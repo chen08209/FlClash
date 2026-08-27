@@ -579,6 +579,44 @@ class ServiceStateMachineTest {
     }
 
     @Test
+    fun `a start that overtakes another inside the binding window adopts the running service`() =
+        runTest {
+            val host = FakeHost(backgroundScope)
+            val machine = ServiceStateMachine(host)
+            machine.syncSharedState(configuredState())
+            host.beforeStartService = {
+                host.beforeStartService = null
+                machine.requestStart()
+            }
+
+            machine.requestStart().await()
+            testScheduler.runCurrent()
+
+            assertEquals(1, host.startCalls)
+            assertEquals(0, host.stopCalls)
+            assertEquals(RunState.STARTED, machine.runState.value)
+            assertTrue(machine.captureRequestToken().running)
+        }
+
+    @Test
+    fun `a start rebinds when the running service is not the one the options ask for`() = runTest {
+        val host = FakeHost(backgroundScope)
+        host.vpnServiceActive = false
+        val machine = ServiceStateMachine(host)
+        machine.syncSharedState(configuredState())
+        host.beforeStartService = {
+            host.beforeStartService = null
+            machine.requestStart()
+        }
+
+        machine.requestStart().await()
+        testScheduler.runCurrent()
+
+        assertEquals(2, host.startCalls)
+        assertEquals(RunState.STARTED, machine.runState.value)
+    }
+
+    @Test
     fun `a stop releases a start that is waiting on the vpn consent`() = runTest {
         val host = FakeHost(backgroundScope)
         val app = FakeApp(holdVpnPreparation = true)

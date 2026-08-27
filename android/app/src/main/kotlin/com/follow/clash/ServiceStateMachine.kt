@@ -243,7 +243,8 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
             if (!isCurrent(request)) {
                 return@transition false
             }
-            if (runState.value == RunState.STARTED && runTimeMillis != 0L) {
+            if (runTimeMillis != 0L && host.isVpnServiceActive() == options.enable) {
+                mutableRunState.value = RunState.STARTED
                 return@transition true
             }
             mutableRunState.value = RunState.STARTING

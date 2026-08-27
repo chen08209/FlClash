@@ -24,6 +24,7 @@ type fakeConn struct {
 	readable      *bytes.Reader
 	writeErr      error
 	writeErrAfter int
+	writeErrTimes int
 	closed        bool
 	deadlines     int
 }
@@ -38,19 +39,32 @@ func (fake *fakeConn) Read(p []byte) (int, error) {
 func (fake *fakeConn) Write(p []byte) (int, error) {
 	fake.mu.Lock()
 	defer fake.mu.Unlock()
-	if fake.writeErr != nil {
-		if fake.writeErrAfter <= 0 {
-			return 0, fake.writeErr
-		}
-		accepted := min(fake.writeErrAfter, len(p))
-		fake.writeErrAfter -= accepted
-		written, err := fake.written.Write(p[:accepted])
-		if err != nil {
-			return written, err
-		}
-		return written, fake.writeErr
+	if fake.writeErr == nil {
+		return fake.written.Write(p)
 	}
-	return fake.written.Write(p)
+	writeErr := fake.writeErr
+	if fake.writeErrTimes > 0 {
+		fake.writeErrTimes--
+		if fake.writeErrTimes == 0 {
+			fake.writeErr = nil
+		}
+	}
+	accepted := min(fake.writeErrAfter, len(p))
+	if accepted <= 0 {
+		return 0, writeErr
+	}
+	fake.writeErrAfter -= accepted
+	written, err := fake.written.Write(p[:accepted])
+	if err != nil {
+		return written, err
+	}
+	return written, writeErr
+}
+
+func (fake *fakeConn) deadlineCount() int {
+	fake.mu.Lock()
+	defer fake.mu.Unlock()
+	return fake.deadlines
 }
 
 func (fake *fakeConn) setWriteErr(err error) {
@@ -432,6 +446,40 @@ func TestSendArmsAWriteDeadlineOnEveryFrame(t *testing.T) {
 	defer fake.mu.Unlock()
 	if fake.deadlines != 2 {
 		t.Errorf("deadlines armed = %d, want one per frame", fake.deadlines)
+	}
+}
+
+func TestSendResumesAFrameThatStalledOnTheWriteDeadline(t *testing.T) {
+	fake := &fakeConn{writeErr: os.ErrDeadlineExceeded, writeErrAfter: 2, writeErrTimes: 1}
+	previous := swapConn(fake)
+	defer swapConn(previous)
+
+	send([]byte("{}"))
+
+	if fake.isClosed() {
+		t.Fatal("a host that stopped reading for one deadline window killed the connection, and with it the tunnel")
+	}
+	frames := fake.frames(t)
+	if len(frames) != 1 || string(frames[0]) != "{}" {
+		t.Errorf("frames = %q, want the stalled frame finished so the stream stays in sync", frames)
+	}
+	if fake.deadlineCount() < 2 {
+		t.Error("resuming a stalled frame must arm a fresh write deadline")
+	}
+}
+
+func TestSendDropsTheConnectionWhenAStalledFrameNeverDrains(t *testing.T) {
+	fake := &fakeConn{writeErr: os.ErrDeadlineExceeded, writeErrAfter: 2}
+	previous := swapConn(fake)
+	defer swapConn(previous)
+
+	send([]byte("{}"))
+
+	if !fake.isClosed() {
+		t.Error("a frame that stalls past every retry leaves the stream desynchronized and must close the connection")
+	}
+	if fake.deadlineCount() != 1+ipcPartialFrameRetries {
+		t.Errorf("deadlines armed = %d, want the retries bounded at %d", fake.deadlineCount(), ipcPartialFrameRetries)
 	}
 }
 

@@ -54,11 +54,17 @@ func shouldReclaimEntry(info fs.FileInfo, uid int) bool {
 	return info.IsDir() || stat.Nlink <= 1
 }
 
-func collectReclaimTargets(homeDir string, uid int) []string {
+type reclaimTarget struct {
+	path string
+	dev  uint64
+	ino  uint64
+}
+
+func collectReclaimTargets(homeDir string, uid int) []reclaimTarget {
 	if !canReclaim(homeDir, uid) {
 		return nil
 	}
-	var targets []string
+	var targets []reclaimTarget
 	_ = filepath.WalkDir(homeDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil
@@ -67,9 +73,18 @@ func collectReclaimTargets(homeDir string, uid int) []string {
 		if infoErr != nil {
 			return nil
 		}
-		if shouldReclaimEntry(info, uid) {
-			targets = append(targets, path)
+		if !shouldReclaimEntry(info, uid) {
+			return nil
 		}
+		stat, ok := info.Sys().(*syscall.Stat_t)
+		if !ok {
+			return nil
+		}
+		targets = append(targets, reclaimTarget{
+			path: path,
+			dev:  uint64(stat.Dev),
+			ino:  uint64(stat.Ino),
+		})
 		return nil
 	})
 	return targets
@@ -88,9 +103,9 @@ func isReclaimableStat(stat *syscall.Stat_t, uid int) bool {
 	return int(stat.Uid) != uid
 }
 
-func reclaimEntry(path string, uid int, gid int) (bool, error) {
+func reclaimEntry(target reclaimTarget, uid int, gid int) (bool, error) {
 	fd, err := syscall.Open(
-		path,
+		target.path,
 		syscall.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK|syscall.O_CLOEXEC,
 		0,
 	)
@@ -101,6 +116,9 @@ func reclaimEntry(path string, uid int, gid int) (bool, error) {
 	var stat syscall.Stat_t
 	if err := syscall.Fstat(fd, &stat); err != nil {
 		return false, err
+	}
+	if uint64(stat.Dev) != target.dev || uint64(stat.Ino) != target.ino {
+		return false, nil
 	}
 	if !isReclaimableStat(&stat, uid) {
 		return false, nil
@@ -120,11 +138,11 @@ func reclaimOwnership(homeDir string) {
 		return
 	}
 	reclaimed := 0
-	for _, path := range targets {
-		ok, err := reclaimEntry(path, realUid, realGid)
+	for _, target := range targets {
+		ok, err := reclaimEntry(target, realUid, realGid)
 		if err != nil {
 			if !errors.Is(err, fs.ErrNotExist) {
-				log.Warnln("[APP] reclaim %s: %v", path, err)
+				log.Warnln("[APP] reclaim %s: %v", target.path, err)
 			}
 			continue
 		}

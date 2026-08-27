@@ -5,8 +5,13 @@ enum _SetupTaskResult { completed, handoffToCoreRestart }
 class _RunRequest {
   final bool running;
   final bool initialize;
+  final DateTime? previousStartTime;
 
-  const _RunRequest({required this.running, required this.initialize});
+  const _RunRequest({
+    required this.running,
+    required this.initialize,
+    required this.previousStartTime,
+  });
 }
 
 @Riverpod(keepAlive: true)
@@ -106,6 +111,7 @@ class SetupAction extends _$SetupAction {
     final request = _RunRequest(
       running: running,
       initialize: running && initialize,
+      previousStartTime: _startTime,
     );
     _latestRunRequest = request;
     _setLocalRunning(running);
@@ -130,14 +136,24 @@ class SetupAction extends _$SetupAction {
       return;
     }
 
-    await _setCoreRunning(request);
+    try {
+      await _setCoreRunning(request);
+    } catch (_) {
+      _rollbackRunning(request);
+      rethrow;
+    }
     if (_isCurrent(request)) {
       applyProfileDebounce(force: true, silence: true);
     }
   }
 
   Future<void> _stop(_RunRequest request) async {
-    await _setCoreRunning(request);
+    try {
+      await _setCoreRunning(request);
+    } catch (_) {
+      _rollbackRunning(request);
+      rethrow;
+    }
     if (!_isCurrent(request)) {
       return;
     }
@@ -157,6 +173,14 @@ class SetupAction extends _$SetupAction {
       }
       await setCoreRunning(request.running);
     });
+  }
+
+  void _rollbackRunning(_RunRequest request) {
+    if (!_isCurrent(request)) {
+      return;
+    }
+    _startTime = request.previousStartTime;
+    _setLocalRunning(!request.running);
   }
 
   bool _isCurrent(_RunRequest request) => identical(_latestRunRequest, request);

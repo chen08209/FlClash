@@ -10,9 +10,16 @@ class CommonAction extends _$CommonAction {
 
   void toggleRunning() {
     final running = !ref.read(isStartProvider);
-    ref
-        .read(setupActionProvider.notifier)
-        .setRunning(running, initialize: running && !ref.read(initProvider));
+    unawaited(
+      globalState.safeRun(
+        () => ref
+            .read(setupActionProvider.notifier)
+            .setRunning(
+              running,
+              initialize: running && !ref.read(initProvider),
+            ),
+      ),
+    );
   }
 
   void updateSpeedStatistics() {

@@ -28,6 +28,7 @@ class TestSetupAction extends SetupAction {
   int trafficResets = 0;
   int applyProfileCalls = 0;
   bool blockCoreCalls = false;
+  Error? coreRunningError;
   int authorizeCalls = 0;
   AuthorizeCode authorizeResult = AuthorizeCode.none;
 
@@ -44,6 +45,10 @@ class TestSetupAction extends SetupAction {
       final gate = Completer<void>();
       pendingCoreCalls.add(gate);
       await gate.future;
+    }
+    final error = coreRunningError;
+    if (error != null) {
+      throw error;
     }
     return true;
   }
@@ -84,6 +89,7 @@ void main() {
 
   tearDown(() async {
     action.blockCoreCalls = false;
+    action.coreRunningError = null;
     for (final gate in action.pendingCoreCalls) {
       if (!gate.isCompleted) {
         gate.complete();
@@ -130,6 +136,36 @@ void main() {
 
       expect(action.coreRunningCalls, [false]);
     });
+  });
+
+  group('run failures', () {
+    test('a start the core rejects stops reporting a run time', () async {
+      markInitialized();
+      action.coreRunningError = StateError('start failed');
+
+      await expectLater(
+        container.read(setupActionProvider.notifier).setRunning(true),
+        throwsStateError,
+      );
+
+      expect(container.read(runTimeProvider), isNull);
+    });
+
+    test(
+      'a stop the core rejects keeps the run time it started with',
+      () async {
+        markInitialized();
+        await container.read(setupActionProvider.notifier).setRunning(true);
+        action.coreRunningError = StateError('stop failed');
+
+        await expectLater(
+          container.read(setupActionProvider.notifier).setRunning(false),
+          throwsStateError,
+        );
+
+        expect(container.read(runTimeProvider), isNotNull);
+      },
+    );
   });
 
   group('stop cleanup', () {

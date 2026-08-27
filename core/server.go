@@ -5,6 +5,7 @@ package main
 import (
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -25,8 +26,9 @@ var (
 )
 
 const (
-	maxIPCFrameSize = 64 * 1024 * 1024
-	ipcWriteTimeout = 10 * time.Second
+	maxIPCFrameSize        = 64 * 1024 * 1024
+	ipcWriteTimeout        = 10 * time.Second
+	ipcPartialFrameRetries = 6
 )
 
 var deliveryFailureReported atomic.Bool
@@ -66,6 +68,38 @@ func writeFrame(w io.Writer, data []byte) (int, error) {
 	}
 	n, err := writeAll(w, data)
 	return written + n, err
+}
+
+type resumingWriter struct {
+	conn    ipcConn
+	written int
+	stalls  int
+}
+
+func (writer *resumingWriter) Write(data []byte) (int, error) {
+	accepted := 0
+	for {
+		n, err := writer.conn.Write(data[accepted:])
+		accepted += n
+		writer.written += n
+		if err == nil {
+			return accepted, nil
+		}
+		if accepted >= len(data) || !writer.resume(err) {
+			return accepted, err
+		}
+	}
+}
+
+func (writer *resumingWriter) resume(err error) bool {
+	if writer.written == 0 || writer.stalls >= ipcPartialFrameRetries {
+		return false
+	}
+	if !errors.Is(err, os.ErrDeadlineExceeded) {
+		return false
+	}
+	writer.stalls++
+	return writer.conn.SetWriteDeadline(time.Now().Add(ipcWriteTimeout)) == nil
 }
 
 func writeAll(w io.Writer, data []byte) (int, error) {
@@ -115,7 +149,7 @@ func send(data []byte) {
 	if err := c.SetWriteDeadline(time.Now().Add(ipcWriteTimeout)); err != nil {
 		logDeliveryError("server write deadline error: %v", err)
 	}
-	written, err := writeFrame(c, data)
+	written, err := writeFrame(&resumingWriter{conn: c}, data)
 	if err == nil {
 		deliveryFailureReported.Store(false)
 		return
