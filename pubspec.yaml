@@ -59,6 +59,7 @@ dependencies:
   riverpod_annotation: ^4.0.3
   riverpod: ^3.3.2
   material_color_utilities: ^0.13.0
+  material_new_shapes: ^1.0.0
   flutter_js: ^0.8.7
   flutter_svg: ^2.1.0
   flutter_cache_manager: ^3.4.1
