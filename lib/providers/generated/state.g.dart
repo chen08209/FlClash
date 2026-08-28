@@ -430,7 +430,7 @@ final class SharedStateProvider
   }
 }
 
-String _$sharedStateHash() => r'6335d55a6eb78b974a4b2c2fd2189b863c84273f';
+String _$sharedStateHash() => r'0ad6621651a00203de8bc02a53205b757f24fd06';
 
 @ProviderFor(AccessControlState)
 final accessControlStateProvider = AccessControlStateProvider._();
@@ -1762,7 +1762,7 @@ final class ProxyGroupSelectorStateProvider
 }
 
 String _$proxyGroupSelectorStateHash() =>
-    r'26326b400a0a2570188560a553ba8c600ad13b80';
+    r'c89bf29a62a958590119d723305ac6a7856de198';
 
 final class ProxyGroupSelectorStateFamily extends $Family
     with $FunctionalFamilyOverride<ProxyGroupSelectorState, (String, String)> {
@@ -1842,7 +1842,7 @@ final class RealTestUrlProvider
   }
 }
 
-String _$realTestUrlHash() => r'6d68caa7a526b6788e3e4899d3ec8ad1c065b15e';
+String _$realTestUrlHash() => r'f990657754638550e66b755591d4c3826f8f99e2';
 
 final class RealTestUrlFamily extends $Family
     with $FunctionalFamilyOverride<String, String?> {
@@ -2115,6 +2115,56 @@ final class UnfoldSetProvider
 
 String _$unfoldSetHash() => r'59a5b417611533069462ddf31eca080ab2f74ac9';
 
+@ProviderFor(realSelectedProxyStateMap)
+final realSelectedProxyStateMapProvider = RealSelectedProxyStateMapProvider._();
+
+final class RealSelectedProxyStateMapProvider
+    extends
+        $FunctionalProvider<
+          Map<String, SelectedProxyState>,
+          Map<String, SelectedProxyState>,
+          Map<String, SelectedProxyState>
+        >
+    with $Provider<Map<String, SelectedProxyState>> {
+  RealSelectedProxyStateMapProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'realSelectedProxyStateMapProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$realSelectedProxyStateMapHash();
+
+  @$internal
+  @override
+  $ProviderElement<Map<String, SelectedProxyState>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  Map<String, SelectedProxyState> create(Ref ref) {
+    return realSelectedProxyStateMap(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<String, SelectedProxyState> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Map<String, SelectedProxyState>>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$realSelectedProxyStateMapHash() =>
+    r'7e9c385d96816c99b6e3e52f336463e74701d97f';
+
 @ProviderFor(realSelectedProxyState)
 final realSelectedProxyStateProvider = RealSelectedProxyStateFamily._();
 
@@ -2180,7 +2230,7 @@ final class RealSelectedProxyStateProvider
 }
 
 String _$realSelectedProxyStateHash() =>
-    r'42fa131419f0a26e30c4f5269bf020893b7f828c';
+    r'540b2d889b07178ea555278c3308efc67fd73ba7';
 
 final class RealSelectedProxyStateFamily extends $Family
     with $FunctionalFamilyOverride<SelectedProxyState, String> {
@@ -2528,7 +2578,7 @@ final class NavigationItemsStateProvider
 }
 
 String _$navigationItemsStateHash() =>
-    r'3c633d4f3e5f2e80b7cfd166a46397f9a207bb1e';
+    r'97ece0a0161b0bf04178b1fb1004f9588886fa06';
 
 @ProviderFor(currentNavigationItemsState)
 final currentNavigationItemsStateProvider =
@@ -2619,7 +2669,7 @@ final class NavigationStateProvider
   }
 }
 
-String _$navigationStateHash() => r'657dc47ecc35ba0807b58cb37e7f1baa14f6c2f9';
+String _$navigationStateHash() => r'd02e0af677f818cc77a06905c646fc346c50769f';
 
 @ProviderFor(dashboardState)
 final dashboardStateProvider = DashboardStateProvider._();

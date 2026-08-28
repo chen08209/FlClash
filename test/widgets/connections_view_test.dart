@@ -94,7 +94,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('ConnectionsView polls only while the page is active', (
+  testWidgets('ConnectionsView refreshes only while the page is active', (
     tester,
   ) async {
     var readCount = 0;
@@ -128,10 +128,9 @@ void main() {
 
     expect(readCount, 1);
 
-    await tester.pump(const Duration(seconds: 1));
-    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
 
-    expect(readCount, 2);
+    expect(readCount, 1);
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -146,13 +145,13 @@ void main() {
     );
     await tester.pump(const Duration(seconds: 3));
 
-    expect(readCount, 2);
+    expect(readCount, 1);
     expect(tester.takeException(), null);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('ConnectionsView stops polling while the app is paused', (
+  testWidgets('ConnectionsView skips refresh while the app is paused', (
     tester,
   ) async {
     var readCount = 0;

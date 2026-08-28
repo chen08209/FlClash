@@ -3,7 +3,6 @@ part of '../action.dart';
 @Riverpod(keepAlive: true)
 class CommonAction extends _$CommonAction {
   CoreController get _core => ref.read(coreHandlerProvider);
-  bool _isUpdatingTraffic = false;
 
   @override
   void build() {}
@@ -38,39 +37,52 @@ class CommonAction extends _$CommonAction {
   }
 
   Future<void> updateTraffic() async {
-    if (_isUpdatingTraffic) {
-      return;
-    }
-    _isUpdatingTraffic = true;
     try {
       final onlyStatisticsProxy = ref.read(
         appSettingProvider.select((state) => state.onlyStatisticsProxy),
       );
-      final [traffic, totalTraffic] = await Future.wait([
-        _readTraffic(() => _core.getTraffic(onlyStatisticsProxy)),
-        _readTraffic(() => _core.getTotalTraffic(onlyStatisticsProxy)),
-      ]);
-      if (traffic != null) {
-        ref.read(trafficsProvider.notifier).addTraffic(traffic);
-      }
-      if (totalTraffic != null) {
-        ref.read(totalTrafficProvider.notifier).value = totalTraffic;
-      }
-    } finally {
-      _isUpdatingTraffic = false;
-    }
-  }
-
-  Future<Traffic?> _readTraffic(Future<Traffic> Function() request) async {
-    try {
-      return await request();
+      final snapshot = await _core.getTrafficSnapshot(onlyStatisticsProxy);
+      applyTrafficSnapshot(now: snapshot.now, total: snapshot.total);
     } catch (error) {
       commonPrint.log(
         'updateTraffic error: $error',
         logLevel: coreFailureLogLevel(error),
       );
-      return null;
     }
+  }
+
+  void applyTrafficSnapshot({required Traffic now, required Traffic total}) {
+    final lastTraffic = ref
+        .read(trafficsProvider)
+        .list
+        .safeLast(const Traffic());
+    if (lastTraffic != now) {
+      ref.read(trafficsProvider.notifier).addTraffic(now);
+    }
+    if (ref.read(totalTrafficProvider) != total) {
+      ref.read(totalTrafficProvider.notifier).value = total;
+    }
+  }
+
+  void applyTrafficPush(Map<String, dynamic> snapshot) {
+    final onlyStatisticsProxy = ref.read(
+      appSettingProvider.select((state) => state.onlyStatisticsProxy),
+    );
+    num read(String key) => snapshot[key] as num? ?? 0;
+    if (onlyStatisticsProxy) {
+      applyTrafficSnapshot(
+        now: Traffic(up: read('proxyUp'), down: read('proxyDown')),
+        total: Traffic(
+          up: read('proxyTotalUp'),
+          down: read('proxyTotalDown'),
+        ),
+      );
+      return;
+    }
+    applyTrafficSnapshot(
+      now: Traffic(up: read('up'), down: read('down')),
+      total: Traffic(up: read('totalUp'), down: read('totalDown')),
+    );
   }
 
   Future<bool> autoCheckUpdate() async {

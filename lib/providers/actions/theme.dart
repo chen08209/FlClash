@@ -14,6 +14,10 @@ class ThemeAction extends _$ThemeAction {
 
   void updateViewSize(Size size) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final current = ref.read(viewSizeProvider);
+      if (current == size) {
+        return;
+      }
       ref.read(viewSizeProvider.notifier).value = size;
     });
   }

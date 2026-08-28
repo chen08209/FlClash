@@ -169,6 +169,8 @@ const _$CoreEventTypeEnumMap = {
   CoreEventType.loaded: 'loaded',
   CoreEventType.crash: 'crash',
   CoreEventType.geoUpdate: 'geoUpdate',
+  CoreEventType.traffic: 'traffic',
+  CoreEventType.connections: 'connections',
 };
 
 _InvokeMessage _$InvokeMessageFromJson(Map<String, dynamic> json) =>

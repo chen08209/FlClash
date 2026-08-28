@@ -479,6 +479,59 @@ abstract class _$LoadedLocale extends $Notifier<Locale?> {
   }
 }
 
+@ProviderFor(ConnectionsSnapshot)
+final connectionsSnapshotProvider = ConnectionsSnapshotProvider._();
+
+final class ConnectionsSnapshotProvider
+    extends $NotifierProvider<ConnectionsSnapshot, List<TrackerInfo>> {
+  ConnectionsSnapshotProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'connectionsSnapshotProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$connectionsSnapshotHash();
+
+  @$internal
+  @override
+  ConnectionsSnapshot create() => ConnectionsSnapshot();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<TrackerInfo> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<TrackerInfo>>(value),
+    );
+  }
+}
+
+String _$connectionsSnapshotHash() =>
+    r'4ffa6dea2505521a9a428002f5f6fbcb9a417bc7';
+
+abstract class _$ConnectionsSnapshot extends $Notifier<List<TrackerInfo>> {
+  List<TrackerInfo> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<List<TrackerInfo>, List<TrackerInfo>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<TrackerInfo>, List<TrackerInfo>>,
+              List<TrackerInfo>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(LocalIp)
 final localIpProvider = LocalIpProvider._();
 

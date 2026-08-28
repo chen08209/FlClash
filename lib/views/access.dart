@@ -23,6 +23,9 @@ class _AccessViewState extends ConsumerState<AccessView> {
   late ScrollController _controller;
   List<String>? _pinedList;
   bool _isInit = false;
+  AccessControlMode? _lastMode;
+  List<Package>? _cachedViewPackages;
+  String? _viewCacheKey;
 
   final _completer = Completer();
 
@@ -323,7 +326,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
 
   Widget _buildContent({
     required List<Package> packages,
-    required List<String> valueList,
+    required Set<String> selectedSet,
   }) {
     return FutureBuilder(
       future: _completer.future,
@@ -345,7 +348,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
                     return PackageListItem(
                       key: Key(package.packageName),
                       package: package,
-                      value: valueList.contains(package.packageName),
+                      value: selectedSet.contains(package.packageName),
                       onChanged: (value) {
                         _handleSelected(package.packageName);
                       },
@@ -410,16 +413,29 @@ class _AccessViewState extends ConsumerState<AccessView> {
   }
 
   void _onSearch(String value) {
-    ref.read(queryProvider(QueryTag.access).notifier).value = value;
-    _pinList();
+    debouncer.call(FunctionTag.accessQuery, () {
+      if (!mounted) {
+        return;
+      }
+      ref.read(queryProvider(QueryTag.access).notifier).value = value;
+      _pinList();
+      _cachedViewPackages = null;
+    }, duration: const Duration(milliseconds: 200));
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isLoading = ref.watch(loadingProvider(LoadingTag.access));
-    final query = ref.watch(queryProvider(QueryTag.access));
-    final packages = ref.watch(packagesProvider);
-    final accessControl = ref.watch(accessControlStateProvider);
+  List<Package> _viewPackages({
+    required List<Package> packages,
+    required AccessControlProps accessControl,
+    required String query,
+  }) {
+    final cacheKey =
+        '${identityHashCode(packages)}|${accessControl.mode}|${accessControl.sort}|'
+        '${accessControl.isFilterNonInternetApp}|${accessControl.isFilterSystemApp}|'
+        '${_pinedList?.length}|$query';
+    final cached = _cachedViewPackages;
+    if (cached != null && _viewCacheKey == cacheKey) {
+      return cached;
+    }
     final viewPackages = packages
         .getViewList(
           pinedList: _pinedList ?? [],
@@ -433,10 +449,36 @@ class _AccessViewState extends ConsumerState<AccessView> {
               package.packageName.contains(query),
         )
         .toList();
+    _viewCacheKey = cacheKey;
+    _cachedViewPackages = viewPackages;
+    return viewPackages;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isLoading = ref.watch(loadingProvider(LoadingTag.access));
+    final query = ref.watch(queryProvider(QueryTag.access));
+    final packages = ref.watch(packagesProvider);
+    final accessControl = ref.watch(accessControlStateProvider);
+    if (_isInit) {
+      if (_lastMode != accessControl.mode) {
+        _lastMode = accessControl.mode;
+        _pinedList = accessControl.currentList;
+        _cachedViewPackages = null;
+      } else {
+        _pinedList ??= accessControl.currentList;
+      }
+    }
+    final viewPackages = _viewPackages(
+      packages: packages,
+      accessControl: accessControl,
+      query: query,
+    );
     final mode = accessControl.mode;
     final currentList = accessControl.currentList;
     final viewPackageNameList = viewPackages.map((e) => e.packageName).toList();
     final valueList = currentList.intersection(viewPackageNameList);
+    final selectedSet = valueList.toSet();
     return CommonScaffold(
       key: _scaffoldKey,
       isLoading: isLoading,
@@ -457,7 +499,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
               status: !accessControl.enable,
               child: _buildContent(
                 packages: viewPackages,
-                valueList: valueList,
+                selectedSet: selectedSet,
               ),
             ),
           ),

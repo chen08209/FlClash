@@ -136,6 +136,19 @@ class LoadedLocale extends _$LoadedLocale with AutoDisposeNotifierMixin {
 }
 
 @Riverpod(keepAlive: true)
+class ConnectionsSnapshot extends _$ConnectionsSnapshot
+    with AutoDisposeNotifierMixin {
+  @override
+  List<TrackerInfo> build() {
+    return const [];
+  }
+
+  void apply(List<TrackerInfo> next) {
+    value = next;
+  }
+}
+
+@Riverpod(keepAlive: true)
 class LocalIp extends _$LocalIp with AutoDisposeNotifierMixin {
   @override
   String? build() {

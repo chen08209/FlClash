@@ -167,7 +167,18 @@ SharedState sharedState(Ref ref) {
       (state) => (stack: state.tun.stack.name, mixedPort: state.mixedPort),
     ),
   );
-  final vpnSetting = ref.watch(vpnSettingProvider);
+  final vpnSetting = ref.watch(
+    vpnSettingProvider.select(
+      (state) => (
+        enable: state.enable,
+        systemProxy: state.systemProxy,
+        ipv6: state.ipv6,
+        dnsHijacking: state.dnsHijacking,
+        accessControlProps: state.accessControlProps,
+        allowBypass: state.allowBypass,
+      ),
+    ),
+  );
   final currentProfileName = currentProfile.label;
   final selectedMap = currentProfile.selectedMap;
   final onlyStatisticsProxy = appSetting.onlyStatisticsProxy;

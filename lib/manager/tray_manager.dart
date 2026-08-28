@@ -4,9 +4,11 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/tray.dart';
 import 'package:fl_clash/common/window.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/state.dart';
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tray/tray.dart';
@@ -28,7 +30,7 @@ class _TrayManagerState extends ConsumerState<TrayManager> {
     super.initState();
     _subscription = Tray.instance.events.listen(_handleTrayEvent);
     ref.listenManual(trayStateProvider, (prev, next) {
-      if (prev != next) {
+      if (prev == null || _trayMenuNeedsRebuild(prev, next)) {
         _reportFailure(ref.read(systemActionProvider.notifier).updateTray());
       }
     });
@@ -49,6 +51,36 @@ class _TrayManagerState extends ConsumerState<TrayManager> {
         }
       });
     }
+  }
+
+  /// Ignore delay-sort reorder of the same proxy names; title updates are
+  /// handled separately via [trayTitleStateProvider].
+  bool _trayMenuNeedsRebuild(TrayState previous, TrayState next) {
+    if (previous.mode != next.mode ||
+        previous.port != next.port ||
+        previous.autoLaunch != next.autoLaunch ||
+        previous.systemProxy != next.systemProxy ||
+        previous.tunEnable != next.tunEnable ||
+        previous.isStart != next.isStart ||
+        previous.showTrayTitle != next.showTrayTitle) {
+      return true;
+    }
+    if (!mapEquals(previous.selectedMap, next.selectedMap)) {
+      return true;
+    }
+    return !listEquals(
+      _groupMenuSignature(previous.groups),
+      _groupMenuSignature(next.groups),
+    );
+  }
+
+  List<String> _groupMenuSignature(List<Group> groups) {
+    return groups
+        .map((group) {
+          final names = group.all.map((proxy) => proxy.name).toList()..sort();
+          return '${group.name}:${names.join(',')}';
+        })
+        .toList();
   }
 
   void _reportFailure(Future<void>? operation) {

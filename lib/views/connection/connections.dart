@@ -22,16 +22,65 @@ class ConnectionsView extends ConsumerStatefulWidget {
 }
 
 class _ConnectionsViewState extends ConsumerState<ConnectionsView>
-    with WidgetsBindingObserver, ActivePollingMixin<ConnectionsView> {
+    with WidgetsBindingObserver {
   CoreController get _core => ref.read(coreHandlerProvider);
 
   final _connectionsStateNotifier = ValueNotifier<TrackerInfosState>(
     const TrackerInfosState(),
   );
   final ScrollController _scrollController = ScrollController();
+  bool _isForeground = false;
+  bool _isPageActive = true;
+
+  bool get _canApplyUpdates => mounted && _isForeground && _isPageActive;
 
   @override
-  Duration get pollInterval => const Duration(seconds: 1);
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    final lifecycleState = WidgetsBinding.instance.lifecycleState;
+    _isForeground =
+        lifecycleState == null || lifecycleState == AppLifecycleState.resumed;
+    ref.listenManual(connectionsSnapshotProvider, (prev, next) {
+      if (!_canApplyUpdates) {
+        return;
+      }
+      _applyConnections(next);
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _syncConnections();
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final isPageActive = PageActivityScope.isActiveOf(context);
+    if (_isPageActive == isPageActive) {
+      return;
+    }
+    _isPageActive = isPageActive;
+    _syncConnections();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final isForeground = state == AppLifecycleState.resumed;
+    if (_isForeground == isForeground) {
+      return;
+    }
+    _isForeground = isForeground;
+    _syncConnections();
+  }
+
+  void _syncConnections() {
+    if (!_canApplyUpdates) {
+      return;
+    }
+    unawaited(_refreshConnections());
+  }
 
   List<Widget> _buildActions() {
     return [
@@ -58,15 +107,6 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
     );
   }
 
-  @override
-  Future<void> poll(PollGuard isCurrent) async {
-    final trackerInfos = await _readConnections();
-    if (trackerInfos == null || !isCurrent()) {
-      return;
-    }
-    _applyConnections(trackerInfos);
-  }
-
   Future<void> _refreshConnections() async {
     final trackerInfos = await _readConnections();
     if (trackerInfos == null || !mounted) {
@@ -90,8 +130,35 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
     }
   }
 
+  bool _isSameSnapshot(List<TrackerInfo> previous, List<TrackerInfo> next) {
+    if (identical(previous, next)) {
+      return true;
+    }
+    if (previous.length != next.length) {
+      return false;
+    }
+    for (var i = 0; i < previous.length; i++) {
+      final a = previous[i];
+      final b = next[i];
+      if (a.id != b.id ||
+          a.upload != b.upload ||
+          a.download != b.download ||
+          a.uploadSpeed != b.uploadSpeed ||
+          a.downloadSpeed != b.downloadSpeed ||
+          a.rule != b.rule ||
+          a.rulePayload != b.rulePayload) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   void _applyConnections(List<TrackerInfo> trackerInfos) {
-    _connectionsStateNotifier.value = _connectionsStateNotifier.value.copyWith(
+    final current = _connectionsStateNotifier.value;
+    if (_isSameSnapshot(current.trackerInfos, trackerInfos)) {
+      return;
+    }
+    _connectionsStateNotifier.value = current.copyWith(
       trackerInfos: trackerInfos,
     );
   }
@@ -103,6 +170,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _connectionsStateNotifier.dispose();
     _scrollController.dispose();
     super.dispose();
