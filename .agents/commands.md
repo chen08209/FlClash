@@ -167,7 +167,21 @@ Releasing a stable version, in order:
 tool/bump_version.sh all
 dart run tool/changelog.dart release --version 0.8.96
 git commit -am "chore(release): v0.8.96"
-git tag v0.8.96 && git push --follow-tags
+git tag v0.8.96
+git push origin main && git push origin v0.8.96
+```
+
+Push the tag by name. Every release tag here is lightweight, and `--follow-tags` carries annotated tags only: it skips a
+lightweight one silently, so the branch lands, the tag does not, and the release workflow never fires.
+
+`tool/release.sh` drives both paths so the ordering below cannot be got wrong by hand. It resolves the version (bumping
+the patch when pubspec still names an already tagged one), prints the notes the tag would ship, and only pushes with
+`--push`:
+
+```bash
+tool/release.sh pre --dry-run     # plan and notes, changes nothing
+tool/release.sh pre --push        # bump, tag vX.Y.Z-pre.N, push
+tool/release.sh stable --push     # changelog, chore(release) commit, tag, push
 ```
 
 The release commit comes before the tag on purpose: the generated wording is reviewable in the diff before it ships, and
@@ -184,7 +198,9 @@ skipped and moves on instead of reporting drift that does not exist. Checking me
 branch fail on an unrelated release.
 
 Prerelease tags (`v0.8.96-pre.N`) skip the release commit, and CI renders their notes with `build --unreleased` for the
-Telegram post. They publish no GitHub release, so the update dialog never sees them.
+Telegram post. They publish no GitHub release, so the update dialog never sees them. `build --unreleased` reads the
+version from `pubspec.yaml` rather than the tag, so the patch has to be bumped before the first `-pre.N` of a cycle:
+while `v<pubspec version>` is still tagged it refuses to collect anything and the release job fails.
 
 ## Verify
 
