@@ -1,10 +1,11 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
@@ -28,43 +29,57 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
     const TrackerInfosState(),
   );
   final ScrollController _scrollController = ScrollController();
+  bool _isForeground = false;
+  bool _isPageActive = true;
 
-  bool get _isPageActive {
-    if (!mounted) {
-      return false;
-    }
-    final route = ModalRoute.of(context);
-    if (route != null && !route.isCurrent) {
-      return false;
-    }
-    return WidgetsBinding.instance.lifecycleState ==
-            AppLifecycleState.resumed ||
-        WidgetsBinding.instance.lifecycleState == null;
-  }
+  bool get _canApplyUpdates => mounted && _isForeground && _isPageActive;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    final lifecycleState = WidgetsBinding.instance.lifecycleState;
+    _isForeground =
+        lifecycleState == null || lifecycleState == AppLifecycleState.resumed;
     ref.listenManual(connectionsSnapshotProvider, (prev, next) {
-      if (!_isPageActive) {
+      if (!_canApplyUpdates) {
         return;
       }
       _applyConnections(next);
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) {
-        return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _syncConnections();
       }
-      await _refreshConnections();
     });
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && mounted) {
-      unawaited(_refreshConnections());
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final isPageActive = PageActivityScope.isActiveOf(context);
+    if (_isPageActive == isPageActive) {
+      return;
     }
+    _isPageActive = isPageActive;
+    _syncConnections();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final isForeground = state == AppLifecycleState.resumed;
+    if (_isForeground == isForeground) {
+      return;
+    }
+    _isForeground = isForeground;
+    _syncConnections();
+  }
+
+  void _syncConnections() {
+    if (!_canApplyUpdates) {
+      return;
+    }
+    unawaited(_refreshConnections());
   }
 
   List<Widget> _buildActions() {

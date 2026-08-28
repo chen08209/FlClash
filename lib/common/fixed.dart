@@ -16,8 +16,6 @@ class FixedList<T> {
 
   int get revision => _revision;
 
-  FixedList._shared(this.maxLength, this._list);
-
   void add(T item) {
     _list.add(item);
     _list.truncate(maxLength);
@@ -39,10 +37,6 @@ class FixedList<T> {
   int get length => _list.length;
 
   T operator [](int index) => _list[index];
-
-  /// New FixedList identity over the same backing storage.
-  /// Used so Riverpod can notify without copying every element.
-  FixedList<T> notifyClone() => FixedList._shared(maxLength, _list);
 
   FixedList<T> copyWith() {
     return FixedList(maxLength, list: List.of(_list));
