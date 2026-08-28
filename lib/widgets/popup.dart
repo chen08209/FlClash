@@ -29,15 +29,38 @@ const _itemArrowPadding = EdgeInsets.only(
   right: 8,
 );
 
+const _popupBeginScale = 0.35;
+
+final _popupTravelTween = CurveTween(
+  curve: const Interval(0, 0.6, curve: Curves.easeInOutBack),
+);
+
+final _popupScaleTween = Tween(
+  begin: _popupBeginScale,
+  end: 1.0,
+).chain(CurveTween(curve: const Interval(0.4, 1, curve: Curves.easeOutBack)));
+
+final _popupFadeTween = CurveTween(
+  curve: const Interval(0.4, 0.85, curve: Curves.easeOut),
+);
+
+final _popupTargetFadeTween = CurveTween(
+  curve: const Interval(0.25, 0.6, curve: Curves.easeIn),
+);
+
 class CommonPopupRoute<T> extends PopupRoute<T> {
   CommonPopupRoute({
     required this.builder,
+    required this.targetBuilder,
     required this.anchorOf,
     required this.barrierLabel,
+    this.onClosed,
   });
 
   final WidgetBuilder builder;
+  final WidgetBuilder targetBuilder;
   final PopupAnchorResolver anchorOf;
+  final VoidCallback? onClosed;
 
   @override
   final String? barrierLabel;
@@ -49,15 +72,21 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
   bool get barrierDismissible => true;
 
   @override
-  Duration get transitionDuration => const Duration(milliseconds: 250);
+  Duration get transitionDuration => const Duration(milliseconds: 340);
 
   @override
-  Duration get reverseTransitionDuration => const Duration(milliseconds: 150);
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 230);
 
   void _handleDismiss() {
     if (isCurrent) {
       navigator?.pop();
     }
+  }
+
+  @override
+  void dispose() {
+    onClosed?.call();
+    super.dispose();
   }
 
   @override
@@ -76,9 +105,6 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    const alignment = Alignment.topRight;
-    final fade = animation.drive(CurveTween(curve: Curves.easeOut));
-    final scale = animation.drive(CurveTween(curve: Curves.easeOutBack));
     return Stack(
       children: [
         Positioned.fill(
@@ -95,23 +121,71 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
               anchor: anchor,
               safeInsets: safeInsets,
             ),
-            child: child,
+            child: _PopupMorphTransition(
+              animation: animation,
+              anchor: anchor,
+              target: SizedBox.fromSize(
+                size: anchor.size,
+                child: targetBuilder(context),
+              ),
+              child: child,
+            ),
           ),
-          child: FadeTransition(
-            opacity: fade,
-            child: ScaleTransition(
-              alignment: alignment,
-              scale: scale,
-              child: SlideTransition(
-                position: scale.drive(
-                  Tween(begin: const Offset(0, -0.02), end: Offset.zero),
-                ),
+          child: child,
+        ),
+      ],
+    );
+  }
+}
+
+class _PopupMorphTransition extends AnimatedWidget {
+  const _PopupMorphTransition({
+    required Animation<double> animation,
+    required this.anchor,
+    required this.target,
+    required this.child,
+  }) : super(listenable: animation);
+
+  final Rect anchor;
+  final Widget target;
+  final Widget child;
+
+  Animation<double> get _animation => listenable as Animation<double>;
+
+  @override
+  Widget build(BuildContext context) {
+    final value = _animation.value;
+    final travel = 1 - _popupTravelTween.transform(value);
+    return FractionalTranslation(
+      translation: const Offset(0.5, -0.5) * travel,
+      child: Transform.translate(
+        offset:
+            Offset(-anchor.width / 2, anchor.height / 2 + _anchorOverlap) *
+            travel,
+        child: Stack(
+          children: [
+            Opacity(
+              opacity: _popupFadeTween.transform(value),
+              child: Transform.scale(
+                scale: _popupScaleTween.transform(value),
                 child: child,
               ),
             ),
-          ),
+            Positioned.fill(
+              child: Align(
+                child: IgnorePointer(
+                  child: ExcludeSemantics(
+                    child: Opacity(
+                      opacity: 1 - _popupTargetFadeTween.transform(value),
+                      child: target,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -231,6 +305,9 @@ class CommonPopupBox extends StatefulWidget {
 }
 
 class _CommonPopupBoxState extends State<CommonPopupBox> {
+  CommonPopupRoute<void>? _route;
+  bool _hidden = false;
+
   Rect? _anchorOf(Offset offset) {
     if (!mounted) {
       return null;
@@ -245,21 +322,48 @@ class _CommonPopupBoxState extends State<CommonPopupBox> {
     return (origin & renderBox.size).shift(offset);
   }
 
+  void _ignoreOpen({Offset offset = Offset.zero}) {}
+
+  void _handleClosed(CommonPopupRoute<void> route) {
+    if (_route != route) {
+      return;
+    }
+    _route = null;
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _hidden = false;
+    });
+  }
+
   void _open({Offset offset = Offset.zero}) {
-    Navigator.of(context).push(
-      CommonPopupRoute<void>(
-        barrierLabel: MaterialLocalizations.of(
-          context,
-        ).modalBarrierDismissLabel,
-        builder: (context) => widget.popupBuilder(context),
-        anchorOf: () => _anchorOf(offset),
-      ),
+    final navigator = Navigator.of(context);
+    final themes = InheritedTheme.capture(from: context, to: navigator.context);
+    late final CommonPopupRoute<void> route;
+    route = CommonPopupRoute<void>(
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      builder: (context) => widget.popupBuilder(context),
+      targetBuilder: (_) => themes.wrap(widget.targetBuilder(_ignoreOpen)),
+      anchorOf: () => _anchorOf(offset),
+      onClosed: () => _handleClosed(route),
     );
+    _route = route;
+    setState(() {
+      _hidden = true;
+    });
+    navigator.push(route);
   }
 
   @override
   Widget build(BuildContext context) {
-    return widget.targetBuilder(_open);
+    return Visibility(
+      visible: !_hidden,
+      maintainSize: true,
+      maintainAnimation: true,
+      maintainState: true,
+      child: widget.targetBuilder(_open),
+    );
   }
 }
 

@@ -16,7 +16,11 @@ void main() {
             child: CommonPopupBox(
               targetBuilder: (value) {
                 open = value;
-                return const SizedBox(width: 40, height: 40);
+                return const SizedBox(
+                  width: 40,
+                  height: 40,
+                  key: Key('target'),
+                );
               },
               popupBuilder: (_) =>
                   const SizedBox(width: 80, height: 80, key: Key('popup')),
@@ -39,7 +43,7 @@ void main() {
         child: CommonPopupBox(
           targetBuilder: (value) {
             open = value;
-            return const SizedBox(width: 40, height: 40);
+            return const SizedBox(width: 40, height: 40, key: Key('target'));
           },
           popupBuilder: (_) => CommonPopupMenu(items: items),
         ),
@@ -57,6 +61,88 @@ void main() {
     expect(find.byKey(const Key('popup')), findsOneWidget);
   });
 
+  testWidgets('the popup travels off the target before it grows', (
+    tester,
+  ) async {
+    final open = await pumpBox(tester);
+    final anchorCenter = tester.getCenter(find.byType(CommonPopupBox));
+    final popup = find.byKey(const Key('popup'));
+
+    open();
+    await tester.pump();
+    final start = tester.getRect(popup);
+
+    await tester.pump(const Duration(milliseconds: 40));
+    final winding = tester.getRect(popup);
+
+    await tester.pump(const Duration(milliseconds: 80));
+    final travelling = tester.getRect(popup);
+
+    await tester.pump(const Duration(milliseconds: 140));
+    final growing = tester.getRect(popup);
+
+    await tester.pumpAndSettle();
+    final settled = tester.getRect(popup);
+
+    expect(start.center, within(distance: 0.5, from: anchorCenter));
+    expect(start.width, lessThan(settled.width / 2));
+
+    expect(winding.center.dx, greaterThan(anchorCenter.dx));
+    expect(winding.center.dy, lessThan(anchorCenter.dy));
+
+    expect(travelling.center.dx, lessThan(anchorCenter.dx));
+    expect(travelling.center.dx, greaterThan(settled.center.dx));
+    expect(travelling.center.dy, greaterThan(anchorCenter.dy));
+    expect(travelling.center.dy, lessThan(settled.center.dy));
+
+    expect(growing.center, within(distance: 0.5, from: settled.center));
+    expect(growing.width, greaterThan(travelling.width));
+    expect(growing.width, greaterThan(settled.width));
+  });
+
+  testWidgets('the target hands its place to the copy that flies out', (
+    tester,
+  ) async {
+    final open = await pumpBox(tester);
+    final target = find.byKey(const Key('target'));
+    final real = find.descendant(
+      of: find.byType(CommonPopupBox),
+      matching: target,
+    );
+    final flying = find.descendant(
+      of: find.byType(CustomSingleChildLayout),
+      matching: target,
+    );
+    final anchor = tester.getRect(real);
+    bool targetShown() => tester
+        .widget<Visibility>(
+          find.ancestor(of: real, matching: find.byType(Visibility)),
+        )
+        .visible;
+
+    expect(target, findsOneWidget);
+    expect(targetShown(), isTrue);
+
+    open();
+    await tester.pump();
+
+    expect(flying, findsOneWidget);
+    expect(targetShown(), isFalse);
+    expect(tester.getRect(flying), anchor);
+
+    await tester.pump(const Duration(milliseconds: 90));
+    final moved = tester.getRect(flying);
+    expect(moved.size, anchor.size);
+    expect(moved.center.dx, lessThan(anchor.center.dx));
+    expect(moved.center.dy, greaterThan(anchor.center.dy));
+
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    expect(target, findsOneWidget);
+    expect(targetShown(), isTrue);
+  });
+
   testWidgets('the popup is only built once it opens', (tester) async {
     var builds = 0;
     await tester.pumpWidget(
@@ -64,7 +150,8 @@ void main() {
         home: Scaffold(
           body: Center(
             child: CommonPopupBox(
-              targetBuilder: (_) => const SizedBox(width: 40, height: 40),
+              targetBuilder: (_) =>
+                  const SizedBox(width: 40, height: 40, key: Key('target')),
               popupBuilder: (_) {
                 builds++;
                 return const SizedBox.shrink();
@@ -99,7 +186,11 @@ void main() {
                 return CommonPopupBox(
                   targetBuilder: (value) {
                     open = value;
-                    return const SizedBox(width: 40, height: 40);
+                    return const SizedBox(
+                      width: 40,
+                      height: 40,
+                      key: Key('target'),
+                    );
                   },
                   popupBuilder: (_) =>
                       const SizedBox(width: 80, height: 80, key: Key('popup')),
