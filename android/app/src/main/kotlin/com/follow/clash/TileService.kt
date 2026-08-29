@@ -1,8 +1,10 @@
 package com.follow.clash
 
 import android.annotation.SuppressLint
+import android.net.VpnService
 import android.os.Build
 import android.service.quicksettings.Tile
+import com.follow.clash.common.GlobalState
 import com.follow.clash.common.QuickAction
 import com.follow.clash.common.quickIntent
 import com.follow.clash.common.toPendingIntent
@@ -26,9 +28,18 @@ class TileService : android.service.quicksettings.TileService() {
         }
     }
 
+    // Routing a tap through the transparent QuickActionActivity collapses the
+    // shade; a tile tap already lets the service start, so the activity is
+    // kept only for the case that still needs a foreground UI: VPN consent.
     override fun onClick() {
         super.onClick()
-        openQuickAction()
+        val needsConsent = ServiceState.runState.value == RunState.STOPPED &&
+            VpnService.prepare(this) != null
+        if (needsConsent) {
+            openQuickAction()
+            return
+        }
+        GlobalState.launch { ServiceState.handleToggleAction() }
     }
 
     override fun onStopListening() {

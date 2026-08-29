@@ -9,6 +9,8 @@ import android.net.NetworkCapabilities.TRANSPORT_SATELLITE
 import android.net.NetworkCapabilities.TRANSPORT_USB
 import android.net.NetworkRequest
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import androidx.core.content.getSystemService
 import com.follow.clash.core.Core
 import java.net.Inet4Address
@@ -30,6 +32,7 @@ internal class NetworkObserveModule(private val service: Service) : ServiceModul
     private val connectivity by lazy {
         service.getSystemService<ConnectivityManager>()
     }
+    private val mainHandler = Handler(Looper.getMainLooper())
     private var currentDnsList = listOf<String>()
 
     private val request = NetworkRequest.Builder().apply {
@@ -48,8 +51,16 @@ internal class NetworkObserveModule(private val service: Service) : ServiceModul
         }
 
         override fun onLosing(network: Network, maxMsToLive: Int) {
-            networkInfos[network]?.losingUntilMillis = System.currentTimeMillis() + maxMsToLive
+            val info = networkInfos[network] ?: return
+            info.losingUntilMillis = System.currentTimeMillis() + maxMsToLive
             updateDns()
+            if (maxMsToLive > 0) {
+                mainHandler.postDelayed({
+                    if (networkInfos.containsKey(network)) {
+                        updateDns()
+                    }
+                }, maxMsToLive.toLong() + 50)
+            }
         }
 
         override fun onLost(network: Network) {
@@ -104,6 +115,7 @@ internal class NetworkObserveModule(private val service: Service) : ServiceModul
     }
 
     override fun stop() {
+        mainHandler.removeCallbacksAndMessages(null)
         try {
             connectivity?.unregisterNetworkCallback(callback)
         } finally {
