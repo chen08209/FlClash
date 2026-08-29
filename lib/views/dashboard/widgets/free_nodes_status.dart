@@ -271,6 +271,102 @@ String _formatShortDuration(Duration duration) {
   return remainMinutes == 0 ? '$hours小时' : '$hours小时$remainMinutes分';
 }
 
+String _formatFreeNodesStatusTime(DateTime dateTime) {
+  final month = dateTime.month.toString().padLeft(2, '0');
+  final day = dateTime.day.toString().padLeft(2, '0');
+  final hour = dateTime.hour.toString().padLeft(2, '0');
+  final minute = dateTime.minute.toString().padLeft(2, '0');
+  return '$month-$day $hour:$minute';
+}
+
+class _CachedFreeNodesDetailText extends StatefulWidget {
+  const _CachedFreeNodesDetailText({
+    required this.profile,
+    required this.lastUpdateText,
+    required this.fallbackNextUpdateText,
+    required this.progress,
+    required this.isUpdating,
+  });
+
+  final Profile? profile;
+  final String lastUpdateText;
+  final String fallbackNextUpdateText;
+  final FreeNodesProgress? progress;
+  final bool isUpdating;
+
+  @override
+  State<_CachedFreeNodesDetailText> createState() =>
+      _CachedFreeNodesDetailTextState();
+}
+
+class _CachedFreeNodesDetailTextState
+    extends State<_CachedFreeNodesDetailText> {
+  Future<String>? _nextUpdateTextFuture;
+  String? _resolvedNextUpdateText;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshNextUpdateText();
+  }
+
+  @override
+  void didUpdateWidget(covariant _CachedFreeNodesDetailText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.profile?.id != widget.profile?.id ||
+        oldWidget.profile?.lastUpdateDate != widget.profile?.lastUpdateDate ||
+        oldWidget.fallbackNextUpdateText != widget.fallbackNextUpdateText) {
+      _refreshNextUpdateText();
+    }
+  }
+
+  void _refreshNextUpdateText() {
+    _resolvedNextUpdateText = null;
+    final future = resolveFreeNodesNextUpdateText(
+      profile: widget.profile,
+      formatTime: _formatFreeNodesStatusTime,
+    );
+    _nextUpdateTextFuture = future;
+    future.then((nextUpdateText) {
+      if (!mounted || !identical(_nextUpdateTextFuture, future)) return;
+      setState(() {
+        _resolvedNextUpdateText = nextUpdateText;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: _nextUpdateTextFuture,
+      initialData: _resolvedNextUpdateText ?? widget.fallbackNextUpdateText,
+      builder: (context, snapshot) {
+        final nextUpdateText =
+            snapshot.data ??
+            _resolvedNextUpdateText ??
+            widget.fallbackNextUpdateText;
+        final detailLines = buildFreeNodesDetailLines(
+          lastUpdateText: widget.lastUpdateText,
+          nextUpdateText: nextUpdateText,
+          progress: widget.progress,
+          isUpdating: widget.isUpdating,
+        );
+        return TooltipText(
+          text: Text(
+            detailLines.join('\n'),
+            maxLines: detailLines.length,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.bodySmall?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+              height: 1.0,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class FreeNodesStatus extends ConsumerWidget {
   const FreeNodesStatus({super.key});
 
@@ -289,28 +385,13 @@ class FreeNodesStatus extends ConsumerWidget {
     );
   }
 
-  String _formatTime(DateTime dateTime) {
-    final month = dateTime.month.toString().padLeft(2, '0');
-    final day = dateTime.day.toString().padLeft(2, '0');
-    final hour = dateTime.hour.toString().padLeft(2, '0');
-    final minute = dateTime.minute.toString().padLeft(2, '0');
-    return '$month-$day $hour:$minute';
-  }
-
   String _getNextUpdateText(Profile? profile) {
     return buildFreeNodesNextUpdateText(
       profile: profile,
       sourceOptions: const [],
       enabledSourceIds: const {},
       sourceScheduleLoaded: false,
-      formatTime: _formatTime,
-    );
-  }
-
-  Future<String> _getFreeNodesNextUpdateText(Profile? profile) async {
-    return resolveFreeNodesNextUpdateText(
-      profile: profile,
-      formatTime: _formatTime,
+      formatTime: _formatFreeNodesStatusTime,
     );
   }
 
@@ -511,21 +592,14 @@ class FreeNodesStatus extends ConsumerWidget {
                         isUpdating: isVisibleUpdating,
                       )
                     else
-                      FutureBuilder<String>(
-                        future: _getFreeNodesNextUpdateText(profile),
-                        initialData: _getNextUpdateText(profile),
-                        builder: (context, snapshot) {
-                          final nextUpdateText =
-                              snapshot.data ?? _getNextUpdateText(profile);
-                          return _buildDetailText(
-                            context,
-                            lastUpdateText: lastUpdateText,
-                            nextUpdateText: nextUpdateText,
-                            progress: progress,
-                            isUpdating: isVisibleUpdating,
-                          );
-                        },
+                      _CachedFreeNodesDetailText(
+                        profile: profile,
+                        lastUpdateText: lastUpdateText,
+                        fallbackNextUpdateText: _getNextUpdateText(profile),
+                        progress: progress,
+                        isUpdating: isVisibleUpdating,
                       ),
+
                     if (isVisibleUpdating) ...[
                       const SizedBox(height: 3),
                       LinearProgressIndicator(value: progress?.value),
