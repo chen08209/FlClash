@@ -133,8 +133,9 @@ class BuildLinuxCommand extends BuildCommand {
     final config = BuildConfig.load(rootDir: _rootDir);
 
     final arch = archName ?? await _hostGoArch();
-    final targets =
-        Target.forPlatform('linux').where((t) => t.goarch == arch).toList();
+    final targets = Target.forPlatform(
+      'linux',
+    ).where((t) => t.goarch == arch).toList();
 
     if (targets.isEmpty) {
       throw BuildException('Invalid arch: $arch');
@@ -180,8 +181,9 @@ class BuildWindowsCommand extends BuildCommand {
     final config = BuildConfig.load(rootDir: _rootDir);
 
     final arch = archName ?? await _hostGoArch();
-    final targets =
-        Target.forPlatform('windows').where((t) => t.goarch == arch).toList();
+    final targets = Target.forPlatform(
+      'windows',
+    ).where((t) => t.goarch == arch).toList();
 
     if (targets.isEmpty) {
       throw BuildException('Invalid arch: $arch');
@@ -196,8 +198,9 @@ class BuildWindowsCommand extends BuildCommand {
       notice: notice,
     );
     final coreResults = await goBuilder.buildAll(targets, force: force);
-    final corePaths =
-        coreResults.map((result) => result.primaryOutput).toList();
+    final corePaths = coreResults
+        .map((result) => result.primaryOutput)
+        .toList();
     final rustBuilder = RustBuilder(
       rootDir: _rootDir,
       config: config,
@@ -257,8 +260,9 @@ class BuildMacosCommand extends BuildCommand {
     final config = BuildConfig.load(rootDir: _rootDir);
 
     final arch = archName ?? await _hostGoArch();
-    final targets =
-        Target.forPlatform('darwin').where((t) => t.goarch == arch).toList();
+    final targets = Target.forPlatform(
+      'darwin',
+    ).where((t) => t.goarch == arch).toList();
 
     if (targets.isEmpty) {
       throw BuildException('Invalid arch: $arch');

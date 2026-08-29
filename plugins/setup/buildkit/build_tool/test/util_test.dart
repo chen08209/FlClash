@@ -7,8 +7,9 @@ import 'package:test/test.dart';
 void main() {
   group('calcSha256', () {
     test('returns correct hash for known content', () async {
-      final tmp =
-          File('${Directory.systemTemp.path}/build_tool_test_sha256.txt');
+      final tmp = File(
+        '${Directory.systemTemp.path}/build_tool_test_sha256.txt',
+      );
       tmp.writeAsStringSync('hello');
       try {
         final hash = await calcSha256(tmp.path);
@@ -81,8 +82,9 @@ void main() {
         ensureDir(tmp);
         expect(Directory(tmp).existsSync(), isTrue);
       } finally {
-        Directory('${Directory.systemTemp.path}/build_tool_test_dir')
-            .deleteSync(recursive: true);
+        Directory(
+          '${Directory.systemTemp.path}/build_tool_test_dir',
+        ).deleteSync(recursive: true);
       }
     });
   });
@@ -99,8 +101,9 @@ void main() {
         expect(File(dest).readAsStringSync(), 'content');
       } finally {
         src.deleteSync();
-        Directory('${Directory.systemTemp.path}/build_tool_test_dest')
-            .deleteSync(recursive: true);
+        Directory(
+          '${Directory.systemTemp.path}/build_tool_test_dest',
+        ).deleteSync(recursive: true);
       }
     });
 

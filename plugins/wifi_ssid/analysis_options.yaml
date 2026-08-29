@@ -1,5 +1,10 @@
-include: package:flutter_lints/flutter.yaml
-
-linter:
-  rules:
-    public_member_api_docs: false
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
+include: ../../lint_options.yaml
