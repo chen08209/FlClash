@@ -4,6 +4,7 @@ Repo-scoped Codex skills live under `.agents/skills/*/SKILL.md`. Codex can disco
 
 ## Available Repo Skills
 
+- `change-workflow`: the code-explorer → implementer → test-generator → code-reviewer pipeline with a review-fix loop and exit criteria.
 - `localization`: hardcoded UI text scans, ARB updates, locale generation, and localization verification.
 - `provider-tests`: Riverpod provider, notifier, and state-management tests.
 - `ui-work`: Flutter UI, widgets, Material You styling, navigation surfaces, async feedback, and user-facing interactions.

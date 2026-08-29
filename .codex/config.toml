@@ -3,3 +3,12 @@ enabled = true
 max_concurrent_threads_per_session = 3
 default_subagent_model = "gpt-5.6-luna"
 default_subagent_reasoning_effort = "high"
+
+[[hooks.PostToolUse]]
+matcher = "apply_patch|Bash"
+
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = "bash tool/check_comment_density.sh"
+timeout = 15
+statusMessage = "Checking comment density"
