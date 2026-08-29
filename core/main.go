@@ -1,4 +1,4 @@
-//go:build !cgo
+//go:build !(android && cgo)
 
 package main
 
@@ -10,7 +10,7 @@ import (
 func main() {
 	args := os.Args
 	if len(args) <= 1 {
-		fmt.Println("Arguments error")
+		fmt.Fprintln(os.Stderr, "Arguments error")
 		os.Exit(1)
 	}
 	startServer(args[1])
