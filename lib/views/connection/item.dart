@@ -4,7 +4,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TrackerInfoItem extends ConsumerWidget {
@@ -229,11 +229,14 @@ class TrackerInfoDetailView extends StatelessWidget {
               if (quickCopy)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: IconButton(
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.content_copy, size: 18),
-                    onPressed: () {},
+                  child: Builder(
+                    builder: (context) => IconButton(
+                      tooltip: context.appLocalizations.copy,
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      icon: const Icon(Icons.content_copy, size: 18),
+                      onPressed: () {},
+                    ),
                   ),
                 ),
             ],

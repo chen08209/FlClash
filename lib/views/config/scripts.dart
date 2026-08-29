@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
@@ -6,9 +7,8 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/database.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ScriptsView extends ConsumerStatefulWidget {
@@ -19,21 +19,25 @@ class ScriptsView extends ConsumerStatefulWidget {
 }
 
 class _ScriptsViewState extends ConsumerState<ScriptsView> {
-  final _key = utils.id;
+  final _key = uniqueId;
 
-  Future<void> _handleDelScript(int id) async {
+  Future<void> _handleDelete() async {
     final appLocalizations = context.appLocalizations;
-    final res = await globalState.showMessage(
+    final res = await dialogs.showMessage(
+      title: appLocalizations.tip,
       message: TextSpan(
-        text: appLocalizations.deleteTip(appLocalizations.script),
+        text: appLocalizations.deleteMultipTip(appLocalizations.script),
       ),
     );
     if (res != true) {
       return;
     }
-    ref.read(scriptsProvider.notifier).del(id);
-    ref.read(itemProvider(_key).notifier).value = null;
-    _clearEffect(id);
+    final selectedScriptIds = ref.read(itemsProvider(_key)).cast<int>();
+    ref.read(scriptsProvider.notifier).delAll(selectedScriptIds);
+    ref.read(itemsProvider(_key).notifier).value = {};
+    for (final id in selectedScriptIds) {
+      unawaited(_clearEffect(id));
+    }
   }
 
   Future<void> _clearEffect(int id) async {
@@ -42,15 +46,20 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
   }
 
   void _handleSelected(int id) {
-    ref.read(itemProvider(_key).notifier).update((value) {
-      if (value == id) {
-        return null;
-      }
-      return id;
+    ref.read(itemsProvider(_key).notifier).update((selectedScriptIds) {
+      return Set<int>.from(selectedScriptIds)..addOrRemove(id);
     });
   }
 
-  Widget _buildContent(List<Script> scripts, int? selectedScriptId) {
+  void _handleSelectAll() {
+    final ids =
+        ref.read(scriptsProvider).value?.map((item) => item.id).toSet() ?? {};
+    ref.read(itemsProvider(_key).notifier).update((selected) {
+      return selected.containsAll(ids) ? {} : ids;
+    });
+  }
+
+  Widget _buildContent(List<Script> scripts, Set<dynamic> selectedScriptIds) {
     final appLocalizations = context.appLocalizations;
     if (scripts.isEmpty) {
       return NullStatus(
@@ -59,23 +68,27 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
       );
     }
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
       itemCount: scripts.length,
       itemBuilder: (_, index) {
         final script = scripts[index];
-        return CommonSelectedListItem(
-          isSelected: selectedScriptId == script.id,
-          title: Text(
-            script.label,
-            style: context.textTheme.bodyLarge,
-            maxLines: 3,
+        return ItemPositionProvider(
+          position: ItemPosition.get(index, scripts.length),
+          child: SelectedDecorationListItem(
+            isSelected: selectedScriptIds.contains(script.id),
+            isEditing: selectedScriptIds.isNotEmpty,
+            title: Text(
+              script.label,
+              style: context.textTheme.bodyLarge,
+              maxLines: 3,
+            ),
+            onSelected: () {
+              _handleSelected(script.id);
+            },
+            onPressed: () {
+              _handleToEditor(script.id);
+            },
           ),
-          onSelected: () {
-            _handleSelected(script.id);
-          },
-          onPressed: () {
-            _handleSelected(script.id);
-          },
         );
       },
     );
@@ -92,7 +105,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
         (script?.copyWith(label: title) ?? Script.create(label: title));
     newScript = await newScript.save(content);
     if (newScript.label.isEmpty) {
-      final res = await globalState.showCommonDialog<String>(
+      final res = await dialogs.showCommonDialog<String>(
         child: InputDialog(
           title: appLocalizations.save,
           value: '',
@@ -122,9 +135,11 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
           .read(scriptsProvider.notifier)
           .isExits(newScript.label);
       if (isExits) {
-        globalState.showMessage(
-          message: TextSpan(
-            text: appLocalizations.existsTip(appLocalizations.name),
+        unawaited(
+          dialogs.showMessage(
+            message: TextSpan(
+              text: appLocalizations.existsTip(appLocalizations.name),
+            ),
           ),
         );
         return;
@@ -147,11 +162,11 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     if (content == raw) {
       return true;
     }
-    final res = await globalState.showMessage(
+    final res = await dialogs.showMessage(
       message: TextSpan(text: appLocalizations.saveChanges),
     );
     if (res == true && mounted) {
-      _handleEditorSave(context, title, content, script: script);
+      unawaited(_handleEditorSave(context, title, content, script: script));
     } else {
       return true;
     }
@@ -165,20 +180,28 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     if (!mounted) {
       return;
     }
-    BaseNavigator.push(
-      context,
-      EditorPage(
-        titleEditable: true,
-        title: title,
-        supportRemoteDownload: true,
-        onSave: (context, title, content) {
-          _handleEditorSave(context, title, content, script: script);
-        },
-        onPop: (context, title, content) {
-          return _handleEditorPop(context, title, content, raw, script: script);
-        },
-        languages: const [Language.javaScript],
-        content: raw,
+    unawaited(
+      BaseNavigator.push(
+        context,
+        EditorPage(
+          titleEditable: true,
+          title: title,
+          supportRemoteDownload: true,
+          onSave: (context, title, content) {
+            _handleEditorSave(context, title, content, script: script);
+          },
+          onPop: (context, title, content) {
+            return _handleEditorPop(
+              context,
+              title,
+              content,
+              raw,
+              script: script,
+            );
+          },
+          languages: const [Language.javaScript],
+          content: raw,
+        ),
       ),
     );
   }
@@ -187,11 +210,11 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     final scripts = ref.watch(scriptsProvider).value ?? [];
-    final selectedScriptId = ref.watch(itemProvider(_key));
+    final selectedScriptIds = ref.watch(itemsProvider(_key));
     return CommonPopScope(
       onPop: (_) {
-        if (selectedScriptId != null) {
-          ref.read(itemProvider(_key).notifier).value = null;
+        if (selectedScriptIds.isNotEmpty) {
+          ref.read(itemsProvider(_key).notifier).value = {};
           return false;
         }
         Navigator.of(context).pop();
@@ -199,24 +222,21 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
       },
       child: CommonScaffold(
         actions: [
-          if (selectedScriptId != null) ...[
+          if (selectedScriptIds.isNotEmpty) ...[
             CommonMinIconButtonTheme(
               child: IconButton.filledTonal(
-                onPressed: () {
-                  _handleDelScript(selectedScriptId);
-                },
+                tooltip: context.appLocalizations.delete,
+                onPressed: _handleDelete,
                 icon: const Icon(Icons.delete),
               ),
             ),
             const SizedBox(width: 2),
           ],
           CommonMinFilledButtonTheme(
-            child: selectedScriptId != null
+            child: selectedScriptIds.isNotEmpty
                 ? FilledButton(
-                    onPressed: () {
-                      _handleToEditor(selectedScriptId);
-                    },
-                    child: Text(appLocalizations.edit),
+                    onPressed: _handleSelectAll,
+                    child: Text(appLocalizations.selectAll),
                   )
                 : FilledButton.tonal(
                     onPressed: () {
@@ -227,7 +247,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
           ),
           const SizedBox(width: 8),
         ],
-        body: _buildContent(scripts, selectedScriptId),
+        body: _buildContent(scripts, selectedScriptIds),
         title: appLocalizations.script,
       ),
     );

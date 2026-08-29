@@ -59,6 +59,11 @@ class AppLocalizations {
     return Intl.message('Rule', name: 'rule', desc: '', args: []);
   }
 
+  /// `Rules`
+  String get rules {
+    return Intl.message('Rules', name: 'rules', desc: '', args: []);
+  }
+
   /// `Global`
   String get global {
     return Intl.message('Global', name: 'global', desc: '', args: []);
@@ -172,6 +177,36 @@ class AppLocalizations {
   /// `Download`
   String get download {
     return Intl.message('Download', name: 'download', desc: '', args: []);
+  }
+
+  /// `Used traffic`
+  String get usedTraffic {
+    return Intl.message(
+      'Used traffic',
+      name: 'usedTraffic',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Total traffic`
+  String get totalTraffic {
+    return Intl.message(
+      'Total traffic',
+      name: 'totalTraffic',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Expiration time`
+  String get expireTime {
+    return Intl.message(
+      'Expiration time',
+      name: 'expireTime',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `No profile, Please add a profile`
@@ -389,6 +424,26 @@ class AppLocalizations {
     return Intl.message(
       'Auto check for updates when the app starts',
       name: 'autoCheckUpdateDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verify TLS certificates`
+  String get checkCertificate {
+    return Intl.message(
+      'Verify TLS certificates',
+      name: 'checkCertificate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reject untrusted certificates. Turning this off exposes subscriptions and backups to man-in-the-middle attacks`
+  String get checkCertificateDesc {
+    return Intl.message(
+      'Reject untrusted certificates. Turning this off exposes subscriptions and backups to man-in-the-middle attacks',
+      name: 'checkCertificateDesc',
       desc: '',
       args: [],
     );
@@ -714,14 +769,19 @@ class AppLocalizations {
     );
   }
 
+  /// `App access control is turned off`
+  String get accessControlDisabledDesc {
+    return Intl.message(
+      'App access control is turned off',
+      name: 'accessControlDisabledDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Selected`
   String get selected {
     return Intl.message('Selected', name: 'selected', desc: '', args: []);
-  }
-
-  /// `ProxyPort`
-  String get proxyPort {
-    return Intl.message('ProxyPort', name: 'proxyPort', desc: '', args: []);
   }
 
   /// `Port`
@@ -814,6 +874,26 @@ class AppLocalizations {
     return Intl.message(
       'The current proxy group cannot be selected.',
       name: 'notSelectedTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Failed to switch proxy, the previous selection has been restored`
+  String get changeProxyFailedTip {
+    return Intl.message(
+      'Failed to switch proxy, the previous selection has been restored',
+      name: 'changeProxyFailedTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Failed to save the change, it has been rolled back`
+  String get databaseWriteFailedTip {
+    return Intl.message(
+      'Failed to save the change, it has been rolled back',
+      name: 'databaseWriteFailedTip',
       desc: '',
       args: [],
     );
@@ -1564,11 +1644,11 @@ class AppLocalizations {
     );
   }
 
-  /// `Rule providers`
-  String get ruleProviders {
+  /// `Subscription info`
+  String get subscriptionInfo {
     return Intl.message(
-      'Rule providers',
-      name: 'ruleProviders',
+      'Subscription info',
+      name: 'subscriptionInfo',
       desc: '',
       args: [],
     );
@@ -2439,11 +2519,31 @@ class AppLocalizations {
     );
   }
 
-  /// `The app crashed during the previous run. To prevent repeated crashes, the current profile has been cleared and automatic configuration setup was skipped.`
-  String get crashDetectedTip {
+  /// `The app failed to finish launching twice in a row. To break the loop, the profile {name} has been deselected and automatic setup was skipped. You can select it again at any time.`
+  String crashDetectedTip(Object name) {
     return Intl.message(
-      'The app crashed during the previous run. To prevent repeated crashes, the current profile has been cleared and automatic configuration setup was skipped.',
+      'The app failed to finish launching twice in a row. To break the loop, the profile $name has been deselected and automatic setup was skipped. You can select it again at any time.',
       name: 'crashDetectedTip',
+      desc: '',
+      args: [name],
+    );
+  }
+
+  /// `Launch did not finish`
+  String get launchInterrupted {
+    return Intl.message(
+      'Launch did not finish',
+      name: 'launchInterrupted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The app exited unexpectedly while it was starting up last time. Automatic setup was skipped for this launch; you can start it manually to retry.`
+  String get launchInterruptedTip {
+    return Intl.message(
+      'The app exited unexpectedly while it was starting up last time. Automatic setup was skipped for this launch; you can start it manually to retry.',
+      name: 'launchInterruptedTip',
       desc: '',
       args: [],
     );
@@ -2597,11 +2697,6 @@ class AppLocalizations {
   /// `Color`
   String get color {
     return Intl.message('Color', name: 'color', desc: '', args: []);
-  }
-
-  /// `Rename`
-  String get rename {
-    return Intl.message('Rename', name: 'rename', desc: '', args: []);
   }
 
   /// `Unnamed`
@@ -3049,11 +3144,6 @@ class AppLocalizations {
     return Intl.message('Loading...', name: 'loading', desc: '', args: []);
   }
 
-  /// `Load test`
-  String get loadTest {
-    return Intl.message('Load test', name: 'loadTest', desc: '', args: []);
-  }
-
   /// `{count, plural, =1{1 year ago} other{{count} years ago}}`
   String yearsAgo(num count) {
     return Intl.plural(
@@ -3484,6 +3574,26 @@ class AppLocalizations {
     return Intl.message(
       'Helper service unavailable; TUN mode cannot be enabled. Reinstall FlClash to restore it.',
       name: 'helperCorruptTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Windows refused to run FlClashCore.exe (error {code}). An app control policy such as Smart App Control or AppLocker blocks unsigned programs; allow FlClash in that policy or turn it off, then try again.`
+  String coreBlockedByPolicyTip(Object code) {
+    return Intl.message(
+      'Windows refused to run FlClashCore.exe (error $code). An app control policy such as Smart App Control or AppLocker blocks unsigned programs; allow FlClash in that policy or turn it off, then try again.',
+      name: 'coreBlockedByPolicyTip',
+      desc: '',
+      args: [code],
+    );
+  }
+
+  /// `Windows Smart App Control blocked FlClashCore.exe because it is not signed. Open Windows Security → App & browser control → Smart App Control settings, choose Off, then start FlClash again. Smart App Control cannot be turned back on without reinstalling Windows.`
+  String get coreBlockedBySmartAppControlTip {
+    return Intl.message(
+      'Windows Smart App Control blocked FlClashCore.exe because it is not signed. Open Windows Security → App & browser control → Smart App Control settings, choose Off, then start FlClash again. Smart App Control cannot be turned back on without reinstalling Windows.',
+      name: 'coreBlockedBySmartAppControlTip',
       desc: '',
       args: [],
     );
@@ -4299,10 +4409,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Affected by the system, this status may not always be accurate.`
+  /// `Due to system limitations, battery optimization status cannot be accurately retrieved while running.`
   String get batteryOptimizationStatusTip {
     return Intl.message(
-      'Affected by the system, this status may not always be accurate.',
+      'Due to system limitations, battery optimization status cannot be accurately retrieved while running.',
       name: 'batteryOptimizationStatusTip',
       desc: '',
       args: [],
@@ -4319,10 +4429,10 @@ class AppLocalizations {
     );
   }
 
-  /// `According to system requirements, obtaining the Wi-Fi name requires you to grant location permission.`
+  /// `According to system requirements, obtaining the Wi-Fi name requires you to grant location permission. On Android choose "Allow all the time", otherwise the Wi-Fi name cannot be read while the app is in the background.`
   String get locationPermissionDesc {
     return Intl.message(
-      'According to system requirements, obtaining the Wi-Fi name requires you to grant location permission.',
+      'According to system requirements, obtaining the Wi-Fi name requires you to grant location permission. On Android choose "Allow all the time", otherwise the Wi-Fi name cannot be read while the app is in the background.',
       name: 'locationPermissionDesc',
       desc: '',
       args: [],
@@ -4474,16 +4584,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Updating {name}...`
-  String geoUpdating(Object name) {
-    return Intl.message(
-      'Updating $name...',
-      name: 'geoUpdating',
-      desc: '',
-      args: [name],
-    );
-  }
-
   /// `{name} is already up to date`
   String geoSkipped(Object name) {
     return Intl.message(
@@ -4521,6 +4621,270 @@ class AppLocalizations {
       name: 'entriesCount',
       desc: '',
       args: [count],
+    );
+  }
+
+  /// `{count, plural, =1{1 proxy} other{{count} proxies}}`
+  String proxiesCount(num count) {
+    return Intl.plural(
+      count,
+      one: '1 proxy',
+      other: '$count proxies',
+      name: 'proxiesCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `{count, plural, =1{1 rule} other{{count} rules}}`
+  String rulesCount(num count) {
+    return Intl.plural(
+      count,
+      one: '1 rule',
+      other: '$count rules',
+      name: 'rulesCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Breaking changes`
+  String get changelogBreaking {
+    return Intl.message(
+      'Breaking changes',
+      name: 'changelogBreaking',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `New features`
+  String get changelogFeatures {
+    return Intl.message(
+      'New features',
+      name: 'changelogFeatures',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Bug fixes`
+  String get changelogFixes {
+    return Intl.message(
+      'Bug fixes',
+      name: 'changelogFixes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Performance`
+  String get changelogPerformance {
+    return Intl.message(
+      'Performance',
+      name: 'changelogPerformance',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reverts`
+  String get changelogReverts {
+    return Intl.message(
+      'Reverts',
+      name: 'changelogReverts',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Close`
+  String get close {
+    return Intl.message('Close', name: 'close', desc: '', args: []);
+  }
+
+  /// `Back`
+  String get back {
+    return Intl.message('Back', name: 'back', desc: '', args: []);
+  }
+
+  /// `Minimize`
+  String get minimize {
+    return Intl.message('Minimize', name: 'minimize', desc: '', args: []);
+  }
+
+  /// `Maximize`
+  String get maximize {
+    return Intl.message('Maximize', name: 'maximize', desc: '', args: []);
+  }
+
+  /// `Restore`
+  String get unmaximize {
+    return Intl.message('Restore', name: 'unmaximize', desc: '', args: []);
+  }
+
+  /// `Pin window`
+  String get pinWindow {
+    return Intl.message('Pin window', name: 'pinWindow', desc: '', args: []);
+  }
+
+  /// `Unpin window`
+  String get unpinWindow {
+    return Intl.message(
+      'Unpin window',
+      name: 'unpinWindow',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Toggle labels`
+  String get toggleLabel {
+    return Intl.message(
+      'Toggle labels',
+      name: 'toggleLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Torch`
+  String get torch {
+    return Intl.message('Torch', name: 'torch', desc: '', args: []);
+  }
+
+  /// `Pick from album`
+  String get pickFromAlbum {
+    return Intl.message(
+      'Pick from album',
+      name: 'pickFromAlbum',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Block connection`
+  String get blockConnection {
+    return Intl.message(
+      'Block connection',
+      name: 'blockConnection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Close connections`
+  String get closeConnections {
+    return Intl.message(
+      'Close connections',
+      name: 'closeConnections',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Scroll to selected`
+  String get scrollToSelected {
+    return Intl.message(
+      'Scroll to selected',
+      name: 'scrollToSelected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show more`
+  String get showMore {
+    return Intl.message('Show more', name: 'showMore', desc: '', args: []);
+  }
+
+  /// `Show less`
+  String get showLess {
+    return Intl.message('Show less', name: 'showLess', desc: '', args: []);
+  }
+
+  /// `Previous match`
+  String get previousMatch {
+    return Intl.message(
+      'Previous match',
+      name: 'previousMatch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Next match`
+  String get nextMatch {
+    return Intl.message('Next match', name: 'nextMatch', desc: '', args: []);
+  }
+
+  /// `Clear search`
+  String get clearSearch {
+    return Intl.message(
+      'Clear search',
+      name: 'clearSearch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add widget`
+  String get addWidget {
+    return Intl.message('Add widget', name: 'addWidget', desc: '', args: []);
+  }
+
+  /// `Show password`
+  String get showPassword {
+    return Intl.message(
+      'Show password',
+      name: 'showPassword',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hide password`
+  String get hidePassword {
+    return Intl.message(
+      'Hide password',
+      name: 'hidePassword',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Authorize`
+  String get authorize {
+    return Intl.message('Authorize', name: 'authorize', desc: '', args: []);
+  }
+
+  /// `App list permission required`
+  String get installedAppsPermissionRequired {
+    return Intl.message(
+      'App list permission required',
+      name: 'installedAppsPermissionRequired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This system hides the installed app list until the permission is granted. Authorize it to configure the per-app proxy.`
+  String get installedAppsPermissionDesc {
+    return Intl.message(
+      'This system hides the installed app list until the permission is granted. Authorize it to configure the per-app proxy.',
+      name: 'installedAppsPermissionDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.`
+  String get installedAppsPermissionDeniedMessage {
+    return Intl.message(
+      'The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.',
+      name: 'installedAppsPermissionDeniedMessage',
+      desc: '',
+      args: [],
     );
   }
 }

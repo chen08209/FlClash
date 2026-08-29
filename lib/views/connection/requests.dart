@@ -3,7 +3,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
 
@@ -20,7 +20,6 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
   final _requestsStateNotifier = ValueNotifier<TrackerInfosState>(
     const TrackerInfosState(),
   );
-  List<TrackerInfo> _requests = [];
   late final ScrollController _scrollController;
 
   void _onSearch(String value) {
@@ -38,16 +37,14 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
   @override
   void initState() {
     super.initState();
-    _requests = ref.read(requestsProvider).list;
     _scrollController = ScrollController(initialScrollOffset: double.maxFinite);
     _requestsStateNotifier.value = _requestsStateNotifier.value.copyWith(
-      trackerInfos: _requests,
+      trackerInfos: ref.read(requestsProvider).list,
     );
-    ref.listenManual(requestsProvider.select((state) => VM(state.list)), (
-      prev,
-      next,
+    ref.listenManual(requestsProvider.select((state) => state.revision), (
+      _,
+      _,
     ) {
-      _requests = next.a;
       updateRequestsThrottler();
     });
   }
@@ -64,8 +61,9 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
       if (!mounted) {
         return;
       }
+      final requests = ref.read(requestsProvider).list;
       final isEquality = trackerInfoListEquality.equals(
-        _requests,
+        requests,
         _requestsStateNotifier.value.trackerInfos,
       );
       if (isEquality) {
@@ -74,7 +72,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           _requestsStateNotifier.value = _requestsStateNotifier.value.copyWith(
-            trackerInfos: _requests,
+            trackerInfos: requests,
           );
         }
       });
