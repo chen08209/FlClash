@@ -7,14 +7,12 @@ list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus
   dynamic_color
   file_selector_windows
-  flutter_js
   hotkey_manager_windows
   proxy
   screen_retriever_windows
-  tray_manager
+  tray
   url_launcher_windows
   wifi_ssid
-  window_ext
   window_manager
 )
 
