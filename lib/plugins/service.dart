@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:isolate';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/event.dart';
@@ -17,7 +16,6 @@ abstract mixin class ServiceListener {
 class Service {
   static Service? _instance;
   late MethodChannel methodChannel;
-  ReceivePort? receiver;
 
   final ObserverList<ServiceListener> _listeners =
       ObserverList<ServiceListener>();
@@ -37,7 +35,7 @@ class Service {
             Map<String, Object?>.from(json.decode(data) as Map),
           );
           for (final event in coreEventsFromData(methodCall.arguments)) {
-            for (final listener in _listeners) {
+            for (final listener in List.of(_listeners)) {
               try {
                 listener.onServiceEvent(event);
               } catch (error) {
@@ -64,7 +62,7 @@ class Service {
     if (data == null) {
       return null;
     }
-    final dataJson = await data.commonToJSON<dynamic>();
+    final dataJson = await data.decodeJson<dynamic>();
     return CoreMethodResponse.fromJson(dataJson);
   }
 

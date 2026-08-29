@@ -8,6 +8,7 @@ import 'package:drift/native.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 
 part 'converter.dart';
 part 'generated/database.g.dart';
@@ -115,22 +116,29 @@ class Database extends _$Database {
     List<ProxyGroup> proxyGroups, {
     bool isOverride = false,
   }) async {
-    if (profiles.isNotEmpty ||
-        scripts.isNotEmpty ||
-        rules.isNotEmpty ||
-        links.isNotEmpty) {
-      await batch((b) {
-        isOverride
-            ? profilesDao.setAllWithBatch(b, profiles)
-            : profilesDao.putAllWithBatch(
-                b,
-                profiles.map((item) => item.toCompanion()),
-              );
+    if (profiles.isEmpty &&
+        scripts.isEmpty &&
+        rules.isEmpty &&
+        links.isEmpty &&
+        proxyGroups.isEmpty) {
+      return;
+    }
+    await batch((b) {
+      if (isOverride) {
+        profilesDao.setAllWithBatch(b, profiles);
         scriptsDao.setAllWithBatch(b, scripts);
         rulesDao.restoreWithBatch(b, rules, links);
         proxyGroupsDao.setAllWithBatch(null, b, proxyGroups);
-      });
-    }
+        return;
+      }
+      profilesDao.putAllWithBatch(
+        b,
+        profiles.map((item) => item.toCompanion()),
+      );
+      scriptsDao.putAllWithBatch(b, scripts);
+      rulesDao.mergeWithBatch(b, rules, links);
+      proxyGroupsDao.putAllWithBatch(b, proxyGroups);
+    });
   }
 
   Future<void> setProfileCustomData(
@@ -194,4 +202,9 @@ extension JoinedSelectStatementExt<T extends HasResultSet, D>
   }
 }
 
-final database = Database();
+Database _database = Database();
+
+Database get database => _database;
+
+@visibleForTesting
+set database(Database value) => _database = value;

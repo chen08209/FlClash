@@ -3,6 +3,10 @@ import 'package:test/test.dart';
 
 void main() {
   group('FixedList', () {
+    test('rejects an uncapped list', () {
+      expect(() => FixedList<int>(0), throwsA(isA<AssertionError>()));
+    });
+
     test('respects maxLength on creation', () {
       final list = FixedList(3, list: [1, 2, 3, 4, 5]);
       expect(list.length, 3);
@@ -44,81 +48,40 @@ void main() {
       final view = list.list;
       expect(() => view.add(4), throwsA(isA<UnsupportedError>()));
     });
-  });
 
-  group('FixedMap', () {
-    test('stores and retrieves values', () {
-      final map = FixedMap<String, int>(5);
-      map.updateCacheValue('a', () => 1);
-      map.updateCacheValue('b', () => 2);
-      expect(map.get('a'), 1);
-      expect(map.get('b'), 2);
+    test('list caches the snapshot until the next mutation', () {
+      final list = FixedList(3, list: [1, 2]);
+      expect(identical(list.list, list.list), isTrue);
+      list.add(3);
+      expect(list.list, [1, 2, 3]);
     });
 
-    test('returns existing value without calling callback', () {
-      final map = FixedMap<String, int>(5);
-      map.updateCacheValue('a', () => 1);
-      var called = false;
-      final result = map.updateCacheValue('a', () {
-        called = true;
-        return 2;
-      });
-      expect(result, 1);
-      expect(called, isFalse);
+    test('append yields a new generation over the same buffer', () {
+      final first = FixedList(3, list: [1, 2]);
+      final second = first.append(3);
+      expect(second.list, [1, 2, 3]);
+      expect(second.revision, first.revision + 1);
     });
 
-    test('truncates when exceeding maxLength', () {
-      final map = FixedMap<int, int>(3);
-      map.updateCacheValue(1, () => 10);
-      map.updateCacheValue(2, () => 20);
-      map.updateCacheValue(3, () => 30);
-      map.updateCacheValue(4, () => 40);
-      expect(map.length, 3);
-      expect(map.containsKey(1), isFalse);
-      expect(map.containsKey(4), isTrue);
+    test('append makes the wrapper unequal so listeners are notified', () {
+      final first = FixedList(3, list: [1, 2]);
+      expect(first == first.copyWith(), isFalse, reason: 'distinct buffers');
+      expect(first == first.append(3), isFalse, reason: 'distinct generations');
     });
 
-    test('clear empties the map', () {
-      final map = FixedMap<String, int>(3);
-      map.updateCacheValue('a', () => 1);
-      map.clear();
-      expect(map.length, 0);
+    test('a snapshot taken before append is unaffected by it', () {
+      final first = FixedList(3, list: [1, 2]);
+      final before = first.list;
+      first.append(3);
+      expect(before, [1, 2]);
     });
 
-    test('updateMaxLength truncates existing data', () {
-      final map = FixedMap<int, int>(5);
-      for (int i = 0; i < 5; i++) {
-        map.updateCacheValue(i, () => i * 10);
+    test('append still honours maxLength', () {
+      var list = FixedList<int>(2);
+      for (var i = 1; i <= 4; i++) {
+        list = list.append(i);
       }
-      map.updateMaxLength(2);
-      expect(map.length, 2);
-    });
-
-    test('updateMap replaces underlying data', () {
-      final map = FixedMap<String, int>(5);
-      map.updateCacheValue('a', () => 1);
-      map.updateMap({'x': 100, 'y': 200});
-      expect(map.get('a'), isNull);
-      expect(map.get('x'), 100);
-    });
-
-    test('map getter returns unmodifiable view', () {
-      final map = FixedMap<String, int>(3);
-      map.updateCacheValue('a', () => 1);
-      final view = map.map;
-      expect(() => view['b'] = 2, throwsA(isA<UnsupportedError>()));
-    });
-
-    test('containsKey works correctly', () {
-      final map = FixedMap<String, int>(3);
-      map.updateCacheValue('a', () => 1);
-      expect(map.containsKey('a'), isTrue);
-      expect(map.containsKey('b'), isFalse);
-    });
-
-    test('get returns null for missing key', () {
-      final map = FixedMap<String, int>(3);
-      expect(map.get('missing'), isNull);
+      expect(list.list, [3, 4]);
     });
   });
 }

@@ -1,15 +1,23 @@
 import 'dart:async';
 
+import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/desktop/model.dart';
+import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:riverpod/riverpod.dart';
+
+import '../helpers/test_profiles.dart';
+
+class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 void main() {
   group('ProfilesAction', () {
@@ -22,7 +30,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           currentProfileIdProvider.overrideWithBuild((_, _) => null),
-          profilesProvider.overrideWith(() => _TestProfiles([original])),
+          profilesProvider.overrideWith(() => TestProfiles([original])),
         ],
       );
       addTearDown(container.dispose);
@@ -48,7 +56,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           currentProfileIdProvider.overrideWithBuild((_, _) => first.id),
-          profilesProvider.overrideWith(() => _TestProfiles([first])),
+          profilesProvider.overrideWith(() => TestProfiles([first])),
         ],
       );
       addTearDown(container.dispose);
@@ -87,7 +95,7 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             currentProfileIdProvider.overrideWithBuild((_, _) => null),
-            profilesProvider.overrideWith(() => _TestProfiles(profiles)),
+            profilesProvider.overrideWith(() => TestProfiles(profiles)),
           ],
         );
         addTearDown(container.dispose);
@@ -106,7 +114,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           currentProfileIdProvider.overrideWithBuild((_, _) => current.id),
-          profilesProvider.overrideWith(() => _TestProfiles([current])),
+          profilesProvider.overrideWith(() => TestProfiles([current])),
         ],
       );
       addTearDown(container.dispose);
@@ -135,11 +143,49 @@ void main() {
       final key = GeoResource.MMDB.updatingKey;
       expect(container.read(isUpdatingProvider(key)), false);
 
-      container.read(isUpdatingProvider(key).notifier).value = true;
+      final operation = container
+          .read(updatingKeysProvider.notifier)
+          .start(key);
       expect(container.read(isUpdatingProvider(key)), true);
 
-      container.read(isUpdatingProvider(key).notifier).value = false;
+      container.read(updatingKeysProvider.notifier).stop(key, operation);
       expect(container.read(isUpdatingProvider(key)), false);
+    });
+
+    test('forwards a manual resource update to Core', () async {
+      final core = _MockCoreHandlerInterface();
+      when(() => core.updateGeoData('MMDB')).thenAnswer((_) async => '');
+      final container = ProviderContainer(
+        overrides: [
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        ],
+      );
+      addTearDown(container.dispose);
+      final action = container.read(geoResourceActionProvider.notifier);
+
+      await action.updateGeoResource(GeoResource.MMDB);
+
+      verify(() => core.updateGeoData('MMDB')).called(1);
+    });
+
+    test('propagates a failed manual Core request', () async {
+      final core = _MockCoreHandlerInterface();
+      when(
+        () => core.updateGeoData('MMDB'),
+      ).thenThrow(StateError('disconnected'));
+      final container = ProviderContainer(
+        overrides: [
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        ],
+      );
+      addTearDown(container.dispose);
+      final action = container.read(geoResourceActionProvider.notifier);
+
+      await expectLater(
+        action.updateGeoResource(GeoResource.MMDB),
+        throwsStateError,
+      );
+      verify(() => core.updateGeoData('MMDB')).called(1);
     });
 
     test('updates valid resource URLs and rejects malformed URLs', () {
@@ -149,7 +195,7 @@ void main() {
 
       expect(
         () => action.updateGeoResourceUrl(GeoResource.MMDB, 'not-a-url'),
-        throwsA('Invalid url'),
+        throwsA(isA<ArgumentError>()),
       );
 
       const url = 'https://example.com/Country.mmdb';
@@ -591,40 +637,9 @@ void main() {
 
       await setupAction.requestAdmin(true);
 
-      expect(container.read(autoSetSystemDnsStateProvider).a, isFalse);
+      expect(container.read(shouldPatchSystemDnsProvider), isFalse);
     });
   });
-}
-
-class _TestProfiles extends Profiles {
-  final List<Profile> initial;
-
-  _TestProfiles(this.initial);
-
-  @override
-  List<Profile> build() => initial;
-
-  @override
-  void put(Profile profile) {
-    final next = List<Profile>.from(state);
-    final index = next.indexWhere((item) => item.id == profile.id);
-    if (index == -1) {
-      next.add(profile);
-    } else {
-      next[index] = profile;
-    }
-    state = next;
-  }
-
-  @override
-  Future<void> del(int id) async {
-    state = state.where((profile) => profile.id != id).toList();
-  }
-
-  @override
-  void reorder(List<Profile> profiles) {
-    state = List.of(profiles);
-  }
 }
 
 class _TestCoreAction extends CoreAction {

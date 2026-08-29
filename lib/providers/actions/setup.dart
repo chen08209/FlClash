@@ -5,12 +5,19 @@ enum _SetupTaskResult { completed, handoffToCoreRestart }
 class _RunRequest {
   final bool running;
   final bool initialize;
+  final DateTime? previousStartTime;
 
-  const _RunRequest({required this.running, required this.initialize});
+  const _RunRequest({
+    required this.running,
+    required this.initialize,
+    required this.previousStartTime,
+  });
 }
 
 @Riverpod(keepAlive: true)
 class SetupAction extends _$SetupAction {
+  CoreController get _core => ref.read(coreHandlerProvider);
+
   Timer? _runtimeTimer;
   final _setupScheduler = SerialTaskScheduler();
   final _listenerScheduler = SerialTaskScheduler();
@@ -20,7 +27,12 @@ class SetupAction extends _$SetupAction {
   bool get _isRunning => _startTime != null && _startTime!.isBeforeNow;
 
   @override
-  void build() {}
+  void build() {
+    ref.onDispose(() {
+      _runtimeTimer?.cancel();
+      _runtimeTimer = null;
+    });
+  }
 
   SetupParams get _setupParams {
     final selectedMap = ref.read(selectedMapProvider);
@@ -32,10 +44,11 @@ class SetupAction extends _$SetupAction {
 
   void fullSetup() {
     if (!ref.read(initProvider)) return;
+    ref.read(proxiesActionProvider.notifier).cancelDelayTests();
     ref.read(delayDataSourceProvider.notifier).value = {};
     unawaited(_runSetup(force: true));
-    ref.read(logsProvider.notifier).value = FixedList(500);
-    ref.read(requestsProvider.notifier).value = FixedList(500);
+    ref.read(logsProvider.notifier).value = FixedList(maxLength);
+    ref.read(requestsProvider.notifier).value = FixedList(maxLength);
   }
 
   void _setLocalRunning(bool running) {
@@ -86,7 +99,7 @@ class SetupAction extends _$SetupAction {
     if (shouldRun) {
       await setRunning(true, initialize: true);
     } else {
-      await applyProfile(force: true);
+      await globalState.safeRun(() => applyProfile(force: true));
     }
   }
 
@@ -98,6 +111,7 @@ class SetupAction extends _$SetupAction {
     final request = _RunRequest(
       running: running,
       initialize: running && initialize,
+      previousStartTime: _startTime,
     );
     _latestRunRequest = request;
     _setLocalRunning(running);
@@ -116,20 +130,30 @@ class SetupAction extends _$SetupAction {
         );
       } catch (_) {
         if (_isCurrent(request)) {
-          await setRunning(false);
+          await globalState.safeRun(() => setRunning(false));
         }
       }
       return;
     }
 
-    await _setCoreRunning(request);
+    try {
+      await _setCoreRunning(request);
+    } catch (_) {
+      _rollbackRunning(request);
+      rethrow;
+    }
     if (_isCurrent(request)) {
       applyProfileDebounce(force: true, silence: true);
     }
   }
 
   Future<void> _stop(_RunRequest request) async {
-    await _setCoreRunning(request);
+    try {
+      await _setCoreRunning(request);
+    } catch (_) {
+      _rollbackRunning(request);
+      rethrow;
+    }
     if (!_isCurrent(request)) {
       return;
     }
@@ -151,6 +175,14 @@ class SetupAction extends _$SetupAction {
     });
   }
 
+  void _rollbackRunning(_RunRequest request) {
+    if (!_isCurrent(request)) {
+      return;
+    }
+    _startTime = request.previousStartTime;
+    _setLocalRunning(!request.running);
+  }
+
   bool _isCurrent(_RunRequest request) => identical(_latestRunRequest, request);
 
   Future<void> updateConfigDebounce() async {
@@ -159,14 +191,12 @@ class SetupAction extends _$SetupAction {
 
   @protected
   Future<bool> setCoreRunning(bool running) {
-    return running
-        ? coreController.startListener()
-        : coreController.stopListener();
+    return running ? _core.startListener() : _core.stopListener();
   }
 
   @protected
   void resetCoreTraffic() {
-    coreController.resetTraffic();
+    _core.resetTraffic();
   }
 
   @visibleForTesting
@@ -178,13 +208,13 @@ class SetupAction extends _$SetupAction {
         await _restartCoreAfterAuthorization();
         return;
       }
-      final message = await coreController.updateConfig(
+      final message = await _core.updateConfig(
         updateParams.copyWith.tun(
           enable: _getEffectiveTunEnable(updateParams.tun.enable),
         ),
       );
       ref.read(checkIpNumProvider.notifier).add();
-      if (message.isNotEmpty) throw message;
+      if (message.isNotEmpty) throw MessageException(message);
     });
   }
 
@@ -266,22 +296,25 @@ class SetupAction extends _$SetupAction {
     }
   }
 
-  Future<VM2<String, String>> getProfile({
+  Future<({String yaml, String md5})> getProfile({
     required SetupState setupState,
     required PatchClashConfig patchConfig,
   }) async {
     final profileId = setupState.profileId;
-    if (profileId == null) return const VM2('', '');
+    if (profileId == null) return (yaml: '', md5: '');
     final defaultUA = globalState.packageInfo.ua;
-    final networkVM2 = ref.read(
+    final networkSetting = ref.read(
       networkSettingProvider.select(
-        (state) => VM2(state.appendSystemDns, state.routeMode),
+        (state) => (
+          appendSystemDns: state.appendSystemDns,
+          routeMode: state.routeMode,
+        ),
       ),
     );
     final overrideDns = ref.read(overrideDnsProvider);
-    final appendSystemDns = networkVM2.a;
-    final routeMode = networkVM2.b;
-    final configMap = await coreController.getConfig(profileId);
+    final appendSystemDns = networkSetting.appendSystemDns;
+    final routeMode = networkSetting.routeMode;
+    final configMap = await _core.getConfig(profileId);
     String? scriptContent;
     final List<Rule> addedRules = [];
     final List<ProxyGroup> proxyGroups = [];
@@ -327,9 +360,9 @@ class SetupAction extends _$SetupAction {
         setupState: setupState,
         patchConfig: patchClashConfig,
       );
-      return res.a;
+      return res.yaml;
     } catch (e) {
-      globalState.showNotifier(e.toString());
+      dialogs.showNotifier(e.toString(), level: MessageLevel.error);
     }
     return '';
   }
@@ -373,14 +406,36 @@ class SetupAction extends _$SetupAction {
     }
   }
 
+  /// An empty profile list is left alone: it is the first-run state, and it is
+  /// what the profile stream holds before its first emission.
+  @visibleForTesting
+  Profile? recoverMissingProfile() {
+    final profileId = ref.read(currentProfileIdProvider);
+    if (profileId == null) return null;
+    final profiles = ref.read(profilesProvider);
+    if (profiles.isEmpty) return null;
+    final fallback = profiles.first;
+    commonPrint.log(
+      'profile $profileId is missing, falling back to ${fallback.id}',
+      logLevel: LogLevel.warning,
+    );
+    ref.read(currentProfileIdProvider.notifier).value = fallback.id;
+    return fallback;
+  }
+
   Future<_SetupTaskResult> _setupConfig({
     bool force = false,
     bool silence = false,
     Future<void> Function()? preloadInvoke,
     FutureOr Function()? onUpdated,
   }) async {
-    var profile = ref.read(currentProfileProvider);
-    final nextProfile = await profile?.checkAndUpdateAndCopy();
+    var profile = ref.read(currentProfileProvider) ?? recoverMissingProfile();
+    // A refresh failure is surfaced by safeRun; setup keeps the old profile.
+    final nextProfile = await globalState.safeRun(
+      () => profile?.checkAndUpdateAndCopy(
+        validate: (path) => _core.validateConfig(path),
+      ),
+    );
     if (nextProfile != null) {
       profile = nextProfile;
       ref.read(profilesProvider.notifier).put(nextProfile);
@@ -396,12 +451,12 @@ class SetupAction extends _$SetupAction {
       enable: effectiveTunEnable,
     );
     final setupState = await ref.read(setupStateProvider(profile?.id).future);
-    final vm2 = await getProfile(
+    final realProfile = await getProfile(
       setupState: setupState,
       patchConfig: realPatchConfig,
     );
-    final yamlString = vm2.a;
-    final yamlMd5 = vm2.b;
+    final yamlString = realProfile.yaml;
+    final yamlMd5 = realProfile.md5;
     if (yamlMd5 == globalState.lastConfigMd5 && force == false) {
       return _SetupTaskResult.completed;
     }
@@ -410,16 +465,29 @@ class SetupAction extends _$SetupAction {
       final sharedState = ref.read(sharedStateProvider);
       await preferences.saveShareState(sharedState);
     }
+    // Recaptured so _start's catch can roll back after safeRun swallows it.
+    (Object, StackTrace)? handoffFailure;
     await globalState.loadingRun(
       () async {
         final configFilePath = await appPath.configFilePath;
         await File(configFilePath).safeWriteAsString(yamlString);
-        final message = await coreController.setupConfig(
-          params: _setupParams,
-          preloadInvoke: preloadInvoke,
-        );
-        if (message.isNotEmpty && !message.endsWith('is empty')) {
-          throw message;
+        final profileId = profile?.id;
+        if (profileId != null) {
+          await appPath.ensureProviderDirs(profileId);
+        }
+        try {
+          final message = await _core.setupConfig(
+            params: _setupParams,
+            preloadInvoke: preloadInvoke,
+          );
+          if (message.isNotEmpty) {
+            throw MessageException(message);
+          }
+        } catch (e, s) {
+          if (preloadInvoke != null) {
+            handoffFailure = (e, s);
+          }
+          rethrow;
         }
         globalState.lastConfigMd5 = yamlMd5;
         ref.read(checkIpNumProvider.notifier).add();
@@ -428,6 +496,9 @@ class SetupAction extends _$SetupAction {
       silence: true,
       tag: !silence ? LoadingTag.proxies : null,
     );
+    if (handoffFailure != null) {
+      Error.throwWithStackTrace(handoffFailure!.$1, handoffFailure!.$2);
+    }
     return _SetupTaskResult.completed;
   }
 }

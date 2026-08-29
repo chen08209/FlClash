@@ -91,6 +91,10 @@ SelectedProxyState computeRealSelectedProxyState(
   );
 }
 
+String delayTestKey(String testUrl, String proxyName) {
+  return '$testUrl\u0000$proxyName';
+}
+
 DelayState computeProxyDelayState({
   required String proxyName,
   required String testUrl,

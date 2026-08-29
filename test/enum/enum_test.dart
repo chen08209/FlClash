@@ -1,7 +1,6 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hotkey_manager/hotkey_manager.dart';
 
 void main() {
   group('GroupType', () {
@@ -39,16 +38,7 @@ void main() {
     });
   });
 
-  group('KeyboardModifierExt', () {
-    test('maps keyboard modifiers to hotkey modifiers', () {
-      expect(KeyboardModifier.alt.toHotKeyModifier(), HotKeyModifier.alt);
-      expect(
-        KeyboardModifier.control.toHotKeyModifier(),
-        HotKeyModifier.control,
-      );
-      expect(KeyboardModifier.shift.toHotKeyModifier(), HotKeyModifier.shift);
-    });
-
+  group('KeyboardModifier', () {
     test('keeps platform key variants for paired modifiers', () {
       expect(KeyboardModifier.alt.physicalKeys, [
         PhysicalKeyboardKey.altLeft,

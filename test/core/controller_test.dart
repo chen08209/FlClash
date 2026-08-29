@@ -143,7 +143,7 @@ void main() {
         },
       );
       var completed = false;
-      setupFuture.then((_) => completed = true);
+      unawaited(setupFuture.then((_) => completed = true));
       await Future<void>.delayed(Duration.zero);
 
       expect(events, ['setup', 'preload']);
@@ -251,19 +251,13 @@ void main() {
   });
 
   group('misc methods', () {
-    test('getCountryCode returns null on empty string', () async {
-      when(() => mock.getCountryCode(any())).thenAnswer((_) async => '');
-      final result = await controller.getCountryCode('8.8.8.8');
-      expect(result, isNull);
-    });
-
     test('getDelay delegates structured delay', () async {
       when(() => mock.asyncTestDelay(any(), any())).thenAnswer(
         (_) async => const Delay(name: 'P1', value: 100, url: 'test.com'),
       );
       final result = await controller.getDelay('test.com', 'P1');
-      expect(result.name, 'P1');
-      expect(result.value, 100);
+      expect(result?.name, 'P1');
+      expect(result?.value, 100);
     });
 
     test('startListener delegates', () async {

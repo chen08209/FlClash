@@ -1,10 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:fl_clash/common/boot_record.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+
+const _platformProbeTimeout = Duration(seconds: 2);
 
 class App {
   static App? _instance;
@@ -39,8 +43,22 @@ class App {
       'getPackages',
     );
     final List<dynamic> packagesRaw =
-        (await packagesString?.commonToJSON<List<dynamic>>()) ?? [];
+        (await packagesString?.decodeJson<List<dynamic>>()) ?? [];
     return packagesRaw.map((e) => Package.fromJson(e)).toSet().toList();
+  }
+
+  Future<bool> isInstalledAppsPermissionGranted() async {
+    return await methodChannel.invokeMethod<bool>(
+          'isInstalledAppsPermissionGranted',
+        ) ??
+        true;
+  }
+
+  Future<bool> requestInstalledAppsPermission() async {
+    return await methodChannel.invokeMethod<bool>(
+          'requestInstalledAppsPermission',
+        ) ??
+        false;
   }
 
   Future<List<String>> getChinaPackageNames() async {
@@ -48,7 +66,7 @@ class App {
       'getChinaPackageNames',
     );
     final List<dynamic> packageNamesRaw =
-        await packageNamesString?.commonToJSON<List<dynamic>>() ?? [];
+        await packageNamesString?.decodeJson<List<dynamic>>() ?? [];
     return packageNamesRaw.map((e) => e.toString()).toList();
   }
 
@@ -93,7 +111,7 @@ class App {
       commonPrint.log('getPackageIcon error: $error');
     }
     _packageIcons[packageName] = icon;
-    _packageIconTasks.remove(packageName);
+    unawaited(_packageIconTasks.remove(packageName));
     return icon;
   }
 
@@ -137,12 +155,32 @@ class App {
 
   Future<bool> didCrashOnPreviousExecution() async {
     try {
-      return await methodChannel.invokeMethod<bool>(
-            'didCrashOnPreviousExecution',
-          ) ??
-          false;
-    } catch (_) {
+      final value = await methodChannel
+          .invokeMethod<bool>('didCrashOnPreviousExecution')
+          .timeout(_platformProbeTimeout);
+      return value ?? false;
+    } catch (error) {
+      commonPrint.log(
+        'Failed to read the previous-execution crash flag: '
+        '${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
       return false;
+    }
+  }
+
+  Future<AppExitInfo?> getLastExitInfo() async {
+    try {
+      final raw = await methodChannel
+          .invokeMapMethod<String, Object?>('getLastExitInfo')
+          .timeout(_platformProbeTimeout);
+      return AppExitInfo.fromJson(raw);
+    } catch (error) {
+      commonPrint.log(
+        'Failed to read the last process exit info: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+      return null;
     }
   }
 }
