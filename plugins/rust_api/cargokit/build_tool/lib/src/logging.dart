@@ -37,11 +37,7 @@ void initLogging() {
     final lines = rec.message.split('\n');
     for (final line in lines) {
       if (line.isNotEmpty || lines.length == 1 || line != lines.last) {
-        _log(LogRecord(
-          rec.level,
-          line,
-          rec.loggerName,
-        ));
+        _log(LogRecord(rec.level, line, rec.loggerName));
       }
     }
   });

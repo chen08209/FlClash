@@ -7,6 +7,7 @@
 // ignore_for_file: argument_type_not_assignable
 
 import 'api/ipc.dart';
+import 'api/script.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';

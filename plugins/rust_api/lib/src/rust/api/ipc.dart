@@ -6,10 +6,6 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `cleanup_socket`, `finish_server`, `io_loop`, `make_frame`, `poll`, `report_error`, `reset`, `server_active`, `stop_server_thread`, `validate_frame_len`, `write_all_interruptible`, `write_frame`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `FrameReader`, `ServerState`
-// These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`
-
 Stream<Uint8List> restartIpcServer({required String name}) =>
     RustLib.instance.api.crateApiIpcRestartIpcServer(name: name);
 
