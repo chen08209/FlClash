@@ -243,6 +243,14 @@ class Windows {
     return _instance!;
   }
 
+  bool get isCurrentProcessElevated {
+    final isUserAnAdmin = _shell32.lookupFunction<
+      Int32 Function(),
+      int Function()
+    >('IsUserAnAdmin');
+    return isUserAnAdmin() != 0;
+  }
+
   bool runas(String command, String arguments) {
     final commandPtr = command.toNativeUtf16();
     final argumentsPtr = arguments.toNativeUtf16();

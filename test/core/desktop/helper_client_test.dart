@@ -501,6 +501,7 @@ void main() {
         directLauncher: direct,
         helperLauncher: helper,
         helperReady: () async => helperReadiness,
+        processElevated: () => false,
       );
 
       final resolved = await resolver.resolve();
@@ -515,6 +516,25 @@ void main() {
     },
   );
 
+  test('elevated Windows launcher resolver uses the direct Core', () async {
+    final direct = FakeLauncher(owner: CoreProcessOwner.direct, pid: 1);
+    final helper = FakeLauncher(owner: CoreProcessOwner.windowsHelper, pid: 2);
+    var readyCalls = 0;
+    final resolver = WindowsHelperLauncherResolver(
+      isWindows: true,
+      directLauncher: direct,
+      helperLauncher: helper,
+      helperReady: () async {
+        readyCalls++;
+        return WindowsHelperReadiness.ready;
+      },
+      processElevated: () => true,
+    );
+
+    expect(await resolver.resolve(), same(direct));
+    expect(readyCalls, 0);
+  });
+
   test('non-Windows launcher resolver never probes Helper', () async {
     final direct = FakeLauncher(owner: CoreProcessOwner.direct, pid: 1);
     final helper = FakeLauncher(owner: CoreProcessOwner.windowsHelper, pid: 2);
@@ -527,6 +547,7 @@ void main() {
         readyCalls++;
         return WindowsHelperReadiness.ready;
       },
+      processElevated: () => false,
     );
 
     expect(await resolver.resolve(), same(direct));

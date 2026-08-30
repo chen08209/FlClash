@@ -457,6 +457,7 @@ final class FallbackCoreLauncher implements CoreProcessLauncher {
 }
 
 typedef HelperReadinessProbe = Future<WindowsHelperReadiness> Function();
+typedef ProcessElevationProbe = bool Function();
 
 final class WindowsHelperLauncherResolver
     implements DesktopCoreLauncherResolver {
@@ -464,17 +465,19 @@ final class WindowsHelperLauncherResolver
   final CoreProcessLauncher directLauncher;
   final CoreProcessLauncher helperLauncher;
   final HelperReadinessProbe helperReady;
+  final ProcessElevationProbe processElevated;
 
   const WindowsHelperLauncherResolver({
     required this.isWindows,
     required this.directLauncher,
     required this.helperLauncher,
     required this.helperReady,
+    required this.processElevated,
   });
 
   @override
   Future<CoreProcessLauncher> resolve() async {
-    if (!isWindows) return directLauncher;
+    if (!isWindows || processElevated()) return directLauncher;
     final readiness = await helperReady();
     if (readiness == WindowsHelperReadiness.ready) {
       return FallbackCoreLauncher(

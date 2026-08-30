@@ -44,6 +44,7 @@ class CoreService extends CoreHandlerInterface {
         directLauncher: directLauncher,
         helperLauncher: WindowsHelperLauncher(windowsHelperClient),
         helperReady: () => windowsHelperClient.readiness(),
+        processElevated: () => windows?.isCurrentProcessElevated ?? false,
       ),
       verifyPeerPid: system.isWindows,
     );
