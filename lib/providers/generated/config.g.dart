@@ -93,7 +93,7 @@ final class WindowSettingProvider
   }
 }
 
-String _$windowSettingHash() => r'563249378a248ed631ade7157b3a0c5289186d10';
+String _$windowSettingHash() => r'b466fe4c113bb896939b5f0c96795cb09dd2759a';
 
 abstract class _$WindowSetting extends $Notifier<WindowProps> {
   WindowProps build();

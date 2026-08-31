@@ -172,6 +172,48 @@ void main() {
       await subscription.cancel();
     });
 
+    test('a data frame hands out a view rather than a copy', () async {
+      final open = transport.open();
+      rawEvents.add(_frame(0x00));
+      await open;
+
+      final frame = transport.frames.first;
+      final source = _frame(0x03, utf8.encode('payload'));
+      rawEvents.add(source);
+
+      final payload = await frame;
+      expect(payload, utf8.encode('payload'));
+      expect(payload.offsetInBytes, 1);
+      source[1] = 0x5a;
+      expect(payload[0], 0x5a);
+    });
+
+    test(
+      'a recovered transport stops answering with the old failure',
+      () async {
+        final open = transport.open();
+        rawEvents.add(_frame(0x00));
+        await open;
+
+        rawEvents.add(_frame(0x04, utf8.encode('boom')));
+        await pumpEventQueue();
+        expect(transport.state, DesktopTransportState.failed);
+        await expectLater(
+          transport.waitUntilConnected(const Duration(seconds: 1)),
+          throwsA(isA<StateError>()),
+        );
+
+        rawEvents.add(_frame(0x00));
+        rawEvents.add(_frame(0x01, _processIdPayload(4321)));
+        await pumpEventQueue();
+
+        final connected = await transport.waitUntilConnected(
+          const Duration(seconds: 1),
+        );
+        expect(connected.pid, 4321);
+      },
+    );
+
     test('close is idempotent', () async {
       final open = transport.open();
       rawEvents.add(_frame(0x00));

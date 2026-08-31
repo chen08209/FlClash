@@ -209,6 +209,11 @@ final class WindowsHelperClient {
     }
   }
 
+  /// /start hashes the whole Core binary before spawning it, and Smart App
+  /// Control adds a cloud reputation lookup inside CreateProcess; the ping
+  /// budget cut those off as a transport error and hid the Helper's answer.
+  static const startTimeout = Duration(seconds: 15);
+
   Future<HelperStartResponse> start({
     required String address,
     required String sessionId,
@@ -218,7 +223,7 @@ final class WindowsHelperClient {
       final response = await _dio.post<Object?>(
         '$baseUrl/start',
         data: {'address': address, 'sessionId': sessionId},
-        options: _options(ResponseType.json),
+        options: _options(ResponseType.json, receiveTimeout: startTimeout),
       );
       final data = _responseMap(response, operation: 'start');
       final returnedSession = data['sessionId'];
@@ -370,11 +375,15 @@ final class WindowsHelperClient {
     }
   }
 
-  Options _options(ResponseType responseType, {bool acceptAnyStatus = false}) {
+  Options _options(
+    ResponseType responseType, {
+    bool acceptAnyStatus = false,
+    Duration receiveTimeout = const Duration(seconds: 2),
+  }) {
     return Options(
       responseType: responseType,
       connectTimeout: const Duration(milliseconds: 300),
-      receiveTimeout: const Duration(seconds: 2),
+      receiveTimeout: receiveTimeout,
       // The Helper reports readiness via non-2xx (400, 409, ...), so only
       // transport errors should surface as DioExceptions.
       validateStatus: acceptAnyStatus ? (_) => true : null,
@@ -405,7 +414,13 @@ final class WindowsHelperLauncher implements CoreProcessLauncher {
     } catch (error, stackTrace) {
       try {
         await client.stop(sessionId);
-      } catch (_) {}
+      } catch (releaseError) {
+        commonPrint.log(
+          'Failed to release Helper session $sessionId after a start failure: '
+          '${compactError(releaseError)}',
+          logLevel: LogLevel.warning,
+        );
+      }
       Error.throwWithStackTrace(error, stackTrace);
     }
   }

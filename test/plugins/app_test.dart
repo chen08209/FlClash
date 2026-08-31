@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/boot_record.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:flutter/services.dart';
@@ -67,26 +68,27 @@ void main() {
   });
 
   test(
-    'caches packages without an icon and skips empty package names',
+    'falls back to the default activity icon for unknown packages',
     () async {
-      var iconCallCount = 0;
+      final requested = <String?>[];
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(channel, (_) async {
-            iconCallCount++;
-            return null;
+          .setMockMethodCallHandler(channel, (call) async {
+            final packageName = call.arguments['packageName'] as String?;
+            requested.add(packageName);
+            return packageName == '' ? '/icons/default_icon.webp' : null;
           });
 
       final app = App();
 
-      expect(await app.getPackageIcon(''), isNull);
-      expect(iconCallCount, 0);
-      expect(app.hasPackageIcon(''), isFalse);
+      final fallback = await app.getPackageIcon('com.a');
+      final defaultIcon = await app.getPackageIcon('');
 
-      expect(await app.getPackageIcon('com.a'), isNull);
-      expect(await app.getPackageIcon('com.a'), isNull);
+      expect(fallback, isNotNull);
+      expect(fallback, same(defaultIcon));
+      expect(requested, ['com.a', '']);
 
-      expect(iconCallCount, 1);
-      expect(app.hasPackageIcon('com.a'), isTrue);
+      expect(await app.getPackageIcon('com.b'), same(defaultIcon));
+      expect(requested, ['com.a', '', 'com.b']);
     },
   );
 
@@ -102,7 +104,10 @@ void main() {
 
     expect(await app.getPackageIcon('com.a'), isNull);
     expect(await app.getPackageIcon('com.a'), isNull);
-    expect(iconCallCount, 1);
+    expect(await app.getPackageIcon(''), isNull);
+    expect(iconCallCount, 2);
+    expect(app.hasPackageIcon('com.a'), isTrue);
+    expect(app.hasPackageIcon(''), isTrue);
   });
 
   test('uses false when crash detection is unavailable', () async {
@@ -113,4 +118,67 @@ void main() {
 
     expect(await App().didCrashOnPreviousExecution(), isFalse);
   });
+
+  test('reads the last process exit info from Android', () async {
+    MethodCall? receivedCall;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          receivedCall = call;
+          return <String, Object?>{
+            'reason': 10,
+            'timestamp': 1234,
+            'description': 'user requested',
+          };
+        });
+
+    final info = await App().getLastExitInfo();
+
+    expect(receivedCall?.method, 'getLastExitInfo');
+    expect(info?.reason, AppExitReason.userRequested);
+    expect(info?.timestamp, 1234);
+    expect(info?.description, 'user requested');
+  });
+
+  test('uses no exit info when Android cannot report one', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (_) async => null);
+
+    expect(await App().getLastExitInfo(), isNull);
+  });
+
+  test('uses no exit info when the platform call fails', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (_) async {
+          throw PlatformException(code: 'unavailable');
+        });
+
+    expect(await App().getLastExitInfo(), isNull);
+  });
+
+  test('reports the installed apps permission Android answers with', () async {
+    final methods = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          methods.add(call.method);
+          return false;
+        });
+
+    expect(await App().isInstalledAppsPermissionGranted(), isFalse);
+    expect(await App().requestInstalledAppsPermission(), isFalse);
+    expect(methods, [
+      'isInstalledAppsPermissionGranted',
+      'requestInstalledAppsPermission',
+    ]);
+  });
+
+  test(
+    'treats a missing installed apps permission answer as granted',
+    () async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (_) async => null);
+
+      expect(await App().isInstalledAppsPermissionGranted(), isTrue);
+      expect(await App().requestInstalledAppsPermission(), isFalse);
+    },
+  );
 }

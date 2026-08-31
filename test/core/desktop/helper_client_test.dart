@@ -39,6 +39,42 @@ void main() {
     },
   );
 
+  test('start waits longer than a ping for the Helper to answer', () async {
+    Duration? receiveTimeout;
+    final client = _client(
+      _ResponseAdapter((options) {
+        receiveTimeout = options.receiveTimeout;
+        return _jsonResponse({'sessionId': _sessionId, 'pid': 6456});
+      }),
+    );
+
+    await client.start(address: 'test-address', sessionId: _sessionId);
+
+    expect(receiveTimeout, WindowsHelperClient.startTimeout);
+    expect(receiveTimeout, greaterThan(const Duration(seconds: 2)));
+  });
+
+  test('start surfaces the OS error the Helper attaches', () async {
+    final client = _client(
+      _ResponseAdapter(
+        (_) => _jsonResponse({
+          'code': 'processLaunchFailed',
+          'message': 'spawn failed (os error 577)',
+          'details': {'osError': 577},
+        }, statusCode: 500),
+      ),
+    );
+
+    await expectLater(
+      client.start(address: 'test-address', sessionId: _sessionId),
+      throwsA(
+        isA<WindowsHelperException>()
+            .having((error) => error.code, 'code', 'processLaunchFailed')
+            .having((error) => error.details, 'details', {'osError': 577}),
+      ),
+    );
+  });
+
   test('start rejects a response for another session', () async {
     final client = _client(
       _ResponseAdapter(
