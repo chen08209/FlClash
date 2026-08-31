@@ -1,8 +1,7 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/pop_scope.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 
 import 'chip.dart';
@@ -170,6 +169,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
     _textController.dispose();
     _isFabExtendedNotifier.dispose();
     _loadingNotifier.dispose();
+    _keywordsNotifier.dispose();
     super.dispose();
   }
 
@@ -191,12 +191,14 @@ class CommonScaffoldState extends State<CommonScaffold> {
   Widget? _buildLeading(VoidCallback? backAction) {
     if (_isEdit) {
       return IconButton(
+        tooltip: context.appLocalizations.close,
         onPressed: _popAppBarLayer,
         icon: const Icon(Icons.close),
       );
     }
     if (_isSearch) {
       return IconButton(
+        tooltip: context.appLocalizations.back,
         onPressed: _popAppBarLayer,
         icon: const Icon(Icons.arrow_back),
       );
@@ -240,12 +242,17 @@ class CommonScaffoldState extends State<CommonScaffold> {
   List<Widget> _buildActions(bool hasSearch, List<Widget> actions) {
     if (_isSearch) {
       return genActions([
-        IconButton(onPressed: _handleClear, icon: const Icon(Icons.close)),
+        IconButton(
+          tooltip: context.appLocalizations.clearSearch,
+          onPressed: _handleClear,
+          icon: const Icon(Icons.close),
+        ),
       ]);
     }
     return genActions([
       if (hasSearch && widget.searchState?.autoAddSearch == true)
         IconButton(
+          tooltip: context.appLocalizations.search,
           onPressed: () {
             _updateSearchState((state) => state?.copyWith(query: ''));
           },
@@ -310,6 +317,8 @@ class CommonScaffoldState extends State<CommonScaffold> {
     assert(widget.appBar != null || widget.title != null);
     final backActionProvider = CommonScaffoldBackActionProvider.of(context);
     final isTV = widget.isTV ?? system.isTV;
+    final bottomInset = BottomInsetScope.of(context);
+    final hasFab = !isTV && widget.floatingActionButton != null;
     final body = SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,8 +354,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
                     for (final keyword in keywords)
                       CommonChip(
                         label: keyword,
-                        type: ChipType.delete,
-                        onPressed: () {
+                        onDeleted: () {
                           _deleteKeyword(keyword);
                         },
                       ),
@@ -359,10 +367,25 @@ class CommonScaffoldState extends State<CommonScaffold> {
         ],
       ),
     );
+    final fabChild = ValueListenableBuilder<bool>(
+      valueListenable: _isFabExtendedNotifier,
+      builder: (_, isExtended, child) {
+        return CommonScaffoldFabExtendedProvider(
+          isExtended: isExtended,
+          child: child!,
+        );
+      },
+      child: widget.floatingActionButton,
+    );
     return Scaffold(
       appBar: _buildAppBar(backActionProvider?.backAction),
       body: NotificationListener<UserScrollNotification>(
-        child: body,
+        child: hasFab
+            ? BottomInsetScope(
+                inset: bottomInset + BottomInsetScope.floatingActionButtonInset,
+                child: body,
+              )
+            : body,
         onNotification: (notification) {
           if (notification.direction == ScrollDirection.reverse) {
             _isFabExtendedNotifier.value = false;
@@ -374,17 +397,13 @@ class CommonScaffoldState extends State<CommonScaffold> {
       ),
       resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
       backgroundColor: widget.backgroundColor,
-      floatingActionButton: !isTV && widget.floatingActionButton != null
-          ? ValueListenableBuilder<bool>(
-              valueListenable: _isFabExtendedNotifier,
-              builder: (_, isExtended, child) {
-                return CommonScaffoldFabExtendedProvider(
-                  isExtended: isExtended,
-                  child: child!,
-                );
-              },
-              child: widget.floatingActionButton,
-            )
+      floatingActionButton: hasFab
+          ? bottomInset > 0
+                ? Padding(
+                    padding: EdgeInsets.only(bottom: bottomInset),
+                    child: fabChild,
+                  )
+                : fabChild
           : null,
     );
   }

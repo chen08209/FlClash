@@ -1,10 +1,8 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/common.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/inherited.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'scaffold.dart';
 import 'side_sheet.dart';
@@ -50,7 +48,7 @@ Future<T?> showSheet<T>({
   required WidgetBuilder builder,
   SheetProps props = const SheetProps(),
 }) {
-  final isMobile = globalState.container.read(isMobileViewProvider);
+  final isMobile = context.isMobileView;
   return switch (isMobile) {
     true => showModalBottomSheet<T>(
       context: context,
@@ -87,7 +85,7 @@ Future<T?> showExtend<T>(
   required WidgetBuilder builder,
   ExtendProps props = const ExtendProps(),
 }) {
-  final isMobile = globalState.container.read(isMobileViewProvider);
+  final isMobile = context.isMobileView;
   return switch (isMobile || props.forceFull) {
     true => BaseNavigator.push(
       context,
@@ -112,6 +110,7 @@ class AdaptiveSheetScaffold extends StatefulWidget {
   final Widget body;
   final String title;
   final bool sheetTransparentToolBar;
+  final bool? centerTitle;
   final List<IconButtonData> actions;
   final VoidCallback? backAction;
 
@@ -120,6 +119,7 @@ class AdaptiveSheetScaffold extends StatefulWidget {
     required this.body,
     required this.title,
     this.sheetTransparentToolBar = false,
+    this.centerTitle,
     this.actions = const [],
     this.backAction,
   });
@@ -161,159 +161,221 @@ class _AdaptiveSheetScaffoldState extends State<AdaptiveSheetScaffold> {
     super.dispose();
   }
 
+  Widget _buildIconButton(IconButtonData data, {required bool filled}) {
+    return _SheetIconButton(data: data, filled: filled);
+  }
+
+  IconButtonData _popButtonData(
+    BuildContext context, {
+    required bool useCloseIcon,
+  }) {
+    if (useCloseIcon) {
+      return IconButtonData(
+        icon: Icons.close,
+        onPressed: context.safeNestedPop,
+        tooltip: context.appLocalizations.close,
+      );
+    }
+    return IconButtonData(
+      icon: backIconData,
+      onPressed: widget.backAction ?? () => Navigator.of(context).pop(),
+      tooltip: context.appLocalizations.back,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final sheetProvider = SheetProvider.of(context);
-    final nestedNavigatorPop = sheetProvider?.nestedNavigatorPop;
-    final ModalRoute<dynamic>? route = ModalRoute.of(context);
     final type = sheetProvider?.type ?? SheetType.page;
-    final backgroundColor = type == SheetType.bottomSheet
+    final isBottomSheet = type == SheetType.bottomSheet;
+    final centerTitle = widget.centerTitle ?? isBottomSheet;
+
+    if (type == SheetType.page) {
+      return CommonScaffold(
+        title: widget.title,
+        centerTitle: centerTitle,
+        actions: [
+          for (final data in widget.actions)
+            _buildIconButton(data, filled: false),
+        ],
+        body: widget.body,
+      );
+    }
+
+    final nestedNavigatorPop = sheetProvider?.nestedNavigatorPop;
+    final route = ModalRoute.of(context);
+    final useCloseIcon =
+        nestedNavigatorPop == null || route?.impliesAppBarDismissal == false;
+    final actions = [
+      for (final data in widget.actions)
+        _buildIconButton(data, filled: isBottomSheet),
+    ];
+    final popButton = _buildIconButton(
+      _popButtonData(context, useCloseIcon: useCloseIcon),
+      filled: isBottomSheet,
+    );
+    final popAsSuffix = useCloseIcon && actions.isEmpty;
+    final backgroundColor = isBottomSheet
         ? context.colorScheme.surfaceContainerLow
         : context.colorScheme.surface;
-    final useCloseIcon =
-        type != SheetType.page &&
-        (nestedNavigatorPop != null && route?.impliesAppBarDismissal == false ||
-            nestedNavigatorPop == null);
-    Widget buildIconButton(IconButtonData data) {
-      if (type == SheetType.bottomSheet) {
-        return IconButton.filledTonal(
-          onPressed: data.onPressed,
-          style: IconButton.styleFrom(
-            visualDensity: VisualDensity.standard,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          icon: Icon(data.icon),
-        );
-      }
-      return IconButton(
-        onPressed: data.onPressed,
-        style: IconButton.styleFrom(
-          visualDensity: VisualDensity.standard,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-        icon: Icon(data.icon),
-      );
-    }
-
-    final actions = widget.actions.map(buildIconButton).toList();
-
-    final popButton = type != SheetType.page
-        ? (useCloseIcon
-              ? buildIconButton(
-                  IconButtonData(
-                    icon: Icons.close,
-                    onPressed: context.safeNestedPop,
-                  ),
-                )
-              : buildIconButton(
-                  IconButtonData(
-                    icon: backIconData,
-                    onPressed:
-                        widget.backAction ??
-                        () {
-                          Navigator.of(context).pop();
-                        },
-                  ),
-                ))
-        : null;
-
-    final suffixPop = type != SheetType.page && actions.isEmpty && useCloseIcon;
     final appBar = AppBar(
       backgroundColor: backgroundColor,
-      forceMaterialTransparency: type == SheetType.bottomSheet ? true : false,
-      leading: suffixPop ? null : popButton,
-      automaticallyImplyLeading: type == SheetType.page ? true : false,
-      centerTitle: true,
-      toolbarHeight: type == SheetType.bottomSheet ? 48 : null,
+      forceMaterialTransparency: isBottomSheet,
+      automaticallyImplyLeading: false,
+      leading: popAsSuffix ? null : Center(child: popButton),
+      centerTitle: centerTitle,
+      toolbarHeight: isBottomSheet ? 48 : null,
       title: Text(widget.title),
-      titleTextStyle: type == SheetType.bottomSheet
+      titleTextStyle: isBottomSheet
           ? context.textTheme.titleLarge?.adjustSize(-4)
           : null,
-      actions: !suffixPop ? genActions(actions) : genActions([?popButton]),
+      actions: genActions(popAsSuffix ? [popButton] : actions),
     );
-    if (type == SheetType.bottomSheet) {
-      const handleSize = Size(28, 4);
-      final sheetAppBar = Column(
+    if (!isBottomSheet) {
+      return CommonScaffold(appBar: appBar, body: widget.body);
+    }
+    final sheetAppBar = _SheetToolBar(appBar: appBar);
+    return ClipRSuperellipse(
+      borderRadius: AppRadius.top(AppCorner.xxl),
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Container(
-              alignment: Alignment.center,
-              height: handleSize.height,
-              width: handleSize.width,
-              decoration: ShapeDecoration(
-                color: context.colorScheme.onSurfaceVariant,
-                shape: RoundedSuperellipseBorder(
-                  borderRadius: BorderRadius.circular(handleSize.height / 2),
-                ),
+          if (!widget.sheetTransparentToolBar) ...[
+            sheetAppBar,
+            Flexible(child: widget.body),
+          ] else
+            Flexible(
+              child: _TransparentToolBarBody(
+                isScrolledController: _isScrolledController,
+                backgroundColor: backgroundColor,
+                toolBar: sheetAppBar,
+                body: widget.body,
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: appBar,
-          ),
-          const SizedBox(height: 6),
+          SizedBox(height: MediaQuery.viewInsetsOf(context).bottom),
+          SizedBox(height: MediaQuery.viewPaddingOf(context).bottom),
         ],
-      );
-      return ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!widget.sheetTransparentToolBar) ...[
-              sheetAppBar,
-              Flexible(child: widget.body),
-            ] else ...[
-              Flexible(
-                child: Stack(
-                  children: [
-                    NotificationListener<ScrollNotification>(
-                      child: widget.body,
-                      onNotification: (notification) {
-                        if (notification is ScrollUpdateNotification) {
-                          final pixels = notification.metrics.pixels;
-                          _isScrolledController.value = pixels > 6;
-                        }
-                        return false;
-                      },
-                    ),
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      child: ValueListenableBuilder(
-                        valueListenable: _isScrolledController,
-                        builder: (_, isScrolled, child) {
-                          return ClipRRect(
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(28),
-                            ),
-                            child: BackdropFilter(
-                              filter: commonFilter,
-                              child: ColoredBox(
-                                color: isScrolled
-                                    ? backgroundColor.opacity60
-                                    : backgroundColor,
-                                child: child!,
-                              ),
-                            ),
-                          );
-                        },
-                        child: sheetAppBar,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
-            SizedBox(height: MediaQuery.of(context).viewPadding.bottom),
-          ],
-        ),
+      ),
+    );
+  }
+}
+
+class _SheetIconButton extends StatelessWidget {
+  const _SheetIconButton({required this.data, required this.filled});
+
+  static final _style = IconButton.styleFrom(
+    visualDensity: VisualDensity.standard,
+    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  );
+
+  final IconButtonData data;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = Icon(data.icon);
+    if (filled) {
+      return IconButton.filledTonal(
+        tooltip: data.tooltip,
+        onPressed: data.onPressed,
+        style: _style,
+        icon: icon,
       );
     }
-    return CommonScaffold(appBar: appBar, body: widget.body);
+    return IconButton(
+      tooltip: data.tooltip,
+      onPressed: data.onPressed,
+      style: _style,
+      icon: icon,
+    );
+  }
+}
+
+class _SheetToolBar extends StatelessWidget {
+  const _SheetToolBar({required this.appBar});
+
+  static const _handleSize = Size(28, 4);
+
+  final Widget appBar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Container(
+            alignment: Alignment.center,
+            height: _handleSize.height,
+            width: _handleSize.width,
+            decoration: ShapeDecoration(
+              color: context.colorScheme.onSurfaceVariant,
+              shape: AppShape.all(_handleSize.height / 2),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: appBar,
+        ),
+        const SizedBox(height: 6),
+      ],
+    );
+  }
+}
+
+class _TransparentToolBarBody extends StatelessWidget {
+  const _TransparentToolBarBody({
+    required this.isScrolledController,
+    required this.backgroundColor,
+    required this.toolBar,
+    required this.body,
+  });
+
+  final ValueNotifier<bool> isScrolledController;
+  final Color backgroundColor;
+  final Widget toolBar;
+  final Widget body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            if (notification is ScrollUpdateNotification) {
+              isScrolledController.value = notification.metrics.pixels > 6;
+            }
+            return false;
+          },
+          child: body,
+        ),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: ValueListenableBuilder(
+            valueListenable: isScrolledController,
+            builder: (_, isScrolled, child) {
+              if (!isScrolled) {
+                return ColoredBox(color: backgroundColor, child: child!);
+              }
+              return ClipRSuperellipse(
+                borderRadius: AppRadius.top(AppCorner.xxl),
+                child: BackdropFilter(
+                  filter: commonFilter,
+                  child: ColoredBox(
+                    color: backgroundColor.opacity60,
+                    child: child!,
+                  ),
+                ),
+              );
+            },
+            child: toolBar,
+          ),
+        ),
+      ],
+    );
   }
 }

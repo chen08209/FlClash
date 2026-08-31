@@ -69,11 +69,11 @@ extension HotActionL10n on HotAction {
   String get label {
     final appLocalizations = currentAppLocalizations;
     return switch (this) {
-      HotAction.start => appLocalizations.action_start,
-      HotAction.view => appLocalizations.action_view,
-      HotAction.mode => appLocalizations.action_mode,
-      HotAction.proxy => appLocalizations.action_proxy,
-      HotAction.tun => appLocalizations.action_tun,
+      HotAction.start => appLocalizations.actionStart,
+      HotAction.view => appLocalizations.actionView,
+      HotAction.mode => appLocalizations.actionMode,
+      HotAction.proxy => appLocalizations.actionProxy,
+      HotAction.tun => appLocalizations.actionTun,
     };
   }
 }
@@ -82,8 +82,8 @@ extension RouteModeL10n on RouteMode {
   String get label {
     final appLocalizations = currentAppLocalizations;
     return switch (this) {
-      RouteMode.bypassPrivate => appLocalizations.routeMode_bypassPrivate,
-      RouteMode.config => appLocalizations.routeMode_config,
+      RouteMode.bypassPrivate => appLocalizations.routeModeBypassPrivate,
+      RouteMode.config => appLocalizations.routeModeConfig,
     };
   }
 }
@@ -92,8 +92,8 @@ extension RestoreStrategyL10n on RestoreStrategy {
   String get label {
     final appLocalizations = currentAppLocalizations;
     return switch (this) {
-      RestoreStrategy.compatible => appLocalizations.restoreStrategy_compatible,
-      RestoreStrategy.override => appLocalizations.restoreStrategy_override,
+      RestoreStrategy.compatible => appLocalizations.restoreStrategyCompatible,
+      RestoreStrategy.override => appLocalizations.restoreStrategyOverride,
     };
   }
 }
@@ -122,7 +122,7 @@ extension LocaleL10n on Locale {
       'en' => appLocalizations.en,
       'ja' => appLocalizations.ja,
       'ru' => appLocalizations.ru,
-      'zh_CN' => appLocalizations.zh_CN,
+      'zh_CN' => appLocalizations.zhCN,
       final code => code,
     };
   }

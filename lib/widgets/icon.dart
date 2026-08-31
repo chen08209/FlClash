@@ -1,13 +1,31 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:fl_clash/common/cache.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/plugins/app.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_svg/svg.dart';
+
+const _maxDecodedIcons = 64;
+
+final _decodedIcons = <String, Uint8List?>{};
+
+Uint8List? _decodeIcon(String src) {
+  if (!src.contains('base64,')) {
+    return null;
+  }
+  if (_decodedIcons.containsKey(src)) {
+    return _decodedIcons[src] = _decodedIcons.remove(src);
+  }
+  if (_decodedIcons.length >= _maxDecodedIcons) {
+    _decodedIcons.remove(_decodedIcons.keys.first);
+  }
+  return _decodedIcons[src] = src.getBase64;
+}
 
 class CommonTargetIcon extends StatelessWidget {
   final String src;
@@ -23,7 +41,7 @@ class CommonTargetIcon extends StatelessWidget {
       return _defaultIcon();
     }
 
-    final base64 = src.getBase64;
+    final base64 = _decodeIcon(src);
     if (base64 != null) {
       return Image.memory(
         base64,
@@ -129,8 +147,14 @@ class _ImageCacheWidgetState extends State<ImageCacheWidget> {
 class PackageIcon extends StatefulWidget {
   final String packageName;
   final double size;
+  final Widget? placeholder;
 
-  const PackageIcon({super.key, required this.packageName, required this.size});
+  const PackageIcon({
+    super.key,
+    required this.packageName,
+    required this.size,
+    this.placeholder,
+  });
 
   @override
   State<PackageIcon> createState() => _PackageIconState();
@@ -158,7 +182,7 @@ class _PackageIconState extends State<PackageIcon> {
     final generation = ++_generation;
     final packageName = widget.packageName;
     final currentApp = app;
-    if (currentApp == null || packageName.isEmpty) {
+    if (currentApp == null) {
       _icon = null;
       return;
     }
@@ -181,7 +205,8 @@ class _PackageIconState extends State<PackageIcon> {
   Widget build(BuildContext context) {
     final icon = _icon;
     if (icon == null) {
-      return SizedBox(width: widget.size, height: widget.size);
+      return widget.placeholder ??
+          SizedBox(width: widget.size, height: widget.size);
     }
     return Image(
       image: icon,

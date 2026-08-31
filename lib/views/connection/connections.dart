@@ -1,13 +1,14 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:super_sliver_list/super_sliver_list.dart';
-
-import 'item.dart';
 
 class ConnectionsView extends ConsumerStatefulWidget {
   final Future<List<TrackerInfo>> Function()? connectionsReader;
@@ -20,9 +21,9 @@ class ConnectionsView extends ConsumerStatefulWidget {
 
 class _ConnectionsViewState extends ConsumerState<ConnectionsView>
     with WidgetsBindingObserver, ActivePollingMixin<ConnectionsView> {
-  final _connectionsStateNotifier = ValueNotifier<TrackerInfosState>(
-    const TrackerInfosState(),
-  );
+  CoreController get _core => ref.read(coreHandlerProvider);
+
+  final _listController = TrackerInfoListController();
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -31,25 +32,14 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
   List<Widget> _buildActions() {
     return [
       IconButton(
+        tooltip: context.appLocalizations.closeConnections,
         onPressed: () async {
-          coreController.closeConnections();
+          unawaited(_core.closeConnections());
           await _refreshConnections();
         },
         icon: const Icon(Icons.delete_sweep_outlined),
       ),
     ];
-  }
-
-  void _onSearch(String value) {
-    _connectionsStateNotifier.value = _connectionsStateNotifier.value.copyWith(
-      query: value,
-    );
-  }
-
-  void _onKeywordsUpdate(List<String> keywords) {
-    _connectionsStateNotifier.value = _connectionsStateNotifier.value.copyWith(
-      keywords: keywords,
-    );
   }
 
   @override
@@ -74,7 +64,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
       final connectionsReader = widget.connectionsReader;
       return connectionsReader != null
           ? await connectionsReader()
-          : await coreController.getConnections();
+          : await _core.getConnections();
     } catch (error) {
       commonPrint.log(
         'updateConnections error: $error',
@@ -85,19 +75,17 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
   }
 
   void _applyConnections(List<TrackerInfo> trackerInfos) {
-    _connectionsStateNotifier.value = _connectionsStateNotifier.value.copyWith(
-      trackerInfos: trackerInfos,
-    );
+    _listController.setTrackerInfos(trackerInfos);
   }
 
   Future<void> _handleBlockConnection(String id) async {
-    await coreController.closeConnection(id);
+    await _core.closeConnection(id);
     await _refreshConnections();
   }
 
   @override
   void dispose() {
-    _connectionsStateNotifier.dispose();
+    _listController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -107,11 +95,11 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
     final appLocalizations = context.appLocalizations;
     return CommonScaffold(
       title: appLocalizations.connections,
-      onKeywordsUpdate: _onKeywordsUpdate,
-      searchState: AppBarSearchState(onSearch: _onSearch),
+      onKeywordsUpdate: _listController.updateKeywords,
+      searchState: AppBarSearchState(onSearch: _listController.search),
       actions: _buildActions(),
       body: ValueListenableBuilder<TrackerInfosState>(
-        valueListenable: _connectionsStateNotifier,
+        valueListenable: _listController,
         builder: (context, state, _) {
           final connections = state.list;
           if (connections.isEmpty) {
@@ -120,32 +108,18 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
               illustration: const ConnectionEmptyIllustration(),
             );
           }
-          return SuperListView.separated(
+          return TrackerInfoAnimatedList(
             controller: _scrollController,
-            itemCount: connections.length,
-            separatorBuilder: (_, _) => const Divider(height: 0),
-            itemBuilder: (_, index) {
-              final trackerInfo = connections[index];
-              return TrackerInfoItem(
-                key: Key(trackerInfo.id),
-                trackerInfo: trackerInfo,
-                onClickKeyword: (value) {
-                  context.commonScaffoldState?.addKeyword(value);
-                },
-                trailing: IconButton(
-                  padding: EdgeInsets.zero,
-                  visualDensity: VisualDensity.compact,
-                  style: IconButton.styleFrom(minimumSize: Size.zero),
-                  icon: const Icon(Icons.block),
-                  onPressed: () {
-                    _handleBlockConnection(trackerInfo.id);
-                  },
-                ),
-                detailTitle: appLocalizations.details(
-                  appLocalizations.connection,
-                ),
-              );
-            },
+            trackerInfos: connections,
+            detailTitle: appLocalizations.details(appLocalizations.connection),
+            trailingBuilder: (trackerInfo) => IconButton(
+              tooltip: appLocalizations.blockConnection,
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.block, size: 20),
+              onPressed: () {
+                _handleBlockConnection(trackerInfo.id);
+              },
+            ),
           );
         },
       ),
