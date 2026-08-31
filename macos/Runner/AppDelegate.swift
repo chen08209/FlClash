@@ -1,6 +1,6 @@
 import Cocoa
 import FlutterMacOS
-import window_ext
+import window_manager
 
 @main
 class AppDelegate: FlutterAppDelegate {
@@ -10,7 +10,7 @@ class AppDelegate: FlutterAppDelegate {
     }
     
     override func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        WindowExtPlugin.instance?.handleShouldTerminate()
+        WindowManagerPlugin.instance?.handleShouldTerminate()
         return .terminateCancel
     }
 
