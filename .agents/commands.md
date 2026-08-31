@@ -87,7 +87,7 @@ flutter test test/setup_test.dart
 flutter test plugins/proxy/test/proxy_test.dart
 ```
 
-Root `flutter test` only discovers the root package's `test/` directory by default. Include bundled plugin Dart tests by passing paths explicitly, or run `flutter test` from that plugin package directory. Native plugin tests under platform folders are not run by `flutter test`.
+Root `flutter test` only discovers the root package's `test/` directory by default. Include bundled plugin Dart tests by passing paths explicitly, or run `flutter test` from that plugin package directory, or run `bash tool/check_plugins.sh` to analyze and test every plugin package the way CI does. Native plugin tests under platform folders are not run by `flutter test`.
 
 For the current Core/service architecture, useful focused checks are:
 
@@ -142,6 +142,66 @@ JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ./gradl
 Always-on VPN entry, system VPN revoke, actual permission UI, and rapid device start/stop still require Android device or
 emulator validation; Kotlin compilation cannot prove those system callbacks.
 
+## Changelog And Release
+
+The changelog is derived from Conventional Commits by `tool/changelog.dart` and written to two committed files:
+`CHANGELOG.md` for readers and `changelog.json` for the renderers. See `.agents/rules.md` for the `Changelog:` trailers
+that decide the wording.
+
+The app ships no changelog of its own. `render release` appends the released version as JSON inside an HTML comment
+(`<!-- flclash:changelog:json … -->`), so the release body GitHub already returns to `checkForUpdate` carries the
+notes shown in the update dialog. `parseReleaseChangelog` reads that block and falls back to the English
+bullets when a release predates it.
+
+```bash
+dart run tool/changelog.dart verify                  # what CI checks
+dart run tool/changelog.dart release --version 0.8.96
+dart run tool/changelog.dart build --unreleased      # changelog.json only, includes untagged work
+dart run tool/changelog.dart render release --out release.md
+dart run tool/changelog.dart render telegram --out telegram.md
+```
+
+Releasing a stable version, in order:
+
+```bash
+tool/bump_version.sh all
+dart run tool/changelog.dart release --version 0.8.96
+git commit -am "chore(release): v0.8.96"
+git tag v0.8.96
+git push origin main && git push origin v0.8.96
+```
+
+Push the tag by name. Every release tag here is lightweight, and `--follow-tags` carries annotated tags only: it skips a
+lightweight one silently, so the branch lands, the tag does not, and the release workflow never fires.
+
+`tool/release.sh` drives both paths so the ordering below cannot be got wrong by hand. It resolves the version (bumping
+the patch when pubspec still names an already tagged one), prints the notes the tag would ship, and only pushes with
+`--push`:
+
+```bash
+tool/release.sh pre --dry-run     # plan and notes, changes nothing
+tool/release.sh pre --push        # bump, tag vX.Y.Z-pre.N, push
+tool/release.sh stable --push     # changelog, chore(release) commit, tag, push
+```
+
+The release commit comes before the tag on purpose: the generated wording is reviewable in the diff before it ships, and
+the tag is what `render release` reads. CI never writes back to the repository; it only runs `verify`. Wording in
+`changelog.json` may be edited by hand as long as no derivable entry disappears and every entry still points at a commit
+inside that version's range.
+
+Entries at or below `v0.8.95` are frozen: they predate the pipeline, live under the `<!-- changelog:frozen -->` marker
+in `CHANGELOG.md`, and are never regenerated.
+
+`verify` compares a version only when its tag is reachable from `HEAD`, because that is the same scope the builder walks
+(`git tag --merged`). A branch cut before the newest release cannot derive that version at all, so `verify` names it as
+skipped and moves on instead of reporting drift that does not exist. Checking mere tag existence is what made every such
+branch fail on an unrelated release.
+
+Prerelease tags (`v0.8.96-pre.N`) skip the release commit, and CI renders their notes with `build --unreleased` for the
+Telegram post. They publish no GitHub release, so the update dialog never sees them. `build --unreleased` reads the
+version from `pubspec.yaml` rather than the tag, so the patch has to be bumped before the first `-pre.N` of a cycle:
+while `v<pubspec version>` is still tagged it refuses to collect anything and the release job fails.
+
 ## Verify
 
 The tag-triggered release workflow runs these root-package checks in order:
@@ -149,7 +209,10 @@ The tag-triggered release workflow runs these root-package checks in order:
 ```bash
 flutter pub get
 flutter analyze --no-fatal-infos
+dart run tool/changelog.dart verify
 flutter test --reporter expanded
+bash tool/check_commit_msg_test.sh
+bash tool/check_comment_density_test.sh
 ```
 
 Run `flutter analyze` locally before committing when practical.
@@ -160,3 +223,16 @@ plugin packages, so CI also validates local Flutter packages, the setup build
 tool, the Go wrapper, and Rust components from their own package directories. A
 separate Windows runner compiles and tests the helper's `windows-service`
 feature before release builds can start.
+
+`bash tool/check_plugins.sh` is that plugin gate, and CI runs the same script.
+It discovers every `plugins/*/pubspec.yaml`, analyzes each package, and runs
+`flutter test` wherever `test/*_test.dart` exists. Adding a plugin package needs
+no workflow edit; enumerating packages by hand in the workflow is what
+previously left `plugins/tray` unanalyzed and untested.
+
+## Worktree Tooling
+
+```bash
+bash tool/worktrees.sh list       # every worktree with owner tool and dirty/clean state
+bash tool/worktrees.sh prune      # remove clean worktrees; add --force to drop dirty ones too
+```

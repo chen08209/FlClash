@@ -16,7 +16,8 @@ Android lib mode:
 Desktop core mode:
 
 - Go core runs as a separate process with `CGO_ENABLED=0`.
-- `rust_api` provides the native local-IPC primitives: a Unix domain socket on macOS/Linux and a named pipe on Windows.
+- `rust_api`'s `ipc` module provides the native local-IPC primitives: a Unix domain socket on macOS/Linux and a named pipe
+  on Windows.
   Dart now owns the transport state, RPC correlation, process ownership, and lifecycle convergence above those primitives.
 - `lib/core/service.dart` (`CoreService`) is the composition root. It wires the IPC transport, launcher selection,
   lifecycle controller, RPC client, and crash-event bridge; it is no longer the whole desktop implementation by itself.
@@ -38,6 +39,28 @@ Key Go core files:
 - `core/message.go`: non-blocking priority/bulk event queues and bounded message batching.
 - `core/lib.go`: CGO exports.
 - `core/server.go`: desktop socket/named-pipe client and framed message forwarding.
+
+## Listener Exposure
+
+`_makeRealProfileTask` in `lib/common/task.dart` writes `mixed-port`, `allow-lan`, and `external-controller` into every
+generated profile. With `allow-lan` off, mihomo's `genAddr` binds each listener to `127.0.0.1`; the external controller is
+`ExternalControllerStatus.close` by default and never binds anywhere but loopback.
+
+The loopback listener takes local connections without authentication on every platform, Android included. That is the
+design, not an oversight: the app reaches the network through its own mixed port, and credentials on that port would lock
+out both FlClash and every other local consumer, which is the reason a local proxy client exists. The boundary the binding
+does enforce is that traffic must originate on the device; it does not isolate programs already running there, so on
+Android any app holding `INTERNET` can use the proxy and learn the outbound IP. Reports treating that as a vulnerability
+(#1934) are answered by this paragraph. Do not add authentication, per-UID filtering, or a random local credential to this
+path without an explicit decision from the maintainer.
+
+### Interface Name Modes
+
+The same task also writes `interface-name` per `PatchClashConfig.interfaceNameMode`: `clear` (default) forces it empty so a
+subscription's value cannot survive into the generated profile, `follow` leaves whatever the profile YAML already has, and
+`custom` writes the user's `interfaceName`. mihomo ignores `interface-name` on Android whenever `dialer.DefaultSocketHook`
+is installed (`core/lib.go` `installHooks`, vendored `dialer.go`), so `NetworkListView` in `lib/views/config/network.dart`
+shows the mode picker and text field only on desktop.
 
 ## Lifecycle Ownership And Convergence
 
@@ -157,6 +180,20 @@ Proxy delay testing follows the same failure-safe UI rule. `proxyDelayTest()` re
 real result on success, and logs plus records `-1` on exceptions. `DelayTestButton` reverses its animation in `finally`, so
 an RPC failure cannot leave the control permanently spinning.
 
+## Settings Rows
+
+`lib/widgets/config_item.dart` holds the shared settings-row vocabulary: `ConfigToggleItem`, `ConfigOptionsItem`,
+`ConfigTextItem`, and `ConfigListInputItem`. Each takes a `selector` (a `ProviderListenable`, normally
+`someProvider.select(...)`) and an `onChanged(ref, value)` writer, and watches its own selector so changing one setting
+rebuilds one row instead of the whole section. Titles and subtitles are `ConfigLabel` callbacks that receive
+`AppLocalizations`, which keeps literal labels such as `IPv6` and localized labels in the same shape.
+
+Build settings screens from these directly, or from a file-local helper that binds one provider once — see `_dnsToggle`
+in `lib/views/config/dns.dart` and `_appSettingToggle` in `lib/views/application_setting.dart`. Declare a named
+`ConsumerWidget` only when a row is genuinely reused across screens, as `lib/views/config/network.dart` rows are by
+`lib/views/dashboard/widgets/quick_options.dart`. Rows with bespoke behaviour — a custom dialog, a derived value, or a
+second provider write — stay hand-written rather than growing extra parameters on the shared items.
+
 ## State Management
 
 Provider files in `lib/providers/`:
@@ -164,10 +201,155 @@ Provider files in `lib/providers/`:
 - `app.dart`: runtime/UI state, logs, traffic, delays, loading, navigation.
 - `config.dart`: persistent config providers, app settings, theme, VPN, proxy style.
 - `state.dart`: derived/computed providers, navigation, proxy, tray, color scheme.
+  Like `action.dart`, this is an entry point only: the providers live under
+  `lib/providers/state/` and are joined with `part` directives, so importing
+  `state.dart` still reaches all of them.
+  - `state/proxies.dart`: group and proxy lists, filter/sort, delay, selection.
+  - `state/navigation.dart`: navigation items, current page, dashboard, more tools.
+  - `state/system.dart`: tray, VPN params, access control, hot keys, shared state.
+  - `state/theme.dart`: dynamic color, color scheme, brightness.
+  - `state/profile.dart`: profiles, current profile, clash config, setup state.
+  - `state/overwrite.dart`: custom overwrite validity and the staged group/rule notifiers.
 - `action.dart`: business logic notifiers, setup, backup, core lifecycle, proxy selection.
+- `core.dart`: `coreHandlerProvider`, the container-scoped handle on `CoreController`.
 - `database.dart`: Drift database provider wrappers.
 
-`globalState` in `lib/state.dart` is a singleton holding app lifecycle, timers, theme, and start/stop state. Providers are generated into `lib/providers/generated/`.
+### Reaching Singletons
+
+`lib/common/` and `lib/core/` publish process-wide singletons (`coreController`,
+`system`, `preferences`, `appPath`, `request`, and others). Code that already has a
+`Ref` or a `WidgetRef` reads them through a provider instead, so a test can scope a
+fake to one `ProviderContainer` rather than swapping a global and relying on a
+tearDown to put it back.
+
+`coreHandlerProvider` is the established case. Every call site under
+`lib/providers/`, `lib/manager/` and `lib/views/` goes through it; notifiers and
+`ConsumerState` classes that touch Core repeatedly hold it as
+`CoreController get _core => ref.read(coreHandlerProvider)`.
+
+Tests override it with `coreHandlerProvider.overrideWithValue(CoreController.scoped(fake))`,
+which does not claim the singleton. `CoreController.test` does claim it, and is
+only for tests that have not moved yet. Prefer the scoped override even when a
+test passes either way: a test that claims the singleton makes the global and the
+provider resolve to the same fake, so it cannot tell a provider read from a
+leftover global read, and a half-migrated call site stays green.
+
+One deliberate exception: `globalState` owns the `ProviderContainer`, so it cannot
+itself live in one. Code without a `Ref` reaches providers through
+`globalState.container.read(...)`. The remaining call sites are `lib/core/lib.dart`,
+`lib/common/print.dart`, and the tray `read` callback in
+`lib/providers/actions/system.dart` — all singletons or platform callbacks with no
+`Ref` in scope.
+
+`lib/models/profile.dart` no longer reaches Core. `Profile.saveFile` and
+`Profile.update` take a `ValidateConfig` callback, and every caller passes
+`(path) => _core.validateConfig(path)`, keeping the Core handle lazy so a profile
+path that never validates never resolves the controller.
+
+The UI layer must not reach a process-wide singleton directly.
+`test/lint/ui_layer_singleton_test.dart` scans `lib/views`, `lib/widgets`,
+`lib/pages` and `lib/features` for `globalState.container` and the bare
+`coreController` global and fails the run on either. Widgets that need Core hold
+`CoreController get _core => ref.read(coreHandlerProvider)`.
+
+`globalState.measure` and `globalState.theme` stay global on purpose. Both are
+context-derived caches assigned by `ThemeManager`, and tests already scope them by
+assigning in the app builder (see `test/helpers/test_app.dart`); moving them into
+providers would touch every layout call site without changing behaviour.
+
+`globalState` in `lib/state.dart` is a singleton holding ambient app state — the
+package info, the measure and theme, the container, and the start/stop flags —
+plus `safeRun`/`loadingRun`. Startup orchestration is **not** on it: `init` and
+`attach` live in `lib/bootstrap.dart`, above `lib/common`, because they drive the
+window, the autostart entry, the tray and the permission prompts. Providers are
+generated into `lib/providers/generated/`.
+
+The root navigator key lives in `lib/common/navigator.dart` as `rootNavigatorKey`;
+`globalState.navigatorKey` is a getter onto it. `lib/common/dialog.dart` reaches
+the key directly, so the dialog helpers no longer import `lib/state.dart`.
+
+### Platform Layering
+
+`lib/common/common.dart` deliberately does not export `tray.dart`, `window.dart`,
+`launch.dart`, `system_dns.dart`, or `permission.dart`. Those five modules import
+`tray_manager`, `window_manager`, `launch_at_startup`, and `screen_retriever`;
+exporting them put those packages in the compile graph of all 132 files that
+import the barrel for a string helper. Import the specific module instead.
+
+`test/lint/platform_layering_test.dart` enforces four rules. Three are local: the
+barrel never re-exports one of those five modules, nothing under `lib/common`,
+`lib/enum` or `lib/models` other than those five imports a desktop platform
+package, and `lib/common` never imports the `lib/manager/manager.dart` barrel
+(import the single manager needed, as `common/context.dart` does with
+`manager/status_manager.dart`). The fourth walks the barrel's whole transitive
+closure and fails if *any* file in it imports one of those packages. That one is
+the real invariant — the local rules only stop the shortest path, and every leak
+found so far arrived through a longer one.
+
+Four consequences are already in the tree:
+
+- `System.back` and `System.exit` no longer touch `window`; the window half of
+  both lives in `SystemAction`.
+- `KeyboardModifier.toHotKeyModifier()` moved from `lib/enum/enum.dart` to
+  `lib/manager/hotkey_manager.dart`, its only consumer.
+- Startup orchestration moved off `GlobalState` into `lib/bootstrap.dart`.
+  `common/num.dart`, `common/print.dart` and `common/request.dart` import
+  `state.dart` for `theme`, `container` and `packageInfo`/`ua`, so anything
+  `GlobalState` reaches lands in the barrel's closure; the ambient state it now
+  holds reaches nothing platform-specific.
+- `SystemAction` talks to `WindowPort` and `TrayPort` from
+  `lib/common/app_ports.dart` instead of importing `common/window.dart` and
+  `common/tray.dart`. `lib/bootstrap.dart` binds `windowPort` and `trayPort` to
+  the real implementations; both stay null in tests, where every call through
+  them is a no-op. A test that needs the real tray assigns `trayPort` itself, as
+  `test/common/tray_menu_test.dart` does.
+
+Narrow the barrel imports too: `lib/providers/providers.dart` re-exports
+`action.dart`, so importing the providers barrel from `lib/common` or from
+`providers/app.dart` reaches the whole action layer. Those three now import
+`providers/state.dart` and `providers/config.dart` directly.
+
+The same shape appeared twice more, without a platform package involved: a data
+type in a lower layer holding the widget that renders it, which drags the whole
+view tree into the barrel's closure.
+
+- `lib/common/navigation.dart` was a route table building view widgets. It is
+  now `lib/views/navigation.dart` implementing `NavigationPort`, which
+  `providers/state/navigation.dart` reads through and `bootstrap.init` binds.
+  Unbound it yields no items, so a test that renders navigation assigns
+  `navigationPort` itself, as `test/pages/home_test.dart` does.
+- `DashboardWidget` carried a `GridItem` per value, so `lib/enum/enum.dart`
+  imported the dashboard cards — and `lib/widgets/widgets.dart` with them. The
+  enum is persisted in the app settings, so it is back to plain data; the
+  mapping lives in `lib/views/dashboard/widget_registry.dart`, the reverse
+  lookup relying on the branches returning canonical consts.
+
+Together those took the closure from 258 files to 187, with nothing under
+`lib/views` left in it. `test/lint/platform_layering_test.dart` pins that
+directly: the barrel's closure must contain no `lib/views` file. Data the
+provider layer needs from the UI layer goes through a port in
+`lib/common/app_ports.dart` rather than an import in the other direction.
+
+### High-Frequency Buffers
+
+`logsProvider`, `requestsProvider` and `trafficsProvider` hold a `FixedList`
+(`lib/common/fixed.dart`), which trades a normal copy-on-write for a shared
+buffer tagged with a generation counter:
+
+- `append` mutates the buffer in place and returns a new wrapper one generation
+  ahead. That is what providers publish, so `updateShouldNotify` still fires.
+- `list` returns an immutable copy, cached until the next mutation. It must stay
+  eager: an older wrapper shares the buffer, so its contents move on. Anything
+  that needs a stable view has to read `list` at the moment it is notified, not
+  hold the wrapper and read later.
+- Consumers that only need to know *that* the buffer changed watch `revision`,
+  not `list` — selecting on the list snapshots and deep-compares the whole
+  buffer on every arrival, which is what this design exists to avoid. See
+  `lib/views/logs.dart` for the pattern: watch the generation, snapshot inside
+  the throttled callback.
+
+`add`/`clear` mutate in place without advancing the generation; use them only on
+a buffer you own outright (seeding, resets, tests), never on published state.
 
 ## Database
 
@@ -188,16 +370,31 @@ Generated Drift output lives in `lib/database/generated/database.g.dart`. After 
 
 ## Manager Stack
 
-Managers are nested `InheritedWidget`/`StatefulWidget` components in `lib/application.dart`:
+Managers are nested `InheritedWidget`/`StatefulWidget` components built by `buildManagerStack()` in `lib/application.dart`:
 
 ```text
 AppEnvManager > StatusManager > ThemeManager
   > [Desktop: WindowManager > TrayManager > HotKeyManager > ProxyManager]
-  > ConnectivityManager > CoreManager > AppStateManager
-  > [Mobile: AndroidManager > VpnManager | Desktop: WindowHeaderContainer]
+    [Mobile:  AndroidManager > TileManager]
+  > AppStateManager > CoreManager > ConnectivityManager
+  > [Desktop: WindowHeaderContainer] [Mobile: VpnManager]
+  > app content
 ```
 
-Each manager in `lib/manager/` handles a specific platform concern. Desktop-only managers are conditionally inserted.
+Each manager in `lib/manager/` handles a specific platform concern. The
+platform slots are exclusive: no desktop manager appears on mobile and no mobile
+manager appears on desktop.
+
+The order is an ownership contract, not a layout detail. `ConnectivityManager`
+sits below `CoreManager` because its `onConnectivityChanged` callback reads
+Core-backed state, so Core must already be mounted when it fires. `StatusManager`
+and `ThemeManager` sit above the platform managers so a platform manager can
+surface a message or read the theme.
+
+`buildManagerStack()` is a pure function of `isDesktop`, the connectivity
+callback, and the app content, so `test/application_test.dart` asserts the whole
+order by constructing the stack without mounting it. Changing the nesting means
+updating both this diagram and that test.
 
 ## Core Controller and Actions
 
@@ -218,6 +415,17 @@ directives, so consumers continue to import the same public API:
 - `ProxiesAction`: group management and proxy selection.
 - `ProfilesAction`: profile CRUD, auto-update, import.
 - `GeoResourceAction`: geo resource updates and URL configuration.
+- `UpdatingAction`: stale sweep over `UpdatingKeys`.
+
+`UpdatingKeys` in `lib/providers/app.dart` owns every per-entity updating flag; `isUpdatingProvider(key)` is the
+read-only view widgets watch. Callers pair `start(key, scope: ...)` with `stop(key, operation)` using the returned
+token, so overlapping operations on one key are reference counted and a late `stop` from a superseded operation
+cannot clear a newer one. Keys started with `UpdatingScope.core` depend on the Core to make progress, so
+`UpdatingKeys` discards them itself when `coreStatusProvider` leaves `connected` — that is the state's own
+invariant, not a policy, and it must stay inside the notifier where no warm-up ordering can miss it.
+`UpdatingScope.local` keys (profile updates run entirely in Dart) survive a Core restart. `UpdatingAction` holds
+only the policy half: the periodic sweep that discards a key stuck past `updatingStaleTimeout`. Do not move the
+timeout back into `UpdatingKeys`, and do not widen the disconnect reset to every scope.
 
 ## Platform Managers
 
@@ -329,6 +537,10 @@ Windows helper integrity/version check:
 - `/stop` requires the same session ID. A missing process returns `notRunning`; a different owner returns
   `sessionMismatch` without terminating that process. Session IDs are ownership tokens for lifecycle safety, not a claim
   that the loopback HTTP endpoints are authenticated.
+- Never take `MANAGED_CORE` or `LOGS` with `lock().unwrap()`. The Helper is a long-lived service running as SYSTEM, so a
+  single panic while a lock is held would poison it and turn every later request into another panic — the service stays
+  dead until Windows restarts it. `lock_surviving_poison` recovers the guard through `PoisonError::into_inner` instead.
+  `hub.rs` uses it at every lock site, tests included, and two tests in that file pin the behaviour.
 
 Build configuration defaults live in `build_tool/lib/src/options.dart` and can be overridden via a root `build_config.yaml`.
 
@@ -338,11 +550,47 @@ Architecture detection is automatic. The `--description` flag passed to `flutter
 
 - `setup`: build-time harness for Go core artifacts and the Windows Rust helper; no runtime Dart API.
 - `proxy`: system proxy configuration.
-- `rust_api`: runtime Flutter Rust Bridge FFI plugin built through Cargokit.
-- `tray_manager`: system tray fork/customization.
+- `rust_api`: runtime Flutter Rust Bridge FFI plugin built through Cargokit. See below.
+- `tray`: system tray for Linux, macOS and Windows. Written for FlClash; replaced the `tray_manager` fork.
 - `wifi_ssid`: Wi-Fi SSID detection.
-- `window_ext`: window extensions.
 - `flutter_distributor`: app packaging/distribution.
+
+## rust_api Crate Layout
+
+`plugins/rust_api/rust/src/` separates the bridge boundary from the code behind it:
+
+- `api/` is the only input flutter_rust_bridge parses (`rust_input: crate::api`). Every function there is a thin
+  delegation, so the generated bindings stay identical on every platform.
+- `ipc/` implements the desktop socket server: `frame` (length-prefixed framing and the write backoff), `queue` (the
+  bounded send queue), `platform` (socket cleanup, Windows peer credentials and the non-blocking pipe reader), and
+  `server` (lifecycle, accept loop, and the `RUNNING`/`STATE` globals).
+- `script/` runs profile override scripts on QuickJS through `rquickjs`.
+
+What a platform does not use, it does not compile. `interprocess` is declared under
+`cfg(not(target_os = "android"))`, and `ipc/mod.rs` swaps in `ipc/unsupported.rs` there, because Android loads the Core
+in-process and never opens a socket. Adding a capability follows the same shape: implement it in its own module, gate the
+dependency by target, and keep the `api/` entry point unconditional so one set of bindings still serves every platform.
+
+`RustLib.init()` runs on every platform now, not only desktop — the script engine is shared.
+
+## Profile Script Engine
+
+`lib/common/javascript.dart` sends the profile as JSON to `evaluate_script`, which runs `main(config)` on QuickJS and
+returns the JSON the script produced. Nothing about the script runs in Dart.
+
+- QuickJS is compiled from source for the target being built, which is what removed the prebuilt `quickjs-c-bridge`
+  binaries: `flutter_js` shipped x64 Windows and desktop-only libraries, so Windows ARM64 could not start (#2361).
+- `rquickjs` carries pre-generated bindings for every target this project builds except the Android ones, so Android
+  builds enable its `bindgen` feature. That needs the NDK's own libclang and sysroot;
+  `cargokit/build_tool/lib/src/android_environment.dart` exports `LIBCLANG_PATH` and `BINDGEN_EXTRA_CLANG_ARGS` for it,
+  which is a local change to vendored Cargokit.
+- Evaluation is bounded: a 10-second interrupt deadline and a memory ceiling, because a script that never returns would
+  otherwise hold the profile forever. `console` is installed before the script runs, since scripts written for other
+  clients log as they work.
+- `rust/tests/fixtures/profile_script.js` is the compatibility regression: an overwrite written for the suite that
+  performs the transform real ones perform, so it exercises `Map`/`Set`, spread, destructuring, optional chaining,
+  nullish coalescing, `Object.fromEntries`, named capture groups and lookbehind in one pass. Keep it first-party and
+  free of external URLs — vendoring somebody's published script here carries their attribution and their links.
 
 ## Rust Helper Service
 
