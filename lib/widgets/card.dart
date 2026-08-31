@@ -1,7 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'fade_box.dart';
@@ -97,11 +97,13 @@ class CommonCard extends StatelessWidget {
     this.shape,
     this.isError = false,
     this.enterActionsOnRight = false,
+    this.skipTraversal = false,
     required this.child,
   }) : isSelected = isSelected ?? false;
 
   final bool enterAnimated;
   final bool enterActionsOnRight;
+  final bool skipTraversal;
   final bool isSelected;
   final bool isError;
   final void Function()? onPressed;
@@ -191,6 +193,60 @@ class CommonCard extends StatelessWidget {
     return colorScheme.primary;
   }
 
+  Widget _buildButton(
+    BuildContext context,
+    Widget childWidget,
+    FocusNode? focusNode,
+  ) {
+    return switch (type == CommonCardType.filled) {
+      true => FilledButton(
+        focusNode: focusNode,
+        onLongPress: onLongPress,
+        clipBehavior: Clip.antiAlias,
+        style:
+            FilledButton.styleFrom(
+              padding: padding ?? EdgeInsets.zero,
+              shape: shape ?? AppShape.all(radius ?? AppCorner.md),
+              iconSize: 20,
+              iconColor: _buildIconColor(context),
+              foregroundColor: _buildForegroundColor(context),
+              side: BorderSide.none,
+              elevation: 0,
+            ).copyWith(
+              backgroundColor: WidgetStatePropertyAll(
+                _buildBackgroundColor(context),
+              ),
+              side: WidgetStateProperty.resolveWith(
+                (states) => _buildBorderSide(context, states),
+              ),
+            ),
+        onPressed: onPressed,
+        child: childWidget,
+      ),
+      false => OutlinedButton(
+        focusNode: focusNode,
+        onLongPress: onLongPress,
+        clipBehavior: Clip.antiAlias,
+        style:
+            OutlinedButton.styleFrom(
+              padding: padding ?? EdgeInsets.zero,
+              shape: shape ?? AppShape.all(radius ?? AppCorner.md),
+              iconSize: 20,
+              iconColor: _buildIconColor(context),
+              backgroundColor: _buildBackgroundColor(context),
+              foregroundColor: _buildForegroundColor(context),
+              elevation: 0,
+            ).copyWith(
+              side: WidgetStateProperty.resolveWith(
+                (states) => _buildBorderSide(context, states),
+              ),
+            ),
+        onPressed: onPressed,
+        child: childWidget,
+      ),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     var childWidget = child;
@@ -215,59 +271,12 @@ class CommonCard extends StatelessWidget {
       childWidget = Stack(children: children);
     }
 
-    final button = switch (type == CommonCardType.filled) {
-      true => FilledButton(
-        onLongPress: onLongPress,
-        clipBehavior: Clip.antiAlias,
-        style:
-            FilledButton.styleFrom(
-              padding: padding ?? EdgeInsets.zero,
-              shape:
-                  shape ??
-                  RoundedSuperellipseBorder(
-                    borderRadius: BorderRadius.circular(radius ?? 14),
-                  ),
-              iconSize: 20,
-              iconColor: _buildIconColor(context),
-              foregroundColor: _buildForegroundColor(context),
-              side: BorderSide.none,
-              elevation: 0,
-            ).copyWith(
-              backgroundColor: WidgetStatePropertyAll(
-                _buildBackgroundColor(context),
-              ),
-              side: WidgetStateProperty.resolveWith(
-                (states) => _buildBorderSide(context, states),
-              ),
-            ),
-        onPressed: onPressed,
-        child: childWidget,
-      ),
-      false => OutlinedButton(
-        onLongPress: onLongPress,
-        clipBehavior: Clip.antiAlias,
-        style:
-            OutlinedButton.styleFrom(
-              padding: padding ?? EdgeInsets.zero,
-              shape:
-                  shape ??
-                  RoundedSuperellipseBorder(
-                    borderRadius: BorderRadius.circular(radius ?? 14),
-                  ),
-              iconSize: 20,
-              iconColor: _buildIconColor(context),
-              backgroundColor: _buildBackgroundColor(context),
-              foregroundColor: _buildForegroundColor(context),
-              elevation: 0,
-            ).copyWith(
-              side: WidgetStateProperty.resolveWith(
-                (states) => _buildBorderSide(context, states),
-              ),
-            ),
-        onPressed: onPressed,
-        child: childWidget,
-      ),
-    };
+    final button = skipTraversal
+        ? _SkipTraversalScope(
+            builder: (focusNode) =>
+                _buildButton(context, childWidget, focusNode),
+          )
+        : _buildButton(context, childWidget, null);
     final card = !enterActionsOnRight
         ? button
         : Focus(
@@ -298,6 +307,35 @@ class CommonCard extends StatelessWidget {
   }
 }
 
+class _SkipTraversalFocusNode extends FocusNode {
+  @override
+  bool get skipTraversal => true;
+}
+
+class _SkipTraversalScope extends StatefulWidget {
+  const _SkipTraversalScope({required this.builder});
+
+  final Widget Function(FocusNode focusNode) builder;
+
+  @override
+  State<_SkipTraversalScope> createState() => _SkipTraversalScopeState();
+}
+
+class _SkipTraversalScopeState extends State<_SkipTraversalScope> {
+  final FocusNode _focusNode = _SkipTraversalFocusNode();
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.builder(_focusNode);
+  }
+}
+
 class SelectIcon extends StatelessWidget {
   const SelectIcon({super.key});
 
@@ -305,7 +343,7 @@ class SelectIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Theme.of(context).colorScheme.inversePrimary,
-      shape: const CircleBorder(),
+      shape: AppShape.circle,
       child: Container(
         padding: const EdgeInsets.all(4),
         child: const Icon(Icons.check, size: 16),

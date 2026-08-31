@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:fl_clash/common/shape.dart';
+import 'package:flutter/foundation.dart';
+import 'package:material_new_shapes/material_new_shapes.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/physics.dart';
 
 enum LoadingIndicatorM3EVariant { defaultStyle, contained }
@@ -12,7 +15,7 @@ class CommonCircleLoading extends StatefulWidget {
   final LoadingIndicatorM3EVariant variant;
   final Color? color;
   final Color? containerColor;
-  final List<StarBorder>? polygons;
+  final List<RoundedPolygon>? polygons;
   final BoxConstraints? constraints;
   final EdgeInsetsGeometry? padding;
   final String? semanticLabel;
@@ -46,57 +49,14 @@ class _CommonCircleLoadingState extends State<CommonCircleLoading>
     height: CommonCircleLoading.defaultDimension,
   );
 
-  static const List<_ShapeSpec> _defaultShapeSequence = [
-    // Soft burst.
-    _ShapeSpec(
-      points: 10,
-      innerRadiusRatio: 0.78,
-      pointRounding: 0.55,
-      valleyRounding: 0.35,
-    ),
-    // Nine-sided cookie.
-    _ShapeSpec(
-      points: 9,
-      innerRadiusRatio: 0.86,
-      pointRounding: 0.62,
-      valleyRounding: 0.28,
-    ),
-    // Pentagon.
-    _ShapeSpec(points: 5, innerRadiusRatio: 0.81, pointRounding: 0.25),
-    // Horizontal pill.
-    _ShapeSpec(
-      points: 2,
-      innerRadiusRatio: 1,
-      pointRounding: 0.5,
-      valleyRounding: 0.5,
-      widthScale: 0.95,
-      heightScale: 0.52,
-      squash: 1,
-    ),
-    // Sunny.
-    _ShapeSpec(
-      points: 8,
-      innerRadiusRatio: 0.58,
-      pointRounding: 0.52,
-      valleyRounding: 0.18,
-    ),
-    // Four-sided cookie.
-    _ShapeSpec(
-      points: 4,
-      innerRadiusRatio: 0.78,
-      pointRounding: 0.62,
-      valleyRounding: 0.28,
-    ),
-    // Vertical oval.
-    _ShapeSpec(
-      points: 2,
-      innerRadiusRatio: 1,
-      pointRounding: 0.5,
-      valleyRounding: 0.5,
-      widthScale: 0.62,
-      heightScale: 0.95,
-      squash: 1,
-    ),
+  static final List<RoundedPolygon> _defaultShapeSequence = [
+    MaterialShapes.softBurst,
+    MaterialShapes.cookie9Sided,
+    MaterialShapes.pentagon,
+    MaterialShapes.pill,
+    MaterialShapes.sunny,
+    MaterialShapes.cookie4Sided,
+    MaterialShapes.oval,
   ];
 
   final SpringSimulation _morphAnimation = SpringSimulation(
@@ -110,6 +70,9 @@ class _CommonCircleLoadingState extends State<CommonCircleLoading>
   late final AnimationController _morphController;
   late final AnimationController _globalRotationController;
   late final Listenable _animation;
+
+  List<RoundedPolygon>? _cachedPolygons;
+  List<Morph>? _cachedMorphs;
 
   var _currentMorphIndex = 0;
   var _morphRotationTargetAngle = _quarterRotation;
@@ -160,11 +123,8 @@ class _CommonCircleLoadingState extends State<CommonCircleLoading>
       LoadingIndicatorM3EVariant.contained =>
         widget.containerColor ?? colorScheme.primaryContainer,
     };
-    final shapeSequence =
-        widget.polygons
-            ?.map(_ShapeSpec.fromStarBorder)
-            .toList(growable: false) ??
-        _defaultShapeSequence;
+    final shapeSequence = widget.polygons ?? _defaultShapeSequence;
+    final morphs = _morphsFor(shapeSequence);
     final padding = (widget.padding ?? EdgeInsets.zero).resolve(
       Directionality.of(context),
     );
@@ -186,7 +146,7 @@ class _CommonCircleLoadingState extends State<CommonCircleLoading>
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: backgroundColor,
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: AppRadius.full,
               ),
               child: Padding(
                 padding: padding,
@@ -204,17 +164,12 @@ class _CommonCircleLoadingState extends State<CommonCircleLoading>
                             morphProgress * _quarterRotation +
                             _morphRotationTargetAngle +
                             _globalRotationController.value * _fullRotation;
-                        final shape = _ShapeSpec.lerp(
-                          shapeSequence[currentMorphIndex],
-                          shapeSequence[(currentMorphIndex + 1) %
-                              shapeSequence.length],
-                          morphProgress,
-                        );
                         return Transform.rotate(
                           angle: rotationDegrees * math.pi / 180,
                           child: CustomPaint(
-                            painter: _ShapePainter(
-                              shape: shape,
+                            painter: _MorphPainter(
+                              morph: morphs[currentMorphIndex],
+                              progress: morphProgress,
                               color: activeColor,
                               scaleFactor: _activeIndicatorScale,
                             ),
@@ -236,6 +191,18 @@ class _CommonCircleLoadingState extends State<CommonCircleLoading>
 
   int get _shapeCount =>
       widget.polygons?.length ?? _defaultShapeSequence.length;
+
+  List<Morph> _morphsFor(List<RoundedPolygon> polygons) {
+    final cachedMorphs = _cachedMorphs;
+    if (cachedMorphs != null && listEquals(_cachedPolygons, polygons)) {
+      return cachedMorphs;
+    }
+    _cachedPolygons = polygons;
+    return _cachedMorphs = [
+      for (var i = 0; i < polygons.length; i++)
+        Morph(polygons[i], polygons[(i + 1) % polygons.length]),
+    ];
+  }
 
   double _resolveDimension(
     BoxConstraints parentConstraints,
@@ -292,87 +259,16 @@ class _CommonCircleLoadingState extends State<CommonCircleLoading>
   }
 }
 
-class _ShapeSpec {
-  final double points;
-  final double innerRadiusRatio;
-  final double pointRounding;
-  final double valleyRounding;
-  final double widthScale;
-  final double heightScale;
-  final double squash;
-
-  const _ShapeSpec({
-    required this.points,
-    required this.innerRadiusRatio,
-    required this.pointRounding,
-    this.valleyRounding = 0,
-    this.widthScale = 1,
-    this.heightScale = 1,
-    this.squash = 0,
-  });
-
-  static _ShapeSpec lerp(_ShapeSpec begin, _ShapeSpec end, double progress) {
-    return _ShapeSpec(
-      points: _lerp(begin.points, end.points, progress),
-      innerRadiusRatio: _lerp(
-        begin.innerRadiusRatio,
-        end.innerRadiusRatio,
-        progress,
-      ),
-      pointRounding: _lerp(begin.pointRounding, end.pointRounding, progress),
-      valleyRounding: _lerp(begin.valleyRounding, end.valleyRounding, progress),
-      widthScale: _lerp(begin.widthScale, end.widthScale, progress),
-      heightScale: _lerp(begin.heightScale, end.heightScale, progress),
-      squash: _lerp(begin.squash, end.squash, progress),
-    );
-  }
-
-  static _ShapeSpec fromStarBorder(StarBorder border) {
-    return _ShapeSpec(
-      points: border.points,
-      innerRadiusRatio: border.innerRadiusRatio,
-      pointRounding: border.pointRounding,
-      valleyRounding: border.valleyRounding,
-      squash: border.squash,
-    );
-  }
-
-  static double _lerp(double begin, double end, double progress) {
-    return begin + (end - begin) * progress;
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is _ShapeSpec &&
-        other.points == points &&
-        other.innerRadiusRatio == innerRadiusRatio &&
-        other.pointRounding == pointRounding &&
-        other.valleyRounding == valleyRounding &&
-        other.widthScale == widthScale &&
-        other.heightScale == heightScale &&
-        other.squash == squash;
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    points,
-    innerRadiusRatio,
-    pointRounding,
-    valleyRounding,
-    widthScale,
-    heightScale,
-    squash,
-  );
-}
-
-class _ShapePainter extends CustomPainter {
-  final _ShapeSpec shape;
+class _MorphPainter extends CustomPainter {
+  final Morph morph;
+  final double progress;
   final Color color;
   final double scaleFactor;
   final Paint _paint;
 
-  _ShapePainter({
-    required this.shape,
+  _MorphPainter({
+    required this.morph,
+    required this.progress,
     required this.color,
     required this.scaleFactor,
   }) : _paint = Paint()
@@ -382,24 +278,19 @@ class _ShapePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final rect = Rect.fromCenter(
-      center: size.center(Offset.zero),
-      width: size.width * scaleFactor * shape.widthScale,
-      height: size.height * scaleFactor * shape.heightScale,
-    );
-    final border = StarBorder(
-      points: shape.points,
-      innerRadiusRatio: shape.innerRadiusRatio,
-      pointRounding: shape.pointRounding,
-      valleyRounding: shape.valleyRounding,
-      squash: shape.squash,
-    );
-    canvas.drawPath(border.getOuterPath(rect), _paint);
+    final scale = size.width * scaleFactor;
+    final offset = (size.width - scale) / 2;
+    canvas.save();
+    canvas.translate(offset, offset);
+    canvas.scale(scale);
+    canvas.drawPath(morph.toPath(progress: progress), _paint);
+    canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant _ShapePainter oldDelegate) {
-    return oldDelegate.shape != shape ||
+  bool shouldRepaint(covariant _MorphPainter oldDelegate) {
+    return oldDelegate.morph != morph ||
+        oldDelegate.progress != progress ||
         oldDelegate.color != color ||
         oldDelegate.scaleFactor != scaleFactor;
   }

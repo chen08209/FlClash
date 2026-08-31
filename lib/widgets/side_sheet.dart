@@ -1,7 +1,8 @@
 import 'dart:ui';
 
 import 'package:fl_clash/common/color.dart';
-import 'package:flutter/material.dart';
+import 'package:fl_clash/common/shape.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 
 const Duration _bottomSheetEnterDuration = Duration(milliseconds: 300);
@@ -82,9 +83,7 @@ class _SideSheetState extends State<SideSheet> {
     final Color surfaceTintColor = colorScheme.surfaceTint;
     final Color shadowColor = widget.shadowColor ?? Colors.transparent;
     final double elevation = widget.elevation ?? 0;
-    final ShapeBorder shape =
-        widget.shape ??
-        RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(0));
+    final ShapeBorder shape = widget.shape ?? AppShape.none;
 
     final BoxConstraints constraints =
         widget.constraints ??

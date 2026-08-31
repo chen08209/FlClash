@@ -1,20 +1,26 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 
 class NullStatus extends StatelessWidget {
   final String label;
+  final String? description;
+  final Widget? action;
   final Widget illustration;
 
   const NullStatus({
     super.key,
     required this.label,
+    this.description,
+    this.action,
     this.illustration = const DataEmptyIllustration(),
   });
 
   @override
   Widget build(BuildContext context) {
+    final description = this.description;
+    final action = this.action;
     return Align(
       alignment: const Alignment(0.0, -0.25),
       child: Wrap(
@@ -28,6 +34,20 @@ class NullStatus extends StatelessWidget {
             label,
             style: Theme.of(context).textTheme.titleMedium?.toBold.toLight,
           ),
+          if (description != null) ...[
+            const SizedBox(height: 8),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 280),
+              child: Text(
+                description,
+                textAlign: TextAlign.center,
+                style: context.textTheme.bodyMedium?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+          if (action != null) ...[const SizedBox(height: 24), action],
         ],
       ),
     );

@@ -1,6 +1,6 @@
 import 'package:animations/animations.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class FadeBox extends StatelessWidget {
   final Widget child;
@@ -168,6 +168,94 @@ class _FadeScaleEnterBoxState extends State<FadeScaleEnterBox>
         return FadeScaleEnterTransition(animation: _animation, child: child!);
       },
       child: widget.child,
+    );
+  }
+}
+
+const _defaultSlideDistance = 24.0;
+
+class FadeSlideEnterBox extends StatefulWidget {
+  final Duration delay;
+  final double distance;
+  final Widget child;
+
+  const FadeSlideEnterBox({
+    super.key,
+    this.delay = Duration.zero,
+    this.distance = _defaultSlideDistance,
+    required this.child,
+  });
+
+  @override
+  State<FadeSlideEnterBox> createState() => _FadeSlideEnterBoxState();
+}
+
+class _FadeSlideEnterBoxState extends State<FadeSlideEnterBox>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    final total = commonDuration + widget.delay;
+    _controller = AnimationController(vsync: this, duration: total);
+    final start = widget.delay.inMicroseconds / total.inMicroseconds;
+    _animation = start == 0
+        ? _controller.view
+        : _controller.drive(CurveTween(curve: Interval(start, 1)));
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeSlideEnterTransition(
+      animation: _animation,
+      distance: widget.distance,
+      child: widget.child,
+    );
+  }
+}
+
+class FadeSlideEnterTransition extends StatelessWidget {
+  const FadeSlideEnterTransition({
+    super.key,
+    required this.animation,
+    this.distance = _defaultSlideDistance,
+    this.child,
+  });
+
+  final Animation<double> animation;
+  final double distance;
+  final Widget? child;
+
+  static final Animatable<double> _fadeInTransition = CurveTween(
+    curve: const Interval(0.0, 0.25),
+  );
+  static final Animatable<double> _slideInCurve = CurveTween(
+    curve: Easing.emphasizedDecelerate,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final slide = Tween<double>(
+      begin: -distance,
+      end: 0,
+    ).chain(_slideInCurve).animate(animation);
+    return FadeTransition(
+      opacity: _fadeInTransition.animate(animation),
+      child: AnimatedBuilder(
+        animation: slide,
+        builder: (_, child) =>
+            Transform.translate(offset: Offset(slide.value, 0), child: child),
+        child: child,
+      ),
     );
   }
 }
