@@ -12,7 +12,7 @@ use std::io::{BufRead, Error, Read};
 use std::os::windows::fs::OpenOptionsExt;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
-use std::sync::Mutex;
+use std::sync::{Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 use std::{io, thread};
 use warp::http::StatusCode;
@@ -68,9 +68,17 @@ struct StopResponse {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ErrorDetails {
+    os_error: i32,
+}
+
+#[derive(Serialize)]
 struct ErrorResponse {
     code: &'static str,
     message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    details: Option<ErrorDetails>,
 }
 
 struct ManagedCore {
@@ -199,6 +207,12 @@ static LOGS: Lazy<Mutex<VecDeque<String>>> =
     Lazy::new(|| Mutex::new(VecDeque::with_capacity(LOG_CAPACITY)));
 static MANAGED_CORE: Lazy<Mutex<Option<ManagedCore>>> = Lazy::new(|| Mutex::new(None));
 
+fn lock_surviving_poison<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
+    mutex
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
 fn release_managed_core(managed: &mut Option<ManagedCore>) -> Result<(), Error> {
     let Some(core) = managed.as_mut() else {
         return Ok(());
@@ -221,8 +235,24 @@ fn error_response(
         &ErrorResponse {
             code,
             message: message.into(),
+            details: None,
         },
         status,
+    )
+}
+
+/// The OS error code is what lets the app tell a Core that Windows refused on
+/// policy grounds (Smart App Control, AppLocker) from one that is broken.
+fn launch_failure_response(error: &Error) -> warp::reply::Response {
+    json_response(
+        &ErrorResponse {
+            code: "processLaunchFailed",
+            message: error.to_string(),
+            details: error
+                .raw_os_error()
+                .map(|os_error| ErrorDetails { os_error }),
+        },
+        StatusCode::INTERNAL_SERVER_ERROR,
     )
 }
 
@@ -242,7 +272,7 @@ fn start(start_params: StartParams) -> warp::reply::Response {
         );
     }
 
-    let mut managed = MANAGED_CORE.lock().unwrap();
+    let mut managed = lock_surviving_poison(&MANAGED_CORE);
     if let Err(error) = release_managed_core(&mut managed) {
         log_message(format!(
             "Helper could not release the managed Core: {error}"
@@ -296,11 +326,7 @@ fn start(start_params: StartParams) -> warp::reply::Response {
         }
         Err(e) => {
             log_message(e.to_string());
-            error_response(
-                "processLaunchFailed",
-                e.to_string(),
-                StatusCode::INTERNAL_SERVER_ERROR,
-            )
+            launch_failure_response(&e)
         }
     }
 }
@@ -313,7 +339,7 @@ fn stop_core(stop_params: StopParams) -> warp::reply::Response {
             StatusCode::BAD_REQUEST,
         );
     }
-    let mut managed = MANAGED_CORE.lock().unwrap();
+    let mut managed = lock_surviving_poison(&MANAGED_CORE);
     match stop_decision(
         managed.as_ref().map(|core| core.session_id.as_str()),
         &stop_params.session_id,
@@ -356,7 +382,7 @@ fn stop_core(stop_params: StopParams) -> warp::reply::Response {
 }
 
 fn log_message(message: String) {
-    let mut log_buffer = LOGS.lock().unwrap();
+    let mut log_buffer = lock_surviving_poison(&LOGS);
     while log_buffer.len() >= LOG_CAPACITY {
         log_buffer.pop_front();
     }
@@ -364,7 +390,7 @@ fn log_message(message: String) {
 }
 
 fn get_logs() -> impl Reply {
-    let log_buffer = LOGS.lock().unwrap();
+    let log_buffer = lock_surviving_poison(&LOGS);
     let value = log_buffer
         .iter()
         .cloned()
@@ -544,7 +570,7 @@ where
         .map_err(|error| anyhow::anyhow!("bind helper server: {error}"))?;
     on_started()?;
     server.await;
-    let mut managed = MANAGED_CORE.lock().unwrap();
+    let mut managed = lock_surviving_poison(&MANAGED_CORE);
     if let Err(error) = release_managed_core(&mut managed) {
         log_message(format!(
             "Helper could not stop the managed Core on shutdown: {error}"
@@ -604,7 +630,7 @@ mod tests {
     }
 
     fn adopt_core(session_id: &str) {
-        *MANAGED_CORE.lock().unwrap() = Some(ManagedCore {
+        *lock_surviving_poison(&MANAGED_CORE) = Some(ManagedCore {
             session_id: session_id.to_string(),
             child: spawn_running_core(),
         });
@@ -739,6 +765,35 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn a_launch_failure_carries_the_os_error_code() {
+        let response = launch_failure_response(&Error::from_raw_os_error(577));
+
+        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        let body: serde_json::Value = serde_json::from_slice(
+            &warp::hyper::body::to_bytes(response.into_body())
+                .await
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(body["code"], "processLaunchFailed");
+        assert_eq!(body["details"]["osError"], 577);
+    }
+
+    #[tokio::test]
+    async fn a_launch_failure_without_an_os_error_omits_the_details() {
+        let response = launch_failure_response(&Error::other("spawn refused"));
+
+        let body: serde_json::Value = serde_json::from_slice(
+            &warp::hyper::body::to_bytes(response.into_body())
+                .await
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(body["message"], "spawn refused");
+        assert!(body.get("details").is_none());
+    }
+
+    #[tokio::test]
     async fn start_rejects_a_caller_supplied_core_argument() {
         let response = warp::test::request()
             .method("POST")
@@ -759,7 +814,7 @@ mod tests {
     #[allow(clippy::await_holding_lock)]
     async fn start_releases_the_managed_core_before_rejecting_an_unverified_core() {
         let _state = lock_process_state();
-        *MANAGED_CORE.lock().unwrap() = Some(ManagedCore {
+        *lock_surviving_poison(&MANAGED_CORE) = Some(ManagedCore {
             session_id: "fedcba9876543210fedcba9876543210".to_string(),
             child: spawn_placeholder_core(),
         });
@@ -777,7 +832,7 @@ mod tests {
         assert_eq!(response.status(), StatusCode::CONFLICT);
         let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
         assert_eq!(body["code"], "coreVerificationFailed");
-        assert!(MANAGED_CORE.lock().unwrap().is_none());
+        assert!(lock_surviving_poison(&MANAGED_CORE).is_none());
     }
 
     #[tokio::test]
@@ -800,7 +855,7 @@ mod tests {
         let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
         assert_eq!(body["stopped"], true);
         assert!(body.get("reason").is_none());
-        assert!(MANAGED_CORE.lock().unwrap().is_none());
+        assert!(lock_surviving_poison(&MANAGED_CORE).is_none());
     }
 
     #[tokio::test]
@@ -822,7 +877,7 @@ mod tests {
         let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
         assert_eq!(body["reason"], "sessionMismatch");
 
-        let mut managed = MANAGED_CORE.lock().unwrap();
+        let mut managed = lock_surviving_poison(&MANAGED_CORE);
         let core = managed.as_mut().expect("Core stays owned");
         assert_eq!(core.session_id, "fedcba9876543210fedcba9876543210");
         assert!(core.child.try_wait().unwrap().is_none());
@@ -955,5 +1010,31 @@ mod tests {
         assert!(!is_allowed_core_pipe(
             r"\\.\pipe\FlClashCore_ABCDEF0123456789abcdef0123456789"
         ));
+    }
+
+    #[test]
+    fn a_poisoned_lock_still_hands_out_the_guarded_value() {
+        let mutex = Mutex::new(7);
+        let _ = std::panic::catch_unwind(|| {
+            let _guard = mutex.lock().unwrap();
+            panic!("poison the lock");
+        });
+
+        assert!(mutex.lock().is_err());
+        assert_eq!(*lock_surviving_poison(&mutex), 7);
+    }
+
+    #[test]
+    fn logging_survives_a_panic_that_poisoned_the_log_buffer() {
+        let _ = std::panic::catch_unwind(|| {
+            let _guard = LOGS.lock().unwrap();
+            panic!("poison the log buffer");
+        });
+
+        log_message("helper still logs after poisoning".to_string());
+
+        assert!(lock_surviving_poison(&LOGS)
+            .iter()
+            .any(|entry| entry == "helper still logs after poisoning"));
     }
 }

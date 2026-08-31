@@ -44,15 +44,19 @@ Rust source                Generated Dart            Public Dart API
 ─────────────────────      ─────────────────────     ─────────────────
 rust/src/api/              lib/src/rust/api/          lib/rust_api.dart
   mod.rs ──► init.rs         (init has no Dart file)
-  named_pipe.rs              named_pipe.dart
-                           lib/src/rust/
-                             frb_generated.dart      (re-exports RustLib)
+  ipc.rs      ──────────►    ipc.dart
+  script.rs   ──────────►    script.dart
+rust/src/ipc/              lib/src/rust/
+rust/src/script/             frb_generated.dart      (re-exports RustLib)
                              frb_generated.io.dart   (FFI for native)
                              frb_generated.web.dart  (stub for web)
 ```
 
 - **Rust side** (`rust/src/api/`): Functions annotated with `#[flutter_rust_bridge::frb]` attributes. The `mod.rs`
-  declares API modules.
+  declares API modules. Keep these entry points thin and unconditional — one set of bindings serves every platform, so a
+  function that is cfg'd out on some target breaks the generated code. The implementations live outside `api/`
+  (`rust/src/ipc/`, `rust/src/script/`) and are where platform gating belongs; see
+  `.agents/architecture.md` in the repository root.
 - **Generated Dart** (`lib/src/rust/`): Auto-generated top-level functions that delegate through `RustLib.instance.api`.
 - **Public API** (`lib/rust_api.dart`): Re-exports generated functions and `RustLib` for initialization.
 - **`RustLib`** is the singleton entrypoint. Call `RustLib.init()` before calling any API functions, and

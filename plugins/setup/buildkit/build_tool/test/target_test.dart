@@ -7,8 +7,11 @@ void main() {
     test('defaults to all Android targets', () {
       final targets = Target.resolveAndroidTargets();
 
-      expect(targets,
-          [Target.androidArm, Target.androidArm64, Target.androidAmd64]);
+      expect(targets, [
+        Target.androidArm,
+        Target.androidArm64,
+        Target.androidAmd64,
+      ]);
     });
 
     test('maps a Flutter target platform to the matching Android target', () {

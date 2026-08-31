@@ -77,8 +77,9 @@ class Target {
 
     final androidTargets = forPlatform('android');
     if (archName != null) {
-      final targets =
-          androidTargets.where((t) => t.goarch == archName).toList();
+      final targets = androidTargets
+          .where((t) => t.goarch == archName)
+          .toList();
       if (targets.isEmpty) {
         throw BuildException('Invalid arch: $archName');
       }

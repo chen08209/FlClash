@@ -91,26 +91,19 @@ class RustBuilder {
     final builder = FingerprintBuilder(rootDir: rootDir)
       ..addValue('cache_schema', BuildCache.schemaVersion)
       ..addValue('kind', 'windows-helper')
-      ..addValue('target', {
-        'goos': target.goos,
-        'goarch': target.goarch,
-      })
+      ..addValue('target', {'goos': target.goos, 'goarch': target.goarch})
       ..addValue('arguments', args)
       ..addValue('core_sha256', coreSha256)
       ..addValue('environment', _rustEnvironment())
       ..addValue('config', config.toFingerprintMap());
 
-    final cargoVersion = runCommand(
-      'cargo',
-      ['--version'],
-      workingDirectory: _helperPath,
-    );
+    final cargoVersion = runCommand('cargo', [
+      '--version',
+    ], workingDirectory: _helperPath);
     builder.addValue('cargo_version', (cargoVersion.stdout as String).trim());
-    final rustVersion = runCommand(
-      'rustc',
-      ['-Vv'],
-      workingDirectory: _helperPath,
-    );
+    final rustVersion = runCommand('rustc', [
+      '-Vv',
+    ], workingDirectory: _helperPath);
     builder.addValue('rustc_version', (rustVersion.stdout as String).trim());
 
     final inputs = collectFiles(

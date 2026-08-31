@@ -10,10 +10,7 @@ import 'error.dart';
 final _log = Logger('build_cache');
 
 class BuildExecution {
-  const BuildExecution({
-    required this.primaryOutput,
-    required this.rebuilt,
-  });
+  const BuildExecution({required this.primaryOutput, required this.rebuilt});
 
   final String primaryOutput;
   final bool rebuilt;
@@ -31,13 +28,13 @@ class BuildNotice {
 
 class BuildCache {
   BuildCache({required String rootDir})
-      : rootDir = p.normalize(p.absolute(rootDir)),
-        cacheDir = p.join(
-          p.normalize(p.absolute(rootDir)),
-          '.dart_tool',
-          'setup_build_cache',
-          'v1',
-        );
+    : rootDir = p.normalize(p.absolute(rootDir)),
+      cacheDir = p.join(
+        p.normalize(p.absolute(rootDir)),
+        '.dart_tool',
+        'setup_build_cache',
+        'v1',
+      );
 
   static const int schemaVersion = 1;
   static final Map<String, _AsyncLock> _processLocks = {};
@@ -97,10 +94,7 @@ class BuildCache {
               primaryOutput: primaryOutput,
             );
       if (missReason == null) {
-        return BuildExecution(
-          primaryOutput: primaryOutput,
-          rebuilt: false,
-        );
+        return BuildExecution(primaryOutput: primaryOutput, rebuilt: false);
       }
 
       notice.show(key: key, reason: missReason);
@@ -112,10 +106,7 @@ class BuildCache {
         fingerprint: currentFingerprint,
         outputs: metadata,
       );
-      return BuildExecution(
-        primaryOutput: primaryOutput,
-        rebuilt: true,
-      );
+      return BuildExecution(primaryOutput: primaryOutput, rebuilt: true);
     } finally {
       try {
         await lock.unlock();

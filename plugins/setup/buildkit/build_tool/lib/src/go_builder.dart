@@ -17,9 +17,7 @@ final _log = Logger('go_builder');
 
 String _resolveCc(Target target) {
   final ndk = Environment.androidNdk;
-  final prebuiltDir = Directory(
-    p.join(ndk, 'toolchains', 'llvm', 'prebuilt'),
-  );
+  final prebuiltDir = Directory(p.join(ndk, 'toolchains', 'llvm', 'prebuilt'));
   final entries = prebuiltDir
       .listSync()
       .where((e) => !p.basename(e.path).startsWith('.'))
@@ -113,10 +111,7 @@ class GoBuilder {
   }
 
   Map<String, String> _buildEnvironment(Target target) {
-    final env = <String, String>{
-      'GOOS': target.goos,
-      'GOARCH': target.goarch,
-    };
+    final env = <String, String>{'GOOS': target.goos, 'GOARCH': target.goarch};
     if (target.isLib) {
       env
         ..['CGO_ENABLED'] = '1'
@@ -129,12 +124,12 @@ class GoBuilder {
   }
 
   List<String> _buildArguments(Target target, {String? outFile}) => [
-        'build',
-        '-ldflags=${config.goLdflags}',
-        '-tags=${config.tags}',
-        if (target.isLib) '-buildmode=c-shared',
-        if (outFile != null) ...['-o', outFile],
-      ];
+    'build',
+    '-ldflags=${config.goLdflags}',
+    '-tags=${config.tags}',
+    if (target.isLib) '-buildmode=c-shared',
+    if (outFile != null) ...['-o', outFile],
+  ];
 
   Future<String> _calculateFingerprint(Target target) async {
     final env = _buildEnvironment(target);
@@ -256,11 +251,20 @@ class GoBuilder {
     required String libName,
   }) async {
     final includesPath = p.join(outDir, 'includes', archName);
-    final androidCoreMainPath =
-        p.join(rootDir, 'android', 'core', 'src', 'main');
+    final androidCoreMainPath = p.join(
+      rootDir,
+      'android',
+      'core',
+      'src',
+      'main',
+    );
     final jniLibsPath = p.join(androidCoreMainPath, 'jniLibs', abiDir);
-    final cppIncludesPath =
-        p.join(androidCoreMainPath, 'cpp', 'includes', archName);
+    final cppIncludesPath = p.join(
+      androidCoreMainPath,
+      'cpp',
+      'includes',
+      archName,
+    );
     final outputs = <String>[];
 
     ensureDir(jniLibsPath);

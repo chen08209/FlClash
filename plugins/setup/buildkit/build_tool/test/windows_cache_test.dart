@@ -31,36 +31,33 @@ void main() {
   });
 
   Future<BuildExecution> buildCore(String fingerprint) => cache.run(
-        key: 'windows-amd64-core',
-        fingerprint: () async => fingerprint,
-        primaryOutput: coreOutput.path,
-        notice: notice,
-        build: () async {
-          coreBuilds++;
-          coreOutput.writeAsStringSync('core-$fingerprint');
-          return [coreOutput.path];
-        },
-      );
+    key: 'windows-amd64-core',
+    fingerprint: () async => fingerprint,
+    primaryOutput: coreOutput.path,
+    notice: notice,
+    build: () async {
+      coreBuilds++;
+      coreOutput.writeAsStringSync('core-$fingerprint');
+      return [coreOutput.path];
+    },
+  );
 
   Future<BuildExecution> buildHelper({
     required String coreSha256,
     required String sourceFingerprint,
     bool stopRunningHelper = false,
-  }) =>
-      cache.run(
-        key: 'windows-amd64-helper-release',
-        fingerprint: () async => '$sourceFingerprint:$coreSha256',
-        primaryOutput: helperOutput.path,
-        notice: notice,
-        build: () async {
-          if (stopRunningHelper) taskKills++;
-          helperBuilds++;
-          helperOutput.writeAsStringSync(
-            'helper-$sourceFingerprint-$coreSha256',
-          );
-          return [helperOutput.path];
-        },
-      );
+  }) => cache.run(
+    key: 'windows-amd64-helper-release',
+    fingerprint: () async => '$sourceFingerprint:$coreSha256',
+    primaryOutput: helperOutput.path,
+    notice: notice,
+    build: () async {
+      if (stopRunningHelper) taskKills++;
+      helperBuilds++;
+      helperOutput.writeAsStringSync('helper-$sourceFingerprint-$coreSha256');
+      return [helperOutput.path];
+    },
+  );
 
   test('core and release helper both skip when unchanged', () async {
     await buildCore('core-a');
@@ -71,8 +68,7 @@ void main() {
       (await buildHelper(
         coreSha256: 'sha-a',
         sourceFingerprint: 'helper-a',
-      ))
-          .rebuilt,
+      )).rebuilt,
       isFalse,
     );
     expect(coreBuilds, 1);
@@ -88,8 +84,7 @@ void main() {
       (await buildHelper(
         coreSha256: 'sha-a',
         sourceFingerprint: 'helper-b',
-      ))
-          .rebuilt,
+      )).rebuilt,
       isTrue,
     );
     expect(coreBuilds, 1);
@@ -103,8 +98,7 @@ void main() {
       (await buildHelper(
         coreSha256: 'sha-b',
         sourceFingerprint: 'helper-a',
-      ))
-          .rebuilt,
+      )).rebuilt,
       isTrue,
     );
     expect(helperBuilds, 2);
@@ -123,8 +117,7 @@ void main() {
         coreSha256: 'sha-a',
         sourceFingerprint: 'helper-a',
         stopRunningHelper: true,
-      ))
-          .rebuilt,
+      )).rebuilt,
       isFalse,
     );
     expect(taskKills, 1);
