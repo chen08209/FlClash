@@ -5,6 +5,158 @@ import 'package:fl_clash/common/function.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('Debouncer', () {
+    const window = Duration(milliseconds: 20);
+
+    test('runs the callback once the quiet window elapses', () async {
+      final debouncer = Debouncer();
+      var calls = 0;
+
+      debouncer.call('tag', () => calls++, duration: window);
+      expect(calls, 0);
+
+      await Future<void>.delayed(window * 2);
+      expect(calls, 1);
+    });
+
+    test('a later call replaces the pending one', () async {
+      final debouncer = Debouncer();
+      final seen = <String>[];
+
+      debouncer.call('tag', () => seen.add('first'), duration: window);
+      debouncer.call('tag', () => seen.add('second'), duration: window);
+      await Future<void>.delayed(window * 2);
+
+      expect(seen, ['second']);
+    });
+
+    test('separate tags do not replace each other', () async {
+      final debouncer = Debouncer();
+      final seen = <String>[];
+
+      debouncer.call('a', () => seen.add('a'), duration: window);
+      debouncer.call('b', () => seen.add('b'), duration: window);
+      await Future<void>.delayed(window * 2);
+
+      expect(seen..sort(), ['a', 'b']);
+    });
+
+    test('cancel stops a pending callback from ever running', () async {
+      final debouncer = Debouncer();
+      var calls = 0;
+
+      debouncer.call('tag', () => calls++, duration: window);
+      debouncer.cancel('tag');
+      await Future<void>.delayed(window * 3);
+
+      expect(calls, 0);
+    });
+
+    test('cancel only drops the tag it names', () async {
+      final debouncer = Debouncer();
+      final seen = <String>[];
+
+      debouncer.call('keep', () => seen.add('keep'), duration: window);
+      debouncer.call('drop', () => seen.add('drop'), duration: window);
+      debouncer.cancel('drop');
+      await Future<void>.delayed(window * 2);
+
+      expect(seen, ['keep']);
+    });
+
+    test('a tag stays usable after being cancelled', () async {
+      final debouncer = Debouncer();
+      var calls = 0;
+
+      debouncer.call('tag', () => calls++, duration: window);
+      debouncer.cancel('tag');
+      debouncer.call('tag', () => calls++, duration: window);
+      await Future<void>.delayed(window * 2);
+
+      expect(calls, 1);
+    });
+
+    test('a throwing callback is reported instead of escaping', () async {
+      final debouncer = Debouncer();
+
+      debouncer.call('tag', () => throw StateError('boom'), duration: window);
+      await Future<void>.delayed(window * 2);
+    });
+
+    test('a rejected async callback is reported instead of escaping', () async {
+      final debouncer = Debouncer();
+
+      debouncer.call(
+        'tag',
+        () async => throw StateError('boom'),
+        duration: window,
+      );
+      await Future<void>.delayed(window * 2);
+    });
+
+    test(
+      'a value-returning async callback still reports its failure',
+      () async {
+        final debouncer = Debouncer();
+
+        debouncer.call('tag', () async {
+          await Future<void>.delayed(Duration.zero);
+          throw StateError('boom');
+        }, duration: window);
+        await Future<void>.delayed(window * 3);
+      },
+    );
+  });
+
+  group('Throttler', () {
+    const window = Duration(milliseconds: 20);
+
+    test('reports whether a tag was already in flight', () {
+      final throttler = Throttler();
+
+      expect(throttler.call('tag', () {}, duration: window), isFalse);
+      expect(throttler.call('tag', () {}, duration: window), isTrue);
+    });
+
+    test('runs the callback at the end of the window by default', () async {
+      final throttler = Throttler();
+      var calls = 0;
+
+      throttler.call('tag', () => calls++, duration: window);
+      expect(calls, 0);
+
+      await Future<void>.delayed(window * 2);
+      expect(calls, 1);
+    });
+
+    test('fire runs the callback immediately and then blocks', () async {
+      final throttler = Throttler();
+      var calls = 0;
+
+      throttler.call('tag', () => calls++, duration: window, fire: true);
+      expect(calls, 1);
+
+      throttler.call('tag', () => calls++, duration: window, fire: true);
+      expect(calls, 1);
+
+      await Future<void>.delayed(window * 2);
+      throttler.call('tag', () => calls++, duration: window, fire: true);
+      expect(calls, 2);
+    });
+
+    test('cancel releases the tag without running the callback', () async {
+      final throttler = Throttler();
+      var calls = 0;
+
+      throttler.call('tag', () => calls++, duration: window);
+      throttler.cancel('tag');
+      await Future<void>.delayed(window * 2);
+
+      expect(calls, 0);
+      expect(throttler.call('tag', () {}, duration: window), isFalse);
+    });
+  });
+
   group('SerialTaskScheduler', () {
     test('serializes tasks in submission order', () async {
       final scheduler = SerialTaskScheduler();

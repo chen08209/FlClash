@@ -46,10 +46,11 @@ Future<String> _encodeMD5<T>(String content) async {
 }
 
 Future<List<Group>> toGroupsTask(ComputeGroupsState data) async {
-  return compute<ComputeGroupsState, List<Group>>(_toGroupsTask, data);
+  return compute<ComputeGroupsState, List<Group>>(buildGroups, data);
 }
 
-Future<List<Group>> _toGroupsTask(ComputeGroupsState state) async {
+@visibleForTesting
+Future<List<Group>> buildGroups(ComputeGroupsState state) async {
   final proxiesData = state.proxiesData;
   final all = proxiesData.all;
   final sortType = state.sortType;
@@ -58,21 +59,18 @@ Future<List<Group>> _toGroupsTask(ComputeGroupsState state) async {
   final defaultTestUrl = state.defaultTestUrl;
   final proxies = proxiesData.proxies;
   if (proxies.isEmpty) return [];
-  final groupsRaw = all
-      .where((name) {
-        final proxy = proxies[name] ?? {};
-        return GroupTypeExtension.valueList.contains(proxy['type']);
-      })
-      .map((groupName) {
-        final group = proxies[groupName];
-        group['all'] = ((group['all'] ?? []) as List)
-            .map((name) => proxies[name])
-            .where((proxy) => proxy != null)
-            .toList();
-        return group;
-      })
-      .toList();
-  final groups = groupsRaw.map((e) => Group.fromJson(e)).toList();
+  final groups = <Group>[];
+  for (final groupName in all) {
+    final raw = proxies[groupName];
+    if (raw is! Map) continue;
+    if (!GroupTypeExtension.valueList.contains(raw['type'])) continue;
+    final memberNames = raw['all'];
+    final group = Map<String, dynamic>.from(raw);
+    group['all'] = memberNames is List
+        ? memberNames.map((name) => proxies[name]).nonNulls.toList()
+        : const [];
+    groups.add(Group.fromJson(group));
+  }
   return computeSort(
     groups: groups,
     sortType: sortType,
@@ -82,16 +80,33 @@ Future<List<Group>> _toGroupsTask(ComputeGroupsState state) async {
   );
 }
 
-Future<VM2<String, String>> makeRealProfileTask(
+Future<ClashConfig> clashConfigTask(Map<String, dynamic> data) async {
+  return compute<Map<String, dynamic>, ClashConfig>(buildClashConfig, data);
+}
+
+@visibleForTesting
+ClashConfig buildClashConfig(Map<String, dynamic> configMap) {
+  final clashConfig = ClashConfig.fromJson(configMap);
+  final proxyTypeMap = <String, String>{};
+  for (final proxy in clashConfig.proxies) {
+    proxyTypeMap[proxy.name] = proxy.type;
+  }
+  for (final proxyGroup in clashConfig.proxyGroups) {
+    proxyTypeMap[proxyGroup.name] = proxyGroup.type.value;
+  }
+  return clashConfig.copyWith(proxyTypeMap: proxyTypeMap);
+}
+
+Future<({String yaml, String md5})> makeRealProfileTask(
   MakeRealProfileState data,
 ) async {
-  return compute<MakeRealProfileState, VM2<String, String>>(
+  return compute<MakeRealProfileState, ({String yaml, String md5})>(
     _makeRealProfileTask,
     data,
   );
 }
 
-Future<VM2<String, String>> _makeRealProfileTask(
+Future<({String yaml, String md5})> _makeRealProfileTask(
   MakeRealProfileState data,
 ) async {
   final rawConfig = Map.from(data.rawConfig);
@@ -102,19 +117,53 @@ Future<VM2<String, String>> _makeRealProfileTask(
   final addedRules = data.addedRules;
   final appendSystemDns = data.appendSystemDns;
   final defaultUA = data.defaultUA;
-  String getProvidersFilePathInner(String type, String url) {
+  String getProvidersFilePathInner(String type, String key) {
     return join(
       profilesPath,
-      'providers',
+      providersDirectoryName,
       profileId.toString(),
       type,
-      url.toMd5(),
+      key.toMd5(),
     );
+  }
+
+  void confineProviders(String section, String type) {
+    final providers = rawConfig[section];
+    if (providers is! Map) {
+      return;
+    }
+    for (final name in providers.keys) {
+      final provider = providers[name];
+      if (provider is! Map || provider['type'] == 'inline') {
+        continue;
+      }
+      // Two providers may share a URL and differ only by header.
+      final url = provider['url'];
+      final hasUrl = url is String && url.isNotEmpty;
+      final path = getProvidersFilePathInner(
+        type,
+        hasUrl ? '$name@$url' : '$section/$name',
+      );
+      if (hasUrl) {
+        _migrateLegacyProviderFile(
+          legacyPath: getProvidersFilePathInner(type, url),
+          newPath: path,
+        );
+      }
+      provider['path'] = path;
+    }
   }
 
   rawConfig['external-controller'] = realPatchConfig.externalController.value;
   rawConfig['external-ui'] = '';
-  rawConfig['interface-name'] = '';
+  switch (realPatchConfig.interfaceNameMode) {
+    case InterfaceNameMode.clear:
+      rawConfig['interface-name'] = '';
+    case InterfaceNameMode.follow:
+      break;
+    case InterfaceNameMode.custom:
+      rawConfig['interface-name'] = realPatchConfig.interfaceName;
+  }
   rawConfig['external-ui-url'] = '';
   rawConfig['tcp-concurrent'] = realPatchConfig.tcpConcurrent;
   rawConfig['unified-delay'] = realPatchConfig.unifiedDelay;
@@ -141,6 +190,8 @@ Future<VM2<String, String>> _makeRealProfileTask(
   rawConfig['tun']['route-address'] = realPatchConfig.tun.routeAddress;
   rawConfig['tun']['auto-route'] = realPatchConfig.tun.autoRoute;
   rawConfig['geodata-loader'] = realPatchConfig.geodataLoader.name;
+  rawConfig['geo-auto-update'] = realPatchConfig.geoAutoUpdate;
+  rawConfig['geo-update-interval'] = realPatchConfig.geoUpdateInterval;
   if (rawConfig['sniffer']?['sniff'] != null) {
     for (final value in (rawConfig['sniffer']?['sniff'] as Map).values) {
       if (value['ports'] != null && value['ports'] is List) {
@@ -152,36 +203,8 @@ Future<VM2<String, String>> _makeRealProfileTask(
   if (rawConfig['profile'] == null) {
     rawConfig['profile'] = {};
   }
-  if (rawConfig['proxy-providers'] != null) {
-    final proxyProviders = rawConfig['proxy-providers'] as Map;
-    for (final key in proxyProviders.keys) {
-      final proxyProvider = proxyProviders[key];
-      if (proxyProvider['type'] != 'http') {
-        continue;
-      }
-      if (proxyProvider['url'] != null) {
-        proxyProvider['path'] = getProvidersFilePathInner(
-          'proxies',
-          proxyProvider['url'],
-        );
-      }
-    }
-  }
-  if (rawConfig['rule-providers'] != null) {
-    final ruleProviders = rawConfig['rule-providers'] as Map;
-    for (final key in ruleProviders.keys) {
-      final ruleProvider = ruleProviders[key];
-      if (ruleProvider['type'] != 'http') {
-        continue;
-      }
-      if (ruleProvider['url'] != null) {
-        ruleProvider['path'] = getProvidersFilePathInner(
-          'rules',
-          ruleProvider['url'],
-        );
-      }
-    }
-  }
+  confineProviders('proxy-providers', proxiesProviderDirectoryName);
+  confineProviders('rule-providers', rulesProviderDirectoryName);
   rawConfig['profile']['store-selected'] = false;
   rawConfig['geox-url'] = realPatchConfig.geoXUrl.raw;
   rawConfig['global-ua'] = realPatchConfig.globalUa ?? defaultUA;
@@ -191,24 +214,24 @@ Future<VM2<String, String>> _makeRealProfileTask(
   for (final host in realPatchConfig.hosts.entries) {
     rawConfig['hosts'][host.key] = host.value.splitByMultipleSeparators;
   }
-  if (rawConfig['dns'] == null) {
-    rawConfig['dns'] = {};
-  }
-  final isEnableDns = rawConfig['dns']['enable'] == true;
+  final rawDns = rawConfig['dns'] is Map
+      ? Map<String, dynamic>.from(rawConfig['dns'] as Map)
+      : <String, dynamic>{};
+  rawConfig['dns'] = rawDns;
+  final isEnableDns = rawDns['enable'] == true;
   const systemDns = 'system://';
   if (overrideDns || !isEnableDns) {
-    final dns = switch (!isEnableDns) {
-      true => realPatchConfig.dns.copyWith(
-        nameserver: [...realPatchConfig.dns.nameserver, systemDns],
-      ),
-      false => realPatchConfig.dns,
-    };
-    rawConfig['dns'] = dns.toJson();
-    rawConfig['dns']['nameserver-policy'] = {};
+    final dns = realPatchConfig.dns;
+    final nameserverPolicy = <String, dynamic>{};
     for (final entry in dns.nameserverPolicy.entries) {
-      rawConfig['dns']['nameserver-policy'][entry.key] =
-          entry.value.splitByMultipleSeparators;
+      nameserverPolicy[entry.key] = entry.value.splitByMultipleSeparators;
     }
+    // Merged, not assigned: the model only covers the keys FlClash can edit.
+    rawConfig['dns'] = {
+      ...rawDns,
+      ...dns.toJson(),
+      'nameserver-policy': nameserverPolicy,
+    };
   }
   if (appendSystemDns) {
     final List<String> nameserver = List<String>.from(
@@ -227,9 +250,12 @@ Future<VM2<String, String>> _makeRealProfileTask(
       final hasMatchPlaceholder = addedRules.any(
         (item) => item.ruleTarget?.toUpperCase() == 'MATCH',
       );
-      String? replacementTarget;
+      String? replacementTarget = data.matchTarget?.trim();
+      if (replacementTarget?.isEmpty == true) {
+        replacementTarget = null;
+      }
 
-      if (hasMatchPlaceholder) {
+      if (hasMatchPlaceholder && replacementTarget == null) {
         for (int i = rules.length - 1; i >= 0; i--) {
           final parsed = Rule.parse(rules[i]);
           if (parsed.ruleAction == RuleAction.MATCH) {
@@ -268,55 +294,96 @@ Future<VM2<String, String>> _makeRealProfileTask(
   }
   rawConfig['rules'] = rules;
   final yaml = await _encodeYaml(Map<String, dynamic>.from(rawConfig));
-  return VM2(yaml, yaml.toMd5());
+  return (yaml: yaml, md5: yaml.toMd5());
 }
 
 Future<List<String>> shakingProfileTask(
-  VM2<Iterable<int>, Iterable<int>> data,
+  ({Iterable<int> profileIds, Iterable<int> scriptIds}) data,
 ) async {
   return compute<
-    VM3<Iterable<int>, Iterable<int>, RootIsolateToken>,
+    ({
+      Iterable<int> profileIds,
+      Iterable<int> scriptIds,
+      RootIsolateToken token,
+    }),
     List<String>
-  >(_shakingProfileTask, VM3(data.a, data.b, RootIsolateToken.instance!));
+  >(_shakingProfileTask, (
+    profileIds: data.profileIds,
+    scriptIds: data.scriptIds,
+    token: RootIsolateToken.instance!,
+  ));
 }
 
 Future<List<String>> _shakingProfileTask(
-  VM3<Iterable<int>, Iterable<int>, RootIsolateToken> data,
+  ({Iterable<int> profileIds, Iterable<int> scriptIds, RootIsolateToken token})
+  data,
 ) async {
-  final profileIds = data.a;
-  final scriptIds = data.b;
-  final token = data.c;
-  BackgroundIsolateBinaryMessenger.ensureInitialized(token);
-  final profilesDir = Directory(await appPath.profilesPath);
-  final scriptsDir = Directory(await appPath.scriptsDirPath);
-  final providersDir = Directory(await appPath.getProvidersRootPath());
+  BackgroundIsolateBinaryMessenger.ensureInitialized(data.token);
+  return shakeOrphanFiles(
+    profileIds: data.profileIds,
+    scriptIds: data.scriptIds,
+    profilesDirPath: await appPath.profilesPath,
+    providersDirPath: await appPath.getProvidersRootPath(),
+    scriptsDirPath: await appPath.scriptsDirPath,
+  );
+}
+
+@visibleForTesting
+List<String> shakeOrphanFiles({
+  required Iterable<int> profileIds,
+  required Iterable<int> scriptIds,
+  required String profilesDirPath,
+  required String providersDirPath,
+  required String scriptsDirPath,
+}) {
   final List<String> targets = [];
   void scanDirectory(
     Directory dir,
     Iterable<int> baseNames, {
-    bool skipProvidersFolder = false,
+    bool includeDirectories = false,
   }) {
     if (!dir.existsSync()) return;
     final entities = dir.listSync(recursive: false, followLinks: false);
 
     for (final entity in entities) {
-      if (entity is File) {
-        final id = basenameWithoutExtension(entity.path);
-        if (!baseNames.contains(int.tryParse(id))) {
-          targets.add(entity.path);
-        }
-      } else if (skipProvidersFolder && entity is Directory) {
-        if (basename(entity.path) == 'providers') {
-          continue;
-        }
+      final selected =
+          entity is File || (includeDirectories && entity is Directory);
+      if (!selected) {
+        continue;
+      }
+      final id = basenameWithoutExtension(entity.path);
+      if (!baseNames.contains(int.tryParse(id))) {
+        targets.add(entity.path);
       }
     }
   }
 
-  scanDirectory(profilesDir, profileIds, skipProvidersFolder: true);
-  scanDirectory(providersDir, profileIds);
-  scanDirectory(scriptsDir, scriptIds);
+  scanDirectory(Directory(profilesDirPath), profileIds);
+  scanDirectory(
+    Directory(providersDirPath),
+    profileIds,
+    includeDirectories: true,
+  );
+  scanDirectory(Directory(scriptsDirPath), scriptIds);
   return targets;
+}
+
+// Best-effort: a legacy url shared by two providers, or any rename failure,
+// just leaves the file to be re-downloaded under the new path.
+void _migrateLegacyProviderFile({
+  required String legacyPath,
+  required String newPath,
+}) {
+  if (legacyPath == newPath || File(newPath).existsSync()) {
+    return;
+  }
+  try {
+    final legacyFile = File(legacyPath);
+    if (legacyFile.existsSync()) {
+      Directory(dirname(newPath)).createSync(recursive: true);
+      legacyFile.renameSync(newPath);
+    }
+  } catch (_) {}
 }
 
 Future<String> encodeLogsTask(List<Log> data) async {
@@ -331,19 +398,28 @@ Future<String> _encodeLogsTask(List<Log> data) async {
 
 Future<MigrationData> oldToNowTask(Map<String, Object?> data) async {
   final homeDir = await appPath.homeDirPath;
-  return compute<VM3<Map<String, Object?>, String, String>, MigrationData>(
-    _oldToNowTask,
-    VM3(data, homeDir, homeDir),
-  );
+  return compute<
+    ({Map<String, Object?> configMap, String sourcePath, String targetPath}),
+    MigrationData
+  >(_oldToNowTask, (configMap: data, sourcePath: homeDir, targetPath: homeDir));
 }
 
 Future<MigrationData> _oldToNowTask(
-  VM3<Map<String, Object?>, String, String> data,
-) async {
-  final configMap = data.a;
-  final sourcePath = data.b;
-  final targetPath = data.c;
+  ({Map<String, Object?> configMap, String sourcePath, String targetPath}) data,
+) {
+  return migrateLegacyConfig(
+    configMap: data.configMap,
+    sourcePath: data.sourcePath,
+    targetPath: data.targetPath,
+  );
+}
 
+@visibleForTesting
+Future<MigrationData> migrateLegacyConfig({
+  required Map<String, Object?> configMap,
+  required String sourcePath,
+  required String targetPath,
+}) async {
   final accessControlMap = configMap['accessControl'];
   final isAccessControl = configMap['isAccessControl'];
   if (accessControlMap != null) {
@@ -362,7 +438,6 @@ Future<MigrationData> _oldToNowTask(
       configMap['appSetting'] as Map<String, dynamic>? ?? {};
   appSettingProps['restoreStrategy'] = appSettingProps['recoveryStrategy'];
   configMap['appSettingProps'] = appSettingProps;
-  configMap['proxiesStyleProps'] = configMap['proxiesStyle'];
   configMap['proxiesStyleProps'] = configMap['proxiesStyle'];
   List rawScripts = configMap['scripts'] as List<dynamic>? ?? [];
   if (rawScripts.isEmpty) {
@@ -471,60 +546,84 @@ Future<String> backupTask(
   Iterable<String> fileNames,
 ) async {
   return compute<
-    VM3<Map<String, dynamic>, Iterable<String>, RootIsolateToken>,
+    ({
+      Map<String, dynamic> configMap,
+      Iterable<String> fileNames,
+      RootIsolateToken token,
+    }),
     String
-  >(_backupTask, VM3(configMap, fileNames, RootIsolateToken.instance!));
+  >(_backupTask, (
+    configMap: configMap,
+    fileNames: fileNames,
+    token: RootIsolateToken.instance!,
+  ));
 }
 
 Future<String> _backupTask<T>(
-  VM3<Map<String, dynamic>, Iterable<String>, RootIsolateToken> args,
+  ({
+    Map<String, dynamic> configMap,
+    Iterable<String> fileNames,
+    RootIsolateToken token,
+  })
+  args,
 ) async {
-  final configMap = args.a;
-  final fileNames = args.b;
-  final token = args.c;
-  BackgroundIsolateBinaryMessenger.ensureInitialized(token);
-  final dbPath = await appPath.databasePath;
+  BackgroundIsolateBinaryMessenger.ensureInitialized(args.token);
+  final tempPath = await appPath.tempPath;
+  final prefix = 'backup$uniqueId';
+  return writeBackupArchive(
+    configMap: args.configMap,
+    fileNames: args.fileNames,
+    databasePath: await appPath.databasePath,
+    profilesDirPath: await appPath.profilesPath,
+    scriptsDirPath: await appPath.scriptsDirPath,
+    zipFilePath: join(tempPath, '$prefix.zip'),
+    tempDatabasePath: join(tempPath, '$prefix.db'),
+    tempConfigPath: join(tempPath, '$prefix.json'),
+  );
+}
+
+@visibleForTesting
+Future<String> writeBackupArchive({
+  required Map<String, dynamic> configMap,
+  required Iterable<String> fileNames,
+  required String databasePath,
+  required String profilesDirPath,
+  required String scriptsDirPath,
+  required String zipFilePath,
+  required String tempDatabasePath,
+  required String tempConfigPath,
+}) async {
   final configStr = json.encode(configMap);
-  final profilesDir = Directory(await appPath.profilesPath);
-  final scriptsDir = Directory(await appPath.scriptsDirPath);
-  final tempZipFilePath = await appPath.tempFilePath;
-  final tempDBFile = File(await appPath.tempFilePath);
-  final tempConfigFile = File(await appPath.tempFilePath);
-  final dbFile = File(dbPath);
+  final profilesDir = Directory(profilesDirPath);
+  final scriptsDir = Directory(scriptsDirPath);
+  final tempDBFile = File(tempDatabasePath);
+  final tempConfigFile = File(tempConfigPath);
+  final dbFile = File(databasePath);
   if (await dbFile.exists()) {
     await dbFile.copy(tempDBFile.path);
   }
   final encoder = ZipFileEncoder();
-  encoder.create(tempZipFilePath);
+  encoder.create(zipFilePath);
   await tempConfigFile.writeAsString(configStr);
   await encoder.addFile(tempDBFile, backupDatabaseName);
   await encoder.addFile(tempConfigFile, configJsonName);
+  ZipFileOperation keepListed(FileSystemEntity entity, double _) {
+    if (!fileNames.contains(basename(entity.path))) {
+      return ZipFileOperation.skip;
+    }
+    return ZipFileOperation.include;
+  }
+
   if (await profilesDir.exists()) {
-    await encoder.addDirectory(
-      profilesDir,
-      filter: (file, _) {
-        if (!fileNames.contains(basename(file.path))) {
-          return ZipFileOperation.skip;
-        }
-        return ZipFileOperation.include;
-      },
-    );
+    await encoder.addDirectory(profilesDir, filter: keepListed);
   }
   if (await scriptsDir.exists()) {
-    await encoder.addDirectory(
-      scriptsDir,
-      filter: (file, _) {
-        if (!fileNames.contains(basename(file.path))) {
-          return ZipFileOperation.skip;
-        }
-        return ZipFileOperation.include;
-      },
-    );
+    await encoder.addDirectory(scriptsDir, filter: keepListed);
   }
-  encoder.close();
+  await encoder.close();
   await tempConfigFile.safeDelete();
   await tempDBFile.safeDelete();
-  return tempZipFilePath;
+  return zipFilePath;
 }
 
 Future<MigrationData> restoreTask() async {
@@ -536,16 +635,48 @@ Future<MigrationData> restoreTask() async {
 
 Future<MigrationData> _restoreTask(RootIsolateToken token) async {
   BackgroundIsolateBinaryMessenger.ensureInitialized(token);
-  final backupFilePath = await appPath.backupFilePath;
-  final restoreDirPath = await appPath.restoreDirPath;
-  final homeDirPath = await appPath.homeDirPath;
+  return readBackupArchive(
+    backupFilePath: await appPath.backupFilePath,
+    restoreDirPath: await appPath.restoreDirPath,
+    homeDirPath: await appPath.homeDirPath,
+  );
+}
+
+/// `posix.normalize` was doing this on its own and it does not: it collapses
+/// `a/../b`, but a name that starts with `../` normalizes to itself and an
+/// absolute one stays absolute, so either writes wherever the archive asks. A
+/// backup file is untrusted input — it is whatever the user picked off disk.
+String? _restoreEntryPath(String restoreDirPath, String name) {
+  final normalized = posix.normalize(name.replaceAll('\\', '/'));
+  if (normalized.isEmpty ||
+      posix.isAbsolute(normalized) ||
+      normalized == '..' ||
+      normalized.startsWith('../')) {
+    return null;
+  }
+  final outPath = normalize(join(restoreDirPath, normalized));
+  if (!isWithin(restoreDirPath, outPath)) {
+    return null;
+  }
+  return outPath;
+}
+
+@visibleForTesting
+Future<MigrationData> readBackupArchive({
+  required String backupFilePath,
+  required String restoreDirPath,
+  required String homeDirPath,
+}) async {
   final zipDecoder = ZipDecoder();
   final input = InputFileStream(backupFilePath);
   final archive = zipDecoder.decodeStream(input);
   final dir = Directory(restoreDirPath);
   await dir.create(recursive: true);
   for (final file in archive.files) {
-    final outPath = join(restoreDirPath, posix.normalize(file.name));
+    final outPath = _restoreEntryPath(restoreDirPath, file.name);
+    if (outPath == null) {
+      continue;
+    }
     final outputStream = OutputFileStream(outPath);
     file.writeContent(outputStream);
     await outputStream.close();
@@ -553,7 +684,7 @@ Future<MigrationData> _restoreTask(RootIsolateToken token) async {
   await input.close();
   final restoreConfigFile = File(join(restoreDirPath, configJsonName));
   if (!await restoreConfigFile.exists()) {
-    throw currentAppLocalizations.invalidBackupFile;
+    throw MessageException(currentAppLocalizations.invalidBackupFile);
   }
   final restoreConfigMap =
       json.decode(await restoreConfigFile.readAsString())
@@ -561,8 +692,10 @@ Future<MigrationData> _restoreTask(RootIsolateToken token) async {
   final version = restoreConfigMap?['version'] ?? 0;
   MigrationData migrationData = MigrationData(configMap: restoreConfigMap);
   if (version == 0 && restoreConfigMap != null) {
-    migrationData = await _oldToNowTask(
-      VM3(restoreConfigMap, restoreDirPath, homeDirPath),
+    migrationData = await migrateLegacyConfig(
+      configMap: restoreConfigMap,
+      sourcePath: restoreDirPath,
+      targetPath: homeDirPath,
     );
     return migrationData;
   }
@@ -578,42 +711,46 @@ Future<MigrationData> _restoreTask(RootIsolateToken token) async {
       ),
     ),
   );
-  final results = await Future.wait([
-    database.profilesDao.query().get(),
-    database.scriptsDao.query().get(),
-    database.rules.all().map((item) => item.toRule()).get(),
-    database.profileRuleLinks.all().map((item) => item.toLink()).get(),
-    database.proxyGroups.all().map((item) => item.toProxyGroup()).get(),
-  ]);
-  final profiles = results[0].cast<Profile>();
-  final scripts = results[1].cast<Script>();
-  final profilesMigration = profiles.map(
-    (item) => VM2(
-      _getProfilePath(restoreDirPath, item.id.toString()),
-      _getProfilePath(homeDirPath, item.id.toString()),
-    ),
-  );
-  final scriptsMigration = scripts.map(
-    (item) => VM2(
-      _getScriptPath(restoreDirPath, item.id.toString()),
-      _getScriptPath(homeDirPath, item.id.toString()),
-    ),
-  );
-  await _copyWithMapList([...profilesMigration, ...scriptsMigration]);
-  migrationData = migrationData.copyWith(
-    profiles: profiles,
-    scripts: scripts,
-    rules: results[2].cast<Rule>(),
-    links: results[3].cast<ProfileRuleLink>(),
-    proxyGroups: results[4].cast<ProxyGroup>(),
-  );
-  await database.close();
-  return migrationData;
+  try {
+    final results = await Future.wait([
+      database.profilesDao.query().get(),
+      database.scriptsDao.query().get(),
+      database.rules.all().map((item) => item.toRule()).get(),
+      database.profileRuleLinks.all().map((item) => item.toLink()).get(),
+      database.proxyGroups.all().map((item) => item.toProxyGroup()).get(),
+    ]);
+    final profiles = results[0].cast<Profile>();
+    final scripts = results[1].cast<Script>();
+    final profilesMigration = profiles.map(
+      (item) => (
+        from: _getProfilePath(restoreDirPath, item.id.toString()),
+        to: _getProfilePath(homeDirPath, item.id.toString()),
+      ),
+    );
+    final scriptsMigration = scripts.map(
+      (item) => (
+        from: _getScriptPath(restoreDirPath, item.id.toString()),
+        to: _getScriptPath(homeDirPath, item.id.toString()),
+      ),
+    );
+    await _copyWithMapList([...profilesMigration, ...scriptsMigration]);
+    return migrationData.copyWith(
+      profiles: profiles,
+      scripts: scripts,
+      rules: results[2].cast<Rule>(),
+      links: results[3].cast<ProfileRuleLink>(),
+      proxyGroups: results[4].cast<ProxyGroup>(),
+    );
+  } finally {
+    await database.close();
+  }
 }
 
-Future<void> _copyWithMapList(List<VM2<String, String>> copyMapList) async {
+Future<void> _copyWithMapList(
+  List<({String from, String to})> copyMapList,
+) async {
   await Future.wait(
-    copyMapList.map((item) => File(item.a).safeCopy(item.b)).toList(),
+    copyMapList.map((item) => File(item.from).safeCopy(item.to)).toList(),
   );
 }
 
@@ -626,14 +763,14 @@ String _getProfilePath(String root, String fileName) {
 }
 
 Future<List<T>> mapListTask<T, S>(List<S> results, T Function(S) mapper) async {
-  return compute<VM2<List<S>, T Function(S)>, List<T>>(
+  return compute<({List<S> results, T Function(S) mapper}), List<T>>(
     _mapListTask,
-    VM2(results, mapper),
+    (results: results, mapper: mapper),
   );
 }
 
-Future<List<T>> _mapListTask<T, S>(VM2<List<S>, T Function(S)> vm2) async {
-  final results = vm2.a;
-  final mapper = vm2.b;
-  return results.map((item) => mapper(item)).toList();
+Future<List<T>> _mapListTask<T, S>(
+  ({List<S> results, T Function(S) mapper}) args,
+) async {
+  return args.results.map((item) => args.mapper(item)).toList();
 }

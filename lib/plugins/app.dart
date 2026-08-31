@@ -1,10 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:fl_clash/common/boot_record.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+
+const _platformProbeTimeout = Duration(seconds: 2);
 
 class App {
   static App? _instance;
@@ -39,8 +43,22 @@ class App {
       'getPackages',
     );
     final List<dynamic> packagesRaw =
-        (await packagesString?.commonToJSON<List<dynamic>>()) ?? [];
+        (await packagesString?.decodeJson<List<dynamic>>()) ?? [];
     return packagesRaw.map((e) => Package.fromJson(e)).toSet().toList();
+  }
+
+  Future<bool> isInstalledAppsPermissionGranted() async {
+    return await methodChannel.invokeMethod<bool>(
+          'isInstalledAppsPermissionGranted',
+        ) ??
+        true;
+  }
+
+  Future<bool> requestInstalledAppsPermission() async {
+    return await methodChannel.invokeMethod<bool>(
+          'requestInstalledAppsPermission',
+        ) ??
+        false;
   }
 
   Future<List<String>> getChinaPackageNames() async {
@@ -48,7 +66,7 @@ class App {
       'getChinaPackageNames',
     );
     final List<dynamic> packageNamesRaw =
-        await packageNamesString?.commonToJSON<List<dynamic>>() ?? [];
+        await packageNamesString?.decodeJson<List<dynamic>>() ?? [];
     return packageNamesRaw.map((e) => e.toString()).toList();
   }
 
@@ -73,9 +91,6 @@ class App {
   }
 
   Future<ImageProvider?> getPackageIcon(String packageName) {
-    if (packageName.isEmpty) {
-      return Future.value(null);
-    }
     if (_packageIcons.containsKey(packageName)) {
       return Future.value(_packageIcons[packageName]);
     }
@@ -83,18 +98,28 @@ class App {
   }
 
   Future<ImageProvider?> _loadPackageIcon(String packageName) async {
-    ImageProvider? icon;
+    var icon = await _requestPackageIcon(packageName);
+    if (icon == null && packageName.isNotEmpty) {
+      icon = await getPackageIcon('');
+    }
+    _packageIcons[packageName] = icon;
+    unawaited(_packageIconTasks.remove(packageName));
+    return icon;
+  }
+
+  Future<ImageProvider?> _requestPackageIcon(String packageName) async {
     try {
       final path = await methodChannel.invokeMethod<String>('getPackageIcon', {
         'packageName': packageName,
       });
-      icon = path == null ? null : FileImage(File(path));
+      if (path == null || path.isEmpty) {
+        return null;
+      }
+      return FileImage(File(path));
     } catch (error) {
       commonPrint.log('getPackageIcon error: $error');
+      return null;
     }
-    _packageIcons[packageName] = icon;
-    _packageIconTasks.remove(packageName);
-    return icon;
   }
 
   @visibleForTesting
@@ -137,12 +162,32 @@ class App {
 
   Future<bool> didCrashOnPreviousExecution() async {
     try {
-      return await methodChannel.invokeMethod<bool>(
-            'didCrashOnPreviousExecution',
-          ) ??
-          false;
-    } catch (_) {
+      final value = await methodChannel
+          .invokeMethod<bool>('didCrashOnPreviousExecution')
+          .timeout(_platformProbeTimeout);
+      return value ?? false;
+    } catch (error) {
+      commonPrint.log(
+        'Failed to read the previous-execution crash flag: '
+        '${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
       return false;
+    }
+  }
+
+  Future<AppExitInfo?> getLastExitInfo() async {
+    try {
+      final raw = await methodChannel
+          .invokeMapMethod<String, Object?>('getLastExitInfo')
+          .timeout(_platformProbeTimeout);
+      return AppExitInfo.fromJson(raw);
+    } catch (error) {
+      commonPrint.log(
+        'Failed to read the last process exit info: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+      return null;
     }
   }
 }

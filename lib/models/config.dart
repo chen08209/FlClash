@@ -1,6 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'models.dart';
@@ -49,14 +49,15 @@ const List<DashboardWidget> defaultDashboardWidgets = [
 List<DashboardWidget> dashboardWidgetsSafeFormJson(
   List<dynamic>? dashboardWidgets,
 ) {
-  try {
-    return dashboardWidgets
+  return decodeOrRestoreDefault(
+    'dashboard widgets',
+    () =>
+        dashboardWidgets
             ?.map((e) => $enumDecode(_$DashboardWidgetEnumMap, e))
             .toList() ??
-        defaultDashboardWidgets;
-  } catch (_) {
-    return defaultDashboardWidgets;
-  }
+        defaultDashboardWidgets,
+    () => defaultDashboardWidgets,
+  );
 }
 
 @freezed
@@ -84,6 +85,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(false) bool developerMode,
     @Default(RestoreStrategy.compatible) RestoreStrategy restoreStrategy,
     @Default(true) bool showTrayTitle,
+    @Default(true) bool checkCertificate,
     @Default('') String customUserAgent,
   }) = _AppSettingProps;
 
@@ -91,13 +93,14 @@ abstract class AppSettingProps with _$AppSettingProps {
       _$AppSettingPropsFromJson(json);
 
   factory AppSettingProps.safeFromJson(Map<String, Object?>? json) {
-    try {
-      return json == null
-          ? defaultAppSettingProps
-          : AppSettingProps.fromJson(json);
-    } catch (_) {
+    if (json == null) {
       return defaultAppSettingProps;
     }
+    return decodeOrRestoreDefault(
+      'app settings',
+      () => AppSettingProps.fromJson(json),
+      () => defaultAppSettingProps,
+    );
   }
 }
 
@@ -221,11 +224,11 @@ abstract class ThemeProps with _$ThemeProps {
     if (json == null) {
       return defaultThemeProps;
     }
-    try {
-      return ThemeProps.fromJson(json);
-    } catch (_) {
-      return defaultThemeProps;
-    }
+    return decodeOrRestoreDefault(
+      'theme settings',
+      () => ThemeProps.fromJson(json),
+      () => defaultThemeProps,
+    );
   }
 }
 
