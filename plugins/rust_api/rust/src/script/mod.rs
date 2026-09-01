@@ -28,9 +28,11 @@ fn evaluate_within(script: &str, config: &str, timeout: Duration) -> Result<Stri
         ctx.eval::<Value, _>(script.as_bytes())
             .catch(&ctx)
             .map_err(describe)?;
+        // Evaluated as an expression rather than read off `globals()` because a
+        // top-level `const main = ...` is a global lexical binding, not a
+        // property of globalThis.
         let entry: Function = ctx
-            .globals()
-            .get(ENTRY)
+            .eval(ENTRY.as_bytes())
             .map_err(|_| format!("script does not define {ENTRY}()"))?;
         let parsed: Value = ctx
             .json_parse(config)
@@ -93,6 +95,17 @@ mod tests {
         .unwrap();
 
         assert_eq!(result, json!({ "mode": "global" }));
+    }
+
+    #[test]
+    fn accepts_a_lexically_declared_arrow_function_entry() {
+        let result = run(
+            "const main = (config) => { return config; }",
+            json!({ "mode": "rule" }),
+        )
+        .unwrap();
+
+        assert_eq!(result, json!({ "mode": "rule" }));
     }
 
     #[test]
