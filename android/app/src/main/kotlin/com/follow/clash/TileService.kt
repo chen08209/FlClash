@@ -3,6 +3,7 @@ package com.follow.clash
 import android.annotation.SuppressLint
 import android.os.Build
 import android.service.quicksettings.Tile
+import com.follow.clash.common.GlobalState
 import com.follow.clash.common.QuickAction
 import com.follow.clash.common.quickIntent
 import com.follow.clash.common.toPendingIntent
@@ -28,7 +29,11 @@ class TileService : android.service.quicksettings.TileService() {
 
     override fun onClick() {
         super.onClick()
-        openQuickAction()
+        if (ServiceState.toggleRequiresVpnConsent()) {
+            openQuickAction()
+        } else {
+            GlobalState.launch { ServiceState.handleToggleAction() }
+        }
     }
 
     override fun onStopListening() {

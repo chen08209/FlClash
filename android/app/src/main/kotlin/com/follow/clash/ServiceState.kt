@@ -74,6 +74,16 @@ object ServiceState {
         }
     }
 
+    fun toggleRequiresVpnConsent(): Boolean {
+        if (isRunningRequested()) {
+            return false
+        }
+        val options = sharedState.vpnOptions
+            ?: GlobalState.application.sharedState.vpnOptions
+            ?: return false
+        return options.enable && VpnService.prepare(GlobalState.application) != null
+    }
+
     suspend fun refresh(): Long = transitionLock.withLock {
         val current = runTimeMillis
         mutableRunState.value = if (current == 0L) RunState.STOPPED else RunState.STARTED
