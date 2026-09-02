@@ -27,7 +27,10 @@ String _resolveCc(Target target) {
   if (entries.isEmpty) {
     throw BuildException('No NDK prebuilt toolchain found in $prebuiltDir');
   }
-  return p.join(entries.first.path, 'bin', target.ndkCcName);
+  final ccName = Platform.isWindows
+      ? '${target.ndkCcName}.cmd'
+      : target.ndkCcName;
+  return p.join(entries.first.path, 'bin', ccName);
 }
 
 class GoBuilder {
