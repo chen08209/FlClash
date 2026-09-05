@@ -1,15 +1,23 @@
 import 'dart:async';
 
+import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/desktop/model.dart';
+import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:riverpod/riverpod.dart';
+
+import '../helpers/test_profiles.dart';
+
+class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 void main() {
   group('ProfilesAction', () {
@@ -22,7 +30,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           currentProfileIdProvider.overrideWithBuild((_, _) => null),
-          profilesProvider.overrideWith(() => _TestProfiles([original])),
+          profilesProvider.overrideWith(() => TestProfiles([original])),
         ],
       );
       addTearDown(container.dispose);
@@ -48,7 +56,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           currentProfileIdProvider.overrideWithBuild((_, _) => first.id),
-          profilesProvider.overrideWith(() => _TestProfiles([first])),
+          profilesProvider.overrideWith(() => TestProfiles([first])),
         ],
       );
       addTearDown(container.dispose);
@@ -87,7 +95,7 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             currentProfileIdProvider.overrideWithBuild((_, _) => null),
-            profilesProvider.overrideWith(() => _TestProfiles(profiles)),
+            profilesProvider.overrideWith(() => TestProfiles(profiles)),
           ],
         );
         addTearDown(container.dispose);
@@ -106,7 +114,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           currentProfileIdProvider.overrideWithBuild((_, _) => current.id),
-          profilesProvider.overrideWith(() => _TestProfiles([current])),
+          profilesProvider.overrideWith(() => TestProfiles([current])),
         ],
       );
       addTearDown(container.dispose);
@@ -135,11 +143,49 @@ void main() {
       final key = GeoResource.MMDB.updatingKey;
       expect(container.read(isUpdatingProvider(key)), false);
 
-      container.read(isUpdatingProvider(key).notifier).value = true;
+      final operation = container
+          .read(updatingKeysProvider.notifier)
+          .start(key);
       expect(container.read(isUpdatingProvider(key)), true);
 
-      container.read(isUpdatingProvider(key).notifier).value = false;
+      container.read(updatingKeysProvider.notifier).stop(key, operation);
       expect(container.read(isUpdatingProvider(key)), false);
+    });
+
+    test('forwards a manual resource update to Core', () async {
+      final core = _MockCoreHandlerInterface();
+      when(() => core.updateGeoData('MMDB')).thenAnswer((_) async => '');
+      final container = ProviderContainer(
+        overrides: [
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        ],
+      );
+      addTearDown(container.dispose);
+      final action = container.read(geoResourceActionProvider.notifier);
+
+      await action.updateGeoResource(GeoResource.MMDB);
+
+      verify(() => core.updateGeoData('MMDB')).called(1);
+    });
+
+    test('propagates a failed manual Core request', () async {
+      final core = _MockCoreHandlerInterface();
+      when(
+        () => core.updateGeoData('MMDB'),
+      ).thenThrow(StateError('disconnected'));
+      final container = ProviderContainer(
+        overrides: [
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        ],
+      );
+      addTearDown(container.dispose);
+      final action = container.read(geoResourceActionProvider.notifier);
+
+      await expectLater(
+        action.updateGeoResource(GeoResource.MMDB),
+        throwsStateError,
+      );
+      verify(() => core.updateGeoData('MMDB')).called(1);
     });
 
     test('updates valid resource URLs and rejects malformed URLs', () {
@@ -149,7 +195,7 @@ void main() {
 
       expect(
         () => action.updateGeoResourceUrl(GeoResource.MMDB, 'not-a-url'),
-        throwsA('Invalid url'),
+        throwsA(isA<ArgumentError>()),
       );
 
       const url = 'https://example.com/Country.mmdb';
@@ -203,6 +249,30 @@ void main() {
         expect(coreAction.lifecycleRestartCount, 1);
         expect(setupAction.setRunningCount, 1);
         expect(setupAction.applyProfileCount, 0);
+      },
+    );
+
+    test(
+      'a rejected setup while running reports restartCore as unsuccessful',
+      () async {
+        final container = ProviderContainer(
+          overrides: [
+            coreActionProvider.overrideWith(_TestCoreAction.new),
+            setupActionProvider.overrideWith(_TestSetupAction.new),
+          ],
+        );
+        addTearDown(container.dispose);
+        container.read(runTimeProvider.notifier).value = 0;
+        final coreAction =
+            container.read(coreActionProvider.notifier) as _TestCoreAction;
+        final setupAction =
+            container.read(setupActionProvider.notifier) as _TestSetupAction;
+        setupAction.setRunningResult = false;
+
+        final applied = await coreAction.restartCore();
+
+        expect(applied, isFalse);
+        expect(setupAction.setRunningCount, 1);
       },
     );
 
@@ -290,6 +360,101 @@ void main() {
       coreAction.restartCompleter = null;
       await coreAction.restartCore();
       expect(coreAction.lifecycleRestartCount, 2);
+      expect(container.read(coreStatusProvider), CoreStatus.connected);
+    });
+
+    test(
+      'startCore leaves status and initCore to the superseding operation',
+      () async {
+        final container = ProviderContainer(
+          overrides: [coreActionProvider.overrideWith(_TestCoreAction.new)],
+        );
+        addTearDown(container.dispose);
+        final coreAction =
+            container.read(coreActionProvider.notifier) as _TestCoreAction;
+        coreAction.startResult = const CoreLifecycleResult(
+          revision: 1,
+          outcome: CoreLifecycleOutcome.superseded,
+        );
+
+        await coreAction.startCore();
+
+        expect(coreAction.initCoreCount, 0);
+        expect(container.read(coreStatusProvider), CoreStatus.connecting);
+      },
+    );
+
+    test('startCore treats a coalesced outcome as applied', () async {
+      final container = ProviderContainer(
+        overrides: [coreActionProvider.overrideWith(_TestCoreAction.new)],
+      );
+      addTearDown(container.dispose);
+      final coreAction =
+          container.read(coreActionProvider.notifier) as _TestCoreAction;
+      coreAction.startResult = const CoreLifecycleResult(
+        revision: 1,
+        outcome: CoreLifecycleOutcome.coalesced,
+      );
+
+      await coreAction.startCore();
+
+      expect(coreAction.initCoreCount, 1);
+      expect(container.read(coreStatusProvider), CoreStatus.connected);
+    });
+
+    test(
+      'restartCore leaves status and initCore to the superseding operation',
+      () async {
+        final container = ProviderContainer(
+          overrides: [
+            coreActionProvider.overrideWith(_TestCoreAction.new),
+            setupActionProvider.overrideWith(_TestSetupAction.new),
+          ],
+        );
+        addTearDown(container.dispose);
+        final coreAction =
+            container.read(coreActionProvider.notifier) as _TestCoreAction;
+        final setupAction =
+            container.read(setupActionProvider.notifier) as _TestSetupAction;
+        coreAction.restartCompleter = Completer<CoreLifecycleResult>()
+          ..complete(
+            const CoreLifecycleResult(
+              revision: 1,
+              outcome: CoreLifecycleOutcome.superseded,
+            ),
+          );
+
+        final applied = await coreAction.restartCore();
+
+        expect(applied, isFalse);
+        expect(coreAction.initCoreCount, 0);
+        expect(container.read(coreStatusProvider), CoreStatus.connecting);
+        expect(setupAction.setRunningCount, 0);
+        expect(setupAction.applyProfileCount, 0);
+      },
+    );
+
+    test('restartCore treats a coalesced outcome as applied', () async {
+      final container = ProviderContainer(
+        overrides: [
+          coreActionProvider.overrideWith(_TestCoreAction.new),
+          setupActionProvider.overrideWith(_TestSetupAction.new),
+        ],
+      );
+      addTearDown(container.dispose);
+      final coreAction =
+          container.read(coreActionProvider.notifier) as _TestCoreAction;
+      coreAction.restartCompleter = Completer<CoreLifecycleResult>()
+        ..complete(
+          const CoreLifecycleResult(
+            revision: 1,
+            outcome: CoreLifecycleOutcome.coalesced,
+          ),
+        );
+
+      await coreAction.restartCore();
+
+      expect(coreAction.initCoreCount, 1);
       expect(container.read(coreStatusProvider), CoreStatus.connected);
     });
   });
@@ -513,6 +678,38 @@ void main() {
       },
     );
 
+    test(
+      'a config Core rejects on the handoff path reports failure, not success',
+      () async {
+        late _AuthorizationSetupAction setupAction;
+        late _RestartRecordingCoreAction coreAction;
+        final container = ProviderContainer(
+          overrides: [
+            currentProfileProvider.overrideWithValue(null),
+            setupActionProvider.overrideWith(() {
+              setupAction = _AuthorizationSetupAction([AuthorizeCode.success]);
+              return setupAction;
+            }),
+            coreActionProvider.overrideWith(() {
+              coreAction = _RestartRecordingCoreAction()..restartResult = false;
+              return coreAction;
+            }),
+          ],
+        );
+        addTearDown(container.dispose);
+        container
+            .read(patchClashConfigProvider.notifier)
+            .update((state) => state.copyWith.tun(enable: true));
+        container.read(setupActionProvider);
+        container.read(coreActionProvider);
+
+        final succeeded = await setupAction.applyProfile(force: true);
+
+        expect(coreAction.restartCount, 1);
+        expect(succeeded, isFalse);
+      },
+    );
+
     test('reopens authorization and propagates a failed restart', () async {
       late _AuthorizationSetupAction setupAction;
       final container = ProviderContainer(
@@ -591,48 +788,27 @@ void main() {
 
       await setupAction.requestAdmin(true);
 
-      expect(container.read(autoSetSystemDnsStateProvider).a, isFalse);
+      expect(container.read(shouldPatchSystemDnsProvider), isFalse);
     });
   });
 }
 
-class _TestProfiles extends Profiles {
-  final List<Profile> initial;
-
-  _TestProfiles(this.initial);
-
-  @override
-  List<Profile> build() => initial;
-
-  @override
-  void put(Profile profile) {
-    final next = List<Profile>.from(state);
-    final index = next.indexWhere((item) => item.id == profile.id);
-    if (index == -1) {
-      next.add(profile);
-    } else {
-      next[index] = profile;
-    }
-    state = next;
-  }
-
-  @override
-  Future<void> del(int id) async {
-    state = state.where((profile) => profile.id != id).toList();
-  }
-
-  @override
-  void reorder(List<Profile> profiles) {
-    state = List.of(profiles);
-  }
-}
-
 class _TestCoreAction extends CoreAction {
   int lifecycleRestartCount = 0;
+  int initCoreCount = 0;
   Completer<CoreLifecycleResult>? restartCompleter;
+  Completer<CoreLifecycleResult>? startCompleter;
+  CoreLifecycleResult startResult = _restartResult;
 
   @override
-  Future<void> initCore() async {}
+  Future<void> initCore() async {
+    initCoreCount++;
+  }
+
+  @override
+  Future<CoreLifecycleResult> startLifecycle() {
+    return startCompleter?.future ?? Future.value(startResult);
+  }
 
   @override
   Future<CoreLifecycleResult> restartLifecycle() {
@@ -644,16 +820,18 @@ class _TestCoreAction extends CoreAction {
 class _TestSetupAction extends SetupAction {
   int setRunningCount = 0;
   int applyProfileCount = 0;
+  bool setRunningResult = true;
   Completer<void>? firstApplyStarted;
   Completer<void>? firstApplyCompleter;
 
   @override
-  Future<void> setRunning(bool running, {bool initialize = false}) async {
+  Future<bool> setRunning(bool running, {bool initialize = false}) async {
     setRunningCount++;
+    return setRunningResult;
   }
 
   @override
-  Future<void> applyProfile({
+  Future<bool> applyProfile({
     bool silence = false,
     bool force = false,
     Future<void> Function()? preloadInvoke,
@@ -663,6 +841,7 @@ class _TestSetupAction extends SetupAction {
       firstApplyStarted?.complete();
       await firstApplyCompleter?.future;
     }
+    return true;
   }
 }
 
@@ -673,16 +852,18 @@ const _restartResult = CoreLifecycleResult(
 
 class _RestartRecordingCoreAction extends CoreAction {
   int restartCount = 0;
+  bool restartResult = true;
 
   @override
-  Future<void> restartCore() async {
+  Future<bool> restartCore() async {
     restartCount++;
+    return restartResult;
   }
 }
 
 class _FailingRestartCoreAction extends CoreAction {
   @override
-  Future<void> restartCore() async {
+  Future<bool> restartCore() async {
     throw _restartFailure;
   }
 }
@@ -735,13 +916,14 @@ class _InitializingSetupAction extends _RaceSetupAction {
   }
 
   @override
-  Future<void> applyProfile({
+  Future<bool> applyProfile({
     bool silence = false,
     bool force = false,
     Future<void> Function()? preloadInvoke,
   }) async {
     await _initializationCompleter.future;
     await preloadInvoke?.call();
+    return true;
   }
 }
 

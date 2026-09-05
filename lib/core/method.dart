@@ -30,7 +30,6 @@ enum CoreMethod {
   stopLog,
   startListener,
   stopListener,
-  getCountryCode,
   getMemory,
   crash,
   setupConfig,

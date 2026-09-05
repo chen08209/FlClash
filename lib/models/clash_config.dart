@@ -154,12 +154,43 @@ abstract class Proxy with _$Proxy {
 @freezed
 abstract class CustomOverwriteDate with _$CustomOverwriteDate {
   const factory CustomOverwriteDate({
-    @Default([]) List<Proxy> proxies,
+    @Default(false) bool loaded,
+    @Default([]) List<String> proxyNames,
+    @Default({}) Map<String, String> proxyTypes,
     @Default([]) List<ProxyGroup> proxyGroups,
     @Default({}) Set<String> proxyProviders,
     @Default({}) Set<String> ruleTargets,
     @Default({}) Set<String> subRules,
   }) = _CustomOverwriteDate;
+}
+
+@freezed
+abstract class CustomOverwriteSelectorState
+    with _$CustomOverwriteSelectorState {
+  const factory CustomOverwriteSelectorState({
+    required bool loaded,
+    required List<Proxy> proxies,
+    required List<String> subRules,
+    required List<String> proxyProviders,
+  }) = _CustomOverwriteSelectorState;
+}
+
+@freezed
+abstract class RuleTargetsSelectorState with _$RuleTargetsSelectorState {
+  const factory RuleTargetsSelectorState({
+    required bool loaded,
+    required Set<String> ruleTargets,
+    required Set<String> subRules,
+  }) = _RuleTargetsSelectorState;
+}
+
+@freezed
+abstract class OverwriteIncludeSelectorState
+    with _$OverwriteIncludeSelectorState {
+  const factory OverwriteIncludeSelectorState({
+    required bool includeAll,
+    required List<String> names,
+  }) = _OverwriteIncludeSelectorState;
 }
 
 @freezed
@@ -230,19 +261,22 @@ abstract class Tun with _$Tun {
     if (json == null) {
       return defaultTun;
     }
-    try {
-      return Tun.fromJson(json);
-    } catch (_) {
-      return defaultTun;
-    }
+    return decodeOrRestoreDefault(
+      'tun config',
+      () => Tun.fromJson(json),
+      () => defaultTun,
+    );
   }
 }
 
 extension TunExt on Tun {
+  List<String> resolveRouteAddress(RouteMode routeMode) =>
+      routeMode == RouteMode.bypassPrivate
+      ? defaultBypassPrivateRouteAddress
+      : routeAddress;
+
   Tun getRealTun(RouteMode routeMode) {
-    final mRouteAddress = routeMode == RouteMode.bypassPrivate
-        ? defaultBypassPrivateRouteAddress
-        : routeAddress;
+    final mRouteAddress = resolveRouteAddress(routeMode);
     return switch (system.isDesktop) {
       true => copyWith(autoRoute: true, routeAddress: []),
       false => copyWith(
@@ -311,11 +345,11 @@ abstract class Dns with _$Dns {
   factory Dns.fromJson(Map<String, Object?> json) => _$DnsFromJson(json);
 
   factory Dns.safeDnsFromJson(Map<String, Object?> json) {
-    try {
-      return Dns.fromJson(json);
-    } catch (_) {
-      return const Dns();
-    }
+    return decodeOrRestoreDefault(
+      'dns config',
+      () => Dns.fromJson(json),
+      () => const Dns(),
+    );
   }
 }
 
@@ -340,56 +374,50 @@ abstract class Rule with _$Rule {
     );
   }
 
+  // Mirrors mihomo's ParseRulePayload with needTarget set.
   factory Rule.parse(String value, {int? id}) {
     id ??= snowflake.id;
-    if (value.isEmpty) {
+    final fields = value.split(',').map((item) => item.trim()).toList();
+    final type = fields.first.toUpperCase();
+    if (type.isEmpty) {
       return Rule(
         id: id,
         ruleAction: RuleAction.DOMAIN,
         ruleTarget: RuleTarget.DIRECT.name,
       );
     }
-    final splits = value.split(',');
-    final shortSplits = splits
-        .where(
-          (item) =>
-              !item.contains('src') &&
-              !item.contains('no-resolve') &&
-              item.isNotEmpty,
-        )
-        .map((item) => item.trim())
-        .toList();
-    final ruleAction = RuleAction.values.firstWhere(
-      (item) => item.value == shortSplits.first,
+    final action = RuleAction.values.firstWhere(
+      (item) => item.value == type,
       orElse: () => RuleAction.DOMAIN,
     );
-    String? subRule;
-    String? ruleTarget;
-
-    if (ruleAction == RuleAction.SUB_RULE) {
-      subRule = shortSplits.last;
+    final rest = fields.sublist(1);
+    String? payload;
+    String? target;
+    var params = const <String>[];
+    if (action == RuleAction.MATCH) {
+      target = rest.firstOrNull;
+    } else if (action.hasCommaPayload) {
+      target = rest.lastOrNull;
+      payload = rest.length > 1
+          ? rest.sublist(0, rest.length - 1).join(',')
+          : null;
     } else {
-      ruleTarget = shortSplits.last;
+      payload = rest.elementAtOrNull(0);
+      target = rest.elementAtOrNull(1);
+      params = rest.skip(2).toList();
     }
-
-    String? content;
-    String? ruleProvider;
-
-    if (ruleAction == RuleAction.RULE_SET) {
-      ruleProvider = shortSplits[1];
-    } else {
-      content = shortSplits[1];
-    }
+    payload = payload?.isNotEmpty == true ? payload : null;
+    target = target?.isNotEmpty == true ? target : null;
 
     return Rule(
       id: id,
-      ruleAction: ruleAction,
-      content: content,
-      src: splits.contains('src'),
-      ruleProvider: ruleProvider,
-      noResolve: splits.contains('no-resolve'),
-      subRule: subRule,
-      ruleTarget: ruleTarget,
+      ruleAction: action,
+      content: action == RuleAction.RULE_SET ? null : payload,
+      ruleProvider: action == RuleAction.RULE_SET ? payload : null,
+      ruleTarget: action == RuleAction.SUB_RULE ? null : target,
+      subRule: action == RuleAction.SUB_RULE ? target : null,
+      src: params.contains('src'),
+      noResolve: params.contains('no-resolve'),
     );
   }
 
@@ -405,9 +433,10 @@ extension RuleExt on Rule {
   }
 
   String? get realContent {
-    return switch (ruleAction == RuleAction.RULE_SET) {
-      true => ruleProvider,
-      false => content,
+    return switch (ruleAction) {
+      RuleAction.MATCH => null,
+      RuleAction.RULE_SET => ruleProvider,
+      _ => content,
     };
   }
 
@@ -426,10 +455,12 @@ extension RuleExt on Rule {
   }
 
   String get rawValue {
+    final content = realContent;
+    final target = realTarget;
     return [
       ruleAction.value,
-      realContent,
-      realTarget,
+      if (content?.isNotEmpty == true) content!,
+      if (target?.isNotEmpty == true) target!,
       if (ruleAction.hasParams) ...[
         if (src) 'src',
         if (noResolve) 'no-resolve',
@@ -507,6 +538,13 @@ abstract class PatchClashConfig with _$PatchClashConfig {
       unknownEnumValue: FindProcessMode.always,
     )
     FindProcessMode findProcessMode,
+    @Default(InterfaceNameMode.clear)
+    @JsonKey(
+      name: 'interface-name-mode',
+      unknownEnumValue: InterfaceNameMode.clear,
+    )
+    InterfaceNameMode interfaceNameMode,
+    @Default('') @JsonKey(name: 'interface-name') String interfaceName,
     @Default(defaultKeepAliveInterval)
     @JsonKey(name: 'keep-alive-interval')
     int keepAliveInterval,
@@ -540,10 +578,10 @@ abstract class PatchClashConfig with _$PatchClashConfig {
     if (json == null) {
       return defaultClashConfig;
     }
-    try {
-      return PatchClashConfig.fromJson(json);
-    } catch (_) {
-      return defaultClashConfig;
-    }
+    return decodeOrRestoreDefault(
+      'clash config',
+      () => PatchClashConfig.fromJson(json),
+      () => defaultClashConfig,
+    );
   }
 }

@@ -3,9 +3,13 @@ import 'dart:ui';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/widgets/scroll.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BaseScrollBehavior extends MaterialScrollBehavior {
+  const BaseScrollBehavior({this.scrollbarPadding = EdgeInsets.zero});
+
+  final EdgeInsets scrollbarPadding;
+
   @override
   Set<PointerDeviceKind> get dragDevices => {
     PointerDeviceKind.touch,
@@ -16,54 +20,54 @@ class BaseScrollBehavior extends MaterialScrollBehavior {
     PointerDeviceKind.unknown,
   };
 
+  bool showScrollbar(BuildContext context) {
+    switch (getPlatform(context)) {
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+        return true;
+      case TargetPlatform.android:
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.iOS:
+        return false;
+    }
+  }
+
   @override
   Widget buildScrollbar(
     BuildContext context,
     Widget child,
     ScrollableDetails details,
   ) {
-    switch (axisDirectionToAxis(details.direction)) {
-      case Axis.horizontal:
-        return child;
-      case Axis.vertical:
-        switch (getPlatform(context)) {
-          case TargetPlatform.linux:
-          case TargetPlatform.macOS:
-          case TargetPlatform.windows:
-            assert(details.controller != null);
-            return CommonScrollBar(
-              controller: details.controller,
-              child: child,
-            );
-          case TargetPlatform.android:
-          case TargetPlatform.fuchsia:
-          case TargetPlatform.iOS:
-            return child;
-        }
+    if (axisDirectionToAxis(details.direction) == Axis.horizontal ||
+        !showScrollbar(context)) {
+      return child;
     }
+    return CommonScrollBar(
+      controller: details.controller,
+      padding: scrollbarPadding,
+      child: child,
+    );
+  }
+
+  @override
+  bool shouldNotify(covariant BaseScrollBehavior oldDelegate) {
+    return oldDelegate.scrollbarPadding != scrollbarPadding;
   }
 }
 
 class HiddenBarScrollBehavior extends BaseScrollBehavior {
+  const HiddenBarScrollBehavior();
+
   @override
-  Widget buildScrollbar(
-    BuildContext context,
-    Widget child,
-    ScrollableDetails details,
-  ) {
-    return child;
-  }
+  bool showScrollbar(BuildContext context) => false;
 }
 
 class ShowBarScrollBehavior extends BaseScrollBehavior {
+  const ShowBarScrollBehavior({super.scrollbarPadding});
+
   @override
-  Widget buildScrollbar(
-    BuildContext context,
-    Widget child,
-    ScrollableDetails details,
-  ) {
-    return CommonScrollBar(controller: details.controller, child: child);
-  }
+  bool showScrollbar(BuildContext context) => true;
 }
 
 class NextClampingScrollPhysics extends ClampingScrollPhysics {

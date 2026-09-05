@@ -5,7 +5,7 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'clash_config.dart';
@@ -19,7 +19,6 @@ abstract class NavigationItem with _$NavigationItem {
   const factory NavigationItem({
     required Icon icon,
     required PageLabel label,
-    final String? description,
     required WidgetBuilder builder,
     @Default(true) bool keep,
     String? path,
@@ -115,6 +114,14 @@ abstract class TrackerInfo with _$TrackerInfo {
 }
 
 extension TrackerInfoExt on TrackerInfo {
+  String get title {
+    final host = metadata.host;
+    if (host.isNotEmpty) {
+      return host;
+    }
+    return metadata.destinationIP;
+  }
+
   String get desc {
     var text = '${metadata.network}://';
     final ips = [
@@ -552,22 +559,6 @@ abstract class Field with _$Field {
   }) = _Field;
 }
 
-class PopupMenuItemData {
-  const PopupMenuItemData({
-    this.icon,
-    required this.label,
-    this.onPressed,
-    this.danger = false,
-    this.subItems = const [],
-  });
-
-  final String label;
-  final VoidCallback? onPressed;
-  final IconData? icon;
-  final bool danger;
-  final List<PopupMenuItemData> subItems;
-}
-
 class CloseWindowIntent extends Intent {
   const CloseWindowIntent();
 }
@@ -700,5 +691,6 @@ abstract class IconButtonData with _$IconButtonData {
   const factory IconButtonData({
     required IconData icon,
     required VoidCallback onPressed,
+    String? tooltip,
   }) = _IconButtonData;
 }

@@ -4,8 +4,8 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wifi_ssid/wifi_ssid_manager.dart';
 
@@ -45,26 +45,28 @@ class Permissions {
   final bool Function() _supportsLocationPermissions;
 
   bool _isRequestingLocation = false;
+  bool _autoRequestedLocation = false;
+  bool _hadExcludeSSIDs = false;
   bool needWaitingBatteryOptimizationSettings = false;
 
-  void check() {
-    checkLocationPermissions();
-    checkBatteryOptimizationDisable();
+  void check(ProviderReader read) {
+    checkLocationPermissions(read);
+    checkBatteryOptimizationDisable(read);
   }
 
-  Future<void> checkBatteryOptimizationDisable() async {
-    await _checkBatteryOptimizationDisable();
+  Future<void> checkBatteryOptimizationDisable(ProviderReader read) async {
+    await _checkBatteryOptimizationDisable(read);
   }
 
-  Future<void> _checkBatteryOptimizationDisable() async {
+  Future<void> _checkBatteryOptimizationDisable(ProviderReader read) async {
     const tag = LoadingTag.batteryOptimization;
     try {
       if (needWaitingBatteryOptimizationSettings) {
-        globalState.container.read(loadingProvider(tag).notifier).value = true;
+        read(loadingProvider(tag).notifier).value = true;
       }
-      globalState.container
-          .read(batteryOptimizationDisableProvider.notifier)
-          .value = await retry<bool>(
+      read(
+        batteryOptimizationDisableProvider.notifier,
+      ).value = await retry<bool>(
         task: () async {
           return await app?.isBatteryOptimizationDisabled() ?? false;
         },
@@ -73,37 +75,46 @@ class Permissions {
         maxAttempts: needWaitingBatteryOptimizationSettings ? 5 : 1,
       );
     } finally {
-      globalState.container.read(loadingProvider(tag).notifier).value = false;
+      read(loadingProvider(tag).notifier).value = false;
       needWaitingBatteryOptimizationSettings = false;
     }
   }
 
-  Future<void> checkLocationPermissions() async {
+  Future<void> checkLocationPermissions(ProviderReader read) async {
     if (!_supportsLocationPermissions()) {
       return;
     }
     final res = await WifiSsidManager.instance.checkPermission();
-    final current = globalState.container.read(locationPermissionsProvider);
+    final current = read(locationPermissionsProvider);
     if (res == WifiSsidPermission.granted ||
         current != WifiSsidPermission.permanentlyDenied) {
-      globalState.container.read(locationPermissionsProvider.notifier).value =
-          res;
+      read(locationPermissionsProvider.notifier).value = res;
     }
-    final needRequestPermission = globalState.container.read(
+    final needRequestPermission = read(
       excludeSSIDsProvider.select((state) => state.isNotEmpty),
     );
+    if (needRequestPermission && !_hadExcludeSSIDs) {
+      _autoRequestedLocation = false;
+    }
+    _hadExcludeSSIDs = needRequestPermission;
     if (res == WifiSsidPermission.denied &&
         needRequestPermission &&
+        !_autoRequestedLocation &&
         !_isRequestingLocation) {
+      _isRequestingLocation = true;
       try {
-        _isRequestingLocation = true;
         final res = await WifiSsidManager.instance.requestPermission();
-        globalState.container.read(locationPermissionsProvider.notifier).value =
-            res;
+        _autoRequestedLocation = true;
+        read(locationPermissionsProvider.notifier).value = res;
         if (res == WifiSsidPermission.granted) {
           final ssid = await WifiSsidManager.instance.getSsid();
-          globalState.container.read(currentSSIDProvider.notifier).value = ssid;
+          read(currentSSIDProvider.notifier).value = ssid;
         }
+      } on PlatformException catch (e) {
+        commonPrint.log(
+          'requestPermission error ${e.toString()}',
+          logLevel: LogLevel.warning,
+        );
       } finally {
         _isRequestingLocation = false;
       }
