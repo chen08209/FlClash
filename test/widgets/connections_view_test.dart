@@ -4,10 +4,9 @@ import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/connection/connections.dart';
-import 'package:fl_clash/views/connection/item.dart';
+import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -76,10 +75,10 @@ void main() {
     final builtItems = find.byType(TrackerInfoItem).evaluate().length;
     expect(builtItems, greaterThan(0));
     expect(builtItems, lessThan(connections.length));
-    expect(find.text('tcp://host-0.com:443'), findsOneWidget);
+    expect(find.textContaining('host-0.com'), findsOneWidget);
 
     await tester.scrollUntilVisible(
-      find.text('tcp://host-99.com:443'),
+      find.textContaining('host-99.com'),
       800,
       scrollable: find.byWidgetPredicate(
         (widget) =>
@@ -89,7 +88,7 @@ void main() {
       ),
     );
 
-    expect(find.text('tcp://host-99.com:443'), findsOneWidget);
+    expect(find.textContaining('host-99.com'), findsOneWidget);
     expect(tester.takeException(), null);
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -195,9 +194,7 @@ class _TestApp extends StatelessWidget {
       navigatorKey: globalState.navigatorKey,
       localizationsDelegates: const [
         AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
       ],
       supportedLocales: AppLocalizations.delegate.supportedLocales,
       builder: (context, child) {

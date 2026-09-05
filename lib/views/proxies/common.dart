@@ -1,5 +1,3 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -22,81 +20,33 @@ double getItemHeight(ProxyCardType proxyCardType) {
   };
 }
 
-List<Group> getCurrentGroups() {
-  return globalState.container.read(currentGroupsStateProvider).value;
-}
+class GroupOffsets {
+  const GroupOffsets(this.groups, this.offsets);
 
-List<Group> getGroups() {
-  return globalState.container.read(groupsProvider);
-}
+  static const empty = GroupOffsets(<Group>[], <double>[]);
 
-void updateCurrentGroupName(String groupName) {
-  globalState.container
-      .read(proxiesActionProvider.notifier)
-      .updateCurrentGroupName(groupName);
-}
+  final List<Group> groups;
+  final List<double> offsets;
 
-void updateCurrentUnfoldSet(Set<String> value) {
-  globalState.container
-      .read(proxiesActionProvider.notifier)
-      .updateCurrentUnfoldSet(value);
-}
+  bool get isEmpty => offsets.isEmpty;
 
-Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
-  final ref = globalState.container;
-  final groups = getGroups();
-  final selectedMap = ref.read(
-    currentProfileProvider.select((state) => state?.selectedMap ?? {}),
-  );
-  final state = computeRealSelectedProxyState(
-    proxy.name,
-    groups: groups,
-    selectedMap: selectedMap,
-  );
-  final currentTestUrl = state.testUrl.takeFirstValid([
-    ref.read(realTestUrlProvider(testUrl)),
-  ]);
-  if (state.proxyName.isEmpty) {
-    return;
+  double offsetOf(String groupName) {
+    final index = groups.indexWhere((group) => group.name == groupName);
+    if (index < 0 || index >= offsets.length) {
+      return 0;
+    }
+    return offsets[index];
   }
-  ref
-      .read(proxiesActionProvider.notifier)
-      .setDelay(Delay(url: currentTestUrl, name: state.proxyName, value: 0));
-  try {
-    final delay = await coreController.getDelay(
-      currentTestUrl,
-      state.proxyName,
-    );
-    ref.read(proxiesActionProvider.notifier).setDelay(delay);
-  } catch (error) {
-    commonPrint.log(
-      'Delay test failed for ${state.proxyName}: $error',
-      logLevel: coreFailureLogLevel(error),
-    );
-    ref
-        .read(proxiesActionProvider.notifier)
-        .setDelay(Delay(url: currentTestUrl, name: state.proxyName, value: -1));
-  }
-}
 
-Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) async {
-  final batches = proxies.batch(maxConcurrentDelayTests);
-  for (final batch in batches) {
-    await Future.wait(
-      batch.map((proxy) async {
-        await proxyDelayTest(proxy, testUrl);
-      }),
-    );
-  }
-  globalState.container.read(sortNumProvider.notifier).add();
+  Group? groupOf(String groupName) => groups.getGroup(groupName);
 }
 
 double getScrollToSelectedOffset({
+  required WidgetRef ref,
   required String groupName,
   required List<Proxy> proxies,
   required int columns,
 }) {
-  final ref = globalState.container;
   final proxyCardType = ref.read(
     proxiesStyleSettingProvider.select((state) => state.cardType),
   );

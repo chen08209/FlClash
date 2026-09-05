@@ -2,13 +2,15 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/widgets/card.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:material_color_utilities/hct/hct.dart';
 
 import 'color_scheme_box.dart';
 import 'theme.dart';
 
 @immutable
+const _selectionRingInset = 4.0;
+
 class Palette extends StatefulWidget {
   const Palette({super.key, required this.controller});
 
@@ -58,30 +60,33 @@ class _PaletteState extends State<Palette> {
     return ValueListenableBuilder(
       valueListenable: widget.controller,
       builder: (_, _, _) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _HueSlider(hue: _hue, onChanged: _onHueChanged),
-            const SizedBox(height: 16),
-            _ChromaSlider(
-              hue: _hue,
-              chroma: _chroma,
-              onChanged: _onChromaChanged,
-            ),
-            const SizedBox(height: 28),
-            _ToneGrid(
-              hue: _hue,
-              chroma: _chroma,
-              selectedTone: _tone,
-              onToneSelected: _onToneSelected,
-            ),
-            const SizedBox(height: 16),
-            InfoHeader(info: Info(label: context.appLocalizations.preview)),
-            PrimaryColorBox(
-              primaryColor: widget.controller.value,
-              child: const _ColorSchemePreview(),
-            ),
-          ],
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _HueSlider(hue: _hue, onChanged: _onHueChanged),
+              const SizedBox(height: 16),
+              _ChromaSlider(
+                hue: _hue,
+                chroma: _chroma,
+                onChanged: _onChromaChanged,
+              ),
+              const SizedBox(height: 28),
+              _ToneGrid(
+                hue: _hue,
+                chroma: _chroma,
+                selectedTone: _tone,
+                onToneSelected: _onToneSelected,
+              ),
+              const SizedBox(height: 16),
+              InfoHeader(info: Info(label: context.appLocalizations.preview)),
+              PrimaryColorBox(
+                primaryColor: widget.controller.value,
+                child: const _ColorSchemePreview(),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -189,8 +194,11 @@ class _HueTrackShape extends SliderTrackShape {
       colors.add(Color(Hct.from(i.toDouble(), 100, 60).toInt()));
     }
     final shader = LinearGradient(colors: colors).createShader(rect);
-    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(12));
-    context.canvas.drawRRect(rrect, Paint()..shader = shader);
+    final shape = RSuperellipse.fromRectAndRadius(
+      rect,
+      const Radius.circular(AppCorner.full),
+    );
+    context.canvas.drawRSuperellipse(shape, Paint()..shader = shader);
     _paintTrackHighlight(context.canvas, rect);
   }
 }
@@ -243,19 +251,22 @@ class _ChromaTrackShape extends SliderTrackShape {
       colors.add(Color(Hct.from(hue, (i / 49) * 150, 60).toInt()));
     }
     final shader = LinearGradient(colors: colors).createShader(rect);
-    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(12));
-    context.canvas.drawRRect(rrect, Paint()..shader = shader);
+    final shape = RSuperellipse.fromRectAndRadius(
+      rect,
+      const Radius.circular(AppCorner.full),
+    );
+    context.canvas.drawRSuperellipse(shape, Paint()..shader = shader);
     _paintTrackHighlight(context.canvas, rect);
   }
 }
 
 void _paintTrackHighlight(Canvas canvas, Rect rect) {
-  final rrect = RRect.fromRectAndRadius(
+  final shape = RSuperellipse.fromRectAndRadius(
     rect.deflate(1),
-    const Radius.circular(12),
+    const Radius.circular(AppCorner.full),
   );
-  canvas.drawRRect(
-    rrect,
+  canvas.drawRSuperellipse(
+    shape,
     Paint()
       ..color = Colors.white.withValues(alpha: 0.35)
       ..style = PaintingStyle.stroke
@@ -314,9 +325,9 @@ class _ToneGrid extends StatelessWidget {
                   children: [
                     Positioned.fill(
                       child: Container(
-                        decoration: BoxDecoration(
+                        decoration: ShapeDecoration(
                           color: color,
-                          borderRadius: BorderRadius.circular(8),
+                          shape: AppShape.sm,
                         ),
                         alignment: Alignment.center,
                         child: Text(
@@ -331,17 +342,21 @@ class _ToneGrid extends StatelessWidget {
                     ),
                     if (isSelected)
                       Positioned.fill(
-                        top: -4,
-                        right: -4,
-                        bottom: -4,
-                        left: -4,
+                        top: -_selectionRingInset,
+                        right: -_selectionRingInset,
+                        bottom: -_selectionRingInset,
+                        left: -_selectionRingInset,
                         child: IgnorePointer(
                           child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: selectedBorderColor,
-                                width: 4,
+                            decoration: ShapeDecoration(
+                              shape: RoundedSuperellipseBorder(
+                                borderRadius: AppRadius.all(
+                                  AppCorner.sm + _selectionRingInset,
+                                ),
+                                side: BorderSide(
+                                  color: selectedBorderColor,
+                                  width: _selectionRingInset,
+                                ),
                               ),
                             ),
                           ),
@@ -404,10 +419,7 @@ class _ColorSchemePreview extends StatelessWidget {
               Container(
                 width: itemWidth,
                 height: 44,
-                decoration: BoxDecoration(
-                  color: bg,
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                decoration: ShapeDecoration(color: bg, shape: AppShape.sm),
                 alignment: Alignment.center,
                 child: Text(
                   label,

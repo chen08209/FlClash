@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:fl_clash/common/color.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class Point {
   final double x;
