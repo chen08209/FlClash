@@ -1,5 +1,7 @@
 import 'package:fl_clash/common/system.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+
+import 'inherited.dart';
 
 class FloatLayout extends StatelessWidget {
   final Widget floatingWidget;
@@ -24,15 +26,17 @@ class FloatLayout extends StatelessWidget {
         ],
       );
     }
+    final bottomInset = BottomInsetScope.of(context);
     return Stack(
       fit: StackFit.loose,
       children: [
-        Center(child: child),
-        Positioned(
-          bottom: 0,
-          right: 0,
-          child: Container(child: floatingWidget),
+        Center(
+          child: BottomInsetScope(
+            inset: bottomInset + BottomInsetScope.floatingActionButtonInset,
+            child: child,
+          ),
         ),
+        Positioned(bottom: bottomInset, right: 0, child: floatingWidget),
       ],
     );
   }

@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/color.dart';
-import 'package:flutter/material.dart';
+import 'package:fl_clash/common/shape.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 class InitErrorScreen extends StatelessWidget {
@@ -49,10 +50,12 @@ class InitErrorScreen extends StatelessWidget {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
+                decoration: ShapeDecoration(
                   color: colorScheme.errorContainer.opacity50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: colorScheme.error.opacity50),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: AppRadius.sm,
+                    side: BorderSide(color: colorScheme.error.opacity50),
+                  ),
                 ),
                 child: SelectableText(
                   error.toString(),
@@ -67,19 +70,18 @@ class InitErrorScreen extends StatelessWidget {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
+                decoration: ShapeDecoration(
                   color: Theme.of(context).brightness == Brightness.dark
                       ? Colors.grey[900]
                       : Colors.grey[200],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.opacity50),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: AppRadius.sm,
+                    side: BorderSide(color: Colors.grey.opacity50),
+                  ),
                 ),
                 child: SelectableText(
                   stack.toString(),
-                  style: const TextStyle(
-                    fontFamily: 'monospace', // Makes code easier to read
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
                 ),
               ),
               const SizedBox(height: 80),

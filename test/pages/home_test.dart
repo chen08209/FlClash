@@ -1,5 +1,4 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/theme.dart';
+import 'package:fl_clash/common/app_ports.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/app_manager.dart';
@@ -12,13 +11,20 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/application_setting.dart';
 import 'package:fl_clash/views/tools.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:fl_clash/views/navigation.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/test_app.dart';
+
 void main() {
+  setUp(() {
+    navigationPort = navigation;
+    addTearDown(() => navigationPort = null);
+  });
+
   testWidgets('initial desktop layout does not animate mobile navigation out', (
     tester,
   ) async {
@@ -110,7 +116,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: const MaterialApp(home: HomePage()),
+          child: const TestApp(includeNavigatorKey: false, child: HomePage()),
         ),
       );
       await tester.pump();
@@ -214,7 +220,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: const _TestApp(child: HomePage()),
+          child: const TestApp(includeNavigatorKey: false, child: HomePage()),
         ),
       );
       await tester.pump();
@@ -225,6 +231,93 @@ void main() {
         await tester.pump(const Duration(milliseconds: 16));
         expect(tester.takeException(), isNull, reason: 'width: $width');
       }
+    },
+  );
+
+  testWidgets(
+    'tools page survives widening past the breakpoint with more items',
+    (tester) async {
+      tester.view.physicalSize = const Size(500, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final container = ProviderContainer(
+        overrides: [
+          navigationItemsStateProvider.overrideWithValue(
+            NavigationItemsState(
+              value: [
+                NavigationItem(
+                  icon: const Icon(Icons.space_dashboard),
+                  label: PageLabel.dashboard,
+                  builder: (_) => const SizedBox.shrink(),
+                ),
+                NavigationItem(
+                  icon: const Icon(Icons.article),
+                  label: PageLabel.logs,
+                  modes: const [
+                    NavigationItemMode.desktop,
+                    NavigationItemMode.more,
+                  ],
+                  builder: (_) => const SizedBox.shrink(),
+                ),
+                NavigationItem(
+                  icon: const Icon(Icons.link),
+                  label: PageLabel.connections,
+                  modes: const [
+                    NavigationItemMode.desktop,
+                    NavigationItemMode.more,
+                  ],
+                  builder: (_) => const SizedBox.shrink(),
+                ),
+                NavigationItem(
+                  icon: const Icon(Icons.construction),
+                  label: PageLabel.tools,
+                  builder: (_) =>
+                      const ToolsView(key: GlobalObjectKey(PageLabel.tools)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      globalState.container = container;
+      container.read(viewSizeProvider.notifier).value = const Size(500, 800);
+      container.read(currentPageLabelProvider.notifier).toPage(PageLabel.tools);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+        ),
+      );
+      await tester.pump();
+      expect(find.byType(ToolsView), findsOneWidget);
+      expect(find.byType(NavigationBar), findsOneWidget);
+
+      for (var width = 520.0; width <= 1200; width += 20) {
+        tester.view.physicalSize = Size(width, 800);
+        container.read(viewSizeProvider.notifier).value = Size(width, 800);
+        await tester.pump(const Duration(milliseconds: 16));
+        expect(tester.takeException(), isNull, reason: 'width: $width');
+      }
+      await tester.pump(const Duration(milliseconds: 301));
+      expect(tester.takeException(), isNull);
+      expect(find.byType(ToolsView), findsOneWidget);
+      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(container.read(currentPageLabelProvider), PageLabel.tools);
+
+      for (var width = 1180.0; width >= 500; width -= 20) {
+        tester.view.physicalSize = Size(width, 800);
+        container.read(viewSizeProvider.notifier).value = Size(width, 800);
+        await tester.pump(const Duration(milliseconds: 16));
+        expect(tester.takeException(), isNull, reason: 'width: $width');
+      }
+      await tester.pump(const Duration(milliseconds: 301));
+      expect(tester.takeException(), isNull);
+      expect(find.byType(ToolsView), findsOneWidget);
+      expect(container.read(currentPageLabelProvider), PageLabel.tools);
     },
   );
 
@@ -253,7 +346,8 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: const _TestApp(
+          child: const TestApp(
+            includeNavigatorKey: false,
             child: ThemeManager(
               child: WindowHeaderContainer(child: HomePage()),
             ),
@@ -287,7 +381,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: const _TestApp(child: HomePage()),
+          child: const TestApp(includeNavigatorKey: false, child: HomePage()),
         ),
       );
       await tester.pump();
@@ -364,7 +458,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: const _TestApp(child: HomePage()),
+          child: const TestApp(includeNavigatorKey: false, child: HomePage()),
         ),
       );
       await tester.pump();
@@ -491,7 +585,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const _TestApp(child: HomePage()),
+        child: const TestApp(includeNavigatorKey: false, child: HomePage()),
       ),
     );
     await tester.pump();
@@ -592,7 +686,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const _TestApp(child: HomePage()),
+        child: const TestApp(includeNavigatorKey: false, child: HomePage()),
       ),
     );
     await tester.pump();
@@ -652,7 +746,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const _TestApp(child: HomePage()),
+        child: const TestApp(includeNavigatorKey: false, child: HomePage()),
       ),
     );
     await tester.pump();
@@ -734,7 +828,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: const _TestApp(child: HomePage()),
+          child: const TestApp(includeNavigatorKey: false, child: HomePage()),
         ),
       );
       await tester.pump();
@@ -778,31 +872,6 @@ void main() {
   );
 }
 
-class _TestApp extends StatelessWidget {
-  final Widget child;
-
-  const _TestApp({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.delegate.supportedLocales,
-      builder: (context, child) {
-        globalState.measure = Measure.of(context, 1);
-        globalState.theme = CommonTheme.of(context, 1);
-        return child!;
-      },
-      home: child,
-    );
-  }
-}
-
 class _ThemeManagedTestApp extends StatelessWidget {
   const _ThemeManagedTestApp();
 
@@ -812,9 +881,7 @@ class _ThemeManagedTestApp extends StatelessWidget {
       navigatorKey: globalState.navigatorKey,
       localizationsDelegates: const [
         AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
       ],
       supportedLocales: AppLocalizations.delegate.supportedLocales,
       builder: (_, child) => ThemeManager(child: child!),
