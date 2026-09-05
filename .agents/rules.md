@@ -211,7 +211,7 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
 - Package `init` in the Android library runs while the `.so` is being loaded, so a panic there takes the application
   down before it can report anything. `platform/limit.go` arms an fd-pressure probe and degrades to never blocking when
   it cannot; keep that shape for anything else `init` sets up that correctness does not depend on.
-- Every `android && cgo` file in `core/` is compiled only by the NDK-backed CI step in the `test` job. Keep the build
+- Every `android && cgo` file in `core/` is compiled only by the NDK-backed CI step in the `go` job. Keep the build
   constraints as `android && cgo` / `!(android && cgo)`: a bare `cgo` constraint makes `go build ./...` fail in `core/`
   on any developer machine, because the files it pulls in need the NDK.
 
