@@ -26,6 +26,9 @@ class TileService : android.service.quicksettings.TileService() {
         }
     }
 
+    // Always route through QuickActionActivity: startActivityAndCollapse is
+    // what closes the shade, so toggling the service in place would leave
+    // the panel open after a tap.
     override fun onClick() {
         super.onClick()
         openQuickAction()

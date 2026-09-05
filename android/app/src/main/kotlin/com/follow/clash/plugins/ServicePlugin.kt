@@ -31,7 +31,11 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         ServiceController.setEventListener(null)
     }
 
-    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+    override fun onMethodCall(call: MethodCall, rawResult: MethodChannel.Result) {
+        // Most handlers below reply from a scope worker on Dispatchers.Default,
+        // but a MethodChannel.Result has to be answered on the platform thread.
+        // Wrapping once here covers every branch, including notImplemented.
+        val result = MainThreadResult(rawResult)
         when (call.method) {
             "init" -> initialize(result)
             "shutdown" -> shutdown(result)
