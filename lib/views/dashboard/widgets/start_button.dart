@@ -1,7 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const _threeDigitHourThreshold = 100 * 60 * 60 * 1000;
@@ -44,7 +44,7 @@ class RunTimeText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = utils.getTimeText(timeStamp);
+    final text = getTimeText(timeStamp);
     final style = _runTimeTextStyle(context);
     final textWidget = text.length < 9
         ? Text(text, maxLines: 1, overflow: TextOverflow.visible, style: style)

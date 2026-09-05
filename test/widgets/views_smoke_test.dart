@@ -1,7 +1,4 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -13,22 +10,31 @@ import 'package:fl_clash/views/config/dns.dart';
 import 'package:fl_clash/views/config/general.dart';
 import 'package:fl_clash/views/config/network.dart';
 import 'package:fl_clash/views/config/on_demand.dart';
+import 'package:fl_clash/views/config/rules.dart';
+import 'package:fl_clash/views/config/scripts.dart';
 import 'package:fl_clash/views/hotkey.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/groups.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/proxies.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/proxy_providers.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/rules.dart';
 import 'package:fl_clash/views/proxies/list.dart';
+import 'package:fl_clash/views/proxies/providers.dart';
 import 'package:fl_clash/views/proxies/tab.dart';
 import 'package:fl_clash/views/theme.dart';
 import 'package:fl_clash/views/views.dart';
 import 'package:fl_clash/widgets/inherited.dart';
+import 'package:fl_clash/widgets/paged_sheet.dart';
 import 'package:fl_clash/widgets/sheet.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smooth_sheets/smooth_sheets.dart';
+
+import '../helpers/test_app.dart';
+import '../helpers/test_database_providers.dart';
+import '../helpers/test_profiles.dart';
+
+Finder _portField(String label) =>
+    find.ancestor(of: find.text(label), matching: find.byType(TextFormField));
 
 void main() {
   final cases = <String, Widget>{
@@ -49,6 +55,9 @@ void main() {
     'backup and restore': const BackupAndRestore(),
     'hotkeys': const HotKeyView(),
     'access control': const AccessView(),
+    'proxy providers': const ProvidersView(),
+    'added rules': const AddedRulesView(),
+    'scripts': const ScriptsView(),
   };
 
   for (final entry in cases.entries) {
@@ -59,7 +68,11 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       final container = ProviderContainer(
-        overrides: [profilesProvider.overrideWith(_TestProfiles.new)],
+        overrides: [
+          profilesProvider.overrideWith(TestProfiles.new),
+          scriptsProvider.overrideWith(TestScripts.new),
+          globalRulesProvider.overrideWith(TestGlobalRules.new),
+        ],
       );
       addTearDown(container.dispose);
       globalState.container = container;
@@ -67,7 +80,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: _TestApp(child: entry.value),
+          child: TestApp(child: entry.value),
         ),
       );
       await tester.pump();
@@ -91,7 +104,7 @@ void main() {
 
   final toolDestinations = <String, Type>{
     'Theme': ThemeView,
-    'Backup and Restore': BackupAndRestore,
+    'Backup and restore': BackupAndRestore,
     'Basic configuration': ConfigView,
     'Advanced configuration': AdvancedConfigView,
     'Application': ApplicationSettingView,
@@ -105,7 +118,7 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       final container = ProviderContainer(
-        overrides: [profilesProvider.overrideWith(_TestProfiles.new)],
+        overrides: [profilesProvider.overrideWith(TestProfiles.new)],
       );
       addTearDown(container.dispose);
       globalState.container = container;
@@ -116,7 +129,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: const _TestApp(child: ToolsView()),
+          child: const TestApp(child: ToolsView()),
         ),
       );
       await tester.pump();
@@ -142,7 +155,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final container = ProviderContainer(
-      overrides: [profilesProvider.overrideWith(_TestProfiles.new)],
+      overrides: [profilesProvider.overrideWith(TestProfiles.new)],
     );
     addTearDown(container.dispose);
     globalState.container = container;
@@ -153,7 +166,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: _TestApp(
+        child: TestApp(
           child: Scaffold(body: ListView(children: const [UaItem()])),
         ),
       ),
@@ -174,6 +187,54 @@ void main() {
     expect(tester.takeException(), null);
   });
 
+  testWidgets('port dialog validates the fields the expander hides', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1000, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = ProviderContainer(
+      overrides: [profilesProvider.overrideWith(TestProfiles.new)],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container
+        .read(viewSizeProvider.notifier)
+        .update((_) => const Size(1000, 800));
+    final before = container.read(patchClashConfigProvider);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: Scaffold(body: PortItem())),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Port').first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Expand'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(_portField('SOCKS port'), '');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Collapse'));
+    await tester.pumpAndSettle();
+    expect(_portField('SOCKS port'), findsNothing);
+
+    await tester.tap(find.text('Submit'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), null);
+    expect(container.read(patchClashConfigProvider), before);
+    expect(_portField('SOCKS port'), findsOneWidget);
+    expect(find.text('SOCKS port cannot be empty'), findsOneWidget);
+  });
+
   testWidgets('DNS mode options update the patch configuration', (
     tester,
   ) async {
@@ -183,7 +244,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final container = ProviderContainer(
-      overrides: [profilesProvider.overrideWith(_TestProfiles.new)],
+      overrides: [profilesProvider.overrideWith(TestProfiles.new)],
     );
     addTearDown(container.dispose);
     globalState.container = container;
@@ -194,7 +255,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const _TestApp(child: Scaffold(body: DnsModeItem())),
+        child: const TestApp(child: Scaffold(body: DnsModeItem())),
       ),
     );
     await tester.pump();
@@ -216,7 +277,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const _TestApp(
+        child: const TestApp(
           child: Scaffold(
             body: Column(
               children: [
@@ -231,7 +292,7 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.tap(find.text('Override Dns'));
+    await tester.tap(find.text('Override DNS'));
     await tester.pump();
     await tester.tap(find.text('Status'));
     await tester.pump();
@@ -280,7 +341,7 @@ void main() {
     );
     final container = ProviderContainer(
       overrides: [
-        profilesProvider.overrideWith(() => _TestProfiles([profile])),
+        profilesProvider.overrideWith(() => TestProfiles([profile])),
         currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
         currentGroupsStateProvider.overrideWithValue(
           GroupsState(value: [group]),
@@ -297,7 +358,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const _TestApp(child: ProxiesView()),
+        child: const TestApp(child: ProxiesView()),
       ),
     );
     await tester.pump();
@@ -354,7 +415,7 @@ void main() {
     );
     final container = ProviderContainer(
       overrides: [
-        profilesProvider.overrideWith(() => _TestProfiles([profile])),
+        profilesProvider.overrideWith(() => TestProfiles([profile])),
         currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
         profileCustomRulesProvider.overrideWith2(
           (_) => _TestProfileCustomRules(rules),
@@ -371,7 +432,9 @@ void main() {
         ),
         customOverwriteDateProvider(profile.id).overrideWithValue(
           CustomOverwriteDate(
-            proxies: const [Proxy(name: 'DIRECT', type: 'Direct')],
+            loaded: true,
+            proxyNames: const ['DIRECT'],
+            proxyTypes: const {'DIRECT': 'Direct'},
             proxyGroups: proxyGroups,
             proxyProviders: const {'provider'},
             ruleTargets: {
@@ -411,7 +474,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: _TestApp(child: view),
+          child: TestApp(child: view),
         ),
       );
       await tester.pump();
@@ -439,7 +502,7 @@ void main() {
             .update((_) => const Size(500, 1000));
         await tester.tap(find.text('Add'));
         await tester.pumpAndSettle();
-        expect(find.byType(SheetViewport), findsOneWidget);
+        expect(find.byType(PagedSheet), findsOneWidget);
         globalState.navigatorKey.currentState!.pop();
         await tester.pumpAndSettle();
         container
@@ -459,7 +522,7 @@ void main() {
             .update((_) => const Size(500, 1000));
         await tester.tap(find.text('Add'));
         await tester.pumpAndSettle();
-        expect(find.byType(SheetViewport), findsOneWidget);
+        expect(find.byType(PagedSheet), findsOneWidget);
         globalState.navigatorKey.currentState!.pop();
         await tester.pumpAndSettle();
         container
@@ -470,15 +533,6 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
-}
-
-class _TestProfiles extends Profiles {
-  final List<Profile> initial;
-
-  _TestProfiles([this.initial = const []]);
-
-  @override
-  List<Profile> build() => initial;
 }
 
 class _TestProfileCustomRules extends ProfileCustomRules {
@@ -503,30 +557,4 @@ class _TestProxyGroups extends ProxyGroups {
 
   @override
   void order(int oldIndex, int newIndex) {}
-}
-
-class _TestApp extends StatelessWidget {
-  final Widget child;
-
-  const _TestApp({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: globalState.navigatorKey,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.delegate.supportedLocales,
-      builder: (context, child) {
-        globalState.measure = Measure.of(context, 1);
-        globalState.theme = CommonTheme.of(context, 1);
-        return child!;
-      },
-      home: child,
-    );
-  }
 }
