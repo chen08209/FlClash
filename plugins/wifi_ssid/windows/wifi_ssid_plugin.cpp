@@ -20,12 +20,52 @@ constexpr char kGetSsidMethod[] = "getSsid";
 constexpr char kCheckPermissionMethod[] = "checkPermission";
 constexpr char kRequestPermissionMethod[] = "requestPermission";
 
+// Windows Server and any install without the Wireless LAN feature ships no
+// wlanapi.dll, and a load-time import of it stops the whole app from starting.
+struct WlanApi {
+  decltype(&::WlanOpenHandle) open_handle = nullptr;
+  decltype(&::WlanCloseHandle) close_handle = nullptr;
+  decltype(&::WlanFreeMemory) free_memory = nullptr;
+  decltype(&::WlanEnumInterfaces) enum_interfaces = nullptr;
+  decltype(&::WlanQueryInterface) query_interface = nullptr;
+
+  bool available() const { return open_handle != nullptr; }
+};
+
+const WlanApi &GetWlanApi() {
+  static const WlanApi api = [] {
+    WlanApi loaded;
+    HMODULE module = LoadLibraryExW(L"wlanapi.dll", nullptr,
+                                    LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (module == nullptr) {
+      return loaded;
+    }
+    loaded.open_handle = reinterpret_cast<decltype(loaded.open_handle)>(
+        GetProcAddress(module, "WlanOpenHandle"));
+    loaded.close_handle = reinterpret_cast<decltype(loaded.close_handle)>(
+        GetProcAddress(module, "WlanCloseHandle"));
+    loaded.free_memory = reinterpret_cast<decltype(loaded.free_memory)>(
+        GetProcAddress(module, "WlanFreeMemory"));
+    loaded.enum_interfaces = reinterpret_cast<decltype(loaded.enum_interfaces)>(
+        GetProcAddress(module, "WlanEnumInterfaces"));
+    loaded.query_interface = reinterpret_cast<decltype(loaded.query_interface)>(
+        GetProcAddress(module, "WlanQueryInterface"));
+    if (loaded.close_handle == nullptr || loaded.free_memory == nullptr ||
+        loaded.enum_interfaces == nullptr ||
+        loaded.query_interface == nullptr) {
+      return WlanApi{};
+    }
+    return loaded;
+  }();
+  return api;
+}
+
 struct WlanHandleDeleter {
   using pointer = HANDLE;
 
   void operator()(HANDLE handle) const {
     if (handle != nullptr) {
-      WlanCloseHandle(handle, nullptr);
+      GetWlanApi().close_handle(handle, nullptr);
     }
   }
 };
@@ -34,7 +74,7 @@ struct WlanMemoryDeleter {
   template <typename T>
   void operator()(T *memory) const {
     if (memory != nullptr) {
-      WlanFreeMemory(memory);
+      GetWlanApi().free_memory(memory);
     }
   }
 };
@@ -81,10 +121,16 @@ void WifiSsidPlugin::HandleMethodCall(
 
 void WifiSsidPlugin::GetSsid(
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
+  const WlanApi &wlan = GetWlanApi();
+  if (!wlan.available()) {
+    result->Success(flutter::EncodableValue());
+    return;
+  }
+
   HANDLE client_handle = nullptr;
   DWORD current_version = 0;
-  DWORD result_code = WlanOpenHandle(WLAN_API_VERSION_2_0, nullptr,
-                                     &current_version, &client_handle);
+  DWORD result_code = wlan.open_handle(WLAN_API_VERSION_2_0, nullptr,
+                                       &current_version, &client_handle);
   if (result_code == ERROR_ACCESS_DENIED) {
     result->Success(flutter::EncodableValue());
     return;
@@ -97,7 +143,7 @@ void WifiSsidPlugin::GetSsid(
   ScopedWlanHandle client(client_handle);
 
   PWLAN_INTERFACE_INFO_LIST interface_list = nullptr;
-  result_code = WlanEnumInterfaces(client.get(), nullptr, &interface_list);
+  result_code = wlan.enum_interfaces(client.get(), nullptr, &interface_list);
   if (result_code == ERROR_ACCESS_DENIED) {
     result->Success(flutter::EncodableValue());
     return;
@@ -119,7 +165,7 @@ void WifiSsidPlugin::GetSsid(
 
     PWLAN_CONNECTION_ATTRIBUTES connection_attributes = nullptr;
     DWORD data_size = 0;
-    result_code = WlanQueryInterface(
+    result_code = wlan.query_interface(
         client.get(), &interface_info.InterfaceGuid,
         wlan_intf_opcode_current_connection, nullptr, &data_size,
         reinterpret_cast<PVOID *>(&connection_attributes), nullptr);

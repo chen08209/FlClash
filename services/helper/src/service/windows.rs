@@ -11,8 +11,10 @@ use tokio::sync::watch;
 use windows_service::{
     define_windows_service,
     service::{
-        Service, ServiceAccess, ServiceControl, ServiceControlAccept, ServiceErrorControl,
-        ServiceExitCode, ServiceInfo, ServiceStartType, ServiceState, ServiceStatus, ServiceType,
+        Service, ServiceAccess, ServiceAction, ServiceActionType, ServiceControl,
+        ServiceControlAccept, ServiceErrorControl, ServiceExitCode, ServiceFailureActions,
+        ServiceFailureResetPeriod, ServiceInfo, ServiceStartType, ServiceState, ServiceStatus,
+        ServiceType,
     },
     service_control_handler::{self, ServiceControlHandlerResult},
     service_dispatcher,
@@ -23,6 +25,8 @@ const SERVICE_NAME: &str = "FlClashHelperService";
 const SERVICE_TYPE: ServiceType = ServiceType::OWN_PROCESS;
 const SERVICE_OPERATION_TIMEOUT: Duration = Duration::from_secs(10);
 const SERVICE_POLL_INTERVAL: Duration = Duration::from_millis(100);
+const SERVICE_RESTART_DELAY: Duration = Duration::from_secs(5);
+const SERVICE_FAILURE_RESET_PERIOD: Duration = Duration::from_secs(24 * 60 * 60);
 
 const ERROR_SERVICE_ALREADY_RUNNING: i32 = 1056;
 const ERROR_SERVICE_DOES_NOT_EXIST: i32 = 1060;
@@ -175,15 +179,32 @@ fn install_service() -> Result<()> {
     let service = manager
         .create_service(
             &service_info,
-            ServiceAccess::QUERY_STATUS | ServiceAccess::START,
+            ServiceAccess::QUERY_STATUS | ServiceAccess::START | ServiceAccess::CHANGE_CONFIG,
         )
         .context("create helper service")?;
+    service
+        .update_failure_actions(crash_recovery())
+        .context("configure helper service recovery")?;
     if let Err(error) = service.start::<&OsStr>(&[]) {
         if !has_error_code(&error, ERROR_SERVICE_ALREADY_RUNNING) {
             return Err(error).context("start helper service");
         }
     }
     wait_for_running(&service)
+}
+
+/// The SCM side of the Linux unit's `Restart=on-failure`; a clean stop stays stopped.
+fn crash_recovery() -> ServiceFailureActions {
+    let restart = ServiceAction {
+        action_type: ServiceActionType::Restart,
+        delay: SERVICE_RESTART_DELAY,
+    };
+    ServiceFailureActions {
+        reset_period: ServiceFailureResetPeriod::After(SERVICE_FAILURE_RESET_PERIOD),
+        reboot_msg: None,
+        command: None,
+        actions: Some(vec![restart.clone(), restart.clone(), restart]),
+    }
 }
 
 fn uninstall_service() -> Result<()> {

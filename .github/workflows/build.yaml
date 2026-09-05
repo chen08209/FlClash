@@ -135,6 +135,10 @@ jobs:
       - name: Run Android unit tests
         working-directory: android
         shell: bash
+        env:
+          # The runner image exports ANDROID_NDK_HOME as r27, which Flutter resolves
+          # first and which dropped libclang; the rust_api hook needs r28 for bindgen.
+          ANDROID_NDK_HOME: ${{ steps.core-ndk.outputs.ndk-path }}
         run: |
           # settings.gradle.kts resolves the Flutter tooling through local.properties,
           # which only the Flutter build itself would otherwise generate.
@@ -253,6 +257,7 @@ jobs:
       - name: Setup NDK
         if: startsWith(matrix.platform,'android')
         uses: nttld/setup-ndk@v1
+        id: build-ndk
         with:
           ndk-version: r28c
           add-to-path: true
@@ -264,6 +269,8 @@ jobs:
           flutter pub get
 
       - name: Setup
+        env:
+          ANDROID_NDK_HOME: ${{ steps.build-ndk.outputs.ndk-path }}
         run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
 
       - name: Upload
