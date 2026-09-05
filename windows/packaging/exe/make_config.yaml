@@ -6,8 +6,12 @@ publisher_url: https://github.com/chen08209/FlClash
 display_name: FlClash
 executable_name: FlClash.exe
 output_base_file_name: FlClash.exe
-setup_icon_file: ..\windows\runner\resources\app_icon.ico
+# Resolved against the project root: flutter_distributor turns this into an
+# absolute path via Directory.current.
+setup_icon_file: windows\runner\resources\app_icon.ico
 locales:
+  # Written into the .iss verbatim, so this one stays relative to the generated
+  # script in dist/.
   - lang: zh
     file: ..\windows\packaging\exe\ChineseSimplified.isl
   - lang: en
