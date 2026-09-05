@@ -97,5 +97,14 @@ TEST(ProxyPlugin, StartProxyRejectsNonStringBypassDomain) {
   EXPECT_EQ(error_code, "bad_args");
 }
 
+TEST(ProxyPlugin, RestoresTheSystemProxyOnlyWhenTheSessionReallyEnds) {
+  EXPECT_TRUE(ProxyPlugin::IsSessionEnding(WM_ENDSESSION, TRUE));
+  // A cancelled shutdown reports itself through the same message, and acting on
+  // it would strip the proxy from a session that goes on running.
+  EXPECT_FALSE(ProxyPlugin::IsSessionEnding(WM_ENDSESSION, FALSE));
+  EXPECT_FALSE(ProxyPlugin::IsSessionEnding(WM_QUERYENDSESSION, TRUE));
+  EXPECT_FALSE(ProxyPlugin::IsSessionEnding(WM_CLOSE, TRUE));
+}
+
 }  // namespace test
 }  // namespace proxy

@@ -5,6 +5,13 @@ version: 0.8.96+2026081701
 environment:
   sdk: '>=3.8.0 <4.0.0'
 
+hooks:
+  user_defines:
+    setup:
+      build_assets: true
+    rust_api:
+      build_assets: true
+
 dependencies:
   flutter:
     sdk: flutter

@@ -4,17 +4,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`rust_api` is a Flutter FFI plugin using **flutter_rust_bridge v2.12.0** to call Rust functions from Dart. The Rust
+`rust_api` is a Flutter FFI package using **flutter_rust_bridge v2.13.0** to call Rust functions from Dart. The Rust
 library is compiled as both `cdylib` (dynamic) and `staticlib`, and bundled into Flutter apps on all platforms
-(Android, iOS, macOS, Linux, Windows) via the `ffiPlugin: true` flag in `pubspec.yaml`.
+(Android, macOS, Linux, Windows) through Dart Native Assets.
 
 ## Build System
 
-Platform builds are orchestrated by **cargokit** (`cargokit/`), a third-party build harness that invokes Cargo and
-integrates with each platform's build system (Gradle for Android, CocoaPods for Apple, CMake for Linux/Windows).
+`hook/build.dart` is a Dart build hook. Flutter runs it for every platform build and for `flutter test`;
+`flutter_rust_bridge_hooks` (wrapping `native_toolchain_rust`) invokes Cargo for the requested target and registers the
+library as a code asset, which Flutter then bundles and signs. There are no platform folders and no CocoaPods, Gradle,
+or CMake glue.
+
+- `rust/rust-toolchain.toml` pins the exact Rust channel and lists every supported target. `native_toolchain_rust`
+  rejects `stable`/`beta`/`nightly` and any target missing from the list; `rustup` installs what is listed on first use.
+- Android: `rquickjs` runs bindgen, so the hook exports `LIBCLANG_PATH` from the NDK toolchain Flutter provides.
 
 Rust compilation happens automatically as part of the host Flutter app's build — there's no standalone build step for
-this plugin.
+this package.
 
 ## Code Generation
 
@@ -44,15 +50,20 @@ Rust source                Generated Dart            Public Dart API
 ─────────────────────      ─────────────────────     ─────────────────
 rust/src/api/              lib/src/rust/api/          lib/rust_api.dart
   mod.rs ──► init.rs         (init has no Dart file)
-  named_pipe.rs              named_pipe.dart
-                           lib/src/rust/
-                             frb_generated.dart      (re-exports RustLib)
-                             frb_generated.io.dart   (FFI for native)
+  hotkey.rs   ──────────►    hotkey.dart
+  ipc.rs      ──────────►    ipc.dart
+  script.rs   ──────────►    script.dart
+rust/src/hotkey/           lib/src/rust/
+rust/src/ipc/                frb_generated.dart      (re-exports RustLib)
+rust/src/script/             frb_generated.io.dart   (FFI for native)
                              frb_generated.web.dart  (stub for web)
 ```
 
 - **Rust side** (`rust/src/api/`): Functions annotated with `#[flutter_rust_bridge::frb]` attributes. The `mod.rs`
-  declares API modules.
+  declares API modules. Keep these entry points thin and unconditional — one set of bindings serves every platform, so a
+  function that is cfg'd out on some target breaks the generated code. The implementations live outside `api/`
+  (`rust/src/hotkey/`, `rust/src/ipc/`, `rust/src/script/`) and are where platform gating belongs; see
+  `.agents/architecture.md` in the repository root.
 - **Generated Dart** (`lib/src/rust/`): Auto-generated top-level functions that delegate through `RustLib.instance.api`.
 - **Public API** (`lib/rust_api.dart`): Re-exports generated functions and `RustLib` for initialization.
 - **`RustLib`** is the singleton entrypoint. Call `RustLib.init()` before calling any API functions, and

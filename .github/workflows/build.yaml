@@ -50,21 +50,22 @@ jobs:
       - name: Analyze
         run: flutter analyze --no-fatal-infos
 
+      - name: Skip native build hooks
+        run: |
+          yq -i '.hooks.user_defines.setup.build_assets = false | .hooks.user_defines.rust_api.build_assets = false' pubspec.yaml
+
       - name: Verify changelog
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
         run: dart run tool/changelog.dart verify
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.26.4'
-          cache-dependency-path: core/go.sum
 
       - name: Run tests
         run: flutter test --reporter expanded --coverage
 
       - name: Check coverage
         run: dart run tool/check_coverage.dart coverage/lcov.info 75
+
+      - name: Restore native build hooks
+        run: git checkout -- pubspec.yaml
 
       - name: Validate local Flutter packages
         shell: bash
@@ -76,6 +77,12 @@ jobs:
           dart pub get
           dart analyze
           dart test
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.4'
+          cache-dependency-path: core/go.sum
 
       - name: Validate Go core wrapper
         working-directory: core
@@ -135,6 +142,10 @@ jobs:
       - name: Run Android unit tests
         working-directory: android
         shell: bash
+        env:
+          # The runner image exports ANDROID_NDK_HOME as r27, which Flutter resolves
+          # first and which dropped libclang; the rust_api hook needs r28 for bindgen.
+          ANDROID_NDK_HOME: ${{ steps.core-ndk.outputs.ndk-path }}
         run: |
           # settings.gradle.kts resolves the Flutter tooling through local.properties,
           # which only the Flutter build itself would otherwise generate.
@@ -253,6 +264,7 @@ jobs:
       - name: Setup NDK
         if: startsWith(matrix.platform,'android')
         uses: nttld/setup-ndk@v1
+        id: build-ndk
         with:
           ndk-version: r28c
           add-to-path: true
@@ -264,6 +276,8 @@ jobs:
           flutter pub get
 
       - name: Setup
+        env:
+          ANDROID_NDK_HOME: ${{ steps.build-ndk.outputs.ndk-path }}
         run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
 
       - name: Upload
@@ -308,6 +322,10 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Skip native build hooks
+        run: |
+          yq -i '.hooks.user_defines.setup.build_assets = false | .hooks.user_defines.rust_api.build_assets = false' pubspec.yaml
 
       - name: Generate release notes
         shell: bash
