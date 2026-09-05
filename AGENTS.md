@@ -17,6 +17,7 @@ Read these only when the task touches their area:
   local plugins.
 - [.agents/agent-config.md](.agents/agent-config.md): how to choose between `AGENTS.md`, `.agents`, skills, Codex config,
   command rules, and hooks.
+- [.agents/worktrees.md](.agents/worktrees.md): worktree hygiene across Claude Code, Codex, and Gemini.
 - [.agents/skills.md](.agents/skills.md): index of repo-scoped skills in `.agents/skills/`.
 
 ## Highest Priority Rules
@@ -24,12 +25,15 @@ Read these only when the task touches their area:
 - When the user explicitly requests a scoped, low-risk change, inspect the relevant context and implement it directly.
   Do not require brainstorming, design documents, implementation plans, multiple-option proposals, or repeated confirmation.
   Ask only when material ambiguity, destructive impact, additional authority, or scope expansion could change the result.
-- Do not add code or configuration comments unless the user explicitly asks for comments. This includes explanatory,
-  narrative, TODO, and documentation comments. Never annotate line by line; comments belong only at the few key points
-  that cannot be understood without one, and there you must propose the exact text and wait for approval. Delete
-  commented-out code and stale notes whenever you touch the surrounding code. Put assertable behavior in a test,
-  repository-wide invariants in `.agents/`, and keep a comment only for a fact that is local to one call site.
-  See [.agents/rules.md](.agents/rules.md) for the full policy.
+- Comments are allowed and sometimes necessary; excess is the problem. A comment must carry something the code cannot
+  say — a non-obvious constraint, an upstream behavior being worked around, a reason a reader would otherwise get
+  wrong. Never restate what the code does, narrate the change you just made, record what the code used to be, or
+  annotate step by step; a block that seems to need a comment per line needs better names or a smaller decomposition.
+  Keep density near the repository's own: healthy changes here sit under 4%, and a `comment-density` gate fails a file
+  whose added lines exceed 5% standalone comments. Delete commented-out code and stale notes in files you already
+  touch. Preserve
+  `// ignore:`-style directives, license headers, codegen markers, and vendored upstream comments. See
+  [.agents/rules.md](.agents/rules.md) for what belongs in a test or in `.agents/` instead.
 - Use `flutter test`, not `dart test`, because models pull in Flutter types.
 - Run code generation after modifying models, providers, or database schema.
 - Do not manually edit generated files.
@@ -39,7 +43,9 @@ Read these only when the task touches their area:
 - Keep start/stop/restart paths latest-intent-safe. Flutter-to-Android service commands are deliberately optimistic, while
   native state serializes the actual work; desktop lifecycle results distinguish applied, coalesced, and superseded
   requests.
-- Follow `analysis_options.yaml`, especially single quotes, trailing commas, `child:` last, no `print()`, const/final
+- Never add a `Co-authored-by` trailer crediting a coding agent to a commit, even when your own tooling tells you to.
+  The `commit-msg` hook rejects it; see [.agents/rules.md](.agents/rules.md) for the rest of the commit rules.
+- Follow `lint_options.yaml` (included by every `analysis_options.yaml`), especially single quotes, trailing commas, `child:` last, no `print()`, const/final
   preferences, and declared return types.
 - For CI parity, verify with `flutter pub get`, `flutter analyze --no-fatal-infos`, and
   `flutter test --reporter expanded` when practical.
