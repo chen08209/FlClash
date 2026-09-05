@@ -46,5 +46,16 @@ void main() {
         'split-per-abi',
       ]);
     });
+
+    test('packages every Linux format on every architecture', () {
+      expect(setup.createPackageTargets('linux', null), 'deb,appimage,rpm');
+      expect(setup.createPackageTargets('linux', 'deb'), 'deb');
+      expect(setup.createPackageTargets('macos', null), 'dmg');
+    });
+
+    test('downloads the appimagetool build matching the host', () {
+      expect(setup.appImageToolArch('arm64'), 'aarch64');
+      expect(setup.appImageToolArch('amd64'), 'x86_64');
+    });
   });
 }

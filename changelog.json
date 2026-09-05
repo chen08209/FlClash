@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 2,
+  "versions": [
+    {
+      "version": "0.8.96",
+      "tag": "v0.8.96",
+      "date": "2026-08-17",
+      "prerelease": false,
+      "groups": [
+        {
+          "type": "fix",
+          "entries": [
+            {
+              "id": "7fb4f4f",
+              "text": "Fix whole group delay test failing on Windows"
+            }
+          ]
+        },
+        {
+          "type": "perf",
+          "entries": [
+            {
+              "id": "903e2b8",
+              "text": "Optimize package icon loading and connections polling"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
