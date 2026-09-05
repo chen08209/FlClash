@@ -156,6 +156,30 @@ void main() {
         'getClashConfigMap',
         'restore',
         'saveConfig',
+        'isAvailable',
+      ]);
+    });
+
+    test('starts with defaults when the store cannot be opened', () async {
+      final store = _FakeMigrationStore(
+        configMap: null,
+        version: 0,
+        configSaveResult: false,
+        available: false,
+      );
+
+      final config = await Migration(store: store).run();
+
+      expect(config, isNotNull);
+      expect(store.didClearClashConfig, isFalse);
+      expect(store.version, 0);
+      expect(store.events, [
+        'getConfigMap',
+        'getVersion',
+        'getClashConfigMap',
+        'restore',
+        'saveConfig',
+        'isAvailable',
       ]);
     });
 
@@ -198,6 +222,7 @@ class _FakeMigrationStore implements MigrationStore {
   final Map<String, Object?>? configMap;
   final Map<String, Object?>? clashConfigMap;
   final bool configSaveResult;
+  final bool available;
   final List<String> events = [];
 
   int version;
@@ -210,7 +235,14 @@ class _FakeMigrationStore implements MigrationStore {
     required this.version,
     this.clashConfigMap,
     this.configSaveResult = true,
+    this.available = true,
   });
+
+  @override
+  Future<bool> get isAvailable async {
+    events.add('isAvailable');
+    return available;
+  }
 
   @override
   Future<void> clearClashConfig() async {

@@ -1,8 +1,35 @@
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:cross_file/cross_file.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_clash/common/picker.dart';
 import 'package:test/test.dart';
+
+base class _LocalPlatformFile extends PlatformFile {
+  _LocalPlatformFile(this._file);
+
+  final File _file;
+
+  @override
+  String get name => _file.uri.pathSegments.last;
+
+  @override
+  Uri get uri => _file.uri;
+
+  @override
+  XFile get xFile => XFile(_file.path);
+
+  @override
+  Future<int> length() => _file.length();
+
+  @override
+  Future<Uint8List> readAsBytes() => _file.readAsBytes();
+
+  @override
+  Stream<Uint8List> readAsByteStream() =>
+      _file.openRead().map(Uint8List.fromList);
+}
 
 void main() {
   group('PlatformFileExt.readBytes', () {
@@ -15,11 +42,7 @@ void main() {
       final file = File('${directory.path}/profile.yaml');
       await file.writeAsString('mixed-port: 7890');
 
-      final platformFile = PlatformFile(
-        name: 'profile.yaml',
-        path: file.path,
-        size: await file.length(),
-      );
+      final platformFile = _LocalPlatformFile(file);
 
       final bytes = await platformFile.readBytes();
 

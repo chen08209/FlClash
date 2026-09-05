@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:test/test.dart';
 
 /// Helper to round-trip a model through JSON encode/decode.
@@ -247,6 +247,8 @@ void main() {
       expect(config.mode, Mode.rule);
       expect(config.externalController, ExternalControllerStatus.close);
       expect(config.geodataLoader, GeodataLoader.memconservative);
+      expect(config.interfaceNameMode, InterfaceNameMode.clear);
+      expect(config.interfaceName, '');
     });
 
     test('custom values survive round-trip', () {
@@ -257,6 +259,8 @@ void main() {
         logLevel: LogLevel.debug,
         externalController: ExternalControllerStatus.open,
         geodataLoader: GeodataLoader.memconservative,
+        interfaceNameMode: InterfaceNameMode.custom,
+        interfaceName: 'eth0',
       );
 
       final restored = roundTrip(
@@ -270,6 +274,16 @@ void main() {
       expect(restored.logLevel, LogLevel.debug);
       expect(restored.externalController, ExternalControllerStatus.open);
       expect(restored.geodataLoader, GeodataLoader.memconservative);
+      expect(restored.interfaceNameMode, InterfaceNameMode.custom);
+      expect(restored.interfaceName, 'eth0');
+    });
+
+    test('unknown interface-name-mode falls back to clear', () {
+      final restored = PatchClashConfig.fromJson({
+        'interface-name-mode': 'unknown',
+      });
+
+      expect(restored.interfaceNameMode, InterfaceNameMode.clear);
     });
   });
 

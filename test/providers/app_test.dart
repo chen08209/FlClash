@@ -3,11 +3,12 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/common/fixed.dart';
 import 'package:fl_clash/common/request.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
 
@@ -253,6 +254,73 @@ void main() {
     });
   });
 
+  group('append-backed buffers notify on every arrival', () {
+    test('Logs.add advances the generation and reaches listeners', () {
+      container.read(logsProvider.notifier).value = FixedList(3);
+      final revisions = <int>[];
+      final subscription = container.listen(
+        logsProvider.select((state) => state.revision),
+        (_, next) => revisions.add(next),
+      );
+      addTearDown(subscription.close);
+
+      final notifier = container.read(logsProvider.notifier);
+      notifier.add(Log.app('a'));
+      notifier.add(Log.app('b'));
+
+      expect(revisions.length, 2, reason: 'one notification per log line');
+      expect(container.read(logsProvider).list.map((log) => log.payload), [
+        'a',
+        'b',
+      ]);
+    });
+
+    test('Requests.addRequest reaches listeners', () {
+      container.read(requestsProvider.notifier).value = FixedList(3);
+      var notifications = 0;
+      final subscription = container.listen(
+        requestsProvider.select((state) => state.revision),
+        (_, _) => notifications++,
+      );
+      addTearDown(subscription.close);
+
+      container
+          .read(requestsProvider.notifier)
+          .addRequest(
+            TrackerInfo(
+              id: '1',
+              start: DateTime.utc(2026),
+              metadata: const Metadata(network: 'tcp', host: 'example.com'),
+              chains: const ['Proxy'],
+              rule: 'DOMAIN',
+              rulePayload: 'example.com',
+            ),
+          );
+
+      expect(notifications, 1);
+      expect(container.read(requestsProvider).length, 1);
+    });
+
+    test('Traffics.addTraffic reaches listeners and clear resets', () {
+      container.read(trafficsProvider.notifier).value = FixedList(3);
+      var notifications = 0;
+      final subscription = container.listen(
+        trafficsProvider,
+        (_, _) => notifications++,
+      );
+      addTearDown(subscription.close);
+
+      final notifier = container.read(trafficsProvider.notifier);
+      notifier.addTraffic(const Traffic(up: 1, down: 2));
+      notifier.addTraffic(const Traffic(up: 3, down: 4));
+      expect(notifications, 2);
+
+      notifier.clear();
+      expect(notifications, 3);
+      expect(container.read(trafficsProvider).length, 0);
+    });
+  });
+
   group('CheckIpNum provider', () {
     test('default is 0', () {
       expect(container.read(checkIpNumProvider), 0);
@@ -324,6 +392,79 @@ void main() {
       await Future.delayed(const Duration(milliseconds: 1100));
 
       expect(container.read(loadingProvider(LoadingTag.profiles)), false);
+    });
+
+    test(
+      'disposing while the minimum-duration timer is pending is safe',
+      () async {
+        final scoped = ProviderContainer();
+        final notifier = scoped.read(
+          loadingProvider(LoadingTag.profiles).notifier,
+        );
+
+        notifier.start();
+        await notifier.stop();
+        scoped.dispose();
+
+        await Future.delayed(const Duration(milliseconds: 1100));
+      },
+    );
+  });
+
+  group('UpdatingKeys provider', () {
+    test('survives a subscriber that stops watching', () {
+      const key = 'provider_geo';
+      final subscription = container.listen<bool>(
+        isUpdatingProvider(key),
+        (_, _) {},
+      );
+      container.read(updatingKeysProvider.notifier).start(key);
+      subscription.close();
+
+      expect(container.read(isUpdatingProvider(key)), isTrue);
+    });
+
+    test('overlapping operations finish independently', () {
+      const key = 'provider_rules';
+      final notifier = container.read(updatingKeysProvider.notifier);
+
+      final first = notifier.start(key);
+      final second = notifier.start(key);
+
+      notifier.stop(key, first);
+
+      expect(container.read(isUpdatingProvider(key)), isTrue);
+
+      notifier.stop(key, second);
+
+      expect(container.read(isUpdatingProvider(key)), isFalse);
+    });
+
+    test('a stale operation cannot stop a later one', () {
+      const key = 'profile_1';
+      final notifier = container.read(updatingKeysProvider.notifier);
+
+      final stale = notifier.start(key);
+      notifier.stopKeys([key]);
+      notifier.start(key);
+      notifier.stop(key, stale);
+
+      expect(container.read(isUpdatingProvider(key)), isTrue);
+    });
+
+    test('a core disconnect only discards the core scope', () {
+      final notifier = container.read(updatingKeysProvider.notifier);
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      notifier.start('geo_resource_MMDB', scope: UpdatingScope.core);
+      notifier.start('provider_geo', scope: UpdatingScope.core);
+      notifier.start('profile_1');
+
+      container.read(coreStatusProvider.notifier).value =
+          CoreStatus.disconnected;
+
+      expect(container.read(isUpdatingProvider('geo_resource_MMDB')), isFalse);
+      expect(container.read(isUpdatingProvider('provider_geo')), isFalse);
+      expect(container.read(isUpdatingProvider('profile_1')), isTrue);
     });
   });
 
