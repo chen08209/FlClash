@@ -40,7 +40,7 @@ abstract class AppState with _$AppState {
 }
 
 extension AppStateExt on AppState {
-  ViewMode get viewMode => utils.getViewMode(viewSize.width);
+  ViewMode get viewMode => getViewMode(viewSize.width);
 
   bool get isStart => runTime != null;
 }

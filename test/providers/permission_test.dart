@@ -1,7 +1,6 @@
 import 'package:fl_clash/common/permission.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/state.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
@@ -19,7 +18,6 @@ void main() {
         excludeSSIDsProvider.overrideWithValue(const ['Office Wi-Fi']),
       ],
     );
-    globalState.container = container;
   });
 
   tearDown(() async {
@@ -60,7 +58,7 @@ void main() {
 
       await Permissions.test(
         supportsLocationPermissions: true,
-      ).checkLocationPermissions();
+      ).checkLocationPermissions(container.read);
 
       expect(calls, ['checkPermission', 'requestPermission', 'getSsid']);
       expect(
@@ -81,7 +79,7 @@ void main() {
 
     await Permissions.test(
       supportsLocationPermissions: true,
-    ).checkLocationPermissions();
+    ).checkLocationPermissions(container.read);
 
     expect(calls, ['checkPermission', 'requestPermission']);
     expect(
@@ -89,5 +87,68 @@ void main() {
       WifiSsidPermission.denied,
     );
     expect(container.read(currentSSIDProvider), isNull);
+  });
+
+  test('auto-requests at most once per session while still denied', () async {
+    final calls = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          calls.add(call.method);
+          return 1;
+        });
+
+    final permissions = Permissions.test(supportsLocationPermissions: true);
+    await permissions.checkLocationPermissions(container.read);
+    await permissions.checkLocationPermissions(container.read);
+
+    expect(calls.where((call) => call == 'requestPermission').length, 1);
+  });
+
+  test(
+    're-arms the auto-request when excludeSSIDs goes from empty to non-empty',
+    () async {
+      container = ProviderContainer();
+      final calls = <String>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            calls.add(call.method);
+            return 1;
+          });
+
+      final permissions = Permissions.test(supportsLocationPermissions: true);
+      await permissions.checkLocationPermissions(container.read);
+      expect(calls.where((call) => call == 'requestPermission'), isEmpty);
+
+      container.read(excludeSSIDsProvider.notifier).value = const [
+        'Office Wi-Fi',
+      ];
+      await permissions.checkLocationPermissions(container.read);
+      await permissions.checkLocationPermissions(container.read);
+
+      expect(calls.where((call) => call == 'requestPermission').length, 1);
+    },
+  );
+
+  test('re-arms the auto-request and does not throw when requestPermission '
+      'fails', () async {
+    var requestPermissionCalls = 0;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          if (call.method == 'requestPermission') {
+            requestPermissionCalls++;
+            throw PlatformException(code: 'IN_PROGRESS');
+          }
+          return 1;
+        });
+
+    final permissions = Permissions.test(supportsLocationPermissions: true);
+
+    await expectLater(
+      permissions.checkLocationPermissions(container.read),
+      completes,
+    );
+    await permissions.checkLocationPermissions(container.read);
+
+    expect(requestPermissionCalls, 2);
   });
 }

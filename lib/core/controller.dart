@@ -23,7 +23,12 @@ class CoreController {
   }
 
   @visibleForTesting
-  CoreController.test(this._interface);
+  CoreController.test(this._interface) {
+    _instance = this;
+  }
+
+  @visibleForTesting
+  CoreController.scoped(this._interface);
 
   @visibleForTesting
   static void resetInstance() {
@@ -43,13 +48,18 @@ class CoreController {
 
   Future<CoreLifecycleResult> close() => _interface.close();
 
-  static Future<void> initGeo() async {
+  static Future<void> ensureHomeDir() async {
     final homePath = await appPath.homeDirPath;
     final homeDir = Directory(homePath);
     final isExists = await homeDir.exists();
     if (!isExists) {
       await homeDir.create(recursive: true);
     }
+    await system.grantHomeDirAccess(homePath);
+  }
+
+  static Future<void> initGeo() async {
+    final homePath = await appPath.homeDirPath;
     const geoFileNameList = [MMDB, GEOIP, GEOSITE, ASN];
     try {
       for (final geoFileName in geoFileNameList) {
@@ -72,6 +82,7 @@ class CoreController {
   }
 
   Future<bool> init(int version) async {
+    await ensureHomeDir();
     await initGeo();
     final homeDirPath = await appPath.homeDirPath;
     return _interface.init(InitParams(homeDir: homeDirPath, version: version));
@@ -185,7 +196,7 @@ class CoreController {
     return _interface.stopListener();
   }
 
-  Future<Delay> getDelay(String url, String proxyName) async {
+  Future<Delay?> getDelay(String url, String proxyName) async {
     return _interface.asyncTestDelay(url, proxyName);
   }
 
@@ -201,14 +212,6 @@ class CoreController {
 
   Future<Traffic> getTraffic(bool onlyStatisticsProxy) async {
     return _interface.getTraffic(onlyStatisticsProxy);
-  }
-
-  Future<IpInfo?> getCountryCode(String ip) async {
-    final countryCode = await _interface.getCountryCode(ip);
-    if (countryCode.isEmpty) {
-      return null;
-    }
-    return IpInfo(ip: ip, countryCode: countryCode);
   }
 
   Future<Traffic> getTotalTraffic(bool onlyStatisticsProxy) async {

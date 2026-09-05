@@ -4,12 +4,9 @@ import 'dart:io';
 
 import 'package:fl_clash/common/context.dart';
 import 'package:fl_clash/common/system.dart';
-import 'package:fl_clash/views/dashboard/widgets/widgets.dart';
-import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:hotkey_manager/hotkey_manager.dart';
 
 enum SupportPlatform {
   Windows,
@@ -27,7 +24,7 @@ enum SupportPlatform {
     } else if (system.isAndroid) {
       return SupportPlatform.Android;
     }
-    throw 'invalid platform';
+    throw UnsupportedError('Unsupported platform: ${Platform.operatingSystem}');
   }
 }
 
@@ -110,7 +107,52 @@ extension LogLevelExt on LogLevel {
   }
 }
 
-enum TransportProtocol { udp, tcp }
+enum MessageLevel { info, success, warning, error }
+
+extension MessageLevelExt on MessageLevel {
+  IconData? get icon {
+    return switch (this) {
+      MessageLevel.info => null,
+      MessageLevel.success => Icons.check_circle_outline,
+      MessageLevel.warning => Icons.warning_amber_outlined,
+      MessageLevel.error => Icons.error_outline,
+    };
+  }
+
+  Color containerColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return switch (this) {
+      MessageLevel.error => colorScheme.errorContainer,
+      _ => colorScheme.surfaceContainerHigh,
+    };
+  }
+
+  Color contentColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return switch (this) {
+      MessageLevel.error => colorScheme.onErrorContainer,
+      _ => colorScheme.onSurfaceVariant,
+    };
+  }
+
+  Color iconColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return switch (this) {
+      MessageLevel.info => colorScheme.onSurfaceVariant,
+      MessageLevel.success => colorScheme.primary,
+      MessageLevel.warning => colorScheme.tertiary,
+      MessageLevel.error => colorScheme.onErrorContainer,
+    };
+  }
+
+  Duration get duration {
+    return switch (this) {
+      MessageLevel.info || MessageLevel.success => const Duration(seconds: 3),
+      MessageLevel.warning => const Duration(seconds: 5),
+      MessageLevel.error => const Duration(seconds: 6),
+    };
+  }
+}
 
 enum TrafficUnit { B, KB, MB, GB, TB }
 
@@ -141,9 +183,9 @@ enum InvokeMessageType { protect, process }
 
 enum FindProcessMode { always, off }
 
-enum RestoreOption { all, onlyProfiles }
+enum InterfaceNameMode { clear, follow, custom }
 
-enum ChipType { action, delete }
+enum RestoreOption { all, onlyProfiles }
 
 enum CommonCardType { plain, filled }
 
@@ -184,19 +226,6 @@ enum KeyboardModifier {
   final List<PhysicalKeyboardKey> physicalKeys;
 
   const KeyboardModifier(this.physicalKeys);
-}
-
-extension KeyboardModifierExt on KeyboardModifier {
-  HotKeyModifier toHotKeyModifier() {
-    return switch (this) {
-      KeyboardModifier.alt => HotKeyModifier.alt,
-      KeyboardModifier.capsLock => HotKeyModifier.capsLock,
-      KeyboardModifier.control => HotKeyModifier.control,
-      KeyboardModifier.fn => HotKeyModifier.fn,
-      KeyboardModifier.meta => HotKeyModifier.meta,
-      KeyboardModifier.shift => HotKeyModifier.shift,
-    };
-  }
 }
 
 enum HotAction { start, view, mode, proxy, tun }
@@ -243,41 +272,24 @@ enum FunctionTag {
   saveSharedFile,
   removeProxy,
   suspend,
+  coreErrorNotifier,
 }
 
 enum DashboardWidget {
-  networkSpeed(GridItem(crossAxisCellCount: 8, child: NetworkSpeed())),
-  outboundModeV2(GridItem(crossAxisCellCount: 8, child: OutboundModeV2())),
-  outboundMode(GridItem(crossAxisCellCount: 4, child: OutboundMode())),
-  trafficUsage(GridItem(crossAxisCellCount: 4, child: TrafficUsage())),
-  networkDetection(GridItem(crossAxisCellCount: 4, child: NetworkDetection())),
-  tunButton(
-    GridItem(crossAxisCellCount: 4, child: TUNButton()),
-    platforms: desktopPlatforms,
-  ),
-  vpnButton(
-    GridItem(crossAxisCellCount: 4, child: VpnButton()),
-    platforms: [SupportPlatform.Android],
-  ),
-  systemProxyButton(
-    GridItem(crossAxisCellCount: 4, child: SystemProxyButton()),
-    platforms: desktopPlatforms,
-  ),
-  intranetIp(GridItem(crossAxisCellCount: 4, child: IntranetIP())),
-  memoryInfo(GridItem(crossAxisCellCount: 4, child: MemoryInfo()));
+  networkSpeed,
+  outboundModeV2,
+  outboundMode,
+  trafficUsage,
+  networkDetection,
+  tunButton(platforms: desktopPlatforms),
+  vpnButton(platforms: [SupportPlatform.Android]),
+  systemProxyButton(platforms: desktopPlatforms),
+  intranetIp,
+  memoryInfo;
 
-  final GridItem widget;
   final List<SupportPlatform> platforms;
 
-  const DashboardWidget(this.widget, {this.platforms = SupportPlatform.values});
-
-  static DashboardWidget getDashboardWidget(GridItem gridItem) {
-    const dashboardWidgets = DashboardWidget.values;
-    final index = dashboardWidgets.indexWhere(
-      (item) => item.widget == gridItem,
-    );
-    return dashboardWidgets[index];
-  }
+  const DashboardWidget({this.platforms = SupportPlatform.values});
 }
 
 enum GeodataLoader { standard, memconservative }
@@ -332,6 +344,7 @@ enum RuleAction {
   DOMAIN_SUFFIX('DOMAIN-SUFFIX'),
   DOMAIN_KEYWORD('DOMAIN-KEYWORD'),
   DOMAIN_REGEX('DOMAIN-REGEX'),
+  DOMAIN_WILDCARD('DOMAIN-WILDCARD'),
   GEOSITE('GEOSITE'),
   IP_CIDR('IP-CIDR'),
   IP_CIDR6('IP-CIDR6'),
@@ -348,10 +361,13 @@ enum RuleAction {
   IN_TYPE('IN-TYPE'),
   IN_USER('IN-USER'),
   IN_NAME('IN-NAME'),
+  REMATCH_NAME('REMATCH-NAME'),
   PROCESS_PATH('PROCESS-PATH'),
   PROCESS_PATH_REGEX('PROCESS-PATH-REGEX'),
+  PROCESS_PATH_WILDCARD('PROCESS-PATH-WILDCARD'),
   PROCESS_NAME('PROCESS-NAME'),
   PROCESS_NAME_REGEX('PROCESS-NAME-REGEX'),
+  PROCESS_NAME_WILDCARD('PROCESS-NAME-WILDCARD'),
   UID('UID'),
   NETWORK('NETWORK'),
   DSCP('DSCP'),
@@ -383,11 +399,20 @@ extension RuleActionExt on RuleAction {
   bool get hasParams => [
     RuleAction.GEOIP,
     RuleAction.IP_ASN,
-    RuleAction.SRC_IP_ASN,
     RuleAction.IP_CIDR,
     RuleAction.IP_CIDR6,
     RuleAction.IP_SUFFIX,
     RuleAction.RULE_SET,
+  ].contains(this);
+
+  bool get hasCommaPayload => [
+    RuleAction.AND,
+    RuleAction.OR,
+    RuleAction.NOT,
+    RuleAction.SUB_RULE,
+    RuleAction.DOMAIN_REGEX,
+    RuleAction.PROCESS_NAME_REGEX,
+    RuleAction.PROCESS_PATH_REGEX,
   ].contains(this);
 
   String getDesc(BuildContext context) {
@@ -397,6 +422,8 @@ extension RuleActionExt on RuleAction {
       RuleAction.DOMAIN_SUFFIX => appLocalizations.ruleActionDomainSuffixDesc,
       RuleAction.DOMAIN_KEYWORD => appLocalizations.ruleActionDomainKeywordDesc,
       RuleAction.DOMAIN_REGEX => appLocalizations.ruleActionDomainRegexDesc,
+      RuleAction.DOMAIN_WILDCARD =>
+        appLocalizations.ruleActionDomainWildcardDesc,
       RuleAction.GEOSITE => appLocalizations.ruleActionGeositeDesc,
       RuleAction.IP_CIDR => appLocalizations.ruleActionIpCidrDesc,
       RuleAction.IP_CIDR6 => appLocalizations.ruleActionIpCidr6Desc,
@@ -413,12 +440,17 @@ extension RuleActionExt on RuleAction {
       RuleAction.IN_TYPE => appLocalizations.ruleActionInTypeDesc,
       RuleAction.IN_USER => appLocalizations.ruleActionInUserDesc,
       RuleAction.IN_NAME => appLocalizations.ruleActionInNameDesc,
+      RuleAction.REMATCH_NAME => appLocalizations.ruleActionRematchNameDesc,
       RuleAction.PROCESS_PATH => appLocalizations.ruleActionProcessPathDesc,
       RuleAction.PROCESS_PATH_REGEX =>
         appLocalizations.ruleActionProcessPathRegexDesc,
+      RuleAction.PROCESS_PATH_WILDCARD =>
+        appLocalizations.ruleActionProcessPathWildcardDesc,
       RuleAction.PROCESS_NAME => appLocalizations.ruleActionProcessNameDesc,
       RuleAction.PROCESS_NAME_REGEX =>
         appLocalizations.ruleActionProcessNameRegexDesc,
+      RuleAction.PROCESS_NAME_WILDCARD =>
+        appLocalizations.ruleActionProcessNameWildcardDesc,
       RuleAction.UID => appLocalizations.ruleActionUidDesc,
       RuleAction.NETWORK => appLocalizations.ruleActionNetworkDesc,
       RuleAction.DSCP => appLocalizations.ruleActionDscpDesc,
@@ -432,25 +464,22 @@ extension RuleActionExt on RuleAction {
   }
 }
 
-enum OverrideRuleType { override, added }
-
 enum OverwriteType { standard, script, custom }
 
 enum RuleTarget {
   DIRECT,
   REJECT;
 
-  static Set<String> get baseTargets =>
-      RuleTarget.values.map((item) => item.name).toSet();
+  static final List<String> baseTargetNames = List.unmodifiable(
+    RuleTarget.values.map((item) => item.name),
+  );
+
+  static final Set<String> baseTargets = Set.unmodifiable(baseTargetNames);
 }
 
 enum RestoreStrategy { compatible, override }
 
-enum CacheTag { logs, rules, requests, proxiesList }
-
 enum Language { yaml, javaScript, json }
-
-enum ImportOption { file, url }
 
 enum ScrollPositionCacheKey { tools, profiles, proxiesList, proxiesTabList }
 
@@ -465,6 +494,8 @@ enum LoadingTag {
 }
 
 enum CoreStatus { connecting, connected, disconnected }
+
+enum UpdatingScope { core, local }
 
 enum RuleScene { added, disabled, custom }
 
@@ -491,6 +522,9 @@ enum ItemPosition {
     List<T> items,
     Set<T> deletedItems,
   ) {
+    if (deletedItems.isEmpty) {
+      return ItemPosition.get(currentIndex, items.length);
+    }
     final currentItem = items[currentIndex];
     if (deletedItems.contains(currentItem)) {
       return ItemPosition.middle;
