@@ -1,4 +1,4 @@
-//go:build cgo
+//go:build android && cgo
 
 package main
 
