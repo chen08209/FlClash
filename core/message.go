@@ -1,68 +1,115 @@
 package main
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 const (
 	messageBatchInterval = 16 * time.Millisecond
 	messageBatchSize     = 32
 	messageQueueSize     = 256
 	messagePriorityBurst = 8
+	messageEvictAttempts = 4
 )
 
 var (
+	stateMessageQueue    = make(chan Message, messageQueueSize)
 	priorityMessageQueue = make(chan Message, messageQueueSize)
 	bulkMessageQueue     = make(chan Message, messageQueueSize)
 )
 
 func init() {
-	go runMessageBatcher(priorityMessageQueue, bulkMessageQueue, sendMessageBatch)
+	go runMessageBatcher(stateMessageQueue, priorityMessageQueue, bulkMessageQueue, sendMessageBatch)
+}
+
+type messageClass int
+
+const (
+	stateMessageClass messageClass = iota
+	priorityMessageClass
+	bulkMessageClass
+)
+
+func classOfMessage(message Message) messageClass {
+	switch message.Type {
+	case LoadedMessage, GeoUpdateMessage:
+		return stateMessageClass
+	case LogMessage, RequestMessage:
+		return bulkMessageClass
+	default:
+		return priorityMessageClass
+	}
 }
 
 func sendMessage(message Message) {
-	queue := priorityMessageQueue
-	if message.Type == LogMessage || message.Type == RequestMessage {
-		queue = bulkMessageQueue
+	switch classOfMessage(message) {
+	case stateMessageClass:
+		enqueueState(stateMessageQueue, message)
+	case bulkMessageClass:
+		enqueueLatest(bulkMessageQueue, message)
+	default:
+		enqueueLatest(priorityMessageQueue, message)
 	}
-	enqueueLatest(queue, message)
+}
+
+func enqueueState(queue chan Message, message Message) {
+	select {
+	case queue <- message:
+	default:
+	}
 }
 
 func enqueueLatest(queue chan Message, message Message) {
-	select {
-	case queue <- message:
-		return
-	default:
-	}
+	for attempt := 0; attempt < messageEvictAttempts; attempt++ {
+		select {
+		case queue <- message:
+			return
+		default:
+		}
 
-	// Event delivery must never block the core. Each priority class evicts only
-	// its own oldest event, so log or request floods cannot displace state.
-	select {
-	case <-queue:
-	default:
-	}
-	select {
-	case queue <- message:
-	default:
+		select {
+		case <-queue:
+		default:
+		}
 	}
 }
 
 func runMessageBatcher(
+	stateMessages <-chan Message,
 	priorityMessages <-chan Message,
 	bulkMessages <-chan Message,
 	send func([]Message),
 ) {
-	ticker := time.NewTicker(messageBatchInterval)
-	defer ticker.Stop()
+	timer := time.NewTimer(messageBatchInterval)
+	if !timer.Stop() {
+		<-timer.C
+	}
+	defer timer.Stop()
 
+	var deadline <-chan time.Time
 	batch := make([]Message, 0, messageBatchSize)
+
 	flush := func() {
 		if len(batch) == 0 {
 			return
 		}
-		current := append([]Message(nil), batch...)
-		batch = batch[:0]
+		if !timer.Stop() {
+			select {
+			case <-timer.C:
+			default:
+			}
+		}
+		deadline = nil
+		current := batch
+		batch = make([]Message, 0, messageBatchSize)
 		send(current)
 	}
 	appendMessage := func(message Message) {
+		if len(batch) == 0 {
+			timer.Reset(messageBatchInterval)
+			deadline = timer.C
+		}
 		batch = append(batch, message)
 		if len(batch) >= messageBatchSize {
 			flush()
@@ -70,7 +117,18 @@ func runMessageBatcher(
 	}
 
 	priorityBurst := 0
-	for priorityMessages != nil || bulkMessages != nil {
+	for stateMessages != nil || priorityMessages != nil || bulkMessages != nil {
+		select {
+		case message, ok := <-stateMessages:
+			if !ok {
+				stateMessages = nil
+			} else {
+				appendMessage(message)
+			}
+			continue
+		default:
+		}
+
 		// Give bulk events one guaranteed opportunity after a bounded priority
 		// burst, while retaining priority preference under ordinary load.
 		if priorityBurst >= messagePriorityBurst && bulkMessages != nil {
@@ -88,7 +146,6 @@ func runMessageBatcher(
 			}
 		}
 
-		// Prefer state-bearing events whenever both queues have work.
 		select {
 		case message, ok := <-priorityMessages:
 			if !ok {
@@ -102,6 +159,12 @@ func runMessageBatcher(
 		}
 
 		select {
+		case message, ok := <-stateMessages:
+			if !ok {
+				stateMessages = nil
+			} else {
+				appendMessage(message)
+			}
 		case message, ok := <-priorityMessages:
 			if !ok {
 				priorityMessages = nil
@@ -116,9 +179,26 @@ func runMessageBatcher(
 				appendMessage(message)
 			}
 			priorityBurst = 0
-		case <-ticker.C:
+		case <-deadline:
 			flush()
 		}
 	}
 	flush()
+}
+
+type messageBatchCall struct {
+	Method    CoreMethod `json:"method"`
+	Arguments []Message  `json:"arguments"`
+}
+
+func sendMessageBatch(messages []Message) {
+	data, err := json.Marshal(messageBatchCall{
+		Method:    messageMethod,
+		Arguments: messages,
+	})
+	if err != nil {
+		logError("Message batch marshal error: %v", err)
+		return
+	}
+	deliverEvent(data)
 }
