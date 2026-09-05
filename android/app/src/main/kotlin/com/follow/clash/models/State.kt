@@ -10,6 +10,7 @@ data class SharedState(
     val currentProfileName: String = "FlClash",
     val stopText: String = "Stop",
     val onlyStatisticsProxy: Boolean = false,
+    val showStopAction: Boolean = true,
     val vpnOptions: VpnOptions? = null,
     val setupParams: SetupParams? = null,
 )
