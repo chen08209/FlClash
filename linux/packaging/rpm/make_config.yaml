@@ -13,6 +13,28 @@ icon: ./assets/images/icon.png
 requires:
   - libsecret
 
+# rpmbuild's find-debuginfo and brp-strip rewrite the Core, and the Helper only
+# starts a Core whose SHA256 matches the value built into it.
+spec_macros:
+  - '%global debug_package %{nil}'
+  - '%global __os_install_post %{nil}'
+
+postinstall_scripts:
+  - 'update-desktop-database %{_datadir}/applications &> /dev/null || :'
+
+# The Helper unit is written on demand by the app, not at install time, so only
+# its teardown belongs here; the binary is already gone when %postun runs.
+postuninstall_scripts:
+  - '[ "$1" = 0 ] || exit 0'
+  - 'systemctl disable --now flclash-helper.service >/dev/null 2>&1 || true'
+  - 'rm -f /etc/systemd/system/flclash-helper.service'
+  - 'systemctl daemon-reload >/dev/null 2>&1 || true'
+
+supported_mime_type:
+  - x-scheme-handler/clash
+  - x-scheme-handler/clashmeta
+  - x-scheme-handler/flclash
+
 keywords:
   - FlClash
   - Clash
