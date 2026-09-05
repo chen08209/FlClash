@@ -240,25 +240,31 @@ while `v<pubspec version>` is still tagged it refuses to collect anything and th
 
 ## Verify
 
-The tag-triggered release workflow runs these root-package checks in order:
+Every branch push runs the `dart` job, which performs these root-package checks
+in order:
 
 ```bash
-flutter pub get
-flutter analyze --no-fatal-infos
-dart run tool/changelog.dart verify
-flutter test --reporter expanded
 bash tool/check_commit_msg_test.sh
 bash tool/check_comment_density_test.sh
+flutter pub get
+dart format --output=none --set-exit-if-changed lib test tool plugins setup.dart
+flutter analyze --no-fatal-infos
+dart run tool/changelog.dart verify   # main and tags only
+flutter test --reporter expanded --coverage
+dart run tool/check_coverage.dart coverage/lcov.info 75
 ```
 
 Run `flutter analyze` locally before committing when practical.
 
-The workflow runs only for `v*` tag pushes; pull requests do not trigger it.
+Release builds run only for `v*` tag pushes; pull requests trigger nothing.
 Root analysis excludes `plugins/**`, and root tests do not discover nested
-plugin packages, so CI also validates local Flutter packages, the setup build
-tool, the Go wrapper, and Rust components from their own package directories. A
-separate Windows runner compiles and tests the helper's `windows-service`
-feature before release builds can start.
+plugin packages, so parallel jobs validate the rest from their own package
+directories: `plugins` (local Flutter packages and the setup build tool), `go`
+(the Core wrapper, plus an NDK-backed vet of the Android files), `android`
+(JVM unit tests for `:common`, `:service` and `:app`, with the Flutter compile
+tasks excluded so no native build hook runs), `rust` (both crates), and a
+Windows runner for the helper's `windows-service` feature. Release builds start
+once all of them pass.
 
 `bash tool/check_plugins.sh` is that plugin gate, and CI runs the same script.
 It discovers every `plugins/*/pubspec.yaml`, analyzes each package, and runs
