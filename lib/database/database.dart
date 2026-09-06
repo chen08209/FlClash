@@ -114,6 +114,7 @@ class Database extends _$Database {
     List<ProfileRuleLink> links,
     List<ProxyGroup> proxyGroups, {
     bool isOverride = false,
+    bool restoreScripts = false,
   }) async {
     if (profiles.isNotEmpty ||
         scripts.isNotEmpty ||
@@ -126,7 +127,9 @@ class Database extends _$Database {
                 b,
                 profiles.map((item) => item.toCompanion()),
               );
-        scriptsDao.setAllWithBatch(b, scripts);
+        if (restoreScripts) {
+          scriptsDao.setAllWithBatch(b, scripts);
+        }
         rulesDao.restoreWithBatch(b, rules, links);
         proxyGroupsDao.setAllWithBatch(null, b, proxyGroups);
       });

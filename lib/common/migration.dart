@@ -44,6 +44,7 @@ class _AppMigrationStore implements MigrationStore {
       data.rules,
       data.links,
       data.proxyGroups,
+      restoreScripts: true,
     );
   }
 

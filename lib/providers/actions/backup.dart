@@ -36,6 +36,7 @@ class BackupAction extends _$BackupAction {
         migrationData.links,
         migrationData.proxyGroups,
         isOverride: isOverride,
+        restoreScripts: false,
       );
       final configMap = migrationData.configMap;
       if (option == RestoreOption.onlyProfiles || configMap == null) return;

@@ -331,18 +331,19 @@ Future<String> _encodeLogsTask(List<Log> data) async {
 
 Future<MigrationData> oldToNowTask(Map<String, Object?> data) async {
   final homeDir = await appPath.homeDirPath;
-  return compute<VM3<Map<String, Object?>, String, String>, MigrationData>(
-    _oldToNowTask,
-    VM3(data, homeDir, homeDir),
-  );
+  return compute<
+    VM4<Map<String, Object?>, String, String, bool>,
+    MigrationData
+  >(_oldToNowTask, VM4(data, homeDir, homeDir, true));
 }
 
 Future<MigrationData> _oldToNowTask(
-  VM3<Map<String, Object?>, String, String> data,
+  VM4<Map<String, Object?>, String, String, bool> data,
 ) async {
   final configMap = data.a;
   final sourcePath = data.b;
   final targetPath = data.c;
+  final restoreScripts = data.d;
 
   final accessControlMap = configMap['accessControl'];
   final isAccessControl = configMap['isAccessControl'];
@@ -364,8 +365,10 @@ Future<MigrationData> _oldToNowTask(
   configMap['appSettingProps'] = appSettingProps;
   configMap['proxiesStyleProps'] = configMap['proxiesStyle'];
   configMap['proxiesStyleProps'] = configMap['proxiesStyle'];
-  List rawScripts = configMap['scripts'] as List<dynamic>? ?? [];
-  if (rawScripts.isEmpty) {
+  List rawScripts = restoreScripts
+      ? configMap['scripts'] as List<dynamic>? ?? []
+      : [];
+  if (restoreScripts && rawScripts.isEmpty) {
     final scriptPropsJson = configMap['scriptProps'] as Map<String, dynamic>?;
     if (scriptPropsJson != null) {
       rawScripts = scriptPropsJson['scripts'] as List<dynamic>? ?? [];
@@ -441,11 +444,16 @@ Future<MigrationData> _oldToNowTask(
         }
       }
       final scriptOverwrite = overwrite['scriptOverwrite'] as Map?;
-      if (scriptOverwrite != null) {
+      if (restoreScripts && scriptOverwrite != null) {
         final scriptId = scriptOverwrite['scriptId'] as String?;
         rawProfile['scriptId'] = scriptId != null ? idMap[scriptId] : null;
       }
       rawProfile['overwriteType'] = overwrite['type'];
+    }
+    if (!restoreScripts &&
+        rawProfile['overwriteType'] == OverwriteType.script.name) {
+      rawProfile['overwriteType'] = OverwriteType.standard.name;
+      rawProfile['scriptId'] = null;
     }
 
     final sourceFile = File(_getProfilePath(sourcePath, rawId));
@@ -464,6 +472,18 @@ Future<MigrationData> _oldToNowTask(
     scripts: scripts,
     links: links,
   );
+}
+
+List<Profile> sanitizeRestoredProfiles(Iterable<Profile> profiles) {
+  return profiles.map((profile) {
+    if (profile.overwriteType != OverwriteType.script) {
+      return profile;
+    }
+    return profile.copyWith(
+      overwriteType: OverwriteType.standard,
+      scriptId: null,
+    );
+  }).toList();
 }
 
 Future<String> backupTask(
@@ -545,7 +565,10 @@ Future<MigrationData> _restoreTask(RootIsolateToken token) async {
   final dir = Directory(restoreDirPath);
   await dir.create(recursive: true);
   for (final file in archive.files) {
-    final outPath = join(restoreDirPath, posix.normalize(file.name));
+    final outPath = restoreEntryPath(restoreDirPath, file.name);
+    if (outPath == null) {
+      continue;
+    }
     final outputStream = OutputFileStream(outPath);
     file.writeContent(outputStream);
     await outputStream.close();
@@ -562,7 +585,7 @@ Future<MigrationData> _restoreTask(RootIsolateToken token) async {
   MigrationData migrationData = MigrationData(configMap: restoreConfigMap);
   if (version == 0 && restoreConfigMap != null) {
     migrationData = await _oldToNowTask(
-      VM3(restoreConfigMap, restoreDirPath, homeDirPath),
+      VM4(restoreConfigMap, restoreDirPath, homeDirPath, false),
     );
     return migrationData;
   }
@@ -580,35 +603,44 @@ Future<MigrationData> _restoreTask(RootIsolateToken token) async {
   );
   final results = await Future.wait([
     database.profilesDao.query().get(),
-    database.scriptsDao.query().get(),
     database.rules.all().map((item) => item.toRule()).get(),
     database.profileRuleLinks.all().map((item) => item.toLink()).get(),
     database.proxyGroups.all().map((item) => item.toProxyGroup()).get(),
   ]);
   final profiles = results[0].cast<Profile>();
-  final scripts = results[1].cast<Script>();
   final profilesMigration = profiles.map(
     (item) => VM2(
       _getProfilePath(restoreDirPath, item.id.toString()),
       _getProfilePath(homeDirPath, item.id.toString()),
     ),
   );
-  final scriptsMigration = scripts.map(
-    (item) => VM2(
-      _getScriptPath(restoreDirPath, item.id.toString()),
-      _getScriptPath(homeDirPath, item.id.toString()),
-    ),
-  );
-  await _copyWithMapList([...profilesMigration, ...scriptsMigration]);
+  final safeProfiles = sanitizeRestoredProfiles(profiles);
+  await _copyWithMapList(profilesMigration.toList());
   migrationData = migrationData.copyWith(
-    profiles: profiles,
-    scripts: scripts,
-    rules: results[2].cast<Rule>(),
-    links: results[3].cast<ProfileRuleLink>(),
-    proxyGroups: results[4].cast<ProxyGroup>(),
+    profiles: safeProfiles,
+    scripts: const [],
+    rules: results[1].cast<Rule>(),
+    links: results[2].cast<ProfileRuleLink>(),
+    proxyGroups: results[3].cast<ProxyGroup>(),
   );
   await database.close();
   return migrationData;
+}
+
+@visibleForTesting
+String? restoreEntryPath(String restoreDirPath, String name) {
+  final normalized = posix.normalize(name.replaceAll('\\', '/'));
+  if (normalized.isEmpty ||
+      posix.isAbsolute(normalized) ||
+      normalized == '..' ||
+      normalized.startsWith('../')) {
+    return null;
+  }
+  final outPath = normalize(join(restoreDirPath, normalized));
+  if (!isWithin(restoreDirPath, outPath)) {
+    return null;
+  }
+  return outPath;
 }
 
 Future<void> _copyWithMapList(List<VM2<String, String>> copyMapList) async {
