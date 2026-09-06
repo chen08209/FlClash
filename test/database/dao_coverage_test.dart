@@ -70,6 +70,34 @@ void main() {
   );
 
   test(
+    'restore can preserve existing scripts when scripts are untrusted',
+    () async {
+      final existing = Script(
+        id: 1,
+        label: 'Existing',
+        lastUpdateTime: DateTime(2026, 1, 1),
+      );
+      final incoming = Script(
+        id: 2,
+        label: 'Incoming',
+        lastUpdateTime: DateTime(2026, 1, 2),
+      );
+      await database.scriptsDao.setAll([existing]);
+
+      await database.restore(
+        const [],
+        [incoming],
+        const [],
+        const [],
+        const [],
+        restoreScripts: false,
+      );
+
+      expect(await database.scriptsDao.query().get(), [existing]);
+    },
+  );
+
+  test(
     'generated table managers create, filter, order, and update rows',
     () async {
       final date = DateTime.utc(2026, 7, 26);
@@ -414,9 +442,15 @@ void main() {
       proxies: ['DIRECT'],
     );
 
-    await database.restore([profile], [script], [rule], [link], [
-      group,
-    ], isOverride: true);
+    await database.restore(
+      [profile],
+      [script],
+      [rule],
+      [link],
+      [group],
+      isOverride: true,
+      restoreScripts: true,
+    );
     expect(await database.profilesDao.query().get(), [
       profile.copyWith(order: 0),
     ]);

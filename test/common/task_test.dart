@@ -64,6 +64,38 @@ void main() {
     expect(groups, isEmpty);
   });
 
+  test('sanitizeRestoredProfiles disables script overwrites', () {
+    const scriptProfile = Profile(
+      id: 1,
+      autoUpdateDuration: Duration.zero,
+      overwriteType: OverwriteType.script,
+      scriptId: 42,
+    );
+    const standardProfile = Profile(
+      id: 2,
+      autoUpdateDuration: Duration.zero,
+      overwriteType: OverwriteType.standard,
+    );
+
+    final profiles = sanitizeRestoredProfiles([scriptProfile, standardProfile]);
+
+    expect(profiles[0].overwriteType, OverwriteType.standard);
+    expect(profiles[0].scriptId, isNull);
+    expect(profiles[1], standardProfile);
+  });
+
+  test(
+    'restoreEntryPath confines archive entries to the restore directory',
+    () {
+      expect(restoreEntryPath('/tmp/restore', '../outside.txt'), isNull);
+      expect(restoreEntryPath('/tmp/restore', '/tmp/outside.txt'), isNull);
+      expect(
+        restoreEntryPath('/tmp/restore', r'profiles\1.yaml'),
+        '/tmp/restore/profiles/1.yaml',
+      );
+    },
+  );
+
   test(
     'makeRealProfileTask normalizes runtime config and added rules',
     () async {
