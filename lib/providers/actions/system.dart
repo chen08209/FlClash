@@ -19,6 +19,9 @@ class SystemAction extends _$SystemAction {
   }
 
   Future<void> handleExit([bool needSave = false]) {
+    if (system.isMacOS) {
+      return suspendApplication(needSave);
+    }
     final coordinator = _exitCoordinator ??= SystemExitCoordinator(
       watchdogDuration: exitWatchdogDuration,
       closeWindow: closeWindow,
@@ -26,12 +29,17 @@ class SystemAction extends _$SystemAction {
       exitApplication: exitApplication,
     );
     return coordinator.exit(
-      cleanup: () => cleanupExitResources(
-        needSave,
-        preserveConnection: true,
-      ),
+      cleanup: () => cleanupExitResources(needSave, preserveConnection: true),
       closeCore: false,
     );
+  }
+
+  @protected
+  Future<void> suspendApplication(bool needSave) async {
+    if (needSave) {
+      await preferences.saveConfig(ref.read(configProvider));
+    }
+    await window?.hide();
   }
 
   @protected

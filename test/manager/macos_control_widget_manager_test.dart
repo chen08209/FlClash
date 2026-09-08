@@ -86,6 +86,8 @@ void main() {
     await manager.init(container);
     container.read(runTimeProvider.notifier).value = 1;
     await Future<void>.delayed(Duration.zero);
+    container.read(runTimeProvider.notifier).value = 2;
+    await Future<void>.delayed(Duration.zero);
     container.read(runTimeProvider.notifier).value = null;
     await Future<void>.delayed(Duration.zero);
 

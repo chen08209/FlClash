@@ -4,6 +4,22 @@ import Foundation
 import WidgetKit
 
 @available(macOS 26.0, *)
+struct OpenFlClashApplicationIntent: AppIntent {
+    static var title: LocalizedStringResource = "Open FlClash"
+    static var isDiscoverable = false
+    static var openAppWhenRun: Bool { true }
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        NotificationCenter.default.post(
+            name: Notification.Name("FlClashOpenApplicationFromWidget"),
+            object: nil
+        )
+        return .result()
+    }
+}
+
+@available(macOS 26.0, *)
 enum FlClashControlWidgetStore {
     static var appGroupIdentifier: String {
         Bundle.main.object(forInfoDictionaryKey: "FlClashAppGroupIdentifier")
@@ -68,7 +84,6 @@ enum FlClashControlWidgetStore {
         defaults?.synchronize()
         ControlCenter.shared.reloadControls(ofKind: controlKind)
         WidgetCenter.shared.reloadTimelines(ofKind: statusWidgetKind)
-        WidgetCenter.shared.reloadAllTimelines()
         NSLog("FlClash Widget requested action=%{public}@", action)
         notifyRunner()
     }

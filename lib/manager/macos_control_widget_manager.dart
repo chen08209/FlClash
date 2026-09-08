@@ -32,7 +32,7 @@ class MacOSControlWidgetManager {
   final Future<void> Function(ProxyState proxyState) _syncProxy;
   final Future<void> Function(ProviderContainer container)
   _refreshCurrentProfile;
-  ProviderSubscription<int?>? _runTimeSubscription;
+  ProviderSubscription<bool>? _runningSubscription;
   ProviderSubscription<Profile?>? _currentProfileSubscription;
   ProviderContainer? _container;
   Future<void> _pendingOperation = Future.value();
@@ -52,10 +52,10 @@ class MacOSControlWidgetManager {
   Future<void> init(ProviderContainer container) async {
     _container = container;
     _channel.setMethodCallHandler(_handleMethodCall);
-    _runTimeSubscription?.close();
-    _runTimeSubscription = container.listen<int?>(
-      runTimeProvider,
-      (_, next) => unawaited(syncWidgetStatus(running: next != null)),
+    _runningSubscription?.close();
+    _runningSubscription = container.listen<bool>(
+      runTimeProvider.select((runTime) => runTime != null),
+      (_, isRunning) => unawaited(syncWidgetStatus(running: isRunning)),
       fireImmediately: true,
     );
     _currentProfileSubscription?.close();
@@ -163,8 +163,8 @@ class MacOSControlWidgetManager {
   void dispose() {
     _pendingActionPoller?.cancel();
     _pendingActionPoller = null;
-    _runTimeSubscription?.close();
-    _runTimeSubscription = null;
+    _runningSubscription?.close();
+    _runningSubscription = null;
     _currentProfileSubscription?.close();
     _currentProfileSubscription = null;
     _container = null;

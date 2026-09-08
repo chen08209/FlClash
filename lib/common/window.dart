@@ -70,15 +70,16 @@ class Window {
   }
 
   Future<void> show() async {
+    await windowManager.ensureInitialized();
     if (system.isMacOS) {
       await const MethodChannel(
         '$packageName/macos_control_widget',
       ).invokeMethod<void>('allowWindowPresentation');
     }
     render?.resume();
+    await windowManager.setSkipTaskbar(false);
     await windowManager.show();
     await windowManager.focus();
-    await windowManager.setSkipTaskbar(false);
   }
 
   Future<bool> get isVisible async {

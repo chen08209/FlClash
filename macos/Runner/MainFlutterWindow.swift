@@ -53,6 +53,7 @@ class MainFlutterWindow: NSWindow {
     }
 
     func revealAfterControlWidgetLaunch() {
+        collectionBehavior.insert(.moveToActiveSpace)
         allowPresentation()
         setIsVisible(true)
     }

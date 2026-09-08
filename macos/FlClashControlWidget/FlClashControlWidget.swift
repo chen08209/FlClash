@@ -201,12 +201,18 @@ struct FlClashStatusWidgetView: View {
                 }
                 .buttonStyle(FlClashWidgetCircleButtonStyle())
             }
-            .invalidatableContent()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .padding(16)
+        .background {
+            Button(intent: OpenFlClashApplicationIntent()) {
+                Color.clear
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Open FlClash")
+        }
         .containerBackground(.background, for: .widget)
-        .widgetURL(URL(string: "flclash://open"))
     }
 }
 

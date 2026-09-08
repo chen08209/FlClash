@@ -46,6 +46,17 @@ final class MacOSControlWidgetBridge: NSObject {
         )
         channel.setMethodCallHandler(handleMethodCall)
         self.channel = channel
+        NotificationCenter.default.removeObserver(
+            self,
+            name: Notification.Name("FlClashOpenApplicationFromWidget"),
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(openApplicationFromWidget),
+            name: Notification.Name("FlClashOpenApplicationFromWidget"),
+            object: nil
+        )
 
         DistributedNotificationCenter.default().removeObserver(self)
         DistributedNotificationCenter.default().addObserver(
@@ -78,6 +89,9 @@ final class MacOSControlWidgetBridge: NSObject {
             nil,
             .deliverImmediately
         )
+        // A widget action can launch Runner before Flutter has installed its
+        // method handler. Retry once the native bridge is ready as well.
+        performPendingAction()
     }
 
     private func handleMethodCall(
@@ -162,7 +176,6 @@ final class MacOSControlWidgetBridge: NSObject {
             ControlCenter.shared.reloadControls(ofKind: Self.controlKind)
         }
         WidgetCenter.shared.reloadTimelines(ofKind: Self.statusWidgetKind)
-        WidgetCenter.shared.reloadAllTimelines()
     }
 
     func setWidgetStatus(
@@ -185,7 +198,6 @@ final class MacOSControlWidgetBridge: NSObject {
             ControlCenter.shared.reloadControls(ofKind: Self.controlKind)
         }
         WidgetCenter.shared.reloadTimelines(ofKind: Self.statusWidgetKind)
-        WidgetCenter.shared.reloadAllTimelines()
     }
 
     func performPendingAction() {
@@ -217,7 +229,9 @@ final class MacOSControlWidgetBridge: NSObject {
     }
 
     func allowWindowPresentation() {
-        NSApp.setActivationPolicy(.regular)
+        if NSApp.activationPolicy() != .regular {
+            NSApp.setActivationPolicy(.regular)
+        }
         for window in NSApp.windows {
             (window as? MainFlutterWindow)?.allowPresentation()
         }
@@ -229,6 +243,11 @@ final class MacOSControlWidgetBridge: NSObject {
 
     func showApplicationWindow() {
         scheduleWindowPresentationRetries()
+    }
+
+    @objc private func openApplicationFromWidget() {
+        allowUserRequestedPresentation()
+        showApplicationWindow()
     }
 
     func cancelWindowPresentation() {
@@ -258,6 +277,9 @@ final class MacOSControlWidgetBridge: NSObject {
             NSApp.activate(ignoringOtherApps: true)
         }
         showWindowFromNative()
+        if NSApp.isActive && NSApp.keyWindow is MainFlutterWindow {
+            return
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.retryWindowPresentation(
                 generation: generation,
