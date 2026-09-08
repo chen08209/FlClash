@@ -6,7 +6,7 @@ import 'package:path/path.dart' as p;
 
 const _allTargets = <String, String>{
   'android': 'apk',
-  'linux': 'deb', // appimage + rpm added for amd64 only
+  'linux': 'deb',
   'macos': 'dmg',
   'windows': 'exe,zip',
 };
@@ -117,7 +117,9 @@ Map<String, String> createBuildEnvironment(String env) {
 
 String _getTargets(String platform, String arch, String? customTargets) {
   if (customTargets != null) return customTargets;
-  if (platform == 'linux' && arch == 'amd64') return 'deb,appimage,rpm';
+  if (platform == 'linux') {
+    return arch == 'amd64' ? 'deb,appimage,rpm' : 'deb,rpm';
+  }
   return _allTargets[platform]!;
 }
 
@@ -252,12 +254,10 @@ Future<int> _ensureLinuxDependencies(String arch) async {
     ['libkeybinder-3.0-dev'],
     ['libsecret-1-dev'],
     ['locate'],
+    ['rpm', 'patchelf'],
   ];
   if (arch == 'amd64') {
-    pkgGroups.addAll([
-      ['rpm', 'patchelf'],
-      ['libfuse2'],
-    ]);
+    pkgGroups.add(['libfuse2']);
   }
 
   final missingGroups = <List<String>>[];
