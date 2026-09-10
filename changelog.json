@@ -1,4 +1,48 @@
 {
   "schemaVersion": 2,
-  "versions": []
+  "versions": [
+    {
+      "version": "0.8.97",
+      "tag": "v0.8.97",
+      "date": "2026-09-10",
+      "prerelease": false,
+      "groups": [
+        {
+          "type": "feat",
+          "entries": [
+            {
+              "id": "26cfbaf",
+              "scope": "ui",
+              "text": "Rework the app UI and refresh the localization"
+            },
+            {
+              "id": "aaf934c",
+              "scope": "app",
+              "text": "Rework the app layer and window handling, and add proxy authentication"
+            },
+            {
+              "id": "c0fcbc0",
+              "scope": "desktop",
+              "text": "Rework the desktop runners, packaging, and native build"
+            },
+            {
+              "id": "ae29f38",
+              "scope": "android",
+              "text": "Rework the Android VPN service and lifecycle handling"
+            },
+            {
+              "id": "adf715f",
+              "scope": "plugins",
+              "text": "Rework the desktop plugins and add the Helper service and Rust bridge"
+            },
+            {
+              "id": "c6eaa0a",
+              "scope": "core",
+              "text": "Rework the core IPC and process lifecycle"
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

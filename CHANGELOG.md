@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.8.97 (2026-09-10)
+
+**Features**
+
+- **ui** Rework the app UI and refresh the localization (26cfbaf)
+- **app** Rework the app layer and window handling, and add proxy authentication (aaf934c)
+- **desktop** Rework the desktop runners, packaging, and native build (c0fcbc0)
+- **android** Rework the Android VPN service and lifecycle handling (ae29f38)
+- **plugins** Rework the desktop plugins and add the Helper service and Rust bridge (adf715f)
+- **core** Rework the core IPC and process lifecycle (c6eaa0a)
+
 <!-- changelog:frozen -->
 <!-- Entries below predate the structured pipeline. Their wording is kept as written; only the heading and list style were normalized. -->
 
