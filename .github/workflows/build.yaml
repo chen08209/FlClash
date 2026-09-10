@@ -2,25 +2,36 @@ name: build
 
 on:
   push:
+    branches:
+      - '**'
     tags:
       - 'v*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+
 env:
   IS_STABLE: ${{ !contains(github.ref, '-') }}
-  FLUTTER_VERSION: '3.44.4'
+  FLUTTER_VERSION: '3.47.1'
+  GO_VERSION: '1.26.4'
+  NDK_VERSION: r28c
 
 jobs:
-  test:
-    name: Test
+  dart:
+    name: Dart
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          fetch-depth: 0
 
-      - name: Test release notes generation
-        shell: bash
-        run: bash .github/scripts/generate_release_notes_test.sh
+      - name: Test commit message hook
+        run: bash tool/check_commit_msg_test.sh
+
+      - name: Test comment density hook
+        run: bash tool/check_comment_density_test.sh
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -32,46 +43,63 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Check format
+        run: dart format --output=none --set-exit-if-changed lib test tool plugins setup.dart
+
       - name: Analyze
         run: flutter analyze --no-fatal-infos
 
+      - name: Skip native build hooks
+        run: |
+          yq -i '.hooks.user_defines.setup.build_assets = false | .hooks.user_defines.rust_api.build_assets = false' pubspec.yaml
+
+      - name: Verify changelog
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+        run: dart run tool/changelog.dart verify
+
       - name: Run tests
-        run: flutter test --reporter expanded
+        run: flutter test --reporter expanded --coverage
+
+      - name: Check coverage
+        run: dart run tool/check_coverage.dart coverage/lcov.info 75
+
+  plugins:
+    name: Plugins
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
 
       - name: Validate local Flutter packages
-        shell: bash
-        run: |
-          for package in plugins/proxy plugins/wifi_ssid plugins/window_ext plugins/setup; do
-            (
-              cd "$package"
-              flutter pub get
-              flutter analyze --no-fatal-infos
-            )
-          done
+        run: bash tool/check_plugins.sh
 
-      - name: Run local plugin tests
-        shell: bash
-        run: |
-          (
-            cd plugins/proxy
-            flutter test --reporter expanded
-          )
-          (
-            cd plugins/wifi_ssid
-            flutter test --reporter expanded
-          )
-
-      - name: Validate setup build tool
-        working-directory: plugins/setup/buildkit/build_tool
+      - name: Validate setup hooks package
+        working-directory: plugins/setup/setup_hooks
         run: |
           dart pub get
           dart analyze
           dart test
 
+  go:
+    name: Go core
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.26.4'
+          go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: core/go.sum
 
       - name: Validate Go core wrapper
@@ -79,14 +107,109 @@ jobs:
         env:
           CGO_ENABLED: 0
         run: |
-          go test .
+          if ! compgen -G '*_test.go' > /dev/null; then
+            echo 'No Go tests found in core/; the test step would pass vacuously.' >&2
+            exit 1
+          fi
+          test -z "$(gofmt -l ./*.go ./platform ./tun)" || {
+            gofmt -l ./*.go ./platform ./tun >&2
+            exit 1
+          }
+          go test -count=1 .
           go vet .
+          GOOS=linux go vet ./platform
 
-      - name: Validate Rust components
+      - name: Setup NDK
+        uses: nttld/setup-ndk@v1
+        id: ndk
+        with:
+          ndk-version: ${{ env.NDK_VERSION }}
+
+      - name: Validate the Android core library
+        working-directory: core
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: |
+          # Nothing else compiles the `android && cgo` files before a `v*` tag.
+          CC="$(echo "$ANDROID_NDK_HOME"/toolchains/llvm/prebuilt/*/bin/aarch64-linux-android21-clang)"
+          test -x "$CC" || { echo "NDK clang not found at $CC" >&2; exit 1; }
+          tags="$(sed -n 's/^tags: *//p' ../build_config.yaml)"
+          test -n "$tags" || { echo 'Could not read tags from build_config.yaml' >&2; exit 1; }
+          export CGO_ENABLED=1 GOOS=android GOARCH=arm64 CC
+          go vet "-tags=$tags" . ./tun ./platform
+
+  android:
+    name: Android unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Setup NDK
+        uses: nttld/setup-ndk@v1
+        id: ndk
+        with:
+          ndk-version: ${{ env.NDK_VERSION }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Run Android unit tests
+        working-directory: android
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: |
+          {
+            echo "flutter.sdk=$FLUTTER_ROOT"
+            echo "sdk.dir=$ANDROID_HOME"
+          } > local.properties
+          wrapper="$FLUTTER_ROOT/bin/cache/artifacts/gradle_wrapper"
+          test -d "$wrapper" || flutter precache
+          cp -R "$wrapper/." .
+          chmod +x gradlew
+          # `:core` only calls System.loadLibrary; the excluded Flutter tasks would run
+          # the native build hooks for every debug ABI, which no JVM unit test consumes.
+          ./gradlew :common:testDebugUnitTest :service:testDebugUnitTest :app:testDebugUnitTest \
+            -x :app:compileFlutterBuildDebug -x :app:copyFlutterAssetsDebug
+
+  rust:
+    name: Rust
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            services/helper
+            plugins/rust_api/rust
+
+      - name: Check format
         run: |
           cargo fmt --manifest-path services/helper/Cargo.toml -- --check
-          cargo test --manifest-path services/helper/Cargo.toml
           cargo fmt --manifest-path plugins/rust_api/rust/Cargo.toml -- --check
+
+      - name: Run tests
+        run: |
+          cargo test --manifest-path services/helper/Cargo.toml
           cargo test --manifest-path plugins/rust_api/rust/Cargo.toml
 
   windows-helper-test:
@@ -96,6 +219,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: services/helper
+
       - name: Check format
         run: cargo fmt --manifest-path services/helper/Cargo.toml -- --check
 
@@ -104,7 +232,7 @@ jobs:
 
   build:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    needs: [ test, windows-helper-test ]
+    needs: [ dart, plugins, go, android, rust, windows-helper-test ]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -159,14 +287,26 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.26.4'
-          cache-dependency-path: |
-            core/go.sum
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: core/go.sum
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.platform }}-${{ matrix.arch || 'all' }}
+          workspaces: services/helper
+          cache-directories: .dart_tool/hooks_runner
+
+      - name: Setup Gradle
+        if: startsWith(matrix.platform,'android')
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Enable git long paths (Windows)
         if: startsWith(matrix.os, 'windows')
         run: git config --global core.longpaths true
 
+      # Stable publishes no Windows or Linux arm64 archive; master makes the action
+      # clone the SDK at the pinned tag and let it fetch the host's own Dart SDK.
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -183,8 +323,9 @@ jobs:
       - name: Setup NDK
         if: startsWith(matrix.platform,'android')
         uses: nttld/setup-ndk@v1
+        id: build-ndk
         with:
-          ndk-version: r28c
+          ndk-version: ${{ env.NDK_VERSION }}
           add-to-path: true
           link-to-sdk: true
 
@@ -194,6 +335,8 @@ jobs:
           flutter pub get
 
       - name: Setup
+        env:
+          ANDROID_NDK_HOME: ${{ steps.build-ndk.outputs.ndk-path }}
         run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
 
       - name: Upload
@@ -202,61 +345,6 @@ jobs:
           name: artifact-${{ matrix.platform }}${{ matrix.arch && format('-{0}', matrix.arch) }}
           path: ./dist
           overwrite: true
-
-  changelog:
-    if: ${{ !contains(github.ref, '-') }}
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    needs: [ build ]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: refs/heads/main
-      - name: Generate
-        run: |
-          last_ver=$(grep -m1 '^## ' CHANGELOG.md 2>/dev/null | sed 's/^## //')
-
-          mapfile -t tags < <(git tag --merged HEAD --sort=-creatordate)
-
-          temp="NEW_CHANGELOG.md"
-          : > "$temp"
-
-          for i in "${!tags[@]}"; do
-              curr="${tags[i]}"
-              [[ "$curr" == "$last_ver" ]] && break
-
-              prev="${tags[i+1]}"
-              range="${prev:+$prev..}$curr"
-
-              echo -e "## $curr\n" >> "$temp"
-              git log --no-merges --pretty=format:"%B" "$range" | \
-              awk '!/Update changelog/ && NF {print "- " $0 "\n"}' >> "$temp"
-          done
-          [ -f CHANGELOG.md ] && cat CHANGELOG.md >> "$temp"
-          
-          mv "$temp" CHANGELOG.md
-
-      - name: Commit
-        run: |
-          git add CHANGELOG.md
-          if ! git diff --cached --quiet; then
-            echo "Commit pushing"
-            git config --local user.email "chen08209@gmail.com"
-            git config --local user.name "chen08209"
-            git commit -m "Update changelog"
-            if git push; then
-              echo "Push succeeded"
-            else
-              echo "Push failed"
-              exit 1
-            fi
-          fi
-
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   upload:
     permissions:
@@ -284,14 +372,35 @@ jobs:
           pattern: artifact-*
           merge-multiple: true
 
-      - name: Generate release.md
-        shell: bash
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Skip native build hooks
         run: |
-          pre_tag=$(
-            curl --silent "https://api.github.com/repos/chen08209/FlClash/releases/latest" |
-              sed -nE 's/.*"tag_name": "([^"]+)".*/\1/p'
-          )
-          bash .github/scripts/generate_release_notes.sh "$pre_tag" release.md
+          yq -i '.hooks.user_defines.setup.build_assets = false | .hooks.user_defines.rust_api.build_assets = false' pubspec.yaml
+
+      - name: Generate release notes
+        shell: bash
+        env:
+          IS_STABLE: ${{ env.IS_STABLE }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          target=()
+          if [[ "$IS_STABLE" == 'true' ]]; then
+            target=(--tag "$TAG")
+          else
+            dart run tool/changelog.dart build --unreleased
+          fi
+          dart run tool/changelog.dart render release "${target[@]}" --out release.md
+          dart run tool/changelog.dart render telegram "${target[@]}" --out telegram.md
+
       - name: Push to telegram
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

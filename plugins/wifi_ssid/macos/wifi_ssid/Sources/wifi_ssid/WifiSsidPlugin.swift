@@ -7,6 +7,7 @@ public class WifiSsidPlugin: NSObject, FlutterPlugin, CLLocationManagerDelegate 
 
     private let locationManager = CLLocationManager()
     private let wifiClient = CWWiFiClient.shared()
+    private let ssidQueue = DispatchQueue(label: "com.follow.clash.wifi_ssid")
     private var pendingPermissionResult: FlutterResult?
 
     private enum Method {
@@ -48,10 +49,19 @@ public class WifiSsidPlugin: NSObject, FlutterPlugin, CLLocationManagerDelegate 
     // MARK: - Permission
 
     private func checkPermission(result: @escaping FlutterResult) {
+        // CoreWLAN only requires location authorization on macOS 14+.
+        guard #available(macOS 14, *) else {
+            result(WifiSsidPermission.granted.rawValue)
+            return
+        }
         result(mapAuthStatus(locationManager.authorizationStatus).rawValue)
     }
 
     private func requestPermission(result: @escaping FlutterResult) {
+        guard #available(macOS 14, *) else {
+            result(WifiSsidPermission.granted.rawValue)
+            return
+        }
         let permission = mapAuthStatus(locationManager.authorizationStatus)
         if permission != .denied {
             result(permission.rawValue)
@@ -98,6 +108,20 @@ public class WifiSsidPlugin: NSObject, FlutterPlugin, CLLocationManagerDelegate 
     // MARK: - SSID
 
     private func getSsid(result: @escaping FlutterResult) {
-        result(wifiClient.interface()?.ssid())
+        if #available(macOS 14, *) {
+            guard mapAuthStatus(locationManager.authorizationStatus) == .granted else {
+                result(nil)
+                return
+            }
+        }
+        // CoreWLAN reaches wifid over XPC, so a wedged daemon would hold the
+        // platform thread and freeze the window until it answers.
+        let client = wifiClient
+        ssidQueue.async {
+            let ssid = client.interface()?.ssid()
+            DispatchQueue.main.async {
+                result(ssid)
+            }
+        }
     }
 }

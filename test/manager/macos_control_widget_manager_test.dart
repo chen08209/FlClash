@@ -322,10 +322,10 @@ class _RecordingSetupAction extends SetupAction {
   final requests = <_RunRequestRecord>[];
 
   @override
-  Future<void> setRunning(bool running, {bool initialize = false}) {
+  Future<bool> setRunning(bool running, {bool initialize = false}) {
     requests.add(_RunRequestRecord(running, initialize));
     ref.read(runTimeProvider.notifier).value = running ? 1 : null;
-    return Future.value();
+    return Future.value(true);
   }
 }
 

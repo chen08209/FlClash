@@ -197,4 +197,17 @@ void main() {
       expect(encoded[5], 0x00);
     });
   });
+
+  group('StringExtension.decodeJson', () {
+    test('decodes small json on main thread', () async {
+      final result = await '{"key": "value"}'
+          .decodeJson<Map<String, dynamic>>();
+      expect(result, {'key': 'value'});
+    });
+
+    test('decodes list json', () async {
+      final result = await '[1, 2, 3]'.decodeJson<List<dynamic>>();
+      expect(result, [1, 2, 3]);
+    });
+  });
 }

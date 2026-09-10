@@ -45,7 +45,7 @@ class CoreEventManager {
 
   CoreEventManager._() {
     _controller.stream.listen((event) {
-      for (final CoreEventListener listener in _listeners) {
+      for (final CoreEventListener listener in List.of(_listeners)) {
         try {
           switch (event.type) {
             case CoreEventType.log:

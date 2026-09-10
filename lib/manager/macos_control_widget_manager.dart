@@ -75,7 +75,7 @@ class MacOSControlWidgetManager {
   Future<dynamic> _handleMethodCall(MethodCall call) {
     return switch (call.method) {
       'performPendingAction' => performPendingAction(),
-      'showWindowFromNative' => window?.show() ?? Future<void>.value(),
+      'showWindowFromNative' => windowPort?.show() ?? Future<void>.value(),
       _ => throw MissingPluginException(),
     };
   }

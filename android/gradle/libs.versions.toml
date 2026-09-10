@@ -9,6 +9,8 @@ annotationJvm = "1.9.1"
 coreSplashscreen = "1.0.1"
 gson = "2.13.1"
 smaliDexlib2 = "3.0.9"
+junit = "4.13.2"
+kotlinxCoroutines = "1.10.2"
 
 [libraries]
 androidx-core = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -18,4 +20,6 @@ firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-crashlytics-ndk = { module = "com.google.firebase:firebase-crashlytics-ndk" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+junit = { module = "junit:junit", version.ref = "junit" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 smali-dexlib2 = { module = "com.android.tools.smali:smali-dexlib2", version.ref = "smaliDexlib2" }

@@ -83,11 +83,49 @@ install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
 install(FILES "EnableLoopback.exe" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
 
+# Ship the MSVC runtime next to the executable. Neither the installer nor the
+# portable archive can assume a machine already carries VCRedist, and without
+# these the app cannot start at all.
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
+include(InstallRequiredSystemLibraries)
+if(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS)
+  install(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+    COMPONENT Runtime)
+endif()
+
 if(PLUGIN_BUNDLED_LIBRARIES)
   install(FILES "${PLUGIN_BUNDLED_LIBRARIES}"
     DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endif()
+
+# Produced by the setup build hook during flutter_assemble.
+set(CORE_ARTIFACTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../libclash/windows")
+# A running Debug Helper holds its exe open and the copy below fails behind an
+# opaque MSB3073; only a Debug install with a changed Helper stops it, matched
+# by path so a Helper registered from an installed release is left alone.
+install(CODE "
+  set(helper_src \"${CORE_ARTIFACTS_DIR}/FlClashHelperService.exe\")
+  set(helper_dst \"${INSTALL_BUNDLE_LIB_DIR}/FlClashHelperService.exe\")
+  if(\"\${CMAKE_INSTALL_CONFIG_NAME}\" STREQUAL \"Debug\" AND EXISTS \"\${helper_dst}\")
+    file(SHA256 \"\${helper_src}\" helper_src_hash)
+    file(SHA256 \"\${helper_dst}\" helper_dst_hash)
+    if(NOT helper_src_hash STREQUAL helper_dst_hash)
+      message(STATUS \"Stopping the Helper running from \${helper_dst} before installing the Debug build\")
+      file(TO_NATIVE_PATH \"\${helper_dst}\" helper_dst_native)
+      execute_process(COMMAND powershell -NoProfile -NonInteractive -Command
+        \"Get-Process -Name FlClashHelperService -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq '\${helper_dst_native}' } | Stop-Process -Force\"
+        OUTPUT_QUIET ERROR_QUIET)
+    endif()
+  endif()
+" COMPONENT Runtime)
+install(FILES
+  "${CORE_ARTIFACTS_DIR}/FlClashCore.exe"
+  "${CORE_ARTIFACTS_DIR}/FlClashHelperService.exe"
+  "${CORE_ARTIFACTS_DIR}/manifest.json"
+  DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+  COMPONENT Runtime)
 
 # Copy the native assets provided by the build.dart from all packages.
 set(NATIVE_ASSETS_DIR "${PROJECT_BUILD_DIR}native_assets/windows/")

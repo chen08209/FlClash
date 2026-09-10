@@ -180,7 +180,7 @@ namespace proxy
             registrar->messenger(), "proxy",
             &flutter::StandardMethodCodec::GetInstance());
 
-    auto plugin = std::make_unique<ProxyPlugin>();
+    auto plugin = std::make_unique<ProxyPlugin>(registrar);
 
     channel->SetMethodCallHandler(
         [plugin_pointer = plugin.get()](const auto &call, auto result)
@@ -191,13 +191,50 @@ namespace proxy
     registrar->AddPlugin(std::move(plugin));
   }
 
+  ProxyPlugin::ProxyPlugin(flutter::PluginRegistrarWindows* registrar)
+      : registrar_(registrar)
+  {
+    window_proc_id_ = registrar_->RegisterTopLevelWindowProcDelegate(
+        [this](HWND window, UINT message, WPARAM wparam, LPARAM lparam)
+        {
+          return HandleWindowProc(window, message, wparam, lparam);
+        });
+  }
+
+  ProxyPlugin::~ProxyPlugin()
+  {
+    if (registrar_ != nullptr)
+    {
+      registrar_->UnregisterTopLevelWindowProcDelegate(window_proc_id_);
+    }
+  }
+
+  bool ProxyPlugin::IsSessionEnding(UINT message, WPARAM wparam)
+  {
+    return message == WM_ENDSESSION && wparam != FALSE;
+  }
+
+  // Shutting Windows down kills the process without running the Dart exit path,
+  // so the setting survives into a boot with nothing listening behind it.
+  std::optional<LRESULT> ProxyPlugin::HandleWindowProc(
+      HWND window, UINT message, WPARAM wparam, LPARAM lparam)
+  {
+    if (proxy_applied_ && IsSessionEnding(message, wparam))
+    {
+      proxy_applied_ = !stopProxy();
+    }
+    return std::nullopt;
+  }
+
   void ProxyPlugin::HandleMethodCall(
       const flutter::MethodCall<flutter::EncodableValue> &method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result)
   {
     if (method_call.method_name() == "StopProxy")
     {
-      result->Success(stopProxy());
+      const bool stopped = stopProxy();
+      proxy_applied_ = proxy_applied_ && !stopped;
+      result->Success(stopped);
     }
     else if (method_call.method_name() == "StartProxy")
     {
@@ -232,6 +269,8 @@ namespace proxy
             "bad_args", "StartProxy bypassDomain must contain only strings");
         return;
       }
+      // A start that reports failure can still have written the setting.
+      proxy_applied_ = true;
       result->Success(startProxy(*port, *bypassDomain));
     }
     else

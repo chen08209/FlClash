@@ -129,6 +129,16 @@ class ProxyGroupsDao extends DatabaseAccessor<Database>
       preDelete: true,
     );
   }
+
+  void putAllWithBatch(Batch batch, Iterable<ProxyGroup> proxyGroups) {
+    final keys = indexing.generateNKeys(proxyGroups.length);
+    batch.insertAllOnConflictUpdate(
+      this.proxyGroups,
+      proxyGroups.mapIndexed(
+        (index, item) => item.toCompanion(null, keys[index]),
+      ),
+    );
+  }
 }
 
 extension RawProxyGroupExt on RawProxyGroup {

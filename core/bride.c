@@ -1,31 +1,57 @@
+//go:build android && cgo
+
 #include "bride.h"
 
 void (*release_object_func)(void *obj);
 
 void (*free_string_func)(char *data);
 
-void (*protect_func)(void *tun_interface, int fd);
+int (*protect_func)(void *tun_interface, int fd);
 
-char* (*resolve_process_func)(void *tun_interface,int protocol, const char *source, const char *target, int uid);
+int (*resolve_uid_func)(void *tun_interface, int protocol, const char *source, const char *target);
+
+char* (*resolve_package_func)(void *tun_interface, int uid);
 
 void (*result_func)(void *invoke_Interface, const char *data);
 
-void protect(void *tun_interface, int fd) {
-    protect_func(tun_interface, fd);
+int protect(void *tun_interface, int fd) {
+    if (protect_func == NULL) {
+        return 0;
+    }
+    return protect_func(tun_interface, fd);
 }
 
-char* resolve_process(void *tun_interface, int protocol, const char *source, const char *target, int uid) {
-    return resolve_process_func(tun_interface, protocol, source, target, uid);
+int resolve_uid(void *tun_interface, int protocol, const char *source, const char *target) {
+    if (resolve_uid_func == NULL) {
+        return -1;
+    }
+    return resolve_uid_func(tun_interface, protocol, source, target);
+}
+
+char* resolve_package(void *tun_interface, int uid) {
+    if (resolve_package_func == NULL) {
+        return NULL;
+    }
+    return resolve_package_func(tun_interface, uid);
 }
 
 void release_object(void *obj) {
+    if (release_object_func == NULL) {
+        return;
+    }
     release_object_func(obj);
 }
 
 void free_string(char *data) {
+    if (free_string_func == NULL) {
+        return;
+    }
     free_string_func(data);
 }
 
 void result(void *invoke_Interface, const char *data) {
-    return result_func(invoke_Interface, data);
+    if (result_func == NULL) {
+        return;
+    }
+    result_func(invoke_Interface, data);
 }

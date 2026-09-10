@@ -1,31 +1,15 @@
 name: setup
-description: FlClash Go core build harness (FFI plugin).
+description: FlClash Go core and Rust helper build harness (Dart build hook).
 version: 0.0.1
 publish_to: none
 
 environment:
-  sdk: ^3.9.2
-  flutter: '>=3.3.0'
+  sdk: ^3.10.0
 
 dependencies:
-  flutter:
-    sdk: flutter
+  hooks: ^2.2.0
+  setup_hooks:
+    path: setup_hooks
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^5.0.0
-
-flutter:
-  plugin:
-    platforms:
-      android:
-        ffiPlugin: true
-      ios:
-        ffiPlugin: true
-      linux:
-        ffiPlugin: true
-      macos:
-        ffiPlugin: true
-      windows:
-        ffiPlugin: true
+  flutter_lints: ^6.0.0

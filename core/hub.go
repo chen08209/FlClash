@@ -3,61 +3,64 @@ package main
 import (
 	"cmp"
 	"context"
+	"errors"
+	"net"
+	"net/url"
+	"os"
+	"path/filepath"
+	"runtime"
+	"runtime/debug"
+	"slices"
+	"strconv"
+	"sync"
+	"sync/atomic"
+	"time"
+
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/common/observable"
 	"github.com/metacubex/mihomo/common/utils"
-	"github.com/metacubex/mihomo/component/mmdb"
 	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/constant/features"
-	cp "github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/listener"
 	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/mihomo/tunnel"
 	"github.com/metacubex/mihomo/tunnel/statistic"
-	"golang.org/x/exp/slices"
-	"net"
-	"os"
-	"path/filepath"
-	"runtime"
-	"runtime/debug"
-	"strconv"
-	"sync/atomic"
-	"time"
 )
 
 var (
-	isInit            atomic.Bool
-	externalProviders = map[string]cp.Provider{}
-	logSubscriber     observable.Subscription[log.Event]
+	logMu         sync.Mutex
+	logSubscriber observable.Subscription[log.Event]
+	logCancel     context.CancelFunc
 )
 
 func handleInitClash(params *InitParams) bool {
-	runLock.Lock()
-	defer runLock.Unlock()
-	version = params.Version
+	configMu.Lock()
+	defer configMu.Unlock()
+	sdkVersion.Store(int32(params.Version))
 	constant.SetHomeDir(params.HomeDir)
+	initOwnership(params.HomeDir)
 	isInit.Store(true)
 	return true
 }
 
 func handleStartListener() bool {
-	runLock.Lock()
-	defer runLock.Unlock()
-	isRunning = true
-	updateListeners()
+	configMu.Lock()
+	defer configMu.Unlock()
+	isRunning.Store(true)
+	updateListeners(currentConfig)
 	resolver.ResetConnection()
 	return true
 }
 
 func handleStopListener() bool {
-	runLock.Lock()
-	defer runLock.Unlock()
-	isRunning = false
+	configMu.Lock()
+	defer configMu.Unlock()
+	isRunning.Store(false)
 	listener.StopListener()
 	resolver.ResetConnection()
 	return true
@@ -69,6 +72,7 @@ func handleGetIsInit() bool {
 
 func handleForceGC() {
 	log.Infoln("[APP] request force GC")
+	tunnel.InvalidateAllProxies()
 	runtime.GC()
 	if features.Android {
 		debug.FreeOSMemory()
@@ -76,55 +80,80 @@ func handleForceGC() {
 }
 
 func handleShutdown() bool {
-	stopListeners()
+	handleStopLog()
+
+	configMu.Lock()
+	isRunning.Store(false)
+	listener.StopListener()
+	updater.StopGeoUpdater()
 	executor.Shutdown()
-	handleForceGC()
+	currentConfig = nil
 	isInit.Store(false)
+	configMu.Unlock()
+
+	handleForceGC()
 	return true
 }
 
 func handleValidateConfig(path string) string {
-	buf, err := readFile(path)
-	_, err = config.UnmarshalRawConfig(buf)
+	buf, err := os.ReadFile(path)
 	if err != nil {
+		return err.Error()
+	}
+	if _, err = config.UnmarshalRawConfig(buf); err != nil {
 		return err.Error()
 	}
 	return ""
 }
 
-func handleGetProxies() ProxiesData {
-	runLock.Lock()
-	defer runLock.Unlock()
+const globalProxyName = "GLOBAL"
 
-	nameList := config.GetProxyNameList()
+func isProxyGroupType(adapterType constant.AdapterType) bool {
+	switch adapterType {
+	case constant.Selector, constant.URLTest, constant.Fallback, constant.Relay, constant.LoadBalance:
+		return true
+	default:
+		return false
+	}
+}
 
-	proxies := tunnel.AllProxies()
-
+func proxyGroupNames(
+	nameList []string,
+	typeOf func(name string) (constant.AdapterType, bool),
+) []string {
 	hasGlobal := false
-
-	allNames := make([]string, 0, len(nameList)+1)
+	names := make([]string, 0, len(nameList)+1)
 
 	for _, name := range nameList {
-		if name == "GLOBAL" {
+		if name == globalProxyName {
 			hasGlobal = true
 		}
-
-		p, ok := proxies[name]
-		if !ok || p == nil {
+		adapterType, ok := typeOf(name)
+		if !ok || !isProxyGroupType(adapterType) {
 			continue
 		}
-		switch p.Type() {
-		case constant.Selector, constant.URLTest, constant.Fallback, constant.Relay, constant.LoadBalance:
-			allNames = append(allNames, name)
-		default:
-		}
+		names = append(names, name)
 	}
 
 	if !hasGlobal {
-		if p, ok := proxies["GLOBAL"]; ok && p != nil {
-			allNames = append([]string{"GLOBAL"}, allNames...)
+		if adapterType, ok := typeOf(globalProxyName); ok && isProxyGroupType(adapterType) {
+			names = append([]string{globalProxyName}, names...)
 		}
 	}
+
+	return names
+}
+
+func handleGetProxies() ProxiesData {
+	proxies := tunnel.AllProxies()
+
+	allNames := proxyGroupNames(config.GetProxyNameList(), func(name string) (constant.AdapterType, bool) {
+		p, ok := proxies[name]
+		if !ok || p == nil {
+			return 0, false
+		}
+		return p.Type(), true
+	})
 
 	return ProxiesData{
 		All:     allNames,
@@ -132,41 +161,48 @@ func handleGetProxies() ProxiesData {
 	}
 }
 
-func handleChangeProxy(params *ChangeProxyParams, fn func(string string)) {
-	runLock.Lock()
-	go func() {
-		defer runLock.Unlock()
-		groupName := params.GroupName
-		proxyName := params.ProxyName
-		proxies := tunnel.AllProxies()
-		group, ok := proxies[groupName]
-		if !ok {
-			fn("Not found group")
-			return
-		}
-		adapterProxy, ok := group.(*adapter.Proxy)
-		if !ok {
-			fn("Group has invalid proxy type")
-			return
-		}
-		selector, ok := adapterProxy.ProxyAdapter.(outboundgroup.SelectAble)
-		if !ok {
-			fn("Group is not selectable")
-			return
-		}
-		if proxyName == "" {
-			selector.ForceSet(proxyName)
-		} else {
-			err := selector.Set(proxyName)
-			if err != nil {
-				fn(err.Error())
-				return
-			}
-		}
+var (
+	errGroupNotFound    = errors.New("Not found group")
+	errGroupInvalidType = errors.New("Group has invalid proxy type")
+	errGroupNotSelect   = errors.New("Group is not selectable")
+)
 
-		fn("")
-		return
-	}()
+func lookupProxy(name string) constant.Proxy {
+	return tunnel.AllProxies()[name]
+}
+
+func selectableGroup(groupName string) (outboundgroup.SelectAble, error) {
+	group := lookupProxy(groupName)
+	if group == nil {
+		return nil, errGroupNotFound
+	}
+	adapterProxy, ok := group.(*adapter.Proxy)
+	if !ok {
+		return nil, errGroupInvalidType
+	}
+	selector, ok := adapterProxy.ProxyAdapter.(outboundgroup.SelectAble)
+	if !ok {
+		return nil, errGroupNotSelect
+	}
+	return selector, nil
+}
+
+func handleChangeProxy(params *ChangeProxyParams) string {
+	selectMu.Lock()
+	defer selectMu.Unlock()
+
+	selector, err := selectableGroup(params.GroupName)
+	if err != nil {
+		return err.Error()
+	}
+	if params.ProxyName == "" {
+		selector.ForceSet(params.ProxyName)
+		return ""
+	}
+	if err := selector.Set(params.ProxyName); err != nil {
+		return err.Error()
+	}
+	return ""
 }
 
 func handleGetTraffic(onlyStatisticsProxy bool) Traffic {
@@ -189,80 +225,102 @@ func handleResetTraffic() {
 	statistic.DefaultManager.ResetStatistic()
 }
 
-func handleAsyncTestDelay(params *TestDelayParams, fn func(*Delay)) {
-	batchKey := params.ProxyName + "\x00" + params.TestUrl
-	mBatch.Go(batchKey, func() (bool, error) {
-		testUrl := params.TestUrl
-		if testUrl == "" {
-			testUrl = constant.DefaultTestURL
-		}
-		delayData := &Delay{
-			Name:  params.ProxyName,
-			Url:   testUrl,
-			Value: -1,
-		}
+func delayValue(delay uint16) int32 {
+	if delay == 0 {
+		return -1
+	}
+	return int32(delay)
+}
 
-		expectedStatus, err := utils.NewUnsignedRanges[uint16]("")
-		if err != nil {
-			fn(delayData)
-			return false, nil
-		}
+var anyDelayTestStatus utils.IntRanges[uint16]
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(params.Timeout))
-		defer cancel()
+func delayTestTimeout(milliseconds int64) time.Duration {
+	if milliseconds <= 0 {
+		return defaultDelayTestTimeout
+	}
+	return time.Duration(milliseconds) * time.Millisecond
+}
 
-		proxies := tunnel.AllProxies()
-		proxy := proxies[params.ProxyName]
+var missingDelayTestProxyAt atomic.Int64
 
-		if proxy == nil {
-			fn(delayData)
-			return false, nil
-		}
-		delay, err := proxy.URLTest(ctx, testUrl, expectedStatus)
-		if err != nil || delay == 0 {
-			fn(delayData)
-			return false, nil
-		}
+// A delay test against a name the tunnel does not know is what an apply that
+// fell back to the default config looks like from the outside: the profile
+// still lists every node and every one of them reports Timeout. Say so, once a
+// second rather than once per node, so the log names the real failure.
+func reportMissingDelayTestProxy(name string) {
+	now := time.Now().UnixNano()
+	last := missingDelayTestProxyAt.Load()
+	if last != 0 && now-last < int64(time.Second) {
+		return
+	}
+	if !missingDelayTestProxyAt.CompareAndSwap(last, now) {
+		return
+	}
+	logError("delay test: %q is not part of the applied config", name)
+}
 
-		delayData.Value = int32(delay)
-		fn(delayData)
-		return false, nil
-	})
+func handleTestDelay(params *TestDelayParams) *Delay {
+	url := params.TestUrl
+	if url == "" {
+		url = currentTestURL()
+	}
+	delayData := &Delay{
+		Name:  params.ProxyName,
+		Url:   url,
+		Value: -1,
+	}
+
+	proxy := lookupProxy(params.ProxyName)
+	if proxy == nil {
+		reportMissingDelayTestProxy(params.ProxyName)
+		return delayData
+	}
+
+	timeout := delayTestTimeout(params.Timeout)
+
+	// Queueing for a slot and probing the node each get the full timeout.
+	// Sharing one deadline meant a node that waited four seconds behind a
+	// saturated semaphore had one second left to connect, so a bulk test of a
+	// large subscription reported Timeout for whatever happened to be at the
+	// back of the queue.
+	queueCtx, cancelQueue := context.WithTimeout(context.Background(), timeout)
+	granted := acquireDelayTestSlot(queueCtx)
+	cancelQueue()
+	if !granted {
+		return nil
+	}
+	defer releaseDelayTestSlot()
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	delay, err := proxy.URLTest(ctx, url, anyDelayTestStatus)
+	if err != nil {
+		return delayData
+	}
+
+	delayData.Value = delayValue(delay)
+	return delayData
 }
 
 func handleGetConnections() *statistic.Snapshot {
-	runLock.Lock()
-	defer runLock.Unlock()
 	return statistic.DefaultManager.Snapshot()
 }
 
 func handleCloseConnections() bool {
-	runLock.Lock()
-	defer runLock.Unlock()
-	closeConnections()
+	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
+		_ = c.Close()
+		return true
+	})
 	return true
 }
 
-func closeConnections() {
-	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
-		err := c.Close()
-		if err != nil {
-			return false
-		}
-		return true
-	})
-}
-
 func handleResetConnections() bool {
-	runLock.Lock()
-	defer runLock.Unlock()
 	resolver.ResetConnection()
 	return true
 }
 
 func handleCloseConnection(connectionId string) bool {
-	runLock.Lock()
-	defer runLock.Unlock()
 	c := statistic.DefaultManager.Get(connectionId)
 	if c == nil {
 		return false
@@ -272,11 +330,9 @@ func handleCloseConnection(connectionId string) bool {
 }
 
 func handleGetExternalProviders() []ExternalProvider {
-	runLock.Lock()
-	defer runLock.Unlock()
-	externalProviders = getExternalProvidersRaw()
-	eps := make([]ExternalProvider, 0)
-	for _, p := range externalProviders {
+	providers := externalProviders()
+	eps := make([]ExternalProvider, 0, len(providers))
+	for _, p := range providers {
 		externalProvider, err := toExternalProvider(p)
 		if err != nil {
 			continue
@@ -290,143 +346,290 @@ func handleGetExternalProviders() []ExternalProvider {
 }
 
 func handleGetExternalProvider(externalProviderName string) *ExternalProvider {
-	runLock.Lock()
-	defer runLock.Unlock()
-	externalProvider, exist := externalProviders[externalProviderName]
+	p, exist := lookupExternalProvider(externalProviderName)
 	if !exist {
 		return nil
 	}
-	e, err := toExternalProvider(externalProvider)
+	externalProvider, err := toExternalProvider(p)
 	if err != nil {
 		return nil
 	}
-	return e
+	return externalProvider
 }
 
-func handleUpdateGeoData(geoType string) {
-	go func() {
-		switch geoType {
-		case "MMDB":
-			updater.UpdateMMDB()
-			return
-		case "ASN":
-			updater.UpdateASN()
-			return
-		case "GEOIP":
-			updater.UpdateGeoIp()
-			return
-		case "GEOSITE":
-			updater.UpdateGeoSite()
-			return
-		}
-	}()
+var geoResourceUpdaters = map[string]func() error{
+	"MMDB":    updater.UpdateMMDB,
+	"ASN":     updater.UpdateASN,
+	"GEOIP":   updater.UpdateGeoIp,
+	"GEOSITE": updater.UpdateGeoSite,
 }
 
-func handleUpdateExternalProvider(providerName string, fn func(value string)) {
-	go func() {
-		runLock.Lock()
-		externalProvider, exist := externalProviders[providerName]
-		runLock.Unlock()
-		if !exist {
-			fn("external provider is not exist")
-			return
-		}
-		err := externalProvider.Update()
-		if err != nil {
-			fn(err.Error())
-			return
-		}
-		fn("")
-	}()
+const (
+	geoUpdateScope      = "geo:"
+	providerUpdateScope = "provider:"
+)
+
+var (
+	updateMu       sync.Mutex
+	updateInFlight = map[string]bool{}
+	geoHookClaims  = map[string]bool{}
+)
+
+func claimUpdate(key string) bool {
+	updateMu.Lock()
+	defer updateMu.Unlock()
+	if updateInFlight[key] {
+		return false
+	}
+	updateInFlight[key] = true
+	return true
 }
 
-func handleSideLoadExternalProvider(providerName string, data []byte, fn func(value string)) {
-	go func() {
-		runLock.Lock()
-		defer runLock.Unlock()
-		externalProvider, exist := externalProviders[providerName]
-		if !exist {
-			fn("external provider is not exist")
-			return
-		}
-		err := sideUpdateExternalProvider(externalProvider, data)
-		if err != nil {
-			fn(err.Error())
-			return
-		}
-		fn("")
-	}()
+func releaseUpdate(key string) {
+	updateMu.Lock()
+	defer updateMu.Unlock()
+	delete(updateInFlight, key)
+	delete(geoHookClaims, key)
 }
+
+func claimGeoUpdate(geoType string) bool {
+	return claimUpdate(geoUpdateScope + geoType)
+}
+
+func releaseGeoUpdate(geoType string) {
+	releaseUpdate(geoUpdateScope + geoType)
+}
+
+func claimGeoUpdateFromHook(geoType string) {
+	key := geoUpdateScope + geoType
+	updateMu.Lock()
+	defer updateMu.Unlock()
+	if updateInFlight[key] {
+		return
+	}
+	updateInFlight[key] = true
+	geoHookClaims[key] = true
+}
+
+func releaseGeoUpdateFromHook(geoType string) {
+	key := geoUpdateScope + geoType
+	updateMu.Lock()
+	defer updateMu.Unlock()
+	if !geoHookClaims[key] {
+		return
+	}
+	delete(geoHookClaims, key)
+	delete(updateInFlight, key)
+}
+
+func handleUpdateGeoData(geoType string) string {
+	update, exist := geoResourceUpdaters[geoType]
+	if !exist {
+		logError("updateGeoData: unknown geo resource %q", geoType)
+		return "unknown geo resource: " + geoType
+	}
+	if !claimGeoUpdate(geoType) {
+		return "geo update already in progress: " + geoType
+	}
+	safeGoDetached("updateGeoData("+geoType+")", func() {
+		defer releaseGeoUpdate(geoType)
+		if err := update(); err != nil {
+			logError("updateGeoData(%s) error: %v", geoType, err)
+		}
+	})
+	return ""
+}
+
+func providerRequestErrorCode(err error) string {
+	message := err.Error()
+	if len(message) >= 4 && message[3] == ' ' {
+		status, parseErr := strconv.Atoi(message[:3])
+		if parseErr == nil && status >= 100 && status <= 599 {
+			return "request_bad_response"
+		}
+	}
+	var urlError *url.Error
+	var networkError net.Error
+	if errors.Is(err, context.DeadlineExceeded) ||
+		errors.As(err, &urlError) ||
+		errors.As(err, &networkError) {
+		return "request_error"
+	}
+	return ""
+}
+
+func providerMethodError(code, providerName string, err error) *MethodError {
+	return &MethodError{
+		Code:    code,
+		Message: err.Error(),
+		Details: map[string]any{"providerName": providerName},
+	}
+}
+
+func handleUpdateExternalProvider(providerName string) *MethodError {
+	p, exist := lookupExternalProvider(providerName)
+	if !exist {
+		return providerMethodError(
+			"provider_not_found",
+			providerName,
+			errors.New("external provider does not exist"),
+		)
+	}
+	key := providerUpdateScope + providerName
+	if !claimUpdate(key) {
+		return providerMethodError(
+			"provider_updating",
+			providerName,
+			errors.New("external provider is updating"),
+		)
+	}
+	defer releaseUpdate(key)
+	if err := p.Update(); err != nil {
+		code := providerRequestErrorCode(err)
+		if code == "" {
+			code = "provider_update_error"
+		}
+		return providerMethodError(code, providerName, err)
+	}
+	return nil
+}
+
+func handleSideLoadExternalProvider(providerName string, data []byte) *MethodError {
+	p, exist := lookupExternalProvider(providerName)
+	if !exist {
+		return providerMethodError(
+			"provider_not_found",
+			providerName,
+			errors.New("external provider does not exist"),
+		)
+	}
+	key := providerUpdateScope + providerName
+	if !claimUpdate(key) {
+		return providerMethodError(
+			"provider_updating",
+			providerName,
+			errors.New("external provider is updating"),
+		)
+	}
+	defer releaseUpdate(key)
+	if err := sideUpdateExternalProvider(p, data); err != nil {
+		return providerMethodError("provider_update_error", providerName, err)
+	}
+	return nil
+}
+
+// defaultRefreshHealthChecks re-probes every proxy provider off the calling
+// thread. Providers coalesce concurrent checks internally, so an extra call
+// costs nothing when one is already running.
+func defaultRefreshHealthChecks() {
+	safeGoDetached("refreshHealthChecks", func() {
+		for name, p := range tunnel.ProvidersSnapshot() {
+			log.Debugln("[APP] re-checking provider %s after resume", name)
+			p.HealthCheck()
+		}
+	})
+}
+
+var refreshHealthChecks = defaultRefreshHealthChecks
 
 func handleSuspend(suspended bool) bool {
+	wasSuspended := isSuspended.Swap(suspended)
 	if suspended {
 		tunnel.OnSuspend()
-	} else {
-		tunnel.OnRunning()
+		return true
+	}
+
+	tunnel.OnRunning()
+	// Provider health checks keep ticking through Doze, where the app has no
+	// network at all, so coming back means every proxy is marked dead and every
+	// delay reads Timeout. A lazy provider then skips its next tick because
+	// nothing touched it in the meantime, and the whole list stays wrong until
+	// the user tests by hand. Re-check now instead - but not while the
+	// listeners are stopped, since the service also resumes the core on its way
+	// down.
+	if wasSuspended && isRunning.Load() {
+		refreshHealthChecks()
 	}
 	return true
 }
 
+// A failure measured while the device is dozing says nothing about the node -
+// the app had no network at all - and publishing it repaints the entire list as
+// Timeout for a user who is not even looking. Successes still are worth having,
+// whenever they happen.
+func shouldPublishDelay(delay uint16) bool {
+	return delay != 0 || !isSuspended.Load()
+}
+
 func handleStartLog() {
-	runLock.Lock()
+	logMu.Lock()
+	if logCancel != nil {
+		logCancel()
+		logCancel = nil
+	}
 	if logSubscriber != nil {
 		log.UnSubscribe(logSubscriber)
+		logSubscriber = nil
 	}
+	ctx, cancel := context.WithCancel(context.Background())
 	subscriber := log.Subscribe()
 	logSubscriber = subscriber
-	runLock.Unlock()
+	logCancel = cancel
+	logMu.Unlock()
+
 	go func() {
-		for logData := range subscriber {
-			if logData.LogLevel < log.Level() {
-				continue
+		defer func() {
+			logMu.Lock()
+			if logSubscriber == subscriber {
+				log.UnSubscribe(subscriber)
+				logSubscriber = nil
+				logCancel = nil
 			}
-			message := &Message{
-				Type: LogMessage,
-				Data: logData,
+			logMu.Unlock()
+		}()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case logData, ok := <-subscriber:
+				if !ok {
+					return
+				}
+				if logData.LogLevel < log.Level() {
+					continue
+				}
+				sendMessage(Message{
+					Type: LogMessage,
+					Data: logData,
+				})
 			}
-			sendMessage(*message)
 		}
 	}()
 }
 
 func handleStopLog() {
-	runLock.Lock()
-	defer runLock.Unlock()
+	logMu.Lock()
+	defer logMu.Unlock()
+	if logCancel != nil {
+		logCancel()
+		logCancel = nil
+	}
 	if logSubscriber != nil {
 		log.UnSubscribe(logSubscriber)
 		logSubscriber = nil
 	}
 }
 
-func handleGetCountryCode(ip string, fn func(value string)) {
-	go func() {
-		runLock.Lock()
-		defer runLock.Unlock()
-		codes := mmdb.IPInstance().LookupCode(net.ParseIP(ip))
-		if len(codes) == 0 {
-			fn("")
-			return
-		}
-		fn(codes[0])
-	}()
-}
-
-func handleGetMemory(fn func(value uint64)) {
-	go func() {
-		fn(statistic.DefaultManager.Memory())
-	}()
+func handleGetMemory() uint64 {
+	return statistic.DefaultManager.Memory()
 }
 
 func handleGetConfig(path string) (*config.RawConfig, error) {
-	bytes, err := readFile(path)
+	buf, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	prof, err := config.UnmarshalRawConfig(bytes)
-	if err != nil {
-		return nil, err
-	}
-	return prof, nil
+	return config.UnmarshalRawConfig(buf)
 }
 
 func handleCrash() {
@@ -434,46 +637,44 @@ func handleCrash() {
 }
 
 func handleUpdateConfig(params *UpdateParams) string {
-	updateConfig(params)
+	if err := updateConfig(params); err != nil {
+		return err.Error()
+	}
 	return ""
+}
+
+// The profile ID is an int64 rendered through strconv, so the last element can
+// never carry a separator or a `..` — that is what keeps handleClearEffect from
+// becoming a general-purpose privileged file deletion API.
+func providerPaths(homeDir string, profileId int64) (root string, target string) {
+	root = filepath.Join(homeDir, "profiles", "providers")
+	return root, filepath.Join(root, strconv.FormatInt(profileId, 10))
 }
 
 // handleClearEffect derives the provider directory from a profile ID so the
 // method cannot be used as a general-purpose privileged file deletion API.
-func handleClearEffect(profileId int64, response MethodResponse) {
-	go func() {
-		if !isInit.Load() {
-			response.success("not initialized")
-			return
-		}
-		if profileId <= 0 {
-			response.success("invalid profile id")
-			return
-		}
-		providersRoot := filepath.Join(
-			constant.Path.HomeDir(),
-			"profiles",
-			"providers",
-		)
-		providersPath := filepath.Join(
-			providersRoot,
-			strconv.FormatInt(profileId, 10),
-		)
-		if err := os.RemoveAll(providersPath); err != nil {
-			response.success(err.Error())
-			return
-		}
-		_ = os.Remove(providersRoot)
-		response.success("")
-	}()
+func handleClearEffect(profileId int64) string {
+	if !isInit.Load() {
+		return "not initialized"
+	}
+	if profileId <= 0 {
+		return "invalid profile id"
+	}
+	providersRoot, providersPath := providerPaths(constant.Path.HomeDir(), profileId)
+	if err := os.RemoveAll(providersPath); err != nil {
+		return err.Error()
+	}
+	_ = os.Remove(providersRoot)
+	return ""
 }
+
+var setupConfig = applyConfig
 
 func handleSetupConfig(params *SetupParams) string {
 	if !isInit.Load() {
 		return "not initialized"
 	}
-	err := applyConfig(params)
-	if err != nil {
+	if err := setupConfig(params); err != nil {
 		return err.Error()
 	}
 	return ""
@@ -481,18 +682,16 @@ func handleSetupConfig(params *SetupParams) string {
 
 func init() {
 	adapter.UrlTestHook = func(url string, name string, delay uint16) {
-		delayData := &Delay{
-			Url:  url,
-			Name: name,
-		}
-		if delay == 0 {
-			delayData.Value = -1
-		} else {
-			delayData.Value = int32(delay)
+		if !shouldPublishDelay(delay) {
+			return
 		}
 		sendMessage(Message{
 			Type: DelayMessage,
-			Data: delayData,
+			Data: &Delay{
+				Url:   url,
+				Name:  name,
+				Value: delayValue(delay),
+			},
 		})
 	}
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
@@ -502,12 +701,19 @@ func init() {
 		})
 	}
 	executor.DefaultProviderLoadedHook = func(providerName string) {
+		scheduleReclaimOwnership()
 		sendMessage(Message{
 			Type: LoadedMessage,
 			Data: providerName,
 		})
 	}
 	updater.GeoUpdateHook = func(geoType string, updating bool, skipped bool, updateErr error) {
+		if updating {
+			claimGeoUpdateFromHook(geoType)
+		} else {
+			releaseGeoUpdateFromHook(geoType)
+			scheduleReclaimOwnership()
+		}
 		status := GeoUpdateStatus{
 			Type:     geoType,
 			Updating: updating,

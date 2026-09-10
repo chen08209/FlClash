@@ -3,9 +3,8 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AddedRulesView extends ConsumerStatefulWidget {
@@ -16,10 +15,10 @@ class AddedRulesView extends ConsumerStatefulWidget {
 }
 
 class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
-  final _key = utils.id;
+  final _key = uniqueId;
 
   Future<void> _handleAddOrUpdate([Rule? rule]) async {
-    final res = await globalState.showCommonDialog<Rule>(
+    final res = await dialogs.showCommonDialog<Rule>(
       child: AddOrEditRuleDialog(rule: rule),
     );
     if (res == null) {
@@ -47,7 +46,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
 
   Future<void> _handleDelete() async {
     final appLocalizations = context.appLocalizations;
-    final res = await globalState.showMessage(
+    final res = await dialogs.showMessage(
       title: appLocalizations.tip,
       message: TextSpan(
         text: appLocalizations.deleteMultipTip(appLocalizations.rule),
@@ -82,6 +81,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
           if (selectedRules.isNotEmpty) ...[
             CommonMinIconButtonTheme(
               child: IconButton.filledTonal(
+                tooltip: context.appLocalizations.delete,
                 onPressed: _handleDelete,
                 icon: const Icon(Icons.delete),
               ),
@@ -103,43 +103,42 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
           ),
           const SizedBox(width: 8),
         ],
-        body: rules.isEmpty
-            ? NullStatus(
-                label: appLocalizations.nullTip(appLocalizations.rule),
-                illustration: const RuleEmptyIllustration(),
-              )
-            : ReorderableList(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 16,
-                  horizontal: 16,
+        body: NullStatusSwitcher(
+          isEmpty: rules.isEmpty,
+          nullStatus: NullStatus(
+            label: appLocalizations.nullTip(appLocalizations.rule),
+            illustration: NullStatusIllustration.rules,
+          ),
+          child: ReorderableList(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            itemBuilder: (context, index) {
+              final rule = rules[index];
+              final position = ItemPosition.get(index, rules.length);
+              return ReorderableDelayedDragStartListener(
+                key: ObjectKey(rule),
+                index: index,
+                child: ItemPositionProvider(
+                  position: position,
+                  child: RuleItem(
+                    hasMatch: true,
+                    isEditing: selectedRules.isNotEmpty,
+                    rule: rule,
+                    isSelected: selectedRules.contains(rule.id),
+                    onSelected: () {
+                      _handleSelected(rule.id);
+                    },
+                    onEdit: (Rule rule) {
+                      _handleAddOrUpdate(rule);
+                    },
+                  ),
                 ),
-                itemBuilder: (context, index) {
-                  final rule = rules[index];
-                  final position = ItemPosition.get(index, rules.length);
-                  return ReorderableDelayedDragStartListener(
-                    key: ObjectKey(rule),
-                    index: index,
-                    child: ItemPositionProvider(
-                      position: position,
-                      child: RuleItem(
-                        hasMatch: true,
-                        isEditing: selectedRules.isNotEmpty,
-                        rule: rule,
-                        isSelected: selectedRules.contains(rule.id),
-                        onSelected: () {
-                          _handleSelected(rule.id);
-                        },
-                        onEdit: (Rule rule) {
-                          _handleAddOrUpdate(rule);
-                        },
-                      ),
-                    ),
-                  );
-                },
-                itemExtent: ruleItemHeight,
-                itemCount: rules.length,
-                onReorderItem: ref.read(globalRulesProvider.notifier).order,
-              ),
+              );
+            },
+            itemExtent: ruleItemHeight,
+            itemCount: rules.length,
+            onReorderItem: ref.read(globalRulesProvider.notifier).order,
+          ),
+        ),
       ),
     );
   }

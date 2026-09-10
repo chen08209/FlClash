@@ -35,11 +35,6 @@ extension IterableExt<E> on Iterable<E> {
       count++;
     }
   }
-
-  Iterable<E> takeLast({int count = 50}) {
-    if (count <= 0) return Iterable.empty();
-    return count >= length ? this : toList().skip(length - count);
-  }
 }
 
 extension ListExt<T> on List<T> {
@@ -87,15 +82,6 @@ extension ListExt<T> on List<T> {
     return newList;
   }
 
-  List<T> safeSublist(int start, [int? end]) {
-    if (start <= 0) return this;
-    if (start > length) return [];
-    if (end != null) {
-      return sublist(start, end.clamp(start, length));
-    }
-    return sublist(start);
-  }
-
   T? safeGet(int index, {T? defaultValue}) {
     if (index < 0 || index >= length) {
       return defaultValue;
@@ -129,47 +115,11 @@ extension SetExt<T> on Set<T> {
   }
 }
 
-extension DoubleListExt on List<double> {
-  int findInterval(num target) {
-    if (isEmpty) return -1;
-    if (target < first) return -1;
-    if (target >= last) return length - 1;
-
-    int left = 0;
-    int right = length - 1;
-
-    while (left <= right) {
-      final int mid = left + (right - left) ~/ 2;
-
-      if (mid == length - 1 ||
-          (this[mid] <= target && target < this[mid + 1])) {
-        return mid;
-      } else if (target < this[mid]) {
-        right = mid - 1;
-      } else {
-        left = mid + 1;
-      }
-    }
-
-    return -1;
-  }
-}
-
 extension MapExt<K, V> on Map<K, V> {
   V updateCacheValue(K key, V Function() callback) {
     if (this[key] == null) {
       this[key] = callback();
     }
     return this[key]!;
-  }
-
-  Map<K, V> copyWitUpdate(K key, V? value) {
-    final newMap = Map<K, V>.from(this);
-    if (value == null) {
-      newMap.remove(key);
-    } else {
-      newMap[key] = value;
-    }
-    return newMap;
   }
 }
