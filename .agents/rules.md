@@ -162,8 +162,17 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   `logDeliveryError`, which writes to stderr and latches until a frame gets through or the next connection is installed.
   A write that fails without putting a byte on the wire — host backpressure hitting `ipcWriteTimeout`, or a payload above
   `maxIPCFrameSize` — drops that one frame and keeps the connection: the stream is still framed correctly, and tearing it
-  down here ends the read loop, and with it the Core process. Only a half-written frame desynchronizes the stream, and
-  that is the one case `send` closes on.
+  down here ends the read loop, and with it the Core process. A half-written frame whose write merely timed out is
+  resumed for as long as the stall lasts: Windows Modern Standby suspends the app while the Helper's Core keeps running,
+  so the host can stop draining for hours and still come back, and go-winio reports the expiry as its own `ErrTimeout`
+  rather than `os.ErrDeadlineExceeded`, which is why `send` checks `Timeout()`. The wait has no cap on purpose, and
+  `send` holds `writeMu` throughout, so every other frame — method responses and the single batcher goroutine behind
+  the event queues — waits behind the stalled one. Memory is bounded by the queues; what gives is delivery: the state
+  queue fills and `enqueueState` starts dropping, which is the case the `UpdatingAction` sweep above exists for. Nothing
+  on the Dart side restarts the Core over a stall: `CoreRpcClient` times each pending request out on its own and hands
+  the caller `null` (a `no_response` exception for message methods), and the sweep clears core-scope updating state
+  minutes later. Only a half-written frame that fails outright desynchronizes the stream, and that is the one case
+  `send` closes on.
 - Core method handlers in `core/hub.go` are synchronous. Anything that must not block the dispatcher is spawned by
   `safeGo`/`safeGoDetached` in `core/method.go`, which recover; a bare `go` in a handler puts a panic outside every
   recovery and kills the process, which on Android is the whole application. The `//export` entry points in
