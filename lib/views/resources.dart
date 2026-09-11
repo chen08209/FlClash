@@ -189,15 +189,15 @@ class _GeoResourceListItemState extends ConsumerState<_GeoResourceListItem> {
     return file.getFileInfo();
   }
 
-  Future<void> _handleUpdateGeoDataItem() async {
-    await globalState.safeRun<void>(() async {
+  Future<void> _handleUpdateGeoDataItem() {
+    return globalState.safeRun<void>(() async {
       await ref
           .read(geoResourceActionProvider.notifier)
           .updateGeoResource(widget.type);
     }, silence: false);
-    if (!mounted) {
-      return;
-    }
+  }
+
+  void _refreshFileInfo() {
     setState(() {
       _fileInfoFuture = _getGeoFileInfo(fileName);
     });
@@ -223,7 +223,13 @@ class _GeoResourceListItemState extends ConsumerState<_GeoResourceListItem> {
 
   @override
   Widget build(BuildContext context) {
-    final isUpdating = ref.watch(isUpdatingProvider(widget.type.updatingKey));
+    final updatingKey = widget.type.updatingKey;
+    ref.listen(isUpdatingProvider(updatingKey), (previous, next) {
+      if (previous == true && !next) {
+        _refreshFileInfo();
+      }
+    });
+    final isUpdating = ref.watch(isUpdatingProvider(updatingKey));
     final url = ref.watch(
       patchClashConfigProvider.select((state) => state.geoXUrl[widget.type]),
     );

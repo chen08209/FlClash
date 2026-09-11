@@ -37,6 +37,9 @@ class GeoResourceAction extends _$GeoResourceAction {
         .stop(geoResource.updatingKey, current);
   }
 
+  /// Completes once the Core has accepted the update, not once it finishes.
+  /// Completion arrives as a geo-update event through [handleCoreUpdate];
+  /// callers that need it watch [isUpdatingProvider] for the key to clear.
   Future<void> updateGeoResource(GeoResource geoResource) async {
     _manualUpdates.add(geoResource);
     final operation = _startUpdating(geoResource);
