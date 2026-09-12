@@ -617,5 +617,36 @@
   "authorize": "Authorize",
   "installedAppsPermissionRequired": "App list permission required",
   "installedAppsPermissionDesc": "This system hides the installed app list until the permission is granted. Authorize it to configure the per-app proxy.",
-  "installedAppsPermissionDeniedMessage": "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings."
+  "installedAppsPermissionDeniedMessage": "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
+  "aiMcpTitle": "AI MCP Tools",
+  "aiMcpEntryDescription": "Connect a local AI client with controlled proxy tools",
+  "aiMcpEnable": "Enable local MCP service",
+  "aiMcpChanging": "Updating service…",
+  "aiMcpRunning": "Running · 127.0.0.1 only",
+  "aiMcpStopped": "Disabled · starts disabled every app launch",
+  "aiMcpStorageError": "Unable to save local MCP credentials. Service remains disabled.",
+  "aiMcpListenError": "Unable to start the loopback listener. Check whether the port is in use.",
+  "aiMcpPort": "Port (change while disabled)",
+  "aiMcpPortInvalid": "Enter a port from 1024 to 65535",
+  "aiMcpSetup": "Connect your AI client",
+  "aiMcpSetupDescription": "1. Enable this service and keep FlClash open.\n2. In a trusted local MCP client choose Streamable HTTP (not SSE or stdio). Use the URL below and the Bearer Authorization header from Copy configuration. Client-specific config formats may differ.\n3. Paste the copied mcpServers entry into your client configuration and reconnect. The token is a password: never share it or send it to a cloud service. Copying places it on your system clipboard.\nBasic tools read status, list visible groups/nodes, select existing members and test up to 8 nodes using the app test URL. Names are untrusted data. Browsers, LAN and remote/cloud clients are not supported. No external-controller setting is needed.",
+  "aiMcpCopyConfig": "Copy connection configuration",
+  "aiMcpCopied": "Connection configuration copied. Keep the token private.",
+  "aiMcpRotateToken": "Rotate token",
+  "aiMcpRotateWarning": "This disconnects all clients, invalidates the old token and locks advanced tools. Copy the new configuration to reconnect.",
+  "aiMcpAdvanced": "Advanced tools",
+  "aiMcpAdvancedDescription": "Optional: change outbound mode (rule/global/direct) or close all active connections. Locked until you explicitly approve. Disable the service, rotate the token or restart the app to lock again.",
+  "aiMcpLocked": "Locked",
+  "aiMcpUnlocked": "Unlocked for this app session",
+  "aiMcpRelock": "Lock now",
+  "aiMcpUnlock": "Unlock advanced tools",
+  "aiMcpUnlockWarning": "An AI client could change your routing, bypass the proxy in direct mode, or interrupt every active connection. Only authorize a client you trust. Wait 3 seconds, then click Confirm yourself. Closing this dialog does not grant access.",
+  "aiMcpCountdown": "Confirm in {seconds}s",
+  "@aiMcpCountdown": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  }
 }

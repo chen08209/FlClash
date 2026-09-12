@@ -617,5 +617,36 @@
   "authorize": "許可",
   "installedAppsPermissionRequired": "アプリ一覧の権限が必要です",
   "installedAppsPermissionDesc": "このシステムでは、許可するまでインストール済みアプリの一覧が提供されません。許可すると、アプリごとのプロキシを設定できます。",
-  "installedAppsPermissionDeniedMessage": "アプリ一覧の権限が拒否されたため、インストール済みアプリを取得できません。システム設定から手動で許可してください。"
+  "installedAppsPermissionDeniedMessage": "アプリ一覧の権限が拒否されたため、インストール済みアプリを取得できません。システム設定から手動で許可してください。",
+  "aiMcpTitle": "AI MCP ツール",
+  "aiMcpEntryDescription": "ローカル AI クライアントから権限付きプロキシ操作",
+  "aiMcpEnable": "ローカル MCP サービスを有効化",
+  "aiMcpChanging": "サービスを更新中…",
+  "aiMcpRunning": "稼働中 · 127.0.0.1 のみ",
+  "aiMcpStopped": "無効 · アプリ起動時は常に無効",
+  "aiMcpStorageError": "MCP 認証情報を保存できません。サービスは無効です。",
+  "aiMcpListenError": "ローカル接続を開始できません。ポートが使用中でないか確認してください。",
+  "aiMcpPort": "ポート（無効時に変更可能）",
+  "aiMcpPortInvalid": "1024～65535 のポートを入力してください",
+  "aiMcpSetup": "AI クライアントの接続",
+  "aiMcpSetupDescription": "1. サービスを有効にし、FlClash を開いたままにします。\n2. 信頼するローカル MCP クライアントで Streamable HTTP を選択します（SSE や stdio ではありません）。下記 URL と、コピーした設定の Bearer Authorization ヘッダーを使用します。形式はクライアントにより異なります。\n3. mcpServers 設定を貼り付けて再接続します。トークンはパスワードです。共有したりクラウドへ送信しないでください。コピーするとシステムのクリップボードに保存されます。\n基本ツールは状態、表示グループとノード、既存メンバーの選択、アプリのテスト URL による最大 8 ノードの遅延測定に対応します。名前は信頼できないデータです。ブラウザ、LAN、リモート接続には非対応です。外部コントローラーは不要です。",
+  "aiMcpCopyConfig": "接続設定をコピー",
+  "aiMcpCopied": "接続設定をコピーしました。トークンを秘密にしてください。",
+  "aiMcpRotateToken": "トークンを再生成",
+  "aiMcpRotateWarning": "全クライアントを切断し、旧トークンを無効にして高度なツールをロックします。新しい設定で再接続してください。",
+  "aiMcpAdvanced": "高度なツール",
+  "aiMcpAdvancedDescription": "任意：出力モード（ルール/グローバル/直接）の変更、または全接続の切断。明示的な承認が必要です。サービス無効化、トークン再生成、再起動でロックされます。",
+  "aiMcpLocked": "ロック中",
+  "aiMcpUnlocked": "今回のアプリ実行中のみ解除",
+  "aiMcpRelock": "今すぐロック",
+  "aiMcpUnlock": "高度なツールのロック解除",
+  "aiMcpUnlockWarning": "AI クライアントは経路の変更、直接モードでのプロキシ回避、全接続の中断を行えます。信頼するクライアントのみ許可してください。3 秒待ってから確認を押してください。閉じるだけでは許可されません。",
+  "aiMcpCountdown": "{seconds} 秒後に確認可能",
+  "@aiMcpCountdown": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:fl_clash/application.dart';
 import 'package:fl_clash/manager/hotkey_manager.dart';
+import 'package:fl_clash/manager/ai_mcp_manager.dart';
 import 'package:fl_clash/manager/manager.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,6 +21,7 @@ Widget? _childOf(Widget widget) {
     TileManager(:final child) => child,
     AppStateManager(:final child) => child,
     CoreManager(:final child) => child,
+    AiMcpManager(:final child) => child,
     ConnectivityManager(:final child) => child,
     WindowHeaderContainer(:final child) => child,
     VpnManager(:final child) => child,
@@ -68,6 +70,7 @@ void main() {
       ProxyManager,
       AppStateManager,
       CoreManager,
+      AiMcpManager,
       ConnectivityManager,
       WindowHeaderContainer,
     ]);
@@ -83,6 +86,7 @@ void main() {
       TileManager,
       AppStateManager,
       CoreManager,
+      AiMcpManager,
       ConnectivityManager,
       VpnManager,
     ]);

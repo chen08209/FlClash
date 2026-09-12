@@ -28,9 +28,28 @@ class ProxiesAction extends _$ProxiesAction {
   final List<_DelayTestJob> _delayTestJobs = [];
 
   final Map<String, String> _pendingSelectedRollback = {};
+  final Map<String, Object> _selectionOperations = {};
+  int _delayTestGeneration = 0;
+
+  int get delayTestGeneration => _delayTestGeneration;
 
   @override
   void build() {
+    ref.listen(currentProfileIdProvider, (_, _) {
+      _selectionOperations.clear();
+      _pendingSelectedRollback.clear();
+      cancelDelayTests();
+    });
+    ref.listen(profilesProvider, (previous, next) {
+      final id = ref.read(currentProfileIdProvider);
+      final before = previous?.getProfile(id)?.selectedMap;
+      final after = next.getProfile(id)?.selectedMap;
+      _selectionOperations.removeWhere((group, _) {
+        if (before?[group] == after?[group]) return false;
+        _pendingSelectedRollback.remove(group);
+        return true;
+      });
+    });
     ref.listen(coreStatusProvider, (_, next) {
       if (next != CoreStatus.connected) {
         cancelDelayTests();
@@ -39,6 +58,7 @@ class ProxiesAction extends _$ProxiesAction {
   }
 
   void cancelDelayTests() {
+    _delayTestGeneration++;
     for (final job in _delayTestJobs) {
       job.cancelled = true;
       job.held.clear();
@@ -51,6 +71,7 @@ class ProxiesAction extends _$ProxiesAction {
   }
 
   void changeProxyDebounce(String groupName, String proxyName) {
+    _selectionOperations.remove(groupName);
     _pendingSelectedRollback.putIfAbsent(
       groupName,
       () => _currentSelectedName(groupName),
@@ -58,10 +79,16 @@ class ProxiesAction extends _$ProxiesAction {
     ref
         .read(profilesActionProvider.notifier)
         .updateCurrentSelectedMap(groupName, proxyName);
+    final operation = Object();
+    _selectionOperations[groupName] = operation;
     debouncer.call((FunctionTag.changeProxy, groupName), (
       String groupName,
       String proxyName,
     ) async {
+      if (!ref.mounted ||
+          !identical(_selectionOperations[groupName], operation)) {
+        return;
+      }
       await changeProxy(groupName: groupName, proxyName: proxyName);
       updateGroupsDebounce();
     }, args: [groupName, proxyName]);
@@ -134,44 +161,77 @@ class ProxiesAction extends _$ProxiesAction {
     ref.read(delayDataSourceProvider.notifier).setDelay(delay);
   }
 
-  Future<void> changeProxy({
+  Future<bool> changeProxy({
     required String groupName,
     required String proxyName,
+    bool notifyFailure = true,
+    bool maintainConnections = true,
+    void Function()? checkContinuation,
   }) async {
+    checkContinuation?.call();
+    final profileId = ref.read(currentProfileIdProvider);
     final profilesAction = ref.read(profilesActionProvider.notifier);
     final rollbackName =
         _pendingSelectedRollback.remove(groupName) ??
         _currentSelectedName(groupName);
     profilesAction.updateCurrentSelectedMap(groupName, proxyName);
-    try {
-      await _core.changeProxy(
-        ChangeProxyParams(groupName: groupName, proxyName: proxyName),
-      );
-    } catch (error) {
-      commonPrint.log(
-        'changeProxy($groupName -> $proxyName) failed: $error',
-        logLevel: coreFailureLogLevel(error),
-      );
-      profilesAction.updateCurrentSelectedMap(groupName, rollbackName);
-      dialogs.showNotifier(
-        currentAppLocalizations.changeProxyFailedTip,
-        level: MessageLevel.error,
-      );
-      return;
-    }
-    try {
-      if (ref.read(appSettingProvider).closeConnections) {
-        await _core.closeConnections();
-      } else {
-        await _core.resetConnections();
+    final operation = Object();
+    _selectionOperations[groupName] = operation;
+
+    bool isCurrent() {
+      if (!ref.mounted ||
+          ref.read(currentProfileIdProvider) != profileId ||
+          !identical(_selectionOperations[groupName], operation)) {
+        return false;
       }
-    } catch (error) {
-      commonPrint.log(
-        'changeProxy($groupName -> $proxyName) connection reset failed: $error',
-        logLevel: coreFailureLogLevel(error),
-      );
+      checkContinuation?.call();
+      return true;
     }
-    ref.read(checkIpNumProvider.notifier).add();
+
+    try {
+      try {
+        final message = await _core.changeProxy(
+          ChangeProxyParams(groupName: groupName, proxyName: proxyName),
+        );
+        if (message.isNotEmpty) throw StateError(message);
+      } catch (error) {
+        if (!isCurrent()) return false;
+        commonPrint.log(
+          'changeProxy($groupName -> $proxyName) failed: $error',
+          logLevel: coreFailureLogLevel(error),
+        );
+        profilesAction.updateCurrentSelectedMap(groupName, rollbackName);
+        if (notifyFailure) {
+          dialogs.showNotifier(
+            currentAppLocalizations.changeProxyFailedTip,
+            level: MessageLevel.error,
+          );
+        }
+        return false;
+      }
+      if (!isCurrent()) return false;
+      if (maintainConnections) {
+        try {
+          if (ref.read(appSettingProvider).closeConnections) {
+            await _core.closeConnections();
+          } else {
+            await _core.resetConnections();
+          }
+        } catch (error) {
+          commonPrint.log(
+            'changeProxy($groupName -> $proxyName) connection reset failed: $error',
+            logLevel: coreFailureLogLevel(error),
+          );
+        }
+      }
+      if (!isCurrent()) return false;
+      ref.read(checkIpNumProvider.notifier).add();
+      return true;
+    } finally {
+      if (identical(_selectionOperations[groupName], operation)) {
+        _selectionOperations.remove(groupName);
+      }
+    }
   }
 
   Future<String> updateProvider(

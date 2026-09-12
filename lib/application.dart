@@ -7,6 +7,7 @@ import 'package:fl_clash/common/window.dart';
 import 'package:fl_clash/bootstrap.dart';
 import 'package:fl_clash/common/system_dns.dart';
 import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/manager/ai_mcp_manager.dart';
 import 'package:fl_clash/manager/hotkey_manager.dart';
 import 'package:fl_clash/manager/manager.dart';
 import 'package:fl_clash/plugins/app.dart';
@@ -29,9 +30,11 @@ Widget buildManagerStack({
       : VpnManager(child: child);
   final state = AppStateManager(
     child: CoreManager(
-      child: ConnectivityManager(
-        onConnectivityChanged: onConnectivityChanged,
-        child: platformApp,
+      child: AiMcpManager(
+        child: ConnectivityManager(
+          onConnectivityChanged: onConnectivityChanged,
+          child: platformApp,
+        ),
       ),
     ),
   );
