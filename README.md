@@ -1,3 +1,57 @@
+## Prebuilt Packages for Ubuntu 20.04
+
+Prebuilt Linux packages compatible with **Ubuntu 20.04 / glibc 2.31** are available from OneDrive.
+
+- `.deb`
+- `.rpm`
+- `.AppImage`
+
+[Download from OneDrive](https://1drv.ms/f/c/04017f21f5709366/IgByTu3WxfnmS56qz1en6QipAT8nROoc2t4dD1qhXC04B08?e=OmlfTU)
+
+These packages were built from this fork and tested on Ubuntu 20.04 x86_64.
+
+### Verified Runtime
+
+```text id="xvm5f6"
+Ubuntu 20.04 x86_64
+glibc 2.31
+```
+
+The following functionality has been verified:
+
+```text id="j20hfz"
+GUI
+FlClashCore
+Helper Service
+systemd integration
+Profile loading
+TUN mode
+Automatic routing
+Proxy traffic
+```
+
+### Package Notes
+
+* `.deb`: recommended for Ubuntu/Debian-based distributions.
+* `.rpm`: provided for RPM-based distributions.
+* `.AppImage`: portable package that can be run without installation.
+
+For AppImage:
+
+```bash id="h8rr9q"
+chmod +x FlClash-*.AppImage
+./FlClash-*.AppImage
+```
+
+For DEB:
+
+```bash id="7x46z0"
+sudo apt install ./FlClash-*.deb
+```
+
+The prebuilt packages are provided for convenience. If you prefer to build from source, see the Ubuntu 20.04 compatibility and build instructions below.
+
+
 ## Ubuntu 20.04 Compatibility
 
 This fork has been tested on **Ubuntu 20.04 x86_64 with glibc 2.31**.
