@@ -1,138 +1,370 @@
-<div>
+## Ubuntu 20.04 Compatibility
 
-[**简体中文**](README_zh_CN.md)
+This fork has been tested on **Ubuntu 20.04 x86_64 with glibc 2.31**.
 
-</div>
+The upstream Linux binary may require a newer glibc version, such as:
 
-## FlClash
-
-[![Downloads](https://img.shields.io/github/downloads/chen08209/FlClash/total?style=flat-square&logo=github)](https://github.com/chen08209/FlClash/releases/)[![Last Version](https://img.shields.io/github/release/chen08209/FlClash/all.svg?style=flat-square)](https://github.com/chen08209/FlClash/releases/)[![License](https://img.shields.io/github/license/chen08209/FlClash?style=flat-square)](LICENSE)
-
-[![Channel](https://img.shields.io/badge/Telegram-Channel-blue?style=flat-square&logo=telegram)](https://t.me/FlClash)
-
-A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.
-
-on Desktop:
-<p style="text-align: center;">
-    <img alt="desktop" src="snapshots/desktop.gif">
-</p>
-
-on Mobile:
-<p style="text-align: center;">
-    <img alt="mobile" src="snapshots/mobile.gif">
-</p>
-
-## Features
-
-✈️ Multi-platform: Android, Windows, macOS and Linux
-
-💻 Adaptive multiple screen sizes, Multiple color themes available
-
-💡 Based on Material You Design, [Surfboard](https://github.com/getsurfboard/surfboard)-like UI
-
-☁️ Supports data sync via WebDAV
-
-✨ Support subscription link, Dark mode
-
-## Use
-
-### Linux
-
-⚠️ Make sure to install the following dependencies before using them
-
-   ```bash
-    sudo apt-get install libayatana-appindicator3-dev
-   ```
-
-### Android
-
-Support the following actions
-
-   ```bash
-    com.follow.clash.action.START
-    
-    com.follow.clash.action.STOP
-    
-    com.follow.clash.action.TOGGLE
-   ```
-
-## Download
-
-<a href="https://chen08209.github.io/FlClash-fdroid-repo/repo?fingerprint=789D6D32668712EF7672F9E58DEEB15FBD6DCEEC5AE7A4371EA72F2AAE8A12FD"><img alt="Get it on F-Droid" src="snapshots/get-it-on-fdroid.svg" width="200px"/></a> <a href="https://github.com/chen08209/FlClash/releases"><img alt="Get it on GitHub" src="snapshots/get-it-on-github.svg" width="200px"/></a>
-
-### Homebrew
-
-```bash
-brew tap chen08209/tap
-brew install --cask flclash
+```text id="sv8mol"
+GLIBC_2.34
 ```
 
-## Build
+and therefore may not run directly on Ubuntu 20.04.
 
-1. Update submodules
-   ```bash
-   git submodule update --init --recursive
-   ```
+Building FlClash locally on Ubuntu 20.04 produces binaries compatible with the system glibc version.
 
-2. Install `Flutter` and `Golang` environment
+### Tested Environment
 
-3. Build Application
+```text id="3l1mu7"
+Ubuntu      20.04 x86_64
+glibc       2.31
+GLib        2.64.x
 
-    - android
+Flutter     3.47.1
+Dart        3.13.1
+Rust        1.95.0
+```
 
-        1. Install `Android SDK`, `Android NDK`
+---
 
-        2. Set `ANDROID_NDK` environment variable
+# 1. Required Ubuntu 20.04 Source Compatibility Fixes
 
-        3. Run build script
+These changes are required to compile the current FlClash source on Ubuntu 20.04.
 
-           ```bash
-           dart setup.dart android
-           ```
+The affected file is:
 
-    - windows
+```text id="d5legl"
+plugins/wifi_ssid/linux/wifi_ssid_plugin.cc
+```
 
-        1. Requires a Windows client
+## 1.1 Support GLib < 2.70
 
-        2. Install `GCC`, `Inno Setup`
+The original code uses:
 
-        3. Run build script
+```cpp id="bj8plz"
+g_spawn_check_wait_status(...)
+```
 
-           ```bash
-           dart setup.dart windows
-           ```
+However, `g_spawn_check_wait_status()` is only available in newer GLib versions.
 
-    - linux
+Ubuntu 20.04 ships with GLib 2.64.x, where the older API must be used:
 
-        1. Requires a Linux client
+```cpp id="jwglog"
+g_spawn_check_exit_status(...)
+```
 
-        2. Dependencies are auto-installed by setup script, or manually:
-           ```bash
-           sudo apt-get install -y libayatana-appindicator3-dev
-           ```
+The compatibility fix is:
 
-        3. Run build script
+```cpp id="7prym8"
+#if GLIB_CHECK_VERSION(2, 70, 0)
+  if (!g_spawn_check_wait_status(wait_status, &error)) {
+#else
+  if (!g_spawn_check_exit_status(wait_status, &error)) {
+#endif
+    return nullptr;
+  }
+```
 
-           ```bash
-           dart setup.dart linux
-           ```
+This results in:
 
-    - macOS
+```text id="uwnnd7"
+GLib >= 2.70  -> g_spawn_check_wait_status()
+GLib <  2.70  -> g_spawn_check_exit_status()
+```
 
-        1. Requires a macOS client
+This allows Ubuntu 20.04 to compile the plugin while still using the newer API on recent Linux distributions.
 
-        2. Run build script
+## 1.2 Fix `g_steal_pointer()` C++ Type Conversion
 
-           ```bash
-           dart setup.dart macos
-           ```
+Two explicit casts are required when compiling with the Ubuntu 20.04 C++ toolchain.
 
-## Star
+Change:
 
-The easiest way to support developers is to click on the star (⭐) at the top of the page.
+```cpp id="z80nsk"
+return g_steal_pointer(&cached);
+```
 
-<p style="text-align: center;">
-    <a href="https://api.star-history.com/svg?repos=chen08209/FlClash&Date">
-        <img alt="start" width=50% src="https://api.star-history.com/svg?repos=chen08209/FlClash&Date"/>
-    </a>
-</p>
+to:
+
+```cpp id="b5brxc"
+return static_cast<GVariant*>(g_steal_pointer(&cached));
+```
+
+and change:
+
+```cpp id="k73m8p"
+return g_steal_pointer(&ssid);
+```
+
+to:
+
+```cpp id="13asox"
+return static_cast<gchar*>(g_steal_pointer(&ssid));
+```
+
+Without these explicit casts, compilation may fail because `g_steal_pointer()` returns a generic pointer which is not implicitly convertible to the expected C++ pointer type.
+
+### Summary of Required Source Changes
+
+Only the following file needs to be modified for the GLib compatibility fix:
+
+```text id="wx2qbf"
+plugins/wifi_ssid/linux/wifi_ssid_plugin.cc
+```
+
+The three changes are:
+
+```text id="8acew1"
+1. GVariant* explicit cast
+2. GLib < 2.70 fallback for g_spawn_check_wait_status()
+3. gchar* explicit cast
+```
+
+---
+
+# 2. Optional SQLite Build Workaround
+
+This modification is **not required specifically because of Ubuntu 20.04**.
+
+It is an optional workaround for environments where the Dart `sqlite3` native asset cannot download its prebuilt native library from GitHub.
+
+If the normal SQLite native asset download works correctly, this section can be ignored.
+
+## 2.1 Vendor the SQLite Amalgamation Source
+
+Download the official SQLite amalgamation source and place it under:
+
+```text id="qzw0p8"
+third_party/sqlite/
+├── sqlite3.c
+├── sqlite3.h
+└── sqlite3ext.h
+```
+
+The version tested during the Ubuntu 20.04 build was:
+
+```text id="k7a3ab"
+SQLite 3.53.4
+```
+
+## 2.2 Configure `sqlite3` to Build from Source
+
+Add the following configuration to the root `pubspec.yaml`:
+
+```yaml id="awhw0g"
+hooks:
+  user_defines:
+    sqlite3:
+      source: source
+      path: third_party/sqlite/sqlite3.c
+```
+
+This causes the SQLite native library to be compiled locally instead of downloading a prebuilt `.so`.
+
+The locally compiled library was verified to require only approximately:
+
+```text id="llcj8m"
+GLIBC_2.28
+```
+
+which is compatible with Ubuntu 20.04's:
+
+```text id="zjvrfk"
+GLIBC_2.31
+```
+
+### Important
+
+The SQLite source build is an **optional build workaround**.
+
+It should not be confused with the required `wifi_ssid` GLib compatibility fix.
+
+```text id="ak3i4u"
+wifi_ssid fix      -> required for Ubuntu 20.04 source compatibility
+
+SQLite source build -> optional workaround when native asset download fails
+```
+
+---
+
+# Ubuntu 20.04 Build Dependencies
+
+Install the required Linux build dependencies:
+
+```bash id="fhuqyy"
+sudo apt update
+
+sudo apt install -y \
+  curl \
+  wget \
+  git \
+  unzip \
+  xz-utils \
+  zip \
+  build-essential \
+  clang \
+  cmake \
+  ninja-build \
+  pkg-config \
+  libgtk-3-dev \
+  liblzma-dev \
+  libglu1-mesa \
+  libayatana-appindicator3-dev
+```
+
+`libayatana-appindicator3-dev` is required for Linux tray/application-indicator support.
+
+A CMake warning such as:
+
+```text id="mhgrit"
+Could NOT find JNI
+```
+
+does not prevent the Linux desktop build from completing.
+
+---
+
+# Flutter
+
+The tested version is:
+
+```text id="2ucbwv"
+Flutter 3.47.1
+Dart 3.13.1
+```
+
+After switching Flutter versions, refresh dependencies:
+
+```bash id="6hwll3"
+rm -rf .dart_tool
+flutter pub get
+```
+
+---
+
+# Rust
+
+The Rust component was built using:
+
+```text id="cmv63x"
+Rust 1.95.0
+```
+
+Install the required toolchain with:
+
+```bash id="mren77"
+rustup toolchain install 1.95.0
+rustup target add x86_64-unknown-linux-gnu --toolchain 1.95.0
+```
+
+---
+
+# Go
+
+FlClashCore requires Go.
+
+Verify the installation with:
+
+```bash id="3jatky"
+go version
+```
+
+It is recommended to use the Go version specified by the current upstream CI workflow.
+
+---
+
+# Build
+
+Install Dart/Flutter dependencies:
+
+```bash id="cqb7q6"
+flutter pub get
+```
+
+Then build the Linux release:
+
+```bash id="58ntcp"
+flutter build linux --release \
+  --dart-define-from-file=env.json
+```
+
+The resulting bundle is located at:
+
+```text id="ongm02"
+build/linux/x64/release/bundle/
+```
+
+---
+
+# Compatibility Verification
+
+The locally built Ubuntu 20.04 bundle was checked for ELF/glibc version requirements.
+
+Representative maximum glibc requirements were:
+
+```text id="6grk9u"
+FlClashHelperService      GLIBC_2.30
+librust_api.so            GLIBC_2.30
+libsqlite3.so             GLIBC_2.28
+libflutter_linux_gtk.so   GLIBC_2.18
+FlClashCore               statically linked
+```
+
+The resulting build therefore requires at most approximately:
+
+```text id="bz8d6q"
+GLIBC_2.30
+```
+
+Ubuntu 20.04 provides:
+
+```text id="7zhk8d"
+GLIBC_2.31
+```
+
+so the locally built application is compatible with Ubuntu 20.04.
+
+---
+
+# Runtime Verification
+
+The Ubuntu 20.04 build has been tested successfully with:
+
+```text id="wzvzxe"
+FlClash GUI               PASS
+FlClashCore               PASS
+GUI/Core IPC              PASS
+Helper Service            PASS
+systemd integration       PASS
+Profile loading           PASS
+TUN interface             PASS
+Automatic routing         PASS
+Proxy traffic             PASS
+```
+
+TUN mode successfully creates the virtual interface and installs the required Linux policy-routing rules.
+
+---
+
+# Notes
+
+There are two separate compatibility topics documented above:
+
+### Required Ubuntu 20.04 compatibility fix
+
+Modify:
+
+```text id="y03rqr"
+plugins/wifi_ssid/linux/wifi_ssid_plugin.cc
+```
+
+to support GLib 2.64 and the Ubuntu 20.04 C++ toolchain.
+
+### Optional build workaround
+
+Build SQLite from its amalgamation source when the `sqlite3` package cannot download its native asset.
+
+This workaround is not inherently required by Ubuntu 20.04.
+
+Finally, these source changes do not automatically make upstream prebuilt Linux packages compatible with Ubuntu 20.04.
+
+Binary glibc compatibility depends on the environment used to build the release artifact. Official Ubuntu 20.04-compatible binaries therefore need to be built against a sufficiently old glibc/sysroot.
