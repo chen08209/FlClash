@@ -1,4 +1,4 @@
-## Prebuilt Packages for Ubuntu 20.04
+## FlClash0.8.97 Prebuilt Packages for Ubuntu 20.04
 
 Prebuilt Linux packages compatible with **Ubuntu 20.04 / glibc 2.31** are available from OneDrive.
 
