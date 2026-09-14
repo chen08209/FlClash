@@ -7,6 +7,9 @@ environment:
 
 hooks:
   user_defines:
+    sqlite3:
+      source: source
+      path: third_party/sqlite/sqlite3.c
     setup:
       build_assets: true
     rust_api:
