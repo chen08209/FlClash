@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.98 (2026-09-14)
+
+**Bug Fixes**
+
+- **resources** Refresh the geo file size and time after an update finishes (c5bf5bd)
+- **core** Keep the core running while Windows sleeps with the app suspended (60f371a)
+
 ## v0.8.97 (2026-09-10)
 
 **Features**
