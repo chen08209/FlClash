@@ -3,11 +3,14 @@ import 'dart:io';
 import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/app_ports.dart';
 import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/common/proxy_env.dart';
 import 'package:fl_clash/common/tray.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
+import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
@@ -19,6 +22,7 @@ import 'package:riverpod/riverpod.dart';
 import 'package:tray/tray.dart';
 
 const _channel = MethodChannel('tray');
+const _codec = StandardMethodCodec();
 
 class _FakePathProvider extends PathProviderPlatform {
   _FakePathProvider(this.root);
@@ -64,6 +68,15 @@ List<Map<Object?, Object?>> _items(MethodCall? call) {
 
 List<String> _labels(MethodCall? call) {
   return _items(call).map((item) => item['label']).whereType<String>().toList();
+}
+
+Future<void> _emitTrayEvent(String method, Object? arguments) {
+  return TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .handlePlatformMessage(
+        _channel.name,
+        _codec.encodeMethodCall(MethodCall(method, arguments)),
+        (_) {},
+      );
 }
 
 void main() {
@@ -158,6 +171,78 @@ void main() {
     expect(labels, isNot(contains(l10n.tun)));
     expect(labels, isNot(contains(l10n.systemProxy)));
   });
+
+  test('copies the Windows PowerShell command from the tray', () async {
+    final copied = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied.add((call.arguments as Map)['text'] as String);
+          }
+          return null;
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null),
+    );
+
+    final windows = AppTray.forPlatform(isMacOS: false, isWindows: true);
+    await update(_trayState(), on: windows);
+
+    final copyItem = _items(
+      showCall(),
+    ).firstWhere((item) => item['label'] == currentAppLocalizations.copyEnvVar);
+    await _emitTrayEvent('onMenuItemSelected', <String, Object?>{
+      'id': copyItem['id'],
+    });
+    await Future<void>.delayed(Duration.zero);
+
+    expect(copied, [
+      buildProxyEnvCommand(port: 7890, os: ProxyCommandOs.windows),
+    ]);
+  });
+
+  test(
+    'copies the LAN address from the tray when LAN access is enabled',
+    () async {
+      container
+          .read(patchClashConfigProvider.notifier)
+          .update((state) => state.copyWith(allowLan: true));
+      container.read(localIpProvider.notifier).update((_) => '192.168.1.20');
+
+      final copied = <String>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+            if (call.method == 'Clipboard.setData') {
+              copied.add((call.arguments as Map)['text'] as String);
+            }
+            return null;
+          });
+      addTearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, null),
+      );
+
+      final windows = AppTray.forPlatform(isMacOS: false, isWindows: true);
+      await update(_trayState(), on: windows);
+
+      final copyItem = _items(showCall()).firstWhere(
+        (item) => item['label'] == currentAppLocalizations.copyEnvVar,
+      );
+      await _emitTrayEvent('onMenuItemSelected', <String, Object?>{
+        'id': copyItem['id'],
+      });
+      await Future<void>.delayed(Duration.zero);
+
+      expect(copied, [
+        buildProxyEnvCommand(
+          port: 7890,
+          os: ProxyCommandOs.windows,
+          host: '192.168.1.20',
+        ),
+      ]);
+    },
+  );
 
   test('adds TUN and system proxy toggles once the core is running', () async {
     await update(_trayState(isStart: true));
