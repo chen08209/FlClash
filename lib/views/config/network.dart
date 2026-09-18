@@ -152,6 +152,91 @@ class AllowLanItem extends ConsumerWidget {
   }
 }
 
+class ProxyPortItem extends ConsumerStatefulWidget {
+  const ProxyPortItem({super.key});
+
+  @override
+  ConsumerState<ProxyPortItem> createState() => _ProxyPortItemState();
+}
+
+class _ProxyPortItemState extends ConsumerState<ProxyPortItem> {
+  final _controller = TextEditingController();
+  final _focusNode = FocusNode();
+
+  int get _port =>
+      ref.read(patchClashConfigProvider.select((state) => state.mixedPort));
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.text = '$_port';
+    _focusNode.addListener(_handleFocusChange);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_handleFocusChange);
+    _focusNode.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleFocusChange() {
+    if (_focusNode.hasFocus || !mounted) {
+      return;
+    }
+    final appLocalizations = context.appLocalizations;
+    final value = _controller.text;
+    final port = int.tryParse(value);
+    if (port == null || !isValidProxyPort(port)) {
+      _controller.text = '$_port';
+      context.showNotifier(
+        value.isEmpty
+            ? appLocalizations.emptyTip(appLocalizations.port)
+            : appLocalizations.portTip(appLocalizations.port),
+        level: MessageLevel.error,
+      );
+      return;
+    }
+    if (port == _port) {
+      return;
+    }
+    ref
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(mixedPort: port));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(patchClashConfigProvider.select((state) => state.mixedPort), (
+      _,
+      next,
+    ) {
+      if (!_focusNode.hasFocus) {
+        _controller.text = '$next';
+      }
+    });
+    return ListItem(
+      title: Text(context.appLocalizations.port),
+      trailing: SizedBox(
+        width: 96,
+        child: TextField(
+          controller: _controller,
+          focusNode: _focusNode,
+          keyboardType: TextInputType.number,
+          inputFormatters: TextInputLimits.digitsOnly(TextInputLimits.port),
+          textAlign: TextAlign.end,
+          onSubmitted: (_) => _focusNode.unfocus(),
+          decoration: const InputDecoration.collapsed(
+            hintText: '',
+            border: NoInputBorder(),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class CopyProxyCommandItem extends ConsumerStatefulWidget {
   const CopyProxyCommandItem({super.key});
 

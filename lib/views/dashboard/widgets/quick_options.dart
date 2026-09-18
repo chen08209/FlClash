@@ -108,6 +108,7 @@ class SystemProxyButton extends StatelessWidget {
       items: const [
         SystemProxyItem(),
         AllowLanItem(),
+        ProxyPortItem(),
         BypassDomainItem(),
         CopyProxyCommandItem(),
       ],

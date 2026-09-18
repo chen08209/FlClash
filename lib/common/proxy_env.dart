@@ -10,6 +10,14 @@ enum ProxyCommandOs {
 
 const proxyLoopbackHost = '127.0.0.1';
 
+const minProxyPort = 1024;
+
+const maxProxyPort = 49151;
+
+bool isValidProxyPort(int port) {
+  return port >= minProxyPort && port <= maxProxyPort;
+}
+
 String proxyHostForCommand({required bool allowLan, required String? localIp}) {
   final host = localIp?.trim();
   return allowLan && host != null && host.isNotEmpty ? host : proxyLoopbackHost;

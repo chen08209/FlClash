@@ -4,6 +4,7 @@ import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/manager/status_manager.dart';
+import 'package:fl_clash/views/config/network.dart';
 import 'package:fl_clash/views/dashboard/widgets/quick_options.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
@@ -236,6 +237,100 @@ void main() {
         ),
       );
       expect(find.text(currentAppLocalizations.copySuccess), findsOneWidget);
+    },
+  );
+
+  Future<void> pumpSystemProxySheet(WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1200, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const Directionality(
+          textDirection: TextDirection.ltr,
+          child: StatusManager(
+            child: TestApp(child: Scaffold(body: SystemProxyButton())),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(currentAppLocalizations.options));
+    await tester.pumpAndSettle();
+  }
+
+  Finder portField() {
+    return find.descendant(
+      of: find.byType(ProxyPortItem),
+      matching: find.byType(TextField),
+    );
+  }
+
+  testWidgets('system proxy options save an edited port once focus leaves', (
+    tester,
+  ) async {
+    await pumpSystemProxySheet(tester);
+
+    final initial = container.read(patchClashConfigProvider).mixedPort;
+    final field = portField();
+    expect(field, findsOneWidget);
+    expect(
+      tester.widget<TextField>(field).controller?.text,
+      initial.toString(),
+    );
+
+    await tester.enterText(field, '${initial + 1}');
+    await tester.pump();
+    expect(container.read(patchClashConfigProvider).mixedPort, initial);
+
+    tester.widget<TextField>(field).focusNode!.unfocus();
+    await tester.pumpAndSettle();
+    expect(container.read(patchClashConfigProvider).mixedPort, initial + 1);
+  });
+
+  testWidgets('system proxy options keep the last valid port on bad input', (
+    tester,
+  ) async {
+    await pumpSystemProxySheet(tester);
+
+    final initial = container.read(patchClashConfigProvider).mixedPort;
+    final field = portField();
+    await tester.enterText(field, '${minProxyPort - 1}');
+    tester.widget<TextField>(field).focusNode!.unfocus();
+    await tester.pumpAndSettle();
+
+    expect(container.read(patchClashConfigProvider).mixedPort, initial);
+    expect(
+      tester.widget<TextField>(field).controller?.text,
+      initial.toString(),
+    );
+    expect(find.textContaining('$minProxyPort'), findsWidgets);
+  });
+
+  testWidgets(
+    'system proxy options save a pending port when the sheet closes',
+    (tester) async {
+      // The app keeps this auto-dispose provider alive through AppManager.
+      final subscription = container.listen(
+        patchClashConfigProvider,
+        (_, _) {},
+      );
+      addTearDown(subscription.close);
+
+      await pumpSystemProxySheet(tester);
+
+      final initial = container.read(patchClashConfigProvider).mixedPort;
+      await tester.enterText(portField(), '${initial + 2}');
+      await tester.pump();
+
+      await tester.tap(find.byTooltip(currentAppLocalizations.close).last);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ProxyPortItem), findsNothing);
+      expect(container.read(patchClashConfigProvider).mixedPort, initial + 2);
     },
   );
 }

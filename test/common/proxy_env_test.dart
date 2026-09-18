@@ -2,6 +2,13 @@ import 'package:fl_clash/common/proxy_env.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('accepts only ports inside the shared range', () {
+    expect(isValidProxyPort(minProxyPort), isTrue);
+    expect(isValidProxyPort(maxProxyPort), isTrue);
+    expect(isValidProxyPort(minProxyPort - 1), isFalse);
+    expect(isValidProxyPort(maxProxyPort + 1), isFalse);
+  });
+
   test('uses the LAN address only when LAN access is enabled', () {
     expect(
       proxyHostForCommand(allowLan: false, localIp: '192.168.1.20'),
