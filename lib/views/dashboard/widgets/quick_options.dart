@@ -105,7 +105,13 @@ class SystemProxyButton extends StatelessWidget {
     return _QuickSwitchCard(
       label: context.appLocalizations.systemProxy,
       iconData: Icons.shuffle,
-      items: const [SystemProxyItem(), BypassDomainItem()],
+      items: const [
+        SystemProxyItem(),
+        AllowLanItem(),
+        BypassDomainItem(),
+        ProxyPortItem(),
+        CopyProxyCommandItem(),
+      ],
       selector: networkSettingProvider.select((state) => state.systemProxy),
       onChanged: (ref, value) {
         ref

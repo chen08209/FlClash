@@ -1,8 +1,5 @@
 part of '../general.dart';
 
-const _minPort = 1024;
-const _maxPort = 49151;
-
 class _PortField {
   final TextEditingController controller;
   final String Function(AppLocalizations appLocalizations) label;
@@ -161,7 +158,7 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
     if (field.allowDisabled && port == 0) {
       return null;
     }
-    if (port < _minPort || port > _maxPort) {
+    if (!isValidProxyPort(port)) {
       return appLocalizations.portTip(label);
     }
     final others = _fields

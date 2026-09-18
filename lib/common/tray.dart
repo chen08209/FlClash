@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/proxy_env.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -158,7 +159,11 @@ class AppTray implements TrayPort {
       TrayMenuAction(
         label: appLocalizations.copyEnvVar,
         onSelected: () {
-          _copyEnv(trayState.port);
+          _copyEnv(
+            trayState.port,
+            allowLan: read(patchClashConfigProvider).allowLan,
+            localIp: read(localIpProvider),
+          );
         },
       ),
       const TrayMenuSeparator(),
@@ -200,14 +205,20 @@ class AppTray implements TrayPort {
     ];
   }
 
-  Future<void> _copyEnv(int port) async {
-    final url = 'http://127.0.0.1:$port';
-
-    final cmdline = isWindows
-        ? 'set \$env:all_proxy=$url'
-        : 'export all_proxy=$url';
-
-    await Clipboard.setData(ClipboardData(text: cmdline));
+  Future<void> _copyEnv(
+    int port, {
+    required bool allowLan,
+    required String? localIp,
+  }) async {
+    await Clipboard.setData(
+      ClipboardData(
+        text: buildProxyEnvCommand(
+          port: port,
+          os: proxyCommandOsForPlatform(isWindows: isWindows, isMacOS: isMacOS),
+          host: proxyHostForCommand(allowLan: allowLan, localIp: localIp),
+        ),
+      ),
+    );
   }
 }
 

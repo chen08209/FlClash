@@ -1,10 +1,12 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 
 typedef _VpnUpdate<T> = VpnProps Function(VpnProps state, T value);
 
@@ -132,6 +134,184 @@ class SystemProxyItem extends ConsumerWidget {
       subtitle: (l) => l.systemProxyDesc,
       select: (state) => state.systemProxy,
       update: (state, value) => state.copyWith(systemProxy: value),
+    );
+  }
+}
+
+class AllowLanItem extends ConsumerWidget {
+  const AllowLanItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    return ConfigToggleItem(
+      title: (l) => l.allowLan,
+      subtitle: (l) => l.allowLanDesc,
+      selector: patchClashConfigProvider.select((state) => state.allowLan),
+      onChanged: _tunWriter((state, value) => state.copyWith(allowLan: value)),
+    );
+  }
+}
+
+class ProxyPortItem extends ConsumerStatefulWidget {
+  const ProxyPortItem({super.key});
+
+  @override
+  ConsumerState<ProxyPortItem> createState() => _ProxyPortItemState();
+}
+
+class _ProxyPortItemState extends ConsumerState<ProxyPortItem> {
+  final _controller = TextEditingController();
+  final _focusNode = FocusNode();
+
+  int get _port =>
+      ref.read(patchClashConfigProvider.select((state) => state.mixedPort));
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.text = '$_port';
+    _focusNode.addListener(_handleFocusChange);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_handleFocusChange);
+    _focusNode.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleFocusChange() {
+    if (_focusNode.hasFocus || !mounted) {
+      return;
+    }
+    final appLocalizations = context.appLocalizations;
+    final value = _controller.text;
+    final port = int.tryParse(value);
+    if (port == null || !isValidProxyPort(port)) {
+      _controller.text = '$_port';
+      context.showNotifier(
+        value.isEmpty
+            ? appLocalizations.emptyTip(appLocalizations.port)
+            : appLocalizations.portTip(appLocalizations.port),
+        level: MessageLevel.error,
+      );
+      return;
+    }
+    if (port == _port) {
+      return;
+    }
+    ref
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(mixedPort: port));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(patchClashConfigProvider.select((state) => state.mixedPort), (
+      _,
+      next,
+    ) {
+      if (!_focusNode.hasFocus) {
+        _controller.text = '$next';
+      }
+    });
+    return ListItem(
+      title: Text(context.appLocalizations.port),
+      trailing: SizedBox(
+        width: 96,
+        child: TextField(
+          controller: _controller,
+          focusNode: _focusNode,
+          keyboardType: TextInputType.number,
+          inputFormatters: TextInputLimits.digitsOnly(TextInputLimits.port),
+          textAlign: TextAlign.center,
+          onSubmitted: (_) => _focusNode.unfocus(),
+          decoration: const InputDecoration(
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class CopyProxyCommandItem extends ConsumerStatefulWidget {
+  const CopyProxyCommandItem({super.key});
+
+  @override
+  ConsumerState<CopyProxyCommandItem> createState() =>
+      _CopyProxyCommandItemState();
+}
+
+class _CopyProxyCommandItemState extends ConsumerState<CopyProxyCommandItem> {
+  late ProxyCommandOs _selectedOs;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedOs = proxyCommandOsForPlatform(
+      isWindows: system.isWindows,
+      isMacOS: system.isMacOS,
+    );
+  }
+
+  Future<void> _copy(int port) async {
+    final allowLan = ref.read(
+      patchClashConfigProvider.select((state) => state.allowLan),
+    );
+    final localIp = ref.read(localIpProvider);
+    await Clipboard.setData(
+      ClipboardData(
+        text: buildProxyEnvCommand(
+          port: port,
+          os: _selectedOs,
+          host: proxyHostForCommand(allowLan: allowLan, localIp: localIp),
+        ),
+      ),
+    );
+    if (mounted) {
+      context.showNotifier(context.appLocalizations.copySuccess);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final port = ref.watch(
+      patchClashConfigProvider.select((state) => state.mixedPort),
+    );
+    return ListItem(
+      title: Text(context.appLocalizations.copyEnvVar),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 96,
+            child: DropdownButton<ProxyCommandOs>(
+              value: _selectedOs,
+              isDense: true,
+              isExpanded: true,
+              focusColor: Colors.transparent,
+              underline: const SizedBox.shrink(),
+              items: [
+                for (final os in ProxyCommandOs.values)
+                  DropdownMenuItem(value: os, child: Text(os.label)),
+              ],
+              onChanged: (os) {
+                if (os != null) {
+                  setState(() => _selectedOs = os);
+                }
+              },
+            ),
+          ),
+          IconButton(
+            tooltip: context.appLocalizations.copyEnvVar,
+            onPressed: () => _copy(port),
+            icon: const Icon(Icons.copy),
+          ),
+        ],
+      ),
     );
   }
 }
