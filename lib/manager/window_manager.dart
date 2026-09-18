@@ -71,7 +71,12 @@ class _WindowContainerState extends ConsumerState<WindowManager>
 
   @override
   Future<void> onWindowShouldTerminate() async {
-    await ref.read(systemActionProvider.notifier).handleExit();
+    final systemAction = ref.read(systemActionProvider.notifier);
+    if (system.isMacOS) {
+      await systemAction.handleMacOSQuit(true);
+    } else {
+      await systemAction.handleExit();
+    }
     super.onWindowShouldTerminate();
   }
 

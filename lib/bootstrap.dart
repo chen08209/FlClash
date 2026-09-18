@@ -13,6 +13,7 @@ import 'package:fl_clash/common/window.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/manager/macos_control_widget_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -34,6 +35,7 @@ class Bootstrap {
   }
 
   BootDecision _bootDecision = const BootDecision();
+  bool _controlWidgetSilentLaunch = false;
 
   Future<ProviderContainer> init(int version) async {
     globalState.appEnv = const String.fromEnvironment(
@@ -128,6 +130,12 @@ class Bootstrap {
       getLocaleForString(config.appSettingProps.locale) ??
           WidgetsBinding.instance.platformDispatcher.locale,
     );
+    _controlWidgetSilentLaunch =
+        system.isMacOS &&
+        await macOSControlWidgetManager.isSilentLaunchRequested();
+    if (system.isMacOS) {
+      await macOSControlWidgetManager.init(container);
+    }
     await window?.init(version, config.windowProps);
     if (system.isAndroid) {
       await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -154,7 +162,8 @@ class Bootstrap {
     unawaited(
       autoLaunch?.updateStatus(_container.read(appSettingProvider).autoLaunch),
     );
-    if (!_container.read(appSettingProvider).silentLaunch) {
+    if (!_container.read(appSettingProvider).silentLaunch &&
+        !_controlWidgetSilentLaunch) {
       unawaited(window?.show());
     } else {
       unawaited(window?.hide());

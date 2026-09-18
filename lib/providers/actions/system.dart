@@ -35,6 +35,13 @@ class SystemAction extends _$SystemAction {
     return coordinator.exit(cleanup: () => cleanupExitResources(needSave));
   }
 
+  Future<void> handleMacOSQuit([bool needSave = true]) async {
+    if (needSave) {
+      await savePreferences();
+    }
+    await windowPort?.hide();
+  }
+
   @protected
   Duration get exitWatchdogDuration => const Duration(seconds: 3);
 
