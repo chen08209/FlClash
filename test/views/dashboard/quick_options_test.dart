@@ -277,6 +277,17 @@ void main() {
     final initial = container.read(patchClashConfigProvider).mixedPort;
     final field = portField();
     expect(field, findsOneWidget);
+    final decoration = tester.widget<TextField>(field).decoration;
+    expect(
+      decoration?.border,
+      isNull,
+      reason: 'The port field inherits AppShape.input, so it reads as a box',
+    );
+    expect(decoration?.isCollapsed, isNot(true));
+    expect(
+      tester.getTopLeft(find.byType(ProxyPortItem)).dy,
+      greaterThan(tester.getTopLeft(find.byType(BypassDomainItem)).dy),
+    );
     expect(
       tester.widget<TextField>(field).controller?.text,
       initial.toString(),

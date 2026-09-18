@@ -225,11 +225,11 @@ class _ProxyPortItemState extends ConsumerState<ProxyPortItem> {
           focusNode: _focusNode,
           keyboardType: TextInputType.number,
           inputFormatters: TextInputLimits.digitsOnly(TextInputLimits.port),
-          textAlign: TextAlign.end,
+          textAlign: TextAlign.center,
           onSubmitted: (_) => _focusNode.unfocus(),
-          decoration: const InputDecoration.collapsed(
-            hintText: '',
-            border: NoInputBorder(),
+          decoration: const InputDecoration(
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           ),
         ),
       ),
