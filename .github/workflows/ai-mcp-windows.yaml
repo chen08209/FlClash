@@ -1,0 +1,99 @@
+name: AI MCP Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/ai-mcp]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-mcp-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Test and package Windows x64
+    runs-on: windows-2022
+    timeout-minutes: 90
+    env:
+      FLUTTER_VERSION: '3.47.1'
+      GO_VERSION: '1.26.4'
+      CARGO_TERM_COLOR: always
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: core/go.sum
+
+      - name: Setup pinned Rust
+        shell: pwsh
+        run: rustup toolchain install 1.95.0 --profile minimal
+
+      - name: Cache Rust builds
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            services/helper
+            plugins/rust_api/rust
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Test MCP behavior
+        shell: pwsh
+        run: |
+          $original = [System.IO.File]::ReadAllText('pubspec.yaml')
+          try {
+            [System.IO.File]::WriteAllText('pubspec.yaml', $original.Replace('build_assets: true', 'build_assets: false'))
+            flutter test test/ai_mcp test/application_test.dart test/providers/proxies_action_test.dart test/core/controller_test.dart --reporter expanded
+            if ($LASTEXITCODE -ne 0) { throw 'MCP tests failed' }
+          } finally {
+            [System.IO.File]::WriteAllText('pubspec.yaml', $original)
+          }
+
+      - name: Build native Windows application
+        run: flutter build windows --release --dart-define=APP_ENV=pre
+
+      - name: Package portable app and checksums
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item docs/ai-mcp.md build/windows/x64/runner/Release/AI-MCP.md
+          $shortSha = '${{ github.sha }}'.Substring(0, 8)
+          $pubspec = [System.IO.File]::ReadAllText('pubspec.yaml')
+          if ($pubspec -notmatch '(?m)^version:\s*([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)(?:\+[0-9A-Za-z.-]+)?\s*$') {
+            throw 'Unable to read pubspec version'
+          }
+          $version = $Matches[1]
+          $name = "FlClash-$version-ai-mcp-windows-amd64-$shortSha.zip"
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath "dist/$name"
+          $hash = (Get-FileHash "dist/$name" -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $name" | Set-Content dist/SHA256SUMS -Encoding ascii
+          "Commit: ${{ github.sha }}" | Set-Content dist/BUILD.txt -Encoding utf8
+          "This is a fork build, not an official FlClash release." | Add-Content dist/BUILD.txt
+
+      - name: Upload portable build
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlClash-AI-MCP-windows-amd64
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14

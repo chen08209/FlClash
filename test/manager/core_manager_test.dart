@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
@@ -9,6 +10,7 @@ import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/core_manager.dart';
 import 'package:fl_clash/manager/status_manager.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
@@ -154,6 +156,59 @@ void main() {
       profileSwitchTempDir.deleteSync(recursive: true);
     } catch (_) {}
   });
+
+  testWidgets(
+    'background delay events remain live while cancelled host RPC results stay out of cache',
+    (tester) async {
+      final core = _coreInterface();
+      final reply = Completer<Delay?>();
+      when(
+        () => core.asyncTestDelay(any(), any()),
+      ).thenAnswer((_) => reply.future);
+      final container = await _pumpCoreManager(
+        tester,
+        core,
+        overrides: [
+          profilesProvider.overrideWith(TestProfiles.new),
+          currentProfileIdProvider.overrideWithBuild((_, _) => null),
+        ],
+      );
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      final action = container.read(proxiesActionProvider.notifier);
+      final pending = action.proxyDelayTest(
+        const Proxy(name: 'host', type: 'ss'),
+        'https://test',
+      );
+      action.invalidateProxyConfig();
+      coreEventManager.sendEvent(
+        const CoreEvent(
+          type: CoreEventType.delay,
+          data: {'name': 'background', 'url': 'https://test', 'value': 15},
+        ),
+      );
+      await tester.pump();
+      reply.complete(const Delay(name: 'host', url: 'https://test', value: 42));
+      await pending;
+      expect(container.read(delayDataSourceProvider)['https://test'], {
+        'background': 15,
+      });
+      coreEventManager.sendEvent(
+        const CoreEvent(
+          type: CoreEventType.delay,
+          data: {'name': 'host', 'url': 'https://test', 'value': 20},
+        ),
+      );
+      await tester.pump();
+      expect(container.read(delayDataSourceProvider)['https://test'], {
+        'background': 15,
+        'host': 20,
+      });
+      expect(container.read(pendingDelayTestsProvider), isEmpty);
+      debouncer.cancel(FunctionTag.updateDelay);
+      debouncer.cancel(FunctionTag.updateGroups);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 
   testWidgets('duplicate crash events disconnect the core only once', (
     tester,

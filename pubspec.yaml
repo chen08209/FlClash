@@ -15,6 +15,7 @@ hooks:
 dependencies:
   flutter:
     sdk: flutter
+  mcp_dart: 2.4.2
   material_ui: ^1.0.1
   intl: any
   path_provider: ^2.1.5

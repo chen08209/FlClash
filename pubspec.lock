@@ -910,6 +910,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.1"
+  mcp_dart:
+    dependency: "direct main"
+    description:
+      name: mcp_dart
+      sha256: "5a185c1c02e90239e6f3ebca05ef51e04ac0f9c2b1b7ec7ffbb1a671a6379729"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.2"
   meta:
     dependency: transitive
     description:

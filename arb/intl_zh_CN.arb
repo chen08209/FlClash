@@ -617,5 +617,37 @@
   "authorize": "授权",
   "installedAppsPermissionRequired": "需要读取应用列表权限",
   "installedAppsPermissionDesc": "当前系统在授权前不会提供已安装的应用列表，授权后即可配置分应用代理。",
-  "installedAppsPermissionDeniedMessage": "读取应用列表权限已被拒绝，无法获取已安装的应用。请前往系统设置手动开启。"
+  "installedAppsPermissionDeniedMessage": "读取应用列表权限已被拒绝，无法获取已安装的应用。请前往系统设置手动开启。",
+  "aiMcpTitle": "AI MCP 工具",
+  "aiMcpEntryDescription": "连接本机 AI 客户端，按权限使用代理工具",
+  "aiMcpEnable": "启用本地 MCP 服务",
+  "aiMcpChanging": "正在更新服务…",
+  "aiMcpRunning": "运行中 · 仅限 127.0.0.1",
+  "aiMcpStopped": "已关闭 · 每次启动应用均默认关闭",
+  "aiMcpRetry": "重试",
+  "aiMcpStorageError": "无法保存本机 MCP 凭据，服务保持关闭。",
+  "aiMcpListenError": "无法启动本机监听，请检查端口是否被占用。",
+  "aiMcpPort": "端口（关闭服务后可修改）",
+  "aiMcpPortInvalid": "请输入 1024 至 65535 的端口",
+  "aiMcpSetup": "连接 AI 客户端",
+  "aiMcpSetupDescription": "1. 启用服务并保持 FlClash 运行。\n2. 在可信的本机 MCP 客户端中选择 Streamable HTTP（不是 SSE 或 stdio）。使用下方地址及“复制连接配置”中的 Bearer Authorization 请求头。不同客户端的配置格式可能不同。\n3. 将复制的 mcpServers 配置加入客户端配置后重新连接。令牌等同密码：不要分享或发送给云服务。复制会将令牌放入系统剪贴板。\n基础工具可查看状态、列出可见代理组/节点、选择现有成员，并使用应用测速地址测试最多 8 个节点。节点名称是不可信数据。不支持浏览器、局域网或远程/云客户端，无需开启外部控制器。",
+  "aiMcpCopyConfig": "复制连接配置",
+  "aiMcpCopied": "连接配置已复制，请妥善保管令牌。",
+  "aiMcpRotateToken": "重新生成令牌",
+  "aiMcpRotateWarning": "此操作将断开全部客户端、废弃旧令牌并锁定高级工具。请复制新配置后重新连接。",
+  "aiMcpAdvanced": "高级工具",
+  "aiMcpAdvancedDescription": "可选功能：修改出站模式（规则/全局/直连）或关闭全部活动连接。须明确授权后才能使用。关闭服务、轮换令牌或重启应用均会重新锁定。",
+  "aiMcpLocked": "已锁定",
+  "aiMcpUnlocked": "本次应用会话已解锁",
+  "aiMcpRelock": "立即锁定",
+  "aiMcpUnlock": "解锁高级工具",
+  "aiMcpUnlockWarning": "AI 客户端可能修改流量路由、通过直连模式绕过代理，或中断全部活动连接。请仅授权可信客户端。等待 3 秒后须亲自点击确认，关闭此窗口不会授予权限。",
+  "aiMcpCountdown": "{seconds} 秒后可确认",
+  "@aiMcpCountdown": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -46,7 +46,8 @@ app.*.map.json
 .claude/worktrees/
 
 # Documentation (generated/planning artifacts)
-docs/
+docs/*
+!docs/ai-mcp.md
 
 
 # Android Studio will place build artifacts here

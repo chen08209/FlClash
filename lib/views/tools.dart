@@ -4,6 +4,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/views/ai_mcp.dart';
 import 'package:fl_clash/views/about.dart';
 import 'package:fl_clash/views/access.dart';
 import 'package:fl_clash/views/application_setting.dart';
@@ -76,6 +77,12 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         const _ConfigItem(),
         const _AdvancedConfigItem(),
         const _SettingItem(),
+        ListItem.open(
+          leading: const Icon(Icons.smart_toy_outlined),
+          title: Text(context.appLocalizations.aiMcpTitle),
+          subtitle: Text(context.appLocalizations.aiMcpEntryDescription),
+          widget: const AiMcpView(),
+        ),
       ],
     );
   }

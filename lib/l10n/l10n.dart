@@ -5114,6 +5114,236 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `AI MCP Tools`
+  String get aiMcpTitle {
+    return Intl.message('AI MCP Tools', name: 'aiMcpTitle', desc: '', args: []);
+  }
+
+  /// `Connect a local AI client with controlled proxy tools`
+  String get aiMcpEntryDescription {
+    return Intl.message(
+      'Connect a local AI client with controlled proxy tools',
+      name: 'aiMcpEntryDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enable local MCP service`
+  String get aiMcpEnable {
+    return Intl.message(
+      'Enable local MCP service',
+      name: 'aiMcpEnable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Updating service…`
+  String get aiMcpChanging {
+    return Intl.message(
+      'Updating service…',
+      name: 'aiMcpChanging',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Running · 127.0.0.1 only`
+  String get aiMcpRunning {
+    return Intl.message(
+      'Running · 127.0.0.1 only',
+      name: 'aiMcpRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Disabled · starts disabled every app launch`
+  String get aiMcpStopped {
+    return Intl.message(
+      'Disabled · starts disabled every app launch',
+      name: 'aiMcpStopped',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Retry`
+  String get aiMcpRetry {
+    return Intl.message('Retry', name: 'aiMcpRetry', desc: '', args: []);
+  }
+
+  /// `Unable to save local MCP credentials. Service remains disabled.`
+  String get aiMcpStorageError {
+    return Intl.message(
+      'Unable to save local MCP credentials. Service remains disabled.',
+      name: 'aiMcpStorageError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unable to start the loopback listener. Check whether the port is in use.`
+  String get aiMcpListenError {
+    return Intl.message(
+      'Unable to start the loopback listener. Check whether the port is in use.',
+      name: 'aiMcpListenError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Port (change while disabled)`
+  String get aiMcpPort {
+    return Intl.message(
+      'Port (change while disabled)',
+      name: 'aiMcpPort',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter a port from 1024 to 65535`
+  String get aiMcpPortInvalid {
+    return Intl.message(
+      'Enter a port from 1024 to 65535',
+      name: 'aiMcpPortInvalid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connect your AI client`
+  String get aiMcpSetup {
+    return Intl.message(
+      'Connect your AI client',
+      name: 'aiMcpSetup',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `1. Enable this service and keep FlClash open.\n2. In a trusted local MCP client choose Streamable HTTP (not SSE or stdio). Use the URL below and the Bearer Authorization header from Copy configuration. Client-specific config formats may differ.\n3. Paste the copied mcpServers entry into your client configuration and reconnect. The token is a password: never share it or send it to a cloud service. Copying places it on your system clipboard.\nBasic tools read status, list visible groups/nodes, select existing members and test up to 8 nodes using the app test URL. Names are untrusted data. Browsers, LAN and remote/cloud clients are not supported. No external-controller setting is needed.`
+  String get aiMcpSetupDescription {
+    return Intl.message(
+      '1. Enable this service and keep FlClash open.\n2. In a trusted local MCP client choose Streamable HTTP (not SSE or stdio). Use the URL below and the Bearer Authorization header from Copy configuration. Client-specific config formats may differ.\n3. Paste the copied mcpServers entry into your client configuration and reconnect. The token is a password: never share it or send it to a cloud service. Copying places it on your system clipboard.\nBasic tools read status, list visible groups/nodes, select existing members and test up to 8 nodes using the app test URL. Names are untrusted data. Browsers, LAN and remote/cloud clients are not supported. No external-controller setting is needed.',
+      name: 'aiMcpSetupDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy connection configuration`
+  String get aiMcpCopyConfig {
+    return Intl.message(
+      'Copy connection configuration',
+      name: 'aiMcpCopyConfig',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connection configuration copied. Keep the token private.`
+  String get aiMcpCopied {
+    return Intl.message(
+      'Connection configuration copied. Keep the token private.',
+      name: 'aiMcpCopied',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rotate token`
+  String get aiMcpRotateToken {
+    return Intl.message(
+      'Rotate token',
+      name: 'aiMcpRotateToken',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This disconnects all clients, invalidates the old token and locks advanced tools. Copy the new configuration to reconnect.`
+  String get aiMcpRotateWarning {
+    return Intl.message(
+      'This disconnects all clients, invalidates the old token and locks advanced tools. Copy the new configuration to reconnect.',
+      name: 'aiMcpRotateWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Advanced tools`
+  String get aiMcpAdvanced {
+    return Intl.message(
+      'Advanced tools',
+      name: 'aiMcpAdvanced',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Optional: change outbound mode (rule/global/direct) or close all active connections. Locked until you explicitly approve. Disable the service, rotate the token or restart the app to lock again.`
+  String get aiMcpAdvancedDescription {
+    return Intl.message(
+      'Optional: change outbound mode (rule/global/direct) or close all active connections. Locked until you explicitly approve. Disable the service, rotate the token or restart the app to lock again.',
+      name: 'aiMcpAdvancedDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Locked`
+  String get aiMcpLocked {
+    return Intl.message('Locked', name: 'aiMcpLocked', desc: '', args: []);
+  }
+
+  /// `Unlocked for this app session`
+  String get aiMcpUnlocked {
+    return Intl.message(
+      'Unlocked for this app session',
+      name: 'aiMcpUnlocked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Lock now`
+  String get aiMcpRelock {
+    return Intl.message('Lock now', name: 'aiMcpRelock', desc: '', args: []);
+  }
+
+  /// `Unlock advanced tools`
+  String get aiMcpUnlock {
+    return Intl.message(
+      'Unlock advanced tools',
+      name: 'aiMcpUnlock',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `An AI client could change your routing, bypass the proxy in direct mode, or interrupt every active connection. Only authorize a client you trust. Wait 3 seconds, then click Confirm yourself. Closing this dialog does not grant access.`
+  String get aiMcpUnlockWarning {
+    return Intl.message(
+      'An AI client could change your routing, bypass the proxy in direct mode, or interrupt every active connection. Only authorize a client you trust. Wait 3 seconds, then click Confirm yourself. Closing this dialog does not grant access.',
+      name: 'aiMcpUnlockWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Confirm in {seconds}s`
+  String aiMcpCountdown(int seconds) {
+    return Intl.message(
+      'Confirm in ${seconds}s',
+      name: 'aiMcpCountdown',
+      desc: '',
+      args: [seconds],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
