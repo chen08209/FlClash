@@ -12,14 +12,11 @@
 
 基于ClashMeta的多平台代理客户端，简单易用，开源无广告。
 
-on Desktop:
-<p style="text-align: center;">
-    <img alt="desktop" src="snapshots/desktop.gif">
-</p>
-
-on Mobile:
-<p style="text-align: center;">
-    <img alt="mobile" src="snapshots/mobile.gif">
+<p align="center">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="snapshots/preview-dark.png">
+        <img alt="FlClash on desktop and mobile" src="snapshots/preview.png" width="90%">
+    </picture>
 </p>
 
 ## Features
