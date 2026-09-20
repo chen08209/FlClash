@@ -624,6 +624,7 @@
   "aiMcpChanging": "正在更新服务…",
   "aiMcpRunning": "运行中 · 仅限 127.0.0.1",
   "aiMcpStopped": "已关闭 · 每次启动应用均默认关闭",
+  "aiMcpRetry": "重试",
   "aiMcpStorageError": "无法保存本机 MCP 凭据，服务保持关闭。",
   "aiMcpListenError": "无法启动本机监听，请检查端口是否被占用。",
   "aiMcpPort": "端口（关闭服务后可修改）",

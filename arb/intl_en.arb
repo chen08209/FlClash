@@ -624,6 +624,7 @@
   "aiMcpChanging": "Updating service…",
   "aiMcpRunning": "Running · 127.0.0.1 only",
   "aiMcpStopped": "Disabled · starts disabled every app launch",
+  "aiMcpRetry": "Retry",
   "aiMcpStorageError": "Unable to save local MCP credentials. Service remains disabled.",
   "aiMcpListenError": "Unable to start the loopback listener. Check whether the port is in use.",
   "aiMcpPort": "Port (change while disabled)",

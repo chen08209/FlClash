@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_clash/ai_mcp/service.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/manager/ai_mcp_manager.dart';
@@ -11,6 +13,99 @@ import '../helpers/test_app.dart';
 import 'helpers.dart';
 
 void main() {
+  for (final rotation in [false, true]) {
+    testWidgets(
+      'actual Retry recovers ${rotation ? 'rotation' : 'initialization'} without enabling or restoring revoked credentials',
+      (tester) async {
+        final store = MemoryAiMcpStore();
+        final service = AiMcpService(store: store, backend: FakeAiMcpBackend());
+        addTearDown(service.dispose);
+        String? revoked;
+        await tester.runAsync(() async {
+          if (rotation) {
+            await service.initialize();
+            await service.setPort(await availableMcpPort());
+            await service.setEnabled(true);
+            service.unlock();
+            revoked = store.settings['token'] as String;
+          }
+          store.fail = true;
+          if (rotation) {
+            await service.rotateToken();
+          } else {
+            await service.initialize();
+          }
+        });
+        expect(service.ready, false);
+        await tester.pumpWidget(
+          TestApp(
+            includeNavigatorKey: false,
+            overrides: [aiMcpServiceProvider.overrideWithValue(service)],
+            child: const AiMcpView(),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final retry = find.byKey(const Key('ai-mcp-retry'));
+        expect(retry, findsOneWidget);
+        final release = Completer<void>();
+        var loads = 0;
+        store.fail = false;
+        store.beforeLoad = () {
+          loads++;
+          return release.future;
+        };
+        await tester.tap(retry);
+        await tester.pump();
+        expect(tester.widget<TextButton>(retry).onPressed, isNull);
+        await service.initialize();
+        await service.rotateToken();
+        expect(loads, 1);
+        release.complete();
+        await tester.pumpAndSettle();
+        expect(service.ready, true);
+        expect(service.error, isNull);
+        expect(service.enabled, false);
+        expect(service.advanced, false);
+        expect(retry, findsNothing);
+        if (rotation) expect(store.settings['token'], isNot(revoked));
+        await tester.pumpWidget(const SizedBox());
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets(
+    'dispose during Retry never publishes readiness or starts a listener',
+    (tester) async {
+      final store = MemoryAiMcpStore()..fail = true;
+      final service = AiMcpService(store: store, backend: FakeAiMcpBackend());
+      await service.initialize();
+      await tester.pumpWidget(
+        TestApp(
+          includeNavigatorKey: false,
+          overrides: [aiMcpServiceProvider.overrideWithValue(service)],
+          child: const AiMcpView(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final release = Completer<void>();
+      store.fail = false;
+      store.beforeSave = () => release.future;
+      await tester.tap(find.byKey(const Key('ai-mcp-retry')));
+      await tester.pump();
+      expect(service.changing, true);
+      await tester.pumpWidget(const SizedBox());
+      service.dispose();
+      release.complete();
+      await tester.pumpAndSettle();
+      expect(service.ready, false);
+      expect(service.enabled, false);
+      expect(service.advanced, false);
+      expect(service.changing, false);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'unlock requires exactly three seconds and a manual confirmation; cancel grants nothing',
     (tester) async {

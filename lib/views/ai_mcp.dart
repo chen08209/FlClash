@@ -45,6 +45,15 @@ class AiMcpView extends ConsumerWidget {
                       : l10n.aiMcpListenError,
                 ),
               ),
+            if (service.error == AiMcpError.storage && !service.ready)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  key: const Key('ai-mcp-retry'),
+                  onPressed: service.changing ? null : service.initialize,
+                  child: Text(l10n.aiMcpRetry),
+                ),
+              ),
             if (service.enabled || service.changing)
               ListItem(
                 title: Text(l10n.aiMcpPort),
@@ -82,7 +91,7 @@ class AiMcpView extends ConsumerWidget {
               children: [
                 FilledButton.icon(
                   key: const Key('ai-mcp-copy'),
-                  onPressed: service.ready
+                  onPressed: service.ready && !service.changing
                       ? () async {
                           await Clipboard.setData(
                             ClipboardData(text: service.connectionConfig),

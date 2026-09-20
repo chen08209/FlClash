@@ -281,6 +281,124 @@ void main() {
     expect(backend.calls, ['app_status']);
   });
 
+  test(
+    'rotation and Retry serialize storage before reopening locked',
+    () async {
+      final entered = Completer<void>();
+      final release = Completer<void>();
+      var saves = 0;
+      store.beforeSave = () {
+        saves++;
+        entered.complete();
+        return release.future;
+      };
+      final rotation = service.rotateToken();
+      await entered.future;
+      await service.initialize();
+      await service.rotateToken();
+      await service.setEnabled(true);
+      expect(saves, 1);
+      expect(service.enabled, false);
+      release.complete();
+      await rotation;
+      expect(service.enabled, true);
+      expect(service.advanced, false);
+    },
+  );
+
+  test('dispose during rotation cannot reopen the listener', () async {
+    final localStore = MemoryAiMcpStore();
+    final local = AiMcpService(store: localStore, backend: backend);
+    await local.initialize();
+    await local.setPort(await availableMcpPort());
+    await local.setEnabled(true);
+    final entered = Completer<void>();
+    final release = Completer<void>();
+    localStore.beforeSave = () {
+      entered.complete();
+      return release.future;
+    };
+    final pending = local.rotateToken();
+    await entered.future;
+    local.dispose();
+    release.complete();
+    await pending;
+    expect(local.enabled, false);
+    expect(local.advanced, false);
+    expect(local.changing, false);
+  });
+
+  test(
+    'dispose during initialization load cannot save or publish readiness',
+    () async {
+      final localStore = MemoryAiMcpStore();
+      final release = Completer<void>();
+      localStore.beforeLoad = () => release.future;
+      final local = AiMcpService(store: localStore, backend: backend);
+      final pending = local.initialize();
+      local.dispose();
+      release.complete();
+      await pending;
+      expect(localStore.settings, isEmpty);
+      expect(local.ready, false);
+      expect(local.changing, false);
+    },
+  );
+
+  test('busy control traffic still obeys the global admission cap', () async {
+    await peer.initialize();
+    final entered = Completer<void>();
+    final release = Completer<void>();
+    backend.beforeExecute = () {
+      entered.complete();
+      return release.future;
+    };
+    final pending = peer.call('app_status');
+    await entered.future;
+    final sockets = <Socket>[];
+    final responses = <Future<String>>[];
+    final control = McpHttpPeer(service)..session = peer.session;
+    try {
+      for (var i = 1; i < AiMcpService.maxSessions; i++) {
+        final socket = await Socket.connect(
+          InternetAddress.loopbackIPv4,
+          service.port,
+        );
+        sockets.add(socket);
+        responses.add(utf8.decoder.bind(socket).join());
+        socket.write(
+          'POST /mcp HTTP/1.1\r\nHost: 127.0.0.1:${service.port}\r\nAuthorization: ${peer.token}\r\nContent-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{',
+        );
+        await socket.flush();
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(
+        (await control.send(
+          message: {
+            'jsonrpc': '2.0',
+            'method': 'notifications/cancelled',
+            'params': {'requestId': 2},
+          },
+        )).status,
+        429,
+      );
+      expect((await control.send(method: 'DELETE')).status, 429);
+      for (final socket in sockets) {
+        socket.write('}');
+        await socket.flush();
+      }
+      await Future.wait(responses);
+      release.complete();
+      await pending;
+    } finally {
+      if (!release.isCompleted) release.complete();
+      for (final socket in sockets) {
+        socket.destroy();
+      }
+      control.close();
+    }
+  });
+
   test('body has a total deadline even when chunks keep arriving', () async {
     final socket = await Socket.connect(
       InternetAddress.loopbackIPv4,

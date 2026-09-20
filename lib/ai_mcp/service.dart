@@ -73,7 +73,10 @@ class AiMcpService extends ChangeNotifier {
   }
 
   Future<void> initialize() async {
-    if (_disposed || ready) return;
+    if (_disposed || ready || changing) return;
+    changing = true;
+    _enabled = false;
+    lock();
     try {
       final settings = await store.load();
       if (_disposed) return;
@@ -82,16 +85,22 @@ class AiMcpService extends ChangeNotifier {
         _port = savedPort;
       }
       final token = settings['token'];
-      _token = token is String && RegExp(r'^[A-Za-z0-9_-]{43}$').hasMatch(token)
-          ? token
-          : randomToken();
+      if (_token.isEmpty) {
+        _token =
+            token is String && RegExp(r'^[A-Za-z0-9_-]{43}$').hasMatch(token)
+            ? token
+            : randomToken();
+      }
       await _save();
+      if (_disposed) return;
       ready = true;
       error = null;
     } catch (_) {
-      error = AiMcpError.storage;
+      if (!_disposed) error = AiMcpError.storage;
+    } finally {
+      changing = false;
+      _notify();
     }
-    _notify();
   }
 
   Future<void> _save() => store.save({'port': _port, 'token': _token});
@@ -130,9 +139,11 @@ class AiMcpService extends ChangeNotifier {
     changing = true;
     _notify();
     try {
-      await _stop();
       _token = randomToken();
+      await _stop();
+      if (_disposed) return;
       await _save();
+      if (_disposed) return;
       error = null;
     } catch (_) {
       ready = false;
@@ -311,11 +322,17 @@ class AiMcpService extends ChangeNotifier {
       admitted = true;
       final revision = _revision;
       dynamic body;
+      if (request.contentLength > maxBodyBytes) {
+        await _reject(request, HttpStatus.requestEntityTooLarge);
+        return;
+      }
+      if (request.method == 'DELETE' &&
+          (request.contentLength > 0 ||
+              request.headers[HttpHeaders.transferEncodingHeader] != null)) {
+        await _reject(request, HttpStatus.badRequest);
+        return;
+      }
       if (request.method == 'POST') {
-        if (request.contentLength > maxBodyBytes) {
-          await _reject(request, HttpStatus.requestEntityTooLarge);
-          return;
-        }
         body = await _readBody(request);
         if (body is! Map<String, dynamic>) {
           await _reject(request, HttpStatus.badRequest);
@@ -345,12 +362,19 @@ class AiMcpService extends ChangeNotifier {
         session = _createSession();
         await session.server.connect(session.transport);
       }
-      if (session.busy) {
+      final control =
+          request.method == 'DELETE' ||
+          (body is Map &&
+              body['method'] == 'notifications/cancelled' &&
+              !body.containsKey('id'));
+      if (session.busy && !control) {
         await _reject(request, HttpStatus.tooManyRequests);
         return;
       }
-      session.busy = true;
-      ownsSession = true;
+      if (!control) {
+        session.busy = true;
+        ownsSession = true;
+      }
       session.lastUsed = DateTime.now();
       await session.transport.handleRequest(request, body);
       await request.response.done.timeout(const Duration(seconds: 60));
@@ -392,7 +416,8 @@ class AiMcpService extends ChangeNotifier {
         definition.name,
         description: definition.description,
         inputSchema: definition.schema,
-        callback: (arguments, _) => _call(id, definition, arguments),
+        callback: (arguments, extra) =>
+            _call(id, definition, arguments, extra.signal),
       );
       if (definition.advanced) {
         advancedTools.add(tool);
@@ -409,9 +434,11 @@ class AiMcpService extends ChangeNotifier {
     String sessionId,
     AiMcpTool tool,
     Map<String, dynamic> arguments,
+    AbortSignal signal,
   ) async {
     final revision = _revision;
     void check() {
+      if (signal.aborted) throw const AiMcpFailure('cancelled');
       if (_disposed ||
           !_enabled ||
           !_sessions.containsKey(sessionId) ||

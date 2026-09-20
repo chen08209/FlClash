@@ -294,6 +294,9 @@ func handleTestDelay(params *TestDelayParams) *Delay {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
+	// URLTest invokes its hook synchronously before returning; the host owns this result.
+	finish := beginHostDelayTest(url, proxy.Name())
+	defer finish()
 	delay, err := proxy.URLTest(ctx, url, anyDelayTestStatus)
 	if err != nil {
 		return delayData
@@ -682,7 +685,7 @@ func handleSetupConfig(params *SetupParams) string {
 
 func init() {
 	adapter.UrlTestHook = func(url string, name string, delay uint16) {
-		if !shouldPublishDelay(delay) {
+		if isHostDelayTest(url, name) || !shouldPublishDelay(delay) {
 			return
 		}
 		sendMessage(Message{

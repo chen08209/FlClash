@@ -624,6 +624,7 @@
   "aiMcpChanging": "サービスを更新中…",
   "aiMcpRunning": "稼働中 · 127.0.0.1 のみ",
   "aiMcpStopped": "無効 · アプリ起動時は常に無効",
+  "aiMcpRetry": "再試行",
   "aiMcpStorageError": "MCP 認証情報を保存できません。サービスは無効です。",
   "aiMcpListenError": "ローカル接続を開始できません。ポートが使用中でないか確認してください。",
   "aiMcpPort": "ポート（無効時に変更可能）",

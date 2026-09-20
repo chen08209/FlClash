@@ -186,6 +186,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Введите порт от 1024 до 65535",
     ),
     "aiMcpRelock": MessageLookupByLibrary.simpleMessage("Заблокировать"),
+    "aiMcpRetry": MessageLookupByLibrary.simpleMessage("Повторить"),
     "aiMcpRotateToken": MessageLookupByLibrary.simpleMessage("Заменить токен"),
     "aiMcpRotateWarning": MessageLookupByLibrary.simpleMessage(
       "Все клиенты будут отключены, старый токен отозван, расширенные инструменты заблокированы. Скопируйте новую конфигурацию.",

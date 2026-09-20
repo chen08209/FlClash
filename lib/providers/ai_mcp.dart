@@ -128,45 +128,50 @@ class AppAiMcpBackend implements AiMcpBackend {
         final nodeName = _name(arguments, 'node');
         final profile = ref.read(currentProfileProvider);
         if (profile == null) throw const AiMcpFailure('profile_unavailable');
-        final groups = await _groups();
-        final group = groups.getGroup(groupName);
-        if (group == null ||
-            group.type != GroupType.Selector ||
-            !group.all.any((node) => node.name == nodeName)) {
-          throw const AiMcpFailure('invalid_selection');
-        }
+        final action = ref.read(proxiesActionProvider.notifier);
+        final intent = action.claimSelection(groupName);
         void checkSelection() {
           checkPermission();
-          if (!ref.mounted ||
-              ref.read(currentProfileProvider)?.id != profile.id) {
-            throw const AiMcpFailure('profile_changed');
+          if (!action.isCurrentSelection(intent)) {
+            throw const AiMcpFailure('selection_superseded');
           }
         }
-        checkSelection();
-        final applied = await ref
-            .read(proxiesActionProvider.notifier)
-            .changeProxy(
-              groupName: groupName,
-              proxyName: nodeName,
-              notifyFailure: false,
-              maintainConnections: false,
-              checkContinuation: checkSelection,
-            );
-        if (!applied) throw const AiMcpFailure('selection_failed');
-        checkSelection();
-        final actual = (await _groups()).getGroup(groupName)?.now;
-        checkSelection();
-        final selectedProfile = ref.read(currentProfileProvider);
-        if (actual != nodeName ||
-            selectedProfile?.id != profile.id ||
-            selectedProfile?.selectedMap[groupName] != nodeName) {
-          throw const AiMcpFailure('selection_not_confirmed');
+        try {
+          final groups = await _groups();
+          checkSelection();
+          final group = groups.getGroup(groupName);
+          if (group == null ||
+              group.type != GroupType.Selector ||
+              !group.all.any((node) => node.name == nodeName)) {
+            throw const AiMcpFailure('invalid_selection');
+          }
+          action.confirmSelectionBaseline(intent, group.now);
+          final applied = await action.changeProxy(
+            groupName: groupName,
+            proxyName: nodeName,
+            notifyFailure: false,
+            maintainConnections: false,
+            checkContinuation: checkPermission,
+            intent: intent,
+          );
+          if (!applied) throw const AiMcpFailure('selection_failed');
+          checkSelection();
+          final actual = (await _groups()).getGroup(groupName)?.now;
+          checkSelection();
+          final selectedProfile = ref.read(currentProfileProvider);
+          if (actual != nodeName ||
+              selectedProfile?.id != profile.id ||
+              selectedProfile?.selectedMap[groupName] != nodeName) {
+            throw const AiMcpFailure('selection_not_confirmed');
+          }
+          return {
+            'group': groupName,
+            'selected': actual,
+            'persistence': 'app_managed',
+          };
+        } finally {
+          action.finishSelection(intent);
         }
-        return {
-          'group': groupName,
-          'selected': actual,
-          'persistence': 'app_managed',
-        };
       case 'test_delays':
         final nodes = arguments['nodes'];
         if (nodes is! List ||

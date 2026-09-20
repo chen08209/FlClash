@@ -496,6 +496,7 @@ class SetupAction extends _$SetupAction {
           if (profileId != null) {
             await appPath.ensureProviderDirs(profileId);
           }
+          ref.read(proxiesActionProvider.notifier).invalidateProxyConfig();
           final message = await _core.setupConfig(
             params: _setupParams,
             preloadInvoke: preloadInvoke,

@@ -5170,6 +5170,11 @@ class AppLocalizations {
     );
   }
 
+  /// `Retry`
+  String get aiMcpRetry {
+    return Intl.message('Retry', name: 'aiMcpRetry', desc: '', args: []);
+  }
+
   /// `Unable to save local MCP credentials. Service remains disabled.`
   String get aiMcpStorageError {
     return Intl.message(

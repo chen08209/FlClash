@@ -314,10 +314,10 @@ void main() {
     final rejected = expectLater(old, throwsA(isA<AiMcpFailure>()));
     await firstEntered.future;
     await expectLater(select('three'), throwsA(isA<AiMcpFailure>()));
-    expect(selection(1), 'two');
+    expect(selection(1), 'one');
     firstReply.complete('old refused');
     await rejected;
-    expect(selection(1), 'two');
+    expect(selection(1), 'one');
   });
 
   test(
@@ -347,13 +347,14 @@ void main() {
   );
 
   test(
-    'superseded debounced rollback cannot leak into a later selection',
+    'external accepted selection replaces superseded debounced rollback',
     () async {
       final action = container.read(proxiesActionProvider.notifier);
       action.changeProxyDebounce('group', 'two');
       container
           .read(profilesActionProvider.notifier)
           .updateCurrentSelectedMap('group', 'three');
+      selected = 'three';
       when(() => core.changeProxy(any())).thenAnswer((_) async => 'refused');
       await expectLater(select('four'), throwsA(isA<AiMcpFailure>()));
       expect(selection(1), 'three');

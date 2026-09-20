@@ -146,6 +146,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "请输入 1024 至 65535 的端口",
     ),
     "aiMcpRelock": MessageLookupByLibrary.simpleMessage("立即锁定"),
+    "aiMcpRetry": MessageLookupByLibrary.simpleMessage("重试"),
     "aiMcpRotateToken": MessageLookupByLibrary.simpleMessage("重新生成令牌"),
     "aiMcpRotateWarning": MessageLookupByLibrary.simpleMessage(
       "此操作将断开全部客户端、废弃旧令牌并锁定高级工具。请复制新配置后重新连接。",

@@ -182,6 +182,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Enter a port from 1024 to 65535",
     ),
     "aiMcpRelock": MessageLookupByLibrary.simpleMessage("Lock now"),
+    "aiMcpRetry": MessageLookupByLibrary.simpleMessage("Retry"),
     "aiMcpRotateToken": MessageLookupByLibrary.simpleMessage("Rotate token"),
     "aiMcpRotateWarning": MessageLookupByLibrary.simpleMessage(
       "This disconnects all clients, invalidates the old token and locks advanced tools. Copy the new configuration to reconnect.",

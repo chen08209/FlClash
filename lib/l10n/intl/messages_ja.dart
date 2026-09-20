@@ -152,6 +152,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "1024～65535 のポートを入力してください",
     ),
     "aiMcpRelock": MessageLookupByLibrary.simpleMessage("今すぐロック"),
+    "aiMcpRetry": MessageLookupByLibrary.simpleMessage("再試行"),
     "aiMcpRotateToken": MessageLookupByLibrary.simpleMessage("トークンを再生成"),
     "aiMcpRotateWarning": MessageLookupByLibrary.simpleMessage(
       "全クライアントを切断し、旧トークンを無効にして高度なツールをロックします。新しい設定で再接続してください。",

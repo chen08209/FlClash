@@ -7,12 +7,18 @@ import 'package:fl_clash/ai_mcp/service.dart';
 class MemoryAiMcpStore implements AiMcpStore {
   Map<String, Object?> settings = {};
   bool fail = false;
+  Future<void> Function()? beforeLoad;
+  Future<void> Function()? beforeSave;
 
   @override
-  Future<Map<String, Object?>> load() async => settings;
+  Future<Map<String, Object?>> load() async {
+    await beforeLoad?.call();
+    return settings;
+  }
 
   @override
   Future<void> save(Map<String, Object?> settings) async {
+    await beforeSave?.call();
     if (fail) throw StateError('private storage error');
     this.settings = Map.of(settings);
   }
@@ -77,7 +83,10 @@ class McpHttpPeer {
     if (!omitAuth) request.headers.set('Authorization', authorization ?? token);
     if (origin != null) request.headers.set('Origin', origin);
     if (session != null) request.headers.set('mcp-session-id', session!);
-    if (method == 'POST') {
+    if (method == 'DELETE' && raw != null) {
+      request.contentLength = utf8.encode(raw).length;
+    }
+    if (method == 'POST' || raw != null) {
       request.headers.contentType = ContentType.json;
       request.write(raw ?? jsonEncode(message));
     }

@@ -19,6 +19,24 @@ class _DelayTestJob {
   bool cancelled = false;
 }
 
+class _ProxySelectionState {
+  _ProxySelectionState(this.confirmedName);
+
+  String? confirmedName;
+  int confirmedRevision = 0;
+  int revision = 0;
+  ProxySelectionIntent? latest;
+}
+
+class ProxySelectionIntent {
+  ProxySelectionIntent._(this.groupName, this._state, this._revision);
+
+  final String groupName;
+  final _ProxySelectionState _state;
+  final int _revision;
+  bool _settled = false;
+}
+
 @Riverpod(keepAlive: true)
 class ProxiesAction extends _$ProxiesAction {
   CoreController get _core => ref.read(coreHandlerProvider);
@@ -27,8 +45,7 @@ class ProxiesAction extends _$ProxiesAction {
 
   final List<_DelayTestJob> _delayTestJobs = [];
 
-  final Map<String, String> _pendingSelectedRollback = {};
-  final Map<String, Object> _selectionOperations = {};
+  final Map<String, _ProxySelectionState> _selections = {};
   int _delayTestGeneration = 0;
 
   int get delayTestGeneration => _delayTestGeneration;
@@ -36,25 +53,56 @@ class ProxiesAction extends _$ProxiesAction {
   @override
   void build() {
     ref.listen(currentProfileIdProvider, (_, _) {
-      _selectionOperations.clear();
-      _pendingSelectedRollback.clear();
-      cancelDelayTests();
-    });
-    ref.listen(profilesProvider, (previous, next) {
-      final id = ref.read(currentProfileIdProvider);
-      final before = previous?.getProfile(id)?.selectedMap;
-      final after = next.getProfile(id)?.selectedMap;
-      _selectionOperations.removeWhere((group, _) {
-        if (before?[group] == after?[group]) return false;
-        _pendingSelectedRollback.remove(group);
-        return true;
-      });
+      invalidateProxyConfig();
     });
     ref.listen(coreStatusProvider, (_, next) {
       if (next != CoreStatus.connected) {
-        cancelDelayTests();
+        invalidateProxyConfig();
       }
     });
+  }
+
+  void invalidateProxyConfig() {
+    _selections.clear();
+    cancelDelayTests();
+  }
+
+  void invalidateSelection(String groupName) {
+    _selections.remove(groupName);
+  }
+
+  ProxySelectionIntent claimSelection(String groupName) {
+    final state = _selections.putIfAbsent(
+      groupName,
+      () => _ProxySelectionState(_currentSelectedName(groupName)),
+    );
+    final intent = ProxySelectionIntent._(groupName, state, ++state.revision);
+    state.latest = intent;
+    return intent;
+  }
+
+  bool isCurrentSelection(ProxySelectionIntent intent) =>
+      ref.mounted &&
+      identical(_selections[intent.groupName], intent._state) &&
+      identical(intent._state.latest, intent);
+
+  void confirmSelectionBaseline(ProxySelectionIntent intent, String? name) {
+    if (isCurrentSelection(intent) &&
+        intent._state.confirmedRevision == 0 &&
+        name != null &&
+        name.isNotEmpty) {
+      intent._state.confirmedName = name;
+    }
+  }
+
+  void finishSelection(ProxySelectionIntent intent) {
+    intent._settled = true;
+  }
+
+  void _writeSelection(String groupName, String? proxyName) {
+    ref
+        .read(profilesActionProvider.notifier)
+        .updateCurrentSelectedMap(groupName, proxyName, userIntent: false);
   }
 
   void cancelDelayTests() {
@@ -71,31 +119,25 @@ class ProxiesAction extends _$ProxiesAction {
   }
 
   void changeProxyDebounce(String groupName, String proxyName) {
-    _selectionOperations.remove(groupName);
-    _pendingSelectedRollback.putIfAbsent(
-      groupName,
-      () => _currentSelectedName(groupName),
-    );
-    ref
-        .read(profilesActionProvider.notifier)
-        .updateCurrentSelectedMap(groupName, proxyName);
-    final operation = Object();
-    _selectionOperations[groupName] = operation;
+    final intent = claimSelection(groupName);
+    _writeSelection(groupName, proxyName);
     debouncer.call((FunctionTag.changeProxy, groupName), (
       String groupName,
       String proxyName,
     ) async {
-      if (!ref.mounted ||
-          !identical(_selectionOperations[groupName], operation)) {
-        return;
-      }
-      await changeProxy(groupName: groupName, proxyName: proxyName);
+      if (!isCurrentSelection(intent)) return;
+      await changeProxy(
+        groupName: groupName,
+        proxyName: proxyName,
+        intent: intent,
+      );
       updateGroupsDebounce();
     }, args: [groupName, proxyName]);
   }
 
-  String _currentSelectedName(String groupName) {
-    return ref.read(currentProfileProvider)?.selectedMap[groupName] ?? '';
+  String? _currentSelectedName(String groupName) {
+    return ref.read(currentProfileProvider)?.selectedMap[groupName] ??
+        ref.read(groupsProvider).getGroup(groupName)?.now;
   }
 
   Future<void> updateGroups() async {
@@ -167,26 +209,37 @@ class ProxiesAction extends _$ProxiesAction {
     bool notifyFailure = true,
     bool maintainConnections = true,
     void Function()? checkContinuation,
+    ProxySelectionIntent? intent,
   }) async {
     checkContinuation?.call();
-    final profileId = ref.read(currentProfileIdProvider);
-    final profilesAction = ref.read(profilesActionProvider.notifier);
-    final rollbackName =
-        _pendingSelectedRollback.remove(groupName) ??
-        _currentSelectedName(groupName);
-    profilesAction.updateCurrentSelectedMap(groupName, proxyName);
-    final operation = Object();
-    _selectionOperations[groupName] = operation;
+    final operation = intent ?? claimSelection(groupName);
+    if (operation.groupName != groupName || !isCurrentSelection(operation)) {
+      return false;
+    }
+    _writeSelection(groupName, proxyName);
 
-    bool isCurrent() {
+    bool canReconcile() {
       if (!ref.mounted ||
-          ref.read(currentProfileIdProvider) != profileId ||
-          !identical(_selectionOperations[groupName], operation)) {
+          !identical(_selections[groupName], operation._state)) {
         return false;
       }
       checkContinuation?.call();
       return true;
     }
+
+    void reconcile({required bool accepted}) {
+      final state = operation._state;
+      operation._settled = true;
+      if (accepted && operation._revision > state.confirmedRevision) {
+        state.confirmedRevision = operation._revision;
+        state.confirmedName = proxyName;
+      }
+      if (state.latest?._settled == true) {
+        _writeSelection(groupName, state.confirmedName);
+      }
+    }
+
+    bool isCurrent() => canReconcile() && isCurrentSelection(operation);
 
     try {
       try {
@@ -195,12 +248,13 @@ class ProxiesAction extends _$ProxiesAction {
         );
         if (message.isNotEmpty) throw StateError(message);
       } catch (error) {
-        if (!isCurrent()) return false;
+        if (!canReconcile()) return false;
+        reconcile(accepted: false);
+        if (!isCurrentSelection(operation)) return false;
         commonPrint.log(
           'changeProxy($groupName -> $proxyName) failed: $error',
           logLevel: coreFailureLogLevel(error),
         );
-        profilesAction.updateCurrentSelectedMap(groupName, rollbackName);
         if (notifyFailure) {
           dialogs.showNotifier(
             currentAppLocalizations.changeProxyFailedTip,
@@ -209,7 +263,9 @@ class ProxiesAction extends _$ProxiesAction {
         }
         return false;
       }
-      if (!isCurrent()) return false;
+      if (!canReconcile()) return false;
+      reconcile(accepted: true);
+      if (!isCurrentSelection(operation)) return false;
       if (maintainConnections) {
         try {
           if (ref.read(appSettingProvider).closeConnections) {
@@ -228,9 +284,7 @@ class ProxiesAction extends _$ProxiesAction {
       ref.read(checkIpNumProvider.notifier).add();
       return true;
     } finally {
-      if (identical(_selectionOperations[groupName], operation)) {
-        _selectionOperations.remove(groupName);
-      }
+      finishSelection(operation);
     }
   }
 
