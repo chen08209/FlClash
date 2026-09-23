@@ -1,4 +1,5 @@
 import 'package:fl_clash/enum/enum.dart';
+import 'package:flutter/foundation.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/widgets/sheet.dart';
 import 'package:material_ui/material_ui.dart';
@@ -32,6 +33,11 @@ class BottomInsetScope extends InheritedWidget {
   static const double floatingActionButtonInset =
       kFloatingActionButtonMargin + _floatingActionButtonHeight;
 
+  static const double dockedSearchHeight = 48;
+  static const double dockedSearchMargin = kFloatingActionButtonMargin;
+  static const double dockedSearchInset =
+      dockedSearchMargin + dockedSearchHeight;
+
   final double inset;
 
   const BottomInsetScope({
@@ -49,6 +55,45 @@ class BottomInsetScope extends InheritedWidget {
 
   @override
   bool updateShouldNotify(BottomInsetScope oldWidget) {
+    return inset != oldWidget.inset;
+  }
+}
+
+/// The room content still has to leave at its top, where the scaffold has
+/// already placed something of its own there.
+class TopInsetScope extends InheritedWidget {
+  final double inset;
+
+  const TopInsetScope({super.key, required this.inset, required super.child});
+
+  static double? of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<TopInsetScope>()?.inset;
+  }
+
+  @override
+  bool updateShouldNotify(TopInsetScope oldWidget) {
+    return inset != oldWidget.inset;
+  }
+}
+
+/// How far a page's app bar reaches over the body floating under it.
+class FloatingBarScope extends InheritedWidget {
+  final double inset;
+
+  const FloatingBarScope({
+    super.key,
+    required this.inset,
+    required super.child,
+  });
+
+  static double? of(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<FloatingBarScope>()
+        ?.inset;
+  }
+
+  @override
+  bool updateShouldNotify(FloatingBarScope oldWidget) {
     return inset != oldWidget.inset;
   }
 }
@@ -188,4 +233,25 @@ class ProfileIdProvider extends InheritedWidget {
   @override
   bool updateShouldNotify(ProfileIdProvider oldWidget) =>
       profileId != oldWidget.profileId;
+}
+
+/// How far a sheet's content hangs below the screen at its current detent.
+class SheetOverhangScope extends InheritedWidget {
+  final ValueListenable<double> overhang;
+
+  const SheetOverhangScope({
+    super.key,
+    required this.overhang,
+    required super.child,
+  });
+
+  static ValueListenable<double>? of(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<SheetOverhangScope>()
+        ?.overhang;
+  }
+
+  @override
+  bool updateShouldNotify(SheetOverhangScope oldWidget) =>
+      overhang != oldWidget.overhang;
 }
