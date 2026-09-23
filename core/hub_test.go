@@ -409,6 +409,27 @@ func TestHandleValidateConfigAcceptsAValidFile(t *testing.T) {
 	}
 }
 
+func TestHandleValidateProxiesReportsEachProxyInPlace(t *testing.T) {
+	got := handleValidateProxies([]map[string]any{
+		{"name": "ok", "type": "socks5", "server": "127.0.0.1", "port": 1080},
+		{"name": "untyped", "server": "127.0.0.1", "port": 1080},
+		{"name": "unknown", "type": "nope"},
+	})
+
+	if len(got) != 3 {
+		t.Fatalf("handleValidateProxies returned %d results, want 3", len(got))
+	}
+	if got[0] != "" {
+		t.Errorf("valid proxy reported %q", got[0])
+	}
+	if !strings.Contains(got[1], "missing type") {
+		t.Errorf("untyped proxy reported %q, want missing type", got[1])
+	}
+	if !strings.Contains(got[2], "unsupport") {
+		t.Errorf("unknown type reported %q, want unsupported", got[2])
+	}
+}
+
 func TestHandleValidateConfigReportsAMissingFile(t *testing.T) {
 	got := handleValidateConfig(filepath.Join(t.TempDir(), "absent.yaml"))
 

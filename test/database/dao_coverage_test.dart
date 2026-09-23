@@ -459,6 +459,12 @@ void main() {
           type: GroupType.Selector,
         ).toCompanion(profile.id),
       );
+      await database.customProxies.put(
+        CustomProxy(
+          id: profile.id,
+          definition: const {'name': 'Node', 'type': 'socks5'},
+        ).toCompanion(profile.id),
+      );
     }
 
     await database.deleteProfile(gone.id);
@@ -469,6 +475,8 @@ void main() {
     expect(links.map((link) => link.profileId), unorderedEquals([null, 2]));
     final groups = await database.proxyGroups.all().get();
     expect(groups.map((group) => group.profileId), [kept.id]);
+    final proxies = await database.customProxies.all().get();
+    expect(proxies.map((proxy) => proxy.profileId), [kept.id]);
   });
 
   test('deleting rules takes their links with them', () async {
@@ -775,11 +783,21 @@ void main() {
       name: 'Replacement',
       type: GroupType.Fallback,
     );
+    const replacementProxy = CustomProxy(
+      id: 45,
+      definition: {'name': 'Node', 'type': 'socks5'},
+    );
     await database.setProfileCustomData(
       profile.id,
+      [replacementProxy],
       [replacementGroup],
       [replacementRule],
     );
+    final customProxy =
+        (await database.customProxiesDao.query(profile.id).get()).single;
+    expect(customProxy.id, replacementProxy.id);
+    expect(customProxy.profileId, profile.id);
+    expect(customProxy.definition, replacementProxy.definition);
     expect(
       (await database.rulesDao.queryProfileCustomRules(profile.id).get())
           .single

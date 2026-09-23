@@ -643,6 +643,1561 @@ as String?,
 
 }
 
+
+/// @nodoc
+mixin _$CustomProxy {
+
+ int? get profileId;@JsonKey(fromJson: Snowflake.buildId) int get id; Map<String, dynamic> get definition; String? get order;
+/// Create a copy of CustomProxy
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CustomProxyCopyWith<CustomProxy> get copyWith => _$CustomProxyCopyWithImpl<CustomProxy>(this as CustomProxy, _$identity);
+
+  /// Serializes this CustomProxy to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as CustomProxy;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CustomProxy&&(identical(other.profileId, _this.profileId) || other.profileId == _this.profileId)&&(identical(other.id, _this.id) || other.id == _this.id)&&const DeepCollectionEquality().equals(other.definition, _this.definition)&&(identical(other.order, _this.order) || other.order == _this.order));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as CustomProxy;
+  return Object.hash(runtimeType,_this.profileId,_this.id,const DeepCollectionEquality().hash(_this.definition),_this.order);
+}
+
+@override
+String toString() {
+  final _this = this as CustomProxy;
+  return 'CustomProxy(profileId: ${_this.profileId}, id: ${_this.id}, definition: ${_this.definition}, order: ${_this.order})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $CustomProxyCopyWith<$Res>  {
+  factory $CustomProxyCopyWith(CustomProxy value, $Res Function(CustomProxy) _then) = _$CustomProxyCopyWithImpl;
+@useResult
+$Res call({
+ int? profileId,@JsonKey(fromJson: Snowflake.buildId) int id, Map<String, dynamic> definition, String? order
+});
+
+
+
+
+}
+/// @nodoc
+class _$CustomProxyCopyWithImpl<$Res>
+    implements $CustomProxyCopyWith<$Res> {
+  _$CustomProxyCopyWithImpl(this._self, this._then);
+
+  final CustomProxy _self;
+  final $Res Function(CustomProxy) _then;
+
+/// Create a copy of CustomProxy
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? profileId = freezed,Object? id = null,Object? definition = null,Object? order = freezed,}) {
+  return _then(CustomProxy(
+profileId: freezed == profileId ? _self.profileId : profileId // ignore: cast_nullable_to_non_nullable
+as int?,id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,definition: null == definition ? _self.definition : definition // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>,order: freezed == order ? _self.order : order // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [CustomProxy].
+extension CustomProxyPatterns on CustomProxy {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _CustomProxy value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _CustomProxy() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _CustomProxy value)  $default,){
+final _that = this;
+switch (_that) {
+case _CustomProxy():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _CustomProxy value)?  $default,){
+final _that = this;
+switch (_that) {
+case _CustomProxy() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int? profileId, @JsonKey(fromJson: Snowflake.buildId)  int id,  Map<String, dynamic> definition,  String? order)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _CustomProxy() when $default != null:
+return $default(_that.profileId,_that.id,_that.definition,_that.order);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int? profileId, @JsonKey(fromJson: Snowflake.buildId)  int id,  Map<String, dynamic> definition,  String? order)  $default,) {final _that = this;
+switch (_that) {
+case _CustomProxy():
+return $default(_that.profileId,_that.id,_that.definition,_that.order);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int? profileId, @JsonKey(fromJson: Snowflake.buildId)  int id,  Map<String, dynamic> definition,  String? order)?  $default,) {final _that = this;
+switch (_that) {
+case _CustomProxy() when $default != null:
+return $default(_that.profileId,_that.id,_that.definition,_that.order);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _CustomProxy implements CustomProxy {
+  const _CustomProxy({this.profileId, @JsonKey(fromJson: Snowflake.buildId) required this.id,  Map<String, dynamic> definition = const {}, this.order}): _definition = definition;
+  factory _CustomProxy.fromJson(Map<String, dynamic> json) => _$CustomProxyFromJson(json);
+
+@override final  int? profileId;
+@override@JsonKey(fromJson: Snowflake.buildId) final  int id;
+ final  Map<String, dynamic> _definition;
+@override@JsonKey() Map<String, dynamic> get definition {
+  if (_definition is EqualUnmodifiableMapView) return _definition;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_definition);
+}
+
+@override final  String? order;
+
+/// Create a copy of CustomProxy
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$CustomProxyCopyWith<_CustomProxy> get copyWith => __$CustomProxyCopyWithImpl<_CustomProxy>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$CustomProxyToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CustomProxy&&(identical(other.profileId, profileId) || other.profileId == profileId)&&(identical(other.id, id) || other.id == id)&&const DeepCollectionEquality().equals(other.definition, _definition)&&(identical(other.order, order) || other.order == order));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,profileId,id,const DeepCollectionEquality().hash(_definition),order);
+}
+
+@override
+String toString() {
+    return 'CustomProxy(profileId: $profileId, id: $id, definition: $definition, order: $order)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$CustomProxyCopyWith<$Res> implements $CustomProxyCopyWith<$Res> {
+  factory _$CustomProxyCopyWith(_CustomProxy value, $Res Function(_CustomProxy) _then) = __$CustomProxyCopyWithImpl;
+@override @useResult
+$Res call({
+ int? profileId,@JsonKey(fromJson: Snowflake.buildId) int id, Map<String, dynamic> definition, String? order
+});
+
+
+
+
+}
+/// @nodoc
+class __$CustomProxyCopyWithImpl<$Res>
+    implements _$CustomProxyCopyWith<$Res> {
+  __$CustomProxyCopyWithImpl(this._self, this._then);
+
+  final _CustomProxy _self;
+  final $Res Function(_CustomProxy) _then;
+
+/// Create a copy of CustomProxy
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? profileId = freezed,Object? id = null,Object? definition = null,Object? order = freezed,}) {
+  return _then(_CustomProxy(
+profileId: freezed == profileId ? _self.profileId : profileId // ignore: cast_nullable_to_non_nullable
+as int?,id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,definition: null == definition ? _self._definition : definition // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>,order: freezed == order ? _self.order : order // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+/// @nodoc
+mixin _$OverwriteIssue {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is OverwriteIssue);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'OverwriteIssue()';
+}
+
+
+}
+
+/// @nodoc
+class $OverwriteIssueCopyWith<$Res>  {
+$OverwriteIssueCopyWith(OverwriteIssue _, $Res Function(OverwriteIssue) __);
+}
+
+
+/// Adds pattern-matching-related methods to [OverwriteIssue].
+extension OverwriteIssuePatterns on OverwriteIssue {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( EmptyNameIssue value)?  emptyName,TResult Function( ReservedNameIssue value)?  reservedName,TResult Function( DuplicateNameIssue value)?  duplicateName,TResult Function( CoreRejectedIssue value)?  coreRejected,TResult Function( MissingProxiesIssue value)?  missingProxies,TResult Function( MissingProvidersIssue value)?  missingProviders,TResult Function( NoProxySourceIssue value)?  noProxySource,TResult Function( GroupLoopIssue value)?  groupLoop,TResult Function( InvalidPayloadIssue value)?  invalidPayload,TResult Function( MissingRuleSetIssue value)?  missingRuleSet,TResult Function( MissingSubRuleIssue value)?  missingSubRule,TResult Function( MissingTargetIssue value)?  missingTarget,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case EmptyNameIssue() when emptyName != null:
+return emptyName(_that);case ReservedNameIssue() when reservedName != null:
+return reservedName(_that);case DuplicateNameIssue() when duplicateName != null:
+return duplicateName(_that);case CoreRejectedIssue() when coreRejected != null:
+return coreRejected(_that);case MissingProxiesIssue() when missingProxies != null:
+return missingProxies(_that);case MissingProvidersIssue() when missingProviders != null:
+return missingProviders(_that);case NoProxySourceIssue() when noProxySource != null:
+return noProxySource(_that);case GroupLoopIssue() when groupLoop != null:
+return groupLoop(_that);case InvalidPayloadIssue() when invalidPayload != null:
+return invalidPayload(_that);case MissingRuleSetIssue() when missingRuleSet != null:
+return missingRuleSet(_that);case MissingSubRuleIssue() when missingSubRule != null:
+return missingSubRule(_that);case MissingTargetIssue() when missingTarget != null:
+return missingTarget(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( EmptyNameIssue value)  emptyName,required TResult Function( ReservedNameIssue value)  reservedName,required TResult Function( DuplicateNameIssue value)  duplicateName,required TResult Function( CoreRejectedIssue value)  coreRejected,required TResult Function( MissingProxiesIssue value)  missingProxies,required TResult Function( MissingProvidersIssue value)  missingProviders,required TResult Function( NoProxySourceIssue value)  noProxySource,required TResult Function( GroupLoopIssue value)  groupLoop,required TResult Function( InvalidPayloadIssue value)  invalidPayload,required TResult Function( MissingRuleSetIssue value)  missingRuleSet,required TResult Function( MissingSubRuleIssue value)  missingSubRule,required TResult Function( MissingTargetIssue value)  missingTarget,}){
+final _that = this;
+switch (_that) {
+case EmptyNameIssue():
+return emptyName(_that);case ReservedNameIssue():
+return reservedName(_that);case DuplicateNameIssue():
+return duplicateName(_that);case CoreRejectedIssue():
+return coreRejected(_that);case MissingProxiesIssue():
+return missingProxies(_that);case MissingProvidersIssue():
+return missingProviders(_that);case NoProxySourceIssue():
+return noProxySource(_that);case GroupLoopIssue():
+return groupLoop(_that);case InvalidPayloadIssue():
+return invalidPayload(_that);case MissingRuleSetIssue():
+return missingRuleSet(_that);case MissingSubRuleIssue():
+return missingSubRule(_that);case MissingTargetIssue():
+return missingTarget(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( EmptyNameIssue value)?  emptyName,TResult? Function( ReservedNameIssue value)?  reservedName,TResult? Function( DuplicateNameIssue value)?  duplicateName,TResult? Function( CoreRejectedIssue value)?  coreRejected,TResult? Function( MissingProxiesIssue value)?  missingProxies,TResult? Function( MissingProvidersIssue value)?  missingProviders,TResult? Function( NoProxySourceIssue value)?  noProxySource,TResult? Function( GroupLoopIssue value)?  groupLoop,TResult? Function( InvalidPayloadIssue value)?  invalidPayload,TResult? Function( MissingRuleSetIssue value)?  missingRuleSet,TResult? Function( MissingSubRuleIssue value)?  missingSubRule,TResult? Function( MissingTargetIssue value)?  missingTarget,}){
+final _that = this;
+switch (_that) {
+case EmptyNameIssue() when emptyName != null:
+return emptyName(_that);case ReservedNameIssue() when reservedName != null:
+return reservedName(_that);case DuplicateNameIssue() when duplicateName != null:
+return duplicateName(_that);case CoreRejectedIssue() when coreRejected != null:
+return coreRejected(_that);case MissingProxiesIssue() when missingProxies != null:
+return missingProxies(_that);case MissingProvidersIssue() when missingProviders != null:
+return missingProviders(_that);case NoProxySourceIssue() when noProxySource != null:
+return noProxySource(_that);case GroupLoopIssue() when groupLoop != null:
+return groupLoop(_that);case InvalidPayloadIssue() when invalidPayload != null:
+return invalidPayload(_that);case MissingRuleSetIssue() when missingRuleSet != null:
+return missingRuleSet(_that);case MissingSubRuleIssue() when missingSubRule != null:
+return missingSubRule(_that);case MissingTargetIssue() when missingTarget != null:
+return missingTarget(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  emptyName,TResult Function( String name)?  reservedName,TResult Function( String name)?  duplicateName,TResult Function( String message)?  coreRejected,TResult Function( List<String> names)?  missingProxies,TResult Function( List<String> names)?  missingProviders,TResult Function()?  noProxySource,TResult Function( List<String> names)?  groupLoop,TResult Function( RulePayloadError error)?  invalidPayload,TResult Function( String name)?  missingRuleSet,TResult Function( String name)?  missingSubRule,TResult Function( String name)?  missingTarget,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case EmptyNameIssue() when emptyName != null:
+return emptyName();case ReservedNameIssue() when reservedName != null:
+return reservedName(_that.name);case DuplicateNameIssue() when duplicateName != null:
+return duplicateName(_that.name);case CoreRejectedIssue() when coreRejected != null:
+return coreRejected(_that.message);case MissingProxiesIssue() when missingProxies != null:
+return missingProxies(_that.names);case MissingProvidersIssue() when missingProviders != null:
+return missingProviders(_that.names);case NoProxySourceIssue() when noProxySource != null:
+return noProxySource();case GroupLoopIssue() when groupLoop != null:
+return groupLoop(_that.names);case InvalidPayloadIssue() when invalidPayload != null:
+return invalidPayload(_that.error);case MissingRuleSetIssue() when missingRuleSet != null:
+return missingRuleSet(_that.name);case MissingSubRuleIssue() when missingSubRule != null:
+return missingSubRule(_that.name);case MissingTargetIssue() when missingTarget != null:
+return missingTarget(_that.name);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  emptyName,required TResult Function( String name)  reservedName,required TResult Function( String name)  duplicateName,required TResult Function( String message)  coreRejected,required TResult Function( List<String> names)  missingProxies,required TResult Function( List<String> names)  missingProviders,required TResult Function()  noProxySource,required TResult Function( List<String> names)  groupLoop,required TResult Function( RulePayloadError error)  invalidPayload,required TResult Function( String name)  missingRuleSet,required TResult Function( String name)  missingSubRule,required TResult Function( String name)  missingTarget,}) {final _that = this;
+switch (_that) {
+case EmptyNameIssue():
+return emptyName();case ReservedNameIssue():
+return reservedName(_that.name);case DuplicateNameIssue():
+return duplicateName(_that.name);case CoreRejectedIssue():
+return coreRejected(_that.message);case MissingProxiesIssue():
+return missingProxies(_that.names);case MissingProvidersIssue():
+return missingProviders(_that.names);case NoProxySourceIssue():
+return noProxySource();case GroupLoopIssue():
+return groupLoop(_that.names);case InvalidPayloadIssue():
+return invalidPayload(_that.error);case MissingRuleSetIssue():
+return missingRuleSet(_that.name);case MissingSubRuleIssue():
+return missingSubRule(_that.name);case MissingTargetIssue():
+return missingTarget(_that.name);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  emptyName,TResult? Function( String name)?  reservedName,TResult? Function( String name)?  duplicateName,TResult? Function( String message)?  coreRejected,TResult? Function( List<String> names)?  missingProxies,TResult? Function( List<String> names)?  missingProviders,TResult? Function()?  noProxySource,TResult? Function( List<String> names)?  groupLoop,TResult? Function( RulePayloadError error)?  invalidPayload,TResult? Function( String name)?  missingRuleSet,TResult? Function( String name)?  missingSubRule,TResult? Function( String name)?  missingTarget,}) {final _that = this;
+switch (_that) {
+case EmptyNameIssue() when emptyName != null:
+return emptyName();case ReservedNameIssue() when reservedName != null:
+return reservedName(_that.name);case DuplicateNameIssue() when duplicateName != null:
+return duplicateName(_that.name);case CoreRejectedIssue() when coreRejected != null:
+return coreRejected(_that.message);case MissingProxiesIssue() when missingProxies != null:
+return missingProxies(_that.names);case MissingProvidersIssue() when missingProviders != null:
+return missingProviders(_that.names);case NoProxySourceIssue() when noProxySource != null:
+return noProxySource();case GroupLoopIssue() when groupLoop != null:
+return groupLoop(_that.names);case InvalidPayloadIssue() when invalidPayload != null:
+return invalidPayload(_that.error);case MissingRuleSetIssue() when missingRuleSet != null:
+return missingRuleSet(_that.name);case MissingSubRuleIssue() when missingSubRule != null:
+return missingSubRule(_that.name);case MissingTargetIssue() when missingTarget != null:
+return missingTarget(_that.name);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class EmptyNameIssue implements OverwriteIssue {
+  const EmptyNameIssue();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is EmptyNameIssue);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'OverwriteIssue.emptyName()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class ReservedNameIssue implements OverwriteIssue {
+  const ReservedNameIssue(this.name);
+  
+
+ final  String name;
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ReservedNameIssueCopyWith<ReservedNameIssue> get copyWith => _$ReservedNameIssueCopyWithImpl<ReservedNameIssue>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ReservedNameIssue&&(identical(other.name, name) || other.name == name));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,name);
+}
+
+@override
+String toString() {
+    return 'OverwriteIssue.reservedName(name: $name)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ReservedNameIssueCopyWith<$Res> implements $OverwriteIssueCopyWith<$Res> {
+  factory $ReservedNameIssueCopyWith(ReservedNameIssue value, $Res Function(ReservedNameIssue) _then) = _$ReservedNameIssueCopyWithImpl;
+@useResult
+$Res call({
+ String name
+});
+
+
+
+
+}
+/// @nodoc
+class _$ReservedNameIssueCopyWithImpl<$Res>
+    implements $ReservedNameIssueCopyWith<$Res> {
+  _$ReservedNameIssueCopyWithImpl(this._self, this._then);
+
+  final ReservedNameIssue _self;
+  final $Res Function(ReservedNameIssue) _then;
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? name = null,}) {
+  return _then(ReservedNameIssue(
+null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class DuplicateNameIssue implements OverwriteIssue {
+  const DuplicateNameIssue(this.name);
+  
+
+ final  String name;
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$DuplicateNameIssueCopyWith<DuplicateNameIssue> get copyWith => _$DuplicateNameIssueCopyWithImpl<DuplicateNameIssue>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DuplicateNameIssue&&(identical(other.name, name) || other.name == name));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,name);
+}
+
+@override
+String toString() {
+    return 'OverwriteIssue.duplicateName(name: $name)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $DuplicateNameIssueCopyWith<$Res> implements $OverwriteIssueCopyWith<$Res> {
+  factory $DuplicateNameIssueCopyWith(DuplicateNameIssue value, $Res Function(DuplicateNameIssue) _then) = _$DuplicateNameIssueCopyWithImpl;
+@useResult
+$Res call({
+ String name
+});
+
+
+
+
+}
+/// @nodoc
+class _$DuplicateNameIssueCopyWithImpl<$Res>
+    implements $DuplicateNameIssueCopyWith<$Res> {
+  _$DuplicateNameIssueCopyWithImpl(this._self, this._then);
+
+  final DuplicateNameIssue _self;
+  final $Res Function(DuplicateNameIssue) _then;
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? name = null,}) {
+  return _then(DuplicateNameIssue(
+null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class CoreRejectedIssue implements OverwriteIssue {
+  const CoreRejectedIssue(this.message);
+  
+
+ final  String message;
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CoreRejectedIssueCopyWith<CoreRejectedIssue> get copyWith => _$CoreRejectedIssueCopyWithImpl<CoreRejectedIssue>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is CoreRejectedIssue&&(identical(other.message, message) || other.message == message));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,message);
+}
+
+@override
+String toString() {
+    return 'OverwriteIssue.coreRejected(message: $message)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $CoreRejectedIssueCopyWith<$Res> implements $OverwriteIssueCopyWith<$Res> {
+  factory $CoreRejectedIssueCopyWith(CoreRejectedIssue value, $Res Function(CoreRejectedIssue) _then) = _$CoreRejectedIssueCopyWithImpl;
+@useResult
+$Res call({
+ String message
+});
+
+
+
+
+}
+/// @nodoc
+class _$CoreRejectedIssueCopyWithImpl<$Res>
+    implements $CoreRejectedIssueCopyWith<$Res> {
+  _$CoreRejectedIssueCopyWithImpl(this._self, this._then);
+
+  final CoreRejectedIssue _self;
+  final $Res Function(CoreRejectedIssue) _then;
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
+  return _then(CoreRejectedIssue(
+null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class MissingProxiesIssue implements OverwriteIssue {
+  const MissingProxiesIssue( List<String> names): _names = names;
+  
+
+ final  List<String> _names;
+ List<String> get names {
+  if (_names is EqualUnmodifiableListView) return _names;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_names);
+}
+
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MissingProxiesIssueCopyWith<MissingProxiesIssue> get copyWith => _$MissingProxiesIssueCopyWithImpl<MissingProxiesIssue>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is MissingProxiesIssue&&const DeepCollectionEquality().equals(other.names, _names));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_names));
+}
+
+@override
+String toString() {
+    return 'OverwriteIssue.missingProxies(names: $names)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MissingProxiesIssueCopyWith<$Res> implements $OverwriteIssueCopyWith<$Res> {
+  factory $MissingProxiesIssueCopyWith(MissingProxiesIssue value, $Res Function(MissingProxiesIssue) _then) = _$MissingProxiesIssueCopyWithImpl;
+@useResult
+$Res call({
+ List<String> names
+});
+
+
+
+
+}
+/// @nodoc
+class _$MissingProxiesIssueCopyWithImpl<$Res>
+    implements $MissingProxiesIssueCopyWith<$Res> {
+  _$MissingProxiesIssueCopyWithImpl(this._self, this._then);
+
+  final MissingProxiesIssue _self;
+  final $Res Function(MissingProxiesIssue) _then;
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? names = null,}) {
+  return _then(MissingProxiesIssue(
+null == names ? _self._names : names // ignore: cast_nullable_to_non_nullable
+as List<String>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class MissingProvidersIssue implements OverwriteIssue {
+  const MissingProvidersIssue( List<String> names): _names = names;
+  
+
+ final  List<String> _names;
+ List<String> get names {
+  if (_names is EqualUnmodifiableListView) return _names;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_names);
+}
+
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MissingProvidersIssueCopyWith<MissingProvidersIssue> get copyWith => _$MissingProvidersIssueCopyWithImpl<MissingProvidersIssue>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is MissingProvidersIssue&&const DeepCollectionEquality().equals(other.names, _names));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_names));
+}
+
+@override
+String toString() {
+    return 'OverwriteIssue.missingProviders(names: $names)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MissingProvidersIssueCopyWith<$Res> implements $OverwriteIssueCopyWith<$Res> {
+  factory $MissingProvidersIssueCopyWith(MissingProvidersIssue value, $Res Function(MissingProvidersIssue) _then) = _$MissingProvidersIssueCopyWithImpl;
+@useResult
+$Res call({
+ List<String> names
+});
+
+
+
+
+}
+/// @nodoc
+class _$MissingProvidersIssueCopyWithImpl<$Res>
+    implements $MissingProvidersIssueCopyWith<$Res> {
+  _$MissingProvidersIssueCopyWithImpl(this._self, this._then);
+
+  final MissingProvidersIssue _self;
+  final $Res Function(MissingProvidersIssue) _then;
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? names = null,}) {
+  return _then(MissingProvidersIssue(
+null == names ? _self._names : names // ignore: cast_nullable_to_non_nullable
+as List<String>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class NoProxySourceIssue implements OverwriteIssue {
+  const NoProxySourceIssue();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is NoProxySourceIssue);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'OverwriteIssue.noProxySource()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class GroupLoopIssue implements OverwriteIssue {
+  const GroupLoopIssue( List<String> names): _names = names;
+  
+
+ final  List<String> _names;
+ List<String> get names {
+  if (_names is EqualUnmodifiableListView) return _names;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_names);
+}
+
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$GroupLoopIssueCopyWith<GroupLoopIssue> get copyWith => _$GroupLoopIssueCopyWithImpl<GroupLoopIssue>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is GroupLoopIssue&&const DeepCollectionEquality().equals(other.names, _names));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_names));
+}
+
+@override
+String toString() {
+    return 'OverwriteIssue.groupLoop(names: $names)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $GroupLoopIssueCopyWith<$Res> implements $OverwriteIssueCopyWith<$Res> {
+  factory $GroupLoopIssueCopyWith(GroupLoopIssue value, $Res Function(GroupLoopIssue) _then) = _$GroupLoopIssueCopyWithImpl;
+@useResult
+$Res call({
+ List<String> names
+});
+
+
+
+
+}
+/// @nodoc
+class _$GroupLoopIssueCopyWithImpl<$Res>
+    implements $GroupLoopIssueCopyWith<$Res> {
+  _$GroupLoopIssueCopyWithImpl(this._self, this._then);
+
+  final GroupLoopIssue _self;
+  final $Res Function(GroupLoopIssue) _then;
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? names = null,}) {
+  return _then(GroupLoopIssue(
+null == names ? _self._names : names // ignore: cast_nullable_to_non_nullable
+as List<String>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class InvalidPayloadIssue implements OverwriteIssue {
+  const InvalidPayloadIssue(this.error);
+  
+
+ final  RulePayloadError error;
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$InvalidPayloadIssueCopyWith<InvalidPayloadIssue> get copyWith => _$InvalidPayloadIssueCopyWithImpl<InvalidPayloadIssue>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is InvalidPayloadIssue&&(identical(other.error, error) || other.error == error));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,error);
+}
+
+@override
+String toString() {
+    return 'OverwriteIssue.invalidPayload(error: $error)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $InvalidPayloadIssueCopyWith<$Res> implements $OverwriteIssueCopyWith<$Res> {
+  factory $InvalidPayloadIssueCopyWith(InvalidPayloadIssue value, $Res Function(InvalidPayloadIssue) _then) = _$InvalidPayloadIssueCopyWithImpl;
+@useResult
+$Res call({
+ RulePayloadError error
+});
+
+
+
+
+}
+/// @nodoc
+class _$InvalidPayloadIssueCopyWithImpl<$Res>
+    implements $InvalidPayloadIssueCopyWith<$Res> {
+  _$InvalidPayloadIssueCopyWithImpl(this._self, this._then);
+
+  final InvalidPayloadIssue _self;
+  final $Res Function(InvalidPayloadIssue) _then;
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? error = null,}) {
+  return _then(InvalidPayloadIssue(
+null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as RulePayloadError,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class MissingRuleSetIssue implements OverwriteIssue {
+  const MissingRuleSetIssue(this.name);
+  
+
+ final  String name;
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MissingRuleSetIssueCopyWith<MissingRuleSetIssue> get copyWith => _$MissingRuleSetIssueCopyWithImpl<MissingRuleSetIssue>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is MissingRuleSetIssue&&(identical(other.name, name) || other.name == name));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,name);
+}
+
+@override
+String toString() {
+    return 'OverwriteIssue.missingRuleSet(name: $name)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MissingRuleSetIssueCopyWith<$Res> implements $OverwriteIssueCopyWith<$Res> {
+  factory $MissingRuleSetIssueCopyWith(MissingRuleSetIssue value, $Res Function(MissingRuleSetIssue) _then) = _$MissingRuleSetIssueCopyWithImpl;
+@useResult
+$Res call({
+ String name
+});
+
+
+
+
+}
+/// @nodoc
+class _$MissingRuleSetIssueCopyWithImpl<$Res>
+    implements $MissingRuleSetIssueCopyWith<$Res> {
+  _$MissingRuleSetIssueCopyWithImpl(this._self, this._then);
+
+  final MissingRuleSetIssue _self;
+  final $Res Function(MissingRuleSetIssue) _then;
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? name = null,}) {
+  return _then(MissingRuleSetIssue(
+null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class MissingSubRuleIssue implements OverwriteIssue {
+  const MissingSubRuleIssue(this.name);
+  
+
+ final  String name;
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MissingSubRuleIssueCopyWith<MissingSubRuleIssue> get copyWith => _$MissingSubRuleIssueCopyWithImpl<MissingSubRuleIssue>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is MissingSubRuleIssue&&(identical(other.name, name) || other.name == name));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,name);
+}
+
+@override
+String toString() {
+    return 'OverwriteIssue.missingSubRule(name: $name)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MissingSubRuleIssueCopyWith<$Res> implements $OverwriteIssueCopyWith<$Res> {
+  factory $MissingSubRuleIssueCopyWith(MissingSubRuleIssue value, $Res Function(MissingSubRuleIssue) _then) = _$MissingSubRuleIssueCopyWithImpl;
+@useResult
+$Res call({
+ String name
+});
+
+
+
+
+}
+/// @nodoc
+class _$MissingSubRuleIssueCopyWithImpl<$Res>
+    implements $MissingSubRuleIssueCopyWith<$Res> {
+  _$MissingSubRuleIssueCopyWithImpl(this._self, this._then);
+
+  final MissingSubRuleIssue _self;
+  final $Res Function(MissingSubRuleIssue) _then;
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? name = null,}) {
+  return _then(MissingSubRuleIssue(
+null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class MissingTargetIssue implements OverwriteIssue {
+  const MissingTargetIssue(this.name);
+  
+
+ final  String name;
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MissingTargetIssueCopyWith<MissingTargetIssue> get copyWith => _$MissingTargetIssueCopyWithImpl<MissingTargetIssue>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is MissingTargetIssue&&(identical(other.name, name) || other.name == name));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,name);
+}
+
+@override
+String toString() {
+    return 'OverwriteIssue.missingTarget(name: $name)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MissingTargetIssueCopyWith<$Res> implements $OverwriteIssueCopyWith<$Res> {
+  factory $MissingTargetIssueCopyWith(MissingTargetIssue value, $Res Function(MissingTargetIssue) _then) = _$MissingTargetIssueCopyWithImpl;
+@useResult
+$Res call({
+ String name
+});
+
+
+
+
+}
+/// @nodoc
+class _$MissingTargetIssueCopyWithImpl<$Res>
+    implements $MissingTargetIssueCopyWith<$Res> {
+  _$MissingTargetIssueCopyWithImpl(this._self, this._then);
+
+  final MissingTargetIssue _self;
+  final $Res Function(MissingTargetIssue) _then;
+
+/// Create a copy of OverwriteIssue
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? name = null,}) {
+  return _then(MissingTargetIssue(
+null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+mixin _$CustomOverwriteIssues {
+
+ Map<int, List<OverwriteIssue>> get proxies; Map<int, List<OverwriteIssue>> get proxyGroups; Map<int, List<OverwriteIssue>> get rules;
+/// Create a copy of CustomOverwriteIssues
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CustomOverwriteIssuesCopyWith<CustomOverwriteIssues> get copyWith => _$CustomOverwriteIssuesCopyWithImpl<CustomOverwriteIssues>(this as CustomOverwriteIssues, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as CustomOverwriteIssues;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CustomOverwriteIssues&&const DeepCollectionEquality().equals(other.proxies, _this.proxies)&&const DeepCollectionEquality().equals(other.proxyGroups, _this.proxyGroups)&&const DeepCollectionEquality().equals(other.rules, _this.rules));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as CustomOverwriteIssues;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.proxies),const DeepCollectionEquality().hash(_this.proxyGroups),const DeepCollectionEquality().hash(_this.rules));
+}
+
+@override
+String toString() {
+  final _this = this as CustomOverwriteIssues;
+  return 'CustomOverwriteIssues(proxies: ${_this.proxies}, proxyGroups: ${_this.proxyGroups}, rules: ${_this.rules})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $CustomOverwriteIssuesCopyWith<$Res>  {
+  factory $CustomOverwriteIssuesCopyWith(CustomOverwriteIssues value, $Res Function(CustomOverwriteIssues) _then) = _$CustomOverwriteIssuesCopyWithImpl;
+@useResult
+$Res call({
+ Map<int, List<OverwriteIssue>> proxies, Map<int, List<OverwriteIssue>> proxyGroups, Map<int, List<OverwriteIssue>> rules
+});
+
+
+
+
+}
+/// @nodoc
+class _$CustomOverwriteIssuesCopyWithImpl<$Res>
+    implements $CustomOverwriteIssuesCopyWith<$Res> {
+  _$CustomOverwriteIssuesCopyWithImpl(this._self, this._then);
+
+  final CustomOverwriteIssues _self;
+  final $Res Function(CustomOverwriteIssues) _then;
+
+/// Create a copy of CustomOverwriteIssues
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? proxies = null,Object? proxyGroups = null,Object? rules = null,}) {
+  return _then(CustomOverwriteIssues(
+proxies: null == proxies ? _self.proxies : proxies // ignore: cast_nullable_to_non_nullable
+as Map<int, List<OverwriteIssue>>,proxyGroups: null == proxyGroups ? _self.proxyGroups : proxyGroups // ignore: cast_nullable_to_non_nullable
+as Map<int, List<OverwriteIssue>>,rules: null == rules ? _self.rules : rules // ignore: cast_nullable_to_non_nullable
+as Map<int, List<OverwriteIssue>>,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [CustomOverwriteIssues].
+extension CustomOverwriteIssuesPatterns on CustomOverwriteIssues {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _CustomOverwriteIssues value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _CustomOverwriteIssues() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _CustomOverwriteIssues value)  $default,){
+final _that = this;
+switch (_that) {
+case _CustomOverwriteIssues():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _CustomOverwriteIssues value)?  $default,){
+final _that = this;
+switch (_that) {
+case _CustomOverwriteIssues() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<int, List<OverwriteIssue>> proxies,  Map<int, List<OverwriteIssue>> proxyGroups,  Map<int, List<OverwriteIssue>> rules)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _CustomOverwriteIssues() when $default != null:
+return $default(_that.proxies,_that.proxyGroups,_that.rules);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<int, List<OverwriteIssue>> proxies,  Map<int, List<OverwriteIssue>> proxyGroups,  Map<int, List<OverwriteIssue>> rules)  $default,) {final _that = this;
+switch (_that) {
+case _CustomOverwriteIssues():
+return $default(_that.proxies,_that.proxyGroups,_that.rules);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<int, List<OverwriteIssue>> proxies,  Map<int, List<OverwriteIssue>> proxyGroups,  Map<int, List<OverwriteIssue>> rules)?  $default,) {final _that = this;
+switch (_that) {
+case _CustomOverwriteIssues() when $default != null:
+return $default(_that.proxies,_that.proxyGroups,_that.rules);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _CustomOverwriteIssues implements CustomOverwriteIssues {
+  const _CustomOverwriteIssues({ Map<int, List<OverwriteIssue>> proxies = const {},  Map<int, List<OverwriteIssue>> proxyGroups = const {},  Map<int, List<OverwriteIssue>> rules = const {}}): _proxies = proxies,_proxyGroups = proxyGroups,_rules = rules;
+  
+
+ final  Map<int, List<OverwriteIssue>> _proxies;
+@override@JsonKey() Map<int, List<OverwriteIssue>> get proxies {
+  if (_proxies is EqualUnmodifiableMapView) return _proxies;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_proxies);
+}
+
+ final  Map<int, List<OverwriteIssue>> _proxyGroups;
+@override@JsonKey() Map<int, List<OverwriteIssue>> get proxyGroups {
+  if (_proxyGroups is EqualUnmodifiableMapView) return _proxyGroups;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_proxyGroups);
+}
+
+ final  Map<int, List<OverwriteIssue>> _rules;
+@override@JsonKey() Map<int, List<OverwriteIssue>> get rules {
+  if (_rules is EqualUnmodifiableMapView) return _rules;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_rules);
+}
+
+
+/// Create a copy of CustomOverwriteIssues
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$CustomOverwriteIssuesCopyWith<_CustomOverwriteIssues> get copyWith => __$CustomOverwriteIssuesCopyWithImpl<_CustomOverwriteIssues>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CustomOverwriteIssues&&const DeepCollectionEquality().equals(other.proxies, _proxies)&&const DeepCollectionEquality().equals(other.proxyGroups, _proxyGroups)&&const DeepCollectionEquality().equals(other.rules, _rules));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_proxies),const DeepCollectionEquality().hash(_proxyGroups),const DeepCollectionEquality().hash(_rules));
+}
+
+@override
+String toString() {
+    return 'CustomOverwriteIssues(proxies: $proxies, proxyGroups: $proxyGroups, rules: $rules)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$CustomOverwriteIssuesCopyWith<$Res> implements $CustomOverwriteIssuesCopyWith<$Res> {
+  factory _$CustomOverwriteIssuesCopyWith(_CustomOverwriteIssues value, $Res Function(_CustomOverwriteIssues) _then) = __$CustomOverwriteIssuesCopyWithImpl;
+@override @useResult
+$Res call({
+ Map<int, List<OverwriteIssue>> proxies, Map<int, List<OverwriteIssue>> proxyGroups, Map<int, List<OverwriteIssue>> rules
+});
+
+
+
+
+}
+/// @nodoc
+class __$CustomOverwriteIssuesCopyWithImpl<$Res>
+    implements _$CustomOverwriteIssuesCopyWith<$Res> {
+  __$CustomOverwriteIssuesCopyWithImpl(this._self, this._then);
+
+  final _CustomOverwriteIssues _self;
+  final $Res Function(_CustomOverwriteIssues) _then;
+
+/// Create a copy of CustomOverwriteIssues
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? proxies = null,Object? proxyGroups = null,Object? rules = null,}) {
+  return _then(_CustomOverwriteIssues(
+proxies: null == proxies ? _self._proxies : proxies // ignore: cast_nullable_to_non_nullable
+as Map<int, List<OverwriteIssue>>,proxyGroups: null == proxyGroups ? _self._proxyGroups : proxyGroups // ignore: cast_nullable_to_non_nullable
+as Map<int, List<OverwriteIssue>>,rules: null == rules ? _self._rules : rules // ignore: cast_nullable_to_non_nullable
+as Map<int, List<OverwriteIssue>>,
+  ));
+}
+
+
+}
+
 /// @nodoc
 mixin _$CustomOverwriteDate {
 
@@ -1264,297 +2819,6 @@ as List<Proxy>,subRules: null == subRules ? _self._subRules : subRules // ignore
 as List<String>,proxyProviders: null == proxyProviders ? _self._proxyProviders : proxyProviders // ignore: cast_nullable_to_non_nullable
 as List<String>,ruleProviders: null == ruleProviders ? _self._ruleProviders : ruleProviders // ignore: cast_nullable_to_non_nullable
 as List<String>,
-  ));
-}
-
-
-}
-
-/// @nodoc
-mixin _$RuleTargetsSelectorState {
-
- bool get loaded; Set<String> get ruleTargets; Set<String> get subRules; Set<String> get ruleProviders;
-/// Create a copy of RuleTargetsSelectorState
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$RuleTargetsSelectorStateCopyWith<RuleTargetsSelectorState> get copyWith => _$RuleTargetsSelectorStateCopyWithImpl<RuleTargetsSelectorState>(this as RuleTargetsSelectorState, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  final _this = this as RuleTargetsSelectorState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RuleTargetsSelectorState&&(identical(other.loaded, _this.loaded) || other.loaded == _this.loaded)&&const DeepCollectionEquality().equals(other.ruleTargets, _this.ruleTargets)&&const DeepCollectionEquality().equals(other.subRules, _this.subRules)&&const DeepCollectionEquality().equals(other.ruleProviders, _this.ruleProviders));
-}
-
-
-@override
-int get hashCode {
-  final _this = this as RuleTargetsSelectorState;
-  return Object.hash(runtimeType,_this.loaded,const DeepCollectionEquality().hash(_this.ruleTargets),const DeepCollectionEquality().hash(_this.subRules),const DeepCollectionEquality().hash(_this.ruleProviders));
-}
-
-@override
-String toString() {
-  final _this = this as RuleTargetsSelectorState;
-  return 'RuleTargetsSelectorState(loaded: ${_this.loaded}, ruleTargets: ${_this.ruleTargets}, subRules: ${_this.subRules}, ruleProviders: ${_this.ruleProviders})';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $RuleTargetsSelectorStateCopyWith<$Res>  {
-  factory $RuleTargetsSelectorStateCopyWith(RuleTargetsSelectorState value, $Res Function(RuleTargetsSelectorState) _then) = _$RuleTargetsSelectorStateCopyWithImpl;
-@useResult
-$Res call({
- bool loaded, Set<String> ruleTargets, Set<String> subRules, Set<String> ruleProviders
-});
-
-
-
-
-}
-/// @nodoc
-class _$RuleTargetsSelectorStateCopyWithImpl<$Res>
-    implements $RuleTargetsSelectorStateCopyWith<$Res> {
-  _$RuleTargetsSelectorStateCopyWithImpl(this._self, this._then);
-
-  final RuleTargetsSelectorState _self;
-  final $Res Function(RuleTargetsSelectorState) _then;
-
-/// Create a copy of RuleTargetsSelectorState
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? loaded = null,Object? ruleTargets = null,Object? subRules = null,Object? ruleProviders = null,}) {
-  return _then(RuleTargetsSelectorState(
-loaded: null == loaded ? _self.loaded : loaded // ignore: cast_nullable_to_non_nullable
-as bool,ruleTargets: null == ruleTargets ? _self.ruleTargets : ruleTargets // ignore: cast_nullable_to_non_nullable
-as Set<String>,subRules: null == subRules ? _self.subRules : subRules // ignore: cast_nullable_to_non_nullable
-as Set<String>,ruleProviders: null == ruleProviders ? _self.ruleProviders : ruleProviders // ignore: cast_nullable_to_non_nullable
-as Set<String>,
-  ));
-}
-
-}
-
-
-/// Adds pattern-matching-related methods to [RuleTargetsSelectorState].
-extension RuleTargetsSelectorStatePatterns on RuleTargetsSelectorState {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _RuleTargetsSelectorState value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _RuleTargetsSelectorState() when $default != null:
-return $default(_that);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _RuleTargetsSelectorState value)  $default,){
-final _that = this;
-switch (_that) {
-case _RuleTargetsSelectorState():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _RuleTargetsSelectorState value)?  $default,){
-final _that = this;
-switch (_that) {
-case _RuleTargetsSelectorState() when $default != null:
-return $default(_that);case _:
-  return null;
-
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool loaded,  Set<String> ruleTargets,  Set<String> subRules,  Set<String> ruleProviders)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _RuleTargetsSelectorState() when $default != null:
-return $default(_that.loaded,_that.ruleTargets,_that.subRules,_that.ruleProviders);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool loaded,  Set<String> ruleTargets,  Set<String> subRules,  Set<String> ruleProviders)  $default,) {final _that = this;
-switch (_that) {
-case _RuleTargetsSelectorState():
-return $default(_that.loaded,_that.ruleTargets,_that.subRules,_that.ruleProviders);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool loaded,  Set<String> ruleTargets,  Set<String> subRules,  Set<String> ruleProviders)?  $default,) {final _that = this;
-switch (_that) {
-case _RuleTargetsSelectorState() when $default != null:
-return $default(_that.loaded,_that.ruleTargets,_that.subRules,_that.ruleProviders);case _:
-  return null;
-
-}
-}
-
-}
-
-/// @nodoc
-
-
-class _RuleTargetsSelectorState implements RuleTargetsSelectorState {
-  const _RuleTargetsSelectorState({required this.loaded, required  Set<String> ruleTargets, required  Set<String> subRules, required  Set<String> ruleProviders}): _ruleTargets = ruleTargets,_subRules = subRules,_ruleProviders = ruleProviders;
-  
-
-@override final  bool loaded;
- final  Set<String> _ruleTargets;
-@override Set<String> get ruleTargets {
-  if (_ruleTargets is EqualUnmodifiableSetView) return _ruleTargets;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableSetView(_ruleTargets);
-}
-
- final  Set<String> _subRules;
-@override Set<String> get subRules {
-  if (_subRules is EqualUnmodifiableSetView) return _subRules;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableSetView(_subRules);
-}
-
- final  Set<String> _ruleProviders;
-@override Set<String> get ruleProviders {
-  if (_ruleProviders is EqualUnmodifiableSetView) return _ruleProviders;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableSetView(_ruleProviders);
-}
-
-
-/// Create a copy of RuleTargetsSelectorState
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$RuleTargetsSelectorStateCopyWith<_RuleTargetsSelectorState> get copyWith => __$RuleTargetsSelectorStateCopyWithImpl<_RuleTargetsSelectorState>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _RuleTargetsSelectorState&&(identical(other.loaded, loaded) || other.loaded == loaded)&&const DeepCollectionEquality().equals(other.ruleTargets, _ruleTargets)&&const DeepCollectionEquality().equals(other.subRules, _subRules)&&const DeepCollectionEquality().equals(other.ruleProviders, _ruleProviders));
-}
-
-
-@override
-int get hashCode {
-    return Object.hash(runtimeType,loaded,const DeepCollectionEquality().hash(_ruleTargets),const DeepCollectionEquality().hash(_subRules),const DeepCollectionEquality().hash(_ruleProviders));
-}
-
-@override
-String toString() {
-    return 'RuleTargetsSelectorState(loaded: $loaded, ruleTargets: $ruleTargets, subRules: $subRules, ruleProviders: $ruleProviders)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class _$RuleTargetsSelectorStateCopyWith<$Res> implements $RuleTargetsSelectorStateCopyWith<$Res> {
-  factory _$RuleTargetsSelectorStateCopyWith(_RuleTargetsSelectorState value, $Res Function(_RuleTargetsSelectorState) _then) = __$RuleTargetsSelectorStateCopyWithImpl;
-@override @useResult
-$Res call({
- bool loaded, Set<String> ruleTargets, Set<String> subRules, Set<String> ruleProviders
-});
-
-
-
-
-}
-/// @nodoc
-class __$RuleTargetsSelectorStateCopyWithImpl<$Res>
-    implements _$RuleTargetsSelectorStateCopyWith<$Res> {
-  __$RuleTargetsSelectorStateCopyWithImpl(this._self, this._then);
-
-  final _RuleTargetsSelectorState _self;
-  final $Res Function(_RuleTargetsSelectorState) _then;
-
-/// Create a copy of RuleTargetsSelectorState
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? loaded = null,Object? ruleTargets = null,Object? subRules = null,Object? ruleProviders = null,}) {
-  return _then(_RuleTargetsSelectorState(
-loaded: null == loaded ? _self.loaded : loaded // ignore: cast_nullable_to_non_nullable
-as bool,ruleTargets: null == ruleTargets ? _self._ruleTargets : ruleTargets // ignore: cast_nullable_to_non_nullable
-as Set<String>,subRules: null == subRules ? _self._subRules : subRules // ignore: cast_nullable_to_non_nullable
-as Set<String>,ruleProviders: null == ruleProviders ? _self._ruleProviders : ruleProviders // ignore: cast_nullable_to_non_nullable
-as Set<String>,
   ));
 }
 

@@ -173,6 +173,7 @@ Future<MigrationData> readBackupArchive({
       database.profileRuleLinks.all().map((item) => item.toLink()).get(),
       database.proxyGroups.all().map((item) => item.toProxyGroup()).get(),
       database.clashProvidersDao.queryAll().get(),
+      database.customProxies.all().map((item) => item.toCustomProxy()).get(),
     ]);
     return MigrationData(
       configMap: configMap,
@@ -182,6 +183,7 @@ Future<MigrationData> readBackupArchive({
       links: results[3].cast<ProfileRuleLink>(),
       proxyGroups: results[4].cast<ProxyGroup>(),
       clashProviders: results[5].cast<ClashProvider>(),
+      customProxies: results[6].cast<CustomProxy>(),
     );
   } finally {
     await database.close();

@@ -355,6 +355,7 @@ class SetupAction extends _$SetupAction {
     final configMap = await _core.getConfig(profileId);
     String? scriptContent;
     final List<Rule> addedRules = [];
+    final List<CustomProxy> proxies = [];
     final List<ProxyGroup> proxyGroups = [];
     final List<Rule> rules = [];
     if (setupState.overwriteType == OverwriteType.script) {
@@ -362,6 +363,7 @@ class SetupAction extends _$SetupAction {
     } else if (setupState.overwriteType == OverwriteType.standard) {
       addedRules.addAll(setupState.addedRules);
     } else {
+      proxies.addAll(setupState.customProxies);
       proxyGroups.addAll(setupState.proxyGroups);
       rules.addAll(setupState.rules);
     }
@@ -381,6 +383,7 @@ class SetupAction extends _$SetupAction {
     final res = makeRealProfileTask(
       MakeRealProfileState(
         rules: rules,
+        proxies: proxies,
         proxyGroups: proxyGroups,
         injectedProxyProviders: injected.proxies,
         injectedRuleProviders: injected.rules,

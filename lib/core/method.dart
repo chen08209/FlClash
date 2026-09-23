@@ -9,6 +9,7 @@ enum CoreMethod {
   forceGc,
   shutdown,
   validateConfig,
+  validateProxies,
   updateConfig,
   getConfig,
   getProxies,

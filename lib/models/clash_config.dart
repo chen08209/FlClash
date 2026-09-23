@@ -202,6 +202,150 @@ extension ProxyExt on Proxy {
   List<String> get searchFields => [name, type];
 }
 
+/// The `type` values `adapter.ParseProxy` accepts, in its own order.
+const customProxyTypes = [
+  'ss',
+  'ssr',
+  'socks5',
+  'http',
+  'vmess',
+  'vless',
+  'snell',
+  'trojan',
+  'hysteria',
+  'hysteria2',
+  'wireguard',
+  'tuic',
+  'shadowquic',
+  'gost-relay',
+  'direct',
+  'dns',
+  'reject',
+  'rematch',
+  'ssh',
+  'mieru',
+  'anytls',
+  'sudoku',
+  'masque',
+  'trusttunnel',
+  'openvpn',
+  'tailscale',
+  'zerotier',
+  'easytier',
+];
+
+/// One entry of a custom overwrite's `proxies`, kept as the raw mapping the
+/// core parses, since each proxy type reads its own set of keys.
+@freezed
+abstract class CustomProxy with _$CustomProxy {
+  const factory CustomProxy({
+    int? profileId,
+    @JsonKey(fromJson: Snowflake.buildId) required int id,
+    @Default({}) Map<String, dynamic> definition,
+    String? order,
+  }) = _CustomProxy;
+
+  factory CustomProxy.fromJson(Map<String, Object?> json) =>
+      _$CustomProxyFromJson(json);
+
+  factory CustomProxy.fromDefinition(Map definition, {int? id}) {
+    return CustomProxy(
+      id: id ?? snowflake.id,
+      definition: Map<String, dynamic>.from(definition),
+    );
+  }
+}
+
+extension CustomProxyExt on CustomProxy {
+  String get name => definition['name']?.toString() ?? '';
+
+  String get type => definition['type']?.toString() ?? '';
+
+  String? get server => definition['server']?.toString();
+
+  int? get port => switch (definition['port']) {
+    final int port => port,
+    final Object port => int.tryParse(port.toString()),
+    null => null,
+  };
+
+  String? get address {
+    final server = this.server;
+    if (server == null || server.isEmpty) {
+      return null;
+    }
+    final port = this.port;
+    return port == null ? server : '$server:$port';
+  }
+
+  List<String> get searchFields => [name, type, ?server];
+
+  String get definitionYaml => yaml.encode(definition);
+
+  /// Throws a [FormatException] unless [content] is a mapping that names a
+  /// proxy and its type.
+  CustomProxy withDefinitionYaml(String content) {
+    final document = _plainYaml(loadYaml(content));
+    if (document is! Map<String, Object?> ||
+        document['name'] is! String ||
+        document['type'] is! String) {
+      throw const FormatException('Not a proxy mapping');
+    }
+    return copyWith(definition: document);
+  }
+
+  CustomProxy withValue(String key, Object? value) {
+    final next = Map<String, dynamic>.from(definition);
+    if (value == null || value == '') {
+      next.remove(key);
+    } else {
+      next[key] = value;
+    }
+    return copyWith(definition: next);
+  }
+}
+
+@freezed
+sealed class OverwriteIssue with _$OverwriteIssue {
+  const factory OverwriteIssue.emptyName() = EmptyNameIssue;
+
+  const factory OverwriteIssue.reservedName(String name) = ReservedNameIssue;
+
+  const factory OverwriteIssue.duplicateName(String name) = DuplicateNameIssue;
+
+  const factory OverwriteIssue.coreRejected(String message) = CoreRejectedIssue;
+
+  const factory OverwriteIssue.missingProxies(List<String> names) =
+      MissingProxiesIssue;
+
+  const factory OverwriteIssue.missingProviders(List<String> names) =
+      MissingProvidersIssue;
+
+  const factory OverwriteIssue.noProxySource() = NoProxySourceIssue;
+
+  const factory OverwriteIssue.groupLoop(List<String> names) = GroupLoopIssue;
+
+  const factory OverwriteIssue.invalidPayload(RulePayloadError error) =
+      InvalidPayloadIssue;
+
+  const factory OverwriteIssue.missingRuleSet(String name) =
+      MissingRuleSetIssue;
+
+  const factory OverwriteIssue.missingSubRule(String name) =
+      MissingSubRuleIssue;
+
+  const factory OverwriteIssue.missingTarget(String name) = MissingTargetIssue;
+}
+
+@freezed
+abstract class CustomOverwriteIssues with _$CustomOverwriteIssues {
+  const factory CustomOverwriteIssues({
+    @Default({}) Map<int, List<OverwriteIssue>> proxies,
+    @Default({}) Map<int, List<OverwriteIssue>> proxyGroups,
+    @Default({}) Map<int, List<OverwriteIssue>> rules,
+  }) = _CustomOverwriteIssues;
+}
+
 @freezed
 abstract class CustomOverwriteDate with _$CustomOverwriteDate {
   const factory CustomOverwriteDate({
@@ -226,16 +370,6 @@ abstract class CustomOverwriteSelectorState
     required List<String> proxyProviders,
     required List<String> ruleProviders,
   }) = _CustomOverwriteSelectorState;
-}
-
-@freezed
-abstract class RuleTargetsSelectorState with _$RuleTargetsSelectorState {
-  const factory RuleTargetsSelectorState({
-    required bool loaded,
-    required Set<String> ruleTargets,
-    required Set<String> subRules,
-    required Set<String> ruleProviders,
-  }) = _RuleTargetsSelectorState;
 }
 
 @freezed

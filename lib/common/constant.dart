@@ -128,6 +128,7 @@ const ruleListEquality = ListEquality<Rule>();
 const scriptListEquality = ListEquality<Script>();
 const profileListEquality = ListEquality<Profile>();
 const proxyGroupsEquality = ListEquality<ProxyGroup>();
+const customProxiesEquality = ListEquality<CustomProxy>();
 const clashProviderListEquality = ListEquality<ClashProvider>();
 const hotKeyActionListEquality = ListEquality<HotKeyAction>();
 const stringAndStringMapEntryListEquality =

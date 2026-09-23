@@ -531,9 +531,18 @@ Tables:
 - `Rules`
 - `ProfileRuleLinks` (`profile_rule_mapping`)
 - `ProxyGroups`
+- `CustomProxies` (`custom_proxies`)
 - `IconRecords` (`icon_records`)
+- `ClashProviders` (`clash_providers`)
 
 Rule scenes distinguish global added rules, profile added rules, profile custom rules, and disabled links. Rule and proxy-group ordering use fractional indexing.
+
+App-level providers (`ClashProviders`, plus every profile offered as a proxy provider) and a custom overwrite's own
+proxies (`CustomProxies`) are soft-disabled through `feature.customProviders` and `feature.customProxies`
+(`lib/common/feature.dart`), switched on by `--dart-define=FEATURE_CUSTOM_PROVIDERS=true` and
+`FEATURE_CUSTOM_PROXIES=true`. While off, their entries are hidden, `appProviderNames` and `appProviderLabels` are
+empty, and `setupState` loads neither, so stored rows stay in the database but never reach a profile. Backups still
+carry both tables.
 
 Generated Drift output lives in `lib/database/generated/database.g.dart`. After schema changes, run code generation and add or update focused database tests under `test/database/` when converter or migration behavior changes.
 

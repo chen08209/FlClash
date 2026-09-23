@@ -108,6 +108,21 @@ func handleValidateConfig(path string) string {
 	return ""
 }
 
+// The same parser the config load runs, so each message matches what a setup
+// with these proxies would fail with.
+func handleValidateProxies(mappings []map[string]any) []string {
+	results := make([]string, len(mappings))
+	for i, mapping := range mappings {
+		proxy, err := adapter.ParseProxy(mapping)
+		if err != nil {
+			results[i] = err.Error()
+			continue
+		}
+		_ = proxy.Close()
+	}
+	return results
+}
+
 const globalProxyName = "GLOBAL"
 
 func isProxyGroupType(adapterType constant.AdapterType) bool {

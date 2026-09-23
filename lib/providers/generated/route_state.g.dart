@@ -41,7 +41,7 @@ final class RouteTrackerProvider
   }
 }
 
-String _$routeTrackerHash() => r'928841c46e14c0aad4e9d4367a70b5809be32ed6';
+String _$routeTrackerHash() => r'e3d92dd30df26820f9e02a442f36e18c4aa83a1b';
 
 abstract class _$RouteTracker extends $Notifier<RouteState> {
   RouteState build();

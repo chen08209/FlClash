@@ -4050,10 +4050,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Custom mode: fully customize proxy groups and rules`
+  /// `Custom mode: fully customize proxies, proxy groups and rules`
   String get overwriteTypeCustomDesc {
     return Intl.message(
-      'Custom mode: fully customize proxy groups and rules',
+      'Custom mode: fully customize proxies, proxy groups and rules',
       name: 'overwriteTypeCustomDesc',
       desc: '',
       args: [],
@@ -4175,16 +4175,6 @@ class AppLocalizations {
     return Intl.message(
       'Proxy group is empty',
       name: 'proxyGroupEmpty',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Proxy group name cannot be empty`
-  String get proxyGroupNameEmpty {
-    return Intl.message(
-      'Proxy group name cannot be empty',
-      name: 'proxyGroupNameEmpty',
       desc: '',
       args: [],
     );
@@ -5155,36 +5145,6 @@ class AppLocalizations {
     );
   }
 
-  /// `The current proxy group is abnormal`
-  String get proxyGroupDetectedAbnormal {
-    return Intl.message(
-      'The current proxy group is abnormal',
-      name: 'proxyGroupDetectedAbnormal',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `The selected proxy providers are abnormal`
-  String get proxyProviderDetectedAbnormal {
-    return Intl.message(
-      'The selected proxy providers are abnormal',
-      name: 'proxyProviderDetectedAbnormal',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `The selected proxies are abnormal`
-  String get proxyDetectedAbnormal {
-    return Intl.message(
-      'The selected proxies are abnormal',
-      name: 'proxyDetectedAbnormal',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Create profile`
   String get createProfile {
     return Intl.message(
@@ -6042,6 +6002,136 @@ class AppLocalizations {
       name: 'nonTextProviderFile',
       desc: '',
       args: [],
+    );
+  }
+
+  /// `Add proxy`
+  String get addCustomProxy {
+    return Intl.message(
+      'Add proxy',
+      name: 'addCustomProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Full configuration`
+  String get proxyDefinition {
+    return Intl.message(
+      'Full configuration',
+      name: 'proxyDefinition',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The configuration must be a YAML mapping with a name and a type`
+  String get proxyDefinitionNotMap {
+    return Intl.message(
+      'The configuration must be a YAML mapping with a name and a type',
+      name: 'proxyDefinitionNotMap',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No custom proxies, so the profile's own proxies are used`
+  String get customProxiesEmpty {
+    return Intl.message(
+      'No custom proxies, so the profile\'s own proxies are used',
+      name: 'customProxiesEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The name is empty`
+  String get overwriteIssueEmptyName {
+    return Intl.message(
+      'The name is empty',
+      name: 'overwriteIssueEmptyName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{name} is a built-in policy name and cannot be used here`
+  String overwriteIssueReservedName(Object name) {
+    return Intl.message(
+      '$name is a built-in policy name and cannot be used here',
+      name: 'overwriteIssueReservedName',
+      desc: '',
+      args: [name],
+    );
+  }
+
+  /// `The name {name} is already used by another proxy or proxy group`
+  String overwriteIssueDuplicateName(Object name) {
+    return Intl.message(
+      'The name $name is already used by another proxy or proxy group',
+      name: 'overwriteIssueDuplicateName',
+      desc: '',
+      args: [name],
+    );
+  }
+
+  /// `The core cannot parse this proxy: {message}`
+  String overwriteIssueCoreRejected(Object message) {
+    return Intl.message(
+      'The core cannot parse this proxy: $message',
+      name: 'overwriteIssueCoreRejected',
+      desc: '',
+      args: [message],
+    );
+  }
+
+  /// `These proxies or policies do not exist: {names}`
+  String overwriteIssueMissingProxies(Object names) {
+    return Intl.message(
+      'These proxies or policies do not exist: $names',
+      name: 'overwriteIssueMissingProxies',
+      desc: '',
+      args: [names],
+    );
+  }
+
+  /// `These proxy providers do not exist: {names}`
+  String overwriteIssueMissingProviders(Object names) {
+    return Intl.message(
+      'These proxy providers do not exist: $names',
+      name: 'overwriteIssueMissingProviders',
+      desc: '',
+      args: [names],
+    );
+  }
+
+  /// `No proxies or proxy providers are selected, so the core rejects this group`
+  String get overwriteIssueNoProxySource {
+    return Intl.message(
+      'No proxies or proxy providers are selected, so the core rejects this group',
+      name: 'overwriteIssueNoProxySource',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy groups reference each other in a loop: {path}`
+  String overwriteIssueGroupLoop(Object path) {
+    return Intl.message(
+      'Proxy groups reference each other in a loop: $path',
+      name: 'overwriteIssueGroupLoop',
+      desc: '',
+      args: [path],
+    );
+  }
+
+  /// `{count} items have problems, and applying this override may fail`
+  String overwriteIssuesSummary(Object count) {
+    return Intl.message(
+      '$count items have problems, and applying this override may fail',
+      name: 'overwriteIssuesSummary',
+      desc: '',
+      args: [count],
     );
   }
 }

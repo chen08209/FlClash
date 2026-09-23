@@ -4099,6 +4099,311 @@ class ClashProvidersCompanion extends UpdateCompanion<RawClashProvider> {
   }
 }
 
+class $CustomProxiesTable extends CustomProxies
+    with TableInfo<$CustomProxiesTable, RawCustomProxy> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CustomProxiesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _profileIdMeta = const VerificationMeta(
+    'profileId',
+  );
+  @override
+  late final GeneratedColumn<int> profileId = GeneratedColumn<int>(
+    'profile_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES profiles (id) ON DELETE CASCADE',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Map<String, dynamic>, String>
+  definition =
+      GeneratedColumn<String>(
+        'definition',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Map<String, dynamic>>(
+        $CustomProxiesTable.$converterdefinition,
+      );
+  static const VerificationMeta _orderMeta = const VerificationMeta('order');
+  @override
+  late final GeneratedColumn<String> order = GeneratedColumn<String>(
+    'order',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, profileId, definition, order];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'custom_proxies';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RawCustomProxy> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('profile_id')) {
+      context.handle(
+        _profileIdMeta,
+        profileId.isAcceptableOrUnknown(data['profile_id']!, _profileIdMeta),
+      );
+    }
+    if (data.containsKey('order')) {
+      context.handle(
+        _orderMeta,
+        order.isAcceptableOrUnknown(data['order']!, _orderMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RawCustomProxy map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RawCustomProxy(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      profileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}profile_id'],
+      ),
+      definition: $CustomProxiesTable.$converterdefinition.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}definition'],
+        )!,
+      ),
+      order: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}order'],
+      ),
+    );
+  }
+
+  @override
+  $CustomProxiesTable createAlias(String alias) {
+    return $CustomProxiesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Map<String, dynamic>, String> $converterdefinition =
+      const JsonMapConverter();
+}
+
+class RawCustomProxy extends DataClass implements Insertable<RawCustomProxy> {
+  final int id;
+  final int? profileId;
+  final Map<String, dynamic> definition;
+  final String? order;
+  const RawCustomProxy({
+    required this.id,
+    this.profileId,
+    required this.definition,
+    this.order,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    if (!nullToAbsent || profileId != null) {
+      map['profile_id'] = Variable<int>(profileId);
+    }
+    {
+      map['definition'] = Variable<String>(
+        $CustomProxiesTable.$converterdefinition.toSql(definition),
+      );
+    }
+    if (!nullToAbsent || order != null) {
+      map['order'] = Variable<String>(order);
+    }
+    return map;
+  }
+
+  CustomProxiesCompanion toCompanion(bool nullToAbsent) {
+    return CustomProxiesCompanion(
+      id: Value(id),
+      profileId: profileId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(profileId),
+      definition: Value(definition),
+      order: order == null && nullToAbsent
+          ? const Value.absent()
+          : Value(order),
+    );
+  }
+
+  factory RawCustomProxy.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RawCustomProxy(
+      id: serializer.fromJson<int>(json['id']),
+      profileId: serializer.fromJson<int?>(json['profileId']),
+      definition: serializer.fromJson<Map<String, dynamic>>(json['definition']),
+      order: serializer.fromJson<String?>(json['order']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'profileId': serializer.toJson<int?>(profileId),
+      'definition': serializer.toJson<Map<String, dynamic>>(definition),
+      'order': serializer.toJson<String?>(order),
+    };
+  }
+
+  RawCustomProxy copyWith({
+    int? id,
+    Value<int?> profileId = const Value.absent(),
+    Map<String, dynamic>? definition,
+    Value<String?> order = const Value.absent(),
+  }) => RawCustomProxy(
+    id: id ?? this.id,
+    profileId: profileId.present ? profileId.value : this.profileId,
+    definition: definition ?? this.definition,
+    order: order.present ? order.value : this.order,
+  );
+  RawCustomProxy copyWithCompanion(CustomProxiesCompanion data) {
+    return RawCustomProxy(
+      id: data.id.present ? data.id.value : this.id,
+      profileId: data.profileId.present ? data.profileId.value : this.profileId,
+      definition: data.definition.present
+          ? data.definition.value
+          : this.definition,
+      order: data.order.present ? data.order.value : this.order,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RawCustomProxy(')
+          ..write('id: $id, ')
+          ..write('profileId: $profileId, ')
+          ..write('definition: $definition, ')
+          ..write('order: $order')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, profileId, definition, order);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RawCustomProxy &&
+          other.id == this.id &&
+          other.profileId == this.profileId &&
+          other.definition == this.definition &&
+          other.order == this.order);
+}
+
+class CustomProxiesCompanion extends UpdateCompanion<RawCustomProxy> {
+  final Value<int> id;
+  final Value<int?> profileId;
+  final Value<Map<String, dynamic>> definition;
+  final Value<String?> order;
+  const CustomProxiesCompanion({
+    this.id = const Value.absent(),
+    this.profileId = const Value.absent(),
+    this.definition = const Value.absent(),
+    this.order = const Value.absent(),
+  });
+  CustomProxiesCompanion.insert({
+    this.id = const Value.absent(),
+    this.profileId = const Value.absent(),
+    required Map<String, dynamic> definition,
+    this.order = const Value.absent(),
+  }) : definition = Value(definition);
+  static Insertable<RawCustomProxy> custom({
+    Expression<int>? id,
+    Expression<int>? profileId,
+    Expression<String>? definition,
+    Expression<String>? order,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (profileId != null) 'profile_id': profileId,
+      if (definition != null) 'definition': definition,
+      if (order != null) 'order': order,
+    });
+  }
+
+  CustomProxiesCompanion copyWith({
+    Value<int>? id,
+    Value<int?>? profileId,
+    Value<Map<String, dynamic>>? definition,
+    Value<String?>? order,
+  }) {
+    return CustomProxiesCompanion(
+      id: id ?? this.id,
+      profileId: profileId ?? this.profileId,
+      definition: definition ?? this.definition,
+      order: order ?? this.order,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (profileId.present) {
+      map['profile_id'] = Variable<int>(profileId.value);
+    }
+    if (definition.present) {
+      map['definition'] = Variable<String>(
+        $CustomProxiesTable.$converterdefinition.toSql(definition.value),
+      );
+    }
+    if (order.present) {
+      map['order'] = Variable<String>(order.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CustomProxiesCompanion(')
+          ..write('id: $id, ')
+          ..write('profileId: $profileId, ')
+          ..write('definition: $definition, ')
+          ..write('order: $order')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$Database extends GeneratedDatabase {
   _$Database(QueryExecutor e) : super(e);
   $DatabaseManager get managers => $DatabaseManager(this);
@@ -4111,6 +4416,7 @@ abstract class _$Database extends GeneratedDatabase {
   late final $ProxyGroupsTable proxyGroups = $ProxyGroupsTable(this);
   late final $IconRecordsTable iconRecords = $IconRecordsTable(this);
   late final $ClashProvidersTable clashProviders = $ClashProvidersTable(this);
+  late final $CustomProxiesTable customProxies = $CustomProxiesTable(this);
   late final Index idxRuleTarget = Index(
     'idx_rule_target',
     'CREATE INDEX idx_rule_target ON rules (rule_target)',
@@ -4127,12 +4433,19 @@ abstract class _$Database extends GeneratedDatabase {
     'last_accessed_url',
     'CREATE INDEX last_accessed_url ON icon_records (last_accessed, url)',
   );
+  late final Index idxCustomProxiesProfileOrder = Index(
+    'idx_custom_proxies_profile_order',
+    'CREATE INDEX idx_custom_proxies_profile_order ON custom_proxies (profile_id, "order")',
+  );
   late final ProfilesDao profilesDao = ProfilesDao(this as Database);
   late final ScriptsDao scriptsDao = ScriptsDao(this as Database);
   late final RulesDao rulesDao = RulesDao(this as Database);
   late final ProxyGroupsDao proxyGroupsDao = ProxyGroupsDao(this as Database);
   late final IconRecordsDao iconRecordsDao = IconRecordsDao(this as Database);
   late final ClashProvidersDao clashProvidersDao = ClashProvidersDao(
+    this as Database,
+  );
+  late final CustomProxiesDao customProxiesDao = CustomProxiesDao(
     this as Database,
   );
   @override
@@ -4147,10 +4460,12 @@ abstract class _$Database extends GeneratedDatabase {
     proxyGroups,
     iconRecords,
     clashProviders,
+    customProxies,
     idxRuleTarget,
     idxProfileSceneOrder,
     idxProfileNameOrder,
     lastAccessedUrl,
+    idxCustomProxiesProfileOrder,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -4174,6 +4489,13 @@ abstract class _$Database extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('proxy_groups', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'profiles',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('custom_proxies', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -4250,6 +4572,24 @@ final class $$ProfilesTableReferences
     ).filter((f) => f.profileId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_proxyGroupsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$CustomProxiesTable, List<RawCustomProxy>>
+  _customProxiesRefsTable(_$Database db) => MultiTypedResultKey.fromTable(
+    db.customProxies,
+    aliasName: 'profiles__id__custom_proxies__profile_id',
+  );
+
+  $$CustomProxiesTableProcessedTableManager get customProxiesRefs {
+    final manager = $$CustomProxiesTableTableManager(
+      $_db,
+      $_db.customProxies,
+    ).filter((f) => f.profileId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_customProxiesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -4384,6 +4724,31 @@ class $$ProfilesTableFilterComposer
           }) => $$ProxyGroupsTableFilterComposer(
             $db: $db,
             $table: $db.proxyGroups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> customProxiesRefs(
+    Expression<bool> Function($$CustomProxiesTableFilterComposer f) f,
+  ) {
+    final $$CustomProxiesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.customProxies,
+      getReferencedColumn: (t) => t.profileId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomProxiesTableFilterComposer(
+            $db: $db,
+            $table: $db.customProxies,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4593,6 +4958,31 @@ class $$ProfilesTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> customProxiesRefs<T extends Object>(
+    Expression<T> Function($$CustomProxiesTableAnnotationComposer a) f,
+  ) {
+    final $$CustomProxiesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.customProxies,
+      getReferencedColumn: (t) => t.profileId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomProxiesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.customProxies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ProfilesTableTableManager
@@ -4611,6 +5001,7 @@ class $$ProfilesTableTableManager
           PrefetchHooks Function({
             bool profileRuleLinksRefs,
             bool proxyGroupsRefs,
+            bool customProxiesRefs,
           })
         > {
   $$ProfilesTableTableManager(_$Database db, $ProfilesTable table)
@@ -4699,12 +5090,17 @@ class $$ProfilesTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({profileRuleLinksRefs = false, proxyGroupsRefs = false}) {
+              ({
+                profileRuleLinksRefs = false,
+                proxyGroupsRefs = false,
+                customProxiesRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (profileRuleLinksRefs) db.profileRuleLinks,
                     if (proxyGroupsRefs) db.proxyGroups,
+                    if (customProxiesRefs) db.customProxies,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -4751,6 +5147,27 @@ class $$ProfilesTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (customProxiesRefs)
+                        await $_getPrefetchedData<
+                          RawProfile,
+                          $ProfilesTable,
+                          RawCustomProxy
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ProfilesTableReferences
+                              ._customProxiesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ProfilesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).customProxiesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.profileId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -4771,7 +5188,11 @@ typedef $$ProfilesTableProcessedTableManager =
       $$ProfilesTableUpdateCompanionBuilder,
       (RawProfile, $$ProfilesTableReferences),
       RawProfile,
-      PrefetchHooks Function({bool profileRuleLinksRefs, bool proxyGroupsRefs})
+      PrefetchHooks Function({
+        bool profileRuleLinksRefs,
+        bool proxyGroupsRefs,
+        bool customProxiesRefs,
+      })
     >;
 typedef $$ScriptsTableCreateCompanionBuilder =
     ScriptsCompanion Function({
@@ -6811,6 +7232,310 @@ typedef $$ClashProvidersTableProcessedTableManager =
       RawClashProvider,
       PrefetchHooks Function()
     >;
+typedef $$CustomProxiesTableCreateCompanionBuilder =
+    CustomProxiesCompanion Function({
+      Value<int> id,
+      Value<int?> profileId,
+      required Map<String, dynamic> definition,
+      Value<String?> order,
+    });
+typedef $$CustomProxiesTableUpdateCompanionBuilder =
+    CustomProxiesCompanion Function({
+      Value<int> id,
+      Value<int?> profileId,
+      Value<Map<String, dynamic>> definition,
+      Value<String?> order,
+    });
+
+final class $$CustomProxiesTableReferences
+    extends BaseReferences<_$Database, $CustomProxiesTable, RawCustomProxy> {
+  $$CustomProxiesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ProfilesTable _profileIdTable(_$Database db) =>
+      db.profiles.createAlias('custom_proxies__profile_id__profiles__id');
+
+  $$ProfilesTableProcessedTableManager? get profileId {
+    final $_column = $_itemColumn<int>('profile_id');
+    if ($_column == null) return null;
+    final manager = $$ProfilesTableTableManager(
+      $_db,
+      $_db.profiles,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_profileIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$CustomProxiesTableFilterComposer
+    extends Composer<_$Database, $CustomProxiesTable> {
+  $$CustomProxiesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<
+    Map<String, dynamic>,
+    Map<String, dynamic>,
+    String
+  >
+  get definition => $composableBuilder(
+    column: $table.definition,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get order => $composableBuilder(
+    column: $table.order,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ProfilesTableFilterComposer get profileId {
+    final $$ProfilesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.profileId,
+      referencedTable: $db.profiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProfilesTableFilterComposer(
+            $db: $db,
+            $table: $db.profiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$CustomProxiesTableOrderingComposer
+    extends Composer<_$Database, $CustomProxiesTable> {
+  $$CustomProxiesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get definition => $composableBuilder(
+    column: $table.definition,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get order => $composableBuilder(
+    column: $table.order,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ProfilesTableOrderingComposer get profileId {
+    final $$ProfilesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.profileId,
+      referencedTable: $db.profiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProfilesTableOrderingComposer(
+            $db: $db,
+            $table: $db.profiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$CustomProxiesTableAnnotationComposer
+    extends Composer<_$Database, $CustomProxiesTable> {
+  $$CustomProxiesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Map<String, dynamic>, String>
+  get definition => $composableBuilder(
+    column: $table.definition,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get order =>
+      $composableBuilder(column: $table.order, builder: (column) => column);
+
+  $$ProfilesTableAnnotationComposer get profileId {
+    final $$ProfilesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.profileId,
+      referencedTable: $db.profiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProfilesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.profiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$CustomProxiesTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $CustomProxiesTable,
+          RawCustomProxy,
+          $$CustomProxiesTableFilterComposer,
+          $$CustomProxiesTableOrderingComposer,
+          $$CustomProxiesTableAnnotationComposer,
+          $$CustomProxiesTableCreateCompanionBuilder,
+          $$CustomProxiesTableUpdateCompanionBuilder,
+          (RawCustomProxy, $$CustomProxiesTableReferences),
+          RawCustomProxy,
+          PrefetchHooks Function({bool profileId})
+        > {
+  $$CustomProxiesTableTableManager(_$Database db, $CustomProxiesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CustomProxiesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CustomProxiesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CustomProxiesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int?> profileId = const Value.absent(),
+                Value<Map<String, dynamic>> definition = const Value.absent(),
+                Value<String?> order = const Value.absent(),
+              }) => CustomProxiesCompanion(
+                id: id,
+                profileId: profileId,
+                definition: definition,
+                order: order,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int?> profileId = const Value.absent(),
+                required Map<String, dynamic> definition,
+                Value<String?> order = const Value.absent(),
+              }) => CustomProxiesCompanion.insert(
+                id: id,
+                profileId: profileId,
+                definition: definition,
+                order: order,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$CustomProxiesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({profileId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (profileId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.profileId,
+                                referencedTable: $$CustomProxiesTableReferences
+                                    ._profileIdTable(db),
+                                referencedColumn: $$CustomProxiesTableReferences
+                                    ._profileIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$CustomProxiesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $CustomProxiesTable,
+      RawCustomProxy,
+      $$CustomProxiesTableFilterComposer,
+      $$CustomProxiesTableOrderingComposer,
+      $$CustomProxiesTableAnnotationComposer,
+      $$CustomProxiesTableCreateCompanionBuilder,
+      $$CustomProxiesTableUpdateCompanionBuilder,
+      (RawCustomProxy, $$CustomProxiesTableReferences),
+      RawCustomProxy,
+      PrefetchHooks Function({bool profileId})
+    >;
 
 class $DatabaseManager {
   final _$Database _db;
@@ -6829,6 +7554,8 @@ class $DatabaseManager {
       $$IconRecordsTableTableManager(_db, _db.iconRecords);
   $$ClashProvidersTableTableManager get clashProviders =>
       $$ClashProvidersTableTableManager(_db, _db.clashProviders);
+  $$CustomProxiesTableTableManager get customProxies =>
+      $$CustomProxiesTableTableManager(_db, _db.customProxies);
 }
 
 mixin _$ProfilesDaoMixin on DatabaseAccessor<Database> {
@@ -6917,4 +7644,19 @@ class ClashProvidersDaoManager {
         _db.attachedDatabase,
         _db.clashProviders,
       );
+}
+
+mixin _$CustomProxiesDaoMixin on DatabaseAccessor<Database> {
+  $ProfilesTable get profiles => attachedDatabase.profiles;
+  $CustomProxiesTable get customProxies => attachedDatabase.customProxies;
+  CustomProxiesDaoManager get managers => CustomProxiesDaoManager(this);
+}
+
+class CustomProxiesDaoManager {
+  final _$CustomProxiesDaoMixin _db;
+  CustomProxiesDaoManager(this._db);
+  $$ProfilesTableTableManager get profiles =>
+      $$ProfilesTableTableManager(_db.attachedDatabase, _db.profiles);
+  $$CustomProxiesTableTableManager get customProxies =>
+      $$CustomProxiesTableTableManager(_db.attachedDatabase, _db.customProxies);
 }

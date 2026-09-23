@@ -23,6 +23,8 @@ mixin CoreInterface {
 
   Future<String> validateConfig(String path);
 
+  Future<List<String>> validateProxies(List<Map<String, dynamic>> proxies);
+
   Future<Map<String, dynamic>> getConfig(String path);
 
   Future<Delay?> asyncTestDelay(String url, String proxyName);
@@ -161,6 +163,23 @@ abstract class CoreHandlerInterface with CoreInterface {
   @override
   Future<String> validateConfig(String path) async {
     return _invokeMessage(method: CoreMethod.validateConfig, arguments: path);
+  }
+
+  @override
+  Future<List<String>> validateProxies(
+    List<Map<String, dynamic>> proxies,
+  ) async {
+    final data = await _invokeMethod<List<dynamic>>(
+      method: CoreMethod.validateProxies,
+      arguments: proxies,
+    );
+    if (data == null || data.length != proxies.length) {
+      throw CoreMethodException(
+        code: 'no_response',
+        message: 'Core did not answer ${CoreMethod.validateProxies.name}',
+      );
+    }
+    return data.map((item) => item?.toString() ?? '').toList();
   }
 
   @override

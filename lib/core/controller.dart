@@ -95,6 +95,13 @@ class CoreController {
     return res;
   }
 
+  Future<List<String>> validateProxies(List<Map<String, dynamic>> proxies) {
+    if (proxies.isEmpty) {
+      return Future.value(const []);
+    }
+    return _interface.validateProxies(proxies);
+  }
+
   Future<String> validateConfigWithData(String data) async {
     final path = await appPath.tempFilePath;
     final file = File(path);

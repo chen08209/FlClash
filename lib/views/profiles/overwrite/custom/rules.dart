@@ -45,47 +45,10 @@ class _CustomRulesViewState extends ConsumerState<CustomRulesView> {
     );
   }
 
-  String? _invalidMessageOf(
-    BuildContext context,
-    Rule rule,
-    RuleTargetsSelectorState targets,
-  ) {
-    final appLocalizations = context.appLocalizations;
-    final payloadError = rule.payloadError;
-    if (payloadError != null) {
-      return payloadError.getMessage(context);
-    }
-    if (!targets.loaded) {
-      return null;
-    }
-    if (rule.ruleAction == RuleAction.RULE_SET &&
-        !targets.ruleProviders.contains(rule.ruleProvider)) {
-      return appLocalizations.invalidRuleSet(rule.ruleProvider ?? '');
-    }
-    final ruleTarget = rule.realTarget;
-    if (rule.ruleAction == RuleAction.SUB_RULE) {
-      return targets.subRules.contains(ruleTarget)
-          ? null
-          : appLocalizations.invalidSubRule(ruleTarget ?? '');
-    }
-    return targets.ruleTargets.contains(ruleTarget)
-        ? null
-        : appLocalizations.invalidPolicy(ruleTarget ?? '');
-  }
-
   @override
   Widget build(context) {
     final appLocalizations = context.appLocalizations;
-    final ruleTargets = ref.watch(
-      customOverwriteDateProvider(_profileId).select(
-        (state) => RuleTargetsSelectorState(
-          loaded: state.loaded,
-          ruleTargets: state.ruleTargets,
-          subRules: state.subRules,
-          ruleProviders: state.ruleProviders,
-        ),
-      ),
-    );
+    final overwrite = ref.watch(customOverwriteDateProvider(_profileId));
     return OverwriteEditorPage<Rule, int>(
       title: appLocalizations.rule,
       selectionEnabled: true,
@@ -98,7 +61,8 @@ class _CustomRulesViewState extends ConsumerState<CustomRulesView> {
           (context, ref, rule, index, isEditing, isSelected, onToggleSelected) {
             return RuleItem(
               invalidMessageOf: (target) {
-                return _invalidMessageOf(context, target, ruleTargets);
+                final issues = customRuleIssues(target, overwrite);
+                return issues.isEmpty ? null : issues.getMessage(context);
               },
               isEditing: isEditing,
               isSelected: isSelected,
@@ -257,10 +221,11 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
                       if (!appRuleProviders.contains(name)) name,
                   ],
                 ),
-                OverwriteSelectionSection(
-                  label: context.appLocalizations.appRuleProviders,
-                  items: appRuleProviders.toList(),
-                ),
+                if (appRuleProviders.isNotEmpty)
+                  OverwriteSelectionSection(
+                    label: context.appLocalizations.appRuleProviders,
+                    items: appRuleProviders.toList(),
+                  ),
               ],
               labelBuilder: (item) => item,
               selectedOf: (ref) =>
@@ -385,23 +350,8 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (invalid && target != null)
-                CommonMinIconButtonTheme(
-                  child: IconButton(
-                    tooltip: appLocalizations.tip,
-                    onPressed: () {
-                      dialogs.showMessage(
-                        message: TextSpan(
-                          text: appLocalizations.invalidPolicy(target),
-                        ),
-                      );
-                    },
-                    icon: GlyphIcon(
-                      AppGlyphs.info,
-                      fill: 1,
-                      size: 16.ap,
-                      color: foregroundColor,
-                    ),
-                  ),
+                InfoMessageButton(
+                  message: appLocalizations.invalidPolicy(target),
                 ),
               Flexible(
                 flex: 1,

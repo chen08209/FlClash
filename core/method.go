@@ -172,6 +172,9 @@ var methodHandlers = map[CoreMethod]methodHandler{
 	validateConfigMethod: withArguments(func(path *string, response MethodResponse) {
 		response.success(handleValidateConfig(*path))
 	}),
+	validateProxiesMethod: withArguments(func(mappings *[]map[string]any, response MethodResponse) {
+		response.success(handleValidateProxies(*mappings))
+	}),
 	updateConfigMethod: withArguments(func(params *UpdateParams, response MethodResponse) {
 		response.success(handleUpdateConfig(params))
 	}),
