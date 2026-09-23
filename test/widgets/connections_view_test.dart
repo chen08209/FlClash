@@ -1,7 +1,10 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/theme.dart';
+import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/connection/connections.dart';
 import 'package:fl_clash/features/features.dart';
@@ -9,6 +12,7 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 
 void main() {
   late ProviderContainer container;
@@ -90,6 +94,42 @@ void main() {
 
     expect(find.textContaining('host-99.com'), findsOneWidget);
     expect(tester.takeException(), null);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a row blocks its own connection and refreshes the list', (
+    tester,
+  ) async {
+    final core = _MockCoreHandlerInterface();
+    when(() => core.closeConnection(any())).thenAnswer((_) async => true);
+    container.dispose();
+    container = ProviderContainer(
+      overrides: [
+        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+      ],
+    );
+    globalState.container = container;
+    var connections = buildConnections(2);
+    var readCount = 0;
+
+    await pumpConnections(
+      tester,
+      connectionsReader: () async {
+        readCount++;
+        return connections;
+      },
+    );
+    await tester.pump();
+    final reads = readCount;
+    connections = connections.sublist(1);
+
+    await tester.tap(find.byTooltip('Block connection').first);
+    await tester.pumpAndSettle();
+
+    verify(() => core.closeConnection('0')).called(1);
+    expect(readCount, greaterThan(reads));
+    expect(find.textContaining('host-0.com'), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -206,3 +246,5 @@ class _TestApp extends StatelessWidget {
     );
   }
 }
+
+class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}

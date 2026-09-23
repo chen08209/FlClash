@@ -287,29 +287,33 @@ void main() {
         .opacity
         .value;
 
-    testWidgets('breathes a ring while running and lets it go when stopped', (
-      tester,
-    ) async {
-      final container = await pumpDocked(tester);
+    testWidgets(
+      'breathes a ring in steps while running and lets it go when stopped',
+      (tester) async {
+        final container = await pumpDocked(tester);
 
-      expect(
-        tester.widget<BreathingRing>(find.byType(BreathingRing)).active,
-        isTrue,
-      );
-      await tester.pump(const Duration(seconds: 2));
-      expect(tester.hasRunningAnimations, isTrue);
-      expect(ringOpacity(tester), 1);
+        expect(
+          tester.widget<BreathingRing>(find.byType(BreathingRing)).active,
+          isTrue,
+        );
+        await tester.pump(const Duration(seconds: 2));
+        expect(ringOpacity(tester), 1);
+        expect(tester.binding.hasScheduledFrame, isFalse);
+        await tester.binding.delayed(const Duration(milliseconds: 70));
+        expect(tester.binding.hasScheduledFrame, isTrue);
 
-      container.read(runTimeProvider.notifier).value = null;
-      await tester.pumpAndSettle();
+        container.read(runTimeProvider.notifier).value = null;
+        await tester.pumpAndSettle();
 
-      expect(
-        tester.widget<BreathingRing>(find.byType(BreathingRing)).active,
-        isFalse,
-      );
-      expect(ringOpacity(tester), 0);
-      expect(tester.hasRunningAnimations, isFalse);
-    });
+        expect(
+          tester.widget<BreathingRing>(find.byType(BreathingRing)).active,
+          isFalse,
+        );
+        expect(ringOpacity(tester), 0);
+        await tester.binding.delayed(const Duration(milliseconds: 200));
+        expect(tester.binding.hasScheduledFrame, isFalse);
+      },
+    );
 
     testWidgets('holds the ring still when animations are disabled', (
       tester,
@@ -317,7 +321,8 @@ void main() {
       await pumpDocked(tester, disableAnimations: true);
       await tester.pumpAndSettle();
 
-      expect(tester.hasRunningAnimations, isFalse);
+      await tester.binding.delayed(const Duration(milliseconds: 200));
+      expect(tester.binding.hasScheduledFrame, isFalse);
       expect(ringOpacity(tester), 1);
     });
   });

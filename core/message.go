@@ -35,14 +35,19 @@ func classOfMessage(message Message) messageClass {
 	switch message.Type {
 	case LoadedMessage, GeoUpdateMessage:
 		return stateMessageClass
-	case LogMessage, RequestMessage:
+	case LogMessage, RequestMessage, DnsMessage:
 		return bulkMessageClass
 	default:
 		return priorityMessageClass
 	}
 }
 
+// Request and DNS events fire per connection and per query for as long as the
+// Android service runs, engine or not; unheard, they are not worth encoding.
 func sendMessage(message Message) {
+	if !hasEventListener() {
+		return
+	}
 	switch classOfMessage(message) {
 	case stateMessageClass:
 		enqueueState(stateMessageQueue, message)

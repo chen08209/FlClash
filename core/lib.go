@@ -329,14 +329,26 @@ func quickSetup(callback unsafe.Pointer, initParamsChar *C.char, setupParamsChar
 	}()
 }
 
+// The listener goes away with the Flutter engine, which never gets to release
+// the route watch it held, while the service and this core run on.
+//
 //export setEventListener
 func setEventListener(listener unsafe.Pointer) {
 	eventListenerLock.Lock()
-	defer eventListenerLock.Unlock()
 	if eventListener != nil {
 		releaseObject(eventListener)
 	}
 	eventListener = listener
+	eventListenerLock.Unlock()
+	if listener == nil {
+		stopRouteWatch()
+	}
+}
+
+func hasEventListener() bool {
+	eventListenerLock.RLock()
+	defer eventListenerLock.RUnlock()
+	return eventListener != nil
 }
 
 //export getTotalTraffic
@@ -376,8 +388,8 @@ func stopTun() {
 }
 
 //export suspend
-func suspend(suspended bool) {
-	handleSuspend(suspended)
+func suspend(suspended, interactive bool) {
+	handleSuspend(suspended, interactive)
 }
 
 //export forceGC

@@ -3,7 +3,8 @@ import 'dart:math' as math;
 import 'package:fl_clash/common/common.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Area chart of a sample stream that scrolls each new sample in from the right.
+/// Area chart of a sample stream that slides each new sample in from the right,
+/// then holds still until the next one.
 class LineChart extends StatefulWidget {
   const LineChart({
     super.key,
@@ -12,7 +13,6 @@ class LineChart extends StatefulWidget {
     required this.capacity,
     required this.minScale,
     required this.color,
-    this.sampleInterval = const Duration(seconds: 1),
   }) : assert(capacity > 1),
        assert(minScale > 0);
 
@@ -29,8 +29,6 @@ class LineChart extends StatefulWidget {
 
   final Color color;
 
-  final Duration sampleInterval;
-
   @override
   State<LineChart> createState() => _LineChartState();
 }
@@ -38,6 +36,7 @@ class LineChart extends StatefulWidget {
 class _LineChartState extends State<LineChart> with TickerProviderStateMixin {
   static const _maxLag = 2.0;
   static const _rescaleDuration = Duration(milliseconds: 450);
+  static const _slideDuration = Duration(milliseconds: 450);
 
   late final AnimationController _lag;
   late final AnimationController _rescale;
@@ -90,7 +89,8 @@ class _LineChartState extends State<LineChart> with TickerProviderStateMixin {
       _lag.value = lag;
       _lag.animateTo(
         0,
-        duration: context.motionDuration(widget.sampleInterval * lag),
+        duration: context.motionDuration(_slideDuration * lag),
+        curve: Easing.standardDecelerate,
       );
     }
     _retargetScale();

@@ -28,13 +28,15 @@ Widget _chart(
 }
 
 void main() {
-  testWidgets('a new sample scrolls in over one interval', (tester) async {
+  testWidgets('a new sample slides in and rests before the next one', (
+    tester,
+  ) async {
     await tester.pumpWidget(_chart(const [1, 2, 3], revision: 3));
     expect(tester.hasRunningAnimations, isFalse);
 
     await tester.pumpWidget(_chart(const [1, 2, 3, 4], revision: 4));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 900));
+    await tester.pump(const Duration(milliseconds: 400));
     expect(tester.hasRunningAnimations, isTrue);
     expect(
       tester.renderObject(
@@ -48,7 +50,7 @@ void main() {
         ..path(color: _color, style: PaintingStyle.stroke),
     );
 
-    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 100));
     expect(tester.hasRunningAnimations, isFalse);
   });
 
@@ -84,13 +86,13 @@ void main() {
     await tester.pumpWidget(_chart(const [1, 2, 3], revision: 3));
     await tester.pumpWidget(_chart(const [1, 2, 3, 4], revision: 4));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 200));
 
     await tester.pumpWidget(_chart([1, 2, 3, 4], revision: 4));
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 200));
     expect(tester.hasRunningAnimations, isTrue);
 
-    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 100));
     expect(tester.hasRunningAnimations, isFalse);
   });
 

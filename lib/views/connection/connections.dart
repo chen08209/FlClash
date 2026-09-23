@@ -155,14 +155,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
               detailTitle: appLocalizations.details(
                 appLocalizations.connection,
               ),
-              actionBuilder: (trackerInfo) => IconButton(
-                tooltip: appLocalizations.blockConnection,
-                style: IconButton.styleFrom(
-                  minimumSize: const Size.square(28),
-                  padding: EdgeInsets.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                icon: const GlyphIcon(AppGlyphs.block, size: 16),
+              actionBuilder: (trackerInfo) => _BlockConnectionButton(
                 onPressed: () {
                   _handleBlockConnection(trackerInfo.id);
                 },
@@ -170,6 +163,37 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+// One per live row: an IconButton would add a theme animation to each.
+class _BlockConnectionButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _BlockConnectionButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: context.appLocalizations.blockConnection,
+      child: Semantics(
+        button: true,
+        child: InkResponse(
+          onTap: onPressed,
+          radius: 14,
+          child: SizedBox.square(
+            dimension: 28,
+            child: Center(
+              child: GlyphIcon(
+                AppGlyphs.block,
+                size: 16,
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

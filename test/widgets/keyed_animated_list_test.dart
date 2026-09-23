@@ -84,6 +84,21 @@ void main() {
     expect(topOf(tester, 'b'), 40);
   });
 
+  testWidgets('rows entering in one update share a single ticker', (
+    tester,
+  ) async {
+    final visible = [for (var i = 0; i < 30; i++) '$i'];
+    await tester.pumpWidget(buildList(visible));
+    await tester.pumpWidget(
+      buildList([...visible, for (var i = 30; i < 70; i++) '$i']),
+    );
+    await tester.pump();
+
+    expect(tester.binding.transientCallbackCount, 1);
+    await tester.pumpAndSettle();
+    expect(tester.binding.transientCallbackCount, 0);
+  });
+
   testWidgets('a change too large to animate swaps the rows at once', (
     tester,
   ) async {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -293,23 +295,30 @@ class BreathingRing extends StatefulWidget {
   State<BreathingRing> createState() => _BreathingRingState();
 }
 
-class _BreathingRingState extends State<BreathingRing>
-    with SingleTickerProviderStateMixin {
+class _BreathingRingState extends State<BreathingRing> {
   static const _breathDuration = Duration(milliseconds: 1400);
+  // A ticker would redraw the screen on every vsync for as long as the core runs.
+  static const _breathStep = Duration(milliseconds: 66);
   static const _fadeDuration = Duration(milliseconds: 300);
 
-  late final AnimationController _breath = AnimationController(
-    vsync: this,
-    duration: _breathDuration,
-  );
-  late final Animation<double> _curve = CurvedAnimation(
-    parent: _breath,
-    curve: Curves.easeInOut,
-  );
+  final _breath = ValueNotifier<double>(0);
+  late final AppLifecycleListener _lifecycle;
+  Timer? _timer;
+  int _steps = 0;
+  bool _canAnimate = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onStateChange: (_) => _sync());
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _canAnimate =
+        !MediaQuery.disableAnimationsOf(context) &&
+        TickerMode.valuesOf(context).enabled;
     _sync();
   }
 
@@ -319,18 +328,31 @@ class _BreathingRingState extends State<BreathingRing>
     _sync();
   }
 
+  bool get _isForeground => switch (WidgetsBinding.instance.lifecycleState) {
+    null || AppLifecycleState.resumed || AppLifecycleState.inactive => true,
+    _ => false,
+  };
+
   void _sync() {
-    final breathing = widget.active && !MediaQuery.disableAnimationsOf(context);
-    if (!breathing) {
-      _breath.stop();
+    if (!widget.active || !_canAnimate || !_isForeground) {
+      _timer?.cancel();
+      _timer = null;
       if (widget.active) _breath.value = 1;
       return;
     }
-    if (!_breath.isAnimating) _breath.repeat(reverse: true);
+    _timer ??= Timer.periodic(_breathStep, (_) => _step());
+  }
+
+  void _step() {
+    final period = _breathDuration.inMicroseconds / _breathStep.inMicroseconds;
+    final phase = ++_steps % (2 * period) / period;
+    _breath.value = Curves.easeInOut.transform(phase <= 1 ? phase : 2 - phase);
   }
 
   @override
   void dispose() {
+    _timer?.cancel();
+    _lifecycle.dispose();
     _breath.dispose();
     super.dispose();
   }
@@ -350,7 +372,7 @@ class _BreathingRingState extends State<BreathingRing>
               child: RepaintBoundary(
                 child: CustomPaint(
                   painter: _BreathingRingPainter(
-                    breath: _curve,
+                    breath: _breath,
                     color: theme.colorScheme.primary,
                     shape:
                         theme.floatingActionButtonTheme.shape ?? AppShape.full,
@@ -378,7 +400,7 @@ class _BreathingRingPainter extends CustomPainter {
   static const _spread = 2.0;
   static const _width = 2.0;
 
-  final Animation<double> breath;
+  final ValueNotifier<double> breath;
   final Color color;
   final ShapeBorder shape;
 

@@ -55,6 +55,11 @@ func deliverEvent(data []byte) {
 	send(data)
 }
 
+// The desktop core exits with its host connection, so it is always heard.
+func hasEventListener() bool {
+	return true
+}
+
 func writeFrame(w io.Writer, data []byte) (int, error) {
 	if len(data) > maxIPCFrameSize {
 		return 0, fmt.Errorf("IPC frame exceeds %d bytes", maxIPCFrameSize)
