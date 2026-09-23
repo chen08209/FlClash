@@ -68,17 +68,44 @@ ProxiesActionsState proxiesActionsState(Ref ref) {
 }
 
 @riverpod
-GroupsState filterGroupsState(Ref ref, String query) {
+GroupsState visibleGroupsState(Ref ref) {
   final currentGroups = ref.watch(currentGroupsStateProvider);
-  if (query.isEmpty) {
+  final hideTimeoutProxies = ref.watch(
+    proxiesStyleSettingProvider.select((state) => state.hideTimeoutProxies),
+  );
+  if (!hideTimeoutProxies) {
     return currentGroups;
   }
-  final lowQuery = query.toLowerCase();
+  // Watching the delay map instead would drop nodes one probe at a time.
+  ref.watch(sortNumProvider);
+  final delaysAtLastTestBatch = ref.read(delayDataSourceProvider);
+  return currentGroups.copyWith(
+    value: computeHideTimeout(
+      groups: currentGroups.value,
+      allGroups: ref.watch(groupsProvider),
+      delayMap: delaysAtLastTestBatch,
+      selectedMap: ref.watch(selectedMapProvider),
+      defaultTestUrl: ref.watch(realTestUrlProvider()),
+    ),
+  );
+}
+
+@riverpod
+GroupsState filterGroupsState(Ref ref, String query) {
+  final currentGroups = ref.watch(visibleGroupsStateProvider);
+  final searchQuery = SearchQuery(query);
+  if (searchQuery.isEmpty) {
+    return currentGroups;
+  }
+  final matches = <Proxy, bool>{};
   final groups = currentGroups.value
       .map((group) {
         return group.copyWith(
           all: group.all
-              .where((proxy) => proxy.name.toLowerCase().contains(lowQuery))
+              .where(
+                (proxy) =>
+                    matches[proxy] ??= searchQuery.matches(proxy.searchFields),
+              )
               .toList(),
         );
       })
@@ -144,16 +171,15 @@ ProxyGroupSelectorState proxyGroupSelectorState(
 ) {
   final proxiesStyle = ref.watch(proxiesStyleSettingProvider);
   final group = ref.watch(
-    currentGroupsStateProvider.select(
+    visibleGroupsStateProvider.select(
       (state) => state.value.getGroup(groupName),
     ),
   );
   final sortNum = ref.watch(sortNumProvider);
-  final lowQuery = query.toLowerCase();
   final proxies =
-      group?.all.where((item) {
-        return item.name.toLowerCase().contains(lowQuery);
-      }).toList() ??
+      group?.all
+          .whereMatches(SearchQuery(query), (proxy) => proxy.searchFields)
+          .toList() ??
       [];
   return ProxyGroupSelectorState(
     testUrl: group?.testUrl,

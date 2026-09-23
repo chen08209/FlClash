@@ -45,7 +45,10 @@ class _CaptionGlyphPainter extends CustomPainter {
         final y = (size.height / 2).floorToDouble() + 0.5;
         canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
       case CaptionGlyph.maximize:
-        canvas.drawRRect(RRect.fromRectAndRadius(box, corner), paint);
+        canvas.drawRSuperellipse(
+          RSuperellipse.fromRectAndRadius(box, corner),
+          paint,
+        );
       case CaptionGlyph.restore:
         const offset = 2.0;
         final front = Rect.fromLTRB(
@@ -55,10 +58,16 @@ class _CaptionGlyphPainter extends CustomPainter {
           box.bottom,
         );
         final back = front.shift(const Offset(offset, -offset));
-        canvas.drawRRect(RRect.fromRectAndRadius(front, corner), paint);
+        canvas.drawRSuperellipse(
+          RSuperellipse.fromRectAndRadius(front, corner),
+          paint,
+        );
         canvas.save();
         canvas.clipRect(front.inflate(0.5), clipOp: ClipOp.difference);
-        canvas.drawRRect(RRect.fromRectAndRadius(back, corner), paint);
+        canvas.drawRSuperellipse(
+          RSuperellipse.fromRectAndRadius(back, corner),
+          paint,
+        );
         canvas.restore();
       case CaptionGlyph.close:
         paint.strokeCap = StrokeCap.round;

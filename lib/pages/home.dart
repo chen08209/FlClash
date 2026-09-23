@@ -3,6 +3,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/manager/app_manager.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/views/dashboard/widgets/start_button.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -63,46 +64,54 @@ class _HomeShell extends ConsumerWidget {
     final state = ref.watch(navigationStateProvider);
     final isMobile = state.viewMode == ViewMode.mobile;
     final navigationItems = state.navigationItems;
+    final hasProfile = ref.watch(
+      profilesProvider.select((profiles) => profiles.isNotEmpty),
+    );
     return Material(
       color: context.colorScheme.surface,
-      child: Column(
+      child: Stack(
         children: [
-          Flexible(
-            flex: 1,
+          Positioned.fill(
             child: FocusTraversalGroup(
               policy: PageTraversalPolicy(),
-              child: MediaQuery.removePadding(
-                removeTop: false,
-                removeBottom: isMobile,
-                removeLeft: isMobile,
-                removeRight: isMobile,
-                context: context,
-                child: child,
+              child: BottomInsetScope(
+                inset: isMobile ? NavigationDock.insetOf(context) : 0,
+                child: MediaQuery.removePadding(
+                  removeTop: false,
+                  removeBottom: isMobile,
+                  removeLeft: isMobile,
+                  removeRight: isMobile,
+                  context: context,
+                  child: child,
+                ),
               ),
             ),
           ),
-          AnimatedVisibility.bottomNavigation(
-            visible: isMobile,
-            child: MediaQuery.removePadding(
-              removeTop: true,
-              removeBottom: false,
-              removeLeft: true,
-              removeRight: true,
-              context: context,
-              child: NavigationBarTheme(
-                data: _NavigationBarDefaultsM3(context),
-                child: NavigationBar(
+          PositionedDirectional(
+            start: 0,
+            end: 0,
+            bottom: 0,
+            child: AnimatedVisibility.bottomNavigation(
+              visible: isMobile,
+              child: MediaQuery.removePadding(
+                removeTop: true,
+                removeBottom: false,
+                removeLeft: true,
+                removeRight: true,
+                context: context,
+                child: NavigationDock(
                   destinations: [
                     for (final item in navigationItems)
-                      NavigationDestination(
-                        icon: item.icon,
+                      NavigationDockDestination(
+                        glyph: item.glyph,
                         label: item.label.label,
                       ),
                   ],
-                  onDestinationSelected: (index) {
+                  selectedIndex: state.currentIndex,
+                  onSelected: (index) {
                     _handleToPage(navigationItems[index].label, ref);
                   },
-                  selectedIndex: state.currentIndex,
+                  trailing: hasProfile ? const StartButton() : null,
                 ),
               ),
             ),
@@ -127,7 +136,9 @@ class _NavigationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scopedView = PageFocusScope(child: view);
+    final scopedView = PageFocusScope(
+      child: DockedPageScope(docked: isMobile, child: view),
+    );
     final keptView = KeepScope(
       key: ValueKey(item.label),
       keep: item.keep,
@@ -144,9 +155,14 @@ class _NavigationPage extends StatelessWidget {
         final isActive = ref.watch(
           currentPageLabelProvider.select((label) => label == item.label),
         );
+        // A kept-alive page off screen still ticks its animations, and
+        // each tick asks for a frame.
         return PageActivityScope(
           isActive: isActive,
-          child: ExcludeFocus(excluding: !isActive, child: child!),
+          child: TickerMode(
+            enabled: isActive,
+            child: ExcludeFocus(excluding: !isActive, child: child!),
+          ),
         );
       },
       child: keptView,
@@ -170,6 +186,9 @@ class _HomePageView extends ConsumerStatefulWidget {
 class _HomePageViewState extends ConsumerState<_HomePageView> {
   late PageController _pageController;
 
+  List<int>? _order;
+  int _slide = 0;
+
   @override
   void initState() {
     super.initState();
@@ -185,6 +204,7 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
   void didUpdateWidget(covariant _HomePageView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.navigationItems.length != widget.navigationItems.length) {
+      _order = null;
       _updatePageController();
     }
   }
@@ -209,14 +229,36 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
     }
     final isAnimateToPage = ref.read(appSettingProvider).isAnimateToPage;
     final isMobile = ref.read(isMobileViewProvider);
-    if (isAnimateToPage && isMobile && !ignoreAnimateTo) {
-      await _pageController.animateToPage(
-        index,
-        duration: kTabScrollDuration,
-        curve: Curves.easeOut,
-      );
-    } else {
+    final slide = ++_slide;
+    final page = _pageController.hasClients
+        ? _pageController.page?.round() ?? index
+        : index;
+    final current = _order?[page] ?? page;
+    if (_order != null) {
+      setState(() => _order = null);
+      _pageController.jumpToPage(current);
+    }
+    if (!isAnimateToPage || !isMobile || ignoreAnimateTo) {
       _pageController.jumpToPage(index);
+      return;
+    }
+    // As TabBarView does, so no page between is built and painted on the way.
+    if ((index - current).abs() > 1) {
+      final adjacent = index > current ? index - 1 : index + 1;
+      setState(() {
+        _order = List.generate(widget.navigationItems.length, (item) => item)
+          ..[adjacent] = current
+          ..[current] = adjacent;
+      });
+      _pageController.jumpToPage(adjacent);
+    }
+    await _pageController.animateToPage(
+      index,
+      duration: kTabScrollDuration,
+      curve: Curves.easeOut,
+    );
+    if (mounted && slide == _slide && _order != null) {
+      setState(() => _order = null);
     }
   }
 
@@ -247,69 +289,15 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
         final index = widget.navigationItems.indexWhere(
           (item) => item.label == key.value,
         );
-        return index == -1 ? null : index;
+        if (index == -1) {
+          return null;
+        }
+        return _order?.indexOf(index) ?? index;
       },
       itemBuilder: (context, index) {
-        return widget.pageBuilder(context, index);
+        return widget.pageBuilder(context, _order?[index] ?? index);
       },
     );
-  }
-}
-
-class _NavigationBarDefaultsM3 extends NavigationBarThemeData {
-  _NavigationBarDefaultsM3(this.context)
-    : super(
-        height: 80.0,
-        elevation: 3.0,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-      );
-
-  final BuildContext context;
-  late final ColorScheme _colors = Theme.of(context).colorScheme;
-  late final TextTheme _textTheme = Theme.of(context).textTheme;
-
-  @override
-  Color? get backgroundColor => _colors.surfaceContainer;
-
-  @override
-  Color? get shadowColor => Colors.transparent;
-
-  @override
-  Color? get surfaceTintColor => Colors.transparent;
-
-  @override
-  WidgetStateProperty<IconThemeData?>? get iconTheme {
-    return WidgetStateProperty.resolveWith((Set<WidgetState> states) {
-      return IconThemeData(
-        size: 24.0,
-        color: states.contains(WidgetState.disabled)
-            ? _colors.onSurfaceVariant.opacity38
-            : states.contains(WidgetState.selected)
-            ? _colors.onSecondaryContainer
-            : _colors.onSurfaceVariant,
-      );
-    });
-  }
-
-  @override
-  Color? get indicatorColor => _colors.secondaryContainer;
-
-  @override
-  ShapeBorder? get indicatorShape => AppShape.full;
-
-  @override
-  WidgetStateProperty<TextStyle?>? get labelTextStyle {
-    return WidgetStateProperty.resolveWith((Set<WidgetState> states) {
-      final TextStyle style = _textTheme.labelMedium!;
-      return style.apply(
-        overflow: TextOverflow.ellipsis,
-        color: states.contains(WidgetState.disabled)
-            ? _colors.onSurfaceVariant.opacity38
-            : states.contains(WidgetState.selected)
-            ? _colors.onSurface
-            : _colors.onSurfaceVariant,
-      );
-    });
   }
 }
 
@@ -328,6 +316,10 @@ class HomeBackScopeContainer extends ConsumerWidget {
         final canPop = Navigator.canPop(realContext);
         if (canPop) {
           Navigator.of(realContext).pop();
+        } else if (system.isTV && pageLabel != PageLabel.dashboard) {
+          ref
+              .read(currentPageLabelProvider.notifier)
+              .toPage(PageLabel.dashboard);
         } else {
           await ref.read(systemActionProvider.notifier).handleClose();
         }

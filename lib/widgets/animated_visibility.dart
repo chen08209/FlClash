@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:material_ui/material_ui.dart';
 
 const _transitionDuration = Duration(milliseconds: 300);
@@ -119,10 +121,22 @@ class _AnimatedVisibilityState extends State<AnimatedVisibility>
   Widget build(BuildContext context) {
     final motion = widget._motion;
     final content = _includeChild
-        ? SizeTransition(
-            sizeFactor: _animation,
-            axis: motion.axis,
-            alignment: motion.alignment,
+        ? AnimatedBuilder(
+            animation: _animation,
+            // Settled, it keeps what paints past its bounds: shadows, a lens.
+            builder: (_, child) => ClipRect(
+              clipBehavior: _controller.isCompleted ? Clip.none : Clip.hardEdge,
+              child: Align(
+                alignment: motion.alignment,
+                widthFactor: motion.axis == Axis.horizontal
+                    ? math.max(_animation.value, 0)
+                    : null,
+                heightFactor: motion.axis == Axis.vertical
+                    ? math.max(_animation.value, 0)
+                    : null,
+                child: child,
+              ),
+            ),
             child: FadeTransition(
               opacity: _animation,
               child: SlideTransition(
@@ -138,10 +152,7 @@ class _AnimatedVisibilityState extends State<AnimatedVisibility>
       excluding: !widget.visible,
       child: ExcludeFocus(
         excluding: !widget.visible,
-        child: IgnorePointer(
-          ignoring: !widget.visible,
-          child: ClipRect(child: content),
-        ),
+        child: IgnorePointer(ignoring: !widget.visible, child: content),
       ),
     );
   }

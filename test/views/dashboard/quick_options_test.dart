@@ -4,6 +4,7 @@ import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/dashboard/widgets/quick_options.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -124,17 +125,34 @@ void main() {
     );
   });
 
-  testWidgets('every card labels itself and offers its options', (
+  testWidgets('every card labels its state and opens its options', (
     tester,
   ) async {
     for (final testCase in _cardCases) {
       await pumpCard(tester, testCase.widget);
 
       expect(
-        find.text(currentAppLocalizations.options),
+        find.text(
+          testCase.initial
+              ? currentAppLocalizations.enabled
+              : currentAppLocalizations.disabled,
+        ),
         findsOneWidget,
-        reason: '${testCase.name} must show the options affordance',
+        reason: '${testCase.name} must label the state it reads',
       );
+
+      await tester.tap(find.byType(CommonCard));
+      await tester.pumpAndSettle();
+
+      final sheet = find.byType(CommonScaffold);
+      expect(
+        sheet,
+        findsOneWidget,
+        reason: '${testCase.name} must open its options from the card',
+      );
+
+      Navigator.of(tester.element(sheet)).pop();
+      await tester.pumpAndSettle();
     }
   });
 }

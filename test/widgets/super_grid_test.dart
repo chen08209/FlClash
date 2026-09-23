@@ -1,16 +1,19 @@
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/widgets/grid.dart';
 import 'package:fl_clash/widgets/super_grid.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 
 GridItem _item(String label, {int crossAxisCellCount = 2}) {
   return GridItem(
+    key: ValueKey(label),
     crossAxisCellCount: crossAxisCellCount,
     mainAxisCellCount: 1,
     child: SizedBox(
-      key: ValueKey(label),
+      key: ValueKey('content-$label'),
       height: 100,
       child: ColoredBox(
         color: Colors.blue,
@@ -20,94 +23,134 @@ GridItem _item(String label, {int crossAxisCellCount = 2}) {
   );
 }
 
-void main() {
-  testWidgets('SuperGrid adds and deletes items while reporting updates', (
-    tester,
-  ) async {
-    final key = GlobalKey<SuperGridState>();
-    var updates = 0;
+/// The shake never stops while editing, so pumpAndSettle would not return.
+Future<void> _settle(WidgetTester tester) async {
+  for (var i = 0; i < 30; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
 
-    await tester.pumpWidget(
-      TestApp(
-        child: Scaffold(
-          body: SingleChildScrollView(
-            child: SuperGrid(
-              key: key,
-              crossAxisCount: 4,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              onUpdate: () => updates++,
-              children: [_item('A'), _item('B'), _item('C')],
-            ),
+Finder _content(String label) => find.byKey(ValueKey('content-$label'));
+
+List<String> _labels(List<GridItem> items) {
+  return [for (final item in items) (item.key! as ValueKey<String>).value];
+}
+
+class _Harness extends StatefulWidget {
+  final GlobalKey<SuperGridState> gridKey;
+  final List<String> labels;
+  final bool editing;
+  final ValueChanged<List<GridItem>>? onChanged;
+
+  const _Harness({
+    required this.gridKey,
+    required this.labels,
+    this.editing = true,
+    this.onChanged,
+  });
+
+  @override
+  State<_Harness> createState() => _HarnessState();
+}
+
+class _HarnessState extends State<_Harness> {
+  late List<GridItem> _children = [
+    for (final label in widget.labels) _item(label),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return TestApp(
+      child: Scaffold(
+        body: SingleChildScrollView(
+          child: SuperGrid(
+            key: widget.gridKey,
+            editing: widget.editing,
+            crossAxisCount: 4,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            onChanged: (items) {
+              setState(() => _children = items);
+              widget.onChanged?.call(items);
+            },
+            children: _children,
           ),
         ),
       ),
     );
-    await tester.pump();
+  }
+}
 
-    expect(key.currentState!.length, 3);
-    expect(find.byIcon(Icons.close), findsNWidgets(3));
+void main() {
+  testWidgets('SuperGrid flies an added item into its slot', (tester) async {
+    final key = GlobalKey<SuperGridState>();
+    final changes = <List<String>>[];
 
-    key.currentState!.handleAdd(_item('D', crossAxisCellCount: 4));
-    await tester.pump();
-    expect(key.currentState!.length, 4);
-    expect(find.byKey(const ValueKey('D')), findsOneWidget);
-
-    final deleteButton = tester.widget<IconButton>(
-      find.ancestor(
-        of: find.byIcon(Icons.close).at(1),
-        matching: find.byType(IconButton),
+    await tester.pumpWidget(
+      _Harness(
+        gridKey: key,
+        labels: const ['A', 'B', 'C'],
+        editing: false,
+        onChanged: (items) => changes.add(_labels(items)),
       ),
     );
-    deleteButton.onPressed!();
+
+    key.currentState!.addItem(
+      _item('D', crossAxisCellCount: 4),
+      from: const Rect.fromLTWH(500, 500, 100, 50),
+    );
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 301));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 421));
-    await tester.pump();
-    expect(key.currentState!.length, 3);
-    expect(find.byKey(const ValueKey('B')), findsNothing);
-    expect(updates, greaterThanOrEqualTo(2));
+
+    expect(changes, [
+      ['A', 'B', 'C', 'D'],
+    ]);
+    // The slot is laid out but hidden while an overlay copy flies in.
+    expect(_content('D'), findsNWidgets(2));
+    final slot = tester.getRect(_content('D').first);
+    final copy = tester.getTopLeft(_content('D').last);
+    expect(copy, isNot(slot.topLeft));
+
+    await _settle(tester);
+
+    expect(_content('D'), findsOneWidget);
+    expect(tester.getRect(_content('D')), slot);
     expect(tester.takeException(), null);
   });
 
-  testWidgets('SuperGrid handles a desktop drag and keeps items mounted', (
+  testWidgets('SuperGrid fades a deleted item while its neighbours slide in', (
     tester,
   ) async {
     final key = GlobalKey<SuperGridState>();
+    final changes = <List<String>>[];
 
     await tester.pumpWidget(
-      TestApp(
-        child: Scaffold(
-          body: SingleChildScrollView(
-            child: SuperGrid(
-              key: key,
-              crossAxisCount: 4,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              children: [_item('A'), _item('B'), _item('C'), _item('D')],
-            ),
-          ),
-        ),
+      _Harness(
+        gridKey: key,
+        labels: const ['A', 'B', 'C'],
+        onChanged: (items) => changes.add(_labels(items)),
       ),
     );
-    await tester.pump();
+    final bSlot = tester.getTopLeft(_content('B'));
+    final cSlot = tester.getTopLeft(_content('C'));
 
-    final gesture = await tester.startGesture(
-      tester.getCenter(find.byKey(const ValueKey('A'))),
-    );
+    await tester.tap(find.byGlyph(AppGlyphs.close).at(1));
     await tester.pump();
-    await gesture.moveBy(const Offset(10, 0));
-    await tester.pump();
-    await gesture.moveTo(tester.getCenter(find.byKey(const ValueKey('D'))));
-    await tester.pump(const Duration(milliseconds: 300));
-    await gesture.up();
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(milliseconds: 100));
 
-    expect(key.currentState!.length, 4);
-    for (final label in ['A', 'B', 'C', 'D']) {
-      expect(find.byKey(ValueKey(label)), findsOneWidget);
-    }
+    expect(changes, [
+      ['A', 'C'],
+    ]);
+    expect(_content('B'), findsOneWidget);
+    final cMoving = tester.getTopLeft(_content('C'));
+    expect(cMoving.dx, inExclusiveRange(cSlot.dx, bSlot.dx));
+    expect(cMoving.dy, inExclusiveRange(bSlot.dy, cSlot.dy));
+
+    await _settle(tester);
+
+    expect(_content('B'), findsNothing);
+    // Within the shake's reach of B's old slot.
+    expect(tester.getTopLeft(_content('C')), within(distance: 8, from: bSlot));
     expect(tester.takeException(), null);
   });
 
@@ -115,36 +158,18 @@ void main() {
     tester,
   ) async {
     final key = GlobalKey<SuperGridState>();
+    final changes = <List<String>>[];
 
     await tester.pumpWidget(
-      TestApp(
-        child: Scaffold(
-          body: SingleChildScrollView(
-            child: SuperGrid(
-              key: key,
-              crossAxisCount: 4,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              children: [_item('A'), _item('B'), _item('C'), _item('D')],
-            ),
-          ),
-        ),
+      _Harness(
+        gridKey: key,
+        labels: const ['A', 'B', 'C', 'D'],
+        onChanged: (items) => changes.add(_labels(items)),
       ),
     );
-    await tester.pump();
 
-    List<String> labels() => key.currentState!.snapshotChildren
-        .map(
-          (item) => ((item.child as SizedBox).key! as ValueKey).value as String,
-        )
-        .toList();
-
-    expect(labels(), ['A', 'B', 'C', 'D']);
-
-    final target = tester.getCenter(find.byKey(const ValueKey('D')));
-    final gesture = await tester.startGesture(
-      tester.getCenter(find.byKey(const ValueKey('A'))),
-    );
+    final target = tester.getCenter(_content('D'));
+    final gesture = await tester.startGesture(tester.getCenter(_content('A')));
     await tester.pump();
     await gesture.moveBy(const Offset(10, 0));
     await tester.pump();
@@ -152,51 +177,56 @@ void main() {
     // Past the hover delay, so the grid opens a slot at D's position.
     await tester.pump(const Duration(milliseconds: 200));
     await tester.pump(const Duration(milliseconds: 500));
+    expect(changes, isEmpty);
     await gesture.up();
-    await tester.pump(const Duration(seconds: 2));
+    await _settle(tester);
 
-    expect(labels(), ['B', 'C', 'D', 'A']);
+    expect(_labels(key.currentState!.items), ['B', 'C', 'D', 'A']);
+    expect(changes, [
+      ['B', 'C', 'D', 'A'],
+    ]);
+    expect(_content('A'), findsOneWidget);
     expect(tester.takeException(), null);
   });
 
-  testWidgets('SuperGrid completes a pending drop when disposed', (
+  testWidgets('SuperGrid keeps item state when editing toggles', (
     tester,
   ) async {
     final key = GlobalKey<SuperGridState>();
 
     await tester.pumpWidget(
-      TestApp(
-        child: Scaffold(
-          body: SingleChildScrollView(
-            child: SuperGrid(
-              key: key,
-              crossAxisCount: 4,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              children: [_item('A'), _item('B'), _item('C'), _item('D')],
-            ),
-          ),
-        ),
-      ),
+      _Harness(gridKey: key, labels: const ['A', 'B'], editing: false),
+    );
+    final element = tester.element(_content('A'));
+
+    await tester.pumpWidget(_Harness(gridKey: key, labels: const ['A', 'B']));
+    await tester.pump();
+    expect(find.byGlyph(AppGlyphs.close), findsNWidgets(2));
+    expect(tester.element(_content('A')), same(element));
+
+    await tester.pumpWidget(
+      _Harness(gridKey: key, labels: const ['A', 'B'], editing: false),
     );
     await tester.pump();
+    expect(find.byGlyph(AppGlyphs.close), findsNothing);
+    expect(tester.element(_content('A')), same(element));
+  });
 
-    final gesture = await tester.startGesture(
-      tester.getCenter(find.byKey(const ValueKey('A'))),
+  testWidgets('SuperGrid drops a flight when disposed mid-air', (tester) async {
+    final key = GlobalKey<SuperGridState>();
+
+    await tester.pumpWidget(_Harness(gridKey: key, labels: const ['A', 'B']));
+    key.currentState!.addItem(
+      _item('C'),
+      from: const Rect.fromLTWH(400, 400, 100, 50),
     );
     await tester.pump();
-    await gesture.moveBy(const Offset(10, 0));
-    await tester.pump();
-    await gesture.moveTo(tester.getCenter(find.byKey(const ValueKey('D'))));
-    await tester.pump(const Duration(milliseconds: 300));
-    await gesture.up();
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
 
-    final transformCompleted = key.currentState!.isTransformCompleter;
     await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
-
-    expect(await transformCompleted, isFalse);
     await tester.pump(const Duration(seconds: 2));
+
+    expect(_content('C'), findsNothing);
     expect(tester.takeException(), null);
   });
 }

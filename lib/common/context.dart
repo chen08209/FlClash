@@ -31,14 +31,22 @@ extension BuildContextExtension on BuildContext {
     }
   }
 
-  double get sheetTopPadding {
-    final sheetType = SheetProvider.of(this)!.type;
-    if (sheetType == SheetType.bottomSheet) {
-      return sheetAppBarHeight;
-    } else {
-      return 10;
-    }
-  }
+  bool get isInBottomSheet =>
+      SheetProvider.of(this)?.type == SheetType.bottomSheet;
+
+  /// How far a page's app bar reaches over the top of its body.
+  ///
+  /// Where a page builds the body it hands its scaffold, outside that body,
+  /// this is where the bar will end: a toolbar below the status bar.
+  double get appBarInset =>
+      FloatingBarScope.of(this) ??
+      (isInBottomSheet
+          ? sheetAppBarHeight
+          : MediaQuery.paddingOf(this).top + kToolbarHeight);
+
+  double get sheetTopPadding =>
+      TopInsetScope.of(this) ??
+      (isInBottomSheet ? sheetAppBarHeight : appBarInset + 10);
 
   void showNotifier(
     String text, {

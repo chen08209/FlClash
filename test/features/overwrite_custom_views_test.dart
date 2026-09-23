@@ -156,9 +156,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('Group 2'));
     await tester.pump();
-    await tester.tap(find.byGlyph(AppGlyphs.more));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(AppLocalizations.current.delete));
+    await tester.tap(find.byTooltip(AppLocalizations.current.delete));
     await tester.pumpAndSettle();
     await tester.tap(find.text(AppLocalizations.current.confirm));
     await tester.pumpAndSettle();

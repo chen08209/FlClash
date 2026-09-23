@@ -64,7 +64,7 @@ class _IpQualityTextState extends ConsumerState<IpQualityText> {
     return InkWell(
       onTap: () => showIpQualitySheet(context, ip: ip),
       onHover: (value) => setState(() => _isHovered = value),
-      borderRadius: AppRadius.xs,
+      customBorder: AppShape.xs,
       hoverColor: Colors.transparent,
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,

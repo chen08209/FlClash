@@ -1,4 +1,6 @@
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -11,6 +13,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
@@ -63,6 +66,16 @@ class _TestSystemAction extends SystemAction {
     installedAppsPermissionGranted = grantOnRequest;
     return grantOnRequest;
   }
+}
+
+Future<void> openBarMenu(WidgetTester tester) async {
+  await tester.tap(
+    find.descendant(
+      of: find.byType(AppBar),
+      matching: find.byGlyph(AppGlyphs.more),
+    ),
+  );
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -192,6 +205,42 @@ void main() {
 
       await teardownView(tester);
     });
+
+    testWidgets('ignores case and needs every term to match', (tester) async {
+      seedAccessControl(const AccessControlProps(enable: true));
+      await pumpAccessView(tester);
+
+      container.read(queryProvider(QueryTag.access).notifier).value = 'CHAT';
+      await tester.pump();
+      expect(find.text('Chat'), findsOneWidget);
+      expect(find.text('Browser'), findsNothing);
+
+      container.read(queryProvider(QueryTag.access).notifier).value =
+          'EXAMPLE browser';
+      await tester.pump();
+      expect(find.text('Browser'), findsOneWidget);
+      expect(find.text('Chat'), findsNothing);
+
+      await teardownView(tester);
+    });
+
+    testWidgets('the app bar search field filters the list', (tester) async {
+      seedAccessControl(const AccessControlProps(enable: true));
+      await pumpAccessView(tester);
+
+      await tester.tap(find.byGlyph(AppGlyphs.search));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'nothing matches');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Browser'), findsNothing);
+      expect(
+        find.text(AppLocalizations.current.noSearchResults),
+        findsOneWidget,
+      );
+
+      await teardownView(tester);
+    });
   });
 
   group('selection', () {
@@ -214,22 +263,47 @@ void main() {
       await teardownView(tester);
     });
 
-    testWidgets('the action button selects then clears every visible app', (
+    testWidgets('the bar menu selects then clears every visible app', (
       tester,
     ) async {
       seedAccessControl(const AccessControlProps(enable: true));
       await pumpAccessView(tester);
 
-      await tester.tap(find.byType(FloatingActionButton).first);
-      await tester.pump();
+      await openBarMenu(tester);
+      await tester.tap(find.text('Select all'));
+      await tester.pumpAndSettle();
       expect(
         [...container.read(accessControlStateProvider).currentList]..sort(),
         ['com.example.browser', 'com.example.chat'],
       );
 
-      await tester.pump(const Duration(milliseconds: 400));
-      await tester.tap(find.byType(FloatingActionButton).first);
-      await tester.pump();
+      await openBarMenu(tester);
+      await tester.tap(find.text('Deselect all'));
+      await tester.pumpAndSettle();
+      expect(container.read(accessControlStateProvider).currentList, isEmpty);
+
+      await teardownView(tester);
+    });
+
+    testWidgets('searching selects then clears only the matching apps', (
+      tester,
+    ) async {
+      seedAccessControl(const AccessControlProps(enable: true));
+      await pumpAccessView(tester);
+
+      await tester.tap(find.byTooltip('Search'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'chat');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Select all'));
+      await tester.pumpAndSettle();
+      expect(container.read(accessControlStateProvider).currentList, [
+        'com.example.chat',
+      ]);
+
+      await tester.tap(find.byTooltip('Deselect all'));
+      await tester.pumpAndSettle();
       expect(container.read(accessControlStateProvider).currentList, isEmpty);
 
       await teardownView(tester);
@@ -287,7 +361,8 @@ void main() {
       expect(find.text('App list permission required'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Authorize'), findsOneWidget);
       expect(find.text('No data'), findsNothing);
-      expect(find.byType(FloatingActionButton), findsNothing);
+      await openBarMenu(tester);
+      expect(find.text('Select all'), findsNothing);
 
       await teardownView(tester);
     });
@@ -354,8 +429,9 @@ void main() {
       seedAccessControl(const AccessControlProps(enable: true));
 
       await pumpAccessView(tester);
+      await openBarMenu(tester);
 
-      expect(find.widgetWithText(FilledButton, 'Save'), findsNothing);
+      expect(find.text('Save'), findsNothing);
 
       await teardownView(tester);
     });
@@ -376,10 +452,9 @@ void main() {
       await tester.tap(find.text('Browser'));
       await tester.pump();
 
-      final saveButton = find.widgetWithText(FilledButton, 'Save');
-      expect(saveButton, findsOneWidget);
-      await tester.tap(saveButton);
-      await tester.pump();
+      await openBarMenu(tester);
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
 
       final saved = container
           .read(vpnSettingProvider)

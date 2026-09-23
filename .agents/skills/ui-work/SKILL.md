@@ -52,15 +52,17 @@ reads as a pill at 24 and as a square at 400, so one radius everywhere is the wr
 | `lg` | 20 | 64 to 180 | mid-size cards: dashboard tiles, proxy node cards |
 | `xl` | 24 | full-bleed | anything spanning the whole width: list rows, grouped runs, group headers |
 | `xxl` | 28 | over 200 | sheets, dialogs, full-screen containers |
-| `full` | 1000 | - | pills and circles: tracks, indicators, progress, avatars |
+| `full` | 1000 | - | pills and circles: buttons, tracks, indicators, progress, avatars |
 
 - `AppCorner` holds the scale as `double`; `AppRadius` mirrors it as `BorderRadius` with `all`, `top`, and `vertical`
-  builders; `AppShape` mirrors it as `RoundedSuperellipseBorder` with `full`, `circle`, `input`, and the
-  `all`/`top`/`vertical`/`of` builders.
+  builders; `AppShape` mirrors it as `RoundedSuperellipseBorder`, `full` included, plus `circle`, `input`, and the
+  `all`/`top`/`vertical`/`of` builders. Use `AppShape.full` for pills, never `StadiumBorder`; the Corner Radius
+  section of `.agents/rules.md` explains why and lists the superellipse API per layer.
 - `AppCorner.fit(shortestSide)` snaps to the largest token at or under one third of the shortest side. Use it whenever
   the size comes from a `LayoutBuilder` or scales with text.
-- `ThemeData.withAppShapes` in `lib/application.dart` already applies the scale to card, dialog, bottom sheet, snack
-  bar, chip, menu, input, FAB, navigation indicator, and progress themes. Do not restate those shapes at call sites, and
+- `ThemeData.withAppShapes` in `lib/common/shape.dart` already applies the scale to card, dialog, bottom sheet, snack
+  bar, chip, menu, input, FAB, navigation indicator, progress, and the filled, text, outlined, elevated, and icon
+  button themes. Do not restate those shapes at call sites, and
   leave `InputDecoration.border` unset so inputs inherit `AppShape.input`.
 
 `xl` and `lg` exist because one token cannot serve both size classes. A full-bleed surface is wide and short, so its

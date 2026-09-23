@@ -476,7 +476,7 @@ class _MemoryBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final duration = context.motionDuration(commonDuration);
     final isEmpty = segments.every((segment) => segment.bytes <= 0);
-    return ClipRRect(
+    return ClipRSuperellipse(
       borderRadius: AppRadius.full,
       child: SizedBox(
         height: 8,

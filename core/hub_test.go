@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -110,18 +111,20 @@ func TestHandleSuspendRefreshesHealthChecksOnResume(t *testing.T) {
 		refreshHealthChecks = previous
 		isRunning.Store(previousRunning)
 		isSuspended.Store(false)
+		healthChecksStale.Store(false)
 		tunnel.OnRunning()
 	})
 
 	isSuspended.Store(false)
+	healthChecksStale.Store(false)
 	isRunning.Store(true)
 
-	handleSuspend(false)
+	handleSuspend(false, true)
 	if got := refreshes.Load(); got != 0 {
 		t.Errorf("refreshes = %d, want none: the device was never suspended", got)
 	}
 
-	handleSuspend(true)
+	handleSuspend(true, false)
 	if !isSuspended.Load() {
 		t.Error("handleSuspend(true) did not record the suspension")
 	}
@@ -129,7 +132,7 @@ func TestHandleSuspendRefreshesHealthChecksOnResume(t *testing.T) {
 		t.Errorf("refreshes = %d, want none while the device is still suspended", got)
 	}
 
-	handleSuspend(false)
+	handleSuspend(false, true)
 	if isSuspended.Load() {
 		t.Error("handleSuspend(false) did not clear the suspension")
 	}
@@ -137,7 +140,7 @@ func TestHandleSuspendRefreshesHealthChecksOnResume(t *testing.T) {
 		t.Errorf("refreshes = %d, want exactly one on resume", got)
 	}
 
-	handleSuspend(false)
+	handleSuspend(false, true)
 	if got := refreshes.Load(); got != 1 {
 		t.Errorf("refreshes = %d, want a redundant resume to change nothing", got)
 	}
@@ -145,10 +148,45 @@ func TestHandleSuspendRefreshesHealthChecksOnResume(t *testing.T) {
 	// The service resumes the core on its way down, and probing every node
 	// through a teardown only produces failures nobody asked for.
 	isRunning.Store(false)
-	handleSuspend(true)
-	handleSuspend(false)
+	handleSuspend(true, false)
+	handleSuspend(false, true)
 	if got := refreshes.Load(); got != 1 {
 		t.Errorf("refreshes = %d, want no probe while the listeners are stopped", got)
+	}
+}
+
+func TestHandleSuspendHoldsTheRefreshUntilTheScreenIsOn(t *testing.T) {
+	var refreshes atomic.Int32
+
+	previous := refreshHealthChecks
+	previousRunning := isRunning.Load()
+	refreshHealthChecks = func() { refreshes.Add(1) }
+	t.Cleanup(func() {
+		refreshHealthChecks = previous
+		isRunning.Store(previousRunning)
+		isSuspended.Store(false)
+		healthChecksStale.Store(false)
+		tunnel.OnRunning()
+	})
+
+	isSuspended.Store(false)
+	healthChecksStale.Store(false)
+	isRunning.Store(true)
+
+	handleSuspend(true, false)
+	handleSuspend(false, false)
+	if isSuspended.Load() {
+		t.Error("a maintenance window has to resume the core, or nothing syncs in it")
+	}
+	handleSuspend(true, false)
+	handleSuspend(false, false)
+	if got := refreshes.Load(); got != 0 {
+		t.Errorf("refreshes = %d, want none in maintenance windows with the screen off", got)
+	}
+
+	handleSuspend(false, true)
+	if got := refreshes.Load(); got != 1 {
+		t.Errorf("refreshes = %d, want the held refresh once the screen turns on", got)
 	}
 }
 
@@ -475,7 +513,7 @@ func TestHandleChangeProxyDoesNotWaitOutAConfigApply(t *testing.T) {
 
 	answered := make(chan string, 1)
 	go func() {
-		answered <- handleChangeProxy(&ChangeProxyParams{GroupName: "absent", ProxyName: "node"})
+		answered <- handleChangeProxy(&ChangeProxyParams{GroupName: "absent", ProxyName: "node"}).Message
 	}()
 
 	select {
@@ -820,6 +858,27 @@ func TestForceGCReleasesTheProxyCache(t *testing.T) {
 	tunnel.AllProxies()
 	if provider.readCount() == warm {
 		t.Error("AllProxies still answered from cache after a forced GC, so the replaced proxies stay pinned")
+	}
+}
+
+func TestHandleGetMemoryStatsReportsALiveRuntime(t *testing.T) {
+	stats := handleGetMemoryStats()
+
+	if stats.HeapInuse == 0 {
+		t.Error("a running Go program always has heap in use; a zero means the runtime read was dropped")
+	}
+	encoded, err := json.Marshal(stats)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fields map[string]uint64
+	if err := json.Unmarshal(encoded, &fields); err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"rss", "heapInuse", "heapIdle", "stackInuse", "runtimeOther"} {
+		if _, ok := fields[key]; !ok {
+			t.Errorf("memory stats lost the %q field the Dart model reads", key)
+		}
 	}
 }
 

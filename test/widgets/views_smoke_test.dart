@@ -1,5 +1,4 @@
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -32,7 +31,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_database_providers.dart';
 import '../helpers/test_profiles.dart';
@@ -414,16 +412,10 @@ void main() {
         list.onReorderItem!(0, 1);
         await tester.pump();
 
-        final barMenu = find.descendant(
-          of: find.byType(AppBar),
-          matching: find.byGlyph(AppGlyphs.more),
-        );
         await tester.tap(find.byType(Checkbox).first);
         await tester.pump();
         for (var i = 0; i < 2; i++) {
-          await tester.tap(barMenu);
-          await tester.pumpAndSettle();
-          await tester.tap(find.text('Select all'));
+          await tester.tap(find.byTooltip('Select all'));
           await tester.pumpAndSettle();
         }
         expect(find.text('Add'), findsOneWidget);

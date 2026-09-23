@@ -1,7 +1,9 @@
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/dashboard/widgets/start_button.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -222,6 +224,107 @@ void main() {
     await tester.tap(button);
     expect(action.requests, [false, true]);
     expect(container.read(isStartProvider), isTrue);
+  });
+  group('docked', () {
+    Future<ProviderContainer> pumpDocked(
+      WidgetTester tester, {
+      bool disableAnimations = false,
+    }) async {
+      final container = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWithValue([
+            const Profile(id: 1, autoUpdateDuration: Duration.zero),
+          ]),
+          suspendProvider.overrideWithValue(false),
+        ],
+      );
+      addTearDown(container.dispose);
+      globalState.container = container;
+      container.read(runTimeProvider.notifier).value = 1;
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: TestApp(
+            includeNavigatorKey: false,
+            setTheme: false,
+            homeBuilder: (child) => Builder(
+              builder: (context) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(disableAnimations: disableAnimations),
+                child: Scaffold(
+                  body: Align(alignment: .bottomCenter, child: child),
+                ),
+              ),
+            ),
+            child: NavigationDock(
+              destinations: const [
+                NavigationDockDestination(
+                  glyph: AppGlyphs.dashboard,
+                  label: 'a',
+                ),
+                NavigationDockDestination(glyph: AppGlyphs.tools, label: 'b'),
+              ],
+              selectedIndex: 0,
+              onSelected: (_) {},
+              trailing: const StartButton(),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      return container;
+    }
+
+    double ringOpacity(WidgetTester tester) => tester
+        .widget<FadeTransition>(
+          find.descendant(
+            of: find.byType(BreathingRing),
+            matching: find.byType(FadeTransition),
+          ),
+        )
+        .opacity
+        .value;
+
+    testWidgets(
+      'breathes a ring in steps while running and lets it go when stopped',
+      (tester) async {
+        final container = await pumpDocked(tester);
+
+        expect(
+          tester.widget<BreathingRing>(find.byType(BreathingRing)).active,
+          isTrue,
+        );
+        await tester.pump(const Duration(seconds: 2));
+        expect(ringOpacity(tester), 1);
+        expect(tester.binding.hasScheduledFrame, isFalse);
+        await tester.binding.delayed(const Duration(milliseconds: 70));
+        expect(tester.binding.hasScheduledFrame, isTrue);
+
+        container.read(runTimeProvider.notifier).value = null;
+        await tester.pumpAndSettle();
+
+        expect(
+          tester.widget<BreathingRing>(find.byType(BreathingRing)).active,
+          isFalse,
+        );
+        expect(ringOpacity(tester), 0);
+        await tester.binding.delayed(const Duration(milliseconds: 200));
+        expect(tester.binding.hasScheduledFrame, isFalse);
+      },
+    );
+
+    testWidgets('holds the ring still when animations are disabled', (
+      tester,
+    ) async {
+      await pumpDocked(tester, disableAnimations: true);
+      await tester.pumpAndSettle();
+
+      await tester.binding.delayed(const Duration(milliseconds: 200));
+      expect(tester.binding.hasScheduledFrame, isFalse);
+      expect(ringOpacity(tester), 1);
+    });
   });
 }
 

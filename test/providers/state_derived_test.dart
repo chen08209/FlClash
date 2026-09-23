@@ -62,6 +62,145 @@ void main() {
     expect(container.read(currentGroupsStateProvider).value, isEmpty);
   });
 
+  test('hiding timed-out nodes leaves the rest of the group alone', () {
+    const testUrl = 'https://default.test';
+    container
+        .read(groupsProvider.notifier)
+        .update(
+          (_) => [
+            const Group(
+              name: 'Visible',
+              type: GroupType.Selector,
+              hidden: false,
+              all: [
+                Proxy(name: 'fast', type: 'ss'),
+                Proxy(name: 'slow', type: 'ss'),
+              ],
+            ),
+          ],
+        );
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(mode: Mode.rule));
+    container
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(testUrl: testUrl));
+    container
+        .read(delayDataSourceProvider.notifier)
+        .setDelay(const Delay(url: testUrl, name: 'slow', value: -1));
+
+    expect(
+      container.read(visibleGroupsStateProvider).value.single.all,
+      hasLength(2),
+    );
+
+    container
+        .read(proxiesStyleSettingProvider.notifier)
+        .update((state) => state.copyWith(hideTimeoutProxies: true));
+    expect(
+      container
+          .read(visibleGroupsStateProvider)
+          .value
+          .single
+          .all
+          .map((proxy) => proxy.name),
+      ['fast'],
+    );
+  });
+
+  test('hidden timed-out nodes change only when a test batch ends', () {
+    const testUrl = 'https://default.test';
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(mode: Mode.rule));
+    container
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(testUrl: testUrl));
+    container
+        .read(proxiesStyleSettingProvider.notifier)
+        .update((state) => state.copyWith(hideTimeoutProxies: true));
+    void setGroup(String now) {
+      container
+          .read(groupsProvider.notifier)
+          .update(
+            (_) => [
+              Group(
+                name: 'Visible',
+                type: GroupType.Selector,
+                now: now,
+                hidden: false,
+                all: const [
+                  Proxy(name: 'a', type: 'ss'),
+                  Proxy(name: 'b', type: 'ss'),
+                  Proxy(name: 'c', type: 'ss'),
+                ],
+              ),
+            ],
+          );
+    }
+
+    Iterable<String> visibleNames() => container
+        .read(visibleGroupsStateProvider)
+        .value
+        .single
+        .all
+        .map((proxy) => proxy.name);
+
+    setGroup('a');
+    expect(visibleNames(), ['a', 'b', 'c']);
+
+    container
+        .read(delayDataSourceProvider.notifier)
+        .setDelay(const Delay(url: testUrl, name: 'b', value: -1));
+    setGroup('c');
+    expect(visibleNames(), ['a', 'b', 'c']);
+
+    container.read(sortNumProvider.notifier).add();
+    expect(visibleNames(), ['a', 'c']);
+  });
+
+  test('hiding timed-out nodes keeps the core pick, never empties a group', () {
+    const testUrl = 'https://default.test';
+    const nodes = [Proxy(name: 'a', type: 'ss'), Proxy(name: 'b', type: 'ss')];
+    container
+        .read(groupsProvider.notifier)
+        .update(
+          (_) => [
+            const Group(
+              name: 'Auto',
+              type: GroupType.URLTest,
+              now: 'b',
+              hidden: false,
+              all: nodes,
+            ),
+            const Group(
+              name: 'Balance',
+              type: GroupType.LoadBalance,
+              hidden: false,
+              all: nodes,
+            ),
+          ],
+        );
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(mode: Mode.rule));
+    container
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(testUrl: testUrl));
+    for (final node in nodes) {
+      container
+          .read(delayDataSourceProvider.notifier)
+          .setDelay(Delay(url: testUrl, name: node.name, value: -1));
+    }
+    container
+        .read(proxiesStyleSettingProvider.notifier)
+        .update((state) => state.copyWith(hideTimeoutProxies: true));
+
+    final groups = container.read(visibleGroupsStateProvider).value;
+    expect(groups.first.all.map((proxy) => proxy.name), ['b']);
+    expect(groups.last.all.map((proxy) => proxy.name), ['a', 'b']);
+  });
+
   test('navigation providers select items for width and current page', () {
     container
         .read(viewSizeProvider.notifier)
@@ -188,6 +327,38 @@ void main() {
     },
   );
 
+  test('proxy search matches the proxy type and needs every term', () {
+    container
+        .read(groupsProvider.notifier)
+        .update(
+          (_) => const [
+            Group(
+              name: 'Group A',
+              type: GroupType.Selector,
+              hidden: false,
+              all: [
+                Proxy(name: 'HK 01', type: 'Vmess'),
+                Proxy(name: 'HK 02', type: 'Trojan'),
+                Proxy(name: 'JP 01', type: 'Trojan'),
+              ],
+            ),
+          ],
+        );
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(mode: Mode.rule));
+
+    List<String> names(String query) => [
+      for (final proxy
+          in container.read(filterGroupsStateProvider(query)).value.single.all)
+        proxy.name,
+    ];
+
+    expect(names('trojan'), ['HK 02', 'JP 01']);
+    expect(names('hk TROJAN'), ['HK 02']);
+    expect(container.read(filterGroupsStateProvider('hk jp')).value, isEmpty);
+  });
+
   test('runtime, VPN, tray, and DNS states follow live state', () {
     container
         .read(runTimeProvider.notifier)
@@ -254,6 +425,61 @@ void main() {
     expect(container.read(proxyStateProvider).isStart, isFalse);
   });
 
+  test('safe mode keeps every host integration off', () async {
+    await AppLocalizations.load(const Locale('en'));
+    final scoped = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        safeModeProvider.overrideWithValue(true),
+      ],
+    );
+    addTearDown(scoped.dispose);
+    scoped.listen(sharedStateProvider, (_, _) {});
+    scoped.read(runTimeProvider.notifier).update((_) => 1);
+    scoped
+        .read(networkSettingProvider.notifier)
+        .update(
+          (state) => state.copyWith(systemProxy: true, autoSetSystemDns: true),
+        );
+    scoped
+        .read(patchClashConfigProvider.notifier)
+        .update(
+          (state) => state.copyWith(tun: state.tun.copyWith(enable: true)),
+        );
+    scoped
+        .read(authorizedTunEnableProvider.notifier)
+        .update((_) => TunAuthorizationState.authorized);
+    scoped
+        .read(vpnSettingProvider.notifier)
+        .update((state) => state.copyWith(enable: true, systemProxy: true));
+
+    scoped
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(showTrayTitle: true));
+    scoped.listen(trayStateProvider, (_, _) {});
+    scoped
+        .read(hotKeyActionsProvider.notifier)
+        .update(
+          (_) => const [
+            HotKeyAction(
+              action: HotAction.view,
+              key: 1,
+              modifiers: {KeyboardModifier.control},
+            ),
+          ],
+        );
+
+    final tray = scoped.read(trayStateProvider);
+    expect(tray.safeMode, isTrue);
+    expect(tray.showTrayTitle, isFalse);
+    expect(tray.hotKeys, isEmpty);
+    expect(scoped.read(trayTitleStateProvider).showTrayTitle, isFalse);
+    expect(scoped.read(shouldPatchSystemDnsProvider), isFalse);
+    final vpnOptions = scoped.read(sharedStateProvider).vpnOptions!;
+    expect(vpnOptions.enable, isFalse);
+    expect(vpnOptions.systemProxy, isFalse);
+  });
+
   test('selection and delay providers resolve groups and profile state', () {
     final profile = Profile.normal().copyWith(
       selectedMap: {'Selector': 'Leaf'},
@@ -300,6 +526,70 @@ void main() {
       ),
       'Direct',
     );
+  });
+
+  test('tray delays follow the listed groups and their test URLs', () {
+    const probeUrl = 'https://probe.example/204';
+    container
+        .read(groupsProvider.notifier)
+        .update(
+          (_) => const [
+            Group(
+              name: 'Selector',
+              type: GroupType.Selector,
+              hidden: false,
+              all: [
+                Proxy(name: 'Leaf', type: 'Direct'),
+                Proxy(name: 'Idle', type: 'Direct'),
+              ],
+            ),
+            Group(
+              name: 'Probe',
+              type: GroupType.URLTest,
+              hidden: false,
+              testUrl: probeUrl,
+              all: [Proxy(name: 'Leaf', type: 'Direct')],
+            ),
+          ],
+        );
+    container.read(delayDataSourceProvider.notifier)
+      ..setDelay(const Delay(name: 'Leaf', url: defaultTestUrl, value: 42))
+      ..setDelay(const Delay(name: 'Leaf', url: probeUrl, value: -1));
+
+    expect(container.read(trayDelaysProvider), {
+      'Selector': {'Leaf': 42},
+      'Probe': {'Leaf': -1},
+    });
+  });
+
+  test('tray hotkeys leave out bindings that cannot fire', () {
+    container.listen(trayStateProvider, (_, _) {});
+    container
+        .read(hotKeyActionsProvider.notifier)
+        .update(
+          (_) => const [
+            HotKeyAction(
+              action: HotAction.view,
+              key: 1,
+              modifiers: {KeyboardModifier.control},
+            ),
+            HotKeyAction(
+              action: HotAction.start,
+              key: 2,
+              modifiers: {KeyboardModifier.capsLock},
+            ),
+            HotKeyAction(
+              action: HotAction.tun,
+              key: 3,
+              modifiers: {KeyboardModifier.control},
+            ),
+          ],
+        );
+    container.read(hotKeyFailuresProvider.notifier).value = {
+      HotAction.tun: 'taken',
+    };
+
+    expect(container.read(trayStateProvider).hotKeys.keys, [HotAction.view]);
   });
 
   test('theme and simple derived providers cover fallback branches', () {

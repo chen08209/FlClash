@@ -29,7 +29,9 @@ raw string.
 
 ### Corner Radius
 
-Rounded corners are superellipses everywhere, not circular arcs. Use the superellipse API at each layer:
+Rounded corners are superellipses (continuous corners) everywhere, never circular arcs; when a component offers
+both, pick the superellipse. `test/lint/superellipse_corners_test.dart` fails on the circular APIs below in `lib/`. Use
+the superellipse API at each layer:
 
 - Shapes: `RoundedSuperellipseBorder` instead of `RoundedRectangleBorder`.
 - Clips: `ClipRSuperellipse` instead of `ClipRRect`.
@@ -37,15 +39,20 @@ Rounded corners are superellipses everywhere, not circular arcs. Use the superel
   `BoxDecoration(borderRadius: ...)`; borders move to the shape's `side`, and a `Container` with
   `clipBehavior` still clips to the shape path.
 - Canvas: `canvas.drawRSuperellipse(RSuperellipse.fromRectAndRadius(...))` instead of `drawRRect`.
+- Ink: `InkWell.customBorder` with an `AppShape` instead of `InkWell.borderRadius`.
 
 Passing `BorderRadius.circular(x)` as the `borderRadius` argument of these APIs is expected — it only
 carries the corner magnitude; the rendered geometry stays a superellipse.
 
-APIs that accept only `BorderRadius` keep circular corners, with the superellipse supplied by an
-enclosing clip or shape where one is needed: `InkWell.borderRadius`, `OutlineInputBorder`,
-`ScrollbarThemeData.radius`, and `smooth_sheets`' `MaterialSheetDecoration`. Fully round pills
-(`BorderRadius.circular(999)` or half the shortest side) may stay circular — both geometries coincide
-there.
+Pills are no exception. `StadiumBorder` joins its round caps to the straight sides with a curvature jump, while
+`AppShape.full`, a superellipse at full radius, blends them, and on a square it renders the exact circle, so it serves
+circles too. Material 3 defaults every button, icon button, segmented button, and search bar to `StadiumBorder`;
+`ThemeData.withAppShapes` replaces that for the button themes, and a local `FilledButtonTheme` or `IconButtonTheme`
+replaces the app's, so merge the ambient `XButtonTheme.of(context).style` into it, as `CommonMinFilledButtonTheme`
+does. `CircleBorder` and `BoxShape.circle` are fine for something that is always square.
+
+APIs that accept only a `Radius`, such as `ScrollbarThemeData.radius`, keep circular corners; supply the superellipse
+with an enclosing clip or shape where it shows.
 
 CI gates formatting: `dart format --output=none --set-exit-if-changed lib test
 tool plugins setup.dart` runs before `flutter analyze`.
