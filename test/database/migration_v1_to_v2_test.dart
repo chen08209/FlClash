@@ -28,8 +28,52 @@ void _downgradeToV1(Database raw) {
 
 /// Schema version 2 had no `match_target` on `profiles`.
 void _downgradeToV2(Database raw) {
+  _downgradeToV3(raw);
   raw.execute('ALTER TABLE profiles DROP COLUMN match_target');
   raw.execute('PRAGMA user_version = 2');
+}
+
+/// Schema version 3 had no `url` on `scripts`.
+void _downgradeToV3(Database raw) {
+  _downgradeToV4(raw);
+  raw.execute('ALTER TABLE scripts DROP COLUMN url');
+  raw.execute('PRAGMA user_version = 3');
+}
+
+/// Schema version 4 had no `order` on `scripts`.
+void _downgradeToV4(Database raw) {
+  _downgradeToV5(raw);
+  raw.execute('ALTER TABLE scripts DROP COLUMN "order"');
+  raw.execute('PRAGMA user_version = 4');
+}
+
+/// Schema version 5 had no `clash_providers` table.
+void _downgradeToV5(Database raw) {
+  _downgradeToV6(raw);
+  raw.execute('DROP TABLE IF EXISTS clash_providers');
+  raw.execute('PRAGMA user_version = 5');
+}
+
+/// Schema version 6 had no `tolerance` or `strategy` on `proxy_groups`.
+void _downgradeToV6(Database raw) {
+  _downgradeToV7(raw);
+  raw.execute('ALTER TABLE proxy_groups DROP COLUMN tolerance');
+  raw.execute('ALTER TABLE proxy_groups DROP COLUMN strategy');
+  raw.execute('PRAGMA user_version = 6');
+}
+
+/// Schema version 8 ran with foreign keys off, so its deletes left orphans.
+void _downgradeToV8(Database raw) {
+  raw.execute('PRAGMA user_version = 8');
+}
+
+/// Schema version 7 still carried the per-use options on `clash_providers`.
+void _downgradeToV7(Database raw) {
+  _downgradeToV8(raw);
+  raw.execute('ALTER TABLE clash_providers ADD COLUMN interval INTEGER');
+  raw.execute('ALTER TABLE clash_providers ADD COLUMN filter TEXT');
+  raw.execute('ALTER TABLE clash_providers ADD COLUMN exclude_filter TEXT');
+  raw.execute('PRAGMA user_version = 7');
 }
 
 Set<String> _columnsOf(Database raw, String table) => {
@@ -76,7 +120,7 @@ void main() {
 
     await openAndMigrate();
 
-    expect(_userVersion(raw), 3);
+    expect(_userVersion(raw), 9);
   });
 
   test('the v3 upgrade adds match_target to profiles', () async {
@@ -86,7 +130,41 @@ void main() {
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'profiles'), contains('match_target'));
-    expect(_userVersion(raw), 3);
+    expect(_userVersion(raw), 9);
+  });
+
+  test('the v4 upgrade adds url to scripts', () async {
+    _downgradeToV3(raw);
+    raw.execute(
+      'INSERT INTO scripts (id, label, last_update_time) '
+      "VALUES (1, 'Local', 0)",
+    );
+    expect(_columnsOf(raw, 'scripts'), isNot(contains('url')));
+
+    final database = await openAndMigrate();
+
+    expect(_columnsOf(raw, 'scripts'), contains('url'));
+    expect(_userVersion(raw), 9);
+    final scripts = await database.scriptsDao.query().get();
+    expect(scripts.single.label, 'Local');
+    expect(scripts.single.url, isNull);
+  });
+
+  test('the v5 upgrade adds order to scripts and keeps id order', () async {
+    _downgradeToV4(raw);
+    raw.execute(
+      'INSERT INTO scripts (id, label, last_update_time) '
+      "VALUES (2, 'Second', 0), (1, 'First', 0)",
+    );
+    expect(_columnsOf(raw, 'scripts'), isNot(contains('order')));
+
+    final database = await openAndMigrate();
+
+    expect(_columnsOf(raw, 'scripts'), contains('order'));
+    expect(_userVersion(raw), 9);
+    final scripts = await database.scriptsDao.query().get();
+    expect(scripts.map((item) => item.label), ['First', 'Second']);
+    expect(scripts.map((item) => item.order), [null, null]);
   });
 
   test(
@@ -98,7 +176,89 @@ void main() {
       await openAndMigrate();
 
       expect(_columnsOf(raw, 'profiles'), contains('match_target'));
-      expect(_userVersion(raw), 3);
+      expect(_userVersion(raw), 9);
+    },
+  );
+
+  test('the v6 upgrade creates clash_providers', () async {
+    _downgradeToV5(raw);
+    expect(_hasTable(raw, 'clash_providers'), isFalse);
+
+    final database = await openAndMigrate();
+
+    expect(_hasTable(raw, 'clash_providers'), isTrue);
+    expect(_userVersion(raw), 9);
+    expect(
+      await database.clashProvidersDao.query(ProviderKind.proxy).get(),
+      isEmpty,
+    );
+  });
+
+  test(
+    'a v5 user_version with clash_providers already present still opens',
+    () async {
+      raw.execute('PRAGMA user_version = 5');
+      expect(_hasTable(raw, 'clash_providers'), isTrue);
+
+      await openAndMigrate();
+
+      expect(_hasTable(raw, 'clash_providers'), isTrue);
+      expect(_userVersion(raw), 9);
+    },
+  );
+
+  test('the v7 upgrade adds tolerance and strategy to proxy_groups', () async {
+    _downgradeToV6(raw);
+    expect(_columnsOf(raw, 'proxy_groups'), isNot(contains('tolerance')));
+
+    await openAndMigrate();
+
+    expect(
+      _columnsOf(raw, 'proxy_groups'),
+      containsAll(['tolerance', 'strategy']),
+    );
+    expect(_userVersion(raw), 9);
+  });
+
+  test(
+    'a v6 user_version with the v7 columns already present still opens',
+    () async {
+      raw.execute('PRAGMA user_version = 6');
+      expect(_columnsOf(raw, 'proxy_groups'), contains('strategy'));
+
+      await openAndMigrate();
+
+      expect(_columnsOf(raw, 'proxy_groups'), contains('strategy'));
+      expect(_userVersion(raw), 9);
+    },
+  );
+
+  test(
+    'the v8 upgrade drops the per-use columns from clash_providers',
+    () async {
+      _downgradeToV7(raw);
+      raw.execute(
+        'INSERT INTO clash_providers '
+        '(id, kind, label, url, behavior, format, "order", interval, filter, '
+        'exclude_filter) '
+        "VALUES (1, 'rule', 'Kept', '', 'classical', 'yaml', 0, 300, 'a', 'b')",
+      );
+      expect(
+        _columnsOf(raw, 'clash_providers'),
+        containsAll(['interval', 'filter', 'exclude_filter']),
+      );
+
+      final database = await openAndMigrate();
+
+      expect(
+        _columnsOf(raw, 'clash_providers'),
+        isNot(anyOf(contains('interval'), contains('filter'))),
+      );
+      expect(_userVersion(raw), 9);
+      expect(
+        (await database.clashProvidersDao.queryAll().get()).single.label,
+        'Kept',
+      );
     },
   );
 
@@ -144,6 +304,10 @@ void main() {
       'INSERT INTO rules (id, value) '
       "VALUES (2, 'IP-CIDR,10.0.0.0/8,REJECT,no-resolve')",
     );
+    raw.execute(
+      'INSERT INTO profile_rule_mapping (id, rule_id) '
+      "VALUES ('1', 1), ('2', 2)",
+    );
 
     final database = await openAndMigrate();
     final rows = await database
@@ -168,12 +332,41 @@ void main() {
     );
   });
 
+  test('the v9 upgrade drops rows orphaned by earlier deletes', () async {
+    _downgradeToV8(raw);
+    raw.execute('PRAGMA foreign_keys = OFF');
+    raw.execute(
+      "INSERT INTO rules (id, rule_action) VALUES (1, 'DOMAIN'), "
+      "(2, 'DOMAIN'), (3, 'DOMAIN')",
+    );
+    raw.execute(
+      'INSERT INTO profile_rule_mapping (id, profile_id, rule_id) '
+      "VALUES ('global', NULL, 1), ('gone_profile', 99, 2), "
+      "('gone_rule', NULL, 404)",
+    );
+    raw.execute(
+      'INSERT INTO proxy_groups (id, profile_id, name, type) '
+      "VALUES (1, NULL, 'Global', 'select'), (2, 99, 'Gone', 'select')",
+    );
+
+    await openAndMigrate();
+
+    List<Object?> ids(String table) => [
+      for (final row in raw.select('SELECT id FROM $table ORDER BY id'))
+        row['id'],
+    ];
+    expect(ids('rules'), [1]);
+    expect(ids('profile_rule_mapping'), ['global']);
+    expect(ids('proxy_groups'), [1]);
+    expect(raw.select('PRAGMA foreign_keys').single['foreign_keys'], 1);
+  });
+
   test('an empty v1 rules table still reaches v2', () async {
     _downgradeToV1(raw);
 
     final database = await openAndMigrate();
 
-    expect(_userVersion(raw), 3);
+    expect(_userVersion(raw), 9);
     expect(await database.customSelect('SELECT * FROM rules').get(), isEmpty);
   });
 
@@ -183,7 +376,7 @@ void main() {
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'rules'), before);
-    expect(_userVersion(raw), 3);
+    expect(_userVersion(raw), 9);
     expect(_hasTable(raw, 'proxy_groups'), isTrue);
   });
 }

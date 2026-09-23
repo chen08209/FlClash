@@ -46,6 +46,10 @@ class ProxyGroups extends Table {
 
   TextColumn get expectedStatus => text().nullable()();
 
+  IntColumn get tolerance => integer().nullable()();
+
+  TextColumn get strategy => text().nullable()();
+
   BoolColumn get includeAll => boolean().nullable()();
 
   BoolColumn get includeAllProxies => boolean().nullable()();
@@ -112,6 +116,18 @@ class ProxyGroupsDao extends DatabaseAccessor<Database>
     );
   }
 
+  Future<void> renameUse({required String oldName, required String newName}) {
+    return customUpdate(
+      'UPDATE ${proxyGroups.entityName} '
+      'SET ${proxyGroups.use.name} = REPLACE(${proxyGroups.use.name}, ?, ?) '
+      'WHERE ${proxyGroups.profileId.name} IS NOT NULL',
+      variables: [
+        Variable.withString('"$oldName"'),
+        Variable.withString('"$newName"'),
+      ],
+    );
+  }
+
   void setAllWithBatch(
     int? profileId,
     Batch batch,
@@ -128,6 +144,12 @@ class ProxyGroupsDao extends DatabaseAccessor<Database>
           : row.profileId.equals(profileId),
       preDelete: true,
     );
+  }
+
+  Future<void> delAll(Iterable<int> ids) {
+    return batch((b) {
+      proxyGroups.deleteInChunks(b, ids, (t, chunk) => t.id.isIn(chunk));
+    });
   }
 
   void putAllWithBatch(Batch batch, Iterable<ProxyGroup> proxyGroups) {
@@ -160,6 +182,8 @@ extension RawProxyGroupExt on RawProxyGroup {
       excludeFilter: excludeFilter,
       excludeType: excludeType,
       expectedStatus: expectedStatus,
+      tolerance: tolerance,
+      strategy: LoadBalanceStrategy.parse(strategy),
       includeAll: includeAll,
       includeAllProxies: includeAllProxies,
       includeAllProviders: includeAllProviders,
@@ -189,6 +213,8 @@ extension ProxyGroupsCompanionExt on ProxyGroup {
       excludeFilter: Value(excludeFilter),
       excludeType: Value(excludeType),
       expectedStatus: Value(expectedStatus),
+      tolerance: Value(tolerance),
+      strategy: Value(strategy?.value),
       includeAll: Value(includeAll),
       includeAllProxies: Value(includeAllProxies),
       includeAllProviders: Value(includeAllProviders),

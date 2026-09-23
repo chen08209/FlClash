@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/proxies/providers.dart';
@@ -13,7 +16,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:path/path.dart' hide context;
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 
 class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
@@ -25,6 +30,7 @@ ExternalProvider _provider(
   int count = 3,
   DateTime? updateAt,
   SubscriptionInfo? subscriptionInfo,
+  String? path,
 }) {
   return ExternalProvider(
     name: name,
@@ -33,6 +39,7 @@ ExternalProvider _provider(
     vehicleType: vehicleType,
     updateAt: updateAt ?? DateTime.utc(2026, 1, 1),
     subscriptionInfo: subscriptionInfo,
+    path: path,
   );
 }
 
@@ -40,16 +47,25 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late _MockCoreHandlerInterface core;
+  late Directory home;
 
   setUpAll(() {
     core = _MockCoreHandlerInterface();
     CoreController.resetInstance();
     CoreController.test(core);
+    home = Directory.systemTemp.createTempSync('flclash-providers-');
   });
 
   setUp(() => reset(core));
 
-  tearDownAll(CoreController.resetInstance);
+  tearDownAll(() {
+    CoreController.resetInstance();
+    if (home.existsSync()) home.deleteSync(recursive: true);
+  });
+
+  File providerFile(String name, String content) {
+    return File(join(home.path, '$name.yaml'))..writeAsStringSync(content);
+  }
 
   ProviderContainer containerFor(
     WidgetTester tester,
@@ -94,7 +110,7 @@ void main() {
           of: find.text(name),
           matching: find.byType(DecorationListItem),
         ),
-        matching: find.byIcon(Icons.more_vert),
+        matching: find.byGlyph(AppGlyphs.more),
       ),
     );
     await tester.pumpAndSettle();
@@ -108,6 +124,53 @@ void main() {
   Future<void> settleTrailing(WidgetTester tester) async {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
+  }
+
+  // Reading and writing the provider file runs on the real event loop,
+  // outside fake-async, so pump in rounds until the flow it feeds arrives.
+  Future<void> pumpUntil(
+    WidgetTester tester,
+    Finder finder, {
+    bool found = true,
+  }) async {
+    for (var i = 0; i < 100; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pumpAndSettle();
+      if (finder.evaluate().isNotEmpty == found) {
+        return;
+      }
+    }
+    fail('timed out waiting for $finder to be ${found ? 'shown' : 'gone'}');
+  }
+
+  // A row probes its file on the real event loop before it offers edit.
+  Future<void> openMenuWithEdit(WidgetTester tester, String name) async {
+    for (var i = 0; i < 100; i++) {
+      await openMenu(tester, name);
+      if (find.text(currentAppLocalizations.edit).evaluate().isNotEmpty) {
+        return;
+      }
+      await closeMenu(tester);
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pumpAndSettle();
+    }
+    fail('$name never offered the edit entry');
+  }
+
+  Future<EditorPage> openEditor(WidgetTester tester, String name) async {
+    await openMenuWithEdit(tester, name);
+    await tester.tap(find.text(currentAppLocalizations.edit));
+    await pumpUntil(
+      tester,
+      find.byWidgetPredicate(
+        (widget) => widget is EditorPage && widget.content?.isNotEmpty == true,
+      ),
+    );
+    return tester.widget<EditorPage>(find.byType(EditorPage));
   }
 
   testWidgets('splits providers into proxy and rule sections', (tester) async {
@@ -153,7 +216,6 @@ void main() {
     expect(find.text(l10n.proxiesCount(7)), findsOneWidget);
     expect(find.text(l10n.rulesCount(9)), findsOneWidget);
     expect(find.text(l10n.proxiesCount(0)), findsNothing);
-    expect(find.text(l10n.entriesCount(7)), findsNothing);
     expect(find.textContaining(' · '), findsNothing);
     final countChip = find.ancestor(
       of: find.text(l10n.proxiesCount(7)),
@@ -279,13 +341,13 @@ void main() {
     final container = containerFor(tester, [provider]);
     await pump(tester, container);
 
-    expect(find.byIcon(Icons.more_vert), findsOne);
+    expect(find.byGlyph(AppGlyphs.more), findsOne);
 
     final updating = container.read(updatingKeysProvider.notifier);
     updating.start(provider.updatingKey);
     await settleTrailing(tester);
 
-    expect(find.byIcon(Icons.more_vert), findsNothing);
+    expect(find.byGlyph(AppGlyphs.more), findsNothing);
     expect(find.byType(CommonCircleLoading), findsOne);
   });
 
@@ -346,7 +408,7 @@ void main() {
     ).thenAnswer((_) async => const ProxiesData(proxies: {}, all: []));
     await pump(tester, container);
 
-    await tester.tap(find.byIcon(Icons.sync));
+    await tester.tap(find.byGlyph(AppGlyphs.sync));
     await tester.pump();
 
     expect(find.byType(CommonCircleLoading), findsOne);
@@ -372,13 +434,165 @@ void main() {
     ).thenAnswer((_) async => const ProxiesData(proxies: {}, all: []));
     await pump(tester, container);
 
-    await tester.tap(find.byIcon(Icons.sync));
+    await tester.tap(find.byGlyph(AppGlyphs.sync));
     await tester.pumpAndSettle();
 
     expect(find.text(currentAppLocalizations.networkException), findsOneWidget);
     expect(find.text('503 Service Unavailable'), findsNothing);
 
     await tester.tap(find.text(currentAppLocalizations.confirm));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('offers edit only for providers backed by a text file', (
+    tester,
+  ) async {
+    final mrs = File(join(home.path, 'compressed.mrs'))
+      ..writeAsBytesSync([0x28, 0xB5, 0x2F, 0xFD, 0x00, 0x01]);
+    final container = containerFor(tester, [
+      _provider(
+        'with-file',
+        path: providerFile('with-file', 'payload:\n').path,
+      ),
+      _provider('compressed', type: 'Rule', path: mrs.path),
+      _provider('without-file'),
+    ]);
+    await pump(tester, container);
+
+    final l10n = currentAppLocalizations;
+    // The text row offering edit proves every row has finished probing.
+    await openMenuWithEdit(tester, 'with-file');
+    expect(find.text(l10n.upload), findsOne);
+    await closeMenu(tester);
+
+    await openMenu(tester, 'compressed');
+    expect(find.text(l10n.edit), findsNothing);
+    expect(find.text(l10n.upload), findsOne);
+    await closeMenu(tester);
+
+    await openMenu(tester, 'without-file');
+    expect(find.text(l10n.edit), findsNothing);
+  });
+
+  testWidgets('the edit item opens the provider file and side-loads it', (
+    tester,
+  ) async {
+    final file = providerFile('editable', 'payload:\n  - old\n');
+    final provider = _provider('editable', path: file.path);
+    when(
+      () => core.sideLoadExternalProvider(
+        providerName: 'editable',
+        data: any(named: 'data'),
+      ),
+    ).thenAnswer((_) async => '');
+    when(
+      () => core.getExternalProvider('editable'),
+    ).thenAnswer((_) async => provider);
+    when(
+      () => core.getProxies(),
+    ).thenAnswer((_) async => const ProxiesData(proxies: {}, all: []));
+
+    final container = containerFor(tester, [provider]);
+    await pump(tester, container);
+
+    final editor = await openEditor(tester, 'editable');
+    expect(editor.content, 'payload:\n  - old\n');
+
+    editor.onSave!(
+      tester.element(find.byType(EditorPage)),
+      'editable',
+      'payload:\n  - new\n',
+    );
+    await pumpUntil(tester, find.byType(EditorPage), found: false);
+
+    expect(file.readAsStringSync(), 'payload:\n  - new\n');
+    verify(
+      () => core.sideLoadExternalProvider(
+        providerName: 'editable',
+        data: 'payload:\n  - new\n',
+      ),
+    ).called(1);
+    expect(find.byType(EditorPage), findsNothing);
+
+    await tester.pump(const Duration(milliseconds: 700));
+  });
+
+  testWidgets('a rejected side-load keeps the editor open', (tester) async {
+    final file = providerFile('rejected', 'payload:\n');
+    final provider = _provider('rejected', path: file.path);
+    when(
+      () => core.sideLoadExternalProvider(
+        providerName: 'rejected',
+        data: any(named: 'data'),
+      ),
+    ).thenAnswer((_) async => 'invalid payload');
+
+    final container = containerFor(tester, [provider]);
+    await pump(tester, container);
+
+    final editor = await openEditor(tester, 'rejected');
+    editor.onSave!(
+      tester.element(find.byType(EditorPage)),
+      'rejected',
+      'payload: broken\n',
+    );
+    await pumpUntil(tester, find.text('invalid payload'));
+
+    expect(find.text('invalid payload'), findsOneWidget);
+    await tester.tap(find.text(currentAppLocalizations.confirm));
+    await tester.pumpAndSettle();
+    expect(find.byType(EditorPage), findsOneWidget);
+    verifyNever(() => core.getExternalProvider('rejected'));
+  });
+
+  testWidgets('leaving an edited provider offers to save the changes', (
+    tester,
+  ) async {
+    final file = providerFile('leaving', 'payload:\n');
+    final provider = _provider('leaving', path: file.path);
+
+    final container = containerFor(tester, [provider]);
+    await pump(tester, container);
+
+    final editor = await openEditor(tester, 'leaving');
+    final context = tester.element(find.byType(EditorPage));
+    expect(await editor.onPop!(context, 'leaving', 'payload:\n'), isTrue);
+
+    final popped = editor.onPop!(context, 'leaving', 'payload: changed\n');
+    await tester.pumpAndSettle();
+    expect(find.text(currentAppLocalizations.saveChanges), findsOneWidget);
+    await tester.tap(find.text(currentAppLocalizations.cancel));
+    await tester.pumpAndSettle();
+
+    expect(await popped, isTrue);
+    expect(file.readAsStringSync(), 'payload:\n');
+    verifyNever(
+      () => core.sideLoadExternalProvider(
+        providerName: any(named: 'providerName'),
+        data: any(named: 'data'),
+      ),
+    );
+  });
+
+  testWidgets('a file that only the full read rejects closes the editor', (
+    tester,
+  ) async {
+    final file = File(join(home.path, 'invalid-utf8'))
+      ..writeAsBytesSync([0xff, 0xfe, 0x41]);
+    final container = containerFor(tester, [
+      _provider('invalid-utf8', type: 'Rule', path: file.path),
+    ]);
+    await pump(tester, container);
+
+    final l10n = currentAppLocalizations;
+    await openMenuWithEdit(tester, 'invalid-utf8');
+    await tester.tap(find.text(l10n.edit));
+    await pumpUntil(tester, find.text(l10n.nonTextProviderFile));
+
+    expect(find.byType(EditorPage), findsNothing);
+    expect(find.textContaining('FileSystemException'), findsNothing);
+
+    await tester.tap(find.text(l10n.confirm));
     await tester.pumpAndSettle();
   });
 
@@ -406,14 +620,14 @@ void main() {
     await tester.tap(find.text(currentAppLocalizations.sync));
     await settleTrailing(tester);
 
-    expect(find.byIcon(Icons.more_vert), findsNothing);
+    expect(find.byGlyph(AppGlyphs.more), findsNothing);
     expect(find.byType(CommonCircleLoading), findsOne);
 
     completer.complete('');
     await tester.pumpAndSettle();
     await tester.pump(const Duration(milliseconds: 700));
 
-    expect(find.byIcon(Icons.more_vert), findsOne);
+    expect(find.byGlyph(AppGlyphs.more), findsOne);
     expect(find.byType(CommonCircleLoading), findsNothing);
   });
 }

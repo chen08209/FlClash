@@ -292,7 +292,7 @@ final class ProfilesProvider
   }
 }
 
-String _$profilesHash() => r'5d818c87da9278ae44c0298b73806aaf0155c96e';
+String _$profilesHash() => r'8b239ac9d47492a31a8155e19276c808ccf915e1';
 
 abstract class _$Profiles extends $Notifier<List<Profile>> {
   List<Profile> build();
@@ -336,7 +336,7 @@ final class ScriptsProvider
   Scripts create() => Scripts();
 }
 
-String _$scriptsHash() => r'5deb6254cd0fd99d9d179ee4576ec680928f182a';
+String _$scriptsHash() => r'd972619681830814ed31751a17346bbfd0ca64a2';
 
 abstract class _$Scripts extends $StreamNotifier<List<Script>> {
   Stream<List<Script>> build();
@@ -353,6 +353,96 @@ abstract class _$Scripts extends $StreamNotifier<List<Script>> {
               Object?
             >;
     return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(ClashProviders)
+final clashProvidersProvider = ClashProvidersFamily._();
+
+final class ClashProvidersProvider
+    extends $StreamNotifierProvider<ClashProviders, List<ClashProvider>> {
+  ClashProvidersProvider._({
+    required ClashProvidersFamily super.from,
+    required ProviderKind super.argument,
+  }) : super(
+         retry: null,
+         name: r'clashProvidersProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$clashProvidersHash();
+
+  @override
+  String toString() {
+    return r'clashProvidersProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  ClashProviders create() => ClashProviders();
+
+  @override
+  bool operator ==(Object other) {
+    return other is ClashProvidersProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$clashProvidersHash() => r'2de9a6c227550ee150371ccfc0e3acaa5997f517';
+
+final class ClashProvidersFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          ClashProviders,
+          AsyncValue<List<ClashProvider>>,
+          List<ClashProvider>,
+          Stream<List<ClashProvider>>,
+          ProviderKind
+        > {
+  ClashProvidersFamily._()
+    : super(
+        retry: null,
+        name: r'clashProvidersProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ClashProvidersProvider call(ProviderKind kind) =>
+      ClashProvidersProvider._(argument: kind, from: this);
+
+  @override
+  String toString() => r'clashProvidersProvider';
+}
+
+abstract class _$ClashProviders extends $StreamNotifier<List<ClashProvider>> {
+  late final _$args = ref.$arg as ProviderKind;
+  ProviderKind get kind => _$args;
+
+  Stream<List<ClashProvider>> build(ProviderKind kind);
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref =
+        this.ref as $Ref<AsyncValue<List<ClashProvider>>, List<ClashProvider>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<ClashProvider>>, List<ClashProvider>>,
+              AsyncValue<List<ClashProvider>>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 

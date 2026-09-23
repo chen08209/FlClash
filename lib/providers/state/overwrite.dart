@@ -1,6 +1,30 @@
 part of '../state.dart';
 
 @riverpod
+Set<String> appProviderLabels(Ref ref, ProviderKind kind) {
+  return ref
+      .watch(
+        clashProvidersProvider(kind).select(
+          (state) => SelectValue({
+            for (final provider in state.value ?? const <ClashProvider>[])
+              provider.label,
+          }),
+        ),
+      )
+      .value;
+}
+
+/// Selectable in every profile, so valid next to the names its own config has.
+@riverpod
+Set<String> appProviderNames(Ref ref, ProviderKind kind) {
+  final labels = ref.watch(appProviderLabelsProvider(kind));
+  if (kind == ProviderKind.rule) {
+    return labels;
+  }
+  return {...ref.watch(profileProvidersProvider).keys, ...labels};
+}
+
+@riverpod
 CustomOverwriteDate customOverwriteDate(Ref ref, int profileId) {
   final overwrite = ref.watch(
     clashConfigProvider(profileId).select((state) {
@@ -10,6 +34,7 @@ CustomOverwriteDate customOverwriteDate(Ref ref, int profileId) {
         proxies: clashConfig?.proxies ?? const [],
         subRules: clashConfig?.subRules ?? const [],
         proxyProviders: clashConfig?.proxyProviders ?? const [],
+        ruleProviders: clashConfig?.ruleProviders ?? const [],
       );
     }),
   );
@@ -34,7 +59,14 @@ CustomOverwriteDate customOverwriteDate(Ref ref, int profileId) {
   };
   return CustomOverwriteDate(
     loaded: overwrite.loaded && groups != null,
-    proxyProviders: overwrite.proxyProviders.toSet(),
+    proxyProviders: {
+      ...overwrite.proxyProviders,
+      ...ref.watch(appProviderNamesProvider(ProviderKind.proxy)),
+    },
+    ruleProviders: {
+      ...overwrite.ruleProviders,
+      ...ref.watch(appProviderNamesProvider(ProviderKind.rule)),
+    },
     proxyNames: proxyNames,
     proxyTypes: proxyTypes,
     proxyGroups: proxyGroups,
@@ -62,6 +94,20 @@ bool customOverwriteProxyProviderIsValid(
   final valid = ref.watch(
     customOverwriteDateProvider(profileId).select(
       (state) => !state.loaded || state.proxyProviders.contains(providerName),
+    ),
+  );
+  return valid;
+}
+
+@riverpod
+bool customOverwriteRuleProviderIsValid(
+  Ref ref,
+  int profileId,
+  String? providerName,
+) {
+  final valid = ref.watch(
+    customOverwriteDateProvider(profileId).select(
+      (state) => !state.loaded || state.ruleProviders.contains(providerName),
     ),
   );
   return valid;

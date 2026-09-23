@@ -242,6 +242,8 @@ void main() {
         excludeFilter: 'exclude',
         excludeType: 'Direct',
         expectedStatus: '204',
+        tolerance: 50,
+        strategy: LoadBalanceStrategy.stickySessions,
         includeAll: true,
         includeAllProxies: false,
         includeAllProviders: true,
@@ -414,6 +416,156 @@ void main() {
     },
   );
 
+  test('delRules deletes more rules than one statement can bind', () async {
+    const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
+    final rules = List.generate(
+      33000,
+      (index) => Rule(
+        id: index + 1,
+        ruleAction: RuleAction.DOMAIN,
+        content: 'rule$index.example',
+        ruleTarget: 'DIRECT',
+      ),
+    );
+    await database.profiles.put(profile.toCompanion());
+    await database.batch((b) {
+      database.rulesDao.setCustomRulesWithBatch(profile.id, b, rules);
+    });
+
+    await database.rulesDao.delRules(rules.map((rule) => rule.id));
+
+    expect(
+      await database.rulesDao.profileCustomRulesCount(profile.id).getSingle(),
+      0,
+    );
+  });
+
+  test('deleting a profile takes its links, groups and own rules', () async {
+    const gone = Profile(id: 1, autoUpdateDuration: Duration.zero);
+    const kept = Profile(id: 2, autoUpdateDuration: Duration.zero);
+    const global = Rule(id: 10, content: 'global.example', ruleTarget: 'A');
+    const custom = Rule(id: 11, content: 'custom.example', ruleTarget: 'A');
+    const other = Rule(id: 12, content: 'other.example', ruleTarget: 'A');
+    await database.profilesDao.putAll([gone.toCompanion(), kept.toCompanion()]);
+    await database.rulesDao.putGlobalRule(global);
+    await database.rulesDao.putProfileCustomRule(gone.id, custom);
+    await database.rulesDao.putDisabledLink(gone.id, global.id);
+    await database.rulesDao.putProfileCustomRule(kept.id, other);
+    for (final profile in [gone, kept]) {
+      await database.proxyGroups.put(
+        ProxyGroup(
+          id: profile.id,
+          name: 'Group',
+          type: GroupType.Selector,
+        ).toCompanion(profile.id),
+      );
+    }
+
+    await database.deleteProfile(gone.id);
+
+    final ruleIds = await database.rules.all().map((row) => row.id).get();
+    expect(ruleIds, unorderedEquals([global.id, other.id]));
+    final links = await database.profileRuleLinks.all().get();
+    expect(links.map((link) => link.profileId), unorderedEquals([null, 2]));
+    final groups = await database.proxyGroups.all().get();
+    expect(groups.map((group) => group.profileId), [kept.id]);
+  });
+
+  test('deleting rules takes their links with them', () async {
+    const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
+    const rule = Rule(id: 10, content: 'custom.example', ruleTarget: 'A');
+    await database.profiles.put(profile.toCompanion());
+    await database.rulesDao.putProfileCustomRule(profile.id, rule);
+
+    await database.rulesDao.delRules([rule.id]);
+
+    expect(await database.profileRuleLinks.count.getSingle(), 0);
+  });
+
+  test('a restore drops the orphans an older backup carries', () async {
+    const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
+    const rule = Rule(id: 10, content: 'kept.example', ruleTarget: 'A');
+    const orphan = Rule(id: 11, content: 'orphan.example', ruleTarget: 'A');
+
+    for (final isOverride in [false, true]) {
+      await database.restore(
+        [profile],
+        const [],
+        [rule, orphan],
+        const [
+          ProfileRuleLink(profileId: 1, ruleId: 10, scene: RuleScene.custom),
+          ProfileRuleLink(profileId: 99, ruleId: 11, scene: RuleScene.custom),
+          ProfileRuleLink(ruleId: 404),
+        ],
+        const [
+          ProxyGroup(id: 1, profileId: 1, name: 'A', type: GroupType.Selector),
+          ProxyGroup(id: 2, profileId: 99, name: 'B', type: GroupType.Selector),
+        ],
+        isOverride: isOverride,
+      );
+
+      final ruleIds = await database.rules.all().map((row) => row.id).get();
+      expect(ruleIds, [rule.id], reason: 'isOverride: $isOverride');
+      expect(await database.profileRuleLinks.count.getSingle(), 1);
+      final groups = await database.proxyGroups.all().get();
+      expect(groups.map((group) => group.id), [1]);
+    }
+  });
+
+  test(
+    'an override restore replaces more rules than one statement can bind',
+    () async {
+      const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
+      const stale = Rule(id: 1, content: 'stale.example', ruleTarget: 'DIRECT');
+      await database.restore(
+        [profile],
+        const [],
+        [stale],
+        [
+          ProfileRuleLink(
+            profileId: profile.id,
+            ruleId: stale.id,
+            scene: RuleScene.custom,
+          ),
+        ],
+        const [],
+        isOverride: true,
+      );
+
+      final rules = List.generate(
+        33000,
+        (index) => Rule(
+          id: index + 2,
+          content: 'rule$index.example',
+          ruleTarget: 'DIRECT',
+        ),
+      );
+      await database.restore(
+        [profile],
+        const [],
+        rules,
+        rules
+            .map(
+              (rule) => ProfileRuleLink(
+                profileId: profile.id,
+                ruleId: rule.id,
+                scene: RuleScene.custom,
+              ),
+            )
+            .toList(),
+        const [],
+        isOverride: true,
+      );
+
+      expect(
+        await database.rulesDao.profileCustomRulesCount(profile.id).getSingle(),
+        rules.length,
+      );
+      expect(await database.rules.count.getSingle(), rules.length);
+      expect(await database.profileRuleLinks.count.getSingle(), rules.length);
+    },
+  );
+
   test(
     'a compatible restore keeps records the backup does not carry',
     () async {
@@ -511,6 +663,68 @@ void main() {
     },
   );
 
+  test('clash providers DAO splits kinds, orders, and replaces', () async {
+    const proxies = ClashProvider(
+      id: 50,
+      kind: ProviderKind.proxy,
+      label: 'Proxies',
+      url: 'https://proxies.example',
+      order: 1,
+    );
+    const rules = ClashProvider(
+      id: 51,
+      kind: ProviderKind.rule,
+      label: 'Rules',
+      url: 'https://rules.example',
+      behavior: RuleProviderBehavior.domain,
+      format: RuleProviderFormat.mrs,
+    );
+    const earlier = ClashProvider(
+      id: 52,
+      kind: ProviderKind.proxy,
+      label: 'Earlier',
+      url: 'https://earlier.example',
+      order: 0,
+    );
+    const local = ClashProvider(
+      id: 53,
+      kind: ProviderKind.rule,
+      label: 'Local',
+      order: 2,
+    );
+
+    await database.clashProvidersDao.putAll(
+      [proxies, rules, earlier, local].map((item) => item.toCompanion()),
+    );
+
+    expect(await database.clashProvidersDao.query(ProviderKind.proxy).get(), [
+      earlier,
+      proxies,
+    ]);
+    expect(await database.clashProvidersDao.query(ProviderKind.rule).get(), [
+      local,
+      rules,
+    ]);
+    expect((await database.clashProvidersDao.queryAll().get()).length, 4);
+    expect(
+      await database.clashProvidersDao.fileNames().get(),
+      unorderedEquals(
+        [proxies, rules, earlier, local].map((item) => item.fileName),
+      ),
+    );
+
+    await database.restore(
+      const [],
+      const [],
+      const [],
+      const [],
+      const [],
+      clashProviders: const [rules],
+      isOverride: true,
+    );
+    expect(await database.clashProvidersDao.queryAll().get(), [rules]);
+  });
+
   test('database restore and custom data replace related records', () async {
     const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
     final script = Script(
@@ -576,6 +790,15 @@ void main() {
       (await database.proxyGroupsDao.query(profile.id).get()).single.id,
       replacementGroup.id,
     );
+  });
+
+  test('icon records evict down to their capacity', () async {
+    final dao = database.iconRecordsDao;
+    for (var index = 0; index <= dao.maxCapacity; index++) {
+      await dao.put('https://example.com/$index.png');
+    }
+
+    expect(await database.iconRecords.count.getSingle(), dao.maxCapacity);
   });
 
   test(
