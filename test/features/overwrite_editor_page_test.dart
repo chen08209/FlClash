@@ -1,18 +1,23 @@
-import 'dart:async';
-
 import 'package:fl_clash/features/overwrite/overwrite.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 
 class _EditorHarness extends StatelessWidget {
-  final ValueNotifier<List<String>> items;
-  final Future<bool> Function(Set<dynamic> selected)? onDelete;
+  final ValueNotifier<List<String>?> items;
+  final void Function(Set<String> ids)? onDelete;
+  final bool searchable;
 
-  const _EditorHarness({required this.items, this.onDelete});
+  const _EditorHarness({
+    required this.items,
+    this.onDelete,
+    this.searchable = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +26,7 @@ class _EditorHarness extends StatelessWidget {
       overrides: [
         viewSizeProvider.overrideWithBuild((_, _) => const Size(1200, 800)),
       ],
-      child: OverwriteEditorPage<String>(
+      child: OverwriteEditorPage<String, String>(
         title: 'Editor',
         itemsOf: (_) => items.value,
         itemBuilder:
@@ -37,7 +42,7 @@ class _EditorHarness extends StatelessWidget {
               return ListTile(
                 title: Text(item),
                 onTap: onToggleSelected,
-                trailing: isSelected ? const Icon(Icons.check) : null,
+                trailing: isSelected ? const GlyphIcon(AppGlyphs.check) : null,
               );
             },
         onReorder: (oldIndex, newIndex) {},
@@ -46,9 +51,38 @@ class _EditorHarness extends StatelessWidget {
         selectionEnabled: true,
         idOf: (item) => item,
         onDelete: onDelete,
+        searchFieldsOf: searchable ? (item) => [item] : null,
       ),
     );
   }
+}
+
+Future<void> _search(WidgetTester tester, String query) async {
+  await tester.tap(find.byGlyph(AppGlyphs.search));
+  await tester.pumpAndSettle();
+  await tester.enterText(find.byType(TextField), query);
+  await tester.pump();
+}
+
+Future<void> _tapMenuAction(WidgetTester tester, String label) async {
+  await tester.tap(
+    find.descendant(
+      of: find.byType(AppBar),
+      matching: find.byGlyph(AppGlyphs.more),
+    ),
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(label));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _answerDialog(WidgetTester tester, {required bool confirm}) async {
+  await tester.pumpAndSettle();
+  final localizations = AppLocalizations.current;
+  await tester.tap(
+    find.text(confirm ? localizations.confirm : localizations.cancel),
+  );
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -63,26 +97,44 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('shows no empty label while the items are loading', (
+    tester,
+  ) async {
+    final items = ValueNotifier<List<String>?>(null);
+    addTearDown(items.dispose);
+    await tester.pumpWidget(_EditorHarness(items: items));
+    await tester.pump();
+
+    expect(find.text('Empty'), findsNothing);
+
+    items.value = ['a'];
+    await tester.pumpWidget(_EditorHarness(items: items));
+    await tester.pump();
+
+    expect(find.text('Empty'), findsNothing);
+    expect(find.text('a'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('tapping a row toggles selection and shows the actions', (
     tester,
   ) async {
     final items = ValueNotifier<List<String>>(['a', 'b', 'c']);
     addTearDown(items.dispose);
-    await tester.pumpWidget(
-      _EditorHarness(items: items, onDelete: (selected) async => true),
-    );
+    await tester.pumpWidget(_EditorHarness(items: items, onDelete: (_) {}));
     await tester.pump();
 
-    expect(find.byIcon(Icons.delete), findsNothing);
+    expect(find.byGlyph(AppGlyphs.delete), findsNothing);
 
     await tester.tap(find.text('a'));
     await tester.pump();
-    expect(find.byIcon(Icons.delete), findsOneWidget);
-    expect(find.text(AppLocalizations.current.selectAll), findsOneWidget);
+    expect(find.byGlyph(AppGlyphs.delete), findsOneWidget);
+    expect(find.byTooltip(AppLocalizations.current.selectAll), findsOneWidget);
 
     await tester.tap(find.text('a'));
     await tester.pump();
-    expect(find.byIcon(Icons.delete), findsNothing);
+    expect(find.byGlyph(AppGlyphs.delete), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -90,20 +142,85 @@ void main() {
   testWidgets('select all toggles every row', (tester) async {
     final items = ValueNotifier<List<String>>(['a', 'b', 'c']);
     addTearDown(items.dispose);
-    await tester.pumpWidget(
-      _EditorHarness(items: items, onDelete: (selected) async => true),
-    );
+    await tester.pumpWidget(_EditorHarness(items: items, onDelete: (_) {}));
     await tester.pump();
 
     await tester.tap(find.text('a'));
     await tester.pump();
-    await tester.tap(find.text(AppLocalizations.current.selectAll));
+    await tester.tap(find.byTooltip(AppLocalizations.current.selectAll));
     await tester.pump();
-    expect(find.byIcon(Icons.check), findsNWidgets(3));
+    expect(find.byGlyph(AppGlyphs.check), findsNWidgets(3));
 
-    await tester.tap(find.text(AppLocalizations.current.selectAll));
+    await tester.tap(find.byTooltip(AppLocalizations.current.selectAll));
     await tester.pump();
-    expect(find.byIcon(Icons.check), findsNothing);
+    expect(find.byGlyph(AppGlyphs.check), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('offers no search without search fields', (tester) async {
+    final items = ValueNotifier<List<String>>(['a']);
+    addTearDown(items.dispose);
+    await tester.pumpWidget(_EditorHarness(items: items));
+    await tester.pump();
+
+    expect(find.byGlyph(AppGlyphs.search), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a search lists only the matches and cannot reorder them', (
+    tester,
+  ) async {
+    final items = ValueNotifier<List<String>>(['alpha', 'beta', 'gamma']);
+    addTearDown(items.dispose);
+    await tester.pumpWidget(_EditorHarness(items: items, searchable: true));
+    await tester.pump();
+    expect(find.byType(ReorderableListView), findsOneWidget);
+
+    await _search(tester, 'MA');
+    expect(find.text('gamma'), findsOneWidget);
+    expect(find.text('alpha'), findsNothing);
+    expect(find.text('beta'), findsNothing);
+    expect(find.byType(ReorderableListView), findsNothing);
+
+    await tester.enterText(find.byType(TextField), 'zeta');
+    await tester.pump();
+    expect(find.text(AppLocalizations.current.noSearchResults), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), '');
+    await tester.pump();
+    expect(find.text('alpha'), findsOneWidget);
+    expect(find.byType(ReorderableListView), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('select all during a search covers only the matches', (
+    tester,
+  ) async {
+    final items = ValueNotifier<List<String>>(['alpha', 'beta', 'gamma']);
+    addTearDown(items.dispose);
+    Set<String>? deleted;
+    await tester.pumpWidget(
+      _EditorHarness(
+        items: items,
+        searchable: true,
+        onDelete: (ids) => deleted = ids,
+      ),
+    );
+    await tester.pump();
+
+    await _search(tester, 'a');
+    await tester.tap(find.text('beta'));
+    await tester.pump();
+    await tester.enterText(find.byType(TextField), 'ma');
+    await tester.pump();
+    await _tapMenuAction(tester, AppLocalizations.current.selectAll);
+    await _tapMenuAction(tester, AppLocalizations.current.delete);
+    await _answerDialog(tester, confirm: true);
+
+    expect(deleted, {'gamma'});
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -111,18 +228,17 @@ void main() {
   testWidgets('delete removes the selected items and clears the selection', (
     tester,
   ) async {
-    final deleted = <Set<dynamic>>[];
+    final deleted = <Set<String>>[];
     final items = ValueNotifier<List<String>>(['a', 'b', 'c']);
     addTearDown(items.dispose);
     await tester.pumpWidget(
       _EditorHarness(
         items: items,
-        onDelete: (selected) async {
-          deleted.add(selected);
+        onDelete: (ids) {
+          deleted.add(ids);
           items.value = items.value
-              .where((item) => !selected.contains(item))
+              .where((item) => !ids.contains(item))
               .toList();
-          return true;
         },
       ),
     );
@@ -130,60 +246,73 @@ void main() {
 
     await tester.tap(find.text('a'));
     await tester.pump();
-    await tester.tap(find.byIcon(Icons.delete));
-    await tester.pump();
+    await tester.tap(find.byGlyph(AppGlyphs.delete));
+    await _answerDialog(tester, confirm: true);
 
     expect(deleted.single, {'a'});
     expect(find.text('a'), findsNothing);
     expect(find.text('b'), findsOneWidget);
-    expect(find.byIcon(Icons.delete), findsNothing);
+    expect(find.byGlyph(AppGlyphs.delete), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
   testWidgets('cancelling delete keeps the selection', (tester) async {
+    final deleted = <Set<String>>[];
     final items = ValueNotifier<List<String>>(['a', 'b']);
     addTearDown(items.dispose);
     await tester.pumpWidget(
-      _EditorHarness(items: items, onDelete: (selected) async => false),
+      _EditorHarness(items: items, onDelete: deleted.add),
     );
     await tester.pump();
 
     await tester.tap(find.text('a'));
     await tester.pump();
-    await tester.tap(find.byIcon(Icons.delete));
-    await tester.pump();
+    await tester.tap(find.byGlyph(AppGlyphs.delete));
+    await _answerDialog(tester, confirm: false);
 
+    expect(deleted, isEmpty);
     expect(find.text('a'), findsOneWidget);
-    expect(find.byIcon(Icons.delete), findsOneWidget);
+    expect(find.byGlyph(AppGlyphs.delete), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('a delete that resolves after disposal does not touch ref', (
-    tester,
-  ) async {
-    // `onDelete` normally awaits a confirmation dialog, so it stays pending for
-    // as long as the user leaves it open — long enough for the sheet holding
-    // this page to be torn down underneath it.
-    final gate = Completer<bool>();
-    final items = ValueNotifier<List<String>>(['a', 'b']);
+  testWidgets('a selection drops items that left the list', (tester) async {
+    final deleted = <Set<String>>[];
+    final items = ValueNotifier<List<String>>(['a', 'b', 'c']);
     addTearDown(items.dispose);
     await tester.pumpWidget(
-      _EditorHarness(items: items, onDelete: (_) => gate.future),
+      _EditorHarness(items: items, onDelete: deleted.add),
     );
     await tester.pump();
 
     await tester.tap(find.text('a'));
     await tester.pump();
-    await tester.tap(find.byIcon(Icons.delete));
+    await tester.tap(find.text('b'));
     await tester.pump();
+
+    items.value = ['b', 'c'];
+    await tester.pumpWidget(
+      _EditorHarness(items: items, onDelete: deleted.add),
+    );
+    await tester.pump();
+    await tester.tap(find.byGlyph(AppGlyphs.delete));
+    await _answerDialog(tester, confirm: true);
+
+    expect(deleted.single, {'b'});
+
+    await tester.tap(find.text('c'));
+    await tester.pump();
+    items.value = ['a'];
+    await tester.pumpWidget(
+      _EditorHarness(items: items, onDelete: deleted.add),
+    );
+    await tester.pump();
+
+    expect(find.byGlyph(AppGlyphs.delete), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
-    gate.complete(true);
-    await tester.pump();
-
-    expect(tester.takeException(), isNull);
   });
 
   testWidgets('delete button is hidden without a delete handler', (
@@ -197,8 +326,8 @@ void main() {
     await tester.tap(find.text('a'));
     await tester.pump();
 
-    expect(find.byIcon(Icons.delete), findsNothing);
-    expect(find.text(AppLocalizations.current.selectAll), findsOneWidget);
+    expect(find.byGlyph(AppGlyphs.delete), findsNothing);
+    expect(find.byTooltip(AppLocalizations.current.selectAll), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

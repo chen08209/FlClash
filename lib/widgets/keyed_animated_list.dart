@@ -4,6 +4,9 @@ import 'package:material_ui/material_ui.dart';
 
 const _defaultDuration = Duration(milliseconds: 300);
 
+// Rows sized towards zero all fit the viewport, so each one is laid out.
+const _maxAnimatedChanges = 50;
+
 /// A lazily built vertical list that diffs [items] by key: removed items
 /// collapse out, inserted items grow in, and items whose key survives slide
 /// from their previous slot to the new one.
@@ -97,9 +100,34 @@ class _KeyedAnimatedListState<T> extends State<KeyedAnimatedList<T>>
     return controller;
   }
 
+  void _replaceItems(List<T> items) {
+    for (final entry in _entries) {
+      final controller = entry.controller;
+      if (controller == null) {
+        continue;
+      }
+      controller.stop();
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        controller.dispose();
+      });
+    }
+    setState(() {
+      _entries = [for (final item in items) _Entry(widget.keyOf(item), item)];
+      _generation++;
+    });
+  }
+
   void _applyItems(List<T> items) {
     final oldByKey = {for (final entry in _entries) entry.key: entry};
     final newKeys = {for (final item in items) widget.keyOf(item)};
+    final inserted = newKeys.where((key) => !oldByKey.containsKey(key));
+    final removed = _entries.where(
+      (entry) => !entry.removing && !newKeys.contains(entry.key),
+    );
+    if (inserted.length + removed.length > _maxAnimatedChanges) {
+      _replaceItems(items);
+      return;
+    }
 
     final removedBefore = <Object, List<_Entry<T>>>{};
     var pending = <_Entry<T>>[];

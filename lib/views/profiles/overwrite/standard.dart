@@ -1,7 +1,9 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/overwrite/overwrite.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/clash_config.dart';
+import 'package:fl_clash/models/state.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -109,10 +111,9 @@ class _StandardContentState extends ConsumerState<StandardContent> {
                           onPressed: () {
                             _handleDelete();
                           },
-                          icon: const Icon(Icons.delete),
+                          icon: const GlyphIcon(AppGlyphs.delete, fill: 1),
                         ),
                       ),
-                      const SizedBox(width: 8),
                     ],
                     CommonMinFilledButtonTheme(
                       child: selectedRules.isNotEmpty
@@ -270,12 +271,23 @@ class _MatchTargetItem extends ConsumerWidget {
   }
 }
 
-class _EditGlobalAddedRules extends ConsumerWidget {
+class _EditGlobalAddedRules extends ConsumerStatefulWidget {
   final int profileId;
 
   const _EditGlobalAddedRules(this.profileId);
 
-  void _handleChange(WidgetRef ref, int profileId, bool status, int ruleId) {
+  @override
+  ConsumerState<_EditGlobalAddedRules> createState() =>
+      _EditGlobalAddedRulesState();
+}
+
+class _EditGlobalAddedRulesState extends ConsumerState<_EditGlobalAddedRules> {
+  var _query = SearchQuery('');
+  final _searchTexts = Expando<String>();
+
+  int get profileId => widget.profileId;
+
+  void _handleChange(bool status, int ruleId) {
     if (status) {
       ref.read(profileDisabledRuleIdsProvider(profileId).notifier).put(ruleId);
     } else {
@@ -283,18 +295,31 @@ class _EditGlobalAddedRules extends ConsumerWidget {
     }
   }
 
+  void _handleSearch(String query) {
+    setState(() {
+      _query = SearchQuery(query);
+    });
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    final disabledRuleIds =
-        (ref.watch(profileDisabledRuleIdsProvider(profileId)).value ??
-                const <int>[])
-            .toSet();
-    final rules = ref.watch(globalRulesProvider).value ?? [];
-    return BaseScaffold(
+    final disabledRuleIdsState = ref.watch(
+      profileDisabledRuleIdsProvider(profileId),
+    );
+    final disabledRuleIds = (disabledRuleIdsState.value ?? const <int>[])
+        .toSet();
+    final rulesState = ref.watch(globalRulesProvider);
+    final rules = (rulesState.value ?? [])
+        .whereMatches(_query, (rule) => rule.searchFields, texts: _searchTexts)
+        .toList();
+    return CommonScaffold(
       title: appLocalizations.editGlobalRules,
+      searchState: AppBarSearchState(onSearch: _handleSearch),
       body: NullStatusSwitcher(
+        isLoading: rulesState.isLoading || disabledRuleIdsState.isLoading,
         isEmpty: rules.isEmpty,
+        isSearching: _query.isNotEmpty,
         nullStatus: NullStatus(
           label: appLocalizations.nullTip(appLocalizations.rule),
           illustration: NullStatusIllustration.rules,
@@ -302,7 +327,9 @@ class _EditGlobalAddedRules extends ConsumerWidget {
         child: ScrollConfiguration(
           behavior: const ShowBarScrollBehavior(),
           child: ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(
+              16,
+            ).copyWith(top: context.appBarInset + 16),
             itemExtent: ruleItemHeight,
             itemBuilder: (context, index) {
               final rule = rules[index];
@@ -313,7 +340,7 @@ class _EditGlobalAddedRules extends ConsumerWidget {
                   status: !disabledRuleIds.contains(rule.id),
                   rule: rule,
                   onChange: (status) {
-                    _handleChange(ref, profileId, !status, rule.id);
+                    _handleChange(!status, rule.id);
                   },
                 ),
               );

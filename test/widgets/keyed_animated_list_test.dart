@@ -83,4 +83,28 @@ void main() {
     expect(find.text('b'), findsOneWidget);
     expect(topOf(tester, 'b'), 40);
   });
+
+  testWidgets('a change too large to animate swaps the rows at once', (
+    tester,
+  ) async {
+    final many = [for (var i = 0; i < 100; i++) '$i'];
+    await tester.pumpWidget(buildList(many));
+    await tester.pumpWidget(buildList(const ['0', '1']));
+    await tester.pump();
+
+    expect(
+      find.descendant(
+        of: find.byType(KeyedAnimatedList<String>),
+        matching: find.byType(SizeTransition),
+      ),
+      findsNothing,
+    );
+    expect(find.text('2'), findsNothing);
+    expect(topOf(tester, '1'), 40);
+
+    await tester.pumpWidget(buildList(many));
+    await tester.pump();
+    expect(find.text('10'), findsOneWidget);
+    expect(topOf(tester, '10'), 400);
+  });
 }

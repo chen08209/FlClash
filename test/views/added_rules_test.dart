@@ -1,4 +1,6 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -8,6 +10,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_database_providers.dart';
 
@@ -29,6 +32,18 @@ Rule _rule(int id, String content) {
     ruleTarget: 'DIRECT',
     order: id.toString(),
   );
+}
+
+final _barMenu = find.descendant(
+  of: find.byType(AppBar),
+  matching: find.byGlyph(AppGlyphs.more),
+);
+
+Future<void> _tapMenuAction(WidgetTester tester, String label) async {
+  await tester.tap(_barMenu);
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(label));
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -80,13 +95,15 @@ void main() {
   testWidgets('checking a rule enters selection mode', (tester) async {
     await pumpRules(tester, [_rule(1, 'a.com'), _rule(2, 'b.com')]);
 
-    expect(find.text(currentAppLocalizations.selectAll), findsNothing);
+    expect(_barMenu, findsNothing);
 
     await tester.tap(find.byType(CommonCheckBox).first);
     await tester.pumpAndSettle();
+    await tester.tap(_barMenu);
+    await tester.pumpAndSettle();
 
     expect(find.text(currentAppLocalizations.selectAll), findsOneWidget);
-    expect(find.byIcon(Icons.delete), findsOneWidget);
+    expect(find.text(currentAppLocalizations.delete), findsOneWidget);
   });
 
   testWidgets('select all covers every rule and toggles back off', (
@@ -96,11 +113,8 @@ void main() {
 
     await tester.tap(find.byType(CommonCheckBox).first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text(currentAppLocalizations.selectAll));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byIcon(Icons.delete));
-    await tester.pumpAndSettle();
+    await _tapMenuAction(tester, currentAppLocalizations.selectAll);
+    await _tapMenuAction(tester, currentAppLocalizations.delete);
     await tester.tap(find.text(currentAppLocalizations.confirm));
     await tester.pumpAndSettle();
 
@@ -114,13 +128,12 @@ void main() {
 
     await tester.tap(find.byType(CommonCheckBox).first);
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.delete));
-    await tester.pumpAndSettle();
+    await _tapMenuAction(tester, currentAppLocalizations.delete);
     await tester.tap(find.text(currentAppLocalizations.cancel));
     await tester.pumpAndSettle();
 
     expect(rules.deleted, isEmpty);
-    expect(find.text(currentAppLocalizations.selectAll), findsOneWidget);
+    expect(_barMenu, findsOneWidget);
   });
 
   testWidgets('deleting only removes the selected rule', (tester) async {
@@ -128,13 +141,75 @@ void main() {
 
     await tester.tap(find.byType(CommonCheckBox).last);
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.delete));
-    await tester.pumpAndSettle();
+    await _tapMenuAction(tester, currentAppLocalizations.delete);
     await tester.tap(find.text(currentAppLocalizations.confirm));
     await tester.pumpAndSettle();
 
     expect(rules.deleted, [
       [2],
     ]);
+  });
+
+  group('search', () {
+    Future<void> search(WidgetTester tester, String query) async {
+      await tester.tap(find.byGlyph(AppGlyphs.search));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), query);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('lists only the matching rules and stops reordering', (
+      tester,
+    ) async {
+      await pumpRules(tester, [_rule(1, 'a.com'), _rule(2, 'b.net')]);
+      expect(find.byType(ReorderableList), findsOneWidget);
+
+      await search(tester, 'NET');
+
+      expect(find.text('b.net'), findsOneWidget);
+      expect(find.text('a.com'), findsNothing);
+      expect(find.byType(ReorderableList), findsNothing);
+    });
+
+    testWidgets('matches the rule type and the target', (tester) async {
+      await pumpRules(tester, [
+        _rule(1, 'a.com'),
+        const Rule(
+          id: 2,
+          ruleAction: RuleAction.GEOIP,
+          content: 'CN',
+          order: '2',
+        ),
+      ]);
+
+      await search(tester, 'geoip');
+      expect(find.text('CN'), findsOneWidget);
+      expect(find.text('a.com'), findsNothing);
+
+      await tester.enterText(find.byType(TextField), 'direct');
+      await tester.pumpAndSettle();
+      expect(find.text('a.com'), findsOneWidget);
+      expect(find.text('CN'), findsNothing);
+    });
+
+    testWidgets('select all and delete reach only the matches', (tester) async {
+      await pumpRules(tester, [
+        _rule(1, 'a.com'),
+        _rule(2, 'b.com'),
+        _rule(3, 'c.net'),
+      ]);
+
+      await search(tester, 'com');
+      await tester.tap(find.byType(CommonCheckBox).first);
+      await tester.pumpAndSettle();
+      await _tapMenuAction(tester, currentAppLocalizations.selectAll);
+      await _tapMenuAction(tester, currentAppLocalizations.delete);
+      await tester.tap(find.text(currentAppLocalizations.confirm));
+      await tester.pumpAndSettle();
+
+      expect(rules.deleted, [
+        unorderedEquals(<int>[1, 2]),
+      ]);
+    });
   });
 }
