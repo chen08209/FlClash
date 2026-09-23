@@ -100,7 +100,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
     super.dispose();
   }
 
-  CommonPopupMenuItem _buildSelectAllItem({
+  IconButtonData _buildSelectAllAction({
     required bool isSelectedAll,
     required List<String> allValueList,
   }) {
@@ -119,14 +119,14 @@ class _AccessViewState extends ConsumerState<AccessView> {
 
     final appLocalizations = context.appLocalizations;
     return isSelectedAll
-        ? CommonPopupMenuItem(
+        ? IconButtonData(
             glyph: AppGlyphs.deselect,
-            label: appLocalizations.cancelSelectAll,
+            tooltip: appLocalizations.cancelSelectAll,
             onPressed: onPressed,
           )
-        : CommonPopupMenuItem(
+        : IconButtonData(
             glyph: AppGlyphs.selectAll,
-            label: appLocalizations.selectAll,
+            tooltip: appLocalizations.selectAll,
             onPressed: onPressed,
           );
   }
@@ -428,6 +428,15 @@ class _AccessViewState extends ConsumerState<AccessView> {
     final valueList = currentList.intersection(viewPackageNameList);
     final needsInstalledAppsPermission =
         packages.isEmpty && !_installedAppsPermissionGranted;
+    final selectAllAction =
+        accessControl.enable &&
+            !needsInstalledAppsPermission &&
+            viewPackageNameList.isNotEmpty
+        ? _buildSelectAllAction(
+            isSelectedAll: valueList.length == viewPackageNameList.length,
+            allValueList: viewPackageNameList,
+          )
+        : null;
     final hasChanges = ref.watch(
       vpnSettingProvider.select(
         (state) =>
@@ -445,6 +454,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
       child: CommonScaffold(
         isLoading: isLoading,
         searchState: AppBarSearchState(onSearch: _onSearch),
+        searchActions: [?selectAllAction],
         title: context.appLocalizations.appAccessControl,
         iconActions: [
           if (hasChanges)
@@ -456,10 +466,11 @@ class _AccessViewState extends ConsumerState<AccessView> {
         ],
         menuItems: [
           ..._buildMenuItems(context, enable: accessControl.enable),
-          if (accessControl.enable && !needsInstalledAppsPermission)
-            _buildSelectAllItem(
-              isSelectedAll: valueList.length == viewPackageNameList.length,
-              allValueList: viewPackageNameList,
+          if (selectAllAction != null)
+            CommonPopupMenuItem(
+              glyph: selectAllAction.glyph,
+              label: selectAllAction.tooltip!,
+              onPressed: selectAllAction.onPressed,
             ),
         ],
         body: AppBarClearance(

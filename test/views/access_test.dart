@@ -285,6 +285,30 @@ void main() {
       await teardownView(tester);
     });
 
+    testWidgets('searching selects then clears only the matching apps', (
+      tester,
+    ) async {
+      seedAccessControl(const AccessControlProps(enable: true));
+      await pumpAccessView(tester);
+
+      await tester.tap(find.byTooltip('Search'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'chat');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Select all'));
+      await tester.pumpAndSettle();
+      expect(container.read(accessControlStateProvider).currentList, [
+        'com.example.chat',
+      ]);
+
+      await tester.tap(find.byTooltip('Deselect all'));
+      await tester.pumpAndSettle();
+      expect(container.read(accessControlStateProvider).currentList, isEmpty);
+
+      await teardownView(tester);
+    });
+
     testWidgets('selection targets the accept list in accept mode', (
       tester,
     ) async {

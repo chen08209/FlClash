@@ -15,6 +15,7 @@ Future<List<String>> _pumpBar(
   bool foldPrimary = false,
   List<String> icons = const [],
   List<String> menuItems = const [],
+  List<String> selection = const [],
 }) async {
   final taps = <String>[];
   IconButtonData action(String label, {bool isLoading = false}) {
@@ -39,6 +40,7 @@ Future<List<String>> _pumpBar(
               : action(primary, isLoading: primaryLoading),
           iconActions: [for (final label in icons) action(label)],
           foldPrimaryAction: foldPrimary,
+          selectionActions: [for (final label in selection) action(label)],
           menuItems: [
             for (final label in menuItems)
               CommonPopupMenuItem(
@@ -153,5 +155,43 @@ void main() {
 
     await _openMenu(tester);
     expect(_menuLabels(tester, ['Add', 'Update', 'Sort']), ['Add', 'Sort']);
+  });
+
+  testWidgets('a selection keeps its actions grouped beside the search', (
+    tester,
+  ) async {
+    final taps = await _pumpBar(
+      tester,
+      hasSearch: true,
+      selection: ['Delete', 'Select all'],
+    );
+
+    expect(_barButtons(tester), ['Search', 'Delete', 'Select all']);
+    expect(_inBar(find.byGlyph(AppGlyphs.more)), findsNothing);
+    expect(
+      find.ancestor(
+        of: find.byTooltip('Search'),
+        matching: find.byType(AppBarButtonGroup),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.ancestor(
+        of: find.byTooltip('Delete'),
+        matching: find.byType(AppBarButtonGroup),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(_inBar(find.byTooltip('Search')));
+    await tester.pumpAndSettle();
+    expect(
+      _barButtons(tester),
+      containsAllInOrder(['Clear search', 'Delete', 'Select all']),
+    );
+    expect(_inBar(find.byGlyph(AppGlyphs.more)), findsNothing);
+
+    await tester.tap(find.byTooltip('Select all'));
+    expect(taps, ['Select all']);
   });
 }

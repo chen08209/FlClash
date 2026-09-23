@@ -326,7 +326,9 @@ primary action, or the first icon action when `foldPrimaryAction` is set; everyt
 primary action first, and a folded action that is loading shows as a disabled item. `primaryAction` counts only where the bar holds it, in a bottom sheet and on a phone's home
 page, whose foot the navigation dock takes; elsewhere it is the page's floating action button. No page adds a
 floating action button of its own: a secondary action such as selecting every app goes into `menuItems`, and saving
-an edit page is a check among its `iconActions`.
+an edit page is a check among its `iconActions`. Actions on a multi-selection, such as delete and select all, go into
+`selectionActions` instead: the bar keeps them in sight as one button group that takes a single slot beside the search
+or clear button, so they never fold.
 
 ## Settings Rows
 

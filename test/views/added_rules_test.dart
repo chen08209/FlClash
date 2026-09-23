@@ -34,15 +34,11 @@ Rule _rule(int id, String content) {
   );
 }
 
-final _barMenu = find.descendant(
-  of: find.byType(AppBar),
-  matching: find.byGlyph(AppGlyphs.more),
-);
+Finder _barAction(String tooltip) =>
+    find.descendant(of: find.byType(AppBar), matching: find.byTooltip(tooltip));
 
-Future<void> _tapMenuAction(WidgetTester tester, String label) async {
-  await tester.tap(_barMenu);
-  await tester.pumpAndSettle();
-  await tester.tap(find.text(label));
+Future<void> _tapBarAction(WidgetTester tester, String tooltip) async {
+  await tester.tap(_barAction(tooltip));
   await tester.pumpAndSettle();
 }
 
@@ -95,15 +91,20 @@ void main() {
   testWidgets('checking a rule enters selection mode', (tester) async {
     await pumpRules(tester, [_rule(1, 'a.com'), _rule(2, 'b.com')]);
 
-    expect(_barMenu, findsNothing);
+    expect(_barAction(currentAppLocalizations.delete), findsNothing);
 
     await tester.tap(find.byType(CommonCheckBox).first);
     await tester.pumpAndSettle();
-    await tester.tap(_barMenu);
-    await tester.pumpAndSettle();
 
-    expect(find.text(currentAppLocalizations.selectAll), findsOneWidget);
-    expect(find.text(currentAppLocalizations.delete), findsOneWidget);
+    expect(_barAction(currentAppLocalizations.selectAll), findsOneWidget);
+    expect(_barAction(currentAppLocalizations.delete), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byGlyph(AppGlyphs.more),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('select all covers every rule and toggles back off', (
@@ -113,8 +114,8 @@ void main() {
 
     await tester.tap(find.byType(CommonCheckBox).first);
     await tester.pumpAndSettle();
-    await _tapMenuAction(tester, currentAppLocalizations.selectAll);
-    await _tapMenuAction(tester, currentAppLocalizations.delete);
+    await _tapBarAction(tester, currentAppLocalizations.selectAll);
+    await _tapBarAction(tester, currentAppLocalizations.delete);
     await tester.tap(find.text(currentAppLocalizations.confirm));
     await tester.pumpAndSettle();
 
@@ -128,12 +129,12 @@ void main() {
 
     await tester.tap(find.byType(CommonCheckBox).first);
     await tester.pumpAndSettle();
-    await _tapMenuAction(tester, currentAppLocalizations.delete);
+    await _tapBarAction(tester, currentAppLocalizations.delete);
     await tester.tap(find.text(currentAppLocalizations.cancel));
     await tester.pumpAndSettle();
 
     expect(rules.deleted, isEmpty);
-    expect(_barMenu, findsOneWidget);
+    expect(_barAction(currentAppLocalizations.delete), findsOneWidget);
   });
 
   testWidgets('deleting only removes the selected rule', (tester) async {
@@ -141,7 +142,7 @@ void main() {
 
     await tester.tap(find.byType(CommonCheckBox).last);
     await tester.pumpAndSettle();
-    await _tapMenuAction(tester, currentAppLocalizations.delete);
+    await _tapBarAction(tester, currentAppLocalizations.delete);
     await tester.tap(find.text(currentAppLocalizations.confirm));
     await tester.pumpAndSettle();
 
@@ -202,8 +203,8 @@ void main() {
       await search(tester, 'com');
       await tester.tap(find.byType(CommonCheckBox).first);
       await tester.pumpAndSettle();
-      await _tapMenuAction(tester, currentAppLocalizations.selectAll);
-      await _tapMenuAction(tester, currentAppLocalizations.delete);
+      await _tapBarAction(tester, currentAppLocalizations.selectAll);
+      await _tapBarAction(tester, currentAppLocalizations.delete);
       await tester.tap(find.text(currentAppLocalizations.confirm));
       await tester.pumpAndSettle();
 

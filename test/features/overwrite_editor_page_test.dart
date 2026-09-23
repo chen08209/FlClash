@@ -64,15 +64,10 @@ Future<void> _search(WidgetTester tester, String query) async {
   await tester.pump();
 }
 
-Future<void> _tapMenuAction(WidgetTester tester, String label) async {
+Future<void> _tapBarAction(WidgetTester tester, String tooltip) async {
   await tester.tap(
-    find.descendant(
-      of: find.byType(AppBar),
-      matching: find.byGlyph(AppGlyphs.more),
-    ),
+    find.descendant(of: find.byType(AppBar), matching: find.byTooltip(tooltip)),
   );
-  await tester.pumpAndSettle();
-  await tester.tap(find.text(label));
   await tester.pumpAndSettle();
 }
 
@@ -216,8 +211,8 @@ void main() {
     await tester.pump();
     await tester.enterText(find.byType(TextField), 'ma');
     await tester.pump();
-    await _tapMenuAction(tester, AppLocalizations.current.selectAll);
-    await _tapMenuAction(tester, AppLocalizations.current.delete);
+    await _tapBarAction(tester, AppLocalizations.current.selectAll);
+    await _tapBarAction(tester, AppLocalizations.current.delete);
     await _answerDialog(tester, confirm: true);
 
     expect(deleted, {'gamma'});

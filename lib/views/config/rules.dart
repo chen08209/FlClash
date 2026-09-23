@@ -119,8 +119,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
               child: Text(appLocalizations.add),
             ),
         ],
-        iconActions: isSelecting ? selectionActions : const [],
-        searchActions: isSelecting ? selectionActions : const [],
+        selectionActions: isSelecting ? selectionActions : const [],
         body: NullStatusSwitcher(
           isLoading: rulesState.isLoading,
           isEmpty: rules.isEmpty,

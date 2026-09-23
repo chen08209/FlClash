@@ -194,8 +194,7 @@ class _OverwriteEditorPageState<T, K>
             child: Text(appLocalizations.add),
           ),
       ],
-      iconActions: isSelecting ? selectionActions : const [],
-      searchActions: isSelecting ? selectionActions : const [],
+      selectionActions: isSelecting ? selectionActions : const [],
       body: NullStatusSwitcher(
         isLoading: loadedItems == null,
         isEmpty: items.isEmpty,

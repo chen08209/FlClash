@@ -51,6 +51,9 @@ class CommonScaffold extends StatefulWidget {
   final AppBarEditState? editState;
   final AppBarSearchState? searchState;
   final List<IconButtonData> searchActions;
+
+  /// One button group taking a single bar slot, searching or not; never folds.
+  final List<IconButtonData> selectionActions;
   final OnKeywordsUpdateCallback? onKeywordsUpdate;
   final bool? resizeToAvoidBottomInset;
   final VoidCallback? backAction;
@@ -68,6 +71,7 @@ class CommonScaffold extends StatefulWidget {
     this.isLoading = false,
     this.searchState,
     this.searchActions = const [],
+    this.selectionActions = const [],
     this.floatingActionButton,
     this.primaryAction,
     this.iconActions = const [],
@@ -436,14 +440,20 @@ class CommonScaffoldState extends State<CommonScaffold> {
     final widgets = _isSearch
         ? const <Widget>[]
         : widget.actions ?? const <Widget>[];
+    final selection = widget.selectionActions;
+    final selectionCount = selection.isEmpty ? 0 : 1;
     final fold = _isSearch
-        ? _foldBarActions(hasLead: true, icons: widget.searchActions)
+        ? _foldBarActions(
+            hasLead: true,
+            icons: widget.searchActions,
+            widgetCount: selectionCount,
+          )
         : _foldBarActions(
             hasLead: lead != null,
             primary: primaryAction,
             foldPrimary: widget.foldPrimaryAction,
             icons: widget.iconActions,
-            widgetCount: widgets.length,
+            widgetCount: widgets.length + selectionCount,
             menuItems: widget.menuItems,
           );
     final popAsSuffix = !_isSearch && !_isEdit && pop?.asSuffix == true;
@@ -452,6 +462,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
         ? null
         : _OverflowMenuButton(items: fold.overflow);
     if (widgets.isEmpty &&
+        selection.isEmpty &&
         !popAsSuffix &&
         shown.length + (overflow == null ? 0 : 1) == 2) {
       return genActions([
@@ -468,6 +479,12 @@ class CommonScaffoldState extends State<CommonScaffold> {
         ElasticPress(
           enabled: !data.isLoading,
           child: AppBarActionButton(data: data),
+        ),
+      if (selection.isNotEmpty)
+        AppBarButtonGroup(
+          children: [
+            for (final data in selection) AppBarActionButton(data: data),
+          ],
         ),
       for (final action in widgets) ElasticPress(child: action),
       if (overflow != null) ElasticPress(child: overflow),
