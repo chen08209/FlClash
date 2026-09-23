@@ -2,6 +2,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/overwrite/overwrite.dart';
 import 'package:fl_clash/models/models.dart' hide FileInfo;
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -155,9 +156,8 @@ class _NameListEditorState extends ConsumerState<NameListEditor>
 
     return SizedBox(
       height: height,
-      child: AdaptiveSheetScaffold(
+      child: CommonScaffold(
         title: widget.labels.title,
-        sheetTransparentToolBar: true,
         body: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(
@@ -192,7 +192,7 @@ class _NameListEditorState extends ConsumerState<NameListEditor>
               ),
             ),
             if (names.isNotEmpty)
-              SliverReorderableList(
+              SuperSliverReorderableList(
                 itemBuilder: (_, index) => itemAt(index),
                 itemCount: names.length,
                 proxyDecorator: (child, index, animation) =>
@@ -247,9 +247,9 @@ class _IncludeAllCard extends StatelessWidget {
                     cancelable: false,
                   );
                 },
-                icon: Icon(
+                icon: GlyphIcon(
                   size: 16.ap,
-                  Icons.info_outline,
+                  AppGlyphs.info,
                   color: context.colorScheme.onSurfaceVariant,
                 ),
               ),

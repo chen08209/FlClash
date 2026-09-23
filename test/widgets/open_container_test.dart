@@ -57,6 +57,86 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('morphs the closed shape and color into the open page', (
+    tester,
+  ) async {
+    const closedShape = RoundedSuperellipseBorder(
+      borderRadius: BorderRadius.all(Radius.circular(24)),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 160,
+              height: 80,
+              child: OpenContainer<void>(
+                closedShape: closedShape,
+                closedColor: Colors.red,
+                openColor: Colors.blue,
+                curve: Curves.linear,
+                transitionDuration: const Duration(milliseconds: 300),
+                closedBuilder: (_, open) {
+                  return GestureDetector(
+                    onTap: open,
+                    child: const Text('Card'),
+                  );
+                },
+                openBuilder: (_, close) {
+                  return GestureDetector(
+                    onTap: () => close(),
+                    child: const Text('Page'),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Material container() {
+      return tester.widget<Material>(
+        find
+            .ancestor(of: find.text('Page'), matching: find.byType(Material))
+            .first,
+      );
+    }
+
+    double corner(ShapeBorder? shape) {
+      final border = shape! as RoundedSuperellipseBorder;
+      return border.borderRadius.resolve(TextDirection.ltr).topLeft.x;
+    }
+
+    final closedMaterial = tester.widget<Material>(
+      find
+          .ancestor(of: find.text('Card'), matching: find.byType(Material))
+          .first,
+    );
+    expect(closedMaterial.shape, closedShape);
+
+    await tester.tap(find.text('Card'));
+    await tester.pump();
+    expect(corner(container().shape), 24);
+    expect(container().color, Colors.red);
+
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(corner(container().shape), closeTo(12, 0.01));
+
+    await tester.pumpAndSettle();
+    expect(container().shape, isNull);
+
+    await tester.tap(find.text('Page'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(corner(container().shape), closeTo(12, 0.01));
+
+    await tester.pumpAndSettle();
+    expect(find.text('Page'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'fadeThrough opens by callback and supports interrupted reverse',
     (tester) async {

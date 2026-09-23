@@ -6,12 +6,14 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/window.dart';
 import 'package:fl_clash/bootstrap.dart';
 import 'package:fl_clash/common/system_dns.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/hotkey_manager.dart';
 import 'package:fl_clash/manager/manager.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/focus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -56,6 +58,17 @@ class Application extends ConsumerStatefulWidget {
   ConsumerState<Application> createState() => ApplicationState();
 }
 
+const _actionIconTheme = ActionIconThemeData(
+  backButtonIconBuilder: _backButtonIcon,
+  closeButtonIconBuilder: _closeButtonIcon,
+);
+
+Widget _backButtonIcon(BuildContext context) =>
+    GlyphIcon(AppGlyphs.backFor(Theme.of(context).platform));
+
+Widget _closeButtonIcon(BuildContext context) =>
+    const GlyphIcon(AppGlyphs.close);
+
 class ApplicationState extends ConsumerState<Application> {
   Timer? _autoUpdateProfilesTaskTimer;
   bool _preHasVpn = false;
@@ -85,7 +98,9 @@ class ApplicationState extends ConsumerState<Application> {
       }
       _autoUpdateProfilesTask();
       _initLink();
-      unawaited(app?.initShortcuts());
+      if (!safeModeBuild) {
+        unawaited(app?.initShortcuts());
+      }
     });
   }
 
@@ -136,7 +151,7 @@ class ApplicationState extends ConsumerState<Application> {
     unawaited(ref.read(systemActionProvider.notifier).updateLocalIp());
     final hasVpn = results.contains(ConnectivityResult.vpn);
     if (_preHasVpn == hasVpn) {
-      ref.read(checkIpNumProvider.notifier).add();
+      ref.read(routeTrackerProvider.notifier).bumpHostEpoch();
     }
     _preHasVpn = hasVpn;
   }
@@ -167,7 +182,10 @@ class ApplicationState extends ConsumerState<Application> {
                 child: buildManagerStack(
                   isDesktop: system.isDesktop,
                   onConnectivityChanged: _handleConnectivityChanged,
-                  child: child!,
+                  child: RemoteFocusAdapter(
+                    enabled: system.isTV,
+                    child: child!,
+                  ),
                 ),
               ),
             );
@@ -180,14 +198,14 @@ class ApplicationState extends ConsumerState<Application> {
           theme: ThemeData(
             useMaterial3: true,
             pageTransitionsTheme: _pageTransitionsTheme,
+            actionIconTheme: _actionIconTheme,
             colorScheme: _getAppColorScheme(brightness: Brightness.light),
           ).withAppShapes,
           darkTheme: ThemeData(
             useMaterial3: true,
             pageTransitionsTheme: _pageTransitionsTheme,
-            colorScheme: _getAppColorScheme(
-              brightness: Brightness.dark,
-            ).toPureBlack(themeProps.pureBlack),
+            actionIconTheme: _actionIconTheme,
+            colorScheme: _getAppColorScheme(brightness: Brightness.dark),
           ).withAppShapes,
           home: child!,
         );

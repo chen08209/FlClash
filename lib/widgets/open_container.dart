@@ -18,25 +18,35 @@ typedef ClosedCallback<S> = void Function(S data);
 class OpenContainer<T extends Object?> extends StatefulWidget {
   const OpenContainer({
     super.key,
+    this.closedColor,
+    this.openColor,
     this.middleColor,
+    this.closedShape,
+    this.openShape,
     this.onClosed,
     required this.closedBuilder,
     required this.openBuilder,
     this.tappable = true,
     this.transitionDuration = const Duration(milliseconds: 300),
     this.transitionType = ContainerTransitionType.fade,
+    this.curve = Curves.fastOutSlowIn,
     this.useRootNavigator = false,
     this.routeSettings,
     this.clipBehavior = Clip.antiAlias,
   });
 
+  final Color? closedColor;
+  final Color? openColor;
   final Color? middleColor;
+  final ShapeBorder? closedShape;
+  final ShapeBorder? openShape;
   final ClosedCallback<T?>? onClosed;
   final CloseContainerBuilder closedBuilder;
   final OpenContainerBuilder<T> openBuilder;
   final bool tappable;
   final Duration transitionDuration;
   final ContainerTransitionType transitionType;
+  final Curve curve;
   final bool useRootNavigator;
   final RouteSettings? routeSettings;
   final Clip clipBehavior;
@@ -58,13 +68,18 @@ class _OpenContainerState<T> extends State<OpenContainer<T?>> {
           rootNavigator: widget.useRootNavigator,
         ).push(
           _OpenContainerRoute<T>(
+            closedColor: widget.closedColor,
+            openColor: widget.openColor,
             middleColor: middleColor,
+            closedShape: widget.closedShape,
+            openShape: widget.openShape,
             closedBuilder: widget.closedBuilder,
             openBuilder: widget.openBuilder,
             hideableKey: _hideableKey,
             closedBuilderKey: _closedBuilderKey,
             transitionDuration: widget.transitionDuration,
             transitionType: widget.transitionType,
+            curve: widget.curve,
             useRootNavigator: widget.useRootNavigator,
             routeSettings: widget.routeSettings,
           ),
@@ -83,6 +98,7 @@ class _OpenContainerState<T> extends State<OpenContainer<T?>> {
         child: Material(
           color: Colors.transparent,
           clipBehavior: widget.clipBehavior,
+          shape: widget.closedShape,
           child: Builder(
             key: _closedBuilderKey,
             builder: (BuildContext context) {
@@ -148,17 +164,23 @@ class _HideableState extends State<_Hideable> {
 
 class _OpenContainerRoute<T> extends ModalRoute<T> {
   _OpenContainerRoute({
+    required this.closedColor,
+    required this.openColor,
     required this.middleColor,
+    required ShapeBorder? closedShape,
+    required this.openShape,
     required this.closedBuilder,
     required this.openBuilder,
     required this.hideableKey,
     required this.closedBuilderKey,
     required this.transitionDuration,
     required this.transitionType,
+    required this.curve,
     required this.useRootNavigator,
     required RouteSettings? routeSettings,
   }) : _closedOpacityTween = _getClosedOpacityTween(transitionType),
        _openOpacityTween = _getOpenOpacityTween(transitionType),
+       _shapeTween = ShapeBorderTween(begin: closedShape, end: openShape),
        super(settings: routeSettings);
 
   static _FlippableTweenSequence<Color?> _getColorTween({
@@ -255,7 +277,10 @@ class _OpenContainerRoute<T> extends ModalRoute<T> {
     }
   }
 
+  final Color? closedColor;
+  final Color? openColor;
   final Color middleColor;
+  final ShapeBorder? openShape;
   final CloseContainerBuilder closedBuilder;
   final OpenContainerBuilder<T> openBuilder;
   final GlobalKey<_HideableState> hideableKey;
@@ -264,11 +289,13 @@ class _OpenContainerRoute<T> extends ModalRoute<T> {
   @override
   final Duration transitionDuration;
   final ContainerTransitionType transitionType;
+  final Curve curve;
 
   final bool useRootNavigator;
 
   final _FlippableTweenSequence<double> _closedOpacityTween;
   final _FlippableTweenSequence<double> _openOpacityTween;
+  final ShapeBorderTween _shapeTween;
   final Animatable<Color?> _scrimTween = ColorTween(
     begin: Colors.transparent,
     end: Colors.transparent,
@@ -418,10 +445,11 @@ class _OpenContainerRoute<T> extends ModalRoute<T> {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
   ) {
+    final surface = Theme.of(context).colorScheme.surface;
     _colorTween = _getColorTween(
       transitionType: transitionType,
-      closedColor: Theme.of(context).colorScheme.surface,
-      openColor: Theme.of(context).colorScheme.surface,
+      closedColor: closedColor ?? surface,
+      openColor: openColor ?? surface,
       middleColor: middleColor,
     );
     return Align(
@@ -432,6 +460,7 @@ class _OpenContainerRoute<T> extends ModalRoute<T> {
           if (animation.isCompleted) {
             return SizedBox.expand(
               child: Material(
+                shape: openShape,
                 child: Builder(
                   key: _openBuilderKey,
                   builder: (BuildContext context) {
@@ -444,10 +473,8 @@ class _OpenContainerRoute<T> extends ModalRoute<T> {
 
           final Animation<double> curvedAnimation = CurvedAnimation(
             parent: animation,
-            curve: Curves.fastOutSlowIn,
-            reverseCurve: _transitionWasInterrupted
-                ? null
-                : Curves.fastOutSlowIn.flipped,
+            curve: curve,
+            reverseCurve: _transitionWasInterrupted ? null : curve.flipped,
           );
           TweenSequence<Color?>? colorTween;
           TweenSequence<double>? closedOpacityTween, openOpacityTween;
@@ -492,6 +519,7 @@ class _OpenContainerRoute<T> extends ModalRoute<T> {
                       clipBehavior: Clip.antiAlias,
                       animationDuration: Duration.zero,
                       color: colorTween!.evaluate(animation),
+                      shape: _shapeTween.evaluate(curvedAnimation),
                       child: Stack(
                         fit: StackFit.passthrough,
                         children: <Widget>[

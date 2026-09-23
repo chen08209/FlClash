@@ -299,7 +299,6 @@ class _ToneGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedBorderColor = Theme.of(context).colorScheme.primary;
     return LayoutBuilder(
       builder: (_, constraints) {
         final columns = min(
@@ -312,63 +311,108 @@ class _ToneGrid extends StatelessWidget {
           spacing: _spacing,
           runSpacing: _spacing,
           children: _tones.map((tone) {
-            final color = Color(Hct.from(hue, chroma, tone.toDouble()).toInt());
-            final isSelected = tone == selectedTone.round();
-            final textColor = tone <= 50 ? Colors.white : Colors.black;
-            return GestureDetector(
-              onTap: () => onToneSelected(tone.toDouble()),
-              child: SizedBox(
-                width: itemWidth,
-                height: itemWidth,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Positioned.fill(
-                      child: Container(
-                        decoration: ShapeDecoration(
-                          color: color,
-                          shape: AppShape.sm,
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          '$tone',
-                          style: TextStyle(
-                            color: textColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (isSelected)
-                      Positioned.fill(
-                        top: -_selectionRingInset,
-                        right: -_selectionRingInset,
-                        bottom: -_selectionRingInset,
-                        left: -_selectionRingInset,
-                        child: IgnorePointer(
-                          child: Container(
-                            decoration: ShapeDecoration(
-                              shape: RoundedSuperellipseBorder(
-                                borderRadius: AppRadius.all(
-                                  AppCorner.sm + _selectionRingInset,
-                                ),
-                                side: BorderSide(
-                                  color: selectedBorderColor,
-                                  width: _selectionRingInset,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+            return _ToneCell(
+              tone: tone,
+              size: itemWidth,
+              color: Color(Hct.from(hue, chroma, tone.toDouble()).toInt()),
+              isSelected: tone == selectedTone.round(),
+              onSelected: () => onToneSelected(tone.toDouble()),
             );
           }).toList(),
         );
       },
+    );
+  }
+}
+
+class _ToneCell extends StatefulWidget {
+  const _ToneCell({
+    required this.tone,
+    required this.size,
+    required this.color,
+    required this.isSelected,
+    required this.onSelected,
+  });
+
+  final int tone;
+  final double size;
+  final Color color;
+  final bool isSelected;
+  final VoidCallback onSelected;
+
+  @override
+  State<_ToneCell> createState() => _ToneCellState();
+}
+
+class _ToneCellState extends State<_ToneCell> {
+  bool _isFocused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final foregroundColor = widget.tone <= 50 ? Colors.white : Colors.black;
+    return SizedBox(
+      width: widget.size,
+      height: widget.size,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: Material(
+              color: widget.color,
+              shape: AppShape.sm,
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: widget.onSelected,
+                onFocusChange: (value) => setState(() => _isFocused = value),
+                child: Center(
+                  child: Text(
+                    '${widget.tone}',
+                    style: TextStyle(
+                      color: foregroundColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          if (_isFocused)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: ShapeDecoration(
+                    shape: AppShape.sm.copyWith(
+                      side: BorderSide(color: foregroundColor, width: 2),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          if (widget.isSelected)
+            Positioned.fill(
+              top: -_selectionRingInset,
+              right: -_selectionRingInset,
+              bottom: -_selectionRingInset,
+              left: -_selectionRingInset,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: ShapeDecoration(
+                    shape: RoundedSuperellipseBorder(
+                      borderRadius: AppRadius.all(
+                        AppCorner.sm + _selectionRingInset,
+                      ),
+                      side: BorderSide(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: _selectionRingInset,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

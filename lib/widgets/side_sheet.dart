@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:fl_clash/common/color.dart';
 import 'package:fl_clash/common/shape.dart';
 import 'package:material_ui/material_ui.dart';
@@ -429,7 +427,6 @@ class ModalSideSheetRoute<T> extends PopupRoute<T> {
     this.transitionAnimationController,
     this.anchorPoint,
     this.useSafeArea = false,
-    super.filter,
   });
 
   final WidgetBuilder builder;
@@ -588,7 +585,6 @@ Future<T?> showModalSideSheet<T>({
   RouteSettings? routeSettings,
   AnimationController? transitionAnimationController,
   Offset? anchorPoint,
-  ImageFilter? filter,
 }) {
   assert(debugCheckHasMediaQuery(context));
   assert(debugCheckHasMaterialLocalizations(context));
@@ -601,7 +597,6 @@ Future<T?> showModalSideSheet<T>({
   return navigator.push(
     ModalSideSheetRoute<T>(
       builder: builder,
-      filter: filter,
       capturedThemes: InheritedTheme.capture(
         from: context,
         to: navigator.context,

@@ -1,3 +1,4 @@
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/l10n/l10n.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wifi_ssid/wifi_ssid.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 
 class _TestExcludeSSIDs extends ExcludeSSIDs {
@@ -77,7 +79,7 @@ void main() {
     expect(find.text('SSIDs are empty'), findsOneWidget);
     expect(find.text('Add'), findsOneWidget);
     expect(find.text('Select all'), findsNothing);
-    expect(find.byIcon(Icons.delete), findsNothing);
+    expect(find.byGlyph(AppGlyphs.delete), findsNothing);
   });
 
   testWidgets('every excluded SSID is rendered', (tester) async {
@@ -92,12 +94,12 @@ void main() {
     tester,
   ) async {
     await pumpView(tester, ssids: ['Home', 'Office']);
-    expect(find.byIcon(Icons.delete), findsNothing);
+    expect(find.byGlyph(AppGlyphs.delete), findsNothing);
 
     await tester.tap(find.byType(CommonCheckBox).first);
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.delete), findsOneWidget);
+    expect(find.byGlyph(AppGlyphs.delete), findsOneWidget);
     expect(find.text('Select all'), findsOneWidget);
     expect(find.text('Add'), findsNothing);
   });
@@ -125,7 +127,7 @@ void main() {
     await tester.tap(find.byType(CommonCheckBox).first);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.delete));
+    await tester.tap(find.byGlyph(AppGlyphs.delete));
     await tester.pumpAndSettle();
 
     expect(container.read(excludeSSIDsProvider), ['Office']);

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -27,10 +28,12 @@ class AboutView extends ConsumerWidget {
   const AboutView({super.key});
 
   Future<void> _checkUpdate(BuildContext context, WidgetRef ref) async {
+    if (ref.read(loadingProvider(LoadingTag.checkUpdate))) return;
     final commonAction = ref.read(commonActionProvider.notifier);
-    final data = await globalState.safeRun<Map<String, dynamic>?>(
+    final data = await globalState.loadingRun<Map<String, dynamic>?>(
       request.checkForUpdate,
       title: context.appLocalizations.checkUpdate,
+      tag: LoadingTag.checkUpdate,
     );
     unawaited(commonAction.checkUpdateResultHandle(data: data, isUser: true));
   }
@@ -52,14 +55,14 @@ class AboutView extends ConsumerWidget {
           onTap: () {
             dialogs.openUrl('https://t.me/FlClash');
           },
-          trailing: const Icon(Icons.launch),
+          trailing: const GlyphIcon(AppGlyphs.openExternal),
         ),
         ListItem(
           title: Text(appLocalizations.project),
           onTap: () {
             dialogs.openUrl('https://github.com/$repository');
           },
-          trailing: const Icon(Icons.launch),
+          trailing: const GlyphIcon(AppGlyphs.openExternal),
         ),
         ListItem(
           title: Text(appLocalizations.core),
@@ -68,7 +71,7 @@ class AboutView extends ConsumerWidget {
               'https://github.com/chen08209/Clash.Meta/tree/FlClash',
             );
           },
-          trailing: const Icon(Icons.launch),
+          trailing: const GlyphIcon(AppGlyphs.openExternal),
         ),
       ],
     );
@@ -169,11 +172,12 @@ class AboutView extends ConsumerWidget {
       ..._buildContributorsSection(appLocalizations),
       ..._buildMoreSection(context, ref),
     ];
-    return BaseScaffold(
+    return CommonScaffold(
+      isLoading: ref.watch(loadingProvider(LoadingTag.checkUpdate)),
       title: appLocalizations.about,
       body: Padding(
-        padding: kMaterialListPadding.copyWith(top: 16, bottom: 16),
-        child: generateListView(items),
+        padding: const EdgeInsets.only(bottom: 16),
+        child: generateListView(items, topPadding: context.appBarInset + 16),
       ),
     );
   }

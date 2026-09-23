@@ -504,9 +504,6 @@ class ListHeader extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: subTitle == null
-            ? CrossAxisAlignment.center
-            : CrossAxisAlignment.start,
         spacing: actions.isEmpty ? 0 : 12,
         children: [
           Expanded(

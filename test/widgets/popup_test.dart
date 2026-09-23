@@ -1,11 +1,17 @@
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/widgets/popup.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  final surfaces = find.byWidgetPredicate(
+    (widget) => widget is Material && widget.type == MaterialType.card,
+  );
 
   Future<PopupOpen> pumpBox(WidgetTester tester) async {
     late PopupOpen open;
@@ -125,6 +131,38 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('a point placement opens the popup from that point', (
+    tester,
+  ) async {
+    late BuildContext context;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (value) {
+            context = value;
+            return const SizedBox.expand();
+          },
+        ),
+      ),
+    );
+
+    Navigator.of(context).push(
+      CommonPopupRoute<void>(
+        barrierLabel: 'Dismiss',
+        placement: PopupPlacement.belowPoint,
+        anchorOf: () => const Offset(100, 120) & Size.zero,
+        builder: (_) =>
+            const SizedBox(width: 80, height: 80, key: Key('popup')),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getTopLeft(find.byKey(const Key('popup'))),
+      const Offset(100, 120),
+    );
+  });
+
   testWidgets('dismissing the barrier closes the popup', (tester) async {
     final open = await pumpBox(tester);
     open();
@@ -146,13 +184,13 @@ void main() {
     open();
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+    expect(find.byGlyph(AppGlyphs.chevronForward), findsOneWidget);
 
     await tester.tap(find.text('parent'));
     await tester.pumpAndSettle();
 
     expect(find.text('child'), findsOneWidget);
-    expect(find.byType(Card), findsNWidgets(2));
+    expect(surfaces, findsNWidgets(2));
     expect(find.text('parent'), findsNWidgets(2));
   });
 
@@ -182,7 +220,7 @@ void main() {
       final open = await pumpMenu(tester, [CommonPopupMenuItem(label: label)]);
       open();
       await tester.pumpAndSettle();
-      final width = tester.getSize(find.byType(Card)).width;
+      final width = tester.getSize(surfaces).width;
       await tester.tapAt(const Offset(10, 10));
       await tester.pumpAndSettle();
       return width;
@@ -213,7 +251,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(Divider), findsOneWidget);
-    expect(tester.getSize(find.byType(Divider)).height, greaterThan(0));
+    final header = find.ancestor(
+      of: find.text('parent').last,
+      matching: find.byType(InkWell),
+    );
+    final divider = find.byType(Divider);
+    expect(tester.getTopLeft(divider).dy, tester.getBottomLeft(header).dy);
+    expect(tester.getSize(divider).height, 17);
+    expect(
+      tester.getTopLeft(find.text('child')).dy -
+          tester.getBottomLeft(divider).dy,
+      greaterThanOrEqualTo(12),
+    );
   });
 
   testWidgets('the header folds the sub menu back into its item', (
@@ -325,7 +374,7 @@ void main() {
     final open = await pumpMenu(tester, [
       CommonPopupMenuItem(label: 'plain', onPressed: () {}),
       CommonPopupMenuItem(
-        icon: Icons.delete_outlined,
+        glyph: AppGlyphs.delete,
         label: 'delete',
         danger: true,
         onPressed: () {},
@@ -343,7 +392,7 @@ void main() {
       colorScheme.error,
     );
     expect(
-      tester.widget<Icon>(find.byIcon(Icons.delete_outlined)).color,
+      tester.widget<GlyphIcon>(find.byGlyph(AppGlyphs.delete)).color,
       colorScheme.error,
     );
     expect(
@@ -393,9 +442,9 @@ void main() {
     await tester.tap(find.text('parent'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(Card), findsNWidgets(2));
-    final parentWidth = tester.getSize(find.byType(Card).first).width;
-    final childWidth = tester.getSize(find.byType(Card).last).width;
+    expect(surfaces, findsNWidgets(2));
+    final parentWidth = tester.getSize(surfaces.first).width;
+    final childWidth = tester.getSize(surfaces.last).width;
     expect(childWidth, greaterThanOrEqualTo(parentWidth));
   });
 
@@ -412,13 +461,11 @@ void main() {
     await tester.pumpAndSettle();
 
     final elevations = tester
-        .widgetList<Card>(find.byType(Card))
-        .map((card) => card.elevation)
+        .widgetList<Material>(surfaces)
+        .map((surface) => surface.elevation)
         .toList();
     expect(elevations, hasLength(2));
-    expect(elevations[0], isNotNull);
-    expect(elevations[1], isNotNull);
-    expect(elevations[0]!, lessThan(elevations[1]!));
+    expect(elevations[0], lessThan(elevations[1]));
   });
 
   testWidgets('a sub menu settles wider than the parent it opened from', (
@@ -432,13 +479,13 @@ void main() {
     ]);
     open();
     await tester.pumpAndSettle();
-    final parentWidth = tester.getSize(find.byType(Card)).width;
+    final parentWidth = tester.getSize(surfaces).width;
 
     await tester.tap(find.text('parent'));
     await tester.pumpAndSettle();
 
     expect(
-      tester.getSize(find.byType(Card).last).width,
+      tester.getSize(surfaces.last).width,
       closeTo(parentWidth * 1.12, 0.01),
     );
   });
@@ -454,14 +501,14 @@ void main() {
     ]);
     open();
     await tester.pumpAndSettle();
-    final parentWidth = tester.getSize(find.byType(Card)).width;
+    final parentWidth = tester.getSize(surfaces).width;
 
     await tester.tap(find.text('parent'));
     await tester.pump();
 
-    final active = find.byType(Card).last;
+    final active = surfaces.last;
     expect(tester.getSize(active).width, parentWidth);
-    expect(tester.widget<Card>(active).elevation, 0);
+    expect(tester.widget<Material>(active).elevation, 0);
 
     await tester.pump(const Duration(milliseconds: 40));
     final midWidth = tester.getSize(active).width;
@@ -486,13 +533,13 @@ void main() {
     ]);
     open();
     await tester.pumpAndSettle();
-    final parentWidth = tester.getSize(find.byType(Card)).width;
+    final parentWidth = tester.getSize(surfaces).width;
 
     await tester.tap(find.text('parent'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 130));
+    await tester.pump(const Duration(milliseconds: 150));
 
-    final active = find.byType(Card).last;
+    final active = surfaces.last;
     final midSize = tester.getSize(active);
     expect(midSize.width, greaterThanOrEqualTo(parentWidth * 1.12));
 
@@ -520,14 +567,14 @@ void main() {
 
     await tester.tap(find.text('parent'));
     await tester.pump();
-    final foldedSize = tester.getSize(find.byType(Card).last);
+    final foldedSize = tester.getSize(surfaces.last);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('parent').last);
     Size? lastSize;
     var frames = 0;
-    while (find.byType(Card).evaluate().length > 1) {
-      lastSize = tester.getSize(find.byType(Card).last);
+    while (surfaces.evaluate().length > 1) {
+      lastSize = tester.getSize(surfaces.last);
       await tester.pump(const Duration(milliseconds: 16));
       frames++;
       expect(frames, lessThan(60));
@@ -536,5 +583,97 @@ void main() {
     expect(lastSize!.width, closeTo(foldedSize.width, 1));
     expect(lastSize.height, closeTo(foldedSize.height, 1));
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('every level draws its shadow on the frame it is asked for', (
+    tester,
+  ) async {
+    final open = await pumpMenu(tester, [
+      const CommonPopupMenuItem(
+        label: 'parent',
+        subItems: [CommonPopupMenuItem(label: 'child')],
+      ),
+    ]);
+    open();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('parent'));
+    await tester.pumpAndSettle();
+
+    final durations = tester
+        .widgetList<Material>(surfaces)
+        .map((surface) => surface.animationDuration)
+        .toSet();
+    expect(durations, {Duration.zero});
+  });
+
+  testWidgets('the parent hands its shadow over without a step', (
+    tester,
+  ) async {
+    final open = await pumpMenu(tester, [
+      const CommonPopupMenuItem(
+        label: 'parent',
+        subItems: [CommonPopupMenuItem(label: 'child')],
+      ),
+    ]);
+    open();
+    await tester.pumpAndSettle();
+    final restingElevation = tester.widget<Material>(surfaces).elevation;
+
+    await tester.tap(find.text('parent'));
+    await tester.pump();
+    expect(tester.widget<Material>(surfaces.first).elevation, restingElevation);
+    expect(tester.widget<Material>(surfaces.last).elevation, 0);
+
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<Material>(surfaces.first).elevation,
+      lessThan(restingElevation),
+    );
+    expect(tester.widget<Material>(surfaces.last).elevation, restingElevation);
+
+    await tester.tap(find.text('parent').last);
+    await tester.pumpAndSettle();
+    expect(tester.widget<Material>(surfaces).elevation, restingElevation);
+  });
+
+  testWidgets('a parent keeps its scroll offset while a sub menu is open', (
+    tester,
+  ) async {
+    final open = await pumpMenu(tester, [
+      for (var index = 0; index < 4; index++)
+        CommonPopupMenuItem(label: 'item $index'),
+      const CommonPopupMenuItem(
+        label: 'parent',
+        subItems: [CommonPopupMenuItem(label: 'child')],
+      ),
+      for (var index = 4; index < 30; index++)
+        CommonPopupMenuItem(label: 'item $index'),
+    ]);
+    open();
+    await tester.pumpAndSettle();
+
+    final scrollable = tester.state<ScrollableState>(find.byType(Scrollable));
+    scrollable.position.jumpTo(100);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('parent'));
+    await tester.pumpAndSettle();
+    expect(find.text('child'), findsOneWidget);
+    final parentScrollable = tester.state<ScrollableState>(
+      find.byType(Scrollable).first,
+    );
+    expect(identical(parentScrollable, scrollable), isTrue);
+    expect(parentScrollable.position.pixels, 100);
+
+    await tester.tap(find.text('parent').last);
+    await tester.pumpAndSettle();
+    expect(
+      identical(
+        tester.state<ScrollableState>(find.byType(Scrollable)),
+        scrollable,
+      ),
+      isTrue,
+    );
+    expect(scrollable.position.pixels, 100);
   });
 }

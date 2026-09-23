@@ -279,7 +279,8 @@ outlined icon with its filled variant:
 
 - `body` fills;
 - `detail` is cut out of the fill, and a `solid` detail such as a dot is cut as an area;
-- `line` stays a stroke, for parts that belong to no body, like a handle or a link between nodes.
+- `line` stays a stroke, for parts that belong to no body, like a handle or a link between nodes; it thickens from
+  `Glyph.strokeWidth` toward 2.2 as the glyph fills, so a glyph of lines alone still carries weight in a filled button.
 
 `GlyphPainter` paints any point between the two forms. Each body fills inward from its outline, reaching half its
 shorter side, which no point of the body lies beyond, as `fill` reaches 1. Details thin away over the first half and
@@ -296,7 +297,7 @@ reference for the metaphor. Tests find one with `find.byGlyph` from `test/helper
 
 Icons are outlined by default and filled inside a filled button: `IconButton.filled` and `.filledTonal`, `FilledButton`
 in its tonal and icon forms, and floating action buttons draw their glyph with `fill: 1`, because an outline on a tinted
-container reads weaker than the container it sits in. A glyph with no body looks the same either way and still takes
+container reads weaker than the container it sits in. A glyph with no body only thickens its lines and still takes
 `fill: 1`, so the rule holds if the glyph later gains one. `test/lint/filled_button_glyphs_test.dart` checks every
 `GlyphIcon` written inside such a button; an icon that reaches the button from elsewhere, as through a helper that picks
 the button variant, gets its fill by hand or from `IconThemeData.fill`. Everywhere else fill marks state only: the
