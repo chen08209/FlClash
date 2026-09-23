@@ -113,9 +113,9 @@ Future<FocusNode> pumpEditProfile(
   return outsideFocus;
 }
 
-bool _isFabFocused() {
+bool _isInAppBar() {
   final context = FocusManager.instance.primaryFocus?.context;
-  return context?.findAncestorWidgetOfExactType<FloatingActionButton>() != null;
+  return context?.findAncestorWidgetOfExactType<AppBar>() != null;
 }
 
 bool _isTextFieldFocused() {
@@ -137,16 +137,21 @@ void main() {
     } catch (_) {}
   });
 
-  testWidgets('tabbing into the edit page starts with the form', (
+  testWidgets('tabbing into the edit page reaches the form past its bar', (
     tester,
   ) async {
     final outsideFocus = await pumpEditProfile(tester);
     expect(FocusManager.instance.primaryFocus, outsideFocus);
 
-    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-    await tester.pump();
-
+    for (var i = 0; i < 4 && !_isTextFieldFocused(); i++) {
+      if (i > 0) {
+        expect(_isInAppBar(), isTrue);
+      }
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+    }
     expect(_isTextFieldFocused(), isTrue);
-    expect(_isFabFocused(), isFalse);
+    expect(find.byType(FloatingActionButton), findsNothing);
+    expect(find.byTooltip('Save'), findsOneWidget);
   });
 }
