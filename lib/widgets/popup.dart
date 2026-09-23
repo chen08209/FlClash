@@ -2,11 +2,14 @@ import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:material_ui/material_ui.dart';
 
 typedef PopupAnchorResolver = Rect? Function();
 
 typedef PopupOpen = void Function({Offset offset});
+
+enum PopupPlacement { overAnchorEnd, belowPoint }
 
 const _screenMargin = 16.0;
 
@@ -19,6 +22,7 @@ const _itemRadius = AppCorner.md;
 const _cardRadius = _itemRadius + _cardInset;
 
 const _itemIconSize = 20.0;
+const _submenuArrowSize = 16.0;
 
 const _itemPadding = EdgeInsets.symmetric(horizontal: 12, vertical: 12);
 
@@ -29,15 +33,19 @@ const _itemArrowPadding = EdgeInsets.only(
   right: 8,
 );
 
+const _dividerHeight = _cardInset * 2 + 1;
+
 class CommonPopupRoute<T> extends PopupRoute<T> {
   CommonPopupRoute({
     required this.builder,
     required this.anchorOf,
     required this.barrierLabel,
+    this.placement = PopupPlacement.overAnchorEnd,
   });
 
   final WidgetBuilder builder;
   final PopupAnchorResolver anchorOf;
+  final PopupPlacement placement;
 
   @override
   final String? barrierLabel;
@@ -76,7 +84,10 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    const alignment = Alignment.topRight;
+    final alignment = switch (placement) {
+      PopupPlacement.overAnchorEnd => Alignment.topRight,
+      PopupPlacement.belowPoint => Alignment.topLeft,
+    };
     final fade = animation.drive(CurveTween(curve: Curves.easeOut));
     final scale = animation.drive(CurveTween(curve: Curves.easeOutBack));
     return Stack(
@@ -94,6 +105,7 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
             delegate: _PopupLayoutDelegate(
               anchor: anchor,
               safeInsets: safeInsets,
+              placement: placement,
             ),
             child: child,
           ),
@@ -171,10 +183,15 @@ class _PopupAnchorTrackerState extends State<_PopupAnchorTracker> {
 }
 
 class _PopupLayoutDelegate extends SingleChildLayoutDelegate {
-  const _PopupLayoutDelegate({required this.anchor, required this.safeInsets});
+  const _PopupLayoutDelegate({
+    required this.anchor,
+    required this.safeInsets,
+    required this.placement,
+  });
 
   final Rect anchor;
   final EdgeInsets safeInsets;
+  final PopupPlacement placement;
 
   EdgeInsets get _insets => safeInsets + const EdgeInsets.all(_screenMargin);
 
@@ -197,21 +214,24 @@ class _PopupLayoutDelegate extends SingleChildLayoutDelegate {
     final insets = _insets;
     final maxX = size.width - insets.right - childSize.width;
     final maxY = size.height - insets.bottom - childSize.height;
+    final (x, y) = switch (placement) {
+      PopupPlacement.overAnchorEnd => (
+        anchor.right - childSize.width,
+        anchor.top - _anchorOverlap,
+      ),
+      PopupPlacement.belowPoint => (anchor.left, anchor.bottom),
+    };
     return Offset(
-      (anchor.right - childSize.width).clamp(
-        insets.left,
-        math.max(insets.left, maxX),
-      ),
-      (anchor.top - _anchorOverlap).clamp(
-        insets.top,
-        math.max(insets.top, maxY),
-      ),
+      x.clamp(insets.left, math.max(insets.left, maxX)),
+      y.clamp(insets.top, math.max(insets.top, maxY)),
     );
   }
 
   @override
   bool shouldRelayout(_PopupLayoutDelegate oldDelegate) {
-    return oldDelegate.anchor != anchor || oldDelegate.safeInsets != safeInsets;
+    return oldDelegate.anchor != anchor ||
+        oldDelegate.safeInsets != safeInsets ||
+        oldDelegate.placement != placement;
   }
 }
 
@@ -263,47 +283,17 @@ class _CommonPopupBoxState extends State<CommonPopupBox> {
   }
 }
 
-class _MenuStep {
-  const _MenuStep({
-    required this.index,
-    required this.top,
-    required this.ownerWidth,
-  });
-
-  final int index;
-  final double top;
-  final double ownerWidth;
-}
-
-class _MenuLevel {
-  const _MenuLevel({
-    required this.items,
-    required this.top,
-    required this.fromWidth,
-    required this.minWidth,
-    required this.maxWidth,
-    this.owner,
-  });
-
-  final List<CommonPopupMenuItem> items;
-  final CommonPopupMenuItem? owner;
-  final double top;
-  final double fromWidth;
-  final double minWidth;
-  final double maxWidth;
-}
-
 class CommonPopupMenuItem {
   const CommonPopupMenuItem({
     required this.label,
-    this.icon,
+    this.glyph,
     this.onPressed,
     this.danger = false,
     this.subItems = const [],
   });
 
   final String label;
-  final IconData? icon;
+  final Glyph? glyph;
   final VoidCallback? onPressed;
   final bool danger;
   final List<CommonPopupMenuItem> subItems;
@@ -325,6 +315,36 @@ class CommonPopupMenu extends StatefulWidget {
   State<CommonPopupMenu> createState() => _CommonPopupMenuState();
 }
 
+class _MenuStep {
+  const _MenuStep({
+    required this.index,
+    required this.itemTop,
+    required this.cardWidth,
+  });
+
+  final int index;
+  final double itemTop;
+  final double cardWidth;
+}
+
+class _MenuLevel {
+  const _MenuLevel({
+    required this.items,
+    required this.top,
+    required this.fromWidth,
+    required this.minWidth,
+    required this.maxWidth,
+    this.owner,
+  });
+
+  final List<CommonPopupMenuItem> items;
+  final CommonPopupMenuItem? owner;
+  final double top;
+  final double fromWidth;
+  final double minWidth;
+  final double maxWidth;
+}
+
 class _CommonPopupMenuState extends State<CommonPopupMenu>
     with SingleTickerProviderStateMixin {
   static const _levelWidthScale = 1.12;
@@ -337,42 +357,22 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
 
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 260),
+    duration: const Duration(milliseconds: 280),
     value: 1,
   );
 
-  late final CurvedAnimation _expand = CurvedAnimation(
-    parent: _controller,
-    curve: Curves.easeOutCubic,
-    reverseCurve: Curves.easeInOutCubic,
-  );
-
-  late final CurvedAnimation _container = CurvedAnimation(
-    parent: _controller,
-    curve: const Interval(0, 0.4, curve: Curves.easeOutCubic),
-    reverseCurve: const Interval(0, 0.4, curve: Curves.easeInOutCubic),
-  );
-
-  late final CurvedAnimation _content = CurvedAnimation(
-    parent: _controller,
-    curve: const Interval(0.4, 1, curve: Curves.easeOut),
-    reverseCurve: const Interval(0.4, 1, curve: Curves.easeInOut),
-  );
-
-  late final CurvedAnimation _recedeScale = CurvedAnimation(
-    parent: _controller,
-    curve: const Interval(0, 0.45, curve: Curves.easeOutCubic),
-    reverseCurve: const Interval(0.55, 1, curve: Curves.easeInCubic),
-  );
-
-  late final CurvedAnimation _recedeScrim = CurvedAnimation(
-    parent: _controller,
-    curve: const Interval(0.25, 1, curve: Curves.easeOut),
-    reverseCurve: const Interval(0, 0.75, curve: Curves.easeIn),
-  );
+  late final CurvedAnimation _frame = _segment(0, 0.5);
+  late final CurvedAnimation _reveal = _segment(0, 0.6);
+  late final CurvedAnimation _unfold = _segment(0, 1);
 
   final List<_MenuStep> _path = [];
-  bool _closing = false;
+  bool _folding = false;
+
+  CurvedAnimation _segment(double begin, double end) => CurvedAnimation(
+    parent: _controller,
+    curve: Interval(begin, end, curve: Curves.easeOutCubic),
+    reverseCurve: Interval(begin, end, curve: Curves.easeInCubic),
+  );
 
   @override
   void initState() {
@@ -382,20 +382,18 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
 
   @override
   void dispose() {
-    _expand.dispose();
-    _container.dispose();
-    _content.dispose();
-    _recedeScale.dispose();
-    _recedeScrim.dispose();
+    _frame.dispose();
+    _reveal.dispose();
+    _unfold.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   void _handleStatusChanged(AnimationStatus status) {
-    if (status != AnimationStatus.dismissed || !_closing || _path.isEmpty) {
+    if (status != AnimationStatus.dismissed || !_folding || _path.isEmpty) {
       return;
     }
-    _closing = false;
+    _folding = false;
     setState(() {
       _path.removeLast();
       _controller.value = 1;
@@ -413,46 +411,29 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
         maxWidth: widget.maxWidth,
       ),
     ];
-    var items = widget.items;
     for (final step in _path) {
-      if (step.index >= items.length) {
+      final parent = levels.last;
+      if (step.index >= parent.items.length) {
         break;
       }
-      final item = items[step.index];
+      final item = parent.items[step.index];
       if (item.subItems.isEmpty) {
         break;
       }
-      final fromWidth = math.max(step.ownerWidth, levels.last.minWidth);
+      final fromWidth = math.max(step.cardWidth, parent.minWidth);
       final minWidth = fromWidth * _levelWidthScale;
       levels.add(
         _MenuLevel(
           items: item.subItems,
           owner: item,
-          top: math.max(0, step.top - _cardInset),
+          top: math.max(0, step.itemTop - _cardInset),
           fromWidth: fromWidth,
           minWidth: minWidth,
           maxWidth: math.max(minWidth, widget.maxWidth),
         ),
       );
-      items = item.subItems;
     }
     return levels;
-  }
-
-  Animation<double> _progressOf(bool expanding) =>
-      expanding ? _expand : kAlwaysCompleteAnimation;
-
-  Animation<double> _containerProgressOf(bool expanding) =>
-      expanding ? _container : kAlwaysCompleteAnimation;
-
-  Animation<double> _contentProgressOf(bool expanding) =>
-      expanding ? _content : kAlwaysCompleteAnimation;
-
-  double _elevationOf(int depth) {
-    return math.max(
-      _minElevation,
-      _activeElevation - depth * _levelElevationStep,
-    );
   }
 
   void _push(BuildContext itemContext, int index) {
@@ -463,15 +444,15 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
         stackBox != null &&
         itemBox.hasSize &&
         stackBox.hasSize;
-    _closing = false;
+    _folding = false;
     setState(() {
       _path.add(
         _MenuStep(
           index: index,
-          top: placed
+          itemTop: placed
               ? itemBox.localToGlobal(Offset.zero, ancestor: stackBox).dy
               : 0,
-          ownerWidth: placed
+          cardWidth: placed
               ? itemBox.size.width + 2 * _cardInset
               : widget.minWidth,
         ),
@@ -481,10 +462,10 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
   }
 
   void _pop() {
-    if (_path.isEmpty || _closing) {
+    if (_path.isEmpty || _folding) {
       return;
     }
-    _closing = true;
+    _folding = true;
     _controller.reverse();
   }
 
@@ -505,9 +486,9 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
     final foregroundColor = enabled ? color : color.opacity30;
     Widget? arrow;
     if (item.subItems.isNotEmpty) {
-      arrow = Icon(
-        Icons.chevron_right,
-        size: _itemIconSize,
+      arrow = GlyphIcon(
+        AppGlyphs.chevronForward,
+        size: _submenuArrowSize,
         color: foregroundColor,
       );
       if (arrowTurns != null) {
@@ -525,8 +506,8 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
         padding: arrow != null ? _itemArrowPadding : _itemPadding,
         child: Row(
           children: [
-            if (item.icon != null) ...[
-              Icon(item.icon, size: _itemIconSize, color: foregroundColor),
+            if (item.glyph case final glyph?) ...[
+              GlyphIcon(glyph, size: _itemIconSize, color: foregroundColor),
               const SizedBox(width: 12),
             ],
             Expanded(
@@ -565,37 +546,10 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
     );
   }
 
-  Widget _buildCard(
-    BuildContext context, {
-    required double minWidth,
-    required double maxWidth,
-    required double elevation,
-    required double radius,
-    required Widget child,
-  }) {
-    return Card(
-      elevation: elevation,
-      margin: EdgeInsets.zero,
-      color: context.colorScheme.surfaceContainer,
-      clipBehavior: Clip.antiAlias,
-      shape: AppShape.all(radius),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(minWidth: minWidth, maxWidth: maxWidth),
-        child: Padding(
-          padding: const EdgeInsets.all(_cardInset),
-          child: SingleChildScrollView(
-            physics: const ClampingScrollPhysics(),
-            child: IntrinsicWidth(child: child),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildContent(
     BuildContext context,
     _MenuLevel level, {
-    required bool expanding,
+    required bool active,
   }) {
     final items = [
       for (var index = 0; index < level.items.length; index++)
@@ -609,7 +563,8 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
         children: items,
       );
     }
-    final progress = _progressOf(expanding);
+    final unfold = active ? _unfold : kAlwaysCompleteAnimation;
+    final reveal = active ? _reveal : kAlwaysCompleteAnimation;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -618,17 +573,20 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
           context,
           item: owner,
           onTap: _pop,
-          arrowTurns: progress.drive(_arrowTween),
+          arrowTurns: unfold.drive(_arrowTween),
         ),
         SizeTransition(
-          sizeFactor: progress,
+          sizeFactor: unfold,
           alignment: Alignment.topCenter,
           child: FadeTransition(
-            opacity: _contentProgressOf(expanding),
+            opacity: reveal,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [const Divider(height: 1, thickness: 1), ...items],
+              children: [
+                const Divider(height: _dividerHeight, thickness: 1),
+                ...items,
+              ],
             ),
           ),
         ),
@@ -636,68 +594,78 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
     );
   }
 
-  Widget _buildActiveLevel(BuildContext context, _MenuLevel level) {
-    final progress = _containerProgressOf(level.owner != null);
-    return AnimatedBuilder(
-      animation: progress,
-      builder: (context, child) {
-        final value = progress.value;
-        return _buildCard(
-          context,
-          minWidth: lerpDouble(level.fromWidth, level.minWidth, value)!,
-          maxWidth: lerpDouble(level.fromWidth, level.maxWidth, value)!,
-          elevation: _activeElevation * value,
-          radius: lerpDouble(_itemRadius + _cardInset, _cardRadius, value)!,
-          child: child!,
-        );
-      },
-      child: _buildContent(context, level, expanding: level.owner != null),
-    );
-  }
-
-  Widget _buildRecedingLevel(
+  Widget _buildLevel(
     BuildContext context,
     _MenuLevel level, {
     required int depth,
-    required double origin,
+    required double pivot,
   }) {
-    final scrim = context.colorScheme.scrim;
+    final receding = depth > 0;
+    final colorScheme = context.colorScheme;
+    final shape = AppShape.all(_cardRadius);
     return IgnorePointer(
+      ignoring: receding,
       child: ExcludeSemantics(
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            final scaleDistance = depth - (1 - _recedeScale.value);
-            final scrimDistance = depth - (1 - _recedeScrim.value);
-            final scale = math.max(0.0, 1 - _levelScaleStep * scaleDistance);
-            return Transform(
-              transform: Matrix4.diagonal3Values(scale, scale, 1),
-              alignment: Alignment.topRight,
-              origin: Offset(0, origin),
-              child: DecoratedBox(
-                position: DecorationPosition.foreground,
-                decoration: ShapeDecoration(
-                  color: scrim.withValues(
-                    alpha: math.min(1.0, _levelScrimStep * scrimDistance),
+        excluding: receding,
+        child: RepaintBoundary(
+          child: AnimatedBuilder(
+            animation: _frame,
+            builder: (context, child) {
+              final frame = receding ? 1.0 : _frame.value;
+              final distance = receding ? depth - 1 + _frame.value : 0.0;
+              final scale = math.max(0.0, 1 - _levelScaleStep * distance);
+              final elevation = receding
+                  ? math.max(
+                      _minElevation,
+                      _activeElevation - distance * _levelElevationStep,
+                    )
+                  : _activeElevation * frame;
+              return Transform(
+                transform: Matrix4.diagonal3Values(scale, scale, 1),
+                alignment: Alignment.topRight,
+                origin: Offset(0, pivot),
+                child: DecoratedBox(
+                  position: DecorationPosition.foreground,
+                  decoration: ShapeDecoration(
+                    color: colorScheme.scrim.withValues(
+                      alpha: math.min(1.0, _levelScrimStep * distance),
+                    ),
+                    shape: shape,
                   ),
-                  shape: const RoundedSuperellipseBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(_cardRadius),
+                  child: Material(
+                    type: MaterialType.card,
+                    animationDuration: Duration.zero,
+                    elevation: elevation,
+                    color: colorScheme.surfaceContainer,
+                    clipBehavior: Clip.antiAlias,
+                    shape: shape,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: lerpDouble(
+                          level.fromWidth,
+                          level.minWidth,
+                          frame,
+                        )!,
+                        maxWidth: lerpDouble(
+                          level.fromWidth,
+                          level.maxWidth,
+                          frame,
+                        )!,
+                      ),
+                      child: child,
                     ),
                   ),
                 ),
-                child: child,
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(_cardInset),
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: IntrinsicWidth(
+                  child: _buildContent(context, level, active: !receding),
+                ),
               ),
-            );
-          },
-          child: RepaintBoundary(
-            child: _buildCard(
-              context,
-              minWidth: level.minWidth,
-              maxWidth: level.maxWidth,
-              elevation: _elevationOf(depth),
-              radius: _cardRadius,
-              child: _buildContent(context, level, expanding: false),
             ),
           ),
         ),
@@ -723,17 +691,14 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
             Padding(
               key: ValueKey(index),
               padding: EdgeInsets.only(top: levels[index].top),
-              child: index == topIndex
-                  ? _buildActiveLevel(context, levels[index])
-                  : _buildRecedingLevel(
-                      context,
-                      levels[index],
-                      depth: topIndex - index,
-                      origin:
-                          levels[index + 1].top +
-                          _cardInset -
-                          levels[index].top,
-                    ),
+              child: _buildLevel(
+                context,
+                levels[index],
+                depth: topIndex - index,
+                pivot: index < topIndex
+                    ? _path[index].itemTop - levels[index].top
+                    : 0,
+              ),
             ),
         ],
       ),

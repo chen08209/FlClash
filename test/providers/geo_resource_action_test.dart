@@ -3,6 +3,7 @@ import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/status_manager.dart';
 import 'package:fl_clash/providers/action.dart';
@@ -13,6 +14,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../helpers/glyph_finders.dart';
 
 class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
@@ -93,8 +96,8 @@ void main() {
       find.text(currentAppLocalizations.geoSkipped(GeoResource.MMDB.name)),
       findsOneWidget,
     );
-    expect(find.byIcon(Icons.check_circle_outline), findsNothing);
-    expect(find.byIcon(Icons.error_outline), findsNothing);
+    expect(find.byGlyph(AppGlyphs.checkCircle), findsNothing);
+    expect(find.byGlyph(AppGlyphs.error), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -211,7 +214,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('download failed'), findsOneWidget);
-    expect(find.byIcon(Icons.error_outline), findsOneWidget);
+    expect(find.byGlyph(AppGlyphs.error), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

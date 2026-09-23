@@ -1,3 +1,4 @@
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/common/shape.dart';
 import 'package:material_ui/material_ui.dart';
@@ -68,7 +69,7 @@ class ColorSchemeBox extends StatelessWidget {
                   const Positioned(
                     bottom: 4,
                     right: 4,
-                    child: Icon(Icons.colorize, size: 20),
+                    child: GlyphIcon(AppGlyphs.eyedropper, size: 20),
                   ),
               ],
             );

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
@@ -96,6 +98,24 @@ void main() {
     await pumpConnections(tester);
 
     expect(find.byType(NullStatus), findsOneWidget);
+    expect(tester.takeException(), null);
+
+    await teardownView(tester);
+  });
+
+  testWidgets('shows no empty state before core answers', (tester) async {
+    final pending = Completer<List<TrackerInfo>>();
+    when(core.getConnections).thenAnswer((_) => pending.future);
+
+    await pumpConnections(tester);
+    expect(find.byType(NullStatus), findsNothing);
+
+    pending.complete([_tracker(id: 'a', host: 'alpha.test')]);
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(NullStatus), findsNothing);
+    expect(find.textContaining('alpha.test'), findsWidgets);
     expect(tester.takeException(), null);
 
     await teardownView(tester);

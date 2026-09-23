@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -92,13 +92,8 @@ class _CoreStatusButtonState extends ConsumerState<CoreStatusButton> {
         alignment: Alignment.centerRight,
         child: coreStatus == CoreStatus.connected
             ? IconButton.filled(
-                visualDensity: VisualDensity.compact,
-                iconSize: 20,
-                padding: EdgeInsets.zero,
                 style: IconButton.styleFrom(
-                  backgroundColor: Colors.green.harmonizeWith(
-                    context.colorScheme.primary,
-                  ),
+                  backgroundColor: context.colorScheme.success,
                   foregroundColor: switch (Theme.brightnessOf(context)) {
                     Brightness.light => context.colorScheme.onSurfaceVariant,
                     Brightness.dark =>
@@ -106,17 +101,15 @@ class _CoreStatusButtonState extends ConsumerState<CoreStatusButton> {
                   },
                 ),
                 onPressed: _handleConnection,
-                icon: const Icon(Icons.check, fontWeight: FontWeight.w900),
+                icon: const GlyphIcon(AppGlyphs.check, fill: 1),
               )
             : FilledButton.icon(
                 key: ValueKey(coreStatus),
                 onPressed: _handleConnection,
                 style: FilledButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   backgroundColor: switch (coreStatus) {
                     CoreStatus.connecting => null,
-                    CoreStatus.connected => Colors.greenAccent,
+                    CoreStatus.connected => context.colorScheme.success,
                     CoreStatus.disconnected => context.colorScheme.error,
                   },
                   foregroundColor: switch (coreStatus) {
@@ -140,13 +133,13 @@ class _CoreStatusButtonState extends ConsumerState<CoreStatusButton> {
                         color: context.colorScheme.onPrimary,
                       ),
                     ),
-                    CoreStatus.connected => const Icon(
-                      Icons.check_sharp,
-                      fontWeight: FontWeight.w900,
+                    CoreStatus.connected => const GlyphIcon(
+                      AppGlyphs.check,
+                      fill: 1,
                     ),
-                    CoreStatus.disconnected => const Icon(
-                      Icons.restart_alt_sharp,
-                      fontWeight: FontWeight.w900,
+                    CoreStatus.disconnected => const GlyphIcon(
+                      AppGlyphs.refresh,
+                      fill: 1,
                     ),
                   },
                 ),

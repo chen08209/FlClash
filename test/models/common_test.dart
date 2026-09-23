@@ -1,9 +1,8 @@
 import 'dart:io';
 
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -62,54 +61,6 @@ void main() {
       verifyNever(() => file.length());
       verifyNever(() => file.lastModified());
     });
-
-    testWidgets('shows unknown while preserving file size', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
-          home: Builder(
-            builder: (context) {
-              return Text(const FileInfo(size: 1024).getDesc(context));
-            },
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('1KB  ·  Unknown'), findsOneWidget);
-    });
-
-    testWidgets('shows relative time for valid last modified time', (
-      tester,
-    ) async {
-      final lastModified = DateTime.now().subtract(const Duration(days: 2));
-      await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
-          home: Builder(
-            builder: (context) {
-              return Text(
-                FileInfo(
-                  size: 1024,
-                  lastModified: lastModified,
-                ).getDesc(context),
-              );
-            },
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('1KB  ·  2 days ago'), findsOneWidget);
-    });
   });
 
   group('PackagesExt', () {
@@ -165,7 +116,7 @@ void main() {
   });
 
   group('TrackerInfoExt', () {
-    test('builds destination description and process text', () {
+    test('builds destination title and process text', () {
       final trackerInfo = TrackerInfo(
         id: '1',
         start: DateTime(2026),
@@ -182,17 +133,16 @@ void main() {
         rulePayload: '',
       );
 
-      expect(trackerInfo.desc, 'tcp://example.com/1.1.1.1:443');
+      expect(trackerInfo.title, 'example.com');
       expect(trackerInfo.progressText, 'Browser(501)');
     });
   });
 
   group('TrafficExt', () {
-    test('formats speed, description, tray title, and total speed', () {
+    test('formats speed, tray title, and total speed', () {
       const traffic = Traffic(up: 1024, down: 2048);
 
       expect(traffic.speedText, '↑ 1KB/s   ↓ 2KB/s');
-      expect(traffic.desc, '1KB ↑ 2KB ↓');
       expect(traffic.trayTitle, '1 KB/s\n2 KB/s');
       expect(traffic.speed, 3072);
     });
@@ -217,6 +167,39 @@ void main() {
     });
   });
 
+  group('ScriptsExt naming', () {
+    Script script(int id, String label) =>
+        Script(id: id, label: label, lastUpdateTime: DateTime(2026));
+
+    test('hasLabel ignores the script being renamed', () {
+      final scripts = [script(1, 'a'), script(2, 'b')];
+      expect(scripts.hasLabel('a'), isTrue);
+      expect(scripts.hasLabel('a', except: scripts[0]), isFalse);
+      expect(scripts.hasLabel('a', except: scripts[1]), isTrue);
+      expect(scripts.hasLabel('c'), isFalse);
+    });
+
+    test('uniqueLabel trims, falls back and numbers duplicates', () {
+      final scripts = [script(1, 'remote'), script(2, 'remote 2')];
+      expect(scripts.uniqueLabel(' local ', fallback: 'Script'), 'local');
+      expect(scripts.uniqueLabel('remote', fallback: 'Script'), 'remote 3');
+      expect(scripts.uniqueLabel('   ', fallback: 'Script'), 'Script');
+      expect(
+        [script(3, 'Script')].uniqueLabel('', fallback: 'Script'),
+        'Script 2',
+      );
+    });
+
+    test('uniqueLabel keeps the numbered label within the name limit', () {
+      final long = 'x' * 100;
+      final scripts = [script(1, 'x' * TextInputLimits.name)];
+      final label = scripts.uniqueLabel(long, fallback: 'Script');
+      expect(label.length, lessThanOrEqualTo(TextInputLimits.name));
+      expect(label, endsWith(' 2'));
+      expect(scripts.hasLabel(label), isFalse);
+    });
+  });
+
   group('IpInfo parsers', () {
     test('parse supported response shapes', () {
       expect(
@@ -224,12 +207,42 @@ void main() {
         const IpInfo(ip: '1.1.1.1', countryCode: 'US'),
       );
       expect(
-        IpInfo.fromMyIpJson({'ip': '2.2.2.2', 'cc': 'JP'}),
+        IpInfo.fromIdentMeJson({'ip': '2.2.2.2', 'cc': 'JP'}),
         const IpInfo(ip: '2.2.2.2', countryCode: 'JP'),
       );
       expect(
         IpInfo.fromIpAPIJson({'query': '3.3.3.3', 'countryCode': 'CN'}),
         const IpInfo(ip: '3.3.3.3', countryCode: 'CN'),
+      );
+      expect(
+        IpInfo.fromGeoJsJson({'ip': '4.4.4.4', 'country_code': 'DE'}),
+        const IpInfo(ip: '4.4.4.4', countryCode: 'DE'),
+      );
+      expect(
+        IpInfo.fromCountryIsJson({'ip': '5.5.5.5', 'country': 'FR'}),
+        const IpInfo(ip: '5.5.5.5', countryCode: 'FR'),
+      );
+    });
+
+    test('parse the ipquery.io country from its location object', () {
+      expect(
+        IpInfo.fromIpQueryJson({
+          'ip': '203.0.113.9',
+          'isp': {'asn': 'AS64500', 'org': '', 'isp': 'Example'},
+          'location': {'country': 'United Kingdom', 'country_code': 'GB'},
+          'risk': {'is_datacenter': false},
+        }),
+        const IpInfo(ip: '203.0.113.9', countryCode: 'GB'),
+      );
+    });
+
+    test('parse the Cloudflare trace key-value text', () {
+      expect(
+        IpInfo.fromCloudflareTrace(
+          'fl=0f0\nh=www.cloudflare.com\nip=203.0.113.9\nts=1757800000.1\n'
+          'visit_scheme=https\ncolo=LHR\nhttp=http/2\nloc=GB\ntls=TLSv1.3\n',
+        ),
+        const IpInfo(ip: '203.0.113.9', countryCode: 'GB'),
       );
     });
 
@@ -239,7 +252,18 @@ void main() {
         throwsFormatException,
       );
       expect(
-        () => IpInfo.fromIpApiCoJson({'ip': '1.1.1.1'}),
+        () => IpInfo.fromGeoJsJson({'ip': '1.1.1.1'}),
+        throwsFormatException,
+      );
+      expect(
+        () => IpInfo.fromIpQueryJson({
+          'ip': '1.1.1.1',
+          'location': <String, dynamic>{},
+        }),
+        throwsFormatException,
+      );
+      expect(
+        () => IpInfo.fromCloudflareTrace('ip=1.1.1.1\ncolo=LHR\n'),
         throwsFormatException,
       );
     });

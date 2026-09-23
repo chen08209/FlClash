@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/app_ports.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/app_glyphs.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/views/views.dart';
 import 'package:material_ui/material_ui.dart';
@@ -15,13 +16,13 @@ class Navigation implements NavigationPort {
     return [
       NavigationItem(
         keep: false,
-        icon: const Icon(Icons.space_dashboard),
+        glyph: AppGlyphs.dashboard,
         label: PageLabel.dashboard,
         builder: (_) =>
             const DashboardView(key: GlobalObjectKey(PageLabel.dashboard)),
       ),
       NavigationItem(
-        icon: const Icon(Icons.article),
+        glyph: AppGlyphs.proxies,
         label: PageLabel.proxies,
         builder: (_) =>
             const ProxiesView(key: GlobalObjectKey(PageLabel.proxies)),
@@ -30,34 +31,41 @@ class Navigation implements NavigationPort {
             : [],
       ),
       NavigationItem(
-        icon: const Icon(Icons.folder),
+        glyph: AppGlyphs.profiles,
         label: PageLabel.profiles,
         builder: (_) =>
             const ProfilesView(key: GlobalObjectKey(PageLabel.profiles)),
       ),
       NavigationItem(
-        icon: const Icon(Icons.view_timeline),
+        glyph: AppGlyphs.requests,
         label: PageLabel.requests,
         builder: (_) =>
             const RequestsView(key: GlobalObjectKey(PageLabel.requests)),
-        modes: [NavigationItemMode.desktop, NavigationItemMode.more],
+        modes: [NavigationItemMode.more],
       ),
       NavigationItem(
-        icon: const Icon(Icons.ballot),
+        glyph: AppGlyphs.connections,
         label: PageLabel.connections,
         builder: (_) =>
             const ConnectionsView(key: GlobalObjectKey(PageLabel.connections)),
         modes: [NavigationItemMode.desktop, NavigationItemMode.more],
       ),
       NavigationItem(
-        icon: const Icon(Icons.storage),
+        glyph: AppGlyphs.dns,
+        label: PageLabel.dns,
+        builder: (_) =>
+            const DnsQueriesView(key: GlobalObjectKey(PageLabel.dns)),
+        modes: [NavigationItemMode.more],
+      ),
+      NavigationItem(
+        glyph: AppGlyphs.resources,
         label: PageLabel.resources,
         builder: (_) =>
             const ResourcesView(key: GlobalObjectKey(PageLabel.resources)),
         modes: [NavigationItemMode.more],
       ),
       NavigationItem(
-        icon: const Icon(Icons.adb),
+        glyph: AppGlyphs.logs,
         label: PageLabel.logs,
         builder: (_) => const LogsView(key: GlobalObjectKey(PageLabel.logs)),
         modes: openLogs
@@ -65,7 +73,7 @@ class Navigation implements NavigationPort {
             : [],
       ),
       NavigationItem(
-        icon: const Icon(Icons.construction),
+        glyph: AppGlyphs.tools,
         label: PageLabel.tools,
         builder: (_) => const ToolsView(key: GlobalObjectKey(PageLabel.tools)),
         modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
