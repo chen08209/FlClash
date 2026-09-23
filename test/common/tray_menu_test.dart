@@ -191,9 +191,8 @@ void main() {
     final reps = ((arguments['icon'] as Map)['reps'] as List).cast<Map>();
     expect(reps.map((rep) => rep['scale']), containsAll([1.0, 2.0, 3.0, 4.0]));
     expect(reps.map((rep) => rep['bytes']), everyElement(isNotEmpty));
-    // [macOS 定制] 不再以模板方式渲染，否则 status_1/2/3 的同形状不同颜色
-    // 在菜单栏上看起来完全一致。
-    expect((arguments['icon'] as Map)['isTemplate'], isFalse);
+    // [macOS 定制] 仍是模板渲染（单色）；状态差异靠 status_1 的不同形状体现。
+    expect((arguments['icon'] as Map)['isTemplate'], isTrue);
   });
 
   test('skips the platform call when the tray state is unchanged', () async {
