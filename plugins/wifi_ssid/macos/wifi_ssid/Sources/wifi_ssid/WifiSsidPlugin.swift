@@ -5,8 +5,14 @@ import FlutterMacOS
 
 public class WifiSsidPlugin: NSObject, FlutterPlugin, CLLocationManagerDelegate {
 
-    private let locationManager = CLLocationManager()
-    private let wifiClient = CWWiFiClient.shared()
+    // Both talk to system daemons (locationd, wifid) on creation, so they are
+    // not built until Dart asks for the SSID or the permission.
+    private lazy var locationManager: CLLocationManager = {
+        let manager = CLLocationManager()
+        manager.delegate = self
+        return manager
+    }()
+    private lazy var wifiClient = CWWiFiClient.shared()
     private let ssidQueue = DispatchQueue(label: "com.follow.clash.wifi_ssid")
     private var pendingPermissionResult: FlutterResult?
 
@@ -26,11 +32,6 @@ public class WifiSsidPlugin: NSObject, FlutterPlugin, CLLocationManagerDelegate 
         )
         let instance = WifiSsidPlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
-    }
-
-    override init() {
-        super.init()
-        locationManager.delegate = self
     }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {

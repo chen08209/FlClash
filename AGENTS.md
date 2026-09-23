@@ -25,6 +25,9 @@ Read these only when the task touches their area:
 - When the user explicitly requests a scoped, low-risk change, inspect the relevant context and implement it directly.
   Do not require brainstorming, design documents, implementation plans, multiple-option proposals, or repeated confirmation.
   Ask only when material ambiguity, destructive impact, additional authority, or scope expansion could change the result.
+- The request sets the scope. A pre-existing bug, cleanup, or refactor the task did not ask for is a follow-up in the
+  summary, not part of the change. Edit a file surgically when a rewrite would give the same result, keep scratch checks
+  out of the repository, and commit tests only where the task asks for them or the neighbouring code already keeps them.
 - Comments are allowed and sometimes necessary; excess is the problem. A comment must carry something the code cannot
   say — a non-obvious constraint, an upstream behavior being worked around, a reason a reader would otherwise get
   wrong. Never restate what the code does, narrate the change you just made, record what the code used to be, or
@@ -34,6 +37,9 @@ Read these only when the task touches their area:
   touch. Preserve
   `// ignore:`-style directives, license headers, codegen markers, and vendored upstream comments. See
   [.agents/rules.md](.agents/rules.md) for what belongs in a test or in `.agents/` instead.
+- Start FlClash on the host only as a safe mode build, and end only processes you started, by recorded pid. Never
+  kill a FlClash instance by name; the user's own instance is not yours to close. See
+  [.agents/rules.md](.agents/rules.md).
 - Use `flutter test`, not `dart test`, because models pull in Flutter types.
 - Run code generation after modifying models, providers, or database schema.
 - Do not manually edit generated files.
@@ -47,10 +53,12 @@ Read these only when the task touches their area:
   The `commit-msg` hook rejects it; see [.agents/rules.md](.agents/rules.md) for the rest of the commit rules.
 - Follow `lint_options.yaml` (included by every `analysis_options.yaml`), especially single quotes, trailing commas, `child:` last, no `print()`, const/final
   preferences, and declared return types.
-- For CI parity, verify with `flutter pub get`, `flutter analyze --no-fatal-infos`, and
-  `flutter test --reporter expanded` when practical.
+- Before reporting a change done, run `flutter pub get`, `flutter analyze --no-fatal-infos`, and the `flutter test`
+  suites that cover it, as CI does. If a toolchain the build hook needs is missing (Go, and on Linux and Windows
+  cargo), say which check was skipped rather than dropping it silently.
 
 ## Repo Skills
 
-Use repo skills from `.agents/skills/` when a task matches their descriptions. Current skills cover localization,
-provider tests, UI work, and core/platform changes.
+Use repo skills from `.agents/skills/` when a task matches their descriptions; `.claude/skills/` symlinks expose the
+same skills to Claude Code. Current skills cover localization, UI work, core/platform changes, and pre-commit
+structural quality review.

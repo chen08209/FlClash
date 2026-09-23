@@ -229,6 +229,28 @@ void main() {
     expect(currentSsid(), isNull);
   });
 
+  testWidgets('a safe mode build never reads the SSID', (tester) async {
+    container.dispose();
+    container = ProviderContainer(
+      overrides: [safeModeProvider.overrideWithValue(true)],
+    );
+    globalState.container = container;
+    var reads = 0;
+    await pumpManager(
+      tester,
+      readSsid: () async {
+        reads++;
+        return 'Home';
+      },
+    );
+
+    connectivity.add([ConnectivityResult.wifi]);
+    await tester.pumpAndSettle();
+
+    expect(reads, 0);
+    expect(currentSsid(), isNull);
+  });
+
   testWidgets('forwards every result to the callback', (tester) async {
     final seen = <List<ConnectivityResult>>[];
     await pumpManager(

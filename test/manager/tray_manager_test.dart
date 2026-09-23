@@ -13,7 +13,7 @@ import 'package:tray/tray.dart';
 import '../helpers/test_profiles.dart';
 
 const _trayChannel = MethodChannel('tray');
-const _windowChannel = MethodChannel('window_manager');
+const _windowChannel = MethodChannel('window');
 const _codec = StandardMethodCodec();
 
 class _RecordingSystemAction extends SystemAction {

@@ -7,7 +7,7 @@ Use the smallest durable surface that matches the job.
 - `AGENTS.md`: repository entry point. Keep it small and reserve it for always-on rules, routing, and high-priority expectations.
 - `CLAUDE.md`: the `@AGENTS.md` import and nothing that is not Claude-only. Claude Code loads `CLAUDE.md` into the system prompt at startup; the import makes `AGENTS.md` arrive with it. Without it, `AGENTS.md` reaches the session only as a tool result some agent chose to fetch, which is the weakest position in context and the first thing dropped when the conversation is summarized. Do not let rules accumulate in this file.
 - `.agents/*.md`: human- and agent-readable reference docs linked from `AGENTS.md`. Use these for detailed project context, commands, architecture, and conventions.
-- `.agents/skills/*/SKILL.md`: repo-scoped Codex skills. Use these for repeatable workflows that should be discoverable by name and description.
+- `.agents/skills/*/SKILL.md`: repo skills shared by Codex and Claude Code. Use these for repeatable workflows that should be discoverable by name and description; `.claude/skills/` holds one symlink per skill so Claude Code finds the same files.
 - `.codex/config.toml`: trusted project Codex settings such as MCP, hooks, sandbox, approval, or model defaults.
 - `.codex/rules/*.rules`: command permission rules for running commands outside the sandbox. Do not mix these with coding conventions in `.agents/rules.md`.
 - `.codex/hooks.json` or `.codex/config.toml` hooks: lifecycle automation such as prompt checks, command validation, or final verification gates.
