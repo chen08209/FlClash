@@ -105,11 +105,29 @@ void main() {
       expect(restored.closeConnections, true);
       expect(restored.isAnimateToPage, true);
       expect(restored.autoCheckUpdate, true);
-      expect(restored.showLabel, false);
+      expect(restored.sidebarExpanded, true);
       expect(restored.minimizeOnExit, true);
       expect(restored.restoreStrategy, RestoreStrategy.compatible);
-      expect(restored.customUserAgent, '');
+      expect(restored.userAgents, defaultUserAgents);
       expect(restored.testUrl, defaultTestUrl);
+    });
+
+    test('a saved outboundModeV2 card folds into outboundMode', () {
+      final restored = AppSettingProps.fromJson({
+        'dashboardWidgets': ['networkSpeed', 'outboundModeV2', 'outboundMode'],
+      });
+      expect(restored.dashboardWidgets, [
+        DashboardWidget.networkSpeed,
+        DashboardWidget.outboundMode,
+      ]);
+
+      final alone = AppSettingProps.fromJson({
+        'dashboardWidgets': ['outboundModeV2', 'trafficUsage'],
+      });
+      expect(alone.dashboardWidgets, [
+        DashboardWidget.outboundMode,
+        DashboardWidget.trafficUsage,
+      ]);
     });
 
     test('custom values survive round-trip', () {
@@ -119,7 +137,7 @@ void main() {
         autoLaunch: true,
         closeConnections: false,
         testUrl: 'https://custom.test',
-        customUserAgent: 'CustomUA/1.0',
+        userAgents: ['CustomUA/1.0'],
       );
       final restored = roundTrip(
         () => props.toJson(),
@@ -130,7 +148,27 @@ void main() {
       expect(restored.autoLaunch, true);
       expect(restored.closeConnections, false);
       expect(restored.testUrl, 'https://custom.test');
-      expect(restored.customUserAgent, 'CustomUA/1.0');
+      expect(restored.userAgents, ['CustomUA/1.0']);
+    });
+
+    test('a legacy custom user agent joins the presets', () {
+      expect(
+        AppSettingProps.fromJson({
+          'customUserAgent': ' CustomUA/1.0 ',
+        }).userAgents,
+        [...defaultUserAgents, 'CustomUA/1.0'],
+      );
+      expect(
+        AppSettingProps.fromJson({'customUserAgent': ''}).userAgents,
+        defaultUserAgents,
+      );
+      expect(
+        AppSettingProps.fromJson({
+          'customUserAgent': 'CustomUA/1.0',
+          'userAgents': <String>[],
+        }).userAgents,
+        isEmpty,
+      );
     });
 
     test('safeFromJson returns default on null', () {
@@ -307,6 +345,47 @@ void main() {
       expect(restored.type, ProxiesType.list);
       expect(restored.sortType, ProxiesSortType.delay);
     });
+
+    test('reads the icon styles saved under their former names', () {
+      expect(
+        ProxiesStyleProps.fromJson({'iconStyle': 'standard'}).iconStyle,
+        ProxiesIconStyle.filled,
+      );
+      expect(
+        ProxiesStyleProps.fromJson({'iconStyle': 'icon'}).iconStyle,
+        ProxiesIconStyle.plain,
+      );
+      expect(
+        ProxiesStyleProps.fromJson({'iconStyle': 'none'}).iconStyle,
+        ProxiesIconStyle.hidden,
+      );
+    });
+
+    test('falls back to the default icon style', () {
+      expect(ProxiesStyleProps.fromJson({}).iconStyle, ProxiesIconStyle.filled);
+      expect(
+        ProxiesStyleProps.fromJson({'iconStyle': 'nonsense'}).iconStyle,
+        ProxiesIconStyle.filled,
+      );
+    });
+
+    test('round-trips every icon style under its own name', () {
+      for (final style in ProxiesIconStyle.values) {
+        final restored = roundTrip(
+          () => ProxiesStyleProps(iconStyle: style).toJson(),
+          ProxiesStyleProps.fromJson,
+        );
+        expect(restored.iconStyle, style);
+      }
+    });
+
+    test('round-trip keeps the timed-out node filter', () {
+      final restored = roundTrip(
+        () => const ProxiesStyleProps(hideTimeoutProxies: true).toJson(),
+        ProxiesStyleProps.fromJson,
+      );
+      expect(restored.hideTimeoutProxies, true);
+    });
   });
 
   group('ThemeProps JSON round-trip', () {
@@ -417,6 +496,30 @@ void main() {
       expect(result.appSettingProps.onlyStatisticsProxy, false);
     });
 
+    test('a fresh config ships valid, distinct default hotkeys', () {
+      final defaults = Config.realFromJson(null).hotKeyActions;
+
+      expect(defaults.map((action) => action.action), [
+        HotAction.view,
+        HotAction.start,
+        HotAction.mode,
+        HotAction.proxy,
+        HotAction.delayTest,
+        HotAction.exit,
+      ]);
+      for (final action in defaults) {
+        expect(
+          isValidHotKey(action.modifiers, action.key),
+          isTrue,
+          reason: action.action.name,
+        );
+      }
+      expect(
+        defaults.map((action) => action.key).toSet(),
+        hasLength(defaults.length),
+      );
+    });
+
     test('full config round-trip', () {
       const config = Config(
         currentProfileId: 42,
@@ -440,6 +543,52 @@ void main() {
       expect(restored.vpnProps.enable, false);
       expect(restored.windowProps.width, 1280);
       expect(restored.windowProps.height, 720);
+    });
+  });
+
+  group('ProxyGroup definition', () {
+    const group = ProxyGroup(
+      profileId: 7,
+      id: 99,
+      name: 'Auto',
+      type: GroupType.URLTest,
+      proxies: ['A'],
+      use: [],
+      url: 'https://cp.cloudflare.com/generate_204',
+      interval: 300,
+      timeout: 5000,
+      lazy: false,
+      filter: '',
+      tolerance: 50,
+      strategy: LoadBalanceStrategy.roundRobin,
+      order: 'a0',
+    );
+
+    test('emits only what the core reads', () {
+      final definition = group.definition;
+
+      expect(definition['name'], 'Auto');
+      expect(definition['type'], 'url-test');
+      expect(definition['proxies'], ['A']);
+      expect(definition['interval'], 300);
+      expect(definition['timeout'], 5000);
+      expect(definition['lazy'], false);
+      expect(definition.containsKey('profileId'), isFalse);
+      expect(definition.containsKey('id'), isFalse);
+      expect(definition.containsKey('order'), isFalse);
+      expect(definition.containsKey('use'), isFalse);
+      expect(definition.containsKey('filter'), isFalse);
+      expect(definition.containsKey('max-failed-times'), isFalse);
+    });
+
+    test('scopes tolerance and strategy to the types that read them', () {
+      expect(group.definition['tolerance'], 50);
+      expect(group.definition.containsKey('strategy'), isFalse);
+
+      final balanced = group.copyWith(type: GroupType.LoadBalance).definition;
+
+      expect(balanced['strategy'], 'round-robin');
+      expect(balanced.containsKey('tolerance'), isFalse);
     });
   });
 }

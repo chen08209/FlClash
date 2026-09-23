@@ -54,31 +54,51 @@ abstract final class TrayCodec {
       sink[id] = item;
       return switch (item) {
         TrayMenuSeparator() => <String, Object?>{'id': id, 'type': 'separator'},
-        TrayMenuAction(:final label, :final enabled) => <String, Object?>{
-          'id': id,
-          'type': 'action',
-          'label': label,
-          'enabled': enabled,
-        },
-        TrayMenuCheckbox(:final label, :final enabled, :final checked) =>
+        TrayMenuAction(:final label, :final detail, :final enabled) =>
+          <String, Object?>{
+            'id': id,
+            'type': 'action',
+            'label': label,
+            ..._encodeDetail(detail),
+            'enabled': enabled,
+          },
+        TrayMenuCheckbox(
+          :final label,
+          :final detail,
+          :final enabled,
+          :final checked,
+        ) =>
           <String, Object?>{
             'id': id,
             'type': 'checkbox',
             'label': label,
+            ..._encodeDetail(detail),
             'enabled': enabled,
             'checked': checked,
           },
-        TrayMenuSubmenu(:final label, :final enabled, :final items) =>
+        TrayMenuSubmenu(
+          :final label,
+          :final detail,
+          :final enabled,
+          :final items,
+        ) =>
           <String, Object?>{
             'id': id,
             'type': 'submenu',
             'label': label,
+            ..._encodeDetail(detail),
             'enabled': enabled,
             'items': _encodeItems(items, sink, allocator),
           },
       };
     }).toList();
   }
+}
+
+Map<String, Object?> _encodeDetail(String? detail) {
+  return detail == null || detail.isEmpty
+      ? const {}
+      : <String, Object?>{'detail': detail};
 }
 
 final class _IdAllocator {

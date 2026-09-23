@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -28,6 +29,8 @@ const defaultBypassDomain = [
   '192.168.*',
 ];
 
+const defaultUserAgents = ['clash-verge/v2.4.2', 'ClashforWindows/0.19.23'];
+
 const defaultAppSettingProps = AppSettingProps();
 const defaultVpnProps = VpnProps();
 const defaultAuthenticationProps = AuthenticationProps();
@@ -36,6 +39,23 @@ const defaultProxiesStyleProps = ProxiesStyleProps();
 const defaultWindowProps = WindowProps();
 const defaultAccessControlProps = AccessControlProps();
 const defaultThemeProps = ThemeProps(primaryColor: defaultPrimaryColor);
+
+HotKeyAction _defaultHotKeyAction(HotAction action, PhysicalKeyboardKey key) {
+  return HotKeyAction(
+    action: action,
+    key: key.usbHidUsage,
+    modifiers: const {KeyboardModifier.control, KeyboardModifier.alt},
+  );
+}
+
+final List<HotKeyAction> defaultHotKeyActions = [
+  _defaultHotKeyAction(HotAction.view, PhysicalKeyboardKey.keyV),
+  _defaultHotKeyAction(HotAction.start, PhysicalKeyboardKey.keyS),
+  _defaultHotKeyAction(HotAction.mode, PhysicalKeyboardKey.keyM),
+  _defaultHotKeyAction(HotAction.proxy, PhysicalKeyboardKey.keyP),
+  _defaultHotKeyAction(HotAction.delayTest, PhysicalKeyboardKey.keyD),
+  _defaultHotKeyAction(HotAction.exit, PhysicalKeyboardKey.keyQ),
+];
 
 const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.networkSpeed,
@@ -47,6 +67,8 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.intranetIp,
 ];
 
+const _legacyOutboundModeV2 = 'outboundModeV2';
+
 List<DashboardWidget> dashboardWidgetsSafeFormJson(
   List<dynamic>? dashboardWidgets,
 ) {
@@ -54,11 +76,31 @@ List<DashboardWidget> dashboardWidgetsSafeFormJson(
     'dashboard widgets',
     () =>
         dashboardWidgets
-            ?.map((e) => $enumDecode(_$DashboardWidgetEnumMap, e))
+            ?.map(
+              (e) => e == _legacyOutboundModeV2
+                  ? DashboardWidget.outboundMode
+                  : $enumDecode(_$DashboardWidgetEnumMap, e),
+            )
+            .toSet()
             .toList() ??
         defaultDashboardWidgets,
     () => defaultDashboardWidgets,
   );
+}
+
+Object? _readUserAgents(Map<dynamic, dynamic> json, String key) {
+  if (json.containsKey(key)) {
+    return json[key];
+  }
+  final legacy = json['customUserAgent'];
+  if (legacy is! String) {
+    return null;
+  }
+  final custom = legacy.trim();
+  if (custom.isEmpty || defaultUserAgents.contains(custom)) {
+    return null;
+  }
+  return [...defaultUserAgents, custom];
 }
 
 @freezed
@@ -78,7 +120,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(defaultTestUrl) String testUrl,
     @Default(true) bool isAnimateToPage,
     @Default(true) bool autoCheckUpdate,
-    @Default(false) bool showLabel,
+    @Default(true) bool sidebarExpanded,
     @Default(false) bool disclaimerAccepted,
     @Default(false) bool crashlyticsTip,
     @Default(false) bool crashlytics,
@@ -88,7 +130,13 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(RestoreStrategy.compatible) RestoreStrategy restoreStrategy,
     @Default(true) bool showTrayTitle,
     @Default(true) bool checkCertificate,
-    @Default('') String customUserAgent,
+    @Default(defaultUserAgents)
+    @JsonKey(readValue: _readUserAgents)
+    List<String> userAgents,
+    @Default(false) bool hideIp,
+    @Default([]) List<String> serviceOrder,
+    @Default([]) List<String> disabledServices,
+    String? currentService,
   }) = _AppSettingProps;
 
   factory AppSettingProps.fromJson(Map<String, Object?> json) =>
@@ -202,14 +250,29 @@ abstract class NetworkProps with _$NetworkProps {
       json == null ? const NetworkProps() : _$NetworkPropsFromJson(json);
 }
 
+/// Reads the styles named `standard`, `icon` and `none` before they became
+/// [ProxiesIconStyle.filled], [ProxiesIconStyle.plain] and
+/// [ProxiesIconStyle.hidden].
+ProxiesIconStyle proxiesIconStyleSafeFromJson(Object? iconStyle) {
+  return switch (iconStyle) {
+    'filled' || 'standard' => ProxiesIconStyle.filled,
+    'plain' || 'icon' => ProxiesIconStyle.plain,
+    'hidden' || 'none' => ProxiesIconStyle.hidden,
+    _ => ProxiesIconStyle.filled,
+  };
+}
+
 @freezed
 abstract class ProxiesStyleProps with _$ProxiesStyleProps {
   const factory ProxiesStyleProps({
     @Default(ProxiesType.tab) ProxiesType type,
     @Default(ProxiesSortType.none) ProxiesSortType sortType,
     @Default(ProxiesLayout.standard) ProxiesLayout layout,
-    @Default(ProxiesIconStyle.standard) ProxiesIconStyle iconStyle,
+    @Default(ProxiesIconStyle.filled)
+    @JsonKey(fromJson: proxiesIconStyleSafeFromJson)
+    ProxiesIconStyle iconStyle,
     @Default(ProxyCardType.expand) ProxyCardType cardType,
+    @Default(false) bool hideTimeoutProxies,
   }) = _ProxiesStyleProps;
 
   factory ProxiesStyleProps.fromJson(Map<String, Object?>? json) => json == null
@@ -236,6 +299,7 @@ abstract class ThemeProps with _$ThemeProps {
     @Default(ThemeMode.dark) ThemeMode themeMode,
     @Default(DynamicSchemeVariant.content) DynamicSchemeVariant schemeVariant,
     @Default(false) bool pureBlack,
+    @Default(true) bool sidebarBlur,
     @Default(TextScale()) TextScale textScale,
   }) = _ThemeProps;
 
@@ -259,6 +323,7 @@ abstract class Config with _$Config {
   const factory Config({
     int? currentProfileId,
     @Default(false) bool overrideDns,
+    @Default(false) bool overrideNtp,
     @Default([]) List<HotKeyAction> hotKeyActions,
     @JsonKey(fromJson: AppSettingProps.safeFromJson)
     @Default(defaultAppSettingProps)
@@ -277,7 +342,10 @@ abstract class Config with _$Config {
 
   factory Config.realFromJson(Map<String, Object?>? json) {
     if (json == null) {
-      return const Config(themeProps: defaultThemeProps);
+      return Config(
+        themeProps: defaultThemeProps,
+        hotKeyActions: defaultHotKeyActions,
+      );
     }
     return _$ConfigFromJson(json);
   }

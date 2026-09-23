@@ -83,10 +83,13 @@ static GtkWidget* build_menu(FlValue* items) {
       continue;
     }
 
-    const char* label = string_value(entry, "label");
-    if (label == nullptr) {
-      label = "";
-    }
+    const char* raw_label = string_value(entry, "label");
+    const char* detail = string_value(entry, "detail");
+    g_autofree gchar* label =
+        detail != nullptr && detail[0] != '\0'
+            ? g_strdup_printf("%s  (%s)", raw_label == nullptr ? "" : raw_label,
+                              detail)
+            : g_strdup(raw_label == nullptr ? "" : raw_label);
 
     GtkWidget* item;
     bool dispatches = true;
