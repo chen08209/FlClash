@@ -1,14 +1,14 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/models/clash_config.dart';
-import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/views/config/dns.dart';
 import 'package:fl_clash/views/config/network.dart';
-import 'package:fl_clash/views/config/on_demand.dart';
+import 'package:fl_clash/views/config/ntp.dart';
+import 'package:fl_clash/views/config/providers.dart';
 import 'package:fl_clash/views/config/scripts.dart';
 import 'package:fl_clash/widgets/list.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'rules.dart';
 
@@ -21,72 +21,50 @@ class AdvancedConfigView extends StatelessWidget {
     final List<Widget> items = [
       ListItem.open(
         title: Text(appLocalizations.network),
-        subtitle: Text(appLocalizations.networkDesc),
-        leading: const Icon(Icons.vpn_key),
-        blur: false,
+        leading: const GlyphIcon(AppGlyphs.key),
         widget: BaseScaffold(
           title: appLocalizations.network,
           body: const NetworkListView(),
         ),
       ),
       ListItem.open(
-        title: Text(appLocalizations.onDemand),
-        subtitle: Text(appLocalizations.onDemandDesc),
-        leading: const Icon(Icons.ssid_chart, fontWeight: FontWeight.w900),
-        widget: const OnDemandView(),
-        blur: false,
+        title: const Text('DNS'),
+        leading: const GlyphIcon(AppGlyphs.dns),
+        widget: const DnsView(),
       ),
       ListItem.open(
-        title: const Text('DNS'),
-        subtitle: Text(appLocalizations.dnsDesc),
-        leading: const Icon(Icons.dns),
-        widget: BaseScaffold(
-          title: 'DNS',
-          actions: [
-            Consumer(
-              builder: (_, ref, _) {
-                return IconButton(
-                  onPressed: () async {
-                    final res = await dialogs.showMessage(
-                      title: appLocalizations.reset,
-                      message: TextSpan(text: appLocalizations.resetTip),
-                    );
-                    if (res != true) {
-                      return;
-                    }
-                    ref
-                        .read(patchClashConfigProvider.notifier)
-                        .update((state) => state.copyWith(dns: defaultDns));
-                  },
-                  tooltip: appLocalizations.reset,
-                  icon: const Icon(Icons.replay),
-                );
-              },
-            ),
-          ],
-          body: const DnsListView(),
-        ),
-        blur: false,
+        title: const Text('NTP'),
+        leading: const GlyphIcon(AppGlyphs.clock),
+        widget: const NtpView(),
       ),
       ListItem.open(
         title: Text(appLocalizations.addedRules),
-        subtitle: Text(appLocalizations.controlGlobalAddedRules),
-        leading: const Icon(Icons.library_books),
+        leading: const GlyphIcon(AppGlyphs.rules),
         widget: const AddedRulesView(),
-        blur: false,
+      ),
+      ListItem.open(
+        title: Text(appLocalizations.proxyProviders),
+        leading: const GlyphIcon(AppGlyphs.proxies),
+        widget: const ClashProvidersView(kind: ProviderKind.proxy),
+      ),
+      ListItem.open(
+        title: Text(appLocalizations.ruleProviders),
+        leading: const GlyphIcon(AppGlyphs.resources),
+        widget: const ClashProvidersView(kind: ProviderKind.rule),
       ),
       ListItem.open(
         title: Text(appLocalizations.script),
-        subtitle: Text(appLocalizations.overrideScript),
-        leading: const Icon(Icons.rocket, fontWeight: FontWeight.w900),
+        leading: const GlyphIcon(AppGlyphs.code),
         widget: const ScriptsView(),
-        blur: false,
       ),
     ];
     return BaseScaffold(
       title: appLocalizations.advancedConfig,
-      body: generateListView(
-        items.separated(const Divider(height: 0)).toList(),
+      body: ListView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+        ).copyWith(top: context.appBarInset + 16, bottom: 16),
+        children: [generateSectionV3(items: items)],
       ),
     );
   }

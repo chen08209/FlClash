@@ -181,8 +181,8 @@ class ConfigTextItem extends _ConfigItem<String> {
   }
 }
 
-class ConfigListInputItem extends _ConfigItem<List<String>> {
-  const ConfigListInputItem({
+class ConfigListEditItem extends _ConfigItem<List<String>> {
+  const ConfigListEditItem({
     super.key,
     required super.selector,
     required super.title,
@@ -207,10 +207,15 @@ class ConfigListInputItem extends _ConfigItem<List<String>> {
     return ListItem.open(
       leading: leading,
       title: Text(label),
-      subtitle: buildSubtitle(appLocalizations),
-      blur: false,
+      subtitle:
+          buildSubtitle(appLocalizations) ??
+          Text(
+            value.isEmpty ? appLocalizations.none : value.join(', '),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
       maxWidth: maxWidth,
-      widget: ListInputPage(
+      widget: ListEditView(
         title: label,
         items: value,
         itemMaxLength: itemMaxLength,

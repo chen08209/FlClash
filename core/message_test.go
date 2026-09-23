@@ -60,6 +60,7 @@ func TestClassOfMessageRoutesEachTier(t *testing.T) {
 		DelayMessage:     priorityMessageClass,
 		LogMessage:       bulkMessageClass,
 		RequestMessage:   bulkMessageClass,
+		DnsMessage:       bulkMessageClass,
 	} {
 		if got := classOfMessage(Message{Type: messageType}); got != want {
 			t.Errorf("classOfMessage(%s) = %d, want %d", messageType, got, want)

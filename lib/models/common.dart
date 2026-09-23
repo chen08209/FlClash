@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/glyph.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -17,7 +18,7 @@ part 'generated/common.g.dart';
 @freezed
 abstract class NavigationItem with _$NavigationItem {
   const factory NavigationItem({
-    required Icon icon,
+    required Glyph glyph,
     required PageLabel label,
     required WidgetBuilder builder,
     @Default(true) bool keep,
@@ -42,9 +43,7 @@ abstract class Package with _$Package {
 }
 
 extension PackagesExt on List<Package> {
-  List<Package> getViewList({
-    required List<String> pinedList,
-    required AccessSortType sortType,
+  Iterable<Package> whereVisible({
     required bool isFilterSystemApp,
     required bool isFilterNonInternetApp,
   }) {
@@ -52,9 +51,22 @@ extension PackagesExt on List<Package> {
       (item) =>
           (isFilterSystemApp ? item.system == false : true) &&
           (isFilterNonInternetApp ? item.internet == true : true),
+    );
+  }
+
+  List<Package> getViewList({
+    required List<String> pinedList,
+    required AccessSortType sortType,
+    required bool isFilterSystemApp,
+    required bool isFilterNonInternetApp,
+  }) {
+    final pinned = pinedList.toSet();
+    return whereVisible(
+      isFilterSystemApp: isFilterSystemApp,
+      isFilterNonInternetApp: isFilterNonInternetApp,
     ).sorted((a, b) {
-      final isSelectA = pinedList.contains(a.packageName);
-      final isSelectB = pinedList.contains(b.packageName);
+      final isSelectA = pinned.contains(a.packageName);
+      final isSelectB = pinned.contains(b.packageName);
 
       if (isSelectA != isSelectB) {
         return isSelectA ? -1 : 1;
@@ -122,17 +134,6 @@ extension TrackerInfoExt on TrackerInfo {
     return metadata.destinationIP;
   }
 
-  String get desc {
-    var text = '${metadata.network}://';
-    final ips = [
-      metadata.host,
-      metadata.destinationIP,
-    ].where((ip) => ip.isNotEmpty);
-    text += ips.join('/');
-    text += ':${metadata.destinationPort}';
-    return text;
-  }
-
   String get progressText {
     final process = metadata.process;
     final uid = metadata.uid;
@@ -141,6 +142,25 @@ extension TrackerInfoExt on TrackerInfo {
     }
     return process.trim();
   }
+
+  List<String> get searchFields => [
+    metadata.network,
+    metadata.host,
+    metadata.destinationIP,
+    metadata.destinationPort,
+    metadata.sourceIP,
+    metadata.sourcePort,
+    metadata.process,
+    metadata.processPath,
+    metadata.remoteDestination,
+    metadata.destinationIPASN,
+    ...metadata.destinationGeoIP,
+    metadata.specialProxy,
+    metadata.specialRules,
+    rule,
+    rulePayload,
+    ...chains,
+  ];
 }
 
 String _logDateTime(dynamic _) {
@@ -172,15 +192,26 @@ abstract class LogsState with _$LogsState {
   }) = _LogsState;
 }
 
+final _logSearchTexts = Expando<String>();
+
 extension LogsStateExt on LogsState {
+  bool get isSearching => keywords.isNotEmpty || SearchQuery(query).isNotEmpty;
+
   List<Log> get list {
-    final lowQuery = query.toLowerCase();
-    return logs.where((log) {
-      final logLevelName = log.logLevel.name;
-      return {logLevelName}.containsAll(keywords) &&
-          ((log.payload.toLowerCase().contains(lowQuery)) ||
-              logLevelName.contains(lowQuery));
-    }).toList();
+    final searchQuery = SearchQuery(query);
+    if (keywords.isEmpty && searchQuery.isEmpty) {
+      return logs;
+    }
+    return logs
+        .where(
+          (log) => keywords.every((keyword) => keyword == log.logLevel.name),
+        )
+        .whereMatches(
+          searchQuery,
+          (log) => [log.payload, log.logLevel.name],
+          texts: _logSearchTexts,
+        )
+        .toList();
   }
 }
 
@@ -194,26 +225,101 @@ abstract class TrackerInfosState with _$TrackerInfosState {
   }) = _TrackerInfosState;
 }
 
+final _trackerInfoSearchTexts = Expando<String>();
+
 extension TrackerInfosStateExt on TrackerInfosState {
+  bool get isSearching => keywords.isNotEmpty || SearchQuery(query).isNotEmpty;
+
   List<TrackerInfo> get list {
-    final lowerQuery = query.toLowerCase().trim();
-    final lowQuery = query.toLowerCase();
-    return trackerInfos.where((trackerInfo) {
-      final chains = trackerInfo.chains;
-      final process = trackerInfo.metadata.process;
-      final networkText = trackerInfo.metadata.network.toLowerCase();
-      final hostText = trackerInfo.metadata.host.toLowerCase();
-      final destinationIPText = trackerInfo.metadata.destinationIP
-          .toLowerCase();
-      final processText = trackerInfo.metadata.process.toLowerCase();
-      final chainsText = chains.join('').toLowerCase();
-      return {...chains, process}.containsAll(keywords) &&
-          (networkText.contains(lowerQuery) ||
-              hostText.contains(lowerQuery) ||
-              destinationIPText.contains(lowQuery) ||
-              processText.contains(lowerQuery) ||
-              chainsText.contains(lowerQuery));
-    }).toList();
+    final searchQuery = SearchQuery(query);
+    if (keywords.isEmpty && searchQuery.isEmpty) {
+      return trackerInfos;
+    }
+    return trackerInfos
+        .where(
+          (trackerInfo) => keywords.every(
+            (keyword) =>
+                keyword == trackerInfo.metadata.process ||
+                trackerInfo.chains.contains(keyword),
+          ),
+        )
+        .whereMatches(
+          searchQuery,
+          (trackerInfo) => trackerInfo.searchFields,
+          texts: _trackerInfoSearchTexts,
+        )
+        .toList();
+  }
+}
+
+@freezed
+abstract class DnsQuery with _$DnsQuery {
+  const factory DnsQuery({
+    required String domain,
+    required String type,
+    @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)
+    DnsQueryInitiator? initiator,
+    @Default('') String upstream,
+    @Default(false) bool cached,
+    @Default([]) List<String> answers,
+    @Default('') String rcode,
+    @Default('') String error,
+    @Default(0) int delay,
+    required DateTime time,
+  }) = _DnsQuery;
+
+  factory DnsQuery.fromJson(Map<String, Object?> json) =>
+      _$DnsQueryFromJson(json);
+}
+
+extension DnsQueryExt on DnsQuery {
+  bool get hasFailureRcode => rcode.isNotEmpty && rcode != 'NOERROR';
+
+  bool get isFailed => error.isNotEmpty || hasFailureRcode;
+
+  List<String> get tags => [type, ...resultTags];
+
+  List<String> get resultTags {
+    final initiator = this.initiator;
+    return [
+      if (initiator != null) initiator.label,
+      if (cached) currentAppLocalizations.cache,
+      if (hasFailureRcode) rcode,
+    ];
+  }
+
+  List<String> get searchFields => [
+    domain,
+    ...tags,
+    rcode,
+    upstream,
+    error,
+    ...answers,
+  ];
+}
+
+@freezed
+abstract class DnsQueriesState with _$DnsQueriesState {
+  const factory DnsQueriesState({
+    @Default([]) List<DnsQuery> dnsQueries,
+    @Default([]) List<String> keywords,
+    @Default('') String query,
+    @Default(true) bool autoScrollToEnd,
+  }) = _DnsQueriesState;
+}
+
+extension DnsQueriesStateExt on DnsQueriesState {
+  bool get isSearching => keywords.isNotEmpty || SearchQuery(query).isNotEmpty;
+
+  List<DnsQuery> get list {
+    final searchQuery = SearchQuery(query);
+    if (keywords.isEmpty && searchQuery.isEmpty) {
+      return dnsQueries;
+    }
+    return dnsQueries
+        .where((dnsQuery) => keywords.every(dnsQuery.tags.contains))
+        .whereMatches(searchQuery, (dnsQuery) => dnsQuery.searchFields)
+        .toList();
   }
 }
 
@@ -343,15 +449,6 @@ extension FileInfoFileExt on File {
   }
 }
 
-extension FileInfoExt on FileInfo {
-  String getDesc(BuildContext context) {
-    final lastModifiedDesc =
-        lastModified?.getLastUpdateTimeDesc(context) ??
-        context.appLocalizations.unknown;
-    return '${size.traffic.show}  ·  $lastModifiedDesc';
-  }
-}
-
 @freezed
 abstract class VersionInfo with _$VersionInfo {
   const factory VersionInfo({
@@ -374,10 +471,6 @@ abstract class Traffic with _$Traffic {
 extension TrafficExt on Traffic {
   String get speedText {
     return '↑ ${up.traffic.show}/s   ↓ ${down.traffic.show}/s';
-  }
-
-  String get desc {
-    return '${up.traffic.show} ↑ ${down.traffic.show} ↓';
   }
 
   String get trayTitle {
@@ -483,7 +576,7 @@ abstract class IpInfo with _$IpInfo {
     };
   }
 
-  static IpInfo fromIpApiCoJson(Map<String, dynamic> json) {
+  static IpInfo fromGeoJsJson(Map<String, dynamic> json) {
     return switch (json) {
       {'ip': final String ip, 'country_code': final String countryCode} =>
         IpInfo(ip: ip, countryCode: countryCode),
@@ -507,9 +600,9 @@ abstract class IpInfo with _$IpInfo {
     };
   }
 
-  static IpInfo fromMyIpJson(Map<String, dynamic> json) {
+  static IpInfo fromCountryIsJson(Map<String, dynamic> json) {
     return switch (json) {
-      {'ip': final String ip, 'cc': final String countryCode} => IpInfo(
+      {'ip': final String ip, 'country': final String countryCode} => IpInfo(
         ip: ip,
         countryCode: countryCode,
       ),
@@ -532,6 +625,34 @@ abstract class IpInfo with _$IpInfo {
         countryCode: countryCode,
       ),
       _ => throw const FormatException('invalid json'),
+    };
+  }
+
+  static IpInfo fromIpQueryJson(Map<String, dynamic> json) {
+    return switch (json) {
+      {
+        'ip': final String ip,
+        'location': {'country_code': final String countryCode},
+      } =>
+        IpInfo(ip: ip, countryCode: countryCode),
+      _ => throw const FormatException('invalid json'),
+    };
+  }
+
+  static IpInfo fromCloudflareTrace(String body) {
+    final fields = <String, String>{};
+    for (final line in const LineSplitter().convert(body)) {
+      final separator = line.indexOf('=');
+      if (separator > 0) {
+        fields[line.substring(0, separator)] = line.substring(separator + 1);
+      }
+    }
+    return switch (fields) {
+      {'ip': final ip, 'loc': final countryCode} => IpInfo(
+        ip: ip,
+        countryCode: countryCode,
+      ),
+      _ => throw const FormatException('invalid trace'),
     };
   }
 }
@@ -594,15 +715,18 @@ abstract class Script with _$Script {
     required int id,
     required String label,
     required DateTime lastUpdateTime,
+    String? url,
+    int? order,
   }) = _Script;
 
   factory Script.fromJson(Map<String, Object?> json) => _$ScriptFromJson(json);
 
-  factory Script.create({required String label}) {
+  factory Script.create({required String label, String? url}) {
     return Script(
       id: snowflake.id,
       label: label,
       lastUpdateTime: DateTime.now(),
+      url: url,
     );
   }
 }
@@ -618,10 +742,24 @@ extension ScriptsExt on List<Script> {
     }
     return null;
   }
+
+  bool hasLabel(String label, {Script? except}) {
+    return any((script) => script.id != except?.id && script.label == label);
+  }
+
+  String uniqueLabel(String name, {required String fallback}) {
+    return uniqueLabelFor(
+      name,
+      fallback: fallback,
+      taken: (label) => hasLabel(label),
+    );
+  }
 }
 
 extension ScriptExt on Script {
   String get fileName => '$id.js';
+
+  String get updatingKey => 'script_$id';
 
   Future<String> get path async => appPath.getScriptPath(id.toString());
 
@@ -642,6 +780,11 @@ extension ScriptExt on Script {
     return copyWith(lastUpdateTime: DateTime.now());
   }
 
+  Future<Script> update() async {
+    final response = await request.getTextResponseForUrl(url!);
+    return save(response.data ?? '');
+  }
+
   Future<Script> saveWithPath(String copyPath) async {
     final file = File(await path);
     if (!await file.exists()) {
@@ -649,6 +792,106 @@ extension ScriptExt on Script {
     }
     await File(copyPath).copy(copyPath);
     return copyWith(lastUpdateTime: DateTime.now());
+  }
+}
+
+@freezed
+abstract class ClashProvider with _$ClashProvider {
+  const factory ClashProvider({
+    required int id,
+    required ProviderKind kind,
+    required String label,
+    @Default('') String url,
+    RuleProviderBehavior? behavior,
+    RuleProviderFormat? format,
+    int? order,
+  }) = _ClashProvider;
+
+  factory ClashProvider.create({
+    required ProviderKind kind,
+    required String label,
+    String url = '',
+  }) {
+    return ClashProvider(
+      id: snowflake.id,
+      kind: kind,
+      label: label,
+      url: url,
+      behavior: kind == ProviderKind.rule
+          ? RuleProviderBehavior.classical
+          : null,
+      format: kind == ProviderKind.rule ? RuleProviderFormat.yaml : null,
+    );
+  }
+}
+
+RuleProviderFormat? ruleProviderFormatOf(String sourceName) {
+  final dot = sourceName.lastIndexOf('.');
+  if (dot <= 0) {
+    return null;
+  }
+  return switch (sourceName.substring(dot + 1).toLowerCase()) {
+    'mrs' => RuleProviderFormat.mrs,
+    'txt' || 'list' || 'conf' => RuleProviderFormat.text,
+    'yaml' || 'yml' => RuleProviderFormat.yaml,
+    _ => null,
+  };
+}
+
+extension ClashProviderExt on ClashProvider {
+  /// Keyed by url so an edited url downloads afresh instead of reusing the
+  /// cached body the old one left behind.
+  String get fileName => '$id@$url'.toMd5();
+
+  bool get isRemote => url.isNotEmpty;
+
+  /// An mrs set is a zstd stream, which no text editor can round-trip.
+  bool get isTextContent => format != RuleProviderFormat.mrs;
+
+  Future<String> get path => appPath.getProviderCachePath(kind, fileName);
+
+  Future<String?> get content async {
+    final file = File(await path);
+    if (!await file.exists()) {
+      return null;
+    }
+    return file.readAsString();
+  }
+
+  Future<void> saveContent(List<int> bytes) async {
+    await File(await path).safeWriteAsBytes(bytes);
+  }
+
+  ClashProvider withFileFormat(String sourceName) {
+    return withFormat(
+      ruleProviderFormatOf(sourceName) ?? RuleProviderFormat.yaml,
+    );
+  }
+
+  /// The core takes mrs only under domain or ipcidr.
+  ClashProvider withFormat(RuleProviderFormat nextFormat) {
+    if (kind != ProviderKind.rule) {
+      return this;
+    }
+    final behaviors = nextFormat.behaviors;
+    return copyWith(
+      format: nextFormat,
+      behavior: behaviors.contains(behavior) ? behavior : behaviors.first,
+    );
+  }
+
+  Map<String, dynamic> definition(String path) {
+    final vehicle = isRemote
+        ? {'type': 'http', 'url': url, 'path': path}
+        : {'type': 'file', 'path': path};
+    return switch (kind) {
+      ProviderKind.proxy => {...vehicle},
+      ProviderKind.rule => {
+        ...vehicle,
+        'behavior': (behavior ?? RuleProviderBehavior.classical).name,
+        'format': (format ?? RuleProviderFormat.yaml).name,
+      },
+    };
   }
 }
 
@@ -689,8 +932,9 @@ abstract class UpdatingMessage with _$UpdatingMessage {
 @freezed
 abstract class IconButtonData with _$IconButtonData {
   const factory IconButtonData({
-    required IconData icon,
+    required Glyph glyph,
     required VoidCallback onPressed,
     String? tooltip,
+    @Default(false) bool isLoading,
   }) = _IconButtonData;
 }

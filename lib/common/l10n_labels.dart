@@ -12,23 +12,23 @@ extension PageLabelL10n on PageLabel {
       PageLabel.profiles => appLocalizations.profiles,
       PageLabel.tools => appLocalizations.tools,
       PageLabel.logs => appLocalizations.logs,
-      PageLabel.requests => appLocalizations.requests,
+      PageLabel.requests => appLocalizations.recentRequests,
       PageLabel.resources => appLocalizations.resources,
-      PageLabel.connections => appLocalizations.connections,
+      PageLabel.connections => appLocalizations.liveConnections,
+      PageLabel.dns => appLocalizations.dnsQueries,
     };
   }
+}
 
-  String? get description {
+extension DnsQueryInitiatorL10n on DnsQueryInitiator {
+  String get label {
     final appLocalizations = currentAppLocalizations;
     return switch (this) {
-      PageLabel.logs => appLocalizations.logsDesc,
-      PageLabel.requests => appLocalizations.requestsDesc,
-      PageLabel.resources => appLocalizations.resourcesDesc,
-      PageLabel.connections => appLocalizations.connectionsDesc,
-      PageLabel.dashboard ||
-      PageLabel.proxies ||
-      PageLabel.profiles ||
-      PageLabel.tools => null,
+      DnsQueryInitiator.app => appLocalizations.app,
+      DnsQueryInitiator.rule => appLocalizations.rule,
+      DnsQueryInitiator.direct => appLocalizations.direct,
+      DnsQueryInitiator.proxy => appLocalizations.proxyNode,
+      DnsQueryInitiator.other => appLocalizations.other,
     };
   }
 }
@@ -74,6 +74,13 @@ extension HotActionL10n on HotAction {
       HotAction.mode => appLocalizations.actionMode,
       HotAction.proxy => appLocalizations.actionProxy,
       HotAction.tun => appLocalizations.actionTun,
+      HotAction.ruleMode => appLocalizations.actionRuleMode,
+      HotAction.globalMode => appLocalizations.actionGlobalMode,
+      HotAction.directMode => appLocalizations.actionDirectMode,
+      HotAction.delayTest => appLocalizations.actionDelayTest,
+      HotAction.updateProfiles => appLocalizations.actionUpdateProfiles,
+      HotAction.copyEnv => appLocalizations.copyEnvVar,
+      HotAction.exit => appLocalizations.exit,
     };
   }
 }
