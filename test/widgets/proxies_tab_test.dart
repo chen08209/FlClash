@@ -105,6 +105,27 @@ void main() {
     },
   );
 
+  testWidgets('the last tab scrolls clear of the more button fade', (
+    tester,
+  ) async {
+    globalContainer
+        .read(_tabStateProvider.notifier)
+        .set(_tabState([for (var i = 0; i < 12; i++) _group('Group $i')]));
+    await pumpTabView(tester);
+
+    final tabs = find.descendant(
+      of: find.byType(TabBar),
+      matching: find.byType(Scrollable),
+    );
+    final position = tester.state<ScrollableState>(tabs).position;
+    position.jumpTo(position.maxScrollExtent);
+    await tester.pump();
+
+    final label = tester.getRect(find.text('Group 11', findRichText: true));
+    final more = tester.getRect(find.byType(IconButton));
+    expect(label.right, lessThanOrEqualTo(more.left - kTabLabelPadding.right));
+  });
+
   testWidgets('rebuilds the tab bar when groups return', (tester) async {
     final key = await pumpTabView(tester);
 
