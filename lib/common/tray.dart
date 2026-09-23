@@ -80,7 +80,10 @@ class AppTray implements TrayPort {
             isStart: trayState.isStart,
             tunEnable: trayState.tunEnable,
           ),
-          isTemplate: isMacOS,
+          // [macOS 定制] 上游在 macOS 上以模板（isTemplate: true）渲染菜单栏图标，
+          // 只取 alpha 通道；而 status_1/2/3 是同形状不同颜色，图标看起来永远不变。
+          // 关闭模板渲染，让颜色随运行状态切换。
+          isTemplate: false,
         ),
         toolTip: appName,
         menu: _buildMenu(trayState: trayState, read: read),
