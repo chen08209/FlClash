@@ -13,7 +13,7 @@ Future<void> showOverwriteNestedSheet<T>({
   required int profileId,
   required List<Override> overrides,
   required T Function(WidgetRef ref) currentOf,
-  required bool Function(BuildContext context, WidgetRef ref) save,
+  required FutureOr<bool> Function(BuildContext context, WidgetRef ref) save,
   required WidgetBuilder formBuilder,
 }) {
   return showSheet(
@@ -37,7 +37,7 @@ Future<void> showOverwriteNestedSheet<T>({
 
 class OverwriteNestedSheet<T> extends ConsumerStatefulWidget {
   final T Function(WidgetRef ref) currentOf;
-  final bool Function(BuildContext context, WidgetRef ref) save;
+  final FutureOr<bool> Function(BuildContext context, WidgetRef ref) save;
   final WidgetBuilder formBuilder;
 
   const OverwriteNestedSheet({
@@ -100,7 +100,7 @@ class _OverwriteNestedSheetState<T>
       Navigator.of(context).pop();
       return;
     }
-    if (widget.save(context, ref)) {
+    if (await widget.save(context, ref) && mounted) {
       Navigator.of(context).pop();
     }
   }

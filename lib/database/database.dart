@@ -12,6 +12,7 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 
 part 'clash_providers.dart';
 part 'converter.dart';
+part 'custom_proxies.dart';
 part 'generated/database.g.dart';
 part 'groups.dart';
 part 'icons.dart';
@@ -29,6 +30,7 @@ part 'scripts.dart';
     ProxyGroups,
     IconRecords,
     ClashProviders,
+    CustomProxies,
   ],
   daos: [
     ProfilesDao,
@@ -37,13 +39,14 @@ part 'scripts.dart';
     ProxyGroupsDao,
     IconRecordsDao,
     ClashProvidersDao,
+    CustomProxiesDao,
   ],
 )
 class Database extends _$Database {
   Database([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {
@@ -81,6 +84,12 @@ class Database extends _$Database {
         if (from < 8) {
           await m.alterTable(TableMigration(clashProviders));
         }
+        // Ahead of the version 9 step, whose purge reaches every table.
+        if (from < 10) {
+          if (await _createTableIfMissing(m, customProxies)) {
+            await m.createIndex(idxCustomProxiesProfileOrder);
+          }
+        }
         if (from < 9) {
           await _purgeOrphans();
         }
@@ -90,14 +99,15 @@ class Database extends _$Database {
   }
 
   /// Drift rewinds user_version on downgrade but keeps the tables it added.
-  Future<void> _createTableIfMissing(Migrator m, TableInfo table) async {
+  Future<bool> _createTableIfMissing(Migrator m, TableInfo table) async {
     final tableInfo = await customSelect(
       'PRAGMA table_info(${table.actualTableName})',
     ).get();
     if (tableInfo.isNotEmpty) {
-      return;
+      return false;
     }
     await m.createTable(table);
+    return true;
   }
 
   /// Drift rewinds user_version on downgrade but keeps the columns it added.
@@ -176,6 +186,7 @@ class Database extends _$Database {
     List<ProfileRuleLink> links,
     List<ProxyGroup> proxyGroups, {
     List<ClashProvider> clashProviders = const [],
+    List<CustomProxy> customProxies = const [],
     bool isOverride = false,
   }) async {
     if (profiles.isEmpty &&
@@ -183,7 +194,8 @@ class Database extends _$Database {
         rules.isEmpty &&
         links.isEmpty &&
         proxyGroups.isEmpty &&
-        clashProviders.isEmpty) {
+        clashProviders.isEmpty &&
+        customProxies.isEmpty) {
       return;
     }
     await transaction(() async {
@@ -195,6 +207,7 @@ class Database extends _$Database {
           scriptsDao.setAllWithBatch(b, scripts);
           rulesDao.restoreWithBatch(b, rules, links);
           proxyGroupsDao.setAllWithBatch(null, b, proxyGroups);
+          customProxiesDao.setAllWithBatch(null, b, customProxies);
           clashProvidersDao.setAllWithBatch(b, clashProviders);
           return;
         }
@@ -205,6 +218,7 @@ class Database extends _$Database {
         scriptsDao.putAllWithBatch(b, scripts);
         rulesDao.mergeWithBatch(b, rules, links);
         proxyGroupsDao.putAllWithBatch(b, proxyGroups);
+        customProxiesDao.putAllWithBatch(b, customProxies);
         clashProvidersDao.putAllWithBatch(b, clashProviders);
       });
       await _purgeOrphans();
@@ -229,15 +243,22 @@ class Database extends _$Database {
     await proxyGroups.remove(
       (t) => t.profileId.isNotNull() & t.profileId.isNotInQuery(profileIds),
     );
+    await customProxies.remove(
+      (t) => t.profileId.isNotNull() & t.profileId.isNotInQuery(profileIds),
+    );
     await rulesDao.delUnlinkedRules();
   }
 
   Future<void> setProfileCustomData(
     int profileId,
+    List<CustomProxy>? proxies,
     List<ProxyGroup> groups,
     List<Rule> rules,
   ) async {
     await batch((b) {
+      if (proxies != null) {
+        customProxiesDao.setAllWithBatch(profileId, b, proxies);
+      }
       proxyGroupsDao.setAllWithBatch(profileId, b, groups);
       rulesDao.setCustomRulesWithBatch(profileId, b, rules);
     });

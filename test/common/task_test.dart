@@ -365,6 +365,12 @@ void main() {
         overrideDns: true,
         overrideNtp: false,
         appendSystemDns: false,
+        proxies: [
+          CustomProxy(
+            id: 2,
+            definition: {'name': 'Node', 'type': 'socks5', 'port': 1080},
+          ),
+        ],
         proxyGroups: [
           ProxyGroup(
             id: 1,
@@ -388,6 +394,9 @@ void main() {
 
     expect(config['dns']['enable'], true);
     expect(config['dns']['nameserver'], isNot(contains('system://')));
+    expect(config['proxies'], [
+      {'name': 'Node', 'type': 'socks5', 'port': 1080},
+    ]);
     expect(config['proxy-groups'], hasLength(1));
     expect(config['proxy-groups'][0].keys, ['name', 'type', 'proxies']);
     expect(config['proxy-groups'][0]['type'], 'select');

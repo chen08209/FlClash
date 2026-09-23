@@ -42,16 +42,18 @@ class AdvancedConfigView extends StatelessWidget {
         leading: const GlyphIcon(AppGlyphs.rules),
         widget: const AddedRulesView(),
       ),
-      ListItem.open(
-        title: Text(appLocalizations.proxyProviders),
-        leading: const GlyphIcon(AppGlyphs.proxies),
-        widget: const ClashProvidersView(kind: ProviderKind.proxy),
-      ),
-      ListItem.open(
-        title: Text(appLocalizations.ruleProviders),
-        leading: const GlyphIcon(AppGlyphs.resources),
-        widget: const ClashProvidersView(kind: ProviderKind.rule),
-      ),
+      if (feature.customProviders) ...[
+        ListItem.open(
+          title: Text(appLocalizations.proxyProviders),
+          leading: const GlyphIcon(AppGlyphs.proxies),
+          widget: const ClashProvidersView(kind: ProviderKind.proxy),
+        ),
+        ListItem.open(
+          title: Text(appLocalizations.ruleProviders),
+          leading: const GlyphIcon(AppGlyphs.resources),
+          widget: const ClashProvidersView(kind: ProviderKind.rule),
+        ),
+      ],
       ListItem.open(
         title: Text(appLocalizations.script),
         leading: const GlyphIcon(AppGlyphs.code),

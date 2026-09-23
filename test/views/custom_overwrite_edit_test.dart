@@ -58,6 +58,10 @@ Finder _rowOf(String title) => find
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(
+    () => feature = const Feature(customProviders: true, customProxies: true),
+  );
+  tearDown(() => feature = const Feature());
 
   late ProviderContainer container;
 

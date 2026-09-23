@@ -1,3 +1,5 @@
+import 'package:fl_clash/features/overwrite/overwrite.dart';
+import 'package:fl_clash/common/feature.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -15,6 +17,7 @@ import 'package:fl_clash/views/config/rules.dart';
 import 'package:fl_clash/views/config/scripts.dart';
 import 'package:fl_clash/views/config/user_agents.dart';
 import 'package:fl_clash/views/hotkey.dart';
+import 'package:fl_clash/views/profiles/overwrite/custom/custom_proxies.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/groups.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/proxies.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/proxy_providers.dart';
@@ -310,6 +313,8 @@ void main() {
   });
 
   testWidgets('custom overwrite editors render populated data', (tester) async {
+    feature = const Feature(customProviders: true, customProxies: true);
+    addTearDown(() => feature = const Feature());
     tester.view.physicalSize = const Size(1400, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -337,6 +342,19 @@ void main() {
         order: index.toString(),
       ),
     );
+    final customProxies = List.generate(
+      6,
+      (index) => CustomProxy(
+        id: 300 + index,
+        profileId: profile.id,
+        definition: {
+          'name': 'Node $index',
+          'type': 'socks5',
+          'server': '127.0.0.1',
+          'port': 1080 + index,
+        },
+      ),
+    );
     final container = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(() => TestProfiles([profile])),
@@ -345,7 +363,15 @@ void main() {
           (_) => _TestProfileCustomRules(rules),
         ),
         proxyGroupsProvider.overrideWith2((_) => _TestProxyGroups(proxyGroups)),
+        customProxiesProvider.overrideWith2(
+          (_) => _TestCustomProxies(customProxies),
+        ),
+        customProxyCoreErrorsProvider(profile.id).overrideWith(
+          (_) async => {customProxies.first.id: 'unsupport proxy type: nope'},
+        ),
         proxyGroupProvider.overrideWithBuild((_, _) => proxyGroups.first),
+        for (final kind in ProviderKind.values)
+          appProviderLabelsProvider(kind).overrideWithValue(const {}),
         clashConfigProvider(profile.id).overrideWithValue(
           const AsyncData(
             ClashConfig(
@@ -376,6 +402,7 @@ void main() {
         .update((_) => const Size(1400, 1000));
 
     final views = <Widget>[
+      CustomProxiesView(profile.id),
       CustomRulesView(profile.id),
       CustomProxyGroupsView(profile.id),
       SheetProvider(
@@ -404,6 +431,13 @@ void main() {
       await tester.pump();
       expect(find.byWidget(view), findsOneWidget);
       expect(tester.takeException(), null);
+
+      if (view is CustomProxiesView) {
+        await tester.pump();
+        expect(find.text('Node 5'), findsOneWidget);
+        expect(find.text('socks5 · 127.0.0.1:1080'), findsOneWidget);
+        expect(find.byType(OverwriteIssueButton), findsOneWidget);
+      }
 
       if (view is CustomRulesView) {
         final list = tester.widget<ReorderableListView>(
@@ -465,6 +499,18 @@ class _TestProfileCustomRules extends ProfileCustomRules {
 
   @override
   Stream<List<Rule>> build(int profileId) => Stream.value(initial);
+
+  @override
+  void order(int oldIndex, int newIndex) {}
+}
+
+class _TestCustomProxies extends CustomProxies {
+  final List<CustomProxy> initial;
+
+  _TestCustomProxies(this.initial);
+
+  @override
+  Stream<List<CustomProxy>> build(int profileId) => Stream.value(initial);
 
   @override
   void order(int oldIndex, int newIndex) {}

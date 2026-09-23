@@ -67,6 +67,15 @@ ProxiesActionsState proxiesActionsState(Ref ref) {
   );
 }
 
+/// Watching the delay map instead would drop nodes one probe at a time, and
+/// reading it on any other rebuild would drop them whenever something
+/// unrelated changed mid-test.
+@riverpod
+DelayMap delaysAtLastTestBatch(Ref ref) {
+  ref.watch(sortNumProvider);
+  return ref.read(delayDataSourceProvider);
+}
+
 @riverpod
 GroupsState visibleGroupsState(Ref ref) {
   final currentGroups = ref.watch(currentGroupsStateProvider);
@@ -76,14 +85,11 @@ GroupsState visibleGroupsState(Ref ref) {
   if (!hideTimeoutProxies) {
     return currentGroups;
   }
-  // Watching the delay map instead would drop nodes one probe at a time.
-  ref.watch(sortNumProvider);
-  final delaysAtLastTestBatch = ref.read(delayDataSourceProvider);
   return currentGroups.copyWith(
     value: computeHideTimeout(
       groups: currentGroups.value,
       allGroups: ref.watch(groupsProvider),
-      delayMap: delaysAtLastTestBatch,
+      delayMap: ref.watch(delaysAtLastTestBatchProvider),
       selectedMap: ref.watch(selectedMapProvider),
       defaultTestUrl: ref.watch(realTestUrlProvider()),
     ),

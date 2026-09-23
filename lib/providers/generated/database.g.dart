@@ -260,6 +260,76 @@ final class ProxyGroupsCountFamily extends $Family
   String toString() => r'proxyGroupsCountProvider';
 }
 
+@ProviderFor(customProxiesCount)
+final customProxiesCountProvider = CustomProxiesCountFamily._();
+
+final class CustomProxiesCountProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
+    with $FutureModifier<int>, $StreamProvider<int> {
+  CustomProxiesCountProvider._({
+    required CustomProxiesCountFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'customProxiesCountProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$customProxiesCountHash();
+
+  @override
+  String toString() {
+    return r'customProxiesCountProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<int> create(Ref ref) {
+    final argument = this.argument as int;
+    return customProxiesCount(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CustomProxiesCountProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$customProxiesCountHash() =>
+    r'648c6350b0b9c6e1ab8fd8c3760c2949f2072689';
+
+final class CustomProxiesCountFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<int>, int> {
+  CustomProxiesCountFamily._()
+    : super(
+        retry: null,
+        name: r'customProxiesCountProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  CustomProxiesCountProvider call(int profileId) =>
+      CustomProxiesCountProvider._(argument: profileId, from: this);
+
+  @override
+  String toString() => r'customProxiesCountProvider';
+}
+
 @ProviderFor(Profiles)
 final profilesProvider = ProfilesProvider._();
 
@@ -292,7 +362,7 @@ final class ProfilesProvider
   }
 }
 
-String _$profilesHash() => r'8b239ac9d47492a31a8155e19276c808ccf915e1';
+String _$profilesHash() => r'e36801d7209492d633d0ef0114240088905ea5ae';
 
 abstract class _$Profiles extends $Notifier<List<Profile>> {
   List<Profile> build();
@@ -397,7 +467,7 @@ final class ClashProvidersProvider
   }
 }
 
-String _$clashProvidersHash() => r'2de9a6c227550ee150371ccfc0e3acaa5997f517';
+String _$clashProvidersHash() => r'3628f6bbed3b0e4dba71bcc126ea72f4192b860f';
 
 final class ClashProvidersFamily extends $Family
     with
@@ -779,7 +849,7 @@ final class ProxyGroupsProvider
   }
 }
 
-String _$proxyGroupsHash() => r'f3a477527846f52cc957af6622d923514a89a66e';
+String _$proxyGroupsHash() => r'caaf53c947ae2da656c284410860448353a209b0';
 
 final class ProxyGroupsFamily extends $Family
     with
@@ -821,6 +891,96 @@ abstract class _$ProxyGroups extends $StreamNotifier<List<ProxyGroup>> {
             as $ClassProviderElement<
               AnyNotifier<AsyncValue<List<ProxyGroup>>, List<ProxyGroup>>,
               AsyncValue<List<ProxyGroup>>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, () => build(_$args));
+  }
+}
+
+@ProviderFor(CustomProxies)
+final customProxiesProvider = CustomProxiesFamily._();
+
+final class CustomProxiesProvider
+    extends $StreamNotifierProvider<CustomProxies, List<CustomProxy>> {
+  CustomProxiesProvider._({
+    required CustomProxiesFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'customProxiesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$customProxiesHash();
+
+  @override
+  String toString() {
+    return r'customProxiesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  CustomProxies create() => CustomProxies();
+
+  @override
+  bool operator ==(Object other) {
+    return other is CustomProxiesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$customProxiesHash() => r'bc9fbfcc728ae91a19c5e9f596926f32aa74a36a';
+
+final class CustomProxiesFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          CustomProxies,
+          AsyncValue<List<CustomProxy>>,
+          List<CustomProxy>,
+          Stream<List<CustomProxy>>,
+          int
+        > {
+  CustomProxiesFamily._()
+    : super(
+        retry: null,
+        name: r'customProxiesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  CustomProxiesProvider call(int profileId) =>
+      CustomProxiesProvider._(argument: profileId, from: this);
+
+  @override
+  String toString() => r'customProxiesProvider';
+}
+
+abstract class _$CustomProxies extends $StreamNotifier<List<CustomProxy>> {
+  late final _$args = ref.$arg as int;
+  int get profileId => _$args;
+
+  Stream<List<CustomProxy>> build(int profileId);
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref =
+        this.ref as $Ref<AsyncValue<List<CustomProxy>>, List<CustomProxy>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<CustomProxy>>, List<CustomProxy>>,
+              AsyncValue<List<CustomProxy>>,
               Object?,
               Object?
             >;

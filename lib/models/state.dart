@@ -347,6 +347,7 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
     required List<Rule> rules,
     required List<Rule> addedRules,
     required String defaultUA,
+    @Default([]) List<CustomProxy> proxies,
     @Default([]) List<String> authentication,
     @Default({}) Map<String, dynamic> injectedProxyProviders,
     @Default({}) Map<String, dynamic> injectedRuleProviders,
@@ -365,6 +366,7 @@ abstract class MigrationData with _$MigrationData {
     @Default([]) List<ProfileRuleLink> links,
     @Default([]) List<ProxyGroup> proxyGroups,
     @Default([]) List<ClashProvider> clashProviders,
+    @Default([]) List<CustomProxy> customProxies,
   }) = _MigrationData;
 }
 
@@ -378,6 +380,7 @@ abstract class SetupState with _$SetupState {
     required List<ProxyGroup> proxyGroups,
     required List<Rule> addedRules,
     required Script? script,
+    @Default([]) List<CustomProxy> customProxies,
     required bool overrideDns,
     required Dns dns,
     required Set<DnsOverrideKey> dnsOverrideKeys,

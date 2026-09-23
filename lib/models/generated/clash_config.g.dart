@@ -89,6 +89,21 @@ Map<String, dynamic> _$ProxyToJson(_Proxy instance) => <String, dynamic>{
   'now': instance.now,
 };
 
+_CustomProxy _$CustomProxyFromJson(Map<String, dynamic> json) => _CustomProxy(
+  profileId: (json['profileId'] as num?)?.toInt(),
+  id: Snowflake.buildId((json['id'] as num?)?.toInt()),
+  definition: json['definition'] as Map<String, dynamic>? ?? const {},
+  order: json['order'] as String?,
+);
+
+Map<String, dynamic> _$CustomProxyToJson(_CustomProxy instance) =>
+    <String, dynamic>{
+      'profileId': instance.profileId,
+      'id': instance.id,
+      'definition': instance.definition,
+      'order': instance.order,
+    };
+
 _RuleProvider _$RuleProviderFromJson(Map<String, dynamic> json) =>
     _RuleProvider(name: json['name'] as String);
 

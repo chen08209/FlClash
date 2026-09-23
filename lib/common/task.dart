@@ -213,8 +213,8 @@ Future<({String yaml, String md5})> _makeRealProfileTask(
     }
     final providers = rawConfig[section];
     rawConfig[section] = {
-      if (providers is Map) ...providers.cast<String, dynamic>(),
       ...injected,
+      if (providers is Map) ...providers.cast<String, dynamic>(),
     };
   }
 
@@ -326,6 +326,9 @@ Future<({String yaml, String md5})> _makeRealProfileTask(
     }
   } else {
     rules = data.rules.map((item) => item.rawValue).toList();
+  }
+  if (data.proxies.isNotEmpty) {
+    rawConfig['proxies'] = data.proxies.map((item) => item.definition).toList();
   }
   if (data.proxyGroups.isNotEmpty) {
     rawConfig['proxy-groups'] = data.proxyGroups

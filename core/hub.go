@@ -109,6 +109,21 @@ func handleValidateConfig(path string) string {
 	return ""
 }
 
+// The per-proxy parser the config load runs; checks across proxies, such as
+// duplicate names, are left to the load itself.
+func handleValidateProxies(mappings []map[string]any) []string {
+	results := make([]string, len(mappings))
+	for i, mapping := range mappings {
+		proxy, err := adapter.ParseProxy(mapping)
+		if err != nil {
+			results[i] = err.Error()
+			continue
+		}
+		_ = proxy.Close()
+	}
+	return results
+}
+
 const globalProxyName = "GLOBAL"
 
 func isProxyGroupType(adapterType constant.AdapterType) bool {

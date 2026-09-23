@@ -170,9 +170,22 @@ Future<MigrationData> readBackupArchive({
       database.profilesDao.query().get(),
       database.scriptsDao.query().get(),
       database.rules.all().map((item) => item.toRule()).get(),
-      database.profileRuleLinks.all().map((item) => item.toLink()).get(),
-      database.proxyGroups.all().map((item) => item.toProxyGroup()).get(),
+      (database.select(database.profileRuleLinks)..orderBy([
+            (t) => OrderingTerm(expression: t.order, nulls: NullsOrder.last),
+          ]))
+          .map((item) => item.toLink())
+          .get(),
+      (database.select(database.proxyGroups)..orderBy([
+            (t) => OrderingTerm(expression: t.order, nulls: NullsOrder.last),
+          ]))
+          .map((item) => item.toProxyGroup())
+          .get(),
       database.clashProvidersDao.queryAll().get(),
+      (database.select(database.customProxies)..orderBy([
+            (t) => OrderingTerm(expression: t.order, nulls: NullsOrder.last),
+          ]))
+          .map((item) => item.toCustomProxy())
+          .get(),
     ]);
     return MigrationData(
       configMap: configMap,
@@ -182,6 +195,7 @@ Future<MigrationData> readBackupArchive({
       links: results[3].cast<ProfileRuleLink>(),
       proxyGroups: results[4].cast<ProxyGroup>(),
       clashProviders: results[5].cast<ClashProvider>(),
+      customProxies: results[6].cast<CustomProxy>(),
     );
   } finally {
     await database.close();

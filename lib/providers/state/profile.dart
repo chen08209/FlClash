@@ -48,6 +48,7 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
     patchClashConfigProvider.select((state) => state.dnsOverrideKeys),
   );
   final overrideDns = ref.watch(overrideDnsProvider);
+  List<CustomProxy> customProxies = [];
   List<ProxyGroup> proxyGroups = [];
   List<Rule> rules = [];
   List<Rule> addedRules = [];
@@ -64,8 +65,13 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
     } else {
       rules = await database.rulesDao.queryProfileCustomRules(profileId).get();
       proxyGroups = await database.proxyGroupsDao.query(profileId).get();
-      clashProviders = await database.clashProvidersDao.queryAll().get();
-      profileProviders = ref.watch(profileProvidersProvider);
+      if (feature.customProxies) {
+        customProxies = await database.customProxiesDao.query(profileId).get();
+      }
+      if (feature.customProviders) {
+        clashProviders = await database.clashProvidersDao.queryAll().get();
+        profileProviders = ref.watch(profileProvidersProvider);
+      }
     }
   }
   return SetupState(
@@ -73,6 +79,7 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
     profileProviders: profileProviders,
     rules: rules,
     proxyGroups: proxyGroups,
+    customProxies: customProxies,
     profileId: profileId,
     profileLastUpdateDate: profileLastUpdateDate,
     overwriteType: overwriteType,

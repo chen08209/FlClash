@@ -110,6 +110,7 @@ class BackupAction extends _$BackupAction {
       data.links,
       data.proxyGroups,
       clashProviders: data.clashProviders,
+      customProxies: data.customProxies,
       isOverride: isOverride,
     );
     await _clearReplacedProviderCaches(previousProviders);
