@@ -37,17 +37,20 @@ void main() {
       );
     });
 
-    test('macOS keeps the template icon in every state', () {
-      for (final (isStart, tunEnable) in [
-        (false, false),
-        (true, false),
-        (true, true),
-      ]) {
-        expect(
-          macOS.getTrayIcon(isStart: isStart, tunEnable: tunEnable),
-          'assets/images/tray/unix/status_1.png',
-        );
-      }
+    // [macOS 定制] 上游把 macOS 固定在 status_1，菜单栏图标不随状态变化。
+    test('macOS follows the running state like linux', () {
+      expect(
+        macOS.getTrayIcon(isStart: false, tunEnable: false),
+        'assets/images/tray/unix/status_1.png',
+      );
+      expect(
+        macOS.getTrayIcon(isStart: true, tunEnable: false),
+        'assets/images/tray/unix/status_2.png',
+      );
+      expect(
+        macOS.getTrayIcon(isStart: true, tunEnable: true),
+        'assets/images/tray/unix/status_3.png',
+      );
     });
   });
 }

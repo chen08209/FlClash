@@ -47,8 +47,10 @@ class AppTray implements TrayPort {
     return isWindows ? 'assets/images/tray/windows' : 'assets/images/tray/unix';
   }
 
+  /// [macOS 定制] 上游在 macOS 上固定使用 status_1，导致菜单栏图标不随状态变化。
+  /// 这里去掉 macOS 特判，让 macOS 与 Windows/Linux 一样按运行状态选择图标。
   String getTrayIcon({required bool isStart, required bool tunEnable}) {
-    final status = switch ((isMacOS || !isStart, tunEnable)) {
+    final status = switch ((!isStart, tunEnable)) {
       (true, _) => 1,
       (false, false) => 2,
       (false, true) => 3,
@@ -78,6 +80,9 @@ class AppTray implements TrayPort {
             isStart: trayState.isStart,
             tunEnable: trayState.tunEnable,
           ),
+          // [macOS 定制] 保持模板渲染（macOS 上取 alpha 通道、随浅/深色菜单栏自动
+          // 反色，即单色图标）。上游的 status_1/2/3 是同形状不同颜色，模板渲染下
+          // 看不出区别，所以 status_1 换成了形状不同的素材（去掉了外圆环）。
           isTemplate: isMacOS,
         ),
         toolTip: appName,

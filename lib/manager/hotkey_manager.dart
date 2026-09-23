@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/sounds.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/action.dart';
@@ -96,14 +97,18 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
     final systemAction = ref.read(systemActionProvider.notifier);
     switch (action) {
       case HotAction.mode:
+        await Sounds.playNotify();
         commonAction.updateMode();
       case HotAction.start:
+        await Sounds.playNotify();
         commonAction.toggleRunning();
       case HotAction.view:
         unawaited(systemAction.updateVisible());
       case HotAction.proxy:
+        await Sounds.playNotify();
         systemAction.updateSystemProxy();
       case HotAction.tun:
+        await Sounds.playNotify();
         systemAction.updateTun();
     }
   }

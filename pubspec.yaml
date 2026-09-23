@@ -73,6 +73,9 @@ dependencies:
       url: https://github.com/chen08209/yaml_writer
       ref: 79c78a44ec9c2f5f5f97da1a65610c6fb2ead8b3
   super_sliver_list: ^0.4.1
+  # [macOS 定制] 热键操作时播放提示音
+  audioplayers: ^6.5.1
+
   drift: ^2.34.3
   drift_flutter: ^0.3.1
   fractional_indexing: ^1.0.0
@@ -105,6 +108,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/data/
+    - assets/sounds/
     - assets/fonts/
     - assets/images/
     - assets/images/avatar/
