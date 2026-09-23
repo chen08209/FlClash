@@ -190,34 +190,36 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
   }) {
     final appLocalizations = context.appLocalizations;
     return CommonMinFilledButtonTheme(
-      child: FilledButton(
-        style: FilledButton.styleFrom(
-          backgroundColor: authorized ? null : context.colorScheme.error,
-          padding: const EdgeInsets.symmetric(
-            horizontal: _authorizeButtonPadding,
+      child: ElasticButton(
+        child: FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: authorized ? null : context.colorScheme.error,
+            padding: const EdgeInsets.symmetric(
+              horizontal: _authorizeButtonPadding,
+            ),
+            minimumSize: const Size(_minAuthorizeButtonWidth, 40),
           ),
-          minimumSize: const Size(_minAuthorizeButtonWidth, 40),
-        ),
-        onPressed: onPressed,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            ExcludeSemantics(
-              child: Opacity(
-                opacity: 0,
-                child: Text(
-                  authorized
-                      ? appLocalizations.tapToAuthorize
-                      : appLocalizations.authorized,
+          onPressed: onPressed,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              ExcludeSemantics(
+                child: Opacity(
+                  opacity: 0,
+                  child: Text(
+                    authorized
+                        ? appLocalizations.tapToAuthorize
+                        : appLocalizations.authorized,
+                  ),
                 ),
               ),
-            ),
-            Text(
-              authorized
-                  ? appLocalizations.authorized
-                  : appLocalizations.tapToAuthorize,
-            ),
-          ],
+              Text(
+                authorized
+                    ? appLocalizations.authorized
+                    : appLocalizations.tapToAuthorize,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -313,22 +315,26 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
       actions: [
         if (hasSelection)
           CommonMinIconButtonTheme(
-            child: IconButton.filledTonal(
-              tooltip: context.appLocalizations.delete,
-              onPressed: _handleDelete,
-              icon: const GlyphIcon(AppGlyphs.delete, fill: 1),
+            child: ElasticButton(
+              child: IconButton.filledTonal(
+                tooltip: context.appLocalizations.delete,
+                onPressed: _handleDelete,
+                icon: const GlyphIcon(AppGlyphs.delete, fill: 1),
+              ),
             ),
           ),
         CommonMinFilledButtonTheme(
-          child: hasSelection
-              ? FilledButton(
-                  onPressed: _handleSelectAll,
-                  child: Text(appLocalizations.selectAll),
-                )
-              : FilledButton.tonal(
-                  onPressed: _handleAddOrUpdate,
-                  child: Text(appLocalizations.add),
-                ),
+          child: ElasticButton(
+            child: hasSelection
+                ? FilledButton(
+                    onPressed: _handleSelectAll,
+                    child: Text(appLocalizations.selectAll),
+                  )
+                : FilledButton.tonal(
+                    onPressed: _handleAddOrUpdate,
+                    child: Text(appLocalizations.add),
+                  ),
+          ),
         ),
       ],
     );

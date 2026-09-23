@@ -106,29 +106,33 @@ class _StandardContentState extends ConsumerState<StandardContent> {
                   actions: [
                     if (selectedRules.isNotEmpty) ...[
                       CommonMinIconButtonTheme(
-                        child: IconButton.filledTonal(
-                          tooltip: context.appLocalizations.delete,
-                          onPressed: () {
-                            _handleDelete();
-                          },
-                          icon: const GlyphIcon(AppGlyphs.delete, fill: 1),
+                        child: ElasticButton(
+                          child: IconButton.filledTonal(
+                            tooltip: context.appLocalizations.delete,
+                            onPressed: () {
+                              _handleDelete();
+                            },
+                            icon: const GlyphIcon(AppGlyphs.delete, fill: 1),
+                          ),
                         ),
                       ),
                     ],
                     CommonMinFilledButtonTheme(
-                      child: selectedRules.isNotEmpty
-                          ? FilledButton(
-                              onPressed: () {
-                                _handleSelectAll();
-                              },
-                              child: Text(appLocalizations.selectAll),
-                            )
-                          : FilledButton.tonal(
-                              onPressed: () {
-                                _handleAddOrUpdate();
-                              },
-                              child: Text(appLocalizations.add),
-                            ),
+                      child: ElasticButton(
+                        child: selectedRules.isNotEmpty
+                            ? FilledButton(
+                                onPressed: () {
+                                  _handleSelectAll();
+                                },
+                                child: Text(appLocalizations.selectAll),
+                              )
+                            : FilledButton.tonal(
+                                onPressed: () {
+                                  _handleAddOrUpdate();
+                                },
+                                child: Text(appLocalizations.add),
+                              ),
+                      ),
                     ),
                   ],
                 ),
@@ -329,7 +333,7 @@ class _EditGlobalAddedRulesState extends ConsumerState<_EditGlobalAddedRules> {
           child: ListView.builder(
             padding: const EdgeInsets.all(
               16,
-            ).copyWith(top: context.appBarInset + 16),
+            ).copyWith(top: context.contentTopPadding),
             itemExtent: ruleItemHeight,
             itemBuilder: (context, index) {
               final rule = rules[index];

@@ -212,7 +212,7 @@ class _OverwriteSelectionSheetState<T>
               controller: _controller,
               slivers: [
                 SliverToBoxAdapter(
-                  child: SizedBox(height: context.sheetTopPadding),
+                  child: SizedBox(height: context.contentTopPadding),
                 ),
                 for (final (sectionIndex, section) in sections.indexed) ...[
                   if (section.label != null) ...[

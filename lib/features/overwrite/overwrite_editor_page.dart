@@ -211,7 +211,7 @@ class _OverwriteEditorPageState<T, K>
   }
 
   EdgeInsets _listPadding(BuildContext context) =>
-      EdgeInsets.fromLTRB(16, context.appBarInset + 12, 16, 24);
+      EdgeInsets.fromLTRB(16, context.contentTopPadding, 16, 24);
 
   Widget _buildReorderableList(
     BuildContext context,

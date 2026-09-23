@@ -373,7 +373,7 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
       child: ReorderableListView.builder(
         padding: const EdgeInsets.all(
           16,
-        ).copyWith(top: context.appBarInset + 16),
+        ).copyWith(top: context.contentTopPadding),
         buildDefaultDragHandles: false,
         itemCount: providers.length,
         itemBuilder: (_, index) {
@@ -618,17 +618,21 @@ class _ProviderDialogState extends State<_ProviderDialog> {
               ListItem(
                 padding: EdgeInsets.zero,
                 title: Text(appLocalizations.format),
-                trailing: FilledButton(
-                  onPressed: _handleSelectFormat,
-                  child: Text(_draft.format!.name),
+                trailing: ElasticButton(
+                  child: FilledButton(
+                    onPressed: _handleSelectFormat,
+                    child: Text(_draft.format!.name),
+                  ),
                 ),
               ),
               ListItem(
                 padding: EdgeInsets.zero,
                 title: Text(appLocalizations.behavior),
-                trailing: FilledButton(
-                  onPressed: _handleSelectBehavior,
-                  child: Text(_draft.behavior!.name),
+                trailing: ElasticButton(
+                  child: FilledButton(
+                    onPressed: _handleSelectBehavior,
+                    child: Text(_draft.behavior!.name),
+                  ),
                 ),
               ),
             ],

@@ -365,4 +365,68 @@ void main() {
     expect(labels.first.style!.fontSize, closeTo(10, 0.001));
     expect(tester.widget<Tooltip>(tooltips).message, 'Configuration');
   });
+
+  testWidgets(
+    'an elastic button leaves a press to the swell and keeps the icon theme',
+    (tester) async {
+      await tester.pumpWidget(
+        TestApp(
+          child: Scaffold(
+            body: IconTheme.merge(
+              data: const IconThemeData(fill: 1),
+              child: Row(
+                children: [
+                  ElasticButton(
+                    child: IconButton.filled(
+                      tooltip: _addLabel,
+                      onPressed: () {},
+                      icon: const GlyphIcon(AppGlyphs.add),
+                    ),
+                  ),
+                  ElasticButton(
+                    child: FilledButton(
+                      onPressed: () {},
+                      child: const Text(_addLabel),
+                    ),
+                  ),
+                  ElasticButton(
+                    child: FloatingActionButton(
+                      heroTag: null,
+                      onPressed: () {},
+                      child: const GlyphIcon(AppGlyphs.copy),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      InkWell inkOf(Type button) => tester.widget<InkWell>(
+        find.descendant(
+          of: find.byType(button),
+          matching: find.byType(InkWell),
+        ),
+      );
+      for (final button in [IconButton, FilledButton]) {
+        final ink = inkOf(button);
+        expect(ink.splashFactory, NoSplash.splashFactory);
+        expect(
+          ink.overlayColor!.resolve({WidgetState.pressed}),
+          Colors.transparent,
+        );
+      }
+      final fabInk = find.descendant(
+        of: find.byType(FloatingActionButton),
+        matching: find.byType(InkWell),
+      );
+      final fabTheme = Theme.of(tester.element(fabInk));
+      expect(fabTheme.splashFactory, NoSplash.splashFactory);
+      expect(fabTheme.highlightColor, Colors.transparent);
+      expect(
+        IconTheme.of(tester.element(find.byType(GlyphIcon).first)).fill,
+        1,
+      );
+    },
+  );
 }

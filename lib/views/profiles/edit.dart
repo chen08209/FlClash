@@ -279,7 +279,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
               child: Builder(
                 builder: (context) => ListView.separated(
                   padding: kMaterialListPadding.copyWith(
-                    top: context.sheetTopPadding + 16,
+                    top: context.contentTopPadding,
                     bottom: BottomInsetScope.of(context) + 16,
                   ),
                   itemBuilder: (_, index) {

@@ -192,7 +192,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
       return;
     }
     if (from != null) {
-      _flights[key] = null;
+      _holdSlot(key);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _revealSlot(key);
         _fly(key, from);
@@ -236,6 +236,11 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
       curve: Curves.easeOutCubic,
       alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
     );
+  }
+
+  void _holdSlot(Key key) {
+    _flights[key]?.dispose();
+    _flights[key] = null;
   }
 
   Future<void> _fly(Key key, Rect from) async {
@@ -314,7 +319,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
       return;
     }
     _dragKey = null;
-    _flights[key] = null;
+    _holdSlot(key);
     _fly(key, details.offset & _dragSize.value);
     if (_sameKeys(_items, widget.children)) {
       setState(() {});
@@ -533,7 +538,7 @@ class _DeletableContainer extends StatelessWidget {
           top: -8,
           right: -8,
           child: DeferPointer(
-            child: ElasticPress(
+            child: ElasticButton(
               child: SizedBox(
                 width: 24,
                 height: 24,
@@ -541,7 +546,6 @@ class _DeletableContainer extends StatelessWidget {
                   tooltip: context.appLocalizations.remove,
                   iconSize: 20,
                   padding: const EdgeInsets.all(2),
-                  style: ElasticPress.buttonStyle,
                   onPressed: onDelete,
                   icon: const GlyphIcon(AppGlyphs.close, fill: 1),
                 ),

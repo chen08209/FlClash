@@ -66,7 +66,7 @@ class AddProfileView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     return ListView(
-      padding: EdgeInsets.only(top: context.sheetTopPadding, bottom: 16),
+      padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 16),
       children: [
         ListItem(
           leading: const GlyphIcon(AppGlyphs.qrCode),

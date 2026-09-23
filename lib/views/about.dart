@@ -115,6 +115,7 @@ class AboutView extends ConsumerWidget {
     final appLocalizations = context.appLocalizations;
     final items = [
       ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -126,7 +127,7 @@ class AboutView extends ConsumerWidget {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         child: Image.asset(
                           'assets/images/icon.png',
                           width: 64,
@@ -177,7 +178,7 @@ class AboutView extends ConsumerWidget {
       title: appLocalizations.about,
       body: Padding(
         padding: const EdgeInsets.only(bottom: 16),
-        child: generateListView(items, topPadding: context.appBarInset + 16),
+        child: generateListView(items, topPadding: context.contentTopPadding),
       ),
     );
   }

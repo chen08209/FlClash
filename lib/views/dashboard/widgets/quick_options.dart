@@ -52,7 +52,7 @@ class _QuickSwitchCard extends StatelessWidget {
                 body: Builder(
                   builder: (context) => generateListView(
                     generateSection(items: items),
-                    topPadding: context.sheetTopPadding,
+                    topPadding: context.contentTopPadding,
                   ),
                 ),
                 title: label,

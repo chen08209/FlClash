@@ -8,6 +8,7 @@ import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/state.dart';
+import 'package:fl_clash/widgets/navigation_dock.dart';
 import 'package:fl_clash/widgets/theme.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -493,12 +494,14 @@ class _MessageContent extends StatelessWidget {
         if (actionState != null) ...[
           const SizedBox(width: 16),
           CommonMinFilledButtonTheme(
-            child: FilledButton.tonal(
-              onPressed: () {
-                onDismiss(message.id);
-                actionState.action();
-              },
-              child: Text(actionState.actionText),
+            child: ElasticButton(
+              child: FilledButton.tonal(
+                onPressed: () {
+                  onDismiss(message.id);
+                  actionState.action();
+                },
+                child: Text(actionState.actionText),
+              ),
             ),
           ),
         ],

@@ -161,7 +161,7 @@ void main() {
         body: SizedBox(),
       ),
     );
-    final group = find.byType(AppBarButtonGroup);
+    final group = find.byType(TonalButtonGroup);
     final leading = tester.getRect(_container(find.byType(BackButton)));
 
     expect(group, findsOneWidget);
@@ -196,7 +196,7 @@ void main() {
     final first = find.widgetWithGlyph(IconButton, AppGlyphs.sync);
     final second = find.widgetWithGlyph(IconButton, AppGlyphs.sort);
 
-    expect(find.byType(AppBarButtonGroup), findsNothing);
+    expect(find.byType(TonalButtonGroup), findsNothing);
     for (final button in [first, second, find.byType(BackButton)]) {
       expect(
         find.ancestor(of: button, matching: find.byType(ElasticPress)),

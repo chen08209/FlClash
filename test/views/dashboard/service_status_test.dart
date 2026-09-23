@@ -369,7 +369,7 @@ void main() {
           of: find.byTooltip(tooltip),
           matching: find.descendant(
             of: find.byType(AppBar),
-            matching: find.byType(AppBarButtonGroup),
+            matching: find.byType(TonalButtonGroup),
           ),
         ),
         findsOneWidget,

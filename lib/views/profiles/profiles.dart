@@ -124,10 +124,12 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
               label: appLocalizations.nullTip(appLocalizations.profiles),
               description: appLocalizations.nullProfileDesc,
               illustration: NullStatusIllustration.profile,
-              action: FilledButton.tonalIcon(
-                onPressed: _handleShowAddExtendPage,
-                icon: const GlyphIcon(AppGlyphs.add, fill: 1),
-                label: Text(appLocalizations.addProfile),
+              action: ElasticButton(
+                child: FilledButton.tonalIcon(
+                  onPressed: _handleShowAddExtendPage,
+                  icon: const GlyphIcon(AppGlyphs.add, fill: 1),
+                  label: Text(appLocalizations.addProfile),
+                ),
               ),
             ),
             child: _ProfilesGrid(
@@ -169,7 +171,7 @@ class _ProfilesGrid extends ConsumerWidget {
           padding: EdgeInsets.only(
             left: _horizontalPadding,
             right: _horizontalPadding,
-            top: context.appBarInset + 16,
+            top: context.contentTopPadding,
             bottom: 16 + BottomInsetScope.of(context),
           ),
           crossAxisCount: columns,
@@ -551,7 +553,7 @@ class _ReorderableProfilesSheetState
           buildDefaultDragHandles: false,
           padding: const EdgeInsets.symmetric(
             horizontal: 16,
-          ).copyWith(top: context.sheetTopPadding),
+          ).copyWith(top: context.contentTopPadding),
           proxyDecorator: (child, index, animation) {
             return commonProxyDecorator(_buildItem(index), index, animation);
           },

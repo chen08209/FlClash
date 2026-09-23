@@ -148,7 +148,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
             child: TrackerInfoAnimatedList(
               controller: _scrollController,
               padding: EdgeInsets.only(
-                top: context.sheetTopPadding,
+                top: context.contentTopPadding,
                 bottom: 16 + BottomInsetScope.of(context),
               ),
               trackerInfos: connections,

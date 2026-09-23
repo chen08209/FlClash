@@ -300,29 +300,35 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
           space: 8,
           actions: [
             if (_removablePrimaryColor == null)
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
+              ElasticButton(
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  onPressed: _handleChangeSchemeVariant,
+                  child: Text(schemeVariant.label),
                 ),
-                onPressed: _handleChangeSchemeVariant,
-                child: Text(schemeVariant.label),
               ),
             if (_removablePrimaryColor != null)
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
+              ElasticButton(
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  onPressed: _clearRemovable,
+                  child: Text(appLocalizations.cancel),
                 ),
-                onPressed: _clearRemovable,
-                child: Text(appLocalizations.cancel),
               ),
             if (_removablePrimaryColor == null && !isEquals)
-              IconButton.filledTonal(
-                tooltip: context.appLocalizations.reset,
-                iconSize: 20,
-                padding: const EdgeInsets.all(4),
-                visualDensity: VisualDensity.compact,
-                onPressed: _handleReset,
-                icon: const GlyphIcon(AppGlyphs.reset, fill: 1),
+              ElasticButton(
+                child: IconButton.filledTonal(
+                  tooltip: context.appLocalizations.reset,
+                  iconSize: 20,
+                  padding: const EdgeInsets.all(4),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: _handleReset,
+                  icon: const GlyphIcon(AppGlyphs.reset, fill: 1),
+                ),
               ),
           ],
           child: Container(
@@ -451,15 +457,17 @@ class _PrimaryColorTile extends StatelessWidget {
             Container(
               color: Colors.white.opacity0,
               padding: const EdgeInsets.all(8),
-              child: IconButton.filledTonal(
-                tooltip: context.appLocalizations.delete,
-                onPressed: onDelete,
-                padding: const EdgeInsets.all(14),
-                iconSize: 26,
-                icon: GlyphIcon(
-                  color: context.colorScheme.primary,
-                  AppGlyphs.delete,
-                  fill: 1,
+              child: ElasticButton(
+                child: IconButton.filledTonal(
+                  tooltip: context.appLocalizations.delete,
+                  onPressed: onDelete,
+                  padding: const EdgeInsets.all(14),
+                  iconSize: 26,
+                  icon: GlyphIcon(
+                    color: context.colorScheme.primary,
+                    AppGlyphs.delete,
+                    fill: 1,
+                  ),
                 ),
               ),
             ),
@@ -481,14 +489,16 @@ class _AddPrimaryColorTile extends StatelessWidget {
       width: width,
       height: width,
       padding: const EdgeInsets.all(4),
-      child: IconButton.filledTonal(
-        tooltip: context.appLocalizations.add,
-        onPressed: onPressed,
-        iconSize: 28,
-        icon: GlyphIcon(
-          color: context.colorScheme.primary,
-          AppGlyphs.add,
-          fill: 1,
+      child: ElasticButton(
+        child: IconButton.filledTonal(
+          tooltip: context.appLocalizations.add,
+          onPressed: onPressed,
+          iconSize: 28,
+          icon: GlyphIcon(
+            color: context.colorScheme.primary,
+            AppGlyphs.add,
+            fill: 1,
+          ),
         ),
       ),
     );

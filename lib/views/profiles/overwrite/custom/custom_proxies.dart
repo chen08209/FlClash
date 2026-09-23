@@ -435,7 +435,7 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
         child: ListView(
           padding: const EdgeInsets.symmetric(
             horizontal: 16,
-          ).copyWith(bottom: 20, top: context.sheetTopPadding),
+          ).copyWith(bottom: 20, top: context.contentTopPadding),
           children: [
             OverwriteIssuesBanner(issues: issues),
             generateSectionV3(

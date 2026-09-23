@@ -156,7 +156,7 @@ class _IconEditViewState extends ConsumerState<IconEditView>
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(height: context.sheetTopPadding),
+                SizedBox(height: context.contentTopPadding),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _IconSrcRow(

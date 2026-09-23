@@ -108,7 +108,9 @@ class _ProvidersViewState extends ConsumerState<ProvidersView> {
       ],
       body: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(child: SizedBox(height: context.sheetTopPadding)),
+          SliverToBoxAdapter(
+            child: SizedBox(height: context.contentTopPadding),
+          ),
           ..._buildSection(
             title: appLocalizations.proxies,
             providers: proxyProviders,

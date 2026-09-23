@@ -273,15 +273,17 @@ class _DockTrailing extends StatelessWidget {
             ? const SizedBox.shrink()
             : Padding(
                 padding: const EdgeInsetsDirectional.only(start: _fabGap),
-                child: ElasticPress(
+                child: ElasticButton(
                   child: DecoratedBox(
                     decoration: ShapeDecoration(
                       shape: AppShape.full,
                       shadows: _dockShadows(theme.colorScheme),
                     ),
-                    child: Theme(
-                      data: _dockedTheme(theme),
-                      child: _DockedMarker(child: child),
+                    child: Builder(
+                      builder: (context) => Theme(
+                        data: _dockedTheme(Theme.of(context)),
+                        child: _DockedMarker(child: child),
+                      ),
                     ),
                   ),
                 ),
@@ -377,6 +379,47 @@ class _ElasticPressState extends State<ElasticPress>
           child: child,
         ),
         child: widget.child,
+      ),
+    );
+  }
+}
+
+/// Leaves a press on the filled button or FAB inside to [ElasticPress]; one
+/// whose style sets a foreground color merges [ElasticPress.buttonStyle].
+class ElasticButton extends StatelessWidget {
+  const ElasticButton({super.key, this.enabled = true, required this.child});
+
+  final bool enabled;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ElasticPress(
+      enabled: enabled,
+      child: Theme(
+        data: theme.copyWith(
+          splashFactory: NoSplash.splashFactory,
+          highlightColor: Colors.transparent,
+        ),
+        child: IconTheme(
+          data: IconTheme.of(context),
+          child: IconButtonTheme(
+            data: IconButtonThemeData(
+              style: ElasticPress.buttonStyle.merge(
+                IconButtonTheme.of(context).style,
+              ),
+            ),
+            child: FilledButtonTheme(
+              data: FilledButtonThemeData(
+                style: ElasticPress.buttonStyle.merge(
+                  FilledButtonTheme.of(context).style,
+                ),
+              ),
+              child: child,
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -308,7 +308,7 @@ class ProxiesSetting extends ConsumerWidget {
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: ref.sheetHeight(context, 0.7)),
       child: SingleChildScrollView(
-        padding: EdgeInsets.only(top: context.sheetTopPadding, bottom: 32),
+        padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

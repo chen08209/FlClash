@@ -171,7 +171,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           child: Builder(
             builder: (context) => SingleChildScrollView(
               padding: const EdgeInsets.all(16).copyWith(
-                top: context.appBarInset + 16,
+                top: context.contentTopPadding,
                 bottom: 16 + BottomInsetScope.of(context),
               ),
               child: Align(
@@ -226,7 +226,7 @@ class _AddDashboardWidgetModal extends StatelessWidget {
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(
           16,
-        ).copyWith(top: context.sheetTopPadding),
+        ).copyWith(top: context.contentTopPadding),
         child: Grid(
           crossAxisCount: 8,
           crossAxisSpacing: 16,
@@ -275,7 +275,7 @@ class _AddedContainer extends StatelessWidget {
           top: -8,
           right: -8,
           child: DeferPointer(
-            child: ElasticPress(
+            child: ElasticButton(
               child: SizedBox(
                 width: 24,
                 height: 24,
@@ -283,7 +283,6 @@ class _AddedContainer extends StatelessWidget {
                   tooltip: context.appLocalizations.add,
                   iconSize: 20,
                   padding: const EdgeInsets.all(2),
-                  style: ElasticPress.buttonStyle,
                   onPressed: () => _handleAdd(context),
                   icon: const GlyphIcon(AppGlyphs.add, fill: 1),
                 ),

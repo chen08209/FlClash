@@ -777,7 +777,7 @@ void main() {
         );
         expect(
           container.read(overlayTopOffsetProvider),
-          kToolbarHeight + (shows ? kHeaderHeight : 0),
+          pageToolbarHeight + (shows ? kHeaderHeight : 0),
           reason: 'view size $viewSize',
         );
       }

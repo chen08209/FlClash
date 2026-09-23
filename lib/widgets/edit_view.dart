@@ -167,7 +167,7 @@ abstract class _EditViewState<W extends ConsumerStatefulWidget, T>
           child: ReorderableListView.builder(
             padding: EdgeInsets.only(
               bottom: 16 + 64,
-              top: context.appBarInset + 16,
+              top: context.contentTopPadding,
               left: 16,
               right: 16,
             ),

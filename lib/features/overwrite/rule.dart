@@ -344,22 +344,24 @@ class _AddOrEditRuleDialogState extends State<AddOrEditRuleDialog> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  FilledButton.tonal(
-                    onPressed: () async {
-                      _ruleAction =
-                          await dialogs.showCommonDialog<RuleAction>(
-                            context: context,
-                            child: OptionsDialog<RuleAction>(
-                              title: appLocalizations.ruleName,
-                              options: RuleAction.addedRuleActions,
-                              textBuilder: (item) => item.value,
-                              value: _ruleAction,
-                            ),
-                          ) ??
-                          _ruleAction;
-                      setState(() {});
-                    },
-                    child: Text(_ruleAction.value),
+                  ElasticButton(
+                    child: FilledButton.tonal(
+                      onPressed: () async {
+                        _ruleAction =
+                            await dialogs.showCommonDialog<RuleAction>(
+                              context: context,
+                              child: OptionsDialog<RuleAction>(
+                                title: appLocalizations.ruleName,
+                                options: RuleAction.addedRuleActions,
+                                textBuilder: (item) => item.value,
+                                value: _ruleAction,
+                              ),
+                            ) ??
+                            _ruleAction;
+                        setState(() {});
+                      },
+                      child: Text(_ruleAction.value),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   _RuleContentField(

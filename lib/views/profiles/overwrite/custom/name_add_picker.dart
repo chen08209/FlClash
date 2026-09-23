@@ -107,10 +107,12 @@ class _NameAddPickerState extends ConsumerState<NameAddPicker>
             ),
             subtitle: subtitle == null ? null : Text(subtitle),
             trailing: CommonMinIconButtonTheme(
-              child: IconButton.filledTonal(
-                tooltip: context.appLocalizations.add,
-                onPressed: onAdd,
-                icon: const GlyphIcon(AppGlyphs.add, size: 18, fill: 1),
+              child: ElasticButton(
+                child: IconButton.filledTonal(
+                  tooltip: context.appLocalizations.add,
+                  onPressed: onAdd,
+                  icon: const GlyphIcon(AppGlyphs.add, size: 18, fill: 1),
+                ),
               ),
             ),
           ),
@@ -190,7 +192,7 @@ class _NameAddPickerState extends ConsumerState<NameAddPicker>
             child: CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(
-                  child: SizedBox(height: context.sheetTopPadding),
+                  child: SizedBox(height: context.contentTopPadding),
                 ),
                 for (var i = 0; i < sections.length; i++)
                   ..._buildSection(sections[i], i == sections.length - 1),

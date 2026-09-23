@@ -97,7 +97,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
                     physics: const NextClampingScrollPhysics(),
                     controller: _scrollController,
                     padding: EdgeInsets.only(
-                      top: context.sheetTopPadding,
+                      top: context.contentTopPadding,
                       bottom: 16 + BottomInsetScope.of(context),
                     ),
                     trackerInfos: requests,

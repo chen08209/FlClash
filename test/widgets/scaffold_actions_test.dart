@@ -171,14 +171,14 @@ void main() {
     expect(
       find.ancestor(
         of: find.byTooltip('Search'),
-        matching: find.byType(AppBarButtonGroup),
+        matching: find.byType(TonalButtonGroup),
       ),
       findsNothing,
     );
     expect(
       find.ancestor(
         of: find.byTooltip('Delete'),
-        matching: find.byType(AppBarButtonGroup),
+        matching: find.byType(TonalButtonGroup),
       ),
       findsOneWidget,
     );

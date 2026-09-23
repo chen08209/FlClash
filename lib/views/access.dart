@@ -345,10 +345,12 @@ class _AccessViewState extends ConsumerState<AccessView> {
       label: appLocalizations.installedAppsPermissionRequired,
       description: appLocalizations.installedAppsPermissionDesc,
       illustration: NullStatusIllustration.permission,
-      action: FilledButton.tonalIcon(
-        onPressed: _handleGrantInstalledAppsPermission,
-        icon: const GlyphIcon(AppGlyphs.lockOpen, fill: 1),
-        label: Text(appLocalizations.authorize),
+      action: ElasticButton(
+        child: FilledButton.tonalIcon(
+          onPressed: _handleGrantInstalledAppsPermission,
+          icon: const GlyphIcon(AppGlyphs.lockOpen, fill: 1),
+          label: Text(appLocalizations.authorize),
+        ),
       ),
     );
   }
@@ -368,9 +370,11 @@ class _AccessViewState extends ConsumerState<AccessView> {
         ),
         actions: [
           CommonMinFilledButtonTheme(
-            child: FilledButton.tonal(
-              onPressed: _handleToggle,
-              child: Text(appLocalizations.turnOn),
+            child: ElasticButton(
+              child: FilledButton.tonal(
+                onPressed: _handleToggle,
+                child: Text(appLocalizations.turnOn),
+              ),
             ),
           ),
         ],
@@ -715,7 +719,7 @@ class _AccessControlPanelState extends ConsumerState<AccessControlPanel> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: EdgeInsets.only(top: context.sheetTopPadding, bottom: 32),
+      padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

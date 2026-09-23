@@ -92,7 +92,7 @@ class DeveloperView extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(
           horizontal: 16,
-        ).copyWith(top: context.appBarInset + 16, bottom: 16),
+        ).copyWith(top: context.contentTopPadding, bottom: 16),
         children: [
           generateSectionV3(
             items: [

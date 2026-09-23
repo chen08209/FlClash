@@ -346,7 +346,7 @@ class NetworkListView extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(
         horizontal: 16,
-      ).copyWith(top: context.appBarInset + 16, bottom: 16),
+      ).copyWith(top: context.contentTopPadding, bottom: 16),
       children: [
         if (system.isAndroid) generateSectionV3(items: const [VPNItem()]),
         if (system.isAndroid)

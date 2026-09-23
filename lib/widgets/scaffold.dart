@@ -466,7 +466,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
         !popAsSuffix &&
         shown.length + (overflow == null ? 0 : 1) == 2) {
       return genActions([
-        AppBarButtonGroup(
+        TonalButtonGroup(
           children: [
             for (final data in shown) AppBarActionButton(data: data),
             ?overflow,
@@ -481,7 +481,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
           child: AppBarActionButton(data: data),
         ),
       if (selection.isNotEmpty)
-        AppBarButtonGroup(
+        TonalButtonGroup(
           children: [
             for (final data in selection) AppBarActionButton(data: data),
           ],
@@ -499,7 +499,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
   }
 
   Widget _buildAppBarWrap(Widget child) {
-    final appBar = _BarButtonTheme(
+    final appBar = TonalButtonTheme(
       child: _isSearch ? _buildSearchingAppBarTheme(child) : child,
     );
     if (_isEdit || _isSearch) {
@@ -517,13 +517,14 @@ class CommonScaffoldState extends State<CommonScaffold> {
     final ownBar = widget.appBar;
     return PreferredSize(
       preferredSize: Size.fromHeight(
-        isBottomSheet ? sheetToolbarHeight : kToolbarHeight,
+        isBottomSheet ? sheetToolbarHeight : pageToolbarHeight,
       ),
       child: Stack(
         alignment: Alignment.bottomCenter,
+        clipBehavior: Clip.none,
         children: [
           if (ownBar != null)
-            _BarButtonTheme(child: ownBar)
+            TonalButtonTheme(child: ownBar)
           else
             ValueListenableBuilder<AppBarState>(
               valueListenable: _appBarState,
@@ -557,8 +558,8 @@ class CommonScaffoldState extends State<CommonScaffold> {
                 return FloatingHeader(
                   backgroundColor:
                       widget.backgroundColor ?? context.colorScheme.surface,
-                  fadeStart:
-                      (top + kToolbarHeight / 2) / (top + kToolbarHeight),
+                  fadeStart: top / (top + pageToolbarHeight),
+                  overhang: _headerOverhang,
                   child: appBar,
                 );
               },
@@ -975,102 +976,14 @@ class AppBarActionButton extends StatelessWidget {
       tooltip: data.tooltip,
       onPressed: data.isLoading ? null : data.onPressed,
       icon: data.isLoading
-          ? const SizedBox.square(
-              dimension: _barIconSize,
-              child: Padding(
+          ? SizedBox.square(
+              dimension: TonalButtonSize.bar.icon,
+              child: const Padding(
                 padding: EdgeInsets.all(2),
                 child: CommonCircleLoading(),
               ),
             )
           : GlyphIcon(data.glyph),
-    );
-  }
-}
-
-/// Two app bar buttons sharing one filled pill, which answers a press on
-/// either as a single button does.
-class AppBarButtonGroup extends StatelessWidget {
-  const AppBarButtonGroup({super.key, required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return ElasticPress(
-      child: DecoratedBox(
-        decoration: ShapeDecoration(
-          color: context.colorScheme.secondaryContainer,
-          shape: AppShape.full,
-        ),
-        child: _BarButtonTheme(
-          grouped: true,
-          child: Row(mainAxisSize: MainAxisSize.min, children: children),
-        ),
-      ),
-    );
-  }
-}
-
-/// Fills every button in an app bar and, as iOS does, leaves a press to the
-/// swell of [ElasticPress]; inside an [AppBarButtonGroup] the group is filled.
-class _BarButtonTheme extends StatelessWidget {
-  const _BarButtonTheme({this.grouped = false, required this.child});
-
-  final bool grouped;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final fill = grouped ? Colors.transparent : colorScheme.secondaryContainer;
-    final foreground = colorScheme.onSecondaryContainer;
-    final disabledForeground = foreground.withValues(alpha: 0.38);
-    ButtonStyle feedback(Color? tint) => ButtonStyle(
-      splashFactory: NoSplash.splashFactory,
-      overlayColor: WidgetStateProperty<Color?>.fromMap({
-        if (tint != null) WidgetState.focused: tint.withValues(alpha: 0.1),
-        WidgetState.pressed: Colors.transparent,
-        if (tint != null) WidgetState.hovered: tint.withValues(alpha: 0.08),
-      }),
-    );
-    return IconButtonTheme(
-      data: IconButtonThemeData(
-        style: feedback(foreground).merge(
-          IconButton.styleFrom(
-            backgroundColor: fill,
-            foregroundColor: foreground,
-            disabledBackgroundColor: fill,
-            disabledForegroundColor: disabledForeground,
-            fixedSize: const Size.square(_barButtonSize),
-            minimumSize: const Size.square(_barButtonSize),
-            padding: EdgeInsets.zero,
-            iconSize: _barIconSize,
-            visualDensity: VisualDensity.standard,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-        ),
-      ),
-      child: FilledButtonTheme(
-        data: FilledButtonThemeData(
-          style: feedback(grouped ? foreground : null).merge(
-            FilledButton.styleFrom(
-              backgroundColor: grouped ? fill : null,
-              foregroundColor: grouped ? foreground : null,
-              disabledBackgroundColor: grouped ? fill : null,
-              disabledForegroundColor: grouped ? disabledForeground : null,
-              minimumSize: const Size.square(_barButtonSize),
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              shape: AppShape.full,
-              visualDensity: VisualDensity.standard,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-          ),
-        ),
-        child: IconTheme.merge(
-          data: const IconThemeData(fill: 1),
-          child: child,
-        ),
-      ),
     );
   }
 }
@@ -1140,9 +1053,8 @@ class _SheetPop {
 
 const double appBarActionSpace = 4;
 
-const double _barButtonSize = 35;
-const double _barIconSize = 20;
 const double _barButtonGap = 8;
+const double _headerOverhang = 16;
 const double _iconButtonTapPadding = 4;
 
 /// Where a filled button sits from the app bar edge, leading included: the
@@ -1152,7 +1064,7 @@ double appBarActionInset(bool compact) => compact ? 16 : 20;
 double _iconActionInset(bool isMobileView) => isMobileView ? 4 : 8;
 
 double appBarLeadingWidth(bool compact) =>
-    _barButtonSize + appBarActionInset(compact) * 2;
+    TonalButtonSize.bar.button + appBarActionInset(compact) * 2;
 
 /// A phone view or a sheet: an iOS compact width.
 bool _isCompactBar(BuildContext context, bool isMobileView) {
@@ -1218,6 +1130,7 @@ class AppBarInsetScope extends ConsumerWidget {
       data: theme.copyWith(
         appBarTheme: theme.appBarTheme.copyWith(
           leadingWidth: appBarLeadingWidth(compact),
+          toolbarHeight: pageToolbarHeight,
         ),
       ),
       child: child,

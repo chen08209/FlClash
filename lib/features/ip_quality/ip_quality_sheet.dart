@@ -83,7 +83,7 @@ class _IpQualityDetail extends ConsumerWidget {
       shrinkWrap: true,
       padding: const EdgeInsets.symmetric(
         horizontal: 16,
-      ).copyWith(bottom: 20, top: context.sheetTopPadding),
+      ).copyWith(bottom: 20, top: context.contentTopPadding),
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(_tipInset, 8, _tipInset, 0),

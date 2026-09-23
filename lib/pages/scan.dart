@@ -8,6 +8,7 @@ import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/activate_box.dart';
+import 'package:fl_clash/widgets/navigation_dock.dart';
 import 'package:fl_clash/widgets/null_status.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/services.dart';
@@ -506,10 +507,12 @@ class _ScannerError extends StatelessWidget {
         label: appLocalizations.cameraPermissionRequired,
         description: appLocalizations.cameraPermissionDesc,
         illustration: NullStatusIllustration.permission,
-        action: FilledButton.tonalIcon(
-          onPressed: onOpenSettings,
-          icon: const GlyphIcon(AppGlyphs.settings, fill: 1),
-          label: Text(appLocalizations.settings),
+        action: ElasticButton(
+          child: FilledButton.tonalIcon(
+            onPressed: onOpenSettings,
+            icon: const GlyphIcon(AppGlyphs.settings, fill: 1),
+            label: Text(appLocalizations.settings),
+          ),
         ),
       ),
       MobileScannerErrorCode.unsupported => NullStatus(
@@ -519,10 +522,12 @@ class _ScannerError extends StatelessWidget {
       _ => NullStatus(
         label: appLocalizations.cameraUnavailable,
         illustration: NullStatusIllustration.camera,
-        action: FilledButton.tonalIcon(
-          onPressed: onRetry,
-          icon: const GlyphIcon(AppGlyphs.refresh, fill: 1),
-          label: Text(appLocalizations.retry),
+        action: ElasticButton(
+          child: FilledButton.tonalIcon(
+            onPressed: onRetry,
+            icon: const GlyphIcon(AppGlyphs.refresh, fill: 1),
+            label: Text(appLocalizations.retry),
+          ),
         ),
       ),
     };
@@ -564,18 +569,20 @@ class _TorchButton extends StatelessWidget {
           child: AnimatedOpacity(
             opacity: available ? 1 : 0,
             duration: kThemeAnimationDuration,
-            child: IconButton.filled(
-              tooltip: context.appLocalizations.torch,
-              isSelected: lit,
-              iconSize: 32,
-              style: IconButton.styleFrom(fixedSize: const Size.square(64)),
-              onPressed: controller.toggleTorch,
-              icon: const GlyphIcon(AppGlyphs.torchOff, fill: 1),
-              selectedIcon: GlyphIcon(
-                torchState == TorchState.auto
-                    ? AppGlyphs.torchAuto
-                    : AppGlyphs.torch,
-                fill: 1,
+            child: ElasticButton(
+              child: IconButton.filled(
+                tooltip: context.appLocalizations.torch,
+                isSelected: lit,
+                iconSize: 32,
+                style: IconButton.styleFrom(fixedSize: const Size.square(64)),
+                onPressed: controller.toggleTorch,
+                icon: const GlyphIcon(AppGlyphs.torchOff, fill: 1),
+                selectedIcon: GlyphIcon(
+                  torchState == TorchState.auto
+                      ? AppGlyphs.torchAuto
+                      : AppGlyphs.torch,
+                  fill: 1,
+                ),
               ),
             ),
           ),

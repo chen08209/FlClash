@@ -57,11 +57,13 @@ class OverwriteDismissItem extends ConsumerWidget {
             subtitle: subtitle != null ? TooltipLabel(subtitle!) : null,
             contentPadding: const EdgeInsets.only(left: 16, right: 0),
             leading: CommonMinIconButtonTheme(
-              child: IconButton.filledTonal(
-                tooltip: context.appLocalizations.remove,
-                onPressed: onRemove,
-                icon: const GlyphIcon(AppGlyphs.remove, size: 18, fill: 1),
-                padding: EdgeInsets.zero,
+              child: ElasticButton(
+                child: IconButton.filledTonal(
+                  tooltip: context.appLocalizations.remove,
+                  onPressed: onRemove,
+                  icon: const GlyphIcon(AppGlyphs.remove, size: 18, fill: 1),
+                  padding: EdgeInsets.zero,
+                ),
               ),
             ),
             trailing: Row(

@@ -118,8 +118,11 @@ void main() {
 
     final cover = tester.widget<DecoratedBox>(
       find
-          .ancestor(
-            of: find.byType(SheetToolBar),
+          .descendant(
+            of: find.ancestor(
+              of: find.byType(SheetToolBar),
+              matching: find.byType(FloatingHeader),
+            ),
             matching: find.byType(DecoratedBox),
           )
           .first,

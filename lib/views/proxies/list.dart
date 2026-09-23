@@ -15,7 +15,6 @@ import 'common.dart';
 
 typedef GroupNameProxiesMap = Map<String, List<Proxy>>;
 
-const _listTopGap = 8.0;
 const _pinnedHeaderGap = 8.0;
 const _enterStaggerLimit = 8;
 const _enterStaggerStep = Duration(milliseconds: 20);
@@ -79,7 +78,7 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
   }) {
     final offsets = <double>[];
     final rowExtent = getItemHeight(cardType) + 8;
-    var currentOffset = _listTopGap;
+    var currentOffset = 0.0;
     for (final group in groups) {
       offsets.add(currentOffset);
       currentOffset += listHeaderHeight + 8;
@@ -334,9 +333,6 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
                           child: SizedBox(height: barInset + _pinnedHeaderGap),
                         ),
                       ),
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: _listTopGap),
-                      ),
                       for (final group in state.groups)
                         _buildGroup(
                           context,
@@ -555,10 +551,6 @@ class _GroupActions extends StatelessWidget {
     required this.onToggle,
   });
 
-  static final _style = ElasticPress.buttonStyle.copyWith(
-    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-  );
-
   final bool isExpand;
   final String groupType;
   final VoidCallback onScrollToSelected;
@@ -567,51 +559,41 @@ class _GroupActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        if (isExpand) ...[
-          ElasticPress(
-            child: IconButton.filledTonal(
-              tooltip: context.appLocalizations.scrollToSelected,
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.all(2),
-              onPressed: onScrollToSelected,
-              style: _style,
-              iconSize: 19,
-              icon: const GlyphIcon(AppGlyphs.locate, fill: 1),
-            ),
-          ),
+    return TonalButtonTheme(
+      size: TonalButtonSize.compact,
+      child: Row(
+        children: [
+          if (isExpand)
+            TonalButtonGroup(
+              size: TonalButtonSize.compact,
+              children: [
+                IconButton(
+                  tooltip: context.appLocalizations.scrollToSelected,
+                  onPressed: onScrollToSelected,
+                  iconSize: 19,
+                  icon: const GlyphIcon(AppGlyphs.locate),
+                ),
+                IconButton(
+                  tooltip: context.appLocalizations.delayTest,
+                  onPressed: onDelayTest,
+                  icon: const GlyphIcon(AppGlyphs.bolt),
+                ),
+              ],
+            )
+          else
+            Text(groupType, style: context.textTheme.labelMedium?.toLight),
           const SizedBox(width: 6),
           ElasticPress(
-            child: IconButton.filledTonal(
-              tooltip: context.appLocalizations.delayTest,
-              iconSize: 20,
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.all(2),
-              onPressed: onDelayTest,
-              style: _style,
-              icon: const GlyphIcon(AppGlyphs.bolt, fill: 1),
+            child: IconButton(
+              tooltip: isExpand
+                  ? context.appLocalizations.showLess
+                  : context.appLocalizations.showMore,
+              onPressed: onToggle,
+              icon: CommonExpandIcon(expand: isExpand),
             ),
           ),
-          const SizedBox(width: 6),
-        ] else ...[
-          Text(groupType, style: context.textTheme.labelMedium?.toLight),
-          const SizedBox(width: 6),
         ],
-        ElasticPress(
-          child: IconButton.filledTonal(
-            tooltip: isExpand
-                ? context.appLocalizations.showLess
-                : context.appLocalizations.showMore,
-            visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.all(2),
-            iconSize: 20,
-            style: _style,
-            onPressed: onToggle,
-            icon: CommonExpandIcon(expand: isExpand),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

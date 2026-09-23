@@ -150,7 +150,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
               ),
               actions: genActions([
                 if (widget.onSave != null)
-                  AppBarButtonGroup(
+                  TonalButtonGroup(
                     children: [
                       _EditorSaveAction(
                         listenable: Listenable.merge([
@@ -772,10 +772,12 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
                     isSelected: _showReplace,
                   ),
                 const SizedBox(width: 2),
-                IconButton.filledTonal(
-                  tooltip: context.appLocalizations.close,
-                  onPressed: _close,
-                  icon: const GlyphIcon(AppGlyphs.close, size: 16, fill: 1),
+                ElasticButton(
+                  child: IconButton.filledTonal(
+                    tooltip: context.appLocalizations.close,
+                    onPressed: _close,
+                    icon: const GlyphIcon(AppGlyphs.close, size: 16, fill: 1),
+                  ),
                 ),
               ],
             ),
@@ -920,10 +922,16 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
     bool isSelected = false,
   }) {
     if (isSelected) {
-      return IconButton.filledTonal(
-        tooltip: tooltip,
-        onPressed: onPressed,
-        icon: IconTheme.merge(data: const IconThemeData(fill: 1), child: icon),
+      return ElasticButton(
+        enabled: onPressed != null,
+        child: IconButton.filledTonal(
+          tooltip: tooltip,
+          onPressed: onPressed,
+          icon: IconTheme.merge(
+            data: const IconThemeData(fill: 1),
+            child: icon,
+          ),
+        ),
       );
     }
     return IconButton(tooltip: tooltip, onPressed: onPressed, icon: icon);

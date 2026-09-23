@@ -159,7 +159,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
   }
 
   EdgeInsets get _listPadding =>
-      const EdgeInsets.all(16).copyWith(top: context.appBarInset + 16);
+      const EdgeInsets.all(16).copyWith(top: context.contentTopPadding);
 
   Widget _buildRuleItem(List<Rule> rules, int index, Set<dynamic> selected) {
     final rule = rules[index];

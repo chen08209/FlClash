@@ -128,7 +128,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
             builder: (context) => SingleChildScrollView(
               padding: const EdgeInsets.all(
                 16,
-              ).copyWith(top: context.sheetTopPadding),
+              ).copyWith(top: context.contentTopPadding),
               child: Consumer(
                 builder: (_, ref, _) {
                   final state = ref.watch(proxiesTabControllerStateProvider);

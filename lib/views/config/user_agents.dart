@@ -159,7 +159,7 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
         ReorderableListView.builder(
           padding: const EdgeInsets.all(
             16,
-          ).copyWith(top: context.appBarInset + 16),
+          ).copyWith(top: context.contentTopPadding),
           buildDefaultDragHandles: false,
           header: ItemPositionProvider(
             position: ItemPosition.get(0, entries.length + 1),

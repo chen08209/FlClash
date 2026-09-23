@@ -42,11 +42,13 @@ extension BuildContextExtension on BuildContext {
       FloatingBarScope.of(this) ??
       (isInBottomSheet
           ? sheetAppBarHeight
-          : MediaQuery.paddingOf(this).top + kToolbarHeight);
+          : MediaQuery.paddingOf(this).top + pageToolbarHeight);
 
-  double get sheetTopPadding =>
+  /// Where a scaffold body's content starts: a gap clear of the bar; a bottom
+  /// sheet's header already trails its own gap.
+  double get contentTopPadding =>
       TopInsetScope.of(this) ??
-      (isInBottomSheet ? sheetAppBarHeight : appBarInset + 10);
+      (isInBottomSheet ? sheetAppBarHeight : appBarInset + 12);
 
   void showNotifier(
     String text, {

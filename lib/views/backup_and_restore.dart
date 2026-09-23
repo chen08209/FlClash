@@ -9,6 +9,7 @@ import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/navigation_dock.dart';
 import 'package:fl_clash/widgets/dialog.dart';
 import 'package:fl_clash/widgets/fade_box.dart';
 import 'package:fl_clash/widgets/input.dart';
@@ -187,11 +188,13 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
                   leading: const GlyphIcon(AppGlyphs.account),
                   title: Text(appLocalizations.noInfo),
                   subtitle: Text(appLocalizations.pleaseBindWebDAV),
-                  trailing: FilledButton.tonal(
-                    onPressed: () {
-                      _showAddWebDAV(dav);
-                    },
-                    child: Text(appLocalizations.bind),
+                  trailing: ElasticButton(
+                    child: FilledButton.tonal(
+                      onPressed: () {
+                        _showAddWebDAV(dav);
+                      },
+                      child: Text(appLocalizations.bind),
+                    ),
                   ),
                 )
               else ...[
@@ -214,11 +217,13 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
                       ],
                     ),
                   ),
-                  trailing: FilledButton.tonal(
-                    onPressed: () {
-                      _showAddWebDAV(dav);
-                    },
-                    child: Text(appLocalizations.edit),
+                  trailing: ElasticButton(
+                    child: FilledButton.tonal(
+                      onPressed: () {
+                        _showAddWebDAV(dav);
+                      },
+                      child: Text(appLocalizations.edit),
+                    ),
                   ),
                 ),
                 ListItem.input(
@@ -324,9 +329,11 @@ class _RestoreStrategyItem extends ConsumerWidget {
     return ListItem(
       onTap: onPressed,
       title: Text(context.appLocalizations.restoreStrategy),
-      trailing: FilledButton(
-        onPressed: onPressed,
-        child: Text(restoreStrategy.label),
+      trailing: ElasticButton(
+        child: FilledButton(
+          onPressed: onPressed,
+          child: Text(restoreStrategy.label),
+        ),
       ),
     );
   }

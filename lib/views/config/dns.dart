@@ -225,7 +225,7 @@ class _OverrideList extends ConsumerWidget {
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
-            top: context.appBarInset + 16,
+            top: context.contentTopPadding,
             bottom: entries.isEmpty ? 0 : 16,
           ),
           sliver: SliverList.list(
@@ -557,18 +557,20 @@ class _RemoveButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return CommonMinIconButtonTheme(
-      child: IconButton.filledTonal(
-        tooltip: context.appLocalizations.remove,
-        onPressed: () => ref
-            .read(patchClashConfigProvider.notifier)
-            .update(
-              (state) => state.copyWith(
-                dnsOverrideKeys: {...state.dnsOverrideKeys}
-                  ..remove(overrideKey),
+      child: ElasticButton(
+        child: IconButton.filledTonal(
+          tooltip: context.appLocalizations.remove,
+          onPressed: () => ref
+              .read(patchClashConfigProvider.notifier)
+              .update(
+                (state) => state.copyWith(
+                  dnsOverrideKeys: {...state.dnsOverrideKeys}
+                    ..remove(overrideKey),
+                ),
               ),
-            ),
-        icon: const GlyphIcon(AppGlyphs.remove, size: 18, fill: 1),
-        padding: EdgeInsets.zero,
+          icon: const GlyphIcon(AppGlyphs.remove, size: 18, fill: 1),
+          padding: EdgeInsets.zero,
+        ),
       ),
     );
   }

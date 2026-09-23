@@ -327,7 +327,7 @@ class _MemoryDetailSheetState extends State<MemoryDetailSheet> {
           return ListView(
             padding: const EdgeInsets.symmetric(
               horizontal: 16,
-            ).copyWith(top: context.sheetTopPadding, bottom: 20),
+            ).copyWith(top: context.contentTopPadding, bottom: 20),
             children: [
               _MemoryOverview(snapshot: snapshot),
               _MemorySection(

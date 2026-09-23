@@ -161,7 +161,7 @@ class _NameListEditorState extends ConsumerState<NameListEditor>
         body: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(
-              child: SizedBox(height: context.sheetTopPadding + 8),
+              child: SizedBox(height: context.contentTopPadding),
             ),
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -182,9 +182,11 @@ class _NameListEditorState extends ConsumerState<NameListEditor>
                   info: Info(label: widget.labels.section),
                   actions: [
                     CommonMinFilledButtonTheme(
-                      child: FilledButton.tonal(
-                        onPressed: _handleToAddView,
-                        child: Text(appLocalizations.add),
+                      child: ElasticButton(
+                        child: FilledButton.tonal(
+                          onPressed: _handleToAddView,
+                          child: Text(appLocalizations.add),
+                        ),
                       ),
                     ),
                   ],

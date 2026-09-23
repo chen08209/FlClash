@@ -403,7 +403,7 @@ class ServiceStatusSheet extends ConsumerWidget {
           shrinkWrap: true,
           slivers: [
             SliverToBoxAdapter(
-              child: SizedBox(height: context.sheetTopPadding),
+              child: SizedBox(height: context.contentTopPadding),
             ),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -484,7 +484,7 @@ class ServiceManageView extends ConsumerWidget {
           shrinkWrap: true,
           slivers: [
             SliverToBoxAdapter(
-              child: SizedBox(height: context.sheetTopPadding + 8),
+              child: SizedBox(height: context.contentTopPadding),
             ),
             SliverReorderableList(
               itemBuilder: (_, index) => itemAt(index),

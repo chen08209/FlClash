@@ -199,7 +199,7 @@ void main() {
     expect(find.text('Telegram'), findsOneWidget);
     expect(
       tester.getRect(find.byType(ListTile).first).top,
-      tester.getRect(find.byType(AppBar)).bottom + 16,
+      tester.getRect(find.byType(AppBar)).bottom + 12,
     );
     expect(tester.takeException(), null);
 

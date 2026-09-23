@@ -245,9 +245,11 @@ class _QuickFillBanner extends StatelessWidget {
           content: Text(appLocalizations.configDataDetected),
           actions: [
             CommonMinFilledButtonTheme(
-              child: FilledButton.tonal(
-                onPressed: onPressed,
-                child: Text(appLocalizations.quickFill),
+              child: ElasticButton(
+                child: FilledButton.tonal(
+                  onPressed: onPressed,
+                  child: Text(appLocalizations.quickFill),
+                ),
               ),
             ),
           ],
