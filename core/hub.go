@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/metacubex/mihomo/adapter"
-	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/common/observable"
 	"github.com/metacubex/mihomo/common/utils"
 	"github.com/metacubex/mihomo/component/resolver"
@@ -25,6 +24,7 @@ import (
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/constant/features"
+	"github.com/metacubex/mihomo/dns"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/listener"
 	"github.com/metacubex/mihomo/log"
@@ -54,6 +54,7 @@ func handleStartListener() bool {
 	isRunning.Store(true)
 	updateListeners(currentConfig)
 	resolver.ResetConnection()
+	refreshRoute()
 	return true
 }
 
@@ -81,6 +82,7 @@ func handleForceGC() {
 
 func handleShutdown() bool {
 	handleStopLog()
+	stopRouteWatch()
 
 	configMu.Lock()
 	isRunning.Store(false)
@@ -171,7 +173,7 @@ func lookupProxy(name string) constant.Proxy {
 	return tunnel.AllProxies()[name]
 }
 
-func selectableGroup(groupName string) (outboundgroup.SelectAble, error) {
+func selectableGroup(groupName string) (pickableGroup, error) {
 	group := lookupProxy(groupName)
 	if group == nil {
 		return nil, errGroupNotFound
@@ -180,29 +182,30 @@ func selectableGroup(groupName string) (outboundgroup.SelectAble, error) {
 	if !ok {
 		return nil, errGroupInvalidType
 	}
-	selector, ok := adapterProxy.ProxyAdapter.(outboundgroup.SelectAble)
+	selector, ok := adapterProxy.ProxyAdapter.(pickableGroup)
 	if !ok {
 		return nil, errGroupNotSelect
 	}
 	return selector, nil
 }
 
-func handleChangeProxy(params *ChangeProxyParams) string {
+func handleChangeProxy(params *ChangeProxyParams) *ChangeProxyResult {
 	selectMu.Lock()
 	defer selectMu.Unlock()
 
 	selector, err := selectableGroup(params.GroupName)
 	if err != nil {
-		return err.Error()
+		return &ChangeProxyResult{Message: err.Error()}
 	}
+	before := selector.Now()
 	if params.ProxyName == "" {
 		selector.ForceSet(params.ProxyName)
-		return ""
+	} else if err := selector.Set(params.ProxyName); err != nil {
+		return &ChangeProxyResult{Message: err.Error()}
 	}
-	if err := selector.Set(params.ProxyName); err != nil {
-		return err.Error()
-	}
-	return ""
+	changed := selector.Now() != before
+	refreshRouteLocked(false)
+	return &ChangeProxyResult{Changed: changed}
 }
 
 func handleGetTraffic(onlyStatisticsProxy bool) Traffic {
@@ -305,6 +308,15 @@ func handleTestDelay(params *TestDelayParams) *Delay {
 
 func handleGetConnections() *statistic.Snapshot {
 	return statistic.DefaultManager.Snapshot()
+}
+
+func handleGetConnectionCount() int {
+	count := 0
+	statistic.DefaultManager.Range(func(statistic.Tracker) bool {
+		count++
+		return true
+	})
+	return count
 }
 
 func handleCloseConnections() bool {
@@ -491,6 +503,7 @@ func handleUpdateExternalProvider(providerName string) *MethodError {
 		}
 		return providerMethodError(code, providerName, err)
 	}
+	refreshRoute()
 	return nil
 }
 
@@ -515,6 +528,7 @@ func handleSideLoadExternalProvider(providerName string, data []byte) *MethodErr
 	if err := sideUpdateExternalProvider(p, data); err != nil {
 		return providerMethodError("provider_update_error", providerName, err)
 	}
+	refreshRoute()
 	return nil
 }
 
@@ -532,9 +546,10 @@ func defaultRefreshHealthChecks() {
 
 var refreshHealthChecks = defaultRefreshHealthChecks
 
-func handleSuspend(suspended bool) bool {
-	wasSuspended := isSuspended.Swap(suspended)
+func handleSuspend(suspended, interactive bool) bool {
+	isSuspended.Store(suspended)
 	if suspended {
+		healthChecksStale.Store(true)
 		tunnel.OnSuspend()
 		return true
 	}
@@ -544,10 +559,11 @@ func handleSuspend(suspended bool) bool {
 	// network at all, so coming back means every proxy is marked dead and every
 	// delay reads Timeout. A lazy provider then skips its next tick because
 	// nothing touched it in the meantime, and the whole list stays wrong until
-	// the user tests by hand. Re-check now instead - but not while the
-	// listeners are stopped, since the service also resumes the core on its way
-	// down.
-	if wasSuspended && isRunning.Load() {
+	// the user tests by hand. Re-check once the screen is on: a maintenance
+	// window resumes the core too, and probing every node there spends the
+	// window's radio time on results nobody sees. Not while the listeners are
+	// stopped either, since the service also resumes the core on its way down.
+	if interactive && healthChecksStale.Swap(false) && isRunning.Load() {
 		refreshHealthChecks()
 	}
 	return true
@@ -620,8 +636,18 @@ func handleStopLog() {
 	}
 }
 
-func handleGetMemory() uint64 {
-	return statistic.DefaultManager.Memory()
+// HeapIdle still counts spans the runtime has already handed back to the OS,
+// so the retained-but-unused figure subtracts HeapReleased.
+func handleGetMemoryStats() MemoryStats {
+	var stats runtime.MemStats
+	runtime.ReadMemStats(&stats)
+	return MemoryStats{
+		Rss:          statistic.DefaultManager.Memory(),
+		HeapInuse:    stats.HeapInuse,
+		HeapIdle:     stats.HeapIdle - stats.HeapReleased,
+		StackInuse:   stats.StackInuse,
+		RuntimeOther: stats.MSpanInuse + stats.MCacheInuse + stats.BuckHashSys + stats.GCSys + stats.OtherSys,
+	}
 }
 
 func handleGetConfig(path string) (*config.RawConfig, error) {
@@ -698,6 +724,12 @@ func init() {
 		sendMessage(Message{
 			Type: RequestMessage,
 			Data: c,
+		})
+	}
+	dns.DefaultQueryNotify = func(record dns.QueryRecord) {
+		sendMessage(Message{
+			Type: DnsMessage,
+			Data: newDnsQuery(record),
 		})
 	}
 	executor.DefaultProviderLoadedHook = func(providerName string) {

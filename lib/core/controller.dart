@@ -140,12 +140,20 @@ class CoreController {
     );
   }
 
-  FutureOr<String> changeProxy(ChangeProxyParams changeProxyParams) async {
-    return await _interface.changeProxy(changeProxyParams);
+  Future<ChangeProxyResult> changeProxy(ChangeProxyParams changeProxyParams) {
+    return _interface.changeProxy(changeProxyParams);
+  }
+
+  Future<RouteSnapshot?> watchRoute(bool watch) {
+    return _interface.watchRoute(watch);
   }
 
   Future<List<TrackerInfo>> getConnections() async {
     return _interface.getConnections();
+  }
+
+  Future<int> getConnectionCount() async {
+    return _interface.getConnectionCount();
   }
 
   Future<void> closeConnection(String id) async {
@@ -200,6 +208,14 @@ class CoreController {
     return _interface.asyncTestDelay(url, proxyName);
   }
 
+  Future<ProbeResult?> probe(ProbeParams params) => _interface.probe(params);
+
+  Future<OutboundIpResult?> outboundIp(OutboundIpParams params) =>
+      _interface.outboundIp(params);
+
+  Future<List<ServiceCheckItem>> serviceCheck(ServiceCheckParams params) =>
+      _interface.serviceCheck(params);
+
   Future<Map<String, dynamic>> getConfig(int id) async {
     final profilePath = await appPath.getProfilePath(id.toString());
     final data = Map<String, dynamic>.from(
@@ -218,8 +234,8 @@ class CoreController {
     return _interface.getTotalTraffic(onlyStatisticsProxy);
   }
 
-  Future<int> getMemory() async {
-    return _interface.getMemory();
+  Future<CoreMemoryStats?> getMemoryStats() async {
+    return _interface.getMemoryStats();
   }
 
   void resetTraffic() {

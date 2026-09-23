@@ -144,6 +144,33 @@ Map<String, dynamic> _$ChangeProxyParamsToJson(_ChangeProxyParams instance) =>
       'proxy-name': instance.proxyName,
     };
 
+_ChangeProxyResult _$ChangeProxyResultFromJson(Map<String, dynamic> json) =>
+    _ChangeProxyResult(
+      message: json['message'] as String? ?? '',
+      changed: json['changed'] as bool? ?? false,
+    );
+
+Map<String, dynamic> _$ChangeProxyResultToJson(_ChangeProxyResult instance) =>
+    <String, dynamic>{'message': instance.message, 'changed': instance.changed};
+
+_RouteSnapshot _$RouteSnapshotFromJson(Map<String, dynamic> json) =>
+    _RouteSnapshot(
+      coreEpoch: (json['core-epoch'] as num?)?.toInt() ?? 0,
+      picksVersion: (json['picks-version'] as num?)?.toInt() ?? 0,
+      picks:
+          (json['picks'] as Map<String, dynamic>?)?.map(
+            (k, e) => MapEntry(k, e as String),
+          ) ??
+          const {},
+    );
+
+Map<String, dynamic> _$RouteSnapshotToJson(_RouteSnapshot instance) =>
+    <String, dynamic>{
+      'core-epoch': instance.coreEpoch,
+      'picks-version': instance.picksVersion,
+      'picks': instance.picks,
+    };
+
 _UpdateGeoDataParams _$UpdateGeoDataParamsFromJson(Map<String, dynamic> json) =>
     _UpdateGeoDataParams(
       geoType: json['geo-type'] as String,
@@ -172,9 +199,11 @@ const _$CoreEventTypeEnumMap = {
   CoreEventType.log: 'log',
   CoreEventType.delay: 'delay',
   CoreEventType.request: 'request',
+  CoreEventType.dns: 'dns',
   CoreEventType.loaded: 'loaded',
   CoreEventType.crash: 'crash',
   CoreEventType.geoUpdate: 'geoUpdate',
+  CoreEventType.routeChanged: 'routeChanged',
 };
 
 _InvokeMessage _$InvokeMessageFromJson(Map<String, dynamic> json) =>
@@ -205,6 +234,158 @@ Map<String, dynamic> _$DelayToJson(_Delay instance) => <String, dynamic>{
   'url': instance.url,
   'value': instance.value,
 };
+
+_ProbeParams _$ProbeParamsFromJson(Map<String, dynamic> json) => _ProbeParams(
+  url: json['url'] as String,
+  proxyName: json['proxy-name'] as String? ?? '',
+  headers:
+      (json['headers'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, e as String),
+      ) ??
+      const {},
+  timeout: (json['timeout'] as num).toInt(),
+  maxBody: (json['max-body'] as num?)?.toInt() ?? 0,
+);
+
+Map<String, dynamic> _$ProbeParamsToJson(_ProbeParams instance) =>
+    <String, dynamic>{
+      'url': instance.url,
+      'proxy-name': instance.proxyName,
+      'headers': instance.headers,
+      'timeout': instance.timeout,
+      'max-body': instance.maxBody,
+    };
+
+_ProbeResult _$ProbeResultFromJson(Map<String, dynamic> json) => _ProbeResult(
+  statusCode: (json['status-code'] as num?)?.toInt() ?? 0,
+  delay: (json['delay'] as num?)?.toInt() ?? 0,
+  body: json['body'] as String? ?? '',
+  url: json['url'] as String? ?? '',
+  chains:
+      (json['chains'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const [],
+  rule: json['rule'] as String? ?? '',
+  rulePayload: json['rule-payload'] as String? ?? '',
+  error: json['error'] as String?,
+  message: json['message'] as String?,
+);
+
+Map<String, dynamic> _$ProbeResultToJson(_ProbeResult instance) =>
+    <String, dynamic>{
+      'status-code': instance.statusCode,
+      'delay': instance.delay,
+      'body': instance.body,
+      'url': instance.url,
+      'chains': instance.chains,
+      'rule': instance.rule,
+      'rule-payload': instance.rulePayload,
+      'error': instance.error,
+      'message': instance.message,
+    };
+
+_OutboundIpParams _$OutboundIpParamsFromJson(Map<String, dynamic> json) =>
+    _OutboundIpParams(
+      proxyName: json['proxy-name'] as String? ?? '',
+      urls:
+          (json['urls'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+          const [],
+      timeout: (json['timeout'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$OutboundIpParamsToJson(_OutboundIpParams instance) =>
+    <String, dynamic>{
+      'proxy-name': instance.proxyName,
+      'urls': instance.urls,
+      'timeout': instance.timeout,
+    };
+
+_OutboundIpResult _$OutboundIpResultFromJson(Map<String, dynamic> json) =>
+    _OutboundIpResult(
+      url: json['url'] as String? ?? '',
+      body: json['body'] as String? ?? '',
+      delay: (json['delay'] as num?)?.toInt() ?? 0,
+      chains:
+          (json['chains'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      error: json['error'] as String?,
+      coreEpoch: (json['core-epoch'] as num?)?.toInt() ?? 0,
+      picksVersion: (json['picks-version'] as num?)?.toInt() ?? 0,
+    );
+
+Map<String, dynamic> _$OutboundIpResultToJson(_OutboundIpResult instance) =>
+    <String, dynamic>{
+      'url': instance.url,
+      'body': instance.body,
+      'delay': instance.delay,
+      'chains': instance.chains,
+      'error': instance.error,
+      'core-epoch': instance.coreEpoch,
+      'picks-version': instance.picksVersion,
+    };
+
+_ServiceCheckParams _$ServiceCheckParamsFromJson(Map<String, dynamic> json) =>
+    _ServiceCheckParams(
+      proxyName: json['proxy-name'] as String? ?? '',
+      names:
+          (json['names'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+          const [],
+      timeout: (json['timeout'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$ServiceCheckParamsToJson(_ServiceCheckParams instance) =>
+    <String, dynamic>{
+      'proxy-name': instance.proxyName,
+      'names': instance.names,
+      'timeout': instance.timeout,
+    };
+
+_ServiceCheckItem _$ServiceCheckItemFromJson(Map<String, dynamic> json) =>
+    _ServiceCheckItem(
+      name: json['name'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      region: json['region'] as String? ?? '',
+      delay: (json['delay'] as num?)?.toInt() ?? 0,
+      chains:
+          (json['chains'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      checkedAt: (json['checked-at'] as num?)?.toInt() ?? 0,
+      coreEpoch: (json['core-epoch'] as num?)?.toInt() ?? 0,
+      picksVersion: (json['picks-version'] as num?)?.toInt() ?? 0,
+    );
+
+Map<String, dynamic> _$ServiceCheckItemToJson(_ServiceCheckItem instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'status': instance.status,
+      'region': instance.region,
+      'delay': instance.delay,
+      'chains': instance.chains,
+      'checked-at': instance.checkedAt,
+      'core-epoch': instance.coreEpoch,
+      'picks-version': instance.picksVersion,
+    };
+
+_CoreMemoryStats _$CoreMemoryStatsFromJson(Map<String, dynamic> json) =>
+    _CoreMemoryStats(
+      rss: (json['rss'] as num?)?.toInt() ?? 0,
+      heapInuse: (json['heapInuse'] as num?)?.toInt() ?? 0,
+      heapIdle: (json['heapIdle'] as num?)?.toInt() ?? 0,
+      stackInuse: (json['stackInuse'] as num?)?.toInt() ?? 0,
+      runtimeOther: (json['runtimeOther'] as num?)?.toInt() ?? 0,
+    );
+
+Map<String, dynamic> _$CoreMemoryStatsToJson(_CoreMemoryStats instance) =>
+    <String, dynamic>{
+      'rss': instance.rss,
+      'heapInuse': instance.heapInuse,
+      'heapIdle': instance.heapIdle,
+      'stackInuse': instance.stackInuse,
+      'runtimeOther': instance.runtimeOther,
+    };
 
 _Now _$NowFromJson(Map<String, dynamic> json) =>
     _Now(name: json['name'] as String, value: json['value'] as String);

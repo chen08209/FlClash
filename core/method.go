@@ -209,8 +209,26 @@ var methodHandlers = map[CoreMethod]methodHandler{
 			response.success(handleTestDelay(params))
 		})
 	}),
+	probeMethod: withArguments(func(params *ProbeParams, response MethodResponse) {
+		safeGo(response, func() {
+			response.success(handleProbe(params))
+		})
+	}),
+	outboundIpMethod: withArguments(func(params *OutboundIpParams, response MethodResponse) {
+		safeGo(response, func() {
+			response.success(handleOutboundIp(params))
+		})
+	}),
+	serviceCheckMethod: withArguments(func(params *ServiceCheckParams, response MethodResponse) {
+		safeGo(response, func() {
+			response.success(handleServiceCheck(params))
+		})
+	}),
 	getConnectionsMethod: withoutArguments(func(response MethodResponse) {
 		response.success(handleGetConnections())
+	}),
+	getConnectionCountMethod: withoutArguments(func(response MethodResponse) {
+		response.success(handleGetConnectionCount())
 	}),
 	closeConnectionsMethod: withoutArguments(func(response MethodResponse) {
 		response.success(handleCloseConnections())
@@ -262,14 +280,19 @@ var methodHandlers = map[CoreMethod]methodHandler{
 	stopListenerMethod: withoutArguments(func(response MethodResponse) {
 		response.success(handleStopListener())
 	}),
-	getMemoryMethod: withoutArguments(func(response MethodResponse) {
+	getMemoryStatsMethod: withoutArguments(func(response MethodResponse) {
 		safeGo(response, func() {
-			response.success(handleGetMemory())
+			response.success(handleGetMemoryStats())
 		})
 	}),
 	clearEffectMethod: withArguments(func(profileId *int64, response MethodResponse) {
 		safeGo(response, func() {
 			response.success(handleClearEffect(*profileId))
+		})
+	}),
+	watchRouteMethod: withArguments(func(watch *bool, response MethodResponse) {
+		safeGo(response, func() {
+			response.success(handleWatchRoute(*watch))
 		})
 	}),
 }

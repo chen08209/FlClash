@@ -27,13 +27,21 @@ mixin CoreInterface {
 
   Future<Delay?> asyncTestDelay(String url, String proxyName);
 
+  Future<ProbeResult?> probe(ProbeParams params);
+
+  Future<OutboundIpResult?> outboundIp(OutboundIpParams params);
+
+  Future<List<ServiceCheckItem>> serviceCheck(ServiceCheckParams params);
+
   Future<String> updateConfig(UpdateParams updateParams);
 
   Future<String> setupConfig(SetupParams setupParams);
 
   Future<ProxiesData> getProxies();
 
-  Future<String> changeProxy(ChangeProxyParams changeProxyParams);
+  Future<ChangeProxyResult> changeProxy(ChangeProxyParams changeProxyParams);
+
+  Future<RouteSnapshot?> watchRoute(bool watch);
 
   Future<bool> startListener();
 
@@ -56,7 +64,7 @@ mixin CoreInterface {
 
   FutureOr<Traffic> getTotalTraffic(bool onlyStatisticsProxy);
 
-  FutureOr<int> getMemory();
+  FutureOr<CoreMemoryStats?> getMemoryStats();
 
   FutureOr<void> resetTraffic();
 
@@ -67,6 +75,8 @@ mixin CoreInterface {
   Future<bool> crash();
 
   FutureOr<List<TrackerInfo>> getConnections();
+
+  FutureOr<int> getConnectionCount();
 
   FutureOr<bool> closeConnection(String id);
 
@@ -200,11 +210,29 @@ abstract class CoreHandlerInterface with CoreInterface {
   }
 
   @override
-  Future<String> changeProxy(ChangeProxyParams changeProxyParams) async {
-    return _invokeMessage(
+  Future<ChangeProxyResult> changeProxy(
+    ChangeProxyParams changeProxyParams,
+  ) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
       method: CoreMethod.changeProxy,
       arguments: changeProxyParams.toJson(),
     );
+    if (data == null) {
+      throw CoreMethodException(
+        code: 'no_response',
+        message: 'Core did not answer ${CoreMethod.changeProxy.name}',
+      );
+    }
+    return ChangeProxyResult.fromJson(data);
+  }
+
+  @override
+  Future<RouteSnapshot?> watchRoute(bool watch) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.watchRoute,
+      arguments: watch,
+    );
+    return data == null ? null : RouteSnapshot.fromJson(data);
   }
 
   @override
@@ -270,6 +298,11 @@ abstract class CoreHandlerInterface with CoreInterface {
         .whereType<Map>()
         .map((item) => TrackerInfo.fromJson(Map<String, Object?>.from(item)))
         .toList();
+  }
+
+  @override
+  Future<int> getConnectionCount() async {
+    return await _invokeMethod<int>(method: CoreMethod.getConnectionCount) ?? 0;
   }
 
   @override
@@ -357,7 +390,50 @@ abstract class CoreHandlerInterface with CoreInterface {
   }
 
   @override
-  Future<int> getMemory() async {
-    return await _invokeMethod<int>(method: CoreMethod.getMemory) ?? 0;
+  Future<ProbeResult?> probe(ProbeParams params) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.probe,
+      arguments: params.toJson(),
+      timeout: probeGuardDuration(params),
+    );
+    return data == null ? null : ProbeResult.fromJson(data);
+  }
+
+  @override
+  Future<OutboundIpResult?> outboundIp(OutboundIpParams params) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.outboundIp,
+      arguments: params.toJson(),
+      timeout: coreGuardFor(params.timeout),
+    );
+    return data == null ? null : OutboundIpResult.fromJson(data);
+  }
+
+  @override
+  Future<List<ServiceCheckItem>> serviceCheck(ServiceCheckParams params) async {
+    final data = await _invokeMethod<List<dynamic>>(
+      method: CoreMethod.serviceCheck,
+      arguments: params.toJson(),
+      timeout: coreGuardFor(
+        params.timeout,
+        budgetFactor: serviceSweepBudgetFactor,
+      ),
+    );
+    return data == null
+        ? const []
+        : data
+              .map(
+                (item) =>
+                    ServiceCheckItem.fromJson(item as Map<String, dynamic>),
+              )
+              .toList();
+  }
+
+  @override
+  Future<CoreMemoryStats?> getMemoryStats() async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.getMemoryStats,
+    );
+    return data == null ? null : CoreMemoryStats.fromJson(data);
   }
 }
