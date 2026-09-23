@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:fl_clash/common/feature.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -67,6 +70,34 @@ void main() {
     });
   });
 
+  group('sidebar blur', () {
+    testWidgets('stays hidden while the feature is off', (tester) async {
+      await pumpThemeView(tester);
+
+      expect(find.text('Sidebar blur'), findsNothing);
+    });
+
+    testWidgets('shows a working toggle only on supported platforms', (
+      tester,
+    ) async {
+      feature = const Feature(sidebarBlur: true);
+      addTearDown(() => feature = const Feature());
+      await pumpThemeView(tester);
+      final toggle = find.text('Sidebar blur');
+
+      expect(readTheme().sidebarBlur, isTrue);
+      if (!Platform.isMacOS && !Platform.isWindows) {
+        expect(toggle, findsNothing);
+        return;
+      }
+
+      expect(toggle, findsOneWidget);
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(readTheme().sidebarBlur, isFalse);
+    });
+  });
+
   group('pure black', () {
     testWidgets('toggles both ways', (tester) async {
       await pumpThemeView(tester);
@@ -94,6 +125,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(readTheme().textScale.enable, isTrue);
+    });
+
+    testWidgets('hides the slider while the toggle is off', (tester) async {
+      await pumpThemeView(tester);
+
+      expect(find.byType(Slider), findsNothing);
     });
 
     testWidgets('the slider writes a new scale once enabled', (tester) async {

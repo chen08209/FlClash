@@ -6,6 +6,7 @@ on:
       - '**'
     tags:
       - 'v*'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -13,13 +14,16 @@ concurrency:
 
 env:
   IS_STABLE: ${{ !contains(github.ref, '-') }}
-  FLUTTER_VERSION: '3.47.1'
+  FLUTTER_VERSION: '3.47.4'
   GO_VERSION: '1.26.4'
   NDK_VERSION: r28c
 
 jobs:
   dart:
     name: Dart
+    # A private copy pays for its Actions minutes, so it runs the checks only when
+    # started by hand.
+    if: &checks github.event_name == 'workflow_dispatch' || !github.event.repository.private
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -51,7 +55,7 @@ jobs:
 
       - name: Skip native build hooks
         run: |
-          yq -i '.hooks.user_defines.setup.build_assets = false | .hooks.user_defines.rust_api.build_assets = false' pubspec.yaml
+          yq -i '.hooks.user_defines.setup.build_assets = false | .hooks.user_defines.rust_api.build_assets = false | .hooks.user_defines.code_forge.build_assets = false' pubspec.yaml
 
       - name: Verify changelog
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
@@ -65,6 +69,7 @@ jobs:
 
   plugins:
     name: Plugins
+    if: *checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -87,8 +92,75 @@ jobs:
           dart analyze
           dart test
 
+  desktop:
+    name: Desktop ${{ matrix.platform }}
+    if: *checks
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux
+            os: ubuntu-latest
+          - platform: windows
+            os: windows-2022
+          - platform: macos
+            os: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: core/go.sum
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: desktop-${{ matrix.platform }}
+          workspaces: |
+            services/helper
+            plugins/rust_api/rust
+          cache-directories: .dart_tool/hooks_runner
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install Linux build dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgtk-3-dev libayatana-appindicator3-dev libsecret-1-dev
+
+      - name: Setup Xcode
+        if: matrix.platform == 'macos'
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.3.app || sudo xcode-select -s /Applications/Xcode_26.2.app
+          xcodebuild -version
+
+      - name: Enable git long paths (Windows)
+        if: matrix.platform == 'windows'
+        run: git config --global core.longpaths true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Compiles the desktop runners and the native plugin code that only the
+      # tagged release matrix built before; the bundle itself is discarded.
+      - name: Build debug bundle
+        run: flutter build ${{ matrix.platform }} --debug
+
   go:
     name: Go core
+    if: *checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -140,6 +212,7 @@ jobs:
 
   android:
     name: Android unit tests
+    if: *checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -190,6 +263,7 @@ jobs:
 
   rust:
     name: Rust
+    if: *checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -214,6 +288,7 @@ jobs:
 
   windows-helper-test:
     name: Windows helper test
+    if: *checks
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -231,7 +306,8 @@ jobs:
         run: cargo test --manifest-path services/helper/Cargo.toml --features windows-service
 
   build:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    # Releases publish where the release links point: the public repository.
+    if: github.repository == 'chen08209/FlClash' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: [ dart, plugins, go, android, rust, windows-helper-test ]
     runs-on: ${{ matrix.os }}
     strategy:
@@ -384,7 +460,7 @@ jobs:
 
       - name: Skip native build hooks
         run: |
-          yq -i '.hooks.user_defines.setup.build_assets = false | .hooks.user_defines.rust_api.build_assets = false' pubspec.yaml
+          yq -i '.hooks.user_defines.setup.build_assets = false | .hooks.user_defines.rust_api.build_assets = false | .hooks.user_defines.code_forge.build_assets = false' pubspec.yaml
 
       - name: Generate release notes
         shell: bash

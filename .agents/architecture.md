@@ -17,10 +17,10 @@ Desktop core mode:
 
 - Go core runs as a separate process with `CGO_ENABLED=0`.
 - `rust_api`'s `ipc` module provides the native local-IPC primitives: a Unix domain socket on macOS/Linux and a named pipe
-  on Windows.
-  Dart now owns the transport state, RPC correlation, process ownership, and lifecycle convergence above those primitives.
+  on Windows. Dart owns the transport state, RPC correlation, process ownership, and lifecycle convergence above those
+  primitives.
 - `lib/core/service.dart` (`CoreService`) is the composition root. It wires the IPC transport, launcher selection,
-  lifecycle controller, RPC client, and crash-event bridge; it is no longer the whole desktop implementation by itself.
+  lifecycle controller, RPC client, and crash-event bridge, and holds no lifecycle logic of its own.
 - `lib/core/desktop/transport.dart` converts native IPC frames into ready, connected, disconnected, failed, and data
   events. A replaceable binding keeps RPC subscriptions stable when a failed or stale transport must be rebuilt.
 - `lib/core/desktop/rpc_client.dart` owns request IDs and pending completers, waits up to 10 seconds for a connection,
@@ -39,6 +39,41 @@ Key Go core files:
 - `core/message.go`: non-blocking priority/bulk event queues and bounded message batching.
 - `core/lib.go`: CGO exports.
 - `core/server.go`: desktop socket/named-pipe client and framed message forwarding.
+
+## DNS Override
+
+`PatchClashConfig.dns` holds a full `Dns` model, but only the keys listed in `dnsOverrideKeys` reach a profile.
+`DnsOverrideKey` names one Clash key each, with `fallback-filter.*` entries for the nested filter, and covers every
+yaml key of mihomo's `RawDNS` and `RawFallbackFilter`; `test/models/dns_override_test.dart` reads
+`core/Clash.Meta/config/config.go` and fails when a core bump adds or drops one. `Dns.overrideJson` builds the
+fragment in model order and `mergeDnsOverride` merges it one level deep, so a partial fallback filter keeps the
+profile's other filter keys. `_makeRealProfileTask` applies the fragment when `overrideDns` is on; for a profile whose
+`dns.enable` is not true it first fills `defaultDns` for `baselineDnsOverrideKeys` and then applies the fragment
+whatever the toggle says. The DNS page's quick edit opens `overrideYaml` in an `EditorPage` and applies it on the way
+back through `applyOverrideYaml`, which rebuilds the key set from the keys the document names and rejects unknown keys
+or bad values; a rejected document can only be discarded or fixed. The page has no reset, because there is nothing to
+reset to.
+
+A fresh config overrides nothing: `dnsOverrideKeys` starts empty and the profile's own section stands until an entry
+is added. `baselineDnsOverrideKeys` is the separate, smaller thing the core is never without — the `enable`,
+`enhanced-mode: fake-ip` and `nameserver` given to a profile that brings no enabled DNS section of its own, so the
+core always resolves. Every other `Dns` field starts at mihomo's own default, which `UnmarshalRawConfig` starts from,
+so adding an entry changes nothing until it is edited; `listen` and `fake-ip-range6`, which mihomo leaves off, start
+from a working value instead. A config saved before the key list existed overrode the whole section as the model held
+it then, so `PatchClashConfig.fromJson` gives it those twenty keys rather than the empty set.
+
+## NTP Override
+
+`PatchClashConfig.ntp` mirrors the DNS shape: a full `Ntp` model of which only the keys in `ntpOverrideKeys` reach a
+profile, an empty set on a fresh config, and one `NtpOverrideKey` per yaml key of mihomo's `RawNTP`;
+`test/models/ntp_override_test.dart` reads `core/Clash.Meta/config/config.go` and fails when a core bump adds, drops
+or redefaults one. The section is flat, so `_makeRealProfileTask` spreads the fragment over the profile's own `ntp`
+map instead of the one-level merge DNS needs, and writes nothing at all while `overrideNtp` is off. `interval` is
+minutes, which is what `ReCreateNTPService` multiplies. The page carries the same add sheet and quick edit as DNS.
+
+Safe mode forces `write-to-system` off on whatever `ntp` section the profile carries, because setting the system clock
+is a host change; mihomo's own `loadConfig` already drops it on Android, where the seccomp policy kills the process
+for `settimeofday`.
 
 ## Listener Exposure
 
@@ -156,12 +191,24 @@ remain strings.
 
 Go event delivery is intentionally non-blocking:
 
-- State-bearing events such as delay, loaded-provider, and geo-update use a 256-entry priority queue. Desktop process
-  crashes are generated locally by `CoreService` from lifecycle failures rather than sent through the Go queue.
-- High-volume log and request/connection events use a separate 256-entry bulk queue, so bulk floods cannot evict state.
+- State-bearing events such as delay, loaded-provider, geo-update, and route-changed use a 256-entry priority queue.
+  Desktop process crashes are generated locally by `CoreService` from lifecycle failures rather than sent through the
+  Go queue.
+- High-volume log, request/connection, and DNS query events use a separate 256-entry bulk queue, so bulk floods cannot
+  evict state.
 - A full queue evicts only its own oldest event and retries the newest event; Core work never blocks on event delivery.
 - The batcher flushes at 32 messages or every 16 milliseconds. Priority events are preferred, but one bulk opportunity is
   guaranteed after eight priority messages to prevent starvation.
+- `sendMessage` drops an event before it is queued when `hasEventListener` is false. That only happens on Android, after
+  the Flutter engine detaches while the service keeps the Core running; request and DNS events would otherwise be
+  encoded per connection and per query for nobody.
+
+DNS query events come from the Clash.Meta fork's `dns/patch.go` and are raised where mihomo writes its `[DNS]` debug
+log, so the DNS page lists the same resolutions: one event per cache hit, and one per upstream exchange however many
+callers singleflight merged into it, carrying the upstream whose answer was used. Fake-IP and hosts answers never reach
+a resolver and are not recorded. Queries from apps arrive with the `DNSContext` that `Service.ServeMsg` created and
+report `app`; other initiators come from `resolver.WithInitiator` at the call site (rule matching, DIRECT, proxy
+server dialing), and unlabeled queries report `other`.
 
 Desktop RPC accepts both a single event object and batched event lists. Android and desktop listener dispatch isolate
 listener exceptions so one faulty observer does not prevent the remaining events/listeners from running.
@@ -180,19 +227,116 @@ surface. It is shown only outside dashboard edit mode and only when `coreLib == 
   the appropriate confirmation and delegate restart to `CoreAction`; the widget never starts Core directly.
 
 Proxy delay testing follows the same failure-safe UI rule. `proxyDelayTest()` records an in-progress zero delay, writes the
-real result on success, and logs plus records `-1` on exceptions. `DelayTestButton` reverses its animation in `finally`, so
-an RPC failure cannot leave the control permanently spinning.
+real result on success, and logs plus records `-1` on exceptions. `ProxiesView` clears the loading flag of its delay test
+action in `finally`, so an RPC failure cannot leave the action permanently spinning.
+
+## Route Consistency
+
+A probe result on the dashboard — the exit IP, a node's exit IP, a service check — either describes the route in
+force or is being asked again. The full design is `docs/plans/probe-route-consistency.md`; the mechanism has three
+parts.
+
+- The Core is the source of truth for the route. `core/route.go` keeps a structural epoch (advanced by a config
+  apply, a mode or IPv6 switch, and any proxy provider whose version changed) and a `picks` map from each Selector,
+  URLTest and Fallback group to what it resolves to right now, versioned on every change. `handleChangeProxy`
+  re-reads the picks under `selectMu` and answers `ChangeProxyResult{changed}`, so the connection reset only runs when
+  the pick moved. A health check moving a URLTest pick has no mihomo hook, so the picks are polled every second while
+  the host watches (`watchRoute(true)`) and the listeners are up. Every probe answer carries the counters it started
+  under; `routeChanged` publishes the state whenever it differs from the last read.
+- `routeTrackerProvider` in `lib/providers/route_state.dart` merges that with the host's side: `proxied` (running and
+  not suspended), a host epoch that a connectivity event moves, and `synced`, which is false until `watchRoute` has
+  returned a snapshot and again after a Core disconnect. Nothing is fresh while unsynced, so a cache never judges
+  answers against counters it made up. The tracker subscribes when the first target is watched and releases the Core
+  when the last one goes; an answer newer than the state means an event was evicted, and the cache asks for a resync.
+  It also releases the Core while the app is hidden and reads it again on return, keeping `synced`: the Core and its
+  counters are the same ones, so the fresh snapshot invalidates only what moved. On Android the Core drops the watch
+  itself when the event listener is cleared, because an engine that goes away never sends `watchRoute(false)`.
+- `RoutedProbe` in `lib/providers/routed_probe.dart` is the one cache both `OutboundIpProbe` and `ServiceStatus` mix
+  in. A widget `watch`es the target it shows and `unwatch`es on the way out; only watched targets are probed, one
+  request in flight per target. An answer is stamped with the Core's counters and the host state at launch, and
+  `RouteState.isFresh` walks its chain against the picks, so a selection change only invalidates results that went
+  through the changed group while an epoch change invalidates everything. A stale watched entry is asked again at
+  once; an unwatched one is dropped. Nothing launches while the app is hidden: what falls due waits for it to be shown.
+  Failures wait for `retry`, `refresh`, or the app resuming (`markResumed`), and
+  a service check that timed out is a failure that still shows its status. `refresh` is the user's own request and
+  runs for unwatched targets too: the service sheet reads the cache and never watches its rows, because one service
+  check is one to four full HTTPS fetches where a delay test is a single empty request.
+
+`ipQuality(ip)` in `lib/providers/ip_quality.dart` is keyed by the outbound IP found, so a route change reaches it as
+a new IP and an unchanged IP reuses the result. A lookup races its sources the way the IP check does and takes the
+first one that determines a type. A success is kept for the session with `ref.keepAlive()`; a failure is not cached,
+and Riverpod's automatic retry is off because a retry after an HTTP 429 spends the same per-outbound-IP quota again.
+
+## Icons
+
+`lib/icons/` holds every icon the app shows. Nothing in `lib/` uses the Material icon font, and
+`test/lint/material_icons_test.dart` fails on any `Icons.*` or `AnimatedIcons.*`, so every icon shares one stroke and
+can animate its shape.
+A `Glyph` is a list of shapes on a 24-unit grid, stroked at `Glyph.strokeWidth` with round caps and joins and
+superellipse corners; a curve the primitive shapes cannot draw is a `GlyphPath`, SVG path data traced along the
+stroke's center. Each shape has a role that decides its filled form, the way SF Symbols and Fluent pair an
+outlined icon with its filled variant:
+
+- `body` fills;
+- `detail` is cut out of the fill, and a `solid` detail such as a dot is cut as an area;
+- `line` stays a stroke, for parts that belong to no body, like a handle or a link between nodes.
+
+`GlyphPainter` paints any point between the two forms. Each body fills inward from its outline, reaching half its
+shorter side, which no point of the body lies beyond, as `fill` reaches 1. Details thin away over the first half and
+return as cutouts over the second, so a detail is never a stroke and a cutout at once. The glyph is painted opaque into
+one layer that carries the color's alpha: a translucent color, such as a disabled one, then stays even where strokes
+cross the fill, and a cutout clears only the glyph's own pixels. `GlyphIcon` shows a glyph at a fixed `fill`, taking
+its size, color, and fill from `IconTheme` unless it is given its own, as `Icon` does, and mirroring it in right-to-left
+text when `Glyph.matchTextDirection` is set.
+`AnimatedGlyph` drives a `GlyphIcon` from its `filled` flag and pops briefly when it fills. A glyph whose shape follows
+some other state, like the sidebar toggle that tracks the pane's width, is a builder in `AppGlyphs` such as
+`AppGlyphs.sidebar(progress)`. A new glyph goes in `AppGlyphs` and in the list `test/icons/glyph_painter_test.dart` runs
+through its checks; it is named for what it means in the app, one glyph per meaning, with SF Symbols and Fluent as the
+reference for the metaphor. Tests find one with `find.byGlyph` from `test/helpers/glyph_finders.dart`.
+
+Icons are outlined by default and filled inside a filled button: `IconButton.filled` and `.filledTonal`, `FilledButton`
+in its tonal and icon forms, and floating action buttons draw their glyph with `fill: 1`, because an outline on a tinted
+container reads weaker than the container it sits in. A glyph with no body looks the same either way and still takes
+`fill: 1`, so the rule holds if the glyph later gains one. `test/lint/filled_button_glyphs_test.dart` checks every
+`GlyphIcon` written inside such a button; an icon that reaches the button from elsewhere, as through a helper that picks
+the button variant, gets its fill by hand or from `IconThemeData.fill`. Everywhere else fill marks state only: the
+selected destination, a pinned window, a lit torch. The phone's floating navigation bar is the one exception: like an iOS
+tab bar it fills every destination and marks the selected one by colour alone.
+
+Framework widgets that draw their own icon take it from the theme: the `ActionIconThemeData` in `lib/application.dart`
+supplies the back and close buttons, with `AppGlyphs.backFor` picking the platform's back glyph, and a `DropdownMenu`
+is given its chevrons. A framework widget added later that paints a Material icon needs the same treatment.
+
+Empty states draw no image assets either. `NullStatus` in `lib/widgets/null_status.dart` shows the glyph for its
+meaning filled on a Material 3 Expressive shape from `material_new_shapes`, with a few accent marks, and enters with
+one of three choreographies picked at random: the shape spins in, morphs out of a circle, or springs in while the
+accents orbit into place. The glyph takes `onPrimaryContainer`, not `primary`: the `content` scheme variant can leave
+`primaryContainer` as light as `primary` in dark mode.
+
+`CaptionIcon` is the one icon that does not follow the glyph grid: the window caption buttons keep the one pixel,
+pixel-aligned stroke of Windows' 10-pixel caption glyphs on every platform.
+
+## App Bar Actions
+
+`CommonScaffold` keeps at most two buttons in sight in its bar. A page hands it what may fold as data: `primaryAction`,
+`iconActions`, `menuItems`, and `searchActions` while searching; custom widgets passed through `actions` never fold.
+Past two, only the search button (the clear button while searching) stays in sight, or on a bar without search the
+primary action, or the first icon action when `foldPrimaryAction` is set; everything else goes into one overflow menu,
+primary action first, and a folded action that is loading shows as a disabled item. `primaryAction` counts only where the bar holds it, in a bottom sheet and on a phone's home
+page, whose foot the navigation dock takes; elsewhere it is the page's floating action button. No page adds a
+floating action button of its own: a secondary action such as selecting every app goes into `menuItems`, and saving
+an edit page is a check among its `iconActions`.
 
 ## Settings Rows
 
 `lib/widgets/config_item.dart` holds the shared settings-row vocabulary: `ConfigToggleItem`, `ConfigOptionsItem`,
-`ConfigTextItem`, and `ConfigListInputItem`. Each takes a `selector` (a `ProviderListenable`, normally
+`ConfigTextItem`, and `ConfigListEditItem`. Each takes a `selector` (a `ProviderListenable`, normally
 `someProvider.select(...)`) and an `onChanged(ref, value)` writer, and watches its own selector so changing one setting
 rebuilds one row instead of the whole section. Titles and subtitles are `ConfigLabel` callbacks that receive
 `AppLocalizations`, which keeps literal labels such as `IPv6` and localized labels in the same shape.
 
-Build settings screens from these directly, or from a file-local helper that binds one provider once — see `_dnsToggle`
-in `lib/views/config/dns.dart` and `_appSettingToggle` in `lib/views/application_setting.dart`. Declare a named
+Build settings screens from these directly, or from a file-local helper that binds one provider once — see `_networkToggle`
+in `lib/views/config/network.dart` and `_appSettingToggle` in `lib/views/config/general.dart`. Declare a named
 `ConsumerWidget` only when a row is genuinely reused across screens, as `lib/views/config/network.dart` rows are by
 `lib/views/dashboard/widgets/quick_options.dart`. Rows with bespoke behaviour — a custom dialog, a derived value, or a
 second provider write — stay hand-written rather than growing extra parameters on the shared items.
@@ -215,6 +359,8 @@ Provider files in `lib/providers/`:
   - `state/overwrite.dart`: custom overwrite validity and the staged group/rule notifiers.
 - `action.dart`: business logic notifiers, setup, backup, core lifecycle, proxy selection.
 - `core.dart`: `coreHandlerProvider`, the container-scoped handle on `CoreController`.
+- `route_state.dart` and `routed_probe.dart`: the route tracker and the probe cache; see Route Consistency above.
+- `outbound_ip.dart` and `service_status.dart`: the dashboard probes built on them.
 - `database.dart`: Drift database provider wrappers.
 
 ### Reaching Singletons
@@ -244,7 +390,7 @@ itself live in one. Code without a `Ref` reaches providers through
 `lib/providers/actions/system.dart` — all singletons or platform callbacks with no
 `Ref` in scope.
 
-`lib/models/profile.dart` no longer reaches Core. `Profile.saveFile` and
+`lib/models/profile.dart` does not reach Core. `Profile.saveFile` and
 `Profile.update` take a `ValidateConfig` callback, and every caller passes
 `(path) => _core.validateConfig(path)`, keeping the Core handle lazy so a profile
 path that never validates never resolves the controller.
@@ -269,15 +415,15 @@ generated into `lib/providers/generated/`.
 
 The root navigator key lives in `lib/common/navigator.dart` as `rootNavigatorKey`;
 `globalState.navigatorKey` is a getter onto it. `lib/common/dialog.dart` reaches
-the key directly, so the dialog helpers no longer import `lib/state.dart`.
+the key directly and does not import `lib/state.dart`.
 
 ### Platform Layering
 
 `lib/common/common.dart` deliberately does not export `tray.dart`, `window.dart`,
 `launch.dart`, `system_dns.dart`, or `permission.dart`. Those five modules import
-`tray_manager`, `window_manager`, `launch_at_startup`, and `screen_retriever`;
-exporting them put those packages in the compile graph of all 132 files that
-import the barrel for a string helper. Import the specific module instead.
+`tray`, `window`, `launch_at_startup`, and `screen_retriever`;
+exporting them would put those packages in the compile graph of every file that
+imports the barrel for a string helper. Import the specific module instead.
 
 `test/lint/platform_layering_test.dart` enforces four rules. Three are local: the
 barrel never re-exports one of those five modules, nothing under `lib/common`,
@@ -289,16 +435,16 @@ closure and fails if *any* file in it imports one of those packages. That one is
 the real invariant — the local rules only stop the shortest path, and every leak
 found so far arrived through a longer one.
 
-Four consequences are already in the tree:
+The shapes that keep the closure small:
 
-- `System.back` and `System.exit` no longer touch `window`; the window half of
+- `System.back` and `System.exit` do not touch `window`; the window half of
   both lives in `SystemAction`.
-- `KeyboardModifier.toHotKeyModifier()` moved from `lib/enum/enum.dart` to
-  `lib/manager/hotkey_manager.dart`, its only consumer.
-- Startup orchestration moved off `GlobalState` into `lib/bootstrap.dart`.
+- `KeyboardModifier.toHotKeyModifier()` lives in
+  `lib/manager/hotkey_manager.dart`, its only consumer, not in `lib/enum/enum.dart`.
+- Startup orchestration lives in `lib/bootstrap.dart`, not on `GlobalState`.
   `common/num.dart`, `common/print.dart` and `common/request.dart` import
   `state.dart` for `theme`, `container` and `packageInfo`/`ua`, so anything
-  `GlobalState` reaches lands in the barrel's closure; the ambient state it now
+  `GlobalState` reaches lands in the barrel's closure; the ambient state it
   holds reaches nothing platform-specific.
 - `SystemAction` talks to `WindowPort` and `TrayPort` from
   `lib/common/app_ports.dart` instead of importing `common/window.dart` and
@@ -306,36 +452,27 @@ Four consequences are already in the tree:
   the real implementations; both stay null in tests, where every call through
   them is a no-op. A test that needs the real tray assigns `trayPort` itself, as
   `test/common/tray_menu_test.dart` does.
+- `lib/providers/providers.dart` re-exports `action.dart`, so `lib/common` and
+  `providers/app.dart` import `providers/state.dart` and `providers/config.dart`
+  directly; the barrel would reach the whole action layer.
+- A data type in a lower layer never holds the widget that renders it, because
+  that drags the whole view tree into the barrel's closure. The route table is
+  `lib/views/navigation.dart` implementing `NavigationPort`, which
+  `providers/state/navigation.dart` reads through and `bootstrap.init` binds;
+  unbound it yields no items, so a test that renders navigation assigns
+  `navigationPort` itself, as `test/pages/home_test.dart` does. `DashboardWidget`
+  is plain data, since it is persisted in the app settings; the widget mapping
+  lives in `lib/views/dashboard/widget_registry.dart`, the reverse lookup relying
+  on the branches returning canonical consts.
 
-Narrow the barrel imports too: `lib/providers/providers.dart` re-exports
-`action.dart`, so importing the providers barrel from `lib/common` or from
-`providers/app.dart` reaches the whole action layer. Those three now import
-`providers/state.dart` and `providers/config.dart` directly.
-
-The same shape appeared twice more, without a platform package involved: a data
-type in a lower layer holding the widget that renders it, which drags the whole
-view tree into the barrel's closure.
-
-- `lib/common/navigation.dart` was a route table building view widgets. It is
-  now `lib/views/navigation.dart` implementing `NavigationPort`, which
-  `providers/state/navigation.dart` reads through and `bootstrap.init` binds.
-  Unbound it yields no items, so a test that renders navigation assigns
-  `navigationPort` itself, as `test/pages/home_test.dart` does.
-- `DashboardWidget` carried a `GridItem` per value, so `lib/enum/enum.dart`
-  imported the dashboard cards — and `lib/widgets/widgets.dart` with them. The
-  enum is persisted in the app settings, so it is back to plain data; the
-  mapping lives in `lib/views/dashboard/widget_registry.dart`, the reverse
-  lookup relying on the branches returning canonical consts.
-
-Together those took the closure from 258 files to 187, with nothing under
-`lib/views` left in it. `test/lint/platform_layering_test.dart` pins that
-directly: the barrel's closure must contain no `lib/views` file. Data the
-provider layer needs from the UI layer goes through a port in
-`lib/common/app_ports.dart` rather than an import in the other direction.
+`test/lint/platform_layering_test.dart` also pins that the barrel's closure
+contains no `lib/views` file. Data the provider layer needs from the UI layer
+goes through a port in `lib/common/app_ports.dart` rather than an import in the
+other direction.
 
 ### High-Frequency Buffers
 
-`logsProvider`, `requestsProvider` and `trafficsProvider` hold a `FixedList`
+`logsProvider`, `requestsProvider`, `dnsQueriesProvider` and `trafficsProvider` hold a `FixedList`
 (`lib/common/fixed.dart`), which trades a normal copy-on-write for a shared
 buffer tagged with a generation counter:
 
@@ -354,9 +491,35 @@ buffer tagged with a generation counter:
 `add`/`clear` mutate in place without advancing the generation; use them only on
 a buffer you own outright (seeding, resets, tests), never on published state.
 
+### Background Work
+
+A proxy client runs for days with nobody looking at it, so work that only feeds the UI stops when the UI cannot be
+seen. There are three levels of gating:
+
+- `appVisibleProvider` is false while the desktop window is hidden or the Android activity is in the background
+  (`hidden`, `paused`, `detached`). `AppStateManager` writes it. The one-second run-time and traffic ticker in
+  `SetupAction` follows it. The macOS menu bar title is the exception: it shows the traffic while the window is
+  hidden. `RouteTracker` and `RoutedProbe` follow it too, as described under Route Consistency.
+- `ActivePollingMixin` is stricter for per-widget polls such as connections and memory. It polls only while the app is
+  `resumed` and its home page is the current one.
+- `_NavigationPage` puts every page except the current one under a disabled `TickerMode`. Home pages are kept alive in
+  the `PageView`, and Flutter does not mute tickers on a kept-alive page off screen. A spinner left on one would
+  otherwise keep scheduling frames.
+
+A provider's own `ref.listen` delivers nothing while no one listens to that provider. That is the usual state of an
+action notifier, which is only ever read. A derived provider it listens to is never recomputed, and even a `ref.read`
+of it returns a stale value. So an action that has to follow a signal listens to the keep-alive provider that holds
+it, as `SetupAction` does with `appVisibleProvider`, not to a provider derived from that.
+
+On Android, `SuspendModule` suspends the Core while the screen is off and the device is in Doze. Health checks that
+run in Doze all fail, so after a suspension the Core re-probes every provider. That re-probe waits for the screen to
+come on. A Doze maintenance window resumes the Core too, but probing there would spend the window's radio time on
+results nobody sees.
+
 ## Database
 
-The app uses Drift/SQLite in `lib/database/`. Current schema version is 2.
+The app uses Drift/SQLite in `lib/database/`. `schemaVersion` in `lib/database/database.dart` is the migration
+counter; every schema change bumps it and adds the matching migration step.
 
 Tables:
 
@@ -410,7 +573,10 @@ directives, so consumers continue to import the same public API:
 
 - `CommonAction`: update check and common UI operations.
 - `SetupAction`: config setup and TUN management.
-- `BackupAction`: backup/restore with WebDAV sync.
+- `BackupAction`: backup/restore orchestration over a per-run temp work directory; the view supplies where an archive
+  goes (local save, WebDAV upload) or comes from. The archive format lives in `lib/common/backup.dart`, which stages a
+  restore without touching the data directory; files, database rows and settings are applied only after the whole
+  archive has been read and validated.
 - `CoreAction`: core lifecycle, initialization, coalesced restart, and post-restart profile/running-state application.
 - `SystemAction`: system integration, tray, coordinated resource cleanup, terminal Core close, exit, and brightness.
 - `StoreAction`: profile storage operations.
@@ -452,6 +618,51 @@ Shared:
 - `AppStateManager`
 - `StatusManager`
 - `ThemeManager`
+
+## Safe Mode
+
+`--dart-define=SAFE_MODE=true` builds a FlClash that never changes the host network, so a development build can run
+next to an installed one. It is a compile-time constant with two faces: `safeModeBuild` in `lib/common/constant.dart`
+for the process-wide handles that exist before the provider container, and `safeModeProvider` in
+`lib/providers/app.dart` for everything reached through Riverpod, which is also what tests override. Settings are never
+rewritten; each owner reads the flag where it would otherwise act:
+
+- Core config: `SetupAction._effectivePatchConfig` is the one place the profile path and `updateConfig` derive what
+  the Core receives from the user's `PatchClashConfig`. In safe mode it reports `tun.enable: false` and
+  `ExternalControllerStatus.close`, so the generated profile and every `updateConfig` carry no TUN and an empty
+  `external-controller` (the Core's `route.ReCreateServer` binds no RESTful API port) while the settings keep the
+  user's values and the installed app keeps `127.0.0.1:9090`. `SetupAction.requestAdmin` skips authorization.
+- System clock: `_makeRealProfileTask` sets `write-to-system: false` on whatever `ntp` section the generated profile
+  ends up with, so neither the user's override nor the profile's own NTP config can move the host's time.
+- System proxy: the `proxy` plugin handle in `lib/common/proxy.dart` is `null`, so `ProxyManager` and exit cleanup
+  never write the OS setting, not even the `stopProxy` that would clear what the installed app configured.
+- System DNS: `systemDnsCoordinator` is `null` and `shouldPatchSystemDnsProvider` is `false`, so neither the apply nor
+  the restore path runs. The restore path matters because a profile or release build shares the preferences of the
+  installed app (only a macOS or Android debug build has its own bundle id) and would restore from its record.
+- Login item: the `autoLaunch` handle in `lib/common/launch.dart` is `null`, so neither the boot sync nor the setting
+  listener registers the build's executable or removes the installed app's entry, which on Windows is the same
+  `FlClash` value in the user's Run key.
+- Privileged Core: `CoreService` resolves the launcher with `hasHelper: false`, which is the direct child-process path
+  on every desktop platform; the Helper keeps managing the installed app's Core.
+- Core listeners: `SetupAction._setCoreRunning` and the `AppManager` suspend listener never call `startListener` or
+  `stopListener`, so the Core's `isRunning` stays false and `updateListeners` binds nothing, while `isStartProvider`
+  and `applyProfile` behave as usual. The installed app keeps the mixed, DNS and other loopback ports.
+- Android: `sharedStateProvider` hands the service `VpnOptions.enable: false` and `systemProxy: false`, so the
+  foreground service runs without a `VpnService`.
+- Wi-Fi SSID: `ConnectivityManager` never reads the SSID and `Permissions.checkLocationPermissions` neither checks
+  nor requests location authorization, so `currentSSIDProvider` stays `null` and the excluded-network suspend never
+  trips. The macOS `wifi_ssid` plugin builds its `CLLocationManager` and `CWWiFiClient` lazily, so a build that
+  never asks never reaches locationd or wifid.
+- Global hotkeys: `HotKeyManager` neither subscribes to hotkey events nor registers the configured shortcuts with the
+  OS; the in-window `Shortcuts` (close window, escape) stay.
+- URL schemes and launcher shortcuts: `Window.init` skips the Windows registry and Linux desktop-entry registration
+  of the `clash` schemes, and Android never calls `initShortcuts`.
+- Presentation: `AppEnvManager` shows a `SAFE MODE` banner ahead of the channel banner, and `TrayState.safeMode` gives
+  the tray the `status_4` bug icon, a suffixed tooltip and a menu of only show and exit. `trayStateProvider` and
+  `trayTitleStateProvider` report `showTrayTitle: false`, so the macOS menu bar carries no traffic title.
+
+A new host integration, anything that changes the OS's routes, proxy, DNS, login items, privileges or VPN state, or
+that asks the OS for a permission, a global shortcut or a registration, must consult the flag at its owner in the same way and get a test that overrides `safeModeProvider`.
 
 ## Build System
 
@@ -583,14 +794,78 @@ artifacts under `src/main` are whatever the last hook run left behind, which is 
 detect. Verify a change here with `./gradlew ":core:buildCMakeDebug[arm64-v8a]" :app:compileFlutterBuildDebug
 --dry-run`: the Flutter task must be listed first even though the CMake task was requested first.
 
+#### Android Crash Symbols
+
+Crashlytics NDK symbolicates a native crash only from libraries that still carry their symbols, and AGP strips every
+`.so` it packages, so the Android build keeps symbols until `:app`'s own strip step and the APK does not grow:
+
+- The hook drops `-s` and `-w` from `go_ldflags` for the `c-shared` Android targets only; the desktop Cores stay
+  stripped because nothing consumes their symbols.
+- `:core` compiles with `-g`, does not `--strip-all`, and sets `packaging.jniLibs.keepDebugSymbols` so its own strip
+  task leaves `libclash.so` and `libcore.so` intact on the way into `:app`'s merged native libs, which is where the
+  Crashlytics plugin reads them.
+- `:app` turns on `nativeSymbolUploadEnabled` and finalizes `assembleRelease` and `bundleRelease` with
+  `uploadCrashlyticsSymbolFileRelease` only when release signing is configured, the same condition that marks a real
+  release build; the checked-in `google-services.json` is a placeholder, so a local upload is noise at best, and CI
+  supplies both files together. The Crashlytics plugin wires the R8 mapping upload itself but leaves the native symbol
+  upload to the caller, so nothing else triggers it. `generateCrashlyticsSymbolFileRelease` runs `dump_syms` over the
+  Go Core for every ABI, which is the other reason it stays off for unsigned builds.
+
 ## Local Plugins
 
 - `setup`: build-time harness for Go core artifacts and the Rust helper, driven by a Dart build hook; no runtime Dart API.
 - `proxy`: system proxy configuration.
 - `rust_api`: runtime Flutter Rust Bridge FFI package built through Native Assets. See below.
 - `tray`: system tray for Linux, macOS and Windows. Written for FlClash; replaced the `tray_manager` fork.
+- `window`: desktop window control for Linux, macOS and Windows. Written for FlClash; replaced the
+  `window_manager` fork. See below.
 - `wifi_ssid`: Wi-Fi SSID detection.
 - `flutter_distributor`: app packaging/distribution.
+
+## window Plugin
+
+`plugins/window` exposes `desktopWindow` (`DesktopWindow`) on the `window` method channel; `plugins/window/README.md`
+is the channel contract (methods, arguments, events, effects, runner hooks) and every platform implements exactly that
+table. `lib/common/window.dart` and `lib/manager/window_manager.dart` are the only application callers.
+
+- Each platform keeps one style record (title bar style and button visibility everywhere, rounded corners on
+  Windows, effect, tint and brightness on Windows and macOS) and reapplies it whole from a single `apply` routine, so DWM margins
+  on Windows and `isOpaque`/effect views on macOS have one writer. Add a visual setting to that record, never a second
+  code path.
+- Method dispatch is a table on every platform, and every handler validates its arguments; a bad call answers with a
+  `bad_args` `PlatformException`, a capability the platform lacks with `unsupported`. Coordinates cross the channel in
+  logical pixels; Windows converts with `GetDpiForWindow`.
+- Position and size changes surface as one `geometry-changed` event that each platform coalesces natively (150 ms
+  after the last `WM_WINDOWPOSCHANGED`, did-move/did-resize, or configure-event); `WindowManager` only debounces the
+  capture on top of it.
+- Windows: with `titleBarStyle: hidden`, `WM_NCCALCSIZE` lets `DefWindowProc` compute the client rect and then puts
+  the top edge back (plus the frame height when maximized, so the taskbar stays uncovered; plus 1 px otherwise, which
+  Windows 11 needs to draw the top border and Windows 10 needs to avoid a white line). Fullscreen is emulated by the
+  plugin, which raises `enter-full-screen` and
+  `leave-full-screen` itself and mutes `WM_SIZE` while it is on. The find-running-window IPC
+  (`WindowPluginFindRunningWindow`/`WindowPluginActivateWindow`) registers a window message from the executable path
+  and whitelists it through UIPI so a non-elevated launcher reaches an elevated instance.
+- Linux: GTK drops the placement of an unmapped window, so `hide` saves the geometry and the `map-event` handler
+  applies it, then corrects the placement for 150 ms while the window manager settles (it may place the window
+  after the map handler ran). `isPositionSupported` is X11-only; Wayland owns placement and re-shown windows land where the
+  compositor puts them. Linux supports no effect: GTK 3 has no desktop-neutral blur protocol, so `isEffectSupported`
+  is true only for `none` and the runner keeps the default visual.
+- macOS: `WindowPlugin.instance` is reached from `AppDelegate` for `applicationShouldTerminate` (emits
+  `should-terminate`) and `applicationShouldHandleReopen` (emits `activate`); `MainFlutterWindow` calls
+  `hiddenWindowAtLaunch()` so the first `order` keeps the window hidden until Dart shows it.
+- Window effects (`transparent`, `blur`, `acrylic`, `mica`) are capability-gated by `isEffectSupported`; the Flutter
+  content must paint a translucent background for them to show. `ThemeProps.sidebarBlur` (on by default) drives
+  them: `Window.setBlur` picks `blur` on macOS and `acrylic` (or `blur`) on Windows and caches only a successful
+  probe, so a platform that answered unsupported is asked again the next time blur is turned on. `WindowManager` reapplies it
+  whenever the setting or the app brightness changes and records the outcome in `windowBlurProvider`, and only the
+  sidebar and the caption strip paint translucently while it is on. On macOS the sidebar paints fully transparent
+  and the effect view follows the window's active state, which is the flutter_acrylic `TransparentMacOSSidebar`
+  look; Windows keeps a 50% tint because the accent effects blur too little for the rail to stay readable.
+- Sidebar blur is soft-disabled: `feature.sidebarBlur` (`lib/common/feature.dart`) is off unless the build passes
+  `--dart-define=FEATURE_SIDEBAR_BLUR=true`. While it is off the theme page hides the toggle and
+  `windowBlurRequestProvider` asks for no effect whatever `ThemeProps.sidebarBlur` holds. `WindowManager` still sends
+  that request at startup: the macOS plugin installs its effect view in `ensureInitialized` and leaves it active until
+  the first `setEffect`, so the `none` request is what makes the window opaque and parks the effect view.
 
 ## rust_api Crate Layout
 
@@ -600,6 +875,12 @@ Cargo and registers `librust_api` as a code asset that Flutter bundles and signs
 `rustup run <channel>`, so `rust/rust-toolchain.toml` must pin an exact channel and list every target the project ships;
 the hook refuses `stable` and a target missing from that list. `rustup show` installs the pinned toolchain and those
 targets on first use.
+
+`flutter_rust_bridge_codegen generate` (see `.agents/commands.md`) writes `lib/src/rust/frb_generated.dart`,
+`frb_generated.io.dart`, `frb_generated.web.dart`, one `lib/src/rust/api/<module>.dart` per Rust API module, and
+`rust/src/frb_generated.rs`; none of them is edited by hand. A new Rust function is a public function in `rust/src/api/`,
+plus `pub mod <name>;` in `api/mod.rs` and an export from `lib/rust_api.dart` when it starts a new module. `RustLib` is
+the singleton entry point: `RustLib.init()` runs before any call and `RustLib.dispose()` on teardown.
 
 `plugins/rust_api/rust/src/` separates the bridge boundary from the code behind it:
 
@@ -619,7 +900,7 @@ What a platform does not use, it does not compile. `interprocess` and `global-ho
 Android loads the Core in-process and has no global shortcuts. Adding a capability follows the same shape: implement it in its own module, gate the
 dependency by target, and keep the `api/` entry point unconditional so one set of bindings still serves every platform.
 
-`RustLib.init()` runs on every platform now, not only desktop — the script engine is shared.
+`RustLib.init()` runs on every platform, because the script engine is shared.
 
 ## Profile Script Engine
 

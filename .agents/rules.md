@@ -254,8 +254,14 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   actions through `ServiceState` and keep `ServiceController` as the sole binding/run-time owner.
 - Every `BroadcastReceiver.goAsync()` path must finish its `PendingResult` exactly once. A watchdog may release the
   broadcast lease, but must not cancel, reverse, or otherwise redefine the service operation.
+- Anything that probes through the outbound route is a `RoutedProbe` judged against `routeTrackerProvider` (Route
+  Consistency in `.agents/architecture.md`); the Core stamps every answer and publishes its picks, so do not add a
+  change signal, a trigger counter, or a `coreStatusProvider` watch of your own.
 - Presentation smoothing such as `CoreStatusButton`'s connecting hold must remain local display state. It must not delay or
   overwrite `coreStatusProvider`, and a real failure must bypass/cancel the hold immediately.
+- Safe mode (`SAFE_MODE` define, see the safe mode section of `.agents/architecture.md`) is consulted by each host
+  integration at its owner, never by rewriting the user's settings. `safeModeBuild` is for handles created before the
+  container exists; everything else reads `safeModeProvider` so a test can override it.
 - `Tray.hide()` is idempotent on all three desktop platforms and returns native state to "`show` was never called".
   `AppTray.shutdown()` latches, so no later `update()`/`updateTitle()` can resurrect the icon once shutdown begins.
   Keep it that way; a resurrected icon outlives `exit(0)` as a Windows ghost icon, because `setPreventClose(true)`
@@ -326,10 +332,10 @@ key), so a test that skips the seam registers the test binary on the machine tha
 under `kDebugMode`, which is always true beneath `flutter test`, so its remaining branches cannot be reached from a test
 at all; `test/common/launch_test.dart` pins the early return instead.
 
-`pumpAndSettle` never returns on a page holding `EditorPage`: the code editor blinks its caret forever, so frames keep
-being scheduled. Pump explicitly instead. `encodeYamlTask` and its neighbours in `common/task.dart` hand work to a real
-isolate through `compute`, which only runs outside the fake-async zone, so a test awaiting one needs
-`tester.runAsync(...)` between the pumps — see `test/views/profile_preview_test.dart`.
+`pumpAndSettle` never returns on a page holding `EditorView` (what `EditorPage` embeds): the code editor blinks its
+caret forever, so frames keep being scheduled. Pump explicitly instead. `encodeYamlTask` and its neighbours in
+`common/task.dart` hand work to a real isolate through `compute`, which only runs outside the fake-async zone, so a test
+awaiting one needs `tester.runAsync(...)` between the pumps.
 
 The `@visibleForTesting` `database` setter in `lib/database/database.dart` deliberately does not close the instance it
 replaces. Tests inject `NativeDatabase.memory()`, which holds no file handle, and `Database.close()` is async while the
@@ -359,7 +365,7 @@ The same seam carries the two other places a platform decision changed what was 
 takes nullable `isAndroid`/`isMacOS` that fall back to the host. Every test names the platform it means, because
 `debugDefaultTargetPlatformOverride` does not move `system` and a suite that leaves it to the host asserts the macOS
 shape on a developer machine and the Linux one on CI. `WindowHeaderContainer` builds the caption buttons on every
-non-macOS host, so a test mounting it needs `TestApp` for `AppLocalizations` and a `window_manager` channel mock that
+non-macOS host, so a test mounting it needs `TestApp` for `AppLocalizations` and a `window` channel mock that
 answers `isMaximized`/`isAlwaysOnTop` with a bool.
 
 Auto-dispose providers need a container-level hold before a test reads them back. `proxyGroupProvider`, `ruleProvider`,
@@ -405,7 +411,10 @@ throws "`…State.dispose failed to call super.dispose.`" in debug and profile b
 dispose()` and hand async teardown to `unawaited(...)`; `Future<void> dispose() async` compiles and is the shape that
 invites the bug.
 
-Use `ProviderContainer` directly for simple Riverpod provider tests. The generated Riverpod `update()` method takes a callback:
+Use `ProviderContainer` directly for simple Riverpod provider tests, released with `addTearDown(container.dispose)`.
+Assert against the provider's generated public API, not its implementation, re-read source defaults before asserting
+them, and wait on provider futures or state changes rather than fixed sleeps. The generated Riverpod `update()` method
+takes a callback:
 
 ```dart
 notifier.update((state) => newValue);
@@ -415,6 +424,16 @@ When testing freezed models with nested objects, always round-trip through `json
 
 For async widgets, put visual cleanup in `finally` when the action may throw. Focused widget tests should cover success,
 failure, disposal, and any timer boundary that changes visible state.
+
+## Running the App Locally
+
+- An agent starts FlClash on the host only as a safe mode build (`--dart-define=SAFE_MODE=true`, see
+  `.agents/commands.md`). A normal build takes over the host network, so the user runs it, never the agent.
+- Never end a FlClash process the agent did not start, and never kill by name (`pkill`, `killall`, a pattern on the
+  executable path): the user's own instance matches too. Record the pid of every process you launch, check with
+  `ps -o pid,command -p <pid>` that its executable is your own build output, and end only that pid.
+- Release and profile builds share the installed app's data directory and single-instance lock, so one cannot start
+  while the user's instance runs; a debug build uses the separate `.debug` bundle directory.
 
 ## Commit Messages
 
@@ -452,9 +471,9 @@ Changelog: Per-profile override scripts
 ```
 
 - `Changelog:` is the English entry. `Changelog: skip` drops the commit from the changelog entirely.
-- The changelog is English only. Translation trailers were removed on purpose: they pushed release copy into the commit
-  history, so any `Changelog-<locale>:` or `Breaking-<locale>:` now fails the hook. Translate after the fact if ever
-  needed, not in the commit message.
+- The changelog is English only. A `Changelog-<locale>:` or `Breaking-<locale>:` trailer fails the hook, because
+  translated release copy does not belong in the commit history. Translate after the fact if ever needed, not in the
+  commit message.
 - `Changelog-Type:` moves an entry into another group, for example to promote a `refactor` that users will notice. Valid
   values are `breaking`, `feat`, `fix`, `perf`, `revert`.
 - `BREAKING CHANGE:` is required whenever the subject carries `!`, and its text becomes the breaking entry. A `!` commit
