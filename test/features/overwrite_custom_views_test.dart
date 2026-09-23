@@ -1,5 +1,7 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/overwrite/overwrite.dart';
+import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -13,6 +15,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
@@ -30,6 +33,7 @@ class _TestProfileCustomRules extends ProfileCustomRules {
 
 class _TestProxyGroups extends ProxyGroups {
   final List<ProxyGroup> initial;
+  final List<Set<int>> deleted = [];
 
   _TestProxyGroups(this.initial);
 
@@ -38,6 +42,11 @@ class _TestProxyGroups extends ProxyGroups {
 
   @override
   void order(int oldIndex, int newIndex) {}
+
+  @override
+  void delAll(Iterable<int> proxyGroupIds) {
+    deleted.add(proxyGroupIds.toSet());
+  }
 }
 
 class _TestOverwriteData extends Notifier<CustomOverwriteDate> {
@@ -68,57 +77,63 @@ void _setViewport(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
+Future<_TestProxyGroups> _pumpProxyGroups(WidgetTester tester) async {
+  _setViewport(tester);
+  final profile = Profile.normal().copyWith(
+    overwriteType: OverwriteType.custom,
+  );
+  final proxyGroups = List.generate(
+    3,
+    (index) => ProxyGroup(
+      id: 100 + index,
+      profileId: profile.id,
+      name: 'Group $index',
+      type: GroupType.Selector,
+      proxies: const ['DIRECT'],
+    ),
+  );
+  final notifier = _TestProxyGroups(proxyGroups);
+  final container = ProviderContainer(
+    overrides: [
+      profilesProvider.overrideWith(() => TestProfiles([profile])),
+      currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+      proxyGroupsProvider.overrideWith2((_) => notifier),
+      customOverwriteDateProvider(profile.id).overrideWithValue(
+        CustomOverwriteDate(
+          loaded: true,
+          proxyNames: const ['DIRECT'],
+          proxyTypes: const {'DIRECT': 'Direct'},
+          proxyGroups: proxyGroups,
+          proxyProviders: const {'provider'},
+          ruleTargets: {
+            ...RuleTarget.baseTargets,
+            ...proxyGroups.map((group) => group.name),
+          },
+        ),
+      ),
+    ],
+  );
+  addTearDown(container.dispose);
+  globalState.container = container;
+  container
+      .read(viewSizeProvider.notifier)
+      .update((_) => const Size(1400, 1000));
+
+  await tester.pumpWidget(
+    UncontrolledProviderScope(
+      container: container,
+      child: TestApp(child: CustomProxyGroupsView(profile.id)),
+    ),
+  );
+  await tester.pump();
+  return notifier;
+}
+
 void main() {
   testWidgets('groups list rounds only the first and last rows', (
     tester,
   ) async {
-    _setViewport(tester);
-    final profile = Profile.normal().copyWith(
-      overwriteType: OverwriteType.custom,
-    );
-    final proxyGroups = List.generate(
-      3,
-      (index) => ProxyGroup(
-        id: 100 + index,
-        profileId: profile.id,
-        name: 'Group $index',
-        type: GroupType.Selector,
-        proxies: const ['DIRECT'],
-      ),
-    );
-    final container = ProviderContainer(
-      overrides: [
-        profilesProvider.overrideWith(() => TestProfiles([profile])),
-        currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
-        proxyGroupsProvider.overrideWith2((_) => _TestProxyGroups(proxyGroups)),
-        customOverwriteDateProvider(profile.id).overrideWithValue(
-          CustomOverwriteDate(
-            loaded: true,
-            proxyNames: const ['DIRECT'],
-            proxyTypes: const {'DIRECT': 'Direct'},
-            proxyGroups: proxyGroups,
-            proxyProviders: const {'provider'},
-            ruleTargets: {
-              ...RuleTarget.baseTargets,
-              ...proxyGroups.map((group) => group.name),
-            },
-          ),
-        ),
-      ],
-    );
-    addTearDown(container.dispose);
-    globalState.container = container;
-    container
-        .read(viewSizeProvider.notifier)
-        .update((_) => const Size(1400, 1000));
-
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: TestApp(child: CustomProxyGroupsView(profile.id)),
-      ),
-    );
-    await tester.pump();
+    await _pumpProxyGroups(tester);
 
     final rows = find.byType(DecorationListItem);
     expect(rows, findsNWidgets(3));
@@ -130,6 +145,25 @@ void main() {
       find.descendant(of: rows.last, matching: find.byType(Divider)),
       findsNothing,
     );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('groups list deletes the checked groups', (tester) async {
+    final notifier = await _pumpProxyGroups(tester);
+
+    await tester.tap(find.byType(CommonCheckBox).at(0));
+    await tester.pump();
+    await tester.tap(find.text('Group 2'));
+    await tester.pump();
+    await tester.tap(find.byGlyph(AppGlyphs.more));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(AppLocalizations.current.delete));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(AppLocalizations.current.confirm));
+    await tester.pumpAndSettle();
+
+    expect(notifier.deleted.single, {100, 102});
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -237,7 +271,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byIcon(Icons.info), findsOneWidget);
+    expect(find.byGlyph(AppGlyphs.info), findsOneWidget);
 
     container.read(_testOverwriteDataProvider.notifier).setRuleTargets({
       ...container.read(_testOverwriteDataProvider).ruleTargets,
@@ -245,8 +279,57 @@ void main() {
     });
     await tester.pump();
 
-    expect(find.byIcon(Icons.info), findsNothing);
+    expect(find.byGlyph(AppGlyphs.info), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
+
+  testWidgets(
+    'a rule the core would reject is flagged despite a DIRECT target',
+    (tester) async {
+      _setViewport(tester);
+      final profile = Profile.normal().copyWith(
+        overwriteType: OverwriteType.custom,
+      );
+      final rules = [
+        Rule.parse('NETWORK,tcp,DIRECT', id: 1).copyWith(order: '1'),
+        Rule.parse('NETWORK,icmp,DIRECT', id: 2).copyWith(order: '2'),
+        Rule.parse('RULE-SET,known,DIRECT', id: 3).copyWith(order: '3'),
+        Rule.parse('RULE-SET,gone,DIRECT', id: 4).copyWith(order: '4'),
+      ];
+      final container = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(() => TestProfiles([profile])),
+          currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+          profileCustomRulesProvider.overrideWith2(
+            (_) => _TestProfileCustomRules(rules),
+          ),
+          customOverwriteDateProvider(profile.id).overrideWithValue(
+            const CustomOverwriteDate(
+              loaded: true,
+              ruleTargets: {'DIRECT'},
+              ruleProviders: {'known'},
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      globalState.container = container;
+      container
+          .read(viewSizeProvider.notifier)
+          .update((_) => const Size(1400, 1000));
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: TestApp(child: CustomRulesView(profile.id)),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byGlyph(AppGlyphs.info), findsNWidgets(2));
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 }
