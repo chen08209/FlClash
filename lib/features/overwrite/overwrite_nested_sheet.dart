@@ -18,11 +18,7 @@ Future<void> showOverwriteNestedSheet<T>({
 }) {
   return showSheet(
     context: context,
-    props: const SheetProps(
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      maxWidth: double.maxFinite,
-    ),
+    props: nestedPagedSheetProps,
     builder: (_) {
       return ProfileIdProvider(
         profileId: profileId,
@@ -58,7 +54,6 @@ class OverwriteNestedSheet<T> extends ConsumerStatefulWidget {
 
 class _OverwriteNestedSheetState<T>
     extends ConsumerState<OverwriteNestedSheet<T>> {
-  final GlobalKey<NavigatorState> _nestedNavigatorKey = GlobalKey();
   late final T _origin;
   bool _closing = false;
 
@@ -68,12 +63,11 @@ class _OverwriteNestedSheetState<T>
     _origin = widget.currentOf(ref);
   }
 
-  Future<void> _handleClose() async {
+  Future<void> _handleDismiss(bool hasPushedPages) async {
     if (_closing) return;
     _closing = true;
     try {
-      final state = _nestedNavigatorKey.currentState;
-      if (state != null && state.canPop()) {
+      if (hasPushedPages) {
         final res = await dialogs.showMessage(
           message: TextSpan(text: context.appLocalizations.confirmExitWindow),
         );
@@ -111,61 +105,12 @@ class _OverwriteNestedSheetState<T>
     }
   }
 
-  Future<void> _handlePop() async {
-    final state = _nestedNavigatorKey.currentState;
-    if (state != null && state.canPop()) {
-      state.pop();
-    } else {
-      unawaited(_handleExit());
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final nestedNavigator = Navigator(
-      key: _nestedNavigatorKey,
-      onGenerateInitialRoutes: (navigator, initialRoute) {
-        return [
-          PagedSheetRoute(builder: (context) => widget.formBuilder(context)),
-        ];
-      },
-    );
-    final sheetProvider = SheetProvider.of(context);
-    return CommonPopScope(
-      onPop: (_) async {
-        unawaited(_handlePop());
-        return false;
-      },
-      child: sheetProvider!.copyWith(
-        nestedNavigatorPop: ([data]) {
-          Navigator.of(context).pop(data);
-        },
-        child: SizedBox(
-          width: sheetProvider.type == SheetType.sideSheet ? 400 : null,
-          height: double.infinity,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: GestureDetector(
-                  onTap: () async {
-                    await _handleClose();
-                  },
-                ),
-              ),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: SizedBox(
-                  width: double.infinity,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    child: PagedSheet(child: nestedNavigator),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return NestedPagedSheet(
+      builder: widget.formBuilder,
+      onExit: () => unawaited(_handleExit()),
+      onDismiss: (hasPushedPages) => unawaited(_handleDismiss(hasPushedPages)),
     );
   }
 }

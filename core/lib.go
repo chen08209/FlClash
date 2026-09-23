@@ -285,7 +285,7 @@ func invokeMethod(callback unsafe.Pointer, paramsChar *C.char) {
 		newMethodResponse("", callback).failure("invalid_method_call", err.Error(), nil)
 		return
 	}
-	go handleMethodCall(call, newMethodResponse(call.ID, callback))
+	dispatchMethodCall(call, newMethodResponse(call.ID, callback))
 }
 
 //export startTUN

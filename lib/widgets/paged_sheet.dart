@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/shape.dart';
 import 'package:fl_clash/widgets/inherited.dart';
+import 'package:fl_clash/widgets/pop_scope.dart';
 import 'package:fl_clash/widgets/sheet.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:navigator_resizable/navigator_resizable.dart';
@@ -111,6 +112,96 @@ class PagedSheet extends StatelessWidget {
               : AppShape.none),
       clipBehavior: clipBehavior,
       child: NavigatorResizable(child: child),
+    );
+  }
+}
+
+const nestedPagedSheetProps = SheetProps(
+  isScrollControlled: true,
+  backgroundColor: Colors.transparent,
+  maxWidth: double.maxFinite,
+);
+
+/// Opened with [nestedPagedSheetProps]. [onDismiss] is told whether a page is
+/// pushed over the root; with no callbacks, back on the root and a tap outside
+/// close the sheet.
+class NestedPagedSheet extends StatefulWidget {
+  const NestedPagedSheet({
+    super.key,
+    required this.builder,
+    this.onExit,
+    this.onDismiss,
+  });
+
+  final WidgetBuilder builder;
+  final VoidCallback? onExit;
+  final ValueChanged<bool>? onDismiss;
+
+  @override
+  State<NestedPagedSheet> createState() => _NestedPagedSheetState();
+}
+
+class _NestedPagedSheetState extends State<NestedPagedSheet> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey();
+
+  bool get _hasPushedPages => _navigatorKey.currentState?.canPop() ?? false;
+
+  void _close() => Navigator.of(context).pop();
+
+  void _handlePop() {
+    if (_hasPushedPages) {
+      _navigatorKey.currentState!.pop();
+      return;
+    }
+    (widget.onExit ?? _close)();
+  }
+
+  void _handleDismiss() {
+    final onDismiss = widget.onDismiss;
+    if (onDismiss == null) {
+      _close();
+      return;
+    }
+    onDismiss(_hasPushedPages);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sheetProvider = SheetProvider.of(context)!;
+    return CommonPopScope(
+      onPop: (_) async {
+        _handlePop();
+        return false;
+      },
+      child: sheetProvider.copyWith(
+        nestedNavigatorPop: ([data]) => Navigator.of(context).pop(data),
+        child: SizedBox(
+          width: sheetProvider.type == SheetType.sideSheet ? 400 : null,
+          height: double.infinity,
+          child: Stack(
+            children: [
+              Positioned.fill(child: GestureDetector(onTap: _handleDismiss)),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    child: PagedSheet(
+                      child: Navigator(
+                        key: _navigatorKey,
+                        onGenerateInitialRoutes: (_, _) => [
+                          PagedSheetRoute(builder: widget.builder),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

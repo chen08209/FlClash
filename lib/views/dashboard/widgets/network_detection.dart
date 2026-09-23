@@ -1,7 +1,12 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/service_probe.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/features/features.dart';
+import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/providers/outbound_ip.dart';
+import 'package:fl_clash/providers/routed_probe.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/views/dashboard/widget_metrics.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,22 +19,28 @@ class NetworkDetection extends ConsumerStatefulWidget {
 }
 
 class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
-  String _countryCodeToEmoji(String countryCode) {
-    final String code = countryCode.toUpperCase();
-    if (code.length != 2) {
-      return countryCode;
-    }
-    final int firstLetter = code.codeUnitAt(0) - 0x41 + 0x1F1E6;
-    final int secondLetter = code.codeUnitAt(1) - 0x41 + 0x1F1E6;
-    return String.fromCharCode(firstLetter) + String.fromCharCode(secondLetter);
+  late final OutboundIpProbe _probe;
+
+  @override
+  void initState() {
+    super.initState();
+    _probe = ref.read(outboundIpProbeProvider.notifier)..watch(routedOutbound);
+  }
+
+  @override
+  void dispose() {
+    _probe.unwatch(routedOutbound);
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    final networkDetection = ref.watch(networkDetectionProvider);
-    final ipInfo = networkDetection.ipInfo;
-    final isLoading = networkDetection.isLoading;
+    final entry = ref.watch(
+      outboundIpProbeProvider.select((state) => state.entryOf(routedOutbound)),
+    );
+    final ipInfo = entry.value;
+    final failed = entry.phase == ProbePhase.failed;
     final emojiTextStyle = context.textTheme.titleMedium?.toLight.copyWith(
       fontFamily: FontFamily.twEmoji.value,
     );
@@ -37,26 +48,32 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
     final descTextStyle = context.textTheme.titleSmall?.copyWith(
       color: context.colorScheme.onSurfaceVariant,
     );
+    final textScale = DashboardWidgetMetrics.textScaleOf(context);
     return SizedBox(
-      height: getWidgetHeight(1),
+      height: DashboardWidgetMetrics.heightOf(context, 1),
       child: CommonCard(
-        radius: AppCorner.lg,
-        onPressed: () {},
+        radius: DashboardWidgetMetrics.radiusOf(context),
+        onPressed: failed ? () => _probe.retry(routedOutbound) : () {},
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
-              height: globalState.measure.titleMediumHeight + 16,
-              padding: baseInfoEdgeInsets.copyWith(bottom: 0),
+              height: globalState.measure.titleMediumHeight * textScale + 16,
+              padding: DashboardWidgetMetrics.paddingOf(
+                context,
+              ).copyWith(bottom: 0),
               child: Row(
                 mainAxisSize: MainAxisSize.max,
                 children: [
                   ipInfo != null
                       ? Text(
-                          _countryCodeToEmoji(ipInfo.countryCode),
+                          ipInfo.countryCode.countryFlagEmoji,
                           style: emojiTextStyle,
                         )
-                      : Icon(Icons.network_check, color: titleTextStyle),
+                      : GlyphIcon(
+                          AppGlyphs.networkCheck,
+                          color: titleTextStyle,
+                        ),
                   const SizedBox(width: 8),
                   Flexible(
                     flex: 1,
@@ -84,9 +101,9 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
                           cancelable: false,
                         );
                       },
-                      icon: Icon(
+                      icon: GlyphIcon(
                         size: 16.ap,
-                        Icons.info_outline,
+                        AppGlyphs.info,
                         color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
@@ -95,25 +112,23 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection> {
               ),
             ),
             Container(
-              padding: baseInfoEdgeInsets.copyWith(top: 0),
+              padding: DashboardWidgetMetrics.paddingOf(
+                context,
+              ).copyWith(top: 0),
               child: SizedBox(
-                height: globalState.measure.bodyMediumHeight + 2,
+                height: globalState.measure.bodyMediumHeight * textScale + 2,
                 child: FadeThroughBox(
                   child: ipInfo != null
-                      ? TooltipText(
-                          text: Text(
-                            ipInfo.ip,
-                            style: context.textTheme.bodyMedium?.toLight
-                                .adjustSize(1),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                      ? IpQualityText(
+                          ip: ipInfo.ip,
+                          openDetails: true,
+                          style: context.textTheme.bodyMedium?.adjustSize(1),
                         )
-                      : isLoading == false && ipInfo == null
+                      : failed
                       ? Text(
                           'Timeout',
                           style: context.textTheme.bodyMedium
-                              ?.copyWith(color: Colors.red)
+                              ?.copyWith(color: context.colorScheme.error)
                               .adjustSize(1),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

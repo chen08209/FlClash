@@ -212,6 +212,6 @@ func serve(dialed ipcConn) {
 			continue
 		}
 
-		go handleMethodCall(call, newMethodResponse(call.ID, nil))
+		dispatchMethodCall(call, newMethodResponse(call.ID, nil))
 	}
 }
