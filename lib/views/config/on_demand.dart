@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/permission.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/views/profiles/overwrite/custom/widgets.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -250,7 +250,6 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
 
   Widget _buildBatteryOptimizationItem() {
     final appLocalizations = context.appLocalizations;
-    final isStart = ref.watch(isStartProvider);
     final isLoading = ref.watch(
       loadingProvider(LoadingTag.batteryOptimization),
     );
@@ -262,7 +261,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
         alignment: Alignment.centerRight,
         children: [
           Visibility(
-            visible: !isLoading && !isStart,
+            visible: !isLoading,
             maintainSize: true,
             maintainAnimation: true,
             maintainState: true,
@@ -271,11 +270,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
               onPressed: _handleOpenBatteryOptimizationSettings,
             ),
           ),
-          if (isStart)
-            InfoMessageButton(
-              message: appLocalizations.batteryOptimizationStatusTip,
-            ),
-          if (!isStart && isLoading)
+          if (isLoading)
             const SizedBox.square(dimension: 32, child: CommonCircleLoading()),
         ],
       ),
@@ -316,16 +311,14 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
       title: appLocalizations.excludeSsids,
       subTitle: appLocalizations.excludeSsidsDesc,
       actions: [
-        const SizedBox(width: 8),
         if (hasSelection)
           CommonMinIconButtonTheme(
             child: IconButton.filledTonal(
               tooltip: context.appLocalizations.delete,
               onPressed: _handleDelete,
-              icon: const Icon(Icons.delete),
+              icon: const GlyphIcon(AppGlyphs.delete, fill: 1),
             ),
           ),
-        const SizedBox(width: 2),
         CommonMinFilledButtonTheme(
           child: hasSelection
               ? FilledButton(
@@ -386,7 +379,9 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
       body: CustomScrollView(
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+            ).copyWith(top: context.appBarInset),
             sliver: SliverToBoxAdapter(child: _buildPrerequisites()),
           ),
           SliverPadding(

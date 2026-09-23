@@ -41,6 +41,15 @@ indicator scale it; Windows loads the path as-is, so point it at a multi-size `.
 Menu item ids are assigned by pre-order position, so an unchanged menu serializes identically across
 rebuilds and click dispatch stays stable while a menu is open.
 
+Actions, checkboxes and submenus take an optional `detail`, secondary text shown after the label, such as
+a shortcut or a measured latency:
+
+| macOS | Windows | Linux |
+| --- | --- | --- |
+| right-aligned column in the color of a native key equivalent | the menu's accelerator column | appended in parentheses |
+
+AppIndicator menus travel over dbusmenu, which carries no column for free text, hence the Linux fallback.
+
 ## Events
 
 `Tray.instance.events` is a broadcast stream of `TrayIconActivated`, `TrayMenuRequested` and
