@@ -1,9 +1,9 @@
 library;
 
 import 'package:collection/collection.dart';
-import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -23,7 +23,7 @@ class RuleItem extends StatelessWidget {
   final bool hasMatch;
   final void Function() onSelected;
   final void Function(Rule rule) onEdit;
-  final bool Function(Rule rule)? checkInvalidHandler;
+  final String? Function(Rule rule)? invalidMessageOf;
 
   const RuleItem({
     super.key,
@@ -31,53 +31,59 @@ class RuleItem extends StatelessWidget {
     required this.rule,
     required this.onSelected,
     required this.onEdit,
-    this.checkInvalidHandler,
+    this.invalidMessageOf,
     this.isEditing = false,
     this.hasMatch = false,
   });
 
-  ({bool invalid, Color? color}) _checkInvalid(BuildContext context) {
-    if (rule.ruleAction != RuleAction.SUB_RULE) {
-      final ruleTarget = rule.ruleTarget ?? '';
-      if (ruleTarget.toUpperCase() == 'DIRECT') {
-        return (
-          invalid: false,
-          color: Colors.green.harmonizeWith(context.colorScheme.primary),
-        );
-      } else if (ruleTarget.toUpperCase() == 'REJECT') {
-        return (
-          invalid: false,
-          color: Colors.orange.harmonizeWith(context.colorScheme.primary),
-        );
-      } else if (hasMatch && ruleTarget.toUpperCase() == 'MATCH') {
-        return (invalid: false, color: context.colorScheme.tertiary);
+  ({bool invalid, Color? color, String? message}) _checkInvalid(
+    BuildContext context,
+  ) {
+    final message = invalidMessageOf?.call(rule);
+    if (message == null && rule.ruleAction != RuleAction.SUB_RULE) {
+      final ruleTarget = (rule.ruleTarget ?? '').toUpperCase();
+      final color = switch (ruleTarget) {
+        'DIRECT' => context.colorScheme.success,
+        'REJECT' => context.colorScheme.warning,
+        'MATCH' when hasMatch => context.colorScheme.tertiary,
+        _ => null,
+      };
+      if (color != null) {
+        return (invalid: false, color: color, message: null);
       }
     }
-    bool invalid = true;
-    if (checkInvalidHandler != null) {
-      invalid = checkInvalidHandler!(rule);
-    }
+    final invalid = invalidMessageOf == null || message != null;
     return (
       invalid: invalid,
       color: invalid ? context.colorScheme.error : context.colorScheme.tertiary,
+      message: message,
     );
   }
 
-  Widget _buildInfoWidget(BuildContext context) {
+  Widget _buildInfoWidget(BuildContext context, String? message) {
     return CommonMinIconButtonTheme(
       child: IconButton(
         tooltip: context.appLocalizations.tip,
         onPressed: () {
           dialogs.showMessage(
             message: TextSpan(
-              text: rule.targetErrorTip(
-                context.appLocalizations.invalidSubRule(rule.subRule ?? ''),
-                context.appLocalizations.invalidPolicy(rule.ruleTarget ?? ''),
-              ),
+              text:
+                  message ??
+                  rule.targetErrorTip(
+                    context.appLocalizations.invalidSubRule(rule.subRule ?? ''),
+                    context.appLocalizations.invalidPolicy(
+                      rule.ruleTarget ?? '',
+                    ),
+                  ),
             ),
           );
         },
-        icon: Icon(Icons.info, size: 16.ap, color: context.colorScheme.error),
+        icon: GlyphIcon(
+          AppGlyphs.info,
+          fill: 1,
+          size: 16.ap,
+          color: context.colorScheme.error,
+        ),
       ),
     );
   }
@@ -111,7 +117,8 @@ class RuleItem extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (invalid) _buildInfoWidget(context),
+                      if (invalid)
+                        _buildInfoWidget(context, checkResult.message),
                       if (rule.realTarget != null)
                         Flexible(
                           child: TooltipText(
@@ -341,7 +348,7 @@ class _AddOrEditRuleDialogState extends State<AddOrEditRuleDialog> {
                     onPressed: () async {
                       _ruleAction =
                           await dialogs.showCommonDialog<RuleAction>(
-                            filter: false,
+                            context: context,
                             child: OptionsDialog<RuleAction>(
                               title: appLocalizations.ruleName,
                               options: RuleAction.addedRuleActions,
@@ -465,6 +472,8 @@ class _RuleTargetField extends StatelessWidget {
           menuHeight: 250,
           enableFilter: false,
           enableSearch: false,
+          trailingIcon: const GlyphIcon(AppGlyphs.chevronDown, size: 20),
+          selectedTrailingIcon: const GlyphIcon(AppGlyphs.chevronUp, size: 20),
           dropdownMenuEntries: entries,
           onSelected: (value) => onSelected(value as String?),
           errorText: filed.errorText,

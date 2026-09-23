@@ -46,6 +46,10 @@ class ProxyGroups extends Table {
 
   TextColumn get expectedStatus => text().nullable()();
 
+  IntColumn get tolerance => integer().nullable()();
+
+  TextColumn get strategy => text().nullable()();
+
   BoolColumn get includeAll => boolean().nullable()();
 
   BoolColumn get includeAllProxies => boolean().nullable()();
@@ -130,6 +134,12 @@ class ProxyGroupsDao extends DatabaseAccessor<Database>
     );
   }
 
+  Future<void> delAll(Iterable<int> ids) {
+    return batch((b) {
+      proxyGroups.deleteInChunks(b, ids, (t, chunk) => t.id.isIn(chunk));
+    });
+  }
+
   void putAllWithBatch(Batch batch, Iterable<ProxyGroup> proxyGroups) {
     final keys = indexing.generateNKeys(proxyGroups.length);
     batch.insertAllOnConflictUpdate(
@@ -160,6 +170,8 @@ extension RawProxyGroupExt on RawProxyGroup {
       excludeFilter: excludeFilter,
       excludeType: excludeType,
       expectedStatus: expectedStatus,
+      tolerance: tolerance,
+      strategy: LoadBalanceStrategy.parse(strategy),
       includeAll: includeAll,
       includeAllProxies: includeAllProxies,
       includeAllProviders: includeAllProviders,
@@ -189,6 +201,8 @@ extension ProxyGroupsCompanionExt on ProxyGroup {
       excludeFilter: Value(excludeFilter),
       excludeType: Value(excludeType),
       expectedStatus: Value(expectedStatus),
+      tolerance: Value(tolerance),
+      strategy: Value(strategy?.value),
       includeAll: Value(includeAll),
       includeAllProxies: Value(includeAllProxies),
       includeAllProviders: Value(includeAllProviders),

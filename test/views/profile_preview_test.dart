@@ -40,12 +40,9 @@ void main() {
     globalState.container = container;
   });
 
-  // The editor blinks its caret forever, so `pumpAndSettle` never returns; and
-  // `encodeYamlTask` hands the encode to a real isolate, which only runs
-  // outside the fake-async zone.
+  // The editor blinks its caret forever, so `pumpAndSettle` never returns.
   Future<void> settle(WidgetTester tester) async {
     await tester.pump();
-    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     await tester.pump();
   }
 
@@ -76,7 +73,7 @@ void main() {
 
     expect(_StubSetupAction.requested, [7]);
     expect(editor(tester).title, 'home');
-    expect(editor(tester).content, contains('mixed-port'));
+    expect(editor(tester).content, 'mixed-port: 7890');
   });
 
   testWidgets('renders the editor before the content arrives', (tester) async {

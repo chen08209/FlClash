@@ -6,6 +6,19 @@ import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../helpers/test_profiles.dart';
+
+class _TestClashProviders extends ClashProviders {
+  final List<ClashProvider> initial;
+
+  _TestClashProviders(this.initial);
+
+  @override
+  Stream<List<ClashProvider>> build(ProviderKind kind) =>
+      Stream.value(initial.where((item) => item.kind == kind).toList());
+}
 
 class _TestProxyGroups extends ProxyGroups {
   final List<ProxyGroup> initial;
@@ -20,6 +33,8 @@ class _TestProxyGroups extends ProxyGroups {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   const profileId = 1;
   const proxyGroup = ProxyGroup(
     id: 7,
@@ -34,6 +49,8 @@ void main() {
     final config = Completer<ClashConfig>();
     final container = ProviderContainer(
       overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        clashProvidersProvider.overrideWith2((_) => _TestClashProviders([])),
         proxyGroupsProvider.overrideWith2(
           (_) => _TestProxyGroups([proxyGroup]),
         ),
@@ -85,11 +102,60 @@ void main() {
     );
   });
 
+  test('an app-level provider and a profile count as valid names', () async {
+    const appProvider = ClashProvider(
+      id: 9,
+      kind: ProviderKind.proxy,
+      label: 'provider',
+      url: 'https://example.com/nodes.yaml',
+    );
+    final profile = Profile.normal(label: 'Subscription');
+    final container = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWith(() => TestProfiles([profile])),
+        clashProvidersProvider.overrideWith2(
+          (_) => _TestClashProviders([appProvider]),
+        ),
+        proxyGroupsProvider.overrideWith2(
+          (_) => _TestProxyGroups([
+            proxyGroup.copyWith(proxies: null, use: ['provider']),
+          ]),
+        ),
+        clashConfigProvider(profileId).overrideWith((_) => const ClashConfig()),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.listen(customOverwriteDateProvider(profileId), (_, _) {});
+    await container.read(proxyGroupsProvider(profileId).future);
+    await container.read(clashConfigProvider(profileId).future);
+    await container.read(clashProvidersProvider(ProviderKind.proxy).future);
+
+    expect(container.read(invalidProxyGroupIdsProvider(profileId)), isEmpty);
+    expect(
+      container.read(
+        customOverwriteProxyProviderIsValidProvider(profileId, 'provider'),
+      ),
+      true,
+    );
+    expect(
+      container.read(
+        customOverwriteUseIsValidProvider(profileId, const ['Subscription']),
+      ),
+      true,
+    );
+    expect(
+      container.read(appProviderNamesProvider(ProviderKind.rule)),
+      isEmpty,
+    );
+  });
+
   test(
     'a resolved config reports the groups that reference missing names',
     () async {
       final container = ProviderContainer(
         overrides: [
+          profilesProvider.overrideWith(TestProfiles.new),
+          clashProvidersProvider.overrideWith2((_) => _TestClashProviders([])),
           proxyGroupsProvider.overrideWith2(
             (_) => _TestProxyGroups([proxyGroup]),
           ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:animations/animations.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:material_ui/material_ui.dart';
@@ -15,6 +17,25 @@ class BaseNavigator {
       context,
     ).push<T>(CommonRoute(builder: (context) => child));
   }
+}
+
+// Work a page starts on arrival drops frames while the route still animates.
+Future<void> whenRouteSettled(BuildContext context) {
+  final animation = ModalRoute.of(context)?.animation;
+  if (animation == null || !animation.isAnimating) {
+    return Future.value();
+  }
+  final completer = Completer<void>();
+  void handleStatus(AnimationStatus status) {
+    if (status.isAnimating) {
+      return;
+    }
+    animation.removeStatusListener(handleStatus);
+    completer.complete();
+  }
+
+  animation.addStatusListener(handleStatus);
+  return completer.future;
 }
 
 const commonSharedXPageTransitions = SharedAxisPageTransitionsBuilder(

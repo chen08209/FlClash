@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart';
-import 'package:drift/drift.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -95,8 +94,16 @@ Stream<int> proxyGroupsCount(Ref ref, int profileId) {
 class Profiles extends _$Profiles {
   @override
   List<Profile> build() {
+    ref.listen(clashProvidersProvider(ProviderKind.proxy), (_, _) {});
     return ref.watch(profilesStreamProvider).value ?? [];
   }
+
+  Set<String> get _reservedLabels => {
+    for (final provider
+        in ref.read(clashProvidersProvider(ProviderKind.proxy)).value ??
+            const <ClashProvider>[])
+      provider.label,
+  };
 
   void _optimistic(List<Profile> next, FutureOr<void> Function() action) {
     unawaited(
@@ -118,7 +125,7 @@ class Profiles extends _$Profiles {
   }
 
   void put(Profile profile) {
-    final newProfile = state.optimizeLabel(profile);
+    final newProfile = state.optimizeLabel(profile, reserved: _reservedLabels);
     _optimistic(
       state.copyAndPut(newProfile, (item) => item.id == newProfile.id),
       () => database.profiles.put(newProfile.toCompanion()),
@@ -128,7 +135,7 @@ class Profiles extends _$Profiles {
   Future<void> del(int id) {
     return _optimisticAsync(
       state.where((e) => e.id != id).toList(),
-      () => database.profiles.remove((t) => t.id.equals(id)),
+      () => database.deleteProfile(id),
     );
   }
 
@@ -194,16 +201,16 @@ class Scripts extends _$Scripts with AsyncNotifierMixin, OptimisticMixin {
     optimistic(next, () => database.scripts.remove((t) => t.id.equals(id)));
   }
 
-  void delAll(Iterable<int> ids) {
-    final scriptIds = ids.toSet();
-    optimistic(
-      value.where((item) => !scriptIds.contains(item.id)).toList(),
-      () => database.scripts.remove((t) => t.id.isIn(scriptIds)),
-    );
-  }
-
-  bool isExits(String label) {
-    return value.indexWhere((item) => item.label == label) != -1;
+  void order(int oldIndex, int newIndex) {
+    final next = value.copyAndReorder(oldIndex, newIndex);
+    final changed = <ScriptsCompanion>[];
+    next.forEachIndexed((index, item) {
+      if (item.order != index) {
+        next[index] = item.copyWith(order: index);
+        changed.add(item.toCompanion(index));
+      }
+    });
+    optimistic(next, () => database.scriptsDao.putAll(changed));
   }
 
   @override
@@ -212,6 +219,60 @@ class Scripts extends _$Scripts with AsyncNotifierMixin, OptimisticMixin {
     AsyncValue<List<Script>> next,
   ) {
     return !scriptListEquality.equals(previous.value, next.value);
+  }
+}
+
+@riverpod
+class ClashProviders extends _$ClashProviders
+    with AsyncNotifierMixin, OptimisticMixin {
+  @override
+  Stream<List<ClashProvider>> build(ProviderKind kind) {
+    return database.clashProvidersDao.query(kind).watch();
+  }
+
+  @override
+  List<ClashProvider> get value => state.value ?? [];
+
+  void put(ClashProvider provider) {
+    final next = List<ClashProvider>.from(value);
+    final index = next.indexWhere((item) => item.id == provider.id);
+    if (index != -1) {
+      next[index] = provider;
+    } else {
+      next.add(provider);
+    }
+    optimistic(next, () => database.clashProviders.put(provider.toCompanion()));
+  }
+
+  void del(int id) {
+    final next = List<ClashProvider>.from(value);
+    final index = next.indexWhere((item) => item.id == id);
+    if (index == -1) return;
+    next.removeAt(index);
+    optimistic(
+      next,
+      () => database.clashProviders.remove((t) => t.id.equals(id)),
+    );
+  }
+
+  void order(int oldIndex, int newIndex) {
+    final next = value.copyAndReorder(oldIndex, newIndex);
+    final changed = <ClashProvidersCompanion>[];
+    next.forEachIndexed((index, item) {
+      if (item.order != index) {
+        next[index] = item.copyWith(order: index);
+        changed.add(item.toCompanion(index));
+      }
+    });
+    optimistic(next, () => database.clashProvidersDao.putAll(changed));
+  }
+
+  @override
+  bool updateShouldNotify(
+    AsyncValue<List<ClashProvider>> previous,
+    AsyncValue<List<ClashProvider>> next,
+  ) {
+    return !clashProviderListEquality.equals(previous.value, next.value);
   }
 }
 
@@ -251,9 +312,10 @@ mixin RuleListMixin on OptimisticMixin<List<Rule>> {
   }
 
   void delAll(Iterable<int> ruleIds) {
+    final ids = ruleIds.toSet();
     optimistic(
-      value.where((item) => !ruleIds.contains(item.id)).toList(),
-      () => database.rulesDao.delRules(ruleIds),
+      value.where((item) => !ids.contains(item.id)).toList(),
+      () => database.rulesDao.delRules(ids),
     );
   }
 
@@ -342,12 +404,11 @@ class ProxyGroups extends _$ProxyGroups
     return !proxyGroupsEquality.equals(previous.value, next.value);
   }
 
-  void del(String name) {
+  void delAll(Iterable<int> proxyGroupIds) {
+    final ids = proxyGroupIds.toSet();
     optimistic(
-      value.where((item) => item.name != name).toList(),
-      () => database.proxyGroups.remove(
-        (t) => t.profileId.equals(profileId) & t.name.equals(name),
-      ),
+      value.where((item) => !ids.contains(item.id)).toList(),
+      () => database.proxyGroupsDao.delAll(ids),
     );
   }
 

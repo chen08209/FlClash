@@ -29,6 +29,17 @@ void main() {
       expect(dateTime.showTime, ' 14:03:09');
     });
 
+    test('formats offset timestamps in the system time zone', () {
+      final parsed = DateTime.parse('2026-05-27T14:03:09+08:00');
+      final local = DateTime.fromMillisecondsSinceEpoch(
+        parsed.millisecondsSinceEpoch,
+      );
+
+      expect(parsed.isUtc, isTrue);
+      expect(parsed.showFull, local.toString().substring(0, 19));
+      expect(parsed.show, local.toString().substring(0, 10));
+    });
+
     testWidgets(
       'getLastUpdateTimeDesc returns unknown for epoch or year <= 1970',
       (tester) async {

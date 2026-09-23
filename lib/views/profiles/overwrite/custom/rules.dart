@@ -1,6 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/overwrite/overwrite.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/models/state.dart';
@@ -27,24 +28,8 @@ class _CustomRulesViewState extends ConsumerState<CustomRulesView> {
         .order(oldIndex, newIndex);
   }
 
-  Future<bool> _handleDelete(Set<dynamic> selectedRules) async {
-    final appLocalizations = context.appLocalizations;
-    final res = await dialogs.showMessage(
-      title: appLocalizations.tip,
-      message: TextSpan(
-        text: appLocalizations.deleteMultipTip(appLocalizations.rule),
-      ),
-    );
-    if (res != true) {
-      return false;
-    }
-    if (!mounted) {
-      return false;
-    }
-    ref
-        .read(profileCustomRulesProvider(_profileId).notifier)
-        .delAll(selectedRules.cast<int>());
-    return true;
+  void _handleDelete(Set<int> ruleIds) {
+    ref.read(profileCustomRulesProvider(_profileId).notifier).delAll(ruleIds);
   }
 
   void _handleAddOrUpdate({Rule? rule}) {
@@ -60,15 +45,32 @@ class _CustomRulesViewState extends ConsumerState<CustomRulesView> {
     );
   }
 
-  bool _handleCheckInvalid(Rule rule, RuleTargetsSelectorState targets) {
+  String? _invalidMessageOf(
+    BuildContext context,
+    Rule rule,
+    RuleTargetsSelectorState targets,
+  ) {
+    final appLocalizations = context.appLocalizations;
+    final payloadError = rule.payloadError;
+    if (payloadError != null) {
+      return payloadError.getMessage(context);
+    }
     if (!targets.loaded) {
-      return false;
+      return null;
+    }
+    if (rule.ruleAction == RuleAction.RULE_SET &&
+        !targets.ruleProviders.contains(rule.ruleProvider)) {
+      return appLocalizations.invalidRuleSet(rule.ruleProvider ?? '');
     }
     final ruleTarget = rule.realTarget;
     if (rule.ruleAction == RuleAction.SUB_RULE) {
-      return !targets.subRules.contains(ruleTarget);
+      return targets.subRules.contains(ruleTarget)
+          ? null
+          : appLocalizations.invalidSubRule(ruleTarget ?? '');
     }
-    return !targets.ruleTargets.contains(ruleTarget);
+    return targets.ruleTargets.contains(ruleTarget)
+        ? null
+        : appLocalizations.invalidPolicy(ruleTarget ?? '');
   }
 
   @override
@@ -80,22 +82,23 @@ class _CustomRulesViewState extends ConsumerState<CustomRulesView> {
           loaded: state.loaded,
           ruleTargets: state.ruleTargets,
           subRules: state.subRules,
+          ruleProviders: state.ruleProviders,
         ),
       ),
     );
-    return OverwriteEditorPage<Rule>(
+    return OverwriteEditorPage<Rule, int>(
       title: appLocalizations.rule,
       selectionEnabled: true,
       dragFromRow: true,
       idOf: (rule) => rule.id,
       itemsOf: (ref) {
-        return ref.watch(profileCustomRulesProvider(_profileId)).value ?? [];
+        return ref.watch(profileCustomRulesProvider(_profileId)).value;
       },
       itemBuilder:
           (context, ref, rule, index, isEditing, isSelected, onToggleSelected) {
             return RuleItem(
-              checkInvalidHandler: (target) {
-                return _handleCheckInvalid(target, ruleTargets);
+              invalidMessageOf: (target) {
+                return _invalidMessageOf(context, target, ruleTargets);
               },
               isEditing: isEditing,
               isSelected: isSelected,
@@ -109,6 +112,7 @@ class _CustomRulesViewState extends ConsumerState<CustomRulesView> {
       onReorder: _handleReorder,
       onAdd: () => _handleAddOrUpdate(),
       onDelete: _handleDelete,
+      searchFieldsOf: (rule) => rule.searchFields,
       emptyLabel: appLocalizations.ruleEmpty,
       itemExtent: ruleItemHeight,
     );
@@ -187,7 +191,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
               ),
             ),
           ),
-          const Icon(Icons.arrow_forward_ios),
+          const GlyphIcon(AppGlyphs.chevronForward),
         ],
       ),
     );
@@ -195,23 +199,36 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
 
   Widget _buildContentItem(String? content) {
     final appLocalizations = context.appLocalizations;
-    return _buildItem(
-      title: appLocalizations.content,
-      trailing: TextFormField(
-        initialValue: content,
-        keyboardType: TextInputType.name,
-        inputFormatters: TextInputLimits.limit(TextInputLimits.rule),
-        onChanged: (value) {
-          ref
-              .read(ruleProvider.notifier)
-              .update((state) => state.copyWith(content: value));
-        },
-        textAlign: TextAlign.end,
-        decoration: InputDecoration.collapsed(
-          border: const NoInputBorder(),
-          hintText: appLocalizations.inputRuleContent,
-        ),
+    final payloadError = ref.watch(
+      ruleProvider.select((state) => state.payloadError),
+    );
+    final field = TextFormField(
+      initialValue: content,
+      keyboardType: TextInputType.name,
+      inputFormatters: TextInputLimits.limit(TextInputLimits.rule),
+      onChanged: (value) {
+        ref
+            .read(ruleProvider.notifier)
+            .update((state) => state.copyWith(content: value));
+      },
+      textAlign: TextAlign.end,
+      decoration: InputDecoration.collapsed(
+        border: const NoInputBorder(),
+        hintText: appLocalizations.inputRuleContent,
       ),
+    );
+    return _buildItem(
+      invalid: payloadError != null,
+      title: appLocalizations.content,
+      trailing: payloadError == null
+          ? field
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InfoMessageButton(message: payloadError.getMessage(context)),
+                Flexible(child: field),
+              ],
+            ),
     );
   }
 
@@ -228,9 +245,23 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
                   ),
                 )
                 .value;
+            final appRuleProviders = ref.watch(
+              appProviderNamesProvider(ProviderKind.rule),
+            );
             return OverwriteSelectionSheet<String>(
               title: context.appLocalizations.ruleSet,
-              sections: [OverwriteSelectionSection(items: ruleProviders)],
+              sections: [
+                OverwriteSelectionSection(
+                  items: [
+                    for (final name in ruleProviders)
+                      if (!appRuleProviders.contains(name)) name,
+                  ],
+                ),
+                OverwriteSelectionSection(
+                  label: context.appLocalizations.appRuleProviders,
+                  items: appRuleProviders.toList(),
+                ),
+              ],
               labelBuilder: (item) => item,
               selectedOf: (ref) =>
                   ref.watch(ruleProvider.select((state) => state.ruleProvider)),
@@ -249,15 +280,28 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
         .update((state) => state.copyWith(ruleProvider: res));
   }
 
-  Widget _buildRuleProviderItem(String? ruleProvider) {
+  Widget _buildRuleProviderItem(int profileId, String? ruleProvider) {
     final appLocalizations = context.appLocalizations;
+    final invalid =
+        ruleProvider != null &&
+        !ref.watch(
+          customOverwriteRuleProviderIsValidProvider(profileId, ruleProvider),
+        );
+    final foregroundColor = invalid
+        ? context.colorScheme.error
+        : context.colorScheme.onSurfaceVariant;
     return _buildItem(
+      invalid: invalid,
       title: appLocalizations.ruleSet,
       onPressed: _handleSelectedRuleProvider,
       trailing: Row(
         spacing: 4,
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (invalid)
+            InfoMessageButton(
+              message: appLocalizations.invalidRuleSet(ruleProvider),
+            ),
           Flexible(
             child: TooltipText(
               text: Text(
@@ -265,12 +309,12 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: context.textTheme.bodyLarge?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
+                  color: foregroundColor,
                 ),
               ),
             ),
           ),
-          const Icon(Icons.arrow_forward_ios),
+          GlyphIcon(AppGlyphs.chevronForward, color: foregroundColor),
         ],
       ),
     );
@@ -351,7 +395,12 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
                         ),
                       );
                     },
-                    icon: Icon(Icons.info, size: 16.ap, color: foregroundColor),
+                    icon: GlyphIcon(
+                      AppGlyphs.info,
+                      fill: 1,
+                      size: 16.ap,
+                      color: foregroundColor,
+                    ),
                   ),
                 ),
               Flexible(
@@ -368,7 +417,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
                 ),
               ),
               const SizedBox(width: 4),
-              Icon(Icons.arrow_forward_ios, color: foregroundColor),
+              GlyphIcon(AppGlyphs.chevronForward, color: foregroundColor),
             ],
           ),
         );
@@ -432,23 +481,26 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
               ),
             ),
           ),
-          const Icon(Icons.arrow_forward_ios),
+          const GlyphIcon(AppGlyphs.chevronForward),
         ],
       ),
     );
   }
 
-  Widget _buildNoResolveItem(bool noResolve) {
+  Widget _buildNoResolveItem(bool noResolve, bool src) {
     final appLocalizations = context.appLocalizations;
+    // The core turns no-resolve on with src, so the switch cannot disagree.
     return _buildItem(
       title: appLocalizations.noResolveHostname,
       trailing: Switch(
-        value: noResolve,
-        onChanged: (value) {
-          ref
-              .read(ruleProvider.notifier)
-              .update((state) => state.copyWith(noResolve: value));
-        },
+        value: noResolve || src,
+        onChanged: src
+            ? null
+            : (value) {
+                ref
+                    .read(ruleProvider.notifier)
+                    .update((state) => state.copyWith(noResolve: value));
+              },
       ),
     );
   }
@@ -494,15 +546,16 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
     final profileId = ProfileIdProvider.of(context)!.profileId;
     final rule = ref.watch(ruleProvider);
     final height = ref.sheetHeight(context, 0.60);
-    return AdaptiveSheetScaffold(
+    return CommonScaffold(
       actions: [
-        IconButtonData(
-          icon: Icons.check,
-          onPressed: _handleSave,
-          tooltip: context.appLocalizations.save,
+        AppBarActionButton(
+          data: IconButtonData(
+            glyph: AppGlyphs.check,
+            onPressed: _handleSave,
+            tooltip: context.appLocalizations.save,
+          ),
         ),
       ],
-      sheetTransparentToolBar: true,
       body: Container(
         constraints: BoxConstraints(maxHeight: height),
         child: ListView(
@@ -517,7 +570,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
                 _buildTypeItem(rule.ruleAction),
                 if (rule.ruleAction != RuleAction.MATCH)
                   rule.ruleAction == RuleAction.RULE_SET
-                      ? _buildRuleProviderItem(rule.ruleProvider)
+                      ? _buildRuleProviderItem(profileId, rule.ruleProvider)
                       : _buildContentItem(rule.content),
                 rule.ruleAction != RuleAction.SUB_RULE
                     ? _buildTargetItem(profileId, rule.ruleTarget)
@@ -528,7 +581,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
               generateSectionV3(
                 title: appLocalizations.additionalParameters,
                 items: [
-                  _buildNoResolveItem(rule.noResolve),
+                  _buildNoResolveItem(rule.noResolve, rule.src),
                   _buildSrcItem(rule.src),
                 ],
               ),
@@ -558,6 +611,14 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
 bool _handleSaveRule(BuildContext context, WidgetRef ref) {
   final rule = ref.read(ruleProvider);
   final appLocalizations = context.appLocalizations;
+  final payloadError = rule.payloadError;
+  if (payloadError != null) {
+    dialogs.showMessage(
+      cancelable: false,
+      message: TextSpan(text: payloadError.getMessage(context)),
+    );
+    return false;
+  }
   if (rule.ruleAction != RuleAction.MATCH &&
       rule.realContent?.isNotEmpty != true) {
     dialogs.showMessage(

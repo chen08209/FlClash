@@ -5,8 +5,34 @@ import 'package:flutter/foundation.dart';
 
 import 'print.dart';
 import 'protocol.dart';
+import 'string.dart';
 
 typedef InstallConfigCallBack = void Function(String url);
+
+String? profileUrlFromQrCodes(Iterable<String?> values) {
+  for (final value in values) {
+    final text = value?.trim();
+    if (text == null || text.isEmpty) {
+      continue;
+    }
+    if (text.isUrl) {
+      return text;
+    }
+    final uri = Uri.tryParse(text);
+    if (uri == null || !protocolSchemes.contains(uri.scheme)) {
+      continue;
+    }
+    final url = _installConfigUrl(uri)?.trim();
+    if (url != null && url.isUrl) {
+      return url;
+    }
+  }
+  return null;
+}
+
+String? _installConfigUrl(Uri uri) {
+  return uri.host == 'install-config' ? uri.queryParameters['url'] : null;
+}
 
 class LinkManager {
   static LinkManager? _instance;
@@ -46,12 +72,9 @@ class LinkManager {
 
   void _handle(Uri uri, Function(String url) installConfigCallBack) {
     commonPrint.log('onAppLink: $uri');
-    if (uri.host == 'install-config') {
-      final parameters = uri.queryParameters;
-      final url = parameters['url'];
-      if (url != null) {
-        installConfigCallBack(url);
-      }
+    final url = _installConfigUrl(uri);
+    if (url != null) {
+      installConfigCallBack(url);
     }
   }
 

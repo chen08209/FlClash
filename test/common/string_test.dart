@@ -210,4 +210,20 @@ void main() {
       expect(result, [1, 2, 3]);
     });
   });
+  group('StringExtension.fileStem', () {
+    test('drops only the last extension', () {
+      expect('my.script.js'.fileStem, 'my.script');
+      expect('script'.fileStem, 'script');
+      expect('.hidden'.fileStem, '.hidden');
+      expect(''.fileStem, '');
+    });
+  });
+
+  group('StringExtension.take', () {
+    test('cuts to the length without throwing on short strings', () {
+      expect('abcdef'.take(3), 'abc');
+      expect('ab'.take(3), 'ab');
+      expect(''.take(3), '');
+    });
+  });
 }

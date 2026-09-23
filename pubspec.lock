@@ -225,6 +225,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.11.1"
+  code_forge:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: "v10.14.0-flclash.4"
+      resolved-ref: "032b9aa6626248bb2a510cf61df71519e67f9e19"
+      url: "https://github.com/chen08209/code_forge.git"
+    source: git
+    version: "10.14.0"
   collection:
     dependency: "direct main"
     description:
@@ -518,6 +527,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.4.2"
+  flutter_colorpicker:
+    dependency: transitive
+    description:
+      name: flutter_colorpicker
+      sha256: "969de5f6f9e2a570ac660fb7b501551451ea2a1ab9e2097e89475f60e07816ea"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -765,22 +782,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
-  isolate_contactor:
-    dependency: transitive
-    description:
-      name: isolate_contactor
-      sha256: "6ba8434ceb58238a1389d6365111a3efe7baa1c68a66f4db6d63d351cf6c3a0f"
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.1.0"
-  isolate_manager:
-    dependency: transitive
-    description:
-      name: isolate_manager
-      sha256: "22ed0c25f80ec3b5f21e3a55d060f4650afff33f27c2dff34c0f9409d5759ae5"
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.1.5+1"
   jni:
     dependency: transitive
     description:
@@ -1031,7 +1032,7 @@ packages:
     source: hosted
     version: "1.9.1"
   path_parsing:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: path_parsing
       sha256: "883402936929eac138ee0a45da5b0f2c80f89913e6dc3bf77eb65b84b409c6ca"
@@ -1149,14 +1150,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.0"
-  re_editor:
-    dependency: "direct main"
-    description:
-      name: re_editor
-      sha256: "66671c4774a6b4c5254c9a53ab35a083e7e7da9ae371c519bcf491c70a2a4e56"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.10.0"
   re_highlight:
     dependency: "direct main"
     description:
@@ -1781,15 +1774,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.3"
-  window_manager:
+  window:
     dependency: "direct main"
     description:
-      path: "packages/window_manager"
-      ref: "v0.5.1-flclash.3"
-      resolved-ref: "4c7dcf9b6b0658a83ce77ad8c3e480952d190d3a"
-      url: "https://github.com/chen08209/window_manager"
-    source: git
-    version: "0.5.1"
+      path: "plugins/window"
+      relative: true
+    source: path
+    version: "0.0.1"
   windows_file_picker:
     dependency: transitive
     description:
@@ -1815,7 +1806,7 @@ packages:
     source: hosted
     version: "6.6.1"
   yaml:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: yaml
       sha256: b9da305ac7c39faa3f030eccd175340f968459dae4af175130b3fc47e40d76ce
@@ -1832,5 +1823,5 @@ packages:
     source: git
     version: "2.1.0"
 sdks:
-  dart: ">=3.13.0 <4.0.0"
+  dart: ">=3.13.2 <4.0.0"
   flutter: ">=3.44.0"

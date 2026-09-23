@@ -44,10 +44,15 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
   final profileLastUpdateDate = profile?.lastUpdateDate?.millisecondsSinceEpoch;
   final overwriteType = profile?.overwriteType ?? OverwriteType.standard;
   final dns = ref.watch(patchClashConfigProvider.select((state) => state.dns));
+  final dnsOverrideKeys = ref.watch(
+    patchClashConfigProvider.select((state) => state.dnsOverrideKeys),
+  );
   final overrideDns = ref.watch(overrideDnsProvider);
   List<ProxyGroup> proxyGroups = [];
   List<Rule> rules = [];
   List<Rule> addedRules = [];
+  List<ClashProvider> clashProviders = [];
+  Map<String, int> profileProviders = const {};
   Script? script;
   if (profileId != null) {
     if (overwriteType == OverwriteType.standard) {
@@ -59,9 +64,13 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
     } else {
       rules = await database.rulesDao.queryProfileCustomRules(profileId).get();
       proxyGroups = await database.proxyGroupsDao.query(profileId).get();
+      clashProviders = await database.clashProvidersDao.queryAll().get();
+      profileProviders = ref.watch(profileProvidersProvider);
     }
   }
   return SetupState(
+    clashProviders: clashProviders,
+    profileProviders: profileProviders,
     rules: rules,
     proxyGroups: proxyGroups,
     profileId: profileId,
@@ -71,8 +80,17 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
     script: script,
     overrideDns: overrideDns,
     dns: dns,
+    dnsOverrideKeys: dnsOverrideKeys,
     matchTarget: overwriteType == OverwriteType.standard
         ? profile?.matchTarget
         : null,
   );
+}
+
+/// Every profile doubles as a proxy provider, so a group can pull one
+/// subscription's nodes into another profile.
+@riverpod
+Map<String, int> profileProviders(Ref ref) {
+  final profiles = ref.watch(profilesProvider);
+  return {for (final profile in profiles) profile.realLabel: profile.id};
 }
