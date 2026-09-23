@@ -1,249 +1,330 @@
-import 'dart:ui';
+import 'dart:math' as math;
 
-import 'package:fl_clash/common/color.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:material_ui/material_ui.dart';
 
-class Point {
-  final double x;
-  final double y;
-
-  const Point(this.x, this.y);
-}
-
+/// Area chart of a sample stream that scrolls each new sample in from the right.
 class LineChart extends StatefulWidget {
-  final List<Point> points;
-  final Color color;
-  final Duration duration;
-  final bool gradient;
-
   const LineChart({
     super.key,
-    this.gradient = false,
-    required this.points,
+    required this.values,
+    required this.revision,
+    required this.capacity,
+    required this.minScale,
     required this.color,
-    this.duration = Duration.zero,
-  });
+    this.sampleInterval = const Duration(seconds: 1),
+  }) : assert(capacity > 1),
+       assert(minScale > 0);
+
+  final List<double> values;
+
+  /// Advances by one for each sample appended to [values]. Any other change,
+  /// such as a clear, redraws the chart without scrolling.
+  final int revision;
+
+  final int capacity;
+
+  /// The least value the top stands for, so idle noise stays near the baseline.
+  final double minScale;
+
+  final Color color;
+
+  final Duration sampleInterval;
 
   @override
   State<LineChart> createState() => _LineChartState();
 }
 
-class _LineChartState extends State<LineChart>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  List<Point> _points = [];
+class _LineChartState extends State<LineChart> with TickerProviderStateMixin {
+  static const _maxLag = 2.0;
+  static const _rescaleDuration = Duration(milliseconds: 450);
 
-  List<Point> _prevRenderPoints = [];
-  List<Point> _currentRenderPoints = [];
+  late final AnimationController _lag;
+  late final AnimationController _rescale;
+  late final _LogTween _scaleTween;
+  late final Animation<double> _scale;
+  late _Series _series;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: widget.duration);
-    _points = widget.points;
-    _currentRenderPoints = _getRenderPoints(_points);
-    _prevRenderPoints = _currentRenderPoints;
+    _series = _Series.of(widget.values, _seriesLength);
+    _lag = AnimationController.unbounded(vsync: this);
+    _rescale = AnimationController(vsync: this, value: 1);
+    _scaleTween = _LogTween(_scaleTarget);
+    _scale = _rescale
+        .drive(CurveTween(curve: Easing.standardDecelerate))
+        .drive(_scaleTween);
   }
+
+  /// Extra samples keep the left edge covered while lagging up to [_maxLag],
+  /// and keep the slope that changes when the oldest drops out off screen.
+  int get _seriesLength =>
+      widget.capacity + _maxLag.toInt() + 2 + _Series.radius;
+
+  double get _scaleTarget => math.max(_series.max, widget.minScale);
 
   @override
   void didUpdateWidget(LineChart oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.points != _points) {
-      _points = widget.points;
-      _prevRenderPoints = _currentRenderPoints;
-      _currentRenderPoints = _getRenderPoints(_points);
-      _controller.forward(from: 0);
+    if (widget.capacity != oldWidget.capacity) {
+      _reset();
+      return;
     }
+    final appended = widget.revision - oldWidget.revision;
+    if (appended == 0) {
+      _retargetScale();
+      return;
+    }
+    if (appended < 0 || appended > widget.values.length) {
+      _reset();
+      return;
+    }
+    _series = _series.append(
+      widget.values.sublist(widget.values.length - appended),
+    );
+    if (_series.isFlat) {
+      _lag.value = 0;
+    } else {
+      final lag = math.min(_lag.value + appended, _maxLag);
+      _lag.value = lag;
+      _lag.animateTo(
+        0,
+        duration: context.motionDuration(widget.sampleInterval * lag),
+      );
+    }
+    _retargetScale();
+  }
+
+  void _reset() {
+    _series = _Series.of(widget.values, _seriesLength);
+    _lag.value = 0;
+    _retargetScale();
+  }
+
+  void _retargetScale() {
+    final target = _scaleTarget;
+    if (target == _scaleTween.end) {
+      return;
+    }
+    _scaleTween
+      ..begin = _scale.value
+      ..end = target;
+    _rescale
+      ..duration = context.motionDuration(_rescaleDuration)
+      ..forward(from: 0);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _lag.dispose();
+    _rescale.dispose();
     super.dispose();
-  }
-
-  List<Point> _getRenderPoints(List<Point> points) {
-    if (points.isEmpty) return [];
-    double maxX = points[0].x;
-    double minX = points[0].x;
-    double maxY = points[0].y;
-    double minY = points[0].y;
-
-    for (final point in points) {
-      if (point.x > maxX) maxX = point.x;
-      if (point.x < minX) minX = point.x;
-      if (point.y > maxY) maxY = point.y;
-      if (point.y < minY) minY = point.y;
-    }
-
-    return points.map((e) {
-      var x = (e.x - minX) / (maxX - minX);
-      if (x.isNaN) x = 0;
-      var y = (e.y - minY) / (maxY - minY);
-      if (y.isNaN) y = 0;
-      return Point(x, y);
-    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (_, container) {
-        return AnimatedBuilder(
-          animation: _controller.view,
-          builder: (_, _) {
-            return CustomPaint(
-              painter: LineChartPainter(
-                prevRenderPoints: _prevRenderPoints,
-                currentRenderPoints: _currentRenderPoints,
-                progress: _controller.value,
-                gradient: widget.gradient,
-                color: widget.color,
-              ),
-              child: SizedBox(
-                height: container.maxHeight,
-                width: container.maxWidth,
-              ),
-            );
-          },
-        );
-      },
+    return RepaintBoundary(
+      child: SizedBox.expand(
+        child: CustomPaint(
+          painter: _LineChartPainter(
+            series: _series,
+            capacity: widget.capacity,
+            lag: _lag,
+            scale: _scale,
+            color: widget.color,
+          ),
+        ),
+      ),
     );
   }
 }
 
-class LineChartPainter extends CustomPainter {
-  final List<Point> prevRenderPoints;
-  final List<Point> currentRenderPoints;
-  final double progress;
-  final Color color;
-  final bool gradient;
+/// Log space, so a jump across orders of magnitude zooms at an even pace.
+class _LogTween extends Tween<double> {
+  _LogTween(double value) : super(begin: value, end: value);
 
-  late final Paint _strokePaint;
-  late final Paint _fillPaint;
+  @override
+  double lerp(double t) {
+    final from = math.log(begin!);
+    return math.exp(from + (math.log(end!) - from) * t);
+  }
+}
 
-  Shader? _cachedShader;
-  Size? _cachedShaderSize;
-  Color? _cachedShaderColor;
+@immutable
+class _Series {
+  _Series._(this.values)
+    : max = _blur(values, List.filled(values.length, 1.0)).reduce(math.max);
 
-  LineChartPainter({
-    required this.prevRenderPoints,
-    required this.currentRenderPoints,
-    required this.progress,
+  factory _Series.of(List<double> window, int length) {
+    final count = math.min(window.length, length);
+    return _Series._(
+      List.filled(length, 0.0)
+        ..setAll(length - count, window.sublist(window.length - count)),
+    );
+  }
+
+  static const _sigma = 1.5;
+  static final radius = (_sigma * 2.5).ceil();
+  static final _kernel = [
+    for (var d = 0; d <= radius; d++) math.exp(-d * d / (2 * _sigma * _sigma)),
+  ];
+
+  final List<double> values;
+
+  final double max;
+
+  bool get isFlat => values.every((value) => value == values.first);
+
+  _Series append(List<double> samples) {
+    final next = [...values, ...samples];
+    return _Series._(next.sublist(next.length - values.length));
+  }
+
+  /// A sample scrolling in weighs in by [presence], so it never bends the curve.
+  static List<double> _blur(List<double> values, List<double> presence) {
+    return [
+      for (var i = 0; i < values.length; i++) _blurAt(values, presence, i),
+    ];
+  }
+
+  static double _blurAt(List<double> values, List<double> presence, int i) {
+    var sum = 0.0;
+    var weight = 0.0;
+    final from = math.max(i - radius, 0);
+    final to = math.min(i + radius, values.length - 1);
+    for (var j = from; j <= to; j++) {
+      final w = _kernel[(j - i).abs()] * presence[j];
+      sum += w * values[j];
+      weight += w;
+    }
+    return weight == 0 ? values[i] : sum / weight;
+  }
+
+  List<double> blurred(List<double> presence) => _blur(values, presence);
+
+  /// Catmull-Rom slopes, clamped so no control point and no curve dips below 0.
+  static List<double> slopesOf(List<double> values) {
+    final last = values.length - 1;
+    return [
+      for (var i = 0; i <= last; i++)
+        i == 0 || i == last
+            ? 0.0
+            : ((values[i + 1] - values[i - 1]) / 2).clamp(
+                -3 * values[i],
+                3 * values[i],
+              ),
+    ];
+  }
+}
+
+class _LineChartPainter extends CustomPainter {
+  _LineChartPainter({
+    required this.series,
+    required this.capacity,
+    required this.lag,
+    required this.scale,
     required this.color,
-    required this.gradient,
-  }) {
-    _strokePaint = Paint()
-      ..color = color
-      ..strokeWidth = 2.0
-      ..style = PaintingStyle.stroke;
+  }) : _strokePaint = Paint()
+         ..color = color
+         ..strokeWidth = _strokeWidth
+         ..strokeCap = StrokeCap.round
+         ..strokeJoin = StrokeJoin.round
+         ..style = PaintingStyle.stroke,
+       super(repaint: Listenable.merge([lag, scale]));
 
-    _fillPaint = Paint()..style = PaintingStyle.fill;
-  }
+  static const _strokeWidth = 2.0;
 
-  List<Point> _getInterpolatePoints(double t) {
-    if (currentRenderPoints.isEmpty) return [];
+  /// Keeps the zero line clear of the card's rounded bottom corners.
+  static const _baselineRatio = 0.7;
 
-    final length = currentRenderPoints.length;
-    final result = <Point>[];
+  final _Series series;
+  final int capacity;
+  final Animation<double> lag;
+  final Animation<double> scale;
+  final Color color;
 
-    for (var i = 0; i < length; i++) {
-      if (i > prevRenderPoints.length - 1) {
-        result.add(currentRenderPoints[i]);
-      } else {
-        final x = lerpDouble(
-          prevRenderPoints[i].x,
-          currentRenderPoints[i].x,
-          t,
-        )!;
-        final y = lerpDouble(
-          prevRenderPoints[i].y,
-          currentRenderPoints[i].y,
-          t,
-        )!;
-        result.add(Point(x, y));
-      }
-    }
-
-    return result;
-  }
-
-  Path _getPath(List<Point> points, Size size) {
-    if (points.isEmpty) return Path();
-
-    final path = Path()
-      ..moveTo(points[0].x * size.width, (1 - points[0].y) * size.height);
-
-    for (var i = 1; i < points.length - 1; i++) {
-      final nextPoint = points[i + 1];
-      final currentPoint = points[i];
-      final midX = (currentPoint.x + nextPoint.x) / 2;
-      final midY = (currentPoint.y + nextPoint.y) / 2;
-
-      path.quadraticBezierTo(
-        currentPoint.x * size.width,
-        (1 - currentPoint.y) * size.height,
-        midX * size.width,
-        (1 - midY) * size.height,
-      );
-    }
-
-    path.lineTo(points.last.x * size.width, (1 - points.last.y) * size.height);
-    return path;
-  }
-
-  Path _getAnimatedPath(Size size) {
-    final interpolatedPoints = _getInterpolatePoints(progress);
-    return _getPath(interpolatedPoints, size);
-  }
-
-  Shader _getShader(Size size) {
-    if (_cachedShader == null ||
-        _cachedShaderSize != size ||
-        _cachedShaderColor != color) {
-      final gradient = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [color.opacity38, color.opacity10],
-      );
-
-      const strokeWidth = 2.0;
-      _cachedShader = gradient.createShader(
-        Rect.fromLTWH(0, 0, size.width, size.height + strokeWidth * 2),
-      );
-      _cachedShaderSize = size;
-      _cachedShaderColor = color;
-    }
-    return _cachedShader!;
-  }
+  final Paint _strokePaint;
+  final Paint _fillPaint = Paint();
+  Size? _shaderSize;
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (currentRenderPoints.isEmpty) return;
+    final step = size.width / (capacity - 1);
+    final baseline = size.height * _baselineRatio;
+    final count = series.values.length;
+    final firstX = size.width + (lag.value - count + 1) * step;
+    double xOf(int index) => firstX + index * step;
+    final values = series.blurred([
+      for (var i = 0; i < count; i++)
+        ((size.width + step - xOf(i)) / step).clamp(0.0, 1.0),
+    ]);
+    final slopes = _Series.slopesOf(values);
 
-    const strokeWidth = 2.0;
-    final chartSize = Size(size.width, size.height * 0.7);
-    final path = _getAnimatedPath(chartSize);
-
-    if (gradient) {
-      final fillPath = Path.from(path);
-      fillPath.lineTo(size.width, size.height + strokeWidth * 2);
-      fillPath.lineTo(0, size.height + strokeWidth * 2);
-      fillPath.close();
-
-      _fillPaint.shader = _getShader(size);
-      canvas.drawPath(fillPath, _fillPaint);
+    // A sample eases from a flat end into its real slope while it crosses
+    // the last step, so its successor arriving never bends what is shown.
+    double riseOf(int index) {
+      final settled = ((size.width - xOf(index)) / step).clamp(0.0, 1.0);
+      return slopes[index] * settled;
     }
 
-    canvas.drawPath(path, _strokePaint);
+    var x = firstX;
+    var y = -values[0];
+    var rise = riseOf(0);
+    final curve = Path()..moveTo(x, y);
+    for (var i = 1; i < count; i++) {
+      final nextX = x + step;
+      final nextY = -values[i];
+      final nextRise = riseOf(i);
+      curve.cubicTo(
+        x + step / 3,
+        y - rise / 3,
+        nextX - step / 3,
+        nextY + nextRise / 3,
+        nextX,
+        nextY,
+      );
+      x = nextX;
+      y = nextY;
+      rise = nextRise;
+    }
+    // Blurring without the samples still scrolling in lifts a fresh peak
+    // above the series max, so the top also stands for the drawn curve.
+    final top = math.max(scale.value, -curve.getBounds().top);
+    final yScale = (baseline - _strokeWidth) / top;
+    final line = curve.transform(
+      (Matrix4.identity()
+            ..translateByDouble(0, baseline, 0, 1)
+            ..scaleByDouble(1, yScale, 1, 1))
+          .storage,
+    );
+    final area = Path.from(line)
+      ..lineTo(x, size.height)
+      ..lineTo(firstX, size.height)
+      ..close();
+
+    if (_shaderSize != size) {
+      _shaderSize = size;
+      _fillPaint.shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [color.opacity38, color.opacity10],
+      ).createShader(Offset.zero & size);
+    }
+    canvas
+      ..save()
+      ..clipRect(Offset.zero & size)
+      ..drawPath(area, _fillPaint)
+      ..drawPath(line, _strokePaint)
+      ..restore();
   }
 
   @override
-  bool shouldRepaint(covariant LineChartPainter oldDelegate) {
-    return oldDelegate.progress != progress ||
-        oldDelegate.prevRenderPoints != prevRenderPoints ||
-        oldDelegate.currentRenderPoints != currentRenderPoints ||
-        oldDelegate.color != color ||
-        oldDelegate.gradient != gradient;
+  bool shouldRepaint(_LineChartPainter oldDelegate) {
+    return oldDelegate.series != series ||
+        oldDelegate.capacity != capacity ||
+        oldDelegate.lag != lag ||
+        oldDelegate.scale != scale ||
+        oldDelegate.color != color;
   }
 }
