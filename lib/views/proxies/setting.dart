@@ -2,9 +2,8 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 class ProxiesSetting extends StatelessWidget {
   const ProxiesSetting({super.key});
@@ -24,7 +23,8 @@ class ProxiesSetting extends StatelessWidget {
     };
   }
 
-  String _getStringProxiesSortType(ProxiesSortType type) {
+  String _getStringProxiesSortType(BuildContext context, ProxiesSortType type) {
+    final appLocalizations = context.appLocalizations;
     return switch (type) {
       ProxiesSortType.none => appLocalizations.defaultText,
       ProxiesSortType.delay => appLocalizations.delay,
@@ -32,7 +32,11 @@ class ProxiesSetting extends StatelessWidget {
     };
   }
 
-  String getTextForProxiesLayout(ProxiesLayout proxiesLayout) {
+  String getTextForProxiesLayout(
+    BuildContext context,
+    ProxiesLayout proxiesLayout,
+  ) {
+    final appLocalizations = context.appLocalizations;
     return switch (proxiesLayout) {
       ProxiesLayout.tight => appLocalizations.tight,
       ProxiesLayout.standard => appLocalizations.standard,
@@ -40,7 +44,11 @@ class ProxiesSetting extends StatelessWidget {
     };
   }
 
-  String _getTextWithProxiesIconStyle(ProxiesIconStyle style) {
+  String _getTextWithProxiesIconStyle(
+    BuildContext context,
+    ProxiesIconStyle style,
+  ) {
+    final appLocalizations = context.appLocalizations;
     return switch (style) {
       ProxiesIconStyle.standard => appLocalizations.standard,
       ProxiesIconStyle.none => appLocalizations.none,
@@ -48,7 +56,8 @@ class ProxiesSetting extends StatelessWidget {
     };
   }
 
-  List<Widget> _buildStyleSetting() {
+  List<Widget> _buildStyleSetting(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
     return generateSection(
       isFirst: true,
       title: appLocalizations.style,
@@ -67,7 +76,7 @@ class ProxiesSetting extends StatelessWidget {
                   for (final item in ProxiesType.values)
                     SettingInfoCard(
                       Info(
-                        label: Intl.message(item.name),
+                        label: item.label,
                         iconData: _getIconWithProxiesType(item),
                       ),
                       isSelected: proxiesType == item,
@@ -88,7 +97,8 @@ class ProxiesSetting extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildSortSetting() {
+  List<Widget> _buildSortSetting(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
     return generateSection(
       title: appLocalizations.sort,
       items: [
@@ -106,7 +116,7 @@ class ProxiesSetting extends StatelessWidget {
                   for (final item in ProxiesSortType.values)
                     SettingInfoCard(
                       Info(
-                        label: _getStringProxiesSortType(item),
+                        label: _getStringProxiesSortType(context, item),
                         iconData: _getIconWithProxiesSortType(item),
                       ),
                       isSelected: sortType == item,
@@ -127,7 +137,8 @@ class ProxiesSetting extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildSizeSetting() {
+  List<Widget> _buildSizeSetting(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
     return generateSection(
       title: appLocalizations.size,
       items: [
@@ -144,7 +155,7 @@ class ProxiesSetting extends StatelessWidget {
                 children: [
                   for (final item in ProxyCardType.values)
                     SettingTextCard(
-                      Intl.message(item.name),
+                      item.label,
                       isSelected: item == cardType,
                       onPressed: () {
                         ref.read(proxiesStyleSettingProvider.notifier).update((
@@ -163,7 +174,8 @@ class ProxiesSetting extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildLayoutSetting() {
+  List<Widget> _buildLayoutSetting(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
     return generateSection(
       title: appLocalizations.layout,
       items: [
@@ -180,7 +192,7 @@ class ProxiesSetting extends StatelessWidget {
                 children: [
                   for (final item in ProxiesLayout.values)
                     SettingTextCard(
-                      getTextForProxiesLayout(item),
+                      getTextForProxiesLayout(context, item),
                       isSelected: item == layout,
                       onPressed: () {
                         ref.watch(proxiesStyleSettingProvider.notifier).update((
@@ -199,7 +211,8 @@ class ProxiesSetting extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildGroupStyleSetting() {
+  List<Widget> _buildGroupStyleSetting(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
     return generateSection(
       title: appLocalizations.iconStyle,
       items: [
@@ -216,7 +229,7 @@ class ProxiesSetting extends StatelessWidget {
                 children: [
                   for (final item in ProxiesIconStyle.values)
                     SettingTextCard(
-                      _getTextWithProxiesIconStyle(item),
+                      _getTextWithProxiesIconStyle(context, item),
                       isSelected: iconStyle == item,
                       onPressed: () {
                         ref.read(proxiesStyleSettingProvider.notifier).update((
@@ -238,15 +251,15 @@ class ProxiesSetting extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: EdgeInsets.only(bottom: 32),
+      padding: const EdgeInsets.only(bottom: 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ..._buildStyleSetting(),
-          ..._buildSortSetting(),
-          ..._buildLayoutSetting(),
-          ..._buildSizeSetting(),
+          ..._buildStyleSetting(context),
+          ..._buildSortSetting(context),
+          ..._buildLayoutSetting(context),
+          ..._buildSizeSetting(context),
           Consumer(
             builder: (_, ref, child) {
               final isList = ref.watch(
@@ -262,7 +275,7 @@ class ProxiesSetting extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [..._buildGroupStyleSetting()],
+              children: [..._buildGroupStyleSetting(context)],
             ),
           ),
         ],

@@ -1,23 +1,59 @@
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/manager/manager.dart';
+import 'package:fl_clash/manager/status_manager.dart';
 import 'package:fl_clash/models/state.dart';
+import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/widgets/inherited.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
-import 'package:flutter/material.dart';
+import 'package:fl_clash/widgets/sheet.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 extension BuildContextExtension on BuildContext {
   CommonScaffoldState? get commonScaffoldState {
     return findAncestorStateOfType<CommonScaffoldState>();
   }
 
-  void showNotifier(String text, {MessageActionState? actionState}) {
+  bool get isMobileView {
+    return ProviderScope.containerOf(
+      this,
+      listen: false,
+    ).read(isMobileViewProvider);
+  }
+
+  void safeNestedPop<T extends Object?>([T? result]) {
+    final nestedPop = SheetProvider.of(this)?.nestedNavigatorPop;
+    if (nestedPop != null) {
+      return nestedPop(result);
+    } else {
+      return Navigator.of(this).pop(result);
+    }
+  }
+
+  double get sheetTopPadding {
+    final sheetType = SheetProvider.of(this)!.type;
+    if (sheetType == SheetType.bottomSheet) {
+      return sheetAppBarHeight;
+    } else {
+      return 10;
+    }
+  }
+
+  void showNotifier(
+    String text, {
+    MessageLevel level = MessageLevel.info,
+    MessageActionState? actionState,
+  }) {
     return findAncestorStateOfType<StatusManagerState>()?.message(
       text,
+      level: level,
       actionState: actionState,
     );
   }
 
   void showSnackBar(String message, {SnackBarAction? action}) {
-    final width = viewWidth;
+    final width = MediaQuery.sizeOf(this).width;
     EdgeInsets margin;
     if (width < 600) {
       margin = const EdgeInsets.only(bottom: 16, right: 16, left: 16);
@@ -35,15 +71,12 @@ extension BuildContextExtension on BuildContext {
     );
   }
 
-  Size get appSize {
-    return MediaQuery.of(this).size;
-  }
-
-  double get viewWidth {
-    return appSize.width;
-  }
-
   ColorScheme get colorScheme => Theme.of(this).colorScheme;
+
+  bool get disableAnimations => MediaQuery.disableAnimationsOf(this);
+
+  Duration motionDuration(Duration duration) =>
+      disableAnimations ? Duration.zero : duration;
 
   TextTheme get textTheme => Theme.of(this).textTheme;
 
@@ -52,7 +85,7 @@ extension BuildContextExtension on BuildContext {
   T? findLastStateOfType<T extends State>() {
     T? state;
 
-    visitor(Element element) {
+    void visitor(Element element) {
       if (!element.mounted) {
         return;
       }
@@ -66,23 +99,5 @@ extension BuildContextExtension on BuildContext {
 
     visitor(this as Element);
     return state;
-  }
-}
-
-class BackHandleInherited extends InheritedWidget {
-  final Function handleBack;
-
-  const BackHandleInherited({
-    super.key,
-    required this.handleBack,
-    required super.child,
-  });
-
-  static BackHandleInherited? of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<BackHandleInherited>();
-
-  @override
-  bool updateShouldNotify(BackHandleInherited oldWidget) {
-    return handleBack != oldWidget.handleBack;
   }
 }

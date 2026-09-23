@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="108" height="108" viewBox="54 54 132 132" xmlns="http://www.w3.org/2000/svg">
+    <title>status_1</title>
+    <defs>
+        <filter id="glow-shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#0F172A" flood-opacity="0.12"/>
+        </filter>
+        <path id="shape-top"
+              d="M60.65,89.6L154.18,35.6A18,18 107.59,0 1,178.77 42.19L178.77,42.19A18,18 107.59,0 1,172.18 66.78L78.65,120.78A18,18 106.67,0 1,54.06 114.19L54.06,114.19A18,18 106.67,0 1,60.65 89.6z"/>
+        <path id="shape-mid"
+              d="M84.65,131.17L131.42,104.17A18,18 107.83,0 1,156 110.76L156,110.76A18,18 107.83,0 1,149.42 135.35L102.65,162.35A18,18 106.67,0 1,78.06 155.76L78.06,155.76A18,18 106.67,0 1,84.65 131.17z"/>
+        <path id="shape-bot"
+              d="M108.65,172.74L108.65,172.74A18,18 116.03,0 1,133.24 179.33L133.24,179.33A18,18 116.03,0 1,126.65 203.92L126.65,203.92A18,18 116.03,0 1,102.06 197.33L102.06,197.33A18,18 116.03,0 1,108.65 172.74z"/>
+        <mask id="cutout-mask">
+            <rect x="0" y="0" width="240" height="240" fill="white"/>
+            <g transform="translate(9.12, 9.12) scale(0.924, 0.924)">
+                <g transform="translate(45.96154, 43.846153) scale(0.63461536, 0.63461536)">
+                    <use href="#shape-top" fill="black" stroke="black" stroke-width="25"/>
+                    <use href="#shape-mid" fill="black" stroke="black" stroke-width="25"/>
+                    <use href="#shape-bot" fill="black" stroke="black" stroke-width="25"/>
+                </g>
+            </g>
+        </mask>
+        <linearGradient id="ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#B8C0CD"/>
+            <stop offset="100%" stop-color="#D7DCE6"/>
+        </linearGradient>
+    </defs>
+    <circle cx="120" cy="120" r="56" fill="none" stroke="url(#ring-grad)" stroke-width="16" mask="url(#cutout-mask)"
+            opacity="0.9"/>
+
+
+    <g transform="translate(9.12, 9.12) scale(0.924, 0.924)" filter="url(#glow-shadow)">
+        <g transform="translate(45.96154, 43.846153) scale(0.63461536, 0.63461536)">
+            <use href="#shape-top" fill="#7E8798"/>
+            <use href="#shape-mid" fill="#687386"/>
+            <use href="#shape-bot" fill="#98A3B6"/>
+        </g>
+    </g>
+</svg>

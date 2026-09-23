@@ -128,14 +128,16 @@ const _$LogLevelEnumMap = {
 _DAVProps _$DAVPropsFromJson(Map<String, dynamic> json) => _DAVProps(
   uri: json['uri'] as String,
   user: json['user'] as String,
-  password: json['password'] as String,
+  password: json['password'] == null
+      ? ''
+      : _decodeDavPassword(json['password'] as String?),
   fileName: json['fileName'] as String? ?? defaultDavFileName,
 );
 
 Map<String, dynamic> _$DAVPropsToJson(_DAVProps instance) => <String, dynamic>{
   'uri': instance.uri,
   'user': instance.user,
-  'password': instance.password,
+  'password': _encodeDavPassword(instance.password),
   'fileName': instance.fileName,
 };
 
@@ -158,20 +160,8 @@ Map<String, dynamic> _$TrafficToJson(_Traffic instance) => <String, dynamic>{
   'down': instance.down,
 };
 
-_Proxy _$ProxyFromJson(Map<String, dynamic> json) => _Proxy(
-  name: json['name'] as String,
-  type: json['type'] as String,
-  now: json['now'] as String?,
-);
-
-Map<String, dynamic> _$ProxyToJson(_Proxy instance) => <String, dynamic>{
-  'name': instance.name,
-  'type': instance.type,
-  'now': instance.now,
-};
-
 _Group _$GroupFromJson(Map<String, dynamic> json) => _Group(
-  type: $enumDecode(_$GroupTypeEnumMap, json['type']),
+  type: GroupType.parse(json['type'] as String),
   all:
       (json['all'] as List<dynamic>?)
           ?.map((e) => Proxy.fromJson(e as Map<String, dynamic>))
@@ -195,11 +185,11 @@ Map<String, dynamic> _$GroupToJson(_Group instance) => <String, dynamic>{
 };
 
 const _$GroupTypeEnumMap = {
-  GroupType.Selector: 'Selector',
-  GroupType.URLTest: 'URLTest',
-  GroupType.Fallback: 'Fallback',
-  GroupType.LoadBalance: 'LoadBalance',
-  GroupType.Relay: 'Relay',
+  GroupType.Selector: 'select',
+  GroupType.URLTest: 'url-test',
+  GroupType.Fallback: 'fallback',
+  GroupType.LoadBalance: 'load-balance',
+  GroupType.Relay: 'relay',
 };
 
 _HotKeyAction _$HotKeyActionFromJson(Map<String, dynamic> json) =>

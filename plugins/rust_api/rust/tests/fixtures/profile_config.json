@@ -1,0 +1,23 @@
+{
+  "proxies": [
+    { "name": "🇭🇰 香港 01 | 1x", "type": "ss", "server": "hk1.example.com", "port": 443, "cipher": "aes-128-gcm", "password": "a" },
+    { "name": "香港02  倍率:2.0", "type": "vmess", "server": "hk2.example.com", "port": 443, "uuid": "u", "alterId": 0, "cipher": "auto" },
+    { "name": "🇯🇵 日本 IEPL 03", "type": "trojan", "server": "jp3.example.com", "port": 443, "password": "b" },
+    { "name": "US-洛杉矶-04 0.5x", "type": "ss", "server": "us4.example.com", "port": 443, "cipher": "aes-128-gcm", "password": "c" },
+    { "name": "新加坡 05", "type": "vless", "server": "sg5.example.com", "port": 443, "uuid": "v" },
+    { "name": "台湾06", "type": "ss", "server": "tw6.example.com", "port": 443, "cipher": "aes-128-gcm", "password": "d" },
+    { "name": "🇰🇷 韩国 07", "type": "ss", "server": "kr7.example.com", "port": 443, "cipher": "aes-128-gcm", "password": "e" },
+    { "name": "地区未知节点 08", "type": "ss", "server": "xx8.example.com", "port": 443, "cipher": "aes-128-gcm", "password": "f" },
+    { "name": "官网 https://example.com", "type": "ss", "server": "info.example.com", "port": 443, "cipher": "aes-128-gcm", "password": "g" },
+    { "name": "🇬🇧 英国 09", "type": "ss", "server": "uk9.example.com", "port": 443, "cipher": "aes-128-gcm", "password": "h", "dialer-proxy": "🇭🇰 香港 01 | 1x" },
+    { "name": "德国 10", "type": "ss", "server": "de10.example.com", "port": 443, "cipher": "aes-128-gcm", "password": "i", "dialer-proxy": "官网 https://example.com" }
+  ],
+  "proxy-providers": {},
+  "dns": {
+    "enable": true,
+    "nameserver": ["223.5.5.5", "119.29.29.29"],
+    "nameserver-policy": { "+.example.com": "223.5.5.5" },
+    "proxy-server-nameserver-policy": {},
+    "hosts": {}
+  }
+}

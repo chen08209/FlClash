@@ -15,8 +15,8 @@ SolidCompression=yes
 SetupIconFile={{SETUP_ICON_FILE}}
 WizardStyle=modern
 PrivilegesRequired={{PRIVILEGES_REQUIRED}}
-ArchitecturesAllowed=x64 arm64
-ArchitecturesInstallIn64BitMode=x64 arm64
+ArchitecturesAllowed={{ARCH}}
+ArchitecturesInstallIn64BitMode={{ARCH}}
 
 [Code]
 procedure KillProcesses;
@@ -33,8 +33,28 @@ begin
   end;
 end;
 
-function InitializeSetup(): Boolean;
+procedure UnregisterHelperService;
+var
+  HelperPath: String;
+  ResultCode: Integer;
 begin
+  HelperPath := ExpandConstant('{app}\\FlClashHelperService.exe');
+  if FileExists(HelperPath) then
+  begin
+    Exec(HelperPath, 'uninstall', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  end;
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  UnregisterHelperService;
+  KillProcesses;
+  Result := '';
+end;
+
+function InitializeUninstall(): Boolean;
+begin
+  UnregisterHelperService;
   KillProcesses;
   Result := True;
 end;

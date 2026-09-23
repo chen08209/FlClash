@@ -12,14 +12,11 @@
 
 A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.
 
-on Desktop:
-<p style="text-align: center;">
-    <img alt="desktop" src="snapshots/desktop.gif">
-</p>
-
-on Mobile:
-<p style="text-align: center;">
-    <img alt="mobile" src="snapshots/mobile.gif">
+<p align="center">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="snapshots/preview-dark.png">
+        <img alt="FlClash on desktop and mobile" src="snapshots/preview.png" width="90%">
+    </picture>
 </p>
 
 ## Features
@@ -42,7 +39,6 @@ on Mobile:
 
    ```bash
     sudo apt-get install libayatana-appindicator3-dev
-    sudo apt-get install libkeybinder-3.0-dev
    ```
 
 ### Android
@@ -61,6 +57,13 @@ Support the following actions
 
 <a href="https://chen08209.github.io/FlClash-fdroid-repo/repo?fingerprint=789D6D32668712EF7672F9E58DEEB15FBD6DCEEC5AE7A4371EA72F2AAE8A12FD"><img alt="Get it on F-Droid" src="snapshots/get-it-on-fdroid.svg" width="200px"/></a> <a href="https://github.com/chen08209/FlClash/releases"><img alt="Get it on GitHub" src="snapshots/get-it-on-github.svg" width="200px"/></a>
 
+### Homebrew
+
+```bash
+brew tap chen08209/tap
+brew install --cask flclash
+```
+
 ## Build
 
 1. Update submodules
@@ -74,46 +77,51 @@ Support the following actions
 
     - android
 
-        1. Install  `Android SDK` ,  `Android NDK`
+        1. Install `Android SDK`, `Android NDK`
 
-        2. Set `ANDROID_NDK` environment variables
-
-        3. Run Build script
-
-           ```bash
-           dart ./setup.dart android
-           ```
-
-    - windows
-
-        1. You need a windows client
-
-        2. Install  `Gcc`，`Inno Setup`
+        2. Set `ANDROID_NDK` environment variable
 
         3. Run build script
 
            ```bash
-           dart ./setup.dart windows --arch <arm64 | amd64>
+           dart setup.dart android
+           ```
+
+    - windows
+
+        1. Requires a Windows client
+
+        2. Install `GCC`, `Inno Setup`
+
+        3. Run build script
+
+           ```bash
+           dart setup.dart windows
            ```
 
     - linux
 
-        1. You need a linux client
+        1. Requires a Linux client
 
-        2. Run build script
+        2. Dependencies are auto-installed by setup script, or manually:
+           ```bash
+           sudo apt-get install -y libayatana-appindicator3-dev
+           ```
+
+        3. Run build script
 
            ```bash
-           dart ./setup.dart linux --arch <arm64 | amd64>
+           dart setup.dart linux
            ```
 
     - macOS
 
-        1. You need a macOS client
+        1. Requires a macOS client
 
         2. Run build script
 
            ```bash
-           dart ./setup.dart macos --arch <arm64 | amd64>
+           dart setup.dart macos
            ```
 
 ## Star

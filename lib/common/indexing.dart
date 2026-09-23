@@ -35,13 +35,13 @@ class Indexing {
 
   String? _incrementInteger(String x) {
     _validateInteger(x);
-    String head = x[0];
-    List<String> digs = x.substring(1).split('');
+    final String head = x[0];
+    final List<String> digs = x.substring(1).split('');
 
     bool carry = true;
 
     for (int i = digs.length - 1; carry && i >= 0; i--) {
-      int d = digits.indexOf(digs[i]) + 1;
+      final int d = digits.indexOf(digs[i]) + 1;
       if (d == digits.length) {
         digs[i] = '0';
       } else {
@@ -57,7 +57,7 @@ class Indexing {
       if (head == 'z') {
         return null;
       }
-      String h = String.fromCharCode(head.codeUnitAt(0) + 1);
+      final String h = String.fromCharCode(head.codeUnitAt(0) + 1);
       if (h.compareTo('a') > 0) {
         digs.add('0');
       } else {
@@ -71,13 +71,13 @@ class Indexing {
 
   String? _decrementInteger(String x) {
     _validateInteger(x);
-    String head = x[0];
-    List<String> digs = x.substring(1).split('');
+    final String head = x[0];
+    final List<String> digs = x.substring(1).split('');
 
     bool borrow = true;
 
     for (int i = digs.length - 1; borrow && i >= 0; i--) {
-      int d = digits.indexOf(digs[i]) - 1;
+      final int d = digits.indexOf(digs[i]) - 1;
       if (d == -1) {
         digs[i] = digits[digits.length - 1];
       } else {
@@ -93,7 +93,7 @@ class Indexing {
       if (head == 'A') {
         return null;
       }
-      String h = String.fromCharCode(head.codeUnitAt(0) - 1);
+      final String h = String.fromCharCode(head.codeUnitAt(0) - 1);
       if (h.compareTo('Z') < 0) {
         digs.add(digits[digits.length - 1]);
       } else {
@@ -132,13 +132,13 @@ class Indexing {
       }
     }
 
-    int digitA = (a.isNotEmpty) ? digits.indexOf(a[0]) : 0;
-    int digitB = (b != null && b.isNotEmpty)
+    final int digitA = (a.isNotEmpty) ? digits.indexOf(a[0]) : 0;
+    final int digitB = (b != null && b.isNotEmpty)
         ? digits.indexOf(b[0])
         : digits.length;
 
     if (digitB - digitA > 1) {
-      int midDigit = (digitA + digitB + 1) ~/ 2;
+      final int midDigit = (digitA + digitB + 1) ~/ 2;
       return digits[midDigit];
     } else {
       if (b != null && b.length > 1) {
@@ -151,7 +151,7 @@ class Indexing {
   }
 
   String _getIntegerPart(String key) {
-    int integerPartLength = _getIntegerLength(key[0]);
+    final int integerPartLength = _getIntegerLength(key[0]);
     if (integerPartLength > key.length) {
       throw Exception('Invalid order key: $key');
     }
@@ -163,8 +163,8 @@ class Indexing {
       throw Exception('Invalid order key: $key');
     }
 
-    String i = _getIntegerPart(key);
-    String f = key.substring(i.length);
+    final String i = _getIntegerPart(key);
+    final String f = key.substring(i.length);
     if (f.isNotEmpty && f[f.length - 1] == '0') {
       throw Exception('Invalid order key: $key');
     }
@@ -192,8 +192,8 @@ class Indexing {
 
     if (a == null) {
       b = b!;
-      String ib = _getIntegerPart(b);
-      String fb = b.substring(ib.length);
+      final String ib = _getIntegerPart(b);
+      final String fb = b.substring(ib.length);
       if (ib == smallestInteger) {
         return ib + _midpoint('', fb);
       }
@@ -201,22 +201,22 @@ class Indexing {
     }
 
     if (b == null) {
-      String ia = _getIntegerPart(a);
-      String fa = a.substring(ia.length);
-      String? i = _incrementInteger(ia);
+      final String ia = _getIntegerPart(a);
+      final String fa = a.substring(ia.length);
+      final String? i = _incrementInteger(ia);
       return i ?? ia + _midpoint(fa, null);
     }
 
-    String ia = _getIntegerPart(a);
-    String fa = a.substring(ia.length);
-    String ib = _getIntegerPart(b);
-    String fb = b.substring(ib.length);
+    final String ia = _getIntegerPart(a);
+    final String fa = a.substring(ia.length);
+    final String ib = _getIntegerPart(b);
+    final String fb = b.substring(ib.length);
 
     if (ia == ib) {
       return ia + _midpoint(fa, fb);
     }
 
-    String? i = _incrementInteger(ia);
+    final String? i = _incrementInteger(ia);
     return (i == null || i.compareTo(b) < 0) ? i : ia + _midpoint(fa, null);
   }
 
@@ -230,7 +230,7 @@ class Indexing {
 
     if (b == null) {
       String? c = generateKeyBetween(a, b);
-      List<String?> result = [c];
+      final List<String?> result = [c];
       for (int i = 1; i < n; i++) {
         c = generateKeyBetween(c, b);
         result.add(c);
@@ -240,7 +240,7 @@ class Indexing {
 
     if (a == null) {
       String? c = generateKeyBetween(a, b);
-      List<String?> result = [c];
+      final List<String?> result = [c];
       for (int i = 1; i < n; i++) {
         c = generateKeyBetween(a, c);
         result.add(c);
@@ -248,12 +248,16 @@ class Indexing {
       return result.reversed.toList();
     }
 
-    int mid = n ~/ 2;
-    String? c = generateKeyBetween(a, b);
+    final int mid = n ~/ 2;
+    final String? c = generateKeyBetween(a, b);
     return generateNKeysBetween(a, c, mid)
         .followedBy([c])
         .followedBy(generateNKeysBetween(c, b, n - mid - 1))
         .toList();
+  }
+
+  List<String?> generateNKeys(int n) {
+    return generateNKeysBetween(null, null, n);
   }
 }
 

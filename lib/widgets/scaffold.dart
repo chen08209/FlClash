@@ -1,8 +1,7 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/pop_scope.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 
 import 'chip.dart';
@@ -22,6 +21,7 @@ class CommonScaffold extends StatefulWidget {
   final List<Widget>? actions;
   final bool? centerTitle;
   final Widget? floatingActionButton;
+  final bool? isTV;
   final AppBarEditState? editState;
   final AppBarSearchState? searchState;
   final OnKeywordsUpdateCallback? onKeywordsUpdate;
@@ -39,6 +39,7 @@ class CommonScaffold extends StatefulWidget {
     this.isLoading = false,
     this.searchState,
     this.floatingActionButton,
+    this.isTV,
     this.onKeywordsUpdate,
     this.resizeToAvoidBottomInset,
   });
@@ -137,7 +138,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
       _handleClearInput();
       return;
     }
-    _updateSearchState((state) => state?.copyWith(query: null));
+    _popAppBarLayer();
   }
 
   void handleExitSearching() {
@@ -148,12 +149,27 @@ class CommonScaffoldState extends State<CommonScaffold> {
     _updateSearchState((state) => state?.copyWith(query: null));
   }
 
+  void _handleExitAppBarLayer() {
+    handleExitSearching();
+    if (_isEdit) {
+      _appBarState.value.editState?.onExit();
+    }
+  }
+
+  void _popAppBarLayer() {
+    if (!_isEdit && !_isSearch) {
+      return;
+    }
+    Navigator.of(context).pop();
+  }
+
   @override
   void dispose() {
     _appBarState.dispose();
     _textController.dispose();
     _isFabExtendedNotifier.dispose();
     _loadingNotifier.dispose();
+    _keywordsNotifier.dispose();
     super.dispose();
   }
 
@@ -175,14 +191,16 @@ class CommonScaffoldState extends State<CommonScaffold> {
   Widget? _buildLeading(VoidCallback? backAction) {
     if (_isEdit) {
       return IconButton(
-        onPressed: _appBarState.value.editState?.onExit,
-        icon: Icon(Icons.close),
+        tooltip: context.appLocalizations.close,
+        onPressed: _popAppBarLayer,
+        icon: const Icon(Icons.close),
       );
     }
     if (_isSearch) {
       return IconButton(
-        onPressed: handleExitSearching,
-        icon: Icon(Icons.arrow_back),
+        tooltip: context.appLocalizations.back,
+        onPressed: _popAppBarLayer,
+        icon: const Icon(Icons.arrow_back),
       );
     }
     return backAction != null
@@ -198,10 +216,12 @@ class CommonScaffoldState extends State<CommonScaffold> {
   }
 
   Widget _buildTitle(AppBarSearchState? startState) {
+    final appLocalizations = context.appLocalizations;
     return _isSearch
         ? TextField(
             autofocus: true,
             controller: _textController,
+            inputFormatters: TextInputLimits.limit(TextInputLimits.search),
             style: context.textTheme.titleLarge,
             onChanged: (value) {
               if (startState != null) {
@@ -222,16 +242,21 @@ class CommonScaffoldState extends State<CommonScaffold> {
   List<Widget> _buildActions(bool hasSearch, List<Widget> actions) {
     if (_isSearch) {
       return genActions([
-        IconButton(onPressed: _handleClear, icon: Icon(Icons.close)),
+        IconButton(
+          tooltip: context.appLocalizations.clearSearch,
+          onPressed: _handleClear,
+          icon: const Icon(Icons.close),
+        ),
       ]);
     }
     return genActions([
       if (hasSearch && widget.searchState?.autoAddSearch == true)
         IconButton(
+          tooltip: context.appLocalizations.search,
           onPressed: () {
             _updateSearchState((state) => state?.copyWith(query: ''));
           },
-          icon: Icon(Icons.search),
+          icon: const Icon(Icons.search),
         ),
       ...actions,
     ]);
@@ -240,19 +265,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
   Widget _buildAppBarWrap(Widget child) {
     final appBar = _isSearch ? _buildSearchingAppBarTheme(child) : child;
     if (_isEdit || _isSearch) {
-      return SystemBackBlock(
-        child: CommonPopScope(
-          onPop: (context) {
-            if (_isEdit || _isSearch) {
-              handleExitSearching();
-              _appBarState.value.editState?.onExit();
-              return false;
-            }
-            return true;
-          },
-          child: appBar,
-        ),
-      );
+      return BackLayerScope(onBack: _handleExitAppBarLayer, child: appBar);
     }
     return appBar;
   }
@@ -303,10 +316,21 @@ class CommonScaffoldState extends State<CommonScaffold> {
   Widget build(BuildContext context) {
     assert(widget.appBar != null || widget.title != null);
     final backActionProvider = CommonScaffoldBackActionProvider.of(context);
+    final isTV = widget.isTV ?? system.isTV;
+    final bottomInset = BottomInsetScope.of(context);
+    final hasFab = !isTV && widget.floatingActionButton != null;
     final body = SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (isTV && widget.floatingActionButton != null)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: CommonScaffoldFabExtendedProvider(
+                isExtended: true,
+                child: widget.floatingActionButton!,
+              ),
+            ),
           ValueListenableBuilder(
             valueListenable: _keywordsNotifier,
             builder: (_, keywords, _) {
@@ -316,7 +340,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
                 });
               }
               if (keywords.isEmpty) {
-                return SizedBox();
+                return const SizedBox();
               }
               return Padding(
                 padding: const EdgeInsets.symmetric(
@@ -330,8 +354,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
                     for (final keyword in keywords)
                       CommonChip(
                         label: keyword,
-                        type: ChipType.delete,
-                        onPressed: () {
+                        onDeleted: () {
                           _deleteKeyword(keyword);
                         },
                       ),
@@ -344,10 +367,25 @@ class CommonScaffoldState extends State<CommonScaffold> {
         ],
       ),
     );
+    final fabChild = ValueListenableBuilder<bool>(
+      valueListenable: _isFabExtendedNotifier,
+      builder: (_, isExtended, child) {
+        return CommonScaffoldFabExtendedProvider(
+          isExtended: isExtended,
+          child: child!,
+        );
+      },
+      child: widget.floatingActionButton,
+    );
     return Scaffold(
       appBar: _buildAppBar(backActionProvider?.backAction),
       body: NotificationListener<UserScrollNotification>(
-        child: body,
+        child: hasFab
+            ? BottomInsetScope(
+                inset: bottomInset + BottomInsetScope.floatingActionButtonInset,
+                child: body,
+              )
+            : body,
         onNotification: (notification) {
           if (notification.direction == ScrollDirection.reverse) {
             _isFabExtendedNotifier.value = false;
@@ -359,17 +397,13 @@ class CommonScaffoldState extends State<CommonScaffold> {
       ),
       resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
       backgroundColor: widget.backgroundColor,
-      floatingActionButton: widget.floatingActionButton != null
-          ? ValueListenableBuilder<bool>(
-              valueListenable: _isFabExtendedNotifier,
-              builder: (_, isExtended, child) {
-                return CommonScaffoldFabExtendedProvider(
-                  isExtended: isExtended,
-                  child: child!,
-                );
-              },
-              child: widget.floatingActionButton,
-            )
+      floatingActionButton: hasFab
+          ? bottomInset > 0
+                ? Padding(
+                    padding: EdgeInsets.only(bottom: bottomInset),
+                    child: fabChild,
+                  )
+                : fabChild
           : null,
     );
   }
@@ -378,7 +412,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
 List<Widget> genActions(List<Widget> actions, {double? space}) {
   return <Widget>[
     ...actions.separated(SizedBox(width: space ?? 4)),
-    SizedBox(width: 8),
+    const SizedBox(width: 8),
   ];
 }
 

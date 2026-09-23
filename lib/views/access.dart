@@ -1,14 +1,13 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -24,7 +23,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
   late ScrollController _controller;
   List<String>? _pinedList;
   bool _isInit = false;
-  AccessControlMode? _lastMode;
+  bool _installedAppsPermissionGranted = true;
 
   final _completer = Completer();
 
@@ -32,13 +31,66 @@ class _AccessViewState extends ConsumerState<AccessView> {
   void initState() {
     super.initState();
     _controller = ScrollController();
-    _completer.complete(appController.getPackages());
+    _completer.complete(_loadPackages());
     final accessControl = ref
         .read(vpnSettingProvider.select((state) => state.accessControlProps))
         .copyWith();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
       ref.read(accessControlStateProvider.notifier).value = accessControl;
       _isInit = true;
+      _pinList();
+    });
+    ref.listenManual(
+      accessControlStateProvider.select((state) => state.mode),
+      (_, _) => _pinList(),
+    );
+  }
+
+  Future<void> _loadPackages() async {
+    final action = ref.read(systemActionProvider.notifier);
+    final packages = await action.getPackages();
+    final granted =
+        packages.isNotEmpty || await action.isInstalledAppsPermissionGranted();
+    if (!mounted || granted == _installedAppsPermissionGranted) {
+      return;
+    }
+    setState(() {
+      _installedAppsPermissionGranted = granted;
+    });
+  }
+
+  Future<void> _handleGrantInstalledAppsPermission() async {
+    final appLocalizations = context.appLocalizations;
+    final granted = await ref
+        .read(systemActionProvider.notifier)
+        .requestInstalledAppsPermission();
+    if (!mounted) {
+      return;
+    }
+    if (!granted) {
+      final res = await dialogs.showMessage(
+        message: TextSpan(
+          text: appLocalizations.installedAppsPermissionDeniedMessage,
+        ),
+        confirmText: appLocalizations.settings,
+      );
+      if (res == true) {
+        await app?.openAppSettings();
+      }
+      return;
+    }
+    await globalState.loadingRun(_loadPackages, tag: LoadingTag.access);
+  }
+
+  void _pinList() {
+    if (!_isInit || !mounted) {
+      return;
+    }
+    setState(() {
+      _pinedList = ref.read(accessControlStateProvider).currentList;
     });
   }
 
@@ -52,7 +104,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
     required bool isSelectedAll,
     required List<String> allValueList,
   }) {
-    onPressed() {
+    void onPressed() {
       ref.read(accessControlStateProvider.notifier).update((state) {
         final newSet = Set<String>.from(state.currentList);
         final isSelectedAll = newSet.containsAll(allValueList);
@@ -65,17 +117,18 @@ class _AccessViewState extends ConsumerState<AccessView> {
       });
     }
 
+    final appLocalizations = context.appLocalizations;
     return FadeRotationScaleBox(
       alignment: Alignment.centerRight,
       child: isSelectedAll
           ? FloatingActionButton.extended(
-              key: ValueKey(true),
+              key: const ValueKey(true),
               onPressed: onPressed,
               label: Text(appLocalizations.cancelSelectAll),
               icon: const Icon(Icons.deselect),
             )
           : FloatingActionButton.extended(
-              key: ValueKey(false),
+              key: const ValueKey(false),
               tooltip: appLocalizations.selectAll,
               onPressed: onPressed,
               label: Text(appLocalizations.selectAll),
@@ -92,7 +145,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
       return;
     }
     final selectedPackageNames =
-        (await appController.loadingRun<List<String>>(() async {
+        (await globalState.loadingRun<List<String>>(() async {
           return await app?.getChinaPackageNames() ?? [];
         }, tag: LoadingTag.access))?.toSet() ??
         {};
@@ -113,11 +166,11 @@ class _AccessViewState extends ConsumerState<AccessView> {
   Future<void> _handleToSetting() async {
     await showSheet<int>(
       context: context,
-      props: SheetProps(isScrollControlled: true),
-      builder: (_, type) {
+      props: const SheetProps(isScrollControlled: true),
+      builder: (context) {
+        final appLocalizations = context.appLocalizations;
         return AdaptiveSheetScaffold(
-          type: type,
-          body: AccessControlPanel(),
+          body: const AccessControlPanel(),
           title: appLocalizations.accessControlSettings,
         );
       },
@@ -143,7 +196,8 @@ class _AccessViewState extends ConsumerState<AccessView> {
   }
 
   Future<void> _handleBack() async {
-    final res = await globalState.showMessage(
+    final appLocalizations = context.appLocalizations;
+    final res = await dialogs.showMessage(
       title: appLocalizations.tip,
       message: TextSpan(text: appLocalizations.saveChanges),
     );
@@ -170,10 +224,12 @@ class _AccessViewState extends ConsumerState<AccessView> {
           isFilterNonInternetApp: accessControl.isFilterNonInternetApp,
         )
         .map((item) => item.packageName)
-        .toSet()
-        .toList();
+        .toSet();
     return accessControl.copyWithNewList(
-      accessControl.currentList.intersection(viewPackageNames),
+      accessControl.currentList
+          .where((item) => viewPackageNames.contains(item))
+          .toList()
+        ..sort(),
     );
   }
 
@@ -193,14 +249,16 @@ class _AccessViewState extends ConsumerState<AccessView> {
       builder: (_, ref, child) {
         final accessControl = ref.watch(accessControlStateProvider);
         final noSave = ref.watch(
-          vpnSettingProvider.select(
-            (state) =>
-                state.accessControlProps ==
-                _getRealAccessControlProps(accessControl),
-          ),
+          vpnSettingProvider.select((state) {
+            final current = _getRealAccessControlProps(
+              state.accessControlProps,
+            );
+            final origin = _getRealAccessControlProps(accessControl);
+            return current == origin;
+          }),
         );
         if (noSave) {
-          return SizedBox();
+          return const SizedBox();
         }
         return child!;
       },
@@ -220,7 +278,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
   }
 
   Future<void> _exportToClipboard() async {
-    await appController.safeRun(() {
+    await globalState.safeRun(() {
       final currentList = ref.read(
         accessControlStateProvider.select((state) => state.currentList),
       );
@@ -229,7 +287,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
   }
 
   Future<void> _importFormClipboard() async {
-    await appController.safeRun(() async {
+    await globalState.safeRun(() async {
       final data = await Clipboard.getData('text/plain');
       final text = data?.text;
       if (text == null) return;
@@ -240,52 +298,54 @@ class _AccessViewState extends ConsumerState<AccessView> {
     });
   }
 
-  List<Widget> _buildActions({required bool enable}) {
+  List<Widget> _buildActions(BuildContext context, {required bool enable}) {
+    final appLocalizations = context.appLocalizations;
     return [
       _buildConfirm(),
       CommonPopupBox(
         targetBuilder: (open) {
           return IconButton(
+            tooltip: appLocalizations.more,
             onPressed: () {
-              open(offset: Offset(0, 0));
+              open(offset: const Offset(0, 0));
             },
-            icon: Icon(Icons.more_vert),
+            icon: const Icon(Icons.more_vert),
           );
         },
-        popup: CommonPopupMenu(
+        popupBuilder: (_) => CommonPopupMenu(
           items: [
-            PopupMenuItemData(
+            CommonPopupMenuItem(
               icon: Icons.swap_horiz,
               label: enable
                   ? appLocalizations.turnOff
                   : appLocalizations.turnOn,
               onPressed: _handleToggle,
             ),
-            PopupMenuItemData(
+            CommonPopupMenuItem(
               icon: Icons.search,
               label: appLocalizations.search,
               onPressed: _handleSearch,
             ),
-            PopupMenuItemData(
+            CommonPopupMenuItem(
               icon: Icons.tune,
               label: appLocalizations.settings,
               onPressed: _handleToSetting,
             ),
-            PopupMenuItemData(
+            CommonPopupMenuItem(
               icon: Icons.emergency_outlined,
               label: appLocalizations.action,
               subItems: [
-                PopupMenuItemData(
+                CommonPopupMenuItem(
                   icon: Icons.auto_awesome,
                   label: appLocalizations.intelligentSelected,
                   onPressed: _intelligentSelected,
                 ),
-                PopupMenuItemData(
+                CommonPopupMenuItem(
                   icon: Icons.content_copy,
                   label: appLocalizations.clipboardExport,
                   onPressed: _exportToClipboard,
                 ),
-                PopupMenuItemData(
+                CommonPopupMenuItem(
                   icon: Icons.paste,
                   label: appLocalizations.clipboardImport,
                   onPressed: _importFormClipboard,
@@ -304,36 +364,78 @@ class _AccessViewState extends ConsumerState<AccessView> {
   }) {
     return FutureBuilder(
       future: _completer.future,
-      builder: (_, snapshot) {
+      builder: (context, snapshot) {
+        final appLocalizations = context.appLocalizations;
         if (snapshot.connectionState != ConnectionState.done) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CommonCircleLoading());
         }
-        return packages.isEmpty
-            ? NullStatus(label: appLocalizations.noData)
-            : CommonScrollBar(
-                controller: _controller,
-                child: ListView.builder(
-                  controller: _controller,
-                  itemCount: packages.length,
-                  itemExtent: 72,
-                  itemBuilder: (_, index) {
-                    final package = packages[index];
-                    return PackageListItem(
-                      key: Key(package.packageName),
-                      package: package,
-                      value: valueList.contains(package.packageName),
-                      onChanged: (value) {
-                        _handleSelected(package.packageName);
-                      },
-                    );
+        return NullStatusSwitcher(
+          isEmpty: packages.isEmpty,
+          nullStatus: NullStatus(
+            label: appLocalizations.noData,
+            illustration: NullStatusIllustration.apps,
+          ),
+          child: CommonScrollBar(
+            controller: _controller,
+            child: ListView.builder(
+              controller: _controller,
+              itemCount: packages.length,
+              itemExtent: 72,
+              itemBuilder: (_, index) {
+                final package = packages[index];
+                return PackageListItem(
+                  key: Key(package.packageName),
+                  package: package,
+                  value: valueList.contains(package.packageName),
+                  onChanged: (value) {
+                    _handleSelected(package.packageName);
                   },
-                ),
-              );
+                );
+              },
+            ),
+          ),
+        );
       },
     );
   }
 
-  Widget _buildBannerBar(AccessControlMode mode, int count) {
+  Widget _buildInstalledAppsPermissionStatus() {
+    final appLocalizations = context.appLocalizations;
+    return NullStatus(
+      label: appLocalizations.installedAppsPermissionRequired,
+      description: appLocalizations.installedAppsPermissionDesc,
+      illustration: NullStatusIllustration.permission,
+      action: FilledButton.tonalIcon(
+        onPressed: _handleGrantInstalledAppsPermission,
+        icon: const Icon(Icons.lock_open),
+        label: Text(appLocalizations.authorize),
+      ),
+    );
+  }
+
+  Widget _buildBannerBar({
+    required bool enable,
+    required AccessControlMode mode,
+    required int count,
+  }) {
+    final appLocalizations = context.appLocalizations;
+    if (!enable) {
+      return MaterialBanner(
+        leading: Icon(Icons.info_outline, color: context.colorScheme.outline),
+        content: Text(
+          appLocalizations.accessControlDisabledDesc,
+          style: TextStyle(color: context.colorScheme.onSurfaceVariant),
+        ),
+        actions: [
+          CommonMinFilledButtonTheme(
+            child: FilledButton.tonal(
+              onPressed: _handleToggle,
+              child: Text(appLocalizations.turnOn),
+            ),
+          ),
+        ],
+      );
+    }
     final describe = mode == AccessControlMode.acceptSelected
         ? appLocalizations.accessControlAllowDesc
         : appLocalizations.accessControlNotAllowDesc;
@@ -346,16 +448,14 @@ class _AccessViewState extends ConsumerState<AccessView> {
         Card.filled(
           color: context.colorScheme.primary,
           elevation: 0,
-          shape: RoundedSuperellipseBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+          shape: AppShape.md,
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(appLocalizations.selected, style: textStyle),
-                SizedBox(width: 4),
+                const SizedBox(width: 4),
                 Flexible(child: Text('$count', style: textStyle)),
               ],
             ),
@@ -367,7 +467,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
 
   void _onSearch(String value) {
     ref.read(queryProvider(QueryTag.access).notifier).value = value;
-    _pinedList = null;
+    _pinList();
   }
 
   @override
@@ -376,14 +476,6 @@ class _AccessViewState extends ConsumerState<AccessView> {
     final query = ref.watch(queryProvider(QueryTag.access));
     final packages = ref.watch(packagesProvider);
     final accessControl = ref.watch(accessControlStateProvider);
-    if (_isInit) {
-      if (_lastMode != accessControl.mode) {
-        _lastMode = accessControl.mode;
-        _pinedList = accessControl.currentList;
-      } else {
-        _pinedList ??= accessControl.currentList;
-      }
-    }
     final viewPackages = packages
         .getViewList(
           pinedList: _pinedList ?? [],
@@ -401,32 +493,43 @@ class _AccessViewState extends ConsumerState<AccessView> {
     final currentList = accessControl.currentList;
     final viewPackageNameList = viewPackages.map((e) => e.packageName).toList();
     final valueList = currentList.intersection(viewPackageNameList);
+    final needsInstalledAppsPermission =
+        packages.isEmpty && !_installedAppsPermissionGranted;
     return CommonScaffold(
       key: _scaffoldKey,
       isLoading: isLoading,
       searchState: AppBarSearchState(onSearch: _onSearch, autoAddSearch: false),
-      title: appLocalizations.appAccessControl,
-      actions: _buildActions(enable: accessControl.enable),
-      body: DisabledMask(
-        status: !accessControl.enable,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildBannerBar(mode, valueList.length),
-            SizedBox(height: 8),
-            Expanded(
-              child: _buildContent(
-                packages: viewPackages,
-                valueList: valueList,
-              ),
-            ),
-          ],
-        ),
+      title: context.appLocalizations.appAccessControl,
+      actions: _buildActions(context, enable: accessControl.enable),
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildBannerBar(
+            enable: accessControl.enable,
+            mode: mode,
+            count: valueList.length,
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: needsInstalledAppsPermission
+                ? _buildInstalledAppsPermissionStatus()
+                : DisabledMask(
+                    status: !accessControl.enable,
+                    child: _buildContent(
+                      packages: viewPackages,
+                      valueList: valueList,
+                    ),
+                  ),
+          ),
+        ],
       ),
-      floatingActionButton: _buildSelectedAllButton(
-        isSelectedAll: valueList.length == viewPackageNameList.length,
-        allValueList: viewPackageNameList,
-      ),
+      floatingActionButton:
+          accessControl.enable && !needsInstalledAppsPermission
+          ? _buildSelectedAllButton(
+              isSelectedAll: valueList.length == viewPackageNameList.length,
+              allValueList: viewPackageNameList,
+            )
+          : null,
     );
   }
 }
@@ -446,25 +549,7 @@ class PackageListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem.checkbox(
-      leading: SizedBox(
-        width: 48,
-        height: 48,
-        child: FutureBuilder<ImageProvider?>(
-          future: app?.getPackageIcon(package.packageName),
-          builder: (_, snapshot) {
-            if (!snapshot.hasData && snapshot.data == null) {
-              return Container();
-            } else {
-              return Image(
-                image: snapshot.data!,
-                gaplessPlayback: true,
-                width: 48,
-                height: 48,
-              );
-            }
-          },
-        ),
-      ),
+      leading: PackageIcon(packageName: package.packageName, size: 48),
       title: Text(
         package.label,
         style: const TextStyle(overflow: TextOverflow.ellipsis),
@@ -475,7 +560,8 @@ class PackageListItem extends StatelessWidget {
         style: const TextStyle(overflow: TextOverflow.ellipsis),
         maxLines: 1,
       ),
-      delegate: CheckboxDelegate(value: value, onChanged: onChanged),
+      value: value,
+      onChanged: onChanged,
     );
   }
 }
@@ -496,6 +582,7 @@ class _AccessControlPanelState extends ConsumerState<AccessControlPanel> {
   }
 
   String _getTextWithAccessControlMode(AccessControlMode mode) {
+    final appLocalizations = context.appLocalizations;
     return switch (mode) {
       AccessControlMode.acceptSelected => appLocalizations.whitelistMode,
       AccessControlMode.rejectSelected => appLocalizations.blacklistMode,
@@ -503,6 +590,7 @@ class _AccessControlPanelState extends ConsumerState<AccessControlPanel> {
   }
 
   String _getTextWithAccessSortType(AccessSortType type) {
+    final appLocalizations = context.appLocalizations;
     return switch (type) {
       AccessSortType.none => appLocalizations.defaultText,
       AccessSortType.name => appLocalizations.name,
@@ -519,6 +607,7 @@ class _AccessControlPanelState extends ConsumerState<AccessControlPanel> {
   }
 
   List<Widget> _buildModeSetting() {
+    final appLocalizations = context.appLocalizations;
     return generateSection(
       isFirst: true,
       title: appLocalizations.mode,
@@ -557,6 +646,7 @@ class _AccessControlPanelState extends ConsumerState<AccessControlPanel> {
   }
 
   List<Widget> _buildSortSetting() {
+    final appLocalizations = context.appLocalizations;
     return generateSection(
       title: appLocalizations.sort,
       items: [
@@ -594,6 +684,7 @@ class _AccessControlPanelState extends ConsumerState<AccessControlPanel> {
   }
 
   List<Widget> _buildSourceSetting() {
+    final appLocalizations = context.appLocalizations;
     return generateSection(
       title: appLocalizations.source,
       items: [
@@ -602,11 +693,11 @@ class _AccessControlPanelState extends ConsumerState<AccessControlPanel> {
           scrollDirection: Axis.horizontal,
           child: Consumer(
             builder: (_, ref, _) {
-              final vm2 = ref.watch(
+              final filters = ref.watch(
                 accessControlStateProvider.select(
-                  (state) => VM2(
-                    state.isFilterSystemApp,
-                    state.isFilterNonInternetApp,
+                  (state) => (
+                    filterSystemApp: state.isFilterSystemApp,
+                    filterNonInternetApp: state.isFilterNonInternetApp,
                   ),
                 ),
               );
@@ -615,25 +706,28 @@ class _AccessControlPanelState extends ConsumerState<AccessControlPanel> {
                 children: [
                   SettingTextCard(
                     appLocalizations.systemApp,
-                    isSelected: vm2.a == false,
+                    isSelected: filters.filterSystemApp == false,
                     onPressed: () {
                       ref
                           .read(accessControlStateProvider.notifier)
                           .update(
-                            (state) =>
-                                state.copyWith(isFilterSystemApp: !vm2.a),
+                            (state) => state.copyWith(
+                              isFilterSystemApp: !filters.filterSystemApp,
+                            ),
                           );
                     },
                   ),
                   SettingTextCard(
                     appLocalizations.noNetworkApp,
-                    isSelected: vm2.b == false,
+                    isSelected: filters.filterNonInternetApp == false,
                     onPressed: () {
                       ref
                           .read(accessControlStateProvider.notifier)
                           .update(
-                            (state) =>
-                                state.copyWith(isFilterNonInternetApp: !vm2.b),
+                            (state) => state.copyWith(
+                              isFilterNonInternetApp:
+                                  !filters.filterNonInternetApp,
+                            ),
                           );
                     },
                   ),

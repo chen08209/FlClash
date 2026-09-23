@@ -8,8 +8,7 @@
             android:name=".VpnService"
             android:exported="false"
             android:foregroundServiceType="specialUse"
-            android:permission="android.permission.BIND_VPN_SERVICE"
-            android:process=":remote">
+            android:permission="android.permission.BIND_VPN_SERVICE">
             <intent-filter>
                 <action android:name="android.net.VpnService" />
             </intent-filter>
@@ -19,28 +18,20 @@
         </service>
 
         <service
-            android:name=".CommonService"
+            android:name=".ProxyService"
             android:exported="false"
-            android:foregroundServiceType="specialUse"
-            android:process=":remote">
+            android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="proxy" />
         </service>
-
-        <service
-            android:name=".RemoteService"
-            android:enabled="true"
-            android:exported="false"
-            android:process=":remote" />
 
         <provider
             android:name=".FilesProvider"
             android:authorities="${applicationId}.files"
             android:exported="true"
             android:grantUriPermissions="true"
-            android:permission="android.permission.MANAGE_DOCUMENTS"
-            android:process=":remote">
+            android:permission="android.permission.MANAGE_DOCUMENTS">
             <intent-filter>
                 <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
             </intent-filter>

@@ -3,13 +3,23 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'generated/clash_config.freezed.dart';
+
 part 'generated/clash_config.g.dart';
 
-const defaultClashConfig = ClashConfig();
+const defaultClashConfig = PatchClashConfig();
 
 const defaultTun = Tun();
 const defaultDns = Dns();
-const defaultGeoXUrl = GeoXUrl();
+const defaultGeoXUrl = {
+  GeoResource.MMDB:
+      'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb',
+  GeoResource.ASN:
+      'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb',
+  GeoResource.GEOIP:
+      'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat',
+  GeoResource.GEOSITE:
+      'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat',
+};
 
 const defaultMixedPort = 7890;
 const defaultKeepAliveInterval = 30;
@@ -102,25 +112,85 @@ const defaultBypassPrivateRouteAddress = [
 @freezed
 abstract class ProxyGroup with _$ProxyGroup {
   const factory ProxyGroup({
+    int? profileId,
+    @JsonKey(fromJson: Snowflake.buildId) required int id,
     required String name,
-    @JsonKey(fromJson: GroupType.parseProfileType) required GroupType type,
+    required GroupType type,
     List<String>? proxies,
     List<String>? use,
     int? interval,
     bool? lazy,
+    @JsonKey(name: 'disable-udp') bool? disableUDP,
     String? url,
     int? timeout,
     @JsonKey(name: 'max-failed-times') int? maxFailedTimes,
     String? filter,
-    @JsonKey(name: 'expected-filter') String? excludeFilter,
+    @JsonKey(name: 'exclude-filter') String? excludeFilter,
     @JsonKey(name: 'exclude-type') String? excludeType,
-    @JsonKey(name: 'expected-status') dynamic expectedStatus,
+    @JsonKey(name: 'expected-status') String? expectedStatus,
+    @JsonKey(name: 'include-all') bool? includeAll,
+    @JsonKey(name: 'include-all-proxies') bool? includeAllProxies,
+    @JsonKey(name: 'include-all-providers') bool? includeAllProviders,
     bool? hidden,
     String? icon,
+    String? order,
   }) = _ProxyGroup;
 
   factory ProxyGroup.fromJson(Map<String, Object?> json) =>
       _$ProxyGroupFromJson(json);
+}
+
+@freezed
+abstract class Proxy with _$Proxy {
+  const factory Proxy({
+    required String name,
+    required String type,
+    String? now,
+  }) = _Proxy;
+
+  factory Proxy.fromJson(Map<String, Object?> json) => _$ProxyFromJson(json);
+}
+
+@freezed
+abstract class CustomOverwriteDate with _$CustomOverwriteDate {
+  const factory CustomOverwriteDate({
+    @Default(false) bool loaded,
+    @Default([]) List<String> proxyNames,
+    @Default({}) Map<String, String> proxyTypes,
+    @Default([]) List<ProxyGroup> proxyGroups,
+    @Default({}) Set<String> proxyProviders,
+    @Default({}) Set<String> ruleTargets,
+    @Default({}) Set<String> subRules,
+  }) = _CustomOverwriteDate;
+}
+
+@freezed
+abstract class CustomOverwriteSelectorState
+    with _$CustomOverwriteSelectorState {
+  const factory CustomOverwriteSelectorState({
+    required bool loaded,
+    required List<Proxy> proxies,
+    required List<String> subRules,
+    required List<String> proxyProviders,
+  }) = _CustomOverwriteSelectorState;
+}
+
+@freezed
+abstract class RuleTargetsSelectorState with _$RuleTargetsSelectorState {
+  const factory RuleTargetsSelectorState({
+    required bool loaded,
+    required Set<String> ruleTargets,
+    required Set<String> subRules,
+  }) = _RuleTargetsSelectorState;
+}
+
+@freezed
+abstract class OverwriteIncludeSelectorState
+    with _$OverwriteIncludeSelectorState {
+  const factory OverwriteIncludeSelectorState({
+    required bool includeAll,
+    required List<String> names,
+  }) = _OverwriteIncludeSelectorState;
 }
 
 @freezed
@@ -129,6 +199,14 @@ abstract class RuleProvider with _$RuleProvider {
 
   factory RuleProvider.fromJson(Map<String, Object?> json) =>
       _$RuleProviderFromJson(json);
+}
+
+@freezed
+abstract class ProxyProvider with _$ProxyProvider {
+  const factory ProxyProvider({required String name}) = _ProxyProvider;
+
+  factory ProxyProvider.fromJson(Map<String, Object?> json) =>
+      _$ProxyProviderFromJson(json);
 }
 
 @freezed
@@ -183,19 +261,22 @@ abstract class Tun with _$Tun {
     if (json == null) {
       return defaultTun;
     }
-    try {
-      return Tun.fromJson(json);
-    } catch (_) {
-      return defaultTun;
-    }
+    return decodeOrRestoreDefault(
+      'tun config',
+      () => Tun.fromJson(json),
+      () => defaultTun,
+    );
   }
 }
 
 extension TunExt on Tun {
+  List<String> resolveRouteAddress(RouteMode routeMode) =>
+      routeMode == RouteMode.bypassPrivate
+      ? defaultBypassPrivateRouteAddress
+      : routeAddress;
+
   Tun getRealTun(RouteMode routeMode) {
-    final mRouteAddress = routeMode == RouteMode.bypassPrivate
-        ? defaultBypassPrivateRouteAddress
-        : routeAddress;
+    final mRouteAddress = resolveRouteAddress(routeMode);
     return switch (system.isDesktop) {
       true => copyWith(autoRoute: true, routeAddress: []),
       false => copyWith(
@@ -211,7 +292,7 @@ abstract class FallbackFilter with _$FallbackFilter {
   const factory FallbackFilter({
     @Default(true) bool geoip,
     @Default('CN') @JsonKey(name: 'geoip-code') String geoipCode,
-    @Default(['gfw']) List<String> geosite,
+    @Default([]) List<String> geosite,
     @Default(['240.0.0.0/4']) List<String> ipcidr,
     @Default(['+.google.com', '+.facebook.com', '+.youtube.com'])
     List<String> domain,
@@ -264,107 +345,122 @@ abstract class Dns with _$Dns {
   factory Dns.fromJson(Map<String, Object?> json) => _$DnsFromJson(json);
 
   factory Dns.safeDnsFromJson(Map<String, Object?> json) {
-    try {
-      return Dns.fromJson(json);
-    } catch (_) {
-      return const Dns();
-    }
+    return decodeOrRestoreDefault(
+      'dns config',
+      () => Dns.fromJson(json),
+      () => const Dns(),
+    );
   }
 }
 
 @freezed
-abstract class GeoXUrl with _$GeoXUrl {
-  const factory GeoXUrl({
-    @Default(
-      'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb',
-    )
-    String mmdb,
-    @Default(
-      'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb',
-    )
-    String asn,
-    @Default(
-      'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat',
-    )
-    String geoip,
-    @Default(
-      'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat',
-    )
-    String geosite,
-  }) = _GeoXUrl;
-
-  factory GeoXUrl.fromJson(Map<String, Object?> json) =>
-      _$GeoXUrlFromJson(json);
-
-  factory GeoXUrl.safeFormJson(Map<String, Object?>? json) {
-    if (json == null) {
-      return defaultGeoXUrl;
-    }
-    try {
-      return GeoXUrl.fromJson(json);
-    } catch (_) {
-      return defaultGeoXUrl;
-    }
-  }
-}
-
-@freezed
-abstract class ParsedRule with _$ParsedRule {
-  const factory ParsedRule({
-    required RuleAction ruleAction,
+abstract class Rule with _$Rule {
+  const factory Rule({
+    @Default(-1) int id,
+    @Default(RuleAction.DOMAIN) RuleAction ruleAction,
     String? content,
     String? ruleTarget,
     String? ruleProvider,
     String? subRule,
     @Default(false) bool noResolve,
     @Default(false) bool src,
-  }) = _ParsedRule;
+    String? order,
+  }) = _Rule;
 
-  factory ParsedRule.parseString(String value) {
-    final splits = value.split(',');
-    final shortSplits = splits
-        .where((item) => !item.contains('src') && !item.contains('no-resolve'))
-        .toList();
-    final ruleAction = RuleAction.values.firstWhere(
-      (item) => item.value == shortSplits.first,
-      orElse: () => RuleAction.DOMAIN,
-    );
-    String? subRule;
-    String? ruleTarget;
-
-    if (ruleAction == RuleAction.SUB_RULE) {
-      subRule = shortSplits.last;
-    } else {
-      ruleTarget = shortSplits.last;
-    }
-
-    String? content;
-    String? ruleProvider;
-
-    if (ruleAction == RuleAction.RULE_SET) {
-      ruleProvider = shortSplits.sublist(1, shortSplits.length - 1).join(',');
-    } else {
-      content = shortSplits.sublist(1, shortSplits.length - 1).join(',');
-    }
-
-    return ParsedRule(
-      ruleAction: ruleAction,
-      content: content,
-      src: splits.contains('src'),
-      ruleProvider: ruleProvider,
-      noResolve: splits.contains('no-resolve'),
-      subRule: subRule,
-      ruleTarget: ruleTarget,
+  factory Rule.init() {
+    return Rule(
+      ruleAction: RuleAction.DOMAIN,
+      ruleTarget: RuleTarget.DIRECT.name,
     );
   }
+
+  // Mirrors mihomo's ParseRulePayload with needTarget set.
+  factory Rule.parse(String value, {int? id}) {
+    id ??= snowflake.id;
+    final fields = value.split(',').map((item) => item.trim()).toList();
+    final type = fields.first.toUpperCase();
+    if (type.isEmpty) {
+      return Rule(
+        id: id,
+        ruleAction: RuleAction.DOMAIN,
+        ruleTarget: RuleTarget.DIRECT.name,
+      );
+    }
+    final action = RuleAction.values.firstWhere(
+      (item) => item.value == type,
+      orElse: () => RuleAction.DOMAIN,
+    );
+    final rest = fields.sublist(1);
+    String? payload;
+    String? target;
+    var params = const <String>[];
+    if (action == RuleAction.MATCH) {
+      target = rest.firstOrNull;
+    } else if (action.hasCommaPayload) {
+      target = rest.lastOrNull;
+      payload = rest.length > 1
+          ? rest.sublist(0, rest.length - 1).join(',')
+          : null;
+    } else {
+      payload = rest.elementAtOrNull(0);
+      target = rest.elementAtOrNull(1);
+      params = rest.skip(2).toList();
+    }
+    payload = payload?.isNotEmpty == true ? payload : null;
+    target = target?.isNotEmpty == true ? target : null;
+
+    return Rule(
+      id: id,
+      ruleAction: action,
+      content: action == RuleAction.RULE_SET ? null : payload,
+      ruleProvider: action == RuleAction.RULE_SET ? payload : null,
+      ruleTarget: action == RuleAction.SUB_RULE ? null : target,
+      subRule: action == RuleAction.SUB_RULE ? target : null,
+      src: params.contains('src'),
+      noResolve: params.contains('no-resolve'),
+    );
+  }
+
+  factory Rule.fromJson(Map<String, Object?> json) => _$RuleFromJson(json);
 }
 
-extension ParsedRuleExt on ParsedRule {
-  String get value {
+extension RuleExt on Rule {
+  Rule autoOrder(Rule rule, String? a, String? b) {
+    final newRule = rule.order?.isNotEmpty != true
+        ? rule.copyWith(order: indexing.generateKeyBetween(a, b))
+        : rule;
+    return newRule;
+  }
+
+  String? get realContent {
+    return switch (ruleAction) {
+      RuleAction.MATCH => null,
+      RuleAction.RULE_SET => ruleProvider,
+      _ => content,
+    };
+  }
+
+  String? get realTarget {
+    return switch (ruleAction == RuleAction.SUB_RULE) {
+      true => subRule,
+      false => ruleTarget,
+    };
+  }
+
+  String? targetErrorTip(String invalidSubRuleTip, String invalidPolicyTip) {
+    return switch (ruleAction == RuleAction.SUB_RULE) {
+      true => invalidSubRuleTip,
+      false => invalidPolicyTip,
+    };
+  }
+
+  String get rawValue {
+    final content = realContent;
+    final target = realTarget;
     return [
       ruleAction.value,
-      ruleAction == RuleAction.RULE_SET ? ruleProvider : content,
-      ruleAction == RuleAction.SUB_RULE ? subRule : ruleTarget,
+      if (content?.isNotEmpty == true) content!,
+      if (target?.isNotEmpty == true) target!,
       if (ruleAction.hasParams) ...[
         if (src) 'src',
         if (noResolve) 'no-resolve',
@@ -373,74 +469,60 @@ extension ParsedRuleExt on ParsedRule {
   }
 }
 
-@freezed
-abstract class Rule with _$Rule {
-  const factory Rule({required int id, required String value, String? order}) =
-      _Rule;
-
-  factory Rule.value(String value) {
-    return Rule(value: value, id: snowflake.id);
-  }
-
-  factory Rule.fromJson(Map<String, Object?> json) => _$RuleFromJson(json);
-}
-
-extension RulesExt on List<Rule> {
-  List<Rule> copyAndPut(Rule rule) {
-    var newList = List<Rule>.from(this);
-    final index = newList.indexWhere((item) => item.id == rule.id);
-    if (index != -1) {
-      newList[index] = rule;
-    } else {
-      newList.insert(0, rule);
-    }
-    return newList;
-  }
-}
-
-@freezed
-abstract class SubRule with _$SubRule {
-  const factory SubRule({required String name}) = _SubRule;
-
-  factory SubRule.fromJson(Map<String, Object?> json) =>
-      _$SubRuleFromJson(json);
-}
-
-List<Rule> _genRule(List<dynamic>? rules) {
+List<Rule> _genRules(List<dynamic>? rules) {
   if (rules == null) {
     return [];
   }
-  return rules.map((item) => Rule.value(item)).toList();
+  return rules.map((item) => Rule.parse(item)).toList();
 }
 
-List<RuleProvider> _genRuleProviders(Map<String, dynamic> json) {
-  return json.entries.map((entry) => RuleProvider(name: entry.key)).toList();
-}
-
-List<SubRule> _genSubRules(Map<String, dynamic> json) {
-  return json.entries.map((entry) => SubRule(name: entry.key)).toList();
-}
-
-@freezed
-abstract class ClashConfigSnippet with _$ClashConfigSnippet {
-  const factory ClashConfigSnippet({
-    @Default([]) @JsonKey(name: 'proxy-groups') List<ProxyGroup> proxyGroups,
-    @JsonKey(fromJson: _genRule, name: 'rules') @Default([]) List<Rule> rule,
-    @JsonKey(name: 'rule-providers', fromJson: _genRuleProviders)
-    @Default([])
-    List<RuleProvider> ruleProvider,
-    @JsonKey(name: 'sub-rules', fromJson: _genSubRules)
-    @Default([])
-    List<SubRule> subRules,
-  }) = _ClashConfigSnippet;
-
-  factory ClashConfigSnippet.fromJson(Map<String, Object?> json) =>
-      _$ClashConfigSnippetFromJson(json);
+List<String> _genList(Map<String, dynamic> json) {
+  return json.entries.map((entry) => entry.key).toList();
 }
 
 @freezed
 abstract class ClashConfig with _$ClashConfig {
   const factory ClashConfig({
+    @Default([]) @JsonKey(name: 'proxy-groups') List<ProxyGroup> proxyGroups,
+    @JsonKey(fromJson: _genRules) @Default([]) List<Rule> rules,
+    @Default([]) List<Proxy> proxies,
+    @JsonKey(name: 'proxy-providers', fromJson: _genList)
+    @Default([])
+    List<String> proxyProviders,
+    @JsonKey(name: 'rule-providers', fromJson: _genList)
+    @Default([])
+    List<String> ruleProviders,
+    @JsonKey(name: 'sub-rules', fromJson: _genList)
+    @Default([])
+    List<String> subRules,
+    @Default({}) Map<String, String> proxyTypeMap,
+  }) = _ClashConfig;
+
+  factory ClashConfig.fromJson(Map<String, Object?> json) =>
+      _$ClashConfigFromJson(json);
+}
+
+extension GeoResourceUrlMapExt on Map<GeoResource, String> {
+  Map<String, String> get raw =>
+      map((key, value) => MapEntry(key.configKey, value));
+}
+
+Map<GeoResource, String> _geoXUrlFromJson(Map<String, Object?>? json) {
+  if (json == null) {
+    return defaultGeoXUrl;
+  }
+  return json.map(
+    (key, value) => MapEntry(GeoResource.fromJson(key), value as String),
+  );
+}
+
+Map<String, String> _geoXUrlToJson(Map<GeoResource, String> value) {
+  return value.raw;
+}
+
+@freezed
+abstract class PatchClashConfig with _$PatchClashConfig {
+  const factory PatchClashConfig({
     @Default(defaultMixedPort) @JsonKey(name: 'mixed-port') int mixedPort,
     @Default(0) @JsonKey(name: 'socks-port') int socksPort,
     @Default(0) @JsonKey(name: 'port') int port,
@@ -456,6 +538,13 @@ abstract class ClashConfig with _$ClashConfig {
       unknownEnumValue: FindProcessMode.always,
     )
     FindProcessMode findProcessMode,
+    @Default(InterfaceNameMode.clear)
+    @JsonKey(
+      name: 'interface-name-mode',
+      unknownEnumValue: InterfaceNameMode.clear,
+    )
+    InterfaceNameMode interfaceNameMode,
+    @Default('') @JsonKey(name: 'interface-name') String interfaceName,
     @Default(defaultKeepAliveInterval)
     @JsonKey(name: 'keep-alive-interval')
     int keepAliveInterval,
@@ -464,31 +553,35 @@ abstract class ClashConfig with _$ClashConfig {
     @Default(defaultTun) @JsonKey(fromJson: Tun.safeFormJson) Tun tun,
     @Default(defaultDns) @JsonKey(fromJson: Dns.safeDnsFromJson) Dns dns,
     @Default(defaultGeoXUrl)
-    @JsonKey(name: 'geox-url', fromJson: GeoXUrl.safeFormJson)
-    GeoXUrl geoXUrl,
+    @JsonKey(
+      name: 'geox-url',
+      fromJson: _geoXUrlFromJson,
+      toJson: _geoXUrlToJson,
+    )
+    Map<GeoResource, String> geoXUrl,
     @Default(GeodataLoader.memconservative)
     @JsonKey(name: 'geodata-loader')
     GeodataLoader geodataLoader,
-    @Default([]) @JsonKey(name: 'proxy-groups') List<ProxyGroup> proxyGroups,
-    @Default([]) List<String> rule,
     @JsonKey(name: 'global-ua') String? globalUa,
     @Default(ExternalControllerStatus.close)
     @JsonKey(name: 'external-controller')
     ExternalControllerStatus externalController,
     @Default({}) Map<String, String> hosts,
-  }) = _ClashConfig;
+    @Default(false) @JsonKey(name: 'geo-auto-update') bool geoAutoUpdate,
+    @Default(24) @JsonKey(name: 'geo-update-interval') int geoUpdateInterval,
+  }) = _PatchClashConfig;
 
-  factory ClashConfig.fromJson(Map<String, Object?> json) =>
-      _$ClashConfigFromJson(json);
+  factory PatchClashConfig.fromJson(Map<String, Object?> json) =>
+      _$PatchClashConfigFromJson(json);
 
-  factory ClashConfig.safeFormJson(Map<String, Object?>? json) {
+  factory PatchClashConfig.safeFormJson(Map<String, Object?>? json) {
     if (json == null) {
       return defaultClashConfig;
     }
-    try {
-      return ClashConfig.fromJson(json);
-    } catch (_) {
-      return defaultClashConfig;
-    }
+    return decodeOrRestoreDefault(
+      'clash config',
+      () => PatchClashConfig.fromJson(json),
+      () => defaultClashConfig,
+    );
   }
 }

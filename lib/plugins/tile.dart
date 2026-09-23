@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:fl_clash/common/constant.dart';
-import 'package:fl_clash/common/system.dart';
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -25,17 +25,24 @@ class Tile {
   final ObserverList<TileListener> _listeners = ObserverList<TileListener>();
 
   Future<void> _methodCallHandler(MethodCall call) async {
-    for (final TileListener listener in _listeners) {
-      switch (call.method) {
-        case 'start':
-          listener.onStart();
-          break;
-        case 'stop':
-          listener.onStop();
-          break;
-        case 'detached':
-          listener.onDetached();
-          break;
+    for (final TileListener listener in List.of(_listeners)) {
+      try {
+        switch (call.method) {
+          case 'start':
+            listener.onStart();
+            break;
+          case 'stop':
+            listener.onStop();
+            break;
+          case 'detached':
+            listener.onDetached();
+            break;
+        }
+      } catch (error) {
+        commonPrint.log(
+          'Unable to dispatch Tile event ${call.method}: $error',
+          logLevel: LogLevel.error,
+        );
       }
     }
   }

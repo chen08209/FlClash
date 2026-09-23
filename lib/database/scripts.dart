@@ -19,7 +19,7 @@ class Scripts extends Table {
 class ScriptsDao extends DatabaseAccessor<Database> with _$ScriptsDaoMixin {
   ScriptsDao(super.attachedDatabase);
 
-  Selectable<Script> all() {
+  Selectable<Script> query() {
     return scripts.select().map((item) => item.toScript());
   }
 
@@ -29,10 +29,22 @@ class ScriptsDao extends DatabaseAccessor<Database> with _$ScriptsDaoMixin {
     return stmt.map((it) => it.toScript());
   }
 
+  Selectable<String> fileNames() {
+    final query = scripts.selectOnly()..addColumns([scripts.id]);
+    return query.map((row) => '${row.read(scripts.id)}.js');
+  }
+
   Future<void> setAll(Iterable<Script> scripts) async {
     await batch((b) async {
       await setAllWithBatch(b, scripts);
     });
+  }
+
+  void putAllWithBatch(Batch batch, Iterable<Script> scripts) {
+    batch.insertAllOnConflictUpdate(
+      this.scripts,
+      scripts.map((item) => item.toCompanion()),
+    );
   }
 
   Future<void> setAllWithBatch(Batch batch, Iterable<Script> scripts) async {

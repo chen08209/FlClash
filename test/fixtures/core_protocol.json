@@ -1,0 +1,50 @@
+{
+  "methodCall": {
+    "id": "updateConfig#contract",
+    "method": "updateConfig",
+    "arguments": {
+      "mixed-port": 7890,
+      "allow-lan": true,
+      "ipv6": false,
+      "geo-auto-update": true,
+      "geo-update-interval": 24
+    }
+  },
+  "eventCall": {
+    "method": "message",
+    "arguments": [
+      {
+        "type": "loaded",
+        "data": "provider-a"
+      },
+      {
+        "type": "delay",
+        "data": {
+          "name": "proxy-a",
+          "url": "https://example.com",
+          "value": 42
+        }
+      }
+    ]
+  },
+  "successResponse": {
+    "id": "updateConfig#contract",
+    "result": ""
+  },
+  "structuredResponse": {
+    "id": "getTraffic#contract",
+    "result": {
+      "up": 12,
+      "down": 34
+    }
+  },
+  "errorResponse": {
+    "id": "getConfig#contract",
+    "result": null,
+    "error": {
+      "code": "core_error",
+      "message": "config not found",
+      "details": null
+    }
+  }
+}

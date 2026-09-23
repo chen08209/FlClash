@@ -2,7 +2,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NetworkSpeed extends StatefulWidget {
@@ -16,7 +16,7 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
   List<Point> initPoints = const [Point(0, 0), Point(1, 0)];
 
   List<Point> _getPoints(List<Traffic> traffics) {
-    List<Point> trafficPoints = traffics
+    final List<Point> trafficPoints = traffics
         .toList()
         .asMap()
         .map(
@@ -32,17 +32,19 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
   }
 
   Traffic _getLastTraffic(List<Traffic> traffics) {
-    if (traffics.isEmpty) return Traffic();
+    if (traffics.isEmpty) return const Traffic();
     return traffics.last;
   }
 
   @override
   Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
     final color = context.colorScheme.onSurfaceVariant.opacity80;
     return SizedBox(
       height: getWidgetHeight(2),
       child: RepaintBoundary(
         child: CommonCard(
+          radius: AppCorner.lg,
           onPressed: () {},
           child: Consumer(
             builder: (_, ref, _) {
@@ -63,7 +65,7 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
                             ),
                           ),
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
                           _getLastTraffic(traffics).speedText,
                           style: context.textTheme.bodySmall?.copyWith(
@@ -75,7 +77,7 @@ class _NetworkSpeedState extends State<NetworkSpeed> {
                   ),
                   Flexible(
                     child: Padding(
-                      padding: EdgeInsets.all(
+                      padding: const EdgeInsets.all(
                         16,
                       ).copyWith(bottom: 0, left: 0, right: 0),
                       child: LineChart(

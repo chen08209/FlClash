@@ -1,34 +1,20 @@
 import 'package:animations/animations.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+
+final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 class BaseNavigator {
   static Future<T?> push<T>(BuildContext context, Widget child) async {
-    if (!appController.isMobile) {
-      return await Navigator.of(
+    if (!context.isMobileView) {
+      return Navigator.of(
         context,
       ).push<T>(CommonDesktopRoute(builder: (context) => child));
     }
-    return await Navigator.of(
+    return Navigator.of(
       context,
     ).push<T>(CommonRoute(builder: (context) => child));
   }
-
-  // static Future<T?> modal<T>(BuildContext context, Widget child) async {
-  //   if (globalState.appState.viewMode != ViewMode.mobile) {
-  //     return await globalState.showCommonDialog<T>(
-  //       child: CommonModal(
-  //         child: child,
-  //       ),
-  //     );
-  //   }
-  //   return await Navigator.of(context).push<T>(
-  //     CommonRoute(
-  //       builder: (context) => child,
-  //     ),
-  //   );
-  // }
 }
 
 const commonSharedXPageTransitions = SharedAxisPageTransitionsBuilder(
@@ -65,10 +51,10 @@ class CommonDesktopRoute<T> extends PageRoute<T> {
   bool get maintainState => true;
 
   @override
-  Duration get transitionDuration => Duration(milliseconds: 200);
+  Duration get transitionDuration => const Duration(milliseconds: 200);
 
   @override
-  Duration get reverseTransitionDuration => Duration(milliseconds: 200);
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 200);
 }
 
 class CommonRoute<T> extends PageRoute<T> {
@@ -106,10 +92,10 @@ class CommonRoute<T> extends PageRoute<T> {
   }
 
   @override
-  Duration get transitionDuration => Duration(milliseconds: 300);
+  Duration get transitionDuration => const Duration(milliseconds: 300);
 
   @override
-  Duration get reverseTransitionDuration => Duration(milliseconds: 300);
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 300);
 }
 
 final Animatable<Offset> _kRightMiddleTween = Tween<Offset>(
@@ -262,7 +248,7 @@ class _CommonPageTransitionState extends State<CommonPageTransition> {
         (_primaryShadowCurve ?? widget.primaryRouteAnimation).drive(
           DecorationTween(
             begin: const _CommonEdgeShadowDecoration(),
-            end: _CommonEdgeShadowDecoration(<Color>[
+            end: const _CommonEdgeShadowDecoration(<Color>[
               Color(0x04000000),
               Colors.transparent,
             ]),

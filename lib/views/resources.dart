@@ -1,230 +1,301 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
-import 'package:fl_clash/core/core.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/action.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' hide context;
 
-@immutable
-class GeoItem {
-  final String label;
-  final String key;
-  final String fileName;
-
-  const GeoItem({
-    required this.label,
-    required this.key,
-    required this.fileName,
-  });
-}
-
-class ResourcesView extends StatelessWidget {
+class ResourcesView extends ConsumerWidget {
   const ResourcesView({super.key});
 
+  Future<void> _updateInterval(
+    BuildContext context,
+    WidgetRef ref,
+    int updateInterval,
+  ) async {
+    final appLocalizations = context.appLocalizations;
+    final value = await dialogs.showCommonDialog<String>(
+      child: InputDialog(
+        title: appLocalizations.geoAutoUpdateInterval,
+        value: updateInterval.toString(),
+        suffixText: appLocalizations.hours,
+        keyboardType: TextInputType.number,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return appLocalizations.emptyTip(
+              appLocalizations.geoAutoUpdateInterval,
+            );
+          }
+          final interval = int.tryParse(value);
+          if (interval == null) {
+            return appLocalizations.numberTip(
+              appLocalizations.geoAutoUpdateInterval,
+            );
+          }
+          if (interval <= 0) {
+            return appLocalizations.geoAutoUpdateIntervalTip;
+          }
+          return null;
+        },
+      ),
+    );
+    final interval = int.tryParse(value ?? '');
+    if (interval == null || interval <= 0) {
+      return;
+    }
+    ref
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(geoUpdateInterval: interval));
+  }
+
   @override
-  Widget build(BuildContext context) {
-    const geoItems = <GeoItem>[
-      GeoItem(label: 'GEOIP', fileName: GEOIP, key: 'geoip'),
-      GeoItem(label: 'GEOSITE', fileName: GEOSITE, key: 'geosite'),
-      GeoItem(label: 'MMDB', fileName: MMDB, key: 'mmdb'),
-      GeoItem(label: 'ASN', fileName: ASN, key: 'asn'),
-    ];
+  Widget build(BuildContext context, WidgetRef ref) {
+    const geoResources = GeoResource.values;
+    final appLocalizations = context.appLocalizations;
+    final geoSetting = ref.watch(
+      patchClashConfigProvider.select(
+        (state) => (
+          autoUpdate: state.geoAutoUpdate,
+          updateInterval: state.geoUpdateInterval,
+        ),
+      ),
+    );
+
+    void updateAutoUpdate(bool value) {
+      ref
+          .read(patchClashConfigProvider.notifier)
+          .update((state) => state.copyWith(geoAutoUpdate: value));
+    }
 
     return CommonScaffold(
-      title: appLocalizations.resources,
-      body: ListView.separated(
-        itemBuilder: (_, index) {
-          final geoItem = geoItems[index];
-          return GeoDataListItem(geoItem: geoItem);
-        },
-        separatorBuilder: (BuildContext context, int index) {
-          return const Divider(height: 0);
-        },
-        itemCount: geoItems.length,
+      title: context.appLocalizations.resources,
+      body: ListView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+        ).copyWith(bottom: 16),
+        children: [
+          generateSectionV3(
+            title: appLocalizations.geoOptions,
+            items: [
+              DecorationListItem(
+                minVerticalPadding: 8,
+                contentPadding: const EdgeInsets.only(left: 16, right: 8),
+                title: Text(appLocalizations.geoAutoUpdate),
+                onPressed: () {
+                  updateAutoUpdate(!geoSetting.autoUpdate);
+                },
+                trailing: Switch(
+                  value: geoSetting.autoUpdate,
+                  onChanged: updateAutoUpdate,
+                ),
+              ),
+              DecorationListItem(
+                minVerticalPadding: 8,
+                title: Text(appLocalizations.geoAutoUpdateInterval),
+                onPressed: () {
+                  _updateInterval(context, ref, geoSetting.updateInterval);
+                },
+                trailing: Text(
+                  appLocalizations.hoursCount(geoSetting.updateInterval),
+                  style: context.textTheme.bodyMedium?.toSoftBold,
+                ),
+              ),
+            ],
+          ),
+          generateSectionV3(
+            title: appLocalizations.geoResources,
+            items: [
+              for (final geoResource in geoResources)
+                _GeoResourceListItem(geoResource),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
-class GeoDataListItem extends StatefulWidget {
-  final GeoItem geoItem;
+class _GeoResourceListItem extends ConsumerStatefulWidget {
+  final GeoResource type;
 
-  const GeoDataListItem({super.key, required this.geoItem});
+  const _GeoResourceListItem(this.type);
 
   @override
-  State<GeoDataListItem> createState() => _GeoDataListItemState();
+  ConsumerState<_GeoResourceListItem> createState() =>
+      _GeoResourceListItemState();
 }
 
-class _GeoDataListItemState extends State<GeoDataListItem> {
-  final isUpdating = ValueNotifier<bool>(false);
+class _GeoResourceListItemState extends ConsumerState<_GeoResourceListItem> {
+  late Future<FileInfo?> _fileInfoFuture;
 
-  GeoItem get geoItem => widget.geoItem;
+  String get fileName {
+    return switch (widget.type) {
+      GeoResource.MMDB => MMDB,
+      GeoResource.ASN => ASN,
+      GeoResource.GEOIP => GEOIP,
+      GeoResource.GEOSITE => GEOSITE,
+    };
+  }
 
-  Future<void> _updateUrl(String url, WidgetRef ref) async {
-    final defaultMap = defaultGeoXUrl.toJson();
-    final newUrl = await globalState.showCommonDialog<String>(
+  @override
+  void initState() {
+    super.initState();
+    _fileInfoFuture = _getGeoFileInfo(fileName);
+  }
+
+  @override
+  void didUpdateWidget(covariant _GeoResourceListItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.type != widget.type) {
+      _fileInfoFuture = _getGeoFileInfo(fileName);
+    }
+  }
+
+  Future<void> _updateUrl(String url) async {
+    final newUrl = await dialogs.showCommonDialog<String>(
       child: UpdateGeoUrlFormDialog(
-        title: geoItem.label,
+        title: widget.type.name,
         url: url,
-        defaultValue: defaultMap[geoItem.key],
+        defaultValue: defaultGeoXUrl[widget.type],
       ),
     );
     if (newUrl != null && newUrl != url && mounted) {
       try {
-        if (!newUrl.isUrl) {
-          throw 'Invalid url';
-        }
-        ref.read(patchClashConfigProvider.notifier).update((state) {
-          final map = state.geoXUrl.toJson();
-          map[geoItem.key] = newUrl;
-          return state.copyWith(geoXUrl: GeoXUrl.fromJson(map));
-        });
+        ref
+            .read(geoResourceActionProvider.notifier)
+            .updateGeoResourceUrl(widget.type, newUrl);
       } catch (e) {
-        globalState.showMessage(
-          title: geoItem.label,
-          message: TextSpan(text: e.toString()),
+        unawaited(
+          dialogs.showMessage(
+            title: widget.type.name,
+            message: TextSpan(text: e.toString()),
+          ),
         );
       }
     }
   }
 
-  Future<FileInfo> _getGeoFileLastModified(String fileName) async {
+  Future<FileInfo?> _getGeoFileInfo(String fileName) async {
     final homePath = await appPath.homeDirPath;
     final file = File(join(homePath, fileName));
-    final lastModified = await file.lastModified();
-    final size = await file.length();
-    return FileInfo(size: size, lastModified: lastModified);
+    return file.getFileInfo();
   }
 
-  Widget _buildSubtitle() {
-    return Consumer(
-      builder: (_, ref, _) {
-        final url = ref.watch(
-          patchClashConfigProvider.select(
-            (state) => state.geoXUrl.toJson()[geoItem.key],
-          ),
-        );
-        if (url == null) {
-          return SizedBox();
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 6),
-            FutureBuilder<FileInfo>(
-              future: _getGeoFileLastModified(geoItem.fileName),
-              builder: (_, snapshot) {
-                final height = globalState.measure.bodyMediumHeight;
-                return SizedBox(
-                  height: height,
-                  child: snapshot.data == null
-                      ? SizedBox(width: height, height: height)
-                      : Text(
-                          snapshot.data!.desc,
-                          style: context.textTheme.bodyMedium,
-                        ),
-                );
-              },
-            ),
-            const SizedBox(height: 4),
-            Text(url, style: context.textTheme.bodyMedium?.toLight),
-            const SizedBox(height: 12),
-            Wrap(
-              runSpacing: 6,
-              spacing: 12,
-              runAlignment: WrapAlignment.center,
-              children: [
-                CommonChip(
-                  avatar: const Icon(Icons.edit),
-                  label: appLocalizations.edit,
-                  onPressed: () {
-                    _updateUrl(url, ref);
-                  },
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      child: ValueListenableBuilder(
-                        valueListenable: isUpdating,
-                        builder: (_, isUpdating, _) {
-                          return isUpdating
-                              ? SizedBox(
-                                  height: 30,
-                                  width: 30,
-                                  child: const Padding(
-                                    padding: EdgeInsets.all(2),
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                )
-                              : CommonChip(
-                                  avatar: const Icon(Icons.sync),
-                                  label: appLocalizations.sync,
-                                  onPressed: () {
-                                    _handleUpdateGeoDataItem();
-                                  },
-                                );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _handleUpdateGeoDataItem() async {
-    await appController.safeRun<void>(() async {
-      await updateGeoDateItem();
+  Future<void> _handleUpdateGeoDataItem() {
+    return globalState.safeRun<void>(() async {
+      await ref
+          .read(geoResourceActionProvider.notifier)
+          .updateGeoResource(widget.type);
     }, silence: false);
-    if (mounted) {
-      setState(() {});
-    }
   }
 
-  Future<void> updateGeoDateItem() async {
-    isUpdating.value = true;
-    try {
-      final message = await coreController.updateGeoData(
-        UpdateGeoDataParams(geoName: geoItem.fileName, geoType: geoItem.label),
-      );
-      if (message.isNotEmpty) throw message;
-    } catch (e) {
-      isUpdating.value = false;
-      rethrow;
-    }
-    isUpdating.value = false;
-    return;
+  void _refreshFileInfo() {
+    setState(() {
+      _fileInfoFuture = _getGeoFileInfo(fileName);
+    });
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    isUpdating.dispose();
+  List<CommonPopupMenuItem> _menuItems(BuildContext context, String url) {
+    final appLocalizations = context.appLocalizations;
+    return [
+      CommonPopupMenuItem(
+        icon: Icons.edit_outlined,
+        label: appLocalizations.edit,
+        onPressed: () {
+          _updateUrl(url);
+        },
+      ),
+      CommonPopupMenuItem(
+        icon: Icons.sync,
+        label: appLocalizations.sync,
+        onPressed: _handleUpdateGeoDataItem,
+      ),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListItem(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      title: Text(geoItem.label),
-      subtitle: _buildSubtitle(),
+    final updatingKey = widget.type.updatingKey;
+    ref.listen(isUpdatingProvider(updatingKey), (previous, next) {
+      if (previous == true && !next) {
+        _refreshFileInfo();
+      }
+    });
+    final isUpdating = ref.watch(isUpdatingProvider(updatingKey));
+    final url = ref.watch(
+      patchClashConfigProvider.select((state) => state.geoXUrl[widget.type]),
+    );
+    return FutureBuilder<FileInfo?>(
+      future: _fileInfoFuture,
+      builder: (context, snapshot) {
+        final fileInfo = snapshot.data;
+        return DecorationListItem(
+          minVerticalPadding: 8,
+          contentPadding: const EdgeInsets.only(left: 16, right: 0),
+          title: Text(widget.type.name),
+          subtitle: fileInfo == null
+              ? null
+              : Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 2),
+                  child: Row(
+                    spacing: 4,
+                    children: [
+                      MetaChip(label: fileInfo.size.traffic.show),
+                      MetaChip(
+                        label:
+                            fileInfo.lastModified?.getLastUpdateTimeDesc(
+                              context,
+                            ) ??
+                            context.appLocalizations.unknown,
+                      ),
+                    ],
+                  ),
+                ),
+          trailing: url == null
+              ? null
+              : SizedBox.square(
+                  dimension: kMinInteractiveDimension,
+                  child: FadeThroughBox(
+                    alignment: Alignment.center,
+                    child: isUpdating
+                        ? const SizedBox.square(
+                            key: ValueKey('loading'),
+                            dimension: kMinInteractiveDimension,
+                            child: Padding(
+                              padding: EdgeInsets.all(12),
+                              child: CommonCircleLoading(),
+                            ),
+                          )
+                        : CommonPopupBox(
+                            key: const ValueKey('menu'),
+                            popupBuilder: (_) => CommonPopupMenu(
+                              items: _menuItems(context, url),
+                            ),
+                            targetBuilder: (open) {
+                              return IconButton(
+                                tooltip: context.appLocalizations.more,
+                                onPressed: open,
+                                icon: const Icon(Icons.more_vert),
+                              );
+                            },
+                          ),
+                  ),
+                ),
+        );
+      },
     );
   }
 }
 
-class UpdateGeoUrlFormDialog extends StatefulWidget {
+class UpdateGeoUrlFormDialog extends StatelessWidget {
   final String title;
   final String url;
   final String? defaultValue;
@@ -237,66 +308,23 @@ class UpdateGeoUrlFormDialog extends StatefulWidget {
   });
 
   @override
-  State<UpdateGeoUrlFormDialog> createState() => _UpdateGeoUrlFormDialogState();
-}
-
-class _UpdateGeoUrlFormDialogState extends State<UpdateGeoUrlFormDialog> {
-  late final TextEditingController _urlController;
-
-  @override
-  void initState() {
-    super.initState();
-    _urlController = TextEditingController(text: widget.url);
-  }
-
-  Future<void> _handleReset() async {
-    if (widget.defaultValue == null) {
-      return;
-    }
-    Navigator.of(context).pop<String>(widget.defaultValue);
-  }
-
-  Future<void> _handleUpdate() async {
-    final url = _urlController.value.text;
-    if (url.isEmpty) return;
-    Navigator.of(context).pop<String>(url);
-  }
-
-  @override
-  void dispose() {
-    _urlController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return CommonDialog(
-      title: widget.title,
-      actions: [
-        if (widget.defaultValue != null &&
-            _urlController.value.text != widget.defaultValue) ...[
-          TextButton(
-            onPressed: _handleReset,
-            child: Text(appLocalizations.reset),
-          ),
-          const SizedBox(width: 4),
-        ],
-        TextButton(
-          onPressed: _handleUpdate,
-          child: Text(appLocalizations.submit),
-        ),
-      ],
-      child: Wrap(
-        runSpacing: 16,
-        children: [
-          TextField(
-            maxLines: 5,
-            minLines: 1,
-            controller: _urlController,
-            decoration: const InputDecoration(border: OutlineInputBorder()),
-          ),
-        ],
-      ),
+    final appLocalizations = context.appLocalizations;
+    return InputDialog(
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      title: title,
+      value: url,
+      resetValue: defaultValue,
+      inputFormatters: TextInputLimits.limit(TextInputLimits.url),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return appLocalizations.emptyTip('').trim();
+        }
+        if (!value.isUrl) {
+          return appLocalizations.urlTip('').trim();
+        }
+        return null;
+      },
     );
   }
 }

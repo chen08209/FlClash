@@ -31,6 +31,9 @@ abstract class UpdateParams with _$UpdateParams {
     @JsonKey(name: 'external-controller')
     required ExternalControllerStatus externalController,
     @JsonKey(name: 'unified-delay') required bool unifiedDelay,
+    @Default([]) List<String> authentication,
+    @Default(false) @JsonKey(name: 'geo-auto-update') bool geoAutoUpdate,
+    @Default(24) @JsonKey(name: 'geo-update-interval') int geoUpdateInterval,
   }) = _UpdateParams;
 
   factory UpdateParams.fromJson(Map<String, dynamic> json) =>
@@ -167,17 +170,6 @@ extension ExternalProviderExt on ExternalProvider {
 }
 
 @freezed
-abstract class Action with _$Action {
-  const factory Action({
-    required ActionMethod method,
-    required dynamic data,
-    required String id,
-  }) = _Action;
-
-  factory Action.fromJson(Map<String, Object?> json) => _$ActionFromJson(json);
-}
-
-@freezed
 abstract class ProxiesData with _$ProxiesData {
   const factory ProxiesData({
     required Map<String, dynamic> proxies,
@@ -186,27 +178,4 @@ abstract class ProxiesData with _$ProxiesData {
 
   factory ProxiesData.fromJson(Map<String, Object?> json) =>
       _$ProxiesDataFromJson(json);
-}
-
-@freezed
-abstract class ActionResult with _$ActionResult {
-  const factory ActionResult({
-    required ActionMethod method,
-    required dynamic data,
-    String? id,
-    @Default(ResultType.success) ResultType code,
-  }) = _ActionResult;
-
-  factory ActionResult.fromJson(Map<String, Object?> json) =>
-      _$ActionResultFromJson(json);
-}
-
-extension ActionResultExt on ActionResult {
-  Result get toResult {
-    if (code == ResultType.success) {
-      return Result.success(data);
-    } else {
-      return Result.error('$data');
-    }
-  }
 }

@@ -1,21 +1,18 @@
 [versions]
-#agp = "8.10.1"
-firebaseBom = "34.2.0"
+firebaseBom = "34.15.0"
 minSdk = "23"
 targetSdk = "36"
 compileSdk = "36"
-ndkVersion = "28.0.13004108"
+ndkVersion = "28.2.13676358"
 coreKtx = "1.17.0"
 annotationJvm = "1.9.1"
 coreSplashscreen = "1.0.1"
 gson = "2.13.1"
-kotlin = "2.2.10"
 smaliDexlib2 = "3.0.9"
-firebaseCrashlyticsKtx = "20.0.1"
-firebaseCommonKtx = "22.0.0"
+junit = "4.13.2"
+kotlinxCoroutines = "1.10.2"
 
 [libraries]
-build-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 androidx-core = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 annotation-jvm = { module = "androidx.annotation:annotation-jvm", version.ref = "annotationJvm" }
 core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
@@ -23,6 +20,6 @@ firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-crashlytics-ndk = { module = "com.google.firebase:firebase-crashlytics-ndk" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+junit = { module = "junit:junit", version.ref = "junit" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 smali-dexlib2 = { module = "com.android.tools.smali:smali-dexlib2", version.ref = "smaliDexlib2" }
-firebase-crashlytics-ktx = { group = "com.google.firebase", name = "firebase-crashlytics-ktx", version.ref = "firebaseCrashlyticsKtx" }
-firebase-common-ktx = { group = "com.google.firebase", name = "firebase-common-ktx", version.ref = "firebaseCommonKtx" }

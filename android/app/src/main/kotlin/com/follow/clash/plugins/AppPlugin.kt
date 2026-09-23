@@ -1,126 +1,128 @@
 package com.follow.clash.plugins
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ActivityManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
-import android.content.pm.ApplicationInfo
-import android.content.pm.ComponentInfo
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.VpnService
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
-import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile
+import androidx.core.net.toUri
 import com.follow.clash.R
 import com.follow.clash.common.Components
 import com.follow.clash.common.GlobalState
+import com.follow.clash.common.PendingCallback
 import com.follow.clash.common.QuickAction
 import com.follow.clash.common.quickIntent
+import com.follow.clash.common.registerReceiverCompat
 import com.follow.clash.getPackageIconPath
-import com.follow.clash.models.Package
+import com.follow.clash.packages.PackageResolver
 import com.follow.clash.showToast
 import com.google.gson.Gson
-import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.plugin.common.PluginRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.File
-import java.lang.ref.WeakReference
-import java.util.zip.ZipFile
 
 class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware {
 
-    companion object {
-        const val VPN_PERMISSION_REQUEST_CODE = 1001
-        const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1002
-    }
+    private var activity: Activity? = null
 
-    private var activityRef: WeakReference<Activity>? = null
+    private var activityBinding: ActivityPluginBinding? = null
+
+    private val activityResultListener =
+        PluginRegistry.ActivityResultListener(::onActivityResult)
+
+    private val permissionsResultListener =
+        PluginRegistry.RequestPermissionsResultListener(::onRequestPermissionsResultListener)
 
     private lateinit var channel: MethodChannel
 
     private lateinit var scope: CoroutineScope
 
-    private var vpnPrepareCallback: (suspend () -> Unit)? = null
+    private val vpnPrepareCallback = PendingCallback<Boolean>()
 
-    private var requestNotificationCallback: (() -> Unit)? = null
+    private val requestNotificationCallback = PendingCallback<Boolean>()
 
-    private val packages = mutableListOf<Package>()
+    private val requestInstalledAppsCallback = PendingCallback<Boolean>()
 
-    private val skipPrefixList = listOf(
-        "com.google",
-        "com.android.chrome",
-        "com.android.vending",
-        "com.microsoft",
-        "com.apple",
-        "com.zhiliaoapp.musically", // Banned by China
-    )
+    private var isRequestingNotificationPermission = false
 
-    private val chinaAppPrefixList = listOf(
-        "com.tencent",
-        "com.alibaba",
-        "com.umeng",
-        "com.qihoo",
-        "com.ali",
-        "com.alipay",
-        "com.amap",
-        "com.sina",
-        "com.weibo",
-        "com.vivo",
-        "com.xiaomi",
-        "com.huawei",
-        "com.taobao",
-        "com.secneo",
-        "s.h.e.l.l",
-        "com.stub",
-        "com.kiwisec",
-        "com.secshell",
-        "com.wrapper",
-        "cn.securitystack",
-        "com.mogosec",
-        "com.secoen",
-        "com.netease",
-        "com.mx",
-        "com.qq.e",
-        "com.baidu",
-        "com.bytedance",
-        "com.bugly",
-        "com.miui",
-        "com.oppo",
-        "com.coloros",
-        "com.iqoo",
-        "com.meizu",
-        "com.gionee",
-        "cn.nubia",
-        "com.oplus",
-        "andes.oplus",
-        "com.unionpay",
-        "cn.wps"
-    )
+    private val gson = Gson()
 
-    private val chinaAppRegex by lazy {
-        ("(" + chinaAppPrefixList.joinToString("|").replace(".", "\\.") + ").*").toRegex()
+    private val packageResolver by lazy {
+        PackageResolver(
+            GlobalState.application.packageManager,
+            GlobalState.application.packageName,
+        )
     }
 
-    private var isBlockNotification: Boolean = false
+    private var packageChangeContext: Context? = null
 
-    override fun onMethodCall(call: MethodCall, result: Result) {
+    private val packageChangeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent == null || intent.data?.schemeSpecificPart == GlobalState.application.packageName) {
+                return
+            }
+            val addedByUpdate = intent.action == Intent.ACTION_PACKAGE_ADDED &&
+                intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)
+            if (addedByUpdate) {
+                return
+            }
+            packageResolver.invalidate()
+            channel.invokeMethod("packagesChanged", null)
+        }
+    }
+
+    private var skipNotificationPermissionRequest = false
+
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    /**
+     * The permission and consent hops below touch the Activity — starting an
+     * activity for result, raising a permission prompt — and read the state that
+     * tracks whether one is already up. Their callers are coroutines on
+     * [Dispatchers.Default], while the answers come back on the main thread
+     * through the ActivityAware listeners, so main is the one thread both ends
+     * can agree on. A plain main-looper post rather than the plugin scope: the
+     * scope is cancelled when the engine detaches, and a request dropped there
+     * would leave its caller waiting for a callback that can no longer run.
+     */
+    private fun onMainThread(block: () -> Unit) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            block()
+        } else {
+            mainHandler.post(block)
+        }
+    }
+
+    override fun onMethodCall(call: MethodCall, rawResult: Result) {
+        val result = MainThreadResult(rawResult)
         when (call.method) {
             "moveTaskToBack" -> {
-                activityRef?.get()?.moveTaskToBack(true)
+                activity?.moveTaskToBack(true)
                 result.success(true)
             }
 
@@ -131,20 +133,29 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             }
 
             "initShortcuts" -> {
-                initShortcuts(call.arguments as String)
-                result.success(true)
-            }
-
-            "getPackages" -> {
-                scope.launch {
-                    result.success(getPackagesToJson())
+                val label = call.arguments as? String
+                if (label == null) {
+                    result.error("INVALID_ARGUMENT", "Shortcut label must be a string", null)
+                } else {
+                    initShortcuts(label)
+                    result.success(true)
                 }
             }
 
-            "getChinaPackageNames" -> {
-                scope.launch {
-                    result.success(getChinaPackageNames())
-                }
+            "getPackages" -> reply(result) {
+                gson.toJson(packageResolver.installedPackages)
+            }
+
+            "getChinaPackageNames" -> reply(result) {
+                gson.toJson(packageResolver.getChinaPackageNames())
+            }
+
+            "isInstalledAppsPermissionGranted" -> reply(result) {
+                packageResolver.hasInstalledAppsPermission()
+            }
+
+            "requestInstalledAppsPermission" -> {
+                requestInstalledAppsPermission { granted -> result.success(granted) }
             }
 
             "getPackageIcon" -> {
@@ -153,8 +164,28 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
             "tip" -> {
                 val message = call.argument<String>("message")
-                tip(message)
+                GlobalState.application.showToast(message)
                 result.success(true)
+            }
+
+            "isBatteryOptimizationDisabled" -> {
+                result.success(isBatteryOptimizationDisabled())
+            }
+
+            "openBatteryOptimizationSettings" -> {
+                result.success(openBatteryOptimizationSettings())
+            }
+
+            "openAppSettings" -> {
+                result.success(openAppSettings())
+            }
+
+            "didCrashOnPreviousExecution" -> reply(result) {
+                GlobalState.didCrashOnPreviousExecution()
+            }
+
+            "getLastExitInfo" -> reply(result) {
+                GlobalState.lastExitInfo()
             }
 
             else -> {
@@ -163,15 +194,21 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         }
     }
 
-    private fun handleGetPackageIcon(call: MethodCall, result: Result) {
-        scope.launch {
-            val packageName = call.argument<String>("packageName")
-            if (packageName == null) {
-                result.success("")
-                return@launch
+    private fun handleGetPackageIcon(call: MethodCall, result: Result) = reply(result) {
+        val packageName = call.argument<String>("packageName") ?: ""
+        GlobalState.application.packageManager.getPackageIconPath(packageName)
+    }
+
+    // A throw inside the plugin scope has no handler and ends the process;
+    // the Dart caller gets a PlatformException to handle instead.
+    private fun reply(result: Result, block: suspend () -> Any?) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                result.success(block())
+            } catch (error: Exception) {
+                GlobalState.log("Platform call failed: $error")
+                result.error("PLATFORM_ERROR", error.toString(), null)
             }
-            val path = GlobalState.application.packageManager.getPackageIconPath(packageName)
-            result.success(path)
         }
     }
 
@@ -182,18 +219,49 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 IconCompat.createWithResource(
                     GlobalState.application,
                     R.mipmap.ic_launcher_round,
-                )
+                ),
             )
             setIntent(QuickAction.TOGGLE.quickIntent)
             build()
         }
         ShortcutManagerCompat.setDynamicShortcuts(
-            GlobalState.application, listOf(shortcut)
+            GlobalState.application,
+            listOf(shortcut),
         )
     }
 
-    private fun tip(message: String?) {
-        GlobalState.application.showToast(message)
+    private fun isBatteryOptimizationDisabled(): Boolean {
+        val powerManager = getSystemService(GlobalState.application, PowerManager::class.java)
+        return powerManager?.isIgnoringBatteryOptimizations(GlobalState.application.packageName)
+            ?: false
+    }
+
+    @SuppressLint("BatteryLife")
+    private fun openBatteryOptimizationSettings(): Boolean {
+        // VPN continuity is the user-requested core function, so the direct exemption is intentional.
+        val activity = activity ?: return false
+        return try {
+            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = "package:${GlobalState.application.packageName}".toUri()
+            }
+            activity.startActivity(intent)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun openAppSettings(): Boolean {
+        val activity = activity ?: return false
+        return try {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = "package:${GlobalState.application.packageName}".toUri()
+            }
+            activity.startActivity(intent)
+            true
+        } catch (_: Exception) {
+            false
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -201,218 +269,199 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         val am = getSystemService(GlobalState.application, ActivityManager::class.java)
         val task = am?.appTasks?.firstOrNull {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                it.taskInfo.taskId == activityRef?.get()?.taskId
+                it.taskInfo.taskId == activity?.taskId
             } else {
-                it.taskInfo.id == activityRef?.get()?.taskId
+                it.taskInfo.id == activity?.taskId
             }
         }
-
-        when (value) {
-            true -> task?.setExcludeFromRecents(value)
-            false -> task?.setExcludeFromRecents(value)
-            null -> task?.setExcludeFromRecents(false)
-        }
+        task?.setExcludeFromRecents(value ?: false)
     }
 
-
-    private fun getPackages(): List<Package> {
-        val packageManager = GlobalState.application.packageManager
-        if (packages.isNotEmpty()) return packages
-        packageManager?.getInstalledPackages(PackageManager.GET_META_DATA or PackageManager.GET_PERMISSIONS)
-            ?.filter {
-                it.packageName != GlobalState.application.packageName && it.packageName != "android"
-            }?.map {
-                Package(
-                    packageName = it.packageName,
-                    label = it.applicationInfo?.loadLabel(packageManager).toString(),
-                    system = (it.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM)) != 0,
-                    lastUpdateTime = it.lastUpdateTime,
-                    internet = it.requestedPermissions?.contains(Manifest.permission.INTERNET) == true
-                )
-            }?.let { packages.addAll(it) }
-        return packages
-    }
-
-    private suspend fun getPackagesToJson(): String {
-        return withContext(Dispatchers.Default) {
-            Gson().toJson(getPackages())
-        }
-    }
-
-    private suspend fun getChinaPackageNames(): String {
-        return withContext(Dispatchers.Default) {
-            val packages: List<String> =
-                getPackages().map { it.packageName }.filter { isChinaPackage(it) }
-            Gson().toJson(packages)
-        }
-    }
-
-    fun requestNotificationsPermission(callBack: () -> Unit) {
-        requestNotificationCallback = callBack
+    fun requestNotificationPermission(callback: (Boolean) -> Unit) = onMainThread {
+        requestNotificationCallback.replace(callback, supersededValue = false)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val permission = ContextCompat.checkSelfPermission(
-                GlobalState.application, Manifest.permission.POST_NOTIFICATIONS
+                GlobalState.application,
+                Manifest.permission.POST_NOTIFICATIONS,
             )
-            if (permission == PackageManager.PERMISSION_GRANTED || isBlockNotification) {
-                invokeRequestNotificationCallback()
-                return
+            if (permission == PackageManager.PERMISSION_GRANTED || skipNotificationPermissionRequest) {
+                invokeRequestNotificationCallback(true)
+                return@onMainThread
             }
-            activityRef?.get()?.let {
+            if (isRequestingNotificationPermission) {
+                return@onMainThread
+            }
+            isRequestingNotificationPermission = true
+            activity?.let {
                 ActivityCompat.requestPermissions(
                     it,
                     arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    NOTIFICATION_PERMISSION_REQUEST_CODE
+                    NOTIFICATION_PERMISSION_REQUEST_CODE,
                 )
-            }
-            return
-        } else {
-            invokeRequestNotificationCallback()
+            } ?: invokeRequestNotificationCallback(true)
+            return@onMainThread
         }
-
+        invokeRequestNotificationCallback(true)
     }
 
-    fun invokeRequestNotificationCallback() {
-        requestNotificationCallback?.invoke()
-        requestNotificationCallback = null
+    private fun invokeRequestNotificationCallback(shouldStart: Boolean) {
+        isRequestingNotificationPermission = false
+        requestNotificationCallback.resolve(shouldStart)
     }
 
-    fun prepare(needPrepare: Boolean, callBack: (suspend () -> Unit)) {
-        vpnPrepareCallback = callBack
+    private fun requestInstalledAppsPermission(callback: (Boolean) -> Unit) = onMainThread {
+        requestInstalledAppsCallback.replace(callback, supersededValue = false)
+        val activity = activity
+        if (packageResolver.hasInstalledAppsPermission()) {
+            invokeRequestInstalledAppsCallback(true)
+            return@onMainThread
+        }
+        if (activity == null) {
+            invokeRequestInstalledAppsCallback(false)
+            return@onMainThread
+        }
+        ActivityCompat.requestPermissions(
+            activity,
+            arrayOf(PackageResolver.GET_INSTALLED_APPS),
+            INSTALLED_APPS_PERMISSION_REQUEST_CODE,
+        )
+    }
+
+    private fun invokeRequestInstalledAppsCallback(granted: Boolean) {
+        if (granted) {
+            packageResolver.invalidate()
+        }
+        requestInstalledAppsCallback.resolve(granted)
+    }
+
+    fun prepareVpn(needPrepare: Boolean, callback: (Boolean) -> Unit) = onMainThread {
+        vpnPrepareCallback.replace(callback, supersededValue = false)
         if (!needPrepare) {
-            invokeVpnPrepareCallback()
-            return
+            invokeVpnPrepareCallback(true)
+            return@onMainThread
         }
         val intent = VpnService.prepare(GlobalState.application)
         if (intent != null) {
-            activityRef?.get()?.startActivityForResult(intent, VPN_PERMISSION_REQUEST_CODE)
-            return
-        }
-        invokeVpnPrepareCallback()
-    }
-
-    fun invokeVpnPrepareCallback() {
-        GlobalState.launch {
-            vpnPrepareCallback?.invoke()
-            vpnPrepareCallback = null
-        }
-    }
-
-
-    @Suppress("DEPRECATION")
-    private fun isChinaPackage(packageName: String): Boolean {
-        val packageManager = GlobalState.application.packageManager ?: return false
-        skipPrefixList.forEach {
-            if (packageName == it || packageName.startsWith("$it.")) return false
-        }
-        val packageManagerFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            PackageManager.MATCH_UNINSTALLED_PACKAGES or PackageManager.GET_ACTIVITIES or PackageManager.GET_SERVICES or PackageManager.GET_RECEIVERS or PackageManager.GET_PROVIDERS
-        } else {
-            PackageManager.GET_UNINSTALLED_PACKAGES or PackageManager.GET_ACTIVITIES or PackageManager.GET_SERVICES or PackageManager.GET_RECEIVERS or PackageManager.GET_PROVIDERS
-        }
-        if (packageName.matches(chinaAppRegex)) {
-            return true
-        }
-        try {
-            val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                packageManager.getPackageInfo(
-                    packageName, PackageManager.PackageInfoFlags.of(packageManagerFlags.toLong())
-                )
+            val activity = activity
+            if (activity == null) {
+                invokeVpnPrepareCallback(false)
             } else {
-                packageManager.getPackageInfo(
-                    packageName, packageManagerFlags
-                )
+                @Suppress("DEPRECATION")
+                activity.startActivityForResult(intent, VPN_PERMISSION_REQUEST_CODE)
             }
-            mutableListOf<ComponentInfo>().apply {
-                packageInfo.services?.let { addAll(it) }
-                packageInfo.activities?.let { addAll(it) }
-                packageInfo.receivers?.let { addAll(it) }
-                packageInfo.providers?.let { addAll(it) }
-            }.forEach {
-                if (it.name.matches(chinaAppRegex)) return true
-            }
-            packageInfo.applicationInfo?.publicSourceDir?.let {
-                ZipFile(File(it)).use {
-                    for (packageEntry in it.entries()) {
-                        if (packageEntry.name.startsWith("firebase-")) return false
-                    }
-                    for (packageEntry in it.entries()) {
-                        if (!(packageEntry.name.startsWith("classes") && packageEntry.name.endsWith(
-                                ".dex"
-                            ))
-                        ) {
-                            continue
-                        }
-                        if (packageEntry.size > 15000000) {
-                            return true
-                        }
-                        val input = it.getInputStream(packageEntry).buffered()
-                        val dexFile = try {
-                            DexBackedDexFile.fromInputStream(null, input)
-                        } catch (e: Exception) {
-                            return false
-                        }
-                        for (clazz in dexFile.classes) {
-                            val clazzName =
-                                clazz.type.substring(1, clazz.type.length - 1).replace("/", ".")
-                                    .replace("$", ".")
-                            if (clazzName.matches(chinaAppRegex)) return true
-                        }
-                    }
-                }
-            }
-        } catch (_: Exception) {
-            return false
+            return@onMainThread
         }
-        return false
+        invokeVpnPrepareCallback(true)
+    }
+
+    // Posted rather than run where the cancellation lands, so it stays ordered
+    // behind the prepareVpn that installed the callback it is cancelling.
+    fun cancelVpnPreparation(callback: (Boolean) -> Unit) = onMainThread {
+        vpnPrepareCallback.cancel(callback)
+    }
+
+    private fun invokeVpnPrepareCallback(granted: Boolean) {
+        vpnPrepareCallback.resolve(granted)
     }
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        scope = CoroutineScope(Dispatchers.Default)
+        scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         channel =
             MethodChannel(flutterPluginBinding.binaryMessenger, "${Components.PACKAGE_NAME}/app")
         channel.setMethodCallHandler(this)
+        watchPackageChanges(flutterPluginBinding.applicationContext)
+    }
+
+    private fun watchPackageChanges(context: Context) {
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REPLACED)
+            addAction(Intent.ACTION_PACKAGE_FULLY_REMOVED)
+            addDataScheme("package")
+        }
+        context.registerReceiverCompat(packageChangeReceiver, filter)
+        packageChangeContext = context
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        packageChangeContext?.unregisterReceiver(packageChangeReceiver)
+        packageChangeContext = null
         channel.setMethodCallHandler(null)
         scope.cancel()
+        invokeVpnPrepareCallback(false)
+        invokeRequestNotificationCallback(false)
+        invokeRequestInstalledAppsCallback(false)
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
-        activityRef = WeakReference(binding.activity)
-        binding.addActivityResultListener(::onActivityResult)
-        binding.addRequestPermissionsResultListener(::onRequestPermissionsResultListener)
+        attachToActivity(binding)
+    }
+
+    private fun attachToActivity(binding: ActivityPluginBinding) {
+        detachFromActivity()
+        activityBinding = binding
+        activity = binding.activity
+        binding.addActivityResultListener(activityResultListener)
+        binding.addRequestPermissionsResultListener(permissionsResultListener)
+    }
+
+    private fun detachFromActivity() {
+        activity = null
+        val binding = activityBinding ?: return
+        activityBinding = null
+        binding.removeActivityResultListener(activityResultListener)
+        binding.removeRequestPermissionsResultListener(permissionsResultListener)
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
-        activityRef = null
+        detachFromActivity()
     }
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
-        activityRef = WeakReference(binding.activity)
+        attachToActivity(binding)
     }
 
     override fun onDetachedFromActivity() {
         channel.invokeMethod("exit", null)
-        activityRef = null
+        detachFromActivity()
+        invokeVpnPrepareCallback(false)
+        invokeRequestNotificationCallback(false)
+        invokeRequestInstalledAppsCallback(false)
     }
 
     private fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
-        if (requestCode == VPN_PERMISSION_REQUEST_CODE) {
-            if (resultCode == FlutterActivity.RESULT_OK) {
-                invokeVpnPrepareCallback()
-            }
+        if (requestCode != VPN_PERMISSION_REQUEST_CODE) {
+            return false
         }
+        invokeVpnPrepareCallback(resultCode == Activity.RESULT_OK)
         return true
     }
 
     private fun onRequestPermissionsResultListener(
-        requestCode: Int, permissions: Array<String>, grantResults: IntArray
-    ): Boolean {
-        if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
-            isBlockNotification = true
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray,
+    ): Boolean = when (requestCode) {
+        NOTIFICATION_PERMISSION_REQUEST_CODE -> {
+            skipNotificationPermissionRequest = true
+            invokeRequestNotificationCallback(true)
+            true
         }
-        invokeRequestNotificationCallback()
-        return true
+
+        INSTALLED_APPS_PERMISSION_REQUEST_CODE -> {
+            invokeRequestInstalledAppsCallback(
+                grantResults.isNotEmpty() &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED,
+            )
+            true
+        }
+
+        else -> false
+    }
+
+    private companion object {
+        const val VPN_PERMISSION_REQUEST_CODE = 1001
+        const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1002
+        const val INSTALLED_APPS_PERMISSION_REQUEST_CODE = 1003
     }
 }

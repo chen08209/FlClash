@@ -8,7 +8,7 @@ part 'generated/config.g.dart';
 class AppSetting extends _$AppSetting with AutoDisposeNotifierMixin {
   @override
   AppSettingProps build() {
-    return AppSettingProps();
+    return const AppSettingProps();
   }
 }
 
@@ -16,17 +16,15 @@ class AppSetting extends _$AppSetting with AutoDisposeNotifierMixin {
 class WindowSetting extends _$WindowSetting with AutoDisposeNotifierMixin {
   @override
   WindowProps build() {
-    return WindowProps();
+    return const WindowProps();
   }
-
-  void hello() {}
 }
 
 @riverpod
 class VpnSetting extends _$VpnSetting with AutoDisposeNotifierMixin {
   @override
   VpnProps build() {
-    return VpnProps();
+    return const VpnProps();
   }
 }
 
@@ -34,7 +32,7 @@ class VpnSetting extends _$VpnSetting with AutoDisposeNotifierMixin {
 class NetworkSetting extends _$NetworkSetting with AutoDisposeNotifierMixin {
   @override
   NetworkProps build() {
-    return NetworkProps();
+    return const NetworkProps();
   }
 }
 
@@ -42,7 +40,7 @@ class NetworkSetting extends _$NetworkSetting with AutoDisposeNotifierMixin {
 class ThemeSetting extends _$ThemeSetting with AutoDisposeNotifierMixin {
   @override
   ThemeProps build() {
-    return ThemeProps();
+    return const ThemeProps();
   }
 }
 
@@ -84,16 +82,24 @@ class ProxiesStyleSetting extends _$ProxiesStyleSetting
     with AutoDisposeNotifierMixin {
   @override
   ProxiesStyleProps build() {
-    return ProxiesStyleProps();
+    return const ProxiesStyleProps();
+  }
+}
+
+@Riverpod(name: 'patchClashConfigProvider')
+class _PatchClashConfig extends _$PatchClashConfig
+    with AutoDisposeNotifierMixin {
+  @override
+  PatchClashConfig build() {
+    return const PatchClashConfig();
   }
 }
 
 @riverpod
-class PatchClashConfig extends _$PatchClashConfig
-    with AutoDisposeNotifierMixin {
+class ExcludeSSIDs extends _$ExcludeSSIDs with AutoDisposeNotifierMixin {
   @override
-  ClashConfig build() {
-    return ClashConfig();
+  List<String> build() {
+    return [];
   }
 }
 
@@ -110,6 +116,7 @@ Config _config(Ref ref) {
   final hotKeyActions = ref.watch(hotKeyActionsProvider);
   final proxiesStyleProps = ref.watch(proxiesStyleSettingProvider);
   final patchClashConfig = ref.watch(patchClashConfigProvider);
+  final excludeSSIDs = ref.watch(excludeSSIDsProvider);
   return Config(
     appSettingProps: appSettingProps,
     windowProps: windowProps,
@@ -122,6 +129,7 @@ Config _config(Ref ref) {
     hotKeyActions: hotKeyActions,
     proxiesStyleProps: proxiesStyleProps,
     patchClashConfig: patchClashConfig,
+    excludeSSIDs: excludeSSIDs,
   );
 }
 
@@ -144,5 +152,6 @@ List<Override> buildConfigOverrides(Config config) {
     patchClashConfigProvider.overrideWithBuild(
       (_, _) => config.patchClashConfig,
     ),
+    excludeSSIDsProvider.overrideWithBuild((_, _) => config.excludeSSIDs),
   ];
 }

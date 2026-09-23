@@ -25,7 +25,7 @@ class Render {
     throttler.call(
       FunctionTag.renderPause,
       _pause,
-      duration: Duration(seconds: 5),
+      duration: const Duration(seconds: 5),
     );
   }
 

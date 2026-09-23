@@ -1,46 +1,46 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 extension ColorExtension on Color {
   Color get opacity80 {
-    return withAlpha(204);
+    return withValues(alpha: 0.8);
   }
 
   Color get opacity60 {
-    return withAlpha(153);
+    return withValues(alpha: 0.6);
   }
 
   Color get opacity50 {
-    return withAlpha(128);
+    return withValues(alpha: 0.5);
   }
 
   Color get opacity38 {
-    return withAlpha(97);
+    return withValues(alpha: 0.38);
   }
 
   Color get opacity30 {
-    return withAlpha(77);
+    return withValues(alpha: 0.3);
   }
 
   Color get opacity12 {
-    return withAlpha(31);
+    return withValues(alpha: 0.12);
   }
 
   Color get opacity15 {
-    return withAlpha(38);
+    return withValues(alpha: 0.15);
   }
 
   Color get opacity10 {
-    return withAlpha(15);
+    return withValues(alpha: 0.1);
   }
 
   Color get opacity3 {
-    return withAlpha(76);
+    return withValues(alpha: 0.03);
   }
 
   Color get opacity0 {
-    return withAlpha(0);
+    return withValues(alpha: 0);
   }
 
   int get value32bit {
@@ -93,26 +93,11 @@ extension ColorExtension on Color {
         .toColor();
   }
 
-  Color blendDarken(
-    BuildContext context, {
-    double factor = 0.1,
-  }) {
+  Color blendDarken(BuildContext context, {double factor = 0.1}) {
     final brightness = Theme.of(context).brightness;
     return Color.lerp(
       this,
       brightness == Brightness.dark ? Colors.white : Colors.black,
-      factor,
-    )!;
-  }
-
-  Color blendLighten(
-    BuildContext context, {
-    double factor = 0.1,
-  }) {
-    final brightness = Theme.of(context).brightness;
-    return Color.lerp(
-      this,
-      brightness == Brightness.dark ? Colors.black : Colors.white,
       factor,
     )!;
   }
@@ -122,9 +107,14 @@ extension ColorSchemeExtension on ColorScheme {
   ColorScheme toPureBlack(bool isPrueBlack) => isPrueBlack
       ? copyWith(
           surface: Colors.black,
-          surfaceContainer: surfaceContainer.darken(
-            5,
-          ),
+          surfaceContainer: surfaceContainer.darken(5),
         )
       : this;
+}
+
+Color? getDelayColor(int? delay) {
+  if (delay == null) return null;
+  if (delay < 0) return Colors.red;
+  if (delay < 600) return Colors.green;
+  return const Color(0xFFC57F0A);
 }

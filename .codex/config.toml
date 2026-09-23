@@ -1,0 +1,8 @@
+[[hooks.PostToolUse]]
+matcher = "apply_patch|Bash"
+
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = "bash tool/check_comment_density.sh"
+timeout = 15
+statusMessage = "Checking comment density"

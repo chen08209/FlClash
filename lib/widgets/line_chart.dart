@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:fl_clash/common/color.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class Point {
   final double x;
@@ -207,7 +207,7 @@ class LineChartPainter extends CustomPainter {
         colors: [color.opacity38, color.opacity10],
       );
 
-      final strokeWidth = 2.0;
+      const strokeWidth = 2.0;
       _cachedShader = gradient.createShader(
         Rect.fromLTWH(0, 0, size.width, size.height + strokeWidth * 2),
       );
@@ -221,7 +221,7 @@ class LineChartPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (currentRenderPoints.isEmpty) return;
 
-    final strokeWidth = 2.0;
+    const strokeWidth = 2.0;
     final chartSize = Size(size.width, size.height * 0.7);
     final path = _getAnimatedPath(chartSize);
 

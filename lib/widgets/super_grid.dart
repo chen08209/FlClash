@@ -3,14 +3,16 @@ import 'dart:math';
 
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/widgets/activate_box.dart';
-import 'package:fl_clash/widgets/card.dart';
 import 'package:fl_clash/widgets/grid.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/physics.dart';
 
-typedef VoidCallback = void Function();
+/// Kept in one notifier so a builder that reads part of it also rebuilds when
+/// the rest changes.
+typedef _DragState = ({int index, Size size, bool landing});
+
+const _idleDrag = (index: -1, size: Size.zero, landing: false);
 
 class SuperGrid extends StatefulWidget {
   final List<GridItem> children;
@@ -33,115 +35,79 @@ class SuperGrid extends StatefulWidget {
 }
 
 class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
-  final ValueNotifier<List<GridItem>> _childrenNotifier = ValueNotifier([]);
+  static const _reorderDuration = Duration(milliseconds: 420);
+  static const _shakeDuration = Duration(milliseconds: 480);
+  static const _reorderCurve = Cubic(0.22, 0.72, 0.24, 1.08);
+
+  static const _hoverDelay = Duration(milliseconds: 120);
+
+  /// Matches the default CommonCard shape, so the lift's shadow traces the card
+  /// it is drawn behind.
+  static const _cardShape = AppShape.md;
+
+  late final ValueNotifier<List<GridItem>> _childrenNotifier;
   List<GridItem> children = [];
+  List<GridItem>? _pendingChildren;
+
+  List<GridItem> get snapshotChildren =>
+      List<GridItem>.unmodifiable(_pendingChildren ?? children);
 
   int get length => _childrenNotifier.value.length;
+  int get crossCount => widget.crossAxisCount;
+
   List<int> _tempIndexList = [];
-  List<BuildContext?> _itemContexts = [];
+
+  /// One stable key per slot, so item elements survive a reorder.
+  final List<GlobalKey> _itemKeys = [];
+
   Size _containerSize = Size.zero;
   int _targetIndex = -1;
   Offset _targetOffset = Offset.zero;
   List<Size> _sizes = [];
   List<Offset> _offsets = [];
   Offset _parentOffset = Offset.zero;
+
   EdgeDraggingAutoScroller? _edgeDraggingAutoScroller;
-  Map<int, Tween<Offset>> _transformTweenMap = {};
+  Scrollable? _scrollable;
+  Rect _dragRect = Rect.zero;
+  bool _isDragging = false;
+  Timer? _hoverTimer;
 
-  final ValueNotifier<bool> _animating = ValueNotifier(false);
-
-  final _dragWidgetSizeNotifier = ValueNotifier(Size.zero);
-
-  final _dragIndexNotifier = ValueNotifier(-1);
+  final ValueNotifier<_DragState> _dragNotifier = ValueNotifier(_idleDrag);
 
   late AnimationController _transformController;
-
-  Future<bool> get isTransformCompleter =>
-      _transformCompleter?.future ?? Future(() => true);
-
-  Completer<bool>? _transformCompleter;
-
   Map<int, Animation<Offset>> _transformAnimationMap = {};
 
-  late AnimationController _fakeDragWidgetController;
-  Animation<Offset>? _fakeDragWidgetAnimation;
+  Future<bool> get isTransformCompleter =>
+      _transformCompleter?.future ?? Future<bool>.value(true);
+  Completer<bool>? _transformCompleter;
+
+  late AnimationController _landingController;
+  Animation<Offset>? _landingAnimation;
 
   late AnimationController _shakeController;
-  late Animation<double> _shakeAnimation;
-  Rect _dragRect = Rect.zero;
-  Scrollable? _scrollable;
-
-  int get crossCount => widget.crossAxisCount;
-
-  void _onChildrenChange() {
-    _tempIndexList = List.generate(length, (index) => index);
-    _itemContexts = List.filled(length, null);
-  }
-
-  void _preTransformState() {
-    _sizes = _itemContexts.map((item) => item!.size!).toList();
-    _parentOffset = (context.findRenderObject() as RenderBox).localToGlobal(
-      Offset.zero,
-    );
-    _offsets = _itemContexts
-        .map(
-          (item) =>
-              (item!.findRenderObject() as RenderBox).localToGlobal(
-                Offset.zero,
-              ) -
-              _parentOffset,
-        )
-        .toList();
-    _containerSize = context.size!;
-  }
-
-  void _initState() {
-    _transformController.value = 0;
-    _sizes = List.generate(length, (index) => Size.zero);
-    _offsets = [];
-    _transformTweenMap.clear();
-    _transformAnimationMap.clear();
-    _containerSize = Size.zero;
-    _dragIndexNotifier.value = -1;
-    _dragWidgetSizeNotifier.value = Size.zero;
-    _targetOffset = Offset.zero;
-    _parentOffset = Offset.zero;
-    _dragRect = Rect.zero;
-    _targetIndex = -1;
-  }
 
   @override
   void initState() {
     super.initState();
-    _childrenNotifier.addListener(() {
-      children = _childrenNotifier.value;
-      if (widget.onUpdate != null) {
-        widget.onUpdate!();
-      }
-    });
+    children = List<GridItem>.of(widget.children);
+    _childrenNotifier = ValueNotifier(children)
+      ..addListener(_handleChildrenChanged);
+    _tempIndexList = List.generate(length, (index) => index);
+    _syncItemKeys();
 
-    _childrenNotifier.value = widget.children;
-
-    _fakeDragWidgetController = AnimationController.unbounded(vsync: this);
+    _landingController = AnimationController.unbounded(vsync: this);
 
     _shakeController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 120),
-    );
-
-    _shakeAnimation = Tween<double>(begin: -0.012, end: 0.012).animate(
-      CurvedAnimation(parent: _shakeController, curve: Curves.easeInOut),
-    );
+      duration: _shakeDuration,
+    )..repeat();
 
     _transformController = AnimationController(
       vsync: this,
-      duration: commonDuration,
+      duration: _reorderDuration,
     );
-    _initState();
-  }
-
-  void handleAdd(GridItem gridItem) {
-    _childrenNotifier.value = List.from(_childrenNotifier.value)..add(gridItem);
+    _resetDragState();
   }
 
   @override
@@ -150,105 +116,190 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
 
     final scrollable = context.findAncestorWidgetOfExactType<Scrollable>();
     if (scrollable == null) {
+      _stopAutoScroll();
+      _scrollable = null;
+      _edgeDraggingAutoScroller = null;
       return;
     }
-    if (_scrollable != scrollable) {
-      _edgeDraggingAutoScroller = EdgeDraggingAutoScroller(
-        Scrollable.of(context),
-        onScrollViewScrolled: () {
-          _edgeDraggingAutoScroller?.startAutoScrollIfNecessary(_dragRect);
-        },
-        velocityScalar: 40,
+    if (_scrollable == scrollable) {
+      return;
+    }
+    _stopAutoScroll();
+    _scrollable = scrollable;
+    late final EdgeDraggingAutoScroller autoScroller;
+    autoScroller = EdgeDraggingAutoScroller(
+      Scrollable.of(context),
+      onScrollViewScrolled: () {
+        if (!mounted ||
+            !_isDragging ||
+            !identical(_edgeDraggingAutoScroller, autoScroller)) {
+          return;
+        }
+        autoScroller.startAutoScrollIfNecessary(_dragRect);
+      },
+      velocityScalar: 40,
+    );
+    _edgeDraggingAutoScroller = autoScroller;
+  }
+
+  @override
+  void dispose() {
+    _isDragging = false;
+    _stopAutoScroll();
+    _edgeDraggingAutoScroller = null;
+    _scrollable = null;
+    _hoverTimer?.cancel();
+    _hoverTimer = null;
+    final completer = _transformCompleter;
+    if (completer != null && !completer.isCompleted) {
+      completer.complete(false);
+    }
+    _transformCompleter = null;
+    _childrenNotifier.removeListener(_handleChildrenChanged);
+    _childrenNotifier.value = const [];
+    children = const [];
+    _pendingChildren = null;
+    _itemKeys.clear();
+    _sizes = [];
+    _offsets = [];
+    _transformAnimationMap.clear();
+    _landingAnimation = null;
+    _landingController.dispose();
+    _shakeController.dispose();
+    _transformController.dispose();
+    _dragNotifier.dispose();
+    _childrenNotifier.dispose();
+    super.dispose();
+  }
+
+  void handleAdd(GridItem gridItem) {
+    _childrenNotifier.value = [..._childrenNotifier.value, gridItem];
+  }
+
+  void _stopAutoScroll() {
+    _edgeDraggingAutoScroller?.stopAutoScroll();
+  }
+
+  void _handleChildrenChanged() {
+    children = List<GridItem>.of(_childrenNotifier.value);
+    _tempIndexList = List.generate(length, (index) => index);
+    _syncItemKeys();
+    widget.onUpdate?.call();
+  }
+
+  /// Grows or trims [_itemKeys] without replacing existing entries, so a slot
+  /// keeps its key across reorders and its element is never rebuilt.
+  void _syncItemKeys() {
+    while (_itemKeys.length < length) {
+      _itemKeys.add(
+        GlobalKey(debugLabel: 'super_grid_item_${_itemKeys.length}'),
       );
+    }
+    if (_itemKeys.length > length) {
+      _itemKeys.removeRange(length, _itemKeys.length);
     }
   }
 
-  Future _transform() async {
-    List<Offset> layoutOffsets = [Offset(_containerSize.width, 0)];
-    final List<Offset> nextOffsets = [];
+  void _resetDragState() {
+    _transformController.value = 0;
+    _sizes = List.generate(length, (index) => Size.zero);
+    _offsets = [];
+    _transformAnimationMap.clear();
+    _containerSize = Size.zero;
+    _dragNotifier.value = _idleDrag;
+    _targetOffset = Offset.zero;
+    _parentOffset = Offset.zero;
+    _dragRect = Rect.zero;
+    _targetIndex = -1;
+  }
 
-    for (final index in _tempIndexList) {
-      final size = _sizes[index];
-      final offset = _getNextOffset(layoutOffsets, size);
-      final layoutOffset = Offset(
-        min(
-          offset.dx + size.width + widget.crossAxisSpacing,
-          _containerSize.width,
-        ),
-        min(
-          offset.dy + size.height + widget.mainAxisSpacing,
-          _containerSize.height,
-        ),
-      );
-      final startLayoutOffsetX = offset.dx;
-      final endLayoutOffsetX = layoutOffset.dx;
-      nextOffsets.add(offset);
-
-      final startIndex = layoutOffsets.indexWhere(
-        (i) => i.dx >= startLayoutOffsetX,
-      );
-      final endIndex = layoutOffsets.indexWhere(
-        (i) => i.dx >= endLayoutOffsetX,
-      );
-      final endOffset = layoutOffsets[endIndex];
-
-      if (startIndex != endIndex) {
-        final startOffset = layoutOffsets[startIndex];
-        if (startOffset.dx != startLayoutOffsetX) {
-          layoutOffsets[startIndex] = Offset(
-            startLayoutOffsetX,
-            startOffset.dy,
-          );
-        }
+  bool _captureLayout() {
+    final renderObject = context.findRenderObject();
+    if (renderObject is! RenderBox || !renderObject.hasSize) {
+      return false;
+    }
+    if (_itemKeys.length != length) {
+      return false;
+    }
+    final parentOffset = renderObject.localToGlobal(Offset.zero);
+    final sizes = <Size>[];
+    final offsets = <Offset>[];
+    for (final key in _itemKeys) {
+      final itemRenderObject = key.currentContext?.findRenderObject();
+      if (itemRenderObject is! RenderBox || !itemRenderObject.hasSize) {
+        return false;
       }
-      if (endOffset.dx == endLayoutOffsetX) {
-        layoutOffsets[endIndex] = layoutOffset;
-      } else {
-        layoutOffsets.insert(endIndex, layoutOffset);
+      sizes.add(itemRenderObject.size);
+      offsets.add(itemRenderObject.localToGlobal(Offset.zero) - parentOffset);
+    }
+    _sizes = sizes;
+    _offsets = offsets;
+    _parentOffset = parentOffset;
+    _containerSize = renderObject.size;
+    return true;
+  }
+
+  Future<bool> _transform() async {
+    if (_sizes.length != length ||
+        _offsets.length != length ||
+        _containerSize.isEmpty) {
+      return false;
+    }
+    final items = _childrenNotifier.value;
+    final geometry = packGridSlots(
+      crossAxisCellCounts: [
+        for (final index in _tempIndexList) items[index].crossAxisCellCount,
+      ],
+      mainAxisExtents: [
+        for (final index in _tempIndexList) _sizes[index].height,
+      ],
+      crossAxisCount: crossCount,
+      crossAxisExtent: _containerSize.width,
+      crossAxisSpacing: widget.crossAxisSpacing,
+      mainAxisSpacing: widget.mainAxisSpacing,
+    );
+
+    final transformCurve = CurvedAnimation(
+      parent: _transformController,
+      curve: _reorderCurve,
+    );
+    final transformAnimationMap = <int, Animation<Offset>>{};
+    for (var slotIndex = 0; slotIndex < _tempIndexList.length; slotIndex++) {
+      final index = _tempIndexList[slotIndex];
+      final slot = geometry.slots[slotIndex];
+      final nextOffset = Offset(
+        slot.crossAxisIndex * geometry.stride,
+        slot.mainAxisOffset,
+      );
+      if (slotIndex == _targetIndex) {
+        _targetOffset = nextOffset;
       }
-      layoutOffsets.removeRange(min(startIndex + 1, endIndex), endIndex);
+      transformAnimationMap[index] = Tween<Offset>(
+        // Continue from where the item is, so an interrupted reorder does not
+        // jump back to its resting place.
+        begin: _transformAnimationMap[index]?.value ?? Offset.zero,
+        end: nextOffset - _offsets[index],
+      ).animate(transformCurve);
     }
+    _transformAnimationMap = transformAnimationMap;
 
-    final Map<int, Tween<Offset>> transformTweenMap = {};
-
-    for (final index in _tempIndexList) {
-      final nextIndex = _tempIndexList.indexWhere((i) => i == index);
-      transformTweenMap[index] = Tween(
-        begin: _transformTweenMap[index]?.begin ?? Offset.zero,
-        end: nextOffsets[nextIndex] - _offsets[index],
-      );
+    try {
+      await _transformController.forward(from: 0).orCancel;
+      return true;
+    } on TickerCanceled {
+      return false;
     }
-
-    _transformTweenMap = transformTweenMap;
-
-    _transformAnimationMap = transformTweenMap.map((key, value) {
-      final preAnimationValue = _transformAnimationMap[key]?.value;
-      return MapEntry(
-        key,
-        Tween(begin: preAnimationValue ?? Offset.zero, end: value.end).animate(
-          _transformController.drive(
-            Tween<double>(
-              begin: 0.0,
-              end: 1,
-            ).chain(CurveTween(curve: Easing.emphasizedAccelerate)),
-          ),
-        ),
-      );
-    });
-
-    if (_targetIndex != -1) {
-      _targetOffset = nextOffsets[_targetIndex];
-    }
-    return _transformController.forward(from: 0);
   }
 
   void _handleDragStarted(int index) {
-    _initState();
-    _preTransformState();
-    _dragIndexNotifier.value = index;
-    _dragWidgetSizeNotifier.value = _sizes[index];
+    _resetDragState();
+    if (!_captureLayout()) {
+      return;
+    }
+    _isDragging = true;
     _targetIndex = index;
     _targetOffset = _offsets[index];
+    _dragNotifier.value = (index: index, size: _sizes[index], landing: false);
     _dragRect = Rect.fromLTWH(
       _targetOffset.dx + _parentOffset.dx,
       _targetOffset.dy + _parentOffset.dy,
@@ -257,59 +308,98 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
     );
   }
 
-  Future<void> _handleDragEnd(DraggableDetails details) async {
-    final children = List<GridItem>.from(_childrenNotifier.value);
-    children.insert(_targetIndex, children.removeAt(_dragIndexNotifier.value));
-    this.children = children;
-    debouncer.cancel(FunctionTag.handleWill);
-    if (_targetIndex == -1) {
+  void _handleDragUpdate(DragUpdateDetails details) {
+    if (!_isDragging) {
       return;
     }
-    const tolerance = Tolerance(distance: 0.5, velocity: 0.01);
-    const spring = SpringDescription(mass: 1, stiffness: 100, damping: 10);
-    final simulation = SpringSimulation(spring, 0, 1, 0, tolerance: tolerance);
-    _fakeDragWidgetAnimation = Tween(
-      begin: details.offset - _parentOffset,
-      end: _targetOffset,
-    ).animate(_fakeDragWidgetController);
-    _animating.value = true;
-
-    _transformCompleter = Completer<bool>();
-    await _fakeDragWidgetController.animateWith(simulation);
-    _transformCompleter?.complete(true);
-    _animating.value = false;
-    _fakeDragWidgetAnimation = null;
-    _transformTweenMap.clear();
-    _transformAnimationMap.clear();
-    _childrenNotifier.value = children;
-    _initState();
-  }
-
-  void _handleDragUpdate(DragUpdateDetails details) {
-    _dragRect = _dragRect.translate(0, details.delta.dy);
+    _dragRect = _dragRect.shift(details.delta);
     _edgeDraggingAutoScroller?.startAutoScrollIfNecessary(_dragRect);
   }
 
-  Future<void> _handleWill(int index) async {
-    final dragIndex = _dragIndexNotifier.value;
-    if (dragIndex < 0 || dragIndex > _offsets.length - 1) {
+  Future<void> _handleDragEnd(DraggableDetails details) async {
+    _isDragging = false;
+    _stopAutoScroll();
+    _hoverTimer?.cancel();
+    final dragIndex = _dragNotifier.value.index;
+    if (_targetIndex < 0 ||
+        _targetIndex >= length ||
+        dragIndex < 0 ||
+        dragIndex >= length) {
+      _resetDragState();
       return;
     }
-    final targetIndex = _tempIndexList.indexWhere((i) => i == index);
-    if (_targetIndex == targetIndex) {
+
+    final nextChildren = List<GridItem>.of(_childrenNotifier.value);
+    nextChildren.insert(_targetIndex, nextChildren.removeAt(dragIndex));
+    children = nextChildren;
+
+    const tolerance = Tolerance(distance: 0.001, velocity: 0.01);
+    const spring = SpringDescription(mass: 1, stiffness: 180, damping: 18);
+    final simulation = SpringSimulation(spring, 0, 1, 0, tolerance: tolerance);
+    _landingAnimation = Tween<Offset>(
+      begin: details.offset - _parentOffset,
+      end: _targetOffset,
+    ).animate(_landingController);
+    _dragNotifier.value = (
+      index: dragIndex,
+      size: _dragNotifier.value.size,
+      landing: true,
+    );
+
+    final completer = Completer<bool>();
+    _transformCompleter = completer;
+    try {
+      await _landingController.animateWith(simulation).orCancel;
+      if (!mounted) {
+        return;
+      }
+      _landingAnimation = null;
+      _transformAnimationMap.clear();
+      _childrenNotifier.value = nextChildren;
+      _resetDragState();
+      completer.complete(true);
+    } on TickerCanceled {
+      if (mounted) {
+        _landingAnimation = null;
+        _resetDragState();
+      }
+    } finally {
+      if (!completer.isCompleted) {
+        completer.complete(false);
+      }
+      if (identical(_transformCompleter, completer)) {
+        _transformCompleter = null;
+      }
+    }
+  }
+
+  void _scheduleHover(int index) {
+    _hoverTimer?.cancel();
+    _hoverTimer = Timer(_hoverDelay, () => _handleHover(index));
+  }
+
+  Future<void> _handleHover(int index) async {
+    if (!mounted || !_isDragging) {
+      return;
+    }
+    final dragIndex = _dragNotifier.value.index;
+    if (dragIndex < 0 || dragIndex >= _offsets.length) {
+      return;
+    }
+    final targetIndex = _tempIndexList.indexOf(index);
+    if (targetIndex < 0 || _targetIndex == targetIndex) {
       return;
     }
     _tempIndexList = List.generate(length, (i) {
-      if (i == targetIndex) return _dragIndexNotifier.value;
+      if (i == targetIndex) return dragIndex;
       if (_targetIndex > targetIndex && i > targetIndex && i <= _targetIndex) {
         return _tempIndexList[i - 1];
-      } else if (_targetIndex < targetIndex &&
-          i >= _targetIndex &&
-          i < targetIndex) {
+      }
+      if (_targetIndex < targetIndex && i >= _targetIndex && i < targetIndex) {
         return _tempIndexList[i + 1];
       }
       return _tempIndexList[i];
-    }).toList();
+    });
 
     _targetIndex = targetIndex;
 
@@ -317,105 +407,92 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
   }
 
   Future<void> _handleDelete(int index) async {
-    _preTransformState();
-    final indexWhere = _tempIndexList.indexWhere((i) => i == index);
-    _tempIndexList.removeAt(indexWhere);
-    await _transform();
-    final children = List<GridItem>.from(_childrenNotifier.value);
-    children.removeAt(index);
-    _childrenNotifier.value = children;
-    _initState();
+    // One removal at a time: a second one would overwrite _pendingChildren and
+    // cancel the first transform, silently dropping a deletion.
+    if (_pendingChildren != null || _isDragging) {
+      return;
+    }
+    if (!_captureLayout()) {
+      return;
+    }
+    final slotIndex = _tempIndexList.indexOf(index);
+    if (slotIndex < 0) {
+      return;
+    }
+    _tempIndexList = List<int>.of(_tempIndexList)..removeAt(slotIndex);
+    final nextChildren = List<GridItem>.of(_childrenNotifier.value)
+      ..removeAt(index);
+    _pendingChildren = nextChildren;
+    final completed = await _transform();
+    if (!completed || !mounted) {
+      _pendingChildren = null;
+      return;
+    }
+    _childrenNotifier.value = nextChildren;
+    _pendingChildren = null;
+    _resetDragState();
+  }
+
+  /// [t] is 1 while the item is held and eases to 0 as it settles, so the drag
+  /// feedback and the landing widget are one surface at two depths.
+  Widget _buildLiftedSurface(Widget child, double t) {
+    return Transform.scale(
+      scale: 1 + 0.03 * t,
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          shape: _cardShape,
+          shadows: BoxShadow.lerpList(
+            const <BoxShadow>[],
+            kElevationToShadow[8]!,
+            t.clamp(0.0, 1.0),
+          )!,
+        ),
+        child: child,
+      ),
+    );
+  }
+
+  Widget _buildDragSizeBox(Widget child) {
+    return ValueListenableBuilder(
+      valueListenable: _dragNotifier,
+      builder: (_, drag, child) {
+        return SizedBox.fromSize(size: drag.size, child: child!);
+      },
+      child: child,
+    );
   }
 
   Widget _buildTransform(Widget rawChild, int index) {
     return ValueListenableBuilder(
-      valueListenable: _animating,
-      builder: (_, animating, child) {
-        if (animating && _dragIndexNotifier.value == index) {
-          return _buildSizeBox(Container(), index);
+      valueListenable: _dragNotifier,
+      builder: (_, drag, child) {
+        // The landing widget paints it on the way home; hold its space open.
+        if (drag.landing && drag.index == index) {
+          return _buildDragSizeBox(const SizedBox.shrink());
         }
         return child!;
       },
       child: AnimatedBuilder(
+        animation: _transformController.view,
         builder: (_, child) {
           return Transform.translate(
             offset: _transformAnimationMap[index]?.value ?? Offset.zero,
             child: child,
           );
         },
-        animation: _transformController.view,
         child: rawChild,
       ),
     );
   }
 
-  Offset _getNextOffset(List<Offset> offsets, Size size) {
-    final length = offsets.length;
-    Offset nextOffset = Offset(0, double.infinity);
-    for (int i = 0; i < length; i++) {
-      final offset = offsets[i];
-      if (offset.dy.moreOrEqual(nextOffset.dy)) {
-        continue;
-      }
-      double offsetX = 0;
-      double span = 0;
-      for (
-        int j = 0;
-        span < size.width &&
-            j < length &&
-            _containerSize.width.moreOrEqual(offsetX + size.width);
-        j++
-      ) {
-        final tempOffset = offsets[j];
-        if (offset.dy.moreOrEqual(tempOffset.dy)) {
-          span = tempOffset.dx - offsetX;
-          if (span.moreOrEqual(size.width)) {
-            nextOffset = Offset(offsetX, offset.dy);
-          }
-        } else {
-          offsetX = tempOffset.dx;
-          span = 0;
-        }
-      }
-    }
-    return nextOffset;
-  }
-
-  Widget _buildSizeBox(Widget child, int index) {
-    return ValueListenableBuilder(
-      valueListenable: _dragWidgetSizeNotifier,
-      builder: (_, size, child) {
-        return SizedBox.fromSize(size: size, child: child!);
-      },
-      child: child,
-    );
-  }
-
-  Widget _buildInactivate(Widget child) {
-    return ValueListenableBuilder(
-      valueListenable: _animating,
-      builder: (_, animating, child) {
-        if (animating) {
-          return ActivateBox(child: child!);
-        } else {
-          return child!;
-        }
-      },
-      child: child,
-    );
-  }
-
-  Widget _buildShake(Widget child) {
-    final random = 0.7 + Random().nextDouble() * 0.3;
-    _shakeController.stop();
-    _shakeController.repeat(reverse: true);
+  Widget _buildShake(Widget child, int index) {
     return AnimatedBuilder(
-      animation: _shakeAnimation,
+      animation: _shakeController,
       builder: (_, child) {
-        return Transform.rotate(
-          angle: _shakeAnimation.value * random,
-          child: child!,
-        );
+        // An irregular phase step keeps neighbours from shaking in unison.
+        final phase = index * 1.7;
+        final angle = sin(_shakeController.value * 2 * pi + phase) * 0.01;
+        return Transform.rotate(angle: angle, child: child!);
       },
       child: child,
     );
@@ -427,163 +504,144 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
     required Widget item,
     required int index,
   }) {
+    // onDragEnd resolves the drop from _targetIndex, so this target never
+    // accepts; it only reports which item the pointer is over.
     final target = DragTarget<int>(
       builder: (_, _, _) {
         return AbsorbPointer(child: item);
       },
       onWillAcceptWithDetails: (_) {
-        debouncer.call(
-          FunctionTag.handleWill,
-          _handleWill,
-          args: [index],
-          duration: commonDuration,
-        );
+        _scheduleHover(index);
         return false;
       },
     );
-    final shakeTarget = ValueListenableBuilder(
-      valueListenable: _animating,
-      builder: (_, animating, child) {
-        if (animating) {
-          return target;
-        } else {
+
+    final decoratedTarget = ValueListenableBuilder(
+      valueListenable: _dragNotifier,
+      builder: (_, drag, child) {
+        if (drag.landing || drag.index == index) {
           return child!;
         }
+        return _buildShake(
+          _DeletableContainer(
+            onDelete: () {
+              _handleDelete(index);
+            },
+            child: child!,
+          ),
+          index,
+        );
       },
-      child: ValueListenableBuilder(
-        valueListenable: _dragIndexNotifier,
-        builder: (_, dragIndex, child) {
-          if (dragIndex == index) {
-            return child!;
-          }
-          return _buildShake(
-            _DeletableContainer(
-              onDelete: () {
-                _handleDelete(index);
-              },
-              child: child!,
-            ),
-          );
-        },
-        child: target,
-      ),
+      child: target,
     );
-    final draggableChild = system.isDesktop
+
+    void onDragStarted() => _handleDragStarted(index);
+    void onDragUpdate(DragUpdateDetails details) => _handleDragUpdate(details);
+    void onDragEnd(DraggableDetails details) => _handleDragEnd(details);
+
+    return system.isDesktop
         ? Draggable(
             childWhenDragging: childWhenDragging,
             data: index,
             feedback: feedback,
-            onDragStarted: () {
-              _handleDragStarted(index);
-            },
-            onDragUpdate: (details) {
-              _handleDragUpdate(details);
-            },
-            onDragEnd: (details) {
-              _handleDragEnd(details);
-            },
-            child: shakeTarget,
+            onDragStarted: onDragStarted,
+            onDragUpdate: onDragUpdate,
+            onDragEnd: onDragEnd,
+            child: decoratedTarget,
           )
         : LongPressDraggable(
             childWhenDragging: childWhenDragging,
             data: index,
             feedback: feedback,
-            onDragStarted: () {
-              _handleDragStarted(index);
-            },
-            onDragUpdate: (details) {
-              _handleDragUpdate(details);
-            },
-            onDragEnd: (details) {
-              _handleDragEnd(details);
-            },
-            child: shakeTarget,
+            onDragStarted: onDragStarted,
+            onDragUpdate: onDragUpdate,
+            onDragEnd: onDragEnd,
+            child: decoratedTarget,
           );
-    return draggableChild;
   }
 
   Widget _builderItem(int index) {
-    final girdItem = _childrenNotifier.value[index];
-    final child = RepaintBoundary(child: girdItem.child);
+    final gridItem = _childrenNotifier.value[index];
+    final child = gridItem.child;
+    // The children already render their own CommonCard; do not add a second.
+    final childWhenDragging = ActivateBox(
+      child: Opacity(opacity: 0.4, child: _buildDragSizeBox(child)),
+    );
+    final feedback = ActivateBox(
+      child: _buildDragSizeBox(_buildLiftedSurface(child, 1)),
+    );
     return GridItem(
-      mainAxisCellCount: girdItem.mainAxisCellCount,
-      crossAxisCellCount: girdItem.crossAxisCellCount,
-      child: Builder(
-        builder: (context) {
-          _itemContexts[index] = context;
-          final childWhenDragging = ActivateBox(
-            child: Opacity(
-              opacity: 0.6,
-              child: _buildSizeBox(CommonCard(child: child), index),
-            ),
-          );
-          final feedback = ActivateBox(
-            child: _buildSizeBox(
-              CommonCard(child: Material(elevation: 6, child: child)),
-              index,
-            ),
-          );
-          return _buildTransform(
-            _buildDraggable(
+      mainAxisCellCount: gridItem.mainAxisCellCount,
+      crossAxisCellCount: gridItem.crossAxisCellCount,
+      child: KeyedSubtree(
+        key: _itemKeys[index],
+        child: _buildTransform(
+          // The shake never stops while edit mode is open, and without a
+          // boundary here its markNeedsPaint reaches the scroll viewport, so
+          // every frame repaints the whole grid instead of one item.
+          RepaintBoundary(
+            child: _buildDraggable(
               childWhenDragging: childWhenDragging,
               feedback: feedback,
               item: child,
               index: index,
             ),
-            index,
-          );
-        },
+          ),
+          index,
+        ),
       ),
     );
   }
 
-  Widget _buildFakeTransformWidget() {
-    return ValueListenableBuilder<bool>(
-      valueListenable: _animating,
-      builder: (_, animating, _) {
-        final index = _dragIndexNotifier.value;
-        if (!animating || _fakeDragWidgetAnimation == null || index == -1) {
-          return Container();
+  /// The dragged item springing back into the grid, drawn above it so it can
+  /// overlap its neighbours on the way in.
+  Widget _buildLandingWidget() {
+    return ValueListenableBuilder(
+      valueListenable: _dragNotifier,
+      builder: (_, drag, _) {
+        final animation = _landingAnimation;
+        if (!drag.landing || animation == null || drag.index == -1) {
+          return const SizedBox.shrink();
         }
-        return _buildSizeBox(
-          AnimatedBuilder(
-            animation: _fakeDragWidgetAnimation!,
+        return SizedBox.fromSize(
+          size: drag.size,
+          child: AnimatedBuilder(
+            animation: animation,
             builder: (_, child) {
+              // Fade the lift out on the spring's own curve, so the item
+              // settles instead of popping.
+              final lift = (1 - _landingController.value).clamp(0.0, 1.0);
               return Transform.translate(
-                offset: _fakeDragWidgetAnimation!.value,
-                child: child!,
+                offset: animation.value,
+                child: _buildLiftedSurface(child!, lift),
               );
             },
-            child: ActivateBox(child: _childrenNotifier.value[index].child),
+            child: ActivateBox(
+              child: _childrenNotifier.value[drag.index].child,
+            ),
           ),
-          index,
         );
       },
     );
   }
 
   @override
-  void dispose() {
-    _scrollable = null;
-    _fakeDragWidgetController.dispose();
-    _shakeController.dispose();
-    _transformController.dispose();
-    _dragIndexNotifier.dispose();
-    _animating.dispose();
-    _childrenNotifier.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return DeferredPointerHandler(
+      // Delete buttons sit outside their item's bounds and the landing widget
+      // casts a shadow past the grid, so nothing here may be clipped.
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          _buildInactivate(
-            ValueListenableBuilder(
+          ValueListenableBuilder(
+            valueListenable: _dragNotifier,
+            builder: (_, drag, child) {
+              // Freeze interaction with the grid while an item is landing.
+              return drag.landing ? ActivateBox(child: child!) : child!;
+            },
+            child: ValueListenableBuilder(
               valueListenable: _childrenNotifier,
               builder: (_, children, _) {
-                _onChildrenChange();
                 return Grid(
                   axisDirection: AxisDirection.down,
                   crossAxisCount: crossCount,
@@ -596,7 +654,7 @@ class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
               },
             ),
           ),
-          _buildFakeTransformWidget(),
+          _buildLandingWidget(),
         ],
       ),
     );
@@ -683,10 +741,11 @@ class _DeletableContainerState extends State<_DeletableContainer>
                 width: 24,
                 height: 24,
                 child: IconButton.filled(
+                  tooltip: context.appLocalizations.remove,
                   iconSize: 20,
-                  padding: EdgeInsets.all(2),
+                  padding: const EdgeInsets.all(2),
                   onPressed: _handleDel,
-                  icon: Icon(Icons.close),
+                  icon: const Icon(Icons.close),
                 ),
               ),
             ),

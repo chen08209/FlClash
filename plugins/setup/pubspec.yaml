@@ -1,0 +1,15 @@
+name: setup
+description: FlClash Go core and Rust helper build harness (Dart build hook).
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  hooks: ^2.2.0
+  setup_hooks:
+    path: setup_hooks
+
+dev_dependencies:
+  flutter_lints: ^6.0.0

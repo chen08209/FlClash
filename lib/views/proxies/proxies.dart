@@ -1,12 +1,11 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/models/state.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/proxies/list.dart';
 import 'package:fl_clash/views/proxies/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'setting.dart';
@@ -20,42 +19,43 @@ class ProxiesView extends ConsumerStatefulWidget {
 }
 
 class _ProxiesViewState extends ConsumerState<ProxiesView> {
-  final GlobalKey<CommonScaffoldState> _scaffoldKey = GlobalKey();
   final GlobalKey<ProxiesTabViewState> _proxiesTabKey = GlobalKey();
   bool _hasProviders = false;
   bool _isTab = false;
 
-  List<Widget> _buildActions() {
+  List<Widget> _buildActions(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
     return [
       if (_isTab)
         IconButton(
+          tooltip: context.appLocalizations.scrollToSelected,
           onPressed: () {
             _proxiesTabKey.currentState?.scrollToGroupSelected();
           },
-          icon: Icon(Icons.adjust, weight: 1),
+          icon: const Icon(Icons.adjust, weight: 1),
         ),
       CommonPopupBox(
         targetBuilder: (open) {
           return IconButton(
+            tooltip: context.appLocalizations.more,
             onPressed: () {
               final isMobile = ref.read(isMobileViewProvider);
               open(offset: Offset(0, isMobile ? 0 : 20));
             },
-            icon: Icon(Icons.more_vert),
+            icon: const Icon(Icons.more_vert),
           );
         },
-        popup: CommonPopupMenu(
+        popupBuilder: (_) => CommonPopupMenu(
           items: [
-            PopupMenuItemData(
+            CommonPopupMenuItem(
               icon: Icons.tune,
               label: appLocalizations.settings,
               onPressed: () {
                 showSheet(
                   context: context,
-                  props: SheetProps(isScrollControlled: true),
-                  builder: (_, type) {
+                  props: const SheetProps(isScrollControlled: true),
+                  builder: (_) {
                     return AdaptiveSheetScaffold(
-                      type: type,
                       body: const ProxiesSetting(),
                       title: appLocalizations.settings,
                     );
@@ -64,14 +64,14 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
               },
             ),
             if (_hasProviders)
-              PopupMenuItemData(
+              CommonPopupMenuItem(
                 icon: Icons.poll_outlined,
                 label: appLocalizations.providers,
                 onPressed: () {
                   showExtend(
                     context,
-                    builder: (_, type) {
-                      return ProvidersView(type: type);
+                    builder: (_) {
+                      return const ProvidersView();
                     },
                   );
                 },
@@ -122,14 +122,6 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
       },
       fireImmediately: true,
     );
-    ref.listenManual(
-      currentPageLabelProvider.select((state) => state == PageLabel.proxies),
-      (prev, next) {
-        if (prev != next && next == false) {
-          _scaffoldKey.currentState?.handleExitSearching();
-        }
-      },
-    );
   }
 
   @override
@@ -139,12 +131,11 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
     );
     final isLoading = ref.watch(loadingProvider(LoadingTag.proxies));
     return CommonScaffold(
-      key: _scaffoldKey,
       isLoading: isLoading,
       resizeToAvoidBottomInset: false,
       floatingActionButton: _buildFAB(),
-      actions: _buildActions(),
-      title: appLocalizations.proxies,
+      actions: _buildActions(context),
+      title: context.appLocalizations.proxies,
       searchState: AppBarSearchState(onSearch: _onSearch),
       body: switch (proxiesType) {
         ProxiesType.tab => ProxiesTabView(key: _proxiesTabKey),

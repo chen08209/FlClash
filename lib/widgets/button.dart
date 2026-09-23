@@ -1,7 +1,8 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'builder.dart';
+import 'card.dart';
 
 class CommonFloatingActionButton extends StatelessWidget {
   final VoidCallback? onPressed;
@@ -22,7 +23,7 @@ class CommonFloatingActionButton extends StatelessWidget {
         floatingActionButtonTheme: Theme.of(context).floatingActionButtonTheme
             .copyWith(
               extendedIconLabelSpacing: 0,
-              extendedPadding: EdgeInsets.all(16),
+              extendedPadding: const EdgeInsets.all(16),
             ),
       ),
       child: FloatingActionButtonExtendedBuilder(
@@ -50,6 +51,41 @@ class CommonFloatingActionButton extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class MoreActionButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final String label;
+  final Widget? trailing;
+
+  const MoreActionButton({
+    super.key,
+    this.onPressed,
+    required this.label,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: CommonCard(
+        radius: AppCorner.xl,
+        onPressed: onPressed,
+        child: ListTile(
+          minTileHeight: 0,
+          minVerticalPadding: 0,
+          titleTextStyle: context.textTheme.bodyMedium?.toJetBrainsMono,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+          title: Text(label, style: context.textTheme.bodyLarge),
+          trailing: trailing ?? const Icon(Icons.arrow_forward_ios, size: 18),
+        ),
       ),
     );
   }

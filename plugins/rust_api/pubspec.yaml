@@ -1,0 +1,23 @@
+name: rust_api
+description: "Flutter Rust Bridge FFI package built through Native Assets."
+version: 0.0.1
+homepage:
+publish_to: none
+
+environment:
+  sdk: '>=3.9.2 <4.0.0'
+  flutter: '>=3.3.0'
+
+dependencies:
+  code_assets: ^1.2.1
+  flutter:
+    sdk: flutter
+  flutter_rust_bridge: 2.13.0
+  flutter_rust_bridge_hooks: 2.13.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  integration_test:
+    sdk: flutter

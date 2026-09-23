@@ -1,21 +1,24 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
-import 'package:flutter/cupertino.dart';
 
 class Request {
   late final Dio dio;
   late final Dio _clashDio;
   String? userAgent;
+
+  ProviderReader? _read;
+
+  void attach(ProviderReader read) {
+    _read = read;
+  }
 
   Request() {
     dio = Dio(BaseOptions(headers: {'User-Agent': browserUa}));
@@ -24,8 +27,12 @@ class Request {
       createHttpClient: () {
         final client = HttpClient();
         client.findProxy = (Uri uri) {
-          client.userAgent = appController.ua;
-          return FlClashHttpOverrides.handleFindProxy(uri);
+          client.userAgent = globalState.ua;
+          final read = _read;
+          if (read == null) {
+            return 'DIRECT';
+          }
+          return FlClashHttpOverrides.findProxyForReader(read, uri);
         };
         return client;
       },
@@ -39,36 +46,27 @@ class Request {
         options: Options(responseType: ResponseType.bytes),
       );
     } catch (e) {
-      commonPrint.log('getFileResponseForUrl error ${e.toString()}');
-      if (e is DioException) {
-        if (e.type == DioExceptionType.unknown) {
-          throw appLocalizations.unknownNetworkError;
-        } else if (e.type == DioExceptionType.badResponse) {
-          throw appLocalizations.networkException;
-        }
-        rethrow;
-      }
-      throw appLocalizations.unknownNetworkError;
+      commonPrint.log(
+        'getFileResponseForUrl error ${compactError(e)}',
+        logLevel: LogLevel.warning,
+      );
+      rethrow;
     }
   }
 
   Future<Response<String>> getTextResponseForUrl(String url) async {
-    final response = await _clashDio.get<String>(
-      url,
-      options: Options(responseType: ResponseType.plain),
-    );
-    return response;
-  }
-
-  Future<MemoryImage?> getImage(String url) async {
-    if (url.isEmpty) return null;
-    final response = await dio.get<Uint8List>(
-      url,
-      options: Options(responseType: ResponseType.bytes),
-    );
-    final data = response.data;
-    if (data == null) return null;
-    return MemoryImage(data);
+    try {
+      return await _clashDio.get<String>(
+        url,
+        options: Options(responseType: ResponseType.plain),
+      );
+    } catch (e) {
+      commonPrint.log(
+        'getTextResponseForUrl error ${compactError(e)}',
+        logLevel: LogLevel.warning,
+      );
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>?> checkForUpdate() async {
@@ -82,7 +80,7 @@ class Request {
       final remoteVersion = data['tag_name'];
       final version = globalState.packageInfo.version;
       final hasUpdate =
-          utils.compareVersions(remoteVersion.replaceAll('v', ''), version) > 0;
+          compareVersions(remoteVersion.replaceAll('v', ''), version) > 0;
       if (!hasUpdate) return null;
       return data;
     } catch (e) {
@@ -106,7 +104,7 @@ class Request {
     final token = cancelToken ?? CancelToken();
     final futures = _ipInfoSources.entries.map((source) async {
       final Completer<Result<IpInfo?>> completer = Completer();
-      handleFailRes() {
+      void handleFailRes() {
         if (!completer.isCompleted && failureCount == _ipInfoSources.length) {
           completer.complete(Result.success(null));
         }
@@ -119,82 +117,55 @@ class Request {
             options: Options(responseType: ResponseType.json),
           )
           .timeout(const Duration(seconds: 10));
-      future
-          .then((res) {
-            if (res.statusCode == HttpStatus.ok && res.data != null) {
-              completer.complete(Result.success(source.value(res.data!)));
-              return;
-            }
-            failureCount++;
-            handleFailRes();
-          })
-          .catchError((e) {
-            failureCount++;
-            if (e is DioException && e.type == DioExceptionType.cancel) {
-              completer.complete(Result.error('cancelled'));
-            }
-            handleFailRes();
-          });
+      unawaited(
+        future
+            .then((res) {
+              if (res.statusCode == HttpStatus.ok && res.data != null) {
+                completer.complete(Result.success(source.value(res.data!)));
+                return;
+              }
+              commonPrint.log('checkIp data empty', logLevel: LogLevel.info);
+              failureCount++;
+              handleFailRes();
+            })
+            .catchError((e) {
+              failureCount++;
+              if (e is DioException && e.type == DioExceptionType.cancel) {
+                completer.complete(Result.error('cancelled'));
+                return;
+              }
+              commonPrint.log('checkIp error $e', logLevel: LogLevel.warning);
+              handleFailRes();
+            }),
+      );
       return completer.future;
     });
     final res = await Future.any(futures);
     token.cancel();
     return res;
   }
-
-  Future<bool> pingHelper() async {
-    try {
-      final response = await dio
-          .get(
-            'http://$localhost:$helperPort/ping',
-            options: Options(responseType: ResponseType.plain),
-          )
-          .timeout(const Duration(milliseconds: 2000));
-      if (response.statusCode != HttpStatus.ok) {
-        return false;
-      }
-      return (response.data as String) == globalState.coreSHA256;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<bool> startCoreByHelper(String arg) async {
-    try {
-      final response = await dio
-          .post(
-            'http://$localhost:$helperPort/start',
-            data: json.encode({'path': appPath.corePath, 'arg': arg}),
-            options: Options(responseType: ResponseType.plain),
-          )
-          .timeout(const Duration(milliseconds: 2000));
-      if (response.statusCode != HttpStatus.ok) {
-        return false;
-      }
-      final data = response.data as String;
-      return data.isEmpty;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<bool> stopCoreByHelper() async {
-    try {
-      final response = await dio
-          .post(
-            'http://$localhost:$helperPort/stop',
-            options: Options(responseType: ResponseType.plain),
-          )
-          .timeout(const Duration(milliseconds: 2000));
-      if (response.statusCode != HttpStatus.ok) {
-        return false;
-      }
-      final data = response.data as String;
-      return data.isEmpty;
-    } catch (_) {
-      return false;
-    }
-  }
 }
 
 final request = Request();
+
+String? getFileNameForDisposition(String? disposition) {
+  if (disposition == null) return null;
+  final parseValue = HeaderValue.parse(disposition);
+  final parameters = parseValue.parameters;
+  final fileNamePointKey = parameters.keys.firstWhere(
+    (key) => key == 'filename*',
+    orElse: () => '',
+  );
+  if (fileNamePointKey.isNotEmpty) {
+    final res = parameters[fileNamePointKey]?.split("''") ?? [];
+    if (res.length >= 2) {
+      return Uri.decodeComponent(res[1]);
+    }
+  }
+  final fileNameKey = parameters.keys.firstWhere(
+    (key) => key == 'filename',
+    orElse: () => '',
+  );
+  if (fileNameKey.isEmpty) return null;
+  return parameters[fileNameKey];
+}

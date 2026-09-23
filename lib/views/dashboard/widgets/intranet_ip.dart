@@ -2,7 +2,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class IntranetIP extends StatelessWidget {
@@ -10,9 +10,11 @@ class IntranetIP extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
     return SizedBox(
       height: getWidgetHeight(1),
       child: CommonCard(
+        radius: AppCorner.lg,
         info: Info(label: appLocalizations.intranetIP, iconData: Icons.devices),
         onPressed: () {},
         child: Container(
@@ -40,8 +42,8 @@ class IntranetIP extends StatelessWidget {
                               ),
                             )
                           : Container(
-                              padding: EdgeInsets.all(2),
-                              child: AspectRatio(
+                              padding: const EdgeInsets.all(2),
+                              child: const AspectRatio(
                                 aspectRatio: 1,
                                 child: CommonCircleLoading(),
                               ),

@@ -1,12 +1,13 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
-import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/list.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 @immutable
@@ -22,18 +23,20 @@ class Contributor {
   });
 }
 
-class AboutView extends StatelessWidget {
+class AboutView extends ConsumerWidget {
   const AboutView({super.key});
 
-  Future<void> _checkUpdate(BuildContext context) async {
-    final data = await appController.safeRun<Map<String, dynamic>?>(
+  Future<void> _checkUpdate(BuildContext context, WidgetRef ref) async {
+    final commonAction = ref.read(commonActionProvider.notifier);
+    final data = await globalState.safeRun<Map<String, dynamic>?>(
       request.checkForUpdate,
-      title: appLocalizations.checkUpdate,
+      title: context.appLocalizations.checkUpdate,
     );
-    appController.checkUpdateResultHandle(data: data, isUser: true);
+    unawaited(commonAction.checkUpdateResultHandle(data: data, isUser: true));
   }
 
-  List<Widget> _buildMoreSection(BuildContext context) {
+  List<Widget> _buildMoreSection(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
     return generateSection(
       separated: false,
       title: appLocalizations.more,
@@ -41,27 +44,27 @@ class AboutView extends StatelessWidget {
         ListItem(
           title: Text(appLocalizations.checkUpdate),
           onTap: () {
-            _checkUpdate(context);
+            _checkUpdate(context, ref);
           },
         ),
         ListItem(
           title: const Text('Telegram'),
           onTap: () {
-            globalState.openUrl('https://t.me/FlClash');
+            dialogs.openUrl('https://t.me/FlClash');
           },
           trailing: const Icon(Icons.launch),
         ),
         ListItem(
           title: Text(appLocalizations.project),
           onTap: () {
-            globalState.openUrl('https://github.com/$repository');
+            dialogs.openUrl('https://github.com/$repository');
           },
           trailing: const Icon(Icons.launch),
         ),
         ListItem(
           title: Text(appLocalizations.core),
           onTap: () {
-            globalState.openUrl(
+            dialogs.openUrl(
               'https://github.com/chen08209/Clash.Meta/tree/FlClash',
             );
           },
@@ -71,7 +74,7 @@ class AboutView extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildContributorsSection() {
+  List<Widget> _buildContributorsSection(AppLocalizations appLocalizations) {
     const contributors = [
       Contributor(
         avatar: 'assets/images/avatar/june2.jpg',
@@ -105,7 +108,8 @@ class AboutView extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
     final items = [
       ListTile(
         title: Column(
@@ -147,6 +151,7 @@ class AboutView extends StatelessWidget {
                         .update((state) => state.copyWith(developerMode: true));
                     context.showNotifier(
                       appLocalizations.developerModeEnableTip,
+                      level: MessageLevel.success,
                     );
                   },
                 );
@@ -161,8 +166,8 @@ class AboutView extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 12),
-      ..._buildContributorsSection(),
-      ..._buildMoreSection(context),
+      ..._buildContributorsSection(appLocalizations),
+      ..._buildMoreSection(context, ref),
     ];
     return BaseScaffold(
       title: appLocalizations.about,
@@ -195,9 +200,6 @@ class Avatar extends StatelessWidget {
           Text(contributor.name, style: context.textTheme.bodySmall),
         ],
       ),
-      onTap: () {
-        globalState.openUrl(contributor.link);
-      },
     );
   }
 }
@@ -226,7 +228,7 @@ class _DeveloperModeDetectorState extends State<_DeveloperModeDetector> {
       _resetCounter();
     } else {
       _timer?.cancel();
-      _timer = Timer(Duration(seconds: 1), _resetCounter);
+      _timer = Timer(const Duration(seconds: 1), _resetCounter);
     }
   }
 

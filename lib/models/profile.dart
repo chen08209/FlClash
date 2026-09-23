@@ -2,15 +2,15 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'clash_config.dart';
-import 'state.dart';
 
 part 'generated/profile.freezed.dart';
 part 'generated/profile.g.dart';
+
+typedef ValidateConfig = Future<String> Function(String path);
 
 @freezed
 abstract class SubscriptionInfo with _$SubscriptionInfo {
@@ -27,7 +27,7 @@ abstract class SubscriptionInfo with _$SubscriptionInfo {
   factory SubscriptionInfo.formHString(String? info) {
     if (info == null) return const SubscriptionInfo();
     final list = info.split(';');
-    Map<String, int?> map = {};
+    final Map<String, int?> map = {};
     for (final i in list) {
       final keyValue = i.trim().split('=');
       map[keyValue[0]] = int.tryParse(keyValue[1]);
@@ -56,6 +56,7 @@ abstract class Profile with _$Profile {
     @Default({}) Set<String> unfoldSet,
     @Default(OverwriteType.standard) OverwriteType overwriteType,
     int? scriptId,
+    String? matchTarget,
     int? order,
   }) = _Profile;
 
@@ -94,18 +95,6 @@ extension ProfileRuleLinkExt on ProfileRuleLink {
   }
 }
 
-// @freezed
-// abstract class Overwrite with _$Overwrite {
-//   const factory Overwrite({
-//     @Default(OverwriteType.standard) OverwriteType type,
-//     @Default(StandardOverwrite()) StandardOverwrite standardOverwrite,
-//     @Default(ScriptOverwrite()) ScriptOverwrite scriptOverwrite,
-//   }) = _Overwrite;
-//
-//   factory Overwrite.fromJson(Map<String, Object?> json) =>
-//       _$OverwriteFromJson(json);
-// }
-
 @freezed
 abstract class StandardOverwrite with _$StandardOverwrite {
   const factory StandardOverwrite({
@@ -139,26 +128,14 @@ extension ProfilesExt on List<Profile> {
         ) !=
         -1;
     if (hasDup) {
-      return _getLabel(utils.getOverwriteLabel(realLabel), id);
+      return _getLabel(getOverwriteLabel(realLabel), id);
     } else {
-      return label;
+      return realLabel;
     }
   }
 
-  VM2<List<Profile>, Profile> copyAndAddProfile(Profile profile) {
-    final List<Profile> profilesTemp = List.from(this);
-    final index = profilesTemp.indexWhere(
-      (element) => element.id == profile.id,
-    );
-    final updateProfile = profile.copyWith(
-      label: _getLabel(profile.label, profile.id),
-    );
-    if (index == -1) {
-      profilesTemp.add(updateProfile);
-    } else {
-      profilesTemp[index] = updateProfile;
-    }
-    return VM2(profilesTemp, updateProfile);
+  Profile optimizeLabel(Profile profile) {
+    return profile.copyWith(label: _getLabel(profile.label, profile.id));
   }
 }
 
@@ -174,13 +151,15 @@ extension ProfileExtension on Profile {
 
   String get updatingKey => 'profile_$id';
 
-  Future<Profile?> checkAndUpdateAndCopy() async {
+  Future<Profile?> checkAndUpdateAndCopy({
+    required ValidateConfig validate,
+  }) async {
     final mFile = await _getFile(false);
     final isExists = await mFile.exists();
     if (isExists || url.isEmpty) {
       return null;
     }
-    return update();
+    return update(validate: validate);
   }
 
   Future<File> _getFile([bool autoCreate = true]) async {
@@ -188,62 +167,42 @@ extension ProfileExtension on Profile {
     final file = File(path);
     final isExists = await file.exists();
     if (!isExists && autoCreate) {
-      return await file.create(recursive: true);
+      return file.create(recursive: true);
     }
     return file;
-    // final oldPath = await appPath.getProfilePath(id);
-    // final newPath = await appPath.getProfilePath(fileName);
-    // final oldFile = oldPath == newPath ? null : File(oldPath);
-    // final oldIsExists = await oldFile?.exists() ?? false;
-    // if (oldIsExists) {
-    //   return await oldFile!.rename(newPath);
-    // }
-    // final file = File(newPath);
-    // final isExists = await file.exists();
-    // if (!isExists && autoCreate) {
-    //   return await file.create(recursive: true);
-    // }
-    // return file;
   }
 
   Future<File> get file async {
     return _getFile();
   }
 
-  Future<Profile> update() async {
+  Future<Profile> update({required ValidateConfig validate}) async {
     final response = await request.getFileResponseForUrl(url);
     final disposition = response.headers.value('content-disposition');
     final userinfo = response.headers.value('subscription-userinfo');
-    return await copyWith(
+    return copyWith(
       label: label.takeFirstValid([
-        utils.getFileNameForDisposition(disposition),
+        getFileNameForDisposition(disposition),
         id.toString(),
       ]),
       subscriptionInfo: SubscriptionInfo.formHString(userinfo),
-    ).saveFile(response.data ?? Uint8List.fromList([]));
+    ).saveFile(response.data ?? Uint8List.fromList([]), validate: validate);
   }
 
-  Future<Profile> saveFile(Uint8List bytes) async {
+  Future<Profile> saveFile(
+    Uint8List bytes, {
+    required ValidateConfig validate,
+  }) async {
     final path = await appPath.tempFilePath;
     final tempFile = File(path);
     await tempFile.safeWriteAsBytes(bytes);
-    final message = await coreController.validateConfig(path);
+    final message = await validate(path);
     if (message.isNotEmpty) {
-      throw message;
+      throw MessageException(message);
     }
     final mFile = await file;
     await tempFile.copy(mFile.path);
     await tempFile.safeDelete();
-    return copyWith(lastUpdateDate: DateTime.now());
-  }
-
-  Future<Profile> saveFileWithPath(String path) async {
-    final message = await coreController.validateConfig(path);
-    if (message.isNotEmpty) {
-      throw message;
-    }
-    final mFile = await file;
-    await File(path).copy(mFile.path);
     return copyWith(lastUpdateDate: DateTime.now());
   }
 }

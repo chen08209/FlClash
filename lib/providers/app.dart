@@ -1,20 +1,25 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:ui' show Locale;
 
 import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/providers/core.dart';
+import 'package:fl_clash/providers/state.dart';
 import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:wifi_ssid/wifi_ssid.dart';
 
 part 'generated/app.g.dart';
 
-@riverpod
-class RealTunEnable extends _$RealTunEnable with AutoDisposeNotifierMixin {
+@Riverpod(keepAlive: true)
+class AuthorizedTunEnable extends _$AuthorizedTunEnable
+    with AutoDisposeNotifierMixin {
   @override
-  bool build() {
-    return false;
+  TunAuthorizationState build() {
+    return TunAuthorizationState.none;
   }
 }
 
@@ -22,11 +27,24 @@ class RealTunEnable extends _$RealTunEnable with AutoDisposeNotifierMixin {
 class Logs extends _$Logs with AutoDisposeNotifierMixin {
   @override
   FixedList<Log> build() {
-    return FixedList(0);
+    return FixedList(maxLogsLength);
   }
 
-  void addLog(Log value) {
-    this.value = state.copyWith()..add(value);
+  void add(Log value) {
+    if (!ref.mounted) {
+      return;
+    }
+    this.value = state.append(value);
+  }
+
+  Future<bool> exportLogs() async {
+    final logString = await encodeLogsTask(value.list);
+    final tempFilePath = await appPath.tempFilePath;
+    final file = File(tempFilePath);
+    await file.safeWriteAsString(logString);
+    bool res = false;
+    res = await picker.saveFileWithPath(logFileName, tempFilePath) != null;
+    return res;
   }
 }
 
@@ -34,11 +52,14 @@ class Logs extends _$Logs with AutoDisposeNotifierMixin {
 class Requests extends _$Requests with AutoDisposeNotifierMixin {
   @override
   FixedList<TrackerInfo> build() {
-    return FixedList(0);
+    return FixedList(maxRequestsLength);
   }
 
   void addRequest(TrackerInfo value) {
-    this.value = state.copyWith()..add(value);
+    if (!ref.mounted) {
+      return;
+    }
+    this.value = state.append(value);
   }
 }
 
@@ -55,6 +76,10 @@ class Providers extends _$Providers with AutoDisposeNotifierMixin {
     if (index == -1) return;
     final newState = List<ExternalProvider>.from(value)..[index] = provider;
     value = newState;
+  }
+
+  Future<void> syncProviders() async {
+    value = await ref.read(coreHandlerProvider).getExternalProviders();
   }
 }
 
@@ -79,11 +104,14 @@ class SystemBrightness extends _$SystemBrightness
 class Traffics extends _$Traffics with AutoDisposeNotifierMixin {
   @override
   FixedList<Traffic> build() {
-    return FixedList(0);
+    return FixedList(trafficSampleLength);
   }
 
   void addTraffic(Traffic value) {
-    this.value = state.copyWith()..add(value);
+    if (!ref.mounted) {
+      return;
+    }
+    this.value = state.append(value);
   }
 
   void clear() {
@@ -95,7 +123,15 @@ class Traffics extends _$Traffics with AutoDisposeNotifierMixin {
 class TotalTraffic extends _$TotalTraffic with AutoDisposeNotifierMixin {
   @override
   Traffic build() {
-    return Traffic();
+    return const Traffic();
+  }
+}
+
+@Riverpod(keepAlive: true)
+class LoadedLocale extends _$LoadedLocale with AutoDisposeNotifierMixin {
+  @override
+  Locale? build() {
+    return null;
   }
 }
 
@@ -138,7 +174,7 @@ double viewWidth(Ref ref) {
 
 @Riverpod(keepAlive: true)
 ViewMode viewMode(Ref ref) {
-  return utils.getViewMode(ref.watch(viewWidthProvider));
+  return getViewMode(ref.watch(viewWidthProvider));
 }
 
 @Riverpod(keepAlive: true)
@@ -166,6 +202,14 @@ class CurrentPageLabel extends _$CurrentPageLabel
   PageLabel build() {
     return PageLabel.dashboard;
   }
+
+  void toPage(PageLabel pageLabel) {
+    value = pageLabel;
+  }
+
+  void toProfiles() {
+    toPage(PageLabel.profiles);
+  }
 }
 
 @Riverpod(keepAlive: true)
@@ -186,14 +230,6 @@ class CheckIpNum extends _$CheckIpNum with AutoDisposeNotifierMixin {
   }
 
   int add() => state++;
-}
-
-@Riverpod(keepAlive: true)
-class BackBlock extends _$BackBlock with AutoDisposeNotifierMixin {
-  @override
-  bool build() {
-    return false;
-  }
 }
 
 @Riverpod(keepAlive: true)
@@ -232,11 +268,65 @@ class DelayDataSource extends _$DelayDataSource with AutoDisposeNotifierMixin {
 }
 
 @Riverpod(keepAlive: true)
+class PendingDelayTests extends _$PendingDelayTests
+    with AutoDisposeNotifierMixin {
+  final Map<String, int> _counts = {};
+
+  @override
+  Set<String> build() {
+    return const <String>{};
+  }
+
+  void acquire(Iterable<String> keys) {
+    var added = false;
+    for (final key in keys) {
+      final count = _counts[key] ?? 0;
+      _counts[key] = count + 1;
+      added |= count == 0;
+    }
+    if (added) {
+      _publish();
+    }
+  }
+
+  void release(Iterable<String> keys) {
+    var removed = false;
+    for (final key in keys) {
+      final count = _counts[key];
+      if (count == null) {
+        continue;
+      }
+      if (count > 1) {
+        _counts[key] = count - 1;
+        continue;
+      }
+      _counts.remove(key);
+      removed = true;
+    }
+    if (removed) {
+      _publish();
+    }
+  }
+
+  void clear() {
+    if (_counts.isEmpty) {
+      return;
+    }
+    _counts.clear();
+    _publish();
+  }
+
+  void _publish() {
+    value = Set.unmodifiable(_counts.keys);
+  }
+}
+
+@Riverpod(keepAlive: true)
 class SystemUiOverlayStyleState extends _$SystemUiOverlayStyleState
     with AutoDisposeNotifierMixin {
   @override
   SystemUiOverlayStyle build() {
-    return SystemUiOverlayStyle();
+    return const SystemUiOverlayStyle();
   }
 }
 
@@ -263,6 +353,9 @@ class Loading extends _$Loading with AutoDisposeNotifierMixin {
 
   @override
   bool build(LoadingTag tag) {
+    ref.onDispose(() {
+      _timer?.cancel();
+    });
     return false;
   }
 
@@ -295,7 +388,7 @@ class Loading extends _$Loading with AutoDisposeNotifierMixin {
 }
 
 @riverpod
-class SelectedItems extends _$SelectedItems with AutoDisposeNotifierMixin {
+class Items extends _$Items with AutoDisposeNotifierMixin {
   @override
   Set<dynamic> build(String key) {
     return {};
@@ -303,31 +396,98 @@ class SelectedItems extends _$SelectedItems with AutoDisposeNotifierMixin {
 }
 
 @riverpod
-class SelectedItem extends _$SelectedItem with AutoDisposeNotifierMixin {
+class Item extends _$Item with AutoDisposeNotifierMixin {
   @override
   dynamic build(String key) {
     return null;
   }
 }
 
-@riverpod
-class IsUpdating extends _$IsUpdating with AutoDisposeNotifierMixin {
+@Riverpod(keepAlive: true)
+class UpdatingKeys extends _$UpdatingKeys {
+  final _operations = <String, Set<int>>{};
+  final _scopes = <String, UpdatingScope>{};
+  int _operation = 0;
+
   @override
-  bool build(String name) {
-    return false;
+  Set<String> build() {
+    ref.listen(coreStatusProvider, (_, next) {
+      if (next != CoreStatus.connected) {
+        _discardScope(UpdatingScope.core);
+      }
+    });
+    return const <String>{};
   }
+
+  int start(String key, {UpdatingScope scope = UpdatingScope.local}) {
+    final operation = ++_operation;
+    _operations.putIfAbsent(key, () => <int>{}).add(operation);
+    _scopes[key] = scope;
+    if (!state.contains(key)) {
+      state = {...state, key};
+    }
+    return operation;
+  }
+
+  void stop(String key, int operation) {
+    final operations = _operations[key];
+    if (operations == null) {
+      return;
+    }
+    operations.remove(operation);
+    if (operations.isNotEmpty) {
+      return;
+    }
+    _discard([key]);
+  }
+
+  void stopKeys(Iterable<String> keys) {
+    _discard(keys.toList());
+  }
+
+  UpdatingScope? scopeOf(String key) => _scopes[key];
+
+  void _discardScope(UpdatingScope scope) {
+    _discard(state.where((key) => _scopes[key] == scope).toList());
+  }
+
+  void _discard(List<String> keys) {
+    if (keys.isEmpty) {
+      return;
+    }
+    for (final key in keys) {
+      _operations.remove(key);
+      _scopes.remove(key);
+    }
+    final next = state.where((key) => !keys.contains(key)).toSet();
+    if (next.length == state.length) {
+      return;
+    }
+    state = next;
+  }
+}
+
+@riverpod
+bool isUpdating(Ref ref, String name) {
+  return ref.watch(updatingKeysProvider).contains(name);
 }
 
 @Riverpod(keepAlive: true)
 class NetworkDetection extends _$NetworkDetection
     with AutoDisposeNotifierMixin {
+  static const _timeoutDisplayDelay = Duration(seconds: 2);
+
   bool? _preIsStart;
   CancelToken? _cancelToken;
-  int _startMillisecondsEpoch = 0;
+  Timer? _timeoutTimer;
+  int _checkVersion = 0;
 
   @override
   NetworkDetectionState build() {
-    return NetworkDetectionState(isLoading: true, ipInfo: null);
+    ref.onDispose(() {
+      _resetCheckSession(null);
+    });
+    return const NetworkDetectionState(isLoading: true, ipInfo: null);
   }
 
   void startCheck() {
@@ -345,32 +505,82 @@ class NetworkDetection extends _$NetworkDetection
     if (!isStart && _preIsStart == false && state.ipInfo != null) {
       return;
     }
-    final millisecondsEpoch = DateTime.now().millisecondsSinceEpoch;
-    _startMillisecondsEpoch = millisecondsEpoch;
-    final runTime = millisecondsEpoch + 1;
-    _cancelToken?.cancel();
-    _cancelToken = CancelToken();
+    final cancelToken = CancelToken();
+    final version = _resetCheckSession(cancelToken);
     commonPrint.log('checkIp start');
     state = state.copyWith(isLoading: true, ipInfo: null);
     _preIsStart = isStart;
-    final res = await request.checkIp(cancelToken: _cancelToken);
+    final res = await request.checkIp(cancelToken: cancelToken);
     commonPrint.log('checkIp res: $res');
-    if (res.isError && runTime > _startMillisecondsEpoch) {
-      state = state.copyWith(isLoading: true, ipInfo: null);
+
+    if (!ref.mounted ||
+        version != _checkVersion ||
+        cancelToken != _cancelToken) {
       return;
     }
     final ipInfo = res.data;
     if (ipInfo == null) {
+      _delayTimeoutDisplay(version);
       return;
     }
     state = state.copyWith(isLoading: false, ipInfo: ipInfo);
+  }
+
+  int _resetCheckSession(CancelToken? cancelToken) {
+    _cancelTimeoutTimer();
+    final version = ++_checkVersion;
+    final previousCancelToken = _cancelToken;
+    _cancelToken = cancelToken;
+    previousCancelToken?.cancel();
+    return version;
+  }
+
+  void _delayTimeoutDisplay(int version) {
+    _cancelTimeoutTimer();
+    _timeoutTimer = Timer(_timeoutDisplayDelay, () {
+      _timeoutTimer = null;
+      if (!ref.mounted || version != _checkVersion || state.ipInfo != null) {
+        return;
+      }
+      state = state.copyWith(isLoading: false, ipInfo: null);
+    });
+  }
+
+  void _cancelTimeoutTimer() {
+    _timeoutTimer?.cancel();
+    _timeoutTimer = null;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class CurrentSSID extends _$CurrentSSID with AutoDisposeNotifierMixin {
+  @override
+  String? build() {
+    return null;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class BatteryOptimizationDisable extends _$BatteryOptimizationDisable
+    with AutoDisposeNotifierMixin {
+  @override
+  bool build() {
+    return false;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class LocationPermissions extends _$LocationPermissions
+    with AutoDisposeNotifierMixin {
+  @override
+  WifiSsidPermission build() {
+    return WifiSsidPermission.denied;
   }
 }
 
 List<Override> buildAppStateOverrides(AppState appState) {
   return [
     initProvider.overrideWithBuild((_, _) => appState.isInit),
-    backBlockProvider.overrideWithBuild((_, _) => appState.backBlock),
     currentPageLabelProvider.overrideWithBuild((_, _) => appState.pageLabel),
     packagesProvider.overrideWithBuild((_, _) => appState.packages),
     sortNumProvider.overrideWithBuild((_, _) => appState.sortNum),
@@ -388,7 +598,9 @@ List<Override> buildAppStateOverrides(AppState appState) {
     logsProvider.overrideWithBuild((_, _) => appState.logs),
     trafficsProvider.overrideWithBuild((_, _) => appState.traffics),
     totalTrafficProvider.overrideWithBuild((_, _) => appState.totalTraffic),
-    realTunEnableProvider.overrideWithBuild((_, _) => appState.realTunEnable),
+    authorizedTunEnableProvider.overrideWithBuild(
+      (_, _) => appState.authorizedTunEnable,
+    ),
     systemUiOverlayStyleStateProvider.overrideWithBuild(
       (_, _) => appState.systemUiOverlayStyle,
     ),

@@ -1,7 +1,7 @@
-import 'package:fl_clash/common/app_localizations.dart';
+import 'package:fl_clash/common/context.dart';
 import 'package:fl_clash/views/config/general.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class ConfigView extends StatelessWidget {
   const ConfigView({super.key});
@@ -9,8 +9,8 @@ class ConfigView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BaseScaffold(
-      title: appLocalizations.basicConfig,
-      body: generateListView(generalItems),
+      title: context.appLocalizations.basicConfig,
+      body: const GeneralListView(),
     );
   }
 }

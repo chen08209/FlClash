@@ -1,18 +1,21 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
-import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
+import 'package:fl_clash/providers/action.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DeveloperView extends ConsumerWidget {
   const DeveloperView({super.key});
 
   Widget _getDeveloperList(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
     return generateSectionV2(
       title: appLocalizations.options,
       items: [
@@ -20,7 +23,12 @@ class DeveloperView extends ConsumerWidget {
           title: Text(appLocalizations.messageTest),
           minVerticalPadding: 12,
           onTap: () {
-            context.showNotifier(appLocalizations.messageTestTip);
+            for (final level in MessageLevel.values) {
+              context.showNotifier(
+                '${level.name}: ${appLocalizations.messageTestTip}',
+                level: level,
+              );
+            }
           },
         ),
         ListItem(
@@ -28,55 +36,50 @@ class DeveloperView extends ConsumerWidget {
           minVerticalPadding: 12,
           onTap: () {
             for (int i = 0; i < 1000; i++) {
-              appController.addLog(
-                Log.app(
-                  '[$i]${utils.generateRandomString(maxLength: 200, minLength: 20)}',
-                ),
-              );
+              ref
+                  .read(logsProvider.notifier)
+                  .add(
+                    Log.app(
+                      '[$i]${generateRandomString(maxLength: 200, minLength: 20)}',
+                    ),
+                  );
             }
           },
         ),
-        if (globalState.isPre)
+        if (globalState.canCrashCore)
           ListItem(
             title: Text(appLocalizations.crashTest),
             minVerticalPadding: 12,
             onTap: () async {
-              final res = await globalState.showMessage(
+              final coreAction = ref.read(coreActionProvider.notifier);
+              final res = await dialogs.showMessage(
                 message: TextSpan(text: appLocalizations.confirmForceCrashCore),
               );
               if (res != true) {
                 return;
               }
-              coreController.crash();
+              unawaited(coreAction.crash());
             },
           ),
         ListItem(
           title: Text(appLocalizations.clearData),
           minVerticalPadding: 12,
           onTap: () async {
-            final res = await globalState.showMessage(
+            final storeAction = ref.read(storeActionProvider.notifier);
+            final res = await dialogs.showMessage(
               message: TextSpan(text: appLocalizations.confirmClearAllData),
             );
             if (res != true) {
               return;
             }
-            await appController.handleClear();
+            await storeAction.handleClear();
           },
         ),
-        // ListItem(
-        //   title: Text(appLocalizations.loadTest),
-        //   minVerticalPadding: 12,
-        //   onTap: () {
-        //     ref.read(loadingProvider.notifier).value = !ref.read(
-        //       loadingProvider,
-        //     );
-        //   },
-        // ),
         ListItem(
           title: Text(appLocalizations.pruneCache),
           minVerticalPadding: 12,
-          onTap: () {
-            appController.shakingStore();
+          onTap: () async {
+            await ref.read(storeActionProvider.notifier).shakingStore();
           },
         ),
       ],
@@ -85,6 +88,7 @@ class DeveloperView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
+    final appLocalizations = context.appLocalizations;
     final enable = ref.watch(
       appSettingProvider.select((state) => state.developerMode),
     );
@@ -96,23 +100,19 @@ class DeveloperView extends ConsumerWidget {
           children: [
             CommonCard(
               type: CommonCardType.filled,
-              radius: 18,
-              child: ListItem.switchItem(
+              radius: AppCorner.md,
+              child: ListItem.toggle(
                 padding: const EdgeInsets.only(left: 16, right: 16),
                 title: Text(appLocalizations.developerMode),
-                delegate: SwitchDelegate(
-                  value: enable,
-                  onChanged: (value) {
-                    ref
-                        .read(appSettingProvider.notifier)
-                        .update(
-                          (state) => state.copyWith(developerMode: value),
-                        );
-                  },
-                ),
+                value: enable,
+                onChanged: (value) {
+                  ref
+                      .read(appSettingProvider.notifier)
+                      .update((state) => state.copyWith(developerMode: value));
+                },
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             _getDeveloperList(context, ref),
           ],
         ),

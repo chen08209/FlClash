@@ -1,18 +1,20 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
-import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
+import 'package:fl_clash/providers/action.dart';
+import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class EditProfileView extends StatefulWidget {
+class EditProfileView extends ConsumerStatefulWidget {
   final Profile profile;
   final BuildContext context;
 
@@ -23,10 +25,10 @@ class EditProfileView extends StatefulWidget {
   });
 
   @override
-  State<EditProfileView> createState() => _EditProfileViewState();
+  ConsumerState<EditProfileView> createState() => _EditProfileViewState();
 }
 
-class _EditProfileViewState extends State<EditProfileView> {
+class _EditProfileViewState extends ConsumerState<EditProfileView> {
   late final TextEditingController _labelController;
   late final TextEditingController _urlController;
   late final TextEditingController _autoUpdateDurationController;
@@ -34,6 +36,7 @@ class _EditProfileViewState extends State<EditProfileView> {
   String? _rawText;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final _fileInfoNotifier = ValueNotifier<FileInfo?>(null);
+  late SetupAction _setupAction;
   Uint8List? _fileData;
 
   @override
@@ -45,20 +48,17 @@ class _EditProfileViewState extends State<EditProfileView> {
     _autoUpdateDurationController = TextEditingController(
       text: widget.profile.autoUpdateDuration.inMinutes.toString(),
     );
+    _setupAction = ref.read(setupActionProvider.notifier);
     _updateFileInfo();
   }
 
   Future<void> _updateFileInfo() async {
     final file = await widget.profile.file;
-    if (!await file.exists()) {
-      return;
-    }
-    final lastModified = await file.lastModified();
-    final size = await file.length();
+    final fileInfo = await file.getFileInfo();
     if (!mounted) {
       return;
     }
-    _fileInfoNotifier.value = FileInfo(size: size, lastModified: lastModified);
+    _fileInfoNotifier.value = fileInfo;
   }
 
   Future<void> _handleConfirm() async {
@@ -71,10 +71,12 @@ class _EditProfileViewState extends State<EditProfileView> {
         minutes: int.parse(_autoUpdateDurationController.text),
       ),
     );
+    final profilesAction = ref.read(profilesActionProvider.notifier);
     final hasUpdate = widget.profile.url != profile.url;
     if (_fileData != null) {
       if (profile.type == ProfileType.url && _autoUpdate) {
-        final res = await globalState.showMessage(
+        final appLocalizations = context.appLocalizations;
+        final res = await dialogs.showMessage(
           title: appLocalizations.tip,
           message: TextSpan(text: appLocalizations.profileHasUpdate),
         );
@@ -82,16 +84,28 @@ class _EditProfileViewState extends State<EditProfileView> {
           profile = profile.copyWith(autoUpdate: false);
         }
       }
-      appController.putProfile(await profile.saveFile(_fileData!));
+      final savedProfile = await globalState.safeRun(
+        () => profile.saveFile(
+          _fileData!,
+          validate: (path) =>
+              ref.read(coreHandlerProvider).validateConfig(path),
+        ),
+      );
+      if (savedProfile == null) {
+        return;
+      }
+      profilesAction.putProfile(savedProfile);
     } else if (!hasUpdate) {
-      appController.putProfile(profile);
+      profilesAction.putProfile(profile);
     } else {
-      appController.safeRun(() async {
-        await Future.delayed(commonDuration);
-        if (hasUpdate) {
-          await appController.updateProfile(profile);
-        }
-      });
+      unawaited(
+        globalState.safeRun(() async {
+          await Future.delayed(commonDuration);
+          if (hasUpdate) {
+            await profilesAction.updateProfile(profile);
+          }
+        }),
+      );
     }
     if (mounted) {
       Navigator.of(context).pop();
@@ -106,14 +120,18 @@ class _EditProfileViewState extends State<EditProfileView> {
   }
 
   Future<void> _handleSaveEdit(BuildContext context, String data) async {
-    final message = await appController.safeRun<String>(() async {
-      final message = await coreController.validateConfigWithData(data);
+    final message = await globalState.safeRun<String>(() async {
+      final message = await ref
+          .read(profilesActionProvider.notifier)
+          .validateConfigWithData(data);
       return message;
     }, silence: false);
     if (message?.isNotEmpty == true) {
-      globalState.showMessage(
-        title: appLocalizations.tip,
-        message: TextSpan(text: message),
+      unawaited(
+        dialogs.showMessage(
+          title: currentAppLocalizations.tip,
+          message: TextSpan(text: message),
+        ),
       );
       return;
     }
@@ -146,12 +164,12 @@ class _EditProfileViewState extends State<EditProfileView> {
         if (content == _rawText) {
           return true;
         }
-        final res = await globalState.showMessage(
+        final res = await dialogs.showMessage(
           title: title,
-          message: TextSpan(text: appLocalizations.hasCacheChange),
+          message: TextSpan(text: context.appLocalizations.hasCacheChange),
         );
         if (res == true && context.mounted) {
-          _handleSaveEdit(context, content);
+          unawaited(_handleSaveEdit(context, content));
         } else {
           return true;
         }
@@ -171,9 +189,9 @@ class _EditProfileViewState extends State<EditProfileView> {
   }
 
   Future<void> _uploadProfileFile() async {
-    final platformFile = await appController.safeRun(picker.pickerFile);
-    if (platformFile?.bytes == null) return;
-    _fileData = platformFile?.bytes;
+    final platformFile = await globalState.safeRun(picker.pickerFile);
+    if (platformFile == null) return;
+    _fileData = await platformFile.readBytes();
     if (!mounted) {
       return;
     }
@@ -184,12 +202,13 @@ class _EditProfileViewState extends State<EditProfileView> {
   }
 
   Future<void> _handleBack() async {
-    final res = await globalState.showMessage(
+    final appLocalizations = context.appLocalizations;
+    final res = await dialogs.showMessage(
       title: appLocalizations.tip,
       message: TextSpan(text: appLocalizations.fileIsUpdate),
     );
     if (res == true) {
-      _handleConfirm();
+      unawaited(_handleConfirm());
     } else {
       if (mounted) {
         Navigator.of(context).pop();
@@ -204,155 +223,244 @@ class _EditProfileViewState extends State<EditProfileView> {
     _fileInfoNotifier.dispose();
     _autoUpdateDurationController.dispose();
     super.dispose();
-    appController.autoApplyProfile();
+    _setupAction.autoApplyProfile();
   }
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      ListItem(
-        title: TextFormField(
-          textInputAction: TextInputAction.next,
-          controller: _labelController,
-          decoration: InputDecoration(
-            border: const OutlineInputBorder(),
-            labelText: appLocalizations.name,
-          ),
-          validator: (String? value) {
-            if (value == null || value.isEmpty) {
-              return appLocalizations.profileNameNullValidationDesc;
-            }
-            return null;
-          },
-        ),
-      ),
+    final appLocalizations = context.appLocalizations;
+    final items = <Widget>[
+      _ProfileNameField(controller: _labelController),
       if (widget.profile.type == ProfileType.url) ...[
-        ListItem(
-          title: TextFormField(
-            textInputAction: TextInputAction.next,
-            keyboardType: TextInputType.url,
-            controller: _urlController,
-            maxLines: 5,
-            minLines: 1,
-            decoration: InputDecoration(
-              border: const OutlineInputBorder(),
-              labelText: appLocalizations.url,
-            ),
-            validator: (String? value) {
-              if (value == null || value.isEmpty) {
-                return appLocalizations.profileUrlNullValidationDesc;
-              }
-              if (!value.isUrl) {
-                return appLocalizations.profileUrlInvalidValidationDesc;
-              }
-              return null;
-            },
-          ),
-        ),
-        ListItem.switchItem(
+        _ProfileUrlField(controller: _urlController),
+        ListItem.toggle(
           title: Text(appLocalizations.autoUpdate),
-          delegate: SwitchDelegate<bool>(
-            value: _autoUpdate,
-            onChanged: _setAutoUpdate,
-          ),
+          value: _autoUpdate,
+          onChanged: _setAutoUpdate,
         ),
         if (_autoUpdate)
-          ListItem(
-            title: TextFormField(
-              textInputAction: TextInputAction.next,
-              controller: _autoUpdateDurationController,
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                labelText: appLocalizations.autoUpdateInterval,
-              ),
-              validator: (String? value) {
-                if (value == null || value.isEmpty) {
-                  return appLocalizations
-                      .profileAutoUpdateIntervalNullValidationDesc;
-                }
-                try {
-                  int.parse(value);
-                } catch (_) {
-                  return appLocalizations
-                      .profileAutoUpdateIntervalInvalidValidationDesc;
-                }
-                return null;
-              },
-            ),
-          ),
+          _AutoUpdateIntervalField(controller: _autoUpdateDurationController),
       ],
-      ValueListenableBuilder<FileInfo?>(
-        valueListenable: _fileInfoNotifier,
-        builder: (_, fileInfo, _) {
-          return FadeThroughBox(
-            alignment: Alignment.centerLeft,
-            child: fileInfo == null
-                ? Container()
-                : ListItem(
-                    title: Text(appLocalizations.profile),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 4),
-                        Text(fileInfo.desc),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          runSpacing: 6,
-                          spacing: 12,
-                          children: [
-                            CommonChip(
-                              avatar: const Icon(Icons.edit),
-                              label: appLocalizations.edit,
-                              onPressed: _editProfileFile,
-                            ),
-                            CommonChip(
-                              avatar: const Icon(Icons.upload),
-                              label: appLocalizations.upload,
-                              onPressed: _uploadProfileFile,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-          );
-        },
+      _ProfileFileItem(
+        fileInfoNotifier: _fileInfoNotifier,
+        onEdit: _editProfileFile,
+        onUpload: _uploadProfileFile,
       ),
     ];
-    return CommonPopScope(
-      onPop: (context) {
-        if (_fileData == null) {
-          return true;
-        }
-        _handleBack();
-        return false;
-      },
-      child: FloatLayout(
-        floatingWidget: FloatWrapper(
-          child: FloatingActionButton.extended(
-            heroTag: null,
-            onPressed: _handleConfirm,
-            label: Text(appLocalizations.save),
-            icon: const Icon(Icons.save),
-          ),
-        ),
-        child: Form(
-          key: _formKey,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: ListView.separated(
-              padding: kMaterialListPadding.copyWith(bottom: 72),
-              itemBuilder: (_, index) {
-                return items[index];
-              },
-              separatorBuilder: (_, _) {
-                return const SizedBox(height: 24);
-              },
-              itemCount: items.length,
+    return FocusTraversalGroup(
+      policy: PageTraversalPolicy(),
+      child: PageFocusScope(
+        child: CommonPopScope(
+          onPop: (context) {
+            if (_fileData == null) {
+              return true;
+            }
+            _handleBack();
+            return false;
+          },
+          child: FloatLayout(
+            floatingWidget: FloatWrapper(
+              child: CommonFloatingActionButton(
+                onPressed: _handleConfirm,
+                icon: const Icon(Icons.save),
+                label: appLocalizations.save,
+              ),
+            ),
+            child: Form(
+              key: _formKey,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Builder(
+                  builder: (context) => ListView.separated(
+                    padding: kMaterialListPadding.copyWith(
+                      bottom: BottomInsetScope.of(context),
+                    ),
+                    itemBuilder: (_, index) {
+                      return items[index];
+                    },
+                    separatorBuilder: (_, _) {
+                      return const SizedBox(height: 24);
+                    },
+                    itemCount: items.length,
+                  ),
+                ),
+              ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ProfileNameField extends StatelessWidget {
+  const _ProfileNameField({required this.controller});
+
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return ListItem(
+      title: TextFormField(
+        textInputAction: TextInputAction.next,
+        controller: controller,
+        inputFormatters: TextInputLimits.limit(TextInputLimits.name),
+        decoration: InputDecoration(labelText: appLocalizations.name),
+        validator: (String? value) {
+          if (value == null || value.isEmpty) {
+            return appLocalizations.profileNameNullValidationDesc;
+          }
+          return null;
+        },
+      ),
+    );
+  }
+}
+
+class _ProfileUrlField extends StatelessWidget {
+  const _ProfileUrlField({required this.controller});
+
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return ListItem(
+      title: TextFormField(
+        textInputAction: TextInputAction.next,
+        keyboardType: TextInputType.url,
+        controller: controller,
+        inputFormatters: TextInputLimits.limit(TextInputLimits.url),
+        maxLines: 5,
+        minLines: 1,
+        decoration: InputDecoration(labelText: appLocalizations.url),
+        validator: (String? value) {
+          if (value == null || value.isEmpty) {
+            return appLocalizations.profileUrlNullValidationDesc;
+          }
+          if (!value.isUrl) {
+            return appLocalizations.profileUrlInvalidValidationDesc;
+          }
+          return null;
+        },
+      ),
+    );
+  }
+}
+
+class _AutoUpdateIntervalField extends StatelessWidget {
+  const _AutoUpdateIntervalField({required this.controller});
+
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return ListItem(
+      title: TextFormField(
+        textInputAction: TextInputAction.next,
+        controller: controller,
+        inputFormatters: TextInputLimits.digitsOnly(TextInputLimits.interval),
+        decoration: InputDecoration(
+          labelText: appLocalizations.autoUpdateInterval,
+        ),
+        validator: (String? value) {
+          if (value == null || value.isEmpty) {
+            return appLocalizations.profileAutoUpdateIntervalNullValidationDesc;
+          }
+          try {
+            int.parse(value);
+          } catch (_) {
+            return appLocalizations
+                .profileAutoUpdateIntervalInvalidValidationDesc;
+          }
+          return null;
+        },
+      ),
+    );
+  }
+}
+
+class _ProfileFileItem extends StatelessWidget {
+  const _ProfileFileItem({
+    required this.fileInfoNotifier,
+    required this.onEdit,
+    required this.onUpload,
+  });
+
+  final ValueNotifier<FileInfo?> fileInfoNotifier;
+  final VoidCallback onEdit;
+  final VoidCallback onUpload;
+
+  Widget _buildMetadata(BuildContext context, FileInfo fileInfo) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 2),
+      child: Row(
+        spacing: 4,
+        children: [
+          MetaChip(label: fileInfo.size.traffic.show),
+          MetaChip(
+            label:
+                fileInfo.lastModified?.getLastUpdateTimeDesc(context) ??
+                context.appLocalizations.unknown,
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<CommonPopupMenuItem> _menuItems(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return [
+      CommonPopupMenuItem(
+        icon: Icons.edit_outlined,
+        label: appLocalizations.edit,
+        onPressed: onEdit,
+      ),
+      CommonPopupMenuItem(
+        icon: Icons.upload_outlined,
+        label: appLocalizations.upload,
+        onPressed: onUpload,
+      ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return ValueListenableBuilder<FileInfo?>(
+      valueListenable: fileInfoNotifier,
+      builder: (context, fileInfo, _) {
+        return FadeThroughBox(
+          alignment: Alignment.centerLeft,
+          child: fileInfo == null
+              ? Container()
+              : Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ItemPositionProvider(
+                    position: ItemPosition.startAndEnd,
+                    child: DecorationListItem(
+                      minVerticalPadding: 8,
+                      contentPadding: const EdgeInsets.only(left: 16, right: 8),
+                      title: Text(appLocalizations.profile),
+                      subtitle: _buildMetadata(context, fileInfo),
+                      trailing: CommonPopupBox(
+                        popupBuilder: (_) =>
+                            CommonPopupMenu(items: _menuItems(context)),
+                        targetBuilder: (open) {
+                          return IconButton(
+                            tooltip: appLocalizations.more,
+                            onPressed: open,
+                            icon: const Icon(Icons.more_vert),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+        );
+      },
     );
   }
 }

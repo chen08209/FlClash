@@ -2,11 +2,10 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/theme.dart';
-import 'package:fl_clash/controller.dart';
-import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,59 +20,27 @@ class ThemeManager extends ConsumerWidget {
     if (!system.isAndroid) {
       return child;
     }
-    return AnnotatedRegion<SystemUiMode>(
-      sized: false,
-      value: SystemUiMode.edgeToEdge,
-      child: Consumer(
-        builder: (context, ref, _) {
-          final brightness = ref.watch(currentBrightnessProvider);
-          final iconBrightness = brightness == Brightness.light
-              ? Brightness.dark
-              : Brightness.light;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ref
-                .read(systemUiOverlayStyleStateProvider.notifier)
-                .update(
-                  (state) => state.copyWith(
-                    statusBarColor: Colors.transparent,
-                    statusBarIconBrightness: iconBrightness,
-                    systemNavigationBarIconBrightness: iconBrightness,
-                    systemNavigationBarColor: context.colorScheme.surface,
-                    systemNavigationBarDividerColor: Colors.transparent,
-                  ),
-                );
-          });
-          return AnnotatedRegion<SystemUiOverlayStyle>(
-            value: SystemUiOverlayStyle(
-              statusBarColor: Colors.transparent,
-              statusBarIconBrightness: iconBrightness,
-              systemNavigationBarIconBrightness: iconBrightness,
-              systemNavigationBarColor: context.colorScheme.surface,
-              systemNavigationBarDividerColor: Colors.transparent,
-            ),
-            sized: false,
-            child: child,
-          );
-        },
-      ),
+    return Consumer(
+      builder: (context, ref, _) {
+        final brightness = ref.watch(currentBrightnessProvider);
+        final iconBrightness = brightness == Brightness.light
+            ? Brightness.dark
+            : Brightness.light;
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: iconBrightness,
+            systemNavigationBarIconBrightness: iconBrightness,
+            systemNavigationBarColor: Colors.transparent,
+            systemNavigationBarDividerColor: Colors.transparent,
+            systemNavigationBarContrastEnforced: false,
+          ),
+          sized: false,
+          child: child,
+        );
+      },
     );
   }
-
-  // _buildScrollbar(Widget child) {
-  //   return Consumer(
-  //     builder: (_, ref, child) {
-  //       final isMobileView = ref.read(isMobileViewProvider);
-  //       if (isMobileView) {
-  //         return ScrollConfiguration(
-  //           behavior: HiddenBarScrollBehavior(),
-  //           child: child!,
-  //         );
-  //       }
-  //       return child!;
-  //     },
-  //     child: child,
-  //   );
-  // }
 
   @override
   Widget build(BuildContext context, ref) {
@@ -99,23 +66,15 @@ class ThemeManager extends ConsumerWidget {
           top: padding.top > height * 0.3 ? 20.0 : padding.top,
         ),
       ),
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          floatingActionButtonTheme: Theme.of(context).floatingActionButtonTheme
-              .copyWith(
-                shape: const RoundedSuperellipseBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(16.0)),
-                ),
-              ),
-        ),
-        child: LayoutBuilder(
-          builder: (_, container) {
-            appController.updateViewSize(
-              Size(container.maxWidth, container.maxHeight),
-            );
-            return _buildSystemUi(child);
-          },
-        ),
+      child: LayoutBuilder(
+        builder: (_, constraints) {
+          ref
+              .read(themeActionProvider.notifier)
+              .updateViewSize(
+                Size(constraints.maxWidth, constraints.maxHeight),
+              );
+          return _buildSystemUi(child);
+        },
       ),
     );
   }

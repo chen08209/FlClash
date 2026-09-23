@@ -10,11 +10,11 @@ part of '../config.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(AppSetting)
-const appSettingProvider = AppSettingProvider._();
+final appSettingProvider = AppSettingProvider._();
 
 final class AppSettingProvider
     extends $NotifierProvider<AppSetting, AppSettingProps> {
-  const AppSettingProvider._()
+  AppSettingProvider._()
     : super(
         from: null,
         argument: null,
@@ -41,14 +41,13 @@ final class AppSettingProvider
   }
 }
 
-String _$appSettingHash() => r'0efd340a05a5be1b1190b3f2e9465bdfc6182046';
+String _$appSettingHash() => r'520a3125e1d0baca1fb65abb2110ad4419f8b2d9';
 
 abstract class _$AppSetting extends $Notifier<AppSettingProps> {
   AppSettingProps build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AppSettingProps, AppSettingProps>;
     final element =
         ref.element
@@ -58,16 +57,16 @@ abstract class _$AppSetting extends $Notifier<AppSettingProps> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(WindowSetting)
-const windowSettingProvider = WindowSettingProvider._();
+final windowSettingProvider = WindowSettingProvider._();
 
 final class WindowSettingProvider
     extends $NotifierProvider<WindowSetting, WindowProps> {
-  const WindowSettingProvider._()
+  WindowSettingProvider._()
     : super(
         from: null,
         argument: null,
@@ -94,14 +93,13 @@ final class WindowSettingProvider
   }
 }
 
-String _$windowSettingHash() => r'd245796233fec671722ebed58e39c967d9a12142';
+String _$windowSettingHash() => r'b466fe4c113bb896939b5f0c96795cb09dd2759a';
 
 abstract class _$WindowSetting extends $Notifier<WindowProps> {
   WindowProps build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<WindowProps, WindowProps>;
     final element =
         ref.element
@@ -111,15 +109,15 @@ abstract class _$WindowSetting extends $Notifier<WindowProps> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(VpnSetting)
-const vpnSettingProvider = VpnSettingProvider._();
+final vpnSettingProvider = VpnSettingProvider._();
 
 final class VpnSettingProvider extends $NotifierProvider<VpnSetting, VpnProps> {
-  const VpnSettingProvider._()
+  VpnSettingProvider._()
     : super(
         from: null,
         argument: null,
@@ -146,14 +144,13 @@ final class VpnSettingProvider extends $NotifierProvider<VpnSetting, VpnProps> {
   }
 }
 
-String _$vpnSettingHash() => r'051f90f388a52678052b655827c48947150b7ca1';
+String _$vpnSettingHash() => r'dd0ff8720c2c4f22fc973305de8c87bcbee4536e';
 
 abstract class _$VpnSetting extends $Notifier<VpnProps> {
   VpnProps build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<VpnProps, VpnProps>;
     final element =
         ref.element
@@ -163,16 +160,16 @@ abstract class _$VpnSetting extends $Notifier<VpnProps> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(NetworkSetting)
-const networkSettingProvider = NetworkSettingProvider._();
+final networkSettingProvider = NetworkSettingProvider._();
 
 final class NetworkSettingProvider
     extends $NotifierProvider<NetworkSetting, NetworkProps> {
-  const NetworkSettingProvider._()
+  NetworkSettingProvider._()
     : super(
         from: null,
         argument: null,
@@ -199,14 +196,13 @@ final class NetworkSettingProvider
   }
 }
 
-String _$networkSettingHash() => r'54bd68084a1eb1b68650e353089c240d4a07f3a5';
+String _$networkSettingHash() => r'fa204b5ad21bc3e73c07aa6989f68c288ca20aaf';
 
 abstract class _$NetworkSetting extends $Notifier<NetworkProps> {
   NetworkProps build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<NetworkProps, NetworkProps>;
     final element =
         ref.element
@@ -216,16 +212,16 @@ abstract class _$NetworkSetting extends $Notifier<NetworkProps> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(ThemeSetting)
-const themeSettingProvider = ThemeSettingProvider._();
+final themeSettingProvider = ThemeSettingProvider._();
 
 final class ThemeSettingProvider
     extends $NotifierProvider<ThemeSetting, ThemeProps> {
-  const ThemeSettingProvider._()
+  ThemeSettingProvider._()
     : super(
         from: null,
         argument: null,
@@ -252,14 +248,13 @@ final class ThemeSettingProvider
   }
 }
 
-String _$themeSettingHash() => r'5b64a2e3968a60967534805b4bef3adf3712e77a';
+String _$themeSettingHash() => r'47c656bdac6ea1320d54c4599ce1fde993e989a1';
 
 abstract class _$ThemeSetting extends $Notifier<ThemeProps> {
   ThemeProps build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ThemeProps, ThemeProps>;
     final element =
         ref.element
@@ -269,16 +264,16 @@ abstract class _$ThemeSetting extends $Notifier<ThemeProps> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(CurrentProfileId)
-const currentProfileIdProvider = CurrentProfileIdProvider._();
+final currentProfileIdProvider = CurrentProfileIdProvider._();
 
 final class CurrentProfileIdProvider
     extends $NotifierProvider<CurrentProfileId, int?> {
-  const CurrentProfileIdProvider._()
+  CurrentProfileIdProvider._()
     : super(
         from: null,
         argument: null,
@@ -311,8 +306,7 @@ abstract class _$CurrentProfileId extends $Notifier<int?> {
   int? build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<int?, int?>;
     final element =
         ref.element
@@ -322,16 +316,16 @@ abstract class _$CurrentProfileId extends $Notifier<int?> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(DavSetting)
-const davSettingProvider = DavSettingProvider._();
+final davSettingProvider = DavSettingProvider._();
 
 final class DavSettingProvider
     extends $NotifierProvider<DavSetting, DAVProps?> {
-  const DavSettingProvider._()
+  DavSettingProvider._()
     : super(
         from: null,
         argument: null,
@@ -364,8 +358,7 @@ abstract class _$DavSetting extends $Notifier<DAVProps?> {
   DAVProps? build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<DAVProps?, DAVProps?>;
     final element =
         ref.element
@@ -375,15 +368,15 @@ abstract class _$DavSetting extends $Notifier<DAVProps?> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(OverrideDns)
-const overrideDnsProvider = OverrideDnsProvider._();
+final overrideDnsProvider = OverrideDnsProvider._();
 
 final class OverrideDnsProvider extends $NotifierProvider<OverrideDns, bool> {
-  const OverrideDnsProvider._()
+  OverrideDnsProvider._()
     : super(
         from: null,
         argument: null,
@@ -416,8 +409,7 @@ abstract class _$OverrideDns extends $Notifier<bool> {
   bool build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<bool, bool>;
     final element =
         ref.element
@@ -427,16 +419,16 @@ abstract class _$OverrideDns extends $Notifier<bool> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(HotKeyActions)
-const hotKeyActionsProvider = HotKeyActionsProvider._();
+final hotKeyActionsProvider = HotKeyActionsProvider._();
 
 final class HotKeyActionsProvider
     extends $NotifierProvider<HotKeyActions, List<HotKeyAction>> {
-  const HotKeyActionsProvider._()
+  HotKeyActionsProvider._()
     : super(
         from: null,
         argument: null,
@@ -469,8 +461,7 @@ abstract class _$HotKeyActions extends $Notifier<List<HotKeyAction>> {
   List<HotKeyAction> build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<List<HotKeyAction>, List<HotKeyAction>>;
     final element =
         ref.element
@@ -480,16 +471,16 @@ abstract class _$HotKeyActions extends $Notifier<List<HotKeyAction>> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(ProxiesStyleSetting)
-const proxiesStyleSettingProvider = ProxiesStyleSettingProvider._();
+final proxiesStyleSettingProvider = ProxiesStyleSettingProvider._();
 
 final class ProxiesStyleSettingProvider
     extends $NotifierProvider<ProxiesStyleSetting, ProxiesStyleProps> {
-  const ProxiesStyleSettingProvider._()
+  ProxiesStyleSettingProvider._()
     : super(
         from: null,
         argument: null,
@@ -517,14 +508,13 @@ final class ProxiesStyleSettingProvider
 }
 
 String _$proxiesStyleSettingHash() =>
-    r'b785ed2e71d74384150d80456d2b852e80629b8e';
+    r'af5e94bbe4145170f8a8c4771830b115a89e8c3c';
 
 abstract class _$ProxiesStyleSetting extends $Notifier<ProxiesStyleProps> {
   ProxiesStyleProps build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ProxiesStyleProps, ProxiesStyleProps>;
     final element =
         ref.element
@@ -534,16 +524,16 @@ abstract class _$ProxiesStyleSetting extends $Notifier<ProxiesStyleProps> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
-@ProviderFor(PatchClashConfig)
-const patchClashConfigProvider = PatchClashConfigProvider._();
+@ProviderFor(_PatchClashConfig)
+final patchClashConfigProvider = _PatchClashConfigProvider._();
 
-final class PatchClashConfigProvider
-    extends $NotifierProvider<PatchClashConfig, ClashConfig> {
-  const PatchClashConfigProvider._()
+final class _PatchClashConfigProvider
+    extends $NotifierProvider<_PatchClashConfig, PatchClashConfig> {
+  _PatchClashConfigProvider._()
     : super(
         from: null,
         argument: null,
@@ -555,48 +545,99 @@ final class PatchClashConfigProvider
       );
 
   @override
-  String debugGetCreateSourceHash() => _$patchClashConfigHash();
+  String debugGetCreateSourceHash() => _$_patchClashConfigHash();
 
   @$internal
   @override
-  PatchClashConfig create() => PatchClashConfig();
+  _PatchClashConfig create() => _PatchClashConfig();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ClashConfig value) {
+  Override overrideWithValue(PatchClashConfig value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<ClashConfig>(value),
+      providerOverride: $SyncValueProvider<PatchClashConfig>(value),
     );
   }
 }
 
-String _$patchClashConfigHash() => r'ff92f991ccb3a3d13a938affc006d7e2cb85fecd';
+String _$_patchClashConfigHash() => r'2a02c8f1ff5746c6c0b2248343bd729d4f2a5886';
 
-abstract class _$PatchClashConfig extends $Notifier<ClashConfig> {
-  ClashConfig build();
+abstract class _$PatchClashConfig extends $Notifier<PatchClashConfig> {
+  PatchClashConfig build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
-    final ref = this.ref as $Ref<ClashConfig, ClashConfig>;
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<PatchClashConfig, PatchClashConfig>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<ClashConfig, ClashConfig>,
-              ClashConfig,
+              AnyNotifier<PatchClashConfig, PatchClashConfig>,
+              PatchClashConfig,
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(ExcludeSSIDs)
+final excludeSSIDsProvider = ExcludeSSIDsProvider._();
+
+final class ExcludeSSIDsProvider
+    extends $NotifierProvider<ExcludeSSIDs, List<String>> {
+  ExcludeSSIDsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'excludeSSIDsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$excludeSSIDsHash();
+
+  @$internal
+  @override
+  ExcludeSSIDs create() => ExcludeSSIDs();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<String>>(value),
+    );
+  }
+}
+
+String _$excludeSSIDsHash() => r'a67805c76b58d19da1656783f4514111d6bf4e35';
+
+abstract class _$ExcludeSSIDs extends $Notifier<List<String>> {
+  List<String> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<List<String>, List<String>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<String>, List<String>>,
+              List<String>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(_config)
-const configProvider = _ConfigProvider._();
+final configProvider = _ConfigProvider._();
 
 final class _ConfigProvider extends $FunctionalProvider<Config, Config, Config>
     with $Provider<Config> {
-  const _ConfigProvider._()
+  _ConfigProvider._()
     : super(
         from: null,
         argument: null,
@@ -629,4 +670,4 @@ final class _ConfigProvider extends $FunctionalProvider<Config, Config, Config>
   }
 }
 
-String _$_configHash() => r'17dad8563f5727690a7fd484815e7344e6a46ffa';
+String _$_configHash() => r'7f29da1e31a3393fb36ab43c21f0d1b38223afec';

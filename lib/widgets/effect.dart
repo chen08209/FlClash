@@ -1,7 +1,8 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:fl_clash/widgets/inherited.dart';
+import 'package:material_ui/material_ui.dart';
 
 class EffectGestureDetector extends StatefulWidget {
   final Widget child;
@@ -128,13 +129,16 @@ Widget commonProxyDecorator(
   int index,
   Animation<double> animation,
 ) {
-  return AnimatedBuilder(
-    animation: animation,
-    builder: (_, Widget? child) {
-      final double animValue = Curves.easeInOut.transform(animation.value);
-      final double scale = lerpDouble(1, 1.02, animValue)!;
-      return Transform.scale(scale: scale, child: child);
-    },
-    child: child,
+  return ProxyDecoratorProvider(
+    isProxyDecorator: true,
+    child: AnimatedBuilder(
+      animation: animation,
+      builder: (_, Widget? child) {
+        final double animValue = Curves.easeInOut.transform(animation.value);
+        final double scale = lerpDouble(1, 1.02, animValue)!;
+        return Transform.scale(scale: scale, child: child);
+      },
+      child: child,
+    ),
   );
 }

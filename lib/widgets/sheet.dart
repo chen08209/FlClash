@@ -1,6 +1,8 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/controller.dart';
-import 'package:flutter/material.dart';
+import 'package:fl_clash/models/common.dart';
+import 'package:fl_clash/widgets/inherited.dart';
+import 'package:flutter/foundation.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'scaffold.dart';
 import 'side_sheet.dart';
@@ -11,11 +13,13 @@ class SheetProps {
   final double? maxHeight;
   final bool isScrollControlled;
   final bool useSafeArea;
+  final Color? backgroundColor;
   final bool blur;
 
   const SheetProps({
     this.maxWidth,
     this.maxHeight,
+    this.backgroundColor,
     this.useSafeArea = true,
     this.isScrollControlled = false,
     this.blur = true,
@@ -39,21 +43,23 @@ class ExtendProps {
 
 enum SheetType { page, bottomSheet, sideSheet }
 
-typedef SheetBuilder = Widget Function(BuildContext context, SheetType type);
-
 Future<T?> showSheet<T>({
   required BuildContext context,
-  required SheetBuilder builder,
+  required WidgetBuilder builder,
   SheetProps props = const SheetProps(),
 }) {
-  final isMobile = appController.isMobile;
+  final isMobile = context.isMobileView;
   return switch (isMobile) {
     true => showModalBottomSheet<T>(
       context: context,
       isScrollControlled: props.isScrollControlled,
       builder: (_) {
-        return builder(context, SheetType.bottomSheet);
+        return SheetProvider(
+          type: SheetType.bottomSheet,
+          child: builder(context),
+        );
       },
+      backgroundColor: props.backgroundColor,
       showDragHandle: false,
       useSafeArea: props.useSafeArea,
     ),
@@ -61,10 +67,14 @@ Future<T?> showSheet<T>({
       useSafeArea: props.useSafeArea,
       isScrollControlled: props.isScrollControlled,
       context: context,
+      backgroundColor: props.backgroundColor,
       constraints: BoxConstraints(maxWidth: props.maxWidth ?? 360),
       filter: props.blur ? commonFilter : null,
       builder: (_) {
-        return builder(context, SheetType.sideSheet);
+        return SheetProvider(
+          type: SheetType.sideSheet,
+          child: builder(context),
+        );
       },
     ),
   };
@@ -72,38 +82,46 @@ Future<T?> showSheet<T>({
 
 Future<T?> showExtend<T>(
   BuildContext context, {
-  required SheetBuilder builder,
+  required WidgetBuilder builder,
   ExtendProps props = const ExtendProps(),
 }) {
-  final isMobile = appController.isMobile;
+  final isMobile = context.isMobileView;
   return switch (isMobile || props.forceFull) {
-    true => BaseNavigator.push(context, builder(context, SheetType.page)),
+    true => BaseNavigator.push(
+      context,
+      SheetProvider(type: SheetType.page, child: builder(context)),
+    ),
     false => showModalSideSheet<T>(
       useSafeArea: props.useSafeArea,
       context: context,
       constraints: BoxConstraints(maxWidth: props.maxWidth ?? 360),
       filter: props.blur ? commonFilter : null,
       builder: (context) {
-        return builder(context, SheetType.sideSheet);
+        return SheetProvider(
+          type: SheetType.sideSheet,
+          child: builder(context),
+        );
       },
     ),
   };
 }
 
 class AdaptiveSheetScaffold extends StatefulWidget {
-  final SheetType type;
   final Widget body;
   final String title;
+  final bool sheetTransparentToolBar;
   final bool? centerTitle;
-  final List<Widget> actions;
+  final List<IconButtonData> actions;
+  final VoidCallback? backAction;
 
   const AdaptiveSheetScaffold({
     super.key,
-    required this.type,
     required this.body,
     required this.title,
+    this.sheetTransparentToolBar = false,
     this.centerTitle,
     this.actions = const [],
+    this.backAction,
   });
 
   @override
@@ -111,56 +129,241 @@ class AdaptiveSheetScaffold extends StatefulWidget {
 }
 
 class _AdaptiveSheetScaffoldState extends State<AdaptiveSheetScaffold> {
+  IconData get backIconData {
+    if (kIsWeb) {
+      return Icons.arrow_back;
+    }
+    switch (Theme.of(context).platform) {
+      case TargetPlatform.android:
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+      case TargetPlatform.windows:
+        return Icons.arrow_back;
+      case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
+        return Icons.arrow_back_ios_new_rounded;
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
-    final backgroundColor = context.colorScheme.surface;
-    final bottomSheet = widget.type == SheetType.bottomSheet;
-    final sideSheet = widget.type == SheetType.sideSheet;
-    final appBar = AppBar(
-      forceMaterialTransparency: bottomSheet ? true : false,
-      automaticallyImplyLeading: bottomSheet
-          ? false
-          : widget.actions.isEmpty && sideSheet
-          ? false
-          : true,
-      centerTitle:
-          widget.centerTitle ?? (bottomSheet && widget.actions.isEmpty),
-      backgroundColor: backgroundColor,
-      title: Text(widget.title),
-      actions: genActions([
-        if (widget.actions.isEmpty && sideSheet) CloseButton(),
-        ...widget.actions,
-      ]),
-    );
-    if (bottomSheet) {
-      final handleSize = Size(32, 4);
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: EdgeInsets.only(top: 16),
-            child: Container(
-              alignment: Alignment.center,
-              height: handleSize.height,
-              width: handleSize.width,
-              decoration: ShapeDecoration(
-                color: context.colorScheme.onSurfaceVariant,
-                shape: RoundedSuperellipseBorder(
-                  borderRadius: BorderRadius.circular(handleSize.height / 2),
-                ),
-              ),
-            ),
-          ),
-          Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: appBar),
-          Flexible(flex: 1, child: widget.body),
-          SizedBox(height: MediaQuery.of(context).viewPadding.bottom),
-        ],
+  void didUpdateWidget(covariant AdaptiveSheetScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.backAction != widget.backAction) {
+      setState(() {});
+    }
+  }
+
+  Widget _buildIconButton(IconButtonData data, {required bool filled}) {
+    return _SheetIconButton(data: data, filled: filled);
+  }
+
+  IconButtonData _popButtonData(
+    BuildContext context, {
+    required bool useCloseIcon,
+  }) {
+    if (useCloseIcon) {
+      return IconButtonData(
+        icon: Icons.close,
+        onPressed: context.safeNestedPop,
+        tooltip: context.appLocalizations.close,
       );
     }
-    return CommonScaffold(
-      appBar: appBar,
+    return IconButtonData(
+      icon: backIconData,
+      onPressed: widget.backAction ?? () => Navigator.of(context).pop(),
+      tooltip: context.appLocalizations.back,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sheetProvider = SheetProvider.of(context);
+    final type = sheetProvider?.type ?? SheetType.page;
+    final isBottomSheet = type == SheetType.bottomSheet;
+    final centerTitle = widget.centerTitle ?? isBottomSheet;
+
+    if (type == SheetType.page) {
+      return CommonScaffold(
+        title: widget.title,
+        centerTitle: centerTitle,
+        actions: [
+          for (final data in widget.actions)
+            _buildIconButton(data, filled: false),
+        ],
+        body: widget.body,
+      );
+    }
+
+    final nestedNavigatorPop = sheetProvider?.nestedNavigatorPop;
+    final route = ModalRoute.of(context);
+    final useCloseIcon =
+        nestedNavigatorPop == null || route?.impliesAppBarDismissal == false;
+    final actions = [
+      for (final data in widget.actions)
+        _buildIconButton(data, filled: isBottomSheet),
+    ];
+    final popButton = _buildIconButton(
+      _popButtonData(context, useCloseIcon: useCloseIcon),
+      filled: isBottomSheet,
+    );
+    final popAsSuffix = useCloseIcon && actions.isEmpty;
+    final backgroundColor = isBottomSheet
+        ? context.colorScheme.surfaceContainerLow
+        : context.colorScheme.surface;
+    final appBar = AppBar(
       backgroundColor: backgroundColor,
-      body: widget.body,
+      forceMaterialTransparency: isBottomSheet,
+      automaticallyImplyLeading: false,
+      leading: popAsSuffix ? null : Center(child: popButton),
+      centerTitle: centerTitle,
+      toolbarHeight: isBottomSheet ? 48 : null,
+      title: Text(widget.title),
+      titleTextStyle: isBottomSheet
+          ? context.textTheme.titleLarge?.adjustSize(-4)
+          : null,
+      actions: genActions(popAsSuffix ? [popButton] : actions),
+    );
+    if (!isBottomSheet) {
+      return CommonScaffold(appBar: appBar, body: widget.body);
+    }
+    final sheetAppBar = _SheetToolBar(appBar: appBar);
+    return ClipRSuperellipse(
+      borderRadius: AppRadius.top(AppCorner.xxl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!widget.sheetTransparentToolBar) ...[
+            sheetAppBar,
+            Flexible(
+              child: ScrollConfiguration(
+                behavior: const ShowBarScrollBehavior(),
+                child: widget.body,
+              ),
+            ),
+          ] else
+            Flexible(
+              child: _TransparentToolBarBody(
+                backgroundColor: backgroundColor,
+                toolBar: sheetAppBar,
+                body: widget.body,
+              ),
+            ),
+          SizedBox(height: MediaQuery.viewInsetsOf(context).bottom),
+          SizedBox(height: MediaQuery.viewPaddingOf(context).bottom),
+        ],
+      ),
+    );
+  }
+}
+
+class _SheetIconButton extends StatelessWidget {
+  const _SheetIconButton({required this.data, required this.filled});
+
+  static final _style = IconButton.styleFrom(
+    visualDensity: VisualDensity.standard,
+    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  );
+
+  final IconButtonData data;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = Icon(data.icon);
+    if (filled) {
+      return IconButton.filledTonal(
+        tooltip: data.tooltip,
+        onPressed: data.onPressed,
+        style: _style,
+        icon: icon,
+      );
+    }
+    return IconButton(
+      tooltip: data.tooltip,
+      onPressed: data.onPressed,
+      style: _style,
+      icon: icon,
+    );
+  }
+}
+
+class _SheetToolBar extends StatelessWidget {
+  const _SheetToolBar({required this.appBar});
+
+  static const _handleSize = Size(28, 4);
+
+  final Widget appBar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Container(
+            alignment: Alignment.center,
+            height: _handleSize.height,
+            width: _handleSize.width,
+            decoration: ShapeDecoration(
+              color: context.colorScheme.onSurfaceVariant,
+              shape: AppShape.all(_handleSize.height / 2),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: appBar,
+        ),
+        const SizedBox(height: 6),
+      ],
+    );
+  }
+}
+
+class _TransparentToolBarBody extends StatelessWidget {
+  const _TransparentToolBarBody({
+    required this.backgroundColor,
+    required this.toolBar,
+    required this.body,
+  });
+
+  final Color backgroundColor;
+  final Widget toolBar;
+  final Widget body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        ScrollConfiguration(
+          behavior: const ShowBarScrollBehavior(
+            scrollbarPadding: EdgeInsets.only(top: sheetAppBarHeight),
+          ),
+          child: body,
+        ),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: sheetAppBarHeight,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0, 0.5, 1],
+                colors: [
+                  backgroundColor.opacity60,
+                  backgroundColor.opacity60,
+                  backgroundColor.opacity0,
+                ],
+              ),
+            ),
+            child: Align(alignment: Alignment.topCenter, child: toolBar),
+          ),
+        ),
+      ],
     );
   }
 }

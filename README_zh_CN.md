@@ -12,14 +12,11 @@
 
 基于ClashMeta的多平台代理客户端，简单易用，开源无广告。
 
-on Desktop:
-<p style="text-align: center;">
-    <img alt="desktop" src="snapshots/desktop.gif">
-</p>
-
-on Mobile:
-<p style="text-align: center;">
-    <img alt="mobile" src="snapshots/mobile.gif">
+<p align="center">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="snapshots/preview-dark.png">
+        <img alt="FlClash on desktop and mobile" src="snapshots/preview.png" width="90%">
+    </picture>
 </p>
 
 ## Features
@@ -42,7 +39,6 @@ on Mobile:
 
    ```bash
     sudo apt-get install libayatana-appindicator3-dev
-    sudo apt-get install libkeybinder-3.0-dev
    ```
 
 ### Android
@@ -60,6 +56,13 @@ on Mobile:
 ## Download
 
 <a href="https://chen08209.github.io/FlClash-fdroid-repo/repo?fingerprint=789D6D32668712EF7672F9E58DEEB15FBD6DCEEC5AE7A4371EA72F2AAE8A12FD"><img alt="Get it on F-Droid" src="snapshots/get-it-on-fdroid.svg" width="200px"/></a> <a href="https://github.com/chen08209/FlClash/releases"><img alt="Get it on GitHub" src="snapshots/get-it-on-github.svg" width="200px"/></a>
+
+### Homebrew
+
+```bash
+brew tap chen08209/tap
+brew install --cask flclash
+```
 
 ## Build
 
@@ -81,29 +84,34 @@ on Mobile:
         3. 运行构建脚本
 
            ```bash
-           dart ./setup.dart android
+           dart setup.dart android
            ```
 
     - windows
 
         1. 你需要一个windows客户端
 
-        2. 安装 `Gcc`，`Inno Setup`
+        2. 安装 `GCC`，`Inno Setup`
 
         3. 运行构建脚本
 
            ```bash
-           dart ./setup.dart windows --arch <arm64 | amd64>
+           dart setup.dart windows
            ```
 
     - linux
 
         1. 你需要一个linux客户端
 
-        2. 运行构建脚本
+        2. 依赖会由 setup 脚本自动安装，也可以手动安装：
+           ```bash
+           sudo apt-get install -y libayatana-appindicator3-dev
+           ```
+
+        3. 运行构建脚本
 
            ```bash
-           dart ./setup.dart linux --arch <arm64 | amd64>
+           dart setup.dart linux
            ```
 
     - macOS
@@ -113,10 +121,10 @@ on Mobile:
         2. 运行构建脚本
 
            ```bash
-           dart ./setup.dart macos --arch <arm64 | amd64>
+           dart setup.dart macos
            ```
 
-## Star History
+## Star
 
 支持开发者的最简单方式是点击页面顶部的星标（⭐）。
 

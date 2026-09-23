@@ -5,24 +5,24 @@
 #include <gdk/gdkx.h>
 #endif
 
+#include <window_manager/window_manager_plugin.h>
+
 #include "flutter/generated_plugin_registrant.h"
 
 struct _MyApplication {
   GtkApplication parent_instance;
   char** dart_entrypoint_arguments;
+  gboolean had_window_before_emit;
 };
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
-// Called when first Flutter frame received.
-static void first_frame_cb(MyApplication* self, FlView *view)
-{
-  gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
-}
-
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
+  if (self->had_window_before_emit) {
+    return;
+  }
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
 
@@ -53,7 +53,7 @@ static void my_application_activate(GApplication* application) {
     gtk_window_set_title(window, "FlClash");
   }
 
-  gtk_window_set_default_size(window, 1280, 720);
+  gtk_window_set_default_size(window, 680, 580);
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(project, self->dart_entrypoint_arguments);
@@ -66,9 +66,8 @@ static void my_application_activate(GApplication* application) {
   gtk_widget_show(GTK_WIDGET(view));
   gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(view));
 
-  // Show the window when Flutter renders.
-  // Requires the view to be realized so we can start rendering.
-  g_signal_connect_swapped(view, "first-frame", G_CALLBACK(first_frame_cb), self);
+  // Realize the view so Flutter can render even if the window stays hidden
+  // until Dart startup logic explicitly shows it.
   gtk_widget_realize(GTK_WIDGET(view));
 
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
@@ -76,23 +75,36 @@ static void my_application_activate(GApplication* application) {
   gtk_widget_grab_focus(GTK_WIDGET(view));
 }
 
-// Implements GApplication::local_command_line.
-static gboolean my_application_local_command_line(GApplication* application, gchar*** arguments, int* exit_status) {
+// Implements GApplication::command_line.
+static gint my_application_command_line(GApplication* application, GApplicationCommandLine* command_line) {
   MyApplication* self = MY_APPLICATION(application);
-  // Strip out the first argument as it is the binary name.
-  self->dart_entrypoint_arguments = g_strdupv(*arguments + 1);
-
-  g_autoptr(GError) error = nullptr;
-  if (!g_application_register(application, nullptr, &error)) {
-     g_warning("Failed to register: %s", error->message);
-     *exit_status = 1;
-     return TRUE;
+  if (self->dart_entrypoint_arguments == nullptr) {
+    gchar** arguments = g_application_command_line_get_arguments(command_line, nullptr);
+    // Strip out the first argument as it is the binary name.
+    self->dart_entrypoint_arguments = g_strdupv(arguments + 1);
+    g_strfreev(arguments);
   }
-
   g_application_activate(application);
-  *exit_status = 0;
+  return 0;
+}
 
-  return TRUE;
+// Implements GApplication::before_emit.
+static void my_application_before_emit(GApplication* application, GVariant* platform_data) {
+  MyApplication* self = MY_APPLICATION(application);
+  self->had_window_before_emit =
+      gtk_application_get_windows(GTK_APPLICATION(application)) != nullptr;
+  G_APPLICATION_CLASS(my_application_parent_class)->before_emit(application, platform_data);
+}
+
+// Implements GApplication::after_emit. A relaunch reaches the primary as a
+// command-line signal that the gtk plugin consumes first, so the window is
+// raised here, while the launcher's activation token is still current.
+static void my_application_after_emit(GApplication* application, GVariant* platform_data) {
+  MyApplication* self = MY_APPLICATION(application);
+  if (self->had_window_before_emit) {
+    window_manager_plugin_activate();
+  }
+  G_APPLICATION_CLASS(my_application_parent_class)->after_emit(application, platform_data);
 }
 
 // Implements GApplication::startup.
@@ -122,7 +134,9 @@ static void my_application_dispose(GObject* object) {
 
 static void my_application_class_init(MyApplicationClass* klass) {
   G_APPLICATION_CLASS(klass)->activate = my_application_activate;
-  G_APPLICATION_CLASS(klass)->local_command_line = my_application_local_command_line;
+  G_APPLICATION_CLASS(klass)->command_line = my_application_command_line;
+  G_APPLICATION_CLASS(klass)->before_emit = my_application_before_emit;
+  G_APPLICATION_CLASS(klass)->after_emit = my_application_after_emit;
   G_APPLICATION_CLASS(klass)->startup = my_application_startup;
   G_APPLICATION_CLASS(klass)->shutdown = my_application_shutdown;
   G_OBJECT_CLASS(klass)->dispose = my_application_dispose;
@@ -139,6 +153,6 @@ MyApplication* my_application_new() {
 
   return MY_APPLICATION(g_object_new(my_application_get_type(),
                                      "application-id", APPLICATION_ID,
-                                     "flags", G_APPLICATION_NON_UNIQUE,
+                                     "flags", G_APPLICATION_HANDLES_COMMAND_LINE,
                                      nullptr));
 }
