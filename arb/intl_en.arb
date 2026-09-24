@@ -215,6 +215,7 @@
   "loose": "Loose",
   "profilesSort": "Sort profiles",
   "start": "Start",
+  "runTime": "Run time",
   "stop": "Stop",
   "key": "Key",
   "value": "Value",
@@ -227,8 +228,6 @@
   "providers": "External resources",
   "proxyProviders": "Proxy providers",
   "ruleProviders": "Rule providers",
-  "appProxyProviders": "App proxy providers",
-  "appRuleProviders": "App rule providers",
   "behavior": "Behavior",
   "format": "Format",
   "providerUrlTip": "Only remote providers are supported",
@@ -768,9 +767,7 @@
   "overwriteIssueGroupLoop": "Proxy groups reference each other in a loop: {path}",
   "overwriteIssuesSummary": "{count} items have problems, and applying this override may fail",
   "overwriteIssueSubscriptionGroupMissingProxies": "The profile's own proxy groups name proxies that the custom proxies no longer include: {names}",
-  "overwriteIssueProviderShadowed": "The profile already has a provider named {name}, so the app-level one is not used. Rename it to use it",
   "providerInUse": "{label} is still used by the custom proxy groups or rules of {profiles}. Remove it there first",
   "providerSourceSubscription": "Subscription",
-  "providerRenameShadowed": "The subscriptions of {profiles} already have {label}, so those profiles would switch to theirs. Choose another name",
-  "appProviderShadowed": "The app-level one of this name is not used here"
+  "providerRenameShadowed": "The subscriptions of {profiles} already have {label}, so those profiles would switch to theirs. Choose another name"
 }

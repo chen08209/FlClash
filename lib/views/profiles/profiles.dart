@@ -33,17 +33,6 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
     super.initState();
   }
 
-  void _handleShowAddExtendPage() {
-    final context = globalState.navigatorKey.currentState!.context;
-    showExtend(
-      context,
-      builder: (context) => CommonScaffold(
-        title: context.appLocalizations.addProfile,
-        body: AddProfileView(context: context),
-      ),
-    );
-  }
-
   Future<void> _updateProfiles(List<Profile> profiles) async {
     if (_isUpdating == true) {
       return;
@@ -113,7 +102,7 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
               ? null
               : IconButtonData(
                   glyph: AppGlyphs.add,
-                  onPressed: _handleShowAddExtendPage,
+                  onPressed: showAddProfilePage,
                   tooltip: appLocalizations.addProfile,
                 ),
           iconActions: _buildActions(state.profiles),
@@ -126,7 +115,7 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
               illustration: NullStatusIllustration.profile,
               action: ElasticButton(
                 child: FilledButton.tonalIcon(
-                  onPressed: _handleShowAddExtendPage,
+                  onPressed: showAddProfilePage,
                   icon: const GlyphIcon(AppGlyphs.add, fill: 1),
                   label: Text(appLocalizations.addProfile),
                 ),
@@ -209,6 +198,20 @@ class ProfileItem extends ConsumerWidget {
   Future<void> _handleDeleteProfile(BuildContext context, WidgetRef ref) async {
     final profilesAction = ref.read(profilesActionProvider.notifier);
     final appLocalizations = context.appLocalizations;
+    final users = await profilesAction.providerUsers(profile);
+    if (users.isNotEmpty) {
+      await dialogs.showMessage(
+        title: appLocalizations.tip,
+        message: TextSpan(
+          text: appLocalizations.providerInUse(
+            profile.realLabel,
+            users.map((item) => item.realLabel).join(', '),
+          ),
+        ),
+        cancelable: false,
+      );
+      return;
+    }
     final res = await dialogs.showMessage(
       title: appLocalizations.tip,
       message: TextSpan(

@@ -215,6 +215,7 @@
   "loose": "ゆったり",
   "profilesSort": "プロファイルの並べ替え",
   "start": "開始",
+  "runTime": "起動時間",
   "stop": "停止",
   "key": "キー",
   "value": "値",
@@ -227,8 +228,6 @@
   "providers": "外部リソース",
   "proxyProviders": "プロキシプロバイダー",
   "ruleProviders": "ルールプロバイダー",
-  "appProxyProviders": "アプリのプロキシプロバイダー",
-  "appRuleProviders": "アプリのルールプロバイダー",
   "behavior": "動作",
   "format": "形式",
   "providerUrlTip": "リモートリソースのみ対応しています",
@@ -768,9 +767,7 @@
   "overwriteIssueGroupLoop": "プロキシグループが循環参照しています：{path}",
   "overwriteIssuesSummary": "{count} 件に問題があり、上書きの適用に失敗する可能性があります",
   "overwriteIssueSubscriptionGroupMissingProxies": "プロファイル自身のプロキシグループが、カスタムプロキシに含まれないプロキシを参照しています：{names}",
-  "overwriteIssueProviderShadowed": "プロファイルに {name} という名前のプロバイダーが既にあるため、同名のアプリレベルのプロバイダーは使用されません。名前を変更してください",
   "providerInUse": "{label} は {profiles} のカスタムプロキシグループまたはルールでまだ使用されています。先にそこから外してください",
   "providerSourceSubscription": "サブスクリプション",
-  "providerRenameShadowed": "{profiles} のサブスクリプションには既に {label} があるため、名前を変えるとそちらが使われます。別の名前にしてください",
-  "appProviderShadowed": "同名のアプリ側の項目はここでは使われません"
+  "providerRenameShadowed": "{profiles} のサブスクリプションには既に {label} があるため、名前を変えるとそちらが使われます。別の名前にしてください"
 }

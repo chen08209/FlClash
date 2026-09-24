@@ -215,6 +215,7 @@
   "loose": "宽松",
   "profilesSort": "配置排序",
   "start": "启动",
+  "runTime": "启动时间",
   "stop": "暂停",
   "key": "键",
   "value": "值",
@@ -227,8 +228,6 @@
   "providers": "外部资源",
   "proxyProviders": "代理集",
   "ruleProviders": "规则集",
-  "appProxyProviders": "应用代理集",
-  "appRuleProviders": "应用规则集",
   "behavior": "行为",
   "format": "格式",
   "providerUrlTip": "仅支持远程资源",
@@ -768,9 +767,7 @@
   "overwriteIssueGroupLoop": "策略组之间存在循环引用：{path}",
   "overwriteIssuesSummary": "{count} 项存在问题，应用覆写可能失败",
   "overwriteIssueSubscriptionGroupMissingProxies": "配置文件自身的策略组引用了自定义代理中已没有的代理：{names}",
-  "overwriteIssueProviderShadowed": "配置文件中已有名为 {name} 的外部资源，同名的应用级外部资源不会生效，请改名",
   "providerInUse": "{label} 仍被 {profiles} 的自定义策略组或规则使用，请先在那里移除",
   "providerSourceSubscription": "订阅",
-  "providerRenameShadowed": "{profiles} 的订阅里已有 {label}，改名后这些配置会改用订阅里的那个，请换一个名称",
-  "appProviderShadowed": "同名的应用级项在此不生效"
+  "providerRenameShadowed": "{profiles} 的订阅里已有 {label}，改名后这些配置会改用订阅里的那个，请换一个名称"
 }
