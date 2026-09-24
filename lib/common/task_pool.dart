@@ -13,6 +13,8 @@ class TaskPool {
 
   int get pendingCount => _waiting.length;
 
+  int get idleSlots => _waiting.isEmpty ? concurrency - _active : 0;
+
   Future<T> run<T>(Future<T> Function() task) async {
     if (_active >= concurrency || _waiting.isNotEmpty) {
       final waiter = Completer<void>();

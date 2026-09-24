@@ -1,8 +1,11 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/pages/scan.dart';
 import 'package:fl_clash/providers/action.dart';
+import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,26 +36,29 @@ class AddProfileView extends ConsumerWidget {
   Future<void> _toAdd(WidgetRef ref) async {
     final profilesAction = ref.read(profilesActionProvider.notifier);
     final appLocalizations = context.appLocalizations;
-    final url = await dialogs.showCommonDialog<String>(
-      child: InputDialog(
-        autovalidateMode: AutovalidateMode.onUnfocus,
-        title: appLocalizations.importFromURL,
-        labelText: appLocalizations.url,
-        value: '',
-        inputFormatters: TextInputLimits.limit(TextInputLimits.url),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return appLocalizations.emptyTip('').trim();
-          }
-          if (!value.isUrl) {
-            return appLocalizations.urlTip('').trim();
-          }
-          return null;
-        },
-      ),
+    final reservedLabels = ref.read(
+      appProviderLabelsProvider(ProviderKind.proxy),
     );
-    if (url != null) {
-      unawaited(profilesAction.addProfileFormURL(url));
+    final res = await dialogs.showNamedUrlInput(
+      title: appLocalizations.importFromURL,
+      labelValidator: (value) {
+        if (reservedLabels.contains(value?.trim())) {
+          return appLocalizations.existsTip(appLocalizations.name);
+        }
+        return null;
+      },
+      urlValidator: (value) {
+        if (value == null || value.isEmpty) {
+          return appLocalizations.emptyTip('').trim();
+        }
+        if (!value.isUrl) {
+          return appLocalizations.urlTip('').trim();
+        }
+        return null;
+      },
+    );
+    if (res != null) {
+      unawaited(profilesAction.addProfileFormURL(res.url, label: res.label));
     }
   }
 
@@ -60,21 +66,22 @@ class AddProfileView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     return ListView(
+      padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 16),
       children: [
         ListItem(
-          leading: const Icon(Icons.qr_code_sharp),
+          leading: const GlyphIcon(AppGlyphs.qrCode),
           title: Text(appLocalizations.qrcode),
           subtitle: Text(appLocalizations.qrcodeDesc),
           onTap: () => _toScan(ref),
         ),
         ListItem(
-          leading: const Icon(Icons.upload_file_sharp),
+          leading: const GlyphIcon(AppGlyphs.importFile),
           title: Text(appLocalizations.file),
           subtitle: Text(appLocalizations.fileDesc),
           onTap: () => _handleAddProfileFormFile(ref),
         ),
         ListItem(
-          leading: const Icon(Icons.cloud_download_sharp),
+          leading: const GlyphIcon(AppGlyphs.cloudDownload),
           title: Text(appLocalizations.url),
           subtitle: Text(appLocalizations.urlDesc),
           onTap: () => _toAdd(ref),

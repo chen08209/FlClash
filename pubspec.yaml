@@ -31,7 +31,7 @@ dependencies:
       ref: e930ce65c5804343103447e01d39fccabedc8681
   json_annotation: ^4.12.0
   file_picker: ^12.0.0
-  mobile_scanner: ^7.4.0
+  mobile_scanner: ^7.4.2
   app_links: ^7.1.2
   win32_registry: ^3.0.3
   tray:
