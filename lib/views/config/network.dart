@@ -275,7 +275,6 @@ class RouteAddressItem extends ConsumerWidget {
     return ConfigListEditItem(
       title: (l) => l.routeAddress,
       itemMaxLength: TextInputLimits.cidr,
-      maxWidth: 360,
       selector: patchClashConfigProvider.select(
         (state) => state.tun.routeAddress,
       ),

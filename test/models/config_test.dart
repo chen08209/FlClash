@@ -104,7 +104,7 @@ void main() {
       expect(restored.autoRun, false);
       expect(restored.openLogs, false);
       expect(restored.closeConnections, true);
-      expect(restored.isAnimateToPage, true);
+      expect(restored.tabAnimation, TabAnimation.slide);
       expect(restored.autoCheckUpdate, true);
       expect(restored.sidebarExpanded, true);
       expect(restored.minimizeOnExit, true);
@@ -175,6 +175,24 @@ void main() {
           'userAgents': <String>[],
         }).userAgents,
         isEmpty,
+      );
+    });
+
+    test('a legacy isAnimateToPage sets the tab animation', () {
+      expect(
+        AppSettingProps.fromJson({'isAnimateToPage': false}).tabAnimation,
+        TabAnimation.fade,
+      );
+      expect(
+        AppSettingProps.fromJson({'isAnimateToPage': true}).tabAnimation,
+        TabAnimation.slide,
+      );
+      expect(
+        AppSettingProps.fromJson({
+          'isAnimateToPage': false,
+          'tabAnimation': 'slide',
+        }).tabAnimation,
+        TabAnimation.slide,
       );
     });
 

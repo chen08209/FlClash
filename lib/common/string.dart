@@ -29,6 +29,18 @@ extension StringExtension on String {
     return toLowerCase().compareTo(other.toLowerCase());
   }
 
+  String get countryFlagEmoji {
+    final code = toUpperCase();
+    if (!RegExp(r'^[A-Z]{2}$').hasMatch(code)) {
+      return this;
+    }
+    const regionalIndicatorA = 0x1F1E6;
+    return String.fromCharCodes([
+      code.codeUnitAt(0) - 0x41 + regionalIndicatorA,
+      code.codeUnitAt(1) - 0x41 + regionalIndicatorA,
+    ]);
+  }
+
   String safeSubstring(int start, [int? end]) {
     if (isEmpty) return '';
     final safeStart = start.clamp(0, length);
@@ -101,6 +113,46 @@ extension StringExtension on String {
     }
     return this;
   }
+
+  String take(int maxLength) {
+    return length <= maxLength ? this : substring(0, maxLength);
+  }
+
+  String get fileStem {
+    final dot = lastIndexOf('.');
+    return dot > 0 ? substring(0, dot) : this;
+  }
+
+  String get urlFileName {
+    final segments = Uri.tryParse(this)?.pathSegments ?? const [];
+    return segments.lastWhere(
+      (segment) => segment.isNotEmpty,
+      orElse: () => '',
+    );
+  }
+}
+
+final _labelCounter = RegExp(r'\((\d{1,9})\)$');
+
+String uniqueLabelFor(
+  String name, {
+  required String fallback,
+  required bool Function(String label) taken,
+}) {
+  const maxLength = TextInputLimits.name;
+  final label = name.trim().takeFirstValid([fallback]).take(maxLength).trim();
+  if (!taken(label)) {
+    return label;
+  }
+  final counter = _labelCounter.firstMatch(label);
+  final stem = counter == null ? label : label.substring(0, counter.start);
+  for (var index = int.parse(counter?[1] ?? '0') + 1; ; index++) {
+    final suffix = '($index)';
+    final candidate = stem.take(maxLength - suffix.length) + suffix;
+    if (!taken(candidate)) {
+      return candidate;
+    }
+  }
 }
 
 extension StringNullExt on String? {
@@ -147,16 +199,4 @@ String generateRandomSecret(int length) {
       (_) => chars.codeUnitAt(random.nextInt(chars.length)),
     ),
   );
-}
-
-String getOverwriteLabel(String label) {
-  final reg = RegExp(r'\((\d+)\)$');
-  final matches = reg.allMatches(label);
-  if (matches.isNotEmpty) {
-    final match = matches.last;
-    final number = int.parse(match[1] ?? '0') + 1;
-    return '${label.substring(0, match.start)}($number)';
-  } else {
-    return '$label(1)';
-  }
 }

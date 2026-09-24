@@ -1,8 +1,10 @@
 import 'package:emoji_regex/emoji_regex.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../state.dart';
+import 'builder.dart';
 
 class TooltipText extends StatelessWidget {
   final Text text;
@@ -147,6 +149,33 @@ class EmojiText extends StatelessWidget {
       maxLines: maxLines,
       overflow: overflow ?? TextOverflow.clip,
       text: TextSpan(children: _buildTextSpans(text)),
+    );
+  }
+}
+
+class LastUpdateTimeText extends StatelessWidget {
+  final DateTime? lastUpdateDate;
+  final TextStyle? style;
+
+  const LastUpdateTimeText({
+    super.key,
+    required this.lastUpdateDate,
+    this.style,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (lastUpdateDate == null) {
+      return Text('', style: style);
+    }
+    return TickBuilder(
+      duration: const Duration(minutes: 1),
+      builder: (context, _) {
+        return Text(
+          lastUpdateDate!.getLastUpdateTimeDesc(context),
+          style: style,
+        );
+      },
     );
   }
 }

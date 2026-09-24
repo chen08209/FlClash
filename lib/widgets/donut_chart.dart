@@ -1,44 +1,39 @@
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
 @immutable
 class DonutChartData {
-  final double _value;
+  const DonutChartData({required this.value, required this.color});
+
+  final double value;
   final Color color;
-
-  const DonutChartData({required double value, required this.color})
-    : _value = value + 1;
-
-  double get value => _value;
-
-  @override
-  String toString() {
-    return 'DonutChartData{_value: $_value}';
-  }
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is DonutChartData &&
-          runtimeType == other.runtimeType &&
-          _value == other._value &&
-          color == other.color;
+      other is DonutChartData && value == other.value && color == other.color;
 
   @override
-  int get hashCode => _value.hashCode ^ color.hashCode;
+  int get hashCode => Object.hash(value, color);
 }
 
 class DonutChart extends StatefulWidget {
-  final List<DonutChartData> data;
-  final Duration duration;
-
   const DonutChart({
     super.key,
     required this.data,
+    this.trackColor,
     this.duration = commonDuration,
   });
+
+  final List<DonutChartData> data;
+
+  /// Fills the part of the ring [data] leaves empty, such as all of it while
+  /// every value is zero.
+  final Color? trackColor;
+
+  final Duration duration;
 
   @override
   State<DonutChart> createState() => _DonutChartState();
@@ -46,166 +41,178 @@ class DonutChart extends StatefulWidget {
 
 class _DonutChartState extends State<DonutChart>
     with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late List<DonutChartData> _oldData;
+  static const _minChange = 1 / 720;
+
+  late final AnimationController _controller;
+  late final CurvedAnimation _progress;
+  late List<double> _from;
+  late List<double> _to;
 
   @override
   void initState() {
     super.initState();
-    _oldData = widget.data;
-    _animationController = AnimationController(
-      vsync: this,
-      duration: widget.duration,
-    );
+    _to = _fractionsOf(widget.data);
+    _from = _to;
+    _controller = AnimationController(vsync: this, value: 1);
+    _progress = CurvedAnimation(parent: _controller, curve: Easing.standard);
+  }
+
+  static List<double> _fractionsOf(List<DonutChartData> data) {
+    final total = data.fold(0.0, (sum, item) => sum + max(0.0, item.value));
+    return [
+      for (final item in data) total > 0 ? max(0.0, item.value) / total : 0.0,
+    ];
   }
 
   @override
   void didUpdateWidget(DonutChart oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.data != widget.data) {
-      _oldData = oldWidget.data;
-      _animationController.forward(from: 0);
+    final target = _fractionsOf(widget.data);
+    final current = _lerp(_from, _to, _progress.value);
+    var change = double.infinity;
+    if (target.length == current.length) {
+      change = 0;
+      for (var i = 0; i < target.length; i++) {
+        change = max(change, (target[i] - current[i]).abs());
+      }
     }
+    if (change == 0) {
+      return;
+    }
+    if (change < _minChange || change.isInfinite) {
+      _from = target;
+      _to = target;
+      _controller.value = 1;
+      return;
+    }
+    _from = current;
+    _to = target;
+    _controller
+      ..duration = context.motionDuration(widget.duration)
+      ..forward(from: 0);
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _progress.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return CustomPaint(
-          painter: DonutChartPainter(
-            _oldData,
-            widget.data,
-            _animationController.value,
+    return RepaintBoundary(
+      child: SizedBox.expand(
+        child: CustomPaint(
+          painter: _DonutChartPainter(
+            from: _from,
+            to: _to,
+            progress: _progress,
+            colors: [for (final item in widget.data) item.color],
+            trackColor:
+                widget.trackColor ??
+                context.colorScheme.surfaceContainerHighest,
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
 
-class DonutChartPainter extends CustomPainter {
-  final List<DonutChartData> oldData;
-  final List<DonutChartData> newData;
-  final double progress;
+List<double> _lerp(List<double> from, List<double> to, double t) {
+  return [for (var i = 0; i < to.length; i++) from[i] + (to[i] - from[i]) * t];
+}
 
-  late final Paint _arcPaint;
+class _DonutChartPainter extends CustomPainter {
+  _DonutChartPainter({
+    required this.from,
+    required this.to,
+    required this.progress,
+    required this.colors,
+    required this.trackColor,
+  }) : super(repaint: progress);
 
-  List<DonutChartData>? _cachedInterpolatedData;
-  double? _cachedProgress;
+  static const _minStrokeWidth = 10.0;
+  static const _maxStrokeWidth = 16.0;
+  static const _strokeRatio = 0.12;
+  static const _gapRatio = 0.3;
+  static const _fullDotFraction = 0.01;
+  static const _minSweep = 1e-3;
 
-  DonutChartPainter(this.oldData, this.newData, this.progress) {
-    _arcPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-  }
+  final List<double> from;
+  final List<double> to;
+  final Animation<double> progress;
+  final List<Color> colors;
+  final Color trackColor;
 
-  static const _logBase = 10.0;
-  static const _minValue = 0.1;
-  static final _logBaseInv = 1.0 / log(_logBase);
-
-  double _logTransform(double value) {
-    if (value < _minValue) return 0;
-    return log(value) * _logBaseInv + 1;
-  }
-
-  double _expTransform(double value) {
-    if (value <= 0) return 0;
-    return pow(_logBase, value - 1).toDouble();
-  }
-
-  List<DonutChartData> get _interpolatedData {
-    if (_cachedInterpolatedData != null && _cachedProgress == progress) {
-      return _cachedInterpolatedData!;
-    }
-
-    if (newData.isEmpty) {
-      _cachedInterpolatedData = newData;
-      _cachedProgress = progress;
-      return newData;
-    }
-
-    if (oldData.length != newData.length) {
-      _cachedInterpolatedData = newData;
-      _cachedProgress = progress;
-      return newData;
-    }
-
-    final result = <DonutChartData>[];
-    for (var i = 0; i < newData.length; i++) {
-      final oldValue = oldData[i].value;
-      final newValue = newData[i].value;
-      final logOldValue = _logTransform(oldValue);
-      final logNewValue = _logTransform(newValue);
-      final interpolatedLogValue =
-          logOldValue + (logNewValue - logOldValue) * progress;
-
-      final interpolatedValue = _expTransform(interpolatedLogValue);
-
-      result.add(
-        DonutChartData(value: interpolatedValue, color: newData[i].color),
-      );
-    }
-
-    _cachedInterpolatedData = result;
-    _cachedProgress = progress;
-    return result;
-  }
+  final Paint _arcPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round;
+  final Paint _dotPaint = Paint();
 
   @override
   void paint(Canvas canvas, Size size) {
-    final data = _interpolatedData;
-    if (data.isEmpty) return;
-
-    double total = 0;
-    for (final item in data) {
-      total += item.value;
+    final diameter = min(size.width, size.height);
+    final strokeWidth = (diameter * _strokeRatio).clamp(
+      _minStrokeWidth.ap,
+      _maxStrokeWidth.ap,
+    );
+    final radius = (diameter - strokeWidth) / 2;
+    if (radius <= 0) {
+      return;
+    }
+    final center = size.center(Offset.zero);
+    final fractions = _lerp(from, to, progress.value);
+    final covered = fractions.fold(0.0, (sum, fraction) => sum + fraction);
+    final trackAlpha = trackColor.a * (1 - covered);
+    if (trackAlpha * 255 >= 1) {
+      _arcPaint
+        ..color = trackColor.withValues(alpha: trackAlpha)
+        ..strokeWidth = strokeWidth;
+      canvas.drawCircle(center, radius, _arcPaint);
     }
 
-    if (total <= 0) return;
+    // Every segment keeps room for its round caps and a gap on either side,
+    // so the smallest share still shows as a whole dot; the room, like the
+    // dot, only shrinks away as the share falls to zero.
+    final weights = [
+      for (final fraction in fractions) min(1.0, fraction / _fullDotFraction),
+    ];
+    final slot = strokeWidth * (1 + _gapRatio) / radius;
+    final reserved = weights.fold(0.0, (sum, weight) => sum + weight * slot);
+    final available = max(0.0, 2 * pi - reserved);
+    final rect = Rect.fromCircle(center: center, radius: radius);
 
-    final center = Offset(size.width / 2, size.height / 2);
-    final strokeWidth = 10.0.ap;
-    final radius = min(size.width / 2, size.height / 2) - strokeWidth / 2;
-
-    final gapAngle = 2 * asin(strokeWidth * 1 / (2 * radius)) * 1.2;
-    final availableAngle = 2 * pi - (data.length * gapAngle);
-    final totalInv = 1.0 / total;
-
-    double startAngle = -pi / 2 + gapAngle / 2;
-
-    _arcPaint.strokeWidth = strokeWidth;
-
-    for (final item in data) {
-      final sweepAngle = availableAngle * (item.value * totalInv);
-
-      if (sweepAngle <= 0) continue;
-
-      _arcPaint.color = item.color;
-
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        startAngle,
-        sweepAngle,
-        false,
-        _arcPaint,
-      );
-
-      startAngle += sweepAngle + gapAngle;
+    var start = -pi / 2;
+    for (var i = 0; i < fractions.length; i++) {
+      final weight = weights[i];
+      final sweep = available * fractions[i];
+      start += weight * slot / 2;
+      if (weight > 0) {
+        if (sweep > _minSweep) {
+          _arcPaint
+            ..color = colors[i]
+            ..strokeWidth = strokeWidth * weight;
+          canvas.drawArc(rect, start, sweep, false, _arcPaint);
+        } else {
+          _dotPaint.color = colors[i];
+          canvas.drawCircle(
+            center + Offset(cos(start), sin(start)) * radius,
+            strokeWidth * weight / 2,
+            _dotPaint,
+          );
+        }
+      }
+      start += sweep + weight * slot / 2;
     }
   }
 
   @override
-  bool shouldRepaint(DonutChartPainter oldDelegate) {
-    return oldDelegate.progress != progress ||
-        oldDelegate.oldData != oldData ||
-        oldDelegate.newData != newData;
+  bool shouldRepaint(_DonutChartPainter oldDelegate) {
+    return oldDelegate.from != from ||
+        oldDelegate.to != to ||
+        oldDelegate.progress != progress ||
+        !listEquals(oldDelegate.colors, colors) ||
+        oldDelegate.trackColor != trackColor;
   }
 }

@@ -1,7 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
@@ -30,13 +29,17 @@ final baseInfoEdgeInsets = EdgeInsets.symmetric(
 );
 final listHeaderPadding = EdgeInsets.only(
   left: 16.mAp,
-  right: 8.mAp,
+  right: 16.mAp,
   top: 24.mAp,
   bottom: 8.mAp,
 );
+const pageToolbarHeight = 64.0;
+const sheetToolbarHeight = 48.0;
 const sheetAppBarHeight = 68.0;
 
 const watchExecution = false;
+
+const safeModeBuild = bool.fromEnvironment('SAFE_MODE');
 
 String _randomPipeId() {
   final random = Random.secure();
@@ -56,6 +59,22 @@ const delayTestTimeoutDuration = Duration(seconds: 8);
 
 const delayTestGuardDuration = Duration(seconds: 30);
 
+const probeTimeoutDuration = Duration(seconds: 10);
+
+/// A healthy source answers within a second; past this the outbound is down.
+const outboundIpTimeoutDuration = Duration(seconds: 6);
+
+/// The Core may spend a method's own timeout twice, once queueing for a probe
+/// slot and once on the request, before the transport is considered
+/// unresponsive. [budgetFactor] covers methods that spend it more than once.
+Duration coreGuardFor(int timeout, {int budgetFactor = 2}) =>
+    Duration(milliseconds: timeout * budgetFactor) + const Duration(seconds: 5);
+
+Duration probeGuardDuration(ProbeParams params) => coreGuardFor(params.timeout);
+
+/// Kept in step with serviceSweepBudgetFactor in core/service_check.go.
+const serviceSweepBudgetFactor = 6;
+
 const coreConnectionWaitDuration = Duration(seconds: 10);
 
 /// Keep at or below the Core's delay-test concurrency (`delayTestConcurrency`
@@ -64,11 +83,20 @@ const maxConcurrentDelayTests = 16;
 const animateDuration = Duration(milliseconds: 100);
 const midDuration = Duration(milliseconds: 200);
 const commonDuration = Duration(milliseconds: 300);
+
+/// How often a live Core feed is allowed to repaint. One batch costs about a
+/// frame on a phone, and anything at or below the 200ms scroll-to-end
+/// animation restarts it mid-flight, so the list jumps instead of animating.
+const renderThrottleDuration = Duration(milliseconds: 300);
 const defaultUpdateDuration = Duration(days: 1);
 const MMDB = 'GEOIP.metadb';
 const ASN = 'ASN.mmdb';
 const GEOIP = 'GEOIP.dat';
 const GEOSITE = 'GEOSITE.dat';
+
+/// The macOS sidebar material is the finished look; the Windows accent
+/// effects need a tint over them to keep the rail readable.
+final double kSidebarBlurOpacity = system.isMacOS ? 0 : 0.5;
 final double kHeaderHeight = getWindowHeaderHeight(
   isDesktop: system.isDesktop,
   isMacOS: system.isMacOS,
@@ -77,6 +105,12 @@ const profilesDirectoryName = 'profiles';
 const providersDirectoryName = 'providers';
 const proxiesProviderDirectoryName = 'proxies';
 const rulesProviderDirectoryName = 'rules';
+
+String providerCacheDirectoryName(ProviderKind kind) => switch (kind) {
+  ProviderKind.proxy => proxiesProviderDirectoryName,
+  ProviderKind.rule => rulesProviderDirectoryName,
+};
+
 const localhost = '127.0.0.1';
 const clashConfigKey = 'clash_config';
 const configKey = 'config';
@@ -88,11 +122,6 @@ const repository = 'chen08209/FlClash';
 const maxMobileWidth = 600;
 const maxLaptopWidth = 840;
 const defaultTestUrl = 'https://www.gstatic.com/generate_204';
-final commonFilter = ImageFilter.blur(
-  sigmaX: 5,
-  sigmaY: 5,
-  tileMode: TileMode.clamp,
-);
 
 const stringListEquality = ListEquality<String>();
 const intListEquality = ListEquality<int>();
@@ -100,6 +129,8 @@ const ruleListEquality = ListEquality<Rule>();
 const scriptListEquality = ListEquality<Script>();
 const profileListEquality = ListEquality<Profile>();
 const proxyGroupsEquality = ListEquality<ProxyGroup>();
+const customProxiesEquality = ListEquality<CustomProxy>();
+const clashProviderListEquality = ListEquality<ClashProvider>();
 const hotKeyActionListEquality = ListEquality<HotKeyAction>();
 const stringAndStringMapEntryListEquality =
     ListEquality<MapEntry<String, String>>();
@@ -111,15 +142,12 @@ const profilesStoreKey = PageStorageKey<String>('profiles');
 
 const defaultPrimaryColor = 0XFFD8C0C3;
 
-double getWidgetHeight(num lines) {
-  final space = 14.mAp;
-  return max(lines * (80.ap + space) - space, 0);
-}
-
 const maxLogsLength = 5000;
 const maxRequestsLength = 2000;
+const maxDnsQueriesLength = 3000;
 const pausedMaxLogsLength = maxLogsLength * 2;
 const pausedMaxRequestsLength = maxRequestsLength * 2;
+const pausedMaxDnsQueriesLength = maxDnsQueriesLength * 2;
 
 const trafficSampleLength = 30;
 
@@ -137,6 +165,10 @@ const scriptTemplate = '''
 const main = (config) => {
   return config;
 }''';
+
+const proxyProviderTemplate = 'proxies: []\n';
+
+const ruleProviderTemplate = 'payload: []\n';
 
 const backupDatabaseName = 'database.sqlite';
 const configJsonName = 'config.json';

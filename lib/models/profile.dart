@@ -120,22 +120,18 @@ extension ProfilesExt on List<Profile> {
     return index == -1 ? null : this[index];
   }
 
-  String _getLabel(String label, int id) {
-    final realLabel = label.takeFirstValid([id.toString()]);
-    final hasDup =
-        indexWhere(
-          (element) => element.label == realLabel && element.id != id,
-        ) !=
-        -1;
-    if (hasDup) {
-      return _getLabel(getOverwriteLabel(realLabel), id);
-    } else {
-      return realLabel;
-    }
-  }
-
-  Profile optimizeLabel(Profile profile) {
-    return profile.copyWith(label: _getLabel(profile.label, profile.id));
+  /// A profile doubles as a proxy provider, so its label must also stay
+  /// clear of the app-level ones.
+  Profile optimizeLabel(Profile profile, {Set<String> reserved = const {}}) {
+    return profile.copyWith(
+      label: uniqueLabelFor(
+        profile.label,
+        fallback: profile.id.toString(),
+        taken: (label) =>
+            reserved.contains(label) ||
+            any((item) => item.label == label && item.id != profile.id),
+      ),
+    );
   }
 }
 
