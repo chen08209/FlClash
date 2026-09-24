@@ -4,7 +4,9 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/action.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
@@ -40,10 +42,20 @@ extension HotKeyActionExt on HotKeyAction {
   }
 }
 
+typedef HotKeyRegistrar =
+    Future<List<HotKeyFailure>> Function({required List<HotKeySpec> specs});
+
 class HotKeyManager extends ConsumerStatefulWidget {
+  final HotKeyRegistrar? registerHotKeys;
+  final Stream<int> Function()? hotKeyEventSource;
   final Widget child;
 
-  const HotKeyManager({super.key, required this.child});
+  const HotKeyManager({
+    super.key,
+    this.registerHotKeys,
+    this.hotKeyEventSource,
+    required this.child,
+  });
 
   @override
   ConsumerState<HotKeyManager> createState() => _HotKeyManagerState();
@@ -52,18 +64,32 @@ class HotKeyManager extends ConsumerStatefulWidget {
 class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
   StreamSubscription<int>? _eventSubscription;
   Future<void> _pendingUpdate = Future.value();
+  late final HotKeyRegistrar _registerHotKeys =
+      widget.registerHotKeys ?? setHotKeys;
+  late final Stream<int> Function() _hotKeyEvents =
+      widget.hotKeyEventSource ?? hotKeyEvents;
 
   @override
   void initState() {
     super.initState();
+    if (ref.read(safeModeProvider)) {
+      return;
+    }
     _subscribeHotKeyEvents();
     ref.listenManual(hotKeyActionsProvider, (prev, next) {
       if (!hotKeyActionListEquality.equals(prev, next)) {
-        _pendingUpdate = _pendingUpdate.then(
-          (_) => _updateHotKeys(hotKeyActions: next),
-        );
+        _scheduleUpdate();
       }
     }, fireImmediately: true);
+    ref.listenManual(hotKeyRecordingProvider, (prev, next) {
+      if (prev != next) {
+        _scheduleUpdate();
+      }
+    });
+  }
+
+  void _scheduleUpdate() {
+    _pendingUpdate = _pendingUpdate.then((_) => _updateHotKeys());
   }
 
   void _subscribeHotKeyEvents() {
@@ -75,7 +101,7 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
     }
 
     try {
-      _eventSubscription = hotKeyEvents().listen(
+      _eventSubscription = _hotKeyEvents().listen(
         _handleHotKeyEvent,
         onError: warn,
       );
@@ -94,6 +120,7 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
   Future<void> _handleHotKeyAction(HotAction action) async {
     final commonAction = ref.read(commonActionProvider.notifier);
     final systemAction = ref.read(systemActionProvider.notifier);
+    final setupAction = ref.read(setupActionProvider.notifier);
     switch (action) {
       case HotAction.mode:
         commonAction.updateMode();
@@ -105,29 +132,70 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
         systemAction.updateSystemProxy();
       case HotAction.tun:
         systemAction.updateTun();
+      case HotAction.ruleMode:
+        setupAction.changeMode(Mode.rule);
+      case HotAction.globalMode:
+        setupAction.changeMode(Mode.global);
+      case HotAction.directMode:
+        setupAction.changeMode(Mode.direct);
+      case HotAction.delayTest:
+        unawaited(
+          ref
+              .read(proxiesActionProvider.notifier)
+              .delayTestGroups(ref.read(currentGroupsStateProvider).value),
+        );
+      case HotAction.updateProfiles:
+        unawaited(
+          globalState.safeRun(
+            ref.read(profilesActionProvider.notifier).updateProfiles,
+          ),
+        );
+      case HotAction.copyEnv:
+        unawaited(systemAction.copyProxyEnv());
+      case HotAction.exit:
+        unawaited(systemAction.handleExit());
     }
   }
 
-  Future<void> _updateHotKeys({
-    required List<HotKeyAction> hotKeyActions,
-  }) async {
+  /// While the recorder is open nothing is registered, so the OS hands the
+  /// recorder a combination that is already bound instead of running it.
+  Future<void> _updateHotKeys() async {
+    if (!mounted) {
+      return;
+    }
+    final isRecording = ref.read(hotKeyRecordingProvider);
     final specs = [
-      for (final hotKeyAction in hotKeyActions) ?hotKeyAction.toHotKeySpec(),
+      if (!isRecording)
+        for (final hotKeyAction in ref.read(hotKeyActionsProvider))
+          ?hotKeyAction.toHotKeySpec(),
     ];
+    final failed = await _register(specs);
+    if (!isRecording && mounted) {
+      ref.read(hotKeyFailuresProvider.notifier).value = failed;
+    }
+  }
+
+  Future<Map<HotAction, String>> _register(List<HotKeySpec> specs) async {
     try {
-      final failures = await setHotKeys(specs: specs);
-      for (final failure in failures) {
+      final failures = await _registerHotKeys(specs: specs);
+      final failed = {
+        for (final failure in failures)
+          if (failure.id >= 0 && failure.id < HotAction.values.length)
+            HotAction.values[failure.id]: failure.reason,
+      };
+      for (final MapEntry(:key, :value) in failed.entries) {
         commonPrint.log(
-          'hotkey ${HotAction.values[failure.id].name} not registered: '
-          '${failure.reason}',
+          'hotkey ${key.name} not registered: $value',
           logLevel: LogLevel.warning,
         );
       }
+      return failed;
     } catch (error) {
       commonPrint.log(
         'update hotkeys failed: $error',
         logLevel: LogLevel.warning,
       );
+      return {for (final spec in specs) HotAction.values[spec.id]: '$error'};
     }
   }
 

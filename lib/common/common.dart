@@ -18,6 +18,7 @@ export 'future.dart';
 export 'http.dart';
 export 'icons.dart';
 export 'indexing.dart';
+export 'input_entries.dart';
 export 'input_limits.dart';
 export 'iterable.dart';
 export 'javascript.dart';

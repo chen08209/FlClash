@@ -28,7 +28,7 @@ func Start(fd int, stack string, address, dns string) *sing_tun.Listener {
 	var prefix6 []netip.Prefix
 	tunStack, ok := constant.StackTypeMapping[strings.ToLower(stack)]
 	if !ok {
-		tunStack = constant.TunSystem
+		tunStack = constant.TunMips
 	}
 	for _, a := range strings.Split(address, ",") {
 		a = strings.TrimSpace(a)

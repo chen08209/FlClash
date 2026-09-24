@@ -162,7 +162,7 @@ enum Network { tcp, udp }
 
 enum ProxiesSortType { none, delay, name }
 
-enum TunStack { gvisor, system, mixed }
+enum TunStack { gvisor, system, mixed, mips }
 
 enum AccessControlMode { acceptSelected, rejectSelected }
 
@@ -213,6 +213,71 @@ enum DnsMode {
   hosts,
 }
 
+enum DnsCacheAlgorithm { lru, arc }
+
+enum FakeIpFilterMode { blacklist, whitelist, rule }
+
+@JsonEnum(valueField: 'path')
+enum DnsOverrideKey {
+  enable('enable'),
+  listen('listen'),
+  listenRoutingMark('listen-routing-mark'),
+  useHosts('use-hosts'),
+  useSystemHosts('use-system-hosts'),
+  ipv6('ipv6'),
+  ipv6Timeout('ipv6-timeout'),
+  respectRules('respect-rules'),
+  preferH3('prefer-h3'),
+  cacheAlgorithm('cache-algorithm'),
+  cacheMaxSize('cache-max-size'),
+  enhancedMode('enhanced-mode'),
+  fakeIpRange('fake-ip-range'),
+  fakeIpRange6('fake-ip-range6'),
+  fakeIpFilter('fake-ip-filter'),
+  fakeIpFilterMode('fake-ip-filter-mode'),
+  fakeIpTtl('fake-ip-ttl'),
+  defaultNameserver('default-nameserver'),
+  nameserverPolicy('nameserver-policy'),
+  nameserver('nameserver'),
+  fallback('fallback'),
+  fallbackLazyQuery('fallback-lazy-query'),
+  proxyServerNameserver('proxy-server-nameserver'),
+  proxyServerNameserverPolicy('proxy-server-nameserver-policy'),
+  directNameserver('direct-nameserver'),
+  directNameserverFollowPolicy('direct-nameserver-follow-policy'),
+  fallbackFilterGeoip('fallback-filter.geoip'),
+  fallbackFilterGeoipCode('fallback-filter.geoip-code'),
+  fallbackFilterGeosite('fallback-filter.geosite'),
+  fallbackFilterIpcidr('fallback-filter.ipcidr'),
+  fallbackFilterDomain('fallback-filter.domain');
+
+  const DnsOverrideKey(this.path);
+
+  final String path;
+
+  static const fallbackFilterSection = 'fallback-filter';
+
+  bool get isFallbackFilter => path.startsWith('$fallbackFilterSection.');
+
+  String get jsonKey => isFallbackFilter
+      ? path.substring(fallbackFilterSection.length + 1)
+      : path;
+}
+
+@JsonEnum(valueField: 'path')
+enum NtpOverrideKey {
+  enable('enable'),
+  server('server'),
+  port('port'),
+  interval('interval'),
+  dialerProxy('dialer-proxy'),
+  writeToSystem('write-to-system');
+
+  const NtpOverrideKey(this.path);
+
+  final String path;
+}
+
 enum ExternalControllerStatus {
   @JsonValue('')
   close(''),
@@ -237,7 +302,20 @@ enum KeyboardModifier {
   const KeyboardModifier(this.physicalKeys);
 }
 
-enum HotAction { start, view, mode, proxy, tun }
+enum HotAction {
+  start,
+  view,
+  mode,
+  proxy,
+  tun,
+  ruleMode,
+  globalMode,
+  directMode,
+  delayTest,
+  updateProfiles,
+  copyEnv,
+  exit,
+}
 
 enum ProxiesIconStyle { none, standard, icon }
 
@@ -273,12 +351,14 @@ enum FunctionTag {
   proxiesTabChange,
   logs,
   requests,
+  dnsQueries,
   autoScrollToEnd,
   loadedProvider,
   saveSharedFile,
   removeProxy,
   suspend,
   coreErrorNotifier,
+  reloadPackages,
 }
 
 enum DashboardWidget {
@@ -364,6 +444,7 @@ enum PageLabel {
   requests,
   resources,
   connections,
+  dns,
 }
 
 enum RuleAction {
