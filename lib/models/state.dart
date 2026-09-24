@@ -307,6 +307,7 @@ abstract class SharedState with _$SharedState {
     VpnOptions? vpnOptions,
     required String stopTip,
     required String startTip,
+    required String localNetworkTip,
     required String currentProfileName,
     required String stopText,
     required bool onlyStatisticsProxy,

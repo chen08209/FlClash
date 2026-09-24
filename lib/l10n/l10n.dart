@@ -940,6 +940,16 @@ class AppLocalizations {
     return Intl.message('Stopping VPN…', name: 'stopVpn', desc: '', args: []);
   }
 
+  /// `Local network permission denied: using the gvisor stack, LAN is unreachable.`
+  String get localNetworkDeniedTip {
+    return Intl.message(
+      'Local network permission denied: using the gvisor stack, LAN is unreachable.',
+      name: 'localNetworkDeniedTip',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Compatibility mode`
   String get compatible {
     return Intl.message(
@@ -1655,6 +1665,11 @@ class AppLocalizations {
     return Intl.message('Start', name: 'start', desc: '', args: []);
   }
 
+  /// `Run time`
+  String get runTime {
+    return Intl.message('Run time', name: 'runTime', desc: '', args: []);
+  }
+
   /// `Stop`
   String get stop {
     return Intl.message('Stop', name: 'stop', desc: '', args: []);
@@ -1740,26 +1755,6 @@ class AppLocalizations {
     return Intl.message(
       'Rule providers',
       name: 'ruleProviders',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `App proxy providers`
-  String get appProxyProviders {
-    return Intl.message(
-      'App proxy providers',
-      name: 'appProxyProviders',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `App rule providers`
-  String get appRuleProviders {
-    return Intl.message(
-      'App rule providers',
-      name: 'appRuleProviders',
       desc: '',
       args: [],
     );
@@ -5440,6 +5435,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Due to system limitations, the battery optimization status cannot be read correctly while running`
+  String get batteryOptimizationStatusTip {
+    return Intl.message(
+      'Due to system limitations, the battery optimization status cannot be read correctly while running',
+      name: 'batteryOptimizationStatusTip',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Location permission`
   String get locationPermission {
     return Intl.message(
@@ -6368,16 +6373,6 @@ class AppLocalizations {
     );
   }
 
-  /// `The profile already has a provider named {name}, so the app-level one is not used. Rename it to use it`
-  String overwriteIssueProviderShadowed(Object name) {
-    return Intl.message(
-      'The profile already has a provider named $name, so the app-level one is not used. Rename it to use it',
-      name: 'overwriteIssueProviderShadowed',
-      desc: '',
-      args: [name],
-    );
-  }
-
   /// `{label} is still used by the custom proxy groups or rules of {profiles}. Remove it there first`
   String providerInUse(Object label, Object profiles) {
     return Intl.message(
@@ -6405,16 +6400,6 @@ class AppLocalizations {
       name: 'providerRenameShadowed',
       desc: '',
       args: [profiles, label],
-    );
-  }
-
-  /// `The app-level one of this name is not used here`
-  String get appProviderShadowed {
-    return Intl.message(
-      'The app-level one of this name is not used here',
-      name: 'appProviderShadowed',
-      desc: '',
-      args: [],
     );
   }
 }

@@ -189,6 +189,19 @@ abstract final class AppGlyphs {
     ], role: GlyphRole.line),
   ]);
 
+  static const picker = Glyph([
+    GlyphPolyline([
+      GlyphVertex(7.5, 9.5),
+      GlyphVertex(12, 5, 0.4),
+      GlyphVertex(16.5, 9.5),
+    ], role: GlyphRole.line),
+    GlyphPolyline([
+      GlyphVertex(7.5, 14.5),
+      GlyphVertex(12, 19, 0.4),
+      GlyphVertex(16.5, 14.5),
+    ], role: GlyphRole.line),
+  ]);
+
   static const caretDown = Glyph([
     GlyphPolyline([
       GlyphVertex(5.2, 8, 1),

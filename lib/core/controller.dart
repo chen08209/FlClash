@@ -228,10 +228,15 @@ class CoreController {
       _interface.serviceCheck(params);
 
   Future<Map<String, dynamic>> getConfig(int id) async {
-    final profilePath = await appPath.getProfilePath(id.toString());
-    final data = Map<String, dynamic>.from(
-      await _interface.getConfig(profilePath),
-    );
+    return _readConfig(await appPath.getProfilePath(id.toString()));
+  }
+
+  Future<Map<String, dynamic>> getAppliedConfig() async {
+    return _readConfig(await appPath.configFilePath);
+  }
+
+  Future<Map<String, dynamic>> _readConfig(String path) async {
+    final data = Map<String, dynamic>.from(await _interface.getConfig(path));
     data['rules'] = data['rule'];
     data.remove('rule');
     return data;

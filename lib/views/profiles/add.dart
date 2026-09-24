@@ -6,9 +6,21 @@ import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/pages/scan.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/state.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+void showAddProfilePage() {
+  final context = globalState.navigatorKey.currentState!.context;
+  showExtend(
+    context,
+    builder: (context) => CommonScaffold(
+      title: context.appLocalizations.addProfile,
+      body: AddProfileView(context: context),
+    ),
+  );
+}
 
 class AddProfileView extends ConsumerWidget {
   final BuildContext context;
