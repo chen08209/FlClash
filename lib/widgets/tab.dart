@@ -18,10 +18,6 @@ const EdgeInsetsGeometry _kHorizontalItemPadding = EdgeInsets.symmetric(
 
 const double _kThumbInset = 1;
 
-const Radius _kCornerRadius = Radius.circular(AppCorner.sm + _kThumbInset);
-
-const Radius _kThumbRadius = Radius.circular(AppCorner.sm);
-
 const EdgeInsets _kThumbInsets = EdgeInsets.symmetric(horizontal: _kThumbInset);
 
 const double _kMinSegmentedControlHeight = 28.0;
@@ -46,6 +42,8 @@ const FontWeight _kHighlightedFontWeight = FontWeight.w600;
 
 const Color _kDisabledContentColor = Color.fromARGB(115, 122, 122, 122);
 
+const double _kFocusRingWidth = 2;
+
 final SpringSimulation _kThumbSpringAnimationSimulation = SpringSimulation(
   const SpringDescription(mass: 1, stiffness: 503.551, damping: 44.8799),
   0,
@@ -67,6 +65,7 @@ class CommonTabBar<T extends Object> extends StatefulWidget {
     this.disabledChildren = const <Never>{},
     this.groupValue,
     required this.thumbColor,
+    this.thumbRadius = AppCorner.sm,
     this.padding = _kHorizontalItemPadding,
     this.backgroundColor,
     this.proportionalWidth = false,
@@ -81,6 +80,7 @@ class CommonTabBar<T extends Object> extends StatefulWidget {
   final ValueChanged<T?> onValueChanged;
   final Color? backgroundColor;
   final Color thumbColor;
+  final double thumbRadius;
   final bool proportionalWidth;
   final EdgeInsetsGeometry padding;
 
@@ -335,28 +335,21 @@ class _CommonTabBarState<T extends Object> extends State<CommonTabBar<T>>
         TextDirection.rtl when index == 0 => _SegmentLocation.rightmost,
         TextDirection.ltr || TextDirection.rtl => _SegmentLocation.inbetween,
       };
+      final bool enabled = !widget.disabledChildren.contains(entry.key);
       children.add(
-        Semantics(
-          button: true,
-          onTap: () {
-            if (widget.disabledChildren.contains(entry.key)) {
-              return;
-            }
-            widget.onValueChanged(entry.key);
-          },
-          inMutuallyExclusiveGroup: true,
+        _FocusableSegment(
+          enabled: enabled,
           selected: widget.groupValue == entry.key,
-          child: MouseRegion(
-            cursor: kIsWeb ? SystemMouseCursors.click : MouseCursor.defer,
-            child: _Segment<T>(
-              key: ValueKey<T>(entry.key),
-              highlighted: isHighlighted,
-              pressed: pressed == entry.key,
-              isDragging: isThumbDragging,
-              enabled: !widget.disabledChildren.contains(entry.key),
-              segmentLocation: segmentLocation,
-              child: entry.value,
-            ),
+          focusRadius: widget.thumbRadius,
+          onActivate: () => widget.onValueChanged(entry.key),
+          child: _Segment<T>(
+            key: ValueKey<T>(entry.key),
+            highlighted: isHighlighted,
+            pressed: pressed == entry.key,
+            isDragging: isThumbDragging,
+            enabled: enabled,
+            segmentLocation: segmentLocation,
+            child: entry.value,
           ),
         ),
       );
@@ -383,8 +376,10 @@ class _CommonTabBarState<T extends Object> extends State<CommonTabBar<T>>
         clipBehavior: Clip.antiAlias,
         padding: widget.padding.resolve(Directionality.of(context)),
         decoration: ShapeDecoration(
-          shape: const RoundedSuperellipseBorder(
-            borderRadius: BorderRadius.all(_kCornerRadius),
+          shape: RoundedSuperellipseBorder(
+            borderRadius: BorderRadius.circular(
+              widget.thumbRadius + _kThumbInset,
+            ),
           ),
           color: widget.backgroundColor,
         ),
@@ -396,6 +391,7 @@ class _CommonTabBarState<T extends Object> extends State<CommonTabBar<T>>
               key: segmentedControlRenderWidgetKey,
               highlightedIndex: highlightedIndex,
               thumbColor: widget.thumbColor,
+              thumbRadius: widget.thumbRadius,
               thumbScale: thumbScaleAnimation.value,
               state: this,
               children: children,

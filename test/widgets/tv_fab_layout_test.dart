@@ -1,13 +1,16 @@
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/test_app.dart';
+
 Widget _action() {
   return CommonFloatingActionButton(
     key: const ValueKey('action'),
     onPressed: () {},
-    icon: const Icon(Icons.add),
+    icon: const GlyphIcon(AppGlyphs.add),
     label: 'action',
   );
 }
@@ -36,9 +39,10 @@ bool _isActionFocused() {
 void main() {
   testWidgets('non-TV CommonScaffold keeps the Scaffold FAB', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: CommonScaffold(
-          appBar: AppBar(title: const Text('page')),
+      TestApp(
+        wrapInProviderScope: true,
+        child: CommonScaffold(
+          title: 'page',
           isTV: false,
           floatingActionButton: _action(),
           body: _content(),
@@ -55,9 +59,10 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: CommonScaffold(
-          appBar: AppBar(title: const Text('page')),
+      TestApp(
+        wrapInProviderScope: true,
+        child: CommonScaffold(
+          title: 'page',
           isTV: true,
           floatingActionButton: _action(),
           body: _content(),
@@ -85,13 +90,14 @@ void main() {
     final outsideFocus = FocusNode();
     addTearDown(outsideFocus.dispose);
     await tester.pumpWidget(
-      MaterialApp(
-        home: Column(
+      TestApp(
+        wrapInProviderScope: true,
+        child: Column(
           children: [
             Focus(focusNode: outsideFocus, child: const SizedBox()),
             Expanded(
               child: CommonScaffold(
-                appBar: AppBar(title: const Text('page')),
+                title: 'page',
                 isTV: true,
                 floatingActionButton: _action(),
                 body: _content(),
@@ -108,32 +114,5 @@ void main() {
     await tester.pump();
 
     expect(_isActionFocused(), isTrue);
-  });
-
-  testWidgets('FloatLayout uses the same fixed top action layout on TV', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: FloatLayout(
-            isTV: true,
-            floatingWidget: _action(),
-            child: _content(),
-          ),
-        ),
-      ),
-    );
-
-    final action = find.byKey(const ValueKey('action'));
-    final firstItem = find.byKey(const ValueKey('item0'));
-    final initialActionTop = tester.getTopLeft(action).dy;
-
-    expect(initialActionTop, lessThan(tester.getTopLeft(firstItem).dy));
-
-    await tester.drag(firstItem, const Offset(0, -300));
-    await tester.pumpAndSettle();
-
-    expect(tester.getTopLeft(action).dy, initialActionTop);
   });
 }

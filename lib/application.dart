@@ -14,6 +14,7 @@ import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/focus.dart';
+import 'package:fl_clash/widgets/keyboard_inset_hold.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -196,7 +197,7 @@ class ApplicationState extends ConsumerState<Application> {
             actionIconTheme: _actionIconTheme,
             colorScheme: _getAppColorScheme(brightness: Brightness.dark),
           ).withAppShapes,
-          home: child!,
+          home: KeyboardInsetHold(child: child!),
         );
       },
       child: const HomePage(),
