@@ -192,6 +192,7 @@ void main() {
             hosts: {'router.local': '192.168.1.1,192.168.1.2'},
           ),
           overrideDns: false,
+          overrideNtp: false,
           appendSystemDns: true,
           proxyGroups: const [],
           rules: const [],
@@ -249,6 +250,7 @@ void main() {
         rawConfig: rawConfig,
         realPatchConfig: const PatchClashConfig(),
         overrideDns: false,
+        overrideNtp: false,
         appendSystemDns: false,
         proxyGroups: const [],
         rules: const [],
@@ -302,6 +304,7 @@ void main() {
             geoUpdateInterval: 48,
           ),
           overrideDns: false,
+          overrideNtp: false,
           appendSystemDns: false,
           proxyGroups: const [],
           rules: const [],
@@ -330,6 +333,7 @@ void main() {
       rawConfig: rawConfig,
       realPatchConfig: const PatchClashConfig(),
       overrideDns: false,
+      overrideNtp: false,
       appendSystemDns: false,
       proxyGroups: const [],
       rules: const [],
@@ -359,7 +363,14 @@ void main() {
         rawConfig: {},
         realPatchConfig: PatchClashConfig(),
         overrideDns: true,
+        overrideNtp: false,
         appendSystemDns: false,
+        proxies: [
+          CustomProxy(
+            id: 2,
+            definition: {'name': 'Node', 'type': 'socks5', 'port': 1080},
+          ),
+        ],
         proxyGroups: [
           ProxyGroup(
             id: 1,
@@ -383,7 +394,12 @@ void main() {
 
     expect(config['dns']['enable'], true);
     expect(config['dns']['nameserver'], isNot(contains('system://')));
+    expect(config['proxies'], [
+      {'name': 'Node', 'type': 'socks5', 'port': 1080},
+    ]);
     expect(config['proxy-groups'], hasLength(1));
+    expect(config['proxy-groups'][0].keys, ['name', 'type', 'proxies']);
+    expect(config['proxy-groups'][0]['type'], 'select');
     expect(config['rules'], ['DOMAIN,custom.example,DIRECT']);
   });
 
@@ -412,6 +428,7 @@ void main() {
         rawConfig: rawConfig,
         realPatchConfig: const PatchClashConfig(),
         overrideDns: false,
+        overrideNtp: false,
         appendSystemDns: false,
         proxyGroups: const [],
         rules: const [],
@@ -432,6 +449,47 @@ void main() {
     );
   });
 
+  test('makeRealProfileTask keeps safe mode off the host', () async {
+    Future<YamlMap> build({required bool safeMode}) async {
+      final result = await makeRealProfileTask(
+        MakeRealProfileState(
+          profilesPath: '/profiles',
+          profileId: 14,
+          rawConfig: {
+            'dns': {'enable': true, 'listen': '0.0.0.0:53'},
+            'ntp': {'enable': true, 'write-to-system': true},
+            'external-controller-tls': '127.0.0.1:9443',
+            'external-controller-unix': 'mihomo.sock',
+            'external-controller-pipe': r'\\.\pipe\mihomo',
+          },
+          realPatchConfig: const PatchClashConfig(),
+          overrideDns: false,
+          overrideNtp: false,
+          appendSystemDns: false,
+          proxyGroups: const [],
+          rules: const [],
+          addedRules: const [],
+          defaultUA: 'FlClash-Test',
+          safeMode: safeMode,
+        ),
+      );
+      return loadYaml(result.yaml) as YamlMap;
+    }
+
+    final normal = await build(safeMode: false);
+    expect(normal['dns']['listen'], '0.0.0.0:53');
+    expect(normal['external-controller-tls'], '127.0.0.1:9443');
+    expect(normal['ntp']['write-to-system'], true);
+
+    final safe = await build(safeMode: true);
+    expect(safe['dns']['listen'], '');
+    expect(safe['external-controller-tls'], '');
+    expect(safe['external-controller-unix'], '');
+    expect(safe['external-controller-pipe'], '');
+    expect(safe['ntp']['write-to-system'], false);
+    expect(safe['ntp']['enable'], true);
+  });
+
   group('makeRealProfileTask interface-name mode', () {
     Future<YamlMap> runWith(PatchClashConfig realPatchConfig) async {
       final rawConfig = await decodeJSONTask<Map<String, dynamic>>(
@@ -445,6 +503,7 @@ void main() {
           rawConfig: rawConfig,
           realPatchConfig: realPatchConfig,
           overrideDns: false,
+          overrideNtp: false,
           appendSystemDns: false,
           proxyGroups: const [],
           rules: const [],
@@ -519,6 +578,7 @@ void main() {
           },
           realPatchConfig: const PatchClashConfig(),
           overrideDns: false,
+          overrideNtp: false,
           appendSystemDns: false,
           proxyGroups: const [],
           rules: const [],

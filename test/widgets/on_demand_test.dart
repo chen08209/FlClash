@@ -1,14 +1,19 @@
+import 'dart:async';
+
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/config/on_demand.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wifi_ssid/wifi_ssid.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 
 class _TestExcludeSSIDs extends ExcludeSSIDs {
@@ -77,7 +82,7 @@ void main() {
     expect(find.text('SSIDs are empty'), findsOneWidget);
     expect(find.text('Add'), findsOneWidget);
     expect(find.text('Select all'), findsNothing);
-    expect(find.byIcon(Icons.delete), findsNothing);
+    expect(find.byGlyph(AppGlyphs.delete), findsNothing);
   });
 
   testWidgets('every excluded SSID is rendered', (tester) async {
@@ -92,12 +97,12 @@ void main() {
     tester,
   ) async {
     await pumpView(tester, ssids: ['Home', 'Office']);
-    expect(find.byIcon(Icons.delete), findsNothing);
+    expect(find.byGlyph(AppGlyphs.delete), findsNothing);
 
     await tester.tap(find.byType(CommonCheckBox).first);
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.delete), findsOneWidget);
+    expect(find.byGlyph(AppGlyphs.delete), findsOneWidget);
     expect(find.text('Select all'), findsOneWidget);
     expect(find.text('Add'), findsNothing);
   });
@@ -125,7 +130,7 @@ void main() {
     await tester.tap(find.byType(CommonCheckBox).first);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.delete));
+    await tester.tap(find.byGlyph(AppGlyphs.delete));
     await tester.pumpAndSettle();
 
     expect(container.read(excludeSSIDsProvider), ['Office']);
@@ -157,6 +162,54 @@ void main() {
 
     expect(find.bySemanticsLabel('Authorized'), findsOneWidget);
     expect(find.bySemanticsLabel('Tap to authorize'), findsNothing);
+  });
+
+  testWidgets('a refused location request leaves the permission as it was', (
+    tester,
+  ) async {
+    const channel = MethodChannel('wifi_ssid');
+    final messenger = tester.binding.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(
+      channel,
+      (_) async => throw PlatformException(code: 'IN_PROGRESS'),
+    );
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    await pumpView(tester, isMacOS: true);
+
+    await tester.tap(find.text('Tap to authorize'));
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(locationPermissionsProvider),
+      WifiSsidPermission.denied,
+    );
+    expect(find.bySemanticsLabel('Tap to authorize'), findsOneWidget);
+  });
+
+  testWidgets('a second tap while the location request waits asks only once', (
+    tester,
+  ) async {
+    const channel = MethodChannel('wifi_ssid');
+    final messenger = tester.binding.defaultBinaryMessenger;
+    final answer = Completer<Object?>();
+    var requests = 0;
+    messenger.setMockMethodCallHandler(channel, (_) {
+      requests++;
+      return answer.future;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    await pumpView(tester, isMacOS: true);
+    container.read(viewSizeProvider.notifier).value = const Size(1400, 1000);
+
+    await tester.tap(find.text('Tap to authorize'));
+    await tester.pump();
+    await tester.tap(find.text('Tap to authorize'));
+    await tester.pump();
+    answer.complete(WifiSsidPermission.permanentlyDenied.index);
+    await tester.pumpAndSettle();
+
+    expect(requests, 1);
+    expect(find.text('Location permission required'), findsOneWidget);
   });
 
   testWidgets('Android also asks to be left out of battery optimization', (
