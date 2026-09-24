@@ -1,16 +1,16 @@
 [versions]
-firebaseBom = "34.15.0"
-minSdk = "23"
-targetSdk = "36"
-compileSdk = "36"
+firebaseBom = "34.19.0"
+minSdk = "24"
+targetSdk = "37"
+compileSdk = "37"
 ndkVersion = "28.2.13676358"
-coreKtx = "1.17.0"
-annotationJvm = "1.9.1"
-coreSplashscreen = "1.0.1"
-gson = "2.13.1"
-smaliDexlib2 = "3.0.9"
+coreKtx = "1.19.1"
+annotationJvm = "1.11.0"
+coreSplashscreen = "1.2.0"
+gson = "2.14.0"
+smaliDexlib2 = "3.0.10"
 junit = "4.13.2"
-kotlinxCoroutines = "1.10.2"
+kotlinxCoroutines = "1.11.0"
 
 [libraries]
 androidx-core = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }

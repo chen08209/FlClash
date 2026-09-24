@@ -9,6 +9,7 @@ crate-type = ["cdylib", "staticlib"]
 [dependencies]
 flutter_rust_bridge = "=2.13.0"
 rquickjs = { version = "0.12", default-features = false }
+ropey = { version = "1.6.1", default-features = false, features = ["simd"] }
 
 # The IPC server exists so a desktop Core process can talk to the app. Android
 # loads the Core in-process, so nothing below is built into the Android library.

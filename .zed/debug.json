@@ -1,0 +1,24 @@
+[
+  {
+    "label": "Flutter App (With Env)",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "program": "lib/main.dart",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "toolArgs": ["--dart-define-from-file", "env.json"],
+  },
+  {
+    "label": "Flutter App (Safe Mode)",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "program": "lib/main.dart",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "toolArgs": [
+      "--dart-define-from-file",
+      "env.json",
+      "--dart-define=SAFE_MODE=true",
+    ],
+  },
+]

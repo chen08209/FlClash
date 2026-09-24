@@ -98,7 +98,7 @@ String escapeTelegramHtml(String value) => value
 
 /// Telegram captions are capped at 1024 characters, so the text is truncated
 /// with a pointer to the full notes instead of failing the upload.
-String renderTelegram(ChangelogVersion version, {required String moreUrl}) {
+String renderTelegram(ChangelogVersion version, {String? moreUrl}) {
   final buffer = StringBuffer();
   if (version.isEmpty) {
     buffer.writeln('• ${escapeTelegramHtml(emptyVersionNote)}');
@@ -111,20 +111,26 @@ String renderTelegram(ChangelogVersion version, {required String moreUrl}) {
     buffer.writeln();
   }
   final text = buffer.toString().trimRight();
-  if (text.length <= telegramLimit) {
+  if (_telegramVisibleLength(text) <= telegramLimit) {
     return text;
   }
-  final cut = text.substring(0, telegramLimit);
-  final lastBreak = cut.lastIndexOf('\n');
-  // Cut on a line break so the cut never lands inside a tag; the trailing
-  // pattern covers the one case that has no break to cut on, where the cut can
-  // still land halfway through an entity.
-  final kept = (lastBreak < 0 ? cut : cut.substring(0, lastBreak)).replaceAll(
-    RegExp(r'&[A-Za-z]*$|<[^>]*$'),
-    '',
-  );
-  return '$kept\n\n…\n$moreUrl';
+  final kept = StringBuffer();
+  var length = 0;
+  for (final line in text.split('\n')) {
+    length += _telegramVisibleLength(line) + 1;
+    if (length > telegramLimit) {
+      break;
+    }
+    kept.writeln(line);
+  }
+  final more = moreUrl == null ? '' : '\n$moreUrl';
+  return '${kept.toString().trimRight()}\n\n…$more';
 }
+
+int _telegramVisibleLength(String markup) => markup
+    .replaceAll(RegExp('<[^>]*>'), '')
+    .replaceAll(RegExp('&[a-z]+;'), '&')
+    .length;
 
 /// Version headings stay the only `##` level; groups are bold lines because a
 /// release carries a handful of entries and an `###` per group outweighs them.
