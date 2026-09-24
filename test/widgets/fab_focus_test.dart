@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
@@ -17,7 +20,7 @@ Widget _buildPage({bool wrapNavigator = false}) {
     ),
     floatingActionButton: CommonFloatingActionButton(
       onPressed: () {},
-      icon: const Icon(Icons.add),
+      icon: const GlyphIcon(AppGlyphs.add),
       label: 'add',
     ),
   );
@@ -139,6 +142,100 @@ void main() {
     expect(_focusedItemKey(), 'item1');
   });
 
+  testWidgets('down stays on the last control when nothing lies below', (
+    tester,
+  ) async {
+    final outsideFocus = await _pumpWithOutsideFocus(tester, _buildPage());
+
+    for (var i = 0; i < 4; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+    }
+    expect(_isFabFocused(), isTrue);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+
+    expect(_isFabFocused(), isTrue);
+    expect(FocusManager.instance.primaryFocus, isNot(outsideFocus));
+  });
+
+  testWidgets('left picks the sidebar item beside the focused row', (
+    tester,
+  ) async {
+    final sidebarFocus = List.generate(3, (_) => FocusNode());
+    for (final node in sidebarFocus) {
+      addTearDown(node.dispose);
+    }
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              children: [
+                for (final node in sidebarFocus)
+                  Focus(
+                    focusNode: node,
+                    child: const SizedBox(width: 80, height: 48),
+                  ),
+              ],
+            ),
+            Expanded(child: _buildPage(wrapNavigator: true)),
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+    sidebarFocus.first.requestFocus();
+    await tester.pump();
+
+    for (var i = 0; i < 5; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+    }
+    expect(_focusedItemKey(), 'item2');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pump();
+
+    expect(FocusManager.instance.primaryFocus, sidebarFocus[2]);
+  });
+
+  testWidgets('down from the last control reaches a bar below the page', (
+    tester,
+  ) async {
+    final barFocus = FocusNode();
+    addTearDown(barFocus.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Column(
+          children: [
+            Expanded(child: _buildPage()),
+            Focus(
+              focusNode: barFocus,
+              child: const SizedBox(height: 80, width: double.infinity),
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+    barFocus.requestFocus();
+    await tester.pump();
+
+    for (var i = 0; i < 4; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+    }
+    expect(_isFabFocused(), isTrue);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+
+    expect(FocusManager.instance.primaryFocus, barFocus);
+  });
+
   testWidgets('left leaves page content for an adjacent sidebar', (
     tester,
   ) async {
@@ -169,5 +266,40 @@ void main() {
     await tester.pump();
 
     expect(FocusManager.instance.primaryFocus, sidebarFocus);
+  });
+
+  testWidgets('left stays in a pushed page instead of the page it covers', (
+    tester,
+  ) async {
+    final coveredFocus = FocusNode();
+    addTearDown(coveredFocus.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Row(
+          children: [
+            Focus(
+              focusNode: coveredFocus,
+              child: const SizedBox(width: 80, height: 600),
+            ),
+            const Expanded(child: SizedBox()),
+          ],
+        ),
+      ),
+    );
+    unawaited(
+      tester
+          .state<NavigatorState>(find.byType(Navigator))
+          .push(MaterialPageRoute<void>(builder: (_) => _buildPage())),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    expect(_focusedItemKey(), 'item0');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pump();
+
+    expect(_focusedItemKey(), 'item0');
   });
 }

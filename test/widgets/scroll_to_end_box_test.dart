@@ -6,12 +6,14 @@ class _Host extends StatefulWidget {
   final List<int> data;
   final bool enable;
   final VoidCallback onCancelToEnd;
+  final VoidCallback onResumeToEnd;
   final ScrollController controller;
 
   const _Host({
     required this.data,
     required this.enable,
     required this.onCancelToEnd,
+    required this.onResumeToEnd,
     required this.controller,
   });
 
@@ -29,6 +31,7 @@ class _HostState extends State<_Host> {
           dataSource: widget.data,
           enable: widget.enable,
           onCancelToEnd: widget.onCancelToEnd,
+          onResumeToEnd: widget.onResumeToEnd,
           child: ListView.builder(
             controller: widget.controller,
             itemCount: widget.data.length,
@@ -44,10 +47,12 @@ class _HostState extends State<_Host> {
 void main() {
   late ScrollController controller;
   late int cancelCount;
+  late int resumeCount;
 
   setUp(() {
     controller = ScrollController();
     cancelCount = 0;
+    resumeCount = 0;
   });
 
   tearDown(() {
@@ -65,6 +70,7 @@ void main() {
         enable: enable,
         controller: controller,
         onCancelToEnd: () => cancelCount++,
+        onResumeToEnd: () => resumeCount++,
       ),
     );
   }
@@ -105,6 +111,81 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, 200));
     await tester.pumpAndSettle();
     expect(cancelCount, 1);
+  });
+
+  testWidgets('resumes when the user scrolls back to the end', (tester) async {
+    await pump(tester, data: List.generate(20, (i) => i));
+    await pump(tester, data: List.generate(21, (i) => i));
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.byType(ListView), const Offset(0, 200));
+    await tester.pumpAndSettle();
+    expect(cancelCount, 1);
+
+    await pump(tester, data: List.generate(21, (i) => i), enable: false);
+    await tester.drag(find.byType(ListView), const Offset(0, -100));
+    await tester.pumpAndSettle();
+    expect(resumeCount, 0);
+
+    await tester.drag(find.byType(ListView), const Offset(0, -400));
+    await tester.pumpAndSettle();
+    expect(controller.offset, controller.position.maxScrollExtent);
+    expect(resumeCount, 1);
+  });
+
+  // The viewport is 600 tall and a row is 100, so six rows fill a screen.
+  Future<void> pumpAtEnd(WidgetTester tester) async {
+    await pump(tester, data: List.generate(20, (i) => i));
+    await pump(tester, data: List.generate(21, (i) => i));
+    await tester.pumpAndSettle();
+    expect(controller.offset, controller.position.maxScrollExtent);
+  }
+
+  testWidgets('a batch shorter than a screen animates to the end', (
+    tester,
+  ) async {
+    await pumpAtEnd(tester);
+
+    await pump(tester, data: List.generate(25, (i) => i));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(controller.offset, lessThan(controller.position.maxScrollExtent));
+
+    await tester.pumpAndSettle();
+    expect(controller.offset, controller.position.maxScrollExtent);
+  });
+
+  testWidgets('a batch past a screenful jumps instead, with nothing left to '
+      'carry through an animation', (tester) async {
+    await pumpAtEnd(tester);
+
+    await pump(tester, data: List.generate(41, (i) => i));
+    await tester.pump();
+    await tester.pump();
+
+    expect(controller.offset, controller.position.maxScrollExtent);
+  });
+
+  testWidgets('a viewport that shrinks keeps a following list at the end', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await pumpAtEnd(tester);
+
+    tester.view.physicalSize = const Size(800, 400);
+    await tester.pumpAndSettle();
+
+    expect(controller.offset, controller.position.maxScrollExtent);
+
+    await pump(tester, data: List.generate(21, (i) => i), enable: false);
+    tester.view.physicalSize = const Size(800, 300);
+    await tester.pumpAndSettle();
+
+    expect(controller.offset, lessThan(controller.position.maxScrollExtent));
   });
 
   testWidgets('re-enabling scrolls back to the end', (tester) async {

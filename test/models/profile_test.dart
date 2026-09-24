@@ -89,6 +89,22 @@ void main() {
 
       expect(profiles.optimizeLabel(newProfile).label, 'Work(2)');
     });
+
+    test('steps past a label an app-level proxy provider holds', () {
+      const profiles = <Profile>[];
+      const newProfile = Profile(
+        id: 3,
+        label: 'Shared nodes',
+        autoUpdateDuration: defaultUpdateDuration,
+      );
+
+      expect(
+        profiles
+            .optimizeLabel(newProfile, reserved: const {'Shared nodes'})
+            .label,
+        'Shared nodes(1)',
+      );
+    });
   });
 
   group('ProfileRuleLinkExt', () {

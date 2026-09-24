@@ -1,25 +1,26 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ProxiesSetting extends StatelessWidget {
+class ProxiesSetting extends ConsumerWidget {
   const ProxiesSetting({super.key});
 
-  IconData _getIconWithProxiesType(ProxiesType type) {
+  Glyph _getIconWithProxiesType(ProxiesType type) {
     return switch (type) {
-      ProxiesType.tab => Icons.view_carousel,
-      ProxiesType.list => Icons.view_list,
+      ProxiesType.tab => AppGlyphs.layoutTabs,
+      ProxiesType.list => AppGlyphs.layoutList,
     };
   }
 
-  IconData _getIconWithProxiesSortType(ProxiesSortType type) {
+  Glyph _getIconWithProxiesSortType(ProxiesSortType type) {
     return switch (type) {
-      ProxiesSortType.none => Icons.sort,
-      ProxiesSortType.delay => Icons.network_ping,
-      ProxiesSortType.name => Icons.sort_by_alpha,
+      ProxiesSortType.none => AppGlyphs.sort,
+      ProxiesSortType.delay => AppGlyphs.bolt,
+      ProxiesSortType.name => AppGlyphs.sortAlpha,
     };
   }
 
@@ -50,9 +51,33 @@ class ProxiesSetting extends StatelessWidget {
   ) {
     final appLocalizations = context.appLocalizations;
     return switch (style) {
-      ProxiesIconStyle.standard => appLocalizations.standard,
-      ProxiesIconStyle.none => appLocalizations.none,
-      ProxiesIconStyle.icon => appLocalizations.onlyIcon,
+      ProxiesIconStyle.filled => appLocalizations.iconStyleFilled,
+      ProxiesIconStyle.plain => appLocalizations.iconStylePlain,
+      ProxiesIconStyle.hidden => appLocalizations.iconStyleHidden,
+    };
+  }
+
+  Glyph _getIconWithProxiesLayout(ProxiesLayout proxiesLayout) {
+    return switch (proxiesLayout) {
+      ProxiesLayout.tight => AppGlyphs.columnsThree,
+      ProxiesLayout.standard => AppGlyphs.columnsTwo,
+      ProxiesLayout.loose => AppGlyphs.columnsOne,
+    };
+  }
+
+  Glyph _getIconWithProxyCardType(ProxyCardType type) {
+    return switch (type) {
+      ProxyCardType.expand => AppGlyphs.cardLarge,
+      ProxyCardType.shrink => AppGlyphs.cardMedium,
+      ProxyCardType.min => AppGlyphs.cardSmall,
+    };
+  }
+
+  Glyph _getIconWithProxiesIconStyle(ProxiesIconStyle style) {
+    return switch (style) {
+      ProxiesIconStyle.filled => AppGlyphs.iconTile,
+      ProxiesIconStyle.plain => AppGlyphs.iconPlain,
+      ProxiesIconStyle.hidden => AppGlyphs.eyeOff,
     };
   }
 
@@ -77,7 +102,7 @@ class ProxiesSetting extends StatelessWidget {
                     SettingInfoCard(
                       Info(
                         label: item.label,
-                        iconData: _getIconWithProxiesType(item),
+                        glyph: _getIconWithProxiesType(item),
                       ),
                       isSelected: proxiesType == item,
                       onPressed: () {
@@ -117,7 +142,7 @@ class ProxiesSetting extends StatelessWidget {
                     SettingInfoCard(
                       Info(
                         label: _getStringProxiesSortType(context, item),
-                        iconData: _getIconWithProxiesSortType(item),
+                        glyph: _getIconWithProxiesSortType(item),
                       ),
                       isSelected: sortType == item,
                       onPressed: () {
@@ -154,8 +179,11 @@ class ProxiesSetting extends StatelessWidget {
                 spacing: 16,
                 children: [
                   for (final item in ProxyCardType.values)
-                    SettingTextCard(
-                      item.label,
+                    SettingInfoCard(
+                      Info(
+                        label: item.label,
+                        glyph: _getIconWithProxyCardType(item),
+                      ),
                       isSelected: item == cardType,
                       onPressed: () {
                         ref.read(proxiesStyleSettingProvider.notifier).update((
@@ -191,8 +219,11 @@ class ProxiesSetting extends StatelessWidget {
                 spacing: 16,
                 children: [
                   for (final item in ProxiesLayout.values)
-                    SettingTextCard(
-                      getTextForProxiesLayout(context, item),
+                    SettingInfoCard(
+                      Info(
+                        label: getTextForProxiesLayout(context, item),
+                        glyph: _getIconWithProxiesLayout(item),
+                      ),
                       isSelected: item == layout,
                       onPressed: () {
                         ref.watch(proxiesStyleSettingProvider.notifier).update((
@@ -228,8 +259,11 @@ class ProxiesSetting extends StatelessWidget {
                 spacing: 16,
                 children: [
                   for (final item in ProxiesIconStyle.values)
-                    SettingTextCard(
-                      _getTextWithProxiesIconStyle(context, item),
+                    SettingInfoCard(
+                      Info(
+                        label: _getTextWithProxiesIconStyle(context, item),
+                        glyph: _getIconWithProxiesIconStyle(item),
+                      ),
                       isSelected: iconStyle == item,
                       onPressed: () {
                         ref.read(proxiesStyleSettingProvider.notifier).update((
@@ -248,37 +282,62 @@ class ProxiesSetting extends StatelessWidget {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.only(bottom: 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ..._buildStyleSetting(context),
-          ..._buildSortSetting(context),
-          ..._buildLayoutSetting(context),
-          ..._buildSizeSetting(context),
-          Consumer(
-            builder: (_, ref, child) {
-              final isList = ref.watch(
-                proxiesStyleSettingProvider.select(
-                  (state) => state.type == ProxiesType.list,
-                ),
-              );
-              if (isList) {
-                return child!;
-              }
-              return Container();
-            },
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [..._buildGroupStyleSetting(context)],
-            ),
+  List<Widget> _buildFilterSetting(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return generateSection(
+      title: appLocalizations.filter,
+      items: [
+        ConfigToggleItem(
+          title: (l) => l.hideTimeoutProxies,
+          subtitle: (l) => l.hideTimeoutProxiesDesc,
+          selector: proxiesStyleSettingProvider.select(
+            (state) => state.hideTimeoutProxies,
           ),
-        ],
+          onChanged: (ref, value) {
+            ref
+                .read(proxiesStyleSettingProvider.notifier)
+                .update((state) => state.copyWith(hideTimeoutProxies: value));
+          },
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: ref.sheetHeight(context, 0.7)),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ..._buildStyleSetting(context),
+            ..._buildSortSetting(context),
+            ..._buildLayoutSetting(context),
+            ..._buildSizeSetting(context),
+            Consumer(
+              builder: (_, ref, child) {
+                final isList = ref.watch(
+                  proxiesStyleSettingProvider.select(
+                    (state) => state.type == ProxiesType.list,
+                  ),
+                );
+                if (isList) {
+                  return child!;
+                }
+                return Container();
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [..._buildGroupStyleSetting(context)],
+              ),
+            ),
+            ..._buildFilterSetting(context),
+          ],
+        ),
       ),
     );
   }

@@ -1,755 +1,609 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:defer_pointer/defer_pointer.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/widgets/activate_box.dart';
+import 'package:fl_clash/widgets/defer_pointer.dart';
+import 'package:fl_clash/widgets/motion_grid.dart';
+import 'package:fl_clash/widgets/navigation_dock.dart';
 import 'package:fl_clash/widgets/grid.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/physics.dart';
+import 'package:flutter/rendering.dart';
+import 'package:material_ui/material_ui.dart';
 
-/// Kept in one notifier so a builder that reads part of it also rebuilds when
-/// the rest changes.
-typedef _DragState = ({int index, Size size, bool landing});
-
-const _idleDrag = (index: -1, size: Size.zero, landing: false);
-
+/// Keeps its own order while the user edits and reports each committed change
+/// to [onChanged]; a list from the parent replaces it only when its keys
+/// differ.
 class SuperGrid extends StatefulWidget {
   final List<GridItem> children;
+  final bool editing;
   final double mainAxisSpacing;
   final double crossAxisSpacing;
   final int crossAxisCount;
-  final VoidCallback? onUpdate;
+  final ValueChanged<List<GridItem>>? onChanged;
+
+  /// What the page floats over the viewport's edges, kept clear on reveal.
+  final EdgeInsets revealPadding;
 
   const SuperGrid({
     super.key,
     required this.children,
+    this.editing = false,
     this.crossAxisCount = 1,
     this.mainAxisSpacing = 0,
     this.crossAxisSpacing = 0,
-    this.onUpdate,
+    this.onChanged,
+    this.revealPadding = EdgeInsets.zero,
   });
 
   @override
   State<SuperGrid> createState() => SuperGridState();
 }
 
-class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
-  static const _reorderDuration = Duration(milliseconds: 420);
-  static const _shakeDuration = Duration(milliseconds: 480);
-  static const _reorderCurve = Cubic(0.22, 0.72, 0.24, 1.08);
+class _Flight {
+  final AnimationController controller;
+  final Rect from;
+  OverlayEntry? entry;
+  Rect? lastTarget;
 
+  _Flight(this.controller, this.from);
+
+  void dispose() {
+    entry
+      ?..remove()
+      ..dispose();
+    entry = null;
+    controller.dispose();
+  }
+}
+
+class SuperGridState extends State<SuperGrid> with TickerProviderStateMixin {
+  static const _shakeDuration = Duration(milliseconds: 3600);
+  static const _shakeSwingsPerLoop = [6, 7, 5];
+  static const _shakeReach = 2.5;
   static const _hoverDelay = Duration(milliseconds: 120);
+  static const _revealDuration = Duration(milliseconds: 300);
+  static const _flightSpring = SpringDescription(
+    mass: 1,
+    stiffness: 180,
+    damping: 18,
+  );
 
   /// Matches the default CommonCard shape, so the lift's shadow traces the card
   /// it is drawn behind.
   static const _cardShape = AppShape.md;
 
-  late final ValueNotifier<List<GridItem>> _childrenNotifier;
-  List<GridItem> children = [];
-  List<GridItem>? _pendingChildren;
+  List<GridItem> _items = [];
 
-  List<GridItem> get snapshotChildren =>
-      List<GridItem>.unmodifiable(_pendingChildren ?? children);
+  final Map<Key, GlobalKey> _contentKeys = {};
 
-  int get length => _childrenNotifier.value.length;
-  int get crossCount => widget.crossAxisCount;
+  /// A null flight hides a slot that has not been laid out yet.
+  final Map<Key, _Flight?> _flights = {};
 
-  List<int> _tempIndexList = [];
-
-  /// One stable key per slot, so item elements survive a reorder.
-  final List<GlobalKey> _itemKeys = [];
-
-  Size _containerSize = Size.zero;
-  int _targetIndex = -1;
-  Offset _targetOffset = Offset.zero;
-  List<Size> _sizes = [];
-  List<Offset> _offsets = [];
-  Offset _parentOffset = Offset.zero;
-
-  EdgeDraggingAutoScroller? _edgeDraggingAutoScroller;
-  Scrollable? _scrollable;
-  Rect _dragRect = Rect.zero;
-  bool _isDragging = false;
+  Key? _dragKey;
+  final ValueNotifier<Size> _dragSize = ValueNotifier(Size.zero);
   Timer? _hoverTimer;
 
-  final ValueNotifier<_DragState> _dragNotifier = ValueNotifier(_idleDrag);
+  EdgeDraggingAutoScroller? _autoScroller;
+  Scrollable? _scrollable;
+  Rect _dragRect = Rect.zero;
 
-  late AnimationController _transformController;
-  Map<int, Animation<Offset>> _transformAnimationMap = {};
+  late final AnimationController _shakeController;
 
-  Future<bool> get isTransformCompleter =>
-      _transformCompleter?.future ?? Future<bool>.value(true);
-  Completer<bool>? _transformCompleter;
-
-  late AnimationController _landingController;
-  Animation<Offset>? _landingAnimation;
-
-  late AnimationController _shakeController;
+  List<GridItem> get items => List<GridItem>.unmodifiable(_items);
 
   @override
   void initState() {
     super.initState();
-    children = List<GridItem>.of(widget.children);
-    _childrenNotifier = ValueNotifier(children)
-      ..addListener(_handleChildrenChanged);
-    _tempIndexList = List.generate(length, (index) => index);
-    _syncItemKeys();
-
-    _landingController = AnimationController.unbounded(vsync: this);
-
+    _items = List<GridItem>.of(widget.children);
     _shakeController = AnimationController(
       vsync: this,
       duration: _shakeDuration,
-    )..repeat();
-
-    _transformController = AnimationController(
-      vsync: this,
-      duration: _reorderDuration,
     );
-    _resetDragState();
+    _syncShake();
+  }
+
+  @override
+  void didUpdateWidget(SuperGrid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_sameKeys(oldWidget.children, widget.children)) {
+      _items = List<GridItem>.of(widget.children);
+      if (_dragKey != null && _indexOf(_dragKey!) < 0) {
+        _dragKey = null;
+      }
+    } else if (!identical(oldWidget.children, widget.children)) {
+      final latest = {for (final item in widget.children) item.key: item};
+      _items = [for (final item in _items) latest[item.key] ?? item];
+    }
+    if (oldWidget.editing != widget.editing) {
+      _dragKey = null;
+      _hoverTimer?.cancel();
+      _autoScroller?.stopAutoScroll();
+      _syncShake();
+    }
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     final scrollable = context.findAncestorWidgetOfExactType<Scrollable>();
-    if (scrollable == null) {
-      _stopAutoScroll();
-      _scrollable = null;
-      _edgeDraggingAutoScroller = null;
+    if (identical(_scrollable, scrollable)) {
       return;
     }
-    if (_scrollable == scrollable) {
-      return;
-    }
-    _stopAutoScroll();
+    _autoScroller?.stopAutoScroll();
     _scrollable = scrollable;
+    if (scrollable == null) {
+      _autoScroller = null;
+      return;
+    }
     late final EdgeDraggingAutoScroller autoScroller;
     autoScroller = EdgeDraggingAutoScroller(
       Scrollable.of(context),
       onScrollViewScrolled: () {
-        if (!mounted ||
-            !_isDragging ||
-            !identical(_edgeDraggingAutoScroller, autoScroller)) {
-          return;
+        if (_dragKey != null && identical(_autoScroller, autoScroller)) {
+          autoScroller.startAutoScrollIfNecessary(_dragRect);
         }
-        autoScroller.startAutoScrollIfNecessary(_dragRect);
       },
       velocityScalar: 40,
     );
-    _edgeDraggingAutoScroller = autoScroller;
+    _autoScroller = autoScroller;
   }
 
   @override
   void dispose() {
-    _isDragging = false;
-    _stopAutoScroll();
-    _edgeDraggingAutoScroller = null;
-    _scrollable = null;
+    _autoScroller?.stopAutoScroll();
     _hoverTimer?.cancel();
-    _hoverTimer = null;
-    final completer = _transformCompleter;
-    if (completer != null && !completer.isCompleted) {
-      completer.complete(false);
+    for (final flight in _flights.values) {
+      flight?.dispose();
     }
-    _transformCompleter = null;
-    _childrenNotifier.removeListener(_handleChildrenChanged);
-    _childrenNotifier.value = const [];
-    children = const [];
-    _pendingChildren = null;
-    _itemKeys.clear();
-    _sizes = [];
-    _offsets = [];
-    _transformAnimationMap.clear();
-    _landingAnimation = null;
-    _landingController.dispose();
+    _flights.clear();
     _shakeController.dispose();
-    _transformController.dispose();
-    _dragNotifier.dispose();
-    _childrenNotifier.dispose();
+    _dragSize.dispose();
     super.dispose();
   }
 
-  void handleAdd(GridItem gridItem) {
-    _childrenNotifier.value = [..._childrenNotifier.value, gridItem];
-  }
-
-  void _stopAutoScroll() {
-    _edgeDraggingAutoScroller?.stopAutoScroll();
-  }
-
-  void _handleChildrenChanged() {
-    children = List<GridItem>.of(_childrenNotifier.value);
-    _tempIndexList = List.generate(length, (index) => index);
-    _syncItemKeys();
-    widget.onUpdate?.call();
-  }
-
-  /// Grows or trims [_itemKeys] without replacing existing entries, so a slot
-  /// keeps its key across reorders and its element is never rebuilt.
-  void _syncItemKeys() {
-    while (_itemKeys.length < length) {
-      _itemKeys.add(
-        GlobalKey(debugLabel: 'super_grid_item_${_itemKeys.length}'),
-      );
-    }
-    if (_itemKeys.length > length) {
-      _itemKeys.removeRange(length, _itemKeys.length);
-    }
-  }
-
-  void _resetDragState() {
-    _transformController.value = 0;
-    _sizes = List.generate(length, (index) => Size.zero);
-    _offsets = [];
-    _transformAnimationMap.clear();
-    _containerSize = Size.zero;
-    _dragNotifier.value = _idleDrag;
-    _targetOffset = Offset.zero;
-    _parentOffset = Offset.zero;
-    _dragRect = Rect.zero;
-    _targetIndex = -1;
-  }
-
-  bool _captureLayout() {
-    final renderObject = context.findRenderObject();
-    if (renderObject is! RenderBox || !renderObject.hasSize) {
+  bool _sameKeys(List<GridItem> a, List<GridItem> b) {
+    if (a.length != b.length) {
       return false;
     }
-    if (_itemKeys.length != length) {
-      return false;
-    }
-    final parentOffset = renderObject.localToGlobal(Offset.zero);
-    final sizes = <Size>[];
-    final offsets = <Offset>[];
-    for (final key in _itemKeys) {
-      final itemRenderObject = key.currentContext?.findRenderObject();
-      if (itemRenderObject is! RenderBox || !itemRenderObject.hasSize) {
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].key != b[i].key) {
         return false;
       }
-      sizes.add(itemRenderObject.size);
-      offsets.add(itemRenderObject.localToGlobal(Offset.zero) - parentOffset);
     }
-    _sizes = sizes;
-    _offsets = offsets;
-    _parentOffset = parentOffset;
-    _containerSize = renderObject.size;
     return true;
   }
 
-  Future<bool> _transform() async {
-    if (_sizes.length != length ||
-        _offsets.length != length ||
-        _containerSize.isEmpty) {
-      return false;
-    }
-    final items = _childrenNotifier.value;
-    final geometry = packGridSlots(
-      crossAxisCellCounts: [
-        for (final index in _tempIndexList) items[index].crossAxisCellCount,
-      ],
-      mainAxisExtents: [
-        for (final index in _tempIndexList) _sizes[index].height,
-      ],
-      crossAxisCount: crossCount,
-      crossAxisExtent: _containerSize.width,
-      crossAxisSpacing: widget.crossAxisSpacing,
-      mainAxisSpacing: widget.mainAxisSpacing,
-    );
+  int _indexOf(Key key) => _items.indexWhere((item) => item.key == key);
 
-    final transformCurve = CurvedAnimation(
-      parent: _transformController,
-      curve: _reorderCurve,
-    );
-    final transformAnimationMap = <int, Animation<Offset>>{};
-    for (var slotIndex = 0; slotIndex < _tempIndexList.length; slotIndex++) {
-      final index = _tempIndexList[slotIndex];
-      final slot = geometry.slots[slotIndex];
-      final nextOffset = Offset(
-        slot.crossAxisIndex * geometry.stride,
-        slot.mainAxisOffset,
-      );
-      if (slotIndex == _targetIndex) {
-        _targetOffset = nextOffset;
-      }
-      transformAnimationMap[index] = Tween<Offset>(
-        // Continue from where the item is, so an interrupted reorder does not
-        // jump back to its resting place.
-        begin: _transformAnimationMap[index]?.value ?? Offset.zero,
-        end: nextOffset - _offsets[index],
-      ).animate(transformCurve);
-    }
-    _transformAnimationMap = transformAnimationMap;
-
-    try {
-      await _transformController.forward(from: 0).orCancel;
-      return true;
-    } on TickerCanceled {
-      return false;
+  void _syncShake() {
+    if (widget.editing) {
+      _shakeController.repeat();
+    } else {
+      _shakeController.stop();
     }
   }
 
-  void _handleDragStarted(int index) {
-    _resetDragState();
-    if (!_captureLayout()) {
+  void _commit(List<GridItem> items) {
+    setState(() {
+      _items = items;
+    });
+    widget.onChanged?.call(List<GridItem>.unmodifiable(items));
+  }
+
+  /// Completes once a copy of [item] has flown from the global [from] rect.
+  Future<void> addItem(GridItem item, {Rect? from}) {
+    final key = item.key!;
+    if (_indexOf(key) >= 0) {
+      return Future.value();
+    }
+    final landed = Completer<void>();
+    if (from != null) {
+      _holdSlot(key);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _revealSlot(key);
+        landed.complete(_fly(key, from));
+      });
+    } else {
+      landed.complete();
+    }
+    _commit([..._items, item]);
+    return landed.future;
+  }
+
+  void _deleteItem(Key key) {
+    if (_dragKey != null) {
       return;
     }
-    _isDragging = true;
-    _targetIndex = index;
-    _targetOffset = _offsets[index];
-    _dragNotifier.value = (index: index, size: _sizes[index], landing: false);
-    _dragRect = Rect.fromLTWH(
-      _targetOffset.dx + _parentOffset.dx,
-      _targetOffset.dy + _parentOffset.dy,
-      _sizes[index].width,
-      _sizes[index].height,
+    _contentKeys.remove(key);
+    _commit([
+      for (final item in _items)
+        if (item.key != key) item,
+    ]);
+  }
+
+  RenderBox? _slotBoxOf(Key key) {
+    final box = _contentKeys[key]?.currentContext?.findRenderObject();
+    return box is RenderBox && box.attached && box.hasSize ? box : null;
+  }
+
+  Rect? _slotRectOf(Key key) {
+    final box = _slotBoxOf(key);
+    if (box == null) {
+      return null;
+    }
+    return box.localToGlobal(Offset.zero) & box.size;
+  }
+
+  void _revealSlot(Key key) {
+    final slotContext = _contentKeys[key]?.currentContext;
+    final box = _slotBoxOf(key);
+    if (!mounted || slotContext == null || box == null) {
+      return;
+    }
+    final viewport = RenderAbstractViewport.maybeOf(box);
+    final position = Scrollable.maybeOf(slotContext)?.position;
+    if (viewport == null || position == null) {
+      return;
+    }
+    final rect = widget.revealPadding.inflateRect(Offset.zero & box.size);
+    final leading = viewport.getOffsetToReveal(box, 0, rect: rect).offset;
+    final trailing = viewport.getOffsetToReveal(box, 1, rect: rect).offset;
+    final target = clampDouble(
+      trailing > leading
+          ? leading
+          : clampDouble(position.pixels, trailing, leading),
+      position.minScrollExtent,
+      position.maxScrollExtent,
     );
+    if ((target - position.pixels).abs() < precisionErrorTolerance) {
+      return;
+    }
+    unawaited(
+      position.animateTo(
+        target,
+        duration: _revealDuration,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+  }
+
+  void _holdSlot(Key key) {
+    _flights[key]?.dispose();
+    _flights[key] = null;
+  }
+
+  Future<void> _fly(Key key, Rect from) async {
+    final index = _indexOf(key);
+    if (!mounted || index < 0) {
+      _flights.remove(key);
+      return;
+    }
+    final item = _items[index];
+    final controller = AnimationController.unbounded(vsync: this);
+    final flight = _Flight(controller, from);
+    _flights[key]?.dispose();
+    _flights[key] = flight;
+    final overlay = Overlay.of(context, rootOverlay: true);
+    flight.entry = OverlayEntry(
+      builder: (_) => _FlightView(
+        flight: flight,
+        overlay: overlay,
+        slotRect: () => _slotRectOf(key),
+        builder: _buildLiftedSurface,
+        child: InheritedTheme.captureAll(
+          context,
+          ActivateBox(child: item.child),
+        ),
+      ),
+    );
+    overlay.insert(flight.entry!);
+    try {
+      await controller
+          .animateWith(
+            SpringSimulation(
+              _flightSpring,
+              0,
+              1,
+              0,
+              tolerance: const Tolerance(distance: 0.001, velocity: 0.01),
+            ),
+          )
+          .orCancel;
+    } on TickerCanceled {
+      return;
+    }
+    if (!mounted || !identical(_flights[key], flight)) {
+      return;
+    }
+    setState(() {
+      _flights.remove(key);
+    });
+    flight.dispose();
+  }
+
+  void _handleDragStarted(Key key) {
+    final box = _slotBoxOf(key);
+    if (box == null) {
+      return;
+    }
+    _dragSize.value = box.size;
+    _dragRect = box.localToGlobal(Offset.zero) & box.size;
+    setState(() {
+      _dragKey = key;
+    });
   }
 
   void _handleDragUpdate(DragUpdateDetails details) {
-    if (!_isDragging) {
+    if (_dragKey == null) {
       return;
     }
     _dragRect = _dragRect.shift(details.delta);
-    _edgeDraggingAutoScroller?.startAutoScrollIfNecessary(_dragRect);
+    _autoScroller?.startAutoScrollIfNecessary(_dragRect);
   }
 
-  Future<void> _handleDragEnd(DraggableDetails details) async {
-    _isDragging = false;
-    _stopAutoScroll();
+  void _handleDragEnd(Key key, DraggableDetails details) {
     _hoverTimer?.cancel();
-    final dragIndex = _dragNotifier.value.index;
-    if (_targetIndex < 0 ||
-        _targetIndex >= length ||
-        dragIndex < 0 ||
-        dragIndex >= length) {
-      _resetDragState();
+    _autoScroller?.stopAutoScroll();
+    if (_dragKey != key) {
       return;
     }
-
-    final nextChildren = List<GridItem>.of(_childrenNotifier.value);
-    nextChildren.insert(_targetIndex, nextChildren.removeAt(dragIndex));
-    children = nextChildren;
-
-    const tolerance = Tolerance(distance: 0.001, velocity: 0.01);
-    const spring = SpringDescription(mass: 1, stiffness: 180, damping: 18);
-    final simulation = SpringSimulation(spring, 0, 1, 0, tolerance: tolerance);
-    _landingAnimation = Tween<Offset>(
-      begin: details.offset - _parentOffset,
-      end: _targetOffset,
-    ).animate(_landingController);
-    _dragNotifier.value = (
-      index: dragIndex,
-      size: _dragNotifier.value.size,
-      landing: true,
-    );
-
-    final completer = Completer<bool>();
-    _transformCompleter = completer;
-    try {
-      await _landingController.animateWith(simulation).orCancel;
-      if (!mounted) {
-        return;
-      }
-      _landingAnimation = null;
-      _transformAnimationMap.clear();
-      _childrenNotifier.value = nextChildren;
-      _resetDragState();
-      completer.complete(true);
-    } on TickerCanceled {
-      if (mounted) {
-        _landingAnimation = null;
-        _resetDragState();
-      }
-    } finally {
-      if (!completer.isCompleted) {
-        completer.complete(false);
-      }
-      if (identical(_transformCompleter, completer)) {
-        _transformCompleter = null;
-      }
+    _dragKey = null;
+    _holdSlot(key);
+    _fly(key, details.offset & _dragSize.value);
+    if (_sameKeys(_items, widget.children)) {
+      setState(() {});
+    } else {
+      _commit(_items);
     }
   }
 
-  void _scheduleHover(int index) {
+  void _scheduleHover(Key key) {
     _hoverTimer?.cancel();
-    _hoverTimer = Timer(_hoverDelay, () => _handleHover(index));
+    _hoverTimer = Timer(_hoverDelay, () => _handleHover(key));
   }
 
-  Future<void> _handleHover(int index) async {
-    if (!mounted || !_isDragging) {
+  void _handleHover(Key key) {
+    final dragKey = _dragKey;
+    if (!mounted || dragKey == null || dragKey == key) {
       return;
     }
-    final dragIndex = _dragNotifier.value.index;
-    if (dragIndex < 0 || dragIndex >= _offsets.length) {
+    final from = _indexOf(dragKey);
+    final to = _indexOf(key);
+    if (from < 0 || to < 0) {
       return;
     }
-    final targetIndex = _tempIndexList.indexOf(index);
-    if (targetIndex < 0 || _targetIndex == targetIndex) {
-      return;
-    }
-    _tempIndexList = List.generate(length, (i) {
-      if (i == targetIndex) return dragIndex;
-      if (_targetIndex > targetIndex && i > targetIndex && i <= _targetIndex) {
-        return _tempIndexList[i - 1];
-      }
-      if (_targetIndex < targetIndex && i >= _targetIndex && i < targetIndex) {
-        return _tempIndexList[i + 1];
-      }
-      return _tempIndexList[i];
+    final items = List<GridItem>.of(_items);
+    items.insert(to, items.removeAt(from));
+    setState(() {
+      _items = items;
     });
-
-    _targetIndex = targetIndex;
-
-    await _transform();
-  }
-
-  Future<void> _handleDelete(int index) async {
-    // One removal at a time: a second one would overwrite _pendingChildren and
-    // cancel the first transform, silently dropping a deletion.
-    if (_pendingChildren != null || _isDragging) {
-      return;
-    }
-    if (!_captureLayout()) {
-      return;
-    }
-    final slotIndex = _tempIndexList.indexOf(index);
-    if (slotIndex < 0) {
-      return;
-    }
-    _tempIndexList = List<int>.of(_tempIndexList)..removeAt(slotIndex);
-    final nextChildren = List<GridItem>.of(_childrenNotifier.value)
-      ..removeAt(index);
-    _pendingChildren = nextChildren;
-    final completed = await _transform();
-    if (!completed || !mounted) {
-      _pendingChildren = null;
-      return;
-    }
-    _childrenNotifier.value = nextChildren;
-    _pendingChildren = null;
-    _resetDragState();
   }
 
   /// [t] is 1 while the item is held and eases to 0 as it settles, so the drag
-  /// feedback and the landing widget are one surface at two depths.
+  /// feedback and the flight are one surface at two depths.
   Widget _buildLiftedSurface(Widget child, double t) {
+    final lift = t.clamp(0.0, 1.0);
     return Transform.scale(
-      scale: 1 + 0.03 * t,
+      scale: 1 + 0.03 * lift,
       child: DecoratedBox(
         decoration: ShapeDecoration(
           shape: _cardShape,
-          shadows: BoxShadow.lerpList(
-            const <BoxShadow>[],
-            kElevationToShadow[8]!,
-            t.clamp(0.0, 1.0),
-          )!,
+          // BoxShadow.lerpList keeps colors opaque, leaving a hard outline.
+          shadows: [
+            for (final shadow in kElevationToShadow[8]!)
+              BoxShadow(
+                color: shadow.color.withValues(alpha: shadow.color.a * lift),
+                offset: shadow.offset * lift,
+                blurRadius: shadow.blurRadius * lift,
+                spreadRadius: shadow.spreadRadius * lift,
+              ),
+          ],
         ),
         child: child,
       ),
     );
   }
 
-  Widget _buildDragSizeBox(Widget child) {
-    return ValueListenableBuilder(
-      valueListenable: _dragNotifier,
-      builder: (_, drag, child) {
-        return SizedBox.fromSize(size: drag.size, child: child!);
-      },
-      child: child,
-    );
-  }
-
-  Widget _buildTransform(Widget rawChild, int index) {
-    return ValueListenableBuilder(
-      valueListenable: _dragNotifier,
-      builder: (_, drag, child) {
-        // The landing widget paints it on the way home; hold its space open.
-        if (drag.landing && drag.index == index) {
-          return _buildDragSizeBox(const SizedBox.shrink());
-        }
-        return child!;
-      },
-      child: AnimatedBuilder(
-        animation: _transformController.view,
-        builder: (_, child) {
-          return Transform.translate(
-            offset: _transformAnimationMap[index]?.value ?? Offset.zero,
-            child: child,
-          );
-        },
-        child: rawChild,
-      ),
-    );
-  }
-
   Widget _buildShake(Widget child, int index) {
-    return AnimatedBuilder(
-      animation: _shakeController,
-      builder: (_, child) {
-        // An irregular phase step keeps neighbours from shaking in unison.
-        final phase = index * 1.7;
-        final angle = sin(_shakeController.value * 2 * pi + phase) * 0.01;
-        return Transform.rotate(angle: angle, child: child!);
+    final cycles = _shakeSwingsPerLoop[index % _shakeSwingsPerLoop.length];
+    final phase = index * 1.7;
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        final radius = constraints.biggest.longestSide / 2;
+        final maxAngle = radius.isFinite && radius > 0
+            ? _shakeReach / radius
+            : 0.0;
+        return AnimatedBuilder(
+          animation: _shakeController,
+          builder: (_, child) {
+            final turn = _shakeController.value * 2 * pi * cycles + phase;
+            return Transform.translate(
+              offset: Offset(0, cos(turn) * _shakeReach / 2),
+              child: Transform.rotate(
+                angle: sin(turn) * maxAngle,
+                child: child,
+              ),
+            );
+          },
+          child: child,
+        );
       },
-      child: child,
     );
   }
 
-  Widget _buildDraggable({
-    required Widget childWhenDragging,
-    required Widget feedback,
-    required Widget item,
-    required int index,
-  }) {
-    // onDragEnd resolves the drop from _targetIndex, so this target never
+  Widget _buildEditable(GridItem item, Widget content, int index) {
+    final key = item.key!;
+    // onDragEnd resolves the drop from the live order, so this target never
     // accepts; it only reports which item the pointer is over.
-    final target = DragTarget<int>(
-      builder: (_, _, _) {
-        return AbsorbPointer(child: item);
-      },
-      onWillAcceptWithDetails: (_) {
-        _scheduleHover(index);
+    final target = DragTarget<Key>(
+      builder: (_, _, _) => AbsorbPointer(child: content),
+      onWillAcceptWithDetails: (details) {
+        if (details.data != key) {
+          _scheduleHover(key);
+        }
         return false;
       },
     );
-
-    final decoratedTarget = ValueListenableBuilder(
-      valueListenable: _dragNotifier,
-      builder: (_, drag, child) {
-        if (drag.landing || drag.index == index) {
-          return child!;
-        }
-        return _buildShake(
-          _DeletableContainer(
-            onDelete: () {
-              _handleDelete(index);
-            },
-            child: child!,
-          ),
-          index,
-        );
-      },
-      child: target,
-    );
-
-    void onDragStarted() => _handleDragStarted(index);
-    void onDragUpdate(DragUpdateDetails details) => _handleDragUpdate(details);
-    void onDragEnd(DraggableDetails details) => _handleDragEnd(details);
-
-    return system.isDesktop
-        ? Draggable(
-            childWhenDragging: childWhenDragging,
-            data: index,
-            feedback: feedback,
-            onDragStarted: onDragStarted,
-            onDragUpdate: onDragUpdate,
-            onDragEnd: onDragEnd,
-            child: decoratedTarget,
-          )
-        : LongPressDraggable(
-            childWhenDragging: childWhenDragging,
-            data: index,
-            feedback: feedback,
-            onDragStarted: onDragStarted,
-            onDragUpdate: onDragUpdate,
-            onDragEnd: onDragEnd,
-            child: decoratedTarget,
-          );
-  }
-
-  Widget _builderItem(int index) {
-    final gridItem = _childrenNotifier.value[index];
-    final child = gridItem.child;
-    // The children already render their own CommonCard; do not add a second.
-    final childWhenDragging = ActivateBox(
-      child: Opacity(opacity: 0.4, child: _buildDragSizeBox(child)),
-    );
-    final feedback = ActivateBox(
-      child: _buildDragSizeBox(_buildLiftedSurface(child, 1)),
-    );
-    return GridItem(
-      mainAxisCellCount: gridItem.mainAxisCellCount,
-      crossAxisCellCount: gridItem.crossAxisCellCount,
-      child: KeyedSubtree(
-        key: _itemKeys[index],
-        child: _buildTransform(
-          // The shake never stops while edit mode is open, and without a
-          // boundary here its markNeedsPaint reaches the scroll viewport, so
-          // every frame repaints the whole grid instead of one item.
-          RepaintBoundary(
-            child: _buildDraggable(
-              childWhenDragging: childWhenDragging,
-              feedback: feedback,
-              item: child,
-              index: index,
+    final decorated = _dragKey == key
+        ? ActivateBox(child: Opacity(opacity: 0.4, child: content))
+        : _buildShake(
+            _DeletableContainer(
+              onDelete: () => _deleteItem(key),
+              child: target,
             ),
-          ),
-          index,
+            index,
+          );
+    final feedback = ActivateBox(
+      child: InheritedTheme.captureAll(
+        context,
+        ValueListenableBuilder(
+          valueListenable: _dragSize,
+          builder: (_, size, child) {
+            return SizedBox.fromSize(size: size, child: child);
+          },
+          child: _buildLiftedSurface(item.child, 1),
         ),
       ),
     );
+    final draggable = system.isDesktop
+        ? Draggable<Key>(
+            data: key,
+            feedback: feedback,
+            onDragStarted: () => _handleDragStarted(key),
+            onDragUpdate: _handleDragUpdate,
+            onDragEnd: (details) => _handleDragEnd(key, details),
+            child: decorated,
+          )
+        : LongPressDraggable<Key>(
+            data: key,
+            feedback: feedback,
+            onDragStarted: () => _handleDragStarted(key),
+            onDragUpdate: _handleDragUpdate,
+            onDragEnd: (details) => _handleDragEnd(key, details),
+            child: decorated,
+          );
+    // The shake never stops while editing, and without a boundary here its
+    // markNeedsPaint reaches the scroll viewport, so every frame repaints the
+    // whole grid instead of one item.
+    return RepaintBoundary(child: draggable);
   }
 
-  /// The dragged item springing back into the grid, drawn above it so it can
-  /// overlap its neighbours on the way in.
-  Widget _buildLandingWidget() {
-    return ValueListenableBuilder(
-      valueListenable: _dragNotifier,
-      builder: (_, drag, _) {
-        final animation = _landingAnimation;
-        if (!drag.landing || animation == null || drag.index == -1) {
-          return const SizedBox.shrink();
-        }
-        return SizedBox.fromSize(
-          size: drag.size,
-          child: AnimatedBuilder(
-            animation: animation,
-            builder: (_, child) {
-              // Fade the lift out on the spring's own curve, so the item
-              // settles instead of popping.
-              final lift = (1 - _landingController.value).clamp(0.0, 1.0);
-              return Transform.translate(
-                offset: animation.value,
-                child: _buildLiftedSurface(child!, lift),
-              );
-            },
-            child: ActivateBox(
-              child: _childrenNotifier.value[drag.index].child,
-            ),
-          ),
-        );
-      },
+  GridItem _buildItem(GridItem item, int index) {
+    final key = item.key!;
+    final content = KeyedSubtree(
+      key: _contentKeys.putIfAbsent(
+        key,
+        () => GlobalKey(debugLabel: 'super_grid_$key'),
+      ),
+      child: item.child,
+    );
+    return GridItem(
+      key: key,
+      crossAxisCellCount: item.crossAxisCellCount,
+      mainAxisCellCount: item.mainAxisCellCount,
+      child: Visibility.maintain(
+        visible: !_flights.containsKey(key),
+        child: widget.editing ? _buildEditable(item, content, index) : content,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return DeferredPointerHandler(
-      // Delete buttons sit outside their item's bounds and the landing widget
-      // casts a shadow past the grid, so nothing here may be clipped.
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          ValueListenableBuilder(
-            valueListenable: _dragNotifier,
-            builder: (_, drag, child) {
-              // Freeze interaction with the grid while an item is landing.
-              return drag.landing ? ActivateBox(child: child!) : child!;
-            },
-            child: ValueListenableBuilder(
-              valueListenable: _childrenNotifier,
-              builder: (_, children, _) {
-                return Grid(
-                  axisDirection: AxisDirection.down,
-                  crossAxisCount: crossCount,
-                  crossAxisSpacing: widget.crossAxisSpacing,
-                  mainAxisSpacing: widget.mainAxisSpacing,
-                  children: [
-                    for (int i = 0; i < children.length; i++) _builderItem(i),
-                  ],
-                );
-              },
+    final grid = MotionGrid(
+      crossAxisCount: widget.crossAxisCount,
+      crossAxisSpacing: widget.crossAxisSpacing,
+      mainAxisSpacing: widget.mainAxisSpacing,
+      children: [
+        for (var i = 0; i < _items.length; i++) _buildItem(_items[i], i),
+      ],
+    );
+    return DeferredPointerHandler(child: grid);
+  }
+}
+
+class _FlightView extends StatelessWidget {
+  final _Flight flight;
+  final OverlayState overlay;
+  final Rect? Function() slotRect;
+  final Widget Function(Widget child, double lift) builder;
+  final Widget child;
+
+  const _FlightView({
+    required this.flight,
+    required this.overlay,
+    required this.slotRect,
+    required this.builder,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: flight.controller,
+      builder: (_, child) {
+        final overlayBox = overlay.context.findRenderObject();
+        final target = flight.lastTarget = slotRect() ?? flight.lastTarget;
+        if (target == null || overlayBox is! RenderBox) {
+          return const SizedBox.shrink();
+        }
+        final t = flight.controller.value;
+        final rect = Rect.lerp(flight.from, target, t)!;
+        final topLeft = overlayBox.globalToLocal(rect.topLeft);
+        // Scaled rather than laid out at in-between sizes its content may
+        // not fit.
+        return Positioned(
+          left: topLeft.dx,
+          top: topLeft.dy,
+          child: Transform.scale(
+            scale: rect.width / target.width,
+            alignment: Alignment.topLeft,
+            child: SizedBox.fromSize(
+              size: target.size,
+              child: builder(child!, 1 - t),
             ),
           ),
-          _buildLandingWidget(),
-        ],
-      ),
+        );
+      },
+      child: child,
     );
   }
 }
 
-class _DeletableContainer extends StatefulWidget {
+class _DeletableContainer extends StatelessWidget {
   final Widget child;
   final VoidCallback onDelete;
 
   const _DeletableContainer({required this.child, required this.onDelete});
 
   @override
-  State<_DeletableContainer> createState() => _DeletableContainerState();
-}
-
-class _DeletableContainerState extends State<_DeletableContainer>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
-  bool _deleteButtonVisible = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: commonDuration);
-    _scaleAnimation = Tween(
-      begin: 1.0,
-      end: 0.4,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
-    _fadeAnimation = Tween(
-      begin: 1.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
-  }
-
-  @override
-  void didUpdateWidget(_DeletableContainer oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.child != widget.child) {
-      setState(() {
-        _controller.value = 0;
-        _deleteButtonVisible = true;
-      });
-    }
-  }
-
-  Future<void> _handleDel() async {
-    setState(() {
-      _deleteButtonVisible = false;
-    });
-    await _controller.forward(from: 0);
-    widget.onDelete();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        AnimatedBuilder(
-          animation: _controller.view,
-          builder: (_, child) {
-            return Transform.scale(
-              scale: _scaleAnimation.value,
-              child: Opacity(opacity: _fadeAnimation.value, child: child!),
-            );
-          },
-          child: widget.child,
-        ),
-        if (_deleteButtonVisible)
-          Positioned(
-            top: -8,
-            right: -8,
-            child: DeferPointer(
+        child,
+        Positioned(
+          top: -8,
+          right: -8,
+          child: DeferPointer(
+            child: ElasticButton(
               child: SizedBox(
                 width: 24,
                 height: 24,
                 child: IconButton.filled(
                   tooltip: context.appLocalizations.remove,
-                  iconSize: 20,
-                  padding: const EdgeInsets.all(2),
-                  onPressed: _handleDel,
-                  icon: const Icon(Icons.close),
+                  iconSize: 16,
+                  padding: const EdgeInsets.all(4),
+                  onPressed: onDelete,
+                  icon: const GlyphIcon(AppGlyphs.close, fill: 1),
                 ),
               ),
             ),
           ),
+        ),
       ],
     );
   }

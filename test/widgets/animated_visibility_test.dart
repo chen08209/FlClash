@@ -302,6 +302,40 @@ void main() {
     expect(exitingPosition.dy, lessThan(600));
   });
 
+  testWidgets('settled content paints past its bounds', (tester) async {
+    Widget buildApp(bool visible) {
+      return MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              const Expanded(child: SizedBox()),
+              AnimatedVisibility.bottomNavigation(
+                visible: visible,
+                child: const SizedBox(width: 180, height: 80),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    Clip clip() => tester
+        .widget<ClipRect>(
+          find.descendant(
+            of: find.byType(AnimatedVisibility),
+            matching: find.byType(ClipRect),
+          ),
+        )
+        .clipBehavior;
+
+    await tester.pumpWidget(buildApp(true));
+    expect(clip(), Clip.none);
+
+    await tester.pumpWidget(buildApp(false));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(clip(), Clip.hardEdge);
+  });
+
   testWidgets('horizontal transition clips without narrowing its child', (
     tester,
   ) async {

@@ -128,6 +128,80 @@ void main() {
     });
   });
 
+  group('ScriptsAction', () {
+    ProviderContainer scriptsContainer(
+      Profile profile,
+      _ApplyRecordingSetupAction setupAction,
+    ) {
+      final container = ProviderContainer(
+        overrides: [
+          currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+          profilesProvider.overrideWith(() => TestProfiles([profile])),
+          scriptsProvider.overrideWith(_MemoryScripts.new),
+          setupActionProvider.overrideWith(() => setupAction),
+        ],
+      );
+      addTearDown(container.dispose);
+      container.listen(scriptsProvider, (_, _) {});
+      return container;
+    }
+
+    Script script(int id, {String? url}) => Script(
+      id: id,
+      label: 'Script $id',
+      lastUpdateTime: DateTime(2026),
+      url: url,
+    );
+
+    test('putScript re-applies only a current profile running that script', () {
+      final profile = Profile.normal().copyWith(
+        overwriteType: OverwriteType.script,
+        scriptId: 1,
+      );
+      final setupAction = _ApplyRecordingSetupAction();
+      final container = scriptsContainer(profile, setupAction);
+      final action = container.read(scriptsActionProvider.notifier);
+
+      action.putScript(script(2));
+      expect(setupAction.applyCount, 0);
+
+      action.putScript(script(1));
+      expect(setupAction.applyCount, 1);
+      expect(container.read(scriptsProvider).value?.map((item) => item.id), [
+        2,
+        1,
+      ]);
+
+      container
+          .read(profilesProvider.notifier)
+          .put(profile.copyWith(overwriteType: OverwriteType.standard));
+      action.putScript(script(1));
+      expect(setupAction.applyCount, 1);
+    });
+
+    test(
+      'updateScript releases the updating key when the download fails',
+      () async {
+        final profile = Profile.normal().copyWith(
+          overwriteType: OverwriteType.script,
+          scriptId: 1,
+        );
+        final setupAction = _ApplyRecordingSetupAction();
+        final container = scriptsContainer(profile, setupAction);
+        final remote = script(1, url: 'bad-url');
+
+        await expectLater(
+          container.read(scriptsActionProvider.notifier).updateScript(remote),
+          throwsA(anything),
+        );
+
+        expect(container.read(isUpdatingProvider(remote.updatingKey)), isFalse);
+        expect(container.read(scriptsProvider).value, isEmpty);
+        expect(setupAction.applyCount, 0);
+      },
+    );
+  });
+
   group('GeoResourceAction', () {
     test('GeoResource has correct updatingKey', () {
       expect(GeoResource.MMDB.updatingKey, 'geo_resource_MMDB');
@@ -814,6 +888,25 @@ class _TestCoreAction extends CoreAction {
   Future<CoreLifecycleResult> restartLifecycle() {
     lifecycleRestartCount++;
     return restartCompleter?.future ?? Future.value(_restartResult);
+  }
+}
+
+class _ApplyRecordingSetupAction extends SetupAction {
+  int applyCount = 0;
+
+  @override
+  void applyProfileDebounce({bool silence = false, bool force = false}) {
+    applyCount++;
+  }
+}
+
+class _MemoryScripts extends Scripts {
+  @override
+  Stream<List<Script>> build() => Stream.value(const []);
+
+  @override
+  void put(Script script) {
+    state = AsyncData([...value.where((item) => item.id != script.id), script]);
   }
 }
 
