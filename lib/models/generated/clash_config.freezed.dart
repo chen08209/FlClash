@@ -972,7 +972,7 @@ extension OverwriteIssuePatterns on OverwriteIssue {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( EmptyNameIssue value)?  emptyName,TResult Function( ReservedNameIssue value)?  reservedName,TResult Function( DuplicateNameIssue value)?  duplicateName,TResult Function( CoreRejectedIssue value)?  coreRejected,TResult Function( MissingProxiesIssue value)?  missingProxies,TResult Function( MissingProvidersIssue value)?  missingProviders,TResult Function( NoProxySourceIssue value)?  noProxySource,TResult Function( GroupLoopIssue value)?  groupLoop,TResult Function( InvalidPayloadIssue value)?  invalidPayload,TResult Function( MissingRuleSetIssue value)?  missingRuleSet,TResult Function( MissingSubRuleIssue value)?  missingSubRule,TResult Function( MissingTargetIssue value)?  missingTarget,TResult Function( SubscriptionGroupMissingProxiesIssue value)?  subscriptionGroupMissingProxies,TResult Function( ProviderShadowedIssue value)?  providerShadowed,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( EmptyNameIssue value)?  emptyName,TResult Function( ReservedNameIssue value)?  reservedName,TResult Function( DuplicateNameIssue value)?  duplicateName,TResult Function( CoreRejectedIssue value)?  coreRejected,TResult Function( MissingProxiesIssue value)?  missingProxies,TResult Function( MissingProvidersIssue value)?  missingProviders,TResult Function( NoProxySourceIssue value)?  noProxySource,TResult Function( GroupLoopIssue value)?  groupLoop,TResult Function( InvalidPayloadIssue value)?  invalidPayload,TResult Function( MissingRuleSetIssue value)?  missingRuleSet,TResult Function( MissingSubRuleIssue value)?  missingSubRule,TResult Function( MissingTargetIssue value)?  missingTarget,TResult Function( SubscriptionGroupMissingProxiesIssue value)?  subscriptionGroupMissingProxies,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case EmptyNameIssue() when emptyName != null:
@@ -988,8 +988,7 @@ return invalidPayload(_that);case MissingRuleSetIssue() when missingRuleSet != n
 return missingRuleSet(_that);case MissingSubRuleIssue() when missingSubRule != null:
 return missingSubRule(_that);case MissingTargetIssue() when missingTarget != null:
 return missingTarget(_that);case SubscriptionGroupMissingProxiesIssue() when subscriptionGroupMissingProxies != null:
-return subscriptionGroupMissingProxies(_that);case ProviderShadowedIssue() when providerShadowed != null:
-return providerShadowed(_that);case _:
+return subscriptionGroupMissingProxies(_that);case _:
   return orElse();
 
 }
@@ -1007,7 +1006,7 @@ return providerShadowed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( EmptyNameIssue value)  emptyName,required TResult Function( ReservedNameIssue value)  reservedName,required TResult Function( DuplicateNameIssue value)  duplicateName,required TResult Function( CoreRejectedIssue value)  coreRejected,required TResult Function( MissingProxiesIssue value)  missingProxies,required TResult Function( MissingProvidersIssue value)  missingProviders,required TResult Function( NoProxySourceIssue value)  noProxySource,required TResult Function( GroupLoopIssue value)  groupLoop,required TResult Function( InvalidPayloadIssue value)  invalidPayload,required TResult Function( MissingRuleSetIssue value)  missingRuleSet,required TResult Function( MissingSubRuleIssue value)  missingSubRule,required TResult Function( MissingTargetIssue value)  missingTarget,required TResult Function( SubscriptionGroupMissingProxiesIssue value)  subscriptionGroupMissingProxies,required TResult Function( ProviderShadowedIssue value)  providerShadowed,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( EmptyNameIssue value)  emptyName,required TResult Function( ReservedNameIssue value)  reservedName,required TResult Function( DuplicateNameIssue value)  duplicateName,required TResult Function( CoreRejectedIssue value)  coreRejected,required TResult Function( MissingProxiesIssue value)  missingProxies,required TResult Function( MissingProvidersIssue value)  missingProviders,required TResult Function( NoProxySourceIssue value)  noProxySource,required TResult Function( GroupLoopIssue value)  groupLoop,required TResult Function( InvalidPayloadIssue value)  invalidPayload,required TResult Function( MissingRuleSetIssue value)  missingRuleSet,required TResult Function( MissingSubRuleIssue value)  missingSubRule,required TResult Function( MissingTargetIssue value)  missingTarget,required TResult Function( SubscriptionGroupMissingProxiesIssue value)  subscriptionGroupMissingProxies,}){
 final _that = this;
 switch (_that) {
 case EmptyNameIssue():
@@ -1023,8 +1022,7 @@ return invalidPayload(_that);case MissingRuleSetIssue():
 return missingRuleSet(_that);case MissingSubRuleIssue():
 return missingSubRule(_that);case MissingTargetIssue():
 return missingTarget(_that);case SubscriptionGroupMissingProxiesIssue():
-return subscriptionGroupMissingProxies(_that);case ProviderShadowedIssue():
-return providerShadowed(_that);}
+return subscriptionGroupMissingProxies(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -1038,7 +1036,7 @@ return providerShadowed(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( EmptyNameIssue value)?  emptyName,TResult? Function( ReservedNameIssue value)?  reservedName,TResult? Function( DuplicateNameIssue value)?  duplicateName,TResult? Function( CoreRejectedIssue value)?  coreRejected,TResult? Function( MissingProxiesIssue value)?  missingProxies,TResult? Function( MissingProvidersIssue value)?  missingProviders,TResult? Function( NoProxySourceIssue value)?  noProxySource,TResult? Function( GroupLoopIssue value)?  groupLoop,TResult? Function( InvalidPayloadIssue value)?  invalidPayload,TResult? Function( MissingRuleSetIssue value)?  missingRuleSet,TResult? Function( MissingSubRuleIssue value)?  missingSubRule,TResult? Function( MissingTargetIssue value)?  missingTarget,TResult? Function( SubscriptionGroupMissingProxiesIssue value)?  subscriptionGroupMissingProxies,TResult? Function( ProviderShadowedIssue value)?  providerShadowed,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( EmptyNameIssue value)?  emptyName,TResult? Function( ReservedNameIssue value)?  reservedName,TResult? Function( DuplicateNameIssue value)?  duplicateName,TResult? Function( CoreRejectedIssue value)?  coreRejected,TResult? Function( MissingProxiesIssue value)?  missingProxies,TResult? Function( MissingProvidersIssue value)?  missingProviders,TResult? Function( NoProxySourceIssue value)?  noProxySource,TResult? Function( GroupLoopIssue value)?  groupLoop,TResult? Function( InvalidPayloadIssue value)?  invalidPayload,TResult? Function( MissingRuleSetIssue value)?  missingRuleSet,TResult? Function( MissingSubRuleIssue value)?  missingSubRule,TResult? Function( MissingTargetIssue value)?  missingTarget,TResult? Function( SubscriptionGroupMissingProxiesIssue value)?  subscriptionGroupMissingProxies,}){
 final _that = this;
 switch (_that) {
 case EmptyNameIssue() when emptyName != null:
@@ -1054,8 +1052,7 @@ return invalidPayload(_that);case MissingRuleSetIssue() when missingRuleSet != n
 return missingRuleSet(_that);case MissingSubRuleIssue() when missingSubRule != null:
 return missingSubRule(_that);case MissingTargetIssue() when missingTarget != null:
 return missingTarget(_that);case SubscriptionGroupMissingProxiesIssue() when subscriptionGroupMissingProxies != null:
-return subscriptionGroupMissingProxies(_that);case ProviderShadowedIssue() when providerShadowed != null:
-return providerShadowed(_that);case _:
+return subscriptionGroupMissingProxies(_that);case _:
   return null;
 
 }
@@ -1072,7 +1069,7 @@ return providerShadowed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  emptyName,TResult Function( String name)?  reservedName,TResult Function( String name)?  duplicateName,TResult Function( String message)?  coreRejected,TResult Function( List<String> names)?  missingProxies,TResult Function( List<String> names)?  missingProviders,TResult Function()?  noProxySource,TResult Function( List<String> names)?  groupLoop,TResult Function( RulePayloadError error)?  invalidPayload,TResult Function( String name)?  missingRuleSet,TResult Function( String name)?  missingSubRule,TResult Function( String name)?  missingTarget,TResult Function( List<String> names)?  subscriptionGroupMissingProxies,TResult Function( String name)?  providerShadowed,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  emptyName,TResult Function( String name)?  reservedName,TResult Function( String name)?  duplicateName,TResult Function( String message)?  coreRejected,TResult Function( List<String> names)?  missingProxies,TResult Function( List<String> names)?  missingProviders,TResult Function()?  noProxySource,TResult Function( List<String> names)?  groupLoop,TResult Function( RulePayloadError error)?  invalidPayload,TResult Function( String name)?  missingRuleSet,TResult Function( String name)?  missingSubRule,TResult Function( String name)?  missingTarget,TResult Function( List<String> names)?  subscriptionGroupMissingProxies,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case EmptyNameIssue() when emptyName != null:
 return emptyName();case ReservedNameIssue() when reservedName != null:
@@ -1087,8 +1084,7 @@ return invalidPayload(_that.error);case MissingRuleSetIssue() when missingRuleSe
 return missingRuleSet(_that.name);case MissingSubRuleIssue() when missingSubRule != null:
 return missingSubRule(_that.name);case MissingTargetIssue() when missingTarget != null:
 return missingTarget(_that.name);case SubscriptionGroupMissingProxiesIssue() when subscriptionGroupMissingProxies != null:
-return subscriptionGroupMissingProxies(_that.names);case ProviderShadowedIssue() when providerShadowed != null:
-return providerShadowed(_that.name);case _:
+return subscriptionGroupMissingProxies(_that.names);case _:
   return orElse();
 
 }
@@ -1106,7 +1102,7 @@ return providerShadowed(_that.name);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  emptyName,required TResult Function( String name)  reservedName,required TResult Function( String name)  duplicateName,required TResult Function( String message)  coreRejected,required TResult Function( List<String> names)  missingProxies,required TResult Function( List<String> names)  missingProviders,required TResult Function()  noProxySource,required TResult Function( List<String> names)  groupLoop,required TResult Function( RulePayloadError error)  invalidPayload,required TResult Function( String name)  missingRuleSet,required TResult Function( String name)  missingSubRule,required TResult Function( String name)  missingTarget,required TResult Function( List<String> names)  subscriptionGroupMissingProxies,required TResult Function( String name)  providerShadowed,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  emptyName,required TResult Function( String name)  reservedName,required TResult Function( String name)  duplicateName,required TResult Function( String message)  coreRejected,required TResult Function( List<String> names)  missingProxies,required TResult Function( List<String> names)  missingProviders,required TResult Function()  noProxySource,required TResult Function( List<String> names)  groupLoop,required TResult Function( RulePayloadError error)  invalidPayload,required TResult Function( String name)  missingRuleSet,required TResult Function( String name)  missingSubRule,required TResult Function( String name)  missingTarget,required TResult Function( List<String> names)  subscriptionGroupMissingProxies,}) {final _that = this;
 switch (_that) {
 case EmptyNameIssue():
 return emptyName();case ReservedNameIssue():
@@ -1121,8 +1117,7 @@ return invalidPayload(_that.error);case MissingRuleSetIssue():
 return missingRuleSet(_that.name);case MissingSubRuleIssue():
 return missingSubRule(_that.name);case MissingTargetIssue():
 return missingTarget(_that.name);case SubscriptionGroupMissingProxiesIssue():
-return subscriptionGroupMissingProxies(_that.names);case ProviderShadowedIssue():
-return providerShadowed(_that.name);}
+return subscriptionGroupMissingProxies(_that.names);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -1136,7 +1131,7 @@ return providerShadowed(_that.name);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  emptyName,TResult? Function( String name)?  reservedName,TResult? Function( String name)?  duplicateName,TResult? Function( String message)?  coreRejected,TResult? Function( List<String> names)?  missingProxies,TResult? Function( List<String> names)?  missingProviders,TResult? Function()?  noProxySource,TResult? Function( List<String> names)?  groupLoop,TResult? Function( RulePayloadError error)?  invalidPayload,TResult? Function( String name)?  missingRuleSet,TResult? Function( String name)?  missingSubRule,TResult? Function( String name)?  missingTarget,TResult? Function( List<String> names)?  subscriptionGroupMissingProxies,TResult? Function( String name)?  providerShadowed,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  emptyName,TResult? Function( String name)?  reservedName,TResult? Function( String name)?  duplicateName,TResult? Function( String message)?  coreRejected,TResult? Function( List<String> names)?  missingProxies,TResult? Function( List<String> names)?  missingProviders,TResult? Function()?  noProxySource,TResult? Function( List<String> names)?  groupLoop,TResult? Function( RulePayloadError error)?  invalidPayload,TResult? Function( String name)?  missingRuleSet,TResult? Function( String name)?  missingSubRule,TResult? Function( String name)?  missingTarget,TResult? Function( List<String> names)?  subscriptionGroupMissingProxies,}) {final _that = this;
 switch (_that) {
 case EmptyNameIssue() when emptyName != null:
 return emptyName();case ReservedNameIssue() when reservedName != null:
@@ -1151,8 +1146,7 @@ return invalidPayload(_that.error);case MissingRuleSetIssue() when missingRuleSe
 return missingRuleSet(_that.name);case MissingSubRuleIssue() when missingSubRule != null:
 return missingSubRule(_that.name);case MissingTargetIssue() when missingTarget != null:
 return missingTarget(_that.name);case SubscriptionGroupMissingProxiesIssue() when subscriptionGroupMissingProxies != null:
-return subscriptionGroupMissingProxies(_that.names);case ProviderShadowedIssue() when providerShadowed != null:
-return providerShadowed(_that.name);case _:
+return subscriptionGroupMissingProxies(_that.names);case _:
   return null;
 
 }
@@ -1990,74 +1984,6 @@ class _$SubscriptionGroupMissingProxiesIssueCopyWithImpl<$Res>
   return _then(SubscriptionGroupMissingProxiesIssue(
 null == names ? _self._names : names // ignore: cast_nullable_to_non_nullable
 as List<String>,
-  ));
-}
-
-
-}
-
-/// @nodoc
-
-
-class ProviderShadowedIssue implements OverwriteIssue {
-  const ProviderShadowedIssue(this.name);
-  
-
- final  String name;
-
-/// Create a copy of OverwriteIssue
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$ProviderShadowedIssueCopyWith<ProviderShadowedIssue> get copyWith => _$ProviderShadowedIssueCopyWithImpl<ProviderShadowedIssue>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is ProviderShadowedIssue&&(identical(other.name, name) || other.name == name));
-}
-
-
-@override
-int get hashCode {
-    return Object.hash(runtimeType,name);
-}
-
-@override
-String toString() {
-    return 'OverwriteIssue.providerShadowed(name: $name)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $ProviderShadowedIssueCopyWith<$Res> implements $OverwriteIssueCopyWith<$Res> {
-  factory $ProviderShadowedIssueCopyWith(ProviderShadowedIssue value, $Res Function(ProviderShadowedIssue) _then) = _$ProviderShadowedIssueCopyWithImpl;
-@useResult
-$Res call({
- String name
-});
-
-
-
-
-}
-/// @nodoc
-class _$ProviderShadowedIssueCopyWithImpl<$Res>
-    implements $ProviderShadowedIssueCopyWith<$Res> {
-  _$ProviderShadowedIssueCopyWithImpl(this._self, this._then);
-
-  final ProviderShadowedIssue _self;
-  final $Res Function(ProviderShadowedIssue) _then;
-
-/// Create a copy of OverwriteIssue
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? name = null,}) {
-  return _then(ProviderShadowedIssue(
-null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,
   ));
 }
 

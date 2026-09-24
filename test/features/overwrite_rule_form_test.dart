@@ -1,6 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/overwrite/overwrite.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -8,10 +9,12 @@ import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/rules.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
@@ -52,6 +55,24 @@ final _testOverwriteDataProvider =
       _TestOverwriteData.new,
     );
 
+class _TestClashProviders extends ClashProviders {
+  _TestClashProviders(this.ruleLabels);
+
+  final List<String> ruleLabels;
+
+  @override
+  Stream<List<ClashProvider>> build(ProviderKind kind) => Stream.value([
+    if (kind == ProviderKind.rule)
+      for (final (index, label) in ruleLabels.indexed)
+        ClashProvider(
+          id: index,
+          kind: kind,
+          label: label,
+          url: 'https://example.com/$label.yaml',
+        ),
+  ]);
+}
+
 class _Harness {
   late final ProviderContainer container;
   late final _RecordingProfileCustomRules rules;
@@ -61,6 +82,8 @@ class _Harness {
     WidgetTester tester, {
     List<Rule> initialRules = const [],
     Size size = const Size(1400, 1000),
+    List<String>? ruleProviders,
+    List<String> appRuleProviders = const [],
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -77,6 +100,14 @@ class _Harness {
         customOverwriteDateProvider(
           profile.id,
         ).overrideWith((ref) => ref.watch(_testOverwriteDataProvider)),
+        if (ruleProviders != null) ...[
+          clashConfigProvider(profile.id).overrideWithValue(
+            AsyncData(ClashConfig(ruleProviders: ruleProviders)),
+          ),
+          clashProvidersProvider.overrideWith2(
+            (_) => _TestClashProviders(appRuleProviders),
+          ),
+        ],
       ],
     );
     addTearDown(container.dispose);
@@ -98,7 +129,7 @@ class _Harness {
   }
 
   Future<void> save(WidgetTester tester) async {
-    await tester.tap(find.byIcon(Icons.check));
+    await tester.tap(find.byGlyph(AppGlyphs.check));
     await tester.pumpAndSettle();
   }
 
@@ -109,6 +140,11 @@ class _Harness {
       find.text(action.name),
       300,
       scrollable: find.byType(Scrollable).last,
+    );
+    // That leaves the row at the viewport's top, under the floating bar.
+    await Scrollable.ensureVisible(
+      tester.element(find.text(action.name).last),
+      alignment: 0.5,
     );
     await tester.pumpAndSettle();
     await tester.tap(find.text(action.name).last);
@@ -166,6 +202,35 @@ void main() {
 
     expect(find.text(currentAppLocalizations.subRuleNotEmpty), findsOne);
     expect(harness.rules.puts, isEmpty);
+  });
+
+  testWidgets('the rule set sheet lists the subscription first in one list', (
+    tester,
+  ) async {
+    feature = const Feature(customProviders: true);
+    addTearDown(() => feature = const Feature());
+    final harness = _Harness();
+    await harness.pump(
+      tester,
+      ruleProviders: const ['own', 'shared'],
+      appRuleProviders: const ['shared', 'app-only'],
+    );
+    await harness.openAddSheet(tester);
+    await harness.selectType(tester, RuleAction.RULE_SET);
+    await tester.tap(find.text(currentAppLocalizations.ruleSet));
+    await tester.pumpAndSettle();
+
+    double top(String text) => tester.getTopLeft(find.text(text)).dy;
+    expect(find.text('shared'), findsOne);
+    expect(top('own'), lessThan(top('shared')));
+    expect(top('shared'), lessThan(top('app-only')));
+    expect(
+      find.descendant(
+        of: find.byType(OverwriteSelectionSheet<String>),
+        matching: find.byType(InfoHeader),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('a MATCH rule saves without a content field', (tester) async {

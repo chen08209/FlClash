@@ -1,16 +1,19 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/name_add_picker.dart';
 import 'package:fl_clash/widgets/inherited.dart';
+import 'package:fl_clash/widgets/search_field.dart';
 import 'package:fl_clash/widgets/sheet.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 
 ProxyGroup _group({List<String>? proxies}) {
@@ -61,7 +64,7 @@ void main() {
         container: container,
         child: TestApp(
           child: SheetProvider(
-            type: SheetType.page,
+            type: SheetType.bottomSheet,
             child: NameAddPicker(
               title: 'Add',
               stageTagPrefix: 'NameAddPickerTest',
@@ -203,7 +206,7 @@ void main() {
 
     holdStageKey(tester);
 
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.tap(find.byGlyph(AppGlyphs.add));
     await tester.pump();
     // The staging flow debounces before it writes through.
     await tester.pump(const Duration(milliseconds: 400));
@@ -235,18 +238,81 @@ void main() {
 
     holdStageKey(tester, scenes: const ['a', 'b']);
 
-    await tester.tap(find.byIcon(Icons.add).first);
+    await tester.tap(find.byGlyph(AppGlyphs.add).first);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(container.read(proxyGroupProvider).proxies, ['alpha']);
 
-    await tester.tap(find.byIcon(Icons.add).last);
+    await tester.tap(find.byGlyph(AppGlyphs.add).last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(container.read(proxyGroupProvider).proxies, ['alpha', 'beta']);
 
     await drainStaging(tester);
+  });
+
+  group('search', () {
+    List<NameAddSection> proxySections(int count) => [
+      const NameAddSection(
+        label: 'Targets',
+        scene: 'targets',
+        entries: [NameAddEntry(title: 'DIRECT', subtitle: 'direct')],
+      ),
+      NameAddSection(
+        label: 'Proxies',
+        scene: 'proxies',
+        entries: [
+          for (var i = 1; i < count; i++)
+            NameAddEntry(
+              title: 'Node $i',
+              subtitle: i.isEven ? 'Vmess' : 'Trojan',
+            ),
+        ],
+      ),
+    ];
+
+    testWidgets('offers no search field for a short list', (tester) async {
+      container = buildContainer(_group());
+
+      await pumpPicker(
+        tester,
+        scenes: const ['targets', 'proxies'],
+        sections: proxySections(sheetSearchMinItemCount - 1),
+      );
+
+      expect(find.byType(SearchField), findsNothing);
+    });
+
+    testWidgets('narrows every section by title and subtitle', (tester) async {
+      container = buildContainer(_group());
+
+      await pumpPicker(
+        tester,
+        scenes: const ['targets', 'proxies'],
+        sections: proxySections(sheetSearchMinItemCount),
+      );
+      expect(find.byType(SearchField), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField), 'trojan');
+      await tester.pump();
+      expect(find.text('Targets'), findsNothing);
+      expect(find.text('Node 1'), findsOneWidget);
+      expect(find.text('Node 2'), findsNothing);
+
+      await tester.enterText(find.byType(TextField), 'node 2');
+      await tester.pump();
+      expect(find.text('Node 2'), findsOneWidget);
+      expect(find.text('Node 1'), findsNothing);
+
+      await tester.enterText(find.byType(TextField), 'missing');
+      await tester.pumpAndSettle();
+      expect(
+        find.text(currentAppLocalizations.noSearchResults),
+        findsOneWidget,
+      );
+      expect(find.byType(SearchField), findsOneWidget);
+    });
   });
 }
