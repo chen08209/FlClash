@@ -1,3 +1,4 @@
+import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
@@ -79,6 +80,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+
+            configure<CrashlyticsExtension> {
+                nativeSymbolUploadEnabled = hasReleaseSigning
+            }
         }
     }
 
@@ -96,6 +101,13 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+// The Crashlytics plugin finalizes R8 with the mapping upload but leaves the native symbol upload to the caller.
+if (hasReleaseSigning) {
+    tasks.matching { it.name == "assembleRelease" || it.name == "bundleRelease" }.configureEach {
+        finalizedBy("uploadCrashlyticsSymbolFileRelease")
+    }
 }
 
 dependencies {
