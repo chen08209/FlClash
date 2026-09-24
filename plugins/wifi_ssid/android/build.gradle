@@ -8,7 +8,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.12.2'
+        classpath 'com.android.tools.build:gradle:9.4.1'
     }
 }
 
@@ -23,7 +23,7 @@ apply plugin: 'com.android.library'
 
 android {
     namespace 'com.follow.clash.wifi_ssid'
-    compileSdk 36
+    compileSdk 37
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -31,7 +31,7 @@ android {
     }
 
     defaultConfig {
-        minSdk 21
+        minSdk 24
     }
 }
 
@@ -42,5 +42,5 @@ kotlin {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.15.0'
+    implementation 'androidx.core:core-ktx:1.19.1'
 }

@@ -51,6 +51,15 @@ void main() {
     );
   });
 
+  test('macOS lets a second permission request wait for the same answer', () {
+    expect(pluginSource, contains('pendingPermissionResults.append(result)'));
+    expect(
+      pluginSource,
+      isNot(contains('IN_PROGRESS')),
+      reason: 'a prompt left unanswered would refuse every later request',
+    );
+  });
+
   test('macOS reports the location permission as granted below macOS 14', () {
     final checkPermissionIndex = pluginSource.indexOf(
       'private func checkPermission',

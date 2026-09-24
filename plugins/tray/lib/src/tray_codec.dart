@@ -54,31 +54,62 @@ abstract final class TrayCodec {
       sink[id] = item;
       return switch (item) {
         TrayMenuSeparator() => <String, Object?>{'id': id, 'type': 'separator'},
-        TrayMenuAction(:final label, :final enabled) => <String, Object?>{
-          'id': id,
-          'type': 'action',
-          'label': label,
-          'enabled': enabled,
-        },
-        TrayMenuCheckbox(:final label, :final enabled, :final checked) =>
+        TrayMenuAction(
+          :final label,
+          :final detail,
+          :final detailTone,
+          :final enabled,
+        ) =>
+          <String, Object?>{
+            'id': id,
+            'type': 'action',
+            'label': label,
+            ..._encodeDetail(detail, detailTone),
+            'enabled': enabled,
+          },
+        TrayMenuCheckbox(
+          :final label,
+          :final detail,
+          :final detailTone,
+          :final enabled,
+          :final checked,
+        ) =>
           <String, Object?>{
             'id': id,
             'type': 'checkbox',
             'label': label,
+            ..._encodeDetail(detail, detailTone),
             'enabled': enabled,
             'checked': checked,
           },
-        TrayMenuSubmenu(:final label, :final enabled, :final items) =>
+        TrayMenuSubmenu(
+          :final label,
+          :final detail,
+          :final detailTone,
+          :final enabled,
+          :final items,
+        ) =>
           <String, Object?>{
             'id': id,
             'type': 'submenu',
             'label': label,
+            ..._encodeDetail(detail, detailTone),
             'enabled': enabled,
             'items': _encodeItems(items, sink, allocator),
           },
       };
     }).toList();
   }
+}
+
+Map<String, Object?> _encodeDetail(String? detail, TrayDetailTone tone) {
+  if (detail == null || detail.isEmpty) {
+    return const {};
+  }
+  return <String, Object?>{
+    'detail': detail,
+    if (tone != TrayDetailTone.plain) 'detailTone': tone.name,
+  };
 }
 
 final class _IdAllocator {

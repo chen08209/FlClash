@@ -36,6 +36,8 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var wifiNetworkCallback: ConnectivityManager.NetworkCallback? = null
     private val wifiInfoByNetwork = ConcurrentHashMap<Network, WifiInfo>()
     private val pendingSsidResults = mutableListOf<Result>()
+    @Volatile
+    private var hasPendingSsid = false
     private val mainHandler = Handler(Looper.getMainLooper())
     private var ssidTimeout: Runnable? = null
 
@@ -255,6 +257,7 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 return
             }
             pendingSsidResults.add(result)
+            hasPendingSsid = true
             if (!registerWifiNetworkCallback()) {
                 completePendingSsidResults(ssid = null)
                 return
@@ -314,6 +317,9 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 } else {
                     wifiInfoByNetwork[network] = wifiInfo
                 }
+                if (!hasPendingSsid) {
+                    return
+                }
                 currentSsid()?.let { ssid ->
                     mainHandler.post {
                         completePendingSsidResults(ssid = ssid)
@@ -356,6 +362,7 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         }
         val results = pendingSsidResults.toList()
         pendingSsidResults.clear()
+        hasPendingSsid = false
         results.forEach { result ->
             if (errorMessage == null) {
                 result.success(ssid)

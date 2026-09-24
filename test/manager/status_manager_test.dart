@@ -1,10 +1,12 @@
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/manager/status_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 
 Future<StatusManagerState> _pumpStatusManager(
@@ -278,7 +280,7 @@ void main() {
     state.message('boom', level: MessageLevel.error);
     await tester.pump();
 
-    expect(find.byIcon(Icons.error_outline), findsOneWidget);
+    expect(find.byGlyph(AppGlyphs.error), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 4));
     await tester.pump(const Duration(milliseconds: 500));
@@ -297,7 +299,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('plain'), findsOneWidget);
-    expect(find.byType(Icon), findsNothing);
+    expect(find.byType(GlyphIcon), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

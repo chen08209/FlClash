@@ -10,7 +10,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   tray
   url_launcher_linux
   wifi_ssid
-  window_manager
+  window
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

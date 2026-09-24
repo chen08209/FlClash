@@ -81,7 +81,7 @@ class Permissions {
   }
 
   Future<void> checkLocationPermissions(ProviderReader read) async {
-    if (!_supportsLocationPermissions()) {
+    if (!_supportsLocationPermissions() || read(safeModeProvider)) {
       return;
     }
     final res = await WifiSsidManager.instance.checkPermission();
