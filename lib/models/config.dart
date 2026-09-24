@@ -155,6 +155,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     List<String> userAgents,
     @Default(false) bool hideIp,
     @Default(false) bool editorLineWrap,
+    @Default(EditorFontSize.standard) EditorFontSize editorFontSize,
     @Default([]) List<String> serviceOrder,
     @Default([]) List<String> disabledServices,
     String? currentService,

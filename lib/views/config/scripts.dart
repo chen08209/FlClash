@@ -204,7 +204,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     Script? script,
   }) async {
     final appLocalizations = context.appLocalizations;
-    if (content == raw) {
+    if (content == raw && title == (script?.label ?? '')) {
       return true;
     }
     final res = await dialogs.showMessage(
@@ -229,9 +229,8 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
         EditorPage(
           titleEditable: true,
           title: script?.label ?? '',
-          onSave: (context, title, content) {
-            _handleEditorSave(context, title, content, script: script);
-          },
+          onSave: (context, title, content) =>
+              _handleEditorSave(context, title, content, script: script),
           onPop: (context, title, content) {
             return _handleEditorPop(
               context,

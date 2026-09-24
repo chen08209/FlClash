@@ -1,0 +1,22 @@
+name: code_forge
+description: "The code editor of FlClash, derived from code_forge 10.14.0."
+version: 10.14.0
+homepage: https://github.com/heckmon/code_forge
+publish_to: none
+
+environment:
+  sdk: ^3.13.2
+  flutter: '>=3.47.2'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  material_ui: ^1.4.0
+  re_highlight: ^0.0.3
+  rust_api:
+    path: ../rust_api
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

@@ -9,6 +9,7 @@ import 'package:fl_clash/features/overwrite/overwrite.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/about.dart';
@@ -26,6 +27,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+import '../plugins/code_forge/support.dart';
 
 class _PendingAdapter implements HttpClientAdapter {
   final response = Completer<ResponseBody>();
@@ -295,6 +297,40 @@ void main() {
     expect(find.text('Start from scratch'), findsOneWidget);
     expect(find.text('Import from URL'), findsOneWidget);
     expect(find.text('Import from file'), findsOneWidget);
+  });
+
+  testWidgets('a new script asks before a name alone is discarded', (
+    tester,
+  ) async {
+    await tester.runAsync(initEditorNative);
+    final container = _containerFor(
+      tester,
+      overrides: [scriptsProvider.overrideWith(() => _TestScripts(const []))],
+    );
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: ScriptsView()),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.text('Add'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start from scratch'));
+    await settle(tester, 12);
+
+    await tester.enterText(
+      find.descendant(
+        of: find.byType(EditorPage),
+        matching: find.byType(TextField),
+      ),
+      'Named',
+    );
+    await tester.pump();
+    await tester.binding.handlePopRoute();
+    await settle(tester, 12);
+
+    expect(find.text('Save the changes?'), findsOneWidget);
   });
 
   testWidgets('scripts view offers sync only for scripts with a source URL', (

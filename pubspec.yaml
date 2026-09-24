@@ -48,7 +48,8 @@ dependencies:
 
   dio: ^5.8.0+1
   win32: ^6.4.0
-  re_editor: ^0.10.0
+  code_forge:
+    path: plugins/code_forge
   re_highlight: ^0.0.3
   archive: ^4.0.7
   emoji_regex: ^0.0.5
