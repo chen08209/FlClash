@@ -8,7 +8,7 @@ class Rules extends Table {
 
   IntColumn get id => integer()();
 
-  TextColumn get ruleAction => textEnum<RuleAction>()();
+  TextColumn get ruleAction => text().map(const RuleActionConverter())();
 
   TextColumn get content => text().nullable()();
 

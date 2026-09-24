@@ -1,5 +1,23 @@
 part of 'database.dart';
 
+class RuleActionConverter extends TypeConverter<RuleAction, String>
+    with JsonTypeConverter<RuleAction, String> {
+  const RuleActionConverter();
+
+  @override
+  RuleAction fromSql(String fromDb) {
+    return RuleAction.values.firstWhere(
+      (action) => action.name == fromDb || action.value == fromDb,
+      orElse: () => throw ArgumentError.value(fromDb, 'fromDb'),
+    );
+  }
+
+  @override
+  String toSql(RuleAction value) {
+    return value.name;
+  }
+}
+
 class StringMapConverter extends TypeConverter<Map<String, String>, String> {
   const StringMapConverter();
 

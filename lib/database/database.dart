@@ -56,12 +56,8 @@ class Database extends _$Database {
           await _migrateProfileSourceUrl();
         }
       },
-      beforeOpen: (details) async {
-        // final m = Migrator(this);
-        // await m.createTable(iconRecords);
-        // await _migrateRules(m);
-        // await m.deleteTable('proxy_groups');
-        // await m.createTable(proxyGroups);
+      beforeOpen: (_) async {
+        await _normalizeRuleActions();
       },
     );
   }
@@ -98,7 +94,7 @@ class Database extends _$Database {
       await customStatement(
         'UPDATE rules SET rule_action = ?, content = ?, rule_target = ?, rule_provider = ?, sub_rule = ?, no_resolve = ?, src = ? WHERE id = ?',
         [
-          parsed.ruleAction.name,
+          const RuleActionConverter().toSql(parsed.ruleAction),
           parsed.content,
           parsed.ruleTarget,
           parsed.ruleProvider,
@@ -111,6 +107,25 @@ class Database extends _$Database {
     }
     await customStatement('ALTER TABLE rules DROP COLUMN value');
     await m.createIndex(idxRuleTarget);
+  }
+
+  Future<void> _normalizeRuleActions() async {
+    final tableInfo = await customSelect('PRAGMA table_info(rules)').get();
+    final hasRuleAction = tableInfo.any(
+      (row) => row.read<String>('name') == 'rule_action',
+    );
+    if (!hasRuleAction) {
+      return;
+    }
+    for (final action in RuleAction.values) {
+      if (action.name == action.value) {
+        continue;
+      }
+      await customStatement(
+        'UPDATE rules SET rule_action = ? WHERE rule_action = ?',
+        [action.name, action.value],
+      );
+    }
   }
 
   Future<void> _migrateProfileSourceUrl() async {

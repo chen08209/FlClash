@@ -12,6 +12,7 @@ void main() {
       label: 'Profile',
       currentGroupName: 'Select',
       url: 'https://example.com/profile.yaml',
+      sourceUrl: 'https://source.example/profile.yaml',
       lastUpdateDate: date,
       overwriteType: OverwriteType.custom,
       scriptId: 2,
@@ -28,8 +29,8 @@ void main() {
       order: 3,
     );
 
-    expect(profile.toColumns(true), hasLength(13));
-    expect(profile.toCompanion(true).toColumns(true), hasLength(13));
+    expect(profile.toColumns(true), hasLength(14));
+    expect(profile.toCompanion(true).toColumns(true), hasLength(14));
     expect(RawProfile.fromJson(profile.toJson()).toJson(), profile.toJson());
     expect(profile.copyWith(label: 'Next').label, 'Next');
     expect(
@@ -52,15 +53,16 @@ void main() {
       id: 2,
       label: 'Empty',
       url: '',
+      sourceUrl: '',
       overwriteType: OverwriteType.standard,
       autoUpdateDurationMillis: 0,
       autoUpdate: false,
       selectedMap: {},
       unfoldSet: {},
     );
-    expect(emptyProfile.toColumns(true), hasLength(8));
-    expect(emptyProfile.toColumns(false), hasLength(13));
-    expect(emptyProfile.toCompanion(true).toColumns(true), hasLength(8));
+    expect(emptyProfile.toColumns(true), hasLength(9));
+    expect(emptyProfile.toColumns(false), hasLength(14));
+    expect(emptyProfile.toCompanion(true).toColumns(true), hasLength(9));
 
     final insertedProfile = ProfilesCompanion.insert(
       label: 'Inserted',

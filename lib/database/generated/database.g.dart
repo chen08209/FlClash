@@ -1305,7 +1305,7 @@ class $RulesTable extends Rules with TableInfo<$RulesTable, RawRule> {
   }
 
   static JsonTypeConverter2<RuleAction, String, String> $converterruleAction =
-      const EnumNameConverter<RuleAction>(RuleAction.values);
+      const RuleActionConverter();
 }
 
 class RawRule extends DataClass implements Insertable<RawRule> {
