@@ -771,5 +771,8 @@
   "overwriteIssueSubscriptionGroupMissingProxies": "配置文件自身的策略组引用了自定义代理中已没有的代理：{names}",
   "providerInUse": "{label} 仍被 {profiles} 的自定义策略组或规则使用，请先在那里移除",
   "providerSourceSubscription": "订阅",
-  "providerRenameShadowed": "{profiles} 的订阅里已有 {label}，改名后这些配置会改用订阅里的那个，请换一个名称"
+  "providerRenameShadowed": "{profiles} 的订阅里已有 {label}，改名后这些配置会改用订阅里的那个，请换一个名称",
+  "fontSize": "大小",
+  "large": "大",
+  "extraLarge": "超大"
 }

@@ -432,6 +432,7 @@ class _EditProviderViewState extends ConsumerState<_EditProviderView> {
     return EditorPage(
       title: widget.provider.name,
       load: _load,
+      schema: EditorSchema.provider,
       onSave: (context, _, content) {
         _handleSave(context, content);
       },

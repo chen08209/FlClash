@@ -270,6 +270,7 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
           titleEditable: true,
           title: provider?.label ?? '',
           load: () async => raw = (await provider?.content) ?? _template,
+          schema: EditorSchema.provider,
           onSave: (_, title, content) {
             _handleEditorSave(title, content, provider: provider);
           },

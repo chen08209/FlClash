@@ -8,8 +8,13 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`
 
-Future<List<RustFoldRange>> foldsComputeAll({required RopeBridge rope}) =>
-    RustLib.instance.api.crateApiEditorFoldsComputeAll(rope: rope);
+Future<List<RustFoldRange>> foldsComputeAll({
+  required RopeBridge rope,
+  required BigInt tabSize,
+}) => RustLib.instance.api.crateApiEditorFoldsComputeAll(
+  rope: rope,
+  tabSize: tabSize,
+);
 
 BigInt? foldsFindMatchingBracket({
   required RopeBridge rope,

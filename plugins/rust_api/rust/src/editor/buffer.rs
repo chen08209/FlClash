@@ -22,6 +22,11 @@ impl Buffer {
         self.rope.read().unwrap()
     }
 
+    /// Shares the tree instead of copying it, so a long scan need not hold the lock.
+    pub fn snapshot(&self) -> Rope {
+        self.rope().clone()
+    }
+
     pub fn selection(&self) -> SelectionState {
         *self.selection.read().unwrap()
     }

@@ -353,6 +353,7 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
       title: context.appLocalizations.proxyDefinition,
       content: raw,
       readOnly: false,
+      schema: EditorSchema.proxy,
       onPop: (_, _, content) => _handleDefinitionPop(content, raw),
     );
     await Navigator.of(context, rootNavigator: true).push(

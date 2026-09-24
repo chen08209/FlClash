@@ -844,6 +844,7 @@ fn wire__crate__api__editor__folds_compute_all_impl(
             let api_rope = <RustOpaqueMoi<
                 flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RopeBridge>,
             >>::sse_decode(&mut deserializer);
+            let api_tab_size = <usize>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, ()>((move || {
@@ -861,8 +862,10 @@ fn wire__crate__api__editor__folds_compute_all_impl(
                         }
                     }
                     let api_rope_guard = api_rope_guard.unwrap();
-                    let output_ok =
-                        Ok::<_, ()>(crate::api::editor::folds_compute_all(&*api_rope_guard))?;
+                    let output_ok = Ok::<_, ()>(crate::api::editor::folds_compute_all(
+                        &*api_rope_guard,
+                        api_tab_size,
+                    ))?;
                     std::result::Result::Ok(output_ok)
                 })())
             }

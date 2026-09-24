@@ -6402,6 +6402,21 @@ class AppLocalizations {
       args: [profiles, label],
     );
   }
+
+  /// `Size`
+  String get fontSize {
+    return Intl.message('Size', name: 'fontSize', desc: '', args: []);
+  }
+
+  /// `Large`
+  String get large {
+    return Intl.message('Large', name: 'large', desc: '', args: []);
+  }
+
+  /// `Extra large`
+  String get extraLarge {
+    return Intl.message('Extra large', name: 'extraLarge', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

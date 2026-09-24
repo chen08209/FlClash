@@ -111,8 +111,8 @@ impl RopeBridge {
     }
 }
 
-pub fn folds_compute_all(rope: &RopeBridge) -> Vec<RustFoldRange> {
-    editor::compute_folds(&rope.buffer.rope())
+pub fn folds_compute_all(rope: &RopeBridge, tab_size: usize) -> Vec<RustFoldRange> {
+    editor::compute_folds(&rope.buffer.snapshot(), tab_size)
 }
 
 #[frb(sync)]
@@ -131,5 +131,5 @@ pub fn guides_compute_viewport(
 }
 
 pub fn words_extract(rope: &RopeBridge) -> Vec<String> {
-    editor::extract_words(&rope.buffer.rope())
+    editor::extract_words(&rope.buffer.snapshot())
 }

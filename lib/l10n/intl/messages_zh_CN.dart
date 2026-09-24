@@ -460,6 +460,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "开启后将可以通过9090端口控制Clash内核",
     ),
     "externalLink": MessageLookupByLibrary.simpleMessage("外部链接"),
+    "extraLarge": MessageLookupByLibrary.simpleMessage("超大"),
     "fade": MessageLookupByLibrary.simpleMessage("淡入"),
     "fakeipFilter": MessageLookupByLibrary.simpleMessage("Fake-IP过滤"),
     "fakeipFilterMode": MessageLookupByLibrary.simpleMessage("Fake-IP过滤模式"),
@@ -480,6 +481,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "followProfile": MessageLookupByLibrary.simpleMessage("跟随配置"),
     "followSystem": MessageLookupByLibrary.simpleMessage("跟随系统"),
     "fontFamily": MessageLookupByLibrary.simpleMessage("字体"),
+    "fontSize": MessageLookupByLibrary.simpleMessage("大小"),
     "forceRestartCoreTip": MessageLookupByLibrary.simpleMessage("您确定要强制重启核心吗？"),
     "format": MessageLookupByLibrary.simpleMessage("格式"),
     "fruitSaladScheme": MessageLookupByLibrary.simpleMessage("果缤纷"),
@@ -619,6 +621,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "keepAliveIntervalDesc": MessageLookupByLibrary.simpleMessage("TCP保持活动间隔"),
     "key": MessageLookupByLibrary.simpleMessage("键"),
     "language": MessageLookupByLibrary.simpleMessage("语言"),
+    "large": MessageLookupByLibrary.simpleMessage("大"),
     "launchInterrupted": MessageLookupByLibrary.simpleMessage("启动未完成"),
     "launchInterruptedTip": MessageLookupByLibrary.simpleMessage(
       "应用上次在启动过程中意外退出。已跳过本次自动配置，你可以手动启动重试。",

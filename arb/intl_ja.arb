@@ -771,5 +771,8 @@
   "overwriteIssueSubscriptionGroupMissingProxies": "プロファイル自身のプロキシグループが、カスタムプロキシに含まれないプロキシを参照しています：{names}",
   "providerInUse": "{label} は {profiles} のカスタムプロキシグループまたはルールでまだ使用されています。先にそこから外してください",
   "providerSourceSubscription": "サブスクリプション",
-  "providerRenameShadowed": "{profiles} のサブスクリプションには既に {label} があるため、名前を変えるとそちらが使われます。別の名前にしてください"
+  "providerRenameShadowed": "{profiles} のサブスクリプションには既に {label} があるため、名前を変えるとそちらが使われます。別の名前にしてください",
+  "fontSize": "サイズ",
+  "large": "大",
+  "extraLarge": "特大"
 }

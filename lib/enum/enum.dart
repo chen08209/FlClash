@@ -386,6 +386,16 @@ enum FontFamily {
   const FontFamily(this.value);
 }
 
+enum EditorFontSize {
+  standard(16),
+  large(18),
+  extraLarge(20);
+
+  final double value;
+
+  const EditorFontSize(this.value);
+}
+
 enum RouteMode { bypassPrivate, config }
 
 enum AuthorizeCode { none, success, error }
