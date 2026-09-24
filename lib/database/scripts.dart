@@ -11,6 +11,10 @@ class Scripts extends Table {
 
   DateTimeColumn get lastUpdateTime => dateTime()();
 
+  TextColumn get url => text().nullable()();
+
+  IntColumn get order => integer().nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -20,7 +24,18 @@ class ScriptsDao extends DatabaseAccessor<Database> with _$ScriptsDaoMixin {
   ScriptsDao(super.attachedDatabase);
 
   Selectable<Script> query() {
-    return scripts.select().map((item) => item.toScript());
+    final stmt = scripts.select();
+    stmt.orderBy([
+      (t) => OrderingTerm(expression: t.order, nulls: NullsOrder.last),
+      (t) => OrderingTerm.asc(t.id),
+    ]);
+    return stmt.map((item) => item.toScript());
+  }
+
+  Future<void> putAll(Iterable<ScriptsCompanion> items) async {
+    await batch((b) async {
+      b.insertAllOnConflictUpdate(scripts, items);
+    });
   }
 
   Selectable<Script> get(int scriptId) {
@@ -60,16 +75,24 @@ class ScriptsDao extends DatabaseAccessor<Database> with _$ScriptsDaoMixin {
 
 extension RawScriptExt on RawScript {
   Script toScript() {
-    return Script(id: id, label: label, lastUpdateTime: lastUpdateTime);
+    return Script(
+      id: id,
+      label: label,
+      lastUpdateTime: lastUpdateTime,
+      url: url,
+      order: order,
+    );
   }
 }
 
 extension ScriptsCompanionExt on Script {
-  ScriptsCompanion toCompanion() {
+  ScriptsCompanion toCompanion([int? order]) {
     return ScriptsCompanion.insert(
       id: Value(id),
       label: label,
       lastUpdateTime: lastUpdateTime,
+      url: Value(url),
+      order: Value(order ?? this.order),
     );
   }
 }

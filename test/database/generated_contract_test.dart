@@ -262,6 +262,8 @@ void main() {
       excludeFilter: 'exclude',
       excludeType: 'Direct',
       expectedStatus: '204',
+      tolerance: 50,
+      strategy: 'round-robin',
       includeAll: true,
       includeAllProxies: true,
       includeAllProviders: true,
@@ -270,8 +272,8 @@ void main() {
       order: 'a0',
     );
 
-    expect(group.toColumns(true), hasLength(22));
-    expect(group.toCompanion(true).toColumns(true), hasLength(22));
+    expect(group.toColumns(true), hasLength(24));
+    expect(group.toCompanion(true).toColumns(true), hasLength(24));
     expect(RawProxyGroup.fromJson(group.toJson()).toJson(), group.toJson());
     expect(group.copyWith(name: 'Changed').name, 'Changed');
     expect(
@@ -291,7 +293,7 @@ void main() {
 
     const emptyGroup = RawProxyGroup(id: 21, name: 'Empty', type: 'select');
     expect(emptyGroup.toColumns(true), hasLength(3));
-    expect(emptyGroup.toColumns(false), hasLength(22));
+    expect(emptyGroup.toColumns(false), hasLength(24));
 
     final companion =
         ProxyGroupsCompanion.insert(name: 'Inserted', type: 'select').copyWith(
@@ -309,6 +311,8 @@ void main() {
           excludeFilter: const Value('exclude'),
           excludeType: const Value('Direct'),
           expectedStatus: const Value('204'),
+          tolerance: const Value(50),
+          strategy: const Value('round-robin'),
           includeAll: const Value(true),
           includeAllProxies: const Value(true),
           includeAllProviders: const Value(true),
@@ -316,7 +320,7 @@ void main() {
           icon: const Value('icon'),
           order: const Value('a0'),
         );
-    expect(companion.toColumns(true), hasLength(22));
+    expect(companion.toColumns(true), hasLength(24));
     expect(companion.toString(), contains('Inserted'));
     expect(
       ProxyGroupsCompanion.custom(
@@ -336,6 +340,8 @@ void main() {
         excludeFilter: const Variable('exclude'),
         excludeType: const Variable('Direct'),
         expectedStatus: const Variable('204'),
+        tolerance: const Variable(50),
+        strategy: const Variable('round-robin'),
         includeAll: const Variable(true),
         includeAllProxies: const Variable(true),
         includeAllProviders: const Variable(true),
@@ -343,7 +349,7 @@ void main() {
         icon: const Variable('icon'),
         order: const Variable('a0'),
       ).toColumns(false),
-      hasLength(22),
+      hasLength(24),
     );
 
     const icon = IconRecord(
