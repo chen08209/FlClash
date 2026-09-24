@@ -95,6 +95,12 @@ const profilesDirectoryName = 'profiles';
 const providersDirectoryName = 'providers';
 const proxiesProviderDirectoryName = 'proxies';
 const rulesProviderDirectoryName = 'rules';
+
+String providerCacheDirectoryName(ProviderKind kind) => switch (kind) {
+  ProviderKind.proxy => proxiesProviderDirectoryName,
+  ProviderKind.rule => rulesProviderDirectoryName,
+};
+
 const localhost = '127.0.0.1';
 const clashConfigKey = 'clash_config';
 const configKey = 'config';
@@ -118,6 +124,8 @@ const ruleListEquality = ListEquality<Rule>();
 const scriptListEquality = ListEquality<Script>();
 const profileListEquality = ListEquality<Profile>();
 const proxyGroupsEquality = ListEquality<ProxyGroup>();
+const customProxiesEquality = ListEquality<CustomProxy>();
+const clashProviderListEquality = ListEquality<ClashProvider>();
 const hotKeyActionListEquality = ListEquality<HotKeyAction>();
 const stringAndStringMapEntryListEquality =
     ListEquality<MapEntry<String, String>>();
@@ -157,6 +165,10 @@ const scriptTemplate = '''
 const main = (config) => {
   return config;
 }''';
+
+const proxyProviderTemplate = 'proxies: []\n';
+
+const ruleProviderTemplate = 'payload: []\n';
 
 const backupDatabaseName = 'database.sqlite';
 const configJsonName = 'config.json';

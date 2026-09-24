@@ -199,6 +199,10 @@ class CoreController {
     );
   }
 
+  Future<String> dumpRuleSet(String path) {
+    return _interface.dumpRuleSet(path);
+  }
+
   Future<String> updateExternalProvider({required String providerName}) async {
     return _interface.updateExternalProvider(providerName);
   }

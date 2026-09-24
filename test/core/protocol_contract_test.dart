@@ -210,6 +210,14 @@ void main() {
     expect(handler.calls[CoreMethod.clearEffect], 42);
   });
 
+  test('dumpRuleSet sends the rule set path', () async {
+    final handler = _RecordingCoreHandler();
+
+    await handler.dumpRuleSet('/rules.mrs');
+
+    expect(handler.calls[CoreMethod.dumpRuleSet], '/rules.mrs');
+  });
+
   test('event contract accepts batches and legacy single events', () async {
     final fixture =
         json.decode(

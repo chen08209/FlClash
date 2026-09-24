@@ -30,6 +30,7 @@ import (
 	cp "github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/dns"
 	"github.com/metacubex/mihomo/log"
+	rp "github.com/metacubex/mihomo/rules/provider"
 	"github.com/metacubex/mihomo/tunnel"
 	D "github.com/miekg/dns"
 )
@@ -1105,5 +1106,43 @@ func TestProxyViewKeepsWhatTheHostReads(t *testing.T) {
 	}
 	if _, exist := group["history"]; exist {
 		t.Error("the view still carries delay history")
+	}
+}
+
+func TestDumpRuleSetReadsEitherMrsBehavior(t *testing.T) {
+	cases := []struct {
+		behavior cp.RuleBehavior
+		source   string
+		want     string
+	}{
+		{cp.Domain, "example.com\n+.example.org\n", "+.example.org\nexample.com\n"},
+		{cp.IPCIDR, "10.0.0.0/8\n192.168.1.0/24\n", "10.0.0.0/8\n192.168.1.0/24\n"},
+	}
+	for _, c := range cases {
+		var mrs strings.Builder
+		if err := rp.ConvertToMrs([]byte(c.source), c.behavior, cp.TextRule, &mrs); err != nil {
+			t.Fatalf("encode %s: %v", c.behavior, err)
+		}
+		path := filepath.Join(t.TempDir(), "rules.mrs")
+		if err := os.WriteFile(path, []byte(mrs.String()), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		got, err := handleDumpRuleSet(path)
+		if err != nil {
+			t.Fatalf("dump %s: %v", c.behavior, err)
+		}
+		if got != c.want {
+			t.Fatalf("dump %s = %q, want %q", c.behavior, got, c.want)
+		}
+	}
+}
+
+func TestDumpRuleSetRejectsText(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "rules.txt")
+	if err := os.WriteFile(path, []byte("example.com\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := handleDumpRuleSet(path); err == nil {
+		t.Fatal("dumping a text rule set succeeded")
 	}
 }
