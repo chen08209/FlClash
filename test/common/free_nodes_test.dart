@@ -2966,7 +2966,7 @@ proxy-groups:
       isNull,
     );
   });
-  test('catalog defaults enable only explicitly declared source ids', () async {
+  test('catalog defaults do not limit the all-source app default', () async {
     const catalog = '''
 {
   "lookbackDays": 1,
@@ -3002,7 +3002,7 @@ proxy-groups:
       },
     );
 
-    expect(await service.getEnabledSourceIds(), {'default'});
+    expect(await service.getEnabledSourceIds(), {'default', 'reserve'});
     final result = await service.fetchMergedConfig();
 
     expect(result.proxyCount, 2);
@@ -3012,7 +3012,7 @@ proxy-groups:
       isTrue,
     );
     expect(
-      fetchedUrls.every((url) => url.contains('default.example.com')),
+      fetchedUrls.any((url) => url.contains('reserve.example.com')),
       isTrue,
     );
   });

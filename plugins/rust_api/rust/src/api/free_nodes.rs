@@ -1061,17 +1061,12 @@ fn fetch_merge_free_nodes(input: FreeNodesInput) -> Result<FreeNodesOutput, Stri
 fn adaptive_source_worker_count(
     requested_concurrency: usize,
     source_count: usize,
-    parallelism: usize,
+    _parallelism: usize,
 ) -> usize {
     if source_count == 0 {
         return 0;
     }
-    let upper_bound = requested_concurrency.clamp(1, source_count);
-    let device_parallelism = parallelism.max(1).min(upper_bound);
-    let responsive_window = device_parallelism
-        .saturating_add(device_parallelism.div_ceil(4))
-        .max(1);
-    responsive_window.min(upper_bound)
+    requested_concurrency.clamp(1, source_count)
 }
 
 fn build_stream_partial_yaml(
@@ -12696,15 +12691,12 @@ mod tests {
     }
 
     #[test]
-    fn test_adaptive_source_worker_count_scales_without_fixed_global_cap() {
-        let low_parallelism = adaptive_source_worker_count(187, 187, 8);
-        let high_parallelism = adaptive_source_worker_count(187, 187, 32);
-        assert_eq!(low_parallelism, 10);
-        assert_eq!(high_parallelism, 40);
-        assert!(low_parallelism < 187);
-        assert!(high_parallelism > low_parallelism);
-        assert!(high_parallelism <= 187);
+    fn test_adaptive_source_worker_count_uses_requested_all_source_concurrency() {
+        assert_eq!(adaptive_source_worker_count(187, 187, 8), 187);
+        assert_eq!(adaptive_source_worker_count(187, 187, 32), 187);
         assert_eq!(adaptive_source_worker_count(8, 187, 32), 8);
+        assert_eq!(adaptive_source_worker_count(512, 187, 32), 187);
+        assert_eq!(adaptive_source_worker_count(0, 187, 32), 1);
         assert_eq!(adaptive_source_worker_count(187, 0, 32), 0);
     }
 

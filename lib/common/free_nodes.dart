@@ -2069,8 +2069,7 @@ class FreeNodesService {
     _FreeNodeSourceCatalog catalog,
   ) async {
     final allIds = catalog.sources.map((source) => source.id).toSet();
-    final declaredDefaults = catalog.defaultSourceIds.intersection(allIds);
-    final defaultIds = declaredDefaults.isEmpty ? allIds : declaredDefaults;
+    final defaultIds = allIds;
     final overrideIds = enabledSourceIds;
     if (overrideIds != null) {
       final filtered = overrideIds.intersection(allIds);

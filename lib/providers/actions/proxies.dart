@@ -10,13 +10,15 @@ class ProxiesAction extends _$ProxiesAction {
   }
 
   void changeProxyDebounce(String groupName, String proxyName) {
-    debouncer.call(FunctionTag.changeProxy, (
-      String groupName,
-      String proxyName,
-    ) async {
-      await changeProxy(groupName: groupName, proxyName: proxyName);
-      updateGroupsDebounce();
-    }, args: [groupName, proxyName]);
+    debouncer.call(
+      FunctionTag.changeProxy,
+      (String groupName, String proxyName) async {
+        await changeProxy(groupName: groupName, proxyName: proxyName);
+        updateGroupsDebounce(const Duration(milliseconds: 80));
+      },
+      args: [groupName, proxyName],
+      duration: const Duration(milliseconds: 80),
+    );
   }
 
   Future<void> updateGroups() async {
@@ -79,11 +81,18 @@ class ProxiesAction extends _$ProxiesAction {
     await coreController.changeProxy(
       ChangeProxyParams(groupName: groupName, proxyName: proxyName),
     );
-    if (ref.read(appSettingProvider).closeConnections) {
-      await coreController.closeConnections();
-    } else {
-      await coreController.resetConnections();
-    }
+    final closeConnections = ref.read(appSettingProvider).closeConnections;
+    unawaited(
+      (closeConnections
+              ? coreController.closeConnections()
+              : coreController.resetConnections())
+          .catchError((Object e) {
+            commonPrint.log(
+              'changeProxy connection refresh error: $e',
+              logLevel: coreFailureLogLevel(e),
+            );
+          }),
+    );
     ref.read(checkIpNumProvider.notifier).add();
   }
 
