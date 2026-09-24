@@ -3,7 +3,11 @@ package main
 import (
 	"cmp"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/json"
 	"errors"
+	"io"
 	"net"
 	"net/url"
 	"os"
@@ -14,10 +18,10 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/metacubex/mihomo/adapter"
-	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/common/observable"
 	"github.com/metacubex/mihomo/common/utils"
 	"github.com/metacubex/mihomo/component/resolver"
@@ -25,6 +29,8 @@ import (
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/constant/features"
+	cp "github.com/metacubex/mihomo/constant/provider"
+	"github.com/metacubex/mihomo/dns"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/listener"
 	"github.com/metacubex/mihomo/log"
@@ -54,6 +60,7 @@ func handleStartListener() bool {
 	isRunning.Store(true)
 	updateListeners(currentConfig)
 	resolver.ResetConnection()
+	refreshRoute()
 	return true
 }
 
@@ -81,6 +88,7 @@ func handleForceGC() {
 
 func handleShutdown() bool {
 	handleStopLog()
+	stopRouteWatch()
 
 	configMu.Lock()
 	isRunning.Store(false)
@@ -104,6 +112,21 @@ func handleValidateConfig(path string) string {
 		return err.Error()
 	}
 	return ""
+}
+
+// The per-proxy parser the config load runs; checks across proxies, such as
+// duplicate names, are left to the load itself.
+func handleValidateProxies(mappings []map[string]any) []string {
+	results := make([]string, len(mappings))
+	for i, mapping := range mappings {
+		proxy, err := adapter.ParseProxy(mapping)
+		if err != nil {
+			results[i] = err.Error()
+			continue
+		}
+		_ = proxy.Close()
+	}
+	return results
 }
 
 const globalProxyName = "GLOBAL"
@@ -155,10 +178,33 @@ func handleGetProxies() ProxiesData {
 		return p.Type(), true
 	})
 
+	views := make(map[string]any, len(proxies))
+	for name, proxy := range proxies {
+		views[name] = proxyView(proxy)
+	}
 	return ProxiesData{
 		All:     allNames,
-		Proxies: proxies,
+		Proxies: views,
 	}
+}
+
+// Proxy.MarshalJSON encodes each node twice, with history the host never reads.
+func proxyView(proxy constant.Proxy) any {
+	node := nodeView{Name: proxy.Name(), Type: proxy.Type().String()}
+	if !isProxyGroupType(proxy.Type()) {
+		return node
+	}
+	data, err := proxy.Adapter().MarshalJSON()
+	view := map[string]any{}
+	if err == nil {
+		err = json.Unmarshal(data, &view)
+	}
+	if err != nil {
+		log.Warnln("[APP] encode group %s: %v", node.Name, err)
+		return node
+	}
+	view["name"] = node.Name
+	return view
 }
 
 var (
@@ -171,7 +217,7 @@ func lookupProxy(name string) constant.Proxy {
 	return tunnel.AllProxies()[name]
 }
 
-func selectableGroup(groupName string) (outboundgroup.SelectAble, error) {
+func selectableGroup(groupName string) (pickableGroup, error) {
 	group := lookupProxy(groupName)
 	if group == nil {
 		return nil, errGroupNotFound
@@ -180,29 +226,30 @@ func selectableGroup(groupName string) (outboundgroup.SelectAble, error) {
 	if !ok {
 		return nil, errGroupInvalidType
 	}
-	selector, ok := adapterProxy.ProxyAdapter.(outboundgroup.SelectAble)
+	selector, ok := adapterProxy.ProxyAdapter.(pickableGroup)
 	if !ok {
 		return nil, errGroupNotSelect
 	}
 	return selector, nil
 }
 
-func handleChangeProxy(params *ChangeProxyParams) string {
+func handleChangeProxy(params *ChangeProxyParams) *ChangeProxyResult {
 	selectMu.Lock()
 	defer selectMu.Unlock()
 
 	selector, err := selectableGroup(params.GroupName)
 	if err != nil {
-		return err.Error()
+		return &ChangeProxyResult{Message: err.Error()}
 	}
+	before := selector.Now()
 	if params.ProxyName == "" {
 		selector.ForceSet(params.ProxyName)
-		return ""
+	} else if err := selector.Set(params.ProxyName); err != nil {
+		return &ChangeProxyResult{Message: err.Error()}
 	}
-	if err := selector.Set(params.ProxyName); err != nil {
-		return err.Error()
-	}
-	return ""
+	changed := selector.Now() != before
+	refreshRouteLocked(false)
+	return &ChangeProxyResult{Changed: changed}
 }
 
 func handleGetTraffic(onlyStatisticsProxy bool) Traffic {
@@ -305,6 +352,15 @@ func handleTestDelay(params *TestDelayParams) *Delay {
 
 func handleGetConnections() *statistic.Snapshot {
 	return statistic.DefaultManager.Snapshot()
+}
+
+func handleGetConnectionCount() int {
+	count := 0
+	statistic.DefaultManager.Range(func(statistic.Tracker) bool {
+		count++
+		return true
+	})
+	return count
 }
 
 func handleCloseConnections() bool {
@@ -440,20 +496,65 @@ func handleUpdateGeoData(geoType string) string {
 	return ""
 }
 
-func providerRequestErrorCode(err error) string {
+type providerRequestFailure struct {
+	code       string
+	reason     string
+	statusCode int
+}
+
+// The reason values are matched by lib/common/network_error.dart.
+func classifyProviderRequestError(err error) (providerRequestFailure, bool) {
+	// mihomo reports a non-2xx fetch as errors.New(resp.Status).
 	message := err.Error()
 	if len(message) >= 4 && message[3] == ' ' {
 		status, parseErr := strconv.Atoi(message[:3])
 		if parseErr == nil && status >= 100 && status <= 599 {
-			return "request_bad_response"
+			return providerRequestFailure{
+				code:       "request_bad_response",
+				statusCode: status,
+			}, true
 		}
 	}
 	var urlError *url.Error
 	var networkError net.Error
-	if errors.Is(err, context.DeadlineExceeded) ||
+	if reason := providerRequestFailureReason(err); reason != "" ||
 		errors.As(err, &urlError) ||
 		errors.As(err, &networkError) {
-		return "request_error"
+		return providerRequestFailure{code: "request_error", reason: reason}, true
+	}
+	return providerRequestFailure{}, false
+}
+
+func providerRequestFailureReason(err error) string {
+	var unknownAuthority x509.UnknownAuthorityError
+	var hostname x509.HostnameError
+	var invalidCertificate x509.CertificateInvalidError
+	var certificateVerification *tls.CertificateVerificationError
+	var recordHeader tls.RecordHeaderError
+	var alert tls.AlertError
+	var dnsError *net.DNSError
+	var networkError net.Error
+	var opError *net.OpError
+	switch {
+	case errors.As(err, &unknownAuthority),
+		errors.As(err, &hostname),
+		errors.As(err, &invalidCertificate),
+		errors.As(err, &certificateVerification),
+		errors.As(err, &recordHeader),
+		errors.As(err, &alert):
+		return "tls"
+	case errors.As(err, &dnsError), errors.Is(err, resolver.ErrIPNotFound):
+		return "dns"
+	case errors.Is(err, context.DeadlineExceeded),
+		errors.Is(err, os.ErrDeadlineExceeded),
+		errors.As(err, &networkError) && networkError.Timeout():
+		return "timeout"
+	case errors.As(err, &opError),
+		errors.Is(err, syscall.ECONNREFUSED),
+		errors.Is(err, syscall.ECONNRESET),
+		errors.Is(err, io.EOF),
+		errors.Is(err, io.ErrUnexpectedEOF):
+		return "connection"
 	}
 	return ""
 }
@@ -463,6 +564,25 @@ func providerMethodError(code, providerName string, err error) *MethodError {
 		Code:    code,
 		Message: err.Error(),
 		Details: map[string]any{"providerName": providerName},
+	}
+}
+
+func providerRequestMethodError(
+	failure providerRequestFailure,
+	providerName string,
+	err error,
+) *MethodError {
+	details := map[string]any{"providerName": providerName}
+	if failure.reason != "" {
+		details["reason"] = failure.reason
+	}
+	if failure.statusCode != 0 {
+		details["statusCode"] = failure.statusCode
+	}
+	return &MethodError{
+		Code:    failure.code,
+		Message: err.Error(),
+		Details: details,
 	}
 }
 
@@ -485,12 +605,12 @@ func handleUpdateExternalProvider(providerName string) *MethodError {
 	}
 	defer releaseUpdate(key)
 	if err := p.Update(); err != nil {
-		code := providerRequestErrorCode(err)
-		if code == "" {
-			code = "provider_update_error"
+		if failure, ok := classifyProviderRequestError(err); ok {
+			return providerRequestMethodError(failure, providerName, err)
 		}
-		return providerMethodError(code, providerName, err)
+		return providerMethodError("provider_update_error", providerName, err)
 	}
+	refreshRouteAfterUpdate(p)
 	return nil
 }
 
@@ -515,7 +635,17 @@ func handleSideLoadExternalProvider(providerName string, data []byte) *MethodErr
 	if err := sideUpdateExternalProvider(p, data); err != nil {
 		return providerMethodError("provider_update_error", providerName, err)
 	}
+	refreshRouteAfterUpdate(p)
 	return nil
+}
+
+// A rule set moves where a rule-routed probe goes without touching any pick.
+func refreshRouteAfterUpdate(p cp.Provider) {
+	if p.Type() == cp.Rule {
+		bumpRouteEpoch()
+		return
+	}
+	refreshRoute()
 }
 
 // defaultRefreshHealthChecks re-probes every proxy provider off the calling
@@ -532,9 +662,10 @@ func defaultRefreshHealthChecks() {
 
 var refreshHealthChecks = defaultRefreshHealthChecks
 
-func handleSuspend(suspended bool) bool {
-	wasSuspended := isSuspended.Swap(suspended)
+func handleSuspend(suspended, interactive bool) bool {
+	isSuspended.Store(suspended)
 	if suspended {
+		healthChecksStale.Store(true)
 		tunnel.OnSuspend()
 		return true
 	}
@@ -544,10 +675,11 @@ func handleSuspend(suspended bool) bool {
 	// network at all, so coming back means every proxy is marked dead and every
 	// delay reads Timeout. A lazy provider then skips its next tick because
 	// nothing touched it in the meantime, and the whole list stays wrong until
-	// the user tests by hand. Re-check now instead - but not while the
-	// listeners are stopped, since the service also resumes the core on its way
-	// down.
-	if wasSuspended && isRunning.Load() {
+	// the user tests by hand. Re-check once the screen is on: a maintenance
+	// window resumes the core too, and probing every node there spends the
+	// window's radio time on results nobody sees. Not while the listeners are
+	// stopped either, since the service also resumes the core on its way down.
+	if interactive && healthChecksStale.Swap(false) && isRunning.Load() {
 		refreshHealthChecks()
 	}
 	return true
@@ -620,8 +752,18 @@ func handleStopLog() {
 	}
 }
 
-func handleGetMemory() uint64 {
-	return statistic.DefaultManager.Memory()
+// HeapIdle still counts spans the runtime has already handed back to the OS,
+// so the retained-but-unused figure subtracts HeapReleased.
+func handleGetMemoryStats() MemoryStats {
+	var stats runtime.MemStats
+	runtime.ReadMemStats(&stats)
+	return MemoryStats{
+		Rss:          statistic.DefaultManager.Memory(),
+		HeapInuse:    stats.HeapInuse,
+		HeapIdle:     stats.HeapIdle - stats.HeapReleased,
+		StackInuse:   stats.StackInuse,
+		RuntimeOther: stats.MSpanInuse + stats.MCacheInuse + stats.BuckHashSys + stats.GCSys + stats.OtherSys,
+	}
 }
 
 func handleGetConfig(path string) (*config.RawConfig, error) {
@@ -695,9 +837,16 @@ func init() {
 		})
 	}
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
+		notifyProbeRoute(c)
 		sendMessage(Message{
 			Type: RequestMessage,
 			Data: c,
+		})
+	}
+	dns.DefaultQueryNotify = func(record dns.QueryRecord) {
+		sendMessage(Message{
+			Type: DnsMessage,
+			Data: newDnsQuery(record),
 		})
 	}
 	executor.DefaultProviderLoadedHook = func(providerName string) {
@@ -713,6 +862,9 @@ func init() {
 		} else {
 			releaseGeoUpdateFromHook(geoType)
 			scheduleReclaimOwnership()
+			if !skipped && updateErr == nil {
+				bumpRouteEpoch()
+			}
 		}
 		status := GeoUpdateStatus{
 			Type:     geoType,

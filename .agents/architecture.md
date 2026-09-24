@@ -235,6 +235,15 @@ test button, the tab page's action and the list page's group header alike, spins
 holds the group; `delayTestPageGroup` marks it, ignores a second request for the same group, and clears it in `finally`,
 so an RPC failure cannot leave the button spinning and remounting a header does not lose the state.
 
+The dashboard's probe cards show a failure as still checking for five seconds after they see `proxied` turn true,
+through `ProbeStartHold` in `lib/views/dashboard/probe_start_hold.dart`: `ServiceStatusCard` holds its check and the
+exit IP beside it, and `NetworkDetection` holds the exit IP, whose tap to retry stays inert meanwhile.
+`SetupAction.setRunning` flips the run time, and with it `proxied`, before the Core has brought its listeners up, so the
+probe launched on the spot often fails, and the config re-apply that follows every start probes again moments later;
+without the hold a card flashes a failure and then takes it back. The hold is local display state like the connecting
+hold above: the cache still records the failure, the hold arms only on an observed transition, a result that is not a
+failure shows at once, a stop cancels it, and a failure still standing when it ends is shown.
+
 ## Route Consistency
 
 A probe result on the dashboard — the exit IP, a node's exit IP, a service check — either describes the route in

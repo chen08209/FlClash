@@ -9,6 +9,17 @@ import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+final _utf8JsonDecoder = utf8.decoder.fuse(json.decoder);
+
+Object? _decodeUtf8Json(Uint8List data) => _utf8JsonDecoder.convert(data);
+
+Future<Object?> _decodeResponse(Uint8List data) async {
+  if (data.length < 51200) {
+    return _decodeUtf8Json(data);
+  }
+  return compute(_decodeUtf8Json, data);
+}
+
 abstract mixin class ServiceListener {
   void onServiceEvent(CoreEvent event) {}
 }
@@ -55,15 +66,15 @@ class Service {
   }
 
   Future<CoreMethodResponse?> invokeMethod(CoreMethodCall call) async {
-    final data = await methodChannel.invokeMethod<String>(
+    final data = await methodChannel.invokeMethod<Uint8List>(
       'invokeMethod',
       json.encode(call),
     );
     if (data == null) {
       return null;
     }
-    final dataJson = await data.decodeJson<dynamic>();
-    return CoreMethodResponse.fromJson(dataJson);
+    final dataJson = await _decodeResponse(data);
+    return CoreMethodResponse.fromJson(dataJson as Map<String, dynamic>);
   }
 
   Future<bool> start() async {
