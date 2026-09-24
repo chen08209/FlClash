@@ -152,6 +152,19 @@ void main() {
     semantics.dispose();
   });
 
+  testWidgets('names the service to screen readers but not on the tile', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    answer((_) => [_item('google', ServiceProbeStatus.available, delay: 45)]);
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+
+    expect(find.text(ServiceTarget.google.label), findsNothing);
+    expect(find.bySemanticsLabel(RegExp('Google\nAvailable')), findsOneWidget);
+    semantics.dispose();
+  });
+
   testWidgets('checks the shown service directly while the proxy is off', (
     tester,
   ) async {
@@ -523,8 +536,8 @@ void main() {
     final gesture = await tester.startGesture(
       tester.getCenter(find.byType(PageView)),
     );
-    await gesture.moveBy(const Offset(24, 0));
-    await gesture.moveBy(const Offset(24, 0));
+    await gesture.moveBy(const Offset(32, 0));
+    await gesture.moveBy(const Offset(32, 0));
     await tester.pump();
     expect(find.text('Timeout'), findsNothing);
     await gesture.up();

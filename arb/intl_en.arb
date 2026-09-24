@@ -119,6 +119,7 @@
   "desc": "A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.",
   "startVpn": "Starting VPN…",
   "stopVpn": "Stopping VPN…",
+  "localNetworkDeniedTip": "Local network permission denied: using the gvisor stack, LAN is unreachable.",
   "compatible": "Compatibility mode",
   "notSelectedTip": "The current proxy group cannot be selected",
   "changeProxyFailedTip": "Failed to switch proxy; the previous selection has been restored",
@@ -215,6 +216,7 @@
   "loose": "Loose",
   "profilesSort": "Sort profiles",
   "start": "Start",
+  "runTime": "Run time",
   "stop": "Stop",
   "key": "Key",
   "value": "Value",
@@ -227,8 +229,6 @@
   "providers": "External resources",
   "proxyProviders": "Proxy providers",
   "ruleProviders": "Rule providers",
-  "appProxyProviders": "App proxy providers",
-  "appRuleProviders": "App rule providers",
   "behavior": "Behavior",
   "format": "Format",
   "providerUrlTip": "Only remote providers are supported",
@@ -653,6 +653,7 @@
   "prerequisites": "Prerequisites",
   "ignoreBatteryOptimization": "Ignore battery optimization",
   "batteryOptimizationDesc": "To keep the app running in the background, disable battery optimization for it. Tap to open settings.",
+  "batteryOptimizationStatusTip": "Due to system limitations, the battery optimization status cannot be read correctly while running",
   "locationPermission": "Location permission",
   "locationPermissionDesc": "The system requires location permission to read the Wi-Fi name. On Android choose \"Allow all the time\", otherwise the Wi-Fi name cannot be read while the app is in the background.",
   "excludeSsids": "Exclude SSIDs",
@@ -768,9 +769,7 @@
   "overwriteIssueGroupLoop": "Proxy groups reference each other in a loop: {path}",
   "overwriteIssuesSummary": "{count} items have problems, and applying this override may fail",
   "overwriteIssueSubscriptionGroupMissingProxies": "The profile's own proxy groups name proxies that the custom proxies no longer include: {names}",
-  "overwriteIssueProviderShadowed": "The profile already has a provider named {name}, so the app-level one is not used. Rename it to use it",
   "providerInUse": "{label} is still used by the custom proxy groups or rules of {profiles}. Remove it there first",
   "providerSourceSubscription": "Subscription",
-  "providerRenameShadowed": "The subscriptions of {profiles} already have {label}, so those profiles would switch to theirs. Choose another name",
-  "appProviderShadowed": "The app-level one of this name is not used here"
+  "providerRenameShadowed": "The subscriptions of {profiles} already have {label}, so those profiles would switch to theirs. Choose another name"
 }

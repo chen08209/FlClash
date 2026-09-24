@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 const _sharedState = SharedState(
   stopTip: 'stop',
   startTip: 'start',
+  localNetworkTip: 'local',
   currentProfileName: 'profile',
   stopText: 'stopped',
   onlyStatisticsProxy: true,

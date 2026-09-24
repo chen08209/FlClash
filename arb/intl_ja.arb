@@ -119,6 +119,7 @@
   "desc": "ClashMetaベースのマルチプラットフォーム対応プロキシクライアント。シンプルで使いやすく、オープンソースで広告もありません。",
   "startVpn": "VPNを起動しています…",
   "stopVpn": "VPNを停止しています…",
+  "localNetworkDeniedTip": "ローカルネットワークの権限が拒否されたため gvisor スタックを使用します。LAN にはアクセスできません。",
   "compatible": "互換モード",
   "notSelectedTip": "現在のプロキシグループは選択できません",
   "changeProxyFailedTip": "プロキシの切り替えに失敗したため、前回の選択に戻しました",
@@ -215,6 +216,7 @@
   "loose": "ゆったり",
   "profilesSort": "プロファイルの並べ替え",
   "start": "開始",
+  "runTime": "起動時間",
   "stop": "停止",
   "key": "キー",
   "value": "値",
@@ -227,8 +229,6 @@
   "providers": "外部リソース",
   "proxyProviders": "プロキシプロバイダー",
   "ruleProviders": "ルールプロバイダー",
-  "appProxyProviders": "アプリのプロキシプロバイダー",
-  "appRuleProviders": "アプリのルールプロバイダー",
   "behavior": "動作",
   "format": "形式",
   "providerUrlTip": "リモートリソースのみ対応しています",
@@ -653,6 +653,7 @@
   "prerequisites": "前提条件",
   "ignoreBatteryOptimization": "電池の最適化を無視",
   "batteryOptimizationDesc": "バックグラウンドでの動作を維持するため、このアプリの電池の最適化を無効にしてください。タップすると設定を開きます。",
+  "batteryOptimizationStatusTip": "システムの制限により、実行中は電池の最適化の状態を正しく取得できません",
   "locationPermission": "位置情報の権限",
   "locationPermissionDesc": "システムの要件により、Wi-Fi 名の取得には位置情報の権限が必要です。Android では「常に許可」を選択してください。そうしないと、アプリがバックグラウンドにあるときに Wi-Fi 名を取得できません。",
   "excludeSsids": "除外SSID",
@@ -768,9 +769,7 @@
   "overwriteIssueGroupLoop": "プロキシグループが循環参照しています：{path}",
   "overwriteIssuesSummary": "{count} 件に問題があり、上書きの適用に失敗する可能性があります",
   "overwriteIssueSubscriptionGroupMissingProxies": "プロファイル自身のプロキシグループが、カスタムプロキシに含まれないプロキシを参照しています：{names}",
-  "overwriteIssueProviderShadowed": "プロファイルに {name} という名前のプロバイダーが既にあるため、同名のアプリレベルのプロバイダーは使用されません。名前を変更してください",
   "providerInUse": "{label} は {profiles} のカスタムプロキシグループまたはルールでまだ使用されています。先にそこから外してください",
   "providerSourceSubscription": "サブスクリプション",
-  "providerRenameShadowed": "{profiles} のサブスクリプションには既に {label} があるため、名前を変えるとそちらが使われます。別の名前にしてください",
-  "appProviderShadowed": "同名のアプリ側の項目はここでは使われません"
+  "providerRenameShadowed": "{profiles} のサブスクリプションには既に {label} があるため、名前を変えるとそちらが使われます。別の名前にしてください"
 }

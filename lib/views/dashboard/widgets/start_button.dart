@@ -1,23 +1,22 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const _threeDigitHourThreshold = 100 * 60 * 60 * 1000;
 const _widthAnimationDuration = Duration(milliseconds: 200);
 const _buttonHeight = 56.0;
+const _iconMorphDuration = Duration(milliseconds: 450);
 
 TextStyle? _runTimeTextStyle(BuildContext context) {
   return context.textTheme.titleMedium?.toSoftBold.copyWith(
     color: context.colorScheme.onPrimaryContainer,
-  );
-}
-
-TextStyle? _hundredsTextStyle(BuildContext context) {
-  return context.textTheme.titleMedium?.toSoftBold.copyWith(
-    color: context.colorScheme.primary,
-    fontWeight: FontWeight.w600,
+    fontFeatures: const [FontFeature.tabularFigures()],
   );
 }
 
@@ -25,16 +24,11 @@ double _computeRunTimeTextWidth(
   BuildContext context, {
   required bool hasThreeDigitHours,
 }) {
-  final regularWidth = globalState.measure
-      .computeTextSize(Text('99:99:99', style: _runTimeTextStyle(context)))
-      .width;
-  if (!hasThreeDigitHours) {
-    return regularWidth + 16;
-  }
-  final hundredsWidth = globalState.measure
-      .computeTextSize(Text('9', style: _hundredsTextStyle(context)))
-      .width;
-  return hundredsWidth + regularWidth + 16;
+  final sample = hasThreeDigitHours ? '999:99:99' : '99:99:99';
+  return globalState.measure
+          .computeTextSize(Text(sample, style: _runTimeTextStyle(context)))
+          .width +
+      16;
 }
 
 class RunTimeText extends StatelessWidget {
@@ -44,21 +38,12 @@ class RunTimeText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = getTimeText(timeStamp);
-    final style = _runTimeTextStyle(context);
-    final textWidget = text.length < 9
-        ? Text(text, maxLines: 1, overflow: TextOverflow.visible, style: style)
-        : Text.rich(
-            TextSpan(
-              text: text.substring(0, 1),
-              style: _hundredsTextStyle(context),
-              children: [TextSpan(text: text.substring(1), style: style)],
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.visible,
-            style: style,
-          );
-    return textWidget;
+    return Text(
+      getTimeText(timeStamp),
+      maxLines: 1,
+      overflow: TextOverflow.visible,
+      style: _runTimeTextStyle(context),
+    );
   }
 }
 
@@ -177,6 +162,25 @@ class _StartButtonState extends ConsumerState<StartButton>
         24;
   }
 
+  Widget _buildIcon(bool isStart, {required bool suspended}) {
+    return AnimatedSwitcher(
+      duration: context.motionDuration(commonDuration),
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: ScaleTransition(scale: animation, child: child),
+      ),
+      child: suspended
+          ? const GlyphIcon(AppGlyphs.wifiOff, fill: 1)
+          : TweenAnimationBuilder<double>(
+              tween: Tween(end: isStart ? 1 : 0),
+              duration: _iconMorphDuration,
+              curve: Curves.easeOutBack,
+              builder: (_, progress, _) =>
+                  GlyphIcon(AppGlyphs.playPause(progress), fill: 1),
+            ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasProfile = ref.watch(
@@ -185,11 +189,24 @@ class _StartButtonState extends ConsumerState<StartButton>
     if (!hasProfile) {
       return Container();
     }
+    final isStart = ref.watch(isStartProvider);
     final suspend = ref.watch(suspendProvider);
+    final appLocalizations = context.appLocalizations;
+    final suspended = isStart && suspend;
+    if (NavigationDock.isDocked(context)) {
+      return BreathingFill(
+        active: isStart && !suspend,
+        child: FloatingActionButton(
+          heroTag: null,
+          tooltip: suspended ? appLocalizations.suspended : null,
+          onPressed: handleSwitchStart,
+          child: _buildIcon(isStart, suspended: suspended),
+        ),
+      );
+    }
     final hasThreeDigitHours =
         (_displayRunTime ?? 0) >= _threeDigitHourThreshold;
     final theme = Theme.of(context);
-    final appLocalizations = context.appLocalizations;
     final textWidth = suspend
         ? _getSuspendedTextWidth(context, appLocalizations.suspended)
         : _getRunTimeTextWidth(context, hasThreeDigitHours: hasThreeDigitHours);
@@ -205,59 +222,183 @@ class _StartButtonState extends ConsumerState<StartButton>
             ),
           ),
         ),
-        child: FloatingActionButton(
-          clipBehavior: Clip.antiAlias,
-          materialTapTargetSize: MaterialTapTargetSize.padded,
-          heroTag: null,
-          onPressed: () {
-            handleSwitchStart();
-          },
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedBuilder(
-                animation: _animation,
-                builder: (_, child) {
-                  return Container(
-                    height: _buttonHeight,
-                    padding: EdgeInsets.only(
-                      left: 16,
-                      right: 16 - 8 * _animation.value,
-                    ),
-                    alignment: Alignment.centerLeft,
-                    child: child,
-                  );
-                },
-                child: AnimatedIcon(
-                  icon: AnimatedIcons.play_pause,
-                  progress: _animation,
+        child: ElasticButton(
+          child: FloatingActionButton(
+            clipBehavior: Clip.antiAlias,
+            materialTapTargetSize: MaterialTapTargetSize.padded,
+            heroTag: null,
+            onPressed: () {
+              handleSwitchStart();
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedBuilder(
+                  animation: _animation,
+                  builder: (_, child) {
+                    return Container(
+                      height: _buttonHeight,
+                      padding: EdgeInsets.only(
+                        left: 16,
+                        right: 16 - 8 * _animation.value,
+                      ),
+                      alignment: Alignment.centerLeft,
+                      child: child,
+                    );
+                  },
+                  child: _buildIcon(isStart, suspended: suspended),
                 ),
-              ),
-              SizeTransition(
-                axis: Axis.horizontal,
-                alignment: Alignment.centerLeft,
-                sizeFactor: _animation,
-                child: AnimatedContainer(
-                  width: textWidth,
-                  duration: _widthAnimationDuration,
-                  curve: Curves.easeOut,
-                  child: suspend
-                      ? Text(
-                          appLocalizations.suspended,
-                          maxLines: 1,
-                          overflow: TextOverflow.visible,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                color: context.colorScheme.onPrimaryContainer,
-                              ),
-                        )
-                      : RunTimeText(timeStamp: _displayRunTime),
+                SizeTransition(
+                  axis: Axis.horizontal,
+                  alignment: Alignment.centerLeft,
+                  sizeFactor: _animation,
+                  child: AnimatedContainer(
+                    width: textWidth,
+                    duration: _widthAnimationDuration,
+                    curve: Curves.easeOut,
+                    child: suspend
+                        ? Text(
+                            appLocalizations.suspended,
+                            maxLines: 1,
+                            overflow: TextOverflow.visible,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: context.colorScheme.onPrimaryContainer,
+                                ),
+                          )
+                        : RunTimeText(timeStamp: _displayRunTime),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+class BreathingFill extends StatefulWidget {
+  const BreathingFill({super.key, required this.active, required this.child});
+
+  final bool active;
+  final Widget child;
+
+  @override
+  State<BreathingFill> createState() => _BreathingFillState();
+}
+
+class _BreathingFillState extends State<BreathingFill> {
+  static const _breathDuration = Duration(milliseconds: 1400);
+  // A ticker would redraw the screen on every vsync for as long as the core runs.
+  static const _breathStep = Duration(milliseconds: 66);
+  static const _fadeDuration = Duration(milliseconds: 300);
+
+  final _breath = ValueNotifier<double>(0);
+  late final AppLifecycleListener _lifecycle;
+  Timer? _timer;
+  int _steps = 0;
+  bool _canAnimate = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onStateChange: (_) => _sync());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _canAnimate =
+        !MediaQuery.disableAnimationsOf(context) &&
+        TickerMode.valuesOf(context).enabled;
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(BreathingFill oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _sync();
+  }
+
+  bool get _isForeground => switch (WidgetsBinding.instance.lifecycleState) {
+    null || AppLifecycleState.resumed || AppLifecycleState.inactive => true,
+    _ => false,
+  };
+
+  void _sync() {
+    if (!widget.active || !_canAnimate || !_isForeground) {
+      _timer?.cancel();
+      _timer = null;
+      if (widget.active) _breath.value = 1;
+      return;
+    }
+    _timer ??= Timer.periodic(_breathStep, (_) => _step());
+  }
+
+  void _step() {
+    final period = _breathDuration.inMicroseconds / _breathStep.inMicroseconds;
+    final phase = ++_steps % (2 * period) / period;
+    _breath.value = Curves.easeInOut.transform(phase <= 1 ? phase : 2 - phase);
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _lifecycle.dispose();
+    _breath.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Stack(
+      children: [
+        widget.child,
+        Positioned.fill(
+          child: IgnorePointer(
+            child: AnimatedOpacity(
+              opacity: widget.active ? 1 : 0,
+              duration: _fadeDuration,
+              child: RepaintBoundary(
+                child: CustomPaint(
+                  painter: _BreathingFillPainter(
+                    breath: _breath,
+                    color: theme.colorScheme.onPrimaryContainer,
+                    shape:
+                        theme.floatingActionButtonTheme.shape ?? AppShape.full,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BreathingFillPainter extends CustomPainter {
+  _BreathingFillPainter({
+    required this.breath,
+    required this.color,
+    required this.shape,
+  }) : super(repaint: breath);
+
+  final ValueNotifier<double> breath;
+  final Color color;
+  final ShapeBorder shape;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawPath(
+      shape.getOuterPath(Offset.zero & size),
+      Paint()..color = color.withValues(alpha: 0.14 * breath.value),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_BreathingFillPainter oldDelegate) =>
+      color != oldDelegate.color || shape != oldDelegate.shape;
 }
