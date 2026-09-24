@@ -1,14 +1,18 @@
+import 'dart:io';
+
+import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/window.dart';
 import 'package:fl_clash/models/config.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-const _windowChannel = MethodChannel('window_manager');
+const _windowChannel = MethodChannel('window');
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late List<String> calls;
+  late List<MethodCall> methodCalls;
   late bool isVisible;
   late bool isMaximized;
   late bool isFullScreen;
@@ -17,6 +21,7 @@ void main() {
 
   setUp(() {
     calls = <String>[];
+    methodCalls = <MethodCall>[];
     isVisible = true;
     isMaximized = false;
     isFullScreen = false;
@@ -25,7 +30,9 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_windowChannel, (call) async {
           calls.add(call.method);
+          methodCalls.add(call);
           return switch (call.method) {
+            'isEffectSupported' => true,
             'isVisible' => isVisible,
             'isMaximized' => isMaximized,
             'isFullScreen' => isFullScreen,
@@ -66,6 +73,88 @@ void main() {
     await Window().hide();
 
     expect(calls, containsAllInOrder(<String>['hide', 'setSkipTaskbar']));
+  });
+
+  // Runs before any probe succeeds: the singleton caches a supported effect.
+  test('an unsupported probe is retried the next time blur is on', () async {
+    const tint = Color(0xFF112233);
+    if (Platform.isLinux) {
+      return;
+    }
+    var supported = false;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(_windowChannel, (call) async {
+          methodCalls.add(call);
+          return call.method == 'isEffectSupported' ? supported : null;
+        });
+
+    final first = await Window().setBlur(
+      enabled: true,
+      brightness: Brightness.dark,
+      tint: tint,
+    );
+    supported = true;
+    final second = await Window().setBlur(
+      enabled: true,
+      brightness: Brightness.dark,
+      tint: tint,
+    );
+
+    expect(first, isFalse);
+    expect(second, isTrue);
+    expect(
+      methodCalls.where((call) => call.method == 'isEffectSupported'),
+      hasLength(Platform.isWindows ? 3 : 2),
+    );
+    expect(methodCalls.last.arguments['effect'], isNot('none'));
+  });
+
+  test('blur respects the platform effect support and brightness', () async {
+    const tint = Color(0xFF112233);
+    final active = await Window().setBlur(
+      enabled: true,
+      brightness: Brightness.dark,
+      tint: tint,
+    );
+
+    if (Platform.isLinux) {
+      expect(active, isFalse);
+      expect(methodCalls, isEmpty);
+      return;
+    }
+
+    expect(active, isTrue);
+    expect(calls.last, 'setEffect');
+    expect(methodCalls.last.arguments, {
+      'effect': Platform.isWindows ? 'acrylic' : 'blur',
+      'tint': Platform.isWindows
+          ? tint.withValues(alpha: kSidebarBlurOpacity).toARGB32()
+          : null,
+      'brightness': 'dark',
+    });
+  });
+
+  test('blur off sets the effect back to none', () async {
+    const tint = Color(0xFF112233);
+    final active = await Window().setBlur(
+      enabled: false,
+      brightness: Brightness.light,
+      tint: tint,
+    );
+
+    expect(active, isFalse);
+    if (Platform.isLinux) {
+      expect(methodCalls, isEmpty);
+      return;
+    }
+
+    expect(methodCalls.last.arguments, {
+      'effect': 'none',
+      'tint': Platform.isWindows
+          ? tint.withValues(alpha: kSidebarBlurOpacity).toARGB32()
+          : null,
+      'brightness': 'light',
+    });
   });
 
   test('close asks the platform to close the window', () async {

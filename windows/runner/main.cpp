@@ -3,16 +3,16 @@
 #include <windows.h>
 
 #include <app_links/app_links_plugin_c_api.h>
-#include <window_manager/window_manager_plugin.h>
+#include <window/window_plugin_c_api.h>
 
 #include "flutter_window.h"
 #include "utils.h"
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
-  if (HWND running = WindowManagerFindRunningWindow()) {
+  if (HWND running = WindowPluginFindRunningWindow()) {
     SendAppLink(running);
-    WindowManagerActivateWindow(running);
+    WindowPluginActivateWindow(running);
     return EXIT_SUCCESS;
   }
 

@@ -94,6 +94,75 @@ void main() {
     );
   });
 
+  test('detail is serialized only when it has text', () {
+    final encoded = TrayCodec.encode(
+      _spec(
+        menu: const [
+          TrayMenuAction(label: 'a', detail: '⌃⌥S'),
+          TrayMenuCheckbox(label: 'b', checked: true, detail: '88 ms'),
+          TrayMenuSubmenu(label: 'c', detail: 'HK', items: []),
+          TrayMenuAction(label: 'd'),
+          TrayMenuAction(label: 'e', detail: ''),
+        ],
+      ),
+    );
+
+    final items = encoded.menu.cast<Map<String, Object?>>();
+    expect(items.map((item) => item['detail']), [
+      '⌃⌥S',
+      '88 ms',
+      'HK',
+      null,
+      null,
+    ]);
+    expect(items[3].containsKey('detail'), isFalse);
+    expect(items[4].containsKey('detail'), isFalse);
+  });
+
+  test('detail tone is serialized only with a detail and a color', () {
+    final encoded = TrayCodec.encode(
+      _spec(
+        menu: const [
+          TrayMenuCheckbox(
+            label: 'a',
+            checked: false,
+            detail: '88 ms',
+            detailTone: TrayDetailTone.success,
+          ),
+          TrayMenuSubmenu(
+            label: 'b',
+            detail: 'Timeout',
+            detailTone: TrayDetailTone.error,
+            items: [],
+          ),
+          TrayMenuAction(label: 'c', detail: '⌃⌥S'),
+          TrayMenuAction(label: 'd', detailTone: TrayDetailTone.warning),
+        ],
+      ),
+    );
+
+    final items = encoded.menu.cast<Map<String, Object?>>();
+    expect(items.map((item) => item['detailTone']), [
+      'success',
+      'error',
+      null,
+      null,
+    ]);
+  });
+
+  test('signature tracks the detail', () {
+    String signatureWith(String? detail) {
+      return TrayCodec.encode(
+        _spec(
+          menu: [TrayMenuAction(label: 'a', detail: detail)],
+        ),
+      ).signature;
+    }
+
+    expect(signatureWith('88 ms'), isNot(signatureWith('90 ms')));
+    expect(signatureWith(null), isNot(signatureWith('88 ms')));
+  });
+
   test('separators serialize without label or state', () {
     final encoded = TrayCodec.encode(_spec(menu: const [TrayMenuSeparator()]));
 

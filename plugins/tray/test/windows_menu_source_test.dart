@@ -26,6 +26,11 @@ void main() {
     expect(pluginSource, isNot(contains('WM_COMMAND')));
   });
 
+  test('windows puts the detail in the accelerator column', () {
+    expect(pluginSource, contains('StringAt(*entry, "detail")'));
+    expect(pluginSource, contains("text += L'\\t';"));
+  });
+
   test('windows show reports a failed icon load', () {
     expect(
       pluginSource,

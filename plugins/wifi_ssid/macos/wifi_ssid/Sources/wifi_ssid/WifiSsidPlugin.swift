@@ -5,19 +5,21 @@ import FlutterMacOS
 
 public class WifiSsidPlugin: NSObject, FlutterPlugin, CLLocationManagerDelegate {
 
-    private let locationManager = CLLocationManager()
-    private let wifiClient = CWWiFiClient.shared()
+    // Both talk to system daemons (locationd, wifid) on creation, so they are
+    // not built until Dart asks for the SSID or the permission.
+    private lazy var locationManager: CLLocationManager = {
+        let manager = CLLocationManager()
+        manager.delegate = self
+        return manager
+    }()
+    private lazy var wifiClient = CWWiFiClient.shared()
     private let ssidQueue = DispatchQueue(label: "com.follow.clash.wifi_ssid")
-    private var pendingPermissionResult: FlutterResult?
+    private var pendingPermissionResults: [FlutterResult] = []
 
     private enum Method {
         static let getSsid = "getSsid"
         static let checkPermission = "checkPermission"
         static let requestPermission = "requestPermission"
-    }
-
-    private enum ErrorCode {
-        static let inProgress = "IN_PROGRESS"
     }
 
     public static func register(with registrar: FlutterPluginRegistrar) {
@@ -26,11 +28,6 @@ public class WifiSsidPlugin: NSObject, FlutterPlugin, CLLocationManagerDelegate 
         )
         let instance = WifiSsidPlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
-    }
-
-    override init() {
-        super.init()
-        locationManager.delegate = self
     }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -67,24 +64,19 @@ public class WifiSsidPlugin: NSObject, FlutterPlugin, CLLocationManagerDelegate 
             result(permission.rawValue)
             return
         }
-        if pendingPermissionResult != nil {
-            result(
-                FlutterError(
-                    code: ErrorCode.inProgress,
-                    message: "A permission request is already active",
-                    details: nil
-                )
-            )
-            return
-        }
-        pendingPermissionResult = result
+        pendingPermissionResults.append(result)
         locationManager.requestWhenInUseAuthorization()
     }
 
     public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        guard let result = pendingPermissionResult else { return }
-        pendingPermissionResult = nil
-        result(mapAuthStatus(manager.authorizationStatus).rawValue)
+        // A new manager reports its status once, and the lazy one is created
+        // by the request itself, so that report can land while the prompt is up.
+        guard manager.authorizationStatus != .notDetermined,
+              !pendingPermissionResults.isEmpty else { return }
+        let results = pendingPermissionResults
+        pendingPermissionResults.removeAll()
+        let permission = mapAuthStatus(manager.authorizationStatus).rawValue
+        results.forEach { $0(permission) }
     }
 
     private func mapAuthStatus(_ status: CLAuthorizationStatus) -> WifiSsidPermission {
