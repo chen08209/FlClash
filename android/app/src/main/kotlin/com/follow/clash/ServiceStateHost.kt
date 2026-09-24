@@ -1,6 +1,10 @@
 package com.follow.clash
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.VpnService
+import android.os.Build
+import androidx.core.content.ContextCompat
 import com.follow.clash.common.GlobalState
 import com.follow.clash.models.SharedState
 import com.follow.clash.plugins.AppPlugin
@@ -33,6 +37,8 @@ internal interface ServiceStateHost {
 
     fun isVpnPermissionGranted(): Boolean
 
+    fun isLocalNetworkPermissionGranted(): Boolean
+
     fun tile(): TileGateway?
 
     fun app(): AppGateway?
@@ -54,6 +60,8 @@ internal interface TileGateway {
 
 internal interface AppGateway {
     fun requestNotificationPermission(callback: (Boolean) -> Unit)
+
+    fun requestLocalNetworkPermission(callback: (Boolean) -> Unit)
 
     fun prepareVpn(enable: Boolean, callback: (Boolean) -> Unit)
 
@@ -100,6 +108,13 @@ internal object AndroidServiceStateHost : ServiceStateHost {
     override fun isVpnPermissionGranted(): Boolean =
         VpnService.prepare(GlobalState.application) == null
 
+    override fun isLocalNetworkPermissionGranted(): Boolean =
+        sdkInt < Build.VERSION_CODES.CINNAMON_BUN ||
+            ContextCompat.checkSelfPermission(
+                GlobalState.application,
+                Manifest.permission.ACCESS_LOCAL_NETWORK,
+            ) == PackageManager.PERMISSION_GRANTED
+
     override fun tile(): TileGateway? = flutterEngine?.plugin<TilePlugin>()?.let { plugin ->
         object : TileGateway {
             override fun handleStart() = plugin.handleStart()
@@ -112,6 +127,9 @@ internal object AndroidServiceStateHost : ServiceStateHost {
         object : AppGateway {
             override fun requestNotificationPermission(callback: (Boolean) -> Unit) =
                 plugin.requestNotificationPermission(callback)
+
+            override fun requestLocalNetworkPermission(callback: (Boolean) -> Unit) =
+                plugin.requestLocalNetworkPermission(callback)
 
             override fun prepareVpn(enable: Boolean, callback: (Boolean) -> Unit) =
                 plugin.prepareVpn(enable, callback)

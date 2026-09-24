@@ -38,6 +38,8 @@ const sheetAppBarHeight = 68.0;
 
 const watchExecution = false;
 
+const safeModeBuild = bool.fromEnvironment('SAFE_MODE');
+
 String _randomPipeId() {
   final random = Random.secure();
   return List.generate(

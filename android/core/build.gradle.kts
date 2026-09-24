@@ -33,6 +33,13 @@ android {
         }
     }
 
+    // :app strips what it packages; Crashlytics symbolication needs the unstripped libraries to reach its merge.
+    packaging {
+        jniLibs {
+            keepDebugSymbols += "**/*.so"
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

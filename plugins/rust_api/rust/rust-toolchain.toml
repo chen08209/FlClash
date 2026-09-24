@@ -1,6 +1,6 @@
 [toolchain]
 # native_toolchain_rust refuses a floating channel; bump this deliberately.
-channel = "1.95.0"
+channel = "1.98.1"
 targets = [
   "aarch64-apple-darwin",
   "x86_64-apple-darwin",
