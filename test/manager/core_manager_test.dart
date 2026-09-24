@@ -13,6 +13,7 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/route_state.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:material_ui/material_ui.dart';
@@ -49,6 +50,7 @@ const _nullProfileSetupState = SetupState(
   proxyGroups: [],
   addedRules: [],
   script: null,
+  dnsOverrideKeys: {},
   overrideDns: false,
   dns: Dns(),
 );
@@ -280,6 +282,35 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('core dns queries are recorded and counted', (tester) async {
+    final coreInterface = _coreInterface();
+    final container = await _pumpCoreManager(tester, coreInterface);
+
+    for (final domain in ['alpha.test', 'beta.test']) {
+      coreEventManager.sendEvent(
+        CoreEvent(
+          type: CoreEventType.dns,
+          data: {
+            'domain': domain,
+            'type': 'A',
+            'answers': ['1.1.1.1'],
+            'delay': 3,
+            'time': '2026-09-18T04:30:01Z',
+          },
+        ),
+      );
+    }
+    await tester.pump();
+
+    expect(
+      container.read(dnsQueriesProvider).list.map((query) => query.domain),
+      ['alpha.test', 'beta.test'],
+    );
+    expect(container.read(dnsQueryCountProvider), 2);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('geo events are forwarded to the geo resource action', (
     tester,
   ) async {
@@ -302,6 +333,31 @@ void main() {
 
     expect(container.read(isUpdatingProvider(key)), isFalse);
     expect(find.text('background failure'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('route events reach the route tracker', (tester) async {
+    final coreInterface = _coreInterface();
+    final container = await _pumpCoreManager(tester, coreInterface);
+
+    coreEventManager.sendEvent(
+      const CoreEvent(
+        type: CoreEventType.routeChanged,
+        data: {
+          'core-epoch': 7,
+          'picks-version': 42,
+          'picks': {'Proxy': 'HK-01'},
+        },
+      ),
+    );
+    await tester.pump();
+
+    final route = container.read(routeTrackerProvider);
+    expect(route.coreEpoch, 7);
+    expect(route.picksVersion, 42);
+    expect(route.picks, {'Proxy': 'HK-01'});
+    expect(route.synced, isTrue);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

@@ -105,6 +105,7 @@ flutter:
     - assets/images/
     - assets/images/avatar/
     - assets/images/empty/
+    - assets/images/services/
     - path: assets/images/tray/unix/
       platforms: [ linux ]
     - path: assets/images/tray/macos/

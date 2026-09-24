@@ -9,6 +9,7 @@ enum CoreMethod {
   forceGc,
   shutdown,
   validateConfig,
+  validateProxies,
   updateConfig,
   getConfig,
   getProxies,
@@ -17,7 +18,11 @@ enum CoreMethod {
   getTotalTraffic,
   resetTraffic,
   asyncTestDelay,
+  probe,
+  outboundIp,
+  serviceCheck,
   getConnections,
+  getConnectionCount,
   closeConnections,
   resetConnections,
   closeConnection,
@@ -30,11 +35,12 @@ enum CoreMethod {
   stopLog,
   startListener,
   stopListener,
-  getMemory,
+  getMemoryStats,
   crash,
   setupConfig,
   clearEffect,
   updateDns,
+  watchRoute,
 }
 
 class CoreMethodCall {

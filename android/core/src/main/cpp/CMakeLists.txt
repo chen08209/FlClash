@@ -9,8 +9,8 @@ message("CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}")
 
 if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
-    add_compile_options(-O3 -flto -g0 -fno-exceptions -fno-rtti)
-    add_link_options(-flto -Wl,--gc-sections,--strip-all)
+    add_compile_options(-O3 -flto -g -fno-exceptions -fno-rtti)
+    add_link_options(-flto -Wl,--gc-sections)
 endif ()
 
 set(LIB_CLASH_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/../cpp/includes/${ANDROID_ABI}")
