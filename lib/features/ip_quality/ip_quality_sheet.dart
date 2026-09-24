@@ -12,6 +12,11 @@ import 'ip_quality_text.dart';
 import 'labels.dart';
 
 Future<void> showIpQualitySheet(BuildContext context, {required String ip}) {
+  if (isSheetPage(context)) {
+    return Navigator.of(
+      context,
+    ).push(PagedSheetRoute(builder: (_) => _IpQualitySheet(ip: ip)));
+  }
   return showSheet<void>(
     context: context,
     builder: (_) => _IpQualitySheet(ip: ip),
@@ -29,7 +34,7 @@ class _IpQualitySheet extends ConsumerWidget {
     final isLoading = ref.watch(
       ipQualityProvider(ip).select((result) => result.isLoading),
     );
-    return CommonScaffold(
+    final page = CommonScaffold(
       title: localizations.outboundIp,
       actions: [
         AppBarActionButton(
@@ -42,6 +47,13 @@ class _IpQualitySheet extends ConsumerWidget {
         ),
       ],
       body: _IpQualityDetail(ip: ip),
+    );
+    if (!isSheetPage(context)) return page;
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: ref.sheetHeight(context, shortSheetMaxHeight),
+      ),
+      child: page,
     );
   }
 }
@@ -79,6 +91,7 @@ class _IpQualityDetail extends ConsumerWidget {
     final result = ref.watch(ipQualityProvider(ip));
     final quality = result.value;
     final error = result.error;
+    final failed = quality == null && !result.isLoading;
     return ListView(
       shrinkWrap: true,
       padding: const EdgeInsets.symmetric(
@@ -102,29 +115,24 @@ class _IpQualityDetail extends ConsumerWidget {
               copyText: ip,
               value: IpQualityText(ip: ip),
             ),
-            if (quality != null)
-              ..._qualityRows(context, quality)
-            else
+            if (failed)
               DetailRow(
                 title: localizations.ipType,
-                value: result.isLoading
-                    ? const SizedBox.square(
-                        dimension: 20,
-                        child: CommonCircleLoading(),
-                      )
-                    : Text(
-                        localizations.ipQualityFailed,
-                        style: TextStyle(color: context.colorScheme.error),
-                      ),
-              ),
+                value: Text(
+                  localizations.ipQualityFailed,
+                  style: TextStyle(color: context.colorScheme.error),
+                ),
+              )
+            else
+              ..._qualityRows(context, quality),
           ],
         ),
-        if (quality != null)
+        if (!failed)
           generateSectionV3(
             title: localizations.network,
             items: _networkRows(context, quality),
           ),
-        if (quality == null && error is IpQualityLookupException)
+        if (failed && error is IpQualityLookupException)
           generateSectionV3(
             title: localizations.ipQualitySources,
             items: [
@@ -143,8 +151,26 @@ class _IpQualityDetail extends ConsumerWidget {
     );
   }
 
-  List<Widget> _qualityRows(BuildContext context, IpQuality quality) {
+  /// A lookup still running lays out every row it will fill, so the page
+  /// keeps its height when the values arrive.
+  List<Widget> _qualityRows(BuildContext context, IpQuality? quality) {
     final localizations = context.appLocalizations;
+    if (quality == null) {
+      return [
+        DetailRow(
+          title: localizations.ipQualityLevel,
+          value: const SkeletonText(width: 40),
+        ),
+        DetailRow(
+          title: localizations.ipType,
+          value: const SkeletonText(width: 64),
+        ),
+        DetailRow(
+          title: localizations.ipFlags,
+          value: const SkeletonText(width: 40),
+        ),
+      ];
+    }
     final flags = [
       if (quality.isTor) localizations.ipFlagTor,
       if (quality.isAbuser) localizations.ipFlagAbuser,
@@ -177,24 +203,33 @@ class _IpQualityDetail extends ConsumerWidget {
     ];
   }
 
-  List<Widget> _networkRows(BuildContext context, IpQuality quality) {
+  List<Widget> _networkRows(BuildContext context, IpQuality? quality) {
     final localizations = context.appLocalizations;
+    Widget valueOf(String? text, {required double width}) =>
+        switch ((quality, text)) {
+          (null, _) => SkeletonText(width: width),
+          (_, final text?) => Text(text),
+          _ => const Text('—'),
+        };
+    final organization = quality?.organization;
+    final asn = switch (quality?.asn) {
+      final asn? => 'AS$asn',
+      null => null,
+    };
     return [
-      if (quality.organization case final organization?)
-        DetailRow(
-          title: localizations.ipOrganization,
-          copyText: organization,
-          value: Text(organization),
-        ),
-      if (quality.asn case final asn?)
-        DetailRow(
-          title: localizations.ipAsn,
-          copyText: 'AS$asn',
-          value: Text('AS$asn'),
-        ),
+      DetailRow(
+        title: localizations.ipOrganization,
+        copyText: organization,
+        value: valueOf(organization, width: 120),
+      ),
+      DetailRow(
+        title: localizations.ipAsn,
+        copyText: asn,
+        value: valueOf(asn, width: 56),
+      ),
       DetailRow(
         title: localizations.ipQualitySource,
-        value: Text(quality.source.label),
+        value: valueOf(quality?.source.label, width: 72),
       ),
     ];
   }

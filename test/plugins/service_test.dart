@@ -115,6 +115,7 @@ void main() {
           const SharedState(
             stopTip: 'stopTip',
             startTip: 'startTip',
+            localNetworkTip: 'localNetworkTip',
             currentProfileName: 'profile',
             stopText: 'stop',
             onlyStatisticsProxy: false,
@@ -130,6 +131,7 @@ void main() {
       const state = SharedState(
         stopTip: 'stopTip',
         startTip: 'startTip',
+        localNetworkTip: 'localNetworkTip',
         currentProfileName: 'profile',
         stopText: 'stop',
         onlyStatisticsProxy: true,

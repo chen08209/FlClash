@@ -222,6 +222,7 @@ SharedState sharedState(Ref ref) {
     crashlytics: crashlytics,
     stopTip: currentAppLocalizations.stopVpn,
     startTip: currentAppLocalizations.startVpn,
+    localNetworkTip: currentAppLocalizations.localNetworkDeniedTip,
     setupParams: SetupParams(selectedMap: selectedMap, testUrl: testUrl),
     vpnOptions: VpnOptions(
       enable: vpnSetting.enable && !safeMode,
