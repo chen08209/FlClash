@@ -51,6 +51,7 @@ class _AppMigrationStore implements MigrationStore {
       data.rules,
       data.links,
       data.proxyGroups,
+      clashProviders: data.clashProviders,
     );
   }
 

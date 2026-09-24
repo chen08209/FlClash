@@ -1,15 +1,13 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive_io.dart';
 import 'package:drift/native.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/migration.dart';
 import 'package:fl_clash/database/database.dart' as db;
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -43,8 +41,6 @@ void main() {
     Directory(join(root.path, 'tmp')).createSync(recursive: true);
     Directory(join(root.path, 'archive')).createSync(recursive: true);
     PathProviderPlatform.instance = _FakePathProvider(root.path);
-    // readBackupArchive reports an unusable archive through the localizations.
-    await AppLocalizations.load(const Locale('en'));
   });
 
   tearDownAll(() {
@@ -78,6 +74,8 @@ void main() {
         profilesDirPath: profiles.path,
         providersDirPath: providers.path,
         scriptsDirPath: scripts.path,
+        providerFileNames: const [],
+        providerCacheDirPath: join(root.path, 'missing'),
       );
 
       expect(orphans.map(basename), unorderedEquals(['2.yaml', '20.js', '2']));
@@ -99,6 +97,8 @@ void main() {
         profilesDirPath: join(root.path, 'missing'),
         providersDirPath: providers.path,
         scriptsDirPath: join(root.path, 'missing'),
+        providerFileNames: const [],
+        providerCacheDirPath: join(root.path, 'missing'),
       );
 
       expect(
@@ -120,6 +120,8 @@ void main() {
         profilesDirPath: profiles.path,
         providersDirPath: join(root.path, 'missing'),
         scriptsDirPath: join(root.path, 'missing'),
+        providerFileNames: const [],
+        providerCacheDirPath: join(root.path, 'missing'),
       );
 
       expect(orphans.map(basename), ['stray.yaml']);
@@ -137,9 +139,36 @@ void main() {
         profilesDirPath: profiles.path,
         providersDirPath: join(root.path, 'missing'),
         scriptsDirPath: join(root.path, 'missing'),
+        providerFileNames: const [],
+        providerCacheDirPath: join(root.path, 'missing'),
       );
 
       expect(orphans, isEmpty);
+    });
+
+    test('reports a provider cache file no row names any more', () {
+      final cache = makeDir('provider_cache');
+      writeFile(join(cache.path, 'proxies', 'live'), 'keep');
+      writeFile(join(cache.path, 'proxies', 'gone'), 'drop');
+      writeFile(join(cache.path, 'rules', 'stale'), 'drop');
+
+      final orphans = shakeOrphanFiles(
+        profileIds: const [],
+        scriptIds: const [],
+        providerFileNames: const ['live'],
+        profilesDirPath: join(root.path, 'missing'),
+        providersDirPath: join(root.path, 'missing'),
+        providerCacheDirPath: cache.path,
+        scriptsDirPath: join(root.path, 'missing'),
+      );
+
+      expect(
+        orphans,
+        unorderedEquals([
+          join(cache.path, 'proxies', 'gone'),
+          join(cache.path, 'rules', 'stale'),
+        ]),
+      );
     });
 
     test('ignores directories that do not exist', () {
@@ -150,6 +179,8 @@ void main() {
           profilesDirPath: join(root.path, 'nope'),
           providersDirPath: join(root.path, 'nope'),
           scriptsDirPath: join(root.path, 'nope'),
+          providerFileNames: const [],
+          providerCacheDirPath: join(root.path, 'missing'),
         ),
         isEmpty,
       );
@@ -416,13 +447,20 @@ void main() {
   });
 
   group('backup and restore', () {
+    const localProvider = ClashProvider(
+      id: 4,
+      kind: ProviderKind.rule,
+      label: 'Local rules',
+      behavior: RuleProviderBehavior.classical,
+      format: RuleProviderFormat.yaml,
+    );
     late Directory home;
-    late Directory restore;
+    late Directory staging;
     late String databasePath;
 
     setUp(() async {
       home = makeDir('home');
-      restore = makeDir('restore');
+      staging = makeDir('staging');
       databasePath = join(home.path, 'database.sqlite');
     });
 
@@ -442,24 +480,54 @@ void main() {
         1,
         const Rule(id: 3, content: 'example.com', order: 'a'),
       );
+      await database.clashProvidersDao.putAll([localProvider.toCompanion()]);
       await database.close();
     }
 
     Future<String> backup({
-      Map<String, dynamic> configMap = const {'version': 1},
-      Iterable<String> fileNames = const ['1.yaml', '2.js'],
-    }) {
-      return writeBackupArchive(
+      Map<String, Object?> configMap = const {'version': 1},
+      List<String>? entries,
+    }) async {
+      entries ??= BackupEntries.of(
+        profileIds: const [1],
+        scriptIds: const [2],
+        providers: const [localProvider],
+      );
+      final archivePath = join(root.path, 'archive', '$uniqueId.zip');
+      await writeBackupArchive(
+        archivePath: archivePath,
         configMap: configMap,
-        fileNames: fileNames,
-        databasePath: databasePath,
-        profilesDirPath: join(home.path, 'profiles'),
-        scriptsDirPath: join(home.path, 'scripts'),
-        zipFilePath: join(root.path, 'archive', '$uniqueId.zip'),
-        tempDatabasePath: join(root.path, 'tmp', '$uniqueId.sqlite'),
-        tempConfigPath: join(root.path, 'tmp', '$uniqueId.json'),
+        databaseSnapshotPath: databasePath,
+        homeDirPath: home.path,
+        entries: entries,
+      );
+      return archivePath;
+    }
+
+    Future<String> zipOf(Map<String, List<int>> files) async {
+      final archivePath = join(root.path, 'archive', '$uniqueId.zip');
+      final encoder = ZipFileEncoder()..create(archivePath);
+      for (final MapEntry(:key, :value) in files.entries) {
+        encoder.addArchiveFile(ArchiveFile.bytes(key, value));
+      }
+      await encoder.close();
+      return archivePath;
+    }
+
+    Future<MigrationData> restore(String archivePath) {
+      return readBackupArchive(
+        archivePath: archivePath,
+        stagingDirPath: staging.path,
       );
     }
+
+    Matcher failsWith(BackupFailure failure) => throwsA(
+      isA<BackupException>().having(
+        (error) => error.failure,
+        'failure',
+        failure,
+      ),
+    );
 
     test('the archive carries the database, the config and only the listed '
         'files', () async {
@@ -473,51 +541,41 @@ void main() {
       final names = ZipDecoder()
           .decodeStream(InputFileStream(archivePath))
           .files
-          .map((file) => basename(file.name))
+          .map((file) => file.name)
           .toSet();
-      expect(names, containsAll([backupDatabaseName, configJsonName]));
-      expect(names, contains('1.yaml'));
-      expect(names, contains('2.js'));
-      expect(names, isNot(contains('9.yaml')));
+      expect(names, {
+        backupDatabaseName,
+        configJsonName,
+        'profiles/1.yaml',
+        'scripts/2.js',
+      });
     });
 
-    test('the temporary database and config copies are cleaned up', () async {
-      await seedDatabase();
-      final before = Directory(join(root.path, 'tmp'));
-
-      await backup();
-
-      final leftovers = before.existsSync()
-          ? before.listSync().map((entity) => basename(entity.path))
-          : <String>[];
-      expect(leftovers, isEmpty);
-    });
-
-    test('restoring returns the rows and copies the files home', () async {
+    test('restoring returns the rows and stages the files', () async {
       await seedDatabase();
       writeFile(join(home.path, 'profiles', '1.yaml'), 'proxies: []');
       writeFile(join(home.path, 'scripts', '2.js'), 'body');
-      final archivePath = await backup();
-      final target = makeDir('restore_target');
-
-      final data = await readBackupArchive(
-        backupFilePath: archivePath,
-        restoreDirPath: restore.path,
-        homeDirPath: target.path,
+      writeFile(
+        join(home.path, 'providers', 'rules', localProvider.fileName),
+        'payload: []',
       );
+      final archivePath = await backup();
+
+      final data = await restore(archivePath);
 
       expect(data.profiles.single.label, 'Backed up');
       expect(data.scripts.single.label, 'Script');
       expect(data.rules.single.content, 'example.com');
       expect(data.links.single.ruleId, 3);
+      expect(data.clashProviders.single.label, 'Local rules');
       expect(data.configMap?['version'], 1);
       expect(
-        File(join(target.path, 'profiles', '1.yaml')).readAsStringSync(),
-        'proxies: []',
-      );
-      expect(
-        File(join(target.path, 'scripts', '2.js')).readAsStringSync(),
-        'body',
+        BackupEntries.ofData(data).map(
+          (entry) => File(
+            BackupEntries.resolve(staging.path, entry),
+          ).readAsStringSync(),
+        ),
+        ['proxies: []', 'body', 'payload: []'],
       );
     });
 
@@ -531,15 +589,10 @@ void main() {
             {'id': 'legacy', 'label': 'Old', 'autoUpdateDuration': 0},
           ],
         },
-        fileNames: const ['legacy.yaml'],
+        entries: const ['profiles/legacy.yaml'],
       );
-      final target = makeDir('restore_target');
 
-      final data = await readBackupArchive(
-        backupFilePath: archivePath,
-        restoreDirPath: restore.path,
-        homeDirPath: target.path,
-      );
+      final data = await restore(archivePath);
 
       final profile = data.profiles.single;
       expect(profile.label, 'Old');
@@ -550,56 +603,81 @@ void main() {
       );
       expect(
         File(
-          join(target.path, 'profiles', '${profile.id}.yaml'),
+          BackupEntries.resolve(
+            staging.path,
+            BackupEntries.profile(profile.id),
+          ),
         ).readAsStringSync(),
         'proxies: []',
       );
     });
 
+    test(
+      'an entry that climbs out of the staging directory is dropped',
+      () async {
+        final archivePath = await zipOf({
+          configJsonName: utf8.encode(json.encode({'version': 1})),
+          '../escaped.txt': utf8.encode('outside'),
+        });
+
+        await restore(archivePath);
+
+        expect(
+          File(join(staging.parent.path, 'escaped.txt')).existsSync(),
+          isFalse,
+        );
+      },
+    );
+
     test('an archive without a config document is rejected', () async {
-      final archivePath = join(root.path, 'archive', '$uniqueId.zip');
-      final encoder = ZipFileEncoder();
-      encoder.create(archivePath);
-      await encoder.addFile(
-        writeFile(join(root.path, 'tmp', '$uniqueId.txt'), 'nothing'),
-        'unrelated.txt',
-      );
-      unawaited(encoder.close());
+      final archivePath = await zipOf({'unrelated.txt': utf8.encode('x')});
+
+      await expectLater(restore(archivePath), failsWith(BackupFailure.invalid));
+    });
+
+    test('a file that is not a zip archive is rejected', () async {
+      final archivePath = writeFile(
+        join(root.path, 'archive', '$uniqueId.zip'),
+        'not a zip',
+      ).path;
+
+      await expectLater(restore(archivePath), failsWith(BackupFailure.invalid));
+    });
+
+    test('a config from a newer data version is rejected', () async {
+      final archivePath = await zipOf({
+        configJsonName: utf8.encode(
+          json.encode({'version': Migration.currentVersion + 1}),
+        ),
+      });
 
       await expectLater(
-        readBackupArchive(
-          backupFilePath: archivePath,
-          restoreDirPath: makeDir('restore').path,
-          homeDirPath: makeDir('home').path,
-        ),
-        throwsA(
-          isA<MessageException>().having(
-            (error) => error.message,
-            'message',
-            currentAppLocalizations.invalidBackupFile,
-          ),
-        ),
+        restore(archivePath),
+        failsWith(BackupFailure.newerVersion),
+      );
+    });
+
+    test('a database from a newer schema is rejected', () async {
+      await seedDatabase();
+      final raw = db.Database(NativeDatabase(File(databasePath)));
+      await raw.customStatement(
+        'PRAGMA user_version = ${raw.schemaVersion + 1}',
+      );
+      await raw.close();
+      final archivePath = await backup();
+
+      await expectLater(
+        restore(archivePath),
+        failsWith(BackupFailure.newerVersion),
       );
     });
 
     test('an archive without a database yields just the config', () async {
-      final archivePath = join(root.path, 'archive', '$uniqueId.zip');
-      final encoder = ZipFileEncoder();
-      encoder.create(archivePath);
-      await encoder.addFile(
-        writeFile(
-          join(root.path, 'tmp', '$uniqueId.json'),
-          json.encode({'version': 1}),
-        ),
-        configJsonName,
-      );
-      unawaited(encoder.close());
+      final archivePath = await zipOf({
+        configJsonName: utf8.encode(json.encode({'version': 1})),
+      });
 
-      final data = await readBackupArchive(
-        backupFilePath: archivePath,
-        restoreDirPath: makeDir('restore').path,
-        homeDirPath: makeDir('home').path,
-      );
+      final data = await restore(archivePath);
 
       expect(data.configMap?['version'], 1);
       expect(data.profiles, isEmpty);
