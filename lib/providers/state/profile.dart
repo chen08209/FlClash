@@ -44,10 +44,19 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
   final profileLastUpdateDate = profile?.lastUpdateDate?.millisecondsSinceEpoch;
   final overwriteType = profile?.overwriteType ?? OverwriteType.standard;
   final dns = ref.watch(patchClashConfigProvider.select((state) => state.dns));
+  final dnsOverrideKeys = ref.watch(
+    patchClashConfigProvider.select((state) => state.dnsOverrideKeys),
+  );
   final overrideDns = ref.watch(overrideDnsProvider);
+  final allProfileProviders = feature.customProviders
+      ? ref.watch(profileProvidersProvider)
+      : const <String, int>{};
+  List<CustomProxy> customProxies = [];
   List<ProxyGroup> proxyGroups = [];
   List<Rule> rules = [];
   List<Rule> addedRules = [];
+  List<ClashProvider> clashProviders = [];
+  Map<String, int> profileProviders = const {};
   Script? script;
   if (profileId != null) {
     if (overwriteType == OverwriteType.standard) {
@@ -59,11 +68,21 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
     } else {
       rules = await database.rulesDao.queryProfileCustomRules(profileId).get();
       proxyGroups = await database.proxyGroupsDao.query(profileId).get();
+      if (feature.customProxies) {
+        customProxies = await database.customProxiesDao.query(profileId).get();
+      }
+      if (feature.customProviders) {
+        clashProviders = await database.clashProvidersDao.queryAll().get();
+        profileProviders = allProfileProviders;
+      }
     }
   }
   return SetupState(
+    clashProviders: clashProviders,
+    profileProviders: profileProviders,
     rules: rules,
     proxyGroups: proxyGroups,
+    customProxies: customProxies,
     profileId: profileId,
     profileLastUpdateDate: profileLastUpdateDate,
     overwriteType: overwriteType,
@@ -71,8 +90,16 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
     script: script,
     overrideDns: overrideDns,
     dns: dns,
+    dnsOverrideKeys: dnsOverrideKeys,
     matchTarget: overwriteType == OverwriteType.standard
         ? profile?.matchTarget
         : null,
   );
+}
+
+/// Every profile doubles as a proxy provider another profile's groups can use.
+@riverpod
+Map<String, int> profileProviders(Ref ref) {
+  final profiles = ref.watch(profilesProvider);
+  return {for (final profile in profiles) profile.realLabel: profile.id};
 }

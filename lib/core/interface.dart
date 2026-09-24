@@ -27,6 +27,8 @@ mixin CoreInterface {
 
   Future<Map<String, dynamic>> getConfig(String path);
 
+  Future<String> dumpRuleSet(String path);
+
   Future<Delay?> asyncTestDelay(String url, String proxyName);
 
   Future<ProbeResult?> probe(ProbeParams params);
@@ -211,6 +213,11 @@ abstract class CoreHandlerInterface with CoreInterface {
       method: CoreMethod.setupConfig,
       arguments: setupParams.toJson(),
     );
+  }
+
+  @override
+  Future<String> dumpRuleSet(String path) async {
+    return _invokeMessage(method: CoreMethod.dumpRuleSet, arguments: path);
   }
 
   @override

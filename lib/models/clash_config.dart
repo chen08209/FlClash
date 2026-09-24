@@ -339,9 +339,6 @@ sealed class OverwriteIssue with _$OverwriteIssue {
   const factory OverwriteIssue.subscriptionGroupMissingProxies(
     List<String> names,
   ) = SubscriptionGroupMissingProxiesIssue;
-
-  const factory OverwriteIssue.providerShadowed(String name) =
-      ProviderShadowedIssue;
 }
 
 @freezed

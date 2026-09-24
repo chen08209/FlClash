@@ -62,6 +62,32 @@ enum GroupType {
       String() => throw UnimplementedError(),
     };
   }
+
+  /// The core refuses a relay group, so it stays parseable but unofferable.
+  static List<GroupType> get selectableValues =>
+      values.where((item) => item != Relay).toList();
+}
+
+enum LoadBalanceStrategy {
+  @JsonValue('consistent-hashing')
+  consistentHashing('consistent-hashing'),
+  @JsonValue('round-robin')
+  roundRobin('round-robin'),
+  @JsonValue('sticky-sessions')
+  stickySessions('sticky-sessions');
+
+  final String value;
+
+  const LoadBalanceStrategy(this.value);
+
+  static LoadBalanceStrategy? parse(String? value) {
+    for (final item in values) {
+      if (item.value == value) {
+        return item;
+      }
+    }
+    return null;
+  }
 }
 
 extension GroupTypeExtension on GroupType {
@@ -572,17 +598,51 @@ extension RuleActionExt on RuleAction {
   }
 }
 
+enum RulePayloadError { network, numberRange, dscpRange }
+
+extension RulePayloadErrorExt on RulePayloadError {
+  String getMessage(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return switch (this) {
+      RulePayloadError.network => appLocalizations.invalidNetworkContent,
+      RulePayloadError.numberRange => appLocalizations.invalidRangeContent,
+      RulePayloadError.dscpRange => appLocalizations.invalidDscpContent,
+    };
+  }
+}
+
 enum OverwriteType { standard, script, custom }
 
 enum RuleTarget {
-  DIRECT,
-  REJECT;
+  DIRECT('DIRECT'),
+  REJECT('REJECT'),
+  REJECT_DROP('REJECT-DROP');
+
+  final String value;
+
+  const RuleTarget(this.value);
 
   static final List<String> baseTargetNames = List.unmodifiable(
-    RuleTarget.values.map((item) => item.name),
+    RuleTarget.values.map((item) => item.value),
   );
 
   static final Set<String> baseTargets = Set.unmodifiable(baseTargetNames);
+}
+
+enum ProviderKind { proxy, rule }
+
+/// Where a provider name a custom overwrite uses resolves, in lookup order.
+enum ProviderSource { subscription, profile, app }
+
+enum RuleProviderBehavior { domain, ipcidr, classical }
+
+enum RuleProviderFormat { yaml, text, mrs }
+
+extension RuleProviderFormatExt on RuleProviderFormat? {
+  /// The core reads an mrs set only as a domain or an ipcidr one.
+  List<RuleProviderBehavior> get behaviors => this == RuleProviderFormat.mrs
+      ? const [RuleProviderBehavior.domain, RuleProviderBehavior.ipcidr]
+      : RuleProviderBehavior.values;
 }
 
 enum RestoreStrategy { compatible, override }
@@ -595,6 +655,7 @@ enum QueryTag { proxies, access }
 
 enum LoadingTag {
   profiles,
+  scripts,
   backup_restore,
   access,
   proxies,

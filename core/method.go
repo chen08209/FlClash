@@ -200,6 +200,16 @@ var methodHandlers = map[CoreMethod]methodHandler{
 		}
 		response.success(rawConfig)
 	}),
+	dumpRuleSetMethod: withArguments(func(path *string, response MethodResponse) {
+		safeGo(response, func() {
+			text, err := handleDumpRuleSet(*path)
+			if err != nil {
+				response.failure("core_error", err.Error(), nil)
+				return
+			}
+			response.success(text)
+		})
+	}),
 	getProxiesMethod: withoutArguments(func(response MethodResponse) {
 		response.success(handleGetProxies())
 	}),
