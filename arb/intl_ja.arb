@@ -172,6 +172,7 @@
   "view": "表示",
   "cut": "切り取り",
   "copy": "コピー",
+  "clipboardWriteFailed": "クリップボードにコピーできませんでした。選択範囲が大きすぎる可能性があります",
   "paste": "貼り付け",
   "testUrl": "テストURL",
   "sync": "同期",
@@ -771,5 +772,10 @@
   "overwriteIssueSubscriptionGroupMissingProxies": "プロファイル自身のプロキシグループが、カスタムプロキシに含まれないプロキシを参照しています：{names}",
   "providerInUse": "{label} は {profiles} のカスタムプロキシグループまたはルールでまだ使用されています。先にそこから外してください",
   "providerSourceSubscription": "サブスクリプション",
-  "providerRenameShadowed": "{profiles} のサブスクリプションには既に {label} があるため、名前を変えるとそちらが使われます。別の名前にしてください"
+  "providerRenameShadowed": "{profiles} のサブスクリプションには既に {label} があるため、名前を変えるとそちらが使われます。別の名前にしてください",
+  "fontSize": "サイズ",
+  "large": "大",
+  "extraLarge": "特大",
+  "switchProfile": "プロファイルを切り替え",
+  "lastUpdated": "最終更新"
 }

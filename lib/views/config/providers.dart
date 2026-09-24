@@ -245,7 +245,7 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
     String raw, {
     ClashProvider? provider,
   }) async {
-    if (content == raw) {
+    if (content == raw && title == (provider?.label ?? '')) {
       return true;
     }
     final res = await dialogs.showMessage(
@@ -270,9 +270,9 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
           titleEditable: true,
           title: provider?.label ?? '',
           load: () async => raw = (await provider?.content) ?? _template,
-          onSave: (_, title, content) {
-            _handleEditorSave(title, content, provider: provider);
-          },
+          schema: EditorSchema.provider,
+          onSave: (_, title, content) =>
+              _handleEditorSave(title, content, provider: provider),
           onPop: (_, title, content) =>
               _handleEditorPop(title, content, raw, provider: provider),
         ),

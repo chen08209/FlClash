@@ -348,6 +348,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "clipboardImport": MessageLookupByLibrary.simpleMessage(
       "Import from clipboard",
     ),
+    "clipboardWriteFailed": MessageLookupByLibrary.simpleMessage(
+      "Couldn\'t copy to the clipboard. The selection may be too large",
+    ),
     "close": MessageLookupByLibrary.simpleMessage("Close"),
     "closeConnections": MessageLookupByLibrary.simpleMessage(
       "Close connections",
@@ -606,6 +609,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "When enabled, the Clash core can be controlled on port 9090",
     ),
     "externalLink": MessageLookupByLibrary.simpleMessage("External link"),
+    "extraLarge": MessageLookupByLibrary.simpleMessage("Extra large"),
     "fade": MessageLookupByLibrary.simpleMessage("Fade"),
     "fakeipFilter": MessageLookupByLibrary.simpleMessage("Fake-IP filter"),
     "fakeipFilterMode": MessageLookupByLibrary.simpleMessage(
@@ -634,6 +638,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "followProfile": MessageLookupByLibrary.simpleMessage("Follow profile"),
     "followSystem": MessageLookupByLibrary.simpleMessage("Follow system"),
     "fontFamily": MessageLookupByLibrary.simpleMessage("Font family"),
+    "fontSize": MessageLookupByLibrary.simpleMessage("Size"),
     "forceRestartCoreTip": MessageLookupByLibrary.simpleMessage(
       "Are you sure you want to force restart the core?",
     ),
@@ -816,6 +821,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "key": MessageLookupByLibrary.simpleMessage("Key"),
     "language": MessageLookupByLibrary.simpleMessage("Language"),
+    "large": MessageLookupByLibrary.simpleMessage("Large"),
+    "lastUpdated": MessageLookupByLibrary.simpleMessage("Last updated"),
     "launchInterrupted": MessageLookupByLibrary.simpleMessage(
       "Launch did not finish",
     ),
@@ -1411,6 +1418,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Subscription info",
     ),
     "suspended": MessageLookupByLibrary.simpleMessage("Suspended…"),
+    "switchProfile": MessageLookupByLibrary.simpleMessage("Switch profile"),
     "sync": MessageLookupByLibrary.simpleMessage("Sync"),
     "system": MessageLookupByLibrary.simpleMessage("System"),
     "systemApp": MessageLookupByLibrary.simpleMessage("System apps"),
