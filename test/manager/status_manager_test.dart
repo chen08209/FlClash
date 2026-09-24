@@ -23,28 +23,26 @@ Future<StatusManagerState> _pumpStatusManager(
   return tester.state<StatusManagerState>(find.byType(StatusManager));
 }
 
-double _revealOf(WidgetTester tester, String text) {
-  return tester
-      .widget<SizeTransition>(
-        find
-            .ancestor(
-              of: find.text(text),
-              matching: find.byType(SizeTransition),
-            )
-            .first,
+Finder _rowOf(String text) {
+  return find
+      .ancestor(
+        of: find.text(text),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is Align && widget.heightFactor != null,
+        ),
       )
-      .sizeFactor
-      .value;
+      .first;
+}
+
+double _revealOf(WidgetTester tester, String text) {
+  return tester.widget<Align>(_rowOf(text)).heightFactor!;
 }
 
 double _opacityOf(WidgetTester tester, String text) {
-  final transition = find
-      .ancestor(of: find.text(text), matching: find.byType(SizeTransition))
-      .first;
   return tester
       .widget<FadeTransition>(
         find
-            .descendant(of: transition, matching: find.byType(FadeTransition))
+            .descendant(of: _rowOf(text), matching: find.byType(FadeTransition))
             .first,
       )
       .opacity
@@ -52,15 +50,21 @@ double _opacityOf(WidgetTester tester, String text) {
 }
 
 Offset _offsetOf(WidgetTester tester, String text) {
-  final size = find
-      .ancestor(of: find.text(text), matching: find.byType(SizeTransition))
-      .first;
-  return tester
-      .widget<SlideTransition>(
-        find.ancestor(of: size, matching: find.byType(SlideTransition)).first,
+  final translation = tester
+      .widget<Transform>(
+        find
+            .descendant(of: _rowOf(text), matching: find.byType(Transform))
+            .first,
       )
-      .position
-      .value;
+      .transform
+      .getTranslation();
+  return Offset(translation.x, translation.y);
+}
+
+Finder _cardOf(String text) {
+  return find
+      .ancestor(of: find.text(text), matching: find.byType(Material))
+      .first;
 }
 
 void main() {
@@ -167,17 +171,16 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('a new message slides in from the trailing edge', (tester) async {
+  testWidgets('a new message drops in from above', (tester) async {
     final state = await _pumpStatusManager(tester);
     state.message('animated');
     await tester.pump();
 
-    expect(_offsetOf(tester, 'animated').dx, greaterThan(0));
-    expect(_offsetOf(tester, 'animated').dy, 0);
+    expect(_offsetOf(tester, 'animated').dy, lessThan(0));
+    expect(_offsetOf(tester, 'animated').dx, 0);
 
     await tester.pump(const Duration(milliseconds: 60));
-    final mid = _offsetOf(tester, 'animated').dx;
-    expect(mid, greaterThan(0));
+    expect(_offsetOf(tester, 'animated').dy, lessThan(0));
 
     await tester.pump(const Duration(milliseconds: 400));
     expect(_offsetOf(tester, 'animated'), Offset.zero);
@@ -356,7 +359,7 @@ void main() {
     state.message('swipe me');
     await tester.pumpAndSettle();
 
-    await tester.drag(find.byType(Dismissible), const Offset(600, 0));
+    await tester.drag(_cardOf('swipe me'), const Offset(600, 0));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(milliseconds: 220));
@@ -373,7 +376,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final gesture = await tester.startGesture(
-      tester.getCenter(find.byType(Dismissible)),
+      tester.getCenter(_cardOf('held while the finger stays down on the card')),
     );
     for (var step = 0; step < 4; step++) {
       await gesture.moveBy(const Offset(10, 0));
@@ -410,10 +413,7 @@ void main() {
     state.message('the newer message that would expire first');
     await tester.pumpAndSettle();
 
-    final held = find.ancestor(
-      of: find.text('the older message sitting underneath the held one'),
-      matching: find.byType(Dismissible),
-    );
+    final held = _cardOf('the older message sitting underneath the held one');
     final gesture = await tester.startGesture(tester.getCenter(held));
     for (var step = 0; step < 4; step++) {
       await gesture.moveBy(const Offset(10, 0));
@@ -450,7 +450,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final gesture = await tester.startGesture(
-      tester.getCenter(find.byType(Dismissible)),
+      tester.getCenter(_cardOf('the message being held down by a finger')),
     );
     for (var step = 0; step < 4; step++) {
       await gesture.moveBy(const Offset(10, 0));
@@ -469,13 +469,62 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('a swiped message leaves in the direction of the swipe', (
+    tester,
+  ) async {
+    for (final direction in [-1.0, 1.0]) {
+      final state = await _pumpStatusManager(tester);
+      state.message('swipe me');
+      await tester.pumpAndSettle();
+      final restingLeft = tester.getTopLeft(find.text('swipe me')).dx;
+
+      await tester.drag(_cardOf('swipe me'), Offset(300 * direction, 0));
+      await tester.pump();
+      final releasedAt = tester.getTopLeft(find.text('swipe me')).dx;
+      expect((releasedAt - restingLeft).sign, direction);
+
+      while (find.text('swipe me').evaluate().isNotEmpty) {
+        final left = tester.getTopLeft(find.text('swipe me')).dx;
+        expect((left - releasedAt) * direction, greaterThanOrEqualTo(0));
+        await tester.pump(const Duration(milliseconds: 40));
+      }
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
+  testWidgets('a short drag springs back and keeps the message', (
+    tester,
+  ) async {
+    final state = await _pumpStatusManager(tester);
+    state.message('swipe me');
+    await tester.pumpAndSettle();
+    final restingLeft = tester.getTopLeft(find.text('swipe me')).dx;
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(_cardOf('swipe me')),
+    );
+    for (var step = 0; step < 4; step++) {
+      await gesture.moveBy(const Offset(-10, 0));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    expect(tester.getTopLeft(find.text('swipe me')).dx, lessThan(restingLeft));
+    await tester.pump(const Duration(milliseconds: 500));
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(tester.getTopLeft(find.text('swipe me')).dx, restingLeft);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('swipe dismiss removes the message', (tester) async {
     final state = await _pumpStatusManager(tester);
     state.message('swipe me');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    await tester.drag(find.byType(Dismissible), const Offset(600, 0));
+    await tester.drag(_cardOf('swipe me'), const Offset(600, 0));
     await tester.pumpAndSettle();
 
     expect(find.text('swipe me'), findsNothing);

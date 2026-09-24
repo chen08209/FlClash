@@ -1,7 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
@@ -34,6 +33,8 @@ final listHeaderPadding = EdgeInsets.only(
   top: 24.mAp,
   bottom: 8.mAp,
 );
+const pageToolbarHeight = 64.0;
+const sheetToolbarHeight = 48.0;
 const sheetAppBarHeight = 68.0;
 
 const watchExecution = false;
@@ -87,6 +88,10 @@ const MMDB = 'GEOIP.metadb';
 const ASN = 'ASN.mmdb';
 const GEOIP = 'GEOIP.dat';
 const GEOSITE = 'GEOSITE.dat';
+
+/// The macOS sidebar material is the finished look; the Windows accent
+/// effects need a tint over them to keep the rail readable.
+final double kSidebarBlurOpacity = system.isMacOS ? 0 : 0.5;
 final double kHeaderHeight = getWindowHeaderHeight(
   isDesktop: system.isDesktop,
   isMacOS: system.isMacOS,
@@ -112,11 +117,6 @@ const repository = 'chen08209/FlClash';
 const maxMobileWidth = 600;
 const maxLaptopWidth = 840;
 const defaultTestUrl = 'https://www.gstatic.com/generate_204';
-final commonFilter = ImageFilter.blur(
-  sigmaX: 5,
-  sigmaY: 5,
-  tileMode: TileMode.clamp,
-);
 
 const stringListEquality = ListEquality<String>();
 const intListEquality = ListEquality<int>();

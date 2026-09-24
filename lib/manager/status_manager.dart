@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:math' as math;
 
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
@@ -17,12 +18,17 @@ const _actionMinDuration = Duration(seconds: 6);
 const _maxBufferedMessages = 8;
 const _mobileMaxVisibleMessages = 2;
 const _desktopMaxVisibleMessages = 4;
-const _messageEnterDuration = Duration(milliseconds: 500);
-const _messageExitDuration = Duration(milliseconds: 400);
+const _messageEnterDuration = Duration(milliseconds: 450);
+const _messageExitDuration = Duration(milliseconds: 300);
 const _messageCollapseDuration = Duration(milliseconds: 200);
-const _messageEnterOffset = Offset(0.32, 0);
+const _messageSwipeOutDuration = Duration(milliseconds: 200);
+const _messageSwipeBackDuration = Duration(milliseconds: 300);
+const _messageEnterShift = -16.0;
+const _messageEnterScale = 0.94;
+const _swipeDismissFraction = 0.35;
+const _swipeDismissVelocity = 700.0;
 const _messageMaxWidth = 500.0;
-const _messageMinHeight = 54.0;
+const _messageMinHeight = 52.0;
 
 class StatusManager extends ConsumerStatefulWidget {
   final Widget child;
@@ -331,8 +337,7 @@ class _MessageTransitionState extends State<_MessageTransition>
   late final AnimationController _controller;
   late final CurvedAnimation _size;
   late final CurvedAnimation _opacity;
-  late final CurvedAnimation _slide;
-  late final Animation<Offset> _offset;
+  late final CurvedAnimation _settle;
 
   @override
   void initState() {
@@ -345,19 +350,18 @@ class _MessageTransitionState extends State<_MessageTransition>
     _size = CurvedAnimation(
       parent: _controller,
       curve: const Interval(0, 0.8, curve: Easing.emphasizedDecelerate),
-      reverseCurve: const Interval(0, 0.65, curve: Easing.emphasizedAccelerate),
+      reverseCurve: const Interval(0, 0.6, curve: Easing.emphasizedAccelerate),
     );
     _opacity = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0, 0.4, curve: Curves.easeOut),
+      curve: const Interval(0, 0.5, curve: Curves.easeOut),
       reverseCurve: const Interval(0.5, 1, curve: Curves.easeIn),
     );
-    _slide = CurvedAnimation(
+    _settle = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0, 0.85, curve: Easing.emphasizedDecelerate),
-      reverseCurve: const Interval(0.45, 1, curve: Curves.easeInCubic),
+      curve: Easing.emphasizedDecelerate,
+      reverseCurve: const Interval(0.4, 1, curve: Curves.easeInCubic),
     );
-    _offset = _slide.drive(Tween(begin: _messageEnterOffset, end: Offset.zero));
     if (widget.visible) {
       _controller.forward();
       return;
@@ -397,28 +401,41 @@ class _MessageTransitionState extends State<_MessageTransition>
     _controller.removeStatusListener(_handleAnimationStatus);
     _size.dispose();
     _opacity.dispose();
-    _slide.dispose();
+    _settle.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SlideTransition(
-      position: _offset,
-      child: SizeTransition(
-        sizeFactor: _size,
-        alignment: AlignmentDirectional.topEnd,
-        child: FadeTransition(
-          opacity: _opacity,
-          child: IgnorePointer(ignoring: !widget.visible, child: widget.child),
-        ),
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (_, child) {
+        final settle = widget.swiped ? 1.0 : _settle.value;
+        // Align rather than SizeTransition: its clip would cut the card's
+        // shadow and the card itself as a swipe carries it out of the row.
+        return Align(
+          alignment: AlignmentDirectional.topEnd,
+          widthFactor: 1,
+          heightFactor: _size.value,
+          child: Transform.translate(
+            offset: Offset(0, _messageEnterShift * (1 - settle)),
+            child: Transform.scale(
+              scale: _messageEnterScale + (1 - _messageEnterScale) * settle,
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: FadeTransition(
+        opacity: _opacity,
+        child: IgnorePointer(ignoring: !widget.visible, child: widget.child),
       ),
     );
   }
 }
 
-class _MessageCard extends StatelessWidget {
+class _MessageCard extends StatefulWidget {
   const _MessageCard({
     required this.message,
     required this.onDismiss,
@@ -430,31 +447,123 @@ class _MessageCard extends StatelessWidget {
   final void Function(String id, bool dragging) onDragging;
 
   @override
+  State<_MessageCard> createState() => _MessageCardState();
+}
+
+class _MessageCardState extends State<_MessageCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _drag;
+  double _width = 0;
+  bool _leaving = false;
+
+  String get _id => widget.message.id;
+
+  @override
+  void initState() {
+    super.initState();
+    _drag = AnimationController.unbounded(vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _drag.dispose();
+    super.dispose();
+  }
+
+  void _handleDragStart(DragStartDetails details) {
+    if (_leaving) {
+      return;
+    }
+    _width = context.size?.width ?? 0;
+    _drag.stop();
+    widget.onDragging(_id, true);
+  }
+
+  void _handleDragUpdate(DragUpdateDetails details) {
+    if (_leaving) {
+      return;
+    }
+    _drag.value += details.primaryDelta ?? 0;
+  }
+
+  Future<void> _release(double velocity) async {
+    if (_leaving) {
+      return;
+    }
+    final offset = _drag.value;
+    final flung =
+        velocity.abs() >= _swipeDismissVelocity && velocity.sign == offset.sign;
+    if (_width > 0 &&
+        (flung || offset.abs() >= _width * _swipeDismissFraction)) {
+      _leaving = true;
+      await _drag.animateTo(
+        offset.sign * math.max(_width, offset.abs()),
+        duration: _messageSwipeOutDuration,
+        curve: Curves.easeOut,
+      );
+      if (mounted) {
+        widget.onDismiss(_id, swiped: true);
+      }
+      return;
+    }
+    widget.onDragging(_id, false);
+    _drag.animateTo(
+      0,
+      duration: _messageSwipeBackDuration,
+      curve: Easing.emphasizedDecelerate,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final message = widget.message;
+    final colorScheme = context.colorScheme;
     return Padding(
       padding: const EdgeInsets.only(left: 8, right: 8, top: 2, bottom: 8),
-      child: Dismissible(
-        key: ValueKey(message.id),
-        resizeDuration: null,
-        onUpdate: (details) {
-          onDragging(message.id, details.progress > 0);
+      child: AnimatedBuilder(
+        animation: _drag,
+        builder: (_, child) {
+          final offset = _drag.value;
+          final progress = _width > 0 ? offset.abs() / _width : 0.0;
+          return Transform.translate(
+            offset: Offset(offset, 0),
+            child: Opacity(opacity: 1 - progress.clamp(0.0, 1.0), child: child),
+          );
         },
-        onDismissed: (_) {
-          onDismiss(message.id, swiped: true);
-        },
-        child: Card(
-          margin: EdgeInsets.zero,
-          shape: AppShape.lg,
-          elevation: 6,
-          color: message.level.containerColor(context),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              minHeight: _messageMinHeight,
-              maxWidth: _messageMaxWidth,
+        child: GestureDetector(
+          onHorizontalDragStart: _handleDragStart,
+          onHorizontalDragUpdate: _handleDragUpdate,
+          onHorizontalDragEnd: (details) {
+            _release(details.primaryVelocity ?? 0);
+          },
+          onHorizontalDragCancel: () {
+            _release(0);
+          },
+          child: Material(
+            color: message.level.containerColor(context),
+            surfaceTintColor: Colors.transparent,
+            shadowColor: colorScheme.shadow.withValues(alpha: 0.6),
+            elevation: 3,
+            shape: AppShape.lg.copyWith(
+              side: BorderSide(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+              ),
             ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: _MessageContent(message: message, onDismiss: onDismiss),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: _messageMinHeight,
+                maxWidth: _messageMaxWidth,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                child: _MessageContent(
+                  message: message,
+                  onDismiss: widget.onDismiss,
+                ),
+              ),
             ),
           ),
         ),

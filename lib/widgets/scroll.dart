@@ -162,14 +162,21 @@ class _FloatingScrollbarState extends State<FloatingScrollbar> {
     // Material scrollbar defaults: 48px min thumb length, no main-axis
     // margin. Reversed lists place the thumb at (1 - fraction).
     final thumbExtent = max(48.0, track * fractionVisible).clamp(0.0, track);
+    final thumbFraction = axisDirectionIsReversed(metrics.axisDirection)
+        ? 1 - fraction
+        : fraction;
     return padding.top +
-        (1 - fraction) * (track - thumbExtent) +
+        thumbFraction * (track - thumbExtent) +
         thumbExtent / 2;
   }
 
   @override
   Widget build(BuildContext context) {
     final bottomInset = BottomInsetScope.of(context);
+    final behavior = ScrollConfiguration.of(context);
+    final barPadding = behavior is BaseScrollBehavior
+        ? behavior.scrollbarPadding
+        : EdgeInsets.zero;
     return NotificationListener<ScrollNotification>(
       onNotification: _handleScrollNotification,
       child: LayoutBuilder(
@@ -192,16 +199,21 @@ class _FloatingScrollbarState extends State<FloatingScrollbar> {
               top = _thumbCenter(
                 metrics,
                 constraints.maxHeight,
-                MediaQuery.paddingOf(context),
+                MediaQuery.paddingOf(context) + barPadding,
               ).clamp(half, max(half, limit - half));
               label = widget.hintBuilder(fraction);
             }
           }
           return Stack(
             children: [
+              // This is the list's only bar; the ambient behavior adds none.
               CommonScrollBar(
                 controller: widget.controller,
-                child: widget.child,
+                padding: barPadding,
+                child: ScrollConfiguration(
+                  behavior: const HiddenBarScrollBehavior(),
+                  child: widget.child,
+                ),
               ),
               if (label != null)
                 Positioned(
@@ -299,6 +311,7 @@ class ScrollToEndBox<T> extends StatefulWidget {
   final Widget child;
   final bool enable;
   final VoidCallback? onCancelToEnd;
+  final VoidCallback? onResumeToEnd;
 
   const ScrollToEndBox({
     super.key,
@@ -306,6 +319,7 @@ class ScrollToEndBox<T> extends StatefulWidget {
     required this.controller,
     required this.dataSource,
     this.onCancelToEnd,
+    this.onResumeToEnd,
     this.enable = true,
   });
 
@@ -314,8 +328,40 @@ class ScrollToEndBox<T> extends StatefulWidget {
 }
 
 class _ScrollToEndBoxState<T> extends State<ScrollToEndBox<T>> {
-  bool _isAtEnd(ScrollPosition position) =>
-      (position.maxScrollExtent - position.pixels).abs() <
+  double? _viewportDimension;
+
+  /// Moving the position would end the user's drag or fling under them.
+  bool _userScrolling = false;
+  bool _followDeferred = false;
+  ValueListenable<bool>? _sheetSettling;
+
+  bool get _followPaused => _userScrolling || (_sheetSettling?.value ?? false);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final settling = SheetSettlingScope.of(context);
+    if (settling != _sheetSettling) {
+      _sheetSettling?.removeListener(_resumeFollow);
+      _sheetSettling = settling?..addListener(_resumeFollow);
+    }
+  }
+
+  @override
+  void dispose() {
+    _sheetSettling?.removeListener(_resumeFollow);
+    super.dispose();
+  }
+
+  void _resumeFollow() {
+    if (_followDeferred && !_followPaused) {
+      _followDeferred = false;
+      _scheduleScrollToEnd();
+    }
+  }
+
+  bool _isAtEnd(ScrollMetrics metrics) =>
+      (metrics.maxScrollExtent - metrics.pixels).abs() <
       precisionErrorTolerance;
 
   void _scheduleScrollToEnd() {
@@ -324,23 +370,50 @@ class _ScrollToEndBoxState<T> extends State<ScrollToEndBox<T>> {
     });
   }
 
+  void _scheduleJumpToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !widget.enable || !widget.controller.hasClients) {
+        return;
+      }
+      if (_followPaused) {
+        _followDeferred = true;
+        return;
+      }
+      final position = widget.controller.position;
+      if (!_isAtEnd(position)) {
+        widget.controller.jumpTo(position.maxScrollExtent);
+      }
+    });
+  }
+
   Future<void> _scrollToEnd() async {
-    if (!mounted || !widget.controller.hasClients) {
+    if (!mounted || !widget.enable || !widget.controller.hasClients) {
+      return;
+    }
+    if (_followPaused) {
+      _followDeferred = true;
       return;
     }
     final position = widget.controller.position;
     if (_isAtEnd(position)) {
       return;
     }
-    await widget.controller.animateTo(
-      position.maxScrollExtent,
-      duration: kThemeAnimationDuration,
-      curve: Curves.easeOut,
-    );
+    if (position.maxScrollExtent - position.pixels >
+        position.viewportDimension) {
+      widget.controller.jumpTo(position.maxScrollExtent);
+      await WidgetsBinding.instance.endOfFrame;
+    } else {
+      await widget.controller.animateTo(
+        position.maxScrollExtent,
+        duration: kThemeAnimationDuration,
+        curve: Curves.easeOut,
+      );
+    }
     // Lazy lists refine maxScrollExtent while the animation runs, so the
     // target captured at start can land short of the real end.
     if (mounted &&
         widget.enable &&
+        !_followPaused &&
         widget.controller.hasClients &&
         !_isAtEnd(position)) {
       widget.controller.jumpTo(position.maxScrollExtent);
@@ -369,16 +442,55 @@ class _ScrollToEndBoxState<T> extends State<ScrollToEndBox<T>> {
     }
   }
 
+  bool _handleMetricsNotification(ScrollMetricsNotification notification) {
+    if (notification.depth != 0) {
+      return false;
+    }
+    final viewportDimension = notification.metrics.viewportDimension;
+    final resized =
+        _viewportDimension != null && _viewportDimension != viewportDimension;
+    _viewportDimension = viewportDimension;
+    if (resized && widget.enable && !_isAtEnd(notification.metrics)) {
+      _scheduleJumpToEnd();
+    }
+    return false;
+  }
+
+  bool _handleScrollNotification(ScrollNotification notification) {
+    if (notification.depth != 0) {
+      return false;
+    }
+    if (notification is ScrollStartNotification &&
+        notification.dragDetails != null) {
+      _userScrolling = true;
+    }
+    if (notification is ScrollEndNotification && _userScrolling) {
+      _userScrolling = false;
+      _resumeFollow();
+    }
+    if (notification is UserScrollNotification) {
+      if (notification.direction == ScrollDirection.forward) {
+        _followDeferred = false;
+        widget.onCancelToEnd?.call();
+      }
+      return false;
+    }
+    if (!widget.enable &&
+        notification is ScrollEndNotification &&
+        _isAtEnd(notification.metrics)) {
+      widget.onResumeToEnd?.call();
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return NotificationListener<UserScrollNotification>(
-      onNotification: (notification) {
-        if (notification.direction == ScrollDirection.forward) {
-          widget.onCancelToEnd?.call();
-        }
-        return false;
-      },
-      child: widget.child,
+    return NotificationListener<ScrollMetricsNotification>(
+      onNotification: _handleMetricsNotification,
+      child: NotificationListener<ScrollNotification>(
+        onNotification: _handleScrollNotification,
+        child: widget.child,
+      ),
     );
   }
 }
