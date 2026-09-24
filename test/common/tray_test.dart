@@ -9,30 +9,30 @@ void main() {
 
     test('windows loads ico files from the windows directory', () {
       expect(
-        windows.getTrayIcon(isStart: false, tunEnable: false),
+        windows.getTrayIcon(isStart: false, tunEnable: false, safeMode: false),
         'assets/images/tray/windows/status_1.ico',
       );
       expect(
-        windows.getTrayIcon(isStart: true, tunEnable: false),
+        windows.getTrayIcon(isStart: true, tunEnable: false, safeMode: false),
         'assets/images/tray/windows/status_2.ico',
       );
       expect(
-        windows.getTrayIcon(isStart: true, tunEnable: true),
+        windows.getTrayIcon(isStart: true, tunEnable: true, safeMode: false),
         'assets/images/tray/windows/status_3.ico',
       );
     });
 
     test('linux loads png files from the unix directory', () {
       expect(
-        linux.getTrayIcon(isStart: false, tunEnable: false),
+        linux.getTrayIcon(isStart: false, tunEnable: false, safeMode: false),
         'assets/images/tray/unix/status_1.png',
       );
       expect(
-        linux.getTrayIcon(isStart: true, tunEnable: false),
+        linux.getTrayIcon(isStart: true, tunEnable: false, safeMode: false),
         'assets/images/tray/unix/status_2.png',
       );
       expect(
-        linux.getTrayIcon(isStart: true, tunEnable: true),
+        linux.getTrayIcon(isStart: true, tunEnable: true, safeMode: false),
         'assets/images/tray/unix/status_3.png',
       );
     });
@@ -44,8 +44,45 @@ void main() {
         (true, true),
       ]) {
         expect(
-          macOS.getTrayIcon(isStart: isStart, tunEnable: tunEnable),
+          macOS.getTrayIcon(
+            isStart: isStart,
+            tunEnable: tunEnable,
+            safeMode: false,
+          ),
           'assets/images/tray/unix/status_1.png',
+        );
+      }
+    });
+
+    test('safe mode shows its own icon whatever the core is doing', () {
+      for (final (isStart, tunEnable) in [
+        (false, false),
+        (true, false),
+        (true, true),
+      ]) {
+        expect(
+          windows.getTrayIcon(
+            isStart: isStart,
+            tunEnable: tunEnable,
+            safeMode: true,
+          ),
+          'assets/images/tray/windows/status_4.ico',
+        );
+        expect(
+          linux.getTrayIcon(
+            isStart: isStart,
+            tunEnable: tunEnable,
+            safeMode: true,
+          ),
+          'assets/images/tray/unix/status_4.png',
+        );
+        expect(
+          macOS.getTrayIcon(
+            isStart: isStart,
+            tunEnable: tunEnable,
+            safeMode: true,
+          ),
+          'assets/images/tray/unix/status_4.png',
         );
       }
     });

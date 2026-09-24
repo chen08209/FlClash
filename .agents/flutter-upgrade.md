@@ -29,3 +29,43 @@ listed in the SDK's `CHANGELOG.md`.
   changelog lists #191538). Before dropping the step, build the Intel DMG without it and scroll the proxies and
   dashboard pages on an Intel Mac with its integrated GPU driving the built-in display; an external display can
   switch to the discrete GPU and hide the flicker.
+
+## Windows view visibility forwarded by the runner
+
+- **Bug:** the Windows embedder's `WindowsLifecycleManager` counts the Flutter view as a window of its own and keeps
+  it visible until the view is sized to zero. Hiding the top-level window never resizes the view, and the `window`
+  plugin keeps it sized while minimized, so the app was never told `hidden`: animations kept rendering in the tray
+  and `appVisibleProvider` stayed true.
+- **Workaround:** `WindowPluginForwardVisibility` in the `window` plugin's
+  `windows/include/window/window_plugin_runner.h` hands the top-level window's `WM_SHOWWINDOW` and `WM_SIZE` to
+  `ProcessExternalWindowMessage` for the view's HWND, so the view shows and hides with its window.
+  `FlutterWindow::MessageHandler` in `windows/runner/flutter_window.cpp` calls it before `HandleTopLevelWindowProc`;
+  the Flutter runner template has no such call, so keep it when regenerating the runner.
+- **Remove when:** the engine hides the view together with its top-level window. Check with the proxy running and
+  the window focused: hiding it to the tray and minimizing it must each log `AppLifecycleState.hidden`.
+
+## macOS activation resumes a hidden window
+
+- **Bug:** `handleWillBecomeActive` in the macOS engine's `FlutterEngine.mm` resumes when any window in
+  `NSApp.windows` is visible, and the tray's `NSStatusBarWindow` always is. Activating the app while its window was
+  minimized or hidden, such as Cmd-Tab back to a minimized window, reported `resumed`, and the next deactivation
+  `inactive`, so frames ran until the window was shown again.
+- **Workaround:** the `window` plugin observes will-become-active and will-resign-active and, once the engine has
+  answered, sends `AppLifecycleState.hidden` on `flutter/lifecycle` while its window is not visible
+  (`applicationActivityChanged` in `WindowPlugin.swift`).
+- **Remove when:** the engine ignores status item windows on activation. Check without the workaround: minimize the
+  window, switch to another app, then Cmd-Tab back without restoring it; the log must stay at
+  `AppLifecycleState.hidden`.
+
+## Linux minimize on Wayland reads as inactive
+
+- **Bug:** the Linux engine reports `hidden` for `GDK_WINDOW_STATE_ICONIFIED`, but xdg-shell has no minimized state,
+  so GTK 3 never sets it on Wayland. A minimized window reported only its focus loss, as `inactive`, and kept
+  rendering at the display rate (GNOME 46).
+- **Workaround:** the `window` plugin's Linux `minimize` records the time, and a focus loss within 500 ms of it sends
+  `AppLifecycleState.hidden`. Its `window-state-event` handler is connected after the engine's, so that message
+  follows the engine's `inactive`; the compositor focuses the window when it restores it, which the engine reports as
+  `resumed`. A minimize the compositor starts itself (Super+H, the dock) is not covered.
+- **Remove when:** the Linux engine reports minimized windows on Wayland, which needs GTK 4 or xdg-shell's
+  `suspended` state. Check in a GNOME Wayland session without the workaround: minimizing from the caption button
+  must log `AppLifecycleState.hidden`.

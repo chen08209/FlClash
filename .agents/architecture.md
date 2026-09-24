@@ -848,9 +848,13 @@ table. `lib/common/window.dart` and `lib/manager/window_manager.dart` are the on
 - Position and size changes surface as one `geometry-changed` event that each platform coalesces natively (150 ms
   after the last `WM_WINDOWPOSCHANGED`, did-move/did-resize, or configure-event); `WindowManager` only debounces the
   capture on top of it.
-- Windows: with `titleBarStyle: hidden`, `WM_NCCALCSIZE` lets `DefWindowProc` compute the client rect and then puts
-  the top edge back (plus the frame height when maximized, so the taskbar stays uncovered; plus 1 px otherwise, which
-  Windows 11 needs to draw the top border and Windows 10 needs to avoid a white line). Fullscreen is emulated by the
+- Windows: with `titleBarStyle: hidden`, `WM_NCCALCSIZE` takes the frame insets from `AdjustWindowRectExForDpi` and
+  keeps the client rect at the top edge (plus the frame height when maximized, so the taskbar stays uncovered; plus
+  1 px on Windows 11, which draws the top border only into a non-client strip; none on Windows 10, where DWM draws
+  the whole caption over any strip shorter than one). Windows 10 gets its top border the Windows Terminal way
+  instead: the DWM frame is extended over the caption height, the plugin places the Flutter view 1 px lower and
+  paints that row black, which DWM treats as alpha 0, and hit-tests it as `HTTOP`; see `plugins/window/README.md`.
+  The plugin therefore owns the view placement on `WM_SIZE`. Fullscreen is emulated by the
   plugin, which raises `enter-full-screen` and
   `leave-full-screen` itself and mutes `WM_SIZE` while it is on. The find-running-window IPC
   (`WindowPluginFindRunningWindow`/`WindowPluginActivateWindow`) registers a window message from the executable path
