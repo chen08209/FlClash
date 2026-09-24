@@ -225,9 +225,14 @@ class VpnService : SystemVpnService(), ManagedService {
         if (!accessControl.enable) return
         when (accessControl.mode) {
             AccessControlMode.ACCEPT_SELECTED -> {
-                (accessControl.acceptList + packageName).forEach { name ->
-                    addApplication(name, ::addAllowedApplication)
-                }
+                // Some Google apps route part of their traffic through the
+                // com.google.android.gms UID, so auto-allow it here; devices
+                // without GMS are skipped by addApplication's guard.
+                (accessControl.acceptList + packageName + GOOGLE_PLAY_SERVICES)
+                    .toSet()
+                    .forEach { name ->
+                        addApplication(name, ::addAllowedApplication)
+                    }
             }
 
             AccessControlMode.REJECT_SELECTED -> {
@@ -293,5 +298,6 @@ class VpnService : SystemVpnService(), ManagedService {
         private const val NET_ANY6 = "::"
         private const val LOCAL_HOST = "127.0.0.1"
         private const val MTU = 9000
+        private const val GOOGLE_PLAY_SERVICES = "com.google.android.gms"
     }
 }
