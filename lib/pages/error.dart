@@ -1,5 +1,7 @@
 import 'package:fl_clash/common/color.dart';
 import 'package:fl_clash/common/shape.dart';
+import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/widgets/navigation_dock.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
@@ -28,8 +30,8 @@ class InitErrorScreen extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(
-                    Icons.report_problem,
+                  GlyphIcon(
+                    AppGlyphs.warning,
                     color: colorScheme.error,
                     size: 32,
                   ),
@@ -89,12 +91,14 @@ class InitErrorScreen extends StatelessWidget {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _copyToClipboard(context),
-        label: const Text('Copy Details'),
-        icon: const Icon(Icons.copy),
-        backgroundColor: colorScheme.error,
-        foregroundColor: colorScheme.onError,
+      floatingActionButton: ElasticButton(
+        child: FloatingActionButton.extended(
+          onPressed: () => _copyToClipboard(context),
+          label: const Text('Copy Details'),
+          icon: const GlyphIcon(AppGlyphs.copy, fill: 1),
+          backgroundColor: colorScheme.error,
+          foregroundColor: colorScheme.onError,
+        ),
       ),
     );
   }

@@ -1,28 +1,32 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'fade_box.dart';
+import 'scaffold.dart';
 import 'text.dart';
 
 class Info {
   final String label;
-  final IconData? iconData;
+  final Glyph? glyph;
 
-  const Info({required this.label, this.iconData});
+  const Info({required this.label, this.glyph});
 }
 
 class InfoHeader extends StatelessWidget {
   final Info info;
   final List<Widget> actions;
   final EdgeInsets? padding;
+  final double? space;
 
   const InfoHeader({
     super.key,
     required this.info,
     this.padding,
+    this.space,
     List<Widget>? actions,
   }) : actions = actions ?? const [];
 
@@ -43,9 +47,9 @@ class InfoHeader extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.max,
               children: [
-                if (info.iconData != null) ...[
-                  Icon(
-                    info.iconData,
+                if (info.glyph case final glyph?) ...[
+                  GlyphIcon(
+                    glyph,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 8),
@@ -73,6 +77,7 @@ class InfoHeader extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.end,
+                spacing: space ?? appBarActionSpace,
                 children: [...actions],
               ),
             ),
@@ -81,6 +86,8 @@ class InfoHeader extends StatelessWidget {
     );
   }
 }
+
+const commonCardIconSize = 20.0;
 
 class CommonCard extends StatelessWidget {
   const CommonCard({
@@ -93,6 +100,7 @@ class CommonCard extends StatelessWidget {
     this.padding,
     this.enterAnimated = false,
     this.info,
+    this.infoPadding,
     this.onLongPress,
     this.shape,
     this.isError = false,
@@ -112,6 +120,7 @@ class CommonCard extends StatelessWidget {
   final Widget child;
   final EdgeInsets? padding;
   final Info? info;
+  final EdgeInsets? infoPadding;
   final CommonCardType type;
   final double? radius;
   final OutlinedBorder? shape;
@@ -207,7 +216,7 @@ class CommonCard extends StatelessWidget {
             FilledButton.styleFrom(
               padding: padding ?? EdgeInsets.zero,
               shape: shape ?? AppShape.all(radius ?? AppCorner.md),
-              iconSize: 20,
+              iconSize: commonCardIconSize,
               iconColor: _buildIconColor(context),
               foregroundColor: _buildForegroundColor(context),
               side: BorderSide.none,
@@ -231,7 +240,7 @@ class CommonCard extends StatelessWidget {
             OutlinedButton.styleFrom(
               padding: padding ?? EdgeInsets.zero,
               shape: shape ?? AppShape.all(radius ?? AppCorner.md),
-              iconSize: 20,
+              iconSize: commonCardIconSize,
               iconColor: _buildIconColor(context),
               backgroundColor: _buildBackgroundColor(context),
               foregroundColor: _buildForegroundColor(context),
@@ -256,7 +265,7 @@ class CommonCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           InfoHeader(
-            padding: baseInfoEdgeInsets.copyWith(bottom: 0),
+            padding: infoPadding ?? baseInfoEdgeInsets.copyWith(bottom: 0),
             info: info!,
           ),
           Flexible(flex: 1, child: child),
@@ -288,8 +297,17 @@ class CommonCard extends StatelessWidget {
               }
               final focusNode = FocusManager.instance.primaryFocus;
               final context = focusNode?.context;
-              if (focusNode == null ||
-                  context == null ||
+              if (focusNode == null || context == null) {
+                return KeyEventResult.ignored;
+              }
+              final action = focusNode.descendants
+                  .where((node) => node.skipTraversal && node.canRequestFocus)
+                  .firstOrNull;
+              if (action != null) {
+                action.requestFocus();
+                return KeyEventResult.handled;
+              }
+              if (focusNode.skipTraversal ||
                   context.findAncestorWidgetOfExactType<IconButton>() != null) {
                 return KeyEventResult.ignored;
               }
@@ -307,7 +325,9 @@ class CommonCard extends StatelessWidget {
   }
 }
 
-class _SkipTraversalFocusNode extends FocusNode {
+/// A focus node left out of the traversal that walks between cards: a card
+/// that must not be a stop, or an action inside a card reached by arrow right.
+class SkipTraversalFocusNode extends FocusNode {
   @override
   bool get skipTraversal => true;
 }
@@ -322,7 +342,7 @@ class _SkipTraversalScope extends StatefulWidget {
 }
 
 class _SkipTraversalScopeState extends State<_SkipTraversalScope> {
-  final FocusNode _focusNode = _SkipTraversalFocusNode();
+  final FocusNode _focusNode = SkipTraversalFocusNode();
 
   @override
   void dispose() {
@@ -346,7 +366,7 @@ class SelectIcon extends StatelessWidget {
       shape: AppShape.circle,
       child: Container(
         padding: const EdgeInsets.all(4),
-        child: const Icon(Icons.check, size: 16),
+        child: const GlyphIcon(AppGlyphs.check, size: 16),
       ),
     );
   }

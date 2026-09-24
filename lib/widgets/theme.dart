@@ -14,7 +14,7 @@ class CommonMinFilledButtonTheme extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           visualDensity: VisualDensity.compact,
-        ),
+        ).merge(FilledButtonTheme.of(context).style),
       ),
       child: child,
     );
@@ -35,7 +35,7 @@ class CommonMinIconButtonTheme extends StatelessWidget {
           visualDensity: VisualDensity.compact,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           iconSize: 20.ap,
-        ),
+        ).merge(IconButtonTheme.of(context).style),
       ),
       child: child,
     );
