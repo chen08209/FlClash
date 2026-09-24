@@ -155,6 +155,7 @@ abstract class RustLibApi extends BaseApi {
 
   Future<List<RustFoldRange>> crateApiEditorFoldsComputeAll({
     required RopeBridge rope,
+    required BigInt tabSize,
   });
 
   BigInt? crateApiEditorFoldsFindMatchingBracket({
@@ -726,6 +727,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @override
   Future<List<RustFoldRange>> crateApiEditorFoldsComputeAll({
     required RopeBridge rope,
+    required BigInt tabSize,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -735,6 +737,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             rope,
             serializer,
           );
+          sse_encode_usize(tabSize, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -747,14 +750,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: null,
         ),
         constMeta: kCrateApiEditorFoldsComputeAllConstMeta,
-        argValues: [rope],
+        argValues: [rope, tabSize],
         apiImpl: this,
       ),
     );
   }
 
   TaskConstMeta get kCrateApiEditorFoldsComputeAllConstMeta =>
-      const TaskConstMeta(debugName: "folds_compute_all", argNames: ["rope"]);
+      const TaskConstMeta(
+        debugName: "folds_compute_all",
+        argNames: ["rope", "tabSize"],
+      );
 
   @override
   BigInt? crateApiEditorFoldsFindMatchingBracket({
