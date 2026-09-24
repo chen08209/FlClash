@@ -230,7 +230,9 @@ surface. It is shown only outside dashboard edit mode and only when `coreLib == 
 
 Proxy delay testing follows the same failure-safe UI rule. `ProxiesAction._runDelayTests` marks its keys in
 `pendingDelayTestsProvider` and releases them in `finally`, and a test the Core does not answer leaves the last
-measurement in place; the delay-test bullets under Core API Safety in `.agents/rules.md` give the reasons. A group's delay
+measurement in place; the delay-test bullets under Core API Safety in `.agents/rules.md` give the reasons. A key stays
+`queued` until the `TaskPool` actually runs it, so node cards animate a loader for at most `maxConcurrentDelayTests`
+nodes and show a static glyph for the rest; a loader on every queued node made fast scrolling drop frames. A group's delay
 test button, the tab page's action and the list page's group header alike, spins while `delayTestingGroupsProvider`
 holds the group; `delayTestPageGroup` marks it, ignores a second request for the same group, and clears it in `finally`,
 so an RPC failure cannot leave the button spinning and remounting a header does not lose the state.

@@ -108,6 +108,8 @@ extension GroupTypeExtension on GroupType {
 
 enum UsedProxy { GLOBAL, DIRECT, REJECT }
 
+enum DelayTestPhase { queued, running }
+
 extension UsedProxyExtension on UsedProxy {
   static List<String> get valueList =>
       UsedProxy.values.map((e) => e.toString().split('.').last).toList();
@@ -121,15 +123,46 @@ enum ViewMode { mobile, laptop, desktop }
 
 enum LogLevel { debug, info, warning, error, silent }
 
-extension LogLevelExt on LogLevel {
-  Color? color(BuildContext context) {
+enum RecordTone { muted, neutral, warning, error }
+
+extension RecordToneExt on RecordTone {
+  Color? accentColor(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return switch (this) {
-      LogLevel.silent => colorScheme.outline,
-      LogLevel.debug => colorScheme.onSurfaceVariant,
-      LogLevel.info => null,
-      LogLevel.warning => colorScheme.tertiary,
-      LogLevel.error => colorScheme.error,
+      RecordTone.warning => colorScheme.tertiary,
+      RecordTone.error => colorScheme.error,
+      RecordTone.muted || RecordTone.neutral => null,
+    };
+  }
+
+  Color? tintColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return switch (this) {
+      RecordTone.warning => colorScheme.tertiaryContainer.withValues(
+        alpha: 0.2,
+      ),
+      RecordTone.error => colorScheme.errorContainer.withValues(alpha: 0.2),
+      RecordTone.muted || RecordTone.neutral => null,
+    };
+  }
+
+  Color labelColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return switch (this) {
+      RecordTone.muted => colorScheme.outline,
+      RecordTone.neutral => colorScheme.onSurfaceVariant,
+      RecordTone.warning => colorScheme.onTertiaryContainer,
+      RecordTone.error => colorScheme.onErrorContainer,
+    };
+  }
+
+  Color labelContainerColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return switch (this) {
+      RecordTone.muted => colorScheme.surfaceContainerHigh,
+      RecordTone.neutral => colorScheme.surfaceContainerHighest,
+      RecordTone.warning => colorScheme.tertiaryContainer,
+      RecordTone.error => colorScheme.errorContainer,
     };
   }
 }
@@ -344,7 +377,7 @@ enum HotAction {
   exit,
 }
 
-enum ProxiesIconStyle { none, standard, icon }
+enum ProxiesIconStyle { filled, plain, hidden }
 
 enum FontFamily {
   twEmoji('Twemoji'),
@@ -662,6 +695,7 @@ enum LoadingTag {
   access,
   proxies,
   batteryOptimization,
+  checkUpdate,
 }
 
 enum CoreStatus { connecting, connected, disconnected }

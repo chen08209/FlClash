@@ -44,6 +44,7 @@ export 'provider_reader.dart';
 export 'proxy.dart';
 export 'request.dart';
 export 'scroll.dart';
+export 'search.dart';
 export 'shape.dart';
 export 'snowflake.dart';
 export 'string.dart';

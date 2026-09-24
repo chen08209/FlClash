@@ -338,4 +338,119 @@ void main() {
       expect(group.getCurrentSelectedName(''), '');
     });
   });
+
+  group('computeHideTimeout', () {
+    const defaultTestUrl = 'https://default.test';
+
+    List<Group> hide({
+      required List<Group> groups,
+      required DelayMap delayMap,
+      Map<String, String> selectedMap = const {},
+    }) {
+      return computeHideTimeout(
+        groups: groups,
+        allGroups: groups,
+        delayMap: delayMap,
+        selectedMap: selectedMap,
+        defaultTestUrl: defaultTestUrl,
+      );
+    }
+
+    const group = Group(
+      name: 'sel',
+      type: GroupType.Selector,
+      all: [
+        Proxy(name: 'fast', type: 'ss'),
+        Proxy(name: 'slow', type: 'ss'),
+        Proxy(name: 'untested', type: 'ss'),
+      ],
+    );
+
+    test('drops the proxies whose last probe timed out', () {
+      final groups = hide(
+        groups: [group],
+        delayMap: {
+          defaultTestUrl: {'fast': 120, 'slow': -1},
+        },
+      );
+      expect(groups.single.all.map((proxy) => proxy.name), [
+        'fast',
+        'untested',
+      ]);
+    });
+
+    test('keeps a timed-out proxy while it is the selected one', () {
+      final groups = hide(
+        groups: [group],
+        delayMap: {
+          defaultTestUrl: {'slow': -1},
+        },
+        selectedMap: {'sel': 'slow'},
+      );
+      expect(groups.single.all.map((proxy) => proxy.name), [
+        'fast',
+        'slow',
+        'untested',
+      ]);
+    });
+
+    test('keeps built-in adapters a delay probe cannot reach', () {
+      const withBuiltins = Group(
+        name: 'sel',
+        type: GroupType.Selector,
+        all: [
+          Proxy(name: 'slow', type: 'ss'),
+          Proxy(name: 'REJECT', type: 'Reject'),
+          Proxy(name: 'PASS', type: 'Pass'),
+          Proxy(name: 'blocked', type: 'Selector'),
+        ],
+      );
+      const blocked = Group(
+        name: 'blocked',
+        type: GroupType.Selector,
+        all: [Proxy(name: 'REJECT', type: 'Reject')],
+      );
+      final groups = hide(
+        groups: [withBuiltins, blocked],
+        delayMap: {
+          defaultTestUrl: {'slow': -1, 'REJECT': -1, 'PASS': -1},
+        },
+      );
+      expect(groups.first.all.map((proxy) => proxy.name), [
+        'REJECT',
+        'PASS',
+        'blocked',
+      ]);
+    });
+
+    test("reads a group's own test url", () {
+      const withTestUrl = Group(
+        name: 'sel',
+        type: GroupType.Selector,
+        testUrl: 'https://group.test',
+        all: [
+          Proxy(name: 'fast', type: 'ss'),
+          Proxy(name: 'slow', type: 'ss'),
+        ],
+      );
+      expect(
+        hide(
+          groups: [withTestUrl],
+          delayMap: {
+            defaultTestUrl: {'slow': -1},
+          },
+        ).single.all,
+        hasLength(2),
+      );
+      expect(
+        hide(
+          groups: [withTestUrl],
+          delayMap: {
+            'https://group.test': {'slow': -1},
+          },
+        ).single.all.map((proxy) => proxy.name),
+        ['fast'],
+      );
+    });
+  });
 }
