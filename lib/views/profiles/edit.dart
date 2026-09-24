@@ -167,9 +167,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
             await appPath.getProfilePath(widget.profile.id.toString()),
           ) ??
           '',
-      onSave: (context, _, content) {
-        _handleSaveEdit(context, content);
-      },
+      onSave: (context, _, content) => _handleSaveEdit(context, content),
       onPop: (context, _, content) async {
         if (content == _rawText) {
           return true;

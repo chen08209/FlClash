@@ -172,6 +172,7 @@
   "view": "View",
   "cut": "Cut",
   "copy": "Copy",
+  "clipboardWriteFailed": "Couldn't copy to the clipboard. The selection may be too large",
   "paste": "Paste",
   "testUrl": "Test URL",
   "sync": "Sync",
@@ -771,5 +772,10 @@
   "overwriteIssueSubscriptionGroupMissingProxies": "The profile's own proxy groups name proxies that the custom proxies no longer include: {names}",
   "providerInUse": "{label} is still used by the custom proxy groups or rules of {profiles}. Remove it there first",
   "providerSourceSubscription": "Subscription",
-  "providerRenameShadowed": "The subscriptions of {profiles} already have {label}, so those profiles would switch to theirs. Choose another name"
+  "providerRenameShadowed": "The subscriptions of {profiles} already have {label}, so those profiles would switch to theirs. Choose another name",
+  "fontSize": "Size",
+  "large": "Large",
+  "extraLarge": "Extra large",
+  "switchProfile": "Switch profile",
+  "lastUpdated": "Last updated"
 }

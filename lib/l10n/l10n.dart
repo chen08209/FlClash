@@ -1360,6 +1360,16 @@ class AppLocalizations {
     return Intl.message('Copy', name: 'copy', desc: '', args: []);
   }
 
+  /// `Couldn't copy to the clipboard. The selection may be too large`
+  String get clipboardWriteFailed {
+    return Intl.message(
+      'Couldn\'t copy to the clipboard. The selection may be too large',
+      name: 'clipboardWriteFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Paste`
   String get paste {
     return Intl.message('Paste', name: 'paste', desc: '', args: []);
@@ -6400,6 +6410,41 @@ class AppLocalizations {
       name: 'providerRenameShadowed',
       desc: '',
       args: [profiles, label],
+    );
+  }
+
+  /// `Size`
+  String get fontSize {
+    return Intl.message('Size', name: 'fontSize', desc: '', args: []);
+  }
+
+  /// `Large`
+  String get large {
+    return Intl.message('Large', name: 'large', desc: '', args: []);
+  }
+
+  /// `Extra large`
+  String get extraLarge {
+    return Intl.message('Extra large', name: 'extraLarge', desc: '', args: []);
+  }
+
+  /// `Switch profile`
+  String get switchProfile {
+    return Intl.message(
+      'Switch profile',
+      name: 'switchProfile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Last updated`
+  String get lastUpdated {
+    return Intl.message(
+      'Last updated',
+      name: 'lastUpdated',
+      desc: '',
+      args: [],
     );
   }
 }
