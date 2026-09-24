@@ -1,0 +1,346 @@
+#requires -Version 7.0
+[CmdletBinding()]
+param(
+    [ValidateSet('Status', 'Verify', 'Commit', 'Build', 'Publish', 'All')]
+    [string]$Action = 'All',
+
+    [string]$Message,
+
+    [string[]]$Path = @(),
+
+    [string[]]$Test = @(),
+
+    [string]$Remote = 'fork',
+
+    [string]$Branch,
+
+    [ValidatePattern('^v[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z][0-9A-Za-z.-]*)?$')]
+    [string]$Tag,
+
+    [ValidatePattern('^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$')]
+    [string]$Repository = 'nekobyran/FlClash',
+
+    [switch]$Push,
+
+    [switch]$IncludeAll,
+
+    [switch]$SkipAnalyze,
+
+    [switch]$SkipTests,
+
+    [switch]$FullTests,
+
+    [switch]$BuildRelease,
+
+    [switch]$PublishRelease,
+
+    [switch]$DryRun
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+$ProjectRoot = if ([string]::IsNullOrWhiteSpace($env:FLCLASHPLUS_UPLOAD_ROOT)) {
+    [IO.Path]::GetFullPath((Split-Path -Parent $PSCommandPath))
+}
+else {
+    [IO.Path]::GetFullPath($env:FLCLASHPLUS_UPLOAD_ROOT)
+}
+$ReleaseScript = Join-Path $ProjectRoot 'command/Publish-FlClashPlusRelease.ps1'
+$createdCommit = $null
+$pushed = $false
+
+Set-Location -LiteralPath $ProjectRoot
+$Path = @(
+    $Path |
+        ForEach-Object { [string]$_ -split ',' } |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+)
+$Test = @(
+    $Test |
+        ForEach-Object { [string]$_ -split ',' } |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+)
+
+function Invoke-CommandChecked {
+    param(
+        [Parameter(Mandatory)][string]$FilePath,
+        [Parameter(Mandatory)][string[]]$Arguments
+    )
+
+    Write-Host ('> {0} {1}' -f $FilePath, ($Arguments -join ' '))
+    & $FilePath @Arguments
+    $exitCode = if ($null -eq $global:LASTEXITCODE) { 0 } else { $global:LASTEXITCODE }
+    Write-Host ('EXIT={0}' -f $exitCode)
+    if ($exitCode -ne 0) {
+        throw ('{0} failed with exit code {1}' -f $FilePath, $exitCode)
+    }
+}
+
+function Invoke-GitChecked {
+    param([Parameter(Mandatory)][string[]]$Arguments)
+    Invoke-CommandChecked -FilePath 'git' -Arguments $Arguments
+}
+
+function Invoke-GitOutput {
+    param([Parameter(Mandatory)][string[]]$Arguments)
+
+    $output = & git @Arguments
+    $exitCode = if ($null -eq $global:LASTEXITCODE) { 0 } else { $global:LASTEXITCODE }
+    if ($exitCode -ne 0) {
+        throw ('git {0} failed with exit code {1}' -f ($Arguments -join ' '), $exitCode)
+    }
+    return @($output)
+}
+
+function Test-GitSuccess {
+    param([Parameter(Mandatory)][string[]]$Arguments)
+
+    & git @Arguments *> $null
+    return $global:LASTEXITCODE -eq 0
+}
+
+function Assert-NoGitOperation {
+    $gitDir = Invoke-GitOutput @('rev-parse', '--git-dir') | Select-Object -First 1
+    $gitDir = [IO.Path]::GetFullPath($gitDir)
+    $blocked = @(
+        'MERGE_HEAD',
+        'CHERRY_PICK_HEAD',
+        'REVERT_HEAD',
+        'rebase-merge',
+        'rebase-apply'
+    )
+    foreach ($entry in $blocked) {
+        if (Test-Path -LiteralPath (Join-Path $gitDir $entry)) {
+            throw ('Refusing to run during an unfinished git operation: {0}' -f $entry)
+        }
+    }
+}
+
+function Get-CurrentBranch {
+    if (-not [string]::IsNullOrWhiteSpace($Branch)) {
+        return $Branch
+    }
+    $current = Invoke-GitOutput @('rev-parse', '--abbrev-ref', 'HEAD') | Select-Object -First 1
+    if ($current -eq 'HEAD') {
+        throw 'Detached HEAD needs an explicit -Branch value before pushing.'
+    }
+    return $current
+}
+
+function Get-StagedFiles {
+    return @(Invoke-GitOutput @('diff', '--cached', '--name-only', '--diff-filter=ACMRT'))
+}
+
+function Get-WorktreeStatus {
+    return @(Invoke-GitOutput @('status', '--short', '--untracked-files=no'))
+}
+
+function Show-Status {
+    $head = Invoke-GitOutput @('log', '-1', '--oneline') | Select-Object -First 1
+    $branchName = Invoke-GitOutput @('rev-parse', '--abbrev-ref', 'HEAD') | Select-Object -First 1
+    Write-Host ('HEAD: {0}' -f $head)
+    Write-Host ('Branch: {0}' -f $branchName)
+    Write-Host 'Status:'
+            $status = @(Get-WorktreeStatus)
+    if ($status.Count -eq 0) {
+        Write-Host '  clean'
+    }
+    else {
+        $status | ForEach-Object { Write-Host ('  {0}' -f $_) }
+    }
+    Write-Host 'Staged:'
+    $staged = @(Get-StagedFiles)
+    if ($staged.Count -eq 0) {
+        Write-Host '  none'
+    }
+    else {
+        $staged | ForEach-Object { Write-Host ('  {0}' -f $_) }
+    }
+}
+
+function New-SideEffectSnapshot {
+    $paths = @(
+        'analysis_options.yaml',
+        'pubspec.lock',
+        'distribute_options.yaml',
+        'windows/packaging/exe/make_config.yaml',
+        'env.json',
+        'android/app/keystore.jks'
+    )
+    $snapshot = @{}
+    foreach ($item in $paths) {
+        $exists = Test-Path -LiteralPath $item -PathType Leaf
+        $clean = (Test-GitSuccess @('diff', '--quiet', '--', $item)) -and
+            (Test-GitSuccess @('diff', '--cached', '--quiet', '--', $item))
+        $snapshot[$item] = [pscustomobject]@{
+            Exists = $exists
+            Clean = $clean
+        }
+    }
+    return $snapshot
+}
+
+function Restore-SideEffects {
+    param([Parameter(Mandatory)][hashtable]$Snapshot)
+
+    foreach ($entry in $Snapshot.GetEnumerator()) {
+        $path = [string]$entry.Key
+        $state = $entry.Value
+        if (-not $state.Clean) {
+            continue
+        }
+        if ($state.Exists) {
+            if (-not (Test-GitSuccess @('diff', '--quiet', '--', $path))) {
+                Invoke-GitChecked @('restore', '--', $path)
+            }
+        }
+        elseif (Test-Path -LiteralPath $path -PathType Leaf) {
+            Remove-Item -LiteralPath $path -Force
+        }
+    }
+}
+
+function Stage-RequestedChanges {
+    if ($IncludeAll) {
+        Invoke-GitChecked @('add', '-A')
+        return
+    }
+    if ($Path.Count -gt 0) {
+        Invoke-GitChecked (@('add', '--') + $Path)
+    }
+}
+
+function Assert-StagedChanges {
+    $staged = @(Get-StagedFiles)
+    if ($staged.Count -eq 0) {
+        throw 'No staged changes. Pass -Path, pass -IncludeAll, or stage files before running upload.'
+    }
+    return $staged
+}
+
+function Invoke-Verification {
+    param([switch]$RequireStaged)
+
+    if ($RequireStaged) {
+        [void](Assert-StagedChanges)
+    }
+    Invoke-GitChecked @('diff', '--cached', '--check')
+    if (-not $SkipAnalyze) {
+        Invoke-CommandChecked -FilePath 'flutter' -Arguments @('analyze', '--no-fatal-infos')
+    }
+    if (-not $SkipTests) {
+        if ($FullTests) {
+            Invoke-CommandChecked -FilePath 'flutter' -Arguments @('test', '--reporter', 'expanded')
+        }
+        elseif ($Test.Count -gt 0) {
+            Invoke-CommandChecked -FilePath 'flutter' -Arguments (@('test') + $Test)
+        }
+    }
+}
+
+function Invoke-Commit {
+    $staged = Assert-StagedChanges
+    if ([string]::IsNullOrWhiteSpace($Message)) {
+        throw 'Commit message is required. Pass -Message ''your message''.'
+    }
+    Write-Host 'Files to commit:'
+    $staged | ForEach-Object { Write-Host ('  {0}' -f $_) }
+    if ($DryRun) {
+        Write-Host 'Dry run: commit skipped.'
+        return
+    }
+    Invoke-GitChecked @('commit', '-m', $Message)
+    $script:createdCommit = Invoke-GitOutput @('rev-parse', 'HEAD') | Select-Object -First 1
+}
+
+function Invoke-ReleaseBuild {
+    if ([string]::IsNullOrWhiteSpace($Tag)) {
+        throw 'Release build requires -Tag vX.Y.Z-plus.N.'
+    }
+    if (-not (Test-Path -LiteralPath $ReleaseScript -PathType Leaf)) {
+        throw ('Release script not found: {0}' -f $ReleaseScript)
+    }
+    Invoke-CommandChecked -FilePath 'pwsh' -Arguments @(
+        '-NoLogo', '-NoProfile', '-File', $ReleaseScript,
+        '-Action', 'Plan', '-Tag', $Tag, '-Repository', $Repository
+    )
+    Invoke-CommandChecked -FilePath 'pwsh' -Arguments @(
+        '-NoLogo', '-NoProfile', '-File', $ReleaseScript,
+        '-Action', 'Build', '-Tag', $Tag, '-Repository', $Repository
+    )
+}
+
+function Invoke-Push {
+    $targetBranch = Get-CurrentBranch
+    if ($DryRun) {
+        Write-Host ('Dry run: push skipped for {0} HEAD:{1}.' -f $Remote, $targetBranch)
+        return
+    }
+    Invoke-GitChecked @('push', $Remote, ('HEAD:{0}' -f $targetBranch))
+    $script:pushed = $true
+}
+
+function Invoke-PublishRelease {
+    if ([string]::IsNullOrWhiteSpace($Tag)) {
+        throw 'Publish requires -Tag vX.Y.Z-plus.N.'
+    }
+    if (-not $PublishRelease) {
+        throw 'Publish requires the explicit -PublishRelease switch.'
+    }
+    Invoke-CommandChecked -FilePath 'pwsh' -Arguments @(
+        '-NoLogo', '-NoProfile', '-File', $ReleaseScript,
+        '-Action', 'Publish', '-Tag', $Tag, '-Repository', $Repository, '-Apply'
+    )
+    Invoke-CommandChecked -FilePath 'pwsh' -Arguments @(
+        '-NoLogo', '-NoProfile', '-File', $ReleaseScript,
+        '-Action', 'Verify', '-Tag', $Tag, '-Repository', $Repository
+    )
+}
+
+Assert-NoGitOperation
+
+if ($Action -eq 'Status') {
+    Show-Status
+    exit 0
+}
+
+$sideEffects = New-SideEffectSnapshot
+try {
+    if ($Action -in @('Verify', 'Commit', 'All')) {
+        Stage-RequestedChanges
+    }
+
+    if ($Action -in @('Verify', 'Commit', 'All')) {
+        Invoke-Verification -RequireStaged:($Action -in @('Commit', 'All'))
+    }
+
+    if ($Action -in @('Commit', 'All')) {
+        Invoke-Commit
+    }
+
+    if ($Action -eq 'Build' -or ($Action -eq 'All' -and $BuildRelease)) {
+        Invoke-ReleaseBuild
+    }
+
+    if ($Action -eq 'Publish') {
+        Invoke-PublishRelease
+    }
+
+    if ($Push -and $Action -in @('Commit', 'All')) {
+        Invoke-Push
+    }
+}
+catch {
+    Write-Error $_
+    if ($null -ne $createdCommit -and -not $pushed) {
+        Write-Warning ('Local commit remains unpushed: {0}' -f $createdCommit)
+        Write-Warning 'Rollback if needed: git reset --soft HEAD~1'
+    }
+    throw
+}
+finally {
+    Restore-SideEffects -Snapshot $sideEffects
+}
+
+Show-Status
