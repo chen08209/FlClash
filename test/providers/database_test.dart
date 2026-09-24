@@ -132,6 +132,23 @@ void main() {
       },
     );
 
+    test('put steps past a label an app-level proxy provider holds', () async {
+      await testDatabase.clashProvidersDao.putAll([
+        const ClashProvider(
+          id: 9,
+          kind: ProviderKind.proxy,
+          label: 'Shared nodes',
+          url: 'https://example.com/nodes.yaml',
+        ).toCompanion(),
+      ]);
+      await keepAlive(clashProvidersProvider(ProviderKind.proxy));
+
+      notifier.put(profile(1, label: 'Shared nodes'));
+      await pumpEventQueue();
+
+      expect(read().single.label, 'Shared nodes(1)');
+    });
+
     test('put falls back to the id when the profile has no label', () async {
       // Profile.normal() leaves the label empty when the download exposed no
       // filename, and optimizeLabel is the only thing that names it.
@@ -296,6 +313,23 @@ void main() {
 
     List<Script> read() => notifier.value;
 
+    test('order persists the new positions and lists by them', () async {
+      notifier.put(script(1, 'First'));
+      await pumpEventQueue();
+      notifier.put(script(2, 'Second'));
+      await pumpEventQueue();
+      notifier.put(script(3, 'Third'));
+      await pumpEventQueue();
+
+      notifier.order(2, 0);
+      await pumpEventQueue();
+
+      expect(read().map((item) => item.label), ['Third', 'First', 'Second']);
+      final rows = await testDatabase.scriptsDao.query().get();
+      expect(rows.map((item) => item.label), ['Third', 'First', 'Second']);
+      expect(rows.map((item) => item.order), [0, 1, 2]);
+    });
+
     test('put appends a new script and replaces an existing one', () async {
       notifier.put(script(1, 'First'));
       await pumpEventQueue();
@@ -358,12 +392,17 @@ void main() {
       expect(read().map((item) => item.id), [2], reason: 'rolled back');
     });
 
-    test('isExits matches on label', () async {
-      notifier.put(script(1, 'Known'));
+    test('put persists the source url and clears it again', () async {
+      const url = 'https://example.com/override.js';
+      notifier.put(script(1, 'Remote').copyWith(url: url));
       await pumpEventQueue();
 
-      expect(notifier.isExits('Known'), isTrue);
-      expect(notifier.isExits('Unknown'), isFalse);
+      expect((await testDatabase.scriptsDao.get(1).getSingle()).url, url);
+
+      notifier.put(script(1, 'Remote'));
+      await pumpEventQueue();
+
+      expect((await testDatabase.scriptsDao.get(1).getSingle()).url, isNull);
     });
   });
 
@@ -402,6 +441,24 @@ void main() {
       final rows = await testDatabase.rulesDao.queryGlobalAddedRules().get();
       expect(rows.map((item) => item.id), [2, 1]);
     });
+
+    test(
+      'putAll puts the batch ahead of existing rules in its order',
+      () async {
+        notifier.put(const Rule(id: 1, content: 'existing'));
+        await pumpEventQueue();
+
+        notifier.putAll(const [
+          Rule(id: 2, content: 'second'),
+          Rule(id: 3, content: 'third'),
+        ]);
+        expect(read().map((item) => item.id), [2, 3, 1], reason: 'optimistic');
+        await pumpEventQueue();
+
+        final rows = await testDatabase.rulesDao.queryGlobalAddedRules().get();
+        expect(rows.map((item) => item.id), [2, 3, 1]);
+      },
+    );
 
     test('delAll removes every listed rule', () async {
       notifier.put(const Rule(id: 1, content: 'first'));
@@ -719,15 +776,20 @@ void main() {
       );
     });
 
-    test('del removes the group', () async {
+    test('delAll removes every listed group', () async {
       expect(notifier.put(group(1, 'Gone')), isTrue);
       await pumpEventQueue();
-
-      notifier.del('Gone');
+      expect(notifier.put(group(2, 'AlsoGone')), isTrue);
+      await pumpEventQueue();
+      expect(notifier.put(group(3, 'Kept')), isTrue);
       await pumpEventQueue();
 
-      expect(read(), isEmpty);
-      expect(await testDatabase.proxyGroupsDao.query(profileId).get(), isEmpty);
+      notifier.delAll([1, 2]);
+      await pumpEventQueue();
+
+      expect(read().map((item) => item.id), [3]);
+      final rows = await testDatabase.proxyGroupsDao.query(profileId).get();
+      expect(rows.map((item) => item.id), [3]);
     });
 
     test('order moves a group and persists the new key', () async {
@@ -744,12 +806,12 @@ void main() {
       expect(rows.map((item) => item.id), before.reversed);
     });
 
-    test('del restores the previous list when the write fails', () async {
+    test('delAll restores the previous list when the write fails', () async {
       expect(notifier.put(group(1, 'Kept')), isTrue);
       await pumpEventQueue();
       await breakTable('proxy_groups');
 
-      final failure = captureWriteFailure(() => notifier.del('Kept'));
+      final failure = captureWriteFailure(() => notifier.delAll([1]));
       expect(read(), isEmpty, reason: 'optimistic');
 
       await failure;

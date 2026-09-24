@@ -41,3 +41,17 @@ class StringSetConverter extends TypeConverter<Set<String>, String> {
     return json.encode(value.toList());
   }
 }
+
+class JsonMapConverter extends TypeConverter<Map<String, dynamic>, String> {
+  const JsonMapConverter();
+
+  @override
+  Map<String, dynamic> fromSql(String fromDb) {
+    return Map<String, dynamic>.from(json.decode(fromDb));
+  }
+
+  @override
+  String toSql(Map<String, dynamic> value) {
+    return json.encode(value);
+  }
+}
