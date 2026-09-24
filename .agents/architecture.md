@@ -363,6 +363,24 @@ in `lib/views/config/network.dart` and `_appSettingToggle` in `lib/views/config/
 `lib/views/dashboard/widgets/quick_options.dart`. Rows with bespoke behaviour — a custom dialog, a derived value, or a
 second provider write — stay hand-written rather than growing extra parameters on the shared items.
 
+## Keyboard Insets
+
+The soft keyboard moves `MediaQuery.viewInsets` on every frame of its animation, so whatever depends on them rebuilds
+and relays out at frame rate for a few hundred milliseconds. `ThemeManager` wraps the whole app in a `LayoutBuilder`,
+which runs every one of those rebuilds inside the layout phase; in a profile trace they show up there, not under
+`BUILD`.
+
+- A page the user is not typing in holds its bottom inset through `KeyboardInsetHold`
+  (`lib/widgets/keyboard_inset_hold.dart`). Pages under another route and inactive tabs are still laid out, offstage or
+  not, and without it every page the app keeps relaid out, and rebuilt under its `LayoutBuilder`s, with each frame of a
+  keyboard raised by a dialog or sheet on top. The home route, each home tab, `CommonRoute`, `CommonDesktopRoute` and
+  the open-container route wrap their page in one; a new page route type does the same.
+- A widget high in the tree reads the aspect it needs (`MediaQuery.paddingOf`, `viewInsetsOf`, ...), never
+  `MediaQuery.of` or `MediaQuery.removePadding(context: ...)` on its own context, which subscribes it to every inset
+  change. Move such a read into a small widget of its own below it, as `_AppMediaQuery` in `ThemeManager`,
+  `_BodyPadding` in `lib/pages/home.dart`, the keyboard spacer in `CommonScaffold` and the keyboard watch in
+  `SnapSheet` do.
+
 ## State Management
 
 Provider files in `lib/providers/`:

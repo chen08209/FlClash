@@ -27,6 +27,9 @@ dialogs, and interaction behavior.
 - Modals dim what they cover with the Material 3 scrim (`ColorScheme.modalScrim`, `scrim` at 32%) and never blur it.
   Every modal brings its own scrim, including one opened from inside another, so do not make a barrier transparent to
   keep scrims from stacking.
+- The keyboard animates `MediaQuery.viewInsets` every frame. Read MediaQuery by aspect (`paddingOf`, `viewInsetsOf`)
+  rather than `MediaQuery.of`, and wrap the page of a new route type in `KeyboardInsetHold`; Keyboard Insets in
+  `.agents/architecture.md` has the reasons.
 - App bar buttons reach `CommonScaffold` as data (`primaryAction`, `iconActions`, `menuItems`) so it can fold them into
   its overflow menu; App Bar Actions in `.agents/architecture.md` has the rule.
 - User-facing text goes through ARB; use `localization` when text changes are non-trivial.

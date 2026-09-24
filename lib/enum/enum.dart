@@ -183,7 +183,7 @@ extension MessageLevelExt on MessageLevel {
 
 enum TrafficUnit { B, KB, MB, GB, TB }
 
-enum NavigationItemMode { mobile, desktop, more }
+enum NavigationItemMode { mobile, desktop, more, moreFull }
 
 enum Network { tcp, udp }
 
@@ -646,6 +646,8 @@ extension RuleProviderFormatExt on RuleProviderFormat? {
 }
 
 enum RestoreStrategy { compatible, override }
+
+enum TabAnimation { slide, fade }
 
 enum Language { yaml, javaScript, json }
 

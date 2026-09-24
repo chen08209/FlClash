@@ -29,6 +29,7 @@ export 'log_payload.dart';
 export 'lock.dart';
 export 'measure.dart';
 export 'mixin.dart';
+export 'motion.dart';
 export 'navigator.dart';
 export 'network.dart';
 export 'network_error.dart';

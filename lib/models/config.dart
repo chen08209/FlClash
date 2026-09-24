@@ -96,6 +96,13 @@ Object? _readSidebarExpanded(Map<dynamic, dynamic> json, String key) {
   return json.containsKey(key) ? json[key] : json['showLabel'];
 }
 
+Object? _readTabAnimation(Map<dynamic, dynamic> json, String key) {
+  if (json.containsKey(key)) {
+    return json[key];
+  }
+  return json['isAnimateToPage'] == false ? TabAnimation.fade.name : null;
+}
+
 Object? _readUserAgents(Map<dynamic, dynamic> json, String key) {
   if (json.containsKey(key)) {
     return json[key];
@@ -126,7 +133,10 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(false) bool openLogs,
     @Default(true) bool closeConnections,
     @Default(defaultTestUrl) String testUrl,
-    @Default(true) bool isAnimateToPage,
+    @Default(TabAnimation.slide)
+    @JsonKey(readValue: _readTabAnimation)
+    TabAnimation tabAnimation,
+    @Default(true) bool floatingNavigationBar,
     @Default(true) bool autoCheckUpdate,
     @Default(true)
     @JsonKey(readValue: _readSidebarExpanded)
@@ -282,7 +292,7 @@ abstract class ProxiesStyleProps with _$ProxiesStyleProps {
     @Default(ProxiesIconStyle.filled)
     @JsonKey(fromJson: proxiesIconStyleSafeFromJson)
     ProxiesIconStyle iconStyle,
-    @Default(ProxyCardType.expand) ProxyCardType cardType,
+    @Default(ProxyCardType.shrink) ProxyCardType cardType,
     @Default(false) bool hideTimeoutProxies,
   }) = _ProxiesStyleProps;
 
