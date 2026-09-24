@@ -164,73 +164,43 @@ void main() {
     });
   });
 
-  group('interface name visibility', () {
-    testWidgets('is hidden unless the mode is custom', (tester) async {
-      container
-          .read(patchClashConfigProvider.notifier)
-          .update(
-            (state) =>
-                state.copyWith(interfaceNameMode: InterfaceNameMode.follow),
-          );
-
-      await pumpItem(tester, const InterfaceNameItem());
-
-      expect(find.byType(ListTile), findsNothing);
-    });
-
-    testWidgets('is shown when the mode is custom', (tester) async {
-      container
-          .read(patchClashConfigProvider.notifier)
-          .update(
-            (state) =>
-                state.copyWith(interfaceNameMode: InterfaceNameMode.custom),
-          );
-
-      await pumpItem(tester, const InterfaceNameItem());
-
-      expect(find.byType(ListTile), findsOneWidget);
-    });
-  });
-
   group('network options items', () {
-    test('interface name rows appear only on desktop', () {
-      final desktopTypes = networkOptionsItems(
-        isDesktop: true,
+    List<Type> types({
+      required bool isDesktop,
+      bool isCustomInterfaceName = true,
+      bool isBypassPrivateRoute = false,
+    }) {
+      return networkOptionsItems(
+        isDesktop: isDesktop,
         isMacOS: false,
-      ).map((item) => item.runtimeType);
+        isCustomInterfaceName: isCustomInterfaceName,
+        isBypassPrivateRoute: isBypassPrivateRoute,
+      ).map((item) => item.runtimeType).toList();
+    }
+
+    test('interface name rows appear only on desktop', () {
+      final desktopTypes = types(isDesktop: true);
       expect(desktopTypes, contains(InterfaceNameModeItem));
       expect(desktopTypes, contains(InterfaceNameItem));
 
-      final androidTypes = networkOptionsItems(
-        isDesktop: false,
-        isMacOS: false,
-      ).map((item) => item.runtimeType);
+      final androidTypes = types(isDesktop: false);
       expect(androidTypes, isNot(contains(InterfaceNameModeItem)));
       expect(androidTypes, isNot(contains(InterfaceNameItem)));
     });
-  });
 
-  group('route address visibility', () {
-    testWidgets('is hidden while bypassing private addresses', (tester) async {
-      container
-          .read(networkSettingProvider.notifier)
-          .update(
-            (state) => state.copyWith(routeMode: RouteMode.bypassPrivate),
-          );
-
-      await pumpItem(tester, const RouteAddressItem());
-
-      expect(find.byType(ListTile), findsNothing);
+    test('the interface name row is listed only for the custom mode', () {
+      expect(
+        types(isDesktop: true, isCustomInterfaceName: false),
+        isNot(contains(InterfaceNameItem)),
+      );
     });
 
-    testWidgets('is shown for every other route mode', (tester) async {
-      container
-          .read(networkSettingProvider.notifier)
-          .update((state) => state.copyWith(routeMode: RouteMode.config));
-
-      await pumpItem(tester, const RouteAddressItem());
-
-      expect(find.byType(ListTile), findsOneWidget);
+    test('the route address row is listed unless private routes bypass', () {
+      expect(types(isDesktop: false), contains(RouteAddressItem));
+      expect(
+        types(isDesktop: false, isBypassPrivateRoute: true),
+        isNot(contains(RouteAddressItem)),
+      );
     });
   });
 }
