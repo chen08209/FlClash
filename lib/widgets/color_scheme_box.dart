@@ -1,78 +1,121 @@
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/common/shape.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'card.dart';
-import 'grid.dart';
 
 class ColorSchemeBox extends StatelessWidget {
   final Color? primaryColor;
   final bool? isSelected;
   final void Function()? onPressed;
+  final double size;
 
   const ColorSchemeBox({
     super.key,
     required this.primaryColor,
     this.onPressed,
     this.isSelected,
+    this.size = 48,
   });
+
+  static const _duration = Duration(milliseconds: 200);
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 1,
-      child: PrimaryColorBox(
-        primaryColor: primaryColor,
-        child: Builder(
-          builder: (context) {
-            final colorScheme = Theme.of(context).colorScheme;
-            return Stack(
-              children: [
-                CommonCard(
-                  isSelected: isSelected,
-                  onPressed: onPressed,
-                  selectWidget: Container(
+    final selected = isSelected ?? false;
+    final ring = Theme.of(context).colorScheme.primary;
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: SizedBox.square(
+        dimension: size,
+        child: PrimaryColorBox(
+          primaryColor: primaryColor,
+          child: Builder(
+            builder: (context) {
+              final colorScheme = Theme.of(context).colorScheme;
+              return Material(
+                type: MaterialType.transparency,
+                shape: AppShape.circle,
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  customBorder: AppShape.circle,
+                  onTap: onPressed,
+                  child: Stack(
                     alignment: Alignment.center,
-                    child: const SelectIcon(),
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    child: ClipRSuperellipse(
-                      borderRadius: AppRadius.full,
-                      child: SizedBox(
-                        width: 72,
-                        height: 72,
-                        child: Grid(
-                          crossAxisCount: 2,
-                          children: [
-                            GridItem(
-                              mainAxisCellCount: 2,
-                              child: Container(color: colorScheme.primary),
+                    children: [
+                      AnimatedContainer(
+                        duration: _duration,
+                        curve: Curves.easeOutCubic,
+                        padding: EdgeInsets.all(selected ? 5 : 0),
+                        decoration: ShapeDecoration(
+                          shape: CircleBorder(
+                            side: BorderSide(
+                              color: selected ? ring : Colors.transparent,
+                              width: 2,
                             ),
-                            GridItem(
-                              mainAxisCellCount: 1,
-                              child: Container(color: colorScheme.secondary),
-                            ),
-                            GridItem(
-                              mainAxisCellCount: 1,
-                              child: Container(color: colorScheme.tertiary),
-                            ),
-                          ],
+                          ),
+                        ),
+                        child: ClipOval(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: ColoredBox(color: colorScheme.primary),
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Expanded(
+                                      child: ColoredBox(
+                                        color: colorScheme.secondary,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: ColoredBox(
+                                        color: colorScheme.tertiary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                      AnimatedScale(
+                        duration: _duration,
+                        curve: Curves.easeOutBack,
+                        scale: selected ? 1 : 0,
+                        child: const SelectIcon(),
+                      ),
+                      if (primaryColor == null)
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: ShapeDecoration(
+                              color: colorScheme.surfaceContainerHighest,
+                              shape: AppShape.circle,
+                            ),
+                            child: GlyphIcon(
+                              AppGlyphs.eyedropper,
+                              size: size / 4,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                if (primaryColor == null)
-                  const Positioned(
-                    bottom: 4,
-                    right: 4,
-                    child: Icon(Icons.colorize, size: 20),
-                  ),
-              ],
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );

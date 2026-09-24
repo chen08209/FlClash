@@ -1,15 +1,18 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/theme.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/status_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/views/disclaimer.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 
 Future<ProviderContainer> _pumpHost(
@@ -166,6 +169,42 @@ void main() {
     expect(await result, 'picked');
   });
 
+  testWidgets('a dialog stacked on a dialog brings its own scrim', (
+    tester,
+  ) async {
+    await _pumpHost(tester);
+
+    final result = dialogs.showCommonDialog<void>(
+      child: Builder(
+        builder: (context) => TextButton(
+          onPressed: () {
+            dialogs.showCommonDialog<void>(
+              context: context,
+              child: const Text('inner'),
+            );
+          },
+          child: const Text('open inner'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final outer = tester.element(find.text('open inner'));
+    final scrim = outer.colorScheme.scrim.withValues(alpha: 0.32);
+    expect(ModalRoute.of(outer)!.barrierColor, scrim);
+
+    await tester.tap(find.text('open inner'));
+    await tester.pumpAndSettle();
+    final inner = tester.element(find.text('inner'));
+    expect(ModalRoute.of(inner)!.barrierColor, scrim);
+    expect(find.byType(BackdropFilter), findsNothing);
+
+    Navigator.of(inner).pop();
+    await tester.pumpAndSettle();
+    Navigator.of(outer).pop();
+    await tester.pumpAndSettle();
+    await result;
+  });
+
   testWidgets('showAllUpdatingMessagesDialog lists every message', (
     tester,
   ) async {
@@ -185,7 +224,7 @@ void main() {
     final messageText = tester.widget<Text>(find.text(longMessage));
     expect(messageText.maxLines, 2);
     expect(messageText.overflow, TextOverflow.ellipsis);
-    expect(find.byIcon(Icons.error_outline), findsNothing);
+    expect(find.byGlyph(AppGlyphs.error), findsNothing);
     expect(
       find.ancestor(
         of: find.text(longMessage),
@@ -199,22 +238,40 @@ void main() {
     expect(await result, isTrue);
   });
 
-  testWidgets('showDisclaimer maps agree and exit to a boolean', (
+  testWidgets(
+    'requestDisclaimerConsent maps agree, exit, and back to a boolean',
+    (tester) async {
+      await _pumpHost(tester);
+
+      final agreed = requestDisclaimerConsent();
+      await tester.pumpAndSettle();
+      expect(find.text('Data collection and privacy'), findsOneWidget);
+      await tester.tap(find.text('Agree'));
+      await tester.pumpAndSettle();
+      expect(await agreed, isTrue);
+
+      final declined = requestDisclaimerConsent();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Exit'));
+      await tester.pumpAndSettle();
+      expect(await declined, isFalse);
+
+      final dismissed = requestDisclaimerConsent();
+      await tester.pumpAndSettle();
+      rootNavigatorKey.currentState!.pop();
+      await tester.pumpAndSettle();
+      expect(await dismissed, isFalse);
+    },
+  );
+
+  testWidgets('DisclaimerView without consent shows no agree or exit', (
     tester,
   ) async {
-    await _pumpHost(tester);
+    await _pumpHost(tester, homeBuilder: (_) => const DisclaimerView());
 
-    final agreed = dialogs.showDisclaimer();
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Agree'));
-    await tester.pumpAndSettle();
-    expect(await agreed, isTrue);
-
-    final declined = dialogs.showDisclaimer();
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Exit'));
-    await tester.pumpAndSettle();
-    expect(await declined, isFalse);
+    expect(find.text('Disclaimer'), findsWidgets);
+    expect(find.text('Agree'), findsNothing);
+    expect(find.text('Exit'), findsNothing);
   });
 
   testWidgets('showNotifier delivers text through the StatusManager host', (

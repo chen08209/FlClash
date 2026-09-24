@@ -21,7 +21,6 @@ abstract class AppState with _$AppState {
     @Default(0) double sideWidth,
     @Default({}) DelayMap delayMap,
     @Default([]) List<Group> groups,
-    @Default(0) int checkIpNum,
     required Brightness brightness,
     int? runTime,
     @Default([]) List<ExternalProvider> providers,

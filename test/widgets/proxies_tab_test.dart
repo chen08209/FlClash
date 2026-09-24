@@ -1,5 +1,6 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
@@ -104,6 +105,62 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('the last tab scrolls clear of the more button fade', (
+    tester,
+  ) async {
+    globalContainer
+        .read(_tabStateProvider.notifier)
+        .set(_tabState([for (var i = 0; i < 12; i++) _group('Group $i')]));
+    await pumpTabView(tester);
+
+    final tabs = find.descendant(
+      of: find.byType(TabBar),
+      matching: find.byType(Scrollable),
+    );
+    final position = tester.state<ScrollableState>(tabs).position;
+    position.jumpTo(position.maxScrollExtent);
+    await tester.pump();
+
+    final label = tester.getRect(find.text('Group 11', findRichText: true));
+    final more = tester.getRect(find.byType(IconButton));
+    expect(label.right, lessThanOrEqualTo(more.left - kTabLabelPadding.right));
+  });
+
+  testWidgets('scroll to selected brings the row to the top of the grid', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final group = Group(
+      type: GroupType.Selector,
+      name: 'B',
+      all: [for (var i = 0; i < 80; i++) Proxy(name: 'B-$i', type: 'ss')],
+    );
+    globalContainer.read(groupsProvider.notifier).value = [group];
+    final profile = globalContainer.read(currentProfileProvider)!;
+    globalContainer
+        .read(profilesProvider.notifier)
+        .put(profile.copyWith(selectedMap: {'B': 'B-41'}));
+    globalContainer
+        .read(_tabStateProvider.notifier)
+        .set(_tabState([_group('A'), group]));
+    final key = await pumpTabView(tester);
+    await tester.pumpAndSettle();
+    final firstRowTop = tester
+        .getRect(find.text('B-0', findRichText: true).first)
+        .top;
+
+    key.currentState?.scrollToGroupSelected();
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getRect(find.text('B-41', findRichText: true).first).top,
+      firstRowTop,
+    );
+  });
 
   testWidgets('rebuilds the tab bar when groups return', (tester) async {
     final key = await pumpTabView(tester);

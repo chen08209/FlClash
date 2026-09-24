@@ -56,28 +56,58 @@ class ProfilesAction extends _$ProfilesAction {
     }
   }
 
-  void putProfile(Profile profile) {
-    ref.read(profilesProvider.notifier).put(profile);
+  void putProfile(Profile profile, {Iterable<int> renameIn = const []}) {
+    ref.read(profilesProvider.notifier).put(profile, renameIn: renameIn);
     if (ref.read(currentProfileIdProvider) != null) return;
     ref.read(currentProfileIdProvider.notifier).value = profile.id;
+  }
+
+  Future<List<Profile>> providerUsers(Profile profile) async {
+    if (!feature.customProviders) {
+      return const [];
+    }
+    final users = await ref
+        .read(clashProvidersActionProvider.notifier)
+        .profilesReferencing(ProviderKind.proxy, profile.realLabel);
+    return [
+      for (final user in users)
+        if (user.id != profile.id) user,
+    ];
+  }
+
+  /// [conflicts] would move to their subscription's provider of the new name.
+  Future<({List<Profile> renameIn, List<Profile> conflicts})> providerRename(
+    Profile previous,
+    Profile next,
+  ) async {
+    final label = ref.read(profilesProvider.notifier).labeled(next).realLabel;
+    if (!feature.customProviders || label == previous.realLabel) {
+      return (renameIn: const <Profile>[], conflicts: const <Profile>[]);
+    }
+    final renameIn = await providerUsers(previous);
+    final conflicts = await ref
+        .read(clashProvidersActionProvider.notifier)
+        .profilesDefining(ProviderKind.proxy, label, renameIn);
+    return (renameIn: renameIn, conflicts: conflicts);
   }
 
   Future<void> updateProfiles() async {
     for (final profile in ref.read(profilesProvider)) {
       if (profile.type == ProfileType.file) continue;
-      await updateProfile(profile);
+      await updateProfile(profile, showLoading: true);
     }
   }
 
   Future<void> updateProfile(
     Profile profile, {
     bool showLoading = false,
+    Iterable<int> renameIn = const [],
   }) async {
     final operation = showLoading
         ? ref.read(updatingKeysProvider.notifier).start(profile.updatingKey)
         : null;
     try {
-      ref.read(profilesProvider.notifier).put(profile);
+      ref.read(profilesProvider.notifier).put(profile, renameIn: renameIn);
       final newProfile = await profile.update(
         validate: (path) => _core.validateConfig(path),
       );
@@ -116,7 +146,7 @@ class ProfilesAction extends _$ProfilesAction {
     }
   }
 
-  Future<void> addProfileFormURL(String url) async {
+  Future<void> addProfileFormURL(String url, {String? label}) async {
     if (globalState.navigatorKey.currentState?.canPop() ?? false) {
       globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
     }
@@ -125,6 +155,7 @@ class ProfilesAction extends _$ProfilesAction {
       tag: LoadingTag.profiles,
       () async {
         return Profile.normal(
+          label: label,
           url: url,
         ).update(validate: (path) => _core.validateConfig(path));
       },

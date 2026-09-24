@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class CommonDialog extends ConsumerWidget {
   final String title;
+  final Widget? trailing;
   final Widget? child;
   final List<Widget>? actions;
   final EdgeInsets? padding;
@@ -16,6 +17,7 @@ class CommonDialog extends ConsumerWidget {
   const CommonDialog({
     super.key,
     required this.title,
+    this.trailing,
     this.actions,
     this.child,
     this.padding,
@@ -27,7 +29,14 @@ class CommonDialog extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     final size = ref.watch(viewSizeProvider);
     return AlertDialog(
-      title: Text(title),
+      title: trailing == null
+          ? Text(title)
+          : Row(
+              children: [
+                Expanded(child: Text(title)),
+                trailing!,
+              ],
+            ),
       actions: actions,
       contentPadding: padding,
       backgroundColor: backgroundColor,

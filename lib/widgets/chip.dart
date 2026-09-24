@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:material_ui/material_ui.dart';
 
 class CommonChip extends StatelessWidget {
@@ -39,9 +40,15 @@ class CommonChip extends StatelessWidget {
             ),
           ),
           if (onDeleted != null)
-            GestureDetector(
+            InkWell(
               onTap: onDeleted,
-              child: Icon(Icons.close, size: 14, color: foregroundColor),
+              customBorder: AppShape.circle,
+              focusColor: colorScheme.primary.opacity30,
+              child: GlyphIcon(
+                AppGlyphs.close,
+                size: 14,
+                color: foregroundColor,
+              ),
             ),
         ],
       ),
@@ -51,6 +58,42 @@ class CommonChip extends StatelessWidget {
       shape: AppShape.sm.copyWith(
         side: BorderSide(color: colorScheme.outlineVariant),
       ),
+      clipBehavior: Clip.antiAlias,
+      child: onPressed == null
+          ? content
+          : InkWell(onTap: onPressed, child: content),
+    );
+  }
+}
+
+class TonalChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final Color foregroundColor;
+  final VoidCallback? onPressed;
+
+  const TonalChip({
+    super.key,
+    required this.label,
+    required this.color,
+    required this.foregroundColor,
+    this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: context.textTheme.labelMedium?.copyWith(color: foregroundColor),
+      ),
+    );
+    return Material(
+      color: color,
+      shape: AppShape.sm,
       clipBehavior: Clip.antiAlias,
       child: onPressed == null
           ? content

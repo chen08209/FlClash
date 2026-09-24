@@ -138,6 +138,25 @@ void main() {
     });
   });
 
+  group('canExpandSidebar', () {
+    test('expands only in the desktop view mode', () {
+      expect(canExpandSidebar(getViewMode(maxLaptopWidth + 1)), isTrue);
+      expect(canExpandSidebar(getViewMode(maxLaptopWidth.toDouble())), isFalse);
+      expect(canExpandSidebar(ViewMode.mobile), isFalse);
+    });
+  });
+
+  group('windowControlsOverSidebar', () {
+    test('only macOS 11 and later draw the traffic lights over it', () {
+      expect(
+        windowControlsOverSidebar(isMacOS: true, version: 15),
+        macOSTrafficLightsArea,
+      );
+      expect(windowControlsOverSidebar(isMacOS: true, version: 10), Size.zero);
+      expect(windowControlsOverSidebar(isMacOS: false, version: 11), Size.zero);
+    });
+  });
+
   group('getProxiesColumns', () {
     test('minimum 2 columns', () {
       expect(getProxiesColumns(100, ProxiesLayout.standard), 2);

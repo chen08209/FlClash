@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -126,6 +127,112 @@ void main() {
     await tester.pump();
 
     expect(clicked, ['Proxy A', 'Proxy B']);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('TrackerInfoItem reads from the rule to the node', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        homeBuilder: (child) => Scaffold(body: child),
+        child: TrackerInfoItem(
+          trackerInfo: _tracker(
+            rulePayload: 'example.com',
+            process: 'chrome',
+            uid: 1000,
+            sourceIP: '1.2.3.4',
+            sourcePort: '8080',
+            destinationIP: '5.6.7.8',
+            destinationPort: '443',
+            host: 'example.com',
+            chains: const ['Node', 'Group'],
+          ),
+          detailTitle: 'detail',
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final rule = tester.getCenter(find.text('DOMAIN-SUFFIX(example.com)'));
+    final group = tester.getCenter(find.text('Group'));
+    final node = tester.getCenter(find.text('Node'));
+    expect(rule.dx, lessThan(group.dx));
+    expect(group.dx, lessThan(node.dx));
+    expect(find.text('example.com:443  5.6.7.8'), findsOneWidget);
+    expect(find.text('chrome(1000)  ·  1.2.3.4:8080'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('TrackerInfoItem shows speed only for a live connection', (
+    tester,
+  ) async {
+    Future<void> pumpItem({required bool isLive}) async {
+      await tester.pumpWidget(
+        TestApp(
+          wrapInProviderScope: true,
+          homeBuilder: (child) => Scaffold(body: child),
+          child: TrackerInfoItem(
+            key: ValueKey(isLive),
+            trackerInfo: _tracker(
+              host: 'example.com',
+            ).copyWith(uploadSpeed: 2048, downloadSpeed: 4096),
+            isLive: isLive,
+            action: const SizedBox(key: ValueKey('action')),
+            detailTitle: 'detail',
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    await pumpItem(isLive: false);
+    expect(find.text(DateTime(2026, 1, 1, 10, 30).showFull), findsOneWidget);
+    expect(find.textContaining('4KB/s'), findsNothing);
+
+    await pumpItem(isLive: true);
+    expect(find.text(DateTime(2026, 1, 1, 10, 30).showFull), findsNothing);
+    expect(find.textContaining('4KB/s'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(RecordHeader),
+        matching: find.byKey(const ValueKey('action')),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('TrackerInfoDetailView lists the chain from group to node', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      TestApp(
+        homeBuilder: (child) => Scaffold(body: child),
+        child: SheetProvider(
+          type: SheetType.page,
+          child: TrackerInfoDetailView(
+            trackerInfo: _tracker(chains: const ['Node', 'Group']),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.scrollUntilVisible(
+      find.text('Node'),
+      100,
+      scrollable: find.byType(Scrollable),
+    );
+
+    expect(
+      tester.getCenter(find.text('Group')).dx,
+      lessThan(tester.getCenter(find.text('Node')).dx),
+    );
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

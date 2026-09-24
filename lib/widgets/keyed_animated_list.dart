@@ -4,6 +4,9 @@ import 'package:material_ui/material_ui.dart';
 
 const _defaultDuration = Duration(milliseconds: 300);
 
+// Rows sized towards zero all fit the viewport, so each one is laid out.
+const _maxAnimatedChanges = 50;
+
 /// A lazily built vertical list that diffs [items] by key: removed items
 /// collapse out, inserted items grow in, and items whose key survives slide
 /// from their previous slot to the new one.
@@ -31,19 +34,38 @@ class KeyedAnimatedList<T> extends StatefulWidget {
   State<KeyedAnimatedList<T>> createState() => _KeyedAnimatedListState<T>();
 }
 
+enum _Phase { settled, entering, leaving }
+
 class _Entry<T> {
   final Object key;
   T item;
-  AnimationController? controller;
-  bool removing = false;
+  _Phase phase = _Phase.settled;
 
   _Entry(this.key, this.item);
 }
 
 class _KeyedAnimatedListState<T> extends State<KeyedAnimatedList<T>>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   List<_Entry<T>> _entries = [];
   int _generation = 0;
+
+  // One controller drives every row entering or leaving in an update, so a
+  // refresh that touches rows far off screen still runs a single ticker.
+  late final AnimationController _transition =
+      AnimationController(vsync: this, duration: widget.duration)
+        ..addStatusListener((status) {
+          if (status.isCompleted) {
+            setState(_settle);
+          }
+        });
+  late final CurvedAnimation _entering = CurvedAnimation(
+    parent: _transition,
+    curve: Curves.easeOutCubic,
+  );
+  late final CurvedAnimation _leaving = CurvedAnimation(
+    parent: ReverseAnimation(_transition),
+    curve: Curves.easeInCubic,
+  );
 
   @override
   void initState() {
@@ -56,6 +78,7 @@ class _KeyedAnimatedListState<T> extends State<KeyedAnimatedList<T>>
   @override
   void didUpdateWidget(covariant KeyedAnimatedList<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _transition.duration = widget.duration;
     if (!identical(oldWidget.items, widget.items)) {
       _applyItems(widget.items);
     }
@@ -63,47 +86,43 @@ class _KeyedAnimatedListState<T> extends State<KeyedAnimatedList<T>>
 
   @override
   void dispose() {
-    for (final entry in _entries) {
-      entry.controller?.dispose();
-    }
+    _entering.dispose();
+    _leaving.dispose();
+    _transition.dispose();
     super.dispose();
   }
 
-  AnimationController _createController(
-    _Entry<T> entry, {
-    required double from,
-  }) {
-    final controller = AnimationController(
-      vsync: this,
-      duration: widget.duration,
-      value: from,
-    );
-    controller.addStatusListener((status) {
-      if (!mounted) {
-        return;
-      }
-      if (!status.isAnimating) {
-        setState(() {
-          entry.controller = null;
-          if (status.isDismissed) {
-            _entries.remove(entry);
-          }
-        });
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          controller.dispose();
-        });
-      }
+  void _settle() {
+    _entries.removeWhere((entry) => entry.phase == _Phase.leaving);
+    for (final entry in _entries) {
+      entry.phase = _Phase.settled;
+    }
+  }
+
+  void _replaceItems(List<T> items) {
+    _transition.stop();
+    setState(() {
+      _entries = [for (final item in items) _Entry(widget.keyOf(item), item)];
+      _generation++;
     });
-    return controller;
   }
 
   void _applyItems(List<T> items) {
+    if (_transition.isAnimating) {
+      _transition.stop();
+      _settle();
+    }
     final oldByKey = {for (final entry in _entries) entry.key: entry};
     final newKeys = {for (final item in items) widget.keyOf(item)};
+    final inserted = newKeys.where((key) => !oldByKey.containsKey(key));
+    final removed = _entries.where((entry) => !newKeys.contains(entry.key));
+    if (inserted.length + removed.length > _maxAnimatedChanges) {
+      _replaceItems(items);
+      return;
+    }
 
     final removedBefore = <Object, List<_Entry<T>>>{};
     var pending = <_Entry<T>>[];
-    final transitions = <VoidCallback>[];
     for (final entry in _entries) {
       if (newKeys.contains(entry.key)) {
         if (pending.isNotEmpty) {
@@ -111,15 +130,8 @@ class _KeyedAnimatedListState<T> extends State<KeyedAnimatedList<T>>
           pending = [];
         }
       } else {
+        entry.phase = _Phase.leaving;
         pending.add(entry);
-        if (!entry.removing) {
-          entry.removing = true;
-          final controller = entry.controller ??= _createController(
-            entry,
-            from: 1,
-          );
-          transitions.add(controller.reverse);
-        }
       }
     }
 
@@ -129,21 +141,10 @@ class _KeyedAnimatedListState<T> extends State<KeyedAnimatedList<T>>
       next.addAll(removedBefore[key] ?? const []);
       final existing = oldByKey[key];
       if (existing == null) {
-        final entry = _Entry(key, item);
-        final controller = _createController(entry, from: 0);
-        entry.controller = controller;
-        transitions.add(controller.forward);
-        next.add(entry);
+        next.add(_Entry(key, item)..phase = _Phase.entering);
         continue;
       }
       existing.item = item;
-      if (existing.removing) {
-        existing.removing = false;
-        final controller = existing.controller;
-        if (controller != null) {
-          transitions.add(controller.forward);
-        }
-      }
       next.add(existing);
     }
     next.addAll(pending);
@@ -152,8 +153,8 @@ class _KeyedAnimatedListState<T> extends State<KeyedAnimatedList<T>>
       _entries = next;
       _generation++;
     });
-    for (final transition in transitions) {
-      transition();
+    if (next.any((entry) => entry.phase != _Phase.settled)) {
+      _transition.forward(from: 0);
     }
   }
 
@@ -164,13 +165,12 @@ class _KeyedAnimatedListState<T> extends State<KeyedAnimatedList<T>>
     if (separator != null && index < _entries.length - 1) {
       row = Column(mainAxisSize: MainAxisSize.min, children: [row, separator]);
     }
-    final controller = entry.controller;
-    if (controller != null) {
-      final animation = CurvedAnimation(
-        parent: controller,
-        curve: Curves.easeOutCubic,
-        reverseCurve: Curves.easeInCubic,
-      );
+    final animation = switch (entry.phase) {
+      _Phase.settled => null,
+      _Phase.entering => _entering,
+      _Phase.leaving => _leaving,
+    };
+    if (animation != null) {
       row = SizeTransition(
         sizeFactor: animation,
         alignment: Alignment.topCenter,

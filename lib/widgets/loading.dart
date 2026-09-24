@@ -144,9 +144,9 @@ class _CommonCircleLoadingState extends State<CommonCircleLoading>
             label: widget.semanticLabel,
             value: widget.semanticValue,
             child: DecoratedBox(
-              decoration: BoxDecoration(
+              decoration: ShapeDecoration(
                 color: backgroundColor,
-                borderRadius: AppRadius.full,
+                shape: AppShape.full,
               ),
               child: Padding(
                 padding: padding,

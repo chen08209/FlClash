@@ -106,4 +106,51 @@ void main() {
     expect(linkManager.subscription, isNull);
     expect(received, isEmpty);
   });
+
+  group('profileUrlFromQrCodes', () {
+    test('accepts a bare url with surrounding whitespace', () {
+      expect(
+        profileUrlFromQrCodes([' https://example.com/sub?token=1\n']),
+        'https://example.com/sub?token=1',
+      );
+    });
+
+    test('unwraps the url of an install-config link for every scheme', () {
+      for (final scheme in ['clash', 'clashmeta', 'flclash']) {
+        expect(
+          profileUrlFromQrCodes([
+            '$scheme://install-config?url=https%3A%2F%2Fexample.com%2Fa.yaml',
+          ]),
+          'https://example.com/a.yaml',
+        );
+      }
+    });
+
+    test('rejects codes that carry no profile url', () {
+      expect(
+        profileUrlFromQrCodes([
+          null,
+          '',
+          'plain text',
+          'vmess://eyJhZGQiOiIxLjIuMy40In0=',
+          'https://',
+          'clash://install-config?url=not-a-url',
+          'clash://open-profile?url=https://example.com/a.yaml',
+          'other://install-config?url=https://example.com/a.yaml',
+        ]),
+        isNull,
+      );
+    });
+
+    test('returns the first code that carries a profile url', () {
+      expect(
+        profileUrlFromQrCodes([
+          'plain text',
+          'flclash://install-config?url=https://example.com/first.yaml',
+          'https://example.com/second.yaml',
+        ]),
+        'https://example.com/first.yaml',
+      );
+    });
+  });
 }

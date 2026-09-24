@@ -29,6 +29,18 @@ extension StringExtension on String {
     return toLowerCase().compareTo(other.toLowerCase());
   }
 
+  String get countryFlagEmoji {
+    final code = toUpperCase();
+    if (!RegExp(r'^[A-Z]{2}$').hasMatch(code)) {
+      return this;
+    }
+    const regionalIndicatorA = 0x1F1E6;
+    return String.fromCharCodes([
+      code.codeUnitAt(0) - 0x41 + regionalIndicatorA,
+      code.codeUnitAt(1) - 0x41 + regionalIndicatorA,
+    ]);
+  }
+
   String safeSubstring(int start, [int? end]) {
     if (isEmpty) return '';
     final safeStart = start.clamp(0, length);
@@ -100,6 +112,42 @@ extension StringExtension on String {
       return null;
     }
     return this;
+  }
+
+  String take(int maxLength) {
+    return length <= maxLength ? this : substring(0, maxLength);
+  }
+
+  String get fileStem {
+    final dot = lastIndexOf('.');
+    return dot > 0 ? substring(0, dot) : this;
+  }
+
+  String get urlFileName {
+    final segments = Uri.tryParse(this)?.pathSegments ?? const [];
+    return segments.lastWhere(
+      (segment) => segment.isNotEmpty,
+      orElse: () => '',
+    );
+  }
+}
+
+String uniqueLabelFor(
+  String name, {
+  required String fallback,
+  required bool Function(String label) taken,
+}) {
+  const maxLength = TextInputLimits.name;
+  final base = name.trim().takeFirstValid([fallback]).take(maxLength).trim();
+  if (!taken(base)) {
+    return base;
+  }
+  for (var index = 2; ; index++) {
+    final suffix = ' $index';
+    final label = base.take(maxLength - suffix.length).trim() + suffix;
+    if (!taken(label)) {
+      return label;
+    }
   }
 }
 

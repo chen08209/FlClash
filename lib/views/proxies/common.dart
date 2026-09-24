@@ -1,8 +1,9 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/widgets.dart';
+
+const proxyGridSpacing = 8.0;
 
 double get listHeaderHeight {
   final measure = globalState.measure;
@@ -19,6 +20,9 @@ double getItemHeight(ProxyCardType proxyCardType) {
     ProxyCardType.min => baseHeight - measure.bodyMediumHeight,
   };
 }
+
+double getRowExtent(ProxyCardType proxyCardType) =>
+    getItemHeight(proxyCardType) + proxyGridSpacing;
 
 class GroupOffsets {
   const GroupOffsets(this.groups, this.offsets);
@@ -41,20 +45,27 @@ class GroupOffsets {
   Group? groupOf(String groupName) => groups.getGroup(groupName);
 }
 
-double getScrollToSelectedOffset({
-  required WidgetRef ref,
-  required String groupName,
+double? selectedRowOffset({
   required List<Proxy> proxies,
+  required String? selectedProxyName,
   required int columns,
+  required double rowExtent,
 }) {
-  final proxyCardType = ref.read(
-    proxiesStyleSettingProvider.select((state) => state.cardType),
+  final index = proxies.indexWhere((proxy) => proxy.name == selectedProxyName);
+  if (index < 0) {
+    return null;
+  }
+  return (index ~/ columns) * rowExtent;
+}
+
+void animateScrollTo(ScrollController controller, double offset) {
+  if (!controller.hasClients) {
+    return;
+  }
+  final position = controller.position;
+  controller.animateTo(
+    offset.clamp(position.minScrollExtent, position.maxScrollExtent),
+    duration: const Duration(milliseconds: 300),
+    curve: Curves.easeOutCubic,
   );
-  final selectedProxyName = ref.read(selectedProxyNameProvider(groupName));
-  final findSelectedIndex = proxies.indexWhere(
-    (proxy) => proxy.name == selectedProxyName,
-  );
-  final selectedIndex = findSelectedIndex != -1 ? findSelectedIndex : 0;
-  final rows = (selectedIndex / columns).floor();
-  return rows * getItemHeight(proxyCardType) + (rows - 1) * 8;
 }
