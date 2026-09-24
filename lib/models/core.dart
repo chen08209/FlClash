@@ -82,6 +82,29 @@ abstract class ChangeProxyParams with _$ChangeProxyParams {
 }
 
 @freezed
+abstract class ChangeProxyResult with _$ChangeProxyResult {
+  const factory ChangeProxyResult({
+    @Default('') String message,
+    @Default(false) bool changed,
+  }) = _ChangeProxyResult;
+
+  factory ChangeProxyResult.fromJson(Map<String, Object?> json) =>
+      _$ChangeProxyResultFromJson(json);
+}
+
+@freezed
+abstract class RouteSnapshot with _$RouteSnapshot {
+  const factory RouteSnapshot({
+    @JsonKey(name: 'core-epoch') @Default(0) int coreEpoch,
+    @JsonKey(name: 'picks-version') @Default(0) int picksVersion,
+    @Default({}) Map<String, String> picks,
+  }) = _RouteSnapshot;
+
+  factory RouteSnapshot.fromJson(Map<String, Object?> json) =>
+      _$RouteSnapshotFromJson(json);
+}
+
+@freezed
 abstract class UpdateGeoDataParams with _$UpdateGeoDataParams {
   const factory UpdateGeoDataParams({
     @JsonKey(name: 'geo-type') required String geoType,
@@ -116,6 +139,113 @@ abstract class Delay with _$Delay {
       _Delay;
 
   factory Delay.fromJson(Map<String, Object?> json) => _$DelayFromJson(json);
+}
+
+@freezed
+abstract class ProbeParams with _$ProbeParams {
+  const factory ProbeParams({
+    required String url,
+    @JsonKey(name: 'proxy-name') @Default('') String proxyName,
+    @Default({}) Map<String, String> headers,
+    required int timeout,
+    @JsonKey(name: 'max-body') @Default(0) int maxBody,
+  }) = _ProbeParams;
+
+  factory ProbeParams.fromJson(Map<String, Object?> json) =>
+      _$ProbeParamsFromJson(json);
+}
+
+@freezed
+abstract class ProbeResult with _$ProbeResult {
+  const factory ProbeResult({
+    @JsonKey(name: 'status-code') @Default(0) int statusCode,
+    @Default(0) int delay,
+    @Default('') String body,
+    @Default('') String url,
+    @Default([]) List<String> chains,
+    @Default('') String rule,
+    @JsonKey(name: 'rule-payload') @Default('') String rulePayload,
+    String? error,
+    String? message,
+  }) = _ProbeResult;
+
+  factory ProbeResult.fromJson(Map<String, Object?> json) =>
+      _$ProbeResultFromJson(json);
+}
+
+@freezed
+abstract class OutboundIpParams with _$OutboundIpParams {
+  const factory OutboundIpParams({
+    @JsonKey(name: 'proxy-name') @Default('') String proxyName,
+    @Default([]) List<String> urls,
+    required int timeout,
+  }) = _OutboundIpParams;
+
+  factory OutboundIpParams.fromJson(Map<String, Object?> json) =>
+      _$OutboundIpParamsFromJson(json);
+}
+
+@freezed
+abstract class OutboundIpResult with _$OutboundIpResult {
+  const factory OutboundIpResult({
+    @Default('') String url,
+    @Default('') String body,
+    @Default(0) int delay,
+    @Default([]) List<String> chains,
+    String? error,
+    @JsonKey(name: 'core-epoch') @Default(0) int coreEpoch,
+    @JsonKey(name: 'picks-version') @Default(0) int picksVersion,
+  }) = _OutboundIpResult;
+
+  factory OutboundIpResult.fromJson(Map<String, Object?> json) =>
+      _$OutboundIpResultFromJson(json);
+}
+
+@freezed
+abstract class ServiceCheckParams with _$ServiceCheckParams {
+  const factory ServiceCheckParams({
+    @JsonKey(name: 'proxy-name') @Default('') String proxyName,
+    @Default([]) List<String> names,
+    required int timeout,
+  }) = _ServiceCheckParams;
+
+  factory ServiceCheckParams.fromJson(Map<String, Object?> json) =>
+      _$ServiceCheckParamsFromJson(json);
+}
+
+@freezed
+abstract class ServiceCheckItem with _$ServiceCheckItem {
+  const factory ServiceCheckItem({
+    @Default('') String name,
+    @Default('') String status,
+    @Default('') String region,
+    @Default(0) int delay,
+    @Default([]) List<String> chains,
+    @JsonKey(name: 'checked-at') @Default(0) int checkedAt,
+    @JsonKey(name: 'core-epoch') @Default(0) int coreEpoch,
+    @JsonKey(name: 'picks-version') @Default(0) int picksVersion,
+  }) = _ServiceCheckItem;
+
+  factory ServiceCheckItem.fromJson(Map<String, Object?> json) =>
+      _$ServiceCheckItemFromJson(json);
+}
+
+@freezed
+abstract class CoreMemoryStats with _$CoreMemoryStats {
+  const factory CoreMemoryStats({
+    @Default(0) int rss,
+    @Default(0) int heapInuse,
+    @Default(0) int heapIdle,
+    @Default(0) int stackInuse,
+    @Default(0) int runtimeOther,
+  }) = _CoreMemoryStats;
+
+  factory CoreMemoryStats.fromJson(Map<String, Object?> json) =>
+      _$CoreMemoryStatsFromJson(json);
+}
+
+extension CoreMemoryStatsExt on CoreMemoryStats {
+  int get runtimeTotal => heapInuse + heapIdle + stackInuse + runtimeOther;
 }
 
 @freezed

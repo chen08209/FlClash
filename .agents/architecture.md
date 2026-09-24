@@ -235,6 +235,15 @@ test button, the tab page's action and the list page's group header alike, spins
 holds the group; `delayTestPageGroup` marks it, ignores a second request for the same group, and clears it in `finally`,
 so an RPC failure cannot leave the button spinning and remounting a header does not lose the state.
 
+The dashboard's probe cards show a failure as still checking for five seconds after they see `proxied` turn true,
+through `ProbeStartHold` in `lib/views/dashboard/probe_start_hold.dart`: `ServiceStatusCard` holds its check and the
+exit IP beside it, and `NetworkDetection` holds the exit IP, whose tap to retry stays inert meanwhile.
+`SetupAction.setRunning` flips the run time, and with it `proxied`, before the Core has brought its listeners up, so the
+probe launched on the spot often fails, and the config re-apply that follows every start probes again moments later;
+without the hold a card flashes a failure and then takes it back. The hold is local display state like the connecting
+hold above: the cache still records the failure, the hold arms only on an observed transition, a result that is not a
+failure shows at once, a stop cancels it, and a failure still standing when it ends is shown.
+
 ## Route Consistency
 
 A probe result on the dashboard — the exit IP, a node's exit IP, a service check — either describes the route in
@@ -242,12 +251,14 @@ force or is being asked again. The full design is `docs/plans/probe-route-consis
 parts.
 
 - The Core is the source of truth for the route. `core/route.go` keeps a structural epoch (advanced by a config
-  apply, a mode or IPv6 switch, and any proxy provider whose version changed) and a `picks` map from each Selector,
-  URLTest and Fallback group to what it resolves to right now, versioned on every change. `handleChangeProxy`
-  re-reads the picks under `selectMu` and answers `ChangeProxyResult{changed}`, so the connection reset only runs when
-  the pick moved. A health check moving a URLTest pick has no mihomo hook, so the picks are polled every second while
-  the host watches (`watchRoute(true)`) and the listeners are up. Every probe answer carries the counters it started
-  under; `routeChanged` publishes the state whenever it differs from the last read.
+  apply, a mode or IPv6 switch, any proxy provider whose version changed, and any rule set that loaded new content,
+  whether the user or its own interval updated it) and a `picks` map from each Selector, URLTest and Fallback group
+  to what it resolves to right now, versioned on every change. `handleChangeProxy` re-reads the picks under
+  `selectMu` and answers `ChangeProxyResult{changed}`, so the connection reset only runs when the pick moved. A
+  health check moving a URLTest pick has no mihomo hook, so the picks are polled every second while the host watches
+  (`watchRoute(true)`) and the listeners are up; the same poll notices a provider or rule set that updated in the
+  background. Every probe answer carries the counters it started under; `routeChanged` publishes the state whenever
+  it differs from the last read.
 - `routeTrackerProvider` in `lib/providers/route_state.dart` merges that with the host's side: `proxied` (running and
   not suspended), a host epoch that a connectivity event moves, and `synced`, which is false until `watchRoute` has
   returned a snapshot and again after a Core disconnect. Nothing is fresh while unsynced, so a cache never judges

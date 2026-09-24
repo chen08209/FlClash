@@ -70,8 +70,9 @@ Java_com_follow_clash_core_Core_getTotalTraffic(JNIEnv *env, jobject thiz,
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_follow_clash_core_Core_suspended(JNIEnv *env, jobject thiz, jboolean suspended) {
-    suspend(suspended);
+Java_com_follow_clash_core_Core_suspended(JNIEnv *env, jobject thiz, jboolean suspended,
+                                          jboolean interactive) {
+    suspend(suspended, interactive);
 }
 
 extern "C"
@@ -160,7 +161,7 @@ static void call_invoke_interface_result_impl(void *invoke_interface, const char
         return;
     }
     ATTACH_JNI();
-    const auto value = new_string(data);
+    const auto value = new_bytes(data);
     env->CallVoidMethod(static_cast<jobject>(invoke_interface),
                         m_invoke_interface_result,
                         value);
@@ -190,7 +191,7 @@ JNI_OnLoad(JavaVM *vm, void *) {
     m_tun_interface_resolve_package = find_method(c_tun_interface, "resolvePackage",
                                                   "(I)Ljava/lang/String;");
     m_invoke_interface_result = find_method(c_invoke_interface, "onResult",
-                                            "(Ljava/lang/String;)V");
+                                            "([B)V");
 
 
     protect_func = &call_tun_interface_protect_impl;

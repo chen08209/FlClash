@@ -93,6 +93,20 @@ jstring jni_new_string(JNIEnv *env, const char *str) {
     return result;
 }
 
+jbyteArray jni_new_bytes(JNIEnv *env, const char *str) {
+    const auto length = str == nullptr ? 0 : static_cast<int>(strlen(str));
+    const auto array = env->NewByteArray(length);
+    if (jni_clear_exception(env) || array == nullptr) {
+        return nullptr;
+    }
+    env->SetByteArrayRegion(array, 0, length, reinterpret_cast<const jbyte *>(str));
+    if (jni_clear_exception(env)) {
+        env->DeleteLocalRef(array);
+        return nullptr;
+    }
+    return array;
+}
+
 void jni_attach_thread(scoped_jni *jni) {
     if (global_vm->GetEnv(reinterpret_cast<void **>(&jni->env), JNI_VERSION_1_6) == JNI_OK) {
         jni->require_release = 0;
