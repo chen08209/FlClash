@@ -1,4 +1,5 @@
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -9,6 +10,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
@@ -124,7 +126,7 @@ void main() {
       await pumpDialog(tester, const WebDAVFormDialog());
 
       final toggle = find.descendant(
-        of: find.widgetWithIcon(TextFormField, Icons.password),
+        of: find.widgetWithGlyph(TextFormField, AppGlyphs.password),
         matching: find.byType(IconButton),
       );
       expect(tester.widget<IconButton>(toggle).tooltip, 'Show password');
@@ -139,15 +141,15 @@ void main() {
       await pumpDialog(tester, const WebDAVFormDialog());
 
       await tester.enterText(
-        find.widgetWithIcon(TextFormField, Icons.link),
+        find.widgetWithGlyph(TextFormField, AppGlyphs.link),
         'not-a-url',
       );
       await tester.enterText(
-        find.widgetWithIcon(TextFormField, Icons.account_circle),
+        find.widgetWithGlyph(TextFormField, AppGlyphs.account),
         'alice',
       );
       await tester.enterText(
-        find.widgetWithIcon(TextFormField, Icons.password),
+        find.widgetWithGlyph(TextFormField, AppGlyphs.password),
         'secret',
       );
       await tester.tap(find.widgetWithText(TextButton, 'Save'));
@@ -162,15 +164,15 @@ void main() {
       await pumpDialog(tester, const WebDAVFormDialog());
 
       await tester.enterText(
-        find.widgetWithIcon(TextFormField, Icons.link),
+        find.widgetWithGlyph(TextFormField, AppGlyphs.link),
         'https://dav.example.com/remote',
       );
       await tester.enterText(
-        find.widgetWithIcon(TextFormField, Icons.account_circle),
+        find.widgetWithGlyph(TextFormField, AppGlyphs.account),
         'alice',
       );
       await tester.enterText(
-        find.widgetWithIcon(TextFormField, Icons.password),
+        find.widgetWithGlyph(TextFormField, AppGlyphs.password),
         'secret',
       );
       await tester.tap(find.widgetWithText(TextButton, 'Save'));
@@ -190,7 +192,7 @@ void main() {
       await pumpDialog(tester, const WebDAVFormDialog(dav: _existing));
 
       await tester.enterText(
-        find.widgetWithIcon(TextFormField, Icons.account_circle),
+        find.widgetWithGlyph(TextFormField, AppGlyphs.account),
         'bob',
       );
       await tester.tap(find.widgetWithText(TextButton, 'Save'));
@@ -224,10 +226,10 @@ void main() {
     testWidgets('toggles password visibility', (tester) async {
       await pumpDialog(tester, const WebDAVFormDialog(dav: _existing));
 
-      expect(find.byIcon(Icons.visibility), findsOneWidget);
-      await tester.tap(find.byIcon(Icons.visibility));
+      expect(find.byGlyph(AppGlyphs.eye), findsOneWidget);
+      await tester.tap(find.byGlyph(AppGlyphs.eye));
       await tester.pumpAndSettle();
-      expect(find.byIcon(Icons.visibility_off), findsOneWidget);
+      expect(find.byGlyph(AppGlyphs.eyeOff), findsOneWidget);
     });
   });
 }

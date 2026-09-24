@@ -56,19 +56,13 @@ class IconRecordsDao extends DatabaseAccessor<Database>
       final count = await iconRecords.count.getSingle() ?? 0;
 
       if (count > maxCapacity) {
-        final oldestRecords =
-            await (select(iconRecords)
-                  ..orderBy([
-                    (t) => OrderingTerm(
-                      expression: t.lastAccessed,
-                      mode: OrderingMode.asc,
-                    ),
-                  ])
-                  ..limit(count - maxCapacity))
-                .get();
-
-        final oldestUrls = oldestRecords.map((e) => e.url).toList();
-        await (delete(iconRecords)..where((t) => t.url.isIn(oldestUrls))).go();
+        final oldestUrls = selectOnly(iconRecords)
+          ..addColumns([iconRecords.url])
+          ..orderBy([OrderingTerm.asc(iconRecords.lastAccessed)])
+          ..limit(count - maxCapacity);
+        await (delete(
+          iconRecords,
+        )..where((t) => t.url.isInQuery(oldestUrls))).go();
       }
     });
   }
