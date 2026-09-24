@@ -40,12 +40,9 @@ void main() {
     globalState.container = container;
   });
 
-  // The editor blinks its caret forever, so `pumpAndSettle` never returns; and
-  // `encodeYamlTask` hands the encode to a real isolate, which only runs
-  // outside the fake-async zone.
+  // The editor blinks its caret forever, so `pumpAndSettle` never returns.
   Future<void> settle(WidgetTester tester) async {
     await tester.pump();
-    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     await tester.pump();
   }
 
@@ -66,6 +63,10 @@ void main() {
     return tester.widget<EditorPage>(find.byType(EditorPage));
   }
 
+  String? loaded(WidgetTester tester) {
+    return tester.widget<EditorView>(find.byType(EditorView)).content;
+  }
+
   testWidgets('asks for the profile it was given and shows its yaml', (
     tester,
   ) async {
@@ -76,7 +77,7 @@ void main() {
 
     expect(_StubSetupAction.requested, [7]);
     expect(editor(tester).title, 'home');
-    expect(editor(tester).content, contains('mixed-port'));
+    expect(loaded(tester), 'mixed-port: 7890');
   });
 
   testWidgets('renders the editor before the content arrives', (tester) async {
@@ -96,11 +97,11 @@ void main() {
       ),
     );
 
-    expect(editor(tester).content, isNull);
+    expect(loaded(tester), isNull);
 
     await settle(tester);
 
-    expect(editor(tester).content, isNotNull);
+    expect(loaded(tester), isNotNull);
   });
 
   testWidgets('an unlabelled profile falls back to its id', (tester) async {

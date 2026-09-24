@@ -5,6 +5,15 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/widgets/scroll.dart';
 import 'package:material_ui/material_ui.dart';
 
+bool isTouchPlatform(TargetPlatform platform) => switch (platform) {
+  TargetPlatform.android ||
+  TargetPlatform.iOS ||
+  TargetPlatform.fuchsia => true,
+  TargetPlatform.linux ||
+  TargetPlatform.macOS ||
+  TargetPlatform.windows => false,
+};
+
 class BaseScrollBehavior extends MaterialScrollBehavior {
   const BaseScrollBehavior({this.scrollbarPadding = EdgeInsets.zero});
 
@@ -20,18 +29,8 @@ class BaseScrollBehavior extends MaterialScrollBehavior {
     PointerDeviceKind.unknown,
   };
 
-  bool showScrollbar(BuildContext context) {
-    switch (getPlatform(context)) {
-      case TargetPlatform.linux:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
-        return true;
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.iOS:
-        return false;
-    }
-  }
+  bool showScrollbar(BuildContext context) =>
+      !isTouchPlatform(getPlatform(context));
 
   @override
   Widget buildScrollbar(
@@ -43,7 +42,7 @@ class BaseScrollBehavior extends MaterialScrollBehavior {
         !showScrollbar(context)) {
       return child;
     }
-    return CommonScrollBar(
+    return CommonScrollBar.ambient(
       controller: details.controller,
       padding: scrollbarPadding,
       child: child,

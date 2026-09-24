@@ -61,7 +61,9 @@ void main() {
         ),
       );
 
-      final scrollBarContext = tester.element(find.byType(Scrollbar).first);
+      final scrollBarContext = tester.element(
+        find.byWidgetPredicate((widget) => widget is RawScrollbar).first,
+      );
       expect(
         MediaQuery.paddingOf(scrollBarContext),
         viewPadding.copyWith(top: viewPadding.top + sheetAppBarHeight),
@@ -107,6 +109,44 @@ void main() {
         find.byType(CommonScrollBar),
       );
       expect(scrollBar.padding, const EdgeInsets.only(top: sheetAppBarHeight));
+    },
+  );
+
+  testWidgets(
+    'a scroll bar given a list leaves a list nested in it the ambient bar',
+    variant: _desktop,
+    (tester) async {
+      final controller = ScrollController();
+      addTearDown(controller.dispose);
+      const ambientPadding = EdgeInsets.only(top: 12);
+
+      await tester.pumpWidget(
+        TestApp(
+          child: ScrollConfiguration(
+            behavior: const BaseScrollBehavior(
+              scrollbarPadding: ambientPadding,
+            ),
+            child: CommonScrollBar(
+              controller: controller,
+              child: ListView(
+                controller: controller,
+                children: [
+                  SizedBox(height: 200, child: _list()),
+                  for (var index = 0; index < 30; index++)
+                    SizedBox(height: 40, child: Text('row $index')),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final bars = tester.widgetList<CommonScrollBar>(
+        find.byType(CommonScrollBar),
+      );
+      expect(bars.where((bar) => bar.controller == controller), hasLength(1));
+      final nested = bars.singleWhere((bar) => bar.controller != controller);
+      expect(nested.padding, ambientPadding);
     },
   );
 

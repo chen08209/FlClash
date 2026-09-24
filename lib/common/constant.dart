@@ -83,6 +83,11 @@ const maxConcurrentDelayTests = 16;
 const animateDuration = Duration(milliseconds: 100);
 const midDuration = Duration(milliseconds: 200);
 const commonDuration = Duration(milliseconds: 300);
+
+/// How often a live Core feed is allowed to repaint. One batch costs about a
+/// frame on a phone, and anything at or below the 200ms scroll-to-end
+/// animation restarts it mid-flight, so the list jumps instead of animating.
+const renderThrottleDuration = Duration(milliseconds: 300);
 const defaultUpdateDuration = Duration(days: 1);
 const MMDB = 'GEOIP.metadb';
 const ASN = 'ASN.mmdb';

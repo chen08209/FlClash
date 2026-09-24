@@ -3,66 +3,353 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'inherited.dart';
 
-const _thumbThickness = 6.0;
+const _restThickness = 6.0;
+const _activeThickness = 10.0;
+const _crossAxisMargin = 2.0;
+const _minThumbLength = 48.0;
 const _fabZoneGap = 8.0;
+
+// Every band the pointer strays sideways from where it grabbed the thumb
+// halves how far the content moves per pixel of thumb travel.
+const _scrubBandWidth = 48.0;
+const _scrubRates = [1.0, 0.5, 0.25, 0.125];
 
 class CommonScrollBar extends StatelessWidget {
   final ScrollController? controller;
   final Widget child;
-  final bool trackVisibility;
   final bool thumbVisibility;
   final EdgeInsets padding;
+
+  /// Reports the scrub rate while the thumb is held, and null on release.
+  final ValueChanged<double?>? onScrub;
+
+  final bool _hidesAmbientBar;
 
   const CommonScrollBar({
     super.key,
     required this.child,
     required this.controller,
-    this.trackVisibility = false,
     this.thumbVisibility = false,
     this.padding = EdgeInsets.zero,
-  });
+    this.onScrub,
+  }) : _hidesAmbientBar = true;
 
-  Widget _buildScrollBar(Widget child) {
-    return Scrollbar(
+  /// The bar a scroll behavior adds, which has no other bar to hide.
+  const CommonScrollBar.ambient({
+    super.key,
+    required this.child,
+    required this.controller,
+    this.padding = EdgeInsets.zero,
+  }) : thumbVisibility = false,
+       onScrub = null,
+       _hidesAmbientBar = false;
+
+  Widget _buildScrollBar(BuildContext context, Widget child) {
+    return _AppScrollbar(
       controller: controller,
       thumbVisibility: thumbVisibility,
-      trackVisibility: trackVisibility,
-      thickness: _thumbThickness,
-      radius: const Radius.circular(_thumbThickness / 2),
-      interactive: true,
-      child: child,
+      onScrub: onScrub,
+      child: _hidesAmbientBar
+          ? ScrollConfiguration(
+              behavior: _OwnBarScrollBehavior(
+                ambient: ScrollConfiguration.of(context),
+                controller:
+                    controller ?? PrimaryScrollController.maybeOf(context),
+              ),
+              child: child,
+            )
+          : child,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     if (padding == EdgeInsets.zero) {
-      return _buildScrollBar(child);
+      return _buildScrollBar(context, child);
     }
     // Scrollbar insets its track by MediaQuery padding, so the inset reaches it
     // through a MediaQuery of its own and the child keeps the original one.
     final mediaQuery = MediaQuery.of(context);
     return MediaQuery(
       data: mediaQuery.copyWith(padding: mediaQuery.padding + padding),
-      child: _buildScrollBar(MediaQuery(data: mediaQuery, child: child)),
+      child: _buildScrollBar(
+        context,
+        MediaQuery(data: mediaQuery, child: child),
+      ),
     );
+  }
+}
+
+/// The ambient behavior less the bar it would stack on the scrollable that
+/// [controller] drives, so lists nested inside keep theirs.
+class _OwnBarScrollBehavior extends ScrollBehavior {
+  const _OwnBarScrollBehavior({
+    required this.ambient,
+    required this.controller,
+  });
+
+  final ScrollBehavior ambient;
+  final ScrollController? controller;
+
+  @override
+  Widget buildScrollbar(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    if (details.controller == controller) {
+      return child;
+    }
+    return ambient.buildScrollbar(context, child, details);
+  }
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) => ambient.buildOverscrollIndicator(context, child, details);
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => ambient.dragDevices;
+
+  @override
+  Set<LogicalKeyboardKey> get pointerAxisModifiers =>
+      ambient.pointerAxisModifiers;
+
+  @override
+  MultitouchDragStrategy getMultitouchDragStrategy(BuildContext context) =>
+      ambient.getMultitouchDragStrategy(context);
+
+  @override
+  TargetPlatform getPlatform(BuildContext context) =>
+      ambient.getPlatform(context);
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      ambient.getScrollPhysics(context);
+
+  @override
+  ScrollViewKeyboardDismissBehavior getKeyboardDismissBehavior(
+    BuildContext context,
+  ) => ambient.getKeyboardDismissBehavior(context);
+
+  @override
+  GestureVelocityTrackerBuilder velocityTrackerBuilder(BuildContext context) =>
+      ambient.velocityTrackerBuilder(context);
+
+  @override
+  bool shouldNotify(_OwnBarScrollBehavior oldDelegate) =>
+      oldDelegate.controller != controller ||
+      oldDelegate.ambient.runtimeType != ambient.runtimeType ||
+      ambient.shouldNotify(oldDelegate.ambient);
+}
+
+class _AppScrollbar extends RawScrollbar {
+  final ValueChanged<double?>? onScrub;
+
+  const _AppScrollbar({
+    required super.child,
+    super.controller,
+    super.thumbVisibility,
+    this.onScrub,
+  }) : super(
+         interactive: true,
+         shape: AppShape.full,
+         minThumbLength: _minThumbLength,
+         crossAxisMargin: _crossAxisMargin,
+         fadeDuration: const Duration(milliseconds: 250),
+         // Long enough to let go and grab the thumb again before it fades.
+         timeToFade: const Duration(milliseconds: 1200),
+       );
+
+  @override
+  RawScrollbarState<_AppScrollbar> createState() => _AppScrollbarState();
+}
+
+class _AppScrollbarState extends RawScrollbarState<_AppScrollbar> {
+  late final AnimationController _emphasis;
+  late final CurvedAnimation _emphasisCurve;
+  late ColorScheme _colorScheme;
+  late TargetPlatform _platform;
+  var _hovered = false;
+  var _dragging = false;
+  Offset? _scrubOrigin;
+  Offset? _scrubLast;
+  Offset? _scrubPosition;
+  var _scrubRate = 1.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _emphasis = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+    )..addListener(updateScrollbarPainter);
+    _emphasisCurve = CurvedAnimation(parent: _emphasis, curve: Curves.easeOut);
+  }
+
+  @override
+  void didChangeDependencies() {
+    final theme = Theme.of(context);
+    _colorScheme = theme.colorScheme;
+    _platform = theme.platform;
+    super.didChangeDependencies();
+  }
+
+  @override
+  void dispose() {
+    _emphasisCurve.dispose();
+    _emphasis.dispose();
+    super.dispose();
+  }
+
+  void _syncEmphasis() {
+    if (_hovered || _dragging) {
+      _emphasis.forward();
+    } else {
+      _emphasis.reverse();
+    }
+  }
+
+  double _scrubRateFor(double sidewaysDistance) {
+    if (!isTouchPlatform(_platform)) {
+      return 1.0;
+    }
+    final band = (sidewaysDistance / _scrubBandWidth).floor();
+    return _scrubRates[band.clamp(0, _scrubRates.length - 1)];
+  }
+
+  @override
+  void updateScrollbarPainter() {
+    super.updateScrollbarPainter();
+    final t = _emphasisCurve.value;
+    final onSurface = _colorScheme.onSurface;
+    final isDark = _colorScheme.brightness == Brightness.dark;
+    scrollbarPainter
+      ..color = Color.lerp(
+        onSurface.withValues(alpha: isDark ? 0.35 : 0.25),
+        onSurface.withValues(alpha: isDark ? 0.65 : 0.5),
+        t,
+      )!
+      ..thickness = _restThickness + (_activeThickness - _restThickness) * t;
+  }
+
+  @override
+  void handleThumbPressStart(Offset localPosition) {
+    super.handleThumbPressStart(localPosition);
+    if (getScrollbarDirection() == null) {
+      return;
+    }
+    _dragging = true;
+    _scrubOrigin = localPosition;
+    _scrubLast = localPosition;
+    _scrubPosition = localPosition;
+    _scrubRate = 1.0;
+    _syncEmphasis();
+    if (isTouchPlatform(_platform)) {
+      HapticFeedback.selectionClick();
+    }
+    widget.onScrub?.call(_scrubRate);
+  }
+
+  // The thumb maps to an absolute offset, so a slowed scrub feeds the base
+  // class a virtual pointer that advances by the scaled delta only.
+  @override
+  void handleThumbPressUpdate(Offset localPosition) {
+    final origin = _scrubOrigin;
+    final last = _scrubLast;
+    final position = _scrubPosition;
+    final direction = getScrollbarDirection();
+    if (origin == null || last == null || position == null) {
+      super.handleThumbPressUpdate(localPosition);
+      return;
+    }
+    final Offset next;
+    final double rate;
+    switch (direction) {
+      case Axis.vertical:
+        rate = _scrubRateFor((localPosition.dx - origin.dx).abs());
+        next = Offset(
+          localPosition.dx,
+          position.dy + (localPosition.dy - last.dy) * rate,
+        );
+      case Axis.horizontal:
+        rate = _scrubRateFor((localPosition.dy - origin.dy).abs());
+        next = Offset(
+          position.dx + (localPosition.dx - last.dx) * rate,
+          localPosition.dy,
+        );
+      case null:
+        super.handleThumbPressUpdate(localPosition);
+        return;
+    }
+    _scrubLast = localPosition;
+    _scrubPosition = next;
+    if (rate != _scrubRate) {
+      _scrubRate = rate;
+      widget.onScrub?.call(rate);
+    }
+    super.handleThumbPressUpdate(next);
+  }
+
+  @override
+  void handleThumbPressEnd(Offset localPosition, Velocity velocity) {
+    final position = _scrubPosition ?? localPosition;
+    final slowed = _scrubRate < 1;
+    _dragging = false;
+    _scrubOrigin = null;
+    _scrubLast = null;
+    _scrubPosition = null;
+    _scrubRate = 1.0;
+    _syncEmphasis();
+    // A fling would throw away the precision the slowed scrub just bought.
+    super.handleThumbPressEnd(position, slowed ? Velocity.zero : velocity);
+    widget.onScrub?.call(null);
+  }
+
+  @override
+  void handleHover(PointerHoverEvent event) {
+    super.handleHover(event);
+    final hovered = isPointerOverScrollbar(
+      event.position,
+      event.kind,
+      forHover: true,
+    );
+    if (hovered != _hovered) {
+      _hovered = hovered;
+      _syncEmphasis();
+    }
+  }
+
+  @override
+  void handleHoverExit(PointerExitEvent event) {
+    super.handleHoverExit(event);
+    if (_hovered) {
+      _hovered = false;
+      _syncEmphasis();
+    }
   }
 }
 
 class FloatingScrollbar extends StatefulWidget {
   final ScrollController controller;
   final String Function(double fraction) hintBuilder;
+  final bool thumbVisibility;
   final Widget child;
 
   const FloatingScrollbar({
     super.key,
     required this.controller,
     required this.hintBuilder,
+    this.thumbVisibility = false,
     required this.child,
   });
 
@@ -71,16 +358,17 @@ class FloatingScrollbar extends StatefulWidget {
 }
 
 class _FloatingScrollbarState extends State<FloatingScrollbar> {
-  var _shown = false;
+  var _hintVisible = false;
+  var _hintMounted = false;
+  double? _scrubRate;
   var _pillHeight = 0.0;
   Timer? _hideTimer;
 
   @override
   void initState() {
     super.initState();
-    // Scroll notifications only fire on scroll activity; lazy lists also
-    // refine maxScrollExtent during layout, which moves the thumb without
-    // any notification. The position listener covers both.
+    // Lazy lists also refine maxScrollExtent during layout, which moves the
+    // thumb without a scroll notification; the position listener covers both.
     widget.controller.addListener(_syncPosition);
   }
 
@@ -101,41 +389,37 @@ class _FloatingScrollbarState extends State<FloatingScrollbar> {
   }
 
   void _syncPosition() {
-    if (_shown && mounted) {
+    if (_hintMounted && mounted) {
       setState(() {});
     }
   }
 
-  // Deferred so transient ScrollEndNotifications mid-gesture do not blink
-  // the pill off and on.
-  void _scheduleHide() {
+  void _handleScrub(double? rate) {
     _hideTimer?.cancel();
-    if (!_shown) return;
+    if (rate != null) {
+      final appearing = !_hintMounted;
+      setState(() {
+        _scrubRate = rate;
+        _hintVisible = !appearing;
+        _hintMounted = true;
+      });
+      if (appearing) {
+        // Mounts transparent so AnimatedOpacity has a value to fade from.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _hintMounted) {
+            setState(() => _hintVisible = true);
+          }
+        });
+      }
+      return;
+    }
+    setState(() => _scrubRate = null);
+    // Lingers so letting go and grabbing again does not blink the hint.
     _hideTimer = Timer(const Duration(milliseconds: 500), () {
       if (mounted) {
-        setState(() => _shown = false);
+        setState(() => _hintVisible = false);
       }
     });
-  }
-
-  bool _handleScrollNotification(ScrollNotification notification) {
-    if (notification is ScrollEndNotification) {
-      _scheduleHide();
-      return false;
-    }
-    // Only user drags arm the hint; programmatic animateTo must not flash it.
-    final isUserDrag = switch (notification) {
-      ScrollStartNotification(:final dragDetails) => dragDetails != null,
-      ScrollUpdateNotification(:final dragDetails) => dragDetails != null,
-      _ => false,
-    };
-    if (isUserDrag) {
-      _hideTimer?.cancel();
-      if (!_shown) {
-        setState(() => _shown = true);
-      }
-    }
-    return false;
   }
 
   double _thumbCenter(
@@ -159,9 +443,11 @@ class _FloatingScrollbarState extends State<FloatingScrollbar> {
             1.0,
           )
         : 1.0;
-    // Material scrollbar defaults: 48px min thumb length, no main-axis
-    // margin. Reversed lists place the thumb at (1 - fraction).
-    final thumbExtent = max(48.0, track * fractionVisible).clamp(0.0, track);
+    // Reversed lists place the thumb at (1 - fraction).
+    final thumbExtent = max(
+      _minThumbLength,
+      track * fractionVisible,
+    ).clamp(0.0, track);
     final thumbFraction = axisDirectionIsReversed(metrics.axisDirection)
         ? 1 - fraction
         : fraction;
@@ -177,78 +463,92 @@ class _FloatingScrollbarState extends State<FloatingScrollbar> {
     final barPadding = behavior is BaseScrollBehavior
         ? behavior.scrollbarPadding
         : EdgeInsets.zero;
-    return NotificationListener<ScrollNotification>(
-      onNotification: _handleScrollNotification,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          String? label;
-          var top = 0.0;
-          if (_shown && widget.controller.hasClients) {
-            final metrics = widget.controller.position;
-            if (metrics.maxScrollExtent > metrics.minScrollExtent) {
-              final scrollableExtent =
-                  metrics.maxScrollExtent - metrics.minScrollExtent;
-              final fraction =
-                  ((metrics.pixels - metrics.minScrollExtent) /
-                          scrollableExtent)
-                      .clamp(0.0, 1.0);
-              // Continuous clamp: the pill stays clear of the FAB zone at any height.
-              final half = _pillHeight / 2;
-              final limit = (constraints.maxHeight - bottomInset - _fabZoneGap)
-                  .clamp(0.0, double.infinity);
-              top = _thumbCenter(
-                metrics,
-                constraints.maxHeight,
-                MediaQuery.paddingOf(context) + barPadding,
-              ).clamp(half, max(half, limit - half));
-              label = widget.hintBuilder(fraction);
-            }
+    // A finger on the thumb covers the bar's edge, so the hint keeps clear.
+    final hintGap = isTouchPlatform(Theme.of(context).platform) ? 40.0 : 20.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        String? label;
+        var top = 0.0;
+        if (_hintMounted && widget.controller.hasClients) {
+          final metrics = widget.controller.position;
+          if (metrics.maxScrollExtent > metrics.minScrollExtent) {
+            final scrollableExtent =
+                metrics.maxScrollExtent - metrics.minScrollExtent;
+            final fraction =
+                ((metrics.pixels - metrics.minScrollExtent) / scrollableExtent)
+                    .clamp(0.0, 1.0);
+            // Continuous clamp: the pill stays clear of the FAB zone at any height.
+            final half = _pillHeight / 2;
+            final limit = (constraints.maxHeight - bottomInset - _fabZoneGap)
+                .clamp(0.0, double.infinity);
+            top = _thumbCenter(
+              metrics,
+              constraints.maxHeight,
+              MediaQuery.paddingOf(context) + barPadding,
+            ).clamp(half, max(half, limit - half));
+            label = widget.hintBuilder(fraction);
           }
-          return Stack(
-            children: [
-              // This is the list's only bar; the ambient behavior adds none.
-              CommonScrollBar(
-                controller: widget.controller,
-                padding: barPadding,
-                child: ScrollConfiguration(
-                  behavior: const HiddenBarScrollBehavior(),
-                  child: widget.child,
-                ),
-              ),
-              if (label != null)
-                Positioned(
-                  right: 12,
-                  top: top,
-                  child: FractionalTranslation(
-                    translation: const Offset(0, -0.5),
-                    child: IgnorePointer(
-                      child: _MeasureSize(
-                        onChanged: (size) {
-                          if (mounted && size.height != _pillHeight) {
-                            setState(() => _pillHeight = size.height);
-                          }
-                        },
-                        child: _ScrollbarHintPill(label: label),
-                      ),
+        }
+        return Stack(
+          children: [
+            CommonScrollBar(
+              controller: widget.controller,
+              thumbVisibility: widget.thumbVisibility,
+              padding: barPadding,
+              onScrub: _handleScrub,
+              child: widget.child,
+            ),
+            // Outlives the label, so the fade-out still ends and unmounts it.
+            if (_hintMounted)
+              Positioned(
+                right: hintGap,
+                top: top,
+                child: FractionalTranslation(
+                  translation: const Offset(0, -0.5),
+                  child: IgnorePointer(
+                    child: AnimatedOpacity(
+                      opacity: _hintVisible ? 1 : 0,
+                      duration: const Duration(milliseconds: 150),
+                      onEnd: () {
+                        if (!_hintVisible) {
+                          setState(() => _hintMounted = false);
+                        }
+                      },
+                      child: label == null
+                          ? const SizedBox.shrink()
+                          : _MeasureSize(
+                              onChanged: (size) {
+                                if (mounted && size.height != _pillHeight) {
+                                  setState(() => _pillHeight = size.height);
+                                }
+                              },
+                              child: _ScrollbarHintPill(
+                                label: label,
+                                scrubRate: _scrubRate,
+                              ),
+                            ),
                     ),
                   ),
                 ),
-            ],
-          );
-        },
-      ),
+              ),
+          ],
+        );
+      },
     );
   }
 }
 
 class _ScrollbarHintPill extends StatelessWidget {
   final String label;
+  final double? scrubRate;
 
-  const _ScrollbarHintPill({required this.label});
+  const _ScrollbarHintPill({required this.label, required this.scrubRate});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final style = context.textTheme.labelMedium;
+    final rate = scrubRate;
     return DecoratedBox(
       key: const ValueKey('scrollbarHintPill'),
       decoration: ShapeDecoration(
@@ -259,11 +559,22 @@ class _ScrollbarHintPill extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Text(
-          label,
-          style: context.textTheme.labelMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: style?.copyWith(color: colorScheme.onSurfaceVariant),
+            ),
+            if (rate != null && rate < 1) ...[
+              const SizedBox(width: 6),
+              Text(
+                '×1/${(1 / rate).round()}',
+                key: const ValueKey('scrollbarScrubRate'),
+                style: style?.copyWith(color: colorScheme.primary),
+              ),
+            ],
+          ],
         ),
       ),
     );

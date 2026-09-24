@@ -59,6 +59,8 @@ class _CommonCircleLoadingState extends State<CommonCircleLoading>
     MaterialShapes.oval,
   ];
 
+  static final List<Morph> _defaultMorphs = _buildMorphs(_defaultShapeSequence);
+
   final SpringSimulation _morphAnimation = SpringSimulation(
     SpringDescription.withDampingRatio(mass: 1, stiffness: 200, ratio: 0.6),
     0,
@@ -124,7 +126,7 @@ class _CommonCircleLoadingState extends State<CommonCircleLoading>
         widget.containerColor ?? colorScheme.primaryContainer,
     };
     final shapeSequence = widget.polygons ?? _defaultShapeSequence;
-    final morphs = _morphsFor(shapeSequence);
+    final morphs = _morphsFor(widget.polygons);
     final padding = (widget.padding ?? EdgeInsets.zero).resolve(
       Directionality.of(context),
     );
@@ -192,13 +194,20 @@ class _CommonCircleLoadingState extends State<CommonCircleLoading>
   int get _shapeCount =>
       widget.polygons?.length ?? _defaultShapeSequence.length;
 
-  List<Morph> _morphsFor(List<RoundedPolygon> polygons) {
+  List<Morph> _morphsFor(List<RoundedPolygon>? polygons) {
+    if (polygons == null) {
+      return _defaultMorphs;
+    }
     final cachedMorphs = _cachedMorphs;
     if (cachedMorphs != null && listEquals(_cachedPolygons, polygons)) {
       return cachedMorphs;
     }
     _cachedPolygons = polygons;
-    return _cachedMorphs = [
+    return _cachedMorphs = _buildMorphs(polygons);
+  }
+
+  static List<Morph> _buildMorphs(List<RoundedPolygon> polygons) {
+    return [
       for (var i = 0; i < polygons.length; i++)
         Morph(polygons[i], polygons[(i + 1) % polygons.length]),
     ];
