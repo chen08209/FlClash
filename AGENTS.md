@@ -32,7 +32,7 @@ Read these only when the task touches their area:
   say — a non-obvious constraint, an upstream behavior being worked around, a reason a reader would otherwise get
   wrong. Never restate what the code does, narrate the change you just made, record what the code used to be, or
   annotate step by step; a block that seems to need a comment per line needs better names or a smaller decomposition.
-  Keep density near the repository's own: healthy changes here sit under 4%, and a `comment-density` gate fails a file
+  Keep density near the repository's own: healthy changes here sit at or under 3.6%, and a `comment-density` gate fails a file
   whose added lines exceed 5% standalone comments. Delete commented-out code and stale notes in files you already
   touch. Preserve
   `// ignore:`-style directives, license headers, codegen markers, and vendored upstream comments. See

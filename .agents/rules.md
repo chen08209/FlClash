@@ -57,12 +57,13 @@ with an enclosing clip or shape where it shows.
 CI gates formatting: `dart format --output=none --set-exit-if-changed lib test
 tool plugins setup.dart` runs before `flutter analyze`.
 
-Generated directories are excluded from analysis:
+These directories are excluded from analysis:
 
 - `build/**`
 - `lib/l10n/intl/**`
 - `lib/**/generated/**`
 - `plugins/**`
+- the platform runner directories: `android/`, `ios/`, `web/`, `windows/`, `macos/`, `linux/`
 
 ## Comments
 
@@ -143,9 +144,10 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   keeps its identity check on the Dart side, which compares the named-pipe peer PID with the Core it launched.
 - Keep the shared `CoreMethodCall`/`CoreMethodResponse` JSON envelope structurally identical across Dart, Go, JNI, and
   desktop IPC. Do not double-encode `arguments`, `result`, or event batches.
-- `core/message.go` carries three event queues, and the split is load-bearing: state (loaded, geo-update), delay, and
-  bulk (log, request). Delay and bulk evict their own oldest entry under backpressure; state uses `enqueueState`, which
-  never evicts, because a dropped `geoUpdate{updating:false}` leaves `isUpdatingProvider` stuck at true in the UI until
+- `core/message.go` carries three event queues, and the split is load-bearing: state (loaded, geo-update,
+  route-changed), priority (every other event), and bulk (log, request, DNS). Priority and bulk evict their own oldest
+  entry under backpressure, except DNS, which enters the bulk queue through `enqueueState` so a lookup burst cannot push
+  out the request events the connection list is built from; state uses `enqueueState`, which never evicts, because a dropped `geoUpdate{updating:false}` leaves `isUpdatingProvider` stuck at true in the UI until
   `UpdatingAction` sweeps it as stale minutes later. Do not merge the tiers or give state eviction semantics. `enqueueState` drops silently on a full
   queue and must stay that way: reaching it means the host stopped reading, which `logDeliveryError` already reports,
   and reporting it from the message layer feeds the same batcher.
@@ -202,12 +204,11 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   mutual exclusion against each other and against `patchSelectGroup` — but not against a whole config apply, which is
   what `configMu` made a proxy switch wait for, provider downloads included. `patchSelectGroup` takes `selectMu` under
   `configMu`, fixing the order as `configMu` → `selectMu`.
-- The delay-test semaphore is acquired with a slice of the caller's budget (`budget/delayTestQueueShare`), not
-  unconditionally and not with the whole deadline. Queueing and probing come out of one budget, so a test handed all of
-  it can spend it waiting and reach `URLTest` with nothing left, reporting a proxy it never contacted as unreachable.
-  The probe keeps the caller's original deadline, so whatever the queue did not use is still its own.
+- Queueing for the delay-test semaphore and probing the node each get the full timeout in `handleTestDelay`. With one
+  shared deadline, a node that waited behind a saturated semaphore reached `URLTest` with almost nothing left, so a bulk
+  test of a large subscription reported whatever sat at the back of the queue as unreachable.
 - A delay test that the Core does not answer is a fault of the Core or the channel, never a verdict on the proxy:
-  `handleTestDelay` returns inside its own budget on every path. `asyncTestDelay` therefore returns null instead of a
+  `handleTestDelay` returns within its two timeouts on every path. `asyncTestDelay` therefore returns null instead of a
   `-1` delay, and `ProxiesAction` leaves the last measurement in place and abandons the rest of the run. Writing a
   timeout there is what made a reachable node read as unreachable whenever the host deadline beat the Core's.
 - Delay-test progress lives in `pendingDelayTestsProvider`, not as a sentinel value in `DelayDataSource`. A delay of 0
@@ -312,8 +313,6 @@ connection `captureFrames` has installed by then. Either keep the event out of t
 connection with `swapConn`; a bare assignment races every event it happens to be delivering, and `go test -race` catches
 it in an unrelated test.
 
-Use `CoreController.test(mock)` to inject a mocked `CoreHandlerInterface`. Call `CoreController.resetInstance()` in `tearDown` to clean up the singleton between tests.
-
 Register fallback values for freezed params used with `any()` matchers.
 
 `tool/check_coverage.dart` enforces a total floor passed by CI plus per-group floors declared in `_groupFloors`. Raise a
@@ -326,7 +325,8 @@ land.
 
 Prefer `coreHandlerProvider.overrideWithValue(CoreController.scoped(fake))` over `CoreController.test(fake)` in new and
 touched tests. `CoreController.test` claims the process-wide singleton, which makes a global read and a provider read
-resolve to the same fake, so it cannot fail on a call site that still reaches for the global.
+resolve to the same fake, so it cannot fail on a call site that still reaches for the global. A test that does claim
+the singleton calls `CoreController.resetInstance()` in `tearDown`.
 
 Construct the Android lib handler with `CoreLib.scoped(fakeService)`. The `service` global is gated on `Platform.isAndroid`
 and is therefore null on every test host, so a `CoreLib()` built from it silently takes the null-service fallback on every
@@ -439,8 +439,9 @@ failure, disposal, and any timer boundary that changes visible state.
 - Never end a FlClash process the agent did not start, and never kill by name (`pkill`, `killall`, a pattern on the
   executable path): the user's own instance matches too. Record the pid of every process you launch, check with
   `ps -o pid,command -p <pid>` that its executable is your own build output, and end only that pid.
-- Release and profile builds share the installed app's data directory and single-instance lock, so one cannot start
-  while the user's instance runs; a debug build uses the separate `.debug` bundle directory.
+- Only a macOS or Android debug build has its own data directory; every other build shares the installed app's data
+  directory and single-instance lock, so it cannot start while the user's instance runs. `.agents/commands.md` lists
+  which builds are kept apart.
 
 ## Commit Messages
 
@@ -487,7 +488,8 @@ Changelog: Per-profile override scripts
   therefore needs two lines of copy: the footer for the breaking entry and `Changelog:` for the normal one.
 
 `feat`, `fix`, `perf`, `revert` and breaking commits are collected by default; every other type is dropped unless it
-carries a `Changelog:` trailer. Commits missing a trailer reuse their subject, and the hook says so without blocking.
+carries a `Changelog:` trailer. Commits missing a trailer reuse their subject; for `feat`, `fix` and `perf` the hook
+says so without blocking.
 
 ## Generated Code
 

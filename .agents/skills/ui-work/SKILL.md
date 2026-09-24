@@ -1,6 +1,6 @@
 ---
 name: ui-work
-description: Use when changing FlClash Flutter UI, widgets, screens, Material You styling, navigation surfaces, async feedback, or user-facing interactions.
+description: Use when changing FlClash Flutter UI, widgets, screens, Material You styling, icons or glyphs, shapes and corner radii, navigation surfaces, async feedback, or user-facing interactions.
 ---
 
 # UI Work
@@ -80,7 +80,7 @@ up. `AppInputBorder` clips the notch region and paints the full superellipse thr
 `OutlineInputBorder` does by shortening the arc. It needs no `contentPadding` compensation.
 
 Nested radii are derived, never tokens: concentric corners need `outer = inner + inset`, so name the inset and compute
-the outer value, as `_cardRadius` in `lib/widgets/popup.dart`, `_kCornerRadius` in `lib/widgets/tab.dart`, and the
+the outer value, as `_cardRadius` in `lib/widgets/popup.dart`, `thumbRadius + _kThumbInset` in `lib/widgets/tab.dart`, and the
 selection ring in `lib/widgets/palette.dart` do. Adding a token for one of these is how a scale grows without bound.
 
 A component the scale does not fit keeps its own value instead of growing the scale: name it once in the file and pass

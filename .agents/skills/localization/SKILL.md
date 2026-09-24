@@ -34,7 +34,9 @@ Do not use this for README translation sync or manual edits to generated localiz
    dart run intl_utils:generate
    ```
 
-6. Run `flutter analyze` on the changed Dart files.
+6. Run `flutter analyze --no-fatal-infos` and `flutter test test/l10n test/lint/dynamic_message_key_test.dart`. The
+   lint test covers the labels built from a runtime key, such as `action_${HotAction.name}`, which the analyzer cannot
+   see; the ARB section of `.agents/rules.md` explains them.
 7. Re-run the Han-text scan for targeted strings.
 
 ## Pitfalls

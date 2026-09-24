@@ -271,8 +271,9 @@ while `v<pubspec version>` is still tagged it refuses to collect anything and th
 
 ## Verify
 
-Every branch push runs the `dart` job, which performs these root-package checks
-in order:
+In the public repository every branch push runs the `dart` job; in the private
+`origin` every check job runs only when started by hand (`workflow_dispatch`).
+The `dart` job performs these root-package checks in order:
 
 ```bash
 bash tool/check_commit_msg_test.sh
@@ -294,8 +295,9 @@ directories: `plugins` (local Flutter packages and the setup build tool), `go`
 (the Core wrapper, plus an NDK-backed vet of the Android files), `android`
 (JVM unit tests for `:common`, `:service` and `:app`, with the Flutter compile
 tasks excluded so no native build hook runs), `rust` (both crates), and a
-Windows runner for the helper's `windows-service` feature. Release builds start
-once all of them pass.
+Windows runner for the helper's `windows-service` feature. A `desktop` job also
+compiles a debug build per desktop platform. Release builds run only in the
+public repository and start once every job except `desktop` passes.
 
 `bash tool/check_plugins.sh` is that plugin gate, and CI runs the same script.
 It discovers every `plugins/*/pubspec.yaml`, analyzes each package, and runs

@@ -4,9 +4,10 @@ FlClash is a multi-platform proxy client based on ClashMeta (mihomo), built with
 
 ## Version Notes
 
-- Release CI pins Flutter 3.47.4. Local SDK may diverge, so trust the CI
-  version as the source of truth for release builds. `code_forge` 10.13 and
-  later need Dart 3.13.2, so the pin cannot go below Flutter 3.47.2.
+- Flutter stays on the 3.47.x line. Release CI pins 3.47.4 and is the source
+  of truth for release builds; `.fvmrc` and local SDKs may sit on another 3.47
+  patch. `code_forge` 10.13 and later need Dart 3.13.2, so the CI pin cannot go
+  below Flutter 3.47.2.
 - The Dart SDK lower bound in `pubspec.yaml` sets the package language
   version. `flutter analyze` excludes `lib/**/generated/**`, so a raise is
   proven by `flutter test`, which parses the generated code, not by analyze.
@@ -52,7 +53,7 @@ now, see the window plugin section of `architecture.md`.
 - Drop the fork once upstream quotes map keys by the same
   `isValidUnquotedString` rule it already applies to values.
 
-`code_forge` — `chen08209/code_forge`, tag `v10.14.0-flclash.2`, version 10.14.0.
+`code_forge` — `chen08209/code_forge`, tag `v10.14.0-flclash.4`, version 10.14.0.
 A new pin is a new `v<upstream version>-flclash.N` tag on the fork's `main`.
 
 - Builds the Rust crate through a `hook/build.dart` Native Assets hook, the same

@@ -36,7 +36,7 @@ Key Go core files:
 
 - `core/hub.go`: handler functions.
 - `core/method.go`: MethodChannel-style method-call dispatch and response envelopes.
-- `core/message.go`: non-blocking priority/bulk event queues and bounded message batching.
+- `core/message.go`: non-blocking state/priority/bulk event queues and bounded message batching.
 - `core/lib.go`: CGO exports.
 - `core/server.go`: desktop socket/named-pipe client and framed message forwarding.
 
@@ -84,7 +84,7 @@ generated profile. With `allow-lan` off, mihomo's `genAddr` binds each listener 
 The loopback listener takes local connections without authentication by default: mandatory credentials would lock out
 every external local consumer a proxy client exists for. The binding only guarantees traffic originates on the device;
 it does not isolate programs already running there, so on Android any app holding `INTERNET` can use the proxy and learn
-the outbound IP (#1934). The opt-in answer is the local authentication setting (`NetworkProps.localAuth`), which spans
+the outbound IP (#1934). The opt-in answer is the local authentication setting (`NetworkProps.authentication`), which spans
 four paths that must stay in sync: `_makeRealProfileTask` writes the credentials into `authentication` and force-clears
 `skip-auth-prefixes` so a profile cannot silently exempt loopback; `UpdateParams.authentication` applies the same list
 to a running core; `FlClashHttpOverrides` sends the credentials with the app's own proxied requests; and `sharedState`
@@ -111,9 +111,9 @@ callers must not try to reuse a closed platform implementation.
 
 - `startCore()` publishes `connecting`, starts the platform Core, publishes `connected`, then initializes Core state. A
   startup error publishes `disconnected` and displays the error.
-- `restartCore()` coalesces overlapping callers behind one worker. `_requestedRestartRevision` records newer requests,
-  while `_latestExplicitStart` retains the newest requested post-restart running intent. After the lifecycle restart and
-  `initCore()`, the worker reapplies profile/running state until it has consumed the latest revision.
+- `restartCore()` coalesces overlapping callers behind one worker. `_requestedRestartRevision` records newer requests.
+  After the lifecycle restart, the worker reapplies running state or the profile, rereading `isStartProvider` on every
+  pass, until it has consumed the latest revision, so the newest start intent wins.
 - The provider is an orchestration and presentation layer, not a process owner. Platform lifecycle code remains responsible
   for determining whether a Core process/service is actually running.
 
@@ -191,12 +191,14 @@ remain strings.
 
 Go event delivery is intentionally non-blocking:
 
-- State-bearing events such as delay, loaded-provider, geo-update, and route-changed use a 256-entry priority queue.
-  Desktop process crashes are generated locally by `CoreService` from lifecycle failures rather than sent through the
-  Go queue.
+- Loaded-provider, geo-update, and route-changed events use a state queue that never evicts; the rules for it are under
+  Core API Safety in `.agents/rules.md`. Every other event except the bulk kinds, delay included, uses a 256-entry
+  priority queue. Desktop process crashes are generated locally by `CoreService` from lifecycle failures rather than
+  sent through the Go queue.
 - High-volume log, request/connection, and DNS query events use a separate 256-entry bulk queue, so bulk floods cannot
   evict state.
-- A full queue evicts only its own oldest event and retries the newest event; Core work never blocks on event delivery.
+- A full priority or bulk queue evicts only its own oldest event and retries the newest; DNS events never evict. Core
+  work never blocks on event delivery.
 - The batcher flushes at 32 messages or every 16 milliseconds. Priority events are preferred, but one bulk opportunity is
   guaranteed after eight priority messages to prevent starvation.
 - `sendMessage` drops an event before it is queued when `hasEventListener` is false. That only happens on Android, after
@@ -226,9 +228,10 @@ surface. It is shown only outside dashboard edit mode and only when `coreLib == 
 - Taps during the display hold or while the provider is genuinely connecting are inert. Connected/disconnected taps show
   the appropriate confirmation and delegate restart to `CoreAction`; the widget never starts Core directly.
 
-Proxy delay testing follows the same failure-safe UI rule. `proxyDelayTest()` records an in-progress zero delay, writes the
-real result on success, and logs plus records `-1` on exceptions. `ProxiesView` clears the loading flag of its delay test
-action in `finally`, so an RPC failure cannot leave the action permanently spinning.
+Proxy delay testing follows the same failure-safe UI rule. `ProxiesAction._runDelayTests` marks its keys in
+`pendingDelayTestsProvider` and releases them in `finally`, and a test the Core does not answer leaves the last
+measurement in place; the delay-test bullets under Core API Safety in `.agents/rules.md` give the reasons. `ProxiesView`
+clears the loading flag of its delay test action in `finally`, so an RPC failure cannot leave the action spinning.
 
 ## Route Consistency
 
@@ -551,7 +554,7 @@ Generated Drift output lives in `lib/database/generated/database.g.dart`. After 
 Managers are nested `InheritedWidget`/`StatefulWidget` components built by `buildManagerStack()` in `lib/application.dart`:
 
 ```text
-AppEnvManager > StatusManager > ThemeManager
+AppEnvManager > LocaleManager > StatusManager > ThemeManager
   > [Desktop: WindowManager > TrayManager > HotKeyManager > ProxyManager]
     [Mobile:  AndroidManager > TileManager]
   > AppStateManager > CoreManager > ConnectivityManager
@@ -576,7 +579,7 @@ updating both this diagram and that test.
 
 ## Core Controller and Actions
 
-`lib/core/controller.dart` (`CoreController`) is a singleton facade over `CoreHandlerInterface`. Public methods delegate to the platform-specific interface, either Android FFI or desktop socket. It has an `@visibleForTesting` constructor and `resetInstance()` for test injection.
+`lib/core/controller.dart` (`CoreController`) is a singleton facade over `CoreHandlerInterface`. Public methods delegate to the platform-specific interface, either the Android service channel (`CoreLib`) or the desktop socket. It has an `@visibleForTesting` constructor and `resetInstance()` for test injection.
 
 `lib/providers/action.dart` is the public library entry point for action
 providers. The Riverpod notifier implementations are split by responsibility
@@ -608,29 +611,6 @@ invariant, not a policy, and it must stay inside the notifier where no warm-up o
 only the policy half: the periodic sweep that discards a key stuck past `updatingStaleTimeout`. Do not move the
 timeout back into `UpdatingKeys`, and do not widen the disconnect reset to every scope.
 
-## Platform Managers
-
-Desktop:
-
-- `WindowManager`
-- `TrayManager`
-- `HotKeyManager`
-- `ProxyManager`
-
-Mobile:
-
-- `AndroidManager`
-- `TileManager`
-- `VpnManager`
-
-Shared:
-
-- `ConnectivityManager`
-- `CoreManager`
-- `AppStateManager`
-- `StatusManager`
-- `ThemeManager`
-
 ## Safe Mode
 
 `--dart-define=SAFE_MODE=true` builds a FlClash that never changes the host network, so a development build can run
@@ -656,7 +636,7 @@ rewritten; each owner reads the flag where it would otherwise act:
   `FlClash` value in the user's Run key.
 - Privileged Core: `CoreService` resolves the launcher with `hasHelper: false`, which is the direct child-process path
   on every desktop platform; the Helper keeps managing the installed app's Core.
-- Core listeners: `SetupAction._setCoreRunning` and the `AppManager` suspend listener never call `startListener` or
+- Core listeners: `SetupAction._setCoreRunning` and the `AppStateManager` suspend listener never call `startListener` or
   `stopListener`, so the Core's `isRunning` stays false and `updateListeners` binds nothing, while `isStartProvider`
   and `applyProfile` behave as usual. The installed app keeps the mixed, DNS and other loopback ports.
 - Android: `sharedStateProvider` hands the service `VpnOptions.enable: false` and `systemProxy: false`, so the
@@ -832,7 +812,6 @@ Crashlytics NDK symbolicates a native crash only from libraries that still carry
 - `window`: desktop window control for Linux, macOS and Windows. Written for FlClash; replaced the
   `window_manager` fork. See below.
 - `wifi_ssid`: Wi-Fi SSID detection.
-- `flutter_distributor`: app packaging/distribution.
 
 ## window Plugin
 

@@ -1,6 +1,6 @@
 ---
 name: core-platform
-description: Use when changing FlClash Core integration, lifecycle/process ownership, Go event delivery, Android services, desktop IPC, platform managers, VPN/TUN, or Windows Helper flow.
+description: Use when changing FlClash Core integration, lifecycle/process ownership, Go event delivery, Android services, desktop IPC, platform managers, build hooks, system proxy, tray, VPN/TUN, or the Windows or Linux Helper.
 ---
 
 # Core And Platform
