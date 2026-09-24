@@ -362,7 +362,7 @@ final class ProfilesProvider
   }
 }
 
-String _$profilesHash() => r'e36801d7209492d633d0ef0114240088905ea5ae';
+String _$profilesHash() => r'b2387af479356e6819e2418282b4da1183060f04';
 
 abstract class _$Profiles extends $Notifier<List<Profile>> {
   List<Profile> build();
@@ -467,7 +467,7 @@ final class ClashProvidersProvider
   }
 }
 
-String _$clashProvidersHash() => r'3628f6bbed3b0e4dba71bcc126ea72f4192b860f';
+String _$clashProvidersHash() => r'e2cd40bb0c849d300fdbc0243cc552349cf2b571';
 
 final class ClashProvidersFamily extends $Family
     with

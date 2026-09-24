@@ -173,6 +173,31 @@ void main() {
       },
     );
 
+    test('put carries a new label into the groups it is told of', () async {
+      for (final (id, label) in [(1, 'Home'), (2, 'Work'), (3, 'Other')]) {
+        notifier.put(profile(id, label: label));
+      }
+      await pumpEventQueue();
+      for (final id in [2, 3]) {
+        await testDatabase.proxyGroups.put(
+          ProxyGroup(
+            id: id,
+            name: 'Group',
+            type: GroupType.Selector,
+            use: const ['Home'],
+          ).toCompanion(id),
+        );
+      }
+
+      notifier.put(profile(1, label: 'Away'), renameIn: const [2]);
+      await pumpEventQueue();
+
+      Future<List<String>?> use(int id) async =>
+          (await testDatabase.proxyGroupsDao.query(id).get()).single.use;
+      expect(await use(2), ['Away']);
+      expect(await use(3), ['Home']);
+    });
+
     test('put restores the previous list when the write fails', () async {
       notifier.put(profile(1, label: 'Kept'));
       await pumpEventQueue();

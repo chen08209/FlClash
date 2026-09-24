@@ -1,6 +1,8 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/models/common.dart';
+import 'package:fl_clash/models/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,9 +18,9 @@ typedef OverwriteItemBuilder<T> =
       VoidCallback onToggleSelected,
     );
 
-class OverwriteEditorPage<T> extends ConsumerStatefulWidget {
+class OverwriteEditorPage<T, K> extends ConsumerStatefulWidget {
   final String title;
-  final List<T> Function(WidgetRef ref) itemsOf;
+  final List<T>? Function(WidgetRef ref) itemsOf;
   final OverwriteItemBuilder<T> itemBuilder;
   final void Function(int oldIndex, int newIndex) onReorder;
   final VoidCallback onAdd;
@@ -26,8 +28,9 @@ class OverwriteEditorPage<T> extends ConsumerStatefulWidget {
   final double? itemExtent;
   final bool selectionEnabled;
   final bool dragFromRow;
-  final dynamic Function(T item)? idOf;
-  final Future<bool> Function(Set<dynamic> selected)? onDelete;
+  final K Function(T item) idOf;
+  final void Function(Set<K> ids)? onDelete;
+  final Iterable<String?> Function(T item)? searchFieldsOf;
 
   const OverwriteEditorPage({
     super.key,
@@ -40,18 +43,22 @@ class OverwriteEditorPage<T> extends ConsumerStatefulWidget {
     this.itemExtent,
     this.selectionEnabled = false,
     this.dragFromRow = false,
-    this.idOf,
+    required this.idOf,
     this.onDelete,
+    this.searchFieldsOf,
   });
 
   @override
-  ConsumerState<OverwriteEditorPage<T>> createState() =>
-      _OverwriteEditorPageState<T>();
+  ConsumerState<OverwriteEditorPage<T, K>> createState() =>
+      _OverwriteEditorPageState<T, K>();
 }
 
-class _OverwriteEditorPageState<T> extends ConsumerState<OverwriteEditorPage<T>>
-    with UniqueKeyStateMixin {
+class _OverwriteEditorPageState<T, K>
+    extends ConsumerState<OverwriteEditorPage<T, K>> {
   late final ScrollController _scrollController;
+  var _query = SearchQuery('');
+  final _searchTexts = Expando<String>();
+  var _selected = <K>{};
 
   @override
   void initState() {
@@ -65,35 +72,61 @@ class _OverwriteEditorPageState<T> extends ConsumerState<OverwriteEditorPage<T>>
     super.dispose();
   }
 
-  Set<dynamic> get _selected =>
-      widget.selectionEnabled ? ref.watch(itemsProvider(key)) : const {};
+  Set<K> _liveSelection(List<T>? items) {
+    if (!widget.selectionEnabled || _selected.isEmpty || items == null) {
+      return const {};
+    }
+    return items.map(widget.idOf).where(_selected.contains).toSet();
+  }
 
-  dynamic _idOf(T item) => widget.idOf?.call(item) ?? item;
+  List<T> _visibleItems(List<T> items) {
+    final searchFieldsOf = widget.searchFieldsOf;
+    if (searchFieldsOf == null) {
+      return items;
+    }
+    return items
+        .whereMatches(_query, searchFieldsOf, texts: _searchTexts)
+        .toList();
+  }
+
+  void _handleSearch(String query) {
+    setState(() {
+      _query = SearchQuery(query);
+    });
+  }
 
   void _handleToggleSelected(T item) {
     if (!widget.selectionEnabled) {
       return;
     }
-    final id = _idOf(item);
-    ref.read(itemsProvider(key).notifier).update((selected) {
-      final newSelected = Set<dynamic>.from(selected)..addOrRemove(id);
-      return newSelected;
+    setState(() {
+      _selected = {..._selected}..addOrRemove(widget.idOf(item));
     });
   }
 
-  Future<void> _handleSelectAll() async {
-    final ids = widget.itemsOf(ref).map(_idOf).toSet();
-    ref.read(itemsProvider(key).notifier).update((selected) {
-      return selected.containsAll(ids) ? {} : ids;
+  void _handleSelectAll(List<T> visibleItems) {
+    final ids = visibleItems.map(widget.idOf).toSet();
+    setState(() {
+      _selected = _selected.containsAll(ids) ? {} : ids;
     });
   }
 
-  Future<void> _handleDelete() async {
-    final selected = _selected;
-    final deleted = await widget.onDelete?.call(selected) ?? true;
-    if (deleted && mounted) {
-      ref.read(itemsProvider(key).notifier).value = {};
+  Future<void> _handleDelete(
+    void Function(Set<K> ids) onDelete,
+    Set<K> ids,
+  ) async {
+    final res = await dialogs.showMessage(
+      message: TextSpan(
+        text: context.appLocalizations.deleteMultipTip(widget.title),
+      ),
+    );
+    if (res != true || !mounted) {
+      return;
     }
+    onDelete(ids);
+    setState(() {
+      _selected = {};
+    });
   }
 
   Widget _buildItem(
@@ -101,9 +134,10 @@ class _OverwriteEditorPageState<T> extends ConsumerState<OverwriteEditorPage<T>>
     T item,
     int index,
     int total,
-    Set<dynamic> selected,
-  ) {
-    final id = _idOf(item);
+    Set<K> selected, {
+    required bool reorderable,
+  }) {
+    final id = widget.idOf(item);
     final child = ItemPositionProvider(
       position: ItemPosition.get(index, total),
       child: widget.itemBuilder(
@@ -111,12 +145,12 @@ class _OverwriteEditorPageState<T> extends ConsumerState<OverwriteEditorPage<T>>
         ref,
         item,
         index,
-        widget.selectionEnabled && selected.isNotEmpty,
-        widget.selectionEnabled && selected.contains(id),
+        selected.isNotEmpty,
+        selected.contains(id),
         () => _handleToggleSelected(item),
       ),
     );
-    if (widget.dragFromRow) {
+    if (reorderable && widget.dragFromRow) {
       return ReorderableDelayedDragStartListener(
         key: ValueKey(id),
         index: index,
@@ -129,66 +163,102 @@ class _OverwriteEditorPageState<T> extends ConsumerState<OverwriteEditorPage<T>>
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    final items = widget.itemsOf(ref);
-    final selected = _selected;
+    final loadedItems = widget.itemsOf(ref);
+    final items = _visibleItems(loadedItems ?? const []);
+    final isSearching = widget.searchFieldsOf != null && _query.isNotEmpty;
+    final selected = _liveSelection(loadedItems);
+    final isSelecting = selected.isNotEmpty;
+    final onDelete = widget.onDelete;
+    final selectionActions = [
+      if (onDelete != null)
+        IconButtonData(
+          glyph: AppGlyphs.delete,
+          onPressed: () => _handleDelete(onDelete, _liveSelection(items)),
+          tooltip: appLocalizations.delete,
+        ),
+      IconButtonData(
+        glyph: AppGlyphs.selectAll,
+        onPressed: () => _handleSelectAll(items),
+        tooltip: appLocalizations.selectAll,
+      ),
+    ];
     return CommonScaffold(
       title: widget.title,
+      searchState: widget.searchFieldsOf != null
+          ? AppBarSearchState(onSearch: _handleSearch)
+          : null,
       actions: [
-        if (widget.selectionEnabled &&
-            widget.onDelete != null &&
-            selected.isNotEmpty) ...[
-          CommonMinIconButtonTheme(
-            child: IconButton.filledTonal(
-              tooltip: appLocalizations.delete,
-              onPressed: _handleDelete,
-              icon: const Icon(Icons.delete),
-            ),
+        if (!isSelecting)
+          FilledButton.tonal(
+            onPressed: widget.onAdd,
+            child: Text(appLocalizations.add),
           ),
-          const SizedBox(width: 2),
-        ],
-        CommonMinFilledButtonTheme(
-          child: widget.selectionEnabled && selected.isNotEmpty
-              ? FilledButton(
-                  onPressed: _handleSelectAll,
-                  child: Text(appLocalizations.selectAll),
-                )
-              : FilledButton.tonal(
-                  onPressed: widget.onAdd,
-                  child: Text(appLocalizations.add),
-                ),
-        ),
-        const SizedBox(width: 8),
       ],
+      selectionActions: isSelecting ? selectionActions : const [],
       body: NullStatusSwitcher(
+        isLoading: loadedItems == null,
         isEmpty: items.isEmpty,
+        isSearching: isSearching,
         nullStatus: NullStatus(label: widget.emptyLabel),
         child: CommonScrollBar(
           controller: _scrollController,
-          child: ReorderableListView.builder(
-            scrollController: _scrollController,
-            buildDefaultDragHandles: false,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ).copyWith(bottom: 24),
-            itemBuilder: (_, index) {
-              final item = items[index];
-              return _buildItem(context, item, index, items.length, selected);
-            },
-            itemExtent: widget.itemExtent,
-            itemCount: items.length,
-            proxyDecorator: (child, index, animation) {
-              final item = items[index];
-              return commonProxyDecorator(
-                _buildItem(context, item, index, items.length, selected),
-                index,
-                animation,
-              );
-            },
-            onReorderItem: widget.onReorder,
-          ),
+          child: isSearching
+              ? _buildSearchResults(context, items, selected)
+              : _buildReorderableList(context, items, selected),
         ),
       ),
+    );
+  }
+
+  EdgeInsets _listPadding(BuildContext context) =>
+      EdgeInsets.fromLTRB(16, context.contentTopPadding, 16, 24);
+
+  Widget _buildReorderableList(
+    BuildContext context,
+    List<T> items,
+    Set<K> selected,
+  ) {
+    Widget itemAt(int index) => _buildItem(
+      context,
+      items[index],
+      index,
+      items.length,
+      selected,
+      reorderable: true,
+    );
+    return ReorderableListView.builder(
+      scrollController: _scrollController,
+      buildDefaultDragHandles: false,
+      padding: _listPadding(context),
+      itemBuilder: (_, index) => itemAt(index),
+      itemExtent: widget.itemExtent,
+      itemCount: items.length,
+      proxyDecorator: (child, index, animation) =>
+          commonProxyDecorator(itemAt(index), index, animation),
+      onReorderItem: widget.onReorder,
+    );
+  }
+
+  // Indices here are positions among the matches, which onReorder cannot
+  // map back onto the full list, so a filtered list is not reorderable.
+  Widget _buildSearchResults(
+    BuildContext context,
+    List<T> items,
+    Set<K> selected,
+  ) {
+    return ListView.builder(
+      controller: _scrollController,
+      padding: _listPadding(context),
+      itemBuilder: (_, index) => _buildItem(
+        context,
+        items[index],
+        index,
+        items.length,
+        selected,
+        reorderable: false,
+      ),
+      itemExtent: widget.itemExtent,
+      itemCount: items.length,
     );
   }
 }

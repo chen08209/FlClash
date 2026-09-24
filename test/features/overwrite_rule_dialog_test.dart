@@ -55,6 +55,28 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('every built-in target is a valid rule target', (tester) async {
+    for (final target in RuleTarget.baseTargetNames) {
+      await tester.pumpWidget(
+        TestApp(
+          child: Material(
+            child: RuleItem(
+              isSelected: false,
+              rule: Rule(content: 'example.com', ruleTarget: target),
+              onSelected: () {},
+              onEdit: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text(target), findsOneWidget);
+      expect(find.byType(IconButton), findsNothing, reason: target);
+    }
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('selecting MATCH target shows the label but stores MATCH', (
     tester,
   ) async {

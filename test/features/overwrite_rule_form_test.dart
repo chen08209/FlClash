@@ -1,6 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/overwrite/overwrite.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -12,6 +13,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
@@ -98,7 +100,7 @@ class _Harness {
   }
 
   Future<void> save(WidgetTester tester) async {
-    await tester.tap(find.byIcon(Icons.check));
+    await tester.tap(find.byGlyph(AppGlyphs.check));
     await tester.pumpAndSettle();
   }
 
@@ -109,6 +111,11 @@ class _Harness {
       find.text(action.name),
       300,
       scrollable: find.byType(Scrollable).last,
+    );
+    // That leaves the row at the viewport's top, under the floating bar.
+    await Scrollable.ensureVisible(
+      tester.element(find.text(action.name).last),
+      alignment: 0.5,
     );
     await tester.pumpAndSettle();
     await tester.tap(find.text(action.name).last);
