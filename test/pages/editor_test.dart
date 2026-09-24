@@ -1,8 +1,11 @@
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 
 final _viewSizeOverride = viewSizeProvider.overrideWithBuild(
@@ -10,7 +13,7 @@ final _viewSizeOverride = viewSizeProvider.overrideWithBuild(
 );
 
 void main() {
-  testWidgets('import from URL shows a translated network error message', (
+  testWidgets('shows the unavailable state without the native editor library', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -18,36 +21,62 @@ void main() {
         overrides: [_viewSizeOverride],
         child: const EditorPage(
           title: 'Editor',
-          content: '',
+          content: 'mixed-port: 7890',
           onSave: _noopSave,
-          supportRemoteDownload: true,
         ),
       ),
     );
     await tester.pump();
 
-    await tester.tap(find.byIcon(Icons.more_vert));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('External fetch'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Import from URL'));
-    await tester.pumpAndSettle();
+    expect(find.text('Editor unavailable'), findsOneWidget);
+    for (final glyph in [AppGlyphs.search, AppGlyphs.check]) {
+      expect(
+        tester
+            .widget<IconButton>(find.widgetWithGlyph(IconButton, glyph))
+            .onPressed,
+        isNull,
+      );
+    }
+  });
 
-    await tester.enterText(
-      find.byType(TextFormField),
-      'http://127.0.0.1/anything',
+  testWidgets('Ctrl+S saves a changed document off Apple platforms', (
+    tester,
+  ) async {
+    final saved = <String>[];
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [_viewSizeOverride],
+        child: EditorPage(
+          title: 'Editor',
+          content: '',
+          titleEditable: true,
+          onSave: (_, title, _) => saved.add(title),
+        ),
+      ),
     );
-    await tester.tap(find.text('Submit'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-    await tester.pump(const Duration(milliseconds: 100));
+    Future<void> pressSave() async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+    }
 
-    // flutter_test's mocked HttpClient answers with HTTP 400, which maps to
-    // the localized network exception message in the snackbar.
+    await tester.tap(find.byType(TextField).first);
+    await tester.pump();
+    await pressSave();
+    expect(saved, isEmpty);
+
+    await tester.enterText(find.byType(TextField).first, 'Renamed');
+    await tester.pump();
     expect(
-      find.text('Network error, please check your connection and try again'),
-      findsOneWidget,
+      tester
+          .widget<IconButton>(find.widgetWithGlyph(IconButton, AppGlyphs.check))
+          .onPressed,
+      isNotNull,
     );
+    await pressSave();
+    expect(saved, ['Renamed']);
   });
 }
 
