@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:fl_clash/common/common.dart';
@@ -85,7 +86,10 @@ class ServiceStatusCard extends ConsumerStatefulWidget {
 class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard>
     with ProbeStartHold<ServiceStatusCard> {
   static const _gap = 12.0;
-  static const _nodeMinWidth = 260.0;
+  // The badge sits the same distance from the start, top and bottom edges. At
+  // this inset a concentric radius would square it off, so it takes the card's
+  // own proportion of radius to height instead.
+  static const _badgeInsetShare = 0.7;
 
   late final PageController _controller;
   late final ServiceStatus _services;
@@ -116,7 +120,6 @@ class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard>
     final targets = ref.read(enabledServiceTargetsProvider);
     _controller = PageController(
       initialPage: targets.indexOf(_targetIn(targets)),
-      viewportFraction: 0.4,
     );
   }
 
@@ -151,8 +154,8 @@ class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard>
   }
 
   /// A swipe or an animated jump passes through the services in between; only
-  /// the one the picker settles on is worth a check.
-  bool _onPickerScroll(ScrollNotification notification) {
+  /// the one the pager settles on is worth a check.
+  bool _onPagerScroll(ScrollNotification notification) {
     if (notification.depth != 0) return false;
     if (notification is ScrollStartNotification) {
       _scrolling = true;
@@ -192,6 +195,55 @@ class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard>
     );
   }
 
+  /// Only a service the pager has settled on is checked, so one still being
+  /// swiped past shows a result only if it is already current.
+  bool _isLoading(ProbePhase phase, {required bool settled}) =>
+      phase == ProbePhase.probing ||
+      ((_scrolling || !settled) && phase != ProbePhase.fresh);
+
+  Widget _buildPage(
+    ServiceTarget target, {
+    required bool settled,
+    required double badgeSize,
+    required double badgeRadius,
+  }) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final entry = ref.watch(
+          serviceStatusProvider.select((state) => state.entryOf(target)),
+        );
+        final phase = settled ? shownPhase(entry) : entry.phase;
+        final loading = _isLoading(phase, settled: settled);
+        final check = entry.value;
+        final node = check?.node;
+        final ipEntry = node != null
+            ? ref.watch(
+                outboundIpProbeProvider.select((state) => state.entryOf(node)),
+              )
+            : null;
+        final outboundIp = ipEntry?.value;
+        final ipPending =
+            ipEntry != null &&
+            (settled ? shownPhase(ipEntry) : ipEntry.phase) !=
+                ProbePhase.failed &&
+            outboundIp == null;
+        final (label, color) = _statusOf(context, check, phase);
+        return _ServicePage(
+          target: target,
+          badgeSize: badgeSize,
+          badgeRadius: badgeRadius,
+          label: label,
+          color: color,
+          loading: loading,
+          region: check?.region,
+          node: node,
+          outboundIp: loading ? null : outboundIp,
+          ipPending: !loading && ipPending,
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(enabledServiceTargetsProvider, _onTargetsChanged);
@@ -205,201 +257,178 @@ class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard>
       serviceStatusProvider.select((state) => state.entryOf(target)),
     );
     final check = entry.value;
-    final phase = shownPhase(entry);
-    final loading =
-        phase == ProbePhase.probing ||
-        (_scrolling && phase != ProbePhase.fresh);
-    final node = check?.node;
-    _showNode(node);
-    final ipEntry = node == null
-        ? null
-        : ref.watch(
-            outboundIpProbeProvider.select((state) => state.entryOf(node)),
-          );
-    final outboundIp = ipEntry?.value;
-    final ipPending =
-        ipEntry != null &&
-        shownPhase(ipEntry) != ProbePhase.failed &&
-        outboundIp == null;
+    final loading = _isLoading(shownPhase(entry), settled: true);
+    _showNode(check?.node);
 
-    final (label, color) = _statusOf(context, check, phase);
     final inset = DashboardWidgetMetrics.insetOf(context);
+    final height = DashboardWidgetMetrics.heightOf(context, 1);
+    final badgeInset =
+        DashboardWidgetMetrics.radiusOf(context) * _badgeInsetShare;
+    final badgeSize = height - badgeInset * 2;
+    final badgeRadius =
+        badgeSize * DashboardWidgetMetrics.radiusOf(context) / height;
+    final index = targets.indexOf(target);
     return SizedBox(
-      height: DashboardWidgetMetrics.heightOf(context, 1),
+      height: height,
       child: CommonCard(
         radius: DashboardWidgetMetrics.radiusOf(context),
         onPressed: _openSheet,
-        child: Padding(
-          padding: EdgeInsetsDirectional.only(start: inset - 8, end: inset),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final pickerWidth = (constraints.maxWidth * 0.3).clamp(
-                80.0,
-                112.0,
-              );
-              final showNode =
-                  constraints.maxWidth - pickerWidth - _gap >= _nodeMinWidth;
-              return Row(
-                children: [
-                  SizedBox(
-                    width: pickerWidth,
-                    child: NotificationListener<ScrollNotification>(
-                      onNotification: _onPickerScroll,
-                      child: _ServicePicker(
-                        controller: _controller,
-                        targets: targets,
-                        index: targets.indexOf(target),
-                        onChanged: (index) => _onTargetChanged(targets, index),
+        child: Row(
+          children: [
+            Expanded(
+              child: _EdgeFade(
+                start: badgeInset,
+                end: _gap,
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: _onPagerScroll,
+                  child: _ServicePager(
+                    controller: _controller,
+                    targets: targets,
+                    index: index,
+                    onChanged: (index) => _onTargetChanged(targets, index),
+                    itemBuilder: (context, item) => Padding(
+                      padding: EdgeInsetsDirectional.only(
+                        start: badgeInset,
+                        end: _gap,
+                      ),
+                      child: _buildPage(
+                        item,
+                        settled: item == target,
+                        badgeSize: badgeSize,
+                        badgeRadius: badgeRadius,
                       ),
                     ),
                   ),
-                  const SizedBox(width: _gap),
-                  Expanded(
-                    child: _ServiceSummary(
-                      name: target.label,
-                      label: label,
-                      color: color,
-                      loading: loading,
-                      delay: check?.delay,
-                      outboundIp: loading ? null : outboundIp,
-                      ipPending: loading || ipPending,
-                      node: showNode ? node : null,
-                      nodePending: showNode && loading,
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsetsDirectional.only(end: inset),
+              child: _ServiceAside(
+                loading: loading,
+                delay: check?.delay,
+                controller: _controller,
+                count: targets.length,
+                index: index,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _ServiceSummary extends StatelessWidget {
-  const _ServiceSummary({
-    required this.name,
+class _ServicePage extends StatelessWidget {
+  const _ServicePage({
+    required this.target,
+    required this.badgeSize,
+    required this.badgeRadius,
     required this.label,
     required this.color,
     required this.loading,
-    required this.delay,
+    required this.region,
+    required this.node,
     required this.outboundIp,
     required this.ipPending,
-    required this.node,
-    required this.nodePending,
   });
 
-  final String name;
+  final ServiceTarget target;
+  final double badgeSize;
+  final double badgeRadius;
   final String label;
   final Color color;
   final bool loading;
-  final int? delay;
+  final String? region;
+  final String? node;
   final IpInfo? outboundIp;
   final bool ipPending;
-  final String? node;
-  final bool nodePending;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final title = context.textTheme.titleSmall?.toSoftBold;
     final secondary = context.textTheme.bodySmall?.copyWith(
-      color: colorScheme.onSurfaceVariant,
+      color: context.colorScheme.onSurfaceVariant,
     );
-    final numeric = context.textTheme.titleMedium?.toSoftBold.copyWith(
-      fontFeatures: const [FontFeature.tabularFigures()],
-    );
-    final outboundIp = this.outboundIp;
-    final node = this.node;
-    final delay = this.delay;
     return Row(
       spacing: 12,
       children: [
+        _ServiceBadge(
+          target: target,
+          size: badgeSize,
+          radius: badgeRadius,
+          dot: loading ? context.colorScheme.outlineVariant : color,
+        ),
         Expanded(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 4,
+            spacing: 2,
             children: [
-              Row(
-                spacing: 8,
-                children: [
-                  Flexible(
-                    child: Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: title,
-                    ),
-                  ),
-                  Flexible(
-                    child: Semantics(
-                      liveRegion: true,
-                      label: loading ? label : null,
-                      child: loading
-                          ? SkeletonText(
-                              width: 48,
-                              style: context.textTheme.labelMedium,
-                            )
-                          : _StatusPill(label: label, color: color),
-                    ),
-                  ),
-                ],
+              _ServiceTitle(
+                name: target.label,
+                style: context.textTheme.titleMedium,
+                status: Semantics(
+                  liveRegion: true,
+                  label: loading ? label : null,
+                  child: loading
+                      ? SkeletonText(
+                          width: 48,
+                          style: context.textTheme.labelMedium,
+                        )
+                      : _StatusPill(label: label, color: color),
+                ),
               ),
-              Row(
-                spacing: 6,
-                children: [
-                  Flexible(
-                    child: AnimatedSwitcher(
-                      duration: context.motionDuration(commonDuration),
-                      layoutBuilder: (current, previous) => Stack(
-                        alignment: AlignmentDirectional.centerStart,
-                        children: [...previous, ?current],
-                      ),
-                      child: outboundIp != null
-                          ? _OutboundIp(ipInfo: outboundIp, style: secondary)
-                          : ipPending
-                          ? SkeletonText(width: 96, style: secondary)
-                          : Text('—', style: secondary),
-                    ),
-                  ),
-                  if (nodePending)
-                    SkeletonText(width: 56, style: secondary)
-                  else if (node != null) ...[
-                    Text('·', style: secondary),
-                    Flexible(
-                      child: Text(
-                        node,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: secondary,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+              if (loading)
+                SkeletonText(width: 96, style: secondary)
+              else
+                _OutboundIpLine(
+                  ip: outboundIp,
+                  region: region,
+                  pending: ipPending,
+                  fallback: node,
+                  style: secondary,
+                ),
             ],
           ),
         ),
-        if (loading)
-          SkeletonText(width: 32, style: numeric)
-        else if (delay != null)
-          Text.rich(
-            TextSpan(
-              text: '$delay',
-              children: [
-                TextSpan(
-                  text: ' ms',
-                  style: context.textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-            style: numeric,
-          ),
       ],
+    );
+  }
+}
+
+class _ServiceTitle extends StatelessWidget {
+  const _ServiceTitle({required this.name, required this.status, this.style});
+
+  static const _statusShare = 0.6;
+
+  final String name;
+  final Widget status;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      // A Flexible status would cap the name at its own share even when the
+      // status is short, so the status takes what it needs up to a limit.
+      builder: (context, constraints) => Row(
+        spacing: 8,
+        children: [
+          Flexible(
+            child: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: style,
+            ),
+          ),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: constraints.maxWidth * _statusShare,
+            ),
+            child: status,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -430,6 +459,352 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
+/// Node names tend to carry their own flag emoji, so the card shows where
+/// the service's traffic leaves from as a flag and the address instead, and
+/// falls back to the node only when the address could not be looked up.
+class _OutboundIpLine extends StatelessWidget {
+  const _OutboundIpLine({
+    required this.ip,
+    required this.region,
+    required this.pending,
+    required this.fallback,
+    required this.style,
+  });
+
+  final IpInfo? ip;
+  final String? region;
+  final bool pending;
+  final String? fallback;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    final ip = this.ip;
+    final fallback = this.fallback;
+    final flag = ip?.countryCode ?? region;
+    final line = Row(
+      spacing: 4,
+      children: [
+        if (flag != null)
+          Text(
+            flag.countryFlagEmoji,
+            style: style?.copyWith(fontFamily: FontFamily.twEmoji.value),
+          ),
+        if (ip != null)
+          Flexible(
+            child: IpQualityText(ip: ip.ip, style: style),
+          )
+        else if (pending)
+          Flexible(child: SkeletonText(width: 88, style: style))
+        else if (fallback != null)
+          Flexible(
+            child: Text(
+              fallback,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: style,
+            ),
+          ),
+      ],
+    );
+    if (ip == null) return line;
+    return Tooltip(
+      message: context.appLocalizations.outboundIp,
+      child: InkWell(
+        onTap: () => showIpQualitySheet(context, ip: ip.ip),
+        customBorder: AppShape.xs,
+        hoverColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        child: line,
+      ),
+    );
+  }
+}
+
+class _ServiceAside extends StatelessWidget {
+  const _ServiceAside({
+    required this.loading,
+    required this.delay,
+    required this.controller,
+    required this.count,
+    required this.index,
+  });
+
+  final bool loading;
+  final int? delay;
+  final PageController controller;
+  final int count;
+  final int index;
+
+  /// The pager beside this column must keep its width: a resize mid-swipe
+  /// cancels the page animation and lets it settle on the wrong service.
+  double _widthOf(BuildContext context, TextSpan widest) {
+    final painter = TextPainter(
+      text: widest,
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final width = painter.width;
+    painter.dispose();
+    return max(width, _PageDots.widthOf(count));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final delay = this.delay;
+    final numeric = context.textTheme.titleMedium
+        ?.adjustSize(2)
+        .toSoftBold
+        .copyWith(fontFeatures: const [FontFeature.tabularFigures()]);
+    final unit = context.textTheme.labelSmall?.copyWith(
+      color: context.colorScheme.onSurfaceVariant,
+    );
+    TextSpan span(String value) => TextSpan(
+      text: value,
+      style: numeric,
+      children: [TextSpan(text: ' ms', style: unit)],
+    );
+    return SizedBox(
+      width: _widthOf(context, span('0000')),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        spacing: 8,
+        children: [
+          if (loading)
+            SkeletonText(width: 36, style: numeric)
+          else if (delay != null)
+            Text.rich(span('$delay'), maxLines: 1),
+          if (count > 1)
+            _PageDots(controller: controller, count: count, index: index),
+        ],
+      ),
+    );
+  }
+}
+
+class _PageDots extends StatelessWidget {
+  const _PageDots({
+    required this.controller,
+    required this.count,
+    required this.index,
+  });
+
+  static const _window = 7;
+  static const _size = 4.0;
+  static const _edgeSize = 2.5;
+  static const _activeWidth = 12.0;
+  static const _spacing = 3.0;
+
+  static double widthOf(int count) {
+    if (count < 2) return 0;
+    final shown = min(count, _window);
+    return (shown - 1) * (_size + _spacing) + _activeWidth;
+  }
+
+  final PageController controller;
+  final int count;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return ExcludeSemantics(
+      child: AnimatedBuilder(
+        animation: controller,
+        builder: (context, _) {
+          final page =
+              controller.hasClients && controller.position.hasContentDimensions
+              ? controller.page ?? index.toDouble()
+              : index.toDouble();
+          final shown = min(count, _window);
+          final first = (page.round() - _window ~/ 2).clamp(0, count - shown);
+          final last = first + shown - 1;
+          return SizedBox(
+            height: _size,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: _spacing,
+              children: [
+                for (var i = first; i <= last; i++)
+                  _dot(
+                    colorScheme,
+                    active: (1 - (page - i).abs()).clamp(0.0, 1.0),
+                    edge:
+                        (i == first && first > 0) ||
+                        (i == last && last < count - 1),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _dot(
+    ColorScheme colorScheme, {
+    required double active,
+    required bool edge,
+  }) {
+    final size = edge ? _edgeSize : _size;
+    return SizedBox(
+      width: lerpDouble(size, _activeWidth, active),
+      height: size,
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          color: Color.lerp(
+            colorScheme.outlineVariant,
+            colorScheme.primary,
+            active,
+          ),
+          shape: AppShape.full,
+        ),
+      ),
+    );
+  }
+}
+
+class _EdgeFade extends StatelessWidget {
+  const _EdgeFade({
+    required this.start,
+    required this.end,
+    required this.child,
+  });
+
+  final double start;
+  final double end;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final textDirection = Directionality.of(context);
+    return ShaderMask(
+      blendMode: BlendMode.dstIn,
+      shaderCallback: (bounds) => LinearGradient(
+        begin: AlignmentDirectional.centerStart,
+        end: AlignmentDirectional.centerEnd,
+        colors: const [
+          Colors.transparent,
+          Colors.black,
+          Colors.black,
+          Colors.transparent,
+        ],
+        stops: [
+          0,
+          (start / bounds.width).clamp(0.0, 0.5),
+          (1 - end / bounds.width).clamp(0.5, 1.0),
+          1,
+        ],
+      ).createShader(bounds, textDirection: textDirection),
+      child: child,
+    );
+  }
+}
+
+/// The status dot sits in a notch cleared from the tile rather than on a ring
+/// painted in the surface colour, which differs between the card and the rows.
+class _ServiceBadge extends StatelessWidget {
+  const _ServiceBadge({
+    required this.target,
+    required this.size,
+    this.radius,
+    this.dot,
+    this.enabled = true,
+  });
+
+  static const _glyphShare = 0.56;
+
+  final ServiceTarget target;
+  final double size;
+  final double? radius;
+  final Color? dot;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return CustomPaint(
+      size: Size.square(size),
+      painter: _BadgePainter(
+        color: enabled
+            ? colorScheme.secondaryContainer
+            : colorScheme.surfaceContainerHighest,
+        radius: radius ?? AppCorner.fit(size),
+        dot: dot,
+        dotRadius: max(size / 10, 4),
+        ring: max(size / 16, 2),
+      ),
+      child: SizedBox.square(
+        dimension: size,
+        child: Center(
+          child: SvgPicture.asset(
+            'assets/images/services/${target.icon}.svg',
+            width: size * _glyphShare,
+            height: size * _glyphShare,
+            excludeFromSemantics: true,
+            colorFilter: ColorFilter.mode(
+              enabled ? colorScheme.onSecondaryContainer : colorScheme.outline,
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BadgePainter extends CustomPainter {
+  const _BadgePainter({
+    required this.color,
+    required this.radius,
+    required this.dot,
+    required this.dotRadius,
+    required this.ring,
+  });
+
+  final Color color;
+  final double radius;
+  final Color? dot;
+  final double dotRadius;
+  final double ring;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bounds = Offset.zero & size;
+    final tile = RSuperellipse.fromRectAndRadius(
+      bounds,
+      Radius.circular(radius),
+    );
+    final dot = this.dot;
+    if (dot == null) {
+      canvas.drawRSuperellipse(tile, Paint()..color = color);
+      return;
+    }
+    final center = size.bottomRight(Offset(-dotRadius, -dotRadius));
+    canvas
+      ..saveLayer(bounds, Paint())
+      ..drawRSuperellipse(tile, Paint()..color = color)
+      ..drawCircle(
+        center,
+        dotRadius + ring,
+        Paint()..blendMode = BlendMode.clear,
+      )
+      ..restore()
+      ..drawCircle(center, dotRadius, Paint()..color = dot);
+  }
+
+  @override
+  bool shouldRepaint(_BadgePainter oldDelegate) =>
+      oldDelegate.color != color ||
+      oldDelegate.radius != radius ||
+      oldDelegate.dot != dot ||
+      oldDelegate.dotRadius != dotRadius ||
+      oldDelegate.ring != ring;
+}
+
 Future<ServiceTarget?> showServiceStatusSheet(BuildContext context) {
   return showSheet<ServiceTarget>(
     context: context,
@@ -439,8 +814,8 @@ Future<ServiceTarget?> showServiceStatusSheet(BuildContext context) {
   );
 }
 
-/// Lists every enabled service at once, so the card's picker never has to be
-/// scrolled through to find one. Tapping a row hands it back to the card.
+/// Lists every enabled service at once, so the card's pager never has to be
+/// swiped through to find one. Tapping a row hands it back to the card.
 /// The rows read the cache and are only checked on request.
 class ServiceStatusSheet extends ConsumerWidget {
   const ServiceStatusSheet({super.key});
@@ -449,6 +824,11 @@ class ServiceStatusSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final targets = ref.watch(enabledServiceTargetsProvider);
     final state = ref.watch(serviceStatusProvider);
+    final saved = ServiceTarget.byId(
+      ref.watch(appSettingProvider.select((state) => state.currentService)) ??
+          '',
+    );
+    final current = targets.contains(saved) ? saved : targets.first;
     final services = ref.read(serviceStatusProvider.notifier);
     final localizations = context.appLocalizations;
     return ConstrainedBox(
@@ -487,6 +867,7 @@ class ServiceStatusSheet extends ConsumerWidget {
                     child: _ServiceRow(
                       target: target,
                       entry: state.entryOf(target),
+                      selected: target == current,
                       onTap: () => context.safeNestedPop(target),
                       onCheck: () => services.refresh([target]),
                     ),
@@ -572,6 +953,11 @@ class ServiceManageView extends ConsumerWidget {
   }
 }
 
+const _rowBadgeSize = 40.0;
+const _rowBadgeInset = 12.0;
+// Concentric with the corners DecorationListItem gives the ends of a run.
+const _rowBadgeRadius = AppCorner.xl - _rowBadgeInset;
+
 class _ServiceManageItem extends StatelessWidget {
   const _ServiceManageItem({
     super.key,
@@ -596,21 +982,21 @@ class _ServiceManageItem extends StatelessWidget {
       child: ItemPositionProvider(
         position: position,
         child: DecorationListItem(
-          minVerticalPadding: 8,
-          contentPadding: const EdgeInsets.only(left: 16, right: 0),
+          minVerticalPadding: _rowBadgeInset,
+          contentPadding: const EdgeInsets.only(left: _rowBadgeInset, right: 0),
           onPressed: onChanged == null ? null : () => onChanged(!enabled),
-          leading: SizedBox.square(
-            dimension: 28,
-            child: SvgPicture.asset(
-              'assets/images/services/${target.icon}.svg',
-              semanticsLabel: target.label,
-              colorFilter: ColorFilter.mode(
-                context.colorScheme.onSurfaceVariant,
-                BlendMode.srcIn,
-              ),
-            ),
+          leading: _ServiceBadge(
+            target: target,
+            size: _rowBadgeSize,
+            radius: _rowBadgeRadius,
+            enabled: enabled,
           ),
-          title: Text(target.label),
+          title: Text(
+            target.label,
+            style: enabled
+                ? null
+                : TextStyle(color: context.colorScheme.onSurfaceVariant),
+          ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -635,12 +1021,14 @@ class _ServiceRow extends StatelessWidget {
   const _ServiceRow({
     required this.target,
     required this.entry,
+    required this.selected,
     required this.onTap,
     required this.onCheck,
   });
 
   final ServiceTarget target;
   final ProbeEntry<ServiceCheck> entry;
+  final bool selected;
   final VoidCallback onTap;
   final VoidCallback onCheck;
 
@@ -652,46 +1040,35 @@ class _ServiceRow extends StatelessWidget {
     );
     final check = entry.value;
     final loading = entry.isLoading;
+    final node = check?.node;
     final (label, color) = _statusOf(context, check, entry.phase);
     return DecorationListItem(
-      minVerticalPadding: 8,
-      contentPadding: const EdgeInsets.only(left: 16, right: 4),
+      isSelected: selected,
+      minVerticalPadding: _rowBadgeInset,
+      contentPadding: const EdgeInsets.only(left: _rowBadgeInset, right: 4),
       onPressed: onTap,
-      leading: SizedBox.square(
-        dimension: 28,
-        child: SvgPicture.asset(
-          'assets/images/services/${target.icon}.svg',
-          semanticsLabel: target.label,
-          colorFilter: ColorFilter.mode(
-            context.colorScheme.onSurfaceVariant,
-            BlendMode.srcIn,
-          ),
-        ),
+      leading: _ServiceBadge(
+        target: target,
+        size: _rowBadgeSize,
+        radius: _rowBadgeRadius,
+        dot: loading
+            ? context.colorScheme.outlineVariant
+            : check != null || entry.phase == ProbePhase.failed
+            ? color
+            : null,
       ),
-      title: Text(target.label),
-      subtitle: Row(
-        spacing: 6,
-        children: [
-          if (loading)
-            const SizedBox.square(
-              dimension: 10,
-              child: CircularProgressIndicator(strokeWidth: 1.5),
-            ),
-          if (check?.region case final region?)
-            Text(
-              region.countryFlagEmoji,
-              style: secondary?.copyWith(fontFamily: FontFamily.twEmoji.value),
-            ),
-          Flexible(
-            child: Text(
-              label,
+      title: _ServiceTitle(
+        name: target.label,
+        status: _StatusPill(label: label, color: color),
+      ),
+      subtitle: node == null
+          ? null
+          : Text(
+              node,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: secondary?.copyWith(color: color),
+              style: secondary,
             ),
-          ),
-        ],
-      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         spacing: 4,
@@ -728,7 +1105,14 @@ class _ServiceRowTrailing extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        if (delay != null) Text('$delay ms', style: numeric),
+        if (delay != null)
+          Text(
+            '$delay ms',
+            style: numeric?.copyWith(
+              color: context.colorScheme.onSurface,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         if (checkedAt != null)
           Text(
             checkedAt.showTime.trim(),
@@ -744,48 +1128,26 @@ class _ServiceRowTrailing extends StatelessWidget {
   }
 }
 
-class _OutboundIp extends StatelessWidget {
-  const _OutboundIp({required this.ipInfo, this.style});
-
-  final IpInfo ipInfo;
-  final TextStyle? style;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 4,
-      children: [
-        Text(
-          ipInfo.countryCode.countryFlagEmoji,
-          style: style?.copyWith(fontFamily: FontFamily.twEmoji.value),
-        ),
-        Flexible(
-          child: IpQualityText(ip: ipInfo.ip, openDetails: true, style: style),
-        ),
-      ],
-    );
-  }
-}
-
-class _ServicePicker extends StatefulWidget {
-  const _ServicePicker({
+class _ServicePager extends StatefulWidget {
+  const _ServicePager({
     required this.controller,
     required this.targets,
     required this.index,
     required this.onChanged,
+    required this.itemBuilder,
   });
 
   final PageController controller;
   final List<ServiceTarget> targets;
   final int index;
   final ValueChanged<int> onChanged;
+  final Widget Function(BuildContext context, ServiceTarget target) itemBuilder;
 
   @override
-  State<_ServicePicker> createState() => _ServicePickerState();
+  State<_ServicePager> createState() => _ServicePagerState();
 }
 
-class _ServicePickerState extends State<_ServicePicker> {
+class _ServicePagerState extends State<_ServicePager> {
   bool _moving = false;
 
   Future<void> _select(int index) async {
@@ -840,94 +1202,18 @@ class _ServicePickerState extends State<_ServicePicker> {
           onDecrease: index > 0 ? () => _select(index - 1) : null,
           child: Listener(
             onPointerSignal: _onPointerSignal,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 44,
-                  height: 48,
-                  decoration: ShapeDecoration(
-                    color: context.colorScheme.secondaryContainer,
-                    shape: AppShape.md,
-                  ),
-                ),
-                ShaderMask(
-                  blendMode: BlendMode.dstIn,
-                  shaderCallback: (bounds) => const LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      Colors.black,
-                      Colors.black,
-                      Colors.transparent,
-                    ],
-                    stops: [0, 0.2, 0.8, 1],
-                  ).createShader(bounds),
-                  child: ScrollConfiguration(
-                    behavior: ScrollConfiguration.of(context).copyWith(
-                      dragDevices: PointerDeviceKind.values.toSet(),
-                      scrollbars: false,
-                    ),
-                    child: PageView.builder(
-                      controller: widget.controller,
-                      itemCount: targets.length,
-                      onPageChanged: widget.onChanged,
-                      itemBuilder: (context, itemIndex) {
-                        final target = targets[itemIndex];
-                        return AnimatedBuilder(
-                          animation: widget.controller,
-                          builder: (context, child) {
-                            final page =
-                                widget.controller.hasClients &&
-                                    widget
-                                        .controller
-                                        .position
-                                        .hasContentDimensions
-                                ? widget.controller.page ?? index.toDouble()
-                                : index.toDouble();
-                            final distance = (page - itemIndex).abs().clamp(
-                              0.0,
-                              1.0,
-                            );
-                            return Transform.scale(
-                              scale: 1 - distance * 0.3,
-                              child: Opacity(
-                                opacity: 1 - distance * 0.55,
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: Center(
-                            child: Tooltip(
-                              message: target.label,
-                              child: GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: () => _select(itemIndex),
-                                child: SizedBox.square(
-                                  dimension: 44,
-                                  child: Center(
-                                    child: SvgPicture.asset(
-                                      'assets/images/services/${target.icon}.svg',
-                                      width: 28,
-                                      height: 28,
-                                      semanticsLabel: target.label,
-                                      colorFilter: ColorFilter.mode(
-                                        context
-                                            .colorScheme
-                                            .onSecondaryContainer,
-                                        BlendMode.srcIn,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ],
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: PointerDeviceKind.values.toSet(),
+                scrollbars: false,
+              ),
+              child: PageView.builder(
+                controller: widget.controller,
+                itemCount: targets.length,
+                onPageChanged: widget.onChanged,
+                itemBuilder: (context, itemIndex) =>
+                    widget.itemBuilder(context, targets[itemIndex]),
+              ),
             ),
           ),
         ),

@@ -572,36 +572,6 @@ List<Widget> generateSection({
   ];
 }
 
-Widget generateSectionV2({
-  String? title,
-  required Iterable<Widget> items,
-  List<Widget>? actions,
-  bool separated = true,
-}) {
-  final genItems = items
-      .map<Widget>((item) {
-        return ClipRSuperellipse(
-          borderRadius: AppRadius.xs,
-          child: CommonCard(
-            type: CommonCardType.filled,
-            radius: AppCorner.none,
-            child: item,
-          ),
-        );
-      })
-      .separated(const Divider(height: 2, color: Colors.transparent));
-  return Column(
-    children: [
-      if (items.isNotEmpty && title != null)
-        ListHeader(title: title, actions: actions),
-      ClipRSuperellipse(
-        borderRadius: AppRadius.xl,
-        child: Column(children: [...genItems]),
-      ),
-    ],
-  );
-}
-
 Widget generateSectionV3({
   String? title,
   required Iterable<Widget> items,

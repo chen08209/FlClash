@@ -85,6 +85,7 @@ void main() {
     double height = 84,
     Locale locale = const Locale('en'),
     Widget body = const ServiceStatusCard(),
+    IpQuality? ipQuality,
   }) {
     when(() => core.outboundIp(any())).thenAnswer((invocation) async {
       if (outboundIp == null) return Completer<OutboundIpResult?>().future;
@@ -109,7 +110,11 @@ void main() {
           ),
         ),
         coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
-        ipQualityProvider.overrideWith((_, _) => Completer<IpQuality>().future),
+        ipQualityProvider.overrideWith(
+          (_, _) => ipQuality != null
+              ? Future.value(ipQuality)
+              : Completer<IpQuality>().future,
+        ),
       ],
       child: Scaffold(
         body: Center(
@@ -129,7 +134,7 @@ void main() {
     expect(dashboardWidgetOf(item), DashboardWidget.serviceStatus);
   });
 
-  testWidgets('holds each field with a skeleton and then shows the latency', (
+  testWidgets('holds the status and the latency with skeletons until checked', (
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
@@ -138,7 +143,7 @@ void main() {
     await tester.pumpWidget(app(width: 552, height: 120));
     await tester.pump();
     await tester.pump(commonDuration);
-    expect(find.byType(SkeletonText), findsNWidgets(4));
+    expect(find.byType(SkeletonText), findsNWidgets(3));
     expect(find.bySemanticsLabel(RegExp('Loading…')), findsOneWidget);
     expect(find.text('Loading…'), findsNothing);
 
@@ -149,6 +154,18 @@ void main() {
     expect(find.byType(SkeletonText), findsNothing);
     expect(find.text('Available'), findsOneWidget);
     expect(find.text('123 ms'), findsOneWidget);
+    semantics.dispose();
+  });
+
+  testWidgets('names the shown service on the tile', (tester) async {
+    final semantics = tester.ensureSemantics();
+    answer((_) => [_item('google', ServiceProbeStatus.available, delay: 45)]);
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+
+    expect(find.text(ServiceTarget.google.label), findsOneWidget);
+    expect(find.bySemanticsLabel('Google\nAvailable'), findsOneWidget);
+    expect(find.bySemanticsLabel('Google'), findsNothing);
     semantics.dispose();
   });
 
@@ -168,7 +185,9 @@ void main() {
     expect(find.text('45 ms'), findsOneWidget);
   });
 
-  testWidgets('a wide tile shows the outbound IP and the node', (tester) async {
+  testWidgets('the tile shows the flag and the address the node leaves from', (
+    tester,
+  ) async {
     final outboundIps = <String>[];
     answer(
       (_) => [
@@ -177,6 +196,7 @@ void main() {
           ServiceProbeStatus.available,
           delay: 88,
           chains: ['HK-01'],
+          region: 'JP',
         ),
       ],
     );
@@ -186,47 +206,78 @@ void main() {
           outboundIps.add(params.proxyName);
           return _address('203.0.113.7', 'US');
         },
-        width: 552,
-        height: 120,
+        width: 288,
       ),
     );
     await tester.pumpAndSettle();
 
     expect(outboundIps, ['HK-01']);
-    expect(find.text('HK-01'), findsOneWidget);
-    expect(find.text('203.0.113.7'), findsOneWidget);
     expect(find.text('\u{1F1FA}\u{1F1F8}'), findsOneWidget);
+    expect(find.text('203.0.113.7'), findsOneWidget);
+    expect(find.text('HK-01'), findsNothing);
   });
 
-  testWidgets('the sheet, not the tile, shows the region the Core reported', (
-    tester,
-  ) async {
+  testWidgets('the sheet lists the node of every service', (tester) async {
     answer(
       (params) => [
         for (final name in params.names)
-          _item(name, ServiceProbeStatus.available, region: 'JP'),
+          _item(
+            name,
+            ServiceProbeStatus.available,
+            region: 'JP',
+            chains: ['HK-01'],
+          ),
       ],
     );
-    await tester.pumpWidget(app(width: 552, height: 120));
+    await tester.pumpWidget(app(outboundIp: (_) => null));
     await tester.pumpAndSettle();
-    expect(find.text('\u{1F1EF}\u{1F1F5}'), findsNothing);
 
     await tester.tap(find.byType(ServiceStatusCard));
     await tester.pumpAndSettle();
-    expect(find.text('\u{1F1EF}\u{1F1F5}'), findsOneWidget);
+    await tester.tap(find.byTooltip('Check all'));
+    await tester.pumpAndSettle();
+    final sheet = find.byType(ServiceStatusSheet);
+    expect(
+      find.descendant(of: sheet, matching: find.text('HK-01')),
+      findsWidgets,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('\u{1F1EF}\u{1F1F5}')),
+      findsNothing,
+    );
   });
 
-  testWidgets('a narrow tile shows the outbound IP without the node', (
-    tester,
-  ) async {
+  testWidgets('the sheet marks the service the tile shows', (tester) async {
+    answer((params) => const []);
+    await tester.pumpWidget(
+      app(settings: const AppSettingProps(currentService: 'github')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(ServiceStatusCard));
+    await tester.pumpAndSettle();
+
+    final selected = tester
+        .widgetList<DecorationListItem>(
+          find.descendant(
+            of: find.byType(ServiceStatusSheet),
+            matching: find.byType(DecorationListItem),
+          ),
+        )
+        .where((item) => item.isSelected ?? false);
+    expect(selected, hasLength(1));
+    expect(
+      find.descendant(
+        of: find.byWidget(selected.single),
+        matching: find.text(ServiceTarget.github.label),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('tapping the address line opens its quality', (tester) async {
     answer(
       (_) => [
-        _item(
-          'google',
-          ServiceProbeStatus.available,
-          delay: 88,
-          chains: ['HK-01'],
-        ),
+        _item('google', ServiceProbeStatus.available, chains: ['HK-01']),
       ],
     );
     await tester.pumpWidget(
@@ -234,8 +285,36 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('203.0.113.7'), findsOneWidget);
-    expect(find.text('HK-01'), findsNothing);
+    await tester.tap(find.text('\u{1F1FA}\u{1F1F8}'));
+    await tester.pump();
+    await tester.pump(commonDuration * 2);
+    expect(find.byType(ServiceStatusSheet), findsNothing);
+    expect(find.text('Outbound IP'), findsOneWidget);
+  });
+
+  testWidgets('the address takes the colour of its quality', (tester) async {
+    answer(
+      (_) => [
+        _item('google', ServiceProbeStatus.available, chains: ['HK-01']),
+      ],
+    );
+    await tester.pumpWidget(
+      app(
+        outboundIp: (_) => _address('203.0.113.7', 'US'),
+        width: 288,
+        ipQuality: const IpQuality(
+          ip: '203.0.113.7',
+          source: IpQualitySource.ipApiIs,
+          type: IpType.hosting,
+          isAbuser: true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final address = tester.widget<Text>(find.text('203.0.113.7'));
+    final context = tester.element(find.text('203.0.113.7'));
+    expect(address.style?.color, Theme.of(context).colorScheme.error);
   });
 
   testWidgets('holds the address with a skeleton until it resolves', (
@@ -252,12 +331,13 @@ void main() {
         ),
       ],
     );
-    await tester.pumpWidget(app(outboundIp: (_) => lookup.future));
+    await tester.pumpWidget(
+      app(outboundIp: (_) => lookup.future, width: 552, height: 120),
+    );
     await tester.pump();
     await tester.pump(commonDuration * 2);
     expect(find.text('88 ms'), findsOneWidget);
     expect(find.byType(SkeletonText), findsOneWidget);
-    expect(find.text('—'), findsNothing);
 
     lookup.complete(_address('203.0.113.7', 'US'));
     await tester.pumpAndSettle();
@@ -265,17 +345,19 @@ void main() {
     expect(find.text('203.0.113.7'), findsOneWidget);
   });
 
-  testWidgets('a failed address lookup shows a dash', (tester) async {
+  testWidgets('a failed address lookup falls back to the node', (tester) async {
     answer(
       (_) => [
         _item('google', ServiceProbeStatus.available, chains: ['HK-01']),
       ],
     );
-    await tester.pumpWidget(app(outboundIp: (_) => null));
+    await tester.pumpWidget(
+      app(outboundIp: (_) => null, width: 552, height: 120),
+    );
     await tester.pumpAndSettle();
 
     expect(find.byType(SkeletonText), findsNothing);
-    expect(find.text('—'), findsOneWidget);
+    expect(find.text('HK-01'), findsOneWidget);
   });
 
   testWidgets('horizontal dragging selects and checks the next service', (
@@ -293,7 +375,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(asked, ['google']);
 
-    await tester.drag(find.byType(PageView), const Offset(-48, 0));
+    await tester.drag(find.byType(PageView), const Offset(-200, 0));
     await tester.pumpAndSettle();
 
     expect(asked.last, 'github');
@@ -490,9 +572,9 @@ void main() {
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
 
-    await tester.drag(find.byType(PageView), const Offset(-48, 0));
+    await tester.drag(find.byType(PageView), const Offset(-200, 0));
     await tester.pumpAndSettle();
-    await tester.drag(find.byType(PageView), const Offset(48, 0));
+    await tester.drag(find.byType(PageView), const Offset(200, 0));
     await tester.pumpAndSettle();
 
     expect(asked, ['google', 'github']);
@@ -518,13 +600,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Timeout'), findsOneWidget);
 
-    await tester.drag(find.byType(PageView), const Offset(-48, 0));
+    await tester.drag(find.byType(PageView), const Offset(-200, 0));
     await tester.pumpAndSettle();
     final gesture = await tester.startGesture(
       tester.getCenter(find.byType(PageView)),
     );
-    await gesture.moveBy(const Offset(24, 0));
-    await gesture.moveBy(const Offset(24, 0));
+    await gesture.moveBy(const Offset(120, 0));
+    await gesture.moveBy(const Offset(120, 0));
     await tester.pump();
     expect(find.text('Timeout'), findsNothing);
     await gesture.up();
@@ -646,8 +728,19 @@ void main() {
     await tester.tap(find.byType(ServiceStatusCard));
     await tester.pumpAndSettle();
     final labels = tester
-        .widgetList<ListTile>(find.byType(ListTile))
-        .map((tile) => (tile.title! as Text).data)
+        .widgetList<Text>(
+          find.descendant(
+            of: find.byType(ServiceStatusSheet),
+            matching: find.byWidgetPredicate(
+              (widget) =>
+                  widget is Text &&
+                  ServiceTarget.values.any(
+                    (target) => target.label == widget.data,
+                  ),
+            ),
+          ),
+        )
+        .map((text) => text.data)
         .take(3);
     expect(labels, ['Claude', 'Google', 'YouTube']);
     expect(find.text(ServiceTarget.github.label), findsNothing);
@@ -767,7 +860,7 @@ void main() {
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
 
-    await tester.drag(find.byType(PageView), const Offset(-48, 0));
+    await tester.drag(find.byType(PageView), const Offset(-200, 0));
     await tester.pumpAndSettle();
 
     expect(settingsOf(tester).currentService, 'github');
@@ -822,7 +915,6 @@ void main() {
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
     expect(find.text('Check failed'), findsOneWidget);
-    expect(find.text('—'), findsOneWidget);
   });
 
   ProviderContainer containerOf(WidgetTester tester) =>
@@ -930,9 +1022,11 @@ void main() {
           _item(name, ServiceProbeStatus.available, chains: ['HK-01']),
       ],
     );
-    await tester.pumpWidget(app(started: false, outboundIp: (_) => null));
+    await tester.pumpWidget(
+      app(started: false, outboundIp: (_) => null, width: 552, height: 120),
+    );
     await tester.pumpAndSettle();
-    expect(find.text('—'), findsOneWidget);
+    expect(find.byType(SkeletonText), findsNothing);
 
     setStarted(tester, true);
     await tester.pump();
@@ -943,10 +1037,10 @@ void main() {
       ProbePhase.failed,
     );
     expect(find.text('Available'), findsOneWidget);
-    expect(find.text('—'), findsNothing);
+    expect(find.byType(SkeletonText), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 5));
-    expect(find.text('—'), findsOneWidget);
+    expect(find.byType(SkeletonText), findsNothing);
   });
 
   testWidgets('leaving the dashboard releases the shown service', (

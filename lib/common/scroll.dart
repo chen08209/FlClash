@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/widgets/scroll.dart';
+import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 
 class BaseScrollBehavior extends MaterialScrollBehavior {
@@ -115,6 +117,186 @@ class NextClampingScrollPhysics extends ClampingScrollPhysics {
       velocity: velocity,
       tolerance: tolerance,
     );
+  }
+}
+
+const _stopEpsilon = 1e-3;
+
+/// Settles each scroll on a whole row of [RowSnapScrollController.itemExtent].
+class RowSnapScrollPhysics extends ScrollPhysics {
+  const RowSnapScrollPhysics({super.parent});
+
+  @override
+  RowSnapScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return RowSnapScrollPhysics(parent: buildParent(ancestor));
+  }
+
+  bool _canSnap(_RowSnapScrollPosition position) =>
+      position.itemExtent > 0 &&
+      position.maxScrollExtent > position.minScrollExtent;
+
+  // The end is rarely row-aligned, so it replaces the nearest row as a stop.
+  int _lastStop(_RowSnapScrollPosition position) => max(
+    ((position.maxScrollExtent - position.minScrollExtent) /
+            position.itemExtent)
+        .round(),
+    1,
+  );
+
+  double _stopAt(_RowSnapScrollPosition position, double pixels) {
+    final lastRow = (_lastStop(position) - 1) * position.itemExtent;
+    final offset = pixels - position.minScrollExtent;
+    if (offset <= lastRow) {
+      return offset / position.itemExtent;
+    }
+    final range = position.maxScrollExtent - position.minScrollExtent;
+    return _lastStop(position) - 1 + (offset - lastRow) / (range - lastRow);
+  }
+
+  double _pixelsOf(_RowSnapScrollPosition position, int stop) {
+    if (stop >= _lastStop(position)) {
+      return position.maxScrollExtent;
+    }
+    return position.minScrollExtent + max(stop, 0) * position.itemExtent;
+  }
+
+  Simulation? _springToStop(
+    _RowSnapScrollPosition position,
+    double velocity,
+    ScrollDirection direction,
+  ) {
+    final stop = _stopAt(position, position.pixels);
+    final target = _pixelsOf(position, switch (direction) {
+      ScrollDirection.reverse => (stop - _stopEpsilon).ceil(),
+      ScrollDirection.forward => (stop + _stopEpsilon).floor(),
+      ScrollDirection.idle => stop.round(),
+    });
+    if (target == position.pixels) {
+      return null;
+    }
+    return ScrollSpringSimulation(
+      spring,
+      position.pixels,
+      target,
+      velocity,
+      tolerance: toleranceFor(position),
+    );
+  }
+
+  Simulation? _settleWheel(
+    _RowSnapScrollPosition position,
+    ScrollDirection direction,
+  ) {
+    return _canSnap(position) ? _springToStop(position, 0, direction) : null;
+  }
+
+  @override
+  Simulation? createBallisticSimulation(
+    ScrollMetrics position,
+    double velocity,
+  ) {
+    if (position is! _RowSnapScrollPosition ||
+        !_canSnap(position) ||
+        position.outOfRange ||
+        velocity.abs() >= toleranceFor(position).velocity) {
+      return super.createBallisticSimulation(position, velocity);
+    }
+    return _springToStop(position, velocity, ScrollDirection.idle);
+  }
+}
+
+class RowSnapScrollController extends ScrollController {
+  RowSnapScrollController({
+    super.initialScrollOffset,
+    super.keepScrollOffset,
+    super.debugLabel,
+  });
+
+  double itemExtent = 0;
+
+  @override
+  ScrollPosition createScrollPosition(
+    ScrollPhysics physics,
+    ScrollContext context,
+    ScrollPosition? oldPosition,
+  ) {
+    return _RowSnapScrollPosition(
+      controller: this,
+      physics: physics,
+      context: context,
+      initialPixels: initialScrollOffset,
+      keepScrollOffset: keepScrollOffset,
+      oldPosition: oldPosition,
+      debugLabel: debugLabel,
+    );
+  }
+}
+
+const _wheelSettleDelay = Duration(milliseconds: 200);
+
+// Stock wheel handling settles after every tick instead of once it rests.
+class _RowSnapScrollPosition extends ScrollPositionWithSingleContext {
+  _RowSnapScrollPosition({
+    required this.controller,
+    required super.physics,
+    required super.context,
+    super.initialPixels,
+    super.keepScrollOffset,
+    super.oldPosition,
+    super.debugLabel,
+  });
+
+  final RowSnapScrollController controller;
+
+  double get itemExtent => controller.itemExtent;
+
+  Timer? _wheelSettle;
+  bool _wheeling = false;
+
+  @override
+  void pointerScroll(double delta) {
+    _wheeling = true;
+    try {
+      super.pointerScroll(delta);
+    } finally {
+      _wheeling = false;
+    }
+  }
+
+  @override
+  void goBallistic(double velocity) {
+    final physics = this.physics;
+    if (!_wheeling || physics is! RowSnapScrollPhysics) {
+      super.goBallistic(velocity);
+      return;
+    }
+    final direction = userScrollDirection;
+    goIdle();
+    _wheelSettle = Timer(_wheelSettleDelay, () {
+      final simulation = physics._settleWheel(this, direction);
+      if (simulation != null) {
+        beginActivity(
+          BallisticScrollActivity(
+            this,
+            simulation,
+            context.vsync,
+            shouldIgnorePointer,
+          ),
+        );
+      }
+    });
+  }
+
+  @override
+  void beginActivity(ScrollActivity? newActivity) {
+    _wheelSettle?.cancel();
+    super.beginActivity(newActivity);
+  }
+
+  @override
+  void dispose() {
+    _wheelSettle?.cancel();
+    super.dispose();
   }
 }
 

@@ -142,11 +142,6 @@ const profilesStoreKey = PageStorageKey<String>('profiles');
 
 const defaultPrimaryColor = 0XFFD8C0C3;
 
-double getWidgetHeight(num lines) {
-  final space = 14.mAp;
-  return max(lines * (80.ap + space) - space, 0);
-}
-
 const maxLogsLength = 5000;
 const maxRequestsLength = 2000;
 const maxDnsQueriesLength = 3000;

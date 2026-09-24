@@ -119,6 +119,7 @@
   "desc": "基于ClashMeta的多平台代理客户端，简单易用，开源无广告。",
   "startVpn": "正在启动VPN…",
   "stopVpn": "正在停止VPN…",
+  "localNetworkDeniedTip": "本地网络权限被拒绝：已改用 gvisor 栈，局域网无法访问。",
   "compatible": "兼容模式",
   "notSelectedTip": "当前代理组无法选中",
   "changeProxyFailedTip": "切换代理失败，已恢复上一次的选择",
@@ -215,6 +216,7 @@
   "loose": "宽松",
   "profilesSort": "配置排序",
   "start": "启动",
+  "runTime": "启动时间",
   "stop": "暂停",
   "key": "键",
   "value": "值",
@@ -227,8 +229,6 @@
   "providers": "外部资源",
   "proxyProviders": "代理集",
   "ruleProviders": "规则集",
-  "appProxyProviders": "应用代理集",
-  "appRuleProviders": "应用规则集",
   "behavior": "行为",
   "format": "格式",
   "providerUrlTip": "仅支持远程资源",
@@ -653,6 +653,7 @@
   "prerequisites": "前置条件",
   "ignoreBatteryOptimization": "忽略电池优化",
   "batteryOptimizationDesc": "为保证后台运行，请关闭本应用的电池优化。点击前往设置。",
+  "batteryOptimizationStatusTip": "由于系统限制，运行状态下无法正确获取电池优化状态",
   "locationPermission": "位置权限",
   "locationPermissionDesc": "根据系统要求，获取Wi-Fi名称需要您授予位置权限。Android 上请选择“始终允许”，否则应用在后台时无法获取 Wi-Fi 名称。",
   "excludeSsids": "排除SSIDs",
@@ -768,9 +769,7 @@
   "overwriteIssueGroupLoop": "策略组之间存在循环引用：{path}",
   "overwriteIssuesSummary": "{count} 项存在问题，应用覆写可能失败",
   "overwriteIssueSubscriptionGroupMissingProxies": "配置文件自身的策略组引用了自定义代理中已没有的代理：{names}",
-  "overwriteIssueProviderShadowed": "配置文件中已有名为 {name} 的外部资源，同名的应用级外部资源不会生效，请改名",
   "providerInUse": "{label} 仍被 {profiles} 的自定义策略组或规则使用，请先在那里移除",
   "providerSourceSubscription": "订阅",
-  "providerRenameShadowed": "{profiles} 的订阅里已有 {label}，改名后这些配置会改用订阅里的那个，请换一个名称",
-  "appProviderShadowed": "同名的应用级项在此不生效"
+  "providerRenameShadowed": "{profiles} 的订阅里已有 {label}，改名后这些配置会改用订阅里的那个，请换一个名称"
 }
