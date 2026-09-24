@@ -29,7 +29,9 @@ raw string.
 
 ### Corner Radius
 
-Rounded corners are superellipses everywhere, not circular arcs. Use the superellipse API at each layer:
+Rounded corners are superellipses (continuous corners) everywhere, never circular arcs; when a component offers
+both, pick the superellipse. `test/lint/superellipse_corners_test.dart` fails on the circular APIs below in `lib/`. Use
+the superellipse API at each layer:
 
 - Shapes: `RoundedSuperellipseBorder` instead of `RoundedRectangleBorder`.
 - Clips: `ClipRSuperellipse` instead of `ClipRRect`.
@@ -37,25 +39,31 @@ Rounded corners are superellipses everywhere, not circular arcs. Use the superel
   `BoxDecoration(borderRadius: ...)`; borders move to the shape's `side`, and a `Container` with
   `clipBehavior` still clips to the shape path.
 - Canvas: `canvas.drawRSuperellipse(RSuperellipse.fromRectAndRadius(...))` instead of `drawRRect`.
+- Ink: `InkWell.customBorder` with an `AppShape` instead of `InkWell.borderRadius`.
 
 Passing `BorderRadius.circular(x)` as the `borderRadius` argument of these APIs is expected — it only
 carries the corner magnitude; the rendered geometry stays a superellipse.
 
-APIs that accept only `BorderRadius` keep circular corners, with the superellipse supplied by an
-enclosing clip or shape where one is needed: `InkWell.borderRadius`, `OutlineInputBorder`,
-`ScrollbarThemeData.radius`, and `smooth_sheets`' `MaterialSheetDecoration`. Fully round pills
-(`BorderRadius.circular(999)` or half the shortest side) may stay circular — both geometries coincide
-there.
+Pills are no exception. `StadiumBorder` joins its round caps to the straight sides with a curvature jump, while
+`AppShape.full`, a superellipse at full radius, blends them, and on a square it renders the exact circle, so it serves
+circles too. Material 3 defaults every button, icon button, segmented button, and search bar to `StadiumBorder`;
+`ThemeData.withAppShapes` replaces that for the button themes, and a local `FilledButtonTheme` or `IconButtonTheme`
+replaces the app's, so merge the ambient `XButtonTheme.of(context).style` into it, as `CommonMinFilledButtonTheme`
+does. `CircleBorder` and `BoxShape.circle` are fine for something that is always square.
+
+APIs that accept only a `Radius`, such as `ScrollbarThemeData.radius`, keep circular corners; supply the superellipse
+with an enclosing clip or shape where it shows.
 
 CI gates formatting: `dart format --output=none --set-exit-if-changed lib test
 tool plugins setup.dart` runs before `flutter analyze`.
 
-Generated directories are excluded from analysis:
+These directories are excluded from analysis:
 
 - `build/**`
 - `lib/l10n/intl/**`
 - `lib/**/generated/**`
 - `plugins/**`
+- the platform runner directories: `android/`, `ios/`, `web/`, `windows/`, `macos/`, `linux/`
 
 ## Comments
 
@@ -136,9 +144,10 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   keeps its identity check on the Dart side, which compares the named-pipe peer PID with the Core it launched.
 - Keep the shared `CoreMethodCall`/`CoreMethodResponse` JSON envelope structurally identical across Dart, Go, JNI, and
   desktop IPC. Do not double-encode `arguments`, `result`, or event batches.
-- `core/message.go` carries three event queues, and the split is load-bearing: state (loaded, geo-update), delay, and
-  bulk (log, request). Delay and bulk evict their own oldest entry under backpressure; state uses `enqueueState`, which
-  never evicts, because a dropped `geoUpdate{updating:false}` leaves `isUpdatingProvider` stuck at true in the UI until
+- `core/message.go` carries three event queues, and the split is load-bearing: state (loaded, geo-update,
+  route-changed), priority (every other event), and bulk (log, request, DNS). Priority and bulk evict their own oldest
+  entry under backpressure, except DNS, which enters the bulk queue through `enqueueState` so a lookup burst cannot push
+  out the request events the connection list is built from; state uses `enqueueState`, which never evicts, because a dropped `geoUpdate{updating:false}` leaves `isUpdatingProvider` stuck at true in the UI until
   `UpdatingAction` sweeps it as stale minutes later. Do not merge the tiers or give state eviction semantics. `enqueueState` drops silently on a full
   queue and must stay that way: reaching it means the host stopped reading, which `logDeliveryError` already reports,
   and reporting it from the message layer feeds the same batcher.
@@ -195,12 +204,11 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   mutual exclusion against each other and against `patchSelectGroup` — but not against a whole config apply, which is
   what `configMu` made a proxy switch wait for, provider downloads included. `patchSelectGroup` takes `selectMu` under
   `configMu`, fixing the order as `configMu` → `selectMu`.
-- The delay-test semaphore is acquired with a slice of the caller's budget (`budget/delayTestQueueShare`), not
-  unconditionally and not with the whole deadline. Queueing and probing come out of one budget, so a test handed all of
-  it can spend it waiting and reach `URLTest` with nothing left, reporting a proxy it never contacted as unreachable.
-  The probe keeps the caller's original deadline, so whatever the queue did not use is still its own.
+- Queueing for the delay-test semaphore and probing the node each get the full timeout in `handleTestDelay`. With one
+  shared deadline, a node that waited behind a saturated semaphore reached `URLTest` with almost nothing left, so a bulk
+  test of a large subscription reported whatever sat at the back of the queue as unreachable.
 - A delay test that the Core does not answer is a fault of the Core or the channel, never a verdict on the proxy:
-  `handleTestDelay` returns inside its own budget on every path. `asyncTestDelay` therefore returns null instead of a
+  `handleTestDelay` returns within its two timeouts on every path. `asyncTestDelay` therefore returns null instead of a
   `-1` delay, and `ProxiesAction` leaves the last measurement in place and abandons the rest of the run. Writing a
   timeout there is what made a reachable node read as unreachable whenever the host deadline beat the Core's.
 - Delay-test progress lives in `pendingDelayTestsProvider`, not as a sentinel value in `DelayDataSource`. A delay of 0
@@ -254,8 +262,14 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   actions through `ServiceState` and keep `ServiceController` as the sole binding/run-time owner.
 - Every `BroadcastReceiver.goAsync()` path must finish its `PendingResult` exactly once. A watchdog may release the
   broadcast lease, but must not cancel, reverse, or otherwise redefine the service operation.
+- Anything that probes through the outbound route is a `RoutedProbe` judged against `routeTrackerProvider` (Route
+  Consistency in `.agents/architecture.md`); the Core stamps every answer and publishes its picks, so do not add a
+  change signal, a trigger counter, or a `coreStatusProvider` watch of your own.
 - Presentation smoothing such as `CoreStatusButton`'s connecting hold must remain local display state. It must not delay or
   overwrite `coreStatusProvider`, and a real failure must bypass/cancel the hold immediately.
+- Safe mode (`SAFE_MODE` define, see the safe mode section of `.agents/architecture.md`) is consulted by each host
+  integration at its owner, never by rewriting the user's settings. `safeModeBuild` is for handles created before the
+  container exists; everything else reads `safeModeProvider` so a test can override it.
 - `Tray.hide()` is idempotent on all three desktop platforms and returns native state to "`show` was never called".
   `AppTray.shutdown()` latches, so no later `update()`/`updateTitle()` can resurrect the icon once shutdown begins.
   Keep it that way; a resurrected icon outlives `exit(0)` as a Windows ghost icon, because `setPreventClose(true)`
@@ -299,8 +313,6 @@ connection `captureFrames` has installed by then. Either keep the event out of t
 connection with `swapConn`; a bare assignment races every event it happens to be delivering, and `go test -race` catches
 it in an unrelated test.
 
-Use `CoreController.test(mock)` to inject a mocked `CoreHandlerInterface`. Call `CoreController.resetInstance()` in `tearDown` to clean up the singleton between tests.
-
 Register fallback values for freezed params used with `any()` matchers.
 
 `tool/check_coverage.dart` enforces a total floor passed by CI plus per-group floors declared in `_groupFloors`. Raise a
@@ -313,7 +325,8 @@ land.
 
 Prefer `coreHandlerProvider.overrideWithValue(CoreController.scoped(fake))` over `CoreController.test(fake)` in new and
 touched tests. `CoreController.test` claims the process-wide singleton, which makes a global read and a provider read
-resolve to the same fake, so it cannot fail on a call site that still reaches for the global.
+resolve to the same fake, so it cannot fail on a call site that still reaches for the global. A test that does claim
+the singleton calls `CoreController.resetInstance()` in `tearDown`.
 
 Construct the Android lib handler with `CoreLib.scoped(fakeService)`. The `service` global is gated on `Platform.isAndroid`
 and is therefore null on every test host, so a `CoreLib()` built from it silently takes the null-service fallback on every
@@ -326,10 +339,10 @@ key), so a test that skips the seam registers the test binary on the machine tha
 under `kDebugMode`, which is always true beneath `flutter test`, so its remaining branches cannot be reached from a test
 at all; `test/common/launch_test.dart` pins the early return instead.
 
-`pumpAndSettle` never returns on a page holding `EditorPage`: the code editor blinks its caret forever, so frames keep
-being scheduled. Pump explicitly instead. `encodeYamlTask` and its neighbours in `common/task.dart` hand work to a real
-isolate through `compute`, which only runs outside the fake-async zone, so a test awaiting one needs
-`tester.runAsync(...)` between the pumps — see `test/views/profile_preview_test.dart`.
+`pumpAndSettle` never returns on a page holding `EditorView` (what `EditorPage` embeds): the code editor blinks its
+caret forever, so frames keep being scheduled. Pump explicitly instead. `encodeYamlTask` and its neighbours in
+`common/task.dart` hand work to a real isolate through `compute`, which only runs outside the fake-async zone, so a test
+awaiting one needs `tester.runAsync(...)` between the pumps.
 
 The `@visibleForTesting` `database` setter in `lib/database/database.dart` deliberately does not close the instance it
 replaces. Tests inject `NativeDatabase.memory()`, which holds no file handle, and `Database.close()` is async while the
@@ -359,7 +372,7 @@ The same seam carries the two other places a platform decision changed what was 
 takes nullable `isAndroid`/`isMacOS` that fall back to the host. Every test names the platform it means, because
 `debugDefaultTargetPlatformOverride` does not move `system` and a suite that leaves it to the host asserts the macOS
 shape on a developer machine and the Linux one on CI. `WindowHeaderContainer` builds the caption buttons on every
-non-macOS host, so a test mounting it needs `TestApp` for `AppLocalizations` and a `window_manager` channel mock that
+non-macOS host, so a test mounting it needs `TestApp` for `AppLocalizations` and a `window` channel mock that
 answers `isMaximized`/`isAlwaysOnTop` with a bool.
 
 Auto-dispose providers need a container-level hold before a test reads them back. `proxyGroupProvider`, `ruleProvider`,
@@ -405,7 +418,10 @@ throws "`…State.dispose failed to call super.dispose.`" in debug and profile b
 dispose()` and hand async teardown to `unawaited(...)`; `Future<void> dispose() async` compiles and is the shape that
 invites the bug.
 
-Use `ProviderContainer` directly for simple Riverpod provider tests. The generated Riverpod `update()` method takes a callback:
+Use `ProviderContainer` directly for simple Riverpod provider tests, released with `addTearDown(container.dispose)`.
+Assert against the provider's generated public API, not its implementation, re-read source defaults before asserting
+them, and wait on provider futures or state changes rather than fixed sleeps. The generated Riverpod `update()` method
+takes a callback:
 
 ```dart
 notifier.update((state) => newValue);
@@ -415,6 +431,17 @@ When testing freezed models with nested objects, always round-trip through `json
 
 For async widgets, put visual cleanup in `finally` when the action may throw. Focused widget tests should cover success,
 failure, disposal, and any timer boundary that changes visible state.
+
+## Running the App Locally
+
+- An agent starts FlClash on the host only as a safe mode build (`--dart-define=SAFE_MODE=true`, see
+  `.agents/commands.md`). A normal build takes over the host network, so the user runs it, never the agent.
+- Never end a FlClash process the agent did not start, and never kill by name (`pkill`, `killall`, a pattern on the
+  executable path): the user's own instance matches too. Record the pid of every process you launch, check with
+  `ps -o pid,command -p <pid>` that its executable is your own build output, and end only that pid.
+- Only a macOS or Android debug build has its own data directory; every other build shares the installed app's data
+  directory and single-instance lock, so it cannot start while the user's instance runs. `.agents/commands.md` lists
+  which builds are kept apart.
 
 ## Commit Messages
 
@@ -452,16 +479,17 @@ Changelog: Per-profile override scripts
 ```
 
 - `Changelog:` is the English entry. `Changelog: skip` drops the commit from the changelog entirely.
-- The changelog is English only. Translation trailers were removed on purpose: they pushed release copy into the commit
-  history, so any `Changelog-<locale>:` or `Breaking-<locale>:` now fails the hook. Translate after the fact if ever
-  needed, not in the commit message.
+- The changelog is English only. A `Changelog-<locale>:` or `Breaking-<locale>:` trailer fails the hook, because
+  translated release copy does not belong in the commit history. Translate after the fact if ever needed, not in the
+  commit message.
 - `Changelog-Type:` moves an entry into another group, for example to promote a `refactor` that users will notice. Valid
   values are `breaking`, `feat`, `fix`, `perf`, `revert`.
 - `BREAKING CHANGE:` is required whenever the subject carries `!`, and its text becomes the breaking entry. A `!` commit
   therefore needs two lines of copy: the footer for the breaking entry and `Changelog:` for the normal one.
 
 `feat`, `fix`, `perf`, `revert` and breaking commits are collected by default; every other type is dropped unless it
-carries a `Changelog:` trailer. Commits missing a trailer reuse their subject, and the hook says so without blocking.
+carries a `Changelog:` trailer. Commits missing a trailer reuse their subject; for `feat`, `fix` and `perf` the hook
+says so without blocking.
 
 ## Generated Code
 
