@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/theme.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_profiles.dart';
 
 Profile urlProfile(String label) =>
@@ -120,7 +122,7 @@ void main() {
       matching: find.byType(ListItem),
     );
     await tester.tap(
-      find.descendant(of: profileItem, matching: find.byIcon(Icons.more_vert)),
+      find.descendant(of: profileItem, matching: find.byGlyph(AppGlyphs.more)),
     );
     await tester.pumpAndSettle();
 

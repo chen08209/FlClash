@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -48,7 +49,8 @@ class LogsView extends ConsumerStatefulWidget {
   ConsumerState<LogsView> createState() => _LogsViewState();
 }
 
-class _LogsViewState extends ConsumerState<LogsView> {
+class _LogsViewState extends ConsumerState<LogsView>
+    with RouteMotionHoldMixin<LogsView> {
   final _listController = LogListController();
   late final ScrollController _scrollController;
 
@@ -62,14 +64,12 @@ class _LogsViewState extends ConsumerState<LogsView> {
     });
   }
 
-  List<Widget> _buildActions() {
+  List<IconButtonData> _buildActions() {
     return [
-      IconButton(
+      IconButtonData(
+        glyph: AppGlyphs.export,
         tooltip: context.appLocalizations.exportLogs,
-        onPressed: () {
-          _handleExport();
-        },
-        icon: const Icon(Icons.save_as_outlined),
+        onPressed: _handleExport,
       ),
     ];
   }
@@ -100,47 +100,27 @@ class _LogsViewState extends ConsumerState<LogsView> {
       if (!mounted) {
         return;
       }
-      _listController.setLogs(ref.read(logsProvider).list);
-    }, duration: commonDuration);
+      updateWhenRouteSettled(
+        () => _listController.setLogs(ref.read(logsProvider).list),
+      );
+    }, duration: renderThrottleDuration);
   }
 
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     return CommonScaffold(
-      actions: _buildActions(),
+      iconActions: _buildActions(),
       onKeywordsUpdate: _listController.updateKeywords,
       searchState: AppBarSearchState(onSearch: _listController.search),
       title: appLocalizations.logs,
-      floatingActionButton: ValueListenableBuilder(
-        valueListenable: _listController,
-        builder: (_, state, _) {
-          final autoScrollToEnd = state.autoScrollToEnd;
-          return FadeRotationScaleBox(
-            child: FloatingActionButton(
-              key: ValueKey(autoScrollToEnd),
-              onPressed: () {
-                if (autoScrollToEnd) {
-                  _listController.setAutoScrollToEnd(false);
-                } else {
-                  _listController.resumeAutoScrollToEnd(
-                    ref.read(logsProvider).list,
-                  );
-                }
-              },
-              child: autoScrollToEnd
-                  ? const Icon(Icons.block)
-                  : const Icon(Icons.vertical_align_top),
-            ),
-          );
-        },
-      ),
       body: ValueListenableBuilder<LogsState>(
         valueListenable: _listController,
         builder: (context, state, _) {
           final logs = state.list;
           return NullStatusSwitcher(
             isEmpty: logs.isEmpty,
+            isSearching: state.isSearching,
             nullStatus: NullStatus(
               illustration: NullStatusIllustration.logs,
               label: appLocalizations.nullTip(appLocalizations.logs),
@@ -157,6 +137,11 @@ class _LogsViewState extends ConsumerState<LogsView> {
                   onCancelToEnd: () {
                     _listController.setAutoScrollToEnd(false);
                   },
+                  onResumeToEnd: () {
+                    _listController.resumeAutoScrollToEnd(
+                      ref.read(logsProvider).list,
+                    );
+                  },
                   controller: _scrollController,
                   enable: state.autoScrollToEnd,
                   dataSource: logs,
@@ -166,6 +151,7 @@ class _LogsViewState extends ConsumerState<LogsView> {
                     shrinkWrap: true,
                     controller: _scrollController,
                     padding: EdgeInsets.only(
+                      top: context.appBarInset,
                       bottom: 16 + BottomInsetScope.of(context),
                     ),
                     itemCount: logs.length,
@@ -198,42 +184,81 @@ class LogItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListItem(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 8,
-      ).copyWith(bottom: 12),
+    final tone = switch (log.logLevel) {
+      LogLevel.warning => RecordTone.warning,
+      LogLevel.error => RecordTone.error,
+      LogLevel.info => RecordTone.neutral,
+      LogLevel.debug || LogLevel.silent => RecordTone.muted,
+    };
+    final payload = LogPayload.parse(log.payload);
+    return RecordListItem(
+      tone: tone,
       onTap: () {},
-      minVerticalPadding: 0,
-      title: SelectableText(
-        log.payload,
-        style: context.textTheme.bodyLarge?.copyWith(
-          color: log.logLevel.color(context),
-        ),
+      header: RecordHeader(
+        children: [
+          RecordTimestamp(log.dateTime),
+          RecordLabel(
+            label: log.logLevel.name,
+            tone: tone,
+            onPressed: () => onClick?.call(log.logLevel.name),
+          ),
+        ],
       ),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Row(
-          spacing: 8,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            CommonChip(
-              label: log.logLevel.name,
-              onPressed: () => onClick?.call(log.logLevel.name),
+      body: _LogBody(payload: payload, errorColor: tone.accentColor(context)),
+    );
+  }
+}
+
+class _LogBody extends StatelessWidget {
+  final LogPayload payload;
+  final Color? errorColor;
+
+  const _LogBody({required this.payload, this.errorColor});
+
+  String get _sourceText => [
+    payload.tag,
+    if (payload.route case final route?) ...[route.source, route.sourceDetail],
+  ].where((text) => text.isNotEmpty).join('  ·  ');
+
+  @override
+  Widget build(BuildContext context) {
+    final styles = RecordTextStyles.of(context);
+    final route = payload.route;
+    if (route == null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SelectableText(payload.message, style: styles.primary),
+          if (payload.tag.isNotEmpty) Text(payload.tag, style: styles.muted),
+        ],
+      );
+    }
+    return SelectableText.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: route.destination,
+            style: styles.primary?.copyWith(fontWeight: FontWeight.w500),
+          ),
+          if (route.error.isNotEmpty)
+            TextSpan(
+              text: '\n${route.error}',
+              style: styles.secondary?.copyWith(color: errorColor),
             ),
-            Flexible(
-              child: Text(
-                log.dateTime,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.end,
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
+          const TextSpan(text: '\n'),
+          if (route.rule.isNotEmpty) ...[
+            TextSpan(text: route.rule, style: styles.secondary),
+            TextSpan(text: ' \u2192 ', style: styles.muted?.toJetBrainsMono),
           ],
-        ),
+          TextSpan(
+            text: route.proxy,
+            style: styles.secondary?.copyWith(
+              color: context.colorScheme.primary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          TextSpan(text: '\n$_sourceText', style: styles.muted),
+        ],
       ),
     );
   }

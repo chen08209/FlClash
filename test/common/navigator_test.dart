@@ -78,6 +78,121 @@ void main() {
     });
   });
 
+  group('drag back', () {
+    Future<void> openPage(
+      WidgetTester tester,
+      double width,
+      Widget page,
+    ) async {
+      setViewWidth(width);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: TextButton(
+                  onPressed: () => BaseNavigator.push(context, page),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+    }
+
+    const page = Scaffold(body: Center(child: Text('pushed page')));
+
+    for (final width in [400.0, 1400.0]) {
+      testWidgets('pops after a long right drag at width $width', (
+        tester,
+      ) async {
+        await openPage(tester, width, page);
+
+        await tester.timedDrag(
+          find.text('pushed page'),
+          Offset(tester.getSize(find.byType(Scaffold).last).width * 0.7, 0),
+          const Duration(seconds: 1),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('pushed page'), findsNothing);
+        expect(find.text('open'), findsOneWidget);
+      });
+
+      testWidgets('stays after a short slow right drag at width $width', (
+        tester,
+      ) async {
+        await openPage(tester, width, page);
+
+        await tester.timedDrag(
+          find.text('pushed page'),
+          const Offset(80, 0),
+          const Duration(seconds: 1),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('pushed page'), findsOneWidget);
+        expect(tester.getTopLeft(find.byType(Scaffold).last), Offset.zero);
+      });
+    }
+
+    testWidgets('pops on a quick right fling', (tester) async {
+      await openPage(tester, 400, page);
+
+      await tester.fling(find.text('pushed page'), const Offset(120, 0), 1500);
+      await tester.pumpAndSettle();
+
+      expect(find.text('pushed page'), findsNothing);
+    });
+
+    testWidgets('is disabled when the page vetoes popping', (tester) async {
+      await openPage(tester, 400, const PopScope(canPop: false, child: page));
+
+      await tester.timedDrag(
+        find.text('pushed page'),
+        const Offset(300, 0),
+        const Duration(seconds: 1),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('pushed page'), findsOneWidget);
+    });
+
+    testWidgets('yields to a horizontal scrollable inside the page', (
+      tester,
+    ) async {
+      await openPage(
+        tester,
+        400,
+        Scaffold(
+          body: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              for (var i = 0; i < 20; i++)
+                SizedBox(width: 200, child: Text('item $i')),
+            ],
+          ),
+        ),
+      );
+      final list = find.byType(Scrollable).last;
+      tester.state<ScrollableState>(list).position.jumpTo(600);
+      await tester.pump();
+
+      await tester.timedDrag(
+        list,
+        const Offset(300, 0),
+        const Duration(seconds: 1),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ListView), findsOneWidget);
+    });
+  });
+
   group('route configuration', () {
     test('desktop route exposes a transparent barrier and keeps state', () {
       final route = CommonDesktopRoute<void>(builder: (_) => const SizedBox());

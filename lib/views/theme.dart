@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -11,12 +12,12 @@ import 'package:material_color_utilities/hct/hct.dart';
 
 class ThemeModeItem {
   final ThemeMode themeMode;
-  final IconData iconData;
+  final Glyph glyph;
   final String label;
 
   const ThemeModeItem({
     required this.themeMode,
-    required this.iconData,
+    required this.glyph,
     required this.label,
   });
 }
@@ -36,16 +37,18 @@ class ThemeView extends StatelessWidget {
     final appLocalizations = context.appLocalizations;
     return BaseScaffold(
       title: appLocalizations.theme,
-      body: const CustomScrollView(
+      body: CustomScrollView(
         slivers: [
-          _ThemeModeItem(),
-          SliverToBoxAdapter(child: SizedBox(height: 16)),
-          _PrimaryColorItem(),
-          SliverToBoxAdapter(child: SizedBox(height: 16)),
-          _PrueBlackItem(),
-          SliverToBoxAdapter(child: SizedBox(height: 16)),
-          _TextScaleFactorItem(),
-          SliverToBoxAdapter(child: SizedBox(height: 32)),
+          SliverToBoxAdapter(child: SizedBox(height: context.appBarInset)),
+          const _ThemeModeItem(),
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          const _PrimaryColorItem(),
+          const SliverToBoxAdapter(child: SizedBox(height: 32)),
+          const _PureBlackItem(),
+          const _TabAnimationItem(),
+          const _SidebarBlurItem(),
+          const _TextScaleFactorItem(),
+          const SliverToBoxAdapter(child: SizedBox(height: 32)),
         ],
       ),
     );
@@ -56,12 +59,14 @@ class ItemCard extends StatelessWidget {
   final Widget child;
   final Info info;
   final List<Widget> actions;
+  final double? space;
 
   const ItemCard({
     super.key,
     required this.info,
     required this.child,
     this.actions = const [],
+    this.space,
   });
 
   @override
@@ -69,7 +74,7 @@ class ItemCard extends StatelessWidget {
     return Wrap(
       runSpacing: 16,
       children: [
-        InfoHeader(info: info, actions: actions),
+        InfoHeader(info: info, actions: actions, space: space),
         child,
       ],
     );
@@ -87,27 +92,24 @@ class _ThemeModeItem extends ConsumerWidget {
     );
     final List<ThemeModeItem> themeModeItems = [
       ThemeModeItem(
-        iconData: Icons.auto_mode,
+        glyph: AppGlyphs.themeAuto,
         label: appLocalizations.auto,
         themeMode: ThemeMode.system,
       ),
       ThemeModeItem(
-        iconData: Icons.light_mode,
+        glyph: AppGlyphs.sun,
         label: appLocalizations.light,
         themeMode: ThemeMode.light,
       ),
       ThemeModeItem(
-        iconData: Icons.dark_mode,
+        glyph: AppGlyphs.moon,
         label: appLocalizations.dark,
         themeMode: ThemeMode.dark,
       ),
     ];
     return SliverToBoxAdapter(
       child: ItemCard(
-        info: Info(
-          label: appLocalizations.themeMode,
-          iconData: Icons.brightness_high,
-        ),
+        info: Info(label: appLocalizations.themeMode, glyph: AppGlyphs.sun),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           height: 56,
@@ -132,7 +134,7 @@ class _ThemeModeItem extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      Flexible(child: Icon(themeModeItem.iconData)),
+                      Flexible(child: GlyphIcon(themeModeItem.glyph)),
                       const SizedBox(width: 8),
                       Flexible(child: Text(themeModeItem.label)),
                     ],
@@ -281,47 +283,51 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
 
     return SliverToBoxAdapter(
       child: CommonPopScope(
-        onPop: (context) {
-          if (_removablePrimaryColor != null) {
-            setState(() {
-              _removablePrimaryColor = null;
-            });
-            return false;
-          }
-          return true;
-        },
+        onPop: _removablePrimaryColor == null
+            ? null
+            : (_) {
+                _clearRemovable();
+                return false;
+              },
         child: ItemCard(
           info: Info(
             label: appLocalizations.themeColor,
-            iconData: Icons.palette,
+            glyph: AppGlyphs.palette,
           ),
-          actions: genActions([
+          space: 8,
+          actions: [
             if (_removablePrimaryColor == null)
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
+              ElasticButton(
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  onPressed: _handleChangeSchemeVariant,
+                  child: Text(schemeVariant.label),
                 ),
-                onPressed: _handleChangeSchemeVariant,
-                child: Text(schemeVariant.label),
               ),
             if (_removablePrimaryColor != null)
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
+              ElasticButton(
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  onPressed: _clearRemovable,
+                  child: Text(appLocalizations.cancel),
                 ),
-                onPressed: _clearRemovable,
-                child: Text(appLocalizations.cancel),
               ),
             if (_removablePrimaryColor == null && !isEquals)
-              IconButton.filledTonal(
-                tooltip: context.appLocalizations.reset,
-                iconSize: 20,
-                padding: const EdgeInsets.all(4),
-                visualDensity: VisualDensity.compact,
-                onPressed: _handleReset,
-                icon: const Icon(Icons.replay),
+              ElasticButton(
+                child: IconButton.filledTonal(
+                  tooltip: context.appLocalizations.reset,
+                  iconSize: 20,
+                  padding: const EdgeInsets.all(4),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: _handleReset,
+                  icon: const GlyphIcon(AppGlyphs.reset, fill: 1),
+                ),
               ),
-          ], space: 8),
+          ],
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
             child: _PrimaryColorGrid(
@@ -448,12 +454,18 @@ class _PrimaryColorTile extends StatelessWidget {
             Container(
               color: Colors.white.opacity0,
               padding: const EdgeInsets.all(8),
-              child: IconButton.filledTonal(
-                tooltip: context.appLocalizations.delete,
-                onPressed: onDelete,
-                padding: const EdgeInsets.all(12),
-                iconSize: 30,
-                icon: Icon(color: context.colorScheme.primary, Icons.delete),
+              child: ElasticButton(
+                child: IconButton.filledTonal(
+                  tooltip: context.appLocalizations.delete,
+                  onPressed: onDelete,
+                  padding: const EdgeInsets.all(14),
+                  iconSize: 26,
+                  icon: GlyphIcon(
+                    color: context.colorScheme.primary,
+                    AppGlyphs.delete,
+                    fill: 1,
+                  ),
+                ),
               ),
             ),
         ],
@@ -474,28 +486,34 @@ class _AddPrimaryColorTile extends StatelessWidget {
       width: width,
       height: width,
       padding: const EdgeInsets.all(4),
-      child: IconButton.filledTonal(
-        tooltip: context.appLocalizations.add,
-        onPressed: onPressed,
-        iconSize: 32,
-        icon: Icon(color: context.colorScheme.primary, Icons.add),
+      child: ElasticButton(
+        child: IconButton.filledTonal(
+          tooltip: context.appLocalizations.add,
+          onPressed: onPressed,
+          iconSize: 28,
+          icon: GlyphIcon(
+            color: context.colorScheme.primary,
+            AppGlyphs.add,
+            fill: 1,
+          ),
+        ),
       ),
     );
   }
 }
 
-class _PrueBlackItem extends ConsumerWidget {
-  const _PrueBlackItem();
+class _PureBlackItem extends ConsumerWidget {
+  const _PureBlackItem();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
-    final prueBlack = ref.watch(
+    final pureBlack = ref.watch(
       themeSettingProvider.select((state) => state.pureBlack),
     );
     return SliverToBoxAdapter(
       child: ListItem.toggle(
-        leading: const Icon(Icons.contrast),
+        leading: const GlyphIcon(AppGlyphs.pureBlack),
         horizontalTitleGap: 12,
         title: Text(
           appLocalizations.pureBlackMode,
@@ -503,11 +521,77 @@ class _PrueBlackItem extends ConsumerWidget {
             color: context.colorScheme.onSurfaceVariant,
           ),
         ),
-        value: prueBlack,
+        subtitle: Text(appLocalizations.pureBlackModeDesc),
+        value: pureBlack,
         onChanged: (value) {
           ref
               .read(themeSettingProvider.notifier)
               .update((state) => state.copyWith(pureBlack: value));
+        },
+      ),
+    );
+  }
+}
+
+class _TabAnimationItem extends ConsumerWidget {
+  const _TabAnimationItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
+    final isAnimateToPage = ref.watch(
+      appSettingProvider.select((state) => state.isAnimateToPage),
+    );
+    return SliverToBoxAdapter(
+      child: ListItem.toggle(
+        leading: const GlyphIcon(AppGlyphs.motion),
+        horizontalTitleGap: 12,
+        title: Text(
+          appLocalizations.tabAnimation,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        subtitle: Text(appLocalizations.tabAnimationDesc),
+        value: isAnimateToPage,
+        onChanged: (value) {
+          ref
+              .read(appSettingProvider.notifier)
+              .update((state) => state.copyWith(isAnimateToPage: value));
+        },
+      ),
+    );
+  }
+}
+
+class _SidebarBlurItem extends ConsumerWidget {
+  const _SidebarBlurItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!feature.sidebarBlur || (!system.isMacOS && !system.isWindows)) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+    final appLocalizations = context.appLocalizations;
+    final sidebarBlur = ref.watch(
+      themeSettingProvider.select((state) => state.sidebarBlur),
+    );
+    return SliverToBoxAdapter(
+      child: ListItem.toggle(
+        leading: const GlyphIcon(AppGlyphs.blur),
+        horizontalTitleGap: 12,
+        title: Text(
+          appLocalizations.sidebarBlur,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        subtitle: Text(appLocalizations.sidebarBlurDesc),
+        value: sidebarBlur,
+        onChanged: (value) {
+          ref
+              .read(themeSettingProvider.notifier)
+              .update((state) => state.copyWith(sidebarBlur: value));
         },
       ),
     );
@@ -531,7 +615,7 @@ class _TextScaleFactorItem extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: ListItem.toggle(
-              leading: const Icon(Icons.text_fields),
+              leading: const GlyphIcon(AppGlyphs.textSize),
               horizontalTitleGap: 12,
               title: Text(
                 appLocalizations.textScale,
@@ -539,6 +623,7 @@ class _TextScaleFactorItem extends ConsumerWidget {
                   color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
+              subtitle: Text(appLocalizations.textScaleDesc),
               value: textScale.enable,
               onChanged: (value) {
                 ref
@@ -547,45 +632,40 @@ class _TextScaleFactorItem extends ConsumerWidget {
               },
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              mainAxisSize: MainAxisSize.max,
-              spacing: 32,
-              children: [
-                Expanded(
-                  child: DisabledMask(
-                    status: !textScale.enable,
-                    child: ActivateBox(
-                      active: textScale.enable,
-                      child: SliderTheme(
-                        data: SliderDefaultsM3(context),
-                        child: Slider(
-                          padding: EdgeInsets.zero,
-                          min: minTextScale,
-                          max: maxTextScale,
-                          value: textScale.scale,
-                          onChanged: (value) {
-                            ref
-                                .read(themeSettingProvider.notifier)
-                                .update(
-                                  (state) =>
-                                      state.copyWith.textScale(scale: value),
-                                );
-                          },
-                        ),
+          if (textScale.enable)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.max,
+                spacing: 32,
+                children: [
+                  Expanded(
+                    child: SliderTheme(
+                      data: SliderDefaultsM3(context),
+                      child: Slider(
+                        padding: EdgeInsets.zero,
+                        min: minTextScale,
+                        max: maxTextScale,
+                        value: textScale.scale,
+                        onChanged: (value) {
+                          ref
+                              .read(themeSettingProvider.notifier)
+                              .update(
+                                (state) =>
+                                    state.copyWith.textScale(scale: value),
+                              );
+                        },
                       ),
                     ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(right: 4),
-                  child: Text(process, style: context.textTheme.titleMedium),
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: Text(process, style: context.textTheme.titleMedium),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );

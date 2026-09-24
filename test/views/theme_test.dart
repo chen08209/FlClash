@@ -1,9 +1,13 @@
+import 'dart:io';
+
+import 'package:fl_clash/common/feature.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/theme.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -67,6 +71,57 @@ void main() {
     });
   });
 
+  group('primary color', () {
+    testWidgets('blocks the back gesture only while a color is removable', (
+      tester,
+    ) async {
+      await pumpThemeView(tester);
+      RoutePopDisposition disposition() {
+        return ModalRoute.of(
+          tester.element(find.byType(ThemeView)),
+        )!.popDisposition;
+      }
+
+      expect(disposition(), isNot(RoutePopDisposition.doNotPop));
+
+      await tester.longPress(find.byType(ColorSchemeBox).at(1));
+      await tester.pumpAndSettle();
+      expect(disposition(), RoutePopDisposition.doNotPop);
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(disposition(), isNot(RoutePopDisposition.doNotPop));
+    });
+  });
+
+  group('sidebar blur', () {
+    testWidgets('stays hidden while the feature is off', (tester) async {
+      await pumpThemeView(tester);
+
+      expect(find.text('Sidebar blur'), findsNothing);
+    });
+
+    testWidgets('shows a working toggle only on supported platforms', (
+      tester,
+    ) async {
+      feature = const Feature(sidebarBlur: true);
+      addTearDown(() => feature = const Feature());
+      await pumpThemeView(tester);
+      final toggle = find.text('Sidebar blur');
+
+      expect(readTheme().sidebarBlur, isTrue);
+      if (!Platform.isMacOS && !Platform.isWindows) {
+        expect(toggle, findsNothing);
+        return;
+      }
+
+      expect(toggle, findsOneWidget);
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(readTheme().sidebarBlur, isFalse);
+    });
+  });
+
   group('pure black', () {
     testWidgets('toggles both ways', (tester) async {
       await pumpThemeView(tester);
@@ -94,6 +149,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(readTheme().textScale.enable, isTrue);
+    });
+
+    testWidgets('hides the slider while the toggle is off', (tester) async {
+      await pumpThemeView(tester);
+
+      expect(find.byType(Slider), findsNothing);
     });
 
     testWidgets('the slider writes a new scale once enabled', (tester) async {

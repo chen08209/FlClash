@@ -116,5 +116,5 @@ double overlayTopOffset(Ref ref) {
     version: version,
     isMobileView: isMobileView,
   );
-  return kToolbarHeight + (showsHeader ? kHeaderHeight : 0);
+  return pageToolbarHeight + (showsHeader ? kHeaderHeight : 0);
 }

@@ -1,10 +1,4 @@
-import 'dart:async';
-import 'dart:typed_data';
-
-import 'package:dio/dio.dart';
-import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/fixed.dart';
-import 'package:fl_clash/common/request.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -321,19 +315,6 @@ void main() {
     });
   });
 
-  group('CheckIpNum provider', () {
-    test('default is 0', () {
-      expect(container.read(checkIpNumProvider), 0);
-    });
-
-    test('increment returns previous value and updates state', () {
-      final value = container.read(checkIpNumProvider.notifier).add();
-
-      expect(value, 0);
-      expect(container.read(checkIpNumProvider), 1);
-    });
-  });
-
   group('SortNum provider', () {
     test('increment returns previous value and updates state', () {
       final value = container.read(sortNumProvider.notifier).add();
@@ -365,6 +346,26 @@ void main() {
       notifier.setDelay(delay);
 
       expect(identical(container.read(delayDataSourceProvider), state), isTrue);
+    });
+
+    test('applies a batch of delays as one state change', () {
+      const url = 'https://test.example';
+      final changes = <DelayMap>[];
+      container.listen(delayDataSourceProvider, (_, next) => changes.add(next));
+
+      container.read(delayDataSourceProvider.notifier).setDelays([
+        const Delay(name: 'A', url: url, value: 10),
+        const Delay(name: 'B', url: url, value: -1),
+        const Delay(name: 'A', url: url, value: 20),
+        const Delay(name: 'A', url: 'https://other.example', value: 30),
+      ]);
+
+      expect(changes, [
+        {
+          url: {'A': 20, 'B': -1},
+          'https://other.example': {'A': 30},
+        },
+      ]);
     });
   });
 
@@ -473,93 +474,4 @@ void main() {
       expect(container.read(coreStatusProvider), CoreStatus.disconnected);
     });
   });
-
-  group('NetworkDetection provider', () {
-    late HttpClientAdapter originalAdapter;
-
-    setUp(() {
-      originalAdapter = request.dio.httpClientAdapter;
-    });
-
-    tearDown(() {
-      request.dio.httpClientAdapter = originalAdapter;
-    });
-
-    test(
-      'ignores a canceled stale check after a newer check succeeds',
-      () async {
-        request.dio.httpClientAdapter = _DelayedCancelIpAdapter();
-        final container = ProviderContainer(
-          overrides: [
-            initProvider.overrideWithBuild((_, _) => true),
-            runTimeProvider.overrideWithBuild((_, _) => 1),
-          ],
-        );
-        addTearDown(container.dispose);
-
-        final notifier = container.read(networkDetectionProvider.notifier);
-        notifier.startCheck();
-        await Future.delayed(commonDuration + const Duration(milliseconds: 50));
-
-        notifier.startCheck();
-        await Future.delayed(
-          commonDuration + const Duration(milliseconds: 120),
-        );
-
-        expect(container.read(networkDetectionProvider).ipInfo?.ip, '2.2.2.2');
-        expect(container.read(networkDetectionProvider).isLoading, false);
-
-        await Future.delayed(const Duration(milliseconds: 620));
-
-        expect(container.read(networkDetectionProvider).ipInfo?.ip, '2.2.2.2');
-        expect(container.read(networkDetectionProvider).isLoading, false);
-      },
-    );
-  });
-}
-
-class _DelayedCancelIpAdapter implements HttpClientAdapter {
-  static const _sourceCount = 7;
-
-  int _requestCount = 0;
-
-  @override
-  Future<ResponseBody> fetch(
-    RequestOptions options,
-    Stream<Uint8List>? requestStream,
-    Future<void>? cancelFuture,
-  ) {
-    _requestCount++;
-    final batch = ((_requestCount - 1) ~/ _sourceCount) + 1;
-    if (batch == 1) {
-      final completer = Completer<ResponseBody>();
-      cancelFuture?.then((_) {
-        Timer(const Duration(milliseconds: 500), () {
-          if (completer.isCompleted) return;
-          completer.completeError(
-            DioException(
-              requestOptions: options,
-              type: DioExceptionType.cancel,
-              error: 'cancelled',
-            ),
-          );
-        });
-      });
-      return completer.future;
-    }
-
-    return Future.delayed(
-      const Duration(milliseconds: 10),
-      () => ResponseBody.fromString(
-        '{"ip":"2.2.2.2","country_code":"US"}',
-        200,
-        headers: {
-          Headers.contentTypeHeader: ['application/json'],
-        },
-      ),
-    );
-  }
-
-  @override
-  void close({bool force = false}) {}
 }

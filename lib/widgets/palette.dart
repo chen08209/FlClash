@@ -1,15 +1,16 @@
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/widgets/card.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:material_color_utilities/hct/hct.dart';
 
 import 'color_scheme_box.dart';
 import 'theme.dart';
 
-@immutable
-const _selectionRingInset = 4.0;
+const _trackHeight = 20.0;
+const _thumbRadius = 14.0;
+const _trackTone = 60.0;
+const _previewInset = 8.0;
 
 class Palette extends StatefulWidget {
   const Palette({super.key, required this.controller});
@@ -57,30 +58,57 @@ class _PaletteState extends State<Palette> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final maxChroma = Hct.from(_hue, 200, _trackTone).chroma;
     return ValueListenableBuilder(
       valueListenable: widget.controller,
       builder: (_, _, _) {
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _HueSlider(hue: _hue, onChanged: _onHueChanged),
-              const SizedBox(height: 16),
-              _ChromaSlider(
-                hue: _hue,
-                chroma: _chroma,
+              _GradientSlider(
+                value: _hue,
+                max: 360,
+                thumbColor: Color(Hct.from(_hue, 100, _trackTone).toInt()),
+                colors: [
+                  for (var hue = 0; hue <= 360; hue += 10)
+                    Color(Hct.from(hue.toDouble(), 100, _trackTone).toInt()),
+                ],
+                onChanged: _onHueChanged,
+              ),
+              const SizedBox(height: 8),
+              _GradientSlider(
+                value: _chroma.clamp(0, maxChroma),
+                max: maxChroma,
+                thumbColor: Color(Hct.from(_hue, _chroma, _trackTone).toInt()),
+                colors: [
+                  for (var i = 0; i <= 24; i++)
+                    Color(
+                      Hct.from(_hue, maxChroma * i / 24, _trackTone).toInt(),
+                    ),
+                ],
                 onChanged: _onChromaChanged,
               ),
-              const SizedBox(height: 28),
-              _ToneGrid(
+              const SizedBox(height: 16),
+              _ToneStrip(
                 hue: _hue,
                 chroma: _chroma,
                 selectedTone: _tone,
                 onToneSelected: _onToneSelected,
               ),
-              const SizedBox(height: 16),
-              InfoHeader(info: Info(label: context.appLocalizations.preview)),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  context.appLocalizations.preview,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
               PrimaryColorBox(
                 primaryColor: widget.controller.value,
                 child: const _ColorSchemePreview(),
@@ -93,64 +121,51 @@ class _PaletteState extends State<Palette> {
   }
 }
 
-class _HueSlider extends StatelessWidget {
-  const _HueSlider({required this.hue, required this.onChanged});
-
-  final double hue;
-  final ValueChanged<double> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SliderTheme(
-      data: SliderDefaultsM3(context).copyWith(
-        trackShape: _HueTrackShape(),
-        trackHeight: 24,
-        thumbSize: const WidgetStatePropertyAll(Size(6.0, 48.0)),
-        thumbColor: Color(Hct.from(hue, 100, 80).toInt()),
-      ),
-      child: Slider(
-        padding: EdgeInsets.zero,
-        value: hue,
-        min: 0,
-        max: 360,
-        onChanged: onChanged,
-      ),
-    );
-  }
-}
-
-class _ChromaSlider extends StatelessWidget {
-  const _ChromaSlider({
-    required this.hue,
-    required this.chroma,
+class _GradientSlider extends StatelessWidget {
+  const _GradientSlider({
+    required this.value,
+    required this.max,
+    required this.thumbColor,
+    required this.colors,
     required this.onChanged,
   });
 
-  final double hue;
-  final double chroma;
+  final double value;
+  final double max;
+  final Color thumbColor;
+  final List<Color> colors;
   final ValueChanged<double> onChanged;
 
   @override
   Widget build(BuildContext context) {
     return SliderTheme(
       data: SliderDefaultsM3(context).copyWith(
-        trackShape: _ChromaTrackShape(hue: hue),
-        trackHeight: 24,
-        thumbSize: const WidgetStatePropertyAll(Size(6.0, 48.0)),
-        thumbColor: Color(Hct.from(hue, chroma, 80).toInt()),
+        trackShape: _GradientTrackShape(
+          colors: colors,
+          outlineColor: Theme.of(context).colorScheme.outlineVariant,
+        ),
+        trackHeight: _trackHeight,
+        thumbShape: _ColorThumbShape(color: thumbColor),
+        overlayShape: SliderComponentShape.noOverlay,
       ),
       child: Slider(
         padding: EdgeInsets.zero,
-        value: chroma.clamp(0, 10),
+        value: value,
         min: 0,
-        max: 10,
+        max: max,
         onChanged: onChanged,
       ),
     );
   }
 }
 
-class _HueTrackShape extends SliderTrackShape {
+class _GradientTrackShape extends SliderTrackShape {
+  const _GradientTrackShape({required this.colors, required this.outlineColor});
+
+  final List<Color> colors;
+  final Color outlineColor;
+
+  // The thumb travels between the pill's end caps so it never overhangs them.
   @override
   Rect getPreferredRect({
     required RenderBox parentBox,
@@ -159,12 +174,11 @@ class _HueTrackShape extends SliderTrackShape {
     bool isEnabled = false,
     bool isDiscrete = false,
   }) {
-    final trackHeight = sliderTheme.trackHeight ?? 24;
-    final trackTop = offset.dy + (parentBox.size.height - trackHeight) / 2;
+    final trackHeight = sliderTheme.trackHeight ?? _trackHeight;
     return Rect.fromLTWH(
-      offset.dx,
-      trackTop,
-      parentBox.size.width,
+      offset.dx + _thumbRadius,
+      offset.dy + (parentBox.size.height - trackHeight) / 2,
+      parentBox.size.width - _thumbRadius * 2,
       trackHeight,
     );
   }
@@ -182,107 +196,78 @@ class _HueTrackShape extends SliderTrackShape {
     bool isDiscrete = false,
     bool isEnabled = false,
   }) {
-    final rect = getPreferredRect(
+    final valueRect = getPreferredRect(
       parentBox: parentBox,
       offset: offset,
       sliderTheme: sliderTheme,
-      isEnabled: isEnabled,
-      isDiscrete: isDiscrete,
     );
-    final colors = <Color>[];
-    for (int i = 0; i <= 360; i += 10) {
-      colors.add(Color(Hct.from(i.toDouble(), 100, 60).toInt()));
-    }
-    final shader = LinearGradient(colors: colors).createShader(rect);
+    final rect = Rect.fromLTRB(
+      valueRect.left - _thumbRadius,
+      valueRect.top,
+      valueRect.right + _thumbRadius,
+      valueRect.bottom,
+    );
     final shape = RSuperellipse.fromRectAndRadius(
       rect,
       const Radius.circular(AppCorner.full),
     );
-    context.canvas.drawRSuperellipse(shape, Paint()..shader = shader);
-    _paintTrackHighlight(context.canvas, rect);
+    final canvas = context.canvas;
+    canvas.drawRSuperellipse(
+      shape,
+      Paint()..shader = LinearGradient(colors: colors).createShader(valueRect),
+    );
+    canvas.drawRSuperellipse(
+      shape,
+      Paint()
+        ..color = outlineColor.withValues(alpha: 0.6)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
+    );
   }
 }
 
-class _ChromaTrackShape extends SliderTrackShape {
-  const _ChromaTrackShape({required this.hue});
+class _ColorThumbShape extends SliderComponentShape {
+  const _ColorThumbShape({required this.color});
 
-  final double hue;
+  final Color color;
+
+  static const _ringWidth = 3.0;
 
   @override
-  Rect getPreferredRect({
-    required RenderBox parentBox,
-    Offset offset = Offset.zero,
-    required SliderThemeData sliderTheme,
-    bool isEnabled = false,
-    bool isDiscrete = false,
-  }) {
-    final trackHeight = sliderTheme.trackHeight ?? 24;
-    final trackTop = offset.dy + (parentBox.size.height - trackHeight) / 2;
-    return Rect.fromLTWH(
-      offset.dx,
-      trackTop,
-      parentBox.size.width,
-      trackHeight,
-    );
-  }
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) =>
+      const Size.fromRadius(_thumbRadius);
 
   @override
   void paint(
     PaintingContext context,
-    Offset offset, {
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required bool isDiscrete,
+    required TextPainter labelPainter,
     required RenderBox parentBox,
     required SliderThemeData sliderTheme,
-    required Animation<double> enableAnimation,
     required TextDirection textDirection,
-    required Offset thumbCenter,
-    Offset? secondaryOffset,
-    bool isDiscrete = false,
-    bool isEnabled = false,
+    required double value,
+    required double textScaleFactor,
+    required Size sizeWithOverflow,
   }) {
-    final rect = getPreferredRect(
-      parentBox: parentBox,
-      offset: offset,
-      sliderTheme: sliderTheme,
-      isEnabled: isEnabled,
-      isDiscrete: isDiscrete,
+    final canvas = context.canvas;
+    final radius = _thumbRadius + activationAnimation.value * 2;
+    canvas.drawCircle(
+      center.translate(0, 1),
+      radius,
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.28)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5),
     );
-    final colors = <Color>[];
-    for (int i = 0; i <= 49; i++) {
-      colors.add(Color(Hct.from(hue, (i / 49) * 150, 60).toInt()));
-    }
-    final shader = LinearGradient(colors: colors).createShader(rect);
-    final shape = RSuperellipse.fromRectAndRadius(
-      rect,
-      const Radius.circular(AppCorner.full),
-    );
-    context.canvas.drawRSuperellipse(shape, Paint()..shader = shader);
-    _paintTrackHighlight(context.canvas, rect);
+    canvas.drawCircle(center, radius, Paint()..color = Colors.white);
+    canvas.drawCircle(center, radius - _ringWidth, Paint()..color = color);
   }
 }
 
-void _paintTrackHighlight(Canvas canvas, Rect rect) {
-  final shape = RSuperellipse.fromRectAndRadius(
-    rect.deflate(1),
-    const Radius.circular(AppCorner.full),
-  );
-  canvas.drawRSuperellipse(
-    shape,
-    Paint()
-      ..color = Colors.white.withValues(alpha: 0.35)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1,
-  );
-  canvas.drawLine(
-    Offset(rect.left + 12, rect.bottom - 2),
-    Offset(rect.right - 12, rect.bottom - 2),
-    Paint()
-      ..color = Colors.black.withValues(alpha: 0.12)
-      ..strokeWidth = 1,
-  );
-}
-
-class _ToneGrid extends StatelessWidget {
-  const _ToneGrid({
+class _ToneStrip extends StatelessWidget {
+  const _ToneStrip({
     required this.hue,
     required this.chroma,
     required this.selectedTone,
@@ -295,80 +280,107 @@ class _ToneGrid extends StatelessWidget {
   final ValueChanged<double> onToneSelected;
 
   static const _tones = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
-  static const _spacing = 8.0;
 
   @override
   Widget build(BuildContext context) {
-    final selectedBorderColor = Theme.of(context).colorScheme.primary;
-    return LayoutBuilder(
-      builder: (_, constraints) {
-        final columns = min(
-          max((constraints.maxWidth / 40).floor(), 1),
-          _tones.length,
-        );
-        final itemWidth =
-            (constraints.maxWidth - (columns - 1) * _spacing) / columns;
-        return Wrap(
-          spacing: _spacing,
-          runSpacing: _spacing,
-          children: _tones.map((tone) {
-            final color = Color(Hct.from(hue, chroma, tone.toDouble()).toInt());
-            final isSelected = tone == selectedTone.round();
-            final textColor = tone <= 50 ? Colors.white : Colors.black;
-            return GestureDetector(
-              onTap: () => onToneSelected(tone.toDouble()),
-              child: SizedBox(
-                width: itemWidth,
-                height: itemWidth,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Positioned.fill(
-                      child: Container(
-                        decoration: ShapeDecoration(
-                          color: color,
-                          shape: AppShape.sm,
+    return Container(
+      height: 44,
+      clipBehavior: Clip.antiAlias,
+      decoration: const ShapeDecoration(shape: AppShape.md),
+      foregroundDecoration: ShapeDecoration(
+        shape: AppShape.md.copyWith(
+          side: BorderSide(
+            color: Theme.of(
+              context,
+            ).colorScheme.outlineVariant.withValues(alpha: 0.6),
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          for (final tone in _tones)
+            Expanded(
+              child: _ToneCell(
+                tone: tone,
+                color: Color(Hct.from(hue, chroma, tone.toDouble()).toInt()),
+                isSelected: tone == selectedTone.round(),
+                onSelected: () => onToneSelected(tone.toDouble()),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ToneCell extends StatefulWidget {
+  const _ToneCell({
+    required this.tone,
+    required this.color,
+    required this.isSelected,
+    required this.onSelected,
+  });
+
+  final int tone;
+  final Color color;
+  final bool isSelected;
+  final VoidCallback onSelected;
+
+  @override
+  State<_ToneCell> createState() => _ToneCellState();
+}
+
+class _ToneCellState extends State<_ToneCell> {
+  bool _isFocused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final foregroundColor = widget.tone <= 50 ? Colors.white : Colors.black;
+    final showRing = widget.isSelected || _isFocused;
+    return Material(
+      color: widget.color,
+      child: InkWell(
+        onTap: widget.onSelected,
+        onFocusChange: (value) => setState(() => _isFocused = value),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (showRing)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+                child: DecoratedBox(
+                  decoration: ShapeDecoration(
+                    shape: AppShape.full.copyWith(
+                      side: BorderSide(
+                        color: foregroundColor.withValues(
+                          alpha: widget.isSelected ? 0.9 : 0.5,
                         ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          '$tone',
-                          style: TextStyle(
-                            color: textColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        width: 2,
                       ),
                     ),
-                    if (isSelected)
-                      Positioned.fill(
-                        top: -_selectionRingInset,
-                        right: -_selectionRingInset,
-                        bottom: -_selectionRingInset,
-                        left: -_selectionRingInset,
-                        child: IgnorePointer(
-                          child: Container(
-                            decoration: ShapeDecoration(
-                              shape: RoundedSuperellipseBorder(
-                                borderRadius: AppRadius.all(
-                                  AppCorner.sm + _selectionRingInset,
-                                ),
-                                side: BorderSide(
-                                  color: selectedBorderColor,
-                                  width: _selectionRingInset,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
               ),
-            );
-          }).toList(),
-        );
-      },
+            Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  '${widget.tone}',
+                  style: TextStyle(
+                    color: foregroundColor.withValues(
+                      alpha: widget.isSelected ? 1 : 0.72,
+                    ),
+                    fontSize: 11,
+                    fontWeight: widget.isSelected
+                        ? FontWeight.w700
+                        : FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -376,62 +388,72 @@ class _ToneGrid extends StatelessWidget {
 class _ColorSchemePreview extends StatelessWidget {
   const _ColorSchemePreview();
 
-  static const _spacing = 8.0;
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final roles = [
-      (colorScheme.primary, colorScheme.onPrimary, 'Primary'),
-      (colorScheme.secondary, colorScheme.onSecondary, 'Secondary'),
-      (colorScheme.tertiary, colorScheme.onTertiary, 'Tertiary'),
-      (colorScheme.error, colorScheme.onError, 'Error'),
-      (colorScheme.surface, colorScheme.onSurface, 'Surface'),
       (
+        colorScheme.primary,
+        colorScheme.onPrimary,
         colorScheme.primaryContainer,
-        colorScheme.onPrimaryContainer,
-        'Primary\nCont.',
+        'Primary',
       ),
       (
+        colorScheme.secondary,
+        colorScheme.onSecondary,
         colorScheme.secondaryContainer,
-        colorScheme.onSecondaryContainer,
-        'Secondary\nCont.',
+        'Secondary',
       ),
       (
+        colorScheme.tertiary,
+        colorScheme.onTertiary,
         colorScheme.tertiaryContainer,
-        colorScheme.onTertiaryContainer,
-        'Tertiary\nCont.',
+        'Tertiary',
       ),
     ];
-    return LayoutBuilder(
-      builder: (_, constraints) {
-        final columns = min(
-          max((constraints.maxWidth / 68).floor(), 1),
-          roles.length,
-        );
-        final itemWidth =
-            (constraints.maxWidth - (columns - 1) * _spacing) / columns;
-        return Wrap(
-          spacing: _spacing,
-          runSpacing: _spacing,
+    return Container(
+      padding: const EdgeInsets.all(_previewInset),
+      decoration: ShapeDecoration(
+        color: colorScheme.surfaceContainer,
+        shape: AppShape.lg.copyWith(
+          side: BorderSide(color: colorScheme.outlineVariant),
+        ),
+      ),
+      child: LayoutBuilder(
+        builder: (_, constraints) => Row(
+          spacing: min(_previewInset, constraints.maxWidth / 8),
           children: [
-            for (final (bg, fg, label) in roles)
-              Container(
-                width: itemWidth,
-                height: 44,
-                decoration: ShapeDecoration(color: bg, shape: AppShape.sm),
-                alignment: Alignment.center,
-                child: Text(
-                  label,
-                  style: TextStyle(color: fg, fontSize: 9),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+            for (final (color, onColor, container, label) in roles)
+              Expanded(
+                child: ClipRSuperellipse(
+                  borderRadius: AppRadius.all(AppCorner.lg - _previewInset),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        height: 44,
+                        color: color,
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            color: onColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(height: 24, color: container),
+                    ],
+                  ),
                 ),
               ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }

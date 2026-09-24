@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/app_ports.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/app_manager.dart';
 import 'package:fl_clash/manager/theme_manager.dart';
@@ -8,7 +9,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/home.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/application_setting.dart';
+import 'package:fl_clash/views/config/general.dart';
 import 'package:fl_clash/views/tools.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:fl_clash/views/navigation.dart';
@@ -17,7 +18,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
+
+Finder _glyph(Glyph glyph) => find.byGlyph(glyph);
 
 void main() {
   setUp(() {
@@ -39,12 +43,12 @@ void main() {
           NavigationItemsState(
             value: [
               NavigationItem(
-                icon: const Icon(Icons.space_dashboard),
+                glyph: AppGlyphs.dashboard,
                 label: PageLabel.dashboard,
                 builder: (_) => const SizedBox.shrink(),
               ),
               NavigationItem(
-                icon: const Icon(Icons.construction),
+                glyph: AppGlyphs.tools,
                 label: PageLabel.tools,
                 builder: (_) => const SizedBox.shrink(),
               ),
@@ -66,16 +70,16 @@ void main() {
 
     expect(globalState.navigatorKey.currentContext, isNotNull);
     expect(container.read(viewSizeProvider), const Size(1200, 800));
-    expect(find.byType(NavigationBar), findsNothing);
+    expect(find.byType(FloatingNavigationBar), findsNothing);
 
     await tester.pump();
 
-    expect(find.byType(NavigationRail), findsOneWidget);
-    expect(find.byType(NavigationBar), findsNothing);
+    expect(find.byType(NavigationSidebar), findsOneWidget);
+    expect(find.byType(FloatingNavigationBar), findsNothing);
 
     await tester.pump(const Duration(milliseconds: 150));
 
-    expect(find.byType(NavigationBar), findsNothing);
+    expect(find.byType(FloatingNavigationBar), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -93,14 +97,14 @@ void main() {
             NavigationItemsState(
               value: [
                 NavigationItem(
-                  icon: const Icon(Icons.space_dashboard),
+                  glyph: AppGlyphs.dashboard,
                   label: PageLabel.dashboard,
                   builder: (_) => const _StatefulContent(
                     key: GlobalObjectKey(PageLabel.dashboard),
                   ),
                 ),
                 NavigationItem(
-                  icon: const Icon(Icons.construction),
+                  glyph: AppGlyphs.tools,
                   label: PageLabel.tools,
                   builder: (_) => const SizedBox.shrink(),
                 ),
@@ -130,18 +134,32 @@ void main() {
       final sidebarContainer = tester.widget<Container>(
         sidebarBackground.first,
       );
+      final colorScheme = Theme.of(
+        tester.element(find.byType(AppSidebarContainer)),
+      ).colorScheme;
+      expect(sidebarContainer.color, colorScheme.surfaceContainer);
+
+      final sidebarEdge = tester.widget<Material>(
+        find
+            .descendant(
+              of: find.byType(AppSidebarContainer),
+              matching: find.byWidgetPredicate(
+                (widget) =>
+                    widget is Material && widget.shape is BorderDirectional,
+              ),
+            )
+            .first,
+      );
       expect(
-        sidebarContainer.color,
-        Theme.of(
-          tester.element(find.byType(AppSidebarContainer)),
-        ).colorScheme.surfaceContainer,
+        (sidebarEdge.shape! as BorderDirectional).end.color,
+        colorScheme.outlineVariant,
       );
 
       await tester.tap(find.text('count: 0'));
       await tester.pump();
       expect(find.text('count: 1'), findsOneWidget);
-      expect(find.byType(NavigationRail), findsOneWidget);
-      expect(find.byType(NavigationBar), findsNothing);
+      expect(find.byType(NavigationSidebar), findsOneWidget);
+      expect(find.byType(FloatingNavigationBar), findsNothing);
 
       for (var width = 1180.0; width >= 500; width -= 20) {
         tester.view.physicalSize = Size(width, 800);
@@ -151,37 +169,106 @@ void main() {
       }
 
       expect(find.text('count: 1'), findsOneWidget);
-      expect(find.byType(NavigationRail), findsOneWidget);
-      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(NavigationSidebar), findsOneWidget);
+      expect(find.byType(FloatingNavigationBar), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 150));
       expect(tester.takeException(), isNull);
 
       final outgoingTools = find.descendant(
-        of: find.byType(NavigationRail),
-        matching: find.byIcon(Icons.construction),
+        of: find.byType(NavigationSidebar),
+        matching: _glyph(AppGlyphs.tools),
       );
       await tester.tap(outgoingTools, warnIfMissed: false);
       await tester.pump();
       expect(container.read(currentPageLabelProvider), PageLabel.dashboard);
 
       await tester.pump(const Duration(milliseconds: 301));
-      expect(find.byType(NavigationRail), findsNothing);
-      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(NavigationSidebar), findsNothing);
+      expect(find.byType(FloatingNavigationBar), findsOneWidget);
 
       tester.view.physicalSize = const Size(1200, 800);
       container.read(viewSizeProvider.notifier).value = const Size(1200, 800);
       await tester.pump();
 
       expect(find.text('count: 1'), findsOneWidget);
-      expect(find.byType(NavigationRail), findsOneWidget);
-      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(NavigationSidebar), findsOneWidget);
+      expect(find.byType(FloatingNavigationBar), findsOneWidget);
 
       await tester.pump(const Duration(milliseconds: 301));
-      expect(find.byType(NavigationRail), findsOneWidget);
-      expect(find.byType(NavigationBar), findsNothing);
+      expect(find.byType(NavigationSidebar), findsOneWidget);
+      expect(find.byType(FloatingNavigationBar), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('the sidebar widens in place only at desktop width', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = ProviderContainer(
+      overrides: [
+        navigationItemsStateProvider.overrideWithValue(
+          NavigationItemsState(
+            value: [
+              NavigationItem(
+                glyph: AppGlyphs.dashboard,
+                label: PageLabel.dashboard,
+                builder: (_) => const SizedBox.shrink(),
+              ),
+              NavigationItem(
+                glyph: AppGlyphs.tools,
+                label: PageLabel.tools,
+                builder: (_) => const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container.read(viewSizeProvider.notifier).value = const Size(1200, 800);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    final sidebar = find.byType(NavigationSidebar);
+    expect(tester.getSize(sidebar).width, 220);
+
+    await tester.tap(find.byTooltip('Collapse'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(container.read(appSettingProvider).sidebarExpanded, isFalse);
+    expect(tester.getSize(sidebar).width, 48);
+
+    await tester.tap(find.byTooltip('Expand'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.getSize(sidebar).width, 220);
+
+    tester.view.physicalSize = const Size(800, 800);
+    container.read(viewSizeProvider.notifier).value = const Size(800, 800);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.getSize(sidebar).width, 48);
+
+    await tester.tap(find.byTooltip('Expand'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.getSize(sidebar).width, 48);
+    expect(find.text('Tools'), findsNWidgets(2));
+    expect(container.read(appSettingProvider).sidebarExpanded, isTrue);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'list content stays valid while resizing through the breakpoint',
@@ -197,14 +284,14 @@ void main() {
             NavigationItemsState(
               value: [
                 NavigationItem(
-                  icon: const Icon(Icons.space_dashboard),
+                  glyph: AppGlyphs.dashboard,
                   label: PageLabel.dashboard,
                   builder: (_) => const ToolsView(
                     key: GlobalObjectKey(PageLabel.dashboard),
                   ),
                 ),
                 NavigationItem(
-                  icon: const Icon(Icons.construction),
+                  glyph: AppGlyphs.tools,
                   label: PageLabel.tools,
                   builder: (_) => const SizedBox.shrink(),
                 ),
@@ -248,12 +335,12 @@ void main() {
             NavigationItemsState(
               value: [
                 NavigationItem(
-                  icon: const Icon(Icons.space_dashboard),
+                  glyph: AppGlyphs.dashboard,
                   label: PageLabel.dashboard,
                   builder: (_) => const SizedBox.shrink(),
                 ),
                 NavigationItem(
-                  icon: const Icon(Icons.article),
+                  glyph: AppGlyphs.proxies,
                   label: PageLabel.logs,
                   modes: const [
                     NavigationItemMode.desktop,
@@ -262,7 +349,7 @@ void main() {
                   builder: (_) => const SizedBox.shrink(),
                 ),
                 NavigationItem(
-                  icon: const Icon(Icons.link),
+                  glyph: AppGlyphs.connections,
                   label: PageLabel.connections,
                   modes: const [
                     NavigationItemMode.desktop,
@@ -271,7 +358,7 @@ void main() {
                   builder: (_) => const SizedBox.shrink(),
                 ),
                 NavigationItem(
-                  icon: const Icon(Icons.construction),
+                  glyph: AppGlyphs.tools,
                   label: PageLabel.tools,
                   builder: (_) =>
                       const ToolsView(key: GlobalObjectKey(PageLabel.tools)),
@@ -294,7 +381,7 @@ void main() {
       );
       await tester.pump();
       expect(find.byType(ToolsView), findsOneWidget);
-      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(FloatingNavigationBar), findsOneWidget);
 
       for (var width = 520.0; width <= 1200; width += 20) {
         tester.view.physicalSize = Size(width, 800);
@@ -305,7 +392,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 301));
       expect(tester.takeException(), isNull);
       expect(find.byType(ToolsView), findsOneWidget);
-      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(find.byType(NavigationSidebar), findsOneWidget);
       expect(container.read(currentPageLabelProvider), PageLabel.tools);
 
       for (var width = 1180.0; width >= 500; width -= 20) {
@@ -386,27 +473,32 @@ void main() {
       );
       await tester.pump();
 
-      final applicationItem = find.text('Application');
+      final generalItem = find.text('General');
       await tester.scrollUntilVisible(
-        applicationItem,
+        generalItem,
         500,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.tap(applicationItem);
+      await tester.tap(generalItem);
       await tester.pumpAndSettle();
-      expect(find.byType(ApplicationSettingView), findsOneWidget);
+      expect(find.byType(GeneralView), findsOneWidget);
 
       final logItem = find.text('Logcat');
       await tester.scrollUntilVisible(
         logItem,
         500,
-        scrollable: find.byType(Scrollable).first,
+        scrollable: find
+            .descendant(
+              of: find.byType(GeneralView),
+              matching: find.byType(Scrollable),
+            )
+            .first,
       );
       await tester.tap(logItem);
       await tester.pumpAndSettle();
 
       expect(container.read(appSettingProvider).openLogs, isTrue);
-      expect(find.byType(ApplicationSettingView), findsOneWidget);
+      expect(find.byType(GeneralView), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
@@ -425,7 +517,7 @@ void main() {
             NavigationItemsState(
               value: [
                 NavigationItem(
-                  icon: const Icon(Icons.space_dashboard),
+                  glyph: AppGlyphs.dashboard,
                   label: PageLabel.dashboard,
                   builder: (_) => Align(
                     alignment: Alignment.topLeft,
@@ -436,7 +528,7 @@ void main() {
                   ),
                 ),
                 NavigationItem(
-                  icon: const Icon(Icons.article),
+                  glyph: AppGlyphs.proxies,
                   label: PageLabel.proxies,
                   builder: (_) => Align(
                     alignment: Alignment.topLeft,
@@ -462,62 +554,59 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(find.byType(NavigationSidebar), findsOneWidget);
 
-      bool focusInRail() {
+      bool focusInSidebar() {
         final context = FocusManager.instance.primaryFocus?.context;
-        return context?.findAncestorWidgetOfExactType<NavigationRail>() != null;
+        return context?.findAncestorWidgetOfExactType<NavigationSidebar>() !=
+            null;
       }
 
-      IconData? focusedRailIcon() {
+      Glyph? focusedSidebarIcon() {
         final focusNode = FocusManager.instance.primaryFocus;
-        if (!focusInRail() || focusNode == null) {
+        if (!focusInSidebar() || focusNode == null) {
           return null;
         }
-        return [Icons.space_dashboard, Icons.article].reduce((closest, icon) {
-          final closestDistance =
-              (tester.getCenter(find.byIcon(closest)).dy -
-                      focusNode.rect.center.dy)
-                  .abs();
-          final distance =
-              (tester.getCenter(find.byIcon(icon)).dy -
-                      focusNode.rect.center.dy)
-                  .abs();
-          return distance < closestDistance ? icon : closest;
-        });
+        for (final glyph in [AppGlyphs.dashboard, AppGlyphs.proxies]) {
+          if (focusNode.rect.contains(tester.getCenter(_glyph(glyph)))) {
+            return glyph;
+          }
+        }
+        return null;
       }
 
-      for (var i = 0; i < 30 && !focusInRail(); i++) {
+      for (var i = 0; i < 30 && focusedSidebarIcon() == null; i++) {
         await tester.sendKeyEvent(LogicalKeyboardKey.tab);
         await tester.pump();
       }
-      expect(focusInRail(), isTrue);
-      expect(focusedRailIcon(), Icons.space_dashboard);
+      expect(focusedSidebarIcon(), AppGlyphs.dashboard);
 
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
       await tester.pump();
-      expect(focusedRailIcon(), Icons.article);
+      expect(focusedSidebarIcon(), AppGlyphs.proxies);
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pump();
 
       expect(container.read(currentPageLabelProvider), PageLabel.proxies);
-      final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
-      expect(rail.selectedIndex, 1);
-      expect(focusedRailIcon(), Icons.article);
+      final sidebar = tester.widget<NavigationSidebar>(
+        find.byType(NavigationSidebar),
+      );
+      expect(sidebar.selectedIndex, 1);
+      expect(focusedSidebarIcon(), AppGlyphs.proxies);
 
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
       await tester.pump();
-      expect(focusedRailIcon(), Icons.space_dashboard);
+      expect(focusedSidebarIcon(), AppGlyphs.dashboard);
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pump();
 
       expect(container.read(currentPageLabelProvider), PageLabel.dashboard);
-      expect(focusedRailIcon(), Icons.space_dashboard);
+      expect(focusedSidebarIcon(), AppGlyphs.dashboard);
 
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
       await tester.pump();
 
-      expect(focusedRailIcon(), Icons.article);
+      expect(focusedSidebarIcon(), AppGlyphs.proxies);
       expect(container.read(currentPageLabelProvider), PageLabel.dashboard);
     },
   );
@@ -538,10 +627,15 @@ void main() {
           Positioned(
             left: 200,
             bottom: 0,
-            child: IconButton(
-              key: const ValueKey('content-action'),
-              onPressed: () {},
-              icon: const Icon(Icons.more_horiz),
+            child: Builder(
+              builder: (context) => Padding(
+                padding: EdgeInsets.only(bottom: BottomInsetScope.of(context)),
+                child: IconButton(
+                  key: const ValueKey('content-action'),
+                  onPressed: () {},
+                  icon: const Icon(Icons.more_horiz),
+                ),
+              ),
             ),
           ),
         ],
@@ -554,22 +648,22 @@ void main() {
           NavigationItemsState(
             value: [
               NavigationItem(
-                icon: const Icon(Icons.space_dashboard),
+                glyph: AppGlyphs.dashboard,
                 label: PageLabel.dashboard,
                 builder: (_) => page('dashboard'),
               ),
               NavigationItem(
-                icon: const Icon(Icons.folder),
+                glyph: AppGlyphs.profiles,
                 label: PageLabel.profiles,
                 builder: (_) => page('profiles'),
               ),
               NavigationItem(
-                icon: const Icon(Icons.construction),
+                glyph: AppGlyphs.tools,
                 label: PageLabel.tools,
                 builder: (_) => page('tools'),
               ),
               NavigationItem(
-                icon: const Icon(Icons.article),
+                glyph: AppGlyphs.proxies,
                 label: PageLabel.logs,
                 builder: (_) => page('logs'),
               ),
@@ -589,12 +683,13 @@ void main() {
       ),
     );
     await tester.pump();
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byType(FloatingNavigationBar), findsOneWidget);
 
-    NavigationBar navBar() =>
-        tester.widget<NavigationBar>(find.byType(NavigationBar));
+    FloatingNavigationBar navBar() => tester.widget<FloatingNavigationBar>(
+      find.byType(FloatingNavigationBar),
+    );
 
-    await tester.tap(find.byIcon(Icons.construction));
+    await tester.tap(_glyph(AppGlyphs.tools));
     await tester.pumpAndSettle();
     expect(container.read(currentPageLabelProvider), PageLabel.tools);
     expect(navBar().selectedIndex, 2);
@@ -602,7 +697,8 @@ void main() {
 
     bool focusInNav() {
       final context = FocusManager.instance.primaryFocus?.context;
-      return context?.findAncestorWidgetOfExactType<NavigationBar>() != null;
+      return context?.findAncestorWidgetOfExactType<FloatingNavigationBar>() !=
+          null;
     }
 
     for (var i = 0; i < 20 && !focusInNav(); i++) {
@@ -619,11 +715,11 @@ void main() {
     expect(navBar().selectedIndex, 1);
     expect(find.text('page:profiles'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.construction));
+    await tester.tap(_glyph(AppGlyphs.tools));
     await tester.pump(const Duration(milliseconds: 100));
-    await tester.tap(find.byIcon(Icons.article));
+    await tester.tap(_glyph(AppGlyphs.proxies));
     await tester.pump(const Duration(milliseconds: 100));
-    await tester.tap(find.byIcon(Icons.folder));
+    await tester.tap(_glyph(AppGlyphs.profiles));
     await tester.pumpAndSettle();
     expect(container.read(currentPageLabelProvider), PageLabel.profiles);
     expect(navBar().selectedIndex, 1);
@@ -642,6 +738,65 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('a far mobile page switch builds no page in between', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(500, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final inits = <PageLabel>[];
+    final container = ProviderContainer(
+      overrides: [
+        navigationItemsStateProvider.overrideWithValue(
+          NavigationItemsState(
+            value: [
+              for (final (glyph, label) in [
+                (AppGlyphs.dashboard, PageLabel.dashboard),
+                (AppGlyphs.proxies, PageLabel.proxies),
+                (AppGlyphs.profiles, PageLabel.profiles),
+                (AppGlyphs.tools, PageLabel.tools),
+              ])
+                NavigationItem(
+                  glyph: glyph,
+                  label: label,
+                  builder: (_) => _InitRecorder(label: label, inits: inits),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container.read(viewSizeProvider.notifier).value = const Size(500, 800);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(_glyph(AppGlyphs.tools));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('page:dashboard'), findsOneWidget);
+    expect(find.text('page:tools'), findsOneWidget);
+
+    await tester.pumpAndSettle();
+    expect(find.text('page:dashboard'), findsNothing);
+    expect(find.text('page:tools'), findsOneWidget);
+
+    await tester.tap(_glyph(AppGlyphs.dashboard));
+    await tester.pumpAndSettle();
+    expect(find.text('page:dashboard'), findsOneWidget);
+    expect(inits.toSet(), {PageLabel.dashboard, PageLabel.tools});
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('switching home pages exits a generic search layer', (
     tester,
   ) async {
@@ -657,7 +812,7 @@ void main() {
           NavigationItemsState(
             value: [
               NavigationItem(
-                icon: const Icon(Icons.space_dashboard),
+                glyph: AppGlyphs.dashboard,
                 label: PageLabel.dashboard,
                 builder: (_) => CommonScaffold(
                   title: 'Search page',
@@ -670,7 +825,7 @@ void main() {
                 ),
               ),
               NavigationItem(
-                icon: const Icon(Icons.construction),
+                glyph: AppGlyphs.tools,
                 label: PageLabel.tools,
                 builder: (_) => const SizedBox.shrink(),
               ),
@@ -691,19 +846,80 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byIcon(Icons.search));
+    await tester.tap(find.byGlyph(AppGlyphs.search));
     await tester.pumpAndSettle();
     expect(find.byType(TextField), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'needle');
     expect(query, 'needle');
 
-    await tester.tap(find.byIcon(Icons.construction));
+    await tester.tap(_glyph(AppGlyphs.tools));
     await tester.pumpAndSettle();
     expect(query, isEmpty);
-    await tester.tap(find.byIcon(Icons.space_dashboard));
+    await tester.tap(_glyph(AppGlyphs.dashboard));
     await tester.pumpAndSettle();
 
     expect(find.byType(TextField), findsNothing);
+  });
+
+  testWidgets('a page kept alive off screen stops asking for frames', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = ProviderContainer(
+      overrides: [
+        navigationItemsStateProvider.overrideWithValue(
+          NavigationItemsState(
+            value: [
+              NavigationItem(
+                glyph: AppGlyphs.dashboard,
+                label: PageLabel.dashboard,
+                builder: (_) => const SizedBox.shrink(),
+              ),
+              NavigationItem(
+                glyph: AppGlyphs.profiles,
+                label: PageLabel.profiles,
+                builder: (_) =>
+                    const Center(child: CircularProgressIndicator()),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container.read(viewSizeProvider.notifier).value = const Size(1200, 800);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+      ),
+    );
+    await tester.pump();
+
+    Finder railIcon(Glyph glyph) => find.descendant(
+      of: find.byType(NavigationSidebar),
+      matching: _glyph(glyph),
+    );
+
+    await tester.tap(railIcon(AppGlyphs.profiles));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(tester.binding.hasScheduledFrame, isTrue);
+
+    await tester.tap(railIcon(AppGlyphs.dashboard));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byType(CircularProgressIndicator, skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(tester.binding.hasScheduledFrame, isFalse);
   });
 
   testWidgets('desktop nested route inherits home page activity', (
@@ -721,7 +937,7 @@ void main() {
           NavigationItemsState(
             value: [
               NavigationItem(
-                icon: const Icon(Icons.space_dashboard),
+                glyph: AppGlyphs.dashboard,
                 label: PageLabel.dashboard,
                 builder: (_) => _NestedSearchLauncher(
                   onSearch: (value) {
@@ -730,7 +946,7 @@ void main() {
                 ),
               ),
               NavigationItem(
-                icon: const Icon(Icons.construction),
+                glyph: AppGlyphs.tools,
                 label: PageLabel.tools,
                 builder: (_) => const SizedBox.shrink(),
               ),
@@ -753,17 +969,14 @@ void main() {
 
     await tester.tap(find.text('Open nested search'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.search));
+    await tester.tap(find.byGlyph(AppGlyphs.search));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'needle');
     expect(query, 'needle');
 
-    final navigationRail = find.byType(NavigationRail);
+    final navigationRail = find.byType(NavigationSidebar);
     await tester.tap(
-      find.descendant(
-        of: navigationRail,
-        matching: find.byIcon(Icons.construction),
-      ),
+      find.descendant(of: navigationRail, matching: _glyph(AppGlyphs.tools)),
     );
     await tester.pumpAndSettle();
     expect(query, isEmpty);
@@ -771,7 +984,7 @@ void main() {
     await tester.tap(
       find.descendant(
         of: navigationRail,
-        matching: find.byIcon(Icons.space_dashboard),
+        matching: _glyph(AppGlyphs.dashboard),
       ),
     );
     await tester.pumpAndSettle();
@@ -807,12 +1020,12 @@ void main() {
             NavigationItemsState(
               value: [
                 NavigationItem(
-                  icon: const Icon(Icons.space_dashboard),
+                  glyph: AppGlyphs.dashboard,
                   label: PageLabel.dashboard,
                   builder: (_) => pageContent('dashboard'),
                 ),
                 NavigationItem(
-                  icon: const Icon(Icons.folder),
+                  glyph: AppGlyphs.profiles,
                   label: PageLabel.profiles,
                   builder: (_) => pageContent('profiles'),
                 ),
@@ -832,27 +1045,28 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(find.byType(NavigationSidebar), findsOneWidget);
 
-      Finder railIcon(IconData icon) => find.descendant(
-        of: find.byType(NavigationRail),
-        matching: find.byIcon(icon),
+      Finder railIcon(Glyph glyph) => find.descendant(
+        of: find.byType(NavigationSidebar),
+        matching: _glyph(glyph),
       );
 
       // Visit another page so its content stays alive in the PageView cache.
-      await tester.tap(railIcon(Icons.folder));
+      await tester.tap(railIcon(AppGlyphs.profiles));
       await tester.pumpAndSettle();
       expect(container.read(currentPageLabelProvider), PageLabel.profiles);
-      await tester.tap(railIcon(Icons.space_dashboard));
+      await tester.tap(railIcon(AppGlyphs.dashboard));
       await tester.pumpAndSettle();
       expect(container.read(currentPageLabelProvider), PageLabel.dashboard);
 
-      bool focusInRail() {
+      bool focusInSidebar() {
         final context = FocusManager.instance.primaryFocus?.context;
-        return context?.findAncestorWidgetOfExactType<NavigationRail>() != null;
+        return context?.findAncestorWidgetOfExactType<NavigationSidebar>() !=
+            null;
       }
 
-      for (var i = 0; i < 40 && !focusInRail(); i++) {
+      for (var i = 0; i < 40 && !focusInSidebar(); i++) {
         await tester.sendKeyEvent(LogicalKeyboardKey.tab);
         await tester.pump();
         expect(
@@ -861,7 +1075,7 @@ void main() {
           reason: 'tab $i flipped the page',
         );
       }
-      expect(focusInRail(), isTrue);
+      expect(focusInSidebar(), isTrue);
       expect(
         find.text('page:profiles').hitTestable(),
         findsNothing,
@@ -950,4 +1164,25 @@ class _HomeTestProfiles extends Profiles {
 
   @override
   List<Profile> build() => initial;
+}
+
+class _InitRecorder extends StatefulWidget {
+  const _InitRecorder({required this.label, required this.inits});
+
+  final PageLabel label;
+  final List<PageLabel> inits;
+
+  @override
+  State<_InitRecorder> createState() => _InitRecorderState();
+}
+
+class _InitRecorderState extends State<_InitRecorder> {
+  @override
+  void initState() {
+    super.initState();
+    widget.inits.add(widget.label);
+  }
+
+  @override
+  Widget build(BuildContext context) => Text('page:${widget.label.name}');
 }

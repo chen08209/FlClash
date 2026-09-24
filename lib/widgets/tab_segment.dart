@@ -1,5 +1,87 @@
 part of 'tab.dart';
 
+class _FocusableSegment extends StatefulWidget {
+  const _FocusableSegment({
+    required this.enabled,
+    required this.selected,
+    required this.focusRadius,
+    required this.onActivate,
+    required this.child,
+  });
+
+  final bool enabled;
+  final bool selected;
+  final double focusRadius;
+  final VoidCallback onActivate;
+  final Widget child;
+
+  @override
+  State<_FocusableSegment> createState() => _FocusableSegmentState();
+}
+
+class _FocusableSegmentState extends State<_FocusableSegment> {
+  bool _focused = false;
+
+  void _activate() {
+    if (!widget.enabled) {
+      return;
+    }
+    widget.onActivate();
+  }
+
+  Object? _handleActivateIntent(Intent intent) {
+    _activate();
+    return null;
+  }
+
+  void _handleFocusHighlight(bool value) {
+    if (_focused == value) {
+      return;
+    }
+    setState(() {
+      _focused = value;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      onTap: _activate,
+      inMutuallyExclusiveGroup: true,
+      selected: widget.selected,
+      child: FocusableActionDetector(
+        enabled: widget.enabled,
+        mouseCursor: kIsWeb ? SystemMouseCursors.click : MouseCursor.defer,
+        onShowFocusHighlight: _handleFocusHighlight,
+        actions: <Type, Action<Intent>>{
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: _handleActivateIntent,
+          ),
+          ButtonActivateIntent: CallbackAction<ButtonActivateIntent>(
+            onInvoke: _handleActivateIntent,
+          ),
+        },
+        child: DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: ShapeDecoration(
+            shape: RoundedSuperellipseBorder(
+              borderRadius: BorderRadius.circular(widget.focusRadius),
+              side: _focused && widget.enabled
+                  ? BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: _kFocusRingWidth,
+                    )
+                  : BorderSide.none,
+            ),
+          ),
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}
+
 class _Segment<T> extends StatefulWidget {
   const _Segment({
     required ValueKey<T> key,

@@ -12,6 +12,8 @@ class _DelayTestTarget {
   final String key;
 }
 
+typedef _DelayTestBatch = ({List<Proxy> proxies, String? testUrl});
+
 class _DelayTestJob {
   _DelayTestJob(Iterable<String> keys) : held = keys.toSet();
 
@@ -27,10 +29,17 @@ class ProxiesAction extends _$ProxiesAction {
 
   final List<_DelayTestJob> _delayTestJobs = [];
 
+  final List<Delay> _bufferedDelays = [];
+
+  final List<String> _bufferedReleases = [];
+
+  Timer? _delayFlushTimer;
+
   final Map<String, String> _pendingSelectedRollback = {};
 
   @override
   void build() {
+    ref.onDispose(() => _delayFlushTimer?.cancel());
     ref.listen(coreStatusProvider, (_, next) {
       if (next != CoreStatus.connected) {
         cancelDelayTests();
@@ -43,7 +52,30 @@ class ProxiesAction extends _$ProxiesAction {
       job.cancelled = true;
       job.held.clear();
     }
+    _delayFlushTimer?.cancel();
+    _delayFlushTimer = null;
+    _bufferedDelays.clear();
+    _bufferedReleases.clear();
     ref.read(pendingDelayTestsProvider.notifier).clear();
+  }
+
+  void _scheduleDelayFlush() {
+    _delayFlushTimer ??= Timer(renderThrottleDuration, _flushDelayResults);
+  }
+
+  void _flushDelayResults() {
+    _delayFlushTimer?.cancel();
+    _delayFlushTimer = null;
+    if (_bufferedDelays.isNotEmpty) {
+      final delays = List.of(_bufferedDelays);
+      _bufferedDelays.clear();
+      ref.read(delayDataSourceProvider.notifier).setDelays(delays);
+    }
+    if (_bufferedReleases.isNotEmpty) {
+      final keys = List.of(_bufferedReleases);
+      _bufferedReleases.clear();
+      ref.read(pendingDelayTestsProvider.notifier).release(keys);
+    }
   }
 
   void updateGroupsDebounce([Duration? duration]) {
@@ -131,7 +163,8 @@ class ProxiesAction extends _$ProxiesAction {
   }
 
   void setDelay(Delay delay) {
-    ref.read(delayDataSourceProvider.notifier).setDelay(delay);
+    _bufferedDelays.add(delay);
+    _scheduleDelayFlush();
   }
 
   Future<void> changeProxy({
@@ -143,10 +176,14 @@ class ProxiesAction extends _$ProxiesAction {
         _pendingSelectedRollback.remove(groupName) ??
         _currentSelectedName(groupName);
     profilesAction.updateCurrentSelectedMap(groupName, proxyName);
+    final ChangeProxyResult result;
     try {
-      await _core.changeProxy(
+      result = await _core.changeProxy(
         ChangeProxyParams(groupName: groupName, proxyName: proxyName),
       );
+      if (result.message.isNotEmpty) {
+        throw MessageException(result.message);
+      }
     } catch (error) {
       commonPrint.log(
         'changeProxy($groupName -> $proxyName) failed: $error',
@@ -157,6 +194,9 @@ class ProxiesAction extends _$ProxiesAction {
         currentAppLocalizations.changeProxyFailedTip,
         level: MessageLevel.error,
       );
+      return;
+    }
+    if (!result.changed) {
       return;
     }
     try {
@@ -171,7 +211,6 @@ class ProxiesAction extends _$ProxiesAction {
         logLevel: coreFailureLogLevel(error),
       );
     }
-    ref.read(checkIpNumProvider.notifier).add();
   }
 
   Future<String> updateProvider(
@@ -231,52 +270,74 @@ class ProxiesAction extends _$ProxiesAction {
   }
 
   Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) {
-    return _runDelayTests([proxy], testUrl);
+    return _runDelayTests([
+      (proxies: [proxy], testUrl: testUrl),
+    ]);
   }
 
   Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) async {
-    await _runDelayTests(proxies, testUrl);
+    await _runDelayTests([(proxies: proxies, testUrl: testUrl)]);
     ref.read(sortNumProvider.notifier).add();
   }
 
+  Future<void> delayTestGroups(List<Group> groups) async {
+    await _runDelayTests([
+      for (final group in groups) (proxies: group.all, testUrl: group.testUrl),
+    ]);
+    ref.read(sortNumProvider.notifier).add();
+  }
+
+  Future<void> delayTestPageGroup(String groupName) async {
+    final group = ref.read(groupsProvider).getGroup(groupName);
+    if (group == null) {
+      return;
+    }
+    final query = SearchQuery(ref.read(queryProvider(QueryTag.proxies)));
+    await delayTest(
+      group.all.whereMatches(query, (proxy) => proxy.searchFields).toList(),
+      group.testUrl,
+    );
+  }
+
   List<_DelayTestTarget> _resolveDelayTestTargets(
-    List<Proxy> proxies,
-    String? testUrl,
+    List<_DelayTestBatch> batches,
   ) {
     final groups = ref.read(groupsProvider);
     final selectedMap = ref.read(
       currentProfileProvider.select((state) => state?.selectedMap ?? {}),
     );
-    final fallbackTestUrl = ref.read(realTestUrlProvider(testUrl));
     final seen = <String>{};
     final targets = <_DelayTestTarget>[];
-    for (final proxy in proxies) {
-      final state = computeRealSelectedProxyState(
-        proxy.name,
-        groups: groups,
-        selectedMap: selectedMap,
-      );
-      if (state.proxyName.isEmpty) {
-        continue;
+    for (final batch in batches) {
+      final fallbackTestUrl = ref.read(realTestUrlProvider(batch.testUrl));
+      for (final proxy in batch.proxies) {
+        final state = computeRealSelectedProxyState(
+          proxy.name,
+          groups: groups,
+          selectedMap: selectedMap,
+        );
+        if (state.proxyName.isEmpty) {
+          continue;
+        }
+        final currentTestUrl = state.testUrl.takeFirstValid([fallbackTestUrl]);
+        final key = delayTestKey(currentTestUrl, state.proxyName);
+        if (!seen.add(key)) {
+          continue;
+        }
+        targets.add(
+          _DelayTestTarget(
+            proxyName: state.proxyName,
+            testUrl: currentTestUrl,
+            key: key,
+          ),
+        );
       }
-      final currentTestUrl = state.testUrl.takeFirstValid([fallbackTestUrl]);
-      final key = delayTestKey(currentTestUrl, state.proxyName);
-      if (!seen.add(key)) {
-        continue;
-      }
-      targets.add(
-        _DelayTestTarget(
-          proxyName: state.proxyName,
-          testUrl: currentTestUrl,
-          key: key,
-        ),
-      );
     }
     return targets;
   }
 
-  Future<void> _runDelayTests(List<Proxy> proxies, String? testUrl) async {
-    final targets = _resolveDelayTestTargets(proxies, testUrl);
+  Future<void> _runDelayTests(List<_DelayTestBatch> batches) async {
+    final targets = _resolveDelayTestTargets(batches);
     if (targets.isEmpty) {
       return;
     }
@@ -292,6 +353,7 @@ class ProxiesAction extends _$ProxiesAction {
       );
     } finally {
       _delayTestJobs.remove(job);
+      _flushDelayResults();
       final abandoned = job.held.toList();
       job.held.clear();
       pending.release(abandoned);
@@ -317,7 +379,8 @@ class ProxiesAction extends _$ProxiesAction {
       );
     } finally {
       if (job.held.remove(target.key)) {
-        ref.read(pendingDelayTestsProvider.notifier).release([target.key]);
+        _bufferedReleases.add(target.key);
+        _scheduleDelayFlush();
       }
     }
   }

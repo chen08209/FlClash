@@ -181,20 +181,18 @@ class ConfigTextItem extends _ConfigItem<String> {
   }
 }
 
-class ConfigListInputItem extends _ConfigItem<List<String>> {
-  const ConfigListInputItem({
+class ConfigListEditItem extends _ConfigItem<List<String>> {
+  const ConfigListEditItem({
     super.key,
     required super.selector,
     required super.title,
     required super.onChanged,
     this.itemMaxLength,
-    this.maxWidth,
     super.subtitle,
     super.leading,
   });
 
   final int? itemMaxLength;
-  final double? maxWidth;
 
   @override
   Widget buildItem(
@@ -207,10 +205,14 @@ class ConfigListInputItem extends _ConfigItem<List<String>> {
     return ListItem.open(
       leading: leading,
       title: Text(label),
-      subtitle: buildSubtitle(appLocalizations),
-      blur: false,
-      maxWidth: maxWidth,
-      widget: ListInputPage(
+      subtitle:
+          buildSubtitle(appLocalizations) ??
+          Text(
+            value.isEmpty ? appLocalizations.none : value.join(', '),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+      widget: ListEditView(
         title: label,
         items: value,
         itemMaxLength: itemMaxLength,

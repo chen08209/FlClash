@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -14,6 +15,7 @@ import 'common.dart';
 
 typedef GroupNameProxiesMap = Map<String, List<Proxy>>;
 
+const _pinnedHeaderGap = 8.0;
 const _enterStaggerLimit = 8;
 const _enterStaggerStep = Duration(milliseconds: 20);
 const _enterSlideBase = 32.0;
@@ -286,8 +288,14 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
         final proxiesLayout = ref.watch(
           proxiesStyleSettingProvider.select((state) => state.layout),
         );
+        final isSearching = ref.watch(
+          queryProvider(
+            QueryTag.proxies,
+          ).select((query) => SearchQuery(query).isNotEmpty),
+        );
         return NullStatusSwitcher(
           isEmpty: state.groups.isEmpty,
+          isSearching: isSearching,
           nullStatus: NullStatus(
             illustration: NullStatusIllustration.proxies,
             label: appLocalizations.nullTip(appLocalizations.proxies),
@@ -304,34 +312,41 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
                 columns: columns,
                 cardType: state.proxyCardType,
               );
-              containerHeight = max(constraints.maxHeight - 16, 0);
+              final barInset = MediaQuery.paddingOf(context).top;
+              containerHeight = max(
+                constraints.maxHeight - barInset - _pinnedHeaderGap,
+                0,
+              );
               return CommonScrollBar(
                 controller: _controller,
                 thumbVisibility: true,
                 trackVisibility: true,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: ScrollConfiguration(
-                    behavior: const HiddenBarScrollBehavior(),
-                    child: CustomScrollView(
-                      key: proxiesListStoreKey,
-                      controller: _controller,
-                      slivers: [
-                        for (final group in state.groups)
-                          _buildGroup(
-                            context,
-                            group: group,
-                            currentUnfoldSet: state.currentUnfoldSet,
-                            columns: columns,
-                            cardType: state.proxyCardType,
-                          ),
-                        SliverToBoxAdapter(
-                          child: SizedBox(
-                            height: 16 + BottomInsetScope.of(context),
-                          ),
+                child: ScrollConfiguration(
+                  behavior: const HiddenBarScrollBehavior(),
+                  child: CustomScrollView(
+                    key: proxiesListStoreKey,
+                    controller: _controller,
+                    slivers: [
+                      PinnedHeaderSliver(
+                        child: ColoredBox(
+                          color: context.colorScheme.surface,
+                          child: SizedBox(height: barInset + _pinnedHeaderGap),
                         ),
-                      ],
-                    ),
+                      ),
+                      for (final group in state.groups)
+                        _buildGroup(
+                          context,
+                          group: group,
+                          currentUnfoldSet: state.currentUnfoldSet,
+                          columns: columns,
+                          cardType: state.proxyCardType,
+                        ),
+                      SliverToBoxAdapter(
+                        child: SizedBox(
+                          height: 16 + BottomInsetScope.of(context),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -382,7 +397,7 @@ class _ListHeaderState extends ConsumerState<ListHeader> {
     try {
       await ref
           .read(proxiesActionProvider.notifier)
-          .delayTest(widget.group.all, widget.group.testUrl);
+          .delayTestPageGroup(groupName);
     } finally {
       isLock = false;
     }
@@ -445,7 +460,7 @@ class _GroupIcon extends ConsumerWidget {
       proxiesStyleSettingProvider.select((state) => state.iconStyle),
     );
     return switch (iconStyle) {
-      ProxiesIconStyle.standard => LayoutBuilder(
+      ProxiesIconStyle.filled => LayoutBuilder(
         builder: (_, constraints) {
           return Container(
             margin: const EdgeInsets.only(right: 12),
@@ -470,7 +485,7 @@ class _GroupIcon extends ConsumerWidget {
           );
         },
       ),
-      ProxiesIconStyle.icon => Container(
+      ProxiesIconStyle.plain => Container(
         margin: const EdgeInsets.only(right: 8),
         child: LayoutBuilder(
           builder: (_, constraints) {
@@ -481,7 +496,7 @@ class _GroupIcon extends ConsumerWidget {
           },
         ),
       ),
-      ProxiesIconStyle.none => Container(),
+      ProxiesIconStyle.hidden => Container(),
     };
   }
 }
@@ -536,10 +551,6 @@ class _GroupActions extends StatelessWidget {
     required this.onToggle,
   });
 
-  static const _shrinkWrap = ButtonStyle(
-    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-  );
-
   final bool isExpand;
   final String groupType;
   final VoidCallback onScrollToSelected;
@@ -548,45 +559,41 @@ class _GroupActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        if (isExpand) ...[
-          IconButton(
-            tooltip: context.appLocalizations.scrollToSelected,
-            visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.all(2),
-            onPressed: onScrollToSelected,
-            style: _shrinkWrap,
-            iconSize: 19,
-            icon: const Icon(Icons.adjust),
-          ),
-          const SizedBox(width: 2),
-          IconButton(
-            tooltip: context.appLocalizations.delayTest,
-            iconSize: 20,
-            visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.all(2),
-            onPressed: onDelayTest,
-            style: _shrinkWrap,
-            icon: const Icon(Icons.network_ping),
-          ),
+    return TonalButtonTheme(
+      size: TonalButtonSize.compact,
+      child: Row(
+        children: [
+          if (isExpand)
+            TonalButtonGroup(
+              size: TonalButtonSize.compact,
+              children: [
+                IconButton(
+                  tooltip: context.appLocalizations.scrollToSelected,
+                  onPressed: onScrollToSelected,
+                  iconSize: 19,
+                  icon: const GlyphIcon(AppGlyphs.locate),
+                ),
+                IconButton(
+                  tooltip: context.appLocalizations.delayTest,
+                  onPressed: onDelayTest,
+                  icon: const GlyphIcon(AppGlyphs.bolt),
+                ),
+              ],
+            )
+          else
+            Text(groupType, style: context.textTheme.labelMedium?.toLight),
           const SizedBox(width: 6),
-        ] else ...[
-          Text(groupType, style: context.textTheme.labelMedium?.toLight),
-          const SizedBox(width: 6),
+          ElasticPress(
+            child: IconButton(
+              tooltip: isExpand
+                  ? context.appLocalizations.showLess
+                  : context.appLocalizations.showMore,
+              onPressed: onToggle,
+              icon: CommonExpandIcon(expand: isExpand),
+            ),
+          ),
         ],
-        IconButton.filledTonal(
-          tooltip: isExpand
-              ? context.appLocalizations.showLess
-              : context.appLocalizations.showMore,
-          visualDensity: VisualDensity.compact,
-          padding: const EdgeInsets.all(2),
-          iconSize: 24,
-          style: _shrinkWrap,
-          onPressed: onToggle,
-          icon: CommonExpandIcon(expand: isExpand),
-        ),
-      ],
+      ),
     );
   }
 }

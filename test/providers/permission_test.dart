@@ -69,6 +69,33 @@ void main() {
     },
   );
 
+  test('a safe mode build neither checks nor requests location', () async {
+    container.dispose();
+    container = ProviderContainer(
+      overrides: [
+        excludeSSIDsProvider.overrideWithValue(const ['Office Wi-Fi']),
+        safeModeProvider.overrideWithValue(true),
+      ],
+    );
+    final calls = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          calls.add(call.method);
+          return 0;
+        });
+
+    await Permissions.test(
+      supportsLocationPermissions: true,
+    ).checkLocationPermissions(container.read);
+
+    expect(calls, isEmpty);
+    expect(
+      container.read(locationPermissionsProvider),
+      WifiSsidPermission.denied,
+    );
+    expect(container.read(currentSSIDProvider), isNull);
+  });
+
   test('does not read SSID when permission remains denied', () async {
     final calls = <String>[];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
