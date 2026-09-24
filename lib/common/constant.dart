@@ -58,6 +58,22 @@ const delayTestTimeoutDuration = Duration(seconds: 8);
 
 const delayTestGuardDuration = Duration(seconds: 30);
 
+const probeTimeoutDuration = Duration(seconds: 10);
+
+/// A healthy source answers within a second; past this the outbound is down.
+const outboundIpTimeoutDuration = Duration(seconds: 6);
+
+/// The Core may spend a method's own timeout twice, once queueing for a probe
+/// slot and once on the request, before the transport is considered
+/// unresponsive. [budgetFactor] covers methods that spend it more than once.
+Duration coreGuardFor(int timeout, {int budgetFactor = 2}) =>
+    Duration(milliseconds: timeout * budgetFactor) + const Duration(seconds: 5);
+
+Duration probeGuardDuration(ProbeParams params) => coreGuardFor(params.timeout);
+
+/// Kept in step with serviceSweepBudgetFactor in core/service_check.go.
+const serviceSweepBudgetFactor = 6;
+
 const coreConnectionWaitDuration = Duration(seconds: 10);
 
 /// Keep at or below the Core's delay-test concurrency (`delayTestConcurrency`

@@ -43,6 +43,15 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
         'url': 'https://example.com',
         'value': 42,
       },
+      CoreMethod.probe => {
+        'status-code': 204,
+        'delay': 17,
+        'body': '',
+        'url': 'https://example.com/',
+        'chains': ['DIRECT'],
+        'rule': 'Match',
+        'rule-payload': '',
+      },
       CoreMethod.getConnections => {
         'connections': [
           {
@@ -77,7 +86,20 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
         'mode': 'rule',
         'rule': ['MATCH,DIRECT'],
       },
-      CoreMethod.getMemory => 2048,
+      CoreMethod.getMemoryStats => {
+        'rss': 2048,
+        'heapInuse': 1024,
+        'heapIdle': 256,
+        'stackInuse': 64,
+        'runtimeOther': 32,
+      },
+      CoreMethod.changeProxy => {'message': '', 'changed': true},
+      CoreMethod.getConnectionCount => 3,
+      CoreMethod.watchRoute => {
+        'core-epoch': 1,
+        'picks-version': 0,
+        'picks': <String, String>{},
+      },
       _ => '',
     };
     return result as T;
@@ -149,11 +171,23 @@ void main() {
     await handler.setupConfig(
       const SetupParams(selectedMap: {'GLOBAL': 'DIRECT'}, testUrl: 'test'),
     );
-    await handler.changeProxy(
+    final switched = await handler.changeProxy(
       const ChangeProxyParams(groupName: 'GLOBAL', proxyName: 'DIRECT'),
     );
+    expect(switched, const ChangeProxyResult(changed: true));
+    final route = await handler.watchRoute(true);
+    expect(route, const RouteSnapshot(coreEpoch: 1));
+    expect(handler.calls[CoreMethod.watchRoute], isTrue);
     await handler.sideLoadExternalProvider(providerName: 'provider', data: 'x');
     await handler.asyncTestDelay('https://example.com', 'DIRECT');
+    await handler.probe(
+      const ProbeParams(
+        url: 'https://example.com',
+        proxyName: 'DIRECT',
+        timeout: 1000,
+        maxBody: 64,
+      ),
+    );
     await handler.clearEffect(42);
 
     for (final method in [
@@ -162,9 +196,17 @@ void main() {
       CoreMethod.changeProxy,
       CoreMethod.sideLoadExternalProvider,
       CoreMethod.asyncTestDelay,
+      CoreMethod.probe,
     ]) {
       expect(handler.calls[method], isA<Map>());
     }
+    expect(handler.calls[CoreMethod.probe], {
+      'url': 'https://example.com',
+      'proxy-name': 'DIRECT',
+      'headers': <String, String>{},
+      'timeout': 1000,
+      'max-body': 64,
+    });
     expect(handler.calls[CoreMethod.clearEffect], 42);
   });
 
@@ -185,6 +227,60 @@ void main() {
 
     final legacy = coreEventsFromData({'type': 'loaded', 'data': 'provider-b'});
     expect(legacy.single.data, 'provider-b');
+  });
+
+  test('event contract decodes the dns query the Core sends', () {
+    final events = coreEventsFromData([
+      {
+        'type': 'dns',
+        'data': {
+          'domain': 'www.example.com',
+          'type': 'A',
+          'initiator': 'app',
+          'answers': ['93.184.216.34'],
+          'rcode': 'NOERROR',
+          'delay': 0,
+          'time': '2026-09-18T12:30:01.123456789+08:00',
+        },
+      },
+      {
+        'type': 'dns',
+        'data': {
+          'domain': 'missing.test',
+          'type': 'AAAA',
+          'initiator': 'unknown-initiator',
+          'upstream': 'tls://1.1.1.1:853',
+          'cached': true,
+          'answers': <String>[],
+          'error': 'i/o timeout',
+          'delay': 5000,
+          'time': '2026-09-18T04:30:02Z',
+        },
+      },
+    ]);
+
+    expect(events.map((event) => event.type), [
+      CoreEventType.dns,
+      CoreEventType.dns,
+    ]);
+    final queries = [
+      for (final event in events)
+        DnsQuery.fromJson(Map<String, Object?>.from(event.data as Map)),
+    ];
+    expect(queries.first.initiator, DnsQueryInitiator.app);
+    expect(queries.first.upstream, isEmpty);
+    expect(queries.first.cached, isFalse);
+    expect(queries.first.answers, ['93.184.216.34']);
+    expect(
+      queries.first.time.toUtc(),
+      DateTime.utc(2026, 9, 18, 4, 30, 1, 123, 456),
+    );
+    expect(queries.first.isFailed, isFalse);
+    expect(queries.last.initiator, isNull);
+    expect(queries.last.upstream, 'tls://1.1.1.1:853');
+    expect(queries.last.cached, isTrue);
+    expect(queries.last.rcode, isEmpty);
+    expect(queries.last.isFailed, isTrue);
   });
 
   test('event contract skips malformed entries without dropping the batch', () {
@@ -209,7 +305,20 @@ void main() {
       await handler.asyncTestDelay('https://example.com', 'DIRECT'),
       const Delay(name: 'DIRECT', url: 'https://example.com', value: 42),
     );
+    expect(
+      await handler.probe(
+        const ProbeParams(url: 'https://example.com', timeout: 1000),
+      ),
+      const ProbeResult(
+        statusCode: 204,
+        delay: 17,
+        url: 'https://example.com/',
+        chains: ['DIRECT'],
+        rule: 'Match',
+      ),
+    );
     expect((await handler.getConnections()).single.id, 'connection-1');
+    expect(await handler.getConnectionCount(), 3);
     expect((await handler.getExternalProviders()).single.name, 'provider-1');
     expect(
       (await handler.getExternalProvider('provider-1'))?.name,
@@ -219,7 +328,9 @@ void main() {
       'mode': 'rule',
       'rule': ['MATCH,DIRECT'],
     });
-    expect(await handler.getMemory(), 2048);
+    final memory = await handler.getMemoryStats();
+    expect(memory?.rss, 2048);
+    expect(memory?.runtimeTotal, 1024 + 256 + 64 + 32);
   });
 
   test('getConfig preserves structured core errors', () async {

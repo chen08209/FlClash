@@ -55,11 +55,13 @@ func runBatcherUntilDrained(t *testing.T, state, priority, bulk chan Message) *b
 
 func TestClassOfMessageRoutesEachTier(t *testing.T) {
 	for messageType, want := range map[MessageType]messageClass{
-		LoadedMessage:    stateMessageClass,
-		GeoUpdateMessage: stateMessageClass,
-		DelayMessage:     priorityMessageClass,
-		LogMessage:       bulkMessageClass,
-		RequestMessage:   bulkMessageClass,
+		LoadedMessage:       stateMessageClass,
+		GeoUpdateMessage:    stateMessageClass,
+		RouteChangedMessage: stateMessageClass,
+		DelayMessage:        priorityMessageClass,
+		LogMessage:          bulkMessageClass,
+		RequestMessage:      bulkMessageClass,
+		DnsMessage:          yieldingBulkMessageClass,
 	} {
 		if got := classOfMessage(Message{Type: messageType}); got != want {
 			t.Errorf("classOfMessage(%s) = %d, want %d", messageType, got, want)

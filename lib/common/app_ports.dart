@@ -1,8 +1,17 @@
+import 'dart:ui' show Brightness, Color;
+
 import 'package:fl_clash/common/provider_reader.dart';
 import 'package:fl_clash/models/models.dart';
 
 abstract interface class WindowPort {
   Future<WindowProps?> captureNormalGeometry(WindowProps current);
+
+  /// Returns whether a backdrop is now drawn behind the content.
+  Future<bool> setBlur({
+    required bool enabled,
+    required Brightness brightness,
+    required Color tint,
+  });
 
   Future<void> show();
 

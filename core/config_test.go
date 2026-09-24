@@ -598,6 +598,33 @@ func TestLoadConfigReportsMalformedYaml(t *testing.T) {
 	}
 }
 
+func TestLoadConfigKeepsTheSystemTimeWriteOnlyWhereItIsAllowed(t *testing.T) {
+	previous := systemTimeWritable
+	t.Cleanup(func() { systemTimeWritable = previous })
+
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	profile := "ntp:\n  enable: true\n  write-to-system: true\n"
+	if err := os.WriteFile(path, []byte(profile), 0o600); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	for _, writable := range []bool{true, false} {
+		systemTimeWritable = writable
+
+		cfg, err := loadConfig(path)
+
+		if err != nil {
+			t.Fatalf("loadConfig = %v", err)
+		}
+		if cfg.NTP.WriteToSystem != writable {
+			t.Errorf("writable %t: WriteToSystem = %t", writable, cfg.NTP.WriteToSystem)
+		}
+		if !cfg.NTP.Enable {
+			t.Errorf("writable %t: NTP was disabled, want only the system write dropped", writable)
+		}
+	}
+}
+
 func withSetupConfig(t *testing.T, apply func(*SetupParams) error) {
 	t.Helper()
 	previous := setupConfig

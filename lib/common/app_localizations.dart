@@ -1,4 +1,4 @@
-import 'package:dio/dio.dart';
+import 'package:fl_clash/common/network_error.dart';
 import 'package:fl_clash/core/desktop/launch_policy.dart';
 import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/l10n/l10n.dart';
@@ -6,22 +6,6 @@ import 'package:fl_clash/l10n/l10n.dart';
 import 'dart:ui';
 
 final currentAppLocalizations = AppLocalizations.current;
-
-String? networkErrorMessage(Object error, AppLocalizations appLocalizations) {
-  if (error case CoreMethodException(:final code)) {
-    return switch (code) {
-      'request_bad_response' => appLocalizations.networkException,
-      'request_error' => appLocalizations.unknownNetworkError,
-      _ => null,
-    };
-  }
-  if (error is DioException) {
-    return error.type == DioExceptionType.badResponse
-        ? appLocalizations.networkException
-        : appLocalizations.unknownNetworkError;
-  }
-  return null;
-}
 
 String? coreLaunchBlockedMessage(
   Object error,

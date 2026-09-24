@@ -177,7 +177,16 @@ enum ResultType {
   error,
 }
 
-enum CoreEventType { log, delay, request, loaded, crash, geoUpdate }
+enum CoreEventType {
+  log,
+  delay,
+  request,
+  dns,
+  loaded,
+  crash,
+  geoUpdate,
+  routeChanged,
+}
 
 enum InvokeMessageType { protect, process }
 
@@ -252,11 +261,9 @@ enum FunctionTag {
   updateConfig,
   setupConfig,
   updateGroups,
-  addCheckIpNum,
   applyProfile,
   savePreferences,
   changeProxy,
-  checkIp,
   handleWill,
   updateDelay,
   vpnTip,
@@ -290,6 +297,27 @@ enum DashboardWidget {
 
   const DashboardWidget({this.platforms = SupportPlatform.values});
 }
+
+enum DnsQueryInitiator { app, rule, direct, proxy, other }
+
+enum IpType { residential, mobile, business, hosting }
+
+enum IpQualityLevel { good, normal, risky }
+
+enum IpQualitySource {
+  identMe('ident.me'),
+  ipApiCom('ip-api.com'),
+  ipQuery('ipquery.io'),
+  ipLocate('iplocate.io'),
+  proxyCheck('proxycheck.io'),
+  ipApiIs('ipapi.is');
+
+  const IpQualitySource(this.label);
+
+  final String label;
+}
+
+enum IpQualitySourceStatus { noType, timeout, rateLimited, failed, ipMismatch }
 
 enum GeodataLoader { standard, memconservative }
 
