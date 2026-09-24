@@ -236,21 +236,40 @@ void main() {
       );
     });
 
+    ChangelogVersion longVersion() => version(
+      groups: [
+        entryGroup(ChangelogType.feat, [
+          for (var index = 0; index < 200; index++)
+            ('hash$index', null, 'A reasonably long changelog entry & more'),
+        ]),
+      ],
+    );
+
     test('truncates past the caption limit and links out', () {
       final text = renderTelegram(
-        version(
-          groups: [
-            entryGroup(ChangelogType.feat, [
-              for (var index = 0; index < 200; index++)
-                ('hash$index', null, 'A reasonably long changelog entry'),
-            ]),
-          ],
-        ),
+        longVersion(),
         moreUrl: 'https://example.com',
       );
 
-      expect(text.length, lessThan(telegramLimit + 40));
-      expect(text, endsWith('https://example.com'));
+      expect(text.length, lessThan(telegramLimit + 200));
+      expect(text, endsWith('…\nhttps://example.com'));
+    });
+
+    test('counts visible text, not markup, against the limit', () {
+      final text = renderTelegram(longVersion());
+      final visible = text
+          .replaceAll(RegExp('<[^>]*>'), '')
+          .replaceAll('&amp;', '&');
+
+      expect(visible.length, greaterThan(telegramLimit - 60));
+      expect(visible.length, lessThanOrEqualTo(telegramLimit + 3));
+    });
+
+    test('ends on an ellipsis alone without a page to link to', () {
+      expect(
+        renderTelegram(longVersion()),
+        endsWith('• A reasonably long changelog entry &amp; more\n\n…'),
+      );
     });
   });
 

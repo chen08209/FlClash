@@ -6,7 +6,7 @@ import 'src/icons/ico.dart';
 const sourceDir = 'assets_source/images/icon';
 const pngOutputDir = 'assets/images/tray/unix';
 const icoOutputDir = 'assets/images/tray/windows';
-const statusIconNames = ['status_1', 'status_2', 'status_3'];
+const statusIconNames = ['status_1', 'status_2', 'status_3', 'status_4'];
 const trayBaseSize = 18;
 const trayScales = [1, 2, 3, 4];
 const appIconSource = 'assets/images/icon.png';
