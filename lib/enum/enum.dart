@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:fl_clash/common/context.dart';
 import 'package:fl_clash/common/system.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -136,12 +137,12 @@ extension LogLevelExt on LogLevel {
 enum MessageLevel { info, success, warning, error }
 
 extension MessageLevelExt on MessageLevel {
-  IconData? get icon {
+  Glyph? get glyph {
     return switch (this) {
       MessageLevel.info => null,
-      MessageLevel.success => Icons.check_circle_outline,
-      MessageLevel.warning => Icons.warning_amber_outlined,
-      MessageLevel.error => Icons.error_outline,
+      MessageLevel.success => AppGlyphs.checkCircle,
+      MessageLevel.warning => AppGlyphs.warning,
+      MessageLevel.error => AppGlyphs.error,
     };
   }
 
@@ -347,8 +348,7 @@ enum ProxiesIconStyle { none, standard, icon }
 
 enum FontFamily {
   twEmoji('Twemoji'),
-  jetBrainsMono('JetBrainsMono'),
-  icon('Icons');
+  jetBrainsMono('JetBrainsMono');
 
   final String value;
 

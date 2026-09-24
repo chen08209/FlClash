@@ -30,7 +30,7 @@ final baseInfoEdgeInsets = EdgeInsets.symmetric(
 );
 final listHeaderPadding = EdgeInsets.only(
   left: 16.mAp,
-  right: 8.mAp,
+  right: 16.mAp,
   top: 24.mAp,
   bottom: 8.mAp,
 );
