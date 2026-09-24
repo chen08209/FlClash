@@ -173,4 +173,51 @@ void main() {
       expect(rule.rawValue, 'SRC-IP-ASN,13335,DIRECT');
     });
   });
+
+  group('Rule.payloadError', () {
+    test('accepts the payloads mihomo parses', () {
+      for (final value in [
+        'NETWORK,tcp,DIRECT',
+        'NETWORK,UDP,DIRECT',
+        'DST-PORT,80,DIRECT',
+        'SRC-PORT,8000-9000,DIRECT',
+        'IN-PORT,80/443,DIRECT',
+        'IN-PORT,80,443,DIRECT',
+        'UID,1000-1010,DIRECT',
+        'DSCP,4,DIRECT',
+        'DSCP,0-63,DIRECT',
+        'DOMAIN-SUFFIX,example.com,DIRECT',
+      ]) {
+        expect(Rule.parse(value).payloadError, isNull, reason: value);
+      }
+    });
+
+    test('rejects the payloads mihomo refuses', () {
+      expect(
+        Rule.parse('NETWORK,icmp,DIRECT').payloadError,
+        RulePayloadError.network,
+      );
+      expect(
+        Rule.parse('DST-PORT,http,DIRECT').payloadError,
+        RulePayloadError.numberRange,
+      );
+      expect(
+        Rule.parse('SRC-PORT,80..90,DIRECT').payloadError,
+        RulePayloadError.numberRange,
+      );
+      expect(
+        Rule.parse('UID,*,DIRECT').payloadError,
+        RulePayloadError.numberRange,
+      );
+      expect(
+        Rule.parse('DSCP,64,DIRECT').payloadError,
+        RulePayloadError.dscpRange,
+      );
+    });
+
+    test('leaves an empty payload to the not-empty check', () {
+      expect(Rule.parse('NETWORK').payloadError, isNull);
+      expect(Rule.parse('MATCH,DIRECT').payloadError, isNull);
+    });
+  });
 }

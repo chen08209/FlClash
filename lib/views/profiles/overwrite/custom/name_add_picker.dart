@@ -2,10 +2,12 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/overwrite/overwrite.dart';
 import 'package:fl_clash/models/models.dart' hide FileInfo;
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:super_sliver_list/super_sliver_list.dart';
 
 class NameAddEntry {
   final String title;
@@ -55,6 +57,14 @@ class NameAddPicker extends ConsumerStatefulWidget {
 
 class _NameAddPickerState extends ConsumerState<NameAddPicker>
     with UniqueKeyStateMixin, OverwriteStageFlowMixin<NameAddPicker> {
+  var _query = SearchQuery('');
+
+  void _handleSearch(String query) {
+    setState(() {
+      _query = SearchQuery(query);
+    });
+  }
+
   String _tagOf(String? scene) =>
       scene == null ? widget.stageTagPrefix : '${widget.stageTagPrefix}_$scene';
 
@@ -97,10 +107,12 @@ class _NameAddPickerState extends ConsumerState<NameAddPicker>
             ),
             subtitle: subtitle == null ? null : Text(subtitle),
             trailing: CommonMinIconButtonTheme(
-              child: IconButton.filledTonal(
-                tooltip: context.appLocalizations.add,
-                onPressed: onAdd,
-                icon: const Icon(Icons.add, size: 18),
+              child: ElasticButton(
+                child: IconButton.filledTonal(
+                  tooltip: context.appLocalizations.add,
+                  onPressed: onAdd,
+                  icon: const GlyphIcon(AppGlyphs.add, size: 18, fill: 1),
+                ),
               ),
             ),
           ),
@@ -122,8 +134,9 @@ class _NameAddPickerState extends ConsumerState<NameAddPicker>
           child: InfoHeader(info: Info(label: section.label)),
         ),
       ),
-      SliverList(
-        delegate: SliverChildBuilderDelegate((_, index) {
+      SuperSliverList.builder(
+        itemCount: entries.length,
+        itemBuilder: (_, index) {
           final entry = entries[index];
           return _buildItem(
             entry: entry,
@@ -139,7 +152,7 @@ class _NameAddPickerState extends ConsumerState<NameAddPicker>
               handleStage(entry.title, section.scene);
             },
           );
-        }, childCount: entries.length),
+        },
       ),
       if (!isLast) const SliverToBoxAdapter(child: SizedBox(height: 8)),
     ];
@@ -149,27 +162,45 @@ class _NameAddPickerState extends ConsumerState<NameAddPicker>
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     final height = ref.sheetHeight(context, widget.heightFactor);
-    final sections = widget
-        .sectionsBuilder(context, ref)
-        .where((section) => section.entries.isNotEmpty)
-        .toList();
+    final allSections = widget.sectionsBuilder(context, ref);
+    final sections = [
+      for (final section in allSections)
+        NameAddSection(
+          label: section.label,
+          scene: section.scene,
+          entries: section.entries
+              .whereMatches(_query, (entry) => [entry.title, entry.subtitle])
+              .toList(),
+        ),
+    ].where((section) => section.entries.isNotEmpty).toList();
+    final entryCount = allSections.fold(
+      0,
+      (count, section) => count + section.entries.length,
+    );
     return SizedBox(
       height: height,
-      child: AdaptiveSheetScaffold(
-        sheetTransparentToolBar: true,
+      child: CommonScaffold(
         title: widget.title,
-        body: NullStatusSwitcher(
-          isEmpty: sections.isEmpty,
-          nullStatus: NullStatus(label: appLocalizations.noData),
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: SizedBox(height: context.sheetTopPadding),
-              ),
-              for (var i = 0; i < sections.length; i++)
-                ..._buildSection(sections[i], i == sections.length - 1),
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            ],
+        searchState: _query.isNotEmpty || entryCount >= sheetSearchMinItemCount
+            ? AppBarSearchState(onSearch: _handleSearch)
+            : null,
+        body: Builder(
+          builder: (context) => NullStatusSwitcher(
+            isEmpty: sections.isEmpty,
+            isSearching: _query.isNotEmpty,
+            nullStatus: NullStatus(label: appLocalizations.noData),
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: SizedBox(height: context.contentTopPadding),
+                ),
+                for (var i = 0; i < sections.length; i++)
+                  ..._buildSection(sections[i], i == sections.length - 1),
+                SliverToBoxAdapter(
+                  child: SizedBox(height: 16 + BottomInsetScope.of(context)),
+                ),
+              ],
+            ),
           ),
         ),
       ),

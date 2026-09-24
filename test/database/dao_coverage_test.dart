@@ -490,6 +490,60 @@ void main() {
     expect(await database.profileRuleLinks.count.getSingle(), 0);
   });
 
+  test('renaming a provider rewrites only the listed profiles', () async {
+    const oldName = 'Old "nodes"';
+    const newName = r'New \nodes';
+    for (final id in [1, 2]) {
+      await database.profiles.put(
+        Profile(id: id, autoUpdateDuration: Duration.zero).toCompanion(),
+      );
+      await database.proxyGroups.put(
+        ProxyGroup(
+          id: id,
+          name: 'Group',
+          type: GroupType.Selector,
+          use: const [oldName, 'Old', 'Kept'],
+        ).toCompanion(id),
+      );
+      await database.rulesDao.putProfileCustomRule(
+        id,
+        Rule(
+          id: 10 + id,
+          ruleAction: RuleAction.RULE_SET,
+          ruleProvider: oldName,
+          ruleTarget: 'DIRECT',
+        ),
+      );
+    }
+
+    await database.proxyGroupsDao.renameUse(
+      const [],
+      oldName: 'Kept',
+      newName: newName,
+    );
+    await database.proxyGroupsDao.renameUse(
+      const [1],
+      oldName: oldName,
+      newName: newName,
+    );
+    await database.rulesDao.renameCustomRuleProvider(
+      const [1],
+      oldName: oldName,
+      newName: newName,
+    );
+
+    Future<List<String>?> use(int id) async =>
+        (await database.proxyGroupsDao.query(id).get()).single.use;
+    Future<String?> ruleSet(int id) async =>
+        (await database.rulesDao.queryProfileCustomRules(id).get())
+            .single
+            .ruleProvider;
+    expect(await use(1), [newName, 'Old', 'Kept']);
+    expect(await use(2), [oldName, 'Old', 'Kept']);
+    expect(await ruleSet(1), newName);
+    expect(await ruleSet(2), oldName);
+  });
+
   test('a restore drops the orphans an older backup carries', () async {
     const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
     const rule = Rule(id: 10, content: 'kept.example', ruleTarget: 'A');

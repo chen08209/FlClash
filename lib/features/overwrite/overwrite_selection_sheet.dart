@@ -1,16 +1,17 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-const _maxRevealSteps = 6;
+import 'package:super_sliver_list/super_sliver_list.dart';
 
 class OverwriteSelectionSection<T> {
   final String? label;
   final List<T> items;
-  final String Function(BuildContext context, T item)? subtitleBuilder;
+  final String? Function(BuildContext context, T item)? subtitleBuilder;
 
   const OverwriteSelectionSection({
     this.label,
@@ -47,64 +48,85 @@ class OverwriteSelectionSheet<T> extends ConsumerStatefulWidget {
 class _OverwriteSelectionSheetState<T>
     extends ConsumerState<OverwriteSelectionSheet<T>> {
   final _controller = ScrollController();
+  final _revealController = ListController();
   final _selectedKey = GlobalKey();
   var _revealRequested = false;
+  var _query = SearchQuery('');
 
   @override
   void dispose() {
     _controller.dispose();
+    _revealController.dispose();
     super.dispose();
   }
 
-  int get _itemCount =>
-      widget.sections.fold(0, (value, section) => value + section.items.length);
-
-  List<int> get _sectionOffsets {
-    final offsets = <int>[];
-    var offset = 0;
-    for (final section in widget.sections) {
-      offsets.add(offset);
-      offset += section.items.length;
-    }
-    return offsets;
+  void _handleSearch(String query) {
+    setState(() {
+      _query = SearchQuery(query);
+    });
   }
 
-  int _indexOf(T? selected) {
-    var index = 0;
-    for (final section in widget.sections) {
-      for (final item in section.items) {
-        if (item == selected) {
-          return index;
-        }
-        index++;
-      }
+  List<OverwriteSelectionSection<T>> _matchingSections(BuildContext context) {
+    if (_query.isEmpty) {
+      return widget.sections;
     }
-    return -1;
+    return [
+      for (final section in widget.sections)
+        OverwriteSelectionSection(
+          label: section.label,
+          items: section.items
+              .whereMatches(
+                _query,
+                (item) => [
+                  widget.labelBuilder(item),
+                  section.subtitleBuilder?.call(context, item),
+                ],
+              )
+              .toList(),
+          subtitleBuilder: section.subtitleBuilder,
+        ),
+    ].where((section) => section.items.isNotEmpty).toList();
   }
 
-  // The list builds lazily, so a selection below the first viewport has no
-  // element to reveal yet. Each jump builds more children, which also sharpens
-  // the sliver's own extent estimate for the next step.
-  Future<void> _revealSelected(int index, int count) async {
-    for (var step = 0; step < _maxRevealSteps; step++) {
-      if (!mounted || !_controller.hasClients) {
-        return;
+  int _countOf(List<OverwriteSelectionSection<T>> sections) =>
+      sections.fold(0, (value, section) => value + section.items.length);
+
+  ({int section, int index})? _locate(
+    List<OverwriteSelectionSection<T>> sections,
+    T? selected,
+  ) {
+    if (selected == null) {
+      return null;
+    }
+    for (final (sectionIndex, section) in sections.indexed) {
+      final index = section.items.indexOf(selected);
+      if (index != -1) {
+        return (section: sectionIndex, index: index);
       }
-      final itemContext = _selectedKey.currentContext;
-      if (itemContext != null && itemContext.mounted) {
-        _alignSelected(itemContext);
-        return;
-      }
-      final position = _controller.position;
-      final target = (position.maxScrollExtent * index / count).clamp(
-        position.minScrollExtent,
-        position.maxScrollExtent,
-      );
-      if ((target - position.pixels).abs() < 1) {
-        return;
-      }
-      _controller.jumpTo(target);
-      await WidgetsBinding.instance.endOfFrame;
+    }
+    return null;
+  }
+
+  void _revealSelected(int index) {
+    if (!mounted || !_controller.hasClients) {
+      return;
+    }
+    final itemContext = _selectedKey.currentContext;
+    if (itemContext != null && itemContext.mounted) {
+      _alignSelected(itemContext);
+      return;
+    }
+    if (!_revealController.isAttached) {
+      return;
+    }
+    _revealController.jumpToItem(
+      index: index,
+      scrollController: _controller,
+      alignment: 0.5,
+    );
+    final position = _controller.position;
+    if (position.pixels > position.maxScrollExtent) {
+      _controller.jumpTo(position.maxScrollExtent);
     }
   }
 
@@ -137,14 +159,13 @@ class _OverwriteSelectionSheetState<T>
     required bool isRevealTarget,
   }) {
     final position = ItemPosition.get(index, section.items.length);
+    final subtitle = section.subtitleBuilder?.call(context, item);
     return ItemPositionProvider(
       key: isRevealTarget ? _selectedKey : null,
       position: position,
       child: DecorationListItem(
         onPressed: () => widget.onSelected(item),
-        subtitle: section.subtitleBuilder != null
-            ? TooltipLabel(section.subtitleBuilder!(context, item))
-            : null,
+        subtitle: subtitle != null ? TooltipLabel(subtitle) : null,
         title: TooltipText(
           text: Text(
             widget.labelBuilder(item),
@@ -153,7 +174,7 @@ class _OverwriteSelectionSheetState<T>
           ),
         ),
         isSelected: isSelected,
-        trailing: isSelected ? const Icon(Icons.check) : null,
+        trailing: isSelected ? const GlyphIcon(AppGlyphs.check) : null,
       ),
     );
   }
@@ -161,66 +182,79 @@ class _OverwriteSelectionSheetState<T>
   @override
   Widget build(BuildContext context) {
     final height = ref.sheetHeight(context, (widget.bottomHeightFactor ?? 1));
-    final count = _itemCount;
+    final sections = _matchingSections(context);
+    final count = _countOf(sections);
     final selected = widget.selectedOf(ref);
-    final selectedIndex = _indexOf(selected);
-    final sectionOffsets = _sectionOffsets;
-    if (!_revealRequested && selectedIndex > 0) {
+    final location = _locate(sections, selected);
+    if (!_revealRequested && location != null) {
       _revealRequested = true;
       WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _revealSelected(selectedIndex, count),
+        (_) => _revealSelected(location.index),
       );
     }
-    return AdaptiveSheetScaffold(
-      sheetTransparentToolBar: true,
+    final searchable =
+        _query.isNotEmpty ||
+        _countOf(widget.sections) >= sheetSearchMinItemCount;
+    return CommonScaffold(
+      title: widget.title,
+      searchState: searchable
+          ? AppBarSearchState(onSearch: _handleSearch)
+          : null,
       body: SizedBox(
         height: height,
-        child: NullStatusSwitcher(
-          isEmpty: count == 0 && widget.emptyLabel != null,
-          nullStatus: NullStatus(label: widget.emptyLabel ?? ''),
-          child: CustomScrollView(
-            controller: _controller,
-            slivers: [
-              SliverToBoxAdapter(
-                child: SizedBox(height: context.sheetTopPadding),
-              ),
-              for (final (sectionIndex, section)
-                  in widget.sections.indexed) ...[
-                if (section.label != null) ...[
+        child: Builder(
+          builder: (context) => NullStatusSwitcher(
+            isEmpty:
+                count == 0 && (widget.emptyLabel != null || _query.isNotEmpty),
+            isSearching: _query.isNotEmpty,
+            nullStatus: NullStatus(label: widget.emptyLabel ?? ''),
+            child: CustomScrollView(
+              controller: _controller,
+              slivers: [
+                SliverToBoxAdapter(
+                  child: SizedBox(height: context.contentTopPadding),
+                ),
+                for (final (sectionIndex, section) in sections.indexed) ...[
+                  if (section.label != null) ...[
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverToBoxAdapter(
+                        child: InfoHeader(info: Info(label: section.label!)),
+                      ),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 4)),
+                  ],
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    sliver: SliverToBoxAdapter(
-                      child: InfoHeader(info: Info(label: section.label!)),
+                    sliver: SuperSliverList.builder(
+                      listController: sectionIndex == location?.section
+                          ? _revealController
+                          : null,
+                      itemCount: section.items.length,
+                      itemBuilder: (context, index) {
+                        final item = section.items[index];
+                        return _buildItem(
+                          context,
+                          section,
+                          item,
+                          index,
+                          isSelected: item == selected,
+                          isRevealTarget:
+                              sectionIndex == location?.section &&
+                              index == location?.index,
+                        );
+                      },
                     ),
                   ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 4)),
                 ],
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverList.builder(
-                    itemCount: section.items.length,
-                    itemBuilder: (context, index) {
-                      final item = section.items[index];
-                      return _buildItem(
-                        context,
-                        section,
-                        item,
-                        index,
-                        isSelected: item == selected,
-                        isRevealTarget:
-                            sectionOffsets[sectionIndex] + index ==
-                            selectedIndex,
-                      );
-                    },
-                  ),
+                SliverToBoxAdapter(
+                  child: SizedBox(height: 20 + BottomInsetScope.of(context)),
                 ),
               ],
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
-            ],
+            ),
           ),
         ),
       ),
-      title: widget.title,
     );
   }
 }

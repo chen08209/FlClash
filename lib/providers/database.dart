@@ -129,11 +129,28 @@ class Profiles extends _$Profiles {
     );
   }
 
-  void put(Profile profile) {
-    final newProfile = state.optimizeLabel(profile, reserved: _reservedLabels);
+  Profile labeled(Profile profile) =>
+      state.optimizeLabel(profile, reserved: _reservedLabels);
+
+  void put(Profile profile, {Iterable<int> renameIn = const []}) {
+    final newProfile = labeled(profile);
+    final previousLabel = state.getProfile(profile.id)?.realLabel;
+    final renamedFrom =
+        renameIn.isNotEmpty && previousLabel != newProfile.realLabel
+        ? previousLabel
+        : null;
     _optimistic(
       state.copyAndPut(newProfile, (item) => item.id == newProfile.id),
-      () => database.profiles.put(newProfile.toCompanion()),
+      renamedFrom == null
+          ? () => database.profiles.put(newProfile.toCompanion())
+          : () => database.transaction(() async {
+              await database.proxyGroupsDao.renameUse(
+                renameIn,
+                oldName: renamedFrom,
+                newName: newProfile.realLabel,
+              );
+              await database.profiles.put(newProfile.toCompanion());
+            }),
     );
   }
 
@@ -238,7 +255,7 @@ class ClashProviders extends _$ClashProviders
   @override
   List<ClashProvider> get value => state.value ?? [];
 
-  void put(ClashProvider provider) {
+  void put(ClashProvider provider, {Iterable<int> renameIn = const []}) {
     final next = List<ClashProvider>.from(value);
     final index = next.indexWhere((item) => item.id == provider.id);
     final renamedFrom = index != -1 && next[index].label != provider.label
@@ -256,11 +273,13 @@ class ClashProviders extends _$ClashProviders
           switch (provider.kind) {
             case ProviderKind.proxy:
               await database.proxyGroupsDao.renameUse(
+                renameIn,
                 oldName: renamedFrom,
                 newName: provider.label,
               );
             case ProviderKind.rule:
               await database.rulesDao.renameCustomRuleProvider(
+                renameIn,
                 oldName: renamedFrom,
                 newName: provider.label,
               );

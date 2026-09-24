@@ -1,4 +1,6 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/overwrite/overwrite.dart';
 import 'package:fl_clash/models/models.dart' hide FileInfo;
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/name_add_picker.dart';
@@ -13,6 +15,10 @@ class EditProxyProvidersView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
+    final profileId = ProfileIdProvider.of(context)!.profileId;
+    final sources = ref.watch(
+      providerSourcesProvider(profileId, ProviderKind.proxy),
+    );
     return NameListEditor(
       stageTag: 'EditProxyProvidersViewState_handleRealRemove',
       dragIconPadding: 16,
@@ -30,18 +36,19 @@ class EditProxyProvidersView extends ConsumerWidget {
         withIncludeAll: (state, includeAll) =>
             state.copyWith(includeAllProviders: includeAll),
       ),
-      addViewBuilder: (_) => const _AddProxyProvidersView(),
+      addViewBuilder: (_) => const AddProxyProvidersView(),
       isValidOf: (ref, profileId, title) => ref.watch(
         customOverwriteProxyProviderIsValidProvider(profileId, title),
       ),
       invalidMessageOf: (context, title) =>
           context.appLocalizations.invalidProxyProvider(title),
+      subtitleOf: (name) => sources[name]?.label(appLocalizations),
     );
   }
 }
 
-class _AddProxyProvidersView extends ConsumerWidget {
-  const _AddProxyProvidersView();
+class AddProxyProvidersView extends ConsumerWidget {
+  const AddProxyProvidersView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -67,12 +74,38 @@ class _AddProxyProvidersView extends ConsumerWidget {
               ),
             )
             .value;
+        final appProxyProviders = ref.watch(
+          appProviderNamesProvider(ProviderKind.proxy),
+        );
+        final sources = ref.watch(
+          providerSourcesProvider(profileId, ProviderKind.proxy),
+        );
         return [
           NameAddSection(
             label: appLocalizations.proxyProviders,
             entries: [
               for (final name in allProxyProviders)
-                if (!excluded.contains(name)) NameAddEntry(title: name),
+                if (!excluded.contains(name))
+                  NameAddEntry(
+                    title: name,
+                    subtitle: appProxyProviders.contains(name)
+                        ? appLocalizations.appProviderShadowed
+                        : null,
+                  ),
+            ],
+          ),
+          NameAddSection(
+            label: appLocalizations.appProxyProviders,
+            entries: [
+              for (final name in appProxyProviders)
+                if (!excluded.contains(name) &&
+                    sources[name] != ProviderSource.subscription)
+                  NameAddEntry(
+                    title: name,
+                    subtitle: sources[name] == ProviderSource.profile
+                        ? appLocalizations.profile
+                        : null,
+                  ),
             ],
           ),
         ];

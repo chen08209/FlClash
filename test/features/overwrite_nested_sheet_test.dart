@@ -24,8 +24,7 @@ class _ProbeForm extends ConsumerWidget {
     final height = isBottomSheet
         ? ref.read(viewSizeProvider).height * 0.6
         : double.maxFinite;
-    return AdaptiveSheetScaffold(
-      sheetTransparentToolBar: true,
+    return CommonScaffold(
       body: Container(
         constraints: BoxConstraints(maxHeight: height),
         child: ListView(
