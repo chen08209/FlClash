@@ -1368,6 +1368,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ruleTarget": MessageLookupByLibrary.simpleMessage("Цель правила"),
     "rules": MessageLookupByLibrary.simpleMessage("Правила"),
     "rulesCount": m47,
+    "runTime": MessageLookupByLibrary.simpleMessage("Время работы"),
     "safeMode": MessageLookupByLibrary.simpleMessage("Безопасный режим"),
     "safeModeAppTitle": m48,
     "save": MessageLookupByLibrary.simpleMessage("Сохранить"),

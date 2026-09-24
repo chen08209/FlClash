@@ -139,7 +139,7 @@ class NullStatus extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               _EnterItem(
-                child: _EmptyIllustration(
+                child: EmptyIllustration(
                   type: illustration,
                   dimension: compact ? 120 : 160,
                 ),
@@ -257,17 +257,21 @@ class _EnterItemState extends State<_EnterItem>
   }
 }
 
-class _EmptyIllustration extends StatefulWidget {
+class EmptyIllustration extends StatefulWidget {
   final NullStatusIllustration type;
   final double dimension;
 
-  const _EmptyIllustration({required this.type, required this.dimension});
+  const EmptyIllustration({
+    super.key,
+    required this.type,
+    required this.dimension,
+  });
 
   @override
-  State<_EmptyIllustration> createState() => _EmptyIllustrationState();
+  State<EmptyIllustration> createState() => _EmptyIllustrationState();
 }
 
-class _EmptyIllustrationState extends State<_EmptyIllustration>
+class _EmptyIllustrationState extends State<EmptyIllustration>
     with SingleTickerProviderStateMixin {
   static final _random = math.Random();
 

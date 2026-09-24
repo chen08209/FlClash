@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:fl_clash/common/common.dart';
@@ -84,7 +85,8 @@ class ServiceStatusCard extends ConsumerStatefulWidget {
 
 class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard>
     with ProbeStartHold<ServiceStatusCard> {
-  static const _gap = 12.0;
+  static const _gap = 16.0;
+  static const _summaryMinWidth = 160.0;
   static const _nodeMinWidth = 260.0;
 
   late final PageController _controller;
@@ -230,13 +232,13 @@ class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard>
         radius: DashboardWidgetMetrics.radiusOf(context),
         onPressed: _openSheet,
         child: Padding(
-          padding: EdgeInsetsDirectional.only(start: inset - 8, end: inset),
+          padding: EdgeInsets.symmetric(horizontal: inset),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final pickerWidth = (constraints.maxWidth * 0.3).clamp(
-                80.0,
-                112.0,
-              );
+              final pickerWidth = min(
+                constraints.maxWidth * 0.36,
+                constraints.maxWidth - _gap - _summaryMinWidth,
+              ).clamp(80.0, 136.0);
               final showNode =
                   constraints.maxWidth - pickerWidth - _gap >= _nodeMinWidth;
               return Row(
@@ -303,7 +305,6 @@ class _ServiceSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final title = context.textTheme.titleSmall?.toSoftBold;
     final secondary = context.textTheme.bodySmall?.copyWith(
       color: colorScheme.onSurfaceVariant,
     );
@@ -322,30 +323,18 @@ class _ServiceSummary extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 4,
             children: [
-              Row(
-                spacing: 8,
-                children: [
-                  Flexible(
-                    child: Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: title,
-                    ),
-                  ),
-                  Flexible(
-                    child: Semantics(
-                      liveRegion: true,
-                      label: loading ? label : null,
-                      child: loading
-                          ? SkeletonText(
-                              width: 48,
-                              style: context.textTheme.labelMedium,
-                            )
-                          : _StatusPill(label: label, color: color),
-                    ),
-                  ),
-                ],
+              Semantics(
+                label: name,
+                child: Semantics(
+                  liveRegion: true,
+                  label: loading ? label : null,
+                  child: loading
+                      ? SkeletonText(
+                          width: 48,
+                          style: context.textTheme.labelMedium,
+                        )
+                      : _StatusPill(label: label, color: color),
+                ),
               ),
               Row(
                 spacing: 6,
@@ -860,7 +849,7 @@ class _ServicePickerState extends State<_ServicePicker> {
                       Colors.black,
                       Colors.transparent,
                     ],
-                    stops: [0, 0.2, 0.8, 1],
+                    stops: [0, 0.1, 0.9, 1],
                   ).createShader(bounds),
                   child: ScrollConfiguration(
                     behavior: ScrollConfiguration.of(context).copyWith(

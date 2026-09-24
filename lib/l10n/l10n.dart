@@ -1655,6 +1655,11 @@ class AppLocalizations {
     return Intl.message('Start', name: 'start', desc: '', args: []);
   }
 
+  /// `Run time`
+  String get runTime {
+    return Intl.message('Run time', name: 'runTime', desc: '', args: []);
+  }
+
   /// `Stop`
   String get stop {
     return Intl.message('Stop', name: 'stop', desc: '', args: []);

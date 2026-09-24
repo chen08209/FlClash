@@ -1103,6 +1103,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ruleTarget": MessageLookupByLibrary.simpleMessage("ルールターゲット"),
     "rules": MessageLookupByLibrary.simpleMessage("ルール"),
     "rulesCount": m47,
+    "runTime": MessageLookupByLibrary.simpleMessage("起動時間"),
     "safeMode": MessageLookupByLibrary.simpleMessage("セーフモード"),
     "safeModeAppTitle": m48,
     "save": MessageLookupByLibrary.simpleMessage("保存"),
