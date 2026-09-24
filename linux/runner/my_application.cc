@@ -5,7 +5,7 @@
 #include <gdk/gdkx.h>
 #endif
 
-#include <window_manager/window_manager_plugin.h>
+#include <window/window_plugin.h>
 
 #include "flutter/generated_plugin_registrant.h"
 
@@ -102,7 +102,7 @@ static void my_application_before_emit(GApplication* application, GVariant* plat
 static void my_application_after_emit(GApplication* application, GVariant* platform_data) {
   MyApplication* self = MY_APPLICATION(application);
   if (self->had_window_before_emit) {
-    window_manager_plugin_activate();
+    window_plugin_activate();
   }
   G_APPLICATION_CLASS(my_application_parent_class)->after_emit(application, platform_data);
 }

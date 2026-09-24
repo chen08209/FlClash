@@ -6,7 +6,7 @@ class ThemeAction extends _$ThemeAction {
   void build() {}
 
   void updateBrightness() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    runAfterFrame(() {
       ref.read(systemBrightnessProvider.notifier).value =
           WidgetsBinding.instance.platformDispatcher.platformBrightness;
     });

@@ -32,21 +32,15 @@ void main() {
     expect(titleViewSource, isNot(contains('NSTextField')));
   });
 
-  test('macOS tray title text is drawn centered', () {
+  test('macOS tray title centres its cap-height block, right-aligned', () {
     expect(titleViewSource, contains('override var isFlipped: Bool'));
-    expect(titleViewSource, contains('.alignment = .right'));
-    expect(
-      titleViewSource,
-      contains('(bounds.height - textBounds.height) / 2'),
-    );
+    expect(titleViewSource, contains('(bounds.height - blockHeight) / 2'));
+    expect(titleViewSource, contains('x: bounds.width - width'));
   });
 
   test('macOS tray title widens instead of clipping long speeds', () {
     expect(titleViewSource, contains('invalidateIntrinsicContentSize'));
-    expect(
-      titleViewSource,
-      contains('max(TrayTitleView.width, ceil(measure(text).width))'),
-    );
+    expect(titleViewSource, contains('max(TrayTitleView.width, textWidth)'));
     expect(
       statusItemSource,
       contains('greaterThanOrEqualToConstant: TrayTitleView.width'),

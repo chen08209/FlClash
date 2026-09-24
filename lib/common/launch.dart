@@ -47,4 +47,4 @@ class AutoLaunch {
   }
 }
 
-final autoLaunch = system.isDesktop ? AutoLaunch() : null;
+final autoLaunch = system.isDesktop && !safeModeBuild ? AutoLaunch() : null;

@@ -6,7 +6,12 @@ import 'src/icons/ico.dart';
 const sourceDir = 'assets_source/images/icon';
 const pngOutputDir = 'assets/images/tray/unix';
 const icoOutputDir = 'assets/images/tray/windows';
-const statusIconNames = ['status_1', 'status_2', 'status_3'];
+const macosOutputDir = 'assets/images/tray/macos';
+const statusIconNames = ['status_1', 'status_2', 'status_3', 'status_4'];
+const macosStatusIconSources = {
+  'status_1': '$sourceDir/glyph.svg',
+  'status_4': '$sourceDir/status_4.svg',
+};
 const trayBaseSize = 18;
 const trayScales = [1, 2, 3, 4];
 const appIconSource = 'assets/images/icon.png';
@@ -33,12 +38,27 @@ Future<void> main() async {
         exitCode = 1;
         return;
       }
-      await _writeTrayVariants(renderer, source, name);
+      await _writeTrayVariants(renderer, source, name, pngOutputDir);
       await _writeIco(
         renderer,
         source,
         File('$icoOutputDir/$name.ico'),
         sizes: trayIcoSizes,
+      );
+    }
+    for (final MapEntry(key: name, value: path)
+        in macosStatusIconSources.entries) {
+      final source = File(path);
+      if (!source.existsSync()) {
+        stderr.writeln('Missing source SVG: ${source.path}');
+        exitCode = 1;
+        return;
+      }
+      await _writeTrayVariants(
+        renderer,
+        await renderer.monochrome(source),
+        name,
+        macosOutputDir,
       );
     }
     final appIcon = await renderer.wrapRaster(File(appIconSource));
@@ -54,9 +74,10 @@ Future<void> _writeTrayVariants(
   _Renderer renderer,
   File source,
   String name,
+  String outputDir,
 ) async {
   for (final scale in trayScales) {
-    final directory = scale == 1 ? pngOutputDir : '$pngOutputDir/$scale.0x';
+    final directory = scale == 1 ? outputDir : '$outputDir/$scale.0x';
     await Directory(directory).create(recursive: true);
     final output = File('$directory/$name.png');
     await output.writeAsBytes(
@@ -129,6 +150,17 @@ class _Renderer {
       '</svg>',
     );
     return wrapper;
+  }
+
+  Future<File> monochrome(File source) async {
+    final copy = File('${tempDir.path}/mono-${_basename(source)}');
+    await copy.writeAsString(
+      (await source.readAsString()).replaceAllMapped(
+        RegExp(r'\b(fill|stroke)="(?!none")[^"]*"'),
+        (match) => '${match[1]}="#000000"',
+      ),
+    );
+    return copy;
   }
 
   String _basename(File file) => file.uri.pathSegments.last;

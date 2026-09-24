@@ -1,15 +1,15 @@
 import 'dart:async';
-import 'dart:ui' show ClipOp;
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/launch.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/config.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:window_manager/window_manager.dart';
+import 'package:window/window.dart';
 
 const _windowGeometryDelay = Duration(milliseconds: 120);
 
@@ -26,6 +26,7 @@ class _WindowContainerState extends ConsumerState<WindowManager>
     with WindowListener {
   Timer? _windowGeometryTimer;
   int _windowGeometryRevision = 0;
+  int _windowBlurRevision = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +46,38 @@ class _WindowContainerState extends ConsumerState<WindowManager>
         });
       }
     });
-    windowManager.addListener(this);
+    ref.listenManual(windowBlurRequestProvider, (prev, next) {
+      if (prev != next) {
+        unawaited(_applyWindowBlur(next));
+      }
+    }, fireImmediately: true);
+    desktopWindow.addListener(this);
+  }
+
+  Future<void> _applyWindowBlur(WindowBlurRequest request) async {
+    final port = windowPort;
+    if (port == null) {
+      return;
+    }
+    final revision = ++_windowBlurRevision;
+    bool active;
+    try {
+      active = await port.setBlur(
+        enabled: request.enabled,
+        brightness: request.brightness,
+        tint: request.tint,
+      );
+    } catch (error) {
+      commonPrint.log(
+        'Window blur failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+      active = false;
+    }
+    if (!mounted || revision != _windowBlurRevision) {
+      return;
+    }
+    ref.read(windowBlurProvider.notifier).value = active;
   }
 
   @override
@@ -58,11 +90,9 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   void onWindowFocus() {
     super.onWindowFocus();
     commonPrint.log('focus');
-    render?.resume();
   }
 
-  /// Another launch, or a Dock reopen, asked for the window; showing it from
-  /// here keeps the render loop running before it becomes visible.
+  /// Another launch, or a Dock reopen, asked for the window.
   @override
   void onWindowActivate() {
     super.onWindowActivate();
@@ -113,26 +143,8 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   }
 
   @override
-  void onWindowMove() {
-    super.onWindowMove();
-    _scheduleWindowGeometryCapture();
-  }
-
-  @override
-  void onWindowMoved() {
-    super.onWindowMoved();
-    _scheduleWindowGeometryCapture();
-  }
-
-  @override
-  void onWindowResize() {
-    super.onWindowResize();
-    _scheduleWindowGeometryCapture();
-  }
-
-  @override
-  void onWindowResized() {
-    super.onWindowResized();
+  void onWindowGeometryChanged() {
+    super.onWindowGeometryChanged();
     _scheduleWindowGeometryCapture();
   }
 
@@ -141,7 +153,7 @@ class _WindowContainerState extends ConsumerState<WindowManager>
     _invalidateWindowGeometryCapture();
     super.onWindowMaximize();
     if (system.isWindows) {
-      unawaited(windowManager.setWindowCornerPreference(round: false));
+      unawaited(desktopWindow.setRoundedCorners(false));
     }
   }
 
@@ -149,7 +161,7 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   void onWindowUnmaximize() {
     super.onWindowUnmaximize();
     if (system.isWindows) {
-      unawaited(windowManager.setWindowCornerPreference(round: true));
+      unawaited(desktopWindow.setRoundedCorners(true));
     }
     _scheduleWindowGeometryCapture();
   }
@@ -171,14 +183,12 @@ class _WindowContainerState extends ConsumerState<WindowManager>
     _invalidateWindowGeometryCapture();
     ref.read(storeActionProvider.notifier).savePreferencesDebounce();
     commonPrint.log('minimize');
-    render?.pause();
     super.onWindowMinimize();
   }
 
   @override
   void onWindowRestore() {
     commonPrint.log('restore');
-    render?.resume();
     super.onWindowRestore();
     _scheduleWindowGeometryCapture();
   }
@@ -186,7 +196,7 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   @override
   void dispose() {
     _invalidateWindowGeometryCapture();
-    windowManager.removeListener(this);
+    desktopWindow.removeListener(this);
     super.dispose();
   }
 }
@@ -294,7 +304,7 @@ class WindowCaptionState {
 class WindowCaptionController extends ValueNotifier<WindowCaptionState>
     with WindowListener {
   WindowCaptionController() : super(const WindowCaptionState()) {
-    windowManager.addListener(this);
+    desktopWindow.addListener(this);
     unawaited(_syncFromWindow());
   }
 
@@ -302,9 +312,9 @@ class WindowCaptionController extends ValueNotifier<WindowCaptionState>
 
   Future<void> _syncFromWindow() async {
     final states = await Future.wait<bool>([
-      windowManager.isAlwaysOnTop(),
-      windowManager.isMaximized(),
-      windowManager.isFullScreen(),
+      desktopWindow.isAlwaysOnTop(),
+      desktopWindow.isMaximized(),
+      desktopWindow.isFullScreen(),
     ]);
     _set(
       WindowCaptionState(
@@ -345,25 +355,25 @@ class WindowCaptionController extends ValueNotifier<WindowCaptionState>
   }
 
   Future<void> toggleMaximized() async {
-    if (await windowManager.isFullScreen()) {
-      await windowManager.setFullScreen(false);
-    } else if (await windowManager.isMaximized()) {
-      await windowManager.unmaximize();
+    if (await desktopWindow.isFullScreen()) {
+      await desktopWindow.setFullScreen(false);
+    } else if (await desktopWindow.isMaximized()) {
+      await desktopWindow.unmaximize();
     } else {
-      await windowManager.maximize();
+      await desktopWindow.maximize();
     }
   }
 
   Future<void> togglePin() async {
-    final isPinned = await windowManager.isAlwaysOnTop();
-    await windowManager.setAlwaysOnTop(!isPinned);
-    _set(value.copyWith(isPinned: await windowManager.isAlwaysOnTop()));
+    final isPinned = await desktopWindow.isAlwaysOnTop();
+    await desktopWindow.setAlwaysOnTop(!isPinned);
+    _set(value.copyWith(isPinned: await desktopWindow.isAlwaysOnTop()));
   }
 
   @override
   void dispose() {
     _disposed = true;
-    windowManager.removeListener(this);
+    desktopWindow.removeListener(this);
     super.dispose();
   }
 }
@@ -386,9 +396,12 @@ class _WindowHeaderState extends ConsumerState<WindowHeader> {
 
   @override
   Widget build(BuildContext context) {
+    final translucent =
+        ref.watch(windowBlurProvider) && !ref.watch(isMobileViewProvider);
     return WindowHeaderBar(
       height: kHeaderHeight,
-      onDragStart: windowManager.startDragging,
+      translucent: translucent,
+      onDragStart: desktopWindow.startDragging,
       onDoubleTap: caption.toggleMaximized,
       title: system.isMacOS ? const Text(appName) : null,
       actions: system.isMacOS
@@ -396,7 +409,7 @@ class _WindowHeaderState extends ConsumerState<WindowHeader> {
           : WindowHeaderActions(
               state: caption,
               onPin: caption.togglePin,
-              onMinimize: windowManager.minimize,
+              onMinimize: desktopWindow.minimize,
               onMaximize: caption.toggleMaximized,
               onClose: () {
                 ref.read(systemActionProvider.notifier).handleClose();
@@ -412,6 +425,7 @@ class WindowHeaderBar extends StatelessWidget {
     required this.height,
     required this.onDragStart,
     required this.onDoubleTap,
+    this.translucent = false,
     this.title,
     this.actions,
   });
@@ -419,15 +433,18 @@ class WindowHeaderBar extends StatelessWidget {
   final double height;
   final VoidCallback onDragStart;
   final VoidCallback onDoubleTap;
+  final bool translucent;
   final Widget? title;
   final Widget? actions;
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
     return Material(
-      shape: Border(
-        bottom: BorderSide(color: context.colorScheme.outlineVariant),
-      ),
+      color: translucent ? Colors.transparent : null,
+      shape: translucent
+          ? null
+          : Border(bottom: BorderSide(color: colorScheme.outlineVariant)),
       child: SizedBox(
         height: height,
         child: Stack(
@@ -440,7 +457,11 @@ class WindowHeaderBar extends StatelessWidget {
                 },
                 onDoubleTap: onDoubleTap,
                 child: ColoredBox(
-                  color: context.colorScheme.surfaceContainerHighest,
+                  color: translucent
+                      ? colorScheme.surfaceContainer.withValues(
+                          alpha: kSidebarBlurOpacity,
+                        )
+                      : colorScheme.surfaceContainerHighest,
                 ),
               ),
             ),
@@ -529,8 +550,9 @@ class WindowHeaderActions extends StatelessWidget {
                   iconSize: WidgetStatePropertyAll(pinIconSize),
                 ),
                 onPressed: onPin,
-                icon: Icon(
-                  state.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                icon: AnimatedGlyph(
+                  glyph: AppGlyphs.pin,
+                  filled: state.isPinned,
                 ),
               ),
             ),
@@ -571,93 +593,6 @@ class WindowHeaderActions extends StatelessWidget {
           ],
         );
       },
-    );
-  }
-}
-
-enum CaptionGlyph { minimize, maximize, restore, close }
-
-/// Painted rather than taken from an icon font so every caption button keeps
-/// the same one pixel stroke weight on every platform.
-class CaptionIcon extends StatelessWidget {
-  const CaptionIcon(this.glyph, {super.key});
-
-  final CaptionGlyph glyph;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = IconTheme.of(context).color ?? context.colorScheme.onSurface;
-    return CustomPaint(
-      size: const Size.square(captionGlyphSize),
-      painter: _CaptionGlyphPainter(glyph: glyph, color: color),
-    );
-  }
-}
-
-class _CaptionGlyphPainter extends CustomPainter {
-  const _CaptionGlyphPainter({required this.glyph, required this.color});
-
-  final CaptionGlyph glyph;
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..strokeJoin = StrokeJoin.round;
-    const corner = Radius.circular(1);
-    // Every coordinate sits on a half pixel so a one pixel stroke covers a
-    // single device pixel at 100% scaling.
-    final box = (Offset.zero & size).deflate(0.5);
-    switch (glyph) {
-      case CaptionGlyph.minimize:
-        final y = (size.height / 2).floorToDouble() + 0.5;
-        canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-      case CaptionGlyph.maximize:
-        canvas.drawRRect(RRect.fromRectAndRadius(box, corner), paint);
-      case CaptionGlyph.restore:
-        const offset = 2.0;
-        final front = Rect.fromLTRB(
-          box.left,
-          box.top + offset,
-          box.right - offset,
-          box.bottom,
-        );
-        final back = front.shift(const Offset(offset, -offset));
-        canvas.drawRRect(RRect.fromRectAndRadius(front, corner), paint);
-        canvas.save();
-        canvas.clipRect(front.inflate(0.5), clipOp: ClipOp.difference);
-        canvas.drawRRect(RRect.fromRectAndRadius(back, corner), paint);
-        canvas.restore();
-      case CaptionGlyph.close:
-        paint.strokeCap = StrokeCap.round;
-        canvas.drawLine(box.topLeft, box.bottomRight, paint);
-        canvas.drawLine(box.topRight, box.bottomLeft, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_CaptionGlyphPainter oldDelegate) =>
-      glyph != oldDelegate.glyph || color != oldDelegate.color;
-}
-
-class AppIcon extends StatelessWidget {
-  const AppIcon({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: ShapeDecoration(
-        color: context.colorScheme.surfaceContainerHighest,
-        shape: AppShape.md,
-      ),
-      padding: const EdgeInsets.all(8),
-      child: Transform.translate(
-        offset: const Offset(0, -1),
-        child: Image.asset('assets/images/icon.png', width: 34, height: 34),
-      ),
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/locale_manager.dart';
 import 'package:fl_clash/manager/tray_manager.dart';
@@ -13,7 +15,7 @@ import 'package:tray/tray.dart';
 import '../helpers/test_profiles.dart';
 
 const _trayChannel = MethodChannel('tray');
-const _windowChannel = MethodChannel('window_manager');
+const _windowChannel = MethodChannel('window');
 const _codec = StandardMethodCodec();
 
 class _RecordingSystemAction extends SystemAction {
@@ -31,6 +33,19 @@ class _FailingSystemAction extends SystemAction {
   @override
   Future<void> updateTray() async {
     throw StateError('tray boom');
+  }
+}
+
+class _SlowFirstFailureSystemAction extends SystemAction {
+  static int updateTrayCount = 0;
+  static Completer<void> firstUpdate = Completer<void>();
+
+  @override
+  Future<void> updateTray() async {
+    if (updateTrayCount++ == 0) {
+      await firstUpdate.future;
+      throw StateError('tray boom');
+    }
   }
 }
 
@@ -183,6 +198,31 @@ void main() {
         .update((state) => state.copyWith(mixedPort: state.mixedPort + 1));
     await tester.pumpAndSettle();
 
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a change made during a failing update still reaches the tray', (
+    tester,
+  ) async {
+    _SlowFirstFailureSystemAction.updateTrayCount = 0;
+    _SlowFirstFailureSystemAction.firstUpdate = Completer<void>();
+    await pumpTrayManager(
+      tester,
+      systemAction: _SlowFirstFailureSystemAction.new,
+    );
+
+    for (var i = 0; i < 2; i++) {
+      container
+          .read(patchClashConfigProvider.notifier)
+          .update((state) => state.copyWith(mixedPort: state.mixedPort + 1));
+      await tester.pump();
+    }
+    expect(_SlowFirstFailureSystemAction.updateTrayCount, 1);
+
+    _SlowFirstFailureSystemAction.firstUpdate.complete();
+    await tester.pumpAndSettle();
+
+    expect(_SlowFirstFailureSystemAction.updateTrayCount, 2);
     expect(tester.takeException(), isNull);
   });
 
