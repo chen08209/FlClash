@@ -2,8 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/x509"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
@@ -11,6 +15,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"testing"
 	"time"
 
@@ -19,6 +24,7 @@ import (
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/adapter/provider"
 	"github.com/metacubex/mihomo/common/utils"
+	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
 	cp "github.com/metacubex/mihomo/constant/provider"
@@ -110,18 +116,20 @@ func TestHandleSuspendRefreshesHealthChecksOnResume(t *testing.T) {
 		refreshHealthChecks = previous
 		isRunning.Store(previousRunning)
 		isSuspended.Store(false)
+		healthChecksStale.Store(false)
 		tunnel.OnRunning()
 	})
 
 	isSuspended.Store(false)
+	healthChecksStale.Store(false)
 	isRunning.Store(true)
 
-	handleSuspend(false)
+	handleSuspend(false, true)
 	if got := refreshes.Load(); got != 0 {
 		t.Errorf("refreshes = %d, want none: the device was never suspended", got)
 	}
 
-	handleSuspend(true)
+	handleSuspend(true, false)
 	if !isSuspended.Load() {
 		t.Error("handleSuspend(true) did not record the suspension")
 	}
@@ -129,7 +137,7 @@ func TestHandleSuspendRefreshesHealthChecksOnResume(t *testing.T) {
 		t.Errorf("refreshes = %d, want none while the device is still suspended", got)
 	}
 
-	handleSuspend(false)
+	handleSuspend(false, true)
 	if isSuspended.Load() {
 		t.Error("handleSuspend(false) did not clear the suspension")
 	}
@@ -137,7 +145,7 @@ func TestHandleSuspendRefreshesHealthChecksOnResume(t *testing.T) {
 		t.Errorf("refreshes = %d, want exactly one on resume", got)
 	}
 
-	handleSuspend(false)
+	handleSuspend(false, true)
 	if got := refreshes.Load(); got != 1 {
 		t.Errorf("refreshes = %d, want a redundant resume to change nothing", got)
 	}
@@ -145,10 +153,45 @@ func TestHandleSuspendRefreshesHealthChecksOnResume(t *testing.T) {
 	// The service resumes the core on its way down, and probing every node
 	// through a teardown only produces failures nobody asked for.
 	isRunning.Store(false)
-	handleSuspend(true)
-	handleSuspend(false)
+	handleSuspend(true, false)
+	handleSuspend(false, true)
 	if got := refreshes.Load(); got != 1 {
 		t.Errorf("refreshes = %d, want no probe while the listeners are stopped", got)
+	}
+}
+
+func TestHandleSuspendHoldsTheRefreshUntilTheScreenIsOn(t *testing.T) {
+	var refreshes atomic.Int32
+
+	previous := refreshHealthChecks
+	previousRunning := isRunning.Load()
+	refreshHealthChecks = func() { refreshes.Add(1) }
+	t.Cleanup(func() {
+		refreshHealthChecks = previous
+		isRunning.Store(previousRunning)
+		isSuspended.Store(false)
+		healthChecksStale.Store(false)
+		tunnel.OnRunning()
+	})
+
+	isSuspended.Store(false)
+	healthChecksStale.Store(false)
+	isRunning.Store(true)
+
+	handleSuspend(true, false)
+	handleSuspend(false, false)
+	if isSuspended.Load() {
+		t.Error("a maintenance window has to resume the core, or nothing syncs in it")
+	}
+	handleSuspend(true, false)
+	handleSuspend(false, false)
+	if got := refreshes.Load(); got != 0 {
+		t.Errorf("refreshes = %d, want none in maintenance windows with the screen off", got)
+	}
+
+	handleSuspend(false, true)
+	if got := refreshes.Load(); got != 1 {
+		t.Errorf("refreshes = %d, want the held refresh once the screen turns on", got)
 	}
 }
 
@@ -371,6 +414,27 @@ func TestHandleValidateConfigAcceptsAValidFile(t *testing.T) {
 	}
 }
 
+func TestHandleValidateProxiesReportsEachProxyInPlace(t *testing.T) {
+	got := handleValidateProxies([]map[string]any{
+		{"name": "ok", "type": "socks5", "server": "127.0.0.1", "port": 1080},
+		{"name": "untyped", "server": "127.0.0.1", "port": 1080},
+		{"name": "unknown", "type": "nope"},
+	})
+
+	if len(got) != 3 {
+		t.Fatalf("handleValidateProxies returned %d results, want 3", len(got))
+	}
+	if got[0] != "" {
+		t.Errorf("valid proxy reported %q", got[0])
+	}
+	if !strings.Contains(got[1], "missing type") {
+		t.Errorf("untyped proxy reported %q, want missing type", got[1])
+	}
+	if !strings.Contains(got[2], "unsupport") {
+		t.Errorf("unknown type reported %q, want unsupported", got[2])
+	}
+}
+
 func TestHandleValidateConfigReportsAMissingFile(t *testing.T) {
 	got := handleValidateConfig(filepath.Join(t.TempDir(), "absent.yaml"))
 
@@ -475,7 +539,7 @@ func TestHandleChangeProxyDoesNotWaitOutAConfigApply(t *testing.T) {
 
 	answered := make(chan string, 1)
 	go func() {
-		answered <- handleChangeProxy(&ChangeProxyParams{GroupName: "absent", ProxyName: "node"})
+		answered <- handleChangeProxy(&ChangeProxyParams{GroupName: "absent", ProxyName: "node"}).Message
 	}()
 
 	select {
@@ -598,19 +662,72 @@ func (p *failingProxyProvider) Update() error {
 	return p.err
 }
 
-func TestProviderRequestErrorCode(t *testing.T) {
+func TestClassifyProviderRequestError(t *testing.T) {
 	tests := []struct {
 		err  error
-		want string
+		want providerRequestFailure
+		ok   bool
 	}{
-		{err: errors.New("503 Service Unavailable"), want: "request_bad_response"},
-		{err: fmt.Errorf("fetch: %w", context.DeadlineExceeded), want: "request_error"},
-		{err: errors.New("proxy 0: unsupported type"), want: ""},
+		{
+			err:  errors.New("503 Service Unavailable"),
+			want: providerRequestFailure{code: "request_bad_response", statusCode: 503},
+			ok:   true,
+		},
+		{
+			err:  fmt.Errorf("fetch: %w", context.DeadlineExceeded),
+			want: providerRequestFailure{code: "request_error", reason: "timeout"},
+			ok:   true,
+		},
+		{
+			err:  &url.Error{Op: "Get", URL: "https://sub.example", Err: &net.DNSError{Err: "no such host", Name: "sub.example"}},
+			want: providerRequestFailure{code: "request_error", reason: "dns"},
+			ok:   true,
+		},
+		{
+			err:  fmt.Errorf("dial: %w", resolver.ErrIPNotFound),
+			want: providerRequestFailure{code: "request_error", reason: "dns"},
+			ok:   true,
+		},
+		{
+			err:  &url.Error{Op: "Get", URL: "https://sub.example", Err: x509.UnknownAuthorityError{}},
+			want: providerRequestFailure{code: "request_error", reason: "tls"},
+			ok:   true,
+		},
+		{
+			err:  &url.Error{Op: "Get", URL: "https://sub.example", Err: &net.OpError{Op: "dial", Net: "tcp", Err: syscall.ECONNREFUSED}},
+			want: providerRequestFailure{code: "request_error", reason: "connection"},
+			ok:   true,
+		},
+		{
+			err:  &url.Error{Op: "Get", URL: "https://sub.example", Err: errors.New("unexpected")},
+			want: providerRequestFailure{code: "request_error"},
+			ok:   true,
+		},
+		{err: errors.New("proxy 0: unsupported type")},
 	}
 	for _, test := range tests {
-		if got := providerRequestErrorCode(test.err); got != test.want {
-			t.Errorf("providerRequestErrorCode(%q) = %q, want %q", test.err, got, test.want)
+		got, ok := classifyProviderRequestError(test.err)
+		if got != test.want || ok != test.ok {
+			t.Errorf("classifyProviderRequestError(%q) = %+v, %v, want %+v, %v", test.err, got, ok, test.want, test.ok)
 		}
+	}
+}
+
+func TestUpdateExternalProviderReportsRequestFailureDetails(t *testing.T) {
+	const name = "subscription"
+	provider := &failingProxyProvider{
+		fakeProxyProvider: fakeProxyProvider{name: name, vehicle: cp.HTTP},
+		err:               errors.New("403 Forbidden"),
+	}
+	withTunnelProviders(t, map[string]cp.ProxyProvider{name: provider}, nil)
+
+	methodError := handleUpdateExternalProvider(name)
+	if methodError == nil || methodError.Code != "request_bad_response" {
+		t.Fatalf("methodError = %+v, want request_bad_response", methodError)
+	}
+	details, ok := methodError.Details.(map[string]any)
+	if !ok || details["providerName"] != name || details["statusCode"] != 403 {
+		t.Errorf("details = %#v, want providerName %q and statusCode 403", methodError.Details, name)
 	}
 }
 
@@ -820,6 +937,27 @@ func TestForceGCReleasesTheProxyCache(t *testing.T) {
 	tunnel.AllProxies()
 	if provider.readCount() == warm {
 		t.Error("AllProxies still answered from cache after a forced GC, so the replaced proxies stay pinned")
+	}
+}
+
+func TestHandleGetMemoryStatsReportsALiveRuntime(t *testing.T) {
+	stats := handleGetMemoryStats()
+
+	if stats.HeapInuse == 0 {
+		t.Error("a running Go program always has heap in use; a zero means the runtime read was dropped")
+	}
+	encoded, err := json.Marshal(stats)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fields map[string]uint64
+	if err := json.Unmarshal(encoded, &fields); err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"rss", "heapInuse", "heapIdle", "stackInuse", "runtimeOther"} {
+		if _, ok := fields[key]; !ok {
+			t.Errorf("memory stats lost the %q field the Dart model reads", key)
+		}
 	}
 }
 

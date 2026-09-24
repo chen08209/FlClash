@@ -70,8 +70,9 @@ Java_com_follow_clash_core_Core_getTotalTraffic(JNIEnv *env, jobject thiz,
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_follow_clash_core_Core_suspended(JNIEnv *env, jobject thiz, jboolean suspended) {
-    suspend(suspended);
+Java_com_follow_clash_core_Core_suspended(JNIEnv *env, jobject thiz, jboolean suspended,
+                                          jboolean interactive) {
+    suspend(suspended, interactive);
 }
 
 extern "C"

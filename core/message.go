@@ -29,25 +29,37 @@ const (
 	stateMessageClass messageClass = iota
 	priorityMessageClass
 	bulkMessageClass
+	// Shares the bulk queue but never evicts from it: a lookup burst would
+	// otherwise push out the request events the connection list is built from.
+	yieldingBulkMessageClass
 )
 
 func classOfMessage(message Message) messageClass {
 	switch message.Type {
-	case LoadedMessage, GeoUpdateMessage:
+	case LoadedMessage, GeoUpdateMessage, RouteChangedMessage:
 		return stateMessageClass
 	case LogMessage, RequestMessage:
 		return bulkMessageClass
+	case DnsMessage:
+		return yieldingBulkMessageClass
 	default:
 		return priorityMessageClass
 	}
 }
 
+// Request and DNS events fire per connection and per query for as long as the
+// Android service runs, engine or not; unheard, they are not worth encoding.
 func sendMessage(message Message) {
+	if !hasEventListener() {
+		return
+	}
 	switch classOfMessage(message) {
 	case stateMessageClass:
 		enqueueState(stateMessageQueue, message)
 	case bulkMessageClass:
 		enqueueLatest(bulkMessageQueue, message)
+	case yieldingBulkMessageClass:
+		enqueueState(bulkMessageQueue, message)
 	default:
 		enqueueLatest(priorityMessageQueue, message)
 	}
