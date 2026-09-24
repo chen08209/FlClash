@@ -261,7 +261,6 @@ enum FunctionTag {
   updateDelay,
   vpnTip,
   autoLaunch,
-  renderPause,
   updatePageIndex,
   pageChange,
   proxiesTabChange,

@@ -20,11 +20,8 @@ dependencies:
   path_provider: ^2.1.5
   path: ^1.9.0
   shared_preferences: ^2.5.3
-  window_manager:
-    git:
-      url: https://github.com/chen08209/window_manager
-      ref: v0.5.1-flclash.3
-      path: packages/window_manager
+  window:
+    path: plugins/window
   dynamic_color: ^2.1.0
   proxy:
     path: plugins/proxy
@@ -109,7 +106,9 @@ flutter:
     - assets/images/avatar/
     - assets/images/empty/
     - path: assets/images/tray/unix/
-      platforms: [ macos, linux ]
+      platforms: [ linux ]
+    - path: assets/images/tray/macos/
+      platforms: [ macos ]
     - path: assets/images/tray/windows/
       platforms: [ windows ]
   fonts:

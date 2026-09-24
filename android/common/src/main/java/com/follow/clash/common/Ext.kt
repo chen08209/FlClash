@@ -59,19 +59,24 @@ val Intent.toPendingIntent: PendingIntent
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 
-fun Service.startForeground(notification: Notification) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        val manager = getSystemService(NotificationManager::class.java)
-        var channel = manager?.getNotificationChannel(GlobalState.NOTIFICATION_CHANNEL)
-        if (channel == null) {
-            channel = NotificationChannel(
-                GlobalState.NOTIFICATION_CHANNEL,
-                getString(R.string.service_channel_name),
-                NotificationManager.IMPORTANCE_LOW,
-            )
-            manager?.createNotificationChannel(channel)
-        }
+fun Context.ensureNotificationChannel() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        return
     }
+    val manager = getSystemService(NotificationManager::class.java) ?: return
+    if (manager.getNotificationChannel(GlobalState.NOTIFICATION_CHANNEL) != null) {
+        return
+    }
+    manager.createNotificationChannel(
+        NotificationChannel(
+            GlobalState.NOTIFICATION_CHANNEL,
+            getString(R.string.service_channel_name),
+            NotificationManager.IMPORTANCE_LOW,
+        ),
+    )
+}
+
+fun Service.startForeground(notification: Notification) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
         startForeground(
             GlobalState.NOTIFICATION_ID,
