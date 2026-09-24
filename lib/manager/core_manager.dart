@@ -8,6 +8,7 @@ import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
+import 'package:fl_clash/providers/route_state.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,7 +40,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     // the previous one hides the error and looks like the switch was lost.
     ref.listenManual(currentProfileIdProvider, (prev, next) {
       if (prev == next) return;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      runAfterFrame(() {
         unawaited(ref.read(setupActionProvider.notifier).fullSetup());
       });
     });
@@ -93,7 +94,15 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   @override
   void onRequest(TrackerInfo trackerInfo) async {
     ref.read(requestsProvider.notifier).addRequest(trackerInfo);
+    ref.read(requestCountProvider.notifier).update((count) => count + 1);
     super.onRequest(trackerInfo);
+  }
+
+  @override
+  void onDns(DnsQuery dnsQuery) {
+    ref.read(dnsQueriesProvider.notifier).addQuery(dnsQuery);
+    ref.read(dnsQueryCountProvider.notifier).update((count) => count + 1);
+    super.onDns(dnsQuery);
   }
 
   @override
@@ -130,5 +139,11 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         .read(geoResourceActionProvider.notifier)
         .handleCoreUpdate(geoType, updating, skipped, error);
     super.onGeoUpdate(geoType, updating, skipped, error);
+  }
+
+  @override
+  void onRouteChanged(RouteSnapshot snapshot) {
+    ref.read(routeTrackerProvider.notifier).applySnapshot(snapshot);
+    super.onRouteChanged(snapshot);
   }
 }

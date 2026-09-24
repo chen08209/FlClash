@@ -11,6 +11,8 @@ extern void initialize_jni(JavaVM *vm, JNIEnv *env);
 
 extern jstring jni_new_string(JNIEnv *env, const char *str);
 
+extern jbyteArray jni_new_bytes(JNIEnv *env, const char *str);
+
 extern char *jni_get_string(JNIEnv *env, jstring str);
 
 extern void jni_attach_thread(scoped_jni *jni);
@@ -34,3 +36,4 @@ extern bool jni_clear_exception(JNIEnv *env);
 #define del_global(obj) env->DeleteGlobalRef(obj)
 #define get_string(jstr) jni_get_string(env, jstr)
 #define new_string(cstr) jni_new_string(env, cstr)
+#define new_bytes(cstr) jni_new_bytes(env, cstr)
