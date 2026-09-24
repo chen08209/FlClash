@@ -116,16 +116,42 @@ class ProxyGroupsDao extends DatabaseAccessor<Database>
     );
   }
 
-  Future<void> renameUse({required String oldName, required String newName}) {
-    return customUpdate(
-      'UPDATE ${proxyGroups.entityName} '
-      'SET ${proxyGroups.use.name} = REPLACE(${proxyGroups.use.name}, ?, ?) '
-      'WHERE ${proxyGroups.profileId.name} IS NOT NULL',
-      variables: [
-        Variable.withString('"$oldName"'),
-        Variable.withString('"$newName"'),
-      ],
-    );
+  Future<Set<int>> profileIdsUsing(String provider) async {
+    final query = selectOnly(proxyGroups)
+      ..addColumns([proxyGroups.profileId, proxyGroups.use])
+      ..where(proxyGroups.profileId.isNotNull() & proxyGroups.use.isNotNull());
+    return {
+      for (final row in await query.get())
+        if (row.readWithConverter(proxyGroups.use)!.contains(provider))
+          row.read(proxyGroups.profileId)!,
+    };
+  }
+
+  Future<void> renameUse(
+    Iterable<int> profileIds, {
+    required String oldName,
+    required String newName,
+  }) async {
+    if (profileIds.isEmpty) {
+      return;
+    }
+    final rows =
+        await (proxyGroups.select()
+              ..where((t) => t.profileId.isIn(profileIds) & t.use.isNotNull()))
+            .get();
+    for (final row in rows) {
+      final use = row.use!;
+      if (!use.contains(oldName)) {
+        continue;
+      }
+      await (proxyGroups.update()..where((t) => t.id.equals(row.id))).write(
+        ProxyGroupsCompanion(
+          use: Value([
+            for (final name in use) name == oldName ? newName : name,
+          ]),
+        ),
+      );
+    }
   }
 
   void setAllWithBatch(

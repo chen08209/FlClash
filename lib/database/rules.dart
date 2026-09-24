@@ -240,10 +240,14 @@ class RulesDao extends DatabaseAccessor<Database> with _$RulesDaoMixin {
     return stmt.write(RulesCompanion(ruleTarget: Value(newName)));
   }
 
-  Future<int> renameCustomRuleProvider({
+  Future<int> renameCustomRuleProvider(
+    Iterable<int> profileIds, {
     required String oldName,
     required String newName,
-  }) {
+  }) async {
+    if (profileIds.isEmpty) {
+      return 0;
+    }
     final stmt = rules.update()
       ..where(
         (t) =>
@@ -254,10 +258,35 @@ class RulesDao extends DatabaseAccessor<Database> with _$RulesDaoMixin {
         (t) => t.id.isInQuery(
           selectOnly(profileRuleLinks)
             ..addColumns([profileRuleLinks.ruleId])
-            ..where(profileRuleLinks.scene.equalsValue(RuleScene.custom)),
+            ..where(
+              profileRuleLinks.profileId.isIn(profileIds) &
+                  profileRuleLinks.scene.equalsValue(RuleScene.custom),
+            ),
         ),
       );
     return stmt.write(RulesCompanion(ruleProvider: Value(newName)));
+  }
+
+  Future<Set<int>> profileIdsUsingCustomRuleProvider(String provider) async {
+    final query =
+        selectOnly(rules, distinct: true).join([
+            innerJoin(
+              profileRuleLinks,
+              profileRuleLinks.ruleId.equalsExp(rules.id),
+              useColumns: false,
+            ),
+          ])
+          ..addColumns([profileRuleLinks.profileId])
+          ..where(
+            rules.ruleAction.equalsValue(RuleAction.RULE_SET) &
+                rules.ruleProvider.equals(provider) &
+                profileRuleLinks.scene.equalsValue(RuleScene.custom) &
+                profileRuleLinks.profileId.isNotNull(),
+          );
+    return {
+      for (final row in await query.get())
+        row.read(profileRuleLinks.profileId)!,
+    };
   }
 
   JoinedSelectStatement<HasResultSet, dynamic> _getSelectStatement({

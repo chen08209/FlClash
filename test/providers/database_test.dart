@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:drift/native.dart';
+import 'package:fl_clash/common/feature.dart';
 // `Profiles`, `Scripts` and `ProxyGroups` name both a drift table and a
 // notifier, so the schema side is imported behind a prefix.
 import 'package:fl_clash/database/database.dart' as db;
@@ -132,21 +133,36 @@ void main() {
       },
     );
 
-    test('put steps past a label an app-level proxy provider holds', () async {
+    Future<void> putAppProxyProvider(String label) async {
       await testDatabase.clashProvidersDao.putAll([
-        const ClashProvider(
+        ClashProvider(
           id: 9,
           kind: ProviderKind.proxy,
-          label: 'Shared nodes',
+          label: label,
           url: 'https://example.com/nodes.yaml',
         ).toCompanion(),
       ]);
       await keepAlive(clashProvidersProvider(ProviderKind.proxy));
+    }
+
+    test('put steps past a label an app-level proxy provider holds', () async {
+      feature = const Feature(customProviders: true);
+      addTearDown(() => feature = const Feature());
+      await putAppProxyProvider('Shared nodes');
 
       notifier.put(profile(1, label: 'Shared nodes'));
       await pumpEventQueue();
 
       expect(read().single.label, 'Shared nodes(1)');
+    });
+
+    test('put ignores app-level providers while they are off', () async {
+      await putAppProxyProvider('Shared nodes');
+
+      notifier.put(profile(1, label: 'Shared nodes'));
+      await pumpEventQueue();
+
+      expect(read().single.label, 'Shared nodes');
     });
 
     test('put falls back to the id when the profile has no label', () async {
@@ -172,6 +188,31 @@ void main() {
         expect(read().single.label, 'Stable');
       },
     );
+
+    test('put carries a new label into the groups it is told of', () async {
+      for (final (id, label) in [(1, 'Home'), (2, 'Work'), (3, 'Other')]) {
+        notifier.put(profile(id, label: label));
+      }
+      await pumpEventQueue();
+      for (final id in [2, 3]) {
+        await testDatabase.proxyGroups.put(
+          ProxyGroup(
+            id: id,
+            name: 'Group',
+            type: GroupType.Selector,
+            use: const ['Home'],
+          ).toCompanion(id),
+        );
+      }
+
+      notifier.put(profile(1, label: 'Away'), renameIn: const [2]);
+      await pumpEventQueue();
+
+      Future<List<String>?> use(int id) async =>
+          (await testDatabase.proxyGroupsDao.query(id).get()).single.use;
+      expect(await use(2), ['Away']);
+      expect(await use(3), ['Home']);
+    });
 
     test('put restores the previous list when the write fails', () async {
       notifier.put(profile(1, label: 'Kept'));
