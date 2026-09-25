@@ -88,7 +88,20 @@ extension UsedProxyExtension on UsedProxy {
   String get value => UsedProxyExtension.valueList[index];
 }
 
-enum Mode { rule, global, direct }
+enum Mode {
+  rule,
+  global,
+  direct;
+
+  static Mode fromString(String mode) {
+    return switch (mode) {
+      'rule' => Mode.rule,
+      'global' => Mode.global,
+      'direct' => Mode.direct,
+      _ => throw ArgumentError('unknown mode: $mode'),
+    };
+  }
+}
 
 enum ViewMode { mobile, laptop, desktop }
 

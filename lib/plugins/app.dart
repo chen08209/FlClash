@@ -5,10 +5,24 @@ import 'package:fl_clash/common/boot_record.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 const _platformProbeTimeout = Duration(seconds: 2);
+
+/// Extra shortcut surfaces for external automation (Samsung Modes and
+/// Routines, Tasker). Mode shortcuts are on by default — three fixed entries;
+/// profile shortcuts are opt-in because they multiply with the profile count.
+const showModeShortcuts = bool.fromEnvironment(
+  'flclash.show_mode_shortcuts',
+  defaultValue: true,
+);
+const showProfileShortcuts = bool.fromEnvironment(
+  'flclash.show_profile_shortcuts',
+  defaultValue: false,
+);
 
 class App {
   static App? _instance;
@@ -26,6 +40,37 @@ class App {
           }
         case 'packagesChanged':
           onPackagesChanged?.call();
+        case 'changeMode':
+          if (call.arguments is String) {
+            final mode = Mode.fromString(call.arguments as String);
+            globalState.container
+                .read(setupActionProvider.notifier)
+                .changeMode(mode);
+            // configProvider listener in app_manager debounces a save on any
+            // config change — no explicit persistence needed here.
+          }
+        case 'selectProfile':
+          if (call.arguments is int) {
+            final profiles = globalState.container.read(profilesProvider);
+            final profile = profiles.cast<Profile?>().firstWhere(
+              (p) => p?.id == call.arguments,
+              orElse: () => null,
+            );
+            if (profile != null) {
+              // The single source of truth for "which profile is active" is
+              // currentProfileIdProvider — CoreManager listens on it and runs
+              // fullSetup(). setProfileAndAutoApply alone only reorders the list,
+              // so a shortcut/routine firing it would silently do nothing when
+              // another profile is already current. Set the id, then apply.
+              globalState.container
+                      .read(currentProfileIdProvider.notifier)
+                      .value =
+                  profile.id;
+              globalState.container
+                  .read(profilesActionProvider.notifier)
+                  .setProfileAndAutoApply(profile);
+            }
+          }
         default:
           throw MissingPluginException();
       }
@@ -136,10 +181,20 @@ class App {
   }
 
   Future<bool?> initShortcuts() async {
-    return methodChannel.invokeMethod<bool>(
-      'initShortcuts',
-      currentAppLocalizations.toggle,
-    );
+    final labels = <String, String>{
+      'start': currentAppLocalizations.start,
+      'stop': currentAppLocalizations.stop,
+      'toggle': currentAppLocalizations.toggle,
+      if (showModeShortcuts) ...{
+        'mode_rule': Mode.rule.label,
+        'mode_global': Mode.global.label,
+        'mode_direct': Mode.direct.label,
+      },
+      if (showProfileShortcuts)
+        for (final profile in globalState.container.read(profilesProvider))
+          'profile_${profile.id}': profile.realLabel,
+    };
+    return methodChannel.invokeMethod<bool>('initShortcuts', labels);
   }
 
   Future<bool?> updateExcludeFromRecents(bool value) async {

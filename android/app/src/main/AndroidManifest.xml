@@ -86,7 +86,29 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <action android:name="${applicationId}.action.TOGGLE" />
             </intent-filter>
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="${applicationId}.action.MODE_RULE" />
+            </intent-filter>
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="${applicationId}.action.MODE_GLOBAL" />
+            </intent-filter>
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="${applicationId}.action.MODE_DIRECT" />
+            </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".ChangeModeReceiver"
+            android:enabled="true"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="${applicationId}.action.CHANGE_MODE" />
+            </intent-filter>
+        </receiver>
 
         <service
             android:name=".TileService"
