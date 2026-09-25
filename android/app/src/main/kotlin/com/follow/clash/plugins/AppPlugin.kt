@@ -27,6 +27,7 @@ import com.follow.clash.common.Components
 import com.follow.clash.common.GlobalState
 import com.follow.clash.common.PendingCallback
 import com.follow.clash.common.QuickAction
+import com.follow.clash.common.intent
 import com.follow.clash.common.quickIntent
 import com.follow.clash.common.registerReceiverCompat
 import com.follow.clash.getPackageIconPath
@@ -133,11 +134,16 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             }
 
             "initShortcuts" -> {
-                val label = call.arguments as? String
-                if (label == null) {
-                    result.error("INVALID_ARGUMENT", "Shortcut label must be a string", null)
+                val labels = call.arguments as? Map<*, *>
+                if (labels == null) {
+                    result.error(
+                        "INVALID_ARGUMENT",
+                        "Shortcut labels must be a map",
+                        null,
+                    )
                 } else {
-                    initShortcuts(label)
+                    @Suppress("UNCHECKED_CAST")
+                    initShortcuts(labels as Map<String, String>)
                     result.success(true)
                 }
             }
@@ -212,22 +218,74 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         }
     }
 
-    private fun initShortcuts(label: String) {
-        val shortcut = with(ShortcutInfoCompat.Builder(GlobalState.application, "toggle")) {
-            setShortLabel(label)
-            setIcon(
+    private fun initShortcuts(labels: Map<String, String>) {
+        val startLabel = labels["start"] ?: "Start"
+        val stopLabel = labels["stop"] ?: "Stop"
+        val toggleLabel = labels["toggle"] ?: return
+        val shortcuts = listOf(
+            buildShortcut("start", startLabel, QuickAction.START),
+            buildShortcut("stop", stopLabel, QuickAction.STOP),
+            buildShortcut("toggle", toggleLabel, QuickAction.TOGGLE),
+        ) + modeShortcuts(labels)
+        ShortcutManagerCompat.setDynamicShortcuts(
+            GlobalState.application,
+            shortcuts,
+        )
+    }
+
+    /**
+     * Mode/profile shortcuts are optional: the Dart side adds them to the label
+     * map when it wants them exposed (keys "mode_rule"/"mode_global"/
+     * "mode_direct" and "profile_<id>" with a display name as value).
+     */
+    private fun modeShortcuts(labels: Map<String, String>): List<ShortcutInfoCompat> {
+        val out = mutableListOf<ShortcutInfoCompat>()
+        labels["mode_rule"]?.let {
+            out += buildShortcut("mode_rule", it, QuickAction.MODE_RULE)
+        }
+        labels["mode_global"]?.let {
+            out += buildShortcut("mode_global", it, QuickAction.MODE_GLOBAL)
+        }
+        labels["mode_direct"]?.let {
+            out += buildShortcut("mode_direct", it, QuickAction.MODE_DIRECT)
+        }
+        for ((key, label) in labels) {
+            if (!key.startsWith(PROFILE_KEY_PREFIX)) continue
+            val id = key.removePrefix(PROFILE_KEY_PREFIX).toLongOrNull() ?: continue
+            out += buildShortcut(
+                key,
+                label,
+                Components.quickActionActivity.intent.apply {
+                    action = "${GlobalState.packageName}.action.SELECT_PROFILE"
+                    putExtra(EXTRA_PROFILE_ID, id)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                },
+            )
+        }
+        return out
+    }
+
+    private fun buildShortcut(
+        id: String,
+        label: String,
+        action: QuickAction,
+    ): ShortcutInfoCompat = buildShortcut(id, label, action.quickIntent)
+
+    private fun buildShortcut(
+        id: String,
+        label: String,
+        intent: Intent,
+    ): ShortcutInfoCompat {
+        return ShortcutInfoCompat.Builder(GlobalState.application, id)
+            .setShortLabel(label)
+            .setIcon(
                 IconCompat.createWithResource(
                     GlobalState.application,
                     R.mipmap.ic_launcher_round,
                 ),
             )
-            setIntent(QuickAction.TOGGLE.quickIntent)
-            build()
-        }
-        ShortcutManagerCompat.setDynamicShortcuts(
-            GlobalState.application,
-            listOf(shortcut),
-        )
+            .setIntent(intent)
+            .build()
     }
 
     private fun isBatteryOptimizationDisabled(): Boolean {
@@ -370,6 +428,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             MethodChannel(flutterPluginBinding.binaryMessenger, "${Components.PACKAGE_NAME}/app")
         channel.setMethodCallHandler(this)
         watchPackageChanges(flutterPluginBinding.applicationContext)
+        instance = this
     }
 
     private fun watchPackageChanges(context: Context) {
@@ -384,6 +443,9 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        if (instance === this) {
+            instance = null
+        }
         packageChangeContext?.unregisterReceiver(packageChangeReceiver)
         packageChangeContext = null
         channel.setMethodCallHandler(null)
@@ -459,9 +521,46 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         else -> false
     }
 
-    private companion object {
+    private fun changeModeInternal(mode: String) {
+        channel.invokeMethod("changeMode", mode)
+    }
+
+    internal companion object {
         const val VPN_PERMISSION_REQUEST_CODE = 1001
         const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1002
         const val INSTALLED_APPS_PERMISSION_REQUEST_CODE = 1003
+        const val PROFILE_KEY_PREFIX = "profile_"
+        const val EXTRA_PROFILE_ID = "profile_id"
+
+        /**
+         * The live plugin instance, set while a Flutter engine is attached.
+         * External entry points (QuickActionActivity via intents/broadcasts)
+         * use it to reach the Dart side without owning an engine themselves.
+         */
+        @Volatile
+        var instance: AppPlugin? = null
+
+        /**
+         * Requests an outbound-mode change on the Flutter side.
+         * @return true when delivered; false when no engine is alive (cold start).
+         */
+        fun changeMode(mode: String): Boolean {
+            val plugin = instance ?: return false
+            runCatching { plugin.changeModeInternal(mode) }.onFailure {
+                GlobalState.log("changeMode failed: $it")
+                return false
+            }
+            return true
+        }
+
+        /** Selects and applies a profile by id on the Flutter side. */
+        fun selectProfile(id: Long): Boolean {
+            val plugin = instance ?: return false
+            runCatching { plugin.channel.invokeMethod("selectProfile", id) }.onFailure {
+                GlobalState.log("selectProfile failed: $it")
+                return false
+            }
+            return true
+        }
     }
 }

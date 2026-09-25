@@ -35,6 +35,15 @@ class _AndroidContainerState extends ConsumerState<AndroidManager>
         app?.initShortcuts();
       }
     });
+    ref.listenManual(
+      profilesProvider.select((profiles) =>
+          profiles.map((profile) => profile.realLabel).join(',')),
+      (prev, next) {
+        if (prev != next) {
+          unawaited(app?.initShortcuts());
+        }
+      },
+    );
     ref.listenManual(sharedStateProvider, (prev, next) {
       if (prev != next) {
         debouncer.call(FunctionTag.saveSharedFile, () async {
