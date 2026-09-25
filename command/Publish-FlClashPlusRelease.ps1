@@ -242,7 +242,7 @@ function Initialize-ReleaseEnvironment {
     $env:ANDROID_NDK = Join-Path $env:ANDROID_HOME ("ndk\" + $ndkVersionMatch.Groups['version'].Value)
     if (-not (Test-Path -LiteralPath $env:ANDROID_NDK -PathType Container)) { throw "Configured Android NDK is missing: $env:ANDROID_NDK" }
     $env:JAVA_HOME = Join-Path $SdkRoot 'jdk'
-    $env:INNO_SETUP_HOME = Join-Path $SdkRoot 'inno-setup-6'
+    $env:INNO_SETUP_PATH = Join-Path $SdkRoot 'inno-setup-6'
 }
 
 function Initialize-PortableWindowsToolchain {
@@ -828,10 +828,21 @@ function Invoke-ReleaseBuild {
             throw 'Multiple Android package outputs exist; refusing an ambiguous resume.'
         }
         if ($existingApks.Count -eq 0) {
-            Invoke-Captured -FilePath 'dart' -Arguments @(
+            $androidLogPath = Join-Path $LogsRoot 'build-android-release.log'
+            $androidBuild = Invoke-Captured -FilePath 'dart' -Arguments @(
                 'setup.dart', 'android', '--env', 'stable', '--targets', 'apk',
                 '--arch', 'arm64'
-            ) -LogPath (Join-Path $LogsRoot 'build-android-release.log') | Out-Null
+            ) -LogPath $androidLogPath -AllowFailure
+            if ($androidBuild.ExitCode -ne 0) {
+                $knownDistributorFailure = $androidBuild.Output -match
+                    "type '_BuildAndroidApkResult' is not a subtype of type 'BuildWindowsResult'"
+                $flutterApk = Join-Path $ProjectRoot 'build/app/outputs/flutter-apk/app-arm64-v8a-release.apk'
+                if (-not $knownDistributorFailure -or -not (Test-Path -LiteralPath $flutterApk -PathType Leaf)) {
+                    throw "Android packaging failed with exit code $($androidBuild.ExitCode)."
+                }
+                $recoveredApk = Join-Path $PackageOutputRoot 'app-arm64-v8a-release.apk'
+                Copy-Item -LiteralPath $flutterApk -Destination $recoveredApk -Force
+            }
         }
 
         $existingExes = @(Get-ChildItem -LiteralPath $PackageOutputRoot -File -Filter '*.exe')
