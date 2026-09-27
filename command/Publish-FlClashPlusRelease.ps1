@@ -218,6 +218,8 @@ function Initialize-ReleaseEnvironment {
     $env:TEMP = $TaskTempRoot
     $env:TMP = $TaskTempRoot
     $env:PUB_CACHE = Join-Path $SdkRoot 'pub-cache'
+    $env:ProgramData = Join-Path $SdkRoot 'program-data'
+    $env:ALLUSERSPROFILE = $env:ProgramData
     $env:GRADLE_USER_HOME = Join-Path $SdkRoot 'gradle-user-home'
     $env:CARGO_HOME = Join-Path $SdkRoot 'cargo-home'
     $env:RUSTUP_HOME = Join-Path $SdkRoot 'rust\rustup'
@@ -246,7 +248,26 @@ function Initialize-ReleaseEnvironment {
 }
 
 function Initialize-PortableWindowsToolchain {
-    $visualStudioRoot = Join-Path $SdkRoot 'visual-studio-build-tools'
+    $visualStudioCandidates = @(
+        (Join-Path $SdkRoot 'visual-studio-build-tools'),
+        (Join-Path $SdkRoot 'visual-studio-build-tools-vs2022')
+    )
+    $visualStudioRoot = $visualStudioCandidates |
+        Where-Object {
+            Test-Path -LiteralPath (Join-Path $_ 'VC\Tools\MSVC') -PathType Container
+        } |
+        Where-Object {
+            @(
+                Get-ChildItem -LiteralPath (Join-Path $_ 'VC\Tools\MSVC') -Directory |
+                    Where-Object {
+                        Test-Path -LiteralPath (Join-Path $_.FullName 'bin\Hostx64\x64\cl.exe') -PathType Leaf
+                    }
+            ).Count -gt 0
+        } |
+        Select-Object -First 1
+    if ([string]::IsNullOrWhiteSpace($visualStudioRoot)) {
+        throw 'The portable Visual Studio C++ toolchain is incomplete.'
+    }
     $windowsSdkRoot = Join-Path $SdkRoot 'windows-sdk'
     $programFilesX86 = Join-Path $SdkRoot 'program-files-x86'
 
