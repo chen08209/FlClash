@@ -533,10 +533,15 @@ action notifier, which is only ever read. A derived provider it listens to is ne
 of it returns a stale value. So an action that has to follow a signal listens to the keep-alive provider that holds
 it, as `SetupAction` does with `appVisibleProvider`, not to a provider derived from that.
 
-On Android, `SuspendModule` suspends the Core while the screen is off and the device is in Doze. Health checks that
-run in Doze all fail, so after a suspension the Core re-probes every provider. That re-probe waits for the screen to
-come on. A Doze maintenance window resumes the Core too, but probing there would spend the window's radio time on
-results nobody sees.
+On Android the Core does not react to the screen or to Doze. Doze's firewall keeps apps without an exemption off the
+network before their traffic reaches the TUN, so what still arrives is traffic Doze allows, FCM among it; suspending the
+tunnel rejects exactly that and stalls push reconnects until their backoff runs out. The VPN service keeps its own
+network as a foreground service (`dumpsys netpolicy` shows its `DOZE` block allowed by `FOREGROUND`), so health checks
+keep producing real results: holding them blocks the re-check mihomo runs after repeated dial failures, which is how a
+`url-test` group leaves a dead node, and hiding their failures hides the truth. Nothing re-probes on resume either:
+every proxy group is a provider, `select` groups included, and checking one tests every node in it. Should a ROM be
+shown to cut the VPN's own network while the screen is off, holding back failures measured then needs only a screen
+on/off signal.
 
 ## Database
 

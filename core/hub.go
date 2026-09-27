@@ -652,51 +652,6 @@ func handleSideLoadExternalProvider(providerName string, data []byte) *MethodErr
 	return nil
 }
 
-// defaultRefreshHealthChecks re-probes every proxy provider off the calling
-// thread. Providers coalesce concurrent checks internally, so an extra call
-// costs nothing when one is already running.
-func defaultRefreshHealthChecks() {
-	safeGoDetached("refreshHealthChecks", func() {
-		for name, p := range tunnel.ProvidersSnapshot() {
-			log.Debugln("[APP] re-checking provider %s after resume", name)
-			p.HealthCheck()
-		}
-	})
-}
-
-var refreshHealthChecks = defaultRefreshHealthChecks
-
-func handleSuspend(suspended, interactive bool) bool {
-	isSuspended.Store(suspended)
-	if suspended {
-		healthChecksStale.Store(true)
-		tunnel.OnSuspend()
-		return true
-	}
-
-	tunnel.OnRunning()
-	// Provider health checks keep ticking through Doze, where the app has no
-	// network at all, so coming back means every proxy is marked dead and every
-	// delay reads Timeout. A lazy provider then skips its next tick because
-	// nothing touched it in the meantime, and the whole list stays wrong until
-	// the user tests by hand. Re-check once the screen is on: a maintenance
-	// window resumes the core too, and probing every node there spends the
-	// window's radio time on results nobody sees. Not while the listeners are
-	// stopped either, since the service also resumes the core on its way down.
-	if interactive && healthChecksStale.Swap(false) && isRunning.Load() {
-		refreshHealthChecks()
-	}
-	return true
-}
-
-// A failure measured while the device is dozing says nothing about the node -
-// the app had no network at all - and publishing it repaints the entire list as
-// Timeout for a user who is not even looking. Successes still are worth having,
-// whenever they happen.
-func shouldPublishDelay(delay uint16) bool {
-	return delay != 0 || !isSuspended.Load()
-}
-
 func handleStartLog() {
 	logMu.Lock()
 	if logCancel != nil {
@@ -828,9 +783,6 @@ func handleSetupConfig(params *SetupParams) string {
 
 func init() {
 	adapter.UrlTestHook = func(url string, name string, delay uint16) {
-		if !shouldPublishDelay(delay) {
-			return
-		}
 		sendMessage(Message{
 			Type: DelayMessage,
 			Data: &Delay{
