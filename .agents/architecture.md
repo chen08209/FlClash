@@ -553,10 +553,15 @@ action notifier, which is only ever read. A derived provider it listens to is ne
 of it returns a stale value. So an action that has to follow a signal listens to the keep-alive provider that holds
 it, as `SetupAction` does with `appVisibleProvider`, not to a provider derived from that.
 
-On Android, `SuspendModule` suspends the Core while the screen is off and the device is in Doze. Health checks that
-run in Doze all fail, so after a suspension the Core re-probes every provider. That re-probe waits for the screen to
-come on. A Doze maintenance window resumes the Core too, but probing there would spend the window's radio time on
-results nobody sees.
+On Android the Core does not react to the screen or to Doze. Doze's firewall keeps apps without an exemption off the
+network before their traffic reaches the TUN, so what still arrives is traffic Doze allows, FCM among it; suspending the
+tunnel rejects exactly that and stalls push reconnects until their backoff runs out. The VPN service keeps its own
+network as a foreground service (`dumpsys netpolicy` shows its `DOZE` block allowed by `FOREGROUND`), so health checks
+keep producing real results: holding them blocks the re-check mihomo runs after repeated dial failures, which is how a
+`url-test` group leaves a dead node, and hiding their failures hides the truth. Nothing re-probes on resume either:
+every proxy group is a provider, `select` groups included, and checking one tests every node in it. Should a ROM be
+shown to cut the VPN's own network while the screen is off, holding back failures measured then needs only a screen
+on/off signal.
 
 ## Database
 
@@ -854,14 +859,50 @@ Crashlytics NDK symbolicates a native crash only from libraries that still carry
 
 `CodeForgeController` is the document: text lives in the Rust `RopeBridge`, and the controller's methods are split by
 concern into `lib/code_forge/controller/` extensions. `CodeForge` builds `_CodeFieldRenderer`, whose painting, layout,
-folding, caret and gutter code sit in `lib/code_forge/code_area/` part files.
+folding, caret, gutter and pointer code sit in `lib/code_forge/code_area/` part files.
 
 - Rust counts offsets in Unicode scalars and Flutter in UTF-16 code units. Convert at the boundary with
   `text_offsets.dart`; a mixed-up offset only shows up with astral characters such as emoji, so tests use them.
-- The renderer follows edits through the controller's `lineEdit` (first line, lines removed, lines inserted) and never
-  reads the whole text per edit; a whole-text `text =` assignment resets the renderer instead.
+- The renderer learns what changed from `takeChange()`, whose `lines` (first line, lines removed, lines inserted) let it
+  follow edits without reading the whole text; a whole-text `text =` assignment marks the change `replaced` and resets
+  the renderer instead.
+- The input method is handed a window of the document around the caret, at most 4096 characters, and its deltas are
+  mapped through that window, so the platform has to hold the current one: a caret move that shifts the window, the
+  input method's own included, sends it again. A selection can reach past the window; when the platform removes the
+  selection it sees, the controller removes the rest with it, as one undo step. Gboard does that by collapsing the
+  selection and deleting what it saw, then composes the typed letter before a newly sent window reaches it: deltas
+  made on a window already replaced are not mapped through the new one, and only what they typed is kept. A line
+  longer than the window gets one cut by character count, which stays where it is until the caret nears an end of it,
+  or every key would replace it. A caret move can put a window of the very same text further along; an edit the
+  platform then makes at the caret it had is mapped through the window it still holds.
+- A selection the input method collapsed is still the one to replace only while the caret rests at the end it was
+  left at; Gboard's spacebar caret gesture collapses to the middle and moves on, which lets it go. The platform's own
+  cut (Gboard's text-editing panel) arrives as a lone deletion of the live selection and copies only the window's
+  part, so the controller rewrites the clipboard with the whole selection. That panel's select-all and copy still
+  reach only the window. Gboard types over a selection in two batches, the removal and then the letter: the second
+  joins the undo step of the first, and undoing it gives the selection back.
+- A composition is drawn over the document and written into it only when it ends, so whatever reads or rewrites the
+  document from outside the input method commits it first: saving, leaving the page, accepting a suggestion, a
+  snippet, find's replace, and `UndoRedoController`'s `undo`/`redo` through the `settleInput` callback the controller
+  registers. Losing focus and a closing connection commit it too rather than drop it. Typing that ends a composition,
+  Enter or a bracket, goes through the typing path so it still indents and pairs. Android ends one with an empty
+  delta batch when the keyboard is hidden.
+- A caret the input method moves has to set `selection` on the change record like any other move, or the renderer
+  neither repaints nor follows it.
+- A line's fold comes from the renderer's `_computeFoldRangeForLine` up to 10000 lines and from `compute_all` in
+  `rust_api`'s `editor/folds.rs` past that, and the two must find the same ranges; `folding_test.dart` compares them on
+  one document. A folded range, and the folded ranges inside it that it folds again when it opens, outlive an edit
+  only while the text still gives that range. An edit reports the lines it changed, not where in them, so a fold
+  heading a line inside an edit that changes the line count is opened rather than guessed at; `replaceText`, which
+  find's replace-all uses, rewrites only the span that differs to keep that to the lines between its matches.
+- The caret never rests on a line a fold hides: folding over it moves it to the heading line, the keyboard steps over
+  the fold, and a caret put there any other way opens it.
+- The controller reaches the mounted editor only through the `CodeForgeView` it attaches, which the editor's state
+  implements by forwarding to its renderer.
 - FlClash supplies the suggestion popup, context menu and scrollbar; the package has no built-in versions of them.
 - Tests live in `test/plugins/code_forge/` at the repository root and need the `rust_api` library.
+- `isMobile` comes from `Platform`, so host tests never reach the touch branches (selection handles, long press,
+  magnifier); check those on an Android emulator.
 
 ## window Plugin
 
@@ -935,10 +976,10 @@ the singleton entry point: `RustLib.init()` runs before any call and `RustLib.di
   bounded send queue), `platform` (socket cleanup, Windows peer credentials and the non-blocking pipe reader), and
   `server` (lifecycle, accept loop, and the `RUNNING`/`STATE` globals).
 - `script/` runs profile override scripts on QuickJS through `rquickjs`.
-- `editor/` backs `plugins/code_forge`: a `ropey` buffer with its selection, fold ranges and bracket matching,
-  indent guides for the viewport, and completion words. `api/editor.rs` exposes the buffer as the opaque
-  `RopeBridge`. Only the editor imports this module, through `lib/editor.dart`, so `lib/rust_api.dart` keeps its
-  generic names such as `SelectionState` out of app code.
+- `editor/` backs `plugins/code_forge`: a `ropey` buffer, fold ranges and bracket matching, indent guides for the
+  viewport, and completion words. `api/editor.rs` exposes the buffer as the opaque `RopeBridge`; the selection
+  stays in Dart. Only the editor imports this module, through `lib/editor.dart`, so `lib/rust_api.dart` keeps its
+  generic names such as `GuideBlock` out of app code.
 - `hotkey/` registers desktop global shortcuts through `global-hotkey`: `keys` maps Flutter USB HID usages to key
   codes, `owner` runs every registration on the thread the platform binds it to (a dedicated message-loop thread on
   Windows, the main dispatch queue on macOS, in place on Linux), and `service` owns the registry and forwards presses
