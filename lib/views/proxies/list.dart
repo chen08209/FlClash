@@ -448,17 +448,19 @@ class _GroupIcon extends ConsumerWidget {
         },
       ),
       ProxiesIconStyle.plain => Container(
-        margin: const EdgeInsets.only(right: 8),
+        margin: const EdgeInsets.only(left: 2, right: 10),
         child: LayoutBuilder(
           builder: (_, constraints) {
             return IconTheme.merge(
-              data: IconThemeData(size: constraints.maxHeight - 8.ap),
+              data: IconThemeData(size: constraints.maxHeight - 16.ap),
               child: CommonTargetIcon(src: src),
             );
           },
         ),
       ),
-      ProxiesIconStyle.hidden => Container(),
+      // Lines the title up with the proxy card names below, which sit at the
+      // row inset plus the card padding.
+      ProxiesIconStyle.hidden => const SizedBox(width: 4),
     };
   }
 }
