@@ -10,6 +10,7 @@ class _FakeNativeWindow {
 
   WindowVisibilityController controller({
     Duration dockSettleDuration = const Duration(seconds: 1),
+    bool restoreTaskbarBeforeShow = false,
   }) {
     return WindowVisibilityController(
       showWindow: () async {
@@ -25,6 +26,7 @@ class _FakeNativeWindow {
       setSkipTaskbar: (skip) async {
         calls.add(skip ? 'dock:off' : 'dock:on');
       },
+      restoreTaskbarBeforeShow: restoreTaskbarBeforeShow,
       dockSettleDuration: dockSettleDuration,
     );
   }
@@ -127,6 +129,19 @@ void main() {
     expect(native.calls, ['show']);
   });
 
+  test('restoring the taskbar before show maps the window unflagged', () async {
+    final native = _FakeNativeWindow();
+    final controller = native.controller(
+      dockSettleDuration: Duration.zero,
+      restoreTaskbarBeforeShow: true,
+    );
+
+    await controller.hide();
+    await controller.show();
+
+    expect(native.calls, ['hide', 'dock:off', 'dock:on', 'show']);
+  });
+
   test('a failed step does not block later requests', () async {
     var failShow = true;
     final calls = <String>[];
@@ -140,6 +155,7 @@ void main() {
       hideWindow: () async => calls.add('hide'),
       isWindowVisible: () async => false,
       setSkipTaskbar: (skip) async => calls.add(skip ? 'dock:off' : 'dock:on'),
+      restoreTaskbarBeforeShow: false,
       dockSettleDuration: Duration.zero,
     );
 

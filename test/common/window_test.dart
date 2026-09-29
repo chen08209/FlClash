@@ -62,10 +62,8 @@ void main() {
   ) async {
     await Window().show();
 
-    expect(
-      calls,
-      containsAllInOrder(<String>['show', 'focus', 'setSkipTaskbar']),
-    );
+    expect(calls, containsAllInOrder(<String>['show', 'focus']));
+    expect(calls, contains('setSkipTaskbar'));
     await tester.pump(const Duration(seconds: 1));
   });
 
@@ -177,10 +175,8 @@ void main() {
     isVisible = false;
     await Window().toggle();
 
-    expect(
-      calls,
-      containsAllInOrder(<String>['isVisible', 'show', 'setSkipTaskbar']),
-    );
+    expect(calls, containsAllInOrder(<String>['isVisible', 'show']));
+    expect(calls, contains('setSkipTaskbar'));
     await tester.pump(const Duration(seconds: 1));
   });
 

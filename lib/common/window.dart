@@ -18,6 +18,7 @@ class Window implements WindowPort {
         hideWindow: _hideWindow,
         isWindowVisible: _isWindowVisible,
         setSkipTaskbar: (skip) => desktopWindow.setSkipTaskbar(skip),
+        restoreTaskbarBeforeShow: system.isLinux,
         dockSettleDuration: system.isMacOS
             ? const Duration(seconds: 1)
             : Duration.zero,
@@ -226,6 +227,7 @@ class WindowVisibilityController {
     required Future<void> Function() hideWindow,
     required Future<bool> Function() isWindowVisible,
     required Future<void> Function(bool skip) setSkipTaskbar,
+    required this.restoreTaskbarBeforeShow,
     required this.dockSettleDuration,
   }) : _showWindow = showWindow,
        _hideWindow = hideWindow,
@@ -236,6 +238,11 @@ class WindowVisibilityController {
   final Future<void> Function() _hideWindow;
   final Future<bool> Function() _isWindowVisible;
   final Future<void> Function(bool skip) _setSkipTaskbar;
+
+  /// Linux docks such as Ubuntu Dock count a window's taskbar entries only when
+  /// it maps and ignore a later skip-taskbar change, so a window mapped while
+  /// still flagged loses its running indicator until the shell restarts.
+  final bool restoreTaskbarBeforeShow;
   final Duration dockSettleDuration;
 
   Future<void>? _queue;
@@ -269,8 +276,13 @@ class WindowVisibilityController {
 
   Future<void> _show() async {
     _dockHidePending = false;
-    await _showWindow();
-    await _setSkipTaskbar(false);
+    if (restoreTaskbarBeforeShow) {
+      await _setSkipTaskbar(false);
+      await _showWindow();
+    } else {
+      await _showWindow();
+      await _setSkipTaskbar(false);
+    }
     _dockSettleTimer?.cancel();
     _dockSettleTimer = dockSettleDuration == Duration.zero
         ? null
