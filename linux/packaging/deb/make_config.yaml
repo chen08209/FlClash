@@ -39,3 +39,7 @@ categories:
   - Network
 
 startup_notify: true
+
+# Must match APPLICATION_ID in linux/CMakeLists.txt, which GTK sets as the
+# window's WM_CLASS; without it docks cannot tie the window to this entry.
+startup_wm_class: com.follow.clash
