@@ -1,0 +1,2 @@
+# freezed emits lines of trailing spaces, and generated code is never edited by hand.
+lib/**/generated/** -whitespace
