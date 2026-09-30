@@ -496,13 +496,21 @@ class NetworkDetection extends _$NetworkDetection
     }, duration: commonDuration);
   }
 
-  Future<void> _checkIp() async {
+  Future<void> refresh() async {
+    if (state.isLoading) {
+      return;
+    }
+    debouncer.cancel(FunctionTag.checkIp);
+    await _checkIp(force: true);
+  }
+
+  Future<void> _checkIp({bool force = false}) async {
     final isInit = ref.read(initProvider);
     if (!isInit) {
       return;
     }
     final isStart = ref.read(isStartProvider);
-    if (!isStart && _preIsStart == false && state.ipInfo != null) {
+    if (!force && !isStart && _preIsStart == false && state.ipInfo != null) {
       return;
     }
     final cancelToken = CancelToken();
