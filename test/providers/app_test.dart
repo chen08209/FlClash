@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/fixed.dart';
+import 'package:fl_clash/common/function.dart';
 import 'package:fl_clash/common/request.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -483,6 +484,62 @@ void main() {
 
     tearDown(() {
       request.dio.httpClientAdapter = originalAdapter;
+      debouncer.cancel(FunctionTag.checkIp);
+    });
+
+    test('manual refresh replaces a cached IP while stopped', () async {
+      final refreshedResponse = Completer<ResponseBody>();
+      final adapter = _ManualRefreshIpAdapter([
+        Future.value(
+          ResponseBody.fromString(
+            '{"ip":"1.1.1.1","country_code":"US"}',
+            200,
+            headers: {
+              Headers.contentTypeHeader: ['application/json'],
+            },
+          ),
+        ),
+        refreshedResponse.future,
+      ]);
+      request.dio.httpClientAdapter = adapter;
+      final container = ProviderContainer(
+        overrides: [initProvider.overrideWithBuild((_, _) => true)],
+      );
+      addTearDown(container.dispose);
+      final firstResult = Completer<void>();
+      container.listen(networkDetectionProvider, (_, next) {
+        if (next.ipInfo != null && !firstResult.isCompleted) {
+          firstResult.complete();
+        }
+      });
+      final notifier = container.read(networkDetectionProvider.notifier);
+      notifier.startCheck();
+      debouncer.flush(FunctionTag.checkIp);
+      await firstResult.future;
+      expect(container.read(networkDetectionProvider).ipInfo?.ip, '1.1.1.1');
+
+      notifier.startCheck();
+      debouncer.flush(FunctionTag.checkIp);
+      expect(adapter.checkCount, 1);
+
+      final refresh = notifier.refresh();
+      expect(container.read(networkDetectionProvider).isLoading, true);
+      expect(container.read(networkDetectionProvider).ipInfo, isNull);
+      await notifier.refresh();
+      refreshedResponse.complete(
+        ResponseBody.fromString(
+          '{"ip":"2.2.2.2","country_code":"US"}',
+          200,
+          headers: {
+            Headers.contentTypeHeader: ['application/json'],
+          },
+        ),
+      );
+      await refresh;
+
+      expect(adapter.checkCount, 2);
+      expect(container.read(networkDetectionProvider).ipInfo?.ip, '2.2.2.2');
+      expect(container.read(networkDetectionProvider).isLoading, false);
     });
 
     test(
@@ -516,6 +573,32 @@ void main() {
       },
     );
   });
+}
+
+class _ManualRefreshIpAdapter implements HttpClientAdapter {
+  _ManualRefreshIpAdapter(this.responses);
+
+  final List<Future<ResponseBody>> responses;
+  int checkCount = 0;
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    if (options.uri.host == 'ipwho.is') {
+      return responses[checkCount++];
+    }
+    await cancelFuture;
+    throw DioException(
+      requestOptions: options,
+      type: DioExceptionType.cancel,
+    );
+  }
+
+  @override
+  void close({bool force = false}) {}
 }
 
 class _DelayedCancelIpAdapter implements HttpClientAdapter {
