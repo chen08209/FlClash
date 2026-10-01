@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - 'codex/upstream-sync-v0.8.94'
   workflow_dispatch:
     inputs:
       release_tag:
@@ -12,8 +14,8 @@ on:
         type: string
 env:
   IS_STABLE: ${{ !contains(github.ref, '-') }}
-  IS_PLUS_RELEASE: ${{ contains(github.ref, '-plus.') || contains(inputs.release_tag, '-plus.') }}
-  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+  IS_PLUS_RELEASE: ${{ contains(github.ref, '-plus.') || contains(inputs.release_tag, '-plus.') || github.ref_name == 'codex/upstream-sync-v0.8.94' }}
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name == 'codex/upstream-sync-v0.8.94' && 'v0.8.94-plus.13' || github.ref_name }}
   FLUTTER_VERSION: '3.44.4'
 
 jobs:
@@ -111,7 +113,7 @@ jobs:
         run: cargo test --manifest-path services/helper/Cargo.toml --features windows-service
 
   build:
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/v') || github.ref_name == 'codex/upstream-sync-v0.8.94')) }}
     needs: [ test, windows-helper-test ]
     runs-on: ${{ matrix.os }}
     strategy:
@@ -266,7 +268,30 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  plus-release:
+    if: ${{ env.IS_PLUS_RELEASE == 'true' }}
+    permissions:
+      contents: write
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download
+        uses: actions/download-artifact@v4
+        with:
+          path: ./dist/
+          pattern: artifact-*
+          merge-multiple: true
+      - name: Release FlClashPlus
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./dist/*
+          tag_name: ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ github.sha }}
+          name: FlClashPlus ${{ env.RELEASE_TAG }}
+          body: Formal FlClashPlus release built and gated by GitHub Actions.
+
   upload:
+    if: ${{ env.IS_STABLE == 'true' }}
     permissions:
       contents: write
     needs: [ build ]
