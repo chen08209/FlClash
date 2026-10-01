@@ -5,6 +5,10 @@ analyzer:
     - lib/l10n/intl/**
     - lib/**/generated/**
     - plugins/**
+    - android/**
+    - windows/**
+    - macos/**
+    - linux/**
   errors:
     invalid_annotation_target: ignore
 
