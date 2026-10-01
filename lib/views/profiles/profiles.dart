@@ -702,6 +702,7 @@ class ProfileItem extends StatelessWidget {
         !profile.isFreeNodesProfile && profile.sourceUrl.trim().isNotEmpty;
     final showProfileMenu = profile.isFreeNodesProfile || hasSourceUrl;
     final card = CommonCard(
+      enterActionsOnRight: true,
       isSelected: profile.id == groupValue,
       onPressed: () {
         onChanged(profile.id);

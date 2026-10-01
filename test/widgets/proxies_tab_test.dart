@@ -44,17 +44,22 @@ void main() {
     final key = GlobalKey<ProxiesTabViewState>();
     final renderedGroups = [_group('B'), _group('C')];
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          proxiesTabStateProvider.overrideWithValue(
-            ProxiesTabState(
-              groups: renderedGroups,
-              currentGroupName: 'B',
-              proxyCardType: ProxyCardType.expand,
-            ),
+    final widgetContainer = ProviderContainer(
+      overrides: [
+        proxiesTabStateProvider.overrideWithValue(
+          ProxiesTabState(
+            groups: renderedGroups,
+            currentGroupName: 'B',
+            proxyCardType: ProxyCardType.expand,
           ),
-        ],
+        ),
+      ],
+    );
+    addTearDown(widgetContainer.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: widgetContainer,
         child: _TestApp(child: ProxiesTabView(key: key)),
       ),
     );
@@ -68,6 +73,8 @@ void main() {
 
     expect(key.currentState?.currentGroup?.name, 'C');
     expect(globalContainer.read(currentProfileProvider)?.currentGroupName, 'C');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
   });
 }
 

@@ -388,7 +388,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     final deleteButton = find.ancestor(
-      of: find.byIcon(Icons.close).first,
+      of: find.descendant(
+        of: find.byType(SuperGrid),
+        matching: find.byIcon(Icons.close),
+      ).first,
       matching: find.byType(IconButton),
     );
     tester.widget<IconButton>(deleteButton).onPressed!();
@@ -397,13 +400,17 @@ void main() {
     await tester.pump();
     expect(
       tester.state<SuperGridState>(find.byType(SuperGrid)).snapshotChildren,
-      [DashboardWidget.outboundModeV2.widget],
+      [
+        DashboardWidget.networkSpeed.widget,
+        DashboardWidget.outboundModeV2.widget,
+      ],
     );
     await tester.binding.handlePopRoute();
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.byKey(const ValueKey('edit-icon')), findsOneWidget);
     expect(container.read(appSettingProvider).dashboardWidgets, [
+      DashboardWidget.networkSpeed,
       DashboardWidget.outboundModeV2,
     ]);
   });
