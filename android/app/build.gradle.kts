@@ -5,7 +5,6 @@ plugins {
     id("com.android.application")
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
-    id("com.google.firebase.crashlytics")
 }
 
 val localProperties = Properties().apply {
@@ -68,10 +67,6 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
-                mappingFileUploadEnabled = false
-                nativeSymbolUploadEnabled = false
-            }
             if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
             } else {
