@@ -1,47 +1,47 @@
-1 | include: package:flutter_lints/flutter.yaml
-2 | analyzer:
-3 |   exclude:
-4 |     - build/**
-5 |     - lib/l10n/intl/**
-6 |     - lib/**/generated/**
-7 |     - plugins/**
-8 |     - android/**
-9 |     - windows/**
-10 |     - macos/**
-11 |     - linux/**
-12 |   errors:
-13 |     invalid_annotation_target: ignore
-14 | 
-15 | linter:
-16 |   rules:
-17 |     # Style
-18 |     prefer_single_quotes: true
-19 |     require_trailing_commas: true
-20 |     sort_child_properties_last: true
-21 | 
-22 |     # Avoid unnecessary code
-23 |     unnecessary_new: true
-24 |     unnecessary_this: true
-25 |     unnecessary_const: true
-26 |     avoid_print: true
-27 |     avoid_unnecessary_containers: true
-28 |     sized_box_for_whitespace: true
-29 | 
-30 |     # Prefer best practices
-31 |     prefer_const_constructors: true
-32 |     prefer_const_declarations: true
-33 |     prefer_final_locals: true
-34 |     prefer_final_in_for_each: true
-35 |     prefer_is_empty: true
-36 |     prefer_is_not_empty: true
-37 |     prefer_interpolation_to_compose_strings: true
-38 | 
-39 |     # Type safety
-40 |     always_declare_return_types: true
-41 |     annotate_overrides: true
-42 |     use_key_in_widget_constructors: true
-43 |     no_leading_underscores_for_local_identifiers: true
-44 | 
-45 |     # Async
-46 |     use_build_context_synchronously: true
-47 |     unnecessary_await_in_return: true
+include: package:flutter_lints/flutter.yaml
+analyzer:
+  exclude:
+    - build/**
+    - lib/l10n/intl/**
+    - lib/**/generated/**
+    - plugins/**
+    - android/**
+    - windows/**
+    - macos/**
+    - linux/**
+  errors:
+    invalid_annotation_target: ignore
+
+linter:
+  rules:
+    # Style
+    prefer_single_quotes: true
+    require_trailing_commas: true
+    sort_child_properties_last: true
+
+    # Avoid unnecessary code
+    unnecessary_new: true
+    unnecessary_this: true
+    unnecessary_const: true
+    avoid_print: true
+    avoid_unnecessary_containers: true
+    sized_box_for_whitespace: true
+
+    # Prefer best practices
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_final_locals: true
+    prefer_final_in_for_each: true
+    prefer_is_empty: true
+    prefer_is_not_empty: true
+    prefer_interpolation_to_compose_strings: true
+
+    # Type safety
+    always_declare_return_types: true
+    annotate_overrides: true
+    use_key_in_widget_constructors: true
+    no_leading_underscores_for_local_identifiers: true
+
+    # Async
+    use_build_context_synchronously: true
+    unnecessary_await_in_return: true
