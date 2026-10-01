@@ -6,6 +6,7 @@ on:
       - 'v*'
 env:
   IS_STABLE: ${{ !contains(github.ref, '-') }}
+  IS_PLUS_RELEASE: ${{ contains(github.ref, '-plus.') }}
   FLUTTER_VERSION: '3.44.4'
 
 jobs:
@@ -293,6 +294,7 @@ jobs:
           )
           bash .github/scripts/generate_release_notes.sh "$pre_tag" release.md
       - name: Push to telegram
+        if: ${{ env.IS_STABLE == 'true' }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TAG: ${{ github.ref_name }}
@@ -314,7 +316,7 @@ jobs:
           sha256sum ./* > SHA256SUMS
 
       - name: Release
-        if: ${{ env.IS_STABLE == 'true' }}
+        if: ${{ env.IS_STABLE == 'true' || env.IS_PLUS_RELEASE == 'true' }}
         uses: softprops/action-gh-release@v2
         with:
           files: ./dist/*
