@@ -1,409 +1,409 @@
-name: build
-
-on:
-  push:
-    tags:
-      - 'v*'
-    branches:
-      - 'codex/upstream-sync-v0.8.94'
-  workflow_dispatch:
-    inputs:
-      release_tag:
-        description: 'Release tag to publish'
-        required: true
-        type: string
-env:
-  IS_STABLE: ${{ !contains(github.ref, '-') }}
-  IS_PLUS_RELEASE: ${{ contains(github.ref, '-plus.') || contains(inputs.release_tag, '-plus.') || github.ref_name == 'codex/upstream-sync-v0.8.94' }}
-  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name == 'codex/upstream-sync-v0.8.94' && 'v0.8.94-plus.13' || github.ref_name }}
-  FLUTTER_VERSION: '3.44.4'
-
-jobs:
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Test release notes generation
-        shell: bash
-        run: bash .github/scripts/generate_release_notes_test.sh
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Analyze
-        run: flutter analyze --no-fatal-infos
-
-      - name: Run tests
-        run: flutter test --reporter expanded
-
-      - name: Validate local Flutter packages
-        shell: bash
-        run: |
-          for package in plugins/proxy plugins/wifi_ssid plugins/window_ext plugins/setup; do
-            (
-              cd "$package"
-              flutter pub get
-              flutter analyze --no-fatal-infos
-            )
-          done
-
-      - name: Run local plugin tests
-        shell: bash
-        run: |
-          (
-            cd plugins/proxy
-            flutter test --reporter expanded
-          )
-          (
-            cd plugins/wifi_ssid
-            flutter test --reporter expanded
-          )
-
-      - name: Validate setup build tool
-        working-directory: plugins/setup/buildkit/build_tool
-        run: |
-          dart pub get
-          dart analyze
-          dart test
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.26.4'
-          cache-dependency-path: core/go.sum
-
-      - name: Validate Go core wrapper
-        working-directory: core
-        env:
-          CGO_ENABLED: 0
-        run: |
-          go test .
-          go vet .
-
-      - name: Validate Rust components
-        run: |
-          cargo fmt --manifest-path services/helper/Cargo.toml -- --check
-          cargo test --manifest-path services/helper/Cargo.toml
-          cargo fmt --manifest-path plugins/rust_api/rust/Cargo.toml -- --check
-          cargo test --manifest-path plugins/rust_api/rust/Cargo.toml
-
-  windows-helper-test:
-    name: Windows helper test
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Check format
-        run: cargo fmt --manifest-path services/helper/Cargo.toml -- --check
-
-      - name: Run Windows service tests
-        run: cargo test --manifest-path services/helper/Cargo.toml --features windows-service
-
-  build:
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/v') || github.ref_name == 'codex/upstream-sync-v0.8.94')) }}
-    needs: [ test, windows-helper-test ]
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - platform: android
-            os: ubuntu-latest
-          - platform: windows
-            os: Windows-2022
-            arch: amd64
-          - platform: linux
-            os: ubuntu-22.04
-            arch: amd64
-          - platform: macos
-            os: macos-15-intel
-            arch: amd64
-          - platform: macos
-            os: macos-latest
-            arch: arm64
-          - platform: windows
-            os: windows-11-arm
-            arch: arm64
-          - platform: linux
-            os: ubuntu-24.04-arm
-            arch: arm64
-
-    steps:
-      - name: Setup rust
-        if: startsWith(matrix.os, 'windows-11-arm')
-        shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri "https://win.rustup.rs/aarch64" -OutFile rustup-init.exe
-          .\rustup-init.exe -y --default-toolchain stable
-          $cargoPath = "$env:USERPROFILE\.cargo\bin"
-          Add-Content $env:GITHUB_PATH $cargoPath
-
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Setup Android Signing
-        if: startsWith(matrix.platform,'android')
-        run: |
-          echo "${{ secrets.KEYSTORE }}" | base64 --decode > android/app/keystore.jks
-          echo "${{ secrets.SERVICE_JSON }}" | base64 --decode > android/app/google-services.json
-          {
-            echo "keyAlias=${{ secrets.KEY_ALIAS }}"
-            echo "storePassword=${{ secrets.STORE_PASSWORD }}"
-            echo "keyPassword=${{ secrets.KEY_PASSWORD }}"
-          } >> android/local.properties
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.26.4'
-          cache-dependency-path: |
-            core/go.sum
-
-      - name: Enable git long paths (Windows)
-        if: startsWith(matrix.os, 'windows')
-        run: git config --global core.longpaths true
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: master
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-
-      - name: Setup Xcode
-        if: startsWith(matrix.platform,'macos')
-        run: |
-          sudo xcode-select -s /Applications/Xcode_26.3.app || sudo xcode-select -s /Applications/Xcode_26.2.app
-          xcodebuild -version
-
-      - name: Setup NDK
-        if: startsWith(matrix.platform,'android')
-        uses: nttld/setup-ndk@v1
-        with:
-          ndk-version: r28c
-          add-to-path: true
-          link-to-sdk: true
-
-      - name: Get Flutter Dependency
-        run: |
-          flutter --version
-          flutter pub get
-
-      - name: Setup
-        run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
-
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          name: artifact-${{ matrix.platform }}${{ matrix.arch && format('-{0}', matrix.arch) }}
-          path: ./dist
-          overwrite: true
-
-  changelog:
-    if: ${{ !contains(github.ref, '-') }}
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    needs: [ build ]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: refs/heads/main
-      - name: Generate
-        run: |
-          last_ver=$(grep -m1 '^## ' CHANGELOG.md 2>/dev/null | sed 's/^## //')
-
-          mapfile -t tags < <(git tag --merged HEAD --sort=-creatordate)
-
-          temp="NEW_CHANGELOG.md"
-          : > "$temp"
-
-          for i in "${!tags[@]}"; do
-              curr="${tags[i]}"
-              [[ "$curr" == "$last_ver" ]] && break
-
-              prev="${tags[i+1]}"
-              range="${prev:+$prev..}$curr"
-
-              echo -e "## $curr\n" >> "$temp"
-              git log --no-merges --pretty=format:"%B" "$range" | \
-              awk '!/Update changelog/ && NF {print "- " $0 "\n"}' >> "$temp"
-          done
-          [ -f CHANGELOG.md ] && cat CHANGELOG.md >> "$temp"
-          
-          mv "$temp" CHANGELOG.md
-
-      - name: Commit
-        run: |
-          git add CHANGELOG.md
-          if ! git diff --cached --quiet; then
-            echo "Commit pushing"
-            git config --local user.email "chen08209@gmail.com"
-            git config --local user.name "chen08209"
-            git commit -m "Update changelog"
-            if git push; then
-              echo "Push succeeded"
-            else
-              echo "Push failed"
-              exit 1
-            fi
-          fi
-
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  plus-release:
-    if: ${{ contains(github.ref, '-plus.') || contains(inputs.release_tag, '-plus.') || github.ref_name == 'codex/upstream-sync-v0.8.94' }}
-    permissions:
-      contents: write
-    needs: [ build ]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download
-        uses: actions/download-artifact@v4
-        with:
-          path: ./dist/
-          pattern: artifact-*
-          merge-multiple: true
-      - name: Release FlClashPlus
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ./dist/*
-          tag_name: ${{ env.RELEASE_TAG }}
-          target_commitish: ${{ github.sha }}
-          name: FlClashPlus ${{ env.RELEASE_TAG }}
-          body: Formal FlClashPlus release built and gated by GitHub Actions.
-
-  upload:
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-') }}
-    permissions:
-      contents: write
-    needs: [ build ]
-    runs-on: ubuntu-latest
-    services:
-      telegram-bot-api:
-        image: aiogram/telegram-bot-api:latest
-        env:
-          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
-          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
-        ports:
-          - 8081:8081
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Download
-        uses: actions/download-artifact@v4
-        with:
-          path: ./dist/
-          pattern: artifact-*
-          merge-multiple: true
-
-      - name: Generate release.md
-        shell: bash
-        run: |
-          pre_tag=$(
-            curl --silent "https://api.github.com/repos/chen08209/FlClash/releases/latest" |
-              sed -nE 's/.*"tag_name": "([^"]+)".*/\1/p'
-          )
-          bash .github/scripts/generate_release_notes.sh "$pre_tag" release.md
-      - name: Push to telegram
-        if: ${{ env.IS_STABLE == 'true' }}
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TAG: ${{ github.ref_name }}
-          RUN_ID: ${{ github.run_id }}
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests
-          python release_telegram.py
-
-      - name: Patch release.md
-        run: |
-          version=$(echo "${{ env.RELEASE_TAG }}" | sed 's/^v//')
-          sed "s|VERSION|$version|g" ./.github/release_template.md >> release.md
-
-      - name: Generate sha256
-        if: ${{ env.IS_STABLE == 'true' }}
-        run: |
-          cd ./dist
-          sha256sum ./* > SHA256SUMS
-
-      - name: Release
-        if: ${{ env.IS_STABLE == 'true' || env.IS_PLUS_RELEASE == 'true' }}
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ./dist/*
-          body_path: './release.md'
-          tag_name: ${{ env.RELEASE_TAG }}
-          target_commitish: ${{ github.sha }}
-
-      - name: Create Homebrew Cask Source Dir
-        if: ${{ env.IS_STABLE == 'true' }}
-        run: |
-          version=$(echo "${{ env.RELEASE_TAG }}" | sed 's/^v//')
-          arm_sha=$(sha256sum "./dist/FlClash-${version}-macos-arm64.dmg" | awk '{print $1}')
-          amd_sha=$(sha256sum "./dist/FlClash-${version}-macos-amd64.dmg" | awk '{print $1}')
-
-          mkdir -p ./brew/Casks
-          sed \
-            -e "s|VERSION|$version|g" \
-            -e "s|ARM_SHA256|$arm_sha|g" \
-            -e "s|AMD_SHA256|$amd_sha|g" \
-            ./.github/homebrew_cask_template.rb > ./brew/Casks/flclash.rb
-
-      - name: Push to Homebrew tap
-        if: ${{ env.IS_STABLE == 'true' }}
-        uses: cpina/github-action-push-to-another-repository@v1.7.2
-        env:
-          SSH_DEPLOY_KEY: ${{ secrets.HOMEBREW_SSH_DEPLOY_KEY }}
-        with:
-          source-directory: ./brew/
-          destination-github-username: chen08209
-          destination-repository-name: homebrew-tap
-          user-name: 'chen08029'
-          user-email: 'chen08209@gmail.com'
-          target-branch: main
-          commit-message: Update Homebrew cask from ${{ github.ref_name }}
-          target-directory: /
-
-      - name: Create Fdroid Source Dir
-        if: ${{ env.IS_STABLE == 'true' }}
-        run: |
-          mkdir -p ./tmp
-          cp ./dist/*android-arm64-v8a* ./tmp/ || true
-          echo "Files copied successfully"
-
-      - name: Push to fdroid repo
-        if: ${{ env.IS_STABLE == 'true' }}
-        uses: cpina/github-action-push-to-another-repository@v1.7.2
-        env:
-          SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
-        with:
-          source-directory: ./tmp/
-          destination-github-username: chen08209
-          destination-repository-name: FlClash-fdroid-repo
-          user-name: 'chen08029'
-          user-email: 'chen08209@gmail.com'
-          target-branch: main
-          commit-message: Update from ${{ github.ref_name }}
-          target-directory: /tmp/
-
+1 | name: build
+2 | 
+3 | on:
+4 |   push:
+5 |     tags:
+6 |       - 'v*'
+7 |     branches:
+8 |       - 'codex/upstream-sync-v0.8.94'
+9 |   workflow_dispatch:
+10 |     inputs:
+11 |       release_tag:
+12 |         description: 'Release tag to publish'
+13 |         required: true
+14 |         type: string
+15 | env:
+16 |   IS_STABLE: ${{ !contains(github.ref, '-') }}
+17 |   IS_PLUS_RELEASE: ${{ contains(github.ref, '-plus.') || contains(inputs.release_tag, '-plus.') || github.ref_name == 'codex/upstream-sync-v0.8.94' }}
+18 |   RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name == 'codex/upstream-sync-v0.8.94' && 'v0.8.94-plus.13' || github.ref_name }}
+19 |   FLUTTER_VERSION: '3.44.4'
+20 | 
+21 | jobs:
+22 |   test:
+23 |     name: Test
+24 |     runs-on: ubuntu-latest
+25 |     steps:
+26 |       - name: Checkout
+27 |         uses: actions/checkout@v4
+28 |         with:
+29 |           submodules: recursive
+30 | 
+31 |       - name: Test release notes generation
+32 |         shell: bash
+33 |         run: bash .github/scripts/generate_release_notes_test.sh
+34 | 
+35 |       - name: Setup Flutter
+36 |         uses: subosito/flutter-action@v2
+37 |         with:
+38 |           channel: stable
+39 |           flutter-version: ${{ env.FLUTTER_VERSION }}
+40 |           cache: true
+41 | 
+42 |       - name: Install dependencies
+43 |         run: flutter pub get
+44 | 
+45 |       - name: Analyze
+46 |         run: flutter analyze --no-fatal-infos
+47 | 
+48 |       - name: Run tests
+49 |         run: flutter test --reporter expanded
+50 | 
+51 |       - name: Validate local Flutter packages
+52 |         shell: bash
+53 |         run: |
+54 |           for package in plugins/proxy plugins/wifi_ssid plugins/window_ext plugins/setup; do
+55 |             (
+56 |               cd "$package"
+57 |               flutter pub get
+58 |               flutter analyze --no-fatal-infos
+59 |             )
+60 |           done
+61 | 
+62 |       - name: Run local plugin tests
+63 |         shell: bash
+64 |         run: |
+65 |           (
+66 |             cd plugins/proxy
+67 |             flutter test --reporter expanded
+68 |           )
+69 |           (
+70 |             cd plugins/wifi_ssid
+71 |             flutter test --reporter expanded
+72 |           )
+73 | 
+74 |       - name: Validate setup build tool
+75 |         working-directory: plugins/setup/buildkit/build_tool
+76 |         run: |
+77 |           dart pub get
+78 |           dart analyze
+79 |           dart test
+80 | 
+81 |       - name: Setup Go
+82 |         uses: actions/setup-go@v5
+83 |         with:
+84 |           go-version: '1.26.4'
+85 |           cache-dependency-path: core/go.sum
+86 | 
+87 |       - name: Validate Go core wrapper
+88 |         working-directory: core
+89 |         env:
+90 |           CGO_ENABLED: 0
+91 |         run: |
+92 |           go test .
+93 |           go vet .
+94 | 
+95 |       - name: Validate Rust components
+96 |         run: |
+97 |           cargo fmt --manifest-path services/helper/Cargo.toml -- --check
+98 |           cargo test --manifest-path services/helper/Cargo.toml
+99 |           cargo fmt --manifest-path plugins/rust_api/rust/Cargo.toml -- --check
+100 |           cargo test --manifest-path plugins/rust_api/rust/Cargo.toml
+101 | 
+102 |   windows-helper-test:
+103 |     name: Windows helper test
+104 |     runs-on: windows-2022
+105 |     steps:
+106 |       - name: Checkout
+107 |         uses: actions/checkout@v4
+108 | 
+109 |       - name: Check format
+110 |         run: cargo fmt --manifest-path services/helper/Cargo.toml -- --check
+111 | 
+112 |       - name: Run Windows service tests
+113 |         run: cargo test --manifest-path services/helper/Cargo.toml --features windows-service
+114 | 
+115 |   build:
+116 |     if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/v') || github.ref_name == 'codex/upstream-sync-v0.8.94')) }}
+117 |     needs: [ test, windows-helper-test ]
+118 |     runs-on: ${{ matrix.os }}
+119 |     strategy:
+120 |       matrix:
+121 |         include:
+122 |           - platform: android
+123 |             os: ubuntu-latest
+124 |           - platform: windows
+125 |             os: Windows-2022
+126 |             arch: amd64
+127 |           - platform: linux
+128 |             os: ubuntu-22.04
+129 |             arch: amd64
+130 |           - platform: macos
+131 |             os: macos-15-intel
+132 |             arch: amd64
+133 |           - platform: macos
+134 |             os: macos-latest
+135 |             arch: arm64
+136 |           - platform: windows
+137 |             os: windows-11-arm
+138 |             arch: arm64
+139 |           - platform: linux
+140 |             os: ubuntu-24.04-arm
+141 |             arch: arm64
+142 | 
+143 |     steps:
+144 |       - name: Setup rust
+145 |         if: startsWith(matrix.os, 'windows-11-arm')
+146 |         shell: pwsh
+147 |         run: |
+148 |           Invoke-WebRequest -Uri "https://win.rustup.rs/aarch64" -OutFile rustup-init.exe
+149 |           .\rustup-init.exe -y --default-toolchain stable
+150 |           $cargoPath = "$env:USERPROFILE\.cargo\bin"
+151 |           Add-Content $env:GITHUB_PATH $cargoPath
+152 | 
+153 |       - name: Checkout
+154 |         uses: actions/checkout@v4
+155 |         with:
+156 |           submodules: recursive
+157 | 
+158 |       - name: Setup Android Signing
+159 |         if: startsWith(matrix.platform,'android')
+160 |         run: |
+161 |           echo "${{ secrets.KEYSTORE }}" | base64 --decode > android/app/keystore.jks
+162 |           echo "${{ secrets.SERVICE_JSON }}" | base64 --decode > android/app/google-services.json
+163 |           {
+164 |             echo "keyAlias=${{ secrets.KEY_ALIAS }}"
+165 |             echo "storePassword=${{ secrets.STORE_PASSWORD }}"
+166 |             echo "keyPassword=${{ secrets.KEY_PASSWORD }}"
+167 |           } >> android/local.properties
+168 | 
+169 |       - name: Setup Go
+170 |         uses: actions/setup-go@v5
+171 |         with:
+172 |           go-version: '1.26.4'
+173 |           cache-dependency-path: |
+174 |             core/go.sum
+175 | 
+176 |       - name: Enable git long paths (Windows)
+177 |         if: startsWith(matrix.os, 'windows')
+178 |         run: git config --global core.longpaths true
+179 | 
+180 |       - name: Setup Flutter
+181 |         uses: subosito/flutter-action@v2
+182 |         with:
+183 |           channel: master
+184 |           flutter-version: ${{ env.FLUTTER_VERSION }}
+185 |           cache: true
+186 | 
+187 |       - name: Setup Xcode
+188 |         if: startsWith(matrix.platform,'macos')
+189 |         run: |
+190 |           sudo xcode-select -s /Applications/Xcode_26.3.app || sudo xcode-select -s /Applications/Xcode_26.2.app
+191 |           xcodebuild -version
+192 | 
+193 |       - name: Setup NDK
+194 |         if: startsWith(matrix.platform,'android')
+195 |         uses: nttld/setup-ndk@v1
+196 |         with:
+197 |           ndk-version: r28c
+198 |           add-to-path: true
+199 |           link-to-sdk: true
+200 | 
+201 |       - name: Get Flutter Dependency
+202 |         run: |
+203 |           flutter --version
+204 |           flutter pub get
+205 | 
+206 |       - name: Setup
+207 |         run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
+208 | 
+209 |       - name: Upload
+210 |         uses: actions/upload-artifact@v4
+211 |         with:
+212 |           name: artifact-${{ matrix.platform }}${{ matrix.arch && format('-{0}', matrix.arch) }}
+213 |           path: ./dist
+214 |           overwrite: true
+215 | 
+216 |   changelog:
+217 |     if: ${{ !contains(github.ref, '-') }}
+218 |     permissions:
+219 |       contents: write
+220 |     runs-on: ubuntu-latest
+221 |     needs: [ build ]
+222 |     steps:
+223 |       - name: Checkout
+224 |         uses: actions/checkout@v4
+225 |         with:
+226 |           fetch-depth: 0
+227 |           ref: refs/heads/main
+228 |       - name: Generate
+229 |         run: |
+230 |           last_ver=$(grep -m1 '^## ' CHANGELOG.md 2>/dev/null | sed 's/^## //')
+231 | 
+232 |           mapfile -t tags < <(git tag --merged HEAD --sort=-creatordate)
+233 | 
+234 |           temp="NEW_CHANGELOG.md"
+235 |           : > "$temp"
+236 | 
+237 |           for i in "${!tags[@]}"; do
+238 |               curr="${tags[i]}"
+239 |               [[ "$curr" == "$last_ver" ]] && break
+240 | 
+241 |               prev="${tags[i+1]}"
+242 |               range="${prev:+$prev..}$curr"
+243 | 
+244 |               echo -e "## $curr\n" >> "$temp"
+245 |               git log --no-merges --pretty=format:"%B" "$range" | \
+246 |               awk '!/Update changelog/ && NF {print "- " $0 "\n"}' >> "$temp"
+247 |           done
+248 |           [ -f CHANGELOG.md ] && cat CHANGELOG.md >> "$temp"
+249 |           
+250 |           mv "$temp" CHANGELOG.md
+251 | 
+252 |       - name: Commit
+253 |         run: |
+254 |           git add CHANGELOG.md
+255 |           if ! git diff --cached --quiet; then
+256 |             echo "Commit pushing"
+257 |             git config --local user.email "chen08209@gmail.com"
+258 |             git config --local user.name "chen08209"
+259 |             git commit -m "Update changelog"
+260 |             if git push; then
+261 |               echo "Push succeeded"
+262 |             else
+263 |               echo "Push failed"
+264 |               exit 1
+265 |             fi
+266 |           fi
+267 | 
+268 |         env:
+269 |           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+270 | 
+271 |   plus-release:
+272 |     if: ${{ contains(github.ref, '-plus.') || contains(inputs.release_tag, '-plus.') || github.ref_name == 'codex/upstream-sync-v0.8.94' }}
+273 |     permissions:
+274 |       contents: write
+275 |     needs: [ build ]
+276 |     runs-on: ubuntu-latest
+277 |     steps:
+278 |       - name: Download
+279 |         uses: actions/download-artifact@v4
+280 |         with:
+281 |           path: ./dist/
+282 |           pattern: artifact-*
+283 |           merge-multiple: true
+284 |       - name: Release FlClashPlus
+285 |         uses: softprops/action-gh-release@v2
+286 |         with:
+287 |           files: ./dist/*
+288 |           tag_name: ${{ env.RELEASE_TAG }}
+289 |           target_commitish: ${{ github.sha }}
+290 |           name: FlClashPlus ${{ env.RELEASE_TAG }}
+291 |           body: Formal FlClashPlus release built and gated by GitHub Actions.
+292 | 
+293 |   upload:
+294 |     if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-') }}
+295 |     permissions:
+296 |       contents: write
+297 |     needs: [ build ]
+298 |     runs-on: ubuntu-latest
+299 |     services:
+300 |       telegram-bot-api:
+301 |         image: aiogram/telegram-bot-api:latest
+302 |         env:
+303 |           TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+304 |           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+305 |         ports:
+306 |           - 8081:8081
+307 |     steps:
+308 |       - name: Checkout
+309 |         uses: actions/checkout@v4
+310 |         with:
+311 |           fetch-depth: 0
+312 | 
+313 |       - name: Download
+314 |         uses: actions/download-artifact@v4
+315 |         with:
+316 |           path: ./dist/
+317 |           pattern: artifact-*
+318 |           merge-multiple: true
+319 | 
+320 |       - name: Generate release.md
+321 |         shell: bash
+322 |         run: |
+323 |           pre_tag=$(
+324 |             curl --silent "https://api.github.com/repos/chen08209/FlClash/releases/latest" |
+325 |               sed -nE 's/.*"tag_name": "([^"]+)".*/\1/p'
+326 |           )
+327 |           bash .github/scripts/generate_release_notes.sh "$pre_tag" release.md
+328 |       - name: Push to telegram
+329 |         if: ${{ env.IS_STABLE == 'true' }}
+330 |         env:
+331 |           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+332 |           TAG: ${{ github.ref_name }}
+333 |           RUN_ID: ${{ github.run_id }}
+334 |         run: |
+335 |           python -m pip install --upgrade pip
+336 |           pip install requests
+337 |           python release_telegram.py
+338 | 
+339 |       - name: Patch release.md
+340 |         run: |
+341 |           version=$(echo "${{ env.RELEASE_TAG }}" | sed 's/^v//')
+342 |           sed "s|VERSION|$version|g" ./.github/release_template.md >> release.md
+343 | 
+344 |       - name: Generate sha256
+345 |         if: ${{ env.IS_STABLE == 'true' }}
+346 |         run: |
+347 |           cd ./dist
+348 |           sha256sum ./* > SHA256SUMS
+349 | 
+350 |       - name: Release
+351 |         if: ${{ env.IS_STABLE == 'true' || env.IS_PLUS_RELEASE == 'true' }}
+352 |         uses: softprops/action-gh-release@v2
+353 |         with:
+354 |           files: ./dist/*
+355 |           body_path: './release.md'
+356 |           tag_name: ${{ env.RELEASE_TAG }}
+357 |           target_commitish: ${{ github.sha }}
+358 | 
+359 |       - name: Create Homebrew Cask Source Dir
+360 |         if: ${{ env.IS_STABLE == 'true' }}
+361 |         run: |
+362 |           version=$(echo "${{ env.RELEASE_TAG }}" | sed 's/^v//')
+363 |           arm_sha=$(sha256sum "./dist/FlClash-${version}-macos-arm64.dmg" | awk '{print $1}')
+364 |           amd_sha=$(sha256sum "./dist/FlClash-${version}-macos-amd64.dmg" | awk '{print $1}')
+365 | 
+366 |           mkdir -p ./brew/Casks
+367 |           sed \
+368 |             -e "s|VERSION|$version|g" \
+369 |             -e "s|ARM_SHA256|$arm_sha|g" \
+370 |             -e "s|AMD_SHA256|$amd_sha|g" \
+371 |             ./.github/homebrew_cask_template.rb > ./brew/Casks/flclash.rb
+372 | 
+373 |       - name: Push to Homebrew tap
+374 |         if: ${{ env.IS_STABLE == 'true' }}
+375 |         uses: cpina/github-action-push-to-another-repository@v1.7.2
+376 |         env:
+377 |           SSH_DEPLOY_KEY: ${{ secrets.HOMEBREW_SSH_DEPLOY_KEY }}
+378 |         with:
+379 |           source-directory: ./brew/
+380 |           destination-github-username: chen08209
+381 |           destination-repository-name: homebrew-tap
+382 |           user-name: 'chen08029'
+383 |           user-email: 'chen08209@gmail.com'
+384 |           target-branch: main
+385 |           commit-message: Update Homebrew cask from ${{ github.ref_name }}
+386 |           target-directory: /
+387 | 
+388 |       - name: Create Fdroid Source Dir
+389 |         if: ${{ env.IS_STABLE == 'true' }}
+390 |         run: |
+391 |           mkdir -p ./tmp
+392 |           cp ./dist/*android-arm64-v8a* ./tmp/ || true
+393 |           echo "Files copied successfully"
+394 | 
+395 |       - name: Push to fdroid repo
+396 |         if: ${{ env.IS_STABLE == 'true' }}
+397 |         uses: cpina/github-action-push-to-another-repository@v1.7.2
+398 |         env:
+399 |           SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
+400 |         with:
+401 |           source-directory: ./tmp/
+402 |           destination-github-username: chen08209
+403 |           destination-repository-name: FlClash-fdroid-repo
+404 |           user-name: 'chen08029'
+405 |           user-email: 'chen08209@gmail.com'
+406 |           target-branch: main
+407 |           commit-message: Update from ${{ github.ref_name }}
+408 |           target-directory: /tmp/
+409 | 
