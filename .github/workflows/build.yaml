@@ -203,7 +203,20 @@ jobs:
           flutter --version
           flutter pub get
 
+      - name: Setup Android
+        if: startsWith(matrix.platform,'android')
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v && exit 0
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            sleep 15
+          done
+
       - name: Setup
+        if: ${{ !startsWith(matrix.platform,'android') }}
         run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
 
       - name: Upload
