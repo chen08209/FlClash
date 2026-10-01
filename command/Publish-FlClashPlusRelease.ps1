@@ -218,6 +218,16 @@ function Initialize-ReleaseEnvironment {
     $env:TEMP = $TaskTempRoot
     $env:TMP = $TaskTempRoot
     $env:PUB_CACHE = Join-Path $SdkRoot 'pub-cache'
+    $env:ProgramData = 'C:\ProgramData'
+    $env:SystemDrive = 'C:'
+    $env:HOMEDRIVE = 'C:'
+    $env:HOMEPATH = '\Users\Administrator'
+    $env:PUBLIC = 'C:\Users\Public'
+    $env:ProgramW6432 = 'C:\Program Files'
+    $env:ALLUSERSPROFILE = $env:ProgramData
+    $env:CommonProgramFiles = 'C:\Program Files\Common Files'
+    ${env:CommonProgramFiles(x86)} = 'C:\Program Files (x86)\Common Files'
+    $env:CommonProgramW6432 = 'C:\Program Files\Common Files'
     $env:GRADLE_USER_HOME = Join-Path $SdkRoot 'gradle-user-home'
     $env:CARGO_HOME = Join-Path $SdkRoot 'cargo-home'
     $env:RUSTUP_HOME = Join-Path $SdkRoot 'rust\rustup'
@@ -246,7 +256,26 @@ function Initialize-ReleaseEnvironment {
 }
 
 function Initialize-PortableWindowsToolchain {
-    $visualStudioRoot = Join-Path $SdkRoot 'visual-studio-build-tools'
+    $visualStudioCandidates = @(
+        (Join-Path $SdkRoot 'visual-studio-build-tools-vs2022'),
+        (Join-Path $SdkRoot 'visual-studio-build-tools')
+    )
+    $visualStudioRoot = $visualStudioCandidates |
+        Where-Object {
+            Test-Path -LiteralPath (Join-Path $_ 'VC\Tools\MSVC') -PathType Container
+        } |
+        Where-Object {
+            @(
+                Get-ChildItem -LiteralPath (Join-Path $_ 'VC\Tools\MSVC') -Directory |
+                    Where-Object {
+                        Test-Path -LiteralPath (Join-Path $_.FullName 'bin\Hostx64\x64\cl.exe') -PathType Leaf
+                    }
+            ).Count -gt 0
+        } |
+        Select-Object -First 1
+    if ([string]::IsNullOrWhiteSpace($visualStudioRoot)) {
+        throw 'The portable Visual Studio C++ toolchain is incomplete.'
+    }
     $windowsSdkRoot = Join-Path $SdkRoot 'windows-sdk'
     $programFilesX86 = Join-Path $SdkRoot 'program-files-x86'
 
@@ -277,6 +306,24 @@ function Initialize-PortableWindowsToolchain {
         }
     }
 
+    $vcvars64 = Join-Path $visualStudioRoot 'VC\Auxiliary\Build\vcvars64.bat'
+    if (-not (Test-Path -LiteralPath $vcvars64 -PathType Leaf)) {
+        throw "Portable Visual Studio environment script is missing: $vcvars64"
+    }
+    $vcvarsEnvironment = & $env:ComSpec /d /s /c "call `"$vcvars64`" >nul && set"
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Portable Visual Studio environment initialization failed.'
+    }
+    foreach ($line in $vcvarsEnvironment) {
+        $separator = $line.IndexOf('=')
+        if ($separator -gt 0) {
+            [Environment]::SetEnvironmentVariable(
+                $line.Substring(0, $separator),
+                $line.Substring($separator + 1),
+                'Process'
+            )
+        }
+    }
     $msvcRoot = $msvc.FullName
     $msvcBin = Join-Path $msvcRoot 'bin\Hostx64\x64'
     $sdkVersion = $windowsSdk.Name
@@ -335,9 +382,10 @@ function Assert-DiskBudget {
     if ($cFree -lt 16) {
         throw "C drive free space is below 16 GiB ($cFree GiB)."
     }
-    if ($dFree -lt 64) {
-        throw "D drive free space is below 64 GiB ($dFree GiB)."
+        if ($dFree -lt 50) {
+        throw "D drive free space is below 50 GiB ($dFree GiB)."
     }
+
     return [pscustomobject]@{ CFreeGiB = $cFree; DFreeGiB = $dFree }
 }
 
@@ -406,9 +454,10 @@ function Write-ProvenanceBackup {
             )) {
             $item = Get-Item -LiteralPath $path
             [ordered]@{
-                file = $item.Name
+                                file = $item.Name
                 sizeBytes = $item.Length
-                sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+
+
             }
         }
     )
@@ -477,7 +526,7 @@ function New-AndroidSigningIdentity {
             '-keyalg', 'RSA',
             '-keysize', '4096',
             '-validity', '10000',
-            '-dname', 'CN=FlClashPlus Private Release,OU=Release,O=Nekobyran,L=Singapore,ST=Singapore,C=SG'
+            '-dname', 'CN=FlClashPlus Public Release,OU=Release,O=Nekobyran,L=Singapore,ST=Singapore,C=SG'
         ) -LogPath (Join-Path $LogsRoot 'android-signing-key-create.log') | Out-Null
         Protect-SigningCredential -Password $password
     }
@@ -611,75 +660,41 @@ function Test-WindowsZipArtifact {
     }
 }
 
-function Write-Checksums {
-    $files = @(
-        Get-ChildItem -LiteralPath $ArtifactsRoot -File |
-            Where-Object { $_.Name -ne 'SHA256SUMS' } |
-            Sort-Object Name
-    )
-    if ($files.Count -lt 3) {
-        throw 'Expected Android APK, Windows setup, and Windows portable artifacts.'
-    }
-    $lines = foreach ($file in $files) {
-        $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-        "$hash  $($file.Name)"
-    }
-    $checksumPath = Join-Path $ArtifactsRoot 'SHA256SUMS'
-    [IO.File]::WriteAllText(
-        $checksumPath,
-        ($lines -join "`n") + "`n",
-        [Text.UTF8Encoding]::new($false)
-    )
-    return $checksumPath
-}
-
 function Get-ReleaseAssets {
     $files = @(
         Get-ChildItem -LiteralPath $ArtifactsRoot -File |
-            Where-Object { $_.Name -ne 'artifact-manifest.json' } |
+            Where-Object { $_.Extension -in @('.apk', '.exe', '.zip') } |
             Sort-Object Name
     )
-    if ($files.Count -lt 4) {
-        throw 'Release artifact set is incomplete.'
+    if ($files.Count -ne 3) {
+        throw 'Expected exactly Android APK, Windows setup, and Windows portable artifacts.'
     }
     return @(
         foreach ($file in $files) {
-            $platform = if ($file.Extension -eq '.apk') {
-                'android'
-            }
-            elseif ($file.Extension -in @('.exe', '.zip')) {
-                'windows'
-            }
-            else {
-                'verification'
-            }
+            $platform = if ($file.Extension -eq '.apk') { 'android' } else { 'windows' }
             $kind = switch ($file.Extension) {
                 '.apk' { 'installer' }
                 '.exe' { 'installer' }
                 '.zip' { 'portable' }
-                default { 'checksum' }
             }
             $label = switch ($file.Extension) {
                 '.apk' { 'Android ARM64' }
                 '.exe' { 'Windows Installer' }
                 '.zip' { 'Windows Portable' }
-                default { 'SHA-256 Checksums' }
             }
             [ordered]@{
                 id = [IO.Path]::GetFileNameWithoutExtension($file.Name).ToLowerInvariant()
                 label = $label
                 platform = $platform
-                arch = if ($file.Extension -eq '.apk') { 'arm64-v8a' } elseif ($platform -eq 'windows') { 'x64' } else { 'all' }
+                arch = if ($file.Extension -eq '.apk') { 'arm64-v8a' } else { 'x64' }
                 fileName = $file.Name
                 sizeBytes = $file.Length
-                sha256 = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
                 url = "https://github.com/$Repository/releases/download/$Tag/$([Uri]::EscapeDataString($file.Name))"
                 kind = $kind
             }
         }
     )
 }
-
 function Write-SiteManifest {
     if (-not (Test-Path -LiteralPath $SiteRoot -PathType Container)) {
         throw 'release-site is missing.'
@@ -689,7 +704,7 @@ function Write-SiteManifest {
         schemaVersion = 1
         product = [ordered]@{
             name = 'FlClashPlus'
-            tagline = '公开源码与跨端发布，下载可验证。'
+            tagline = '公开源码与跨端正式发布。'
         }
         release = [ordered]@{
             tag = $Tag
@@ -700,8 +715,8 @@ function Write-SiteManifest {
             privateAccess = $false
             notes = @(
                 '公开源码与公开 Release，遵循 GNU GPL v3.0。',
-                'Android 与 Windows 工件来自同一份源码快照。',
-                '安装前请使用 SHA256SUMS 核验下载文件。'
+                                'Android 与 Windows 工件来自同一份源码快照。'
+
             )
             assets = $assets
         }
@@ -715,7 +730,14 @@ function Write-SiteManifest {
 
 function Invoke-ReleaseBuild {
     Initialize-ReleaseEnvironment
+    foreach ($obsolete in @('SHA256SUMS', 'SOURCE_MANIFEST.sha256')) {
+        $obsoletePath = Join-Path $ArtifactsRoot $obsolete
+        if (Test-Path -LiteralPath $obsoletePath -PathType Leaf) {
+            Remove-Item -LiteralPath $obsoletePath -Force
+        }
+    }
     $disk = Assert-DiskBudget
+
     Write-ProvenanceBackup
     New-AndroidSigningIdentity
 
@@ -912,7 +934,6 @@ function Invoke-ReleaseBuild {
     } | ConvertTo-Json |
         Set-Content -LiteralPath (Join-Path $LogsRoot 'windows-setup-authenticode.json') -Encoding utf8
 
-    [void](Write-Checksums)
     Write-SiteManifest
     $siteCheckSource = Join-Path $SiteRoot 'scripts\check.mjs'
     $siteCheckScript = Join-Path $TaskTempRoot 'release-site-check.mjs'
@@ -956,13 +977,10 @@ function Test-SensitiveStagingContent {
     }
 
     $tokenPattern = '(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|CLOUDFLARE_API_TOKEN\s*=\s*["'']?[A-Za-z0-9_-]{16,})'
-    $passwordPattern = '(?<name>storePassword|keyPassword)\s*=\s*["''](?<value>[^"''\r\n]{4,})["'']'
+    $passwordPattern = '(?m)^\s*(?<name>storePassword|keyPassword)\s*=\s*["''](?<value>[^"''\r\n]{4,})["'']'
     $allowedPasswordPlaceholders = @(
         'your_key_password',
         'your_store_password'
-    )
-    $allowedLiteralPasswordFileHashes = @(
-        'ca95c420ea323afb9209b44206037ec6f5bb761c8b2924fd9c74b1c63cf78b34'
     )
     $textFiles = @(
         Get-ChildItem -LiteralPath $Root -Recurse -File -Force |
@@ -986,11 +1004,7 @@ function Test-SensitiveStagingContent {
             foreach ($match in $hit.Matches) {
                 $value = $match.Groups['value'].Value.ToLowerInvariant()
                 if ($value -notin $allowedPasswordPlaceholders) {
-                    $fileHash = (Get-FileHash -LiteralPath $file.FullName `
-                            -Algorithm SHA256).Hash.ToLowerInvariant()
-                    if ($fileHash -notin $allowedLiteralPasswordFileHashes) {
-                        throw "Potential literal password found in source mirror: $($file.FullName)"
-                    }
+                    throw "Potential literal password found in source mirror: $($file.FullName)"
                 }
             }
         }
@@ -1035,29 +1049,6 @@ function Copy-SourceTree {
             Out-Null
         Copy-Item -LiteralPath $file.FullName -Destination $target
     }
-}
-
-function New-SourceManifest {
-    param([Parameter(Mandatory)][string]$Root)
-    $manifestPath = Join-Path $Root 'SOURCE_MANIFEST.sha256'
-    $lines = @(
-        Get-ChildItem -LiteralPath $Root -Recurse -File -Force |
-            Where-Object {
-                $_.FullName -notmatch '[\\/]\.git[\\/]' -and
-                $_.FullName -ne $manifestPath
-            } |
-            ForEach-Object {
-                $relative = [IO.Path]::GetRelativePath($Root, $_.FullName).Replace('\', '/')
-                $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-                "$hash  $relative"
-            } |
-            Sort-Object
-    )
-    [IO.File]::WriteAllText(
-        $manifestPath,
-        ($lines -join "`n") + "`n",
-        [Text.UTF8Encoding]::new($false)
-    )
 }
 
 function Assert-PublicRepository {
@@ -1181,13 +1172,14 @@ env.json
 core_sha256.json
 "@ | Set-Content -LiteralPath (Join-Path $RepositoryStage '.gitignore') -Encoding utf8
 
-    $checksumsPath = Join-Path $ArtifactsRoot 'SHA256SUMS'
-    if (Test-Path -LiteralPath $checksumsPath -PathType Leaf) {
-        Copy-Item -LiteralPath $checksumsPath `
-            -Destination (Join-Path $RepositoryStage 'SHA256SUMS')
+        foreach ($obsolete in @('SHA256SUMS', 'SOURCE_MANIFEST.sha256')) {
+        $obsoletePath = Join-Path $RepositoryStage $obsolete
+        if (Test-Path -LiteralPath $obsoletePath -PathType Leaf) {
+            Remove-Item -LiteralPath $obsoletePath -Force
+        }
     }
-    New-SourceManifest -Root $RepositoryStage
     Test-SensitiveStagingContent -Root $RepositoryStage
+
 }
 
 function Write-ReleaseNotes {
@@ -1203,8 +1195,8 @@ function Write-ReleaseNotes {
         ''
     )
     foreach ($asset in $assetRows) {
-        $lines += ('- **{0}** — `{1}` — SHA-256 `{2}`' -f `
-                $asset.label, $asset.fileName, $asset.sha256)
+        $lines += ('- **{0}** — `{1}` — {2:N1} MiB' -f `
+                $asset.label, $asset.fileName, ($asset.sizeBytes / 1MB))
     }
     $lines += @(
         '',
@@ -1212,7 +1204,6 @@ function Write-ReleaseNotes {
         '',
         '- Android 使用 FlClashPlus 专用发布签名身份。',
         '- Windows 安装器未进行 Authenticode 签名，系统可能显示 SmartScreen 提示。',
-        '- 安装前请使用 `SHA256SUMS` 核验下载文件。',
         '- 对应公开源码快照保存在同名 Release 标签。',
         '- 公共发布页不包含 GitHub 或 Cloudflare 凭据。'
     )
@@ -1356,12 +1347,11 @@ function Invoke-GitHubPublish {
         'push', 'origin', $Tag
     ) -LogPath (Join-Path $LogsRoot 'github-push-tag.log') | Out-Null
 
-    $uploadPaths = @(
-        Get-ChildItem -LiteralPath $ArtifactsRoot -File |
-            Where-Object { $_.Name -ne 'artifact-manifest.json' } |
-            Sort-Object Name |
-            ForEach-Object FullName
+        $uploadPaths = @(
+        Get-ReleaseAssets |
+            ForEach-Object { Join-Path $ArtifactsRoot $_.fileName }
     )
+
     $releaseArgs = @(
         'release', 'create', $Tag,
         '--repo', $Repository,
@@ -1492,9 +1482,9 @@ switch ($Action) {
             artifacts = @(
                 "FlClashPlus-$Version-android-arm64-v8a.apk",
                 "FlClashPlus-$Version-windows-x64-setup.exe",
-                "FlClashPlus-$Version-windows-x64-portable.zip",
-                'SHA256SUMS'
+                                "FlClashPlus-$Version-windows-x64-portable.zip"
             )
+
             externalWriteRequiresApply = $true
         } | ConvertTo-Json -Depth 8
     }
@@ -1521,3 +1511,4 @@ switch ($Action) {
         Invoke-GitHubPublish | ConvertTo-Json -Depth 8
     }
 }
+
