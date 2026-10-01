@@ -276,6 +276,34 @@ Telegram post. They publish no GitHub release, so the update dialog never sees t
 version from `pubspec.yaml` rather than the tag, so the patch has to be bumped before the first `-pre.N` of a cycle:
 while `v<pubspec version>` is still tagged it refuses to collect anything and the release job fails.
 
+### Website
+
+`site/` is the GitHub Pages site: a static page that renders `CHANGELOG.md` and the download links in the browser, and
+works as is for local previews. `tool/build_site.sh [dir]` assembles it with the preview images, the app icon,
+`CHANGELOG.md` read at the latest release tag, and a `release.json` of asset names, sizes and digests fetched through
+`gh`. Without `gh` access the page falls back to the newest version in `CHANGELOG.md` and lists the files without sizes.
+It then runs `tool/render_site.mjs` (Node), which writes the English page and a `zh/` copy for search engines: page
+text, the first changelog releases, canonical and `hreflang` links, JSON-LD and `sitemap.xml`, all from the strings,
+changelog parser and release markup in `site/assets/shared.js`. `SITE_URL` overrides the published URL these point at.
+On the built site each URL keeps its language: the language button links to the other page and carries the section in
+view, the chosen platform and the changelog search. Only the English root sends readers who chose or prefer Chinese on
+to `zh/`, unless its URL carries `?lang=en`: the button on `zh/` links there with it, so getting back to English never
+depends on browser storage. A project site cannot serve the `robots.txt` that would announce the sitemap, so submit
+`sitemap.xml` in Google Search Console and Bing Webmaster Tools once.
+
+```bash
+tool/build_site.sh && python3 -m http.server -d build/site
+```
+
+The page's look is deliberate: low-saturation flat colour, no blur, glow, glass or soft shadow, and motion that follows
+the logo's 30° lattice. `site/assets/field.js` draws the hero's capsules on that lattice with the glyph's own
+proportions, and the slanted wipes, the dot-to-bar marks and the theme transition reuse the same angle. Text that sits
+inside the hero has to be listed in `wireField` in `app.js`, or the capsules run behind it.
+
+`.github/workflows/pages.yaml` deploys it after every successful stable tag build and on pushes to `main` that touch the
+site, in the public repository only; its Pages source has to be set to GitHub Actions once. The file names come from the
+release matrix in `build.yaml`, so a renamed artifact needs the same change in `buildsFor` in `site/assets/app.js`.
+
 ## Verify
 
 In the public repository every branch push runs the `dart` job; in the private

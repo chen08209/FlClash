@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>FlClash – Clash Meta (mihomo) proxy client for Android, Windows, macOS and Linux</title>
+  <meta name="description" content="FlClash is a free, open-source Clash Meta (mihomo) proxy client for Android, Windows, macOS and Linux, with rule routing, TUN mode and subscription import. No ads.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f3efea" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#181617" media="(prefers-color-scheme: dark)">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="FlClash">
+  <meta property="og:description" content="A multi-platform proxy client based on Clash Meta (mihomo). Simple to use, open source and ad-free.">
+  <meta property="og:image" content="https://chen08209.github.io/FlClash/preview.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="stylesheet" href="assets/style.css">
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var page = root.dataset.pageLang;
+      var lang = null;
+      try {
+        var theme = localStorage.getItem('flclash.theme');
+        if (theme === 'light' || theme === 'dark') root.dataset.theme = theme;
+        lang = localStorage.getItem('flclash.lang');
+      } catch (e) {}
+      if (page === 'zh') return;
+      if (lang !== 'zh' && lang !== 'en') {
+        var prefs = navigator.languages || [navigator.language || ''];
+        lang = prefs.some(function (l) { return /^zh/i.test(l); }) ? 'zh' : 'en';
+      }
+      // The built English page is also the x-default URL, so it hands Chinese readers to the zh/ page.
+      if (page === 'en') {
+        if (lang === 'zh' && !/[?&]lang=en(&|$)/.test(location.search)) {
+          location.replace('zh/' + location.search + location.hash);
+        }
+        return;
+      }
+      root.lang = lang === 'zh' ? 'zh-CN' : 'en';
+    })();
+  </script>
+</head>
+<body>
+  <a class="skip" href="#download" data-i18n="skip">Skip to downloads</a>
+
+  <header class="nav" id="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#top" aria-label="FlClash">
+        <svg class="glyph" viewBox="0 0 240 240" aria-hidden="true">
+          <g stroke-width="46.32" stroke-linecap="round">
+            <line class="sig sig-3" x1="59.68" y1="100.95" x2="180.02" y2="31.47"/>
+            <line class="sig sig-2" x1="90.56" y1="154.43" x2="150.74" y2="119.69"/>
+          </g>
+          <circle class="sig sig-1" cx="121.44" cy="207.92" r="23.16"/>
+        </svg>
+        <span>FlClash</span>
+      </a>
+      <nav class="nav-links" aria-label="Sections" data-ink>
+        <a href="#download" data-i18n="navDownload">Download</a>
+        <a href="#changelog" data-i18n="navChangelog">Changelog</a>
+      </nav>
+      <div class="nav-tools" data-ink>
+        <a class="tool gh" href="https://github.com/chen08209/FlClash" id="gh-link" aria-label="GitHub">
+          <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path fill="currentColor" d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-1.96c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.68.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+          <span id="stars" class="stars" hidden></span>
+        </a>
+        <button class="tool" id="lang-toggle" type="button">中文</button>
+        <button class="tool" id="theme-toggle" type="button" aria-label="Toggle dark mode">
+          <svg class="theme-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.25" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M12 3.75a8.25 8.25 0 0 1 0 16.5Z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <span class="nav-progress" aria-hidden="true"></span>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <canvas class="field" id="field" aria-hidden="true"></canvas>
+      <div class="wrap">
+        <a class="eyebrow" id="hero-release" href="#changelog">
+          <span class="pulse" aria-hidden="true"></span>
+          <span id="hero-release-text" data-i18n="heroReleaseLoading">Latest release</span>
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <h1 class="display">
+              <span class="line word" id="wordmark">FlClash</span>
+              <span class="line second" id="tagline"><span class="for" data-i18n="heroFor">for</span> <button class="reel" id="reel" type="button" aria-label="Switch platform"><span class="reel-track" id="reel-track" aria-hidden="true"><span>Android</span><span>Windows</span><span>macOS</span><span>Linux</span></span><span class="sr" id="reel-current">Android</span></button></span>
+            </h1>
+            <p class="lede" data-i18n="heroLede">A multi-platform proxy client based on Clash Meta (mihomo). Simple to use, open source and ad-free.</p>
+            <div class="cta">
+              <a class="btn primary" id="cta" href="#download">
+                <span class="ico-clip" aria-hidden="true"><svg class="ico-down" viewBox="0 0 20 20" width="20" height="20"><path d="M10 3.5v11m0 0-4.5-4.5m4.5 4.5 4.5-4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <span class="btn-text">
+                  <span id="cta-title" data-i18n="ctaChoose">Choose a download</span>
+                  <span class="btn-sub" id="cta-sub" hidden></span>
+                </span>
+              </a>
+              <a class="btn quiet" href="#download" data-i18n="heroOther">Other platforms</a>
+            </div>
+            <p class="cta-note" id="cta-note" hidden></p>
+          </div>
+          <div class="stage" id="stage" aria-hidden="true"></div>
+        </div>
+
+        <figure class="preview">
+          <picture>
+            <source id="shot-dark" srcset="preview-dark.png" media="(prefers-color-scheme: dark)">
+            <img class="shot" src="preview.png" width="2400" height="1500" decoding="async" alt="FlClash dashboard on a MacBook and a phone" data-i18n-alt="previewAlt">
+          </picture>
+        </figure>
+
+        <ul class="facts" id="facts">
+          <li><b data-i18n="fact1Title">mihomo core</b><span data-i18n="fact1">Rule routing, proxy groups and TUN mode.</span></li>
+          <li><b data-i18n="fact2Title">Subscriptions</b><span data-i18n="fact2">Import a profile from a subscription link.</span></li>
+          <li><b data-i18n="fact3Title">WebDAV sync</b><span data-i18n="fact3">Back up and restore your data across devices.</span></li>
+          <li><b data-i18n="fact4Title">Open source</b><span data-i18n="fact4">Licensed under GPL-3.0, with no ads.</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section wrap" id="download" aria-labelledby="download-title">
+      <div class="rail-grid">
+        <div class="rail">
+          <p class="kicker" aria-hidden="true"><span class="cap"></span>01</p>
+          <h2 id="download-title" data-i18n="dlTitle">Download</h2>
+          <p class="section-sub" id="dl-meta"></p>
+          <p class="rail-text" data-i18n="dlLead">The build for this device is already selected. Each file says which devices it is for.</p>
+          <p class="rail-links">
+            <a id="sums-link" href="https://github.com/chen08209/FlClash/releases/latest">SHA256SUMS</a>
+            <a href="https://github.com/chen08209/FlClash/releases" data-i18n="dlAll">All releases on GitHub</a>
+          </p>
+        </div>
+        <div class="dl">
+          <div class="seg" id="platform-seg" role="tablist" aria-label="Platform">
+            <span class="seg-ink" aria-hidden="true"></span>
+            <button type="button" role="tab" id="tab-android" data-value="android" aria-controls="panel">Android</button>
+            <button type="button" role="tab" id="tab-windows" data-value="windows" aria-controls="panel">Windows</button>
+            <button type="button" role="tab" id="tab-macos" data-value="macos" aria-controls="panel">macOS</button>
+            <button type="button" role="tab" id="tab-linux" data-value="linux" aria-controls="panel">Linux</button>
+          </div>
+          <div class="panel" id="panel" role="tabpanel">
+            <div class="panel-top">
+              <p class="panel-hint" id="panel-hint"></p>
+              <div class="seg seg-sm" id="arch-seg" role="tablist" aria-label="Architecture" hidden>
+                <span class="seg-ink" aria-hidden="true"></span>
+                <button type="button" role="tab" id="arch-x64" data-value="x64">x64</button>
+                <button type="button" role="tab" id="arch-arm64" data-value="arm64">ARM64</button>
+              </div>
+            </div>
+            <ul class="files" id="files"></ul>
+            <p class="dl-error" id="dl-error" hidden></p>
+            <div class="extras" id="extras"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section wrap" id="changelog" aria-labelledby="changelog-title">
+      <div class="rail-grid">
+        <div class="rail rail-sticky">
+          <p class="kicker" aria-hidden="true"><span class="cap"></span>02</p>
+          <h2 id="changelog-title" data-i18n="clTitle">Changelog</h2>
+          <p class="section-sub" id="cl-meta"></p>
+          <label class="search" for="cl-search">
+            <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="9" cy="9" r="5.75" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m13.25 13.25 3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <input id="cl-search" type="search" autocomplete="off" spellcheck="false" placeholder="Search changes or versions" data-i18n-placeholder="clSearch">
+            <kbd aria-hidden="true">/</kbd>
+          </label>
+          <p class="cl-status" id="cl-status" aria-live="polite"></p>
+        </div>
+        <div class="cl">
+          <div class="timeline" id="timeline"></div>
+          <button class="more" id="cl-more" type="button" hidden></button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot wrap">
+    <div class="foot-brand">
+      <svg class="glyph" viewBox="0 0 240 240" aria-hidden="true">
+        <g stroke-width="46.32" stroke-linecap="round">
+          <line class="sig sig-3" x1="59.68" y1="100.95" x2="180.02" y2="31.47"/>
+          <line class="sig sig-2" x1="90.56" y1="154.43" x2="150.74" y2="119.69"/>
+        </g>
+        <circle class="sig sig-1" cx="121.44" cy="207.92" r="23.16"/>
+      </svg>
+      <div>
+        <p class="foot-name">FlClash</p>
+        <p class="foot-text"><span data-i18n="footLicense">Free and open source under GPL-3.0.</span> <span data-i18n="footUpdated">This page updates with every release.</span></p>
+      </div>
+    </div>
+    <nav class="foot-links" aria-label="Links">
+      <a href="https://github.com/chen08209/FlClash">GitHub</a>
+      <a href="https://github.com/chen08209/FlClash/releases" data-i18n="footReleases">Releases</a>
+      <a href="https://t.me/FlClash" data-i18n="footTelegram">Telegram channel</a>
+    </nav>
+  </footer>
+
+  <script src="assets/shared.js"></script>
+  <script src="assets/field.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

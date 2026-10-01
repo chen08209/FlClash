@@ -1,0 +1,81 @@
+name: pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'site/**'
+      - 'tool/build_site.sh'
+      - 'tool/render_site.mjs'
+      - '.github/workflows/pages.yaml'
+  workflow_run:
+    workflows:
+      - build
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    # head_branch also names a branch push's branch, so only a tag at the built commit counts as a release.
+    if: >-
+      github.repository == 'chen08209/FlClash' &&
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_branch, 'v') &&
+      !contains(github.event.workflow_run.head_branch, '-')
+    runs-on: ubuntu-latest
+    outputs:
+      stable: ${{ steps.lookup.outputs.stable }}
+    steps:
+      - name: Look up the tag
+        id: lookup
+        env:
+          NAME: ${{ github.event.workflow_run.head_branch }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          REMOTE: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          if git ls-remote --tags "$REMOTE" "refs/tags/$NAME" "refs/tags/$NAME^{}" | grep -q "^$SHA"; then
+            echo 'stable=true' >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    needs: tag
+    if: >-
+      github.repository == 'chen08209/FlClash' &&
+      !cancelled() &&
+      (github.event_name != 'workflow_run' || needs.tag.outputs.stable == 'true')
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Assemble site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash tool/build_site.sh _site
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
