@@ -269,7 +269,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   plus-release:
-    if: ${{ env.IS_PLUS_RELEASE == 'true' }}
+    if: ${{ contains(github.ref, '-plus.') || contains(inputs.release_tag, '-plus.') || github.ref_name == 'codex/upstream-sync-v0.8.94' }}
     permissions:
       contents: write
     needs: [ build ]
@@ -291,7 +291,7 @@ jobs:
           body: Formal FlClashPlus release built and gated by GitHub Actions.
 
   upload:
-    if: ${{ env.IS_STABLE == 'true' }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-') }}
     permissions:
       contents: write
     needs: [ build ]
