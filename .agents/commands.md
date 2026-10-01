@@ -276,6 +276,21 @@ Telegram post. They publish no GitHub release, so the update dialog never sees t
 version from `pubspec.yaml` rather than the tag, so the patch has to be bumped before the first `-pre.N` of a cycle:
 while `v<pubspec version>` is still tagged it refuses to collect anything and the release job fails.
 
+### Website
+
+`site/` is the GitHub Pages site: a static page with no build step that renders `CHANGELOG.md` and the download links in
+the browser. `tool/build_site.sh [dir]` assembles it with the preview images, the app icon, `CHANGELOG.md` read at the
+latest release tag, and a `release.json` of asset names, sizes and digests fetched through `gh`. Without `gh` access the
+page falls back to the newest version in `CHANGELOG.md` and lists the files without sizes.
+
+```bash
+tool/build_site.sh && python3 -m http.server -d build/site
+```
+
+`.github/workflows/pages.yaml` deploys it after every successful stable tag build and on pushes to `main` that touch the
+site, in the public repository only; its Pages source has to be set to GitHub Actions once. The file names come from the
+release matrix in `build.yaml`, so a renamed artifact needs the same change in `buildsFor` in `site/assets/app.js`.
+
 ## Verify
 
 In the public repository every branch push runs the `dart` job; in the private
