@@ -1149,6 +1149,7 @@ extension PatchClashConfigExt on PatchClashConfig {
       mixedPort: mixedPort,
       geoAutoUpdate: geoAutoUpdate,
       geoUpdateInterval: geoUpdateInterval,
+      geoXUrl: geoXUrl.raw,
     );
   }
 }

@@ -36,6 +36,7 @@ type UpdateParams struct {
 	Authentication     *[]string          `json:"authentication"`
 	GeoAutoUpdate      *bool              `json:"geo-auto-update"`
 	GeoUpdateInterval  *int               `json:"geo-update-interval"`
+	GeoXUrl            map[string]string  `json:"geox-url"`
 }
 
 type tunSchema struct {

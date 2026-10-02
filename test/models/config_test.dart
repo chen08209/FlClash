@@ -89,6 +89,21 @@ void main() {
 
       expect(config.geoXUrl, {GeoResource.MMDB: 'https://example.com/mmdb'});
     });
+
+    test('toUpdateParams sends geoXUrl to the Core under geox-url', () {
+      final params = const PatchClashConfig(
+        geoXUrl: {
+          GeoResource.MMDB: 'https://example.com/geoip.metadb',
+          GeoResource.GEOSITE: 'https://example.com/geosite.dat',
+        },
+      ).toUpdateParams(routeMode: RouteMode.config, authentication: const []);
+
+      final json = jsonDecode(jsonEncode(params)) as Map<String, Object?>;
+      expect(json['geox-url'], {
+        'mmdb': 'https://example.com/geoip.metadb',
+        'geosite': 'https://example.com/geosite.dat',
+      });
+    });
   });
 
   group('AppSettingProps JSON round-trip', () {

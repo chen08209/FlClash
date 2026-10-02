@@ -318,6 +318,9 @@ func updateConfig(params *UpdateParams) error {
 	}
 
 	updateListeners(currentConfig)
+	for geoType, link := range params.GeoXUrl {
+		setGeoResourceUrl(geoType, link)
+	}
 	syncGeoUpdater(params.GeoAutoUpdate, params.GeoUpdateInterval)
 	if routeChanged {
 		bumpRouteEpoch()

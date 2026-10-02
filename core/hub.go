@@ -26,6 +26,7 @@ import (
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/common/observable"
 	"github.com/metacubex/mihomo/common/utils"
+	"github.com/metacubex/mihomo/component/geodata"
 	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/config"
@@ -428,11 +429,29 @@ func handleGetExternalProvider(externalProviderName string) *ExternalProvider {
 	return externalProvider
 }
 
-var geoResourceUpdaters = map[string]func() error{
-	"MMDB":    updater.UpdateMMDB,
-	"ASN":     updater.UpdateASN,
-	"GEOIP":   updater.UpdateGeoIp,
-	"GEOSITE": updater.UpdateGeoSite,
+type geoResource struct {
+	update func() error
+	url    func() string
+	setUrl func(string)
+}
+
+var geoResources = map[string]geoResource{
+	"MMDB":    {update: updater.UpdateMMDB, url: geodata.MmdbUrl, setUrl: geodata.SetMmdbUrl},
+	"ASN":     {update: updater.UpdateASN, url: geodata.ASNUrl, setUrl: geodata.SetASNUrl},
+	"GEOIP":   {update: updater.UpdateGeoIp, url: geodata.GeoIpUrl, setUrl: geodata.SetGeoIpUrl},
+	"GEOSITE": {update: updater.UpdateGeoSite, url: geodata.GeoSiteUrl, setUrl: geodata.SetGeoSiteUrl},
+}
+
+// mihomo's updaters read these links without a lock, so an unchanged one is never rewritten.
+func setGeoResourceUrl(geoType string, link string) {
+	resource, exist := geoResources[strings.ToUpper(geoType)]
+	if !exist {
+		log.Warnln("geox-url: unknown geo resource %q", geoType)
+		return
+	}
+	if link != "" && link != resource.url() {
+		resource.setUrl(link)
+	}
 }
 
 const (
@@ -494,7 +513,7 @@ func releaseGeoUpdateFromHook(geoType string) {
 }
 
 func handleUpdateGeoData(geoType string) string {
-	update, exist := geoResourceUpdaters[geoType]
+	resource, exist := geoResources[geoType]
 	if !exist {
 		logError("updateGeoData: unknown geo resource %q", geoType)
 		return "unknown geo resource: " + geoType
@@ -504,7 +523,7 @@ func handleUpdateGeoData(geoType string) string {
 	}
 	safeGoDetached("updateGeoData("+geoType+")", func() {
 		defer releaseGeoUpdate(geoType)
-		if err := update(); err != nil {
+		if err := resource.update(); err != nil {
 			logError("updateGeoData(%s) error: %v", geoType, err)
 		}
 	})
