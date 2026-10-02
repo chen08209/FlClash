@@ -159,7 +159,17 @@ jobs:
         if: startsWith(matrix.platform,'android')
         run: |
           echo "${{ secrets.KEYSTORE }}" | base64 --decode > android/app/keystore.jks
-          echo "${{ secrets.SERVICE_JSON }}" | base64 --decode > android/app/google-services.json
+          if [ -n "${{ secrets.SERVICE_JSON }}" ]; then
+            service_json="$(mktemp)"
+            if echo "${{ secrets.SERVICE_JSON }}" | base64 --decode > "$service_json" &&
+               python3 -m json.tool "$service_json" > /dev/null &&
+               grep -q '"package_name"[[:space:]]*:[[:space:]]*"cc.nkbr.flclashplusplus"' "$service_json"; then
+              mv "$service_json" android/app/google-services.json
+            else
+              rm -f "$service_json"
+              echo "SERVICE_JSON is invalid for FlClashPlus; using tracked google-services.json"
+            fi
+          fi
           {
             echo "keyAlias=${{ secrets.KEY_ALIAS }}"
             echo "storePassword=${{ secrets.STORE_PASSWORD }}"
