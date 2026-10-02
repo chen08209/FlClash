@@ -6,7 +6,7 @@ publisher_url: https://github.com/chen08209/FlClash
 display_name: flclash++
 executable_name: flclashplusplus.exe
 output_base_file_name: flclashplusplus.exe
-setup_icon_file: ..\windows\runner\resources\app_icon.ico
+setup_icon_file: windows\runner\resources\app_icon.ico
 locales:
   - lang: zh
     file: ..\windows\packaging\exe\ChineseSimplified.isl
