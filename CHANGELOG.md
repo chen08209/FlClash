@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.8.99 (2026-10-03)
+
+**Features**
+
+- **editor** Editor word wrap and snippets (e131675)
+- **dashboard** More dashboard cards (e62afb7)
+- **views** Hide timed-out nodes and search every list (8378c70)
+- **ui** Sidebar, floating dock and drag to go back (841d603)
+- **ui** New app glyphs, empty states and theme page (ee6a497)
+- **overwrite** Invalid override warnings and rule presets (46fb7fe)
+- **config** DNS query log and per-key DNS/NTP overrides (a390a42)
+- **core** Proxied service checks and outbound IP risk (8068e68)
+- **platform** Tray hotkeys, node delays and a delay test (1e97716)
+
+**Bug Fixes**
+
+- **core** A changed resource link is now used by the next sync and by auto update (ff23f30)
+- **core** DNS lookups no longer fail on networks that report no DNS servers (e55f6d1)
+- **proxies** Smaller icons in icon-only group headers (786a6ab)
+- **core,android** Push notifications reconnect in Doze (1e9955d)
+- **backup,database** Restores never apply halfway (bee8f24)
+
 ## v0.8.98 (2026-09-14)
 
 **Bug Fixes**

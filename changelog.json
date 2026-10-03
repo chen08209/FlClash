@@ -2,6 +2,94 @@
   "schemaVersion": 2,
   "versions": [
     {
+      "version": "0.8.99",
+      "tag": "v0.8.99",
+      "date": "2026-10-03",
+      "prerelease": false,
+      "groups": [
+        {
+          "type": "feat",
+          "entries": [
+            {
+              "id": "e131675",
+              "scope": "editor",
+              "text": "Editor word wrap and snippets"
+            },
+            {
+              "id": "e62afb7",
+              "scope": "dashboard",
+              "text": "More dashboard cards"
+            },
+            {
+              "id": "8378c70",
+              "scope": "views",
+              "text": "Hide timed-out nodes and search every list"
+            },
+            {
+              "id": "841d603",
+              "scope": "ui",
+              "text": "Sidebar, floating dock and drag to go back"
+            },
+            {
+              "id": "ee6a497",
+              "scope": "ui",
+              "text": "New app glyphs, empty states and theme page"
+            },
+            {
+              "id": "46fb7fe",
+              "scope": "overwrite",
+              "text": "Invalid override warnings and rule presets"
+            },
+            {
+              "id": "a390a42",
+              "scope": "config",
+              "text": "DNS query log and per-key DNS/NTP overrides"
+            },
+            {
+              "id": "8068e68",
+              "scope": "core",
+              "text": "Proxied service checks and outbound IP risk"
+            },
+            {
+              "id": "1e97716",
+              "scope": "platform",
+              "text": "Tray hotkeys, node delays and a delay test"
+            }
+          ]
+        },
+        {
+          "type": "fix",
+          "entries": [
+            {
+              "id": "ff23f30",
+              "scope": "core",
+              "text": "A changed resource link is now used by the next sync and by auto update"
+            },
+            {
+              "id": "e55f6d1",
+              "scope": "core",
+              "text": "DNS lookups no longer fail on networks that report no DNS servers"
+            },
+            {
+              "id": "786a6ab",
+              "scope": "proxies",
+              "text": "Smaller icons in icon-only group headers"
+            },
+            {
+              "id": "1e9955d",
+              "scope": "core,android",
+              "text": "Push notifications reconnect in Doze"
+            },
+            {
+              "id": "bee8f24",
+              "scope": "backup,database",
+              "text": "Restores never apply halfway"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.8.98",
       "tag": "v0.8.98",
       "date": "2026-09-14",
