@@ -13,7 +13,7 @@
 [![License](https://img.shields.io/github/license/chen08209/FlClash?style=flat-square)](LICENSE)
 [![Telegram](https://img.shields.io/badge/Telegram-channel-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://t.me/FlClash)
 
-[官网](https://chen08209.github.io/FlClash/zh/) · [下载](#下载) · [更新日志](CHANGELOG.md) · [从源码构建](#从源码构建)
+[官网](https://chen08209.github.io/FlClash/zh) · [下载](#下载) · [更新日志](CHANGELOG.md) · [从源码构建](#从源码构建)
 
 </div>
 
@@ -38,7 +38,7 @@
 ## 下载
 
 从 [GitHub Releases](https://github.com/chen08209/FlClash/releases/latest) 获取最新版本，或打开
-[官网](https://chen08209.github.io/FlClash/zh/#download)，它会自动为你的设备选好安装包。
+[官网](https://chen08209.github.io/FlClash/zh#download)，它会自动为你的设备选好安装包。
 
 | 平台 | 安装包 | 说明 |
 | --- | --- | --- |

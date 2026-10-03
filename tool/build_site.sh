@@ -42,6 +42,6 @@ else
   cp "$root/CHANGELOG.md" "$out/CHANGELOG.md"
 fi
 
-node "$root/tool/render_site.mjs" "$out" "${SITE_URL:-https://chen08209.github.io/FlClash/}"
+node "$root/tool/render_site.mjs" "$out" "${SITE_URL:-https://chen08209.github.io/FlClash}"
 
 echo "site assembled in $out"

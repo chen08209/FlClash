@@ -913,6 +913,24 @@
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => field?.refresh());
   }
 
+  // Scroll-driven CSS animations stutter in Android WebView at 120 Hz, so the page progress bar and the preview
+  // settling flat follow the scroll position from script instead.
+  function followScroll() {
+    if (reducedMotion.matches) return;
+    const range = root.scrollHeight - innerHeight;
+    const read = range > 0 ? Math.min(1, Math.max(0, scrollY / range)) : 0;
+    $('.nav-progress').style.transform = `scaleX(${read.toFixed(4)})`;
+
+    const shot = $('.shot');
+    let top = 0;
+    for (let node = shot; node; node = node.offsetParent) top += node.offsetTop;
+    const inset = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0;
+    const travel = (innerHeight - inset + shot.offsetHeight) * 0.42;
+    const flat = Math.min(1, Math.max(0, (scrollY - top + innerHeight) / travel));
+    shot.style.transform =
+      flat < 1 ? `rotateX(${(18 * (1 - flat)).toFixed(2)}deg) scale(${(0.93 + 0.07 * flat).toFixed(4)})` : '';
+  }
+
   function wireEvents() {
     wireTabs($('#platform-seg'), (value) => setPlatform(value));
     wireTabs($('#arch-seg'), (value) => setArch(value));
@@ -966,9 +984,13 @@
     addEventListener('hashchange', revealHash);
 
     const nav = $('#nav');
-    const onScroll = () => nav.classList.toggle('scrolled', scrollY > 4);
+    const onScroll = () => {
+      nav.classList.toggle('scrolled', scrollY > 4);
+      followScroll();
+    };
     addEventListener('scroll', onScroll, { passive: true });
     onScroll();
+    if ('ResizeObserver' in window) new ResizeObserver(followScroll).observe(document.body);
 
     let resizeFrame = 0;
     addEventListener('resize', () => {
@@ -977,6 +999,7 @@
         moveInk($('#platform-seg'), false);
         moveInk($('#arch-seg'), false);
         reel.refit();
+        followScroll();
       });
     });
   }
