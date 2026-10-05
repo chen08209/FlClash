@@ -13,6 +13,16 @@ class MainActivity : FlutterActivity() {
         flutterEngine.plugins.add(ServicePlugin())
         flutterEngine.plugins.add(TilePlugin())
         ServiceState.attachFlutterEngine(flutterEngine)
+        // A mode/profile request may have arrived while no engine was alive
+        // (cold start from a shortcut/broadcast); replay them now that Dart can.
+        ModeRequest.pending?.let { mode ->
+            ModeRequest.pending = null
+            AppPlugin.changeMode(mode)
+        }
+        ModeRequest.pendingProfileId?.let { id ->
+            ModeRequest.pendingProfileId = null
+            AppPlugin.selectProfile(id)
+        }
     }
 
     override fun onDestroy() {
