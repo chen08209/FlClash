@@ -627,6 +627,49 @@ void main() {
         ExternalControllerStatus.open,
       );
     });
+
+    Future<UpdateParams> updateWith(PatchClashConfig patchConfig) async {
+      final core = _MockCoreHandlerInterface();
+      when(() => core.updateConfig(any())).thenAnswer((_) async => '');
+      final scopedAction = TestSetupAction();
+      final scoped = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(TestProfiles.new),
+          setupActionProvider.overrideWith(() => scopedAction),
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        ],
+      );
+      addTearDown(scoped.dispose);
+      scoped.read(setupActionProvider.notifier);
+      scoped.read(patchClashConfigProvider.notifier).value = patchConfig;
+
+      await scopedAction.updateConfig();
+
+      return verify(() => core.updateConfig(captureAny())).captured.single
+          as UpdateParams;
+    }
+
+    test('hands the Core the controller secret with the address', () async {
+      final params = await updateWith(
+        const PatchClashConfig(
+          externalController: ExternalControllerStatus.open,
+          secret: 'abc',
+        ),
+      );
+
+      expect(params.externalController, ExternalControllerStatus.open);
+      expect(params.secret, 'abc');
+    });
+
+    test('never opens the controller without a secret', () async {
+      final params = await updateWith(
+        const PatchClashConfig(
+          externalController: ExternalControllerStatus.open,
+        ),
+      );
+
+      expect(params.externalController, ExternalControllerStatus.close);
+    });
   });
 
   group('recoverMissingProfile', () {

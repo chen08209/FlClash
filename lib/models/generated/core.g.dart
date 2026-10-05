@@ -34,6 +34,7 @@ _UpdateParams _$UpdateParamsFromJson(Map<String, dynamic> json) =>
         _$ExternalControllerStatusEnumMap,
         json['external-controller'],
       ),
+      secret: json['secret'] as String? ?? '',
       unifiedDelay: json['unified-delay'] as bool,
       authentication:
           (json['authentication'] as List<dynamic>?)
@@ -61,6 +62,7 @@ Map<String, dynamic> _$UpdateParamsToJson(_UpdateParams instance) =>
       'tcp-concurrent': instance.tcpConcurrent,
       'external-controller':
           _$ExternalControllerStatusEnumMap[instance.externalController]!,
+      'secret': instance.secret,
       'unified-delay': instance.unifiedDelay,
       'authentication': instance.authentication,
       'geo-auto-update': instance.geoAutoUpdate,

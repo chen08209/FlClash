@@ -371,12 +371,80 @@ void main() {
       expect(restored.interfaceName, 'eth0');
     });
 
+    test('the controller secret survives round-trip and defaults to none', () {
+      expect(const PatchClashConfig().secret, isEmpty);
+
+      final restored = roundTrip(
+        () => const PatchClashConfig(secret: 'abc').toJson(),
+        PatchClashConfig.fromJson,
+      );
+
+      expect(restored.secret, 'abc');
+    });
+
     test('unknown interface-name-mode falls back to clear', () {
       final restored = PatchClashConfig.fromJson({
         'interface-name-mode': 'unknown',
       });
 
       expect(restored.interfaceNameMode, InterfaceNameMode.clear);
+    });
+  });
+
+  group('PatchClashConfig.ensureControllerSecret', () {
+    const open = PatchClashConfig(
+      externalController: ExternalControllerStatus.open,
+    );
+
+    test('leaves a closed controller without a secret as it is', () {
+      const closed = PatchClashConfig();
+
+      expect(identical(closed.ensureControllerSecret(), closed), isTrue);
+    });
+
+    test('gives an open controller a secret of its own', () {
+      final ensured = open.ensureControllerSecret();
+
+      expect(ensured.secret, matches(RegExp(r'^[A-Za-z0-9]{32}$')));
+      expect(ensured.externalController, ExternalControllerStatus.open);
+    });
+
+    test('is idempotent, so a secret the user chose or was shown stays', () {
+      final ensured = open.ensureControllerSecret();
+
+      expect(ensured.ensureControllerSecret().secret, ensured.secret);
+      expect(
+        open.copyWith(secret: 'mine').ensureControllerSecret().secret,
+        'mine',
+      );
+    });
+
+    test(
+      'drops the secret with the controller, and opening again rotates it',
+      () {
+        final first = open.ensureControllerSecret();
+        final closed = first
+            .copyWith(externalController: ExternalControllerStatus.close)
+            .ensureControllerSecret();
+        final second = closed
+            .copyWith(externalController: ExternalControllerStatus.open)
+            .ensureControllerSecret();
+
+        expect(closed.secret, isEmpty);
+        expect(second.secret, isNot(first.secret));
+      },
+    );
+
+    test('reaches the Core through the update params', () {
+      final params = open
+          .copyWith(secret: 'abc')
+          .toUpdateParams(
+            routeMode: RouteMode.config,
+            authentication: const [],
+          );
+
+      expect(params.secret, 'abc');
+      expect(params.toJson()['secret'], 'abc');
     });
   });
 

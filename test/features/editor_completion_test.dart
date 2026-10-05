@@ -59,6 +59,14 @@ void main() {
       expect(_inserted(completion, 'mixed-port'), 'mixed-port: ');
     });
 
+    test('omits disabled controllers and keeps listener completion', () {
+      final controllers = _labels(_complete('external-controller-|'));
+      expect(controllers, isNot(contains('external-controller-tls')));
+      expect(controllers, isNot(contains('external-controller-unix')));
+      expect(controllers, isNot(contains('external-controller-pipe')));
+      expect(_labels(_complete('listen|')), contains('listeners'));
+    });
+
     test('keeps dashes in the prefix and opens a sequence', () {
       final completion = _complete('proxy-g|');
       expect(completion!.prefix, 'proxy-g');

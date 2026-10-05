@@ -308,11 +308,7 @@ func updateConfig(params *UpdateParams) error {
 	if params.Tun != nil {
 		patchTun(&general.Tun, params.Tun)
 	}
-	if params.ExternalController != nil &&
-		*params.ExternalController != currentConfig.Controller.ExternalController {
-		currentConfig.Controller.ExternalController = *params.ExternalController
-		route.ReCreateServer(routeConfig(currentConfig))
-	}
+	patchController(params)
 	if params.Authentication != nil {
 		applyAuthentication(currentConfig, *params.Authentication)
 	}
@@ -326,6 +322,22 @@ func updateConfig(params *UpdateParams) error {
 		bumpRouteEpoch()
 	}
 	return nil
+}
+
+func patchController(params *UpdateParams) {
+	controller := currentConfig.Controller
+	address, secret := controller.ExternalController, controller.Secret
+	if params.ExternalController != nil {
+		address = *params.ExternalController
+	}
+	if params.Secret != nil {
+		secret = *params.Secret
+	}
+	if address == controller.ExternalController && secret == controller.Secret {
+		return
+	}
+	controller.ExternalController, controller.Secret = address, secret
+	route.ReCreateServer(routeConfig(currentConfig))
 }
 
 func applyAuthentication(cfg *config.Config, authentication []string) {

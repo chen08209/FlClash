@@ -150,6 +150,7 @@
   "allowBypass": "アプリによるVPNバイパスを許可",
   "externalController": "外部コントローラー",
   "externalControllerDesc": "有効にすると、ポート9090でClashコアを制御できます",
+  "externalControllerSecret": "外部コントローラーのシークレット",
   "ipv6Desc": "有効にすると、IPv6トラフィックを受信できます",
   "app": "アプリ",
   "general": "一般",

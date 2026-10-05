@@ -80,13 +80,48 @@ class System {
         : ['-c', '%U:%G %A', corePath];
   }
 
+  /// Execute for others fails it, so an older `+sx` Core is re-authorized.
   @visibleForTesting
   static bool isPrivilegedStatOutput(
     String output, {
     required String ownerPrefix,
   }) {
     final trimmed = output.trim();
-    return trimmed.startsWith(ownerPrefix) && trimmed.contains('rws');
+    if (!trimmed.startsWith(ownerPrefix)) {
+      return false;
+    }
+    final mode = trimmed.split(RegExp(r'\s+')).last;
+    return mode.length >= 10 &&
+        mode[3] == 's' &&
+        mode[9] != 'x' &&
+        mode[9] != 't';
+  }
+
+  @visibleForTesting
+  static String macOSElevationShell(String corePath) {
+    final path = _shellEscape(corePath);
+    return 'chown root:admin $path && chmod 4750 $path';
+  }
+
+  @visibleForTesting
+  static String linuxElevationShell(String corePath) {
+    final path = _shellEscape(corePath);
+    return 'group=\$(id -g "\$PKEXEC_UID") && chown "root:\$group" $path && '
+        'chmod 4750 $path';
+  }
+
+  Future<bool> _isInAdminGroup() async {
+    try {
+      final result = await runProcess('id', ['-Gn']);
+      return result.exitCode == 0 &&
+          result.stdout
+              .toString()
+              .trim()
+              .split(RegExp(r'\s+'))
+              .contains('admin');
+    } on ProcessException {
+      return false;
+    }
   }
 
   /// A read-only nosuid mount at a path that changes every run: no elevation sticks.
@@ -194,8 +229,15 @@ class System {
     }
 
     if (system.isMacOS) {
-      final escapedPath = _shellEscape(appPath.corePath);
-      final shell = 'chown root:admin $escapedPath && chmod +sx $escapedPath';
+      if (!await _isInAdminGroup()) {
+        commonPrint.log(
+          'TUN needs an administrator account: only the admin group may run '
+          'the elevated Core',
+          logLevel: LogLevel.error,
+        );
+        return AuthorizeCode.error;
+      }
+      final shell = macOSElevationShell(appPath.corePath);
       final arguments = [
         '-e',
         'do shell script "$shell" with administrator privileges',
@@ -206,13 +248,12 @@ class System {
       }
       return AuthorizeCode.success;
     } else if (system.isLinux) {
-      final escapedCorePath = _shellEscape(appPath.corePath);
       final ProcessResult result;
       try {
         result = await runProcess('pkexec', [
           '/bin/sh',
           '-c',
-          'chown root:root $escapedCorePath && chmod +sx $escapedCorePath',
+          linuxElevationShell(appPath.corePath),
         ]);
       } on ProcessException catch (error) {
         commonPrint.log(
@@ -308,9 +349,14 @@ class Windows {
     return true;
   }
 
+  /// The installer may be another administrator, so this process names the owner.
+  @visibleForTesting
+  static String installArguments(int ownerPid) =>
+      'install --owner-pid $ownerPid';
+
   Future<AuthorizeCode> registerService() {
     return registerHelperService(
-      () async => runas(appPath.helperPath, 'install'),
+      () async => runas(appPath.helperPath, installArguments(pid)),
     );
   }
 }

@@ -842,9 +842,6 @@ const clashConfigSchema = YamlSchema.map({
   'routing-mark': _str,
   'etag-support': _bool,
   'external-controller': YamlSchema.scalar(['127.0.0.1:9090']),
-  'external-controller-tls': _str,
-  'external-controller-unix': _str,
-  'external-controller-pipe': _str,
   'external-controller-cors': YamlSchema.map({
     'allow-origins': _strList,
     'allow-private-network': _bool,

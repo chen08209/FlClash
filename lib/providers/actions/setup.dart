@@ -493,6 +493,9 @@ class SetupAction extends _$SetupAction {
       tun: patchConfig.tun.copyWith(
         enable: patchConfig.tun.enable && authorized,
       ),
+      externalController: patchConfig.secret.isEmpty
+          ? ExternalControllerStatus.close
+          : patchConfig.externalController,
     );
   }
 

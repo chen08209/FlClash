@@ -100,6 +100,11 @@ class Bootstrap {
       config = config.copyWith(currentProfileId: null);
       await preferences.saveConfig(config);
     }
+    final patchClashConfig = config.patchClashConfig.ensureControllerSecret();
+    if (patchClashConfig != config.patchClashConfig) {
+      config = config.copyWith(patchClashConfig: patchClashConfig);
+      await preferences.saveConfig(config);
+    }
     final appState = AppState(
       brightness: WidgetsBinding.instance.platformDispatcher.platformBrightness,
       version: version,

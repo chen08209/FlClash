@@ -226,6 +226,24 @@ void main() {
     });
   });
 
+  group('writeConfig', () {
+    test('never leaves a restored open controller without a secret', () {
+      final ref = container.read(Provider<Ref>((ref) => ref));
+
+      writeConfig(
+        ref,
+        const Config(
+          themeProps: ThemeProps(),
+          patchClashConfig: PatchClashConfig(
+            externalController: ExternalControllerStatus.open,
+          ),
+        ),
+      );
+
+      expect(container.read(patchClashConfigProvider).secret, hasLength(32));
+    });
+  });
+
   group('buildConfigOverrides', () {
     test('produces correct overrides', () {
       const config = Config(

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"net/http"
 	"net/netip"
 	"os"
 	"path/filepath"
@@ -16,6 +17,7 @@ import (
 	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
+	"github.com/metacubex/mihomo/hub/route"
 	authStore "github.com/metacubex/mihomo/listener/auth"
 	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/mihomo/tunnel"
@@ -239,6 +241,63 @@ func TestUpdateConfigLeavesTheControllerAloneWhenTheAddressIsUnchanged(t *testin
 
 	if currentConfig.Controller.Secret != "s3cret" {
 		t.Errorf("Secret = %q, want the controller left untouched", currentConfig.Controller.Secret)
+	}
+}
+
+func TestUpdateConfigReplacesTheSecretTheProfileCarried(t *testing.T) {
+	withCurrentConfig(t, &config.Config{
+		General:    &config.General{},
+		Controller: &config.Controller{Secret: "from-the-profile"},
+	})
+	closed, secret := "", "generated"
+
+	if err := updateConfig(&UpdateParams{ExternalController: &closed, Secret: &secret}); err != nil {
+		t.Fatalf("updateConfig error: %v", err)
+	}
+
+	if currentConfig.Controller.Secret != secret {
+		t.Errorf("Secret = %q, want %q", currentConfig.Controller.Secret, secret)
+	}
+}
+
+func TestUpdateConfigServesTheControllerBehindTheSecretItWasGiven(t *testing.T) {
+	probe, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("reserve a port: %v", err)
+	}
+	address := probe.Addr().String()
+	_ = probe.Close()
+	withCurrentConfig(t, &config.Config{General: &config.General{}, Controller: &config.Controller{}})
+	t.Cleanup(func() { route.ReCreateServer(&route.Config{}) })
+	secret := "generated"
+
+	if err := updateConfig(&UpdateParams{ExternalController: &address, Secret: &secret}); err != nil {
+		t.Fatalf("updateConfig error: %v", err)
+	}
+
+	status := func(authorization string) int {
+		request, _ := http.NewRequest(http.MethodGet, "http://"+address+"/version", nil)
+		if authorization != "" {
+			request.Header.Set("Authorization", authorization)
+		}
+		deadline := time.Now().Add(3 * time.Second)
+		for {
+			response, err := http.DefaultClient.Do(request)
+			if err == nil {
+				_ = response.Body.Close()
+				return response.StatusCode
+			}
+			if time.Now().After(deadline) {
+				t.Fatalf("the controller never came up: %v", err)
+			}
+			time.Sleep(50 * time.Millisecond)
+		}
+	}
+	if got := status(""); got != http.StatusUnauthorized {
+		t.Errorf("without the secret: status %d, want %d", got, http.StatusUnauthorized)
+	}
+	if got := status("Bearer " + secret); got != http.StatusOK {
+		t.Errorf("with the secret: status %d, want %d", got, http.StatusOK)
 	}
 }
 

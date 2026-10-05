@@ -1,5 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
+import 'dart:io';
 import 'dart:math';
 
 import 'package:collection/collection.dart';
@@ -20,7 +21,7 @@ final windowsPipeName = '\\\\.\\pipe\\FlClashCore_${_randomPipeId()}';
 const helperPort = 47890;
 const helperSocketPath = '/run/flclash/helper.sock';
 const helperProtocolVersionHeader = 'x-flclash-helper-protocol';
-const helperProtocolVersion = '6';
+final helperProtocolVersion = Platform.isWindows ? '8' : '6';
 const maxTextScale = 1.4;
 const minTextScale = 0.8;
 final baseInfoEdgeInsets = EdgeInsets.symmetric(

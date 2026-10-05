@@ -150,6 +150,7 @@
   "allowBypass": "允许应用绕过VPN",
   "externalController": "外部控制器",
   "externalControllerDesc": "开启后将可以通过9090端口控制Clash内核",
+  "externalControllerSecret": "外部控制器密钥",
   "ipv6Desc": "开启后将可以接收IPv6流量",
   "app": "应用",
   "general": "常规",

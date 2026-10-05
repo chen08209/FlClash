@@ -79,7 +79,26 @@ for `settimeofday`.
 
 `_makeRealProfileTask` in `lib/common/task.dart` writes `mixed-port`, `allow-lan`, and `external-controller` into every
 generated profile. With `allow-lan` off, mihomo's `genAddr` binds each listener to `127.0.0.1`; the external controller is
-`ExternalControllerStatus.close` by default and never binds anywhere but loopback.
+`ExternalControllerStatus.close` by default and never binds anywhere but loopback. The task also clears
+`external-controller-tls`, `-unix` and `-pipe` in every mode: the unix and pipe controllers answer without a secret, and
+the unix one unlinks whatever file sits at its path before opening it to everyone, so a profile may not choose them.
+Outside safe mode, profiles retain `listeners`, `tunnels`, `ss-config`, `vmess-config`, `tuic-server`, `iptables`,
+`dns.listen` and `ntp.write-to-system`. Extra inbounds can bypass the app's LAN and authentication settings, and a TUN
+listener can change routing independently of the app's TUN toggle. These network and clock effects are an accepted
+boundary; they are not treated as arbitrary filesystem modification. The task disables `iptables` when its
+`inbound-interface` contains a space, because mihomo interpolates it into commands and splits their arguments on spaces.
+Safe mode clears these extra inbounds and iptables, closes DNS listening and disables NTP system time writes even after
+local overrides. The editor omits disabled alternate controllers and keeps listener completion.
+
+An open external controller always has a secret, because mihomo serves a controller with an empty one to every local
+user and, through CORS, to any page the user visits. `PatchClashConfig.secret` is that secret and it belongs to FlClash,
+as the address does: the task writes it over whatever the profile carries, and `UpdateParams.secret` hands the same value
+to a running Core, which restarts the controller when it changes. `ensureControllerSecret` keeps the pair consistent
+(an open controller gets a generated secret, a closed one drops it, so every opening rotates it) and runs where a
+config enters the app: the settings toggle, startup, and `writeConfig` for a restored backup. `_effectivePatchConfig`
+reports a controller without a secret as closed, and `_makeRealProfileTask` independently closes it without a secret
+or in safe mode, so a writer that skips `ensureControllerSecret` opens nothing. The settings page shows the secret in
+an editable row, which refuses an empty value.
 
 The loopback listener takes local connections without authentication by default: mandatory credentials would lock out
 every external local consumer a proxy client exists for. The binding only guarantees traffic originates on the device;
@@ -91,6 +110,32 @@ to a running core; `FlClashHttpOverrides` sends the credentials with the app's o
 withholds the Android VPN system proxy declaration because `ProxyInfo` cannot carry credentials (TUN still captures that
 traffic). Desktop system proxy is deliberately not gated — dropping it would leak traffic direct, so the setting's
 description tells users to supply credentials manually instead.
+
+### Local Trust Boundary
+
+The Windows Helper answers only a connection whose client process runs under the owner SID it was installed for;
+the Linux Helper only the owner uid. A setuid Core is executable by `root:admin` (macOS) or the installing user's primary
+group, so its boundary also includes every member of that group, not just the installing account. Profiles cannot choose
+a controller address, a secret or alternate controllers. Another account outside those permissions, a subscription,
+or a remote party reaching the privileged Core's control or filesystem APIs is a vulnerability.
+
+A process running as the same account is not stopped. It can ask the Helper to start the Core
+against a socket or pipe it owns, or run a setuid Core against a port it listens on, and so become the host that drives
+a privileged Core: `initClash` chooses the home directory every path check anchors on, and `getConfig` reads any path.
+The Core connects to whatever address it is given and cannot tell that host from FlClash. An account check cannot
+distinguish it from a same-account process that can already read FlClash's memory and files. This remains a user-to-root
+or user-to-SYSTEM privilege escalation, not a complete security fix. An open external
+controller is inside the same boundary: its secret is stored under the account, and `/upgrade` stays mounted (it fetches
+fixed MetaCubeX release URLs, not caller-chosen code). mihomo's `IsSafePath` compares paths lexically, so a symlink inside
+the home directory escapes it; that fix belongs upstream, not in the submodule.
+
+Closing the same-account case requires limiting what a hijacked Core can do. Keeping the main Core unprivileged and
+moving host changes into narrow platform helpers requires architectural work, but need not introduce repeated prompts
+or remove ordinary proxy functionality. Features that require additional privileges, such as identifying other users'
+processes, need platform-specific handling. Descriptor-based filesystem confinement can preserve ordinary managed
+paths; intentional external symlink targets need explicit allowed roots. These changes have not been implemented.
+Account authentication, a private socket directory or a symlink check at configuration time does not remove the
+privileged filesystem operations available to the host. Changes must not widen access to those operations.
 
 ### Interface Name Modes
 
@@ -667,6 +712,8 @@ rewritten; each owner reads the flag where it would otherwise act:
   user's values and the installed app keeps `127.0.0.1:9090`. `SetupAction.requestAdmin` skips authorization.
 - System clock: `_makeRealProfileTask` sets `write-to-system: false` on whatever `ntp` section the generated profile
   ends up with, so neither the user's override nor the profile's own NTP config can move the host's time.
+- Profile listeners and firewall rules: `_makeRealProfileTask` clears `listeners`, `tunnels`, `ss-config`,
+  `vmess-config`, `tuic-server` and `iptables`, and closes `dns.listen`, preventing profile-only changes during apply.
 - System proxy: the `proxy` plugin handle in `lib/common/proxy.dart` is `null`, so `ProxyManager` and exit cleanup
   never write the OS setting, not even the `stopProxy` that would clear what the installed app configured.
 - System DNS: `systemDnsCoordinator` is `null` and `shouldPatchSystemDnsProvider` is `false`, so neither the apply nor
@@ -1020,8 +1067,10 @@ after calculating the SHA256 of the Core produced for the active Flutter configu
 
 The helper owns its Windows Service Control Manager lifecycle through two elevated commands:
 
-- `FlClashHelperService.exe install` stops and removes any stale registration, creates the auto-start service for the
-  current executable path, starts it, and waits for the running state.
+- `FlClashHelperService.exe install --owner-pid <pid>` reads the account of that process (the app, which Dart names with
+  its own PID because the elevated installer may be another administrator), stops and removes any stale registration,
+  creates the auto-start service for the current executable path with `--owner-sid <SID>` as its launch argument,
+  starts it, and waits for the running state. A service started without an owner exits instead of serving anyone.
 - `FlClashHelperService.exe uninstall` stops the service, waits for shutdown, removes its registration, and is also used
   by the Windows package uninstaller.
 
@@ -1060,22 +1109,41 @@ is registered at package install, and `Linux.registerService` asks for elevation
 - A Linux host without systemd (`/run/systemd/system` absent) has no Helper: `system.hasHelperService` is false there,
   readiness is the `stat` check, and `pkexec` sets the setuid bit on the bundled Core as before.
 
+A setuid Core is a root process for whoever gives it an address to dial (`argv[1]`), so its mode never lets others
+execute it: macOS runs `chown root:admin` and `chmod 4750` (and refuses an account outside the `admin` group, which
+could not run the result), and a Linux host without systemd hands it to the requesting user's primary group under
+`pkexec`. `System.isPrivilegedStatOutput` reads a Core that others can execute as unauthorized, so one that an earlier
+version marked `+sx` is re-authorized on the next TUN enable.
+
 In every Flutter build mode `/start` opens the fixed Core executable beside the Helper without write/delete sharing,
 validates it against the SHA256 embedded only in the Helper, and keeps that handle open through process creation.
 `/ping` only compares the requested `coreSha256` with the Helper's embedded value and checks the fixed Core path exists;
-it never hashes the Core. Protocol version 6 uses 32-character lowercase-hex session ownership:
+it never hashes the Core. Protocol version 6 (8 on Windows, where the owner check and the browser-origin check arrived
+and an older Helper must be reinstalled) uses 32-character lowercase-hex session ownership:
 
 - `GET /ping?coreSha256=...` returns the current Helper executable path with `x-flclash-helper-protocol` when the
   requested SHA matches.
-- `POST /start` rejects unknown JSON fields, validates `{address, sessionId}`, then releases any previously managed Core
-  before verifying the Core — so every outcome, including a rejected one, leaves the Helper owning no Core — and returns
+- `POST /start` rejects unknown JSON fields and validates `{address, sessionId}` and, on Linux, the socket owner, which
+  leaves a running Core alone. It then releases any previously managed Core before verifying the Core — so every
+  outcome of a request that passed validation, including a rejected one, leaves the Helper owning no Core — and returns
   `{sessionId, pid}`.
 - `POST /stop` validates `{sessionId}` and only stops the matching managed Core. A session mismatch is HTTP 409.
 - `GET /logs` exposes the bounded recent Helper/Core stderr buffer with `no-store` caching.
 
+`/start` and `/stop` take at most 4096 bytes and need a `Content-Length` (HTTP 413 and 411 otherwise); `HelperClient`
+always sends one. All endpoints reject `Origin` headers and non-local `Host` values, preventing browser requests and DNS
+rebinding through an owner-account browser, which would otherwise pass the Windows account check. The accepted
+authorities are `127.0.0.1`, `localhost` and the Linux Unix-socket placeholder `FlClashHelperService`. The Helper grants
+no CORS access.
+
 Endpoints bind only to `127.0.0.1:47890` on Windows and to `/run/flclash/helper.sock` on Linux, and do not use
-request-token authentication. Lifecycle safety comes from the fixed executable/hash, the strict address namespace
-(`\\.\pipe\FlClashCore_<32 hex>` on Windows, `/tmp/FlClashSocket_<digits>.sock` on Linux), the session-scoped stop
+request-token authentication. Who may call them is decided per connection, before any request is read: the Linux
+socket drops a peer whose `SO_PEERCRED` UID is not the owner's, and the Windows listener (`service/peer.rs`) traces the
+connection through the TCP table to the process holding its client end and drops it unless that process runs as the
+owner SID the service was registered with. The Windows Core runs as SYSTEM and dials whatever pipe `/start` names, so
+without that check any local account would host a SYSTEM Core. What no per-connection check closes is a process that
+runs as the owner itself, on either platform. Lifecycle safety also comes from the fixed executable/hash, the strict
+address namespace (`\\.\pipe\FlClashCore_<32 hex>` on Windows, `/tmp/FlClashSocket_<digits>.sock` on Linux), the session-scoped stop
 contract, Dart-side peer-PID verification on Windows and, on Unix, the Core socket that `plugins/rust_api` sets to
 mode `0600` so only the owning user (and the root-effective Core) can connect. When the Helper service itself shuts
 down, it unconditionally stops the Core process it owns; under systemd the unit's control group does the same.

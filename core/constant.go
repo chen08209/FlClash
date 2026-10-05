@@ -32,6 +32,7 @@ type UpdateParams struct {
 	IPv6               *bool              `json:"ipv6"`
 	TCPConcurrent      *bool              `json:"tcp-concurrent"`
 	ExternalController *string            `json:"external-controller"`
+	Secret             *string            `json:"secret"`
 	UnifiedDelay       *bool              `json:"unified-delay"`
 	Authentication     *[]string          `json:"authentication"`
 	GeoAutoUpdate      *bool              `json:"geo-auto-update"`

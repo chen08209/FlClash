@@ -164,7 +164,23 @@ Future<({String yaml, String md5})> _makeRealProfileTask(
     }
   }
 
-  rawConfig['external-controller'] = realPatchConfig.externalController.value;
+  rawConfig['external-controller'] =
+      data.safeMode || realPatchConfig.secret.isEmpty
+      ? ''
+      : realPatchConfig.externalController.value;
+  rawConfig['secret'] = realPatchConfig.secret;
+  // mihomo serves the unix and pipe controllers without a secret, and the unix
+  // one unlinks whatever sits at its path before opening it to everyone.
+  rawConfig['external-controller-tls'] = '';
+  rawConfig['external-controller-unix'] = '';
+  rawConfig['external-controller-pipe'] = '';
+  final iptables = rawConfig['iptables'];
+  if (iptables is Map) {
+    final inboundInterface = iptables['inbound-interface'];
+    if (inboundInterface is String && inboundInterface.contains(' ')) {
+      rawConfig['iptables'] = {'enable': false};
+    }
+  }
   rawConfig['external-ui'] = '';
   switch (realPatchConfig.interfaceNameMode) {
     case InterfaceNameMode.clear:
@@ -280,10 +296,13 @@ Future<({String yaml, String md5})> _makeRealProfileTask(
     }
   }
   if (data.safeMode) {
+    rawConfig['listeners'] = [];
+    rawConfig['tunnels'] = [];
+    rawConfig['ss-config'] = '';
+    rawConfig['vmess-config'] = '';
+    rawConfig['tuic-server'] = {'enable': false};
+    rawConfig['iptables'] = {'enable': false};
     rawConfig['dns']['listen'] = '';
-    rawConfig['external-controller-tls'] = '';
-    rawConfig['external-controller-unix'] = '';
-    rawConfig['external-controller-pipe'] = '';
     final rawNtp = rawConfig['ntp'];
     if (rawNtp is Map) {
       rawConfig['ntp'] = {

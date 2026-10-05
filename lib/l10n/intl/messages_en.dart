@@ -608,6 +608,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "externalControllerDesc": MessageLookupByLibrary.simpleMessage(
       "When enabled, the Clash core can be controlled on port 9090",
     ),
+    "externalControllerSecret": MessageLookupByLibrary.simpleMessage(
+      "External controller secret",
+    ),
     "externalLink": MessageLookupByLibrary.simpleMessage("External link"),
     "extraLarge": MessageLookupByLibrary.simpleMessage("Extra large"),
     "fade": MessageLookupByLibrary.simpleMessage("Fade"),

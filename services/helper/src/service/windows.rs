@@ -1,6 +1,8 @@
-use crate::service::hub::run_service_until;
+use crate::service::owner::{owner_sid_arguments, service_command, ServiceCommand};
+use crate::service::peer::{process_sid, serve_until};
 
 use anyhow::{bail, Context, Result};
+use once_cell::sync::OnceCell;
 use std::ffi::{OsStr, OsString};
 use std::thread::sleep;
 use std::time::{Duration, Instant};
@@ -34,36 +36,18 @@ const ERROR_SERVICE_CANNOT_ACCEPT_CTRL: i32 = 1061;
 const ERROR_SERVICE_NOT_ACTIVE: i32 = 1062;
 const ERROR_SERVICE_MARKED_FOR_DELETE: i32 = 1072;
 
-#[derive(Debug, PartialEq, Eq)]
-enum ServiceCommand {
-    Run,
-    Install,
-    Uninstall,
-}
+static OWNER_SID: OnceCell<String> = OnceCell::new();
 
 pub fn main() -> Result<()> {
     match service_command(std::env::args_os().skip(1))? {
-        ServiceCommand::Run => start_service().map_err(Into::into),
-        ServiceCommand::Install => install_service(),
+        ServiceCommand::Run { owner_sid } => start_service(owner_sid).map_err(Into::into),
+        ServiceCommand::Install { owner_pid } => install_service(owner_pid),
         ServiceCommand::Uninstall => uninstall_service(),
     }
 }
 
-fn service_command(args: impl IntoIterator<Item = OsString>) -> Result<ServiceCommand> {
-    let mut args = args.into_iter();
-    let command = match args.next().as_deref() {
-        None => ServiceCommand::Run,
-        Some(value) if value == OsStr::new("install") => ServiceCommand::Install,
-        Some(value) if value == OsStr::new("uninstall") => ServiceCommand::Uninstall,
-        Some(value) => bail!("unknown helper command: {}", value.to_string_lossy()),
-    };
-    if args.next().is_some() {
-        bail!("helper accepts at most one command");
-    }
-    Ok(command)
-}
-
-fn start_service() -> windows_service::Result<()> {
+fn start_service(owner_sid: String) -> windows_service::Result<()> {
+    let _ = OWNER_SID.set(owner_sid);
     service_dispatcher::start(SERVICE_NAME, ffi_service_main)
 }
 
@@ -74,6 +58,10 @@ fn service_main(_arguments: Vec<OsString>) {
 }
 
 fn run_windows_service() -> Result<()> {
+    let owner_sid = OWNER_SID
+        .get()
+        .cloned()
+        .context("the helper service has no owner")?;
     let (shutdown_tx, mut shutdown_rx) = watch::channel(false);
     let status_handle = service_control_handler::register(
         SERVICE_NAME,
@@ -116,7 +104,8 @@ fn run_windows_service() -> Result<()> {
 
     let shutdown_status_handle = status_handle;
     let running_status_handle = status_handle;
-    let service_result = runtime.block_on(run_service_until(
+    let service_result = runtime.block_on(serve_until(
+        owner_sid,
         async move {
             if !*shutdown_rx.borrow() {
                 let _ = shutdown_rx.changed().await;
@@ -155,7 +144,9 @@ fn run_windows_service() -> Result<()> {
     Ok(())
 }
 
-fn install_service() -> Result<()> {
+fn install_service(owner_pid: u32) -> Result<()> {
+    let owner_sid = process_sid(owner_pid)
+        .with_context(|| format!("read the account of process {owner_pid}"))?;
     let manager = ServiceManager::local_computer(
         None::<&str>,
         ServiceManagerAccess::CONNECT | ServiceManagerAccess::CREATE_SERVICE,
@@ -171,7 +162,7 @@ fn install_service() -> Result<()> {
         start_type: ServiceStartType::AutoStart,
         error_control: ServiceErrorControl::Normal,
         executable_path,
-        launch_arguments: Vec::new(),
+        launch_arguments: owner_sid_arguments(&owner_sid),
         dependencies: Vec::new(),
         account_name: None,
         account_password: None,
@@ -319,31 +310,5 @@ fn service_status(
         checkpoint,
         wait_hint,
         process_id: None,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn parses_service_commands() {
-        assert_eq!(service_command([]).unwrap(), ServiceCommand::Run);
-        assert_eq!(
-            service_command([OsString::from("install")]).unwrap(),
-            ServiceCommand::Install
-        );
-        assert_eq!(
-            service_command([OsString::from("uninstall")]).unwrap(),
-            ServiceCommand::Uninstall
-        );
-    }
-
-    #[test]
-    fn rejects_unknown_or_extra_service_commands() {
-        assert!(service_command([OsString::from("unknown")]).is_err());
-        assert!(
-            service_command([OsString::from("install"), OsString::from("unexpected")]).is_err()
-        );
     }
 }

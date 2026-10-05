@@ -552,6 +552,7 @@ _PatchClashConfig _$PatchClashConfigFromJson(Map<String, dynamic> json) =>
             json['external-controller'],
           ) ??
           ExternalControllerStatus.close,
+      secret: json['secret'] as String? ?? '',
       hosts:
           (json['hosts'] as Map<String, dynamic>?)?.map(
             (k, e) => MapEntry(k, e as String),
@@ -593,6 +594,7 @@ Map<String, dynamic> _$PatchClashConfigToJson(_PatchClashConfig instance) =>
       'global-ua': instance.globalUa,
       'external-controller':
           _$ExternalControllerStatusEnumMap[instance.externalController]!,
+      'secret': instance.secret,
       'hosts': instance.hosts,
       'geo-auto-update': instance.geoAutoUpdate,
       'geo-update-interval': instance.geoUpdateInterval,

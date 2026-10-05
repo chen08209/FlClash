@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
@@ -213,21 +214,39 @@ void main() {
   });
 
   group('isPrivilegedStatOutput', () {
-    test('accepts a root-owned setuid binary', () {
+    test('accepts a root-owned setuid binary closed to others', () {
       expect(
         System.isPrivilegedStatOutput(
-          'root:admin -rwsr-sr-x\n',
+          'root:admin -rwsr-x---\n',
           ownerPrefix: 'root:admin',
         ),
         isTrue,
       );
       expect(
         System.isPrivilegedStatOutput(
-          'root:root -rwsr-sr-x',
+          'root:alice -rws------+',
           ownerPrefix: 'root:',
         ),
         isTrue,
       );
+    });
+
+    test('rejects a setuid binary that others can execute', () {
+      for (final mode in [
+        '-rwsr-sr-x',
+        '-rwsr-xr-x',
+        '-rwsr-x--x',
+        '-rwsr-x--t',
+      ]) {
+        expect(
+          System.isPrivilegedStatOutput(
+            'root:admin $mode',
+            ownerPrefix: 'root:admin',
+          ),
+          isFalse,
+          reason: mode,
+        );
+      }
     });
 
     test('rejects a root-owned binary without the setuid bit', () {
@@ -262,11 +281,20 @@ void main() {
     'checkIsAdmin',
     () {
       test('stats the core path verbatim', () async {
-        processes.stub('stat', 'root:admin -rwsr-sr-x');
+        processes.stub('stat', 'root:admin -rwsr-x---');
 
         expect(await system.checkIsAdmin(), isTrue);
         expect(processes.argumentsFor('stat').last, appPath.corePath);
       });
+
+      test(
+        'does not trust a core earlier versions left executable by all',
+        () async {
+          processes.stub('stat', 'root:admin -rwsr-sr-x');
+
+          expect(await system.checkIsAdmin(), isFalse);
+        },
+      );
 
       test('reports a core that is not setuid root', () async {
         processes.stub('stat', 'alice:staff -rwxr-xr-x');
@@ -284,6 +312,56 @@ void main() {
         ? 'the Helper probe replaces stat here'
         : false,
   );
+
+  group('elevation shells', () {
+    test('macOS hands the Core to the admin group and nobody else', () {
+      expect(
+        System.macOSElevationShell('/Apps/Fl Clash/core'),
+        "chown root:admin '/Apps/Fl Clash/core' && "
+        "chmod 4750 '/Apps/Fl Clash/core'",
+      );
+    });
+
+    test('Linux hands the Core to the requesting user\'s group', () {
+      final shell = System.linuxElevationShell('/opt/FlClash/FlClashCore');
+
+      expect(shell, startsWith(r'group=$(id -g "$PKEXEC_UID") && '));
+      expect(shell, contains(r'chown "root:$group" '));
+      expect(shell, endsWith("chmod 4750 '/opt/FlClash/FlClashCore'"));
+    });
+
+    test('neither leaves execute to others', () {
+      for (final shell in [
+        System.macOSElevationShell('/core'),
+        System.linuxElevationShell('/core'),
+      ]) {
+        expect(shell, isNot(contains('+sx')));
+        expect(shell, contains('chmod 4750'));
+      }
+    });
+  });
+
+  group('authorizeCore on macOS', () {
+    test('refuses an account outside the admin group', () async {
+      processes.stub('id', 'alice staff everyone');
+
+      expect(await system.authorizeCore(), AuthorizeCode.error);
+      expect(processes.ran('osascript'), isFalse);
+    });
+
+    test('elevates the Core for an admin account', () async {
+      processes.stub('id', 'alice staff admin');
+
+      expect(await system.authorizeCore(), AuthorizeCode.success);
+      expect(processes.argumentsFor('osascript').last, contains('chmod 4750'));
+    });
+  }, skip: system.isMacOS ? false : 'macOS only');
+
+  group('Windows installArguments', () {
+    test('names this process as the account the Helper serves', () {
+      expect(Windows.installArguments(4242), 'install --owner-pid 4242');
+    });
+  });
 
   group('Linux installService', () {
     test('asks pkexec to install the bundled Helper', () async {

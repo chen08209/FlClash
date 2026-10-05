@@ -238,6 +238,23 @@ class AuthenticationPasswordItem extends ConsumerWidget {
   }
 }
 
+class ExternalControllerSecretItem extends ConsumerWidget {
+  const ExternalControllerSecretItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    return ConfigTextItem(
+      title: (l) => l.externalControllerSecret,
+      maxLength: TextInputLimits.password,
+      selector: patchClashConfigProvider.select((state) => state.secret),
+      normalize: (value) => value.trim(),
+      onChanged: (ref, value) => ref
+          .read(patchClashConfigProvider.notifier)
+          .update((state) => state.copyWith(secret: value)),
+    );
+  }
+}
+
 ConfigToggleItem _clashToggle({
   required ConfigLabel title,
   ConfigLabel? subtitle,
@@ -322,7 +339,10 @@ class GeneralView extends ConsumerWidget {
     ];
   }
 
-  List<Widget> _inboundItems(bool authentication) {
+  List<Widget> _inboundItems({
+    required bool authentication,
+    required bool externalController,
+  }) {
     return [
       const PortItem(),
       _clashToggle(
@@ -335,12 +355,15 @@ class GeneralView extends ConsumerWidget {
         subtitle: (l) => l.externalControllerDesc,
         select: (state) =>
             state.externalController == ExternalControllerStatus.open,
-        update: (state, value) => state.copyWith(
-          externalController: value
-              ? ExternalControllerStatus.open
-              : ExternalControllerStatus.close,
-        ),
+        update: (state, value) => state
+            .copyWith(
+              externalController: value
+                  ? ExternalControllerStatus.open
+                  : ExternalControllerStatus.close,
+            )
+            .ensureControllerSecret(),
       ),
+      if (externalController) const ExternalControllerSecretItem(),
       const AuthenticationItem(),
       if (authentication) ...const [
         AuthenticationAccountItem(),
@@ -456,6 +479,11 @@ class GeneralView extends ConsumerWidget {
     final authentication = ref.watch(
       networkSettingProvider.select((state) => state.authentication.enable),
     );
+    final externalController = ref.watch(
+      patchClashConfigProvider.select(
+        (state) => state.externalController == ExternalControllerStatus.open,
+      ),
+    );
     return BaseScaffold(
       title: appLocalizations.general,
       body: ListView(
@@ -473,7 +501,10 @@ class GeneralView extends ConsumerWidget {
           ),
           generateSectionV3(
             title: appLocalizations.inbound,
-            items: _inboundItems(authentication),
+            items: _inboundItems(
+              authentication: authentication,
+              externalController: externalController,
+            ),
           ),
           generateSectionV3(
             title: appLocalizations.connection,

@@ -511,6 +511,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "externalControllerDesc": MessageLookupByLibrary.simpleMessage(
       "有効にすると、ポート9090でClashコアを制御できます",
     ),
+    "externalControllerSecret": MessageLookupByLibrary.simpleMessage(
+      "外部コントローラーのシークレット",
+    ),
     "externalLink": MessageLookupByLibrary.simpleMessage("外部リンク"),
     "extraLarge": MessageLookupByLibrary.simpleMessage("特大"),
     "fade": MessageLookupByLibrary.simpleMessage("フェード"),
