@@ -5,6 +5,7 @@ import 'package:fl_clash/views/config/dns.dart';
 import 'package:fl_clash/views/config/network.dart';
 import 'package:fl_clash/views/config/ntp.dart';
 import 'package:fl_clash/views/config/providers.dart';
+import 'package:fl_clash/views/config/scene_linkage.dart';
 import 'package:fl_clash/views/config/scripts.dart';
 import 'package:fl_clash/widgets/list.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
@@ -27,6 +28,13 @@ class AdvancedConfigView extends StatelessWidget {
           body: const NetworkListView(),
         ),
       ),
+      if (system.isAndroid)
+        ListItem.open(
+          title: const Text('应用场景联动'),
+          subtitle: const Text('根据当前运行的前台应用自动切换配置与节点'),
+          leading: const GlyphIcon(AppGlyphs.sparkle),
+          widget: const SceneLinkageView(),
+        ),
       ListItem.open(
         title: const Text('DNS'),
         leading: const GlyphIcon(AppGlyphs.dns),

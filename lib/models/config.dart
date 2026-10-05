@@ -39,6 +39,7 @@ const defaultProxiesStyleProps = ProxiesStyleProps();
 const defaultWindowProps = WindowProps();
 const defaultAccessControlProps = AccessControlProps();
 const defaultThemeProps = ThemeProps(primaryColor: defaultPrimaryColor);
+const defaultSceneLinkageProps = SceneLinkageProps();
 
 HotKeyAction _defaultHotKeyAction(HotAction action, PhysicalKeyboardKey key) {
   return HotKeyAction(
@@ -358,6 +359,7 @@ abstract class Config with _$Config {
     @Default(defaultWindowProps) WindowProps windowProps,
     @Default(defaultClashConfig) PatchClashConfig patchClashConfig,
     @Default([]) List<String> excludeSSIDs,
+    @Default(defaultSceneLinkageProps) SceneLinkageProps sceneLinkageProps,
   }) = _Config;
 
   factory Config.fromJson(Map<String, Object?> json) => _$ConfigFromJson(json);

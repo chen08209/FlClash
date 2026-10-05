@@ -431,6 +431,11 @@ _Config _$ConfigFromJson(Map<String, dynamic> json) => _Config(
           ?.map((e) => e as String)
           .toList() ??
       const [],
+  sceneLinkageProps: json['sceneLinkageProps'] == null
+      ? defaultSceneLinkageProps
+      : SceneLinkageProps.fromJson(
+          json['sceneLinkageProps'] as Map<String, dynamic>?,
+        ),
 );
 
 Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
@@ -447,4 +452,5 @@ Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
   'windowProps': instance.windowProps,
   'patchClashConfig': instance.patchClashConfig,
   'excludeSSIDs': instance.excludeSSIDs,
+  'sceneLinkageProps': instance.sceneLinkageProps.toJson(),
 };

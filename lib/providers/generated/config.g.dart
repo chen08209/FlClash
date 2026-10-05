@@ -683,6 +683,59 @@ abstract class _$ExcludeSSIDs extends $Notifier<List<String>> {
   }
 }
 
+@ProviderFor(SceneLinkageSetting)
+final sceneLinkageSettingProvider = SceneLinkageSettingProvider._();
+
+final class SceneLinkageSettingProvider
+    extends $NotifierProvider<SceneLinkageSetting, SceneLinkageProps> {
+  SceneLinkageSettingProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sceneLinkageSettingProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$sceneLinkageSettingHash();
+
+  @$internal
+  @override
+  SceneLinkageSetting create() => SceneLinkageSetting();
+
+  /// {$macro riverpod.override_with_value}
+  Override overrideWithValue(SceneLinkageProps value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SceneLinkageProps>(value),
+    );
+  }
+}
+
+String _$sceneLinkageSettingHash() =>
+    r'a67805c76b58d19da1656783f4514111d6bf4e36';
+
+abstract class _$SceneLinkageSetting extends $Notifier<SceneLinkageProps> {
+  SceneLinkageProps build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<SceneLinkageProps, SceneLinkageProps>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<SceneLinkageProps, SceneLinkageProps>,
+              SceneLinkageProps,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(_config)
 final configProvider = _ConfigProvider._();
 

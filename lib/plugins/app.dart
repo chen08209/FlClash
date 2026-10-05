@@ -82,6 +82,31 @@ class App {
         false;
   }
 
+  Future<bool> hasUsageStatsPermission() async {
+    return await methodChannel.invokeMethod<bool>('hasUsageStatsPermission') ??
+        false;
+  }
+
+  Future<bool> openUsageStatsSettings() async {
+    return await methodChannel.invokeMethod<bool>('openUsageStatsSettings') ??
+        false;
+  }
+
+  Future<String?> getForegroundPackage() async {
+    return await methodChannel.invokeMethod<String>('getForegroundPackage');
+  }
+
+  Future<bool> showSceneNotification({
+    required String title,
+    required String content,
+  }) async {
+    return await methodChannel.invokeMethod<bool>('showSceneNotification', {
+          'title': title,
+          'content': content,
+        }) ??
+        false;
+  }
+
   final Map<String, ImageProvider?> _packageIcons = {};
   final Map<String, Future<ImageProvider?>> _packageIconTasks = {};
 

@@ -4,6 +4,11 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ActivityManager
+import android.app.AppOpsManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.usage.UsageStats
+import android.app.usage.UsageStatsManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -16,6 +21,7 @@ import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.pm.ShortcutInfoCompat
@@ -194,10 +200,107 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 GlobalState.lastExitInfo()
             }
 
+            "hasUsageStatsPermission" -> {
+                result.success(hasUsageStatsPermission())
+            }
+
+            "openUsageStatsSettings" -> {
+                result.success(openUsageStatsSettings())
+            }
+
+            "getForegroundPackage" -> {
+                result.success(getForegroundPackage())
+            }
+
+            "showSceneNotification" -> {
+                val title = call.argument<String>("title") ?: ""
+                val content = call.argument<String>("content") ?: ""
+                showSceneNotification(title, content)
+                result.success(true)
+            }
+
             else -> {
                 result.notImplemented()
             }
         }
+    }
+
+    private fun hasUsageStatsPermission(): Boolean {
+        val appOps = getSystemService(GlobalState.application, AppOpsManager::class.java) ?: return false
+        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            appOps.unsafeCheckOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(),
+                GlobalState.application.packageName,
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            appOps.checkOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(),
+                GlobalState.application.packageName,
+            )
+        }
+        return mode == AppOpsManager.MODE_ALLOWED
+    }
+
+    private fun openUsageStatsSettings(): Boolean {
+        val context = activity ?: GlobalState.application
+        return try {
+            val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                data = "package:${GlobalState.application.packageName}".toUri()
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+            true
+        } catch (_: Exception) {
+            try {
+                val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+                true
+            } catch (_: Exception) {
+                false
+            }
+        }
+    }
+
+    private fun getForegroundPackage(): String? {
+        if (!hasUsageStatsPermission()) return null
+        val usm = getSystemService(GlobalState.application, UsageStatsManager::class.java) ?: return null
+        val time = System.currentTimeMillis()
+        val stats = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, time - 10000, time)
+        if (stats.isNullOrEmpty()) return null
+        var recentApp: UsageStats? = null
+        for (usageStats in stats) {
+            if (recentApp == null || usageStats.lastTimeUsed > recentApp.lastTimeUsed) {
+                recentApp = usageStats
+            }
+        }
+        return recentApp?.packageName
+    }
+
+    private fun showSceneNotification(title: String, content: String) {
+        val context = GlobalState.application
+        val nm = getSystemService(context, NotificationManager::class.java) ?: return
+        val channelId = "scene_linkage"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "应用场景联动",
+                NotificationManager.IMPORTANCE_HIGH,
+            )
+            nm.createNotificationChannel(channel)
+        }
+        val notification = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(R.mipmap.ic_launcher_round)
+            .setContentTitle(title)
+            .setContentText(content)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+        nm.notify(2001, notification)
     }
 
     private fun handleGetPackageIcon(call: MethodCall, result: Result) = reply(result) {

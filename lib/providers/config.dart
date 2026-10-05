@@ -111,6 +111,15 @@ class ExcludeSSIDs extends _$ExcludeSSIDs with AutoDisposeNotifierMixin {
   }
 }
 
+@riverpod
+class SceneLinkageSetting extends _$SceneLinkageSetting
+    with AutoDisposeNotifierMixin {
+  @override
+  SceneLinkageProps build() {
+    return const SceneLinkageProps();
+  }
+}
+
 @Riverpod(name: 'configProvider')
 Config _config(Ref ref) {
   final appSettingProps = ref.watch(appSettingProvider);
@@ -126,6 +135,7 @@ Config _config(Ref ref) {
   final proxiesStyleProps = ref.watch(proxiesStyleSettingProvider);
   final patchClashConfig = ref.watch(patchClashConfigProvider);
   final excludeSSIDs = ref.watch(excludeSSIDsProvider);
+  final sceneLinkageProps = ref.watch(sceneLinkageSettingProvider);
   return Config(
     appSettingProps: appSettingProps,
     windowProps: windowProps,
@@ -140,6 +150,7 @@ Config _config(Ref ref) {
     proxiesStyleProps: proxiesStyleProps,
     patchClashConfig: patchClashConfig,
     excludeSSIDs: excludeSSIDs,
+    sceneLinkageProps: sceneLinkageProps,
   );
 }
 
@@ -158,6 +169,8 @@ void writeConfig(Ref ref, Config config) {
       config.proxiesStyleProps;
   ref.read(patchClashConfigProvider.notifier).value = config.patchClashConfig;
   ref.read(excludeSSIDsProvider.notifier).value = config.excludeSSIDs;
+  ref.read(sceneLinkageSettingProvider.notifier).value =
+      config.sceneLinkageProps;
 }
 
 List<Override> buildConfigOverrides(Config config) {
@@ -181,5 +194,8 @@ List<Override> buildConfigOverrides(Config config) {
       (_, _) => config.patchClashConfig,
     ),
     excludeSSIDsProvider.overrideWithBuild((_, _) => config.excludeSSIDs),
+    sceneLinkageSettingProvider.overrideWithBuild(
+      (_, _) => config.sceneLinkageProps,
+    ),
   ];
 }
