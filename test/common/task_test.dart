@@ -542,6 +542,94 @@ void main() {
     });
   });
 
+  group('makeRealProfileTask desktop TUN auto-detect-interface', () {
+    Future<YamlMap> run({
+      required Map<String, dynamic> raw,
+      required PatchClashConfig patch,
+    }) async {
+      final rawConfig = await decodeJSONTask<Map<String, dynamic>>(
+        await encodeJSONTask(raw),
+      );
+      final result = await makeRealProfileTask(
+        MakeRealProfileState(
+          profilesPath: '/profiles',
+          profileId: 13,
+          rawConfig: rawConfig,
+          realPatchConfig: patch,
+          overrideDns: false,
+          overrideNtp: false,
+          appendSystemDns: false,
+          proxyGroups: const [],
+          rules: const [],
+          addedRules: const [],
+          defaultUA: 'FlClash-Test',
+        ),
+      );
+      return loadYaml(result.yaml) as YamlMap;
+    }
+
+    test(
+      'sets auto-detect-interface when the TUN route is on and interface-name is empty',
+      () async {
+        final config = await run(
+          raw: {
+            'tun': {'auto-detect-interface': false},
+          },
+          patch: const PatchClashConfig(
+            tun: Tun(enable: true, autoRoute: true),
+          ),
+        );
+
+        expect(config['interface-name'], '');
+        expect(config['tun']['auto-detect-interface'], true);
+      },
+    );
+
+    test(
+      'sets auto-detect-interface to false when interface-name has a value',
+      () async {
+        final config = await run(
+          raw: {
+            'interface-name': 'en0',
+            'tun': {'auto-detect-interface': true},
+          },
+          patch: const PatchClashConfig(
+            interfaceNameMode: InterfaceNameMode.follow,
+            tun: Tun(enable: true, autoRoute: true),
+          ),
+        );
+
+        expect(config['interface-name'], 'en0');
+        expect(config['tun']['auto-detect-interface'], false);
+      },
+    );
+
+    test('keeps the profile value when TUN is off', () async {
+      final config = await run(
+        raw: {
+          'tun': {'auto-detect-interface': false},
+        },
+        patch: const PatchClashConfig(
+          tun: Tun(enable: false, autoRoute: true),
+        ),
+      );
+
+      expect(config['tun']['auto-detect-interface'], false);
+    });
+
+    test('keeps the profile value when auto-route is off', () async {
+      final config = await run(
+        raw: {
+          'tun': {'auto-detect-interface': false},
+        },
+        patch: const PatchClashConfig(tun: Tun(enable: true)),
+      );
+
+      expect(config['tun']['auto-route'], false);
+      expect(config['tun']['auto-detect-interface'], false);
+    });
+  });
+
   group('makeRealProfileTask legacy provider file migration', () {
     late Directory tempDir;
     const url = 'https://example.com/proxy.yaml';

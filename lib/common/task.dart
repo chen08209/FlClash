@@ -115,6 +115,26 @@ Future<({String yaml, String md5})> makeRealProfileTask(
   );
 }
 
+bool _hasInterfaceName(Object? name) {
+  return name is String && name.trim().isNotEmpty;
+}
+
+void _setDesktopTunAutoDetectInterface(Map<dynamic, dynamic> rawConfig) {
+  if (!system.isDesktop) {
+    return;
+  }
+  final tun = rawConfig['tun'];
+  if (tun is! Map) {
+    return;
+  }
+  if (tun['enable'] != true || tun['auto-route'] != true) {
+    return;
+  }
+  tun['auto-detect-interface'] = !_hasInterfaceName(
+    rawConfig['interface-name'],
+  );
+}
+
 Future<({String yaml, String md5})> _makeRealProfileTask(
   MakeRealProfileState data,
 ) async {
@@ -203,6 +223,7 @@ Future<({String yaml, String md5})> _makeRealProfileTask(
   rawConfig['tun']['stack'] = realPatchConfig.tun.stack.name;
   rawConfig['tun']['route-address'] = realPatchConfig.tun.routeAddress;
   rawConfig['tun']['auto-route'] = realPatchConfig.tun.autoRoute;
+  _setDesktopTunAutoDetectInterface(rawConfig);
   rawConfig['geodata-loader'] = realPatchConfig.geodataLoader.name;
   rawConfig['geo-auto-update'] = realPatchConfig.geoAutoUpdate;
   rawConfig['geo-update-interval'] = realPatchConfig.geoUpdateInterval;
