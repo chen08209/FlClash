@@ -100,6 +100,11 @@ subscription's value cannot survive into the generated profile, `follow` leaves 
 is installed (`core/lib.go` `installHooks`, vendored `dialer.go`), so `NetworkListView` in `lib/views/config/network.dart`
 shows the mode picker and text field only on desktop.
 
+On desktop, the same task sets `auto-detect-interface` when TUN `enable` and `auto-route` are both true. An empty
+`interface-name` sets it true. mihomo otherwise dials the proxy through the TUN default route, and the connection fails.
+A non-empty `interface-name` sets it false, so the named NIC stays the outbound interface. Android does not get this
+write. `core/tun/tun.go` keeps `AutoDetectInterface` false for the VPN file descriptor.
+
 ## Lifecycle Ownership And Convergence
 
 ### Shared Flutter Layer
