@@ -139,7 +139,10 @@ class CommonRoute<T> extends PageRoute<T> with DragBackRouteMixin<T> {
           ? dragBackSlide(context, animation, child)
           : SharedAxisTransition(
               animation: animation,
-              secondaryAnimation: secondaryAnimation,
+              secondaryAnimation: dragBackSecondaryAnimation(
+                context,
+                secondaryAnimation,
+              ),
               transitionType: SharedAxisTransitionType.horizontal,
               fillColor: context.colorScheme.surface,
               child: child,

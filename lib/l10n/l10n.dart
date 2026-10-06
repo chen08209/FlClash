@@ -1565,6 +1565,111 @@ class AppLocalizations {
     );
   }
 
+  /// `Interface style`
+  String get interfaceStyle {
+    return Intl.message(
+      'Interface style',
+      name: 'interfaceStyle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Material`
+  String get materialStyle {
+    return Intl.message('Material', name: 'materialStyle', desc: '', args: []);
+  }
+
+  /// `Miuix`
+  String get miuixStyle {
+    return Intl.message('Miuix', name: 'miuixStyle', desc: '', args: []);
+  }
+
+  /// `Enable Monet colors`
+  String get miuixMonet {
+    return Intl.message(
+      'Enable Monet colors',
+      name: 'miuixMonet',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Use the theme color instead of the stock Miuix palette`
+  String get miuixMonetDesc {
+    return Intl.message(
+      'Use the theme color instead of the stock Miuix palette',
+      name: 'miuixMonetDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Effects`
+  String get interfaceEffects {
+    return Intl.message(
+      'Effects',
+      name: 'interfaceEffects',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Blur bars`
+  String get barBlur {
+    return Intl.message('Blur bars', name: 'barBlur', desc: '', args: []);
+  }
+
+  /// `Blur the content behind the top and bottom bars`
+  String get barBlurDesc {
+    return Intl.message(
+      'Blur the content behind the top and bottom bars',
+      name: 'barBlurDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Liquid glass`
+  String get liquidGlass {
+    return Intl.message(
+      'Liquid glass',
+      name: 'liquidGlass',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Render the floating bottom bar as refracting glass`
+  String get liquidGlassDesc {
+    return Intl.message(
+      'Render the floating bottom bar as refracting glass',
+      name: 'liquidGlassDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Predictive back`
+  String get predictiveBack {
+    return Intl.message(
+      'Predictive back',
+      name: 'predictiveBack',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Preview the previous page while the back gesture is in progress`
+  String get predictiveBackDesc {
+    return Intl.message(
+      'Preview the previous page while the back gesture is in progress',
+      name: 'predictiveBackDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `TCP keep-alive interval`
   String get keepAliveIntervalDesc {
     return Intl.message(

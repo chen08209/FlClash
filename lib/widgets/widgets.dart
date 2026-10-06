@@ -52,6 +52,7 @@ export 'skeleton.dart';
 export 'subscription_info_view.dart';
 export 'super_grid.dart';
 export 'super_reorderable_list.dart';
+export 'switch.dart';
 export 'tab.dart';
 export 'text.dart';
 export 'text_loupe.dart';

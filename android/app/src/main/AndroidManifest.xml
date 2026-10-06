@@ -32,6 +32,7 @@
     <application
         android:name=".FlClashApplication"
         android:banner="@mipmap/ic_banner"
+        android:enableOnBackInvokedCallback="true"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name">
@@ -88,6 +89,13 @@
                 <action android:name="${applicationId}.action.TOGGLE" />
             </intent-filter>
         </activity>
+
+        <!-- url_launcher's WebView goes back a page from onKeyDown(KEYCODE_BACK), which an
+             opted-in activity never receives. Android 13 reads only the application flag. -->
+        <activity
+            android:name="io.flutter.plugins.urllauncher.WebViewActivity"
+            android:enableOnBackInvokedCallback="false"
+            tools:node="merge" />
 
         <service
             android:name=".TileService"

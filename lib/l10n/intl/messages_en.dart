@@ -279,6 +279,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "This backup comes from a newer version of the app. Update the app before restoring it",
     ),
     "backupSuccess": MessageLookupByLibrary.simpleMessage("Backup successful"),
+    "barBlur": MessageLookupByLibrary.simpleMessage("Blur bars"),
+    "barBlurDesc": MessageLookupByLibrary.simpleMessage(
+      "Blur the content behind the top and bottom bars",
+    ),
     "basicInfo": MessageLookupByLibrary.simpleMessage("Basic info"),
     "basicStrategy": MessageLookupByLibrary.simpleMessage("Basic strategies"),
     "batchAdd": MessageLookupByLibrary.simpleMessage("Batch add"),
@@ -744,6 +748,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "intelligentSelected": MessageLookupByLibrary.simpleMessage(
       "Smart selection",
     ),
+    "interfaceEffects": MessageLookupByLibrary.simpleMessage("Effects"),
     "interfaceName": MessageLookupByLibrary.simpleMessage("Interface name"),
     "interfaceNameDesc": MessageLookupByLibrary.simpleMessage(
       "Network interface used for outbound connections",
@@ -756,6 +761,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "interfaceNameModeFollow": MessageLookupByLibrary.simpleMessage(
       "Follow config",
     ),
+    "interfaceStyle": MessageLookupByLibrary.simpleMessage("Interface style"),
     "internet": MessageLookupByLibrary.simpleMessage("Internet"),
     "interval": MessageLookupByLibrary.simpleMessage("Interval"),
     "intranetIP": MessageLookupByLibrary.simpleMessage("Intranet IP"),
@@ -833,6 +839,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "light": MessageLookupByLibrary.simpleMessage("Light"),
     "lineIssueTip": m21,
     "lineWrap": MessageLookupByLibrary.simpleMessage("Word wrap"),
+    "liquidGlass": MessageLookupByLibrary.simpleMessage("Liquid glass"),
+    "liquidGlassDesc": MessageLookupByLibrary.simpleMessage(
+      "Render the floating bottom bar as refracting glass",
+    ),
     "list": MessageLookupByLibrary.simpleMessage("List"),
     "listen": MessageLookupByLibrary.simpleMessage("Listen"),
     "listenRoutingMark": MessageLookupByLibrary.simpleMessage(
@@ -873,6 +883,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "loose": MessageLookupByLibrary.simpleMessage("Loose"),
     "matchSourceIp": MessageLookupByLibrary.simpleMessage("Match source IP"),
     "matchTarget": MessageLookupByLibrary.simpleMessage("MATCH-TARGET"),
+    "materialStyle": MessageLookupByLibrary.simpleMessage("Material"),
     "maxFailedTimes": MessageLookupByLibrary.simpleMessage("Max failures"),
     "maxLengthTip": m23,
     "maximize": MessageLookupByLibrary.simpleMessage("Maximize"),
@@ -906,6 +917,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "minimize": MessageLookupByLibrary.simpleMessage("Minimize"),
     "minimizeOnExit": MessageLookupByLibrary.simpleMessage("Minimize on exit"),
     "minutesAgo": m25,
+    "miuixMonet": MessageLookupByLibrary.simpleMessage("Enable Monet colors"),
+    "miuixMonetDesc": MessageLookupByLibrary.simpleMessage(
+      "Use the theme color instead of the stock Miuix palette",
+    ),
+    "miuixStyle": MessageLookupByLibrary.simpleMessage("Miuix"),
     "mixedPort": MessageLookupByLibrary.simpleMessage("Mixed port"),
     "mode": MessageLookupByLibrary.simpleMessage("Mode"),
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("Monochrome"),
@@ -1036,6 +1052,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Please enter a different port",
     ),
     "portTip": m42,
+    "predictiveBack": MessageLookupByLibrary.simpleMessage("Predictive back"),
+    "predictiveBackDesc": MessageLookupByLibrary.simpleMessage(
+      "Preview the previous page while the back gesture is in progress",
+    ),
     "prerequisites": MessageLookupByLibrary.simpleMessage("Prerequisites"),
     "pressKeyboard": MessageLookupByLibrary.simpleMessage(
       "Press a key combination",

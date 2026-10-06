@@ -583,6 +583,54 @@ abstract class _$DynamicColor extends $Notifier<DynamicColorSeeds> {
   }
 }
 
+@ProviderFor(interfaceStyleTheme)
+final interfaceStyleThemeProvider = InterfaceStyleThemeProvider._();
+
+final class InterfaceStyleThemeProvider
+    extends
+        $FunctionalProvider<
+          InterfaceStyleTheme,
+          InterfaceStyleTheme,
+          InterfaceStyleTheme
+        >
+    with $Provider<InterfaceStyleTheme> {
+  InterfaceStyleThemeProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'interfaceStyleThemeProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$interfaceStyleThemeHash();
+
+  @$internal
+  @override
+  $ProviderElement<InterfaceStyleTheme> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  InterfaceStyleTheme create(Ref ref) {
+    return interfaceStyleTheme(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(InterfaceStyleTheme value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<InterfaceStyleTheme>(value),
+    );
+  }
+}
+
+String _$interfaceStyleThemeHash() =>
+    r'cdce7026a07c30362c7869cddfd1cdbfd47d2e79';
+
 @ProviderFor(genColorScheme)
 final genColorSchemeProvider = GenColorSchemeFamily._();
 
@@ -649,7 +697,7 @@ final class GenColorSchemeProvider
   }
 }
 
-String _$genColorSchemeHash() => r'6cdb57ea100cf84c9920e2795963407b62af4543';
+String _$genColorSchemeHash() => r'9b98ba877277c9c15600d497350dae0d9d814ae6';
 
 final class GenColorSchemeFamily extends $Family
     with

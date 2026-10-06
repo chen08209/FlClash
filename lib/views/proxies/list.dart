@@ -34,6 +34,7 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
   final _controller = ScrollController();
   GroupOffsets _groupOffsets = GroupOffsets.empty;
   double containerHeight = 0;
+  double _barCollapse = 0;
   String? _enterGroupName;
   Timer? _enterTimer;
 
@@ -195,7 +196,7 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
         _groupOffsets.isEmpty) {
       return 0;
     }
-    return _groupOffsets.offsetOf(groupName);
+    return _groupOffsets.offsetOf(groupName) + _barCollapse;
   }
 
   void _scrollToMakeVisibleWithPadding({
@@ -304,8 +305,13 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
                 cardType: state.proxyCardType,
               );
               final barInset = MediaQuery.paddingOf(context).top;
+              _barCollapse = CommonScaffold.collapseExtentOf(context);
+              final barSpacer = _BarSpacer(
+                maxExtent: barInset + _pinnedHeaderGap,
+                minExtent: barInset - _barCollapse + _pinnedHeaderGap,
+              );
               containerHeight = max(
-                constraints.maxHeight - barInset - _pinnedHeaderGap,
+                constraints.maxHeight - barSpacer.minExtent,
                 0,
               );
               return CommonScrollBar(
@@ -315,9 +321,7 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
                   key: proxiesListStoreKey,
                   controller: _controller,
                   slivers: [
-                    PinnedHeaderSliver(
-                      child: SizedBox(height: barInset + _pinnedHeaderGap),
-                    ),
+                    SliverPersistentHeader(pinned: true, delegate: barSpacer),
                     for (final group in state.groups)
                       _buildGroup(
                         context,
@@ -340,6 +344,24 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
       },
     );
   }
+}
+
+/// Shrinks as the page's bar collapses, keeping the list's scroll extent.
+class _BarSpacer extends SliverPersistentHeaderDelegate {
+  const _BarSpacer({required this.maxExtent, required this.minExtent});
+
+  @override
+  final double maxExtent;
+  @override
+  final double minExtent;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlaps) =>
+      const SizedBox.expand();
+
+  @override
+  bool shouldRebuild(_BarSpacer oldDelegate) =>
+      oldDelegate.maxExtent != maxExtent || oldDelegate.minExtent != minExtent;
 }
 
 class ListHeader extends ConsumerWidget {

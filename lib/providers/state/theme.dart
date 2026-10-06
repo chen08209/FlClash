@@ -27,6 +27,32 @@ class DynamicColor extends _$DynamicColor {
 }
 
 @riverpod
+InterfaceStyleTheme interfaceStyleTheme(Ref ref) {
+  final isAndroid = system.isAndroid;
+  return ref.watch(
+    themeSettingProvider.select(
+      (state) => interfaceStyleThemeOf(state, isAndroid: isAndroid),
+    ),
+  );
+}
+
+InterfaceStyleTheme interfaceStyleThemeOf(
+  ThemeProps props, {
+  required bool isAndroid,
+}) {
+  if (!isAndroid) {
+    return const InterfaceStyleTheme();
+  }
+  return InterfaceStyleTheme(
+    style: props.interfaceStyle,
+    miuixMonet: props.miuixMonet,
+    barBlur: props.barBlur,
+    liquidGlass: props.liquidGlass,
+    predictiveBack: props.predictiveBack,
+  );
+}
+
+@riverpod
 ColorScheme genColorScheme(
   Ref ref,
   Brightness brightness, {
@@ -40,9 +66,16 @@ ColorScheme genColorScheme(
         primaryColor: state.primaryColor,
         schemeVariant: state.schemeVariant,
         pureBlack: state.pureBlack,
+        miuixMonet: state.miuixMonet,
       ),
     ),
   );
+  final isMiuix = ref.watch(
+    interfaceStyleThemeProvider.select((state) => state.isMiuix),
+  );
+  if (color == null && !ignoreConfig && isMiuix && !themeSetting.miuixMonet) {
+    return miuixColorScheme(brightness);
+  }
   final dynamicColor = ref.watch(dynamicColorProvider);
   final Color seedColor;
   if (color == null &&

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/icons.dart';
@@ -145,7 +147,7 @@ class CommonCard extends StatelessWidget {
             : colorScheme.error.opacity30,
       );
     }
-    if (type == CommonCardType.filled) {
+    if (type == CommonCardType.filled || context.interfaceStyle.isMiuix) {
       return BorderSide.none;
     }
     final hoverColor = isSelected
@@ -165,6 +167,15 @@ class CommonCard extends StatelessWidget {
 
   Color? _buildBackgroundColor(BuildContext context) {
     final colorScheme = context.colorScheme;
+    if (context.interfaceStyle.isMiuix) {
+      // A bottom sheet is as white as a card, so compose-miuix sets cards apart.
+      final base = context.isInBottomSheet
+          ? colorScheme.secondaryContainer
+          : colorScheme.surfaceContainer;
+      return isSelected
+          ? Color.alphaBlend(colorScheme.primary.opacity12, base)
+          : base;
+    }
     if (type == CommonCardType.filled) {
       if (isSelected) {
         return colorScheme.secondaryContainer.opacity80;
@@ -202,6 +213,16 @@ class CommonCard extends StatelessWidget {
     return colorScheme.primary;
   }
 
+  OutlinedBorder _buildShape(BuildContext context) {
+    final corner = radius ?? AppCorner.md;
+    return shape ??
+        AppShape.all(
+          context.interfaceStyle.isMiuix
+              ? math.min(corner, AppCorner.md)
+              : corner,
+        );
+  }
+
   Widget _buildButton(
     BuildContext context,
     Widget childWidget,
@@ -215,7 +236,7 @@ class CommonCard extends StatelessWidget {
         style:
             FilledButton.styleFrom(
               padding: padding ?? EdgeInsets.zero,
-              shape: shape ?? AppShape.all(radius ?? AppCorner.md),
+              shape: _buildShape(context),
               iconSize: commonCardIconSize,
               iconColor: _buildIconColor(context),
               foregroundColor: _buildForegroundColor(context),
@@ -239,7 +260,7 @@ class CommonCard extends StatelessWidget {
         style:
             OutlinedButton.styleFrom(
               padding: padding ?? EdgeInsets.zero,
-              shape: shape ?? AppShape.all(radius ?? AppCorner.md),
+              shape: _buildShape(context),
               iconSize: commonCardIconSize,
               iconColor: _buildIconColor(context),
               backgroundColor: _buildBackgroundColor(context),

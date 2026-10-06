@@ -15,6 +15,13 @@ class MainActivity : FlutterActivity() {
         ServiceState.attachFlutterEngine(flutterEngine)
     }
 
+    // Android 14+ moves a root task to back on system back only when Home launched it with a
+    // MAIN/LAUNCHER intent; any other launch (notification, QS tile, link) is finished through
+    // here, which would destroy the engine instead of minimizing.
+    override fun finishAfterTransition() {
+        if (isTaskRoot) moveTaskToBack(true) else super.finishAfterTransition()
+    }
+
     override fun onDestroy() {
         flutterEngine?.let(ServiceState::detachFlutterEngine)
         super.onDestroy()

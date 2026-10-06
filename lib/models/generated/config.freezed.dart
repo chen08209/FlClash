@@ -2422,7 +2422,7 @@ as double,
 /// @nodoc
 mixin _$ThemeProps {
 
- int? get primaryColor; List<int> get primaryColors; ThemeMode get themeMode; DynamicSchemeVariant get schemeVariant; bool get pureBlack; bool get sidebarBlur; TextScale get textScale;
+ int? get primaryColor; List<int> get primaryColors; ThemeMode get themeMode; DynamicSchemeVariant get schemeVariant; bool get pureBlack; bool get sidebarBlur; TextScale get textScale;@JsonKey(unknownEnumValue: InterfaceStyle.material) InterfaceStyle get interfaceStyle; bool get miuixMonet; bool get barBlur; bool get liquidGlass; bool get predictiveBack;
 /// Create a copy of ThemeProps
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2436,20 +2436,20 @@ $ThemePropsCopyWith<ThemeProps> get copyWith => _$ThemePropsCopyWithImpl<ThemePr
 @override
 bool operator ==(Object other) {
   final _this = this as ThemeProps;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ThemeProps&&(identical(other.primaryColor, _this.primaryColor) || other.primaryColor == _this.primaryColor)&&const DeepCollectionEquality().equals(other.primaryColors, _this.primaryColors)&&(identical(other.themeMode, _this.themeMode) || other.themeMode == _this.themeMode)&&(identical(other.schemeVariant, _this.schemeVariant) || other.schemeVariant == _this.schemeVariant)&&(identical(other.pureBlack, _this.pureBlack) || other.pureBlack == _this.pureBlack)&&(identical(other.sidebarBlur, _this.sidebarBlur) || other.sidebarBlur == _this.sidebarBlur)&&(identical(other.textScale, _this.textScale) || other.textScale == _this.textScale));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ThemeProps&&(identical(other.primaryColor, _this.primaryColor) || other.primaryColor == _this.primaryColor)&&const DeepCollectionEquality().equals(other.primaryColors, _this.primaryColors)&&(identical(other.themeMode, _this.themeMode) || other.themeMode == _this.themeMode)&&(identical(other.schemeVariant, _this.schemeVariant) || other.schemeVariant == _this.schemeVariant)&&(identical(other.pureBlack, _this.pureBlack) || other.pureBlack == _this.pureBlack)&&(identical(other.sidebarBlur, _this.sidebarBlur) || other.sidebarBlur == _this.sidebarBlur)&&(identical(other.textScale, _this.textScale) || other.textScale == _this.textScale)&&(identical(other.interfaceStyle, _this.interfaceStyle) || other.interfaceStyle == _this.interfaceStyle)&&(identical(other.miuixMonet, _this.miuixMonet) || other.miuixMonet == _this.miuixMonet)&&(identical(other.barBlur, _this.barBlur) || other.barBlur == _this.barBlur)&&(identical(other.liquidGlass, _this.liquidGlass) || other.liquidGlass == _this.liquidGlass)&&(identical(other.predictiveBack, _this.predictiveBack) || other.predictiveBack == _this.predictiveBack));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as ThemeProps;
-  return Object.hash(runtimeType,_this.primaryColor,const DeepCollectionEquality().hash(_this.primaryColors),_this.themeMode,_this.schemeVariant,_this.pureBlack,_this.sidebarBlur,_this.textScale);
+  return Object.hash(runtimeType,_this.primaryColor,const DeepCollectionEquality().hash(_this.primaryColors),_this.themeMode,_this.schemeVariant,_this.pureBlack,_this.sidebarBlur,_this.textScale,_this.interfaceStyle,_this.miuixMonet,_this.barBlur,_this.liquidGlass,_this.predictiveBack);
 }
 
 @override
 String toString() {
   final _this = this as ThemeProps;
-  return 'ThemeProps(primaryColor: ${_this.primaryColor}, primaryColors: ${_this.primaryColors}, themeMode: ${_this.themeMode}, schemeVariant: ${_this.schemeVariant}, pureBlack: ${_this.pureBlack}, sidebarBlur: ${_this.sidebarBlur}, textScale: ${_this.textScale})';
+  return 'ThemeProps(primaryColor: ${_this.primaryColor}, primaryColors: ${_this.primaryColors}, themeMode: ${_this.themeMode}, schemeVariant: ${_this.schemeVariant}, pureBlack: ${_this.pureBlack}, sidebarBlur: ${_this.sidebarBlur}, textScale: ${_this.textScale}, interfaceStyle: ${_this.interfaceStyle}, miuixMonet: ${_this.miuixMonet}, barBlur: ${_this.barBlur}, liquidGlass: ${_this.liquidGlass}, predictiveBack: ${_this.predictiveBack})';
 }
 
 
@@ -2460,7 +2460,7 @@ abstract mixin class $ThemePropsCopyWith<$Res>  {
   factory $ThemePropsCopyWith(ThemeProps value, $Res Function(ThemeProps) _then) = _$ThemePropsCopyWithImpl;
 @useResult
 $Res call({
- int? primaryColor, List<int> primaryColors, ThemeMode themeMode, DynamicSchemeVariant schemeVariant, bool pureBlack, bool sidebarBlur, TextScale textScale
+ int? primaryColor, List<int> primaryColors, ThemeMode themeMode, DynamicSchemeVariant schemeVariant, bool pureBlack, bool sidebarBlur, TextScale textScale,@JsonKey(unknownEnumValue: InterfaceStyle.material) InterfaceStyle interfaceStyle, bool miuixMonet, bool barBlur, bool liquidGlass, bool predictiveBack
 });
 
 
@@ -2477,7 +2477,7 @@ class _$ThemePropsCopyWithImpl<$Res>
 
 /// Create a copy of ThemeProps
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? primaryColor = freezed,Object? primaryColors = null,Object? themeMode = null,Object? schemeVariant = null,Object? pureBlack = null,Object? sidebarBlur = null,Object? textScale = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? primaryColor = freezed,Object? primaryColors = null,Object? themeMode = null,Object? schemeVariant = null,Object? pureBlack = null,Object? sidebarBlur = null,Object? textScale = null,Object? interfaceStyle = null,Object? miuixMonet = null,Object? barBlur = null,Object? liquidGlass = null,Object? predictiveBack = null,}) {
   return _then(ThemeProps(
 primaryColor: freezed == primaryColor ? _self.primaryColor : primaryColor // ignore: cast_nullable_to_non_nullable
 as int?,primaryColors: null == primaryColors ? _self.primaryColors : primaryColors // ignore: cast_nullable_to_non_nullable
@@ -2486,7 +2486,12 @@ as ThemeMode,schemeVariant: null == schemeVariant ? _self.schemeVariant : scheme
 as DynamicSchemeVariant,pureBlack: null == pureBlack ? _self.pureBlack : pureBlack // ignore: cast_nullable_to_non_nullable
 as bool,sidebarBlur: null == sidebarBlur ? _self.sidebarBlur : sidebarBlur // ignore: cast_nullable_to_non_nullable
 as bool,textScale: null == textScale ? _self.textScale : textScale // ignore: cast_nullable_to_non_nullable
-as TextScale,
+as TextScale,interfaceStyle: null == interfaceStyle ? _self.interfaceStyle : interfaceStyle // ignore: cast_nullable_to_non_nullable
+as InterfaceStyle,miuixMonet: null == miuixMonet ? _self.miuixMonet : miuixMonet // ignore: cast_nullable_to_non_nullable
+as bool,barBlur: null == barBlur ? _self.barBlur : barBlur // ignore: cast_nullable_to_non_nullable
+as bool,liquidGlass: null == liquidGlass ? _self.liquidGlass : liquidGlass // ignore: cast_nullable_to_non_nullable
+as bool,predictiveBack: null == predictiveBack ? _self.predictiveBack : predictiveBack // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 /// Create a copy of ThemeProps
@@ -2580,10 +2585,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int? primaryColor,  List<int> primaryColors,  ThemeMode themeMode,  DynamicSchemeVariant schemeVariant,  bool pureBlack,  bool sidebarBlur,  TextScale textScale)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int? primaryColor,  List<int> primaryColors,  ThemeMode themeMode,  DynamicSchemeVariant schemeVariant,  bool pureBlack,  bool sidebarBlur,  TextScale textScale, @JsonKey(unknownEnumValue: InterfaceStyle.material)  InterfaceStyle interfaceStyle,  bool miuixMonet,  bool barBlur,  bool liquidGlass,  bool predictiveBack)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ThemeProps() when $default != null:
-return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.schemeVariant,_that.pureBlack,_that.sidebarBlur,_that.textScale);case _:
+return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.schemeVariant,_that.pureBlack,_that.sidebarBlur,_that.textScale,_that.interfaceStyle,_that.miuixMonet,_that.barBlur,_that.liquidGlass,_that.predictiveBack);case _:
   return orElse();
 
 }
@@ -2601,10 +2606,10 @@ return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.sch
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int? primaryColor,  List<int> primaryColors,  ThemeMode themeMode,  DynamicSchemeVariant schemeVariant,  bool pureBlack,  bool sidebarBlur,  TextScale textScale)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int? primaryColor,  List<int> primaryColors,  ThemeMode themeMode,  DynamicSchemeVariant schemeVariant,  bool pureBlack,  bool sidebarBlur,  TextScale textScale, @JsonKey(unknownEnumValue: InterfaceStyle.material)  InterfaceStyle interfaceStyle,  bool miuixMonet,  bool barBlur,  bool liquidGlass,  bool predictiveBack)  $default,) {final _that = this;
 switch (_that) {
 case _ThemeProps():
-return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.schemeVariant,_that.pureBlack,_that.sidebarBlur,_that.textScale);case _:
+return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.schemeVariant,_that.pureBlack,_that.sidebarBlur,_that.textScale,_that.interfaceStyle,_that.miuixMonet,_that.barBlur,_that.liquidGlass,_that.predictiveBack);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2621,10 +2626,10 @@ return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.sch
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int? primaryColor,  List<int> primaryColors,  ThemeMode themeMode,  DynamicSchemeVariant schemeVariant,  bool pureBlack,  bool sidebarBlur,  TextScale textScale)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int? primaryColor,  List<int> primaryColors,  ThemeMode themeMode,  DynamicSchemeVariant schemeVariant,  bool pureBlack,  bool sidebarBlur,  TextScale textScale, @JsonKey(unknownEnumValue: InterfaceStyle.material)  InterfaceStyle interfaceStyle,  bool miuixMonet,  bool barBlur,  bool liquidGlass,  bool predictiveBack)?  $default,) {final _that = this;
 switch (_that) {
 case _ThemeProps() when $default != null:
-return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.schemeVariant,_that.pureBlack,_that.sidebarBlur,_that.textScale);case _:
+return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.schemeVariant,_that.pureBlack,_that.sidebarBlur,_that.textScale,_that.interfaceStyle,_that.miuixMonet,_that.barBlur,_that.liquidGlass,_that.predictiveBack);case _:
   return null;
 
 }
@@ -2636,7 +2641,7 @@ return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.sch
 @JsonSerializable()
 
 class _ThemeProps implements ThemeProps {
-  const _ThemeProps({this.primaryColor,  List<int> primaryColors = defaultPrimaryColors, this.themeMode = ThemeMode.dark, this.schemeVariant = DynamicSchemeVariant.content, this.pureBlack = false, this.sidebarBlur = true, this.textScale = const TextScale()}): _primaryColors = primaryColors;
+  const _ThemeProps({this.primaryColor,  List<int> primaryColors = defaultPrimaryColors, this.themeMode = ThemeMode.dark, this.schemeVariant = DynamicSchemeVariant.content, this.pureBlack = false, this.sidebarBlur = true, this.textScale = const TextScale(), @JsonKey(unknownEnumValue: InterfaceStyle.material) this.interfaceStyle = InterfaceStyle.material, this.miuixMonet = false, this.barBlur = false, this.liquidGlass = false, this.predictiveBack = true}): _primaryColors = primaryColors;
   factory _ThemeProps.fromJson(Map<String, dynamic> json) => _$ThemePropsFromJson(json);
 
 @override final  int? primaryColor;
@@ -2652,6 +2657,11 @@ class _ThemeProps implements ThemeProps {
 @override@JsonKey() final  bool pureBlack;
 @override@JsonKey() final  bool sidebarBlur;
 @override@JsonKey() final  TextScale textScale;
+@override@JsonKey(unknownEnumValue: InterfaceStyle.material) final  InterfaceStyle interfaceStyle;
+@override@JsonKey() final  bool miuixMonet;
+@override@JsonKey() final  bool barBlur;
+@override@JsonKey() final  bool liquidGlass;
+@override@JsonKey() final  bool predictiveBack;
 
 /// Create a copy of ThemeProps
 /// with the given fields replaced by the non-null parameter values.
@@ -2666,18 +2676,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ThemeProps&&(identical(other.primaryColor, primaryColor) || other.primaryColor == primaryColor)&&const DeepCollectionEquality().equals(other.primaryColors, _primaryColors)&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.schemeVariant, schemeVariant) || other.schemeVariant == schemeVariant)&&(identical(other.pureBlack, pureBlack) || other.pureBlack == pureBlack)&&(identical(other.sidebarBlur, sidebarBlur) || other.sidebarBlur == sidebarBlur)&&(identical(other.textScale, textScale) || other.textScale == textScale));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ThemeProps&&(identical(other.primaryColor, primaryColor) || other.primaryColor == primaryColor)&&const DeepCollectionEquality().equals(other.primaryColors, _primaryColors)&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.schemeVariant, schemeVariant) || other.schemeVariant == schemeVariant)&&(identical(other.pureBlack, pureBlack) || other.pureBlack == pureBlack)&&(identical(other.sidebarBlur, sidebarBlur) || other.sidebarBlur == sidebarBlur)&&(identical(other.textScale, textScale) || other.textScale == textScale)&&(identical(other.interfaceStyle, interfaceStyle) || other.interfaceStyle == interfaceStyle)&&(identical(other.miuixMonet, miuixMonet) || other.miuixMonet == miuixMonet)&&(identical(other.barBlur, barBlur) || other.barBlur == barBlur)&&(identical(other.liquidGlass, liquidGlass) || other.liquidGlass == liquidGlass)&&(identical(other.predictiveBack, predictiveBack) || other.predictiveBack == predictiveBack));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,primaryColor,const DeepCollectionEquality().hash(_primaryColors),themeMode,schemeVariant,pureBlack,sidebarBlur,textScale);
+    return Object.hash(runtimeType,primaryColor,const DeepCollectionEquality().hash(_primaryColors),themeMode,schemeVariant,pureBlack,sidebarBlur,textScale,interfaceStyle,miuixMonet,barBlur,liquidGlass,predictiveBack);
 }
 
 @override
 String toString() {
-    return 'ThemeProps(primaryColor: $primaryColor, primaryColors: $primaryColors, themeMode: $themeMode, schemeVariant: $schemeVariant, pureBlack: $pureBlack, sidebarBlur: $sidebarBlur, textScale: $textScale)';
+    return 'ThemeProps(primaryColor: $primaryColor, primaryColors: $primaryColors, themeMode: $themeMode, schemeVariant: $schemeVariant, pureBlack: $pureBlack, sidebarBlur: $sidebarBlur, textScale: $textScale, interfaceStyle: $interfaceStyle, miuixMonet: $miuixMonet, barBlur: $barBlur, liquidGlass: $liquidGlass, predictiveBack: $predictiveBack)';
 }
 
 
@@ -2688,7 +2698,7 @@ abstract mixin class _$ThemePropsCopyWith<$Res> implements $ThemePropsCopyWith<$
   factory _$ThemePropsCopyWith(_ThemeProps value, $Res Function(_ThemeProps) _then) = __$ThemePropsCopyWithImpl;
 @override @useResult
 $Res call({
- int? primaryColor, List<int> primaryColors, ThemeMode themeMode, DynamicSchemeVariant schemeVariant, bool pureBlack, bool sidebarBlur, TextScale textScale
+ int? primaryColor, List<int> primaryColors, ThemeMode themeMode, DynamicSchemeVariant schemeVariant, bool pureBlack, bool sidebarBlur, TextScale textScale,@JsonKey(unknownEnumValue: InterfaceStyle.material) InterfaceStyle interfaceStyle, bool miuixMonet, bool barBlur, bool liquidGlass, bool predictiveBack
 });
 
 
@@ -2705,7 +2715,7 @@ class __$ThemePropsCopyWithImpl<$Res>
 
 /// Create a copy of ThemeProps
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? primaryColor = freezed,Object? primaryColors = null,Object? themeMode = null,Object? schemeVariant = null,Object? pureBlack = null,Object? sidebarBlur = null,Object? textScale = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? primaryColor = freezed,Object? primaryColors = null,Object? themeMode = null,Object? schemeVariant = null,Object? pureBlack = null,Object? sidebarBlur = null,Object? textScale = null,Object? interfaceStyle = null,Object? miuixMonet = null,Object? barBlur = null,Object? liquidGlass = null,Object? predictiveBack = null,}) {
   return _then(_ThemeProps(
 primaryColor: freezed == primaryColor ? _self.primaryColor : primaryColor // ignore: cast_nullable_to_non_nullable
 as int?,primaryColors: null == primaryColors ? _self._primaryColors : primaryColors // ignore: cast_nullable_to_non_nullable
@@ -2714,7 +2724,12 @@ as ThemeMode,schemeVariant: null == schemeVariant ? _self.schemeVariant : scheme
 as DynamicSchemeVariant,pureBlack: null == pureBlack ? _self.pureBlack : pureBlack // ignore: cast_nullable_to_non_nullable
 as bool,sidebarBlur: null == sidebarBlur ? _self.sidebarBlur : sidebarBlur // ignore: cast_nullable_to_non_nullable
 as bool,textScale: null == textScale ? _self.textScale : textScale // ignore: cast_nullable_to_non_nullable
-as TextScale,
+as TextScale,interfaceStyle: null == interfaceStyle ? _self.interfaceStyle : interfaceStyle // ignore: cast_nullable_to_non_nullable
+as InterfaceStyle,miuixMonet: null == miuixMonet ? _self.miuixMonet : miuixMonet // ignore: cast_nullable_to_non_nullable
+as bool,barBlur: null == barBlur ? _self.barBlur : barBlur // ignore: cast_nullable_to_non_nullable
+as bool,liquidGlass: null == liquidGlass ? _self.liquidGlass : liquidGlass // ignore: cast_nullable_to_non_nullable
+as bool,predictiveBack: null == predictiveBack ? _self.predictiveBack : predictiveBack // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

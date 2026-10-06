@@ -165,10 +165,10 @@ class ApplicationState extends ConsumerState<Application> {
           appSettingProvider.select((state) => state.locale),
         );
         final themeProps = ref.watch(themeSettingProvider);
+        final interfaceStyle = ref.watch(interfaceStyleThemeProvider);
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           navigatorKey: globalState.navigatorKey,
-          onNavigationNotification: (_) => true,
           localizationsDelegates: const [
             AppLocalizations.delegate,
             ...GlobalMaterialLocalizations.delegates,
@@ -190,13 +190,13 @@ class ApplicationState extends ConsumerState<Application> {
             pageTransitionsTheme: _pageTransitionsTheme,
             actionIconTheme: _actionIconTheme,
             colorScheme: _getAppColorScheme(brightness: Brightness.light),
-          ).withAppShapes,
+          ).withAppShapes.withInterfaceStyle(interfaceStyle),
           darkTheme: ThemeData(
             useMaterial3: true,
             pageTransitionsTheme: _pageTransitionsTheme,
             actionIconTheme: _actionIconTheme,
             colorScheme: _getAppColorScheme(brightness: Brightness.dark),
-          ).withAppShapes,
+          ).withAppShapes.withInterfaceStyle(interfaceStyle),
           home: KeyboardInsetHold(child: child!),
         );
       },

@@ -1034,7 +1034,7 @@ class _ServiceManageItem extends StatelessWidget {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Switch(value: enabled, onChanged: onChanged),
+              CommonSwitch(value: enabled, onChanged: onChanged),
               ReorderableDelayedDragStartListener(
                 index: index,
                 child: Container(

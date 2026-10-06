@@ -3,6 +3,7 @@ import 'dart:ui' show ImageFilter, lerpDouble;
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/widgets/liquid_glass.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/physics.dart';
@@ -38,6 +39,18 @@ const double _jellyStretch = 0.25;
 const double _overdrag = 0.35;
 const double _pullLimit = 7 / 32;
 const double _pullStretch = 0.5;
+const double _miuixLensAlpha = 0.15;
+// Kyant0/AndroidLiquidGlass's LiquidBottomTabs.
+const double _glassPressedScale = 78 / 56;
+const double _glassLensMagnify = 0.2;
+const double _glassBlurRadius = 8;
+const double _glassRefraction = 24;
+const double _glassTintAlpha = 0.4;
+const double _lensRefractionHeight = 10;
+const double _lensRefractionAmount = 14;
+const double _lensInnerShadowRadius = 8;
+const double _restLensAlpha = 0.1;
+const double _liftedLensAlpha = 0.03;
 const _flingProjection = Duration(milliseconds: 100);
 const _slotDuration = Duration(milliseconds: 500);
 const _slotExitDuration = Duration(milliseconds: 220);
@@ -90,12 +103,15 @@ Rect _lensRect({
   required double extent,
   required double height,
   required double lift,
+  required bool glass,
 }) {
   final stretch =
       (velocity.abs() / _jellySpeed).clamp(0.0, 1.0) * _jellyStretch;
-  final growth = _lensGrowth * 2 * lift;
-  final width = (extent + growth) * (1 + stretch);
-  final lensHeight = (height + growth) * (1 - stretch / 2);
+  final growth = glass
+      ? Size(extent, height) * ((_glassPressedScale - 1) * lift)
+      : Size.square(_lensGrowth * 2 * lift);
+  final width = (extent + growth.width) * (1 + stretch);
+  final lensHeight = (height + growth.height) * (1 - stretch / 2);
   return Rect.fromLTWH(
     (position + 0.5) * extent - width / 2,
     (height - lensHeight) / 2,
@@ -706,10 +722,23 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar>
   VelocityTracker? _tracker;
   Offset? _cursor;
   final ValueNotifier<double?> _hoverAt = ValueNotifier(null);
+  LiquidGlassShaders? _shaders = LiquidGlassShaders.loaded;
 
   int get _lastIndex => math.max(0, widget.destinations.length - 1);
 
   int get _selectedIndex => widget.selectedIndex.clamp(0, _lastIndex);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_shaders == null && context.interfaceStyle.liquidGlass) {
+      LiquidGlassShaders.load().then((shaders) {
+        if (mounted && shaders != null) {
+          setState(() => _shaders = shaders);
+        }
+      });
+    }
+  }
 
   @override
   void didUpdateWidget(covariant FloatingNavigationBar oldWidget) {
@@ -958,95 +987,132 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar>
       0.0,
       (height, label) => math.max(height, label.height),
     );
-    final bar = DecoratedBox(
-      decoration: ShapeDecoration(
-        shape: AppShape.full,
-        shadows: _dockShadows(colorScheme),
-      ),
-      child: Material(
-        color: colorScheme.surfaceContainer,
-        shape: AppShape.full,
-        // Raw pointers rather than recognizers: a drag has nothing to win the
-        // arena from, and a tap waiting on one lifts the lens late.
-        child: Listener(
-          behavior: HitTestBehavior.opaque,
-          onPointerDown: _handlePointerDown,
-          onPointerMove: _handlePointerMove,
-          onPointerUp: _handlePointerEnd,
-          onPointerCancel: _handlePointerEnd,
-          child: MouseRegion(
-            onHover: _handleHover,
-            onExit: _handleExit,
-            child: Padding(
-              padding: const EdgeInsets.all(_barPadding),
-              // Above the LayoutBuilder: rebuilding anything under one relays
-              // it out, and that repaint would otherwise reach the whole dock.
-              child: RepaintBoundary(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final extent =
-                        constraints.maxWidth /
-                        math.max(1, widget.destinations.length);
-                    final room = extent - _labelInset * 2;
-                    final labelScale = widest <= room
-                        ? 1.0
-                        : math.max(room / widest, _minLabelSize / _labelSize);
-                    return Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        if (widget.destinations.isNotEmpty)
-                          AnimatedBuilder(
-                            animation: _motion,
-                            builder: (_, _) => _Lens(
-                              position: _lens.value,
-                              velocity: _lens.velocity,
-                              extent: extent,
-                              height: constraints.maxHeight,
-                              lift: _lift.value,
-                            ),
-                          ),
-                        if (widget.destinations.isNotEmpty)
-                          AnimatedBuilder(
-                            animation: _hoverMotion,
-                            builder: (_, _) => _HoverHighlight(
-                              position: _hover.value,
-                              extent: extent,
-                              opacity: _hoverShow.value,
-                            ),
-                          ),
-                        Row(
-                          children: [
-                            for (final (index, destination)
-                                in widget.destinations.indexed)
-                              Expanded(
-                                child: _FloatingBarItem(
-                                  destination: destination,
-                                  selected: index == _selectedIndex,
-                                  index: index,
-                                  lens: _lens,
-                                  hoverAt: _hoverAt,
-                                  lift: _lift,
-                                  labelStyle: labelStyle?.copyWith(
-                                    fontSize: _labelSize * labelScale,
-                                  ),
-                                  labelHeight: lineHeight,
-                                  labelOverflows:
-                                      labels[index].width * labelScale > room,
-                                  onActivate: () => widget.onSelected(index),
-                                ),
-                              ),
-                          ],
+    final glass = context.interfaceStyle.liquidGlass;
+    final hasLens = widget.destinations.isNotEmpty;
+    // Raw pointers rather than recognizers: a drag has nothing to win the
+    // arena from, and a tap waiting on one lifts the lens late.
+    final content = Listener(
+      behavior: HitTestBehavior.opaque,
+      onPointerDown: _handlePointerDown,
+      onPointerMove: _handlePointerMove,
+      onPointerUp: _handlePointerEnd,
+      onPointerCancel: _handlePointerEnd,
+      child: MouseRegion(
+        onHover: _handleHover,
+        onExit: _handleExit,
+        child: Padding(
+          padding: const EdgeInsets.all(_barPadding),
+          // Above the LayoutBuilder: rebuilding anything under one relays
+          // it out, and that repaint would otherwise reach the whole dock.
+          child: RepaintBoundary(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final extent =
+                    constraints.maxWidth /
+                    math.max(1, widget.destinations.length);
+                final room = extent - _labelInset * 2;
+                final labelScale = widest <= room
+                    ? 1.0
+                    : math.max(room / widest, _minLabelSize / _labelSize);
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    if (glass && hasLens)
+                      AnimatedBuilder(
+                        animation: _motion,
+                        builder: (_, _) => _GlassGlow(
+                          position: _lens.value,
+                          extent: extent,
+                          size: constraints.biggest,
+                          lift: _lift.value,
                         ),
+                      ),
+                    if (hasLens)
+                      AnimatedBuilder(
+                        animation: _motion,
+                        builder: (_, _) => _Lens(
+                          position: _lens.value,
+                          velocity: _lens.velocity,
+                          extent: extent,
+                          height: constraints.maxHeight,
+                          lift: _lift.value,
+                        ),
+                      ),
+                    if (hasLens)
+                      AnimatedBuilder(
+                        animation: _hoverMotion,
+                        builder: (_, _) => _HoverHighlight(
+                          position: _hover.value,
+                          extent: extent,
+                          opacity: _hoverShow.value,
+                        ),
+                      ),
+                    Row(
+                      children: [
+                        for (final (index, destination)
+                            in widget.destinations.indexed)
+                          Expanded(
+                            child: _FloatingBarItem(
+                              destination: destination,
+                              selected: index == _selectedIndex,
+                              index: index,
+                              lens: _lens,
+                              hoverAt: _hoverAt,
+                              lift: _lift,
+                              labelStyle: labelStyle?.copyWith(
+                                fontSize: _labelSize * labelScale,
+                              ),
+                              labelHeight: lineHeight,
+                              labelOverflows:
+                                  labels[index].width * labelScale > room,
+                              onActivate: () => widget.onSelected(index),
+                            ),
+                          ),
                       ],
-                    );
-                  },
-                ),
-              ),
+                    ),
+                    if (glass)
+                      Positioned.fill(
+                        left: -_barPadding,
+                        top: -_barPadding,
+                        right: -_barPadding,
+                        bottom: -_barPadding,
+                        child: IgnorePointer(
+                          child: LiquidGlassHighlight(shaders: _shaders),
+                        ),
+                      ),
+                    if (glass && hasLens)
+                      AnimatedBuilder(
+                        animation: _motion,
+                        builder: (_, _) => _LensGlass(
+                          position: _lens.value,
+                          velocity: _lens.velocity,
+                          extent: extent,
+                          height: constraints.maxHeight,
+                          lift: _lift.value,
+                          shaders: _shaders,
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
           ),
         ),
       ),
     );
+    final bar = glass
+        ? _GlassBar(shaders: _shaders, child: content)
+        : DecoratedBox(
+            decoration: ShapeDecoration(
+              shape: AppShape.full,
+              shadows: _dockShadows(colorScheme),
+            ),
+            child: Material(
+              color: colorScheme.surfaceContainer,
+              shape: AppShape.full,
+              child: content,
+            ),
+          );
     return AnimatedBuilder(
       animation: _barMotion,
       builder: (_, child) => _PressTransform(
@@ -1110,15 +1176,33 @@ class _Lens extends StatelessWidget {
   final double height;
   final double lift;
 
+  Color _color(ColorScheme colorScheme, InterfaceStyleTheme style) {
+    final lift = this.lift.clamp(0.0, 1.0);
+    if (style.liquidGlass) {
+      final tint = colorScheme.brightness == Brightness.light
+          ? Colors.black
+          : Colors.white;
+      return tint.withValues(alpha: _restLensAlpha * (1 - lift));
+    }
+    if (style.isMiuix) {
+      return colorScheme.primary.withValues(alpha: _miuixLensAlpha);
+    }
+    return Color.alphaBlend(
+      colorScheme.onSecondaryContainer.withValues(alpha: 0.08 * lift),
+      colorScheme.secondaryContainer,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final style = context.interfaceStyle;
     final rect = _lensRect(
       position: position,
       velocity: velocity,
       extent: extent,
       height: height,
       lift: lift,
+      glass: style.liquidGlass,
     );
     return PositionedDirectional(
       start: rect.left,
@@ -1127,13 +1211,137 @@ class _Lens extends StatelessWidget {
       height: rect.height,
       child: DecoratedBox(
         decoration: ShapeDecoration(
-          color: Color.alphaBlend(
-            colorScheme.onSecondaryContainer.withValues(
-              alpha: 0.08 * lift.clamp(0.0, 1.0),
-            ),
-            colorScheme.secondaryContainer,
-          ),
+          color: _color(context.colorScheme, style),
           shape: AppShape.full,
+        ),
+      ),
+    );
+  }
+}
+
+/// The bar's glass: the backdrop seen through `vibrancy`, `blur` and `lens`
+/// under a tint of the bar's color, with the shadow outside it.
+class _GlassBar extends StatelessWidget {
+  const _GlassBar({required this.shaders, required this.child});
+
+  final LiquidGlassShaders? shaders;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      fit: StackFit.passthrough,
+      children: [
+        Positioned.fill(
+          child: RepaintBoundary(
+            child: LiquidGlass(
+              shaders: shaders,
+              color: context.colorScheme.surfaceContainer.withValues(
+                alpha: _glassTintAlpha,
+              ),
+              blurRadius: _glassBlurRadius,
+              vibrancy: true,
+              refractionHeight: _glassRefraction,
+              refractionAmount: _glassRefraction,
+              shadowAlpha: 1,
+            ),
+          ),
+        ),
+        Material(type: MaterialType.transparency, child: child),
+      ],
+    );
+  }
+}
+
+/// The glow a press lights across the glass bar, centred on the lens.
+class _GlassGlow extends StatelessWidget {
+  const _GlassGlow({
+    required this.position,
+    required this.extent,
+    required this.size,
+    required this.lift,
+  });
+
+  final double position;
+  final double extent;
+  final Size size;
+  final double lift;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = lift.clamp(0.0, 1.0);
+    if (progress == 0) {
+      return const SizedBox.shrink();
+    }
+    final start = (position + 0.5) * extent;
+    final x = Directionality.of(context) == TextDirection.ltr
+        ? start
+        : size.width - start;
+    return Positioned.fill(
+      left: -_barPadding,
+      top: -_barPadding,
+      right: -_barPadding,
+      bottom: -_barPadding,
+      child: IgnorePointer(
+        child: LiquidGlassGlow(
+          center: Offset(x + _barPadding, size.height / 2 + _barPadding),
+          progress: progress,
+        ),
+      ),
+    );
+  }
+}
+
+/// The lifted lens of the glass bar, a drop of glass over the destinations
+/// that refracts what [_LensTint] draws under it.
+class _LensGlass extends StatelessWidget {
+  const _LensGlass({
+    required this.position,
+    required this.velocity,
+    required this.extent,
+    required this.height,
+    required this.lift,
+    required this.shaders,
+  });
+
+  final double position;
+  final double velocity;
+  final double extent;
+  final double height;
+  final double lift;
+  final LiquidGlassShaders? shaders;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = lift.clamp(0.0, 1.0);
+    if (progress == 0) {
+      return const SizedBox.shrink();
+    }
+    final rect = _lensRect(
+      position: position,
+      velocity: velocity,
+      extent: extent,
+      height: height,
+      lift: lift,
+      glass: true,
+    );
+    return PositionedDirectional(
+      start: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+      child: IgnorePointer(
+        child: LiquidGlass(
+          shaders: shaders,
+          color: Colors.black.withValues(alpha: _liftedLensAlpha * progress),
+          refractionHeight: _lensRefractionHeight * progress,
+          refractionAmount: _lensRefractionAmount * progress,
+          chromaticAberration: true,
+          shadowAlpha: progress,
+          innerShadowRadius: _lensInnerShadowRadius * progress,
+          innerShadowAlpha: progress,
+          highlightAlpha: progress,
         ),
       ),
     );
@@ -1221,13 +1429,17 @@ class _FloatingBarItemState extends State<_FloatingBarItem>
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final color = colorScheme.onSurfaceVariant;
+    final style = context.interfaceStyle;
+    final color = style.liquidGlass || style.isMiuix
+        ? colorScheme.onSurface
+        : colorScheme.onSurfaceVariant;
     final content = _LensTint(
       lens: widget.lens,
       lift: widget.lift,
       parallax: _parallax,
       index: widget.index,
       color: colorScheme.primary,
+      glass: style.liquidGlass,
       textDirection: Directionality.of(context),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: _labelInset),
@@ -1299,6 +1511,7 @@ class _LensTint extends SingleChildRenderObjectWidget {
     required this.parallax,
     required this.index,
     required this.color,
+    required this.glass,
     required this.textDirection,
     super.child,
   });
@@ -1308,6 +1521,7 @@ class _LensTint extends SingleChildRenderObjectWidget {
   final ValueListenable<double> parallax;
   final int index;
   final Color color;
+  final bool glass;
   final TextDirection textDirection;
 
   @override
@@ -1318,6 +1532,7 @@ class _LensTint extends SingleChildRenderObjectWidget {
       parallax: parallax,
       index: index,
       color: color,
+      glass: glass,
       textDirection: textDirection,
     );
   }
@@ -1330,6 +1545,7 @@ class _LensTint extends SingleChildRenderObjectWidget {
       ..parallax = parallax
       ..index = index
       ..color = color
+      ..glass = glass
       ..textDirection = textDirection;
   }
 }
@@ -1341,12 +1557,14 @@ class _RenderLensTint extends RenderProxyBox {
     required ValueListenable<double> parallax,
     required int index,
     required Color color,
+    required bool glass,
     required TextDirection textDirection,
   }) : _lens = lens,
        _lift = lift,
        _parallax = parallax,
        _index = index,
        _color = color,
+       _glass = glass,
        _textDirection = textDirection;
 
   final _outside = LayerHandle<ClipPathLayer>();
@@ -1412,6 +1630,15 @@ class _RenderLensTint extends RenderProxyBox {
     markNeedsPaint();
   }
 
+  bool _glass;
+  set glass(bool value) {
+    if (value == _glass) {
+      return;
+    }
+    _glass = value;
+    markNeedsPaint();
+  }
+
   TextDirection _textDirection;
   set textDirection(TextDirection value) {
     if (value == _textDirection) {
@@ -1454,6 +1681,7 @@ class _RenderLensTint extends RenderProxyBox {
       extent: size.width,
       height: size.height,
       lift: _lift.value,
+      glass: _glass,
     );
     return _textDirection == TextDirection.ltr
         ? rect
@@ -1467,7 +1695,8 @@ class _RenderLensTint extends RenderProxyBox {
 
   Matrix4? get _motion {
     final emphasis = (1 - (_lens.value - _index).abs()).clamp(0.0, 1.0);
-    final scale = 1 + _lensMagnify * emphasis * _lift.value;
+    final magnify = _glass ? _glassLensMagnify : _lensMagnify;
+    final scale = 1 + magnify * emphasis * _lift.value;
     final direction = _textDirection == TextDirection.ltr ? 1 : -1;
     final shift = _parallax.value * size.width * direction;
     if (scale == 1 && shift == 0) {

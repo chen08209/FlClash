@@ -323,6 +323,13 @@ abstract class ThemeProps with _$ThemeProps {
     @Default(false) bool pureBlack,
     @Default(true) bool sidebarBlur,
     @Default(TextScale()) TextScale textScale,
+    @JsonKey(unknownEnumValue: InterfaceStyle.material)
+    @Default(InterfaceStyle.material)
+    InterfaceStyle interfaceStyle,
+    @Default(false) bool miuixMonet,
+    @Default(false) bool barBlur,
+    @Default(false) bool liquidGlass,
+    @Default(true) bool predictiveBack,
   }) = _ThemeProps;
 
   factory ThemeProps.fromJson(Map<String, Object?> json) =>

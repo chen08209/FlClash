@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:fl_clash/common/app_ports.dart';
+import 'package:fl_clash/common/interface_style.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
@@ -9,6 +10,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/dashboard/widgets/start_button.dart';
 import 'package:fl_clash/views/navigation.dart';
+import 'package:fl_clash/widgets/liquid_glass.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
@@ -97,6 +99,66 @@ Future<ProviderContainer> _pumpHome(
     await tester.pump(const Duration(seconds: 1));
   }
   return container;
+}
+
+Future<void> _pumpStyledDock(
+  WidgetTester tester,
+  InterfaceStyleTheme style, {
+  Brightness brightness = Brightness.light,
+}) async {
+  tester.view.physicalSize = _mobileSize;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+  await tester.pumpWidget(
+    TestApp(
+      child: Theme(
+        data: ThemeData(brightness: brightness).withInterfaceStyle(style),
+        child: Scaffold(
+          body: Align(
+            alignment: Alignment.bottomCenter,
+            child: NavigationDock(
+              destinations: const [
+                NavigationDockDestination(
+                  glyph: AppGlyphs.dashboard,
+                  label: 'Dashboard',
+                ),
+                NavigationDockDestination(
+                  glyph: AppGlyphs.proxies,
+                  label: 'Proxies',
+                ),
+                NavigationDockDestination(
+                  glyph: AppGlyphs.tools,
+                  label: 'Tools',
+                ),
+              ],
+              selectedIndex: 0,
+              onSelected: (_) {},
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+Color? _lensColor(WidgetTester tester) {
+  final box = tester.widget<DecoratedBox>(
+    find.descendant(of: _lens.first, matching: find.byType(DecoratedBox)),
+  );
+  return (box.decoration as ShapeDecoration).color;
+}
+
+Set<Color?> _glyphColors(WidgetTester tester) {
+  return {
+    for (final icon in tester.widgetList<GlyphIcon>(
+      find.descendant(
+        of: find.byType(FloatingNavigationBar),
+        matching: find.byType(GlyphIcon),
+      ),
+    ))
+      icon.color,
+  };
 }
 
 // A press only paints, so its swell shows in the paint transform.
@@ -578,6 +640,90 @@ void main() {
     labels = await pumpLabels('Configuration');
     expect(labels.first.style!.fontSize, closeTo(9, 0.001));
     expect(tester.widget<Tooltip>(tooltips).message, 'Configuration');
+  });
+
+  testWidgets('a glass dock lifts a drop of glass while it is pressed', (
+    tester,
+  ) async {
+    await _pumpStyledDock(tester, const InterfaceStyleTheme(liquidGlass: true));
+    final bar = find.byType(FloatingNavigationBar);
+    final glass = find.descendant(of: bar, matching: find.byType(LiquidGlass));
+    final glow = find.descendant(
+      of: bar,
+      matching: find.byType(LiquidGlassGlow),
+    );
+    expect(glass, findsOneWidget);
+    expect(
+      find.descendant(of: bar, matching: find.byType(BackdropFilter)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: bar, matching: find.byType(LiquidGlassHighlight)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: bar,
+        matching: find.byWidgetPredicate(
+          (widget) => widget is Material && widget.color != null,
+        ),
+      ),
+      findsNothing,
+    );
+    expect(_lensColor(tester), Colors.black.withValues(alpha: 0.1));
+    expect(_glyphColors(tester), {ThemeData().colorScheme.onSurface});
+    final resting = tester.getRect(_lens);
+
+    final gesture = await tester.startGesture(resting.center);
+    await tester.pumpAndSettle();
+    expect(glass, findsNWidgets(2));
+    expect(glow, findsOneWidget);
+    expect(_lensColor(tester), Colors.black.withValues(alpha: 0));
+    final drop = tester.getRect(
+      find.ancestor(
+        of: glass.last,
+        matching: find.byType(PositionedDirectional),
+      ),
+    );
+    expect(drop.center, resting.center);
+    expect(drop.height, moreOrLessEquals(resting.height * 78 / 56));
+    expect(drop.width, moreOrLessEquals(resting.width * 78 / 56));
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(glass, findsOneWidget);
+    expect(glow, findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a dark glass dock rests its lens on a light tint', (
+    tester,
+  ) async {
+    await _pumpStyledDock(
+      tester,
+      const InterfaceStyleTheme(liquidGlass: true),
+      brightness: Brightness.dark,
+    );
+
+    expect(_lensColor(tester), Colors.white.withValues(alpha: 0.1));
+  });
+
+  testWidgets('a Miuix dock draws its lens in the primary color', (
+    tester,
+  ) async {
+    await _pumpStyledDock(
+      tester,
+      const InterfaceStyleTheme(style: InterfaceStyle.miuix),
+    );
+    final colorScheme = ThemeData().colorScheme;
+
+    expect(_lensColor(tester), colorScheme.primary.withValues(alpha: 0.15));
+    expect(_glyphColors(tester), {colorScheme.onSurface});
+    expect(find.byType(LiquidGlass), findsNothing);
+
+    await _pumpStyledDock(tester, const InterfaceStyleTheme());
+    expect(_lensColor(tester), colorScheme.secondaryContainer);
+    expect(_glyphColors(tester), {colorScheme.onSurfaceVariant});
   });
 
   testWidgets(

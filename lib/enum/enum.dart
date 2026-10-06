@@ -700,6 +700,8 @@ enum RestoreStrategy { compatible, override }
 
 enum TabAnimation { slide, fade }
 
+enum InterfaceStyle { material, miuix }
+
 enum Language { yaml, javaScript, json }
 
 enum ScrollPositionCacheKey { tools, profiles, proxiesList, proxiesTabList }

@@ -288,6 +288,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "backupSuccess": MessageLookupByLibrary.simpleMessage(
       "Резервная копия создана",
     ),
+    "barBlur": MessageLookupByLibrary.simpleMessage("Размытие панелей"),
+    "barBlurDesc": MessageLookupByLibrary.simpleMessage(
+      "Размывать содержимое под верхней и нижней панелями",
+    ),
     "basicInfo": MessageLookupByLibrary.simpleMessage("Основная информация"),
     "basicStrategy": MessageLookupByLibrary.simpleMessage("Базовые политики"),
     "batchAdd": MessageLookupByLibrary.simpleMessage("Массовое добавление"),
@@ -765,6 +769,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Требуется разрешение на список приложений",
     ),
     "intelligentSelected": MessageLookupByLibrary.simpleMessage("Умный выбор"),
+    "interfaceEffects": MessageLookupByLibrary.simpleMessage("Эффекты"),
     "interfaceName": MessageLookupByLibrary.simpleMessage("Имя интерфейса"),
     "interfaceNameDesc": MessageLookupByLibrary.simpleMessage(
       "Сетевой интерфейс для исходящих соединений",
@@ -777,6 +782,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "interfaceNameModeFollow": MessageLookupByLibrary.simpleMessage(
       "Как в конфигурации",
     ),
+    "interfaceStyle": MessageLookupByLibrary.simpleMessage("Стиль интерфейса"),
     "internet": MessageLookupByLibrary.simpleMessage("Интернет"),
     "interval": MessageLookupByLibrary.simpleMessage("Интервал"),
     "intranetIP": MessageLookupByLibrary.simpleMessage("Внутренний IP"),
@@ -856,6 +862,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "light": MessageLookupByLibrary.simpleMessage("Светлая"),
     "lineIssueTip": m21,
     "lineWrap": MessageLookupByLibrary.simpleMessage("Перенос строк"),
+    "liquidGlass": MessageLookupByLibrary.simpleMessage("Жидкое стекло"),
+    "liquidGlassDesc": MessageLookupByLibrary.simpleMessage(
+      "Отображать плавающую нижнюю панель как преломляющее стекло",
+    ),
     "list": MessageLookupByLibrary.simpleMessage("Список"),
     "listen": MessageLookupByLibrary.simpleMessage("Прослушивание"),
     "listenRoutingMark": MessageLookupByLibrary.simpleMessage(
@@ -904,6 +914,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Сопоставлять IP источника",
     ),
     "matchTarget": MessageLookupByLibrary.simpleMessage("MATCH-TARGET"),
+    "materialStyle": MessageLookupByLibrary.simpleMessage("Material"),
     "maxFailedTimes": MessageLookupByLibrary.simpleMessage(
       "Макс. число неудач",
     ),
@@ -947,6 +958,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "Сворачивать при выходе",
     ),
     "minutesAgo": m25,
+    "miuixMonet": MessageLookupByLibrary.simpleMessage("Включить цвета Monet"),
+    "miuixMonetDesc": MessageLookupByLibrary.simpleMessage(
+      "Использовать цвет темы вместо стандартной палитры Miuix",
+    ),
+    "miuixStyle": MessageLookupByLibrary.simpleMessage("Miuix"),
     "mixedPort": MessageLookupByLibrary.simpleMessage("Смешанный порт"),
     "mode": MessageLookupByLibrary.simpleMessage("Режим"),
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("Монохром"),
@@ -1087,6 +1103,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Введите другой порт",
     ),
     "portTip": m42,
+    "predictiveBack": MessageLookupByLibrary.simpleMessage(
+      "Предиктивный жест «Назад»",
+    ),
+    "predictiveBackDesc": MessageLookupByLibrary.simpleMessage(
+      "Показывать предыдущую страницу во время жеста возврата",
+    ),
     "prerequisites": MessageLookupByLibrary.simpleMessage(
       "Предварительные условия",
     ),

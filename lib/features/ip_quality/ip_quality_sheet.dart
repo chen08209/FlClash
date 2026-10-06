@@ -72,7 +72,7 @@ class _HideIpItem extends ConsumerWidget {
     return DecorationListItem(
       title: Text(context.appLocalizations.hideIp),
       onPressed: () => update(!hideIp),
-      trailing: Switch(value: hideIp, onChanged: update),
+      trailing: CommonSwitch(value: hideIp, onChanged: update),
     );
   }
 }

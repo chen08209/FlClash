@@ -27,10 +27,6 @@ class _QuickSwitchCard extends StatelessWidget {
   final void Function(WidgetRef ref, bool value) onChanged;
   final WidgetBuilder sheetBuilder;
 
-  /// A shrink-wrapped Switch still lays out 4 above and below its track, so
-  /// the row may poke into the header's box while the track stays under it.
-  static const _switchHeight = kMinInteractiveDimension - 8;
-
   @override
   Widget build(BuildContext context) {
     final inset = DashboardWidgetMetrics.insetOf(context);
@@ -38,7 +34,12 @@ class _QuickSwitchCard extends StatelessWidget {
         globalState.measure.bodyMediumHeight *
             DashboardWidgetMetrics.textScaleOf(context) +
         2;
-    final overhang = max(0.0, (_switchHeight - lineHeight) / 2);
+    // The switch row may poke into the header's box while the track stays
+    // under it.
+    final overhang = max(
+      0.0,
+      (CommonSwitch.shrinkWrappedHeightOf(context) - lineHeight) / 2,
+    );
     return SizedBox(
       height: DashboardWidgetMetrics.heightOf(context, 1),
       child: CommonCard(
@@ -80,7 +81,7 @@ class _QuickSwitchCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Switch(
+                    CommonSwitch(
                       padding: EdgeInsets.zero,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       value: value,

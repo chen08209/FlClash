@@ -120,6 +120,10 @@ flutter:
     - family: Twemoji
       fonts:
         - asset: assets/fonts/Twemoji.Mozilla.ttf
+  shaders:
+    - shaders/liquid_glass_refraction.frag
+    - shaders/liquid_glass_dispersion.frag
+    - shaders/liquid_glass_highlight.frag
 flutter_intl:
   enabled: true
   class_name: AppLocalizations

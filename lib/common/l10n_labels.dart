@@ -122,6 +122,16 @@ extension DynamicSchemeVariantL10n on DynamicSchemeVariant {
   }
 }
 
+extension InterfaceStyleL10n on InterfaceStyle {
+  String get label {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      InterfaceStyle.material => appLocalizations.materialStyle,
+      InterfaceStyle.miuix => appLocalizations.miuixStyle,
+    };
+  }
+}
+
 extension LocaleL10n on Locale {
   String get label {
     final appLocalizations = currentAppLocalizations;

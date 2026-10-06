@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/inherited.dart';
 import 'package:material_ui/material_ui.dart';
@@ -10,8 +11,62 @@ import 'input.dart';
 import 'open_container.dart';
 import 'scaffold.dart';
 import 'sheet.dart';
+import 'switch.dart';
 
 part 'list_selected.dart';
+
+/// Miuix preference rows: a 17sp medium title over its summary, start icons
+/// in the text color 14dp clear of the title, at least 56dp tall; sections
+/// sit inside a 12dp list margin under a bold 14sp title.
+abstract final class _MiuixList {
+  static const minHeight = 56.0;
+  static const verticalPadding = 12.0;
+  static const iconGap = 14.0;
+  static const margin = 12.0;
+  static const chevronSize = 16.0;
+
+  static TextStyle? title(BuildContext context) =>
+      context.textTheme.bodyLarge?.copyWith(
+        fontSize: 17,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0,
+        color: context.colorScheme.onSurface,
+      );
+
+  static TextStyle? subtitle(BuildContext context) => context
+      .textTheme
+      .bodyMedium
+      ?.copyWith(letterSpacing: 0, color: context.colorScheme.onSurfaceVariant);
+
+  static TextStyle? sectionTitle(BuildContext context) {
+    final colors = context.colorScheme;
+    final color = context.interfaceStyle.miuixMonet
+        ? colors.primary
+        : switch (colors.brightness) {
+            Brightness.light => const Color(0xFF8C93B0),
+            Brightness.dark => const Color(0xFF787E96),
+          };
+    return context.textTheme.labelLarge?.copyWith(
+      fontSize: 14,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0,
+      color: color,
+    );
+  }
+}
+
+class _MiuixChevron extends StatelessWidget {
+  const _MiuixChevron();
+
+  @override
+  Widget build(BuildContext context) {
+    return GlyphIcon(
+      AppGlyphs.chevronForward,
+      size: _MiuixList.chevronSize,
+      color: context.colorScheme.onSurfaceVariant,
+    );
+  }
+}
 
 sealed class _ListItemAction {
   const _ListItemAction();
@@ -313,11 +368,13 @@ class ListItem<T> extends StatelessWidget {
        leading = null,
        onTap = null;
 
-  Widget _buildListTile({
+  Widget _buildListTile(
+    BuildContext context, {
     required ItemPosition? position,
     void Function()? onTap,
     Widget? trailing,
     Widget? leading,
+    bool enabled = true,
   }) {
     if (position != null) {
       // OpenContainer reparents the closed tile out of the section's provider.
@@ -331,20 +388,27 @@ class ListItem<T> extends StatelessWidget {
           contentPadding: padding,
           horizontalTitleGap: horizontalTitleGap,
           onPressed: onTap,
+          enabled: enabled,
         ),
       );
     }
+    final isMiuix = context.interfaceStyle.isMiuix;
     return ListTile(
       key: key,
+      enabled: enabled,
       dense: dense,
       visualDensity: visualDensity,
       tileColor: color,
-      titleTextStyle: titleTextStyle,
-      subtitleTextStyle: subtitleTextStyle,
+      titleTextStyle:
+          titleTextStyle ?? (isMiuix ? _MiuixList.title(context) : null),
+      subtitleTextStyle:
+          subtitleTextStyle ?? (isMiuix ? _MiuixList.subtitle(context) : null),
+      iconColor: isMiuix ? context.colorScheme.onSurface : null,
       leading: leading ?? this.leading,
-      horizontalTitleGap: horizontalTitleGap,
+      horizontalTitleGap:
+          horizontalTitleGap ?? (isMiuix ? _MiuixList.iconGap : null),
       title: title,
-      minTileHeight: minTileHeight,
+      minTileHeight: minTileHeight ?? (isMiuix ? _MiuixList.minHeight : null),
       minVerticalPadding: minVerticalPadding,
       subtitle: subtitle,
       titleAlignment: tileTitleAlignment,
@@ -357,13 +421,18 @@ class ListItem<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final position = ItemPositionProvider.of(context)?.position;
+    final chevron = context.interfaceStyle.isMiuix
+        ? trailing ?? const _MiuixChevron()
+        : null;
     switch (_action) {
       case final _OpenAction openDelegate:
         final child = openDelegate.widget;
         final onChanged = openDelegate.onChanged;
         if (!context.isMobileView) {
           return _buildListTile(
+            context,
             position: position,
+            trailing: chevron,
             onTap: () async {
               final result = await showExtend<dynamic>(
                 context,
@@ -376,7 +445,12 @@ class ListItem<T> extends StatelessWidget {
         }
         return OpenContainer<dynamic>(
           closedBuilder: (context, action) {
-            return _buildListTile(position: position, onTap: action);
+            return _buildListTile(
+              context,
+              position: position,
+              trailing: chevron,
+              onTap: action,
+            );
           },
           onClosed: onChanged,
           openBuilder: (_, action) {
@@ -387,7 +461,9 @@ class ListItem<T> extends StatelessWidget {
         final child = nextDelegate.widget;
 
         return _buildListTile(
+          context,
           position: position,
+          trailing: chevron,
           onTap: () {
             showExtend(
               context,
@@ -401,6 +477,7 @@ class ListItem<T> extends StatelessWidget {
       case final _OptionsAction options:
         final optionsDelegate = options as _OptionsAction<T>;
         return _buildListTile(
+          context,
           position: position,
           onTap: () async {
             // Options are boxed so that a nullable option such as the default
@@ -423,6 +500,7 @@ class ListItem<T> extends StatelessWidget {
         );
       case final _InputAction inputDelegate:
         return _buildListTile(
+          context,
           position: position,
           onTap: () async {
             final value = await dialogs.showCommonDialog<String>(
@@ -443,6 +521,7 @@ class ListItem<T> extends StatelessWidget {
         );
       case final _CheckboxAction checkboxDelegate:
         return _buildListTile(
+          context,
           position: position,
           onTap: checkboxDelegate.onChanged == null
               ? null
@@ -456,13 +535,15 @@ class ListItem<T> extends StatelessWidget {
         );
       case final _ToggleAction toggleAction:
         return _buildListTile(
+          context,
           position: position,
+          enabled: toggleAction.onChanged != null,
           onTap: toggleAction.onChanged == null
               ? null
               : () {
                   toggleAction.onChanged!(!toggleAction.value);
                 },
-          trailing: Switch(
+          trailing: CommonSwitch(
             value: toggleAction.value,
             onChanged: toggleAction.onChanged,
           ),
@@ -470,6 +551,7 @@ class ListItem<T> extends StatelessWidget {
       case final _RadioAction radio:
         final radioDelegate = radio as _RadioAction<T>;
         return _buildListTile(
+          context,
           position: position,
           onTap: radioDelegate.onTap,
           leading: ExcludeFocus(
@@ -483,7 +565,7 @@ class ListItem<T> extends StatelessWidget {
           trailing: trailing,
         );
       case _DefaultAction():
-        return _buildListTile(position: position, onTap: onTap);
+        return _buildListTile(context, position: position, onTap: onTap);
     }
   }
 }
@@ -522,10 +604,12 @@ class ListHeader extends StatelessWidget {
                   title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.labelLarge?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant.opacity80,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.interfaceStyle.isMiuix
+                      ? _MiuixList.sectionTitle(context)
+                      : context.textTheme.labelLarge?.copyWith(
+                          color: context.colorScheme.onSurfaceVariant.opacity80,
+                          fontWeight: FontWeight.w600,
+                        ),
                 ),
                 if (subTitle != null)
                   Text(
@@ -556,20 +640,71 @@ List<Widget> generateSection({
   bool isFirst = false,
   bool separated = true,
 }) {
+  final count = items.length;
+  final entries = items.mapIndexed<Widget>(
+    (index, item) =>
+        _SectionEntry(position: ItemPosition.get(index, count), child: item),
+  );
   final genItems = separated
-      ? items.separated(const Divider(height: 0))
-      : items;
+      ? entries.separated(const _SectionDivider())
+      : entries;
   return [
     if (items.isNotEmpty && title != null)
-      ListHeader(
-        title: title,
-        actions: actions,
-        padding: isFirst
-            ? listHeaderPadding.copyWith(top: 8.ap)
-            : listHeaderPadding,
+      _SectionEntry(
+        child: ListHeader(
+          title: title,
+          actions: actions,
+          padding: isFirst
+              ? listHeaderPadding.copyWith(top: 8.ap)
+              : listHeaderPadding,
+        ),
       ),
     ...genItems,
   ];
+}
+
+/// Material runs a section edge to edge; Miuix groups its rows into a card
+/// inside the list margin. A style switch moves the row between the two
+/// rather than rebuilding it, so an open container keeps its tile.
+class _SectionEntry extends StatefulWidget {
+  const _SectionEntry({this.position, required this.child});
+
+  final ItemPosition? position;
+  final Widget child;
+
+  @override
+  State<_SectionEntry> createState() => _SectionEntryState();
+}
+
+class _SectionEntryState extends State<_SectionEntry> {
+  final _childKey = GlobalKey();
+
+  @override
+  Widget build(BuildContext context) {
+    final child = KeyedSubtree(key: _childKey, child: widget.child);
+    if (!context.interfaceStyle.isMiuix) {
+      return child;
+    }
+    final entry = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: _MiuixList.margin),
+      child: child,
+    );
+    final position = widget.position;
+    return position == null
+        ? entry
+        : ItemPositionProvider(position: position, child: entry);
+  }
+}
+
+class _SectionDivider extends StatelessWidget {
+  const _SectionDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return context.interfaceStyle.isMiuix
+        ? const SizedBox.shrink()
+        : const Divider(height: 0);
+  }
 }
 
 Widget generateSectionV3({

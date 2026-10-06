@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/theme.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
@@ -47,13 +48,7 @@ class ThemeManager extends ConsumerWidget {
     final textScale = ref.read(
       themeSettingProvider.select((state) => state.textScale),
     );
-    final double textScaleFactor = max(
-      min(
-        textScale.enable ? textScale.scale : defaultTextScaleFactor,
-        maxTextScale,
-      ),
-      minTextScale,
-    );
+    final textScaleFactor = appTextScaleFactor(textScale);
 
     globalState.measure = Measure.of(context, textScaleFactor);
     globalState.theme = CommonTheme.of(context, textScaleFactor);
@@ -93,4 +88,14 @@ class _AppMediaQuery extends StatelessWidget {
       child: child,
     );
   }
+}
+
+double appTextScaleFactor(TextScale textScale) {
+  return max(
+    min(
+      textScale.enable ? textScale.scale : defaultTextScaleFactor,
+      maxTextScale,
+    ),
+    minTextScale,
+  );
 }

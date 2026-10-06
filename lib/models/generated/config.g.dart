@@ -356,6 +356,17 @@ _ThemeProps _$ThemePropsFromJson(Map<String, dynamic> json) => _ThemeProps(
   textScale: json['textScale'] == null
       ? const TextScale()
       : TextScale.fromJson(json['textScale'] as Map<String, dynamic>),
+  interfaceStyle:
+      $enumDecodeNullable(
+        _$InterfaceStyleEnumMap,
+        json['interfaceStyle'],
+        unknownValue: InterfaceStyle.material,
+      ) ??
+      InterfaceStyle.material,
+  miuixMonet: json['miuixMonet'] as bool? ?? false,
+  barBlur: json['barBlur'] as bool? ?? false,
+  liquidGlass: json['liquidGlass'] as bool? ?? false,
+  predictiveBack: json['predictiveBack'] as bool? ?? true,
 );
 
 Map<String, dynamic> _$ThemePropsToJson(_ThemeProps instance) =>
@@ -367,6 +378,11 @@ Map<String, dynamic> _$ThemePropsToJson(_ThemeProps instance) =>
       'pureBlack': instance.pureBlack,
       'sidebarBlur': instance.sidebarBlur,
       'textScale': instance.textScale,
+      'interfaceStyle': _$InterfaceStyleEnumMap[instance.interfaceStyle]!,
+      'miuixMonet': instance.miuixMonet,
+      'barBlur': instance.barBlur,
+      'liquidGlass': instance.liquidGlass,
+      'predictiveBack': instance.predictiveBack,
     };
 
 const _$ThemeModeEnumMap = {
@@ -385,6 +401,11 @@ const _$DynamicSchemeVariantEnumMap = {
   DynamicSchemeVariant.content: 'content',
   DynamicSchemeVariant.rainbow: 'rainbow',
   DynamicSchemeVariant.fruitSalad: 'fruitSalad',
+};
+
+const _$InterfaceStyleEnumMap = {
+  InterfaceStyle.material: 'material',
+  InterfaceStyle.miuix: 'miuix',
 };
 
 _Config _$ConfigFromJson(Map<String, dynamic> json) => _Config(

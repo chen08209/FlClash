@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
 import 'inherited.dart';
@@ -42,6 +43,15 @@ class CommonPopScope extends StatelessWidget {
             },
       child: child,
     );
+  }
+}
+
+void _reportLocalHistoryChange(ModalRoute<dynamic> route) {
+  final context = route.subtreeContext;
+  if (route.isActive && context != null) {
+    NavigationNotification(
+      canHandlePop: route.willHandlePopInternally,
+    ).dispatch(context);
   }
 }
 
@@ -98,15 +108,24 @@ class _BackLayerScopeState extends State<BackLayerScope> {
       }
       final entry = LocalHistoryEntry(
         impliesAppBarDismissal: false,
-        onRemove: _handleRemove,
+        onRemove: () => _handleRemove(route),
       );
       _entry = entry;
       route.addLocalHistoryEntry(entry);
+      _reportLocalHistoryChange(route);
     });
   }
 
-  void _handleRemove() {
+  void _handleRemove(ModalRoute<dynamic> route) {
     _entry = null;
+    final binding = WidgetsBinding.instance;
+    void report(Duration _) => _reportLocalHistoryChange(route);
+    // Removed mid-frame, the route's PopScopes rebuild only in the next frame.
+    if (binding.schedulerPhase == SchedulerPhase.persistentCallbacks) {
+      binding.addPostFrameCallback((_) => binding.addPostFrameCallback(report));
+    } else {
+      binding.addPostFrameCallback(report);
+    }
     if (!_isDetaching && mounted) {
       widget.onBack();
     }

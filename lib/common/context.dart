@@ -42,7 +42,7 @@ extension BuildContextExtension on BuildContext {
       FloatingBarScope.of(this) ??
       (isInBottomSheet
           ? sheetAppBarHeight
-          : MediaQuery.paddingOf(this).top + pageToolbarHeight);
+          : MediaQuery.paddingOf(this).top + CommonScaffold.barHeightOf(this));
 
   /// Where a scaffold body's content starts: a gap clear of the bar; a bottom
   /// sheet's header already trails its own gap.

@@ -7,9 +7,12 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/manager/theme_manager.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/widgets/navigation_dock.dart';
+import 'package:fl_clash/widgets/sheet_header.dart';
 import 'package:fl_clash/widgets/theme.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -245,9 +248,22 @@ class StatusManagerState extends ConsumerState<StatusManager> {
         Consumer(
           builder: (_, ref, child) {
             final top = ref.watch(overlayTopOffsetProvider);
+            final textScale = ref.watch(
+              themeSettingProvider.select((state) => state.textScale),
+            );
+            final largeTitle = context.interfaceStyle.isMiuix
+                ? LargeTitleHeader.expandedHeightFor(
+                        TextScaler.linear(appTextScaleFactor(textScale)),
+                      ) -
+                      pageToolbarHeight
+                : 0.0;
             return Container(
               margin: EdgeInsets.only(
-                top: top + MediaQuery.viewPaddingOf(context).top + 8,
+                top:
+                    top +
+                    largeTitle +
+                    MediaQuery.viewPaddingOf(context).top +
+                    8,
               ),
               child: child,
             );

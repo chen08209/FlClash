@@ -103,16 +103,17 @@ class PagedSheetRoute<T> extends PageRoute<T>
     Widget child,
   ) {
     final color = backgroundColor ?? _sheetColorOf(context);
+    final secondary = dragBackSecondaryAnimation(context, secondaryAnimation);
     return dragBackDetector(switch (transitionsBuilder) {
       _ when isDragBackActive => dragBackSlide(
         context,
         animation,
         ColoredBox(color: color, child: child),
       ),
-      final builder? => builder(context, animation, secondaryAnimation, child),
+      final builder? => builder(context, animation, secondary, child),
       null => FadeForwardsPageTransitionsBuilder(
         backgroundColor: color,
-      ).buildTransitions(this, context, animation, secondaryAnimation, child),
+      ).buildTransitions(this, context, animation, secondary, child),
     });
   }
 }

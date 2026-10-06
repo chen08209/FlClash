@@ -68,6 +68,7 @@ class DecorationListItem extends StatelessWidget {
   final VoidCallback? onPressed;
   final double? minVerticalPadding;
   final bool invalid;
+  final bool enabled;
 
   const DecorationListItem({
     super.key,
@@ -81,6 +82,7 @@ class DecorationListItem extends StatelessWidget {
     this.horizontalTitleGap,
     this.minVerticalPadding,
     this.invalid = false,
+    this.enabled = true,
   });
 
   @override
@@ -96,9 +98,11 @@ class DecorationListItem extends StatelessWidget {
       ItemPosition.end,
       ItemPosition.startAndEnd,
     ].contains(position);
+    final isMiuix = context.interfaceStyle.isMiuix;
+    final corner = isMiuix ? AppCorner.md : AppCorner.xl;
     final borderRadius = AppRadius.vertical(
-      top: isStart ? AppCorner.xl : AppCorner.none,
-      bottom: isEnd ? AppCorner.xl : AppCorner.none,
+      top: isStart ? corner : AppCorner.none,
+      bottom: isEnd ? corner : AppCorner.none,
     );
     return CommonCard(
       shape: proxyDecorator == true
@@ -110,17 +114,24 @@ class DecorationListItem extends StatelessWidget {
       type: CommonCardType.filled,
       onPressed: proxyDecorator ? null : onPressed,
       child: LayoutBuilder(
-        builder: (_, constraints) {
+        builder: (context, constraints) {
           final isInfinite = constraints.maxHeight >= double.infinity;
           final tile = ListTile(
+            enabled: enabled,
             leading: leading,
             contentPadding:
                 contentPadding ?? const EdgeInsets.only(right: 16, left: 16),
             title: title,
             subtitle: subtitle,
-            minVerticalPadding: minVerticalPadding ?? 6,
-            minTileHeight: 54,
-            horizontalTitleGap: horizontalTitleGap,
+            minVerticalPadding:
+                minVerticalPadding ??
+                (isMiuix ? _MiuixList.verticalPadding : 6),
+            minTileHeight: isMiuix ? _MiuixList.minHeight : 54,
+            horizontalTitleGap:
+                horizontalTitleGap ?? (isMiuix ? _MiuixList.iconGap : null),
+            titleTextStyle: isMiuix ? _MiuixList.title(context) : null,
+            subtitleTextStyle: isMiuix ? _MiuixList.subtitle(context) : null,
+            iconColor: isMiuix ? context.colorScheme.onSurface : null,
             trailing: trailing,
           );
           return Column(
@@ -131,7 +142,7 @@ class DecorationListItem extends StatelessWidget {
                 fit: isInfinite ? FlexFit.loose : FlexFit.tight,
                 child: tile,
               ),
-              if (!invalid && proxyDecorator != true && !isEnd)
+              if (!isMiuix && !invalid && proxyDecorator != true && !isEnd)
                 const Divider(height: 0, indent: 14, endIndent: 14),
             ],
           );

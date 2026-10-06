@@ -17,12 +17,22 @@ class FontFamilyItem {
   const FontFamilyItem({required this.fontFamily, required this.label});
 }
 
-class ThemeView extends StatelessWidget {
-  const ThemeView({super.key});
+class ThemeView extends ConsumerWidget {
+  const ThemeView({super.key, this.isAndroid});
+
+  final bool? isAndroid;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
+    final isAndroid = this.isAndroid ?? system.isAndroid;
+    final settings = ref.watch(
+      themeSettingProvider.select(
+        (state) => (style: state.interfaceStyle, monet: state.miuixMonet),
+      ),
+    );
+    final miuix = isAndroid && settings.style == InterfaceStyle.miuix;
+    final stockMiuixPalette = miuix && !settings.monet;
     return BaseScaffold(
       title: appLocalizations.theme,
       body: CustomScrollView(
@@ -30,14 +40,25 @@ class ThemeView extends StatelessWidget {
           SliverToBoxAdapter(child: SizedBox(height: context.appBarInset)),
           const SliverToBoxAdapter(child: ThemeLivePreview()),
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          if (isAndroid) ...const [
+            _InterfaceStyleItem(),
+            SliverToBoxAdapter(child: SizedBox(height: 16)),
+          ],
           const _ThemeModeItem(),
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
-          const _PureBlackItem(),
+          if (miuix) const _MiuixMonetItem(),
+          _PureBlackItem(enabled: !stockMiuixPalette),
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
-          const _PrimaryColorItem(),
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          if (!stockMiuixPalette) ...const [
+            _PrimaryColorItem(),
+            SliverToBoxAdapter(child: SizedBox(height: 16)),
+          ],
           const _NavigationBarItem(),
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          if (isAndroid) ...const [
+            _InterfaceEffectsItem(),
+            SliverToBoxAdapter(child: SizedBox(height: 16)),
+          ],
           const _TabAnimationItem(),
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
           const _SidebarBlurItem(),
@@ -75,6 +96,75 @@ class ItemCard extends StatelessWidget {
   }
 }
 
+class _InterfaceStyleItem extends ConsumerWidget {
+  const _InterfaceStyleItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
+    final settings = ref.watch(
+      themeSettingProvider.select(
+        (state) => (
+          style: state.interfaceStyle,
+          monet: state.miuixMonet,
+          primaryColor: state.primaryColor,
+        ),
+      ),
+    );
+    final floatingBar = ref.watch(_floatingBarProvider);
+    final interfaceStyle = ref.watch(interfaceStyleThemeProvider);
+    final brightness = Theme.of(context).brightness;
+    final primaryColor = settings.primaryColor;
+    // Spelled out: the plain call answers with the stock Miuix palette while
+    // that palette is in use.
+    final themeColors = ref.watch(
+      genColorSchemeProvider(
+        brightness,
+        color: primaryColor == null ? null : Color(primaryColor),
+        ignoreConfig: true,
+      ),
+    );
+    PreviewChoice<InterfaceStyle> choice(
+      InterfaceStyle style,
+      ColorScheme colorScheme,
+    ) {
+      return PreviewChoice(
+        value: style,
+        label: style.label,
+        pictogram: MiniScreenThumb(
+          screen: MiniScreen(
+            colorScheme: colorScheme,
+            floatingBar: floatingBar,
+            interfaceStyle: interfaceStyle.copyWith(style: style),
+          ),
+        ),
+      );
+    }
+
+    return SliverToBoxAdapter(
+      child: PreviewChoiceGroup<InterfaceStyle>(
+        info: Info(
+          label: appLocalizations.interfaceStyle,
+          glyph: AppGlyphs.customize,
+        ),
+        value: settings.style,
+        choices: [
+          choice(InterfaceStyle.material, themeColors),
+          choice(
+            InterfaceStyle.miuix,
+            settings.monet ? themeColors : miuixColorScheme(brightness),
+          ),
+        ],
+        onChanged: (value) {
+          ref
+              .read(themeSettingProvider.notifier)
+              .update((state) => state.copyWith(interfaceStyle: value));
+        },
+      ),
+    );
+  }
+}
+
 class _ThemeModeItem extends ConsumerWidget {
   const _ThemeModeItem();
 
@@ -85,13 +175,16 @@ class _ThemeModeItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.themeMode),
     );
     final floatingBar = ref.watch(_floatingBarProvider);
+    final interfaceStyle = ref.watch(interfaceStyleThemeProvider);
     final light = MiniScreen(
       colorScheme: ref.watch(genColorSchemeProvider(Brightness.light)),
       floatingBar: floatingBar,
+      interfaceStyle: interfaceStyle,
     );
     final dark = MiniScreen(
       colorScheme: ref.watch(genColorSchemeProvider(Brightness.dark)),
       floatingBar: floatingBar,
+      interfaceStyle: interfaceStyle,
     );
     return SliverToBoxAdapter(
       child: PreviewChoiceGroup<ThemeMode>(
@@ -459,8 +552,41 @@ final _floatingBarProvider = appSettingProvider.select(
   (state) => state.floatingNavigationBar,
 );
 
+class _MiuixMonetItem extends ConsumerWidget {
+  const _MiuixMonetItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
+    final miuixMonet = ref.watch(
+      themeSettingProvider.select((state) => state.miuixMonet),
+    );
+    return SliverToBoxAdapter(
+      child: ListItem.toggle(
+        leading: const GlyphIcon(AppGlyphs.eyedropper),
+        horizontalTitleGap: 12,
+        title: Text(
+          appLocalizations.miuixMonet,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        subtitle: Text(appLocalizations.miuixMonetDesc),
+        value: miuixMonet,
+        onChanged: (value) {
+          ref
+              .read(themeSettingProvider.notifier)
+              .update((state) => state.copyWith(miuixMonet: value));
+        },
+      ),
+    );
+  }
+}
+
 class _PureBlackItem extends ConsumerWidget {
-  const _PureBlackItem();
+  const _PureBlackItem({required this.enabled});
+
+  final bool enabled;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -469,12 +595,14 @@ class _PureBlackItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.pureBlack),
     );
     final floatingBar = ref.watch(_floatingBarProvider);
+    final interfaceStyle = ref.watch(interfaceStyleThemeProvider);
     Widget preview(bool pureBlack) => MiniScreenThumb(
       screen: MiniScreen(
         colorScheme: ref.watch(
           genColorSchemeProvider(Brightness.dark, pureBlack: pureBlack),
         ),
         floatingBar: floatingBar,
+        interfaceStyle: interfaceStyle,
       ),
     );
     return SliverToBoxAdapter(
@@ -496,11 +624,13 @@ class _PureBlackItem extends ConsumerWidget {
             pictogram: preview(true),
           ),
         ],
-        onChanged: (value) {
-          ref
-              .read(themeSettingProvider.notifier)
-              .update((state) => state.copyWith(pureBlack: value));
-        },
+        onChanged: enabled
+            ? (value) {
+                ref
+                    .read(themeSettingProvider.notifier)
+                    .update((state) => state.copyWith(pureBlack: value));
+              }
+            : null,
       ),
     );
   }
@@ -513,6 +643,7 @@ class _NavigationBarItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     final floatingBar = ref.watch(_floatingBarProvider);
+    final interfaceStyle = ref.watch(interfaceStyleThemeProvider);
     final colorScheme = context.colorScheme;
     return SliverToBoxAdapter(
       child: PreviewChoiceGroup<bool>(
@@ -526,14 +657,22 @@ class _NavigationBarItem extends ConsumerWidget {
             value: true,
             label: appLocalizations.floating,
             pictogram: MiniScreenThumb(
-              screen: MiniScreen(colorScheme: colorScheme, floatingBar: true),
+              screen: MiniScreen(
+                colorScheme: colorScheme,
+                floatingBar: true,
+                interfaceStyle: interfaceStyle,
+              ),
             ),
           ),
           PreviewChoice(
             value: false,
             label: appLocalizations.docked,
             pictogram: MiniScreenThumb(
-              screen: MiniScreen(colorScheme: colorScheme, floatingBar: false),
+              screen: MiniScreen(
+                colorScheme: colorScheme,
+                floatingBar: false,
+                interfaceStyle: interfaceStyle,
+              ),
             ),
           ),
         ],
@@ -542,6 +681,82 @@ class _NavigationBarItem extends ConsumerWidget {
               .read(appSettingProvider.notifier)
               .update((state) => state.copyWith(floatingNavigationBar: value));
         },
+      ),
+    );
+  }
+}
+
+ConfigToggleItem _themeToggle({
+  required ConfigLabel title,
+  required ConfigLabel subtitle,
+  required bool Function(ThemeProps state) select,
+  required ThemeProps Function(ThemeProps state, bool value) update,
+}) {
+  return ConfigToggleItem(
+    title: title,
+    subtitle: subtitle,
+    selector: themeSettingProvider.select(select),
+    onChanged: (ref, value) => ref
+        .read(themeSettingProvider.notifier)
+        .update((state) => update(state, value)),
+  );
+}
+
+class _InterfaceEffectsItem extends ConsumerWidget {
+  const _InterfaceEffectsItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
+    final floatingBar = ref.watch(_floatingBarProvider);
+    final liquidGlass = ref.watch(
+      themeSettingProvider.select((state) => state.liquidGlass),
+    );
+    return SliverToBoxAdapter(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InfoHeader(
+            info: Info(
+              label: appLocalizations.interfaceEffects,
+              glyph: AppGlyphs.sparkle,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: generateSectionV3(
+              items: [
+                _themeToggle(
+                  title: (l) => l.barBlur,
+                  subtitle: (l) => l.barBlurDesc,
+                  select: (state) => state.barBlur,
+                  update: (state, value) => state.copyWith(barBlur: value),
+                ),
+                ListItem.toggle(
+                  title: Text(appLocalizations.liquidGlass),
+                  subtitle: Text(appLocalizations.liquidGlassDesc),
+                  value: liquidGlass,
+                  onChanged: floatingBar
+                      ? (value) {
+                          ref
+                              .read(themeSettingProvider.notifier)
+                              .update(
+                                (state) => state.copyWith(liquidGlass: value),
+                              );
+                        }
+                      : null,
+                ),
+                _themeToggle(
+                  title: (l) => l.predictiveBack,
+                  subtitle: (l) => l.predictiveBackDesc,
+                  select: (state) => state.predictiveBack,
+                  update: (state, value) =>
+                      state.copyWith(predictiveBack: value),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -557,11 +772,13 @@ class _TabAnimationItem extends ConsumerWidget {
       appSettingProvider.select((state) => state.tabAnimation),
     );
     final floatingBar = ref.watch(_floatingBarProvider);
+    final interfaceStyle = ref.watch(interfaceStyleThemeProvider);
     final colorScheme = context.colorScheme;
     Widget switching(TabAnimation tabAnimation) => MiniScreenThumb(
       screen: MiniScreen(
         colorScheme: colorScheme,
         floatingBar: floatingBar,
+        interfaceStyle: interfaceStyle,
         selected: 1,
         previous: 0,
         progress: 0.55,

@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/icons.dart';
@@ -5,6 +7,7 @@ import 'package:fl_clash/manager/app_manager.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/dashboard/widgets/start_button.dart';
+import 'package:fl_clash/widgets/miuix_navigation_bar.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -80,6 +83,14 @@ class _HomeShell extends ConsumerWidget {
     final isDashboard = ref.watch(
       currentPageLabelProvider.select((label) => label == PageLabel.dashboard),
     );
+    final barBlur = context.interfaceStyle.barBlur;
+    final dockedBar = _DockedBar(
+      navigationItems: navigationItems,
+      selectedIndex: state.currentIndex,
+      onSelected: (index) {
+        _handleToPage(navigationItems[index].label, ref);
+      },
+    );
     return Material(
       color: context.colorScheme.surface,
       child: Column(
@@ -91,8 +102,12 @@ class _HomeShell extends ConsumerWidget {
                   child: FocusTraversalGroup(
                     policy: PageTraversalPolicy(),
                     child: BottomInsetScope(
-                      inset: isMobile && floating
+                      inset: !isMobile
+                          ? 0
+                          : floating
                           ? NavigationDock.insetOf(context)
+                          : barBlur
+                          ? _DockedBar.heightOf(context)
                           : 0,
                       child: _BodyPadding(isMobile: isMobile, child: child),
                     ),
@@ -104,6 +119,7 @@ class _HomeShell extends ConsumerWidget {
                   bottom: 0,
                   child: AnimatedVisibility.bottomNavigation(
                     visible: isMobile && floating,
+                    fade: !context.interfaceStyle.liquidGlass,
                     child: _NavigationPadding(
                       child: NavigationDock(
                         destinations: [
@@ -124,31 +140,105 @@ class _HomeShell extends ConsumerWidget {
                     ),
                   ),
                 ),
+                if (barBlur)
+                  PositionedDirectional(
+                    start: 0,
+                    end: 0,
+                    bottom: 0,
+                    child: AnimatedVisibility.bottomNavigation(
+                      visible: isMobile && !floating,
+                      child: _NavigationPadding(child: dockedBar),
+                    ),
+                  ),
               ],
             ),
           ),
           AnimatedVisibility.bottomNavigation(
-            visible: isMobile && !floating,
-            child: _NavigationPadding(
-              child: NavigationBar(
-                destinations: [
-                  for (final (index, item) in navigationItems.indexed)
-                    NavigationDestination(
-                      icon: AnimatedGlyph(
-                        glyph: item.glyph,
-                        filled: index == state.currentIndex,
-                      ),
-                      label: item.label.label,
-                    ),
-                ],
-                selectedIndex: state.currentIndex,
-                onDestinationSelected: (index) {
-                  _handleToPage(navigationItems[index].label, ref);
-                },
-              ),
-            ),
+            visible: isMobile && !floating && !barBlur,
+            child: _NavigationPadding(child: dockedBar),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The bar that holds the foot of a phone's window when the dock does not
+/// float; with bar blur it lies over the page, which scrolls on under it.
+class _DockedBar extends StatelessWidget {
+  const _DockedBar({
+    required this.navigationItems,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  // miuix's 25dp texture blur, whose sigma is 0.45 of its radius.
+  static const double _blurSigma = 0.45 * 25;
+  static const double _blurTintAlpha = 0.87;
+  static const double _materialHeight = 80;
+
+  final List<NavigationItem> navigationItems;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  static double heightOf(BuildContext context) {
+    if (context.interfaceStyle.isMiuix) {
+      return MiuixNavigationBar.heightOf(context);
+    }
+    return (NavigationBarTheme.of(context).height ?? _materialHeight) +
+        MediaQuery.paddingOf(context).bottom;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final style = context.interfaceStyle;
+    final colorScheme = context.colorScheme;
+    final background = style.barBlur ? Colors.transparent : null;
+    final bar = style.isMiuix
+        ? MiuixNavigationBar(
+            destinations: [
+              for (final item in navigationItems)
+                NavigationDockDestination(
+                  glyph: item.glyph,
+                  label: item.label.label,
+                ),
+            ],
+            selectedIndex: selectedIndex,
+            onSelected: onSelected,
+            color: background,
+          )
+        : NavigationBar(
+            backgroundColor: background,
+            destinations: [
+              for (final (index, item) in navigationItems.indexed)
+                NavigationDestination(
+                  icon: AnimatedGlyph(
+                    glyph: item.glyph,
+                    filled: index == selectedIndex,
+                  ),
+                  label: item.label.label,
+                ),
+            ],
+            selectedIndex: selectedIndex,
+            onDestinationSelected: onSelected,
+          );
+    if (!style.barBlur) {
+      return bar;
+    }
+    final tint = style.isMiuix
+        ? colorScheme.surface
+        : colorScheme.surfaceContainer;
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: _blurSigma,
+          sigmaY: _blurSigma,
+          tileMode: TileMode.clamp,
+        ),
+        child: ColoredBox(
+          color: tint.withValues(alpha: _blurTintAlpha),
+          child: bar,
+        ),
       ),
     );
   }
@@ -428,6 +518,9 @@ class _FadeTabPage extends StatelessWidget {
   }
 }
 
+// Below Android 13 back still reaches Flutter, which finishes a root activity.
+const _systemBackSdk = 33;
+
 class HomeBackScopeContainer extends ConsumerWidget {
   final Widget child;
 
@@ -435,23 +528,31 @@ class HomeBackScopeContainer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
+    final systemBack =
+        context.interfaceStyle.predictiveBack &&
+        !system.isTV &&
+        ref.watch(versionProvider) >= _systemBackSdk &&
+        ref.watch(isMobileViewProvider) &&
+        ref.watch(appSettingProvider.select((state) => state.minimizeOnExit));
     return CommonPopScope(
-      onPop: (context) async {
-        final pageLabel = ref.read(currentPageLabelProvider);
-        final realContext =
-            GlobalObjectKey(pageLabel).currentContext ?? context;
-        final canPop = Navigator.canPop(realContext);
-        if (canPop) {
-          Navigator.of(realContext).pop();
-        } else if (system.isTV && pageLabel != PageLabel.dashboard) {
-          ref
-              .read(currentPageLabelProvider.notifier)
-              .toPage(PageLabel.dashboard);
-        } else {
-          await ref.read(systemActionProvider.notifier).handleClose();
-        }
-        return false;
-      },
+      onPop: systemBack
+          ? null
+          : (context) async {
+              final pageLabel = ref.read(currentPageLabelProvider);
+              final realContext =
+                  GlobalObjectKey(pageLabel).currentContext ?? context;
+              final canPop = Navigator.canPop(realContext);
+              if (canPop) {
+                Navigator.of(realContext).pop();
+              } else if (system.isTV && pageLabel != PageLabel.dashboard) {
+                ref
+                    .read(currentPageLabelProvider.notifier)
+                    .toPage(PageLabel.dashboard);
+              } else {
+                await ref.read(systemActionProvider.notifier).handleClose();
+              }
+              return false;
+            },
       child: child,
     );
   }

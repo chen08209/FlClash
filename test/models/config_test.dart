@@ -471,6 +471,34 @@ void main() {
       expect(restored.pureBlack, true);
       expect(restored.textScale.scale, 1.5);
     });
+
+    test('interface settings default to Material with predictive back', () {
+      const props = ThemeProps();
+      expect(props.interfaceStyle, InterfaceStyle.material);
+      expect(props.miuixMonet, false);
+      expect(props.barBlur, false);
+      expect(props.liquidGlass, false);
+      expect(props.predictiveBack, true);
+    });
+
+    test('interface settings round-trip and tolerate unknown styles', () {
+      const props = ThemeProps(
+        interfaceStyle: InterfaceStyle.miuix,
+        miuixMonet: true,
+        barBlur: true,
+        liquidGlass: true,
+        predictiveBack: false,
+      );
+      final restored = roundTrip(() => props.toJson(), ThemeProps.fromJson);
+      expect(restored.interfaceStyle, InterfaceStyle.miuix);
+      expect(restored.miuixMonet, true);
+      expect(restored.barBlur, true);
+      expect(restored.liquidGlass, true);
+      expect(restored.predictiveBack, false);
+
+      final unknown = ThemeProps.fromJson({'interfaceStyle': 'hyperos'});
+      expect(unknown.interfaceStyle, InterfaceStyle.material);
+    });
   });
 
   group('AccessControlProps', () {

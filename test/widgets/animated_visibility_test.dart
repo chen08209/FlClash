@@ -1,5 +1,6 @@
 import 'package:fl_clash/widgets/animated_visibility.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -300,6 +301,47 @@ void main() {
     expect(exitingPosition.dx, closeTo(visiblePosition.dx, 0.01));
     expect(exitingPosition.dy, greaterThan(visiblePosition.dy + 20));
     expect(exitingPosition.dy, lessThan(600));
+  });
+
+  testWidgets('content kept from fading only slides', (tester) async {
+    final contentKey = GlobalKey();
+
+    Widget buildApp(bool visible) {
+      return MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              const Expanded(child: SizedBox()),
+              AnimatedVisibility.bottomNavigation(
+                visible: visible,
+                fade: false,
+                child: SizedBox(key: contentKey, width: 180, height: 80),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(buildApp(true));
+    final visiblePosition = tester.getTopLeft(find.byKey(contentKey));
+
+    await tester.pumpWidget(buildApp(false));
+    await tester.pump(const Duration(milliseconds: 150));
+
+    expect(
+      tester.getTopLeft(find.byKey(contentKey)).dy,
+      greaterThan(visiblePosition.dy + 20),
+    );
+    final fadeTransition = find.descendant(
+      of: find.byType(AnimatedVisibility),
+      matching: find.byType(FadeTransition),
+    );
+    expect(tester.widget<FadeTransition>(fadeTransition).opacity.value, 1);
+    expect(
+      tester.layers.whereType<OpacityLayer>().map((layer) => layer.alpha),
+      everyElement(anyOf(isNull, 255)),
+    );
   });
 
   testWidgets('settled content paints past its bounds', (tester) async {

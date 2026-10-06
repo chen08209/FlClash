@@ -343,7 +343,10 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
     return OverwriteFormRow(
       title: 'UDP',
       onPressed: () => _update('udp', !udp),
-      trailing: Switch(value: udp, onChanged: (value) => _update('udp', value)),
+      trailing: CommonSwitch(
+        value: udp,
+        onChanged: (value) => _update('udp', value),
+      ),
     );
   }
 

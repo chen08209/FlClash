@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
@@ -66,7 +67,11 @@ void main() {
 
   tearDown(() => container.dispose());
 
-  Future<void> pumpCard(WidgetTester tester, Widget card) async {
+  Future<void> pumpCard(
+    WidgetTester tester,
+    Widget card, {
+    InterfaceStyleTheme? style,
+  }) async {
     tester.view.physicalSize = const Size(1200, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -76,6 +81,14 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: TestApp(
+          homeBuilder: (child) => style == null
+              ? child
+              : Builder(
+                  builder: (context) => Theme(
+                    data: Theme.of(context).withInterfaceStyle(style),
+                    child: child,
+                  ),
+                ),
           child: Scaffold(body: ListView(children: [card])),
         ),
       ),
@@ -133,6 +146,26 @@ void main() {
           'carrying a different tap target size is how the copies drifted '
           'apart before they shared a widget.',
     );
+  });
+
+  testWidgets('the Miuix switch keeps the state label at the same height', (
+    tester,
+  ) async {
+    double labelLift() {
+      final label = tester.getRect(find.text(currentAppLocalizations.enabled));
+      return tester.getRect(find.byType(CommonCard)).bottom - label.center.dy;
+    }
+
+    await pumpCard(tester, const VpnButton());
+    final material = labelLift();
+
+    await pumpCard(
+      tester,
+      const VpnButton(),
+      style: const InterfaceStyleTheme(style: InterfaceStyle.miuix),
+    );
+    expect(find.byType(Switch), findsNothing);
+    expect(labelLift(), material);
   });
 
   testWidgets('every card labels its state and opens its options', (

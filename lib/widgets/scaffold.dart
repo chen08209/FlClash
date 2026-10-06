@@ -82,8 +82,40 @@ class CommonScaffold extends StatefulWidget {
     this.resizeToAvoidBottomInset,
   });
 
+  /// How tall a page's bar stands below the status bar: a Miuix page's
+  /// takes its large title.
+  static double barHeightOf(BuildContext context) => _hasLargeTitle(context)
+      ? LargeTitleHeader.expandedHeightOf(context)
+      : pageToolbarHeight;
+
+  /// How far above its body's top inset a page's bar can end.
+  static double collapseExtentOf(BuildContext context) {
+    final extent = context
+        .dependOnInheritedWidgetOfExactType<_CollapseScope>()
+        ?.extent;
+    return (FloatingBarScope.of(context) ?? 0) > 0 ? extent ?? 0 : 0;
+  }
+
   @override
   State<CommonScaffold> createState() => CommonScaffoldState();
+}
+
+class _CollapseScope extends InheritedWidget {
+  const _CollapseScope({required this.extent, required super.child});
+
+  final double extent;
+
+  @override
+  bool updateShouldNotify(_CollapseScope oldWidget) =>
+      extent != oldWidget.extent;
+}
+
+bool _hasLargeTitle(BuildContext context) {
+  if (!context.interfaceStyle.isMiuix) {
+    return false;
+  }
+  final sheet = SheetProvider.of(context)?.type;
+  return sheet == null || sheet == SheetType.page;
 }
 
 class CommonScaffoldState extends State<CommonScaffold> {
@@ -91,6 +123,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
   final ValueNotifier<bool> _loadingNotifier = ValueNotifier(false);
   final ValueNotifier<bool> _isFabExtendedNotifier = ValueNotifier(true);
   final ValueNotifier<List<String>> _keywordsNotifier = ValueNotifier([]);
+  final ValueNotifier<double> _collapse = ValueNotifier(0);
   final _textController = TextEditingController();
   final _searchFocusNode = FocusNode();
 
@@ -268,6 +301,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
     _isFabExtendedNotifier.dispose();
     _loadingNotifier.dispose();
     _keywordsNotifier.dispose();
+    _collapse.dispose();
     super.dispose();
   }
 
@@ -276,6 +310,8 @@ class CommonScaffoldState extends State<CommonScaffold> {
     if (isContains) return;
     final keywords = List<String>.from(_keywordsNotifier.value)..add(keyword);
     _keywordsNotifier.value = keywords;
+    // The keywords take the body out from under the bar.
+    _collapse.value = 0;
   }
 
   void _deleteKeyword(String keyword) {
@@ -500,13 +536,77 @@ class CommonScaffoldState extends State<CommonScaffold> {
     return appBar;
   }
 
+  Color get _headerColor =>
+      widget.backgroundColor ?? context.colorScheme.surface;
+
   Widget _buildFloatingHeader(Widget appBar) {
     final top = MediaQuery.paddingOf(context).top;
     return FloatingHeader(
-      backgroundColor: widget.backgroundColor ?? context.colorScheme.surface,
+      backgroundColor: _headerColor,
       fadeStart: top / (top + pageToolbarHeight),
       overhang: _headerOverhang,
+      blur: context.interfaceStyle.barBlur,
       child: appBar,
+    );
+  }
+
+  AppBar _buildToolbar(
+    AppBarState state,
+    VoidCallback? backAction,
+    _SheetForm form, {
+    required IconButtonData? primaryAction,
+  }) {
+    final isBottomSheet = form.isBottomSheet;
+    return AppBar(
+      clipBehavior: Clip.none,
+      automaticallyImplyLeading: false,
+      animateColor: true,
+      // A searching bar carries its own opaque theme.
+      forceMaterialTransparency: isBottomSheet || !_isSearch,
+      toolbarHeight: isBottomSheet ? sheetToolbarHeight : null,
+      centerTitle: widget.centerTitle ?? isBottomSheet,
+      titleTextStyle: isBottomSheet
+          ? context.textTheme.titleLarge?.adjustSize(-4)
+          : null,
+      leading: _buildLeading(backAction, pop: form.pop),
+      title: _buildTitle(state.searchState),
+      actions: _buildActions(
+        state.searchState != null,
+        primaryAction,
+        backAction,
+        form,
+      ),
+    );
+  }
+
+  Widget _buildLargeTitleHeader(
+    AppBarState state,
+    VoidCallback? backAction,
+    _SheetForm form, {
+    required IconButtonData? primaryAction,
+    required Widget loading,
+  }) {
+    return LargeTitleHeader(
+      collapse: _collapse,
+      backgroundColor: _headerColor,
+      blur: context.interfaceStyle.barBlur,
+      title: _buildTitle(state.searchState),
+      bottom: loading,
+      barBuilder: (smallTitle) => AppBar(
+        clipBehavior: Clip.none,
+        automaticallyImplyLeading: false,
+        forceMaterialTransparency: true,
+        toolbarHeight: LargeTitleHeader.barHeight,
+        centerTitle: true,
+        leading: _buildLeading(backAction, pop: form.pop),
+        title: smallTitle,
+        actions: _buildActions(
+          state.searchState != null,
+          primaryAction,
+          backAction,
+          form,
+        ),
+      ),
     );
   }
 
@@ -514,8 +614,62 @@ class CommonScaffoldState extends State<CommonScaffold> {
     VoidCallback? backAction,
     _SheetForm form, {
     required IconButtonData? primaryAction,
+    required bool largeTitle,
   }) {
     final isBottomSheet = form.isBottomSheet;
+    final loading = ValueListenableBuilder(
+      valueListenable: _loadingNotifier,
+      builder: (_, value, _) {
+        return value == true ? const LinearProgressIndicator() : Container();
+      },
+    );
+    if (largeTitle) {
+      return PreferredSize(
+        preferredSize: Size.fromHeight(
+          LargeTitleHeader.expandedHeightOf(context),
+        ),
+        child: ValueListenableBuilder<AppBarState>(
+          valueListenable: _appBarState,
+          builder: (_, state, _) {
+            if (!_isSearch) {
+              return _buildAppBarWrap(
+                _buildLargeTitleHeader(
+                  state,
+                  backAction,
+                  form,
+                  primaryAction: primaryAction,
+                  loading: loading,
+                ),
+              );
+            }
+            // The slot keeps the expanded height so the body does not jump.
+            return Align(
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                height: MediaQuery.paddingOf(context).top + pageToolbarHeight,
+                child: Stack(
+                  alignment: Alignment.bottomCenter,
+                  clipBehavior: Clip.none,
+                  children: [
+                    _buildFloatingHeader(
+                      _buildAppBarWrap(
+                        _buildToolbar(
+                          state,
+                          backAction,
+                          form,
+                          primaryAction: primaryAction,
+                        ),
+                      ),
+                    ),
+                    loading,
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    }
     return PreferredSize(
       preferredSize: Size.fromHeight(
         isBottomSheet ? sheetToolbarHeight : pageToolbarHeight,
@@ -528,41 +682,72 @@ class CommonScaffoldState extends State<CommonScaffold> {
             valueListenable: _appBarState,
             builder: (_, state, _) {
               final appBar = _buildAppBarWrap(
-                AppBar(
-                  clipBehavior: Clip.none,
-                  automaticallyImplyLeading: false,
-                  animateColor: true,
-                  // A searching bar carries its own opaque theme.
-                  forceMaterialTransparency: isBottomSheet || !_isSearch,
-                  toolbarHeight: isBottomSheet ? sheetToolbarHeight : null,
-                  centerTitle: widget.centerTitle ?? isBottomSheet,
-                  titleTextStyle: isBottomSheet
-                      ? context.textTheme.titleLarge?.adjustSize(-4)
-                      : null,
-                  leading: _buildLeading(backAction, pop: form.pop),
-                  title: _buildTitle(state.searchState),
-                  actions: _buildActions(
-                    state.searchState != null,
-                    primaryAction,
-                    backAction,
-                    form,
-                  ),
+                _buildToolbar(
+                  state,
+                  backAction,
+                  form,
+                  primaryAction: primaryAction,
                 ),
               );
               return isBottomSheet ? appBar : _buildFloatingHeader(appBar);
             },
           ),
-          ValueListenableBuilder(
-            valueListenable: _loadingNotifier,
-            builder: (_, value, _) {
-              return value == true
-                  ? const LinearProgressIndicator()
-                  : Container();
-            },
-          ),
+          loading,
         ],
       ),
     );
+  }
+
+  Widget _trackCollapse(Widget body, {required bool largeTitle}) {
+    final tracked = NotificationListener<ScrollMetricsNotification>(
+      onNotification: (notification) => _updateCollapse(
+        notification.metrics,
+        notification.depth,
+        notification.context,
+      ),
+      child: NotificationListener<ScrollUpdateNotification>(
+        onNotification: (notification) => _updateCollapse(
+          notification.metrics,
+          notification.depth,
+          notification.context,
+        ),
+        child: body,
+      ),
+    );
+    return ValueListenableBuilder<AppBarState>(
+      valueListenable: _appBarState,
+      builder: (context, _, child) => _CollapseScope(
+        extent: !largeTitle
+            ? 0
+            : _isSearch
+            ? LargeTitleHeader.expandedHeightOf(context) - pageToolbarHeight
+            : LargeTitleHeader.titleExtentOf(context),
+        child: child!,
+      ),
+      child: tracked,
+    );
+  }
+
+  // Only the body's own vertical scroll view collapses the title, and only
+  // where it runs under the bar: a body held clear of it never scrolls there.
+  bool _updateCollapse(
+    ScrollMetrics metrics,
+    int depth,
+    BuildContext? scrollContext,
+  ) {
+    final barScope = scrollContext
+        ?.getInheritedWidgetOfExactType<FloatingBarScope>();
+    if (depth != 0 ||
+        metrics.axis != Axis.vertical ||
+        (barScope?.inset ?? 0) <= 0) {
+      return false;
+    }
+    final scrolled = metrics.axisDirection == AxisDirection.up
+        ? metrics.extentAfter
+        : metrics.extentBefore;
+    final extent = LargeTitleHeader.titleExtentOf(context);
+    _collapse.value = (scrolled / extent).clamp(0.0, 1.0);
+    return false;
   }
 
   @override
@@ -682,10 +867,12 @@ class CommonScaffoldState extends State<CommonScaffold> {
       },
       child: fabSlot,
     );
+    final largeTitle = widget.titleWidget == null && _hasLargeTitle(context);
     final appBar = _buildAppBar(
       backAction,
       form,
       primaryAction: actionInBar ? primaryAction : null,
+      largeTitle: largeTitle,
     );
     final insetBody = form.hasDockedSearch
         ? BottomInsetScope(
@@ -727,7 +914,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
         child: Scaffold(
           appBar: appBar,
           extendBodyBehindAppBar: barFloats,
-          body: content,
+          body: _trackCollapse(content, largeTitle: largeTitle),
           resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
           backgroundColor: widget.backgroundColor,
           floatingActionButton: fab,
@@ -780,10 +967,28 @@ class _KeyboardSpacer extends StatelessWidget {
 }
 
 /// Holds a body whose top stays put clear of the bar floating over it.
-class AppBarClearance extends StatelessWidget {
+class AppBarClearance extends StatefulWidget {
   const AppBarClearance({super.key, required this.child});
 
   final Widget child;
+
+  @override
+  State<AppBarClearance> createState() => _AppBarClearanceState();
+}
+
+class _AppBarClearanceState extends State<AppBarClearance> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(_expandStaleTitle);
+  }
+
+  void _expandStaleTitle(Duration _) {
+    if (mounted) {
+      context.findAncestorStateOfType<CommonScaffoldState>()?._collapse.value =
+          0;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -792,7 +997,7 @@ class AppBarClearance extends StatelessWidget {
       child: MediaQuery.removePadding(
         context: context,
         removeTop: true,
-        child: FloatingBarScope(inset: 0, child: child),
+        child: FloatingBarScope(inset: 0, child: widget.child),
       ),
     );
   }

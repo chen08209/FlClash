@@ -30,10 +30,11 @@ class PreviewChoiceGroup<T> extends StatelessWidget {
   final Info info;
   final List<PreviewChoice<T>> choices;
   final T value;
-  final ValueChanged<T> onChanged;
+  final ValueChanged<T>? onChanged;
 
   @override
   Widget build(BuildContext context) {
+    final onChanged = this.onChanged;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -48,7 +49,9 @@ class PreviewChoiceGroup<T> extends StatelessWidget {
                 _ChoiceButton(
                   label: choice.label,
                   isSelected: choice.value == value,
-                  onPressed: () => onChanged(choice.value),
+                  onPressed: onChanged == null
+                      ? null
+                      : () => onChanged(choice.value),
                   pictogram: choice.pictogram,
                 ),
             ],
@@ -71,7 +74,7 @@ class _ChoiceButton extends StatelessWidget {
 
   final String label;
   final bool isSelected;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Widget pictogram;
 
   @override
@@ -232,6 +235,7 @@ class _ThemeLivePreviewState extends ConsumerState<ThemeLivePreview>
     final tabAnimation = ref.watch(
       appSettingProvider.select((state) => state.tabAnimation),
     );
+    final interfaceStyle = ref.watch(interfaceStyleThemeProvider);
     final corner = AppCorner.fit(_phoneWidth);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -260,11 +264,16 @@ class _ThemeLivePreviewState extends ConsumerState<ThemeLivePreview>
                 builder: (_, colorScheme, _) => AnimatedSwitcher(
                   duration: _duration,
                   child: AnimatedBuilder(
-                    key: ValueKey(floatingBar),
+                    key: ValueKey((
+                      floatingBar,
+                      interfaceStyle.style,
+                      interfaceStyle.liquidGlass,
+                    )),
                     animation: _slideCurve,
                     builder: (_, _) => MiniScreen(
                       colorScheme: colorScheme,
                       floatingBar: floatingBar,
+                      interfaceStyle: interfaceStyle,
                       selected: _selected,
                       previous: _previous,
                       progress: _previous == null ? 1 : _slideCurve.value,
@@ -284,7 +293,8 @@ class _ThemeLivePreviewState extends ConsumerState<ThemeLivePreview>
 
 enum _MiniPage { cards, list }
 
-/// A phone-shaped sketch of the home page, drawn in [colorScheme].
+/// A phone-shaped sketch of the home page, drawn in [colorScheme] and
+/// [interfaceStyle].
 ///
 /// With [previous], the page is caught [progress] of the way through a switch
 /// from it, drawn as [tabAnimation] moves the pages.
@@ -293,6 +303,7 @@ class MiniScreen extends StatelessWidget {
     super.key,
     required this.colorScheme,
     required this.floatingBar,
+    this.interfaceStyle = const InterfaceStyleTheme(),
     this.selected = 0,
     this.previous,
     this.progress = 1,
@@ -304,6 +315,7 @@ class MiniScreen extends StatelessWidget {
 
   final ColorScheme colorScheme;
   final bool floatingBar;
+  final InterfaceStyleTheme interfaceStyle;
   final int selected;
   final int? previous;
   final double progress;
@@ -312,6 +324,62 @@ class MiniScreen extends StatelessWidget {
 
   static _MiniPage _pageOf(int index) =>
       index.isEven ? _MiniPage.cards : _MiniPage.list;
+
+  bool get _glass => floatingBar && interfaceStyle.liquidGlass;
+
+  (Color? indicator, Color selectedColor, Color color) _destinationColors() {
+    if (_glass) {
+      final tint = colorScheme.brightness == Brightness.light
+          ? Colors.black
+          : Colors.white;
+      return (
+        tint.withValues(alpha: 0.1),
+        colorScheme.primary,
+        colorScheme.onSurface,
+      );
+    }
+    if (!interfaceStyle.isMiuix) {
+      return (
+        colorScheme.secondaryContainer,
+        colorScheme.onSecondaryContainer,
+        colorScheme.onSurfaceVariant,
+      );
+    }
+    if (floatingBar) {
+      return (
+        colorScheme.primary.withValues(alpha: 0.15),
+        colorScheme.primary,
+        colorScheme.onSurface,
+      );
+    }
+    return (
+      null,
+      colorScheme.onSurface,
+      colorScheme.onSurface.withValues(alpha: 0.4),
+    );
+  }
+
+  Decoration _floatingBarDecoration(double unit) {
+    if (_glass) {
+      return ShapeDecoration(
+        color: colorScheme.surfaceContainer.withValues(alpha: 0.4),
+        shape: AppShape.full.copyWith(
+          side: BorderSide(color: colorScheme.onSurface.withValues(alpha: 0.1)),
+        ),
+      );
+    }
+    return ShapeDecoration(
+      color: colorScheme.surfaceContainer,
+      shape: AppShape.full,
+      shadows: [
+        BoxShadow(
+          color: colorScheme.shadow.withValues(alpha: 0.12),
+          blurRadius: unit,
+          offset: Offset(0, unit * 0.3),
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -344,6 +412,7 @@ class MiniScreen extends StatelessWidget {
                     maxHeight: double.infinity,
                     child: _MiniPageContent(
                       colorScheme: colorScheme,
+                      miuix: interfaceStyle.isMiuix,
                       page: _pageOf(index),
                       seed: index,
                       unit: unit,
@@ -368,8 +437,11 @@ class MiniScreen extends StatelessWidget {
           ];
         }
 
+        final (indicator, selectedColor, color) = _destinationColors();
         final destinations = _MiniDestinations(
-          colorScheme: colorScheme,
+          indicator: indicator,
+          selectedColor: selectedColor,
+          color: color,
           selected: selected,
           unit: unit,
           onSelect: onSelect,
@@ -400,17 +472,7 @@ class MiniScreen extends StatelessWidget {
                   bottom: margin,
                   height: barHeight,
                   child: DecoratedBox(
-                    decoration: ShapeDecoration(
-                      color: colorScheme.surfaceContainer,
-                      shape: AppShape.full,
-                      shadows: [
-                        BoxShadow(
-                          color: colorScheme.shadow.withValues(alpha: 0.12),
-                          blurRadius: unit,
-                          offset: Offset(0, unit * 0.3),
-                        ),
-                      ],
-                    ),
+                    decoration: _floatingBarDecoration(unit),
                     child: destinations,
                   ),
                 )
@@ -420,10 +482,22 @@ class MiniScreen extends StatelessWidget {
                   right: 0,
                   bottom: 0,
                   height: barHeight,
-                  child: ColoredBox(
-                    color: colorScheme.surfaceContainer,
-                    child: destinations,
-                  ),
+                  child: interfaceStyle.isMiuix
+                      ? DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: colorScheme.surface,
+                            border: Border(
+                              top: BorderSide(
+                                color: colorScheme.outlineVariant,
+                              ),
+                            ),
+                          ),
+                          child: destinations,
+                        )
+                      : ColoredBox(
+                          color: colorScheme.surfaceContainer,
+                          child: destinations,
+                        ),
                 ),
               if (hasFab && floatingBar)
                 Positioned(
@@ -482,12 +556,14 @@ class _DiagonalClipper extends CustomClipper<Path> {
 class _MiniPageContent extends StatelessWidget {
   const _MiniPageContent({
     required this.colorScheme,
+    required this.miuix,
     required this.page,
     required this.seed,
     required this.unit,
   });
 
   final ColorScheme colorScheme;
+  final bool miuix;
   final _MiniPage page;
   final int seed;
   final double unit;
@@ -496,16 +572,54 @@ class _MiniPageContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final card = colorScheme.surfaceContainer;
     final line = colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
+    Widget listRow(int i) {
+      return SizedBox(
+        height: unit * 2.6,
+        child: Row(
+          spacing: unit,
+          children: [
+            _MiniDot(
+              color: i == 0
+                  ? colorScheme.tertiaryContainer
+                  : colorScheme.secondaryContainer,
+              size: unit * 2.2,
+            ),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: unit * 0.5,
+                children: [
+                  _MiniLine(
+                    color: line,
+                    width: unit * (8 - (i + seed) % 3 * 1.5),
+                    height: unit * 0.8,
+                  ),
+                  _MiniLine(
+                    color: line.withValues(alpha: 0.2),
+                    width: unit * 4,
+                    height: unit * 0.6,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: unit,
       children: [
         Padding(
-          padding: EdgeInsets.only(bottom: unit * 0.5),
+          padding: miuix
+              ? EdgeInsets.fromLTRB(unit * 0.8, unit * 1.5, 0, unit * 0.5)
+              : EdgeInsets.only(bottom: unit * 0.5),
           child: _MiniLine(
             color: colorScheme.onSurface.withValues(alpha: 0.72),
-            width: unit * 7,
-            height: unit * 1.1,
+            width: unit * (miuix ? 9 : 7),
+            height: unit * (miuix ? 1.6 : 1.1),
           ),
         ),
         ...switch (page) {
@@ -554,42 +668,19 @@ class _MiniPageContent extends StatelessWidget {
             for (var i = 0; i < 3; i++)
               _MiniCard(color: card, height: unit * 4.5, unit: unit),
           ],
-          _MiniPage.list => [
-            for (var i = 0; i < 7; i++)
-              SizedBox(
-                height: unit * 2.6,
-                child: Row(
+          _MiniPage.list when miuix => [
+            for (final (start, end) in [(0, 3), (3, 7)])
+              _MiniBlock(
+                color: card,
+                extent: unit * 4.5,
+                padding: EdgeInsets.all(unit),
+                child: Column(
                   spacing: unit,
-                  children: [
-                    _MiniDot(
-                      color: i == 0
-                          ? colorScheme.tertiaryContainer
-                          : colorScheme.secondaryContainer,
-                      size: unit * 2.2,
-                    ),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: unit * 0.5,
-                        children: [
-                          _MiniLine(
-                            color: line,
-                            width: unit * (8 - (i + seed) % 3 * 1.5),
-                            height: unit * 0.8,
-                          ),
-                          _MiniLine(
-                            color: line.withValues(alpha: 0.2),
-                            width: unit * 4,
-                            height: unit * 0.6,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  children: [for (var i = start; i < end; i++) listRow(i)],
                 ),
               ),
           ],
+          _MiniPage.list => [for (var i = 0; i < 7; i++) listRow(i)],
         },
       ],
     );
@@ -598,33 +689,36 @@ class _MiniPageContent extends StatelessWidget {
 
 class _MiniDestinations extends StatelessWidget {
   const _MiniDestinations({
-    required this.colorScheme,
+    required this.indicator,
+    required this.selectedColor,
+    required this.color,
     required this.selected,
     required this.unit,
     required this.onSelect,
   });
 
-  final ColorScheme colorScheme;
+  final Color? indicator;
+  final Color selectedColor;
+  final Color color;
   final int selected;
   final double unit;
   final ValueChanged<int>? onSelect;
 
   Widget _buildDestination(int index) {
     if (index != selected) {
-      return _MiniDot(color: colorScheme.onSurfaceVariant, size: unit * 0.9);
+      return _MiniDot(color: color, size: unit * 0.9);
+    }
+    final dot = _MiniDot(color: selectedColor, size: unit * 0.9);
+    final indicator = this.indicator;
+    if (indicator == null) {
+      return dot;
     }
     return Container(
       width: unit * 2.8,
       height: unit * 1.6,
       alignment: Alignment.center,
-      decoration: ShapeDecoration(
-        color: colorScheme.secondaryContainer,
-        shape: AppShape.full,
-      ),
-      child: _MiniDot(
-        color: colorScheme.onSecondaryContainer,
-        size: unit * 0.9,
-      ),
+      decoration: ShapeDecoration(color: indicator, shape: AppShape.full),
+      child: dot,
     );
   }
 

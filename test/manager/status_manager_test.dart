@@ -1,8 +1,11 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/manager/status_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/widgets/sheet_header.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -12,11 +15,22 @@ import '../helpers/test_app.dart';
 Future<StatusManagerState> _pumpStatusManager(
   WidgetTester tester, {
   bool isMobileView = true,
+  InterfaceStyleTheme interfaceStyle = const InterfaceStyleTheme(),
+  TextScale textScale = const TextScale(),
 }) async {
   await tester.pumpWidget(
     TestApp(
       wrapInProviderScope: true,
-      overrides: [isMobileViewProvider.overrideWithValue(isMobileView)],
+      overrides: [
+        isMobileViewProvider.overrideWithValue(isMobileView),
+        themeSettingProvider.overrideWithBuild(
+          (_, _) => ThemeProps(textScale: textScale),
+        ),
+      ],
+      homeBuilder: (child) => Theme(
+        data: ThemeData().withInterfaceStyle(interfaceStyle),
+        child: child,
+      ),
       child: const StatusManager(child: SizedBox()),
     ),
   );
@@ -68,6 +82,45 @@ Finder _cardOf(String text) {
 }
 
 void main() {
+  testWidgets('clears the Miuix large title at any app text scale', (
+    tester,
+  ) async {
+    Future<double> topOf(
+      InterfaceStyleTheme interfaceStyle, {
+      TextScale textScale = const TextScale(),
+    }) async {
+      final state = await _pumpStatusManager(
+        tester,
+        interfaceStyle: interfaceStyle,
+        textScale: textScale,
+      );
+      state.message('hello');
+      await tester.pumpAndSettle();
+      final top = tester.getTopLeft(_cardOf('hello')).dy;
+      await tester.pumpWidget(const SizedBox.shrink());
+      return top;
+    }
+
+    const miuix = InterfaceStyleTheme(style: InterfaceStyle.miuix);
+    const large = TextScale(enable: true, scale: 1.4);
+    final material = await topOf(const InterfaceStyleTheme());
+
+    expect(
+      await topOf(miuix) - material,
+      LargeTitleHeader.expandedHeightFor(TextScaler.noScaling) -
+          pageToolbarHeight,
+    );
+    expect(
+      await topOf(miuix, textScale: large) - material,
+      LargeTitleHeader.expandedHeightFor(const TextScaler.linear(1.4)) -
+          pageToolbarHeight,
+    );
+    expect(
+      await topOf(const InterfaceStyleTheme(), textScale: large),
+      material,
+    );
+  });
+
   testWidgets('shows a message until its duration expires', (tester) async {
     final state = await _pumpStatusManager(tester);
     state.message('hello');

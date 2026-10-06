@@ -35,19 +35,6 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     );
   }
 
-  Widget _buildNavigationMenu(List<NavigationItem> navigationItems) {
-    return Column(
-      children: [
-        for (final navigationItem in navigationItems) ...[
-          _buildNavigationMenuItem(navigationItem),
-          navigationItems.last != navigationItem
-              ? const Divider(height: 0)
-              : Container(),
-        ],
-      ],
-    );
-  }
-
   List<Widget> _getOtherList(bool enableDeveloperMode) {
     return generateSection(
       title: context.appLocalizations.other,
@@ -89,10 +76,13 @@ class _ToolViewState extends ConsumerState<ToolsView> {
             return Container();
           }
           return Column(
-            children: [
-              ListHeader(title: context.appLocalizations.more),
-              _buildNavigationMenu(state.navigationItems),
-            ],
+            children: generateSection(
+              title: context.appLocalizations.more,
+              items: [
+                for (final navigationItem in state.navigationItems)
+                  _buildNavigationMenuItem(navigationItem),
+              ],
+            ),
           );
         },
       ),

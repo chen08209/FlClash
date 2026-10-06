@@ -93,7 +93,7 @@ class ResourcesView extends ConsumerWidget {
                 onPressed: () {
                   updateAutoUpdate(!geoSetting.autoUpdate);
                 },
-                trailing: Switch(
+                trailing: CommonSwitch(
                   value: geoSetting.autoUpdate,
                   onChanged: updateAutoUpdate,
                 ),

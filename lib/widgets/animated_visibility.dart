@@ -33,10 +33,15 @@ class AnimatedVisibility extends StatefulWidget {
   final _VisibilityMotion _motion;
   final Widget child;
 
+  /// Whether the child fades as it moves. Under a fade, a backdrop filter
+  /// that overlaps other layers reads an empty layer instead of the page.
+  final bool fade;
+
   /// Creates a sidebar transition that moves to the left when hidden.
   const AnimatedVisibility.sidebar({
     super.key,
     required this.visible,
+    this.fade = true,
     required this.child,
   }) : _motion = _VisibilityMotion.sidebar;
 
@@ -44,6 +49,7 @@ class AnimatedVisibility extends StatefulWidget {
   const AnimatedVisibility.bottomNavigation({
     super.key,
     required this.visible,
+    this.fade = true,
     required this.child,
   }) : _motion = _VisibilityMotion.bottomNavigation;
 
@@ -138,7 +144,7 @@ class _AnimatedVisibilityState extends State<AnimatedVisibility>
               ),
             ),
             child: FadeTransition(
-              opacity: _animation,
+              opacity: widget.fade ? _animation : kAlwaysCompleteAnimation,
               child: SlideTransition(
                 position: _animation.drive(
                   Tween(begin: motion.hiddenOffset, end: Offset.zero),
