@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:fl_clash/common/boot_record.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/plugins/app.dart';
@@ -89,6 +92,37 @@ void main() {
 
       expect(await app.getPackageIcon('com.b'), same(defaultIcon));
       expect(requested, ['com.a', '', 'com.b']);
+    },
+  );
+
+  test(
+    'asks Android for a bounded number of package icons at a time',
+    () async {
+      var inFlight = 0;
+      var peak = 0;
+      final release = Completer<void>();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            inFlight++;
+            peak = max(peak, inFlight);
+            await release.future;
+            inFlight--;
+            return '/icons/${call.arguments['packageName']}.png';
+          });
+
+      final app = App();
+      final icons = Future.wait([
+        for (var i = 0; i < maxConcurrentIconLoads * 2; i++)
+          app.getPackageIcon('com.$i'),
+      ]);
+      await pumpEventQueue();
+
+      expect(inFlight, maxConcurrentIconLoads);
+
+      release.complete();
+
+      expect(await icons, everyElement(isNotNull));
+      expect(peak, maxConcurrentIconLoads);
     },
   );
 

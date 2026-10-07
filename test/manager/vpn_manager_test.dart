@@ -1,8 +1,10 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/status_manager.dart';
 import 'package:fl_clash/manager/vpn_manager.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/state.dart';
@@ -11,19 +13,28 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+class _RestartRecordingSetupAction extends SetupAction {
+  int restarts = 0;
+
+  @override
+  Future<void> restartVpn() async {
+    restarts++;
+  }
+}
+
 void main() {
   late ProviderContainer container;
+  late _RestartRecordingSetupAction setupAction;
 
   setUp(() {
-    container = ProviderContainer();
+    setupAction = _RestartRecordingSetupAction();
+    container = ProviderContainer(
+      overrides: [setupActionProvider.overrideWith(() => setupAction)],
+    );
     globalState.container = container;
-    globalState.lastVpnState = null;
   });
 
-  tearDown(() {
-    container.dispose();
-    globalState.lastVpnState = null;
-  });
+  tearDown(() => container.dispose());
 
   Future<void> pumpVpnManager(WidgetTester tester) async {
     await tester.pumpWidget(
@@ -46,73 +57,122 @@ void main() {
     await tester.pump();
   }
 
+  Future<void> outlastTip(WidgetTester tester) async {
+    await tester.pump(const Duration(seconds: 7));
+    await tester.pump(const Duration(milliseconds: 500));
+  }
+
   Future<void> drainTimers(WidgetTester tester) async {
-    await tester.pump(const Duration(seconds: 11));
+    await outlastTip(tester);
     await tester.pumpWidget(const SizedBox.shrink());
   }
 
-  testWidgets('shows a tip when the vpn state changes while started', (
+  void startService() {
+    container.read(runningVpnOptionsProvider.notifier).value = container.read(
+      vpnOptionsProvider,
+    );
+  }
+
+  void updateVpn(VpnProps Function(VpnProps state) update) {
+    container.read(vpnSettingProvider.notifier).update(update);
+  }
+
+  Finder tip() => find.text(currentAppLocalizations.vpnConfigChangeDetected);
+
+  testWidgets('a change the running service reads asks for a restart', (
     tester,
   ) async {
     await pumpVpnManager(tester);
-    container.read(runTimeProvider.notifier).value = 1;
+    startService();
 
-    container
-        .read(vpnSettingProvider.notifier)
-        .update((_) => const VpnProps(enable: false));
+    updateVpn((state) => state.copyWith(ipv6: !state.ipv6));
     await tester.pump();
+    expect(tip(), findsOneWidget);
 
-    expect(
-      find.text(currentAppLocalizations.vpnConfigChangeDetected),
-      findsOneWidget,
-    );
-    await drainTimers(tester);
-  });
-
-  testWidgets('does not show a tip when not started', (tester) async {
-    await pumpVpnManager(tester);
-
-    container
-        .read(vpnSettingProvider.notifier)
-        .update((_) => const VpnProps(enable: false));
-    await tester.pump();
-
-    expect(
-      find.text(currentAppLocalizations.vpnConfigChangeDetected),
-      findsNothing,
-    );
-    await drainTimers(tester);
-  });
-
-  testWidgets('does not repeat the tip for the same vpn state', (tester) async {
-    await pumpVpnManager(tester);
-    container.read(runTimeProvider.notifier).value = 1;
-
-    container
-        .read(vpnSettingProvider.notifier)
-        .update((_) => const VpnProps(enable: false));
-    await tester.pump();
-    expect(
-      find.text(currentAppLocalizations.vpnConfigChangeDetected),
-      findsOneWidget,
-    );
-    await tester.pump(const Duration(seconds: 7));
     await tester.pump(const Duration(milliseconds: 500));
-    expect(
-      find.text(currentAppLocalizations.vpnConfigChangeDetected),
-      findsNothing,
-    );
+    await tester.tap(find.text(currentAppLocalizations.restart));
+    await tester.pump();
+    expect(setupAction.restarts, 1);
+    await drainTimers(tester);
+  });
 
-    globalState.lastVpnState = container.read(vpnStateProvider);
+  testWidgets('a mixed port change asks for a restart under a system proxy', (
+    tester,
+  ) async {
+    await pumpVpnManager(tester);
+    startService();
+
     container
-        .read(vpnSettingProvider.notifier)
-        .update((_) => const VpnProps(enable: true));
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(mixedPort: state.mixedPort + 1));
     await tester.pump();
 
-    expect(
-      find.text(currentAppLocalizations.vpnConfigChangeDetected),
-      findsNothing,
+    expect(tip(), findsOneWidget);
+    await drainTimers(tester);
+  });
+
+  testWidgets('no tip while no service is running', (tester) async {
+    await pumpVpnManager(tester);
+
+    updateVpn((state) => state.copyWith(ipv6: !state.ipv6));
+    await tester.pump();
+
+    expect(tip(), findsNothing);
+    await drainTimers(tester);
+  });
+
+  testWidgets('no tip for what the service never reads', (tester) async {
+    await pumpVpnManager(tester);
+    startService();
+
+    updateVpn(
+      (state) => state.copyWith(
+        accessControlProps: state.accessControlProps.copyWith(
+          sort: AccessSortType.name,
+          isFilterSystemApp: !state.accessControlProps.isFilterSystemApp,
+        ),
+      ),
     );
+    await tester.pump();
+
+    expect(tip(), findsNothing);
+    await drainTimers(tester);
+  });
+
+  testWidgets('changing back to what the service runs asks for nothing', (
+    tester,
+  ) async {
+    await pumpVpnManager(tester);
+    startService();
+
+    updateVpn((state) => state.copyWith(ipv6: !state.ipv6));
+    await tester.pump();
+    expect(tip(), findsOneWidget);
+    await outlastTip(tester);
+    expect(tip(), findsNothing);
+
+    updateVpn((state) => state.copyWith(ipv6: !state.ipv6));
+    await tester.pump();
+
+    expect(tip(), findsNothing);
+    await drainTimers(tester);
+  });
+
+  testWidgets('a restart measures later changes against the new options', (
+    tester,
+  ) async {
+    await pumpVpnManager(tester);
+    startService();
+    updateVpn((state) => state.copyWith(ipv6: !state.ipv6));
+    await tester.pump();
+    await outlastTip(tester);
+    expect(tip(), findsNothing);
+
+    startService();
+    updateVpn((state) => state.copyWith(ipv6: !state.ipv6));
+    await tester.pump();
+
+    expect(tip(), findsOneWidget);
     await drainTimers(tester);
   });
 }

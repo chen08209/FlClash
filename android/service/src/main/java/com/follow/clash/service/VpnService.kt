@@ -7,7 +7,6 @@ import android.net.ProxyInfo
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
-import android.util.Log
 import androidx.core.content.getSystemService
 import com.follow.clash.common.AccessControlMode
 import com.follow.clash.common.GlobalState
@@ -18,6 +17,8 @@ import com.follow.clash.service.models.VpnOptions
 import com.follow.clash.service.models.getIpv4RouteAddress
 import com.follow.clash.service.models.getIpv6RouteAddress
 import com.follow.clash.service.models.toCIDR
+import com.follow.clash.service.models.tunMtu
+import com.follow.clash.service.models.tunOptions
 import com.follow.clash.service.modules.ServiceModules
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentHashMap
@@ -92,6 +93,11 @@ class VpnService : SystemVpnService(), ManagedService {
         super.onLowMemory()
     }
 
+    override fun onTrimMemory(level: Int) {
+        trimCoreMemory(level)
+        super.onTrimMemory(level)
+    }
+
     inner class LocalBinder : Binder() {
         val service: VpnService
             get() = this@VpnService
@@ -120,7 +126,7 @@ class VpnService : SystemVpnService(), ManagedService {
         val fd = with(Builder()) {
             addAddressAndRoutes(options)
             addDnsServers(options)
-            setMtu(MTU)
+            setMtu(options.tunMtu)
             configureAccessControl(options)
             setSession(getString(CommonR.string.app_name))
             setBlocking(false)
@@ -160,6 +166,7 @@ class VpnService : SystemVpnService(), ManagedService {
                         stack = options.stack,
                         address = options.tunAddress,
                         dns = options.tunDns,
+                        options = options.tunOptions,
                     ),
                 ) { "Core rejected the tun file descriptor" }
             } catch (error: Exception) {
@@ -175,7 +182,7 @@ class VpnService : SystemVpnService(), ManagedService {
         addRoutes(
             routes = options::getIpv4RouteAddress,
             fallbackAddress = NET_ANY,
-            logTag = "addRoute4",
+            routeAll = options.routeAddress.isEmpty(),
         )
 
         if (options.ipv6) {
@@ -188,24 +195,25 @@ class VpnService : SystemVpnService(), ManagedService {
             addRoutes(
                 routes = options::getIpv6RouteAddress,
                 fallbackAddress = NET_ANY6,
-                logTag = "addRoute6",
+                routeAll = options.routeAddress.isEmpty(),
             )
         }
     }
 
+    // Flutter lists every family it routes, so a family missing from a
+    // non-empty list is one whose routes were all excluded.
     private fun Builder.addRoutes(
         routes: () -> List<CIDR>,
         fallbackAddress: String,
-        logTag: String,
+        routeAll: Boolean,
     ) {
-        val routeList = runCatching(routes).getOrDefault(emptyList())
-        if (routeList.isEmpty()) {
+        val routeList = runCatching(routes).getOrNull()
+        if (routeAll || routeList == null) {
             addRoute(fallbackAddress, 0)
             return
         }
         try {
             routeList.forEach { route ->
-                Log.d(logTag, "address: ${route.address} prefixLength: ${route.prefixLength}")
                 addRoute(route.address, route.prefixLength)
             }
         } catch (_: Exception) {
@@ -285,13 +293,14 @@ class VpnService : SystemVpnService(), ManagedService {
     }
 
     companion object {
-        private const val IPV4_ADDRESS = "172.19.0.1/30"
+        // mihomo's own TUN default: 198.18.0.0/15 is benchmarking space no LAN
+        // uses, and its fake-ip pool starts at .4, past this /30.
+        private const val IPV4_ADDRESS = "198.18.0.1/30"
         private const val IPV6_ADDRESS = "fdfe:dcba:9876::1/126"
-        private const val DNS = "172.19.0.2"
+        private const val DNS = "198.18.0.2"
         private const val DNS6 = "fdfe:dcba:9876::2"
         private const val NET_ANY = "0.0.0.0"
         private const val NET_ANY6 = "::"
         private const val LOCAL_HOST = "127.0.0.1"
-        private const val MTU = 9000
     }
 }

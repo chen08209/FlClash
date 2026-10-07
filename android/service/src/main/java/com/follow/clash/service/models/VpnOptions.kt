@@ -1,6 +1,7 @@
 package com.follow.clash.service.models
 
 import com.follow.clash.common.AccessControlMode
+import com.google.gson.Gson
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
@@ -23,7 +24,28 @@ data class VpnOptions(
     val bypassDomain: List<String>,
     val stack: String,
     val routeAddress: List<String>,
+    val mtu: Int = 0,
+    val congestionController: String? = null,
 )
+
+private const val DEFAULT_TUN_MTU = 9000
+
+// establish() rejects an MTU above 65535, and below 1280 the kernel drops the
+// IPv6 address.
+private val TUN_MTU_RANGE = 1280..65535
+
+private val gson = Gson()
+
+val VpnOptions.tunMtu: Int
+    get() = if (mtu > 0) mtu.coerceIn(TUN_MTU_RANGE) else DEFAULT_TUN_MTU
+
+val VpnOptions.tunOptions: String
+    get() = gson.toJson(
+        mapOf(
+            "mtu" to tunMtu,
+            "congestion-controller" to congestionController.orEmpty(),
+        ),
+    )
 
 data class CIDR(
     val address: InetAddress,

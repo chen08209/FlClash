@@ -51,8 +51,23 @@ class FilesProvider : DocumentsProvider() {
         mode: String,
         signal: CancellationSignal?,
     ): ParcelFileDescriptor {
-        val accessMode = ParcelFileDescriptor.parseMode(mode)
+        val accessMode = ParcelFileDescriptor.parseMode(canonicalMode(mode))
         return ParcelFileDescriptor.open(resolveFile(documentId), accessMode)
+    }
+
+    // parseMode throws on a letter outside r, w, t and a, and before Android 10
+    // on any spelling but these six; callers do not all stick to them.
+    private fun canonicalMode(mode: String): String {
+        val read = 'r' in mode
+        val truncate = 't' in mode
+        return when {
+            'w' !in mode -> "r"
+            read && truncate -> "rwt"
+            read -> "rw"
+            truncate -> "wt"
+            'a' in mode -> "wa"
+            else -> "w"
+        }
     }
 
     private fun includeFile(result: MatrixCursor, file: File) {

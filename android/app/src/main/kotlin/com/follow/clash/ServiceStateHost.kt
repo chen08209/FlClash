@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat
 import com.follow.clash.common.GlobalState
 import com.follow.clash.models.SharedState
 import com.follow.clash.plugins.AppPlugin
+import com.follow.clash.plugins.ServicePlugin
 import com.follow.clash.plugins.TilePlugin
 import com.follow.clash.service.ServiceConfig
 import com.follow.clash.service.models.NotificationParams
@@ -15,13 +16,18 @@ import com.follow.clash.service.models.VpnOptions
 import io.flutter.embedding.engine.FlutterEngine
 import kotlinx.coroutines.CoroutineScope
 
+internal data class ServiceRuntime(
+    val vpn: Boolean,
+    val startedAtMillis: Long,
+)
+
 /**
  * The machine owns the arbitration and the transitions; this is only the part that cannot run on a
  * plain JVM, so unit tests can drive the state machine with an in-memory implementation.
  */
 internal interface ServiceStateHost {
     val scope: CoroutineScope
-    val runTimeMillis: Long
+    val runtime: ServiceRuntime?
     val homeDirPath: String
     val sdkInt: Int
 
@@ -43,19 +49,17 @@ internal interface ServiceStateHost {
 
     fun app(): AppGateway?
 
+    fun notifyStopped()
+
     suspend fun quickSetup(initParams: String, setupParams: String): Result<String>
 
-    suspend fun startService(options: VpnOptions): Long
+    suspend fun startService(options: VpnOptions): Boolean
 
     suspend fun stopService()
-
-    suspend fun isVpnServiceActive(): Boolean
 }
 
-internal interface TileGateway {
+internal fun interface TileGateway {
     fun handleStart()
-
-    fun handleStop()
 }
 
 internal interface AppGateway {
@@ -75,8 +79,8 @@ internal object AndroidServiceStateHost : ServiceStateHost {
     override val scope: CoroutineScope
         get() = GlobalState
 
-    override val runTimeMillis: Long
-        get() = ServiceController.getRunTimeMillis()
+    override val runtime: ServiceRuntime?
+        get() = ServiceController.runtime
 
     override val homeDirPath: String
         get() = GlobalState.application.filesDir.path
@@ -116,11 +120,7 @@ internal object AndroidServiceStateHost : ServiceStateHost {
             ) == PackageManager.PERMISSION_GRANTED
 
     override fun tile(): TileGateway? = flutterEngine?.plugin<TilePlugin>()?.let { plugin ->
-        object : TileGateway {
-            override fun handleStart() = plugin.handleStart()
-
-            override fun handleStop() = plugin.handleStop()
-        }
+        TileGateway(plugin::handleStart)
     }
 
     override fun app(): AppGateway? = flutterEngine?.plugin<AppPlugin>()?.let { plugin ->
@@ -139,13 +139,15 @@ internal object AndroidServiceStateHost : ServiceStateHost {
         }
     }
 
+    override fun notifyStopped() {
+        flutterEngine?.plugin<ServicePlugin>()?.notifyStopped()
+    }
+
     override suspend fun quickSetup(initParams: String, setupParams: String): Result<String> =
         ServiceController.quickSetup(initParams, setupParams)
 
-    override suspend fun startService(options: VpnOptions): Long =
+    override suspend fun startService(options: VpnOptions): Boolean =
         ServiceController.start(options)
 
     override suspend fun stopService() = ServiceController.stop()
-
-    override suspend fun isVpnServiceActive(): Boolean = ServiceController.isVpnServiceActive()
 }
