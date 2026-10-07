@@ -3,7 +3,7 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-checker="$script_dir/check_comment_density.sh"
+checker="$script_dir/comment_density.sh"
 temp_dir="$(mktemp -d)"
 trap 'rm -rf "$temp_dir"' EXIT
 
@@ -205,4 +205,4 @@ if ((failures > 0)); then
   exit 1
 fi
 
-echo 'check_comment_density.sh behaves as documented.'
+echo 'comment_density.sh behaves as documented.'

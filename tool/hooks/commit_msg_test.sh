@@ -3,12 +3,13 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-checker="$script_dir/check_commit_msg.sh"
+checker="$script_dir/commit_msg.sh"
 temp_dir="$(mktemp -d)"
 trap 'rm -rf "$temp_dir"' EXIT
 
 message_file="$temp_dir/COMMIT_EDITMSG"
 failures=0
+subject='fix(core): keep the socket alive'
 
 run() {
   printf '%s\n' "$@" >"$message_file"
@@ -57,20 +58,14 @@ expect_stderr() {
   fi
 }
 
-expect_pass 'a conventional subject' 'fix(core): keep the socket alive'
+expect_pass 'a conventional subject' "$subject"
 # A message left uncleaned starts with blank lines, and the subject then sits
 # below line one. Cutting the body from line two would put the subject in it.
 expect_fail 'a leading blank line does not hide a bad trailer' \
-  'Unknown changelog trailer' \
-  '' \
-  'fix(core): keep the socket alive' \
-  '' \
-  'Changelog-de: nope'
-expect_pass 'a leading blank line still finds the subject' \
-  '' \
-  'fix(core): keep the socket alive'
+  'Unknown changelog trailer' '' "$subject" '' 'Changelog-de: nope'
+expect_pass 'a leading blank line still finds the subject' '' "$subject"
 expect_pass 'a merge subject' 'Merge branch main into dev'
-expect_pass 'a fixup subject' 'fixup! fix(core): keep the socket alive'
+expect_pass 'a fixup subject' "fixup! $subject"
 expect_pass 'a changelog trailer' \
   'feat(profiles): support override scripts' \
   '' \
@@ -92,7 +87,7 @@ expect_pass 'a camel case identifier' 'fix(ui): AppBar text is truncated'
 expect_pass 'an acronym' 'fix(core): DNS leaks after wake'
 expect_fail 'an upper case first word before punctuation' 'lower case' \
   'fix(core): Keep, or drop, the socket'
-expect_fail 'a trailing period' 'period' 'fix(core): keep the socket alive.'
+expect_fail 'a trailing period' 'period' "$subject."
 expect_fail 'a changelog translation trailer' 'Changelog-zh-CN' \
   'feat: x' '' 'Changelog-zh-CN: 新功能'
 expect_fail 'an unknown changelog trailer' 'Changelog-de' \
@@ -103,18 +98,16 @@ expect_fail 'an unknown changelog type' 'Changelog-Type' \
   'chore: x' '' 'Changelog: X' 'Changelog-Type: docs'
 expect_fail 'a breaking marker with no footer' 'BREAKING CHANGE' \
   'feat(core)!: drop the legacy socket'
-expect_fail 'an agent co-author' 'coding agent' \
-  'fix(core): keep the socket alive' \
-  '' \
-  'Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>'
-expect_fail 'a bot co-author' 'coding agent' \
-  'fix(core): keep the socket alive' \
-  '' \
-  'Co-authored-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
+for trailer in \
+  'co-authored-by: Devin <devin@example.com>' \
+  'Co-authored-by: Review Helper <helper@openai.com>' \
+  'Co-authored-by: Cursor Agent <cursoragent@cursor.com>' \
+  'Co-authored-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'; do
+  expect_fail "an agent co-author ($trailer)" 'coding agent' \
+    "$subject" '' "$trailer"
+done
 expect_pass 'a human co-author' \
-  'fix(core): keep the socket alive' \
-  '' \
-  'Co-authored-by: Feng Chen <chen08209@gmail.com>'
+  "$subject" '' 'Co-authored-by: Jane Doe <jane.doe@example.com>'
 
 expect_stderr 'a user facing commit without a trailer' 'Changelog:' \
   'feat(profiles): support override scripts'
@@ -124,4 +117,4 @@ if ((failures > 0)); then
   exit 1
 fi
 
-echo 'check_commit_msg.sh behaves as documented.'
+echo 'commit_msg.sh behaves as documented.'

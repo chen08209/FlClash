@@ -10,8 +10,8 @@ const _recordSeparator = '\u001e';
 /// A release tag that matches the `vMAJOR.MINOR.PATCH[-pre.N]` contract.
 ///
 /// Every other tag in the repository is ignored on purpose: `backup-pre-squash-*`
-/// and similar bookkeeping tags used to leak into the generated changelog as
-/// fake version sections.
+/// and similar bookkeeping tags would otherwise show up in the generated
+/// changelog as fake version sections.
 class VersionTag implements Comparable<VersionTag> {
   const VersionTag({
     required this.name,

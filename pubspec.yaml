@@ -15,11 +15,12 @@ hooks:
 dependencies:
   flutter:
     sdk: flutter
-  material_ui: ^1.4.0
+  material_ui: ^1.5.0
   intl: any
-  path_provider: ^2.1.5
-  path: ^1.9.0
-  shared_preferences: ^2.5.3
+  path_provider: ^2.1.6
+  path: ^1.9.1
+  shared_preferences: ^2.5.6
+  shared_preferences_platform_interface: ^2.4.2
   window:
     path: plugins/window
   dynamic_color: ^2.1.0
@@ -30,9 +31,9 @@ dependencies:
       url: https://github.com/chen08209/launch_at_startup.git
       ref: e930ce65c5804343103447e01d39fccabedc8681
   json_annotation: ^4.12.0
-  file_picker: ^12.0.0
+  file_picker: ^12.3.0
   mobile_scanner: ^7.4.2
-  app_links: ^7.1.2
+  app_links: ^7.2.2
   win32_registry: ^3.0.3
   tray:
     path: plugins/tray
@@ -40,43 +41,37 @@ dependencies:
     path: plugins/wifi_ssid
   collection: ^1.19.1
   animations: ^3.0.0
-  package_info_plus: ^10.2.1
-  url_launcher: ^6.3.2
+  package_info_plus: ^10.2.2
+  url_launcher: ^6.3.3
   freezed_annotation: ^3.1.0
-  image_picker: ^1.2.0
-  ffi: ^2.1.4
+  image_picker: ^1.2.4
+  ffi: ^2.2.0
 
-  dio: ^5.8.0+1
+  dio: ^5.11.1
   win32: ^6.4.0
   code_forge:
     path: plugins/code_forge
   re_highlight: ^0.0.3
-  archive: ^4.0.7
+  archive: ^4.3.0
   emoji_regex: ^0.0.5
   uni_platform: ^0.1.3
-  device_info_plus: ^13.2.0
+  device_info_plus: ^13.3.0
   connectivity_plus: 7.2.0
-  screen_retriever: ^0.2.1
+  screen_retriever: ^0.2.2
   flutter_riverpod: ^3.4.3
-  riverpod_annotation: ^4.0.6
+  riverpod_annotation: ^4.0.7
   riverpod: ^3.4.3
   material_color_utilities: ^0.13.0
   material_new_shapes: ^1.0.0
-  flutter_svg: ^2.1.0
+  flutter_svg: ^2.3.0
   path_parsing: ^1.1.0
-  flutter_cache_manager: ^3.4.1
-  crypto: ^3.0.3
-  yaml: ^3.1.3
-  yaml_writer:
-    git:
-      url: https://github.com/chen08209/yaml_writer
-      ref: 79c78a44ec9c2f5f5f97da1a65610c6fb2ead8b3
+  flutter_cache_manager: ^3.4.5
+  crypto: ^3.0.7
+  yaml: ^3.1.4
   super_sliver_list: ^0.4.1
-  drift: ^2.34.3
+  drift: ^2.35.1
   drift_flutter: ^0.3.1
-  fractional_indexing: ^1.0.0
   navigator_resizable: ^3.1.0
-  flutter_staggered_grid_view: ^0.7.0
   rust_api:
     path: plugins/rust_api
   setup:
@@ -86,17 +81,17 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   json_serializable: ^6.14.1
-  build_runner: ^2.15.1
-  args: ^2.4.2
+  build_runner: ^2.16.1
+  args: ^2.7.0
   freezed: ^4.0.1
-  riverpod_generator: ^4.0.8
+  riverpod_generator: ^4.0.9
 
-  drift_dev: ^2.34.0
-  intl_utils: ^2.8.15
-  test: ^1.31.0
-  sqlite3: ^3.5.1
-  cross_file: ^0.3.4+2
-  mocktail: ^1.0.4
+  drift_dev: ^2.35.1
+  intl_utils: ^2.8.16
+  test: ^1.31.1
+  sqlite3: ^3.7.0
+  cross_file: ^0.3.5+5
+  mocktail: ^1.0.5
   path_provider_platform_interface: ^2.1.3
 
 flutter:

@@ -26,6 +26,7 @@ windows-sys = { version = "0.52.0", features = [
     "Win32_Security_Authorization",
     "Win32_Storage_FileSystem",
     "Win32_System_JobObjects",
+    "Win32_System_Registry",
     "Win32_System_Threading",
 ] }
 

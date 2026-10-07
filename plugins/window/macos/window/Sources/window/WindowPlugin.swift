@@ -36,6 +36,7 @@ public class WindowPlugin: NSObject, FlutterPlugin {
     private var reportedHidden = false
 
     public static func register(with registrar: FlutterPluginRegistrar) {
+        BackBufferCacheGuard.install()
         let channel = FlutterMethodChannel(name: "window", binaryMessenger: registrar.messenger)
         let plugin = WindowPlugin()
         plugin.registrar = registrar
