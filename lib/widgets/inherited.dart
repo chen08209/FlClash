@@ -1,9 +1,7 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/foundation.dart';
-import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/widgets/sheet.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class PageActivityScope extends InheritedWidget {
   final bool isActive;
@@ -178,21 +176,27 @@ class SheetProvider<T> extends InheritedWidget {
   final SheetType type;
   final void Function([T? result])? nestedNavigatorPop;
 
+  /// The close button's way out of the sheet; [nestedNavigatorPop] only pops.
+  final VoidCallback? onClose;
+
   const SheetProvider({
     super.key,
     required super.child,
     required this.type,
     this.nestedNavigatorPop,
+    this.onClose,
   });
 
   SheetProvider copyWith({
     SheetType? type,
     void Function([T? result])? nestedNavigatorPop,
+    VoidCallback? onClose,
     required Widget child,
   }) {
     return SheetProvider<T>(
       type: type ?? this.type,
       nestedNavigatorPop: nestedNavigatorPop ?? this.nestedNavigatorPop,
+      onClose: onClose ?? this.onClose,
       child: child,
     );
   }
@@ -205,16 +209,6 @@ class SheetProvider<T> extends InheritedWidget {
   bool updateShouldNotify(SheetProvider oldWidget) =>
       type != oldWidget.type &&
       nestedNavigatorPop != oldWidget.nestedNavigatorPop;
-}
-
-extension SheetHeightExt on WidgetRef {
-  double sheetHeight(BuildContext context, double factor) {
-    final viewHeight = watch(viewHeightProvider);
-    if (SheetProvider.of(context)?.type != SheetType.bottomSheet) {
-      return double.maxFinite;
-    }
-    return viewHeight * factor;
-  }
 }
 
 class ProfileIdProvider extends InheritedWidget {
@@ -286,11 +280,31 @@ class SheetDismissScope extends InheritedWidget {
       handler != oldWidget.handler;
 }
 
+class SheetStackScope extends InheritedWidget {
+  final ValueNotifier<bool> surfaceClaimed;
+
+  const SheetStackScope({
+    super.key,
+    required this.surfaceClaimed,
+    required super.child,
+  });
+
+  static ValueNotifier<bool>? of(BuildContext context) {
+    return context
+        .getInheritedWidgetOfExactType<SheetStackScope>()
+        ?.surfaceClaimed;
+  }
+
+  @override
+  bool updateShouldNotify(SheetStackScope oldWidget) =>
+      surfaceClaimed != oldWidget.surfaceClaimed;
+}
+
 /// Makes a scroll controller that hands drags to the sheet, one per route
 /// inside it: a controller shared by pages kept alive together fails the
 /// scrollbar's single position check.
 class SheetScrollScope extends InheritedWidget {
-  final ScrollController Function() createController;
+  final SheetScrollControllerFactory createController;
 
   const SheetScrollScope({
     super.key,
@@ -298,7 +312,7 @@ class SheetScrollScope extends InheritedWidget {
     required super.child,
   });
 
-  static ScrollController Function()? of(BuildContext context) {
+  static SheetScrollControllerFactory? of(BuildContext context) {
     return context
         .getInheritedWidgetOfExactType<SheetScrollScope>()
         ?.createController;
@@ -309,23 +323,16 @@ class SheetScrollScope extends InheritedWidget {
       createController != oldWidget.createController;
 }
 
-/// Whether a sheet is animating to a detent, which resizes its content.
-class SheetSettlingScope extends InheritedWidget {
-  final ValueListenable<bool> settling;
+typedef SheetScrollControllerFactory =
+    ScrollController Function({double initialScrollOffset});
 
-  const SheetSettlingScope({
-    super.key,
-    required this.settling,
-    required super.child,
-  });
-
-  static ValueListenable<bool>? of(BuildContext context) {
-    return context
-        .dependOnInheritedWidgetOfExactType<SheetSettlingScope>()
-        ?.settling;
+ScrollController sheetScrollController(
+  BuildContext context, {
+  double initialScrollOffset = 0.0,
+}) {
+  final createController = SheetScrollScope.of(context);
+  if (createController == null) {
+    return ScrollController(initialScrollOffset: initialScrollOffset);
   }
-
-  @override
-  bool updateShouldNotify(SheetSettlingScope oldWidget) =>
-      settling != oldWidget.settling;
+  return createController(initialScrollOffset: initialScrollOffset);
 }

@@ -156,9 +156,10 @@ abstract class _EditViewState<W extends ConsumerStatefulWidget, T>
               child: Text(appLocalizations.selectAll),
             )
           else
-            FilledButton.tonal(
+            IconButton(
+              tooltip: appLocalizations.add,
               onPressed: _handleAdd,
-              child: Text(appLocalizations.add),
+              icon: const GlyphIcon(AppGlyphs.addCircle),
             ),
         ],
         body: NullStatusSwitcher(
@@ -255,73 +256,69 @@ class _ListEditViewState extends _EditViewState<ListEditView, String> {
   @override
   Object popResult(List<String> entries) => entries;
 
-  String get _valueLabel => widget.valueLabel ?? context.appLocalizations.value;
-
-  ParsedInput<String> _parseBatch(String text) {
-    return parseListInput(
-      text,
-      existing: _entries.toSet(),
-      maxLength: widget.itemMaxLength,
-    );
-  }
-
-  String _issueMessage(InputIssue issue) {
-    return context.appLocalizations.maxLengthTip(
-      _valueLabel,
-      widget.itemMaxLength!,
-    );
-  }
-
-  String _toEntry(String? key, String value) =>
-      parseListInput(value).entries.single;
-
   @override
   Future<List<String>?> showEntryDialog(String? entry) {
-    final appLocalizations = context.appLocalizations;
-    final label = _valueLabel;
-
-    String? validator(String? value) {
-      final parsed = parseListInput(
-        value ?? '',
-        maxLength: widget.itemMaxLength,
-      );
-      if (!parsed.isValid) {
-        return appLocalizations.maxLengthTip(label, widget.itemMaxLength!);
-      }
-      if (parsed.entries.isEmpty) {
-        return appLocalizations.emptyTip(label);
-      }
-      if (parsed.entries.length > 1) {
-        return appLocalizations.singleValueTip(label);
-      }
-      final next = parsed.entries.single;
-      if (next != entry && _entries.contains(next)) {
-        return appLocalizations.existsTip(label);
-      }
-      return null;
-    }
-
-    return dialogs.showCommonDialog<List<String>>(
-      child: EntryDialog<String>(
-        title: entry == null ? appLocalizations.add : appLocalizations.edit,
-        valueField: Field(
-          label: label,
-          value: entry ?? '',
-          validator: validator,
-        ),
-        valueMaxLength: widget.itemMaxLength,
-        toEntry: _toEntry,
-        batch: entry != null
-            ? null
-            : BatchInput(
-                label: widget.title,
-                formatTip: appLocalizations.batchListInputTip,
-                parse: _parseBatch,
-                issueMessage: _issueMessage,
-              ),
-      ),
+    return showListEntryDialog(
+      context,
+      title: widget.title,
+      entries: _entries,
+      entry: entry,
+      valueLabel: widget.valueLabel,
+      itemMaxLength: widget.itemMaxLength,
     );
   }
+}
+
+Future<List<String>?> showListEntryDialog(
+  BuildContext context, {
+  required String title,
+  required List<String> entries,
+  String? entry,
+  String? valueLabel,
+  int? itemMaxLength,
+}) {
+  final appLocalizations = context.appLocalizations;
+  final label = valueLabel ?? appLocalizations.value;
+
+  String? validator(String? value) {
+    final parsed = parseListInput(value ?? '', maxLength: itemMaxLength);
+    if (!parsed.isValid) {
+      return appLocalizations.maxLengthTip(label, itemMaxLength!);
+    }
+    if (parsed.entries.isEmpty) {
+      return appLocalizations.emptyTip(label);
+    }
+    if (parsed.entries.length > 1) {
+      return appLocalizations.singleValueTip(label);
+    }
+    final next = parsed.entries.single;
+    if (next != entry && entries.contains(next)) {
+      return appLocalizations.existsTip(label);
+    }
+    return null;
+  }
+
+  return dialogs.showCommonDialog<List<String>>(
+    child: EntryDialog<String>(
+      title: entry == null ? appLocalizations.add : appLocalizations.edit,
+      valueField: Field(label: label, value: entry ?? '', validator: validator),
+      valueMaxLength: itemMaxLength,
+      toEntry: (_, value) => parseListInput(value).entries.single,
+      batch: entry != null
+          ? null
+          : BatchInput(
+              label: title,
+              formatTip: appLocalizations.batchListInputTip,
+              parse: (text) => parseListInput(
+                text,
+                existing: entries.toSet(),
+                maxLength: itemMaxLength,
+              ),
+              issueMessage: (_) =>
+                  appLocalizations.maxLengthTip(label, itemMaxLength!),
+            ),
+    ),
+  );
 }
 
 class MapEditView extends ConsumerStatefulWidget {
@@ -411,6 +408,7 @@ class _MapEditViewState
         widget.valueMaxLength!,
       ),
       InputIssueKind.missingValue => appLocalizations.emptyTip(_valueLabel),
+      InputIssueKind.invalidUrl => appLocalizations.urlTip(_valueLabel),
     };
   }
 

@@ -1,5 +1,8 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:fl_clash/widgets/deferred_push.dart';
 import 'package:fl_clash/widgets/drag_back.dart';
 import 'package:fl_clash/widgets/keyboard_inset_hold.dart';
 
@@ -12,8 +15,6 @@ typedef OpenContainerBuilder<S> =
 typedef CloseContainerBuilder =
     Widget Function(BuildContext context, VoidCallback action);
 
-enum ContainerTransitionType { fade, fadeThrough }
-
 typedef ClosedCallback<S> = void Function(S data);
 
 @optionalTypeArgs
@@ -22,7 +23,6 @@ class OpenContainer<T extends Object?> extends StatefulWidget {
     super.key,
     this.closedColor,
     this.openColor,
-    this.middleColor,
     this.closedShape,
     this.openShape,
     this.onClosed,
@@ -30,16 +30,12 @@ class OpenContainer<T extends Object?> extends StatefulWidget {
     required this.openBuilder,
     this.tappable = true,
     this.transitionDuration = const Duration(milliseconds: 300),
-    this.transitionType = ContainerTransitionType.fade,
     this.curve = Curves.fastOutSlowIn,
-    this.useRootNavigator = false,
-    this.routeSettings,
     this.clipBehavior = Clip.antiAlias,
   });
 
   final Color? closedColor;
   final Color? openColor;
-  final Color? middleColor;
   final ShapeBorder? closedShape;
   final ShapeBorder? openShape;
   final ClosedCallback<T?>? onClosed;
@@ -47,10 +43,7 @@ class OpenContainer<T extends Object?> extends StatefulWidget {
   final OpenContainerBuilder<T> openBuilder;
   final bool tappable;
   final Duration transitionDuration;
-  final ContainerTransitionType transitionType;
   final Curve curve;
-  final bool useRootNavigator;
-  final RouteSettings? routeSettings;
   final Clip clipBehavior;
 
   @override
@@ -62,30 +55,20 @@ class _OpenContainerState<T> extends State<OpenContainer<T?>> {
   final GlobalKey _closedBuilderKey = GlobalKey();
 
   Future<void> openContainer() async {
-    final Color middleColor =
-        widget.middleColor ?? Theme.of(context).canvasColor;
-    final T? data =
-        await Navigator.of(
-          context,
-          rootNavigator: widget.useRootNavigator,
-        ).push(
-          _OpenContainerRoute<T>(
-            closedColor: widget.closedColor,
-            openColor: widget.openColor,
-            middleColor: middleColor,
-            closedShape: widget.closedShape,
-            openShape: widget.openShape,
-            closedBuilder: widget.closedBuilder,
-            openBuilder: widget.openBuilder,
-            hideableKey: _hideableKey,
-            closedBuilderKey: _closedBuilderKey,
-            transitionDuration: widget.transitionDuration,
-            transitionType: widget.transitionType,
-            curve: widget.curve,
-            useRootNavigator: widget.useRootNavigator,
-            routeSettings: widget.routeSettings,
-          ),
-        );
+    final T? data = await Navigator.of(context).push(
+      _OpenContainerRoute<T>(
+        closedColor: widget.closedColor,
+        openColor: widget.openColor,
+        closedShape: widget.closedShape,
+        openShape: widget.openShape,
+        closedBuilder: widget.closedBuilder,
+        openBuilder: widget.openBuilder,
+        hideableKey: _hideableKey,
+        closedBuilderKey: _closedBuilderKey,
+        transitionDuration: widget.transitionDuration,
+        curve: widget.curve,
+      ),
+    );
     if (widget.onClosed != null) {
       widget.onClosed!(data);
     }
@@ -164,125 +147,23 @@ class _HideableState extends State<_Hideable> {
   }
 }
 
-class _OpenContainerRoute<T> extends ModalRoute<T> with DragBackRouteMixin<T> {
+class _OpenContainerRoute<T> extends ModalRoute<T>
+    with DragBackRouteMixin<T>, DeferredPushRouteMixin<T> {
   _OpenContainerRoute({
     required this.closedColor,
     required this.openColor,
-    required this.middleColor,
     required ShapeBorder? closedShape,
-    required this.openShape,
+    required ShapeBorder? openShape,
     required this.closedBuilder,
     required this.openBuilder,
     required this.hideableKey,
     required this.closedBuilderKey,
     required this.transitionDuration,
-    required this.transitionType,
     required this.curve,
-    required this.useRootNavigator,
-    required RouteSettings? routeSettings,
-  }) : _closedOpacityTween = _getClosedOpacityTween(transitionType),
-       _openOpacityTween = _getOpenOpacityTween(transitionType),
-       _shapeTween = ShapeBorderTween(begin: closedShape, end: openShape),
-       super(settings: routeSettings);
-
-  static _FlippableTweenSequence<Color?> _getColorTween({
-    required ContainerTransitionType transitionType,
-    required Color closedColor,
-    required Color openColor,
-    required Color middleColor,
-  }) {
-    switch (transitionType) {
-      case ContainerTransitionType.fade:
-        return _FlippableTweenSequence<Color?>(<TweenSequenceItem<Color?>>[
-          TweenSequenceItem<Color>(
-            tween: ConstantTween<Color>(closedColor),
-            weight: 1 / 5,
-          ),
-          TweenSequenceItem<Color?>(
-            tween: ColorTween(begin: closedColor, end: openColor),
-            weight: 1 / 5,
-          ),
-          TweenSequenceItem<Color>(
-            tween: ConstantTween<Color>(openColor),
-            weight: 3 / 5,
-          ),
-        ]);
-      case ContainerTransitionType.fadeThrough:
-        return _FlippableTweenSequence<Color?>(<TweenSequenceItem<Color?>>[
-          TweenSequenceItem<Color?>(
-            tween: ColorTween(begin: closedColor, end: middleColor),
-            weight: 1 / 5,
-          ),
-          TweenSequenceItem<Color?>(
-            tween: ColorTween(begin: middleColor, end: openColor),
-            weight: 4 / 5,
-          ),
-        ]);
-    }
-  }
-
-  static _FlippableTweenSequence<double> _getClosedOpacityTween(
-    ContainerTransitionType transitionType,
-  ) {
-    switch (transitionType) {
-      case ContainerTransitionType.fade:
-        return _FlippableTweenSequence<double>(<TweenSequenceItem<double>>[
-          TweenSequenceItem<double>(
-            tween: ConstantTween<double>(1.0),
-            weight: 1,
-          ),
-        ]);
-      case ContainerTransitionType.fadeThrough:
-        return _FlippableTweenSequence<double>(<TweenSequenceItem<double>>[
-          TweenSequenceItem<double>(
-            tween: Tween<double>(begin: 1.0, end: 0.0),
-            weight: 1 / 5,
-          ),
-          TweenSequenceItem<double>(
-            tween: ConstantTween<double>(0.0),
-            weight: 4 / 5,
-          ),
-        ]);
-    }
-  }
-
-  static _FlippableTweenSequence<double> _getOpenOpacityTween(
-    ContainerTransitionType transitionType,
-  ) {
-    switch (transitionType) {
-      case ContainerTransitionType.fade:
-        return _FlippableTweenSequence<double>(<TweenSequenceItem<double>>[
-          TweenSequenceItem<double>(
-            tween: ConstantTween<double>(0.0),
-            weight: 1 / 5,
-          ),
-          TweenSequenceItem<double>(
-            tween: Tween<double>(begin: 0.0, end: 1.0),
-            weight: 1 / 5,
-          ),
-          TweenSequenceItem<double>(
-            tween: ConstantTween<double>(1.0),
-            weight: 3 / 5,
-          ),
-        ]);
-      case ContainerTransitionType.fadeThrough:
-        return _FlippableTweenSequence<double>(<TweenSequenceItem<double>>[
-          TweenSequenceItem<double>(
-            tween: ConstantTween<double>(0.0),
-            weight: 1 / 5,
-          ),
-          TweenSequenceItem<double>(
-            tween: Tween<double>(begin: 0.0, end: 1.0),
-            weight: 4 / 5,
-          ),
-        ]);
-    }
-  }
+  }) : _shapeTween = ShapeBorderTween(begin: closedShape, end: openShape);
 
   final Color? closedColor;
   final Color? openColor;
-  final Color middleColor;
-  final ShapeBorder? openShape;
   final CloseContainerBuilder closedBuilder;
   final OpenContainerBuilder<T> openBuilder;
   final GlobalKey<_HideableState> hideableKey;
@@ -290,24 +171,49 @@ class _OpenContainerRoute<T> extends ModalRoute<T> with DragBackRouteMixin<T> {
 
   @override
   final Duration transitionDuration;
-  final ContainerTransitionType transitionType;
   final Curve curve;
+  late final Curve _reverseCurve = curve.flipped;
 
-  final bool useRootNavigator;
-
-  final _FlippableTweenSequence<double> _closedOpacityTween;
-  final _FlippableTweenSequence<double> _openOpacityTween;
   final ShapeBorderTween _shapeTween;
-  final Animatable<Color?> _scrimTween = ColorTween(
-    begin: Colors.transparent,
-    end: Colors.transparent,
-  );
-  late _FlippableTweenSequence<Color?> _colorTween;
-  final GlobalKey _openBuilderKey = GlobalKey();
-  final RectTween _rectTween = RectTween();
+
+  // The closed child stays in this route from the push until the route is
+  // dismissed or dragged back, so it moves between its tile and the route
+  // twice per cycle rather than at every status change.
+  final _closedRect = ValueNotifier<Rect?>(null);
+  final _hostsClosed = ValueNotifier<bool>(false);
+  late final Listenable _closedChanges = Listenable.merge([
+    _closedRect,
+    _hostsClosed,
+  ]);
+  late final _openOpacity = _OpenOpacity(this);
 
   AnimationStatus? _lastAnimationStatus;
   AnimationStatus? _currentAnimationStatus;
+
+  bool get _settled => animation!.isCompleted || isDragBackActive;
+
+  bool get _closing =>
+      animation!.status == AnimationStatus.reverse &&
+      !_transitionWasInterrupted;
+
+  double get _progress {
+    final t = animation!.value;
+    if (t == 0 || t == 1) {
+      return t;
+    }
+    return (_closing ? _reverseCurve : curve).transform(t);
+  }
+
+  /// How far the open page and the container color have faded in. Both
+  /// change over a fifth of the transition: the second fifth on the way in,
+  /// the fourth on the way out.
+  double get _fade {
+    if (_settled) {
+      return 1;
+    }
+    final start = _closing ? 0.6 : 0.2;
+    return clampDouble((animation!.value - start) / 0.2, 0, 1);
+  }
 
   @override
   TickerFuture didPush() {
@@ -318,10 +224,12 @@ class _OpenContainerRoute<T> extends ModalRoute<T> with DragBackRouteMixin<T> {
       _currentAnimationStatus = status;
       switch (status) {
         case AnimationStatus.dismissed:
-          _toggleHideable(hide: false);
+          _returnClosedChild(visible: true);
           break;
         case AnimationStatus.completed:
-          _toggleHideable(hide: true);
+          if (!_hostsClosed.value) {
+            hideableKey.currentState?.isVisible = false;
+          }
           break;
         case AnimationStatus.forward:
         case AnimationStatus.reverse:
@@ -346,20 +254,28 @@ class _OpenContainerRoute<T> extends ModalRoute<T> with DragBackRouteMixin<T> {
 
   @override
   void dispose() {
-    if (hideableKey.currentState?.isVisible == false) {
+    final hideable = hideableKey.currentState;
+    if (hideable != null && (!hideable.isInTree || !hideable.isVisible)) {
       SchedulerBinding.instance.addPostFrameCallback(
-        (Duration d) => _toggleHideable(hide: false),
+        (Duration d) => hideableKey.currentState
+          ?..placeholderSize = null
+          ..isVisible = true,
       );
     }
     super.dispose();
+    _closedRect.dispose();
+    _hostsClosed.dispose();
   }
 
-  void _toggleHideable({required bool hide}) {
-    if (hideableKey.currentState != null) {
-      hideableKey.currentState!
-        ..placeholderSize = null
-        ..isVisible = !hide;
+  void _returnClosedChild({required bool visible}) {
+    final hideable = hideableKey.currentState;
+    if (hideable == null) {
+      return;
     }
+    hideable
+      ..placeholderSize = null
+      ..isVisible = visible;
+    _hostsClosed.value = false;
   }
 
   void _takeMeasurements({
@@ -367,20 +283,16 @@ class _OpenContainerRoute<T> extends ModalRoute<T> with DragBackRouteMixin<T> {
     bool delayForSourceRoute = false,
   }) {
     final RenderBox navigator =
-        Navigator.of(
-              navigatorContext,
-              rootNavigator: useRootNavigator,
-            ).context.findRenderObject()!
-            as RenderBox;
-    final Size navSize = _getSize(navigator);
-    _rectTween.end = Offset.zero & navSize;
+        Navigator.of(navigatorContext).context.findRenderObject()! as RenderBox;
 
     void takeMeasurementsInSourceRoute([Duration? _]) {
       if (!navigator.attached || hideableKey.currentContext == null) {
         return;
       }
-      _rectTween.begin = _getRect(hideableKey, navigator);
-      hideableKey.currentState!.placeholderSize = _rectTween.begin!.size;
+      final rect = _getRect(hideableKey, navigator);
+      _closedRect.value = rect;
+      hideableKey.currentState!.placeholderSize = rect.size;
+      _hostsClosed.value = true;
     }
 
     if (delayForSourceRoute) {
@@ -390,11 +302,6 @@ class _OpenContainerRoute<T> extends ModalRoute<T> with DragBackRouteMixin<T> {
     } else {
       takeMeasurementsInSourceRoute();
     }
-  }
-
-  Size _getSize(RenderBox render) {
-    assert(render.hasSize);
-    return render.size;
   }
 
   Rect _getRect(GlobalKey key, RenderBox ancestor) {
@@ -409,36 +316,9 @@ class _OpenContainerRoute<T> extends ModalRoute<T> with DragBackRouteMixin<T> {
     );
   }
 
-  bool get _transitionWasInterrupted {
-    bool wasInProgress = false;
-    bool isInProgress = false;
-
-    switch (_currentAnimationStatus) {
-      case AnimationStatus.completed:
-      case AnimationStatus.dismissed:
-        isInProgress = false;
-        break;
-      case AnimationStatus.forward:
-      case AnimationStatus.reverse:
-        isInProgress = true;
-        break;
-      case null:
-        break;
-    }
-    switch (_lastAnimationStatus) {
-      case AnimationStatus.completed:
-      case AnimationStatus.dismissed:
-        wasInProgress = false;
-        break;
-      case AnimationStatus.forward:
-      case AnimationStatus.reverse:
-        wasInProgress = true;
-        break;
-      case null:
-        break;
-    }
-    return wasInProgress && isInProgress;
-  }
+  bool get _transitionWasInterrupted =>
+      (_lastAnimationStatus?.isAnimating ?? false) &&
+      (_currentAnimationStatus?.isAnimating ?? false);
 
   void closeContainer({T? returnValue}) {
     Navigator.of(subtreeContext!).pop(returnValue);
@@ -450,148 +330,59 @@ class _OpenContainerRoute<T> extends ModalRoute<T> with DragBackRouteMixin<T> {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
   ) {
-    final surface = Theme.of(context).colorScheme.surface;
-    _colorTween = _getColorTween(
-      transitionType: transitionType,
-      closedColor: closedColor ?? surface,
-      openColor: openColor ?? surface,
-      middleColor: middleColor,
+    final theme = Theme.of(context);
+    final surface = theme.colorScheme.surface;
+    final open = FadeTransition(
+      opacity: _openOpacity,
+      child: RepaintBoundary(
+        child: Material(
+          type: MaterialType.transparency,
+          child: Builder(
+            builder: (BuildContext context) {
+              return KeyboardInsetHold(
+                child: openBuilder(context, closeContainer),
+              );
+            },
+          ),
+        ),
+      ),
     );
-    return Align(
-      alignment: Alignment.topLeft,
-      child: AnimatedBuilder(
-        animation: animation,
-        builder: (BuildContext context, Widget? child) {
-          if (animation.isCompleted || isDragBackActive) {
-            return SizedBox.expand(
-              child: Material(
-                shape: openShape,
-                child: Builder(
-                  key: _openBuilderKey,
-                  builder: (BuildContext context) {
-                    return KeyboardInsetHold(
-                      child: openBuilder(context, closeContainer),
-                    );
-                  },
-                ),
-              ),
-            );
-          }
-
-          final Animation<double> curvedAnimation = CurvedAnimation(
-            parent: animation,
-            curve: curve,
-            reverseCurve: _transitionWasInterrupted ? null : curve.flipped,
-          );
-          TweenSequence<Color?>? colorTween;
-          TweenSequence<double>? closedOpacityTween, openOpacityTween;
-          switch (animation.status) {
-            case AnimationStatus.dismissed:
-            case AnimationStatus.forward:
-              closedOpacityTween = _closedOpacityTween;
-              openOpacityTween = _openOpacityTween;
-              colorTween = _colorTween;
-              break;
-            case AnimationStatus.reverse:
-              if (_transitionWasInterrupted) {
-                closedOpacityTween = _closedOpacityTween;
-                openOpacityTween = _openOpacityTween;
-                colorTween = _colorTween;
-                break;
-              }
-              closedOpacityTween = _closedOpacityTween.flipped;
-              openOpacityTween = _openOpacityTween.flipped;
-              colorTween = _colorTween.flipped;
-              break;
-            case AnimationStatus.completed:
-              assert(false); // Unreachable.
-              break;
-          }
-          assert(colorTween != null);
-          assert(closedOpacityTween != null);
-          assert(openOpacityTween != null);
-
-          final Rect rect = _rectTween.evaluate(curvedAnimation)!;
-          return SizedBox.expand(
-            child: Container(
-              color: _scrimTween.evaluate(curvedAnimation),
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: Transform.translate(
-                  offset: Offset(rect.left, rect.top),
-                  child: SizedBox(
-                    width: rect.width,
-                    height: rect.height,
-                    child: Material(
-                      clipBehavior: Clip.antiAlias,
-                      animationDuration: Duration.zero,
-                      color: colorTween!.evaluate(animation),
-                      shape: _shapeTween.evaluate(curvedAnimation),
-                      child: Stack(
-                        fit: StackFit.passthrough,
-                        children: <Widget>[
-                          // Closed child fading out.
-                          FittedBox(
-                            fit: BoxFit.fitWidth,
-                            alignment: Alignment.topLeft,
-                            child: SizedBox(
-                              width: _rectTween.begin!.width,
-                              height: _rectTween.begin!.height,
-                              child:
-                                  (hideableKey.currentState?.isInTree ?? false)
-                                  ? null
-                                  : FadeTransition(
-                                      opacity: closedOpacityTween!.animate(
-                                        animation,
-                                      ),
-                                      child: Builder(
-                                        key: closedBuilderKey,
-                                        builder: (BuildContext context) {
-                                          // Use dummy "open container" callback
-                                          // since we are in the process of opening.
-                                          return closedBuilder(context, () {});
-                                        },
-                                      ),
-                                    ),
-                            ),
-                          ),
-                          // Open child fading in.
-                          OverflowBox(
-                            maxWidth: _rectTween.end!.width,
-                            maxHeight: _rectTween.end!.height,
-                            alignment: Alignment.topLeft,
-                            child: FadeTransition(
-                              opacity: openOpacityTween!.animate(animation),
-                              child: RepaintBoundary(
-                                child: Builder(
-                                  key: _openBuilderKey,
-                                  builder: (BuildContext context) {
-                                    return KeyboardInsetHold(
-                                      child: openBuilder(
-                                        context,
-                                        closeContainer,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+    return ListenableBuilder(
+      listenable: _closedChanges,
+      builder: (BuildContext context, Widget? open) {
+        return _ContainerTransition(
+          route: this,
+          closedColor: closedColor ?? surface,
+          openColor: openColor ?? surface,
+          settledColor: theme.canvasColor,
+          closed: _hostsClosed.value
+              ? IgnorePointer(
+                  child: ExcludeFocus(
+                    child: ExcludeSemantics(
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: Builder(
+                          key: closedBuilderKey,
+                          builder: (BuildContext context) {
+                            // Use dummy "open container" callback
+                            // since we are in the process of opening.
+                            return closedBuilder(context, () {});
+                          },
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
+                )
+              : null,
+          open: open!,
+        );
+      },
+      child: open,
     );
   }
 
   @override
-  void didStartDragBack() => _toggleHideable(hide: false);
+  void didStartDragBack() => _returnClosedChild(visible: true);
 
   @override
   Widget buildTransitions(
@@ -600,9 +391,7 @@ class _OpenContainerRoute<T> extends ModalRoute<T> with DragBackRouteMixin<T> {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    return dragBackDetector(
-      isDragBackActive ? dragBackSlide(context, animation, child) : child,
-    );
+    return dragBackDetector(dragBackSlide(context, animation, child));
   }
 
   @override
@@ -621,25 +410,304 @@ class _OpenContainerRoute<T> extends ModalRoute<T> with DragBackRouteMixin<T> {
   String? get barrierLabel => null;
 }
 
-class _FlippableTweenSequence<T> extends TweenSequence<T> {
-  _FlippableTweenSequence(this._items) : super(_items);
+class _OpenOpacity extends Animation<double>
+    with AnimationWithParentMixin<double> {
+  _OpenOpacity(this.route);
 
-  final List<TweenSequenceItem<T>> _items;
-  _FlippableTweenSequence<T>? _flipped;
+  final _OpenContainerRoute<dynamic> route;
 
-  _FlippableTweenSequence<T>? get flipped {
-    if (_flipped == null) {
-      final List<TweenSequenceItem<T>> newItems = <TweenSequenceItem<T>>[];
-      for (int i = 0; i < _items.length; i++) {
-        newItems.add(
-          TweenSequenceItem<T>(
-            tween: _items[i].tween,
-            weight: _items[_items.length - 1 - i].weight,
-          ),
-        );
-      }
-      _flipped = _FlippableTweenSequence<T>(newItems);
+  @override
+  Animation<double> get parent => route.animation!;
+
+  @override
+  double get value => route._fade;
+}
+
+enum _Slot { closed, open }
+
+/// Grows the container from the closed child's rect to the whole route by
+/// painting alone: the open page is laid out once at its final size and
+/// moved under a clip, and the closed child is scaled to the rect's width.
+class _ContainerTransition
+    extends SlottedMultiChildRenderObjectWidget<_Slot, RenderBox> {
+  const _ContainerTransition({
+    required this.route,
+    required this.closedColor,
+    required this.openColor,
+    required this.settledColor,
+    required this.closed,
+    required this.open,
+  });
+
+  final _OpenContainerRoute<dynamic> route;
+  final Color closedColor;
+  final Color openColor;
+  final Color settledColor;
+  final Widget? closed;
+  final Widget open;
+
+  @override
+  Iterable<_Slot> get slots => _Slot.values;
+
+  @override
+  Widget? childForSlot(_Slot slot) => switch (slot) {
+    _Slot.closed => closed,
+    _Slot.open => open,
+  };
+
+  @override
+  _RenderContainerTransition createRenderObject(BuildContext context) {
+    return _RenderContainerTransition(
+      route: route,
+      closedColor: closedColor,
+      openColor: openColor,
+      settledColor: settledColor,
+    );
+  }
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _RenderContainerTransition renderObject,
+  ) {
+    renderObject
+      ..route = route
+      ..closedColor = closedColor
+      ..openColor = openColor
+      ..settledColor = settledColor
+      ..markNeedsLayout();
+  }
+}
+
+class _RenderContainerTransition extends RenderBox
+    with SlottedContainerRenderObjectMixin<_Slot, RenderBox> {
+  _RenderContainerTransition({
+    required _OpenContainerRoute<dynamic> route,
+    required Color closedColor,
+    required Color openColor,
+    required Color settledColor,
+  }) : _route = route,
+       _closedColor = closedColor,
+       _openColor = openColor,
+       _settledColor = settledColor;
+
+  _OpenContainerRoute<dynamic> get route => _route;
+  _OpenContainerRoute<dynamic> _route;
+  set route(_OpenContainerRoute<dynamic> value) {
+    if (identical(value, _route)) {
+      return;
     }
-    return _flipped;
+    if (attached) {
+      _unlisten();
+    }
+    _route = value;
+    if (attached) {
+      _listen();
+    }
+    markNeedsPaint();
+  }
+
+  Color _closedColor;
+  set closedColor(Color value) {
+    if (value == _closedColor) {
+      return;
+    }
+    _closedColor = value;
+    markNeedsPaint();
+  }
+
+  Color _openColor;
+  set openColor(Color value) {
+    if (value == _openColor) {
+      return;
+    }
+    _openColor = value;
+    markNeedsPaint();
+  }
+
+  Color _settledColor;
+  set settledColor(Color value) {
+    if (value == _settledColor) {
+      return;
+    }
+    _settledColor = value;
+    markNeedsPaint();
+  }
+
+  RenderBox? get _closed => childForSlot(_Slot.closed);
+  RenderBox? get _open => childForSlot(_Slot.open);
+
+  final _clipLayer = LayerHandle<ContainerLayer>();
+  final _closedTransformLayer = LayerHandle<TransformLayer>();
+
+  void _handleStatus(AnimationStatus _) => markNeedsPaint();
+
+  void _listen() {
+    _route.animation!
+      ..addListener(markNeedsPaint)
+      ..addStatusListener(_handleStatus);
+  }
+
+  void _unlisten() {
+    _route.animation!
+      ..removeListener(markNeedsPaint)
+      ..removeStatusListener(_handleStatus);
+  }
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    _listen();
+  }
+
+  @override
+  void detach() {
+    _unlisten();
+    super.detach();
+  }
+
+  @override
+  void dispose() {
+    _clipLayer.layer = null;
+    _closedTransformLayer.layer = null;
+    super.dispose();
+  }
+
+  Rect? get _closedRect => _route._closedRect.value;
+
+  /// The container's rect, or null once the route has settled.
+  Rect? get _rect {
+    if (_route._settled) {
+      return null;
+    }
+    final full = Offset.zero & size;
+    return Rect.lerp(_closedRect ?? full, full, _route._progress)!;
+  }
+
+  Matrix4? _closedTransform(Rect rect) {
+    final closedRect = _closedRect;
+    if (closedRect == null || closedRect.width == 0) {
+      return null;
+    }
+    final scale = rect.width / closedRect.width;
+    return Matrix4.translationValues(rect.left, rect.top, 0)
+      ..scaleByDouble(scale, scale, 1, 1);
+  }
+
+  @override
+  Size computeDryLayout(covariant BoxConstraints constraints) {
+    return constraints.biggest;
+  }
+
+  @override
+  void performLayout() {
+    size = constraints.biggest;
+    _closed?.layout(BoxConstraints.tight(_closedRect?.size ?? Size.zero));
+    _open?.layout(BoxConstraints.tight(size));
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    final rect = _rect;
+    if (rect == null) {
+      _clipLayer.layer = null;
+      _closedTransformLayer.layer = null;
+      context.canvas.drawRect(offset & size, Paint()..color = _settledColor);
+      context.paintChild(_open!, offset);
+      return;
+    }
+    final path = _route._shapeTween.lerp(_route._progress)?.getOuterPath(rect);
+    final color = Paint()
+      ..color = Color.lerp(_closedColor, _openColor, _route._fade)!;
+    if (path == null) {
+      context.canvas.drawRect(rect.shift(offset), color);
+    } else {
+      context.canvas.drawPath(path.shift(offset), color);
+    }
+    void paintContents(PaintingContext context, Offset offset) {
+      final closed = _closed;
+      final transform = _closedTransform(rect);
+      if (closed != null && transform != null) {
+        _closedTransformLayer.layer = context.pushTransform(
+          closed.needsCompositing,
+          offset,
+          transform,
+          (context, offset) => context.paintChild(closed, offset),
+          oldLayer: _closedTransformLayer.layer,
+        );
+      } else {
+        _closedTransformLayer.layer = null;
+      }
+      context.paintChild(_open!, offset + rect.topLeft);
+    }
+
+    final oldLayer = _clipLayer.layer;
+    _clipLayer.layer = path == null
+        ? context.pushClipRect(
+            needsCompositing,
+            offset,
+            rect,
+            paintContents,
+            clipBehavior: Clip.antiAlias,
+            oldLayer: oldLayer is ClipRectLayer ? oldLayer : null,
+          )
+        : context.pushClipPath(
+            needsCompositing,
+            offset,
+            rect,
+            path,
+            paintContents,
+            clipBehavior: Clip.antiAlias,
+            oldLayer: oldLayer is ClipPathLayer ? oldLayer : null,
+          );
+  }
+
+  @override
+  void applyPaintTransform(RenderBox child, Matrix4 transform) {
+    final rect = _rect;
+    if (rect == null) {
+      return;
+    }
+    if (identical(child, _closed)) {
+      final closedTransform = _closedTransform(rect);
+      if (closedTransform != null) {
+        transform.multiply(closedTransform);
+      }
+      return;
+    }
+    transform.translateByDouble(rect.left, rect.top, 0, 1);
+  }
+
+  @override
+  bool hitTestSelf(Offset position) => true;
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    final rect = _rect;
+    if (rect != null) {
+      final shape = _route._shapeTween.lerp(_route._progress);
+      final inside = shape == null
+          ? rect.contains(position)
+          : shape.getOuterPath(rect).contains(position);
+      if (!inside) {
+        return false;
+      }
+    }
+    return super.hitTest(result, position: position);
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
+    if (_route._fade == 0) {
+      return false;
+    }
+    final origin = _rect?.topLeft ?? Offset.zero;
+    return result.addWithPaintOffset(
+      offset: origin,
+      position: position,
+      hitTest: (BoxHitTestResult result, Offset transformed) {
+        return _open!.hitTest(result, position: transformed);
+      },
+    );
   }
 }

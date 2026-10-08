@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/widgets/scroll.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -79,6 +80,10 @@ class NextClampingScrollPhysics extends ClampingScrollPhysics {
     return NextClampingScrollPhysics(parent: buildParent(ancestor));
   }
 
+  // iOS momentum is sized for its friction fling; a clamping one multiplies it.
+  @override
+  double carriedMomentum(double existingVelocity) => 0;
+
   @override
   Simulation? createBallisticSimulation(
     ScrollMetrics position,
@@ -117,6 +122,54 @@ class NextClampingScrollPhysics extends ClampingScrollPhysics {
       tolerance: tolerance,
     );
   }
+}
+
+class FollowEndScrollPhysics extends NextClampingScrollPhysics {
+  const FollowEndScrollPhysics({required this.isFollowing, super.parent});
+
+  final ValueGetter<bool> isFollowing;
+
+  static bool isAtEnd(ScrollMetrics metrics) =>
+      metrics.pixels >= metrics.maxScrollExtent - precisionErrorTolerance;
+
+  @override
+  FollowEndScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return FollowEndScrollPhysics(
+      isFollowing: isFollowing,
+      parent: buildParent(ancestor),
+    );
+  }
+
+  @override
+  double adjustPositionForNewDimensions({
+    required ScrollMetrics oldPosition,
+    required ScrollMetrics newPosition,
+    required bool isScrolling,
+    required double velocity,
+  }) {
+    if (isFollowing() && isAtEnd(oldPosition)) {
+      return newPosition.maxScrollExtent;
+    }
+    return super.adjustPositionForNewDimensions(
+      oldPosition: oldPosition,
+      newPosition: newPosition,
+      isScrolling: isScrolling,
+      velocity: velocity,
+    );
+  }
+}
+
+double zeroDividerExtentEstimation(int? index, double crossAxisExtent) {
+  return index != null && index.isEven ? 100 : 0;
+}
+
+mixin ScrubbableScrollPosition on ScrollPosition {
+  bool isScrubbing = false;
+}
+
+/// Drags move the sheet until it opens fully, so a scrollbar hides till then.
+mixin SheetScrollController on ScrollController {
+  ValueListenable<bool> get sheetOpen;
 }
 
 const _stopEpsilon = 1e-3;

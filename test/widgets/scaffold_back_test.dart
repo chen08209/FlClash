@@ -385,7 +385,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     final deleteButton = find.ancestor(
-      of: find.byGlyph(AppGlyphs.close).first,
+      of: find.byGlyph(AppGlyphs.removeCircle).first,
       matching: find.byType(IconButton),
     );
     tester.widget<IconButton>(deleteButton).onPressed!();

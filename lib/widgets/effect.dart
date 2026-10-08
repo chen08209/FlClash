@@ -8,12 +8,14 @@ import 'package:material_ui/material_ui.dart';
 class EffectGestureDetector extends StatefulWidget {
   final Widget child;
   final GestureLongPressCallback? onLongPress;
+  final GestureTapCallback? onSecondaryTap;
   final GestureTapCallback? onTap;
 
   const EffectGestureDetector({
     super.key,
     required this.child,
     this.onLongPress,
+    this.onSecondaryTap,
     this.onTap,
   });
 
@@ -52,6 +54,7 @@ class _EffectGestureDetectorState extends State<EffectGestureDetector>
           });
         },
         onTap: widget.onTap,
+        onSecondaryTap: widget.onSecondaryTap,
         onLongPressEnd: (_) {
           setState(() {
             _scale = 1;

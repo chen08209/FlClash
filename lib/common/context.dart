@@ -90,6 +90,26 @@ extension BuildContextExtension on BuildContext {
 
   TextTheme get textTheme => Theme.of(this).textTheme;
 
+  /// Tighter than Material's 24 dp line so a row with a subtitle stays compact.
+  TextStyle? get listTitleStyle => textTheme.bodyLarge?.copyWith(
+    height: 22 / 16,
+    color: colorScheme.onSurface,
+  );
+
+  TextStyle? get listSubtitleStyle => textTheme.bodyMedium?.copyWith(
+    height: 20 / 14,
+    color: colorScheme.onSurfaceVariant,
+  );
+
+  TextStyle? get listCaptionStyle => textTheme.bodySmall
+      ?.adjustSize(1)
+      .copyWith(color: colorScheme.onSurfaceVariant);
+
+  TextStyle? get sectionHeaderStyle => textTheme.labelLarge?.copyWith(
+    fontWeight: FontWeight.w600,
+    color: colorScheme.onSurfaceVariant.opacity80,
+  );
+
   AppLocalizations get appLocalizations => AppLocalizations.of(this);
 
   T? findLastStateOfType<T extends State>() {

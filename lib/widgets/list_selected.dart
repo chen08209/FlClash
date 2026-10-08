@@ -35,8 +35,9 @@ class CommonSelectedListItem extends StatelessWidget {
             onPressed();
           },
           child: ListTile(
-            minTileHeight: 32 + globalState.measure.bodyMediumHeight,
-            minVerticalPadding: 12,
+            minTileHeight: listRowMinHeight,
+            minVerticalPadding: listRowVerticalPadding,
+            titleTextStyle: context.listTitleStyle,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             trailing: SizedBox(
               width: 24,
@@ -57,7 +58,7 @@ class CommonSelectedListItem extends StatelessWidget {
   }
 }
 
-class DecorationListItem extends StatelessWidget {
+class DecorationListItem extends StatefulWidget {
   final Widget title;
   final Widget? subtitle;
   final Widget? leading;
@@ -84,9 +85,24 @@ class DecorationListItem extends StatelessWidget {
   });
 
   @override
+  State<DecorationListItem> createState() => _DecorationListItemState();
+}
+
+class _DecorationListItemState extends State<DecorationListItem> {
+  final _states = WidgetStatesController();
+
+  @override
+  void dispose() {
+    _states.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final proxyDecorator =
         ProxyDecoratorProvider.of(context)?.isProxyDecorator ?? false;
+    final sortable = SortableItem.maybeOf(context);
+    final sorting = sortable?.sorting ?? false;
     final position = ItemPositionProvider.of(context)?.position;
     final isStart = [
       ItemPosition.start,
@@ -100,42 +116,47 @@ class DecorationListItem extends StatelessWidget {
       top: isStart ? AppCorner.xl : AppCorner.none,
       bottom: isEnd ? AppCorner.xl : AppCorner.none,
     );
-    return CommonCard(
-      shape: proxyDecorator == true
-          ? LinearBorder.none
-          : AppShape.of(borderRadius),
-      isError: invalid,
-      isSelected: isSelected,
-      padding: EdgeInsets.zero,
-      type: CommonCardType.filled,
-      onPressed: proxyDecorator ? null : onPressed,
-      child: LayoutBuilder(
-        builder: (_, constraints) {
-          final isInfinite = constraints.maxHeight >= double.infinity;
-          final tile = ListTile(
-            leading: leading,
-            contentPadding:
-                contentPadding ?? const EdgeInsets.only(right: 16, left: 16),
-            title: title,
-            subtitle: subtitle,
-            minVerticalPadding: minVerticalPadding ?? 6,
-            minTileHeight: 54,
-            horizontalTitleGap: horizontalTitleGap,
-            trailing: trailing,
-          );
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Flexible(
-                fit: isInfinite ? FlexFit.loose : FlexFit.tight,
-                child: tile,
-              ),
-              if (!invalid && proxyDecorator != true && !isEnd)
-                const Divider(height: 0, indent: 14, endIndent: 14),
-            ],
-          );
-        },
+    return _ListRowSeparator(
+      separated: !proxyDecorator && !isEnd,
+      emphasized: (widget.isSelected ?? false) || widget.invalid,
+      states: _states,
+      endIndent: 14,
+      child: CommonCard(
+        shape: proxyDecorator ? LinearBorder.none : AppShape.of(borderRadius),
+        isError: widget.invalid,
+        isSelected: widget.isSelected,
+        padding: EdgeInsets.zero,
+        type: CommonCardType.filled,
+        statesController: _states,
+        inert: sorting,
+        onPressed: proxyDecorator ? null : widget.onPressed,
+        child: LayoutBuilder(
+          builder: (_, constraints) {
+            final tile = ListTile(
+              leading: widget.leading == null
+                  ? null
+                  : IgnorePointer(ignoring: sorting, child: widget.leading),
+              contentPadding:
+                  widget.contentPadding ??
+                  const EdgeInsets.only(right: 16, left: 16),
+              title: _ListRowSeparatorStart(child: widget.title),
+              subtitle: widget.subtitle,
+              titleTextStyle: context.listTitleStyle,
+              subtitleTextStyle: context.listSubtitleStyle,
+              minVerticalPadding:
+                  widget.minVerticalPadding ?? listRowVerticalPadding,
+              minTileHeight: listRowMinHeight,
+              horizontalTitleGap: widget.horizontalTitleGap,
+              trailing: sortable == null
+                  ? widget.trailing
+                  : SortableTrailing(item: sortable, child: widget.trailing),
+            );
+            if (constraints.maxHeight >= double.infinity) {
+              return tile;
+            }
+            return SizedBox(height: constraints.maxHeight, child: tile);
+          },
+        ),
       ),
     );
   }
