@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"net/http"
@@ -87,6 +87,21 @@ func TestTikTokRegionReadsTheAppContext(t *testing.T) {
 	}
 	if got := tikTokRegion(`{"webapp.app-context":{"region":"zh-Hant-TW"}}`); got != "" {
 		t.Errorf("region = %q, want a locale left unread rather than its language", got)
+	}
+}
+
+func TestBilibiliStatusReadsTheLeadingCode(t *testing.T) {
+	cases := map[string]string{
+		`{"code":0,"message":"success","result":{"code":0,"accept_format":"hdf`: serviceAvailable,
+		`{"code":-10403,"message":"region locked"}`:                             serviceUnsupportedRegion,
+		`{"code":-412,"message":"request blocked"}`:                             serviceFailed,
+		`{"message":"success","result":{"code":0}}`:                             serviceFailed,
+		"": serviceFailed,
+	}
+	for body, want := range cases {
+		if got := bilibiliStatus(body); got != want {
+			t.Errorf("bilibiliStatus(%q) = %q, want %q", body, got, want)
+		}
 	}
 }
 

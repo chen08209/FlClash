@@ -1,27 +1,10 @@
 import 'error.dart';
 
 class Target {
-  const Target({required this.goos, required this.goarch, this.abi});
+  const Target({required this.goos, required this.goarch});
 
   final String goos;
   final String goarch;
-  final String? abi;
-
-  static const androidArm = Target(
-    goos: 'android',
-    goarch: 'arm',
-    abi: 'armeabi-v7a',
-  );
-  static const androidArm64 = Target(
-    goos: 'android',
-    goarch: 'arm64',
-    abi: 'arm64-v8a',
-  );
-  static const androidAmd64 = Target(
-    goos: 'android',
-    goarch: 'amd64',
-    abi: 'x86_64',
-  );
 
   static const macosArm64 = Target(goos: 'darwin', goarch: 'arm64');
   static const macosAmd64 = Target(goos: 'darwin', goarch: 'amd64');
@@ -33,9 +16,6 @@ class Target {
   static const windowsArm64 = Target(goos: 'windows', goarch: 'arm64');
 
   static const all = [
-    androidArm,
-    androidArm64,
-    androidAmd64,
     macosArm64,
     macosAmd64,
     linuxArm64,
@@ -54,20 +34,11 @@ class Target {
     throw BuildException('No $platform Core target for GOARCH $goarch');
   }
 
-  bool get isLib => abi != null;
-
   bool get hasHelper => goos == 'linux' || goos == 'windows';
 
   String get executableExtension => goos == 'windows' ? '.exe' : '';
 
   String get platformDir => goos == 'darwin' ? 'macos' : goos;
-
-  String get ndkTriple => switch (abi) {
-    'armeabi-v7a' => 'armv7a-linux-androideabi',
-    'arm64-v8a' => 'aarch64-linux-android',
-    'x86_64' => 'x86_64-linux-android',
-    _ => throw BuildException('Not an Android target: $this'),
-  };
 
   String get rustTriple {
     final arch = switch (goarch) {
@@ -83,5 +54,5 @@ class Target {
   }
 
   @override
-  String toString() => '$goos/$goarch${abi != null ? ' ($abi)' : ''}';
+  String toString() => '$goos/$goarch';
 }

@@ -35,7 +35,6 @@ void main() {
     required Architecture architecture,
     bool codeAssets = true,
     Uri? compiler,
-    int ndkApi = 23,
     Directory? package,
     Map<String, Object?> userDefines = const {},
   }) {
@@ -66,9 +65,7 @@ void main() {
                 archiver: compiler.resolve('llvm-ar'),
                 linker: compiler.resolve('ld.lld'),
               ),
-        android: os == OS.android
-            ? AndroidCodeConfig(targetNdkApi: ndkApi)
-            : null,
+        android: os == OS.android ? AndroidCodeConfig(targetNdkApi: 23) : null,
       ).setupBuildInput(builder);
     }
     return builder.build();
@@ -104,7 +101,6 @@ void main() {
       expect(request.rootDir, repository.path);
       expect(request.harnessDir, p.join(packageRoot.path, 'setup_hooks'));
       expect(request.target, Target.linuxAmd64);
-      expect(request.androidToolchain, isNull);
     });
 
     test('skips the macOS slice the host does not run', () {
@@ -126,30 +122,18 @@ void main() {
       );
     });
 
-    test('derives the Android compiler from the NDK clang Flutter passes', () {
+    test('leaves Android to the :core Gradle module', () {
       final bin = p.join(repository.path, 'ndk', 'prebuilt', 'host', 'bin');
-      final request = const CoreBuilder().requestFor(
-        buildInput(
-          os: OS.android,
-          architecture: Architecture.arm64,
-          compiler: Uri.file(p.join(bin, 'clang')),
-          ndkApi: 23,
-        ),
-      )!;
 
-      expect(request.target, Target.androidArm64);
       expect(
-        request.androidToolchain!.clangFor(Target.androidArm64),
-        p.join(bin, 'aarch64-linux-android23-clang'),
-      );
-    });
-
-    test('fails when Flutter passes no Android compiler', () {
-      expect(
-        () => const CoreBuilder().requestFor(
-          buildInput(os: OS.android, architecture: Architecture.arm64),
+        const CoreBuilder().requestFor(
+          buildInput(
+            os: OS.android,
+            architecture: Architecture.arm64,
+            compiler: Uri.file(p.join(bin, 'clang')),
+          ),
         ),
-        throwsA(isA<InfraError>()),
+        isNull,
       );
     });
 

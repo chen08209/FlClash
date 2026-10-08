@@ -10,6 +10,7 @@ abstract class SetupParams with _$SetupParams {
   const factory SetupParams({
     @JsonKey(name: 'selected-map') required Map<String, String> selectedMap,
     @JsonKey(name: 'test-url') required String testUrl,
+    @Default(false) @JsonKey(name: 'skip-cert-verify') bool skipCertVerify,
   }) = _SetupParams;
 
   factory SetupParams.fromJson(Map<String, dynamic> json) =>
@@ -36,6 +37,7 @@ abstract class UpdateParams with _$UpdateParams {
     @Default(false) @JsonKey(name: 'geo-auto-update') bool geoAutoUpdate,
     @Default(24) @JsonKey(name: 'geo-update-interval') int geoUpdateInterval,
     @Default({}) @JsonKey(name: 'geox-url') Map<String, String> geoXUrl,
+    @Default(false) @JsonKey(name: 'skip-cert-verify') bool skipCertVerify,
   }) = _UpdateParams;
 
   factory UpdateParams.fromJson(Map<String, dynamic> json) =>
@@ -55,10 +57,45 @@ abstract class VpnOptions with _$VpnOptions {
     required List<String> bypassDomain,
     required String stack,
     @Default([]) List<String> routeAddress,
+    @Default(0) int mtu,
+    @Default('') String congestionController,
   }) = _VpnOptions;
 
   factory VpnOptions.fromJson(Map<String, Object?> json) =>
       _$VpnOptionsFromJson(json);
+}
+
+extension VpnOptionsExt on VpnOptions {
+  /// Only what `ServiceController.start` and `VpnService.handleStart` read.
+  VpnOptions get effective {
+    if (!enable) {
+      return const VpnOptions(
+        enable: false,
+        port: 0,
+        ipv6: false,
+        dnsHijacking: false,
+        accessControlProps: AccessControlProps(),
+        allowBypass: false,
+        systemProxy: false,
+        bypassDomain: [],
+        stack: '',
+      );
+    }
+    final accessControl = accessControlProps;
+    final accepts = accessControl.mode == AccessControlMode.acceptSelected;
+    return copyWith(
+      port: systemProxy ? port : 0,
+      bypassDomain: systemProxy ? bypassDomain : const [],
+      accessControlProps: accessControl.enable
+          ? AccessControlProps(
+              enable: true,
+              mode: accessControl.mode,
+              acceptList: accepts ? accessControl.acceptList : const [],
+              rejectList: accepts ? const [] : accessControl.rejectList,
+            )
+          : const AccessControlProps(),
+    );
+  }
 }
 
 @freezed

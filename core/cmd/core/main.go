@@ -1,8 +1,9 @@
-//go:build !(android && cgo)
+//go:build !android
 
 package main
 
 import (
+	"core"
 	"fmt"
 	"os"
 )
@@ -13,6 +14,6 @@ func main() {
 		fmt.Fprintln(os.Stderr, "Arguments error")
 		os.Exit(1)
 	}
-	go exitOnTermination()
-	startServer(args[1])
+	go core.ExitOnTermination()
+	core.StartServer(args[1])
 }

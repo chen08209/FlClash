@@ -10,10 +10,12 @@ void main() {
       final json = {
         'selected-map': {'G1': 'P1'},
         'test-url': 'http://test.com',
+        'skip-cert-verify': true,
       };
       final params = SetupParams.fromJson(json);
       expect(params.selectedMap, {'G1': 'P1'});
       expect(params.testUrl, 'http://test.com');
+      expect(params.skipCertVerify, isTrue);
     });
 
     test('toJson uses snake-case keys', () {
@@ -24,6 +26,7 @@ void main() {
       final json = params.toJson();
       expect(json['selected-map'], {'G1': 'P1'});
       expect(json['test-url'], 'http://t.com');
+      expect(json['skip-cert-verify'], isFalse);
     });
   });
 
@@ -58,6 +61,100 @@ void main() {
       final restored = jsonDecode(jsonEncode(params.toJson()));
       expect(restored['home-dir'], '/data/clash');
       expect(restored['version'], 3);
+    });
+  });
+
+  group('VpnOptions.effective', () {
+    const options = VpnOptions(
+      enable: true,
+      port: 7890,
+      ipv6: false,
+      dnsHijacking: false,
+      accessControlProps: AccessControlProps(
+        enable: true,
+        mode: AccessControlMode.acceptSelected,
+        acceptList: ['a.app'],
+        rejectList: ['b.app'],
+      ),
+      allowBypass: true,
+      systemProxy: true,
+      bypassDomain: ['localhost'],
+      stack: 'mixed',
+      routeAddress: ['0.0.0.0/0'],
+      mtu: 9000,
+    );
+
+    test('tells apart every option the tunnel is built from', () {
+      final changes = [
+        options.copyWith(port: 7891),
+        options.copyWith(ipv6: true),
+        options.copyWith(dnsHijacking: true),
+        options.copyWith(allowBypass: false),
+        options.copyWith(systemProxy: false),
+        options.copyWith(bypassDomain: const ['example.com']),
+        options.copyWith(stack: 'gvisor'),
+        options.copyWith(routeAddress: const ['10.0.0.0/8']),
+        options.copyWith(mtu: 1500),
+        options.copyWith(congestionController: 'bbr'),
+        options.copyWith(
+          accessControlProps: options.accessControlProps.copyWith(
+            acceptList: const ['c.app'],
+          ),
+        ),
+        options.copyWith(enable: false),
+      ];
+
+      for (final changed in changes) {
+        expect(changed.effective, isNot(options.effective));
+      }
+    });
+
+    test('ignores how the app list is shown and the list not applied', () {
+      final changed = options.copyWith(
+        accessControlProps: options.accessControlProps.copyWith(
+          rejectList: const ['c.app'],
+          sort: AccessSortType.name,
+          isFilterSystemApp: false,
+        ),
+      );
+
+      expect(changed.effective, options.effective);
+    });
+
+    test('ignores the proxy port and bypass list without a system proxy', () {
+      final withoutProxy = options.copyWith(systemProxy: false);
+
+      expect(
+        withoutProxy.copyWith(port: 7891, bypassDomain: const []).effective,
+        withoutProxy.effective,
+      );
+    });
+
+    test('ignores the access lists while access control is off', () {
+      final open = options.copyWith(
+        accessControlProps: options.accessControlProps.copyWith(enable: false),
+      );
+
+      expect(
+        open
+            .copyWith(
+              accessControlProps: open.accessControlProps.copyWith(
+                mode: AccessControlMode.rejectSelected,
+                acceptList: const [],
+              ),
+            )
+            .effective,
+        open.effective,
+      );
+    });
+
+    test('a proxy-only run reads none of the tunnel options', () {
+      final proxyOnly = options.copyWith(enable: false);
+
+      expect(
+        proxyOnly.copyWith(ipv6: true, stack: 'gvisor', mtu: 1500).effective,
+        proxyOnly.effective,
+      );
     });
   });
 

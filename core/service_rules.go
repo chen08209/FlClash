@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"encoding/json"
@@ -28,9 +28,13 @@ var (
 	disneyCountryPattern   = regexp.MustCompile(`"countryCode"\s*:\s*"([^"]+)"`)
 	disneySupportedPattern = regexp.MustCompile(`"inSupportedLocation"\s*:\s*(false|true)`)
 	spotifyCountryPattern  = regexp.MustCompile(`"countryCode"\s*:\s*"([^"]+)"`)
+	discordCountryPattern  = regexp.MustCompile(`"country_code"\s*:\s*"([^"]+)"`)
 	geminiRegionMarker     = `,2,1,200,"`
 	claudeBlockedRegions   = []string{"AF", "BY", "CN", "CU", "HK", "IR", "KP", "MO", "RU", "SY"}
 	geminiBlockedRegions   = []string{"CHN", "RUS", "BLR", "CUB", "IRN", "PRK", "SYR", "HKG", "MAC"}
+
+	// A playable episode runs past the small body cap; only its leading code is read.
+	bilibiliCodePattern = regexp.MustCompile(`^\s*\{\s*"code"\s*:\s*(-?\d+)`)
 )
 
 func firstSubmatch(pattern *regexp.Regexp, body string) string {
@@ -222,26 +226,50 @@ func tikTokRegion(body string) string {
 }
 
 func checkBilibili(env serviceEnv) ServiceCheckItem {
-	const url = "https://api.bilibili.com/pgc/player/web/playurl?avid=18281381&cid=29892777&qn=0&type=&otype=json&ep_id=183799&fourk=1&fnver=0&fnval=16&module=bangumi"
+	const mainland = "https://api.bilibili.com/pgc/player/web/playurl?avid=82846771&qn=0&type=&otype=json&ep_id=307247&fourk=1&fnver=0&fnval=16&module=bangumi"
+	const hongKongMacauTaiwan = "https://api.bilibili.com/pgc/player/web/playurl?avid=18281381&cid=29892777&qn=0&type=&otype=json&ep_id=183799&fourk=1&fnver=0&fnval=16&module=bangumi"
+	item := bilibiliEpisode(env, mainland)
+	switch item.Status {
+	case serviceAvailable:
+		item.Region = "CN"
+		return item
+	case serviceUnsupportedRegion:
+		return bilibiliEpisode(env, hongKongMacauTaiwan)
+	default:
+		return item
+	}
+}
+
+func bilibiliEpisode(env serviceEnv, url string) ServiceCheckItem {
 	result := env.get(url, serviceSmallMaxBody)
 	item := itemFrom(result)
 	if !answered(item, result) {
 		return item
 	}
-	var payload struct {
-		Code int `json:"code"`
+	item.Status = bilibiliStatus(result.Body)
+	return item
+}
+
+func bilibiliStatus(body string) string {
+	switch firstSubmatch(bilibiliCodePattern, body) {
+	case "0":
+		return serviceAvailable
+	case "-10403":
+		return serviceUnsupportedRegion
+	default:
+		return serviceFailed
 	}
-	if err := json.Unmarshal([]byte(result.Body), &payload); err != nil {
-		item.Status = serviceFailed
+}
+
+func checkDiscord(env serviceEnv) ServiceCheckItem {
+	result := env.get("https://discord.com/api/v9/auth/location-metadata", serviceSmallMaxBody)
+	item := itemFrom(result)
+	if !answered(item, result) {
 		return item
 	}
-	switch payload.Code {
-	case 0:
-		item.Status = serviceAvailable
-	case -10403:
-		item.Status = serviceUnsupportedRegion
-	default:
-		item.Status = serviceFailed
+	item.Status = statusFromCode(result.StatusCode)
+	if item.Status == serviceAvailable {
+		item.Region = normalizeRegion(firstSubmatch(discordCountryPattern, result.Body))
 	}
 	return item
 }
