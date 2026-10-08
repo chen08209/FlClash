@@ -31,6 +31,39 @@ void main() {
     });
   });
 
+  test('the model defaults match the core\'s but leave its presets unset', () {
+    final source = File('core/Clash.Meta/config/config.go').readAsStringSync();
+    final body = RegExp(
+      r'DNS: RawDNS\{([\s\S]*?)\n\t\t\},',
+    ).firstMatch(source)!.group(1)!;
+    String valueOf(String field) =>
+        RegExp('\\b$field:\\s*(.+),').firstMatch(body)!.group(1)!.trim();
+
+    expect(valueOf('Enable'), '${defaultDns.enable}');
+    expect(valueOf('IPv6'), '${defaultDns.ipv6}');
+    expect(valueOf('UseHosts'), '${defaultDns.useHosts}');
+    expect(valueOf('UseSystemHosts'), '${defaultDns.useSystemHosts}');
+    expect(valueOf('IPv6Timeout'), '${defaultDns.ipv6Timeout}');
+    expect(valueOf('FakeIPTTL'), '${defaultDns.fakeIpTtl}');
+    expect(valueOf('GeoIP'), '${defaultDns.fallbackFilter.geoip}');
+    expect(valueOf('EnhancedMode'), 'C.DNSMapping');
+    expect(defaultDns.enhancedMode, DnsMode.redirHost);
+    expect(valueOf('FakeIPFilterMode'), 'C.FilterBlackList');
+    expect(defaultDns.fakeIpFilterMode, FakeIpFilterMode.blacklist);
+    expect(
+      defaultDns.overrideJson({
+        DnsOverrideKey.listen,
+        DnsOverrideKey.fakeIpRange,
+        DnsOverrideKey.fakeIpRange6,
+        DnsOverrideKey.fakeIpFilter,
+        DnsOverrideKey.defaultNameserver,
+        DnsOverrideKey.nameserver,
+        DnsOverrideKey.fallbackFilterGeoipCode,
+      }),
+      isEmpty,
+    );
+  });
+
   group('Dns.overrideJson', () {
     test('emits only the selected keys in model order', () {
       const dns = Dns(listen: ':53', nameserver: ['1.1.1.1']);
@@ -137,10 +170,10 @@ void main() {
     });
 
     test('the baseline a profile without DNS is given stays minimal', () {
-      expect(defaultDns.overrideJson(baselineDnsOverrideKeys), {
+      expect(baselineDns.overrideJson(baselineDnsOverrideKeys), {
         'enable': true,
         'enhanced-mode': 'fake-ip',
-        'nameserver': defaultDns.nameserver,
+        'nameserver': baselineDns.nameserver,
       });
     });
 
@@ -257,6 +290,121 @@ proxy-server-nameserver-policy:
       );
       expect(() => dns.applyOverrideYaml('ipv6: maybe'), throwsA(anything));
       expect(() => dns.applyOverrideYaml('- ipv6'), throwsFormatException);
+    });
+  });
+
+  test('ProfileOverrides names the rule sets its picked policies match', () {
+    const overrides = ProfileOverrides(
+      dns: Dns(
+        nameserverPolicy: {
+          'rule-set:cn,private': '223.5.5.5',
+          'geosite:gfw': '8.8.8.8',
+        },
+        proxyServerNameserverPolicy: {'RULE-SET:proxy': '1.1.1.1'},
+      ),
+      dnsOverrideKeys: {DnsOverrideKey.nameserverPolicy},
+    );
+
+    expect(overrides.ruleSets, {'cn', 'private'});
+    expect(
+      overrides
+          .copyWith(
+            dnsOverrideKeys: {
+              DnsOverrideKey.nameserverPolicy,
+              DnsOverrideKey.proxyServerNameserverPolicy,
+            },
+          )
+          .ruleSets,
+      {'cn', 'private', 'proxy'},
+    );
+    expect(overrides.copyWith(dnsOverrideKeys: {}).ruleSets, isEmpty);
+  });
+
+  test('a custom profile resolves unless it turns DNS off, and runs NTP and '
+      'sniffing only once it turns them on', () {
+    const fresh = ProfileOverrides();
+    expect(fresh.customDnsEnabled, isTrue);
+    expect(fresh.customNtpEnabled, isFalse);
+    expect(fresh.customSnifferEnabled, isFalse);
+
+    final picked = fresh.copyWith(
+      dns: const Dns(enable: false),
+      ntp: const Ntp(enable: true),
+      sniffer: const Sniffer(enable: true),
+    );
+    expect(picked.customDnsEnabled, isTrue);
+    expect(picked.customNtpEnabled, isFalse);
+    expect(picked.customSnifferEnabled, isFalse);
+
+    final on = picked.copyWith(
+      dnsOverrideKeys: {DnsOverrideKey.enable},
+      ntpOverrideKeys: {NtpOverrideKey.enable},
+      snifferOverrideKeys: {SnifferOverrideKey.enable},
+    );
+    expect(on.customDnsEnabled, isFalse);
+    expect(on.customNtpEnabled, isTrue);
+    expect(on.customSnifferEnabled, isTrue);
+  });
+
+  group('ProxyProviderOptions', () {
+    test('writes nothing until an option is set', () {
+      expect(const ProxyProviderOptions().definition, isEmpty);
+      expect(const ProxyProviderOptions(filter: 'HK').definition, {
+        'filter': 'HK',
+      });
+    });
+
+    test('a health check always names a url, so the core runs it', () {
+      const options = ProxyProviderOptions(
+        healthCheck: ProviderHealthCheck(timeout: 3000, lazy: false),
+      );
+
+      expect(options.definition, {
+        'health-check': {
+          'enable': true,
+          'url': 'https://www.gstatic.com/generate_204',
+          'timeout': 3000,
+          'lazy': false,
+        },
+      });
+    });
+
+    test('writes only the overrides that are set, as the core names them', () {
+      const options = ProxyProviderOptions(
+        proxyOverride: ProviderOverride(
+          additionalPrefix: 'HK-',
+          udp: false,
+          ipVersion: IpVersion.ipv4Prefer,
+        ),
+      );
+
+      expect(options.definition, {
+        'override': {
+          'additional-prefix': 'HK-',
+          'udp': false,
+          'ip-version': 'ipv4-prefer',
+        },
+      });
+    });
+
+    test('survives a round trip through the profile overrides', () {
+      const overrides = ProfileOverrides(
+        proxyProviders: {
+          'sub': ProxyProviderOptions(
+            healthCheck: ProviderHealthCheck(url: 'https://example.com'),
+            proxyOverride: ProviderOverride(
+              skipCertVerify: true,
+              ipVersion: IpVersion.ipv6Prefer,
+            ),
+          ),
+        },
+      );
+
+      final decoded = ProfileOverrides.fromJson(
+        jsonDecode(jsonEncode(overrides.toJson())) as Map<String, Object?>,
+      );
+
+      expect(decoded, overrides);
     });
   });
 }

@@ -5,8 +5,8 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
 
-PatchClashConfig _decode(Map<String, Object?> json) {
-  return PatchClashConfig.fromJson(
+ProfileOverrides _decode(Map<String, Object?> json) {
+  return ProfileOverrides.fromJson(
     jsonDecode(jsonEncode(json)) as Map<String, Object?>,
   );
 }
@@ -24,7 +24,7 @@ void main() {
     });
   });
 
-  test('the model defaults match the ones the core parses', () {
+  test('the model defaults match the core\'s but leave its server unset', () {
     final source = File('core/Clash.Meta/config/config.go').readAsStringSync();
     final body = RegExp(
       r'NTP: RawNTP\{([^}]*)\}',
@@ -32,7 +32,8 @@ void main() {
     String valueOf(String field) =>
         RegExp('$field:\\s*(.+),').firstMatch(body)!.group(1)!.trim();
 
-    expect(valueOf('Server'), '"${defaultNtp.server}"');
+    expect(valueOf('Server'), isNot('""'));
+    expect(defaultNtp.server, isEmpty);
     expect(valueOf('Port'), '${defaultNtp.port}');
     expect(valueOf('Interval'), '${defaultNtp.interval}');
     expect(valueOf('Enable'), '${defaultNtp.enable}');
@@ -57,9 +58,9 @@ void main() {
     });
   });
 
-  group('PatchClashConfig.ntpOverrideKeys', () {
+  group('ProfileOverrides.ntpOverrideKeys', () {
     test('round-trips as key paths', () {
-      const config = PatchClashConfig(
+      const config = ProfileOverrides(
         ntpOverrideKeys: {
           NtpOverrideKey.writeToSystem,
           NtpOverrideKey.dialerProxy,
@@ -72,11 +73,11 @@ void main() {
     });
 
     test('a fresh config overrides nothing', () {
-      expect(const PatchClashConfig().ntpOverrideKeys, isEmpty);
+      expect(const ProfileOverrides().ntpOverrideKeys, isEmpty);
     });
 
     test('a config saved before the section keeps the empty set', () {
-      final json = const PatchClashConfig().toJson()
+      final json = const ProfileOverrides().toJson()
         ..remove('ntp')
         ..remove('ntp-override-keys');
       final config = _decode(json);
@@ -86,12 +87,14 @@ void main() {
     });
 
     test('a key this build does not know is dropped, not the config', () {
-      final json = const PatchClashConfig(mixedPort: 7899).toJson();
+      final json = const ProfileOverrides(
+        ntp: Ntp(server: 'time.cloudflare.com'),
+      ).toJson();
       json['ntp-override-keys'] = ['server', 'key-from-a-newer-build'];
       final config = _decode(json);
 
       expect(config.ntpOverrideKeys, {NtpOverrideKey.server});
-      expect(config.mixedPort, 7899);
+      expect(config.ntp.server, 'time.cloudflare.com');
     });
   });
 

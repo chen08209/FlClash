@@ -80,15 +80,20 @@ enum LoadBalanceStrategy {
   final String value;
 
   const LoadBalanceStrategy(this.value);
+}
 
-  static LoadBalanceStrategy? parse(String? value) {
-    for (final item in values) {
-      if (item.value == value) {
-        return item;
-      }
-    }
-    return null;
-  }
+enum IpVersion {
+  dual('dual'),
+  ipv4('ipv4'),
+  ipv6('ipv6'),
+  @JsonValue('ipv4-prefer')
+  ipv4Prefer('ipv4-prefer'),
+  @JsonValue('ipv6-prefer')
+  ipv6Prefer('ipv6-prefer');
+
+  final String value;
+
+  const IpVersion(this.value);
 }
 
 extension GroupTypeExtension on GroupType {
@@ -228,7 +233,7 @@ enum AccessControlMode { acceptSelected, rejectSelected }
 
 enum AccessSortType { none, name, time }
 
-enum ProfileType { file, url }
+enum ProfileType { file, url, custom }
 
 enum ResultType {
   @JsonValue(0)
@@ -246,6 +251,7 @@ enum CoreEventType {
   crash,
   geoUpdate,
   routeChanged,
+  dialerLoop,
 }
 
 enum InvokeMessageType { protect, process }
@@ -277,8 +283,19 @@ enum DnsCacheAlgorithm { lru, arc }
 
 enum FakeIpFilterMode { blacklist, whitelist, rule }
 
+mixin OverrideKey on Enum {
+  String get path;
+
+  String? get parent {
+    final dot = path.indexOf('.');
+    return dot < 0 ? null : path.substring(0, dot);
+  }
+
+  String get field => path.substring(path.indexOf('.') + 1);
+}
+
 @JsonEnum(valueField: 'path')
-enum DnsOverrideKey {
+enum DnsOverrideKey with OverrideKey {
   enable('enable'),
   listen('listen'),
   listenRoutingMark('listen-routing-mark'),
@@ -313,19 +330,28 @@ enum DnsOverrideKey {
 
   const DnsOverrideKey(this.path);
 
+  @override
   final String path;
 
   static const fallbackFilterSection = 'fallback-filter';
 
-  bool get isFallbackFilter => path.startsWith('$fallbackFilterSection.');
-
-  String get jsonKey => isFallbackFilter
-      ? path.substring(fallbackFilterSection.length + 1)
-      : path;
+  /// What a subscription or file profile may override: nothing that names its
+  /// groups or rule sets, which change with every update.
+  static const normalProfileKeys = {
+    listen,
+    ipv6,
+    enhancedMode,
+    fakeIpFilter,
+    fakeIpFilterMode,
+    defaultNameserver,
+    nameserver,
+    proxyServerNameserver,
+    directNameserver,
+  };
 }
 
 @JsonEnum(valueField: 'path')
-enum NtpOverrideKey {
+enum NtpOverrideKey with OverrideKey {
   enable('enable'),
   server('server'),
   port('port'),
@@ -335,6 +361,42 @@ enum NtpOverrideKey {
 
   const NtpOverrideKey(this.path);
 
+  @override
+  final String path;
+}
+
+@JsonEnum(valueField: 'path')
+enum SnifferOverrideKey with OverrideKey {
+  enable('enable'),
+  overrideDest('override-destination'),
+  forceDnsMapping('force-dns-mapping'),
+  parsePureIp('parse-pure-ip'),
+  forceDomain('force-domain'),
+  skipDomain('skip-domain'),
+  skipSrcAddress('skip-src-address'),
+  skipDstAddress('skip-dst-address'),
+  sniffHttp('sniff.HTTP'),
+  sniffTls('sniff.TLS'),
+  sniffQuic('sniff.QUIC');
+
+  const SnifferOverrideKey(this.path);
+
+  @override
+  final String path;
+
+  static const sniffSection = 'sniff';
+}
+
+/// Written over the profile's `tun` section, which Android's VPN never reads,
+/// so these apply on desktop only. The network settings' `Tun` holds the rest.
+@JsonEnum(valueField: 'path')
+enum TunOverrideKey with OverrideKey {
+  disableIcmpForwarding('disable-icmp-forwarding'),
+  excludeInterface('exclude-interface');
+
+  const TunOverrideKey(this.path);
+
+  @override
   final String path;
 }
 
@@ -398,8 +460,6 @@ enum EditorFontSize {
   const EditorFontSize(this.value);
 }
 
-enum RouteMode { bypassPrivate, config }
-
 enum AuthorizeCode { none, success, error }
 
 enum TunAuthorizationState { none, authorized, unauthorized }
@@ -413,7 +473,6 @@ enum FunctionTag {
   changeProxy,
   handleWill,
   updateDelay,
-  vpnTip,
   autoLaunch,
   updatePageIndex,
   pageChange,
@@ -427,6 +486,7 @@ enum FunctionTag {
   removeProxy,
   suspend,
   coreErrorNotifier,
+  dialerLoopNotifier,
   reloadPackages,
 }
 
@@ -444,8 +504,6 @@ enum DashboardWidget {
   dnsQueries,
   requests,
   connections,
-  overrideDnsButton,
-  overrideNtpButton,
   runTime,
   proxyGroups,
   profiles;
@@ -590,6 +648,13 @@ extension RuleActionExt on RuleAction {
     RuleAction.RULE_SET,
   ].contains(this);
 
+  bool get nestsRules => [
+    RuleAction.AND,
+    RuleAction.OR,
+    RuleAction.NOT,
+    RuleAction.SUB_RULE,
+  ].contains(this);
+
   bool get hasCommaPayload => [
     RuleAction.AND,
     RuleAction.OR,
@@ -649,6 +714,8 @@ extension RuleActionExt on RuleAction {
   }
 }
 
+enum ProxyCredential { username, password, uuid }
+
 enum RulePayloadError { network, numberRange, dscpRange }
 
 extension RulePayloadErrorExt on RulePayloadError {
@@ -662,7 +729,7 @@ extension RulePayloadErrorExt on RulePayloadError {
   }
 }
 
-enum OverwriteType { standard, script, custom }
+enum ExtendType { standard, script }
 
 enum RuleTarget {
   DIRECT('DIRECT'),
@@ -682,19 +749,9 @@ enum RuleTarget {
 
 enum ProviderKind { proxy, rule }
 
-/// Where a provider name a custom overwrite uses resolves, in lookup order.
-enum ProviderSource { subscription, profile, app }
-
 enum RuleProviderBehavior { domain, ipcidr, classical }
 
 enum RuleProviderFormat { yaml, text, mrs }
-
-extension RuleProviderFormatExt on RuleProviderFormat? {
-  /// The core reads an mrs set only as a domain or an ipcidr one.
-  List<RuleProviderBehavior> get behaviors => this == RuleProviderFormat.mrs
-      ? const [RuleProviderBehavior.domain, RuleProviderBehavior.ipcidr]
-      : RuleProviderBehavior.values;
-}
 
 enum RestoreStrategy { compatible, override }
 
@@ -709,18 +766,17 @@ enum QueryTag { proxies, access }
 enum LoadingTag {
   profiles,
   scripts,
+  ruleProviders,
+  iconSets,
   backup_restore,
   access,
   proxies,
-  batteryOptimization,
   checkUpdate,
 }
 
 enum CoreStatus { connecting, connected, disconnected }
 
 enum UpdatingScope { core, local }
-
-enum RuleScene { added, disabled, custom }
 
 enum ItemPosition {
   start,

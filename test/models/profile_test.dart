@@ -28,16 +28,56 @@ void main() {
       expect(info.total, 0);
       expect(info.expire, 0);
     });
+
+    test('skips empty and malformed fields instead of throwing', () {
+      final info = SubscriptionInfo.formHString(
+        'upload=10;; download; =5; total=100;',
+      );
+
+      expect(info.upload, 10);
+      expect(info.download, 0);
+      expect(info.total, 100);
+    });
+
+    test('truncates decimal and exponent counts', () {
+      final info = SubscriptionInfo.formHString(
+        'Upload=1.5; download=2.4e3; total=1.073741824E10; expire=Infinity',
+      );
+
+      expect(info.upload, 1);
+      expect(info.download, 2400);
+      expect(info.total, 10737418240);
+      expect(info.expire, 0);
+    });
+  });
+
+  group('Profile factories', () {
+    test('normal takes its type from whether it has a url', () {
+      expect(Profile.normal().type, ProfileType.file);
+      expect(
+        Profile.normal(url: 'https://example.com/profile.yaml').type,
+        ProfileType.url,
+      );
+    });
+
+    test('custom never updates itself', () {
+      final profile = Profile.custom(label: 'Mine');
+
+      expect(profile.type, ProfileType.custom);
+      expect(profile.url, isEmpty);
+      expect(profile.realAutoUpdate, false);
+    });
   });
 
   group('ProfileExtension', () {
-    test('derives type, label, filename, and updating key', () {
+    test('derives auto update, label, filename, and updating key', () {
       const fileProfile = Profile(
         id: 7,
         autoUpdateDuration: defaultUpdateDuration,
       );
       const urlProfile = Profile(
         id: 8,
+        type: ProfileType.url,
         label: 'Remote',
         url: 'https://example.com/profile.yaml',
         autoUpdate: true,
@@ -88,36 +128,6 @@ void main() {
       );
 
       expect(profiles.optimizeLabel(newProfile).label, 'Work(2)');
-    });
-
-    test('steps past a label an app-level proxy provider holds', () {
-      const profiles = <Profile>[];
-      const newProfile = Profile(
-        id: 3,
-        label: 'Shared nodes',
-        autoUpdateDuration: defaultUpdateDuration,
-      );
-
-      expect(
-        profiles
-            .optimizeLabel(newProfile, reserved: const {'Shared nodes'})
-            .label,
-        'Shared nodes(1)',
-      );
-    });
-  });
-
-  group('ProfileRuleLinkExt', () {
-    test('builds stable key from non-null parts', () {
-      const link = ProfileRuleLink(
-        profileId: 1,
-        ruleId: 2,
-        scene: RuleScene.added,
-      );
-      const globalLink = ProfileRuleLink(ruleId: 3);
-
-      expect(link.key, '1_2_added');
-      expect(globalLink.key, '3');
     });
   });
 }

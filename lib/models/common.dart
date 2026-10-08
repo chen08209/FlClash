@@ -763,6 +763,8 @@ extension ScriptExt on Script {
 
   Future<String> get path async => appPath.getScriptPath(id.toString());
 
+  Future<FileInfo?> get fileInfo async => File(await path).getFileInfo();
+
   Future<String?> get content async => readTextFileTask(await path);
 
   Future<Script> save(String content) async {
@@ -793,44 +795,22 @@ extension ScriptExt on Script {
 abstract class ClashProvider with _$ClashProvider {
   const factory ClashProvider({
     required int id,
-    required ProviderKind kind,
     required String label,
     @Default('') String url,
-    RuleProviderBehavior? behavior,
-    RuleProviderFormat? format,
+    @Default(RuleProviderBehavior.classical) RuleProviderBehavior behavior,
+    @Default(RuleProviderFormat.yaml) RuleProviderFormat format,
     int? order,
   }) = _ClashProvider;
 
-  factory ClashProvider.create({
-    required ProviderKind kind,
-    required String label,
-    String url = '',
-  }) {
-    return ClashProvider(
-      id: snowflake.id,
-      kind: kind,
-      label: label,
-      url: url,
-      behavior: kind == ProviderKind.rule
-          ? RuleProviderBehavior.classical
-          : null,
-      format: kind == ProviderKind.rule ? RuleProviderFormat.yaml : null,
-    );
+  factory ClashProvider.create({required String label, String url = ''}) {
+    return ClashProvider(id: snowflake.id, label: label, url: url);
   }
 }
 
-RuleProviderFormat? ruleProviderFormatOf(String sourceName) {
-  final dot = sourceName.lastIndexOf('.');
-  if (dot <= 0) {
-    return null;
-  }
-  return switch (sourceName.substring(dot + 1).toLowerCase()) {
-    'mrs' => RuleProviderFormat.mrs,
-    'txt' || 'list' || 'conf' => RuleProviderFormat.text,
-    'yaml' || 'yml' => RuleProviderFormat.yaml,
-    _ => null,
-  };
-}
+typedef RuleSetInfo = ({
+  RuleProviderBehavior behavior,
+  RuleProviderFormat format,
+});
 
 extension ClashProviderExt on ClashProvider {
   /// Keyed by url so an edited url downloads afresh instead of reusing the
@@ -839,48 +819,148 @@ extension ClashProviderExt on ClashProvider {
 
   bool get isRemote => url.isNotEmpty;
 
+  String get updatingKey => 'rule_provider_$id';
+
   /// An mrs set is a zstd stream, which no text editor can round-trip.
   bool get isTextContent => format != RuleProviderFormat.mrs;
 
-  Future<String> get path => appPath.getProviderCachePath(kind, fileName);
+  /// [format] is the source's; classical rules have no mrs form.
+  bool get isCompiled =>
+      isTextContent && behavior != RuleProviderBehavior.classical;
+
+  Future<String> get path => appPath.getProviderCachePath(fileName);
+
+  Future<String> get compiledPath async => '${await path}.mrs';
+
+  Future<String> get corePath => isCompiled ? compiledPath : path;
+
+  Future<FileInfo?> get fileInfo async => File(await path).getFileInfo();
 
   Future<String?> get content async => readTextFileTask(await path);
 
-  Future<void> saveContent(List<int> bytes) async {
-    await File(await path).safeWriteAsBytes(bytes);
-  }
-
-  ClashProvider withFileFormat(String sourceName) {
-    return withFormat(
-      ruleProviderFormatOf(sourceName) ?? RuleProviderFormat.yaml,
-    );
-  }
-
-  /// The core takes mrs only under domain or ipcidr.
-  ClashProvider withFormat(RuleProviderFormat nextFormat) {
-    if (kind != ProviderKind.rule) {
-      return this;
-    }
-    final behaviors = nextFormat.behaviors;
-    return copyWith(
-      format: nextFormat,
-      behavior: behaviors.contains(behavior) ? behavior : behaviors.first,
-    );
+  ClashProvider withInfo(RuleSetInfo info) {
+    return copyWith(behavior: info.behavior, format: info.format);
   }
 
   Map<String, dynamic> definition(String path) {
-    final vehicle = isRemote
-        ? {'type': 'http', 'url': url, 'path': path}
-        : {'type': 'file', 'path': path};
-    return switch (kind) {
-      ProviderKind.proxy => {...vehicle},
-      ProviderKind.rule => {
-        ...vehicle,
-        'behavior': (behavior ?? RuleProviderBehavior.classical).name,
-        'format': (format ?? RuleProviderFormat.yaml).name,
-      },
+    return {
+      'type': 'file',
+      'path': path,
+      'behavior': behavior.name,
+      'format': isCompiled ? RuleProviderFormat.mrs.name : format.name,
     };
   }
+}
+
+@freezed
+abstract class IconSetIcon with _$IconSetIcon {
+  const factory IconSetIcon({required String name, required String url}) =
+      _IconSetIcon;
+
+  factory IconSetIcon.fromJson(Map<String, Object?> json) =>
+      _$IconSetIconFromJson(json);
+}
+
+extension IconSetIconExt on IconSetIcon {
+  String get label => name.fileStem.replaceAll('_', ' ');
+}
+
+String _compactIconName(String value) =>
+    value.toLowerCase().replaceAll(RegExp('[^a-z0-9]'), '');
+
+extension IconSetIconsExt on Iterable<IconSetIcon> {
+  /// English only: a name with no Latin letters or digits matches nothing.
+  List<IconSetIcon> recommendFor(String name, {int limit = 24}) {
+    final target = _compactIconName(name);
+    if (target.isEmpty) {
+      return const [];
+    }
+    final seen = <String>{};
+    final scored = <({IconSetIcon icon, int score, int length})>[];
+    for (final icon in this) {
+      final compact = _compactIconName(icon.label);
+      if (compact.isEmpty) {
+        continue;
+      }
+      final score = switch (compact) {
+        _ when compact == target => 3,
+        _ when compact.length >= 3 && target.contains(compact) => 2,
+        _ when target.length >= 3 && compact.contains(target) => 1,
+        _ => 0,
+      };
+      if (score > 0 && seen.add(icon.url)) {
+        scored.add((icon: icon, score: score, length: compact.length));
+      }
+    }
+    mergeSort(
+      scored,
+      compare: (a, b) => a.score != b.score
+          ? b.score.compareTo(a.score)
+          : a.length.compareTo(b.length),
+    );
+    return scored.take(limit).map((item) => item.icon).toList();
+  }
+}
+
+@freezed
+abstract class IconSet with _$IconSet {
+  const factory IconSet({
+    required int id,
+    required String name,
+    @Default('') String url,
+    @Default([]) List<IconSetIcon> icons,
+    DateTime? lastUpdateTime,
+    int? order,
+  }) = _IconSet;
+}
+
+extension IconSetExt on IconSet {
+  bool get isRemote => url.isNotEmpty;
+
+  String get cover => icons.firstOrNull?.url ?? '';
+
+  String get updatingKey => 'icon_set_$id';
+}
+
+bool _isHttpUrl(String value) {
+  final uri = Uri.tryParse(value);
+  return uri != null &&
+      (uri.isScheme('http') || uri.isScheme('https')) &&
+      uri.host.isNotEmpty;
+}
+
+/// Reads the icon gallery format Quantumult X and Loon subscribe to:
+/// `{"name": ..., "icons": [{"name": ..., "url": ...}]}`.
+({String name, List<IconSetIcon> icons}) parseIconSet(String content) {
+  final document = json.decode(content);
+  if (document is! Map || document['icons'] is! List) {
+    throw const FormatException('Not an icon set');
+  }
+  final seen = <String>{};
+  final icons = <IconSetIcon>[];
+  for (final item in document['icons'] as List) {
+    if (item is! Map) {
+      continue;
+    }
+    final url = item['url'];
+    if (url is! String || !_isHttpUrl(url) || !seen.add(url)) {
+      continue;
+    }
+    final name = item['name'];
+    icons.add(
+      IconSetIcon(
+        name: name is String && name.trim().isNotEmpty
+            ? name.trim()
+            : url.urlFileName,
+        url: url,
+      ),
+    );
+  }
+  if (icons.isEmpty) {
+    throw const FormatException('An icon set without icons');
+  }
+  final name = document['name'];
+  return (name: name is String ? name.trim() : '', icons: icons);
 }
 
 @freezed
@@ -893,7 +973,8 @@ extension DelayStateExt on DelayState {
   int get priority {
     if (delay > 0) return 0;
     if (delay == 0) return 1;
-    return 2;
+    if (delay == delayTimedOutValue) return 2;
+    return 3;
   }
 
   int compareTo(DelayState other) {
@@ -924,5 +1005,8 @@ abstract class IconButtonData with _$IconButtonData {
     required VoidCallback? onPressed,
     String? tooltip,
     @Default(false) bool isLoading,
+
+    /// Non-null makes the button a toggle that shows this state.
+    bool? isSelected,
   }) = _IconButtonData;
 }

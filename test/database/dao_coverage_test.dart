@@ -35,7 +35,8 @@ void main() {
         autoUpdate: false,
         selectedMap: const {'Selector': 'Proxy'},
         unfoldSet: const {'Selector'},
-        overwriteType: OverwriteType.custom,
+        type: ProfileType.url,
+        extendType: ExtendType.script,
         scriptId: 7,
         order: 1,
       );
@@ -69,15 +70,105 @@ void main() {
     },
   );
 
+  test('profiles query skips a row it cannot read and keeps it', () async {
+    const readable = Profile(
+      id: 1,
+      label: 'Readable',
+      autoUpdateDuration: Duration.zero,
+    );
+    await database.profilesDao.putAll([readable.toCompanion()]);
+    await database.customStatement(
+      'INSERT INTO profiles (id, type, label, url, extend_type, '
+      'auto_update_duration_millis, auto_update, selected_map, unfold_set) '
+      "VALUES (2, 'future', 'Future', '', 'standard', 0, 1, '{}', '[]')",
+    );
+
+    expect(await database.profilesDao.query().get(), [readable]);
+    expect(await database.profilesDao.ids().get(), [1, 2]);
+  });
+
+  test('provider queries skip a row they cannot read', () async {
+    await database.customStatement(
+      'INSERT INTO clash_providers (id, kind, label, url, behavior) VALUES '
+      "(1, 'rule', 'Kept', 'https://a.example', 'domain'), "
+      "(2, 'rule', 'Future', 'https://b.example', 'future')",
+    );
+
+    final providers = await database.clashProvidersDao.query().get();
+    expect(providers.map((provider) => provider.id), [1]);
+    expect(await database.clashProvidersDao.fileNames().get(), [
+      providers.single.fileName,
+      const ClashProvider(id: 2, label: '', url: 'https://b.example').fileName,
+    ]);
+  });
+
+  test('rule queries fail on a row they cannot read', () async {
+    await database.customStatement(
+      'INSERT INTO rules (id, rule_action, content, rule_target) '
+      "VALUES (1, 'DOMAIN', 'example.com', 'DIRECT'), "
+      "(2, 'FUTURE', 'example.org', 'DIRECT')",
+    );
+
+    await expectLater(
+      database.rulesDao.queryGlobalRules().get(),
+      throwsA(anything),
+    );
+  });
+
+  test('profiles query resets damaged JSON columns of a profile', () async {
+    await database.customStatement(
+      'INSERT INTO profiles (id, type, label, url, extend_type, '
+      'auto_update_duration_millis, auto_update, selected_map, unfold_set, '
+      'subscription_info, overrides) '
+      "VALUES (1, 'url', 'Damaged', '', 'standard', 0, 1, 'x', '{}', '[', '{')",
+    );
+
+    final profile = (await database.profilesDao.query().get()).single;
+    expect(profile.label, 'Damaged');
+    expect(profile.selectedMap, isEmpty);
+    expect(profile.unfoldSet, isEmpty);
+    expect(profile.subscriptionInfo, null);
+    expect(profile.overrides, const ProfileOverrides());
+  });
+
+  test('proxy groups query resets damaged options of a group', () async {
+    await database.customStatement(
+      'INSERT INTO profiles (id, type, label, url, extend_type, '
+      'auto_update_duration_millis, auto_update, selected_map, unfold_set) '
+      "VALUES (1, 'custom', 'Mine', '', 'standard', 0, 1, '{}', '[]')",
+    );
+    await database.customStatement(
+      'INSERT INTO proxy_groups (id, profile_id, name, type, proxies, '
+      'definition) VALUES '
+      "(1, 1, 'Broken', 'select', '[', '{'), "
+      '''(2, 1, 'Typed', 'url-test', NULL, '{"interval":"x","hidden":true}')''',
+    );
+
+    final [broken, typed] = await database.proxyGroupsDao.query(1).get();
+    expect(
+      broken,
+      const ProxyGroup(
+        profileId: 1,
+        id: 1,
+        name: 'Broken',
+        type: GroupType.Selector,
+        proxies: [],
+      ),
+    );
+    expect(typed.interval, null);
+    expect(typed.hidden, true);
+  });
+
   test(
     'generated table managers create, filter, order, and update rows',
     () async {
       final date = DateTime.utc(2026, 7, 26);
       await database.managers.profiles.create(
         (row) => row(
+          type: ProfileType.custom,
           label: 'Managed profile',
           url: 'https://example.com/profile.yaml',
-          overwriteType: OverwriteType.custom,
+          extendType: ExtendType.standard,
           autoUpdateDurationMillis: 60000,
           autoUpdate: true,
           selectedMap: const {'Proxy': 'DIRECT'},
@@ -89,17 +180,18 @@ void main() {
       );
       await database.managers.rules.create(
         (row) => row(
+          profileId: const Value(1),
           ruleAction: RuleAction.DOMAIN,
           content: const Value('example.com'),
           ruleTarget: const Value('DIRECT'),
         ),
       );
-      await database.managers.profileRuleLinks.create(
-        (row) => row(id: 'managed', profileId: const Value(1), ruleId: 1),
+      await database.managers.disabledRules.create(
+        (row) => row(profileId: 1, ruleId: 1),
       );
       await database.managers.proxyGroups.create(
         (row) => row(
-          profileId: const Value(1),
+          profileId: 1,
           name: 'Managed group',
           type: GroupType.Selector.name,
           proxies: const Value(['DIRECT']),
@@ -139,10 +231,10 @@ void main() {
         isA<RawRule>(),
       );
       expect(
-        await database.managers.profileRuleLinks
-            .filter((row) => row.scene.isNull())
+        await database.managers.disabledRules
+            .filter((row) => row.ruleId.id.equals(1))
             .getSingle(),
-        isA<RawProfileRuleLink>(),
+        isA<RawDisabledRule>(),
       );
       expect(
         await database.managers.proxyGroups
@@ -159,12 +251,16 @@ void main() {
 
       final profileWithReferences = await database.managers.profiles
           .withReferences(
-            (prefetch) =>
-                prefetch(profileRuleLinksRefs: true, proxyGroupsRefs: true),
+            (prefetch) => prefetch(
+              rulesRefs: true,
+              disabledRulesRefs: true,
+              proxyGroupsRefs: true,
+            ),
           )
           .getSingle();
+      expect(await profileWithReferences.$2.rulesRefs.get(), hasLength(1));
       expect(
-        await profileWithReferences.$2.profileRuleLinksRefs.get(),
+        await profileWithReferences.$2.disabledRulesRefs.get(),
         hasLength(1),
       );
       expect(
@@ -173,23 +269,17 @@ void main() {
       );
 
       final ruleWithReferences = await database.managers.rules
-          .withReferences((prefetch) => prefetch(profileRuleLinksRefs: true))
+          .withReferences(
+            (prefetch) => prefetch(profileId: true, disabledRulesRefs: true),
+          )
           .getSingle();
-      expect(
-        await ruleWithReferences.$2.profileRuleLinksRefs.get(),
-        hasLength(1),
-      );
-
-      final linkWithReferences = await database.managers.profileRuleLinks
-          .withReferences((prefetch) => prefetch(profileId: true, ruleId: true))
-          .getSingle();
-      expect((await linkWithReferences.$2.profileId?.getSingle())?.id, 1);
-      expect((await linkWithReferences.$2.ruleId.getSingle()).id, 1);
+      expect((await ruleWithReferences.$2.profileId?.getSingle())?.id, 1);
+      expect(await ruleWithReferences.$2.disabledRulesRefs.get(), hasLength(1));
 
       final groupWithReferences = await database.managers.proxyGroups
           .withReferences((prefetch) => prefetch(profileId: true))
           .getSingle();
-      expect((await groupWithReferences.$2.profileId?.getSingle())?.id, 1);
+      expect((await groupWithReferences.$2.profileId.getSingle()).id, 1);
     },
   );
 
@@ -244,6 +334,9 @@ void main() {
         expectedStatus: '204',
         tolerance: 50,
         strategy: LoadBalanceStrategy.stickySessions,
+        hashKey: 'in-user',
+        defaultSelected: 'Old',
+        emptyFallback: 'Old',
         includeAll: true,
         includeAllProxies: false,
         includeAllProviders: true,
@@ -256,6 +349,8 @@ void main() {
         name: 'Secondary',
         type: GroupType.Selector,
         proxies: ['Primary'],
+        defaultSelected: 'Primary',
+        emptyFallback: 'Primary',
         order: 'b',
       );
       await database.profiles.put(profile.toCompanion());
@@ -264,17 +359,24 @@ void main() {
 
       final groups = await database.proxyGroupsDao.query(profile.id).get();
       expect(groups.first, first.copyWith(profileId: profile.id));
+      expect(
+        (await (database.select(
+          database.proxyGroups,
+        )..where((t) => t.id.equals(second.id))).getSingle()).definition,
+        '{"default-selected":"Primary","empty-fallback":"Primary"}',
+      );
       expect(await database.proxyGroupsDao.count(profile.id).getSingle(), 2);
 
-      await database.proxyGroupsDao.renameProxies(
-        profile.id,
-        oldName: 'Primary',
-        newName: 'Renamed',
+      await database.proxyGroupsDao.rewrite(
+        groups,
+        (group) => group.renamedProxies({'Primary': 'Renamed'}),
       );
-      expect(
-        (await database.proxyGroupsDao.query(profile.id).get()).last.proxies,
-        ['Renamed'],
-      );
+      final renamed = await database.proxyGroupsDao.query(profile.id).get();
+      expect(renamed.last.proxies, ['Renamed']);
+      expect(renamed.last.defaultSelected, 'Renamed');
+      expect(renamed.last.emptyFallback, 'Renamed');
+      expect(renamed.first.defaultSelected, 'Old');
+      expect(renamed.first.emptyFallback, 'Old');
 
       await database.proxyGroupsDao.order(
         profile.id,
@@ -287,7 +389,9 @@ void main() {
       );
 
       await database.batch((batch) {
-        database.proxyGroupsDao.setAllWithBatch(profile.id, batch, [first]);
+        database.proxyGroupsDao.setAllWithBatch(batch, [
+          first.copyWith(profileId: profile.id),
+        ]);
       });
       expect(
         (await database.proxyGroupsDao.query(profile.id).get()).single.name,
@@ -297,7 +401,7 @@ void main() {
   );
 
   test(
-    'rules DAO handles global, added, custom, disabled, order, and rename',
+    'rules DAO keeps global and profile rules apart, disables, orders and renames',
     () async {
       const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
       const global = Rule(
@@ -316,7 +420,7 @@ void main() {
         src: true,
         order: 'a',
       );
-      const custom = Rule(
+      const ruleSet = Rule(
         id: 32,
         ruleAction: RuleAction.RULE_SET,
         ruleProvider: 'provider',
@@ -324,97 +428,99 @@ void main() {
         order: 'c',
       );
       await database.profiles.put(profile.toCompanion());
-      await database.rulesDao.putGlobalRule(global);
-      await database.rulesDao.putProfileAddedRule(profile.id, added);
-      await database.rulesDao.putProfileCustomRule(profile.id, custom);
+      await database.rulesDao.putRule(global);
+      await database.rulesDao.putRule(added, profileId: profile.id);
+      await database.rulesDao.putRule(ruleSet, profileId: profile.id);
 
-      expect(await database.rulesDao.queryGlobalAddedRules().get(), [global]);
-      expect(await database.rulesDao.queryProfileAddedRules(profile.id).get(), [
-        added,
+      expect(await database.rulesDao.queryGlobalRules().get(), [global]);
+      expect(await database.rulesDao.queryProfileRules(profile.id).get(), [
+        added.copyWith(profileId: profile.id),
+        ruleSet.copyWith(profileId: profile.id),
       ]);
       expect(
-        await database.rulesDao.queryProfileCustomRules(profile.id).get(),
-        [custom],
+        await database.rulesDao.profileRulesCount(profile.id).getSingle(),
+        2,
       );
       expect(
-        await database.rulesDao.profileCustomRulesCount(profile.id).getSingle(),
-        1,
+        (await database.rulesDao.queryAddedRules(profile.id).get()).map(
+          (rule) => rule.id,
+        ),
+        [added.id, ruleSet.id, global.id],
       );
 
-      await database.rulesDao.putDisabledLink(profile.id, global.id);
-      expect(
-        (await database.rulesDao.queryProfileDisabledRules(profile.id).get())
-            .single
-            .id,
+      await database.rulesDao.putDisabled(profile.id, global.id);
+      expect(await database.rulesDao.queryDisabledRuleIds(profile.id).get(), [
         global.id,
-      );
+      ]);
       expect(
         (await database.rulesDao.queryAddedRules(profile.id).get()).map(
           (rule) => rule.id,
         ),
-        [added.id],
+        isNot(contains(global.id)),
       );
+      expect(await database.rulesDao.delDisabled(profile.id, global.id), 1);
       expect(
-        await database.rulesDao.delDisabledLink(profile.id, global.id),
-        isTrue,
+        await database.rulesDao.queryDisabledRuleIds(profile.id).get(),
+        isEmpty,
       );
 
-      const disabled = Rule(
-        id: 33,
-        ruleAction: RuleAction.DOMAIN,
-        content: 'disabled.example',
-        ruleTarget: 'REJECT',
-        order: 'd',
-      );
-      await database.rulesDao.putProfileDisabledRule(profile.id, disabled);
+      await database.rulesDao.order(ruleId: ruleSet.id, order: '0');
       expect(
-        (await database.rulesDao.queryProfileDisabledRules(profile.id).get())
-            .single
-            .id,
-        disabled.id,
-      );
-      expect(
-        (await database.rulesDao.queryAddedRules(profile.id).get()).map(
-          (rule) => rule.id,
-        ),
-        isNot(contains(disabled.id)),
+        (await database.rulesDao.queryProfileRules(profile.id).get()).first.id,
+        ruleSet.id,
       );
 
-      await database.rulesDao.orderGlobalRule(ruleId: global.id, order: '0');
-      await database.rulesDao.orderProfileAddedRule(
-        profile.id,
-        ruleId: added.id,
-        order: '1',
-      );
-      await database.rulesDao.orderProfileCustomRule(
-        profile.id,
-        ruleId: custom.id,
-        order: '2',
-      );
-      await database.rulesDao.renameCustomRuleTarget(
+      await database.rulesDao.renameRuleTarget(
         profile.id,
         oldName: 'OldGroup',
         newName: 'NewGroup',
       );
       expect(
-        (await database.rulesDao.queryProfileCustomRules(profile.id).get())
-            .single
+        (await database.rulesDao.queryProfileRules(profile.id).get())
+            .first
             .ruleTarget,
         'NewGroup',
       );
 
-      await database.rulesDao.resetOrders();
-      await database.rulesDao.delRules([added.id, custom.id]);
+      await database.rulesDao.delRules([added.id, ruleSet.id]);
       expect(
-        await database.rulesDao.queryProfileAddedRules(profile.id).get(),
+        await database.rulesDao.queryProfileRules(profile.id).get(),
         isEmpty,
       );
-      expect(
-        await database.rulesDao.queryProfileCustomRules(profile.id).get(),
-        isEmpty,
-      );
+      expect(await database.rulesDao.queryGlobalRules().get(), [global]);
     },
   );
+
+  test('setting a profile\'s rules replaces only its own', () async {
+    const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
+    const other = Profile(id: 2, autoUpdateDuration: Duration.zero);
+    const global = Rule(id: 1, content: 'global.example', ruleTarget: 'A');
+    const kept = Rule(id: 2, content: 'kept.example', ruleTarget: 'A');
+    const stale = Rule(id: 3, content: 'stale.example', ruleTarget: 'A');
+    const fresh = Rule(id: 4, content: 'fresh.example', ruleTarget: 'A');
+    await database.profilesDao.putAll([
+      profile.toCompanion(),
+      other.toCompanion(),
+    ]);
+    await database.rulesDao.putRule(global);
+    await database.rulesDao.putRule(kept, profileId: other.id);
+    await database.rulesDao.putRule(stale, profileId: profile.id);
+
+    await database.batch((b) {
+      database.rulesDao.setProfileRulesWithBatch(profile.id, b, [fresh]);
+    });
+
+    final rows = {
+      for (final row in await database.rules.all().get()) row.id: row.profileId,
+    };
+    expect(rows, {global.id: null, kept.id: other.id, fresh.id: profile.id});
+    expect(
+      (await database.rulesDao.queryProfileRules(profile.id).get())
+          .single
+          .order,
+      isNot(equals(null)),
+    );
+  });
 
   test('delRules deletes more rules than one statement can bind', () async {
     const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
@@ -429,28 +535,28 @@ void main() {
     );
     await database.profiles.put(profile.toCompanion());
     await database.batch((b) {
-      database.rulesDao.setCustomRulesWithBatch(profile.id, b, rules);
+      database.rulesDao.setProfileRulesWithBatch(profile.id, b, rules);
     });
 
     await database.rulesDao.delRules(rules.map((rule) => rule.id));
 
     expect(
-      await database.rulesDao.profileCustomRulesCount(profile.id).getSingle(),
+      await database.rulesDao.profileRulesCount(profile.id).getSingle(),
       0,
     );
   });
 
-  test('deleting a profile takes its links, groups and own rules', () async {
+  test('deleting a profile takes its rules, disables and groups', () async {
     const gone = Profile(id: 1, autoUpdateDuration: Duration.zero);
     const kept = Profile(id: 2, autoUpdateDuration: Duration.zero);
     const global = Rule(id: 10, content: 'global.example', ruleTarget: 'A');
-    const custom = Rule(id: 11, content: 'custom.example', ruleTarget: 'A');
+    const own = Rule(id: 11, content: 'own.example', ruleTarget: 'A');
     const other = Rule(id: 12, content: 'other.example', ruleTarget: 'A');
     await database.profilesDao.putAll([gone.toCompanion(), kept.toCompanion()]);
-    await database.rulesDao.putGlobalRule(global);
-    await database.rulesDao.putProfileCustomRule(gone.id, custom);
-    await database.rulesDao.putDisabledLink(gone.id, global.id);
-    await database.rulesDao.putProfileCustomRule(kept.id, other);
+    await database.rulesDao.putRule(global);
+    await database.rulesDao.putRule(own, profileId: gone.id);
+    await database.rulesDao.putDisabled(gone.id, global.id);
+    await database.rulesDao.putRule(other, profileId: kept.id);
     for (final profile in [gone, kept]) {
       await database.proxyGroups.put(
         ProxyGroup(
@@ -459,43 +565,97 @@ void main() {
           type: GroupType.Selector,
         ).toCompanion(profile.id),
       );
-      await database.customProxies.put(
-        CustomProxy(
-          id: profile.id,
-          definition: const {'name': 'Node', 'type': 'socks5'},
-        ).toCompanion(profile.id),
-      );
     }
 
     await database.deleteProfile(gone.id);
 
     final ruleIds = await database.rules.all().map((row) => row.id).get();
     expect(ruleIds, unorderedEquals([global.id, other.id]));
-    final links = await database.profileRuleLinks.all().get();
-    expect(links.map((link) => link.profileId), unorderedEquals([null, 2]));
+    expect(await database.disabledRules.count.getSingle(), 0);
     final groups = await database.proxyGroups.all().get();
     expect(groups.map((group) => group.profileId), [kept.id]);
-    final proxies = await database.customProxies.all().get();
-    expect(proxies.map((proxy) => proxy.profileId), [kept.id]);
   });
 
-  test('deleting rules takes their links with them', () async {
+  test('deleting a rule takes the disables naming it', () async {
     const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
-    const rule = Rule(id: 10, content: 'custom.example', ruleTarget: 'A');
+    const rule = Rule(id: 10, content: 'global.example', ruleTarget: 'A');
     await database.profiles.put(profile.toCompanion());
-    await database.rulesDao.putProfileCustomRule(profile.id, rule);
+    await database.rulesDao.putRule(rule);
+    await database.rulesDao.putDisabled(profile.id, rule.id);
 
     await database.rulesDao.delRules([rule.id]);
 
-    expect(await database.profileRuleLinks.count.getSingle(), 0);
+    expect(await database.disabledRules.count.getSingle(), 0);
   });
+
+  test(
+    'dialers follow their profile and proxy and survive a restore',
+    () async {
+      const home = CustomProxy(id: 30, definition: {'name': 'Home'});
+      const work = CustomProxy(id: 31, definition: {'name': 'Work'});
+      const dialers = [
+        ProxyDialer(profileId: 1, proxyId: 30, target: 'Relay'),
+        ProxyDialer(profileId: 1, proxyId: 31, target: 'Relay'),
+        ProxyDialer(profileId: 2, proxyId: 30, target: 'Other'),
+      ];
+      Future<List<ProxyDialer>> all() => database
+          .select(database.proxyDialers)
+          .map((row) => row.toProxyDialer())
+          .get();
+
+      for (final isOverride in [false, true]) {
+        await database.restore(
+          const [
+            Profile(id: 1, autoUpdateDuration: Duration.zero),
+            Profile(id: 2, autoUpdateDuration: Duration.zero),
+          ],
+          const [],
+          const [],
+          const [],
+          const [],
+          customProxies: const [home, work],
+          proxyDialers: const [
+            ...dialers,
+            ProxyDialer(profileId: 99, proxyId: 30, target: 'Orphan'),
+          ],
+          isOverride: isOverride,
+        );
+
+        expect(
+          await all(),
+          unorderedEquals(dialers),
+          reason: 'isOverride: $isOverride',
+        );
+      }
+
+      await database.proxyDialersDao.renameTarget(
+        1,
+        oldName: 'Relay',
+        newName: 'Front',
+      );
+      await database.customProxiesDao.delAll([work.id]);
+      await database.deleteProfile(2);
+
+      expect(await all(), const [
+        ProxyDialer(profileId: 1, proxyId: 30, target: 'Front'),
+      ]);
+
+      await database.proxyDialersDao.set(1, home.id, null);
+
+      expect(await all(), isEmpty);
+    },
+  );
 
   test('renaming a provider rewrites only the listed profiles', () async {
     const oldName = 'Old "nodes"';
     const newName = r'New \nodes';
     for (final id in [1, 2]) {
       await database.profiles.put(
-        Profile(id: id, autoUpdateDuration: Duration.zero).toCompanion(),
+        Profile(
+          id: id,
+          type: ProfileType.custom,
+          autoUpdateDuration: Duration.zero,
+        ).toCompanion(),
       );
       await database.proxyGroups.put(
         ProxyGroup(
@@ -505,14 +665,14 @@ void main() {
           use: const [oldName, 'Old', 'Kept'],
         ).toCompanion(id),
       );
-      await database.rulesDao.putProfileCustomRule(
-        id,
+      await database.rulesDao.putRule(
         Rule(
           id: 10 + id,
           ruleAction: RuleAction.RULE_SET,
           ruleProvider: oldName,
           ruleTarget: 'DIRECT',
         ),
+        profileId: id,
       );
     }
 
@@ -526,7 +686,7 @@ void main() {
       oldName: oldName,
       newName: newName,
     );
-    await database.rulesDao.renameCustomRuleProvider(
+    await database.rulesDao.renameRuleProvider(
       const [1],
       oldName: oldName,
       newName: newName,
@@ -535,7 +695,7 @@ void main() {
     Future<List<String>?> use(int id) async =>
         (await database.proxyGroupsDao.query(id).get()).single.use;
     Future<String?> ruleSet(int id) async =>
-        (await database.rulesDao.queryProfileCustomRules(id).get())
+        (await database.rulesDao.queryProfileRules(id).get())
             .single
             .ruleProvider;
     expect(await use(1), [newName, 'Old', 'Kept']);
@@ -544,10 +704,87 @@ void main() {
     expect(await ruleSet(2), oldName);
   });
 
+  test(
+    'a logic rule nesting an app rule set uses it and follows a rename',
+    () async {
+      await database.profiles.put(
+        const Profile(
+          id: 1,
+          type: ProfileType.custom,
+          autoUpdateDuration: Duration.zero,
+        ).toCompanion(),
+      );
+      await database.rulesDao.putRule(
+        Rule.parse('AND,((RULE-SET,Ads),(NETWORK,UDP)),REJECT', id: 10),
+        profileId: 1,
+      );
+      await database.rulesDao.putRule(
+        Rule.parse('AND,((RULE-SET,Ads-old),(NETWORK,UDP)),REJECT', id: 11),
+        profileId: 1,
+      );
+
+      expect(await database.rulesDao.profileIdsUsingRuleProvider('Ads'), {1});
+      expect(
+        await database.rulesDao.profileIdsUsingRuleProvider('Ad'),
+        isEmpty,
+      );
+
+      await database.rulesDao.renameRuleProvider(
+        const [1],
+        oldName: 'Ads',
+        newName: 'Ad block',
+      );
+
+      expect(
+        [
+          for (final rule in await database.rulesDao.queryProfileRules(1).get())
+            rule.rawValue,
+        ],
+        unorderedEquals([
+          'AND,((RULE-SET,Ad block),(NETWORK,UDP)),REJECT',
+          'AND,((RULE-SET,Ads-old),(NETWORK,UDP)),REJECT',
+        ]),
+      );
+    },
+  );
+
+  test('only custom profiles count as using an app rule set', () async {
+    for (final (id, type) in [(1, ProfileType.custom), (2, ProfileType.url)]) {
+      await database.profiles.put(
+        Profile(
+          id: id,
+          type: type,
+          autoUpdateDuration: Duration.zero,
+        ).toCompanion(),
+      );
+      await database.rulesDao.putRule(
+        Rule(
+          id: id,
+          ruleAction: RuleAction.RULE_SET,
+          ruleProvider: 'Ads',
+          ruleTarget: 'REJECT',
+        ),
+        profileId: id,
+      );
+    }
+
+    expect(await database.rulesDao.profileIdsUsingRuleProvider('Ads'), {1});
+  });
+
   test('a restore drops the orphans an older backup carries', () async {
     const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
-    const rule = Rule(id: 10, content: 'kept.example', ruleTarget: 'A');
-    const orphan = Rule(id: 11, content: 'orphan.example', ruleTarget: 'A');
+    const rule = Rule(
+      id: 10,
+      profileId: 1,
+      content: 'kept.example',
+      ruleTarget: 'A',
+    );
+    const orphan = Rule(
+      id: 11,
+      profileId: 99,
+      content: 'orphan.example',
+      ruleTarget: 'A',
+    );
 
     for (final isOverride in [false, true]) {
       await database.restore(
@@ -555,9 +792,8 @@ void main() {
         const [],
         [rule, orphan],
         const [
-          ProfileRuleLink(profileId: 1, ruleId: 10, scene: RuleScene.custom),
-          ProfileRuleLink(profileId: 99, ruleId: 11, scene: RuleScene.custom),
-          ProfileRuleLink(ruleId: 404),
+          DisabledRule(profileId: 1, ruleId: 404),
+          DisabledRule(profileId: 99, ruleId: 10),
         ],
         const [
           ProxyGroup(id: 1, profileId: 1, name: 'A', type: GroupType.Selector),
@@ -568,7 +804,7 @@ void main() {
 
       final ruleIds = await database.rules.all().map((row) => row.id).get();
       expect(ruleIds, [rule.id], reason: 'isOverride: $isOverride');
-      expect(await database.profileRuleLinks.count.getSingle(), 1);
+      expect(await database.disabledRules.count.getSingle(), 0);
       final groups = await database.proxyGroups.all().get();
       expect(groups.map((group) => group.id), [1]);
     }
@@ -578,18 +814,17 @@ void main() {
     'an override restore replaces more rules than one statement can bind',
     () async {
       const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
-      const stale = Rule(id: 1, content: 'stale.example', ruleTarget: 'DIRECT');
+      const stale = Rule(
+        id: 1,
+        profileId: 1,
+        content: 'stale.example',
+        ruleTarget: 'DIRECT',
+      );
       await database.restore(
         [profile],
         const [],
         [stale],
-        [
-          ProfileRuleLink(
-            profileId: profile.id,
-            ruleId: stale.id,
-            scene: RuleScene.custom,
-          ),
-        ],
+        const [],
         const [],
         isOverride: true,
       );
@@ -598,6 +833,7 @@ void main() {
         33000,
         (index) => Rule(
           id: index + 2,
+          profileId: profile.id,
           content: 'rule$index.example',
           ruleTarget: 'DIRECT',
         ),
@@ -606,25 +842,16 @@ void main() {
         [profile],
         const [],
         rules,
-        rules
-            .map(
-              (rule) => ProfileRuleLink(
-                profileId: profile.id,
-                ruleId: rule.id,
-                scene: RuleScene.custom,
-              ),
-            )
-            .toList(),
+        const [],
         const [],
         isOverride: true,
       );
 
       expect(
-        await database.rulesDao.profileCustomRulesCount(profile.id).getSingle(),
+        await database.rulesDao.profileRulesCount(profile.id).getSingle(),
         rules.length,
       );
       expect(await database.rules.count.getSingle(), rules.length);
-      expect(await database.profileRuleLinks.count.getSingle(), rules.length);
     },
   );
 
@@ -634,13 +861,9 @@ void main() {
       const keptProfile = Profile(id: 1, autoUpdateDuration: Duration.zero);
       const keptRule = Rule(
         id: 41,
+        profileId: 1,
         content: 'kept.example',
         ruleTarget: 'DIRECT',
-      );
-      const keptLink = ProfileRuleLink(
-        profileId: 1,
-        ruleId: 41,
-        scene: RuleScene.custom,
       );
       const keptGroup = ProxyGroup(
         id: 42,
@@ -648,14 +871,9 @@ void main() {
         name: 'Kept',
         type: GroupType.Selector,
       );
-      await database.restore(
-        [keptProfile],
-        const [],
-        [keptRule],
-        [keptLink],
-        [keptGroup],
-        isOverride: true,
-      );
+      await database.restore([keptProfile], const [], [keptRule], const [], [
+        keptGroup,
+      ], isOverride: true);
 
       const backupProfile = Profile(id: 2, autoUpdateDuration: Duration.zero);
       const backupGroup = ProxyGroup(
@@ -673,7 +891,7 @@ void main() {
       );
 
       expect(
-        (await database.rulesDao.queryProfileCustomRules(1).get()).single.id,
+        (await database.rulesDao.queryProfileRules(1).get()).single.id,
         keptRule.id,
       );
       expect(
@@ -691,17 +909,17 @@ void main() {
     'a groups-only backup does not clear the rules of other profiles',
     () async {
       const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
-      const rule = Rule(id: 41, content: 'kept.example', ruleTarget: 'DIRECT');
-      const link = ProfileRuleLink(
+      const rule = Rule(
+        id: 41,
         profileId: 1,
-        ruleId: 41,
-        scene: RuleScene.custom,
+        content: 'kept.example',
+        ruleTarget: 'DIRECT',
       );
       await database.restore(
         [profile],
         const [],
         [rule],
-        [link],
+        const [],
         const [],
         isOverride: true,
       );
@@ -715,7 +933,7 @@ void main() {
       await database.restore(const [], const [], const [], const [], [group]);
 
       expect(
-        (await database.rulesDao.queryProfileCustomRules(1).get()).single.id,
+        (await database.rulesDao.queryProfileRules(1).get()).single.id,
         rule.id,
       );
       expect(
@@ -725,17 +943,9 @@ void main() {
     },
   );
 
-  test('clash providers DAO splits kinds, orders, and replaces', () async {
-    const proxies = ClashProvider(
-      id: 50,
-      kind: ProviderKind.proxy,
-      label: 'Proxies',
-      url: 'https://proxies.example',
-      order: 1,
-    );
+  test('clash providers DAO skips proxy rows, orders, and replaces', () async {
     const rules = ClashProvider(
       id: 51,
-      kind: ProviderKind.rule,
       label: 'Rules',
       url: 'https://rules.example',
       behavior: RuleProviderBehavior.domain,
@@ -743,36 +953,30 @@ void main() {
     );
     const earlier = ClashProvider(
       id: 52,
-      kind: ProviderKind.proxy,
       label: 'Earlier',
       url: 'https://earlier.example',
       order: 0,
     );
-    const local = ClashProvider(
-      id: 53,
-      kind: ProviderKind.rule,
-      label: 'Local',
-      order: 2,
-    );
+    const local = ClashProvider(id: 53, label: 'Local', order: 2);
 
-    await database.clashProvidersDao.putAll(
-      [proxies, rules, earlier, local].map((item) => item.toCompanion()),
-    );
-
-    expect(await database.clashProvidersDao.query(ProviderKind.proxy).get(), [
-      earlier,
-      proxies,
+    await database.clashProvidersDao.putAll([
+      ...[rules, earlier, local].map((item) => item.toCompanion()),
+      ClashProvidersCompanion.insert(
+        id: const Value(50),
+        kind: ProviderKind.proxy,
+        label: 'Proxies',
+        url: 'https://proxies.example',
+      ),
     ]);
-    expect(await database.clashProvidersDao.query(ProviderKind.rule).get(), [
+
+    expect(await database.clashProvidersDao.query().get(), [
+      earlier,
       local,
       rules,
     ]);
-    expect((await database.clashProvidersDao.queryAll().get()).length, 4);
     expect(
       await database.clashProvidersDao.fileNames().get(),
-      unorderedEquals(
-        [proxies, rules, earlier, local].map((item) => item.fileName),
-      ),
+      unorderedEquals([rules, earlier, local].map((item) => item.fileName)),
     );
 
     await database.restore(
@@ -784,21 +988,26 @@ void main() {
       clashProviders: const [rules],
       isOverride: true,
     );
-    expect(await database.clashProvidersDao.queryAll().get(), [rules]);
+    expect(await database.clashProvidersDao.query().get(), [rules]);
   });
 
-  test('database restore and custom data replace related records', () async {
-    const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
+  test('database restore replaces related records', () async {
+    const profile = Profile(
+      id: 1,
+      type: ProfileType.custom,
+      autoUpdateDuration: Duration.zero,
+    );
     final script = Script(
       id: 40,
       label: 'Script',
       lastUpdateTime: DateTime(2026),
     );
-    const rule = Rule(id: 41, content: 'example.com', ruleTarget: 'DIRECT');
-    const link = ProfileRuleLink(
+    const global = Rule(id: 45, content: 'global.example', ruleTarget: 'A');
+    const rule = Rule(
+      id: 41,
       profileId: 1,
-      ruleId: 41,
-      scene: RuleScene.custom,
+      content: 'example.com',
+      ruleTarget: 'DIRECT',
     );
     const group = ProxyGroup(
       id: 42,
@@ -808,60 +1017,32 @@ void main() {
       proxies: ['DIRECT'],
     );
 
-    await database.restore([profile], [script], [rule], [link], [
-      group,
-    ], isOverride: true);
+    await database.restore(
+      [profile],
+      [script],
+      [global, rule],
+      const [DisabledRule(profileId: 1, ruleId: 45)],
+      [group],
+      isOverride: true,
+    );
     expect(await database.profilesDao.query().get(), [
       profile.copyWith(order: 0),
     ]);
     expect(await database.scriptsDao.query().get(), [script]);
     final restoredRules = await database.rulesDao
-        .queryProfileCustomRules(profile.id)
+        .queryProfileRules(profile.id)
         .get();
     expect(restoredRules.single.id, rule.id);
     expect(restoredRules.single.order, isNot(equals(null)));
+    expect(await database.rulesDao.queryDisabledRuleIds(profile.id).get(), [
+      global.id,
+    ]);
     final restoredGroups = await database.proxyGroupsDao
         .query(profile.id)
         .get();
     expect(restoredGroups.single.id, group.id);
     expect(restoredGroups.single.profileId, profile.id);
     expect(restoredGroups.single.order, isNot(equals(null)));
-
-    const replacementRule = Rule(
-      id: 43,
-      content: 'replacement.example',
-      ruleTarget: 'Group',
-    );
-    const replacementGroup = ProxyGroup(
-      id: 44,
-      name: 'Replacement',
-      type: GroupType.Fallback,
-    );
-    const replacementProxy = CustomProxy(
-      id: 45,
-      definition: {'name': 'Node', 'type': 'socks5'},
-    );
-    await database.setProfileCustomData(
-      profile.id,
-      [replacementProxy],
-      [replacementGroup],
-      [replacementRule],
-    );
-    final customProxy =
-        (await database.customProxiesDao.query(profile.id).get()).single;
-    expect(customProxy.id, replacementProxy.id);
-    expect(customProxy.profileId, profile.id);
-    expect(customProxy.definition, replacementProxy.definition);
-    expect(
-      (await database.rulesDao.queryProfileCustomRules(profile.id).get())
-          .single
-          .id,
-      replacementRule.id,
-    );
-    expect(
-      (await database.proxyGroupsDao.query(profile.id).get()).single.id,
-      replacementGroup.id,
-    );
   });
 
   test('icon records evict down to their capacity', () async {
@@ -877,8 +1058,8 @@ void main() {
     'icon records update access time, avoid duplicates, and filter queries',
     () async {
       await database.iconRecordsDao.put('https://example.com/a.png');
-      await database.iconRecordsDao.putIfAbsent('https://example.com/a.png');
-      await database.iconRecordsDao.putIfAbsent('https://other.com/b.png');
+      await database.iconRecordsDao.put('https://example.com/a.png');
+      await database.iconRecordsDao.put('https://other.com/b.png');
 
       final before = await database.iconRecordsDao.query('example.com');
       expect(before.map((record) => record.url), ['https://example.com/a.png']);
@@ -888,6 +1069,40 @@ void main() {
       expect(record?.url, 'https://example.com/a.png');
       expect(await database.iconRecordsDao.get('missing'), null);
       expect(await database.iconRecords.count.getSingle(), 2);
+
+      await database.iconRecordsDao.del('https://example.com/a.png');
+
+      expect(
+        (await database.iconRecordsDao.query('')).map((record) => record.url),
+        ['https://other.com/b.png'],
+      );
     },
   );
+
+  test('icon sets round-trip their icons and keep their order', () async {
+    const icons = [
+      IconSetIcon(name: 'Hong_Kong.png', url: 'https://example.com/hk.png'),
+      IconSetIcon(name: 'Japan.svg', url: 'https://example.com/jp.svg'),
+    ];
+    await database.iconSetsDao.putAll([
+      const IconSet(
+        id: 2,
+        name: 'Second',
+        icons: icons,
+        order: 0,
+      ).toCompanion(),
+      const IconSet(
+        id: 1,
+        name: 'First',
+        url: 'https://example.com/set.json',
+      ).toCompanion(),
+      const IconSet(id: 3, name: 'Unordered').toCompanion(1),
+    ]);
+
+    final iconSets = await database.iconSetsDao.query().get();
+
+    expect(iconSets.map((iconSet) => iconSet.id), [2, 3, 1]);
+    expect(iconSets.first.icons, icons);
+    expect(iconSets.last.url, 'https://example.com/set.json');
+  });
 }

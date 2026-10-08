@@ -293,14 +293,6 @@ abstract class SelectedProxyState with _$SelectedProxyState {
 }
 
 @freezed
-abstract class VpnState with _$VpnState {
-  const factory VpnState({
-    required TunStack stack,
-    required VpnProps vpnProps,
-  }) = _VpnState;
-}
-
-@freezed
 abstract class SharedState with _$SharedState {
   const factory SharedState({
     SetupParams? setupParams,
@@ -341,14 +333,12 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
     required int profileId,
     required Map<String, dynamic> rawConfig,
     required PatchClashConfig realPatchConfig,
-    required bool overrideDns,
-    required bool overrideNtp,
+    @Default(ProfileOverrides()) ProfileOverrides overrides,
     required bool appendSystemDns,
     required List<ProxyGroup> proxyGroups,
     required List<Rule> rules,
     required List<Rule> addedRules,
     required String defaultUA,
-    @Default([]) List<CustomProxy> proxies,
     @Default([]) List<String> authentication,
     @Default({}) Map<String, dynamic> injectedProxyProviders,
     @Default({}) Map<String, dynamic> injectedRuleProviders,
@@ -364,10 +354,11 @@ abstract class MigrationData with _$MigrationData {
     @Default([]) List<Rule> rules,
     @Default([]) List<Script> scripts,
     @Default([]) List<Profile> profiles,
-    @Default([]) List<ProfileRuleLink> links,
+    @Default([]) List<DisabledRule> disabledRules,
     @Default([]) List<ProxyGroup> proxyGroups,
     @Default([]) List<ClashProvider> clashProviders,
     @Default([]) List<CustomProxy> customProxies,
+    @Default([]) List<ProxyDialer> proxyDialers,
   }) = _MigrationData;
 }
 
@@ -376,17 +367,17 @@ abstract class SetupState with _$SetupState {
   const factory SetupState({
     required int? profileId,
     required int? profileLastUpdateDate,
-    required OverwriteType overwriteType,
+    required ProfileType profileType,
+    required ExtendType extendType,
     required List<Rule> rules,
     required List<ProxyGroup> proxyGroups,
     required List<Rule> addedRules,
     required Script? script,
-    @Default([]) List<CustomProxy> customProxies,
-    required bool overrideDns,
-    required Dns dns,
-    required Set<DnsOverrideKey> dnsOverrideKeys,
+    required ProfileOverrides overrides,
     @Default([]) List<ClashProvider> clashProviders,
     @Default({}) Map<String, int> profileProviders,
+    @Default([]) List<CustomProxy> appProxies,
+    @Default({}) Map<int, String> proxyDialers,
     String? matchTarget,
   }) = _SetupState;
 }

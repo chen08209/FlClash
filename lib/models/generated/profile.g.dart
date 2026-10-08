@@ -24,6 +24,9 @@ Map<String, dynamic> _$SubscriptionInfoToJson(_SubscriptionInfo instance) =>
 
 _Profile _$ProfileFromJson(Map<String, dynamic> json) => _Profile(
   id: (json['id'] as num).toInt(),
+  type:
+      $enumDecodeNullable(_$ProfileTypeEnumMap, json['type']) ??
+      ProfileType.file,
   label: json['label'] as String? ?? '',
   currentGroupName: json['currentGroupName'] as String?,
   url: json['url'] as String? ?? '',
@@ -47,16 +50,22 @@ _Profile _$ProfileFromJson(Map<String, dynamic> json) => _Profile(
   unfoldSet:
       (json['unfoldSet'] as List<dynamic>?)?.map((e) => e as String).toSet() ??
       const {},
-  overwriteType:
-      $enumDecodeNullable(_$OverwriteTypeEnumMap, json['overwriteType']) ??
-      OverwriteType.standard,
+  extendType:
+      $enumDecodeNullable(_$ExtendTypeEnumMap, json['extendType']) ??
+      ExtendType.standard,
   scriptId: (json['scriptId'] as num?)?.toInt(),
   matchTarget: json['matchTarget'] as String?,
   order: (json['order'] as num?)?.toInt(),
+  overrides: json['overrides'] == null
+      ? const ProfileOverrides()
+      : ProfileOverrides.safeFromJson(
+          json['overrides'] as Map<String, Object?>,
+        ),
 );
 
 Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
   'id': instance.id,
+  'type': _$ProfileTypeEnumMap[instance.type]!,
   'label': instance.label,
   'currentGroupName': instance.currentGroupName,
   'url': instance.url,
@@ -66,40 +75,20 @@ Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
   'autoUpdate': instance.autoUpdate,
   'selectedMap': instance.selectedMap,
   'unfoldSet': instance.unfoldSet.toList(),
-  'overwriteType': _$OverwriteTypeEnumMap[instance.overwriteType]!,
+  'extendType': _$ExtendTypeEnumMap[instance.extendType]!,
   'scriptId': instance.scriptId,
   'matchTarget': instance.matchTarget,
   'order': instance.order,
+  'overrides': instance.overrides,
 };
 
-const _$OverwriteTypeEnumMap = {
-  OverwriteType.standard: 'standard',
-  OverwriteType.script: 'script',
-  OverwriteType.custom: 'custom',
+const _$ProfileTypeEnumMap = {
+  ProfileType.file: 'file',
+  ProfileType.url: 'url',
+  ProfileType.custom: 'custom',
 };
 
-_StandardOverwrite _$StandardOverwriteFromJson(Map<String, dynamic> json) =>
-    _StandardOverwrite(
-      addedRules:
-          (json['addedRules'] as List<dynamic>?)
-              ?.map((e) => Rule.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          const [],
-      disabledRuleIds:
-          (json['disabledRuleIds'] as List<dynamic>?)
-              ?.map((e) => (e as num).toInt())
-              .toList() ??
-          const [],
-    );
-
-Map<String, dynamic> _$StandardOverwriteToJson(_StandardOverwrite instance) =>
-    <String, dynamic>{
-      'addedRules': instance.addedRules,
-      'disabledRuleIds': instance.disabledRuleIds,
-    };
-
-_ScriptOverwrite _$ScriptOverwriteFromJson(Map<String, dynamic> json) =>
-    _ScriptOverwrite(scriptId: (json['scriptId'] as num?)?.toInt());
-
-Map<String, dynamic> _$ScriptOverwriteToJson(_ScriptOverwrite instance) =>
-    <String, dynamic>{'scriptId': instance.scriptId};
+const _$ExtendTypeEnumMap = {
+  ExtendType.standard: 'standard',
+  ExtendType.script: 'script',
+};

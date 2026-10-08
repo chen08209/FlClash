@@ -31,6 +31,53 @@ const defaultBypassDomain = [
 
 const defaultUserAgents = ['clash-verge/v2.4.2', 'ClashforWindows/0.19.23'];
 
+const defaultFilters = [
+  Filter(
+    label: 'Hong Kong',
+    regex: r'(?i)🇭🇰|港|(?<![a-z])hk(?![a-z])|hong\s*kong',
+  ),
+  Filter(
+    label: 'Taiwan',
+    regex: r'(?i)🇹🇼|台湾|台灣|台北|新北|彰化|(?<![a-z])tw(?![a-z])|taiwan',
+  ),
+  Filter(
+    label: 'Japan',
+    regex: r'(?i)🇯🇵|日本|东京|東京|大阪|埼玉|(?<![a-z])jp(?![a-z])|japan|tokyo|osaka',
+  ),
+  Filter(
+    label: 'Singapore',
+    regex: r'(?i)🇸🇬|新加坡|狮城|獅城|(?<![a-z])sg(?![a-z])|singapore',
+  ),
+  Filter(
+    label: 'United States',
+    regex:
+        r'(?i)🇺🇸|美国|美國|美西|美东|美東|洛杉矶|圣何塞|西雅图|硅谷|纽约'
+        r'|(?<![a-z])usa?(?![a-z])|united\s*states',
+  ),
+  Filter(
+    label: 'South Korea',
+    regex: r'(?i)🇰🇷|韩国|韓國|首尔|首爾|(?<![a-z])kr(?![a-z])|korea|seoul',
+  ),
+  Filter(
+    label: 'United Kingdom',
+    regex:
+        r'(?i)🇬🇧|英国|英國|伦敦|倫敦|(?<![a-z])(uk|gb)(?![a-z])'
+        r'|united\s*kingdom|britain|london',
+  ),
+  Filter(
+    label: 'Remaining Traffic',
+    regex: r'(?i)剩余|剩餘|已用|流量\s*[:：]|traffic|remaining',
+  ),
+  Filter(label: 'Expiry Date', regex: r'(?i)到期|过期|過期|有效期|expir'),
+  Filter(label: 'Traffic Reset', regex: r'(?i)重置|reset'),
+  Filter(
+    label: 'Website & Notices',
+    regex:
+        r'(?i)官网|官網|网址|網址|域名|公告|套餐|客服|群组|群組|频道|頻道'
+        r'|website|telegram|(?<![a-z])tg(?![a-z])',
+  ),
+];
+
 const defaultAppSettingProps = AppSettingProps();
 const defaultVpnProps = VpnProps();
 const defaultAuthenticationProps = AuthenticationProps();
@@ -73,23 +120,21 @@ const List<DashboardWidget> defaultDashboardWidgets = [
 
 const _legacyOutboundModeV2 = 'outboundModeV2';
 
-List<DashboardWidget> dashboardWidgetsSafeFormJson(
+const _retiredDashboardWidgets = {'overrideDnsButton', 'overrideNtpButton'};
+
+List<DashboardWidget> dashboardWidgetsFromJson(
   List<dynamic>? dashboardWidgets,
 ) {
-  return decodeOrRestoreDefault(
-    'dashboard widgets',
-    () =>
-        dashboardWidgets
-            ?.map(
-              (e) => e == _legacyOutboundModeV2
-                  ? DashboardWidget.outboundMode
-                  : $enumDecode(_$DashboardWidgetEnumMap, e),
-            )
-            .toSet()
-            .toList() ??
-        defaultDashboardWidgets,
-    () => defaultDashboardWidgets,
-  );
+  return dashboardWidgets
+          ?.where((e) => !_retiredDashboardWidgets.contains(e))
+          .map(
+            (e) => e == _legacyOutboundModeV2
+                ? DashboardWidget.outboundMode
+                : $enumDecode(_$DashboardWidgetEnumMap, e),
+          )
+          .toSet()
+          .toList() ??
+      defaultDashboardWidgets;
 }
 
 Object? _readSidebarExpanded(Map<dynamic, dynamic> json, String key) {
@@ -119,11 +164,19 @@ Object? _readUserAgents(Map<dynamic, dynamic> json, String key) {
 }
 
 @freezed
+abstract class Filter with _$Filter {
+  const factory Filter({required String label, required String regex}) =
+      _Filter;
+
+  factory Filter.fromJson(Map<String, Object?> json) => _$FilterFromJson(json);
+}
+
+@freezed
 abstract class AppSettingProps with _$AppSettingProps {
   const factory AppSettingProps({
     String? locale,
     @Default(defaultDashboardWidgets)
-    @JsonKey(fromJson: dashboardWidgetsSafeFormJson)
+    @JsonKey(fromJson: dashboardWidgetsFromJson)
     List<DashboardWidget> dashboardWidgets,
     @Default(false) bool onlyStatisticsProxy,
     @Default(true) bool showNotificationStopAction,
@@ -141,7 +194,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(true)
     @JsonKey(readValue: _readSidebarExpanded)
     bool sidebarExpanded,
-    @Default(false) bool disclaimerAccepted,
+    @Default(0) int acceptedDisclaimerVersion,
     @Default(false) bool crashlyticsTip,
     @Default(false) bool crashlytics,
     @Default(true) bool minimizeOnExit,
@@ -153,6 +206,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(defaultUserAgents)
     @JsonKey(readValue: _readUserAgents)
     List<String> userAgents,
+    @Default(defaultFilters) List<Filter> filters,
     @Default(false) bool hideIp,
     @Default(false) bool editorLineWrap,
     @Default(EditorFontSize.standard) EditorFontSize editorFontSize,
@@ -168,11 +222,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     if (json == null) {
       return defaultAppSettingProps;
     }
-    return decodeOrRestoreDefault(
-      'app settings',
-      () => AppSettingProps.fromJson(json),
-      () => defaultAppSettingProps,
-    );
+    return decodeSalvaging('app settings', json, AppSettingProps.fromJson);
   }
 }
 
@@ -193,6 +243,8 @@ abstract class AccessControlProps with _$AccessControlProps {
 }
 
 extension AccessControlPropsExt on AccessControlProps {
+  bool get hasPackages => acceptList.isNotEmpty || rejectList.isNotEmpty;
+
   List<String> get currentList => switch (mode) {
     AccessControlMode.acceptSelected => acceptList,
     AccessControlMode.rejectSelected => rejectList,
@@ -211,6 +263,7 @@ abstract class WindowProps with _$WindowProps {
     @Default(0) double height,
     double? top,
     double? left,
+    double? scale,
   }) = _WindowProps;
 
   factory WindowProps.fromJson(Map<String, Object?>? json) =>
@@ -262,7 +315,7 @@ abstract class NetworkProps with _$NetworkProps {
   const factory NetworkProps({
     @Default(true) bool systemProxy,
     @Default(defaultBypassDomain) List<String> bypassDomain,
-    @Default(RouteMode.config) RouteMode routeMode,
+    @Default(false) bool bypassPrivateRoute,
     @Default(true) bool autoSetSystemDns,
     @Default(false) bool appendSystemDns,
     @Default(defaultAuthenticationProps) AuthenticationProps authentication,
@@ -323,6 +376,9 @@ abstract class ThemeProps with _$ThemeProps {
     @Default(false) bool pureBlack,
     @Default(true) bool sidebarBlur,
     @Default(TextScale()) TextScale textScale,
+    // `fontFamily` held the names of a removed enum, which old configs may
+    // still carry.
+    @JsonKey(name: 'systemFontFamily') String? fontFamily,
   }) = _ThemeProps;
 
   factory ThemeProps.fromJson(Map<String, Object?> json) =>
@@ -332,11 +388,7 @@ abstract class ThemeProps with _$ThemeProps {
     if (json == null) {
       return defaultThemeProps;
     }
-    return decodeOrRestoreDefault(
-      'theme settings',
-      () => ThemeProps.fromJson(json),
-      () => defaultThemeProps,
-    );
+    return decodeSalvaging('theme settings', json, ThemeProps.fromJson);
   }
 }
 
@@ -344,8 +396,6 @@ abstract class ThemeProps with _$ThemeProps {
 abstract class Config with _$Config {
   const factory Config({
     int? currentProfileId,
-    @Default(false) bool overrideDns,
-    @Default(false) bool overrideNtp,
     @Default([]) List<HotKeyAction> hotKeyActions,
     @JsonKey(fromJson: AppSettingProps.safeFromJson)
     @Default(defaultAppSettingProps)
@@ -360,7 +410,14 @@ abstract class Config with _$Config {
     @Default([]) List<String> excludeSSIDs,
   }) = _Config;
 
-  factory Config.fromJson(Map<String, Object?> json) => _$ConfigFromJson(json);
+  factory Config.fromJson(Map<String, Object?> json) =>
+      decodeSalvaging('config', json, Config.strictFromJson);
+
+  factory Config.strictFromJson(Map<String, Object?> json) =>
+      _withLegacyOverrideDns(
+        _$ConfigFromJson(_withLegacyRouteMode(json)),
+        json,
+      );
 
   factory Config.realFromJson(Map<String, Object?>? json) {
     if (json == null) {
@@ -369,6 +426,44 @@ abstract class Config with _$Config {
         hotKeyActions: defaultHotKeyActions,
       );
     }
-    return _$ConfigFromJson(json);
+    return Config.fromJson(json);
   }
+}
+
+const _legacyOverrideDnsKey = 'overrideDns';
+
+/// An off `overrideDns` left a profile's own DNS section alone.
+Config _withLegacyOverrideDns(Config config, Map<String, Object?> json) {
+  if (!json.containsKey(_legacyOverrideDnsKey)) {
+    return config;
+  }
+  final keys = json[_legacyOverrideDnsKey] == true
+      ? config.patchClashConfig.dnsOverrideKeys.intersection(
+          DnsOverrideKey.normalProfileKeys,
+        )
+      : <DnsOverrideKey>{};
+  return config.copyWith.patchClashConfig(dnsOverrideKeys: keys);
+}
+
+Map<String, Object?> _withLegacyRouteMode(Map<String, Object?> json) {
+  final network = json['networkProps'];
+  if (network is! Map ||
+      network['routeMode'] != 'bypassPrivate' ||
+      network.containsKey('bypassPrivateRoute')) {
+    return json;
+  }
+  final clash = json['patchClashConfig'];
+  final tun = clash is Map ? clash['tun'] : null;
+  return {
+    ...json,
+    'networkProps': {
+      ...Map<String, Object?>.from(network),
+      'bypassPrivateRoute': true,
+    },
+    if (clash is Map && tun is Map)
+      'patchClashConfig': {
+        ...Map<String, Object?>.from(clash),
+        'tun': {...Map<String, Object?>.from(tun), 'route-address': <String>[]},
+      },
+  };
 }

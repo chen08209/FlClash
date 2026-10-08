@@ -2,8 +2,8 @@ part of 'database.dart';
 
 @DataClassName('RawProxyGroup')
 @TableIndex(
-  name: 'idx_profile_name_order',
-  columns: {#profileId, #name, #order},
+  name: 'idx_proxy_groups_profile_order',
+  columns: {#profileId, #order},
 )
 class ProxyGroups extends Table {
   @override
@@ -11,11 +11,8 @@ class ProxyGroups extends Table {
 
   IntColumn get id => integer()();
 
-  IntColumn get profileId => integer().nullable().references(
-    Profiles,
-    #id,
-    onDelete: KeyAction.cascade,
-  )();
+  IntColumn get profileId =>
+      integer().references(Profiles, #id, onDelete: KeyAction.cascade)();
 
   TextColumn get name => text()();
 
@@ -26,39 +23,7 @@ class ProxyGroups extends Table {
 
   TextColumn get use => text().map(const StringListConverter()).nullable()();
 
-  TextColumn get url => text().nullable()();
-
-  IntColumn get interval => integer().nullable()();
-
-  IntColumn get timeout => integer().nullable()();
-
-  IntColumn get maxFailedTimes => integer().nullable()();
-
-  BoolColumn get lazy => boolean().nullable()();
-
-  BoolColumn get disableUDP => boolean().nullable()();
-
-  TextColumn get filter => text().nullable()();
-
-  TextColumn get excludeFilter => text().nullable()();
-
-  TextColumn get excludeType => text().nullable()();
-
-  TextColumn get expectedStatus => text().nullable()();
-
-  IntColumn get tolerance => integer().nullable()();
-
-  TextColumn get strategy => text().nullable()();
-
-  BoolColumn get includeAll => boolean().nullable()();
-
-  BoolColumn get includeAllProxies => boolean().nullable()();
-
-  BoolColumn get includeAllProviders => boolean().nullable()();
-
-  BoolColumn get hidden => boolean().nullable()();
-
-  TextColumn get icon => text().nullable()();
+  TextColumn get definition => text().withDefault(const Constant('{}'))();
 
   TextColumn get order => text().nullable()();
 
@@ -83,9 +48,6 @@ class ProxyGroupsDao extends DatabaseAccessor<Database>
   Selectable<int> count(int profileId) {
     final stmt = proxyGroups.select();
     stmt.where((row) => row.profileId.equals(profileId));
-    stmt.orderBy([
-      (t) => OrderingTerm(expression: t.order, nulls: NullsOrder.last),
-    ]);
     return stmt.count;
   }
 
@@ -99,27 +61,34 @@ class ProxyGroupsDao extends DatabaseAccessor<Database>
     );
   }
 
-  Future<void> renameProxies(
-    int profileId, {
-    required String oldName,
-    required String newName,
-  }) {
-    return customUpdate(
-      'UPDATE ${proxyGroups.entityName} '
-      'SET ${proxyGroups.proxies.name} = REPLACE(${proxyGroups.proxies.name}, ?, ?) '
-      'WHERE ${proxyGroups.profileId.name} = ?',
-      variables: [
-        Variable.withString('"$oldName"'),
-        Variable.withString('"$newName"'),
-        Variable.withInt(profileId),
-      ],
-    );
+  /// In Dart, as a SQL replace on the JSON list breaks on quotes and commas.
+  Future<void> rewrite(
+    Iterable<ProxyGroup> groups,
+    ProxyGroup Function(ProxyGroup group) rewrite,
+  ) async {
+    for (final group in groups) {
+      final next = rewrite(group);
+      if (next != group) {
+        await (proxyGroups.update()..where((t) => t.id.equals(group.id))).write(
+          next.toCompanion(),
+        );
+      }
+    }
+  }
+
+  Selectable<String> names({int? except}) {
+    final query = selectOnly(proxyGroups, distinct: true)
+      ..addColumns([proxyGroups.name]);
+    if (except != null) {
+      query.where(proxyGroups.profileId.equals(except).not());
+    }
+    return query.map((row) => row.read(proxyGroups.name)!);
   }
 
   Future<Set<int>> profileIdsUsing(String provider) async {
     final query = selectOnly(proxyGroups)
       ..addColumns([proxyGroups.profileId, proxyGroups.use])
-      ..where(proxyGroups.profileId.isNotNull() & proxyGroups.use.isNotNull());
+      ..where(proxyGroups.use.isNotNull());
     return {
       for (final row in await query.get())
         if (row.readWithConverter(proxyGroups.use)!.contains(provider))
@@ -154,20 +123,27 @@ class ProxyGroupsDao extends DatabaseAccessor<Database>
     }
   }
 
-  void setAllWithBatch(
-    int? profileId,
-    Batch batch,
-    Iterable<ProxyGroup> proxyGroups,
-  ) async {
+  void setAllWithBatch(Batch batch, Iterable<ProxyGroup> proxyGroups) {
     final keys = indexing.generateNKeys(proxyGroups.length);
     this.proxyGroups.setAll(
       batch,
       proxyGroups.mapIndexed(
-        (index, item) => item.toCompanion(profileId, keys[index]),
+        (index, item) => item.toCompanion(null, keys[index]),
       ),
-      deleteFilter: (row) => profileId == null
-          ? const Constant(true)
-          : row.profileId.equals(profileId),
+      deleteFilter: (_) => const Constant(true),
+      preDelete: true,
+    );
+  }
+
+  void setProfileGroupsWithBatch(
+    int profileId,
+    Batch batch,
+    Iterable<ProxyGroup> proxyGroups,
+  ) {
+    this.proxyGroups.setAll(
+      batch,
+      proxyGroups.map((item) => item.toCompanion(profileId)),
+      deleteFilter: (t) => t.profileId.equals(profileId),
       preDelete: true,
     );
   }
@@ -189,33 +165,36 @@ class ProxyGroupsDao extends DatabaseAccessor<Database>
   }
 }
 
+const _proxyGroupColumnKeys = {
+  'profileId',
+  'id',
+  'name',
+  'type',
+  'proxies',
+  'use',
+  'order',
+};
+
 extension RawProxyGroupExt on RawProxyGroup {
   ProxyGroup toProxyGroup() {
-    return ProxyGroup(
-      profileId: profileId,
-      id: id,
-      name: name,
-      type: GroupType.parse(type),
-      proxies: proxies,
-      use: use,
-      url: url,
-      interval: interval,
-      timeout: timeout,
-      maxFailedTimes: maxFailedTimes,
-      lazy: lazy,
-      disableUDP: disableUDP,
-      filter: filter,
-      excludeFilter: excludeFilter,
-      excludeType: excludeType,
-      expectedStatus: expectedStatus,
-      tolerance: tolerance,
-      strategy: LoadBalanceStrategy.parse(strategy),
-      includeAll: includeAll,
-      includeAllProxies: includeAllProxies,
-      includeAllProviders: includeAllProviders,
-      hidden: hidden,
-      icon: icon,
-      order: order,
+    final options = decodeOrRestoreDefault(
+      'proxy group options',
+      () => Map<String, Object?>.from(json.decode(definition)),
+      () => const <String, Object?>{},
+    );
+    return decodeSalvaging(
+      'proxy group options',
+      options,
+      (options) => ProxyGroup.fromJson({
+        ...options,
+        'profileId': profileId,
+        'id': id,
+        'name': name,
+        'type': type,
+        'proxies': proxies,
+        'use': use,
+        'order': order,
+      }),
     );
   }
 }
@@ -224,28 +203,18 @@ extension ProxyGroupsCompanionExt on ProxyGroup {
   ProxyGroupsCompanion toCompanion([int? profileId, String? order]) {
     return ProxyGroupsCompanion.insert(
       id: Value(id),
-      profileId: Value(this.profileId ?? profileId),
+      profileId: (this.profileId ?? profileId)!,
       name: name,
       type: type.value,
       proxies: Value(proxies),
       use: Value(use),
-      url: Value(url),
-      interval: Value(interval),
-      timeout: Value(timeout),
-      maxFailedTimes: Value(maxFailedTimes),
-      lazy: Value(lazy),
-      disableUDP: Value(disableUDP),
-      filter: Value(filter),
-      excludeFilter: Value(excludeFilter),
-      excludeType: Value(excludeType),
-      expectedStatus: Value(expectedStatus),
-      tolerance: Value(tolerance),
-      strategy: Value(strategy?.value),
-      includeAll: Value(includeAll),
-      includeAllProxies: Value(includeAllProxies),
-      includeAllProviders: Value(includeAllProviders),
-      hidden: Value(hidden),
-      icon: Value(icon),
+      definition: Value(
+        json.encode({
+          for (final MapEntry(:key, :value) in toJson().entries)
+            if (value != null && !_proxyGroupColumnKeys.contains(key))
+              key: value,
+        }),
+      ),
       order: Value(order ?? this.order),
     );
   }

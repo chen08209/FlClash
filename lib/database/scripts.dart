@@ -24,12 +24,13 @@ class ScriptsDao extends DatabaseAccessor<Database> with _$ScriptsDaoMixin {
   ScriptsDao(super.attachedDatabase);
 
   Selectable<Script> query() {
-    final stmt = scripts.select();
-    stmt.orderBy([
-      (t) => OrderingTerm(expression: t.order, nulls: NullsOrder.last),
-      (t) => OrderingTerm.asc(t.id),
-    ]);
-    return stmt.map((item) => item.toScript());
+    return scripts.readable(
+      (row) => row.toScript(),
+      orderBy: [
+        (t) => OrderingTerm(expression: t.order, nulls: NullsOrder.last),
+        (t) => OrderingTerm.asc(t.id),
+      ],
+    );
   }
 
   Future<void> putAll(Iterable<ScriptsCompanion> items) async {
@@ -39,15 +40,18 @@ class ScriptsDao extends DatabaseAccessor<Database> with _$ScriptsDaoMixin {
   }
 
   Selectable<Script> get(int scriptId) {
-    final stmt = scripts.select();
-    stmt.where((t) => t.id.equals(scriptId));
-    return stmt.map((it) => it.toScript());
+    return scripts.readable(
+      (row) => row.toScript(),
+      where: (t) => t.id.equals(scriptId),
+    );
   }
 
-  Selectable<String> fileNames() {
+  Selectable<int> ids() {
     final query = scripts.selectOnly()..addColumns([scripts.id]);
-    return query.map((row) => '${row.read(scripts.id)}.js');
+    return query.map((row) => row.read(scripts.id)!);
   }
+
+  Selectable<String> fileNames() => ids().map((id) => '$id.js');
 
   Future<void> setAll(Iterable<Script> scripts) async {
     await batch((b) async {
