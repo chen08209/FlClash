@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui' show Brightness, Color;
 
 import 'package:fl_clash/common/app_ports.dart';
+import 'package:fl_clash/common/path.dart';
 import 'package:fl_clash/common/preferences.dart';
 import 'package:fl_clash/models/config.dart';
 import 'package:fl_clash/providers/action.dart';
@@ -92,6 +94,28 @@ class _GeometryWindowPort implements WindowPort {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  final savedSupportDirectory = AppPath.supportDirectory;
+  final savedExecutableDirectory = AppPath.executableDirectory;
+  final savedTemporaryDirectory = AppPath.temporaryDirectory;
+  final savedCacheDirectory = AppPath.cacheDirectory;
+  late Directory home;
+
+  setUpAll(() {
+    home = Directory.systemTemp.createTempSync('flclash-system-action-');
+    AppPath.supportDirectory = () async => home;
+    AppPath.executableDirectory = () => home.path;
+    AppPath.temporaryDirectory = () async => home;
+    AppPath.cacheDirectory = () async => home;
+  });
+
+  tearDownAll(() {
+    AppPath.supportDirectory = savedSupportDirectory;
+    AppPath.executableDirectory = savedExecutableDirectory;
+    AppPath.temporaryDirectory = savedTemporaryDirectory;
+    AppPath.cacheDirectory = savedCacheDirectory;
+    if (home.existsSync()) home.deleteSync(recursive: true);
+  });
 
   test('coalesces repeated exit requests and runs cleanup once', () async {
     final closeCoreCompleter = Completer<void>();

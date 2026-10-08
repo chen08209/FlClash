@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:archive/archive.dart';
 import 'package:test/test.dart';
 
 import '../setup.dart' as setup;
@@ -70,6 +73,59 @@ hooks:
     test('downloads the appimagetool build matching the host', () {
       expect(setup.appImageToolArch('arm64'), 'aarch64');
       expect(setup.appImageToolArch('amd64'), 'x86_64');
+    });
+  });
+
+  group('portable zip packaging', () {
+    late Directory dir;
+
+    setUp(() {
+      dir = Directory.systemTemp.createTempSync('setup_zip_test');
+    });
+
+    tearDown(() {
+      if (dir.existsSync()) {
+        dir.deleteSync(recursive: true);
+      }
+    });
+
+    Future<String> writeZip(List<ArchiveFile> entries) async {
+      final zipPath = '${dir.path}/FlClash-windows-amd64.zip';
+      final archive = Archive();
+      for (final entry in entries) {
+        archive.addFile(entry);
+      }
+      await File(zipPath).writeAsBytes(ZipEncoder().encode(archive));
+      return zipPath;
+    }
+
+    Archive readZip(String zipPath) =>
+        ZipDecoder().decodeBytes(File(zipPath).readAsBytesSync());
+
+    test('injects a config directory into a windows zip', () async {
+      final zipPath = await writeZip([
+        ArchiveFile.bytes('FlClash.exe', [1, 2, 3]),
+      ]);
+
+      await setup.injectPortableDirectoryIntoZip(zipPath);
+
+      final archive = readZip(zipPath);
+      expect(archive.find('config/'), isNotNull);
+      expect(archive.find('FlClash.exe'), isNotNull);
+    });
+
+    test('leaves a zip that already carries the directory alone', () async {
+      final zipPath = await writeZip([
+        ArchiveFile.directory('config/'),
+        ArchiveFile.bytes('FlClash.exe', [1, 2, 3]),
+      ]);
+
+      await setup.injectPortableDirectoryIntoZip(zipPath);
+
+      expect(
+        readZip(zipPath).where((file) => file.name == 'config/').length,
+        1,
+      );
     });
   });
 }

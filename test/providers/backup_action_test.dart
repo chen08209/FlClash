@@ -33,6 +33,7 @@ void main() {
     await AppLocalizations.load(const Locale('en'));
     home = Directory.systemTemp.createTempSync('flclash-backup-action-');
     AppPath.supportDirectory = () async => home;
+    AppPath.executableDirectory = () => home.path;
     AppPath.temporaryDirectory = () async => home;
     AppPath.cacheDirectory = () async => home;
     AppPath.downloadDirectory = () async => home;

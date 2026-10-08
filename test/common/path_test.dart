@@ -178,4 +178,133 @@ void main() {
 
     await expectLater(appPath.ensureProviderDirs(9), completes);
   });
+
+  group('portable mode', () {
+    final savedExecutableDirectory = AppPath.executableDirectory;
+    final savedSupportDirectory = AppPath.supportDirectory;
+    final savedTemporaryDirectory = AppPath.temporaryDirectory;
+    final savedCacheDirectory = AppPath.cacheDirectory;
+
+    late Directory portableRoot;
+    late Directory appDir;
+    late Directory systemDir;
+
+    setUp(() {
+      portableRoot = Directory.systemTemp.createTempSync('portable_path_test');
+      appDir = Directory(join(portableRoot.path, 'app'))
+        ..createSync(recursive: true);
+      systemDir = Directory(join(portableRoot.path, 'system'))
+        ..createSync(recursive: true);
+      AppPath.executableDirectory = () => appDir.path;
+      AppPath.supportDirectory = () async => systemDir;
+      AppPath.temporaryDirectory = () async => portableRoot;
+      AppPath.cacheDirectory = () async => portableRoot;
+    });
+
+    tearDown(() {
+      AppPath.executableDirectory = savedExecutableDirectory;
+      AppPath.supportDirectory = savedSupportDirectory;
+      AppPath.temporaryDirectory = savedTemporaryDirectory;
+      AppPath.cacheDirectory = savedCacheDirectory;
+      if (portableRoot.existsSync()) {
+        portableRoot.deleteSync(recursive: true);
+      }
+    });
+
+    Directory createPortableDir() {
+      return Directory(join(appDir.path, portableDirectoryName))
+        ..createSync(recursive: true);
+    }
+
+    test('a config directory beside the executable is portable', () async {
+      final configDir = createPortableDir();
+      final path = AppPath.forTest();
+
+      expect(path.isPortable, isTrue);
+      expect(await path.homeDirPath, configDir.path);
+      expect(await path.databasePath, join(configDir.path, 'database.sqlite'));
+      expect(
+        await path.sharedPreferencesPath,
+        join(configDir.path, 'shared_preferences.json'),
+      );
+    });
+
+    test('without one it keeps the system data directory', () async {
+      final path = AppPath.forTest();
+
+      expect(path.isPortable, isFalse);
+      expect(await path.homeDirPath, systemDir.path);
+    });
+
+    test('the first run brings the installed data along', () async {
+      final configDir = createPortableDir();
+      File(join(systemDir.path, 'database.sqlite')).writeAsBytesSync([1, 2, 3]);
+      File(join(systemDir.path, 'database.sqlite-wal')).writeAsBytesSync([4]);
+      File(join(systemDir.path, 'config.yaml')).writeAsStringSync('mode: rule');
+      File(join(systemDir.path, 'shared_preferences.json')).writeAsStringSync(
+        '{"flutter.version":1}',
+      );
+      Directory(join(systemDir.path, 'profiles')).createSync();
+      File(join(systemDir.path, 'profiles', 'default.yaml')).writeAsStringSync(
+        'proxies: []',
+      );
+      Directory(join(systemDir.path, 'scripts')).createSync();
+      File(join(systemDir.path, 'scripts', 'patch.js')).writeAsStringSync('//');
+
+      final path = AppPath.forTest();
+      expect(path.isPortable, isTrue);
+      // The copy runs behind dataDir, so wait for the directory it resolves to.
+      await path.homeDirPath;
+
+      expect(
+        File(join(configDir.path, 'database.sqlite')).readAsBytesSync(),
+        [1, 2, 3],
+        reason: 'a legacy install that crashed still holds rows in its log',
+      );
+      expect(
+        File(join(configDir.path, 'database.sqlite-wal')).readAsBytesSync(),
+        [4],
+      );
+      expect(File(join(configDir.path, 'config.yaml')).existsSync(), isTrue);
+      expect(
+        File(join(configDir.path, 'shared_preferences.json')).existsSync(),
+        isTrue,
+      );
+      expect(
+        File(join(configDir.path, 'profiles', 'default.yaml')).existsSync(),
+        isTrue,
+      );
+      expect(
+        File(join(configDir.path, 'scripts', 'patch.js')).existsSync(),
+        isTrue,
+      );
+    });
+
+    test('a later run keeps what the folder already holds', () async {
+      final configDir = createPortableDir();
+      File(join(configDir.path, 'database.sqlite')).writeAsBytesSync([9, 9]);
+      File(join(systemDir.path, 'database.sqlite')).writeAsBytesSync([1, 2, 3]);
+
+      expect(AppPath.forTest().isPortable, isTrue);
+
+      expect(
+        File(join(configDir.path, 'database.sqlite')).readAsBytesSync(),
+        [9, 9],
+      );
+    });
+
+    test('an unusable system directory fails the path, not the app', () async {
+      createPortableDir();
+      AppPath.supportDirectory = () async => throw const FileSystemException(
+        'no support directory',
+      );
+
+      final path = AppPath.forTest();
+
+      // The directory beside the executable decides this on its own, so it
+      // never depends on the system one resolving.
+      expect(path.isPortable, isTrue);
+      await expectLater(path.homeDirPath, throwsA(isA<FileSystemException>()));
+    });
+  });
 }

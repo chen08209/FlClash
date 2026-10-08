@@ -59,6 +59,7 @@ void main() {
   setUpAll(() {
     home = Directory.systemTemp.createTempSync('flclash-providers-action-');
     AppPath.supportDirectory = () async => home;
+    AppPath.executableDirectory = () => home.path;
     AppPath.temporaryDirectory = () async => home;
     AppPath.cacheDirectory = () async => home;
     AppPath.downloadDirectory = () async => home;

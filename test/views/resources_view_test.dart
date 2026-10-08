@@ -23,10 +23,12 @@ void main() {
   final supportDirectory = AppPath.supportDirectory;
   final temporaryDirectory = AppPath.temporaryDirectory;
   final cacheDirectory = AppPath.cacheDirectory;
+  final executableDirectory = AppPath.executableDirectory;
 
   setUpAll(() async {
     home = Directory.systemTemp.createTempSync('flclash-resources-');
     AppPath.supportDirectory = () async => home;
+    AppPath.executableDirectory = () => home.path;
     AppPath.temporaryDirectory = () async => home;
     AppPath.cacheDirectory = () async => home;
     await appPath.homeDirPath;
@@ -34,6 +36,7 @@ void main() {
 
   tearDownAll(() {
     AppPath.supportDirectory = supportDirectory;
+    AppPath.executableDirectory = executableDirectory;
     AppPath.temporaryDirectory = temporaryDirectory;
     AppPath.cacheDirectory = cacheDirectory;
     if (home.existsSync()) home.deleteSync(recursive: true);

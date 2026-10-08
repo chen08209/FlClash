@@ -48,6 +48,7 @@ void main() {
     registerFallbackValue(0);
     home = Directory.systemTemp.createTempSync('flclash-store-');
     AppPath.supportDirectory = () async => home;
+    AppPath.executableDirectory = () => home.path;
     AppPath.temporaryDirectory = () async => home;
     AppPath.cacheDirectory = () async => home;
     AppPath.downloadDirectory = () async => home;

@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:fl_clash/common/path.dart';
 import 'package:fl_clash/manager/android_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -16,6 +18,30 @@ import '../helpers/test_profiles.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
+
+  final savedSupportDirectory = AppPath.supportDirectory;
+  final savedExecutableDirectory = AppPath.executableDirectory;
+  final savedTemporaryDirectory = AppPath.temporaryDirectory;
+  final savedCacheDirectory = AppPath.cacheDirectory;
+  late Directory home;
+
+  setUpAll(() {
+    home = Directory.systemTemp.createTempSync('flclash-android-manager-');
+    AppPath.supportDirectory = () async => home;
+    AppPath.executableDirectory = () => home.path;
+    // Constructing AppPath starts every directory lookup, and an unmocked one
+    // rejects after the test that built it has already finished.
+    AppPath.temporaryDirectory = () async => home;
+    AppPath.cacheDirectory = () async => home;
+  });
+
+  tearDownAll(() {
+    AppPath.supportDirectory = savedSupportDirectory;
+    AppPath.executableDirectory = savedExecutableDirectory;
+    AppPath.temporaryDirectory = savedTemporaryDirectory;
+    AppPath.cacheDirectory = savedCacheDirectory;
+    if (home.existsSync()) home.deleteSync(recursive: true);
+  });
 
   late ProviderContainer container;
   late SharedPreferences store;

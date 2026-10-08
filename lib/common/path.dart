@@ -7,6 +7,22 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
+const portableDirectoryName = 'config';
+
+/// The sqlite sidecars travel with the database: a legacy install that did not
+/// shut down cleanly still holds committed rows in its write-ahead log.
+const _migratedFiles = [
+  'shared_preferences.json',
+  'database.sqlite',
+  'database.sqlite-wal',
+  'database.sqlite-shm',
+  'config.yaml',
+];
+
+/// The Core's own `<home>/providers` rule cache is left behind: it is a cache,
+/// and the Core downloads every rule set again on the first portable run.
+const _migratedDirectories = [profilesDirectoryName, 'scripts'];
+
 class AppPath {
   static AppPath? _instance;
   Completer<Directory> dataDir = Completer();
@@ -14,6 +30,12 @@ class AppPath {
   Completer<Directory> tempDir = Completer();
   Completer<Directory> cacheDir = Completer();
   late String appDirPath;
+
+  /// Whether a `config` directory sits beside the executable. This is a single
+  /// stat rather than an awaited lookup because `Preferences` reads it while
+  /// picking its store, and a real filesystem round trip there would stall
+  /// every widget test, whose fake clock never advances one.
+  late final bool isPortable = _detectPortable();
 
   @visibleForTesting
   static Future<Directory> Function() supportDirectory =
@@ -31,17 +53,19 @@ class AppPath {
   static Future<Directory?> Function() downloadDirectory =
       getDownloadsDirectory;
 
+  @visibleForTesting
+  static String Function() executableDirectory =
+      () => dirname(Platform.resolvedExecutable);
+
   AppPath._internal() {
-    appDirPath = join(dirname(Platform.resolvedExecutable));
-    supportDirectory().then((value) {
-      dataDir.complete(value);
-    });
+    appDirPath = executableDirectory();
     temporaryDirectory().then((value) {
       tempDir.complete(value);
     });
     cacheDirectory().then((value) {
       cacheDir.complete(value);
     });
+    unawaited(_initDataDir());
   }
 
   factory AppPath() {
@@ -49,14 +73,120 @@ class AppPath {
     return _instance!;
   }
 
+  @visibleForTesting
+  factory AppPath.forTest() => AppPath._internal();
+
+  bool _detectPortable() {
+    return system.isDesktop &&
+        Directory(join(appDirPath, portableDirectoryName)).existsSync();
+  }
+
+  /// A `config` directory beside the executable makes the build portable, and
+  /// the Windows zip ships an empty one; the first run copies the data in.
+  ///
+  /// Nothing here may reject or leave [dataDir] pending: every path getter
+  /// awaits it, so a rejected [dataDir] would take the whole app down and a
+  /// pending one would hang it silently on the splash.
+  Future<void> _initDataDir() async {
+    final portableConfigDir = Directory(
+      join(appDirPath, portableDirectoryName),
+    );
+    if (isPortable) {
+      try {
+        final systemDir = await supportDirectory();
+        if (!equals(systemDir.path, portableConfigDir.path)) {
+          await _migrateSystemData(systemDir, portableConfigDir);
+        }
+        dataDir.complete(portableConfigDir);
+        return;
+      } catch (e) {
+        // Every copy below guards itself and only logs, so this is the one
+        // place a portable folder can be abandoned: losing its contents must
+        // never cost the user their settings.
+        commonPrint.log(
+          'Falling back to the system data directory: $e',
+          logLevel: LogLevel.warning,
+        );
+      }
+    }
+    try {
+      dataDir.complete(await supportDirectory());
+    } catch (e) {
+      commonPrint.log(
+        'Failed to resolve the application support directory: $e',
+        logLevel: LogLevel.warning,
+      );
+      dataDir.completeError(e, StackTrace.current);
+    }
+  }
+
+  Future<void> _migrateSystemData(Directory from, Directory to) async {
+    if (!await from.exists()) return;
+    for (final name in _migratedFiles) {
+      await _copyMissingFile(name, from, to);
+    }
+    for (final name in _migratedDirectories) {
+      await _copyMissingDirectory(name, from, to);
+    }
+  }
+
+  Future<void> _copyMissingFile(
+    String name,
+    Directory from,
+    Directory to,
+  ) async {
+    try {
+      final source = File(join(from.path, name));
+      if (!await source.exists()) return;
+      final target = File(join(to.path, name));
+      if (await target.exists()) return;
+      await source.safeCopy(target.path);
+    } catch (e) {
+      commonPrint.log(
+        'Failed to migrate $name into the portable directory: $e',
+        logLevel: LogLevel.warning,
+      );
+    }
+  }
+
+  Future<void> _copyMissingDirectory(
+    String name,
+    Directory from,
+    Directory to,
+  ) async {
+    try {
+      final source = Directory(join(from.path, name));
+      if (!await source.exists()) return;
+      final target = Directory(join(to.path, name));
+      if (await target.exists()) return;
+      await target.create(recursive: true);
+      await for (final entity in source.list(
+        recursive: true,
+        followLinks: false,
+      )) {
+        final destination = join(
+          target.path,
+          relative(entity.path, from: source.path),
+        );
+        if (entity is Directory) {
+          await Directory(destination).create(recursive: true);
+        } else if (entity is File) {
+          await entity.safeCopy(destination);
+        }
+      }
+    } catch (e) {
+      commonPrint.log(
+        'Failed to migrate the $name directory into the portable directory: $e',
+        logLevel: LogLevel.warning,
+      );
+    }
+  }
+
   String get executableExtension {
     return system.isWindows ? '.exe' : '';
   }
 
-  String get executableDirPath {
-    final currentExecutablePath = Platform.resolvedExecutable;
-    return dirname(currentExecutablePath);
-  }
+  String get executableDirPath => appDirPath;
 
   String get corePath {
     return join(executableDirPath, 'FlClashCore$executableExtension');

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:archive/archive.dart';
 import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
@@ -11,6 +12,9 @@ const _allTargets = <String, String>{
   'macos': 'dmg',
   'windows': 'exe,zip',
 };
+
+/// The entry `AppPath.portableDirectoryName` is shipped as.
+const _portableDirectoryEntry = 'config/';
 
 const _androidFlutterTarget = {
   'arm': 'android-arm',
@@ -221,7 +225,38 @@ Future<int> _package(
     stderr.write(utf8.decode(data));
   });
   final exitCode = await process.exitCode;
+  if (exitCode == 0 && platform == 'windows') {
+    await _injectPortableDirectory(rootDir);
+  }
   return exitCode;
+}
+
+Future<void> _injectPortableDirectory(String rootDir) async {
+  final distDir = Directory(p.join(rootDir, 'dist'));
+  if (!await distDir.exists()) return;
+  await for (final entity in distDir.list(recursive: true)) {
+    if (entity is! File || !entity.path.toLowerCase().endsWith('.zip')) {
+      continue;
+    }
+    try {
+      await injectPortableDirectoryIntoZip(entity.path);
+      stdout.writeln('Injected $_portableDirectoryEntry into ${entity.path}');
+    } catch (e) {
+      stderr.writeln('Failed to inject $_portableDirectoryEntry into ${entity.path}: $e');
+    }
+  }
+}
+
+Future<void> injectPortableDirectoryIntoZip(String zipPath) async {
+  final bytes = await File(zipPath).readAsBytes();
+  final archive = ZipDecoder().decodeBytes(bytes);
+  if (archive.find(_portableDirectoryEntry) != null) {
+    return;
+  }
+  archive.addFile(ArchiveFile.directory(_portableDirectoryEntry));
+  final tmp = File('$zipPath.tmp');
+  await tmp.writeAsBytes(ZipEncoder().encode(archive), flush: true);
+  await tmp.rename(zipPath);
 }
 
 String _detectArch() {
