@@ -244,8 +244,11 @@ class RenderGrid extends RenderBox
         childParentData,
         crossAxisCount,
       );
-      final childCrossAxisExtent =
-          stride * crossAxisCellCount - crossAxisSpacing;
+      final childCrossAxisExtent = _spannedExtent(
+        stride,
+        crossAxisCellCount,
+        crossAxisSpacing,
+      );
       final double childMainAxisExtent;
       if (childParentData.mainAxisCellCount == null) {
         final childConstraints = mainAxis == Axis.vertical
@@ -256,10 +259,11 @@ class RenderGrid extends RenderBox
             ? child.size.height
             : child.size.width;
       } else {
-        childMainAxisExtent =
-            (this.mainAxisExtent ?? stride) *
-                childParentData.mainAxisCellCount! -
-            mainAxisSpacing;
+        childMainAxisExtent = _spannedExtent(
+          this.mainAxisExtent ?? stride,
+          childParentData.mainAxisCellCount!,
+          mainAxisSpacing,
+        );
         final childSize = mainAxis == Axis.vertical
             ? Size(childCrossAxisExtent, childMainAxisExtent)
             : Size(childMainAxisExtent, childCrossAxisExtent);
@@ -313,8 +317,11 @@ class RenderGrid extends RenderBox
     if (mainAxis == Axis.vertical && textDirection == TextDirection.rtl) {
       for (int i = 0; i < children.length; i++) {
         final childParentData = _getParentData(children[i]);
-        final childCrossAxisExtent =
-            stride * crossAxisCellCounts[i] - crossAxisSpacing;
+        final childCrossAxisExtent = _spannedExtent(
+          stride,
+          crossAxisCellCounts[i],
+          crossAxisSpacing,
+        );
         final offset = childParentData.offset;
         childParentData.offset = Offset(
           crossAxisExtent - offset.dx - childCrossAxisExtent,
@@ -407,6 +414,10 @@ class GridGeometry {
     required this.slots,
     required this.mainAxisExtent,
   });
+}
+
+double _spannedExtent(double stride, num cellCount, double spacing) {
+  return math.max(0, stride * cellCount - spacing);
 }
 
 double gridStride({

@@ -1,4 +1,8 @@
+import 'dart:async';
+
+import 'package:fl_clash/common/navigator.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 /// Holds list refreshes while the page's route is pushed, popped, covered,
@@ -65,4 +69,38 @@ mixin RouteMotionHoldMixin<T extends StatefulWidget> on State<T> {
     _heldUpdate = null;
     update();
   }
+}
+
+/// Calls [didSettleRoute] once the route that brought the page in has settled.
+mixin RouteSettledMixin<T extends StatefulWidget> on State<T> {
+  var _settleScheduled = false;
+  var _routeSettled = false;
+
+  bool get routeSettled => _routeSettled;
+
+  @protected
+  void didSettleRoute();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_settleScheduled) {
+      return;
+    }
+    _settleScheduled = true;
+    unawaited(_settle());
+  }
+
+  Future<void> _settle() async {
+    await whenRouteSettled(context);
+    if (!mounted) {
+      return;
+    }
+    _routeSettled = true;
+    didSettleRoute();
+  }
+}
+
+ScrollCacheExtent? arrivalScrollCacheExtent(bool routeSettled) {
+  return routeSettled ? null : const ScrollCacheExtent.pixels(0);
 }

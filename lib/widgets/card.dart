@@ -61,9 +61,7 @@ class InfoHeader extends StatelessWidget {
                       info.label,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
+                      style: context.sectionHeaderStyle,
                     ),
                   ),
                 ),
@@ -73,7 +71,7 @@ class InfoHeader extends StatelessWidget {
           const SizedBox(width: 8),
           if (actions.isNotEmpty)
             SizedBox(
-              height: globalState.measure.titleSmallHeight + 16.ap,
+              height: globalState.measure.sectionHeaderHeight + 16.ap,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -106,9 +104,13 @@ class CommonCard extends StatelessWidget {
     this.isError = false,
     this.enterActionsOnRight = false,
     this.skipTraversal = false,
+    this.statesController,
+    this.inert = false,
     required this.child,
   }) : isSelected = isSelected ?? false;
 
+  /// Ignores presses in the enabled colors, so toggling it animates nothing.
+  final bool inert;
   final bool enterAnimated;
   final bool enterActionsOnRight;
   final bool skipTraversal;
@@ -124,6 +126,7 @@ class CommonCard extends StatelessWidget {
   final CommonCardType type;
   final double? radius;
   final OutlinedBorder? shape;
+  final WidgetStatesController? statesController;
 
   BorderSide _buildBorderSide(BuildContext context, Set<WidgetState> states) {
     final colorScheme = context.colorScheme;
@@ -210,7 +213,8 @@ class CommonCard extends StatelessWidget {
     return switch (type == CommonCardType.filled) {
       true => FilledButton(
         focusNode: focusNode,
-        onLongPress: onLongPress,
+        statesController: statesController,
+        onLongPress: inert ? null : onLongPress,
         clipBehavior: Clip.antiAlias,
         style:
             FilledButton.styleFrom(
@@ -219,6 +223,10 @@ class CommonCard extends StatelessWidget {
               iconSize: commonCardIconSize,
               iconColor: _buildIconColor(context),
               foregroundColor: _buildForegroundColor(context),
+              disabledIconColor: inert ? _buildIconColor(context) : null,
+              disabledForegroundColor: inert
+                  ? _buildForegroundColor(context)
+                  : null,
               side: BorderSide.none,
               elevation: 0,
             ).copyWith(
@@ -229,12 +237,13 @@ class CommonCard extends StatelessWidget {
                 (states) => _buildBorderSide(context, states),
               ),
             ),
-        onPressed: onPressed,
+        onPressed: inert ? null : onPressed,
         child: childWidget,
       ),
       false => OutlinedButton(
         focusNode: focusNode,
-        onLongPress: onLongPress,
+        statesController: statesController,
+        onLongPress: inert ? null : onLongPress,
         clipBehavior: Clip.antiAlias,
         style:
             OutlinedButton.styleFrom(
@@ -244,13 +253,20 @@ class CommonCard extends StatelessWidget {
               iconColor: _buildIconColor(context),
               backgroundColor: _buildBackgroundColor(context),
               foregroundColor: _buildForegroundColor(context),
+              disabledIconColor: inert ? _buildIconColor(context) : null,
+              disabledBackgroundColor: inert
+                  ? _buildBackgroundColor(context)
+                  : null,
+              disabledForegroundColor: inert
+                  ? _buildForegroundColor(context)
+                  : null,
               elevation: 0,
             ).copyWith(
               side: WidgetStateProperty.resolveWith(
                 (states) => _buildBorderSide(context, states),
               ),
             ),
-        onPressed: onPressed,
+        onPressed: inert ? null : onPressed,
         child: childWidget,
       ),
     };

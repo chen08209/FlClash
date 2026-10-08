@@ -1,6 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/widgets/inherited.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:fl_clash/widgets/search_field.dart';
@@ -52,6 +53,28 @@ void main() {
     expect(queries, ['wiki']);
     // The title survives searching, because nothing took the bar over.
     expect(find.text('title'), findsOneWidget);
+  });
+
+  testWidgets('a docked field leaves the close button at the trailing end', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      scaffold(
+        type: SheetType.bottomSheet,
+        body: const SizedBox(width: 600, height: 200),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final bar = find.byType(AppBar);
+    final close = find.descendant(
+      of: bar,
+      matching: find.byGlyph(AppGlyphs.close),
+    );
+    expect(close, findsOneWidget);
+    final rect = tester.getRect(bar);
+    expect(rect.width, 600);
+    expect(tester.getCenter(close).dx, greaterThan(rect.center.dx));
   });
 
   testWidgets('a page and a side sheet keep the bar button', (tester) async {
@@ -171,20 +194,43 @@ void main() {
     );
   });
 
-  testWidgets('a docked field stays above the keyboard', (tester) async {
-    tester.view.physicalSize = const Size(400, 900);
+  testWidgets('a fit sheet keeps its docked field above the keyboard', (
+    tester,
+  ) async {
+    const size = Size(400, 900);
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.reset);
 
-    await openModalSheet(tester);
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [viewSizeProvider.overrideWithBuild((_, _) => size)],
+        child: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSheet<void>(
+              context: context,
+              builder: (_) => CommonScaffold(
+                title: 'title',
+                searchState: AppBarSearchState(onSearch: queries.add),
+                body: const SizedBox(height: 200),
+              ),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
     expect(tester.getBottomLeft(find.byType(SearchField)).dy, lessThan(900));
 
     tester.view.viewInsets = const FakeViewPadding(bottom: 300);
-    addTearDown(tester.view.resetViewInsets);
     await tester.pumpAndSettle();
 
     expect(tester.getBottomLeft(find.byType(SearchField)).dy, lessThan(600));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
   });
 
   testWidgets('a snap sheet keeps its docked field above the keyboard', (

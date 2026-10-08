@@ -71,7 +71,6 @@ dependencies:
   super_sliver_list: ^0.4.1
   drift: ^2.35.1
   drift_flutter: ^0.3.1
-  navigator_resizable: ^3.1.0
   rust_api:
     path: plugins/rust_api
   setup:

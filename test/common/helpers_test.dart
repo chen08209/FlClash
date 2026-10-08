@@ -224,7 +224,7 @@ void main() {
     });
 
     test('scales with width', () {
-      expect(getProfilesColumns(240), 1);
+      expect(getProfilesColumns(300), 1);
       expect(getProfilesColumns(700), 2);
       expect(getProfilesColumns(960), 3);
     });
@@ -235,12 +235,12 @@ void main() {
     });
 
     test('spacing costs a column at the breakpoint', () {
-      expect(getProfilesColumns(480), 2);
-      expect(getProfilesColumns(480, spacing: 14), 1);
+      expect(getProfilesColumns(600), 2);
+      expect(getProfilesColumns(600, spacing: 14), 1);
     });
 
-    test('fits two padded cards near 600 dp', () {
-      expect(getProfilesColumns(568, spacing: 14), 2);
+    test('fits two padded cards, not three, near 900 dp', () {
+      expect(getProfilesColumns(868, spacing: 12), 2);
     });
 
     test('every card keeps at least the minimum width', () {

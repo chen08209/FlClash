@@ -156,7 +156,7 @@ class ConfigTextItem extends _ConfigItem<String> {
     return ListItem.input(
       leading: leading,
       title: Text(label),
-      subtitle: showValueAsSubtitle
+      subtitle: showValueAsSubtitle && value.isNotEmpty
           ? Text(value)
           : buildSubtitle(appLocalizations),
       dialogTitle: label,
@@ -208,9 +208,9 @@ class ConfigListEditItem extends _ConfigItem<List<String>> {
       subtitle:
           buildSubtitle(appLocalizations) ??
           Text(
-            value.isEmpty ? appLocalizations.none : value.join(', '),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            value.isEmpty
+                ? appLocalizations.none
+                : appLocalizations.itemsCount(value.length),
           ),
       widget: ListEditView(
         title: label,
