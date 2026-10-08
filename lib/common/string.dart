@@ -8,13 +8,25 @@ import 'package:fl_clash/enum/enum.dart';
 import 'dart:math';
 
 extension StringExtension on String {
-  bool get isUrl {
-    final uri = Uri.tryParse(this);
+  bool get isUrl => webUri != null;
+
+  Uri? get webUri {
+    final uri = Uri.tryParse(this) ?? _parseWithBareAtInUserInfo(this);
     return uri != null &&
-        (uri.scheme == 'http' ||
-            uri.scheme == 'https' ||
-            uri.scheme == 'ftp') &&
-        uri.host.isNotEmpty;
+            (uri.scheme == 'http' ||
+                uri.scheme == 'https' ||
+                uri.scheme == 'ftp') &&
+            uri.host.isNotEmpty
+        ? uri
+        : null;
+  }
+
+  bool get isShareLink {
+    final index = indexOf('://');
+    return index > 0 &&
+        length > index + 3 &&
+        !contains('\n') &&
+        shareLinkSchemes.contains(substring(0, index).toLowerCase());
   }
 
   dynamic get splitByMultipleSeparators {
@@ -80,7 +92,10 @@ extension StringExtension on String {
   }
 
   bool get isSvg {
-    return endsWith('.svg');
+    if (startsWith('data:')) {
+      return startsWith('data:image/svg+xml');
+    }
+    return (Uri.tryParse(this)?.path ?? this).toLowerCase().endsWith('.svg');
   }
 
   bool get isRegex {
@@ -130,6 +145,20 @@ extension StringExtension on String {
       orElse: () => '',
     );
   }
+}
+
+Uri? _parseWithBareAtInUserInfo(String url) {
+  final schemeEnd = url.indexOf('://');
+  if (schemeEnd == -1) return null;
+  final authorityStart = schemeEnd + 3;
+  final pathStart = url.indexOf(RegExp('[/?#]'), authorityStart);
+  final authorityEnd = pathStart == -1 ? url.length : pathStart;
+  final at = url.lastIndexOf('@', authorityEnd - 1);
+  if (at <= authorityStart) return null;
+  final userInfo = url.substring(authorityStart, at).replaceAll('@', '%40');
+  return Uri.tryParse(
+    '${url.substring(0, authorityStart)}$userInfo${url.substring(at)}',
+  );
 }
 
 final _labelCounter = RegExp(r'\((\d{1,9})\)$');

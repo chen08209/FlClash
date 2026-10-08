@@ -93,6 +93,29 @@ void main() {
       expect(urlProfile.type, ProfileType.url);
       expect(urlProfile.realAutoUpdate, true);
       expect(urlProfile.realLabel, 'Remote');
+      expect(urlProfile.copyWith(label: '').realLabel, 'example.com');
+    });
+
+    test('an unnamed profile falls back to its url host, then its id', () {
+      final profiles = [
+        const Profile(
+          id: 1,
+          label: 'example.com',
+          autoUpdateDuration: defaultUpdateDuration,
+        ),
+      ];
+      const remote = Profile(
+        id: 2,
+        type: ProfileType.url,
+        url: 'https://example.com:8443/api/subscribe?token=1',
+        autoUpdateDuration: defaultUpdateDuration,
+      );
+      const local = Profile(id: 3, autoUpdateDuration: defaultUpdateDuration);
+
+      expect(remote.defaultLabel, 'example.com');
+      expect(local.defaultLabel, '3');
+      expect(profiles.optimizeLabel(remote).label, 'example.com(1)');
+      expect(profiles.optimizeLabel(local).label, '3');
     });
   });
 

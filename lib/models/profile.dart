@@ -10,7 +10,8 @@ import 'clash_config.dart';
 part 'generated/profile.freezed.dart';
 part 'generated/profile.g.dart';
 
-typedef ValidateConfig = Future<String> Function(String path);
+typedef ValidateConfig =
+    Future<String> Function(String path, String ageSecretKey);
 
 @freezed
 abstract class SubscriptionInfo with _$SubscriptionInfo {
@@ -67,6 +68,7 @@ abstract class Profile with _$Profile {
     @Default('') String label,
     String? currentGroupName,
     @Default('') String url,
+    @Default('') String ageSecretKey,
     DateTime? lastUpdateDate,
     required Duration autoUpdateDuration,
     SubscriptionInfo? subscriptionInfo,
@@ -125,7 +127,7 @@ extension ProfilesExt on List<Profile> {
     return profile.copyWith(
       label: uniqueLabelFor(
         profile.label,
-        fallback: profile.id.toString(),
+        fallback: profile.defaultLabel,
         taken: (label) =>
             any((item) => item.label == label && item.id != profile.id),
       ),
@@ -136,7 +138,9 @@ extension ProfilesExt on List<Profile> {
 extension ProfileExtension on Profile {
   bool get realAutoUpdate => type == ProfileType.url && autoUpdate;
 
-  String get realLabel => label.takeFirstValid([id.toString()]);
+  String get realLabel => label.takeFirstValid([defaultLabel]);
+
+  String get defaultLabel => url.webUri?.host ?? id.toString();
 
   String get fileName => '$id.yaml';
 
@@ -176,7 +180,7 @@ extension ProfileExtension on Profile {
     return copyWith(
       label: label.takeFirstValid([
         getFileNameForDisposition(disposition),
-        id.toString(),
+        defaultLabel,
       ]),
       subscriptionInfo: SubscriptionInfo.formHString(userinfo),
     ).saveFile(
@@ -192,7 +196,7 @@ extension ProfileExtension on Profile {
     final path = await appPath.tempFilePath;
     final tempFile = File(path);
     await tempFile.safeWriteAsBytes(bytes);
-    final message = await validate(path);
+    final message = await validate(path, ageSecretKey);
     if (message.isNotEmpty) {
       throw MessageException(message);
     }

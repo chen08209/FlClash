@@ -155,7 +155,7 @@ void main() {
 
     test('putScript re-applies only a current profile running that script', () {
       final profile = Profile.normal().copyWith(
-        overwriteType: OverwriteType.script,
+        extendType: ExtendType.script,
         scriptId: 1,
       );
       final setupAction = _ApplyRecordingSetupAction();
@@ -174,7 +174,7 @@ void main() {
 
       container
           .read(profilesProvider.notifier)
-          .put(profile.copyWith(overwriteType: OverwriteType.standard));
+          .put(profile.copyWith(extendType: ExtendType.standard));
       action.putScript(script(1));
       expect(setupAction.applyCount, 1);
     });
@@ -183,7 +183,7 @@ void main() {
       'updateScript releases the updating key when the download fails',
       () async {
         final profile = Profile.normal().copyWith(
-          overwriteType: OverwriteType.script,
+          extendType: ExtendType.script,
           scriptId: 1,
         );
         final setupAction = _ApplyRecordingSetupAction();

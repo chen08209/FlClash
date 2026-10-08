@@ -55,11 +55,38 @@ ColorScheme genColorScheme(
   } else {
     seedColor = color ?? Color(themeSetting.primaryColor!);
   }
-  return ColorScheme.fromSeed(
-    seedColor: seedColor,
-    brightness: brightness,
-    dynamicSchemeVariant: themeSetting.schemeVariant,
-  ).toPureBlack(pureBlack ?? themeSetting.pureBlack);
+  return _cachedColorScheme(
+    seedColor,
+    brightness,
+    themeSetting.schemeVariant,
+    pureBlack ?? themeSetting.pureBlack,
+  );
+}
+
+const _maxCachedColorSchemes = 64;
+
+final _colorSchemes =
+    <(Color, Brightness, DynamicSchemeVariant, bool), ColorScheme>{};
+
+ColorScheme _cachedColorScheme(
+  Color seedColor,
+  Brightness brightness,
+  DynamicSchemeVariant variant,
+  bool pureBlack,
+) {
+  final key = (seedColor, brightness, variant, pureBlack);
+  final colorScheme =
+      _colorSchemes.remove(key) ??
+      ColorScheme.fromSeed(
+        seedColor: seedColor,
+        brightness: brightness,
+        dynamicSchemeVariant: variant,
+      ).toPureBlack(pureBlack);
+  _colorSchemes[key] = colorScheme;
+  if (_colorSchemes.length > _maxCachedColorSchemes) {
+    _colorSchemes.remove(_colorSchemes.keys.first);
+  }
+  return colorScheme;
 }
 
 typedef WindowBlurRequest = ({bool enabled, Brightness brightness, Color tint});

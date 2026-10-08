@@ -60,6 +60,64 @@ void main() {
     });
   });
 
+  group('parseUrlInput', () {
+    bool isHttp(String url) => url.startsWith('https://');
+
+    test('splits on lines and any whitespace, stripping YAML markup', () {
+      final parsed = parseUrlInput(
+        "https://a.com/x?q=1,2  https://b.com\r\n\n- 'https://c.com'\n",
+        isValid: isHttp,
+      );
+
+      expect(parsed.entries, [
+        'https://a.com/x?q=1,2',
+        'https://b.com',
+        'https://c.com',
+      ]);
+      expect(parsed.isValid, isTrue);
+    });
+
+    test('keeps a share link line whole', () {
+      final parsed = parseUrlInput(
+        'trojan://pass@example.com:443#Hong Kong 01\nhttps://a.com https://b.com',
+        isValid: (_) => true,
+      );
+
+      expect(parsed.entries, [
+        'trojan://pass@example.com:443#Hong Kong 01',
+        'https://a.com',
+        'https://b.com',
+      ]);
+    });
+
+    test('merges duplicates and skips existing urls', () {
+      final parsed = parseUrlInput(
+        'https://a.com\nhttps://b.com\nhttps://a.com\nhttps://c.com',
+        isValid: isHttp,
+        existing: {'https://b.com'},
+      );
+
+      expect(parsed.entries, ['https://a.com', 'https://c.com']);
+      expect(parsed.skippedExisting, 1);
+    });
+
+    test('reports invalid urls with their line', () {
+      final parsed = parseUrlInput(
+        'https://a.com\nftp://b.com https://c.com',
+        isValid: isHttp,
+      );
+
+      expect(parsed.entries, ['https://a.com', 'https://c.com']);
+      expect(parsed.issues, [
+        const InputIssue(
+          line: 2,
+          raw: 'ftp://b.com',
+          kind: InputIssueKind.invalidUrl,
+        ),
+      ]);
+    });
+  });
+
   group('parseMapInput', () {
     test('splits on the first whitespace and keeps colons', () {
       final parsed = parseMapInput(

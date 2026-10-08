@@ -1,6 +1,8 @@
 import 'package:fl_clash/enum/enum.dart';
 
-enum InputIssueKind { keyTooLong, valueTooLong, missingValue }
+import 'string.dart';
+
+enum InputIssueKind { keyTooLong, valueTooLong, missingValue, invalidUrl }
 
 class InputIssue {
   final int line;
@@ -40,6 +42,7 @@ class ParsedInput<T> {
 final _lineSeparator = RegExp(r'\r?\n');
 final _listSeparator = RegExp(r'[,，]');
 final _whitespace = RegExp(r'\s');
+final _whitespaces = RegExp(r'\s+');
 final _ruleTypes = {for (final action in RuleAction.values) action.value};
 
 /// fake-ip-filter in rule mode takes whole rules such as
@@ -110,6 +113,51 @@ ParsedInput<String> parseListInput(
         continue;
       }
       entries.add(value);
+    }
+  }
+  return ParsedInput(
+    entries: entries,
+    skippedExisting: skippedExisting,
+    issues: issues,
+  );
+}
+
+/// A url never carries whitespace, so any run of it separates two.
+ParsedInput<String> parseUrlInput(
+  String text, {
+  required bool Function(String url) isValid,
+  Set<String> existing = const {},
+}) {
+  final entries = <String>[];
+  final issues = <InputIssue>[];
+  final seen = <String>{};
+  var skippedExisting = 0;
+  final lines = text.split(_lineSeparator);
+  for (var index = 0; index < lines.length; index++) {
+    final line = _stripLineMarkup(lines[index]);
+    for (final raw in line.isShareLink ? [line] : line.split(_whitespaces)) {
+      final url = _unquote(raw);
+      if (url.isEmpty) {
+        continue;
+      }
+      if (!isValid(url)) {
+        issues.add(
+          InputIssue(
+            line: index + 1,
+            raw: url,
+            kind: InputIssueKind.invalidUrl,
+          ),
+        );
+        continue;
+      }
+      if (!seen.add(url)) {
+        continue;
+      }
+      if (existing.contains(url)) {
+        skippedExisting++;
+        continue;
+      }
+      entries.add(url);
     }
   }
   return ParsedInput(

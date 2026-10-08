@@ -558,12 +558,14 @@ extension TunExt on Tun {
     if (bypassPrivateRoute) ...privateRouteAddress,
   ];
 
-  List<String> vpnRouteAddress({required bool bypassPrivateRoute}) {
+  Future<List<String>> vpnRouteAddress({
+    required bool bypassPrivateRoute,
+  }) async {
     final excluded = excludedRoutes(bypassPrivateRoute: bypassPrivateRoute);
     if (routeAddress.isEmpty && excluded.isEmpty) {
       return const [];
     }
-    return subtractCidrs(routeAddress, excluded, wholeWhenEmpty: true);
+    return subtractCidrsTask(routeAddress, excluded, wholeWhenEmpty: true);
   }
 
   Tun getRealTun({required bool bypassPrivateRoute}) => copyWith(

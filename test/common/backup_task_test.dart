@@ -148,8 +148,7 @@ void main() {
 
     test('reports a provider cache file no row names any more', () {
       final cache = makeDir('provider_cache');
-      writeFile(join(cache.path, 'proxies', 'live'), 'keep');
-      writeFile(join(cache.path, 'proxies', 'gone'), 'drop');
+      writeFile(join(cache.path, 'rules', 'live'), 'keep');
       writeFile(join(cache.path, 'rules', 'stale'), 'drop');
 
       final orphans = shakeOrphanFiles(
@@ -162,13 +161,7 @@ void main() {
         scriptsDirPath: join(root.path, 'missing'),
       );
 
-      expect(
-        orphans,
-        unorderedEquals([
-          join(cache.path, 'proxies', 'gone'),
-          join(cache.path, 'rules', 'stale'),
-        ]),
-      );
+      expect(orphans, [join(cache.path, 'rules', 'stale')]);
     });
 
     test('ignores directories that do not exist', () {
@@ -310,14 +303,13 @@ void main() {
       final profile = data.profiles.single;
       final rule = data.rules.single;
       expect(rule.content, 'example.com');
-      final link = data.links.single;
-      expect(link.profileId, profile.id);
-      expect(link.ruleId, rule.id);
-      expect(link.scene, RuleScene.added);
+      expect(rule.profileId, profile.id);
+      expect(profile.type, ProfileType.file);
+      expect(data.disabledRules, isEmpty);
     });
 
     test(
-      'keeps a disabled link only for a rule id it has already seen',
+      'keeps a disabled rule only for a rule id it has already seen',
       () async {
         writeFile(join(source.path, 'profiles', 'p1.yaml'), '');
 
@@ -343,13 +335,34 @@ void main() {
           targetPath: target.path,
         );
 
-        final disabled = data.links
-            .where((link) => link.scene == RuleScene.disabled)
-            .toList();
-        expect(disabled, hasLength(1));
-        expect(disabled.single.ruleId, data.rules.single.id);
+        expect(data.disabledRules, [
+          DisabledRule(
+            profileId: data.profiles.single.id,
+            ruleId: data.rules.single.id,
+          ),
+        ]);
       },
     );
+
+    test('gives a profile with a url the url type', () async {
+      writeFile(join(source.path, 'profiles', 'p1.yaml'), '');
+
+      final data = await migrateLegacyConfig(
+        configMap: legacyConfig(
+          profiles: [
+            {
+              'id': 'p1',
+              'url': 'https://example.com/sub',
+              'autoUpdateDuration': 0,
+            },
+          ],
+        ),
+        sourcePath: source.path,
+        targetPath: target.path,
+      );
+
+      expect(data.profiles.single.type, ProfileType.url);
+    });
 
     test('points the profile at its remapped script id', () async {
       writeFile(join(source.path, 'profiles', 'p1.yaml'), '');
@@ -375,7 +388,27 @@ void main() {
       );
 
       expect(data.profiles.single.scriptId, data.scripts.single.id);
-      expect(data.profiles.single.overwriteType, OverwriteType.script);
+      expect(data.profiles.single.extendType, ExtendType.script);
+    });
+
+    test('falls a custom overwrite back to a standard one', () async {
+      writeFile(join(source.path, 'profiles', 'p1.yaml'), '');
+
+      final data = await migrateLegacyConfig(
+        configMap: legacyConfig(
+          profiles: [
+            {
+              'id': 'p1',
+              'autoUpdateDuration': 0,
+              'overwrite': {'type': 'custom'},
+            },
+          ],
+        ),
+        sourcePath: source.path,
+        targetPath: target.path,
+      );
+
+      expect(data.profiles.single.extendType, ExtendType.standard);
     });
 
     test('remaps currentProfileId and nulls it when there is none', () async {
@@ -449,7 +482,6 @@ void main() {
   group('backup and restore', () {
     const localProvider = ClashProvider(
       id: 4,
-      kind: ProviderKind.rule,
       label: 'Local rules',
       behavior: RuleProviderBehavior.classical,
       format: RuleProviderFormat.yaml,
@@ -476,9 +508,9 @@ void main() {
       await database.scriptsDao.setAll([
         Script(id: 2, label: 'Script', lastUpdateTime: DateTime(2026)),
       ]);
-      await database.rulesDao.putProfileAddedRule(
-        1,
+      await database.rulesDao.putRule(
         const Rule(id: 3, content: 'example.com', order: 'a'),
+        profileId: 1,
       );
       await database.clashProvidersDao.putAll([localProvider.toCompanion()]);
       await database.close();
@@ -566,7 +598,7 @@ void main() {
       expect(data.profiles.single.label, 'Backed up');
       expect(data.scripts.single.label, 'Script');
       expect(data.rules.single.content, 'example.com');
-      expect(data.links.single.ruleId, 3);
+      expect(data.rules.single.profileId, 1);
       expect(data.clashProviders.single.label, 'Local rules');
       expect(data.configMap?['version'], 1);
       expect(

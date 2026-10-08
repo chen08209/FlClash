@@ -122,8 +122,7 @@ Future<({String yaml, String md5})> _makeRealProfileTask(
   final realPatchConfig = data.realPatchConfig;
   final profilesPath = data.profilesPath;
   final profileId = data.profileId;
-  final overrideDns = data.overrideDns;
-  final overrideNtp = data.overrideNtp;
+  final overrides = data.overrides;
   final addedRules = data.addedRules;
   final appendSystemDns = data.appendSystemDns;
   final defaultUA = data.defaultUA;
@@ -198,6 +197,9 @@ Future<({String yaml, String md5})> _makeRealProfileTask(
   rawConfig['port'] = 0;
   rawConfig['socks-port'] = 0;
   rawConfig['keep-alive-interval'] = realPatchConfig.keepAliveInterval;
+  rawConfig['keep-alive-idle'] = realPatchConfig.keepAliveIdle;
+  rawConfig['disable-keep-alive'] = realPatchConfig.disableKeepAlive;
+  rawConfig['routing-mark'] = realPatchConfig.routingMark;
   rawConfig['mixed-port'] = realPatchConfig.mixedPort;
   rawConfig['port'] = realPatchConfig.port;
   rawConfig['socks-port'] = realPatchConfig.socksPort;
@@ -210,18 +212,25 @@ Future<({String yaml, String md5})> _makeRealProfileTask(
   rawConfig['authentication'] = data.authentication;
   rawConfig['skip-auth-prefixes'] = [];
   rawConfig['mode'] = realPatchConfig.mode.name;
-  if (rawConfig['tun'] == null) {
-    rawConfig['tun'] = {};
-  }
-  rawConfig['tun']['enable'] = realPatchConfig.tun.enable;
-  rawConfig['tun']['device'] = realPatchConfig.tun.device;
-  rawConfig['tun']['dns-hijack'] = realPatchConfig.tun.dnsHijack;
-  rawConfig['tun']['stack'] = realPatchConfig.tun.stack.name;
-  rawConfig['tun']['route-address'] = realPatchConfig.tun.routeAddress;
-  rawConfig['tun']['auto-route'] = realPatchConfig.tun.autoRoute;
+  rawConfig['tun'] = {
+    if (rawConfig['tun'] is Map) ...rawConfig['tun'] as Map,
+    ...overrides.tun.overrideJson(overrides.tunOverrideKeys),
+    ...realPatchConfig.tun.toJson(),
+  };
   rawConfig['geodata-loader'] = realPatchConfig.geodataLoader.name;
   rawConfig['geo-auto-update'] = realPatchConfig.geoAutoUpdate;
   rawConfig['geo-update-interval'] = realPatchConfig.geoUpdateInterval;
+  final snifferOverride = overrides.sniffer.overrideJson(
+    overrides.snifferOverrideKeys,
+  );
+  if (snifferOverride.isNotEmpty) {
+    rawConfig['sniffer'] = mergeSnifferOverride(
+      rawConfig['sniffer'] is Map
+          ? Map<String, dynamic>.from(rawConfig['sniffer'] as Map)
+          : <String, dynamic>{},
+      snifferOverride,
+    );
+  }
   if (rawConfig['sniffer']?['sniff'] != null) {
     for (final value in (rawConfig['sniffer']?['sniff'] as Map).values) {
       if (value['ports'] != null && value['ports'] is List) {
@@ -268,24 +277,20 @@ Future<({String yaml, String md5})> _makeRealProfileTask(
   if (!isEnableDns) {
     rawDns = mergeDnsOverride(
       rawDns,
-      defaultDns.overrideJson(baselineDnsOverrideKeys),
+      baselineDns.overrideJson(baselineDnsOverrideKeys),
     );
   }
-  if (overrideDns || !isEnableDns) {
-    rawDns = mergeDnsOverride(
-      rawDns,
-      realPatchConfig.dns.overrideJson(realPatchConfig.dnsOverrideKeys),
-    );
-  }
+  rawDns = mergeDnsOverride(
+    rawDns,
+    overrides.dns.overrideJson(overrides.dnsOverrideKeys),
+  );
   rawConfig['dns'] = rawDns;
-  if (overrideNtp) {
+  final ntpOverride = overrides.ntp.overrideJson(overrides.ntpOverrideKeys);
+  if (ntpOverride.isNotEmpty) {
     final rawNtp = rawConfig['ntp'] is Map
         ? Map<String, dynamic>.from(rawConfig['ntp'] as Map)
         : <String, dynamic>{};
-    rawConfig['ntp'] = {
-      ...rawNtp,
-      ...realPatchConfig.ntp.overrideJson(realPatchConfig.ntpOverrideKeys),
-    };
+    rawConfig['ntp'] = {...rawNtp, ...ntpOverride};
   }
   if (appendSystemDns) {
     final List<String> nameserver = List<String>.from(
@@ -358,9 +363,6 @@ Future<({String yaml, String md5})> _makeRealProfileTask(
     }
   } else {
     rules = data.rules.map((item) => item.rawValue).toList();
-  }
-  if (data.proxies.isNotEmpty) {
-    rawConfig['proxies'] = data.proxies.map((item) => item.definition).toList();
   }
   if (data.proxyGroups.isNotEmpty) {
     rawConfig['proxy-groups'] = data.proxyGroups
@@ -440,13 +442,10 @@ List<String> shakeOrphanFiles({
     isLiveId(profileIds),
     includeDirectories: true,
   );
-  final cacheNames = providerFileNames.toSet();
-  for (final kind in ProviderKind.values) {
-    scanDirectory(
-      Directory(join(providerCacheDirPath, providerCacheDirectoryName(kind))),
-      cacheNames.contains,
-    );
-  }
+  scanDirectory(
+    Directory(join(providerCacheDirPath, rulesProviderDirectoryName)),
+    providerFileNames.toSet().contains,
+  );
   scanDirectory(Directory(scriptsDirPath), isLiveId(scriptIds));
   return targets;
 }
@@ -547,13 +546,12 @@ Future<MigrationData> migrateLegacyConfig({
   }
   final List rawRules = configMap['rules'] as List<dynamic>? ?? [];
   final List<Rule> rules = [];
-  final List<ProfileRuleLink> links = [];
+  final List<DisabledRule> disabledRules = [];
   for (final rawRule in rawRules) {
     final id = idMap.updateCacheValue(rawRule['id'], () => snowflake.id);
     rawRule['id'] = id;
     final value = rawRule['value'] ?? '';
     rules.add(Rule.parse(value, id: id));
-    links.add(ProfileRuleLink(ruleId: id));
   }
   final List rawProfiles = configMap['profiles'] as List<dynamic>? ?? [];
   final List<Profile> profiles = [];
@@ -572,26 +570,15 @@ Future<MigrationData> migrateLegacyConfig({
         for (final addRule in addedRules) {
           final id = idMap.updateCacheValue(addRule['id'], () => snowflake.id);
           final value = addRule['value'] ?? '';
-          rules.add(Rule.parse(value, id: id));
-          links.add(
-            ProfileRuleLink(
-              profileId: profileId,
-              ruleId: id,
-              scene: RuleScene.added,
-            ),
-          );
+          rules.add(Rule.parse(value, id: id).copyWith(profileId: profileId));
         }
         final disabledRuleIds = standardOverwrite['disabledRuleIds'] as List?;
         if (disabledRuleIds != null) {
           for (final disabledRuleId in disabledRuleIds) {
             final newDisabledRuleId = idMap[disabledRuleId];
             if (newDisabledRuleId != null) {
-              links.add(
-                ProfileRuleLink(
-                  profileId: profileId,
-                  ruleId: newDisabledRuleId,
-                  scene: RuleScene.disabled,
-                ),
+              disabledRules.add(
+                DisabledRule(profileId: profileId, ruleId: newDisabledRuleId),
               );
             }
           }
@@ -602,8 +589,12 @@ Future<MigrationData> migrateLegacyConfig({
         final scriptId = scriptOverwrite['scriptId'] as String?;
         rawProfile['scriptId'] = scriptId != null ? idMap[scriptId] : null;
       }
-      rawProfile['overwriteType'] = overwrite['type'];
+      rawProfile['extendType'] = overwrite['type'] == ExtendType.script.name
+          ? ExtendType.script.name
+          : ExtendType.standard.name;
     }
+    final rawUrl = rawProfile['url'];
+    rawProfile['type'] = rawUrl is String && rawUrl.isNotEmpty ? 'url' : 'file';
 
     final sourceFile = File(
       BackupEntries.resolve(sourcePath, BackupEntries.profile(rawId)),
@@ -624,7 +615,7 @@ Future<MigrationData> migrateLegacyConfig({
     profiles: profiles,
     rules: rules,
     scripts: scripts,
-    links: links,
+    disabledRules: disabledRules,
   );
 }
 

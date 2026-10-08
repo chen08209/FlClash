@@ -20,15 +20,18 @@ class _VpnContainerState extends ConsumerState<VpnManager> {
   @override
   void initState() {
     super.initState();
-    ref.listenManual(vpnOptionsProvider.select((state) => state.effective), (
-      prev,
-      next,
-    ) {
-      final running = ref.read(runningVpnOptionsProvider)?.effective;
-      if (prev != next && running != null && running != next) {
-        _showRestartTip();
-      }
-    });
+    ref.listenManual(
+      vpnOptionsProvider.select((state) => state.value?.effective),
+      (prev, next) {
+        final running = ref.read(runningVpnOptionsProvider)?.effective;
+        if (next != null &&
+            prev != next &&
+            running != null &&
+            running != next) {
+          _showRestartTip();
+        }
+      },
+    );
   }
 
   void _showRestartTip() {

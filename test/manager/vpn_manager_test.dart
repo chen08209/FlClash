@@ -57,6 +57,11 @@ void main() {
     await tester.pump();
   }
 
+  Future<void> settle(WidgetTester tester) async {
+    await tester.pump();
+    await tester.pump();
+  }
+
   Future<void> outlastTip(WidgetTester tester) async {
     await tester.pump(const Duration(seconds: 7));
     await tester.pump(const Duration(milliseconds: 500));
@@ -68,9 +73,9 @@ void main() {
   }
 
   void startService() {
-    container.read(runningVpnOptionsProvider.notifier).value = container.read(
-      vpnOptionsProvider,
-    );
+    container.read(runningVpnOptionsProvider.notifier).value = container
+        .read(vpnOptionsProvider)
+        .requireValue;
   }
 
   void updateVpn(VpnProps Function(VpnProps state) update) {
@@ -86,7 +91,7 @@ void main() {
     startService();
 
     updateVpn((state) => state.copyWith(ipv6: !state.ipv6));
-    await tester.pump();
+    await settle(tester);
     expect(tip(), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 500));
@@ -105,8 +110,35 @@ void main() {
     container
         .read(patchClashConfigProvider.notifier)
         .update((state) => state.copyWith(mixedPort: state.mixedPort + 1));
-    await tester.pump();
+    await settle(tester);
 
+    expect(tip(), findsOneWidget);
+    await drainTimers(tester);
+  });
+
+  testWidgets('a route change asks once its routes are computed', (
+    tester,
+  ) async {
+    await pumpVpnManager(tester);
+    startService();
+
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update(
+          (state) => state.copyWith(
+            tun: state.tun.copyWith(routeAddress: const ['10.0.0.0/8']),
+          ),
+        );
+    await tester.pump();
+    expect(container.read(vpnOptionsProvider).isLoading, isTrue);
+    expect(tip(), findsNothing);
+
+    for (var i = 0; i < 100 && tip().evaluate().isEmpty; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pump();
+    }
     expect(tip(), findsOneWidget);
     await drainTimers(tester);
   });
@@ -115,7 +147,7 @@ void main() {
     await pumpVpnManager(tester);
 
     updateVpn((state) => state.copyWith(ipv6: !state.ipv6));
-    await tester.pump();
+    await settle(tester);
 
     expect(tip(), findsNothing);
     await drainTimers(tester);
@@ -133,7 +165,7 @@ void main() {
         ),
       ),
     );
-    await tester.pump();
+    await settle(tester);
 
     expect(tip(), findsNothing);
     await drainTimers(tester);
@@ -146,13 +178,13 @@ void main() {
     startService();
 
     updateVpn((state) => state.copyWith(ipv6: !state.ipv6));
-    await tester.pump();
+    await settle(tester);
     expect(tip(), findsOneWidget);
     await outlastTip(tester);
     expect(tip(), findsNothing);
 
     updateVpn((state) => state.copyWith(ipv6: !state.ipv6));
-    await tester.pump();
+    await settle(tester);
 
     expect(tip(), findsNothing);
     await drainTimers(tester);
@@ -164,13 +196,13 @@ void main() {
     await pumpVpnManager(tester);
     startService();
     updateVpn((state) => state.copyWith(ipv6: !state.ipv6));
-    await tester.pump();
+    await settle(tester);
     await outlastTip(tester);
     expect(tip(), findsNothing);
 
     startService();
     updateVpn((state) => state.copyWith(ipv6: !state.ipv6));
-    await tester.pump();
+    await settle(tester);
 
     expect(tip(), findsOneWidget);
     await drainTimers(tester);

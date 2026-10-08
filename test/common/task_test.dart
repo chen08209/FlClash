@@ -23,6 +23,26 @@ void main() {
     expect(await encodeMD5Task('abc'), '900150983cd24fb0d6963f7d28e17f72');
   });
 
+  test('a proxy name holding control characters stays readable YAML', () {
+    const name = 'HK \x1b[31m\x00\x7f\r ';
+    final encoded = yaml.encode({
+      'proxies': [
+        {'name': name},
+      ],
+      'proxy-groups': [
+        {
+          'name': 'G',
+          'proxies': [name],
+        },
+      ],
+    });
+
+    expect(encoded, isNot(contains('\x1b')));
+    final config = loadYaml(encoded) as YamlMap;
+    expect(config['proxies'].first['name'], name);
+    expect(config['proxy-groups'].first['proxies'], [name]);
+  });
+
   test('toGroupsTask converts, selects, and sorts core proxy data', () async {
     final proxies = <String, dynamic>{
       'Selector': {
@@ -191,8 +211,6 @@ void main() {
             ipv6: true,
             hosts: {'router.local': '192.168.1.1,192.168.1.2'},
           ),
-          overrideDns: false,
-          overrideNtp: false,
           appendSystemDns: true,
           proxyGroups: const [],
           rules: const [],
@@ -249,8 +267,6 @@ void main() {
         profileId: 7,
         rawConfig: rawConfig,
         realPatchConfig: const PatchClashConfig(),
-        overrideDns: false,
-        overrideNtp: false,
         appendSystemDns: false,
         proxyGroups: const [],
         rules: const [],
@@ -303,8 +319,6 @@ void main() {
             geoAutoUpdate: false,
             geoUpdateInterval: 48,
           ),
-          overrideDns: false,
-          overrideNtp: false,
           appendSystemDns: false,
           proxyGroups: const [],
           rules: const [],
@@ -332,8 +346,6 @@ void main() {
       profileId: 12,
       rawConfig: rawConfig,
       realPatchConfig: const PatchClashConfig(),
-      overrideDns: false,
-      overrideNtp: false,
       appendSystemDns: false,
       proxyGroups: const [],
       rules: const [],
@@ -362,15 +374,7 @@ void main() {
         profileId: 9,
         rawConfig: {},
         realPatchConfig: PatchClashConfig(),
-        overrideDns: true,
-        overrideNtp: false,
         appendSystemDns: false,
-        proxies: [
-          CustomProxy(
-            id: 2,
-            definition: {'name': 'Node', 'type': 'socks5', 'port': 1080},
-          ),
-        ],
         proxyGroups: [
           ProxyGroup(
             id: 1,
@@ -394,9 +398,6 @@ void main() {
 
     expect(config['dns']['enable'], true);
     expect(config['dns']['nameserver'], isNot(contains('system://')));
-    expect(config['proxies'], [
-      {'name': 'Node', 'type': 'socks5', 'port': 1080},
-    ]);
     expect(config['proxy-groups'], hasLength(1));
     expect(config['proxy-groups'][0].keys, ['name', 'type', 'proxies']);
     expect(config['proxy-groups'][0]['type'], 'select');
@@ -427,8 +428,6 @@ void main() {
         profileId: 13,
         rawConfig: rawConfig,
         realPatchConfig: const PatchClashConfig(),
-        overrideDns: false,
-        overrideNtp: false,
         appendSystemDns: false,
         proxyGroups: const [],
         rules: const [],
@@ -460,8 +459,6 @@ void main() {
             'ntp': {'enable': true, 'write-to-system': true},
           },
           realPatchConfig: const PatchClashConfig(),
-          overrideDns: false,
-          overrideNtp: false,
           appendSystemDns: false,
           proxyGroups: const [],
           rules: const [],
@@ -499,8 +496,6 @@ void main() {
               'external-controller-pipe': r'\\.\pipe\mihomo',
             },
             realPatchConfig: const PatchClashConfig(),
-            overrideDns: false,
-            overrideNtp: false,
             appendSystemDns: false,
             proxyGroups: const [],
             rules: const [],
@@ -530,8 +525,6 @@ void main() {
             profileId: 14,
             rawConfig: {'secret': 'from-the-profile'},
             realPatchConfig: realPatchConfig,
-            overrideDns: false,
-            overrideNtp: false,
             appendSystemDns: false,
             proxyGroups: const [],
             rules: const [],
@@ -685,8 +678,6 @@ void main() {
           profileId: 13,
           rawConfig: rawConfig,
           realPatchConfig: realPatchConfig,
-          overrideDns: false,
-          overrideNtp: false,
           appendSystemDns: false,
           proxyGroups: const [],
           rules: const [],
@@ -725,6 +716,64 @@ void main() {
     });
   });
 
+  group('makeRealProfileTask network settings', () {
+    Future<YamlMap> runWith(
+      PatchClashConfig realPatchConfig,
+      Map<String, dynamic> rawConfig,
+    ) async {
+      final result = await makeRealProfileTask(
+        MakeRealProfileState(
+          profilesPath: '/profiles',
+          profileId: 14,
+          rawConfig: await decodeJSONTask<Map<String, dynamic>>(
+            await encodeJSONTask(rawConfig),
+          ),
+          realPatchConfig: realPatchConfig,
+          appendSystemDns: false,
+          proxyGroups: const [],
+          rules: const [],
+          addedRules: const [],
+          defaultUA: 'FlClash-Test',
+        ),
+      );
+      return loadYaml(result.yaml) as YamlMap;
+    }
+
+    test('tun settings replace the profile ones and leave the rest', () async {
+      final config = await runWith(
+        const PatchClashConfig(tun: Tun(mtu: 1400, strictRoute: true)),
+        {
+          'tun': {'mtu': 9000, 'strict-route': false, 'udp-timeout': 60},
+        },
+      );
+      final tun = config['tun'] as YamlMap;
+
+      expect(tun['mtu'], 1400);
+      expect(tun['strict-route'], true);
+      expect(tun['congestion-controller'], 'cubic');
+      expect(tun['udp-timeout'], 60);
+    });
+
+    test('outbound settings start at the core defaults', () async {
+      final config = await runWith(const PatchClashConfig(), {
+        'routing-mark': 1,
+      });
+
+      expect(config['keep-alive-idle'], 15);
+      expect(config['routing-mark'], 0);
+    });
+
+    test('set outbound values replace the profile ones', () async {
+      final config = await runWith(
+        const PatchClashConfig(routingMark: 6666, disableKeepAlive: true),
+        {'routing-mark': 1, 'disable-keep-alive': false},
+      );
+
+      expect(config['routing-mark'], 6666);
+      expect(config['disable-keep-alive'], true);
+    });
+  });
+
   group('makeRealProfileTask legacy provider file migration', () {
     late Directory tempDir;
     const url = 'https://example.com/proxy.yaml';
@@ -760,8 +809,6 @@ void main() {
             },
           },
           realPatchConfig: const PatchClashConfig(),
-          overrideDns: false,
-          overrideNtp: false,
           appendSystemDns: false,
           proxyGroups: const [],
           rules: const [],

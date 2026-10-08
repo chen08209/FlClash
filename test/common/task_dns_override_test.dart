@@ -14,32 +14,31 @@ const _profileDns = <String, dynamic>{
   },
 };
 
-const _patchConfig = PatchClashConfig(
-  dns: Dns(
-    listen: ':1053',
-    ipv6: true,
-    nameserver: ['1.1.1.1'],
-    fallbackFilter: FallbackFilter(geoip: true),
-  ),
-  dnsOverrideKeys: {
-    DnsOverrideKey.nameserver,
-    DnsOverrideKey.fallbackFilterGeoip,
-    DnsOverrideKey.ipv6,
-  },
+const _dns = Dns(
+  listen: ':1053',
+  ipv6: true,
+  nameserver: ['1.1.1.1'],
+  fallbackFilter: FallbackFilter(geoip: true),
 );
+
+const _keys = {
+  DnsOverrideKey.nameserver,
+  DnsOverrideKey.fallbackFilterGeoip,
+  DnsOverrideKey.ipv6,
+};
 
 Future<YamlMap> _dnsOf({
   required Map<String, dynamic> rawConfig,
-  required bool overrideDns,
+  Dns dns = _dns,
+  Set<DnsOverrideKey> keys = _keys,
 }) async {
   final result = await makeRealProfileTask(
     MakeRealProfileState(
       profilesPath: '/profiles',
       profileId: 1,
       rawConfig: rawConfig,
-      realPatchConfig: _patchConfig,
-      overrideDns: overrideDns,
-      overrideNtp: false,
+      realPatchConfig: const PatchClashConfig(),
+      overrides: ProfileOverrides(dns: dns, dnsOverrideKeys: keys),
       appendSystemDns: false,
       proxyGroups: const [],
       rules: const [],
@@ -53,10 +52,7 @@ Future<YamlMap> _dnsOf({
 
 void main() {
   test('overrides only the selected DNS keys of an enabled profile', () async {
-    final dns = await _dnsOf(
-      rawConfig: {'dns': _profileDns},
-      overrideDns: true,
-    );
+    final dns = await _dnsOf(rawConfig: {'dns': _profileDns});
 
     expect(dns['nameserver'], ['1.1.1.1']);
     expect(dns['ipv6'], true);
@@ -67,11 +63,8 @@ void main() {
     });
   });
 
-  test('leaves an enabled profile alone while the override is off', () async {
-    final dns = await _dnsOf(
-      rawConfig: {'dns': _profileDns},
-      overrideDns: false,
-    );
+  test('leaves an enabled profile alone without picked keys', () async {
+    final dns = await _dnsOf(rawConfig: {'dns': _profileDns}, keys: {});
 
     expect(dns['nameserver'], ['9.9.9.9']);
     expect(dns.containsKey('ipv6'), isFalse);
@@ -84,7 +77,7 @@ void main() {
   test(
     'fills the minimal defaults plus overrides for a profile without DNS',
     () async {
-      final dns = await _dnsOf(rawConfig: {}, overrideDns: false);
+      final dns = await _dnsOf(rawConfig: {});
 
       expect(dns, {
         'enable': true,
@@ -95,4 +88,15 @@ void main() {
       });
     },
   );
+
+  test('a key picked without a value writes nothing', () async {
+    final dns = await _dnsOf(
+      rawConfig: {'dns': _profileDns},
+      dns: const Dns(nameserver: [], listen: ''),
+      keys: {DnsOverrideKey.nameserver, DnsOverrideKey.listen},
+    );
+
+    expect(dns['nameserver'], ['9.9.9.9']);
+    expect(dns['listen'], '0.0.0.0:53');
+  });
 }

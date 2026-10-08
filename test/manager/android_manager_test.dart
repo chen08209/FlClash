@@ -6,6 +6,7 @@ import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,6 +49,7 @@ void main() {
   tearDown(() => container.dispose());
 
   Future<void> pumpAndroidManager(WidgetTester tester) async {
+    await container.read(vpnOptionsProvider.future);
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

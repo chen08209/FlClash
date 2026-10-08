@@ -15,14 +15,14 @@ String? profileUrlFromQrCodes(Iterable<String?> values) {
     if (text == null || text.isEmpty) {
       continue;
     }
-    if (text.isUrl) {
+    if (text.isUrl || text.isShareLink) {
       return text;
     }
     final uri = Uri.tryParse(text);
     if (uri == null || !protocolSchemes.contains(uri.scheme)) {
       continue;
     }
-    final url = _installConfigUrl(uri)?.trim();
+    final url = _installConfigUrl(uri);
     if (url != null && url.isUrl) {
       return url;
     }
@@ -31,7 +31,11 @@ String? profileUrlFromQrCodes(Iterable<String?> values) {
 }
 
 String? _installConfigUrl(Uri uri) {
-  return uri.host == 'install-config' ? uri.queryParameters['url'] : null;
+  if (uri.host != 'install-config') {
+    return null;
+  }
+  final url = uri.queryParameters['url']?.trim();
+  return url == null || url.isEmpty ? null : url;
 }
 
 class LinkManager {
@@ -58,7 +62,6 @@ class LinkManager {
   Future<void> initAppLinksListen(
     Function(String url) installConfigCallBack,
   ) async {
-    commonPrint.log('initAppLinksListen');
     destroy();
     subscription = uriLinkStream().listen((uri) {
       _handle(uri, installConfigCallBack);

@@ -9,7 +9,6 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:wifi_ssid/wifi_ssid.dart';
 
 part 'generated/app.g.dart';
 
@@ -184,6 +183,17 @@ class RunTime extends _$RunTime with AutoDisposeNotifierMixin {
   }
 }
 
+/// What the running Android service was started with: it builds the tunnel
+/// once, so a later change waits for a restart.
+@Riverpod(keepAlive: true)
+class RunningVpnOptions extends _$RunningVpnOptions
+    with AutoDisposeNotifierMixin {
+  @override
+  VpnOptions? build() {
+    return null;
+  }
+}
+
 /// False while the window is hidden or the Android activity is in the
 /// background; work that only feeds the UI waits for it to come back.
 @Riverpod(keepAlive: true)
@@ -232,11 +242,6 @@ ViewMode viewMode(Ref ref) {
 @Riverpod(keepAlive: true)
 bool isMobileView(Ref ref) {
   return ref.watch(viewModeProvider) == ViewMode.mobile;
-}
-
-@Riverpod(keepAlive: true)
-double viewHeight(Ref ref) {
-  return ref.watch(viewSizeProvider).height;
 }
 
 @Riverpod(keepAlive: true)
@@ -618,24 +623,6 @@ class CurrentSSID extends _$CurrentSSID with AutoDisposeNotifierMixin {
   @override
   String? build() {
     return null;
-  }
-}
-
-@Riverpod(keepAlive: true)
-class BatteryOptimizationDisable extends _$BatteryOptimizationDisable
-    with AutoDisposeNotifierMixin {
-  @override
-  bool build() {
-    return false;
-  }
-}
-
-@Riverpod(keepAlive: true)
-class LocationPermissions extends _$LocationPermissions
-    with AutoDisposeNotifierMixin {
-  @override
-  WifiSsidPermission build() {
-    return WifiSsidPermission.denied;
   }
 }
 
