@@ -1138,6 +1138,52 @@ void main() {
     expect(proxies.map((proxy) => proxy.id).toSet(), hasLength(5));
   });
 
+  test('a link edit keeps what the old link could not carry', () {
+    const previous = {
+      'name': 'A',
+      'type': 'vmess',
+      'server': 'a',
+      'udp': true,
+      'tfo': true,
+      'ws-opts': {'path': '/old', 'max-early-data': 2048},
+    };
+    const linked = {
+      'name': 'A',
+      'type': 'vmess',
+      'server': 'a',
+      'udp': true,
+      'ws-opts': {'path': '/old'},
+    };
+
+    expect(
+      withUnlinkedFields(
+        const {
+          'name': 'A',
+          'type': 'vmess',
+          'server': 'b',
+          'ws-opts': {'path': '/new'},
+        },
+        previous: previous,
+        linked: linked,
+      ),
+      {
+        'name': 'A',
+        'type': 'vmess',
+        'server': 'b',
+        'tfo': true,
+        'ws-opts': {'path': '/new', 'max-early-data': 2048},
+      },
+    );
+    expect(
+      withUnlinkedFields(
+        const {'name': 'A', 'type': 'trojan', 'server': 'b'},
+        previous: previous,
+        linked: linked,
+      ),
+      {'name': 'A', 'type': 'trojan', 'server': 'b'},
+    );
+  });
+
   group('share link edit', () {
     const a = CustomProxy(
       id: 1,
@@ -1199,6 +1245,39 @@ void main() {
       );
 
       expect(proxies.map((proxy) => proxy.name), ['A', 'W', 'B', 'G-01']);
+    });
+
+    test('a replaced proxy keeps the options it listed without a value', () {
+      final listed = CustomProxy(
+        id: 1,
+        definition: {...a.definition, 'udp-over-tcp': true},
+        emptyOptions: const {ProxyField.plugin, ProxyField.udpOverTcp},
+      );
+      final edit = ShareLinkEdit.read(
+        'ss://a2#A\ntrojan://b#B',
+        previous: [listed, w, b],
+        links: links,
+      );
+      expect(edit.droppedLinks, {1: 'ss://a#A'});
+      final proxies = edit.apply(
+        groupNames: const {},
+        linked: {1: a.definition},
+        {
+          1: [
+            {'name': 'A', 'type': 'ss', 'server': 'a2'},
+          ],
+        },
+      );
+
+      final replaced = proxies.singleWhere((proxy) => proxy.name == 'A');
+      expect(replaced.id, 1);
+      expect(replaced.definition, {
+        'name': 'A',
+        'type': 'ss',
+        'server': 'a2',
+        'udp-over-tcp': true,
+      });
+      expect(replaced.emptyOptions, {ProxyField.plugin});
     });
 
     test('a removed line drops its proxy and leaves the rest', () {

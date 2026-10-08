@@ -774,6 +774,9 @@ void main() {
     await AppLocalizations.load(const Locale('en'));
     container.listen(sharedStateProvider, (_, _) {});
     container
+        .read(networkSettingProvider.notifier)
+        .update((state) => state.copyWith(bypassPrivateRoute: false));
+    container
         .read(patchClashConfigProvider.notifier)
         .update(
           (state) => state.copyWith(
@@ -839,6 +842,9 @@ void main() {
   test('shared state keeps the last routes while new ones compute', () async {
     await AppLocalizations.load(const Locale('en'));
     container.listen(sharedStateProvider, (_, _) {});
+    container
+        .read(networkSettingProvider.notifier)
+        .update((state) => state.copyWith(bypassPrivateRoute: false));
     container
         .read(patchClashConfigProvider.notifier)
         .update(

@@ -113,11 +113,23 @@ class ProxyGroupsDao extends DatabaseAccessor<Database>
       if (!use.contains(oldName)) {
         continue;
       }
+      final usePosition = row.toProxyGroup().usePosition;
       await (proxyGroups.update()..where((t) => t.id.equals(row.id))).write(
         ProxyGroupsCompanion(
           use: Value([
             for (final name in use) name == oldName ? newName : name,
           ]),
+          definition: usePosition?.containsKey(oldName) == true
+              ? Value(
+                  json.encode({
+                    ...json.decode(row.definition) as Map<String, Object?>,
+                    'use-position': {
+                      for (final MapEntry(:key, :value) in usePosition!.entries)
+                        key == oldName ? newName : key: value,
+                    },
+                  }),
+                )
+              : const Value.absent(),
         ),
       );
     }

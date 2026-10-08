@@ -282,7 +282,10 @@ Future<({String yaml, String md5})> _makeRealProfileTask(
   }
   rawDns = mergeDnsOverride(
     rawDns,
-    overrides.dns.overrideJson(overrides.dnsOverrideKeys),
+    overrides.dns.overrideJson(
+      overrides.dnsOverrideKeys,
+      keepEmpty: data.keepEmptyDnsOverrides,
+    ),
   );
   rawConfig['dns'] = rawDns;
   final ntpOverride = overrides.ntp.overrideJson(overrides.ntpOverrideKeys);

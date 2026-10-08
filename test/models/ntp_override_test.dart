@@ -24,7 +24,7 @@ void main() {
     });
   });
 
-  test('the model defaults match the core\'s but leave its server unset', () {
+  test('the model defaults match the core\'s', () {
     final source = File('core/Clash.Meta/config/config.go').readAsStringSync();
     final body = RegExp(
       r'NTP: RawNTP\{([^}]*)\}',
@@ -32,8 +32,7 @@ void main() {
     String valueOf(String field) =>
         RegExp('$field:\\s*(.+),').firstMatch(body)!.group(1)!.trim();
 
-    expect(valueOf('Server'), isNot('""'));
-    expect(defaultNtp.server, isEmpty);
+    expect(valueOf('Server'), '"${defaultNtp.server}"');
     expect(valueOf('Port'), '${defaultNtp.port}');
     expect(valueOf('Interval'), '${defaultNtp.interval}');
     expect(valueOf('Enable'), '${defaultNtp.enable}');

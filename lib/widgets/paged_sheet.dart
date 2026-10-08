@@ -373,18 +373,6 @@ class _SkirtPainter extends CustomPainter {
       color != oldDelegate.color || depth != oldDelegate.depth;
 }
 
-/// Pushes the page into the sheet [context] is a page of, and opens it with
-/// [showExtend] anywhere else.
-Future<T?> showSheetPageOrExtend<T>(
-  BuildContext context, {
-  required WidgetBuilder builder,
-}) {
-  if (isSheetPage(context)) {
-    return Navigator.of(context).push(PagedSheetRoute<T>(builder: builder));
-  }
-  return showExtend<T>(context, builder: builder);
-}
-
 /// Pushes the page into the sheet [context] is a page of, and opens a sheet
 /// for it anywhere else.
 Future<T?> showInSheet<T>(

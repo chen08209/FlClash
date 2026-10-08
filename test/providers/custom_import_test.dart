@@ -76,6 +76,25 @@ proxy-groups:
       expect(config.proxyGroups.single.use, ['My sub']);
     });
 
+    test('places a renamed provider where use-position puts it', () {
+      final config = _read('''
+proxy-providers:
+  sub:
+    type: http
+    url: https://example.com/sub
+proxy-groups:
+  - name: Proxy
+    type: select
+    proxies: [DIRECT, REJECT]
+    use: [sub, other]
+    use-position: {sub: 1, other: 2}
+''', _app(profiles: {'https://example.com/sub': 'My sub'}));
+
+      final group = config.proxyGroups.single;
+      expect(group.use, ['My sub', 'other']);
+      expect(group.usePosition, {'My sub': 1});
+    });
+
     test('moves a new provider off a label the app uses', () {
       final config = _read('''
 proxy-providers:

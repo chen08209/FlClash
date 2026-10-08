@@ -214,6 +214,7 @@ class ListEditView extends ConsumerStatefulWidget {
   final Widget Function(String item)? leadingBuilder;
   final String? valueLabel;
   final int? itemMaxLength;
+  final String? Function(String item)? itemValidator;
 
   const ListEditView({
     super.key,
@@ -224,6 +225,7 @@ class ListEditView extends ConsumerStatefulWidget {
     this.valueLabel,
     this.subtitleBuilder,
     this.itemMaxLength,
+    this.itemValidator,
   });
 
   @override
@@ -244,7 +246,12 @@ class _ListEditViewState extends _EditViewState<ListEditView, String> {
   Widget buildTitle(String entry) => widget.titleBuilder(entry);
 
   @override
-  Widget? buildSubtitle(String entry) => widget.subtitleBuilder?.call(entry);
+  Widget? buildSubtitle(String entry) {
+    if (widget.itemValidator?.call(entry) case final error?) {
+      return Text(error, style: TextStyle(color: context.colorScheme.error));
+    }
+    return widget.subtitleBuilder?.call(entry);
+  }
 
   @override
   Widget? buildLeading(String entry) => widget.leadingBuilder?.call(entry);
@@ -265,6 +272,7 @@ class _ListEditViewState extends _EditViewState<ListEditView, String> {
       entry: entry,
       valueLabel: widget.valueLabel,
       itemMaxLength: widget.itemMaxLength,
+      itemValidator: widget.itemValidator,
     );
   }
 }
@@ -276,6 +284,7 @@ Future<List<String>?> showListEntryDialog(
   String? entry,
   String? valueLabel,
   int? itemMaxLength,
+  String? Function(String item)? itemValidator,
 }) {
   final appLocalizations = context.appLocalizations;
   final label = valueLabel ?? appLocalizations.value;
@@ -295,7 +304,7 @@ Future<List<String>?> showListEntryDialog(
     if (next != entry && entries.contains(next)) {
       return appLocalizations.existsTip(label);
     }
-    return null;
+    return itemValidator?.call(next);
   }
 
   return dialogs.showCommonDialog<List<String>>(
@@ -313,9 +322,14 @@ Future<List<String>?> showListEntryDialog(
                 text,
                 existing: entries.toSet(),
                 maxLength: itemMaxLength,
+                isValid: itemValidator == null
+                    ? null
+                    : (item) => itemValidator(item) == null,
               ),
-              issueMessage: (_) =>
-                  appLocalizations.maxLengthTip(label, itemMaxLength!),
+              issueMessage: (issue) => switch (issue.kind) {
+                InputIssueKind.invalidValue => itemValidator!(issue.raw)!,
+                _ => appLocalizations.maxLengthTip(label, itemMaxLength!),
+              },
             ),
     ),
   );
@@ -408,7 +422,8 @@ class _MapEditViewState
         widget.valueMaxLength!,
       ),
       InputIssueKind.missingValue => appLocalizations.emptyTip(_valueLabel),
-      InputIssueKind.invalidUrl => appLocalizations.urlTip(_valueLabel),
+      InputIssueKind.invalidUrl ||
+      InputIssueKind.invalidValue => appLocalizations.urlTip(_valueLabel),
     };
   }
 

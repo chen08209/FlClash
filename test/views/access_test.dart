@@ -9,6 +9,7 @@ import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/access.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -281,6 +282,34 @@ void main() {
       await tester.tap(find.text('Deselect all'));
       await tester.pumpAndSettle();
       expect(container.read(accessControlStateProvider).currentList, isEmpty);
+
+      await teardownView(tester);
+    });
+
+    testWidgets('the bar menu turns access control off and on', (tester) async {
+      seedAccessControl(const AccessControlProps(enable: true));
+      await pumpAccessView(tester);
+
+      Future<void> tapMenuPath(List<String> labels) async {
+        await openBarMenu(tester);
+        for (final label in labels) {
+          await tester.tap(
+            find
+                .descendant(
+                  of: find.byType(CommonPopupMenu),
+                  matching: find.text(label),
+                )
+                .last,
+          );
+          await tester.pumpAndSettle();
+        }
+      }
+
+      await tapMenuPath(['Access control', 'Turn off']);
+      expect(container.read(accessControlStateProvider).enable, isFalse);
+
+      await tapMenuPath(['Access control', 'Turn on']);
+      expect(container.read(accessControlStateProvider).enable, isTrue);
 
       await teardownView(tester);
     });

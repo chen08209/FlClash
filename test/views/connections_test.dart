@@ -85,6 +85,11 @@ void main() {
     await tester.pump();
   }
 
+  Future<void> pumpPastArrivalHold(WidgetTester tester) async {
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(commonDuration);
+  }
+
   Future<void> teardownView(WidgetTester tester) async {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
@@ -112,8 +117,9 @@ void main() {
 
     pending.complete([_tracker(id: 'a', host: 'alpha.test')]);
     await tester.pump();
-    await tester.pump(commonDuration);
-    await tester.pump(commonDuration);
+    expect(find.byType(NullStatus), findsOneWidget);
+
+    await pumpPastArrivalHold(tester);
 
     expect(find.byType(NullStatus), findsNothing);
     expect(find.textContaining('alpha.test'), findsWidgets);
@@ -131,8 +137,7 @@ void main() {
     );
 
     await pumpConnections(tester);
-    await tester.pump(commonDuration);
-    await tester.pump(commonDuration);
+    await pumpPastArrivalHold(tester);
 
     expect(find.byType(NullStatus), findsNothing);
     expect(find.textContaining('alpha.test'), findsWidgets);
@@ -159,6 +164,7 @@ void main() {
     );
 
     await pumpConnections(tester);
+    await pumpPastArrivalHold(tester);
 
     double topOf(String host) =>
         tester.getTopLeft(find.textContaining(host).first).dy;

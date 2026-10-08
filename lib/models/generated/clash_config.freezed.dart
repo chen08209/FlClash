@@ -16,7 +16,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ProxyGroup {
 
- int? get profileId;@JsonKey(fromJson: Snowflake.buildId) int get id; String get name; GroupType get type; List<String>? get proxies; List<String>? get use; int? get interval; bool? get lazy;@JsonKey(name: 'disable-udp') bool? get disableUDP; String? get url; int? get timeout;@JsonKey(name: 'max-failed-times') int? get maxFailedTimes; String? get filter;@JsonKey(name: 'exclude-filter') String? get excludeFilter;@JsonKey(name: 'exclude-type') String? get excludeType;@JsonKey(name: 'expected-status') String? get expectedStatus; int? get tolerance; LoadBalanceStrategy? get strategy;@JsonKey(name: 'hash-key') String? get hashKey;@JsonKey(name: 'default-selected') String? get defaultSelected;@JsonKey(name: 'empty-fallback') String? get emptyFallback;@JsonKey(name: 'include-all') bool? get includeAll;@JsonKey(name: 'include-all-proxies') bool? get includeAllProxies;@JsonKey(name: 'include-all-providers') bool? get includeAllProviders; bool? get hidden; String? get icon; String? get order;
+ int? get profileId;@JsonKey(fromJson: Snowflake.buildId) int get id; String get name; GroupType get type; List<String>? get proxies; List<String>? get use;@JsonKey(name: 'use-position') Map<String, int>? get usePosition; int? get interval; bool? get lazy;@JsonKey(name: 'disable-udp') bool? get disableUDP; String? get url; int? get timeout;@JsonKey(name: 'max-failed-times') int? get maxFailedTimes; String? get filter;@JsonKey(name: 'exclude-filter') String? get excludeFilter;@JsonKey(name: 'exclude-type') String? get excludeType;@JsonKey(name: 'expected-status') String? get expectedStatus; int? get tolerance; LoadBalanceStrategy? get strategy;@JsonKey(name: 'hash-key') String? get hashKey;@JsonKey(name: 'default-selected') String? get defaultSelected;@JsonKey(name: 'empty-fallback') String? get emptyFallback;@JsonKey(name: 'include-all') bool? get includeAll;@JsonKey(name: 'include-all-proxies') bool? get includeAllProxies;@JsonKey(name: 'include-all-providers') bool? get includeAllProviders; bool? get hidden; String? get icon; String? get order;/// Where the members list shows the filters among the proxies, which no
+/// config carries, as `ProxyGroupMembersSliver` writes it.
+ List<String>? get memberLayout;
 /// Create a copy of ProxyGroup
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,20 +32,20 @@ $ProxyGroupCopyWith<ProxyGroup> get copyWith => _$ProxyGroupCopyWithImpl<ProxyGr
 @override
 bool operator ==(Object other) {
   final _this = this as ProxyGroup;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProxyGroup&&(identical(other.profileId, _this.profileId) || other.profileId == _this.profileId)&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.type, _this.type) || other.type == _this.type)&&const DeepCollectionEquality().equals(other.proxies, _this.proxies)&&const DeepCollectionEquality().equals(other.use, _this.use)&&(identical(other.interval, _this.interval) || other.interval == _this.interval)&&(identical(other.lazy, _this.lazy) || other.lazy == _this.lazy)&&(identical(other.disableUDP, _this.disableUDP) || other.disableUDP == _this.disableUDP)&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.timeout, _this.timeout) || other.timeout == _this.timeout)&&(identical(other.maxFailedTimes, _this.maxFailedTimes) || other.maxFailedTimes == _this.maxFailedTimes)&&(identical(other.filter, _this.filter) || other.filter == _this.filter)&&(identical(other.excludeFilter, _this.excludeFilter) || other.excludeFilter == _this.excludeFilter)&&(identical(other.excludeType, _this.excludeType) || other.excludeType == _this.excludeType)&&(identical(other.expectedStatus, _this.expectedStatus) || other.expectedStatus == _this.expectedStatus)&&(identical(other.tolerance, _this.tolerance) || other.tolerance == _this.tolerance)&&(identical(other.strategy, _this.strategy) || other.strategy == _this.strategy)&&(identical(other.hashKey, _this.hashKey) || other.hashKey == _this.hashKey)&&(identical(other.defaultSelected, _this.defaultSelected) || other.defaultSelected == _this.defaultSelected)&&(identical(other.emptyFallback, _this.emptyFallback) || other.emptyFallback == _this.emptyFallback)&&(identical(other.includeAll, _this.includeAll) || other.includeAll == _this.includeAll)&&(identical(other.includeAllProxies, _this.includeAllProxies) || other.includeAllProxies == _this.includeAllProxies)&&(identical(other.includeAllProviders, _this.includeAllProviders) || other.includeAllProviders == _this.includeAllProviders)&&(identical(other.hidden, _this.hidden) || other.hidden == _this.hidden)&&(identical(other.icon, _this.icon) || other.icon == _this.icon)&&(identical(other.order, _this.order) || other.order == _this.order));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProxyGroup&&(identical(other.profileId, _this.profileId) || other.profileId == _this.profileId)&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.type, _this.type) || other.type == _this.type)&&const DeepCollectionEquality().equals(other.proxies, _this.proxies)&&const DeepCollectionEquality().equals(other.use, _this.use)&&const DeepCollectionEquality().equals(other.usePosition, _this.usePosition)&&(identical(other.interval, _this.interval) || other.interval == _this.interval)&&(identical(other.lazy, _this.lazy) || other.lazy == _this.lazy)&&(identical(other.disableUDP, _this.disableUDP) || other.disableUDP == _this.disableUDP)&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.timeout, _this.timeout) || other.timeout == _this.timeout)&&(identical(other.maxFailedTimes, _this.maxFailedTimes) || other.maxFailedTimes == _this.maxFailedTimes)&&(identical(other.filter, _this.filter) || other.filter == _this.filter)&&(identical(other.excludeFilter, _this.excludeFilter) || other.excludeFilter == _this.excludeFilter)&&(identical(other.excludeType, _this.excludeType) || other.excludeType == _this.excludeType)&&(identical(other.expectedStatus, _this.expectedStatus) || other.expectedStatus == _this.expectedStatus)&&(identical(other.tolerance, _this.tolerance) || other.tolerance == _this.tolerance)&&(identical(other.strategy, _this.strategy) || other.strategy == _this.strategy)&&(identical(other.hashKey, _this.hashKey) || other.hashKey == _this.hashKey)&&(identical(other.defaultSelected, _this.defaultSelected) || other.defaultSelected == _this.defaultSelected)&&(identical(other.emptyFallback, _this.emptyFallback) || other.emptyFallback == _this.emptyFallback)&&(identical(other.includeAll, _this.includeAll) || other.includeAll == _this.includeAll)&&(identical(other.includeAllProxies, _this.includeAllProxies) || other.includeAllProxies == _this.includeAllProxies)&&(identical(other.includeAllProviders, _this.includeAllProviders) || other.includeAllProviders == _this.includeAllProviders)&&(identical(other.hidden, _this.hidden) || other.hidden == _this.hidden)&&(identical(other.icon, _this.icon) || other.icon == _this.icon)&&(identical(other.order, _this.order) || other.order == _this.order)&&const DeepCollectionEquality().equals(other.memberLayout, _this.memberLayout));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as ProxyGroup;
-  return Object.hashAll([runtimeType,_this.profileId,_this.id,_this.name,_this.type,const DeepCollectionEquality().hash(_this.proxies),const DeepCollectionEquality().hash(_this.use),_this.interval,_this.lazy,_this.disableUDP,_this.url,_this.timeout,_this.maxFailedTimes,_this.filter,_this.excludeFilter,_this.excludeType,_this.expectedStatus,_this.tolerance,_this.strategy,_this.hashKey,_this.defaultSelected,_this.emptyFallback,_this.includeAll,_this.includeAllProxies,_this.includeAllProviders,_this.hidden,_this.icon,_this.order]);
+  return Object.hashAll([runtimeType,_this.profileId,_this.id,_this.name,_this.type,const DeepCollectionEquality().hash(_this.proxies),const DeepCollectionEquality().hash(_this.use),const DeepCollectionEquality().hash(_this.usePosition),_this.interval,_this.lazy,_this.disableUDP,_this.url,_this.timeout,_this.maxFailedTimes,_this.filter,_this.excludeFilter,_this.excludeType,_this.expectedStatus,_this.tolerance,_this.strategy,_this.hashKey,_this.defaultSelected,_this.emptyFallback,_this.includeAll,_this.includeAllProxies,_this.includeAllProviders,_this.hidden,_this.icon,_this.order,const DeepCollectionEquality().hash(_this.memberLayout)]);
 }
 
 @override
 String toString() {
   final _this = this as ProxyGroup;
-  return 'ProxyGroup(profileId: ${_this.profileId}, id: ${_this.id}, name: ${_this.name}, type: ${_this.type}, proxies: ${_this.proxies}, use: ${_this.use}, interval: ${_this.interval}, lazy: ${_this.lazy}, disableUDP: ${_this.disableUDP}, url: ${_this.url}, timeout: ${_this.timeout}, maxFailedTimes: ${_this.maxFailedTimes}, filter: ${_this.filter}, excludeFilter: ${_this.excludeFilter}, excludeType: ${_this.excludeType}, expectedStatus: ${_this.expectedStatus}, tolerance: ${_this.tolerance}, strategy: ${_this.strategy}, hashKey: ${_this.hashKey}, defaultSelected: ${_this.defaultSelected}, emptyFallback: ${_this.emptyFallback}, includeAll: ${_this.includeAll}, includeAllProxies: ${_this.includeAllProxies}, includeAllProviders: ${_this.includeAllProviders}, hidden: ${_this.hidden}, icon: ${_this.icon}, order: ${_this.order})';
+  return 'ProxyGroup(profileId: ${_this.profileId}, id: ${_this.id}, name: ${_this.name}, type: ${_this.type}, proxies: ${_this.proxies}, use: ${_this.use}, usePosition: ${_this.usePosition}, interval: ${_this.interval}, lazy: ${_this.lazy}, disableUDP: ${_this.disableUDP}, url: ${_this.url}, timeout: ${_this.timeout}, maxFailedTimes: ${_this.maxFailedTimes}, filter: ${_this.filter}, excludeFilter: ${_this.excludeFilter}, excludeType: ${_this.excludeType}, expectedStatus: ${_this.expectedStatus}, tolerance: ${_this.tolerance}, strategy: ${_this.strategy}, hashKey: ${_this.hashKey}, defaultSelected: ${_this.defaultSelected}, emptyFallback: ${_this.emptyFallback}, includeAll: ${_this.includeAll}, includeAllProxies: ${_this.includeAllProxies}, includeAllProviders: ${_this.includeAllProviders}, hidden: ${_this.hidden}, icon: ${_this.icon}, order: ${_this.order}, memberLayout: ${_this.memberLayout})';
 }
 
 
@@ -54,7 +56,7 @@ abstract mixin class $ProxyGroupCopyWith<$Res>  {
   factory $ProxyGroupCopyWith(ProxyGroup value, $Res Function(ProxyGroup) _then) = _$ProxyGroupCopyWithImpl;
 @useResult
 $Res call({
- int? profileId,@JsonKey(fromJson: Snowflake.buildId) int id, String name, GroupType type, List<String>? proxies, List<String>? use, int? interval, bool? lazy,@JsonKey(name: 'disable-udp') bool? disableUDP, String? url, int? timeout,@JsonKey(name: 'max-failed-times') int? maxFailedTimes, String? filter,@JsonKey(name: 'exclude-filter') String? excludeFilter,@JsonKey(name: 'exclude-type') String? excludeType,@JsonKey(name: 'expected-status') String? expectedStatus, int? tolerance, LoadBalanceStrategy? strategy,@JsonKey(name: 'hash-key') String? hashKey,@JsonKey(name: 'default-selected') String? defaultSelected,@JsonKey(name: 'empty-fallback') String? emptyFallback,@JsonKey(name: 'include-all') bool? includeAll,@JsonKey(name: 'include-all-proxies') bool? includeAllProxies,@JsonKey(name: 'include-all-providers') bool? includeAllProviders, bool? hidden, String? icon, String? order
+ int? profileId,@JsonKey(fromJson: Snowflake.buildId) int id, String name, GroupType type, List<String>? proxies, List<String>? use,@JsonKey(name: 'use-position') Map<String, int>? usePosition, int? interval, bool? lazy,@JsonKey(name: 'disable-udp') bool? disableUDP, String? url, int? timeout,@JsonKey(name: 'max-failed-times') int? maxFailedTimes, String? filter,@JsonKey(name: 'exclude-filter') String? excludeFilter,@JsonKey(name: 'exclude-type') String? excludeType,@JsonKey(name: 'expected-status') String? expectedStatus, int? tolerance, LoadBalanceStrategy? strategy,@JsonKey(name: 'hash-key') String? hashKey,@JsonKey(name: 'default-selected') String? defaultSelected,@JsonKey(name: 'empty-fallback') String? emptyFallback,@JsonKey(name: 'include-all') bool? includeAll,@JsonKey(name: 'include-all-proxies') bool? includeAllProxies,@JsonKey(name: 'include-all-providers') bool? includeAllProviders, bool? hidden, String? icon, String? order, List<String>? memberLayout
 });
 
 
@@ -71,7 +73,7 @@ class _$ProxyGroupCopyWithImpl<$Res>
 
 /// Create a copy of ProxyGroup
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? profileId = freezed,Object? id = null,Object? name = null,Object? type = null,Object? proxies = freezed,Object? use = freezed,Object? interval = freezed,Object? lazy = freezed,Object? disableUDP = freezed,Object? url = freezed,Object? timeout = freezed,Object? maxFailedTimes = freezed,Object? filter = freezed,Object? excludeFilter = freezed,Object? excludeType = freezed,Object? expectedStatus = freezed,Object? tolerance = freezed,Object? strategy = freezed,Object? hashKey = freezed,Object? defaultSelected = freezed,Object? emptyFallback = freezed,Object? includeAll = freezed,Object? includeAllProxies = freezed,Object? includeAllProviders = freezed,Object? hidden = freezed,Object? icon = freezed,Object? order = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? profileId = freezed,Object? id = null,Object? name = null,Object? type = null,Object? proxies = freezed,Object? use = freezed,Object? usePosition = freezed,Object? interval = freezed,Object? lazy = freezed,Object? disableUDP = freezed,Object? url = freezed,Object? timeout = freezed,Object? maxFailedTimes = freezed,Object? filter = freezed,Object? excludeFilter = freezed,Object? excludeType = freezed,Object? expectedStatus = freezed,Object? tolerance = freezed,Object? strategy = freezed,Object? hashKey = freezed,Object? defaultSelected = freezed,Object? emptyFallback = freezed,Object? includeAll = freezed,Object? includeAllProxies = freezed,Object? includeAllProviders = freezed,Object? hidden = freezed,Object? icon = freezed,Object? order = freezed,Object? memberLayout = freezed,}) {
   return _then(ProxyGroup(
 profileId: freezed == profileId ? _self.profileId : profileId // ignore: cast_nullable_to_non_nullable
 as int?,id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
@@ -79,7 +81,8 @@ as int,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nu
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as GroupType,proxies: freezed == proxies ? _self.proxies : proxies // ignore: cast_nullable_to_non_nullable
 as List<String>?,use: freezed == use ? _self.use : use // ignore: cast_nullable_to_non_nullable
-as List<String>?,interval: freezed == interval ? _self.interval : interval // ignore: cast_nullable_to_non_nullable
+as List<String>?,usePosition: freezed == usePosition ? _self.usePosition : usePosition // ignore: cast_nullable_to_non_nullable
+as Map<String, int>?,interval: freezed == interval ? _self.interval : interval // ignore: cast_nullable_to_non_nullable
 as int?,lazy: freezed == lazy ? _self.lazy : lazy // ignore: cast_nullable_to_non_nullable
 as bool?,disableUDP: freezed == disableUDP ? _self.disableUDP : disableUDP // ignore: cast_nullable_to_non_nullable
 as bool?,url: freezed == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
@@ -100,7 +103,8 @@ as bool?,includeAllProviders: freezed == includeAllProviders ? _self.includeAllP
 as bool?,hidden: freezed == hidden ? _self.hidden : hidden // ignore: cast_nullable_to_non_nullable
 as bool?,icon: freezed == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
 as String?,order: freezed == order ? _self.order : order // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,memberLayout: freezed == memberLayout ? _self.memberLayout : memberLayout // ignore: cast_nullable_to_non_nullable
+as List<String>?,
   ));
 }
 
@@ -185,10 +189,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int? profileId, @JsonKey(fromJson: Snowflake.buildId)  int id,  String name,  GroupType type,  List<String>? proxies,  List<String>? use,  int? interval,  bool? lazy, @JsonKey(name: 'disable-udp')  bool? disableUDP,  String? url,  int? timeout, @JsonKey(name: 'max-failed-times')  int? maxFailedTimes,  String? filter, @JsonKey(name: 'exclude-filter')  String? excludeFilter, @JsonKey(name: 'exclude-type')  String? excludeType, @JsonKey(name: 'expected-status')  String? expectedStatus,  int? tolerance,  LoadBalanceStrategy? strategy, @JsonKey(name: 'hash-key')  String? hashKey, @JsonKey(name: 'default-selected')  String? defaultSelected, @JsonKey(name: 'empty-fallback')  String? emptyFallback, @JsonKey(name: 'include-all')  bool? includeAll, @JsonKey(name: 'include-all-proxies')  bool? includeAllProxies, @JsonKey(name: 'include-all-providers')  bool? includeAllProviders,  bool? hidden,  String? icon,  String? order)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int? profileId, @JsonKey(fromJson: Snowflake.buildId)  int id,  String name,  GroupType type,  List<String>? proxies,  List<String>? use, @JsonKey(name: 'use-position')  Map<String, int>? usePosition,  int? interval,  bool? lazy, @JsonKey(name: 'disable-udp')  bool? disableUDP,  String? url,  int? timeout, @JsonKey(name: 'max-failed-times')  int? maxFailedTimes,  String? filter, @JsonKey(name: 'exclude-filter')  String? excludeFilter, @JsonKey(name: 'exclude-type')  String? excludeType, @JsonKey(name: 'expected-status')  String? expectedStatus,  int? tolerance,  LoadBalanceStrategy? strategy, @JsonKey(name: 'hash-key')  String? hashKey, @JsonKey(name: 'default-selected')  String? defaultSelected, @JsonKey(name: 'empty-fallback')  String? emptyFallback, @JsonKey(name: 'include-all')  bool? includeAll, @JsonKey(name: 'include-all-proxies')  bool? includeAllProxies, @JsonKey(name: 'include-all-providers')  bool? includeAllProviders,  bool? hidden,  String? icon,  String? order,  List<String>? memberLayout)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProxyGroup() when $default != null:
-return $default(_that.profileId,_that.id,_that.name,_that.type,_that.proxies,_that.use,_that.interval,_that.lazy,_that.disableUDP,_that.url,_that.timeout,_that.maxFailedTimes,_that.filter,_that.excludeFilter,_that.excludeType,_that.expectedStatus,_that.tolerance,_that.strategy,_that.hashKey,_that.defaultSelected,_that.emptyFallback,_that.includeAll,_that.includeAllProxies,_that.includeAllProviders,_that.hidden,_that.icon,_that.order);case _:
+return $default(_that.profileId,_that.id,_that.name,_that.type,_that.proxies,_that.use,_that.usePosition,_that.interval,_that.lazy,_that.disableUDP,_that.url,_that.timeout,_that.maxFailedTimes,_that.filter,_that.excludeFilter,_that.excludeType,_that.expectedStatus,_that.tolerance,_that.strategy,_that.hashKey,_that.defaultSelected,_that.emptyFallback,_that.includeAll,_that.includeAllProxies,_that.includeAllProviders,_that.hidden,_that.icon,_that.order,_that.memberLayout);case _:
   return orElse();
 
 }
@@ -206,10 +210,10 @@ return $default(_that.profileId,_that.id,_that.name,_that.type,_that.proxies,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int? profileId, @JsonKey(fromJson: Snowflake.buildId)  int id,  String name,  GroupType type,  List<String>? proxies,  List<String>? use,  int? interval,  bool? lazy, @JsonKey(name: 'disable-udp')  bool? disableUDP,  String? url,  int? timeout, @JsonKey(name: 'max-failed-times')  int? maxFailedTimes,  String? filter, @JsonKey(name: 'exclude-filter')  String? excludeFilter, @JsonKey(name: 'exclude-type')  String? excludeType, @JsonKey(name: 'expected-status')  String? expectedStatus,  int? tolerance,  LoadBalanceStrategy? strategy, @JsonKey(name: 'hash-key')  String? hashKey, @JsonKey(name: 'default-selected')  String? defaultSelected, @JsonKey(name: 'empty-fallback')  String? emptyFallback, @JsonKey(name: 'include-all')  bool? includeAll, @JsonKey(name: 'include-all-proxies')  bool? includeAllProxies, @JsonKey(name: 'include-all-providers')  bool? includeAllProviders,  bool? hidden,  String? icon,  String? order)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int? profileId, @JsonKey(fromJson: Snowflake.buildId)  int id,  String name,  GroupType type,  List<String>? proxies,  List<String>? use, @JsonKey(name: 'use-position')  Map<String, int>? usePosition,  int? interval,  bool? lazy, @JsonKey(name: 'disable-udp')  bool? disableUDP,  String? url,  int? timeout, @JsonKey(name: 'max-failed-times')  int? maxFailedTimes,  String? filter, @JsonKey(name: 'exclude-filter')  String? excludeFilter, @JsonKey(name: 'exclude-type')  String? excludeType, @JsonKey(name: 'expected-status')  String? expectedStatus,  int? tolerance,  LoadBalanceStrategy? strategy, @JsonKey(name: 'hash-key')  String? hashKey, @JsonKey(name: 'default-selected')  String? defaultSelected, @JsonKey(name: 'empty-fallback')  String? emptyFallback, @JsonKey(name: 'include-all')  bool? includeAll, @JsonKey(name: 'include-all-proxies')  bool? includeAllProxies, @JsonKey(name: 'include-all-providers')  bool? includeAllProviders,  bool? hidden,  String? icon,  String? order,  List<String>? memberLayout)  $default,) {final _that = this;
 switch (_that) {
 case _ProxyGroup():
-return $default(_that.profileId,_that.id,_that.name,_that.type,_that.proxies,_that.use,_that.interval,_that.lazy,_that.disableUDP,_that.url,_that.timeout,_that.maxFailedTimes,_that.filter,_that.excludeFilter,_that.excludeType,_that.expectedStatus,_that.tolerance,_that.strategy,_that.hashKey,_that.defaultSelected,_that.emptyFallback,_that.includeAll,_that.includeAllProxies,_that.includeAllProviders,_that.hidden,_that.icon,_that.order);case _:
+return $default(_that.profileId,_that.id,_that.name,_that.type,_that.proxies,_that.use,_that.usePosition,_that.interval,_that.lazy,_that.disableUDP,_that.url,_that.timeout,_that.maxFailedTimes,_that.filter,_that.excludeFilter,_that.excludeType,_that.expectedStatus,_that.tolerance,_that.strategy,_that.hashKey,_that.defaultSelected,_that.emptyFallback,_that.includeAll,_that.includeAllProxies,_that.includeAllProviders,_that.hidden,_that.icon,_that.order,_that.memberLayout);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -226,10 +230,10 @@ return $default(_that.profileId,_that.id,_that.name,_that.type,_that.proxies,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int? profileId, @JsonKey(fromJson: Snowflake.buildId)  int id,  String name,  GroupType type,  List<String>? proxies,  List<String>? use,  int? interval,  bool? lazy, @JsonKey(name: 'disable-udp')  bool? disableUDP,  String? url,  int? timeout, @JsonKey(name: 'max-failed-times')  int? maxFailedTimes,  String? filter, @JsonKey(name: 'exclude-filter')  String? excludeFilter, @JsonKey(name: 'exclude-type')  String? excludeType, @JsonKey(name: 'expected-status')  String? expectedStatus,  int? tolerance,  LoadBalanceStrategy? strategy, @JsonKey(name: 'hash-key')  String? hashKey, @JsonKey(name: 'default-selected')  String? defaultSelected, @JsonKey(name: 'empty-fallback')  String? emptyFallback, @JsonKey(name: 'include-all')  bool? includeAll, @JsonKey(name: 'include-all-proxies')  bool? includeAllProxies, @JsonKey(name: 'include-all-providers')  bool? includeAllProviders,  bool? hidden,  String? icon,  String? order)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int? profileId, @JsonKey(fromJson: Snowflake.buildId)  int id,  String name,  GroupType type,  List<String>? proxies,  List<String>? use, @JsonKey(name: 'use-position')  Map<String, int>? usePosition,  int? interval,  bool? lazy, @JsonKey(name: 'disable-udp')  bool? disableUDP,  String? url,  int? timeout, @JsonKey(name: 'max-failed-times')  int? maxFailedTimes,  String? filter, @JsonKey(name: 'exclude-filter')  String? excludeFilter, @JsonKey(name: 'exclude-type')  String? excludeType, @JsonKey(name: 'expected-status')  String? expectedStatus,  int? tolerance,  LoadBalanceStrategy? strategy, @JsonKey(name: 'hash-key')  String? hashKey, @JsonKey(name: 'default-selected')  String? defaultSelected, @JsonKey(name: 'empty-fallback')  String? emptyFallback, @JsonKey(name: 'include-all')  bool? includeAll, @JsonKey(name: 'include-all-proxies')  bool? includeAllProxies, @JsonKey(name: 'include-all-providers')  bool? includeAllProviders,  bool? hidden,  String? icon,  String? order,  List<String>? memberLayout)?  $default,) {final _that = this;
 switch (_that) {
 case _ProxyGroup() when $default != null:
-return $default(_that.profileId,_that.id,_that.name,_that.type,_that.proxies,_that.use,_that.interval,_that.lazy,_that.disableUDP,_that.url,_that.timeout,_that.maxFailedTimes,_that.filter,_that.excludeFilter,_that.excludeType,_that.expectedStatus,_that.tolerance,_that.strategy,_that.hashKey,_that.defaultSelected,_that.emptyFallback,_that.includeAll,_that.includeAllProxies,_that.includeAllProviders,_that.hidden,_that.icon,_that.order);case _:
+return $default(_that.profileId,_that.id,_that.name,_that.type,_that.proxies,_that.use,_that.usePosition,_that.interval,_that.lazy,_that.disableUDP,_that.url,_that.timeout,_that.maxFailedTimes,_that.filter,_that.excludeFilter,_that.excludeType,_that.expectedStatus,_that.tolerance,_that.strategy,_that.hashKey,_that.defaultSelected,_that.emptyFallback,_that.includeAll,_that.includeAllProxies,_that.includeAllProviders,_that.hidden,_that.icon,_that.order,_that.memberLayout);case _:
   return null;
 
 }
@@ -241,7 +245,7 @@ return $default(_that.profileId,_that.id,_that.name,_that.type,_that.proxies,_th
 @JsonSerializable()
 
 class _ProxyGroup implements ProxyGroup {
-  const _ProxyGroup({this.profileId, @JsonKey(fromJson: Snowflake.buildId) required this.id, required this.name, required this.type,  List<String>? proxies,  List<String>? use, this.interval, this.lazy, @JsonKey(name: 'disable-udp') this.disableUDP, this.url, this.timeout, @JsonKey(name: 'max-failed-times') this.maxFailedTimes, this.filter, @JsonKey(name: 'exclude-filter') this.excludeFilter, @JsonKey(name: 'exclude-type') this.excludeType, @JsonKey(name: 'expected-status') this.expectedStatus, this.tolerance, this.strategy, @JsonKey(name: 'hash-key') this.hashKey, @JsonKey(name: 'default-selected') this.defaultSelected, @JsonKey(name: 'empty-fallback') this.emptyFallback, @JsonKey(name: 'include-all') this.includeAll, @JsonKey(name: 'include-all-proxies') this.includeAllProxies, @JsonKey(name: 'include-all-providers') this.includeAllProviders, this.hidden, this.icon, this.order}): _proxies = proxies,_use = use;
+  const _ProxyGroup({this.profileId, @JsonKey(fromJson: Snowflake.buildId) required this.id, required this.name, required this.type,  List<String>? proxies,  List<String>? use, @JsonKey(name: 'use-position')  Map<String, int>? usePosition, this.interval, this.lazy, @JsonKey(name: 'disable-udp') this.disableUDP, this.url, this.timeout, @JsonKey(name: 'max-failed-times') this.maxFailedTimes, this.filter, @JsonKey(name: 'exclude-filter') this.excludeFilter, @JsonKey(name: 'exclude-type') this.excludeType, @JsonKey(name: 'expected-status') this.expectedStatus, this.tolerance, this.strategy, @JsonKey(name: 'hash-key') this.hashKey, @JsonKey(name: 'default-selected') this.defaultSelected, @JsonKey(name: 'empty-fallback') this.emptyFallback, @JsonKey(name: 'include-all') this.includeAll, @JsonKey(name: 'include-all-proxies') this.includeAllProxies, @JsonKey(name: 'include-all-providers') this.includeAllProviders, this.hidden, this.icon, this.order,  List<String>? memberLayout}): _proxies = proxies,_use = use,_usePosition = usePosition,_memberLayout = memberLayout;
   factory _ProxyGroup.fromJson(Map<String, dynamic> json) => _$ProxyGroupFromJson(json);
 
 @override final  int? profileId;
@@ -266,6 +270,15 @@ class _ProxyGroup implements ProxyGroup {
   return EqualUnmodifiableListView(value);
 }
 
+ final  Map<String, int>? _usePosition;
+@override@JsonKey(name: 'use-position') Map<String, int>? get usePosition {
+  final value = _usePosition;
+  if (value == null) return null;
+  if (_usePosition is EqualUnmodifiableMapView) return _usePosition;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(value);
+}
+
 @override final  int? interval;
 @override final  bool? lazy;
 @override@JsonKey(name: 'disable-udp') final  bool? disableUDP;
@@ -287,6 +300,19 @@ class _ProxyGroup implements ProxyGroup {
 @override final  bool? hidden;
 @override final  String? icon;
 @override final  String? order;
+/// Where the members list shows the filters among the proxies, which no
+/// config carries, as `ProxyGroupMembersSliver` writes it.
+ final  List<String>? _memberLayout;
+/// Where the members list shows the filters among the proxies, which no
+/// config carries, as `ProxyGroupMembersSliver` writes it.
+@override List<String>? get memberLayout {
+  final value = _memberLayout;
+  if (value == null) return null;
+  if (_memberLayout is EqualUnmodifiableListView) return _memberLayout;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(value);
+}
+
 
 /// Create a copy of ProxyGroup
 /// with the given fields replaced by the non-null parameter values.
@@ -301,18 +327,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProxyGroup&&(identical(other.profileId, profileId) || other.profileId == profileId)&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.type, type) || other.type == type)&&const DeepCollectionEquality().equals(other.proxies, _proxies)&&const DeepCollectionEquality().equals(other.use, _use)&&(identical(other.interval, interval) || other.interval == interval)&&(identical(other.lazy, lazy) || other.lazy == lazy)&&(identical(other.disableUDP, disableUDP) || other.disableUDP == disableUDP)&&(identical(other.url, url) || other.url == url)&&(identical(other.timeout, timeout) || other.timeout == timeout)&&(identical(other.maxFailedTimes, maxFailedTimes) || other.maxFailedTimes == maxFailedTimes)&&(identical(other.filter, filter) || other.filter == filter)&&(identical(other.excludeFilter, excludeFilter) || other.excludeFilter == excludeFilter)&&(identical(other.excludeType, excludeType) || other.excludeType == excludeType)&&(identical(other.expectedStatus, expectedStatus) || other.expectedStatus == expectedStatus)&&(identical(other.tolerance, tolerance) || other.tolerance == tolerance)&&(identical(other.strategy, strategy) || other.strategy == strategy)&&(identical(other.hashKey, hashKey) || other.hashKey == hashKey)&&(identical(other.defaultSelected, defaultSelected) || other.defaultSelected == defaultSelected)&&(identical(other.emptyFallback, emptyFallback) || other.emptyFallback == emptyFallback)&&(identical(other.includeAll, includeAll) || other.includeAll == includeAll)&&(identical(other.includeAllProxies, includeAllProxies) || other.includeAllProxies == includeAllProxies)&&(identical(other.includeAllProviders, includeAllProviders) || other.includeAllProviders == includeAllProviders)&&(identical(other.hidden, hidden) || other.hidden == hidden)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.order, order) || other.order == order));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProxyGroup&&(identical(other.profileId, profileId) || other.profileId == profileId)&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.type, type) || other.type == type)&&const DeepCollectionEquality().equals(other.proxies, _proxies)&&const DeepCollectionEquality().equals(other.use, _use)&&const DeepCollectionEquality().equals(other.usePosition, _usePosition)&&(identical(other.interval, interval) || other.interval == interval)&&(identical(other.lazy, lazy) || other.lazy == lazy)&&(identical(other.disableUDP, disableUDP) || other.disableUDP == disableUDP)&&(identical(other.url, url) || other.url == url)&&(identical(other.timeout, timeout) || other.timeout == timeout)&&(identical(other.maxFailedTimes, maxFailedTimes) || other.maxFailedTimes == maxFailedTimes)&&(identical(other.filter, filter) || other.filter == filter)&&(identical(other.excludeFilter, excludeFilter) || other.excludeFilter == excludeFilter)&&(identical(other.excludeType, excludeType) || other.excludeType == excludeType)&&(identical(other.expectedStatus, expectedStatus) || other.expectedStatus == expectedStatus)&&(identical(other.tolerance, tolerance) || other.tolerance == tolerance)&&(identical(other.strategy, strategy) || other.strategy == strategy)&&(identical(other.hashKey, hashKey) || other.hashKey == hashKey)&&(identical(other.defaultSelected, defaultSelected) || other.defaultSelected == defaultSelected)&&(identical(other.emptyFallback, emptyFallback) || other.emptyFallback == emptyFallback)&&(identical(other.includeAll, includeAll) || other.includeAll == includeAll)&&(identical(other.includeAllProxies, includeAllProxies) || other.includeAllProxies == includeAllProxies)&&(identical(other.includeAllProviders, includeAllProviders) || other.includeAllProviders == includeAllProviders)&&(identical(other.hidden, hidden) || other.hidden == hidden)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.order, order) || other.order == order)&&const DeepCollectionEquality().equals(other.memberLayout, _memberLayout));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hashAll([runtimeType,profileId,id,name,type,const DeepCollectionEquality().hash(_proxies),const DeepCollectionEquality().hash(_use),interval,lazy,disableUDP,url,timeout,maxFailedTimes,filter,excludeFilter,excludeType,expectedStatus,tolerance,strategy,hashKey,defaultSelected,emptyFallback,includeAll,includeAllProxies,includeAllProviders,hidden,icon,order]);
+    return Object.hashAll([runtimeType,profileId,id,name,type,const DeepCollectionEquality().hash(_proxies),const DeepCollectionEquality().hash(_use),const DeepCollectionEquality().hash(_usePosition),interval,lazy,disableUDP,url,timeout,maxFailedTimes,filter,excludeFilter,excludeType,expectedStatus,tolerance,strategy,hashKey,defaultSelected,emptyFallback,includeAll,includeAllProxies,includeAllProviders,hidden,icon,order,const DeepCollectionEquality().hash(_memberLayout)]);
 }
 
 @override
 String toString() {
-    return 'ProxyGroup(profileId: $profileId, id: $id, name: $name, type: $type, proxies: $proxies, use: $use, interval: $interval, lazy: $lazy, disableUDP: $disableUDP, url: $url, timeout: $timeout, maxFailedTimes: $maxFailedTimes, filter: $filter, excludeFilter: $excludeFilter, excludeType: $excludeType, expectedStatus: $expectedStatus, tolerance: $tolerance, strategy: $strategy, hashKey: $hashKey, defaultSelected: $defaultSelected, emptyFallback: $emptyFallback, includeAll: $includeAll, includeAllProxies: $includeAllProxies, includeAllProviders: $includeAllProviders, hidden: $hidden, icon: $icon, order: $order)';
+    return 'ProxyGroup(profileId: $profileId, id: $id, name: $name, type: $type, proxies: $proxies, use: $use, usePosition: $usePosition, interval: $interval, lazy: $lazy, disableUDP: $disableUDP, url: $url, timeout: $timeout, maxFailedTimes: $maxFailedTimes, filter: $filter, excludeFilter: $excludeFilter, excludeType: $excludeType, expectedStatus: $expectedStatus, tolerance: $tolerance, strategy: $strategy, hashKey: $hashKey, defaultSelected: $defaultSelected, emptyFallback: $emptyFallback, includeAll: $includeAll, includeAllProxies: $includeAllProxies, includeAllProviders: $includeAllProviders, hidden: $hidden, icon: $icon, order: $order, memberLayout: $memberLayout)';
 }
 
 
@@ -323,7 +349,7 @@ abstract mixin class _$ProxyGroupCopyWith<$Res> implements $ProxyGroupCopyWith<$
   factory _$ProxyGroupCopyWith(_ProxyGroup value, $Res Function(_ProxyGroup) _then) = __$ProxyGroupCopyWithImpl;
 @override @useResult
 $Res call({
- int? profileId,@JsonKey(fromJson: Snowflake.buildId) int id, String name, GroupType type, List<String>? proxies, List<String>? use, int? interval, bool? lazy,@JsonKey(name: 'disable-udp') bool? disableUDP, String? url, int? timeout,@JsonKey(name: 'max-failed-times') int? maxFailedTimes, String? filter,@JsonKey(name: 'exclude-filter') String? excludeFilter,@JsonKey(name: 'exclude-type') String? excludeType,@JsonKey(name: 'expected-status') String? expectedStatus, int? tolerance, LoadBalanceStrategy? strategy,@JsonKey(name: 'hash-key') String? hashKey,@JsonKey(name: 'default-selected') String? defaultSelected,@JsonKey(name: 'empty-fallback') String? emptyFallback,@JsonKey(name: 'include-all') bool? includeAll,@JsonKey(name: 'include-all-proxies') bool? includeAllProxies,@JsonKey(name: 'include-all-providers') bool? includeAllProviders, bool? hidden, String? icon, String? order
+ int? profileId,@JsonKey(fromJson: Snowflake.buildId) int id, String name, GroupType type, List<String>? proxies, List<String>? use,@JsonKey(name: 'use-position') Map<String, int>? usePosition, int? interval, bool? lazy,@JsonKey(name: 'disable-udp') bool? disableUDP, String? url, int? timeout,@JsonKey(name: 'max-failed-times') int? maxFailedTimes, String? filter,@JsonKey(name: 'exclude-filter') String? excludeFilter,@JsonKey(name: 'exclude-type') String? excludeType,@JsonKey(name: 'expected-status') String? expectedStatus, int? tolerance, LoadBalanceStrategy? strategy,@JsonKey(name: 'hash-key') String? hashKey,@JsonKey(name: 'default-selected') String? defaultSelected,@JsonKey(name: 'empty-fallback') String? emptyFallback,@JsonKey(name: 'include-all') bool? includeAll,@JsonKey(name: 'include-all-proxies') bool? includeAllProxies,@JsonKey(name: 'include-all-providers') bool? includeAllProviders, bool? hidden, String? icon, String? order, List<String>? memberLayout
 });
 
 
@@ -340,7 +366,7 @@ class __$ProxyGroupCopyWithImpl<$Res>
 
 /// Create a copy of ProxyGroup
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? profileId = freezed,Object? id = null,Object? name = null,Object? type = null,Object? proxies = freezed,Object? use = freezed,Object? interval = freezed,Object? lazy = freezed,Object? disableUDP = freezed,Object? url = freezed,Object? timeout = freezed,Object? maxFailedTimes = freezed,Object? filter = freezed,Object? excludeFilter = freezed,Object? excludeType = freezed,Object? expectedStatus = freezed,Object? tolerance = freezed,Object? strategy = freezed,Object? hashKey = freezed,Object? defaultSelected = freezed,Object? emptyFallback = freezed,Object? includeAll = freezed,Object? includeAllProxies = freezed,Object? includeAllProviders = freezed,Object? hidden = freezed,Object? icon = freezed,Object? order = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? profileId = freezed,Object? id = null,Object? name = null,Object? type = null,Object? proxies = freezed,Object? use = freezed,Object? usePosition = freezed,Object? interval = freezed,Object? lazy = freezed,Object? disableUDP = freezed,Object? url = freezed,Object? timeout = freezed,Object? maxFailedTimes = freezed,Object? filter = freezed,Object? excludeFilter = freezed,Object? excludeType = freezed,Object? expectedStatus = freezed,Object? tolerance = freezed,Object? strategy = freezed,Object? hashKey = freezed,Object? defaultSelected = freezed,Object? emptyFallback = freezed,Object? includeAll = freezed,Object? includeAllProxies = freezed,Object? includeAllProviders = freezed,Object? hidden = freezed,Object? icon = freezed,Object? order = freezed,Object? memberLayout = freezed,}) {
   return _then(_ProxyGroup(
 profileId: freezed == profileId ? _self.profileId : profileId // ignore: cast_nullable_to_non_nullable
 as int?,id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
@@ -348,7 +374,8 @@ as int,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nu
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as GroupType,proxies: freezed == proxies ? _self._proxies : proxies // ignore: cast_nullable_to_non_nullable
 as List<String>?,use: freezed == use ? _self._use : use // ignore: cast_nullable_to_non_nullable
-as List<String>?,interval: freezed == interval ? _self.interval : interval // ignore: cast_nullable_to_non_nullable
+as List<String>?,usePosition: freezed == usePosition ? _self._usePosition : usePosition // ignore: cast_nullable_to_non_nullable
+as Map<String, int>?,interval: freezed == interval ? _self.interval : interval // ignore: cast_nullable_to_non_nullable
 as int?,lazy: freezed == lazy ? _self.lazy : lazy // ignore: cast_nullable_to_non_nullable
 as bool?,disableUDP: freezed == disableUDP ? _self.disableUDP : disableUDP // ignore: cast_nullable_to_non_nullable
 as bool?,url: freezed == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
@@ -369,7 +396,8 @@ as bool?,includeAllProviders: freezed == includeAllProviders ? _self.includeAllP
 as bool?,hidden: freezed == hidden ? _self.hidden : hidden // ignore: cast_nullable_to_non_nullable
 as bool?,icon: freezed == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
 as String?,order: freezed == order ? _self.order : order // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,memberLayout: freezed == memberLayout ? _self._memberLayout : memberLayout // ignore: cast_nullable_to_non_nullable
+as List<String>?,
   ));
 }
 
@@ -656,7 +684,9 @@ as String?,
 /// @nodoc
 mixin _$CustomProxy {
 
-@JsonKey(fromJson: Snowflake.buildId) int get id; Map<String, dynamic> get definition; String? get order;
+@JsonKey(fromJson: Snowflake.buildId) int get id; Map<String, dynamic> get definition; String? get order;/// Options the form lists with no value yet, which [definition] cannot
+/// hold since the core reads every key in it.
+ Set<ProxyField> get emptyOptions;
 /// Create a copy of CustomProxy
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -670,20 +700,20 @@ $CustomProxyCopyWith<CustomProxy> get copyWith => _$CustomProxyCopyWithImpl<Cust
 @override
 bool operator ==(Object other) {
   final _this = this as CustomProxy;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CustomProxy&&(identical(other.id, _this.id) || other.id == _this.id)&&const DeepCollectionEquality().equals(other.definition, _this.definition)&&(identical(other.order, _this.order) || other.order == _this.order));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CustomProxy&&(identical(other.id, _this.id) || other.id == _this.id)&&const DeepCollectionEquality().equals(other.definition, _this.definition)&&(identical(other.order, _this.order) || other.order == _this.order)&&const DeepCollectionEquality().equals(other.emptyOptions, _this.emptyOptions));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as CustomProxy;
-  return Object.hash(runtimeType,_this.id,const DeepCollectionEquality().hash(_this.definition),_this.order);
+  return Object.hash(runtimeType,_this.id,const DeepCollectionEquality().hash(_this.definition),_this.order,const DeepCollectionEquality().hash(_this.emptyOptions));
 }
 
 @override
 String toString() {
   final _this = this as CustomProxy;
-  return 'CustomProxy(id: ${_this.id}, definition: ${_this.definition}, order: ${_this.order})';
+  return 'CustomProxy(id: ${_this.id}, definition: ${_this.definition}, order: ${_this.order}, emptyOptions: ${_this.emptyOptions})';
 }
 
 
@@ -694,7 +724,7 @@ abstract mixin class $CustomProxyCopyWith<$Res>  {
   factory $CustomProxyCopyWith(CustomProxy value, $Res Function(CustomProxy) _then) = _$CustomProxyCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(fromJson: Snowflake.buildId) int id, Map<String, dynamic> definition, String? order
+@JsonKey(fromJson: Snowflake.buildId) int id, Map<String, dynamic> definition, String? order, Set<ProxyField> emptyOptions
 });
 
 
@@ -711,12 +741,13 @@ class _$CustomProxyCopyWithImpl<$Res>
 
 /// Create a copy of CustomProxy
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? definition = null,Object? order = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? definition = null,Object? order = freezed,Object? emptyOptions = null,}) {
   return _then(CustomProxy(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,definition: null == definition ? _self.definition : definition // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,order: freezed == order ? _self.order : order // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,emptyOptions: null == emptyOptions ? _self.emptyOptions : emptyOptions // ignore: cast_nullable_to_non_nullable
+as Set<ProxyField>,
   ));
 }
 
@@ -801,10 +832,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(fromJson: Snowflake.buildId)  int id,  Map<String, dynamic> definition,  String? order)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(fromJson: Snowflake.buildId)  int id,  Map<String, dynamic> definition,  String? order,  Set<ProxyField> emptyOptions)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CustomProxy() when $default != null:
-return $default(_that.id,_that.definition,_that.order);case _:
+return $default(_that.id,_that.definition,_that.order,_that.emptyOptions);case _:
   return orElse();
 
 }
@@ -822,10 +853,10 @@ return $default(_that.id,_that.definition,_that.order);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(fromJson: Snowflake.buildId)  int id,  Map<String, dynamic> definition,  String? order)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(fromJson: Snowflake.buildId)  int id,  Map<String, dynamic> definition,  String? order,  Set<ProxyField> emptyOptions)  $default,) {final _that = this;
 switch (_that) {
 case _CustomProxy():
-return $default(_that.id,_that.definition,_that.order);case _:
+return $default(_that.id,_that.definition,_that.order,_that.emptyOptions);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -842,10 +873,10 @@ return $default(_that.id,_that.definition,_that.order);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(fromJson: Snowflake.buildId)  int id,  Map<String, dynamic> definition,  String? order)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(fromJson: Snowflake.buildId)  int id,  Map<String, dynamic> definition,  String? order,  Set<ProxyField> emptyOptions)?  $default,) {final _that = this;
 switch (_that) {
 case _CustomProxy() when $default != null:
-return $default(_that.id,_that.definition,_that.order);case _:
+return $default(_that.id,_that.definition,_that.order,_that.emptyOptions);case _:
   return null;
 
 }
@@ -857,7 +888,7 @@ return $default(_that.id,_that.definition,_that.order);case _:
 @JsonSerializable()
 
 class _CustomProxy implements CustomProxy {
-  const _CustomProxy({@JsonKey(fromJson: Snowflake.buildId) required this.id,  Map<String, dynamic> definition = const {}, this.order}): _definition = definition;
+  const _CustomProxy({@JsonKey(fromJson: Snowflake.buildId) required this.id,  Map<String, dynamic> definition = const {}, this.order,  Set<ProxyField> emptyOptions = const {}}): _definition = definition,_emptyOptions = emptyOptions;
   factory _CustomProxy.fromJson(Map<String, dynamic> json) => _$CustomProxyFromJson(json);
 
 @override@JsonKey(fromJson: Snowflake.buildId) final  int id;
@@ -869,6 +900,17 @@ class _CustomProxy implements CustomProxy {
 }
 
 @override final  String? order;
+/// Options the form lists with no value yet, which [definition] cannot
+/// hold since the core reads every key in it.
+ final  Set<ProxyField> _emptyOptions;
+/// Options the form lists with no value yet, which [definition] cannot
+/// hold since the core reads every key in it.
+@override@JsonKey() Set<ProxyField> get emptyOptions {
+  if (_emptyOptions is EqualUnmodifiableSetView) return _emptyOptions;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableSetView(_emptyOptions);
+}
+
 
 /// Create a copy of CustomProxy
 /// with the given fields replaced by the non-null parameter values.
@@ -883,18 +925,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CustomProxy&&(identical(other.id, id) || other.id == id)&&const DeepCollectionEquality().equals(other.definition, _definition)&&(identical(other.order, order) || other.order == order));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CustomProxy&&(identical(other.id, id) || other.id == id)&&const DeepCollectionEquality().equals(other.definition, _definition)&&(identical(other.order, order) || other.order == order)&&const DeepCollectionEquality().equals(other.emptyOptions, _emptyOptions));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,const DeepCollectionEquality().hash(_definition),order);
+    return Object.hash(runtimeType,id,const DeepCollectionEquality().hash(_definition),order,const DeepCollectionEquality().hash(_emptyOptions));
 }
 
 @override
 String toString() {
-    return 'CustomProxy(id: $id, definition: $definition, order: $order)';
+    return 'CustomProxy(id: $id, definition: $definition, order: $order, emptyOptions: $emptyOptions)';
 }
 
 
@@ -905,7 +947,7 @@ abstract mixin class _$CustomProxyCopyWith<$Res> implements $CustomProxyCopyWith
   factory _$CustomProxyCopyWith(_CustomProxy value, $Res Function(_CustomProxy) _then) = __$CustomProxyCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(fromJson: Snowflake.buildId) int id, Map<String, dynamic> definition, String? order
+@JsonKey(fromJson: Snowflake.buildId) int id, Map<String, dynamic> definition, String? order, Set<ProxyField> emptyOptions
 });
 
 
@@ -922,12 +964,13 @@ class __$CustomProxyCopyWithImpl<$Res>
 
 /// Create a copy of CustomProxy
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? definition = null,Object? order = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? definition = null,Object? order = freezed,Object? emptyOptions = null,}) {
   return _then(_CustomProxy(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,definition: null == definition ? _self._definition : definition // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,order: freezed == order ? _self.order : order // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,emptyOptions: null == emptyOptions ? _self._emptyOptions : emptyOptions // ignore: cast_nullable_to_non_nullable
+as Set<ProxyField>,
   ));
 }
 
@@ -5103,7 +5146,7 @@ return $default(_that.enable,_that.listen,_that.listenRoutingMark,_that.preferH3
 @JsonSerializable()
 
 class _Dns implements Dns {
-  const _Dns({this.enable = false, this.listen = '', @JsonKey(name: 'listen-routing-mark') this.listenRoutingMark = 0, @JsonKey(name: 'prefer-h3') this.preferH3 = false, @JsonKey(name: 'use-hosts') this.useHosts = true, @JsonKey(name: 'use-system-hosts') this.useSystemHosts = true, @JsonKey(name: 'respect-rules') this.respectRules = false, this.ipv6 = false, @JsonKey(name: 'ipv6-timeout') this.ipv6Timeout = 100, @JsonKey(name: 'cache-algorithm') this.cacheAlgorithm = DnsCacheAlgorithm.lru, @JsonKey(name: 'cache-max-size') this.cacheMaxSize = 4096, @JsonKey(name: 'default-nameserver')  List<String> defaultNameserver = const [], @JsonKey(name: 'enhanced-mode') this.enhancedMode = DnsMode.redirHost, @JsonKey(name: 'fake-ip-range') this.fakeIpRange = '', @JsonKey(name: 'fake-ip-range6') this.fakeIpRange6 = '', @JsonKey(name: 'fake-ip-filter')  List<String> fakeIpFilter = const [], @JsonKey(name: 'fake-ip-filter-mode') this.fakeIpFilterMode = FakeIpFilterMode.blacklist, @JsonKey(name: 'fake-ip-ttl') this.fakeIpTtl = 1, @JsonKey(name: 'nameserver-policy')  Map<String, String> nameserverPolicy = const {},  List<String> nameserver = const [],  List<String> fallback = const [], @JsonKey(name: 'fallback-lazy-query') this.fallbackLazyQuery = false, @JsonKey(name: 'proxy-server-nameserver')  List<String> proxyServerNameserver = const [], @JsonKey(name: 'proxy-server-nameserver-policy')  Map<String, String> proxyServerNameserverPolicy = const {}, @JsonKey(name: 'direct-nameserver')  List<String> directNameserver = const [], @JsonKey(name: 'direct-nameserver-follow-policy') this.directNameserverFollowPolicy = false, @JsonKey(name: 'fallback-filter') this.fallbackFilter = const FallbackFilter()}): _defaultNameserver = defaultNameserver,_fakeIpFilter = fakeIpFilter,_nameserverPolicy = nameserverPolicy,_nameserver = nameserver,_fallback = fallback,_proxyServerNameserver = proxyServerNameserver,_proxyServerNameserverPolicy = proxyServerNameserverPolicy,_directNameserver = directNameserver;
+  const _Dns({this.enable = false, this.listen = '', @JsonKey(name: 'listen-routing-mark') this.listenRoutingMark = 0, @JsonKey(name: 'prefer-h3') this.preferH3 = false, @JsonKey(name: 'use-hosts') this.useHosts = true, @JsonKey(name: 'use-system-hosts') this.useSystemHosts = true, @JsonKey(name: 'respect-rules') this.respectRules = false, this.ipv6 = false, @JsonKey(name: 'ipv6-timeout') this.ipv6Timeout = 100, @JsonKey(name: 'cache-algorithm') this.cacheAlgorithm = DnsCacheAlgorithm.lru, @JsonKey(name: 'cache-max-size') this.cacheMaxSize = 4096, @JsonKey(name: 'default-nameserver')  List<String> defaultNameserver = const ['114.114.114.114', '223.5.5.5', '8.8.8.8', '1.0.0.1'], @JsonKey(name: 'enhanced-mode') this.enhancedMode = DnsMode.redirHost, @JsonKey(name: 'fake-ip-range') this.fakeIpRange = '198.18.0.1/16', @JsonKey(name: 'fake-ip-range6') this.fakeIpRange6 = '', @JsonKey(name: 'fake-ip-filter')  List<String> fakeIpFilter = const ['dns.msftnsci.com', 'www.msftnsci.com', 'www.msftconnecttest.com'], @JsonKey(name: 'fake-ip-filter-mode') this.fakeIpFilterMode = FakeIpFilterMode.blacklist, @JsonKey(name: 'fake-ip-ttl') this.fakeIpTtl = 1, @JsonKey(name: 'nameserver-policy')  Map<String, String> nameserverPolicy = const {},  List<String> nameserver = const ['https://doh.pub/dns-query', 'tls://223.5.5.5:853'],  List<String> fallback = const [], @JsonKey(name: 'fallback-lazy-query') this.fallbackLazyQuery = false, @JsonKey(name: 'proxy-server-nameserver')  List<String> proxyServerNameserver = const [], @JsonKey(name: 'proxy-server-nameserver-policy')  Map<String, String> proxyServerNameserverPolicy = const {}, @JsonKey(name: 'direct-nameserver')  List<String> directNameserver = const [], @JsonKey(name: 'direct-nameserver-follow-policy') this.directNameserverFollowPolicy = false, @JsonKey(name: 'fallback-filter') this.fallbackFilter = const FallbackFilter()}): _defaultNameserver = defaultNameserver,_fakeIpFilter = fakeIpFilter,_nameserverPolicy = nameserverPolicy,_nameserver = nameserver,_fallback = fallback,_proxyServerNameserver = proxyServerNameserver,_proxyServerNameserverPolicy = proxyServerNameserverPolicy,_directNameserver = directNameserver;
   factory _Dns.fromJson(Map<String, dynamic> json) => _$DnsFromJson(json);
 
 @override@JsonKey() final  bool enable;
@@ -5487,7 +5530,7 @@ return $default(_that.enable,_that.server,_that.port,_that.interval,_that.dialer
 @JsonSerializable()
 
 class _Ntp implements Ntp {
-  const _Ntp({this.enable = false, this.server = '', this.port = 123, this.interval = 30, @JsonKey(name: 'dialer-proxy') this.dialerProxy = '', @JsonKey(name: 'write-to-system') this.writeToSystem = false});
+  const _Ntp({this.enable = false, this.server = 'time.apple.com', this.port = 123, this.interval = 30, @JsonKey(name: 'dialer-proxy') this.dialerProxy = '', @JsonKey(name: 'write-to-system') this.writeToSystem = false});
   factory _Ntp.fromJson(Map<String, dynamic> json) => _$NtpFromJson(json);
 
 @override@JsonKey() final  bool enable;
@@ -6807,7 +6850,9 @@ as IpVersion?,
 /// @nodoc
 mixin _$ProxyProviderOptions {
 
-@JsonKey(name: 'health-check') ProviderHealthCheck get healthCheck; String? get filter;@JsonKey(name: 'exclude-filter') String? get excludeFilter;@JsonKey(name: 'override') ProviderOverride get proxyOverride;
+@JsonKey(name: 'health-check') ProviderHealthCheck get healthCheck; String? get filter;@JsonKey(name: 'exclude-filter') String? get excludeFilter;@JsonKey(name: 'override') ProviderOverride get proxyOverride;/// Where the filters list shows the exclude filters among the filters,
+/// which no config carries, as `ProxyProviderFiltersSliver` writes it.
+ List<String>? get memberLayout;
 /// Create a copy of ProxyProviderOptions
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -6821,20 +6866,20 @@ $ProxyProviderOptionsCopyWith<ProxyProviderOptions> get copyWith => _$ProxyProvi
 @override
 bool operator ==(Object other) {
   final _this = this as ProxyProviderOptions;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProxyProviderOptions&&(identical(other.healthCheck, _this.healthCheck) || other.healthCheck == _this.healthCheck)&&(identical(other.filter, _this.filter) || other.filter == _this.filter)&&(identical(other.excludeFilter, _this.excludeFilter) || other.excludeFilter == _this.excludeFilter)&&(identical(other.proxyOverride, _this.proxyOverride) || other.proxyOverride == _this.proxyOverride));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProxyProviderOptions&&(identical(other.healthCheck, _this.healthCheck) || other.healthCheck == _this.healthCheck)&&(identical(other.filter, _this.filter) || other.filter == _this.filter)&&(identical(other.excludeFilter, _this.excludeFilter) || other.excludeFilter == _this.excludeFilter)&&(identical(other.proxyOverride, _this.proxyOverride) || other.proxyOverride == _this.proxyOverride)&&const DeepCollectionEquality().equals(other.memberLayout, _this.memberLayout));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as ProxyProviderOptions;
-  return Object.hash(runtimeType,_this.healthCheck,_this.filter,_this.excludeFilter,_this.proxyOverride);
+  return Object.hash(runtimeType,_this.healthCheck,_this.filter,_this.excludeFilter,_this.proxyOverride,const DeepCollectionEquality().hash(_this.memberLayout));
 }
 
 @override
 String toString() {
   final _this = this as ProxyProviderOptions;
-  return 'ProxyProviderOptions(healthCheck: ${_this.healthCheck}, filter: ${_this.filter}, excludeFilter: ${_this.excludeFilter}, proxyOverride: ${_this.proxyOverride})';
+  return 'ProxyProviderOptions(healthCheck: ${_this.healthCheck}, filter: ${_this.filter}, excludeFilter: ${_this.excludeFilter}, proxyOverride: ${_this.proxyOverride}, memberLayout: ${_this.memberLayout})';
 }
 
 
@@ -6845,7 +6890,7 @@ abstract mixin class $ProxyProviderOptionsCopyWith<$Res>  {
   factory $ProxyProviderOptionsCopyWith(ProxyProviderOptions value, $Res Function(ProxyProviderOptions) _then) = _$ProxyProviderOptionsCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'health-check') ProviderHealthCheck healthCheck, String? filter,@JsonKey(name: 'exclude-filter') String? excludeFilter,@JsonKey(name: 'override') ProviderOverride proxyOverride
+@JsonKey(name: 'health-check') ProviderHealthCheck healthCheck, String? filter,@JsonKey(name: 'exclude-filter') String? excludeFilter,@JsonKey(name: 'override') ProviderOverride proxyOverride, List<String>? memberLayout
 });
 
 
@@ -6862,13 +6907,14 @@ class _$ProxyProviderOptionsCopyWithImpl<$Res>
 
 /// Create a copy of ProxyProviderOptions
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? healthCheck = null,Object? filter = freezed,Object? excludeFilter = freezed,Object? proxyOverride = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? healthCheck = null,Object? filter = freezed,Object? excludeFilter = freezed,Object? proxyOverride = null,Object? memberLayout = freezed,}) {
   return _then(ProxyProviderOptions(
 healthCheck: null == healthCheck ? _self.healthCheck : healthCheck // ignore: cast_nullable_to_non_nullable
 as ProviderHealthCheck,filter: freezed == filter ? _self.filter : filter // ignore: cast_nullable_to_non_nullable
 as String?,excludeFilter: freezed == excludeFilter ? _self.excludeFilter : excludeFilter // ignore: cast_nullable_to_non_nullable
 as String?,proxyOverride: null == proxyOverride ? _self.proxyOverride : proxyOverride // ignore: cast_nullable_to_non_nullable
-as ProviderOverride,
+as ProviderOverride,memberLayout: freezed == memberLayout ? _self.memberLayout : memberLayout // ignore: cast_nullable_to_non_nullable
+as List<String>?,
   ));
 }
 /// Create a copy of ProxyProviderOptions
@@ -6971,10 +7017,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'health-check')  ProviderHealthCheck healthCheck,  String? filter, @JsonKey(name: 'exclude-filter')  String? excludeFilter, @JsonKey(name: 'override')  ProviderOverride proxyOverride)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'health-check')  ProviderHealthCheck healthCheck,  String? filter, @JsonKey(name: 'exclude-filter')  String? excludeFilter, @JsonKey(name: 'override')  ProviderOverride proxyOverride,  List<String>? memberLayout)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProxyProviderOptions() when $default != null:
-return $default(_that.healthCheck,_that.filter,_that.excludeFilter,_that.proxyOverride);case _:
+return $default(_that.healthCheck,_that.filter,_that.excludeFilter,_that.proxyOverride,_that.memberLayout);case _:
   return orElse();
 
 }
@@ -6992,10 +7038,10 @@ return $default(_that.healthCheck,_that.filter,_that.excludeFilter,_that.proxyOv
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'health-check')  ProviderHealthCheck healthCheck,  String? filter, @JsonKey(name: 'exclude-filter')  String? excludeFilter, @JsonKey(name: 'override')  ProviderOverride proxyOverride)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'health-check')  ProviderHealthCheck healthCheck,  String? filter, @JsonKey(name: 'exclude-filter')  String? excludeFilter, @JsonKey(name: 'override')  ProviderOverride proxyOverride,  List<String>? memberLayout)  $default,) {final _that = this;
 switch (_that) {
 case _ProxyProviderOptions():
-return $default(_that.healthCheck,_that.filter,_that.excludeFilter,_that.proxyOverride);case _:
+return $default(_that.healthCheck,_that.filter,_that.excludeFilter,_that.proxyOverride,_that.memberLayout);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -7012,10 +7058,10 @@ return $default(_that.healthCheck,_that.filter,_that.excludeFilter,_that.proxyOv
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'health-check')  ProviderHealthCheck healthCheck,  String? filter, @JsonKey(name: 'exclude-filter')  String? excludeFilter, @JsonKey(name: 'override')  ProviderOverride proxyOverride)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'health-check')  ProviderHealthCheck healthCheck,  String? filter, @JsonKey(name: 'exclude-filter')  String? excludeFilter, @JsonKey(name: 'override')  ProviderOverride proxyOverride,  List<String>? memberLayout)?  $default,) {final _that = this;
 switch (_that) {
 case _ProxyProviderOptions() when $default != null:
-return $default(_that.healthCheck,_that.filter,_that.excludeFilter,_that.proxyOverride);case _:
+return $default(_that.healthCheck,_that.filter,_that.excludeFilter,_that.proxyOverride,_that.memberLayout);case _:
   return null;
 
 }
@@ -7027,13 +7073,26 @@ return $default(_that.healthCheck,_that.filter,_that.excludeFilter,_that.proxyOv
 @JsonSerializable()
 
 class _ProxyProviderOptions implements ProxyProviderOptions {
-  const _ProxyProviderOptions({@JsonKey(name: 'health-check') this.healthCheck = const ProviderHealthCheck(), this.filter, @JsonKey(name: 'exclude-filter') this.excludeFilter, @JsonKey(name: 'override') this.proxyOverride = const ProviderOverride()});
+  const _ProxyProviderOptions({@JsonKey(name: 'health-check') this.healthCheck = const ProviderHealthCheck(), this.filter, @JsonKey(name: 'exclude-filter') this.excludeFilter, @JsonKey(name: 'override') this.proxyOverride = const ProviderOverride(),  List<String>? memberLayout}): _memberLayout = memberLayout;
   factory _ProxyProviderOptions.fromJson(Map<String, dynamic> json) => _$ProxyProviderOptionsFromJson(json);
 
 @override@JsonKey(name: 'health-check') final  ProviderHealthCheck healthCheck;
 @override final  String? filter;
 @override@JsonKey(name: 'exclude-filter') final  String? excludeFilter;
 @override@JsonKey(name: 'override') final  ProviderOverride proxyOverride;
+/// Where the filters list shows the exclude filters among the filters,
+/// which no config carries, as `ProxyProviderFiltersSliver` writes it.
+ final  List<String>? _memberLayout;
+/// Where the filters list shows the exclude filters among the filters,
+/// which no config carries, as `ProxyProviderFiltersSliver` writes it.
+@override List<String>? get memberLayout {
+  final value = _memberLayout;
+  if (value == null) return null;
+  if (_memberLayout is EqualUnmodifiableListView) return _memberLayout;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(value);
+}
+
 
 /// Create a copy of ProxyProviderOptions
 /// with the given fields replaced by the non-null parameter values.
@@ -7048,18 +7107,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProxyProviderOptions&&(identical(other.healthCheck, healthCheck) || other.healthCheck == healthCheck)&&(identical(other.filter, filter) || other.filter == filter)&&(identical(other.excludeFilter, excludeFilter) || other.excludeFilter == excludeFilter)&&(identical(other.proxyOverride, proxyOverride) || other.proxyOverride == proxyOverride));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProxyProviderOptions&&(identical(other.healthCheck, healthCheck) || other.healthCheck == healthCheck)&&(identical(other.filter, filter) || other.filter == filter)&&(identical(other.excludeFilter, excludeFilter) || other.excludeFilter == excludeFilter)&&(identical(other.proxyOverride, proxyOverride) || other.proxyOverride == proxyOverride)&&const DeepCollectionEquality().equals(other.memberLayout, _memberLayout));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,healthCheck,filter,excludeFilter,proxyOverride);
+    return Object.hash(runtimeType,healthCheck,filter,excludeFilter,proxyOverride,const DeepCollectionEquality().hash(_memberLayout));
 }
 
 @override
 String toString() {
-    return 'ProxyProviderOptions(healthCheck: $healthCheck, filter: $filter, excludeFilter: $excludeFilter, proxyOverride: $proxyOverride)';
+    return 'ProxyProviderOptions(healthCheck: $healthCheck, filter: $filter, excludeFilter: $excludeFilter, proxyOverride: $proxyOverride, memberLayout: $memberLayout)';
 }
 
 
@@ -7070,7 +7129,7 @@ abstract mixin class _$ProxyProviderOptionsCopyWith<$Res> implements $ProxyProvi
   factory _$ProxyProviderOptionsCopyWith(_ProxyProviderOptions value, $Res Function(_ProxyProviderOptions) _then) = __$ProxyProviderOptionsCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'health-check') ProviderHealthCheck healthCheck, String? filter,@JsonKey(name: 'exclude-filter') String? excludeFilter,@JsonKey(name: 'override') ProviderOverride proxyOverride
+@JsonKey(name: 'health-check') ProviderHealthCheck healthCheck, String? filter,@JsonKey(name: 'exclude-filter') String? excludeFilter,@JsonKey(name: 'override') ProviderOverride proxyOverride, List<String>? memberLayout
 });
 
 
@@ -7087,13 +7146,14 @@ class __$ProxyProviderOptionsCopyWithImpl<$Res>
 
 /// Create a copy of ProxyProviderOptions
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? healthCheck = null,Object? filter = freezed,Object? excludeFilter = freezed,Object? proxyOverride = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? healthCheck = null,Object? filter = freezed,Object? excludeFilter = freezed,Object? proxyOverride = null,Object? memberLayout = freezed,}) {
   return _then(_ProxyProviderOptions(
 healthCheck: null == healthCheck ? _self.healthCheck : healthCheck // ignore: cast_nullable_to_non_nullable
 as ProviderHealthCheck,filter: freezed == filter ? _self.filter : filter // ignore: cast_nullable_to_non_nullable
 as String?,excludeFilter: freezed == excludeFilter ? _self.excludeFilter : excludeFilter // ignore: cast_nullable_to_non_nullable
 as String?,proxyOverride: null == proxyOverride ? _self.proxyOverride : proxyOverride // ignore: cast_nullable_to_non_nullable
-as ProviderOverride,
+as ProviderOverride,memberLayout: freezed == memberLayout ? _self._memberLayout : memberLayout // ignore: cast_nullable_to_non_nullable
+as List<String>?,
   ));
 }
 

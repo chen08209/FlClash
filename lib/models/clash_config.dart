@@ -70,6 +70,7 @@ abstract class ProxyGroup with _$ProxyGroup {
     required GroupType type,
     List<String>? proxies,
     List<String>? use,
+    @JsonKey(name: 'use-position') Map<String, int>? usePosition,
     int? interval,
     bool? lazy,
     @JsonKey(name: 'disable-udp') bool? disableUDP,
@@ -91,6 +92,10 @@ abstract class ProxyGroup with _$ProxyGroup {
     bool? hidden,
     String? icon,
     String? order,
+
+    /// Where the members list shows the filters among the proxies, which no
+    /// config carries, as `ProxyGroupMembersSliver` writes it.
+    List<String>? memberLayout,
   }) = _ProxyGroup;
 
   factory ProxyGroup.fromJson(Map<String, Object?> json) =>
@@ -106,6 +111,7 @@ extension ProxyGroupExt on ProxyGroup {
       'type': type.value,
       if (proxies?.isNotEmpty == true) 'proxies': proxies,
       if (use?.isNotEmpty == true) 'use': use,
+      'use-position': ?effectiveUsePosition,
       if (url?.isNotEmpty == true) 'url': url,
       if (interval != null) 'interval': interval,
       if (timeout != null) 'timeout': timeout,
@@ -137,21 +143,70 @@ extension ProxyGroupExt on ProxyGroup {
     };
   }
 
+  /// [usePosition] without the providers the core would list last anyway.
+  Map<String, int>? get effectiveUsePosition {
+    final count = proxies?.length ?? 0;
+    final positions = {
+      for (final name in use ?? const <String>[])
+        if (usePosition?[name] case final position? when position < count)
+          name: position < 0 ? 0 : position,
+    };
+    return positions.isEmpty ? null : positions;
+  }
+
   String get definitionYaml => yaml.encode(definition);
 
+  /// What [definitionYaml] leaves out, such as an option added without a
+  /// value, was never there to remove, so it stays.
   ProxyGroup withDefinitionYaml(String content) {
     final document = _plainYaml(loadYaml(content));
     if (document is! Map<String, Object?> ||
-        document['name'] is! String ||
+        (document['name'] is! String && document['name'] is! num) ||
         document['type'] is! String) {
       throw const FormatException('Not a proxy group mapping');
     }
-    return ProxyGroup.fromJson({
+    final shown = definition;
+    final group = ProxyGroup.fromJson({
+      for (final MapEntry(:key, :value) in toJson().entries)
+        if (!shown.containsKey(key) && key != 'use-position') key: value,
       ...document,
+      for (final key in proxyGroupTextKeys)
+        if (document[key] case final value? when value is! String)
+          key: value.toString(),
+      for (final key in const ['proxies', 'use'])
+        if (document[key] case final List<Object?> names)
+          key: [for (final name in names) name.toString()],
+      if (document.containsKey('use-position'))
+        'use-position': usePositionOf(document['use-position']),
       'id': id,
     }).copyWith(profileId: profileId, order: order);
+    return group.copyWith(usePosition: group.effectiveUsePosition);
   }
 }
+
+Map<String, int>? usePositionOf(
+  Object? value, [
+  Map<String, String> names = const {},
+]) => switch (value) {
+  Map() => {
+    for (final MapEntry(:key, :value) in value.entries)
+      names['$key'] ?? '$key': ?int.tryParse('$value'),
+  },
+  _ => null,
+};
+
+const proxyGroupTextKeys = [
+  'name',
+  'url',
+  'filter',
+  'exclude-filter',
+  'exclude-type',
+  'expected-status',
+  'hash-key',
+  'default-selected',
+  'empty-fallback',
+  'icon',
+];
 
 @freezed
 abstract class Proxy with _$Proxy {
@@ -285,6 +340,10 @@ abstract class CustomProxy with _$CustomProxy {
     @JsonKey(fromJson: Snowflake.buildId) required int id,
     @Default({}) Map<String, dynamic> definition,
     String? order,
+
+    /// Options the form lists with no value yet, which [definition] cannot
+    /// hold since the core reads every key in it.
+    @Default({}) Set<ProxyField> emptyOptions,
   }) = _CustomProxy;
 
   factory CustomProxy.fromJson(Map<String, Object?> json) =>
@@ -1026,15 +1085,23 @@ abstract class Dns with _$Dns {
     @JsonKey(name: 'cache-algorithm')
     DnsCacheAlgorithm cacheAlgorithm,
     @Default(4096) @JsonKey(name: 'cache-max-size') int cacheMaxSize,
-    @Default([])
+    @Default(['114.114.114.114', '223.5.5.5', '8.8.8.8', '1.0.0.1'])
     @JsonKey(name: 'default-nameserver')
     List<String> defaultNameserver,
     @Default(DnsMode.redirHost)
     @JsonKey(name: 'enhanced-mode')
     DnsMode enhancedMode,
-    @Default('') @JsonKey(name: 'fake-ip-range') String fakeIpRange,
+    @Default('198.18.0.1/16')
+    @JsonKey(name: 'fake-ip-range')
+    String fakeIpRange,
     @Default('') @JsonKey(name: 'fake-ip-range6') String fakeIpRange6,
-    @Default([]) @JsonKey(name: 'fake-ip-filter') List<String> fakeIpFilter,
+    @Default([
+      'dns.msftnsci.com',
+      'www.msftnsci.com',
+      'www.msftconnecttest.com',
+    ])
+    @JsonKey(name: 'fake-ip-filter')
+    List<String> fakeIpFilter,
     @Default(FakeIpFilterMode.blacklist)
     @JsonKey(name: 'fake-ip-filter-mode')
     FakeIpFilterMode fakeIpFilterMode,
@@ -1042,7 +1109,8 @@ abstract class Dns with _$Dns {
     @Default({})
     @JsonKey(name: 'nameserver-policy')
     Map<String, String> nameserverPolicy,
-    @Default([]) List<String> nameserver,
+    @Default(['https://doh.pub/dns-query', 'tls://223.5.5.5:853'])
+    List<String> nameserver,
     @Default([]) List<String> fallback,
     @Default(false)
     @JsonKey(name: 'fallback-lazy-query')
@@ -1129,8 +1197,18 @@ extension DnsOverrideExt on Dns {
     return json;
   }
 
-  Map<String, Object?> overrideJson(Set<DnsOverrideKey> keys) =>
-      _overrideJson(_json, DnsOverrideKey.values, keys);
+  /// [keepEmpty] writes emptied keys, but the core refuses an empty nameserver.
+  Map<String, Object?> overrideJson(
+    Set<DnsOverrideKey> keys, {
+    bool keepEmpty = false,
+  }) => _overrideJson(
+    _json,
+    DnsOverrideKey.values,
+    keys,
+    keepEmpty: keepEmpty
+        ? keys.difference({DnsOverrideKey.nameserver})
+        : const <DnsOverrideKey>{},
+  );
 
   String overrideYaml(Set<DnsOverrideKey> keys) =>
       yaml.encode(overrideJson(keys));
@@ -1165,8 +1243,9 @@ Object? _plainYaml(Object? node) => switch (node) {
 Map<String, Object?> _overrideJson<K extends OverrideKey>(
   Map<String, Object?> json,
   List<K> values,
-  Set<K> keys,
-) {
+  Set<K> keys, {
+  Set<K> keepEmpty = const {},
+}) {
   final result = <String, Object?>{};
   for (final key in values) {
     if (!keys.contains(key)) {
@@ -1176,7 +1255,7 @@ Map<String, Object?> _overrideJson<K extends OverrideKey>(
     final value = parent == null
         ? json[key.path]
         : (json[parent] as Map)[key.field];
-    if (_isUnset(value)) {
+    if (_isUnset(value) && !keepEmpty.contains(key)) {
       continue;
     }
     if (parent == null) {
@@ -1191,8 +1270,6 @@ Map<String, Object?> _overrideJson<K extends OverrideKey>(
   return result;
 }
 
-/// A key is added without a value, and writes nothing until it gets one: the
-/// core refuses an empty `nameserver` outright.
 bool _isUnset(Object? value) => switch (value) {
   String() => value.isEmpty,
   Iterable() => value.isEmpty,
@@ -1299,7 +1376,7 @@ Map<String, dynamic> mergeDnsOverride(
 abstract class Ntp with _$Ntp {
   const factory Ntp({
     @Default(false) bool enable,
-    @Default('') String server,
+    @Default('time.apple.com') String server,
     @Default(123) int port,
     @Default(30) int interval,
     @Default('') @JsonKey(name: 'dialer-proxy') String dialerProxy,
@@ -1457,6 +1534,10 @@ abstract class ProxyProviderOptions with _$ProxyProviderOptions {
     @Default(ProviderOverride())
     @JsonKey(name: 'override')
     ProviderOverride proxyOverride,
+
+    /// Where the filters list shows the exclude filters among the filters,
+    /// which no config carries, as `ProxyProviderFiltersSliver` writes it.
+    List<String>? memberLayout,
   }) = _ProxyProviderOptions;
 
   factory ProxyProviderOptions.fromJson(Map<String, Object?> json) =>
@@ -1465,27 +1546,39 @@ abstract class ProxyProviderOptions with _$ProxyProviderOptions {
 
 extension ProxyProviderOptionsExt on ProxyProviderOptions {
   /// A health check without a url never runs, so one always carries a url.
-  Map<String, Object?> get definition => {
-    if (healthCheck != const ProviderHealthCheck())
-      'health-check': {
-        'enable': true,
-        'url': healthCheck.url ?? defaultTestUrl,
-        'interval': ?healthCheck.interval,
-        'timeout': ?healthCheck.timeout,
-        'lazy': ?healthCheck.lazy,
-        'expected-status': ?healthCheck.expectedStatus,
-      },
-    'filter': ?filter,
-    'exclude-filter': ?excludeFilter,
-    if (proxyOverride != const ProviderOverride())
-      'override': {
-        'additional-prefix': ?proxyOverride.additionalPrefix,
-        'additional-suffix': ?proxyOverride.additionalSuffix,
-        'udp': ?proxyOverride.udp,
-        'skip-cert-verify': ?proxyOverride.skipCertVerify,
-        'ip-version': ?proxyOverride.ipVersion?.value,
-      },
-  };
+  /// A text option added but left empty stays in the form and out of here.
+  Map<String, Object?> get definition {
+    String? text(String? value) => value?.isNotEmpty == true ? value : null;
+    final healthCheck = this.healthCheck.copyWith(
+      url: text(this.healthCheck.url),
+      expectedStatus: text(this.healthCheck.expectedStatus),
+    );
+    final proxyOverride = this.proxyOverride.copyWith(
+      additionalPrefix: text(this.proxyOverride.additionalPrefix),
+      additionalSuffix: text(this.proxyOverride.additionalSuffix),
+    );
+    return {
+      if (healthCheck != const ProviderHealthCheck())
+        'health-check': {
+          'enable': true,
+          'url': healthCheck.url ?? defaultTestUrl,
+          'interval': ?healthCheck.interval,
+          'timeout': ?healthCheck.timeout,
+          'lazy': ?healthCheck.lazy,
+          'expected-status': ?healthCheck.expectedStatus,
+        },
+      'filter': ?filter,
+      'exclude-filter': ?excludeFilter,
+      if (proxyOverride != const ProviderOverride())
+        'override': {
+          'additional-prefix': ?proxyOverride.additionalPrefix,
+          'additional-suffix': ?proxyOverride.additionalSuffix,
+          'udp': ?proxyOverride.udp,
+          'skip-cert-verify': ?proxyOverride.skipCertVerify,
+          'ip-version': ?proxyOverride.ipVersion?.value,
+        },
+    };
+  }
 }
 
 extension ProfileOverridesExt on ProfileOverrides {

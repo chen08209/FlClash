@@ -89,6 +89,32 @@ class _StandardContentState extends ConsumerState<StandardContent> {
     BaseNavigator.push(context, _EditGlobalAddedRules(_profileId));
   }
 
+  Widget _buildRuleItem(List<Rule> rules, int index, Set<dynamic> selected) {
+    final rule = rules[index];
+    return ReorderableDelayedDragStartListener(
+      key: ObjectKey(rule),
+      index: index,
+      child: ItemPositionProvider(
+        position: ItemPosition.get(index, rules.length),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          child: RuleItem(
+            hasMatch: true,
+            isEditing: selected.isNotEmpty,
+            isSelected: selected.contains(rule.id),
+            rule: rule,
+            onSelected: () {
+              _handleSelected(rule.id);
+            },
+            onEdit: (rule) {
+              _handleAddOrUpdate(rule);
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
@@ -171,32 +197,13 @@ class _StandardContentState extends ConsumerState<StandardContent> {
           const SliverToBoxAdapter(child: SizedBox(height: 8)),
           SliverReorderableList(
             itemCount: addedRules.length,
-            itemBuilder: (_, index) {
-              final rule = addedRules[index];
-              final position = ItemPosition.get(index, addedRules.length);
-              return ReorderableDelayedDragStartListener(
-                key: ObjectKey(rule),
-                index: index,
-                child: ItemPositionProvider(
-                  position: position,
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    child: RuleItem(
-                      hasMatch: true,
-                      isEditing: selectedRules.isNotEmpty,
-                      isSelected: selectedRules.contains(rule.id),
-                      rule: rule,
-                      onSelected: () {
-                        _handleSelected(rule.id);
-                      },
-                      onEdit: (rule) {
-                        _handleAddOrUpdate(rule);
-                      },
-                    ),
-                  ),
-                ),
-              );
-            },
+            itemBuilder: (_, index) =>
+                _buildRuleItem(addedRules, index, selectedRules),
+            proxyDecorator: (child, index, animation) => commonProxyDecorator(
+              _buildRuleItem(addedRules, index, selectedRules),
+              index,
+              animation,
+            ),
             itemExtent: ruleItemHeight,
             onReorderItem: ref
                 .read(profileRulesProvider(_profileId).notifier)

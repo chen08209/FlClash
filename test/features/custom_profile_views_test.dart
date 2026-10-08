@@ -1010,7 +1010,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('a provider dragged above the proxies stays among providers', (
+  testWidgets('a provider dragged above the proxies is listed first', (
     tester,
   ) async {
     await _pumpProxyGroups(tester);
@@ -1049,13 +1049,14 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
     await tester.pump(const Duration(milliseconds: 500));
-    expect(tester.getTopLeft(row('DIRECT')).dy, directTop);
+    expect(tester.getTopLeft(row('DIRECT')).dy, greaterThan(directTop));
 
     await gesture.up();
     await tester.pumpAndSettle();
     final group = container.read(proxyGroupProvider);
     expect(group.proxies, ['DIRECT', 'REJECT']);
     expect(group.use, ['provider']);
+    expect(group.usePosition, {'provider': 0});
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -1601,9 +1602,8 @@ void main() {
     ]);
   });
 
-  testWidgets('app-level proxies left as they were do not reapply', (
-    tester,
-  ) async {
+  testWidgets('app-level proxies left as they were, or changed only in the '
+      'options they list empty, do not reapply', (tester) async {
     _setViewport(tester);
     final action = _RecordingClashProvidersAction();
     final core = _MockCore();
@@ -1636,6 +1636,14 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    container.read(customProxiesProvider.notifier).value = const [
+      CustomProxy(
+        id: 1,
+        definition: {'name': 'Home', 'type': 'ss'},
+        emptyOptions: {ProxyField.tfo},
+      ),
+    ];
+    await tester.pump();
     await tester.pumpWidget(const SizedBox.shrink());
 
     expect(action.applied, isEmpty);

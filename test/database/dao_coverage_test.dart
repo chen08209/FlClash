@@ -588,6 +588,21 @@ void main() {
     expect(await database.disabledRules.count.getSingle(), 0);
   });
 
+  test('a custom proxy keeps the options added without a value', () async {
+    const proxy = CustomProxy(
+      id: 30,
+      definition: {'name': 'Home', 'type': 'trojan'},
+      emptyOptions: {ProxyField.sni, ProxyField.alpn},
+    );
+
+    await database.customProxiesDao.order(proxy: proxy, order: 'a0');
+
+    expect(
+      await database.customProxiesDao.query().getSingle(),
+      proxy.copyWith(order: 'a0'),
+    );
+  });
+
   test(
     'dialers follow their profile and proxy and survive a restore',
     () async {
@@ -662,7 +677,9 @@ void main() {
           id: id,
           name: 'Group',
           type: GroupType.Selector,
+          proxies: const ['DIRECT'],
           use: const [oldName, 'Old', 'Kept'],
+          usePosition: const {oldName: 0, 'Kept': 0},
         ).toCompanion(id),
       );
       await database.rulesDao.putRule(
@@ -698,8 +715,12 @@ void main() {
         (await database.rulesDao.queryProfileRules(id).get())
             .single
             .ruleProvider;
+    Future<Map<String, int>?> usePosition(int id) async =>
+        (await database.proxyGroupsDao.query(id).get()).single.usePosition;
     expect(await use(1), [newName, 'Old', 'Kept']);
     expect(await use(2), [oldName, 'Old', 'Kept']);
+    expect(await usePosition(1), {newName: 0, 'Kept': 0});
+    expect(await usePosition(2), {oldName: 0, 'Kept': 0});
     expect(await ruleSet(1), newName);
     expect(await ruleSet(2), oldName);
   });

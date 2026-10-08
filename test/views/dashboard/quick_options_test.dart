@@ -39,16 +39,6 @@ final _cardCases = <_CardCase>[
     (container) => container.read(vpnSettingProvider).enable,
     initial: true,
   ),
-  _CardCase(
-    'DNS override',
-    const OverrideDnsButton(),
-    (container) => container.read(overrideDnsProvider),
-  ),
-  _CardCase(
-    'NTP override',
-    const OverrideNtpButton(),
-    (container) => container.read(overrideNtpProvider),
-  ),
 ];
 
 void main() {

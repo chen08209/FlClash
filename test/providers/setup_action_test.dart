@@ -299,6 +299,11 @@ void main() {
           profilesProvider.overrideWith(TestProfiles.new),
           setupActionProvider.overrideWith(TestSetupAction.new),
           commonActionProvider.overrideWith(TestCommonAction.new),
+          // Bypassing private addresses computes the routes in Isolate.run, which
+          // the fake clock never lets finish.
+          networkSettingProvider.overrideWithBuild(
+            (_, _) => const NetworkProps(bypassPrivateRoute: false),
+          ),
         ],
       );
       addTearDown(scoped.dispose);
@@ -657,14 +662,25 @@ void main() {
       );
     });
 
-    test('a failed authorization continues but stays unauthorized', () async {
+    test('a failed authorization turns tun off and asks again on the next '
+        'enable', () async {
+      await AppLocalizations.load(const Locale('en'));
+      container
+          .read(patchClashConfigProvider.notifier)
+          .update((state) => state.copyWith.tun(enable: true));
       action.authorizeResult = AuthorizeCode.error;
 
       expect(await action.requestAdmin(true), isTrue);
+      expect(container.read(patchClashConfigProvider).tun.enable, isFalse);
       expect(
         container.read(authorizedTunEnableProvider),
-        TunAuthorizationState.unauthorized,
+        TunAuthorizationState.none,
       );
+
+      action.authorizeResult = AuthorizeCode.success;
+
+      expect(await action.requestAdmin(true), isFalse);
+      expect(action.authorizeCalls, 2);
     });
   });
 
@@ -1141,6 +1157,92 @@ void main() {
       scoped.invalidate(setupStateProvider);
       await leaveEditor();
       verify(() => core.getConfig(any())).called(1);
+      // Queued behind the rebuild: one that outlasts the pump would compare
+      // against the md5 tearDown resets and push into a disposed container.
+      await setupAction.applyProfile();
+    });
+
+    test('a config the Core rejected is pushed again once reverted, and the '
+        'groups follow the Core through both', () async {
+      final profile = Profile.normal(label: 'p');
+      final core = _MockCoreHandlerInterface();
+      Map<String, dynamic> global(List<String> all) => {
+        'name': 'GLOBAL',
+        'type': 'Selector',
+        'hidden': true,
+        'all': all,
+      };
+      final profileProxies = ProxiesData(
+        all: const ['Proxy', 'GLOBAL'],
+        proxies: {
+          'Proxy': <String, dynamic>{
+            'name': 'Proxy',
+            'type': 'Selector',
+            'hidden': false,
+            'all': ['HK-01'],
+          },
+          'HK-01': <String, dynamic>{'name': 'HK-01', 'type': 'ss'},
+          'GLOBAL': global(['Proxy']),
+        },
+      );
+      final fallbackProxies = ProxiesData(
+        all: const ['GLOBAL'],
+        proxies: {
+          'DIRECT': <String, dynamic>{'name': 'DIRECT', 'type': 'Direct'},
+          'GLOBAL': global(['DIRECT']),
+        },
+      );
+      var rejecting = false;
+      var coreProxies = profileProxies;
+      when(() => core.getConfig(any())).thenAnswer((_) async => {});
+      when(() => core.getExternalProviders()).thenAnswer((_) async => []);
+      when(() => core.getProxies()).thenAnswer((_) async => coreProxies);
+      when(() => core.setupConfig(any())).thenAnswer((_) async {
+        if (rejecting) {
+          coreProxies = fallbackProxies;
+          return 'invalid hosts';
+        }
+        coreProxies = profileProxies;
+        return '';
+      });
+      final scoped = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(() => TestProfiles([profile])),
+          currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+          setupStateProvider.overrideWith(
+            (_, profileId) =>
+                nullProfileSetupState.copyWith(profileId: profileId),
+          ),
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          setupActionProvider.overrideWith(SetupAction.new),
+        ],
+      );
+      addTearDown(scoped.dispose);
+      final setupAction = scoped.read(setupActionProvider.notifier);
+      List<String> shownGroups() => [
+        for (final group in scoped.read(currentGroupsStateProvider).value)
+          group.name,
+      ];
+      void setHosts(Map<String, String> hosts) {
+        scoped
+            .read(patchClashConfigProvider.notifier)
+            .update((state) => state.copyWith(hosts: hosts));
+      }
+
+      final originalHosts = scoped.read(patchClashConfigProvider).hosts;
+      expect(await setupAction.applyProfile(force: true), isTrue);
+      expect(shownGroups(), ['Proxy']);
+
+      rejecting = true;
+      setHosts({'example.com': 'not-an-address'});
+      expect(await setupAction.applyProfile(), isFalse);
+      expect(shownGroups(), isEmpty);
+
+      rejecting = false;
+      setHosts(originalHosts);
+      expect(await setupAction.applyProfile(), isTrue);
+      verify(() => core.setupConfig(any())).called(3);
+      expect(shownGroups(), ['Proxy']);
     });
 
     test('a custom profile declares only the proxies and providers it names, '

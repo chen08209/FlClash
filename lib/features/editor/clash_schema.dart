@@ -1302,6 +1302,7 @@ const _proxyGroup = YamlSchema.map(
     ]),
     'proxies': YamlSchema.list(_policy),
     'use': YamlSchema.list(YamlSchema.of(YamlScalar.proxyProvider)),
+    'use-position': YamlSchema.dict(_str),
     'url': YamlSchema.scalar(['https://www.gstatic.com/generate_204']),
     'interval': _str,
     'lazy': _bool,

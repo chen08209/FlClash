@@ -334,6 +334,9 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
     required Map<String, dynamic> rawConfig,
     required PatchClashConfig realPatchConfig,
     @Default(ProfileOverrides()) ProfileOverrides overrides,
+
+    /// Set for a subscription, whose own DNS values an emptied entry replaces.
+    @Default(false) bool keepEmptyDnsOverrides,
     required bool appendSystemDns,
     required List<ProxyGroup> proxyGroups,
     required List<Rule> rules,

@@ -336,7 +336,7 @@ void main() {
       const props = NetworkProps();
       expect(props.systemProxy, true);
       expect(props.bypassDomain, defaultBypassDomain);
-      expect(props.bypassPrivateRoute, false);
+      expect(props.bypassPrivateRoute, true);
       expect(props.autoSetSystemDns, true);
       expect(props.appendSystemDns, false);
     });
@@ -957,6 +957,78 @@ void main() {
       expect(edited.profileId, 7);
       expect(edited.order, 'a0');
       expect(edited.definition, {...group.definition, 'interval': 600});
+    });
+
+    test('keeps the options its YAML leaves out and drops a removed line', () {
+      final added = group.copyWith(expectedStatus: '', emptyFallback: '');
+      final yaml = added.definitionYaml;
+
+      expect(
+        added.withDefinitionYaml(
+          yaml.replaceFirst('interval: 300', 'interval: 600'),
+        ),
+        added.copyWith(interval: 600),
+      );
+      expect(
+        added.withDefinitionYaml(yaml.replaceFirst('interval: 300\n', '')),
+        added.copyWith(interval: null),
+      );
+    });
+
+    test('reads a bare number where the group holds text', () {
+      final edited = group.withDefinitionYaml(
+        'name: 2024\ntype: select\nproxies: [1, A]\nexpected-status: 200\n',
+      );
+
+      expect(edited.name, '2024');
+      expect(edited.proxies, ['1', 'A']);
+      expect(edited.expectedStatus, '200');
+    });
+
+    test('emits use-position only for providers placed before a proxy', () {
+      final mixed = group.copyWith(
+        proxies: ['A', 'B'],
+        use: ['p1', 'p2', 'p3'],
+        usePosition: {'p1': 1, 'p2': 2, 'p3': -1, 'gone': 0},
+      );
+
+      expect(mixed.definition['use-position'], {'p1': 1, 'p3': 0});
+      expect(
+        group.copyWith(usePosition: {'gone': 0}).definition,
+        isNot(contains('use-position')),
+      );
+    });
+
+    test('reads use-position from its YAML as the core would place it', () {
+      final edited = group.withDefinitionYaml(
+        'name: Auto\ntype: select\nproxies: [A, B]\nuse: [p1, p2, p3]\n'
+        'use-position: {p1: 1, p2: x, p3: 2, gone: 0}\n',
+      );
+      final mixed = group.copyWith(
+        proxies: ['A', 'B'],
+        use: ['p1'],
+        usePosition: {'p1': 1},
+      );
+      final stale = group.copyWith(use: ['p1'], usePosition: {'p1': 5});
+
+      expect(edited.usePosition, {'p1': 1});
+      expect(
+        mixed
+            .withDefinitionYaml(
+              'name: Auto\ntype: select\nproxies: [A, B]\nuse: [p1]\n',
+            )
+            .usePosition,
+        isNull,
+      );
+      expect(
+        stale
+            .withDefinitionYaml(
+              'name: Auto\ntype: select\nproxies: [A, B, C, D, E, F]\n'
+              'use: [p1]\n',
+            )
+            .usePosition,
+        isNull,
+      );
     });
 
     test('rejects YAML that is not a named and typed mapping', () {

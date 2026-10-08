@@ -14,6 +14,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'config/advanced.dart';
+import 'config/custom_resources.dart';
 import 'developer.dart';
 import 'disclaimer.dart';
 import 'theme.dart';
@@ -32,19 +33,6 @@ class _ToolViewState extends ConsumerState<ToolsView> {
       title: Text(navigationItem.label.label),
       widget: navigationItem.builder(context),
       forceFull: navigationItem.modes.contains(NavigationItemMode.moreFull),
-    );
-  }
-
-  Widget _buildNavigationMenu(List<NavigationItem> navigationItems) {
-    return Column(
-      children: [
-        for (final navigationItem in navigationItems) ...[
-          _buildNavigationMenuItem(navigationItem),
-          navigationItems.last != navigationItem
-              ? const Divider(height: 0)
-              : Container(),
-        ],
-      ],
     );
   }
 
@@ -69,6 +57,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         if (system.isDesktop) const _HotkeyItem(),
         if (system.isAndroid) const _AccessItem(),
         const _AdvancedConfigItem(),
+        const _CustomResourcesItem(),
         const _GeneralItem(),
       ],
     );
@@ -89,10 +78,10 @@ class _ToolViewState extends ConsumerState<ToolsView> {
             return Container();
           }
           return Column(
-            children: [
-              ListHeader(title: context.appLocalizations.more),
-              _buildNavigationMenu(state.navigationItems),
-            ],
+            children: generateSection(
+              title: context.appLocalizations.more,
+              items: state.navigationItems.map(_buildNavigationMenuItem),
+            ),
           );
         },
       ),
@@ -101,13 +90,15 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     ];
     return CommonScaffold(
       title: context.appLocalizations.tools,
-      body: ListView.builder(
-        key: toolsStoreKey,
-        itemCount: items.length,
-        itemBuilder: (_, index) => items[index],
-        padding: EdgeInsets.only(
-          top: context.appBarInset,
-          bottom: 20 + BottomInsetScope.of(context),
+      body: Builder(
+        builder: (context) => ListView.builder(
+          key: toolsStoreKey,
+          itemCount: items.length,
+          itemBuilder: (_, index) => items[index],
+          padding: EdgeInsets.only(
+            top: context.appBarInset,
+            bottom: 20 + BottomInsetScope.of(context),
+          ),
         ),
       ),
     );
@@ -223,6 +214,20 @@ class _AdvancedConfigItem extends StatelessWidget {
       title: Text(context.appLocalizations.advancedConfig),
       subtitle: Text(context.appLocalizations.advancedConfigDesc),
       widget: const AdvancedConfigView(),
+    );
+  }
+}
+
+class _CustomResourcesItem extends StatelessWidget {
+  const _CustomResourcesItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem.open(
+      leading: const GlyphIcon(AppGlyphs.customize),
+      title: Text(context.appLocalizations.customProfileResources),
+      subtitle: Text(context.appLocalizations.customProfileResourcesDesc),
+      widget: const CustomResourcesView(),
     );
   }
 }

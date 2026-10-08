@@ -46,19 +46,22 @@ class RowCardFrame extends StatelessWidget {
             side: BorderSide(color: colorScheme.surfaceContainerHighest),
           ),
         ),
-        // The page's safe-area padding would otherwise inset the rows'
-        // scrollbar track as if the card spanned the window.
+        // The page's safe-area padding and bar would otherwise inset the
+        // rows' scrollbar track as if the card spanned the window.
         child: MediaQuery.removePadding(
           context: context,
           removeLeft: true,
           removeTop: true,
           removeRight: true,
           removeBottom: true,
-          child: ScrollConfiguration(
-            behavior: const HiddenBarScrollBehavior(),
-            child: IconTheme.merge(
-              data: const IconThemeData(size: commonCardIconSize),
-              child: child,
+          child: FloatingBarScope(
+            inset: 0,
+            child: ScrollConfiguration(
+              behavior: const HiddenBarScrollBehavior(),
+              child: IconTheme.merge(
+                data: const IconThemeData(size: commonCardIconSize),
+                child: child,
+              ),
             ),
           ),
         ),

@@ -310,136 +310,59 @@ class MiniScreen extends StatelessWidget {
   final TabAnimation tabAnimation;
   final ValueChanged<int>? onSelect;
 
-  static _MiniPage _pageOf(int index) =>
-      index.isEven ? _MiniPage.cards : _MiniPage.list;
+  bool get _hasFab {
+    final previous = this.previous;
+    return previous == null || progress > 0.5 ? selected == 0 : previous == 0;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final sketch = SizedBox.expand(
+      child: CustomPaint(
+        painter: _MiniScreenPainter(
+          colorScheme: colorScheme,
+          floatingBar: floatingBar,
+          selected: selected,
+          previous: previous,
+          progress: progress,
+          tabAnimation: tabAnimation,
+          hasFab: _hasFab,
+        ),
+      ),
+    );
+    final onSelect = this.onSelect;
+    if (onSelect == null) {
+      return sketch;
+    }
     return LayoutBuilder(
       builder: (_, constraints) {
-        final width = constraints.maxWidth;
-        final unit = width / 20;
-        final margin = unit * 1.5;
-        final barHeight = floatingBar ? unit * 3.2 : unit * 3.6;
-        final fabSize = unit * 3.2;
-        final previous = this.previous;
-        final hasFab = previous == null || progress > 0.5
-            ? selected == 0
-            : previous == 0;
-        final pageBottom = floatingBar ? 0.0 : barHeight;
-        final direction = previous != null && previous > selected ? -1 : 1;
-        Widget pageAt(int index, double offset, {double opacity = 1}) {
-          return Positioned(
-            left: offset,
-            width: width,
-            top: 0,
-            bottom: pageBottom,
-            child: Opacity(
-              opacity: opacity,
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(margin, margin, margin, 0),
-                child: ClipRect(
-                  child: OverflowBox(
-                    alignment: Alignment.topCenter,
-                    maxHeight: double.infinity,
-                    child: _MiniPageContent(
-                      colorScheme: colorScheme,
-                      page: _pageOf(index),
-                      seed: index,
-                      unit: unit,
+        final geometry = _MiniGeometry(
+          constraints.biggest,
+          floatingBar: floatingBar,
+          hasFab: _hasFab,
+        );
+        return Stack(
+          children: [
+            sketch,
+            Positioned.fromRect(
+              rect: geometry.bar,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 0; i < destinationCount; i++)
+                    Expanded(
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => onSelect(i),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                ],
               ),
             ),
-          );
-        }
-
-        List<Widget> switching(int previous) {
-          if (tabAnimation == TabAnimation.fade) {
-            return [
-              pageAt(previous, 0, opacity: 1 - progress),
-              pageAt(selected, 0, opacity: progress),
-            ];
-          }
-          return [
-            pageAt(previous, -direction * width * progress),
-            pageAt(selected, direction * width * (1 - progress)),
-          ];
-        }
-
-        final destinations = _MiniDestinations(
-          colorScheme: colorScheme,
-          selected: selected,
-          unit: unit,
-          onSelect: onSelect,
-        );
-        return ColoredBox(
-          color: colorScheme.surface,
-          child: Stack(
-            children: [
-              if (previous == null)
-                pageAt(selected, 0)
-              else
-                ...switching(previous),
-              if (hasFab && !floatingBar)
-                Positioned(
-                  right: margin,
-                  bottom: barHeight + margin,
-                  width: fabSize * 1.6,
-                  height: fabSize,
-                  child: _MiniBlock(
-                    color: colorScheme.primaryContainer,
-                    extent: fabSize,
-                  ),
-                ),
-              if (floatingBar)
-                Positioned(
-                  left: margin,
-                  right: margin + (hasFab ? fabSize + unit * 0.6 : 0),
-                  bottom: margin,
-                  height: barHeight,
-                  child: DecoratedBox(
-                    decoration: ShapeDecoration(
-                      color: colorScheme.surfaceContainer,
-                      shape: AppShape.full,
-                      shadows: [
-                        BoxShadow(
-                          color: colorScheme.shadow.withValues(alpha: 0.12),
-                          blurRadius: unit,
-                          offset: Offset(0, unit * 0.3),
-                        ),
-                      ],
-                    ),
-                    child: destinations,
-                  ),
-                )
-              else
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  height: barHeight,
-                  child: ColoredBox(
-                    color: colorScheme.surfaceContainer,
-                    child: destinations,
-                  ),
-                ),
-              if (hasFab && floatingBar)
-                Positioned(
-                  right: margin,
-                  bottom: margin,
-                  width: fabSize,
-                  height: fabSize,
-                  child: DecoratedBox(
-                    decoration: ShapeDecoration(
-                      color: colorScheme.primaryContainer,
-                      shape: AppShape.full,
-                    ),
-                  ),
-                ),
-            ],
-          ),
+          ],
         );
       },
     );
@@ -479,265 +402,329 @@ class _DiagonalClipper extends CustomClipper<Path> {
   bool shouldReclip(_DiagonalClipper oldClipper) => false;
 }
 
-class _MiniPageContent extends StatelessWidget {
-  const _MiniPageContent({
+class _MiniGeometry {
+  _MiniGeometry(this.size, {required bool floatingBar, required bool hasFab})
+    : unit = size.width / 20 {
+    margin = unit * 1.5;
+    fabSize = unit * 3.2;
+    final barHeight = floatingBar ? unit * 3.2 : unit * 3.6;
+    pageBottom = floatingBar ? 0 : barHeight;
+    if (floatingBar) {
+      final right = margin + (hasFab ? fabSize + unit * 0.6 : 0);
+      bar = Rect.fromLTWH(
+        margin,
+        size.height - margin - barHeight,
+        size.width - right - margin,
+        barHeight,
+      );
+      fab = Rect.fromLTWH(
+        size.width - margin - fabSize,
+        size.height - margin - fabSize,
+        fabSize,
+        fabSize,
+      );
+    } else {
+      bar = Rect.fromLTWH(0, size.height - barHeight, size.width, barHeight);
+      fab = Rect.fromLTWH(
+        size.width - margin - fabSize * 1.6,
+        size.height - (barHeight + margin) - fabSize,
+        fabSize * 1.6,
+        fabSize,
+      );
+    }
+  }
+
+  final Size size;
+  final double unit;
+  late final double margin;
+  late final double fabSize;
+  late final double pageBottom;
+  late final Rect bar;
+  late final Rect fab;
+}
+
+class _MiniScreenPainter extends CustomPainter {
+  const _MiniScreenPainter({
     required this.colorScheme,
-    required this.page,
-    required this.seed,
-    required this.unit,
+    required this.floatingBar,
+    required this.selected,
+    required this.previous,
+    required this.progress,
+    required this.tabAnimation,
+    required this.hasFab,
   });
 
   final ColorScheme colorScheme;
-  final _MiniPage page;
-  final int seed;
-  final double unit;
+  final bool floatingBar;
+  final int selected;
+  final int? previous;
+  final double progress;
+  final TabAnimation tabAnimation;
+  final bool hasFab;
+
+  static _MiniPage _pageOf(int index) =>
+      index.isEven ? _MiniPage.cards : _MiniPage.list;
+
+  static void _fill(
+    Canvas canvas,
+    Rect rect,
+    Color color,
+    ShapeBorder shape, {
+    List<BoxShadow>? shadows,
+  }) {
+    ShapeDecoration(color: color, shape: shape, shadows: shadows)
+        .createBoxPainter(() {})
+        .paint(canvas, rect.topLeft, ImageConfiguration(size: rect.size));
+  }
+
+  static void _block(Canvas canvas, Rect rect, Color color, double extent) {
+    _fill(canvas, rect, color, AppShape.all(AppCorner.fit(extent)));
+  }
 
   @override
-  Widget build(BuildContext context) {
+  void paint(Canvas canvas, Size size) {
+    final geometry = _MiniGeometry(
+      size,
+      floatingBar: floatingBar,
+      hasFab: hasFab,
+    );
+    canvas.drawRect(Offset.zero & size, Paint()..color = colorScheme.surface);
+    canvas.save();
+    canvas.clipRect(Offset.zero & size, doAntiAlias: false);
+    final previous = this.previous;
+    if (previous == null) {
+      _paintPage(canvas, geometry, selected, 0);
+    } else if (tabAnimation == TabAnimation.fade) {
+      _paintPage(canvas, geometry, previous, 0, opacity: 1 - progress);
+      _paintPage(canvas, geometry, selected, 0, opacity: progress);
+    } else {
+      final direction = previous > selected ? -1 : 1;
+      _paintPage(
+        canvas,
+        geometry,
+        previous,
+        -direction * size.width * progress,
+      );
+      _paintPage(
+        canvas,
+        geometry,
+        selected,
+        direction * size.width * (1 - progress),
+      );
+    }
+    canvas.restore();
+    final unit = geometry.unit;
+    if (hasFab && !floatingBar) {
+      _block(
+        canvas,
+        geometry.fab,
+        colorScheme.primaryContainer,
+        geometry.fabSize,
+      );
+    }
+    if (floatingBar) {
+      _fill(
+        canvas,
+        geometry.bar,
+        colorScheme.surfaceContainer,
+        AppShape.full,
+        shadows: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.12),
+            blurRadius: unit,
+            offset: Offset(0, unit * 0.3),
+          ),
+        ],
+      );
+    } else {
+      canvas.drawRect(
+        geometry.bar,
+        Paint()..color = colorScheme.surfaceContainer,
+      );
+    }
+    _paintDestinations(canvas, geometry.bar, unit);
+    if (hasFab && floatingBar) {
+      _fill(canvas, geometry.fab, colorScheme.primaryContainer, AppShape.full);
+    }
+  }
+
+  void _paintPage(
+    Canvas canvas,
+    _MiniGeometry geometry,
+    int index,
+    double offset, {
+    double opacity = 1,
+  }) {
+    final alpha = Color.getAlphaFromOpacity(opacity);
+    if (alpha == 0) {
+      return;
+    }
+    final size = geometry.size;
+    final unit = geometry.unit;
+    final margin = geometry.margin;
+    final content = Rect.fromLTRB(
+      offset + margin,
+      margin,
+      offset + size.width - margin,
+      size.height - geometry.pageBottom,
+    );
+    if (alpha < 255) {
+      canvas.saveLayer(null, Paint()..color = Color.fromARGB(alpha, 0, 0, 0));
+    } else {
+      canvas.save();
+    }
+    canvas.clipRect(content, doAntiAlias: false);
+    final left = content.left;
+    final width = content.width;
     final card = colorScheme.surfaceContainer;
     final line = colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: unit,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(bottom: unit * 0.5),
-          child: _MiniLine(
-            color: colorScheme.onSurface.withValues(alpha: 0.72),
-            width: unit * 7,
-            height: unit * 1.1,
-          ),
-        ),
-        ...switch (page) {
-          _MiniPage.cards => [
-            _MiniCard(
-              color: card,
-              height: unit * 5,
-              unit: unit,
-              child: Row(
-                spacing: unit,
-                children: [
-                  _MiniDot(color: colorScheme.primary, size: unit * 2.2),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: unit * 0.6,
-                      children: [
-                        _MiniLine(color: line, width: unit * 6, height: unit),
-                        _MiniLine(
-                          color: line,
-                          width: unit * 3.5,
-                          height: unit * 0.8,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Row(
-              spacing: unit,
-              children: [
-                Expanded(
-                  child: _MiniCard(color: card, height: unit * 4, unit: unit),
-                ),
-                Expanded(
-                  child: _MiniCard(
-                    color: colorScheme.secondaryContainer,
-                    height: unit * 4,
-                    unit: unit,
-                  ),
-                ),
-              ],
-            ),
-            for (var i = 0; i < 3; i++)
-              _MiniCard(color: card, height: unit * 4.5, unit: unit),
-          ],
-          _MiniPage.list => [
-            for (var i = 0; i < 7; i++)
-              SizedBox(
-                height: unit * 2.6,
-                child: Row(
-                  spacing: unit,
-                  children: [
-                    _MiniDot(
-                      color: i == 0
-                          ? colorScheme.tertiaryContainer
-                          : colorScheme.secondaryContainer,
-                      size: unit * 2.2,
-                    ),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: unit * 0.5,
-                        children: [
-                          _MiniLine(
-                            color: line,
-                            width: unit * (8 - (i + seed) % 3 * 1.5),
-                            height: unit * 0.8,
-                          ),
-                          _MiniLine(
-                            color: line.withValues(alpha: 0.2),
-                            width: unit * 4,
-                            height: unit * 0.6,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        },
-      ],
+    var top = content.top;
+    _fill(
+      canvas,
+      Rect.fromLTWH(left, top, unit * 7, unit * 1.1),
+      colorScheme.onSurface.withValues(alpha: 0.72),
+      AppShape.full,
     );
-  }
-}
-
-class _MiniDestinations extends StatelessWidget {
-  const _MiniDestinations({
-    required this.colorScheme,
-    required this.selected,
-    required this.unit,
-    required this.onSelect,
-  });
-
-  final ColorScheme colorScheme;
-  final int selected;
-  final double unit;
-  final ValueChanged<int>? onSelect;
-
-  Widget _buildDestination(int index) {
-    if (index != selected) {
-      return _MiniDot(color: colorScheme.onSurfaceVariant, size: unit * 0.9);
+    top += unit * 1.1 + unit * 0.5 + unit;
+    switch (_pageOf(index)) {
+      case _MiniPage.cards:
+        _block(
+          canvas,
+          Rect.fromLTWH(left, top, width, unit * 5),
+          card,
+          unit * 5,
+        );
+        _fill(
+          canvas,
+          Rect.fromLTWH(
+            left + unit,
+            top + (unit * 5 - unit * 2.2) / 2,
+            unit * 2.2,
+            unit * 2.2,
+          ),
+          colorScheme.primary,
+          AppShape.circle,
+        );
+        final lineLeft = left + unit + unit * 2.2 + unit;
+        final lineTop = top + (unit * 5 - (unit + unit * 0.6 + unit * 0.8)) / 2;
+        _fill(
+          canvas,
+          Rect.fromLTWH(lineLeft, lineTop, unit * 6, unit),
+          line,
+          AppShape.full,
+        );
+        _fill(
+          canvas,
+          Rect.fromLTWH(
+            lineLeft,
+            lineTop + unit + unit * 0.6,
+            unit * 3.5,
+            unit * 0.8,
+          ),
+          line,
+          AppShape.full,
+        );
+        top += unit * 5 + unit;
+        final half = (width - unit) / 2;
+        _block(
+          canvas,
+          Rect.fromLTWH(left, top, half, unit * 4),
+          card,
+          unit * 4,
+        );
+        _block(
+          canvas,
+          Rect.fromLTWH(left + half + unit, top, half, unit * 4),
+          colorScheme.secondaryContainer,
+          unit * 4,
+        );
+        top += unit * 4 + unit;
+        for (var i = 0; i < 3; i++) {
+          _block(
+            canvas,
+            Rect.fromLTWH(left, top, width, unit * 4.5),
+            card,
+            unit * 4.5,
+          );
+          top += unit * 4.5 + unit;
+        }
+      case _MiniPage.list:
+        final lineLeft = left + unit * 2.2 + unit;
+        for (var i = 0; i < 7; i++) {
+          _fill(
+            canvas,
+            Rect.fromLTWH(
+              left,
+              top + (unit * 2.6 - unit * 2.2) / 2,
+              unit * 2.2,
+              unit * 2.2,
+            ),
+            i == 0
+                ? colorScheme.tertiaryContainer
+                : colorScheme.secondaryContainer,
+            AppShape.circle,
+          );
+          final lineTop =
+              top + (unit * 2.6 - (unit * 0.8 + unit * 0.5 + unit * 0.6)) / 2;
+          _fill(
+            canvas,
+            Rect.fromLTWH(
+              lineLeft,
+              lineTop,
+              unit * (8 - (i + index) % 3 * 1.5),
+              unit * 0.8,
+            ),
+            line,
+            AppShape.full,
+          );
+          _fill(
+            canvas,
+            Rect.fromLTWH(
+              lineLeft,
+              lineTop + unit * 0.8 + unit * 0.5,
+              unit * 4,
+              unit * 0.6,
+            ),
+            line.withValues(alpha: 0.2),
+            AppShape.full,
+          );
+          top += unit * 2.6 + unit;
+        }
     }
-    return Container(
-      width: unit * 2.8,
-      height: unit * 1.6,
-      alignment: Alignment.center,
-      decoration: ShapeDecoration(
-        color: colorScheme.secondaryContainer,
-        shape: AppShape.full,
-      ),
-      child: _MiniDot(
-        color: colorScheme.onSecondaryContainer,
-        size: unit * 0.9,
-      ),
-    );
+    canvas.restore();
+  }
+
+  void _paintDestinations(Canvas canvas, Rect bar, double unit) {
+    final cell = bar.width / MiniScreen.destinationCount;
+    for (var i = 0; i < MiniScreen.destinationCount; i++) {
+      final center = Offset(bar.left + cell * i + cell / 2, bar.center.dy);
+      final dot = Rect.fromCenter(
+        center: center,
+        width: unit * 0.9,
+        height: unit * 0.9,
+      );
+      if (i != selected) {
+        _fill(canvas, dot, colorScheme.onSurfaceVariant, AppShape.circle);
+        continue;
+      }
+      _fill(
+        canvas,
+        Rect.fromCenter(center: center, width: unit * 2.8, height: unit * 1.6),
+        colorScheme.secondaryContainer,
+        AppShape.full,
+      );
+      _fill(canvas, dot, colorScheme.onSecondaryContainer, AppShape.circle);
+    }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final onSelect = this.onSelect;
-    return Row(
-      children: [
-        for (var i = 0; i < MiniScreen.destinationCount; i++)
-          Expanded(
-            child: onSelect == null
-                ? Center(child: _buildDestination(i))
-                : MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => onSelect(i),
-                      child: Center(child: _buildDestination(i)),
-                    ),
-                  ),
-          ),
-      ],
-    );
-  }
-}
-
-class _MiniCard extends StatelessWidget {
-  const _MiniCard({
-    required this.color,
-    required this.height,
-    required this.unit,
-    this.child,
-  });
-
-  final Color color;
-  final double height;
-  final double unit;
-  final Widget? child;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: height,
-      width: double.infinity,
-      child: _MiniBlock(
-        color: color,
-        extent: height,
-        padding: EdgeInsets.symmetric(horizontal: unit),
-        child: child,
-      ),
-    );
-  }
-}
-
-class _MiniBlock extends StatelessWidget {
-  const _MiniBlock({
-    required this.color,
-    required this.extent,
-    this.padding,
-    this.child,
-  });
-
-  final Color color;
-  final double extent;
-  final EdgeInsets? padding;
-  final Widget? child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: padding,
-      decoration: ShapeDecoration(
-        color: color,
-        shape: AppShape.all(AppCorner.fit(extent)),
-      ),
-      child: child,
-    );
-  }
-}
-
-class _MiniLine extends StatelessWidget {
-  const _MiniLine({
-    required this.color,
-    required this.width,
-    required this.height,
-  });
-
-  final Color color;
-  final double width;
-  final double height;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: ShapeDecoration(color: color, shape: AppShape.full),
-    );
-  }
-}
-
-class _MiniDot extends StatelessWidget {
-  const _MiniDot({required this.color, required this.size});
-
-  final Color color;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: ShapeDecoration(color: color, shape: AppShape.circle),
-    );
+  bool shouldRepaint(_MiniScreenPainter oldDelegate) {
+    return oldDelegate.colorScheme != colorScheme ||
+        oldDelegate.floatingBar != floatingBar ||
+        oldDelegate.selected != selected ||
+        oldDelegate.previous != previous ||
+        oldDelegate.progress != progress ||
+        oldDelegate.tabAnimation != tabAnimation ||
+        oldDelegate.hasFab != hasFab;
   }
 }

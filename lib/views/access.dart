@@ -19,7 +19,8 @@ class AccessView extends ConsumerStatefulWidget {
   ConsumerState<AccessView> createState() => _AccessViewState();
 }
 
-class _AccessViewState extends ConsumerState<AccessView> {
+class _AccessViewState extends ConsumerState<AccessView>
+    with RouteSettledMixin<AccessView> {
   late ScrollController _controller;
   List<String>? _pinedList;
   bool _isInit = false;
@@ -30,8 +31,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
   @override
   void initState() {
     super.initState();
-    _controller = ScrollController();
-    _completer.complete(_loadPackages());
+    _controller = sheetScrollController(context);
     final accessControl = ref
         .read(vpnSettingProvider.select((state) => state.accessControlProps))
         .copyWith();
@@ -48,6 +48,9 @@ class _AccessViewState extends ConsumerState<AccessView> {
       (_, _) => _pinList(),
     );
   }
+
+  @override
+  void didSettleRoute() => _completer.complete(_loadPackages());
 
   Future<void> _loadPackages() async {
     final action = ref.read(systemActionProvider.notifier);
@@ -160,7 +163,6 @@ class _AccessViewState extends ConsumerState<AccessView> {
   Future<void> _handleToSetting() async {
     await showSheet<int>(
       context: context,
-      props: const SheetProps(isScrollControlled: true),
       builder: (context) {
         final appLocalizations = context.appLocalizations;
         return CommonScaffold(
@@ -179,9 +181,9 @@ class _AccessViewState extends ConsumerState<AccessView> {
     });
   }
 
-  void _handleToggle() {
+  void _handleEnable(bool enable) {
     ref.read(accessControlStateProvider.notifier).update((state) {
-      return state.copyWith(enable: !state.enable);
+      return state.copyWith(enable: enable);
     });
   }
 
@@ -264,8 +266,19 @@ class _AccessViewState extends ConsumerState<AccessView> {
     return [
       CommonPopupMenuItem(
         glyph: AppGlyphs.toggle,
-        label: enable ? appLocalizations.turnOff : appLocalizations.turnOn,
-        onPressed: _handleToggle,
+        label: appLocalizations.accessControl,
+        subItems: [
+          CommonPopupMenuItem(
+            label: appLocalizations.turnOn,
+            checked: enable,
+            onPressed: () => _handleEnable(true),
+          ),
+          CommonPopupMenuItem(
+            label: appLocalizations.turnOff,
+            checked: !enable,
+            onPressed: () => _handleEnable(false),
+          ),
+        ],
       ),
       CommonPopupMenuItem(
         glyph: AppGlyphs.sliders,
@@ -319,6 +332,8 @@ class _AccessViewState extends ConsumerState<AccessView> {
             controller: _controller,
             child: ListView.builder(
               controller: _controller,
+              padding: EdgeInsets.only(bottom: BottomInsetScope.of(context)),
+              scrollCacheExtent: arrivalScrollCacheExtent(routeSettled),
               itemCount: packages.length,
               itemExtent: 72,
               itemBuilder: (_, index) {
@@ -372,7 +387,7 @@ class _AccessViewState extends ConsumerState<AccessView> {
           CommonMinFilledButtonTheme(
             child: ElasticButton(
               child: FilledButton.tonal(
-                onPressed: _handleToggle,
+                onPressed: () => _handleEnable(true),
                 child: Text(appLocalizations.turnOn),
               ),
             ),

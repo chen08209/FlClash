@@ -691,5 +691,120 @@ void main() {
         ),
       );
     });
+
+    testWidgets('an option emptied after holding a value is dropped on save', (
+      tester,
+    ) async {
+      const definition = {
+        'name': 'Gate',
+        'type': 'trojan',
+        'server': 'a.example',
+        'port': 443,
+        'password': 'pw',
+      };
+      final proxies = await pumpProxies(tester, const [
+        CustomProxy(
+          id: 1,
+          definition: {...definition, 'sni': 'b.example'},
+          emptyOptions: {ProxyField.alpn},
+        ),
+      ]);
+      tester.view.physicalSize = const Size(1400, 2600);
+      Finder row(String title) =>
+          find.ancestor(of: find.text(title), matching: find.byType(FormRow));
+
+      await tester.tap(find.text('Gate'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.descendant(of: row('SNI'), matching: find.byType(EditableText)),
+        '',
+      );
+      await tester.pump();
+      expect(row('SNI'), findsOneWidget);
+      await tester.tap(find.byTooltip(currentAppLocalizations.save));
+      await tester.pumpAndSettle();
+
+      expect(proxies.saved.single.definition, definition);
+      expect(proxies.saved.single.emptyOptions, {ProxyField.alpn});
+    });
+
+    testWidgets('options added without a value stay after reopening and a '
+        'link edit, which keeps what the link cannot carry', (tester) async {
+      const titles = ['SNI', 'ALPN'];
+      const definition = {
+        'name': 'Gate',
+        'type': 'trojan',
+        'server': 'a.example',
+        'port': 443,
+        'password': 'pw',
+        'tfo': true,
+      };
+      final linked = {...definition}..remove('tfo');
+      Finder row(String title) =>
+          find.ancestor(of: find.text(title), matching: find.byType(FormRow));
+      Future<_RecordingCustomProxies> open(List<CustomProxy> initial) async {
+        final proxies = await pumpProxies(tester, initial);
+        tester.view.physicalSize = const Size(1400, 2600);
+        await tester.tap(find.text('Gate'));
+        await tester.pumpAndSettle();
+        return proxies;
+      }
+
+      final proxies = await open(const [
+        CustomProxy(id: 1, definition: definition),
+      ]);
+      final l10n = currentAppLocalizations;
+      for (final title in titles) {
+        await tester.ensureVisible(row(l10n.addSettingEntry).first);
+        await tester.tap(row(l10n.addSettingEntry).first);
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.descendant(
+            of: find.byWidgetPredicate((widget) => widget is SelectionSheet),
+            matching: find.text(title),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.pageBack();
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.byTooltip(l10n.save));
+      await tester.pumpAndSettle();
+
+      final saved = proxies.saved.single;
+      expect(saved.definition, definition);
+      expect(saved.emptyOptions, {ProxyField.sni, ProxyField.alpn});
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await open([saved]);
+      for (final title in titles) {
+        expect(row(title), findsOneWidget, reason: title);
+      }
+
+      when(
+        () => core.encodeShareLinks(any()),
+      ).thenAnswer((_) async => ['trojan://pw@a.example:443#Gate']);
+      decodesTo({
+        'trojan://pw@b.example:443#Gate': [
+          {...linked, 'server': 'b.example'},
+        ],
+        'trojan://pw@a.example:443#Gate': [linked],
+      });
+      await tester.tap(formQuickEdit());
+      await tester.pumpAndSettle();
+      await tester.enterText(linkField(), 'trojan://pw@b.example:443#Gate');
+      await confirm(tester);
+
+      expect(readForm(tester).definition, {
+        ...definition,
+        'server': 'b.example',
+      });
+      for (final title in titles) {
+        expect(row(title), findsOneWidget, reason: title);
+      }
+
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
   });
 }

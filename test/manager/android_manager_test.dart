@@ -41,6 +41,11 @@ void main() {
       overrides: [
         profilesProvider.overrideWith(TestProfiles.new),
         setupActionProvider.overrideWith(_RecordingSetupAction.new),
+        // Bypassing private addresses computes the routes in Isolate.run, which
+        // the fake clock never lets finish.
+        networkSettingProvider.overrideWithBuild(
+          (_, _) => const NetworkProps(bypassPrivateRoute: false),
+        ),
       ],
     );
     globalState.container = container;

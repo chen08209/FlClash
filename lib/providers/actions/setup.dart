@@ -453,6 +453,7 @@ class SetupAction extends _$SetupAction {
         rawConfig: rawConfig,
         realPatchConfig: realPatchConfig,
         overrides: setupState.overrides,
+        keepEmptyDnsOverrides: setupState.profileType != ProfileType.custom,
         appendSystemDns: appendSystemDns,
         addedRules: setupState.addedRules,
         defaultUA: defaultUA,
@@ -579,6 +580,14 @@ class SetupAction extends _$SetupAction {
         authorizationNotifier.value = TunAuthorizationState.authorized;
         return true;
       case AuthorizeCode.error:
+        authorizationNotifier.value = TunAuthorizationState.none;
+        ref
+            .read(patchClashConfigProvider.notifier)
+            .update((state) => state.copyWith.tun(enable: false));
+        dialogs.showNotifier(
+          currentAppLocalizations.tunAuthorizationFailed,
+          level: MessageLevel.error,
+        );
         return true;
     }
   }
@@ -610,7 +619,7 @@ class SetupAction extends _$SetupAction {
     // A refresh failure is surfaced by safeRun; setup keeps the old profile.
     final nextProfile = await globalState.safeRun(
       () => profile?.checkAndUpdateAndCopy(
-        validate: (path) => _core.validateProfile(path),
+        validate: (path, key) => _core.validateProfile(path, key),
       ),
     );
     if (nextProfile != null) {
@@ -646,7 +655,10 @@ class SetupAction extends _$SetupAction {
       _appliedInputs = inputs;
       return _SetupTaskResult.completed;
     }
+    // Go answers a config it rejects by running its built-in default, which
+    // has no proxies, so until this push succeeds no applied config is known.
     _appliedInputs = null;
+    globalState.lastConfigMd5 = null;
     if (system.isAndroid) {
       await ref.read(vpnOptionsProvider.future);
       await preferences.saveShareState(ref.read(sharedStateProvider));
@@ -668,6 +680,7 @@ class SetupAction extends _$SetupAction {
             preloadInvoke: preloadInvoke,
           );
           if (message.isNotEmpty) {
+            await globalState.safeRun(() => onUpdated?.call());
             throw MessageException(message);
           }
         } catch (e, s) {

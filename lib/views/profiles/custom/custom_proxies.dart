@@ -182,11 +182,16 @@ class _CustomProxiesViewState extends ConsumerState<CustomProxiesView> {
 
   @override
   void dispose() {
-    if (!customProxiesEquality.equals(_opened, _latest)) {
+    if (!customProxiesEquality.equals(_applied(_opened), _applied(_latest))) {
       unawaited(_providersAction.applyIfProxiesNamed(_seenNames));
     }
     super.dispose();
   }
+
+  static List<CustomProxy> _applied(List<CustomProxy>? proxies) => [
+    for (final proxy in proxies ?? const <CustomProxy>[])
+      proxy.copyWith(emptyOptions: const {}),
+  ];
 
   void _handleReorder(int oldIndex, int newIndex) {
     ref.read(customProxiesProvider.notifier).order(oldIndex, newIndex);
@@ -263,9 +268,17 @@ class _CustomProxiesViewState extends ConsumerState<CustomProxiesView> {
           links: links,
         );
         final decoded = await _decodeShareLinks(core, edit.pending);
+        final dropped = edit.droppedLinks;
+        final linked = dropped.isEmpty
+            ? const <List<Map<String, dynamic>>>[]
+            : await core.decodeShareLinks(dropped.values.toList());
         final proxies = edit.apply(
           decoded,
           groupNames: await ref.read(customGroupNamesProvider.future),
+          linked: {
+            for (final (index, id) in dropped.keys.indexed)
+              if (linked[index] case [final definition]) id: definition,
+          },
         );
         if (!await _confirmReplaced(previous, proxies)) {
           throw const QuickEditCancelled();
@@ -755,6 +768,9 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
   var _revealed = <String>{};
   late Set<ProxyField> _shown;
 
+  /// Added options not given a value since, the only ones a save keeps empty.
+  late Set<ProxyField> _untouched;
+
   /// Bumped when the whole mapping is replaced, so the fields drop the text
   /// they were initialized with.
   int _revision = 0;
@@ -765,7 +781,14 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
     final proxy = ref.read(customProxyProvider);
     _isNew = proxy.id == -1;
     _shown = _shownIn(proxy);
+    _untouched = {
+      for (final field in proxy.emptyOptions)
+        if (proxy.valueOf(field) == null) field,
+    };
     NestedFormSheet.bindSave(context, _handleSave);
+    ref.listenManual(customProxyProvider, (_, proxy) {
+      _untouched.removeWhere((field) => proxy.valueOf(field) != null);
+    });
     ref.listenManual(
       customProxyProvider.select((state) => state.definition),
       (_, _) => _scheduleValidate(),
@@ -800,14 +823,22 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
       child: _ShareLinkDialog(
         initialLink: link,
         read: (text) async {
-          final definitions = (await core.decodeShareLinks([text])).single;
+          final results = await core.decodeShareLinks([
+            text,
+            if (link.isNotEmpty) link,
+          ]);
+          final definitions = results.first;
           if (definitions.isEmpty) {
             throw MessageException(appLocalizations.shareLinksInvalid);
           }
           if (definitions.length > 1) {
             throw MessageException(appLocalizations.singleShareLinkOnly);
           }
-          return definitions.single;
+          return withUnlinkedFields(
+            definitions.single,
+            previous: ref.read(customProxyProvider).definition,
+            linked: results.skip(1).firstOrNull?.singleOrNull,
+          );
         },
       ),
     );
@@ -829,7 +860,10 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
                 if (proxy.id != current.id) proxy,
             ],
           ).single.definition;
-    final next = current.copyWith(definition: named);
+    final next = _withShown(current.copyWith(definition: named), {
+      for (final field in _shown)
+        if (current.valueOf(field) == null) field,
+    });
     ref.read(customProxyProvider.notifier).value = next;
     setState(() {
       _shown = _shownIn(next);
@@ -839,8 +873,18 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
 
   static Set<ProxyField> _shownIn(CustomProxy proxy) => {
     for (final field in proxy.options)
-      if (proxy.valueOf(field) != null) field,
+      if (proxy.valueOf(field) != null || proxy.emptyOptions.contains(field))
+        field,
   };
+
+  CustomProxy _withShown(CustomProxy proxy, Set<ProxyField> shown) =>
+      proxy.copyWith(
+        emptyOptions: {
+          for (final field in shown)
+            if (proxy.valueOf(field) == null && _untouched.contains(field))
+              field,
+        },
+      );
 
   /// Keeps a row for every option [proxy] offers that has a value, was shown,
   /// or was [unlocked] by the change that led to [proxy].
@@ -848,14 +892,17 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
     CustomProxy proxy, {
     Iterable<ProxyField> unlocked = const [],
   }) {
+    final shown = {
+      for (final field in proxy.options)
+        if (_shown.contains(field) ||
+            unlocked.contains(field) ||
+            proxy.valueOf(field) != null)
+          field,
+    };
+    _untouched.addAll(unlocked.where((field) => proxy.valueOf(field) == null));
+    ref.read(customProxyProvider.notifier).value = _withShown(proxy, shown);
     setState(() {
-      _shown = {
-        for (final field in proxy.options)
-          if (_shown.contains(field) ||
-              unlocked.contains(field) ||
-              proxy.valueOf(field) != null)
-            field,
-      };
+      _shown = shown;
     });
   }
 
@@ -899,7 +946,6 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
   void _updateOption(ProxyField field, Object? value) {
     final proxy = ref.read(customProxyProvider);
     final next = proxy.withField(field, value);
-    ref.read(customProxyProvider.notifier).value = next;
     final offered = proxy.options;
     _syncShown(
       next,
@@ -1066,9 +1112,7 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
     if (res == null) {
       return;
     }
-    final next = ref.read(customProxyProvider).withType(res);
-    ref.read(customProxyProvider.notifier).value = next;
-    _syncShown(next);
+    _syncShown(ref.read(customProxyProvider).withType(res));
   }
 
   Future<void> _handleSelectChoice(ProxyField field) async {
@@ -1205,8 +1249,12 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
       ProxyFieldKind.choice => proxy.choicesOf(field).firstOrNull,
       _ => null,
     };
+    final value = proxy.valueOf(field) ?? initial;
     _shown = {..._shown, field};
-    _updateOption(field, proxy.valueOf(field) ?? initial);
+    if (value == null) {
+      _untouched.add(field);
+    }
+    _updateOption(field, value);
   }
 
   void _handleRemoveOption(ProxyField field) {
@@ -1315,6 +1363,9 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
   Future<void> _handleSave() async {
     if (_saving) return;
     _saving = true;
+    ref
+        .read(customProxyProvider.notifier)
+        .update((state) => _withShown(state, _shown));
     try {
       String? coreError;
       final saved = await _handleSaveCustomProxy(

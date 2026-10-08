@@ -10,9 +10,9 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// A group names its proxies under `proxies`, its providers under `use` and
-/// its filters, which only reach the providers' proxies, under `filter`.
-/// `exclude-filter` drops whatever matches it, named members too.
+/// `proxies` names a group's proxies, `use` its providers, `use-position` where
+/// those sit among the proxies, and `filter` what of the providers' proxies it
+/// takes. `exclude-filter` drops whatever matches it, named members too.
 enum _MemberKind {
   proxy,
   provider,
@@ -20,6 +20,8 @@ enum _MemberKind {
   excludeFilter;
 
   bool get isFilter => this == filter || this == excludeFilter;
+
+  _MemberKind get run => this == provider ? proxy : this;
 
   (Color, Color) chipColorsOf(ColorScheme colorScheme) => switch (this) {
     proxy || provider => (
@@ -74,15 +76,39 @@ abstract class _MemberHost<M> {
 
   M withNames(M model, _MemberKind kind, List<String> names);
 
+  List<String>? layoutOf(M model);
+
+  M withLayout(M model, List<String>? layout);
+
   /// What the picker no longer offers as a [kind].
   Set<String> takenIn(M model, _MemberKind kind) => {...namesOf(model, kind)};
 
-  /// The core always lists a group's proxies before its providers' proxies,
-  /// so a move only reorders members of the same kind.
-  List<_Member> membersOf(M model) => [
-    for (final kind in kinds)
-      for (final name in namesOf(model, kind)) (kind: kind, name: name),
+  Iterable<_MemberKind> get _runs => {for (final kind in kinds) kind.run};
+
+  List<_Member> runOf(M model, _MemberKind run) => [
+    for (final name in namesOf(model, run)) (kind: run, name: name),
   ];
+
+  /// The core reads each run's own order only, so the rows take a run each
+  /// as [layoutOf] names it, and the rest follow run by run.
+  List<_Member> membersOf(M model) {
+    final runs = {
+      for (final run in _runs) run.name: runOf(model, run).iterator,
+    };
+    final members = <_Member>[];
+    for (final name in layoutOf(model) ?? const <String>[]) {
+      final run = runs[name];
+      if (run != null && run.moveNext()) {
+        members.add(run.current);
+      }
+    }
+    for (final run in runs.values) {
+      while (run.moveNext()) {
+        members.add(run.current);
+      }
+    }
+    return members;
+  }
 
   M withMembers(M model, Iterable<_Member> members) {
     var next = model;
@@ -95,7 +121,24 @@ abstract class _MemberHost<M> {
         next = withNames(next, kind, names);
       }
     }
-    return next;
+    final layout = _layoutOf(members);
+    if (const ListEquality<String>().equals(layoutOf(model), layout)) {
+      return next;
+    }
+    return withLayout(next, layout);
+  }
+
+  /// Leaves out the trailing rows [membersOf] would put there anyway.
+  List<String>? _layoutOf(Iterable<_Member> members) {
+    final order = _runs.toList();
+    final runs = [for (final member in members) order.indexOf(member.kind.run)];
+    var end = runs.length;
+    while (end > 0 && (end == runs.length || runs[end - 1] <= runs[end])) {
+      end--;
+    }
+    return end == 0
+        ? null
+        : [for (final run in runs.take(end)) order[run].name];
   }
 }
 
@@ -142,10 +185,65 @@ class _GroupMembers extends _MemberHost<ProxyGroup> {
   };
 
   @override
+  List<String>? layoutOf(ProxyGroup group) => group.memberLayout;
+
+  @override
+  ProxyGroup withLayout(ProxyGroup group, List<String>? layout) =>
+      group.copyWith(memberLayout: layout);
+
+  @override
   Set<String> takenIn(ProxyGroup group, _MemberKind kind) => {
     ...super.takenIn(group, kind),
     if (kind == _MemberKind.proxy) group.name,
   };
+
+  @override
+  List<_Member> runOf(ProxyGroup group, _MemberKind run) {
+    if (run != _MemberKind.proxy) {
+      return super.runOf(group, run);
+    }
+    final proxies = group.proxies ?? const <String>[];
+    final positions = group.effectiveUsePosition ?? const <String, int>{};
+    final before = [for (var i = 0; i <= proxies.length; i++) <_Member>[]];
+    for (final name in group.use ?? const <String>[]) {
+      before[positions[name] ?? proxies.length].add((
+        kind: _MemberKind.provider,
+        name: name,
+      ));
+    }
+    return [
+      for (final (index, providers) in before.indexed) ...[
+        ...providers,
+        if (index < proxies.length)
+          (kind: _MemberKind.proxy, name: proxies[index]),
+      ],
+    ];
+  }
+
+  @override
+  ProxyGroup withMembers(ProxyGroup group, Iterable<_Member> members) {
+    final next = super.withMembers(group, members);
+    final count = members
+        .where((member) => member.kind == _MemberKind.proxy)
+        .length;
+    var seen = 0;
+    final positions = <String, int>{};
+    for (final member in members) {
+      if (member.kind == _MemberKind.proxy) {
+        seen++;
+      } else if (member.kind == _MemberKind.provider && seen < count) {
+        positions[member.name] = seen;
+      }
+    }
+    final usePosition = positions.isEmpty ? null : positions;
+    if (const MapEquality<String, int>().equals(
+      group.usePosition,
+      usePosition,
+    )) {
+      return next;
+    }
+    return next.copyWith(usePosition: usePosition);
+  }
 }
 
 class _ProviderFilters extends _MemberHost<ProxyProviderOptions> {
@@ -190,6 +288,15 @@ class _ProviderFilters extends _MemberHost<ProxyProviderOptions> {
     ),
     _ => options.copyWith(filter: joinFilterParts(names)),
   };
+
+  @override
+  List<String>? layoutOf(ProxyProviderOptions options) => options.memberLayout;
+
+  @override
+  ProxyProviderOptions withLayout(
+    ProxyProviderOptions options,
+    List<String>? layout,
+  ) => options.copyWith(memberLayout: layout);
 }
 
 Map<String, String> _providerTypes(
@@ -302,20 +409,19 @@ class _MembersSliverState<M> extends ConsumerState<_MembersSliver<M>>
   }
 
   /// [oldIndex] and [newIndex] count the rows still collapsing too.
-  void _handleReorder(List<_Member> run, int oldIndex, int newIndex) {
-    final rest = [...run];
+  void _handleReorder(int oldIndex, int newIndex) {
+    final rest = [..._entries];
     final moved = rest.removeAt(oldIndex);
     final target = rest
         .take(newIndex)
         .where((member) => !_transitions.isLeaving(member))
         .length;
-    final names = [
-      for (final member in rest)
-        if (!_transitions.isLeaving(member)) member.name,
-    ]..insert(target, moved.name);
-    _host
-        .notifierOf(ref)
-        .update((state) => _host.withNames(state, moved.kind, names));
+    _update(
+      (_) => [
+        for (final member in rest)
+          if (!_transitions.isLeaving(member)) member,
+      ]..insert(target, moved),
+    );
   }
 
   @override
@@ -345,10 +451,10 @@ class _MembersSliverState<M> extends ConsumerState<_MembersSliver<M>>
         filter.regex: filter.label,
     };
     final count = members.length + 1;
-    _transitions.place(_entries, trailing: 1);
-    final runs = groupBy(_entries, (_Member member) => member.kind);
-    Widget itemAt(List<_Member> run, int index) {
-      final member = run[index];
+    final entries = _entries;
+    _transitions.place(entries, trailing: 1);
+    Widget itemAt(int index) {
+      final member = entries[index];
       final name = member.name;
       return EntryTransition(
         key: ValueKey(member),
@@ -382,17 +488,13 @@ class _MembersSliverState<M> extends ConsumerState<_MembersSliver<M>>
         SliverToBoxAdapter(
           child: ListHeader(title: _host.title(appLocalizations)),
         ),
-        for (final kind in _host.kinds)
-          if (runs[kind] case final run?)
-            SuperSliverReorderableList(
-              key: ValueKey(kind),
-              itemBuilder: (_, index) => itemAt(run, index),
-              itemCount: run.length,
-              proxyDecorator: (child, index, animation) =>
-                  commonProxyDecorator(itemAt(run, index), index, animation),
-              onReorderItem: (oldIndex, newIndex) =>
-                  _handleReorder(run, oldIndex, newIndex),
-            ),
+        SuperSliverReorderableList(
+          itemBuilder: (_, index) => itemAt(index),
+          itemCount: entries.length,
+          proxyDecorator: (child, index, animation) =>
+              commonProxyDecorator(itemAt(index), index, animation),
+          onReorderItem: _handleReorder,
+        ),
         SliverToBoxAdapter(
           child: ItemPositionProvider(
             position: ItemPosition.get(members.length, count),

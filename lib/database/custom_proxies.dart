@@ -11,6 +11,9 @@ class CustomProxies extends Table {
 
   TextColumn get order => text().nullable()();
 
+  TextColumn get emptyOptions =>
+      text().map(const StringSetConverter()).nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -59,7 +62,15 @@ class CustomProxiesDao extends DatabaseAccessor<Database>
 
 extension RawCustomProxyExt on RawCustomProxy {
   CustomProxy toCustomProxy() {
-    return CustomProxy(id: id, definition: definition, order: order);
+    final fields = ProxyField.values.asNameMap();
+    return CustomProxy(
+      id: id,
+      definition: definition,
+      order: order,
+      emptyOptions: {
+        for (final name in emptyOptions ?? const {}) ?fields[name],
+      },
+    );
   }
 }
 
@@ -69,6 +80,7 @@ extension CustomProxiesCompanionExt on CustomProxy {
       id: Value(id),
       definition: definition,
       order: Value(order ?? this.order),
+      emptyOptions: Value({for (final field in emptyOptions) field.name}),
     );
   }
 }

@@ -8,6 +8,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/custom/groups.dart';
+import 'package:fl_clash/views/profiles/custom/members.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,7 +28,12 @@ class _TestClashProviders extends ClashProviders {
   Stream<List<ClashProvider>> build() => Stream.value(const []);
 }
 
-ProxyGroup _group({List<String>? proxies, List<String>? use, String? filter}) {
+ProxyGroup _group({
+  List<String>? proxies,
+  List<String>? use,
+  Map<String, int>? usePosition,
+  String? filter,
+}) {
   return ProxyGroup(
     id: 100,
     profileId: _profileId,
@@ -35,6 +41,7 @@ ProxyGroup _group({List<String>? proxies, List<String>? use, String? filter}) {
     type: GroupType.Selector,
     proxies: proxies,
     use: use,
+    usePosition: usePosition,
     filter: filter,
   );
 }
@@ -302,32 +309,73 @@ void main() {
       expect(container.read(proxyGroupProvider).proxies, ['DIRECT']);
     });
 
-    testWidgets('each kind of member reorders in a list of its own', (
-      tester,
-    ) async {
+    testWidgets('every member reorders in one list', (tester) async {
       container = buildContainer(
-        _group(proxies: ['DIRECT', 'REJECT'], use: ['a', 'b'], filter: 'x`y'),
+        _group(
+          proxies: ['DIRECT', 'REJECT'],
+          use: ['a', 'b'],
+          filter: 'x`y',
+        ).copyWith(excludeFilter: 'z'),
       );
 
       await pumpEditView(tester, const EditProxyGroupView());
-      final lists = find.byType(SuperSliverReorderableList);
-      Future<void> move(int list, int from, int to) async {
-        tester.widget<SliverReorderableList>(lists.at(list)).onReorderItem!(
-          from,
-          to,
-        );
+      final list = find.byType(SuperSliverReorderableList);
+      Future<void> move(int from, int to) async {
+        tester.widget<SliverReorderableList>(list).onReorderItem!(from, to);
         await tester.pump();
       }
 
-      expect(lists, findsNWidgets(3));
-      await move(0, 0, 1);
-      await move(1, 0, 1);
-      await move(2, 0, 1);
+      expect(list, findsOneWidget);
+      await move(0, 1);
+      await move(3, 0);
+      await move(5, 0);
+      await move(6, 2);
 
       final group = container.read(proxyGroupProvider);
       expect(group.proxies, ['REJECT', 'DIRECT']);
       expect(group.use, ['b', 'a']);
+      expect(group.usePosition, {'b': 0});
       expect(group.filter, 'y`x');
+      expect(group.excludeFilter, 'z');
+      expect(group.memberLayout, ['filter', 'proxy', 'excludeFilter']);
+      expect(group.definition, isNot(contains('memberLayout')));
+      double top(String text) => tester.getTopLeft(find.text(text)).dy;
+      final order = ['y', 'b', 'z', 'REJECT', 'DIRECT', 'a', 'x'];
+      for (final (index, name) in order.indexed.skip(1)) {
+        expect(top(name), greaterThan(top(order[index - 1])), reason: name);
+      }
+    });
+
+    testWidgets('a provider sits where use-position puts it until it is last', (
+      tester,
+    ) async {
+      container = buildContainer(
+        _group(
+          proxies: ['DIRECT', 'REJECT'],
+          use: ['a', 'b'],
+          usePosition: {'b': 1},
+        ),
+      );
+
+      await pumpEditView(tester, const EditProxyGroupView());
+      double top(String text) => tester.getTopLeft(find.text(text)).dy;
+      final order = ['DIRECT', 'b', 'REJECT', 'a'];
+      for (final (index, name) in order.indexed.skip(1)) {
+        expect(top(name), greaterThan(top(order[index - 1])), reason: name);
+      }
+
+      await tester.tap(
+        find.descendant(
+          of: rowOf('REJECT'),
+          matching: find.byTooltip(currentAppLocalizations.remove),
+        ),
+      );
+      await tester.pump();
+
+      final group = container.read(proxyGroupProvider);
+      expect(group.proxies, ['DIRECT']);
+      expect(group.use, ['b', 'a']);
+      expect(group.usePosition, isNull);
     });
 
     testWidgets('removing the last filter clears it', (tester) async {
@@ -501,6 +549,40 @@ void main() {
         findsOneWidget,
       );
     });
+  });
+
+  testWidgets('an exclude filter of a provider sorts among its filters', (
+    tester,
+  ) async {
+    const options = ProxyProviderOptions(filter: 'x`y', excludeFilter: 'z');
+    container = buildContainer(
+      _group(),
+      overrides: [
+        proxyProviderOptionsProvider.overrideWithBuild((_, _) => options),
+      ],
+    );
+
+    await pumpEditView(
+      tester,
+      const CustomScrollView(slivers: [ProxyProviderFiltersSliver()]),
+    );
+    final list = find.byType(SuperSliverReorderableList);
+    Future<void> move(int from, int to) async {
+      tester.widget<SliverReorderableList>(list).onReorderItem!(from, to);
+      await tester.pump();
+    }
+
+    await move(2, 1);
+    final moved = container.read(proxyProviderOptionsProvider);
+    expect(moved.filter, 'x`y');
+    expect(moved.memberLayout, ['filter', 'excludeFilter']);
+    expect(moved.definition, isNot(contains('memberLayout')));
+    double top(String text) => tester.getTopLeft(find.text(text)).dy;
+    expect(top('z'), greaterThan(top('x')));
+    expect(top('y'), greaterThan(top('z')));
+
+    await move(1, 2);
+    expect(container.read(proxyProviderOptionsProvider), options);
   });
 
   group('EditProxyGroupView', () {

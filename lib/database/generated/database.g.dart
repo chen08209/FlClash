@@ -3793,7 +3793,16 @@ class $CustomProxiesTable extends CustomProxies
     requiredDuringInsert: false,
   );
   @override
-  List<GeneratedColumn> get $columns => [id, definition, order];
+  late final GeneratedColumnWithTypeConverter<Set<String>?, String>
+  emptyOptions = GeneratedColumn<String>(
+    'empty_options',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<Set<String>?>($CustomProxiesTable.$converteremptyOptionsn);
+  @override
+  List<GeneratedColumn> get $columns => [id, definition, order, emptyOptions];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3838,6 +3847,12 @@ class $CustomProxiesTable extends CustomProxies
         DriftSqlType.string,
         data['${effectivePrefix}order'],
       ),
+      emptyOptions: $CustomProxiesTable.$converteremptyOptionsn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}empty_options'],
+        ),
+      ),
     );
   }
 
@@ -3848,16 +3863,22 @@ class $CustomProxiesTable extends CustomProxies
 
   static TypeConverter<Map<String, dynamic>, String> $converterdefinition =
       const JsonMapConverter();
+  static TypeConverter<Set<String>, String> $converteremptyOptions =
+      const StringSetConverter();
+  static TypeConverter<Set<String>?, String?> $converteremptyOptionsn =
+      NullAwareTypeConverter.wrap($converteremptyOptions);
 }
 
 class RawCustomProxy extends DataClass implements Insertable<RawCustomProxy> {
   final int id;
   final Map<String, dynamic> definition;
   final String? order;
+  final Set<String>? emptyOptions;
   const RawCustomProxy({
     required this.id,
     required this.definition,
     this.order,
+    this.emptyOptions,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3871,6 +3892,11 @@ class RawCustomProxy extends DataClass implements Insertable<RawCustomProxy> {
     if (!nullToAbsent || order != null) {
       map['order'] = Variable<String>(order);
     }
+    if (!nullToAbsent || emptyOptions != null) {
+      map['empty_options'] = Variable<String>(
+        $CustomProxiesTable.$converteremptyOptionsn.toSql(emptyOptions),
+      );
+    }
     return map;
   }
 
@@ -3881,6 +3907,9 @@ class RawCustomProxy extends DataClass implements Insertable<RawCustomProxy> {
       order: order == null && nullToAbsent
           ? const Value.absent()
           : Value(order),
+      emptyOptions: emptyOptions == null && nullToAbsent
+          ? const Value.absent()
+          : Value(emptyOptions),
     );
   }
 
@@ -3893,6 +3922,7 @@ class RawCustomProxy extends DataClass implements Insertable<RawCustomProxy> {
       id: serializer.fromJson<int>(json['id']),
       definition: serializer.fromJson<Map<String, dynamic>>(json['definition']),
       order: serializer.fromJson<String?>(json['order']),
+      emptyOptions: serializer.fromJson<Set<String>?>(json['emptyOptions']),
     );
   }
   @override
@@ -3902,6 +3932,7 @@ class RawCustomProxy extends DataClass implements Insertable<RawCustomProxy> {
       'id': serializer.toJson<int>(id),
       'definition': serializer.toJson<Map<String, dynamic>>(definition),
       'order': serializer.toJson<String?>(order),
+      'emptyOptions': serializer.toJson<Set<String>?>(emptyOptions),
     };
   }
 
@@ -3909,10 +3940,12 @@ class RawCustomProxy extends DataClass implements Insertable<RawCustomProxy> {
     int? id,
     Map<String, dynamic>? definition,
     Value<String?> order = const Value.absent(),
+    Value<Set<String>?> emptyOptions = const Value.absent(),
   }) => RawCustomProxy(
     id: id ?? this.id,
     definition: definition ?? this.definition,
     order: order.present ? order.value : this.order,
+    emptyOptions: emptyOptions.present ? emptyOptions.value : this.emptyOptions,
   );
   RawCustomProxy copyWithCompanion(CustomProxiesCompanion data) {
     return RawCustomProxy(
@@ -3921,6 +3954,9 @@ class RawCustomProxy extends DataClass implements Insertable<RawCustomProxy> {
           ? data.definition.value
           : this.definition,
       order: data.order.present ? data.order.value : this.order,
+      emptyOptions: data.emptyOptions.present
+          ? data.emptyOptions.value
+          : this.emptyOptions,
     );
   }
 
@@ -3929,45 +3965,52 @@ class RawCustomProxy extends DataClass implements Insertable<RawCustomProxy> {
     return (StringBuffer('RawCustomProxy(')
           ..write('id: $id, ')
           ..write('definition: $definition, ')
-          ..write('order: $order')
+          ..write('order: $order, ')
+          ..write('emptyOptions: $emptyOptions')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, definition, order);
+  int get hashCode => Object.hash(id, definition, order, emptyOptions);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is RawCustomProxy &&
           other.id == this.id &&
           other.definition == this.definition &&
-          other.order == this.order);
+          other.order == this.order &&
+          other.emptyOptions == this.emptyOptions);
 }
 
 class CustomProxiesCompanion extends UpdateCompanion<RawCustomProxy> {
   final Value<int> id;
   final Value<Map<String, dynamic>> definition;
   final Value<String?> order;
+  final Value<Set<String>?> emptyOptions;
   const CustomProxiesCompanion({
     this.id = const Value.absent(),
     this.definition = const Value.absent(),
     this.order = const Value.absent(),
+    this.emptyOptions = const Value.absent(),
   });
   CustomProxiesCompanion.insert({
     this.id = const Value.absent(),
     required Map<String, dynamic> definition,
     this.order = const Value.absent(),
+    this.emptyOptions = const Value.absent(),
   }) : definition = Value(definition);
   static Insertable<RawCustomProxy> custom({
     Expression<int>? id,
     Expression<String>? definition,
     Expression<String>? order,
+    Expression<String>? emptyOptions,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (definition != null) 'definition': definition,
       if (order != null) 'order': order,
+      if (emptyOptions != null) 'empty_options': emptyOptions,
     });
   }
 
@@ -3975,11 +4018,13 @@ class CustomProxiesCompanion extends UpdateCompanion<RawCustomProxy> {
     Value<int>? id,
     Value<Map<String, dynamic>>? definition,
     Value<String?>? order,
+    Value<Set<String>?>? emptyOptions,
   }) {
     return CustomProxiesCompanion(
       id: id ?? this.id,
       definition: definition ?? this.definition,
       order: order ?? this.order,
+      emptyOptions: emptyOptions ?? this.emptyOptions,
     );
   }
 
@@ -3997,6 +4042,11 @@ class CustomProxiesCompanion extends UpdateCompanion<RawCustomProxy> {
     if (order.present) {
       map['order'] = Variable<String>(order.value);
     }
+    if (emptyOptions.present) {
+      map['empty_options'] = Variable<String>(
+        $CustomProxiesTable.$converteremptyOptionsn.toSql(emptyOptions.value),
+      );
+    }
     return map;
   }
 
@@ -4005,7 +4055,8 @@ class CustomProxiesCompanion extends UpdateCompanion<RawCustomProxy> {
     return (StringBuffer('CustomProxiesCompanion(')
           ..write('id: $id, ')
           ..write('definition: $definition, ')
-          ..write('order: $order')
+          ..write('order: $order, ')
+          ..write('emptyOptions: $emptyOptions')
           ..write(')'))
         .toString();
   }
@@ -7291,12 +7342,14 @@ typedef $$CustomProxiesTableCreateCompanionBuilder =
       Value<int> id,
       required Map<String, dynamic> definition,
       Value<String?> order,
+      Value<Set<String>?> emptyOptions,
     });
 typedef $$CustomProxiesTableUpdateCompanionBuilder =
     CustomProxiesCompanion Function({
       Value<int> id,
       Value<Map<String, dynamic>> definition,
       Value<String?> order,
+      Value<Set<String>?> emptyOptions,
     });
 
 final class $$CustomProxiesTableReferences
@@ -7355,6 +7408,12 @@ class $$CustomProxiesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnWithTypeConverterFilters<Set<String>?, Set<String>, String>
+  get emptyOptions => $composableBuilder(
+    column: $table.emptyOptions,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
   Expression<bool> proxyDialersRefs(
     Expression<bool> Function($$ProxyDialersTableFilterComposer f) f,
   ) {
@@ -7404,6 +7463,11 @@ class $$CustomProxiesTableOrderingComposer
     column: $table.order,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get emptyOptions => $composableBuilder(
+    column: $table.emptyOptions,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CustomProxiesTableAnnotationComposer
@@ -7426,6 +7490,12 @@ class $$CustomProxiesTableAnnotationComposer
 
   GeneratedColumn<String> get order =>
       $composableBuilder(column: $table.order, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Set<String>?, String> get emptyOptions =>
+      $composableBuilder(
+        column: $table.emptyOptions,
+        builder: (column) => column,
+      );
 
   Expression<T> proxyDialersRefs<T extends Object>(
     Expression<T> Function($$ProxyDialersTableAnnotationComposer a) f,
@@ -7484,20 +7554,24 @@ class $$CustomProxiesTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<Map<String, dynamic>> definition = const Value.absent(),
                 Value<String?> order = const Value.absent(),
+                Value<Set<String>?> emptyOptions = const Value.absent(),
               }) => CustomProxiesCompanion(
                 id: id,
                 definition: definition,
                 order: order,
+                emptyOptions: emptyOptions,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required Map<String, dynamic> definition,
                 Value<String?> order = const Value.absent(),
+                Value<Set<String>?> emptyOptions = const Value.absent(),
               }) => CustomProxiesCompanion.insert(
                 id: id,
                 definition: definition,
                 order: order,
+                emptyOptions: emptyOptions,
               ),
           withReferenceMapper: (p0) => p0
               .map(

@@ -231,6 +231,41 @@ List<CustomProxy> importedCustomProxies(
 
 typedef ShareLinkLine = ({int line, String link, CustomProxy? kept});
 
+/// [next], read from an edited link, plus what [previous] holds that its own
+/// link, read back as [linked], cannot carry, which the user could not remove.
+Map<String, dynamic> withUnlinkedFields(
+  Map<String, dynamic> next, {
+  required Map<String, dynamic> previous,
+  required Map<String, dynamic>? linked,
+}) {
+  if (linked == null || next['type'] != previous['type']) {
+    return next;
+  }
+  return _withUnlinked(next, previous, linked);
+}
+
+Map<String, dynamic> _withUnlinked(
+  Map<String, dynamic> next,
+  Map<dynamic, dynamic> previous,
+  Map<dynamic, dynamic> linked,
+) {
+  final result = {...next};
+  for (final MapEntry(:key, :value) in previous.entries) {
+    final carried = linked[key];
+    final edited = result[key];
+    if (!linked.containsKey(key)) {
+      result.putIfAbsent(key.toString(), () => value);
+    } else if (value is Map && carried is Map && edited is Map) {
+      result[key.toString()] = _withUnlinked(
+        Map<String, dynamic>.from(edited),
+        value,
+        carried,
+      );
+    }
+  }
+  return result;
+}
+
 /// A line that repeats a proxy's own link keeps that proxy as it is, since a
 /// link carries fewer fields than the mapping.
 class ShareLinkEdit {
@@ -273,11 +308,22 @@ class ShareLinkEdit {
   List<ShareLinkLine> get pending =>
       lines.where((line) => line.kept == null).toList();
 
+  Map<int, String> get droppedLinks {
+    final keptIds = {for (final line in lines) ?line.kept?.id};
+    return {
+      for (final (index, proxy) in previous.indexed)
+        if (links[index].isNotEmpty && !keptIds.contains(proxy.id))
+          proxy.id: links[index],
+    };
+  }
+
   /// A proxy named after one the edit dropped takes over its id, so each
-  /// profile's dialer for it stays.
+  /// profile's dialer for it stays, and the options it listed without a
+  /// value, which no link carries.
   List<CustomProxy> apply(
     Map<int, List<Map<String, dynamic>>> decoded, {
     required Set<String> groupNames,
+    Map<int, Map<String, dynamic>> linked = const {},
   }) {
     final keptIds = {for (final line in lines) ?line.kept?.id};
     final dropped = <String, CustomProxy>{
@@ -303,11 +349,26 @@ class ShareLinkEdit {
         final base = linkProxyName(definition);
         final replaced = taken.contains(base) ? null : dropped.remove(base);
         final name = freeProxyName(base, taken);
+        final named = <String, dynamic>{...definition, 'name': name};
+        final proxy = CustomProxy.fromDefinition(
+          replaced == null
+              ? named
+              : withUnlinkedFields(
+                  named,
+                  previous: replaced.definition,
+                  linked: linked[replaced.id],
+                ),
+          id: replaced?.id,
+        );
         edited.add(
-          CustomProxy.fromDefinition({
-            ...definition,
-            'name': name,
-          }, id: replaced?.id),
+          replaced == null
+              ? proxy
+              : proxy.copyWith(
+                  emptyOptions: {
+                    for (final field in replaced.emptyOptions)
+                      if (replaced.valueOf(field) == null) field,
+                  },
+                ),
         );
       }
     }

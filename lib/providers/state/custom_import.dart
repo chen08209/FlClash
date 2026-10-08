@@ -411,33 +411,27 @@ ProxyGroup _importGroup(
   required Map<String, String> names,
   required Map<String, String> use,
 }) {
-  final json = _stringified(
-    {
-      // A custom profile has no include-all-providers, so include-all keeps
-      // only its proxies.
-      for (final MapEntry(:key, :value) in group.entries)
-        if (key != 'include-all' && key != 'include-all-providers') key: value,
-      if (group['include-all'] == true) 'include-all-proxies': true,
-      'id': 0,
-      'name': name,
-      if (group.containsKey('proxies'))
-        'proxies': _renamedList(group['proxies'], names),
-      if (group.containsKey('use')) 'use': _renamedList(group['use'], use),
-      if (group['default-selected'] case final Object selected)
-        'default-selected': names[selected.toString()] ?? selected.toString(),
-    },
-    const [
-      'url',
-      'filter',
-      'exclude-filter',
-      'exclude-type',
-      'expected-status',
-      'hash-key',
-      'empty-fallback',
-      'icon',
-    ],
+  final json = _stringified({
+    // A custom profile has no include-all-providers, so include-all keeps
+    // only its proxies.
+    for (final MapEntry(:key, :value) in group.entries)
+      if (key != 'include-all' && key != 'include-all-providers') key: value,
+    if (group['include-all'] == true) 'include-all-proxies': true,
+    'id': 0,
+    'name': name,
+    if (group.containsKey('proxies'))
+      'proxies': _renamedList(group['proxies'], names),
+    if (group.containsKey('use')) 'use': _renamedList(group['use'], use),
+    if (group.containsKey('use-position'))
+      'use-position': usePositionOf(group['use-position'], use),
+    if (group['default-selected'] case final Object selected)
+      'default-selected': names[selected.toString()] ?? selected.toString(),
+  }, proxyGroupTextKeys);
+  final imported = _decodeEntry(
+    _nameOf(group),
+    () => ProxyGroup.fromJson(json),
   );
-  return _decodeEntry(_nameOf(group), () => ProxyGroup.fromJson(json));
+  return imported.copyWith(usePosition: imported.effectiveUsePosition);
 }
 
 Rule _importRule(

@@ -50,7 +50,7 @@ class Database extends _$Database {
   Database([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 19;
+  int get schemaVersion => 20;
 
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {
@@ -103,6 +103,13 @@ class Database extends _$Database {
         }
         if (from < 19) {
           await _addColumnIfMissing(m, profiles, profiles.ageSecretKey);
+        }
+        if (from < 20) {
+          await _addColumnIfMissing(
+            m,
+            customProxies,
+            customProxies.emptyOptions,
+          );
         }
       }),
       beforeOpen: (_) => customStatement('PRAGMA foreign_keys = ON'),
@@ -160,7 +167,15 @@ class Database extends _$Database {
     await customStatement(
       'DROP INDEX IF EXISTS idx_custom_proxies_profile_order',
     );
-    await m.alterTable(TableMigration(customProxies));
+    await m.alterTable(
+      TableMigration(
+        customProxies,
+        newColumns: [
+          if (!columns.contains(customProxies.emptyOptions.name))
+            customProxies.emptyOptions,
+        ],
+      ),
+    );
   }
 
   /// Schema 17 kept each group option in a column of its own.
