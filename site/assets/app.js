@@ -16,6 +16,7 @@
     : 'cubic-bezier(0.22, 1, 0.36, 1)';
   const COS30 = Math.cos(Math.PI / 6);
   let field = null;
+  let counting = false;
 
   const state = {
     lang: root.lang.startsWith('zh') ? 'zh' : 'en',
@@ -238,25 +239,49 @@
     }
     const stars = $('#stars');
     if (release && typeof release.stars === 'number') {
-      const format = new Intl.NumberFormat(locale(), { notation: 'compact', maximumFractionDigits: 1 });
+      const format = starFormat();
       const compact = format.format(release.stars);
-      if (stars.hidden) countUp(stars, release.stars, format);
-      else stars.textContent = compact;
-      stars.hidden = false;
+      if (stars.hidden) {
+        stars.hidden = false;
+        countUp(stars, release.stars, format);
+      } else if (!counting) {
+        stars.textContent = compact;
+      }
       $('#gh-link').setAttribute('aria-label', `GitHub, ${t('stars', compact)}`);
     }
   }
 
+  function starFormat() {
+    return new Intl.NumberFormat(locale(), { notation: 'compact', maximumFractionDigits: 1 });
+  }
+
+  // Counts in the final figure's own unit and precision, inside a box as wide as the final figure, so neither a new
+  // digit nor a switch to a compact suffix moves the nav while it runs.
   function countUp(node, value, format) {
-    if (reducedMotion.matches) {
-      node.textContent = format.format(value);
-      return;
-    }
+    const final = format.format(value);
+    node.textContent = final;
+    if (reducedMotion.matches) return;
+    const parts = format.formatToParts(value);
+    const number = parts.filter((part) => ['integer', 'group', 'decimal', 'fraction'].includes(part.type));
+    const text = (list) => list.map((part) => part.value).join('');
+    const prefix = text(parts.slice(0, parts.indexOf(number[0])));
+    const suffix = text(parts.slice(parts.indexOf(number[number.length - 1]) + 1));
+    const decimal = parts.find((part) => part.type === 'decimal')?.value ?? '.';
+    const digits = parts.find((part) => part.type === 'fraction')?.value.length ?? 0;
+    const shown = Number(text(number.filter((part) => part.type !== 'group')).replace(decimal, '.'));
+    node.style.minWidth = `${node.getBoundingClientRect().width}px`;
+    counting = true;
     const start = performance.now();
     const step = (now) => {
-      const progress = Math.min((now - start) / 1100, 1);
-      node.textContent = format.format(Math.round(value * (1 - (1 - progress) ** 4)));
-      if (progress < 1) requestAnimationFrame(step);
+      const progress = Math.min(Math.max((now - start) / 1100, 0), 1);
+      const current = (shown * (1 - (1 - progress) ** 4)).toFixed(digits).replace('.', decimal);
+      node.textContent = progress < 1 ? prefix + current + suffix : final;
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        node.style.minWidth = '';
+        counting = false;
+      }
     };
     step(start);
   }
@@ -1014,6 +1039,8 @@
     wireEvents();
     wireGlyph();
     wireField();
+    const stars = $('#stars');
+    if (stars.dataset.count && !stars.hidden) countUp(stars, Number(stars.dataset.count), starFormat());
     stageReveal(document.querySelectorAll('.section .rail, .dl, #facts, .foot'));
 
     const [device] = await Promise.all([detectDevice(), loadData()]);

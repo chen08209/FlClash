@@ -118,17 +118,18 @@ user32 without it rather than reporting an effect that draws nothing.
 With `titleBarStyle: hidden` on Windows, `WM_NCCALCSIZE` takes the frame
 insets from `AdjustWindowRectExForDpi` and keeps the client rect at the
 window's top edge, plus the frame height when maximized so the taskbar stays
-uncovered. Windows 11 draws the top border into a 1 px non-client strip left
-there. Windows 10 draws the whole caption over any strip shorter than one
-(Windows Terminal's `NonClientIslandWindow` records the same), so it gets no
-strip. Instead, while no accent effect is on, `WindowStyle::Apply` extends the
-DWM frame over the whole caption height and `WindowController` keeps a 1 px
-row of client area above the Flutter view, paints it black in `WM_PAINT`
-(alpha 0 to DWM, which shows the frame's border through it) and answers
-`WM_NCHITTEST` with `HTTOP` for it. The plugin therefore positions the view
-itself on `WM_SIZE` and after every frame change; the runner's own placement
-only runs before `ensureInitialized`. The row is gone while maximized or full
-screen, where there is no border to show, and while an accent effect is on.
+uncovered. Windows 11 draws the top border into a non-client strip one
+physical pixel tall left there. Windows 10 draws the whole caption over any
+strip shorter than one (Windows Terminal's `NonClientIslandWindow` records the
+same), so it gets no strip. Instead, while no accent effect is on,
+`WindowStyle::Apply` extends the DWM frame over the whole caption height and
+`WindowController` keeps a row of client area one physical pixel tall above
+the Flutter view, paints it black in `WM_PAINT` (alpha 0 to DWM, which shows
+the frame's border through it) and answers `WM_NCHITTEST` with `HTTOP` for it.
+The plugin therefore positions the view itself on `WM_SIZE` and after every
+frame change; the runner's own placement only runs before `ensureInitialized`.
+The row is gone while maximized or full screen, where there is no border to
+show, and while an accent effect is on.
 
 The Flutter content must paint a translucent background for anything but
 `none` to be visible.
