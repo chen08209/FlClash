@@ -497,7 +497,10 @@ class _MoreSectionsView extends ConsumerWidget {
                 appLocalizations.dialerProxy,
                 Text(
                   dialerCount > 0
-                      ? appLocalizations.proxiesCount(dialerCount)
+                      ? appLocalizations.proxiesCount(
+                          dialerCount,
+                          dialerCount.compact,
+                        )
                       : appLocalizations.none,
                   style: hasDialerIssues
                       ? TextStyle(color: context.colorScheme.error)

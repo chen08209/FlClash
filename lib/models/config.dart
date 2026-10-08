@@ -315,7 +315,7 @@ abstract class NetworkProps with _$NetworkProps {
   const factory NetworkProps({
     @Default(true) bool systemProxy,
     @Default(defaultBypassDomain) List<String> bypassDomain,
-    @Default(false) bool bypassPrivateRoute,
+    @Default(true) bool bypassPrivateRoute,
     @Default(true) bool autoSetSystemDns,
     @Default(false) bool appendSystemDns,
     @Default(defaultAuthenticationProps) AuthenticationProps authentication,
@@ -448,19 +448,20 @@ Config _withLegacyOverrideDns(Config config, Map<String, Object?> json) {
 Map<String, Object?> _withLegacyRouteMode(Map<String, Object?> json) {
   final network = json['networkProps'];
   if (network is! Map ||
-      network['routeMode'] != 'bypassPrivate' ||
+      !network.containsKey('routeMode') ||
       network.containsKey('bypassPrivateRoute')) {
     return json;
   }
+  final bypassPrivate = network['routeMode'] == 'bypassPrivate';
   final clash = json['patchClashConfig'];
   final tun = clash is Map ? clash['tun'] : null;
   return {
     ...json,
     'networkProps': {
       ...Map<String, Object?>.from(network),
-      'bypassPrivateRoute': true,
+      'bypassPrivateRoute': bypassPrivate,
     },
-    if (clash is Map && tun is Map)
+    if (bypassPrivate && clash is Map && tun is Map)
       'patchClashConfig': {
         ...Map<String, Object?>.from(clash),
         'tun': {...Map<String, Object?>.from(tun), 'route-address': <String>[]},

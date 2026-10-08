@@ -58,6 +58,22 @@ void main() {
       ]);
       expect(parsed.isValid, isFalse);
     });
+
+    test('reports items the caller refuses with their line', () {
+      final parsed = parseListInput(
+        '1.2.3.0/24\nbad, 10.0.0.0/8',
+        isValid: (value) => value.contains('/'),
+      );
+
+      expect(parsed.entries, ['1.2.3.0/24', '10.0.0.0/8']);
+      expect(parsed.issues, [
+        const InputIssue(
+          line: 2,
+          raw: 'bad',
+          kind: InputIssueKind.invalidValue,
+        ),
+      ]);
+    });
   });
 
   group('parseUrlInput', () {

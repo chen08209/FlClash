@@ -44,10 +44,9 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
     ref.read(globalRulesProvider.notifier).put(res);
   }
 
-  void _handleQuickAdd() {
+  void _handleQuickActions() {
     showSheet<void>(
       context: context,
-      props: const SheetProps(isScrollControlled: true),
       builder: (_) =>
           RulePresetSheet(onAdd: ref.read(globalRulesProvider.notifier).putAll),
     );
@@ -126,19 +125,18 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
         searchState: AppBarSearchState(onSearch: _handleSearch),
         actions: [
           if (!isSelecting)
-            FilledButton.tonal(
-              onPressed: () {
-                _handleAddOrUpdate();
-              },
-              child: Text(appLocalizations.add),
+            IconButton(
+              tooltip: appLocalizations.add,
+              onPressed: _handleAddOrUpdate,
+              icon: const GlyphIcon(AppGlyphs.addCircle),
             ),
         ],
         iconActions: [
           if (!isSelecting)
             IconButtonData(
               glyph: AppGlyphs.bolt,
-              onPressed: _handleQuickAdd,
-              tooltip: appLocalizations.quickAdd,
+              onPressed: _handleQuickActions,
+              tooltip: appLocalizations.quickActions,
             ),
         ],
         selectionActions: isSelecting ? selectionActions : const [],
@@ -150,33 +148,39 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
             label: appLocalizations.nullTip(appLocalizations.rule),
             illustration: NullStatusIllustration.rules,
           ),
-          child: isSearching
-              ? ListView.builder(
-                  padding: _listPadding,
-                  itemBuilder: (_, index) =>
-                      _buildRuleItem(rules, index, selectedRules),
-                  itemExtent: ruleItemHeight,
-                  itemCount: rules.length,
-                )
-              : ReorderableList(
-                  padding: _listPadding,
-                  itemBuilder: (_, index) =>
-                      ReorderableDelayedDragStartListener(
-                        key: ObjectKey(rules[index]),
-                        index: index,
-                        child: _buildRuleItem(rules, index, selectedRules),
-                      ),
-                  itemExtent: ruleItemHeight,
-                  itemCount: rules.length,
-                  onReorderItem: ref.read(globalRulesProvider.notifier).order,
-                ),
+          child: Builder(
+            builder: (context) => isSearching
+                ? ListView.builder(
+                    padding: _listPadding(context),
+                    itemBuilder: (_, index) =>
+                        _buildRuleItem(rules, index, selectedRules),
+                    itemExtent: ruleItemHeight,
+                    itemCount: rules.length,
+                  )
+                : ReorderableList(
+                    padding: _listPadding(context),
+                    itemBuilder: (_, index) =>
+                        ReorderableDelayedDragStartListener(
+                          key: ObjectKey(rules[index]),
+                          index: index,
+                          child: _buildRuleItem(rules, index, selectedRules),
+                        ),
+                    itemExtent: ruleItemHeight,
+                    itemCount: rules.length,
+                    onReorderItem: ref.read(globalRulesProvider.notifier).order,
+                  ),
+          ),
         ),
       ),
     );
   }
 
-  EdgeInsets get _listPadding =>
-      const EdgeInsets.all(16).copyWith(top: context.contentTopPadding);
+  EdgeInsets _listPadding(BuildContext context) => EdgeInsets.fromLTRB(
+    16,
+    context.contentTopPadding,
+    16,
+    16 + BottomInsetScope.of(context),
+  );
 
   Widget _buildRuleItem(List<Rule> rules, int index, Set<dynamic> selected) {
     final rule = rules[index];

@@ -112,7 +112,7 @@ void main() {
 
     expect(
       find.text(
-        'No icon sets yet. Add them in Advanced configuration → Icon sets',
+        'No icon sets yet. Add them in Custom profile resources → Icon sets',
       ),
       findsOne,
     );

@@ -58,8 +58,12 @@ String _randomPipeId() {
   ).join();
 }
 
-final defaultTextScaleFactor =
-    WidgetsBinding.instance.platformDispatcher.textScaleFactor;
+/// Depends on [context]'s text scaler, so the caller rebuilds when the system
+/// font scale changes.
+double systemTextScaleOf(BuildContext context) {
+  MediaQuery.textScalerOf(context);
+  return WidgetsBinding.instance.platformDispatcher.textScaleFactor;
+}
 
 /// How long the Core may spend on one delay test. It spends this twice in the
 /// worst case - once queueing for a slot, once on the probe itself - so the

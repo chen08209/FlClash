@@ -172,13 +172,13 @@ void main() {
 
     expect(find.byTooltip(currentAppLocalizations.edit), findsNothing);
     expect(find.text('3KB / 4KB'), findsOneWidget);
-    expect(find.text(currentAppLocalizations.minutesAgo(5)), findsOneWidget);
+    expect(find.text('5m ago'), findsOneWidget);
 
     container.read(updatingKeysProvider.notifier).start(url.updatingKey);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text(currentAppLocalizations.minutesAgo(5)), findsNothing);
+    expect(find.text('5m ago'), findsNothing);
     expect(
       find.descendant(
         of: find.ancestor(

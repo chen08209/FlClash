@@ -31,13 +31,22 @@ void main() {
     });
   });
 
-  test('the model defaults match the core\'s but leave its presets unset', () {
+  test('the model defaults match the core\'s, GeoIP code aside', () {
     final source = File('core/Clash.Meta/config/config.go').readAsStringSync();
     final body = RegExp(
       r'DNS: RawDNS\{([\s\S]*?)\n\t\t\},',
     ).firstMatch(source)!.group(1)!;
     String valueOf(String field) =>
         RegExp('\\b$field:\\s*(.+),').firstMatch(body)!.group(1)!.trim();
+    String stringOf(String field) => jsonDecode(valueOf(field)) as String;
+    List<String> stringsOf(String field) => [
+      for (final match in RegExp(r'"([^"]*)"').allMatches(
+        RegExp(
+          '\\b$field:\\s*\\[\\]string\\{([^}]*)\\}',
+        ).firstMatch(body)!.group(1)!,
+      ))
+        match.group(1)!,
+    ];
 
     expect(valueOf('Enable'), '${defaultDns.enable}');
     expect(valueOf('IPv6'), '${defaultDns.ipv6}');
@@ -50,14 +59,17 @@ void main() {
     expect(defaultDns.enhancedMode, DnsMode.redirHost);
     expect(valueOf('FakeIPFilterMode'), 'C.FilterBlackList');
     expect(defaultDns.fakeIpFilterMode, FakeIpFilterMode.blacklist);
+    expect(stringOf('FakeIPRange'), defaultDns.fakeIpRange);
+    expect(stringOf('GeoIPCode'), isNotEmpty);
+    expect(stringsOf('FakeIPFilter'), defaultDns.fakeIpFilter);
+    expect(stringsOf('DefaultNameserver'), defaultDns.defaultNameserver);
+    expect(stringsOf('NameServer'), defaultDns.nameserver);
+    expect(body, isNot(contains('Listen:')));
+    expect(body, isNot(contains('FakeIPRange6:')));
     expect(
       defaultDns.overrideJson({
         DnsOverrideKey.listen,
-        DnsOverrideKey.fakeIpRange,
         DnsOverrideKey.fakeIpRange6,
-        DnsOverrideKey.fakeIpFilter,
-        DnsOverrideKey.defaultNameserver,
-        DnsOverrideKey.nameserver,
         DnsOverrideKey.fallbackFilterGeoipCode,
       }),
       isEmpty,

@@ -14,6 +14,11 @@ import '../../helpers/glyph_finders.dart';
 import '../../helpers/test_app.dart';
 
 void main() {
+  final addBadges = find.widgetWithGlyph(
+    CornerBadgeButton,
+    AppGlyphs.addCircle,
+  );
+
   testWidgets('a widget added from the sheet flies into the dashboard', (
     tester,
   ) async {
@@ -52,7 +57,6 @@ void main() {
       ),
     );
     await tester.pump();
-    final dashboardAdds = find.byGlyph(AppGlyphs.add).evaluate().length;
 
     await tester.tap(find.byKey(const ValueKey('edit-icon')));
     await tester.pump(const Duration(milliseconds: 500));
@@ -61,7 +65,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    await tester.tap(find.byGlyph(AppGlyphs.add).last);
+    await tester.tap(addBadges.last);
     await tester.pump();
     await tester.pump();
 
@@ -75,7 +79,7 @@ void main() {
     for (var i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-    expect(find.byGlyph(AppGlyphs.add), findsNWidgets(dashboardAdds));
+    expect(addBadges, findsNothing);
     expect(tester.takeException(), null);
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -135,83 +139,32 @@ void main() {
     }
   }
 
-  testWidgets('the sheet drops out of the way of an add, then comes back', (
-    tester,
-  ) async {
+  testWidgets('adding a widget closes the sheet', (tester) async {
     final added = await openWithTwoLeft(tester, const Size(400, 900));
-    final openTop = tester.getTopLeft(find.byType(SheetDragHandle)).dy;
-    expect(openTop, lessThan(200));
+    expect(find.byType(SheetDragHandle), findsOneWidget);
 
-    await tester.tap(find.byGlyph(AppGlyphs.add).first);
+    await tester.tap(addBadges.first);
     await pumpFor(tester, 500);
 
-    final peekTop = tester.getTopLeft(find.byType(SheetDragHandle)).dy;
-    expect(peekTop, greaterThan(700));
+    expect(find.byType(SheetDragHandle), findsNothing);
     final grid = tester.state<SuperGridState>(find.byType(SuperGrid));
     expect(grid.items.last, added);
-    final slot = tester.getRect(
-      find.descendant(
-        of: find.byType(SuperGrid),
-        matching: find.byKey(added.key!),
-      ),
-    );
-    expect(slot.bottom, lessThanOrEqualTo(peekTop));
-    expect(slot.top, greaterThanOrEqualTo(0));
-
-    await pumpFor(tester, 2000);
-    expect(
-      tester.getTopLeft(find.byType(SheetDragHandle)).dy,
-      closeTo(openTop, 1),
-    );
     expect(tester.takeException(), null);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 10));
   });
 
-  testWidgets('a drag cannot rest the sheet at its collapsed height', (
-    tester,
-  ) async {
-    await openWithTwoLeft(tester, const Size(400, 900));
-    final openTop = tester.getTopLeft(find.byType(SheetDragHandle)).dy;
+  testWidgets('adding a widget closes the side sheet', (tester) async {
+    final added = await openWithTwoLeft(tester, const Size(1200, 900));
+    expect(find.byType(SideSheet), findsOneWidget);
 
-    final gesture = await tester.startGesture(
-      tester.getCenter(find.byType(SheetDragHandle)),
-    );
-    for (var i = 0; i < 20; i++) {
-      await gesture.moveBy(const Offset(0, 18));
-      await tester.pump(const Duration(milliseconds: 50));
-    }
-    await tester.pump(const Duration(milliseconds: 500));
-    await gesture.up();
-    await pumpFor(tester, 1000);
+    await tester.tap(addBadges.first);
+    await pumpFor(tester, 500);
 
-    expect(
-      tester.getTopLeft(find.byType(SheetDragHandle)).dy,
-      closeTo(openTop, 1),
-    );
-    expect(tester.takeException(), null);
-
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump(const Duration(seconds: 10));
-  });
-
-  testWidgets('the side sheet slides off for an add, then comes back', (
-    tester,
-  ) async {
-    await openWithTwoLeft(tester, const Size(1200, 900));
-    final openLeft = tester.getTopLeft(find.byType(SideSheet)).dx;
-    expect(openLeft, lessThan(1200));
-
-    await tester.tap(find.byGlyph(AppGlyphs.add).first);
-    await pumpFor(tester, 400);
-    expect(
-      tester.getTopLeft(find.byType(SideSheet)).dx,
-      greaterThanOrEqualTo(1200),
-    );
-
-    await pumpFor(tester, 2000);
-    expect(tester.getTopLeft(find.byType(SideSheet)).dx, closeTo(openLeft, 1));
+    expect(find.byType(SideSheet), findsNothing);
+    final grid = tester.state<SuperGridState>(find.byType(SuperGrid));
+    expect(grid.items.last, added);
     expect(tester.takeException(), null);
 
     await tester.pumpWidget(const SizedBox.shrink());

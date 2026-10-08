@@ -4,9 +4,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/config/dns.dart';
 import 'package:fl_clash/views/config/network.dart';
-import 'package:fl_clash/views/config/ntp.dart';
 import 'package:fl_clash/views/dashboard/widget_metrics.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -180,40 +178,6 @@ class VpnButton extends StatelessWidget {
         ref
             .read(vpnSettingProvider.notifier)
             .update((state) => state.copyWith(enable: value));
-      },
-    );
-  }
-}
-
-class OverrideDnsButton extends StatelessWidget {
-  const OverrideDnsButton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return _QuickSwitchCard(
-      label: context.appLocalizations.overrideDns,
-      glyph: AppGlyphs.dns,
-      sheetBuilder: (_) => const DnsView(),
-      selector: overrideDnsProvider,
-      onChanged: (ref, value) {
-        ref.read(overrideDnsProvider.notifier).value = value;
-      },
-    );
-  }
-}
-
-class OverrideNtpButton extends StatelessWidget {
-  const OverrideNtpButton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return _QuickSwitchCard(
-      label: context.appLocalizations.overrideNtp,
-      glyph: AppGlyphs.clock,
-      sheetBuilder: (_) => const NtpView(),
-      selector: overrideNtpProvider,
-      onChanged: (ref, value) {
-        ref.read(overrideNtpProvider.notifier).value = value;
       },
     );
   }

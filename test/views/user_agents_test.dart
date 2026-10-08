@@ -1,12 +1,16 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/config/user_agents.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/context_menu.dart';
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
@@ -17,13 +21,10 @@ void main() {
 
   List<String> saved() => container.read(appSettingProvider).userAgents;
 
-  Finder menuOf(String userAgent) => find.descendant(
-    of: find.ancestor(
-      of: find.text(userAgent),
-      matching: find.byType(ListTile),
-    ),
-    matching: find.byTooltip(currentAppLocalizations.more),
-  );
+  Future<void> openMenu(WidgetTester tester, String userAgent) async {
+    await rightClick(tester, find.text(userAgent));
+    await tester.pumpAndSettle();
+  }
 
   Future<void> pumpView(WidgetTester tester, {String? globalUa}) async {
     tester.view.physicalSize = const Size(1000, 1600);
@@ -68,9 +69,36 @@ void main() {
       expect(find.text(userAgent), findsOneWidget);
     }
     expect(
-      find.byTooltip(currentAppLocalizations.more),
+      find.byTooltip(currentAppLocalizations.edit),
       findsNWidgets(defaultUserAgents.length),
     );
+    await openMenu(tester, currentAppLocalizations.defaultText);
+    expect(find.byType(CommonPopupMenu), findsNothing);
+    await openMenu(tester, defaultUserAgents.first);
+    expect(find.text(currentAppLocalizations.edit), findsOneWidget);
+  });
+
+  testWidgets('sort mode trades the add button for handles and back', (
+    tester,
+  ) async {
+    await pumpView(tester);
+
+    await tester.tap(find.byTooltip(currentAppLocalizations.sort));
+    await tester.pumpAndSettle();
+    expect(find.byType(SortHandle), findsNWidgets(defaultUserAgents.length));
+    expect(find.byTooltip(currentAppLocalizations.add), findsNothing);
+
+    await tester.tap(find.text(defaultUserAgents.last));
+    await openMenu(tester, defaultUserAgents.last);
+    expect(selected(), isNull);
+    expect(find.byType(CommonPopupMenu), findsNothing);
+
+    final sortButton = find.widgetWithGlyph(IconButton, AppGlyphs.sort);
+    expect(tester.widget<IconButton>(sortButton).isSelected, isTrue);
+    await tester.tap(sortButton);
+    await tester.pumpAndSettle();
+    expect(find.byType(SortHandle), findsNothing);
+    expect(find.byTooltip(currentAppLocalizations.add), findsOneWidget);
   });
 
   testWidgets('tapping a row selects it and the default clears it', (
@@ -90,7 +118,7 @@ void main() {
   testWidgets('adding appends without changing the selection', (tester) async {
     await pumpView(tester);
 
-    await tester.tap(find.text(currentAppLocalizations.add));
+    await tester.tap(find.byTooltip(currentAppLocalizations.add));
     await tester.pumpAndSettle();
     await submitInput(tester, '  CustomUA/1.0  ');
 
@@ -102,7 +130,7 @@ void main() {
   testWidgets('adding rejects an empty or duplicate value', (tester) async {
     await pumpView(tester);
 
-    await tester.tap(find.text(currentAppLocalizations.add));
+    await tester.tap(find.byTooltip(currentAppLocalizations.add));
     await tester.pumpAndSettle();
     await submitInput(tester, '   ');
     expect(
@@ -125,9 +153,7 @@ void main() {
   testWidgets('editing the selected value keeps it selected', (tester) async {
     await pumpView(tester, globalUa: defaultUserAgents.first);
 
-    await tester.tap(menuOf(defaultUserAgents.first));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(currentAppLocalizations.edit));
+    await tester.tap(find.byTooltip(currentAppLocalizations.edit).first);
     await tester.pumpAndSettle();
     await submitInput(tester, 'clash-verge/v3.0.0');
 
@@ -140,8 +166,7 @@ void main() {
   ) async {
     await pumpView(tester, globalUa: defaultUserAgents.last);
 
-    await tester.tap(menuOf(defaultUserAgents.last));
-    await tester.pumpAndSettle();
+    await openMenu(tester, defaultUserAgents.last);
     await tester.tap(find.text(currentAppLocalizations.delete));
     await tester.pumpAndSettle();
     await tester.tap(find.text(currentAppLocalizations.confirm));
@@ -160,8 +185,7 @@ void main() {
     expect(find.text('Legacy/1.0'), findsOneWidget);
     expect(saved(), defaultUserAgents);
 
-    await tester.tap(menuOf(defaultUserAgents.first));
-    await tester.pumpAndSettle();
+    await openMenu(tester, defaultUserAgents.first);
     await tester.tap(find.text(currentAppLocalizations.delete));
     await tester.pumpAndSettle();
     await tester.tap(find.text(currentAppLocalizations.confirm));

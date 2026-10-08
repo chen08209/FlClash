@@ -113,24 +113,52 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
     );
   }
 
-  Widget _buildItem(List<String> entries, int index, String? selected) {
-    final userAgent = entries[index];
-    return ItemPositionProvider(
-      position: ItemPosition.get(index + 1, entries.length + 1),
-      child: _UserAgentItem(
-        value: userAgent,
-        label: userAgent,
-        isSelected: userAgent == selected,
-        onSelected: () {
-          _select(userAgent);
+  List<CommonPopupMenuItem> _buildMenuItems(String userAgent) {
+    final appLocalizations = context.appLocalizations;
+    return [
+      CommonPopupMenuItem(
+        glyph: AppGlyphs.edit,
+        label: appLocalizations.edit,
+        onPressed: () {
+          _handleEdit(userAgent);
         },
-        trailing: _UserAgentItemMenu(
-          onEdit: () {
-            _handleEdit(userAgent);
-          },
-          onDelete: () {
-            _handleDelete(userAgent);
-          },
+      ),
+      CommonPopupMenuItem(
+        danger: true,
+        glyph: AppGlyphs.delete,
+        label: appLocalizations.delete,
+        onPressed: () {
+          _handleDelete(userAgent);
+        },
+      ),
+    ];
+  }
+
+  Widget _buildItem(List<String> entries, int index, String? selected) {
+    final appLocalizations = context.appLocalizations;
+    final userAgent = entries[index];
+    return SortableItem(
+      key: ValueKey(userAgent),
+      index: index,
+      child: ContextMenuRegion(
+        menuItems: _buildMenuItems(userAgent),
+        child: ItemPositionProvider(
+          position: ItemPosition.get(index + 1, entries.length + 1),
+          child: _UserAgentItem(
+            value: userAgent,
+            label: userAgent,
+            isSelected: userAgent == selected,
+            onSelected: () {
+              _select(userAgent);
+            },
+            trailing: DetailButton(
+              glyph: AppGlyphs.edit,
+              tooltip: appLocalizations.edit,
+              onPressed: () {
+                _handleEdit(userAgent);
+              },
+            ),
+          ),
         ),
       ),
     );
@@ -146,12 +174,14 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
       patchClashConfigProvider.select((state) => state.globalUa),
     );
     final entries = _visibleUserAgents(userAgents, selected);
-    return BaseScaffold(
+    return CommonScaffold(
+      canSort: entries.length > 1,
       title: appLocalizations.userAgent,
       actions: [
-        FilledButton.tonal(
+        IconButton(
+          tooltip: appLocalizations.add,
           onPressed: _handleAdd,
-          child: Text(appLocalizations.add),
+          icon: const GlyphIcon(AppGlyphs.addCircle),
         ),
       ],
       body: _buildRadioGroup(
@@ -173,13 +203,7 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
             ),
           ),
           itemCount: entries.length,
-          itemBuilder: (_, index) {
-            return ReorderableDelayedDragStartListener(
-              key: ValueKey(entries[index]),
-              index: index,
-              child: _buildItem(entries, index, selected),
-            );
-          },
+          itemBuilder: (_, index) => _buildItem(entries, index, selected),
           // The drag proxy is built in the navigator overlay, outside the
           // page's RadioGroup.
           proxyDecorator: (_, index, animation) {
@@ -220,7 +244,7 @@ class _UserAgentItem extends StatelessWidget {
       horizontalTitleGap: 8,
       contentPadding: EdgeInsets.only(
         left: 14,
-        right: trailing == null ? 16 : 6,
+        right: SortableItem.maybeOf(context) == null ? 16 : 0,
       ),
       leading: SizedBox.square(
         dimension: 24,
@@ -235,48 +259,6 @@ class _UserAgentItem extends StatelessWidget {
       title: Text(label, maxLines: 2, overflow: TextOverflow.ellipsis),
       trailing: trailing,
       onPressed: onSelected,
-    );
-  }
-}
-
-class _UserAgentItemMenu extends StatelessWidget {
-  const _UserAgentItemMenu({required this.onEdit, required this.onDelete});
-
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
-    return CommonPopupBox(
-      popupBuilder: (_) => CommonPopupMenu(
-        items: [
-          CommonPopupMenuItem(
-            glyph: AppGlyphs.edit,
-            label: appLocalizations.edit,
-            onPressed: onEdit,
-          ),
-          CommonPopupMenuItem(
-            danger: true,
-            glyph: AppGlyphs.delete,
-            label: appLocalizations.delete,
-            onPressed: onDelete,
-          ),
-        ],
-      ),
-      targetBuilder: (open) {
-        return IconButton(
-          style: IconButton.styleFrom(
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            visualDensity: VisualDensity.standard,
-          ),
-          tooltip: appLocalizations.more,
-          onPressed: () {
-            open();
-          },
-          icon: const GlyphIcon(AppGlyphs.more),
-        );
-      },
     );
   }
 }

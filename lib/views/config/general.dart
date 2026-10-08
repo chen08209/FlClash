@@ -45,46 +45,6 @@ class UaItem extends ConsumerWidget {
   }
 }
 
-class KeepAliveIntervalItem extends ConsumerWidget {
-  const KeepAliveIntervalItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final keepAliveInterval = ref.watch(
-      patchClashConfigProvider.select((state) => state.keepAliveInterval),
-    );
-    return ListItem.input(
-      title: Text(appLocalizations.keepAliveIntervalDesc),
-      subtitle: Text(appLocalizations.secondsCount(keepAliveInterval)),
-      dialogTitle: appLocalizations.keepAliveIntervalDesc,
-      suffixText: appLocalizations.seconds,
-      resetValue: '$defaultKeepAliveInterval',
-      value: '$keepAliveInterval',
-      maxLength: TextInputLimits.interval,
-      validator: (String? value) {
-        if (value == null || value.isEmpty) {
-          return appLocalizations.emptyTip(appLocalizations.interval);
-        }
-        final intValue = int.tryParse(value);
-        if (intValue == null) {
-          return appLocalizations.numberTip(appLocalizations.interval);
-        }
-        return null;
-      },
-      onChanged: (String? value) {
-        if (value == null) {
-          return;
-        }
-        final intValue = int.parse(value);
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update((state) => state.copyWith(keepAliveInterval: intValue));
-      },
-    );
-  }
-}
-
 class TestUrlItem extends ConsumerWidget {
   const TestUrlItem({super.key});
 
@@ -150,11 +110,17 @@ class HostsItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
+    final appLocalizations = context.appLocalizations;
     final hosts = ref.watch(
       patchClashConfigProvider.select((state) => state.hosts),
     );
     return ListItem.open(
       title: const Text('Hosts'),
+      subtitle: Text(
+        hosts.isEmpty
+            ? appLocalizations.none
+            : appLocalizations.itemsCount(hosts.length),
+      ),
       widget: MapEditView(
         title: 'Hosts',
         entries: hosts,
@@ -179,7 +145,6 @@ class AuthenticationItem extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     return ConfigToggleItem(
       title: (l) => l.authentication,
-      subtitle: (l) => l.authenticationDesc,
       selector: networkSettingProvider.select(
         (state) => state.authentication.enable,
       ),
@@ -257,13 +222,11 @@ class ExternalControllerSecretItem extends ConsumerWidget {
 
 ConfigToggleItem _clashToggle({
   required ConfigLabel title,
-  ConfigLabel? subtitle,
   required bool Function(PatchClashConfig state) select,
   required PatchClashConfig Function(PatchClashConfig state, bool value) update,
 }) {
   return ConfigToggleItem(
     title: title,
-    subtitle: subtitle,
     selector: patchClashConfigProvider.select(select),
     onChanged: (ref, value) => ref
         .read(patchClashConfigProvider.notifier)
@@ -273,13 +236,11 @@ ConfigToggleItem _clashToggle({
 
 ConfigToggleItem _appSettingToggle({
   required ConfigLabel title,
-  ConfigLabel? subtitle,
   required bool Function(AppSettingProps state) select,
   required AppSettingProps Function(AppSettingProps state, bool value) update,
 }) {
   return ConfigToggleItem(
     title: title,
-    subtitle: subtitle,
     selector: appSettingProvider.select(select),
     onChanged: (ref, value) => ref
         .read(appSettingProvider.notifier)
@@ -295,26 +256,22 @@ class GeneralView extends ConsumerWidget {
       if (system.isDesktop) ...[
         _appSettingToggle(
           title: (l) => l.autoLaunch,
-          subtitle: (l) => l.autoLaunchDesc,
           select: (state) => state.autoLaunch,
           update: (state, value) => state.copyWith(autoLaunch: value),
         ),
         _appSettingToggle(
           title: (l) => l.silentLaunch,
-          subtitle: (l) => l.silentLaunchDesc,
           select: (state) => state.silentLaunch,
           update: (state, value) => state.copyWith(silentLaunch: value),
         ),
       ],
       _appSettingToggle(
         title: (l) => l.autoRun,
-        subtitle: (l) => l.autoRunDesc,
         select: (state) => state.autoRun,
         update: (state, value) => state.copyWith(autoRun: value),
       ),
       ListItem.open(
         title: Text(appLocalizations.onDemand),
-        subtitle: Text(appLocalizations.onDemandDesc),
         widget: const OnDemandView(),
       ),
       _appSettingToggle(
@@ -325,7 +282,6 @@ class GeneralView extends ConsumerWidget {
       if (system.isAndroid) ...[
         _appSettingToggle(
           title: (l) => l.exclude,
-          subtitle: (l) => l.excludeDesc,
           select: (state) => state.hidden,
           update: (state, value) => state.copyWith(hidden: value),
         ),
@@ -352,7 +308,6 @@ class GeneralView extends ConsumerWidget {
       ),
       _clashToggle(
         title: (l) => l.externalController,
-        subtitle: (l) => l.externalControllerDesc,
         select: (state) =>
             state.externalController == ExternalControllerStatus.open,
         update: (state, value) => state
@@ -385,7 +340,6 @@ class GeneralView extends ConsumerWidget {
         select: (state) => state.tcpConcurrent,
         update: (state, value) => state.copyWith(tcpConcurrent: value),
       ),
-      if (system.isDesktop) const KeepAliveIntervalItem(),
       _clashToggle(
         title: (l) => l.findProcessMode,
         select: (state) => state.findProcessMode == FindProcessMode.always,
@@ -395,7 +349,6 @@ class GeneralView extends ConsumerWidget {
       ),
       _appSettingToggle(
         title: (l) => l.autoCloseConnections,
-        subtitle: (l) => l.autoCloseConnectionsDesc,
         select: (state) => state.closeConnections,
         update: (state, value) => state.copyWith(closeConnections: value),
       ),
@@ -412,7 +365,6 @@ class GeneralView extends ConsumerWidget {
       const UaItem(),
       _appSettingToggle(
         title: (l) => l.checkCertificate,
-        subtitle: (l) => l.checkCertificateDesc,
         select: (state) => state.checkCertificate,
         update: (state, value) => state.copyWith(checkCertificate: value),
       ),
@@ -428,7 +380,6 @@ class GeneralView extends ConsumerWidget {
     return [
       _clashToggle(
         title: (l) => 'IPv6',
-        subtitle: (l) => l.ipv6Desc,
         select: (state) => state.ipv6,
         update: (state, value) => state.copyWith(ipv6: value),
       ),
@@ -459,14 +410,12 @@ class GeneralView extends ConsumerWidget {
       const LogLevelItem(),
       _appSettingToggle(
         title: (l) => l.logcat,
-        subtitle: (l) => l.logcatDesc,
         select: (state) => state.openLogs,
         update: (state, value) => state.copyWith(openLogs: value),
       ),
       if (system.isAndroid)
         _appSettingToggle(
           title: (l) => l.crashlytics,
-          subtitle: (l) => l.crashlyticsTip,
           select: (state) => state.crashlytics,
           update: (state, value) => state.copyWith(crashlytics: value),
         ),
@@ -494,10 +443,16 @@ class GeneralView extends ConsumerWidget {
           generateSectionV3(
             title: appLocalizations.startupAndBackground,
             items: _startupItems(appLocalizations),
+            footer: [
+              if (system.isDesktop) appLocalizations.silentLaunchDesc,
+              appLocalizations.autoRunDesc,
+              appLocalizations.onDemandDesc,
+            ].join('\n'),
           ),
           generateSectionV3(
             title: appLocalizations.requestsAndUpdates,
             items: _requestItems(),
+            footer: appLocalizations.checkCertificateDesc,
           ),
           generateSectionV3(
             title: appLocalizations.inbound,
@@ -505,15 +460,28 @@ class GeneralView extends ConsumerWidget {
               authentication: authentication,
               externalController: externalController,
             ),
+            footer: [
+              appLocalizations.externalControllerDesc,
+              appLocalizations.authenticationDesc,
+            ].join('\n'),
           ),
           generateSectionV3(
             title: appLocalizations.connection,
             items: _connectionItems(),
+            footer: appLocalizations.autoCloseConnectionsDesc,
           ),
-          generateSectionV3(title: appLocalizations.core, items: _coreItems()),
+          generateSectionV3(
+            title: appLocalizations.core,
+            items: _coreItems(),
+            footer: appLocalizations.ipv6Desc,
+          ),
           generateSectionV3(
             title: appLocalizations.logsAndDiagnostics,
             items: _logItems(),
+            footer: [
+              appLocalizations.logcatDesc,
+              if (system.isAndroid) appLocalizations.crashlyticsTip,
+            ].join('\n'),
           ),
         ],
       ),

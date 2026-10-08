@@ -1026,15 +1026,23 @@ abstract class Dns with _$Dns {
     @JsonKey(name: 'cache-algorithm')
     DnsCacheAlgorithm cacheAlgorithm,
     @Default(4096) @JsonKey(name: 'cache-max-size') int cacheMaxSize,
-    @Default([])
+    @Default(['114.114.114.114', '223.5.5.5', '8.8.8.8', '1.0.0.1'])
     @JsonKey(name: 'default-nameserver')
     List<String> defaultNameserver,
     @Default(DnsMode.redirHost)
     @JsonKey(name: 'enhanced-mode')
     DnsMode enhancedMode,
-    @Default('') @JsonKey(name: 'fake-ip-range') String fakeIpRange,
+    @Default('198.18.0.1/16')
+    @JsonKey(name: 'fake-ip-range')
+    String fakeIpRange,
     @Default('') @JsonKey(name: 'fake-ip-range6') String fakeIpRange6,
-    @Default([]) @JsonKey(name: 'fake-ip-filter') List<String> fakeIpFilter,
+    @Default([
+      'dns.msftnsci.com',
+      'www.msftnsci.com',
+      'www.msftconnecttest.com',
+    ])
+    @JsonKey(name: 'fake-ip-filter')
+    List<String> fakeIpFilter,
     @Default(FakeIpFilterMode.blacklist)
     @JsonKey(name: 'fake-ip-filter-mode')
     FakeIpFilterMode fakeIpFilterMode,
@@ -1042,7 +1050,8 @@ abstract class Dns with _$Dns {
     @Default({})
     @JsonKey(name: 'nameserver-policy')
     Map<String, String> nameserverPolicy,
-    @Default([]) List<String> nameserver,
+    @Default(['https://doh.pub/dns-query', 'tls://223.5.5.5:853'])
+    List<String> nameserver,
     @Default([]) List<String> fallback,
     @Default(false)
     @JsonKey(name: 'fallback-lazy-query')
@@ -1191,8 +1200,8 @@ Map<String, Object?> _overrideJson<K extends OverrideKey>(
   return result;
 }
 
-/// A key is added without a value, and writes nothing until it gets one: the
-/// core refuses an empty `nameserver` outright.
+/// A key without a value writes nothing: the core refuses an empty
+/// `nameserver` outright.
 bool _isUnset(Object? value) => switch (value) {
   String() => value.isEmpty,
   Iterable() => value.isEmpty,
@@ -1299,7 +1308,7 @@ Map<String, dynamic> mergeDnsOverride(
 abstract class Ntp with _$Ntp {
   const factory Ntp({
     @Default(false) bool enable,
-    @Default('') String server,
+    @Default('time.apple.com') String server,
     @Default(123) int port,
     @Default(30) int interval,
     @Default('') @JsonKey(name: 'dialer-proxy') String dialerProxy,

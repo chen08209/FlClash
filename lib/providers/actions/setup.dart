@@ -579,6 +579,14 @@ class SetupAction extends _$SetupAction {
         authorizationNotifier.value = TunAuthorizationState.authorized;
         return true;
       case AuthorizeCode.error:
+        authorizationNotifier.value = TunAuthorizationState.none;
+        ref
+            .read(patchClashConfigProvider.notifier)
+            .update((state) => state.copyWith.tun(enable: false));
+        dialogs.showNotifier(
+          currentAppLocalizations.tunAuthorizationFailed,
+          level: MessageLevel.error,
+        );
         return true;
     }
   }
@@ -610,7 +618,7 @@ class SetupAction extends _$SetupAction {
     // A refresh failure is surfaced by safeRun; setup keeps the old profile.
     final nextProfile = await globalState.safeRun(
       () => profile?.checkAndUpdateAndCopy(
-        validate: (path) => _core.validateProfile(path),
+        validate: (path, key) => _core.validateProfile(path, key),
       ),
     );
     if (nextProfile != null) {

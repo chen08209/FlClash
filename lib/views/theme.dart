@@ -4,18 +4,12 @@ import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/state.dart';
+import 'package:fl_clash/views/font_family.dart';
 import 'package:fl_clash/views/theme_preview.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_color_utilities/hct/hct.dart';
-
-class FontFamilyItem {
-  final FontFamily fontFamily;
-  final String label;
-
-  const FontFamilyItem({required this.fontFamily, required this.label});
-}
 
 class ThemeView extends StatelessWidget {
   const ThemeView({super.key});
@@ -41,6 +35,8 @@ class ThemeView extends StatelessWidget {
           const _TabAnimationItem(),
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
           const _SidebarBlurItem(),
+          const _FontFamilyItem(),
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
           const _TextScaleFactorItem(),
           const SliverToBoxAdapter(child: SizedBox(height: 32)),
         ],
@@ -390,7 +386,7 @@ class _PrimaryColorGrid extends StatelessWidget {
             child: IconButton.filledTonal(
               tooltip: context.appLocalizations.add,
               onPressed: onAdd,
-              icon: const GlyphIcon(AppGlyphs.add, fill: 1),
+              icon: const GlyphIcon(AppGlyphs.addCircle, fill: 1),
             ),
           ),
       ],
@@ -422,6 +418,7 @@ class _PrimaryColorTile extends StatelessWidget {
       children: [
         EffectGestureDetector(
           onLongPress: onRequestRemove,
+          onSecondaryTap: onRequestRemove,
           child: ColorSchemeBox(
             isSelected: isSelected,
             primaryColor: color != null ? Color(color!) : null,
@@ -631,6 +628,84 @@ class _SidebarBlurItem extends ConsumerWidget {
   }
 }
 
+class _FontFamilyItem extends ConsumerWidget {
+  const _FontFamilyItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
+    final colorScheme = context.colorScheme;
+    final textTheme = context.textTheme;
+    final fontFamily = ref.watch(
+      themeSettingProvider.select((state) => state.fontFamily),
+    );
+    final preview = Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+      child: Row(
+        spacing: 12,
+        children: [
+          Text(
+            'Aa',
+            style: textTheme.titleMedium?.copyWith(fontFamily: fontFamily),
+          ),
+          Expanded(
+            child: Text(
+              fontFamily ?? appLocalizations.defaultText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.bodyMedium?.copyWith(
+                fontFamily: fontFamily,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          GlyphIcon(
+            AppGlyphs.chevronForward,
+            size: 20,
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ],
+      ),
+    );
+    Widget card(VoidCallback onTap) => Material(
+      color: colorScheme.surfaceContainerLow,
+      shape: AppShape.lg,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(customBorder: AppShape.lg, onTap: onTap, child: preview),
+    );
+    return SliverToBoxAdapter(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InfoHeader(
+            info: Info(
+              label: appLocalizations.fontFamily,
+              glyph: AppGlyphs.font,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: context.isMobileView
+                ? OpenContainer<void>(
+                    tappable: false,
+                    closedShape: AppShape.lg,
+                    closedColor: colorScheme.surfaceContainerLow,
+                    closedBuilder: (_, open) => card(open),
+                    openBuilder: (_, _) => const FontFamilyView(),
+                  )
+                : card(
+                    () => showSheet<void>(
+                      context: context,
+                      builder: (_) => const FontFamilyView(),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _TextScaleFactorItem extends ConsumerStatefulWidget {
   const _TextScaleFactorItem();
 
@@ -658,9 +733,9 @@ class _TextScaleFactorItemState extends ConsumerState<_TextScaleFactorItem> {
     final textScale = ref.watch(
       themeSettingProvider.select((state) => state.textScale),
     );
-    final systemScale = defaultTextScaleFactor
-        .clamp(minTextScale, maxTextScale)
-        .toDouble();
+    final systemScale = systemTextScaleOf(
+      context,
+    ).clamp(minTextScale, maxTextScale).toDouble();
     final scale = _draft ?? (textScale.enable ? textScale.scale : systemScale);
     final percent = '${(scale * 100).round()}%';
     final divisions =

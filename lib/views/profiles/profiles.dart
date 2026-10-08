@@ -375,6 +375,7 @@ class ProfileItem extends ConsumerWidget {
               key: const ValueKey('lastUpdate'),
               lastUpdateDate: profile.lastUpdateDate,
               style: context.textTheme.bodySmall?.toLighter,
+              compact: true,
             ),
     );
   }

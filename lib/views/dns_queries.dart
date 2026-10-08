@@ -56,13 +56,16 @@ class _DnsQueriesViewState extends ConsumerState<DnsQueriesView>
     with RouteMotionHoldMixin<DnsQueriesView> {
   final _listController = DnsQueryListController();
   late final ScrollController _scrollController;
+  late final _physics = FollowEndScrollPhysics(
+    isFollowing: () => _listController.value.autoScrollToEnd,
+  );
 
   @override
   void initState() {
     super.initState();
     _scrollController =
         widget.scrollController ??
-        ScrollController(initialScrollOffset: double.maxFinite);
+        sheetScrollController(context, initialScrollOffset: double.maxFinite);
     _listController.setDnsQueries(ref.read(dnsQueriesProvider).list);
     ref.listenManual(dnsQueriesProvider.select((state) => state.revision), (
       _,
@@ -120,7 +123,6 @@ class _DnsQueriesViewState extends ConsumerState<DnsQueriesView>
                 },
                 child: ScrollToEndBox(
                   controller: _scrollController,
-                  dataSource: dnsQueries,
                   enable: state.autoScrollToEnd,
                   onCancelToEnd: () {
                     _listController.setAutoScrollToEnd(false);
@@ -133,13 +135,14 @@ class _DnsQueriesViewState extends ConsumerState<DnsQueriesView>
                   child: SuperListView.separated(
                     reverse: true,
                     shrinkWrap: true,
-                    physics: const NextClampingScrollPhysics(),
+                    physics: _physics,
                     controller: _scrollController,
                     padding: EdgeInsets.only(
                       top: context.contentTopPadding,
                       bottom: 16 + BottomInsetScope.of(context),
                     ),
                     itemCount: dnsQueries.length,
+                    extentEstimation: zeroDividerExtentEstimation,
                     separatorBuilder: (_, _) => const Divider(height: 0),
                     itemBuilder: (_, index) {
                       return DnsQueryItem(
@@ -167,7 +170,7 @@ class DnsQueryItem extends StatelessWidget {
   const DnsQueryItem({super.key, required this.dnsQuery, this.onClickKeyword});
 
   void _showDetail(BuildContext context) {
-    showExtend(
+    showInSheet<void>(
       context,
       builder: (_) {
         return CommonScaffold(

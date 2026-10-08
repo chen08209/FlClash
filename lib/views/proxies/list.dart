@@ -31,11 +31,17 @@ class ProxiesListView extends ConsumerStatefulWidget {
 }
 
 class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
-  final _controller = ScrollController();
+  late final ScrollController _controller;
   GroupOffsets _groupOffsets = GroupOffsets.empty;
   double containerHeight = 0;
   String? _enterGroupName;
   Timer? _enterTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = sheetScrollController(context);
+  }
 
   @override
   void dispose() {
@@ -380,7 +386,7 @@ class ListHeader extends ConsumerWidget {
             Flexible(
               child: Row(
                 children: [
-                  _GroupIcon(src: group.icon),
+                  _GroupIcon(src: group.icon, name: groupName),
                   Flexible(child: _GroupSummary(groupName: groupName)),
                 ],
               ),
@@ -412,9 +418,10 @@ class ListHeader extends ConsumerWidget {
 }
 
 class _GroupIcon extends ConsumerWidget {
-  const _GroupIcon({required this.src});
+  const _GroupIcon({required this.src, required this.name});
 
   final String src;
+  final String name;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -439,8 +446,14 @@ class _GroupIcon extends ConsumerWidget {
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: IconTheme.merge(
-                  data: IconThemeData(size: constraints.maxHeight - 12.ap),
-                  child: CommonTargetIcon(src: src),
+                  data: IconThemeData(
+                    size: constraints.maxHeight - 12.ap,
+                    color: context.colorScheme.onSecondaryContainer,
+                  ),
+                  child: CommonTargetIcon(
+                    src: src,
+                    fallback: GroupMonogram(name),
+                  ),
                 ),
               ),
             ),
@@ -452,8 +465,11 @@ class _GroupIcon extends ConsumerWidget {
         child: LayoutBuilder(
           builder: (_, constraints) {
             return IconTheme.merge(
-              data: IconThemeData(size: constraints.maxHeight - 16.ap),
-              child: CommonTargetIcon(src: src),
+              data: IconThemeData(
+                size: constraints.maxHeight - 16.ap,
+                color: context.colorScheme.primary,
+              ),
+              child: CommonTargetIcon(src: src, fallback: GroupMonogram(name)),
             );
           },
         ),

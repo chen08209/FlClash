@@ -274,17 +274,17 @@ _Dns _$DnsFromJson(Map<String, dynamic> json) => _Dns(
       (json['default-nameserver'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList() ??
-      const [],
+      const ['114.114.114.114', '223.5.5.5', '8.8.8.8', '1.0.0.1'],
   enhancedMode:
       $enumDecodeNullable(_$DnsModeEnumMap, json['enhanced-mode']) ??
       DnsMode.redirHost,
-  fakeIpRange: json['fake-ip-range'] as String? ?? '',
+  fakeIpRange: json['fake-ip-range'] as String? ?? '198.18.0.1/16',
   fakeIpRange6: json['fake-ip-range6'] as String? ?? '',
   fakeIpFilter:
       (json['fake-ip-filter'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList() ??
-      const [],
+      const ['dns.msftnsci.com', 'www.msftnsci.com', 'www.msftconnecttest.com'],
   fakeIpFilterMode:
       $enumDecodeNullable(
         _$FakeIpFilterModeEnumMap,
@@ -301,7 +301,7 @@ _Dns _$DnsFromJson(Map<String, dynamic> json) => _Dns(
       (json['nameserver'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList() ??
-      const [],
+      const ['https://doh.pub/dns-query', 'tls://223.5.5.5:853'],
   fallback:
       (json['fallback'] as List<dynamic>?)?.map((e) => e as String).toList() ??
       const [],
@@ -380,7 +380,7 @@ const _$FakeIpFilterModeEnumMap = {
 
 _Ntp _$NtpFromJson(Map<String, dynamic> json) => _Ntp(
   enable: json['enable'] as bool? ?? false,
-  server: json['server'] as String? ?? '',
+  server: json['server'] as String? ?? 'time.apple.com',
   port: (json['port'] as num?)?.toInt() ?? 123,
   interval: (json['interval'] as num?)?.toInt() ?? 30,
   dialerProxy: json['dialer-proxy'] as String? ?? '',

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:material_ui/material_ui.dart';
@@ -12,6 +14,72 @@ export 'package:riverpod/misc.dart' show ProviderListenable;
 typedef ConfigLabel = String Function(AppLocalizations appLocalizations);
 
 typedef ConfigWriter<T> = void Function(WidgetRef ref, T value);
+
+typedef ConfigValidator =
+    String? Function(String? value, AppLocalizations appLocalizations);
+
+String? validateCidr(String? value, AppLocalizations appLocalizations) {
+  return isCidr(value ?? '') ? null : appLocalizations.invalidCidrContent;
+}
+
+/// The sniffer's address lists also take mihomo's geoip: and rule-set: items.
+String? validateIpMatcher(String? value, AppLocalizations appLocalizations) {
+  final lower = value?.toLowerCase() ?? '';
+  if (lower.startsWith('geoip:') || lower.startsWith('rule-set:')) {
+    return null;
+  }
+  return validateCidr(value, appLocalizations);
+}
+
+final _portRange = RegExp(r'^([0-9]{1,5})(?:-([0-9]{1,5}))?$');
+
+final _domainLabel = RegExp(
+  r'^[A-Za-z0-9_]([A-Za-z0-9_-]{0,61}[A-Za-z0-9_])?$',
+);
+
+final _port = RegExp(r'^[0-9]{1,5}$');
+
+bool _isIpv6(String value) =>
+    InternetAddress.tryParse(value)?.type == InternetAddressType.IPv6;
+
+bool _isHost(String value) => value.contains(':')
+    ? _isIpv6(value)
+    : value.length <= 253 && value.split('.').every(_domainLabel.hasMatch);
+
+String? validateHost(String? value, AppLocalizations appLocalizations) {
+  return _isHost(value ?? '') ? null : appLocalizations.invalidHostContent;
+}
+
+/// mihomo starts no DNS server, and only logs why, for an address this refuses.
+String? validateListenAddress(
+  String? value,
+  AppLocalizations appLocalizations,
+) {
+  final text = value ?? '';
+  final colon = text.lastIndexOf(':');
+  final host = colon < 0 ? null : text.substring(0, colon);
+  final port = colon < 0 ? '' : text.substring(colon + 1);
+  final validHost = switch (host) {
+    null => false,
+    '' => true,
+    final host when host.startsWith('[') && host.endsWith(']') => _isIpv6(
+      host.substring(1, host.length - 1),
+    ),
+    final host => !host.contains(':') && _isHost(host),
+  };
+  final validPort =
+      _port.hasMatch(port) && int.parse(port) > 0 && int.parse(port) <= 65535;
+  return validHost && validPort ? null : appLocalizations.invalidListenContent;
+}
+
+String? validatePortRange(String? value, AppLocalizations appLocalizations) {
+  final match = _portRange.firstMatch(value ?? '');
+  if (match == null ||
+      [?match[1], ?match[2]].any((port) => int.parse(port) > 65535)) {
+    return appLocalizations.invalidPortRangeContent;
+  }
+  return null;
+}
 
 abstract class _ConfigItem<T> extends ConsumerWidget {
   const _ConfigItem({
@@ -132,8 +200,7 @@ class ConfigTextItem extends _ConfigItem<String> {
 
   final int? maxLength;
   final TextInputType? keyboardType;
-  final String? Function(String? value, AppLocalizations appLocalizations)?
-  validator;
+  final ConfigValidator? validator;
   final String Function(String value)? normalize;
   final bool showValueAsSubtitle;
 
@@ -188,11 +255,13 @@ class ConfigListEditItem extends _ConfigItem<List<String>> {
     required super.title,
     required super.onChanged,
     this.itemMaxLength,
+    this.itemValidator,
     super.subtitle,
     super.leading,
   });
 
   final int? itemMaxLength;
+  final ConfigValidator? itemValidator;
 
   @override
   Widget buildItem(
@@ -202,6 +271,7 @@ class ConfigListEditItem extends _ConfigItem<List<String>> {
     List<String> value,
   ) {
     final label = title(appLocalizations);
+    final itemValidator = this.itemValidator;
     return ListItem.open(
       leading: leading,
       title: Text(label),
@@ -216,6 +286,9 @@ class ConfigListEditItem extends _ConfigItem<List<String>> {
         title: label,
         items: value,
         itemMaxLength: itemMaxLength,
+        itemValidator: itemValidator == null
+            ? null
+            : (item) => itemValidator(item, appLocalizations),
         titleBuilder: (item) => Text(item),
       ),
       onChanged: (items) => onChanged(ref, List<String>.from(items as List)),

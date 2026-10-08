@@ -11,9 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../helpers/test_app.dart';
 
 void main() {
-  testWidgets('dashboard uses 12 columns from 480 logical pixels', (
-    tester,
-  ) async {
+  testWidgets('dashboard uses 12 columns from 480 dp', (tester) async {
     tester.view.physicalSize = const Size(511, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);

@@ -29,7 +29,14 @@ void main() {
   setUp(() {
     setupAction = _RestartRecordingSetupAction();
     container = ProviderContainer(
-      overrides: [setupActionProvider.overrideWith(() => setupAction)],
+      overrides: [
+        setupActionProvider.overrideWith(() => setupAction),
+        // Bypassing private addresses computes the routes in Isolate.run, which
+        // the fake clock never lets finish.
+        networkSettingProvider.overrideWithBuild(
+          (_, _) => const NetworkProps(bypassPrivateRoute: false),
+        ),
+      ],
     );
     globalState.container = container;
   });

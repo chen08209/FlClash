@@ -2,7 +2,13 @@ import 'package:fl_clash/enum/enum.dart';
 
 import 'string.dart';
 
-enum InputIssueKind { keyTooLong, valueTooLong, missingValue, invalidUrl }
+enum InputIssueKind {
+  keyTooLong,
+  valueTooLong,
+  missingValue,
+  invalidUrl,
+  invalidValue,
+}
 
 class InputIssue {
   final int line;
@@ -80,6 +86,7 @@ ParsedInput<String> parseListInput(
   String text, {
   Set<String> existing = const {},
   int? maxLength,
+  bool Function(String value)? isValid,
 }) {
   final entries = <String>[];
   final issues = <InputIssue>[];
@@ -101,6 +108,16 @@ ParsedInput<String> parseListInput(
             line: index + 1,
             raw: value,
             kind: InputIssueKind.valueTooLong,
+          ),
+        );
+        continue;
+      }
+      if (isValid != null && !isValid(value)) {
+        issues.add(
+          InputIssue(
+            line: index + 1,
+            raw: value,
+            kind: InputIssueKind.invalidValue,
           ),
         );
         continue;
