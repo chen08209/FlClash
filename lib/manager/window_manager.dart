@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/launch.dart';
@@ -16,7 +17,11 @@ const _windowGeometryDelay = Duration(milliseconds: 120);
 class WindowManager extends ConsumerStatefulWidget {
   final Widget child;
 
-  const WindowManager({super.key, required this.child});
+  /// A request to quit from outside the window, such as SIGTERM from `kill`
+  /// or the session ending; exits like the tray's quit.
+  final Stream<ProcessSignal>? terminateSignals;
+
+  const WindowManager({super.key, this.terminateSignals, required this.child});
 
   @override
   ConsumerState<WindowManager> createState() => _WindowContainerState();
@@ -25,6 +30,7 @@ class WindowManager extends ConsumerStatefulWidget {
 class _WindowContainerState extends ConsumerState<WindowManager>
     with WindowListener {
   Timer? _windowGeometryTimer;
+  StreamSubscription<ProcessSignal>? _terminateSubscription;
   int _windowGeometryRevision = 0;
   int _windowBlurRevision = 0;
 
@@ -52,6 +58,9 @@ class _WindowContainerState extends ConsumerState<WindowManager>
       }
     }, fireImmediately: true);
     desktopWindow.addListener(this);
+    _terminateSubscription = widget.terminateSignals?.listen(
+      (_) => unawaited(onWindowShouldTerminate()),
+    );
   }
 
   Future<void> _applyWindowBlur(WindowBlurRequest request) async {
@@ -84,12 +93,6 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   void onWindowClose() async {
     await ref.read(systemActionProvider.notifier).handleClose();
     super.onWindowClose();
-  }
-
-  @override
-  void onWindowFocus() {
-    super.onWindowFocus();
-    commonPrint.log('focus');
   }
 
   /// Another launch, or a Dock reopen, asked for the window.
@@ -182,13 +185,11 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   void onWindowMinimize() async {
     _invalidateWindowGeometryCapture();
     ref.read(storeActionProvider.notifier).savePreferencesDebounce();
-    commonPrint.log('minimize');
     super.onWindowMinimize();
   }
 
   @override
   void onWindowRestore() {
-    commonPrint.log('restore');
     super.onWindowRestore();
     _scheduleWindowGeometryCapture();
   }
@@ -196,6 +197,7 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   @override
   void dispose() {
     _invalidateWindowGeometryCapture();
+    unawaited(_terminateSubscription?.cancel());
     desktopWindow.removeListener(this);
     super.dispose();
   }

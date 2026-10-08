@@ -37,8 +37,11 @@ use windows_sys::Win32::System::JobObjects::{
     JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
 };
 
-#[cfg(not(target_os = "linux"))]
-pub(super) const LISTEN_PORT: u16 = 47890;
+#[cfg(not(any(
+    all(feature = "windows-service", target_os = "windows"),
+    target_os = "linux"
+)))]
+const LISTEN_PORT: u16 = 47890;
 #[cfg(not(target_os = "linux"))]
 const CORE_PIPE_PREFIX: &str = r"\\.\pipe\FlClashCore_";
 #[cfg(target_os = "linux")]
@@ -356,6 +359,36 @@ fn lock_surviving_poison<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
         .unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
+/// A Core whose app went away exits on its own, and stays a zombie until it is
+/// waited on; without this nothing waits before the next start or stop.
+fn reap_exited_core(session_id: &str) {
+    let deadline = Instant::now() + CORE_EXIT_TIMEOUT;
+    loop {
+        {
+            let mut managed = lock_surviving_poison(&MANAGED_CORE);
+            let Some(core) = managed
+                .as_mut()
+                .filter(|core| core.session_id == session_id)
+            else {
+                return;
+            };
+            match core.child.try_wait() {
+                Ok(Some(status)) => {
+                    log_message(format!("Core exited on its own: {status}"));
+                    *managed = None;
+                    return;
+                }
+                Ok(None) => {}
+                Err(_) => return,
+            }
+        }
+        if Instant::now() >= deadline {
+            return;
+        }
+        thread::sleep(CORE_EXIT_POLL_INTERVAL);
+    }
+}
+
 fn release_managed_core(managed: &mut Option<ManagedCore>) -> Result<(), Error> {
     let Some(core) = managed.as_mut() else {
         return Ok(());
@@ -418,7 +451,12 @@ fn start(start_params: StartParams) -> warp::reply::Response {
     if let Err(error) = super::linux::ensure_owner_socket(&start_params.address) {
         return error_response("invalidRequest", error.to_string(), StatusCode::BAD_REQUEST);
     }
+    launch(start_params)
+}
 
+/// Releases the managed Core before anything else, so a request reaching this
+/// point must already be accepted: a rejected one has to leave it running.
+fn launch(start_params: StartParams) -> warp::reply::Response {
     let mut managed = lock_surviving_poison(&MANAGED_CORE);
     if let Err(error) = release_managed_core(&mut managed) {
         log_message(format!(
@@ -446,6 +484,7 @@ fn start(start_params: StartParams) -> warp::reply::Response {
             let process_id = child.id();
             if let Some(stderr) = child.stderr.take() {
                 let reader = io::BufReader::new(stderr);
+                let session_id = start_params.session_id.clone();
                 thread::spawn(move || {
                     for line in reader.lines() {
                         match line {
@@ -457,6 +496,7 @@ fn start(start_params: StartParams) -> warp::reply::Response {
                             }
                         }
                     }
+                    reap_exited_core(&session_id);
                 });
             }
             *managed = match ManagedCore::adopt(start_params.session_id.clone(), child) {
@@ -1077,7 +1117,7 @@ mod tests {
 
     #[tokio::test]
     #[allow(clippy::await_holding_lock)]
-    async fn start_releases_the_managed_core_before_rejecting_an_unverified_core() {
+    async fn launch_releases_the_managed_core_before_rejecting_an_unverified_core() {
         let _state = lock_process_state();
         *lock_surviving_poison(&MANAGED_CORE) = Some(
             ManagedCore::adopt(
@@ -1087,20 +1127,56 @@ mod tests {
             .unwrap(),
         );
 
-        let response = warp::test::request()
-            .method("POST")
-            .path("/start")
-            .json(&StartParams {
-                address: ALLOWED_CORE_ADDRESS.to_string(),
-                session_id: "0123456789abcdef0123456789abcdef".to_string(),
-            })
-            .reply(&routes())
-            .await;
+        let response = launch(StartParams {
+            address: ALLOWED_CORE_ADDRESS.to_string(),
+            session_id: "0123456789abcdef0123456789abcdef".to_string(),
+        });
 
         assert_eq!(response.status(), StatusCode::CONFLICT);
-        let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
-        assert_eq!(body["code"], "coreVerificationFailed");
         assert!(lock_surviving_poison(&MANAGED_CORE).is_none());
+        let body: serde_json::Value = serde_json::from_slice(
+            &warp::hyper::body::to_bytes(response.into_body())
+                .await
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(body["code"], "coreVerificationFailed");
+    }
+
+    #[test]
+    fn a_core_that_exits_on_its_own_is_reaped() {
+        let _state = lock_process_state();
+        let session_id = "0123456789abcdef0123456789abcdef";
+        *lock_surviving_poison(&MANAGED_CORE) =
+            Some(ManagedCore::adopt(session_id.to_string(), spawn_placeholder_core()).unwrap());
+
+        reap_exited_core(session_id);
+
+        assert!(lock_surviving_poison(&MANAGED_CORE).is_none());
+    }
+
+    #[test]
+    fn reaping_leaves_a_running_or_newer_core_owned() {
+        let _state = lock_process_state();
+        let session_id = "0123456789abcdef0123456789abcdef";
+        *lock_surviving_poison(&MANAGED_CORE) =
+            Some(ManagedCore::adopt(session_id.to_string(), spawn_placeholder_core()).unwrap());
+
+        reap_exited_core("fedcba9876543210fedcba9876543210");
+        assert!(lock_surviving_poison(&MANAGED_CORE).is_some());
+
+        adopt_core(session_id);
+        reap_exited_core(session_id);
+
+        let mut managed = lock_surviving_poison(&MANAGED_CORE);
+        assert!(managed
+            .as_mut()
+            .unwrap()
+            .child
+            .try_wait()
+            .unwrap()
+            .is_none());
+        release_managed_core(&mut managed).unwrap();
     }
 
     #[tokio::test]

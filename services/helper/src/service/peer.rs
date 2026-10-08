@@ -1,6 +1,5 @@
 use crate::service::hub::{
     ensure_core_sha256_configured, log_message, release_managed_core_on_shutdown, routes,
-    LISTEN_PORT,
 };
 use crate::service::owner::{client_pid, same_sid, TcpConnection};
 
@@ -9,7 +8,7 @@ use std::future::Future;
 use std::io::{Error, Result as IoResult};
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::pin::Pin;
-use std::ptr::null_mut;
+use std::ptr::{null, null_mut};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::task::{Context, Poll};
 use std::time::Duration;
@@ -17,18 +16,26 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::time::Sleep;
 use tokio_stream::Stream;
 use windows_sys::Win32::Foundation::{
-    CloseHandle, LocalFree, ERROR_INSUFFICIENT_BUFFER, HANDLE, NO_ERROR,
+    CloseHandle, LocalFree, ERROR_INSUFFICIENT_BUFFER, ERROR_SUCCESS, HANDLE, NO_ERROR,
 };
 use windows_sys::Win32::NetworkManagement::IpHelper::{
     GetExtendedTcpTable, MIB_TCPTABLE_OWNER_PID, TCP_TABLE_OWNER_PID_ALL,
 };
 use windows_sys::Win32::Security::Authorization::ConvertSidToStringSidW;
 use windows_sys::Win32::Security::{GetTokenInformation, TokenUser, TOKEN_QUERY, TOKEN_USER};
+use windows_sys::Win32::System::Registry::{
+    RegCloseKey, RegCreateKeyExW, RegDeleteKeyW, RegSetValueExW, HKEY, HKEY_LOCAL_MACHINE,
+    KEY_SET_VALUE, REG_DWORD, REG_OPTION_VOLATILE,
+};
 use windows_sys::Win32::System::Threading::{
     OpenProcess, OpenProcessToken, PROCESS_QUERY_LIMITED_INFORMATION,
 };
 
 const AF_INET: u32 = 2;
+/// Hyper-V and WinNAT reserve ranges that can cover any fixed port; only admins
+/// write this volatile key under the service's own, and a reboot clears it.
+const PORT_KEY: &str = r"SYSTEM\CurrentControlSet\Services\FlClashHelperService\Runtime";
+const PORT_VALUE: &str = "Port";
 const TABLE_ATTEMPTS: usize = 5;
 const ACCEPT_RETRY_DELAY: Duration = Duration::from_secs(1);
 
@@ -199,6 +206,61 @@ impl Stream for AuthorizedIncoming {
     }
 }
 
+fn wide(value: &str) -> Vec<u16> {
+    value.encode_utf16().chain(std::iter::once(0)).collect()
+}
+
+struct PublishedPort;
+
+impl PublishedPort {
+    fn publish(port: u16) -> IoResult<Self> {
+        let key_path = wide(PORT_KEY);
+        let value_name = wide(PORT_VALUE);
+        let data = u32::from(port).to_le_bytes();
+        // SAFETY: the buffers outlive the calls, and the opened key is closed.
+        let status = unsafe {
+            let mut key: HKEY = 0;
+            let status = RegCreateKeyExW(
+                HKEY_LOCAL_MACHINE,
+                key_path.as_ptr(),
+                0,
+                null(),
+                REG_OPTION_VOLATILE,
+                KEY_SET_VALUE,
+                null(),
+                &mut key,
+                null_mut(),
+            );
+            if status != ERROR_SUCCESS {
+                return Err(Error::from_raw_os_error(status as i32));
+            }
+            let status = RegSetValueExW(
+                key,
+                value_name.as_ptr(),
+                0,
+                REG_DWORD,
+                data.as_ptr(),
+                data.len() as u32,
+            );
+            RegCloseKey(key);
+            status
+        };
+        if status != ERROR_SUCCESS {
+            return Err(Error::from_raw_os_error(status as i32));
+        }
+        Ok(Self)
+    }
+}
+
+impl Drop for PublishedPort {
+    fn drop(&mut self) {
+        let key_path = wide(PORT_KEY);
+        unsafe {
+            RegDeleteKeyW(HKEY_LOCAL_MACHINE, key_path.as_ptr());
+        }
+    }
+}
+
 pub(super) async fn serve_until<F, S>(
     owner_sid: String,
     shutdown: F,
@@ -210,9 +272,15 @@ where
 {
     ensure_core_sha256_configured()?;
 
-    let listener = TcpListener::bind((Ipv4Addr::LOCALHOST, LISTEN_PORT))
+    let listener = TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
         .await
         .map_err(|error| anyhow::anyhow!("bind helper server: {error}"))?;
+    let port = listener
+        .local_addr()
+        .map_err(|error| anyhow::anyhow!("read helper server port: {error}"))?
+        .port();
+    let published = PublishedPort::publish(port)
+        .map_err(|error| anyhow::anyhow!("publish helper server port: {error}"))?;
     on_started()?;
     let incoming = AuthorizedIncoming {
         listener,
@@ -222,6 +290,7 @@ where
     warp::serve(routes())
         .serve_incoming_with_graceful_shutdown(incoming, shutdown)
         .await;
+    drop(published);
     release_managed_core_on_shutdown();
 
     Ok(())

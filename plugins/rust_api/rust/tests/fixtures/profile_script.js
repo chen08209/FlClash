@@ -1,6 +1,6 @@
 /**
- * A profile overwrite script written for this test suite. It does the work a
- * real overwrite does — drop subscription notices, canonicalise node names,
+ * A profile extension script written for this test suite. It does the work a
+ * real one does — drop subscription notices, canonicalise node names,
  * group by region, rate and dedicated line, build policy groups and rules,
  * merge DNS — so the engine is measured against how such scripts are written
  * rather than against a checklist of language features.

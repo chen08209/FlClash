@@ -45,6 +45,47 @@ begin
   end;
 end;
 
+procedure ClearStaleProxy;
+var
+  AppPath: String;
+  ResultCode: Integer;
+begin
+  AppPath := ExpandConstant('{app}\\{{EXECUTABLE_NAME}}');
+  if FileExists(AppPath) then
+  begin
+    Exec(AppPath, '--clear-stale-proxy', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  end;
+end;
+
+function PointsIntoApp(Value: String): Boolean;
+begin
+  Result := Pos(Lowercase(AddBackslash(ExpandConstant('{app}'))), Lowercase(Value)) > 0;
+end;
+
+// The value name is appName and the schemes are protocolSchemes, both in
+// lib/common.
+procedure RemoveUserRegistrations;
+var
+  Schemes: TArrayOfString;
+  Value: String;
+  i: Integer;
+begin
+  if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', '{{APP_NAME}}', Value) and PointsIntoApp(Value) then
+  begin
+    RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', '{{APP_NAME}}');
+    RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run', '{{APP_NAME}}');
+  end;
+
+  Schemes := ['clash', 'clashmeta', 'flclash'];
+  for i := 0 to GetArrayLength(Schemes)-1 do
+  begin
+    if RegQueryStringValue(HKCU, 'Software\Classes\' + Schemes[i] + '\shell\open\command', '', Value) and PointsIntoApp(Value) then
+    begin
+      RegDeleteKeyIncludingSubkeys(HKCU, 'Software\Classes\' + Schemes[i]);
+    end;
+  end;
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
   UnregisterHelperService;
@@ -52,11 +93,28 @@ begin
   Result := '';
 end;
 
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+  begin
+    ClearStaleProxy;
+  end;
+end;
+
 function InitializeUninstall(): Boolean;
 begin
   UnregisterHelperService;
   KillProcesses;
+  ClearStaleProxy;
   Result := True;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usPostUninstall then
+  begin
+    RemoveUserRegistrations;
+  end;
 end;
 
 [Languages]

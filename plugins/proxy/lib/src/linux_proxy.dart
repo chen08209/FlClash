@@ -325,7 +325,7 @@ class LinuxProxyCommands {
           'Proxy Settings',
           '--key',
           '${type.name}Proxy',
-          '${type.name}://$proxyHost:$port',
+          '${type == _ProxyType.socks ? 'socks' : 'http'}://$proxyHost:$port',
         ]),
       ProxyCommand(executable, [
         '--file',
@@ -336,6 +336,7 @@ class LinuxProxyCommands {
         'ProxyType',
         '1',
       ]),
+      _kdeReparseConfiguration,
     ];
   }
 
@@ -353,8 +354,19 @@ class LinuxProxyCommands {
         'ProxyType',
         '0',
       ]),
+      _kdeReparseConfiguration,
     ];
   }
+
+  /// Running KIO programs keep the settings they read at startup until this
+  /// signal, which is what the KDE proxy settings page sends after saving.
+  static final _kdeReparseConfiguration = ProxyCommand('dbus-send', [
+    '--session',
+    '--type=signal',
+    '/KIO/Scheduler',
+    'org.kde.KIO.Scheduler.reparseSlaveConfiguration',
+    'string:',
+  ], optional: true);
 
   static String _formatGSettingsStringList(List<String> values) {
     final escaped = values.map((value) {

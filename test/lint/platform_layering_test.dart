@@ -15,7 +15,6 @@ const _platformModules = [
   'lib/common/window.dart',
   'lib/common/launch.dart',
   'lib/common/system_dns.dart',
-  'lib/common/permission.dart',
 ];
 
 final _platformImport = RegExp(

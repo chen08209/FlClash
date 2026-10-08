@@ -28,6 +28,8 @@ class _RecordedRun {
 
   String get key =>
       arguments.isEmpty ? executable : '$executable ${arguments.first}';
+
+  String get commandLine => [executable, ...arguments].join(' ');
 }
 
 /// Stands in for `Process.run`, keyed by executable plus its first argument so
@@ -47,6 +49,17 @@ class _FakeProcesses {
     _failures.add(key);
   }
 
+  final List<String> inputs = [];
+
+  Future<ProcessResult> runWithInput(
+    String executable,
+    List<String> arguments,
+    String input,
+  ) {
+    inputs.add(input);
+    return run(executable, arguments);
+  }
+
   Future<ProcessResult> run(String executable, List<String> arguments) async {
     final recorded = _RecordedRun(executable, arguments);
     runs.add(recorded);
@@ -55,8 +68,14 @@ class _FakeProcesses {
     }
     return ProcessResult(
       0,
-      _exitCodes[recorded.key] ?? _exitCodes[executable] ?? 0,
-      _stdout[recorded.key] ?? _stdout[executable] ?? '',
+      _exitCodes[recorded.commandLine] ??
+          _exitCodes[recorded.key] ??
+          _exitCodes[executable] ??
+          0,
+      _stdout[recorded.commandLine] ??
+          _stdout[recorded.key] ??
+          _stdout[executable] ??
+          '',
       '',
     );
   }
@@ -94,6 +113,7 @@ void main() {
 
   late Directory root;
   late _FakeProcesses processes;
+  String? password;
 
   setUpAll(() {
     root = Directory.systemTemp.createTempSync('system_test');
@@ -112,13 +132,16 @@ void main() {
     processes = _FakeProcesses();
     system.runProcess = processes.run;
     MacOS().runProcess = processes.run;
-    Linux().runProcess = processes.run;
+    linuxElevation.run = processes.run;
+    linuxElevation.runWithInput = processes.runWithInput;
+    linuxElevation.askPassword = () async => password;
+    password = null;
   });
 
   tearDown(() {
     system.runProcess = Process.run;
     MacOS().runProcess = Process.run;
-    Linux().runProcess = Process.run;
+    linuxElevation.run = Process.run;
   });
 
   group('statArguments', () {
@@ -325,7 +348,10 @@ void main() {
     test('Linux hands the Core to the requesting user\'s group', () {
       final shell = System.linuxElevationShell('/opt/FlClash/FlClashCore');
 
-      expect(shell, startsWith(r'group=$(id -g "$PKEXEC_UID") && '));
+      expect(
+        shell,
+        startsWith(r'group=$(id -g "${PKEXEC_UID:-$SUDO_UID}") && '),
+      );
       expect(shell, contains(r'chown "root:$group" '));
       expect(shell, endsWith("chmod 4750 '/opt/FlClash/FlClashCore'"));
     });
@@ -375,10 +401,60 @@ void main() {
       expect(await Linux().installService(), isFalse);
     });
 
-    test('reports a host with no pkexec at all', () async {
+    test('installs through cached sudo credentials without pkexec', () async {
       processes.stubThrow('pkexec');
 
+      expect(await Linux().installService(), isTrue);
+      expect(processes.argumentsFor('sudo'), [
+        '-n',
+        '--',
+        appPath.helperPath,
+        'install',
+      ]);
+      expect(processes.inputs, isEmpty);
+    });
+
+    test('asks for the sudo password when no polkit agent answers', () async {
+      processes.stub('pkexec', '', exitCode: 127);
+      processes.stub('sudo -n', '', exitCode: 1);
+      password = 'secret';
+
+      expect(await Linux().installService(), isTrue);
+      expect(processes.runs.last.arguments, [
+        '-S',
+        '-p',
+        '',
+        '--',
+        appPath.helperPath,
+        'install',
+      ]);
+      expect(processes.inputs, ['secret\n']);
+    });
+
+    test('reports a command that failed under cached sudo', () async {
+      processes.stubThrow('pkexec');
+      processes.stub('sudo -n', '', exitCode: 1);
+      processes.stub('sudo -n true', '');
+      password = 'secret';
+
       expect(await Linux().installService(), isFalse);
+      expect(processes.ran('sudo -S'), isFalse);
+      expect(processes.inputs, isEmpty);
+    });
+
+    test('gives up when the sudo prompt is cancelled', () async {
+      processes.stubThrow('pkexec');
+      processes.stub('sudo -n', '', exitCode: 1);
+
+      expect(await Linux().installService(), isFalse);
+      expect(processes.ran('sudo -S'), isFalse);
+    });
+
+    test('does not ask sudo after the polkit dialog is dismissed', () async {
+      processes.stub('pkexec', '', exitCode: 126);
+
+      expect(await Linux().installService(), isFalse);
+      expect(processes.ran('sudo'), isFalse);
     });
   });
 
