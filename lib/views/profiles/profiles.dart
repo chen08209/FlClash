@@ -13,7 +13,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'add.dart';
 import 'edit.dart';
 import 'preview.dart';
 
@@ -98,13 +97,6 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
         return CommonScaffold(
           isLoading: isLoading,
           title: appLocalizations.profiles,
-          primaryAction: state.profiles.isEmpty
-              ? null
-              : IconButtonData(
-                  glyph: AppGlyphs.add,
-                  onPressed: showAddProfilePage,
-                  tooltip: appLocalizations.addProfile,
-                ),
           iconActions: _buildActions(state.profiles),
           foldPrimaryAction: true,
           body: NullStatusSwitcher(
@@ -113,13 +105,6 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
               label: appLocalizations.nullTip(appLocalizations.profiles),
               description: appLocalizations.nullProfileDesc,
               illustration: NullStatusIllustration.profile,
-              action: ElasticButton(
-                child: FilledButton.tonalIcon(
-                  onPressed: showAddProfilePage,
-                  icon: const GlyphIcon(AppGlyphs.add, fill: 1),
-                  label: Text(appLocalizations.addProfile),
-                ),
-              ),
             ),
             child: _ProfilesGrid(
               profiles: state.profiles,
