@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
-import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 enum SourceKind { remote, file, custom }
@@ -66,34 +65,17 @@ class SourceIcon extends StatelessWidget {
     if (onPressed == null) {
       return icon;
     }
-    return Focus(
-      canRequestFocus: false,
-      skipTraversal: true,
-      onKeyEvent: _focusNextOnRight,
-      child: IconButton(
-        tooltip: tooltip,
-        style: IconButton.styleFrom(
-          padding: EdgeInsets.zero,
-          minimumSize: const Size.square(size),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          shape: _sourceIconShape,
-        ),
-        onPressed: onPressed,
-        icon: icon,
+    return IconButton(
+      tooltip: tooltip,
+      style: IconButton.styleFrom(
+        padding: EdgeInsets.zero,
+        minimumSize: const Size.square(size),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: _sourceIconShape,
       ),
+      onPressed: onPressed,
+      icon: icon,
     );
-  }
-
-  // Directional focus treats the enclosing card as the nearest node to the
-  // right, so right would return to the card instead of reaching edit.
-  static KeyEventResult _focusNextOnRight(FocusNode _, KeyEvent event) {
-    if (event is! KeyDownEvent ||
-        event.logicalKey != LogicalKeyboardKey.arrowRight) {
-      return KeyEventResult.ignored;
-    }
-    return FocusManager.instance.primaryFocus?.nextFocus() == true
-        ? KeyEventResult.handled
-        : KeyEventResult.ignored;
   }
 }
 

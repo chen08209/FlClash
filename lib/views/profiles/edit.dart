@@ -5,11 +5,11 @@ import 'dart:typed_data';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/core.dart';
-import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -32,6 +32,7 @@ class EditProfileView extends ConsumerStatefulWidget {
 class _EditProfileViewState extends ConsumerState<EditProfileView> {
   late final TextEditingController _labelController;
   late final TextEditingController _urlController;
+  late final TextEditingController _ageSecretKeyController;
   late final TextEditingController _autoUpdateDurationController;
   late bool _autoUpdate;
   String? _rawText;
@@ -45,12 +46,17 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     super.initState();
     _labelController = TextEditingController(text: widget.profile.label);
     _urlController = TextEditingController(text: widget.profile.url);
+    _ageSecretKeyController = TextEditingController(
+      text: widget.profile.ageSecretKey,
+    );
     _autoUpdate = widget.profile.autoUpdate;
     _autoUpdateDurationController = TextEditingController(
       text: widget.profile.autoUpdateDuration.inMinutes.toString(),
     );
     _setupAction = ref.read(setupActionProvider.notifier);
-    _updateFileInfo();
+    if (widget.profile.type != ProfileType.custom) {
+      _updateFileInfo();
+    }
   }
 
   Future<void> _updateFileInfo() async {
@@ -66,6 +72,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     if (!_formKey.currentState!.validate()) return;
     var profile = widget.profile.copyWith(
       url: _urlController.text,
+      ageSecretKey: _ageSecretKeyController.text.trim(),
       label: _labelController.text,
       autoUpdate: _autoUpdate,
       autoUpdateDuration: Duration(
@@ -74,22 +81,9 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     );
     final profilesAction = ref.read(profilesActionProvider.notifier);
     final appLocalizations = context.appLocalizations;
-    final rename = await profilesAction.providerRename(widget.profile, profile);
-    if (rename.conflicts.isNotEmpty) {
-      await dialogs.showMessage(
-        title: appLocalizations.tip,
-        message: TextSpan(
-          text: appLocalizations.providerRenameShadowed(
-            rename.conflicts.map((item) => item.realLabel).join(', '),
-            profile.realLabel,
-          ),
-        ),
-        cancelable: false,
-      );
-      return;
-    }
-    final renameIn = [for (final item in rename.renameIn) item.id];
-    final hasUpdate = widget.profile.url != profile.url;
+    final hasUpdate =
+        widget.profile.url != profile.url ||
+        widget.profile.ageSecretKey != profile.ageSecretKey;
     if (_fileData != null) {
       if (profile.type == ProfileType.url && _autoUpdate) {
         final res = await dialogs.showMessage(
@@ -103,22 +97,22 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       final savedProfile = await globalState.safeRun(
         () => profile.saveFile(
           _fileData!,
-          validate: (path) =>
-              ref.read(coreHandlerProvider).validateConfig(path),
+          validate: (path, key) =>
+              ref.read(coreHandlerProvider).validateProfile(path, key),
         ),
       );
       if (savedProfile == null) {
         return;
       }
-      profilesAction.putProfile(savedProfile, renameIn: renameIn);
+      profilesAction.putProfile(savedProfile);
     } else if (!hasUpdate) {
-      profilesAction.putProfile(profile, renameIn: renameIn);
+      profilesAction.putProfile(profile);
     } else {
       unawaited(
         globalState.safeRun(() async {
           await Future.delayed(commonDuration);
           if (hasUpdate) {
-            await profilesAction.updateProfile(profile, renameIn: renameIn);
+            await profilesAction.updateProfile(profile);
           }
         }),
       );
@@ -228,6 +222,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
   void dispose() {
     _labelController.dispose();
     _urlController.dispose();
+    _ageSecretKeyController.dispose();
     _fileInfoNotifier.dispose();
     _autoUpdateDurationController.dispose();
     super.dispose();
@@ -238,14 +233,12 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     final items = <Widget>[
-      _ProfileNameField(
-        controller: _labelController,
-        reservedLabels: ref.watch(
-          appProviderLabelsProvider(ProviderKind.proxy),
-        ),
-      ),
-      if (widget.profile.type == ProfileType.url) ...[
+      _ProfileNameField(controller: _labelController),
+      if (widget.profile.type == ProfileType.url)
         _ProfileUrlField(controller: _urlController),
+      if (widget.profile.type != ProfileType.custom)
+        _AgeSecretKeyField(controller: _ageSecretKeyController),
+      if (widget.profile.type == ProfileType.url) ...[
         ListItem.toggle(
           title: Text(appLocalizations.autoUpdate),
           value: _autoUpdate,
@@ -254,11 +247,12 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
         if (_autoUpdate)
           _AutoUpdateIntervalField(controller: _autoUpdateDurationController),
       ],
-      _ProfileFileItem(
-        fileInfoNotifier: _fileInfoNotifier,
-        onEdit: _editProfileFile,
-        onUpload: _uploadProfileFile,
-      ),
+      if (widget.profile.type != ProfileType.custom)
+        _ProfileFileItem(
+          fileInfoNotifier: _fileInfoNotifier,
+          onEdit: _editProfileFile,
+          onUpload: _uploadProfileFile,
+        ),
     ];
     return FocusTraversalGroup(
       policy: PageTraversalPolicy(),
@@ -305,14 +299,41 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
   }
 }
 
+String? validateProfileName(AppLocalizations appLocalizations, String? value) {
+  if (value == null || value.isEmpty) {
+    return appLocalizations.profileNameNullValidationDesc;
+  }
+  return null;
+}
+
+Future<void> renameProfile(
+  BuildContext context,
+  WidgetRef ref,
+  Profile profile, {
+  bool selectAll = false,
+}) async {
+  final appLocalizations = context.appLocalizations;
+  final profilesAction = ref.read(profilesActionProvider.notifier);
+  final label = await dialogs.showCommonDialog<String>(
+    child: InputDialog(
+      title: appLocalizations.rename,
+      labelText: appLocalizations.name,
+      value: profile.label,
+      selectAll: selectAll,
+      inputFormatters: TextInputLimits.limit(TextInputLimits.name),
+      validator: (value) => validateProfileName(appLocalizations, value),
+    ),
+  );
+  if (label == null || label == profile.label) {
+    return;
+  }
+  profilesAction.putProfile(profile.copyWith(label: label));
+}
+
 class _ProfileNameField extends StatelessWidget {
-  const _ProfileNameField({
-    required this.controller,
-    required this.reservedLabels,
-  });
+  const _ProfileNameField({required this.controller});
 
   final TextEditingController controller;
-  final Set<String> reservedLabels;
 
   @override
   Widget build(BuildContext context) {
@@ -323,15 +344,7 @@ class _ProfileNameField extends StatelessWidget {
         controller: controller,
         inputFormatters: TextInputLimits.limit(TextInputLimits.name),
         decoration: InputDecoration(labelText: appLocalizations.name),
-        validator: (String? value) {
-          if (value == null || value.isEmpty) {
-            return appLocalizations.profileNameNullValidationDesc;
-          }
-          if (reservedLabels.contains(value.trim())) {
-            return appLocalizations.existsTip(appLocalizations.name);
-          }
-          return null;
-        },
+        validator: (value) => validateProfileName(appLocalizations, value),
       ),
     );
   }
@@ -363,6 +376,28 @@ class _ProfileUrlField extends StatelessWidget {
           }
           return null;
         },
+      ),
+    );
+  }
+}
+
+class _AgeSecretKeyField extends StatelessWidget {
+  const _AgeSecretKeyField({required this.controller});
+
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return ListItem(
+      title: SecretTextFormField(
+        textInputAction: TextInputAction.next,
+        controller: controller,
+        maxLines: 5,
+        decoration: InputDecoration(
+          labelText: appLocalizations.ageSecretKey,
+          hintText: appLocalizations.optional,
+        ),
       ),
     );
   }
@@ -412,21 +447,13 @@ class _ProfileFileItem extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onUpload;
 
-  Widget _buildMetadata(BuildContext context, FileInfo fileInfo) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4, bottom: 2),
-      child: Row(
-        spacing: 4,
-        children: [
-          MetaChip(label: fileInfo.size.traffic.show),
-          MetaChip(
-            label:
-                fileInfo.lastModified?.getLastUpdateTimeDesc(context) ??
-                context.appLocalizations.unknown,
-          ),
-        ],
-      ),
-    );
+  Widget _buildSubtitle(BuildContext context, FileInfo fileInfo) {
+    final style = context.listCaptionStyle;
+    final lastModified = fileInfo.lastModified;
+    if (lastModified == null) {
+      return Text(context.appLocalizations.unknown, style: style);
+    }
+    return LastUpdateTimeText(lastUpdateDate: lastModified, style: style);
   }
 
   List<CommonPopupMenuItem> _menuItems(BuildContext context) {
@@ -459,21 +486,23 @@ class _ProfileFileItem extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: ItemPositionProvider(
                     position: ItemPosition.startAndEnd,
-                    child: DecorationListItem(
-                      minVerticalPadding: 8,
-                      contentPadding: const EdgeInsets.only(left: 16, right: 8),
-                      title: Text(appLocalizations.profile),
-                      subtitle: _buildMetadata(context, fileInfo),
-                      trailing: CommonPopupBox(
-                        popupBuilder: (_) =>
-                            CommonPopupMenu(items: _menuItems(context)),
-                        targetBuilder: (open) {
-                          return IconButton(
-                            tooltip: appLocalizations.more,
-                            onPressed: open,
-                            icon: const GlyphIcon(AppGlyphs.more),
-                          );
-                        },
+                    child: ContextMenuRegion(
+                      menuItems: _menuItems(context),
+                      child: DecorationListItem(
+                        contentPadding: const EdgeInsets.only(left: 16),
+                        title: Text(appLocalizations.profile),
+                        subtitle: _buildSubtitle(context, fileInfo),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              fileInfo.size.traffic.show,
+                              style: context.listCaptionStyle,
+                            ),
+                            const DisclosureIndicator(),
+                          ],
+                        ),
+                        onPressed: onEdit,
                       ),
                     ),
                   ),

@@ -363,6 +363,36 @@ void main() {
     expect(result, 'default');
   });
 
+  testWidgets('SecretTextFormField hides the text until revealed', (
+    tester,
+  ) async {
+    final controller = TextEditingController(text: 'AGE-SECRET-KEY-1A');
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [_viewSizeOverride],
+        child: Material(
+          child: SecretTextFormField(controller: controller, maxLines: 5),
+        ),
+      ),
+    );
+
+    EditableText editable() => tester.widget(find.byType(EditableText));
+    expect(editable().obscureText, isTrue);
+    expect(editable().maxLines, 1);
+
+    await tester.tap(find.byTooltip('Show password'));
+    await tester.pump();
+    expect(editable().obscureText, isFalse);
+    expect(editable().maxLines, 5);
+
+    await tester.tap(find.byTooltip('Hide password'));
+    await tester.pump();
+    expect(editable().obscureText, isTrue);
+    expect(controller.text, 'AGE-SECRET-KEY-1A');
+  });
+
   testWidgets(
     'NamedUrlDialog puts the optional name first and focuses the url',
     (tester) async {

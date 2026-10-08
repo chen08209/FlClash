@@ -30,14 +30,6 @@ void main() {
     });
   });
 
-  group('UsedProxyExtension', () {
-    test('returns enum names as proxy values', () {
-      expect(UsedProxy.GLOBAL.value, 'GLOBAL');
-      expect(UsedProxy.DIRECT.value, 'DIRECT');
-      expect(UsedProxy.REJECT.value, 'REJECT');
-    });
-  });
-
   group('KeyboardModifier', () {
     test('keeps platform key variants for paired modifiers', () {
       expect(KeyboardModifier.alt.physicalKeys, [
@@ -68,7 +60,18 @@ void main() {
 
   group('RuleTarget', () {
     test('contains built-in target names', () {
-      expect(RuleTarget.baseTargets, {'DIRECT', 'REJECT', 'REJECT-DROP'});
+      expect(RuleTarget.baseTargets, {
+        'DIRECT',
+        'REJECT',
+        'REJECT-DROP',
+        'PASS',
+        'PASS-RULE',
+        'COMPATIBLE',
+      });
+    });
+
+    test('lets a rule name the GLOBAL the core adds', () {
+      expect(RuleTarget.ruleTargets, {...RuleTarget.baseTargets, 'GLOBAL'});
     });
   });
 

@@ -1088,7 +1088,7 @@ final class CustomProfileTargetIsValidProvider
 }
 
 String _$customProfileTargetIsValidHash() =>
-    r'7bad72daba4c3a8a3fa305bbad40e331a969dc0a';
+    r'f4326b61db17dca240a70a4251e66e90bbbaa68a';
 
 final class CustomProfileTargetIsValidFamily extends $Family
     with $FunctionalFamilyOverride<bool, (int, String?)> {
@@ -1761,7 +1761,7 @@ final class CurrentGroupsStateProvider
 }
 
 String _$currentGroupsStateHash() =>
-    r'c93e02f94abd4284bff58c42a931df0b35883bd4';
+    r'd4ea3c3271a77d8bd791f94c697cc94a41fff38f';
 
 @ProviderFor(proxyState)
 final proxyStateProvider = ProxyStateProvider._();
