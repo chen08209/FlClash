@@ -31,6 +31,15 @@ abstract final class TextInputLimits {
     return [LengthLimitingTextInputFormatter(maxLength)];
   }
 
+  /// A rule line joins its fields with commas, so no rule could name a policy
+  /// holding one.
+  static List<TextInputFormatter> policyName(int maxLength) {
+    return [
+      FilteringTextInputFormatter.deny(','),
+      LengthLimitingTextInputFormatter(maxLength),
+    ];
+  }
+
   static List<TextInputFormatter> digitsOnly(int maxLength) {
     return [
       FilteringTextInputFormatter.digitsOnly,

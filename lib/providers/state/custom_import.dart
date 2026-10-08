@@ -1,13 +1,20 @@
 part of '../state.dart';
 
 /// An empty [url] is a local provider, saved with [content].
-typedef ImportedProvider = ({String label, String url, String content});
+typedef ImportedProvider = ({
+  String label,
+  String url,
+  String ageSecretKey,
+  String content,
+});
+
+typedef ProviderSource = ({String url, String ageSecretKey});
 
 typedef CustomImportApp = ({
   Set<String> profileLabels,
-  Map<String, String> profileUrls,
+  Map<ProviderSource, String> profileSources,
   Set<String> ruleProviderLabels,
-  Map<String, String> ruleProviderUrls,
+  Map<ProviderSource, String> ruleProviderSources,
   List<Map<String, dynamic>> proxies,
   Set<String> groupNames,
 });
@@ -26,7 +33,7 @@ final class CustomImportException implements Exception {
 }
 
 /// What a config brings to a custom profile, its names moved off the app's:
-/// a provider whose url the app has is used under the app's label, a proxy
+/// a provider whose source the app has is used under the app's label, a proxy
 /// the app holds unchanged under the app's name, one keeping an app proxy's
 /// name, server and credentials as that proxy, and any other name the app
 /// already uses takes a free one, with every reference to it following.
@@ -82,14 +89,16 @@ CustomProfileImport readCustomProfileImport(
   final proxyProviders = _importProviders(
     document['proxy-providers'],
     labels: app.profileLabels,
-    urls: app.profileUrls,
+    sources: app.profileSources,
     payloadKey: 'proxies',
+    readsAgeSecretKey: true,
   );
   final ruleProviders = _importProviders(
     document['rule-providers'],
     labels: app.ruleProviderLabels,
-    urls: app.ruleProviderUrls,
+    sources: app.ruleProviderSources,
     payloadKey: 'payload',
+    readsAgeSecretKey: false,
   );
   final groups = [
     for (final item in _listOf(document['proxy-groups']))
@@ -145,11 +154,16 @@ String _nameOf(Map<String, Object?> item) => item['name']?.toString() ?? '';
 ({Map<String, String> names, List<ImportedProvider> added}) _importProviders(
   Object? section, {
   required Set<String> labels,
-  required Map<String, String> urls,
+  required Map<ProviderSource, String> sources,
   required String payloadKey,
+  required bool readsAgeSecretKey,
 }) {
   final taken = {...labels};
-  final byUrl = {...urls};
+  final bySource = {...sources};
+  final byUrl = <String, String>{};
+  for (final MapEntry(:key, :value) in sources.entries) {
+    byUrl.putIfAbsent(key.url, () => value);
+  }
   final names = <String, String>{};
   final added = <ImportedProvider>[];
   for (final MapEntry(:key, :value) in (_mapOf(section) ?? const {}).entries) {
@@ -159,17 +173,29 @@ String _nameOf(Map<String, Object?> item) => item['name']?.toString() ?? '';
     }
     final type = provider['type']?.toString();
     final url = type == 'http' ? provider['url']?.toString().trim() ?? '' : '';
-    var label = url.isEmpty ? null : byUrl[url];
+    final ProviderSource source = (
+      url: url,
+      ageSecretKey: readsAgeSecretKey && url.isNotEmpty
+          ? provider['age-secret-key']?.toString().trim() ?? ''
+          : '',
+    );
+    var label = url.isEmpty
+        ? null
+        : source.ageSecretKey.isEmpty
+        ? byUrl[url]
+        : bySource[source];
     if (label == null) {
       label = uniqueLabelFor(key, fallback: key, taken: taken.contains);
       taken.add(label);
       if (url.isNotEmpty) {
-        byUrl[url] = label;
+        bySource[source] = label;
+        byUrl[url] ??= label;
       }
       final payload = provider['payload'];
       added.add((
         label: label,
         url: url,
+        ageSecretKey: source.ageSecretKey,
         content: type == 'inline' && payload is List
             ? yaml.encode({payloadKey: payload})
             : '',
@@ -280,7 +306,7 @@ List<Object?>? _identityOf(Map<String, dynamic> definition) {
     server,
     proxy.port,
     for (final credential in proxy.credentials)
-      definition[credential.name]?.toString(),
+      proxy.valueOf(credential)?.toString(),
   ];
 }
 
@@ -327,7 +353,7 @@ _importProxies(
       if (!existingNames.contains(_nameOf(group))) _nameOf(group),
   };
   final taken = {
-    ...reservedProxyNames,
+    ...reservedCustomProxyNames,
     ...existingNames,
     ...groupNames,
     ...kept,
@@ -347,7 +373,9 @@ _importProxies(
     } else if (identities.contains(_identityOf(definition))) {
       imported = name;
     } else {
-      imported = freeName(name);
+      imported = reservedCustomProxyNames.contains(name)
+          ? freeProxyName(name, taken)
+          : freeName(name);
       added.add({...definition, 'name': imported});
     }
     names.putIfAbsent(name, () => imported);

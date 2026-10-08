@@ -116,7 +116,6 @@ class Dialogs {
         value: '',
         labelText: currentAppLocalizations.password,
         obscureText: true,
-        keyboardType: TextInputType.visiblePassword,
       ),
     );
   }
@@ -128,7 +127,7 @@ class Dialogs {
         title: appLocalizations.ageEncryptedProfile,
         value: '',
         labelText: appLocalizations.ageSecretKey,
-        keyboardType: TextInputType.visiblePassword,
+        obscureText: true,
         validator: (value) => value == null || value.trim().isEmpty
             ? appLocalizations.emptyTip(appLocalizations.ageSecretKey)
             : null,

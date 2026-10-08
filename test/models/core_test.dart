@@ -265,14 +265,4 @@ void main() {
       expect(event.data, 'test log');
     });
   });
-
-  group('InvokeMessage', () {
-    test('fromJson', () {
-      final msg = InvokeMessage.fromJson({
-        'type': 'protect',
-        'data': {'method': 'test'},
-      });
-      expect(msg.type, InvokeMessageType.protect);
-    });
-  });
 }

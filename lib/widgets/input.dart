@@ -331,10 +331,9 @@ class _NamedUrlDialogState extends State<NamedUrlDialog> {
             decoration: InputDecoration(labelText: _urlLabel),
           ),
           if (widget.withAgeSecretKey)
-            TextFormField(
+            SecretTextFormField(
               focusNode: _ageSecretKeyFocusNode,
               controller: _ageSecretKeyController,
-              keyboardType: TextInputType.visiblePassword,
               textInputAction: TextInputAction.done,
               onFieldSubmitted: (_) {
                 _handleSubmit();
@@ -345,6 +344,73 @@ class _NamedUrlDialogState extends State<NamedUrlDialog> {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Single-line while hidden: Flutter cannot obscure more than one line.
+class SecretTextFormField extends StatefulWidget {
+  final TextEditingController controller;
+  final FocusNode? focusNode;
+  final InputDecoration decoration;
+  final int maxLines;
+  final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
+  final FormFieldValidator<String>? validator;
+  final bool autofocus;
+
+  const SecretTextFormField({
+    super.key,
+    required this.controller,
+    this.focusNode,
+    this.decoration = const InputDecoration(),
+    this.maxLines = 1,
+    this.maxLength,
+    this.inputFormatters,
+    this.textInputAction,
+    this.onFieldSubmitted,
+    this.validator,
+    this.autofocus = false,
+  });
+
+  @override
+  State<SecretTextFormField> createState() => _SecretTextFormFieldState();
+}
+
+class _SecretTextFormFieldState extends State<SecretTextFormField> {
+  bool _obscure = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return TextFormField(
+      autofocus: widget.autofocus,
+      focusNode: widget.focusNode,
+      controller: widget.controller,
+      obscureText: _obscure,
+      keyboardType: TextInputType.visiblePassword,
+      maxLines: _obscure ? 1 : widget.maxLines,
+      minLines: 1,
+      maxLength: widget.maxLength,
+      inputFormatters: widget.inputFormatters,
+      textInputAction: widget.textInputAction,
+      onFieldSubmitted: widget.onFieldSubmitted,
+      validator: widget.validator,
+      decoration: widget.decoration.copyWith(
+        suffixIcon: IconButton(
+          tooltip: _obscure
+              ? appLocalizations.showPassword
+              : appLocalizations.hidePassword,
+          icon: GlyphIcon(_obscure ? AppGlyphs.eye : AppGlyphs.eyeOff),
+          onPressed: () {
+            setState(() {
+              _obscure = !_obscure;
+            });
+          },
+        ),
       ),
     );
   }
@@ -363,6 +429,7 @@ class InputDialog extends StatefulWidget {
   final int? maxLength;
   final List<TextInputFormatter>? inputFormatters;
   final TextInputType? keyboardType;
+  final bool selectAll;
 
   const InputDialog({
     super.key,
@@ -377,6 +444,7 @@ class InputDialog extends StatefulWidget {
     this.maxLength,
     this.inputFormatters,
     this.keyboardType,
+    this.selectAll = false,
     this.autovalidateMode = AutovalidateMode.onUserInteraction,
   });
 
@@ -399,6 +467,12 @@ class _InputDialogState extends State<InputDialog> {
   void initState() {
     super.initState();
     _textController = TextEditingController(text: value);
+    if (widget.selectAll) {
+      _textController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: value.length,
+      );
+    }
   }
 
   Future<void> _handleUpdate() async {
@@ -423,6 +497,11 @@ class _InputDialogState extends State<InputDialog> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
+    final decoration = InputDecoration(
+      suffixText: suffixText,
+      hintText: widget.hintText,
+      labelText: widget.labelText,
+    );
     return CommonDialog(
       title: title,
       actions: [
@@ -450,24 +529,34 @@ class _InputDialogState extends State<InputDialog> {
         child: Wrap(
           runSpacing: 16,
           children: [
-            TextFormField(
-              maxLength: widget.maxLength,
-              inputFormatters: widget.inputFormatters,
-              obscureText: widget.obscureText ?? false,
-              keyboardType: widget.keyboardType ?? TextInputType.url,
-              maxLines: widget.obscureText == true ? 1 : 5,
-              minLines: 1,
-              controller: _textController,
-              onFieldSubmitted: (_) {
-                _handleUpdate();
-              },
-              decoration: InputDecoration(
-                suffixText: suffixText,
-                hintText: widget.hintText,
-                labelText: widget.labelText,
+            if (widget.obscureText == true)
+              SecretTextFormField(
+                autofocus: widget.selectAll,
+                maxLength: widget.maxLength,
+                inputFormatters: widget.inputFormatters,
+                maxLines: 5,
+                controller: _textController,
+                onFieldSubmitted: (_) {
+                  _handleUpdate();
+                },
+                decoration: decoration,
+                validator: widget.validator,
+              )
+            else
+              TextFormField(
+                autofocus: widget.selectAll,
+                maxLength: widget.maxLength,
+                inputFormatters: widget.inputFormatters,
+                keyboardType: widget.keyboardType ?? TextInputType.url,
+                maxLines: 5,
+                minLines: 1,
+                controller: _textController,
+                onFieldSubmitted: (_) {
+                  _handleUpdate();
+                },
+                decoration: decoration,
+                validator: widget.validator,
               ),
-              validator: widget.validator,
-            ),
           ],
         ),
       ),

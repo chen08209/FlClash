@@ -26,16 +26,28 @@ class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 CustomImportApp _app({
   Map<String, String> profiles = const {},
+  Map<ProviderSource, String> keyedProfiles = const {},
   Set<String> profileLabels = const {},
   Map<String, String> ruleProviders = const {},
   Set<String> ruleProviderLabels = const {},
   List<Map<String, dynamic>> proxies = const [],
   Set<String> groupNames = const {},
 }) => (
-  profileLabels: {...profileLabels, ...profiles.values},
-  profileUrls: profiles,
+  profileLabels: {
+    ...profileLabels,
+    ...profiles.values,
+    ...keyedProfiles.values,
+  },
+  profileSources: {
+    for (final MapEntry(:key, :value) in profiles.entries)
+      (url: key, ageSecretKey: ''): value,
+    ...keyedProfiles,
+  },
   ruleProviderLabels: {...ruleProviderLabels, ...ruleProviders.values},
-  ruleProviderUrls: ruleProviders,
+  ruleProviderSources: {
+    for (final MapEntry(:key, :value) in ruleProviders.entries)
+      (url: key, ageSecretKey: ''): value,
+  },
   proxies: proxies,
   groupNames: groupNames,
 );
@@ -77,7 +89,12 @@ proxy-groups:
 ''', _app(profileLabels: {'sub'}));
 
       expect(config.proxyProviders, [
-        (label: 'sub(1)', url: 'https://example.com/new', content: ''),
+        (
+          label: 'sub(1)',
+          url: 'https://example.com/new',
+          ageSecretKey: '',
+          content: '',
+        ),
       ]);
       expect(config.proxyGroups.single.use, ['sub(1)', 'other']);
       expect(config.overrides.proxyProviders, {
@@ -104,6 +121,7 @@ proxy-providers:
       expect(config.proxyProviders.first, (
         label: 'local',
         url: '',
+        ageSecretKey: '',
         content: '',
       ));
       final inline = config.proxyProviders.last;
@@ -114,6 +132,61 @@ proxy-providers:
           {'name': 'A', 'type': 'ss', 'server': 'a.example.com'},
         ],
       });
+    });
+
+    test('matches a provider without a key by its url alone', () {
+      final config = _read(
+        '''
+proxy-providers:
+  sub: {type: http, url: https://example.com/sub}
+proxy-groups:
+  - {name: Proxy, type: select, use: [sub]}
+''',
+        _app(
+          keyedProfiles: {
+            (url: 'https://example.com/sub', ageSecretKey: 'AGE-SECRET-KEY-1A'):
+                'Keyed',
+          },
+        ),
+      );
+
+      expect(config.proxyProviders, isEmpty);
+      expect(config.proxyGroups.single.use, ['Keyed']);
+    });
+
+    test('matches a provider with a key by its url and key', () {
+      final config = _read(
+        '''
+proxy-providers:
+  same:
+    type: http
+    url: https://example.com/sub
+    age-secret-key: AGE-SECRET-KEY-1A
+  other:
+    type: http
+    url: https://example.com/sub
+    age-secret-key: AGE-SECRET-KEY-1B
+proxy-groups:
+  - {name: Proxy, type: select, use: [same, other]}
+''',
+        _app(
+          profiles: {'https://example.com/sub': 'Plain'},
+          keyedProfiles: {
+            (url: 'https://example.com/sub', ageSecretKey: 'AGE-SECRET-KEY-1A'):
+                'Keyed',
+          },
+        ),
+      );
+
+      expect(config.proxyProviders, [
+        (
+          label: 'other',
+          url: 'https://example.com/sub',
+          ageSecretKey: 'AGE-SECRET-KEY-1B',
+          content: '',
+        ),
+      ]);
+      expect(config.proxyGroups.single.use, ['Keyed', 'other']);
     });
 
     test('adds one provider for two names sharing a url', () {
@@ -170,7 +243,12 @@ sniffer:
       );
 
       expect(config.ruleProviders, [
-        (label: 'ads(1)', url: 'https://example.com/ads.yaml', content: ''),
+        (
+          label: 'ads(1)',
+          url: 'https://example.com/ads.yaml',
+          ageSecretKey: '',
+          content: '',
+        ),
       ]);
       expect(
         [for (final rule in config.rules) rule.rawValue],
@@ -399,6 +477,21 @@ rules:
       expect(config.proxyGroups.first.proxies, ['A']);
       expect(config.dialers, {'A': 'G'});
       expect(config.rules.single.ruleTarget, 'G');
+    });
+
+    test('moves a proxy off a name the Core keeps, but not a group', () {
+      final config = _read('''
+proxies:
+  - {name: GLOBAL, type: ss, server: a.example.com}
+proxy-groups:
+  - {name: GLOBAL, type: select, proxies: [DIRECT]}
+''');
+
+      expect(
+        [for (final proxy in config.proxies) proxy['name']],
+        ['GLOBAL-01'],
+      );
+      expect(config.proxyGroups.single.name, 'GLOBAL');
     });
 
     test(

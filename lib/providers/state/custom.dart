@@ -70,9 +70,14 @@ bool customProfileTargetIsValid(Ref ref, int profileId, String? target) {
   return ref.watch(
     customProfileDataProvider(
       profileId,
-    ).select((state) => state?.isRuleTarget(target) ?? true),
+    ).select((state) => state == null || _isRuleLineTarget(state, target)),
   );
 }
+
+/// A rule line joins its fields with commas, so the core reads a name holding
+/// one as cut short.
+bool _isRuleLineTarget(CustomProfileData data, String? target) =>
+    data.isRuleTarget(target) && !target!.contains(',');
 
 @riverpod
 bool customProfileProxyProviderIsValid(
@@ -110,6 +115,10 @@ const reservedProxyNames = {
   'PASS',
   'PASS-RULE',
 };
+
+/// A group may take GLOBAL to stand in for the core's own selector, while a
+/// proxy of that name is shadowed by the selector.
+const reservedCustomProxyNames = {...reservedProxyNames, 'GLOBAL'};
 
 Duration? _noRetry(int retryCount, Object error) => null;
 
@@ -192,7 +201,7 @@ List<CustomIssue> customProxyIssues(
   return [
     if (name.isEmpty)
       const CustomIssue.emptyName()
-    else if (reservedProxyNames.contains(name))
+    else if (reservedCustomProxyNames.contains(name))
       CustomIssue.reservedName(name)
     else if (groupNames.contains(name) ||
         proxies.any((item) => item.id != proxy.id && item.name == name))
@@ -207,7 +216,7 @@ List<CustomProxy> importedCustomProxies(
   required Set<String> groupNames,
 }) {
   final taken = {
-    ...reservedProxyNames,
+    ...reservedCustomProxyNames,
     ...groupNames,
     ...existing.map((proxy) => proxy.name),
   };
@@ -277,7 +286,7 @@ class ShareLinkEdit {
           proxy.name: proxy,
     };
     final taken = {
-      ...reservedProxyNames,
+      ...reservedCustomProxyNames,
       ...groupNames,
       for (final (index, proxy) in previous.indexed)
         if (links[index].isEmpty) proxy.name,
@@ -799,7 +808,7 @@ List<CustomIssue> customRuleIssues(Rule rule, CustomProfileData data) {
   if (rule.ruleAction == RuleAction.SUB_RULE) {
     return [CustomIssue.missingSubRule(target ?? '')];
   }
-  return data.isRuleTarget(target)
+  return _isRuleLineTarget(data, target)
       ? const []
       : [CustomIssue.missingTarget(target ?? '')];
 }

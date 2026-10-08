@@ -750,6 +750,46 @@ void main() {
       ]);
     });
 
+    test('a proxy cannot take GLOBAL, which a group may', () {
+      const proxy = CustomProxy(id: 1, definition: {'name': 'GLOBAL'});
+      expect(
+        customProxyIssues(proxy, proxies: const [proxy], groupNames: const {}),
+        [const CustomIssue.reservedName('GLOBAL')],
+      );
+      const group = ProxyGroup(
+        id: 3,
+        name: 'GLOBAL',
+        type: GroupType.Selector,
+        proxies: ['DIRECT'],
+      );
+      expect(proxyGroupIssues(group, profileData), isEmpty);
+    });
+
+    test('a rule may target the GLOBAL the core adds, which a group may not '
+        'hold', () {
+      expect(
+        customRuleIssues(Rule.parse('MATCH,GLOBAL', id: 1), profileData),
+        isEmpty,
+      );
+      const group = ProxyGroup(
+        id: 3,
+        name: 'G',
+        type: GroupType.Selector,
+        proxies: ['GLOBAL'],
+      );
+      expect(proxyGroupIssues(group, profileData), [
+        const CustomIssue.missingProxies(['GLOBAL']),
+      ]);
+    });
+
+    test('a rule cannot target a name holding a comma', () {
+      final data = profileData.copyWith(ruleTargets: {'DIRECT', 'A,B'});
+      const rule = Rule(id: 1, ruleAction: RuleAction.MATCH, ruleTarget: 'A,B');
+      expect(customRuleIssues(rule, data), [
+        const CustomIssue.missingTarget('A,B'),
+      ]);
+    });
+
     test('custom proxies report names and core errors together', () {
       const first = CustomProxy(id: 1, definition: {'name': 'X'});
       const second = CustomProxy(id: 2, definition: {'name': 'X'});
@@ -779,7 +819,7 @@ void main() {
     ]);
   });
 
-  test('credentials match the keys each option struct of the core reads', () {
+  group('proxy fields follow the option structs of the core', () {
     const root = 'core/Clash.Meta/adapter';
     final structs = {
       for (final file in Directory(
@@ -787,32 +827,283 @@ void main() {
       ).listSync().whereType<File>())
         if (!file.path.endsWith('_test.go'))
           for (final match in RegExp(
-            r'^type (\w+Option) struct \{\n([\s\S]*?)\n\}',
+            r'^type (\w+) struct \{\n([\s\S]*?)\n\}',
             multiLine: true,
           ).allMatches(file.readAsStringSync()))
             match.group(1)!: match.group(2)!,
     };
-    final cases = RegExp(
-      r'^\tcase "([^"]+)":\n\t\t\w+ := &outbound\.(\w+)\{',
+    final keyPattern = RegExp(r'proxy:"([^",]+)(,omitempty)?"');
+    final typePattern = RegExp(
+      r'^\t\w+\s+(\S+)\s+`proxy:"([^",]+)',
       multiLine: true,
-    ).allMatches(File('$root/parser.go').readAsStringSync()).toList();
-    final keyPattern = RegExp(r'proxy:"(username|password|uuid)[,"]');
+    );
+    final embeddedPattern = RegExp(r'^\t(\w+Option)$', multiLine: true);
+    final bodies = {
+      for (final match in RegExp(
+        r'^\tcase "([^"]+)":\n\t\t\w+ := &outbound\.(\w+)\{',
+        multiLine: true,
+      ).allMatches(File('$root/parser.go').readAsStringSync()))
+        match.group(1)!: [
+          structs[match.group(2)]!,
+          for (final embedded in embeddedPattern.allMatches(
+            structs[match.group(2)]!,
+          ))
+            if (embedded.group(1) != 'BasicOption') structs[embedded.group(1)]!,
+          structs['BasicOption']!,
+        ].join('\n'),
+    };
+    Set<String> keysIn(String body, {bool required = false}) => {
+      for (final match in keyPattern.allMatches(body))
+        if (match.group(1) != '-' && (!required || match.group(2) == null))
+          match.group(1)!,
+    };
+    Set<String> keysOf(String type, {bool required = false}) =>
+        keysIn(bodies[type]!, required: required);
 
-    expect(cases, hasLength(customProxyTypes.length));
-    for (final match in cases) {
-      final type = match.group(1)!;
-      expect(
-        CustomProxy(
-          id: 0,
-          definition: {'type': type},
-        ).credentials.map((credential) => credential.name).toSet(),
-        keyPattern
-            .allMatches(structs[match.group(2)]!)
-            .map((key) => key.group(1))
-            .toSet(),
-        reason: type,
-      );
-    }
+    test('every type the core parses has its struct', () {
+      expect(bodies.keys, customProxyTypes);
+    });
+
+    test('a plugin offers only the plugin-opts keys it reads', () {
+      List<ProxyField> optionsOf(String plugin) => CustomProxy(
+        id: 0,
+        definition: {'type': 'ss', 'plugin': plugin},
+      ).options;
+      expect(optionsOf('kcptun'), contains(ProxyField.pluginMode));
+      expect(optionsOf('kcptun'), isNot(contains(ProxyField.pluginHost)));
+      expect(optionsOf('shadow-tls'), contains(ProxyField.pluginHost));
+      expect(optionsOf('shadow-tls'), isNot(contains(ProxyField.pluginMode)));
+    });
+
+    test('the form asks for the credentials each struct reads', () {
+      const credentials = {'username', 'password', 'uuid'};
+      for (final type in customProxyTypes) {
+        expect(
+          {
+            for (final field in CustomProxy(
+              id: 0,
+              definition: {'type': type},
+            ).credentials)
+              field.path.single,
+          },
+          keysOf(type).intersection(credentials),
+          reason: type,
+        );
+      }
+    });
+
+    test('the required keys are the ones each struct requires', () {
+      for (final type in customProxyTypes) {
+        expect(
+          CustomProxy(id: 0, definition: {'type': type}).requiredKeys,
+          keysOf(type, required: true).difference({'name'}),
+          reason: type,
+        );
+      }
+    });
+
+    test('the form always shows every key a struct requires', () {
+      // A PEM block does not fit a form row, and the form has no row for a
+      // zerotier network yet.
+      const notInForm = {
+        'openvpn': {'ca'},
+        'zerotier': {'network'},
+      };
+      for (final type in customProxyTypes) {
+        final proxy = CustomProxy(id: 0, definition: {'type': type});
+        expect(
+          {for (final field in proxy.fields) field.path.single},
+          containsAll(
+            proxy.requiredKeys.difference({
+              'server',
+              'port',
+              ...?notInForm[type],
+            }),
+          ),
+          reason: type,
+        );
+      }
+    });
+
+    test('every field and option is a key its struct reads', () {
+      for (final type in customProxyTypes) {
+        final definitions = [
+          {'type': type, 'plugin': 'obfs', 'obfs': 'salamander'},
+          for (final network in CustomProxy(
+            id: 0,
+            definition: {'type': type},
+          ).choicesOf(ProxyField.network))
+            {'type': type, 'network': network},
+        ];
+        for (final definition in definitions) {
+          final proxy = CustomProxy(id: 0, definition: definition);
+          for (final field in [...proxy.fields, ...proxy.options]) {
+            var body = bodies[type]!;
+            for (final key in field.path) {
+              expect(keysIn(body), contains(key), reason: '$type $field');
+              final nested =
+                  structs[[
+                    for (final match in typePattern.allMatches(body))
+                      if (match.group(2) == key) match.group(1)!,
+                  ].first];
+              if (nested == null) {
+                break;
+              }
+              body = nested;
+            }
+            if (field.kind == ProxyFieldKind.choice) {
+              expect(
+                proxy.choicesOf(field),
+                isNotEmpty,
+                reason: '$type $field',
+              );
+            }
+          }
+        }
+      }
+    });
+
+    test('every choice the form offers is a value the core names', () {
+      final sources = [
+        for (final directory in [
+          'adapter',
+          'component',
+          'constant',
+          'transport',
+        ])
+          for (final file in Directory(
+            'core/Clash.Meta/$directory',
+          ).listSync(recursive: true).whereType<File>())
+            if (file.path.endsWith('.go') && !file.path.endsWith('_test.go'))
+              file.readAsStringSync().toLowerCase(),
+      ].join('\n');
+      // These fields take their values from modules outside the submodule.
+      const elsewhere = {
+        'ss': {ProxyField.cipher},
+        'vmess': {ProxyField.cipher},
+        'hysteria2': {ProxyField.obfs},
+      };
+      for (final type in customProxyTypes) {
+        final proxy = CustomProxy(id: 0, definition: {'type': type});
+        for (final field in ProxyField.values) {
+          if (elsewhere[type]?.contains(field) ?? false) {
+            continue;
+          }
+          for (final choice in proxy.choicesOf(field)) {
+            expect(
+              sources,
+              contains('"${choice.toLowerCase()}"'),
+              reason: '$type $field $choice',
+            );
+          }
+        }
+      }
+    });
+  });
+
+  test('a nested field adds and drops the maps that hold it, in any case the '
+      'core reads', () {
+    const proxy = CustomProxy(
+      id: 0,
+      definition: {'type': 'vless', 'network': 'ws'},
+    );
+    final withHost = proxy.withField(ProxyField.wsHost, 'cdn.example');
+
+    expect(withHost.definition['ws-opts'], {
+      'headers': {'Host': 'cdn.example'},
+    });
+    expect(withHost.valueOf(ProxyField.wsHost), 'cdn.example');
+    expect(
+      withHost.withField(ProxyField.wsHost, null).definition,
+      proxy.definition,
+    );
+
+    const lower = CustomProxy(
+      id: 0,
+      definition: {
+        'type': 'vless',
+        'network': 'ws',
+        'ws-opts': {
+          'headers': {'host': 'a.example'},
+        },
+      },
+    );
+    expect(lower.valueOf(ProxyField.wsHost), 'a.example');
+    expect(
+      lower.withField(ProxyField.wsHost, 'b.example').definition['ws-opts'],
+      {
+        'headers': {'host': 'b.example'},
+      },
+    );
+  });
+
+  test('a changed value drops the options only the old one made available', () {
+    const proxy = CustomProxy(
+      id: 0,
+      definition: {
+        'type': 'vless',
+        'network': 'ws',
+        'ws-opts': {
+          'path': '/a',
+          'headers': {'Host': 'a.example'},
+          'max-early-data': 2048,
+        },
+      },
+    );
+
+    expect(proxy.withField(ProxyField.network, 'grpc').definition, {
+      'type': 'vless',
+      'network': 'grpc',
+      'ws-opts': {'max-early-data': 2048},
+    });
+    expect(
+      const CustomProxy(
+        id: 0,
+        definition: {
+          'type': 'hysteria2',
+          'obfs': 'salamander',
+          'obfs-password': 'pw',
+        },
+      ).withField(ProxyField.obfs, null).definition,
+      {'type': 'hysteria2'},
+    );
+  });
+
+  test('a new type keeps what it reads alike and starts from the values '
+      'nearly every server takes', () {
+    const proxy = CustomProxy(
+      id: 0,
+      definition: {
+        'name': 'a',
+        'type': 'ss',
+        'cipher': 'aes-256-gcm',
+        'password': 'pw',
+        'udp-over-tcp': true,
+      },
+    );
+
+    final vmess = proxy.withType('vmess');
+    expect(vmess.definition, {
+      'name': 'a',
+      'type': 'vmess',
+      'cipher': 'auto',
+      'alterId': 0,
+    });
+    expect(vmess.definition.keys.first, 'name');
+    expect(vmess.withType('ss').definition, {'name': 'a', 'type': 'ss'});
+    expect(
+      proxy
+          .withField(ProxyField.cipher, 'aes-128-gcm')
+          .withType('vmess')
+          .definition['cipher'],
+      'aes-128-gcm',
+    );
+    expect(proxy.withType('trojan').definition, {
+      'name': 'a',
+      'type': 'trojan',
+      'password': 'pw',
+    });
+    expect(proxy.withType('ss'), same(proxy));
   });
 
   test('imported links take names no proxy holds yet', () {
@@ -822,6 +1113,7 @@ void main() {
         {'name': '', 'type': 'vless', 'server': 'b.example'},
         {'name': '-01', 'type': 'vless', 'server': 'b.example'},
         {'name': 'DIRECT', 'type': 'trojan', 'server': 'c.example'},
+        {'name': 'GLOBAL', 'type': 'trojan', 'server': 'd.example'},
       ],
       existing: const [
         CustomProxy(id: 1, definition: {'name': 'Home', 'type': 'ss'}),
@@ -834,14 +1126,16 @@ void main() {
       'b.example-01',
       'b.example-02',
       'DIRECT-01',
+      'GLOBAL-01',
     ]);
     expect(proxies.map((proxy) => proxy.server), [
       'a.example',
       'b.example',
       'b.example',
       'c.example',
+      'd.example',
     ]);
-    expect(proxies.map((proxy) => proxy.id).toSet(), hasLength(4));
+    expect(proxies.map((proxy) => proxy.id).toSet(), hasLength(5));
   });
 
   group('share link edit', () {

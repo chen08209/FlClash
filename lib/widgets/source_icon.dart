@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
-import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 enum SourceKind { remote, file, custom }
@@ -66,34 +65,17 @@ class SourceIcon extends StatelessWidget {
     if (onPressed == null) {
       return icon;
     }
-    return Focus(
-      canRequestFocus: false,
-      skipTraversal: true,
-      onKeyEvent: _focusNextOnRight,
-      child: IconButton(
-        tooltip: tooltip,
-        style: IconButton.styleFrom(
-          padding: EdgeInsets.zero,
-          minimumSize: const Size.square(size),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          shape: _sourceIconShape,
-        ),
-        onPressed: onPressed,
-        icon: icon,
+    return IconButton(
+      tooltip: tooltip,
+      style: IconButton.styleFrom(
+        padding: EdgeInsets.zero,
+        minimumSize: const Size.square(size),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: _sourceIconShape,
       ),
+      onPressed: onPressed,
+      icon: icon,
     );
-  }
-
-  // Directional focus treats the enclosing card as the nearest node to the
-  // right, so right would return to the card instead of reaching edit.
-  static KeyEventResult _focusNextOnRight(FocusNode _, KeyEvent event) {
-    if (event is! KeyDownEvent ||
-        event.logicalKey != LogicalKeyboardKey.arrowRight) {
-      return KeyEventResult.ignored;
-    }
-    return FocusManager.instance.primaryFocus?.nextFocus() == true
-        ? KeyEventResult.handled
-        : KeyEventResult.ignored;
   }
 }
 
@@ -105,9 +87,9 @@ class _SourceArtPainter extends CustomPainter {
   });
 
   static const _waveAmplitude = 1.2;
-  static const _cloudBounds = Rect.fromLTRB(5, 12, 33, 31.5);
+  static const _cloudBounds = Rect.fromLTRB(5.5, 9.5, 34.5, 30);
   static final _cloud = _cloudPath(_cloudBounds);
-  static const _badgeCenter = Offset(30, 28.5);
+  static const _badgeCenter = Offset(30.5, 27);
   static final _badgedCloud = Path.combine(
     PathOperation.difference,
     _cloud,
@@ -176,7 +158,6 @@ class _SourceArtPainter extends CustomPainter {
   void _paintRemote(Canvas canvas) {
     final primary = colorScheme.primary;
     final tertiary = colorScheme.tertiary;
-    _paintGlyph(canvas, AppGlyphs.sparkle, const Offset(31, 9.5), 11, tertiary);
     final level = this.level;
     // A solid cloud is what a gauge with nothing used looks like.
     if (level == null) {

@@ -223,23 +223,6 @@ const _$CoreEventTypeEnumMap = {
   CoreEventType.dialerLoop: 'dialerLoop',
 };
 
-_InvokeMessage _$InvokeMessageFromJson(Map<String, dynamic> json) =>
-    _InvokeMessage(
-      type: $enumDecode(_$InvokeMessageTypeEnumMap, json['type']),
-      data: json['data'],
-    );
-
-Map<String, dynamic> _$InvokeMessageToJson(_InvokeMessage instance) =>
-    <String, dynamic>{
-      'type': _$InvokeMessageTypeEnumMap[instance.type]!,
-      'data': instance.data,
-    };
-
-const _$InvokeMessageTypeEnumMap = {
-  InvokeMessageType.protect: 'protect',
-  InvokeMessageType.process: 'process',
-};
-
 _Delay _$DelayFromJson(Map<String, dynamic> json) => _Delay(
   name: json['name'] as String,
   url: json['url'] as String,

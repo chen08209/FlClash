@@ -139,7 +139,7 @@ class ProfilesAction extends _$ProfilesAction {
     try {
       ref.read(profilesProvider.notifier).put(profile);
       final newProfile = await profile.update(
-        validate: (path) => _core.validateProfile(path),
+        validate: (path, key) => _core.validateProfile(path, key),
       );
       ref.read(profilesProvider.notifier).put(newProfile);
       if (profile.id == ref.read(currentProfileIdProvider)) {
@@ -176,11 +176,13 @@ class ProfilesAction extends _$ProfilesAction {
     ref.read(currentPageLabelProvider.notifier).toProfiles();
     final profile = await globalState.loadingRun(
       tag: LoadingTag.profiles,
-      () async {
-        return Profile.normal(
-          label: platformFile.name,
-        ).saveFile(bytes, validate: (path) => _core.validateProfile(path));
-      },
+      () => _withAgeSecretKey(
+        Profile.normal(label: platformFile.name),
+        (profile) => profile.saveFile(
+          bytes,
+          validate: (path, key) => _core.validateProfile(path, key),
+        ),
+      ),
       title: currentAppLocalizations.addProfile,
     );
     if (profile != null) {
@@ -192,6 +194,14 @@ class ProfilesAction extends _$ProfilesAction {
     final profile = Profile.custom(label: label);
     putProfile(profile);
     return profile.id;
+  }
+
+  void touchProfile(int id) {
+    final profile = ref.read(profilesProvider).getProfile(id);
+    if (profile == null) return;
+    ref
+        .read(profilesProvider.notifier)
+        .put(profile.copyWith(lastUpdateDate: DateTime.now()));
   }
 
   Future<CustomProfileImport> readCustomImport(
@@ -208,16 +218,19 @@ class ProfilesAction extends _$ProfilesAction {
       profileLabels: {
         for (final profile in profiles) ...[profile.label, profile.realLabel],
       },
-      profileUrls: {
+      profileSources: {
         for (final profile in profiles)
-          if (profile.type == ProfileType.url) profile.url: profile.realLabel,
+          if (profile.type == ProfileType.url)
+            (url: profile.url, ageSecretKey: profile.ageSecretKey):
+                profile.realLabel,
       },
       ruleProviderLabels: {
         for (final provider in ruleProviders) provider.label,
       },
-      ruleProviderUrls: {
+      ruleProviderSources: {
         for (final provider in ruleProviders)
-          if (provider.isRemote) provider.url: provider.label,
+          if (provider.isRemote)
+            (url: provider.url, ageSecretKey: ''): provider.label,
       },
       proxies: [for (final proxy in proxies) proxy.definition],
       groupNames: groupNames.toSet(),
@@ -247,8 +260,12 @@ class ProfilesAction extends _$ProfilesAction {
     final profiles = ref.read(profilesProvider.notifier);
     final clashProviders = ref.read(clashProvidersProvider.notifier);
     final loads = <({String label, Future<void> Function() load})>[];
-    for (final (:label, :url, :content) in config.proxyProviders) {
-      final profile = Profile.normal(label: label, url: url);
+    for (final (:label, :url, :ageSecretKey, :content)
+        in config.proxyProviders) {
+      final profile = Profile.normal(
+        label: label,
+        url: url,
+      ).copyWith(ageSecretKey: ageSecretKey);
       profiles.put(profile);
       loads.add((
         label: label,
@@ -257,12 +274,13 @@ class ProfilesAction extends _$ProfilesAction {
             : () async => profiles.put(
                 await profile.saveFile(
                   utf8.encode(content),
-                  validate: (path) => _core.validateProfile(path),
+                  validate: (path, key) => _core.validateProfile(path, key),
                 ),
               ),
       ));
     }
-    for (final (:label, :url, :content) in config.ruleProviders) {
+    for (final (:label, :url, ageSecretKey: _, :content)
+        in config.ruleProviders) {
       final provider = ClashProvider.create(label: label, url: url);
       clashProviders.put(provider);
       loads.add((
@@ -314,13 +332,23 @@ class ProfilesAction extends _$ProfilesAction {
     ref.read(currentPageLabelProvider.notifier).value = PageLabel.profiles;
   }
 
-  Future<void> addProfileFromLink(String link, {String? label}) async {
+  Future<void> addProfileFromLink(
+    String link, {
+    String? label,
+    String ageSecretKey = '',
+  }) async {
     _showProfiles();
     final profile = await globalState.loadingRun(
       tag: LoadingTag.profiles,
       () => link.isShareLink
           ? _fromShareLinks(Profile.normal(label: label), [link])
-          : _download(Profile.normal(label: label, url: link)),
+          : _withAgeSecretKey(
+              Profile.normal(
+                label: label,
+                url: link,
+              ).copyWith(ageSecretKey: ageSecretKey),
+              _download,
+            ),
       title: currentAppLocalizations.addProfile,
     );
     if (profile != null) {
@@ -356,13 +384,30 @@ class ProfilesAction extends _$ProfilesAction {
   }
 
   Future<Profile> _download(Profile profile) {
-    return profile.update(validate: (path) => _core.validateProfile(path));
+    return profile.update(
+      validate: (path, key) => _core.validateProfile(path, key),
+    );
+  }
+
+  Future<Profile> _withAgeSecretKey(
+    Profile profile,
+    Future<Profile> Function(Profile profile) save,
+  ) async {
+    try {
+      return await save(profile);
+    } on AgeSecretKeyRequiredException {
+      final key = (await dialogs.showAgeSecretKeyInput())?.trim();
+      if (key == null || key.isEmpty) {
+        rethrow;
+      }
+      return save(profile.copyWith(ageSecretKey: key));
+    }
   }
 
   Future<Profile> _fromShareLinks(Profile profile, List<String> links) async {
     final appLocalizations = currentAppLocalizations;
     final decoded = await _core.decodeShareLinks(links);
-    final taken = {...reservedProxyNames};
+    final taken = {...reservedCustomProxyNames};
     final proxies = <Map<String, dynamic>>[];
     for (final (index, definitions) in decoded.indexed) {
       if (definitions.isEmpty) {
@@ -386,7 +431,7 @@ class ProfilesAction extends _$ProfilesAction {
         .copyWith(label: profile.label.takeFirstValid([label]))
         .saveFile(
           utf8.encode(config),
-          validate: (path) => _core.validateConfig(path),
+          validate: (path, _) => _core.validateConfig(path),
         );
   }
 

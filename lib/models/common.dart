@@ -861,45 +861,75 @@ abstract class IconSetIcon with _$IconSetIcon {
       _$IconSetIconFromJson(json);
 }
 
+final _iconLabels = Expando<String>();
+final _nonAlphanumeric = RegExp('[^a-z0-9]');
+
 extension IconSetIconExt on IconSetIcon {
-  String get label => name.fileStem.replaceAll('_', ' ');
+  String get label => _iconLabels[this] ??= name.fileStem.replaceAll('_', ' ');
 }
 
 String _compactIconName(String value) =>
-    value.toLowerCase().replaceAll(RegExp('[^a-z0-9]'), '');
+    value.toLowerCase().replaceAll(_nonAlphanumeric, '');
 
-extension IconSetIconsExt on Iterable<IconSetIcon> {
-  /// English only: a name with no Latin letters or digits matches nothing.
-  List<IconSetIcon> recommendFor(String name, {int limit = 24}) {
-    final target = _compactIconName(name);
-    if (target.isEmpty) {
-      return const [];
-    }
-    final seen = <String>{};
-    final scored = <({IconSetIcon icon, int score, int length})>[];
-    for (final icon in this) {
-      final compact = _compactIconName(icon.label);
-      if (compact.isEmpty) {
-        continue;
-      }
-      final score = switch (compact) {
-        _ when compact == target => 3,
-        _ when compact.length >= 3 && target.contains(compact) => 2,
-        _ when target.length >= 3 && compact.contains(target) => 1,
-        _ => 0,
-      };
-      if (score > 0 && seen.add(icon.url)) {
-        scored.add((icon: icon, score: score, length: compact.length));
-      }
-    }
-    mergeSort(
-      scored,
-      compare: (a, b) => a.score != b.score
-          ? b.score.compareTo(a.score)
-          : a.length.compareTo(b.length),
-    );
-    return scored.take(limit).map((item) => item.icon).toList();
+typedef IconNameMatch = ({int index, int score, int length});
+
+typedef ScoredIcon = ({IconSetIcon icon, int score, int length});
+
+/// English only: a name with no Latin letters or digits matches nothing.
+List<IconNameMatch> matchIconNames(List<String> names, String target) {
+  final compactTarget = _compactIconName(target);
+  if (compactTarget.isEmpty) {
+    return const [];
   }
+  final matches = <IconNameMatch>[];
+  for (final (index, name) in names.indexed) {
+    final compact = _compactIconName(name.fileStem);
+    if (compact.isEmpty) {
+      continue;
+    }
+    final score = switch (compact) {
+      _ when compact == compactTarget => 3,
+      _ when compact.length >= 3 && compactTarget.contains(compact) => 2,
+      _ when compactTarget.length >= 3 && compact.contains(compactTarget) => 1,
+      _ => 0,
+    };
+    if (score > 0) {
+      matches.add((index: index, score: score, length: compact.length));
+    }
+  }
+  return matches;
+}
+
+/// Keeps the first match of each image, in the order given, before ranking.
+List<IconSetIcon> rankIconMatches(
+  Iterable<ScoredIcon> matches, {
+  int limit = 24,
+}) {
+  final seen = <String>{};
+  final scored = [
+    for (final match in matches)
+      if (seen.add(match.icon.url)) match,
+  ];
+  mergeSort(
+    scored,
+    compare: (a, b) => a.score != b.score
+        ? b.score.compareTo(a.score)
+        : a.length.compareTo(b.length),
+  );
+  return scored.take(limit).map((item) => item.icon).toList();
+}
+
+extension IconSetIconsExt on List<IconSetIcon> {
+  List<ScoredIcon> scoredBy(List<IconNameMatch> matches) => [
+    for (final match in matches)
+      (icon: this[match.index], score: match.score, length: match.length),
+  ];
+
+  List<ScoredIcon> scoreFor(String name) =>
+      scoredBy(matchIconNames([for (final icon in this) icon.name], name));
+
+  List<IconSetIcon> recommendFor(String name, {int limit = 24}) =>
+      rankIconMatches(scoreFor(name), limit: limit);
 }
 
 @freezed

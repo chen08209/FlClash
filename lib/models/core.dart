@@ -164,15 +164,6 @@ abstract class CoreEvent with _$CoreEvent {
 }
 
 @freezed
-abstract class InvokeMessage with _$InvokeMessage {
-  const factory InvokeMessage({required InvokeMessageType type, dynamic data}) =
-      _InvokeMessage;
-
-  factory InvokeMessage.fromJson(Map<String, Object?> json) =>
-      _$InvokeMessageFromJson(json);
-}
-
-@freezed
 abstract class Delay with _$Delay {
   const factory Delay({required String name, required String url, int? value}) =
       _Delay;

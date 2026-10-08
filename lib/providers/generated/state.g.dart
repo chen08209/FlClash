@@ -1088,7 +1088,7 @@ final class CustomProfileTargetIsValidProvider
 }
 
 String _$customProfileTargetIsValidHash() =>
-    r'7bad72daba4c3a8a3fa305bbad40e331a969dc0a';
+    r'f4326b61db17dca240a70a4251e66e90bbbaa68a';
 
 final class CustomProfileTargetIsValidFamily extends $Family
     with $FunctionalFamilyOverride<bool, (int, String?)> {
@@ -1761,7 +1761,7 @@ final class CurrentGroupsStateProvider
 }
 
 String _$currentGroupsStateHash() =>
-    r'c93e02f94abd4284bff58c42a931df0b35883bd4';
+    r'd4ea3c3271a77d8bd791f94c697cc94a41fff38f';
 
 @ProviderFor(proxyState)
 final proxyStateProvider = ProxyStateProvider._();
@@ -3086,6 +3086,47 @@ final class CurrentNavigationItemsStateProvider
 String _$currentNavigationItemsStateHash() =>
     r'06fbdc194f4527b945695fe3b72b16e0585fa440';
 
+@ProviderFor(shownPageLabel)
+final shownPageLabelProvider = ShownPageLabelProvider._();
+
+final class ShownPageLabelProvider
+    extends $FunctionalProvider<PageLabel, PageLabel, PageLabel>
+    with $Provider<PageLabel> {
+  ShownPageLabelProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'shownPageLabelProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$shownPageLabelHash();
+
+  @$internal
+  @override
+  $ProviderElement<PageLabel> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PageLabel create(Ref ref) {
+    return shownPageLabel(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PageLabel value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PageLabel>(value),
+    );
+  }
+}
+
+String _$shownPageLabelHash() => r'1378d52f1b4cb8fc3291b3e76f2ce2c4e23bfe0e';
+
 @ProviderFor(navigationState)
 final navigationStateProvider = NavigationStateProvider._();
 
@@ -3126,7 +3167,7 @@ final class NavigationStateProvider
   }
 }
 
-String _$navigationStateHash() => r'657dc47ecc35ba0807b58cb37e7f1baa14f6c2f9';
+String _$navigationStateHash() => r'9c9beae404c98419430f83922c5d9aa1dbe3a64a';
 
 @ProviderFor(dashboardState)
 final dashboardStateProvider = DashboardStateProvider._();
