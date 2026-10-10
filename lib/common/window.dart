@@ -191,8 +191,22 @@ class Window implements WindowPort {
   Future<void> toggle() => _visibility.toggle();
 
   Future<void> _showWindow() async {
-    await desktopWindow.show();
-    await desktopWindow.focus();
+    final wasAlwaysOnTop = system.isLinux
+        ? await desktopWindow.isAlwaysOnTop()
+        : false;
+    if (system.isLinux && !wasAlwaysOnTop) {
+      // Linux 合成器可能拒绝无激活令牌的 gtk_window_present，临时置顶可可靠提升窗口。
+      await desktopWindow.setAlwaysOnTop(true);
+    }
+    try {
+      await desktopWindow.show();
+      await desktopWindow.focus();
+    } finally {
+      if (system.isLinux && !wasAlwaysOnTop) {
+        // 只撤销本次临时置顶，保留用户原本的置顶设置。
+        await desktopWindow.setAlwaysOnTop(false);
+      }
+    }
   }
 
   Future<void> _hideWindow() async {

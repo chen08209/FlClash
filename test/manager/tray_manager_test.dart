@@ -69,7 +69,11 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_windowChannel, (call) async {
           windowCalls.add(call.method);
-          return call.method == 'isMinimized' ? false : null;
+          // 窗口恢复会临时读取和修改置顶状态，测试桩必须返回有效布尔值。
+          return switch (call.method) {
+            'isMinimized' || 'isAlwaysOnTop' => false,
+            _ => null,
+          };
         });
   });
 

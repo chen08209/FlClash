@@ -39,3 +39,6 @@ categories:
   - Network
 
 startup_notify: true
+
+# 将 GTK 应用 ID 与桌面入口绑定，确保 Cinnamon 重新映射窗口后仍使用 FlClash 图标。
+startup_wm_class: com.follow.clash
