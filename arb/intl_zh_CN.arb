@@ -119,6 +119,8 @@
   "desc": "基于ClashMeta的多平台代理客户端，简单易用，开源无广告。",
   "startVpn": "正在启动VPN…",
   "stopVpn": "正在停止VPN…",
+  "startProxy": "正在启动代理…",
+  "stopProxy": "正在停止代理…",
   "localNetworkDeniedTip": "本地网络权限被拒绝：已改用 gvisor 栈，局域网无法访问。",
   "compatible": "兼容模式",
   "notSelectedTip": "当前代理组无法选中",
