@@ -135,6 +135,7 @@ class GoBuilder {
 
   List<String> _buildArguments(Target target, {String? outFile}) => [
     'build',
+    '-buildvcs=false',
     '-ldflags=${_ldflags(target)}',
     '-tags=${config.tags}',
     if (target.isLib) '-buildmode=c-shared',
