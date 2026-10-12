@@ -113,6 +113,9 @@ class GoBuilder {
 
   Map<String, String> _buildEnvironment(Target target) {
     final env = <String, String>{'GOOS': target.goos, 'GOARCH': target.goarch};
+    // go list and go build both stamp VCS info; CI containers can't read the
+    // submodule's git state, so disable stamping for both via GOFLAGS.
+    env['GOFLAGS'] = '-buildvcs=false';
     if (target.isLib) {
       env
         ..['CGO_ENABLED'] = '1'
