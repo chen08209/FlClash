@@ -3130,6 +3130,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Buttons`
+  String get pageActionButtons {
+    return Intl.message(
+      'Buttons',
+      name: 'pageActionButtons',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Bottom bar`
   String get navigationBarStyle {
     return Intl.message(

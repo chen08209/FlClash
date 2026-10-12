@@ -34,6 +34,9 @@ class CommonScaffold extends StatefulWidget {
   final bool? centerTitle;
   final Widget? floatingActionButton;
 
+  /// Overrides home navigation placement; bottom sheets still use the bar.
+  final bool? actionInBar;
+
   /// The page's main action. A page shows it as its floating action button;
   /// a bottom sheet, and a phone's home page whose foot the navigation dock
   /// holds, show it in the bar instead.
@@ -42,6 +45,8 @@ class CommonScaffold extends StatefulWidget {
   /// Folded into the overflow menu once the bar would hold more than three
   /// buttons, as [primaryAction] and [menuItems] are; [actions] never fold.
   final List<IconButtonData> iconActions;
+
+  final List<IconButtonData> trailingActions;
   final List<CommonPopupMenuItem> menuItems;
 
   /// Folds [primaryAction] ahead of [iconActions], so a bar without search
@@ -73,8 +78,10 @@ class CommonScaffold extends StatefulWidget {
     this.searchActions = const [],
     this.selectionActions = const [],
     this.floatingActionButton,
+    this.actionInBar,
     this.primaryAction,
     this.iconActions = const [],
+    this.trailingActions = const [],
     this.menuItems = const [],
     this.foldPrimaryAction = false,
     this.isTV,
@@ -110,6 +117,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
     return _appBarState.value.searchState != null ||
         widget.primaryAction != null ||
         widget.iconActions.isNotEmpty ||
+        widget.trailingActions.isNotEmpty ||
         widget.menuItems.isNotEmpty ||
         widget.actions?.isNotEmpty == true;
   }
@@ -440,6 +448,9 @@ class CommonScaffoldState extends State<CommonScaffold> {
     final widgets = _isSearch
         ? const <Widget>[]
         : widget.actions ?? const <Widget>[];
+    final trailing = _isSearch
+        ? const <IconButtonData>[]
+        : widget.trailingActions;
     final selection = widget.selectionActions;
     final selectionCount = selection.isEmpty ? 0 : 1;
     final fold = _isSearch
@@ -453,7 +464,8 @@ class CommonScaffoldState extends State<CommonScaffold> {
             primary: primaryAction,
             foldPrimary: widget.foldPrimaryAction,
             icons: widget.iconActions,
-            widgetCount: widgets.length + selectionCount,
+            widgetCount:
+                widgets.length + selectionCount + (trailing.isEmpty ? 0 : 1),
             menuItems: widget.menuItems,
           );
     final popAsSuffix = !_isSearch && !_isEdit && pop?.asSuffix == true;
@@ -480,6 +492,18 @@ class CommonScaffoldState extends State<CommonScaffold> {
       for (final action in widgets) ElasticPress(child: action),
       if (fold.overflow.isNotEmpty)
         ElasticPress(child: _OverflowMenuButton(items: fold.overflow)),
+      if (trailing.length > 1)
+        TonalButtonGroup(
+          children: [
+            for (final data in trailing) AppBarActionButton(data: data),
+          ],
+        )
+      else if (trailing.isNotEmpty)
+        ElasticPress(
+          enabled:
+              !trailing.single.isLoading && trailing.single.onPressed != null,
+          child: AppBarActionButton(data: trailing.single),
+        ),
       if (popAsSuffix)
         ElasticPress(
           child: _buildSheetPopButton(
@@ -580,7 +604,8 @@ class CommonScaffoldState extends State<CommonScaffold> {
     final bottomInset = BottomInsetScope.of(context);
     final primaryAction = widget.primaryAction;
     final actionInBar =
-        form.isBottomSheet || (!isTV && DockedPageScope.of(context));
+        form.isBottomSheet ||
+        (widget.actionInBar ?? (!isTV && DockedPageScope.of(context)));
     final fabSlot = actionInBar
         ? null
         : widget.floatingActionButton ??

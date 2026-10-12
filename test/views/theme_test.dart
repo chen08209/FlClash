@@ -8,6 +8,7 @@ import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/theme.dart';
+import 'package:fl_clash/views/theme_preview.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -139,19 +140,114 @@ void main() {
     });
   });
 
+  Finder choice(String section, String label) => find.descendant(
+    of: find.ancestor(
+      of: find.text(section),
+      matching: find.byType(PreviewChoiceGroup<bool>),
+    ),
+    matching: find.widgetWithText(CommonCard, label),
+  );
+
+  testWidgets(
+    'buttons share the bottom bar card style and change independently',
+    (tester) async {
+      await pumpThemeView(tester);
+      expect(
+        tester.getTopLeft(find.text('Buttons')).dy,
+        lessThan(tester.getTopLeft(find.text('Bottom bar')).dy),
+      );
+      final buttonFloating = choice('Buttons', 'Floating');
+      final barFloating = choice('Bottom bar', 'Floating');
+      expect(tester.getSize(buttonFloating), tester.getSize(barFloating));
+      expect(container.read(appSettingProvider).floatingPageActions, isFalse);
+      for (final floatingBar in [true, false]) {
+        await tester.tap(
+          choice('Bottom bar', floatingBar ? 'Floating' : 'Docked'),
+        );
+        await tester.pumpAndSettle();
+        for (final floating in [true, false]) {
+          await tester.tap(choice('Buttons', floating ? 'Floating' : 'Docked'));
+          await tester.pumpAndSettle();
+          final settings = container.read(appSettingProvider);
+          expect(settings.floatingPageActions, floating);
+          expect(settings.floatingNavigationBar, floatingBar);
+          final preview = tester.widget<MiniScreen>(
+            find.descendant(
+              of: find.byType(ThemeLivePreview),
+              matching: find.byType(MiniScreen),
+            ),
+          );
+          expect(preview.floatingAction, floating);
+          expect(preview.floatingBar, floatingBar);
+        }
+      }
+    },
+  );
+
   group('home navigation', () {
     AppSettingProps readSetting() => container.read(appSettingProvider);
+
+    testWidgets('shows matched choices below the bottom bar heading', (
+      tester,
+    ) async {
+      await pumpThemeView(tester);
+
+      final floating = choice('Bottom bar', 'Floating');
+      final docked = choice('Bottom bar', 'Docked');
+      final heading = find.text('Bottom bar');
+      expect(floating, findsOneWidget);
+      expect(docked, findsOneWidget);
+      expect(heading, findsOneWidget);
+      expect(
+        tester.getTopLeft(floating).dy,
+        greaterThan(tester.getTopLeft(heading).dy),
+      );
+      expect(
+        tester.getTopLeft(docked).dy,
+        greaterThan(tester.getTopLeft(heading).dy),
+      );
+      expect(
+        tester
+            .widget<MiniScreen>(
+              find.descendant(of: floating, matching: find.byType(MiniScreen)),
+            )
+            .floatingBar,
+        isTrue,
+      );
+      expect(
+        tester
+            .widget<MiniScreen>(
+              find.descendant(of: docked, matching: find.byType(MiniScreen)),
+            )
+            .floatingBar,
+        isFalse,
+      );
+      final trailingAction = find.byWidgetPredicate(
+        (widget) =>
+            widget is Positioned &&
+            widget.width != null &&
+            widget.height != null,
+      );
+      expect(
+        find.descendant(of: floating, matching: trailingAction),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: docked, matching: trailingAction),
+        findsNothing,
+      );
+    });
 
     testWidgets('picks a floating or docked bottom bar', (tester) async {
       await pumpThemeView(tester);
 
       expect(readSetting().floatingNavigationBar, isTrue);
 
-      await tester.tap(find.text('Docked'));
+      await tester.tap(choice('Bottom bar', 'Docked'));
       await tester.pumpAndSettle();
       expect(readSetting().floatingNavigationBar, isFalse);
 
-      await tester.tap(find.text('Floating'));
+      await tester.tap(choice('Bottom bar', 'Floating'));
       await tester.pumpAndSettle();
       expect(readSetting().floatingNavigationBar, isTrue);
     });

@@ -94,19 +94,22 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
         final appLocalizations = context.appLocalizations;
         final isLoading = ref.watch(loadingProvider(LoadingTag.profiles));
         final state = ref.watch(profilesStateProvider);
+        final floating = ref.watch(
+          appSettingProvider.select((state) => state.floatingPageActions),
+        );
+        final addAction = IconButtonData(
+          glyph: AppGlyphs.add,
+          onPressed: showAddProfilePage,
+          tooltip: appLocalizations.addProfile,
+        );
         final spacing = cardSpacing;
         return CommonScaffold(
           isLoading: isLoading,
           title: appLocalizations.profiles,
-          primaryAction: state.profiles.isEmpty
-              ? null
-              : IconButtonData(
-                  glyph: AppGlyphs.add,
-                  onPressed: showAddProfilePage,
-                  tooltip: appLocalizations.addProfile,
-                ),
+          actionInBar: false,
+          primaryAction: floating ? addAction : null,
+          trailingActions: [if (!floating) addAction],
           iconActions: _buildActions(state.profiles),
-          foldPrimaryAction: true,
           body: NullStatusSwitcher(
             isEmpty: state.profiles.isEmpty,
             nullStatus: NullStatus(

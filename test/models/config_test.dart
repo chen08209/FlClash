@@ -128,6 +128,19 @@ void main() {
       expect(restored.testUrl, defaultTestUrl);
     });
 
+    test(
+      'older settings keep fixed page actions and their bottom bar choice',
+      () {
+        for (final floatingBar in [true, false]) {
+          final restored = AppSettingProps.fromJson({
+            'floatingNavigationBar': floatingBar,
+          });
+          expect(restored.floatingPageActions, isFalse);
+          expect(restored.floatingNavigationBar, floatingBar);
+        }
+      },
+    );
+
     test('a saved outboundModeV2 card folds into outboundMode', () {
       final restored = AppSettingProps.fromJson({
         'dashboardWidgets': ['networkSpeed', 'outboundModeV2', 'outboundMode'],

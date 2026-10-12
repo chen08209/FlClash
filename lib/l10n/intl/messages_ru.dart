@@ -1066,6 +1066,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "overwriteTypeCustomDesc": MessageLookupByLibrary.simpleMessage(
       "Пользовательский режим: полная настройка прокси, групп прокси и правил",
     ),
+    "pageActionButtons": MessageLookupByLibrary.simpleMessage("Кнопки"),
     "palette": MessageLookupByLibrary.simpleMessage("Палитра"),
     "password": MessageLookupByLibrary.simpleMessage("Пароль"),
     "paste": MessageLookupByLibrary.simpleMessage("Вставить"),

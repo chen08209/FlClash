@@ -121,11 +121,16 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
       proxiesStyleSettingProvider.select((state) => state.type),
     );
     final isLoading = ref.watch(loadingProvider(LoadingTag.proxies));
+    final floating = ref.watch(
+      appSettingProvider.select((state) => state.floatingPageActions),
+    );
+    final delayAction = _buildPrimaryAction();
     return CommonScaffold(
       isLoading: isLoading,
       resizeToAvoidBottomInset: false,
-      primaryAction: _buildPrimaryAction(),
-      iconActions: [
+      actionInBar: false,
+      primaryAction: floating ? delayAction : null,
+      trailingActions: [
         if (_isTab)
           IconButtonData(
             glyph: AppGlyphs.locate,
@@ -134,6 +139,7 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
             },
             tooltip: context.appLocalizations.scrollToSelected,
           ),
+        if (!floating) ?delayAction,
       ],
       menuItems: _buildMenuItems(context),
       title: context.appLocalizations.proxies,

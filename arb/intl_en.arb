@@ -391,6 +391,7 @@
   "sourceIp": "Source IP",
   "noResolve": "Don't resolve IP",
   "saveChanges": "Save the changes?",
+  "pageActionButtons": "Buttons",
   "navigationBarStyle": "Bottom bar",
   "floating": "Floating",
   "docked": "Docked",

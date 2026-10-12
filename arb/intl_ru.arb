@@ -391,6 +391,7 @@
   "sourceIp": "IP источника",
   "noResolve": "Не разрешать IP",
   "saveChanges": "Сохранить изменения?",
+  "pageActionButtons": "Кнопки",
   "navigationBarStyle": "Нижняя панель",
   "floating": "Плавающая",
   "docked": "Закреплённая",

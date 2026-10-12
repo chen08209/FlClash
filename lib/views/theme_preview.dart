@@ -105,16 +105,20 @@ class _ChoiceButton extends StatelessWidget {
   }
 }
 
-/// The foot of a [MiniScreen], where the options differ, drawn at the size of
-/// an icon.
+/// A compact [MiniScreen]; bottom-bar choices crop the screen to its foot.
 class MiniScreenThumb extends StatelessWidget {
-  const MiniScreenThumb({super.key, required this.screen});
+  const MiniScreenThumb({
+    super.key,
+    required this.screen,
+    this.showFullScreen = false,
+  });
 
   static const Size _screenSize = Size(96, 128);
   static const double _shownHeight = 66;
   static const double _height = 30;
 
   final Widget screen;
+  final bool showFullScreen;
 
   @override
   Widget build(BuildContext context) {
@@ -136,8 +140,8 @@ class MiniScreenThumb extends StatelessWidget {
               child: ClipRect(
                 child: OverflowBox(
                   alignment: Alignment.bottomCenter,
-                  minHeight: _screenSize.height,
-                  maxHeight: _screenSize.height,
+                  minHeight: showFullScreen ? _shownHeight : _screenSize.height,
+                  maxHeight: showFullScreen ? _shownHeight : _screenSize.height,
                   child: screen,
                 ),
               ),
@@ -229,6 +233,9 @@ class _ThemeLivePreviewState extends ConsumerState<ThemeLivePreview>
     final floatingBar = ref.watch(
       appSettingProvider.select((state) => state.floatingNavigationBar),
     );
+    final floatingAction = ref.watch(
+      appSettingProvider.select((state) => state.floatingPageActions),
+    );
     final tabAnimation = ref.watch(
       appSettingProvider.select((state) => state.tabAnimation),
     );
@@ -265,6 +272,7 @@ class _ThemeLivePreviewState extends ConsumerState<ThemeLivePreview>
                     builder: (_, _) => MiniScreen(
                       colorScheme: colorScheme,
                       floatingBar: floatingBar,
+                      floatingAction: floatingAction,
                       selected: _selected,
                       previous: _previous,
                       progress: _previous == null ? 1 : _slideCurve.value,
@@ -294,6 +302,7 @@ class MiniScreen extends StatelessWidget {
     required this.colorScheme,
     required this.floatingBar,
     this.selected = 0,
+    this.floatingAction,
     this.previous,
     this.progress = 1,
     this.tabAnimation = TabAnimation.slide,
@@ -304,6 +313,7 @@ class MiniScreen extends StatelessWidget {
 
   final ColorScheme colorScheme;
   final bool floatingBar;
+  final bool? floatingAction;
   final int selected;
   final int? previous;
   final double progress;
@@ -326,6 +336,10 @@ class MiniScreen extends StatelessWidget {
         final hasFab = previous == null || progress > 0.5
             ? selected == 0
             : previous == 0;
+        final activePage = previous == null || progress > 0.5
+            ? selected
+            : previous;
+        final showAction = floatingAction != null && activePage < 3;
         final pageBottom = floatingBar ? 0.0 : barHeight;
         final direction = previous != null && previous > selected ? -1 : 1;
         Widget pageAt(int index, double offset, {double opacity = 1}) {
@@ -382,15 +396,19 @@ class MiniScreen extends StatelessWidget {
                 pageAt(selected, 0)
               else
                 ...switching(previous),
-              if (hasFab && !floatingBar)
+              if (showAction)
                 Positioned(
+                  key: const ValueKey('mini-page-action'),
                   right: margin,
-                  bottom: barHeight + margin,
-                  width: fabSize * 1.6,
-                  height: fabSize,
+                  top: floatingAction! ? null : margin,
+                  bottom: floatingAction!
+                      ? barHeight + margin * (floatingBar ? 2 : 1)
+                      : null,
+                  width: floatingAction! ? fabSize : unit * 2.4,
+                  height: floatingAction! ? fabSize : unit * 2.4,
                   child: _MiniBlock(
                     color: colorScheme.primaryContainer,
-                    extent: fabSize,
+                    extent: floatingAction! ? fabSize : unit * 2.4,
                   ),
                 ),
               if (floatingBar)

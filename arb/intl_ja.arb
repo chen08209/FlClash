@@ -391,6 +391,7 @@
   "sourceIp": "送信元IP",
   "noResolve": "IPを解決しない",
   "saveChanges": "変更を保存しますか？",
+  "pageActionButtons": "ボタン",
   "navigationBarStyle": "ボトムバー",
   "floating": "フローティング",
   "docked": "固定",

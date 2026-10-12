@@ -16,7 +16,17 @@ Future<List<String>> _pumpBar(
   List<String> icons = const [],
   List<String> menuItems = const [],
   List<String> selection = const [],
+  List<String> trailing = const [],
+  bool trailingLoading = false,
+  bool docked = true,
+  Size? size,
 }) async {
+  if (size != null) {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+  }
   final taps = <String>[];
   IconButtonData action(String label, {bool isLoading = false}) {
     return IconButtonData(
@@ -31,7 +41,7 @@ Future<List<String>> _pumpBar(
     TestApp(
       wrapInProviderScope: true,
       child: DockedPageScope(
-        docked: true,
+        docked: docked,
         child: CommonScaffold(
           title: 'Page',
           searchState: hasSearch ? AppBarSearchState(onSearch: (_) {}) : null,
@@ -41,6 +51,10 @@ Future<List<String>> _pumpBar(
           iconActions: [for (final label in icons) action(label)],
           foldPrimaryAction: foldPrimary,
           selectionActions: [for (final label in selection) action(label)],
+          trailingActions: [
+            for (final label in trailing)
+              action(label, isLoading: trailingLoading),
+          ],
           menuItems: [
             for (final label in menuItems)
               CommonPopupMenuItem(
@@ -90,6 +104,83 @@ Finder _inGroup(String tooltip) => find.ancestor(
 );
 
 void main() {
+  for (final docked in [true, false]) {
+    testWidgets(
+      'trailing locate and delay actions stay grouped at the right, docked=$docked',
+      (tester) async {
+        final taps = await _pumpBar(
+          tester,
+          docked: docked,
+          hasSearch: true,
+          menuItems: ['Settings'],
+          trailing: ['Locate', 'Delay test'],
+        );
+        expect(_barButtons(tester), ['Search', 'More', 'Locate', 'Delay test']);
+        expect(_inGroup('Locate'), findsOneWidget);
+        expect(_inGroup('Delay test'), findsOneWidget);
+        expect(
+          _inGroup('Locate').evaluate().single,
+          _inGroup('Delay test').evaluate().single,
+        );
+        expect(find.byType(FloatingActionButton), findsNothing);
+        await tester.tap(find.byTooltip('Delay test'));
+        expect(taps, ['Delay test']);
+      },
+    );
+  }
+
+  testWidgets('narrow phone keeps locate and bolt visible without overflow', (
+    tester,
+  ) async {
+    await _pumpBar(
+      tester,
+      size: const Size(320, 640),
+      hasSearch: true,
+      menuItems: ['Settings'],
+      trailing: ['Locate', 'Delay test'],
+    );
+    expect(tester.takeException(), isNull);
+    expect(
+      tester.getBottomRight(find.byTooltip('Delay test')).dx,
+      lessThanOrEqualTo(320),
+    );
+    expect(_barButtons(tester).last, 'Delay test');
+  });
+
+  testWidgets('trailing add stays last while other actions fold', (
+    tester,
+  ) async {
+    await _pumpBar(
+      tester,
+      icons: ['Sync', 'Sort', 'Export'],
+      trailing: ['Add'],
+    );
+    expect(_barButtons(tester).last, 'Add');
+    expect(find.byType(FloatingActionButton), findsNothing);
+    await _openMenu(tester);
+    expect(find.text('Add'), findsNothing);
+  });
+
+  testWidgets('loading trailing action cannot be tapped', (tester) async {
+    final taps = await _pumpBar(
+      tester,
+      trailing: ['Delay test'],
+      trailingLoading: true,
+    );
+    expect(
+      tester
+          .widget<IconButton>(
+            find.byWidgetPredicate(
+              (widget) =>
+                  widget is IconButton && widget.tooltip == 'Delay test',
+            ),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(taps, isEmpty);
+  });
+
   testWidgets('a bar with three buttons groups two beside the third', (
     tester,
   ) async {

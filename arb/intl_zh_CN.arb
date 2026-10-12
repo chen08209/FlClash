@@ -391,6 +391,7 @@
   "sourceIp": "源IP",
   "noResolve": "不解析IP",
   "saveChanges": "是否保存更改？",
+  "pageActionButtons": "按钮",
   "navigationBarStyle": "底栏",
   "floating": "悬浮",
   "docked": "固定",

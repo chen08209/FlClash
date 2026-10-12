@@ -36,6 +36,8 @@ class ThemeView extends StatelessWidget {
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
           const _PrimaryColorItem(),
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          const _PageActionsItem(),
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
           const _NavigationBarItem(),
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
           const _TabAnimationItem(),
@@ -500,6 +502,50 @@ class _PureBlackItem extends ConsumerWidget {
           ref
               .read(themeSettingProvider.notifier)
               .update((state) => state.copyWith(pureBlack: value));
+        },
+      ),
+    );
+  }
+}
+
+class _PageActionsItem extends ConsumerWidget {
+  const _PageActionsItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
+    final floating = ref.watch(
+      appSettingProvider.select((state) => state.floatingPageActions),
+    );
+    final floatingBar = ref.watch(_floatingBarProvider);
+    return SliverToBoxAdapter(
+      child: PreviewChoiceGroup<bool>(
+        info: Info(
+          label: appLocalizations.pageActionButtons,
+          glyph: AppGlyphs.sliders,
+        ),
+        value: floating,
+        choices: [
+          for (final value in [true, false])
+            PreviewChoice(
+              value: value,
+              label: value
+                  ? appLocalizations.floating
+                  : appLocalizations.docked,
+              pictogram: MiniScreenThumb(
+                showFullScreen: true,
+                screen: MiniScreen(
+                  colorScheme: context.colorScheme,
+                  floatingBar: floatingBar,
+                  floatingAction: value,
+                ),
+              ),
+            ),
+        ],
+        onChanged: (value) {
+          ref
+              .read(appSettingProvider.notifier)
+              .update((state) => state.copyWith(floatingPageActions: value));
         },
       ),
     );
