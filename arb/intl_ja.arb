@@ -336,6 +336,7 @@
   "icon": "アイコン",
   "noData": "データがありません",
   "fontFamily": "フォント",
+  "shortcutStop": "停止",
   "toggle": "切り替え",
   "system": "システム",
   "routeMode": "ルートモード",

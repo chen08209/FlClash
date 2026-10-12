@@ -71,6 +71,12 @@
         </activity>
 
         <activity
+            android:name=".ServiceActionActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:theme="@android:style/Theme.NoDisplay" />
+
+        <activity
             android:name=".QuickActionActivity"
             android:excludeFromRecents="true"
             android:exported="true"

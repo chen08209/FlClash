@@ -1025,6 +1025,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "serviceUnavailable": MessageLookupByLibrary.simpleMessage("不可用"),
     "serviceUnsupportedRegion": MessageLookupByLibrary.simpleMessage("地区不支持"),
     "settings": MessageLookupByLibrary.simpleMessage("设置"),
+    "shortcutStop": MessageLookupByLibrary.simpleMessage("停止"),
     "show": MessageLookupByLibrary.simpleMessage("显示"),
     "showLess": MessageLookupByLibrary.simpleMessage("收起"),
     "showMore": MessageLookupByLibrary.simpleMessage("展开"),

@@ -336,6 +336,7 @@
   "icon": "Icon",
   "noData": "No data",
   "fontFamily": "Font family",
+  "shortcutStop": "Stop",
   "toggle": "Toggle",
   "system": "System",
   "routeMode": "Route mode",

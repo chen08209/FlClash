@@ -1427,6 +1427,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Регион не поддерживается",
     ),
     "settings": MessageLookupByLibrary.simpleMessage("Настройки"),
+    "shortcutStop": MessageLookupByLibrary.simpleMessage("Остановить"),
     "show": MessageLookupByLibrary.simpleMessage("Показать"),
     "showLess": MessageLookupByLibrary.simpleMessage("Свернуть"),
     "showMore": MessageLookupByLibrary.simpleMessage("Развернуть"),

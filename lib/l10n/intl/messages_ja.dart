@@ -1152,6 +1152,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "serviceUnavailable": MessageLookupByLibrary.simpleMessage("利用不可"),
     "serviceUnsupportedRegion": MessageLookupByLibrary.simpleMessage("対象外の地域"),
     "settings": MessageLookupByLibrary.simpleMessage("設定"),
+    "shortcutStop": MessageLookupByLibrary.simpleMessage("停止"),
     "show": MessageLookupByLibrary.simpleMessage("表示"),
     "showLess": MessageLookupByLibrary.simpleMessage("折りたたむ"),
     "showMore": MessageLookupByLibrary.simpleMessage("展開"),
