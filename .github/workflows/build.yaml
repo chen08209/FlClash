@@ -305,7 +305,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends \
-            ca-certificates curl wget git unzip xz-utils \
+            ca-certificates curl wget git unzip xz-utils jq \
             build-essential clang cmake ninja-build pkg-config file \
             libgtk-3-dev libayatana-appindicator3-dev libsecret-1-dev \
             libfuse2 patchelf rpm locate python3
