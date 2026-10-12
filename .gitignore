@@ -73,6 +73,9 @@ docs/
 /issue-triage/
 devtools_options.yaml
 
+# SQLite amalgamation fetched at build time (see .github/workflows/fetch-sqlite3.sh)
+/third_party/sqlite3/
+
 # FVM Version Cache
 .fvm/
 .fvmrc

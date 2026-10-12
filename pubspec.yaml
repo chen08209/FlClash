@@ -11,6 +11,16 @@ hooks:
       build_assets: true
     rust_api:
       build_assets: true
+    sqlite3:
+      # The default source downloads a prebuilt libsqlite3.so linked against
+      # glibc 2.33, which won't load on the Ubuntu 20.04 (glibc 2.31) target.
+      # On Linux, compile SQLite from the amalgamation that the workflow fetches
+      # into third_party/sqlite3/, so the bundled libsqlite3.so links the
+      # container's glibc. Other platforms keep the prebuilt binary.
+      source:
+        linux: source
+        default: null
+      path: third_party/sqlite3/sqlite3.c
 
 dependencies:
   flutter:

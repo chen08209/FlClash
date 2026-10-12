@@ -51,6 +51,9 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
+      - name: Fetch SQLite amalgamation
+        run: bash .github/workflows/fetch-sqlite3.sh
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -144,6 +147,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build libgtk-3-dev libayatana-appindicator3-dev libsecret-1-dev
+
+      - name: Fetch SQLite amalgamation
+        if: matrix.platform == 'linux'
+        run: bash .github/workflows/fetch-sqlite3.sh
 
       - name: Enable git long paths (Windows)
         if: matrix.platform == 'windows'
@@ -318,6 +325,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      # The sqlite3 Dart package compiles libsqlite3 from this amalgamation on
+      # Linux (see pubspec.yaml hooks.user_defines.sqlite3), so the bundled
+      # libsqlite3.so links the container's glibc 2.31 instead of the prebuilt
+      # binary that requires glibc 2.33.
+      - name: Fetch SQLite amalgamation
+        run: bash .github/workflows/fetch-sqlite3.sh
 
       - name: Setup Go
         uses: actions/setup-go@v5
