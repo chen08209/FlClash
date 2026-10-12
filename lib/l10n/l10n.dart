@@ -940,6 +940,26 @@ class AppLocalizations {
     return Intl.message('Stopping VPN…', name: 'stopVpn', desc: '', args: []);
   }
 
+  /// `Starting proxy…`
+  String get startProxy {
+    return Intl.message(
+      'Starting proxy…',
+      name: 'startProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stopping proxy…`
+  String get stopProxy {
+    return Intl.message(
+      'Stopping proxy…',
+      name: 'stopProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Local network permission denied: using the gvisor stack, LAN is unreachable.`
   String get localNetworkDeniedTip {
     return Intl.message(

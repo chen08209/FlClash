@@ -762,6 +762,19 @@ void main() {
     expect(container.read(updateParamsProvider).authentication, isEmpty);
   });
 
+  test('shared state tips follow the VPN mode', () async {
+    await AppLocalizations.load(const Locale('en'));
+    container.listen(sharedStateProvider, (_, _) {});
+    expect(container.read(sharedStateProvider).startTip, 'Starting VPN…');
+    expect(container.read(sharedStateProvider).stopTip, 'Stopping VPN…');
+
+    container
+        .read(vpnSettingProvider.notifier)
+        .update((state) => state.copyWith(enable: false));
+    expect(container.read(sharedStateProvider).startTip, 'Starting proxy…');
+    expect(container.read(sharedStateProvider).stopTip, 'Stopping proxy…');
+  });
+
   test('shared state carries the notification stop action switch', () async {
     await AppLocalizations.load(const Locale('en'));
     container.listen(sharedStateProvider, (_, _) {});

@@ -1471,6 +1471,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "start": MessageLookupByLibrary.simpleMessage("Старт"),
     "startFromScratch": MessageLookupByLibrary.simpleMessage("С нуля"),
+    "startProxy": MessageLookupByLibrary.simpleMessage("Запуск прокси…"),
     "startVpn": MessageLookupByLibrary.simpleMessage("Запуск VPN…"),
     "startupAndBackground": MessageLookupByLibrary.simpleMessage(
       "Запуск и фоновая работа",
@@ -1480,6 +1481,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "При отключении используется системный DNS",
     ),
     "stop": MessageLookupByLibrary.simpleMessage("Стоп"),
+    "stopProxy": MessageLookupByLibrary.simpleMessage("Остановка прокси…"),
     "stopVpn": MessageLookupByLibrary.simpleMessage("Остановка VPN…"),
     "strategy": MessageLookupByLibrary.simpleMessage("Стратегия"),
     "style": MessageLookupByLibrary.simpleMessage("Стиль"),

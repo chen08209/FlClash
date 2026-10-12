@@ -1396,6 +1396,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "startFromScratch": MessageLookupByLibrary.simpleMessage(
       "Start from scratch",
     ),
+    "startProxy": MessageLookupByLibrary.simpleMessage("Starting proxy…"),
     "startVpn": MessageLookupByLibrary.simpleMessage("Starting VPN…"),
     "startupAndBackground": MessageLookupByLibrary.simpleMessage(
       "Startup and background",
@@ -1405,6 +1406,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "When disabled, the system DNS is used",
     ),
     "stop": MessageLookupByLibrary.simpleMessage("Stop"),
+    "stopProxy": MessageLookupByLibrary.simpleMessage("Stopping proxy…"),
     "stopVpn": MessageLookupByLibrary.simpleMessage("Stopping VPN…"),
     "strategy": MessageLookupByLibrary.simpleMessage("Strategy"),
     "style": MessageLookupByLibrary.simpleMessage("Style"),
