@@ -318,9 +318,19 @@ static gchar* get_ssid_from_nmcli() {
   if (!spawned || standard_output == nullptr) {
     return nullptr;
   }
+#if GLIB_CHECK_VERSION(2, 70, 0)
   if (!g_spawn_check_wait_status(wait_status, &error)) {
     return nullptr;
   }
+#else
+  // g_spawn_check_wait_status is GLib 2.70+; the older name is the deprecated
+  // alias with identical semantics. Ubuntu 20.04 ships GLib 2.64.
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+  if (!g_spawn_check_exit_status(wait_status, &error)) {
+    return nullptr;
+  }
+  G_GNUC_END_IGNORE_DEPRECATIONS
+#endif
 
   g_auto(GStrv) lines = g_strsplit(standard_output, "\n", -1);
   for (gchar** line = lines; *line != nullptr; ++line) {
