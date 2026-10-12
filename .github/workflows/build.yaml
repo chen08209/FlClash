@@ -300,6 +300,10 @@ jobs:
         # appimagetool is itself an AppImage; containers lack FUSE, so run it
         # extracted instead of loop-mounted.
         APPIMAGE_EXTRACT_AND_RUN: '1'
+        # The bare container's git cannot resolve the submodule VCS state, so
+        # Go's VCS stamping fails with "error obtaining VCS status: exit status
+        # 128". FlClash does not read build VCS info, so disable stamping.
+        GOFLAGS: -buildvcs=false
     steps:
       - name: Install build dependencies
         run: |
