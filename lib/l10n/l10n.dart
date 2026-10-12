@@ -2675,6 +2675,11 @@ class AppLocalizations {
     return Intl.message('Font family', name: 'fontFamily', desc: '', args: []);
   }
 
+  /// `Stop`
+  String get shortcutStop {
+    return Intl.message('Stop', name: 'shortcutStop', desc: '', args: []);
+  }
+
   /// `Toggle`
   String get toggle {
     return Intl.message('Toggle', name: 'toggle', desc: '', args: []);
@@ -3125,6 +3130,16 @@ class AppLocalizations {
     return Intl.message(
       'Save the changes?',
       name: 'saveChanges',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Buttons`
+  String get pageActionButtons {
+    return Intl.message(
+      'Buttons',
+      name: 'pageActionButtons',
       desc: '',
       args: [],
     );

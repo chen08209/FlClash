@@ -1017,6 +1017,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "overwriteTypeCustomDesc": MessageLookupByLibrary.simpleMessage(
       "Custom mode: fully customize proxies, proxy groups and rules",
     ),
+    "pageActionButtons": MessageLookupByLibrary.simpleMessage("Buttons"),
     "palette": MessageLookupByLibrary.simpleMessage("Palette"),
     "password": MessageLookupByLibrary.simpleMessage("Password"),
     "paste": MessageLookupByLibrary.simpleMessage("Paste"),
@@ -1355,6 +1356,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Region not supported",
     ),
     "settings": MessageLookupByLibrary.simpleMessage("Settings"),
+    "shortcutStop": MessageLookupByLibrary.simpleMessage("Stop"),
     "show": MessageLookupByLibrary.simpleMessage("Show"),
     "showLess": MessageLookupByLibrary.simpleMessage("Collapse"),
     "showMore": MessageLookupByLibrary.simpleMessage("Expand"),

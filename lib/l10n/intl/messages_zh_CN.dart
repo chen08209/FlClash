@@ -774,6 +774,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "overwriteTypeCustomDesc": MessageLookupByLibrary.simpleMessage(
       "自定义模式，支持完全自定义修改代理、策略组以及规则",
     ),
+    "pageActionButtons": MessageLookupByLibrary.simpleMessage("按钮"),
     "palette": MessageLookupByLibrary.simpleMessage("调色板"),
     "password": MessageLookupByLibrary.simpleMessage("密码"),
     "paste": MessageLookupByLibrary.simpleMessage("粘贴"),
@@ -1024,6 +1025,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "serviceUnavailable": MessageLookupByLibrary.simpleMessage("不可用"),
     "serviceUnsupportedRegion": MessageLookupByLibrary.simpleMessage("地区不支持"),
     "settings": MessageLookupByLibrary.simpleMessage("设置"),
+    "shortcutStop": MessageLookupByLibrary.simpleMessage("停止"),
     "show": MessageLookupByLibrary.simpleMessage("显示"),
     "showLess": MessageLookupByLibrary.simpleMessage("收起"),
     "showMore": MessageLookupByLibrary.simpleMessage("展开"),

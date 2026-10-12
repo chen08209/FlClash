@@ -62,6 +62,27 @@ void main() {
       expect(restored.excludeSSIDs, ['home']);
     });
 
+    test(
+      'page actions and bottom bar restore independently from preferences',
+      () async {
+        for (final floating in [false, true]) {
+          for (final floatingBar in [false, true]) {
+            final config = Config(
+              themeProps: defaultThemeProps,
+              appSettingProps: AppSettingProps(
+                floatingPageActions: floating,
+                floatingNavigationBar: floatingBar,
+              ),
+            );
+            expect(await preferences.saveConfig(config), isTrue);
+            final restored = await preferences.getConfig();
+            expect(restored!.appSettingProps.floatingPageActions, floating);
+            expect(restored.appSettingProps.floatingNavigationBar, floatingBar);
+          }
+        }
+      },
+    );
+
     test('getConfigMap returns null for malformed JSON', () async {
       await store.setString(configKey, 'not-json');
 

@@ -1,4 +1,6 @@
 import 'package:fl_clash/common/boot_record.dart';
+import 'package:fl_clash/l10n/l10n.dart';
+import 'dart:ui';
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:flutter/services.dart';
@@ -18,6 +20,26 @@ void main() {
         .setMockMethodCallHandler(channel, null);
     App().clearPackageIconCache();
   });
+
+  test(
+    'preserves toggle and adds start and stop dynamic shortcut labels',
+    () async {
+      await AppLocalizations.load(const Locale('zh', 'CN'));
+      MethodCall? receivedCall;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            receivedCall = call;
+            return true;
+          });
+      expect(await App().initShortcuts(), isTrue);
+      expect(receivedCall?.method, 'initShortcuts');
+      expect(receivedCall?.arguments, {
+        'toggle': '切换',
+        'start': '启动',
+        'stop': '停止',
+      });
+    },
+  );
 
   test('reads previous execution crash state from Android', () async {
     MethodCall? receivedCall;

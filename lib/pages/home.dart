@@ -165,8 +165,8 @@ class _BodyPadding extends StatelessWidget {
     return MediaQuery.removePadding(
       removeTop: false,
       removeBottom: isMobile,
-      removeLeft: isMobile,
-      removeRight: isMobile,
+      removeLeft: false,
+      removeRight: false,
       context: context,
       child: child,
     );

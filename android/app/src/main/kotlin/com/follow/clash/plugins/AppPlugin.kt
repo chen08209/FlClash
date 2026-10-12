@@ -23,6 +23,7 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.net.toUri
 import com.follow.clash.R
+import com.follow.clash.ServiceActionActivity
 import com.follow.clash.common.Components
 import com.follow.clash.common.GlobalState
 import com.follow.clash.common.PendingCallback
@@ -139,11 +140,13 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             }
 
             "initShortcuts" -> {
-                val label = call.arguments as? String
-                if (label == null) {
-                    result.error("INVALID_ARGUMENT", "Shortcut label must be a string", null)
+                val labels = listOf("toggle", "start", "stop").associateWith {
+                    call.argument<String>(it).orEmpty()
+                }
+                if (labels.values.any { it.isBlank() }) {
+                    result.error("INVALID_ARGUMENT", "All shortcut labels are required", null)
                 } else {
-                    initShortcuts(label)
+                    initShortcuts(labels)
                     result.success(true)
                 }
             }
@@ -218,22 +221,21 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         }
     }
 
-    private fun initShortcuts(label: String) {
-        val shortcut = with(ShortcutInfoCompat.Builder(GlobalState.application, "toggle")) {
-            setShortLabel(label)
-            setIcon(
-                IconCompat.createWithResource(
-                    GlobalState.application,
-                    R.mipmap.ic_launcher_round,
-                ),
-            )
-            setIntent(QuickAction.TOGGLE.quickIntent)
-            build()
-        }
-        ShortcutManagerCompat.setDynamicShortcuts(
-            GlobalState.application,
-            listOf(shortcut),
+    private fun initShortcuts(labels: Map<String, String>) {
+        val context = GlobalState.application
+        val intents = listOf(
+            "toggle" to QuickAction.TOGGLE.quickIntent,
+            "start" to QuickAction.START.quickIntent.setClass(context, ServiceActionActivity::class.java),
+            "stop" to QuickAction.STOP.quickIntent.setClass(context, ServiceActionActivity::class.java),
         )
+        val shortcuts = intents.map { (id, intent) ->
+            ShortcutInfoCompat.Builder(context, id)
+                .setShortLabel(labels.getValue(id))
+                .setIcon(IconCompat.createWithResource(context, R.mipmap.ic_launcher_round))
+                .setIntent(intent)
+                .build()
+        }
+        ShortcutManagerCompat.setDynamicShortcuts(context, shortcuts)
     }
 
     private fun isBatteryOptimizationDisabled(): Boolean {

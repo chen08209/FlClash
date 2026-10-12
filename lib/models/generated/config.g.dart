@@ -29,6 +29,7 @@ _AppSettingProps _$AppSettingPropsFromJson(
       ) ??
       TabAnimation.slide,
   floatingNavigationBar: json['floatingNavigationBar'] as bool? ?? true,
+  floatingPageActions: json['floatingPageActions'] as bool? ?? false,
   autoCheckUpdate: json['autoCheckUpdate'] as bool? ?? true,
   sidebarExpanded:
       _readSidebarExpanded(json, 'sidebarExpanded') as bool? ?? true,
@@ -82,6 +83,7 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'testUrl': instance.testUrl,
       'tabAnimation': _$TabAnimationEnumMap[instance.tabAnimation]!,
       'floatingNavigationBar': instance.floatingNavigationBar,
+      'floatingPageActions': instance.floatingPageActions,
       'autoCheckUpdate': instance.autoCheckUpdate,
       'sidebarExpanded': instance.sidebarExpanded,
       'disclaimerAccepted': instance.disclaimerAccepted,
