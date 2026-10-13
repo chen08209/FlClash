@@ -120,20 +120,20 @@ ParsedInput<String> parseListInput(
 }
 
 /// Keys never carry whitespace and values may carry `:` (`geosite:cn`,
-/// `tls://1.1.1.1:853`, IPv6), so the first run of whitespace splits a line
+/// `tls://1.1.1.1:853`, IPv6), so whitespace or an earlier `=` splits a line
 /// and a bare `:` never does. A key may end in `:` or `=` and a value may
 /// start with `=` so YAML and `key=value` lines parse without cleanup.
 MapEntry<String, String>? _splitMapLine(String line) {
   final whitespaceIndex = line.indexOf(_whitespace);
+  final equalsIndex = line.indexOf('=');
   String key;
   String value;
-  if (whitespaceIndex == -1) {
-    final equalsIndex = line.indexOf('=');
-    if (equalsIndex == -1) {
-      return null;
-    }
+  if (equalsIndex != -1 &&
+      (whitespaceIndex == -1 || equalsIndex < whitespaceIndex)) {
     key = line.substring(0, equalsIndex);
-    value = line.substring(equalsIndex + 1);
+    value = line.substring(equalsIndex + 1).trim();
+  } else if (whitespaceIndex == -1) {
+    return null;
   } else {
     key = line.substring(0, whitespaceIndex);
     value = line.substring(whitespaceIndex).trim();

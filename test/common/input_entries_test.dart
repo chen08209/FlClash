@@ -61,6 +61,45 @@ void main() {
   });
 
   group('parseMapInput', () {
+    test(
+      'keeps spaces in values assigned without whitespace before equals',
+      () {
+        final parsed = parseMapInput(
+          'geosite:cn=https://dns.google/dns-query#Proxy A\n'
+          'local=127.0.0.1, ::1',
+        );
+
+        expect(Map.fromEntries(parsed.entries), {
+          'geosite:cn': 'https://dns.google/dns-query#Proxy A',
+          'local': '127.0.0.1, ::1',
+        });
+        expect(parsed.isValid, isTrue);
+      },
+    );
+
+    test(
+      'does not split equals that belong to a whitespace-delimited value',
+      () {
+        final parsed = parseMapInput(
+          'geosite:cn https://dns.google/dns-query#h3=true&proxy=Proxy A',
+        );
+
+        expect(Map.fromEntries(parsed.entries), {
+          'geosite:cn': 'https://dns.google/dns-query#h3=true&proxy=Proxy A',
+        });
+      },
+    );
+
+    test('uses the parsed assignment key to skip existing values', () {
+      final parsed = parseMapInput(
+        'local=127.0.0.1, ::1',
+        existingKeys: {'local'},
+      );
+
+      expect(parsed.entries, isEmpty);
+      expect(parsed.skippedExisting, 1);
+    });
+
     test('splits on the first whitespace and keeps colons', () {
       final parsed = parseMapInput(
         'geosite:cn tls://1.1.1.1:853\n'
