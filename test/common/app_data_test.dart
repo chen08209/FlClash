@@ -6,19 +6,18 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/database/database.dart' as db;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../helpers/app_paths.dart';
+import '../helpers/preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory home;
 
-  setUpAll(() {
+  setUpAll(() async {
     home = Directory.systemTemp.createTempSync('flclash-app-data-');
-    AppPath.supportDirectory = () async => home;
-    AppPath.temporaryDirectory = () async => home;
-    AppPath.cacheDirectory = () async => home;
-    AppPath.downloadDirectory = () async => home;
+    await useAppPaths(home);
   });
 
   tearDownAll(() {
@@ -26,7 +25,7 @@ void main() {
   });
 
   test('clears what a startup failure left behind without the Core', () async {
-    SharedPreferences.setMockInitialValues({});
+    await mockPreferences();
     await preferences.setVersion(7);
     final databaseFile = File(await appPath.databasePath)
       ..writeAsStringSync('not a database');
@@ -35,7 +34,9 @@ void main() {
     final broken = db.Database(
       LazyDatabase(() async => throw const FileSystemException('corrupt')),
     );
+    final previous = db.database;
     db.database = broken;
+    addTearDown(() => db.database = previous);
     await expectLater(broken.profilesDao.query().get(), throwsA(anything));
 
     await clearAppData();

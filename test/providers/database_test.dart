@@ -5,8 +5,10 @@ import 'package:drift/native.dart';
 // notifier, so the schema side is imported behind a prefix.
 import 'package:fl_clash/database/database.dart' as db;
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:flutter_test/flutter_test.dart';
@@ -17,6 +19,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// fails. These tests drive the real drift schema on an in-memory executor so
 /// both halves — the optimistic value and the rollback — are observable.
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   const profileId = 1;
 
   late db.Database testDatabase;
@@ -28,6 +31,8 @@ void main() {
     autoUpdateDuration: Duration.zero,
     order: order,
   );
+
+  setUpAll(() => AppLocalizations.load(const Locale('en')));
 
   setUp(() async {
     testDatabase = db.Database(NativeDatabase.memory());
@@ -48,14 +53,19 @@ void main() {
   }
 
   /// Most call sites wrap the persist step in `unawaited(...)`, so the failure
-  /// never reaches the caller — it lands in the zone handler, and only after
-  /// the rollback has already restored the snapshot.
-  Future<Object> captureWriteFailure(FutureOr<void> Function() body) {
-    final completer = Completer<Object>();
-    runZonedGuarded(() async => body(), (error, _) {
-      if (!completer.isCompleted) completer.complete(error);
-    });
-    return completer.future.timeout(const Duration(seconds: 5));
+  /// never reaches the caller: the notifier logs it, and only after the
+  /// rollback has already restored the snapshot.
+  Future<void> captureWriteFailure(void Function() body) {
+    final reported = Completer<void>();
+    final print = debugPrint;
+    debugPrint = (message, {wrapWidth}) {
+      if (message?.contains('Optimistic database write failed') ?? false) {
+        if (!reported.isCompleted) reported.complete();
+      }
+    };
+    addTearDown(() => debugPrint = print);
+    body();
+    return reported.future.timeout(const Duration(seconds: 5));
   }
 
   /// `customStatement` does not raise a drift table-update notification, so the

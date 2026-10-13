@@ -1,7 +1,5 @@
 import 'dart:io';
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -17,31 +15,17 @@ import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/route_state.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../helpers/app_paths.dart';
 import '../helpers/test_profiles.dart';
 
 class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
-
-class _FakePathProvider extends PathProviderPlatform {
-  final String root;
-
-  _FakePathProvider(this.root);
-
-  @override
-  Future<String?> getTemporaryPath() async => root;
-
-  @override
-  Future<String?> getApplicationSupportPath() async => root;
-
-  @override
-  Future<String?> getApplicationCachePath() async => root;
-}
 
 const _nullProfileSetupState = SetupState(
   profileId: null,
@@ -118,7 +102,6 @@ Future<ProviderContainer> _pumpCoreManager(
         supportedLocales: AppLocalizations.delegate.supportedLocales,
         builder: (context, child) {
           globalState.measure = Measure.of(context, 1);
-          globalState.theme = CommonTheme.of(context, 1);
           return StatusManager(child: child!);
         },
         home: const CoreManager(child: SizedBox()),
@@ -161,9 +144,7 @@ void main() {
     profileSwitchTempDir = Directory.systemTemp.createTempSync(
       'core_manager_test',
     );
-    PathProviderPlatform.instance = _FakePathProvider(
-      profileSwitchTempDir.path,
-    );
+    await useAppPaths(profileSwitchTempDir);
   });
 
   tearDownAll(() {

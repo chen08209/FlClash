@@ -17,6 +17,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yaml/yaml.dart';
 
+import '../helpers/app_paths.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
@@ -32,10 +33,7 @@ void main() {
   setUpAll(() async {
     await AppLocalizations.load(const Locale('en'));
     home = Directory.systemTemp.createTempSync('flclash-profiles-action-');
-    AppPath.supportDirectory = () async => home;
-    AppPath.temporaryDirectory = () async => home;
-    AppPath.cacheDirectory = () async => home;
-    AppPath.downloadDirectory = () async => home;
+    await useAppPaths(home);
   });
 
   tearDownAll(() {

@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../helpers/preferences.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
@@ -28,14 +29,13 @@ class _RecordingSetupAction extends SetupAction {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  SharedPreferences.setMockInitialValues({});
 
   late ProviderContainer container;
   late SharedPreferences store;
 
   setUp(() async {
+    await mockPreferences();
     store = await SharedPreferences.getInstance();
-    await store.clear();
     _RecordingSetupAction.requests.clear();
     container = ProviderContainer(
       overrides: [
