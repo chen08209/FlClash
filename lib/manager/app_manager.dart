@@ -54,14 +54,10 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     ref.listenManual(suspendProvider, (prev, next) {
       final isStart = ref.read(isStartProvider);
       if (prev != next && isStart && !ref.read(safeModeProvider)) {
-        debouncer.call(FunctionTag.suspend, () async {
-          final core = ref.read(coreHandlerProvider);
-          if (next == true) {
-            await core.stopListener();
-          } else {
-            await core.startListener();
-          }
-        });
+        debouncer.call(
+          FunctionTag.suspend,
+          ref.read(setupActionProvider.notifier).syncListener,
+        );
       }
     });
     final systemDns = systemDnsCoordinator;
@@ -74,6 +70,7 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
 
   @override
   void dispose() {
+    debouncer.cancel(FunctionTag.suspend);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

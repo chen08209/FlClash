@@ -75,6 +75,7 @@ class SetupAction extends _$SetupAction {
     if (!running) {
       _startTime = null;
       debouncer.cancel(FunctionTag.applyProfile);
+      debouncer.cancel(FunctionTag.suspend);
       _updateRunTime();
       return;
     }
@@ -213,6 +214,17 @@ class SetupAction extends _$SetupAction {
         return;
       }
       await setCoreRunning(request.running);
+    });
+  }
+
+  Future<void> syncListener() {
+    return _listenerScheduler.run(() async {
+      if (!ref.mounted ||
+          !ref.read(isStartProvider) ||
+          ref.read(safeModeProvider)) {
+        return;
+      }
+      await setCoreRunning(!ref.read(suspendProvider));
     });
   }
 
