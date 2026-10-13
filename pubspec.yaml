@@ -91,7 +91,6 @@ dev_dependencies:
   sqlite3: ^3.7.0
   cross_file: ^0.3.5+5
   mocktail: ^1.0.5
-  path_provider_platform_interface: ^2.1.3
 
 flutter:
   uses-material-design: true

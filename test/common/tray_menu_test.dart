@@ -17,9 +17,10 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:tray/tray.dart';
+
+import '../helpers/app_paths.dart';
 
 const _channel = MethodChannel('tray');
 
@@ -39,21 +40,6 @@ HotKeyAction _bind(HotAction action, PhysicalKeyboardKey key) {
     key: key.usbHidUsage,
     modifiers: const {KeyboardModifier.control, KeyboardModifier.shift},
   );
-}
-
-class _FakePathProvider extends PathProviderPlatform {
-  _FakePathProvider(this.root);
-
-  final String root;
-
-  @override
-  Future<String?> getTemporaryPath() async => root;
-
-  @override
-  Future<String?> getApplicationSupportPath() async => root;
-
-  @override
-  Future<String?> getApplicationCachePath() async => root;
 }
 
 TrayState _trayState({
@@ -106,7 +92,7 @@ void main() {
 
   setUpAll(() async {
     root = Directory.systemTemp.createTempSync('tray_menu_test');
-    PathProviderPlatform.instance = _FakePathProvider(root.path);
+    await useAppPaths(root);
     await AppLocalizations.load(const Locale('en'));
   });
 

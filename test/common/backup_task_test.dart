@@ -10,22 +10,8 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
-import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
-class _FakePathProvider extends PathProviderPlatform {
-  final String root;
-
-  _FakePathProvider(this.root);
-
-  @override
-  Future<String?> getTemporaryPath() async => root;
-
-  @override
-  Future<String?> getApplicationSupportPath() async => root;
-
-  @override
-  Future<String?> getApplicationCachePath() async => root;
-}
+import '../helpers/app_paths.dart';
 
 /// The public entry points hand their work to a background isolate, which
 /// cannot reach the mocked platform channels, so the tests drive the worker
@@ -40,7 +26,7 @@ void main() {
     // already-existing temp and cache dirs the platform hands out.
     Directory(join(root.path, 'tmp')).createSync(recursive: true);
     Directory(join(root.path, 'archive')).createSync(recursive: true);
-    PathProviderPlatform.instance = _FakePathProvider(root.path);
+    await useAppPaths(root);
   });
 
   tearDownAll(() {

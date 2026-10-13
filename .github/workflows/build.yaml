@@ -66,7 +66,7 @@ jobs:
         run: dart run tool/changelog.dart verify
 
       - name: Run tests
-        run: flutter test --reporter expanded --coverage
+        run: dart run tool/test.dart -- --reporter expanded --coverage
 
       - name: Check coverage
         run: dart run tool/check_coverage.dart coverage/lcov.info 75

@@ -7,7 +7,8 @@ import 'package:fl_clash/common/dav_client.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
-import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+
+import '../helpers/app_paths.dart';
 
 class _FakeDAVClient extends DAVClient {
   _FakeDAVClient(super.dav, this.result, [this.onPing]);
@@ -20,21 +21,6 @@ class _FakeDAVClient extends DAVClient {
     onPing?.call();
     return result;
   }
-}
-
-class _FakePathProvider extends PathProviderPlatform {
-  final String root;
-
-  _FakePathProvider(this.root);
-
-  @override
-  Future<String?> getTemporaryPath() async => root;
-
-  @override
-  Future<String?> getApplicationSupportPath() async => root;
-
-  @override
-  Future<String?> getApplicationCachePath() async => root;
 }
 
 class _RecordedRequest {
@@ -213,11 +199,9 @@ void main() {
     late Directory root;
     HttpOverrides? testOverrides;
 
-    // appPath resolves the data directory once per process, so every test in
-    // this group has to share one root.
-    setUpAll(() {
+    setUpAll(() async {
       root = Directory.systemTemp.createTempSync('dav_client_test');
-      PathProviderPlatform.instance = _FakePathProvider(root.path);
+      await useAppPaths(root);
     });
 
     tearDownAll(() {
