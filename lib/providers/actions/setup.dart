@@ -5,12 +5,12 @@ enum _SetupTaskResult { completed, handoffToCoreRestart, failed }
 class _RunRequest {
   final bool running;
   final bool initialize;
-  final DateTime? previousStartTime;
+  final DateTime? startTime;
 
   const _RunRequest({
     required this.running,
     required this.initialize,
-    required this.previousStartTime,
+    required this.startTime,
   });
 }
 
@@ -23,6 +23,7 @@ class SetupAction extends _$SetupAction {
   final _listenerScheduler = SerialTaskScheduler();
   _RunRequest? _latestRunRequest;
   DateTime? _startTime;
+  DateTime? _confirmedStartTime;
 
   bool get _isRunning => _startTime != null && _startTime!.isBeforeNow;
 
@@ -119,6 +120,7 @@ class SetupAction extends _$SetupAction {
 
   Future<void> _updateStartTime() async {
     _startTime = await service?.getRunTime();
+    _confirmedStartTime = _startTime;
   }
 
   Future<void> initStatus() async {
@@ -146,9 +148,10 @@ class SetupAction extends _$SetupAction {
     final request = _RunRequest(
       running: running,
       initialize: running && initialize,
-      previousStartTime: _startTime,
+      startTime: running ? _startTime ?? DateTime.now() : null,
     );
     _latestRunRequest = request;
+    _startTime = request.startTime;
     _setLocalRunning(running);
     if (request.initialize) {
       globalState.needInitStatus = false;
@@ -206,13 +209,17 @@ class SetupAction extends _$SetupAction {
       if (!_isCurrent(request)) {
         return;
       }
-      if (request.running && ref.read(suspendProvider)) {
+      if ((request.running && ref.read(suspendProvider)) ||
+          ref.read(safeModeProvider)) {
+        _confirmedStartTime = request.startTime;
         return;
       }
-      if (ref.read(safeModeProvider)) {
-        return;
+      if (!await setCoreRunning(request.running)) {
+        throw StateError(
+          'Core listener ${request.running ? 'start' : 'stop'} was not confirmed',
+        );
       }
-      await setCoreRunning(request.running);
+      _confirmedStartTime = request.startTime;
     });
   }
 
@@ -220,8 +227,8 @@ class SetupAction extends _$SetupAction {
     if (!_isCurrent(request)) {
       return;
     }
-    _startTime = request.previousStartTime;
-    _setLocalRunning(!request.running);
+    _startTime = _confirmedStartTime;
+    _setLocalRunning(_confirmedStartTime != null);
   }
 
   bool _isCurrent(_RunRequest request) => identical(_latestRunRequest, request);
