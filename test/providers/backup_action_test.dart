@@ -13,7 +13,9 @@ import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 import 'package:riverpod/riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../helpers/app_paths.dart';
+import '../helpers/preferences.dart';
 
 Profile _profile(int id, String label) => Profile(
   id: id,
@@ -29,13 +31,10 @@ void main() {
   late Directory home;
 
   setUpAll(() async {
-    SharedPreferences.setMockInitialValues({'version': 1});
+    await mockPreferences({'version': 1});
     await AppLocalizations.load(const Locale('en'));
     home = Directory.systemTemp.createTempSync('flclash-backup-action-');
-    AppPath.supportDirectory = () async => home;
-    AppPath.temporaryDirectory = () async => home;
-    AppPath.cacheDirectory = () async => home;
-    AppPath.downloadDirectory = () async => home;
+    await useAppPaths(home);
   });
 
   tearDownAll(() {

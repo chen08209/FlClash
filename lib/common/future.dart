@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/ui/ui.dart';
 
 extension FutureExt<T> on Future<T> {
   Future<T> withTimeout({
@@ -34,6 +34,24 @@ extension FutureExt<T> on Future<T> {
         }
       },
     );
+  }
+}
+
+/// Resolves once, then hands out the value rather than the future that
+/// resolved it: a completed future still runs its listeners in the zone it was
+/// created in, which under test may be a fake-async zone nothing drives.
+class ResolveOnce<T> {
+  final Future<T> Function() _resolve;
+  Future<T>? _pending;
+  ({T value})? _resolved;
+
+  ResolveOnce(this._resolve);
+
+  Future<T> get value async {
+    if (_resolved case (:final value)) return value;
+    final value = await (_pending ??= _resolve());
+    _resolved = (value: value);
+    return value;
   }
 }
 

@@ -23,8 +23,8 @@ String _iconSetJson(String name, List<String> icons) => json.encode({
   ],
 });
 
-/// Real downloads over loopback: the test binding would answer every request
-/// with a 400, so this suite runs without it.
+/// Real downloads over loopback: the test binding answers every request with a
+/// 400, so its override is lifted while a test runs.
 void main() {
   late HttpServer server;
   late String body;
@@ -56,6 +56,9 @@ void main() {
   tearDownAll(() => server.close(force: true));
 
   setUp(() {
+    final bindingOverrides = HttpOverrides.current;
+    HttpOverrides.global = null;
+    addTearDown(() => HttpOverrides.global = bindingOverrides);
     held = null;
     testDatabase = db.Database(NativeDatabase.memory());
     db.database = testDatabase;

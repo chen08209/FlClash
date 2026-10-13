@@ -14,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../helpers/app_paths.dart';
 import '../helpers/context_menu.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
@@ -89,11 +90,9 @@ ProviderContainer _containerFor(
 void main() {
   late Directory home;
 
-  setUpAll(() {
+  setUpAll(() async {
     home = Directory.systemTemp.createTempSync('flclash-rule-sets-view-');
-    AppPath.supportDirectory = () async => home;
-    AppPath.temporaryDirectory = () async => home;
-    AppPath.cacheDirectory = () async => home;
+    await useAppPaths(home);
   });
 
   tearDownAll(() {
