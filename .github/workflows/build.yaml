@@ -419,6 +419,16 @@ jobs:
         if: matrix.platform == 'macos' && matrix.arch == 'amd64'
         run: plutil -replace FLTEnableImpeller -bool NO macos/Runner/Info.plist
 
+      # The core embeds this bundle and FlClashHttpOverrides.trustCoreRoots loads it for Dart.
+      - name: Fetch CA certificates
+        shell: bash
+        run: |
+          bundle=core/Clash.Meta/component/ca/ca-certificates.crt
+          curl -fsSL --retry 3 -o "$bundle" https://curl.se/ca/cacert.pem
+          count=$(grep -c 'BEGIN CERTIFICATE' "$bundle")
+          echo "$count CA certificates"
+          test "$count" -ge 100
+
       - name: Setup
         env:
           ANDROID_NDK_HOME: ${{ steps.build-ndk.outputs.ndk-path }}
