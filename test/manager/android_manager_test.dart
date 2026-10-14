@@ -2,8 +2,11 @@ import 'dart:convert';
 
 import 'package:fl_clash/manager/android_manager.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/plugins/service.dart';
+import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +15,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+
+class _RecordingSetupAction extends SetupAction {
+  static final requests = <bool>[];
+
+  @override
+  Future<bool> setRunning(bool running, {bool initialize = false}) async {
+    requests.add(running);
+    return true;
+  }
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -23,8 +36,17 @@ void main() {
   setUp(() async {
     store = await SharedPreferences.getInstance();
     await store.clear();
+    _RecordingSetupAction.requests.clear();
     container = ProviderContainer(
-      overrides: [profilesProvider.overrideWith(TestProfiles.new)],
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        setupActionProvider.overrideWith(_RecordingSetupAction.new),
+        // Bypassing private addresses computes the routes in Isolate.run, which
+        // the fake clock never lets finish.
+        networkSettingProvider.overrideWithBuild(
+          (_, _) => const NetworkProps(bypassPrivateRoute: false),
+        ),
+      ],
     );
     globalState.container = container;
   });
@@ -32,6 +54,7 @@ void main() {
   tearDown(() => container.dispose());
 
   Future<void> pumpAndroidManager(WidgetTester tester) async {
+    await container.read(vpnOptionsProvider.future);
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -48,6 +71,21 @@ void main() {
 
     expect(find.byKey(const Key('child')), findsOneWidget);
     expect(tester.takeException(), null);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a stop the service reports turns the running state off', (
+    tester,
+  ) async {
+    await pumpAndroidManager(tester);
+    final listener =
+        tester.state(find.byType(AndroidManager)) as ServiceListener;
+
+    listener.onServiceStopped();
+    await tester.pump();
+
+    expect(_RecordingSetupAction.requests, [false]);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

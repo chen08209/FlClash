@@ -8,11 +8,30 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/route_state.dart';
 import 'package:fl_clash/providers/state.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:riverpod/riverpod.dart';
 
 class _MockCore extends Mock implements CoreHandlerInterface {}
+
+class _RunStateReader extends ConsumerStatefulWidget {
+  const _RunStateReader();
+
+  @override
+  ConsumerState<_RunStateReader> createState() => _RunStateReaderState();
+}
+
+class _RunStateReaderState extends ConsumerState<_RunStateReader> {
+  @override
+  void initState() {
+    super.initState();
+    ref.read(isStartProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}
 
 const _picks = {'Proxy': 'Nested', 'Nested': 'HK-01', 'Auto': 'JP-02'};
 
@@ -108,6 +127,7 @@ void main() {
       bool init = true,
       CoreStatus status = CoreStatus.connected,
       bool running = true,
+      bool watched = true,
     }) {
       final container = ProviderContainer(
         overrides: [
@@ -119,7 +139,9 @@ void main() {
         ],
       );
       addTearDown(container.dispose);
-      container.listen(routeTrackerProvider, (_, _) {});
+      if (watched) {
+        container.listen(routeTrackerProvider, (_, _) {});
+      }
       return container;
     }
 
@@ -138,6 +160,32 @@ void main() {
 
       expect(stateOf(container).proxied, isTrue);
     });
+
+    testWidgets(
+      'a widget reading a run state the unwatched tracker missed mounts cleanly',
+      (tester) async {
+        final container = build(running: false, watched: false);
+        trackerOf(container);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const SizedBox.shrink(),
+          ),
+        );
+        container.read(runTimeProvider.notifier).value = 1;
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const _RunStateReader(),
+          ),
+        );
+        expect(tester.takeException(), isNull);
+
+        await tester.pump();
+        expect(stateOf(container).proxied, isTrue);
+      },
+    );
 
     test(
       'reads the Core once something watches and lets go when nothing does',

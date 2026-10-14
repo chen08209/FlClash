@@ -52,7 +52,7 @@ class TrackerInfoItem extends ConsumerWidget {
     );
     return RecordListItem(
       onTap: () {
-        showExtend(
+        showInSheet<void>(
           context,
           builder: (_) {
             return CommonScaffold(
@@ -63,29 +63,11 @@ class TrackerInfoItem extends ConsumerWidget {
         );
       },
       header: _buildHeader(context),
-      body: _buildBody(showIcon: showIcon),
-    );
-  }
-
-  Widget _buildBody({required bool showIcon}) {
-    final process = trackerInfo.metadata.process;
-    final body = _TrackerInfoBody(
-      trackerInfo: trackerInfo,
-      onClickKeyword: onClickKeyword,
-    );
-    if (!showIcon || process.isEmpty) {
-      return body;
-    }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 12,
-      children: [
-        GestureDetector(
-          onTap: () => onClickKeyword?.call(process),
-          child: PackageIcon(packageName: process, size: 40),
-        ),
-        Expanded(child: body),
-      ],
+      body: _TrackerInfoBody(
+        trackerInfo: trackerInfo,
+        showIcon: showIcon,
+        onClickKeyword: onClickKeyword,
+      ),
     );
   }
 
@@ -128,7 +110,7 @@ class TrackerInfoItem extends ConsumerWidget {
         ],
       ),
       children: [
-        Text(trackerInfo.start.getLastUpdateTimeDesc(context)),
+        Text(trackerInfo.start.getLastUpdateTimeDesc(context, compact: true)),
         network,
       ],
     );
@@ -137,9 +119,44 @@ class TrackerInfoItem extends ConsumerWidget {
 
 class _TrackerInfoBody extends StatelessWidget {
   final TrackerInfo trackerInfo;
+  final bool showIcon;
   final Function(String)? onClickKeyword;
 
-  const _TrackerInfoBody({required this.trackerInfo, this.onClickKeyword});
+  const _TrackerInfoBody({
+    required this.trackerInfo,
+    required this.showIcon,
+    this.onClickKeyword,
+  });
+
+  Widget _buildTitle(RecordTextStyles styles) {
+    final metadata = trackerInfo.metadata;
+    final title = Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: _endpointText(trackerInfo.title, metadata.destinationPort),
+            style: styles.primary?.copyWith(fontWeight: FontWeight.w500),
+          ),
+          if (metadata.host.isNotEmpty && metadata.destinationIP.isNotEmpty)
+            TextSpan(text: '  ${metadata.destinationIP}', style: styles.muted),
+        ],
+      ),
+    );
+    final process = metadata.process;
+    if (!showIcon || process.isEmpty) {
+      return title;
+    }
+    return Row(
+      spacing: 8,
+      children: [
+        GestureDetector(
+          onTap: () => onClickKeyword?.call(process),
+          child: PackageIcon(packageName: process, size: 24),
+        ),
+        Flexible(child: title),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -155,24 +172,7 @@ class _TrackerInfoBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 4,
       children: [
-        Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: _endpointText(
-                  trackerInfo.title,
-                  metadata.destinationPort,
-                ),
-                style: styles.primary?.copyWith(fontWeight: FontWeight.w500),
-              ),
-              if (metadata.host.isNotEmpty && metadata.destinationIP.isNotEmpty)
-                TextSpan(
-                  text: '  ${metadata.destinationIP}',
-                  style: styles.muted,
-                ),
-            ],
-          ),
-        ),
+        _buildTitle(styles),
         Wrap(
           spacing: 6,
           runSpacing: 4,

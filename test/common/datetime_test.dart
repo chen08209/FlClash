@@ -103,6 +103,18 @@ void main() {
               .getLastUpdateTimeDesc(buildContext),
           l10n.daysAgo(4),
         );
+        expect(
+          now
+              .subtract(const Duration(minutes: 5))
+              .getLastUpdateTimeDesc(buildContext, compact: true),
+          '5m ago',
+        );
+        expect(
+          now
+              .subtract(const Duration(days: 60))
+              .getLastUpdateTimeDesc(buildContext, compact: true),
+          '2mo ago',
+        );
       },
     );
   });

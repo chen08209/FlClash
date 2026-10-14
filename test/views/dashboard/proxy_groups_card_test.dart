@@ -5,6 +5,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/dashboard/widget_metrics.dart';
 import 'package:fl_clash/views/dashboard/widgets/proxy_groups.dart';
 import 'package:fl_clash/views/dashboard/widgets/row_card.dart';
+import 'package:fl_clash/views/proxies/card.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,8 +35,13 @@ void main() {
 
   tearDown(() => container.dispose());
 
-  Future<void> pumpCard(WidgetTester tester, {double unitHeight = 80}) async {
-    tester.view.physicalSize = const Size(1200, 1000);
+  Future<void> pumpCard(
+    WidgetTester tester, {
+    double unitHeight = 80,
+    Size size = const Size(1200, 1000),
+  }) async {
+    container.read(viewSizeProvider.notifier).value = size;
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -161,42 +167,69 @@ void main() {
     await expectWheelRestsOnRow(tester);
   });
 
-  testWidgets('nodes settle on rows of a new height', (tester) async {
-    container.read(groupsProvider.notifier).value = [
-      _group('Nodes', [for (var index = 0; index < 20; index++) 'N$index']),
-    ];
-    await pumpCard(tester);
-    await tester.tap(find.text('Nodes', findRichText: true));
-    await tester.pumpAndSettle();
-    await resizeRows(tester);
-
-    await expectWheelRestsOnRow(tester);
-  });
-
-  testWidgets('a tapped group swaps in its nodes and back again', (
-    tester,
-  ) async {
+  testWidgets('a tapped group opens its nodes in a sheet and the card keeps '
+      'its groups', (tester) async {
     container.read(groupsProvider.notifier).value = [
       _group('Auto', ['HK-01']),
       _group('Media', ['JP-01', 'US-01']),
     ];
     await pumpCard(tester);
 
-    expect(find.byType(CommonCard), findsNothing);
+    await tester.tap(find.text('Media', findRichText: true));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ProxyCard), findsNWidgets(2));
+    expect(find.text('JP-01', findRichText: true), findsOneWidget);
+    expect(find.text('US-01', findRichText: true), findsOneWidget);
+    expect(find.text('Auto', findRichText: true), findsOneWidget);
+  });
+
+  testWidgets('a group with few nodes opens a sheet only as tall as them', (
+    tester,
+  ) async {
+    const size = Size(400, 800);
+    container.read(groupsProvider.notifier).value = [
+      _group('Media', ['JP-01', 'US-01']),
+    ];
+    await pumpCard(tester, size: size);
 
     await tester.tap(find.text('Media', findRichText: true));
     await tester.pumpAndSettle();
 
-    expect(find.text('Auto', findRichText: true), findsNothing);
-    expect(find.text('Media'), findsOneWidget);
-    expect(find.text('JP-01', findRichText: true), findsOneWidget);
-    expect(find.text('US-01', findRichText: true), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.byType(SheetDragHandle)).dy,
+      greaterThan(size.height * (1 - snapSheetDetents.first)),
+    );
+    expect(
+      tester.getBottomLeft(find.byType(ProxyCard).last).dy,
+      lessThan(size.height),
+    );
+  });
 
-    await tester.tap(find.text('Media'));
+  testWidgets('a mouse over a long group opening at its selected node '
+      'raises nothing', (tester) async {
+    const size = Size(400, 800);
+    container.read(groupsProvider.notifier).value = [
+      _group('Media', [
+        for (var index = 0; index < 60; index++) 'N$index',
+      ]).copyWith(now: 'N50'),
+    ];
+    await pumpCard(tester, size: size);
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset(size.width / 2, size.height - 40));
+
+    await tester.tap(find.text('Media', findRichText: true));
     await tester.pumpAndSettle();
 
-    expect(find.text('Auto', findRichText: true), findsOneWidget);
-    expect(find.text('JP-01', findRichText: true), findsNothing);
+    expect(tester.takeException(), isNull);
+    expect(
+      find.descendant(
+        of: find.byType(ProxyCard),
+        matching: find.text('N50', findRichText: true),
+      ),
+      findsOneWidget,
+    );
+    await mouse.removePointer();
   });
 
   Future<Iterable<String?>> tooltipsFor(

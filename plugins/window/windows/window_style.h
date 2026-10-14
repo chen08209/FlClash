@@ -50,8 +50,8 @@ struct WindowStyle {
   // Rows the controller keeps clear above the view and paints transparent.
   // Windows 10 draws the top border only inside a frame extended over the
   // whole caption (a shorter non-client strip makes DWM draw the caption), so
-  // Apply() extends it there; Windows 11 draws the border into the 1 px
-  // non-client strip WM_NCCALCSIZE leaves. Zero while an accent effect is on,
+  // Apply() extends it there; Windows 11 draws the border into the non-client
+  // strip, one physical pixel tall, that WM_NCCALCSIZE leaves. Zero while an accent effect is on,
   // maximized or full screen.
   int TopBorderHeight(HWND hwnd) const;
 };

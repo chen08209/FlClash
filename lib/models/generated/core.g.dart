@@ -9,12 +9,14 @@ part of '../core.dart';
 _SetupParams _$SetupParamsFromJson(Map<String, dynamic> json) => _SetupParams(
   selectedMap: Map<String, String>.from(json['selected-map'] as Map),
   testUrl: json['test-url'] as String,
+  skipCertVerify: json['skip-cert-verify'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$SetupParamsToJson(_SetupParams instance) =>
     <String, dynamic>{
       'selected-map': instance.selectedMap,
       'test-url': instance.testUrl,
+      'skip-cert-verify': instance.skipCertVerify,
     };
 
 _UpdateParams _$UpdateParamsFromJson(Map<String, dynamic> json) =>
@@ -34,6 +36,7 @@ _UpdateParams _$UpdateParamsFromJson(Map<String, dynamic> json) =>
         _$ExternalControllerStatusEnumMap,
         json['external-controller'],
       ),
+      secret: json['secret'] as String? ?? '',
       unifiedDelay: json['unified-delay'] as bool,
       authentication:
           (json['authentication'] as List<dynamic>?)
@@ -47,6 +50,7 @@ _UpdateParams _$UpdateParamsFromJson(Map<String, dynamic> json) =>
             (k, e) => MapEntry(k, e as String),
           ) ??
           const {},
+      skipCertVerify: json['skip-cert-verify'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$UpdateParamsToJson(_UpdateParams instance) =>
@@ -61,11 +65,13 @@ Map<String, dynamic> _$UpdateParamsToJson(_UpdateParams instance) =>
       'tcp-concurrent': instance.tcpConcurrent,
       'external-controller':
           _$ExternalControllerStatusEnumMap[instance.externalController]!,
+      'secret': instance.secret,
       'unified-delay': instance.unifiedDelay,
       'authentication': instance.authentication,
       'geo-auto-update': instance.geoAutoUpdate,
       'geo-update-interval': instance.geoUpdateInterval,
       'geox-url': instance.geoXUrl,
+      'skip-cert-verify': instance.skipCertVerify,
     };
 
 const _$FindProcessModeEnumMap = {
@@ -111,6 +117,8 @@ _VpnOptions _$VpnOptionsFromJson(Map<String, dynamic> json) => _VpnOptions(
           ?.map((e) => e as String)
           .toList() ??
       const [],
+  mtu: (json['mtu'] as num?)?.toInt() ?? 0,
+  congestionController: json['congestionController'] as String? ?? '',
 );
 
 Map<String, dynamic> _$VpnOptionsToJson(_VpnOptions instance) =>
@@ -125,6 +133,8 @@ Map<String, dynamic> _$VpnOptionsToJson(_VpnOptions instance) =>
       'bypassDomain': instance.bypassDomain,
       'stack': instance.stack,
       'routeAddress': instance.routeAddress,
+      'mtu': instance.mtu,
+      'congestionController': instance.congestionController,
     };
 
 _InitParams _$InitParamsFromJson(Map<String, dynamic> json) => _InitParams(
@@ -210,23 +220,7 @@ const _$CoreEventTypeEnumMap = {
   CoreEventType.crash: 'crash',
   CoreEventType.geoUpdate: 'geoUpdate',
   CoreEventType.routeChanged: 'routeChanged',
-};
-
-_InvokeMessage _$InvokeMessageFromJson(Map<String, dynamic> json) =>
-    _InvokeMessage(
-      type: $enumDecode(_$InvokeMessageTypeEnumMap, json['type']),
-      data: json['data'],
-    );
-
-Map<String, dynamic> _$InvokeMessageToJson(_InvokeMessage instance) =>
-    <String, dynamic>{
-      'type': _$InvokeMessageTypeEnumMap[instance.type]!,
-      'data': instance.data,
-    };
-
-const _$InvokeMessageTypeEnumMap = {
-  InvokeMessageType.protect: 'protect',
-  InvokeMessageType.process: 'process',
+  CoreEventType.dialerLoop: 'dialerLoop',
 };
 
 _Delay _$DelayFromJson(Map<String, dynamic> json) => _Delay(

@@ -9,7 +9,7 @@ repos:
         stages: [pre-commit]
       - id: comment-density
         name: comment density
-        entry: tool/check_comment_density.sh
+        entry: tool/hooks/comment_density.sh
         language: system
         files: \.(dart|kt|kts|swift|go|rs|java|cpp|cc|h|hpp|gradle|ya?ml)$
         stages: [pre-commit]
@@ -21,6 +21,6 @@ repos:
         stages: [pre-push]
       - id: commit-msg-format
         name: conventional commit message
-        entry: tool/check_commit_msg.sh
+        entry: tool/hooks/commit_msg.sh
         language: system
         stages: [commit-msg]

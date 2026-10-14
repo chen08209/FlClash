@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"context"
@@ -48,7 +48,7 @@ func handleOutboundIp(params *OutboundIpParams) *OutboundIpResult {
 		return failure(probeErrorFailed)
 	}
 
-	timeout := probeTimeout(params.Timeout)
+	timeout := timeoutFromMillis(params.Timeout, defaultProbeTimeout)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 

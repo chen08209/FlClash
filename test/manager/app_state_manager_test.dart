@@ -5,6 +5,7 @@ import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/manager/app_manager.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/widgets.dart';
@@ -76,6 +77,9 @@ void main() {
         profilesProvider.overrideWith(TestProfiles.new),
         setupActionProvider.overrideWith(_Setup.new),
         commonActionProvider.overrideWith(_Common.new),
+        networkSettingProvider.overrideWithBuild(
+          (_, _) => const NetworkProps(bypassPrivateRoute: false),
+        ),
         excludeSSIDsProvider.overrideWithValue(const ['Office Wi-Fi']),
         safeModeProvider.overrideWithValue(false),
       ],

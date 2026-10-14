@@ -22,6 +22,8 @@ Future<Object?> _decodeResponse(Uint8List data) async {
 
 abstract mixin class ServiceListener {
   void onServiceEvent(CoreEvent event) {}
+
+  void onServiceStopped() {}
 }
 
 class Service {
@@ -30,6 +32,9 @@ class Service {
 
   final ObserverList<ServiceListener> _listeners =
       ObserverList<ServiceListener>();
+
+  int _commandRevision = 0;
+  bool _startRequested = false;
 
   factory Service() {
     _instance ??= Service._internal();
@@ -46,18 +51,19 @@ class Service {
             Map<String, Object?>.from(json.decode(data) as Map),
           );
           for (final event in coreEventsFromData(methodCall.arguments)) {
-            for (final listener in List.of(_listeners)) {
-              try {
-                listener.onServiceEvent(event);
-              } catch (error) {
-                commonPrint.log(
-                  'Unable to dispatch Android Core event '
-                  '${event.type.name}: $error',
-                  logLevel: LogLevel.error,
-                );
-              }
-            }
+            _dispatch(
+              'Core event ${event.type.name}',
+              (listener) => listener.onServiceEvent(event),
+            );
           }
+          break;
+        case 'stopped':
+          // A report stamped before the newest command no longer describes it.
+          if (call.arguments != _commandRevision || !_startRequested) {
+            break;
+          }
+          _startRequested = false;
+          _dispatch('stop report', (listener) => listener.onServiceStopped());
           break;
         default:
           throw MissingPluginException();
@@ -77,12 +83,32 @@ class Service {
     return CoreMethodResponse.fromJson(dataJson as Map<String, dynamic>);
   }
 
+  void _dispatch(String label, void Function(ServiceListener) deliver) {
+    for (final listener in List.of(_listeners)) {
+      try {
+        deliver(listener);
+      } catch (error) {
+        commonPrint.log(
+          'Unable to dispatch Android $label: $error',
+          logLevel: LogLevel.error,
+        );
+      }
+    }
+  }
+
   Future<bool> start() async {
-    return await methodChannel.invokeMethod<bool>('start') ?? false;
+    _startRequested = true;
+    return await methodChannel.invokeMethod<bool>(
+          'start',
+          ++_commandRevision,
+        ) ??
+        false;
   }
 
   Future<bool> stop() async {
-    return await methodChannel.invokeMethod<bool>('stop') ?? false;
+    _startRequested = false;
+    return await methodChannel.invokeMethod<bool>('stop', ++_commandRevision) ??
+        false;
   }
 
   Future<String> init() async {

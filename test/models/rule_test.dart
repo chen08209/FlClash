@@ -220,4 +220,114 @@ void main() {
       expect(Rule.parse('MATCH,DIRECT').payloadError, isNull);
     });
   });
+
+  group('rule list text', () {
+    test('reads back what it writes, quoting only what YAML would misread', () {
+      final rules = [
+        Rule.parse('DOMAIN-SUFFIX,example.com,PROXY'),
+        Rule.parse(r'DOMAIN-REGEX,^a: b$,DIRECT'),
+        Rule.parse("DOMAIN-KEYWORD,it's #1,DIRECT"),
+        Rule.parse('MATCH,DIRECT'),
+      ];
+      final text = encodeRuleList(rules);
+
+      expect(text.split('\n').first, '- DOMAIN-SUFFIX,example.com,PROXY');
+      expect(
+        decodeRuleList(text).map((entry) => entry.rule.rawValue),
+        rules.map((rule) => rule.rawValue),
+      );
+    });
+
+    test('takes a whole rules section and bare lines too', () {
+      for (final content in [
+        'rules:\n  - DOMAIN,example.com,DIRECT\n  - MATCH,PROXY\n',
+        'DOMAIN,example.com,DIRECT\n\nMATCH,PROXY\n',
+        '- DOMAIN,example.com,DIRECT\nMATCH,PROXY',
+        '  - DOMAIN,example.com,DIRECT # mine\n-MATCH,PROXY\r\n',
+        "rules:\n- 'DOMAIN,example.com,DIRECT'\n    - MATCH,PROXY\n",
+      ]) {
+        expect(decodeRuleList(content).map((entry) => entry.rule.rawValue), [
+          'DOMAIN,example.com,DIRECT',
+          'MATCH,PROXY',
+        ], reason: content);
+      }
+      expect(decodeRuleList(''), isEmpty);
+      expect(decodeRuleList('rules:'), isEmpty);
+    });
+
+    test('reports the line of an entry with no rule type', () {
+      for (final (content, line) in [
+        ('- DOMAIN,example.com,DIRECT\n\n- example.com,DIRECT', 3),
+        ('- MATCH,DIRECT\n- {DOMAIN: example.com}', 2),
+        ('DOMAIN,example.com,DIRECT\nexample.com', 2),
+        ('name: rule', 1),
+        ('42', 1),
+        ('rules: {a: 1}', 1),
+      ]) {
+        expect(
+          () => decodeRuleList(content),
+          throwsA(
+            isA<RuleLineException>().having(
+              (error) => error.line,
+              'line',
+              line,
+            ),
+          ),
+          reason: content,
+        );
+      }
+    });
+
+    test('keeps the id of each rule whose text is unchanged', () {
+      final ids = decodeRuleList(
+        [
+          '- domain,a.com,DIRECT',
+          '- DOMAIN,c.com,DIRECT',
+          '- DOMAIN,a.com,DIRECT',
+          '- DOMAIN,a.com,DIRECT',
+        ].join('\n'),
+        previous: [
+          Rule.parse('DOMAIN,a.com,DIRECT', id: 1),
+          Rule.parse('DOMAIN,b.com,DIRECT', id: 2),
+          Rule.parse('DOMAIN,a.com,DIRECT', id: 3),
+        ],
+      ).map((entry) => entry.rule.id).toList();
+
+      expect([ids[0], ids[2]], [1, 3]);
+      expect({ids[1], ids[3]}.intersection({1, 2, 3}), isEmpty);
+      expect(ids[1], isNot(ids[3]));
+    });
+  });
+
+  group('rule sets', () {
+    test('reads the sets a logic rule nests at any depth', () {
+      expect(Rule.parse('RULE-SET,Ads,REJECT').ruleSets, ['Ads']);
+      expect(
+        Rule.parse(
+          'OR,((rule-set, Ads ,no-resolve),(AND,((RULE-SET,CN),(NETWORK,UDP)))),DIRECT',
+        ).ruleSets,
+        ['Ads', 'CN'],
+      );
+      expect(Rule.parse('SUB-RULE,(RULE-SET,Ads),nested').ruleSets, ['Ads']);
+      expect(
+        Rule.parse(r'DOMAIN-REGEX,^\(RULE-SET,x\),DIRECT').ruleSets,
+        isEmpty,
+      );
+    });
+
+    test('renames each set it names', () {
+      const names = {'Ads': 'Ad block'};
+
+      expect(
+        Rule.parse('RULE-SET,Ads,REJECT').renamedRuleSets(names).rawValue,
+        'RULE-SET,Ad block,REJECT',
+      );
+      expect(
+        Rule.parse(
+          'AND,((RULE-SET,Ads),(RULE-SET,Ads-old),(NETWORK,UDP)),REJECT',
+        ).renamedRuleSets(names).rawValue,
+        'AND,((RULE-SET,Ad block),(RULE-SET,Ads-old),(NETWORK,UDP)),REJECT',
+      );
+    });
+  });
 }

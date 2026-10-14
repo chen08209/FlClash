@@ -4,6 +4,7 @@ import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -11,6 +12,7 @@ import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod/riverpod.dart';
@@ -155,7 +157,7 @@ void main() {
 
     test('putScript re-applies only a current profile running that script', () {
       final profile = Profile.normal().copyWith(
-        overwriteType: OverwriteType.script,
+        extendType: ExtendType.script,
         scriptId: 1,
       );
       final setupAction = _ApplyRecordingSetupAction();
@@ -174,7 +176,7 @@ void main() {
 
       container
           .read(profilesProvider.notifier)
-          .put(profile.copyWith(overwriteType: OverwriteType.standard));
+          .put(profile.copyWith(extendType: ExtendType.standard));
       action.putScript(script(1));
       expect(setupAction.applyCount, 1);
     });
@@ -183,7 +185,7 @@ void main() {
       'updateScript releases the updating key when the download fails',
       () async {
         final profile = Profile.normal().copyWith(
-          overwriteType: OverwriteType.script,
+          extendType: ExtendType.script,
           scriptId: 1,
         );
         final setupAction = _ApplyRecordingSetupAction();
@@ -609,6 +611,11 @@ void main() {
             initProvider.overrideWithBuild((_, _) => true),
             commonActionProvider.overrideWith(_RaceCommonAction.new),
             setupActionProvider.overrideWith(_RaceSetupAction.new),
+            // Bypassing private addresses computes the routes in an isolate,
+            // which outlasts the zero delay below.
+            networkSettingProvider.overrideWithBuild(
+              (_, _) => const NetworkProps(bypassPrivateRoute: false),
+            ),
           ],
         );
         addTearDown(container.dispose);
@@ -814,15 +821,13 @@ void main() {
       );
     });
 
-    test('requests admin authorization once per app lifecycle', () async {
+    test('asks once while an authorization request is pending', () async {
+      final pending = Completer<AuthorizeCode>();
       late _AuthorizationSetupAction setupAction;
       final container = ProviderContainer(
         overrides: [
           setupActionProvider.overrideWith(() {
-            setupAction = _AuthorizationSetupAction([
-              AuthorizeCode.error,
-              AuthorizeCode.success,
-            ]);
+            setupAction = _AuthorizationSetupAction([], pending: pending);
             return setupAction;
           }),
         ],
@@ -830,7 +835,7 @@ void main() {
       addTearDown(container.dispose);
       container.read(setupActionProvider);
 
-      expect(await setupAction.requestAdmin(true), isTrue);
+      final first = setupAction.requestAdmin(true);
       expect(
         container.read(authorizedTunEnableProvider),
         TunAuthorizationState.unauthorized,
@@ -838,13 +843,14 @@ void main() {
 
       expect(await setupAction.requestAdmin(true), isTrue);
       expect(setupAction.authorizationRequestCount, 1);
-      expect(
-        container.read(authorizedTunEnableProvider),
-        TunAuthorizationState.unauthorized,
-      );
+
+      pending.complete(AuthorizeCode.success);
+      expect(await first, isFalse);
     });
 
-    test('keeps tun disabled while authorization stays unauthorized', () async {
+    test('a failed authorization leaves tun and system DNS off', () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      await AppLocalizations.load(const Locale('en'));
       late _AuthorizationSetupAction setupAction;
       final container = ProviderContainer(
         overrides: [
@@ -860,9 +866,17 @@ void main() {
           .update((state) => state.copyWith.tun(enable: true));
       container.read(setupActionProvider);
 
-      await setupAction.requestAdmin(true);
+      expect(await setupAction.requestAdmin(true), isTrue);
 
+      expect(container.read(patchClashConfigProvider).tun.enable, isFalse);
       expect(container.read(shouldPatchSystemDnsProvider), isFalse);
+      expect(
+        await setupAction.requestAdmin(
+          container.read(patchClashConfigProvider).tun.enable,
+        ),
+        isTrue,
+      );
+      expect(setupAction.authorizationRequestCount, 1);
     });
   });
 }
@@ -965,13 +979,19 @@ final _restartFailure = Exception('restart failed');
 
 class _AuthorizationSetupAction extends SetupAction {
   final List<AuthorizeCode> authorizationResults;
+  final Completer<AuthorizeCode>? pending;
   int authorizationRequestCount = 0;
 
-  _AuthorizationSetupAction(this.authorizationResults);
+  _AuthorizationSetupAction(this.authorizationResults, {this.pending});
 
   @override
   Future<AuthorizeCode> authorizeCore() async {
-    return authorizationResults[authorizationRequestCount++];
+    final index = authorizationRequestCount++;
+    final pending = this.pending;
+    if (pending != null) {
+      return pending.future;
+    }
+    return authorizationResults[index];
   }
 }
 

@@ -84,6 +84,7 @@ class App {
 
   final Map<String, ImageProvider?> _packageIcons = {};
   final Map<String, Future<ImageProvider?>> _packageIconTasks = {};
+  final TaskPool _packageIconPool = TaskPool(maxConcurrentIconLoads);
 
   bool hasPackageIcon(String packageName) {
     return _packageIcons.containsKey(packageName);
@@ -112,9 +113,11 @@ class App {
 
   Future<ImageProvider?> _requestPackageIcon(String packageName) async {
     try {
-      final path = await methodChannel.invokeMethod<String>('getPackageIcon', {
-        'packageName': packageName,
-      });
+      final path = await _packageIconPool.run(
+        () => methodChannel.invokeMethod<String>('getPackageIcon', {
+          'packageName': packageName,
+        }),
+      );
       if (path == null || path.isEmpty) {
         return null;
       }
@@ -136,26 +139,17 @@ class App {
   }
 
   Future<bool?> initShortcuts() async {
-    return methodChannel.invokeMethod<bool>(
-      'initShortcuts',
-      currentAppLocalizations.toggle,
-    );
+    return methodChannel.invokeMethod<bool>('initShortcuts', {
+      'start': currentAppLocalizations.start,
+      'stop': currentAppLocalizations.stop,
+      'toggle': currentAppLocalizations.toggle,
+    });
   }
 
   Future<bool?> updateExcludeFromRecents(bool value) async {
     return methodChannel.invokeMethod<bool>('updateExcludeFromRecents', {
       'value': value,
     });
-  }
-
-  Future<bool?> isBatteryOptimizationDisabled() async {
-    if (!Platform.isAndroid) return true;
-    return methodChannel.invokeMethod<bool>('isBatteryOptimizationDisabled');
-  }
-
-  Future<bool?> openBatteryOptimizationSettings() async {
-    if (!Platform.isAndroid) return false;
-    return methodChannel.invokeMethod<bool>('openBatteryOptimizationSettings');
   }
 
   Future<bool?> openAppSettings() async {

@@ -6,3 +6,7 @@ final class MessageException implements Exception {
   @override
   String toString() => message;
 }
+
+final class AgeSecretKeyRequiredException implements Exception {
+  const AgeSecretKeyRequiredException();
+}

@@ -171,8 +171,8 @@ class RouteTracker extends _$RouteTracker {
   @override
   RouteState build() {
     ref.onDispose(_cancelRetry);
-    ref.listen(isStartProvider, (_, _) => _syncProxied());
-    ref.listen(suspendProvider, (_, _) => _syncProxied());
+    ref.listen(isStartProvider, (_, _) => _scheduleSyncProxied());
+    ref.listen(suspendProvider, (_, _) => _scheduleSyncProxied());
     ref.listen(initProvider, (_, _) => _subscribe());
     ref.listen(appVisibleProvider, (_, visible) {
       if (visible) {
@@ -235,6 +235,16 @@ class RouteTracker extends _$RouteTracker {
 
   void markResumed() {
     state = state.copyWith(resumes: state.resumes + 1);
+  }
+
+  /// Deferred because both are computed: unwatched, they go stale, and the
+  /// widget that next reads one recomputes it from initState or build.
+  void _scheduleSyncProxied() {
+    scheduleMicrotask(() {
+      if (ref.mounted) {
+        _syncProxied();
+      }
+    });
   }
 
   void _syncProxied() {

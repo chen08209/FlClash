@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
@@ -27,6 +28,8 @@ class _RecordedRun {
 
   String get key =>
       arguments.isEmpty ? executable : '$executable ${arguments.first}';
+
+  String get commandLine => [executable, ...arguments].join(' ');
 }
 
 /// Stands in for `Process.run`, keyed by executable plus its first argument so
@@ -46,6 +49,17 @@ class _FakeProcesses {
     _failures.add(key);
   }
 
+  final List<String> inputs = [];
+
+  Future<ProcessResult> runWithInput(
+    String executable,
+    List<String> arguments,
+    String input,
+  ) {
+    inputs.add(input);
+    return run(executable, arguments);
+  }
+
   Future<ProcessResult> run(String executable, List<String> arguments) async {
     final recorded = _RecordedRun(executable, arguments);
     runs.add(recorded);
@@ -54,8 +68,14 @@ class _FakeProcesses {
     }
     return ProcessResult(
       0,
-      _exitCodes[recorded.key] ?? _exitCodes[executable] ?? 0,
-      _stdout[recorded.key] ?? _stdout[executable] ?? '',
+      _exitCodes[recorded.commandLine] ??
+          _exitCodes[recorded.key] ??
+          _exitCodes[executable] ??
+          0,
+      _stdout[recorded.commandLine] ??
+          _stdout[recorded.key] ??
+          _stdout[executable] ??
+          '',
       '',
     );
   }
@@ -93,6 +113,7 @@ void main() {
 
   late Directory root;
   late _FakeProcesses processes;
+  String? password;
 
   setUpAll(() {
     root = Directory.systemTemp.createTempSync('system_test');
@@ -111,13 +132,16 @@ void main() {
     processes = _FakeProcesses();
     system.runProcess = processes.run;
     MacOS().runProcess = processes.run;
-    Linux().runProcess = processes.run;
+    linuxElevation.run = processes.run;
+    linuxElevation.runWithInput = processes.runWithInput;
+    linuxElevation.askPassword = () async => password;
+    password = null;
   });
 
   tearDown(() {
     system.runProcess = Process.run;
     MacOS().runProcess = Process.run;
-    Linux().runProcess = Process.run;
+    linuxElevation.run = Process.run;
   });
 
   group('statArguments', () {
@@ -213,21 +237,39 @@ void main() {
   });
 
   group('isPrivilegedStatOutput', () {
-    test('accepts a root-owned setuid binary', () {
+    test('accepts a root-owned setuid binary closed to others', () {
       expect(
         System.isPrivilegedStatOutput(
-          'root:admin -rwsr-sr-x\n',
+          'root:admin -rwsr-x---\n',
           ownerPrefix: 'root:admin',
         ),
         isTrue,
       );
       expect(
         System.isPrivilegedStatOutput(
-          'root:root -rwsr-sr-x',
+          'root:alice -rws------+',
           ownerPrefix: 'root:',
         ),
         isTrue,
       );
+    });
+
+    test('rejects a setuid binary that others can execute', () {
+      for (final mode in [
+        '-rwsr-sr-x',
+        '-rwsr-xr-x',
+        '-rwsr-x--x',
+        '-rwsr-x--t',
+      ]) {
+        expect(
+          System.isPrivilegedStatOutput(
+            'root:admin $mode',
+            ownerPrefix: 'root:admin',
+          ),
+          isFalse,
+          reason: mode,
+        );
+      }
     });
 
     test('rejects a root-owned binary without the setuid bit', () {
@@ -262,11 +304,20 @@ void main() {
     'checkIsAdmin',
     () {
       test('stats the core path verbatim', () async {
-        processes.stub('stat', 'root:admin -rwsr-sr-x');
+        processes.stub('stat', 'root:admin -rwsr-x---');
 
         expect(await system.checkIsAdmin(), isTrue);
         expect(processes.argumentsFor('stat').last, appPath.corePath);
       });
+
+      test(
+        'does not trust a core earlier versions left executable by all',
+        () async {
+          processes.stub('stat', 'root:admin -rwsr-sr-x');
+
+          expect(await system.checkIsAdmin(), isFalse);
+        },
+      );
 
       test('reports a core that is not setuid root', () async {
         processes.stub('stat', 'alice:staff -rwxr-xr-x');
@@ -285,6 +336,59 @@ void main() {
         : false,
   );
 
+  group('elevation shells', () {
+    test('macOS hands the Core to the admin group and nobody else', () {
+      expect(
+        System.macOSElevationShell('/Apps/Fl Clash/core'),
+        "chown root:admin '/Apps/Fl Clash/core' && "
+        "chmod 4750 '/Apps/Fl Clash/core'",
+      );
+    });
+
+    test('Linux hands the Core to the requesting user\'s group', () {
+      final shell = System.linuxElevationShell('/opt/FlClash/FlClashCore');
+
+      expect(
+        shell,
+        startsWith(r'group=$(id -g "${PKEXEC_UID:-$SUDO_UID}") && '),
+      );
+      expect(shell, contains(r'chown "root:$group" '));
+      expect(shell, endsWith("chmod 4750 '/opt/FlClash/FlClashCore'"));
+    });
+
+    test('neither leaves execute to others', () {
+      for (final shell in [
+        System.macOSElevationShell('/core'),
+        System.linuxElevationShell('/core'),
+      ]) {
+        expect(shell, isNot(contains('+sx')));
+        expect(shell, contains('chmod 4750'));
+      }
+    });
+  });
+
+  group('authorizeCore on macOS', () {
+    test('refuses an account outside the admin group', () async {
+      processes.stub('id', 'alice staff everyone');
+
+      expect(await system.authorizeCore(), AuthorizeCode.error);
+      expect(processes.ran('osascript'), isFalse);
+    });
+
+    test('elevates the Core for an admin account', () async {
+      processes.stub('id', 'alice staff admin');
+
+      expect(await system.authorizeCore(), AuthorizeCode.success);
+      expect(processes.argumentsFor('osascript').last, contains('chmod 4750'));
+    });
+  }, skip: system.isMacOS ? false : 'macOS only');
+
+  group('Windows installArguments', () {
+    test('names this process as the account the Helper serves', () {
+      expect(Windows.installArguments(4242), 'install --owner-pid 4242');
+    });
+  });
+
   group('Linux installService', () {
     test('asks pkexec to install the bundled Helper', () async {
       expect(await Linux().installService(), isTrue);
@@ -297,10 +401,60 @@ void main() {
       expect(await Linux().installService(), isFalse);
     });
 
-    test('reports a host with no pkexec at all', () async {
+    test('installs through cached sudo credentials without pkexec', () async {
       processes.stubThrow('pkexec');
 
+      expect(await Linux().installService(), isTrue);
+      expect(processes.argumentsFor('sudo'), [
+        '-n',
+        '--',
+        appPath.helperPath,
+        'install',
+      ]);
+      expect(processes.inputs, isEmpty);
+    });
+
+    test('asks for the sudo password when no polkit agent answers', () async {
+      processes.stub('pkexec', '', exitCode: 127);
+      processes.stub('sudo -n', '', exitCode: 1);
+      password = 'secret';
+
+      expect(await Linux().installService(), isTrue);
+      expect(processes.runs.last.arguments, [
+        '-S',
+        '-p',
+        '',
+        '--',
+        appPath.helperPath,
+        'install',
+      ]);
+      expect(processes.inputs, ['secret\n']);
+    });
+
+    test('reports a command that failed under cached sudo', () async {
+      processes.stubThrow('pkexec');
+      processes.stub('sudo -n', '', exitCode: 1);
+      processes.stub('sudo -n true', '');
+      password = 'secret';
+
       expect(await Linux().installService(), isFalse);
+      expect(processes.ran('sudo -S'), isFalse);
+      expect(processes.inputs, isEmpty);
+    });
+
+    test('gives up when the sudo prompt is cancelled', () async {
+      processes.stubThrow('pkexec');
+      processes.stub('sudo -n', '', exitCode: 1);
+
+      expect(await Linux().installService(), isFalse);
+      expect(processes.ran('sudo -S'), isFalse);
+    });
+
+    test('does not ask sudo after the polkit dialog is dismissed', () async {
+      processes.stub('pkexec', '', exitCode: 126);
+
+      expect(await Linux().installService(), isFalse);
+      expect(processes.ran('sudo'), isFalse);
     });
   });
 

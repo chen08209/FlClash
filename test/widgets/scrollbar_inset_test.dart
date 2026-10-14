@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/scrollbar.dart';
 import '../helpers/test_app.dart';
 
 Widget _list({ScrollController? controller}) {
@@ -27,6 +28,9 @@ Widget _sheet(Widget body) {
     ),
   );
 }
+
+double _trackTop(WidgetTester tester) =>
+    scrollbarPainter(tester).padding.resolve(TextDirection.ltr).top;
 
 final _desktop = TargetPlatformVariant.only(TargetPlatform.macOS);
 const _everyPlatform = TargetPlatformVariant({
@@ -72,17 +76,58 @@ void main() {
     },
   );
 
+  for (final (name, body) in [
+    ('the ambient bar', (_) => _list()),
+    (
+      'a bar under a scroll behavior of its own',
+      (_) => ScrollConfiguration(
+        behavior: const ShowBarScrollBehavior(),
+        child: _list(),
+      ),
+    ),
+    (
+      'a bar given its controller',
+      (ScrollController controller) => CommonScrollBar(
+        controller: controller,
+        child: _list(controller: controller),
+      ),
+    ),
+  ]) {
+    testWidgets(
+      'a bottom sheet keeps $name below its floating header',
+      variant: _everyPlatform,
+      (tester) async {
+        final controller = ScrollController();
+        addTearDown(controller.dispose);
+        await tester.pumpWidget(_sheet(body(controller)));
+        await tester.pumpAndSettle();
+
+        expect(_trackTop(tester), sheetAppBarHeight);
+      },
+    );
+  }
+
   testWidgets(
-    'a bottom sheet keeps the scroll bar below its floating header',
+    'a page insets the track of a bar given its controller by its bar once',
     variant: _everyPlatform,
     (tester) async {
-      await tester.pumpWidget(_sheet(_list()));
+      final controller = ScrollController();
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(
+        TestApp(
+          wrapInProviderScope: true,
+          child: CommonScaffold(
+            title: 'title',
+            body: CommonScrollBar(
+              controller: controller,
+              child: _list(controller: controller),
+            ),
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
 
-      final scrollBar = tester.widget<CommonScrollBar>(
-        find.byType(CommonScrollBar),
-      );
-      expect(scrollBar.padding, const EdgeInsets.only(top: sheetAppBarHeight));
+      expect(_trackTop(tester), tester.getRect(find.byType(AppBar)).bottom);
     },
   );
 
@@ -105,10 +150,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(CommonScrollBar), findsOneWidget);
-      final scrollBar = tester.widget<CommonScrollBar>(
-        find.byType(CommonScrollBar),
-      );
-      expect(scrollBar.padding, const EdgeInsets.only(top: sheetAppBarHeight));
+      expect(_trackTop(tester), sheetAppBarHeight);
     },
   );
 

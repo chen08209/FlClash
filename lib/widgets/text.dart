@@ -157,11 +157,13 @@ class EmojiText extends StatelessWidget {
 class LastUpdateTimeText extends StatelessWidget {
   final DateTime? lastUpdateDate;
   final TextStyle? style;
+  final bool compact;
 
   const LastUpdateTimeText({
     super.key,
     required this.lastUpdateDate,
     this.style,
+    this.compact = false,
   });
 
   @override
@@ -173,7 +175,7 @@ class LastUpdateTimeText extends StatelessWidget {
       duration: const Duration(minutes: 1),
       builder: (context, _) {
         return Text(
-          lastUpdateDate!.getLastUpdateTimeDesc(context),
+          lastUpdateDate!.getLastUpdateTimeDesc(context, compact: compact),
           style: style,
         );
       },

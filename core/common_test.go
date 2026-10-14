@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"encoding/json"
@@ -40,31 +40,21 @@ func TestDefaultSetupParamsSurvivesPartialDecode(t *testing.T) {
 	}
 }
 
-func TestUnmarshalJsonPreservesLargeIntegers(t *testing.T) {
-	target := map[string]any{}
+func TestSetupParamsDecodeStartsFromTheDefaults(t *testing.T) {
+	var absent, empty SetupParams
 
-	if err := UnmarshalJson([]byte(`{"id":9007199254740993}`), &target); err != nil {
-		t.Fatalf("UnmarshalJson error: %v", err)
+	if err := json.Unmarshal([]byte(`{"skip-cert-verify":true}`), &absent); err != nil {
+		t.Fatalf("decode error: %v", err)
+	}
+	if err := json.Unmarshal([]byte(`{"test-url":""}`), &empty); err != nil {
+		t.Fatalf("decode error: %v", err)
 	}
 
-	number, ok := target["id"].(json.Number)
-	if !ok {
-		t.Fatalf("id decoded as %T, want json.Number so int64 precision survives", target["id"])
+	if absent.TestURL != defaultTestURL || absent.SelectedMap == nil || !absent.SkipCertVerify {
+		t.Errorf("params = %+v, want the defaults under the decoded fields", absent)
 	}
-	value, err := number.Int64()
-	if err != nil {
-		t.Fatalf("Int64() error: %v", err)
-	}
-	if value != 9007199254740993 {
-		t.Errorf("id = %d, want 9007199254740993", value)
-	}
-}
-
-func TestUnmarshalJsonReportsInvalidPayload(t *testing.T) {
-	target := map[string]any{}
-
-	if err := UnmarshalJson([]byte(`{`), &target); err == nil {
-		t.Fatal("UnmarshalJson accepted malformed JSON")
+	if empty.TestURL != "" {
+		t.Errorf("TestURL = %q, want an explicit empty value kept so the URL in force survives", empty.TestURL)
 	}
 }
 
@@ -138,9 +128,9 @@ func TestSideUpdateExternalProviderRejectsUnsupportedProvider(t *testing.T) {
 func coreMethodConstants(t *testing.T) []CoreMethod {
 	t.Helper()
 	fileSet := token.NewFileSet()
-	file, err := parser.ParseFile(fileSet, "constant.go", nil, 0)
+	file, err := parser.ParseFile(fileSet, "protocol.go", nil, 0)
 	if err != nil {
-		t.Fatalf("parse constant.go: %v", err)
+		t.Fatalf("parse protocol.go: %v", err)
 	}
 
 	var methods []CoreMethod
@@ -168,7 +158,7 @@ func coreMethodConstants(t *testing.T) []CoreMethod {
 	})
 
 	if len(methods) == 0 {
-		t.Fatal("found no CoreMethod constants; the parser lost track of constant.go")
+		t.Fatal("found no CoreMethod constants; the parser lost track of protocol.go")
 	}
 	return methods
 }
@@ -176,8 +166,8 @@ func coreMethodConstants(t *testing.T) []CoreMethod {
 func TestEveryCoreMethodConstantIsDispatchable(t *testing.T) {
 	notDispatched := map[CoreMethod]string{
 		messageMethod:   "core-to-host event envelope, never received",
-		crashMethod:     "handled ahead of the table so it bypasses panic recovery",
-		updateDnsMethod: "registered by the cgo build only",
+		crashMethod:     "handled by the dispatcher so it bypasses panic recovery",
+		updateDnsMethod: "registered by the Android build only",
 	}
 
 	for _, method := range coreMethodConstants(t) {
@@ -200,7 +190,7 @@ func TestRegisterMethodRejectsADuplicate(t *testing.T) {
 		}
 	}()
 
-	registerMethod(getProxiesMethod, withoutArguments(func(response MethodResponse) {}))
+	registerMethod(getProxiesMethod, acknowledged(func() {}))
 }
 
 // fakeProxyProvider and fakeRuleProvider stand in for the mihomo providers the
@@ -242,9 +232,8 @@ func (f *fakeRuleProvider) Match(*constant.Metadata, constant.RuleMatchHelper) b
 }
 func (f *fakeRuleProvider) Strategy() any { return nil }
 
-// withTunnelProviders installs a provider set for the duration of a test. The
-// unit tests never apply a config, so the tunnel starts empty and restoring it
-// to empty is restoring what was there.
+// The unit tests never apply a config, so the tunnel starts empty and restoring
+// it to empty is restoring what was there.
 func withTunnelProviders(
 	t *testing.T,
 	proxyProviders map[string]cp.ProxyProvider,

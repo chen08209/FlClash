@@ -8,11 +8,17 @@ class _RecordingListener with CoreEventListener {
 
   final void Function()? onLoadedCallback;
   final List<String> loaded = [];
+  final List<String> dialerLoops = [];
 
   @override
   void onLoaded(String providerName) {
     loaded.add(providerName);
     onLoadedCallback?.call();
+  }
+
+  @override
+  void onDialerLoop(String proxyName) {
+    dialerLoops.add(proxyName);
   }
 }
 
@@ -50,4 +56,18 @@ void main() {
       expect(second.loaded, ['provider-a', 'provider-b']);
     },
   );
+
+  test('a dialer loop the core stopped reaches the listeners', () async {
+    final listener = _RecordingListener();
+    coreEventManager.addListener(listener);
+    addTearDown(() => coreEventManager.removeListener(listener));
+
+    coreEventsFromData({
+      'type': 'dialerLoop',
+      'data': 'Front',
+    }).forEach(coreEventManager.sendEvent);
+    await pumpEventQueue();
+
+    expect(listener.dialerLoops, ['Front']);
+  });
 }

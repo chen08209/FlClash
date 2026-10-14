@@ -39,3 +39,5 @@ categories:
   - Network
 
 startup_notify: true
+
+startup_wm_class: com.follow.clash

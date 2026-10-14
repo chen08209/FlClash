@@ -99,7 +99,7 @@ void main() {
     expect(find.text('0'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 301));
 
-    expect(find.text('1234'), findsOneWidget);
+    expect(find.text('1.23K'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -285,9 +285,8 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
   });
 
-  testWidgets('a query landing while the sheet opens waits for it to open', (
-    tester,
-  ) async {
+  testWidgets('a query landing while the sheet opens shows at its top and the '
+      'list keeps to its end through every frame', (tester) async {
     seedDnsQueries(40);
     await pumpCard(tester, size: _mobileSize);
     await tester.tap(find.byType(DnsQueriesCard));
@@ -319,11 +318,13 @@ void main() {
             time: DateTime.utc(2026, 9, 18, 4, 31),
           ),
         );
-    await tester.pump(const Duration(milliseconds: 150));
-    await tester.pump(const Duration(milliseconds: 150));
+    for (var frame = 0; frame < 20; frame++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(position.pixels, position.maxScrollExtent);
+    }
 
     expect(sheetTop(tester), greaterThan(_tallTop + 1));
-    expect(position.pixels, lessThan(position.maxScrollExtent));
+    expect(find.text('late.example'), findsOneWidget);
 
     await tester.pumpAndSettle();
 
@@ -382,6 +383,58 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(sheetTop(tester), closeTo(floor, 1));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('a query opens its details as a page of the sheet', (
+    tester,
+  ) async {
+    seedDnsQueries(5);
+    await pumpCard(tester, size: _mobileSize);
+
+    await tester.tap(find.byType(DnsQueriesCard));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DnsQueryItem).hitTestable().first);
+    await tester.pumpAndSettle();
+
+    final detail = find.byType(DnsQueryDetailView);
+    expect(detail, findsOneWidget);
+    expect(ModalRoute.of(tester.element(detail)), isA<PagedSheetRoute>());
+    expect(sheetTop(tester), closeTo(_shortTop, 1));
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    expect(detail, findsNothing);
+    expect(find.byType(DnsQueriesView), findsOneWidget);
+    expect(sheetTop(tester), closeTo(_shortTop, 1));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('a query opens its details as a page of the side sheet', (
+    tester,
+  ) async {
+    seedDnsQueries(5);
+    await pumpCard(tester);
+
+    await tester.tap(find.byType(DnsQueriesCard));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DnsQueryItem).hitTestable().first);
+    await tester.pumpAndSettle();
+
+    final detail = find.byType(DnsQueryDetailView);
+    expect(detail, findsOneWidget);
+    expect(ModalRoute.of(tester.element(detail)), isA<PagedSheetRoute>());
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    expect(detail, findsNothing);
+    expect(find.byType(DnsQueriesView), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));

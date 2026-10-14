@@ -1,18 +1,26 @@
-use crate::frb_generated::StreamSink;
-use flutter_rust_bridge::for_generated::SseCodec;
+use super::EventSink;
+use std::io;
 
-// Android loads the Core in-process; these entry points exist only so that one
-// set of bindings serves every platform.
-const UNSUPPORTED: &str = "IPC server is not available on this platform";
+// Android loads the Core in-process; this keeps one set of bindings for every platform.
+pub struct Server;
 
-pub fn restart_server(_name: String, _sink: StreamSink<Vec<u8>, SseCodec>) -> Result<(), String> {
-    Err(UNSUPPORTED.into())
+fn unsupported() -> io::Error {
+    io::Error::new(
+        io::ErrorKind::Unsupported,
+        "IPC server is not available on this platform",
+    )
 }
 
-pub fn stop_server() -> Result<(), String> {
-    Ok(())
-}
+impl Server {
+    pub fn bind(_address: String) -> io::Result<Self> {
+        Err(unsupported())
+    }
 
-pub fn send_message(_data: Vec<u8>) -> Result<(), String> {
-    Err(UNSUPPORTED.into())
+    pub fn events(&self, _sink: EventSink) {}
+
+    pub fn send(&self, _payload: &[u8]) -> io::Result<()> {
+        Err(unsupported())
+    }
+
+    pub fn close(&self) {}
 }

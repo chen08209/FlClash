@@ -1,6 +1,6 @@
-//go:build !(android && cgo)
+//go:build !android
 
-package main
+package core
 
 import (
 	"fmt"
@@ -28,7 +28,7 @@ func releaseOnExit() {
 	}
 }
 
-func exitOnTermination() {
+func ExitOnTermination() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
 	<-signals

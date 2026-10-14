@@ -45,6 +45,7 @@ void main() {
     WidgetTester tester, {
     Size size = const Size(1200, 1000),
     Future<int> Function()? countReader,
+    Locale? locale,
   }) async {
     container.read(viewSizeProvider.notifier).value = size;
     tester.view.physicalSize = size;
@@ -56,6 +57,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: TestApp(
+          locale: locale,
           child: Scaffold(
             body: ListView(
               children: [ConnectionsCard(countReader: countReader)],
@@ -85,6 +87,20 @@ void main() {
     await tester.pump();
 
     expect(find.text('1'), findsOneWidget);
+
+    await teardownCard(tester);
+  });
+
+  testWidgets('a large count is shortened with K and M in any locale', (
+    tester,
+  ) async {
+    await pumpCard(
+      tester,
+      locale: const Locale('zh', 'CN'),
+      countReader: () async => 12345,
+    );
+
+    expect(find.text('12.3K'), findsOneWidget);
 
     await teardownCard(tester);
   });

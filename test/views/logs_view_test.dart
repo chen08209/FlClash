@@ -71,7 +71,7 @@ void main() {
     final scrollableRect = tester.getRect(find.byType(Scrollable).first);
     // The list runs under the bar, so the scrollbar track starts at the
     // bar's foot. The minimum thumb length is 48, so at the newest end the
-    // thumb center rests 24px below the track's top edge.
+    // thumb center rests 24 dp below the track's top edge.
     final trackTop = tester.getRect(find.byType(AppBar)).bottom;
     expect(tester.getCenter(find.byKey(hintKey)).dy, closeTo(trackTop + 24, 6));
 

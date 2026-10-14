@@ -255,6 +255,16 @@ extension AppShapeThemeExt on ThemeData {
       shape: AppShape.top(AppCorner.xxl),
     ),
     snackBarTheme: snackBarTheme.copyWith(shape: AppShape.xs),
+    tooltipTheme: tooltipTheme.copyWith(
+      // A decoration replaces Material's tooltip colours too, so restate them.
+      decoration: ShapeDecoration(
+        shape: AppShape.xs,
+        color: switch (brightness) {
+          Brightness.dark => Colors.white.withAlpha(230),
+          Brightness.light => Colors.grey[700]!.withAlpha(230),
+        },
+      ),
+    ),
     chipTheme: chipTheme.copyWith(shape: AppShape.sm),
     popupMenuTheme: popupMenuTheme.copyWith(shape: AppShape.md),
     menuTheme: MenuThemeData(

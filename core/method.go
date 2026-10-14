@@ -1,11 +1,11 @@
-package main
+package core
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"runtime"
 	"sync/atomic"
-	"unsafe"
 )
 
 type MethodCall struct {
@@ -15,96 +15,88 @@ type MethodCall struct {
 	seq       uint64
 }
 
-var methodCallSeq atomic.Uint64
-
-// Each call runs on its own goroutine, so a handler that must honour the
-// host's latest intent compares seq, stamped here in arrival order; every
-// transport has to deliver calls in the order the host sent them.
-func dispatchMethodCall(call *MethodCall, response MethodResponse) {
-	call.seq = methodCallSeq.Add(1)
-	go handleMethodCall(call, response)
-}
-
-func (call MethodCall) decodeArguments(target any) error {
-	if len(call.Arguments) == 0 || string(call.Arguments) == "null" {
-		return fmt.Errorf("missing arguments")
-	}
-	return json.Unmarshal(call.Arguments, target)
-}
-
-func decodeMethodArguments(call *MethodCall, response MethodResponse, target any) bool {
-	if err := call.decodeArguments(target); err != nil {
-		response.failure(
-			"invalid_arguments",
-			fmt.Sprintf("invalid arguments for %s: %v", call.Method, err),
-			nil,
-		)
-		return false
-	}
-	return true
-}
-
 type MethodError struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
 	Details any    `json:"details"`
 }
 
+func (e *MethodError) Error() string {
+	return e.Message
+}
+
 type MethodResponse struct {
-	ID       string       `json:"id,omitempty"`
-	Result   any          `json:"result"`
-	Error    *MethodError `json:"error,omitempty"`
-	callback unsafe.Pointer
-	sent     *atomic.Bool
+	ID     string       `json:"id,omitempty"`
+	Result any          `json:"result"`
+	Error  *MethodError `json:"error,omitempty"`
 }
 
-func newMethodResponse(id string, callback unsafe.Pointer) MethodResponse {
-	return MethodResponse{
-		ID:       id,
-		callback: callback,
-		sent:     &atomic.Bool{},
-	}
-}
+var methodCallSeq atomic.Uint64
 
-func (response MethodResponse) JSON() ([]byte, error) {
-	return json.Marshal(response)
-}
-
-func (response MethodResponse) claim() bool {
-	if response.sent == nil {
-		return true
-	}
-	return response.sent.CompareAndSwap(false, true)
-}
-
-func (response MethodResponse) success(result any) {
-	if !response.claim() {
+// Each call runs on its own goroutine, so a handler that must honour the
+// host's latest intent compares seq, stamped here in arrival order; every
+// transport has to deliver calls in the order the host sent them.
+func dispatchMethodCall(call *MethodCall, reply func(data []byte)) {
+	call.seq = methodCallSeq.Add(1)
+	// A developer-only fatal-path test. It runs outside every recovery so the
+	// core process terminates; on Android that is the whole application.
+	if call.Method == crashMethod {
+		go handleCrash()
 		return
 	}
-	response.Result = result
-	response.Error = nil
-	response.send()
+	safeGo(string(call.Method), func() {
+		reply(handleMethodCall(call))
+	})
 }
 
-func (response MethodResponse) failure(code, message string, details any) {
-	if !response.claim() {
-		return
-	}
-	response.Result = nil
-	response.Error = &MethodError{
-		Code:    code,
-		Message: message,
-		Details: details,
-	}
-	response.send()
+func handleCrash() {
+	panic("handle invoke crash")
 }
 
-func (response MethodResponse) notImplemented(method CoreMethod) {
-	response.failure(
-		"not_implemented",
-		fmt.Sprintf("unknown method: %s", method),
-		nil,
-	)
+func handleMethodCall(call *MethodCall) (data []byte) {
+	defer func() {
+		if r := recover(); r != nil {
+			logError("panic in %s: %v\n%s", call.Method, r, stackTrace())
+			data = encodeResponse(MethodResponse{ID: call.ID, Error: &MethodError{
+				Code:    "internal_error",
+				Message: fmt.Sprintf("internal panic: %v", r),
+			}})
+		}
+	}()
+
+	handler, exists := methodHandlers[call.Method]
+	if !exists {
+		return encodeResponse(MethodResponse{ID: call.ID, Error: &MethodError{
+			Code:    "not_implemented",
+			Message: fmt.Sprintf("unknown method: %s", call.Method),
+		}})
+	}
+	result, err := handler(call)
+	if err != nil {
+		return encodeResponse(MethodResponse{ID: call.ID, Error: asMethodError(err)})
+	}
+	return encodeResponse(MethodResponse{ID: call.ID, Result: result})
+}
+
+func encodeResponse(response MethodResponse) []byte {
+	data, err := json.Marshal(response)
+	if err == nil {
+		return data
+	}
+	logError("MethodResponse marshal error: id=%s err=%v", response.ID, err)
+	data, _ = json.Marshal(MethodResponse{ID: response.ID, Error: &MethodError{
+		Code:    "internal_error",
+		Message: "encode response: " + err.Error(),
+	}})
+	return data
+}
+
+func asMethodError(err error) *MethodError {
+	var methodErr *MethodError
+	if errors.As(err, &methodErr) {
+		return methodErr
+	}
+	return &MethodError{Code: "core_error", Message: err.Error()}
 }
 
 func stackTrace() []byte {
@@ -112,19 +104,7 @@ func stackTrace() []byte {
 	return buf[:runtime.Stack(buf, false)]
 }
 
-func safeGo(response MethodResponse, run func()) {
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				logError("panic in async handler: %v\n%s", r, stackTrace())
-				response.failure("internal_error", fmt.Sprintf("internal panic: %v", r), nil)
-			}
-		}()
-		run()
-	}()
-}
-
-func safeGoDetached(name string, run func()) {
+func safeGo(name string, run func()) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -135,194 +115,118 @@ func safeGoDetached(name string, run func()) {
 	}()
 }
 
-type methodHandler func(call *MethodCall, response MethodResponse)
+func (call MethodCall) decodeArguments(target any) error {
+	if len(call.Arguments) == 0 || string(call.Arguments) == "null" {
+		return errors.New("missing arguments")
+	}
+	return json.Unmarshal(call.Arguments, target)
+}
 
-func withArguments[T any](handle func(params *T, response MethodResponse)) methodHandler {
-	return func(call *MethodCall, response MethodResponse) {
-		var params T
-		if !decodeMethodArguments(call, response, &params) {
-			return
+func decodeArguments[P any](call *MethodCall) (params P, err error) {
+	if decodeErr := call.decodeArguments(&params); decodeErr != nil {
+		return params, &MethodError{
+			Code:    "invalid_arguments",
+			Message: fmt.Sprintf("invalid arguments for %s: %v", call.Method, decodeErr),
 		}
-		handle(&params, response)
+	}
+	return params, nil
+}
+
+type methodHandler func(call *MethodCall) (any, error)
+
+func withArguments[P, R any](run func(P) R) methodHandler {
+	return withFallible(func(params P) (R, error) {
+		return run(params), nil
+	})
+}
+
+func withFallible[P, R any](run func(P) (R, error)) methodHandler {
+	return func(call *MethodCall) (any, error) {
+		params, err := decodeArguments[P](call)
+		if err != nil {
+			return nil, err
+		}
+		return run(params)
 	}
 }
 
-func withDefaults[T any](
-	defaults func() *T,
-	handle func(params *T, response MethodResponse),
-) methodHandler {
-	return func(call *MethodCall, response MethodResponse) {
-		params := defaults()
-		if !decodeMethodArguments(call, response, params) {
-			return
+// The host reads the result of these methods as a message that is empty on
+// success. A *MethodError is the structured form and still fails the call.
+func withMessage[P any](run func(P) error) methodHandler {
+	return withFallible(func(params P) (string, error) {
+		err := run(params)
+		var methodErr *MethodError
+		if err == nil || errors.As(err, &methodErr) {
+			return "", err
 		}
-		handle(params, response)
+		return err.Error(), nil
+	})
+}
+
+func withoutArguments[R any](run func() R) methodHandler {
+	return func(*MethodCall) (any, error) {
+		return run(), nil
 	}
 }
 
-func withoutArguments(handle func(response MethodResponse)) methodHandler {
-	return func(_ *MethodCall, response MethodResponse) {
-		handle(response)
+func acknowledged(run func()) methodHandler {
+	return func(*MethodCall) (any, error) {
+		run()
+		return true, nil
 	}
 }
 
 var methodHandlers = map[CoreMethod]methodHandler{
-	initClashMethod: withArguments(func(params *InitParams, response MethodResponse) {
-		response.success(handleInitClash(params))
-	}),
-	getIsInitMethod: withoutArguments(func(response MethodResponse) {
-		response.success(handleGetIsInit())
-	}),
-	forceGcMethod: withoutArguments(func(response MethodResponse) {
-		handleForceGC()
-		response.success(true)
-	}),
-	shutdownMethod: withoutArguments(func(response MethodResponse) {
-		response.success(handleShutdown())
-	}),
-	validateConfigMethod: withArguments(func(path *string, response MethodResponse) {
-		response.success(handleValidateConfig(*path))
-	}),
-	validateProxiesMethod: withArguments(func(mappings *[]map[string]any, response MethodResponse) {
-		response.success(handleValidateProxies(*mappings))
-	}),
-	updateConfigMethod: withArguments(func(params *UpdateParams, response MethodResponse) {
-		response.success(handleUpdateConfig(params))
-	}),
-	setupConfigMethod: withDefaults(defaultSetupParams, func(params *SetupParams, response MethodResponse) {
-		response.success(handleSetupConfig(params))
-	}),
-	getConfigMethod: withArguments(func(path *string, response MethodResponse) {
-		rawConfig, err := handleGetConfig(*path)
-		if err != nil {
-			response.failure("core_error", err.Error(), nil)
-			return
-		}
-		response.success(rawConfig)
-	}),
-	dumpRuleSetMethod: withArguments(func(path *string, response MethodResponse) {
-		safeGo(response, func() {
-			text, err := handleDumpRuleSet(*path)
-			if err != nil {
-				response.failure("core_error", err.Error(), nil)
-				return
-			}
-			response.success(text)
-		})
-	}),
-	getProxiesMethod: withoutArguments(func(response MethodResponse) {
-		response.success(handleGetProxies())
-	}),
-	changeProxyMethod: withArguments(func(params *ChangeProxyParams, response MethodResponse) {
-		safeGo(response, func() {
-			response.success(handleChangeProxy(params))
-		})
-	}),
-	getTrafficMethod: withArguments(func(onlyStatisticsProxy *bool, response MethodResponse) {
-		response.success(handleGetTraffic(*onlyStatisticsProxy))
-	}),
-	getTotalTrafficMethod: withArguments(func(onlyStatisticsProxy *bool, response MethodResponse) {
-		response.success(handleGetTotalTraffic(*onlyStatisticsProxy))
-	}),
-	resetTrafficMethod: withoutArguments(func(response MethodResponse) {
-		handleResetTraffic()
-		response.success(true)
-	}),
-	asyncTestDelayMethod: withArguments(func(params *TestDelayParams, response MethodResponse) {
-		safeGo(response, func() {
-			response.success(handleTestDelay(params))
-		})
-	}),
-	probeMethod: withArguments(func(params *ProbeParams, response MethodResponse) {
-		safeGo(response, func() {
-			response.success(handleProbe(params))
-		})
-	}),
-	outboundIpMethod: withArguments(func(params *OutboundIpParams, response MethodResponse) {
-		safeGo(response, func() {
-			response.success(handleOutboundIp(params))
-		})
-	}),
-	serviceCheckMethod: withArguments(func(params *ServiceCheckParams, response MethodResponse) {
-		safeGo(response, func() {
-			response.success(handleServiceCheck(params))
-		})
-	}),
-	getConnectionsMethod: withoutArguments(func(response MethodResponse) {
-		response.success(handleGetConnections())
-	}),
-	getConnectionCountMethod: withoutArguments(func(response MethodResponse) {
-		response.success(handleGetConnectionCount())
-	}),
-	closeConnectionsMethod: withoutArguments(func(response MethodResponse) {
-		response.success(handleCloseConnections())
-	}),
-	resetConnectionsMethod: withoutArguments(func(response MethodResponse) {
-		response.success(handleResetConnections())
-	}),
-	closeConnectionMethod: withArguments(func(id *string, response MethodResponse) {
-		response.success(handleCloseConnection(*id))
-	}),
-	getExternalProvidersMethod: withoutArguments(func(response MethodResponse) {
-		response.success(handleGetExternalProviders())
-	}),
-	getExternalProviderMethod: withArguments(func(name *string, response MethodResponse) {
-		response.success(handleGetExternalProvider(*name))
-	}),
-	updateExternalProviderMethod: withArguments(func(name *string, response MethodResponse) {
-		safeGo(response, func() {
-			if err := handleUpdateExternalProvider(*name); err != nil {
-				response.failure(err.Code, err.Message, err.Details)
-				return
-			}
-			response.success("")
-		})
-	}),
-	sideLoadExternalProviderMethod: withArguments(func(params *SideLoadParams, response MethodResponse) {
-		safeGo(response, func() {
-			if err := handleSideLoadExternalProvider(params.ProviderName, []byte(params.Data)); err != nil {
-				response.failure(err.Code, err.Message, err.Details)
-				return
-			}
-			response.success("")
-		})
-	}),
-	updateGeoDataMethod: withArguments(func(geoType *string, response MethodResponse) {
-		response.success(handleUpdateGeoData(*geoType))
-	}),
-	startLogMethod: withoutArguments(func(response MethodResponse) {
-		handleStartLog()
-		response.success(true)
-	}),
-	stopLogMethod: withoutArguments(func(response MethodResponse) {
-		handleStopLog()
-		response.success(true)
-	}),
-	startListenerMethod: withoutArguments(func(response MethodResponse) {
-		response.success(handleStartListener())
-	}),
-	stopListenerMethod: withoutArguments(func(response MethodResponse) {
-		response.success(handleStopListener())
-	}),
-	getMemoryStatsMethod: withoutArguments(func(response MethodResponse) {
-		safeGo(response, func() {
-			response.success(handleGetMemoryStats())
-		})
-	}),
-	clearEffectMethod: withArguments(func(profileId *int64, response MethodResponse) {
-		safeGo(response, func() {
-			response.success(handleClearEffect(*profileId))
-		})
-	}),
-	watchRouteMethod: func(call *MethodCall, response MethodResponse) {
-		var watch bool
-		if !decodeMethodArguments(call, response, &watch) {
-			return
-		}
-		safeGo(response, func() {
-			response.success(handleWatchRoute(watch, call.seq))
-		})
-	},
+	initClashMethod:                withArguments(handleInitClash),
+	getIsInitMethod:                withoutArguments(handleGetIsInit),
+	forceGcMethod:                  acknowledged(handleForceGC),
+	shutdownMethod:                 withoutArguments(handleShutdown),
+	startListenerMethod:            withoutArguments(handleStartListener),
+	stopListenerMethod:             withoutArguments(handleStopListener),
+	getMemoryStatsMethod:           withoutArguments(handleGetMemoryStats),
+	startLogMethod:                 acknowledged(handleStartLog),
+	stopLogMethod:                  acknowledged(handleStopLog),
+	validateConfigMethod:           withMessage(handleValidateConfig),
+	decryptConfigMethod:            withFallible(handleDecryptConfig),
+	getConfigMethod:                withFallible(handleGetConfig),
+	setupConfigMethod:              withMessage(handleSetupConfig),
+	updateConfigMethod:             withMessage(updateConfig),
+	validateProxiesMethod:          withArguments(handleValidateProxies),
+	validateFiltersMethod:          withArguments(handleValidateFilters),
+	convertProxiesMethod:           withFallible(handleConvertProxies),
+	encodeShareLinksMethod:         withArguments(handleEncodeShareLinks),
+	decodeShareLinksMethod:         withArguments(handleDecodeShareLinks),
+	getProxiesMethod:               withoutArguments(handleGetProxies),
+	changeProxyMethod:              withArguments(handleChangeProxy),
+	asyncTestDelayMethod:           withArguments(handleTestDelay),
+	watchRouteMethod:               watchRouteHandler,
+	probeMethod:                    withArguments(handleProbe),
+	outboundIpMethod:               withArguments(handleOutboundIp),
+	serviceCheckMethod:             withArguments(handleServiceCheck),
+	getTrafficMethod:               withArguments(handleGetTraffic),
+	getTotalTrafficMethod:          withArguments(handleGetTotalTraffic),
+	resetTrafficMethod:             acknowledged(handleResetTraffic),
+	getConnectionsMethod:           withoutArguments(handleGetConnections),
+	getConnectionCountMethod:       withoutArguments(handleGetConnectionCount),
+	closeConnectionsMethod:         withoutArguments(handleCloseConnections),
+	resetConnectionsMethod:         withoutArguments(handleResetConnections),
+	closeConnectionMethod:          withArguments(handleCloseConnection),
+	getExternalProvidersMethod:     withoutArguments(handleGetExternalProviders),
+	getExternalProviderMethod:      withArguments(handleGetExternalProvider),
+	updateExternalProviderMethod:   withMessage(handleUpdateExternalProvider),
+	sideLoadExternalProviderMethod: withMessage(handleSideLoadExternalProvider),
+	updateGeoDataMethod:            withMessage(handleUpdateGeoData),
+	dumpRuleSetMethod:              withFallible(handleDumpRuleSet),
+	compileRuleSetMethod:           withFallible(handleCompileRuleSet),
+	clearEffectMethod:              withMessage(handleClearEffect),
+}
+
+func watchRouteHandler(call *MethodCall) (any, error) {
+	watch, err := decodeArguments[bool](call)
+	if err != nil {
+		return nil, err
+	}
+	return handleWatchRoute(watch, call.seq), nil
 }
 
 func registerMethod(method CoreMethod, handler methodHandler) {
@@ -330,27 +234,4 @@ func registerMethod(method CoreMethod, handler methodHandler) {
 		panic(fmt.Sprintf("duplicate handler for method %s", method))
 	}
 	methodHandlers[method] = handler
-}
-
-func handleMethodCall(call *MethodCall, response MethodResponse) {
-	// The crash method is a developer-only fatal-path test. It must bypass the
-	// recovery below so the core process terminates; on Android this also
-	// terminates the in-process application.
-	if call.Method == crashMethod {
-		handleCrash()
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			logError("panic in handleMethodCall(%s): %v\n%s", call.Method, r, stackTrace())
-			response.failure("internal_error", fmt.Sprintf("internal panic: %v", r), nil)
-		}
-	}()
-
-	handler, exists := methodHandlers[call.Method]
-	if !exists {
-		response.notImplemented(call.Method)
-		return
-	}
-	handler(call, response)
 }

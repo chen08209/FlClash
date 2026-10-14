@@ -183,6 +183,22 @@ void main() {
       ]);
     });
 
+    test('keeps what it can read of a damaged current config', () async {
+      final configMap = _createConfigMap()
+        ..['currentProfileId'] = 7
+        ..['excludeSSIDs'] = 'home';
+      final store = _FakeMigrationStore(
+        configMap: configMap,
+        version: Migration.currentVersion,
+      );
+
+      final config = await Migration(store: store).run();
+
+      expect(config.currentProfileId, 7);
+      expect(config.excludeSSIDs, isEmpty);
+      expect(store.events, ['getConfigMap', 'getVersion']);
+    });
+
     test('keeps the current version when password obfuscation fails', () async {
       final configMap = _createConfigMap(
         davProps: const DAVProps(uri: 'https://example.com/dav', user: 'user'),

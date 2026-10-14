@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/permission.dart';
 import 'package:fl_clash/common/system_dns.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -46,18 +45,21 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
         unawaited(precacheTargetIcons(next.map((group) => group.icon)));
       }
     }, fireImmediately: true);
+    ref.listenManual(iconSetsProvider, (_, next) {
+      if (next.value case final iconSets?) {
+        unawaited(
+          precacheTargetIcons(iconSets.map((iconSet) => iconSet.cover)),
+        );
+      }
+    }, fireImmediately: true);
     ref.listenManual(needUpdateGroupsProvider, (prev, next) {
       if (prev != next) {
         ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
       }
     });
     ref.listenManual(suspendProvider, (prev, next) {
-      final isStart = ref.read(isStartProvider);
-      if (prev != next && isStart && !ref.read(safeModeProvider)) {
-        debouncer.call(
-          FunctionTag.suspend,
-          ref.read(setupActionProvider.notifier).syncListener,
-        );
+      if (prev != next) {
+        ref.read(setupActionProvider.notifier).syncSuspend();
       }
     });
     final systemDns = systemDnsCoordinator;
@@ -86,10 +88,9 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
 
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
-    commonPrint.log('$state');
     _updateVisible(state);
     if (state == AppLifecycleState.resumed) {
-      permissions.check(ref.read);
+      unawaited(ref.read(locationPermissionsProvider.notifier).refresh());
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) {
           return;

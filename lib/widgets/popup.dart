@@ -211,6 +211,8 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
 
   final _unfolded = ValueNotifier<bool>(false);
 
+  final _pin = _PopupPin();
+
   @override
   void dispose() {
     _grow.dispose();
@@ -276,6 +278,7 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
               safeInsets: safeInsets,
               placement: placement,
               avoid: avoid,
+              pin: _pin,
             ),
             child: _PopupMorph(
               anchor: anchor,
@@ -705,6 +708,7 @@ class _PopupLayoutDelegate extends SingleChildLayoutDelegate {
     required this.anchor,
     required this.safeInsets,
     required this.placement,
+    required this.pin,
     this.avoid,
   });
 
@@ -712,6 +716,7 @@ class _PopupLayoutDelegate extends SingleChildLayoutDelegate {
   final EdgeInsets safeInsets;
   final PopupPlacement placement;
   final Rect? avoid;
+  final _PopupPin pin;
 
   EdgeInsets get _insets => safeInsets + const EdgeInsets.all(_screenMargin);
 
@@ -734,20 +739,27 @@ class _PopupLayoutDelegate extends SingleChildLayoutDelegate {
     final insets = _insets;
     final maxX = size.width - insets.right - childSize.width;
     final maxY = size.height - insets.bottom - childSize.height;
-    final (x, y) = switch (placement) {
-      PopupPlacement.overAnchorEnd => (
-        anchor.right - childSize.width,
-        anchor.top - _anchorOverlap,
-      ),
-      PopupPlacement.belowPoint => (
-        anchor.left,
-        _yBelowPoint(childSize.height, insets.top, maxY),
-      ),
-    };
-    return Offset(
+    final pinned = pin.topRightFor(this, size);
+    final (x, y) = pinned != null
+        ? (pinned.dx - childSize.width, pinned.dy)
+        : switch (placement) {
+            PopupPlacement.overAnchorEnd => (
+              anchor.right - childSize.width,
+              anchor.top - _anchorOverlap,
+            ),
+            PopupPlacement.belowPoint => (
+              anchor.left,
+              _yBelowPoint(childSize.height, insets.top, maxY),
+            ),
+          };
+    final position = Offset(
       x.clamp(insets.left, math.max(insets.left, maxX)),
       y.clamp(insets.top, math.max(insets.top, maxY)),
     );
+    if (pinned == null) {
+      pin.hold(this, size, position.translate(childSize.width, 0));
+    }
+    return position;
   }
 
   double _yBelowPoint(double height, double minY, double maxY) {
@@ -768,12 +780,38 @@ class _PopupLayoutDelegate extends SingleChildLayoutDelegate {
     return anchor.bottom;
   }
 
+  bool _placesLike(_PopupLayoutDelegate other) {
+    return other.anchor == anchor &&
+        other.safeInsets == safeInsets &&
+        other.placement == placement &&
+        other.avoid == avoid;
+  }
+
   @override
   bool shouldRelayout(_PopupLayoutDelegate oldDelegate) {
-    return oldDelegate.anchor != anchor ||
-        oldDelegate.safeInsets != safeInsets ||
-        oldDelegate.placement != placement ||
-        oldDelegate.avoid != avoid;
+    return !_placesLike(oldDelegate) || oldDelegate.pin != pin;
+  }
+}
+
+/// Keeps the top right corner the menu levels stack from while a sub menu
+/// unfolds, so the card neither slides nor flips around what it avoids.
+class _PopupPin {
+  _PopupLayoutDelegate? _placement;
+  Size _size = Size.zero;
+  Offset _topRight = Offset.zero;
+
+  Offset? topRightFor(_PopupLayoutDelegate placement, Size size) {
+    final held = _placement;
+    if (held == null || size != _size || !held._placesLike(placement)) {
+      return null;
+    }
+    return _topRight;
+  }
+
+  void hold(_PopupLayoutDelegate placement, Size size, Offset topRight) {
+    _placement = placement;
+    _size = size;
+    _topRight = topRight;
   }
 }
 

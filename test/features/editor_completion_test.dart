@@ -59,6 +59,14 @@ void main() {
       expect(_inserted(completion, 'mixed-port'), 'mixed-port: ');
     });
 
+    test('omits disabled controllers and keeps listener completion', () {
+      final controllers = _labels(_complete('external-controller-|'));
+      expect(controllers, isNot(contains('external-controller-tls')));
+      expect(controllers, isNot(contains('external-controller-unix')));
+      expect(controllers, isNot(contains('external-controller-pipe')));
+      expect(_labels(_complete('listen|')), contains('listeners'));
+    });
+
     test('keeps dashes in the prefix and opens a sequence', () {
       final completion = _complete('proxy-g|');
       expect(completion!.prefix, 'proxy-g');
@@ -93,6 +101,16 @@ void main() {
         _labels(_complete('proxies:\n  - name: a\n    type: ss\n    ci|')),
         contains('cipher'),
       );
+      const direct = 'proxies:\n  - name: a\n    type: direct\n    ser|';
+      expect(_labels(_complete(direct)), isNot(contains('server')));
+    });
+
+    test('offers the fields of the listener type', () {
+      List<String> fields(String type) => _labels(
+        _complete('listeners:\n  - name: a\n    type: $type\n    ws|'),
+      );
+      expect(fields('vmess'), contains('ws-path'));
+      expect(fields('shadowsocks'), isNot(contains('ws-path')));
     });
 
     test('completes the keys of an item the caret line opens', () {
@@ -127,6 +145,8 @@ void main() {
       expect(_labels(policy).first, 'Proxy');
       expect(policy!.suggestions.first.detail, 'select');
       expect(_labels(_complete('$rules  - MATCH,DI|')), ['DIRECT']);
+      expect(_labels(_complete('$rules  - MATCH,GL|')), ['GLOBAL']);
+      expect(_labels(_complete('$rules  - MATCH,COM|')), ['COMPATIBLE']);
       expect(_labels(_complete('$rules  - GEOIP,CN,DIRECT,no|')), [
         'no-resolve',
       ]);
@@ -205,6 +225,10 @@ void main() {
           'proxy-groups:\n  - name: G\n    type: select\n'
           '    proxies: [DIRECT, REJ|';
       expect(_labels(_complete(document)), ['REJECT', 'REJECT-DROP']);
+      expect(
+        _labels(_complete(document.replaceFirst('REJ|', 'GL|'))),
+        isNot(contains('GLOBAL')),
+      );
     });
 
     test('completes against the part of the config being edited', () {
@@ -264,7 +288,7 @@ void main() {
       expect(_labels(script("({ type: 'vm|")), ['vmess']);
       expect(
         _labels(script("proxy.type === 'hyst|")),
-        unorderedEquals(['hysteria2', 'hysteria']),
+        unorderedEquals(['hysteria2', 'hysteria', 'hysteria2-realm']),
       );
     });
 

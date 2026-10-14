@@ -363,10 +363,40 @@ void main() {
     expect(result, 'default');
   });
 
+  testWidgets('SecretTextFormField hides the text until revealed', (
+    tester,
+  ) async {
+    final controller = TextEditingController(text: 'AGE-SECRET-KEY-1A');
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [_viewSizeOverride],
+        child: Material(
+          child: SecretTextFormField(controller: controller, maxLines: 5),
+        ),
+      ),
+    );
+
+    EditableText editable() => tester.widget(find.byType(EditableText));
+    expect(editable().obscureText, isTrue);
+    expect(editable().maxLines, 1);
+
+    await tester.tap(find.byTooltip('Show password'));
+    await tester.pump();
+    expect(editable().obscureText, isFalse);
+    expect(editable().maxLines, 5);
+
+    await tester.tap(find.byTooltip('Hide password'));
+    await tester.pump();
+    expect(editable().obscureText, isTrue);
+    expect(controller.text, 'AGE-SECRET-KEY-1A');
+  });
+
   testWidgets(
     'NamedUrlDialog puts the optional name first and focuses the url',
     (tester) async {
-      ({String label, String url})? result;
+      List<NamedUrl>? result;
 
       await tester.pumpWidget(
         TestApp(
@@ -375,7 +405,7 @@ void main() {
             builder: (context) {
               return FilledButton(
                 onPressed: () async {
-                  result = await showDialog<({String label, String url})>(
+                  result = await showDialog<List<NamedUrl>>(
                     context: context,
                     builder: (_) => const NamedUrlDialog(title: 'Import'),
                   );
@@ -397,6 +427,7 @@ void main() {
         lessThan(tester.getTopLeft(urlField).dy),
       );
       expect(find.text('Optional'), findsOneWidget);
+      expect(find.byTooltip('Batch import'), findsNothing);
       expect(
         tester
             .widget<EditableText>(
@@ -434,7 +465,77 @@ void main() {
       await tester.enterText(urlField, 'https://example.com/sub');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
-      expect(result, (label: 'Home', url: 'https://example.com/sub'));
+      expect(result, [
+        (label: 'Home', url: 'https://example.com/sub', ageSecretKey: ''),
+      ]);
+    },
+  );
+
+  testWidgets(
+    'NamedUrlDialog batch previews, blocks invalid lines, and pops every url',
+    (tester) async {
+      List<NamedUrl>? result;
+
+      await tester.pumpWidget(
+        TestApp(
+          overrides: [_viewSizeOverride],
+          child: Builder(
+            builder: (context) {
+              return FilledButton(
+                onPressed: () async {
+                  result = await showDialog<List<NamedUrl>>(
+                    context: context,
+                    builder: (_) => const NamedUrlDialog(
+                      title: 'Import',
+                      batch: true,
+                      existingUrls: {'https://example.com/old'},
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      );
+
+      VoidCallback? submit() => tester
+          .widget<TextButton>(find.widgetWithText(TextButton, 'Submit'))
+          .onPressed;
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'URL'),
+        'https://example.com/a',
+      );
+      await tester.tap(find.byTooltip('Batch import'));
+      await tester.pumpAndSettle();
+      expect(find.text('Batch import'), findsOneWidget);
+      expect(find.byTooltip('Single import'), findsOneWidget);
+      expect(find.text('1 to add, 0 skipped as existing'), findsOneWidget);
+
+      await tester.enterText(
+        find.byType(TextField),
+        'https://example.com/a\nnot-a-url',
+      );
+      await tester.pump();
+      expect(find.text('Line 2: URL must be a URL'), findsOneWidget);
+      expect(submit(), isNull);
+
+      await tester.enterText(
+        find.byType(TextField),
+        'https://example.com/a\nhttps://example.com/old\n'
+        'https://example.com/b',
+      );
+      await tester.pump();
+      expect(find.text('2 to add, 1 skipped as existing'), findsOneWidget);
+      await tester.tap(find.text('Submit'));
+      await tester.pumpAndSettle();
+      expect(result, [
+        (label: '', url: 'https://example.com/a', ageSecretKey: ''),
+        (label: '', url: 'https://example.com/b', ageSecretKey: ''),
+      ]);
     },
   );
 
@@ -531,14 +632,14 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Add'));
+    await tester.tap(find.byTooltip('Add'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), 'c');
     await tester.tap(find.text('Confirm'));
     await tester.pumpAndSettle();
     expect(find.text('c'), findsNWidgets(3));
 
-    await tester.tap(find.text('Add'));
+    await tester.tap(find.byTooltip('Add'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), 'x, y');
     await tester.tap(find.text('Confirm'));
@@ -606,7 +707,7 @@ void main() {
       lessThan(tester.getTopLeft(find.text('a').first).dy),
     );
 
-    await tester.tap(find.text('Add'));
+    await tester.tap(find.byTooltip('Add'));
     await tester.pumpAndSettle();
     final fields = find.byType(TextFormField);
     await tester.enterText(fields.first, 'c');
@@ -645,7 +746,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.text('Add'));
+      await tester.tap(find.byTooltip('Add'));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Batch add'));
       await tester.pumpAndSettle();
@@ -697,7 +798,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Add'));
+    await tester.tap(find.byTooltip('Add'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField).first, 'c');
     await tester.enterText(find.byType(TextFormField).last, '3');

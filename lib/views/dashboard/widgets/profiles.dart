@@ -6,6 +6,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/dashboard/widget_metrics.dart';
 import 'package:fl_clash/views/profiles/add.dart';
+import 'package:fl_clash/views/profiles/custom/custom.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,9 +33,12 @@ class ProfilesCard extends ConsumerWidget {
       height: DashboardWidgetMetrics.heightOf(context, 1),
       child: CommonCard(
         radius: DashboardWidgetMetrics.radiusOf(context),
-        onPressed: profile == null
-            ? showAddProfilePage
-            : () => showProfileDetailSheet(context),
+        onPressed: switch (profile) {
+          null => () => showAddProfilePage(context),
+          Profile(type: ProfileType.custom, :final id) =>
+            () => showCustomProfileSheet(context, id),
+          _ => () => showProfileDetailSheet(context),
+        },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -54,9 +58,7 @@ class ProfilesCard extends ConsumerWidget {
                         appLocalizations.profiles,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: context.textTheme.titleSmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+                        style: context.sectionHeaderStyle,
                       ),
                     ),
                   ),
@@ -171,33 +173,30 @@ class _ProfilePickerSheet extends ConsumerWidget {
       Navigator.of(context).pop();
     }
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: ref.sheetHeight(context, 0.7)),
-      child: CommonScaffold(
-        title: context.appLocalizations.switchProfile,
-        body: RadioGroup<int>(
-          groupValue: currentId,
-          onChanged: select,
-          child: ListView.builder(
-            shrinkWrap: true,
-            padding: EdgeInsets.fromLTRB(16, context.contentTopPadding, 16, 16),
-            itemCount: profiles.length,
-            itemBuilder: (context, index) {
-              final profile = profiles[index];
-              return ItemPositionProvider(
-                position: ItemPosition.get(index, profiles.length),
-                child: ListItem.radio(
-                  value: profile.id,
-                  onTap: () => select(profile.id),
-                  title: EmojiText(
-                    profile.realLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+    return CommonScaffold(
+      title: context.appLocalizations.switchProfile,
+      body: RadioGroup<int>(
+        groupValue: currentId,
+        onChanged: select,
+        child: ListView.builder(
+          shrinkWrap: true,
+          padding: EdgeInsets.fromLTRB(16, context.contentTopPadding, 16, 16),
+          itemCount: profiles.length,
+          itemBuilder: (context, index) {
+            final profile = profiles[index];
+            return ItemPositionProvider(
+              position: ItemPosition.get(index, profiles.length),
+              child: ListItem.radio(
+                value: profile.id,
+                onTap: () => select(profile.id),
+                title: EmojiText(
+                  profile.realLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

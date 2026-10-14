@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"context"
@@ -6,19 +6,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/metacubex/mihomo/adapter"
-	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/tunnel"
 )
 
 // mihomo has no hook for a health check moving a URLTest or Fallback pick, so
 // the picks are re-read on this timer while the host watches.
 const routePollInterval = time.Second
-
-type pickableGroup interface {
-	outboundgroup.ProxyGroup
-	outboundgroup.SelectAble
-}
 
 type routeTracker struct {
 	mu               sync.Mutex
@@ -36,7 +29,7 @@ var (
 	currentRoute routeTracker
 
 	publishRoute = func(state RouteState) {
-		sendMessage(Message{Type: RouteChangedMessage, Data: state})
+		sendMessage(RouteChangedMessage, state)
 	}
 )
 
@@ -67,15 +60,9 @@ func routeStamp() (epoch, picksVersion uint64) {
 func readPicks() (map[string]string, map[string]uint32) {
 	picks := map[string]string{}
 	for name, proxy := range tunnel.AllProxies() {
-		outbound, ok := proxy.(*adapter.Proxy)
-		if !ok {
-			continue
+		if group, ok := adapterAs[pickableGroup](proxy); ok {
+			picks[name] = group.Now()
 		}
-		group, ok := outbound.ProxyAdapter.(pickableGroup)
-		if !ok {
-			continue
-		}
-		picks[name] = group.Now()
 	}
 	providers := tunnel.ProvidersSnapshot()
 	versions := make(map[string]uint32, len(providers))
@@ -120,13 +107,13 @@ func refreshRouteLocked(structural bool) {
 		currentRoute.picksVersion++
 		changed = true
 	}
-	state := routeStateLocked()
-	watched := currentRoute.watched
-	currentRoute.mu.Unlock()
-
-	if changed && watched {
-		publishRoute(state)
+	if !changed || !currentRoute.watched {
+		currentRoute.mu.Unlock()
+		return
 	}
+	state := routeStateLocked()
+	currentRoute.mu.Unlock()
+	publishRoute(state)
 }
 
 func refreshRoute() {

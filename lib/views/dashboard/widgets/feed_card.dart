@@ -66,10 +66,12 @@ class FeedCount extends StatelessWidget {
     return Align(
       alignment: AlignmentDirectional.centerStart,
       child: Text(
-        '$count',
+        count.compact,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: context.textTheme.bodyMedium?.toLight.adjustSize(1),
+        style: context.textTheme.bodyMedium?.toLight
+            .adjustSize(1)
+            .copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
       ),
     );
   }

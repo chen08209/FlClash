@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/config.dart';
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window/window.dart';
@@ -31,11 +32,6 @@ class Window implements WindowPort {
   }
 
   Future<void> init(int version, WindowProps props) async {
-    final acquire = await singleInstanceLock.acquire();
-    if (!acquire) {
-      commonPrint.log('another instance owns the data directory, exiting');
-      exit(0);
-    }
     if (!safeModeBuild) {
       if (system.isWindows) {
         for (final scheme in protocolSchemes) {
@@ -61,38 +57,25 @@ class Window implements WindowPort {
   }
 
   Future<void> _windowPosition(WindowProps props) async {
-    if (_supportsPosition) {
-      final left = props.left;
-      final top = props.top;
-      if (left == null || top == null) {
-        await desktopWindow.setAlignment(Alignment.center);
-      } else {
-        final size = props.size;
-        final right = left + size.width;
-        final bottom = top + size.height;
-        final displays = await screenRetriever.getAllDisplays();
-        final isPositionValid = displays.any((display) {
-          final visiblePosition = display.visiblePosition;
-          if (visiblePosition == null) {
-            return false;
-          }
-          final displayBounds = Rect.fromLTWH(
-            visiblePosition.dx,
-            visiblePosition.dy,
-            display.size.width,
-            display.size.height,
+    if (!_supportsPosition) {
+      return;
+    }
+    final position = props.left == null || props.top == null
+        ? null
+        : restoredWindowPosition(
+            props,
+            displays: await screenRetriever.getAllDisplays(),
+            currentScale: system.isWindows ? _windowScale : null,
           );
-          return displayBounds.contains(Offset(left, top)) ||
-              displayBounds.contains(Offset(right, bottom));
-        });
-        if (isPositionValid) {
-          await desktopWindow.setPosition(Offset(left, top));
-        } else {
-          await desktopWindow.setAlignment(Alignment.center);
-        }
-      }
+    if (position == null) {
+      await desktopWindow.setAlignment(Alignment.center);
+    } else {
+      await desktopWindow.setPosition(position);
     }
   }
+
+  double get _windowScale =>
+      PlatformDispatcher.instance.implicitView?.devicePixelRatio ?? 1;
 
   @override
   Future<WindowProps?> captureNormalGeometry(WindowProps current) async {
@@ -119,6 +102,9 @@ class Window implements WindowPort {
       height: bounds.height,
       left: hasValidPosition ? bounds.left : current.left,
       top: hasValidPosition ? bounds.top : current.top,
+      scale: hasValidPosition && system.isWindows
+          ? _windowScale
+          : current.scale,
     );
   }
 
@@ -163,9 +149,12 @@ class Window implements WindowPort {
 
   /// Every desktop runner leaves the window hidden until [init] reveals it, so
   /// a failure before that point would leave the error screen with no window.
-  Future<void> showInitFailure() async {
+  Future<void> showInitFailure({required AsyncCallback onExit}) async {
+    desktopWindow.addListener(_InitFailureWindowListener(onExit));
     try {
       await desktopWindow.ensureInitialized();
+      await desktopWindow.setPreventClose(true);
+      await desktopWindow.setTitleBarStyle(TitleBarStyle.normal);
       if (await desktopWindow.isVisible()) {
         return;
       }
@@ -200,9 +189,7 @@ class Window implements WindowPort {
   }
 
   Future<bool> _isWindowVisible() async {
-    final value = await desktopWindow.isVisible();
-    commonPrint.log('window visible check: $value');
-    return value;
+    return desktopWindow.isVisible();
   }
 
   @override
@@ -214,6 +201,50 @@ class Window implements WindowPort {
   void forceExit() {
     exit(0);
   }
+}
+
+/// On Windows the plugin scales by the window's monitor and screen_retriever by
+/// each display's own, so only physical pixels compare across mixed scales.
+@visibleForTesting
+Offset? restoredWindowPosition(
+  WindowProps props, {
+  required List<Display> displays,
+  double? currentScale,
+}) {
+  final savedScale = currentScale == null ? 1.0 : props.scale ?? currentScale;
+  final topLeft = Offset(props.left!, props.top!) * savedScale;
+  final bottomRight =
+      topLeft + props.size.bottomRight(Offset.zero) * savedScale;
+  final isVisible = displays.any((display) {
+    final position = display.visiblePosition;
+    if (position == null) {
+      return false;
+    }
+    final scale = currentScale == null
+        ? 1.0
+        : display.scaleFactor?.toDouble() ?? 1.0;
+    final bounds = position & display.size;
+    final physical = Rect.fromLTRB(
+      bounds.left * scale,
+      bounds.top * scale,
+      bounds.right * scale,
+      bounds.bottom * scale,
+    );
+    return physical.contains(topLeft) || physical.contains(bottomRight);
+  });
+  return isVisible ? topLeft / (currentScale ?? 1.0) : null;
+}
+
+class _InitFailureWindowListener with WindowListener {
+  final AsyncCallback onExit;
+
+  _InitFailureWindowListener(this.onExit);
+
+  @override
+  void onWindowClose() => unawaited(onExit());
+
+  @override
+  void onWindowShouldTerminate() => unawaited(onExit());
 }
 
 /// Serializes visibility requests so a burst of hotkey toggles lands in

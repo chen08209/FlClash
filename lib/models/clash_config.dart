@@ -14,6 +14,8 @@ const defaultClashConfig = PatchClashConfig();
 const defaultTun = Tun();
 const defaultDns = Dns();
 const defaultNtp = Ntp();
+const defaultSniffer = Sniffer();
+const defaultProfileTun = ProfileTun();
 
 /// What a profile that brings no DNS section of its own is given, so the core
 /// always resolves. The user's own override set starts empty.
@@ -22,6 +24,11 @@ const baselineDnsOverrideKeys = {
   DnsOverrideKey.enhancedMode,
   DnsOverrideKey.nameserver,
 };
+const baselineDns = Dns(
+  enable: true,
+  enhancedMode: DnsMode.fakeIp,
+  nameserver: ['https://doh.pub/dns-query', 'https://dns.alidns.com/dns-query'],
+);
 const defaultGeoXUrl = {
   GeoResource.MMDB:
       'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb',
@@ -35,90 +42,23 @@ const defaultGeoXUrl = {
 
 const defaultMixedPort = 7890;
 const defaultKeepAliveInterval = 30;
+const defaultTunMtu = 9000;
+const minTunMtu = 1280;
+const maxTunMtu = 65535;
+const defaultCongestionController = 'cubic';
 
-const defaultBypassPrivateRouteAddress = [
-  '1.0.0.0/8',
-  '2.0.0.0/7',
-  '4.0.0.0/6',
-  '8.0.0.0/7',
-  '11.0.0.0/8',
-  '12.0.0.0/6',
-  '16.0.0.0/4',
-  '32.0.0.0/3',
-  '64.0.0.0/3',
-  '96.0.0.0/4',
-  '112.0.0.0/5',
-  '120.0.0.0/6',
-  '124.0.0.0/7',
-  '126.0.0.0/8',
-  '128.0.0.0/3',
-  '160.0.0.0/5',
-  '168.0.0.0/8',
-  '169.0.0.0/9',
-  '169.128.0.0/10',
-  '169.192.0.0/11',
-  '169.224.0.0/12',
-  '169.240.0.0/13',
-  '169.248.0.0/14',
-  '169.252.0.0/15',
-  '169.255.0.0/16',
-  '170.0.0.0/7',
-  '172.0.0.0/12',
-  '172.32.0.0/11',
-  '172.64.0.0/10',
-  '172.128.0.0/9',
-  '173.0.0.0/8',
-  '174.0.0.0/7',
-  '176.0.0.0/4',
-  '192.0.0.0/9',
-  '192.128.0.0/11',
-  '192.160.0.0/13',
-  '192.169.0.0/16',
-  '192.170.0.0/15',
-  '192.172.0.0/14',
-  '192.176.0.0/12',
-  '192.192.0.0/10',
-  '193.0.0.0/8',
-  '194.0.0.0/7',
-  '196.0.0.0/6',
-  '200.0.0.0/5',
-  '208.0.0.0/4',
-  '240.0.0.0/5',
-  '248.0.0.0/6',
-  '252.0.0.0/7',
-  '254.0.0.0/8',
-  '255.0.0.0/9',
-  '255.128.0.0/10',
-  '255.192.0.0/11',
-  '255.224.0.0/12',
-  '255.240.0.0/13',
-  '255.248.0.0/14',
-  '255.252.0.0/15',
-  '255.254.0.0/16',
-  '255.255.0.0/17',
-  '255.255.128.0/18',
-  '255.255.192.0/19',
-  '255.255.224.0/20',
-  '255.255.240.0/21',
-  '255.255.248.0/22',
-  '255.255.252.0/23',
-  '255.255.254.0/24',
-  '255.255.255.0/25',
-  '255.255.255.128/26',
-  '255.255.255.192/27',
-  '255.255.255.224/28',
-  '255.255.255.240/29',
-  '255.255.255.248/30',
-  '255.255.255.252/31',
-  '255.255.255.254/32',
-  '::/1',
-  '8000::/2',
-  'c000::/3',
-  'e000::/4',
-  'f000::/5',
-  'f800::/6',
-  'fe00::/9',
-  'fec0::/10',
+const privateRouteAddress = [
+  '0.0.0.0/8',
+  '10.0.0.0/8',
+  '127.0.0.0/8',
+  '169.254.0.0/16',
+  '172.16.0.0/12',
+  '192.168.0.0/16',
+  '224.0.0.0/4',
+  '255.255.255.255/32',
+  'fc00::/7',
+  'fe80::/10',
+  'ff00::/8',
 ];
 
 @freezed
@@ -130,6 +70,7 @@ abstract class ProxyGroup with _$ProxyGroup {
     required GroupType type,
     List<String>? proxies,
     List<String>? use,
+    @JsonKey(name: 'use-position') Map<String, int>? usePosition,
     int? interval,
     bool? lazy,
     @JsonKey(name: 'disable-udp') bool? disableUDP,
@@ -142,12 +83,19 @@ abstract class ProxyGroup with _$ProxyGroup {
     @JsonKey(name: 'expected-status') String? expectedStatus,
     int? tolerance,
     LoadBalanceStrategy? strategy,
+    @JsonKey(name: 'hash-key') String? hashKey,
+    @JsonKey(name: 'default-selected') String? defaultSelected,
+    @JsonKey(name: 'empty-fallback') String? emptyFallback,
     @JsonKey(name: 'include-all') bool? includeAll,
     @JsonKey(name: 'include-all-proxies') bool? includeAllProxies,
     @JsonKey(name: 'include-all-providers') bool? includeAllProviders,
     bool? hidden,
     String? icon,
     String? order,
+
+    /// Where the members list shows the filters among the proxies, which no
+    /// config carries, as `ProxyGroupMembersSliver` writes it.
+    List<String>? memberLayout,
   }) = _ProxyGroup;
 
   factory ProxyGroup.fromJson(Map<String, Object?> json) =>
@@ -163,10 +111,12 @@ extension ProxyGroupExt on ProxyGroup {
       'type': type.value,
       if (proxies?.isNotEmpty == true) 'proxies': proxies,
       if (use?.isNotEmpty == true) 'use': use,
+      'use-position': ?effectiveUsePosition,
       if (url?.isNotEmpty == true) 'url': url,
       if (interval != null) 'interval': interval,
       if (timeout != null) 'timeout': timeout,
       if (maxFailedTimes != null) 'max-failed-times': maxFailedTimes,
+      if (emptyFallback?.isNotEmpty == true) 'empty-fallback': emptyFallback,
       if (lazy != null) 'lazy': lazy,
       if (disableUDP != null) 'disable-udp': disableUDP,
       if (filter?.isNotEmpty == true) 'filter': filter,
@@ -181,11 +131,82 @@ extension ProxyGroupExt on ProxyGroup {
       if (icon?.isNotEmpty == true) 'icon': icon,
       if (type == GroupType.URLTest && tolerance != null)
         'tolerance': tolerance,
+      if (type == GroupType.Selector && defaultSelected?.isNotEmpty == true)
+        'default-selected': defaultSelected,
       if (type == GroupType.LoadBalance && strategy != null)
         'strategy': strategy!.value,
+      // The core refuses a round-robin group that sets one.
+      if (type == GroupType.LoadBalance &&
+          strategy != LoadBalanceStrategy.roundRobin &&
+          hashKey?.isNotEmpty == true)
+        'hash-key': hashKey,
     };
   }
+
+  /// [usePosition] without the providers the core would list last anyway.
+  Map<String, int>? get effectiveUsePosition {
+    final count = proxies?.length ?? 0;
+    final positions = {
+      for (final name in use ?? const <String>[])
+        if (usePosition?[name] case final position? when position < count)
+          name: position < 0 ? 0 : position,
+    };
+    return positions.isEmpty ? null : positions;
+  }
+
+  String get definitionYaml => yaml.encode(definition);
+
+  /// What [definitionYaml] leaves out, such as an option added without a
+  /// value, was never there to remove, so it stays.
+  ProxyGroup withDefinitionYaml(String content) {
+    final document = _plainYaml(loadYaml(content));
+    if (document is! Map<String, Object?> ||
+        (document['name'] is! String && document['name'] is! num) ||
+        document['type'] is! String) {
+      throw const FormatException('Not a proxy group mapping');
+    }
+    final shown = definition;
+    final group = ProxyGroup.fromJson({
+      for (final MapEntry(:key, :value) in toJson().entries)
+        if (!shown.containsKey(key) && key != 'use-position') key: value,
+      ...document,
+      for (final key in proxyGroupTextKeys)
+        if (document[key] case final value? when value is! String)
+          key: value.toString(),
+      for (final key in const ['proxies', 'use'])
+        if (document[key] case final List<Object?> names)
+          key: [for (final name in names) name.toString()],
+      if (document.containsKey('use-position'))
+        'use-position': usePositionOf(document['use-position']),
+      'id': id,
+    }).copyWith(profileId: profileId, order: order);
+    return group.copyWith(usePosition: group.effectiveUsePosition);
+  }
 }
+
+Map<String, int>? usePositionOf(
+  Object? value, [
+  Map<String, String> names = const {},
+]) => switch (value) {
+  Map() => {
+    for (final MapEntry(:key, :value) in value.entries)
+      names['$key'] ?? '$key': ?int.tryParse('$value'),
+  },
+  _ => null,
+};
+
+const proxyGroupTextKeys = [
+  'name',
+  'url',
+  'filter',
+  'exclude-filter',
+  'exclude-type',
+  'expected-status',
+  'hash-key',
+  'default-selected',
+  'empty-fallback',
+  'icon',
+];
 
 @freezed
 abstract class Proxy with _$Proxy {
@@ -234,15 +255,95 @@ const customProxyTypes = [
   'easytier',
 ];
 
-/// One entry of a custom overwrite's `proxies`, kept as the raw mapping the
-/// core parses, since each proxy type reads its own set of keys.
+/// The standard methods of sing-shadowsocks2, which mihomo's ss adapter
+/// creates its cipher with.
+const _ssCiphers = [
+  'aes-128-gcm',
+  'aes-192-gcm',
+  'aes-256-gcm',
+  'chacha20-ietf-poly1305',
+  'xchacha20-ietf-poly1305',
+  '2022-blake3-aes-128-gcm',
+  '2022-blake3-aes-256-gcm',
+  '2022-blake3-chacha20-poly1305',
+  'aes-128-ctr',
+  'aes-192-ctr',
+  'aes-256-ctr',
+  'aes-128-cfb',
+  'aes-192-cfb',
+  'aes-256-cfb',
+  'rc4-md5',
+  'chacha20-ietf',
+  'xchacha20',
+  'chacha20',
+  'none',
+];
+
+/// ShadowsocksR takes stream ciphers only.
+const _ssrCiphers = [
+  'aes-128-ctr',
+  'aes-192-ctr',
+  'aes-256-ctr',
+  'aes-128-cfb',
+  'aes-192-cfb',
+  'aes-256-cfb',
+  'rc4-md5',
+  'chacha20-ietf',
+  'xchacha20',
+  'chacha20',
+  'none',
+];
+
+const _choiceEquality = ListEquality<String>();
+
+/// mihomo matches struct keys, like HTTP header names, in any case.
+Object? _keyIn(Map map, String key) {
+  if (map.containsKey(key)) {
+    return key;
+  }
+  final lower = key.toLowerCase();
+  for (final candidate in map.keys) {
+    if (candidate.toString().toLowerCase() == lower) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+Map<String, dynamic> _withPath(Map map, List<String> path, Object? value) {
+  final [key, ...rest] = path;
+  final next = Map<String, dynamic>.from(map);
+  final existing = _keyIn(next, key) as String? ?? key;
+  final child = rest.isEmpty
+      ? value
+      : _withPath(
+          switch (next[existing]) {
+            final Map map => map,
+            _ => const {},
+          },
+          rest,
+          value,
+        );
+  if (child == null || child == '' || child is Map && child.isEmpty) {
+    next.remove(existing);
+  } else {
+    next[existing] = child;
+  }
+  return next;
+}
+
+/// One app-level proxy, kept as the raw mapping the core parses, since each
+/// proxy type reads its own set of keys.
 @freezed
 abstract class CustomProxy with _$CustomProxy {
   const factory CustomProxy({
-    int? profileId,
     @JsonKey(fromJson: Snowflake.buildId) required int id,
     @Default({}) Map<String, dynamic> definition,
     String? order,
+
+    /// Options the form lists with no value yet, which [definition] cannot
+    /// hold since the core reads every key in it.
+    @Default({}) Set<ProxyField> emptyOptions,
   }) = _CustomProxy;
 
   factory CustomProxy.fromJson(Map<String, Object?> json) =>
@@ -280,110 +381,474 @@ extension CustomProxyExt on CustomProxy {
 
   List<String> get searchFields => [name, type, ?server];
 
-  String get definitionYaml => yaml.encode(definition);
+  Set<String> get requiredKeys => switch (type) {
+    'ss' => const {'server', 'port', 'password', 'cipher'},
+    'ssr' => const {'server', 'port', 'password', 'cipher', 'obfs', 'protocol'},
+    'vmess' => const {'server', 'port', 'uuid', 'alterId', 'cipher'},
+    'vless' => const {'server', 'port', 'uuid'},
+    'snell' => const {'server', 'port', 'psk'},
+    'trojan' || 'anytls' => const {'server', 'port', 'password'},
+    'hysteria' => const {'server', 'up', 'down'},
+    'hysteria2' => const {'server'},
+    'wireguard' => const {'private-key'},
+    'ssh' => const {'server', 'port', 'username'},
+    'mieru' => const {'server', 'transport', 'username', 'password'},
+    'sudoku' => const {'server', 'port', 'key'},
+    'masque' => const {'server', 'port', 'private-key', 'public-key'},
+    'openvpn' => const {'server', 'port', 'ca'},
+    'zerotier' => const {'network'},
+    'socks5' ||
+    'http' ||
+    'tuic' ||
+    'shadowquic' ||
+    'gost-relay' ||
+    'trusttunnel' => const {'server', 'port'},
+    _ => const {},
+  };
 
-  /// Throws a [FormatException] unless [content] is a mapping that names a
-  /// proxy and its type.
-  CustomProxy withDefinitionYaml(String content) {
-    final document = _plainYaml(loadYaml(content));
-    if (document is! Map<String, Object?> ||
-        document['name'] is! String ||
-        document['type'] is! String) {
-      throw const FormatException('Not a proxy mapping');
-    }
-    return copyWith(definition: document);
+  /// The rows the form always shows: the credentials and [requiredKeys].
+  List<ProxyField> get fields => switch (type) {
+    'ss' => const [ProxyField.cipher, ProxyField.password],
+    'ssr' => const [
+      ProxyField.cipher,
+      ProxyField.protocol,
+      ProxyField.obfs,
+      ProxyField.password,
+    ],
+    'vmess' => const [ProxyField.cipher, ProxyField.alterId, ProxyField.uuid],
+    'vless' => const [ProxyField.uuid],
+    'tuic' => const [ProxyField.uuid, ProxyField.password],
+    'trojan' || 'anytls' || 'hysteria2' => const [ProxyField.password],
+    'hysteria' => const [ProxyField.up, ProxyField.down, ProxyField.authStr],
+    'snell' => const [ProxyField.psk],
+    'sudoku' => const [ProxyField.key],
+    'wireguard' ||
+    'masque' => const [ProxyField.privateKey, ProxyField.publicKey],
+    'mieru' => const [
+      ProxyField.transport,
+      ProxyField.username,
+      ProxyField.password,
+    ],
+    'socks5' ||
+    'http' ||
+    'ssh' ||
+    'shadowquic' ||
+    'trusttunnel' ||
+    'gost-relay' ||
+    'openvpn' => const [ProxyField.username, ProxyField.password],
+    _ => const [],
+  };
+
+  /// The username, password and UUID among [fields], which tell one account
+  /// on a server from another.
+  List<ProxyField> get credentials => [
+    for (final field in fields)
+      if (const {
+        ProxyField.username,
+        ProxyField.password,
+        ProxyField.uuid,
+      }.contains(field))
+        field,
+  ];
+
+  /// The keys the form adds one at a time, each left to the core's default
+  /// until then.
+  List<ProxyField> get options {
+    final fields = this.fields;
+    return [
+      for (final field in ProxyField.values)
+        if (!fields.contains(field) && _offers(field)) field,
+    ];
   }
 
-  CustomProxy withValue(String key, Object? value) {
-    final next = Map<String, dynamic>.from(definition);
-    if (value == null || value == '') {
-      next.remove(key);
-    } else {
-      next[key] = value;
-    }
-    return copyWith(definition: next);
+  bool _offers(ProxyField field) {
+    final type = this.type;
+    return switch (field) {
+      ProxyField.username ||
+      ProxyField.password ||
+      ProxyField.uuid ||
+      ProxyField.psk ||
+      ProxyField.key ||
+      ProxyField.publicKey ||
+      ProxyField.authStr ||
+      ProxyField.cipher ||
+      ProxyField.alterId ||
+      ProxyField.transport => false,
+      ProxyField.privateKey || ProxyField.privateKeyPassphrase => type == 'ssh',
+      ProxyField.preSharedKey || ProxyField.allowedIps => type == 'wireguard',
+      ProxyField.obfs ||
+      ProxyField.up ||
+      ProxyField.down => type == 'hysteria2',
+      ProxyField.obfsPassword =>
+        type == 'hysteria2' && valueOf(ProxyField.obfs) != null,
+      ProxyField.protocol || ProxyField.obfsSecret => type == 'hysteria',
+      ProxyField.network => choicesOf(field).isNotEmpty,
+      ProxyField.flow => type == 'vless',
+      ProxyField.wsPath || ProxyField.wsHost => _usesNetwork('ws'),
+      ProxyField.grpcServiceName => _usesNetwork('grpc'),
+      ProxyField.xhttpPath || ProxyField.xhttpHost => _usesNetwork('xhttp'),
+      ProxyField.tls => const {
+        'socks5',
+        'http',
+        'vmess',
+        'vless',
+        'gost-relay',
+      }.contains(type),
+      ProxyField.sni => const {
+        'http',
+        'trojan',
+        'hysteria',
+        'hysteria2',
+        'tuic',
+        'shadowquic',
+        'gost-relay',
+        'anytls',
+        'masque',
+        'trusttunnel',
+      }.contains(type),
+      ProxyField.servername => type == 'vmess' || type == 'vless',
+      ProxyField.alpn => const {
+        'vmess',
+        'vless',
+        'trojan',
+        'hysteria',
+        'hysteria2',
+        'tuic',
+        'shadowquic',
+        'anytls',
+        'trusttunnel',
+      }.contains(type),
+      ProxyField.skipCertVerify => const {
+        'socks5',
+        'http',
+        'vmess',
+        'vless',
+        'trojan',
+        'hysteria',
+        'hysteria2',
+        'tuic',
+        'gost-relay',
+        'anytls',
+        'masque',
+        'trusttunnel',
+      }.contains(type),
+      ProxyField.clientFingerprint => const {
+        'ss',
+        'vmess',
+        'vless',
+        'snell',
+        'trojan',
+        'gost-relay',
+        'anytls',
+        'trusttunnel',
+      }.contains(type),
+      ProxyField.realityPublicKey || ProxyField.realityShortId => const {
+        'vmess',
+        'vless',
+        'trojan',
+      }.contains(type),
+      ProxyField.plugin || ProxyField.udpOverTcp => type == 'ss',
+      ProxyField.pluginMode => type == 'ss' && _pluginReads('mode'),
+      ProxyField.pluginHost => type == 'ss' && _pluginReads('host'),
+      ProxyField.protocolParam || ProxyField.obfsParam => type == 'ssr',
+      ProxyField.obfsMode ||
+      ProxyField.obfsHost ||
+      ProxyField.version => type == 'snell',
+      ProxyField.ports ||
+      ProxyField.hopInterval => type == 'hysteria' || type == 'hysteria2',
+      ProxyField.congestionController => const {
+        'tuic',
+        'shadowquic',
+        'masque',
+        'trusttunnel',
+      }.contains(type),
+      ProxyField.udpRelayMode || ProxyField.reduceRtt => type == 'tuic',
+      ProxyField.ip ||
+      ProxyField.ipv6 ||
+      ProxyField.dns ||
+      ProxyField.remoteDnsResolve ||
+      ProxyField.mtu => type == 'wireguard' || type == 'masque',
+      ProxyField.tfo || ProxyField.mptcp => !const {
+        'dns',
+        'reject',
+        'rematch',
+        'hysteria',
+        'hysteria2',
+        'tuic',
+        'wireguard',
+        'shadowquic',
+        'masque',
+        'tailscale',
+        'zerotier',
+        'easytier',
+      }.contains(type),
+      ProxyField.interfaceName ||
+      ProxyField.routingMark ||
+      ProxyField.ipVersion => !const {
+        'dns',
+        'reject',
+        'rematch',
+      }.contains(type),
+    };
   }
+
+  bool _pluginReads(String key) => switch (valueOf(ProxyField.plugin)) {
+    'obfs' || 'v2ray-plugin' || 'gost-plugin' => true,
+    'kcptun' => key == 'mode',
+    'shadow-tls' || 'restls' || 'jls' => key == 'host',
+    _ => false,
+  };
+
+  bool _usesNetwork(String network) =>
+      valueOf(ProxyField.network) == network &&
+      choicesOf(ProxyField.network).contains(network);
+
+  /// The values the core accepts, in the order the form lists them.
+  List<String> choicesOf(ProxyField field) => switch (field) {
+    ProxyField.cipher => switch (type) {
+      'ss' => _ssCiphers,
+      'ssr' => _ssrCiphers,
+      'vmess' => const [
+        'auto',
+        'aes-128-gcm',
+        'chacha20-poly1305',
+        'aes-128-cfb',
+        'none',
+        'zero',
+      ],
+      _ => const [],
+    },
+    ProxyField.protocol => switch (type) {
+      'ssr' => const [
+        'origin',
+        'auth_sha1_v4',
+        'auth_aes128_md5',
+        'auth_aes128_sha1',
+        'auth_chain_a',
+        'auth_chain_b',
+      ],
+      'hysteria' => const ['udp', 'wechat-video', 'faketcp'],
+      _ => const [],
+    },
+    ProxyField.obfs => switch (type) {
+      'ssr' => const [
+        'plain',
+        'http_simple',
+        'http_post',
+        'random_head',
+        'tls1.2_ticket_auth',
+        'tls1.2_ticket_fastauth',
+      ],
+      'hysteria2' => const ['salamander', 'gecko'],
+      _ => const [],
+    },
+    ProxyField.transport => const ['TCP', 'UDP'],
+    ProxyField.network => switch (type) {
+      'vmess' => const ['tcp', 'ws', 'http', 'h2', 'grpc', 'mekya', 'mkcp'],
+      'vless' => const ['tcp', 'ws', 'http', 'h2', 'grpc', 'xhttp'],
+      'trojan' => const ['tcp', 'ws', 'grpc'],
+      _ => const [],
+    },
+    ProxyField.flow => const ['xtls-rprx-vision'],
+    ProxyField.clientFingerprint => const [
+      'chrome',
+      'firefox',
+      'safari',
+      'ios',
+      'android',
+      'edge',
+      '360',
+      'qq',
+      'random',
+      'chrome120',
+      'firefox120',
+      'safari16',
+      'none',
+    ],
+    ProxyField.plugin => const [
+      'obfs',
+      'v2ray-plugin',
+      'gost-plugin',
+      'shadow-tls',
+      'restls',
+      'jls',
+      'kcptun',
+    ],
+    ProxyField.obfsMode => const ['http', 'tls', 'shadow-tls', 'restls', 'jls'],
+    ProxyField.congestionController => const [
+      'cubic',
+      'new_reno',
+      'bbr',
+      'bbr_meta_v1',
+      'bbr_meta_v2',
+    ],
+    ProxyField.udpRelayMode => const ['native', 'quic'],
+    ProxyField.ipVersion => [
+      for (final version in IpVersion.values) version.value,
+    ],
+    _ => const [],
+  };
+
+  Object? valueOf(ProxyField field) {
+    Object? value = definition;
+    for (final key in field.path) {
+      if (value is! Map) {
+        return null;
+      }
+      value = value[_keyIn(value, key)];
+    }
+    return value;
+  }
+
+  /// Drops the key on an empty [value], with any map left empty and the
+  /// options only the old value made available.
+  CustomProxy withField(ProxyField field, Object? value) {
+    final offered = options;
+    var next = copyWith(definition: _withPath(definition, field.path, value));
+    final stillOffered = next.options;
+    for (final option in offered) {
+      if (!stillOffered.contains(option)) {
+        next = next.copyWith(
+          definition: _withPath(next.definition, option.path, null),
+        );
+      }
+    }
+    return next;
+  }
+
+  /// Keeps the values the new type reads alike and fills the ones nearly
+  /// every server of it takes.
+  CustomProxy withType(String type) {
+    if (type == this.type) {
+      return this;
+    }
+    var next = withValue('type', type);
+    for (final field in ProxyField.values) {
+      final value = next.valueOf(field);
+      if (value == null) {
+        continue;
+      }
+      final choices = next.choicesOf(field);
+      final readsAlike =
+          (next.fields.contains(field) || next.options.contains(field)) &&
+          (_choiceEquality.equals(choicesOf(field), choices) ||
+              choices.contains(value));
+      if (!readsAlike) {
+        next = next.withField(field, null);
+      }
+    }
+    final defaults = switch (type) {
+      'vmess' => const {ProxyField.cipher: 'auto', ProxyField.alterId: 0},
+      'mieru' => const {ProxyField.transport: 'TCP'},
+      _ => const <ProxyField, Object>{},
+    };
+    for (final MapEntry(:key, :value) in defaults.entries) {
+      if (next.valueOf(key) == null) {
+        next = next.withField(key, value);
+      }
+    }
+    return next;
+  }
+
+  List<String> stringsOf(String key) =>
+      switch (definition[_keyIn(definition, key)]) {
+        final List items => [for (final item in items) item.toString()],
+        final String item when item.isNotEmpty => [item],
+        _ => const [],
+      };
+
+  CustomProxy withValue(String key, Object? value) =>
+      copyWith(definition: _withPath(definition, [key], value));
+}
+
+/// Per profile, since [target] names a proxy or group that profile defines.
+@freezed
+abstract class ProxyDialer with _$ProxyDialer {
+  const factory ProxyDialer({
+    required int profileId,
+    required int proxyId,
+    required String target,
+  }) = _ProxyDialer;
 }
 
 @freezed
-sealed class OverwriteIssue with _$OverwriteIssue {
-  const factory OverwriteIssue.emptyName() = EmptyNameIssue;
+sealed class CustomIssue with _$CustomIssue {
+  const factory CustomIssue.emptyName() = EmptyNameIssue;
 
-  const factory OverwriteIssue.reservedName(String name) = ReservedNameIssue;
+  const factory CustomIssue.reservedName(String name) = ReservedNameIssue;
 
-  const factory OverwriteIssue.duplicateName(String name) = DuplicateNameIssue;
+  const factory CustomIssue.duplicateName(String name) = DuplicateNameIssue;
 
-  const factory OverwriteIssue.coreRejected(String message) = CoreRejectedIssue;
+  const factory CustomIssue.coreRejected(String message) = CoreRejectedIssue;
 
-  const factory OverwriteIssue.missingProxies(List<String> names) =
+  const factory CustomIssue.missingProxies(List<String> names) =
       MissingProxiesIssue;
 
-  const factory OverwriteIssue.missingProviders(List<String> names) =
+  const factory CustomIssue.missingProviders(List<String> names) =
       MissingProvidersIssue;
 
-  const factory OverwriteIssue.noProxySource() = NoProxySourceIssue;
+  const factory CustomIssue.noProxySource() = NoProxySourceIssue;
 
-  const factory OverwriteIssue.groupLoop(List<String> names) = GroupLoopIssue;
+  const factory CustomIssue.groupLoop(List<String> names) = GroupLoopIssue;
 
-  const factory OverwriteIssue.invalidPayload(RulePayloadError error) =
+  const factory CustomIssue.invalidEmptyFallback(String name) =
+      InvalidEmptyFallbackIssue;
+
+  const factory CustomIssue.invalidFilter(String name, String message) =
+      InvalidFilterIssue;
+
+  const factory CustomIssue.invalidPayload(RulePayloadError error) =
       InvalidPayloadIssue;
 
-  const factory OverwriteIssue.missingRuleSet(String name) =
-      MissingRuleSetIssue;
+  const factory CustomIssue.missingRuleSet(String name) = MissingRuleSetIssue;
 
-  const factory OverwriteIssue.missingSubRule(String name) =
-      MissingSubRuleIssue;
+  const factory CustomIssue.missingSubRule(String name) = MissingSubRuleIssue;
 
-  const factory OverwriteIssue.missingTarget(String name) = MissingTargetIssue;
+  const factory CustomIssue.missingTarget(String name) = MissingTargetIssue;
 
-  const factory OverwriteIssue.subscriptionGroupMissingProxies(
-    List<String> names,
-  ) = SubscriptionGroupMissingProxiesIssue;
+  const factory CustomIssue.missingDialer(String name) = MissingDialerIssue;
+
+  const factory CustomIssue.dialerLoop(String proxy, String target) =
+      DialerLoopIssue;
 }
 
 @freezed
-abstract class CustomOverwriteIssues with _$CustomOverwriteIssues {
-  const factory CustomOverwriteIssues({
-    @Default({}) Map<int, List<OverwriteIssue>> proxies,
-    @Default({}) Map<int, List<OverwriteIssue>> proxyGroups,
-    @Default({}) Map<int, List<OverwriteIssue>> rules,
-    @Default([]) List<OverwriteIssue> general,
-  }) = _CustomOverwriteIssues;
+abstract class CustomProfileIssues with _$CustomProfileIssues {
+  const factory CustomProfileIssues({
+    @Default({}) Map<int, List<CustomIssue>> proxyGroups,
+    @Default({}) Map<int, List<CustomIssue>> rules,
+    @Default({}) Map<int, List<CustomIssue>> dialers,
+    @Default([]) List<CustomIssue> dns,
+    @Default([]) List<CustomIssue> ntp,
+  }) = _CustomProfileIssues;
 }
 
 @freezed
-abstract class CustomOverwriteDate with _$CustomOverwriteDate {
-  const factory CustomOverwriteDate({
-    @Default(false) bool loaded,
-    @Default([]) List<String> proxyNames,
-    @Default({}) Map<String, String> proxyTypes,
+abstract class CustomProfileData with _$CustomProfileData {
+  const factory CustomProfileData({
     @Default([]) List<ProxyGroup> proxyGroups,
     @Default({}) Set<String> proxyProviders,
     @Default({}) Set<String> ruleProviders,
     @Default({}) Set<String> ruleTargets,
-    @Default({}) Set<String> subRules,
-  }) = _CustomOverwriteDate;
+    @Default({}) Set<String> proxies,
+    @Default({}) Map<String, String> dialers,
+  }) = _CustomProfileData;
 }
 
-@freezed
-abstract class CustomOverwriteSelectorState
-    with _$CustomOverwriteSelectorState {
-  const factory CustomOverwriteSelectorState({
-    required bool loaded,
-    required List<Proxy> proxies,
-    required List<String> subRules,
-    required List<String> proxyProviders,
-    required List<String> ruleProviders,
-  }) = _CustomOverwriteSelectorState;
-}
+final _namedProxies = Expando<Set<String>>();
 
-@freezed
-abstract class OverwriteIncludeSelectorState
-    with _$OverwriteIncludeSelectorState {
-  const factory OverwriteIncludeSelectorState({
-    required bool includeAll,
-    required List<String> names,
-  }) = _OverwriteIncludeSelectorState;
+extension CustomProfileDataExt on CustomProfileData {
+  Set<String> get namedProxies => _namedProxies[this] ??= Set.unmodifiable({
+    for (final group in proxyGroups)
+      for (final name in group.proxies ?? const <String>[])
+        if (proxies.contains(name)) name,
+  });
+
+  /// A local proxy reaches the config only when a group names it.
+  bool isRuleTarget(String? name) =>
+      ruleTargets.contains(name) ||
+      name == GroupName.GLOBAL.name ||
+      namedProxies.contains(name);
 }
 
 @freezed
@@ -407,19 +872,21 @@ abstract class Sniffer with _$Sniffer {
   const factory Sniffer({
     @Default(false) bool enable,
     @Default(true) @JsonKey(name: 'override-destination') bool overrideDest,
-    @Default([]) List<String> sniffing,
-    @Default([]) @JsonKey(name: 'force-domain') List<String> forceDomain,
-    @Default([]) @JsonKey(name: 'skip-src-address') List<String> skipSrcAddress,
-    @Default([]) @JsonKey(name: 'skip-dst-address') List<String> skipDstAddress,
-    @Default([]) @JsonKey(name: 'skip-domain') List<String> skipDomain,
-    @Default([]) @JsonKey(name: 'port-whitelist') List<String> port,
     @Default(true) @JsonKey(name: 'force-dns-mapping') bool forceDnsMapping,
     @Default(true) @JsonKey(name: 'parse-pure-ip') bool parsePureIp,
+    @Default([]) @JsonKey(name: 'force-domain') List<String> forceDomain,
+    @Default([]) @JsonKey(name: 'skip-domain') List<String> skipDomain,
+    @Default([]) @JsonKey(name: 'skip-src-address') List<String> skipSrcAddress,
+    @Default([]) @JsonKey(name: 'skip-dst-address') List<String> skipDstAddress,
     @Default({}) Map<String, SnifferConfig> sniff,
   }) = _Sniffer;
 
   factory Sniffer.fromJson(Map<String, Object?> json) =>
       _$SnifferFromJson(json);
+
+  factory Sniffer.safeSnifferFromJson(Map<String, Object?> json) {
+    return decodeSalvaging('sniffer config', json, Sniffer.fromJson);
+  }
 }
 
 List<String> _formJsonPorts(List? ports) {
@@ -430,11 +897,102 @@ List<String> _formJsonPorts(List? ports) {
 abstract class SnifferConfig with _$SnifferConfig {
   const factory SnifferConfig({
     @Default([]) @JsonKey(fromJson: _formJsonPorts) List<String> ports,
-    @JsonKey(name: 'override-destination') bool? overrideDest,
+    @JsonKey(name: 'override-destination', includeIfNull: false)
+    bool? overrideDest,
   }) = _SnifferConfig;
 
   factory SnifferConfig.fromJson(Map<String, Object?> json) =>
       _$SnifferConfigFromJson(json);
+}
+
+const _snifferOverrideKeysJsonKey = 'sniffer-override-keys';
+
+Set<SnifferOverrideKey> _snifferOverrideKeysFromJson(List<Object?> json) => {
+  for (final path in json)
+    ?SnifferOverrideKey.values.firstWhereOrNull((key) => key.path == path),
+};
+
+extension SnifferOverrideExt on Sniffer {
+  SnifferConfig sniffOf(SnifferOverrideKey key) =>
+      sniff[key.field] ?? const SnifferConfig();
+
+  Sniffer withSniff(SnifferOverrideKey key, SnifferConfig config) =>
+      copyWith(sniff: {...sniff, key.field: config});
+
+  // toJson leaves nested models as objects; the fragment is read as plain maps.
+  Map<String, Object?> get _json {
+    final json = toJson();
+    json[SnifferOverrideKey.sniffSection] = {
+      for (final key in SnifferOverrideKey.values)
+        if (key.parent != null) key.field: sniffOf(key).toJson(),
+    };
+    return json;
+  }
+
+  Map<String, Object?> overrideJson(Set<SnifferOverrideKey> keys) =>
+      _overrideJson(_json, SnifferOverrideKey.values, keys);
+
+  String overrideYaml(Set<SnifferOverrideKey> keys) =>
+      yaml.encode(overrideJson(keys));
+
+  ({Sniffer sniffer, Set<SnifferOverrideKey> keys}) applyOverrideYaml(
+    String content,
+  ) {
+    final json = _json;
+    final keys = _applyOverrideYaml(
+      content,
+      json: json,
+      values: SnifferOverrideKey.values,
+      section: 'sniffer',
+      normalizeField: (protocol) => protocol.toUpperCase(),
+    );
+    if (keys == null) {
+      return (sniffer: this, keys: const {});
+    }
+    return (sniffer: Sniffer.fromJson(json), keys: keys);
+  }
+}
+
+/// mihomo matches sniff protocols case-insensitively, so an overridden
+/// protocol replaces the profile's entry whatever its case.
+Map<String, dynamic> mergeSnifferOverride(
+  Map<String, dynamic> raw,
+  Map<String, Object?> override,
+) {
+  final merged = Map<String, dynamic>.from(raw);
+  for (final entry in override.entries) {
+    final value = entry.value;
+    if (entry.key != SnifferOverrideKey.sniffSection || value is! Map) {
+      merged[entry.key] = value;
+      continue;
+    }
+    final overridden = {for (final name in value.keys) '$name'.toUpperCase()};
+    merged[entry.key] = {
+      for (final current in _rawSniff(raw).entries)
+        if (!overridden.contains('${current.key}'.toUpperCase()))
+          '${current.key}': current.value,
+      ...value,
+    };
+  }
+  return merged;
+}
+
+/// mihomo reads the deprecated `sniffing` list only while `sniff` is empty, so
+/// its protocols are carried into `sniff` before an override fills it.
+Map<Object?, Object?> _rawSniff(Map<String, dynamic> raw) {
+  final sniff = raw[SnifferOverrideKey.sniffSection];
+  if (sniff is Map && sniff.isNotEmpty) {
+    return sniff;
+  }
+  final sniffing = raw['sniffing'];
+  if (sniffing is! List) {
+    return const {};
+  }
+  final ports = raw['port-whitelist'];
+  return {
+    for (final name in sniffing)
+      '$name'.toUpperCase(): {if (ports is List) 'ports': ports},
+  };
 }
 
 @freezed
@@ -446,6 +1004,17 @@ abstract class Tun with _$Tun {
     @Default(TunStack.mips) TunStack stack,
     @JsonKey(name: 'dns-hijack') @Default(['any:53']) List<String> dnsHijack,
     @JsonKey(name: 'route-address') @Default([]) List<String> routeAddress,
+    @JsonKey(fromJson: _mtuFromJson) @Default(defaultTunMtu) int mtu,
+    @JsonKey(
+      name: 'congestion-controller',
+      fromJson: _congestionControllerFromJson,
+    )
+    @Default(defaultCongestionController)
+    String congestionController,
+    @JsonKey(name: 'strict-route') @Default(false) bool strictRoute,
+    @JsonKey(name: 'route-exclude-address')
+    @Default([])
+    List<String> routeExcludeAddress,
   }) = _Tun;
 
   factory Tun.fromJson(Map<String, Object?> json) => _$TunFromJson(json);
@@ -454,37 +1023,43 @@ abstract class Tun with _$Tun {
     if (json == null) {
       return defaultTun;
     }
-    return decodeOrRestoreDefault(
-      'tun config',
-      () => Tun.fromJson(json),
-      () => defaultTun,
-    );
+    return decodeSalvaging('tun config', json, Tun.fromJson);
   }
 }
 
-extension TunExt on Tun {
-  List<String> resolveRouteAddress(RouteMode routeMode) =>
-      routeMode == RouteMode.bypassPrivate
-      ? defaultBypassPrivateRouteAddress
-      : routeAddress;
+int _mtuFromJson(int value) =>
+    value > 0 ? value.clamp(minTunMtu, maxTunMtu) : defaultTunMtu;
 
-  Tun getRealTun(RouteMode routeMode) {
-    final mRouteAddress = resolveRouteAddress(routeMode);
-    return switch (system.isDesktop) {
-      true => copyWith(autoRoute: true, routeAddress: []),
-      false => copyWith(
-        autoRoute: mRouteAddress.isEmpty ? true : false,
-        routeAddress: mRouteAddress,
-      ),
-    };
+String _congestionControllerFromJson(String value) =>
+    value.isEmpty ? defaultCongestionController : value;
+
+extension TunExt on Tun {
+  List<String> excludedRoutes({required bool bypassPrivateRoute}) => [
+    ...routeExcludeAddress,
+    if (bypassPrivateRoute) ...privateRouteAddress,
+  ];
+
+  Future<List<String>> vpnRouteAddress({
+    required bool bypassPrivateRoute,
+  }) async {
+    final excluded = excludedRoutes(bypassPrivateRoute: bypassPrivateRoute);
+    if (routeAddress.isEmpty && excluded.isEmpty) {
+      return const [];
+    }
+    return subtractCidrsTask(routeAddress, excluded, wholeWhenEmpty: true);
   }
+
+  Tun getRealTun({required bool bypassPrivateRoute}) => copyWith(
+    autoRoute: true,
+    routeExcludeAddress: excludedRoutes(bypassPrivateRoute: bypassPrivateRoute),
+  );
 }
 
 @freezed
 abstract class FallbackFilter with _$FallbackFilter {
   const factory FallbackFilter({
     @Default(true) bool geoip,
-    @Default('CN') @JsonKey(name: 'geoip-code') String geoipCode,
+    @Default('') @JsonKey(name: 'geoip-code') String geoipCode,
     @Default([]) List<String> geosite,
     @Default([]) List<String> ipcidr,
     @Default([]) List<String> domain,
@@ -497,8 +1072,8 @@ abstract class FallbackFilter with _$FallbackFilter {
 @freezed
 abstract class Dns with _$Dns {
   const factory Dns({
-    @Default(true) bool enable,
-    @Default('0.0.0.0:1053') String listen,
+    @Default(false) bool enable,
+    @Default('') String listen,
     @Default(0) @JsonKey(name: 'listen-routing-mark') int listenRoutingMark,
     @Default(false) @JsonKey(name: 'prefer-h3') bool preferH3,
     @Default(true) @JsonKey(name: 'use-hosts') bool useHosts,
@@ -513,15 +1088,13 @@ abstract class Dns with _$Dns {
     @Default(['114.114.114.114', '223.5.5.5', '8.8.8.8', '1.0.0.1'])
     @JsonKey(name: 'default-nameserver')
     List<String> defaultNameserver,
-    @Default(DnsMode.fakeIp)
+    @Default(DnsMode.redirHost)
     @JsonKey(name: 'enhanced-mode')
     DnsMode enhancedMode,
     @Default('198.18.0.1/16')
     @JsonKey(name: 'fake-ip-range')
     String fakeIpRange,
-    @Default('fdfe:dcba:9876::1/64')
-    @JsonKey(name: 'fake-ip-range6')
-    String fakeIpRange6,
+    @Default('') @JsonKey(name: 'fake-ip-range6') String fakeIpRange6,
     @Default([
       'dns.msftnsci.com',
       'www.msftnsci.com',
@@ -536,7 +1109,7 @@ abstract class Dns with _$Dns {
     @Default({})
     @JsonKey(name: 'nameserver-policy')
     Map<String, String> nameserverPolicy,
-    @Default(['https://doh.pub/dns-query', 'https://dns.alidns.com/dns-query'])
+    @Default(['https://doh.pub/dns-query', 'tls://223.5.5.5:853'])
     List<String> nameserver,
     @Default([]) List<String> fallback,
     @Default(false)
@@ -562,11 +1135,7 @@ abstract class Dns with _$Dns {
   factory Dns.fromJson(Map<String, Object?> json) => _$DnsFromJson(json);
 
   factory Dns.safeDnsFromJson(Map<String, Object?> json) {
-    return decodeOrRestoreDefault(
-      'dns config',
-      () => Dns.fromJson(json),
-      () => const Dns(),
-    );
+    return decodeSalvaging('dns config', json, Dns.fromJson);
   }
 }
 
@@ -628,86 +1197,33 @@ extension DnsOverrideExt on Dns {
     return json;
   }
 
-  Object? valueOf(DnsOverrideKey key) {
-    final json = _json;
-    if (!key.isFallbackFilter) {
-      return json[key.path];
-    }
-    final section = json[DnsOverrideKey.fallbackFilterSection] as Map;
-    return section[key.jsonKey];
-  }
-
-  Map<String, Object?> overrideJson(Set<DnsOverrideKey> keys) {
-    final json = _json;
-    final section = json[DnsOverrideKey.fallbackFilterSection] as Map;
-    final result = <String, Object?>{};
-    for (final key in DnsOverrideKey.values) {
-      if (!keys.contains(key)) {
-        continue;
-      }
-      if (!key.isFallbackFilter) {
-        result[key.path] = json[key.path];
-        continue;
-      }
-      final filter =
-          result.putIfAbsent(
-                DnsOverrideKey.fallbackFilterSection,
-                () => <String, Object?>{},
-              )
-              as Map<String, Object?>;
-      filter[key.jsonKey] = section[key.jsonKey];
-    }
-    return result;
-  }
+  /// [keepEmpty] writes emptied keys, but the core refuses an empty nameserver.
+  Map<String, Object?> overrideJson(
+    Set<DnsOverrideKey> keys, {
+    bool keepEmpty = false,
+  }) => _overrideJson(
+    _json,
+    DnsOverrideKey.values,
+    keys,
+    keepEmpty: keepEmpty
+        ? keys.difference({DnsOverrideKey.nameserver})
+        : const <DnsOverrideKey>{},
+  );
 
   String overrideYaml(Set<DnsOverrideKey> keys) =>
       yaml.encode(overrideJson(keys));
 
-  /// Reads an edited override document back; the keys it names become the
-  /// override set. Throws on a key the model does not know or a value it
-  /// cannot hold.
   ({Dns dns, Set<DnsOverrideKey> keys}) applyOverrideYaml(String content) {
-    final document = _plainYaml(loadYaml(content));
-    if (document == null) {
+    final json = _json;
+    final keys = _applyOverrideYaml(
+      content,
+      json: json,
+      values: DnsOverrideKey.values,
+      section: 'DNS',
+    );
+    if (keys == null) {
       return (dns: this, keys: const {});
     }
-    if (document is! Map) {
-      throw const FormatException('The override must be a map of DNS keys');
-    }
-    final keys = <DnsOverrideKey>{};
-    final json = _json;
-    final filter = Map<String, Object?>.from(
-      json[DnsOverrideKey.fallbackFilterSection] as Map,
-    );
-    void take(String path, Object? value) {
-      final key = DnsOverrideKey.values.firstWhereOrNull(
-        (key) => key.path == path,
-      );
-      if (key == null) {
-        throw FormatException('Unknown DNS key: $path');
-      }
-      keys.add(key);
-      if (key.isFallbackFilter) {
-        filter[key.jsonKey] = value;
-      } else {
-        json[path] = value;
-      }
-    }
-
-    for (final entry in document.entries) {
-      final name = entry.key.toString();
-      if (name != DnsOverrideKey.fallbackFilterSection) {
-        take(name, entry.value);
-        continue;
-      }
-      if (entry.value is! Map) {
-        throw FormatException('$name must be a map');
-      }
-      for (final sub in (entry.value as Map).entries) {
-        take('$name.${sub.key}', sub.value);
-      }
-    }
-    json[DnsOverrideKey.fallbackFilterSection] = filter;
     for (final policy in _policyKeys) {
       json[policy.path] = _joinPolicyServers(json[policy.path]);
     }
@@ -723,6 +1239,99 @@ Object? _plainYaml(Object? node) => switch (node) {
   YamlList() => [for (final item in node) _plainYaml(item)],
   _ => node,
 };
+
+Map<String, Object?> _overrideJson<K extends OverrideKey>(
+  Map<String, Object?> json,
+  List<K> values,
+  Set<K> keys, {
+  Set<K> keepEmpty = const {},
+}) {
+  final result = <String, Object?>{};
+  for (final key in values) {
+    if (!keys.contains(key)) {
+      continue;
+    }
+    final parent = key.parent;
+    final value = parent == null
+        ? json[key.path]
+        : (json[parent] as Map)[key.field];
+    if (_isUnset(value) && !keepEmpty.contains(key)) {
+      continue;
+    }
+    if (parent == null) {
+      result[key.path] = value;
+      continue;
+    }
+    final nested =
+        result.putIfAbsent(parent, () => <String, Object?>{})
+            as Map<String, Object?>;
+    nested[key.field] = value;
+  }
+  return result;
+}
+
+bool _isUnset(Object? value) => switch (value) {
+  String() => value.isEmpty,
+  Iterable() => value.isEmpty,
+  Map() => value.isEmpty,
+  _ => false,
+};
+
+/// Reads an edited override document into [json] and returns the keys it
+/// names, which become the override set, or null for an empty document.
+/// Throws on a key [values] does not hold; the caller's decode throws on a
+/// value the model cannot hold. [normalizeField] spells a nested field the way
+/// its key path does.
+Set<K>? _applyOverrideYaml<K extends OverrideKey>(
+  String content, {
+  required Map<String, Object?> json,
+  required List<K> values,
+  required String section,
+  String Function(String field)? normalizeField,
+}) {
+  final document = _plainYaml(loadYaml(content));
+  if (document == null) {
+    return null;
+  }
+  if (document is! Map) {
+    throw FormatException('The override must be a map of $section keys');
+  }
+  final nested = {
+    for (final parent in {for (final key in values) ?key.parent})
+      parent: Map<String, Object?>.from(json[parent] as Map),
+  };
+  final keys = <K>{};
+  void take(String path, Object? value) {
+    final key = values.firstWhereOrNull((key) => key.path == path);
+    if (key == null) {
+      throw FormatException('Unknown $section key: $path');
+    }
+    keys.add(key);
+    final parent = key.parent;
+    if (parent == null) {
+      json[path] = value;
+    } else {
+      nested[parent]![key.field] = value;
+    }
+  }
+
+  for (final entry in document.entries) {
+    final name = entry.key.toString();
+    if (!nested.containsKey(name)) {
+      take(name, entry.value);
+      continue;
+    }
+    if (entry.value is! Map) {
+      throw FormatException('$name must be a map');
+    }
+    for (final sub in (entry.value as Map).entries) {
+      final field = sub.key.toString();
+      take('$name.${normalizeField?.call(field) ?? field}', sub.value);
+    }
+  }
+  json.addAll(nested);
+  return keys;
+}
 
 const _policyKeys = [
   DnsOverrideKey.nameserverPolicy,
@@ -777,11 +1386,7 @@ abstract class Ntp with _$Ntp {
   factory Ntp.fromJson(Map<String, Object?> json) => _$NtpFromJson(json);
 
   factory Ntp.safeNtpFromJson(Map<String, Object?> json) {
-    return decodeOrRestoreDefault(
-      'ntp config',
-      () => Ntp.fromJson(json),
-      () => const Ntp(),
-    );
+    return decodeSalvaging('ntp config', json, Ntp.fromJson);
   }
 }
 
@@ -793,46 +1398,208 @@ Set<NtpOverrideKey> _ntpOverrideKeysFromJson(List<Object?> json) => {
 };
 
 extension NtpOverrideExt on Ntp {
-  Map<String, Object?> overrideJson(Set<NtpOverrideKey> keys) {
-    final json = toJson();
-    return {
-      for (final key in NtpOverrideKey.values)
-        if (keys.contains(key)) key.path: json[key.path],
-    };
-  }
+  Map<String, Object?> overrideJson(Set<NtpOverrideKey> keys) =>
+      _overrideJson(toJson(), NtpOverrideKey.values, keys);
 
   String overrideYaml(Set<NtpOverrideKey> keys) =>
       yaml.encode(overrideJson(keys));
 
   ({Ntp ntp, Set<NtpOverrideKey> keys}) applyOverrideYaml(String content) {
-    final document = _plainYaml(loadYaml(content));
-    if (document == null) {
-      return (ntp: this, keys: const {});
-    }
-    if (document is! Map) {
-      throw const FormatException('The override must be a map of NTP keys');
-    }
-    final keys = <NtpOverrideKey>{};
     final json = toJson();
-    for (final entry in document.entries) {
-      final path = entry.key.toString();
-      final key = NtpOverrideKey.values.firstWhereOrNull(
-        (key) => key.path == path,
-      );
-      if (key == null) {
-        throw FormatException('Unknown NTP key: $path');
-      }
-      keys.add(key);
-      json[path] = entry.value;
+    final keys = _applyOverrideYaml(
+      content,
+      json: json,
+      values: NtpOverrideKey.values,
+      section: 'NTP',
+    );
+    if (keys == null) {
+      return (ntp: this, keys: const {});
     }
     return (ntp: Ntp.fromJson(json), keys: keys);
   }
 }
 
 @freezed
+abstract class ProfileTun with _$ProfileTun {
+  const factory ProfileTun({
+    @Default(false)
+    @JsonKey(name: 'disable-icmp-forwarding')
+    bool disableIcmpForwarding,
+    @Default([])
+    @JsonKey(name: 'exclude-interface')
+    List<String> excludeInterface,
+  }) = _ProfileTun;
+
+  factory ProfileTun.fromJson(Map<String, Object?> json) =>
+      _$ProfileTunFromJson(json);
+
+  factory ProfileTun.safeFromJson(Map<String, Object?> json) {
+    return decodeSalvaging('tun override', json, ProfileTun.fromJson);
+  }
+}
+
+const _tunOverrideKeysJsonKey = 'tun-override-keys';
+
+Set<TunOverrideKey> _tunOverrideKeysFromJson(List<Object?> json) => {
+  for (final path in json)
+    ?TunOverrideKey.values.firstWhereOrNull((key) => key.path == path),
+};
+
+extension TunOverrideExt on ProfileTun {
+  Map<String, Object?> overrideJson(Set<TunOverrideKey> keys) =>
+      _overrideJson(toJson(), TunOverrideKey.values, keys);
+}
+
+@freezed
+abstract class ProfileOverrides with _$ProfileOverrides {
+  const factory ProfileOverrides({
+    @Default(defaultDns) @JsonKey(fromJson: Dns.safeDnsFromJson) Dns dns,
+    @Default({})
+    @JsonKey(name: _dnsOverrideKeysJsonKey, fromJson: _dnsOverrideKeysFromJson)
+    Set<DnsOverrideKey> dnsOverrideKeys,
+    @Default(defaultNtp) @JsonKey(fromJson: Ntp.safeNtpFromJson) Ntp ntp,
+    @Default({})
+    @JsonKey(name: _ntpOverrideKeysJsonKey, fromJson: _ntpOverrideKeysFromJson)
+    Set<NtpOverrideKey> ntpOverrideKeys,
+    @Default(defaultSniffer)
+    @JsonKey(fromJson: Sniffer.safeSnifferFromJson)
+    Sniffer sniffer,
+    @Default({})
+    @JsonKey(
+      name: _snifferOverrideKeysJsonKey,
+      fromJson: _snifferOverrideKeysFromJson,
+    )
+    Set<SnifferOverrideKey> snifferOverrideKeys,
+    @Default(defaultProfileTun)
+    @JsonKey(fromJson: ProfileTun.safeFromJson)
+    ProfileTun tun,
+    @Default({})
+    @JsonKey(name: _tunOverrideKeysJsonKey, fromJson: _tunOverrideKeysFromJson)
+    Set<TunOverrideKey> tunOverrideKeys,
+    @Default({})
+    @JsonKey(name: 'proxy-providers')
+    Map<String, ProxyProviderOptions> proxyProviders,
+  }) = _ProfileOverrides;
+
+  factory ProfileOverrides.fromJson(Map<String, Object?> json) =>
+      _$ProfileOverridesFromJson(json);
+
+  factory ProfileOverrides.safeFromJson(Map<String, Object?> json) {
+    return decodeSalvaging(
+      'profile overrides',
+      json,
+      ProfileOverrides.fromJson,
+    );
+  }
+}
+
+@freezed
+abstract class ProviderHealthCheck with _$ProviderHealthCheck {
+  const factory ProviderHealthCheck({
+    String? url,
+    int? interval,
+    int? timeout,
+    bool? lazy,
+    @JsonKey(name: 'expected-status') String? expectedStatus,
+  }) = _ProviderHealthCheck;
+
+  factory ProviderHealthCheck.fromJson(Map<String, Object?> json) =>
+      _$ProviderHealthCheckFromJson(json);
+}
+
+@freezed
+abstract class ProviderOverride with _$ProviderOverride {
+  const factory ProviderOverride({
+    @JsonKey(name: 'additional-prefix') String? additionalPrefix,
+    @JsonKey(name: 'additional-suffix') String? additionalSuffix,
+    bool? udp,
+    @JsonKey(name: 'skip-cert-verify') bool? skipCertVerify,
+    @JsonKey(name: 'ip-version') IpVersion? ipVersion,
+  }) = _ProviderOverride;
+
+  factory ProviderOverride.fromJson(Map<String, Object?> json) =>
+      _$ProviderOverrideFromJson(json);
+}
+
+/// Keyed in a custom profile's overrides by the provider's name. The update
+/// interval stays with the app, which keeps the file the provider reads.
+@freezed
+abstract class ProxyProviderOptions with _$ProxyProviderOptions {
+  const factory ProxyProviderOptions({
+    @Default(ProviderHealthCheck())
+    @JsonKey(name: 'health-check')
+    ProviderHealthCheck healthCheck,
+    String? filter,
+    @JsonKey(name: 'exclude-filter') String? excludeFilter,
+    @Default(ProviderOverride())
+    @JsonKey(name: 'override')
+    ProviderOverride proxyOverride,
+
+    /// Where the filters list shows the exclude filters among the filters,
+    /// which no config carries, as `ProxyProviderFiltersSliver` writes it.
+    List<String>? memberLayout,
+  }) = _ProxyProviderOptions;
+
+  factory ProxyProviderOptions.fromJson(Map<String, Object?> json) =>
+      _$ProxyProviderOptionsFromJson(json);
+}
+
+extension ProxyProviderOptionsExt on ProxyProviderOptions {
+  /// A health check without a url never runs, so one always carries a url.
+  /// A text option added but left empty stays in the form and out of here.
+  Map<String, Object?> get definition {
+    String? text(String? value) => value?.isNotEmpty == true ? value : null;
+    final healthCheck = this.healthCheck.copyWith(
+      url: text(this.healthCheck.url),
+      expectedStatus: text(this.healthCheck.expectedStatus),
+    );
+    final proxyOverride = this.proxyOverride.copyWith(
+      additionalPrefix: text(this.proxyOverride.additionalPrefix),
+      additionalSuffix: text(this.proxyOverride.additionalSuffix),
+    );
+    return {
+      if (healthCheck != const ProviderHealthCheck())
+        'health-check': {
+          'enable': true,
+          'url': healthCheck.url ?? defaultTestUrl,
+          'interval': ?healthCheck.interval,
+          'timeout': ?healthCheck.timeout,
+          'lazy': ?healthCheck.lazy,
+          'expected-status': ?healthCheck.expectedStatus,
+        },
+      'filter': ?filter,
+      'exclude-filter': ?excludeFilter,
+      if (proxyOverride != const ProviderOverride())
+        'override': {
+          'additional-prefix': ?proxyOverride.additionalPrefix,
+          'additional-suffix': ?proxyOverride.additionalSuffix,
+          'udp': ?proxyOverride.udp,
+          'skip-cert-verify': ?proxyOverride.skipCertVerify,
+          'ip-version': ?proxyOverride.ipVersion?.value,
+        },
+    };
+  }
+}
+
+extension ProfileOverridesExt on ProfileOverrides {
+  /// A custom profile brings no DNS section of its own, so it runs on
+  /// [baselineDnsOverrideKeys], which turn DNS on, unless its own `enable`
+  /// turns it off.
+  bool get customDnsEnabled =>
+      !dnsOverrideKeys.contains(DnsOverrideKey.enable) || dns.enable;
+
+  bool get customNtpEnabled =>
+      ntpOverrideKeys.contains(NtpOverrideKey.enable) && ntp.enable;
+
+  bool get customSnifferEnabled =>
+      snifferOverrideKeys.contains(SnifferOverrideKey.enable) && sniffer.enable;
+}
+
+@freezed
 abstract class Rule with _$Rule {
   const factory Rule({
     @Default(-1) int id,
+    @JsonKey(includeFromJson: false, includeToJson: false) int? profileId,
     @Default(RuleAction.DOMAIN) RuleAction ruleAction,
     String? content,
     String? ruleTarget,
@@ -979,6 +1746,73 @@ extension RuleExt on Rule {
   List<String> get searchFields => [ruleAction.name, rawValue];
 }
 
+final class RuleLineException implements Exception {
+  final int line;
+
+  const RuleLineException(this.line);
+}
+
+String encodeRuleList(Iterable<Rule> rules) {
+  return rules.map((rule) => '- ${_ruleScalar(rule.rawValue)}\n').join();
+}
+
+String _ruleScalar(String value) {
+  if (!value.contains(': ') && !value.contains(' #') && !value.endsWith(':')) {
+    return value;
+  }
+  return "'${value.replaceAll("'", "''")}'";
+}
+
+final _rulesHeader = RegExp(r'^rules\s*[:：]$', caseSensitive: false);
+
+List<({int line, Rule rule})> decodeRuleList(
+  String content, {
+  Iterable<Rule> previous = const [],
+}) {
+  final unusedIds = <String, List<int>>{};
+  for (final rule in previous) {
+    unusedIds.putIfAbsent(rule.rawValue, () => []).add(rule.id);
+  }
+  return [
+    for (final (index, line) in content.split('\n').indexed)
+      if (line.trim() case final text
+          when text.isNotEmpty &&
+              !text.startsWith('#') &&
+              !_rulesHeader.hasMatch(text))
+        (line: index + 1, rule: _ruleAt(_ruleText(text), index + 1, unusedIds)),
+  ];
+}
+
+String _ruleText(String line) {
+  final text = line.startsWith('-') ? line.substring(1).trimLeft() : line;
+  if (text.startsWith("'") || text.startsWith('"')) {
+    return switch (_loadScalar(text)) {
+      final String value => value,
+      _ => text,
+    };
+  }
+  final comment = text.indexOf(' #');
+  return comment < 0 ? text : text.substring(0, comment).trimRight();
+}
+
+Object? _loadScalar(String text) {
+  try {
+    return loadYaml(text);
+  } on YamlException {
+    return null;
+  }
+}
+
+Rule _ruleAt(String value, int line, Map<String, List<int>> unusedIds) {
+  final type = value.split(',').first.trim().toUpperCase();
+  if (!RuleAction.values.any((action) => action.value == type)) {
+    throw RuleLineException(line);
+  }
+  final rule = Rule.parse(value);
+  final ids = unusedIds[rule.rawValue];
+  return ids == null || ids.isEmpty ? rule : rule.copyWith(id: ids.removeAt(0));
+}
+
 /// Mirrors mihomo's newIntRanges: `80`, `80-90`, and `/` or `,` between them.
 List<int>? _parseRanges(String payload) {
   if (payload == '*') {
@@ -1085,6 +1919,9 @@ abstract class PatchClashConfig with _$PatchClashConfig {
     @Default(defaultKeepAliveInterval)
     @JsonKey(name: 'keep-alive-interval')
     int keepAliveInterval,
+    @Default(15) @JsonKey(name: 'keep-alive-idle') int keepAliveIdle,
+    @Default(false) @JsonKey(name: 'disable-keep-alive') bool disableKeepAlive,
+    @Default(0) @JsonKey(name: 'routing-mark') int routingMark,
     @Default(true) @JsonKey(name: 'unified-delay') bool unifiedDelay,
     @Default(true) @JsonKey(name: 'tcp-concurrent') bool tcpConcurrent,
     @Default(defaultTun) @JsonKey(fromJson: Tun.safeFormJson) Tun tun,
@@ -1092,10 +1929,6 @@ abstract class PatchClashConfig with _$PatchClashConfig {
     @Default({})
     @JsonKey(name: _dnsOverrideKeysJsonKey, fromJson: _dnsOverrideKeysFromJson)
     Set<DnsOverrideKey> dnsOverrideKeys,
-    @Default(defaultNtp) @JsonKey(fromJson: Ntp.safeNtpFromJson) Ntp ntp,
-    @Default({})
-    @JsonKey(name: _ntpOverrideKeysJsonKey, fromJson: _ntpOverrideKeysFromJson)
-    Set<NtpOverrideKey> ntpOverrideKeys,
     @Default(defaultGeoXUrl)
     @JsonKey(
       name: 'geox-url',
@@ -1110,6 +1943,7 @@ abstract class PatchClashConfig with _$PatchClashConfig {
     @Default(ExternalControllerStatus.close)
     @JsonKey(name: 'external-controller')
     ExternalControllerStatus externalController,
+    @Default('') String secret,
     @Default({}) Map<String, String> hosts,
     @Default(false) @JsonKey(name: 'geo-auto-update') bool geoAutoUpdate,
     @Default(24) @JsonKey(name: 'geo-update-interval') int geoUpdateInterval,
@@ -1122,21 +1956,18 @@ abstract class PatchClashConfig with _$PatchClashConfig {
     if (json == null) {
       return defaultClashConfig;
     }
-    return decodeOrRestoreDefault(
-      'clash config',
-      () => PatchClashConfig.fromJson(json),
-      () => defaultClashConfig,
-    );
+    return decodeSalvaging('clash config', json, PatchClashConfig.fromJson);
   }
 }
 
 extension PatchClashConfigExt on PatchClashConfig {
   UpdateParams toUpdateParams({
-    required RouteMode routeMode,
+    required bool bypassPrivateRoute,
     required List<String> authentication,
+    required bool skipCertVerify,
   }) {
     return UpdateParams(
-      tun: tun.getRealTun(routeMode),
+      tun: tun.getRealTun(bypassPrivateRoute: bypassPrivateRoute),
       authentication: authentication,
       allowLan: allowLan,
       findProcessMode: findProcessMode,
@@ -1145,11 +1976,39 @@ extension PatchClashConfigExt on PatchClashConfig {
       ipv6: ipv6,
       tcpConcurrent: tcpConcurrent,
       externalController: externalController,
+      secret: secret,
       unifiedDelay: unifiedDelay,
       mixedPort: mixedPort,
       geoAutoUpdate: geoAutoUpdate,
       geoUpdateInterval: geoUpdateInterval,
       geoXUrl: geoXUrl.raw,
+      skipCertVerify: skipCertVerify,
     );
+  }
+
+  /// Resets every field [toUpdateParams] patches live, leaving what only a
+  /// full setup hands the Core.
+  PatchClashConfig get setupOnly => copyWith(
+    tun: defaultClashConfig.tun,
+    mixedPort: defaultClashConfig.mixedPort,
+    allowLan: defaultClashConfig.allowLan,
+    findProcessMode: defaultClashConfig.findProcessMode,
+    mode: defaultClashConfig.mode,
+    logLevel: defaultClashConfig.logLevel,
+    ipv6: defaultClashConfig.ipv6,
+    tcpConcurrent: defaultClashConfig.tcpConcurrent,
+    externalController: defaultClashConfig.externalController,
+    secret: defaultClashConfig.secret,
+    unifiedDelay: defaultClashConfig.unifiedDelay,
+    geoAutoUpdate: defaultClashConfig.geoAutoUpdate,
+    geoUpdateInterval: defaultClashConfig.geoUpdateInterval,
+    geoXUrl: defaultClashConfig.geoXUrl,
+  );
+
+  PatchClashConfig ensureControllerSecret() {
+    if (externalController == ExternalControllerStatus.close) {
+      return secret.isEmpty ? this : copyWith(secret: '');
+    }
+    return secret.isEmpty ? copyWith(secret: generateRandomSecret(32)) : this;
   }
 }

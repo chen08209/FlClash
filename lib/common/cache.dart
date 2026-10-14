@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
@@ -8,11 +7,10 @@ extension CacheManagerExt on CacheManager {
     String url, {
     String? key,
     Map<String, String>? headers,
-    VoidCallback? onRemoteNewLoaded,
   }) {
     key ??= url;
     final streamController = StreamController<FileInfo>();
-    _pushFileToStream(streamController, url, key, headers, onRemoteNewLoaded);
+    _pushFileToStream(streamController, url, key, headers);
     return streamController.stream;
   }
 
@@ -21,7 +19,6 @@ extension CacheManagerExt on CacheManager {
     String url,
     String? key,
     Map<String, String>? headers,
-    VoidCallback? onRemoteNewLoaded,
   ) async {
     key ??= url;
     FileInfo? cacheFile;
@@ -40,9 +37,6 @@ extension CacheManagerExt on CacheManager {
       try {
         final res = (await downloadFile(url, key: key, authHeaders: headers));
         streamController.add(res);
-        if (cacheFile == null) {
-          onRemoteNewLoaded?.call();
-        }
       } on Object catch (e) {
         cacheLogger.log(
           'CacheManager: Failed to download file from $url with error:\n$e',

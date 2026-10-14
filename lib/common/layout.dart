@@ -49,6 +49,17 @@ Size windowControlsOverSidebar({required bool isMacOS, required int version}) {
   return isMacOS && version > 10 ? macOSTrafficLightsArea : Size.zero;
 }
 
+/// The mobile view holds the traffic lights in its window header, so only a
+/// page filling a wider window meets them.
+Size windowControlsOverPage({
+  required bool isMacOS,
+  required int version,
+  required bool isMobileView,
+}) {
+  if (isMobileView) return Size.zero;
+  return windowControlsOverSidebar(isMacOS: isMacOS, version: version);
+}
+
 int getProxiesColumns(double viewWidth, ProxiesLayout proxiesLayout) {
   final columns = max((viewWidth / 250).ceil(), 2);
   return switch (proxiesLayout) {
@@ -60,7 +71,8 @@ int getProxiesColumns(double viewWidth, ProxiesLayout proxiesLayout) {
 
 double get cardSpacing => 12.mAp;
 
-const profileItemMinWidth = 270.0;
+const profileItemMinWidth = 300.0;
+const _profilesMaxColumns = 3;
 
 int getProfilesColumns(
   double viewWidth, {
@@ -68,5 +80,5 @@ int getProfilesColumns(
   double minItemWidth = profileItemMinWidth,
 }) {
   final columns = (viewWidth + spacing) / (minItemWidth + spacing);
-  return max(columns.floor(), 1);
+  return columns.floor().clamp(1, _profilesMaxColumns);
 }
