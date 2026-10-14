@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/event.dart';
 import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/spill.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
@@ -210,6 +211,22 @@ final class CoreRpcClient implements CoreRpcChannel {
     final id = response.id;
     final completer = id == null ? null : _pending.remove(id);
     if (completer == null || completer.isCompleted) {
+      unawaited(discardSpilledResponse(response));
+      return;
+    }
+    if (response.file != null) {
+      unawaited(
+        resolveSpilledResponse(
+          response,
+        ).then((resolved) => _complete(completer, resolved)),
+      );
+      return;
+    }
+    _complete(completer, response);
+  }
+
+  void _complete(Completer<Object?> completer, CoreMethodResponse response) {
+    if (completer.isCompleted) {
       return;
     }
     final error = response.error;

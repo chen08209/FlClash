@@ -2,7 +2,19 @@ part of '../action.dart';
 
 enum _SetupTaskResult { completed, handoffToCoreRestart, failed }
 
-typedef _SetupInputs = (SetupState, PatchClashConfig, NetworkProps);
+typedef _SetupInputs = (
+  SetupState,
+  PatchClashConfig,
+  NetworkProps,
+  SetupParams,
+);
+
+typedef BuiltProfile = ({
+  String yaml,
+  String md5,
+  ConfigCounts counts,
+  SetupBase? base,
+});
 
 class _RunRequest {
   final bool running;
@@ -55,6 +67,10 @@ class SetupAction extends _$SetupAction {
       skipCertVerify: !appSetting.checkCertificate,
     );
   }
+
+  // The selection reaches the Core through changeProxy, not through an apply.
+  SetupParams get _appliedParams =>
+      _setupParams.copyWith(selectedMap: const {});
 
   Future<bool> fullSetup() async {
     if (!ref.read(initProvider)) return true;
@@ -184,7 +200,8 @@ class SetupAction extends _$SetupAction {
       _rollbackRunning(request);
       rethrow;
     }
-    if (_isCurrent(request)) {
+    final inputsApplied = await _inputsApplied();
+    if (_isCurrent(request) && !inputsApplied) {
       applyProfileDebounce(force: true, silence: true);
     }
     return true;
@@ -341,6 +358,7 @@ class SetupAction extends _$SetupAction {
           setupState,
           _effectivePatchConfig(ref.read(patchClashConfigProvider)),
           ref.read(networkSettingProvider),
+          _appliedParams,
         );
   }
 
@@ -395,12 +413,15 @@ class SetupAction extends _$SetupAction {
     }
   }
 
-  Future<({String yaml, String md5})> getProfile({
+  /// With a base, [BuiltProfile.yaml] is only the overlay the Core applies.
+  Future<BuiltProfile> getProfile({
     required SetupState setupState,
     required PatchClashConfig patchConfig,
   }) async {
     final profileId = setupState.profileId;
-    if (profileId == null) return (yaml: '', md5: '');
+    if (profileId == null) {
+      return (yaml: '', md5: '', counts: configCountsOf(const {}), base: null);
+    }
     final defaultUA = globalState.packageInfo.ua;
     final networkSetting = ref.read(
       networkSettingProvider.select(
@@ -413,6 +434,14 @@ class SetupAction extends _$SetupAction {
     );
     final appendSystemDns = networkSetting.appendSystemDns;
     final isCustom = setupState.profileType == ProfileType.custom;
+    final scriptContent =
+        !isCustom && setupState.extendType == ExtendType.script
+        ? await setupState.script?.content
+        : null;
+    final hasScript = scriptContent?.isNotEmpty == true;
+    final profileBase = !isCustom && !hasScript
+        ? await _core.getProfileBase(profileId)
+        : null;
     Map<String, dynamic> rawConfig = isCustom
         ? {
             'proxies': appProxiesPayload(
@@ -421,14 +450,10 @@ class SetupAction extends _$SetupAction {
               groups: setupState.proxyGroups,
             ),
           }
-        : await _core.getConfig(profileId);
+        : profileBase?.base.config ?? await _core.getConfig(profileId);
     final proxyGroups = isCustom ? setupState.proxyGroups : <ProxyGroup>[];
     final rules = isCustom ? setupState.rules : <Rule>[];
-    final scriptContent =
-        !isCustom && setupState.extendType == ExtendType.script
-        ? await setupState.script?.content
-        : null;
-    if (scriptContent?.isNotEmpty == true) {
+    if (hasScript) {
       rawConfig = await handleEvaluate(scriptContent!, rawConfig);
     }
     final realPatchConfig = patchConfig.copyWith(
@@ -442,7 +467,7 @@ class SetupAction extends _$SetupAction {
       proxyGroups: proxyGroups,
       rules: rules,
     );
-    final res = makeRealProfileTask(
+    final res = await makeRealProfileTask(
       MakeRealProfileState(
         rules: rules,
         proxyGroups: proxyGroups,
@@ -458,11 +483,28 @@ class SetupAction extends _$SetupAction {
         addedRules: setupState.addedRules,
         defaultUA: defaultUA,
         authentication: networkSetting.authentication.credentials,
-        matchTarget: setupState.matchTarget,
+        matchTarget:
+            profileBase == null ||
+                setupState.matchTarget?.trim().isNotEmpty == true
+            ? setupState.matchTarget
+            : lastMatchTarget(profileBase.base.matchRules),
         safeMode: ref.read(safeModeProvider),
       ),
     );
-    return res;
+    if (profileBase == null) {
+      return (yaml: res.yaml, md5: res.md5, counts: res.counts, base: null);
+    }
+    final (:base, :path) = profileBase;
+    return (
+      yaml: res.yaml,
+      md5: '${res.md5}${base.digest}'.toMd5(),
+      counts: (
+        groups: res.counts.groups + base.proxyGroups,
+        proxies: res.counts.proxies + base.proxies,
+        rules: res.counts.rules + base.rules,
+      ),
+      base: SetupBase(path: path, overlay: res.yaml),
+    );
   }
 
   /// Only what the custom profile actually references is injected, so an
@@ -523,7 +565,10 @@ class SetupAction extends _$SetupAction {
         setupState: setupState,
         patchConfig: patchClashConfig,
       );
-      return res.yaml;
+      return switch (res.base) {
+        final base? => await _core.buildProfile(base),
+        null => res.yaml,
+      };
     } catch (e) {
       dialogs.showNotifier(e.toString(), level: MessageLevel.error);
     }
@@ -641,11 +686,13 @@ class SetupAction extends _$SetupAction {
       return getProfile(setupState: state, patchConfig: realPatchConfig);
     }, title: 'build profile');
     final profileFailed = realProfile == null;
+    final setupParams = _setupParams.copyWith(base: realProfile?.base);
     final inputs = switch (setupState) {
       final state? when !profileFailed => (
         state,
         realPatchConfig,
         networkSetting,
+        _appliedParams,
       ),
       _ => null,
     };
@@ -669,14 +716,16 @@ class SetupAction extends _$SetupAction {
     await globalState.loadingRun(
       () async {
         try {
-          final configFilePath = await appPath.configFilePath;
-          await File(configFilePath).writeAsStringAtomically(yamlString);
+          if (setupParams.base == null) {
+            final configFilePath = await appPath.configFilePath;
+            await File(configFilePath).writeAsStringAtomically(yamlString);
+          }
           final profileId = profile?.id;
           if (profileId != null) {
             await appPath.ensureProviderDirs(profileId);
           }
           final message = await _core.setupConfig(
-            params: _setupParams,
+            params: setupParams,
             preloadInvoke: preloadInvoke,
           );
           if (message.isNotEmpty) {
@@ -691,6 +740,8 @@ class SetupAction extends _$SetupAction {
           rethrow;
         }
         globalState.lastConfigMd5 = yamlMd5;
+        globalState.lastConfigCounts =
+            realProfile?.counts ?? configCountsOf(const {});
         _appliedInputs = inputs;
         await onUpdated?.call();
       },

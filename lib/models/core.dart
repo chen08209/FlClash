@@ -11,10 +11,35 @@ abstract class SetupParams with _$SetupParams {
     @JsonKey(name: 'selected-map') required Map<String, String> selectedMap,
     @JsonKey(name: 'test-url') required String testUrl,
     @Default(false) @JsonKey(name: 'skip-cert-verify') bool skipCertVerify,
+    @JsonKey(includeIfNull: false) SetupBase? base,
   }) = _SetupParams;
 
   factory SetupParams.fromJson(Map<String, dynamic> json) =>
       _$SetupParamsFromJson(json);
+}
+
+@freezed
+abstract class SetupBase with _$SetupBase {
+  const factory SetupBase({required String path, required String overlay}) =
+      _SetupBase;
+
+  factory SetupBase.fromJson(Map<String, dynamic> json) =>
+      _$SetupBaseFromJson(json);
+}
+
+@freezed
+abstract class ProfileBase with _$ProfileBase {
+  const factory ProfileBase({
+    required Map<String, dynamic> config,
+    required String digest,
+    @Default([]) @JsonKey(name: 'match-rules') List<String> matchRules,
+    @Default(0) int proxies,
+    @Default(0) @JsonKey(name: 'proxy-groups') int proxyGroups,
+    @Default(0) int rules,
+  }) = _ProfileBase;
+
+  factory ProfileBase.fromJson(Map<String, dynamic> json) =>
+      _$ProfileBaseFromJson(json);
 }
 
 @freezed
@@ -144,17 +169,6 @@ abstract class RouteSnapshot with _$RouteSnapshot {
 }
 
 @freezed
-abstract class UpdateGeoDataParams with _$UpdateGeoDataParams {
-  const factory UpdateGeoDataParams({
-    @JsonKey(name: 'geo-type') required String geoType,
-    @JsonKey(name: 'geo-name') required String geoName,
-  }) = _UpdateGeoDataParams;
-
-  factory UpdateGeoDataParams.fromJson(Map<String, Object?> json) =>
-      _$UpdateGeoDataParamsFromJson(json);
-}
-
-@freezed
 abstract class CoreEvent with _$CoreEvent {
   const factory CoreEvent({required CoreEventType type, dynamic data}) =
       _CoreEvent;
@@ -276,26 +290,6 @@ abstract class CoreMemoryStats with _$CoreMemoryStats {
 
 extension CoreMemoryStatsExt on CoreMemoryStats {
   int get runtimeTotal => heapInuse + heapIdle + stackInuse + runtimeOther;
-}
-
-@freezed
-abstract class Now with _$Now {
-  const factory Now({required String name, required String value}) = _Now;
-
-  factory Now.fromJson(Map<String, Object?> json) => _$NowFromJson(json);
-}
-
-@freezed
-abstract class ProviderSubscriptionInfo with _$ProviderSubscriptionInfo {
-  const factory ProviderSubscriptionInfo({
-    @JsonKey(name: 'UPLOAD') @Default(0) int upload,
-    @JsonKey(name: 'DOWNLOAD') @Default(0) int download,
-    @JsonKey(name: 'TOTAL') @Default(0) int total,
-    @JsonKey(name: 'EXPIRE') @Default(0) int expire,
-  }) = _ProviderSubscriptionInfo;
-
-  factory ProviderSubscriptionInfo.fromJson(Map<String, Object?> json) =>
-      _$ProviderSubscriptionInfoFromJson(json);
 }
 
 SubscriptionInfo? subscriptionInfoFormCore(Map<String, Object?>? json) {
