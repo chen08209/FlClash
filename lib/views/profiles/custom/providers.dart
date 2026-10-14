@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/profiles/custom/members.dart';
 import 'package:fl_clash/views/profiles/custom/quick_edit.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -66,7 +66,7 @@ class CustomProvidersView extends ConsumerWidget {
             horizontal: 16,
           ).copyWith(top: context.contentTopPadding, bottom: 16),
           children: [
-            generateSectionV3(
+            generateSection(
               title: appLocalizations.proxies,
               items: [
                 for (final name in proxy)
@@ -79,7 +79,7 @@ class CustomProvidersView extends ConsumerWidget {
                   ),
               ],
             ),
-            generateSectionV3(
+            generateSection(
               title: appLocalizations.rules,
               items: [
                 for (final name in rule)
@@ -449,7 +449,7 @@ class _ProxyProviderOptionsViewState
               ),
             ),
           ),
-          Text(suffix, style: context.textTheme.bodyMedium),
+          Text(suffix, style: AppTextStyle.subheadline.of(context)),
         ],
       ),
     );

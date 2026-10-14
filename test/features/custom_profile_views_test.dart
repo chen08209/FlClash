@@ -6,7 +6,6 @@ import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart' hide FileInfo;
 import 'package:fl_clash/pages/editor.dart';
@@ -17,6 +16,7 @@ import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/profiles/custom/custom_proxies.dart';
 import 'package:fl_clash/views/profiles/custom/dialers.dart';
 import 'package:fl_clash/views/profiles/custom/groups.dart';
@@ -517,6 +517,33 @@ void main() {
       );
       await tester.pumpAndSettle();
       await tester.tap(menuItem(AppLocalizations.current.delete));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(AppLocalizations.current.proxyGroupInUse('Group 1')),
+        findsOneWidget,
+      );
+      await tester.tap(find.text(AppLocalizations.current.confirm));
+      await tester.pumpAndSettle();
+
+      expect(notifier.deleted.single, {101});
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('the edit page warns when the profile still names the group', (
+      tester,
+    ) async {
+      final notifier = await _pumpProxyGroups(tester, inUse: {'Group 1'});
+
+      await tester.tap(find.text('Group 1'));
+      await tester.pumpAndSettle();
+      final delete = find.descendant(
+        of: find.byType(EditProxyGroupView),
+        matching: find.text(AppLocalizations.current.delete),
+      );
+      await tester.ensureVisible(delete);
+      await tester.pumpAndSettle();
+      await tester.tap(delete);
       await tester.pumpAndSettle();
       expect(
         find.text(AppLocalizations.current.proxyGroupInUse('Group 1')),

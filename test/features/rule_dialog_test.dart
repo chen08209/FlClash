@@ -245,4 +245,53 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
+
+  testWidgets('a payload the core would refuse is held at the field', (
+    tester,
+  ) async {
+    Rule? result;
+    const rule = Rule(
+      id: 7,
+      ruleAction: RuleAction.DST_PORT,
+      content: '443',
+      ruleTarget: 'DIRECT',
+    );
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        overrides: [
+          viewSizeProvider.overrideWithBuild((_, _) => const Size(1200, 800)),
+        ],
+        child: Builder(
+          builder: (context) {
+            return FilledButton(
+              onPressed: () async {
+                result = await showDialog<Rule>(
+                  context: context,
+                  builder: (_) => const AddOrEditRuleDialog(rule: rule),
+                );
+              },
+              child: const Text('open'),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    final l10n = AppLocalizations.current;
+
+    await tester.enterText(find.byType(TextFormField), 'https');
+    await tester.tap(find.text(l10n.confirm));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.invalidRangeContent), findsOneWidget);
+    expect(result, isNull);
+
+    await tester.enterText(find.byType(TextFormField), '80/443');
+    await tester.tap(find.text(l10n.confirm));
+    await tester.pumpAndSettle();
+    expect(result?.content, '80/443');
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 }

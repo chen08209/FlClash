@@ -4,26 +4,21 @@ import 'dart:typed_data';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class EditProfileView extends ConsumerStatefulWidget {
   final Profile profile;
-  final BuildContext context;
 
-  const EditProfileView({
-    super.key,
-    required this.context,
-    required this.profile,
-  });
+  const EditProfileView({super.key, required this.profile});
 
   @override
   ConsumerState<EditProfileView> createState() => _EditProfileViewState();
@@ -54,9 +49,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       text: widget.profile.autoUpdateDuration.inMinutes.toString(),
     );
     _setupAction = ref.read(setupActionProvider.notifier);
-    if (widget.profile.type != ProfileType.custom) {
-      _updateFileInfo();
-    }
+    _updateFileInfo();
   }
 
   Future<void> _updateFileInfo() async {
@@ -236,8 +229,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       _ProfileNameField(controller: _labelController),
       if (widget.profile.type == ProfileType.url)
         _ProfileUrlField(controller: _urlController),
-      if (widget.profile.type != ProfileType.custom)
-        _AgeSecretKeyField(controller: _ageSecretKeyController),
+      _AgeSecretKeyField(controller: _ageSecretKeyController),
       if (widget.profile.type == ProfileType.url) ...[
         ListItem.toggle(
           title: Text(appLocalizations.autoUpdate),
@@ -247,12 +239,11 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
         if (_autoUpdate)
           _AutoUpdateIntervalField(controller: _autoUpdateDurationController),
       ],
-      if (widget.profile.type != ProfileType.custom)
-        _ProfileFileItem(
-          fileInfoNotifier: _fileInfoNotifier,
-          onEdit: _editProfileFile,
-          onUpload: _uploadProfileFile,
-        ),
+      _ProfileFileItem(
+        fileInfoNotifier: _fileInfoNotifier,
+        onEdit: _editProfileFile,
+        onUpload: _uploadProfileFile,
+      ),
     ];
     return FocusTraversalGroup(
       policy: PageTraversalPolicy(),

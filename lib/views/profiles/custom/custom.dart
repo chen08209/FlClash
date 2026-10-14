@@ -3,13 +3,12 @@ import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/config/dns.dart';
 import 'package:fl_clash/views/config/ntp.dart';
 import 'package:fl_clash/views/config/sniffer.dart';
@@ -161,6 +160,26 @@ class _CustomProfileViewState extends ConsumerState<CustomProfileView>
         }
       }
       await _profilesAction.importCustomProfile(widget.profileId, config);
+      final dropped = [
+        if (config.droppedSubRules > 0)
+          appLocalizations.customImportDroppedSubRules(
+            config.droppedSubRules,
+            config.droppedSubRules.compact,
+          ),
+        if (config.droppedIncludeAll.isNotEmpty)
+          appLocalizations.customImportDroppedIncludeAll(
+            config.droppedIncludeAll.join(', '),
+          ),
+      ];
+      if (dropped.isNotEmpty && mounted) {
+        unawaited(
+          dialogs.showMessage(
+            title: appLocalizations.import,
+            message: TextSpan(text: dropped.join('\n\n')),
+            cancelable: false,
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -228,10 +247,7 @@ class _CustomProfileViewState extends ConsumerState<CustomProfileView>
           actions: [
             CommonPopupBox(
               targetBuilder: (open) => FilledButton(
-                onPressed: _loaded && !_importing
-                    ? () =>
-                          open(offset: Offset(0, context.isMobileView ? 0 : 20))
-                    : null,
+                onPressed: _loaded && !_importing ? open : null,
                 child: Text(appLocalizations.import),
               ),
               popupBuilder: (_) => CommonPopupMenu(
@@ -490,7 +506,7 @@ class _MoreSectionsView extends ConsumerWidget {
           horizontal: 16,
         ).copyWith(top: context.contentTopPadding, bottom: 16),
         children: [
-          generateSectionV3(
+          generateSection(
             items: [
               section(
                 AppGlyphs.link,
@@ -603,11 +619,7 @@ class _OverviewTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final textTheme = context.textTheme;
     return CommonCard(
-      type: context.isInBottomSheet
-          ? CommonCardType.filled
-          : CommonCardType.plain,
       radius: AppCorner.lg,
       onPressed: onPressed,
       child: Padding(
@@ -615,22 +627,24 @@ class _OverviewTile extends StatelessWidget {
         child: Row(
           spacing: 12,
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              alignment: Alignment.center,
-              decoration: ShapeDecoration(
-                color: invalid
-                    ? colorScheme.errorContainer
-                    : colorScheme.secondaryContainer,
-                shape: AppShape.circle,
-              ),
-              child: GlyphIcon(
-                glyph,
-                size: 20,
-                color: invalid
-                    ? colorScheme.onErrorContainer
-                    : colorScheme.onSecondaryContainer,
+            Builder(
+              builder: (context) => Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: ShapeDecoration(
+                  color: invalid
+                      ? colorScheme.errorContainer
+                      : context.raisedSurfaceLevel.colorOf(colorScheme),
+                  shape: AppShape.circle,
+                ),
+                child: GlyphIcon(
+                  glyph,
+                  size: 20,
+                  color: invalid
+                      ? colorScheme.onErrorContainer
+                      : colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
             Expanded(
@@ -642,12 +656,12 @@ class _OverviewTile extends StatelessWidget {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                    style: AppTextStyle.footnote
+                        .of(context)
+                        .copyWith(color: colorScheme.onSurfaceVariant),
                   ),
                   DefaultTextStyle.merge(
-                    style: textTheme.titleMedium,
+                    style: AppTextStyle.headline.of(context),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     child: value,

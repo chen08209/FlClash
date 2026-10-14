@@ -2,7 +2,6 @@ import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart' hide FileInfo;
 import 'package:fl_clash/providers/providers.dart';
@@ -797,7 +796,7 @@ class _MemberPickerState<M> extends ConsumerState<_MemberPicker<M>> {
         _ when kind.isFilter => FilterRegexText(subtitle),
         _ => TooltipLabel(subtitle, maxLines: 1),
       },
-      trailing: isSelected ? const GlyphIcon(AppGlyphs.check) : null,
+      trailing: isSelected ? const SelectionCheck() : null,
     );
   }
 }

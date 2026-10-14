@@ -4,11 +4,11 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart' hide FileInfo;
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1163,7 +1163,7 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
           Flexible(
             child: Text(
               value,
-              style: context.listTitleStyle?.copyWith(
+              style: context.listTitleStyle.copyWith(
                 color: context.colorScheme.onSurfaceVariant,
               ),
             ),
@@ -1300,7 +1300,7 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
   Widget _buildEasyTierSection(CustomProxy proxy) {
     final appLocalizations = context.appLocalizations;
     final definition = proxy.definition;
-    return generateSectionV3(
+    return generateSection(
       title: appLocalizations.network,
       items: [
         _buildTextItem(
@@ -1423,7 +1423,7 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
             ).copyWith(bottom: 20),
             sliver: SliverList.list(
               children: [
-                generateSectionV3(
+                generateSection(
                   title: appLocalizations.basicInfo,
                   items: [
                     _buildTextItem(
@@ -1463,7 +1463,7 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
                   ],
                 ),
                 if (easyTier) _buildEasyTierSection(proxy),
-                generateSectionV3(
+                generateSection(
                   title: appLocalizations.authentication,
                   items: [
                     for (final field in fields)
@@ -1471,7 +1471,7 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
                   ],
                 ),
                 _buildOptions(proxy),
-                generateSectionV3(
+                generateSection(
                   title: appLocalizations.action,
                   items: [
                     if (!_isNew)
@@ -1546,7 +1546,6 @@ class _ProxyValuesView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return ListEditorPage<String, String>(
       title: title,
-      selectionEnabled: true,
       idOf: (value) => value,
       itemsOf: (ref) => ref.watch(
         customProxyProvider.select((state) => state.stringsOf(field)),

@@ -435,21 +435,10 @@ class ProfilesAction extends _$ProfilesAction {
         );
   }
 
-  void setProfileAndAutoApply(Profile profile) {
-    ref.read(profilesProvider.notifier).put(profile);
-    if (profile.id == ref.read(currentProfileIdProvider)) {
-      ref.read(setupActionProvider.notifier).applyProfileDebounce();
-    }
-  }
-
   Future<void> addProfileFormQrCode() async {
     final url = await globalState.safeRun(picker.pickerConfigQRCode);
     if (url == null) return;
     unawaited(addProfileFromLink(url));
-  }
-
-  void reorder(List<Profile> profiles) {
-    ref.read(profilesProvider.notifier).reorder(profiles);
   }
 
   Future<void> clearEffect(int profileId) async {

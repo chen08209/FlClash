@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -12,36 +11,16 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-class _FakePathProvider extends PathProviderPlatform {
-  final String root;
-
-  _FakePathProvider(this.root);
-
-  @override
-  Future<String?> getTemporaryPath() async => root;
-
-  @override
-  Future<String?> getApplicationSupportPath() async => root;
-
-  @override
-  Future<String?> getApplicationCachePath() async => root;
-}
+import '../helpers/app_paths.dart';
+import '../helpers/test_app.dart';
 
 /// The edit page disposes the profile by scheduling an auto-apply; keep that a
 /// no-op so the setup machinery never runs in a widget test.
 class _NoopSetupAction extends SetupAction {
   @override
   void autoApplyProfile() {}
-}
-
-class _RecordingProfilesAction extends ProfilesAction {
-  final put = <Profile>[];
-
-  @override
-  void putProfile(Profile profile) => put.add(profile);
 }
 
 Profile _urlProfile() =>
@@ -85,13 +64,12 @@ Future<FocusNode> pumpEditProfile(
         navigatorKey: globalState.navigatorKey,
         localizationsDelegates: const [
           AppLocalizations.delegate,
+          AppUiLocalizations.delegate,
           ...GlobalMaterialLocalizations.delegates,
         ],
         supportedLocales: AppLocalizations.delegate.supportedLocales,
         builder: (context, child) {
-          globalState.measure = Measure.of(context, 1);
-          globalState.theme = CommonTheme.of(context, 1);
-          return child!;
+          return wrapAppScopes(context, child!);
         },
         home: Scaffold(
           body: Column(
@@ -104,7 +82,6 @@ Future<FocusNode> pumpEditProfile(
                       child: Builder(
                         builder: (context) => Scaffold(
                           body: EditProfileView(
-                            context: context,
                             profile: profile ?? _urlProfile(),
                           ),
                         ),
@@ -143,9 +120,7 @@ void main() {
 
   setUpAll(() async {
     tempDir = Directory.systemTemp.createTempSync('edit_profile_focus_test');
-    PathProviderPlatform.instance = _FakePathProvider(tempDir.path);
-    // A path resolved inside one test's fake zone never wakes a later test.
-    await appPath.dataDir.future;
+    await useAppPaths(tempDir);
   });
 
   tearDownAll(() {
@@ -170,28 +145,6 @@ void main() {
     expect(_isTextFieldFocused(), isTrue);
     expect(find.byType(FloatingActionButton), findsNothing);
     expect(find.byTooltip('Save'), findsOneWidget);
-  });
-
-  testWidgets('a custom profile edits only its name', (tester) async {
-    final action = _RecordingProfilesAction();
-    final profile = Profile.custom(label: 'Mine');
-    await pumpEditProfile(
-      tester,
-      profile: profile,
-      overrides: [profilesActionProvider.overrideWith(() => action)],
-    );
-
-    expect(find.byType(TextFormField), findsOneWidget);
-    expect(find.text(currentAppLocalizations.autoUpdate), findsNothing);
-
-    await tester.enterText(
-      find.widgetWithText(TextFormField, currentAppLocalizations.name),
-      'Renamed',
-    );
-    await tester.tap(find.byTooltip(currentAppLocalizations.save));
-    await tester.pumpAndSettle();
-
-    expect(action.put.single, profile.copyWith(label: 'Renamed'));
   });
 
   testWidgets(

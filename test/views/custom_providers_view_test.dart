@@ -11,27 +11,12 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
+import '../helpers/app_paths.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
 const _profileId = 1;
-
-class _FakePathProvider extends PathProviderPlatform {
-  final String root;
-
-  _FakePathProvider(this.root);
-
-  @override
-  Future<String?> getTemporaryPath() async => root;
-
-  @override
-  Future<String?> getApplicationSupportPath() async => root;
-
-  @override
-  Future<String?> getApplicationCachePath() async => root;
-}
 
 class _TestProxyGroups extends ProxyGroups {
   _TestProxyGroups(this.groups);
@@ -73,10 +58,10 @@ void main() {
 
   late ProviderContainer container;
 
-  setUpAll(() {
-    PathProviderPlatform.instance = _FakePathProvider(
-      Directory.systemTemp.createTempSync('custom_providers').path,
-    );
+  setUpAll(() async {
+    final home = Directory.systemTemp.createTempSync('custom_providers');
+    addTearDown(() => home.deleteSync(recursive: true));
+    await useAppPaths(home);
   });
 
   Future<void> pumpView(

@@ -484,31 +484,7 @@ void main() {
       expect(loop('Work', const {'Work': 'Away', 'Away': 'Home'}), isEmpty);
     });
 
-    test('include-all reaches a proxy only once a group declares it', () {
-      const all = ProxyGroup(
-        id: 6,
-        name: 'All',
-        type: GroupType.Selector,
-        includeAll: true,
-      );
-      expect(dialerLoop('All', [all], proxy: 'Home'), isEmpty);
-      expect(dialerLoop('All', [all, landing], proxy: 'Home'), {'All'});
-    });
-
     test('what a filter picks is left to the core', () {
-      const all = ProxyGroup(
-        id: 6,
-        name: 'All',
-        type: GroupType.Selector,
-        includeAll: true,
-      );
-      for (final group in [
-        all.copyWith(filter: '(?i)hk'),
-        all.copyWith(excludeFilter: 'Home'),
-        all.copyWith(excludeType: 'Shadowsocks'),
-      ]) {
-        expect(dialerLoop('All', [group, landing], proxy: 'Home'), isEmpty);
-      }
       expect(
         dialerLoop('Landing', [
           landing.copyWith(excludeFilter: 'Home'),
@@ -643,10 +619,6 @@ void main() {
       expect(proxyGroupIssues(group, profileData), [
         const CustomIssue.noProxySource(),
       ]);
-      expect(
-        proxyGroupIssues(group.copyWith(includeAllProxies: true), profileData),
-        isEmpty,
-      );
     });
 
     test('a group cannot take a local proxy\'s name, named here or not', () {
@@ -683,26 +655,31 @@ void main() {
       );
     });
 
-    test('empty-fallback takes only a built-in', () {
+    test('empty-fallback takes a built-in or a proxy a group names', () {
       const group = ProxyGroup(
         id: 3,
         name: 'C',
         type: GroupType.Selector,
         proxies: ['Node'],
       );
-      for (final name in ['COMPATIBLE', 'PASS']) {
+      final data = profileData.copyWith(
+        proxyGroups: [
+          ...profileData.proxyGroups,
+          group.copyWith(id: 4, name: 'D', proxies: ['Home']),
+        ],
+        proxies: const {'Home', 'Spare'},
+      );
+      for (final name in ['COMPATIBLE', 'PASS', 'Home']) {
         expect(
-          proxyGroupIssues(group.copyWith(emptyFallback: name), profileData),
+          proxyGroupIssues(group.copyWith(emptyFallback: name), data),
           isEmpty,
           reason: name,
         );
       }
-      for (final name in ['A', 'Node', 'Gone']) {
-        expect(
-          proxyGroupIssues(group.copyWith(emptyFallback: name), profileData),
-          [CustomIssue.invalidEmptyFallback(name)],
-          reason: name,
-        );
+      for (final name in ['A', 'Node', 'Gone', 'Spare']) {
+        expect(proxyGroupIssues(group.copyWith(emptyFallback: name), data), [
+          CustomIssue.invalidEmptyFallback(name),
+        ], reason: name);
       }
     });
 

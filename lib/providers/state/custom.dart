@@ -508,7 +508,7 @@ Set<String> _namesOnLoops(Map<String, List<String>> members) {
 }
 
 /// [target] and what under it leads back to [proxy], through a group's own
-/// list, include-all where no filter narrows it, or an app proxy's entry in
+/// list or, where an app proxy dials through another, that proxy's entry in
 /// [dialers]; empty when the dial does not loop. What filters and providers
 /// pick is left to the core, which fails a dial that comes back to its dialer.
 Set<String> dialerLoop(
@@ -517,12 +517,6 @@ Set<String> dialerLoop(
   required String proxy,
   Map<String, String> dialers = const {},
 }) => dialerLoopsOf(groups, proxy: proxy, dialers: dialers)(target);
-
-bool _takesInEveryProxy(ProxyGroup group) =>
-    (group.includeAll == true || group.includeAllProxies == true) &&
-    (group.filter ?? '').isEmpty &&
-    (group.excludeFilter ?? '').isEmpty &&
-    (group.excludeType ?? '').isEmpty;
 
 /// [dialerLoop] for any target of [proxy], finding what reaches it once.
 Set<String> Function(String target) dialerLoopsOf(
@@ -536,7 +530,6 @@ class _DialerGraph {
   final chained = <String, String>{};
   final members = <String, List<String>>{};
   final groupNames = <String>{};
-  final takingEveryProxy = <String>{};
   final parents = <String, List<String>>{};
 
   _DialerGraph(Iterable<ProxyGroup> groups, Map<String, String> dialers) {
@@ -550,14 +543,8 @@ class _DialerGraph {
       }
     }
     for (final group in groups) {
-      final takesAll = _takesInEveryProxy(group);
-      members[group.name] = [...?group.proxies, if (takesAll) ...chained.keys];
+      members[group.name] = [...?group.proxies];
       groupNames.add(group.name);
-      if (takesAll) {
-        takingEveryProxy.add(group.name);
-      } else {
-        takingEveryProxy.remove(group.name);
-      }
     }
     for (final MapEntry(key: name, value: items) in members.entries) {
       for (final item in items) {
@@ -566,16 +553,14 @@ class _DialerGraph {
     }
   }
 
-  /// The proxy's own dialer is the dial being checked, never a way back; a
-  /// proxy without one is still taken in by every include-all group.
+  /// The proxy's own dialer is the dial being checked, never a way back.
   Set<String> Function(String target) loopsOf(String proxy) {
     if (!declared.contains(proxy)) {
       return (_) => const {};
     }
     final passesThrough = groupNames.contains(proxy);
-    final takenIn = !chained.containsKey(proxy);
     final reaching = <String>{};
-    final pending = [...?parents[proxy], if (takenIn) ...takingEveryProxy];
+    final pending = [...?parents[proxy]];
     while (pending.isNotEmpty) {
       final name = pending.removeLast();
       if ((passesThrough || name != proxy) && reaching.add(name)) {
@@ -593,9 +578,6 @@ class _DialerGraph {
         }
         for (final next in members[name] ?? const <String>[]) {
           walk(next);
-        }
-        if (takenIn && takingEveryProxy.contains(name)) {
-          walk(proxy);
         }
       }
 
@@ -789,12 +771,7 @@ List<CustomIssue> proxyGroupIssues(ProxyGroup group, CustomProfileData data) {
   final name = group.name;
   final proxies = group.proxies ?? const <String>[];
   final use = group.use ?? const <String>[];
-  final hasSource =
-      proxies.isNotEmpty ||
-      use.isNotEmpty ||
-      group.includeAll == true ||
-      group.includeAllProxies == true ||
-      group.includeAllProviders == true;
+  final hasSource = proxies.isNotEmpty || use.isNotEmpty;
   final missingProxies = [
     for (final item in proxies)
       if (!data.ruleTargets.contains(item) && !data.proxies.contains(item))
@@ -804,7 +781,9 @@ List<CustomIssue> proxyGroupIssues(ProxyGroup group, CustomProfileData data) {
   // The core takes only a proxy here, never a group, and refuses the whole
   // config otherwise.
   final invalidEmptyFallback =
-      emptyFallback.isNotEmpty && !reservedProxyNames.contains(emptyFallback);
+      emptyFallback.isNotEmpty &&
+      !reservedProxyNames.contains(emptyFallback) &&
+      !data.namedProxies.contains(emptyFallback);
   final missingProviders = use
       .where((item) => !data.proxyProviders.contains(item))
       .toList();

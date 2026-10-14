@@ -1,13 +1,13 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/profiles/custom/rules.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -191,6 +191,25 @@ void main() {
 
     expect(find.text(RuleAction.NOT.name), findsOne);
     expect(find.text(RuleAction.SUB_RULE.name), findsNothing);
+  });
+
+  testWidgets('a SUB-RULE kept from before cannot be saved as one', (
+    tester,
+  ) async {
+    final harness = _Harness();
+    await harness.pump(
+      tester,
+      initialRules: [Rule.parse('SUB-RULE,(NETWORK,tcp),streaming')],
+    );
+    await tester.tap(find.text(RuleAction.SUB_RULE.name));
+    await tester.pumpAndSettle();
+    await harness.save(tester);
+
+    expect(
+      find.text(currentAppLocalizations.invalidSubRule('streaming')),
+      findsWidgets,
+    );
+    expect(harness.rules.puts, isEmpty);
   });
 
   testWidgets('the rule set sheet lists the app rule sets in one list', (
