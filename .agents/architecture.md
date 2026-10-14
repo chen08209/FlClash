@@ -10,8 +10,15 @@ Android lib mode:
   classes gobind generates in `com.follow.clash.core.mobile`. The `:core` Gradle module builds it and takes in its
   classes and libraries (see Android Core Build).
 - The Android `:core` module owns the binding: `Core.kt` is the only caller of the generated `Mobile` class. Flutter
-  crosses the `${packageName}/service` MethodChannel through `lib/plugins/service.dart` and Android's `ServicePlugin`
-  rather than calling the Core directly.
+  crosses MethodChannels through `lib/plugins/service.dart` and Android's `ServicePlugin` rather than calling the Core
+  directly: `${packageName}/service` for lifecycle commands and Core events, `${packageName}/core` for Core method
+  calls.
+- Flutter runs the UI isolate on Android's main thread (3.47 merges the two and ignores the opt-out in release), so
+  main-thread work anywhere in the process, the Core's included, costs frames. Only sending to Dart needs that thread;
+  a `MethodChannel.Result` may be answered from any thread. `${packageName}/core` is handled on a serial background
+  task queue and answered from the Core's goroutine, an event batch is encoded on the Core's thread and only sent on
+  the main one, `ForceGC` (called from `onLowMemory`/`onTrimMemory`) collects on its own goroutine, and
+  `NetworkObserveModule` refreshes DNS on its own looper.
 - `lib/core/lib.dart` (`CoreLib`) implements the shared Core interface, gates method calls on its connection completer,
   initializes and synchronizes Android shared state, and closes the native service path exactly once.
 - Because Core is in the application process on Android, application RSS already includes Core memory.
@@ -151,7 +158,8 @@ or a remote party reaching the privileged Core's control or filesystem APIs is a
 
 A process running as the same account is not stopped. It can ask the Helper to start the Core
 against a socket or pipe it owns, or run a setuid Core against a port it listens on, and so become the host that drives
-a privileged Core: `initClash` chooses the home directory every path check anchors on, and `getConfig` reads any path.
+a privileged Core: `initClash` chooses the home directory every path check anchors on, and `getConfig`,
+`getProfileBase`, `getProfileOutbounds` and a `setupConfig` or `buildProfile` base read any path.
 The Core connects to whatever address it is given and cannot tell that host from FlClash. An account check cannot
 distinguish it from a same-account process that can already read FlClash's memory and files. This remains a user-to-root
 or user-to-SYSTEM privilege escalation, not a complete security fix. An open external
@@ -319,6 +327,20 @@ directions. The envelope is the only JSON serialization layer: keep arguments, r
 values rather than embedding pre-encoded JSON strings. Plain domain strings, such as country codes or provider contents,
 remain strings.
 
+A response over 1 MiB goes to a file under `<home>/responses/`, and the envelope carries only its `file`
+(`core/spill.go`). Sent inline, Android copies it into the Java heap three times (the gomobile `byte[]`, the codec and a
+direct buffer), and desktop IPC drops a frame above `maxIPCFrameSize`. `lib/core/spill.dart` reads a spilled file only
+from that directory, decodes it in an isolate and deletes it; `initClash` clears what an earlier run left.
+
+A profile file's proxies, groups and rules never cross the bridge. `getProfileBase` returns the config without
+`proxies`, `proxy-groups`, `sub-rules` and `rules`, with their counts, the profile's MATCH rules and a sha256 digest.
+`SetupAction.getProfile` patches it as before and sends the result as `SetupParams.base.overlay`. `core/profile_base.go`
+puts the profile's bulk sections into the overlay, appends the profile's rules after the overlay's, writes `config.yaml`
+for the Android service and the controller's reload, and parses it. `config.yaml` is encoded a slice at a time, because on a
+profile of 100k proxies and 2M rules one `Encode` call doubles the peak heap. The preview reads the YAML `buildProfile`
+merges into the spill directory, and the extend page only the names
+and types `getProfileOutbounds` lists; a script extension still needs the whole config from `getConfig`.
+
 Go event delivery is intentionally non-blocking:
 
 - Loaded-provider, geo-update, and route-changed events use a state queue that never evicts; the rules for it are under
@@ -346,9 +368,10 @@ Dialer-loop events come from the fork's `component/proxydialer/patch.go`. mihomo
 back to its own proxy until the stack overflows, so a dial that asks the same `dialer-proxy` for an address it is
 already dialing through it fails with `ErrDialerLoop`. `core/hooks.go` reports each looping name at most once every
 three seconds as a priority event, which the app shows as an error notice whether or not logs are captured. The custom
-profile pages flag only the loops FlClash can follow on its own, through a group's own list or an include-all that no
-filter narrows; what filters and providers pick, including provider proxies that carry their own `dialer-proxy`, is
-left to this guard.
+profile pages flag only the loops FlClash can follow on its own, through a group's own list; what filters and providers
+pick, including provider proxies that carry their own `dialer-proxy`, is left to this guard. Custom profiles drop
+`include-all`, `include-all-proxies` and `include-all-providers` on import and in a group's quick edit, since which
+proxies they take in is the core's to decide.
 
 Desktop RPC accepts both a single event object and batched event lists. Android and desktop listener dispatch isolate
 listener exceptions so one faulty observer does not prevent the remaining events/listeners from running.
@@ -376,8 +399,8 @@ holds the group; `delayTestPageGroup` marks it, ignores a second request for the
 so an RPC failure cannot leave the button spinning and remounting a header does not lose the state.
 
 The dashboard's probe cards show a failure as still checking for five seconds after they see `proxied` turn true,
-through `ProbeStartHold` in `lib/views/dashboard/probe_start_hold.dart`: `ServiceStatusCard` holds its check and the
-exit IP beside it, and `NetworkDetection` holds the exit IP, whose tap to retry stays inert meanwhile.
+through `ProbeStartHold` in `lib/views/dashboard/probe_start_hold.dart`: `ServiceStatusCard` holds the check on each
+tile, and `CurrentOutboundCard` holds the exit IP, whose refresh button stays inert meanwhile.
 `SetupAction.setRunning` flips the run time, and with it `proxied`, before the Core has brought its listeners up, so the
 probe launched on the spot often fails, and the config re-apply that follows every start probes again moments later;
 without the hold a card flashes a failure and then takes it back. The hold is local display state like the connecting
@@ -423,9 +446,33 @@ a new IP and an unchanged IP reuses the result. A lookup races its sources the w
 first one that determines a type. A success is kept for the session with `ref.keepAlive()`; a failure is not cached,
 and Riverpod's automatic retry is off because a retry after an HTTP 429 spends the same per-outbound-IP quota again.
 
+## UI Layer
+
+`lib/ui/` holds the components and design tokens that know nothing of the app: shapes, surfaces, motion, colors, the
+scaffold, sheets, popups, lists and the glyphs under `lib/ui/icons/`. `lib/widgets/` holds the components built from
+them that do: settings rows, subscription and profile pieces, anything that reads a provider or a model.
+`widgets/widgets.dart` re-exports `ui/ui.dart`, so app code imports either barrel.
+
+`test/lint/ui_layering_test.dart` walks the imports of every file under `lib/ui`. Nothing they reach may leave
+`lib/ui`, except `lib/common` files whose own imports stay out of the app, never the `common.dart` barrel, and none
+may import Riverpod. A component that needs app state reads what the app provides above its navigator:
+
+- `ViewScope` (`lib/ui/view_scope.dart`): the window size, whether the layout is mobile, and the window controls
+  over a page. `AppViewScope` in `lib/manager/theme_manager.dart` fills it from `viewSizeProvider`,
+  `isMobileViewProvider` and `versionProvider`. It is an `InheritedModel`, so a reader of one value does not rebuild
+  when another changes; `context.isMobileView` reads it without listening.
+- `MeasureScope` (`lib/ui/measure.dart`): the `Measure` that `ThemeManager` also assigns to `globalState.measure`.
+- `UiTextScale.factor` (`lib/ui/metrics.dart`): the app text scale behind `.ap` and `.mAp`. It is global because some
+  sizes built from it are top-level finals.
+- `UiLocalizations` (`lib/ui/l10n.dart`): the strings the components show themselves. `AppUiLocalizations.delegate`
+  in `lib/common/app_localizations.dart` serves them from the ARB strings; a new one needs a getter on both.
+
+A test that builds its own `MaterialApp` registers `AppUiLocalizations.delegate` and returns `wrapAppScopes` from
+`test/helpers/test_app.dart` in its builder, as `TestApp` does.
+
 ## Icons
 
-`lib/icons/` holds every icon the app shows. Nothing in `lib/` uses the Material icon font, and
+`lib/ui/icons/` holds every icon the app shows. Nothing in `lib/` uses the Material icon font, and
 `test/lint/material_icons_test.dart` fails on any `Icons.*` or `AnimatedIcons.*`, so every icon shares one stroke and
 can animate its shape.
 A `Glyph` is a list of shapes on a 24-unit grid, stroked at `Glyph.strokeWidth` with round caps and joins and
@@ -464,7 +511,7 @@ Framework widgets that draw their own icon take it from the theme: the `ActionIc
 supplies the back and close buttons, with `AppGlyphs.backFor` picking the platform's back glyph, and a `DropdownMenu`
 is given its chevrons. A framework widget added later that paints a Material icon needs the same treatment.
 
-Empty states draw no image assets either. `NullStatus` in `lib/widgets/null_status.dart` shows the glyph for its
+Empty states draw no image assets either. `NullStatus` in `lib/ui/null_status.dart` shows the glyph for its
 meaning filled on a Material 3 Expressive shape from `material_new_shapes`, with a few accent marks, and enters with
 one of three choreographies picked at random: the shape spins in, morphs out of a circle, or springs in while the
 accents orbit into place. The glyph takes `onPrimaryContainer`, not `primary`: the `content` scheme variant can leave
@@ -482,17 +529,106 @@ button while searching) when there is one, then foldable actions, primary action
 the icon actions ahead of it;
 everything else goes into one overflow menu, primary action first, and a folded action that is loading shows as a
 disabled item. The bar reads as one button group of two beside a single button: the overflow menu button when
-something folds, otherwise the last action, so the proxies list shows a search and delay test group beside the menu. `primaryAction` counts only where the bar holds it, in a bottom sheet and on a phone's home
-page, whose foot the navigation dock takes; elsewhere it is the page's floating action button. No page adds a
+something folds, otherwise the last action, so the proxies list shows a search and delay test group beside the menu. `primaryAction` counts wherever the bar holds it, which is everywhere but a phone's home page
+above the fixed navigation bar: `PrimaryActionInBarScope` lets only that page float it as a FAB. No page adds a
 floating action button of its own: a secondary action such as selecting every app goes into `menuItems`, and saving
 an edit page is a check among its `iconActions`. Actions on a multi-selection, such as delete and select all, go into
 `selectionActions` instead: the bar keeps them in sight as one button group that takes a single slot beside the search
-or clear button, so they never fold.
+or clear button, so they never fold. A sheet's close button leads its bar when the bar has actions, except beside a
+primary action: then the two end the bar as one button group, as the proxies sheet's delay test and close do.
 
 A bar under a sheet drops its actions and keeps its title and back or close button. `CommonScaffold` fades the actions
 out with the entrance of a sheet laid over its page, or over the sheet it is a page of, so none on the layer below
-reads as an action of the sheet on top; `sheetCoverOf` in `lib/widgets/sheet_navigator.dart` reads that entrance, which a sheet route hands
+reads as an action of the sheet on top; `sheetCoverOf` in `lib/ui/sheet_navigator.dart` reads that entrance, which a sheet route hands
 down through `SheetCoverRouteMixin`, as `SnapSheetRoute` and `ModalSideSheetRoute` do.
+
+## Liquid Glass
+
+`ThemeProps.liquidGlass` (off by default) reaches widgets as `LiquidGlassScope` from `ThemeManager`. With it on,
+`CommonScaffold` passes `glass` to the bar's `TonalButtonTheme`, which puts a `LiquidGlass` pane behind each button
+through `ButtonStyle.backgroundBuilder` and one behind a `TonalButtonGroup`; the navigation dock's bar and
+lifted lens become panes as well, and so do a sheet's docked search and the cards of a `CommonPopupMenu`. On the
+dashboard only the start button is a pane: its connected buttons and switches keep their fills, since a pane outside a
+shared group reads the backdrop again on every frame and the dashboard redraws often. Each still swells on its own under
+`ElasticPress`, and a `DashboardConnectedGroup` paints the button pressed last over the neighbours it swells past.
+`lib/ui/liquid_glass.dart` holds the rest:
+
+- A pane is a layer of its own that clips to its superellipse and pushes a `BackdropFilter` running
+  `shaders/liquid_glass.frag`. Panes in one `LiquidGlassGroup` (the bar, the dock) share one read of the backdrop and
+  must not overlap, which is why the lens reads its own.
+- The shader frosts the backdrop itself: it reads the engine's Gaussian, in device pixels, on a Vogel disc of 64
+  taps. Composed under a shader filter, the engine's blur gets no coverage and runs over the whole surface once per
+  pane, then copies that surface from its origin to the pane's far corner; a bar and a dock of five panes quadrupled
+  the GPU time of a scrolling frame. Glass thicker than `_maxShaderFrost` (the menu) would spread the taps too thin,
+  so the engine still blurs it, downsampled.
+- A pane is a rounded rectangle, each corner with its own radius, unless a `clipper` gives it a path, as the start
+  button's cookie does. The shader reads that path as its reach from the pane's center in 64 directions, so it must
+  meet every ray from the center once.
+- The engine hands a backdrop filter the whole surface it draws into, so the layer walks its ancestors each frame to
+  find itself on it (`LiquidGlassPlacement`), and takes back the sub-pixel shift Impeller gives its fragments
+  (flutter-upgrade.md). Under an ancestor that draws offscreen, such as a fading route, it filters a nested backdrop
+  instead, the subpass Impeller rounds out from its visible part. Both map the shader per device pixel from where
+  the texture they read starts, and count a rect clip where Impeller snaps it to pixels.
+- Without Impeller's shader filters (Skia on the Intel macOS build, `flutter test`) a pane frosts: blur, saturation,
+  tint, and a rim, with no refraction. `flutter test --enable-impeller` runs the shader, so `toImage` shows the real
+  glass.
+- A popup grows out of its anchor on a platter (`CommonPopupRoute`). On glass the platter is a `LiquidGlassPane`
+  easing from the button's `regular` glass to the thicker `menu` glass, and the menu's cards stand `bare` while it
+  shows, opening and returning, so one pane bends the backdrop at a time. The anchor's snapshot is taken under
+  `LiquidGlass.withoutPanes`: offscreen a pane has no backdrop and would come out a flat tint.
+- The optics bend with a circular bevel whose width and depth shrink to fit a small pane, so the rim shows the content
+  squeezed and mirrored. The materials are iOS 27's as codenameone/CodenameOne#5906 fitted them (`pill` for the dock,
+  `regular` for buttons): the backdrop passes through as `offset + scale * saturated backdrop`, the tint at
+  `1 - scale` carrying the offset; a dark line takes the outermost pixels because UIKit draws it just outside the
+  bounds, as faint all around as iOS draws it along the top and bottom, since the darker sides iOS draws read as
+  brackets on a pale page; a highlight lights only the top and bottom, fading over 1.3 dp. In dark mode the tint is
+  the scheme's `surfaceContainerHighest` at iOS's alpha: iOS's mid grey lifts a dark page into a grey haze. The tint
+  thickens over content much darker than it, or with a negative `contrast` much lighter.
+- The dock and its lens follow UIKit's tab bar as codenameone/CodenameOne#5906 measured it frame by frame: 86 dp a
+  destination, a resting lens 8 dp wider, a lift of 16 dp that magnifies what lies inside the lens by 16%, and springs
+  taken from the capture; the lens's stretch and squash are a fit to its deformation tables. The lift stays up until it
+  has risen fully and the lens has arrived, so a tap pops it all the way, and `ElasticPress` likewise finishes a tap's
+  swell on the bar's press spring before it bounces back. The destinations stand on the lifted lens, as iOS draws
+  them, so it bends only the bar. The lens is clear and casts no shadow; it reads from outside its rim at the top and
+  bottom only, less toward its ends, so the backdrop shows in crescents that taper into the rim; reading out all
+  around rings the rim with the backdrop and reads as a second layer. Its ends darken only right at the rim, since
+  iOS's flat 6 dp shade joins the crescents into a ring on pale glass. A press lights the bar through
+  `LiquidGlass.glow`: a wash over the whole pane, brightest at the finger, that spreads out as it fades. A `pressed`
+  pane, as a glass button's or a `TonalButtonGroup`'s is, hears the pointer on what it wraps and lights from the
+  finger the same way.
+
+## Popup Motion
+
+`CommonPopupRoute` follows WWDC25's account of iOS 26 menus: one that grows out of a control keeps the two continuous,
+so closing returns it into the control on the same platter, its content blurring out first. Apple documents only the
+opening; one opened at a point (a context menu) has no control to return into and shrinks toward the point to
+`_dismissScale` as it fades, as iOS context menus do.
+
+A sub menu is a `PopupMenuCard` laid out once at full size. One spring (`_unfold` in `lib/ui/popup.dart`) moves
+its surface and clip from the item that opened it to its bounds, recedes the parent, and reveals the items, so a fold
+caught mid-unfold turns back with the speed it had. The parent's item hides under the sub menu's header, which draws
+it again, and the sub menu is removed only once it stands on that item.
+
+A `CommonPopupBox` opens on its button's pointer down, as an iOS menu that is a button's primary action does, and the
+press carries on into the menu. `_PopupPressRecognizer` claims the pointer then, so the button's own tap and its
+tooltip's long press stand down. In a scroll view, as the settings rows are, it first waits `kPressTimeout`, as iOS
+scroll views hold back a touch, so a drag from the button scrolls and a quicker tap opens the popup on its release. The
+pointer's moves and release keep reaching the button, so the box hands them on (`_CarriedPress`) and lets go of the
+`ElasticPress` around it. The menu follows them only once they leave the slop, since it covers the button and a press
+let go where it went down would pick what now lies under it, and drives its own `ElasticPress` with them through
+`ElasticPress.maybeOf`. The box tells a disabled button by the `onTap` of its first `InkResponse`, and holds the popup's
+`anchorShift`, since it opens before the button's `onPressed` would run.
+
+The menu stands in an `ElasticPress` of its own with `pullPastEdges`: it swells under a press and stretches only toward
+a finger that strays past it, so sliding over the items or scrolling leaves it in place. A press on a row belongs to the
+menu rather than the row's `InkWell`, which keeps only hover, focus, and keys: `_RowPressRecognizer` highlights the row
+under the finger as it slides, hit testing where the menu paints (`ElasticPress.paintBoundsOf`), with a selection click
+on each change, and picks the one it is let go on, or none off the rows. It claims the pointer only on release, so a
+menu long enough to scroll takes a drag first and drops the press. A press that rests for `_dwellDuration` on an item
+with a sub menu opens it, and one that rests on an open sub menu's header folds it back, each with a click as the
+highlight moves; the finger then stands on the header or on the item it folded into, and letting go there changes
+nothing. A tap that opens or folds a sub menu clicks no more than a tap on any item does, as iOS menus give selection
+feedback only to a sliding press.
 
 ## Row Actions And Sort Mode
 
@@ -536,7 +672,7 @@ few keys of a `tun` section the network settings own, so its spec does not mix i
 ## Where A Route Opens
 
 On desktop each navigation destination has its own `Navigator` (`_NavigationPage` in `lib/pages/home.dart`); on mobile
-there is none, and everything goes on the root navigator, `rootNavigatorKey` in `lib/common/navigator.dart`. A route
+there is none, and everything goes on the root navigator, `rootNavigatorKey` in `lib/ui/navigator.dart`. A route
 takes the navigator of the context it opens from: `BaseNavigator.push`, `showExtend`, `showSheet` and `showSnapSheet`
 all do, so a page or sheet opened from a destination stays beside the navigation rail, leaves the rail usable, and
 stays in that destination's stack when the user switches away and back. `sheetNavigatorOf` lifts a sheet out of a
@@ -570,14 +706,24 @@ rebuilds one row instead of the whole section. Titles and subtitles are `ConfigL
 
 Build settings screens from these directly, or from a file-local helper that binds one provider once — see `_networkToggle`
 in `lib/views/config/network.dart` and `_appSettingToggle` in `lib/views/config/general.dart`. Declare a named
-`ConsumerWidget` only when a row is genuinely reused across screens, as `lib/views/config/network.dart` rows are by
-`lib/views/dashboard/widgets/quick_options.dart`. Rows with bespoke behaviour — a custom dialog, a derived value, or a
+`ConsumerWidget` only when a row is genuinely reused across screens. Rows with bespoke behaviour — a custom dialog, a derived value, or a
 second provider write — stay hand-written rather than growing extra parameters on the shared items.
 
-In an inset grouped list (`generateSectionV3`, `generateAnimatedSection`), a row's subtitle shows its value or state,
+In an inset grouped list (`generateSection`, `generateAnimatedSection`), a row's subtitle shows its value or state,
 never what the setting does. As iOS settings do, the explanation goes in the group's `footer`, drawn by `ListFooter`,
-one sentence per setting that names it, and a section header carries only its title. Flat `generateSection` lists keep
-their descriptions on the row.
+one sentence per setting that names it, and a section header carries only its title. `generateSection` is the only
+section builder, and a sheet lays its groups inside the 16 dp inset the pages use.
+
+A row that opens a page, `ListItem.open` or `ListItem.next`, ends in `AppGlyphs.chevronForward` unless it passes its own
+`trailing`, as iOS settings rows do. A row that opens a dialog in place, `ListItem.input`, has no chevron. A setting
+that takes one of a few values is an iOS pop-up row, `ListItem.options` or `ConfigOptionsItem`: it ends in its value and
+`AppGlyphs.picker`, and a tap anywhere on it opens a `CommonPopupMenu` out of that value with the current option
+checked. Its items are text alone, as an iOS picker's are; glyphs belong to menus of actions. One value is never picked
+from a radio dialog or a row of selectable chips; a button that picks one, as the theme's scheme variant does, opens the
+same menu through a `CommonPopupBox`. A pick from a menu that returns into its control runs only once the popup has
+landed, so a setting that rebuilds the app, such as the language, never does so under the returning platter; the
+control shows its value with `PopupValueText`, which blurs across to the new value while the control eases to its
+width. A menu opened at a point, as a context menu or the editor's is, runs its pick at once.
 
 ## Keyboard Insets
 
@@ -587,7 +733,7 @@ which runs every one of those rebuilds inside the layout phase; in a profile tra
 `BUILD`.
 
 - A page the user is not typing in holds its bottom inset through `KeyboardInsetHold`
-  (`lib/widgets/keyboard_inset_hold.dart`). Pages under another route and inactive tabs are still laid out, offstage or
+  (`lib/ui/keyboard_inset_hold.dart`). Pages under another route and inactive tabs are still laid out, offstage or
   not, and without it every page the app keeps relaid out, and rebuilt under its `LayoutBuilder`s, with each frame of a
   keyboard raised by a dialog or sheet on top. The home route, each home tab, `CommonRoute`, `CommonDesktopRoute` and
   the open-container route wrap their page in one; a new page route type does the same.
@@ -607,8 +753,8 @@ A pushed page is built, laid out and painted through every frame of its transiti
 raster cache, and every offscreen pass is paid again each frame on a phone GPU.
 
 - Work a widget would start as it mounts waits for the route to settle. `RouteSettledMixin`
-  (`lib/widgets/route_motion_hold.dart`) calls `didSettleRoute` once the route that brought the page in has arrived,
-  and at once on a page that already sits still; `whenRouteSettled` (`lib/common/navigator.dart`) does the same for a
+  (`lib/ui/route_motion_hold.dart`) calls `didSettleRoute` once the route that brought the page in has arrived,
+  and at once on a page that already sits still; `whenRouteSettled` (`lib/ui/navigator.dart`) does the same for a
   one-off future, and both wait out the frame a `HeroController` builds a pushed route offstage with its animation
   pinned to completed. `CommonTargetIcon` and `PackageIcon` show what is already in memory at once and load the rest
   after that. An icon still loading leaves a blank slot of its size and shows its fallback only once the load ends
@@ -628,7 +774,7 @@ raster cache, and every offscreen pass is paid again each frame on a phone GPU.
 - `GlyphPainter` paints a translucent glyph through an offscreen layer. A placeholder repeated in every tile blends its
   color over the surface instead of carrying an alpha.
 - `PagedSheetRoute` and `CommonRoute` share
-  `SharedXPageTransition` (`lib/widgets/page_transition.dart`) and its `pageSlide`, a quarter of the page's width as
+  `SharedXPageTransition` (`lib/ui/page_transition.dart`) and its `pageSlide`, a quarter of the page's width as
   Android 14 slides pages, so a page moves alike in a sheet and on its own. The transition fades a page by painting the surface over it
   and needs no opacity layer: the page on top shows only on its side of the point where the two fades cross, opaque
   over the other, so neither shows through the other. A page below that does not fade with it, such as the home
@@ -690,15 +836,17 @@ itself live in one. Code without a `Ref` reaches providers through
 path that never validates never resolves the controller.
 
 The UI layer must not reach a process-wide singleton directly.
-`test/lint/ui_layer_singleton_test.dart` scans `lib/views`, `lib/widgets`,
+`test/lint/ui_layer_singleton_test.dart` scans `lib/ui`, `lib/views`, `lib/widgets`,
 `lib/pages` and `lib/features` for `globalState.container` and the bare
 `coreController` global and fails the run on either. Widgets that need Core hold
 `CoreController get _core => ref.read(coreHandlerProvider)`.
 
 `globalState.measure` and `globalState.theme` stay global on purpose. Both are
 context-derived caches assigned by `ThemeManager`, and tests already scope them by
-assigning in the app builder (see `test/helpers/test_app.dart`); moving them into
-providers would touch every layout call site without changing behaviour.
+assigning in the app builder (see `wrapAppScopes` in `test/helpers/test_app.dart`);
+moving them into providers would touch every layout call site without changing
+behaviour. `lib/ui` cannot read `globalState`, so it takes the same `Measure` from
+`MeasureScope`; see UI Layer.
 
 `globalState` in `lib/state.dart` is a singleton holding ambient app state — the
 package info, the measure and theme, the container, and the start/stop flags —
@@ -707,7 +855,7 @@ plus `safeRun`/`loadingRun`. Startup orchestration is **not** on it: `init` and
 window, the autostart entry, the tray and the permission prompts. Providers are
 generated into `lib/providers/generated/`.
 
-The root navigator key lives in `lib/common/navigator.dart` as `rootNavigatorKey`;
+The root navigator key lives in `lib/ui/navigator.dart` as `rootNavigatorKey`;
 `globalState.navigatorKey` is a getter onto it. `lib/common/dialog.dart` reaches
 the key directly and does not import `lib/state.dart`.
 
@@ -736,8 +884,8 @@ The shapes that keep the closure small:
 - `KeyboardModifier.toHotKeyModifier()` lives in
   `lib/manager/hotkey_manager.dart`, its only consumer, not in `lib/enum/enum.dart`.
 - Startup orchestration lives in `lib/bootstrap.dart`, not on `GlobalState`.
-  `common/num.dart`, `common/print.dart` and `common/request.dart` import
-  `state.dart` for `theme`, `container` and `packageInfo`/`ua`, so anything
+  `common/print.dart` and `common/request.dart` import `state.dart` for
+  `container` and `packageInfo`/`ua`, so anything
   `GlobalState` reaches lands in the barrel's closure; the ambient state it
   holds reaches nothing platform-specific.
 - `SystemAction` talks to `WindowPort` and `TrayPort` from
@@ -755,9 +903,8 @@ The shapes that keep the closure small:
   `providers/state/navigation.dart` reads through and `bootstrap.init` binds;
   unbound it yields no items, so a test that renders navigation assigns
   `navigationPort` itself, as `test/pages/home_test.dart` does. `DashboardWidget`
-  is plain data, since it is persisted in the app settings; the widget mapping
-  lives in `lib/views/dashboard/widget_registry.dart`, the reverse lookup relying
-  on the branches returning canonical consts.
+  is plain data, since it is persisted in the app settings; the card mapping
+  lives in `lib/views/dashboard/widget_registry.dart`.
 
 `test/lint/platform_layering_test.dart` also pins that the barrel's closure
 contains no `lib/views` file. Data the provider layer needs from the UI layer

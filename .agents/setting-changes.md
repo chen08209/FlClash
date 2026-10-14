@@ -64,9 +64,10 @@ Profile content does not go through `setupPatchProvider`. `setupStateProvider` r
 database once instead of watching them. Content is applied explicitly by whatever changes it:
 
 - Profile editors call `autoApplyProfile` when they close.
-- Subscription updates, `setProfileAndAutoApply`, scripts and app-level providers call `applyProfileDebounce`.
+- Subscription updates, scripts and app-level providers call `applyProfileDebounce`.
 - A profile switch runs `fullSetup`.
-- A start applies again with `force`.
+- A start applies again with `force` unless the last apply saw the same inputs (`_inputsApplied`), the `testUrl` and
+  `skipCertVerify` that only `SetupParams` carries included.
 
 ## Restart
 

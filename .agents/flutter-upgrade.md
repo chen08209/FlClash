@@ -91,3 +91,34 @@ listed in the SDK's `CHANGELOG.md`.
 - **Remove when:** the Linux engine reports minimized windows on Wayland, which needs GTK 4 or xdg-shell's
   `suspended` state. Check in a GNOME Wayland session without the workaround: minimizing from the caption button
   must log `AppLifecycleState.hidden`.
+
+## Liquid glass binds a stand-in to the input sampler
+
+- **Bug:** [flutter/flutter#188365](https://github.com/flutter/flutter/issues/188365). 3.47 offers no way to ask for
+  more than nearest-neighbor sampling of an `ImageFilter.shader`'s input, so refraction, which samples off the pixel
+  grid, stair-steps, and the frost's taps alias.
+- **Fix upstream:** [flutter/flutter#188544](https://github.com/flutter/flutter/pull/188544) adds
+  `ImageFilter.shader(shader, filterQuality: ...)`, merged on `main` on 2026-07-30, after the 3.47 branch. From then on
+  sampler 0 is always the filter input and an image set on it is ignored.
+- **Workaround:** `_GlassProgram` loads a blank image with the program, and `_bendFilter` sets it on sampler 0 with
+  `FilterQuality.low`. 3.47's `impeller/display_list/image_filter.cc` keeps that sampler's descriptor and only swaps in
+  the input texture, so the shader's `texture()` reads are linear.
+- **Remove when:** `FLUTTER_VERSION` moves to a stable whose `ImageFilter.shader` takes `filterQuality`. Pass
+  `FilterQuality.low` there, drop `linearInput`, and compare the lifted dock lens over its labels before and after: a
+  stand-in the engine ignores leaves the lens rim stair-stepped and the frost grainy.
+
+## Liquid glass takes back a sub-pixel shift of its fragments
+
+- **Bug:** not filed upstream. On 3.47, `Canvas::SaveLayer` in `impeller/display_list/canvas.cc` rounds a backdrop
+  filter's subpass out to whole pixels but draws the filtered backdrop at the unrounded `local_position`, so an
+  `ImageFilter.shader` reads `FlutterFragCoord()` shifted on by the fraction of a pixel its coverage starts past one,
+  on each axis, while the clip stays put. A pane at a fractional position, as the dock is while it swells and the
+  lens nearly always is, drew its rim up to a pixel off its clip: the dark line came out thin on one side and thick
+  on the other.
+- **Workaround:** `_LiquidGlassLayer._frame` adds that fraction to the frame's origin, in the window's pass and in the
+  nested subpass a pane under an offscreen ancestor reads. `LiquidGlassPlacement` snaps a rect clip as
+  `EntityPassClipStack` does, since the coverage it leaves decides the fraction.
+- **Remove when:** a probe that makes the shader write `fract(point.x)` and `floor(point.x)` into its color, over panes
+  at fractional device offsets, clipped by a fractional `ClipRect` and under an `Opacity` of 254/255 on a black
+  backdrop (so the blend leaves the high byte exact), under `flutter test --enable-impeller`, reads each pane's own
+  edge as the origin without the added fraction.
