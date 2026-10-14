@@ -545,7 +545,6 @@ paged sheet's own `SheetPagesNavigator`, never past the destination.
 The root navigator is only for what belongs to no single destination:
 
 - dialogs, which `dialogs` in `lib/common/dialog.dart` hosts on the root unless it is given a context, and the notifier;
-- a gate in front of the whole app, such as `requestDisclaimerConsent`;
 - work that starts with no page behind it: a deep link, the tray, a hotkey, the update check.
 
 Never reach for the root to open a page or sheet from a page, whether through `rootNavigatorKey`,
@@ -559,6 +558,9 @@ does.
 The mistake only shows in the desktop layout, and `TestApp` has nothing but the root navigator. A test that guards
 where a route opens hosts the page in a nested `Navigator`, as the desktop case of a new custom profile in
 `test/features/profile_views_test.dart` does.
+
+The disclaimer is a read-only page opened only from the tools page. Startup never opens it, and no flow requires
+disclaimer consent or text input to continue.
 
 ## Settings Rows
 

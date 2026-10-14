@@ -5,26 +5,31 @@ import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/status_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/disclaimer.dart';
+import 'package:fl_clash/views/tools.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
+import '../helpers/test_profiles.dart';
 
 Future<ProviderContainer> _pumpHost(
   WidgetTester tester, {
   Widget Function(Widget child)? homeBuilder,
   Size size = const Size(1000, 800),
+  ProviderContainer? providerContainer,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 
-  final container = ProviderContainer();
+  final container = providerContainer ?? ProviderContainer();
   addTearDown(container.dispose);
   globalState.container = container;
   container.read(viewSizeProvider.notifier).update((_) => size);
@@ -42,46 +47,29 @@ Future<ProviderContainer> _pumpHost(
   return container;
 }
 
-FilledButton _disclaimerAgreeButton(WidgetTester tester) {
-  return tester.widget<FilledButton>(
-    find.descendant(
-      of: find.byType(DisclaimerView),
-      matching: find.byType(FilledButton),
-    ),
-  );
-}
-
-Future<void> _scrollDisclaimerTo(WidgetTester tester, Offset offset) async {
-  await tester.drag(
-    find
-        .descendant(
-          of: find.byType(DisclaimerView),
-          matching: find.byType(Scrollable),
-        )
-        .first,
-    offset,
-  );
-  await tester.pumpAndSettle();
-}
-
-String _noServiceStatement(WidgetTester tester) {
-  return tester
-      .element(find.byType(DisclaimerView))
-      .appLocalizations
-      .disclaimerNoServiceStatement;
-}
-
-TextButton _restateConfirmButton(WidgetTester tester) {
-  return tester.widget<TextButton>(find.widgetWithText(TextButton, 'Confirm'));
-}
-
-Future<void> _agreeAndRestate(WidgetTester tester) async {
-  await tester.tap(find.text('Agree'));
-  await tester.pumpAndSettle();
-  await tester.enterText(find.byType(TextField), _noServiceStatement(tester));
-  await tester.pump();
-  await tester.tap(find.text('Confirm'));
-  await tester.pumpAndSettle();
+void _expectReadOnlyDisclaimer() {
+  final view = find.byType(DisclaimerView);
+  for (final type in [
+    TextField,
+    TextFormField,
+    EditableText,
+    FilledButton,
+    OutlinedButton,
+  ]) {
+    expect(
+      find.descendant(of: view, matching: find.byType(type)),
+      findsNothing,
+    );
+  }
+  for (final label in [
+    'Agree',
+    'Exit',
+    'Confirm',
+    'Read to the end',
+    'Restate the statement',
+  ]) {
+    expect(find.text(label), findsNothing);
+  }
 }
 
 /// The real manager stack mounts [StatusManager] above the app navigator, so
@@ -279,226 +267,110 @@ void main() {
     expect(find.text('profile-a'), findsNothing);
   });
 
-  testWidgets(
-    'requestDisclaimerConsent maps agree, exit, and back to a boolean',
-    (tester) async {
-      await _pumpHost(tester);
+  for (final (label, size, nested) in const [
+    ('desktop nested navigator', Size(1000, 800), true),
+    ('mobile', Size(400, 800), false),
+  ]) {
+    testWidgets('tools disclaimer is read-only on $label', (tester) async {
+      final tabNavigator = GlobalKey<NavigatorState>();
+      final container = ProviderContainer(
+        overrides: [profilesProvider.overrideWith(TestProfiles.new)],
+      );
+      final settingsChanges = <AppSettingProps>[];
+      final settingsSubscription = container.listen(
+        appSettingProvider,
+        (_, next) => settingsChanges.add(next),
+      );
+      final settings = container.read(appSettingProvider);
 
-      final agreed = requestDisclaimerConsent();
+      await _pumpHost(
+        tester,
+        size: size,
+        providerContainer: container,
+        homeBuilder: (_) => nested
+            ? Navigator(
+                key: tabNavigator,
+                pages: const [MaterialPage(child: ToolsView())],
+                onDidRemovePage: (_) {},
+              )
+            : const ToolsView(),
+      );
+      addTearDown(settingsSubscription.close);
       await tester.pumpAndSettle();
-      expect(find.text('Data collection and privacy'), findsOneWidget);
-      await _scrollDisclaimerTo(tester, const Offset(0, -100000));
-      await _agreeAndRestate(tester);
-      expect(await agreed, isTrue);
 
-      final declined = requestDisclaimerConsent();
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Exit'));
-      await tester.pumpAndSettle();
-      expect(await declined, isFalse);
-
-      final dismissed = requestDisclaimerConsent();
-      await tester.pumpAndSettle();
-      rootNavigatorKey.currentState!.pop();
-      await tester.pumpAndSettle();
-      expect(await dismissed, isFalse);
-    },
-  );
-
-  testWidgets('disclaimer agree unlocks only once the terms reach the end', (
-    tester,
-  ) async {
-    await _pumpHost(tester);
-
-    final agreed = requestDisclaimerConsent();
-    await tester.pumpAndSettle();
-    expect(find.text('Read to the end'), findsOneWidget);
-    expect(_disclaimerAgreeButton(tester).onPressed, isNull);
-
-    await _scrollDisclaimerTo(tester, const Offset(0, -300));
-    expect(_disclaimerAgreeButton(tester).onPressed, isNull);
-
-    await _scrollDisclaimerTo(tester, const Offset(0, -100000));
-    await _scrollDisclaimerTo(tester, const Offset(0, 100000));
-    expect(_disclaimerAgreeButton(tester).onPressed, isNotNull);
-    expect(find.text('Read to the end'), findsNothing);
-
-    await _agreeAndRestate(tester);
-    expect(await agreed, isTrue);
-  });
-
-  testWidgets('disclaimer consent on mobile labels the locked button', (
-    tester,
-  ) async {
-    await _pumpHost(tester, size: const Size(400, 800));
-
-    final agreed = requestDisclaimerConsent();
-    await tester.pumpAndSettle();
-    expect(find.text('Agree'), findsNothing);
-    expect(
-      find.descendant(
-        of: find.byType(FilledButton),
-        matching: find.text('Read to the end'),
-      ),
-      findsOneWidget,
-    );
-
-    await _scrollDisclaimerTo(tester, const Offset(0, -100000));
-    await _agreeAndRestate(tester);
-    expect(await agreed, isTrue);
-  });
-
-  testWidgets(
-    'disclaimer consent on desktop keeps the title clear of the window corner',
-    (tester) async {
-      await _pumpHost(tester);
-
-      final agreed = requestDisclaimerConsent();
+      final localizations = tester
+          .element(find.byType(ToolsView))
+          .appLocalizations;
+      expect(find.byType(DisclaimerView), findsNothing);
+      final entry = find.text(localizations.disclaimer);
+      await tester.scrollUntilVisible(
+        entry,
+        500,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(entry);
       await tester.pumpAndSettle();
 
       final view = find.byType(DisclaimerView);
-      expect(
-        find.descendant(of: view, matching: find.byType(AppBar)),
-        findsNothing,
-        reason:
-            'the macOS traffic lights sit over the top-left corner, where an '
-            'app bar puts its back button, and backing out declines anyway',
-      );
-      expect(
-        tester
-            .getTopLeft(
-              find.descendant(of: view, matching: find.text('Disclaimer')),
-            )
-            .dy,
-        greaterThanOrEqualTo(macOSTrafficLightsArea.height),
-      );
-      expect(
-        find.descendant(
-          of: find.byType(FilledButton),
-          matching: find.text('Agree'),
-        ),
-        findsOneWidget,
-      );
+      expect(view, findsOneWidget);
+      if (nested) {
+        expect(
+          find.descendant(of: find.byKey(tabNavigator), matching: view),
+          findsOneWidget,
+        );
+        expect(tabNavigator.currentState!.canPop(), isTrue);
+        expect(globalState.navigatorKey.currentState!.canPop(), isFalse);
+      } else {
+        expect(globalState.navigatorKey.currentState!.canPop(), isTrue);
+      }
+      _expectReadOnlyDisclaimer();
+      final scrollable = find
+          .descendant(of: view, matching: find.byType(Scrollable))
+          .first;
+      final position = tester.state<ScrollableState>(scrollable).position;
+      expect(position.pixels, 0);
+      expect(position.extentAfter, greaterThan(0));
+      expect(find.text(localizations.disclaimerDesc), findsOneWidget);
 
-      await tester.tap(find.text('Exit'));
+      final dismiss = find.byTooltip(localizations.back);
+      await tester.tap(dismiss);
       await tester.pumpAndSettle();
-      expect(await agreed, isFalse);
-    },
-  );
+      expect(view, findsNothing);
+      expect(find.byType(ToolsView), findsOneWidget);
+      if (nested) {
+        expect(tabNavigator.currentState!.canPop(), isFalse);
+      }
+      expect(globalState.navigatorKey.currentState!.canPop(), isFalse);
+      expect(container.read(appSettingProvider), settings);
+      expect(settingsChanges, isEmpty);
 
-  testWidgets('disclaimer agree is unlocked when the terms fit on screen', (
-    tester,
-  ) async {
-    await _pumpHost(tester);
-    tester.view.physicalSize = const Size(1000, 20000);
+      await tester.tap(entry);
+      await tester.pumpAndSettle();
+      final reopenedPosition = tester
+          .state<ScrollableState>(scrollable)
+          .position;
+      while (reopenedPosition.extentAfter > 0) {
+        await tester.drag(scrollable, Offset(0, -size.height));
+        await tester.pumpAndSettle();
+      }
+      expect(reopenedPosition.pixels, greaterThan(0));
+      expect(reopenedPosition.extentAfter, 0);
+      _expectReadOnlyDisclaimer();
 
-    final agreed = requestDisclaimerConsent();
-    await tester.pumpAndSettle();
-    expect(_disclaimerAgreeButton(tester).onPressed, isNotNull);
-
-    await _agreeAndRestate(tester);
-    expect(await agreed, isTrue);
-  });
-
-  testWidgets('disclaimer agree waits for the statement to be restated', (
-    tester,
-  ) async {
-    await _pumpHost(tester);
-
-    final agreed = requestDisclaimerConsent();
-    await tester.pumpAndSettle();
-    await _scrollDisclaimerTo(tester, const Offset(0, -100000));
-    await tester.tap(find.text('Agree'));
-    await tester.pumpAndSettle();
-    expect(find.text('Restate the statement'), findsOneWidget);
-    expect(_restateConfirmButton(tester).onPressed, isNull);
-
-    final field = find.byType(TextField);
-    await tester.enterText(field, 'The Software itself');
-    await tester.pump();
-    expect(find.text('Does not match the statement'), findsNothing);
-    expect(_restateConfirmButton(tester).onPressed, isNull);
-
-    await tester.enterText(field, 'The Software itself provides');
-    await tester.pump();
-    expect(find.text('Does not match the statement'), findsOneWidget);
-
-    await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
-    expect(find.text('Restate the statement'), findsNothing);
-    expect(find.byType(DisclaimerView), findsOneWidget);
-
-    await tester.tap(find.text('Agree'));
-    await tester.pumpAndSettle();
-    expect(tester.widget<TextField>(field).controller!.text, isEmpty);
-    await tester.enterText(field, '${_noServiceStatement(tester)}\n');
-    await tester.pump();
-    expect(_restateConfirmButton(tester).onPressed, isNotNull);
-    await tester.tap(find.text('Confirm'));
-    await tester.pumpAndSettle();
-    expect(await agreed, isTrue);
-  });
-
-  testWidgets('restating keeps the statement selectable without a shortcut', (
-    tester,
-  ) async {
-    await _pumpHost(tester);
-
-    final agreed = requestDisclaimerConsent();
-    await tester.pumpAndSettle();
-    await _scrollDisclaimerTo(tester, const Offset(0, -100000));
-    await tester.tap(find.text('Agree'));
-    await tester.pumpAndSettle();
-
-    final statement = _noServiceStatement(tester);
-    expect(
-      find.byWidgetPredicate(
-        (widget) => widget is SelectableText && widget.data == statement,
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: find.byType(AlertDialog),
-        matching: find.byType(IconButton),
-      ),
-      findsNothing,
-    );
-    final field = find.byType(TextField);
-    expect(tester.widget<TextField>(field).controller!.text, isEmpty);
-
-    await tester.showKeyboard(field);
-    tester.testTextInput.updateEditingValue(
-      const TextEditingValue(
-        text: 'The Softwarexy',
-        composing: TextRange(start: 12, end: 14),
-      ),
-    );
-    await tester.pump();
-    expect(find.text('Does not match the statement'), findsNothing);
-
-    tester.testTextInput.updateEditingValue(
-      const TextEditingValue(text: 'The Softwarexy'),
-    );
-    await tester.pump();
-    expect(find.text('Does not match the statement'), findsOneWidget);
-
-    await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Exit'));
-    await tester.pumpAndSettle();
-    expect(await agreed, isFalse);
-  });
-
-  testWidgets('DisclaimerView without consent shows no agree or exit', (
-    tester,
-  ) async {
-    await _pumpHost(tester, homeBuilder: (_) => const DisclaimerView());
-
-    expect(find.text('Disclaimer'), findsWidgets);
-    expect(find.text('Agree'), findsNothing);
-    expect(find.text('Exit'), findsNothing);
-  });
+      await tester.tap(dismiss);
+      await tester.pumpAndSettle();
+      expect(view, findsNothing);
+      expect(find.byType(ToolsView), findsOneWidget);
+      if (nested) {
+        expect(tabNavigator.currentState!.canPop(), isFalse);
+      }
+      expect(globalState.navigatorKey.currentState!.canPop(), isFalse);
+      expect(container.read(appSettingProvider), settings);
+      expect(settingsChanges, isEmpty);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
 
   testWidgets('showNotifier delivers text through the StatusManager host', (
     tester,

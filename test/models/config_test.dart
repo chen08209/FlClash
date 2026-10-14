@@ -162,11 +162,6 @@ void main() {
       ]);
     });
 
-    test('consent saved before the disclaimer was versioned asks again', () {
-      final restored = AppSettingProps.fromJson({'disclaimerAccepted': true});
-      expect(restored.acceptedDisclaimerVersion, lessThan(disclaimerVersion));
-    });
-
     test('every dashboard widget survives round-trip', () {
       const props = AppSettingProps(dashboardWidgets: DashboardWidget.values);
       final restored = roundTrip(props.toJson, AppSettingProps.fromJson);
@@ -777,7 +772,7 @@ void main() {
     test('fromJson keeps everything but the values it cannot read', () {
       final json = <String, Object?>{
         'currentProfileId': 'one',
-        'appSettingProps': {'locale': 1, 'acceptedDisclaimerVersion': 3},
+        'appSettingProps': {'locale': 1, 'hideIp': true},
         'vpnProps': {
           'ipv6': 'yes',
           'accessControlProps': {
@@ -801,7 +796,7 @@ void main() {
       final config = Config.fromJson(json);
       expect(config.currentProfileId, isNull);
       expect(config.appSettingProps.locale, isNull);
-      expect(config.appSettingProps.acceptedDisclaimerVersion, 3);
+      expect(config.appSettingProps.hideIp, true);
       expect(config.vpnProps.ipv6, false);
       expect(config.vpnProps.accessControlProps.enable, true);
       expect(

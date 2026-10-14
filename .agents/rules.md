@@ -261,8 +261,8 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   `handledExitAt` so the same exit cannot be counted twice.
 - `BootGuard` is an Android-only mechanism and gates itself: on every other platform `evaluate`, `markRunning` and
   `markClosed` return without touching preferences. The desktop has neither of the two attribution sources — no
-  `ApplicationExitInfo` equivalent and no Crashlytics toggle — so a bare sentinel there would read a window closed on
-  the disclaimer dialog, or a session ended by shutdown, as a failed launch. Keep the platform check inside the guard;
+  `ApplicationExitInfo` equivalent and no Crashlytics toggle — so a bare sentinel there would read an interrupted
+  initialization, or a session ended by shutdown, as a failed launch. Keep the platform check inside the guard;
   callers in `bootstrap.dart` and `SystemAction` stay unconditional.
 - `FirebaseCrashlytics.didCrashOnPreviousExecution()` corroborates a failure and must not trigger one. Its marker file is
   cleared by a background initialization that `dataCollectionArbiter` blocks while collection is disabled, which is the
