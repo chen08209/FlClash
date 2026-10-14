@@ -365,9 +365,24 @@ class AppLocalizations {
     return Intl.message('English', name: 'en', desc: '', args: []);
   }
 
+  /// `Spanish`
+  String get es {
+    return Intl.message('Spanish', name: 'es', desc: '', args: []);
+  }
+
+  /// `French`
+  String get fr {
+    return Intl.message('French', name: 'fr', desc: '', args: []);
+  }
+
   /// `Japanese`
   String get ja {
     return Intl.message('Japanese', name: 'ja', desc: '', args: []);
+  }
+
+  /// `Korean`
+  String get ko {
+    return Intl.message('Korean', name: 'ko', desc: '', args: []);
   }
 
   /// `Russian`
@@ -7729,7 +7744,10 @@ class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
   List<Locale> get supportedLocales {
     return const <Locale>[
       Locale.fromSubtags(languageCode: 'en'),
+      Locale.fromSubtags(languageCode: 'es'),
+      Locale.fromSubtags(languageCode: 'fr'),
       Locale.fromSubtags(languageCode: 'ja'),
+      Locale.fromSubtags(languageCode: 'ko'),
       Locale.fromSubtags(languageCode: 'ru'),
       Locale.fromSubtags(languageCode: 'zh', countryCode: 'CN'),
     ];

@@ -642,6 +642,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "entries": MessageLookupByLibrary.simpleMessage(" 件"),
     "error": MessageLookupByLibrary.simpleMessage("エラー"),
     "errorDetails": MessageLookupByLibrary.simpleMessage("エラーの詳細"),
+    "es": MessageLookupByLibrary.simpleMessage("スペイン語"),
     "exclude": MessageLookupByLibrary.simpleMessage("最近のタスクから隠す"),
     "excludeFilter": MessageLookupByLibrary.simpleMessage("除外フィルター"),
     "excludeInterface": MessageLookupByLibrary.simpleMessage("除外インターフェース"),
@@ -712,6 +713,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "forceRestartCoreTip": MessageLookupByLibrary.simpleMessage(
       "コアを強制再起動してもよろしいですか？",
     ),
+    "fr": MessageLookupByLibrary.simpleMessage("フランス語"),
     "fruitSaladScheme": MessageLookupByLibrary.simpleMessage("フルーツサラダ"),
     "general": MessageLookupByLibrary.simpleMessage("一般"),
     "geoResources": MessageLookupByLibrary.simpleMessage("Geo"),
@@ -901,6 +903,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "TCPキープアライブ間隔",
     ),
     "key": MessageLookupByLibrary.simpleMessage("キー"),
+    "ko": MessageLookupByLibrary.simpleMessage("韓国語"),
     "label": MessageLookupByLibrary.simpleMessage("ラベル"),
     "language": MessageLookupByLibrary.simpleMessage("言語"),
     "large": MessageLookupByLibrary.simpleMessage("大"),

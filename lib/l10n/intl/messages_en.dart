@@ -757,6 +757,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "entries": MessageLookupByLibrary.simpleMessage(" entries"),
     "error": MessageLookupByLibrary.simpleMessage("Error"),
     "errorDetails": MessageLookupByLibrary.simpleMessage("Error details"),
+    "es": MessageLookupByLibrary.simpleMessage("Spanish"),
     "exclude": MessageLookupByLibrary.simpleMessage("Hide from recent tasks"),
     "excludeFilter": MessageLookupByLibrary.simpleMessage("Exclude filter"),
     "excludeInterface": MessageLookupByLibrary.simpleMessage(
@@ -839,6 +840,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "forceRestartCoreTip": MessageLookupByLibrary.simpleMessage(
       "Are you sure you want to force restart the core?",
     ),
+    "fr": MessageLookupByLibrary.simpleMessage("French"),
     "fruitSaladScheme": MessageLookupByLibrary.simpleMessage("Fruit salad"),
     "general": MessageLookupByLibrary.simpleMessage("General"),
     "geoResources": MessageLookupByLibrary.simpleMessage("Geo"),
@@ -1049,6 +1051,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "TCP keep-alive interval",
     ),
     "key": MessageLookupByLibrary.simpleMessage("Key"),
+    "ko": MessageLookupByLibrary.simpleMessage("Korean"),
     "label": MessageLookupByLibrary.simpleMessage("Label"),
     "language": MessageLookupByLibrary.simpleMessage("Language"),
     "large": MessageLookupByLibrary.simpleMessage("Large"),
