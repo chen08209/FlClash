@@ -347,7 +347,6 @@ class ListEditorAddAction extends StatelessWidget {
       );
     }
     return CommonPopupBox(
-      anchorShift: Offset(0, context.isMobileView ? 0 : 20),
       targetBuilder: (open) => AppBarActionButton(
         data: IconButtonData(
           glyph: AppGlyphs.addCircle,

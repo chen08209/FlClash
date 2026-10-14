@@ -385,7 +385,6 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
       isLoading: ref.watch(loadingProvider(LoadingTag.ruleProviders)),
       actions: [
         CommonPopupBox(
-          anchorShift: Offset(0, ref.watch(isMobileViewProvider) ? 0 : 20),
           targetBuilder: (open) {
             return IconButton(
               tooltip: appLocalizations.add,

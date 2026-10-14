@@ -59,6 +59,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion> {
             context,
           ).modalBarrierDismissLabel,
           placement: PopupPlacement.belowPoint,
+          theme: Theme.of(context),
           anchorOf: () => point & Size.zero,
           avoid: avoid ? rowRect : null,
           builder: (_) => CommonPopupMenu(items: widget.menuItems!),

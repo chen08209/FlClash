@@ -220,7 +220,6 @@ class _IconSetsViewState extends ConsumerState<IconSetsView> {
       isLoading: ref.watch(loadingProvider(LoadingTag.iconSets)),
       actions: [
         CommonPopupBox(
-          anchorShift: Offset(0, ref.watch(isMobileViewProvider) ? 0 : 20),
           targetBuilder: (open) {
             return IconButton(
               tooltip: appLocalizations.add,

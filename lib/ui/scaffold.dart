@@ -1047,7 +1047,6 @@ class _OverflowMenuButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CommonPopupBox(
-      anchorShift: Offset(0, context.isMobileView ? 0 : 20),
       targetBuilder: (open) => IconButton(
         tooltip: UiLocalizations.of(context).more,
         onPressed: open,

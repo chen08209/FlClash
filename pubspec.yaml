@@ -106,6 +106,8 @@ flutter:
       platforms: [ macos ]
     - path: assets/images/tray/windows/
       platforms: [ windows ]
+  shaders:
+    - shaders/liquid_glass.frag
   fonts:
     - family: JetBrainsMono
       fonts:
