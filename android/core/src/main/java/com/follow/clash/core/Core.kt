@@ -67,10 +67,10 @@ object Core {
     }
 
     fun updateEventListener(
-        callback: ((result: String?) -> Unit)?,
+        callback: ((result: ByteArray) -> Unit)?,
     ) {
         Mobile.setEventListener(
-            callback?.let { ResultHandler { result -> it(result?.decodeToString()) } },
+            callback?.let { ResultHandler { result -> it(result ?: ByteArray(0)) } },
         )
     }
 

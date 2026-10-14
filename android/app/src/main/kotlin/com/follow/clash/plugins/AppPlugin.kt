@@ -123,8 +123,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         }
     }
 
-    override fun onMethodCall(call: MethodCall, rawResult: Result) {
-        val result = MainThreadResult(rawResult)
+    override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
             "moveTaskToBack" -> {
                 activity?.moveTaskToBack(true)
