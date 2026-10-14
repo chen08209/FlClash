@@ -1,14 +1,17 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/widgets/inherited.dart';
-import 'package:fl_clash/widgets/scaffold.dart';
-import 'package:fl_clash/widgets/scroll.dart';
-import 'package:fl_clash/widgets/sheet.dart';
-import 'package:fl_clash/widgets/sheet_header.dart';
-import 'package:fl_clash/widgets/side_sheet.dart';
-import 'package:fl_clash/widgets/snap_sheet.dart';
+import 'package:fl_clash/ui/color.dart';
+import 'package:fl_clash/ui/inherited.dart';
+import 'package:fl_clash/ui/scaffold.dart';
+import 'package:fl_clash/ui/scroll.dart';
+import 'package:fl_clash/ui/sheet.dart';
+import 'package:fl_clash/ui/sheet_header.dart';
+import 'package:fl_clash/ui/side_sheet.dart';
+import 'package:fl_clash/ui/snap_sheet.dart';
+import 'package:fl_clash/ui/surface.dart';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -726,6 +729,70 @@ void main() {
 
     expect(closed, isTrue);
     expect(closedWith, 'done');
+
+    await close(tester);
+  });
+
+  testWidgets('a dark sheet presents a level above the page it covers', (
+    tester,
+  ) async {
+    final plain = seededColorScheme(
+      seedColor: const Color(defaultPrimaryColor),
+      brightness: Brightness.dark,
+    );
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    for (final (page, sheet) in [
+      (plain, plain.elevated),
+      (plain.toPureBlack(true), plain),
+    ]) {
+      expect(
+        sheet.surface.tone,
+        closeTo(SurfaceLevel.card.colorOf(page).tone, 0.5),
+      );
+      final theme = ThemeData(
+        colorScheme: page,
+        extensions: [ElevatedColorScheme(sheet)],
+      ).withAppSurfaces;
+      await tester.pumpWidget(
+        TestApp(
+          wrapInProviderScope: true,
+          homeBuilder: (child) => Theme(data: theme, child: child),
+          child: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showSnapSheet<void>(context, builder: _sheet),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      );
+
+      for (final size in [_mobile, _desktop]) {
+        await setView(tester, size);
+        await tester.tap(find.text('open'));
+        await tester.pumpAndSettle();
+
+        final title = find.text('title');
+        expect(
+          Theme.of(tester.element(title)).colorScheme.surface,
+          sheet.surface,
+        );
+        expect(
+          find.ancestor(
+            of: title,
+            matching: find.byWidgetPredicate(
+              (widget) => widget is Material && widget.color == sheet.surface,
+            ),
+          ),
+          findsWidgets,
+        );
+
+        await tester.tapAt(const Offset(10, 10));
+        await tester.pumpAndSettle();
+        expect(title, findsNothing);
+      }
+    }
 
     await close(tester);
   });

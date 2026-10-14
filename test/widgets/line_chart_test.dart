@@ -1,4 +1,4 @@
-import 'package:fl_clash/widgets/line_chart.dart';
+import 'package:fl_clash/ui/line_chart.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -9,7 +9,11 @@ final _canvas = find.descendant(
   matching: find.byType(CustomPaint),
 );
 
-Widget _chart(List<double> values, {required int revision}) {
+Widget _chart(
+  List<double> values, {
+  required int revision,
+  double baselineRatio = 1,
+}) {
   return Center(
     child: SizedBox(
       width: 290,
@@ -20,6 +24,7 @@ Widget _chart(List<double> values, {required int revision}) {
         capacity: 30,
         minScale: 1,
         color: _color,
+        baselineRatio: baselineRatio,
       ),
     ),
   );
@@ -68,6 +73,14 @@ void main() {
 
     await tester.pumpWidget(_chart([...idle, 10, 0], revision: 22));
     expect(_lineBounds(tester).top, greaterThan(0));
+  });
+
+  testWidgets('an idle chart lies on its baseline', (tester) async {
+    await tester.pumpWidget(
+      _chart(List.filled(10, 0.0), revision: 10, baselineRatio: 0.9),
+    );
+
+    expect(_lineBounds(tester).top, closeTo(90, 0.01));
   });
 
   testWidgets('a clear starts the chart over', (tester) async {

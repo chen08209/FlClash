@@ -1,7 +1,7 @@
 import 'package:fl_clash/common/app_ports.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/app_glyphs.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/ui/icons/app_glyphs.dart';
 import 'package:fl_clash/views/views.dart';
 import 'package:material_ui/material_ui.dart';
 

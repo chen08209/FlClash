@@ -541,14 +541,6 @@ class Items extends _$Items with AutoDisposeNotifierMixin {
   }
 }
 
-@riverpod
-class Item extends _$Item with AutoDisposeNotifierMixin {
-  @override
-  dynamic build(String key) {
-    return null;
-  }
-}
-
 @Riverpod(keepAlive: true)
 class UpdatingKeys extends _$UpdatingKeys {
   final _operations = <String, Set<int>>{};

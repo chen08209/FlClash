@@ -1,7 +1,7 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -118,9 +118,7 @@ class DisclaimerView extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 20),
                     child: Text(
                       appLocalizations.disclaimer,
-                      style: context.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTextStyle.title2.of(context, emphasized: true),
                     ),
                   ),
                   ...terms,
@@ -197,7 +195,7 @@ class _DisclaimerIntro extends StatelessWidget {
     final colorScheme = context.colorScheme;
     return DecoratedBox(
       decoration: ShapeDecoration(
-        color: colorScheme.primaryContainer,
+        color: context.raisedSurfaceLevel.colorOf(colorScheme),
         shape: AppShape.xl,
       ),
       child: Padding(
@@ -205,19 +203,14 @@ class _DisclaimerIntro extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            GlyphIcon(
-              AppGlyphs.gavel,
-              size: 28,
-              color: colorScheme.onPrimaryContainer,
-            ),
+            GlyphIcon(AppGlyphs.gavel, size: 28, color: colorScheme.primary),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
                 text,
-                style: context.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onPrimaryContainer,
-                  height: 1.6,
-                ),
+                style: AppTextStyle.subheadline
+                    .of(context)
+                    .copyWith(color: colorScheme.onSurfaceVariant, height: 1.6),
               ),
             ),
           ],
@@ -245,7 +238,6 @@ class _DisclaimerTerm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final textTheme = context.textTheme;
     return Padding(
       padding: const EdgeInsets.only(top: 28),
       child: Column(
@@ -255,7 +247,7 @@ class _DisclaimerTerm extends StatelessWidget {
             children: [
               DecoratedBox(
                 decoration: ShapeDecoration(
-                  color: colorScheme.secondaryContainer,
+                  color: context.raisedSurfaceLevel.colorOf(colorScheme),
                   shape: AppShape.full,
                 ),
                 child: SizedBox.square(
@@ -263,22 +255,16 @@ class _DisclaimerTerm extends StatelessWidget {
                   child: Center(
                     child: Text(
                       '$index',
-                      style: textTheme.labelMedium?.copyWith(
-                        color: colorScheme.onSecondaryContainer,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: AppTextStyle.caption1
+                          .of(context, emphasized: true)
+                          .copyWith(color: colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  title,
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                child: Text(title, style: AppTextStyle.headline.of(context)),
               ),
             ],
           ),
@@ -299,10 +285,9 @@ class _TermParagraphs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = context.textTheme.bodyMedium?.copyWith(
-      color: context.colorScheme.onSurfaceVariant,
-      height: 1.6,
-    );
+    final style = AppTextStyle.subheadline
+        .of(context)
+        .copyWith(color: context.colorScheme.onSurfaceVariant, height: 1.6);
     final paragraphs = text.split('\n\n');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -331,10 +316,10 @@ class _DataServiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final textTheme = context.textTheme;
+    final level = context.raisedSurfaceLevel;
     return DecoratedBox(
       decoration: ShapeDecoration(
-        color: colorScheme.surfaceContainer,
+        color: level.colorOf(colorScheme),
         shape: AppShape.xl,
       ),
       child: Padding(
@@ -349,15 +334,16 @@ class _DataServiceCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
+                    style: AppTextStyle.subheadline.of(
+                      context,
+                      emphasized: true,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 DecoratedBox(
                   decoration: ShapeDecoration(
-                    color: colorScheme.tertiaryContainer,
+                    color: level.next.colorOf(colorScheme),
                     shape: AppShape.full,
                   ),
                   child: Padding(
@@ -367,10 +353,9 @@ class _DataServiceCard extends StatelessWidget {
                     ),
                     child: Text(
                       context.appLocalizations.disclaimerAndroidOnly,
-                      style: textTheme.labelSmall?.copyWith(
-                        color: colorScheme.onTertiaryContainer,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTextStyle.caption2
+                          .of(context, emphasized: true)
+                          .copyWith(color: colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ),
@@ -536,9 +521,9 @@ class _ConsentBar extends StatelessWidget {
               ? const SizedBox.shrink()
               : Text(
                   appLocalizations.disclaimerReadToEnd,
-                  style: context.textTheme.bodyMedium?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
-                  ),
+                  style: AppTextStyle.subheadline
+                      .of(context)
+                      .copyWith(color: context.colorScheme.onSurfaceVariant),
                 ),
         ),
         const SizedBox(width: 12),
@@ -553,10 +538,7 @@ class _ConsentBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        border: Border(
-          top: BorderSide(color: context.colorScheme.outlineVariant),
-        ),
+        color: SurfaceLevel.page.colorOf(context.colorScheme),
       ),
       child: SafeArea(
         top: false,
@@ -613,14 +595,14 @@ class _RestateDialogState extends State<_RestateDialog> {
   Widget _buildStatement(String statement) {
     return DecoratedBox(
       decoration: ShapeDecoration(
-        color: context.colorScheme.surfaceContainerHighest,
+        color: context.raisedSurfaceLevel.colorOf(context.colorScheme),
         shape: AppShape.lg,
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: SelectableText(
           statement,
-          style: context.textTheme.bodyMedium?.copyWith(height: 1.6),
+          style: AppTextStyle.subheadline.of(context).copyWith(height: 1.6),
         ),
       ),
     );
@@ -657,9 +639,9 @@ class _RestateDialogState extends State<_RestateDialog> {
             children: [
               Text(
                 appLocalizations.disclaimerRestateTip,
-                style: context.textTheme.bodyMedium?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
+                style: AppTextStyle.subheadline
+                    .of(context)
+                    .copyWith(color: context.colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 12),
               _buildStatement(statement),

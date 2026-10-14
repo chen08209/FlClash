@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:animations/animations.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -18,15 +17,10 @@ class Dialogs {
     BuildContext? context,
     bool? dismissible,
   }) async {
-    final host = context ?? _context;
-    return showModal<T>(
-      useRootNavigator: false,
-      context: host,
-      configuration: FadeScaleTransitionConfiguration(
-        barrierColor: host.colorScheme.modalScrim,
-        barrierDismissible: dismissible ?? true,
-      ),
-      builder: (_) => child,
+    return showFloatingDialog<T>(
+      context: context ?? _context,
+      child: child,
+      dismissible: dismissible ?? true,
     );
   }
 
@@ -68,7 +62,7 @@ class Dialogs {
               child: SingleChildScrollView(
                 child: SelectableText.rich(
                   TextSpan(
-                    style: Theme.of(context).textTheme.labelLarge,
+                    style: AppTextStyle.subheadline.of(context),
                     children: [message],
                   ),
                   style: const TextStyle(overflow: TextOverflow.visible),
@@ -250,7 +244,7 @@ class _FailureDetailsSheet extends StatelessWidget {
           separatorBuilder: (_, _) => SizedBox(height: 24.mAp),
           itemBuilder: (_, index) {
             final MapEntry(key: message, value: labels) = groups[index];
-            return generateSectionV3(
+            return generateSection(
               items: [
                 for (final label in labels)
                   DecorationListItem(

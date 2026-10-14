@@ -1,4 +1,4 @@
-import 'package:fl_clash/widgets/fade_box.dart';
+import 'package:fl_clash/ui/fade_box.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -13,7 +13,6 @@ void main() {
   }
 
   for (final (name, box) in [
-    ('FadeSlideEnterBox', const FadeSlideEnterBox(child: SizedBox())),
     ('FadeScaleEnterBox', const FadeScaleEnterBox(child: SizedBox())),
   ]) {
     testWidgets('$name animates its entrance', (tester) async {

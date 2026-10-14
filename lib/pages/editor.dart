@@ -3,8 +3,7 @@ import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/editor/editor.dart';
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
@@ -528,7 +527,7 @@ class _EditorTitleField extends StatelessWidget {
         counter: const SizedBox(),
         hintText: context.appLocalizations.unnamed,
       ),
-      style: context.textTheme.titleLarge,
+      style: AppTextStyle.pageTitle.of(context),
       autofocus: false,
     );
   }
@@ -582,10 +581,7 @@ class _EditorBody extends StatelessWidget {
               ? Container(
                   color: context.colorScheme.surface,
                   alignment: Alignment.center,
-                  child: const SizedBox.square(
-                    dimension: 200,
-                    child: CommonCircleLoading(),
-                  ),
+                  child: const CommonCircleLoading.page(),
                 )
               : const SizedBox.shrink(),
         ),
@@ -689,18 +685,23 @@ class _CodeEditorState extends ConsumerState<_CodeEditor> {
         cursorBubbleColor: colorScheme.primary,
       );
     }
+    final appFont = AppTextStyle.footnote.of(context);
     final textStyle = TextStyle(
       fontSize: fontSize.value,
       fontFamily: FontFamily.jetBrainsMono.value,
+      fontFamilyFallback: [
+        FontFamily.twEmoji.value,
+        ?appFont.fontFamily,
+        ...?appFont.fontFamilyFallback,
+      ],
     );
     if (textStyle != _textStyle) {
       _textStyle = textStyle;
     }
-    final appFont = context.textTheme.bodySmall;
     _lineNumberStyle = TextStyle(
       fontSize: 12,
-      fontFamily: appFont?.fontFamily,
-      fontFamilyFallback: appFont?.fontFamilyFallback,
+      fontFamily: appFont.fontFamily,
+      fontFamilyFallback: appFont.fontFamilyFallback,
       fontFeatures: const [FontFeature.tabularFigures()],
     );
   }
@@ -971,7 +972,7 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
             ),
             const SizedBox(width: 12),
           ],
-          Text(result, style: context.textTheme.bodyMedium),
+          Text(result, style: AppTextStyle.subheadline.of(context)),
           Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -1054,12 +1055,12 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
         _buildIconButton(
-          icon: Text('Aa', style: context.textTheme.bodySmall),
+          icon: Text('Aa', style: AppTextStyle.footnote.of(context)),
           isSelected: controller.caseSensitive,
           onPressed: controller.toggleCaseSensitive,
         ),
         _buildIconButton(
-          icon: Text('.*', style: context.textTheme.bodySmall),
+          icon: Text('.*', style: AppTextStyle.footnote.of(context)),
           isSelected: controller.isRegex,
           onPressed: controller.toggleRegex,
         ),
@@ -1118,12 +1119,12 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
     required VoidCallback onSubmitted,
   }) {
     return SizedBox(
-      height: globalState.measure.bodyMediumHeight + 8 * 2,
+      height: globalState.measure.textHeight(AppTextStyle.subheadline) + 8 * 2,
       child: TextField(
         maxLines: 1,
         focusNode: focusNode,
         inputFormatters: TextInputLimits.limit(TextInputLimits.search),
-        style: context.textTheme.bodyMedium,
+        style: AppTextStyle.subheadline.of(context),
         decoration: const InputDecoration(
           contentPadding: EdgeInsets.symmetric(horizontal: 12),
         ),

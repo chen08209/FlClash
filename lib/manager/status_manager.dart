@@ -5,12 +5,11 @@ import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/state.dart';
-import 'package:fl_clash/widgets/navigation_dock.dart';
-import 'package:fl_clash/widgets/theme.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -544,11 +543,7 @@ class _MessageCardState extends State<_MessageCard>
             surfaceTintColor: Colors.transparent,
             shadowColor: colorScheme.shadow.withValues(alpha: 0.6),
             elevation: 3,
-            shape: AppShape.lg.copyWith(
-              side: BorderSide(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.6),
-              ),
-            ),
+            shape: AppShape.lg,
             child: ConstrainedBox(
               constraints: const BoxConstraints(
                 minHeight: _messageMinHeight,
@@ -594,9 +589,9 @@ class _MessageContent extends StatelessWidget {
           child: Text(
             message.text,
             maxLines: 3,
-            style: context.textTheme.labelLarge?.copyWith(
-              color: level.contentColor(context),
-            ),
+            style: AppTextStyle.subheadline
+                .of(context, emphasized: true)
+                .copyWith(color: level.contentColor(context)),
             overflow: TextOverflow.ellipsis,
           ),
         ),

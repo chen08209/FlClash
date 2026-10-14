@@ -1,10 +1,9 @@
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/common/shape.dart';
+import 'package:fl_clash/ui/card.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/shape.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'card.dart';
 
 class ColorSchemeBox extends StatelessWidget {
   final Color? primaryColor;
@@ -125,15 +124,11 @@ class ColorSchemeBox extends StatelessWidget {
 class PrimaryColorBox extends ConsumerWidget {
   final Color? primaryColor;
   final Widget child;
-  final Brightness? brightness;
-  final bool ignoreConfig;
 
   const PrimaryColorBox({
     super.key,
     required this.primaryColor,
     required this.child,
-    this.brightness,
-    this.ignoreConfig = true,
   });
 
   @override
@@ -141,9 +136,9 @@ class PrimaryColorBox extends ConsumerWidget {
     final themeData = Theme.of(context);
     final colorScheme = ref.watch(
       genColorSchemeProvider(
-        brightness ?? themeData.brightness,
+        themeData.brightness,
         color: primaryColor,
-        ignoreConfig: ignoreConfig,
+        ignoreConfig: true,
       ),
     );
     return Theme(

@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
@@ -37,7 +37,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
         title: appLocalizations.locationPermissionRequired,
         cancelable: false,
         message: TextSpan(
-          style: context.textTheme.bodyMedium,
+          style: AppTextStyle.subheadline.of(context),
           text: appLocalizations.locationPermissionGuide(appName),
         ),
       );
@@ -252,8 +252,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
               onPressed: _handleRequestIgnoreBatteryOptimization,
             ),
           ),
-          if (isLoading)
-            const SizedBox.square(dimension: 32, child: CommonCircleLoading()),
+          if (isLoading) const CommonCircleLoading(size: 24),
         ],
       ),
     );
@@ -277,7 +276,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
 
   Widget _buildPrerequisites() {
     final appLocalizations = context.appLocalizations;
-    return generateSectionV3(
+    return generateSection(
       title: appLocalizations.prerequisites,
       items: [
         if (_isAndroid) _buildBatteryOptimizationItem(),

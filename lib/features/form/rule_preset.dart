@@ -1,9 +1,7 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/clash_config.dart';
-import 'package:fl_clash/models/common.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -112,7 +110,7 @@ class _RulePresetSheetState extends State<RulePresetSheet> {
               title: Text(preset.label(appLocalizations)),
               subtitle: _PresetSubtitle(preset),
               isSelected: isSelected,
-              trailing: isSelected ? const GlyphIcon(AppGlyphs.check) : null,
+              trailing: isSelected ? const SelectionCheck() : null,
               onPressed: () => _handleToggle(preset),
             ),
           );
@@ -137,9 +135,10 @@ class _PresetSubtitle extends StatelessWidget {
             raw,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: context.textTheme.bodySmall?.toJetBrainsMono.copyWith(
-              color: context.colorScheme.tertiary,
-            ),
+            style: AppTextStyle.footnote
+                .of(context)
+                .toJetBrainsMono
+                .copyWith(color: context.colorScheme.tertiary),
           ),
       ],
     );

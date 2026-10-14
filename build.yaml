@@ -11,3 +11,4 @@ targets:
         options:
           build_extensions:
             '^lib/models/{{}}.dart': 'lib/models/generated/{{}}.freezed.dart'
+            '^lib/ui/{{}}.dart': 'lib/ui/generated/{{}}.freezed.dart'

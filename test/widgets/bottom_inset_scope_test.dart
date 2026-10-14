@@ -1,9 +1,21 @@
-import 'package:fl_clash/widgets/inherited.dart';
-import 'package:fl_clash/widgets/scaffold.dart';
+import 'package:fl_clash/ui/button.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/inherited.dart';
+import 'package:fl_clash/ui/models.dart';
+import 'package:fl_clash/ui/scaffold.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
+
+final _addAction = IconButtonData(
+  glyph: AppGlyphs.add,
+  tooltip: 'add',
+  onPressed: () {},
+);
+
+Widget _floating(Widget child) =>
+    PrimaryActionInBarScope(inBar: false, child: child);
 
 void main() {
   const navigationInset = 92.0;
@@ -29,26 +41,27 @@ void main() {
       final scaffold = CommonScaffold(
         title: 'title',
         body: const SizedBox(),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {},
-          child: const Icon(Icons.add),
-        ),
+        primaryAction: _addAction,
       );
       return TestApp(
         wrapInProviderScope: true,
         includeNavigatorKey: false,
-        child: inset == null
-            ? scaffold
-            : BottomInsetScope(inset: inset, child: scaffold),
+        child: _floating(
+          inset == null
+              ? scaffold
+              : BottomInsetScope(inset: inset, child: scaffold),
+        ),
       );
     }
 
     await tester.pumpWidget(buildWith());
-    final baseBottom = tester.getRect(find.byType(FloatingActionButton)).bottom;
+    final baseBottom = tester
+        .getRect(find.byType(CommonFloatingActionButton))
+        .bottom;
 
     await tester.pumpWidget(buildWith(inset: navigationInset));
     final liftedBottom = tester
-        .getRect(find.byType(FloatingActionButton))
+        .getRect(find.byType(CommonFloatingActionButton))
         .bottom;
 
     expect(baseBottom - liftedBottom, navigationInset);
@@ -62,17 +75,14 @@ void main() {
       return TestApp(
         wrapInProviderScope: true,
         includeNavigatorKey: false,
-        child: BottomInsetScope(
-          inset: inset,
-          child: CommonScaffold(
-            title: 'title',
-            body: contentProbe(),
-            floatingActionButton: withFab
-                ? FloatingActionButton(
-                    onPressed: () {},
-                    child: const Icon(Icons.add),
-                  )
-                : null,
+        child: _floating(
+          BottomInsetScope(
+            inset: inset,
+            child: CommonScaffold(
+              title: 'title',
+              body: contentProbe(),
+              primaryAction: withFab ? _addAction : null,
+            ),
           ),
         ),
       );
@@ -104,17 +114,14 @@ void main() {
       return TestApp(
         wrapInProviderScope: true,
         includeNavigatorKey: false,
-        child: BottomInsetScope(
-          inset: inset,
-          child: CommonScaffold(
-            title: 'title',
-            body: contentProbe(),
-            floatingActionButton: withFab
-                ? FloatingActionButton(
-                    onPressed: () {},
-                    child: const Icon(Icons.add),
-                  )
-                : null,
+        child: _floating(
+          BottomInsetScope(
+            inset: inset,
+            child: CommonScaffold(
+              title: 'title',
+              body: contentProbe(),
+              primaryAction: withFab ? _addAction : null,
+            ),
           ),
         ),
       );
@@ -128,30 +135,6 @@ void main() {
 
     await tester.pumpWidget(buildWith(withFab: true));
     expect(contentInset, fabInset);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('does not reserve FAB space on TV', (tester) async {
-    await tester.pumpWidget(
-      TestApp(
-        wrapInProviderScope: true,
-        includeNavigatorKey: false,
-        child: BottomInsetScope(
-          inset: navigationInset,
-          child: CommonScaffold(
-            title: 'title',
-            isTV: true,
-            body: contentProbe(),
-            floatingActionButton: FloatingActionButton(
-              onPressed: () {},
-              child: const Icon(Icons.add),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    expect(contentInset, navigationInset);
     expect(tester.takeException(), isNull);
   });
 }

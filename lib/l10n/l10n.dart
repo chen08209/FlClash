@@ -140,16 +140,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Network detection`
-  String get networkDetection {
-    return Intl.message(
-      'Network detection',
-      name: 'networkDetection',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Service status`
   String get serviceStatus {
     return Intl.message(
@@ -395,16 +385,6 @@ class AppLocalizations {
     return Intl.message('Theme', name: 'theme', desc: '', args: []);
   }
 
-  /// `Set dark mode and adjust colors`
-  String get themeDesc {
-    return Intl.message(
-      'Set dark mode and adjust colors',
-      name: 'themeDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Extend`
   String get extend {
     return Intl.message('Extend', name: 'extend', desc: '', args: []);
@@ -545,10 +525,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Control which apps use the proxy`
+  /// `Access control picks which apps use the proxy.`
   String get accessControlDesc {
     return Intl.message(
-      'Control which apps use the proxy',
+      'Access control picks which apps use the proxy.',
       name: 'accessControlDesc',
       desc: '',
       args: [],
@@ -1415,19 +1395,9 @@ class AppLocalizations {
     );
   }
 
-  /// `Standard`
-  String get expand {
-    return Intl.message('Standard', name: 'expand', desc: '', args: []);
-  }
-
   /// `Compact`
-  String get shrink {
-    return Intl.message('Compact', name: 'shrink', desc: '', args: []);
-  }
-
-  /// `Minimal`
-  String get min {
-    return Intl.message('Minimal', name: 'min', desc: '', args: []);
+  String get compact {
+    return Intl.message('Compact', name: 'compact', desc: '', args: []);
   }
 
   /// `Tab`
@@ -1575,6 +1545,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Liquid Glass`
+  String get liquidGlass {
+    return Intl.message(
+      'Liquid Glass',
+      name: 'liquidGlass',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `TCP keep-alive interval`
   String get keepAliveIntervalDesc {
     return Intl.message(
@@ -1703,16 +1683,6 @@ class AppLocalizations {
   /// `Value`
   String get value {
     return Intl.message('Value', name: 'value', desc: '', args: []);
-  }
-
-  /// `Changes take effect after restarting the VPN`
-  String get vpnTip {
-    return Intl.message(
-      'Changes take effect after restarting the VPN',
-      name: 'vpnTip',
-      desc: '',
-      args: [],
-    );
   }
 
   /// `VPN routes all system traffic through VpnService automatically.`
@@ -3285,23 +3255,13 @@ class AppLocalizations {
     );
   }
 
-  /// `Network, DNS, added rules, and scripts`
+  /// `Advanced configuration holds network, DNS, added rules, and scripts.`
   String get advancedConfigDesc {
     return Intl.message(
-      'Network, DNS, added rules, and scripts',
+      'Advanced configuration holds network, DNS, added rules, and scripts.',
       name: 'advancedConfigDesc',
       desc: '',
       args: [],
-    );
-  }
-
-  /// `{count} selected`
-  String selectedCountTitle(Object count) {
-    return Intl.message(
-      '$count selected',
-      name: 'selectedCountTitle',
-      desc: '',
-      args: [count],
     );
   }
 
@@ -3310,19 +3270,9 @@ class AppLocalizations {
     return Intl.message('Add rule', name: 'addRule', desc: '', args: []);
   }
 
-  /// `Rule name`
-  String get ruleName {
-    return Intl.message('Rule name', name: 'ruleName', desc: '', args: []);
-  }
-
   /// `Content`
   String get content {
     return Intl.message('Content', name: 'content', desc: '', args: []);
-  }
-
-  /// `Sub-rule`
-  String get subRule {
-    return Intl.message('Sub-rule', name: 'subRule', desc: '', args: []);
   }
 
   /// `Rule target`
@@ -4600,10 +4550,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Proxies, rule providers, filters, and icon sets`
+  /// `Custom profile resources hold proxies, rule providers, filters, and icon sets.`
   String get customProfileResourcesDesc {
     return Intl.message(
-      'Proxies, rule providers, filters, and icon sets',
+      'Custom profile resources hold proxies, rule providers, filters, and icon sets.',
       name: 'customProfileResourcesDesc',
       desc: '',
       args: [],
@@ -4765,16 +4715,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Sync data via WebDAV or files`
-  String get backupAndRestoreDesc {
-    return Intl.message(
-      'Sync data via WebDAV or files',
-      name: 'backupAndRestoreDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Restore`
   String get restore {
     return Intl.message('Restore', name: 'restore', desc: '', args: []);
@@ -4830,31 +4770,11 @@ class AppLocalizations {
     );
   }
 
-  /// `Duplicate proxy group name`
-  String get proxyGroupNameDuplicate {
-    return Intl.message(
-      'Duplicate proxy group name',
-      name: 'proxyGroupNameDuplicate',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Are you sure you want to exit the current window?`
   String get confirmExitWindow {
     return Intl.message(
       'Are you sure you want to exit the current window?',
       name: 'confirmExitWindow',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Select proxy providers`
-  String get selectProxyProviders {
-    return Intl.message(
-      'Select proxy providers',
-      name: 'selectProxyProviders',
       desc: '',
       args: [],
     );
@@ -4913,16 +4833,6 @@ class AppLocalizations {
   /// `Tolerance`
   String get tolerance {
     return Intl.message('Tolerance', name: 'tolerance', desc: '', args: []);
-  }
-
-  /// `Select proxies`
-  String get selectProxies {
-    return Intl.message(
-      'Select proxies',
-      name: 'selectProxies',
-      desc: '',
-      args: [],
-    );
   }
 
   /// `Enter the proxy group name`
@@ -5070,16 +4980,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Please select a sub-rule`
-  String get selectSubRule {
-    return Intl.message(
-      'Please select a sub-rule',
-      name: 'selectSubRule',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Don't resolve hostname`
   String get noResolveHostname {
     return Intl.message(
@@ -5135,26 +5035,6 @@ class AppLocalizations {
     return Intl.message('Edit proxy', name: 'editProxy', desc: '', args: []);
   }
 
-  /// `Add proxy providers`
-  String get addProxyProviders {
-    return Intl.message(
-      'Add proxy providers',
-      name: 'addProxyProviders',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Proxies are empty`
-  String get proxiesEmpty {
-    return Intl.message(
-      'Proxies are empty',
-      name: 'proxiesEmpty',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Add nodes`
   String get addNodes {
     return Intl.message('Add nodes', name: 'addNodes', desc: '', args: []);
@@ -5193,11 +5073,6 @@ class AppLocalizations {
       desc: '',
       args: [],
     );
-  }
-
-  /// `No records`
-  String get noRecords {
-    return Intl.message('No records', name: 'noRecords', desc: '', args: []);
   }
 
   /// `Custom`
@@ -5575,26 +5450,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Sub-rule is empty`
-  String get subRuleEmpty {
-    return Intl.message(
-      'Sub-rule is empty',
-      name: 'subRuleEmpty',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Proxy providers cannot be empty`
-  String get proxyProvidersNotEmpty {
-    return Intl.message(
-      'Proxy providers cannot be empty',
-      name: 'proxyProvidersNotEmpty',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Content cannot be empty`
   String get contentNotEmpty {
     return Intl.message(
@@ -5605,31 +5460,11 @@ class AppLocalizations {
     );
   }
 
-  /// `Sub-rule cannot be empty`
-  String get subRuleNotEmpty {
-    return Intl.message(
-      'Sub-rule cannot be empty',
-      name: 'subRuleNotEmpty',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Split strategy cannot be empty`
   String get splitStrategyNotEmpty {
     return Intl.message(
       'Split strategy cannot be empty',
       name: 'splitStrategyNotEmpty',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Proxy providers are empty`
-  String get proxyProvidersEmpty {
-    return Intl.message(
-      'Proxy providers are empty',
-      name: 'proxyProvidersEmpty',
       desc: '',
       args: [],
     );
@@ -5945,18 +5780,6 @@ class AppLocalizations {
     return Intl.message('hours', name: 'hours', desc: '', args: []);
   }
 
-  /// `{count, plural, =1{1 hour} other{{count} hours}}`
-  String hoursCount(num count) {
-    return Intl.plural(
-      count,
-      one: '1 hour',
-      other: '$count hours',
-      name: 'hoursCount',
-      desc: '',
-      args: [count],
-    );
-  }
-
   /// `Geo`
   String get geoResources {
     return Intl.message('Geo', name: 'geoResources', desc: '', args: []);
@@ -6013,6 +5836,18 @@ class AppLocalizations {
       one: '1 rule',
       other: '$label rules',
       name: 'rulesCount',
+      desc: '',
+      args: [count, label],
+    );
+  }
+
+  /// `{count, plural, =1{1 proxy group} other{{label} proxy groups}}`
+  String proxyGroupsCount(num count, Object label) {
+    return Intl.plural(
+      count,
+      one: '1 proxy group',
+      other: '$label proxy groups',
+      name: 'proxyGroupsCount',
       desc: '',
       args: [count, label],
     );
@@ -6206,11 +6041,6 @@ class AppLocalizations {
       desc: '',
       args: [],
     );
-  }
-
-  /// `Add widget`
-  String get addWidget {
-    return Intl.message('Add widget', name: 'addWidget', desc: '', args: []);
   }
 
   /// `Show password`
@@ -7584,6 +7414,311 @@ class AppLocalizations {
       name: 'ageSecretKeyRequiredTip',
       desc: '',
       args: [],
+    );
+  }
+
+  /// `Holds the start button and can't be removed`
+  String get currentOutboundDesc {
+    return Intl.message(
+      'Holds the start button and can\'t be removed',
+      name: 'currentOutboundDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Running`
+  String get running {
+    return Intl.message('Running', name: 'running', desc: '', args: []);
+  }
+
+  /// `Not running`
+  String get notRunning {
+    return Intl.message('Not running', name: 'notRunning', desc: '', args: []);
+  }
+
+  /// `Peak {value}`
+  String trafficPeak(Object value) {
+    return Intl.message(
+      'Peak $value',
+      name: 'trafficPeak',
+      desc: '',
+      args: [value],
+    );
+  }
+
+  /// `Total {value}`
+  String trafficTotal(Object value) {
+    return Intl.message(
+      'Total $value',
+      name: 'trafficTotal',
+      desc: '',
+      args: [value],
+    );
+  }
+
+  /// `Quality`
+  String get ipQualityShort {
+    return Intl.message('Quality', name: 'ipQualityShort', desc: '', args: []);
+  }
+
+  /// `Unknown type`
+  String get ipTypeUnknown {
+    return Intl.message(
+      'Unknown type',
+      name: 'ipTypeUnknown',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tap the icon to retry`
+  String get tapIconToRetry {
+    return Intl.message(
+      'Tap the icon to retry',
+      name: 'tapIconToRetry',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Traffic takeover`
+  String get networkTakeover {
+    return Intl.message(
+      'Traffic takeover',
+      name: 'networkTakeover',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Port {port}`
+  String portValue(Object port) {
+    return Intl.message(
+      'Port $port',
+      name: 'portValue',
+      desc: '',
+      args: [port],
+    );
+  }
+
+  /// `{count, plural, =1{1 issue} other{{count} issues}}`
+  String serviceAbnormalCount(num count) {
+    return Intl.plural(
+      count,
+      one: '1 issue',
+      other: '$count issues',
+      name: 'serviceAbnormalCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `All available`
+  String get serviceAllAvailable {
+    return Intl.message(
+      'All available',
+      name: 'serviceAllAvailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Shown on the dashboard`
+  String get serviceShownOnDashboard {
+    return Intl.message(
+      'Shown on the dashboard',
+      name: 'serviceShownOnDashboard',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count} timed out`
+  String groupTimeoutCount(Object count) {
+    return Intl.message(
+      '$count timed out',
+      name: 'groupTimeoutCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `groups`
+  String get groupCountUnit {
+    return Intl.message('groups', name: 'groupCountUnit', desc: '', args: []);
+  }
+
+  /// `{count, plural, =1{1 group} other{{count} groups}}`
+  String groupCount(num count) {
+    return Intl.plural(
+      count,
+      one: '1 group',
+      other: '$count groups',
+      name: 'groupCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Groups show up here once the core starts`
+  String get proxyGroupsAfterStart {
+    return Intl.message(
+      'Groups show up here once the core starts',
+      name: 'proxyGroupsAfterStart',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `used`
+  String get usedShort {
+    return Intl.message('used', name: 'usedShort', desc: '', args: []);
+  }
+
+  /// `Updated {time}`
+  String profileUpdatedAt(Object time) {
+    return Intl.message(
+      'Updated $time',
+      name: 'profileUpdatedAt',
+      desc: '',
+      args: [time],
+    );
+  }
+
+  /// `Expires {date}, {days, plural, =1{1 day} other{{days} days}} left`
+  String profileExpiresIn(Object date, num days) {
+    return Intl.message(
+      'Expires $date, ${Intl.plural(days, one: '1 day', other: '$days days')} left',
+      name: 'profileExpiresIn',
+      desc: '',
+      args: [date, days],
+    );
+  }
+
+  /// `{days, plural, =1{1 day left} other{{days} days left}}`
+  String profileDaysLeft(num days) {
+    return Intl.plural(
+      days,
+      one: '1 day left',
+      other: '$days days left',
+      name: 'profileDaysLeft',
+      desc: '',
+      args: [days],
+    );
+  }
+
+  /// `Target`
+  String get target {
+    return Intl.message('Target', name: 'target', desc: '', args: []);
+  }
+
+  /// `Exit`
+  String get outboundExit {
+    return Intl.message('Exit', name: 'outboundExit', desc: '', args: []);
+  }
+
+  /// `Duration`
+  String get duration {
+    return Intl.message('Duration', name: 'duration', desc: '', args: []);
+  }
+
+  /// `Traffic`
+  String get traffic {
+    return Intl.message('Traffic', name: 'traffic', desc: '', args: []);
+  }
+
+  /// `From`
+  String get initiatorShort {
+    return Intl.message('From', name: 'initiatorShort', desc: '', args: []);
+  }
+
+  /// `Result`
+  String get result {
+    return Intl.message('Result', name: 'result', desc: '', args: []);
+  }
+
+  /// `Took`
+  String get elapsed {
+    return Intl.message('Took', name: 'elapsed', desc: '', args: []);
+  }
+
+  /// `Connection stats`
+  String get connectionStats {
+    return Intl.message(
+      'Connection stats',
+      name: 'connectionStats',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Live connections, recent requests and DNS queries`
+  String get connectionStatsDesc {
+    return Intl.message(
+      'Live connections, recent requests and DNS queries',
+      name: 'connectionStatsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Memory the app and the core use`
+  String get memoryInfoDesc {
+    return Intl.message(
+      'Memory the app and the core use',
+      name: 'memoryInfoDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Edit dashboard`
+  String get editDashboard {
+    return Intl.message(
+      'Edit dashboard',
+      name: 'editDashboard',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Done`
+  String get done {
+    return Intl.message('Done', name: 'done', desc: '', args: []);
+  }
+
+  /// `Available to add`
+  String get dashboardAddableSection {
+    return Intl.message(
+      'Available to add',
+      name: 'dashboardAddableSection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count, plural, =1{1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules} other{{label} SUB-RULE rules were dropped, since custom profiles do not support sub-rules}}`
+  String customImportDroppedSubRules(num count, Object label) {
+    return Intl.plural(
+      count,
+      one:
+          '1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules',
+      other:
+          '$label SUB-RULE rules were dropped, since custom profiles do not support sub-rules',
+      name: 'customImportDroppedSubRules',
+      desc: '',
+      args: [count, label],
+    );
+  }
+
+  /// `Dropped include-all from the proxy groups {groups}; add the proxies or proxy providers they use`
+  String customImportDroppedIncludeAll(Object groups) {
+    return Intl.message(
+      'Dropped include-all from the proxy groups $groups; add the proxies or proxy providers they use',
+      name: 'customImportDroppedIncludeAll',
+      desc: '',
+      args: [groups],
     );
   }
 }

@@ -3,14 +3,11 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/manager/theme_manager.dart';
 import 'package:fl_clash/plugins/app.dart';
-import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/widgets/activate_box.dart';
-import 'package:fl_clash/widgets/navigation_dock.dart';
-import 'package:fl_clash/widgets/null_status.dart';
-import 'package:fl_clash/widgets/scaffold.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -190,10 +187,7 @@ class _ScanPageState extends ConsumerState<ScanPage>
 
   @override
   Widget build(BuildContext context) {
-    final theme = ThemeData(
-      useMaterial3: true,
-      colorScheme: ref.watch(genColorSchemeProvider(Brightness.dark)),
-    ).withAppShapes;
+    final theme = watchAppTheme(ref, Brightness.dark);
     final appLocalizations = context.appLocalizations;
     return Theme(
       data: theme,
@@ -207,7 +201,7 @@ class _ScanPageState extends ConsumerState<ScanPage>
           child: Scaffold(
             body: LayoutBuilder(
               builder: (context, constraints) {
-                final hintStyle = Theme.of(context).textTheme.bodyMedium!;
+                final hintStyle = AppTextStyle.subheadline.of(context);
                 final layout = _ScanLayout(
                   size: constraints.biggest,
                   padding: MediaQuery.paddingOf(context),

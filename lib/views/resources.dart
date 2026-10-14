@@ -3,13 +3,13 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
@@ -140,7 +140,7 @@ class _ResourcesViewState extends ConsumerState<ResourcesView>
       ),
     );
     final interval = int.tryParse(value ?? '');
-    if (interval == null || interval <= 0) {
+    if (interval == null || interval <= 0 || !mounted) {
       return;
     }
     ref
@@ -214,21 +214,21 @@ class _ResourcesViewState extends ConsumerState<ResourcesView>
             horizontal: 16,
           ).copyWith(top: context.appBarInset, bottom: 16),
           children: [
-            generateSectionV3(
+            generateSection(
               title: appLocalizations.geoResources,
               items: [
                 for (final geoResource in GeoResource.values)
                   _GeoResourceItem(geoResource, preloaded: _fileInfos),
               ],
             ),
-            generateSectionV3(
+            generateSection(
               title: appLocalizations.iconSets,
               items: [
                 for (final iconSet in iconSets)
                   _IconSetItem(iconSet, key: ValueKey(iconSet.id)),
               ],
             ),
-            generateSectionV3(
+            generateSection(
               title: appLocalizations.ruleProviders,
               items: [
                 for (final provider in ruleProviders)
@@ -239,7 +239,7 @@ class _ResourcesViewState extends ConsumerState<ResourcesView>
                   ),
               ],
             ),
-            generateSectionV3(
+            generateSection(
               title: appLocalizations.script,
               items: [
                 for (final script in scripts)
@@ -327,21 +327,14 @@ class _ResourceItem extends StatelessWidget {
         children: [...previousChildren, ?currentChild],
       ),
       child: isUpdating
-          ? const SizedBox.square(
-              key: ValueKey('updating'),
-              dimension: 24,
-              child: Padding(
-                padding: EdgeInsets.all(2),
-                child: CommonCircleLoading(),
-              ),
-            )
+          ? const CommonCircleLoading(key: ValueKey('updating'), size: 24)
           : chip == null
           ? const SizedBox.shrink()
           : TonalChip(
               key: const ValueKey('chip'),
               label: chip,
-              color: colorScheme.secondaryContainer,
-              foregroundColor: colorScheme.onSecondaryContainer,
+              color: context.raisedSurfaceLevel.colorOf(colorScheme),
+              foregroundColor: colorScheme.onSurfaceVariant,
             ),
     );
   }

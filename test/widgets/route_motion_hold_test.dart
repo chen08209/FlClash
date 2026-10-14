@@ -1,4 +1,4 @@
-import 'package:fl_clash/widgets/route_motion_hold.dart';
+import 'package:fl_clash/ui/route_motion_hold.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
