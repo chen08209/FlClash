@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/event.dart';
 import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/spill.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
@@ -29,6 +30,7 @@ abstract mixin class ServiceListener {
 class Service {
   static Service? _instance;
   late MethodChannel methodChannel;
+  static const _coreChannel = MethodChannel('$packageName/core');
 
   final ObserverList<ServiceListener> _listeners =
       ObserverList<ServiceListener>();
@@ -46,9 +48,10 @@ class Service {
     methodChannel.setMethodCallHandler((call) async {
       switch (call.method) {
         case 'event':
-          final data = call.arguments as String? ?? '';
           final methodCall = CoreMethodCall.fromJson(
-            Map<String, Object?>.from(json.decode(data) as Map),
+            Map<String, Object?>.from(
+              _decodeUtf8Json(call.arguments as Uint8List) as Map,
+            ),
           );
           for (final event in coreEventsFromData(methodCall.arguments)) {
             _dispatch(
@@ -72,7 +75,7 @@ class Service {
   }
 
   Future<CoreMethodResponse?> invokeMethod(CoreMethodCall call) async {
-    final data = await methodChannel.invokeMethod<Uint8List>(
+    final data = await _coreChannel.invokeMethod<Uint8List>(
       'invokeMethod',
       json.encode(call),
     );
@@ -80,7 +83,9 @@ class Service {
       return null;
     }
     final dataJson = await _decodeResponse(data);
-    return CoreMethodResponse.fromJson(dataJson as Map<String, dynamic>);
+    return resolveSpilledResponse(
+      CoreMethodResponse.fromJson(dataJson as Map<String, dynamic>),
+    );
   }
 
   void _dispatch(String label, void Function(ServiceListener) deliver) {

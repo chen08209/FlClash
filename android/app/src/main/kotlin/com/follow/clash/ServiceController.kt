@@ -64,7 +64,7 @@ object ServiceController {
         }
     }
 
-    fun setEventListener(callback: ((String?) -> Unit)?): Result<Unit> = runCatching {
+    fun setEventListener(callback: ((ByteArray) -> Unit)?): Result<Unit> = runCatching {
         Core.updateEventListener(callback)
     }
 
