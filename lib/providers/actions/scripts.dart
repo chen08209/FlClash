@@ -22,7 +22,7 @@ class ScriptsAction extends _$ScriptsAction {
 
   void _applyIfInUse(int scriptId) {
     final profile = ref.read(currentProfileProvider);
-    if (profile?.overwriteType != OverwriteType.script ||
+    if (profile?.extendType != ExtendType.script ||
         profile?.scriptId != scriptId) {
       return;
     }

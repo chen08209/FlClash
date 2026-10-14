@@ -72,6 +72,7 @@ class TrackerInfoList extends StatelessWidget {
       controller: controller,
       padding: padding,
       itemCount: trackerInfos.length,
+      extentEstimation: zeroDividerExtentEstimation,
       separatorBuilder: (_, _) => const Divider(height: 0),
       itemBuilder: (_, index) => _buildTrackerInfoItem(
         context,

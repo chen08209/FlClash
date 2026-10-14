@@ -10,9 +10,9 @@ class BuildConfig {
   const BuildConfig({
     required this.tags,
     required this.goLdflags,
+    required this.coreVersion,
     required this.coreDir,
     required this.coreName,
-    required this.libName,
     required this.outputDir,
     required this.helperDir,
     required this.helperName,
@@ -20,9 +20,9 @@ class BuildConfig {
 
   final String tags;
   final String goLdflags;
+  final String coreVersion;
   final String coreDir;
   final String coreName;
-  final String libName;
   final String outputDir;
   final String helperDir;
   final String helperName;
@@ -30,9 +30,9 @@ class BuildConfig {
   static const _defaults = BuildConfig(
     tags: 'with_gvisor',
     goLdflags: '-w -s',
+    coreVersion: '',
     coreDir: 'core',
     coreName: 'FlClashCore',
-    libName: 'libclash',
     outputDir: 'libclash',
     helperDir: 'services/helper',
     helperName: 'FlClashHelperService',
@@ -49,9 +49,9 @@ class BuildConfig {
     return BuildConfig(
       tags: yaml['tags'] as String? ?? _defaults.tags,
       goLdflags: yaml['go_ldflags'] as String? ?? _defaults.goLdflags,
+      coreVersion: yaml['core_version'] as String? ?? _defaults.coreVersion,
       coreDir: yaml['core_dir'] as String? ?? _defaults.coreDir,
       coreName: yaml['core_name'] as String? ?? _defaults.coreName,
-      libName: yaml['lib_name'] as String? ?? _defaults.libName,
       outputDir: yaml['output_dir'] as String? ?? _defaults.outputDir,
       helperDir: yaml['helper_dir'] as String? ?? _defaults.helperDir,
       helperName: yaml['helper_name'] as String? ?? _defaults.helperName,
@@ -61,9 +61,9 @@ class BuildConfig {
   Map<String, String> toFingerprintMap() => {
     'tags': tags,
     'go_ldflags': goLdflags,
+    'core_version': coreVersion,
     'core_dir': coreDir,
     'core_name': coreName,
-    'lib_name': libName,
     'output_dir': outputDir,
     'helper_dir': helperDir,
     'helper_name': helperName,

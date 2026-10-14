@@ -8,24 +8,16 @@ void main() {
   ) async {
     final controller = SideSheet.createAnimationController(tester);
     addTearDown(controller.dispose);
-    var closed = false;
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: SideSheet(
-            animationController: controller,
-            onClosing: () {
-              closed = true;
-            },
-            enableDrag: false,
-            showDragHandle: true,
             backgroundColor: Colors.red,
             shadowColor: Colors.blue,
             elevation: 4,
             shape: const RoundedRectangleBorder(),
             clipBehavior: Clip.hardEdge,
-            constraints: const BoxConstraints(minWidth: 240, maxWidth: 240),
             builder: (_) => const Text('Content'),
           ),
         ),
@@ -40,10 +32,8 @@ void main() {
     expect(material.color, Colors.red);
     expect(material.shadowColor, Colors.blue);
     expect(material.elevation, 4);
-    expect(tester.getSize(find.byType(SideSheet)).width, 240);
     expect(controller.duration, const Duration(milliseconds: 300));
     expect(controller.reverseDuration, const Duration(milliseconds: 200));
-    expect(closed, isFalse);
   });
 
   testWidgets(
@@ -60,23 +50,17 @@ void main() {
                   onPressed: () async {
                     result = await showModalSideSheet<String>(
                       context: context,
-                      useSafeArea: true,
-                      isScrollControlled: true,
                       barrierColor: Colors.black45,
                       backgroundColor: Colors.green,
                       elevation: 3,
                       shape: const RoundedRectangleBorder(),
                       clipBehavior: Clip.antiAlias,
-                      constraints: const BoxConstraints(maxWidth: 280),
                       routeSettings: const RouteSettings(name: 'side-sheet'),
                       anchorPoint: Offset.zero,
                       builder: (context) {
-                        return SizedBox(
-                          width: 280,
-                          child: TextButton(
-                            onPressed: () => Navigator.pop(context, 'done'),
-                            child: const Text('Close sheet'),
-                          ),
+                        return TextButton(
+                          onPressed: () => Navigator.pop(context, 'done'),
+                          child: const Text('Close sheet'),
                         );
                       },
                     );

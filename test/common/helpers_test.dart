@@ -168,6 +168,33 @@ void main() {
     });
   });
 
+  group('windowControlsOverPage', () {
+    test('a wide macOS window meets the traffic lights at its top left', () {
+      expect(
+        windowControlsOverPage(isMacOS: true, version: 15, isMobileView: false),
+        macOSTrafficLightsArea,
+      );
+    });
+
+    test('a window header or a native title bar keeps them off the page', () {
+      for (final (isMacOS, version, isMobileView) in [
+        (true, 15, true),
+        (true, 10, false),
+        (false, 11, false),
+      ]) {
+        expect(
+          windowControlsOverPage(
+            isMacOS: isMacOS,
+            version: version,
+            isMobileView: isMobileView,
+          ),
+          Size.zero,
+          reason: 'macOS=$isMacOS $version mobileView=$isMobileView',
+        );
+      }
+    });
+  });
+
   group('getProxiesColumns', () {
     test('minimum 2 columns', () {
       expect(getProxiesColumns(100, ProxiesLayout.standard), 2);
@@ -197,18 +224,23 @@ void main() {
     });
 
     test('scales with width', () {
-      expect(getProfilesColumns(270), 1);
+      expect(getProfilesColumns(300), 1);
       expect(getProfilesColumns(700), 2);
-      expect(getProfilesColumns(1300), 4);
+      expect(getProfilesColumns(960), 3);
+    });
+
+    test('caps at three columns', () {
+      expect(getProfilesColumns(1300), 3);
+      expect(getProfilesColumns(2400, spacing: 14), 3);
     });
 
     test('spacing costs a column at the breakpoint', () {
-      expect(getProfilesColumns(540), 2);
-      expect(getProfilesColumns(540, spacing: 14), 1);
+      expect(getProfilesColumns(600), 2);
+      expect(getProfilesColumns(600, spacing: 14), 1);
     });
 
-    test('fits two padded cards near 600px', () {
-      expect(getProfilesColumns(568, spacing: 14), 2);
+    test('fits two padded cards, not three, near 900 dp', () {
+      expect(getProfilesColumns(868, spacing: 12), 2);
     });
 
     test('every card keeps at least the minimum width', () {

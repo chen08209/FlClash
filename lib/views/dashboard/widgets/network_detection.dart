@@ -47,9 +47,6 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection>
       fontFamily: FontFamily.twEmoji.value,
     );
     final titleTextStyle = context.colorScheme.onSurfaceVariant;
-    final descTextStyle = context.textTheme.titleSmall?.copyWith(
-      color: context.colorScheme.onSurfaceVariant,
-    );
     final textScale = DashboardWidgetMetrics.textScaleOf(context);
     return SizedBox(
       height: DashboardWidgetMetrics.heightOf(context, 1),
@@ -84,7 +81,7 @@ class _NetworkDetectionState extends ConsumerState<NetworkDetection>
                         appLocalizations.networkDetection,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: descTextStyle,
+                        style: context.sectionHeaderStyle,
                       ),
                     ),
                   ),

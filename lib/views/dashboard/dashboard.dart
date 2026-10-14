@@ -1,6 +1,3 @@
-import 'dart:async';
-import 'dart:math';
-
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -24,13 +21,10 @@ class DashboardView extends ConsumerStatefulWidget {
   ConsumerState<DashboardView> createState() => _DashboardViewState();
 }
 
-class _DashboardViewState extends ConsumerState<DashboardView>
-    with SingleTickerProviderStateMixin {
+class _DashboardViewState extends ConsumerState<DashboardView> {
   final key = GlobalKey<SuperGridState>();
   final _isEditNotifier = ValueNotifier<bool>(false);
   final _addedWidgetsNotifier = ValueNotifier<List<GridItem>>([]);
-  late final _addSheetController = SnapSheetController(vsync: this);
-  int _landingCount = 0;
 
   @override
   void initState() {
@@ -59,7 +53,6 @@ class _DashboardViewState extends ConsumerState<DashboardView>
   void dispose() {
     _isEditNotifier.dispose();
     _addedWidgetsNotifier.dispose();
-    _addSheetController.dispose();
     super.dispose();
   }
 
@@ -120,8 +113,6 @@ class _DashboardViewState extends ConsumerState<DashboardView>
     showSnapSheet(
       context,
       detents: const [0.85],
-      collapsedDetent: 0.2,
-      controller: _addSheetController,
       builder: (sheetContext, scrollController) {
         return ValueListenableBuilder(
           valueListenable: _addedWidgetsNotifier,
@@ -146,21 +137,8 @@ class _DashboardViewState extends ConsumerState<DashboardView>
     if (grid == null) {
       return;
     }
-    final isLast = _addedWidgetsNotifier.value.length <= 1;
-    if (isLast || !_addSheetController.isAttached) {
-      Navigator.of(sheetContext).pop();
-      grid.addItem(item, from: from);
-      return;
-    }
-    _addSheetController.collapse();
-    _landingCount++;
-    unawaited(
-      grid.addItem(item, from: from).whenComplete(() {
-        if (--_landingCount == 0 && mounted) {
-          _addSheetController.restore();
-        }
-      }),
-    );
+    Navigator.of(sheetContext).pop();
+    grid.addItem(item, from: from);
   }
 
   void _handleEnterEdit() {
@@ -197,18 +175,17 @@ class _DashboardViewState extends ConsumerState<DashboardView>
         title: context.appLocalizations.dashboard,
         actions: _buildActions(isEdit),
         floatingActionButton: hasProfile ? const StartButton() : null,
-        body: Align(
-          alignment: Alignment.topCenter,
-          // SingleChildScrollView snaps a bounce back to its edge whenever a
-          // card's refresh relays it out; a sliver viewport keeps the overscroll.
-          child: ValueListenableBuilder(
-            valueListenable: _addSheetController,
-            builder: (context, sheetHeight, _) {
-              final padding = const EdgeInsets.all(16).copyWith(
-                top: context.contentTopPadding,
-                bottom: 16 + max(BottomInsetScope.of(context), sheetHeight),
-              );
-              return CustomScrollView(
+        body: Builder(
+          builder: (context) {
+            final padding = const EdgeInsets.all(16).copyWith(
+              top: context.contentTopPadding,
+              bottom: 16 + BottomInsetScope.of(context),
+            );
+            return Align(
+              alignment: Alignment.topCenter,
+              // SingleChildScrollView snaps a bounce back to its edge whenever a
+              // card's refresh relays it out; a sliver viewport keeps the overscroll.
+              child: CustomScrollView(
                 slivers: [
                   SliverPadding(
                     padding: padding,
@@ -256,9 +233,9 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                     ),
                   ),
                 ],
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -333,16 +310,10 @@ class _AddedContainer extends StatelessWidget {
           right: -8,
           child: DeferPointer(
             child: ElasticButton(
-              child: SizedBox(
-                width: 24,
-                height: 24,
-                child: IconButton.filled(
-                  tooltip: context.appLocalizations.add,
-                  iconSize: 16,
-                  padding: const EdgeInsets.all(4),
-                  onPressed: () => _handleAdd(context),
-                  icon: const GlyphIcon(AppGlyphs.add, fill: 1),
-                ),
+              child: CornerBadgeButton(
+                glyph: AppGlyphs.addCircle,
+                tooltip: context.appLocalizations.add,
+                onPressed: () => _handleAdd(context),
               ),
             ),
           ),

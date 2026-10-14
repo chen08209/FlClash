@@ -28,28 +28,33 @@ class ClashProvidersDao extends DatabaseAccessor<Database>
     with _$ClashProvidersDaoMixin {
   ClashProvidersDao(super.attachedDatabase);
 
-  SimpleSelectStatement<$ClashProvidersTable, RawClashProvider>
-  _orderedSelect() {
-    final stmt = clashProviders.select();
-    stmt.orderBy([
-      (t) => OrderingTerm(expression: t.order, nulls: NullsOrder.last),
-      (t) => OrderingTerm.asc(t.id),
-    ]);
-    return stmt;
+  /// App-level providers are rule providers. Older builds still read [kind],
+  /// and a proxy provider one of them saved is left out.
+  Expression<bool> _isRuleProvider($ClashProvidersTable t) {
+    return t.kind.equalsValue(ProviderKind.rule);
   }
 
-  Selectable<ClashProvider> query(ProviderKind kind) {
-    final stmt = _orderedSelect()..where((t) => t.kind.equalsValue(kind));
-    return stmt.map((item) => item.toClashProvider());
-  }
-
-  Selectable<ClashProvider> queryAll() {
-    return _orderedSelect().map((item) => item.toClashProvider());
+  Selectable<ClashProvider> query() {
+    return clashProviders.readable(
+      (row) => row.toClashProvider(),
+      where: _isRuleProvider,
+      orderBy: [
+        (t) => OrderingTerm(expression: t.order, nulls: NullsOrder.last),
+        (t) => OrderingTerm.asc(t.id),
+      ],
+    );
   }
 
   Selectable<String> fileNames() {
-    return clashProviders.select().map(
-      (item) => item.toClashProvider().fileName,
+    final query = selectOnly(clashProviders)
+      ..addColumns([clashProviders.id, clashProviders.url])
+      ..where(_isRuleProvider(clashProviders));
+    return query.map(
+      (row) => ClashProvider(
+        id: row.read(clashProviders.id)!,
+        label: '',
+        url: row.read(clashProviders.url)!,
+      ).fileName,
     );
   }
 
@@ -80,11 +85,10 @@ extension RawClashProviderExt on RawClashProvider {
   ClashProvider toClashProvider() {
     return ClashProvider(
       id: id,
-      kind: kind,
       label: label,
       url: url,
-      behavior: behavior,
-      format: format,
+      behavior: behavior ?? RuleProviderBehavior.classical,
+      format: format ?? RuleProviderFormat.yaml,
       order: order,
     );
   }
@@ -94,7 +98,7 @@ extension ClashProvidersCompanionExt on ClashProvider {
   ClashProvidersCompanion toCompanion([int? order]) {
     return ClashProvidersCompanion.insert(
       id: Value(id),
-      kind: kind,
+      kind: ProviderKind.rule,
       label: label,
       url: url,
       behavior: Value(behavior),

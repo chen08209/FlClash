@@ -211,7 +211,9 @@ class AppTray implements TrayPort {
     if (delay == null) {
       return null;
     }
-    return delay > 0 ? '$delay' : currentAppLocalizations.timeout;
+    return delay > 0
+        ? '$delay'
+        : delayFailureText(delay, currentAppLocalizations);
   }
 
   List<TrayMenuItem> _buildGroupMenu({

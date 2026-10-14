@@ -46,7 +46,7 @@ void main() {
       final bytes = Uint8List.fromList(utf8.encode('bad: ['));
 
       await expectLater(
-        profile.saveFile(bytes, validate: (_) async => 'invalid config'),
+        profile.saveFile(bytes, validate: (_, _) async => 'invalid config'),
         throwsA(
           isA<MessageException>().having(
             (e) => e.message,
@@ -64,11 +64,29 @@ void main() {
       final profile = Profile.normal(label: 'p');
       final bytes = Uint8List.fromList(utf8.encode('proxies: []'));
 
-      final saved = await profile.saveFile(bytes, validate: (_) async => '');
+      final saved = await profile.saveFile(bytes, validate: (_, _) async => '');
 
       expect(saved.lastUpdateDate, isNotNull);
       final savedFile = await profile.file;
       expect(await savedFile.readAsString(), 'proxies: []');
+    });
+
+    test('validates with the profile age key', () async {
+      final profile = Profile.normal(
+        label: 'p',
+      ).copyWith(ageSecretKey: 'AGE-SECRET-KEY-1A');
+      final bytes = Uint8List.fromList(utf8.encode('proxies: []'));
+      String? ageSecretKey;
+
+      await profile.saveFile(
+        bytes,
+        validate: (_, key) async {
+          ageSecretKey = key;
+          return '';
+        },
+      );
+
+      expect(ageSecretKey, 'AGE-SECRET-KEY-1A');
     });
   });
 }

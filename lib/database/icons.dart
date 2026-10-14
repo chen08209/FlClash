@@ -25,8 +25,9 @@ class IconRecordsDao extends DatabaseAccessor<Database>
     final now = DateTime.now().millisecondsSinceEpoch;
 
     return transaction(() async {
-      final query = select(iconRecords)..where((t) => t.url.equals(url));
-      final record = await query.getSingleOrNull();
+      final record = await iconRecords
+          .readable((row) => row, where: (t) => t.url.equals(url))
+          .getSingleOrNull();
 
       if (record != null) {
         await (update(iconRecords)..where((t) => t.url.equals(url))).write(
@@ -35,14 +36,6 @@ class IconRecordsDao extends DatabaseAccessor<Database>
       }
       return record;
     });
-  }
-
-  Future<void> putIfAbsent(String url) async {
-    final existing = await (select(
-      iconRecords,
-    )..where((t) => t.url.equals(url))).getSingleOrNull();
-    if (existing != null) return;
-    await put(url);
   }
 
   Future<void> put(String url) async {
@@ -67,15 +60,90 @@ class IconRecordsDao extends DatabaseAccessor<Database>
     });
   }
 
+  Future<void> del(String url) {
+    return iconRecords.remove((t) => t.url.equals(url));
+  }
+
   Future<List<IconRecord>> query(String query) {
-    return (select(iconRecords)
-          ..where((t) => t.url.contains(query))
-          ..orderBy([
+    return iconRecords
+        .readable(
+          (row) => row,
+          where: (t) => t.url.contains(query),
+          orderBy: [
             (t) => OrderingTerm(
               expression: t.lastAccessed,
               mode: OrderingMode.desc,
             ),
-          ]))
+          ],
+        )
         .get();
+  }
+}
+
+@DataClassName('RawIconSet')
+class IconSets extends Table {
+  @override
+  String get tableName => 'icon_sets';
+
+  IntColumn get id => integer()();
+
+  TextColumn get name => text()();
+
+  TextColumn get url => text()();
+
+  TextColumn get icons => text().map(const IconSetIconsConverter())();
+
+  DateTimeColumn get lastUpdateTime => dateTime().nullable()();
+
+  IntColumn get order => integer().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftAccessor(tables: [IconSets])
+class IconSetsDao extends DatabaseAccessor<Database> with _$IconSetsDaoMixin {
+  IconSetsDao(super.attachedDatabase);
+
+  Selectable<IconSet> query() {
+    return iconSets.readable(
+      (row) => row.toIconSet(),
+      orderBy: [
+        (t) => OrderingTerm(expression: t.order, nulls: NullsOrder.last),
+        (t) => OrderingTerm.asc(t.id),
+      ],
+    );
+  }
+
+  Future<void> putAll(Iterable<IconSetsCompanion> items) async {
+    await batch((b) {
+      b.insertAllOnConflictUpdate(iconSets, items);
+    });
+  }
+}
+
+extension RawIconSetExt on RawIconSet {
+  IconSet toIconSet() {
+    return IconSet(
+      id: id,
+      name: name,
+      url: url,
+      icons: icons,
+      lastUpdateTime: lastUpdateTime,
+      order: order,
+    );
+  }
+}
+
+extension IconSetsCompanionExt on IconSet {
+  IconSetsCompanion toCompanion([int? order]) {
+    return IconSetsCompanion.insert(
+      id: Value(id),
+      name: name,
+      url: url,
+      icons: icons,
+      lastUpdateTime: Value(lastUpdateTime),
+      order: Value(order ?? this.order),
+    );
   }
 }

@@ -53,11 +53,17 @@ class _LogsViewState extends ConsumerState<LogsView>
     with RouteMotionHoldMixin<LogsView> {
   final _listController = LogListController();
   late final ScrollController _scrollController;
+  late final _physics = FollowEndScrollPhysics(
+    isFollowing: () => _listController.value.autoScrollToEnd,
+  );
 
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController(initialScrollOffset: double.maxFinite);
+    _scrollController = sheetScrollController(
+      context,
+      initialScrollOffset: double.maxFinite,
+    );
     _listController.setLogs(ref.read(logsProvider).list);
     ref.listenManual(logsProvider.select((state) => state.revision), (_, _) {
       updateLogsThrottler();
@@ -144,9 +150,8 @@ class _LogsViewState extends ConsumerState<LogsView>
                   },
                   controller: _scrollController,
                   enable: state.autoScrollToEnd,
-                  dataSource: logs,
                   child: SuperListView.separated(
-                    physics: const NextClampingScrollPhysics(),
+                    physics: _physics,
                     reverse: true,
                     shrinkWrap: true,
                     controller: _scrollController,
@@ -155,6 +160,7 @@ class _LogsViewState extends ConsumerState<LogsView>
                       bottom: 16 + BottomInsetScope.of(context),
                     ),
                     itemCount: logs.length,
+                    extentEstimation: zeroDividerExtentEstimation,
                     separatorBuilder: (_, _) => const Divider(height: 0),
                     itemBuilder: (_, index) {
                       final log = logs[index];

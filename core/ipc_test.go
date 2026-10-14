@@ -1,6 +1,6 @@
-//go:build !cgo
+//go:build !cgo && !android
 
-package main
+package core
 
 import (
 	"bytes"
@@ -211,9 +211,7 @@ func TestReadFrameRejectsTruncatedPayload(t *testing.T) {
 }
 
 func TestMethodResponseSuccessEnvelope(t *testing.T) {
-	frame := captureSingleFrame(t, func() {
-		MethodResponse{ID: "42"}.success(map[string]any{"ok": true})
-	})
+	frame := encodeResponse(MethodResponse{ID: "42", Result: map[string]any{"ok": true}})
 
 	var envelope map[string]any
 	if err := json.Unmarshal(frame, &envelope); err != nil {
@@ -232,9 +230,11 @@ func TestMethodResponseSuccessEnvelope(t *testing.T) {
 }
 
 func TestMethodResponseFailureEnvelope(t *testing.T) {
-	frame := captureSingleFrame(t, func() {
-		MethodResponse{ID: "7"}.failure("core_error", "boom", []string{"detail"})
-	})
+	frame := encodeResponse(MethodResponse{ID: "7", Error: &MethodError{
+		Code:    "core_error",
+		Message: "boom",
+		Details: []string{"detail"},
+	}})
 
 	var envelope struct {
 		ID     string       `json:"id"`
@@ -275,24 +275,14 @@ func TestDecodeMethodArgumentsRejectsInvalidPayloads(t *testing.T) {
 				Method:    initClashMethod,
 				Arguments: json.RawMessage(test.arguments),
 			}
-			target := InitParams{}
-			accepted := true
 
-			frame := captureSingleFrame(t, func() {
-				accepted = decodeMethodArguments(call, MethodResponse{ID: call.ID}, &target)
-			})
+			_, err := decodeArguments[InitParams](call)
 
-			if accepted {
-				t.Fatal("decodeMethodArguments accepted an invalid payload")
+			if err == nil {
+				t.Fatal("decodeArguments accepted an invalid payload")
 			}
-			var envelope struct {
-				Error *MethodError `json:"error"`
-			}
-			if err := json.Unmarshal(frame, &envelope); err != nil {
-				t.Fatalf("response is not valid JSON: %v", err)
-			}
-			if envelope.Error == nil || envelope.Error.Code != "invalid_arguments" {
-				t.Errorf("error = %+v, want code invalid_arguments", envelope.Error)
+			if code := asMethodError(err).Code; code != "invalid_arguments" {
+				t.Errorf("code = %q, want invalid_arguments", code)
 			}
 		})
 	}
@@ -304,16 +294,11 @@ func TestDecodeMethodArgumentsAcceptsValidPayload(t *testing.T) {
 		Method:    initClashMethod,
 		Arguments: json.RawMessage(`{"home-dir":"/tmp/flclash","version":3}`),
 	}
-	target := InitParams{}
 
-	frames := captureFrames(t, func() {
-		if !decodeMethodArguments(call, MethodResponse{ID: call.ID}, &target) {
-			t.Fatal("decodeMethodArguments rejected a valid payload")
-		}
-	})
+	target, err := decodeArguments[*InitParams](call)
 
-	if len(frames) != 0 {
-		t.Errorf("a successful decode must not send a response, got %d frames", len(frames))
+	if err != nil {
+		t.Fatalf("decodeArguments rejected a valid payload: %v", err)
 	}
 	if target.HomeDir != "/tmp/flclash" || target.Version != 3 {
 		t.Errorf("decoded params = %+v, want {/tmp/flclash 3}", target)
@@ -321,12 +306,7 @@ func TestDecodeMethodArgumentsAcceptsValidPayload(t *testing.T) {
 }
 
 func TestHandleMethodCallReportsUnknownMethod(t *testing.T) {
-	frame := captureSingleFrame(t, func() {
-		handleMethodCall(
-			&MethodCall{ID: "9", Method: CoreMethod("nopeMethod")},
-			MethodResponse{ID: "9"},
-		)
-	})
+	frame := handleMethodCall(&MethodCall{ID: "9", Method: CoreMethod("nopeMethod")})
 
 	var envelope struct {
 		Error *MethodError `json:"error"`
@@ -382,26 +362,90 @@ func TestSendWithoutConnectionDoesNotPanic(t *testing.T) {
 	send([]byte("{}"))
 }
 
-func TestMethodResponseAnswersExactlyOnce(t *testing.T) {
-	response := newMethodResponse("11", nil)
+func withMethodHandler(t *testing.T, method CoreMethod, handler methodHandler) {
+	t.Helper()
+	methodHandlers[method] = handler
+	t.Cleanup(func() { delete(methodHandlers, method) })
+}
 
-	frames := captureFrames(t, func() {
-		response.success("first")
-		response.success("second")
-		response.failure("core_error", "late", nil)
-	})
+// dispatchReplies collects every reply to one call; a second one would
+// double-release the platform callback.
+func dispatchReplies(t *testing.T, call *MethodCall) [][]byte {
+	t.Helper()
+	replies := make(chan []byte, 2)
+	dispatchMethodCall(call, func(data []byte) { replies <- data })
+
+	var frames [][]byte
+	select {
+	case frame := <-replies:
+		frames = append(frames, frame)
+	case <-time.After(time.Second):
+		t.Fatal("the call was never answered")
+	}
+	select {
+	case frame := <-replies:
+		frames = append(frames, frame)
+	case <-time.After(50 * time.Millisecond):
+	}
+	return frames
+}
+
+func TestDispatchMethodCallAnswersExactlyOnce(t *testing.T) {
+	const method CoreMethod = "testEcho"
+	withMethodHandler(t, method, withArguments(func(value string) string { return value }))
+
+	frames := dispatchReplies(t, &MethodCall{ID: "11", Method: method, Arguments: json.RawMessage(`"first"`)})
 
 	if len(frames) != 1 {
-		t.Fatalf("captured %d frames, want 1; a second answer double-releases the platform callback", len(frames))
+		t.Fatalf("got %d replies, want 1", len(frames))
 	}
 	var envelope struct {
+		ID     string `json:"id"`
 		Result string `json:"result"`
 	}
 	if err := json.Unmarshal(frames[0], &envelope); err != nil {
 		t.Fatalf("response is not valid JSON: %v", err)
 	}
-	if envelope.Result != "first" {
-		t.Errorf("result = %q, want the first answer to win", envelope.Result)
+	if envelope.ID != "11" || envelope.Result != "first" {
+		t.Errorf("envelope = %+v, want the handler's result under the call's id", envelope)
+	}
+}
+
+func TestMethodHandlerErrorsBecomeFailureEnvelopes(t *testing.T) {
+	const method CoreMethod = "testFail"
+	structured := &MethodError{Code: "provider_updating", Message: "busy"}
+	tests := []struct {
+		name    string
+		handler methodHandler
+		code    string
+		result  string
+	}{
+		{"plain error", withFallible(func(string) (string, error) { return "", errors.New("boom") }), "core_error", ""},
+		{"structured error", withFallible(func(string) (string, error) { return "", structured }), "provider_updating", ""},
+		{"message", withMessage(func(string) error { return errors.New("boom") }), "", "boom"},
+		{"structured message", withMessage(func(string) error { return structured }), "provider_updating", ""},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			withMethodHandler(t, method, test.handler)
+
+			frame := handleMethodCall(&MethodCall{Method: method, Arguments: json.RawMessage(`"x"`)})
+
+			var envelope struct {
+				Result string       `json:"result"`
+				Error  *MethodError `json:"error"`
+			}
+			if err := json.Unmarshal(frame, &envelope); err != nil {
+				t.Fatalf("response is not valid JSON: %v", err)
+			}
+			code := ""
+			if envelope.Error != nil {
+				code = envelope.Error.Code
+			}
+			if code != test.code || envelope.Result != test.result {
+				t.Errorf("code = %q result = %q, want %q and %q", code, envelope.Result, test.code, test.result)
+			}
+		})
 	}
 }
 
@@ -422,12 +466,7 @@ func TestSendMessageBatchDoesNotDoubleEncodeArguments(t *testing.T) {
 }
 
 func TestHandleMethodCallReportsMissingArguments(t *testing.T) {
-	frame := captureSingleFrame(t, func() {
-		handleMethodCall(
-			&MethodCall{ID: "3", Method: getTrafficMethod},
-			newMethodResponse("3", nil),
-		)
-	})
+	frame := handleMethodCall(&MethodCall{ID: "3", Method: getTrafficMethod})
 
 	var envelope struct {
 		Error *MethodError `json:"error"`
@@ -616,21 +655,14 @@ func TestSendRearmsTheFailureReportAfterAFrameGetsThrough(t *testing.T) {
 	}
 }
 
-func TestSafeGoAnswersWhenTheHandlerPanics(t *testing.T) {
-	response := newMethodResponse("5", nil)
-	done := make(chan struct{})
+func TestDispatchMethodCallAnswersWhenTheHandlerPanics(t *testing.T) {
+	const method CoreMethod = "testPanic"
+	withMethodHandler(t, method, withoutArguments(func() bool { panic("handler exploded") }))
 
-	frames := captureFrames(t, func() {
-		safeGo(response, func() {
-			defer close(done)
-			panic("handler exploded")
-		})
-		<-done
-		time.Sleep(50 * time.Millisecond)
-	})
+	frames := dispatchReplies(t, &MethodCall{ID: "5", Method: method})
 
 	if len(frames) != 1 {
-		t.Fatalf("captured %d frames, want the panic answered exactly once", len(frames))
+		t.Fatalf("got %d replies, want the panic answered exactly once", len(frames))
 	}
 	var envelope struct {
 		Error *MethodError `json:"error"`
@@ -646,10 +678,10 @@ func TestSafeGoAnswersWhenTheHandlerPanics(t *testing.T) {
 	}
 }
 
-func TestSafeGoDetachedSurvivesAPanic(t *testing.T) {
+func TestSafeGoSurvivesAPanic(t *testing.T) {
 	done := make(chan struct{})
 
-	safeGoDetached("test", func() {
+	safeGo("test", func() {
 		defer close(done)
 		panic("background exploded")
 	})
@@ -657,7 +689,7 @@ func TestSafeGoDetachedSurvivesAPanic(t *testing.T) {
 	select {
 	case <-done:
 	case <-time.After(time.Second):
-		t.Fatal("safeGoDetached never ran the task")
+		t.Fatal("safeGo never ran the task")
 	}
 	time.Sleep(50 * time.Millisecond)
 }
@@ -736,22 +768,61 @@ func TestDeliveryFailureIsReportedOncePerConnection(t *testing.T) {
 
 func TestHandleStartLogAndStopLogLifecycle(t *testing.T) {
 	handleStartLog()
-	logMu.Lock()
-	if logSubscriber == nil || logCancel == nil {
-		logMu.Unlock()
-		t.Fatal("handleStartLog did not initialize subscriber or cancel func")
+	first := currentLogPump()
+	if first == nil {
+		t.Fatal("handleStartLog did not start a log pump")
 	}
-	logMu.Unlock()
 
 	handleStartLog()
+	second := currentLogPump()
+	if second == first || !first.stopped.Load() {
+		t.Error("a second handleStartLog left the first pump subscribed")
+	}
 
 	handleStopLog()
-	logMu.Lock()
-	if logSubscriber != nil || logCancel != nil {
-		logMu.Unlock()
-		t.Fatal("handleStopLog did not clear subscriber or cancel func")
+	if currentLogPump() != nil || !second.stopped.Load() {
+		t.Fatal("handleStopLog did not stop the log pump")
 	}
-	logMu.Unlock()
+	if _, open := <-second.subscription; open {
+		t.Error("handleStopLog left the subscription open, so mihomo keeps emitting into it")
+	}
+}
+
+// mihomo emits to a subscriber under a lock and blocks once its buffer is full,
+// so a pump that stopped reading before the unsubscribe would wedge the stop.
+func TestHandleStopLogReturnsWhileTheLogIsFlooded(t *testing.T) {
+	previous := log.Level()
+	log.SetLevel(log.SILENT)
+	t.Cleanup(func() { log.SetLevel(previous) })
+
+	handleStartLog()
+	flooding := make(chan struct{})
+	flooded := make(chan struct{})
+	go func() {
+		defer close(flooded)
+		for {
+			select {
+			case <-flooding:
+				return
+			default:
+				log.Infoln("flood")
+			}
+		}
+	}()
+
+	stopped := make(chan struct{})
+	go func() {
+		defer close(stopped)
+		handleStopLog()
+	}()
+
+	select {
+	case <-stopped:
+	case <-time.After(5 * time.Second):
+		t.Fatal("handleStopLog never returned under a log flood")
+	}
+	close(flooding)
+	<-flooded
 }
 
 func TestServeReleasesTheCoreWhenTheHostDisconnects(t *testing.T) {
@@ -776,15 +847,13 @@ func TestServeReleasesTheCoreWhenTheHostDisconnects(t *testing.T) {
 
 func TestReleaseOnExitIsANoOpBeforeInit(t *testing.T) {
 	isInit.Store(false)
-	logMu.Lock()
-	logSubscriber = make(chan log.Event)
-	logCancel = func() { t.Error("release before init cancelled a log pump it does not own") }
-	logMu.Unlock()
-	t.Cleanup(func() {
-		logMu.Lock()
-		logSubscriber, logCancel = nil, nil
-		logMu.Unlock()
-	})
+	handleStartLog()
+	t.Cleanup(handleStopLog)
+	pump := currentLogPump()
 
 	releaseOnExit()
+
+	if currentLogPump() != pump || pump.stopped.Load() {
+		t.Error("release before init stopped a log pump it does not own")
+	}
 }

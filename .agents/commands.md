@@ -17,12 +17,13 @@ dart setup.dart windows
 dart setup.dart android
 ```
 
-The Go core and the Rust helper build automatically: Flutter runs
+The desktop Go core and the Rust helper build automatically: Flutter runs
 `plugins/setup/hook/build.dart` on every `flutter build` and `flutter test`,
 and the hook drives `CoreBuilder` from the `setup_hooks` package in
-`plugins/setup/setup_hooks/`. Android builds take the NDK from the C compiler
-Flutter hands the hook; no `ANDROID_NDK` variable is needed.
-Artifacts land in `libclash/`. The hook reruns only when Go, Rust, or
+`plugins/setup/setup_hooks/`. Artifacts land in `libclash/`. Android's Core is
+the AAR the `:core` Gradle module builds with `gomobile bind` before anything
+compiles against it; that needs `go` on `PATH` and nothing else, since the
+gomobile tools come from `core/go.mod` and the NDK from AGP. The hook reruns only when Go, Rust, or
 `setup_hooks` inputs change; the fingerprint cache lives in
 `.dart_tool/setup_build_cache/`. To force a rebuild, delete that directory:
 
@@ -49,15 +50,16 @@ hooks:
       build_assets: true   # false does the same for the Rust library
 ```
 
-CI flips `setup` to `false` with `yq` before `dart run tool/changelog.dart` and
-`flutter test`, and restores the file afterwards; no test loads the Go core. `rust_api`
-stays on there because the editor tests in `test/plugins/code_forge/` load the Rust
-library the hook builds; the release-notes job, which runs no tests, flips both.
+CI flips `setup` to `false` with `yq` in its throwaway checkout before
+`dart run tool/changelog.dart` and `flutter test`; no test loads the Go core. `rust_api`
+stays on there because the editor tests in `test/plugins/code_forge/` and the socket
+test in `test/core/desktop/ipc_native_test.dart` load the Rust library the hook
+builds; the release-notes job, which runs no tests, flips both.
 Never commit `false`: a build with it set stages whatever `libclash/` already
 holds and bundles no Rust library, which is why `setup.dart` refuses to package
 while it is set. Locally, `false` is worth setting for a Dart-only test loop,
 but the hook cache keys on the user-define, so the first build afterwards runs
-the hooks again. The editor tests still need the Rust library: keep `rust_api`
+the hooks again. The editor and IPC socket tests still need the Rust library: keep `rust_api`
 on, or point `FRB_DART_LOAD_EXTERNAL_LIBRARY_NATIVE_LIB_DIR` at a directory that
 holds a `rust_api` library built from the same sources.
 
@@ -175,7 +177,8 @@ flutter test test/widgets/core_status_button_test.dart
 What those suites own:
 
 - `test/core/desktop/`: replaceable IPC transport, RPC request correlation/failure, direct/Helper process leases, and
-  latest-intent desktop lifecycle convergence.
+  latest-intent desktop lifecycle convergence. `ipc_native_test.dart` runs the transport over a real socket through
+  the Rust `IpcServer`; the server's own behavior is covered by `cargo test` in `plugins/rust_api/rust`.
 - `test/core/service_test.dart`: `CoreService` composition and terminal close behavior.
 - `test/core/protocol_contract_test.dart`: shared Dart/Go method and event-envelope compatibility, including event batches.
 - `test/providers/action_test.dart`: Core start/restart orchestration and overlapping restart requests.
@@ -185,12 +188,13 @@ What those suites own:
 
 ## Native Component Verification
 
-The CI Go-wrapper checks can be reproduced without CGO:
+The CI Go-wrapper checks can be reproduced without CGO, the Android files included:
 
 ```bash
 cd core
 CGO_ENABLED=0 go test .
-CGO_ENABLED=0 go vet .
+CGO_ENABLED=0 go vet . ./cmd/...
+GOOS=android GOARCH=arm64 CGO_ENABLED=0 go vet -tags=with_gvisor . ./mobile ./tun ./platform
 ```
 
 The Windows Helper's loopback/session protocol tests are host-independent by default. Windows CI additionally enables its
@@ -209,6 +213,7 @@ registered with `java_home`, so export it by prefix:
 ```bash
 cd android
 export JAVA_HOME="$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home"   # elsewhere: any JDK 17
+./gradlew :core:compileDebugKotlin -Ptarget-platform=android-arm64   # builds the gomobile AAR for one ABI
 ./gradlew :service:compileDebugKotlin
 ./gradlew :app:compileDebugKotlin
 ```
@@ -284,7 +289,8 @@ works as is for local previews. `tool/build_site.sh [dir]` assembles it with the
 `gh`. Without `gh` access the page falls back to the newest version in `CHANGELOG.md` and lists the files without sizes.
 It then runs `tool/render_site.mjs` (Node), which writes the English page and a `zh/` copy for search engines: page
 text, the first changelog releases, canonical and `hreflang` links, JSON-LD and `sitemap.xml`, all from the strings,
-changelog parser and release markup in `site/assets/shared.js`. `SITE_URL` overrides the published URL these point at.
+changelog parser and release markup in `site/assets/shared.js`, plus the GitHub star count from `release.json` so the
+nav does not grow when the page loads. `SITE_URL` overrides the published URL these point at.
 On the built site each URL keeps its language: the language button links to the other page and carries the section in
 view, the chosen platform and the changelog search. Only the English root sends readers who chose or prefer Chinese on
 to `zh/`, unless its URL carries `?lang=en`: the button on `zh/` links there with it, so getting back to English never
@@ -311,8 +317,7 @@ In the public repository every branch push runs the `dart` job; in the private
 The `dart` job performs these root-package checks in order:
 
 ```bash
-bash tool/check_commit_msg_test.sh
-bash tool/check_comment_density_test.sh
+bash tool/hooks/test.sh
 flutter pub get
 dart format --output=none --set-exit-if-changed lib test tool plugins setup.dart
 flutter analyze --no-fatal-infos
@@ -321,15 +326,18 @@ flutter test --reporter expanded --coverage
 dart run tool/check_coverage.dart coverage/lcov.info 75
 ```
 
+`tool/hooks/` holds the scripts the git hooks run, and `tool/hooks/test.sh` runs every `*_test.sh` beside them, so a
+new hook script needs only its test file next to it, not a workflow step.
+
 Run `flutter analyze` before committing; CI fails on anything it reports.
 
 Release builds run only for `v*` tag pushes; pull requests trigger nothing.
 Root analysis excludes `plugins/**`, and root tests do not discover nested
 plugin packages, so parallel jobs validate the rest from their own package
 directories: `plugins` (local Flutter packages and the setup build tool), `go`
-(the Core wrapper, plus an NDK-backed vet of the Android files), `android`
-(JVM unit tests for `:common`, `:service` and `:app`, with the Flutter compile
-tasks excluded so no native build hook runs), `rust` (both crates), and a
+(the Core wrapper, plus a vet of the Android files), `android` (JVM unit tests
+for `:common`, `:service` and `:app`, with the Flutter compile tasks excluded
+and the gomobile AAR built for one ABI), `rust` (both crates), and a
 Windows runner for the helper's `windows-service` feature. A `desktop` job also
 compiles a debug build per desktop platform. Release builds run only in the
 public repository and start once every job except `desktop` passes.

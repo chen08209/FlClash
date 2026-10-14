@@ -10,6 +10,9 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/dashboard/widget_metrics.dart';
 import 'package:fl_clash/views/dashboard/widgets/profile_detail.dart';
 import 'package:fl_clash/views/dashboard/widgets/profiles.dart';
+import 'package:fl_clash/views/profiles/custom/custom.dart';
+import 'package:fl_clash/views/profiles/custom/rules.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -23,6 +26,21 @@ import '../../helpers/test_profiles.dart';
 const _gib = 1024 * 1024 * 1024;
 
 class _MockCore extends Mock implements CoreHandlerInterface {}
+
+class _TestProfileRules extends ProfileRules {
+  @override
+  Stream<List<Rule>> build(int profileId) => Stream.value(const []);
+}
+
+class _TestProxyGroups extends ProxyGroups {
+  @override
+  Stream<List<ProxyGroup>> build(int profileId) => Stream.value(const []);
+}
+
+class _IdleSetupAction extends SetupAction {
+  @override
+  void autoApplyProfile() {}
+}
 
 class _FakePathProvider extends PathProviderPlatform {
   @override
@@ -246,11 +264,11 @@ void main() {
     await openDetail(tester);
 
     expect(find.byType(ProfileDetailSheet), findsOneWidget);
-    expect(find.byTooltip('Preview'), findsOneWidget);
+    expect(find.byTooltip('Final config'), findsOneWidget);
     expect(find.byTooltip('Edit'), findsNothing);
     for (final (title, value) in [
       ('Proxy group', '1'),
-      ('Proxy node', '7'),
+      ('Proxies', '7'),
       ('Rules', '3'),
     ]) {
       expect(
@@ -263,6 +281,59 @@ void main() {
         findsOneWidget,
       );
     }
+  });
+
+  testWidgets('tapping a custom profile edits it in a sheet, built once open', (
+    tester,
+  ) async {
+    final profile = Profile.custom(label: 'mine');
+    setUpProfiles(
+      [profile],
+      overrides: [
+        profileRulesProvider.overrideWith2((_) => _TestProfileRules()),
+        proxyGroupsProvider.overrideWith2((_) => _TestProxyGroups()),
+        customProfileDataProvider(
+          profile.id,
+        ).overrideWithValue(const CustomProfileData(ruleTargets: {'DIRECT'})),
+        setupActionProvider.overrideWith(_IdleSetupAction.new),
+      ],
+    );
+    await pumpCard(tester);
+
+    await tester.tap(label('mine'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(CustomProfileView), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey(NullStatusIllustration.profile)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(CustomProfileView),
+        matching: find.byType(CommonCard),
+      ),
+      findsNothing,
+    );
+
+    await tester.pumpAndSettle();
+    expect(find.byType(NullStatus), findsOneWidget);
+    expect(find.byType(ProfileDetailSheet), findsNothing);
+    final sheet = find.byType(NestedPagedSheet);
+    expect(
+      find.descendant(of: sheet, matching: find.byType(CustomProfileView)),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.ancestor(of: find.text('Rule'), matching: find.byType(CommonCard)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      ModalRoute.of(tester.element(find.byType(CustomRulesView))),
+      isA<PagedSheetRoute<void>>(),
+    );
   });
 
   test('counts provider proxies but not provider rules', () {

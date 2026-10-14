@@ -8,6 +8,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/preview.dart';
+import 'package:fl_clash/views/proxies/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -30,7 +31,7 @@ typedef ConfigCounts = ({int groups, int proxies, int rules});
 
 typedef ProfileStats = ({int groups, int proxies, int rules, int providers});
 
-/// Counts what the Core was handed, overwrites included, rather than what the
+/// Counts what the Core was handed, extensions included, rather than what the
 /// profile file declares.
 ConfigCounts configCountsOf(Map<String, dynamic> config) {
   int lengthOf(Object? value) => value is List ? value.length : 0;
@@ -157,7 +158,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
           ),
         IconButtonData(
           glyph: AppGlyphs.eye,
-          tooltip: appLocalizations.preview,
+          tooltip: appLocalizations.finalConfig,
           onPressed: () => _handlePreview(profile),
         ),
       ],
@@ -193,10 +194,11 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
                   lastUpdateDate: profile.lastUpdateDate,
                 ),
               ),
-              _InfoRow(
-                label: appLocalizations.overrideMode,
-                value: Text(_overwriteLabel(context, profile.overwriteType)),
-              ),
+              if (profile.type != ProfileType.custom)
+                _InfoRow(
+                  label: appLocalizations.extendMode,
+                  value: Text(_extendLabel(context, profile.extendType)),
+                ),
             ],
           ),
           if (providers.isNotEmpty)
@@ -204,7 +206,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
               title: appLocalizations.providers,
               items: [
                 for (final provider in providers)
-                  _ProviderRow(provider: provider),
+                  ExternalProviderItem(provider: provider),
               ],
             ),
         ],
@@ -213,11 +215,10 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
   }
 }
 
-String _overwriteLabel(BuildContext context, OverwriteType type) {
+String _extendLabel(BuildContext context, ExtendType type) {
   return switch (type) {
-    OverwriteType.standard => context.appLocalizations.standard,
-    OverwriteType.script => context.appLocalizations.script,
-    OverwriteType.custom => context.appLocalizations.overwriteTypeCustom,
+    ExtendType.standard => context.appLocalizations.standard,
+    ExtendType.script => context.appLocalizations.script,
   };
 }
 
@@ -233,7 +234,7 @@ class _StatsGrid extends StatelessWidget {
     final stats = this.stats;
     final tiles = [
       (appLocalizations.proxyGroup, stats?.groups),
-      (appLocalizations.proxyNode, stats?.proxies),
+      (appLocalizations.proxies, stats?.proxies),
       (appLocalizations.rules, stats?.rules),
       (appLocalizations.providers, stats?.providers),
     ];
@@ -318,35 +319,6 @@ class _InfoRow extends StatelessWidget {
           color: context.colorScheme.onSurfaceVariant,
         ),
         child: value,
-      ),
-    );
-  }
-}
-
-class _ProviderRow extends StatelessWidget {
-  const _ProviderRow({required this.provider});
-
-  final ExternalProvider provider;
-
-  @override
-  Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
-    final count = switch (provider.type) {
-      'Proxy' => appLocalizations.proxiesCount(provider.count),
-      _ => appLocalizations.rulesCount(provider.count),
-    };
-    return ListItem(
-      title: EmojiText(
-        provider.name,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Text(count),
-      trailing: Text(
-        provider.updateAt.getLastUpdateTimeDesc(context),
-        style: context.textTheme.bodySmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
-        ),
       ),
     );
   }

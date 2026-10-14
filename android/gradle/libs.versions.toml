@@ -5,7 +5,6 @@ targetSdk = "37"
 compileSdk = "37"
 ndkVersion = "28.2.13676358"
 coreKtx = "1.19.1"
-annotationJvm = "1.11.0"
 coreSplashscreen = "1.2.0"
 gson = "2.14.0"
 smaliDexlib2 = "3.0.10"
@@ -14,7 +13,6 @@ kotlinxCoroutines = "1.11.0"
 
 [libraries]
 androidx-core = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
-annotation-jvm = { module = "androidx.annotation:annotation-jvm", version.ref = "annotationJvm" }
 core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }

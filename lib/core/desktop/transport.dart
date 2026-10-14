@@ -1,20 +1,11 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:rust_api/rust_api.dart';
 
-const _typeReady = 0x00;
-const _typeConnected = 0x01;
-const _typeDisconnected = 0x02;
-const _typeData = 0x03;
-const _typeError = 0x04;
-
-typedef IpcServerStarter = Stream<Uint8List> Function(String address);
-typedef IpcMessageSender = Future<void> Function(List<int> data);
-typedef IpcServerStopper = Future<void> Function();
+typedef IpcServerBinder = Future<IpcServer> Function(String address);
 
 enum DesktopTransportState { idle, starting, ready, connected, failed, closed }
 
@@ -35,8 +26,9 @@ final class TransportConnected extends DesktopTransportEvent {
 
 final class TransportDisconnected extends DesktopTransportEvent {
   final int generation;
+  final Object? error;
 
-  const TransportDisconnected(this.generation);
+  const TransportDisconnected(this.generation, {this.error});
 }
 
 final class TransportFailed extends DesktopTransportEvent {
@@ -59,7 +51,7 @@ abstract interface class DesktopCoreTransport {
 
   Future<TransportConnected> waitUntilConnected(Duration timeout);
 
-  Future<void> send(String message);
+  void send(List<int> frame);
 
   Future<void> close();
 }
@@ -90,6 +82,13 @@ final class DesktopCoreTransportBinding implements DesktopCoreTransport {
     );
   }
 
+  Future<void> _unbind() async {
+    await _eventSubscription?.cancel();
+    await _frameSubscription?.cancel();
+    _eventSubscription = null;
+    _frameSubscription = null;
+  }
+
   @override
   String get address => _transport.address;
 
@@ -107,8 +106,7 @@ final class DesktopCoreTransportBinding implements DesktopCoreTransport {
       throw StateError('IPC transport binding is closed');
     }
     final previous = _transport;
-    if (previous.state == DesktopTransportState.connected &&
-        !_eventController.isClosed) {
+    if (previous.state == DesktopTransportState.connected) {
       _eventController.add(
         TransportFailed(
           StateError('Connected IPC transport was replaced'),
@@ -116,22 +114,12 @@ final class DesktopCoreTransportBinding implements DesktopCoreTransport {
         ),
       );
     }
-    await _eventSubscription?.cancel();
-    await _frameSubscription?.cancel();
-    _eventSubscription = null;
-    _frameSubscription = null;
-    Object? closeError;
-    StackTrace? closeStackTrace;
+    await _unbind();
     try {
       await previous.close();
-    } catch (error, stackTrace) {
-      closeError = error;
-      closeStackTrace = stackTrace;
-    }
-    _transport = next;
-    _bind(next);
-    if (closeError != null) {
-      Error.throwWithStackTrace(closeError, closeStackTrace!);
+    } finally {
+      _transport = next;
+      _bind(next);
     }
   }
 
@@ -144,7 +132,7 @@ final class DesktopCoreTransportBinding implements DesktopCoreTransport {
   }
 
   @override
-  Future<void> send(String message) => _transport.send(message);
+  void send(List<int> frame) => _transport.send(frame);
 
   @override
   Future<void> close() {
@@ -152,10 +140,7 @@ final class DesktopCoreTransportBinding implements DesktopCoreTransport {
   }
 
   Future<void> _close() async {
-    await _eventSubscription?.cancel();
-    await _frameSubscription?.cancel();
-    _eventSubscription = null;
-    _frameSubscription = null;
+    await _unbind();
     try {
       await _transport.close();
     } finally {
@@ -165,21 +150,18 @@ final class DesktopCoreTransportBinding implements DesktopCoreTransport {
   }
 }
 
-final class IPCCoreTransport implements DesktopCoreTransport {
+final class IpcCoreTransport implements DesktopCoreTransport {
   @override
   final String address;
 
-  final Duration readyTimeout;
-  final IpcServerStarter _startServer;
-  final IpcMessageSender _sendMessage;
-  final IpcServerStopper _stopServer;
-
+  final IpcServerBinder _bind;
   final StreamController<DesktopTransportEvent> _eventController =
       StreamController<DesktopTransportEvent>.broadcast();
   final StreamController<Uint8List> _frameController =
       StreamController<Uint8List>.broadcast();
 
-  StreamSubscription<Uint8List>? _subscription;
+  IpcServer? _server;
+  StreamSubscription<IpcEvent>? _subscription;
   Future<void>? _openOperation;
   Future<void>? _closeOperation;
   DesktopTransportState _state = DesktopTransportState.idle;
@@ -187,22 +169,11 @@ final class IPCCoreTransport implements DesktopCoreTransport {
   TransportFailed? _failure;
   int _connectionGeneration = 0;
 
-  IPCCoreTransport({
-    required this.address,
-    this.readyTimeout = const Duration(seconds: 10),
-    IpcServerStarter? startServer,
-    IpcMessageSender? sendMessage,
-    IpcServerStopper? stopServer,
-  }) : _startServer = startServer ?? _restartIpcServer,
-       _sendMessage = sendMessage ?? _sendIpcMessage,
-       _stopServer = stopServer ?? stopIpcServer;
+  IpcCoreTransport({required this.address, IpcServerBinder? bind})
+    : _bind = bind ?? _bindIpcServer;
 
-  static Stream<Uint8List> _restartIpcServer(String address) {
-    return restartIpcServer(name: address);
-  }
-
-  static Future<void> _sendIpcMessage(List<int> data) {
-    return sendIpcMessage(data: data);
+  static Future<IpcServer> _bindIpcServer(String address) {
+    return IpcServer.bind(address: address);
   }
 
   @override
@@ -216,134 +187,103 @@ final class IPCCoreTransport implements DesktopCoreTransport {
 
   @override
   Future<void> open() {
-    if (_state == DesktopTransportState.ready ||
-        _state == DesktopTransportState.connected) {
-      return Future.value();
-    }
     if (_state == DesktopTransportState.closed) {
       return Future.error(StateError('IPC transport is closed'));
+    }
+    final failure = _failure;
+    if (failure != null) {
+      return Future.error(failure.error, failure.stackTrace);
     }
     return _openOperation ??= _open();
   }
 
   Future<void> _open() async {
     _state = DesktopTransportState.starting;
-    final readiness = events.firstWhere(
-      (event) => event is TransportReady || event is TransportFailed,
-    );
     try {
-      _subscription = _startServer(address).listen(
-        _handleFrame,
-        onError: _handleStreamError,
-        onDone: _handleStreamDone,
-        cancelOnError: false,
+      final server = await _bind(address);
+      if (_state == DesktopTransportState.closed) {
+        await server.close();
+        throw StateError('IPC transport is closed');
+      }
+      _server = server;
+      _state = DesktopTransportState.ready;
+      commonPrint.log('IPC Ready');
+      _eventController.add(const TransportReady());
+      _subscription = server.events().listen(
+        _handleEvent,
+        onError: _fail,
+        onDone: _handleDone,
       );
-      final event = await readiness.timeout(readyTimeout);
-      if (event case TransportFailed(:final error, :final stackTrace)) {
-        Error.throwWithStackTrace(error, stackTrace);
-      }
     } catch (error, stackTrace) {
-      if (_state != DesktopTransportState.failed &&
-          _state != DesktopTransportState.closed) {
-        _fail(error, stackTrace);
-      }
-      await _subscription?.cancel();
-      _subscription = null;
+      _fail(error, stackTrace);
       rethrow;
     }
   }
 
-  void _handleFrame(Uint8List data) {
-    if (data.isEmpty || _state == DesktopTransportState.closed) {
+  bool get _isTerminal =>
+      _state == DesktopTransportState.failed ||
+      _state == DesktopTransportState.closed;
+
+  void _handleEvent(IpcEvent event) {
+    if (_isTerminal) {
       return;
     }
-    final type = data[0];
-    final payload = data.length > 1
-        ? Uint8List.sublistView(data, 1)
-        : Uint8List(0);
-    switch (type) {
-      case _typeReady:
-        commonPrint.log('IPC Ready');
-        _failure = null;
-        _state = DesktopTransportState.ready;
-        _eventController.add(const TransportReady());
-      case _typeConnected:
-        final processId = _decodeConnectedProcessId(payload);
-        if (payload.isNotEmpty && processId == null) {
-          _fail(StateError('Invalid IPC connected frame'), StackTrace.current);
-          return;
-        }
-        commonPrint.log(
-          'IPC Connected${processId == null ? '' : ': $processId'}',
-        );
-        _failure = null;
-        _connectionGeneration++;
-        _connection = TransportConnected(
-          pid: processId,
-          generation: _connectionGeneration,
-        );
-        _state = DesktopTransportState.connected;
-        _eventController.add(_connection!);
-      case _typeDisconnected:
-        _disconnect();
-      case _typeData:
-        if (!_frameController.isClosed) {
-          _frameController.add(payload);
-        }
-      case _typeError:
-        final message = utf8.decode(payload, allowMalformed: true);
-        _fail(StateError('IPC error: $message'), StackTrace.current);
-      default:
-        commonPrint.log(
-          'IPC unknown frame type: $type',
-          logLevel: LogLevel.warning,
-        );
+    switch (event.kind) {
+      case IpcEventKind.connected:
+        _connect(event.pid);
+      case IpcEventKind.message:
+        _frameController.add(event.payload);
+      case IpcEventKind.disconnected:
+        _disconnect(event.error);
+      case IpcEventKind.failed:
+        _fail(StateError('IPC error: ${event.error}'), StackTrace.current);
     }
   }
 
-  int? _decodeConnectedProcessId(Uint8List payload) {
-    if (payload.isEmpty) {
-      return null;
-    }
-    if (payload.length != Uint32List.bytesPerElement) {
-      return null;
-    }
-    final processId = ByteData.sublistView(payload).getUint32(0, Endian.little);
-    return processId == 0 ? null : processId;
+  void _connect(int? pid) {
+    commonPrint.log('IPC Connected${pid == null ? '' : ': $pid'}');
+    final connection = TransportConnected(
+      pid: pid,
+      generation: ++_connectionGeneration,
+    );
+    _connection = connection;
+    _state = DesktopTransportState.connected;
+    _eventController.add(connection);
   }
 
-  void _disconnect() {
+  void _disconnect(String? error) {
     final connection = _connection;
     if (connection == null) {
       return;
     }
-    commonPrint.log('IPC Disconnected');
+    commonPrint.log(
+      'IPC Disconnected${error == null ? '' : ': $error'}',
+      logLevel: error == null ? LogLevel.info : LogLevel.warning,
+    );
     _connection = null;
     _state = DesktopTransportState.ready;
-    _eventController.add(TransportDisconnected(connection.generation));
+    _eventController.add(
+      TransportDisconnected(
+        connection.generation,
+        error: error == null ? null : StateError('IPC error: $error'),
+      ),
+    );
   }
 
-  void _handleStreamError(Object error, StackTrace stackTrace) {
-    _fail(error, stackTrace);
-  }
-
-  void _handleStreamDone() {
-    if (_state == DesktopTransportState.closed) {
-      return;
-    }
-    _disconnect();
+  void _handleDone() {
     _fail(StateError('IPC server stopped unexpectedly'), StackTrace.current);
   }
 
   void _fail(Object error, StackTrace stackTrace) {
-    if (_state == DesktopTransportState.failed ||
-        _state == DesktopTransportState.closed) {
+    if (_isTerminal) {
       return;
     }
     commonPrint.log('IPC error: $error', logLevel: LogLevel.debug);
+    final failure = TransportFailed(error, stackTrace);
+    _connection = null;
+    _failure = failure;
     _state = DesktopTransportState.failed;
-    _failure = TransportFailed(error, stackTrace);
-    _eventController.add(_failure!);
+    _eventController.add(failure);
   }
 
   @override
@@ -371,11 +311,15 @@ final class IPCCoreTransport implements DesktopCoreTransport {
   }
 
   @override
-  Future<void> send(String message) {
+  void send(List<int> frame) {
     if (_state == DesktopTransportState.closed) {
-      return Future.error(StateError('IPC transport is closed'));
+      throw StateError('IPC transport is closed');
     }
-    return _sendMessage(utf8.encode(message));
+    final server = _server;
+    if (server == null) {
+      throw StateError('IPC transport is not open');
+    }
+    server.send(message: frame);
   }
 
   @override
@@ -384,16 +328,12 @@ final class IPCCoreTransport implements DesktopCoreTransport {
   }
 
   Future<void> _close() async {
-    if (_state == DesktopTransportState.closed) {
-      return;
-    }
     _state = DesktopTransportState.closed;
     _connection = null;
     try {
-      await _stopServer();
+      await _server?.close();
     } finally {
       await _subscription?.cancel();
-      _subscription = null;
       await _eventController.close();
       await _frameController.close();
     }

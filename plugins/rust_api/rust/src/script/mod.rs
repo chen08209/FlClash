@@ -226,7 +226,7 @@ mod tests {
         assert_eq!(result["entries"], json!({ "a": 0, "b": 1 }));
     }
 
-    fn overwrite_fixture() -> Json {
+    fn extension_fixture() -> Json {
         let script = include_str!("../../tests/fixtures/profile_script.js");
         let config = include_str!("../../tests/fixtures/profile_config.json");
 
@@ -234,8 +234,8 @@ mod tests {
     }
 
     #[test]
-    fn runs_a_profile_overwrite_end_to_end() {
-        let result = overwrite_fixture();
+    fn runs_a_profile_extension_end_to_end() {
+        let result = extension_fixture();
         let proxies = result["proxies"].as_array().unwrap();
         let groups = result["proxy-groups"].as_array().unwrap();
         let rules = result["rules"].as_array().unwrap();
@@ -247,8 +247,8 @@ mod tests {
     }
 
     #[test]
-    fn the_overwrite_renames_nodes_and_rewrites_the_chains_through_them() {
-        let result = overwrite_fixture();
+    fn the_extension_renames_nodes_and_rewrites_the_chains_through_them() {
+        let result = extension_fixture();
         let proxies = result["proxies"].as_array().unwrap();
         let named = |name: &str| {
             proxies
@@ -266,8 +266,8 @@ mod tests {
     }
 
     #[test]
-    fn the_overwrite_merges_dns_instead_of_replacing_it() {
-        let dns = overwrite_fixture()["dns"].clone();
+    fn the_extension_merges_dns_instead_of_replacing_it() {
+        let dns = extension_fixture()["dns"].clone();
 
         assert_eq!(dns["enhanced-mode"], json!("fake-ip"));
         assert_eq!(dns["nameserver"], json!(["223.5.5.5", "119.29.29.29"]));

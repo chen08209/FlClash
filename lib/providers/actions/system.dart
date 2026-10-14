@@ -10,9 +10,6 @@ class SystemAction extends _$SystemAction {
   void build() {}
 
   Future<List<Package>> getPackages() async {
-    if (ref.read(isMobileViewProvider)) {
-      await Future.delayed(commonDuration);
-    }
     ref.read(packagesProvider.notifier).value = await app?.getPackages() ?? [];
     return ref.read(packagesProvider);
   }

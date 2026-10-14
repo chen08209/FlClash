@@ -292,35 +292,48 @@ abstract final class AppGlyphs {
   ], matchTextDirection: true);
 
   static const sync = Glyph([
-    GlyphArc(12, 12, 7.07, math.pi * 1.1, math.pi * 0.65, role: GlyphRole.line),
+    GlyphArc(
+      12,
+      12,
+      7.78,
+      math.pi * 1.144,
+      math.pi * 0.889,
+      role: GlyphRole.line,
+    ),
     GlyphPolyline([
-      GlyphVertex(17, 7),
-      GlyphVertex(18.5, 8.5),
+      GlyphVertex(5, 5),
+      GlyphVertex(5, 8.6, 0.4),
+      GlyphVertex(8.6, 8.6),
     ], role: GlyphRole.line),
+    GlyphArc(
+      12,
+      12,
+      7.78,
+      math.pi * 0.144,
+      math.pi * 0.889,
+      role: GlyphRole.line,
+    ),
     GlyphPolyline([
-      GlyphVertex(18.5, 3.1),
-      GlyphVertex(18.5, 8.5, 0.4),
-      GlyphVertex(13.1, 8.5),
-    ], role: GlyphRole.line),
-    GlyphArc(12, 12, 7.07, math.pi * 0.1, math.pi * 0.65, role: GlyphRole.line),
-    GlyphPolyline([
-      GlyphVertex(7, 17),
-      GlyphVertex(5.5, 15.5),
-    ], role: GlyphRole.line),
-    GlyphPolyline([
-      GlyphVertex(5.5, 20.9),
-      GlyphVertex(5.5, 15.5, 0.4),
-      GlyphVertex(10.9, 15.5),
+      GlyphVertex(19, 19),
+      GlyphVertex(19, 15.4, 0.4),
+      GlyphVertex(15.4, 15.4),
     ], role: GlyphRole.line),
   ]);
 
   static const refresh = Glyph([
-    GlyphArc(12, 13, 7.07, math.pi * 0.1, math.pi * 1.57, role: GlyphRole.line),
+    GlyphArc(
+      12,
+      12,
+      7.78,
+      math.pi * 0.19,
+      math.pi * 1.666,
+      role: GlyphRole.line,
+    ),
     GlyphPolyline([
-      GlyphVertex(18.5, 4.1),
-      GlyphVertex(18.5, 9.5, 0.4),
-      GlyphVertex(13.1, 9.5),
-    ], closed: true),
+      GlyphVertex(19, 5),
+      GlyphVertex(19, 8.6, 0.4),
+      GlyphVertex(15.4, 8.6),
+    ], role: GlyphRole.line),
   ]);
 
   static const reset = Glyph([
@@ -393,21 +406,22 @@ abstract final class AppGlyphs {
   ]);
 
   static const addCircle = Glyph([
-    GlyphCircle(12, 12, 8.8),
+    GlyphCircle(12, 12, 8.8, role: GlyphRole.line),
     GlyphPolyline([
       GlyphVertex(12, 7.8),
       GlyphVertex(12, 16.2),
-    ], role: GlyphRole.detail),
+    ], role: GlyphRole.line),
     GlyphPolyline([
       GlyphVertex(7.8, 12),
       GlyphVertex(16.2, 12),
-    ], role: GlyphRole.detail),
+    ], role: GlyphRole.line),
   ]);
 
-  static const remove = Glyph([
+  static const removeCircle = Glyph([
+    GlyphCircle(12, 12, 8.8, role: GlyphRole.line),
     GlyphPolyline([
-      GlyphVertex(5, 12),
-      GlyphVertex(19, 12),
+      GlyphVertex(7.8, 12),
+      GlyphVertex(16.2, 12),
     ], role: GlyphRole.line),
   ]);
 
@@ -533,6 +547,21 @@ abstract final class AppGlyphs {
       GlyphVertex(10, 17),
     ], role: GlyphRole.line),
   ], matchTextDirection: true);
+
+  static const filter = Glyph([
+    GlyphPolyline([
+      GlyphVertex(4, 7),
+      GlyphVertex(20, 7),
+    ], role: GlyphRole.line),
+    GlyphPolyline([
+      GlyphVertex(7, 12),
+      GlyphVertex(17, 12),
+    ], role: GlyphRole.line),
+    GlyphPolyline([
+      GlyphVertex(10, 17),
+      GlyphVertex(14, 17),
+    ], role: GlyphRole.line),
+  ]);
 
   static const sortAlpha = Glyph([
     GlyphPolyline([
@@ -935,6 +964,27 @@ abstract final class AppGlyphs {
       GlyphVertex(12, 11.4, 0.4),
       GlyphVertex(15, 14.4),
     ], role: GlyphRole.detail),
+  ]);
+
+  static const file = Glyph([
+    GlyphPolyline([
+      GlyphVertex(5, 3, 2.5),
+      GlyphVertex(13.5, 3, 1),
+      GlyphVertex(19, 8.5, 1),
+      GlyphVertex(19, 21, 2.5),
+      GlyphVertex(5, 21, 2.5),
+    ], closed: true),
+    GlyphPolyline([
+      GlyphVertex(13.5, 3.2),
+      GlyphVertex(13.5, 8.5, 1.5),
+      GlyphVertex(18.8, 8.5),
+    ], role: GlyphRole.detail),
+  ]);
+
+  static const cloud = Glyph([
+    GlyphPath(
+      'M7 19.4A4.2 4.2 0 0 1 5.06 11.47A6 6 0 1 1 16.95 9.83A4.8 4.8 0 0 1 16.4 19.4Z',
+    ),
   ]);
 
   static const cloudDownload = Glyph([
@@ -1461,6 +1511,18 @@ abstract final class AppGlyphs {
     GlyphCircle(19.8, 14.6, 1.1, role: GlyphRole.line, solid: true),
     GlyphCircle(9.4, 19.8, 1.1, role: GlyphRole.line, solid: true),
     GlyphCircle(14.6, 19.8, 1.1, role: GlyphRole.line, solid: true),
+  ]);
+
+  static const font = Glyph([
+    GlyphPolyline([
+      GlyphVertex(5.2, 19.6),
+      GlyphVertex(12, 4.4, 0.6),
+      GlyphVertex(18.8, 19.6),
+    ], role: GlyphRole.line),
+    GlyphPolyline([
+      GlyphVertex(7.7, 14),
+      GlyphVertex(16.3, 14),
+    ], role: GlyphRole.line),
   ]);
 
   static const textSize = Glyph([

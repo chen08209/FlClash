@@ -779,9 +779,10 @@ class _ServiceBadge extends StatelessWidget {
             width: size * _glyphShare,
             height: size * _glyphShare,
             excludeFromSemantics: true,
-            colorFilter: ColorFilter.mode(
-              enabled ? colorScheme.onSecondaryContainer : colorScheme.outline,
-              BlendMode.srcIn,
+            theme: SvgTheme(
+              currentColor: enabled
+                  ? colorScheme.onSecondaryContainer
+                  : colorScheme.outline,
             ),
           ),
         ),
@@ -818,15 +819,17 @@ class _BadgePainter extends CustomPainter {
       return;
     }
     final center = size.bottomRight(Offset(-dotRadius, -dotRadius));
+    final gap = Path()
+      ..addOval(Rect.fromCircle(center: center, radius: dotRadius + ring));
     canvas
-      ..saveLayer(bounds, Paint())
-      ..drawRSuperellipse(tile, Paint()..color = color)
-      ..drawCircle(
-        center,
-        dotRadius + ring,
-        Paint()..blendMode = BlendMode.clear,
+      ..drawPath(
+        Path.combine(
+          PathOperation.difference,
+          Path()..addRSuperellipse(tile),
+          gap,
+        ),
+        Paint()..color = color,
       )
-      ..restore()
       ..drawCircle(center, dotRadius, Paint()..color = dot);
   }
 
@@ -865,52 +868,49 @@ class ServiceStatusSheet extends ConsumerWidget {
     final current = targets.contains(saved) ? saved : targets.first;
     final services = ref.read(serviceStatusProvider.notifier);
     final localizations = context.appLocalizations;
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: ref.sheetHeight(context, 0.7)),
-      child: CommonScaffold(
-        title: localizations.serviceStatus,
-        iconActions: [
-          IconButtonData(
-            glyph: AppGlyphs.bolt,
-            tooltip: localizations.serviceCheckAll,
-            isLoading: targets.any(state.isLoading),
-            onPressed: () => services.refresh(targets),
+    return CommonScaffold(
+      title: localizations.serviceStatus,
+      iconActions: [
+        IconButtonData(
+          glyph: AppGlyphs.bolt,
+          tooltip: localizations.serviceCheckAll,
+          isLoading: targets.any(state.isLoading),
+          onPressed: () => services.refresh(targets),
+        ),
+        IconButtonData(
+          glyph: AppGlyphs.sliders,
+          tooltip: localizations.serviceManage,
+          onPressed: () => Navigator.of(
+            context,
+          ).push(PagedSheetRoute(builder: (_) => const ServiceManageView())),
+        ),
+      ],
+      body: CustomScrollView(
+        shrinkWrap: true,
+        slivers: [
+          SliverToBoxAdapter(
+            child: SizedBox(height: context.contentTopPadding),
           ),
-          IconButtonData(
-            glyph: AppGlyphs.sliders,
-            tooltip: localizations.serviceManage,
-            onPressed: () => Navigator.of(
-              context,
-            ).push(PagedSheetRoute(builder: (_) => const ServiceManageView())),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            sliver: SliverList.builder(
+              itemCount: targets.length,
+              itemBuilder: (context, index) {
+                final target = targets[index];
+                return ItemPositionProvider(
+                  position: ItemPosition.get(index, targets.length),
+                  child: _ServiceRow(
+                    target: target,
+                    entry: state.entryOf(target),
+                    selected: target == current,
+                    onTap: () => context.safeNestedPop(target),
+                    onCheck: () => services.refresh([target]),
+                  ),
+                );
+              },
+            ),
           ),
         ],
-        body: CustomScrollView(
-          shrinkWrap: true,
-          slivers: [
-            SliverToBoxAdapter(
-              child: SizedBox(height: context.contentTopPadding),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              sliver: SliverList.builder(
-                itemCount: targets.length,
-                itemBuilder: (context, index) {
-                  final target = targets[index];
-                  return ItemPositionProvider(
-                    position: ItemPosition.get(index, targets.length),
-                    child: _ServiceRow(
-                      target: target,
-                      entry: state.entryOf(target),
-                      selected: target == current,
-                      onTap: () => context.safeNestedPop(target),
-                      onCheck: () => services.refresh([target]),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -962,26 +962,23 @@ class ServiceManageView extends ConsumerWidget {
       );
     }
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: ref.sheetHeight(context, 0.8)),
-      child: CommonScaffold(
-        title: context.appLocalizations.serviceManage,
-        body: CustomScrollView(
-          shrinkWrap: true,
-          slivers: [
-            SliverToBoxAdapter(
-              child: SizedBox(height: context.contentTopPadding),
-            ),
-            SliverReorderableList(
-              itemBuilder: (_, index) => itemAt(index),
-              itemCount: targets.length,
-              proxyDecorator: (child, index, animation) =>
-                  commonProxyDecorator(itemAt(index), index, animation),
-              onReorderItem: reorder,
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-          ],
-        ),
+    return CommonScaffold(
+      title: context.appLocalizations.serviceManage,
+      body: CustomScrollView(
+        shrinkWrap: true,
+        slivers: [
+          SliverToBoxAdapter(
+            child: SizedBox(height: context.contentTopPadding),
+          ),
+          SliverReorderableList(
+            itemBuilder: (_, index) => itemAt(index),
+            itemCount: targets.length,
+            proxyDecorator: (child, index, animation) =>
+                commonProxyDecorator(itemAt(index), index, animation),
+            onReorderItem: reorder,
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+        ],
       ),
     );
   }
@@ -1011,39 +1008,32 @@ class _ServiceManageItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onChanged = this.onChanged;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: ItemPositionProvider(
-        position: position,
-        child: DecorationListItem(
-          minVerticalPadding: _rowBadgeInset,
-          contentPadding: const EdgeInsets.only(left: _rowBadgeInset, right: 0),
-          onPressed: onChanged == null ? null : () => onChanged(!enabled),
-          leading: _ServiceBadge(
-            target: target,
-            size: _rowBadgeSize,
-            radius: _rowBadgeRadius,
-            enabled: enabled,
-          ),
-          title: Text(
-            target.label,
-            style: enabled
-                ? null
-                : TextStyle(color: context.colorScheme.onSurfaceVariant),
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Switch(value: enabled, onChanged: onChanged),
-              ReorderableDelayedDragStartListener(
-                index: index,
-                child: Container(
-                  color: Colors.transparent,
-                  padding: const EdgeInsets.all(12),
-                  child: const GlyphIcon(AppGlyphs.dragHandle),
-                ),
-              ),
-            ],
+    return ReorderableDelayedDragStartListener(
+      index: index,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: ItemPositionProvider(
+          position: position,
+          child: DecorationListItem(
+            minVerticalPadding: _rowBadgeInset,
+            contentPadding: const EdgeInsets.only(
+              left: _rowBadgeInset,
+              right: 16,
+            ),
+            onPressed: onChanged == null ? null : () => onChanged(!enabled),
+            leading: _ServiceBadge(
+              target: target,
+              size: _rowBadgeSize,
+              radius: _rowBadgeRadius,
+              enabled: enabled,
+            ),
+            title: Text(
+              target.label,
+              style: enabled
+                  ? null
+                  : TextStyle(color: context.colorScheme.onSurfaceVariant),
+            ),
+            trailing: Switch(value: enabled, onChanged: onChanged),
           ),
         ),
       ),

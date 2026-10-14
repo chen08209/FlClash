@@ -26,6 +26,45 @@ void main() {
     test('plain text', () {
       expect('not a url'.isUrl, isFalse);
     });
+
+    test('accepts an e-mail user name typed with a bare @', () {
+      final uri = 'https://me@mail.com:p@ss@dav.example.com/dav/a.yaml'.webUri;
+
+      expect(uri?.host, 'dav.example.com');
+      expect(uri?.userInfo, 'me%40mail.com:p%40ss');
+      expect(uri?.path, '/dav/a.yaml');
+    });
+
+    test('leaves an @ after the authority alone', () {
+      final uri = 'https://example.com/a@b?to=c@d'.webUri;
+
+      expect(uri?.host, 'example.com');
+      expect(uri?.userInfo, isEmpty);
+      expect(uri?.path, '/a@b');
+    });
+  });
+
+  group('StringExtension.isShareLink', () {
+    test('a link whose scheme mihomo converts', () {
+      expect('vmess://eyJhZGQiOiIxLjIuMy40In0='.isShareLink, isTrue);
+      expect('Hy2://pass@example.com:443#HK'.isShareLink, isTrue);
+    });
+
+    test('a subscription url', () {
+      expect('https://example.com/sub'.isShareLink, isFalse);
+    });
+
+    test('a scheme with nothing after it', () {
+      expect('ss://'.isShareLink, isFalse);
+    });
+
+    test('several links', () {
+      expect('ss://a@b:1\nss://c@d:2'.isShareLink, isFalse);
+    });
+
+    test('an unknown scheme', () {
+      expect('wireguard://key@example.com:51820'.isShareLink, isFalse);
+    });
   });
 
   group('StringExtension.splitByMultipleSeparators', () {
@@ -124,6 +163,13 @@ void main() {
       expect('icon.svg'.isSvg, isTrue);
       expect('icon.PNG'.isSvg, isFalse);
       expect('icon.svg.bak'.isSvg, isFalse);
+    });
+
+    test('reads the path of a url and the type of a data uri', () {
+      expect('https://example.com/icon.SVG?raw=true'.isSvg, isTrue);
+      expect('https://example.com/icon.png#.svg'.isSvg, isFalse);
+      expect('data:image/svg+xml;base64,PHN2Zy8+'.isSvg, isTrue);
+      expect('data:image/png;base64,iVBORw0KGgo='.isSvg, isFalse);
     });
   });
 

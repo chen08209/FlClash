@@ -153,7 +153,6 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   void _showMoreMenu() {
     showSheet(
       context: context,
-      props: const SheetProps(isScrollControlled: false),
       builder: (_) {
         return CommonScaffold(
           body: Builder(
@@ -351,6 +350,8 @@ class ProxyGroupView extends ConsumerWidget {
   final ScrollController controller;
   final int columns;
   final ProxyCardType cardType;
+  final bool shrinkWrap;
+  final double topPadding;
 
   const ProxyGroupView({
     super.key,
@@ -358,6 +359,8 @@ class ProxyGroupView extends ConsumerWidget {
     required this.controller,
     required this.columns,
     required this.cardType,
+    this.shrinkWrap = false,
+    this.topPadding = 16,
   });
 
   PageStorageKey _getPageStorageKey(WidgetRef ref) {
@@ -379,8 +382,9 @@ class ProxyGroupView extends ConsumerWidget {
       child: GridView.builder(
         key: _getPageStorageKey(ref),
         controller: controller,
+        shrinkWrap: shrinkWrap,
         padding: EdgeInsets.only(
-          top: 16,
+          top: topPadding,
           left: 16,
           right: 16,
           bottom: 16 + BottomInsetScope.of(context),

@@ -45,6 +45,35 @@ void main() {
     expect(tester.getSize(find.byKey(const ValueKey(4))).width, 188);
   });
 
+  testWidgets('a grid narrower than its spacing lays children out empty', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Align(
+          alignment: Alignment.topLeft,
+          child: SizedBox(
+            width: 40,
+            child: Grid(
+              crossAxisCount: 8,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              children: [
+                GridItem(
+                  mainAxisCellCount: 1,
+                  child: SizedBox(key: ValueKey('cell')),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(tester.getSize(find.byKey(const ValueKey('cell'))), Size.zero);
+  });
+
   testWidgets('packGridSlots agrees with the rendered grid', (tester) async {
     await tester.pumpWidget(_buildGrid());
 

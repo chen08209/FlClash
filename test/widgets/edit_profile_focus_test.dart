@@ -7,6 +7,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/edit.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,19 +37,11 @@ class _NoopSetupAction extends SetupAction {
   void autoApplyProfile() {}
 }
 
-class _RenameConflictProfilesAction extends ProfilesAction {
+class _RecordingProfilesAction extends ProfilesAction {
   final put = <Profile>[];
 
   @override
-  Future<({List<Profile> renameIn, List<Profile> conflicts})> providerRename(
-    Profile previous,
-    Profile next,
-  ) async =>
-      (renameIn: const <Profile>[], conflicts: [Profile.normal(label: 'Work')]);
-
-  @override
-  void putProfile(Profile profile, {Iterable<int> renameIn = const []}) =>
-      put.add(profile);
+  void putProfile(Profile profile) => put.add(profile);
 }
 
 Profile _urlProfile() =>
@@ -148,9 +141,11 @@ bool _isTextFieldFocused() {
 void main() {
   late Directory tempDir;
 
-  setUpAll(() {
+  setUpAll(() async {
     tempDir = Directory.systemTemp.createTempSync('edit_profile_focus_test');
     PathProviderPlatform.instance = _FakePathProvider(tempDir.path);
+    // A path resolved inside one test's fake zone never wakes a later test.
+    await appPath.dataDir.future;
   });
 
   tearDownAll(() {
@@ -177,26 +172,52 @@ void main() {
     expect(find.byTooltip('Save'), findsOneWidget);
   });
 
-  testWidgets('a name a user subscription already has is not saved', (
-    tester,
-  ) async {
-    final action = _RenameConflictProfilesAction();
+  testWidgets('a custom profile edits only its name', (tester) async {
+    final action = _RecordingProfilesAction();
+    final profile = Profile.custom(label: 'Mine');
     await pumpEditProfile(
       tester,
+      profile: profile,
       overrides: [profilesActionProvider.overrideWith(() => action)],
     );
 
+    expect(find.byType(TextFormField), findsOneWidget);
+    expect(find.text(currentAppLocalizations.autoUpdate), findsNothing);
+
     await tester.enterText(
       find.widgetWithText(TextFormField, currentAppLocalizations.name),
-      'Taken',
+      'Renamed',
     );
     await tester.tap(find.byTooltip(currentAppLocalizations.save));
     await tester.pumpAndSettle();
 
-    expect(
-      find.textContaining('subscriptions of Work already have Taken'),
-      findsOneWidget,
-    );
-    expect(action.put, isEmpty);
+    expect(action.put.single, profile.copyWith(label: 'Renamed'));
   });
+
+  testWidgets(
+    'the profile file row shows its size and update time without chips',
+    (tester) async {
+      await pumpEditProfile(tester);
+      final row = find.widgetWithText(
+        DecorationListItem,
+        currentAppLocalizations.profile,
+      );
+      for (var i = 0; i < 20 && row.evaluate().isEmpty; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump(const Duration(milliseconds: 400));
+      }
+      expect(row, findsOneWidget);
+      expect(
+        find.descendant(of: row, matching: find.byType(LastUpdateTimeText)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: row, matching: find.text(0.traffic.show)),
+        findsOneWidget,
+      );
+      expect(find.byType(MetaChip), findsNothing);
+    },
+  );
 }

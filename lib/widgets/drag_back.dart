@@ -4,11 +4,13 @@ import 'package:flutter/widgets.dart';
 
 const double _flingVelocity = 1.0;
 const Duration _settleDuration = Duration(milliseconds: 350);
+const double _dragEdge = 1e-6;
 
 final Animatable<Offset> _slideTween = Tween<Offset>(
   begin: const Offset(1.0, 0.0),
   end: Offset.zero,
 );
+const Animation<Offset> _noSlide = AlwaysStoppedAnimation(Offset.zero);
 
 /// Lets a press anywhere on the route drag it toward the reading end to pop.
 /// A horizontal scrollable, slider or text field under the pointer is deeper
@@ -23,23 +25,38 @@ mixin DragBackRouteMixin<T> on ModalRoute<T> {
   @protected
   void didStartDragBack() {}
 
+  /// Called once the route has settled after a drag back, popped or not.
+  @protected
+  void didEndDragBack() {}
+
   Widget dragBackDetector(Widget child) {
     return _DragBackDetector(route: this, child: child);
   }
 
+  /// Follows the finger while a drag back is active and stays still
+  /// otherwise. A route keeps it in its tree either way: wrapping the page
+  /// only once the drag starts would move the page to a new parent, which
+  /// rebuilds all of it.
   Widget dragBackSlide(
     BuildContext context,
     Animation<double> animation,
     Widget child,
   ) {
     return SlideTransition(
-      position: animation.drive(_slideTween),
+      position: _dragBackActive ? animation.drive(_slideTween) : _noSlide,
       textDirection: Directionality.of(context),
       child: child,
     );
   }
 
-  bool get _canDragBack => isCurrent && popGestureEnabled;
+  // popGestureEnabled no longer waits for the route to be fully uncovered or
+  // for another drag back to settle, and NavigatorResizable would settle on
+  // a pop still running under the drag.
+  bool get _canDragBack =>
+      isCurrent &&
+      popGestureEnabled &&
+      secondaryAnimation!.isDismissed &&
+      !popGestureInProgress;
 
   void _startDragBack() {
     _dragBackActive = true;
@@ -47,8 +64,17 @@ mixin DragBackRouteMixin<T> on ModalRoute<T> {
     navigator!.didStartUserGesture();
   }
 
+  // Either end reached mid-drag would flip the animation's status, which
+  // routes take for a finished transition: TransitionRoute turns the route
+  // opaque and OpenContainer hides or returns its tile. The release settles
+  // the last bit.
   void _updateDragBack(double delta) {
-    controller!.value -= delta;
+    final controller = this.controller!;
+    controller.value = clampDouble(
+      controller.value - delta,
+      _dragEdge,
+      1 - _dragEdge,
+    );
   }
 
   void _endDragBack(double velocity) {
@@ -100,6 +126,7 @@ mixin DragBackRouteMixin<T> on ModalRoute<T> {
       return;
     }
     _dragBackActive = false;
+    didEndDragBack();
     navigator.didStopUserGesture();
   }
 
@@ -109,6 +136,7 @@ mixin DragBackRouteMixin<T> on ModalRoute<T> {
       return;
     }
     _dragBackActive = false;
+    didEndDragBack();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (navigator.mounted) {
         navigator.didStopUserGesture();

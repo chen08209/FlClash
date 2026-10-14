@@ -33,7 +33,6 @@ class GlobalState {
   }
 
   String? lastConfigMd5;
-  VpnState? lastVpnState;
   bool isAttach = false;
 
   GlobalState._internal();
@@ -68,6 +67,39 @@ class GlobalState {
         }
       },
     );
+  }
+
+  /// Concurrent [loadingRun]s would let the first to finish clear [tag].
+  Future<void> batchRun<T>(
+    List<T> items,
+    Future<void> Function(T item) task, {
+    required String Function(T item) label,
+    required int concurrency,
+    required LoadingTag? tag,
+  }) async {
+    final pool = TaskPool(concurrency);
+    final failures = List<UpdatingMessage?>.filled(items.length, null);
+    await loadingRun(
+      () => Future.wait([
+        for (final (index, item) in items.indexed)
+          pool.run(() async {
+            try {
+              await task(item);
+            } catch (e, s) {
+              commonPrint.log(
+                '${label(item)} ===> ${compactError(e)}, $s',
+                logLevel: LogLevel.warning,
+              );
+              failures[index] = UpdatingMessage(
+                label: label(item),
+                message: userFacingErrorMessage(e, currentAppLocalizations),
+              );
+            }
+          }),
+      ]),
+      tag: tag,
+    );
+    dialogs.showFailures(failures.nonNulls.toList());
   }
 
   Future<T?> safeRun<T>(

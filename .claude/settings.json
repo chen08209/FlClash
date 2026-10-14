@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/tool/check_comment_density.sh\"",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/tool/hooks/comment_density.sh\"",
             "timeout": 15,
             "statusMessage": "Checking comment density"
           }

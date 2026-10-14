@@ -1,5 +1,5 @@
-YouTube, OpenAI, Google, GitHub, Gemini, Netflix, Prime Video, Spotify, TikTok
-and bilibili icons: Simple Icons 13.0.0.
+YouTube, OpenAI, Google, GitHub, Gemini, Netflix, Prime Video, Spotify, TikTok,
+Discord and bilibili icons: Simple Icons 13.0.0.
 Source: https://github.com/simple-icons/simple-icons/tree/13.0.0/icons
 License: CC0 1.0 Universal.
 License text: https://github.com/simple-icons/simple-icons/blob/13.0.0/LICENSE.md

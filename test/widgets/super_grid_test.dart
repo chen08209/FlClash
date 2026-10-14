@@ -138,7 +138,7 @@ void main() {
     final bSlot = tester.getTopLeft(_content('B'));
     final cSlot = tester.getTopLeft(_content('C'));
 
-    await tester.tap(find.byGlyph(AppGlyphs.close).at(1));
+    await tester.tap(find.byGlyph(AppGlyphs.removeCircle).at(1));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
@@ -172,7 +172,7 @@ void main() {
     await tester.pump();
     final before = position.pixels;
 
-    await tester.tap(find.byGlyph(AppGlyphs.close).last);
+    await tester.tap(find.byGlyph(AppGlyphs.removeCircle).last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 16));
 
@@ -234,14 +234,14 @@ void main() {
 
     await tester.pumpWidget(_Harness(gridKey: key, labels: const ['A', 'B']));
     await tester.pump();
-    expect(find.byGlyph(AppGlyphs.close), findsNWidgets(2));
+    expect(find.byGlyph(AppGlyphs.removeCircle), findsNWidgets(2));
     expect(tester.element(_content('A')), same(element));
 
     await tester.pumpWidget(
       _Harness(gridKey: key, labels: const ['A', 'B'], editing: false),
     );
     await tester.pump();
-    expect(find.byGlyph(AppGlyphs.close), findsNothing);
+    expect(find.byGlyph(AppGlyphs.removeCircle), findsNothing);
     expect(tester.element(_content('A')), same(element));
   });
 

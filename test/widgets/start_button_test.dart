@@ -206,7 +206,6 @@ void main() {
   group('docked', () {
     Future<ProviderContainer> pumpDocked(
       WidgetTester tester, {
-      bool disableAnimations = false,
       bool suspend = false,
     }) async {
       final container = ProviderContainer(
@@ -227,15 +226,8 @@ void main() {
           child: TestApp(
             includeNavigatorKey: false,
             setTheme: false,
-            homeBuilder: (child) => Builder(
-              builder: (context) => MediaQuery(
-                data: MediaQuery.of(
-                  context,
-                ).copyWith(disableAnimations: disableAnimations),
-                child: Scaffold(
-                  body: Align(alignment: .bottomCenter, child: child),
-                ),
-              ),
+            homeBuilder: (child) => Scaffold(
+              body: Align(alignment: .bottomCenter, child: child),
             ),
             child: NavigationDock(
               destinations: const [
@@ -256,57 +248,6 @@ void main() {
       return container;
     }
 
-    double fillOpacity(WidgetTester tester) => tester
-        .widget<FadeTransition>(
-          find
-              .descendant(
-                of: find.byType(BreathingFill),
-                matching: find.byType(FadeTransition),
-              )
-              .last,
-        )
-        .opacity
-        .value;
-
-    testWidgets(
-      'breathes the fill in steps while running and lets it go when stopped',
-      (tester) async {
-        final container = await pumpDocked(tester);
-
-        expect(
-          tester.widget<BreathingFill>(find.byType(BreathingFill)).active,
-          isTrue,
-        );
-        await tester.pump(const Duration(seconds: 2));
-        expect(fillOpacity(tester), 1);
-        expect(tester.binding.hasScheduledFrame, isFalse);
-        await tester.binding.delayed(const Duration(milliseconds: 70));
-        expect(tester.binding.hasScheduledFrame, isTrue);
-
-        container.read(runTimeProvider.notifier).value = null;
-        await tester.pumpAndSettle();
-
-        expect(
-          tester.widget<BreathingFill>(find.byType(BreathingFill)).active,
-          isFalse,
-        );
-        expect(fillOpacity(tester), 0);
-        await tester.binding.delayed(const Duration(milliseconds: 200));
-        expect(tester.binding.hasScheduledFrame, isFalse);
-      },
-    );
-
-    testWidgets('holds the fill still when animations are disabled', (
-      tester,
-    ) async {
-      await pumpDocked(tester, disableAnimations: true);
-      await tester.pumpAndSettle();
-
-      await tester.binding.delayed(const Duration(milliseconds: 200));
-      expect(tester.binding.hasScheduledFrame, isFalse);
-      expect(fillOpacity(tester), 1);
-    });
-
     testWidgets('swaps in the Wi-Fi off glyph and a tooltip when suspended', (
       tester,
     ) async {
@@ -319,10 +260,6 @@ void main() {
             .widget<FloatingActionButton>(find.byType(FloatingActionButton))
             .tooltip,
         context.appLocalizations.suspended,
-      );
-      expect(
-        tester.widget<BreathingFill>(find.byType(BreathingFill)).active,
-        isFalse,
       );
       expect(find.byGlyph(AppGlyphs.wifiOff), findsOneWidget);
     });

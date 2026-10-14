@@ -1,7 +1,6 @@
 package com.follow.clash.plugins
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ActivityManager
 import android.content.BroadcastReceiver
@@ -13,7 +12,6 @@ import android.net.VpnService
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.os.PowerManager
 import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -29,6 +27,7 @@ import com.follow.clash.common.PendingCallback
 import com.follow.clash.common.QuickAction
 import com.follow.clash.common.quickIntent
 import com.follow.clash.common.registerReceiverCompat
+import com.follow.clash.common.shortcutId
 import com.follow.clash.getPackageIconPath
 import com.follow.clash.packages.PackageResolver
 import com.follow.clash.showToast
@@ -139,11 +138,15 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             }
 
             "initShortcuts" -> {
-                val label = call.arguments as? String
-                if (label == null) {
-                    result.error("INVALID_ARGUMENT", "Shortcut label must be a string", null)
+                val labels = shortcutLabels(call.arguments)
+                if (labels == null) {
+                    result.error(
+                        "INVALID_ARGUMENT",
+                        "Shortcut labels must map every quick action to a string",
+                        null,
+                    )
                 } else {
-                    initShortcuts(label)
+                    initShortcuts(labels)
                     result.success(true)
                 }
             }
@@ -172,14 +175,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 val message = call.argument<String>("message")
                 GlobalState.application.showToast(message)
                 result.success(true)
-            }
-
-            "isBatteryOptimizationDisabled" -> {
-                result.success(isBatteryOptimizationDisabled())
-            }
-
-            "openBatteryOptimizationSettings" -> {
-                result.success(openBatteryOptimizationSettings())
             }
 
             "openAppSettings" -> {
@@ -218,44 +213,34 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         }
     }
 
-    private fun initShortcuts(label: String) {
-        val shortcut = with(ShortcutInfoCompat.Builder(GlobalState.application, "toggle")) {
-            setShortLabel(label)
-            setIcon(
-                IconCompat.createWithResource(
-                    GlobalState.application,
-                    R.mipmap.ic_launcher_round,
-                ),
-            )
-            setIntent(QuickAction.TOGGLE.quickIntent)
-            build()
+    private fun shortcutLabels(arguments: Any?): Map<QuickAction, String>? {
+        val map = arguments as? Map<*, *> ?: return null
+        return QuickAction.entries.associateWith { action ->
+            map[action.shortcutId] as? String ?: return null
         }
-        ShortcutManagerCompat.setDynamicShortcuts(
-            GlobalState.application,
-            listOf(shortcut),
-        )
     }
 
-    private fun isBatteryOptimizationDisabled(): Boolean {
-        val powerManager = getSystemService(GlobalState.application, PowerManager::class.java)
-        return powerManager?.isIgnoringBatteryOptimizations(GlobalState.application.packageName)
-            ?: false
-    }
-
-    @SuppressLint("BatteryLife")
-    private fun openBatteryOptimizationSettings(): Boolean {
-        // VPN continuity is the user-requested core function, so the direct exemption is intentional.
-        val activity = activity ?: return false
-        return try {
-            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                data = "package:${GlobalState.application.packageName}".toUri()
+    private fun initShortcuts(labels: Map<QuickAction, String>) {
+        val shortcuts = SHORTCUT_ORDER.mapIndexed { rank, action ->
+            with(ShortcutInfoCompat.Builder(GlobalState.application, action.shortcutId)) {
+                setShortLabel(labels.getValue(action))
+                setIcon(IconCompat.createWithResource(GlobalState.application, action.shortcutIcon))
+                setIntent(action.quickIntent)
+                setRank(rank)
+                build()
             }
-            activity.startActivity(intent)
-            true
-        } catch (_: Exception) {
-            false
         }
+        ShortcutManagerCompat.setDynamicShortcuts(GlobalState.application, shortcuts)
     }
+
+    // Plain circles, not adaptive icons: an adaptive shortcut icon takes the
+    // launcher's own mask, which is a square on many devices.
+    private val QuickAction.shortcutIcon: Int
+        get() = when (this) {
+            QuickAction.START -> R.drawable.ic_shortcut_start
+            QuickAction.STOP -> R.drawable.ic_shortcut_stop
+            QuickAction.TOGGLE -> R.drawable.ic_shortcut_toggle
+        }
 
     private fun openAppSettings(): Boolean {
         val activity = activity ?: return false
@@ -514,6 +499,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     private companion object {
+        val SHORTCUT_ORDER = listOf(QuickAction.START, QuickAction.STOP, QuickAction.TOGGLE)
         const val VPN_PERMISSION_REQUEST_CODE = 1001
         const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1002
         const val INSTALLED_APPS_PERMISSION_REQUEST_CODE = 1003

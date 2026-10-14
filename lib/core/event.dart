@@ -42,6 +42,8 @@ abstract mixin class CoreEventListener {
   ) {}
 
   void onRouteChanged(RouteSnapshot snapshot) {}
+
+  void onDialerLoop(String proxyName) {}
 }
 
 class CoreEventManager {
@@ -83,6 +85,9 @@ class CoreEventManager {
               listener.onRouteChanged(
                 RouteSnapshot.fromJson(Map<String, Object?>.from(event.data)),
               );
+              break;
+            case CoreEventType.dialerLoop:
+              listener.onDialerLoop(event.data as String);
               break;
           }
         } catch (error) {

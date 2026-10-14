@@ -15,7 +15,10 @@ class _RecordingProxiesAction extends ProxiesAction {
   static final List<String> tested = [];
 
   @override
-  Future<void> delayTestPageGroup(String groupName) async {
+  Future<void> delayTestPageGroup(
+    String groupName, {
+    bool matchSearch = true,
+  }) async {
     tested.add(groupName);
   }
 }

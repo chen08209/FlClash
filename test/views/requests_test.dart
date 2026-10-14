@@ -162,7 +162,7 @@ void main() {
     );
     expect(label.data, requests.last.start.showFull);
     // The hint is pinned to the thumb: at the newest end the thumb center
-    // rests 24px (half the 48px minimum thumb) below the track's top edge,
+    // rests 24 dp (half the 48 dp minimum thumb) below the track's top edge,
     // which the list running under the bar leaves at the bar's foot.
     expect(
       tester.getCenter(find.byKey(hintKey)).dy,
@@ -186,8 +186,8 @@ void main() {
     await pumpRequests(tester);
     await tester.pumpAndSettle();
 
-    final box = find.byType(ScrollToEndBox<TrackerInfo>);
-    bool following() => tester.widget<ScrollToEndBox<TrackerInfo>>(box).enable;
+    final box = find.byType(ScrollToEndBox);
+    bool following() => tester.widget<ScrollToEndBox>(box).enable;
     expect(find.byType(FloatingActionButton), findsNothing);
     expect(following(), isTrue);
 

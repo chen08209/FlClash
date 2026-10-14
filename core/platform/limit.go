@@ -1,4 +1,4 @@
-//go:build android && cgo
+//go:build android
 
 package platform
 

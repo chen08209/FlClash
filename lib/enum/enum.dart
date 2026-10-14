@@ -80,15 +80,20 @@ enum LoadBalanceStrategy {
   final String value;
 
   const LoadBalanceStrategy(this.value);
+}
 
-  static LoadBalanceStrategy? parse(String? value) {
-    for (final item in values) {
-      if (item.value == value) {
-        return item;
-      }
-    }
-    return null;
-  }
+enum IpVersion {
+  dual('dual'),
+  ipv4('ipv4'),
+  ipv6('ipv6'),
+  @JsonValue('ipv4-prefer')
+  ipv4Prefer('ipv4-prefer'),
+  @JsonValue('ipv6-prefer')
+  ipv6Prefer('ipv6-prefer');
+
+  final String value;
+
+  const IpVersion(this.value);
 }
 
 extension GroupTypeExtension on GroupType {
@@ -106,16 +111,7 @@ extension GroupTypeExtension on GroupType {
   }
 }
 
-enum UsedProxy { GLOBAL, DIRECT, REJECT }
-
 enum DelayTestPhase { queued, running }
-
-extension UsedProxyExtension on UsedProxy {
-  static List<String> get valueList =>
-      UsedProxy.values.map((e) => e.toString().split('.').last).toList();
-
-  String get value => UsedProxyExtension.valueList[index];
-}
 
 enum Mode { rule, global, direct }
 
@@ -218,8 +214,6 @@ enum TrafficUnit { B, KB, MB, GB, TB }
 
 enum NavigationItemMode { mobile, desktop, more, moreFull }
 
-enum Network { tcp, udp }
-
 enum ProxiesSortType { none, delay, name }
 
 enum TunStack { gvisor, system, mixed, mips }
@@ -228,7 +222,7 @@ enum AccessControlMode { acceptSelected, rejectSelected }
 
 enum AccessSortType { none, name, time }
 
-enum ProfileType { file, url }
+enum ProfileType { file, url, custom }
 
 enum ResultType {
   @JsonValue(0)
@@ -246,9 +240,8 @@ enum CoreEventType {
   crash,
   geoUpdate,
   routeChanged,
+  dialerLoop,
 }
-
-enum InvokeMessageType { protect, process }
 
 enum FindProcessMode { always, off }
 
@@ -277,8 +270,19 @@ enum DnsCacheAlgorithm { lru, arc }
 
 enum FakeIpFilterMode { blacklist, whitelist, rule }
 
+mixin OverrideKey on Enum {
+  String get path;
+
+  String? get parent {
+    final dot = path.indexOf('.');
+    return dot < 0 ? null : path.substring(0, dot);
+  }
+
+  String get field => path.substring(path.indexOf('.') + 1);
+}
+
 @JsonEnum(valueField: 'path')
-enum DnsOverrideKey {
+enum DnsOverrideKey with OverrideKey {
   enable('enable'),
   listen('listen'),
   listenRoutingMark('listen-routing-mark'),
@@ -313,19 +317,28 @@ enum DnsOverrideKey {
 
   const DnsOverrideKey(this.path);
 
+  @override
   final String path;
 
   static const fallbackFilterSection = 'fallback-filter';
 
-  bool get isFallbackFilter => path.startsWith('$fallbackFilterSection.');
-
-  String get jsonKey => isFallbackFilter
-      ? path.substring(fallbackFilterSection.length + 1)
-      : path;
+  /// What a subscription or file profile may override: nothing that names its
+  /// groups or rule sets, which change with every update.
+  static const normalProfileKeys = {
+    listen,
+    ipv6,
+    enhancedMode,
+    fakeIpFilter,
+    fakeIpFilterMode,
+    defaultNameserver,
+    nameserver,
+    proxyServerNameserver,
+    directNameserver,
+  };
 }
 
 @JsonEnum(valueField: 'path')
-enum NtpOverrideKey {
+enum NtpOverrideKey with OverrideKey {
   enable('enable'),
   server('server'),
   port('port'),
@@ -335,6 +348,42 @@ enum NtpOverrideKey {
 
   const NtpOverrideKey(this.path);
 
+  @override
+  final String path;
+}
+
+@JsonEnum(valueField: 'path')
+enum SnifferOverrideKey with OverrideKey {
+  enable('enable'),
+  overrideDest('override-destination'),
+  forceDnsMapping('force-dns-mapping'),
+  parsePureIp('parse-pure-ip'),
+  forceDomain('force-domain'),
+  skipDomain('skip-domain'),
+  skipSrcAddress('skip-src-address'),
+  skipDstAddress('skip-dst-address'),
+  sniffHttp('sniff.HTTP'),
+  sniffTls('sniff.TLS'),
+  sniffQuic('sniff.QUIC');
+
+  const SnifferOverrideKey(this.path);
+
+  @override
+  final String path;
+
+  static const sniffSection = 'sniff';
+}
+
+/// Written over the profile's `tun` section, which Android's VPN never reads,
+/// so these apply on desktop only. The network settings' `Tun` holds the rest.
+@JsonEnum(valueField: 'path')
+enum TunOverrideKey with OverrideKey {
+  disableIcmpForwarding('disable-icmp-forwarding'),
+  excludeInterface('exclude-interface');
+
+  const TunOverrideKey(this.path);
+
+  @override
   final String path;
 }
 
@@ -398,8 +447,6 @@ enum EditorFontSize {
   const EditorFontSize(this.value);
 }
 
-enum RouteMode { bypassPrivate, config }
-
 enum AuthorizeCode { none, success, error }
 
 enum TunAuthorizationState { none, authorized, unauthorized }
@@ -413,7 +460,6 @@ enum FunctionTag {
   changeProxy,
   handleWill,
   updateDelay,
-  vpnTip,
   autoLaunch,
   updatePageIndex,
   pageChange,
@@ -427,6 +473,7 @@ enum FunctionTag {
   removeProxy,
   suspend,
   coreErrorNotifier,
+  dialerLoopNotifier,
   reloadPackages,
 }
 
@@ -444,8 +491,6 @@ enum DashboardWidget {
   dnsQueries,
   requests,
   connections,
-  overrideDnsButton,
-  overrideNtpButton,
   runTime,
   proxyGroups,
   profiles;
@@ -590,6 +635,13 @@ extension RuleActionExt on RuleAction {
     RuleAction.RULE_SET,
   ].contains(this);
 
+  bool get nestsRules => [
+    RuleAction.AND,
+    RuleAction.OR,
+    RuleAction.NOT,
+    RuleAction.SUB_RULE,
+  ].contains(this);
+
   bool get hasCommaPayload => [
     RuleAction.AND,
     RuleAction.OR,
@@ -649,6 +701,77 @@ extension RuleActionExt on RuleAction {
   }
 }
 
+enum ProxyFieldKind { text, secret, number, toggle, choice, list }
+
+/// A key of a proxy definition the form edits, at [path] since the core reads
+/// transport, TLS and plugin settings from maps of their own.
+enum ProxyField {
+  username(['username']),
+  password(['password'], ProxyFieldKind.secret),
+  uuid(['uuid']),
+  psk(['psk'], ProxyFieldKind.secret),
+  key(['key'], ProxyFieldKind.secret),
+  privateKey(['private-key'], ProxyFieldKind.secret),
+  publicKey(['public-key']),
+  privateKeyPassphrase(['private-key-passphrase'], ProxyFieldKind.secret),
+  preSharedKey(['pre-shared-key'], ProxyFieldKind.secret),
+  authStr(['auth-str'], ProxyFieldKind.secret),
+  cipher(['cipher'], ProxyFieldKind.choice),
+  alterId(['alterId'], ProxyFieldKind.number),
+  protocol(['protocol'], ProxyFieldKind.choice),
+  obfs(['obfs'], ProxyFieldKind.choice),
+  transport(['transport'], ProxyFieldKind.choice),
+  up(['up']),
+  down(['down']),
+  network(['network'], ProxyFieldKind.choice),
+  flow(['flow'], ProxyFieldKind.choice),
+  wsPath(['ws-opts', 'path']),
+  wsHost(['ws-opts', 'headers', 'Host']),
+  grpcServiceName(['grpc-opts', 'grpc-service-name']),
+  xhttpPath(['xhttp-opts', 'path']),
+  xhttpHost(['xhttp-opts', 'host']),
+  tls(['tls'], ProxyFieldKind.toggle),
+  sni(['sni']),
+  servername(['servername']),
+  alpn(['alpn'], ProxyFieldKind.list),
+  skipCertVerify(['skip-cert-verify'], ProxyFieldKind.toggle),
+  clientFingerprint(['client-fingerprint'], ProxyFieldKind.choice),
+  realityPublicKey(['reality-opts', 'public-key']),
+  realityShortId(['reality-opts', 'short-id']),
+  plugin(['plugin'], ProxyFieldKind.choice),
+  pluginMode(['plugin-opts', 'mode']),
+  pluginHost(['plugin-opts', 'host']),
+  udpOverTcp(['udp-over-tcp'], ProxyFieldKind.toggle),
+  protocolParam(['protocol-param']),
+  obfsParam(['obfs-param']),
+  obfsPassword(['obfs-password'], ProxyFieldKind.secret),
+  obfsSecret(['obfs'], ProxyFieldKind.secret),
+  obfsMode(['obfs-opts', 'mode'], ProxyFieldKind.choice),
+  obfsHost(['obfs-opts', 'host']),
+  version(['version'], ProxyFieldKind.number),
+  ports(['ports']),
+  hopInterval(['hop-interval']),
+  congestionController(['congestion-controller'], ProxyFieldKind.choice),
+  udpRelayMode(['udp-relay-mode'], ProxyFieldKind.choice),
+  reduceRtt(['reduce-rtt'], ProxyFieldKind.toggle),
+  ip(['ip']),
+  ipv6(['ipv6']),
+  allowedIps(['allowed-ips'], ProxyFieldKind.list),
+  dns(['dns'], ProxyFieldKind.list),
+  remoteDnsResolve(['remote-dns-resolve'], ProxyFieldKind.toggle),
+  mtu(['mtu'], ProxyFieldKind.number),
+  tfo(['tfo'], ProxyFieldKind.toggle),
+  mptcp(['mptcp'], ProxyFieldKind.toggle),
+  interfaceName(['interface-name']),
+  routingMark(['routing-mark'], ProxyFieldKind.number),
+  ipVersion(['ip-version'], ProxyFieldKind.choice);
+
+  final List<String> path;
+  final ProxyFieldKind kind;
+
+  const ProxyField(this.path, [this.kind = ProxyFieldKind.text]);
+}
+
 enum RulePayloadError { network, numberRange, dscpRange }
 
 extension RulePayloadErrorExt on RulePayloadError {
@@ -662,12 +785,15 @@ extension RulePayloadErrorExt on RulePayloadError {
   }
 }
 
-enum OverwriteType { standard, script, custom }
+enum ExtendType { standard, script }
 
 enum RuleTarget {
   DIRECT('DIRECT'),
   REJECT('REJECT'),
-  REJECT_DROP('REJECT-DROP');
+  REJECT_DROP('REJECT-DROP'),
+  PASS('PASS'),
+  PASS_RULE('PASS-RULE'),
+  COMPATIBLE('COMPATIBLE');
 
   final String value;
 
@@ -678,23 +804,22 @@ enum RuleTarget {
   );
 
   static final Set<String> baseTargets = Set.unmodifiable(baseTargetNames);
+
+  /// The core adds GLOBAL only after it parses the groups, so a rule, a dialer
+  /// or a DNS server may name it while a group may not.
+  static final List<String> ruleTargetNames = List.unmodifiable([
+    ...baseTargetNames,
+    GroupName.GLOBAL.name,
+  ]);
+
+  static final Set<String> ruleTargets = Set.unmodifiable(ruleTargetNames);
 }
 
 enum ProviderKind { proxy, rule }
 
-/// Where a provider name a custom overwrite uses resolves, in lookup order.
-enum ProviderSource { subscription, profile, app }
-
 enum RuleProviderBehavior { domain, ipcidr, classical }
 
 enum RuleProviderFormat { yaml, text, mrs }
-
-extension RuleProviderFormatExt on RuleProviderFormat? {
-  /// The core reads an mrs set only as a domain or an ipcidr one.
-  List<RuleProviderBehavior> get behaviors => this == RuleProviderFormat.mrs
-      ? const [RuleProviderBehavior.domain, RuleProviderBehavior.ipcidr]
-      : RuleProviderBehavior.values;
-}
 
 enum RestoreStrategy { compatible, override }
 
@@ -709,18 +834,17 @@ enum QueryTag { proxies, access }
 enum LoadingTag {
   profiles,
   scripts,
+  ruleProviders,
+  iconSets,
   backup_restore,
   access,
   proxies,
-  batteryOptimization,
   checkUpdate,
 }
 
 enum CoreStatus { connecting, connected, disconnected }
 
 enum UpdatingScope { core, local }
-
-enum RuleScene { added, disabled, custom }
 
 enum ItemPosition {
   start,

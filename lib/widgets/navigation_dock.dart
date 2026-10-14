@@ -509,8 +509,10 @@ class _ElasticPressState extends State<ElasticPress>
     _lift.springTo(1, _liftSpring);
   }
 
+  // A pointer's events keep reaching the hit-test path recorded at its down,
+  // so a press removed mid-gesture still hears its moves and release.
   void _handlePointerMove(PointerMoveEvent event) {
-    if (event.pointer != _pointer) {
+    if (!mounted || event.pointer != _pointer) {
       return;
     }
     final limit = context.size!.shortestSide * _pullLimit;
@@ -520,7 +522,7 @@ class _ElasticPressState extends State<ElasticPress>
   }
 
   void _handlePointerEnd(PointerEvent event) {
-    if (event.pointer != _pointer) {
+    if (!mounted || event.pointer != _pointer) {
       return;
     }
     _pointer = null;

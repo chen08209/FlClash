@@ -11,23 +11,22 @@ const _profileNtp = <String, dynamic>{
   'write-to-system': true,
 };
 
-const _patchConfig = PatchClashConfig(
+const _overrides = ProfileOverrides(
   ntp: Ntp(server: 'time.cloudflare.com', interval: 60),
   ntpOverrideKeys: {NtpOverrideKey.server, NtpOverrideKey.interval},
 );
 
 Future<YamlMap?> _ntpOf({
   required Map<String, dynamic> rawConfig,
-  required bool overrideNtp,
+  ProfileOverrides overrides = _overrides,
 }) async {
   final result = await makeRealProfileTask(
     MakeRealProfileState(
       profilesPath: '/profiles',
       profileId: 1,
       rawConfig: rawConfig,
-      realPatchConfig: _patchConfig,
-      overrideDns: false,
-      overrideNtp: overrideNtp,
+      realPatchConfig: const PatchClashConfig(),
+      overrides: overrides,
       appendSystemDns: false,
       proxyGroups: const [],
       rules: const [],
@@ -41,10 +40,7 @@ Future<YamlMap?> _ntpOf({
 
 void main() {
   test('overrides only the selected NTP keys of a profile', () async {
-    final ntp = await _ntpOf(
-      rawConfig: {'ntp': _profileNtp},
-      overrideNtp: true,
-    );
+    final ntp = await _ntpOf(rawConfig: {'ntp': _profileNtp});
 
     expect(ntp!['server'], 'time.cloudflare.com');
     expect(ntp['interval'], 60);
@@ -53,10 +49,10 @@ void main() {
     expect(ntp['write-to-system'], true);
   });
 
-  test('leaves the profile alone while the override is off', () async {
+  test('leaves the profile alone without picked keys', () async {
     final ntp = await _ntpOf(
       rawConfig: {'ntp': _profileNtp},
-      overrideNtp: false,
+      overrides: const ProfileOverrides(),
     );
 
     expect(ntp!['server'], 'ntp.aliyun.com');
@@ -64,11 +60,14 @@ void main() {
   });
 
   test('writes nothing for a profile without NTP', () async {
-    expect(await _ntpOf(rawConfig: {}, overrideNtp: false), isNull);
+    expect(
+      await _ntpOf(rawConfig: {}, overrides: const ProfileOverrides()),
+      isNull,
+    );
   });
 
   test('a profile without NTP gets only the selected keys', () async {
-    final ntp = await _ntpOf(rawConfig: {}, overrideNtp: true);
+    final ntp = await _ntpOf(rawConfig: {});
 
     expect(ntp, {'server': 'time.cloudflare.com', 'interval': 60});
   });

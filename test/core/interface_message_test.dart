@@ -119,6 +119,35 @@ void main() {
     expect(await core.getExternalProvider('p'), isNull);
     expect(await core.watchRoute(true), isNull);
   });
+
+  test('calls nobody waits on absorb a Core that is gone', () async {
+    final core = _DisconnectedCore();
+
+    await core.resetTraffic();
+    await core.startLog();
+    await core.stopLog();
+
+    expect(core.invoked, [
+      CoreMethod.resetTraffic,
+      CoreMethod.startLog,
+      CoreMethod.stopLog,
+    ]);
+  });
+}
+
+class _DisconnectedCore extends _SilentCore {
+  @override
+  Future<T?> invokeMethod<T>({
+    required CoreMethod method,
+    Object? arguments,
+    Duration? timeout,
+  }) async {
+    invoked.add(method);
+    throw const CoreMethodException(
+      code: 'transport_disconnected',
+      message: 'Core RPC client is closed',
+    );
+  }
 }
 
 class _AnsweringCore extends _SilentCore {

@@ -13,8 +13,9 @@ dialogs, and interaction behavior.
 ## Conventions
 
 - Reuse the patterns of nearby widgets, providers, notifiers, and helpers before adding an abstraction, and keep to the
-  Material You, Surfboard-like look the rest of the app has. Do not introduce a visual system for one screen or rewrite
-  a layout the request does not need.
+  look the rest of the app has: Material You from `material_ui` as the base, with Apple's interaction conventions
+  (continuous corners, sheets that snap between detents, a floating tab bar) built on Material widgets rather than
+  Cupertino ones. Do not introduce a visual system for one screen or rewrite a layout the request does not need.
 - `.agents/rules.md` is binding here: the lint set (`child:` last, `const`, final locals), the superellipse corner API,
   and the widget-test facts under Testing Rules (`pumpAndSettle` never returns on `EditorView`, `dispose()` must not
   await, auto-dispose providers need a container-level hold, platform decisions are passed in as parameters).
@@ -27,11 +28,27 @@ dialogs, and interaction behavior.
 - Modals dim what they cover with the Material 3 scrim (`ColorScheme.modalScrim`, `scrim` at 32%) and never blur it.
   Every modal brings its own scrim, including one opened from inside another, so do not make a barrier transparent to
   keep scrims from stacking.
+- A sheet's size belongs to its route, never to its content or call site: a bottom sheet rests at
+  `SheetProps.detents`, and a side sheet is as tall as the window and as wide as `ModalSideSheetRoute` makes it from
+  the window width (`lib/widgets/side_sheet.dart`, pinned by `test/widgets/side_sheet_width_test.dart`). Do not wrap a
+  sheet's content in a fixed width or height to resize one sheet.
 - The keyboard animates `MediaQuery.viewInsets` every frame. Read MediaQuery by aspect (`paddingOf`, `viewInsetsOf`)
   rather than `MediaQuery.of`, and wrap the page of a new route type in `KeyboardInsetHold`; Keyboard Insets in
   `.agents/architecture.md` has the reasons.
+- A page full of images loads them once its route has settled and builds no rows past the viewport until then:
+  `RouteSettledMixin` and `arrivalScrollCacheExtent`, described under Page Arrival in `.agents/architecture.md`.
+- A page that waits on its data as it arrives shows its illustration alone (`NullStatus` without a label, in a
+  `NullStatusSwitcher`) until all of it is ready, never a skeleton screen; Page Arrival in `.agents/architecture.md`
+  has the rule.
 - App bar buttons reach `CommonScaffold` as data (`primaryAction`, `iconActions`, `menuItems`) so it can fold them into
   its overflow menu; App Bar Actions in `.agents/architecture.md` has the rule.
+- A row's secondary actions open from a context menu, never a trailing more button; a list whose rows have one
+  reorders in a sort mode, any other by a long press on the row. Row Actions And Sort Mode in `.agents/architecture.md`
+  has the rule.
+- Quick edit belongs only on a page that edits a whole list or section, or one isolated item; never on one that edits a
+  part of something other settings also write. Quick Edit in `.agents/architecture.md` has the rule.
+- A page or sheet opens on the navigator of the context it comes from, never on the root navigator unless Where A
+  Route Opens in `.agents/architecture.md` allows it.
 - User-facing text goes through ARB; use `localization` when text changes are non-trivial.
 - An asynchronous control keeps four things apart: authoritative provider/domain state; display-only state such as a
   minimum progress duration; tap policy while work or a display hold is active; and failure/disposal cleanup, in
@@ -43,7 +60,7 @@ dialogs, and interaction behavior.
 All corner radii come from `lib/common/shape.dart`: a token, a derived value, or a named off-scale value passed to its
 builders. Never write a bare radius literal at a call site.
 
-The scale is picked by the component's **shortest side**. A radius that reads as a soft card at 64 logical pixels tall
+The scale is picked by the component's **shortest side**. A radius that reads as a soft card at 64 dp tall
 reads as a pill at 24 and as a square at 400, so one radius everywhere is the wrong kind of consistency.
 
 | Token | Value | Shortest side | Use |
