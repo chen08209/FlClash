@@ -224,6 +224,7 @@ enum CoreEventType {
   log,
   delay,
   request,
+  requestTraffic,
   dns,
   loaded,
   crash,

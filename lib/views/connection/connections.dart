@@ -5,9 +5,9 @@ import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/features.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -127,6 +127,14 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
         valueListenable: _listController,
         builder: (context, state, _) {
           final connections = state.list;
+          Widget buildAction(TrackerInfo trackerInfo) {
+            return _BlockConnectionButton(
+              onPressed: () {
+                _handleBlockConnection(trackerInfo.id);
+              },
+            );
+          }
+
           return NullStatusSwitcher(
             isEmpty: connections.isEmpty,
             isSearching: state.isSearching,
@@ -135,20 +143,27 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
               label: appLocalizations.nullTip(appLocalizations.connections),
               illustration: NullStatusIllustration.connections,
             ),
-            child: TrackerInfoAnimatedList(
-              controller: _scrollController,
-              padding: EdgeInsets.only(
-                top: context.contentTopPadding,
-                bottom: 16 + BottomInsetScope.of(context),
+            child: RecordTableFrame<TrackerInfo>(
+              tableId: 'connections',
+              items: connections,
+              columnsOf: (wide) => trackerInfoColumns(
+                context,
+                wide: wide,
+                isLive: true,
+                actionBuilder: buildAction,
               ),
-              trackerInfos: connections,
-              detailTitle: appLocalizations.details(
-                appLocalizations.connection,
-              ),
-              actionBuilder: (trackerInfo) => _BlockConnectionButton(
-                onPressed: () {
-                  _handleBlockConnection(trackerInfo.id);
-                },
+              builder: (context, table, connections) => TrackerInfoAnimatedList(
+                controller: _scrollController,
+                padding: EdgeInsets.only(
+                  top: context.contentTopPadding,
+                  bottom: 16 + BottomInsetScope.of(context),
+                ),
+                trackerInfos: connections,
+                table: table,
+                detailTitle: appLocalizations.details(
+                  appLocalizations.connection,
+                ),
+                actionBuilder: buildAction,
               ),
             ),
           );
