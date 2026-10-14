@@ -7,6 +7,8 @@ import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/paged_sheet.dart';
+import 'package:fl_clash/ui/popup.dart';
 import 'package:fl_clash/views/config/advanced.dart';
 import 'package:fl_clash/views/config/custom_resources.dart';
 import 'package:fl_clash/views/config/dns.dart';
@@ -25,12 +27,9 @@ import 'package:fl_clash/views/profiles/custom/custom.dart';
 import 'package:fl_clash/views/profiles/custom/custom_proxies.dart';
 import 'package:fl_clash/views/profiles/custom/rules.dart';
 import 'package:fl_clash/views/proxies/list.dart';
-import 'package:fl_clash/views/proxies/providers.dart';
 import 'package:fl_clash/views/proxies/tab.dart';
 import 'package:fl_clash/views/theme.dart';
 import 'package:fl_clash/views/views.dart';
-import 'package:fl_clash/widgets/paged_sheet.dart';
-import 'package:fl_clash/widgets/popup.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -65,7 +64,6 @@ void main() {
     'backup and restore': const BackupAndRestore(),
     'hotkeys': const HotKeyView(),
     'access control': const AccessView(),
-    'proxy providers': const ProvidersView(),
     'added rules': const AddedRulesView(),
     'scripts': const ScriptsView(),
     'user agents': const UserAgentsView(),
@@ -289,6 +287,10 @@ void main() {
     container
         .read(viewSizeProvider.notifier)
         .update((_) => const Size(1400, 1000));
+    container.listen(proxiesStyleSettingProvider, (_, _) {});
+    container
+        .read(proxiesStyleSettingProvider.notifier)
+        .update((state) => state.copyWith(type: ProxiesType.tab));
 
     await tester.pumpWidget(
       UncontrolledProviderScope(

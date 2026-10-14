@@ -53,7 +53,7 @@ void main() {
                     Row(
                       children: [
                         Expanded(child: neighbor('left')),
-                        const Expanded(child: OutboundMode()),
+                        const Expanded(child: OutboundModeCard()),
                         Expanded(child: neighbor('right')),
                       ],
                     ),
@@ -111,41 +111,37 @@ void main() {
     return trail;
   }
 
-  testWidgets('arrow down walks every mode and leaves the card', (
-    tester,
-  ) async {
-    await pumpDashboard(tester);
-    await focusNeighbor(tester, 'above');
-
-    final trail = await walk(tester, LogicalKeyboardKey.arrowDown);
-
-    expect(
-      trail.take(4),
-      <String>['Rule', 'Global', 'Direct', 'below'],
-      reason:
-          'arrow down should step through the modes without the card itself '
-          'taking a turn, got $trail',
-    );
-  });
-
-  testWidgets('arrow right enters a mode row and leaves through it', (
+  testWidgets('arrow right walks every mode and leaves the card', (
     tester,
   ) async {
     await pumpDashboard(tester);
     await focusNeighbor(tester, 'left');
 
-    final trail = await walk(tester, LogicalKeyboardKey.arrowRight, steps: 3);
+    final trail = await walk(tester, LogicalKeyboardKey.arrowRight, steps: 4);
+
+    expect(
+      trail,
+      <String>['Rule', 'Global', 'Direct', 'right'],
+      reason:
+          'arrow right should step through the modes, the selected one '
+          'included, without the card itself taking a turn, got $trail',
+    );
+  });
+
+  testWidgets('arrow down enters a mode button and leaves through it', (
+    tester,
+  ) async {
+    await pumpDashboard(tester);
+    await focusNeighbor(tester, 'above');
+
+    final trail = await walk(tester, LogicalKeyboardKey.arrowDown, steps: 2);
 
     expect(
       trail.first,
       anyOf('Rule', 'Global', 'Direct'),
-      reason: 'arrow right should land on a mode row, got $trail',
+      reason: 'arrow down should land on a mode button, got $trail',
     );
-    expect(
-      trail,
-      contains('right'),
-      reason: 'arrow right must keep going past the card, got $trail',
-    );
+    expect(trail.last, 'below');
   });
 
   testWidgets('navigating the card does not change the mode', (tester) async {
@@ -173,12 +169,12 @@ void main() {
     );
   });
 
-  testWidgets('activating a mode row selects it', (tester) async {
+  testWidgets('activating a mode button selects it', (tester) async {
     await pumpDashboard(tester);
-    await focusNeighbor(tester, 'above');
+    await focusNeighbor(tester, 'left');
 
     for (var i = 0; i < 6 && focusedLabel() != 'Global'; i++) {
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
       await tester.pump();
     }
     expect(focusedLabel(), 'Global');
