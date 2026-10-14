@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -194,14 +192,11 @@ class _StartButtonState extends ConsumerState<StartButton>
     final appLocalizations = context.appLocalizations;
     final suspended = isStart && suspend;
     if (NavigationDock.isDocked(context)) {
-      return BreathingFill(
-        active: isStart && !suspend,
-        child: FloatingActionButton(
-          heroTag: null,
-          tooltip: suspended ? appLocalizations.suspended : null,
-          onPressed: handleSwitchStart,
-          child: _buildIcon(isStart, suspended: suspended),
-        ),
+      return FloatingActionButton(
+        heroTag: null,
+        tooltip: suspended ? appLocalizations.suspended : null,
+        onPressed: handleSwitchStart,
+        child: _buildIcon(isStart, suspended: suspended),
       );
     }
     final hasThreeDigitHours =
@@ -276,129 +271,4 @@ class _StartButtonState extends ConsumerState<StartButton>
       ),
     );
   }
-}
-
-class BreathingFill extends StatefulWidget {
-  const BreathingFill({super.key, required this.active, required this.child});
-
-  final bool active;
-  final Widget child;
-
-  @override
-  State<BreathingFill> createState() => _BreathingFillState();
-}
-
-class _BreathingFillState extends State<BreathingFill> {
-  static const _breathDuration = Duration(milliseconds: 1400);
-  // A ticker would redraw the screen on every vsync for as long as the core runs.
-  static const _breathStep = Duration(milliseconds: 66);
-  static const _fadeDuration = Duration(milliseconds: 300);
-
-  final _breath = ValueNotifier<double>(0);
-  late final AppLifecycleListener _lifecycle;
-  Timer? _timer;
-  int _steps = 0;
-  bool _canAnimate = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _lifecycle = AppLifecycleListener(onStateChange: (_) => _sync());
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _canAnimate =
-        !MediaQuery.disableAnimationsOf(context) &&
-        TickerMode.valuesOf(context).enabled;
-    _sync();
-  }
-
-  @override
-  void didUpdateWidget(BreathingFill oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _sync();
-  }
-
-  bool get _isForeground => switch (WidgetsBinding.instance.lifecycleState) {
-    null || AppLifecycleState.resumed || AppLifecycleState.inactive => true,
-    _ => false,
-  };
-
-  void _sync() {
-    if (!widget.active || !_canAnimate || !_isForeground) {
-      _timer?.cancel();
-      _timer = null;
-      if (widget.active) _breath.value = 1;
-      return;
-    }
-    _timer ??= Timer.periodic(_breathStep, (_) => _step());
-  }
-
-  void _step() {
-    final period = _breathDuration.inMicroseconds / _breathStep.inMicroseconds;
-    final phase = ++_steps % (2 * period) / period;
-    _breath.value = Curves.easeInOut.transform(phase <= 1 ? phase : 2 - phase);
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _lifecycle.dispose();
-    _breath.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Stack(
-      children: [
-        widget.child,
-        Positioned.fill(
-          child: IgnorePointer(
-            child: AnimatedOpacity(
-              opacity: widget.active ? 1 : 0,
-              duration: _fadeDuration,
-              child: RepaintBoundary(
-                child: CustomPaint(
-                  painter: _BreathingFillPainter(
-                    breath: _breath,
-                    color: theme.colorScheme.onPrimaryContainer,
-                    shape:
-                        theme.floatingActionButtonTheme.shape ?? AppShape.full,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _BreathingFillPainter extends CustomPainter {
-  _BreathingFillPainter({
-    required this.breath,
-    required this.color,
-    required this.shape,
-  }) : super(repaint: breath);
-
-  final ValueNotifier<double> breath;
-  final Color color;
-  final ShapeBorder shape;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawPath(
-      shape.getOuterPath(Offset.zero & size),
-      Paint()..color = color.withValues(alpha: 0.14 * breath.value),
-    );
-  }
-
-  @override
-  bool shouldRepaint(_BreathingFillPainter oldDelegate) =>
-      color != oldDelegate.color || shape != oldDelegate.shape;
 }

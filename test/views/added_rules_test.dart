@@ -77,7 +77,7 @@ void main() {
     await pumpRules(tester, const []);
 
     expect(find.byType(NullStatus), findsOneWidget);
-    expect(find.text(currentAppLocalizations.add), findsOneWidget);
+    expect(find.byTooltip(currentAppLocalizations.add), findsOneWidget);
   });
 
   testWidgets('lists every rule when the store is populated', (tester) async {

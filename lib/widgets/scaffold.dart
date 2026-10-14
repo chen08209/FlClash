@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
@@ -18,6 +20,8 @@ import 'popup.dart';
 import 'search_field.dart';
 import 'sheet.dart';
 import 'sheet_header.dart';
+import 'sheet_navigator.dart';
+import 'sortable.dart';
 
 typedef OnKeywordsUpdateCallback = void Function(List<String> keywords);
 
@@ -52,11 +56,15 @@ class CommonScaffold extends StatefulWidget {
   final AppBarSearchState? searchState;
   final List<IconButtonData> searchActions;
 
-  /// One button group taking a single bar slot, searching or not; never folds.
+  /// Shown searching or not and never folded; the first two share a button
+  /// group and any after them stand alone.
   final List<IconButtonData> selectionActions;
   final OnKeywordsUpdateCallback? onKeywordsUpdate;
   final bool? resizeToAvoidBottomInset;
   final VoidCallback? backAction;
+
+  /// Puts the toggle of the sort mode in the bar.
+  final bool canSort;
 
   const CommonScaffold({
     super.key,
@@ -80,6 +88,7 @@ class CommonScaffold extends StatefulWidget {
     this.isTV,
     this.onKeywordsUpdate,
     this.resizeToAvoidBottomInset,
+    this.canSort = false,
   });
 
   @override
@@ -93,6 +102,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
   final ValueNotifier<List<String>> _keywordsNotifier = ValueNotifier([]);
   final _textController = TextEditingController();
   final _searchFocusNode = FocusNode();
+  var _sorting = false;
 
   bool get _isSearch {
     return _appBarState.value.searchState?.query != null;
@@ -107,7 +117,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
   }
 
   bool get _hasActions {
-    return _appBarState.value.searchState != null ||
+    return widget.canSort ||
         widget.primaryAction != null ||
         widget.iconActions.isNotEmpty ||
         widget.menuItems.isNotEmpty ||
@@ -134,10 +144,17 @@ class CommonScaffoldState extends State<CommonScaffold> {
     _updateSearchState((state) => state?.copyWith(query: ''));
   }
 
+  void _toggleSorting() {
+    setState(() {
+      _sorting = !_sorting;
+    });
+  }
+
   bool _handleSearchShortcut(KeyEvent event) {
     if (event is! KeyDownEvent ||
         _appBarState.value.searchState == null ||
         _isEdit ||
+        _sorting ||
         !controlSingleActivator(
           LogicalKeyboardKey.keyF,
         ).accepts(event, HardwareKeyboard.instance) ||
@@ -220,6 +237,9 @@ class CommonScaffoldState extends State<CommonScaffold> {
     if (oldWidget.isLoading != widget.isLoading) {
       _loadingNotifier.value = widget.isLoading;
     }
+    if (oldWidget.canSort && !widget.canSort) {
+      _sorting = false;
+    }
   }
 
   void _handleClearInput() {
@@ -249,6 +269,9 @@ class CommonScaffoldState extends State<CommonScaffold> {
     handleExitSearching();
     if (_isEdit) {
       _appBarState.value.editState?.onExit();
+    }
+    if (_sorting) {
+      _toggleSorting();
     }
   }
 
@@ -332,7 +355,9 @@ class CommonScaffoldState extends State<CommonScaffold> {
       data: useCloseIcon
           ? IconButtonData(
               glyph: AppGlyphs.close,
-              onPressed: context.safeNestedPop,
+              onPressed:
+                  SheetProvider.of(context)?.onClose ??
+                  () => context.safeNestedPop(),
               tooltip: appLocalizations.close,
             )
           : IconButtonData(
@@ -345,7 +370,26 @@ class CommonScaffoldState extends State<CommonScaffold> {
 
   Widget? _buildLeading(VoidCallback? backAction, {required _SheetPop? pop}) {
     final button = _buildLeadingButton(backAction, pop: pop);
-    return button == null ? null : Center(child: ElasticPress(child: button));
+    if (button == null) {
+      return null;
+    }
+    final hidden = _sorting && !_isEdit && !_isSearch;
+    return Center(
+      child: ExcludeFocus(
+        excluding: hidden,
+        child: ExcludeSemantics(
+          excluding: hidden,
+          child: IgnorePointer(
+            ignoring: hidden,
+            child: AnimatedOpacity(
+              opacity: hidden ? 0 : 1,
+              duration: context.motionDuration(kThemeAnimationDuration),
+              child: ElasticPress(child: button),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget? _buildLeadingButton(
@@ -422,6 +466,20 @@ class CommonScaffoldState extends State<CommonScaffold> {
     VoidCallback? backAction,
     _SheetForm form,
   ) {
+    if (_sorting) {
+      return genActions([
+        if (widget.canSort)
+          ElasticPress(
+            child: AppBarActionButton(
+              data: sortModeAction(
+                context,
+                sorting: true,
+                onPressed: _toggleSorting,
+              ),
+            ),
+          ),
+      ], edge: AppBarActionEdge.container);
+    }
     final appLocalizations = context.appLocalizations;
     final pop = form.pop;
     final lead = _isSearch
@@ -441,7 +499,10 @@ class CommonScaffoldState extends State<CommonScaffold> {
         ? const <Widget>[]
         : widget.actions ?? const <Widget>[];
     final selection = widget.selectionActions;
-    final selectionCount = selection.isEmpty ? 0 : 1;
+    final selectionGroup = selection.take(_maxGroupedActions);
+    final selectionSingles = selection.skip(_maxGroupedActions);
+    final selectionCount =
+        (selection.isEmpty ? 0 : 1) + selectionSingles.length;
     final fold = _isSearch
         ? _foldBarActions(
             hasLead: true,
@@ -452,7 +513,15 @@ class CommonScaffoldState extends State<CommonScaffold> {
             hasLead: lead != null,
             primary: primaryAction,
             foldPrimary: widget.foldPrimaryAction,
-            icons: widget.iconActions,
+            icons: [
+              if (widget.canSort && !_isEdit)
+                sortModeAction(
+                  context,
+                  sorting: false,
+                  onPressed: _toggleSorting,
+                ),
+              ...widget.iconActions,
+            ],
             widgetCount: widgets.length + selectionCount,
             menuItems: widget.menuItems,
           );
@@ -474,8 +543,13 @@ class CommonScaffoldState extends State<CommonScaffold> {
       if (selection.isNotEmpty)
         TonalButtonGroup(
           children: [
-            for (final data in selection) AppBarActionButton(data: data),
+            for (final data in selectionGroup) AppBarActionButton(data: data),
           ],
+        ),
+      for (final data in selectionSingles)
+        ElasticPress(
+          enabled: !data.isLoading && data.onPressed != null,
+          child: AppBarActionButton(data: data),
         ),
       for (final action in widgets) ElasticPress(child: action),
       if (fold.overflow.isNotEmpty)
@@ -494,7 +568,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
     final appBar = TonalButtonTheme(
       child: _isSearch ? _buildSearchingAppBarTheme(child) : child,
     );
-    if (_isEdit || _isSearch) {
+    if (_isEdit || _isSearch || _sorting) {
       return BackLayerScope(onBack: _handleExitAppBarLayer, child: appBar);
     }
     return appBar;
@@ -516,6 +590,8 @@ class CommonScaffoldState extends State<CommonScaffold> {
     required IconButtonData? primaryAction,
   }) {
     final isBottomSheet = form.isBottomSheet;
+    // Under a sheet the bar drops its actions, so none reads as the sheet's.
+    final uncovered = ReverseAnimation(sheetCoverOf(context));
     return PreferredSize(
       preferredSize: Size.fromHeight(
         isBottomSheet ? sheetToolbarHeight : pageToolbarHeight,
@@ -541,15 +617,22 @@ class CommonScaffoldState extends State<CommonScaffold> {
                       : null,
                   leading: _buildLeading(backAction, pop: form.pop),
                   title: _buildTitle(state.searchState),
-                  actions: _buildActions(
-                    state.searchState != null,
-                    primaryAction,
-                    backAction,
-                    form,
-                  ),
+                  actions: [
+                    for (final action in _buildActions(
+                      state.searchState != null,
+                      primaryAction,
+                      backAction,
+                      form,
+                    ))
+                      FadeTransition(opacity: uncovered, child: action),
+                  ],
                 ),
               );
-              return isBottomSheet ? appBar : _buildFloatingHeader(appBar);
+              return isBottomSheet
+                  ? appBar
+                  : _buildFloatingHeader(
+                      _WindowControlsClearance(child: appBar),
+                    );
             },
           ),
           ValueListenableBuilder(
@@ -595,6 +678,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
     // The page's bar floats over its body, which leaves the bar's height at
     // its top through MediaQuery padding, as extendBodyBehindAppBar does.
     final barFloats = !isBottomSheet;
+    final sortableBody = SortModeScope(sorting: _sorting, child: widget.body);
     final body = SafeArea(
       top: !barFloats,
       child: ValueListenableBuilder(
@@ -605,7 +689,8 @@ class CommonScaffoldState extends State<CommonScaffold> {
               widget.onKeywordsUpdate!(keywords);
             });
           }
-          final hasHeader = keywords.isNotEmpty || (isTV && fabSlot != null);
+          final tvFab = isTV && !_sorting ? fabSlot : null;
+          final hasHeader = keywords.isNotEmpty || tvFab != null;
           final barInset = MediaQuery.paddingOf(context).top;
           final overlap = barFloats
               ? barInset
@@ -617,12 +702,12 @@ class CommonScaffoldState extends State<CommonScaffold> {
             mainAxisSize: hugsContent ? MainAxisSize.min : MainAxisSize.max,
             children: [
               if (hasHeader) SizedBox(height: barInset),
-              if (isTV && fabSlot != null)
+              if (tvFab != null)
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: CommonScaffoldFabExtendedProvider(
                     isExtended: true,
-                    child: fabSlot,
+                    child: tvFab,
                   ),
                 ),
               if (keywords.isNotEmpty)
@@ -653,9 +738,9 @@ class CommonScaffoldState extends State<CommonScaffold> {
                     ? MediaQuery.removePadding(
                         context: context,
                         removeTop: true,
-                        child: FloatingBarScope(inset: 0, child: widget.body),
+                        child: FloatingBarScope(inset: 0, child: sortableBody),
                       )
-                    : widget.body,
+                    : sortableBody,
               ),
             ],
           );
@@ -712,7 +797,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
         return true;
       },
     );
-    final fab = hasFab
+    final fab = hasFab && !_sorting
         ? SheetOverhangLift(
             child: bottomInset > 0
                 ? Padding(
@@ -738,7 +823,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
       backgroundColor:
           widget.backgroundColor ?? context.colorScheme.surfaceContainerLow,
       header: SheetToolBar(appBar: appBar),
-      footer: form.dockedSearch == null
+      footer: form.dockedSearch == null || _sorting
           ? null
           : _buildDockedSearch(form.dockedSearch!),
       body: content,
@@ -758,24 +843,10 @@ class CommonScaffoldState extends State<CommonScaffold> {
         borderRadius: AppRadius.top(AppCorner.xxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(child: sheetBody),
-            const _KeyboardSpacer(),
-            if (!form.hasDockedSearch)
-              SizedBox(height: MediaQuery.viewPaddingOf(context).bottom),
-          ],
+          children: [Flexible(child: sheetBody)],
         ),
       ),
     );
-  }
-}
-
-class _KeyboardSpacer extends StatelessWidget {
-  const _KeyboardSpacer();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(height: MediaQuery.viewInsetsOf(context).bottom);
   }
 }
 
@@ -935,6 +1006,7 @@ _foldBarActions({
           CommonPopupMenuItem(
             glyph: data.glyph,
             label: data.tooltip ?? '',
+            checked: data.isSelected,
             onPressed: data.isLoading ? null : data.onPressed,
           ),
       ...menuItems,
@@ -969,8 +1041,16 @@ class AppBarActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
     return IconButton(
       tooltip: data.tooltip,
+      isSelected: data.isSelected,
+      style: data.isSelected == true
+          ? IconButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+            )
+          : null,
       onPressed: data.isLoading ? null : data.onPressed,
       icon: data.isLoading
           ? SizedBox.square(
@@ -1012,7 +1092,12 @@ class _SheetForm {
       dockedSearch: isBottomSheet ? searchState : null,
       pop: !isModal
           ? null
-          : _SheetPop.of(context, provider, hasActions: hasActions),
+          : _SheetPop.of(
+              context,
+              provider,
+              // A bottom sheet docks its search at its foot, not in the bar.
+              hasActions: hasActions || searchState != null && !isBottomSheet,
+            ),
     );
   }
 
@@ -1083,7 +1168,7 @@ enum AppBarActionEdge {
   };
 }
 
-/// Only the touch platforms ask for the 48px target that pads the container out.
+/// Only the touch platforms ask for the 48 dp target that pads the container out.
 double _tapPaddingOf(BuildContext context) =>
     Theme.of(context).materialTapTargetSize == MaterialTapTargetSize.padded
     ? _iconButtonTapPadding
@@ -1128,6 +1213,42 @@ class AppBarInsetScope extends ConsumerWidget {
           leadingWidth: appBarLeadingWidth(compact),
           toolbarHeight: pageToolbarHeight,
         ),
+      ),
+      child: child,
+    );
+  }
+}
+
+/// A route over the home page on the root navigator fills the window, with
+/// neither the window header nor the sidebar keeping it off the buttons.
+class _WindowControlsClearance extends ConsumerWidget {
+  const _WindowControlsClearance({required this.child});
+
+  final Widget child;
+
+  static bool _fillsWindow(BuildContext context) {
+    final route = ModalRoute.of(context);
+    return route != null &&
+        route.opaque &&
+        !route.isFirst &&
+        route.navigator == Navigator.maybeOf(context, rootNavigator: true);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controls = windowControlsOverPage(
+      isMacOS: system.isMacOS,
+      version: ref.watch(versionProvider),
+      isMobileView: ref.watch(isMobileViewProvider),
+    );
+    if (controls.isEmpty || !_fillsWindow(context)) {
+      return child;
+    }
+    final mediaQuery = MediaQuery.of(context);
+    final padding = mediaQuery.padding;
+    return MediaQuery(
+      data: mediaQuery.copyWith(
+        padding: padding.copyWith(left: math.max(padding.left, controls.width)),
       ),
       child: child,
     );

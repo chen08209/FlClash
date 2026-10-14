@@ -7,7 +7,6 @@ import 'package:fl_clash/models/models.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:test/test.dart';
 
-/// Helper to round-trip a model through JSON encode/decode.
 T roundTrip<T>(
   Object? Function() toJson,
   T Function(Map<String, Object?> json) fromJson,
@@ -91,18 +90,34 @@ void main() {
     });
 
     test('toUpdateParams sends geoXUrl to the Core under geox-url', () {
-      final params = const PatchClashConfig(
-        geoXUrl: {
-          GeoResource.MMDB: 'https://example.com/geoip.metadb',
-          GeoResource.GEOSITE: 'https://example.com/geosite.dat',
-        },
-      ).toUpdateParams(routeMode: RouteMode.config, authentication: const []);
+      final params =
+          const PatchClashConfig(
+            geoXUrl: {
+              GeoResource.MMDB: 'https://example.com/geoip.metadb',
+              GeoResource.GEOSITE: 'https://example.com/geosite.dat',
+            },
+          ).toUpdateParams(
+            bypassPrivateRoute: false,
+            authentication: const [],
+            skipCertVerify: false,
+          );
 
       final json = jsonDecode(jsonEncode(params)) as Map<String, Object?>;
       expect(json['geox-url'], {
         'mmdb': 'https://example.com/geoip.metadb',
         'geosite': 'https://example.com/geosite.dat',
       });
+    });
+
+    test('toUpdateParams sends skipCertVerify under skip-cert-verify', () {
+      final params = const PatchClashConfig().toUpdateParams(
+        bypassPrivateRoute: false,
+        authentication: const [],
+        skipCertVerify: true,
+      );
+
+      final json = jsonDecode(jsonEncode(params)) as Map<String, Object?>;
+      expect(json['skip-cert-verify'], isTrue);
     });
   });
 
@@ -125,6 +140,7 @@ void main() {
       expect(restored.minimizeOnExit, true);
       expect(restored.restoreStrategy, RestoreStrategy.compatible);
       expect(restored.userAgents, defaultUserAgents);
+      expect(restored.filters, defaultFilters);
       expect(restored.testUrl, defaultTestUrl);
     });
 
@@ -146,6 +162,11 @@ void main() {
       ]);
     });
 
+    test('consent saved before the disclaimer was versioned asks again', () {
+      final restored = AppSettingProps.fromJson({'disclaimerAccepted': true});
+      expect(restored.acceptedDisclaimerVersion, lessThan(disclaimerVersion));
+    });
+
     test('every dashboard widget survives round-trip', () {
       const props = AppSettingProps(dashboardWidgets: DashboardWidget.values);
       final restored = roundTrip(props.toJson, AppSettingProps.fromJson);
@@ -160,6 +181,7 @@ void main() {
         closeConnections: false,
         testUrl: 'https://custom.test',
         userAgents: ['CustomUA/1.0'],
+        filters: [Filter(label: 'Asia', regex: 'hk`jp')],
       );
       final restored = roundTrip(
         () => props.toJson(),
@@ -171,6 +193,7 @@ void main() {
       expect(restored.closeConnections, false);
       expect(restored.testUrl, 'https://custom.test');
       expect(restored.userAgents, ['CustomUA/1.0']);
+      expect(restored.filters, [const Filter(label: 'Asia', regex: 'hk`jp')]);
     });
 
     test('a legacy custom user agent joins the presets', () {
@@ -313,7 +336,7 @@ void main() {
       const props = NetworkProps();
       expect(props.systemProxy, true);
       expect(props.bypassDomain, defaultBypassDomain);
-      expect(props.routeMode, RouteMode.config);
+      expect(props.bypassPrivateRoute, true);
       expect(props.autoSetSystemDns, true);
       expect(props.appendSystemDns, false);
     });
@@ -322,12 +345,12 @@ void main() {
       const props = NetworkProps(
         systemProxy: false,
         bypassDomain: ['example.com'],
-        routeMode: RouteMode.bypassPrivate,
+        bypassPrivateRoute: true,
       );
       final restored = roundTrip(() => props.toJson(), NetworkProps.fromJson);
       expect(restored.systemProxy, false);
       expect(restored.bypassDomain, ['example.com']);
-      expect(restored.routeMode, RouteMode.bypassPrivate);
+      expect(restored.bypassPrivateRoute, true);
     });
   });
 
@@ -371,12 +394,137 @@ void main() {
       expect(restored.interfaceName, 'eth0');
     });
 
+    test('the controller secret survives round-trip and defaults to none', () {
+      expect(const PatchClashConfig().secret, isEmpty);
+
+      final restored = roundTrip(
+        () => const PatchClashConfig(secret: 'abc').toJson(),
+        PatchClashConfig.fromJson,
+      );
+
+      expect(restored.secret, 'abc');
+    });
+
     test('unknown interface-name-mode falls back to clear', () {
       final restored = PatchClashConfig.fromJson({
         'interface-name-mode': 'unknown',
       });
 
       expect(restored.interfaceNameMode, InterfaceNameMode.clear);
+    });
+  });
+
+  group('PatchClashConfig.ensureControllerSecret', () {
+    const open = PatchClashConfig(
+      externalController: ExternalControllerStatus.open,
+    );
+
+    test('leaves a closed controller without a secret as it is', () {
+      const closed = PatchClashConfig();
+
+      expect(identical(closed.ensureControllerSecret(), closed), isTrue);
+    });
+
+    test('gives an open controller a secret of its own', () {
+      final ensured = open.ensureControllerSecret();
+
+      expect(ensured.secret, matches(RegExp(r'^[A-Za-z0-9]{32}$')));
+      expect(ensured.externalController, ExternalControllerStatus.open);
+    });
+
+    test('is idempotent, so a secret the user chose or was shown stays', () {
+      final ensured = open.ensureControllerSecret();
+
+      expect(ensured.ensureControllerSecret().secret, ensured.secret);
+      expect(
+        open.copyWith(secret: 'mine').ensureControllerSecret().secret,
+        'mine',
+      );
+    });
+
+    test(
+      'drops the secret with the controller, and opening again rotates it',
+      () {
+        final first = open.ensureControllerSecret();
+        final closed = first
+            .copyWith(externalController: ExternalControllerStatus.close)
+            .ensureControllerSecret();
+        final second = closed
+            .copyWith(externalController: ExternalControllerStatus.open)
+            .ensureControllerSecret();
+
+        expect(closed.secret, isEmpty);
+        expect(second.secret, isNot(first.secret));
+      },
+    );
+
+    test('reaches the Core through the update params', () {
+      final params = open
+          .copyWith(secret: 'abc')
+          .toUpdateParams(
+            bypassPrivateRoute: false,
+            authentication: const [],
+            skipCertVerify: false,
+          );
+
+      expect(params.secret, 'abc');
+      expect(params.toJson()['secret'], 'abc');
+    });
+  });
+
+  group('PatchClashConfig.setupOnly', () {
+    UpdateParams liveParams(PatchClashConfig config) => config.toUpdateParams(
+      bypassPrivateRoute: false,
+      authentication: const [],
+      skipCertVerify: false,
+    );
+
+    test('drops every field the update params patch live', () {
+      final live = defaultClashConfig.copyWith(
+        tun: const Tun(enable: true, stack: TunStack.gvisor, mtu: 1500),
+        mixedPort: 8899,
+        allowLan: true,
+        findProcessMode: FindProcessMode.always,
+        mode: Mode.global,
+        logLevel: LogLevel.debug,
+        ipv6: true,
+        tcpConcurrent: false,
+        externalController: ExternalControllerStatus.open,
+        secret: 'secret',
+        unifiedDelay: false,
+        geoAutoUpdate: true,
+        geoUpdateInterval: 6,
+        geoXUrl: {...defaultGeoXUrl, GeoResource.MMDB: 'https://mmdb.test'},
+      );
+
+      final defaults = defaultClashConfig.toJson();
+      final liveKeys = liveParams(
+        defaultClashConfig,
+      ).toJson().keys.where(defaults.containsKey);
+      expect(liveKeys, isNotEmpty);
+      for (final key in liveKeys) {
+        expect(live.toJson()[key], isNot(defaults[key]), reason: key);
+        expect(live.setupOnly.toJson()[key], defaults[key], reason: key);
+      }
+      expect(live.setupOnly, defaultClashConfig.setupOnly);
+    });
+
+    test('keeps each field only a full setup carries', () {
+      final setupOnlyChanges = [
+        defaultClashConfig.copyWith(socksPort: 7891),
+        defaultClashConfig.copyWith(redirPort: 7892),
+        defaultClashConfig.copyWith(keepAliveInterval: 60),
+        defaultClashConfig.copyWith(interfaceName: 'wlan0'),
+        defaultClashConfig.copyWith(routingMark: 6666),
+        defaultClashConfig.copyWith(globalUa: 'ua'),
+        defaultClashConfig.copyWith(hosts: const {'a.test': '1.1.1.1'}),
+        defaultClashConfig.copyWith(dns: defaultDns.copyWith(ipv6: true)),
+      ];
+
+      for (final config in setupOnlyChanges) {
+        expect(liveParams(config), liveParams(defaultClashConfig));
+        expect(config.setupOnly, isNot(defaultClashConfig.setupOnly));
+      }
     });
   });
 
@@ -540,10 +688,134 @@ void main() {
       const config = Config(themeProps: ThemeProps());
       final restored = roundTrip(() => config.toJson(), Config.fromJson);
       expect(restored.currentProfileId, null);
-      expect(restored.overrideDns, false);
       expect(restored.networkProps.systemProxy, true);
       expect(restored.vpnProps.enable, true);
       expect(restored.hotKeyActions, isEmpty);
+    });
+
+    test('a legacy bypass-private route mode drops the routes it ignored', () {
+      final config = Config.realFromJson({
+        'themeProps': const ThemeProps().toJson(),
+        'networkProps': {'routeMode': 'bypassPrivate'},
+        'patchClashConfig': {
+          'tun': {
+            'route-address': ['10.0.0.0/8'],
+          },
+        },
+      });
+
+      expect(config.networkProps.bypassPrivateRoute, true);
+      expect(config.patchClashConfig.tun.routeAddress, isEmpty);
+    });
+
+    test('a legacy config route mode keeps its routes', () {
+      final config = Config.realFromJson({
+        'themeProps': const ThemeProps().toJson(),
+        'networkProps': {'routeMode': 'config'},
+        'patchClashConfig': {
+          'tun': {
+            'route-address': ['10.0.0.0/8'],
+          },
+        },
+      });
+
+      expect(config.networkProps.bypassPrivateRoute, false);
+      expect(config.patchClashConfig.tun.routeAddress, ['10.0.0.0/8']);
+    });
+
+    for (final (overrideDns, keys) in [
+      (true, {DnsOverrideKey.nameserver}),
+      (false, <DnsOverrideKey>{}),
+    ]) {
+      test('a legacy overrideDns $overrideDns keeps $keys', () {
+        final config = Config.realFromJson({
+          'themeProps': const ThemeProps().toJson(),
+          'overrideDns': overrideDns,
+          'patchClashConfig': {
+            'dns-override-keys': ['nameserver', 'respect-rules'],
+          },
+        });
+
+        expect(config.patchClashConfig.dnsOverrideKeys, keys);
+      });
+    }
+
+    test('drops only the dashboard cards it does not know', () {
+      final props = AppSettingProps.safeFromJson({
+        'dashboardWidgets': ['runTime', 'futureCard', 'requests'],
+        'hideIp': true,
+      });
+
+      expect(props.dashboardWidgets, [
+        DashboardWidget.runTime,
+        DashboardWidget.requests,
+      ]);
+      expect(props.hideIp, true);
+    });
+
+    test('restores the default dashboard when it knows none of the cards', () {
+      final props = AppSettingProps.safeFromJson({
+        'dashboardWidgets': ['futureCard', 'otherFutureCard'],
+        'hideIp': true,
+      });
+
+      expect(props.dashboardWidgets, defaultDashboardWidgets);
+      expect(props.hideIp, true);
+    });
+
+    test('drops the dashboard cards of the retired override toggles', () {
+      expect(
+        dashboardWidgetsFromJson([
+          'overrideDnsButton',
+          'runTime',
+          'overrideNtpButton',
+        ]),
+        [DashboardWidget.runTime],
+      );
+    });
+
+    test('fromJson keeps everything but the values it cannot read', () {
+      final json = <String, Object?>{
+        'currentProfileId': 'one',
+        'appSettingProps': {'locale': 1, 'acceptedDisclaimerVersion': 3},
+        'vpnProps': {
+          'ipv6': 'yes',
+          'accessControlProps': {
+            'enable': true,
+            'mode': 'future',
+            'acceptList': ['a', 1],
+          },
+        },
+        'patchClashConfig': {
+          'mixed-port': 7891,
+          'mode': 'future',
+          'tun': {'enable': true, 'stack': 'future'},
+        },
+        'hotKeyActions': [
+          {'action': 'future'},
+          {'action': 'mode', 'key': 1},
+        ],
+      };
+
+      expect(() => Config.strictFromJson(json), throwsA(anything));
+      final config = Config.fromJson(json);
+      expect(config.currentProfileId, isNull);
+      expect(config.appSettingProps.locale, isNull);
+      expect(config.appSettingProps.acceptedDisclaimerVersion, 3);
+      expect(config.vpnProps.ipv6, false);
+      expect(config.vpnProps.accessControlProps.enable, true);
+      expect(
+        config.vpnProps.accessControlProps.mode,
+        AccessControlMode.rejectSelected,
+      );
+      expect(config.vpnProps.accessControlProps.acceptList, ['a']);
+      expect(config.patchClashConfig.mixedPort, 7891);
+      expect(config.patchClashConfig.mode, Mode.rule);
+      expect(config.patchClashConfig.tun.enable, true);
+      expect(config.patchClashConfig.tun.stack, TunStack.mips);
+      expect(config.hotKeyActions, [
+        const HotKeyAction(action: HotAction.mode, key: 1),
+      ]);
     });
 
     test('realFromJson handles null', () {
@@ -582,7 +854,6 @@ void main() {
     test('full config round-trip', () {
       const config = Config(
         currentProfileId: 42,
-        overrideDns: true,
         hotKeyActions: [],
         appSettingProps: AppSettingProps(locale: 'en', autoLaunch: true),
         networkProps: NetworkProps(systemProxy: false),
@@ -595,7 +866,6 @@ void main() {
       );
       final restored = roundTrip(() => config.toJson(), Config.fromJson);
       expect(restored.currentProfileId, 42);
-      expect(restored.overrideDns, true);
       expect(restored.appSettingProps.locale, 'en');
       expect(restored.appSettingProps.autoLaunch, true);
       expect(restored.networkProps.systemProxy, false);
@@ -648,6 +918,127 @@ void main() {
 
       expect(balanced['strategy'], 'round-robin');
       expect(balanced.containsKey('tolerance'), isFalse);
+    });
+
+    test('emits the options mihomo reads for one type only on that type', () {
+      final options = group.copyWith(
+        defaultSelected: 'A',
+        hashKey: 'in-user',
+        emptyFallback: 'DIRECT',
+      );
+
+      expect(options.definition['empty-fallback'], 'DIRECT');
+      expect(options.definition.containsKey('default-selected'), isFalse);
+      expect(options.definition.containsKey('hash-key'), isFalse);
+      expect(
+        options.copyWith(type: GroupType.Selector).definition,
+        containsPair('default-selected', 'A'),
+      );
+      final sticky = options.copyWith(
+        type: GroupType.LoadBalance,
+        strategy: LoadBalanceStrategy.stickySessions,
+      );
+      expect(sticky.definition, containsPair('hash-key', 'in-user'));
+      expect(
+        sticky
+            .copyWith(strategy: LoadBalanceStrategy.roundRobin)
+            .definition
+            .containsKey('hash-key'),
+        isFalse,
+      );
+    });
+
+    test('reads its YAML back and keeps what the YAML does not carry', () {
+      final edited = group.withDefinitionYaml(
+        group.definitionYaml.replaceFirst('interval: 300', 'interval: 600'),
+      );
+
+      expect(edited.id, 99);
+      expect(edited.profileId, 7);
+      expect(edited.order, 'a0');
+      expect(edited.definition, {...group.definition, 'interval': 600});
+    });
+
+    test('keeps the options its YAML leaves out and drops a removed line', () {
+      final added = group.copyWith(expectedStatus: '', emptyFallback: '');
+      final yaml = added.definitionYaml;
+
+      expect(
+        added.withDefinitionYaml(
+          yaml.replaceFirst('interval: 300', 'interval: 600'),
+        ),
+        added.copyWith(interval: 600),
+      );
+      expect(
+        added.withDefinitionYaml(yaml.replaceFirst('interval: 300\n', '')),
+        added.copyWith(interval: null),
+      );
+    });
+
+    test('reads a bare number where the group holds text', () {
+      final edited = group.withDefinitionYaml(
+        'name: 2024\ntype: select\nproxies: [1, A]\nexpected-status: 200\n',
+      );
+
+      expect(edited.name, '2024');
+      expect(edited.proxies, ['1', 'A']);
+      expect(edited.expectedStatus, '200');
+    });
+
+    test('emits use-position only for providers placed before a proxy', () {
+      final mixed = group.copyWith(
+        proxies: ['A', 'B'],
+        use: ['p1', 'p2', 'p3'],
+        usePosition: {'p1': 1, 'p2': 2, 'p3': -1, 'gone': 0},
+      );
+
+      expect(mixed.definition['use-position'], {'p1': 1, 'p3': 0});
+      expect(
+        group.copyWith(usePosition: {'gone': 0}).definition,
+        isNot(contains('use-position')),
+      );
+    });
+
+    test('reads use-position from its YAML as the core would place it', () {
+      final edited = group.withDefinitionYaml(
+        'name: Auto\ntype: select\nproxies: [A, B]\nuse: [p1, p2, p3]\n'
+        'use-position: {p1: 1, p2: x, p3: 2, gone: 0}\n',
+      );
+      final mixed = group.copyWith(
+        proxies: ['A', 'B'],
+        use: ['p1'],
+        usePosition: {'p1': 1},
+      );
+      final stale = group.copyWith(use: ['p1'], usePosition: {'p1': 5});
+
+      expect(edited.usePosition, {'p1': 1});
+      expect(
+        mixed
+            .withDefinitionYaml(
+              'name: Auto\ntype: select\nproxies: [A, B]\nuse: [p1]\n',
+            )
+            .usePosition,
+        isNull,
+      );
+      expect(
+        stale
+            .withDefinitionYaml(
+              'name: Auto\ntype: select\nproxies: [A, B, C, D, E, F]\n'
+              'use: [p1]\n',
+            )
+            .usePosition,
+        isNull,
+      );
+    });
+
+    test('rejects YAML that is not a named and typed mapping', () {
+      for (final content in ['- Auto', 'name: Auto', 'type: select', '{']) {
+        expect(
+          () => group.withDefinitionYaml(content),
+          throwsFormatException,
+          reason: content,
+        );
+      }
     });
   });
 }

@@ -283,6 +283,7 @@ void main() {
       find.descendant(of: sheet, matching: find.text('203.0.113.7')).first,
     );
     await tester.pump();
+    await tester.pump();
     await tester.pump(commonDuration * 2);
     final title = find.text('Outbound IP');
     expect(title, findsOneWidget);
@@ -345,7 +346,7 @@ void main() {
         for (var i = 1; i < heights.length; i++) {
           expect(heights[i], lessThanOrEqualTo(heights[i - 1]));
         }
-        expect(heights.last, 800 * shortSheetMaxHeight);
+        expect(heights.last, 800 * snapSheetDetents.first);
 
         await tester.pumpWidget(const SizedBox());
         await tester.pump(const Duration(seconds: 1));
@@ -567,7 +568,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(asked.last, 'github');
-    // The tile itself takes focus first now that tapping it opens the sheet.
+    // The tile itself takes focus first; tapping it opens the sheet.
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
@@ -703,6 +704,12 @@ void main() {
     await tester.pumpWidget(app(width: 552, height: 120));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Available'));
+    await tester.pumpAndSettle();
+    await tester.fling(
+      find.byType(Scrollable).last,
+      const Offset(0, -300),
+      2000,
+    );
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
@@ -1006,7 +1013,7 @@ void main() {
     );
   });
 
-  testWidgets('dragging a service in the manage page saves the new order', (
+  testWidgets('long pressing a service in the manage page drags it', (
     tester,
   ) async {
     answer((params) => const []);
@@ -1014,16 +1021,20 @@ void main() {
     await tester.pumpAndSettle();
     await openManage(tester);
 
-    final handle = find.descendant(
-      of: find.widgetWithText(DecorationListItem, ServiceTarget.google.label),
-      matching: find.byGlyph(AppGlyphs.dragHandle),
+    expect(find.byGlyph(AppGlyphs.dragHandle), findsNothing);
+    final row = find.widgetWithText(
+      DecorationListItem,
+      ServiceTarget.google.label,
     );
-    final rowHeight = tester
-        .getSize(
-          find.widgetWithText(DecorationListItem, ServiceTarget.google.label),
-        )
-        .height;
-    final gesture = await tester.startGesture(tester.getCenter(handle));
+    final rowHeight = tester.getSize(row).height;
+    final gesture = await tester.startGesture(
+      tester.getCenter(
+        find.descendant(
+          of: row,
+          matching: find.text(ServiceTarget.google.label),
+        ),
+      ),
+    );
     await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
     for (var step = 0; step < 4; step++) {
       await gesture.moveBy(Offset(0, rowHeight * 0.3));

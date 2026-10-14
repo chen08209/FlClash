@@ -18,6 +18,7 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     private lateinit var channel: MethodChannel
     private lateinit var scope: CoroutineScope
     private val gson = Gson()
+    private var commandRevision = 0
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -42,8 +43,8 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             "invokeMethod" -> invokeMethod(call, result)
             "getRunTime" -> getRunTime(result)
             "syncState" -> syncState(call, result)
-            "start" -> start(result)
-            "stop" -> stop(result)
+            "start" -> start(call, result)
+            "stop" -> stop(call, result)
             else -> result.notImplemented()
         }
     }
@@ -55,10 +56,8 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     }
 
     private fun shutdown(result: MethodChannel.Result) {
-        scope.launch {
-            ServiceController.unbind()
-            result.success(true)
-        }
+        ServiceController.setEventListener(null)
+        result.success(true)
     }
 
     private fun invokeMethod(call: MethodCall, result: MethodChannel.Result) {
@@ -79,7 +78,7 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
     private fun getRunTime(result: MethodChannel.Result) {
         scope.launch {
-            result.success(ServiceState.refresh())
+            result.success(ServiceState.awaitRunTime())
         }
     }
 
@@ -98,14 +97,25 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         }
     }
 
-    private fun start(result: MethodChannel.Result) {
+    private fun start(call: MethodCall, result: MethodChannel.Result) {
+        commandRevision = call.arguments as? Int ?: commandRevision
         ServiceState.requestStart()
         result.success(true)
     }
 
-    private fun stop(result: MethodChannel.Result) {
+    private fun stop(call: MethodCall, result: MethodChannel.Result) {
+        commandRevision = call.arguments as? Int ?: commandRevision
         ServiceState.requestStop()
         result.success(true)
+    }
+
+    // Read on the platform thread, where start and stop arrive: revision and intent are one instant.
+    fun notifyStopped() {
+        scope.launch(Dispatchers.Main) {
+            if (!ServiceState.isRunRequested) {
+                channel.invokeMethod("stopped", commandRevision)
+            }
+        }
     }
 
     private fun sendEvent(value: String?) {

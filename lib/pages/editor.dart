@@ -31,7 +31,8 @@ import 'package:re_highlight/styles/atom-one-dark.dart';
 import 'package:re_highlight/styles/atom-one-light.dart';
 import 'package:rust_api/rust_api.dart' show isRustLibInitialized;
 
-export 'package:fl_clash/features/editor/editor.dart' show EditorSchema;
+export 'package:fl_clash/features/editor/editor.dart'
+    show EditorSchema, readRelaxed;
 
 void _requireRustLib() {
   if (!isRustLibInitialized) {

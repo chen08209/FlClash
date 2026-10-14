@@ -55,6 +55,21 @@ static void my_application_activate(GApplication* application) {
 
   gtk_window_set_default_size(window, 680, 580);
 
+  // X11 panels that do not match the window to a desktop entry read its icon;
+  // GDK leaves one over 512x512 out of _NET_WM_ICON without a word.
+  g_autofree gchar* executable = g_file_read_link("/proc/self/exe", nullptr);
+  if (executable != nullptr) {
+    g_autofree gchar* directory = g_path_get_dirname(executable);
+    g_autofree gchar* path = g_build_filename(
+        directory, "data", "flutter_assets", "assets", "images", "icon.png",
+        nullptr);
+    g_autoptr(GdkPixbuf) icon =
+        gdk_pixbuf_new_from_file_at_size(path, 256, 256, nullptr);
+    if (icon != nullptr) {
+      gtk_window_set_icon(window, icon);
+    }
+  }
+
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(project, self->dart_entrypoint_arguments);
 
@@ -97,8 +112,9 @@ static void my_application_before_emit(GApplication* application, GVariant* plat
 }
 
 // Implements GApplication::after_emit. A relaunch reaches the primary as a
-// command-line signal that the gtk plugin consumes first, so the window is
-// raised here, while the launcher's activation token is still current.
+// command-line signal whose activate returns early on the existing window, so
+// the window is raised here, while the launcher's activation token is still
+// current.
 static void my_application_after_emit(GApplication* application, GVariant* platform_data) {
   MyApplication* self = MY_APPLICATION(application);
   if (self->had_window_before_emit) {

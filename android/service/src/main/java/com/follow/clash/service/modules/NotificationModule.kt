@@ -54,14 +54,19 @@ internal class NotificationModule(
         service.ensureNotificationChannel()
         update(ServiceConfig.notificationParams.value.extended)
         scope.launch {
-            service.receiveBroadcastFlow {
+            // Some ROMs, vivo's among them, drop updates posted behind the
+            // keyguard, so unlocking restarts the loop to post once more.
+            // SystemUI, an app, sends USER_PRESENT, which a receiver that is
+            // not exported never gets; all three actions are protected.
+            service.receiveBroadcastFlow(exported = true) {
                 addAction(Intent.ACTION_SCREEN_ON)
                 addAction(Intent.ACTION_SCREEN_OFF)
+                addAction(Intent.ACTION_USER_PRESENT)
             }.map { intent ->
-                intent.action == Intent.ACTION_SCREEN_ON
+                intent.action != Intent.ACTION_SCREEN_OFF
             }.onStart {
                 emit(isScreenOn())
-            }.distinctUntilChanged().collectLatest { screenOn ->
+            }.collectLatest { screenOn ->
                 if (!screenOn) return@collectLatest
                 combine(
                     flow {

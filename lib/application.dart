@@ -16,6 +16,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/focus.dart';
 import 'package:fl_clash/widgets/keyboard_inset_hold.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -25,6 +26,7 @@ Widget buildManagerStack({
   required bool isDesktop,
   required Future<void> Function(List<ConnectivityResult> results)
   onConnectivityChanged,
+  Stream<ProcessSignal>? terminateSignals,
   required Widget child,
 }) {
   final platformApp = isDesktop
@@ -40,6 +42,7 @@ Widget buildManagerStack({
   );
   final platformState = isDesktop
       ? WindowManager(
+          terminateSignals: terminateSignals,
           child: TrayManager(
             child: HotKeyManager(child: ProxyManager(child: state)),
           ),
@@ -73,6 +76,10 @@ Widget _closeButtonIcon(BuildContext context) =>
 class ApplicationState extends ConsumerState<Application> {
   Timer? _autoUpdateProfilesTaskTimer;
   bool _preHasVpn = false;
+  // Windows can only watch SIGINT and SIGHUP.
+  final _terminateSignals = system.isDesktop && !system.isWindows
+      ? ProcessSignal.sigterm.watch()
+      : null;
 
   final _pageTransitionsTheme = const PageTransitionsTheme(
     builders: <TargetPlatform, PageTransitionsBuilder>{
@@ -129,7 +136,7 @@ class ApplicationState extends ConsumerState<Application> {
       );
       if (res != true) return;
       unawaited(
-        ref.read(profilesActionProvider.notifier).addProfileFormURL(url),
+        ref.read(profilesActionProvider.notifier).addProfileFromLink(url),
       );
     });
   }
@@ -137,6 +144,7 @@ class ApplicationState extends ConsumerState<Application> {
   void _autoUpdateProfilesTask() {
     _autoUpdateProfilesTaskTimer = Timer(const Duration(minutes: 20), () async {
       await ref.read(profilesActionProvider.notifier).autoUpdateProfiles();
+      await ref.read(resourcesActionProvider.notifier).autoUpdate();
       if (!mounted) {
         return;
       }
@@ -165,6 +173,14 @@ class ApplicationState extends ConsumerState<Application> {
           appSettingProvider.select((state) => state.locale),
         );
         final themeProps = ref.watch(themeSettingProvider);
+        final fontFamilyFallback = appFontFamilyFallback(
+          platform: defaultTargetPlatform,
+          locales: [
+            ?getLocaleForString(locale),
+            ...WidgetsBinding.instance.platformDispatcher.locales,
+          ],
+          fontFamily: themeProps.fontFamily,
+        );
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           navigatorKey: globalState.navigatorKey,
@@ -177,6 +193,7 @@ class ApplicationState extends ConsumerState<Application> {
             return buildManagerStack(
               isDesktop: system.isDesktop,
               onConnectivityChanged: _handleConnectivityChanged,
+              terminateSignals: _terminateSignals,
               child: RemoteFocusAdapter(enabled: system.isTV, child: child!),
             );
           },
@@ -190,12 +207,16 @@ class ApplicationState extends ConsumerState<Application> {
             pageTransitionsTheme: _pageTransitionsTheme,
             actionIconTheme: _actionIconTheme,
             colorScheme: _getAppColorScheme(brightness: Brightness.light),
+            fontFamily: themeProps.fontFamily,
+            fontFamilyFallback: fontFamilyFallback,
           ).withAppShapes,
           darkTheme: ThemeData(
             useMaterial3: true,
             pageTransitionsTheme: _pageTransitionsTheme,
             actionIconTheme: _actionIconTheme,
             colorScheme: _getAppColorScheme(brightness: Brightness.dark),
+            fontFamily: themeProps.fontFamily,
+            fontFamilyFallback: fontFamilyFallback,
           ).withAppShapes,
           home: KeyboardInsetHold(child: child!),
         );

@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/widgets/activate_box.dart';
+import 'package:fl_clash/widgets/button.dart';
 import 'package:fl_clash/widgets/defer_pointer.dart';
 import 'package:fl_clash/widgets/motion_grid.dart';
 import 'package:fl_clash/widgets/navigation_dock.dart';
@@ -590,16 +591,10 @@ class _DeletableContainer extends StatelessWidget {
           right: -8,
           child: DeferPointer(
             child: ElasticButton(
-              child: SizedBox(
-                width: 24,
-                height: 24,
-                child: IconButton.filled(
-                  tooltip: context.appLocalizations.remove,
-                  iconSize: 16,
-                  padding: const EdgeInsets.all(4),
-                  onPressed: onDelete,
-                  icon: const GlyphIcon(AppGlyphs.close, fill: 1),
-                ),
+              child: CornerBadgeButton(
+                glyph: AppGlyphs.removeCircle,
+                tooltip: context.appLocalizations.remove,
+                onPressed: onDelete,
               ),
             ),
           ),

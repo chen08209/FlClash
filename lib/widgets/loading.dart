@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/common/context.dart';
 import 'package:fl_clash/common/shape.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_new_shapes/material_new_shapes.dart';
@@ -8,6 +10,37 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/physics.dart';
 
 enum LoadingIndicatorM3EVariant { defaultStyle, contained }
+
+/// Takes no room while idle, so the row's title keeps the width.
+class TrailingLoading extends StatelessWidget {
+  const TrailingLoading({
+    super.key,
+    required this.isLoading,
+    this.dimension = kMinInteractiveDimension,
+  });
+
+  static const _spinnerSize = 24.0;
+
+  final bool isLoading;
+  final double dimension;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSize(
+      duration: context.motionDuration(commonDuration),
+      curve: Curves.easeOutCubic,
+      child: isLoading
+          ? SizedBox.square(
+              dimension: dimension,
+              child: Padding(
+                padding: EdgeInsets.all((dimension - _spinnerSize) / 2),
+                child: const CommonCircleLoading(),
+              ),
+            )
+          : const SizedBox.shrink(),
+    );
+  }
+}
 
 class CommonCircleLoading extends StatefulWidget {
   static const double defaultDimension = 48;
@@ -78,6 +111,7 @@ class _CommonCircleLoadingState extends State<CommonCircleLoading>
 
   var _currentMorphIndex = 0;
   var _morphRotationTargetAngle = _quarterRotation;
+  Timer? _morphPause;
 
   @override
   void initState() {
@@ -96,6 +130,7 @@ class _CommonCircleLoadingState extends State<CommonCircleLoading>
 
   @override
   void dispose() {
+    _morphPause?.cancel();
     _morphController.dispose();
     _globalRotationController.dispose();
     super.dispose();
@@ -252,7 +287,9 @@ class _CommonCircleLoadingState extends State<CommonCircleLoading>
 
       final elapsed = DateTime.now().difference(startedAt);
       if (elapsed < _morphInterval) {
-        await Future<void>.delayed(_morphInterval - elapsed);
+        final paused = Completer<void>();
+        _morphPause = Timer(_morphInterval - elapsed, paused.complete);
+        await paused.future;
       }
       if (!mounted) {
         return;

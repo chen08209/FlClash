@@ -14,8 +14,8 @@ concurrency:
 
 env:
   IS_STABLE: ${{ !contains(github.ref, '-') }}
-  FLUTTER_VERSION: '3.47.4'
-  GO_VERSION: '1.26.4'
+  FLUTTER_VERSION: '3.47.6'
+  GO_VERSION: '1.27.1'
   NDK_VERSION: r28c
 
 jobs:
@@ -32,11 +32,8 @@ jobs:
           fetch-depth: 0
           submodules: true
 
-      - name: Test commit message hook
-        run: bash tool/check_commit_msg_test.sh
-
-      - name: Test comment density hook
-        run: bash tool/check_comment_density_test.sh
+      - name: Test git hooks
+        run: bash tool/hooks/test.sh
 
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
@@ -190,32 +187,22 @@ jobs:
             echo 'No Go tests found in core/; the test step would pass vacuously.' >&2
             exit 1
           fi
-          test -z "$(gofmt -l ./*.go ./platform ./tun)" || {
-            gofmt -l ./*.go ./platform ./tun >&2
+          test -z "$(gofmt -l ./*.go ./cmd ./mobile ./platform ./tun)" || {
+            gofmt -l ./*.go ./cmd ./mobile ./platform ./tun >&2
             exit 1
           }
           go test -count=1 .
-          go vet .
+          go vet . ./cmd/...
           GOOS=linux go vet ./platform
-
-      - name: Setup NDK
-        uses: nttld/setup-ndk@v1
-        id: ndk
-        with:
-          ndk-version: ${{ env.NDK_VERSION }}
 
       - name: Validate the Android core library
         working-directory: core
         env:
-          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+          CGO_ENABLED: 0
         run: |
-          # Nothing else compiles the `android && cgo` files before a `v*` tag.
-          CC="$(echo "$ANDROID_NDK_HOME"/toolchains/llvm/prebuilt/*/bin/aarch64-linux-android21-clang)"
-          test -x "$CC" || { echo "NDK clang not found at $CC" >&2; exit 1; }
           tags="$(sed -n 's/^tags: *//p' ../build_config.yaml)"
           test -n "$tags" || { echo 'Could not read tags from build_config.yaml' >&2; exit 1; }
-          export CGO_ENABLED=1 GOOS=android GOARCH=arm64 CC
-          go vet "-tags=$tags" . ./tun ./platform
+          GOOS=android GOARCH=arm64 go vet "-tags=$tags" . ./mobile ./tun ./platform
 
   android:
     name: Android unit tests
@@ -224,6 +211,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: core/go.sum
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -240,6 +235,7 @@ jobs:
         id: ndk
         with:
           ndk-version: ${{ env.NDK_VERSION }}
+          link-to-sdk: true
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -263,9 +259,10 @@ jobs:
           test -d "$wrapper" || flutter precache
           cp -R "$wrapper/." .
           chmod +x gradlew
-          # `:core` only calls System.loadLibrary; the excluded Flutter tasks would run
-          # the native build hooks for every debug ABI, which no JVM unit test consumes.
+          # No JVM unit test loads the Core or the Flutter build, but `:core` compiles against
+          # the gomobile AAR, so one ABI of it is built.
           ./gradlew :common:testDebugUnitTest :service:testDebugUnitTest :app:testDebugUnitTest \
+            -Ptarget-platform=android-arm64 \
             -x :app:compileFlutterBuildDebug -x :app:copyFlutterAssetsDebug
 
   rust:

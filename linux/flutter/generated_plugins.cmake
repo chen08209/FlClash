@@ -3,9 +3,9 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  app_links_linux
   dynamic_color
   file_selector_linux
-  gtk
   screen_retriever_linux
   tray
   url_launcher_linux

@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/widgets/fade_box.dart';
+import 'package:fl_clash/widgets/inherited.dart';
 import 'package:material_new_shapes/material_new_shapes.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -18,9 +20,12 @@ enum NullStatusIllustration {
   requests,
   dns,
   ntp,
+  sniffer,
+  tun,
   wifi,
   apps,
-  history,
+  icons,
+  fonts,
   permission,
   camera,
   error,
@@ -32,6 +37,10 @@ class NullStatusSwitcher extends StatefulWidget {
   final bool isLoading;
   final bool isEmpty;
   final bool isSearching;
+
+  /// Keeps the status it opens on for at least about a route transition, so
+  /// content that arrives just after does not flash it.
+  final bool holdsArrival;
   final NullStatus nullStatus;
   final Widget child;
 
@@ -40,6 +49,7 @@ class NullStatusSwitcher extends StatefulWidget {
     this.isLoading = false,
     required this.isEmpty,
     this.isSearching = false,
+    this.holdsArrival = false,
     required this.nullStatus,
     required this.child,
   });
@@ -50,8 +60,23 @@ class NullStatusSwitcher extends StatefulWidget {
 
 class _NullStatusSwitcherState extends State<NullStatusSwitcher> {
   static const _exitDuration = Duration(milliseconds: 150);
+  static const _arrivalHoldDuration = Duration(milliseconds: 400);
 
   late bool _loaded = !widget.isLoading;
+  Timer? _arrivalHold;
+  NullStatus? _heldStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.holdsArrival && _loaded && widget.isEmpty) {
+      _heldStatus = widget.nullStatus;
+      _arrivalHold = Timer(
+        _arrivalHoldDuration,
+        () => setState(() => _heldStatus = null),
+      );
+    }
+  }
 
   @override
   void didUpdateWidget(covariant NullStatusSwitcher oldWidget) {
@@ -60,10 +85,22 @@ class _NullStatusSwitcherState extends State<NullStatusSwitcher> {
   }
 
   @override
+  void dispose() {
+    _arrivalHold?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (!_loaded) {
       return const SizedBox.expand();
     }
+    final heldStatus = _heldStatus;
+    final slot = switch ((widget.isEmpty, widget.isSearching)) {
+      (true, true) => _NullStatusSlot.noResults,
+      (false, _) when heldStatus == null => _NullStatusSlot.content,
+      _ => _NullStatusSlot.empty,
+    };
     return AnimatedSwitcher(
       duration: context.motionDuration(commonDuration),
       reverseDuration: context.motionDuration(_exitDuration),
@@ -84,54 +121,66 @@ class _NullStatusSwitcherState extends State<NullStatusSwitcher> {
           child: child,
         ),
       ),
-      child: switch ((widget.isEmpty, widget.isSearching)) {
-        (true, true) => KeyedSubtree(
-          key: const ValueKey(_NullStatusSlot.noResults),
-          child: NullStatus(
+      child: KeyedSubtree(
+        key: ValueKey(slot),
+        child: switch (slot) {
+          _NullStatusSlot.noResults => NullStatus(
             label: context.appLocalizations.noSearchResults,
             illustration: NullStatusIllustration.search,
           ),
-        ),
-        (true, false) => KeyedSubtree(
-          key: const ValueKey(_NullStatusSlot.empty),
-          child: widget.nullStatus,
-        ),
-        (false, _) => KeyedSubtree(
-          key: const ValueKey(_NullStatusSlot.content),
-          child: widget.child,
-        ),
-      },
+          _NullStatusSlot.empty => heldStatus ?? widget.nullStatus,
+          _NullStatusSlot.content => widget.child,
+        },
+      ),
     );
   }
 }
 
 enum _NullStatusSlot { empty, noResults, content }
 
-class NullStatus extends StatelessWidget {
-  final String label;
+class NullStatus extends StatefulWidget {
+  final String? label;
   final String? description;
   final Widget? action;
   final NullStatusIllustration illustration;
 
   const NullStatus({
     super.key,
-    required this.label,
+    this.label,
     this.description,
     this.action,
     this.illustration = NullStatusIllustration.data,
   });
 
   @override
+  State<NullStatus> createState() => _NullStatusState();
+}
+
+class _NullStatusState extends State<NullStatus> {
+  late final ScrollController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = sheetScrollController(context);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final description = this.description;
-    final action = this.action;
+    final NullStatus(:label, :description, :action, :illustration) = widget;
     final textTheme = context.textTheme;
     final colorScheme = context.colorScheme;
     final compact = MediaQuery.sizeOf(context).height < _compactHeight;
     return Align(
       alignment: const Alignment(0.0, -0.2),
       child: SingleChildScrollView(
-        primary: false,
+        controller: _controller,
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 320),
@@ -144,17 +193,19 @@ class NullStatus extends StatelessWidget {
                   dimension: compact ? 120 : 160,
                 ),
               ),
-              SizedBox(height: compact ? 12 : 16),
-              _EnterItem(
-                delay: _staggerStep,
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: textTheme.titleLarge?.copyWith(
-                    color: colorScheme.onSurface,
+              if (label != null) ...[
+                SizedBox(height: compact ? 12 : 16),
+                _EnterItem(
+                  delay: _staggerStep,
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: textTheme.titleMedium?.copyWith(
+                      color: colorScheme.onSurface,
+                    ),
                   ),
                 ),
-              ),
+              ],
               if (description != null) ...[
                 const SizedBox(height: 8),
                 _EnterItem(
@@ -172,7 +223,12 @@ class NullStatus extends StatelessWidget {
                 const SizedBox(height: 24),
                 _EnterItem(
                   delay: _staggerStep * (description != null ? 3 : 2),
-                  child: action,
+                  child: Theme(
+                    data: Theme.of(
+                      context,
+                    ).copyWith(visualDensity: VisualDensity.standard),
+                    child: action,
+                  ),
                 ),
               ],
             ],
@@ -187,13 +243,8 @@ const _compactHeight = 560.0;
 const _staggerStep = Duration(milliseconds: 60);
 const _enterRise = 12.0;
 
-bool _skipsEntrance(BuildContext context) {
-  final route = ModalRoute.of(context);
-  final routeEntering =
-      route != null &&
-      (route.offstage || (route.animation?.isAnimating ?? false));
-  return context.disableAnimations || routeEntering;
-}
+bool _skipsEntrance(BuildContext context) =>
+    context.disableAnimations || isRouteArriving(context);
 
 class _EnterItem extends StatefulWidget {
   final Duration delay;
@@ -357,6 +408,8 @@ class _EmptyIllustrationState extends State<EmptyIllustration>
     ),
     NullStatusIllustration.dns => (MaterialShapes.puffy, AppGlyphs.dns),
     NullStatusIllustration.ntp => (MaterialShapes.pentagon, AppGlyphs.clock),
+    NullStatusIllustration.sniffer => (MaterialShapes.gem, AppGlyphs.eye),
+    NullStatusIllustration.tun => (MaterialShapes.clamShell, AppGlyphs.vpn),
     NullStatusIllustration.wifi => (
       MaterialShapes.cookie7Sided,
       AppGlyphs.wifi,
@@ -365,9 +418,13 @@ class _EmptyIllustrationState extends State<EmptyIllustration>
       MaterialShapes.clover4Leaf,
       AppGlyphs.appsList,
     ),
-    NullStatusIllustration.history => (
-      MaterialShapes.cookie12Sided,
-      AppGlyphs.history,
+    NullStatusIllustration.icons => (
+      MaterialShapes.verySunny,
+      AppGlyphs.iconTile,
+    ),
+    NullStatusIllustration.fonts => (
+      MaterialShapes.puffyDiamond,
+      AppGlyphs.font,
     ),
     NullStatusIllustration.permission => (MaterialShapes.sunny, AppGlyphs.lock),
     NullStatusIllustration.camera => (

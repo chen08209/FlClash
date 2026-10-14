@@ -6,7 +6,7 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ProxiesSetting extends ConsumerWidget {
+class ProxiesSetting extends StatelessWidget {
   const ProxiesSetting({super.key});
 
   Glyph _getIconWithProxiesType(ProxiesType type) {
@@ -304,40 +304,37 @@ class ProxiesSetting extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: ref.sheetHeight(context, 0.7)),
-      child: SingleChildScrollView(
-        padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ..._buildStyleSetting(context),
-            ..._buildSortSetting(context),
-            ..._buildLayoutSetting(context),
-            ..._buildSizeSetting(context),
-            Consumer(
-              builder: (_, ref, child) {
-                final isList = ref.watch(
-                  proxiesStyleSettingProvider.select(
-                    (state) => state.type == ProxiesType.list,
-                  ),
-                );
-                if (isList) {
-                  return child!;
-                }
-                return Container();
-              },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [..._buildGroupStyleSetting(context)],
-              ),
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ..._buildStyleSetting(context),
+          ..._buildSortSetting(context),
+          ..._buildLayoutSetting(context),
+          ..._buildSizeSetting(context),
+          Consumer(
+            builder: (_, ref, child) {
+              final isList = ref.watch(
+                proxiesStyleSettingProvider.select(
+                  (state) => state.type == ProxiesType.list,
+                ),
+              );
+              if (isList) {
+                return child!;
+              }
+              return Container();
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [..._buildGroupStyleSetting(context)],
             ),
-            ..._buildFilterSetting(context),
-          ],
-        ),
+          ),
+          ..._buildFilterSetting(context),
+        ],
       ),
     );
   }

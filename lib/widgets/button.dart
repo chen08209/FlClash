@@ -112,6 +112,42 @@ class _CommonFloatingActionButtonState
   }
 }
 
+/// Backed by the surface so the card edge it straddles stays out of the ring.
+class CornerBadgeButton extends StatelessWidget {
+  const CornerBadgeButton({
+    super.key,
+    required this.glyph,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final Glyph glyph;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return SizedBox.square(
+      dimension: 24,
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          color: colorScheme.surface,
+          shape: const CircleBorder(),
+        ),
+        child: IconButton(
+          tooltip: tooltip,
+          iconSize: 24,
+          padding: EdgeInsets.zero,
+          color: colorScheme.primary,
+          onPressed: onPressed,
+          icon: GlyphIcon(glyph),
+        ),
+      ),
+    );
+  }
+}
+
 class MoreActionButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final String label;
@@ -132,14 +168,11 @@ class MoreActionButton extends StatelessWidget {
         radius: AppCorner.xl,
         onPressed: onPressed,
         child: ListTile(
-          minTileHeight: 0,
-          minVerticalPadding: 0,
-          titleTextStyle: context.textTheme.bodyMedium?.toJetBrainsMono,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
-          title: Text(label, style: context.textTheme.bodyLarge),
+          minTileHeight: listRowMinHeight,
+          minVerticalPadding: listRowVerticalPadding,
+          titleTextStyle: context.listTitleStyle,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          title: Text(label),
           trailing:
               trailing ?? const GlyphIcon(AppGlyphs.chevronForward, size: 18),
         ),
@@ -150,6 +183,7 @@ class MoreActionButton extends StatelessWidget {
 
 enum TonalButtonSize {
   bar(button: 40, icon: 22),
+  section(button: 36, icon: 20),
   compact(button: 32, icon: 20);
 
   const TonalButtonSize({required this.button, required this.icon});

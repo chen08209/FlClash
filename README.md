@@ -31,7 +31,8 @@ A multi-platform proxy client based on ClashMeta. Simple to use, open source and
 - **Profiles** from a subscription link or a file, with a built-in editor, override scripts, and custom rules,
   proxies and proxy groups.
 - **Live views** of connections, requests, DNS queries and logs.
-- **Material You design** with dynamic color, light and dark themes, and layouts that adapt from phones to desktops.
+- **Material You design with Apple-style interaction**: dynamic color, light and dark themes, continuous corners,
+  sheets that snap between heights, and layouts that adapt from phones to desktops.
 - **Backup and restore** through WebDAV or a local file.
 - **Platform touches**: a Quick Settings tile, per-app proxy and Android TV support on Android; a tray menu and
   global hotkeys on the desktop.
@@ -97,8 +98,8 @@ adb shell am start -a com.follow.clash.action.TOGGLE
 
 ## Build from source
 
-You need [Flutter](https://docs.flutter.dev/get-started/install) 3.47 (release builds use 3.47.4),
-[Go](https://go.dev/dl/) 1.26 and [Rust](https://rustup.rs/) installed through rustup. Each platform builds on its own
+You need [Flutter](https://docs.flutter.dev/get-started/install) 3.47 (release builds use 3.47.6),
+[Go](https://go.dev/dl/) 1.27 and [Rust](https://rustup.rs/) installed through rustup. Each platform builds on its own
 host, except Android, which builds anywhere.
 
 ```bash

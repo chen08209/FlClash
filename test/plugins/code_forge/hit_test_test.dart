@@ -67,8 +67,8 @@ void _expectContiguous(List<_Row> rows, List<int> visibleLines) {
   expect(order, visibleLines, reason: 'lines hit from top to bottom');
 }
 
-// With a 16px font and two-digit line numbers the last 24px of the gutter hold
-// the fold icons.
+// With a 16 dp font and two-digit line numbers the last 24 dp of the gutter
+// hold the fold icons.
 const _gutterWidth = 67.2;
 const _lineNumberX = 12.0;
 const _foldIconX = 56.0;

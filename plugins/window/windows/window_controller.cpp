@@ -46,7 +46,9 @@ int WindowController::TopBorderHeight() const {
 }
 
 void WindowController::PlaceView() const {
-  if (hwnd_ == nullptr || view_ == nullptr) {
+  // Minimizing changes the frame too. Fitting the view to the sliver of client
+  // area left would lay the app out at mobile width, which a restore then shows.
+  if (hwnd_ == nullptr || view_ == nullptr || IsMinimized()) {
     return;
   }
   RECT client{};

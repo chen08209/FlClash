@@ -1,7 +1,12 @@
 import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/widgets/null_status.dart';
+import 'package:fl_clash/widgets/paged_sheet.dart';
+import 'package:fl_clash/widgets/sheet.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+
+import '../helpers/test_app.dart';
 
 const _reducedMotion = MediaQueryData(disableAnimations: true);
 
@@ -9,13 +14,16 @@ Widget _switcher({
   required bool isEmpty,
   bool isLoading = false,
   bool isSearching = false,
+  bool holdsArrival = false,
+  String label = 'Nothing here',
   MediaQueryData? mediaQuery,
 }) {
   final switcher = NullStatusSwitcher(
     isLoading: isLoading,
     isEmpty: isEmpty,
     isSearching: isSearching,
-    nullStatus: const NullStatus(label: 'Nothing here'),
+    holdsArrival: holdsArrival,
+    nullStatus: NullStatus(label: label),
     child: const Text('content', key: ValueKey('content')),
   );
   return MaterialApp(
@@ -171,6 +179,44 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('skips its own fade while its sheet is still sliding in', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [
+          viewSizeProvider.overrideWithBuild((_, _) => const Size(400, 900)),
+        ],
+        child: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSheet<void>(
+              context: context,
+              props: nestedPagedSheetProps,
+              builder: (_) => NestedPagedSheet(
+                builder: (_) => const NullStatus(label: 'Nothing here'),
+              ),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.byType(NullStatus), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(NullStatus),
+        matching: find.byType(FadeTransition),
+      ),
+      findsNothing,
+    );
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('skips the entrance fade under reduced motion', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -208,6 +254,45 @@ void main() {
     expect(find.text('Nothing here'), findsNothing);
     expect(find.byKey(const ValueKey('content')), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('holds the status it opens on for a route transition', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_switcher(isEmpty: true, holdsArrival: true));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    await tester.pumpWidget(
+      _switcher(isEmpty: false, holdsArrival: true, label: 'Nothing found'),
+    );
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(find.text('Nothing here'), findsOneWidget);
+    expect(find.text('Nothing found'), findsNothing);
+    expect(find.byKey(const ValueKey('content')), findsNothing);
+
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
+    expect(find.text('Nothing here'), findsNothing);
+    expect(find.byKey(const ValueKey('content')), findsOneWidget);
+
+    await tester.pumpWidget(_switcher(isEmpty: true, holdsArrival: true));
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(_switcher(isEmpty: false, holdsArrival: true));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('content')), findsOneWidget);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('holds nothing when it opens on content', (tester) async {
+    await tester.pumpWidget(_switcher(isEmpty: false, holdsArrival: true));
+    await tester.pump();
+    await tester.pumpWidget(_switcher(isEmpty: true, holdsArrival: true));
+    await tester.pumpAndSettle();
+
+    await tester.pumpWidget(_switcher(isEmpty: false, holdsArrival: true));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('content')), findsOneWidget);
+    await tester.pumpAndSettle();
   });
 
   testWidgets('a search that matches nothing has its own empty state', (

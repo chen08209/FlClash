@@ -186,7 +186,7 @@ Future<int> _package(
     'git',
     'https://github.com/chen08209/flutter_distributor.git',
     '--git-ref',
-    'v0.6.11-flclash.2',
+    'v0.6.11-flclash.3',
     '--git-path',
     'packages/flutter_distributor',
   ]);

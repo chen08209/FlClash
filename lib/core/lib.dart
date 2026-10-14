@@ -52,6 +52,7 @@ class CoreLib extends CoreHandlerInterface {
     if (initializationError.isNotEmpty) {
       throw StateError(initializationError);
     }
+    await globalState.container.read(vpnOptionsProvider.future);
     _connectedCompleter.complete(true);
     final syncError =
         await _service?.syncState(

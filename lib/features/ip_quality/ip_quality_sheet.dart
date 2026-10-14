@@ -34,7 +34,7 @@ class _IpQualitySheet extends ConsumerWidget {
     final isLoading = ref.watch(
       ipQualityProvider(ip).select((result) => result.isLoading),
     );
-    final page = CommonScaffold(
+    return CommonScaffold(
       title: localizations.outboundIp,
       actions: [
         AppBarActionButton(
@@ -47,13 +47,6 @@ class _IpQualitySheet extends ConsumerWidget {
         ),
       ],
       body: _IpQualityDetail(ip: ip),
-    );
-    if (!isSheetPage(context)) return page;
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: ref.sheetHeight(context, shortSheetMaxHeight),
-      ),
-      child: page,
     );
   }
 }

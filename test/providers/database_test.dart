@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:drift/native.dart';
-import 'package:fl_clash/common/feature.dart';
 // `Profiles`, `Scripts` and `ProxyGroups` name both a drift table and a
 // notifier, so the schema side is imported behind a prefix.
 import 'package:fl_clash/database/database.dart' as db;
@@ -133,36 +132,30 @@ void main() {
       },
     );
 
-    Future<void> putAppProxyProvider(String label) async {
-      await testDatabase.clashProvidersDao.putAll([
-        ClashProvider(
-          id: 9,
-          kind: ProviderKind.proxy,
-          label: label,
-          url: 'https://example.com/nodes.yaml',
-        ).toCompanion(),
-      ]);
-      await keepAlive(clashProvidersProvider(ProviderKind.proxy));
-    }
-
-    test('put steps past a label an app-level proxy provider holds', () async {
-      feature = const Feature(customProviders: true);
-      addTearDown(() => feature = const Feature());
-      await putAppProxyProvider('Shared nodes');
-
-      notifier.put(profile(1, label: 'Shared nodes'));
+    test('a read-back during a write keeps the optimistic profile', () async {
+      final rows = StreamController<List<Profile>>();
+      addTearDown(rows.close);
+      final scoped = ProviderContainer(
+        overrides: [profilesStreamProvider.overrideWith((_) => rows.stream)],
+      );
+      addTearDown(scoped.dispose);
+      scoped.listen(profilesProvider, (_, _) {});
+      rows.add(const []);
       await pumpEventQueue();
+      final landing = Completer<void>();
+      final held = testDatabase.transaction(() => landing.future);
 
-      expect(read().single.label, 'Shared nodes(1)');
-    });
-
-    test('put ignores app-level providers while they are off', () async {
-      await putAppProxyProvider('Shared nodes');
-
-      notifier.put(profile(1, label: 'Shared nodes'));
+      scoped.read(profilesProvider.notifier).put(profile(1, label: 'Mine'));
+      rows.add([profile(2, label: 'Theirs')]);
       await pumpEventQueue();
+      expect(scoped.read(profilesProvider).map((item) => item.id), [1]);
 
-      expect(read().single.label, 'Shared nodes');
+      landing.complete();
+      await held;
+      await pumpEventQueue();
+      rows.add([profile(1, label: 'Mine'), profile(2, label: 'Theirs')]);
+      await pumpEventQueue();
+      expect(scoped.read(profilesProvider).map((item) => item.id), [1, 2]);
     });
 
     test('put falls back to the id when the profile has no label', () async {
@@ -189,29 +182,84 @@ void main() {
       },
     );
 
-    test('put carries a new label into the groups it is told of', () async {
-      for (final (id, label) in [(1, 'Home'), (2, 'Work'), (3, 'Other')]) {
-        notifier.put(profile(id, label: label));
-      }
-      await pumpEventQueue();
+    Profile custom(int id) =>
+        profile(id, label: 'Custom $id').copyWith(type: ProfileType.custom);
+
+    test(
+      'a new label follows into the groups of every custom profile',
+      () async {
+        notifier.put(profile(1, label: 'Home'));
+        for (final id in [2, 3]) {
+          notifier.put(custom(id));
+        }
+        await pumpEventQueue();
+        for (final id in [2, 3]) {
+          await testDatabase.proxyGroups.put(
+            ProxyGroup(
+              id: id,
+              name: 'Group',
+              type: GroupType.Selector,
+              use: const ['Home', 'Other'],
+            ).toCompanion(id),
+          );
+        }
+
+        notifier.put(profile(1, label: 'Away'));
+        await pumpEventQueue();
+
+        Future<List<String>?> use(int id) async =>
+            (await testDatabase.proxyGroupsDao.query(id).get()).single.use;
+        expect(await use(2), ['Away', 'Other']);
+        expect(await use(3), ['Away', 'Other']);
+      },
+    );
+
+    test('a new label follows into the provider options of every custom '
+        'profile', () async {
+      const options = ProxyProviderOptions(filter: 'HK');
+      notifier.put(profile(1, label: 'Home'));
       for (final id in [2, 3]) {
-        await testDatabase.proxyGroups.put(
-          ProxyGroup(
-            id: id,
-            name: 'Group',
-            type: GroupType.Selector,
-            use: const ['Home'],
-          ).toCompanion(id),
+        notifier.put(
+          custom(id).copyWith(
+            overrides: const ProfileOverrides(
+              proxyProviders: {'Home': options},
+            ),
+          ),
         );
       }
-
-      notifier.put(profile(1, label: 'Away'), renameIn: const [2]);
       await pumpEventQueue();
 
-      Future<List<String>?> use(int id) async =>
-          (await testDatabase.proxyGroupsDao.query(id).get()).single.use;
-      expect(await use(2), ['Away']);
-      expect(await use(3), ['Home']);
+      notifier.put(profile(1, label: 'Away'));
+      await pumpEventQueue();
+
+      Map<String, ProxyProviderOptions> optionsOf(int id) =>
+          read().firstWhere((item) => item.id == id).overrides.proxyProviders;
+      expect(optionsOf(2), {'Away': options});
+      expect(optionsOf(3), {'Away': options});
+      final rows = await testDatabase.profilesDao.query().get();
+      expect(rows.firstWhere((item) => item.id == 3).overrides.proxyProviders, {
+        'Away': options,
+      });
+    });
+
+    test('a custom profile is never a provider, so its label renames '
+        'nothing', () async {
+      notifier.put(custom(2));
+      await pumpEventQueue();
+      await testDatabase.proxyGroups.put(
+        const ProxyGroup(
+          id: 9,
+          name: 'Group',
+          type: GroupType.Selector,
+          use: ['Custom 2'],
+        ).toCompanion(2),
+      );
+
+      notifier.put(custom(2).copyWith(label: 'Renamed'));
+      await pumpEventQueue();
+
+      final group = (await testDatabase.proxyGroupsDao.query(2).get()).single;
+      expect(group.use, ['Custom 2']);
     });
 
     test('put restores the previous list when the write fails', () async {
@@ -290,23 +338,10 @@ void main() {
       },
     );
 
-    test('setAndReorder replaces the whole list', () async {
-      notifier.put(profile(1, label: 'One'));
-      await pumpEventQueue();
-
-      notifier.setAndReorder([profile(2, label: 'Two', order: 0)]);
-      expect(read().map((item) => item.id), [2]);
-      await pumpEventQueue();
-
-      final rows = await testDatabase.profilesDao.query().get();
-      expect(rows.map((item) => item.id), [2]);
-    });
-
     test('reorder only writes the rows whose order actually changed', () async {
-      notifier.setAndReorder([
-        profile(1, label: 'One', order: 0),
-        profile(2, label: 'Two', order: 1),
-      ]);
+      notifier
+        ..put(profile(1, label: 'One', order: 0))
+        ..put(profile(2, label: 'Two', order: 1));
       await pumpEventQueue();
 
       notifier.reorder([
@@ -321,10 +356,9 @@ void main() {
     });
 
     test('reorder restores the previous order when the write fails', () async {
-      notifier.setAndReorder([
-        profile(1, label: 'One', order: 0),
-        profile(2, label: 'Two', order: 1),
-      ]);
+      notifier
+        ..put(profile(1, label: 'One', order: 0))
+        ..put(profile(2, label: 'Two', order: 1));
       await pumpEventQueue();
       await breakTable('profiles');
 
@@ -369,6 +403,21 @@ void main() {
       final rows = await testDatabase.scriptsDao.query().get();
       expect(rows.map((item) => item.label), ['Third', 'First', 'Second']);
       expect(rows.map((item) => item.order), [0, 1, 2]);
+    });
+
+    test('a row written around the notifier during a write is read back '
+        'once the write settles', () async {
+      final landing = Completer<void>();
+      final write = notifier.optimisticAsync(read(), () => landing.future);
+      await testDatabase.scripts.put(script(1, 'Direct').toCompanion());
+      await pumpEventQueue();
+      expect(read(), isEmpty);
+
+      landing.complete();
+      await write;
+      await pumpEventQueue();
+
+      expect(read().map((item) => item.label), ['Direct']);
     });
 
     test('put appends a new script and replaces an existing one', () async {
@@ -462,7 +511,7 @@ void main() {
       await pumpEventQueue();
 
       expect(read().single.order, isNotNull);
-      final rows = await testDatabase.rulesDao.queryGlobalAddedRules().get();
+      final rows = await testDatabase.rulesDao.queryGlobalRules().get();
       expect(rows.single.order, isNotNull);
     });
 
@@ -479,7 +528,7 @@ void main() {
       notifier.put(const Rule(id: 2, content: 'second'));
       await pumpEventQueue();
 
-      final rows = await testDatabase.rulesDao.queryGlobalAddedRules().get();
+      final rows = await testDatabase.rulesDao.queryGlobalRules().get();
       expect(rows.map((item) => item.id), [2, 1]);
     });
 
@@ -496,7 +545,7 @@ void main() {
         expect(read().map((item) => item.id), [2, 3, 1], reason: 'optimistic');
         await pumpEventQueue();
 
-        final rows = await testDatabase.rulesDao.queryGlobalAddedRules().get();
+        final rows = await testDatabase.rulesDao.queryGlobalRules().get();
         expect(rows.map((item) => item.id), [2, 3, 1]);
       },
     );
@@ -511,10 +560,7 @@ void main() {
       await pumpEventQueue();
 
       expect(read(), isEmpty);
-      expect(
-        await testDatabase.rulesDao.queryGlobalAddedRules().get(),
-        isEmpty,
-      );
+      expect(await testDatabase.rulesDao.queryGlobalRules().get(), isEmpty);
     });
 
     test('delAll restores the previous list when the write fails', () async {
@@ -539,39 +585,39 @@ void main() {
       notifier.order(0, 1);
       await pumpEventQueue();
 
-      final rows = await testDatabase.rulesDao.queryGlobalAddedRules().get();
+      final rows = await testDatabase.rulesDao.queryGlobalRules().get();
       expect(rows.map((item) => item.id), before.reversed);
     });
   });
 
-  group('ProfileCustomRules', () {
-    late ProfileCustomRules notifier;
+  group('ProfileRules', () {
+    late ProfileRules notifier;
 
     setUp(() async {
       await testDatabase.profilesDao.putAll([profile(profileId).toCompanion()]);
-      await keepAlive(profileCustomRulesProvider(profileId));
-      notifier = container.read(profileCustomRulesProvider(profileId).notifier);
+      await keepAlive(profileRulesProvider(profileId));
+      notifier = container.read(profileRulesProvider(profileId).notifier);
     });
 
     List<Rule> read() => notifier.value;
 
     test('put scopes the rule to its profile', () async {
-      notifier.put(const Rule(id: 1, content: 'custom'));
+      notifier.put(const Rule(id: 1, content: 'own'));
       await pumpEventQueue();
 
       expect(read().single.id, 1);
       final scoped = await testDatabase.rulesDao
-          .queryProfileCustomRules(profileId)
+          .queryProfileRules(profileId)
           .get();
       expect(scoped.single.id, 1);
       expect(
-        await testDatabase.rulesDao.queryGlobalAddedRules().get(),
+        await testDatabase.rulesDao.queryGlobalRules().get(),
         isEmpty,
-        reason: 'a custom rule must not leak into the global scene',
+        reason: 'a profile rule must not leak into the global rules',
       );
     });
 
-    test('delAll and order round-trip through the profile scene', () async {
+    test('delAll and order round-trip through the profile rules', () async {
       notifier.put(const Rule(id: 1, content: 'one'));
       await pumpEventQueue();
       notifier.put(const Rule(id: 2, content: 'two'));
@@ -581,8 +627,9 @@ void main() {
       notifier.order(0, 1);
       await pumpEventQueue();
       expect(
-        (await testDatabase.rulesDao.queryProfileCustomRules(profileId).get())
-            .map((item) => item.id),
+        (await testDatabase.rulesDao.queryProfileRules(profileId).get()).map(
+          (item) => item.id,
+        ),
         before.reversed,
       );
 
@@ -604,49 +651,24 @@ void main() {
       await failure;
       expect(read().map((item) => item.id), [1], reason: 'rolled back');
     });
-  });
 
-  group('ProfileAddedRules', () {
-    late ProfileAddedRules notifier;
-
-    setUp(() async {
-      await testDatabase.profilesDao.putAll([profile(profileId).toCompanion()]);
-      await keepAlive(profileAddedRulesProvider(profileId));
-      notifier = container.read(profileAddedRulesProvider(profileId).notifier);
-    });
-
-    List<Rule> read() => notifier.value;
-
-    test('put scopes the rule to its profile', () async {
-      notifier.put(const Rule(id: 1, content: 'added'));
-      await pumpEventQueue();
-
-      final scoped = await testDatabase.rulesDao
-          .queryProfileAddedRules(profileId)
-          .get();
-      expect(scoped.single.id, 1);
-      expect(
-        await testDatabase.rulesDao.queryProfileCustomRules(profileId).get(),
-        isEmpty,
-        reason: 'added and custom are separate scenes of the same table',
-      );
-    });
-
-    test('order rewrites the order key within the added scene', () async {
+    test('setAll replaces the list in the order given', () async {
       notifier.put(const Rule(id: 1, content: 'one'));
       await pumpEventQueue();
       notifier.put(const Rule(id: 2, content: 'two'));
       await pumpEventQueue();
 
-      final before = read().map((item) => item.id).toList();
-      notifier.order(0, 1);
+      notifier.setAll(const [
+        Rule(id: 3, content: 'three'),
+        Rule(id: 1, content: 'one'),
+      ]);
+      expect(read().map((item) => item.id), [3, 1], reason: 'optimistic');
       await pumpEventQueue();
 
-      expect(
-        (await testDatabase.rulesDao.queryProfileAddedRules(profileId).get())
-            .map((item) => item.id),
-        before.reversed,
-      );
+      final rows = await testDatabase.rulesDao
+          .queryProfileRules(profileId)
+          .get();
+      expect(rows.map((item) => item.id), [3, 1]);
     });
 
     test('delAll restores the previous list when the write fails', () async {
@@ -660,6 +682,350 @@ void main() {
       await failure;
       expect(read().map((item) => item.id), [1], reason: 'rolled back');
     });
+
+    test('a read-back during a write keeps the optimistic rule', () async {
+      final gated = _GatedProfileRules();
+      final scoped = ProviderContainer(
+        overrides: [profileRulesProvider.overrideWith2((_) => gated)],
+      );
+      addTearDown(scoped.dispose);
+      scoped.listen(profileRulesProvider(profileId), (_, _) {});
+      await pumpEventQueue();
+
+      gated.put(const Rule(id: 1, content: 'mine'));
+      await testDatabase.rulesDao.putRule(
+        const Rule(id: 2, content: 'theirs'),
+        profileId: profileId,
+      );
+      await pumpEventQueue();
+      expect(gated.value.map((item) => item.id), [1]);
+
+      gated.landing.complete();
+      await pumpEventQueue();
+      expect(gated.value.map((item) => item.id), unorderedEquals([1, 2]));
+    });
+  });
+
+  group('CustomProxies', () {
+    late CustomProxies notifier;
+
+    setUp(() async {
+      await keepAlive(customProxiesProvider);
+      notifier = container.read(customProxiesProvider.notifier);
+    });
+
+    CustomProxy proxy(int id) => CustomProxy(
+      id: id,
+      definition: {'name': 'Proxy $id', 'type': 'socks5'},
+    );
+
+    test('setAll keeps the dialers of the proxies it keeps', () async {
+      await testDatabase.profilesDao.putAll([profile(profileId).toCompanion()]);
+      notifier.put(proxy(1));
+      await pumpEventQueue();
+      notifier.put(proxy(2));
+      await pumpEventQueue();
+      await testDatabase.proxyDialersDao.set(profileId, 1, 'Relay');
+      await testDatabase.proxyDialersDao.set(profileId, 2, 'Relay');
+
+      notifier.setAll([proxy(3), proxy(1)]);
+      expect(notifier.value.map((item) => item.id), [
+        3,
+        1,
+      ], reason: 'optimistic');
+      await pumpEventQueue();
+
+      final rows = await testDatabase.customProxiesDao.query().get();
+      expect(rows.map((item) => item.id), [3, 1]);
+      final dialers = await testDatabase.proxyDialersDao.query(profileId).get();
+      expect(dialers.map((item) => item.proxyId), [1]);
+    });
+
+    test('renaming a proxy rewrites what custom profiles name it by', () async {
+      const standardId = 2;
+      const overrides = ProfileOverrides(
+        dns: Dns(
+          nameserver: [
+            'https://dns.example/dns-query#Proxy 1',
+            'tls://1.1.1.1#Proxy 2',
+          ],
+          nameserverPolicy: {
+            '+.example.com': '1.1.1.1#Proxy%201, 8.8.8.8',
+            '+.other.com': '8.8.8.8;9.9.9.9',
+          },
+        ),
+        ntp: Ntp(dialerProxy: 'Proxy 1'),
+      );
+      await testDatabase.profilesDao.putAll([
+        profile(profileId)
+            .copyWith(type: ProfileType.custom, overrides: overrides)
+            .toCompanion(),
+        profile(standardId).copyWith(overrides: overrides).toCompanion(),
+      ]);
+      notifier.put(proxy(1));
+      await pumpEventQueue();
+      notifier.put(proxy(2));
+      await pumpEventQueue();
+      await testDatabase.proxyGroups.put(
+        const ProxyGroup(
+          id: 7,
+          name: 'Landing',
+          type: GroupType.Selector,
+          proxies: ['Proxy 1', 'Proxy 2'],
+          defaultSelected: 'Proxy 1',
+          order: 'a',
+        ).toCompanion(profileId),
+      );
+      for (final (id, owner) in [(8, profileId), (9, standardId)]) {
+        await testDatabase.rulesDao.putRule(
+          Rule(id: id, content: 'x', ruleTarget: 'Proxy 1', order: 'a'),
+          profileId: owner,
+        );
+      }
+      await testDatabase.proxyDialersDao.set(profileId, 2, 'Proxy 1');
+
+      notifier.put(
+        proxy(1).copyWith(definition: {'name': 'Renamed', 'type': 'socks5'}),
+      );
+      await pumpEventQueue();
+
+      final group =
+          (await testDatabase.proxyGroupsDao.query(profileId).get()).single;
+      expect(group.proxies, ['Renamed', 'Proxy 2']);
+      expect(group.defaultSelected, 'Renamed');
+      Future<String?> ruleTarget(int owner) async =>
+          (await testDatabase.rulesDao.queryProfileRules(owner).get())
+              .single
+              .ruleTarget;
+      expect(await ruleTarget(profileId), 'Renamed');
+      expect(await ruleTarget(standardId), 'Proxy 1');
+      final dialers = await testDatabase.proxyDialersDao.query(profileId).get();
+      expect(dialers.single.target, 'Renamed');
+      final [custom, standard] = await testDatabase.profilesDao.query().get();
+      expect(custom.overrides.dns.nameserver, [
+        'https://dns.example/dns-query#Renamed',
+        'tls://1.1.1.1#Proxy 2',
+      ]);
+      expect(custom.overrides.dns.nameserverPolicy, {
+        '+.example.com': '1.1.1.1#Renamed, 8.8.8.8',
+        '+.other.com': '8.8.8.8;9.9.9.9',
+      });
+      expect(custom.overrides.ntp.dialerProxy, 'Renamed');
+      expect(standard.overrides, overrides);
+    });
+
+    Profile custom(int id, {ProfileOverrides? overrides}) =>
+        profile(id, label: 'Custom $id').copyWith(
+          type: ProfileType.custom,
+          overrides: overrides ?? const ProfileOverrides(),
+        );
+
+    Future<void> putGroup(int owner, ProxyGroup group) =>
+        testDatabase.proxyGroups.put(group.toCompanion(owner));
+
+    test('renaming a proxy leaves the profiles where a group takes either '
+        'name', () async {
+      const ntp = ProfileOverrides(
+        ntp: Ntp(dialerProxy: 'Proxy 1'),
+        ntpOverrideKeys: {NtpOverrideKey.dialerProxy},
+      );
+      await testDatabase.profilesDao.putAll([
+        for (final id in [1, 2, 3]) custom(id, overrides: ntp).toCompanion(),
+      ]);
+      notifier.put(proxy(1));
+      await pumpEventQueue();
+      await putGroup(
+        1,
+        const ProxyGroup(
+          id: 11,
+          name: 'Landing',
+          type: GroupType.Selector,
+          proxies: ['Proxy 1'],
+        ),
+      );
+      await putGroup(
+        2,
+        const ProxyGroup(
+          id: 21,
+          name: 'Proxy 1',
+          type: GroupType.Selector,
+          proxies: ['DIRECT'],
+        ),
+      );
+      await putGroup(
+        3,
+        const ProxyGroup(
+          id: 31,
+          name: 'Renamed',
+          type: GroupType.Selector,
+          proxies: ['DIRECT'],
+        ),
+      );
+      for (final owner in [1, 2, 3]) {
+        await testDatabase.rulesDao.putRule(
+          Rule(
+            id: 100 + owner,
+            content: 'x',
+            ruleTarget: 'Proxy 1',
+            order: 'a',
+          ),
+          profileId: owner,
+        );
+      }
+
+      notifier.put(
+        proxy(1).copyWith(definition: {'name': 'Renamed', 'type': 'socks5'}),
+      );
+      await pumpEventQueue();
+
+      Future<String?> ruleTarget(int owner) async =>
+          (await testDatabase.rulesDao.queryProfileRules(owner).get())
+              .single
+              .ruleTarget;
+      final rows = {
+        for (final row in await testDatabase.profilesDao.query().get())
+          row.id: row,
+      };
+      expect(await ruleTarget(1), 'Renamed');
+      expect(rows[1]!.overrides.ntp.dialerProxy, 'Renamed');
+      for (final owner in [2, 3]) {
+        expect(await ruleTarget(owner), 'Proxy 1', reason: '$owner');
+        expect(rows[owner]!.overrides, ntp, reason: '$owner');
+      }
+    });
+
+    test('renaming a proxy moves the picks of the groups listing it', () async {
+      await keepAlive(profilesProvider);
+      container
+          .read(profilesProvider.notifier)
+          .put(
+            custom(1).copyWith(
+              selectedMap: const {'Landing': 'Proxy 1', 'Pool': 'Proxy 1'},
+            ),
+          );
+      await pumpEventQueue();
+      notifier.put(proxy(1));
+      await pumpEventQueue();
+      await putGroup(
+        1,
+        const ProxyGroup(
+          id: 11,
+          name: 'Landing',
+          type: GroupType.Selector,
+          proxies: ['Proxy 1'],
+        ),
+      );
+      await putGroup(
+        1,
+        const ProxyGroup(
+          id: 12,
+          name: 'Pool',
+          type: GroupType.Selector,
+          use: ['Subscription'],
+        ),
+      );
+
+      notifier.put(
+        proxy(1).copyWith(definition: {'name': 'Renamed', 'type': 'socks5'}),
+      );
+      await pumpEventQueue();
+
+      const picks = {'Landing': 'Renamed', 'Pool': 'Proxy 1'};
+      expect(container.read(profilesProvider).single.selectedMap, picks);
+      expect(
+        (await testDatabase.profilesDao.query().get()).single.selectedMap,
+        picks,
+      );
+    });
+
+    test(
+      'a profile written as a proxy is renamed keeps both changes',
+      () async {
+        const dns = ProfileOverrides(
+          dns: Dns(nameserver: ['1.1.1.1#Proxy 1']),
+          dnsOverrideKeys: {DnsOverrideKey.nameserver},
+        );
+        await keepAlive(profilesProvider);
+        final profiles = container.read(profilesProvider.notifier);
+        profiles.put(custom(1, overrides: dns));
+        await pumpEventQueue();
+        notifier.put(proxy(1));
+        await pumpEventQueue();
+
+        notifier.put(
+          proxy(1).copyWith(definition: {'name': 'Renamed', 'type': 'socks5'}),
+        );
+        profiles.put(
+          container
+              .read(profilesProvider)
+              .single
+              .copyWith(currentGroupName: 'Landing'),
+        );
+        await pumpEventQueue();
+
+        final row = (await testDatabase.profilesDao.query().get()).single;
+        expect(row.overrides.dns.nameserver, ['1.1.1.1#Renamed']);
+        expect(row.currentGroupName, 'Landing');
+        expect(container.read(profilesProvider).single, row);
+      },
+    );
+  });
+
+  group('ClashProviders', () {
+    test(
+      'renaming a set renames it wherever a custom profile names it',
+      () async {
+        const overrides = ProfileOverrides(
+          dns: Dns(
+            nameserverPolicy: {'rule-set:ads,cn': '223.5.5.5'},
+            fakeIpFilter: ['rule-set:ads'],
+          ),
+          dnsOverrideKeys: {
+            DnsOverrideKey.nameserverPolicy,
+            DnsOverrideKey.fakeIpFilter,
+          },
+          sniffer: Sniffer(skipDomain: ['rule-set:ads']),
+          snifferOverrideKeys: {SnifferOverrideKey.skipDomain},
+        );
+        await keepAlive(profilesProvider);
+        await keepAlive(clashProvidersProvider);
+        container
+            .read(profilesProvider.notifier)
+            .put(
+              profile(
+                profileId,
+                label: 'Custom',
+              ).copyWith(type: ProfileType.custom, overrides: overrides),
+            );
+        final providers = container.read(clashProvidersProvider.notifier);
+        providers.put(const ClashProvider(id: 5, label: 'ads'));
+        await pumpEventQueue();
+        await testDatabase.rulesDao.putRule(
+          const Rule(
+            id: 9,
+            ruleAction: RuleAction.RULE_SET,
+            ruleProvider: 'ads',
+            ruleTarget: 'REJECT',
+            order: 'a',
+          ),
+          profileId: profileId,
+        );
+
+        providers.put(const ClashProvider(id: 5, label: 'block'));
+        await pumpEventQueue();
+
+        final rule =
+            (await testDatabase.rulesDao.queryProfileRules(profileId).get())
+                .single;
+        expect(rule.ruleProvider, 'block');
+        final row = (await testDatabase.profilesDao.query().get()).single;
+        expect(row.overrides.ruleSets, {'block', 'cn'});
+        expect(row.overrides.dns.nameserverPolicy.keys, ['rule-set:block,cn']);
+        expect(row.overrides.dns.fakeIpFilter, ['rule-set:block']);
+        expect(row.overrides.sniffer.skipDomain, ['rule-set:block']);
+        expect(container.read(profilesProvider).single, row);
+      },
+    );
   });
 
   group('ProfileDisabledRuleIds', () {
@@ -667,8 +1033,7 @@ void main() {
 
     setUp(() async {
       await testDatabase.profilesDao.putAll([profile(profileId).toCompanion()]);
-      await testDatabase.rulesDao.putProfileAddedRule(
-        profileId,
+      await testDatabase.rulesDao.putRule(
         const Rule(id: 7, content: 'toggled', order: 'a'),
       );
       await keepAlive(profileDisabledRuleIdsProvider(profileId));
@@ -679,14 +1044,13 @@ void main() {
 
     List<int> read() => notifier.value;
 
-    test('put links the rule and del unlinks it', () async {
+    test('put disables the rule and del enables it again', () async {
       notifier.put(7);
       expect(read(), [7]);
       await pumpEventQueue();
 
       expect(
-        (await testDatabase.rulesDao.queryProfileDisabledRules(profileId).get())
-            .map((item) => item.id),
+        await testDatabase.rulesDao.queryDisabledRuleIds(profileId).get(),
         [7],
       );
 
@@ -694,7 +1058,7 @@ void main() {
       await pumpEventQueue();
       expect(read(), isEmpty);
       expect(
-        await testDatabase.rulesDao.queryProfileDisabledRules(profileId).get(),
+        await testDatabase.rulesDao.queryDisabledRuleIds(profileId).get(),
         isEmpty,
       );
     });
@@ -709,7 +1073,7 @@ void main() {
     });
 
     test('put restores the previous ids when the write fails', () async {
-      await breakTable('profile_rule_mapping');
+      await breakTable('disabled_rules');
 
       final failure = captureWriteFailure(() => notifier.put(7));
       expect(read(), [7], reason: 'optimistic');
@@ -773,19 +1137,19 @@ void main() {
       expect(read(), hasLength(1));
     });
 
-    test('renaming a group rewrites the custom rules that target it', () async {
+    test('renaming a group rewrites the rules that target it', () async {
       expect(notifier.put(group(1, 'Old')), isTrue);
       await pumpEventQueue();
-      await testDatabase.rulesDao.putProfileCustomRule(
-        profileId,
+      await testDatabase.rulesDao.putRule(
         const Rule(id: 9, content: 'x', ruleTarget: 'Old', order: 'a'),
+        profileId: profileId,
       );
 
       expect(notifier.put(group(1, 'New')), isTrue);
       await pumpEventQueue();
 
       final rules = await testDatabase.rulesDao
-          .queryProfileCustomRules(profileId)
+          .queryProfileRules(profileId)
           .get();
       expect(rules.single.ruleTarget, 'New');
     });
@@ -802,6 +1166,56 @@ void main() {
       final rows = await testDatabase.proxyGroupsDao.query(profileId).get();
       final parent = rows.firstWhere((item) => item.id == 2);
       expect(parent.proxies, ['New']);
+    });
+
+    test('renaming a group keeps every member list readable', () async {
+      expect(notifier.put(group(1, ',')), isTrue);
+      expect(notifier.put(group(2, 'Old')), isTrue);
+      expect(
+        notifier.put(group(3, 'Parent', proxies: ['x', 'Old', 'y'])),
+        isTrue,
+      );
+      await pumpEventQueue();
+
+      expect(notifier.put(group(1, 'Comma')), isTrue);
+      expect(notifier.put(group(2, 'Say "hi" \\o/')), isTrue);
+      expect(read().firstWhere((item) => item.id == 3).proxies, [
+        'x',
+        'Say "hi" \\o/',
+        'y',
+      ], reason: 'optimistic');
+      await pumpEventQueue();
+
+      final rows = await testDatabase.proxyGroupsDao.query(profileId).get();
+      expect(rows.firstWhere((item) => item.id == 3).proxies, [
+        'x',
+        'Say "hi" \\o/',
+        'y',
+      ]);
+    });
+
+    test('renaming a group moves its picks, tab and unfolding', () async {
+      await testDatabase.profilesDao.putAll([
+        profile(profileId)
+            .copyWith(
+              type: ProfileType.custom,
+              selectedMap: const {'Old': 'DIRECT', 'Parent': 'Old'},
+              currentGroupName: 'Old',
+              unfoldSet: const {'Old', 'Parent'},
+            )
+            .toCompanion(),
+      ]);
+      expect(notifier.put(group(1, 'Old')), isTrue);
+      expect(notifier.put(group(2, 'Parent', proxies: ['Old'])), isTrue);
+      await pumpEventQueue();
+
+      expect(notifier.put(group(1, 'New')), isTrue);
+      await pumpEventQueue();
+
+      final row = (await testDatabase.profilesDao.query().get()).single;
+      expect(row.selectedMap, {'New': 'DIRECT', 'Parent': 'New'});
+      expect(row.currentGroupName, 'New');
+      expect(row.unfoldSet, {'New', 'Parent'});
     });
 
     test('put records the icon so it can be reused later', () async {
@@ -859,4 +1273,14 @@ void main() {
       expect(read().map((item) => item.name), ['Kept'], reason: 'rolled back');
     });
   });
+}
+
+class _GatedProfileRules extends ProfileRules {
+  final landing = Completer<void>();
+
+  @override
+  Future<void> persistRule(Rule rule) async {
+    await landing.future;
+    await super.persistRule(rule);
+  }
 }

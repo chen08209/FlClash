@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"sync"
@@ -62,6 +62,7 @@ func TestClassOfMessageRoutesEachTier(t *testing.T) {
 		LogMessage:          bulkMessageClass,
 		RequestMessage:      bulkMessageClass,
 		DnsMessage:          yieldingBulkMessageClass,
+		DialerLoopMessage:   priorityMessageClass,
 	} {
 		if got := classOfMessage(Message{Type: messageType}); got != want {
 			t.Errorf("classOfMessage(%s) = %d, want %d", messageType, got, want)
