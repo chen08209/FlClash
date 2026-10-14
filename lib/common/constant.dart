@@ -48,8 +48,6 @@ const watchExecution = false;
 
 const safeModeBuild = bool.fromEnvironment('SAFE_MODE');
 
-const disclaimerVersion = 1;
-
 String _randomPipeId() {
   final random = Random.secure();
   return List.generate(
