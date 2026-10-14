@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.9.0 (2026-10-14)
+
+**Breaking Changes**
+
+- **views** DNS and NTP override toggles are removed; picked keys apply to every profile (491fae1)
+- **database** Custom overwrites are removed; rebuild them as custom profiles (1677024)
+
+**Features**
+
+- **views** Per-key DNS, NTP, sniffer and TUN settings (491fae1)
+- **profiles** Custom profiles (3abda78)
+- **ui** Stacked sheets, context menus and a sort mode (8c43053)
+- **providers** DNS, Hosts and ports apply without a restart (532ebf0)
+- **android** Launcher shortcuts and one-step on-demand access (d3fa225)
+- **core** Share link import and mrs rule sets (2fa2f7f)
+
+**Bug Fixes**
+
+- **database** Unreadable settings no longer block startup or restores (1677024)
+- **desktop** Windows and Linux desktop fixes (94a25f4)
+- **core,helper** The elevated Core only answers its owner (d780cb8)
+
 ## v0.8.99 (2026-10-03)
 
 **Features**
