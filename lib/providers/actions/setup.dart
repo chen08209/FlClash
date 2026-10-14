@@ -81,6 +81,7 @@ class SetupAction extends _$SetupAction {
     if (!running) {
       _startTime = null;
       debouncer.cancel(FunctionTag.applyProfile);
+      debouncer.cancel(FunctionTag.suspend);
       _pendingForceApply = false;
       _updateRunTime();
       return;
@@ -221,6 +222,17 @@ class SetupAction extends _$SetupAction {
     });
   }
 
+  Future<void> syncListener() {
+    return _listenerScheduler.run(() async {
+      if (!ref.mounted ||
+          !ref.read(isStartProvider) ||
+          ref.read(safeModeProvider)) {
+        return;
+      }
+      await _setListening(!ref.read(suspendProvider));
+    });
+  }
+
   Future<void> _setListening(bool running) async {
     final vpnOptions = await ref.read(vpnOptionsProvider.future);
     await setCoreRunning(running);
@@ -231,14 +243,7 @@ class SetupAction extends _$SetupAction {
 
   /// An excluded SSID parks the listener without ending the run.
   void syncSuspend() {
-    debouncer.call(FunctionTag.suspend, () {
-      return _listenerScheduler.run(() async {
-        if (!ref.read(isStartProvider) || ref.read(safeModeProvider)) {
-          return;
-        }
-        await _setListening(!ref.read(suspendProvider));
-      });
-    });
+    debouncer.call(FunctionTag.suspend, syncListener);
   }
 
   Future<void> restartVpn() async {

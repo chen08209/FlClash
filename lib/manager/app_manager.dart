@@ -72,6 +72,7 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
 
   @override
   void dispose() {
+    debouncer.cancel(FunctionTag.suspend);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
