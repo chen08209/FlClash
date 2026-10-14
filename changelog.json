@@ -2,6 +2,84 @@
   "schemaVersion": 2,
   "versions": [
     {
+      "version": "0.9.0",
+      "tag": "v0.9.0",
+      "date": "2026-10-14",
+      "prerelease": false,
+      "groups": [
+        {
+          "type": "breaking",
+          "entries": [
+            {
+              "id": "491fae1",
+              "scope": "views",
+              "text": "DNS and NTP override toggles are removed; picked keys apply to every profile"
+            },
+            {
+              "id": "1677024",
+              "scope": "database",
+              "text": "Custom overwrites are removed; rebuild them as custom profiles"
+            }
+          ]
+        },
+        {
+          "type": "feat",
+          "entries": [
+            {
+              "id": "491fae1",
+              "scope": "views",
+              "text": "Per-key DNS, NTP, sniffer and TUN settings"
+            },
+            {
+              "id": "3abda78",
+              "scope": "profiles",
+              "text": "Custom profiles"
+            },
+            {
+              "id": "8c43053",
+              "scope": "ui",
+              "text": "Stacked sheets, context menus and a sort mode"
+            },
+            {
+              "id": "532ebf0",
+              "scope": "providers",
+              "text": "DNS, Hosts and ports apply without a restart"
+            },
+            {
+              "id": "d3fa225",
+              "scope": "android",
+              "text": "Launcher shortcuts and one-step on-demand access"
+            },
+            {
+              "id": "2fa2f7f",
+              "scope": "core",
+              "text": "Share link import and mrs rule sets"
+            }
+          ]
+        },
+        {
+          "type": "fix",
+          "entries": [
+            {
+              "id": "1677024",
+              "scope": "database",
+              "text": "Unreadable settings no longer block startup or restores"
+            },
+            {
+              "id": "94a25f4",
+              "scope": "desktop",
+              "text": "Windows and Linux desktop fixes"
+            },
+            {
+              "id": "d780cb8",
+              "scope": "core,helper",
+              "text": "The elevated Core only answers its owner"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.8.99",
       "tag": "v0.8.99",
       "date": "2026-10-03",

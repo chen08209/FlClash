@@ -4,8 +4,11 @@ import 'package:fl_clash/common/shape.dart';
 import 'package:fl_clash/widgets/inherited.dart';
 import 'package:fl_clash/widgets/paged_sheet.dart';
 import 'package:fl_clash/widgets/sheet.dart';
+import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../helpers/hand_over.dart';
 
 void main() {
   testWidgets('uses the bottom sheet surface color and shape', (tester) async {
@@ -92,7 +95,13 @@ void main() {
 
     expect(find.text('open nested'), findsOneWidget);
     expect(find.text('close nested'), findsOneWidget);
-    expect(find.byType(FadeTransition), findsWidgets);
+    expect(
+      find.descendant(
+        of: find.byType(PagedSheet),
+        matching: find.byType(SlideTransition),
+      ),
+      findsWidgets,
+    );
 
     await tester.pumpAndSettle();
     await tester.tap(find.text('close nested'));
@@ -160,6 +169,7 @@ void main() {
       ).push(PagedSheetRoute(builder: (_) => page(300, 'second'))),
     );
     await tester.pump();
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 175));
 
     final midHeight = tester.getSize(find.byType(PagedSheet)).height;
@@ -168,6 +178,131 @@ void main() {
 
     await tester.pumpAndSettle();
     expect(tester.getSize(find.byType(PagedSheet)), const Size(400, 300));
+  });
+
+  group('fading pages', () {
+    final navigatorKey = GlobalKey<NavigatorState>();
+
+    Widget label(String text, {double top = 0}) {
+      return Padding(
+        padding: EdgeInsets.only(top: top),
+        child: Align(alignment: Alignment.topCenter, child: Text(text)),
+      );
+    }
+
+    Future<void> pumpSheet(WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SheetProvider(
+            type: SheetType.bottomSheet,
+            child: Center(
+              child: SizedBox(
+                width: 400,
+                height: 600,
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: PagedSheet(
+                    child: Navigator(
+                      key: navigatorKey,
+                      onGenerateInitialRoutes: (_, _) => [
+                        PagedSheetRoute(
+                          builder: (_) =>
+                              SizedBox(height: 200, child: label('first')),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    void push(String text, {required double top}) {
+      unawaited(
+        navigatorKey.currentState!.push(
+          PagedSheetRoute<void>(
+            builder: (_) => SizedBox(height: 300, child: label(text, top: top)),
+          ),
+        ),
+      );
+    }
+
+    Future<(Color, Color)> inkAndSurface(WidgetTester tester) async {
+      final rect = tester.getRect(find.text('first'));
+      return (
+        await pixelAt(tester, inkPointOf(tester, 'first')),
+        await pixelAt(tester, rect.centerRight + const Offset(20, 0)),
+      );
+    }
+
+    testWidgets('hand over without one showing through the other', (
+      tester,
+    ) async {
+      await pumpSheet(tester);
+      final (ink, surface) = await inkAndSurface(tester);
+
+      push('second', top: 100);
+      await expectHandOver(
+        tester,
+        ['first', 'second'],
+        ink: ink,
+        surface: surface,
+        floor: 0.25,
+      );
+      expect(find.text('first'), findsNothing);
+
+      navigatorKey.currentState!.pop();
+      await expectHandOver(
+        tester,
+        ['first', 'second'],
+        ink: ink,
+        surface: surface,
+        floor: 0.25,
+      );
+      expect(find.text('second'), findsNothing);
+    });
+
+    testWidgets('cover a page still fading back in', (tester) async {
+      await pumpSheet(tester);
+      final (ink, surface) = await inkAndSurface(tester);
+      push('second', top: 100);
+      await tester.pumpAndSettle();
+
+      navigatorKey.currentState!.pop();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 30));
+      push('third', top: 200);
+      await expectHandOver(
+        tester,
+        ['first', 'second', 'third'],
+        ink: ink,
+        surface: surface,
+      );
+    });
+
+    testWidgets('fade without an opacity layer', (tester) async {
+      await pumpSheet(tester);
+
+      Future<void> expectNoLayers() async {
+        for (var frame = 0; frame < 30; frame++) {
+          await tester.pump(const Duration(milliseconds: 16));
+          expect(
+            tester.layers.whereType<OpacityLayer>().where(
+              (layer) => (layer.alpha ?? 255) < 255,
+            ),
+            isEmpty,
+          );
+        }
+      }
+
+      push('second', top: 100);
+      await expectNoLayers();
+      navigatorKey.currentState!.pop();
+      await expectNoLayers();
+    });
   });
 
   test('uses the configured duration in both directions', () {

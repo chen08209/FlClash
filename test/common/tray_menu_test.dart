@@ -326,11 +326,21 @@ void main() {
         overrides: [
           selectedProxyNameProvider('Proxy').overrideWithValue('A'),
           trayDelaysProvider.overrideWithValue({
-            'Proxy': {'A': 120, 'B': -1},
+            'Proxy': {'A': 120, 'B': -1, 'C': -2},
           }),
         ],
       );
-      await update(_trayState(groups: [_proxyGroup]));
+      const group = Group(
+        name: 'Proxy',
+        type: GroupType.Selector,
+        all: [
+          Proxy(name: 'A', type: 'Direct'),
+          Proxy(name: 'B', type: 'Direct'),
+          Proxy(name: 'C', type: 'Direct'),
+          Proxy(name: 'D', type: 'Direct'),
+        ],
+      );
+      await update(_trayState(groups: [group]));
 
       final submenu = _item(showCall(), 'Proxy');
       expect(submenu['detail'], '120');
@@ -338,6 +348,7 @@ void main() {
       expect(children.map((item) => item['detail']), [
         '120',
         currentAppLocalizations.timeout,
+        currentAppLocalizations.delayFailed,
         null,
       ]);
     },

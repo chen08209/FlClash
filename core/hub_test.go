@@ -1,8 +1,9 @@
-package main
+package core
 
 import (
 	"context"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,12 +25,12 @@ import (
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/adapter/provider"
 	"github.com/metacubex/mihomo/common/utils"
+	"github.com/metacubex/mihomo/component/age"
 	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
 	cp "github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/dns"
-	"github.com/metacubex/mihomo/log"
 	rp "github.com/metacubex/mihomo/rules/provider"
 	"github.com/metacubex/mihomo/tunnel"
 	D "github.com/miekg/dns"
@@ -246,17 +247,20 @@ func TestIsProxyGroupType(t *testing.T) {
 
 func TestDelayValue(t *testing.T) {
 	tests := []struct {
-		delay uint16
-		want  int32
+		delay    uint16
+		timedOut bool
+		want     int32
 	}{
-		{delay: 0, want: -1},
+		{delay: 0, want: delayFailed},
+		{delay: 0, timedOut: true, want: delayTimedOut},
 		{delay: 1, want: 1},
 		{delay: 250, want: 250},
+		{delay: 250, timedOut: true, want: 250},
 		{delay: 65535, want: 65535},
 	}
 	for _, test := range tests {
-		if got := delayValue(test.delay); got != test.want {
-			t.Errorf("delayValue(%d) = %d, want %d", test.delay, got, test.want)
+		if got := delayValue(test.delay, test.timedOut); got != test.want {
+			t.Errorf("delayValue(%d, %v) = %d, want %d", test.delay, test.timedOut, got, test.want)
 		}
 	}
 }
@@ -299,8 +303,39 @@ func TestHandleValidateConfigAcceptsAValidFile(t *testing.T) {
 		t.Fatalf("write config: %v", err)
 	}
 
-	if got := handleValidateConfig(path); got != "" {
-		t.Fatalf("handleValidateConfig = %q, want no error", got)
+	if err := handleValidateConfig(path); err != nil {
+		t.Fatalf("handleValidateConfig = %v, want no error", err)
+	}
+}
+
+func TestHandleDecryptConfigReadsAnAgeEncryptedFile(t *testing.T) {
+	secretKey, publicKey, err := age.GenX25519KeyPair()
+	if err != nil {
+		t.Fatalf("generate key pair: %v", err)
+	}
+	encrypted, err := age.EncryptBytes([]byte("mixed-port: 7890\n"), publicKey)
+	if err != nil {
+		t.Fatalf("encrypt config: %v", err)
+	}
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(path, encrypted, 0o600); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	got, err := handleDecryptConfig(DecryptConfigParams{Path: path, AgeSecretKey: secretKey})
+	if err != nil {
+		t.Fatalf("handleDecryptConfig = %v, want no error", err)
+	}
+	if got != "mixed-port: 7890\n" {
+		t.Errorf("handleDecryptConfig = %q, want the plaintext config", got)
+	}
+
+	otherKey, _, err := age.GenX25519KeyPair()
+	if err != nil {
+		t.Fatalf("generate key pair: %v", err)
+	}
+	if _, err := handleDecryptConfig(DecryptConfigParams{Path: path, AgeSecretKey: otherKey}); err == nil {
+		t.Error("handleDecryptConfig decrypted with a key the file was not encrypted to")
 	}
 }
 
@@ -322,6 +357,38 @@ func TestHandleValidateProxiesReportsEachProxyInPlace(t *testing.T) {
 	}
 	if !strings.Contains(got[2], "unsupport") {
 		t.Errorf("unknown type reported %q, want unsupported", got[2])
+	}
+}
+
+func TestHandleConvertProxiesReadsABase64ShareLinkList(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "subscription")
+	links := "trojan://secret@example.com:443#first\nss://YWVzLTEyOC1nY206cGFzcw@example.com:8388#second\n"
+	if err := os.WriteFile(path, []byte(base64.StdEncoding.EncodeToString([]byte(links))), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := handleConvertProxies(path)
+
+	if err != nil {
+		t.Fatalf("handleConvertProxies error: %v", err)
+	}
+	names := make([]string, 0, len(got))
+	for _, proxy := range got {
+		names = append(names, fmt.Sprint(proxy["name"]))
+	}
+	if !slices.Equal(names, []string{"first", "second"}) {
+		t.Errorf("names = %v, want [first second]", names)
+	}
+}
+
+func TestHandleConvertProxiesRejectsAConfig(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(path, []byte("proxies:\n  - name: a\n    type: direct\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := handleConvertProxies(path); err == nil {
+		t.Fatal("handleConvertProxies found share links in a config")
 	}
 }
 
@@ -365,13 +432,13 @@ func TestHandleValidateProxiesLeavesARunningProxysResolverInPlace(t *testing.T) 
 }
 
 func TestHandleValidateConfigReportsAMissingFile(t *testing.T) {
-	got := handleValidateConfig(filepath.Join(t.TempDir(), "absent.yaml"))
+	err := handleValidateConfig(filepath.Join(t.TempDir(), "absent.yaml"))
 
-	if got == "" {
+	if err == nil {
 		t.Fatal("handleValidateConfig accepted a path that does not exist")
 	}
-	if !strings.Contains(got, "absent.yaml") {
-		t.Errorf("handleValidateConfig = %q, want it to name the missing file", got)
+	if !strings.Contains(err.Error(), "absent.yaml") {
+		t.Errorf("handleValidateConfig = %v, want it to name the missing file", err)
 	}
 }
 
@@ -381,7 +448,7 @@ func TestHandleValidateConfigReportsMalformedYaml(t *testing.T) {
 		t.Fatalf("write config: %v", err)
 	}
 
-	if got := handleValidateConfig(path); got == "" {
+	if err := handleValidateConfig(path); err == nil {
 		t.Fatal("handleValidateConfig accepted malformed yaml")
 	}
 }
@@ -432,15 +499,18 @@ func TestLookupProxyFollowsAProviderUpdate(t *testing.T) {
 	}
 }
 
+func currentLogPump() *logPump {
+	logMu.Lock()
+	defer logMu.Unlock()
+	return activeLog
+}
+
 func TestHandleShutdownTearsDownBackgroundWork(t *testing.T) {
 	withCurrentConfig(t, &config.Config{General: &config.General{}, Controller: &config.Controller{}})
 	isInit.Store(true)
 
-	cancelled := false
-	logMu.Lock()
-	logSubscriber = make(chan log.Event)
-	logCancel = func() { cancelled = true }
-	logMu.Unlock()
+	handleStartLog()
+	pump := currentLogPump()
 
 	handleShutdown()
 
@@ -451,14 +521,11 @@ func TestHandleShutdownTearsDownBackgroundWork(t *testing.T) {
 		t.Error("isInit stayed true after shutdown")
 	}
 
-	logMu.Lock()
-	subscriber, cancel := logSubscriber, logCancel
-	logMu.Unlock()
-	if subscriber != nil || cancel != nil {
+	if currentLogPump() != nil {
 		t.Error("shutdown left the log stream subscribed, so events keep being pumped to a host that stopped the core")
 	}
-	if !cancelled {
-		t.Error("shutdown never cancelled the log pump")
+	if !pump.stopped.Load() {
+		t.Error("shutdown never stopped the log pump")
 	}
 }
 
@@ -526,10 +593,9 @@ func TestAnyDelayTestStatusMatchesTheEmptyRange(t *testing.T) {
 }
 
 // The host reads the proxy tables — a proxy list for the UI, a provider lookup
-// for an update — while a config apply replaces them. Those reads used to be
-// serialised against the apply by a lock the host held for both; the tunnel's
-// own accessors take none, so under -race this is what proves the reads were
-// put back under the lock the apply writes with.
+// for an update — while a config apply replaces them. The tunnel's plain
+// accessors take no lock, so under -race this proves the reads share the lock
+// the apply writes with.
 func TestProxyTableReadsAreSerialisedAgainstAnApply(t *testing.T) {
 	withTunnelProviders(t, nil, nil)
 
@@ -650,8 +716,8 @@ func TestUpdateExternalProviderReportsRequestFailureDetails(t *testing.T) {
 	}
 	withTunnelProviders(t, map[string]cp.ProxyProvider{name: provider}, nil)
 
-	methodError := handleUpdateExternalProvider(name)
-	if methodError == nil || methodError.Code != "request_bad_response" {
+	methodError := asMethodError(handleUpdateExternalProvider(name))
+	if methodError.Code != "request_bad_response" {
 		t.Fatalf("methodError = %+v, want request_bad_response", methodError)
 	}
 	details, ok := methodError.Details.(map[string]any)
@@ -668,10 +734,11 @@ func TestUpdateExternalProviderCategorizesFailure(t *testing.T) {
 	}
 	withTunnelProviders(t, map[string]cp.ProxyProvider{name: provider}, nil)
 
-	methodError := handleUpdateExternalProvider(name)
-	if methodError == nil {
+	err := handleUpdateExternalProvider(name)
+	if err == nil {
 		t.Fatal("the provider error was reported as success")
 	}
+	methodError := asMethodError(err)
 	if methodError.Code != "provider_update_error" {
 		t.Errorf("code = %q, want provider_update_error", methodError.Code)
 	}
@@ -702,7 +769,7 @@ func TestUpdateExternalProviderRunsOneAtATime(t *testing.T) {
 	// Released through the cleanup so a blocked update never wedges the run.
 	t.Cleanup(func() { close(provider.release) })
 
-	first := make(chan *MethodError, 1)
+	first := make(chan error, 1)
 	go func() { first <- handleUpdateExternalProvider(name) }()
 
 	select {
@@ -711,16 +778,16 @@ func TestUpdateExternalProviderRunsOneAtATime(t *testing.T) {
 		t.Fatal("the first update never started")
 	}
 
-	second := make(chan *MethodError, 1)
+	second := make(chan error, 1)
 	go func() { second <- handleUpdateExternalProvider(name) }()
 
 	select {
-	case methodError := <-second:
-		if methodError == nil {
+	case err := <-second:
+		if err == nil {
 			t.Fatal("the duplicate request reported success")
 		}
-		if methodError.Code != "provider_updating" {
-			t.Errorf("code = %q, want provider_updating", methodError.Code)
+		if code := asMethodError(err).Code; code != "provider_updating" {
+			t.Errorf("code = %q, want provider_updating", code)
 		}
 	case <-time.After(time.Second):
 		t.Fatal("the duplicate request reached the provider instead of being coalesced")
@@ -732,8 +799,8 @@ func TestUpdateExternalProviderRunsOneAtATime(t *testing.T) {
 	}
 
 	provider.release <- struct{}{}
-	if methodError := <-first; methodError != nil {
-		t.Fatalf("the first update reported %q", methodError.Message)
+	if err := <-first; err != nil {
+		t.Fatalf("the first update reported %q", err)
 	}
 
 	if got := provider.calls.Load(); got != 1 {
@@ -869,6 +936,42 @@ func TestForceGCReleasesTheProxyCache(t *testing.T) {
 	}
 }
 
+func TestLoadMemoryReleaseWaitsForTheLoadsToGoQuiet(t *testing.T) {
+	released := make(chan struct{}, 4)
+	delay, release := loadReleaseDelay, releaseLoadMemory
+	loadReleaseDelay = 400 * time.Millisecond
+	releaseLoadMemory = func() { released <- struct{}{} }
+	t.Cleanup(func() {
+		loadReleaseMu.Lock()
+		if loadReleaseTimer != nil {
+			loadReleaseTimer.Stop()
+		}
+		loadReleaseMu.Unlock()
+		loadReleaseDelay, releaseLoadMemory = delay, release
+	})
+
+	scheduleLoadMemoryRelease()
+	time.Sleep(100 * time.Millisecond)
+	scheduleLoadMemoryRelease()
+	time.Sleep(300 * time.Millisecond)
+
+	select {
+	case <-released:
+		t.Fatal("released while providers were still loading")
+	default:
+	}
+	select {
+	case <-released:
+	case <-time.After(2 * time.Second):
+		t.Fatal("never released once the loads went quiet")
+	}
+	select {
+	case <-released:
+		t.Error("one quiet spell released twice")
+	case <-time.After(600 * time.Millisecond):
+	}
+}
+
 func TestHandleGetMemoryStatsReportsALiveRuntime(t *testing.T) {
 	stats := handleGetMemoryStats()
 
@@ -993,6 +1096,44 @@ func TestProxyViewKeepsWhatTheHostReads(t *testing.T) {
 	}
 	if _, exist := group["history"]; exist {
 		t.Error("the view still carries delay history")
+	}
+}
+
+func TestProxyViewHidesOnlyTheBuiltInGlobal(t *testing.T) {
+	hidden := func(providerName string) any {
+		t.Helper()
+		members := []constant.Proxy{namedProxy("node-a")}
+		pd, err := provider.NewCompatibleProvider(
+			providerName, members, provider.NewHealthCheck(members, "", 0, 0, true, nil),
+		)
+		if err != nil {
+			t.Fatalf("NewCompatibleProvider: %v", err)
+		}
+		selector, err := outboundgroup.NewSelector(
+			outboundgroup.GroupCommonOption{Name: globalProxyName},
+			outboundgroup.SelectorOption{},
+			namedProxy("COMPATIBLE"),
+			[]cp.ProxyProvider{pd},
+		)
+		if err != nil {
+			t.Fatalf("NewSelector: %v", err)
+		}
+		data, err := json.Marshal(proxyView(adapter.NewProxy(selector)))
+		if err != nil {
+			t.Fatalf("marshal: %v", err)
+		}
+		view := map[string]any{}
+		if err := json.Unmarshal(data, &view); err != nil {
+			t.Fatalf("unmarshal: %v", err)
+		}
+		return view["hidden"]
+	}
+
+	if got := hidden(provider.ReservedName); got != true {
+		t.Errorf("the built-in GLOBAL reports hidden %v, want true", got)
+	}
+	if got := hidden(globalProxyName); got != false {
+		t.Errorf("a configured GLOBAL group reports hidden %v, want false", got)
 	}
 }
 

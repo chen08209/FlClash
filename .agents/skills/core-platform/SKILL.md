@@ -13,9 +13,11 @@ build hooks, system proxy, tray, VPN, TUN, or platform-specific desktop/mobile b
 ## Read First
 
 - `.agents/rules.md`: Core API Safety and Lifecycle Rules are binding. They carry the mihomo-fork patch budget, the
-  JSON envelope and `core/message.go` queue rules, JNI ownership, `BootGuard`, tray, and SSID rules, and every
+  JSON envelope and `core/message.go` queue rules, gomobile callback rules, `BootGuard`, tray, and SSID rules, and every
   lifecycle invariant (latest intent wins, desktop ownership through a `CoreProcessLease`, terminal `close()`,
   optimistic Android commands arbitrated by `ServiceState`, callbacks are not user intent, `goAsync()` finishes once).
+- `.agents/setting-changes.md`: a setting the Core or the Android VPN reads is patched live, re-applied with the
+  profile, or left to a restart the user confirms; it says which, and what adding a setting to each path takes.
 - `.agents/architecture.md`: Core Integration, Lifecycle Ownership And Convergence, Core Protocol And Event Delivery,
   Safe Mode, Build System, and Rust Helper Service describe the current mechanisms, including the Helper protocol,
   the applied/coalesced/superseded outcomes, and the unconfirmed-exit lease.

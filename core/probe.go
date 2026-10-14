@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"bytes"
@@ -31,7 +31,7 @@ const (
 )
 
 var (
-	probeSlots = make(chan struct{}, probeConcurrency)
+	probeSlots = make(slots, probeConcurrency)
 
 	pendingProbeRoutes sync.Map
 )
@@ -152,13 +152,6 @@ func notifyProbeRoute(tracker statistic.Tracker) {
 	})
 }
 
-func probeTimeout(millis int64) time.Duration {
-	if millis <= 0 {
-		return defaultProbeTimeout
-	}
-	return time.Duration(millis) * time.Millisecond
-}
-
 func probeErrorKind(err error) string {
 	var netErr net.Error
 	if errors.Is(err, context.DeadlineExceeded) || (errors.As(err, &netErr) && netErr.Timeout()) {
@@ -189,7 +182,7 @@ func handleProbe(params *ProbeParams) *ProbeResult {
 		url:       params.Url,
 		proxyName: params.ProxyName,
 		headers:   params.Headers,
-		timeout:   probeTimeout(params.Timeout),
+		timeout:   timeoutFromMillis(params.Timeout, defaultProbeTimeout),
 		maxBody:   params.MaxBody,
 	})
 }
@@ -220,13 +213,10 @@ func runProbe(parent context.Context, req probeRequest) *ProbeResult {
 	if timeout <= 0 {
 		timeout = defaultProbeTimeout
 	}
-	queueCtx, cancelQueue := context.WithTimeout(parent, timeout)
-	granted := acquireSlot(queueCtx, probeSlots)
-	cancelQueue()
-	if !granted {
+	if !probeSlots.acquireWithin(parent, timeout) {
 		return nil
 	}
-	defer func() { <-probeSlots }()
+	defer probeSlots.release()
 
 	ctx, cancel := context.WithTimeout(parent, timeout)
 	defer cancel()
@@ -306,16 +296,4 @@ func readProbeBody(body io.Reader, maxBody int64, until func(string) bool) strin
 		}
 	}
 	return buffer.String()
-}
-
-func acquireSlot(ctx context.Context, slots chan struct{}) bool {
-	if ctx.Err() != nil {
-		return false
-	}
-	select {
-	case slots <- struct{}{}:
-		return true
-	case <-ctx.Done():
-		return false
-	}
 }

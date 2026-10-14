@@ -579,6 +579,39 @@ void main() {
       },
     );
 
+    test(
+      'a group tested away from the proxies page ignores its search',
+      () async {
+        when(() => core.asyncTestDelay(_testUrl, any())).thenAnswer(
+          (invocation) async => Delay(
+            name: invocation.positionalArguments[1] as String,
+            url: _testUrl,
+            value: 10,
+          ),
+        );
+        final container = _delayContainer(buildContainer);
+        container
+            .read(groupsProvider.notifier)
+            .update(
+              (_) => [
+                _group('Proxy', const [
+                  _proxy,
+                  Proxy(name: 'JP-01', type: 'ss'),
+                ]),
+              ],
+            );
+        container.listen(queryProvider(QueryTag.proxies), (_, _) {});
+        container.read(queryProvider(QueryTag.proxies).notifier).value = 'HK';
+
+        await actionOf(
+          container,
+        ).delayTestPageGroup('Proxy', matchSearch: false);
+
+        verify(() => core.asyncTestDelay(_testUrl, 'HK-01')).called(1);
+        verify(() => core.asyncTestDelay(_testUrl, 'JP-01')).called(1);
+      },
+    );
+
     test('a page group holds its testing mark until the run settles', () async {
       final release = Completer<Delay?>();
       when(

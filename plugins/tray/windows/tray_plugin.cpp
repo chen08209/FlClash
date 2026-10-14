@@ -10,6 +10,8 @@ namespace {
 
 constexpr UINT kTrayCallbackMessage = WM_USER + 1;
 constexpr UINT kTrayIconId = 1;
+constexpr UINT_PTR kRestoreTimerId = 0x54524159;  // "TRAY"
+constexpr UINT kRestoreIntervalMilliseconds = 2000;
 
 const flutter::EncodableValue* ValueAt(const flutter::EncodableMap& map,
                                        const char* key) {
@@ -188,15 +190,6 @@ bool TrayPlugin::Show(const flutter::EncodableMap& arguments) {
     tool_tip_ = Utf16FromUtf8(*tool_tip);
   }
 
-  bool applied = ApplyIcon(!visible_);
-  if (!applied && visible_) {
-    applied = ApplyIcon(true);
-  }
-  if (!applied) {
-    return false;
-  }
-  visible_ = true;
-
   const flutter::EncodableList* items = ListAt(arguments, "menu");
   if (items != nullptr) {
     if (menu_ == nullptr) {
@@ -205,13 +198,40 @@ bool TrayPlugin::Show(const flutter::EncodableMap& arguments) {
     RebuildMenu(menu_, *items);
   }
 
+  icon_requested_ = true;
+  bool applied = ApplyIcon(!visible_);
+  if (!applied && visible_) {
+    applied = ApplyIcon(true);
+  }
+  if (applied) {
+    visible_ = true;
+  } else {
+    ScheduleRestore();
+  }
   return true;
 }
 
+void TrayPlugin::ScheduleRestore() {
+  ::SetTimer(MainWindow(), kRestoreTimerId, kRestoreIntervalMilliseconds,
+             nullptr);
+}
+
+// An add that timed out may still have landed, so modify goes first.
+void TrayPlugin::RestoreIcon() {
+  if (ApplyIcon(false) || ApplyIcon(true)) {
+    visible_ = true;
+    ::KillTimer(MainWindow(), kRestoreTimerId);
+  } else {
+    ScheduleRestore();
+  }
+}
+
 void TrayPlugin::Hide() {
-  if (visible_) {
+  ::KillTimer(MainWindow(), kRestoreTimerId);
+  if (icon_requested_) {
     ::Shell_NotifyIconW(NIM_DELETE, &icon_data_);
   }
+  icon_requested_ = false;
   if (icon_data_.hIcon != nullptr) {
     ::DestroyIcon(icon_data_.hIcon);
   }
@@ -267,12 +287,17 @@ std::optional<LRESULT> TrayPlugin::HandleWindowProc(HWND window,
     return std::nullopt;
   }
 
+  if (message == WM_TIMER && wparam == kRestoreTimerId) {
+    RestoreIcon();
+    return 0;
+  }
+
   const bool should_restore =
       (taskbar_created_message_ != 0 && message == taskbar_created_message_) ||
       (message == WM_POWERBROADCAST && (wparam == PBT_APMRESUMEAUTOMATIC ||
                                         wparam == PBT_APMRESUMESUSPEND));
-  if (should_restore && visible_) {
-    ApplyIcon(true);
+  if (should_restore && icon_requested_) {
+    RestoreIcon();
   }
 
   return std::nullopt;

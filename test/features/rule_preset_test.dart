@@ -1,4 +1,4 @@
-import 'package:fl_clash/features/overwrite/rule_preset.dart';
+import 'package:fl_clash/features/form/rule_preset.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/providers/app.dart';

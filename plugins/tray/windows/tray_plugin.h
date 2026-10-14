@@ -37,6 +37,8 @@ class TrayPlugin : public flutter::Plugin {
   void Hide();
   bool OpenMenu();
   bool ApplyIcon(bool add);
+  void RestoreIcon();
+  void ScheduleRestore();
   void RebuildMenu(HMENU menu, const flutter::EncodableList& items);
   void SendEvent(const char* name, const flutter::EncodableValue& arguments);
 
@@ -53,6 +55,7 @@ class TrayPlugin : public flutter::Plugin {
   HMENU menu_ = nullptr;
   std::wstring tool_tip_;
   bool visible_ = false;
+  bool icon_requested_ = false;
 
   UINT taskbar_created_message_ = 0;
   int window_proc_id_ = -1;

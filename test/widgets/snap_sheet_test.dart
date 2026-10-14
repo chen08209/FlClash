@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/widgets/inherited.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
+import 'package:fl_clash/widgets/scroll.dart';
 import 'package:fl_clash/widgets/sheet.dart';
 import 'package:fl_clash/widgets/sheet_header.dart';
 import 'package:fl_clash/widgets/side_sheet.dart';
@@ -12,6 +14,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/scrollbar.dart';
 import '../helpers/test_app.dart';
 
 const _mobile = Size(400, 900);
@@ -32,6 +35,45 @@ Widget _sheet(BuildContext context, ScrollController? controller) {
           : SizedBox(height: 40, child: Text('$index')),
     ),
   );
+}
+
+class _OwnControllerList extends StatefulWidget {
+  const _OwnControllerList();
+
+  @override
+  State<_OwnControllerList> createState() => _OwnControllerListState();
+}
+
+class _OwnControllerListState extends State<_OwnControllerList> {
+  late final ScrollController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = sheetScrollController(context);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CommonScaffold(
+      title: 'title',
+      body: CommonScrollBar(
+        controller: _controller,
+        child: ListView.builder(
+          controller: _controller,
+          itemCount: 60,
+          itemBuilder: (_, index) =>
+              SizedBox(height: 40, child: Text('$index')),
+        ),
+      ),
+    );
+  }
 }
 
 void main() {
@@ -103,6 +145,97 @@ void main() {
     await tester.drag(content(), const Offset(0, -100));
     await tester.pumpAndSettle();
 
+    expect(sheetTop(tester), closeTo(expanded, 1));
+    expect(contentOffset(tester), greaterThan(0));
+
+    await close(tester);
+  });
+
+  testWidgets('a collapsed sheet hides its scrollbar and takes a drag where '
+      'the thumb would be, and an open one scrubs only its content', (
+    tester,
+  ) async {
+    await openSheet(
+      tester,
+      builder: (context, controller) => CommonScaffold(
+        title: 'title',
+        body: CommonScrollBar(
+          controller: controller,
+          child: ListView.builder(
+            controller: controller,
+            itemCount: 60,
+            itemBuilder: (_, index) =>
+                SizedBox(height: 40, child: Text('$index')),
+          ),
+        ),
+      ),
+    );
+    final collapsed = _mobile.height * (1 - snapSheetDetents.first);
+    final expanded = _mobile.height * (1 - snapSheetDetents.last);
+    final position = tester.state<ScrollableState>(content()).position;
+
+    position.jumpTo(1);
+    position.jumpTo(0);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(scrollbarPainter(tester).color.a, 0);
+    expect(scrollbarPainter(tester).ignorePointer, isTrue);
+
+    await tester.dragFrom(
+      tester.getTopRight(content()) + const Offset(-5, 100),
+      const Offset(0, -300),
+    );
+    await tester.pumpAndSettle();
+    expect(sheetTop(tester), closeTo(expanded, 1));
+    expect(contentOffset(tester), 0);
+
+    final thumb = await revealScrollbarThumb(tester, scrollable: content());
+    expect(scrollbarPainter(tester).color.a, greaterThan(0));
+    final gesture = await tester.startGesture(thumb);
+    for (var step = 0; step < 6; step++) {
+      await gesture.moveBy(const Offset(0, 10));
+      await tester.pump();
+    }
+    expect(contentOffset(tester), greaterThan(0));
+    for (var step = 0; step < 12; step++) {
+      await gesture.moveBy(const Offset(0, -20));
+      await tester.pump();
+      expect(sheetTop(tester), closeTo(expanded, 1));
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(sheetTop(tester), closeTo(expanded, 1));
+
+    position.jumpTo(0);
+    await tester.drag(content(), const Offset(0, 200));
+    await tester.pumpAndSettle();
+    expect(sheetTop(tester), closeTo(collapsed, 1));
+    expect(scrollbarPainter(tester).color.a, 0);
+
+    await close(tester);
+  });
+
+  testWidgets('a list with a controller of its own drags a collapsed sheet '
+      'open and hides its scrollbar till then', (tester) async {
+    await openSheet(tester, builder: (_, _) => const _OwnControllerList());
+    final collapsed = _mobile.height * (1 - snapSheetDetents.first);
+    final expanded = _mobile.height * (1 - snapSheetDetents.last);
+    final position = tester.state<ScrollableState>(content()).position;
+
+    position.jumpTo(1);
+    position.jumpTo(0);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(sheetTop(tester), closeTo(collapsed, 1));
+    expect(scrollbarPainter(tester).color.a, 0);
+
+    await tester.drag(content(), const Offset(0, -300));
+    await tester.pumpAndSettle();
+    expect(sheetTop(tester), closeTo(expanded, 1));
+    expect(contentOffset(tester), 0);
+
+    await tester.drag(content(), const Offset(0, -100));
+    await tester.pumpAndSettle();
     expect(sheetTop(tester), closeTo(expanded, 1));
     expect(contentOffset(tester), greaterThan(0));
 
@@ -341,6 +474,45 @@ void main() {
     await close(tester);
   });
 
+  testWidgets('a drag keeps the sheet under the finger once its content '
+      'comes to fit', (tester) async {
+    await openSheet(
+      tester,
+      builder: (_, controller) => CommonScaffold(
+        title: 'title',
+        body: CommonScrollBar(
+          controller: controller,
+          child: ListView.builder(
+            controller: controller,
+            itemCount: 15,
+            itemBuilder: (_, index) =>
+                SizedBox(height: 40, child: Text('$index')),
+          ),
+        ),
+      ),
+    );
+    final expanded = _mobile.height * (1 - snapSheetDetents.last);
+    final position = tester.state<ScrollableState>(content()).position;
+    expect(position.maxScrollExtent, greaterThan(0));
+
+    final gesture = await tester.startGesture(tester.getCenter(content()));
+    for (var i = 0; i < 40; i++) {
+      await gesture.moveBy(const Offset(0, -10));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    expect(position.maxScrollExtent, 0);
+    expect(sheetTop(tester), closeTo(expanded, 1));
+
+    for (var i = 0; i < 10; i++) {
+      await gesture.moveBy(const Offset(0, 10));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    expect(sheetTop(tester), closeTo(expanded + 100, 1));
+
+    await gesture.up();
+    await close(tester);
+  });
+
   testWidgets('a wheel tick on a sheet too short to scroll expands it', (
     tester,
   ) async {
@@ -457,6 +629,45 @@ void main() {
     expect(closed, isTrue);
     expect(closedWith, 'done');
     expect(find.text('title'), findsNothing);
+
+    await close(tester);
+  });
+
+  testWidgets('a sheet covered as the view crosses the mobile breakpoint '
+      'follows it once uncovered', (tester) async {
+    final result = await openSheet(tester);
+    Object? closedWith;
+    unawaited(result.then((value) => closedWith = value));
+
+    Future<void> crossCovered(Size size) async {
+      unawaited(
+        showDialog<void>(
+          context: tester.element(find.text('title')),
+          builder: (_) => const Text('cover'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final wasMobile = find.byType(SheetDragHandle).evaluate().isNotEmpty;
+
+      await setView(tester, size);
+
+      expect(find.byType(SheetDragHandle), wasMobile ? findsOne : findsNothing);
+      expect(find.byType(SideSheet), wasMobile ? findsNothing : findsOne);
+
+      Navigator.of(tester.element(find.text('cover'))).pop();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SheetDragHandle), wasMobile ? findsNothing : findsOne);
+      expect(find.byType(SideSheet), wasMobile ? findsOne : findsNothing);
+    }
+
+    await crossCovered(_desktop);
+    await crossCovered(_mobile);
+
+    await tester.tap(find.text('done'));
+    await tester.pumpAndSettle();
+
+    expect(closedWith, 'done');
 
     await close(tester);
   });

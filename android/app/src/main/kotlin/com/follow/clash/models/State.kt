@@ -22,4 +22,6 @@ data class SetupParams(
     val testUrl: String,
     @SerializedName("selected-map")
     val selectedMap: Map<String, String>,
+    @SerializedName("skip-cert-verify")
+    val skipCertVerify: Boolean = false,
 )

@@ -860,6 +860,59 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('a sub menu unfolds without moving the menu it opens from', (
+    tester,
+  ) async {
+    late BuildContext context;
+    await tester.pumpWidget(
+      TestApp(
+        child: Builder(
+          builder: (value) {
+            context = value;
+            return const SizedBox.expand();
+          },
+        ),
+      ),
+    );
+
+    Navigator.of(context).push(
+      CommonPopupRoute<void>(
+        barrierLabel: 'Dismiss',
+        placement: PopupPlacement.belowPoint,
+        anchorOf: () => const Offset(100, 250) & Size.zero,
+        avoid: const Rect.fromLTRB(0, 200, 800, 300),
+        builder: (_) => const CommonPopupMenu(
+          items: [
+            CommonPopupMenuItem(label: 'plain item'),
+            CommonPopupMenuItem(
+              label: 'parent',
+              subItems: [
+                CommonPopupMenuItem(label: 'first child'),
+                CommonPopupMenuItem(label: 'second child'),
+                CommonPopupMenuItem(label: 'third child'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final menu = find.byType(CommonPopupMenu);
+    final corner = tester.getTopRight(menu);
+    final foldedHeight = tester.getSize(menu).height;
+    expect(tester.getBottomRight(menu).dy, lessThan(200));
+
+    await tester.tap(find.text('parent'));
+    for (var frame = 0; frame < 30; frame++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(tester.getTopRight(menu), offsetMoreOrLessEquals(corner));
+    }
+    await tester.pumpAndSettle();
+
+    expect(tester.getTopRight(menu), offsetMoreOrLessEquals(corner));
+    expect(tester.getSize(menu).height, greaterThan(foldedHeight));
+  });
+
   testWidgets('every level draws its shadow on the frame it is asked for', (
     tester,
   ) async {

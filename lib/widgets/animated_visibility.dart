@@ -33,14 +33,12 @@ class AnimatedVisibility extends StatefulWidget {
   final _VisibilityMotion _motion;
   final Widget child;
 
-  /// Creates a sidebar transition that moves to the left when hidden.
   const AnimatedVisibility.sidebar({
     super.key,
     required this.visible,
     required this.child,
   }) : _motion = _VisibilityMotion.sidebar;
 
-  /// Creates a bottom-navigation transition that moves through the bottom.
   const AnimatedVisibility.bottomNavigation({
     super.key,
     required this.visible,

@@ -71,6 +71,7 @@ class CommonScrollBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final padding = this.padding + EdgeInsets.only(top: _barClearance(context));
     if (padding == EdgeInsets.zero) {
       return _buildScrollBar(context, child);
     }
@@ -85,6 +86,13 @@ class CommonScrollBar extends StatelessWidget {
       ),
     );
   }
+}
+
+/// What of the floating bar over the scroll view MediaQuery padding leaves to
+/// cover: a page's bar pads its body, a bottom sheet's header does not.
+double _barClearance(BuildContext context) {
+  final overlap = FloatingBarScope.of(context) ?? 0;
+  return max(0.0, overlap - MediaQuery.paddingOf(context).top);
 }
 
 /// The ambient behavior less the bar it would stack on the scrollable that
@@ -177,6 +185,9 @@ class _AppScrollbar extends RawScrollbar {
 class _AppScrollbarState extends RawScrollbarState<_AppScrollbar> {
   late final AnimationController _emphasis;
   late final CurvedAnimation _emphasisCurve;
+  late final AnimationController _presence;
+  ValueListenable<bool>? _sheetOpen;
+  var _hidden = false;
   late ColorScheme _colorScheme;
   late TargetPlatform _platform;
   var _hovered = false;
@@ -185,6 +196,7 @@ class _AppScrollbarState extends RawScrollbarState<_AppScrollbar> {
   Offset? _scrubLast;
   Offset? _scrubPosition;
   var _scrubRate = 1.0;
+  ScrubbableScrollPosition? _scrubbed;
 
   @override
   void initState() {
@@ -194,6 +206,11 @@ class _AppScrollbarState extends RawScrollbarState<_AppScrollbar> {
       duration: const Duration(milliseconds: 120),
     )..addListener(updateScrollbarPainter);
     _emphasisCurve = CurvedAnimation(parent: _emphasis, curve: Curves.easeOut);
+    _presence = AnimationController(
+      vsync: this,
+      duration: widget.fadeDuration,
+      value: 1,
+    )..addListener(updateScrollbarPainter);
   }
 
   @override
@@ -202,13 +219,74 @@ class _AppScrollbarState extends RawScrollbarState<_AppScrollbar> {
     _colorScheme = theme.colorScheme;
     _platform = theme.platform;
     super.didChangeDependencies();
+    _watchSheet();
+  }
+
+  @override
+  void didUpdateWidget(_AppScrollbar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _watchSheet();
   }
 
   @override
   void dispose() {
+    _endScrub();
+    _sheetOpen?.removeListener(_syncSheet);
+    _presence.dispose();
     _emphasisCurve.dispose();
     _emphasis.dispose();
     super.dispose();
+  }
+
+  @override
+  bool get enableGestures => super.enableGestures && !_hidden;
+
+  // A thumb already held keeps its drag, or its scrub would never end.
+  bool get _sheetHides => !_dragging && !(_sheetOpen?.value ?? true);
+
+  void _watchSheet() {
+    final controller =
+        widget.controller ?? PrimaryScrollController.maybeOf(context);
+    final sheetOpen = controller is SheetScrollController
+        ? controller.sheetOpen
+        : null;
+    if (sheetOpen == _sheetOpen) {
+      return;
+    }
+    _sheetOpen?.removeListener(_syncSheet);
+    _sheetOpen = sheetOpen?..addListener(_syncSheet);
+    _hidden = _sheetHides;
+    _presence.value = _hidden ? 0 : 1;
+  }
+
+  void _syncSheet() {
+    final hidden = _sheetHides;
+    if (hidden == _hidden) {
+      return;
+    }
+    setState(() => _hidden = hidden);
+    if (hidden) {
+      _presence.reverse();
+    } else {
+      _presence.forward();
+    }
+  }
+
+  void _beginScrub() {
+    final controller =
+        widget.controller ?? PrimaryScrollController.maybeOf(context);
+    if (controller == null || controller.positions.length != 1) {
+      return;
+    }
+    final position = controller.position;
+    if (position is ScrubbableScrollPosition) {
+      _scrubbed = position..isScrubbing = true;
+    }
+  }
+
+  void _endScrub() {
+    _scrubbed?.isScrubbing = false;
+    _scrubbed = null;
   }
 
   void _syncEmphasis() {
@@ -233,12 +311,13 @@ class _AppScrollbarState extends RawScrollbarState<_AppScrollbar> {
     final t = _emphasisCurve.value;
     final onSurface = _colorScheme.onSurface;
     final isDark = _colorScheme.brightness == Brightness.dark;
+    final color = Color.lerp(
+      onSurface.withValues(alpha: isDark ? 0.35 : 0.25),
+      onSurface.withValues(alpha: isDark ? 0.65 : 0.5),
+      t,
+    )!;
     scrollbarPainter
-      ..color = Color.lerp(
-        onSurface.withValues(alpha: isDark ? 0.35 : 0.25),
-        onSurface.withValues(alpha: isDark ? 0.65 : 0.5),
-        t,
-      )!
+      ..color = color.withValues(alpha: color.a * _presence.value)
       ..thickness = _restThickness + (_activeThickness - _restThickness) * t;
   }
 
@@ -248,6 +327,7 @@ class _AppScrollbarState extends RawScrollbarState<_AppScrollbar> {
     if (getScrollbarDirection() == null) {
       return;
     }
+    _beginScrub();
     _dragging = true;
     _scrubOrigin = localPosition;
     _scrubLast = localPosition;
@@ -312,7 +392,9 @@ class _AppScrollbarState extends RawScrollbarState<_AppScrollbar> {
     _syncEmphasis();
     // A fling would throw away the precision the slowed scrub just bought.
     super.handleThumbPressEnd(position, slowed ? Velocity.zero : velocity);
+    _endScrub();
     widget.onScrub?.call(null);
+    _syncSheet();
   }
 
   @override
@@ -484,7 +566,9 @@ class _FloatingScrollbarState extends State<FloatingScrollbar> {
             top = _thumbCenter(
               metrics,
               constraints.maxHeight,
-              MediaQuery.paddingOf(context) + barPadding,
+              MediaQuery.paddingOf(context) +
+                  barPadding +
+                  EdgeInsets.only(top: _barClearance(context)),
             ).clamp(half, max(half, limit - half));
             label = widget.hintBuilder(fraction);
           }
@@ -616,9 +700,10 @@ class _MeasureSizeRenderObject extends RenderProxyBox {
   }
 }
 
-class ScrollToEndBox<T> extends StatefulWidget {
+/// Tells a list following its end when the reader scrolls off the end and
+/// back onto it; the list's [FollowEndScrollPhysics] keeps it there.
+class ScrollToEndBox extends StatefulWidget {
   final ScrollController controller;
-  final List<T> dataSource;
   final Widget child;
   final bool enable;
   final VoidCallback? onCancelToEnd;
@@ -628,180 +713,59 @@ class ScrollToEndBox<T> extends StatefulWidget {
     super.key,
     required this.child,
     required this.controller,
-    required this.dataSource,
     this.onCancelToEnd,
     this.onResumeToEnd,
     this.enable = true,
   });
 
   @override
-  State<ScrollToEndBox<T>> createState() => _ScrollToEndBoxState<T>();
+  State<ScrollToEndBox> createState() => _ScrollToEndBoxState();
 }
 
-class _ScrollToEndBoxState<T> extends State<ScrollToEndBox<T>> {
-  double? _viewportDimension;
-
-  /// Moving the position would end the user's drag or fling under them.
-  bool _userScrolling = false;
-  bool _followDeferred = false;
-  ValueListenable<bool>? _sheetSettling;
-
-  bool get _followPaused => _userScrolling || (_sheetSettling?.value ?? false);
-
+class _ScrollToEndBoxState extends State<ScrollToEndBox> {
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final settling = SheetSettlingScope.of(context);
-    if (settling != _sheetSettling) {
-      _sheetSettling?.removeListener(_resumeFollow);
-      _sheetSettling = settling?..addListener(_resumeFollow);
-    }
-  }
-
-  @override
-  void dispose() {
-    _sheetSettling?.removeListener(_resumeFollow);
-    super.dispose();
-  }
-
-  void _resumeFollow() {
-    if (_followDeferred && !_followPaused) {
-      _followDeferred = false;
-      _scheduleScrollToEnd();
-    }
-  }
-
-  bool _isAtEnd(ScrollMetrics metrics) =>
-      (metrics.maxScrollExtent - metrics.pixels).abs() <
-      precisionErrorTolerance;
-
-  void _scheduleScrollToEnd() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_scrollToEnd());
-    });
-  }
-
-  void _scheduleJumpToEnd() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !widget.enable || !widget.controller.hasClients) {
-        return;
-      }
-      if (_followPaused) {
-        _followDeferred = true;
-        return;
-      }
-      final position = widget.controller.position;
-      if (!_isAtEnd(position)) {
-        widget.controller.jumpTo(position.maxScrollExtent);
-      }
-    });
-  }
-
-  Future<void> _scrollToEnd() async {
-    if (!mounted || !widget.enable || !widget.controller.hasClients) {
-      return;
-    }
-    if (_followPaused) {
-      _followDeferred = true;
-      return;
-    }
-    final position = widget.controller.position;
-    if (_isAtEnd(position)) {
-      return;
-    }
-    if (position.maxScrollExtent - position.pixels >
-        position.viewportDimension) {
-      widget.controller.jumpTo(position.maxScrollExtent);
-      await WidgetsBinding.instance.endOfFrame;
-    } else {
-      await widget.controller.animateTo(
-        position.maxScrollExtent,
-        duration: kThemeAnimationDuration,
-        curve: Curves.easeOut,
-      );
-    }
-    // Lazy lists refine maxScrollExtent while the animation runs, so the
-    // target captured at start can land short of the real end.
-    if (mounted &&
-        widget.enable &&
-        !_followPaused &&
-        widget.controller.hasClients &&
-        !_isAtEnd(position)) {
-      widget.controller.jumpTo(position.maxScrollExtent);
-    }
-  }
-
-  bool _dataSourceChanged(List<T> oldData, List<T> newData) {
-    if (identical(oldData, newData)) {
-      return false;
-    }
-    if (oldData.length != newData.length) {
-      return true;
-    }
-    return oldData.isNotEmpty && oldData.last != newData.last;
-  }
-
-  @override
-  void didUpdateWidget(ScrollToEndBox<T> oldWidget) {
+  void didUpdateWidget(ScrollToEndBox oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!widget.enable) {
-      return;
-    }
-    if (!oldWidget.enable ||
-        _dataSourceChanged(oldWidget.dataSource, widget.dataSource)) {
-      _scheduleScrollToEnd();
+    if (widget.enable && !oldWidget.enable) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _jumpToEnd());
     }
   }
 
-  bool _handleMetricsNotification(ScrollMetricsNotification notification) {
-    if (notification.depth != 0) {
-      return false;
+  void _jumpToEnd() {
+    final controller = widget.controller;
+    if (!mounted || !widget.enable || !controller.hasClients) {
+      return;
     }
-    final viewportDimension = notification.metrics.viewportDimension;
-    final resized =
-        _viewportDimension != null && _viewportDimension != viewportDimension;
-    _viewportDimension = viewportDimension;
-    if (resized && widget.enable && !_isAtEnd(notification.metrics)) {
-      _scheduleJumpToEnd();
+    final position = controller.position;
+    if (!FollowEndScrollPhysics.isAtEnd(position)) {
+      controller.jumpTo(position.maxScrollExtent);
     }
-    return false;
   }
 
   bool _handleScrollNotification(ScrollNotification notification) {
     if (notification.depth != 0) {
       return false;
     }
-    if (notification is ScrollStartNotification &&
-        notification.dragDetails != null) {
-      _userScrolling = true;
-    }
-    if (notification is ScrollEndNotification && _userScrolling) {
-      _userScrolling = false;
-      _resumeFollow();
-    }
     if (notification is UserScrollNotification) {
       if (notification.direction == ScrollDirection.forward) {
-        _followDeferred = false;
         widget.onCancelToEnd?.call();
       }
-      return false;
-    }
-    if (!widget.enable &&
-        notification is ScrollEndNotification &&
-        _isAtEnd(notification.metrics)) {
-      widget.onResumeToEnd?.call();
+    } else if (notification is ScrollEndNotification) {
+      final atEnd = FollowEndScrollPhysics.isAtEnd(notification.metrics);
+      if (widget.enable && !atEnd) {
+        widget.onCancelToEnd?.call();
+      } else if (!widget.enable && atEnd) {
+        widget.onResumeToEnd?.call();
+      }
     }
     return false;
   }
 
   @override
   Widget build(BuildContext context) {
-    return NotificationListener<ScrollMetricsNotification>(
-      onNotification: _handleMetricsNotification,
-      child: NotificationListener<ScrollNotification>(
-        onNotification: _handleScrollNotification,
-        child: widget.child,
-      ),
+    return NotificationListener<ScrollNotification>(
+      onNotification: _handleScrollNotification,
+      child: widget.child,
     );
   }
 }

@@ -738,6 +738,70 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('a page that leaves the navigation hands the screen to the '
+      'first one until it returns', (tester) async {
+    tester.view.physicalSize = const Size(500, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    NavigationItem item(Glyph glyph, PageLabel label) => NavigationItem(
+      glyph: glyph,
+      label: label,
+      builder: (_) => Builder(
+        builder: (context) => Text(
+          'page:${label.name} active:${PageActivityScope.isActiveOf(context)}',
+        ),
+      ),
+    );
+    final dashboard = item(AppGlyphs.dashboard, PageLabel.dashboard);
+    final proxies = item(AppGlyphs.proxies, PageLabel.proxies);
+    final profiles = item(AppGlyphs.profiles, PageLabel.profiles);
+    final container = ProviderContainer(
+      overrides: [
+        navigationItemsStateProvider.overrideWith(
+          (ref) =>
+              NavigationItemsState(value: ref.watch(_navigationItemsProvider)),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container.read(viewSizeProvider.notifier).value = const Size(500, 800);
+    final items = container.read(_navigationItemsProvider.notifier)
+      ..set([dashboard, proxies, profiles]);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(_glyph(AppGlyphs.proxies));
+    await tester.pumpAndSettle();
+
+    int selectedIndex() => tester
+        .widget<FloatingNavigationBar>(find.byType(FloatingNavigationBar))
+        .selectedIndex;
+
+    expect(selectedIndex(), 1);
+    expect(find.text('page:proxies active:true'), findsOneWidget);
+
+    items.set([dashboard, profiles]);
+    await tester.pumpAndSettle();
+    expect(selectedIndex(), 0);
+    expect(find.text('page:dashboard active:true'), findsOneWidget);
+    expect(find.textContaining('page:profiles'), findsNothing);
+    expect(container.read(currentPageLabelProvider), PageLabel.proxies);
+
+    items.set([dashboard, proxies, profiles]);
+    await tester.pumpAndSettle();
+    expect(selectedIndex(), 1);
+    expect(find.text('page:proxies active:true'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('a non-floating bottom bar leaves pages undocked', (
     tester,
   ) async {
@@ -1295,6 +1359,18 @@ class _NestedSearchLauncher extends StatelessWidget {
       ),
     );
   }
+}
+
+final _navigationItemsProvider =
+    NotifierProvider<_NavigationItems, List<NavigationItem>>(
+      _NavigationItems.new,
+    );
+
+class _NavigationItems extends Notifier<List<NavigationItem>> {
+  @override
+  List<NavigationItem> build() => const [];
+
+  void set(List<NavigationItem> items) => state = items;
 }
 
 class _HomeTestProfiles extends Profiles {

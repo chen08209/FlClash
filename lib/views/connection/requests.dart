@@ -20,13 +20,16 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     with RouteMotionHoldMixin<RequestsView> {
   final _listController = TrackerInfoListController();
   late final ScrollController _scrollController;
+  late final _physics = FollowEndScrollPhysics(
+    isFollowing: () => _listController.value.autoScrollToEnd,
+  );
 
   @override
   void initState() {
     super.initState();
     _scrollController =
         widget.scrollController ??
-        ScrollController(initialScrollOffset: double.maxFinite);
+        sheetScrollController(context, initialScrollOffset: double.maxFinite);
     _listController.setTrackerInfos(ref.read(requestsProvider).list);
     ref.listenManual(requestsProvider.select((state) => state.revision), (
       _,
@@ -84,7 +87,6 @@ class _RequestsViewState extends ConsumerState<RequestsView>
                 },
                 child: ScrollToEndBox(
                   controller: _scrollController,
-                  dataSource: requests,
                   enable: state.autoScrollToEnd,
                   onCancelToEnd: () {
                     _listController.setAutoScrollToEnd(false);
@@ -97,7 +99,7 @@ class _RequestsViewState extends ConsumerState<RequestsView>
                   child: TrackerInfoList(
                     reverse: true,
                     shrinkWrap: true,
-                    physics: const NextClampingScrollPhysics(),
+                    physics: _physics,
                     controller: _scrollController,
                     padding: EdgeInsets.only(
                       top: context.contentTopPadding,

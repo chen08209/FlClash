@@ -1,126 +1,346 @@
-import 'package:fl_clash/common/color.dart';
-import 'package:fl_clash/common/shape.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/widgets/navigation_dock.dart';
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
-class InitErrorScreen extends StatelessWidget {
+class InitErrorApp extends StatelessWidget {
   final Object error;
   final StackTrace stack;
+  final AsyncCallback onClearData;
+  final AsyncCallback onExit;
 
-  const InitErrorScreen({super.key, required this.error, required this.stack});
+  const InitErrorApp({
+    super.key,
+    required this.error,
+    required this.stack,
+    required this.onClearData,
+    required this.onExit,
+  });
+
+  ThemeData _theme(Brightness brightness) {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(defaultPrimaryColor),
+        brightness: brightness,
+      ),
+    ).withAppShapes;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Init Failed'),
-        backgroundColor: colorScheme.error,
-        foregroundColor: colorScheme.onError,
-        elevation: 0,
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: appName,
+      theme: _theme(Brightness.light),
+      darkTheme: _theme(Brightness.dark),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: AppLocalizations.delegate.supportedLocales,
+      home: InitErrorScreen(
+        error: error,
+        stack: stack,
+        onClearData: onClearData,
+        onExit: onExit,
       ),
+    );
+  }
+}
+
+class InitErrorScreen extends StatefulWidget {
+  final Object error;
+  final StackTrace stack;
+  final AsyncCallback onClearData;
+  final AsyncCallback onExit;
+
+  const InitErrorScreen({
+    super.key,
+    required this.error,
+    required this.stack,
+    required this.onClearData,
+    required this.onExit,
+  });
+
+  @override
+  State<InitErrorScreen> createState() => _InitErrorScreenState();
+}
+
+class _InitErrorScreenState extends State<InitErrorScreen> {
+  static const _maxContentWidth = 720.0;
+
+  bool _isExiting = false;
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
+  }
+
+  Future<void> _copyDetails() async {
+    final text =
+        '=== ERROR ===\n${widget.error}\n\n'
+        '=== STACK TRACE ===\n${widget.stack}';
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) {
+      return;
+    }
+    _showSnackBar(context.appLocalizations.copySuccess);
+  }
+
+  Future<bool> _confirmClearData() async {
+    final appLocalizations = context.appLocalizations;
+    final res = await dialogs.showCommonDialog<bool>(
+      context: context,
+      child: Builder(
+        builder: (context) {
+          return AlertDialog(
+            title: Text(appLocalizations.clearData),
+            content: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 300),
+              child: Text(appLocalizations.clearDataAndExitTip),
+            ),
+            actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(false);
+                },
+                child: Text(appLocalizations.cancel),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(true);
+                },
+                child: Text(appLocalizations.confirm),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    return res == true;
+  }
+
+  Future<void> _clearData() async {
+    if (!await _confirmClearData() || !mounted) {
+      return;
+    }
+    final appLocalizations = context.appLocalizations;
+    setState(() {
+      _isExiting = true;
+    });
+    try {
+      await widget.onClearData();
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isExiting = false;
+      });
+      _showSnackBar(appLocalizations.clearDataFailed('$error'));
+      return;
+    }
+    await widget.onExit();
+  }
+
+  Future<void> _exit() async {
+    setState(() {
+      _isExiting = true;
+    });
+    await widget.onExit();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    final colorScheme = context.colorScheme;
+    final textTheme = context.textTheme;
+    return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  GlyphIcon(
-                    AppGlyphs.warning,
-                    color: colorScheme.error,
-                    size: 32,
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'The application encountered a critical error during startup and cannot continue.',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+        bottom: false,
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 32, 16, 24),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: _maxContentWidth,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        DecoratedBox(
+                          decoration: ShapeDecoration(
+                            color: colorScheme.errorContainer,
+                            shape: AppShape.full,
+                          ),
+                          child: SizedBox.square(
+                            dimension: 56,
+                            child: Center(
+                              child: GlyphIcon(
+                                AppGlyphs.warning,
+                                size: 28,
+                                color: colorScheme.onErrorContainer,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          appLocalizations.initFailed,
+                          style: textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          appLocalizations.initFailedTip,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            height: 1.6,
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+                        _ErrorSection(
+                          label: appLocalizations.errorDetails,
+                          text: widget.error.toString(),
+                          backgroundColor: colorScheme.errorContainer,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onErrorContainer,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        _ErrorSection(
+                          label: appLocalizations.stackTrace,
+                          text: widget.stack.toString(),
+                          backgroundColor: colorScheme.surfaceContainerHighest,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontFamily: 'monospace',
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              _buildSectionLabel('Error Details:'),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: ShapeDecoration(
-                  color: colorScheme.errorContainer.opacity50,
-                  shape: RoundedSuperellipseBorder(
-                    borderRadius: AppRadius.sm,
-                    side: BorderSide(color: colorScheme.error.opacity50),
-                  ),
-                ),
-                child: SelectableText(
-                  error.toString(),
-                  style: TextStyle(
-                    color: colorScheme.onErrorContainer,
-                    fontWeight: FontWeight.w600,
-                  ),
                 ),
               ),
-              const SizedBox(height: 24),
-              _buildSectionLabel('Stack Trace:'),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: ShapeDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey[900]
-                      : Colors.grey[200],
-                  shape: RoundedSuperellipseBorder(
-                    borderRadius: AppRadius.sm,
-                    side: BorderSide(color: Colors.grey.opacity50),
+            ),
+            _ErrorActionBar(
+              maxWidth: _maxContentWidth,
+              children: [
+                ElasticButton(
+                  child: TextButton.icon(
+                    onPressed: _isExiting ? null : _clearData,
+                    style: TextButton.styleFrom(
+                      foregroundColor: colorScheme.error,
+                    ),
+                    icon: const GlyphIcon(AppGlyphs.broom, size: 18),
+                    label: Text(appLocalizations.clearData),
                   ),
                 ),
-                child: SelectableText(
-                  stack.toString(),
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                ElasticButton(
+                  child: OutlinedButton.icon(
+                    onPressed: _copyDetails,
+                    icon: const GlyphIcon(AppGlyphs.copy, size: 18),
+                    label: Text(appLocalizations.copy),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 80),
-            ],
+                ElasticButton(
+                  child: FilledButton(
+                    onPressed: _isExiting ? null : _exit,
+                    child: Text(appLocalizations.exit),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorSection extends StatelessWidget {
+  final String label;
+  final String text;
+  final Color backgroundColor;
+  final TextStyle? style;
+
+  const _ErrorSection({
+    required this.label,
+    required this.text,
+    required this.backgroundColor,
+    required this.style,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          label,
+          style: context.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
           ),
         ),
-      ),
-      floatingActionButton: ElasticButton(
-        child: FloatingActionButton.extended(
-          onPressed: () => _copyToClipboard(context),
-          label: const Text('Copy Details'),
-          icon: const GlyphIcon(AppGlyphs.copy, fill: 1),
-          backgroundColor: colorScheme.error,
-          foregroundColor: colorScheme.onError,
+        const SizedBox(height: 8),
+        DecoratedBox(
+          decoration: ShapeDecoration(
+            color: backgroundColor,
+            shape: AppShape.xl,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: SelectableText(text, style: style),
+          ),
         ),
-      ),
+      ],
     );
   }
+}
 
-  Widget _buildSectionLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(
-        text,
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+class _ErrorActionBar extends StatelessWidget {
+  final double maxWidth;
+  final List<Widget> children;
+
+  const _ErrorActionBar({required this.maxWidth, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
       ),
-    );
-  }
-
-  void _copyToClipboard(BuildContext context) {
-    final text = '=== ERROR ===\n$error\n\n=== STACK TRACE ===\n$stack';
-    Clipboard.setData(ClipboardData(text: text));
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Error details copied to clipboard'),
-        duration: Duration(seconds: 2),
+      child: SafeArea(
+        top: false,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: OverflowBar(
+                alignment: MainAxisAlignment.end,
+                spacing: 8,
+                overflowSpacing: 8,
+                overflowAlignment: OverflowBarAlignment.end,
+                children: children,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

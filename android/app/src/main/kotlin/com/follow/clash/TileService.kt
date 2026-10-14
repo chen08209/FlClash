@@ -20,7 +20,6 @@ class TileService : android.service.quicksettings.TileService() {
         scope?.cancel()
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate).also { scope ->
             scope.launch {
-                ServiceState.refresh()
                 ServiceState.runState.collect(::updateTile)
             }
         }

@@ -294,7 +294,9 @@ class _DelayTextState extends ConsumerState<_DelayText> {
                     child: _withFocusRing(
                       context,
                       Text(
-                        delay > 0 ? '$delay ms' : 'Timeout',
+                        delay > 0
+                            ? '$delay ms'
+                            : delayFailureText(delay, context.appLocalizations),
                         maxLines: 1,
                         style: context.textTheme.labelSmall?.copyWith(
                           overflow: TextOverflow.ellipsis,

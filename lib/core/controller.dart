@@ -95,11 +95,66 @@ class CoreController {
     return res;
   }
 
+  /// An age-encrypted config is rewritten in place into its plaintext, and a
+  /// share-link list into a config of its proxies.
+  Future<String> validateProfile(
+    String path, [
+    String ageSecretKey = '',
+  ]) async {
+    final file = File(path);
+    if (await file.isAgeEncrypted) {
+      if (ageSecretKey.isEmpty) {
+        throw const AgeSecretKeyRequiredException();
+      }
+      await file.safeWriteAsString(
+        await _interface.decryptConfig(path, ageSecretKey),
+      );
+    }
+    final message = await validateConfig(path);
+    if (message.isEmpty) {
+      return message;
+    }
+    final List<Map<String, dynamic>> proxies;
+    try {
+      proxies = await _interface.convertProxies(path);
+    } on Exception {
+      return message;
+    }
+    if (proxies.isEmpty) {
+      return message;
+    }
+    await file.safeWriteAsString(await encodeYamlTask({'proxies': proxies}));
+    return validateConfig(path);
+  }
+
   Future<List<String>> validateProxies(List<Map<String, dynamic>> proxies) {
     if (proxies.isEmpty) {
       return Future.value(const []);
     }
     return _interface.validateProxies(proxies);
+  }
+
+  Future<List<String>> validateFilters(List<String> filters) {
+    if (filters.isEmpty) {
+      return Future.value(const []);
+    }
+    return _interface.validateFilters(filters);
+  }
+
+  Future<List<String>> encodeShareLinks(List<Map<String, dynamic>> proxies) {
+    if (proxies.isEmpty) {
+      return Future.value(const []);
+    }
+    return _interface.encodeShareLinks(proxies);
+  }
+
+  Future<List<List<Map<String, dynamic>>>> decodeShareLinks(
+    List<String> lines,
+  ) {
+    if (lines.isEmpty) {
+      return Future.value(const []);
+    }
+    return _interface.decodeShareLinks(lines);
   }
 
   Future<String> validateConfigWithData(String data) async {
@@ -201,6 +256,10 @@ class CoreController {
 
   Future<String> dumpRuleSet(String path) {
     return _interface.dumpRuleSet(path);
+  }
+
+  Future<RuleSetInfo> compileRuleSet(String name, {String url = ''}) {
+    return _interface.compileRuleSet(name, url: url);
   }
 
   Future<String> updateExternalProvider({required String providerName}) async {

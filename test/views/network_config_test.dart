@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -61,6 +62,12 @@ final _toggleCases = <_ToggleCase>[
     'dns hijacking',
     const DNSHijackingItem(),
     (c) => c.read(vpnSettingProvider).dnsHijacking,
+  ),
+  _ToggleCase(
+    'bypass private route',
+    const BypassPrivateRouteItem(),
+    (c) => c.read(networkSettingProvider).bypassPrivateRoute,
+    initial: true,
   ),
 ];
 
@@ -128,19 +135,6 @@ void main() {
       expect(container.read(patchClashConfigProvider).tun.stack, target);
     });
 
-    testWidgets('the route mode picker writes the chosen mode', (tester) async {
-      await pumpItem(tester, const RouteModeItem());
-      final initial = container.read(networkSettingProvider).routeMode;
-      final target = RouteMode.values.firstWhere((item) => item != initial);
-
-      await tester.tap(find.byType(ListTile).first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(_routeModeLabel(target)).last);
-      await tester.pumpAndSettle();
-
-      expect(container.read(networkSettingProvider).routeMode, target);
-    });
-
     testWidgets('the interface name mode picker writes the chosen mode', (
       tester,
     ) async {
@@ -168,13 +162,11 @@ void main() {
     List<Type> types({
       required bool isDesktop,
       bool isCustomInterfaceName = true,
-      bool isBypassPrivateRoute = false,
     }) {
       return networkOptionsItems(
         isDesktop: isDesktop,
         isMacOS: false,
         isCustomInterfaceName: isCustomInterfaceName,
-        isBypassPrivateRoute: isBypassPrivateRoute,
       ).map((item) => item.runtimeType).toList();
     }
 
@@ -194,22 +186,61 @@ void main() {
         isNot(contains(InterfaceNameItem)),
       );
     });
+  });
 
-    test('the route address row is listed unless private routes bypass', () {
-      expect(types(isDesktop: false), contains(RouteAddressItem));
-      expect(
-        types(isDesktop: false, isBypassPrivateRoute: true),
-        isNot(contains(RouteAddressItem)),
+  group('tun settings', () {
+    List<Widget> items({
+      bool isLinux = false,
+      bool isWindows = false,
+      bool isMipsStack = true,
+    }) {
+      return tunItems(
+        isLinux: isLinux,
+        isWindows: isWindows,
+        isMipsStack: isMipsStack,
       );
+    }
+
+    test('every platform gets the same route rows', () {
+      final types = items().map((item) => item.runtimeType);
+      expect(types, contains(BypassPrivateRouteItem));
+      expect(types, contains(RouteAddressItem));
+      expect(items(), hasLength(5));
+      expect(items(isMipsStack: false), hasLength(4));
+    });
+
+    test('strict route is offered where sing-tun enforces it', () {
+      expect(items(isWindows: true), hasLength(6));
+      expect(items(isLinux: true), hasLength(6));
+    });
+
+    testWidgets('a number shows the core default and resets to it', (
+      tester,
+    ) async {
+      await pumpItem(tester, items().first);
+      final l = currentAppLocalizations;
+      expect(find.text('9000'), findsOneWidget);
+
+      await tester.tap(find.text('MTU'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), '1400');
+      await tester.tap(find.text(l.submit));
+      await tester.pumpAndSettle();
+      expect(container.read(patchClashConfigProvider).tun.mtu, 1400);
+
+      await tester.tap(find.text('MTU'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l.reset));
+      await tester.pumpAndSettle();
+      expect(container.read(patchClashConfigProvider).tun.mtu, 9000);
+    });
+
+    test('keep-alive rows stay off Android and the mark is Linux only', () {
+      expect(outboundItems(isDesktop: false, isLinux: false), isEmpty);
+      expect(outboundItems(isDesktop: true, isLinux: false), hasLength(3));
+      expect(outboundItems(isDesktop: true, isLinux: true), hasLength(4));
     });
   });
-}
-
-String _routeModeLabel(RouteMode mode) {
-  return switch (mode) {
-    RouteMode.config => 'Use config',
-    RouteMode.bypassPrivate => 'Bypass private addresses',
-  };
 }
 
 String _interfaceNameModeLabel(InterfaceNameMode mode) {

@@ -1,23 +1,20 @@
 package com.follow.clash.core
 
+import com.follow.clash.core.mobile.Mobile
+import com.follow.clash.core.mobile.ResultHandler
+import com.follow.clash.core.mobile.TunHandler
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.URI
 
 object Core {
-    private external fun startTun(
-        fd: Int,
-        cb: TunInterface,
-        stack: String,
-        address: String,
-        dns: String,
-    ): Boolean
+    fun forceGC() = Mobile.forceGC()
 
-    external fun forceGC()
-
-    external fun updateDNS(
+    fun updateDNS(
         dns: String,
-    )
+    ) = Mobile.updateDns(dns)
+
+    fun resetNetwork() = Mobile.resetNetwork()
 
     private fun parseInetSocketAddress(address: String): InetSocketAddress {
         val uri = URI("tcp://$address")
@@ -34,10 +31,11 @@ object Core {
         stack: String,
         address: String,
         dns: String,
+        options: String,
     ): Boolean {
-        return startTun(
+        return Mobile.startTun(
             fd,
-            object : TunInterface {
+            object : TunHandler {
                 override fun protect(fd: Int): Boolean = protect(fd)
 
                 override fun resolveUid(
@@ -57,44 +55,23 @@ object Core {
             stack,
             address,
             dns,
+            options,
         )
     }
-
-    private external fun invokeMethod(
-        data: String,
-        cb: InvokeInterface,
-    )
 
     fun invokeMethod(
         data: String,
         cb: (result: ByteArray?) -> Unit,
     ) {
-        invokeMethod(
-            data,
-            object : InvokeInterface {
-                override fun onResult(result: ByteArray?) {
-                    cb(result)
-                }
-            },
-        )
+        Mobile.invokeMethod(data, ResultHandler { result -> cb(result) })
     }
-
-    private external fun setEventListener(cb: InvokeInterface?)
 
     fun updateEventListener(
         callback: ((result: String?) -> Unit)?,
     ) {
-        if (callback == null) {
-            setEventListener(null)
-        } else {
-            setEventListener(
-                object : InvokeInterface {
-                    override fun onResult(result: ByteArray?) {
-                        callback(result?.decodeToString())
-                    }
-                },
-            )
-        }
+        Mobile.setEventListener(
+            callback?.let { ResultHandler { result -> it(result?.decodeToString()) } },
+        )
     }
 
     fun quickSetup(
@@ -102,30 +79,20 @@ object Core {
         setupParamsString: String,
         callback: (result: String?) -> Unit,
     ) {
-        quickSetup(
+        Mobile.quickSetup(
             initParamsString,
             setupParamsString,
-            object : InvokeInterface {
-                override fun onResult(result: ByteArray?) {
-                    callback(result?.decodeToString())
-                }
-            },
+            ResultHandler { result -> callback(result?.decodeToString()) },
         )
     }
 
-    private external fun quickSetup(
-        initParamsString: String,
-        setupParamsString: String,
-        cb: InvokeInterface,
-    )
+    fun stopTun() = Mobile.stopTun()
 
-    external fun stopTun()
+    fun startListener() = Mobile.startListener()
 
-    external fun getTraffic(onlyStatisticsProxy: Boolean): String
+    fun stopListener() = Mobile.stopListener()
 
-    external fun getTotalTraffic(onlyStatisticsProxy: Boolean): String
+    fun getTraffic(onlyStatisticsProxy: Boolean): String = Mobile.getTraffic(onlyStatisticsProxy)
 
-    init {
-        System.loadLibrary("core")
-    }
+    fun getTotalTraffic(onlyStatisticsProxy: Boolean): String = Mobile.getTotalTraffic(onlyStatisticsProxy)
 }

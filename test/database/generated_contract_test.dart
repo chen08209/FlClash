@@ -9,11 +9,13 @@ void main() {
     final date = DateTime.utc(2026, 7, 26);
     final profile = RawProfile(
       id: 1,
+      type: ProfileType.url,
       label: 'Profile',
       currentGroupName: 'Select',
       url: 'https://example.com/profile.yaml',
+      ageSecretKey: 'AGE-SECRET-KEY-1',
       lastUpdateDate: date,
-      overwriteType: OverwriteType.custom,
+      extendType: ExtendType.script,
       scriptId: 2,
       matchTarget: 'Proxy',
       autoUpdateDurationMillis: 3600000,
@@ -27,10 +29,13 @@ void main() {
       selectedMap: const {'Select': 'DIRECT'},
       unfoldSet: const {'Select'},
       order: 3,
+      overrides: const ProfileOverrides(
+        dnsOverrideKeys: {DnsOverrideKey.nameserver},
+      ),
     );
 
-    expect(profile.toColumns(true), hasLength(14));
-    expect(profile.toCompanion(true).toColumns(true), hasLength(14));
+    expect(profile.toColumns(true), hasLength(17));
+    expect(profile.toCompanion(true).toColumns(true), hasLength(17));
     expect(RawProfile.fromJson(profile.toJson()).toJson(), profile.toJson());
     expect(profile.copyWith(label: 'Next').label, 'Next');
     expect(
@@ -51,37 +56,41 @@ void main() {
 
     const emptyProfile = RawProfile(
       id: 2,
+      type: ProfileType.custom,
       label: 'Empty',
       url: '',
-      overwriteType: OverwriteType.standard,
+      extendType: ExtendType.standard,
       autoUpdateDurationMillis: 0,
       autoUpdate: false,
       selectedMap: {},
       unfoldSet: {},
     );
-    expect(emptyProfile.toColumns(true), hasLength(8));
-    expect(emptyProfile.toColumns(false), hasLength(14));
-    expect(emptyProfile.toCompanion(true).toColumns(true), hasLength(8));
+    expect(emptyProfile.toColumns(true), hasLength(9));
+    expect(emptyProfile.toColumns(false), hasLength(17));
+    expect(emptyProfile.toCompanion(true).toColumns(true), hasLength(9));
 
     final insertedProfile = ProfilesCompanion.insert(
+      type: ProfileType.file,
       label: 'Inserted',
       url: 'url',
-      overwriteType: OverwriteType.script,
+      extendType: ExtendType.script,
       autoUpdateDurationMillis: 60,
       autoUpdate: true,
       selectedMap: const {},
       unfoldSet: const {},
     ).copyWith(id: const Value(8), order: const Value(1));
-    expect(insertedProfile.toColumns(true), hasLength(9));
+    expect(insertedProfile.toColumns(true), hasLength(10));
     expect(insertedProfile.toString(), contains('Inserted'));
     expect(
       ProfilesCompanion.custom(
         id: const Variable(1),
+        type: const Variable('custom'),
         label: const Variable('custom'),
         currentGroupName: const Variable('group'),
         url: const Variable('url'),
+        ageSecretKey: const Variable('AGE-SECRET-KEY-1'),
         lastUpdateDate: Variable(date),
-        overwriteType: const Variable('custom'),
+        extendType: const Variable('standard'),
         scriptId: const Variable(2),
         matchTarget: const Variable('Proxy'),
         autoUpdateDurationMillis: const Variable(60),
@@ -90,8 +99,9 @@ void main() {
         selectedMap: const Variable('{}'),
         unfoldSet: const Variable('[]'),
         order: const Variable(1),
+        overrides: const Variable('{}'),
       ).toColumns(false),
-      hasLength(14),
+      hasLength(17),
     );
 
     final script = RawScript(id: 2, label: 'Script', lastUpdateTime: date);
@@ -132,9 +142,10 @@ void main() {
     );
   });
 
-  test('rule and link generated classes preserve nullable contracts', () {
+  test('rule generated classes preserve nullable contracts', () {
     const rule = RawRule(
       id: 10,
+      profileId: 1,
       ruleAction: RuleAction.RULE_SET,
       content: 'content',
       ruleTarget: 'Proxy',
@@ -142,10 +153,11 @@ void main() {
       subRule: 'sub',
       noResolve: true,
       src: true,
+      order: 'a0',
     );
 
-    expect(rule.toColumns(true), hasLength(8));
-    expect(rule.toCompanion(true).toColumns(true), hasLength(8));
+    expect(rule.toColumns(true), hasLength(10));
+    expect(rule.toCompanion(true).toColumns(true), hasLength(10));
     expect(RawRule.fromJson(rule.toJson()), rule);
     expect(rule.copyWith(content: const Value(null)).content, null);
     expect(
@@ -169,23 +181,26 @@ void main() {
       src: false,
     );
     expect(emptyRule.toColumns(true), hasLength(4));
-    expect(emptyRule.toColumns(false), hasLength(8));
+    expect(emptyRule.toColumns(false), hasLength(10));
 
     final ruleCompanion =
         RulesCompanion.insert(ruleAction: RuleAction.DOMAIN_SUFFIX).copyWith(
           id: const Value(12),
+          profileId: const Value(1),
           content: const Value('example.com'),
           ruleTarget: const Value('DIRECT'),
           ruleProvider: const Value('provider'),
           subRule: const Value('sub'),
           noResolve: const Value(true),
           src: const Value(true),
+          order: const Value('a0'),
         );
-    expect(ruleCompanion.toColumns(true), hasLength(8));
+    expect(ruleCompanion.toColumns(true), hasLength(10));
     expect(ruleCompanion.toString(), contains('DOMAIN_SUFFIX'));
     expect(
       RulesCompanion.custom(
         id: const Variable(1),
+        profileId: const Variable(2),
         ruleAction: const Variable('DOMAIN'),
         content: const Variable('example.com'),
         ruleTarget: const Variable('DIRECT'),
@@ -193,54 +208,37 @@ void main() {
         subRule: const Variable('sub'),
         noResolve: const Variable(true),
         src: const Variable(false),
+        order: const Variable('a'),
       ).toColumns(false),
-      hasLength(8),
+      hasLength(10),
     );
 
-    const link = RawProfileRuleLink(
-      id: '1_10_added',
+    const disabled = RawDisabledRule(profileId: 1, ruleId: 10);
+    expect(disabled.toColumns(true), hasLength(2));
+    expect(disabled.toCompanion(true).toColumns(true), hasLength(2));
+    expect(RawDisabledRule.fromJson(disabled.toJson()), disabled);
+    expect(disabled.copyWith(ruleId: 11).ruleId, 11);
+    expect(
+      disabled
+          .copyWithCompanion(const DisabledRulesCompanion(ruleId: Value(12)))
+          .ruleId,
+      12,
+    );
+    expect(disabled.toString(), contains('10'));
+    expect(disabled.hashCode, isNonZero);
+    final disabledCompanion = DisabledRulesCompanion.insert(
       profileId: 1,
       ruleId: 10,
-      scene: RuleScene.added,
-      order: 'a0',
-    );
-    expect(link.toColumns(true), hasLength(5));
-    expect(link.toCompanion(true).toColumns(true), hasLength(5));
-    expect(RawProfileRuleLink.fromJson(link.toJson()), link);
-    expect(link.copyWith(profileId: const Value(null)).profileId, null);
+    ).copyWith(rowid: const Value(5));
+    expect(disabledCompanion.toColumns(true), hasLength(3));
+    expect(disabledCompanion.toString(), contains('10'));
     expect(
-      link
-          .copyWithCompanion(
-            const ProfileRuleLinksCompanion(order: Value('b0')),
-          )
-          .order,
-      'b0',
-    );
-    expect(link.toString(), contains('1_10_added'));
-    expect(link.hashCode, isNonZero);
-
-    const emptyLink = RawProfileRuleLink(id: '10', ruleId: 10);
-    expect(emptyLink.toColumns(true), hasLength(2));
-    expect(emptyLink.toColumns(false), hasLength(5));
-    final linkCompanion =
-        ProfileRuleLinksCompanion.insert(id: 'link', ruleId: 10).copyWith(
-          profileId: const Value(1),
-          scene: const Value(RuleScene.custom),
-          order: const Value('c0'),
-          rowid: const Value(5),
-        );
-    expect(linkCompanion.toColumns(true), hasLength(6));
-    expect(linkCompanion.toString(), contains('link'));
-    expect(
-      ProfileRuleLinksCompanion.custom(
-        id: const Variable('id'),
+      DisabledRulesCompanion.custom(
         profileId: const Variable(1),
         ruleId: const Variable(2),
-        scene: const Variable('custom'),
-        order: const Variable('a'),
         rowid: const Variable(3),
       ).toColumns(false),
-      hasLength(6),
+      hasLength(3),
     );
   });
 
@@ -252,75 +250,52 @@ void main() {
       type: 'select',
       proxies: ['DIRECT'],
       use: ['provider'],
-      url: 'https://example.com/generate_204',
-      interval: 300,
-      timeout: 5000,
-      maxFailedTimes: 3,
-      lazy: true,
-      disableUDP: false,
-      filter: 'include',
-      excludeFilter: 'exclude',
-      excludeType: 'Direct',
-      expectedStatus: '204',
-      tolerance: 50,
-      strategy: 'round-robin',
-      includeAll: true,
-      includeAllProxies: true,
-      includeAllProviders: true,
-      hidden: false,
-      icon: 'icon',
+      definition: '{"hidden":false}',
       order: 'a0',
     );
 
-    expect(group.toColumns(true), hasLength(24));
-    expect(group.toCompanion(true).toColumns(true), hasLength(24));
+    expect(group.toColumns(true), hasLength(8));
+    expect(group.toCompanion(true).toColumns(true), hasLength(8));
     expect(RawProxyGroup.fromJson(group.toJson()).toJson(), group.toJson());
     expect(group.copyWith(name: 'Changed').name, 'Changed');
     expect(
       group
           .copyWithCompanion(
             const ProxyGroupsCompanion(
-              profileId: Value(null),
-              hidden: Value(true),
+              profileId: Value(2),
+              definition: Value('{}'),
             ),
           )
-          .hidden,
-      true,
+          .definition,
+      '{}',
     );
     expect(group.copyWith(), group);
     expect(group.toString(), contains('Select'));
     expect(group.hashCode, isNonZero);
 
-    const emptyGroup = RawProxyGroup(id: 21, name: 'Empty', type: 'select');
-    expect(emptyGroup.toColumns(true), hasLength(3));
-    expect(emptyGroup.toColumns(false), hasLength(24));
+    const emptyGroup = RawProxyGroup(
+      id: 21,
+      profileId: 1,
+      name: 'Empty',
+      type: 'select',
+      definition: '{}',
+    );
+    expect(emptyGroup.toColumns(true), hasLength(5));
+    expect(emptyGroup.toColumns(false), hasLength(8));
 
     final companion =
-        ProxyGroupsCompanion.insert(name: 'Inserted', type: 'select').copyWith(
+        ProxyGroupsCompanion.insert(
+          profileId: 1,
+          name: 'Inserted',
+          type: 'select',
+        ).copyWith(
           id: const Value(22),
-          profileId: const Value(1),
           proxies: const Value(['DIRECT']),
           use: const Value(['provider']),
-          url: const Value('url'),
-          interval: const Value(60),
-          timeout: const Value(1000),
-          maxFailedTimes: const Value(2),
-          lazy: const Value(true),
-          disableUDP: const Value(false),
-          filter: const Value('filter'),
-          excludeFilter: const Value('exclude'),
-          excludeType: const Value('Direct'),
-          expectedStatus: const Value('204'),
-          tolerance: const Value(50),
-          strategy: const Value('round-robin'),
-          includeAll: const Value(true),
-          includeAllProxies: const Value(true),
-          includeAllProviders: const Value(true),
-          hidden: const Value(false),
-          icon: const Value('icon'),
+          definition: const Value('{"hidden":false}'),
           order: const Value('a0'),
         );
-    expect(companion.toColumns(true), hasLength(24));
+    expect(companion.toColumns(true), hasLength(8));
     expect(companion.toString(), contains('Inserted'));
     expect(
       ProxyGroupsCompanion.custom(
@@ -330,26 +305,10 @@ void main() {
         type: const Variable('select'),
         proxies: const Variable('[]'),
         use: const Variable('[]'),
-        url: const Variable('url'),
-        interval: const Variable(60),
-        timeout: const Variable(1000),
-        maxFailedTimes: const Variable(2),
-        lazy: const Variable(true),
-        disableUDP: const Variable(false),
-        filter: const Variable('filter'),
-        excludeFilter: const Variable('exclude'),
-        excludeType: const Variable('Direct'),
-        expectedStatus: const Variable('204'),
-        tolerance: const Variable(50),
-        strategy: const Variable('round-robin'),
-        includeAll: const Variable(true),
-        includeAllProxies: const Variable(true),
-        includeAllProviders: const Variable(true),
-        hidden: const Variable(false),
-        icon: const Variable('icon'),
+        definition: const Variable('{}'),
         order: const Variable('a0'),
       ).toColumns(false),
-      hasLength(24),
+      hasLength(8),
     );
 
     const icon = IconRecord(

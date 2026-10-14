@@ -15,7 +15,9 @@ class RequestsCard extends StatelessWidget {
     showSnapSheet(
       context,
       initialScrollOffset: double.maxFinite,
-      builder: (_, controller) => RequestsView(scrollController: controller),
+      builder: (_, controller) => NestedPagedSheet(
+        builder: (_) => RequestsView(scrollController: controller),
+      ),
     );
   }
 

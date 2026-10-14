@@ -49,7 +49,7 @@ class _AppMigrationStore implements MigrationStore {
       data.profiles,
       data.scripts,
       data.rules,
-      data.links,
+      data.disabledRules,
       data.proxyGroups,
       clashProviders: data.clashProviders,
     );
@@ -85,15 +85,14 @@ class Migration {
       );
     }
     if (oldVersion == currentVersion) {
-      try {
-        config = Config.realFromJson(configMap);
-      } catch (_) {
-        if (!_isV0(configMap)) {
-          throw StateError(
-            'Local data is damaged. A reset is required to fix this issue.',
-          );
+      if (configMap != null && _isV0(configMap)) {
+        try {
+          config = Config.strictFromJson(configMap);
+        } catch (_) {
+          oldVersion = 0;
         }
-        oldVersion = 0;
+      } else {
+        config = Config.realFromJson(configMap);
       }
       if (config != null) {
         final storedDavPassword = _getStoredDavPassword(configMap);

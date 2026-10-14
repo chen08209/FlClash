@@ -11,13 +11,10 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"unsafe"
 )
 
 var netIndexOfLocal = -1
 var netIndexOfUid = -1
-
-var nativeEndian binary.ByteOrder
 
 func QuerySocketUidFromProcFs(source, _ net.Addr) int {
 	if netIndexOfLocal < 0 || netIndexOfUid < 0 {
@@ -139,7 +136,7 @@ func nativeEndianIP(ip net.IP) []byte {
 	for i := 0; i < len(ip); i += 4 {
 		value := binary.BigEndian.Uint32(ip[i:])
 
-		nativeEndian.PutUint32(result[i:], value)
+		binary.NativeEndian.PutUint32(result[i:], value)
 	}
 
 	return result
@@ -191,14 +188,5 @@ func init() {
 		case "uid":
 			netIndexOfUid = idx + offset
 		}
-	}
-}
-
-func init() {
-	var x uint32 = 0x01020304
-	if *(*byte)(unsafe.Pointer(&x)) == 0x01 {
-		nativeEndian = binary.BigEndian
-	} else {
-		nativeEndian = binary.LittleEndian
 	}
 }

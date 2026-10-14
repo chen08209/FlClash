@@ -18,19 +18,19 @@ void main() {
   });
 
   test('added rules follow profile then global UI order', () async {
-    await database.rulesDao.putGlobalRule(
+    await database.rulesDao.putRule(
       const Rule(id: 4, content: 'global second', order: 'b'),
     );
-    await database.rulesDao.putProfileAddedRule(
-      1,
+    await database.rulesDao.putRule(
       const Rule(id: 2, content: 'profile second', order: 'b'),
+      profileId: 1,
     );
-    await database.rulesDao.putGlobalRule(
+    await database.rulesDao.putRule(
       const Rule(id: 3, content: 'global first', order: 'a'),
     );
-    await database.rulesDao.putProfileAddedRule(
-      1,
+    await database.rulesDao.putRule(
       const Rule(id: 1, content: 'profile first', order: 'a'),
+      profileId: 1,
     );
 
     final rules = await database.rulesDao.queryAddedRules(1).get();

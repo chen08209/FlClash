@@ -42,4 +42,38 @@ void main() {
       await expectLater(safeDeletePath(join(root.path, 'missing')), completes);
     });
   });
+
+  group('writeAsStringAtomically', () {
+    test('replaces the file and leaves nothing beside it', () async {
+      final file = File(join(root.path, 'config.yaml'))
+        ..writeAsStringSync('mixed-port: 7890');
+
+      await file.writeAsStringAtomically('mixed-port: 7891');
+
+      expect(file.readAsStringSync(), 'mixed-port: 7891');
+      expect(root.listSync().map((entry) => basename(entry.path)), [
+        'config.yaml',
+      ]);
+    });
+
+    test('creates the directory a first write needs', () async {
+      final file = File(join(root.path, 'home', 'config.yaml'));
+
+      await file.writeAsStringAtomically('mode: rule');
+
+      expect(file.readAsStringSync(), 'mode: rule');
+    });
+
+    test('keeps the old file when the new one cannot be written', () async {
+      final file = File(join(root.path, 'config.yaml'))
+        ..writeAsStringSync('mode: rule');
+      Directory('${file.path}.$pid.tmp').createSync();
+
+      await expectLater(
+        file.writeAsStringAtomically('mode: global'),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect(file.readAsStringSync(), 'mode: rule');
+    });
+  });
 }

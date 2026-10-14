@@ -36,16 +36,6 @@ class _TileContainerState extends ConsumerState<TileManager> with TileListener {
   }
 
   @override
-  Future<void> onStop() async {
-    if (!isStart) {
-      return;
-    }
-    unawaited(ref.read(setupActionProvider.notifier).setRunning(false));
-    unawaited(app?.tip(currentAppLocalizations.stopVpn));
-    super.onStop();
-  }
-
-  @override
   void initState() {
     super.initState();
     tile?.addListener(this);

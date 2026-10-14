@@ -6,10 +6,46 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-Stream<Uint8List> restartIpcServer({required String name}) =>
-    RustLib.instance.api.crateApiIpcRestartIpcServer(name: name);
+// These functions are ignored because they are not marked as `pub`: `bridge`
 
-Future<void> stopIpcServer() => RustLib.instance.api.crateApiIpcStopIpcServer();
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<IpcServer>>
+abstract class IpcServer implements RustOpaqueInterface {
+  static Future<IpcServer> bind({required String address}) =>
+      RustLib.instance.api.crateApiIpcIpcServerBind(address: address);
 
-Future<void> sendIpcMessage({required List<int> data}) =>
-    RustLib.instance.api.crateApiIpcSendIpcMessage(data: data);
+  Future<void> close();
+
+  Stream<IpcEvent> events();
+
+  void send({required List<int> message});
+}
+
+class IpcEvent {
+  final IpcEventKind kind;
+  final int? pid;
+  final Uint8List payload;
+  final String? error;
+
+  const IpcEvent({
+    required this.kind,
+    this.pid,
+    required this.payload,
+    this.error,
+  });
+
+  @override
+  int get hashCode =>
+      kind.hashCode ^ pid.hashCode ^ payload.hashCode ^ error.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is IpcEvent &&
+          runtimeType == other.runtimeType &&
+          kind == other.kind &&
+          pid == other.pid &&
+          payload == other.payload &&
+          error == other.error;
+}
+
+enum IpcEventKind { connected, message, disconnected, failed }

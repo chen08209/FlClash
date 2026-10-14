@@ -291,3 +291,9 @@ Map<String, dynamic> _$ScriptToJson(_Script instance) => <String, dynamic>{
   'url': instance.url,
   'order': instance.order,
 };
+
+_IconSetIcon _$IconSetIconFromJson(Map<String, dynamic> json) =>
+    _IconSetIcon(name: json['name'] as String, url: json['url'] as String);
+
+Map<String, dynamic> _$IconSetIconToJson(_IconSetIcon instance) =>
+    <String, dynamic>{'name': instance.name, 'url': instance.url};

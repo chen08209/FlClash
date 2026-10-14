@@ -47,6 +47,15 @@ void main() {
     expect(received, isEmpty);
   });
 
+  test('an install-config link with a blank url is ignored', () async {
+    await listen();
+
+    await emit('flclash://install-config?url=');
+    await emit('flclash://install-config?url=%20');
+
+    expect(received, isEmpty);
+  });
+
   test('a link for another host is ignored', () async {
     await listen();
 
@@ -132,13 +141,22 @@ void main() {
           null,
           '',
           'plain text',
-          'vmess://eyJhZGQiOiIxLjIuMy40In0=',
           'https://',
           'clash://install-config?url=not-a-url',
           'clash://open-profile?url=https://example.com/a.yaml',
           'other://install-config?url=https://example.com/a.yaml',
         ]),
         isNull,
+      );
+    });
+
+    test('accepts a proxy share link', () {
+      expect(
+        profileUrlFromQrCodes([
+          'plain text',
+          'vmess://eyJhZGQiOiIxLjIuMy40In0=',
+        ]),
+        'vmess://eyJhZGQiOiIxLjIuMy40In0=',
       );
     });
 

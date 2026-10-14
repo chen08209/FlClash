@@ -165,15 +165,6 @@ void main() {
     });
   });
 
-  group('viewHeight provider (derived)', () {
-    test('derives from viewSize height', () {
-      container
-          .read(viewSizeProvider.notifier)
-          .update((_) => const Size(800, 600));
-      expect(container.read(viewHeightProvider), 600);
-    });
-  });
-
   group('Init provider', () {
     test('default is false', () {
       expect(container.read(initProvider), false);

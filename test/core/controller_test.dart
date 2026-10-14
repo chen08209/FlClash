@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:fl_clash/common/exception.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/core/interface.dart';
@@ -106,6 +108,51 @@ void main() {
       final result = await controller.validateConfig('/path');
       expect(result, 'ok');
       verify(() => mock.validateConfig('/path')).called(1);
+    });
+
+    group('validateProfile', () {
+      late Directory dir;
+      late String path;
+
+      setUp(() {
+        dir = Directory.systemTemp.createTempSync('validate_profile_test');
+        path = '${dir.path}/profile.yaml';
+        when(() => mock.validateConfig(path)).thenAnswer((_) async => '');
+      });
+
+      tearDown(() => dir.deleteSync(recursive: true));
+
+      test('decrypts an age-encrypted config in place', () async {
+        File(
+          path,
+        ).writeAsStringSync('-----BEGIN AGE ENCRYPTED FILE-----\nYWdl\n');
+        when(
+          () => mock.decryptConfig(path, 'AGE-SECRET-KEY-1A'),
+        ).thenAnswer((_) async => 'proxies: []');
+
+        expect(await controller.validateProfile(path, 'AGE-SECRET-KEY-1A'), '');
+        expect(File(path).readAsStringSync(), 'proxies: []');
+      });
+
+      test('asks for a key an encrypted config lacks', () async {
+        File(
+          path,
+        ).writeAsStringSync('-----BEGIN AGE ENCRYPTED FILE-----\nYWdl\n');
+
+        await expectLater(
+          controller.validateProfile(path),
+          throwsA(isA<AgeSecretKeyRequiredException>()),
+        );
+        verifyNever(() => mock.decryptConfig(any(), any()));
+      });
+
+      test('leaves a plain config as it is', () async {
+        File(path).writeAsStringSync('proxies: []');
+
+        expect(await controller.validateProfile(path, 'AGE-SECRET-KEY-1A'), '');
+        verifyNever(() => mock.decryptConfig(any(), any()));
+        expect(File(path).readAsStringSync(), 'proxies: []');
+      });
     });
 
     test('updateConfig delegates to interface', () async {

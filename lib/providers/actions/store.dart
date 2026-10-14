@@ -8,9 +8,17 @@ class StoreAction extends _$StoreAction {
   void build() {}
 
   Future<void> shakingStore() async {
-    final profileIds = ref.read(profilesProvider).map((item) => item.id);
+    // The lists leave out rows they cannot read, whose files must survive, and
+    // the tables may not hold an optimistic write yet.
+    final profileIds = {
+      ...ref.read(profilesProvider).map((item) => item.id),
+      ...await database.profilesDao.ids().get(),
+    };
     final scripts = await ref.read(scriptsProvider.future);
-    final scriptIds = scripts.map((item) => item.id);
+    final scriptIds = {
+      ...scripts.map((item) => item.id),
+      ...await database.scriptsDao.ids().get(),
+    };
     final providerFileNames = await database.clashProvidersDao
         .fileNames()
         .get();
@@ -56,11 +64,7 @@ class StoreAction extends _$StoreAction {
     for (final error in clearResults.where((error) => error.isNotEmpty)) {
       commonPrint.log(error, logLevel: LogLevel.warning);
     }
-    await preferences.clearPreferences();
-    commonPrint.log('clear preferences');
-    await database.close();
-    await File(await appPath.databasePath).safeDelete(recursive: true);
-    await Directory(await appPath.profilesPath).safeDelete(recursive: true);
+    await clearAppData();
     unawaited(ref.read(systemActionProvider.notifier).handleExit(false));
   }
 }

@@ -4,9 +4,15 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart' show NumberFormat;
 import 'package:material_ui/material_ui.dart';
 
+/// Pinned to English so every locale reads K and M, never 万 or тыс.
+final _compactFormat = NumberFormat.compact(locale: 'en');
+
 extension NumExt on num {
+  String get compact => _compactFormat.format(this);
+
   String fixed({int decimals = 2}) {
     String formatted = toStringAsFixed(decimals);
     if (formatted.contains('.')) {

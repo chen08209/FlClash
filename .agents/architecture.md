@@ -6,9 +6,12 @@ The Go proxy core in `core/` operates in two modes.
 
 Android lib mode:
 
-- Go core is compiled as a C shared library, `libclash.so`, through `go build -buildmode=c-shared` with CGO.
-- The Android `:core` module owns JNI access to the in-process library. Flutter crosses the `${packageName}/service`
-  MethodChannel through `lib/plugins/service.dart` and Android's `ServicePlugin` rather than talking to JNI directly.
+- `gomobile bind` builds `core/mobile` into an AAR: a native library per ABI, shipped as `libclash.so`, and the Java
+  classes gobind generates in `com.follow.clash.core.mobile`. The `:core` Gradle module builds it and takes in its
+  classes and libraries (see Android Core Build).
+- The Android `:core` module owns the binding: `Core.kt` is the only caller of the generated `Mobile` class. Flutter
+  crosses the `${packageName}/service` MethodChannel through `lib/plugins/service.dart` and Android's `ServicePlugin`
+  rather than calling the Core directly.
 - `lib/core/lib.dart` (`CoreLib`) implements the shared Core interface, gates method calls on its connection completer,
   initializes and synchronizes Android shared state, and closes the native service path exactly once.
 - Because Core is in the application process on Android, application RSS already includes Core memory.
@@ -17,12 +20,14 @@ Desktop core mode:
 
 - Go core runs as a separate process with `CGO_ENABLED=0`.
 - `rust_api`'s `ipc` module provides the native local-IPC primitives: a Unix domain socket on macOS/Linux and a named pipe
-  on Windows. Dart owns the transport state, RPC correlation, process ownership, and lifecycle convergence above those
-  primitives.
+  on Windows, served by an `IpcServer` handle. Dart owns the transport state, RPC correlation, process ownership, and
+  lifecycle convergence above those primitives.
 - `lib/core/service.dart` (`CoreService`) is the composition root. It wires the IPC transport, launcher selection,
   lifecycle controller, RPC client, and crash-event bridge, and holds no lifecycle logic of its own.
-- `lib/core/desktop/transport.dart` converts native IPC frames into ready, connected, disconnected, failed, and data
-  events. A replaceable binding keeps RPC subscriptions stable when a failed or stale transport must be rebuilt.
+- `lib/core/desktop/transport.dart` binds an `IpcServer` and turns its events into ready, connected, disconnected, and
+  failed transport events plus a frame stream. A connection that ends on an I/O error is a disconnect carrying that
+  error; failed means the server itself is gone and is terminal for that transport. A replaceable binding keeps RPC
+  subscriptions stable when a failed or stale transport must be rebuilt.
 - `lib/core/desktop/rpc_client.dart` owns request IDs and pending completers, waits up to 10 seconds for a connection,
   applies a three-minute default method timeout, unwraps `CoreMethodResponse`, and fails all pending calls when transport
   disconnects or closes.
@@ -34,52 +39,96 @@ Desktop core mode:
 
 Key Go core files:
 
-- `core/hub.go`: handler functions.
-- `core/method.go`: MethodChannel-style method-call dispatch and response envelopes.
+- `core/protocol.go`: method names, event types, and the parameter and result shapes shared with Dart.
+- `core/method.go`: MethodChannel-style method-call dispatch, the handler table, and response envelopes.
+- `core/lifecycle.go`, `config.go`, `proxy.go`, `delay.go`, `provider.go`, `geo.go`, `connection.go`, `log.go`: the
+  handler functions, one file per area. `core/hooks.go` wires mihomo's hooks to them.
 - `core/message.go`: non-blocking state/priority/bulk event queues and bounded message batching.
-- `core/lib.go`: CGO exports.
+- `core/lib.go`: the Android library API: TUN callbacks, the event listener, and the entry points `core/mobile` binds.
+- `core/mobile/`: the package gomobile binds. gobind generates Java for its exported API, so it speaks only `int32`,
+  `bool`, `string`, `[]byte` and its own interfaces; a Go `int` would become a Java `long`.
+- `core/cmd/core/`: the desktop entry point. `core/` itself is the library package `core`, because gomobile cannot bind
+  a `main` package.
 - `core/server.go`: desktop socket/named-pipe client and framed message forwarding.
 
-## DNS Override
+## DNS, NTP and Sniffer Overrides
 
-`PatchClashConfig.dns` holds a full `Dns` model, but only the keys listed in `dnsOverrideKeys` reach a profile.
-`DnsOverrideKey` names one Clash key each, with `fallback-filter.*` entries for the nested filter, and covers every
-yaml key of mihomo's `RawDNS` and `RawFallbackFilter`; `test/models/dns_override_test.dart` reads
-`core/Clash.Meta/config/config.go` and fails when a core bump adds or drops one. `Dns.overrideJson` builds the
-fragment in model order and `mergeDnsOverride` merges it one level deep, so a partial fallback filter keeps the
-profile's other filter keys. `_makeRealProfileTask` applies the fragment when `overrideDns` is on; for a profile whose
-`dns.enable` is not true it first fills `defaultDns` for `baselineDnsOverrideKeys` and then applies the fragment
-whatever the toggle says. The DNS page's quick edit opens `overrideYaml` in an `EditorPage` and applies it on the way
-back through `applyOverrideYaml`, which rebuilds the key set from the keys the document names and rejects unknown keys
-or bad values; a rejected document can only be discarded or fixed. The page has no reset, because there is nothing to
-reset to.
+A URL or file profile brings its own sections; a custom profile brings none. The app's DNS page
+(`PatchClashConfig.dns` with `dnsOverrideKeys`) is written over the DNS of every URL and file profile, and offers only
+`DnsOverrideKey.normalProfileKeys`: keys that name nothing of a profile's own, because a subscription's groups and rule
+sets change with every update. A custom profile keeps all three sections in `Profile.overrides`, a `ProfileOverrides`
+stored as JSON in the `profiles.overrides` column, with every key available, and NTP and sniffer exist nowhere else.
+`setupState` resolves `SetupState.overrides` by profile type, intersecting the app-wide keys with the normal set, and
+`_makeRealProfileTask` merges whatever it is handed; there is no on/off toggle, a picked key is the override.
 
-A fresh config overrides nothing: `dnsOverrideKeys` starts empty and the profile's own section stands until an entry
-is added. `baselineDnsOverrideKeys` is the separate, smaller thing the core is never without — the `enable`,
-`enhanced-mode: fake-ip` and `nameserver` given to a profile that brings no enabled DNS section of its own, so the
-core always resolves. Every other `Dns` field starts at mihomo's own default, which `UnmarshalRawConfig` starts from,
-so adding an entry changes nothing until it is edited; `listen` and `fake-ip-range6`, which mihomo leaves off, start
-from a working value instead. A config saved before the key list existed overrode the whole section as the model held
-it then, so `PatchClashConfig.fromJson` gives it those twenty keys rather than the empty set.
+Each `*OverrideKey` names one Clash key, with `parent.field` paths for nested maps, and covers every yaml key of the
+matching mihomo raw struct; `test/models/{dns,ntp,sniffer}_override_test.dart` read `core/Clash.Meta/config/config.go`
+and fail when a core bump adds or drops one. `overrideJson` builds the fragment in model order and skips a key whose
+value is empty, so a key left without a value writes nothing: the core refuses an empty `nameserver` outright.
+`mergeDnsOverride` merges one level deep so a partial fallback filter keeps the profile's other filter keys; NTP spreads
+over the profile's flat `ntp` map. For a profile whose `dns.enable` is not true, the task first fills `baselineDns` for
+`baselineDnsOverrideKeys` (`enable`, `enhanced-mode: fake-ip`, `nameserver`), the one thing the core is never without:
+with DNS off, mihomo answers every TUN-hijacked query with an error. The baseline stays apart from the model defaults,
+which carry no preset of the app.
 
-## NTP Override
+An added key starts from the spec's `defaults` through its `OverrideField.reset`, and those defaults are mihomo's: a key
+starts at the value mihomo parses without it, presets included, such as the nameservers, fake-IP range and filter, and
+NTP server of `DefaultRawConfig`. A key mihomo leaves unset, such as `listen` or a sniff protocol's ports, starts empty
+and writes nothing until the user fills it in, and so does the fallback filter's GeoIP code, whose value is left for the
+user to choose. mihomo sniffs a protocol listed without ports on that protocol's standard port, which the page shows as
+the default. The tests above pin the defaults against `DefaultRawConfig`. A spec that mixes in `OverrideQuickEdit` gets
+quick edit, which opens `overrideYaml` in an `EditorPage` and rebuilds the key set from the document through
+`applyOverrideYaml`, rejecting keys outside the section and values the model cannot hold.
 
-`PatchClashConfig.ntp` mirrors the DNS shape: a full `Ntp` model of which only the keys in `ntpOverrideKeys` reach a
-profile, an empty set on a fresh config, and one `NtpOverrideKey` per yaml key of mihomo's `RawNTP`;
-`test/models/ntp_override_test.dart` reads `core/Clash.Meta/config/config.go` and fails when a core bump adds, drops
-or redefaults one. The section is flat, so `_makeRealProfileTask` spreads the fragment over the profile's own `ntp`
-map instead of the one-level merge DNS needs, and writes nothing at all while `overrideNtp` is off. `interval` is
-minutes, which is what `ReCreateNTPService` multiplies. The page carries the same add sheet and quick edit as DNS.
+mihomo upper-cases sniff protocol names and ignores the deprecated `sniffing` list once `sniff` holds anything, so
+`mergeSnifferOverride` drops the profile's entry for an overridden protocol in any case and first carries `sniffing`
+into `sniff`. A `rule-set:` key of a custom profile's DNS policy counts as a use of that rule provider, so
+`_resolveInjectedProviders` injects it like one a rule names. Safe mode forces `write-to-system` off on whatever `ntp`
+section reaches the core, because setting the system clock is a host change; `loadConfig` in the Go wrapper also drops
+it on Android, where the seccomp policy kills the process for `settimeofday`.
 
-Safe mode forces `write-to-system` off on whatever `ntp` section the profile carries, because setting the system clock
-is a host change; mihomo's own `loadConfig` already drops it on Android, where the seccomp policy kills the process
-for `settimeofday`.
+A custom profile's TUN page is the exception to covering the raw struct. The network settings own `tun` through
+`PatchClashConfig.tun`, spread last over the profile's section and patched again on every `updateConfig`, so
+`TunOverrideKey` offers only a few keys outside it that work in FlClash's TUN: `disable-icmp-forwarding`, and
+`exclude-interface`, which only Linux routing reads. `test/models/tun_override_test.dart` fails if a key comes to
+overlap `Tun`. Android starts its VPN from `core/tun` without the section, so TUN is listed on desktop only.
+Being a part of the section, the page has no quick edit; see Quick Edit.
+
+A custom profile's overview keeps tiles for rules, providers and DNS, which every custom profile runs on, and puts the
+dialer proxies, NTP, sniffer and TUN behind a single "more" tile, which opens a page listing them with their states.
+Another rarely changed section joins that list rather than taking a tile of its own.
+
+Every page is an `OverrideView` over an `OverrideSpec` from `lib/views/config/override.dart`. The spec supplies the
+section's keys, labels and fields; its `OverrideTarget` is where the model and keys live, `PatchOverrideTarget` for the
+app-wide DNS and `ProfileOverrideTarget` for a profile. Another overridable section is a spec, not a copy of a page.
+
+A config from a release that still had the `overrideDns` toggle keeps, through `Config.fromJson`, the normal keys of
+an on toggle and none of an off one. That release had no custom profiles, so its app-wide NTP override is dropped.
 
 ## Listener Exposure
 
 `_makeRealProfileTask` in `lib/common/task.dart` writes `mixed-port`, `allow-lan`, and `external-controller` into every
 generated profile. With `allow-lan` off, mihomo's `genAddr` binds each listener to `127.0.0.1`; the external controller is
-`ExternalControllerStatus.close` by default and never binds anywhere but loopback.
+`ExternalControllerStatus.close` by default and never binds anywhere but loopback. The task also clears
+`external-controller-tls`, `-unix` and `-pipe` in every mode: the unix and pipe controllers answer without a secret, and
+the unix one unlinks whatever file sits at its path before opening it to everyone, so a profile may not choose them.
+Outside safe mode, profiles retain `listeners`, `tunnels`, `ss-config`, `vmess-config`, `tuic-server`, `iptables`,
+`dns.listen` and `ntp.write-to-system`. Extra inbounds can bypass the app's LAN and authentication settings, and a TUN
+listener can change routing independently of the app's TUN toggle. These network and clock effects are an accepted
+boundary; they are not treated as arbitrary filesystem modification. The task disables `iptables` when its
+`inbound-interface` contains a space, because mihomo interpolates it into commands and splits their arguments on spaces.
+Safe mode clears these extra inbounds and iptables, closes DNS listening and disables NTP system time writes even after
+local overrides. The editor omits disabled alternate controllers and keeps listener completion.
+
+An open external controller always has a secret, because mihomo serves a controller with an empty one to every local
+user and, through CORS, to any page the user visits. `PatchClashConfig.secret` is that secret and it belongs to FlClash,
+as the address does: the task writes it over whatever the profile carries, and `UpdateParams.secret` hands the same value
+to a running Core, which restarts the controller when it changes. `ensureControllerSecret` keeps the pair consistent
+(an open controller gets a generated secret, a closed one drops it, so every opening rotates it) and runs where a
+config enters the app: the settings toggle, startup, and `writeConfig` for a restored backup. `_effectivePatchConfig`
+reports a controller without a secret as closed, and `_makeRealProfileTask` independently closes it without a secret
+or in safe mode, so a writer that skips `ensureControllerSecret` opens nothing. The settings page shows the secret in
+an editable row, which refuses an empty value.
 
 The loopback listener takes local connections without authentication by default: mandatory credentials would lock out
 every external local consumer a proxy client exists for. The binding only guarantees traffic originates on the device;
@@ -92,6 +141,32 @@ withholds the Android VPN system proxy declaration because `ProxyInfo` cannot ca
 traffic). Desktop system proxy is deliberately not gated — dropping it would leak traffic direct, so the setting's
 description tells users to supply credentials manually instead.
 
+### Local Trust Boundary
+
+The Windows Helper answers only a connection whose client process runs under the owner SID it was installed for;
+the Linux Helper only the owner uid. A setuid Core is executable by `root:admin` (macOS) or the installing user's primary
+group, so its boundary also includes every member of that group, not just the installing account. Profiles cannot choose
+a controller address, a secret or alternate controllers. Another account outside those permissions, a subscription,
+or a remote party reaching the privileged Core's control or filesystem APIs is a vulnerability.
+
+A process running as the same account is not stopped. It can ask the Helper to start the Core
+against a socket or pipe it owns, or run a setuid Core against a port it listens on, and so become the host that drives
+a privileged Core: `initClash` chooses the home directory every path check anchors on, and `getConfig` reads any path.
+The Core connects to whatever address it is given and cannot tell that host from FlClash. An account check cannot
+distinguish it from a same-account process that can already read FlClash's memory and files. This remains a user-to-root
+or user-to-SYSTEM privilege escalation, not a complete security fix. An open external
+controller is inside the same boundary: its secret is stored under the account, and `/upgrade` stays mounted (it fetches
+fixed MetaCubeX release URLs, not caller-chosen code). mihomo's `IsSafePath` compares paths lexically, so a symlink inside
+the home directory escapes it; that fix belongs upstream, not in the submodule.
+
+Closing the same-account case requires limiting what a hijacked Core can do. Keeping the main Core unprivileged and
+moving host changes into narrow platform helpers requires architectural work, but need not introduce repeated prompts
+or remove ordinary proxy functionality. Features that require additional privileges, such as identifying other users'
+processes, need platform-specific handling. Descriptor-based filesystem confinement can preserve ordinary managed
+paths; intentional external symlink targets need explicit allowed roots. These changes have not been implemented.
+Account authentication, a private socket directory or a symlink check at configuration time does not remove the
+privileged filesystem operations available to the host. Changes must not widen access to those operations.
+
 ### Interface Name Modes
 
 The same task also writes `interface-name` per `PatchClashConfig.interfaceNameMode`: `clear` (default) forces it empty so a
@@ -99,6 +174,27 @@ subscription's value cannot survive into the generated profile, `follow` leaves 
 `custom` writes the user's `interfaceName`. mihomo ignores `interface-name` on Android whenever `dialer.DefaultSocketHook`
 is installed (`core/lib.go` `installHooks`, vendored `dialer.go`), so `NetworkListView` in `lib/views/config/network.dart`
 shows the mode picker and text field only on desktop.
+
+### Network Settings
+
+Every `Tun` field is written over the profile's `tun` section and hot-applied through `tunSchema`, and the other keys of
+that section keep the profile's value; `test/models/tun_test.dart` keeps the model, `RawTun` and `tunSchema` in step.
+Beyond what FlClash always managed, `Tun` carries only the keys worth tuning: `mtu`, the mips stack's
+`congestion-controller`, and `strict-route` where sing-tun enforces it (Linux and Windows).
+
+Routing is the same on every platform: `route-address` (empty routes everything), `route-exclude-address`, and
+`NetworkProps.bypassPrivateRoute`, which adds `privateRouteAddress` to the exclusions in `Tun.getRealTun`. Desktop hands
+both lists to sing-tun. VpnService can only add routes before Android 13, so `Tun.vpnRouteAddress` cuts the exclusions
+out of the routes with `subtractCidrs` and lists every family it routes; `VpnService.addRoutes` routes everything only
+for an empty list. A config saved with the old `routeMode` keeps its choice: `bypassPrivate`, which ignored the route
+list, loads with the flag on and the list cleared, and `config` with the flag off. Others were left out on purpose: no stack in the vendored sing-tun reads `endpoint-independent-nat`, the
+default mips stack ignores `udp-timeout`, and the rest are platform plumbing few users need. Android builds its TUN from
+the VpnService descriptor in `core/tun/tun.go`, so only MTU and the congestion controller reach it, through `VpnOptions`
+and the `options` argument of `startTUN`; the VpnService builder takes the same MTU.
+
+The TUN fields start at mihomo's own defaults, and a saved zero MTU or empty congestion controller, which mihomo reads
+as those defaults, decodes to them. The outbound rows are plain settings written over every profile, and changing one
+re-applies the profile; keep-alive is forced off on Android, and only Linux honours `routing-mark`.
 
 ## Lifecycle Ownership And Convergence
 
@@ -127,6 +223,12 @@ Application exit is centralized in `SystemAction` and `SystemExitCoordinator`:
 The coordinator is idempotent, continues later cleanup steps after an earlier error, preserves the first error for the
 caller, and uses a three-second watchdog as an emergency application-exit path. `Application.dispose()` and
 `CoreManager.onCrash()` do not independently destroy Core; this avoids competing shutdown owners.
+
+### Applying Setting Changes
+
+A changed setting is patched live through `UpdateParams`, re-applied with the profile, or, for the Android VPN, left
+to a restart the user confirms. [setting-changes.md](setting-changes.md) says which path each setting takes and how to
+choose one for a new setting.
 
 ### Desktop Lifecycle
 
@@ -157,27 +259,55 @@ Android deliberately keeps Flutter requests optimistic and the native layer auth
 
 - `ServicePlugin.start()` and `stop()` acknowledge immediately after submitting intent. They do not wait for service
   creation, VPN permission, binding, TUN establishment, or teardown.
-- `ServiceState` owns the latest `RunRequest`, shared configuration, run time, and `STOPPED`/`STARTING`/`STARTED`/`STOPPING`
-  state. Identity checks discard obsolete work. `startPreparationLock` serializes permission/setup preparation and
-  `transitionLock` serializes actual service transitions.
+- `ServiceState` owns the latest `RunRequest` and the shared configuration. Identity checks discard obsolete work.
+  `startPreparationLock` serializes permission/setup preparation and `transitionLock` serializes actual service
+  transitions.
+- `RunState` is derived, never assigned by a step: `ServiceStateMachine.publish` computes it from the transition in
+  flight, the latest intent, and `ServiceController.runtime`. A service that is up under a stop intent reads `STOPPING`, a
+  start still waiting on a permission reads `STOPPED`, and `STARTED` needs both a running intent and a runtime. The tile
+  and `getRunTime` both read this one value, so they cannot disagree with the service.
 - `ServiceController` owns exactly one `ManagedServiceBinding`, selects `VpnService` or `ProxyService` from `VpnOptions`,
-  binds with a five-second connection timeout, invokes `ManagedService.start()`/`stop()` off the main thread, and clears
-  binding/run-time state on failure or disconnection.
+  binds with a five-second connection timeout, and invokes `ManagedService.start()`/`stop()` off the main thread. The
+  binding and `runtime` (which service runs, and since when) are set and cleared together, by a stop, a failed start, or
+  a lost connection and by nothing else. Flutter's `shutdown` only clears the Core event listener: Android keeps an
+  established `VpnService` alive through its own connection, so a binding dropped on exit left a tunnel that was
+  reported as running but that neither a stop nor a revoke could reach.
+- The Core listens exactly while `runtime` is set: a successful start ends in `Core.startListener()` and every path
+  that clears `runtime` calls `Core.stopListener()`. Both return at once when the Core is already there, which is the
+  usual case, since `startTUN`/`stopTun` and Flutter's own `startListener`/`stopListener` got there first. They matter
+  when nothing else does: a proxy-only run stopped from the tile used to keep the mixed port open with nothing
+  reported as running. A start closes after itself the same way: Flutter's `startListener` and the native `quickSetup`
+  both open the ports before any service exists, so a start that ends without a `runtime`, refused or cancelled, stops
+  the empty service once more, without passing through `STOPPING`. Flutter may be gone by then and never see the
+  `stopped` report.
+- A start that does not bring the service up gives its intent back and takes down whatever it left running, unless a
+  newer request has claimed the service. A failed start therefore always ends in `STOPPED`, whichever step refused it.
+  The one start that mints no request is a repeat on a settled run of the same kind, which Flutter sends every time it
+  reattaches: a request refused at a permission prompt there would stop a service that was running fine.
 - Generic service creation/destruction is lifecycle evidence, not user intent. New commands must flow through
   `ServiceState.requestStart()`/`requestStop()` or the explicit system-action handlers instead of inferring intent from a
   callback.
 
 Quick Settings, notification, revoke, and Always-on VPN paths converge on the same owner:
 
-- With a Flutter engine attached, `ServiceState.handleStartAction()`/`handleStopAction()` forward through `TilePlugin` to
-  `TileManager`, which updates normal Flutter setup state. Without Flutter, native code restores `SharedState` from
-  preferences, runs `quickSetup`, checks VPN permission, and submits the native request directly.
+- With a Flutter engine attached, `ServiceState.handleStartAction()` forwards through `TilePlugin` to `TileManager`,
+  because only Flutter can apply the current profile. Without Flutter, native code claims the intent, restores
+  `SharedState` from preferences, runs `quickSetup`, checks VPN permission, and runs the start; claiming first is what
+  makes a second action during the setup toggle that start off instead of racing a second setup against it.
+- A stop never needs Flutter. `handleStopAction()` stops the service natively whether or not an engine is attached, so
+  the tile, the notification action and a revoke work even when Flutter's own idea of the state is wrong.
+- Whenever the run ends without Flutter having asked for it (a start that failed, a native stop, a revoke, a lost
+  service), `ServicePlugin` sends `stopped` with the revision of the last `start`/`stop` command it received.
+  `Service` in `lib/plugins/service.dart` drops a report older than its newest command, or one that arrives while its
+  last command was a stop (on-demand suspension stops the service while `isStartProvider` stays true), and
+  `AndroidManager` answers the rest with `setRunning(false)`. The report is read on the platform thread, where the
+  commands arrive, so the revision and the intent it carries describe the same instant.
 - Android may create an Always-on `VpnService` through `onStartCommand()` without FlClash's bound-service path. The service
   sends the explicit, permission-protected `VPN_START_REQUESTED` broadcast to `ServiceBroadcastReceiver`, which routes it to
   `ServiceState.handleStartAction()` so Core/configuration and the normal binding are restored before TUN is treated as
   ready.
-- `VpnService.onRevoke()` stops TUN/modules first, then sends `VPN_REVOKED`; the receiver only requests a stop when
-  `ServiceController` still owns an active VPN binding.
+- `VpnService.onRevoke()` stops TUN/modules first, then sends `VPN_REVOKED`; the receiver only requests a stop while
+  `ServiceController.runtime` is a VPN run.
 - `ServiceBroadcastReceiver` uses `goAsync()` and an atomic one-shot completion. Normal completion or a nine-second
   watchdog calls `PendingResult.finish()` exactly once; the watchdog releases Android's broadcast lease and does not
   cancel or redefine the underlying lifecycle intent.
@@ -211,6 +341,14 @@ callers singleflight merged into it, carrying the upstream whose answer was used
 a resolver and are not recorded. Queries from apps arrive with the `DNSContext` that `Service.ServeMsg` created and
 report `app`; other initiators come from `resolver.WithInitiator` at the call site (rule matching, DIRECT, proxy
 server dialing), and unlabeled queries report `other`.
+
+Dialer-loop events come from the fork's `component/proxydialer/patch.go`. mihomo follows a `dialer-proxy` that leads
+back to its own proxy until the stack overflows, so a dial that asks the same `dialer-proxy` for an address it is
+already dialing through it fails with `ErrDialerLoop`. `core/hooks.go` reports each looping name at most once every
+three seconds as a priority event, which the app shows as an error notice whether or not logs are captured. The custom
+profile pages flag only the loops FlClash can follow on its own, through a group's own list or an include-all that no
+filter narrows; what filters and providers pick, including provider proxies that carry their own `dialer-proxy`, is
+left to this guard.
 
 Desktop RPC accepts both a single event object and batched event lists. Android and desktop listener dispatch isolate
 listener exceptions so one faulty observer does not prevent the remaining events/listeners from running.
@@ -351,6 +489,77 @@ an edit page is a check among its `iconActions`. Actions on a multi-selection, s
 `selectionActions` instead: the bar keeps them in sight as one button group that takes a single slot beside the search
 or clear button, so they never fold.
 
+A bar under a sheet drops its actions and keeps its title and back or close button. `CommonScaffold` fades the actions
+out with the entrance of a sheet laid over its page, or over the sheet it is a page of, so none on the layer below
+reads as an action of the sheet on top; `sheetCoverOf` in `lib/widgets/sheet_navigator.dart` reads that entrance, which a sheet route hands
+down through `SheetCoverRouteMixin`, as `SnapSheetRoute` and `ModalSideSheetRoute` do.
+
+## Row Actions And Sort Mode
+
+A list row or card carries no trailing more button. Its secondary actions go into a `ContextMenuRegion`, which opens
+them on a right click, a touch long press, the menu key or Shift+F10 of a focused row, and, under an enabled
+`RemoteFocusAdapter` (Android TV), a select key held past the long-press timeout; a short select there still presses
+the row, on key up rather than key down. A tap keeps the row's main action. A row whose tap does something other than
+open its page, as a profile card's tap selects the profile, may carry a trailing button to that page, as iOS's detail
+button does, built as a `DetailButton` so a desktop's compact density cannot pull it off the column the indicator and
+the handle share; a trailing button that repeats the row's own tap is never added. A row whose tap opens a page shows
+a `DisclosureIndicator` there instead, as a script or a rule-set proxy provider does. A provider opens its content on
+a tap, read-only unless it is a local text file the app owns, and keeps a second action on its trailing button: editing
+for a proxy provider backed by a text file, the options dialog for an app rule provider.
+
+A long press can mean only one thing on a row. Where rows have no context menu, as in a plain list editor, the global or
+profile rules, the on-demand SSIDs or the custom proxies, a long press on the row drags it and there is no sort button.
+Where they have one, the list reorders only in a sort mode. When the list is the page, `CommonScaffold` owns the mode as
+it owns search and selection, and the page passes `canSort` for the toggle in its bar. Changes apply as they are made,
+so nothing confirms them: while the mode is on, the bar shows only its toggle, selected, and the back or close button
+fades in place rather than offer the same way out twice, as iOS hides its back button while editing; a system back still
+ends the mode. A list that is one section of its page, as the custom profile's proxy groups are, keeps its own
+`SortModeScope` around its rows and its toggle in its header and leaves the page bar alone, back button included; its
+header keeps adding while it sorts, and a system back ends its mode before it leaves the page. Each row sits in a
+`SortableItem`, which reads the scope: while it sorts `DecorationListItem` drops its tap and context menu, and
+`SortableTrailing` springs a `SortHandle` in from the row's trailing edge while the trailing it replaces shrinks away.
+The motion is painted, not built, and the row relayouts only while the two widths differ, since every row on screen
+animates at once. A page that only reorders, such as the profiles sort sheet or a group's members, shows its
+`SortHandle`s without a mode. A handle drags on press, and with focus a select key lifts its row for the up and down
+keys to move through the enclosing `SliverReorderableList`'s own `onReorderItem`, which is how a remote sorts.
+
+## Quick Edit
+
+Quick edit, the compose button that opens what a page edits as text in an `EditorPage`, appears only where that text is
+the whole of it: a full list or section, such as a custom profile's rules, its proxies as share links, or its DNS, NTP
+and sniffer sections, or one isolated item, such as the definition of the proxy group or proxy a form edits. A page
+that edits only part of something other settings also write offers none, since its document would show a fragment and
+reject what it leaves out. The app-wide DNS page is that case, a few keys laid over the DNS of every URL and file
+profile, so only the profile's DNS spec mixes in `OverrideQuickEdit`. So is the custom profile's TUN page: it picks a
+few keys of a `tun` section the network settings own, so its spec does not mix in `OverrideQuickEdit`.
+
+## Where A Route Opens
+
+On desktop each navigation destination has its own `Navigator` (`_NavigationPage` in `lib/pages/home.dart`); on mobile
+there is none, and everything goes on the root navigator, `rootNavigatorKey` in `lib/common/navigator.dart`. A route
+takes the navigator of the context it opens from: `BaseNavigator.push`, `showExtend`, `showSheet` and `showSnapSheet`
+all do, so a page or sheet opened from a destination stays beside the navigation rail, leaves the rail usable, and
+stays in that destination's stack when the user switches away and back. `sheetNavigatorOf` lifts a sheet out of a
+paged sheet's own `SheetPagesNavigator`, never past the destination.
+
+The root navigator is only for what belongs to no single destination:
+
+- dialogs, which `dialogs` in `lib/common/dialog.dart` hosts on the root unless it is given a context, and the notifier;
+- a gate in front of the whole app, such as `requestDisclaimerConsent`;
+- work that starts with no page behind it: a deep link, the tray, a hotkey, the update check.
+
+Never reach for the root to open a page or sheet from a page, whether through `rootNavigatorKey`,
+`globalState.navigatorKey`, `rootNavigator: true` or `useRootNavigator: true`, and never push a page from the context of
+something on the root, such as a dialog: the page lands on the root too and covers the rail. The add profile sheet is
+the one exception. `addProfileFormFile`, `addProfileFromLink` and `addProfilesFromLinks`, which a deep link also reaches,
+close it with a root `popUntil` before switching to the profiles tab, so `showAddProfilePage` opens it on the root and
+takes the caller's context as `origin`; a page the sheet leads to opens from `origin`, as `AddProfileView._toAddCustom`
+does.
+
+The mistake only shows in the desktop layout, and `TestApp` has nothing but the root navigator. A test that guards
+where a route opens hosts the page in a nested `Navigator`, as the desktop case of a new custom profile in
+`test/features/profile_views_test.dart` does.
+
 ## Settings Rows
 
 `lib/widgets/config_item.dart` holds the shared settings-row vocabulary: `ConfigToggleItem`, `ConfigOptionsItem`,
@@ -364,6 +573,11 @@ in `lib/views/config/network.dart` and `_appSettingToggle` in `lib/views/config/
 `ConsumerWidget` only when a row is genuinely reused across screens, as `lib/views/config/network.dart` rows are by
 `lib/views/dashboard/widgets/quick_options.dart`. Rows with bespoke behaviour — a custom dialog, a derived value, or a
 second provider write — stay hand-written rather than growing extra parameters on the shared items.
+
+In an inset grouped list (`generateSectionV3`, `generateAnimatedSection`), a row's subtitle shows its value or state,
+never what the setting does. As iOS settings do, the explanation goes in the group's `footer`, drawn by `ListFooter`,
+one sentence per setting that names it, and a section header carries only its title. Flat `generateSection` lists keep
+their descriptions on the row.
 
 ## Keyboard Insets
 
@@ -380,8 +594,46 @@ which runs every one of those rebuilds inside the layout phase; in a profile tra
 - A widget high in the tree reads the aspect it needs (`MediaQuery.paddingOf`, `viewInsetsOf`, ...), never
   `MediaQuery.of` or `MediaQuery.removePadding(context: ...)` on its own context, which subscribes it to every inset
   change. Move such a read into a small widget of its own below it, as `_AppMediaQuery` in `ThemeManager`,
-  `_BodyPadding` in `lib/pages/home.dart`, the keyboard spacer in `CommonScaffold` and the keyboard watch in
-  `SnapSheet` do.
+  `_BodyPadding` in `lib/pages/home.dart` and `_SheetKeyboard` in `SnapSheet` do.
+- A bottom sheet makes room for the keyboard itself: `_SheetKeyboard` lays the content out above it and removes the
+  bottom inset from the content's `MediaQuery`, so nothing inside a sheet, `CommonScaffold` included, adds keyboard
+  space. A nested sheet must not carry the keyboard through its pages: `NavigatorResizable` learns a page's new size a
+  frame late, and the sheet would trail the keyboard by a frame.
+
+## Page Arrival
+
+A pushed page is built, laid out and painted through every frame of its transition, so whatever it starts on arrival
+(loading and decoding images, building the rows its data brings in) lands inside the animation. Impeller has no
+raster cache, and every offscreen pass is paid again each frame on a phone GPU.
+
+- Work a widget would start as it mounts waits for the route to settle. `RouteSettledMixin`
+  (`lib/widgets/route_motion_hold.dart`) calls `didSettleRoute` once the route that brought the page in has arrived,
+  and at once on a page that already sits still; `whenRouteSettled` (`lib/common/navigator.dart`) does the same for a
+  one-off future, and both wait out the frame a `HeroController` builds a pushed route offstage with its animation
+  pinned to completed. `CommonTargetIcon` and `PackageIcon` show what is already in memory at once and load the rest
+  after that. An icon still loading leaves a blank slot of its size and shows its fallback only once the load ends
+  without an image, so a grid of placeholders is never painted through the transition only to be replaced.
+- A scroll view of image tiles takes `arrivalScrollCacheExtent(routeSettled)`: the rows past the viewport would
+  otherwise be built in the same frame as the ones on screen, which for a screen of icon cards is most of the push.
+  The icon grids (`IconGridScrollView`) and the access control list do this, and so does `ListEditorPage`, whose
+  rows are heavy enough that only its list rebuilds as the route settles, reusing the rows already built.
+- A page whose content waits on what it loads on arrival (lists read from the database, file sizes, the installed fonts)
+  shows its `NullStatus` illustration, with no label, inside a `NullStatusSwitcher` until all of it is in, then switches
+  to the finished content in one step, as the custom profile, resources and font family pages do. Never a skeleton
+  screen of placeholder rows: it has to guess how many rows are coming, fills in piece by piece, and rebuilds every row
+  it stood in for. `SkeletonText` is for a single value inside a card that is already on screen, such as the dashboard's
+  service status. `holdsArrival` keeps the status a switcher opens on for at least 400 ms, about a route transition,
+  so a load that finishes just after arrival does not flash it; the connections, resources and font family pages set
+  it.
+- `GlyphPainter` paints a translucent glyph through an offscreen layer. A placeholder repeated in every tile blends its
+  color over the surface instead of carrying an alpha.
+- `PagedSheetRoute` and `CommonRoute` share
+  `SharedXPageTransition` (`lib/widgets/page_transition.dart`) and its `pageSlide`, a quarter of the page's width as
+  Android 14 slides pages, so a page moves alike in a sheet and on its own. The transition fades a page by painting the surface over it
+  and needs no opacity layer: the page on top shows only on its side of the point where the two fades cross, opaque
+  over the other, so neither shows through the other. A page below that does not fade with it, such as the home
+  route under a `CommonRoute`, is faded by the page on top painting the surface over it. `CommonDesktopRoute` fades in
+  place through a plain 200 ms `FadeTransition`.
 
 ## State Management
 
@@ -398,7 +650,7 @@ Provider files in `lib/providers/`:
   - `state/system.dart`: tray, VPN params, access control, hot keys, shared state.
   - `state/theme.dart`: dynamic color, color scheme, brightness.
   - `state/profile.dart`: profiles, current profile, clash config, setup state.
-  - `state/overwrite.dart`: custom overwrite validity and the staged group/rule notifiers.
+  - `state/custom.dart`: custom profile validity and the staged group/rule notifiers.
 - `action.dart`: business logic notifiers, setup, backup, core lifecycle, proxy selection.
 - `core.dart`: `coreHandlerProvider`, the container-scoped handle on `CoreController`.
 - `route_state.dart` and `routed_probe.dart`: the route tracker and the probe cache; see Route Consistency above.
@@ -462,14 +714,14 @@ the key directly and does not import `lib/state.dart`.
 ### Platform Layering
 
 `lib/common/common.dart` deliberately does not export `tray.dart`, `window.dart`,
-`launch.dart`, `system_dns.dart`, or `permission.dart`. Those five modules import
+`launch.dart`, or `system_dns.dart`. Those four modules import
 `tray`, `window`, `launch_at_startup`, and `screen_retriever`;
 exporting them would put those packages in the compile graph of every file that
 imports the barrel for a string helper. Import the specific module instead.
 
 `test/lint/platform_layering_test.dart` enforces four rules. Three are local: the
-barrel never re-exports one of those five modules, nothing under `lib/common`,
-`lib/enum` or `lib/models` other than those five imports a desktop platform
+barrel never re-exports one of those four modules, nothing under `lib/common`,
+`lib/enum` or `lib/models` other than those four imports a desktop platform
 package, and `lib/common` never imports the `lib/manager/manager.dart` barrel
 (import the single manager needed, as `common/context.dart` does with
 `manager/status_manager.dart`). The fourth walks the barrel's whole transitive
@@ -566,29 +818,76 @@ on/off signal.
 ## Database
 
 The app uses Drift/SQLite in `lib/database/`. `schemaVersion` in `lib/database/database.dart` is the migration
-counter; every schema change bumps it and adds the matching migration step.
+counter; a schema change bumps it and goes into the one step the coming release takes, as the Migrations section of
+`.agents/rules.md` describes.
 
 Tables:
 
 - `Profiles`
 - `Scripts`
 - `Rules`
-- `ProfileRuleLinks` (`profile_rule_mapping`)
-- `ProxyGroups`
+- `DisabledRules` (`disabled_rules`)
+- `ProxyGroups` (`proxy_groups`)
 - `CustomProxies` (`custom_proxies`)
+- `ProxyDialers` (`proxy_dialers`)
 - `IconRecords` (`icon_records`)
+- `IconSets` (`icon_sets`)
 - `ClashProviders` (`clash_providers`)
 
-Rule scenes distinguish global added rules, profile added rules, profile custom rules, and disabled links. Rule and proxy-group ordering use fractional indexing.
+`Profiles.type` is `file`, `url` or `custom`, fixed when the profile is created. A rule belongs to whoever its
+`profile_id` names: no profile makes it global, a file or url profile's rules are what its standard extension adds, and
+a custom profile's rules are all the rules it has. `DisabledRules` lets a profile leave out a global rule. Proxy groups
+and dialers exist only on custom profiles. Every one of these rows cascades with its profile. Rule and proxy-group
+ordering use fractional indexing.
 
-App-level providers (`ClashProviders`, plus every profile offered as a proxy provider) and a custom overwrite's own
-proxies (`CustomProxies`) are soft-disabled through `feature.customProviders` and `feature.customProxies`
-(`lib/common/feature.dart`), switched on by `--dart-define=FEATURE_CUSTOM_PROVIDERS=true` and
-`FEATURE_CUSTOM_PROXIES=true`. While off, their entries are hidden, `appProviderNames` and `appProviderLabels` are
-empty, and `setupState` loads neither, so stored rows stay in the database but never reach a profile. Backups still
-carry both tables.
+A custom profile has no file and no extension: `SetupAction.getProfile` builds its config from an empty map plus its
+groups and rules, and `clashConfigProvider` answers an empty `ClashConfig` for it. Its groups name app-level custom
+proxies directly, and the config declares only the ones some group names; they take nodes from every file or url
+profile too, each a file proxy provider under its label. A custom profile is never a provider itself. App-level
+`ClashProviders` rows are rule providers only, and only custom profiles are offered them.
+
+A custom profile names groups, local proxies, provider profiles and rule sets by name, mihomo's own strings included
+(a DNS server's `#proxy`, a `rule-set:` policy key, the sniffer's lists). `lib/models/references.dart` reads and
+renames every such place, and renames, delete prompts, provider injection and the profile checks all go through it;
+`test/models/references_test.dart` fails when `config.go` reads a name somewhere it does not. A rename is detected
+where the row is written, so every path carries it. A local proxy may not share a name with any custom profile's
+group, as both live in mihomo's one namespace; where older data has both, the name means the group in that profile
+and a proxy rename leaves it alone. `Profiles` writes rows one at a time from the state as it then stands, so a rename
+rewriting custom profiles is never written over by a put issued before it landed.
+
+An app-level rule set's behavior and format are what the Core's `compileRuleSet` found in its source, never a user
+choice. The source stays at `getProviderCachePath(fileName)`; a domain or ipcidr set also gets an `.mrs` beside it, and
+that is what the config loads, while classical rules have no mrs form and load from the source. The Core downloads a
+remote set too and mihomo sees it as a `file` provider, so a sync goes through `ClashProvidersAction`, not mihomo's
+HTTP vehicle. `ClashProvidersAction.prepare` rebuilds a missing cache while the config is built, since backups carry
+only local sources and sets saved before compiling existed have no `.mrs`.
+
+`IconSets` and `IconRecords` only feed the proxy-group icon picker. A set is an icon gallery in the format Quantumult X
+and Loon subscribe to, kept whole as one JSON column; a record is an icon the user saved on a group, written on save and
+never by merely displaying it. A group stores the icon string itself, a URL or a data URI, never a reference to a set,
+so renaming, syncing or deleting a set leaves every group as it was.
 
 Generated Drift output lives in `lib/database/generated/database.g.dart`. After schema changes, run code generation and add or update focused database tests under `test/database/` when converter or migration behavior changes.
+
+### Unreadable Stored Data
+
+Preferences, database rows and backups can hold values this build cannot read: an enum a newer build wrote before a
+downgrade, a fork sharing the data directory, a hand edit. Reading them gives up the smallest unit it can and never
+fails startup or a whole restore.
+
+- `Config.fromJson` and every `safeFromJson` decoder go through `decodeSalvaging`, which keeps each value the strict
+  decoder accepts, descending into maps and lists, and leaves the rest at their defaults; a list or section none of
+  whose entries can be read falls back to its default rather than to empty. Only the migration uses
+  `Config.strictFromJson`, since it tells legacy data apart by the failure. A field's own `fromJson` throws on what it
+  cannot read instead of restoring a default for the whole field, so the salvage around it drops just that entry.
+- DAO entity queries read through `TableInfo.readable`, which skips a row it cannot map and leaves it in the table. A
+  profile's JSON columns that hold selection state, subscription info or overrides fall back to empty instead, so the
+  profile stays listed.
+- Rules, disabled rules and proxy groups are the exception and read strictly, in the app and from a backup alike:
+  skipping one would quietly change how traffic is routed, so a damaged row fails loudly instead.
+- Code that deletes files or rows by comparing against what a query listed must use raw ids (`ProfilesDao.ids`,
+  `ScriptsDao.ids`, `ClashProvidersDao.fileNames`), or it deletes what a skipped row owns. Startup reorders profiles
+  with `Profiles.reorder`, which writes rows but never deletes them.
 
 ## Manager Stack
 
@@ -667,6 +966,8 @@ rewritten; each owner reads the flag where it would otherwise act:
   user's values and the installed app keeps `127.0.0.1:9090`. `SetupAction.requestAdmin` skips authorization.
 - System clock: `_makeRealProfileTask` sets `write-to-system: false` on whatever `ntp` section the generated profile
   ends up with, so neither the user's override nor the profile's own NTP config can move the host's time.
+- Profile listeners and firewall rules: `_makeRealProfileTask` clears `listeners`, `tunnels`, `ss-config`,
+  `vmess-config`, `tuic-server` and `iptables`, and closes `dns.listen`, preventing profile-only changes during apply.
 - System proxy: the `proxy` plugin handle in `lib/common/proxy.dart` is `null`, so `ProxyManager` and exit cleanup
   never write the OS setting, not even the `stopProxy` that would clear what the installed app configured.
 - System DNS: `systemDnsCoordinator` is `null` and `shouldPatchSystemDnsProvider` is `false`, so neither the apply nor
@@ -677,12 +978,12 @@ rewritten; each owner reads the flag where it would otherwise act:
   `FlClash` value in the user's Run key.
 - Privileged Core: `CoreService` resolves the launcher with `hasHelper: false`, which is the direct child-process path
   on every desktop platform; the Helper keeps managing the installed app's Core.
-- Core listeners: `SetupAction._setCoreRunning` and the `AppStateManager` suspend listener never call `startListener` or
-  `stopListener`, so the Core's `isRunning` stays false and `updateListeners` binds nothing, while `isStartProvider`
+- Core listeners: `SetupAction` never calls `startListener` or `stopListener`, for a run or for an on-demand
+  suspension, so the Core's `isRunning` stays false and `updateListeners` binds nothing, while `isStartProvider`
   and `applyProfile` behave as usual. The installed app keeps the mixed, DNS and other loopback ports.
 - Android: `sharedStateProvider` hands the service `VpnOptions.enable: false` and `systemProxy: false`, so the
   foreground service runs without a `VpnService`.
-- Wi-Fi SSID: `ConnectivityManager` never reads the SSID and `Permissions.checkLocationPermissions` neither checks
+- Wi-Fi SSID: `ConnectivityManager` never reads the SSID and `LocationPermissions.refresh` neither checks
   nor requests location authorization, so `currentSSIDProvider` stays `null` and the excluded-network suspend never
   trips. The macOS `wifi_ssid` plugin builds its `CLLocationManager` and `CWWiFiClient` lazily, so a build that
   never asks never reaches locationd or wifid.
@@ -703,18 +1004,17 @@ that asks the OS for a permission, a global shortcut or a registration, must con
 the `chen08209/flutter_distributor` fork pinned to a `v<version>-flclash.<n>` tag (cut a new tag there and bump
 `--git-ref` when the fork changes), and leaves the Core artifacts to the build hook.
 
-The Go core and the Rust helper are built by a Dart build hook. `plugins/setup/hook/build.dart` only constructs
+The desktop Go core and the Rust helper are built by a Dart build hook; Android's Core is built by Gradle (see Android
+Core Build). `plugins/setup/hook/build.dart` only constructs
 `CoreBuilder`, a `package:hooks` `Builder` in `plugins/setup/setup_hooks/`, the same shape `rust_api` uses. Flutter
 runs it for every platform build and for `flutter test`, once per target architecture. `CoreBuilder` turns the hook
-input into a `BuildRequest` (repository root, `Target`, Android toolchain) and hands it to `buildPlatform`. It lives in
+input into a `BuildRequest` (repository root, `Target`) and hands it to `buildPlatform`. It lives in
 `setup_hooks` so `dart test` there can cover it; a test run of `plugins/setup` itself would execute the hook. Failures
 reach the runner as `BuildError` (Go or Cargo failed, no Core for the architecture) or `InfraError` (a toolchain could
-not start, Flutter passed no NDK compiler, the package is not at `plugins/setup`).
+not start, the package is not at `plugins/setup`).
 
 What the hook protocol forces:
 
-- Android derives the per-ABI clang wrapper from the C compiler and `targetNdkApi` (the app's `minSdk`) Flutter
-  passes; `hooks_runner` filters the environment, so `ANDROID_NDK` is not read.
 - `PATH` arrives unextended, so `runCommand` appends the Homebrew, Go and rustup locations that Xcode's and Gradle's
   stripped `PATH` hides.
 - The hook does not know the build mode: the protocol carries none and `linkingEnabled` only says whether link hooks
@@ -730,8 +1030,8 @@ What the hook protocol forces:
 
 Platform projects copy the artifacts out of `libclash/`; application code must not import `plugins/setup`:
 
-- Android: the Go core is built `c-shared`, and `libclash.so` with its headers lands in the `:core` module (see Android
-  Native Task Ordering).
+- Android: nothing. The hook returns without building, because it runs once per architecture while gomobile packs
+  every ABI and one set of Java classes into a single AAR.
 - macOS: a standalone `FlClashCore`. `Release.xcconfig` pins release and profile `ARCHS` to the host because
   flutter_tools otherwise builds a universal binary and every artifact ships one slice; the hook skips a non-host slice
   for the same reason. The `Stage Core` phase copies the Core after the hook may have rewritten it and fails when it is
@@ -748,7 +1048,7 @@ Setup keeps its own cache under `.dart_tool/setup_build_cache/v1/` because it bu
 Linux, a Rust helper:
 
 - Go fingerprints cover the target-specific `go list -deps` inputs in `core/` and `Clash.Meta`, module files, the
-  effective build configuration, `setup_hooks` sources, target flags, the Go toolchain and the Android clang version.
+  effective build configuration, `setup_hooks` sources, target flags and the Go toolchain.
   Helper fingerprints cover its Rust sources and manifests, Cargo/Rust toolchains and flags, and the expected Core
   SHA256.
 - A hit requires the fingerprint and every recorded output's path, size and modification state to match, and skips
@@ -799,44 +1099,63 @@ Windows helper integrity/version check:
 Build configuration defaults live in `plugins/setup/setup_hooks/lib/src/options.dart` and can be overridden via the root
 `build_config.yaml`.
 
+`core_version` in `build_config.yaml` is the mihomo release tag the `core/Clash.Meta` fork is based on. Upstream injects
+its version only from its own CI, so the fork alone reports the placeholder `1.10.0` in `/version` and in protocol
+user agents; `GoBuilder` passes the value as `-X github.com/metacubex/mihomo/constant.Version=...` for every build,
+local and CI alike. Bump it whenever the submodule moves onto a new upstream release.
+
 Architecture detection is automatic. The `--description` flag passed to `flutter_distributor` adds arch suffixes to artifact names, such as `FlClash-0.8.93-macos-arm64.dmg`.
 
-#### Android Native Task Ordering
+#### Android Core Build
 
-`:core` consumes `libclash.so` and its headers as files the setup build hook writes into `android/core/src/main`, not
-as an asset the hook hands back, so nothing in Gradle's model links the two. AGP's configure fingerprint tracks only
-`CMakeLists.txt` and its own generated files, which makes a wrong ordering *sticky*: a configure that ran before the
-hook stays cached and every later build reuses it. `CMakeLists.txt` therefore links `clash` unconditionally, and
-`android/core/build.gradle.kts` fails before any native task runs when those files are absent — both push the failure
-out of the configure step, where it would be cached, and into a place that re-evaluates every build. Three details
-there are easy to get wrong:
+`android/core/build.gradle.kts` registers `bindCore`, which runs `gomobile bind` on `core/mobile`. `:core` cannot
+depend on the AAR itself: `bundleAar` refuses a local AAR in a library, which would break `./gradlew assemble` and
+Android Studio's Make Project. It takes the AAR apart instead, `classes.jar` as a file dependency and `jni/` through
+an `unpack<Variant>CoreJniLibs` task per variant handed to `variant.sources.jniLibs.addGeneratedSourceDirectory`; the
+legacy `sourceSets` DSL rejects a task-built directory. Gradle therefore runs the Go build before any task that needs
+its classes or libraries, in every variant and whether or not Flutter started the build, and its up-to-date check over
+`core/` (tests, `testdata` and `cmd/` left out), `build_config.yaml`, the Go version, the ABIs, the API level and the
+NDK version stands in for the hook's cache.
 
-- `defaultConfig.ndk.abiFilters` is derived from the `target-platform` property Flutter passes to Gradle, mapped
-  through the same ABI table as `Target.forPlatform('android')` in `setup_hooks`; keep the two tables equal. The hook
-  builds a Core only for the platforms of the current build, so a `:core` ABI outside that set has no `libclash.so` to
-  link, and without any filter AGP would configure the NDK's full default ABI set.
-- Match task names by **prefix**. AGP puts the ABI in the names of the tasks that do the work
-  (`configureCMakeDebug[arm64-v8a]`). The bare `configureCMakeDebug`, `buildCMakeDebug`, and `externalNativeBuildDebug`
-  that an exact-name match catches are grouping tasks that never enter an app build's execution graph.
-- Use `mustRunAfter`, not `dependsOn`. `:core` declares only `debug` and `release` variants, so a **profile** app
-  consumes `:core`'s `debug` variant; no `:core` variant name maps onto the right `:app` task, and `dependsOn` would
-  drag a second, wrong-mode Flutter build into the graph.
-
-A standalone `./gradlew :core:assembleDebug` stays legal once the hook has run at least once; it only warns that the
-artifacts under `src/main` are whatever the last hook run left behind, which is the one failure mode this guard cannot
-detect. Verify a change here with `./gradlew ":core:buildCMakeDebug[arm64-v8a]" :app:compileFlutterBuildDebug
---dry-run`: the Flutter task must be listed first even though the CMake task was requested first.
+- `gomobile` and `gobind` come from the `tool` directives in `core/go.mod` and are built into the task's temporary
+  directory, so their version moves only with `go.mod`. `bindCore` finds `go` on `PATH` or in the Homebrew and Go
+  installer locations that Android Studio's GUI `PATH` leaves out, and puts the JDK running Gradle first for
+  gomobile's `javac`.
+- The ABIs come from the `target-platform` property Flutter passes, and default to all three for a Gradle build Flutter
+  did not start. `ANDROID_HOME` and `ANDROID_NDK_HOME` are AGP's SDK and its `ndkVersion` NDK, so the Core and the app
+  share one NDK, and `-androidapi` is the app's `minSdk`.
+- `tags`, `go_ldflags` and `core_version` come from `build_config.yaml`, the file the hook reads.
+- Both Cores take their GODEBUG defaults from the `go` line of `core/go.mod`, whatever toolchain builds them. The
+  desktop Core gets them from the Go command because `core` is its main module. gomobile links the library as the main
+  package of a module it generates, whose `go` line is the toolchain's, so `bindCore` hands the desktop Core's
+  `DefaultGODEBUG` (from `go list` on `./cmd/core`) to the Android Core through `-X=runtime.godebugDefault`. Without
+  it, a toolchain newer than that line would move only Android's TLS, x509 and runtime defaults. Raising the `go`
+  line therefore changes both Cores' behaviour at once; pin a setting with a `godebug` line in `core/go.mod` to hold
+  it back on both.
+- The TLS settings among them do nothing for proxy traffic. Every TLS connection the Core makes goes through
+  `metacubex/tls` or `metacubex/utls`, ports of `crypto/tls` that hard-code their version's defaults and never read
+  GODEBUG, so `tlssha1` and `tlsmlkem` cannot be held back. They still parse and verify through the standard
+  `crypto/x509` and `crypto/rsa`, and both run before `skip-cert-verify` is consulted, so `core/go.mod` keeps
+  `x509negativeserial=1` and `rsa1024min=0`: a server certificate with a negative serial number or an RSA key under
+  1024 bits would otherwise fail the handshake even on a proxy that skips verification.
+- gomobile names the library `gojni`, both as the file it builds and in the `System.loadLibrary` of the `go.Seq`
+  runtime, with no option to change it. `bindCore` rewrites that string constant in `go/Seq.class` to `clash` as it
+  extracts `classes.jar`, and the unpack task renames `libgojni.so` to `libclash.so`; each fails the build unless it
+  finds what it rewrites, the constant exactly once. Go writes no `DT_SONAME` into a c-shared library, so the ELF
+  needs no change.
+- The AAR's own `proguard.txt` goes with the rest of it. `android/core/consumer-rules.pro` keeps `go.**` and
+  `com.follow.clash.core.mobile.**`, the classes gobind's C glue looks up by name.
+- The CI `android` job compiles `:core` without Flutter, so it passes `-Ptarget-platform=android-arm64` to build one ABI.
 
 #### Android Crash Symbols
 
 Crashlytics NDK symbolicates a native crash only from libraries that still carry their symbols, and AGP strips every
 `.so` it packages, so the Android build keeps symbols until `:app`'s own strip step and the APK does not grow:
 
-- The hook drops `-s` and `-w` from `go_ldflags` for the `c-shared` Android targets only; the desktop Cores stay
+- `bindCore` drops `-s` and `-w` from `go_ldflags`, and gomobile strips nothing itself; the desktop Cores stay
   stripped because nothing consumes their symbols.
-- `:core` compiles with `-g`, does not `--strip-all`, and sets `packaging.jniLibs.keepDebugSymbols` so its own strip
-  task leaves `libclash.so` and `libcore.so` intact on the way into `:app`'s merged native libs, which is where the
-  Crashlytics plugin reads them.
+- `:core` sets `packaging.jniLibs.keepDebugSymbols` so its own strip task leaves `libclash.so` intact on the way into
+  `:app`'s merged native libs, which is where the Crashlytics plugin reads it.
 - `:app` turns on `nativeSymbolUploadEnabled` and finalizes `assembleRelease` and `bundleRelease` with
   `uploadCrashlyticsSymbolFileRelease` only when release signing is configured, the same condition that marks a real
   release build; the checked-in `google-services.json` is a placeholder, so a local upload is noise at best, and CI
@@ -847,7 +1166,10 @@ Crashlytics NDK symbolicates a native crash only from libraries that still carry
 ## Local Plugins
 
 - `setup`: build-time harness for Go core artifacts and the Rust helper, driven by a Dart build hook; no runtime Dart API.
-- `proxy`: system proxy configuration.
+- `proxy`: system proxy configuration. On Windows the package installer and uninstaller kill the app, and then run
+  `FlClash.exe --clear-stale-proxy`, the installer once the new files are in place; the runner hands it to the plugin
+  before any engine starts, and it turns off only a proxy still set to FlClash's `127.0.0.1:<port>` with nothing
+  listening on that port.
 - `rust_api`: runtime Flutter Rust Bridge FFI package built through Native Assets. See below.
 - `tray`: system tray for Linux, macOS and Windows. Written for FlClash; replaced the `tray_manager` fork.
 - `window`: desktop window control for Linux, macOS and Windows. Written for FlClash; replaced the
@@ -922,10 +1244,11 @@ table. `lib/common/window.dart` and `lib/manager/window_manager.dart` are the on
   capture on top of it.
 - Windows: with `titleBarStyle: hidden`, `WM_NCCALCSIZE` takes the frame insets from `AdjustWindowRectExForDpi` and
   keeps the client rect at the top edge (plus the frame height when maximized, so the taskbar stays uncovered; plus
-  1 px on Windows 11, which draws the top border only into a non-client strip; none on Windows 10, where DWM draws
-  the whole caption over any strip shorter than one). Windows 10 gets its top border the Windows Terminal way
-  instead: the DWM frame is extended over the caption height, the plugin places the Flutter view 1 px lower and
-  paints that row black, which DWM treats as alpha 0, and hit-tests it as `HTTOP`; see `plugins/window/README.md`.
+  one physical pixel on Windows 11, which draws the top border only into a non-client strip; none on Windows 10,
+  where DWM draws the whole caption over any strip shorter than one). Windows 10 gets its top border the Windows
+  Terminal way instead: the DWM frame is extended over the caption height, the plugin places the Flutter view one
+  physical pixel lower and paints that row black, which DWM treats as alpha 0, and hit-tests it as `HTTOP`; see
+  `plugins/window/README.md`.
   The plugin therefore owns the view placement on `WM_SIZE`. Fullscreen is emulated by the
   plugin, which raises `enter-full-screen` and
   `leave-full-screen` itself and mutes `WM_SIZE` while it is on. The find-running-window IPC
@@ -972,9 +1295,11 @@ the singleton entry point: `RustLib.init()` runs before any call and `RustLib.di
 
 - `api/` is the only input flutter_rust_bridge parses (`rust_input: crate::api`). Every function there is a thin
   delegation, so the generated bindings stay identical on every platform.
-- `ipc/` implements the desktop socket server: `frame` (length-prefixed framing and the write backoff), `queue` (the
-  bounded send queue), `platform` (socket cleanup, Windows peer credentials and the non-blocking pipe reader), and
-  `server` (lifecycle, accept loop, and the `RUNNING`/`STATE` globals).
+- `ipc/` implements the desktop socket server: `frame` (length-prefixed framing), `outbox` (the byte-bounded send
+  queue), `access` (socket mode, the Unix peer uid check, and the peer PID), and `server` (bind, the accept loop, and
+  the read and write halves of a connection). Each `Server` runs a current-thread tokio runtime on an `ipc-server`
+  thread of its own and holds no global state, so I/O is event-driven on every platform and closing or dropping the
+  handle releases the socket. It serves one peer at a time; a second one waits in the backlog.
 - `script/` runs profile override scripts on QuickJS through `rquickjs`.
 - `editor/` backs `plugins/code_forge`: a `ropey` buffer, fold ranges and bracket matching, indent guides for the
   viewport, and completion words. `api/editor.rs` exposes the buffer as the opaque `RopeBridge`; the selection
@@ -985,7 +1310,13 @@ the singleton entry point: `RustLib.init()` runs before any call and `RustLib.di
   Windows, the main dispatch queue on macOS, in place on Linux), and `service` owns the registry and forwards presses
   to Dart. Linux is X11 only; a Wayland session without XWayland gets an error rather than a silent no-op.
 
-What a platform does not use, it does not compile. `interprocess` and `global-hotkey` are declared under
+`IpcServer.bind` resolves once the address is bound, `events()` attaches the one event stream, `send` only enqueues
+and is a synchronous call so frames keep the order they were sent in, and `close` joins the thread. A bridge function
+that takes a `StreamSink` must not return an error: the generated Dart code drops that call's future, so an `Err`
+surfaces as an unhandled async error instead of reaching the caller. That is why binding is its own call and
+everything after it is reported as an event.
+
+What a platform does not use, it does not compile. `interprocess`, `tokio` and `global-hotkey` are declared under
 `cfg(not(target_os = "android"))`, and `ipc/mod.rs` and `hotkey/mod.rs` swap in their `unsupported.rs` there, because
 Android loads the Core in-process and has no global shortcuts. Adding a capability follows the same shape: implement it in its own module, gate the
 dependency by target, and keep the `api/` entry point unconditional so one set of bindings still serves every platform.
@@ -1007,7 +1338,7 @@ returns the JSON the script produced. Nothing about the script runs in Dart.
 - Evaluation is bounded: a 10-second interrupt deadline and a memory ceiling, because a script that never returns would
   otherwise hold the profile forever. `console` is installed before the script runs, since scripts written for other
   clients log as they work.
-- `rust/tests/fixtures/profile_script.js` is the compatibility regression: an overwrite written for the suite that
+- `rust/tests/fixtures/profile_script.js` is the compatibility regression: an extension script written for the suite that
   performs the transform real ones perform, so it exercises `Map`/`Set`, spread, destructuring, optional chaining,
   nullish coalescing, `Object.fromEntries`, named capture groups and lookbehind in one pass. Keep it first-party and
   free of external URLs — vendoring somebody's published script here carries their attribution and their links.
@@ -1020,8 +1351,10 @@ after calculating the SHA256 of the Core produced for the active Flutter configu
 
 The helper owns its Windows Service Control Manager lifecycle through two elevated commands:
 
-- `FlClashHelperService.exe install` stops and removes any stale registration, creates the auto-start service for the
-  current executable path, starts it, and waits for the running state.
+- `FlClashHelperService.exe install --owner-pid <pid>` reads the account of that process (the app, which Dart names with
+  its own PID because the elevated installer may be another administrator), stops and removes any stale registration,
+  creates the auto-start service for the current executable path with `--owner-sid <SID>` as its launch argument,
+  starts it, and waits for the running state. A service started without an owner exits instead of serving anyone.
 - `FlClashHelperService.exe uninstall` stops the service, waits for shutdown, removes its registration, and is also used
   by the Windows package uninstaller.
 
@@ -1030,8 +1363,11 @@ The Dart layer only launches the helper's `install` command through `ShellExecut
 
 Linux takes the same shape with systemd in place of the Service Control Manager, and the same install timing: nothing
 is registered at package install, and `Linux.registerService` asks for elevation only when TUN authorization needs it.
+Elevation goes through `pkexec` so polkit raises the system prompt. When pkexec is missing, or exits 127 because no
+polkit agent runs (common under tiling window managers), it falls back to `sudo`: cached credentials first, then a
+password the app asks for and hands to `sudo -S` on stdin. A 126 means the user dismissed the polkit dialog and is final.
 
-- `FlClashHelperService install`, run through `pkexec` so polkit raises the system prompt, writes
+- `FlClashHelperService install`, run through `LinuxElevation` (`lib/common/linux_elevation.dart`), writes
   `/etc/systemd/system/flclash-helper.service` for the current executable path and enables and restarts it. It reads
   `PKEXEC_UID`/`SUDO_UID` to learn who asked, and refuses to install without one — there would be no account to grant
   the socket to. It also refuses a Helper whose binary or directory is not root-owned and non-writable (a unit runs it
@@ -1058,24 +1394,46 @@ is registered at package install, and `Linux.registerService` asks for elevation
 - An AppImage has neither a stable executable path nor a writable Core, and its FUSE mount is `nosuid`, so
   `system.isAppImage` reports TUN authorization as unavailable instead of prompting for a password that cannot help.
 - A Linux host without systemd (`/run/systemd/system` absent) has no Helper: `system.hasHelperService` is false there,
-  readiness is the `stat` check, and `pkexec` sets the setuid bit on the bundled Core as before.
+  readiness is the `stat` check, and the same elevation sets the setuid bit on the bundled Core as before.
+
+A setuid Core is a root process for whoever gives it an address to dial (`argv[1]`), so its mode never lets others
+execute it: macOS runs `chown root:admin` and `chmod 4750` (and refuses an account outside the `admin` group, which
+could not run the result), and a Linux host without systemd hands it to the primary group of the user that
+`PKEXEC_UID` or `SUDO_UID` names. `System.isPrivilegedStatOutput` reads a Core that others can execute as unauthorized, so one that an earlier
+version marked `+sx` is re-authorized on the next TUN enable.
 
 In every Flutter build mode `/start` opens the fixed Core executable beside the Helper without write/delete sharing,
 validates it against the SHA256 embedded only in the Helper, and keeps that handle open through process creation.
 `/ping` only compares the requested `coreSha256` with the Helper's embedded value and checks the fixed Core path exists;
-it never hashes the Core. Protocol version 6 uses 32-character lowercase-hex session ownership:
+it never hashes the Core. Protocol version 6 (8 on Windows, where the owner check and the browser-origin check arrived
+and an older Helper must be reinstalled) uses 32-character lowercase-hex session ownership:
 
 - `GET /ping?coreSha256=...` returns the current Helper executable path with `x-flclash-helper-protocol` when the
   requested SHA matches.
-- `POST /start` rejects unknown JSON fields, validates `{address, sessionId}`, then releases any previously managed Core
-  before verifying the Core — so every outcome, including a rejected one, leaves the Helper owning no Core — and returns
+- `POST /start` rejects unknown JSON fields and validates `{address, sessionId}` and, on Linux, the socket owner, which
+  leaves a running Core alone. It then releases any previously managed Core before verifying the Core — so every
+  outcome of a request that passed validation, including a rejected one, leaves the Helper owning no Core — and returns
   `{sessionId, pid}`.
 - `POST /stop` validates `{sessionId}` and only stops the matching managed Core. A session mismatch is HTTP 409.
 - `GET /logs` exposes the bounded recent Helper/Core stderr buffer with `no-store` caching.
 
-Endpoints bind only to `127.0.0.1:47890` on Windows and to `/run/flclash/helper.sock` on Linux, and do not use
-request-token authentication. Lifecycle safety comes from the fixed executable/hash, the strict address namespace
-(`\\.\pipe\FlClashCore_<32 hex>` on Windows, `/tmp/FlClashSocket_<digits>.sock` on Linux), the session-scoped stop
+`/start` and `/stop` take at most 4096 bytes and need a `Content-Length` (HTTP 413 and 411 otherwise); `HelperClient`
+always sends one. All endpoints reject `Origin` headers and non-local `Host` values, preventing browser requests and DNS
+rebinding through an owner-account browser, which would otherwise pass the Windows account check. The accepted
+authorities are `127.0.0.1`, `localhost` and the Linux Unix-socket placeholder `FlClashHelperService`. The Helper grants
+no CORS access.
+
+Endpoints bind only to `127.0.0.1` on Windows and to `/run/flclash/helper.sock` on Linux, and do not use
+request-token authentication. The Windows port is picked by the system, because Hyper-V and WinNAT reserve ranges that
+can cover any fixed one, and published as the `Port` DWORD of a volatile `Runtime` key under the service's own registry
+key, which only administrators can write; `HelperClient` reads it per request and falls back to 47890, where a Helper
+from before listens. Who may call them is decided per connection, before any request is read: the Linux
+socket drops a peer whose `SO_PEERCRED` UID is not the owner's, and the Windows listener (`service/peer.rs`) traces the
+connection through the TCP table to the process holding its client end and drops it unless that process runs as the
+owner SID the service was registered with. The Windows Core runs as SYSTEM and dials whatever pipe `/start` names, so
+without that check any local account would host a SYSTEM Core. What no per-connection check closes is a process that
+runs as the owner itself, on either platform. Lifecycle safety also comes from the fixed executable/hash, the strict
+address namespace (`\\.\pipe\FlClashCore_<32 hex>` on Windows, `/tmp/FlClashSocket_<digits>.sock` on Linux), the session-scoped stop
 contract, Dart-side peer-PID verification on Windows and, on Unix, the Core socket that `plugins/rust_api` sets to
 mode `0600` so only the owning user (and the root-effective Core) can connect. When the Helper service itself shuts
 down, it unconditionally stops the Core process it owns; under systemd the unit's control group does the same.

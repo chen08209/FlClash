@@ -49,7 +49,7 @@ class ThemeManager extends ConsumerWidget {
     );
     final double textScaleFactor = max(
       min(
-        textScale.enable ? textScale.scale : defaultTextScaleFactor,
+        textScale.enable ? textScale.scale : systemTextScaleOf(context),
         maxTextScale,
       ),
       minTextScale,

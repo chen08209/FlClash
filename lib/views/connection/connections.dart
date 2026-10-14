@@ -40,7 +40,8 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
   @override
   void initState() {
     super.initState();
-    _scrollController = widget.scrollController ?? ScrollController();
+    _scrollController =
+        widget.scrollController ?? sheetScrollController(context);
   }
 
   @override
@@ -129,6 +130,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
           return NullStatusSwitcher(
             isEmpty: connections.isEmpty,
             isSearching: state.isSearching,
+            holdsArrival: true,
             nullStatus: NullStatus(
               label: appLocalizations.nullTip(appLocalizations.connections),
               illustration: NullStatusIllustration.connections,

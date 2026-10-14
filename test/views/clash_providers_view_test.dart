@@ -1,15 +1,20 @@
+import 'dart:io';
+
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/views/config/providers.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../helpers/glyph_finders.dart';
+import '../helpers/context_menu.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
@@ -19,8 +24,7 @@ class _TestClashProviders extends ClashProviders {
   final List<ClashProvider> initial;
 
   @override
-  Stream<List<ClashProvider>> build(ProviderKind kind) =>
-      Stream.value(initial.where((item) => item.kind == kind).toList());
+  Stream<List<ClashProvider>> build() => Stream.value(initial);
 
   @override
   void order(int oldIndex, int newIndex) {}
@@ -28,37 +32,32 @@ class _TestClashProviders extends ClashProviders {
 
 class _RecordingClashProvidersAction extends ClashProvidersAction {
   final List<Profile> usedBy;
-  final List<Profile> usedByOnDelete;
-  final List<Profile> renameConflicts;
+  final Exception? putFailure;
   final put = <ClashProvider>[];
+  final refreshed = <ClashProvider>[];
   final deleted = <ClashProvider>[];
 
-  _RecordingClashProvidersAction({
-    this.usedBy = const [],
-    this.usedByOnDelete = const [],
-    this.renameConflicts = const [],
-  });
+  _RecordingClashProvidersAction({this.usedBy = const [], this.putFailure});
 
   @override
-  Future<List<Profile>> putProvider(
+  Future<ClashProvider> putProvider(
     ClashProvider provider, {
     ClashProvider? previous,
     List<int>? content,
+    bool refresh = false,
   }) async {
-    if (renameConflicts.isNotEmpty) {
-      return renameConflicts;
+    if (putFailure case final failure?) {
+      throw failure;
     }
     put.add(provider);
-    return const [];
+    if (refresh) {
+      refreshed.add(provider);
+    }
+    return provider;
   }
 
   @override
-  Future<List<Profile>> delProvider(ClashProvider provider) async {
-    if (usedByOnDelete.isEmpty) {
-      deleted.add(provider);
-    }
-    return usedByOnDelete;
-  }
+  void delProvider(ClashProvider provider) => deleted.add(provider);
 
   @override
   Future<List<Profile>> profilesUsing(ClashProvider provider) async => usedBy;
@@ -88,31 +87,38 @@ ProviderContainer _containerFor(
 }
 
 void main() {
-  const appProxies = ClashProvider(
-    id: 1,
-    kind: ProviderKind.proxy,
-    label: 'Shared nodes',
-    url: 'https://example.com/nodes.yaml',
-  );
-  const appRules = ClashProvider(
-    id: 2,
-    kind: ProviderKind.rule,
-    label: 'Ad block',
-    url: 'https://example.com/ads.yaml',
-    behavior: RuleProviderBehavior.domain,
-    format: RuleProviderFormat.mrs,
-  );
+  late Directory home;
 
-  testWidgets('the proxy providers view lists only its own kind', (
-    tester,
-  ) async {
-    final profile = Profile.normal(label: 'Subscription');
+  setUpAll(() {
+    home = Directory.systemTemp.createTempSync('flclash-rule-sets-view-');
+    AppPath.supportDirectory = () async => home;
+    AppPath.temporaryDirectory = () async => home;
+    AppPath.cacheDirectory = () async => home;
+  });
+
+  tearDownAll(() {
+    if (home.existsSync()) home.deleteSync(recursive: true);
+  });
+
+  testWidgets('a rule set shows its behavior beside its name and when its file '
+      'last changed at the end', (tester) async {
+    const cached = ClashProvider(
+      id: 31,
+      label: 'Cached',
+      url: 'https://example.com/cached.yaml',
+    );
+    final modified = DateTime.now().subtract(const Duration(hours: 3));
+    await tester.runAsync(() async {
+      final file = File(await appPath.getProviderCachePath(cached.fileName));
+      await file.create(recursive: true);
+      await file.writeAsString('payload: []');
+      await file.setLastModified(modified);
+    });
     final container = _containerFor(
       tester,
-      profiles: [profile],
       overrides: [
-        clashProvidersProvider.overrideWith2(
-          (_) => _TestClashProviders([appProxies, appRules]),
+        clashProvidersProvider.overrideWith(
+          () => _TestClashProviders(const [cached]),
         ),
       ],
     );
@@ -120,30 +126,41 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(
-          child: ClashProvidersView(kind: ProviderKind.proxy),
-        ),
+        child: const TestApp(child: ClashProvidersView()),
       ),
     );
-    await tester.pump();
+    for (var step = 0; step < 5; step++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pump();
+    }
 
-    expect(find.text('Shared nodes'), findsOneWidget);
-    expect(find.text('Ad block'), findsNothing);
-    expect(find.text('Subscription'), findsNothing);
-    expect(tester.takeException(), null);
+    final updated = modified.getLastUpdateTimeDesc(
+      tester.element(find.text('Cached')),
+      compact: true,
+    );
+    expect(find.text(updated), findsOneWidget);
+    expect(find.widgetWithText(TonalChip, 'classical'), findsOneWidget);
   });
 
-  testWidgets('a url import rejects a name a profile already uses', (
+  const appRules = ClashProvider(
+    id: 2,
+    label: 'Ad block',
+    url: 'https://example.com/ads.yaml',
+    behavior: RuleProviderBehavior.domain,
+    format: RuleProviderFormat.mrs,
+  );
+
+  testWidgets('a url import rejects a name another rule set has', (
     tester,
   ) async {
-    final profile = Profile.normal(label: 'Subscription');
     final action = _RecordingClashProvidersAction();
     final container = _containerFor(
       tester,
-      profiles: [profile],
       overrides: [
-        clashProvidersProvider.overrideWith2(
-          (_) => _TestClashProviders([appProxies]),
+        clashProvidersProvider.overrideWith(
+          () => _TestClashProviders([appRules]),
         ),
         clashProvidersActionProvider.overrideWith(() => action),
       ],
@@ -152,21 +169,19 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(
-          child: ClashProvidersView(kind: ProviderKind.proxy),
-        ),
+        child: const TestApp(child: ClashProvidersView()),
       ),
     );
     await tester.pump();
 
-    await tester.tap(find.text('Add'));
+    await tester.tap(find.byTooltip('Add'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Import from URL'));
     await tester.pumpAndSettle();
 
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Name'),
-      'Subscription',
+      'Ad block',
     );
     await tester.enterText(
       find.widgetWithText(TextFormField, 'URL'),
@@ -179,24 +194,23 @@ void main() {
 
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Name'),
-      'Extra nodes',
+      'Extra rules',
     );
     await tester.tap(find.text('Submit'));
     await tester.pumpAndSettle();
 
-    expect(action.put.single.label, 'Extra nodes');
+    expect(action.put.single.label, 'Extra rules');
     expect(action.put.single.url, 'https://example.com/more.yaml');
-    expect(action.put.single.kind, ProviderKind.proxy);
   });
 
-  testWidgets('a url import without a name takes both name and format from '
-      'the url', (tester) async {
+  testWidgets('a url import without a name takes it from the url and asks '
+      'nothing more', (tester) async {
     final action = _RecordingClashProvidersAction();
     final container = _containerFor(
       tester,
       overrides: [
-        clashProvidersProvider.overrideWith2(
-          (_) => _TestClashProviders(const []),
+        clashProvidersProvider.overrideWith(
+          () => _TestClashProviders(const []),
         ),
         clashProvidersActionProvider.overrideWith(() => action),
       ],
@@ -205,14 +219,12 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(
-          child: ClashProvidersView(kind: ProviderKind.rule),
-        ),
+        child: const TestApp(child: ClashProvidersView()),
       ),
     );
     await tester.pump();
 
-    await tester.tap(find.text('Add'));
+    await tester.tap(find.byTooltip('Add'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Import from URL'));
     await tester.pumpAndSettle();
@@ -224,21 +236,107 @@ void main() {
     await tester.tap(find.text('Submit'));
     await tester.pumpAndSettle();
 
-    expect(action.put, isEmpty);
-    await tester.tap(find.text('domain'));
+    expect(find.text('Behavior'), findsNothing);
+    expect(action.put.single.label, 'ads');
+    expect(action.put.single.url, 'https://example.com/ads.list');
+  });
+
+  testWidgets('a batch url import skips known urls and names each set apart', (
+    tester,
+  ) async {
+    final action = _RecordingClashProvidersAction();
+    final container = _containerFor(
+      tester,
+      overrides: [
+        clashProvidersProvider.overrideWith(
+          () => _TestClashProviders([appRules]),
+        ),
+        clashProvidersActionProvider.overrideWith(() => action),
+      ],
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: ClashProvidersView()),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Add'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Import from URL'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Batch import'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextField),
+      'https://example.com/ads.yaml\n'
+      'https://a.example/cn.list\n'
+      'https://b.example/cn.list',
+    );
+    await tester.pump();
+    expect(find.text('2 to add, 1 skipped as existing'), findsOneWidget);
+    await tester.tap(find.text('Submit'));
     await tester.pumpAndSettle();
 
-    expect(action.put.single.label, 'ads');
-    expect(action.put.single.format, RuleProviderFormat.text);
-    expect(action.put.single.behavior, RuleProviderBehavior.domain);
-    expect(action.put.single.url, 'https://example.com/ads.list');
+    expect(action.put.map((provider) => (provider.label, provider.url)), [
+      ('cn', 'https://a.example/cn.list'),
+      ('cn(1)', 'https://b.example/cn.list'),
+    ]);
+  });
+
+  testWidgets('a rule set the Core cannot read says why and is not saved', (
+    tester,
+  ) async {
+    final action = _RecordingClashProvidersAction(
+      putFailure: const CoreMethodException(
+        code: 'rule_set_mixed',
+        message: 'rule set mixes domains and IP ranges',
+      ),
+    );
+    final container = _containerFor(
+      tester,
+      overrides: [
+        clashProvidersProvider.overrideWith(
+          () => _TestClashProviders(const []),
+        ),
+        clashProvidersActionProvider.overrideWith(() => action),
+      ],
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: ClashProvidersView()),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Add'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Import from URL'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'URL'),
+      'https://example.com/mixed.list',
+    );
+    await tester.tap(find.text('Submit'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'The rule set mixes domains and IP ranges, so its type cannot be told',
+      ),
+      findsOneWidget,
+    );
+    expect(action.put, isEmpty);
   });
 
   testWidgets('a local provider offers the editor and keeps the url out of '
       'its options', (tester) async {
     const local = ClashProvider(
       id: 3,
-      kind: ProviderKind.rule,
       label: 'Local list',
       behavior: RuleProviderBehavior.classical,
       format: RuleProviderFormat.yaml,
@@ -246,8 +344,8 @@ void main() {
     final container = _containerFor(
       tester,
       overrides: [
-        clashProvidersProvider.overrideWith2(
-          (_) => _TestClashProviders(const [local]),
+        clashProvidersProvider.overrideWith(
+          () => _TestClashProviders(const [local]),
         ),
       ],
     );
@@ -255,37 +353,35 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(
-          child: ClashProvidersView(kind: ProviderKind.rule),
-        ),
+        child: const TestApp(child: ClashProvidersView()),
       ),
     );
     await tester.pump();
 
-    expect(find.text('File'), findsOneWidget);
+    expect(find.text('classical'), findsOneWidget);
+    expect(find.text('Local'), findsOneWidget);
 
-    await tester.tap(find.byGlyph(AppGlyphs.more));
+    await rightClick(tester, find.byType(DecorationListItem));
     await tester.pumpAndSettle();
     expect(find.text('Edit'), findsOneWidget);
+    expect(find.text('Sync'), findsNothing);
 
     await tester.tap(find.text('Options'));
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(TextFormField, 'Name'), findsOneWidget);
     expect(find.widgetWithText(TextFormField, 'URL'), findsNothing);
-    expect(find.text('Behavior'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, 'classical'), findsOneWidget);
+    expect(find.text('Behavior'), findsNothing);
+    expect(find.text('Format'), findsNothing);
   });
 
-  testWidgets('an mrs rule set is offered only the behaviors the core takes', (
-    tester,
-  ) async {
+  testWidgets('a remote rule set syncs through the action', (tester) async {
     final action = _RecordingClashProvidersAction();
     final container = _containerFor(
       tester,
       overrides: [
-        clashProvidersProvider.overrideWith2(
-          (_) => _TestClashProviders([appRules]),
+        clashProvidersProvider.overrideWith(
+          () => _TestClashProviders([appRules]),
         ),
         clashProvidersActionProvider.overrideWith(() => action),
       ],
@@ -294,102 +390,56 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(
-          child: ClashProvidersView(kind: ProviderKind.rule),
+        child: const TestApp(child: ClashProvidersView()),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('domain'), findsOneWidget);
+    expect(find.text('Remote'), findsOneWidget);
+    expect(find.textContaining(appRules.url), findsNothing);
+    await rightClick(tester, find.byType(DecorationListItem));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sync'));
+    await tester.pumpAndSettle();
+
+    expect(action.refreshed, [appRules]);
+  });
+
+  testWidgets('a remote rule set previews read-only on a tap', (tester) async {
+    final container = _containerFor(
+      tester,
+      overrides: [
+        clashProvidersProvider.overrideWith(
+          () => _TestClashProviders([appRules]),
         ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: ClashProvidersView()),
       ),
     );
     await tester.pump();
 
     await tester.tap(find.text('Ad block'));
-    await tester.pumpAndSettle();
-    expect(find.widgetWithText(TextFormField, 'Interval'), findsNothing);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
-    await tester.tap(find.widgetWithText(FilledButton, 'domain'));
-    await tester.pumpAndSettle();
-    expect(find.text('classical'), findsNothing);
-    await tester.tap(find.text('ipcidr'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Confirm'));
-    await tester.pumpAndSettle();
-
-    expect(action.put.single.behavior, RuleProviderBehavior.ipcidr);
-    expect(action.put.single.format, RuleProviderFormat.mrs);
-    expect(action.put.single.id, appRules.id);
+    expect(tester.widget<EditorPage>(find.byType(EditorPage)).onSave, isNull);
   });
 
-  testWidgets(
-    'a rule set whose url turns into an mrs link follows the format',
-    (tester) async {
-      const yamlRules = ClashProvider(
-        id: 4,
-        kind: ProviderKind.rule,
-        label: 'Ads',
-        url: 'https://example.com/ads.yaml',
-        behavior: RuleProviderBehavior.classical,
-        format: RuleProviderFormat.yaml,
-      );
-      final action = _RecordingClashProvidersAction();
-      final container = _containerFor(
-        tester,
-        overrides: [
-          clashProvidersProvider.overrideWith2(
-            (_) => _TestClashProviders(const [yamlRules]),
-          ),
-          clashProvidersActionProvider.overrideWith(() => action),
-        ],
-      );
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const TestApp(
-            child: ClashProvidersView(kind: ProviderKind.rule),
-          ),
-        ),
-      );
-      await tester.pump();
-
-      await tester.tap(find.text('Ads'));
-      await tester.pumpAndSettle();
-      expect(find.widgetWithText(FilledButton, 'yaml'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'classical'), findsOneWidget);
-
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'URL'),
-        'https://example.com/ads.mrs',
-      );
-      await tester.pumpAndSettle();
-      expect(find.widgetWithText(FilledButton, 'mrs'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'domain'), findsOneWidget);
-
-      await tester.tap(find.text('Confirm'));
-      await tester.pumpAndSettle();
-
-      expect(action.put.single.url, 'https://example.com/ads.mrs');
-      expect(action.put.single.format, RuleProviderFormat.mrs);
-      expect(action.put.single.behavior, RuleProviderBehavior.domain);
-    },
-  );
-
-  testWidgets('a rule set can be given a format its url does not name', (
+  testWidgets('the options of a remote rule set edit only its name and url', (
     tester,
   ) async {
-    const bareRules = ClashProvider(
-      id: 5,
-      kind: ProviderKind.rule,
-      label: 'Bare',
-      url: 'https://example.com/rules?token=abc',
-      behavior: RuleProviderBehavior.classical,
-      format: RuleProviderFormat.yaml,
-    );
     final action = _RecordingClashProvidersAction();
     final container = _containerFor(
       tester,
       overrides: [
-        clashProvidersProvider.overrideWith2(
-          (_) => _TestClashProviders(const [bareRules]),
+        clashProvidersProvider.overrideWith(
+          () => _TestClashProviders([appRules]),
         ),
         clashProvidersActionProvider.overrideWith(() => action),
       ],
@@ -398,67 +448,29 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(
-          child: ClashProvidersView(kind: ProviderKind.rule),
-        ),
+        child: const TestApp(child: ClashProvidersView()),
       ),
     );
     await tester.pump();
 
-    await tester.tap(find.text('Bare'));
+    await rightClick(tester, find.byType(DecorationListItem));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'yaml'));
+    await tester.tap(find.text('Options'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('text'));
-    await tester.pumpAndSettle();
-    expect(find.widgetWithText(FilledButton, 'text'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, 'classical'), findsOneWidget);
+    expect(find.text('Behavior'), findsNothing);
+    expect(find.text('Format'), findsNothing);
 
-    await tester.tap(find.text('Confirm'));
-    await tester.pumpAndSettle();
-
-    expect(action.put.single.format, RuleProviderFormat.text);
-    expect(action.put.single.behavior, RuleProviderBehavior.classical);
-  });
-
-  testWidgets('a rename a user subscription already has is not saved', (
-    tester,
-  ) async {
-    final action = _RecordingClashProvidersAction(
-      renameConflicts: [Profile.normal(label: 'Work')],
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'URL'),
+      'https://example.com/ads.list',
     );
-    final container = _containerFor(
-      tester,
-      overrides: [
-        clashProvidersProvider.overrideWith2(
-          (_) => _TestClashProviders([appProxies]),
-        ),
-        clashProvidersActionProvider.overrideWith(() => action),
-      ],
-    );
-
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const TestApp(
-          child: ClashProvidersView(kind: ProviderKind.proxy),
-        ),
-      ),
-    );
-    await tester.pump();
-
-    await tester.tap(find.text('Shared nodes'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.widgetWithText(TextFormField, 'Name'), 'Taken');
     await tester.tap(find.text('Confirm'));
     await tester.pumpAndSettle();
 
     expect(
-      find.textContaining('subscriptions of Work already have Taken'),
-      findsOneWidget,
+      action.put.single,
+      appRules.copyWith(url: 'https://example.com/ads.list'),
     );
-    expect(find.text('Cancel'), findsNothing);
-    expect(action.put, isEmpty);
   });
 
   testWidgets('deleting a provider goes through the action after confirming', (
@@ -468,8 +480,8 @@ void main() {
     final container = _containerFor(
       tester,
       overrides: [
-        clashProvidersProvider.overrideWith2(
-          (_) => _TestClashProviders([appProxies]),
+        clashProvidersProvider.overrideWith(
+          () => _TestClashProviders([appRules]),
         ),
         clashProvidersActionProvider.overrideWith(() => action),
       ],
@@ -478,96 +490,55 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(
-          child: ClashProvidersView(kind: ProviderKind.proxy),
-        ),
+        child: const TestApp(child: ClashProvidersView()),
       ),
     );
     await tester.pump();
 
-    await tester.tap(find.byGlyph(AppGlyphs.more));
+    await rightClick(tester, find.byType(DecorationListItem));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Confirm'));
     await tester.pumpAndSettle();
 
-    expect(action.deleted, [appProxies]);
+    expect(action.deleted, [appRules]);
   });
 
-  testWidgets('a provider a custom profile still uses is not deleted', (
-    tester,
-  ) async {
-    final action = _RecordingClashProvidersAction(
-      usedBy: [Profile.normal(label: 'Work')],
-    );
-    final container = _containerFor(
-      tester,
-      overrides: [
-        clashProvidersProvider.overrideWith2(
-          (_) => _TestClashProviders([appProxies]),
+  testWidgets(
+    'a provider a custom profile still uses is deleted once confirmed',
+    (tester) async {
+      final action = _RecordingClashProvidersAction(
+        usedBy: [Profile.normal(label: 'Work')],
+      );
+      final container = _containerFor(
+        tester,
+        overrides: [
+          clashProvidersProvider.overrideWith(
+            () => _TestClashProviders([appRules]),
+          ),
+          clashProvidersActionProvider.overrideWith(() => action),
+        ],
+      );
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const TestApp(child: ClashProvidersView()),
         ),
-        clashProvidersActionProvider.overrideWith(() => action),
-      ],
-    );
+      );
+      await tester.pump();
 
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const TestApp(
-          child: ClashProvidersView(kind: ProviderKind.proxy),
-        ),
-      ),
-    );
-    await tester.pump();
+      await rightClick(tester, find.byType(DecorationListItem));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byGlyph(AppGlyphs.more));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Delete'));
-    await tester.pumpAndSettle();
+      expect(find.textContaining('used by Work'), findsOneWidget);
+      await tester.tap(find.text('Confirm'));
+      await tester.pumpAndSettle();
 
-    expect(find.textContaining('of Work'), findsOneWidget);
-    expect(find.text('Cancel'), findsNothing);
-    await tester.tap(find.text('Confirm'));
-    await tester.pumpAndSettle();
-
-    expect(action.deleted, isEmpty);
-  });
-
-  testWidgets('a provider taken into use before the delete lands says so', (
-    tester,
-  ) async {
-    final action = _RecordingClashProvidersAction(
-      usedByOnDelete: [Profile.normal(label: 'Work')],
-    );
-    final container = _containerFor(
-      tester,
-      overrides: [
-        clashProvidersProvider.overrideWith2(
-          (_) => _TestClashProviders([appProxies]),
-        ),
-        clashProvidersActionProvider.overrideWith(() => action),
-      ],
-    );
-
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const TestApp(
-          child: ClashProvidersView(kind: ProviderKind.proxy),
-        ),
-      ),
-    );
-    await tester.pump();
-
-    await tester.tap(find.byGlyph(AppGlyphs.more));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Delete'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Confirm'));
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('of Work'), findsOneWidget);
-    expect(action.deleted, isEmpty);
-  });
+      expect(action.deleted, [appRules]);
+    },
+  );
 }

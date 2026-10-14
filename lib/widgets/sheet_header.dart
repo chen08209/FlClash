@@ -140,9 +140,7 @@ class FloatingHeaderBody extends StatelessWidget {
     return Stack(
       children: [
         ScrollConfiguration(
-          behavior: const ShowBarScrollBehavior(
-            scrollbarPadding: EdgeInsets.only(top: sheetAppBarHeight),
-          ),
+          behavior: const ShowBarScrollBehavior(),
           child: body,
         ),
         Positioned(

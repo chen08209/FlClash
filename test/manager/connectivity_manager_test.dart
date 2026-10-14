@@ -4,10 +4,13 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fl_clash/manager/connectivity_manager.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/on_demand.dart';
 import 'package:fl_clash/state.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wifi_ssid/wifi_ssid.dart';
 
 void main() {
   late ProviderContainer container;
@@ -123,6 +126,31 @@ void main() {
     await excludeNetworks(const ['Office']);
     await tester.pumpAndSettle();
 
+    expect(currentSsid(), 'Home');
+  });
+
+  testWidgets('reads the SSID again once location permission is granted', (
+    tester,
+  ) async {
+    const channel = MethodChannel('wifi_ssid');
+    final messenger = tester.binding.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (_) async => 0);
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    var permitted = false;
+    await pumpManager(tester, readSsid: () async => permitted ? 'Home' : null);
+
+    connectivity.add([ConnectivityResult.wifi]);
+    await tester.pumpAndSettle();
+    expect(currentSsid(), isNull);
+
+    permitted = true;
+    await container.read(locationPermissionsProvider.notifier).request();
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(locationPermissionsProvider),
+      WifiSsidPermission.granted,
+    );
     expect(currentSsid(), 'Home');
   });
 

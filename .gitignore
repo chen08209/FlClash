@@ -57,6 +57,7 @@ docs/
 /android/**/build
 /android/common/**/.**/
 /android/common/local.*
+# Left in place by builds from before the gomobile Core.
 /android/core/**/includes/
 /android/core/**/cmake-build-*/
 /android/core/**/jniLibs/

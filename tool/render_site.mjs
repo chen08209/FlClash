@@ -88,6 +88,17 @@ function render(page) {
     (_, a, b, key) => `${a}${text(key)}${b}`,
   );
 
+  // With the count in the page, the GitHub link has its final width from the first paint instead of growing when
+  // release.json arrives.
+  if (typeof release?.stars === 'number') {
+    const stars = new Intl.NumberFormat(page.locale, { notation: 'compact', maximumFractionDigits: 1 });
+    html = replaceOnce(
+      html,
+      /<span id="stars" class="stars" hidden><\/span>/,
+      `<span id="stars" class="stars" data-count="${release.stars}">${escape(stars.format(release.stars))}</span>`,
+    );
+  }
+
   if (versions.length) {
     const meta = escape(changelogMeta(versions, page.lang));
     html = replaceOnce(html, /(<p class="section-sub" id="cl-meta">)(<\/p>)/, (_, open, close) => open + meta + close);

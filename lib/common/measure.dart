@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -111,6 +113,36 @@ class Measure {
           computeTextSize(Text('X', style: context.textTheme.bodyLarge)).height,
     );
   }
+
+  double get listTitleHeight {
+    return _measureMap.updateCacheValue(
+      'listTitleHeight',
+      () => computeTextSize(Text('X', style: context.listTitleStyle)).height,
+    );
+  }
+
+  double get listSubtitleHeight {
+    return _measureMap.updateCacheValue(
+      'listSubtitleHeight',
+      () => computeTextSize(Text('X', style: context.listSubtitleStyle)).height,
+    );
+  }
+
+  double get sectionHeaderHeight {
+    return _measureMap.updateCacheValue(
+      'sectionHeaderHeight',
+      () =>
+          computeTextSize(Text('X', style: context.sectionHeaderStyle)).height,
+    );
+  }
+
+  double get listRowHeight =>
+      max(listRowMinHeight, listTitleHeight + 2 * listRowVerticalPadding);
+
+  double get listTwoLineRowHeight => max(
+    listRowMinHeight,
+    listTitleHeight + listSubtitleHeight + 2 * listRowVerticalPadding,
+  );
 
   double get bodySmallHeight {
     return _measureMap.updateCacheValue(
