@@ -3,7 +3,10 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/core/desktop/model.dart';
+import 'package:fl_clash/core/desktop/rpc_client.dart';
 import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
@@ -23,6 +26,7 @@ import 'package:path_provider_platform_interface/path_provider_platform_interfac
 import 'package:riverpod/riverpod.dart';
 import 'package:yaml/yaml.dart';
 
+import '../core/desktop/fakes.dart';
 import '../helpers/test_profiles.dart';
 
 class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
@@ -67,6 +71,37 @@ class _MessageFailureSetupAction extends SetupAction {
   }
 }
 
+class _TimedOutCore extends CoreHandlerInterface {
+  final CoreRpcClient client;
+
+  final Duration requestTimeout;
+
+  _TimedOutCore(this.client, {this.requestTimeout = Duration.zero});
+
+  @override
+  Future<T?> invokeMethod<T>({
+    required CoreMethod method,
+    Object? arguments,
+    Duration? timeout,
+  }) => client.invoke<T>(
+    method: method,
+    arguments: arguments,
+    timeout: requestTimeout,
+  );
+
+  @override
+  Future<CoreLifecycleResult> start() => throw UnimplementedError();
+
+  @override
+  Future<CoreLifecycleResult> stop() => throw UnimplementedError();
+
+  @override
+  Future<CoreLifecycleResult> restart() => throw UnimplementedError();
+
+  @override
+  Future<CoreLifecycleResult> close() => throw UnimplementedError();
+}
+
 class TestCommonAction extends CommonAction {
   int trafficUpdates = 0;
 
@@ -84,6 +119,7 @@ class TestSetupAction extends SetupAction {
   final List<bool> appliedForce = [];
   bool blockCoreCalls = false;
   Error? coreRunningError;
+  final List<bool> coreRunningResults = [];
   int authorizeCalls = 0;
   AuthorizeCode authorizeResult = AuthorizeCode.none;
 
@@ -105,7 +141,7 @@ class TestSetupAction extends SetupAction {
     if (error != null) {
       throw error;
     }
-    return true;
+    return coreRunningResults.isEmpty ? true : coreRunningResults.removeAt(0);
   }
 
   @override
@@ -164,6 +200,7 @@ void main() {
   tearDown(() async {
     action.blockCoreCalls = false;
     action.coreRunningError = null;
+    action.coreRunningResults.clear();
     for (final gate in action.pendingCoreCalls) {
       if (!gate.isCompleted) {
         gate.complete();
@@ -241,6 +278,178 @@ void main() {
   });
 
   group('run failures', () {
+    for (final connected in [false, true]) {
+      test(
+        'an RPC timeout with connected=$connected rejects the start',
+        () async {
+          final transport = connected
+              ? FakeDesktopCoreTransport.connected()
+              : FakeDesktopCoreTransport();
+          final client = CoreRpcClient(transport);
+          final scoped = ProviderContainer(
+            overrides: [
+              coreHandlerProvider.overrideWithValue(
+                CoreController.scoped(
+                  _TimedOutCore(
+                    client,
+                    requestTimeout: connected
+                        ? const Duration(milliseconds: 50)
+                        : Duration.zero,
+                  ),
+                ),
+              ),
+              profilesProvider.overrideWith(TestProfiles.new),
+              commonActionProvider.overrideWith(TestCommonAction.new),
+            ],
+          );
+          addTearDown(() async {
+            debouncer.cancel(FunctionTag.applyProfile);
+            scoped.dispose();
+            await client.close();
+            await transport.close();
+          });
+          scoped.read(initProvider.notifier).value = true;
+
+          await expectLater(
+            scoped.read(setupActionProvider.notifier).setRunning(true),
+            throwsStateError,
+          );
+
+          expect(scoped.read(runTimeProvider), isNull);
+          expect(client.pendingCount, 0);
+          expect(transport.sentMessages, connected ? isNotEmpty : isEmpty);
+        },
+      );
+    }
+
+    test('an unconfirmed start rolls back the run state', () async {
+      markInitialized();
+      action.coreRunningResults.add(false);
+
+      await expectLater(action.setRunning(true), throwsStateError);
+
+      expect(container.read(runTimeProvider), isNull);
+      expect(action.applyProfileCalls, 0);
+      expect(action.trafficResets, 0);
+      expect(action.coreRunningCalls, [true]);
+      expect(container.read(runningVpnOptionsProvider), isNull);
+    });
+
+    test('an unconfirmed stop preserves the run state and traffic', () async {
+      markInitialized();
+      await action.setRunning(true);
+      final previousRunTime = container.read(runTimeProvider);
+      final previousVpnOptions = container.read(runningVpnOptionsProvider);
+      const traffic = Traffic(up: 10, down: 20);
+      container.read(totalTrafficProvider.notifier).value = traffic;
+      action.coreRunningResults.add(false);
+
+      await expectLater(action.setRunning(false), throwsStateError);
+
+      expect(container.read(runTimeProvider), isNotNull);
+      expect(
+        container.read(runTimeProvider),
+        greaterThanOrEqualTo(previousRunTime!),
+      );
+      expect(container.read(totalTrafficProvider), traffic);
+      expect(action.trafficResets, 0);
+      expect(container.read(runningVpnOptionsProvider), previousVpnOptions);
+    });
+
+    test(
+      'an unconfirmed redundant stop keeps an already stopped state',
+      () async {
+        action.coreRunningResults.add(false);
+
+        await expectLater(action.setRunning(false), throwsStateError);
+
+        expect(container.read(runTimeProvider), isNull);
+      },
+    );
+
+    test('an unconfirmed redundant start preserves an existing run', () async {
+      markInitialized();
+      await action.setRunning(true);
+      action.coreRunningResults.add(false);
+
+      await expectLater(action.setRunning(true), throwsStateError);
+
+      expect(container.read(runTimeProvider), isNotNull);
+    });
+
+    test('an unconfirmed initialize start is reported as a failure', () async {
+      action.coreRunningResults.addAll([false, true]);
+
+      expect(await action.setRunning(true, initialize: true), isFalse);
+      expect(action.coreRunningCalls, [true, false]);
+      expect(container.read(runTimeProvider), isNull);
+    });
+
+    test('an old unconfirmed start cannot undo a newer stop', () async {
+      markInitialized();
+      await container.read(vpnOptionsProvider.future);
+      action.blockCoreCalls = true;
+      action.coreRunningResults.addAll([false, true]);
+      final starting = expectLater(action.setRunning(true), throwsStateError);
+      await Future<void>.delayed(Duration.zero);
+      final stopping = action.setRunning(false);
+      action.blockCoreCalls = false;
+      action.pendingCoreCalls.single.complete();
+
+      await starting;
+      expect(await stopping, isTrue);
+      expect(container.read(runTimeProvider), isNull);
+      expect(action.coreRunningCalls, [true, false]);
+    });
+
+    for (final running in [false, true]) {
+      test(
+        'overlapping failures preserve the confirmed running=$running state',
+        () async {
+          markInitialized();
+          await container.read(vpnOptionsProvider.future);
+          if (running) {
+            await action.setRunning(true);
+          }
+          action.blockCoreCalls = true;
+          action.coreRunningResults.addAll([false, false]);
+          final first = expectLater(
+            action.setRunning(!running),
+            throwsStateError,
+          );
+          await Future<void>.delayed(Duration.zero);
+          final second = expectLater(
+            action.setRunning(!running),
+            throwsStateError,
+          );
+          action.blockCoreCalls = false;
+          action.pendingCoreCalls.single.complete();
+
+          await first;
+          await second;
+
+          expect(container.read(isStartProvider), running);
+        },
+      );
+    }
+
+    test('a failed newer start preserves an older confirmed start', () async {
+      markInitialized();
+      await container.read(vpnOptionsProvider.future);
+      action.blockCoreCalls = true;
+      action.coreRunningResults.addAll([true, false]);
+      final first = action.setRunning(true);
+      await Future<void>.delayed(Duration.zero);
+      final second = expectLater(action.setRunning(true), throwsStateError);
+      action.blockCoreCalls = false;
+      action.pendingCoreCalls.single.complete();
+
+      expect(await first, isTrue);
+      await second;
+
+      expect(container.read(isStartProvider), isTrue);
+    });
+
     test('a start the core rejects stops reporting a run time', () async {
       markInitialized();
       action.coreRunningError = StateError('start failed');
