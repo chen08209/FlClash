@@ -120,7 +120,7 @@ void main() {
   testWidgets('tab walks card to card without stopping on the delay control', (
     tester,
   ) async {
-    await pumpCards(tester, ProxyCardType.shrink);
+    await pumpCards(tester, ProxyCardType.standard);
 
     await focusCard(tester, 0);
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
@@ -134,7 +134,7 @@ void main() {
   });
 
   testWidgets('enter on the delay control runs the delay test', (tester) async {
-    await pumpCards(tester, ProxyCardType.shrink);
+    await pumpCards(tester, ProxyCardType.standard);
 
     await focusCard(tester, 0);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);

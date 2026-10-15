@@ -15,7 +15,7 @@ import '../helpers/test_profiles.dart';
 void main() {
   testWidgets('the list scrolls its rows under the bar, pinning the header '
       'at its foot', (tester) async {
-    tester.view.physicalSize = const Size(1400, 1000);
+    tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -49,7 +49,7 @@ void main() {
     globalState.container = container;
     container
         .read(viewSizeProvider.notifier)
-        .update((_) => const Size(1400, 1000));
+        .update((_) => const Size(500, 1000));
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -81,6 +81,75 @@ void main() {
         ),
       ),
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('builds only the headers near the view and pins a far one '
+      'once its rows reach the bar', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final profile = Profile.normal().copyWith(unfoldSet: {'Far'});
+    final groups = [
+      for (var index = 0; index < 40; index++)
+        Group(name: 'G$index', type: GroupType.Selector, hidden: false),
+      Group(
+        name: 'Far',
+        type: GroupType.Selector,
+        hidden: false,
+        all: List.generate(
+          160,
+          (index) => Proxy(name: 'Proxy $index', type: 'Direct'),
+        ),
+      ),
+    ];
+    final container = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWith(() => TestProfiles([profile])),
+        currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+        currentGroupsStateProvider.overrideWithValue(
+          GroupsState(value: groups),
+        ),
+        groupsProvider.overrideWithValue(groups),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container
+        .read(viewSizeProvider.notifier)
+        .update((_) => const Size(500, 1000));
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: ProxiesView()),
+      ),
+    );
+    container
+        .read(proxiesStyleSettingProvider.notifier)
+        .update((state) => state.copyWith(type: ProxiesType.list));
+    await tester.pump();
+
+    expect(
+      find.byType(ListHeader, skipOffstage: false).evaluate().length,
+      lessThan(groups.length ~/ 2),
+    );
+
+    final position = tester
+        .state<ScrollableState>(find.byType(Scrollable).first)
+        .position;
+    position.jumpTo(position.maxScrollExtent - 1000);
+    await tester.pump();
+
+    final barBottom = tester.getRect(find.byType(AppBar)).bottom;
+    final far = find.ancestor(
+      of: find.text('Far'),
+      matching: find.byType(ListHeader),
+    );
+    expect(tester.getRect(far).top, barBottom + 8);
+    expect(find.text('G0', skipOffstage: false), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

@@ -13,6 +13,8 @@ const _allowed = {
   'lib/features/editor/completion_popup.dart',
   // Nor a drag on a popup menu, which stands over the sheet it opened from.
   'lib/ui/popup.dart',
+  // Nor a drag along the proxies group chips, which run across the sheet.
+  'lib/views/proxies/group_tabs.dart',
 };
 
 int _lineOf(String source, int offset) =>

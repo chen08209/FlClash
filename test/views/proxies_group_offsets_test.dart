@@ -18,13 +18,11 @@ void main() {
 
     expect(offsets.offsetOf('b'), 0);
     expect(offsets.offsetOf('d'), 120);
-    expect(offsets.groupOf('d')?.name, 'd');
   });
 
   test('a group the measured list does not carry falls back to the top', () {
     final offsets = GroupOffsets([_group('b')], const [0]);
 
     expect(offsets.offsetOf('a'), 0);
-    expect(offsets.groupOf('a'), isNull);
   });
 }

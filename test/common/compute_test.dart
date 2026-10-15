@@ -333,6 +333,16 @@ void main() {
       expect(group.getCurrentSelectedName(''), 'proxy-now');
     });
 
+    test('Selector group falls back to realNow when the pick left it', () {
+      const group = Group(
+        name: 'sel',
+        type: GroupType.Selector,
+        now: 'proxy-renamed',
+        all: [Proxy(name: 'proxy-renamed', type: 'ss')],
+      );
+      expect(group.getCurrentSelectedName('proxy-old'), 'proxy-renamed');
+    });
+
     test('Selector group returns empty when both empty', () {
       const group = Group(name: 'sel', type: GroupType.Selector);
       expect(group.getCurrentSelectedName(''), '');

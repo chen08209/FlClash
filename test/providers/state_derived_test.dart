@@ -264,6 +264,101 @@ void main() {
     expect(groups.last.all.map((proxy) => proxy.name), ['a', 'b']);
   });
 
+  test('hiding timed-out nodes keeps a group listed in another', () {
+    const testUrl = 'https://default.test';
+    container
+        .read(groupsProvider.notifier)
+        .update(
+          (_) => const [
+            Group(
+              name: 'Proxy',
+              type: GroupType.Selector,
+              now: 'a',
+              hidden: false,
+              all: [
+                Proxy(name: 'a', type: 'ss'),
+                Proxy(name: 'HK', type: 'Selector'),
+              ],
+            ),
+            Group(
+              name: 'HK',
+              type: GroupType.Selector,
+              now: 'b',
+              hidden: true,
+              all: [Proxy(name: 'b', type: 'ss')],
+            ),
+          ],
+        );
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(mode: Mode.rule));
+    container
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(testUrl: testUrl));
+    container
+        .read(delayDataSourceProvider.notifier)
+        .setDelay(const Delay(url: testUrl, name: 'b', value: -1));
+    container
+        .read(proxiesStyleSettingProvider.notifier)
+        .update((state) => state.copyWith(hideTimeoutProxies: true));
+
+    expect(
+      container
+          .read(visibleGroupsStateProvider)
+          .value
+          .single
+          .all
+          .map((proxy) => proxy.name),
+      ['a', 'HK'],
+    );
+  });
+
+  test('a search whose matches all timed out keeps them and their group', () {
+    const testUrl = 'https://default.test';
+    container
+        .read(groupsProvider.notifier)
+        .update(
+          (_) => const [
+            Group(
+              name: 'Proxy',
+              type: GroupType.Selector,
+              now: 'JP',
+              hidden: false,
+              all: [
+                Proxy(name: 'HK 01', type: 'ss'),
+                Proxy(name: 'HK 02', type: 'ss'),
+                Proxy(name: 'JP', type: 'ss'),
+              ],
+            ),
+          ],
+        );
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(mode: Mode.rule));
+    container
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(testUrl: testUrl));
+    container
+        .read(proxiesStyleSettingProvider.notifier)
+        .update((state) => state.copyWith(hideTimeoutProxies: true));
+    final delays = container.read(delayDataSourceProvider.notifier);
+    delays.setDelay(const Delay(url: testUrl, name: 'HK 01', value: -1));
+    delays.setDelay(const Delay(url: testUrl, name: 'HK 02', value: -1));
+
+    List<String> names(String query) => [
+      for (final proxy
+          in container.read(filterGroupsStateProvider(query)).value.single.all)
+        proxy.name,
+    ];
+
+    expect(names(''), ['JP']);
+    expect(names('hk'), ['HK 01', 'HK 02']);
+
+    delays.setDelay(const Delay(url: testUrl, name: 'HK 02', value: 80));
+    container.read(sortNumProvider.notifier).add();
+    expect(names('hk'), ['HK 02']);
+  });
+
   test('navigation providers select items for width and current page', () {
     container
         .read(viewSizeProvider.notifier)
@@ -313,11 +408,6 @@ void main() {
 
     final dashboard = container.read(dashboardStateProvider);
     expect(dashboard.dashboardWidgets, isNotEmpty);
-
-    final actions = container.read(proxiesActionsStateProvider);
-    expect(actions.pageLabel, PageLabel.dashboard);
-    expect(actions.hasProviders, isFalse);
-    expect(actions.type, ProxiesType.tab);
   });
 
   test(
@@ -375,18 +465,6 @@ void main() {
       final controller = container.read(proxiesTabControllerStateProvider);
       expect(controller.groupNames, ['Group B']);
       expect(controller.currentGroupName, 'Group B');
-
-      final selector = container.read(
-        proxyGroupSelectorStateProvider('Group A', 'be'),
-      );
-      expect(selector.proxies.single.name, 'Beta');
-      expect(selector.groupType, GroupType.Selector);
-
-      final missing = container.read(
-        proxyGroupSelectorStateProvider('Missing', ''),
-      );
-      expect(missing.proxies, isEmpty);
-      expect(missing.groupType, GroupType.Selector);
     },
   );
 
@@ -579,18 +657,6 @@ void main() {
       'Leaf',
     );
     expect(container.read(delayProvider(proxyName: 'Selector')), 42);
-    expect(
-      container.read(
-        proxyDescProvider(const Proxy(name: 'Selector', type: 'Selector')),
-      ),
-      'Selector(Leaf)',
-    );
-    expect(
-      container.read(
-        proxyDescProvider(const Proxy(name: 'Leaf', type: 'Direct')),
-      ),
-      'Direct',
-    );
   });
 
   test('tray delays follow the listed groups and their test URLs', () {
@@ -680,16 +746,6 @@ void main() {
       container.read(realTestUrlProvider('https://custom.test')),
       'https://custom.test',
     );
-    expect(container.read(isCurrentPageProvider(PageLabel.dashboard)), isTrue);
-    expect(
-      container.read(
-        isCurrentPageProvider(
-          PageLabel.logs,
-          handler: (_, viewMode) => viewMode == ViewMode.mobile,
-        ),
-      ),
-      isTrue,
-    );
   });
 
   test('a color scheme outlives the provider that generated it', () {
@@ -711,22 +767,7 @@ void main() {
     expect(container.read(provider), isNot(same(first)));
   });
 
-  test('package, hotkey, profile, and extend providers expose defaults', () {
-    const package = Package(
-      packageName: 'app.example',
-      label: 'Example',
-      system: false,
-      internet: true,
-      lastUpdateTime: 1,
-    );
-    container.read(packagesProvider.notifier).update((_) => [package]);
-    final packageList = container.read(packageListSelectorStateProvider);
-    expect(packageList.packages, [package]);
-    expect(
-      packageList.accessControlProps,
-      container.read(vpnSettingProvider).accessControlProps,
-    );
-
+  test('hotkey, profile, and extend providers expose defaults', () {
     const action = HotKeyAction(
       action: HotAction.start,
       key: 1,

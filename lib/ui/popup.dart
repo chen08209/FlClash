@@ -1716,7 +1716,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
     return 2 * _cardInset + (_maxVisibleItems + 0.5) * _rowExtentOf(context);
   }
 
-  static final _labelWidths = <(String, TextStyle, TextScaler), double>{};
+  static final _labelWidths = <(String, TextStyle, TextScaler, bool), double>{};
 
   /// What the rows would take at their intrinsic width, measured from the
   /// labels as the rows lay them out.
@@ -1724,31 +1724,15 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
     final style = AppTextStyle.subheadline.of(context);
     final root = DefaultTextStyle.of(context).style.merge(style);
     final textScaler = MediaQuery.textScalerOf(context);
-    final textDirection = Directionality.of(context);
-    final locale = Localizations.maybeLocaleOf(context);
+    final boldText = MediaQuery.boldTextOf(context);
     const limit = _menuMaxWidth - 2 * _cardInset;
     var width = 0.0;
     for (final item in items) {
       if (_labelWidths.length >= 1024) {
         _labelWidths.clear();
       }
-      final label = _labelWidths[(item.label, root, textScaler)] ??= () {
-        final painter = TextPainter(
-          text: TextSpan(
-            style: root,
-            children: [EmojiText.spanOf(item.label, style)],
-          ),
-          textDirection: textDirection,
-          textScaler: textScaler,
-          locale: locale,
-          maxLines: 1,
-        )..layout();
-        try {
-          return painter.maxIntrinsicWidth;
-        } finally {
-          painter.dispose();
-        }
-      }();
+      final label = _labelWidths[(item.label, root, textScaler, boldText)] ??=
+          EmojiText.widthOf(context, item.label, root);
       final checked = item.checked == true;
       final row =
           (checked ? _itemArrowPadding : _itemPadding).horizontal +
