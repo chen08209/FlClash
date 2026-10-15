@@ -86,6 +86,21 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
         'mode': 'rule',
         'rule': ['MATCH,DIRECT'],
       },
+      CoreMethod.getProfileOutbounds => {
+        'proxies': [
+          {'name': 'a', 'type': 'ss'},
+        ],
+        'proxy-groups': <Object>[],
+      },
+      CoreMethod.buildProfile => '/home/responses/1.yaml',
+      CoreMethod.getProfileBase => {
+        'config': {'mode': 'rule', 'rule': null},
+        'digest': 'abc',
+        'match-rules': ['MATCH,DIRECT'],
+        'proxies': 2,
+        'proxy-groups': 1,
+        'rules': 3,
+      },
       CoreMethod.getMemoryStats => {
         'rss': 2048,
         'heapInuse': 1024,
@@ -384,6 +399,60 @@ void main() {
     expect(memory?.runtimeTotal, 1024 + 256 + 64 + 32);
   });
 
+  test('getProfileBase sends the path and reads what the Core kept', () async {
+    final handler = _RecordingCoreHandler();
+
+    final base = await handler.getProfileBase('/profiles/1.yaml');
+
+    expect(handler.calls[CoreMethod.getProfileBase], '/profiles/1.yaml');
+    expect(
+      base,
+      const ProfileBase(
+        config: {'mode': 'rule', 'rule': null},
+        digest: 'abc',
+        matchRules: ['MATCH,DIRECT'],
+        proxies: 2,
+        proxyGroups: 1,
+        rules: 3,
+      ),
+    );
+  });
+
+  test('the outbounds and the built profile cross as plain JSON', () async {
+    final handler = _RecordingCoreHandler();
+    const base = SetupBase(path: '/profiles/1.yaml', overlay: 'mode: rule');
+
+    final outbounds = await handler.getProfileOutbounds('/profiles/1.yaml');
+    final built = await handler.buildProfile(base);
+
+    expect(handler.calls[CoreMethod.getProfileOutbounds], '/profiles/1.yaml');
+    expect(outbounds['proxies'], [
+      {'name': 'a', 'type': 'ss'},
+    ]);
+    expect(handler.calls[CoreMethod.buildProfile], base.toJson());
+    expect(built, '/home/responses/1.yaml');
+  });
+
+  test('setupConfig names a base only when the Core applies one', () async {
+    final handler = _RecordingCoreHandler();
+    const params = SetupParams(selectedMap: {}, testUrl: 'test');
+    Object? sent() =>
+        json.decode(json.encode(handler.calls[CoreMethod.setupConfig]));
+
+    await handler.setupConfig(params);
+    expect(sent(), isNot(contains('base')));
+
+    await handler.setupConfig(
+      params.copyWith(
+        base: const SetupBase(path: '/profiles/1.yaml', overlay: 'mode: rule'),
+      ),
+    );
+    expect((sent()! as Map)['base'], {
+      'path': '/profiles/1.yaml',
+      'overlay': 'mode: rule',
+    });
+  });
+
   test('getConfig preserves structured core errors', () async {
     final handler = _FailingConfigCoreHandler();
 
@@ -429,6 +498,9 @@ void main() {
     final failure = CoreMethodResponse.fromJson(
       Map<String, Object?>.from(fixture['errorResponse'] as Map),
     );
+    final spilled = CoreMethodResponse.fromJson(
+      Map<String, Object?>.from(fixture['spilledResponse'] as Map),
+    );
 
     expect(success.unwrap<String>(), '');
     expect(success.toJson(), containsPair('result', ''));
@@ -445,5 +517,9 @@ void main() {
     );
     expect(failure.toJson(), contains('error'));
     expect(failure.toJson(), isNot(contains('code')));
+    expect(failure.file, isNull);
+    expect(failure.toJson(), isNot(contains('file')));
+    expect(spilled.file, '/home/responses/1234.json');
+    expect(spilled.toJson(), containsPair('file', '/home/responses/1234.json'));
   });
 }

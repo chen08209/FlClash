@@ -7,6 +7,7 @@ import (
 	"github.com/metacubex/http"
 	"github.com/metacubex/mihomo/adapter/provider"
 	P "github.com/metacubex/mihomo/component/process"
+	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/mihomo/tunnel"
@@ -56,6 +57,9 @@ const (
 	crashMethod                    CoreMethod = "crash"
 	setupConfigMethod              CoreMethod = "setupConfig"
 	getConfigMethod                CoreMethod = "getConfig"
+	getProfileBaseMethod           CoreMethod = "getProfileBase"
+	getProfileOutboundsMethod      CoreMethod = "getProfileOutbounds"
+	buildProfileMethod             CoreMethod = "buildProfile"
 	dumpRuleSetMethod              CoreMethod = "dumpRuleSet"
 	compileRuleSetMethod           CoreMethod = "compileRuleSet"
 	clearEffectMethod              CoreMethod = "clearEffect"
@@ -95,6 +99,31 @@ type SetupParams struct {
 	SelectedMap    map[string]string `json:"selected-map"`
 	TestURL        string            `json:"test-url"`
 	SkipCertVerify bool              `json:"skip-cert-verify"`
+	Base           *SetupBase        `json:"base,omitempty"`
+}
+
+type SetupBase struct {
+	Path    string `json:"path"`
+	Overlay string `json:"overlay"`
+}
+
+type ProfileBase struct {
+	Config      *config.RawConfig `json:"config"`
+	Digest      string            `json:"digest"`
+	MatchRules  []string          `json:"match-rules"`
+	Proxies     int               `json:"proxies"`
+	ProxyGroups int               `json:"proxy-groups"`
+	Rules       int               `json:"rules"`
+}
+
+type ProfileOutbounds struct {
+	Proxies     []ProfileOutbound `json:"proxies"`
+	ProxyGroups []ProfileOutbound `json:"proxy-groups"`
+}
+
+type ProfileOutbound struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
 }
 
 type UpdateParams struct {

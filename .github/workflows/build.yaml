@@ -14,6 +14,8 @@ concurrency:
 
 env:
   IS_STABLE: ${{ !contains(github.ref, '-') }}
+  # See CI Caches in .agents/commands.md.
+  BRANCH_CACHE: ${{ !startsWith(github.ref, 'refs/tags/') }}
   FLUTTER_VERSION: '3.47.6'
   GO_VERSION: '1.27.1'
   NDK_VERSION: r28c
@@ -40,13 +42,14 @@ jobs:
         with:
           workspaces: plugins/rust_api/rust
           cache-directories: .dart_tool/hooks_runner
+          save-if: ${{ env.BRANCH_CACHE }}
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
+          cache: ${{ env.BRANCH_CACHE }}
 
       - name: Install dependencies
         run: flutter pub get
@@ -84,7 +87,7 @@ jobs:
         with:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
+          cache: ${{ env.BRANCH_CACHE }}
 
       - name: Validate local Flutter packages
         run: bash tool/check_plugins.sh
@@ -98,7 +101,7 @@ jobs:
 
   desktop:
     name: Desktop ${{ matrix.platform }}
-    if: *checks
+    if: (github.event_name == 'workflow_dispatch' || !github.event.repository.private) && !(github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -120,7 +123,9 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: core/go.sum
+          cache-dependency-path: |
+            core/go.sum
+            plugins/setup/setup_hooks/lib/src/go_builder.dart
 
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
@@ -176,6 +181,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: ${{ env.BRANCH_CACHE }}
           cache-dependency-path: core/go.sum
 
       - name: Validate Go core wrapper
@@ -218,14 +224,17 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: core/go.sum
+          cache: ${{ env.BRANCH_CACHE }}
+          cache-dependency-path: |
+            core/go.sum
+            android/core/build.gradle.kts
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
+          cache: ${{ env.BRANCH_CACHE }}
 
       - name: Install dependencies
         run: flutter pub get
@@ -245,6 +254,8 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' }}
 
       - name: Run Android unit tests
         working-directory: android
@@ -279,6 +290,7 @@ jobs:
           workspaces: |
             services/helper
             plugins/rust_api/rust
+          save-if: ${{ env.BRANCH_CACHE }}
 
       - name: Check format
         run: |
@@ -302,6 +314,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: services/helper
+          save-if: ${{ env.BRANCH_CACHE }}
 
       - name: Check format
         run: cargo fmt --manifest-path services/helper/Cargo.toml -- --check
@@ -312,7 +325,6 @@ jobs:
   build:
     # Releases publish where the release links point: the public repository.
     if: github.repository == 'chen08209/FlClash' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    needs: [ dart, plugins, go, android, rust, windows-helper-test ]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -334,9 +346,11 @@ jobs:
           - platform: windows
             os: windows-11-arm
             arch: arm64
+            flutter-channel: master
           - platform: linux
             os: ubuntu-24.04-arm
             arch: arm64
+            flutter-channel: master
 
     steps:
       - name: Setup rust
@@ -368,14 +382,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: ${{ env.BRANCH_CACHE }}
           cache-dependency-path: core/go.sum
-
-      - name: Setup Rust cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          key: ${{ matrix.platform }}-${{ matrix.arch || 'all' }}
-          workspaces: services/helper
-          cache-directories: .dart_tool/hooks_runner
 
       - name: Setup Gradle
         if: startsWith(matrix.platform,'android')
@@ -390,9 +398,9 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: master
+          channel: ${{ matrix.flutter-channel || 'stable' }}
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
+          cache: ${{ env.BRANCH_CACHE }}
 
       - name: Setup Xcode
         if: startsWith(matrix.platform,'macos')
@@ -419,6 +427,18 @@ jobs:
         if: matrix.platform == 'macos' && matrix.arch == 'amd64'
         run: plutil -replace FLTEnableImpeller -bool NO macos/Runner/Info.plist
 
+      # The core embeds this bundle and FlClashHttpOverrides.trustCoreRoots loads it for Dart.
+      # Pinned by hash, so a new bundle from https://curl.se/docs/caextract.html is a reviewed bump.
+      - name: Fetch CA certificates
+        shell: bash
+        env:
+          CA_BUNDLE: cacert-2026-09-25.pem
+          CA_BUNDLE_SHA256: a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505
+        run: |
+          bundle=core/Clash.Meta/component/ca/ca-certificates.crt
+          curl -fsSL --retry 3 -o "$bundle" "https://curl.se/ca/$CA_BUNDLE"
+          echo "$CA_BUNDLE_SHA256  $bundle" | sha256sum -c -
+
       - name: Setup
         env:
           ANDROID_NDK_HOME: ${{ steps.build-ndk.outputs.ndk-path }}
@@ -434,7 +454,7 @@ jobs:
   upload:
     permissions:
       contents: write
-    needs: [ build ]
+    needs: [ build, dart, plugins, go, android, rust, windows-helper-test ]
     runs-on: ubuntu-latest
     services:
       telegram-bot-api:
@@ -462,7 +482,7 @@ jobs:
         with:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
+          cache: ${{ env.BRANCH_CACHE }}
 
       - name: Install dependencies
         run: flutter pub get

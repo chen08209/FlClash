@@ -38,6 +38,11 @@
       "down": 34
     }
   },
+  "spilledResponse": {
+    "id": "getConfig#spilled",
+    "result": null,
+    "file": "/home/responses/1234.json"
+  },
   "errorResponse": {
     "id": "getConfig#contract",
     "result": null,

@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/spill.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
@@ -19,31 +21,17 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'package:path/path.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:yaml/yaml.dart';
 
+import '../helpers/app_paths.dart';
 import '../helpers/test_profiles.dart';
 
 class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 // checkAndUpdateAndCopy checks the file system before it refreshes, so its
 // failure tests need appPath to resolve to a real, writable directory.
-class _FakePathProvider extends PathProviderPlatform {
-  final String root;
-
-  _FakePathProvider(this.root);
-
-  @override
-  Future<String?> getTemporaryPath() async => root;
-
-  @override
-  Future<String?> getApplicationSupportPath() async => root;
-
-  @override
-  Future<String?> getApplicationCachePath() async => root;
-}
-
 class _ListenerHandoffFailureSetupAction extends SetupAction {
   final List<bool> coreRunningCalls = [];
 
@@ -84,6 +72,7 @@ class TestSetupAction extends SetupAction {
   final List<bool> appliedForce = [];
   bool blockCoreCalls = false;
   Error? coreRunningError;
+  final Set<bool> unansweredCoreCalls = {};
   int authorizeCalls = 0;
   AuthorizeCode authorizeResult = AuthorizeCode.none;
 
@@ -105,7 +94,7 @@ class TestSetupAction extends SetupAction {
     if (error != null) {
       throw error;
     }
-    return true;
+    return !unansweredCoreCalls.contains(running);
   }
 
   @override
@@ -128,6 +117,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(() {
     registerFallbackValue(const SetupParams(selectedMap: {}, testUrl: ''));
+    registerFallbackValue(const SetupBase(path: '', overlay: ''));
     registerFallbackValue(
       const UpdateParams(
         tun: Tun(),
@@ -164,6 +154,7 @@ void main() {
   tearDown(() async {
     action.blockCoreCalls = false;
     action.coreRunningError = null;
+    action.unansweredCoreCalls.clear();
     for (final gate in action.pendingCoreCalls) {
       if (!gate.isCompleted) {
         gate.complete();
@@ -266,6 +257,56 @@ void main() {
         );
 
         expect(container.read(runTimeProvider), isNotNull);
+      },
+    );
+
+    final unanswered = isA<CoreMethodException>().having(
+      (error) => error.code,
+      'code',
+      'no_response',
+    );
+
+    test('a start the core leaves unanswered fails and is undone', () async {
+      markInitialized();
+      action.unansweredCoreCalls.add(true);
+
+      await expectLater(
+        container.read(setupActionProvider.notifier).setRunning(true),
+        throwsA(unanswered),
+      );
+
+      expect(container.read(isStartProvider), isFalse);
+      expect(container.read(runTimeProvider), isNull);
+      expect(container.read(runningVpnOptionsProvider), isNull);
+    });
+
+    test('a stop the core leaves unanswered fails but stays stopped', () async {
+      markInitialized();
+      final setup = container.read(setupActionProvider.notifier);
+      await setup.setRunning(true);
+      action.unansweredCoreCalls.add(false);
+
+      await expectLater(setup.setRunning(false), throwsA(unanswered));
+
+      expect(container.read(isStartProvider), isFalse);
+      expect(container.read(runTimeProvider), isNull);
+      expect(container.read(runningVpnOptionsProvider), isNull);
+      expect(action.trafficResets, 1);
+    });
+
+    test(
+      'an initial start the core leaves unanswered is stopped again',
+      () async {
+        action.unansweredCoreCalls.add(true);
+
+        final applied = await container
+            .read(setupActionProvider.notifier)
+            .setRunning(true, initialize: true);
+
+        expect(applied, isFalse);
+        expect(action.coreRunningCalls, [true, false]);
+        expect(container.read(isStartProvider), isFalse);
+        expect(container.read(runningVpnOptionsProvider), isNull);
       },
     );
   });
@@ -549,6 +590,32 @@ void main() {
       expect(action.trafficResets, 0);
       expect(container.read(runTimeProvider), isNotNull);
     });
+
+    test(
+      'a superseded start the core leaves unanswered does not fail',
+      () async {
+        markInitialized();
+        final notifier = container.read(setupActionProvider.notifier);
+        action.blockCoreCalls = true;
+        action.unansweredCoreCalls.add(true);
+
+        final starting = notifier.setRunning(true);
+        await Future<void>.delayed(Duration.zero);
+        final stopping = notifier.setRunning(false);
+        await Future<void>.delayed(Duration.zero);
+
+        action.blockCoreCalls = false;
+        for (final gate in action.pendingCoreCalls) {
+          if (!gate.isCompleted) {
+            gate.complete();
+          }
+        }
+
+        expect(await Future.wait([starting, stopping]), [true, true]);
+        expect(action.coreRunningCalls, [true, false]);
+        expect(container.read(isStartProvider), isFalse);
+      },
+    );
 
     test('the newest request wins the local running state', () async {
       markInitialized();
@@ -936,7 +1003,7 @@ void main() {
 
     setUpAll(() async {
       tempDir = Directory.systemTemp.createTempSync('setup_action_test');
-      PathProviderPlatform.instance = _FakePathProvider(tempDir.path);
+      await useAppPaths(tempDir);
       await AppLocalizations.load(const Locale('en'));
       originalLastConfigMd5 = globalState.lastConfigMd5;
       globalState.packageInfo = PackageInfo(
@@ -1008,7 +1075,9 @@ void main() {
       () async {
         final profile = Profile.normal(label: 'p');
         final core = _MockCoreHandlerInterface();
-        when(() => core.getConfig(any())).thenThrow(Exception('broken yaml'));
+        when(
+          () => core.getProfileBase(any()),
+        ).thenThrow(Exception('broken yaml'));
         String? pushedConfig;
         when(() => core.setupConfig(any())).thenAnswer((_) async {
           pushedConfig = await File(
@@ -1081,12 +1150,13 @@ void main() {
       () async {
         final profile = Profile.normal(label: 'p');
         final core = _MockCoreHandlerInterface();
-        when(() => core.getConfig(any())).thenAnswer((_) async => {});
+        when(
+          () => core.getProfileBase(any()),
+        ).thenAnswer((_) async => const ProfileBase(config: {}, digest: 'd'));
         String? pushedConfig;
-        when(() => core.setupConfig(any())).thenAnswer((_) async {
-          pushedConfig = await File(
-            await appPath.configFilePath,
-          ).readAsString();
+        when(() => core.setupConfig(any())).thenAnswer((invocation) async {
+          final params = invocation.positionalArguments.single as SetupParams;
+          pushedConfig = params.base?.overlay;
           return '';
         });
         final scoped = ProviderContainer(
@@ -1125,7 +1195,9 @@ void main() {
         'differ from the applied config', () async {
       final profile = Profile.normal(label: 'p');
       final core = _MockCoreHandlerInterface();
-      when(() => core.getConfig(any())).thenAnswer((_) async => {});
+      when(
+        () => core.getProfileBase(any()),
+      ).thenAnswer((_) async => const ProfileBase(config: {}, digest: 'd'));
       when(() => core.setupConfig(any())).thenAnswer((_) async => '');
       var setupState = nullProfileSetupState.copyWith(profileId: profile.id);
       final scoped = ProviderContainer(
@@ -1148,15 +1220,15 @@ void main() {
       }
 
       await setupAction.applyProfile(force: true);
-      verify(() => core.getConfig(any())).called(1);
+      verify(() => core.getProfileBase(any())).called(1);
 
       await leaveEditor();
-      verifyNever(() => core.getConfig(any()));
+      verifyNever(() => core.getProfileBase(any()));
 
       setupState = setupState.copyWith(matchTarget: 'DIRECT');
       scoped.invalidate(setupStateProvider);
       await leaveEditor();
-      verify(() => core.getConfig(any())).called(1);
+      verify(() => core.getProfileBase(any())).called(1);
       // Queued behind the rebuild: one that outlasts the pump would compare
       // against the md5 tearDown resets and push into a disposed container.
       await setupAction.applyProfile();
@@ -1194,7 +1266,9 @@ void main() {
       );
       var rejecting = false;
       var coreProxies = profileProxies;
-      when(() => core.getConfig(any())).thenAnswer((_) async => {});
+      when(
+        () => core.getProfileBase(any()),
+      ).thenAnswer((_) async => const ProfileBase(config: {}, digest: 'd'));
       when(() => core.getExternalProviders()).thenAnswer((_) async => []);
       when(() => core.getProxies()).thenAnswer((_) async => coreProxies);
       when(() => core.setupConfig(any())).thenAnswer((_) async {
@@ -1244,6 +1318,183 @@ void main() {
       verify(() => core.setupConfig(any())).called(3);
       expect(shownGroups(), ['Proxy']);
     });
+
+    test('a profile file leaves its bulk sections in the Core and records '
+        'what the Core was handed', () async {
+      final profile = Profile.normal(label: 'p');
+      final core = _MockCoreHandlerInterface();
+      var digest = 'first';
+      when(() => core.getProfileBase(any())).thenAnswer(
+        (_) async => ProfileBase(
+          config: const {'mixed-port': 1},
+          digest: digest,
+          matchRules: const ['MATCH,DIRECT', 'MATCH,Proxy'],
+          proxies: 3,
+          proxyGroups: 2,
+          rules: 5,
+        ),
+      );
+      final pushed = <SetupParams>[];
+      when(() => core.setupConfig(any())).thenAnswer((invocation) async {
+        pushed.add(invocation.positionalArguments.single as SetupParams);
+        return '';
+      });
+      final configFile = File(await appPath.configFilePath);
+      await configFile.writeAsString('previous');
+      final scoped = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(() => TestProfiles([profile])),
+          currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+          setupStateProvider.overrideWith(
+            (_, profileId) => nullProfileSetupState.copyWith(
+              profileId: profileId,
+              addedRules: [Rule.parse('DOMAIN,added.test,MATCH')],
+            ),
+          ),
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          setupActionProvider.overrideWith(SetupAction.new),
+        ],
+      );
+      addTearDown(scoped.dispose);
+      final setupAction = scoped.read(setupActionProvider.notifier);
+      addTearDown(() => globalState.lastConfigCounts = null);
+
+      expect(await setupAction.applyProfile(force: true), isTrue);
+
+      final base = pushed.single.base!;
+      expect(base.path, await appPath.getProfilePath(profile.id.toString()));
+      final overlay = loadYaml(base.overlay) as YamlMap;
+      expect(overlay['rules'], ['DOMAIN,added.test,Proxy']);
+      expect(overlay['mixed-port'], isNot(1));
+      expect(await configFile.readAsString(), 'previous');
+      expect(globalState.lastConfigCounts, (groups: 2, proxies: 3, rules: 6));
+
+      await setupAction.applyProfile();
+      expect(pushed, hasLength(1));
+
+      digest = 'second';
+      await setupAction.applyProfile();
+      expect(pushed, hasLength(2));
+    });
+
+    test('the preview shows the config the Core merges', () async {
+      final profile = Profile.normal(label: 'p');
+      final core = _MockCoreHandlerInterface();
+      when(
+        () => core.getProfileBase(any()),
+      ).thenAnswer((_) async => const ProfileBase(config: {}, digest: 'd'));
+      final built = File(
+        join(await appPath.homeDirPath, coreSpillDirectoryName, 'p.yaml'),
+      );
+      when(() => core.buildProfile(any())).thenAnswer((_) async {
+        await built.create(recursive: true);
+        await built.writeAsString('proxies: []\n');
+        return built.path;
+      });
+      final scoped = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(() => TestProfiles([profile])),
+          setupStateProvider.overrideWith(
+            (_, profileId) =>
+                nullProfileSetupState.copyWith(profileId: profileId),
+          ),
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          setupActionProvider.overrideWith(SetupAction.new),
+        ],
+      );
+      addTearDown(scoped.dispose);
+
+      final yaml = await scoped
+          .read(setupActionProvider.notifier)
+          .getProfileWithId(profile.id);
+
+      verifyNever(() => core.getConfig(any()));
+      expect(yaml, 'proxies: []\n');
+      expect(built.existsSync(), isFalse);
+    });
+
+    test(
+      'the extend page reads only the outbounds of a profile file',
+      () async {
+        final profile = Profile.normal(label: 'p');
+        final core = _MockCoreHandlerInterface();
+        when(() => core.getProfileOutbounds(any())).thenAnswer(
+          (_) async => {
+            'proxies': [
+              {'name': 'a', 'type': 'ss'},
+            ],
+            'proxy-groups': [
+              {'name': 'g', 'type': 'select'},
+            ],
+          },
+        );
+        final scoped = ProviderContainer(
+          overrides: [
+            profilesProvider.overrideWith(() => TestProfiles([profile])),
+            coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          ],
+        );
+        addTearDown(scoped.dispose);
+
+        final config = await scoped.read(
+          clashConfigProvider(profile.id).future,
+        );
+
+        verifyNever(() => core.getConfig(any()));
+        expect(
+          {
+            for (final proxy in config.proxies) proxy.name: proxy.type,
+            for (final group in config.proxyGroups) group.name: group.type,
+          },
+          {'a': 'ss', 'g': GroupType.Selector},
+        );
+      },
+    );
+
+    test(
+      'a start applies the profile again only once its inputs changed',
+      () async {
+        final profile = Profile.normal(label: 'p');
+        final core = _MockCoreHandlerInterface();
+        when(
+          () => core.getProfileBase(any()),
+        ).thenAnswer((_) async => const ProfileBase(config: {}, digest: 'd'));
+        when(() => core.setupConfig(any())).thenAnswer((_) async => '');
+        when(() => core.startListener()).thenAnswer((_) async => true);
+        when(() => core.stopListener()).thenAnswer((_) async => true);
+        final scoped = ProviderContainer(
+          overrides: [
+            profilesProvider.overrideWith(() => TestProfiles([profile])),
+            currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+            setupStateProvider.overrideWith(
+              (_, profileId) =>
+                  nullProfileSetupState.copyWith(profileId: profileId),
+            ),
+            coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+            commonActionProvider.overrideWith(TestCommonAction.new),
+            setupActionProvider.overrideWith(SetupAction.new),
+          ],
+        );
+        addTearDown(scoped.dispose);
+        scoped.read(initProvider.notifier).value = true;
+        final setupAction = scoped.read(setupActionProvider.notifier);
+        await setupAction.applyProfile(force: true);
+        verify(() => core.setupConfig(any())).called(1);
+
+        await setupAction.setRunning(true);
+        await Future<void>.delayed(const Duration(milliseconds: 800));
+        verifyNever(() => core.setupConfig(any()));
+
+        await setupAction.setRunning(false);
+        scoped.read(appSettingProvider.notifier).value = scoped
+            .read(appSettingProvider)
+            .copyWith(testUrl: 'https://example.com/204');
+        await setupAction.setRunning(true);
+        await Future<void>.delayed(const Duration(milliseconds: 800));
+        verify(() => core.setupConfig(any())).called(1);
+        await setupAction.setRunning(false);
+      },
+    );
 
     test('a custom profile declares only the proxies and providers it names, '
         'without a profile file', () async {

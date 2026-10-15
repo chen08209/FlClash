@@ -5,12 +5,32 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/state.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class FlClashHttpOverrides extends HttpOverrides {
   final ProviderContainer _container;
 
   FlClashHttpOverrides(this._container);
+
+  static const _coreRootsAsset =
+      'core/Clash.Meta/component/ca/ca-certificates.crt';
+
+  /// The bundle the core embeds; only release CI fills it.
+  static Future<void> trustCoreRoots() async {
+    try {
+      final data = await rootBundle.load(_coreRootsAsset);
+      if (data.lengthInBytes == 0) return;
+      SecurityContext.defaultContext.setTrustedCertificatesBytes(
+        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+      );
+    } catch (e) {
+      commonPrint.log(
+        'trustCoreRoots error ${compactError(e)}',
+        logLevel: LogLevel.warning,
+      );
+    }
+  }
 
   static String findProxyFor(ProviderContainer container, Uri url) {
     return findProxyForReader(container.read, url);

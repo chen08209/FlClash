@@ -37,8 +37,10 @@ Future<ClashConfig> clashConfig(Ref ref, int profileId) async {
   if (type == ProfileType.custom) {
     return const ClashConfig();
   }
-  final configMap = await ref.read(coreHandlerProvider).getConfig(profileId);
-  return clashConfigTask(configMap);
+  final outbounds = await ref
+      .read(coreHandlerProvider)
+      .getProfileOutbounds(profileId);
+  return clashConfigTask(outbounds);
 }
 
 @riverpod
