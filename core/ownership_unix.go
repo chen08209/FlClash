@@ -153,6 +153,22 @@ func reclaimOwnership(homeDir string) {
 	log.Infoln("[APP] reclaimed %d of %d elevated entries under %s", reclaimed, len(targets), homeDir)
 }
 
+func reclaimDirOwnership(path string) {
+	homeDir, _ := reclaimHomeDir.Load().(string)
+	if !isElevated() || !canReclaim(homeDir, realUid) {
+		return
+	}
+	info, err := os.Lstat(path)
+	if err != nil || !info.IsDir() || !shouldReclaimEntry(info, realUid) {
+		return
+	}
+	stat := info.Sys().(*syscall.Stat_t)
+	target := reclaimTarget{path: path, dev: uint64(stat.Dev), ino: uint64(stat.Ino)}
+	if _, err := reclaimEntry(target, realUid, realGid); err != nil {
+		log.Warnln("[APP] reclaim %s: %v", path, err)
+	}
+}
+
 func initOwnership(homeDir string) {
 	reclaimHomeDir.Store(homeDir)
 	reclaimOwnership(homeDir)

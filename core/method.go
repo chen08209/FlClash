@@ -29,6 +29,7 @@ type MethodResponse struct {
 	ID     string       `json:"id,omitempty"`
 	Result any          `json:"result"`
 	Error  *MethodError `json:"error,omitempty"`
+	File   string       `json:"file,omitempty"`
 }
 
 var methodCallSeq atomic.Uint64
@@ -75,7 +76,7 @@ func handleMethodCall(call *MethodCall) (data []byte) {
 	if err != nil {
 		return encodeResponse(MethodResponse{ID: call.ID, Error: asMethodError(err)})
 	}
-	return encodeResponse(MethodResponse{ID: call.ID, Result: result})
+	return spillResponse(call.ID, encodeResponse(MethodResponse{ID: call.ID, Result: result}))
 }
 
 func encodeResponse(response MethodResponse) []byte {
@@ -189,6 +190,9 @@ var methodHandlers = map[CoreMethod]methodHandler{
 	validateConfigMethod:           withMessage(handleValidateConfig),
 	decryptConfigMethod:            withFallible(handleDecryptConfig),
 	getConfigMethod:                withFallible(handleGetConfig),
+	getProfileBaseMethod:           withFallible(handleGetProfileBase),
+	getProfileOutboundsMethod:      withFallible(handleGetProfileOutbounds),
+	buildProfileMethod:             withFallible(handleBuildProfile),
 	setupConfigMethod:              withMessage(handleSetupConfig),
 	updateConfigMethod:             withMessage(updateConfig),
 	validateProxiesMethod:          withArguments(handleValidateProxies),

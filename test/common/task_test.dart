@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
@@ -7,11 +8,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 import 'package:yaml/yaml.dart';
 
-int _double(int value) => value * 2;
-
 void main() {
   test('encoding helpers round-trip structured data', () async {
-    final encoded = await encodeJSONTask({
+    final encoded = jsonEncode({
       'name': 'FlClash',
       'values': [1, true, null],
     });
@@ -20,7 +19,6 @@ void main() {
     expect(decoded['name'], 'FlClash');
     expect(decoded['values'], [1, true, null]);
     expect(await encodeYamlTask({'enabled': true}), contains('enabled: true'));
-    expect(await encodeMD5Task('abc'), '900150983cd24fb0d6963f7d28e17f72');
   });
 
   test('a proxy name holding control characters stays readable YAML', () {
@@ -107,31 +105,8 @@ void main() {
       expect(clashConfig.proxyProviders, ['provider']);
       expect(clashConfig.ruleProviders, ['ruleSet']);
       expect(clashConfig.subRules, ['nested']);
-      expect(clashConfig.proxyTypeMap, {
-        'Alpha': 'ss',
-        'Beta': 'vmess',
-        'Auto': 'url-test',
-      });
     },
   );
-
-  test('buildClashConfig indexes group types by their clash value', () {
-    final clashConfig = buildClashConfig(<String, dynamic>{
-      'proxies': [
-        {'name': 'Alpha', 'type': 'ss'},
-      ],
-      'proxy-groups': [
-        {
-          'name': 'Fallback',
-          'type': 'fallback',
-          'proxies': ['Alpha'],
-        },
-      ],
-    });
-
-    expect(clashConfig.proxyTypeMap, {'Alpha': 'ss', 'Fallback': 'fallback'});
-    expect(clashConfig.rules, isEmpty);
-  });
 
   test('toGroupsTask leaves the source proxy map untouched', () async {
     final proxies = <String, dynamic>{
@@ -174,7 +149,7 @@ void main() {
     'makeRealProfileTask normalizes runtime config and added rules',
     () async {
       final rawConfig = await decodeJSONTask<Map<String, dynamic>>(
-        await encodeJSONTask({
+        jsonEncode({
           'dns': {
             'enable': true,
             'nameserver': ['1.1.1.1'],
@@ -250,14 +225,23 @@ void main() {
         'DOMAIN,existing.example,DIRECT',
         'MATCH,Original',
       ]);
+      expect(result.counts, (groups: 0, proxies: 0, rules: 3));
     },
   );
+
+  test('lastMatchTarget reads the last MATCH rule that names a target', () {
+    expect(
+      lastMatchTarget(['MATCH,A', 'DOMAIN,x.test,B', 'match,C', 'MATCH,']),
+      'C',
+    );
+    expect(lastMatchTarget(['DOMAIN,x.test,B']), isNull);
+  });
 
   test(
     'makeRealProfileTask routes MATCH placeholders to matchTarget',
     () async {
       final rawConfig = await decodeJSONTask<Map<String, dynamic>>(
-        await encodeJSONTask({
+        jsonEncode({
           'proxies': [],
           'rules': ['DOMAIN,existing.example,DIRECT', 'MATCH,Original'],
         }),
@@ -304,10 +288,7 @@ void main() {
     'makeRealProfileTask lets the app setting own the geo updater',
     () async {
       final rawConfig = await decodeJSONTask<Map<String, dynamic>>(
-        await encodeJSONTask({
-          'geo-auto-update': true,
-          'geo-update-interval': 6,
-        }),
+        jsonEncode({'geo-auto-update': true, 'geo-update-interval': 6}),
       );
 
       final result = await makeRealProfileTask(
@@ -336,7 +317,7 @@ void main() {
   // A profile-shipped loopback skip-auth-prefixes would bypass the credentials.
   test('makeRealProfileTask lets the app own local authentication', () async {
     final rawConfig = await decodeJSONTask<Map<String, dynamic>>(
-      await encodeJSONTask({
+      jsonEncode({
         'authentication': ['subscription:injected'],
         'skip-auth-prefixes': ['127.0.0.1/32'],
       }),
@@ -406,7 +387,7 @@ void main() {
 
   test('makeRealProfileTask keeps the DNS keys it cannot edit', () async {
     final rawConfig = await decodeJSONTask<Map<String, dynamic>>(
-      await encodeJSONTask({
+      jsonEncode({
         'dns': {
           'enable': false,
           'direct-nameserver': ['223.5.5.5'],
@@ -669,7 +650,7 @@ void main() {
   group('makeRealProfileTask interface-name mode', () {
     Future<YamlMap> runWith(PatchClashConfig realPatchConfig) async {
       final rawConfig = await decodeJSONTask<Map<String, dynamic>>(
-        await encodeJSONTask({'interface-name': 'en0'}),
+        jsonEncode({'interface-name': 'en0'}),
       );
 
       final result = await makeRealProfileTask(
@@ -726,7 +707,7 @@ void main() {
           profilesPath: '/profiles',
           profileId: 14,
           rawConfig: await decodeJSONTask<Map<String, dynamic>>(
-            await encodeJSONTask(rawConfig),
+            jsonEncode(rawConfig),
           ),
           realPatchConfig: realPatchConfig,
           appendSystemDns: false,
@@ -865,6 +846,5 @@ void main() {
 
     expect(encoded, contains('first'));
     expect(encoded, contains('\n'));
-    expect(await mapListTask([1, 2, 3], _double), [2, 4, 6]);
   });
 }
