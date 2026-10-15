@@ -15,7 +15,7 @@ import '../helpers/test_profiles.dart';
 void main() {
   testWidgets('the list scrolls its rows under the bar, pinning the header '
       'at its foot', (tester) async {
-    tester.view.physicalSize = const Size(1400, 1000);
+    tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -49,7 +49,7 @@ void main() {
     globalState.container = container;
     container
         .read(viewSizeProvider.notifier)
-        .update((_) => const Size(1400, 1000));
+        .update((_) => const Size(500, 1000));
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
