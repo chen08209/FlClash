@@ -3,8 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/models/core.dart';
 import 'package:fl_clash/models/profile.dart';
@@ -13,62 +11,83 @@ import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ProvidersView extends ConsumerStatefulWidget {
-  const ProvidersView({super.key});
+class ExternalProvidersSliver extends ConsumerStatefulWidget {
+  final List<ExternalProvider> providers;
+
+  const ExternalProvidersSliver({super.key, required this.providers});
 
   @override
-  ConsumerState<ProvidersView> createState() => _ProvidersViewState();
+  ConsumerState<ExternalProvidersSliver> createState() =>
+      _ExternalProvidersSliverState();
 }
 
-class _ProvidersViewState extends ConsumerState<ProvidersView> {
+class _ExternalProvidersSliverState
+    extends ConsumerState<ExternalProvidersSliver> {
+  bool _isUpdating = false;
+
   Future<void> _updateProviders() async {
     final appLocalizations = context.appLocalizations;
-    final providers = ref.read(providersProvider);
     final proxiesAction = ref.read(proxiesActionProvider.notifier);
     final List<UpdatingMessage> messages = [];
-    final updateProviders = providers.map<Future>((provider) async {
-      try {
-        final message = await proxiesAction.updateProvider(
-          provider,
-          showLoading: true,
-        );
-        if (message.isNotEmpty) {
-          messages.add(UpdatingMessage(label: provider.name, message: message));
-        }
-      } catch (error) {
-        messages.add(
-          UpdatingMessage(
-            label: provider.name,
-            message: userFacingErrorMessage(error, appLocalizations),
-          ),
-        );
+    setState(() => _isUpdating = true);
+    try {
+      await Future.wait(
+        widget.providers.map((provider) async {
+          try {
+            final message = await proxiesAction.updateProvider(
+              provider,
+              showLoading: true,
+            );
+            if (message.isNotEmpty) {
+              messages.add(
+                UpdatingMessage(label: provider.name, message: message),
+              );
+            }
+          } catch (error) {
+            messages.add(
+              UpdatingMessage(
+                label: provider.name,
+                message: userFacingErrorMessage(error, appLocalizations),
+              ),
+            );
+          }
+        }),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isUpdating = false);
       }
-    });
-    await Future.wait(updateProviders);
+    }
     proxiesAction.updateGroupsDebounce();
     dialogs.showFailures(messages);
   }
 
-  List<Widget> _buildSection({
-    required String title,
-    required List<ExternalProvider> providers,
-  }) {
-    if (providers.isEmpty) {
-      return const [];
-    }
-    return [
-      SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        sliver: SliverToBoxAdapter(child: ListHeader(title: title)),
-      ),
-      SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        sliver: SliverList.builder(
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    final providers = widget.providers;
+    return SliverMainAxisGroup(
+      slivers: [
+        SliverToBoxAdapter(
+          child: ListHeader(
+            title: appLocalizations.providers,
+            actions: [
+              IconButtonData(
+                glyph: AppGlyphs.sync,
+                tooltip: appLocalizations.update,
+                isLoading: _isUpdating,
+                onPressed: _updateProviders,
+              ),
+            ],
+          ),
+        ),
+        SliverList.builder(
           itemCount: providers.length,
           itemBuilder: (_, index) {
             final provider = providers[index];
@@ -82,47 +101,7 @@ class _ProvidersViewState extends ConsumerState<ProvidersView> {
             );
           },
         ),
-      ),
-    ];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
-    final providers = ref.watch(providersProvider);
-    final proxyProviders = providers
-        .where((item) => item.type == 'Proxy')
-        .toList();
-    final ruleProviders = providers
-        .where((item) => item.type == 'Rule')
-        .toList();
-    return CommonScaffold(
-      actions: [
-        AppBarActionButton(
-          data: IconButtonData(
-            glyph: AppGlyphs.sync,
-            onPressed: _updateProviders,
-            tooltip: appLocalizations.update,
-          ),
-        ),
       ],
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: SizedBox(height: context.contentTopPadding),
-          ),
-          ..._buildSection(
-            title: appLocalizations.proxies,
-            providers: proxyProviders,
-          ),
-          ..._buildSection(
-            title: appLocalizations.rules,
-            providers: ruleProviders,
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
-        ],
-      ),
-      title: appLocalizations.providers,
     );
   }
 }
@@ -234,7 +213,6 @@ class _ProviderItemState extends ConsumerState<ProviderItem> {
         child: Builder(
           builder: (context) {
             return CommonDialog(
-              backgroundColor: context.colorScheme.surfaceContainerLow,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               title: context.appLocalizations.subscriptionInfo,
               actions: [
@@ -305,7 +283,7 @@ class _ProviderItemState extends ConsumerState<ProviderItem> {
     final previewable = _file != _ProviderFile.binary;
     return ContextMenuRegion(
       menuItems: isUpdating ? null : _menuItems(context),
-      child: ExternalProviderItem(
+      child: _ExternalProviderItem(
         provider: provider,
         isUpdating: isUpdating,
         onPressed: isUpdating || !previewable
@@ -316,15 +294,14 @@ class _ProviderItemState extends ConsumerState<ProviderItem> {
   }
 }
 
-class ExternalProviderItem extends StatelessWidget {
+class _ExternalProviderItem extends StatelessWidget {
   final ExternalProvider provider;
   final bool isUpdating;
   final VoidCallback? onPressed;
 
-  const ExternalProviderItem({
-    super.key,
+  const _ExternalProviderItem({
     required this.provider,
-    this.isUpdating = false,
+    required this.isUpdating,
     this.onPressed,
   });
 
@@ -350,11 +327,7 @@ class ExternalProviderItem extends StatelessWidget {
           children: [...previous, ?current],
         ),
         child: isUpdating
-            ? const SizedBox.square(
-                key: ValueKey('loading'),
-                dimension: 24,
-                child: CommonCircleLoading(),
-              )
+            ? const CommonCircleLoading(key: ValueKey('loading'), size: 24)
             : LastUpdateTimeText(
                 key: const ValueKey('time'),
                 lastUpdateDate: updateAt.microsecondsSinceEpoch > 0

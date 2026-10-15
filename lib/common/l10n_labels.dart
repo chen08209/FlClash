@@ -58,9 +58,9 @@ extension ProxyCardTypeL10n on ProxyCardType {
   String get label {
     final appLocalizations = currentAppLocalizations;
     return switch (this) {
-      ProxyCardType.expand => appLocalizations.expand,
-      ProxyCardType.shrink => appLocalizations.shrink,
-      ProxyCardType.min => appLocalizations.min,
+      ProxyCardType.loose => appLocalizations.loose,
+      ProxyCardType.standard => appLocalizations.standard,
+      ProxyCardType.compact => appLocalizations.compact,
     };
   }
 }

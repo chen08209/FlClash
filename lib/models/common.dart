@@ -508,8 +508,12 @@ extension GroupExt on Group {
     if (type.isComputedSelected) {
       return realNow.isNotEmpty ? realNow : proxyName;
     }
-    return proxyName.isNotEmpty ? proxyName : realNow;
+    return proxyName.isNotEmpty && _isMember(proxyName) ? proxyName : realNow;
   }
+
+  /// A saved pick outlives a subscription update that renames or drops it.
+  bool _isMember(String proxyName) =>
+      all.isEmpty || all.any((proxy) => proxy.name == proxyName);
 }
 
 @freezed
