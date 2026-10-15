@@ -735,6 +735,15 @@ void main() {
       expect(tun['udp-timeout'], 60);
     });
 
+    test('tun detects the outbound interface over the profile', () async {
+      final config = await runWith(const PatchClashConfig(), {
+        'tun': {'auto-detect-interface': false},
+      });
+      final tun = config['tun'] as YamlMap;
+
+      expect(tun['auto-detect-interface'], true);
+    });
+
     test('outbound settings start at the core defaults', () async {
       final config = await runWith(const PatchClashConfig(), {
         'routing-mark': 1,

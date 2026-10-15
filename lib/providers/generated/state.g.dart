@@ -140,7 +140,7 @@ final class TrayStateProvider
   }
 }
 
-String _$trayStateHash() => r'e3e841e2d6ae95e4eafe27996c7da33f82edcc80';
+String _$trayStateHash() => r'b7da57e41143cd8c284260d33b368b1be044bd01';
 
 /// Measured delays of the proxies the tray lists, by group and then proxy
 /// name. Resolved like a proxy card, so a nested group shows its selection.

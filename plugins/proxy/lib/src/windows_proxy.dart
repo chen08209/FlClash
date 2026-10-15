@@ -1,13 +1,13 @@
 import 'dart:io';
 
-/// WinINet rejects the whole list over one bare IPv6 literal, so the system
-/// proxy is not set at all, and its `<local>` token for single-label intranet
-/// hosts like `nas` has no cross-platform pattern. Loopback needs no entry:
-/// WinINet never proxies it.
+/// WinINet rejects the whole list over one bare IPv6 literal or one entry
+/// ending in `/`, so the system proxy is not set at all, and its `<local>`
+/// token for single-label intranet hosts like `nas` has no cross-platform
+/// pattern. Loopback needs no entry: WinINet never proxies it.
 List<String> windowsBypassList(List<String> bypassDomain) {
   final entries = <String>{};
   for (final domain in bypassDomain) {
-    final entry = domain.trim();
+    final entry = domain.trim().replaceFirst(_trailingSlashes, '');
     if (entry.isEmpty) continue;
     final isBareIPv6 =
         InternetAddress.tryParse(entry)?.type == InternetAddressType.IPv6;
@@ -15,3 +15,5 @@ List<String> windowsBypassList(List<String> bypassDomain) {
   }
   return {...entries, '<local>'}.toList();
 }
+
+final _trailingSlashes = RegExp(r'/+$');

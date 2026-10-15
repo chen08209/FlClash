@@ -58,6 +58,7 @@ TrayState trayState(Ref ref) {
   final groups = ref.watch(currentGroupsStateProvider).value;
   final selectedMap = ref.watch(selectedMapProvider);
   final safeMode = ref.watch(safeModeProvider);
+  final suspended = ref.watch(suspendProvider);
   final hotKeys = _trayHotKeys(ref);
 
   return TrayState(
@@ -67,6 +68,7 @@ TrayState trayState(Ref ref) {
     systemProxy: systemProxy,
     tunEnable: clashConfig.tunEnable,
     isStart: isStart,
+    suspended: isStart && suspended,
     groups: groups,
     selectedMap: selectedMap,
     showTrayTitle: appSetting.showTrayTitle,

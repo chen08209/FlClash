@@ -207,10 +207,14 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
   rawConfig['authentication'] = data.authentication;
   rawConfig['skip-auth-prefixes'] = [];
   rawConfig['mode'] = realPatchConfig.mode.name;
+  // auto-route is always on, so without auto-detect-interface the core sends
+  // its own outbound back into the TUN unless interface-name binds it, and
+  // interface-name wins over the detected interface anyway.
   rawConfig['tun'] = {
     if (rawConfig['tun'] is Map) ...rawConfig['tun'] as Map,
     ...overrides.tun.overrideJson(overrides.tunOverrideKeys),
     ...realPatchConfig.tun.toJson(),
+    'auto-detect-interface': true,
   };
   rawConfig['geodata-loader'] = realPatchConfig.geodataLoader.name;
   rawConfig['geo-auto-update'] = realPatchConfig.geoAutoUpdate;

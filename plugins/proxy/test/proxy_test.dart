@@ -446,6 +446,13 @@ USB 10/100/1000 LAN
         ['[::1]', '[fe80::1]', '[fd00::1]', '*.lan', '<local>'],
       );
     });
+
+    test('drops trailing slashes that fail the whole list', () {
+      expect(
+        windowsBypassList(['example.test/', 'example.test', 'nas//', '/']),
+        ['example.test', 'nas', '<local>'],
+      );
+    });
   });
 
   group('MethodChannelProxy', () {
