@@ -70,6 +70,7 @@ List<Group> computeHideTimeout({
   required String defaultTestUrl,
 }) {
   final realStates = <String, SelectedProxyState>{};
+  final groupNames = {for (final group in allGroups) group.name};
   final proxyTypes = {
     for (final group in allGroups)
       for (final proxy in group.all) proxy.name: proxy.type,
@@ -81,7 +82,9 @@ List<Group> computeHideTimeout({
       selectedMap[group.name] ?? '',
     );
     final visible = group.all.where((proxy) {
-      if (proxy.name == selectedName) {
+      // A group's delay is its pick's, and hiding it would take away the only
+      // way to choose the group where the mode does not show it on its own.
+      if (proxy.name == selectedName || groupNames.contains(proxy.name)) {
         return true;
       }
       final state = realStates.putIfAbsent(
