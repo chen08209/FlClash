@@ -51,7 +51,7 @@ hooks:
 ```
 
 CI flips `setup` to `false` with `yq` in its throwaway checkout before
-`dart run tool/changelog.dart` and `flutter test`; no test loads the Go core. `rust_api`
+`dart run tool/changelog.dart` and `dart run tool/test.dart`; no test loads the Go core. `rust_api`
 stays on there because the editor tests in `test/plugins/code_forge/` and the socket
 test in `test/core/desktop/ipc_native_test.dart` load the Rust library the hook
 builds; the release-notes job, which runs no tests, flips both.
@@ -154,12 +154,29 @@ flutter test test/setup_test.dart
 flutter test plugins/proxy/test/proxy_test.dart
 ```
 
+For the whole suite, or a directory of more than a few files, use `tool/test.dart`, which is also what CI runs:
+
+```bash
+dart run tool/test.dart                                  # all of test/
+dart run tool/test.dart test/widgets test/views          # some paths
+dart run tool/test.dart -- --reporter expanded --coverage
+```
+
+Plain `flutter test` compiles each file into its own program and starts an engine for it, one file after another, and
+that dominates a full run: 329 files took 128 s on a 12-core Mac with at most four running at once. `tool/test.dart`
+imports the files into 32 generated entrypoints under `.dart_tool/test_bundles/` and runs those with one worker per
+core: about 60 s for the same run, and 67 s instead of 180–213 s with `--coverage`. Files in one entrypoint share an
+isolate, so a test can see state a file before it left behind; the script runs every file that failed there again on
+its own, lets that run decide, and names the files that only failed together. See the Shared Test Isolate section of
+`rules.md` before fixing one.
+
 `plugins/setup/setup_hooks/` is a pure Dart package and is tested with `dart test` from its own directory, which is
 also what CI runs; `tool/check_plugins.sh` does not descend into it. It must stay out of `flutter test`, because a test
 run of `plugins/setup` would execute the build hook itself.
 
 Native plugin code under `plugins/*/{linux,macos,windows}` is compiled by the CI `desktop` job, which runs
-`flutter build <platform> --debug` on every push; `tool/check_plugins.sh` only analyzes and tests the Dart side.
+`flutter build <platform> --debug` on every branch push, and by the release matrix on a tag; `tool/check_plugins.sh`
+only analyzes and tests the Dart side.
 
 Root `flutter test` only discovers the root package's `test/` directory by default. Include bundled plugin Dart tests by passing paths explicitly, or run `flutter test` from that plugin package directory, or run `bash tool/check_plugins.sh` to analyze and test every plugin package the way CI does. Native plugin tests under platform folders are not run by `flutter test`.
 
@@ -338,15 +355,30 @@ directories: `plugins` (local Flutter packages and the setup build tool), `go`
 (the Core wrapper, plus a vet of the Android files), `android` (JVM unit tests
 for `:common`, `:service` and `:app`, with the Flutter compile tasks excluded
 and the gomobile AAR built for one ABI), `rust` (both crates), and a
-Windows runner for the helper's `windows-service` feature. A `desktop` job also
-compiles a debug build per desktop platform. Release builds run only in the
-public repository and start once every job except `desktop` passes.
+Windows runner for the helper's `windows-service` feature. On branch pushes a
+`desktop` job also compiles a debug build per desktop platform; a tag skips it,
+since its release matrix compiles the same native code. Release builds run only
+in the public repository and start alongside the checks; `upload` publishes
+only once every build and every check job passes.
 
 `bash tool/check_plugins.sh` is that plugin gate, and CI runs the same script.
 It discovers every `plugins/*/pubspec.yaml`, analyzes each package, and runs
 `flutter test` wherever `test/*_test.dart` exists. Adding a plugin package needs
 no workflow edit; enumerating packages by hand in the workflow is what
 previously left `plugins/tray` unanalyzed and untested.
+
+### CI Caches
+
+A run restores only cache entries saved on its own branch or tag, or on the default branch (`main`), and the
+repository holds 10 GB before evicting the least recently used entries. Every release is a new tag that no later run
+reads from, so `BRANCH_CACHE` turns caching off in tag runs: one release used to write about 9 GB of such entries and
+evict everything `dev` had saved. Release builds therefore start cold; branch runs, chiefly `dev`, keep the caches.
+
+- setup-go keys its entry on the `cache-dependency-path` files alone and saves only on a miss, so jobs listing the
+  same files share one entry holding the build cache of whichever finished first. `desktop` and `android` each add
+  the file that drives their Core build to get an entry of their own.
+- setup-gradle writes only on the default branch unless told otherwise, so `android` lets `dev` write as well. Its
+  entries are keyed by job, which is one more reason the release build gains nothing from caching.
 
 ## Worktree Tooling
 

@@ -91,3 +91,13 @@ listed in the SDK's `CHANGELOG.md`.
 - **Remove when:** the Linux engine reports minimized windows on Wayland, which needs GTK 4 or xdg-shell's
   `suspended` state. Check in a GNOME Wayland session without the workaround: minimizing from the caption button
   must log `AppLifecycleState.hidden`.
+
+## Liquid glass saves around the transform of a blurring layer
+
+- **Bug:** not filed upstream. On 3.47 Impeller scales a `saveLayer`'s image filter by a transform set inside the
+  layer that is still in effect when the layer is restored. A host's capture shrinks each pane's slot inside the
+  layer that blurs it, so its blur vanished at a quarter scale and spread half again as far at 1.5.
+- **Workaround:** `_LiquidGlassHostLayer._snapshot` sets each slot's transform inside a `save` of its own, and each
+  band's offset, restored before the layer is.
+- **Remove when:** without that `save`, the frosted-pane case of `test/widgets/liquid_glass_host_test.dart` passes
+  under `flutter test --enable-impeller`.

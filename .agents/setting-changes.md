@@ -23,9 +23,9 @@ The update path carries these fields:
 
 - From `PatchClashConfig`: `mode`, `log-level`, `mixed-port`, `allow-lan`, `ipv6`, `find-process-mode`,
   `tcp-concurrent`, `unified-delay`, `external-controller`, `secret`, `geo-auto-update`, `geo-update-interval`,
-  `geox-url`, and every `tun` field.
-- From other settings: `NetworkProps.authentication` and `bypassPrivateRoute`, which `Tun.getRealTun` folds into the
-  TUN exclusions, and `AppSettingProps.checkCertificate`, sent as `skip-cert-verify`.
+  `geox-url`, and the `tun` keys of `Tun.coreJson`: `enable`, `device`, `stack`, and `auto-route`, always on.
+- From other settings: `NetworkProps.authentication`, and `AppSettingProps.checkCertificate`, sent as
+  `skip-cert-verify`.
 
 On desktop, `updateListeners` rebuilds the TUN from the patched `tun`. Enabling TUN may need authorization first. When
 `requestAdmin` gets it newly granted, `updateConfig` restarts the Core instead of patching it. On Android,
@@ -45,15 +45,17 @@ Prefer update whenever Go has a setter for the setting, because an apply reloads
 ## Apply
 
 `CoreManager` answers each change of `setupPatchProvider` with `applyProfileDebounce(silence: true)`. That call
-rebuilds the profile YAML and hands it to Go's `applyConfig` through `setupConfig`. The provider holds two values:
+rebuilds the profile YAML and hands it to Go's `applyConfig` through `setupConfig`. The provider holds three values:
 
 - `PatchClashConfig.setupOnly`: the config with every field that update carries reset to its default.
 - `NetworkProps.appendSystemDns`.
+- `NetworkProps.bypassPrivateRoute` on desktop, where the task adds the private ranges to the TUN's final
+  `route-exclude-address`.
 
-A change to anything else in `PatchClashConfig` therefore reaches it. Today that is the DNS override (`dns`,
-`dnsOverrideKeys`), `hosts`, the extra inbound ports (`port`, `socks-port`, `redir-port`, `tproxy-port`), the dialer
-options (`keep-alive-*`, `disable-keep-alive`, `interface-name`, its mode, `routing-mark`), `geodata-loader` and
-`global-ua`. A new `PatchClashConfig` field written by `_makeRealProfileTask` lands here without further work. A value
+A change to anything else in `PatchClashConfig` therefore reaches it. Today that is the DNS and TUN overrides (`dns`,
+`dnsOverrideKeys`, `tunOverride`, `tunOverrideKeys`), `hosts`, the extra inbound ports (`port`, `socks-port`,
+`redir-port`, `tproxy-port`), the dialer options (`keep-alive-*`, `disable-keep-alive`, `interface-name`, its mode,
+`routing-mark`), `geodata-loader` and `global-ua`. A new `PatchClashConfig` field written by `_makeRealProfileTask` lands here without further work. A value
 the profile build reads from another settings object has to be added to `setupPatchProvider`.
 
 An apply without `force` sends nothing when the md5 of the generated YAML has not changed. A value that only
@@ -64,9 +66,10 @@ Profile content does not go through `setupPatchProvider`. `setupStateProvider` r
 database once instead of watching them. Content is applied explicitly by whatever changes it:
 
 - Profile editors call `autoApplyProfile` when they close.
-- Subscription updates, `setProfileAndAutoApply`, scripts and app-level providers call `applyProfileDebounce`.
+- Subscription updates, scripts and app-level providers call `applyProfileDebounce`.
 - A profile switch runs `fullSetup`.
-- A start applies again with `force`.
+- A start applies again with `force` unless the last apply saw the same inputs (`_inputsApplied`), the `testUrl` and
+  `skipCertVerify` that only `SetupParams` carries included.
 
 ## Restart
 
@@ -116,8 +119,11 @@ options, because the service does not report the options it was started with.
 Each path watches its own provider, so a single setting can take more than one of them:
 
 - `mixedPort`: update moves the Core's listener; under the VPN system proxy, the restart notice follows.
-- TUN fields and `bypassPrivateRoute`: update rebuilds the desktop TUN. On Android the update reaches no TUN, and the
-  restart notice carries the change.
+- TUN switch and stack: update rebuilds the desktop TUN. On Android the update reaches no TUN, and the restart notice
+  carries the stack.
+- MTU, congestion control and routes: Android's rows take the restart path; on desktop they are TUN overrides, applied
+  with the profile.
+- `bypassPrivateRoute`: apply on desktop, restart on Android.
 - Local authentication: update applies it to the inbounds. It also switches the VPN system proxy, which needs a
   restart.
 
