@@ -135,6 +135,12 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   }
 
   @override
+  void onRequestTraffic(Map<String, RequestTraffic> traffic) {
+    ref.read(requestsProvider.notifier).updateTraffic(traffic);
+    super.onRequestTraffic(traffic);
+  }
+
+  @override
   void onDns(DnsQuery dnsQuery) {
     ref.read(dnsQueriesProvider.notifier).addQuery(dnsQuery);
     ref.read(dnsQueryCountProvider.notifier).update((count) => count + 1);

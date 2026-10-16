@@ -224,6 +224,7 @@ enum CoreEventType {
   log,
   delay,
   request,
+  requestTraffic,
   dns,
   loaded,
   crash,
@@ -791,6 +792,8 @@ enum RuleProviderFormat { yaml, text, mrs }
 enum RestoreStrategy { compatible, override }
 
 enum TabAnimation { slide, fade }
+
+enum LiquidGlassMode { none, standard }
 
 enum Language { yaml, javaScript, json }
 

@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -156,12 +156,13 @@ class _LogsViewState extends ConsumerState<LogsView>
                     shrinkWrap: true,
                     controller: _scrollController,
                     padding: EdgeInsets.only(
-                      top: context.appBarInset,
+                      top: context.contentTopPadding,
                       bottom: 16 + BottomInsetScope.of(context),
                     ),
                     itemCount: logs.length,
-                    extentEstimation: zeroDividerExtentEstimation,
-                    separatorBuilder: (_, _) => const Divider(height: 0),
+                    extentEstimation: recordListExtentEstimation,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: recordListGap),
                     itemBuilder: (_, index) {
                       final log = logs[index];
                       return LogItem(
@@ -193,12 +194,10 @@ class LogItem extends StatelessWidget {
     final tone = switch (log.logLevel) {
       LogLevel.warning => RecordTone.warning,
       LogLevel.error => RecordTone.error,
-      LogLevel.info => RecordTone.neutral,
-      LogLevel.debug || LogLevel.silent => RecordTone.muted,
+      LogLevel.info || LogLevel.debug || LogLevel.silent => RecordTone.neutral,
     };
     final payload = LogPayload.parse(log.payload);
     return RecordListItem(
-      tone: tone,
       onTap: () {},
       header: RecordHeader(
         children: [
@@ -235,35 +234,32 @@ class _LogBody extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SelectableText(payload.message, style: styles.primary),
-          if (payload.tag.isNotEmpty) Text(payload.tag, style: styles.muted),
+          if (payload.tag.isNotEmpty)
+            Text(payload.tag, style: styles.secondary),
         ],
       );
     }
     return SelectableText.rich(
       TextSpan(
         children: [
-          TextSpan(
-            text: route.destination,
-            style: styles.primary?.copyWith(fontWeight: FontWeight.w500),
-          ),
+          TextSpan(text: route.destination, style: styles.title),
           if (route.error.isNotEmpty)
             TextSpan(
               text: '\n${route.error}',
-              style: styles.secondary?.copyWith(color: errorColor),
+              style: styles.secondary.copyWith(color: errorColor),
             ),
           const TextSpan(text: '\n'),
           if (route.rule.isNotEmpty) ...[
             TextSpan(text: route.rule, style: styles.secondary),
-            TextSpan(text: ' \u2192 ', style: styles.muted?.toJetBrainsMono),
+            TextSpan(text: ' \u2192 ', style: styles.secondary.toJetBrainsMono),
           ],
           TextSpan(
             text: route.proxy,
-            style: styles.secondary?.copyWith(
-              color: context.colorScheme.primary,
-              fontWeight: FontWeight.w500,
-            ),
+            style: AppTextStyle.footnote
+                .of(context, emphasized: true)
+                .copyWith(color: context.colorScheme.primary),
           ),
-          TextSpan(text: '\n$_sourceText', style: styles.muted),
+          TextSpan(text: '\n$_sourceText', style: styles.secondary),
         ],
       ),
     );

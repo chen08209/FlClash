@@ -20,7 +20,10 @@ func init() {
 	}
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
 		notifyProbeRoute(c)
-		sendMessage(RequestMessage, c)
+		if hasEventListener() {
+			sendMessage(RequestMessage, c)
+			watchRequestTraffic(c)
+		}
 	}
 	dns.DefaultQueryNotify = func(record dns.QueryRecord) {
 		if hasEventListener() {
