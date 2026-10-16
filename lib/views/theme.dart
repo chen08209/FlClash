@@ -1,9 +1,9 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/font_family.dart';
 import 'package:fl_clash/views/theme_preview.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -33,6 +33,8 @@ class ThemeView extends StatelessWidget {
           const _NavigationBarItem(),
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
           const _TabAnimationItem(),
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          const _LiquidGlassItem(),
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
           const _SidebarBlurItem(),
           const _FontFamilyItem(),
@@ -81,13 +83,16 @@ class _ThemeModeItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.themeMode),
     );
     final floatingBar = ref.watch(_floatingBarProvider);
+    final liquidGlass = ref.watch(_liquidGlassProvider);
     final light = MiniScreen(
       colorScheme: ref.watch(genColorSchemeProvider(Brightness.light)),
       floatingBar: floatingBar,
+      liquidGlass: liquidGlass,
     );
     final dark = MiniScreen(
       colorScheme: ref.watch(genColorSchemeProvider(Brightness.dark)),
       floatingBar: floatingBar,
+      liquidGlass: liquidGlass,
     );
     return SliverToBoxAdapter(
       child: PreviewChoiceGroup<ThemeMode>(
@@ -167,7 +172,7 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
         text: appLocalizations.deleteTip(appLocalizations.colorSchemes),
       ),
     );
-    if (res != true) {
+    if (res != true || !mounted) {
       return;
     }
     ref.read(themeSettingProvider.notifier).update((state) {
@@ -196,13 +201,13 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
     final res = await dialogs.showCommonDialog<int>(
       child: const _PaletteDialog(),
     );
-    if (res == null) {
+    if (res == null || !mounted) {
       return;
     }
     final isExists = ref.read(
       themeSettingProvider.select((state) => state.primaryColors.contains(res)),
     );
-    if (isExists && mounted) {
+    if (isExists) {
       context.showNotifier(
         appLocalizations.existsTip(appLocalizations.colorSchemes),
         level: MessageLevel.warning,
@@ -216,21 +221,7 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
     });
   }
 
-  Future<void> _handleChangeSchemeVariant() async {
-    final schemeVariant = ref.read(
-      themeSettingProvider.select((state) => state.schemeVariant),
-    );
-    final value = await dialogs.showCommonDialog<DynamicSchemeVariant>(
-      child: OptionsDialog<DynamicSchemeVariant>(
-        title: context.appLocalizations.colorSchemes,
-        options: DynamicSchemeVariant.values,
-        textBuilder: (item) => item.label,
-        value: schemeVariant,
-      ),
-    );
-    if (value == null) {
-      return;
-    }
+  void _handleChangeSchemeVariant(DynamicSchemeVariant value) {
     ref.read(themeSettingProvider.notifier).update((state) {
       return state.copyWith(schemeVariant: value);
     });
@@ -277,10 +268,22 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
           actions: [
             if (_removablePrimaryColor == null)
               ElasticButton(
-                child: FilledButton.tonal(
-                  style: _headerButtonStyle,
-                  onPressed: _handleChangeSchemeVariant,
-                  child: Text(schemeVariant.label),
+                child: CommonPopupBox(
+                  targetBuilder: (open) => FilledButton.tonal(
+                    style: _headerButtonStyle,
+                    onPressed: open,
+                    child: PopupValueText(schemeVariant.label),
+                  ),
+                  popupBuilder: (_) => CommonPopupMenu(
+                    items: [
+                      for (final variant in DynamicSchemeVariant.values)
+                        CommonPopupMenuItem(
+                          label: variant.label,
+                          checked: variant == schemeVariant,
+                          onPressed: () => _handleChangeSchemeVariant(variant),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             if (_removablePrimaryColor != null)
@@ -456,6 +459,10 @@ final _floatingBarProvider = appSettingProvider.select(
   (state) => state.floatingNavigationBar,
 );
 
+final _liquidGlassProvider = themeSettingProvider.select(
+  (state) => state.liquidGlass,
+);
+
 class _PureBlackItem extends ConsumerWidget {
   const _PureBlackItem();
 
@@ -466,12 +473,14 @@ class _PureBlackItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.pureBlack),
     );
     final floatingBar = ref.watch(_floatingBarProvider);
+    final liquidGlass = ref.watch(_liquidGlassProvider);
     Widget preview(bool pureBlack) => MiniScreenThumb(
       screen: MiniScreen(
         colorScheme: ref.watch(
           genColorSchemeProvider(Brightness.dark, pureBlack: pureBlack),
         ),
         floatingBar: floatingBar,
+        liquidGlass: liquidGlass,
       ),
     );
     return SliverToBoxAdapter(
@@ -510,6 +519,7 @@ class _NavigationBarItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     final floatingBar = ref.watch(_floatingBarProvider);
+    final liquidGlass = ref.watch(_liquidGlassProvider);
     final colorScheme = context.colorScheme;
     return SliverToBoxAdapter(
       child: PreviewChoiceGroup<bool>(
@@ -523,7 +533,11 @@ class _NavigationBarItem extends ConsumerWidget {
             value: true,
             label: appLocalizations.floating,
             pictogram: MiniScreenThumb(
-              screen: MiniScreen(colorScheme: colorScheme, floatingBar: true),
+              screen: MiniScreen(
+                colorScheme: colorScheme,
+                floatingBar: true,
+                liquidGlass: liquidGlass,
+              ),
             ),
           ),
           PreviewChoice(
@@ -554,11 +568,13 @@ class _TabAnimationItem extends ConsumerWidget {
       appSettingProvider.select((state) => state.tabAnimation),
     );
     final floatingBar = ref.watch(_floatingBarProvider);
+    final liquidGlass = ref.watch(_liquidGlassProvider);
     final colorScheme = context.colorScheme;
     Widget switching(TabAnimation tabAnimation) => MiniScreenThumb(
       screen: MiniScreen(
         colorScheme: colorScheme,
         floatingBar: floatingBar,
+        liquidGlass: liquidGlass,
         selected: 1,
         previous: 0,
         progress: 0.55,
@@ -594,6 +610,53 @@ class _TabAnimationItem extends ConsumerWidget {
   }
 }
 
+class _LiquidGlassItem extends ConsumerWidget {
+  const _LiquidGlassItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
+    final liquidGlass = ref.watch(_liquidGlassProvider);
+    final colorScheme = context.colorScheme;
+    // Floating either way, as a docked bar stays a fill, over the list page,
+    // whose rows run on under the bar where glass shows them.
+    Widget preview(bool liquidGlass) => MiniScreenThumb(
+      screen: MiniScreen(
+        colorScheme: colorScheme,
+        floatingBar: true,
+        liquidGlass: liquidGlass,
+        selected: 1,
+      ),
+    );
+    return SliverToBoxAdapter(
+      child: PreviewChoiceGroup<bool>(
+        info: Info(
+          label: appLocalizations.liquidGlass,
+          glyph: AppGlyphs.liquidGlass,
+        ),
+        value: liquidGlass,
+        choices: [
+          PreviewChoice(
+            value: false,
+            label: appLocalizations.standard,
+            pictogram: preview(false),
+          ),
+          PreviewChoice(
+            value: true,
+            label: appLocalizations.liquidGlass,
+            pictogram: preview(true),
+          ),
+        ],
+        onChanged: (value) {
+          ref
+              .read(themeSettingProvider.notifier)
+              .update((state) => state.copyWith(liquidGlass: value));
+        },
+      ),
+    );
+  }
+}
+
 class _SidebarBlurItem extends ConsumerWidget {
   const _SidebarBlurItem();
 
@@ -612,9 +675,9 @@ class _SidebarBlurItem extends ConsumerWidget {
         horizontalTitleGap: 12,
         title: Text(
           appLocalizations.sidebarBlur,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
-          ),
+          style: AppTextStyle.subheadline
+              .of(context, emphasized: true)
+              .copyWith(color: context.colorScheme.onSurfaceVariant),
         ),
         subtitle: Text(appLocalizations.sidebarBlurDesc),
         value: sidebarBlur,
@@ -635,7 +698,6 @@ class _FontFamilyItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     final colorScheme = context.colorScheme;
-    final textTheme = context.textTheme;
     final fontFamily = ref.watch(
       themeSettingProvider.select((state) => state.fontFamily),
     );
@@ -646,17 +708,21 @@ class _FontFamilyItem extends ConsumerWidget {
         children: [
           Text(
             'Aa',
-            style: textTheme.titleMedium?.copyWith(fontFamily: fontFamily),
+            style: AppTextStyle.headline
+                .of(context)
+                .copyWith(fontFamily: fontFamily),
           ),
           Expanded(
             child: Text(
               fontFamily ?? appLocalizations.defaultText,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: textTheme.bodyMedium?.copyWith(
-                fontFamily: fontFamily,
-                color: colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyle.subheadline
+                  .of(context)
+                  .copyWith(
+                    fontFamily: fontFamily,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
             ),
           ),
           GlyphIcon(
@@ -667,8 +733,9 @@ class _FontFamilyItem extends ConsumerWidget {
         ],
       ),
     );
+    final cardColor = context.raisedSurfaceLevel.colorOf(colorScheme);
     Widget card(VoidCallback onTap) => Material(
-      color: colorScheme.surfaceContainerLow,
+      color: cardColor,
       shape: AppShape.lg,
       clipBehavior: Clip.antiAlias,
       child: InkWell(customBorder: AppShape.lg, onTap: onTap, child: preview),
@@ -687,9 +754,8 @@ class _FontFamilyItem extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: context.isMobileView
                 ? OpenContainer<void>(
-                    tappable: false,
                     closedShape: AppShape.lg,
-                    closedColor: colorScheme.surfaceContainerLow,
+                    closedColor: cardColor,
                     closedBuilder: (_, open) => card(open),
                     openBuilder: (_, _) => const FontFamilyView(),
                   )
@@ -738,6 +804,7 @@ class _TextScaleFactorItemState extends ConsumerState<_TextScaleFactorItem> {
     ).clamp(minTextScale, maxTextScale).toDouble();
     final scale = _draft ?? (textScale.enable ? textScale.scale : systemScale);
     final percent = '${(scale * 100).round()}%';
+    final level = context.raisedSurfaceLevel;
     final divisions =
         ((maxTextScale - minTextScale) / _TextScaleFactorItem._step).round();
     return SliverToBoxAdapter(
@@ -783,7 +850,7 @@ class _TextScaleFactorItemState extends ConsumerState<_TextScaleFactorItem> {
                 Container(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   decoration: ShapeDecoration(
-                    color: colorScheme.surfaceContainerLow,
+                    color: level.colorOf(colorScheme),
                     shape: AppShape.lg,
                   ),
                   child: Column(
@@ -808,12 +875,13 @@ class _TextScaleFactorItemState extends ConsumerState<_TextScaleFactorItem> {
                                   children: [
                                     Text(
                                       'Aa',
-                                      style: context.textTheme.titleLarge,
+                                      style: AppTextStyle.title3.of(context),
                                     ),
                                     Text(
                                       appLocalizations.textScalePreview,
-                                      style: context.textTheme.bodyMedium
-                                          ?.copyWith(
+                                      style: AppTextStyle.subheadline
+                                          .of(context)
+                                          .copyWith(
                                             color: colorScheme.onSurfaceVariant,
                                           ),
                                     ),
@@ -828,17 +896,19 @@ class _TextScaleFactorItemState extends ConsumerState<_TextScaleFactorItem> {
                               vertical: 4,
                             ),
                             decoration: ShapeDecoration(
-                              color: colorScheme.secondaryContainer,
+                              color: level.next.colorOf(colorScheme),
                               shape: AppShape.full,
                             ),
                             child: Text(
                               percent,
-                              style: context.textTheme.labelLarge?.copyWith(
-                                color: colorScheme.onSecondaryContainer,
-                                fontFeatures: const [
-                                  FontFeature.tabularFigures(),
-                                ],
-                              ),
+                              style: AppTextStyle.subheadline
+                                  .of(context, emphasized: true)
+                                  .copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontFeatures: const [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                  ),
                             ),
                           ),
                         ],
@@ -851,10 +921,11 @@ class _TextScaleFactorItemState extends ConsumerState<_TextScaleFactorItem> {
                             ExcludeSemantics(
                               child: Text(
                                 'A',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
+                                style: AppTextStyle.footnote
+                                    .of(context)
+                                    .copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
                               ),
                             ),
                             Expanded(
@@ -880,11 +951,11 @@ class _TextScaleFactorItemState extends ConsumerState<_TextScaleFactorItem> {
                             ExcludeSemantics(
                               child: Text(
                                 'A',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w500,
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
+                                style: AppTextStyle.title2
+                                    .of(context)
+                                    .copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
                               ),
                             ),
                           ],
@@ -925,7 +996,7 @@ class _SegmentedToggle extends StatelessWidget {
       height: _height,
       padding: const EdgeInsets.all(_inset),
       decoration: ShapeDecoration(
-        color: colorScheme.surfaceContainerHigh,
+        color: context.raisedSurfaceLevel.colorOf(colorScheme),
         shape: AppShape.full,
       ),
       child: Stack(
@@ -941,7 +1012,7 @@ class _SegmentedToggle extends StatelessWidget {
               heightFactor: 1,
               child: DecoratedBox(
                 decoration: ShapeDecoration(
-                  color: colorScheme.secondaryContainer,
+                  color: colorScheme.primary,
                   shape: AppShape.full,
                 ),
               ),
@@ -967,14 +1038,13 @@ class _SegmentedToggle extends StatelessWidget {
                         child: Center(
                           child: AnimatedDefaultTextStyle(
                             duration: const Duration(milliseconds: 200),
-                            style: context.textTheme.labelLarge!.copyWith(
-                              color: option == value
-                                  ? colorScheme.onSecondaryContainer
-                                  : colorScheme.onSurfaceVariant,
-                              fontWeight: option == value
-                                  ? FontWeight.w600
-                                  : FontWeight.w500,
-                            ),
+                            style: AppTextStyle.subheadline
+                                .of(context, emphasized: option == value)
+                                .copyWith(
+                                  color: option == value
+                                      ? colorScheme.onPrimary
+                                      : colorScheme.onSurfaceVariant,
+                                ),
                             child: Text(
                               label,
                               maxLines: 1,

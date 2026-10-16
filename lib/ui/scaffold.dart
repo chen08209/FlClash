@@ -20,6 +20,7 @@ import 'package:flutter/services.dart';
 
 import 'button.dart';
 import 'chip.dart';
+import 'dialog.dart';
 import 'inherited.dart';
 import 'liquid_glass.dart';
 import 'loading.dart';
@@ -41,6 +42,7 @@ class CommonScaffold extends StatefulWidget {
   final Color? backgroundColor;
   final String? title;
   final Widget? titleWidget;
+  final List<CommonPopupMenuItem> titleMenuItems;
   final bool isLoading;
   final List<Widget>? actions;
 
@@ -50,6 +52,10 @@ class CommonScaffold extends StatefulWidget {
   /// buttons, as [primaryAction] and [menuItems] are; [actions] never fold.
   final List<IconButtonData> iconActions;
   final List<CommonPopupMenuItem> menuItems;
+
+  /// Answers a form: last in the bar, and in a form sheet the filled default
+  /// at its foot beside cancel, where SwiftUI sets one on macOS.
+  final IconButtonData? confirmationAction;
 
   /// Folds [primaryAction] ahead of [iconActions], so a bar without search
   /// keeps the first of them in sight instead.
@@ -73,6 +79,7 @@ class CommonScaffold extends StatefulWidget {
     this.backgroundColor,
     this.title,
     this.titleWidget,
+    this.titleMenuItems = const [],
     this.actions,
     this.backAction,
     this.isLoading = false,
@@ -82,6 +89,7 @@ class CommonScaffold extends StatefulWidget {
     this.primaryAction,
     this.iconActions = const [],
     this.menuItems = const [],
+    this.confirmationAction,
     this.foldPrimaryAction = false,
     this.onKeywordsUpdate,
     this.resizeToAvoidBottomInset,
@@ -95,7 +103,6 @@ class CommonScaffold extends StatefulWidget {
 class CommonScaffoldState extends State<CommonScaffold> {
   late final ValueNotifier<AppBarState> _appBarState;
   final ValueNotifier<bool> _loadingNotifier = ValueNotifier(false);
-  final ValueNotifier<bool> _isFabExtendedNotifier = ValueNotifier(true);
   final ValueNotifier<List<String>> _keywordsNotifier = ValueNotifier([]);
   final _textController = TextEditingController();
   final _searchFocusNode = FocusNode();
@@ -109,6 +116,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
     return widget.canSort ||
         widget.primaryAction != null ||
         widget.iconActions.isNotEmpty ||
+        widget.confirmationAction != null ||
         widget.menuItems.isNotEmpty ||
         widget.actions?.isNotEmpty == true;
   }
@@ -147,7 +155,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
         !_isFrontmost) {
       return false;
     }
-    if (_isSearch || context.isInBottomSheet) {
+    if (_isSearch || context.isInCompactSheet) {
       _searchFocusNode.requestFocus();
       _textController.selection = TextSelection(
         baseOffset: 0,
@@ -214,8 +222,9 @@ class CommonScaffoldState extends State<CommonScaffold> {
   void didUpdateWidget(CommonScaffold oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.searchState != widget.searchState) {
+      final query = _appBarState.value.searchState?.query;
       _appBarState.value = _appBarState.value.copyWith(
-        searchState: widget.searchState,
+        searchState: widget.searchState?.copyWith(query: query),
       );
     }
     if (oldWidget.isLoading != widget.isLoading) {
@@ -269,7 +278,6 @@ class CommonScaffoldState extends State<CommonScaffold> {
     _appBarState.dispose();
     _textController.dispose();
     _searchFocusNode.dispose();
-    _isFabExtendedNotifier.dispose();
     _loadingNotifier.dispose();
     _keywordsNotifier.dispose();
     super.dispose();
@@ -293,7 +301,6 @@ class CommonScaffoldState extends State<CommonScaffold> {
   Widget _buildDockedSearch(AppBarSearchState searchState) {
     final colorScheme = context.colorScheme;
     final glass = LiquidGlassScope.of(context);
-    final shadows = dockShadows(colorScheme);
     final pill = AppShape.input.copyWith(borderRadius: AppRadius.full);
     final fieldPadding =
         (BottomInsetScope.dockedSearchHeight -
@@ -330,18 +337,21 @@ class CommonScaffoldState extends State<CommonScaffold> {
       child: glass
           ? LiquidGlass(
               style: LiquidGlassStyle.pill(colorScheme),
-              shadows: shadows,
+              shadows: dockGlassShadows(colorScheme),
               child: field,
             )
           : DecoratedBox(
               decoration: ShapeDecoration(
                 shape: AppShape.full,
-                shadows: shadows,
+                shadows: dockShadows(colorScheme),
               ),
               child: field,
             ),
     );
   }
+
+  VoidCallback get _closeSheet =>
+      SheetProvider.of(context)?.onClose ?? () => context.safeNestedPop();
 
   Widget _buildSheetPopButton(
     VoidCallback? backAction, {
@@ -352,9 +362,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
       data: useCloseIcon
           ? IconButtonData(
               glyph: AppGlyphs.close,
-              onPressed:
-                  SheetProvider.of(context)?.onClose ??
-                  () => context.safeNestedPop(),
+              onPressed: _closeSheet,
               tooltip: localizations.close,
             )
           : IconButtonData(
@@ -401,7 +409,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
       );
     }
     if (pop != null) {
-      return pop.asSuffix
+      return pop.asSuffix || pop.atFoot
           ? null
           : _buildSheetPopButton(backAction, useCloseIcon: pop.useCloseIcon);
     }
@@ -424,7 +432,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
         : const BackButton();
   }
 
-  Widget _buildTitle(AppBarSearchState? startState) {
+  Widget _buildTitle(AppBarSearchState? startState, {required bool compact}) {
     final localizations = UiLocalizations.of(context);
     return _isSearch
         ? TextField(
@@ -441,7 +449,19 @@ class CommonScaffoldState extends State<CommonScaffold> {
             },
             decoration: InputDecoration(hintText: localizations.search),
           )
-        : widget.titleWidget ?? Text(widget.title!);
+        : widget.titleWidget ??
+              (widget.titleMenuItems.isEmpty
+                  ? Text(widget.title!)
+                  : CommonPopupBox(
+                      placement: PopupPlacement.overAnchorStart,
+                      targetBuilder: (open) => _TitleMenuButton(
+                        title: widget.title!,
+                        compact: compact,
+                        onPressed: open,
+                      ),
+                      popupBuilder: (_) =>
+                          CommonPopupMenu(items: widget.titleMenuItems),
+                    ));
   }
 
   List<Widget> _buildActions(
@@ -489,6 +509,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
         (selection.isEmpty ? 0 : 1) + selectionSingles.length;
     final popAsSuffix = !_isSearch && pop?.asSuffix == true;
     final pairedPrimary = popAsSuffix ? primaryAction : null;
+    final atFoot = pop?.atFoot == true;
     final fold = _isSearch
         ? _foldBarActions(
             hasLead: true,
@@ -508,6 +529,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
                 ),
               ...widget.iconActions,
             ],
+            confirmation: atFoot ? null : widget.confirmationAction,
             widgetCount:
                 widgets.length +
                 selectionCount +
@@ -559,12 +581,30 @@ class CommonScaffoldState extends State<CommonScaffold> {
     ], edge: AppBarActionEdge.container);
   }
 
-  Widget _buildAppBarWrap(Widget child) {
-    final appBar = LiquidGlassGroup(
-      child: TonalButtonTheme(
-        glass: LiquidGlassScope.of(context),
-        child: _isSearch ? _buildSearchingAppBarTheme(child) : child,
+  Widget _buildFootActions(IconButtonData confirmation) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: AlertActions(
+        actions: [
+          TextButton(
+            onPressed: _closeSheet,
+            child: Text(UiLocalizations.of(context).cancel),
+          ),
+          TextButton(
+            onPressed: confirmation.isLoading ? null : confirmation.onPressed,
+            child: confirmation.isLoading
+                ? CommonCircleLoading(size: TonalButtonSize.bar.icon)
+                : Text(confirmation.tooltip!),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildAppBarWrap(Widget child) {
+    final appBar = TonalButtonTheme(
+      glass: LiquidGlassScope.of(context),
+      child: _isSearch ? _buildSearchingAppBarTheme(child) : child,
     );
     if (_isSearch || _sorting) {
       return BackLayerScope(onBack: _handleExitAppBarLayer, child: appBar);
@@ -584,25 +624,23 @@ class CommonScaffoldState extends State<CommonScaffold> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(
-    VoidCallback? backAction,
-    _SheetForm form, {
-    required IconButtonData? primaryAction,
-  }) {
-    final isBottomSheet = form.isBottomSheet;
-    // A pushed page on a phone centres a small title between its buttons, as
-    // iOS does, so a long one is not squeezed against the back button.
+  PreferredSizeWidget _buildAppBar(VoidCallback? backAction, _SheetForm form) {
+    final isCompact = form.isCompact;
+    final isMobileView = ViewScope.isMobileOf(context);
     final pushed =
         form.pop == null &&
         widget.titleWidget == null &&
-        ViewScope.isMobileOf(context) &&
+        isMobileView &&
         ModalRoute.of(context)?.impliesAppBarDismissal == true;
-    final centered = isBottomSheet || pushed;
+    final compactTitle = isCompact || pushed;
+    final titleEndInset = appBarActionInset(
+      _isCompactBar(context, isMobileView),
+    );
     // Under a sheet the bar drops its actions, so none reads as the sheet's.
     final uncovered = ReverseAnimation(sheetCoverOf(context));
     return PreferredSize(
       preferredSize: Size.fromHeight(
-        isBottomSheet ? sheetToolbarHeight : pageToolbarHeight,
+        isCompact ? sheetToolbarHeight : pageToolbarHeight,
       ),
       child: Stack(
         alignment: Alignment.bottomCenter,
@@ -618,22 +656,32 @@ class CommonScaffoldState extends State<CommonScaffold> {
                   automaticallyImplyLeading: false,
                   animateColor: true,
                   // A searching bar carries its own opaque theme.
-                  forceMaterialTransparency: isBottomSheet || !_isSearch,
-                  toolbarHeight: isBottomSheet ? sheetToolbarHeight : null,
-                  centerTitle: isBottomSheet || pushed && !_isSearch,
+                  forceMaterialTransparency: isCompact || !_isSearch,
+                  toolbarHeight: isCompact ? sheetToolbarHeight : null,
+                  centerTitle: isCompact,
                   titleTextStyle: _isSearch
                       ? null
-                      : centered
+                      : compactTitle
                       ? AppTextStyle.headline.of(context)
                       : AppTextStyle.pageTitle.of(context),
                   leading: leading,
                   // The leading slot already trails its button by a margin.
                   titleSpacing: leading == null ? null : 0,
-                  title: _buildTitle(state.searchState),
+                  title: leading == null || isCompact || _isSearch
+                      ? _buildTitle(state.searchState, compact: compactTitle)
+                      : Padding(
+                          padding: EdgeInsetsDirectional.only(
+                            end: titleEndInset,
+                          ),
+                          child: _buildTitle(
+                            state.searchState,
+                            compact: compactTitle,
+                          ),
+                        ),
                   actions: [
                     for (final action in _buildActions(
                       state.searchState != null,
-                      primaryAction,
+                      widget.primaryAction,
                       backAction,
                       form,
                     ))
@@ -641,7 +689,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
                   ],
                 ),
               );
-              return isBottomSheet
+              return isCompact
                   ? appBar
                   : _buildFloatingHeader(
                       _WindowControlsClearance(child: appBar),
@@ -670,25 +718,16 @@ class CommonScaffoldState extends State<CommonScaffold> {
       searchState: widget.searchState,
       hasActions: _hasActions,
       hasPrimaryAction: widget.primaryAction != null,
+      hasConfirmationAction: widget.confirmationAction != null,
     );
-    final isBottomSheet = form.isBottomSheet;
+    final isCompact = form.isCompact;
     final bottomInset = BottomInsetScope.of(context);
-    final primaryAction = widget.primaryAction;
-    final actionInBar =
-        form.isBottomSheet || PrimaryActionInBarScope.of(context);
-    final fabSlot = actionInBar
-        ? null
-        : primaryAction == null
-        ? null
-        : _PrimaryActionFab(data: primaryAction);
-    final hasFab = fabSlot != null;
     // A detent sheet fills the height its detent gives it and clips its own
     // corners; any other bottom sheet sizes to its content and brings both.
-    final hugsContent =
-        isBottomSheet && !SheetOverhangScope.fillsDetentOf(context);
+    final hugsContent = isCompact && !SheetOverhangScope.fillsDetentOf(context);
     // The page's bar floats over its body, which leaves the bar's height at
     // its top through MediaQuery padding, as extendBodyBehindAppBar does.
-    final barFloats = !isBottomSheet;
+    final barFloats = !isCompact;
     final sortableBody = SortModeScope(sorting: _sorting, child: widget.body);
     final body = SafeArea(
       top: !barFloats,
@@ -704,7 +743,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
           final barInset = MediaQuery.paddingOf(context).top;
           final overlap = barFloats
               ? barInset
-              : isBottomSheet
+              : isCompact
               ? sheetAppBarHeight
               : 0.0;
           final content = Column(
@@ -717,7 +756,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
                   padding: EdgeInsets.only(
                     left: 16,
                     right: 16,
-                    top: isBottomSheet ? sheetAppBarHeight : 16,
+                    top: isCompact ? sheetAppBarHeight : 16,
                     bottom: 16,
                   ),
                   child: Wrap(
@@ -760,65 +799,21 @@ class CommonScaffoldState extends State<CommonScaffold> {
         },
       ),
     );
-    final fabChild = ValueListenableBuilder<bool>(
-      valueListenable: _isFabExtendedNotifier,
-      builder: (_, isExtended, child) {
-        return CommonScaffoldFabExtendedProvider(
-          isExtended: isExtended,
-          child: child!,
-        );
-      },
-      child: fabSlot,
-    );
-    final appBar = _buildAppBar(
-      backAction,
-      form,
-      primaryAction: actionInBar ? primaryAction : null,
-    );
-    final insetBody = form.hasDockedSearch
+    final appBar = _buildAppBar(backAction, form);
+    final content = form.hasDockedSearch
         ? BottomInsetScope(
             inset: bottomInset + BottomInsetScope.dockedSearchInset,
             child: body,
           )
         : body;
-    final content = NotificationListener<UserScrollNotification>(
-      child: PrimaryActionInBarScope(
-        inBar: true,
-        child: hasFab
-            ? BottomInsetScope(
-                inset: bottomInset + BottomInsetScope.floatingActionButtonInset,
-                child: insetBody,
-              )
-            : insetBody,
-      ),
-      onNotification: (notification) {
-        if (notification.direction == ScrollDirection.reverse) {
-          _isFabExtendedNotifier.value = false;
-        } else if (notification.direction == ScrollDirection.forward) {
-          _isFabExtendedNotifier.value = true;
-        }
-        return true;
-      },
-    );
-    final fab = hasFab && !_sorting
-        ? SheetOverhangLift(
-            child: bottomInset > 0
-                ? Padding(
-                    padding: EdgeInsets.only(bottom: bottomInset),
-                    child: fabChild,
-                  )
-                : fabChild,
-          )
-        : null;
-    if (!isBottomSheet) {
+    if (!isCompact) {
       return AppBarInsetScope(
         child: Scaffold(
           appBar: appBar,
           extendBodyBehindAppBar: barFloats,
-          body: content,
+          body: _BodyScope(child: content),
           resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
           backgroundColor: widget.backgroundColor,
-          floatingActionButton: fab,
         ),
       );
     }
@@ -826,30 +821,44 @@ class CommonScaffoldState extends State<CommonScaffold> {
       backgroundColor:
           widget.backgroundColor ??
           SurfaceLevel.page.colorOf(context.colorScheme),
-      header: SheetToolBar(appBar: appBar),
+      header: SheetToolBar(appBar: appBar, dragHandle: form.hasDragHandle),
       footer: form.dockedSearch == null || _sorting
           ? null
           : _buildDockedSearch(form.dockedSearch!),
       body: content,
     );
+    final footed = form.pop?.atFoot == true
+        ? Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                fit: hugsContent ? FlexFit.loose : FlexFit.tight,
+                child: sheetBody,
+              ),
+              _buildFootActions(widget.confirmationAction!),
+            ],
+          )
+        : sheetBody;
     if (!hugsContent) {
       return AppBarInsetScope(
         child: Scaffold(
-          body: sheetBody,
+          body: footed,
           resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
           backgroundColor: widget.backgroundColor,
-          floatingActionButton: fab,
         ),
       );
     }
+    final hugging = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [Flexible(child: footed)],
+    );
     return AppBarInsetScope(
-      child: ClipRSuperellipse(
-        borderRadius: AppRadius.top(AppCorner.xxl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [Flexible(child: sheetBody)],
-        ),
-      ),
+      child: form.hasDragHandle
+          ? ClipRSuperellipse(
+              borderRadius: AppRadius.top(AppCorner.xxl),
+              child: hugging,
+            )
+          : hugging,
     );
   }
 }
@@ -870,6 +879,42 @@ class AppBarClearance extends StatelessWidget {
         child: FloatingBarScope(inset: 0, child: child),
       ),
     );
+  }
+}
+
+/// Keeps rebuilds in the body to its own layer (.agents/architecture.md).
+class _BodyScope extends StatelessWidget {
+  const _BodyScope({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return _BodyBoundary(child: LayoutBuilder(builder: (_, _) => child));
+  }
+}
+
+class _BodyBoundary extends SingleChildRenderObjectWidget {
+  const _BodyBoundary({super.child});
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderBodyBoundary();
+}
+
+class _RenderBodyBoundary extends RenderProxyBox {
+  @override
+  bool get isRepaintBoundary => true;
+
+  @override
+  bool get sizedByParent => true;
+
+  @override
+  Size computeDryLayout(BoxConstraints constraints) => constraints.biggest;
+
+  @override
+  void performLayout() {
+    child?.layout(constraints);
   }
 }
 
@@ -947,57 +992,6 @@ class _FocusClearOfBarState extends State<_FocusClearOfBar> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Only a home page above the fixed navigation bar floats its action button.
-class PrimaryActionInBarScope extends InheritedWidget {
-  const PrimaryActionInBarScope({
-    super.key,
-    required this.inBar,
-    required super.child,
-  });
-
-  final bool inBar;
-
-  static bool of(BuildContext context) =>
-      context
-          .dependOnInheritedWidgetOfExactType<PrimaryActionInBarScope>()
-          ?.inBar ??
-      true;
-
-  @override
-  bool updateShouldNotify(PrimaryActionInBarScope oldWidget) =>
-      inBar != oldWidget.inBar;
-}
-
-class _PrimaryActionFab extends StatelessWidget {
-  const _PrimaryActionFab({required this.data});
-
-  static const _duration = Duration(milliseconds: 400);
-
-  final IconButtonData data;
-
-  @override
-  Widget build(BuildContext context) {
-    final isLoading = data.isLoading;
-    return IgnorePointer(
-      ignoring: isLoading,
-      child: AnimatedScale(
-        scale: isLoading ? 0 : 1,
-        duration: _duration,
-        curve: Curves.easeInOutBack,
-        child: AnimatedOpacity(
-          opacity: isLoading ? 0 : 1,
-          duration: _duration,
-          child: CommonFloatingActionButton(
-            onPressed: data.onPressed,
-            icon: GlyphIcon(data.glyph, fill: 1),
-            label: data.tooltip ?? '',
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 const _maxBarButtons = 3;
 const _maxGroupedActions = 2;
 
@@ -1007,13 +1001,15 @@ _foldBarActions({
   IconButtonData? primary,
   bool foldPrimary = false,
   List<IconButtonData> icons = const [],
+  IconButtonData? confirmation,
   int widgetCount = 0,
   List<CommonPopupMenuItem> menuItems = const [],
 }) {
   final foldable = [?primary, ...icons];
-  final fixed = (hasLead ? 1 : 0) + widgetCount;
+  final fixed =
+      (hasLead ? 1 : 0) + widgetCount + (confirmation == null ? 0 : 1);
   if (fixed + foldable.length + (menuItems.isEmpty ? 0 : 1) <= _maxBarButtons) {
-    return (shown: foldable, overflow: menuItems);
+    return (shown: [...foldable, ?confirmation], overflow: menuItems);
   }
   final slots = _maxBarButtons - 1 - fixed;
   final kept = (foldPrimary ? [...icons, ?primary] : foldable)
@@ -1024,6 +1020,7 @@ _foldBarActions({
     shown: [
       for (final data in foldable)
         if (isKept(data)) data,
+      ?confirmation,
     ],
     overflow: [
       for (final data in foldable)
@@ -1047,7 +1044,6 @@ class _OverflowMenuButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CommonPopupBox(
-      anchorShift: Offset(0, context.isMobileView ? 0 : 20),
       targetBuilder: (open) => IconButton(
         tooltip: UiLocalizations.of(context).more,
         onPressed: open,
@@ -1094,7 +1090,8 @@ class AppBarActionButton extends StatelessWidget {
 /// foot instead of a button that takes the bar over.
 class _SheetForm {
   const _SheetForm({
-    required this.isBottomSheet,
+    required this.isCompact,
+    required this.hasDragHandle,
     required this.dockedSearch,
     required this.pop,
   });
@@ -1104,26 +1101,31 @@ class _SheetForm {
     required AppBarSearchState? searchState,
     required bool hasActions,
     required bool hasPrimaryAction,
+    required bool hasConfirmationAction,
   }) {
     final provider = SheetProvider.of(context);
     final isModal = provider != null && provider.type != SheetType.page;
-    final isBottomSheet = provider?.type == SheetType.bottomSheet;
+    final isCompact = provider?.type.isCompact ?? false;
     return _SheetForm(
-      isBottomSheet: isBottomSheet,
-      dockedSearch: isBottomSheet ? searchState : null,
+      isCompact: isCompact,
+      hasDragHandle: provider?.type == SheetType.bottomSheet,
+      dockedSearch: isCompact ? searchState : null,
       pop: !isModal
           ? null
           : _SheetPop.of(
               context,
               provider,
               // A bottom sheet docks its search at its foot, not in the bar.
-              hasActions: hasActions || searchState != null && !isBottomSheet,
+              hasActions: hasActions || searchState != null && !isCompact,
               hasPrimaryAction: hasPrimaryAction,
+              hasConfirmationAction:
+                  hasConfirmationAction && searchState == null,
             ),
     );
   }
 
-  final bool isBottomSheet;
+  final bool isCompact;
+  final bool hasDragHandle;
   final AppBarSearchState? dockedSearch;
   final _SheetPop? pop;
 
@@ -1133,25 +1135,36 @@ class _SheetForm {
 /// How a sheet's own pop button reads: [useCloseIcon] where it dismisses the
 /// sheet, and [asSuffix] where it ends the bar, alone or with a primary action.
 class _SheetPop {
-  const _SheetPop({required this.useCloseIcon, required this.asSuffix});
+  const _SheetPop({
+    required this.useCloseIcon,
+    required this.asSuffix,
+    required this.atFoot,
+  });
 
   factory _SheetPop.of(
     BuildContext context,
     SheetProvider provider, {
     required bool hasActions,
     required bool hasPrimaryAction,
+    required bool hasConfirmationAction,
   }) {
     final useCloseIcon =
         provider.nestedNavigatorPop == null ||
         ModalRoute.of(context)?.impliesAppBarDismissal == false;
+    final atFoot =
+        useCloseIcon &&
+        hasConfirmationAction &&
+        provider.type == SheetType.formSheet;
     return _SheetPop(
       useCloseIcon: useCloseIcon,
-      asSuffix: useCloseIcon && (!hasActions || hasPrimaryAction),
+      asSuffix: !atFoot && useCloseIcon && (!hasActions || hasPrimaryAction),
+      atFoot: atFoot,
     );
   }
 
   final bool useCloseIcon;
   final bool asSuffix;
+  final bool atFoot;
 }
 
 const double appBarActionSpace = 4;
@@ -1242,6 +1255,43 @@ class AppBarInsetScope extends StatelessWidget {
 
 /// A route over the home page on the root navigator fills the window, with
 /// neither the window header nor the sidebar keeping it off the buttons.
+class _TitleMenuButton extends StatelessWidget {
+  const _TitleMenuButton({
+    required this.title,
+    required this.compact,
+    required this.onPressed,
+  });
+
+  final String title;
+  final bool compact;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    // No ink: the padding it needs would move the title off its place in the
+    // bar, and a press turns the title into its menu at once.
+    return InkWell(
+      onTap: onPressed,
+      customBorder: AppShape.sm,
+      hoverColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      splashFactory: NoSplash.splashFactory,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: compact ? 2 : 4,
+        children: [
+          Flexible(child: Text(title)),
+          GlyphIcon(
+            AppGlyphs.chevronDown,
+            size: compact ? 16 : 20,
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _WindowControlsClearance extends StatelessWidget {
   const _WindowControlsClearance({required this.child});
 

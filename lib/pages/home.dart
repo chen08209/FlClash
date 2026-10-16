@@ -29,11 +29,6 @@ class HomePage extends ConsumerWidget {
                   .watch(currentNavigationItemsStateProvider)
                   .value;
               final isMobile = ref.watch(isMobileViewProvider);
-              final floating = ref.watch(
-                appSettingProvider.select(
-                  (state) => state.floatingNavigationBar,
-                ),
-              );
               return _HomePageView(
                 navigationItems: navigationItems,
                 pageBuilder: (_, index) {
@@ -42,7 +37,6 @@ class HomePage extends ConsumerWidget {
                     key: ValueKey(navigationItem.label),
                     item: navigationItem,
                     isMobile: isMobile,
-                    primaryActionInBar: !isMobile || floating,
                     view: navigationItem.builder(context),
                   );
                 },
@@ -185,20 +179,16 @@ class _NavigationPage extends StatelessWidget {
     super.key,
     required this.item,
     required this.isMobile,
-    required this.primaryActionInBar,
     required this.view,
   });
 
   final NavigationItem item;
   final bool isMobile;
-  final bool primaryActionInBar;
   final Widget view;
 
   @override
   Widget build(BuildContext context) {
-    final scopedView = PageFocusScope(
-      child: PrimaryActionInBarScope(inBar: primaryActionInBar, child: view),
-    );
+    final scopedView = PageFocusScope(child: view);
     final keptView = KeepScope(
       key: ValueKey(item.label),
       keep: item.keep,
@@ -413,7 +403,8 @@ class _FadeTabPage extends StatelessWidget {
     return AnimatedBuilder(
       animation: controller,
       builder: (_, child) {
-        final delta = enabled ? _delta : 0.0;
+        final offset = _delta;
+        final delta = enabled ? offset : 0.0;
         return FractionalTranslation(
           translation: Offset(-delta, 0),
           child: Opacity(opacity: 1 - delta.abs(), child: child),

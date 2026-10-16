@@ -82,6 +82,36 @@ Future<List<String>> _pump(
   return pressed;
 }
 
+/// A row whose sync withdraws its menu, as a row does while its item updates,
+/// rebuilding the app above the navigator with it.
+Future<ValueNotifier<bool>> _pumpSyncing(WidgetTester tester) async {
+  final syncing = ValueNotifier(false);
+  addTearDown(syncing.dispose);
+  await tester.pumpWidget(
+    ValueListenableBuilder(
+      valueListenable: syncing,
+      builder: (_, value, _) => TestApp(
+        child: Scaffold(
+          body: ContextMenuRegion(
+            menuItems: value
+                ? null
+                : [
+                    CommonPopupMenuItem(
+                      glyph: AppGlyphs.sync,
+                      label: 'Sync',
+                      onPressed: () => syncing.value = true,
+                    ),
+                  ],
+            child: const DecorationListItem(title: Text('a')),
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+  return syncing;
+}
+
 List<String> _order(WidgetTester tester, List<String> items) =>
     [...items]..sort(
       (a, b) => tester
@@ -118,6 +148,30 @@ void main() {
 
     expect(find.text('Delete a'), findsOneWidget);
     expect(pressed, isEmpty);
+  });
+
+  testWidgets('an item that withdraws the menu lets the menu close', (
+    tester,
+  ) async {
+    await _pumpSyncing(tester);
+    await _rightClick(tester, 'a');
+
+    await tester.tap(find.text('Sync'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sync'), findsNothing);
+  });
+
+  testWidgets('a row that withdraws its menu closes the open one', (
+    tester,
+  ) async {
+    final syncing = await _pumpSyncing(tester);
+    await _rightClick(tester, 'a');
+
+    syncing.value = true;
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sync'), findsNothing);
   });
 
   testWidgets('a mouse long press opens nothing', (tester) async {

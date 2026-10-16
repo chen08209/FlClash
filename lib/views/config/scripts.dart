@@ -39,6 +39,8 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
       message: TextSpan(
         text: appLocalizations.deleteTip(appLocalizations.script),
       ),
+      destructive: true,
+      confirmText: appLocalizations.delete,
     );
     if (res != true || !mounted) {
       return;
@@ -345,7 +347,6 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
       isLoading: isLoading,
       actions: [
         CommonPopupBox(
-          anchorShift: Offset(0, ref.watch(isMobileViewProvider) ? 0 : 20),
           targetBuilder: (open) {
             return IconButton(
               tooltip: appLocalizations.add,

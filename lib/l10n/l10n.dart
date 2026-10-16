@@ -1645,6 +1645,11 @@ class AppLocalizations {
     return Intl.message('Standard', name: 'standard', desc: '', args: []);
   }
 
+  /// `Ultra`
+  String get ultra {
+    return Intl.message('Ultra', name: 'ultra', desc: '', args: []);
+  }
+
   /// `Loose`
   String get loose {
     return Intl.message('Loose', name: 'loose', desc: '', args: []);
