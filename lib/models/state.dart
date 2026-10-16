@@ -53,6 +53,7 @@ abstract class TrayState with _$TrayState {
     required bool systemProxy,
     required bool tunEnable,
     required bool isStart,
+    @Default(false) bool suspended,
     required List<Group> groups,
     required Map<String, String> selectedMap,
     required bool showTrayTitle,
@@ -218,6 +219,7 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
     required Map<String, dynamic> rawConfig,
     required PatchClashConfig realPatchConfig,
     @Default(ProfileOverrides()) ProfileOverrides overrides,
+    @Default(false) bool bypassPrivateRoute,
 
     /// Set for a subscription, whose own DNS values an emptied entry replaces.
     @Default(false) bool keepEmptyDnsOverrides,

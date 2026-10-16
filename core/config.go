@@ -227,26 +227,8 @@ func patchTun(target *LC.Tun, params *tunSchema) {
 	if params.Device != nil {
 		target.Device = *params.Device
 	}
-	if params.RouteAddress != nil {
-		target.RouteAddress = *params.RouteAddress
-	}
-	if params.DNSHijack != nil {
-		target.DNSHijack = *params.DNSHijack
-	}
 	if params.Stack != nil {
 		target.Stack = *params.Stack
-	}
-	if params.MTU != nil {
-		target.MTU = *params.MTU
-	}
-	if params.CongestionController != nil {
-		target.CongestionController = *params.CongestionController
-	}
-	if params.StrictRoute != nil {
-		target.StrictRoute = *params.StrictRoute
-	}
-	if params.RouteExcludeAddress != nil {
-		target.RouteExcludeAddress = *params.RouteExcludeAddress
 	}
 }
 

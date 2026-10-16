@@ -56,23 +56,45 @@ void main() {
   });
 
   test('shutdown stops any later update from resurrecting the tray', () async {
-    await AppTray().update(
+    final tray = AppTray.forPlatform(isMacOS: false, isWindows: false);
+    await tray.update(
       trayState: _trayState(),
       traffic: const Traffic(),
       read: container.read,
     );
     expect(calls.where((call) => call.method == 'show'), hasLength(1));
 
-    await AppTray().shutdown();
+    await tray.shutdown();
     expect(calls.where((call) => call.method == 'hide'), hasLength(1));
 
     calls.clear();
-    await AppTray().update(
+    await tray.update(
       trayState: _trayState(isStart: true),
       traffic: const Traffic(),
       read: container.read,
     );
-    await AppTray().updateTitle(showTrayTitle: true, traffic: const Traffic());
+    await tray.updateTitle(showTrayTitle: true, traffic: const Traffic());
+
+    expect(calls, isEmpty);
+  });
+
+  test('macOS shutdown leaves the status item to the process', () async {
+    final tray = AppTray.forPlatform(isMacOS: true, isWindows: false);
+    await tray.update(
+      trayState: _trayState(),
+      traffic: const Traffic(),
+      read: container.read,
+    );
+
+    await tray.shutdown();
+    expect(calls.where((call) => call.method == 'hide'), isEmpty);
+
+    calls.clear();
+    await tray.update(
+      trayState: _trayState(isStart: true),
+      traffic: const Traffic(),
+      read: container.read,
+    );
 
     expect(calls, isEmpty);
   });

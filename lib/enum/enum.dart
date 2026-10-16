@@ -364,11 +364,24 @@ enum SnifferOverrideKey with OverrideKey {
 }
 
 /// Written over the profile's `tun` section, which Android's VPN never reads,
-/// so these apply on desktop only. The network settings' `Tun` holds the rest.
+/// so these apply on desktop only, beside the keys of `Tun.coreJson`.
 @JsonEnum(valueField: 'path')
 enum TunOverrideKey with OverrideKey {
+  mtu('mtu'),
+  congestionController('congestion-controller'),
+  strictRoute('strict-route'),
+  routeAddress('route-address'),
+  routeExcludeAddress('route-exclude-address'),
+  dnsHijack('dns-hijack'),
+  udpTimeout('udp-timeout'),
   disableIcmpForwarding('disable-icmp-forwarding'),
-  excludeInterface('exclude-interface');
+  gso('gso'),
+  includeInterface('include-interface'),
+  excludeInterface('exclude-interface'),
+  includeUid('include-uid'),
+  excludeUid('exclude-uid'),
+  excludeSrcPort('exclude-src-port'),
+  excludeDstPort('exclude-dst-port');
 
   const TunOverrideKey(this.path);
 
@@ -793,7 +806,7 @@ enum RestoreStrategy { compatible, override }
 
 enum TabAnimation { slide, fade }
 
-enum LiquidGlassMode { none, standard }
+enum LiquidGlassMode { none, standard, ultra }
 
 enum Language { yaml, javaScript, json }
 

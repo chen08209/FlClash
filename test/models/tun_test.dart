@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
 
@@ -39,18 +40,26 @@ void main() {
     expect(Tun.fromJson({'mtu': 1500}).mtu, 1500);
   });
 
-  test('the core keeps the route list and gets private ranges excluded', () {
-    final tun = const Tun(
+  test('the desktop TUN takes only its switch, device and stack, routed', () {
+    const tun = Tun(
+      enable: true,
+      stack: TunStack.gvisor,
+      mtu: 1400,
       routeAddress: ['1.0.0.0/8'],
-      routeExcludeAddress: ['1.1.1.0/24'],
-    ).getRealTun(bypassPrivateRoute: true);
+    );
 
-    expect(tun.autoRoute, isTrue);
-    expect(tun.routeAddress, ['1.0.0.0/8']);
-    expect(tun.routeExcludeAddress, ['1.1.1.0/24', ...privateRouteAddress]);
+    expect(tun.coreJson, {
+      'enable': true,
+      'device': tun.device,
+      'stack': 'gvisor',
+      'auto-route': true,
+    });
   });
 
-  test('a config update patches every Tun key on desktop', () {
-    expect(_keysOf('core/protocol.go', 'tunSchema', 'json'), tunKeys);
+  test('a config update patches every key the desktop TUN takes', () {
+    expect(
+      _keysOf('core/protocol.go', 'tunSchema', 'json'),
+      const Tun().coreJson.keys.toSet(),
+    );
   });
 }
