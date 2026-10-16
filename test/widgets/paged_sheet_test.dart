@@ -1,9 +1,10 @@
 import 'dart:async';
 
-import 'package:fl_clash/common/shape.dart';
-import 'package:fl_clash/widgets/inherited.dart';
-import 'package:fl_clash/widgets/paged_sheet.dart';
-import 'package:fl_clash/widgets/sheet.dart';
+import 'package:fl_clash/ui/inherited.dart';
+import 'package:fl_clash/ui/paged_sheet.dart';
+import 'package:fl_clash/ui/shape.dart';
+import 'package:fl_clash/ui/sheet.dart';
+import 'package:fl_clash/ui/surface.dart';
 import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -36,7 +37,7 @@ void main() {
       ),
     );
 
-    expect(material.color, ColorScheme.of(context).surfaceContainerLow);
+    expect(material.color, SurfaceLevel.page.colorOf(ColorScheme.of(context)));
     expect(material.shape, AppShape.top(AppCorner.xxl));
     expect(material.clipBehavior, Clip.antiAlias);
   });
@@ -303,16 +304,5 @@ void main() {
       navigatorKey.currentState!.pop();
       await expectNoLayers();
     });
-  });
-
-  test('uses the configured duration in both directions', () {
-    final route = PagedSheetRoute<void>(
-      duration: const Duration(milliseconds: 350),
-      builder: (_) => const SizedBox.shrink(),
-    );
-
-    expect(route.transitionDuration, const Duration(milliseconds: 350));
-    expect(route.reverseTransitionDuration, const Duration(milliseconds: 350));
-    expect(route.delegatedTransition, isNull);
   });
 }

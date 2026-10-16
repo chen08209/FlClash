@@ -24,7 +24,6 @@ void main() {
         container: container,
         child: TestApp(
           locale: locale,
-          setTheme: false,
           child: const LocaleManager(child: SizedBox.shrink()),
         ),
       ),

@@ -1,4 +1,4 @@
-import 'package:fl_clash/widgets/super_reorderable_list.dart';
+import 'package:fl_clash/ui/super_reorderable_list.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 

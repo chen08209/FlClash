@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -9,7 +10,7 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-part 'general/port_dialog.dart';
+part 'general/port_form.dart';
 
 class LogLevelItem extends ConsumerWidget {
   const LogLevelItem({super.key});
@@ -85,8 +86,11 @@ class TestUrlItem extends ConsumerWidget {
 class PortItem extends ConsumerWidget {
   const PortItem({super.key});
 
-  Future<void> handleShowPortDialog() async {
-    await dialogs.showCommonDialog(child: const _PortDialog());
+  Future<void> handleShowPortForm(BuildContext context) async {
+    await showFormSheet<void>(
+      context: context,
+      builder: (_) => const _PortForm(),
+    );
   }
 
   @override
@@ -99,7 +103,7 @@ class PortItem extends ConsumerWidget {
       title: Text(appLocalizations.port),
       subtitle: Text('$mixedPort'),
       onTap: () {
-        handleShowPortDialog();
+        handleShowPortForm(context);
       },
     );
   }
@@ -440,7 +444,7 @@ class GeneralView extends ConsumerWidget {
           horizontal: 16,
         ).copyWith(top: context.appBarInset, bottom: 16),
         children: [
-          generateSectionV3(
+          generateSection(
             title: appLocalizations.startupAndBackground,
             items: _startupItems(appLocalizations),
             footer: [
@@ -449,12 +453,12 @@ class GeneralView extends ConsumerWidget {
               appLocalizations.onDemandDesc,
             ].join('\n'),
           ),
-          generateSectionV3(
+          generateSection(
             title: appLocalizations.requestsAndUpdates,
             items: _requestItems(),
             footer: appLocalizations.checkCertificateDesc,
           ),
-          generateSectionV3(
+          generateSection(
             title: appLocalizations.inbound,
             items: _inboundItems(
               authentication: authentication,
@@ -465,17 +469,17 @@ class GeneralView extends ConsumerWidget {
               appLocalizations.authenticationDesc,
             ].join('\n'),
           ),
-          generateSectionV3(
+          generateSection(
             title: appLocalizations.connection,
             items: _connectionItems(),
             footer: appLocalizations.autoCloseConnectionsDesc,
           ),
-          generateSectionV3(
+          generateSection(
             title: appLocalizations.core,
             items: _coreItems(),
             footer: appLocalizations.ipv6Desc,
           ),
-          generateSectionV3(
+          generateSection(
             title: appLocalizations.logsAndDiagnostics,
             items: _logItems(),
             footer: [

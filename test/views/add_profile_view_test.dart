@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -31,6 +32,11 @@ class _RecordingProfilesAction extends ProfilesAction {
   Future<void> addProfilesFromLinks(List<String> links) async =>
       batches.add(links);
 }
+
+Finder _field(String title) => find.descendant(
+  of: find.widgetWithText(FormRow, title),
+  matching: find.byType(TextFormField),
+);
 
 ProviderContainer _containerFor(
   WidgetTester tester, {
@@ -152,7 +158,7 @@ void main() {
     await tester.tap(find.text(l10n.link));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.widgetWithText(TextFormField, l10n.link),
+      _field(l10n.link),
       'trojan://pass@example.com:443#HK',
     );
     await tester.pump();
@@ -187,14 +193,8 @@ void main() {
     final l10n = currentAppLocalizations;
     await tester.tap(find.text(l10n.link));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.widgetWithText(TextFormField, l10n.link),
-      'https://example.com/sub',
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, l10n.ageSecretKey),
-      ' AGE-SECRET-KEY-1A ',
-    );
+    await tester.enterText(_field(l10n.link), 'https://example.com/sub');
+    await tester.enterText(_field(l10n.ageSecretKey), ' AGE-SECRET-KEY-1A ');
     await tester.pump();
     await tester.tap(find.text(l10n.submit));
     await tester.pumpAndSettle();
@@ -229,7 +229,7 @@ void main() {
     await tester.tap(find.text(l10n.link));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.widgetWithText(TextFormField, l10n.link),
+      _field(l10n.link),
       'wireguard://key@example.com:51820',
     );
     await tester.pump();

@@ -139,10 +139,9 @@ void main() {
   });
 
   group('TrafficExt', () {
-    test('formats speed, tray title, and total speed', () {
+    test('formats tray title and total speed', () {
       const traffic = Traffic(up: 1024, down: 2048);
 
-      expect(traffic.speedText, '↑ 1KB/s   ↓ 2KB/s');
       expect(traffic.trayTitle, '1 KB/s\n2 KB/s');
       expect(traffic.speed, 3072);
     });
@@ -330,51 +329,6 @@ void main() {
           reason: content,
         );
       }
-    });
-  });
-
-  group('IconSetIconsExt.recommendFor', () {
-    const icons = [
-      IconSetIcon(name: 'Apple_TV_Plus.png', url: 'https://e.com/1'),
-      IconSetIcon(name: 'Apple_TV.png', url: 'https://e.com/2'),
-      IconSetIcon(name: 'YouTube.png', url: 'https://e.com/3'),
-      IconSetIcon(name: 'HK.png', url: 'https://e.com/4'),
-      IconSetIcon(name: 'Hong_Kong.png', url: 'https://e.com/5'),
-      IconSetIcon(name: 'YouTube_Music.png', url: 'https://e.com/6'),
-      IconSetIcon(name: 'Apple_TV.png', url: 'https://e.com/2'),
-    ];
-
-    List<String> namesFor(String name) =>
-        icons.recommendFor(name).map((icon) => icon.name).toList();
-
-    test('ranks an exact name before names it contains or extends', () {
-      expect(namesFor('Apple TV'), ['Apple_TV.png', 'Apple_TV_Plus.png']);
-      expect(namesFor('🎬 YouTube Music'), [
-        'YouTube_Music.png',
-        'YouTube.png',
-      ]);
-      expect(namesFor('香港 Hong-Kong'), ['Hong_Kong.png']);
-    });
-
-    test('matches short names only exactly', () {
-      expect(namesFor('HK'), ['HK.png']);
-      expect(namesFor('HKG'), isEmpty);
-    });
-
-    test('ignores names without latin letters or digits', () {
-      expect(namesFor('香港节点'), isEmpty);
-    });
-
-    test('an image shared under another name is still suggested once', () {
-      const shared = [
-        IconSetIcon(name: 'United_States.png', url: 'https://e.com/same'),
-        IconSetIcon(name: 'Netflix.png', url: 'https://e.com/same'),
-        IconSetIcon(name: 'Netflix_1.png', url: 'https://e.com/same'),
-      ];
-
-      expect(shared.recommendFor('Netflix').map((icon) => icon.name), [
-        'Netflix.png',
-      ]);
     });
   });
 }

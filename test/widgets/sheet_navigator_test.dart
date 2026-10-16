@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/widgets/sheet.dart';
-import 'package:fl_clash/widgets/sheet_navigator.dart';
-import 'package:fl_clash/widgets/side_sheet.dart';
+import 'package:fl_clash/ui/sheet.dart';
+import 'package:fl_clash/ui/sheet_navigator.dart';
+import 'package:fl_clash/ui/side_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+
+import '../helpers/test_app.dart';
 
 void main() {
   final hostKey = GlobalKey<NavigatorState>();
@@ -23,6 +25,7 @@ void main() {
       ProviderScope(
         overrides: [isMobileViewProvider.overrideWithValue(isMobileView)],
         child: MaterialApp(
+          builder: (context, child) => wrapAppScopes(context, child!),
           home: Navigator(
             key: hostKey,
             onGenerateInitialRoutes: (_, _) => [

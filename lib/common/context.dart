@@ -1,55 +1,10 @@
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/status_manager.dart';
 import 'package:fl_clash/models/state.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/widgets/inherited.dart';
-import 'package:fl_clash/widgets/scaffold.dart';
-import 'package:fl_clash/widgets/sheet.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-extension BuildContextExtension on BuildContext {
-  CommonScaffoldState? get commonScaffoldState {
-    return findAncestorStateOfType<CommonScaffoldState>();
-  }
-
-  bool get isMobileView {
-    return ProviderScope.containerOf(
-      this,
-      listen: false,
-    ).read(isMobileViewProvider);
-  }
-
-  void safeNestedPop<T extends Object?>([T? result]) {
-    final nestedPop = SheetProvider.of(this)?.nestedNavigatorPop;
-    if (nestedPop != null) {
-      return nestedPop(result);
-    } else {
-      return Navigator.of(this).pop(result);
-    }
-  }
-
-  bool get isInBottomSheet =>
-      SheetProvider.of(this)?.type == SheetType.bottomSheet;
-
-  /// How far a page's app bar reaches over the top of its body.
-  ///
-  /// Where a page builds the body it hands its scaffold, outside that body,
-  /// this is where the bar will end: a toolbar below the status bar.
-  double get appBarInset =>
-      FloatingBarScope.of(this) ??
-      (isInBottomSheet
-          ? sheetAppBarHeight
-          : MediaQuery.paddingOf(this).top + pageToolbarHeight);
-
-  /// Where a scaffold body's content starts: a gap clear of the bar; a bottom
-  /// sheet's header already trails its own gap.
-  double get contentTopPadding =>
-      TopInsetScope.of(this) ??
-      (isInBottomSheet ? sheetAppBarHeight : appBarInset + 12);
-
+extension AppContextExtension on BuildContext {
   void showNotifier(
     String text, {
     MessageLevel level = MessageLevel.info,
@@ -62,72 +17,5 @@ extension BuildContextExtension on BuildContext {
     );
   }
 
-  void showSnackBar(String message, {SnackBarAction? action}) {
-    final width = MediaQuery.sizeOf(this).width;
-    EdgeInsets margin;
-    if (width < 600) {
-      margin = const EdgeInsets.only(bottom: 16, right: 16, left: 16);
-    } else {
-      margin = EdgeInsets.only(bottom: 16, left: 16, right: width - 316);
-    }
-    ScaffoldMessenger.of(this).showSnackBar(
-      SnackBar(
-        action: action,
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(milliseconds: 1500),
-        margin: margin,
-      ),
-    );
-  }
-
-  ColorScheme get colorScheme => Theme.of(this).colorScheme;
-
-  bool get disableAnimations => MediaQuery.disableAnimationsOf(this);
-
-  Duration motionDuration(Duration duration) =>
-      disableAnimations ? Duration.zero : duration;
-
-  TextTheme get textTheme => Theme.of(this).textTheme;
-
-  /// Tighter than Material's 24 dp line so a row with a subtitle stays compact.
-  TextStyle? get listTitleStyle => textTheme.bodyLarge?.copyWith(
-    height: 22 / 16,
-    color: colorScheme.onSurface,
-  );
-
-  TextStyle? get listSubtitleStyle => textTheme.bodyMedium?.copyWith(
-    height: 20 / 14,
-    color: colorScheme.onSurfaceVariant,
-  );
-
-  TextStyle? get listCaptionStyle => textTheme.bodySmall
-      ?.adjustSize(1)
-      .copyWith(color: colorScheme.onSurfaceVariant);
-
-  TextStyle? get sectionHeaderStyle => textTheme.labelLarge?.copyWith(
-    fontWeight: FontWeight.w600,
-    color: colorScheme.onSurfaceVariant.opacity80,
-  );
-
   AppLocalizations get appLocalizations => AppLocalizations.of(this);
-
-  T? findLastStateOfType<T extends State>() {
-    T? state;
-
-    void visitor(Element element) {
-      if (!element.mounted) {
-        return;
-      }
-      if (element is StatefulElement) {
-        if (element.state is T) {
-          state = element.state as T;
-        }
-      }
-      element.visitChildren(visitor);
-    }
-
-    visitor(this as Element);
-    return state;
-  }
 }

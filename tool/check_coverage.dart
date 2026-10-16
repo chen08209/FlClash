@@ -20,6 +20,7 @@ const _excludedPatterns = [
 const _groupFloors = <String, double>{
   'core': 76.0,
   'database': 81.0,
+  'ui': 91.0,
   'widgets': 82.0,
   'features': 81.0,
   'models': 67.0,
@@ -28,7 +29,6 @@ const _groupFloors = <String, double>{
   'manager': 68.0,
   'views': 66.0,
   'enum': 86.0,
-  'icons': 90.0,
   'pages': 71.0,
   'plugins': 67.0,
   'lib': 20.0,

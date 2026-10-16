@@ -53,6 +53,11 @@ abstract class RopeBridge implements RustOpaqueInterface {
       .api
       .crateApiEditorRopeBridgeCreate(initialText: initialText);
 
+  static Future<RopeBridge> createInBackground({required String initialText}) =>
+      RustLib.instance.api.crateApiEditorRopeBridgeCreateInBackground(
+        initialText: initialText,
+      );
+
   String getText();
 
   void insert({required BigInt charIdx, required String text});

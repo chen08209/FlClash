@@ -1,14 +1,17 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/widgets/inherited.dart';
-import 'package:fl_clash/widgets/scaffold.dart';
-import 'package:fl_clash/widgets/scroll.dart';
-import 'package:fl_clash/widgets/sheet.dart';
-import 'package:fl_clash/widgets/sheet_header.dart';
-import 'package:fl_clash/widgets/side_sheet.dart';
-import 'package:fl_clash/widgets/snap_sheet.dart';
+import 'package:fl_clash/ui/color.dart';
+import 'package:fl_clash/ui/inherited.dart';
+import 'package:fl_clash/ui/scaffold.dart';
+import 'package:fl_clash/ui/scroll.dart';
+import 'package:fl_clash/ui/sheet.dart';
+import 'package:fl_clash/ui/sheet_header.dart';
+import 'package:fl_clash/ui/side_sheet.dart';
+import 'package:fl_clash/ui/snap_sheet.dart';
+import 'package:fl_clash/ui/surface.dart';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -242,9 +245,8 @@ void main() {
     await close(tester);
   });
 
-  testWidgets('the keyboard raises the sheet without rebuilding its content', (
-    tester,
-  ) async {
+  testWidgets('the keyboard carries the sheet in step, frame by frame, '
+      'without rebuilding its content', (tester) async {
     var builds = 0;
     await openSheet(
       tester,
@@ -255,18 +257,14 @@ void main() {
     );
     addTearDown(tester.view.resetViewInsets);
     final shown = builds;
+    final collapsed = _mobile.height * (1 - snapSheetDetents.first);
 
-    for (final height in [100.0, 200.0, 300.0]) {
+    for (final height in [100.0, 200.0, 300.0, 200.0, 100.0, 0.0]) {
       tester.view.viewInsets = FakeViewPadding(bottom: height);
       await tester.pump();
+      expect(sheetTop(tester), closeTo(collapsed - height, 1));
     }
     expect(builds, shown);
-
-    await tester.pumpAndSettle();
-    expect(
-      sheetTop(tester),
-      closeTo(_mobile.height * (1 - snapSheetDetents.last), 1),
-    );
 
     await close(tester);
   });
@@ -287,8 +285,8 @@ void main() {
     await close(tester);
   });
 
-  testWidgets('a short drag down springs the collapsed sheet back and a fling '
-      'down closes it', (tester) async {
+  testWidgets('a short drag down springs the collapsed sheet back and a hard '
+      'fling down closes it', (tester) async {
     final result = await openSheet(tester);
     var closed = false;
     unawaited(result.then((_) => closed = true));
@@ -300,10 +298,36 @@ void main() {
     expect(closed, isFalse);
     expect(sheetTop(tester), closeTo(collapsed, 1));
 
-    await tester.fling(content(), const Offset(0, 80), 1500);
+    await tester.fling(content(), const Offset(0, 80), 3000);
     await tester.pumpAndSettle();
 
     expect(closed, isTrue);
+
+    await close(tester);
+  });
+
+  testWidgets('a sheet popped while a finger drags it still leaves', (
+    tester,
+  ) async {
+    final result = await openSheet(tester);
+    var closed = false;
+    unawaited(result.then((_) => closed = true));
+
+    final gesture = await tester.startGesture(tester.getCenter(content()));
+    for (var step = 0; step < 5; step++) {
+      await gesture.moveBy(const Offset(0, 30));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    Navigator.of(tester.element(find.text('title'))).pop();
+    for (var step = 0; step < 5; step++) {
+      await gesture.moveBy(const Offset(0, -40));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(closed, isTrue);
+    expect(find.text('title'), findsNothing);
 
     await close(tester);
   });
@@ -349,7 +373,7 @@ void main() {
     await close(tester);
   });
 
-  testWidgets('a short flick up lands on the detent its velocity projects to', (
+  testWidgets('a flick up lands on the detent its velocity projects to', (
     tester,
   ) async {
     await openSheet(tester);
@@ -362,15 +386,20 @@ void main() {
 
     await tester.fling(content(), const Offset(0, -60), 800);
     await tester.pumpAndSettle();
+    expect(sheetTop(tester), closeTo(collapsed, 1));
+
+    await tester.fling(content(), const Offset(0, -60), 2000);
+    await tester.pumpAndSettle();
     expect(sheetTop(tester), closeTo(expanded, 1));
 
     await close(tester);
   });
 
-  testWidgets('a hard fling up settles without overshooting the detent', (
+  testWidgets('a hard fling up overshoots the detent only slightly', (
     tester,
   ) async {
     await openSheet(tester);
+    final collapsed = _mobile.height * (1 - snapSheetDetents.first);
     final expanded = _mobile.height * (1 - snapSheetDetents.last);
 
     await tester.fling(content(), const Offset(0, -100), 8000);
@@ -380,7 +409,8 @@ void main() {
       highest = min(highest, sheetTop(tester));
     }
 
-    expect(highest, greaterThan(expanded - 1));
+    expect(highest, greaterThan(expanded - (collapsed - expanded) * 0.03));
+    expect(sheetTop(tester), closeTo(expanded, 1));
 
     await close(tester);
   });
@@ -510,6 +540,84 @@ void main() {
     expect(sheetTop(tester), closeTo(expanded + 100, 1));
 
     await gesture.up();
+    await close(tester);
+  });
+
+  testWidgets('one drag up opens the sheet and scrolls the content with what '
+      'is left of it', (tester) async {
+    await openSheet(tester);
+    final collapsed = _mobile.height * (1 - snapSheetDetents.first);
+    final expanded = _mobile.height * (1 - snapSheetDetents.last);
+
+    await tester.drag(content(), const Offset(0, -500));
+    await tester.pumpAndSettle();
+
+    expect(sheetTop(tester), closeTo(expanded, 1));
+    expect(
+      contentOffset(tester),
+      closeTo(500 - kDragSlopDefault - (collapsed - expanded), 1),
+    );
+
+    await close(tester);
+  });
+
+  testWidgets('a drag down that scrolls the content back to its top leaves '
+      'the sheet open, and the next one takes it down', (tester) async {
+    await openSheet(tester);
+    final collapsed = _mobile.height * (1 - snapSheetDetents.first);
+    final expanded = _mobile.height * (1 - snapSheetDetents.last);
+    await tester.drag(content(), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(contentOffset(tester), greaterThan(100));
+
+    final gesture = await tester.startGesture(tester.getCenter(content()));
+    for (var step = 0; step < 40; step++) {
+      await gesture.moveBy(const Offset(0, 10));
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(sheetTop(tester), closeTo(expanded, 1));
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(contentOffset(tester), 0);
+    expect(sheetTop(tester), closeTo(expanded, 1));
+
+    await tester.drag(content(), const Offset(0, 200));
+    await tester.pumpAndSettle();
+    expect(sheetTop(tester), closeTo(collapsed, 1));
+
+    await close(tester);
+  });
+
+  testWidgets('a sheet let go past half of its height carries on down '
+      'smoothly without springing back first', (tester) async {
+    final result = await openSheet(tester);
+    var closed = false;
+    unawaited(result.then((_) => closed = true));
+
+    final gesture = await tester.createGesture();
+    await gesture.down(tester.getCenter(content()));
+    var time = Duration.zero;
+    for (var i = 0; i < 20; i++) {
+      time += const Duration(milliseconds: 16);
+      await gesture.moveBy(const Offset(0, 16), timeStamp: time);
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    var last = sheetTop(tester);
+    await gesture.up(timeStamp: time + const Duration(milliseconds: 100));
+    while (find.byType(SheetDragHandle).evaluate().isNotEmpty) {
+      await tester.pump(const Duration(milliseconds: 16));
+      if (find.byType(SheetDragHandle).evaluate().isEmpty) {
+        break;
+      }
+      expect(sheetTop(tester) - last, inInclusiveRange(0, 40));
+      last = sheetTop(tester);
+    }
+    await tester.pump();
+    expect(closed, isTrue);
+
     await close(tester);
   });
 
@@ -726,6 +834,70 @@ void main() {
 
     expect(closed, isTrue);
     expect(closedWith, 'done');
+
+    await close(tester);
+  });
+
+  testWidgets('a dark sheet presents a level above the page it covers', (
+    tester,
+  ) async {
+    final plain = seededColorScheme(
+      seedColor: const Color(defaultPrimaryColor),
+      brightness: Brightness.dark,
+    );
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    for (final (page, sheet) in [
+      (plain, plain.elevated),
+      (plain.toPureBlack(true), plain),
+    ]) {
+      expect(
+        sheet.surface.tone,
+        closeTo(SurfaceLevel.card.colorOf(page).tone, 0.5),
+      );
+      final theme = ThemeData(
+        colorScheme: page,
+        extensions: [ElevatedColorScheme(sheet)],
+      ).withAppSurfaces;
+      await tester.pumpWidget(
+        TestApp(
+          wrapInProviderScope: true,
+          homeBuilder: (child) => Theme(data: theme, child: child),
+          child: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showSnapSheet<void>(context, builder: _sheet),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      );
+
+      for (final size in [_mobile, _desktop]) {
+        await setView(tester, size);
+        await tester.tap(find.text('open'));
+        await tester.pumpAndSettle();
+
+        final title = find.text('title');
+        expect(
+          Theme.of(tester.element(title)).colorScheme.surface,
+          sheet.surface,
+        );
+        expect(
+          find.ancestor(
+            of: title,
+            matching: find.byWidgetPredicate(
+              (widget) => widget is Material && widget.color == sheet.surface,
+            ),
+          ),
+          findsWidgets,
+        );
+
+        await tester.tapAt(const Offset(10, 10));
+        await tester.pumpAndSettle();
+        expect(title, findsNothing);
+      }
+    }
 
     await close(tester);
   });

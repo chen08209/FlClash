@@ -1,10 +1,12 @@
 part of 'input.dart';
 
-abstract class _EditViewState<W extends ConsumerStatefulWidget, T>
+/// Public for `MapEditView`, whose entries are entered in a form.
+abstract class EditViewState<W extends ConsumerStatefulWidget, T>
     extends ConsumerState<W> {
   List<T> _entries = [];
   late final List<T> _initialEntries;
   final _selectionKey = uniqueId;
+  bool _routeTakesResult = false;
 
   String get title;
 
@@ -16,21 +18,32 @@ abstract class _EditViewState<W extends ConsumerStatefulWidget, T>
 
   Widget? buildSubtitle(T entry);
 
-  Widget? buildLeading(T entry);
-
   bool sameEntries(List<T> a, List<T> b);
 
   Object popResult(List<T> entries);
 
+  @protected
+  List<T> get entries => _entries;
+
   /// Adds when [entry] is null and edits it otherwise; an add may return
   /// several entries from batch mode.
-  Future<List<T>?> showEntryDialog(T? entry);
+  Future<List<T>?> showEntryEditor(T? entry);
 
   @override
   void initState() {
     super.initState();
     _entries = List<T>.from(initialEntries);
     _initialEntries = List<T>.from(_entries);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    _routeTakesResult = route is DragBackRouteMixin;
+    if (route is DragBackRouteMixin) {
+      route.pageResult = () => popResult(_entries);
+    }
   }
 
   void _handleReorder(int oldIndex, int newIndex) {
@@ -53,14 +66,14 @@ abstract class _EditViewState<W extends ConsumerStatefulWidget, T>
   }
 
   Future<void> _handleAdd() async {
-    final entries = await showEntryDialog(null);
+    final entries = await showEntryEditor(null);
     if (!mounted || entries == null || entries.isEmpty) return;
     _entries = [..._entries, ...entries];
     setState(() {});
   }
 
   Future<void> _handleEdit(T entry) async {
-    final entries = await showEntryDialog(entry);
+    final entries = await showEntryEditor(entry);
     if (!mounted || entries == null || entries.isEmpty) return;
     final next = entries.single;
     final id = idOf(entry);
@@ -71,7 +84,15 @@ abstract class _EditViewState<W extends ConsumerStatefulWidget, T>
     setState(() {});
   }
 
-  void _handleDelete() {
+  Future<void> _handleDelete() async {
+    final res = await dialogs.showMessage(
+      message: TextSpan(text: context.appLocalizations.deleteMultipTip(title)),
+      destructive: true,
+      confirmText: context.appLocalizations.delete,
+    );
+    if (res != true || !mounted) {
+      return;
+    }
     final selected = ref.read(itemsProvider(_selectionKey));
     _entries = _entries
         .where((entry) => !selected.contains(idOf(entry)))
@@ -83,6 +104,8 @@ abstract class _EditViewState<W extends ConsumerStatefulWidget, T>
   Future<void> _handleReset() async {
     final res = await dialogs.showMessage(
       message: TextSpan(text: context.appLocalizations.resetPageChangesTip),
+      destructive: true,
+      confirmText: context.appLocalizations.reset,
     );
     if (!mounted || res != true) {
       return;
@@ -106,7 +129,6 @@ abstract class _EditViewState<W extends ConsumerStatefulWidget, T>
         position: position,
         child: SelectedDecorationListItem(
           title: buildTitle(entry),
-          leading: buildLeading(entry),
           subtitle: buildSubtitle(entry),
           isSelected: isSelected,
           isEditing: isEditing,
@@ -127,40 +149,47 @@ abstract class _EditViewState<W extends ConsumerStatefulWidget, T>
     final selected = ref.watch(itemsProvider(_selectionKey));
     final isEditing = selected.isNotEmpty;
     return CommonPopScope(
-      onPop: (_) {
-        if (isEditing) {
-          ref.read(itemsProvider(_selectionKey).notifier).value = {};
-          return false;
-        }
-        Navigator.of(context).pop(popResult(_entries));
-        return false;
-      },
+      onPop: isEditing
+          ? (_) {
+              ref.read(itemsProvider(_selectionKey).notifier).value = {};
+              return false;
+            }
+          : _routeTakesResult
+          ? null
+          : (_) {
+              Navigator.of(context).pop(popResult(_entries));
+              return false;
+            },
       child: CommonScaffold(
         title: title,
-        actions: [
-          if (isEditing)
-            IconButton(
+        selectionActions: [
+          if (isEditing) ...[
+            IconButtonData(
+              glyph: AppGlyphs.delete,
               tooltip: appLocalizations.delete,
               onPressed: _handleDelete,
-              icon: const GlyphIcon(AppGlyphs.delete),
-            )
-          else if (!sameEntries(_entries, _initialEntries))
-            IconButton(
-              tooltip: appLocalizations.reset,
-              onPressed: _handleReset,
-              icon: const GlyphIcon(AppGlyphs.reset),
             ),
-          if (isEditing)
-            FilledButton(
+            IconButtonData(
+              glyph: AppGlyphs.selectAll,
+              tooltip: appLocalizations.selectAll,
               onPressed: _handleSelectAll,
-              child: Text(appLocalizations.selectAll),
-            )
-          else
-            IconButton(
+            ),
+          ],
+        ],
+        iconActions: [
+          if (!isEditing) ...[
+            if (!sameEntries(_entries, _initialEntries))
+              IconButtonData(
+                glyph: AppGlyphs.reset,
+                tooltip: appLocalizations.reset,
+                onPressed: _handleReset,
+              ),
+            IconButtonData(
+              glyph: AppGlyphs.addCircle,
               tooltip: appLocalizations.add,
               onPressed: _handleAdd,
-              icon: const GlyphIcon(AppGlyphs.addCircle),
             ),
+          ],
         ],
         body: NullStatusSwitcher(
           isEmpty: _entries.isEmpty,
@@ -210,9 +239,6 @@ class ListEditView extends ConsumerStatefulWidget {
   final String title;
   final List<String> items;
   final Widget Function(String item) titleBuilder;
-  final Widget Function(String item)? subtitleBuilder;
-  final Widget Function(String item)? leadingBuilder;
-  final String? valueLabel;
   final int? itemMaxLength;
   final String? Function(String item)? itemValidator;
 
@@ -221,9 +247,6 @@ class ListEditView extends ConsumerStatefulWidget {
     required this.title,
     required this.items,
     required this.titleBuilder,
-    this.leadingBuilder,
-    this.valueLabel,
-    this.subtitleBuilder,
     this.itemMaxLength,
     this.itemValidator,
   });
@@ -232,7 +255,7 @@ class ListEditView extends ConsumerStatefulWidget {
   ConsumerState<ListEditView> createState() => _ListEditViewState();
 }
 
-class _ListEditViewState extends _EditViewState<ListEditView, String> {
+class _ListEditViewState extends EditViewState<ListEditView, String> {
   @override
   String get title => widget.title;
 
@@ -250,11 +273,8 @@ class _ListEditViewState extends _EditViewState<ListEditView, String> {
     if (widget.itemValidator?.call(entry) case final error?) {
       return Text(error, style: TextStyle(color: context.colorScheme.error));
     }
-    return widget.subtitleBuilder?.call(entry);
+    return null;
   }
-
-  @override
-  Widget? buildLeading(String entry) => widget.leadingBuilder?.call(entry);
 
   @override
   bool sameEntries(List<String> a, List<String> b) =>
@@ -264,13 +284,12 @@ class _ListEditViewState extends _EditViewState<ListEditView, String> {
   Object popResult(List<String> entries) => entries;
 
   @override
-  Future<List<String>?> showEntryDialog(String? entry) {
+  Future<List<String>?> showEntryEditor(String? entry) {
     return showListEntryDialog(
       context,
       title: widget.title,
       entries: _entries,
       entry: entry,
-      valueLabel: widget.valueLabel,
       itemMaxLength: widget.itemMaxLength,
       itemValidator: widget.itemValidator,
     );
@@ -312,7 +331,7 @@ Future<List<String>?> showListEntryDialog(
       title: entry == null ? appLocalizations.add : appLocalizations.edit,
       valueField: Field(label: label, value: entry ?? '', validator: validator),
       valueMaxLength: itemMaxLength,
-      toEntry: (_, value) => parseListInput(value).entries.single,
+      toEntry: (value) => parseListInput(value).entries.single,
       batch: entry != null
           ? null
           : BatchInput(
@@ -333,135 +352,4 @@ Future<List<String>?> showListEntryDialog(
             ),
     ),
   );
-}
-
-class MapEditView extends ConsumerStatefulWidget {
-  final String title;
-  final Map<String, String> entries;
-  final Widget Function(MapEntry<String, String> item) titleBuilder;
-  final Widget Function(MapEntry<String, String> item)? subtitleBuilder;
-  final Widget Function(MapEntry<String, String> item)? leadingBuilder;
-  final String? keyLabel;
-  final String? valueLabel;
-  final int? keyMaxLength;
-  final int? valueMaxLength;
-
-  const MapEditView({
-    super.key,
-    required this.title,
-    required this.entries,
-    required this.titleBuilder,
-    this.leadingBuilder,
-    this.keyLabel,
-    this.valueLabel,
-    this.subtitleBuilder,
-    this.keyMaxLength,
-    this.valueMaxLength,
-  });
-
-  @override
-  ConsumerState<MapEditView> createState() => _MapEditViewState();
-}
-
-class _MapEditViewState
-    extends _EditViewState<MapEditView, MapEntry<String, String>> {
-  @override
-  String get title => widget.title;
-
-  @override
-  List<MapEntry<String, String>> get initialEntries =>
-      widget.entries.entries.toList();
-
-  @override
-  String idOf(MapEntry<String, String> entry) => entry.key;
-
-  @override
-  Widget buildTitle(MapEntry<String, String> entry) =>
-      widget.titleBuilder(entry);
-
-  @override
-  Widget? buildSubtitle(MapEntry<String, String> entry) =>
-      widget.subtitleBuilder?.call(entry);
-
-  @override
-  Widget? buildLeading(MapEntry<String, String> entry) =>
-      widget.leadingBuilder?.call(entry);
-
-  @override
-  bool sameEntries(
-    List<MapEntry<String, String>> a,
-    List<MapEntry<String, String>> b,
-  ) => stringAndStringMapEntryListEquality.equals(a, b);
-
-  @override
-  Object popResult(List<MapEntry<String, String>> entries) =>
-      Map<String, String>.fromEntries(entries);
-
-  String get _keyLabel => widget.keyLabel ?? context.appLocalizations.key;
-
-  String get _valueLabel => widget.valueLabel ?? context.appLocalizations.value;
-
-  ParsedInput<MapEntry<String, String>> _parseBatch(String text) {
-    return parseMapInput(
-      text,
-      existingKeys: _entries.map(idOf).toSet(),
-      keyMaxLength: widget.keyMaxLength,
-      valueMaxLength: widget.valueMaxLength,
-    );
-  }
-
-  String _issueMessage(InputIssue issue) {
-    final appLocalizations = context.appLocalizations;
-    return switch (issue.kind) {
-      InputIssueKind.keyTooLong => appLocalizations.maxLengthTip(
-        _keyLabel,
-        widget.keyMaxLength!,
-      ),
-      InputIssueKind.valueTooLong => appLocalizations.maxLengthTip(
-        _valueLabel,
-        widget.valueMaxLength!,
-      ),
-      InputIssueKind.missingValue => appLocalizations.emptyTip(_valueLabel),
-      InputIssueKind.invalidUrl ||
-      InputIssueKind.invalidValue => appLocalizations.urlTip(_valueLabel),
-    };
-  }
-
-  static MapEntry<String, String> _toEntry(String? key, String value) =>
-      MapEntry(key!, value);
-
-  @override
-  Future<List<MapEntry<String, String>>?> showEntryDialog(
-    MapEntry<String, String>? entry,
-  ) {
-    final appLocalizations = context.appLocalizations;
-
-    String? keyValidator(String? value) {
-      final taken = value != entry?.key && _entries.any((e) => e.key == value);
-      return taken ? appLocalizations.existsTip(_keyLabel) : null;
-    }
-
-    return dialogs.showCommonDialog<List<MapEntry<String, String>>>(
-      child: EntryDialog<MapEntry<String, String>>(
-        title: entry == null ? appLocalizations.add : appLocalizations.edit,
-        keyField: Field(
-          label: _keyLabel,
-          value: entry?.key ?? '',
-          validator: keyValidator,
-        ),
-        valueField: Field(label: _valueLabel, value: entry?.value ?? ''),
-        keyMaxLength: widget.keyMaxLength,
-        valueMaxLength: widget.valueMaxLength,
-        toEntry: _toEntry,
-        batch: entry != null
-            ? null
-            : BatchInput(
-                label: widget.title,
-                formatTip: appLocalizations.batchMapInputTip,
-                parse: _parseBatch,
-                issueMessage: _issueMessage,
-              ),
-      ),
-    );
-  }
 }

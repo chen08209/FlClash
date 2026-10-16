@@ -7,6 +7,12 @@ class Rope {
   Rope([String initialText = ''])
     : _rope = RopeBridge.create(initialText: initialText);
 
+  Rope._(this._rope);
+
+  /// Builds the buffer on a Rust worker thread instead of the calling isolate.
+  static Future<Rope> inBackground(String initialText) async =>
+      Rope._(await RopeBridge.createInBackground(initialText: initialText));
+
   int get length => _rope.lenChars().toInt();
 
   void dispose() => _rope.dispose();

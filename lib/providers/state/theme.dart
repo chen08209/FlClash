@@ -77,10 +77,10 @@ ColorScheme _cachedColorScheme(
   final key = (seedColor, brightness, variant, pureBlack);
   final colorScheme =
       _colorSchemes.remove(key) ??
-      ColorScheme.fromSeed(
+      seededColorScheme(
         seedColor: seedColor,
         brightness: brightness,
-        dynamicSchemeVariant: variant,
+        variant: variant,
       ).toPureBlack(pureBlack);
   _colorSchemes[key] = colorScheme;
   if (_colorSchemes.length > _maxCachedColorSchemes) {

@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -6,7 +5,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'app.dart';
 import 'clash_config.dart';
 import 'common.dart';
-import 'config.dart';
 import 'core.dart';
 import 'profile.dart';
 
@@ -16,19 +14,6 @@ part 'generated/state.g.dart';
 @freezed
 abstract class SelectValue<T> with _$SelectValue<T> {
   const factory SelectValue(T value) = _SelectValue;
-}
-
-@freezed
-abstract class ActivateState with _$ActivateState {
-  const factory ActivateState({required bool active}) = _ActivateState;
-}
-
-@freezed
-abstract class InitState with _$InitState {
-  const factory InitState({
-    required Config config,
-    required List<Profile> profiles,
-  }) = _InitState;
 }
 
 @freezed
@@ -48,38 +33,6 @@ abstract class MessageActionState with _$MessageActionState {
     required String actionText,
     required VoidCallback action,
   }) = _MessageActionState;
-}
-
-@freezed
-abstract class AppBarState with _$AppBarState {
-  const factory AppBarState({
-    AppBarSearchState? searchState,
-    AppBarEditState? editState,
-  }) = _AppBarState;
-}
-
-@freezed
-abstract class AppBarSearchState with _$AppBarSearchState {
-  const factory AppBarSearchState({
-    required Function(String) onSearch,
-    @Default(null) String? query,
-  }) = _AppBarSearchState;
-}
-
-@freezed
-abstract class AppBarEditState with _$AppBarEditState {
-  const factory AppBarEditState({
-    @Default(0) int editCount,
-    required Function() onExit,
-  }) = _AppBarEditState;
-}
-
-@freezed
-abstract class StartButtonState with _$StartButtonState {
-  const factory StartButtonState({
-    required bool isPreload,
-    required bool hasProfile,
-  }) = _StartButtonState;
 }
 
 @freezed
@@ -164,80 +117,10 @@ abstract class ProxiesTabControllerState with _$ProxiesTabControllerState {
 }
 
 @freezed
-abstract class ProxyGroupSelectorState with _$ProxyGroupSelectorState {
-  const factory ProxyGroupSelectorState({
-    required String? testUrl,
-    required ProxiesSortType proxiesSortType,
-    required ProxyCardType proxyCardType,
-    required num sortNum,
-    required GroupType groupType,
-    required List<Proxy> proxies,
-  }) = _ProxyGroupSelectorState;
-}
-
-@freezed
 abstract class MoreToolsSelectorState with _$MoreToolsSelectorState {
   const factory MoreToolsSelectorState({
     required List<NavigationItem> navigationItems,
   }) = _MoreToolsSelectorState;
-}
-
-@freezed
-abstract class PackageListSelectorState with _$PackageListSelectorState {
-  const factory PackageListSelectorState({
-    required List<Package> packages,
-    required AccessControlProps accessControlProps,
-  }) = _PackageListSelectorState;
-}
-
-extension PackageListSelectorStateExt on PackageListSelectorState {
-  List<Package> get list {
-    final isFilterSystemApp = accessControlProps.isFilterSystemApp;
-    final isFilterNonInternetApp = accessControlProps.isFilterNonInternetApp;
-    return packages
-        .where(
-          (item) =>
-              (isFilterSystemApp ? item.system == false : true) &&
-              (isFilterNonInternetApp ? item.internet == true : true),
-        )
-        .toList();
-  }
-
-  List<Package> getSortList(List<String> selectedList) {
-    final sort = accessControlProps.sort;
-
-    return list.sorted((a, b) {
-      final isSelectA = selectedList.contains(a.packageName);
-      final isSelectB = selectedList.contains(b.packageName);
-
-      if (isSelectA != isSelectB) {
-        return isSelectA ? -1 : 1;
-      }
-      return switch (sort) {
-        AccessSortType.none => 0,
-        AccessSortType.name => a.label.compareTo(b.label),
-        AccessSortType.time => b.lastUpdateTime.compareTo(a.lastUpdateTime),
-      };
-    });
-  }
-}
-
-@freezed
-abstract class ProxiesListHeaderSelectorState
-    with _$ProxiesListHeaderSelectorState {
-  const factory ProxiesListHeaderSelectorState({
-    required double offset,
-    required int currentIndex,
-  }) = _ProxiesListHeaderSelectorState;
-}
-
-@freezed
-abstract class ProxiesActionsState with _$ProxiesActionsState {
-  const factory ProxiesActionsState({
-    required PageLabel pageLabel,
-    required ProxiesType type,
-    required bool hasProviders,
-  }) = _ProxiesActionsState;
 }
 
 @freezed

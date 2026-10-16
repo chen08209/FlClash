@@ -164,6 +164,7 @@ extension _RendererLayout on _CodeFieldRenderer {
       color: color,
       fontSize: _textStyle?.fontSize ?? 14.0,
       fontFamily: _textStyle?.fontFamily,
+      fontFamilyFallback: _textStyle?.fontFamilyFallback,
     );
     _caretPainter.color = _selectionStyle.cursorColor ?? color;
   }

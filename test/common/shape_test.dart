@@ -1,5 +1,4 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/widgets/theme.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 

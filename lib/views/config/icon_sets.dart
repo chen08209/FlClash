@@ -3,10 +3,10 @@ import 'dart:convert';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/profiles/custom/icon.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -73,7 +73,7 @@ class _IconSetsViewState extends ConsumerState<IconSetsView> {
               : appLocalizations.emptyTip(appLocalizations.name),
         ),
       );
-      if (name != null) {
+      if (name != null && mounted) {
         ref
             .read(iconSetsProvider.notifier)
             .put(iconSet.copyWith(name: name.trim()));
@@ -105,7 +105,7 @@ class _IconSetsViewState extends ConsumerState<IconSetsView> {
       title: appLocalizations.tip,
       message: TextSpan(text: appLocalizations.deleteTip(iconSet.name)),
     );
-    if (res == true) {
+    if (res == true && mounted) {
       ref.read(iconSetsProvider.notifier).del(iconSet.id);
     }
   }
@@ -220,13 +220,11 @@ class _IconSetsViewState extends ConsumerState<IconSetsView> {
       isLoading: ref.watch(loadingProvider(LoadingTag.iconSets)),
       actions: [
         CommonPopupBox(
+          anchorShift: Offset(0, ref.watch(isMobileViewProvider) ? 0 : 20),
           targetBuilder: (open) {
             return IconButton(
               tooltip: appLocalizations.add,
-              onPressed: () {
-                final isMobile = ref.read(isMobileViewProvider);
-                open(offset: Offset(0, isMobile ? 0 : 20));
-              },
+              onPressed: open,
               icon: const GlyphIcon(AppGlyphs.addCircle),
             );
           },

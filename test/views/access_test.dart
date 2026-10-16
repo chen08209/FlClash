@@ -1,5 +1,4 @@
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
@@ -8,6 +7,7 @@ import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/access.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -167,6 +167,33 @@ void main() {
 
       expect(find.text('Offline'), findsOneWidget);
       expect(find.text('Settings'), findsNothing);
+
+      await teardownView(tester);
+    });
+
+    testWidgets('the settings sheet shows system apps from a toggle', (
+      tester,
+    ) async {
+      seedAccessControl(const AccessControlProps(enable: true));
+      await pumpAccessView(tester);
+      final l10n = AppLocalizations.current;
+
+      await openBarMenu(tester);
+      await tester.tap(
+        find
+            .descendant(
+              of: find.byType(CommonPopupMenu),
+              matching: find.text(l10n.settings),
+            )
+            .last,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.systemApp));
+      await tester.pumpAndSettle();
+
+      final state = container.read(accessControlStateProvider);
+      expect(state.isFilterSystemApp, isFalse);
+      expect(state.isFilterNonInternetApp, isTrue);
 
       await teardownView(tester);
     });

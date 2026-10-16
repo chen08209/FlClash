@@ -1,8 +1,7 @@
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -39,7 +38,6 @@ class _EditorHarness extends StatelessWidget {
       onReorder: (oldIndex, newIndex) {},
       onAdd: () {},
       emptyLabel: 'Empty',
-      selectionEnabled: true,
       idOf: (item) => item,
       onDelete: onDelete,
       searchFieldsOf: searchable ? (item) => [item] : null,
@@ -76,7 +74,7 @@ Future<void> _answerDialog(WidgetTester tester, {required bool confirm}) async {
   await tester.pumpAndSettle();
   final localizations = AppLocalizations.current;
   await tester.tap(
-    find.text(confirm ? localizations.confirm : localizations.cancel),
+    find.text(confirm ? localizations.delete : localizations.cancel),
   );
   await tester.pumpAndSettle();
 }
@@ -454,7 +452,14 @@ void main() {
     final arrived = {...builds.keys};
     expect(arrived, isNotEmpty);
     expect(
-      tester.getTopLeft(find.text('item ${arrived.length - 1}')).dy,
+      tester
+          .getTopLeft(
+            find.ancestor(
+              of: find.text('item ${arrived.length - 1}'),
+              matching: find.byType(ListTile),
+            ),
+          )
+          .dy,
       lessThan(600),
     );
 

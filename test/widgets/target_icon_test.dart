@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -80,7 +80,7 @@ void main() {
       expect(find.byType(Image), findsOne);
     });
 
-    testWidgets('waits for the route bringing it in to settle', (tester) async {
+    testWidgets('loads while the route bringing it in arrives', (tester) async {
       const src = 'https://example.com/pushed.png';
       await tester.pumpWidget(
         TestApp(
@@ -105,19 +105,14 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      expect(reads, isEmpty);
-      expect(find.byGlyph(AppGlyphs.photos), findsNothing);
-      expect(find.byType(Image), findsNothing);
-
-      await tester.pumpAndSettle();
-
       expect(reads, [src]);
       expect(find.byGlyph(AppGlyphs.photos), findsNothing);
       expect(find.byType(Image), findsOne);
+      await tester.pumpAndSettle();
     });
 
     testWidgets('a page pushed again shows a whole set it loaded before '
-        'through its transition', (tester) async {
+        'from its first frame', (tester) async {
       readRemoteIcon = (src) {
         reads.add(src);
         return Stream.value(Uint8List.fromList(_onePixelPng));
@@ -147,12 +142,10 @@ void main() {
           ),
         ),
       );
-      reads.clear();
       await tester.tap(find.text('open'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      expect(reads, isEmpty);
       expect(find.byType(Image), findsNWidgets(340));
     });
 

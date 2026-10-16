@@ -1,8 +1,9 @@
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/widgets/null_status.dart';
-import 'package:fl_clash/widgets/paged_sheet.dart';
-import 'package:fl_clash/widgets/sheet.dart';
+import 'package:fl_clash/ui/null_status.dart';
+import 'package:fl_clash/ui/paged_sheet.dart';
+import 'package:fl_clash/ui/sheet.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -14,7 +15,7 @@ Widget _switcher({
   required bool isEmpty,
   bool isLoading = false,
   bool isSearching = false,
-  bool holdsArrival = false,
+  String? loadingLabel,
   String label = 'Nothing here',
   MediaQueryData? mediaQuery,
 }) {
@@ -22,13 +23,16 @@ Widget _switcher({
     isLoading: isLoading,
     isEmpty: isEmpty,
     isSearching: isSearching,
-    holdsArrival: holdsArrival,
+    loadingStatus: loadingLabel == null
+        ? null
+        : NullStatus(label: loadingLabel),
     nullStatus: NullStatus(label: label),
     child: const Text('content', key: ValueKey('content')),
   );
   return MaterialApp(
     localizationsDelegates: const [
       AppLocalizations.delegate,
+      AppUiLocalizations.delegate,
       ...GlobalMaterialLocalizations.delegates,
     ],
     supportedLocales: AppLocalizations.delegate.supportedLocales,
@@ -256,43 +260,52 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('holds the status it opens on for a route transition', (
+  testWidgets('a first load done within a route transition shows no status', (
     tester,
   ) async {
-    await tester.pumpWidget(_switcher(isEmpty: true, holdsArrival: true));
-    await tester.pump(const Duration(milliseconds: 100));
-
     await tester.pumpWidget(
-      _switcher(isEmpty: false, holdsArrival: true, label: 'Nothing found'),
+      _switcher(isEmpty: true, isLoading: true, loadingLabel: 'Loading'),
     );
-    await tester.pump(const Duration(milliseconds: 250));
-    expect(find.text('Nothing here'), findsOneWidget);
-    expect(find.text('Nothing found'), findsNothing);
-    expect(find.byKey(const ValueKey('content')), findsNothing);
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.byType(NullStatus), findsNothing);
 
-    await tester.pump(const Duration(milliseconds: 100));
-    await tester.pumpAndSettle();
-    expect(find.text('Nothing here'), findsNothing);
-    expect(find.byKey(const ValueKey('content')), findsOneWidget);
+    await tester.pumpWidget(_switcher(isEmpty: false, loadingLabel: 'Loading'));
+    await tester.pump(const Duration(seconds: 1));
 
-    await tester.pumpWidget(_switcher(isEmpty: true, holdsArrival: true));
-    await tester.pumpAndSettle();
-    await tester.pumpWidget(_switcher(isEmpty: false, holdsArrival: true));
-    await tester.pump();
+    expect(find.byType(NullStatus), findsNothing);
     expect(find.byKey(const ValueKey('content')), findsOneWidget);
-    await tester.pumpAndSettle();
   });
 
-  testWidgets('holds nothing when it opens on content', (tester) async {
-    await tester.pumpWidget(_switcher(isEmpty: false, holdsArrival: true));
-    await tester.pump();
-    await tester.pumpWidget(_switcher(isEmpty: true, holdsArrival: true));
-    await tester.pumpAndSettle();
+  testWidgets('a first load that outlasts a route transition shows its '
+      'loading status until the content arrives', (tester) async {
+    await tester.pumpWidget(
+      _switcher(isEmpty: true, isLoading: true, loadingLabel: 'Loading'),
+    );
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.text('Loading'), findsNothing);
 
-    await tester.pumpWidget(_switcher(isEmpty: false, holdsArrival: true));
-    await tester.pump();
-    expect(find.byKey(const ValueKey('content')), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('Loading'), findsOneWidget);
+    expect(find.byKey(const ValueKey('content')), findsNothing);
+
+    await tester.pumpWidget(_switcher(isEmpty: false, loadingLabel: 'Loading'));
     await tester.pumpAndSettle();
+    expect(find.text('Loading'), findsNothing);
+    expect(find.byKey(const ValueKey('content')), findsOneWidget);
+  });
+
+  testWidgets('a first load that finds nothing leaves the loading status for '
+      'the empty one', (tester) async {
+    await tester.pumpWidget(
+      _switcher(isEmpty: true, isLoading: true, loadingLabel: 'Loading'),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Loading'), findsOneWidget);
+
+    await tester.pumpWidget(_switcher(isEmpty: true, loadingLabel: 'Loading'));
+    await tester.pumpAndSettle();
+    expect(find.text('Loading'), findsNothing);
+    expect(find.text('Nothing here'), findsOneWidget);
   });
 
   testWidgets('a search that matches nothing has its own empty state', (

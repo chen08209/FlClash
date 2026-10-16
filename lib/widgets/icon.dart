@@ -2,15 +2,13 @@ import 'dart:async';
 
 import 'package:fl_clash/common/cache.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/plugins/app.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_svg/svg.dart';
-
-import 'route_motion_hold.dart';
-import 'text.dart';
 
 const _maxCachedIconBytes = 16 << 20;
 
@@ -163,12 +161,12 @@ class GroupMonogram extends StatelessWidget {
         child: EmojiText(
           mark,
           maxLines: 1,
-          style: TextStyle(
-            fontSize: size * 0.62,
-            height: 1,
-            fontWeight: FontWeight.w600,
-            color: iconTheme.color,
-          ),
+          style: AppTextStyle.custom(
+            context,
+            size: size * 0.62,
+            leading: size * 0.62,
+            weight: FontWeight.w600,
+          ).copyWith(color: iconTheme.color),
         ),
       ),
     );
@@ -289,8 +287,7 @@ class ImageCacheWidget extends StatefulWidget {
   State<ImageCacheWidget> createState() => _ImageCacheWidgetState();
 }
 
-class _ImageCacheWidgetState extends State<ImageCacheWidget>
-    with RouteSettledMixin<ImageCacheWidget> {
+class _ImageCacheWidgetState extends State<ImageCacheWidget> {
   late final ValueNotifier<Uint8List?> _bytesNotifier;
   StreamSubscription? _streamSubscription;
   var _loadEnded = false;
@@ -299,10 +296,8 @@ class _ImageCacheWidgetState extends State<ImageCacheWidget>
   void initState() {
     super.initState();
     _bytesNotifier = ValueNotifier(_remoteIcons[widget.src]);
+    _getImageFormCache();
   }
-
-  @override
-  void didSettleRoute() => _getImageFormCache();
 
   @override
   void didUpdateWidget(covariant ImageCacheWidget oldWidget) {
@@ -310,9 +305,7 @@ class _ImageCacheWidgetState extends State<ImageCacheWidget>
     if (oldWidget.src != widget.src) {
       _bytesNotifier.value = _remoteIcons[widget.src];
       _loadEnded = false;
-      if (routeSettled) {
-        _getImageFormCache();
-      }
+      _getImageFormCache();
     }
   }
 
@@ -371,21 +364,14 @@ class _ImageCacheWidgetState extends State<ImageCacheWidget>
 class PackageIcon extends StatefulWidget {
   final String packageName;
   final double size;
-  final Widget? placeholder;
 
-  const PackageIcon({
-    super.key,
-    required this.packageName,
-    required this.size,
-    this.placeholder,
-  });
+  const PackageIcon({super.key, required this.packageName, required this.size});
 
   @override
   State<PackageIcon> createState() => _PackageIconState();
 }
 
-class _PackageIconState extends State<PackageIcon>
-    with RouteSettledMixin<PackageIcon> {
+class _PackageIconState extends State<PackageIcon> {
   ImageProvider? _icon;
   int _generation = 0;
 
@@ -393,19 +379,15 @@ class _PackageIconState extends State<PackageIcon>
   void initState() {
     super.initState();
     _showCachedIcon();
+    _loadIcon();
   }
-
-  @override
-  void didSettleRoute() => _loadIcon();
 
   @override
   void didUpdateWidget(covariant PackageIcon oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.packageName != widget.packageName) {
       _showCachedIcon();
-      if (routeSettled) {
-        _loadIcon();
-      }
+      _loadIcon();
     }
   }
 
@@ -433,8 +415,7 @@ class _PackageIconState extends State<PackageIcon>
   Widget build(BuildContext context) {
     final icon = _icon;
     if (icon == null) {
-      return widget.placeholder ??
-          SizedBox(width: widget.size, height: widget.size);
+      return SizedBox(width: widget.size, height: widget.size);
     }
     return Image(
       image: icon,

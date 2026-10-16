@@ -198,7 +198,7 @@ void main() {
     expect(state.entryOf('b').phase, ProbePhase.fresh);
   });
 
-  test('a failed answer waits for a retry or the app resuming', () async {
+  test('a failed answer waits for a refresh or the app resuming', () async {
     final container = build();
     final probe = container.read(_probeProvider.notifier);
     probe.watch('a');
@@ -214,7 +214,7 @@ void main() {
     await pumpEventQueue();
     expect(probe.calls, hasLength(1));
 
-    probe.retry('a');
+    probe.refresh(['a']);
     await pumpEventQueue();
     expect(probe.calls, hasLength(2));
     probe.answer({
