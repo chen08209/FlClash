@@ -46,6 +46,16 @@ class Preferences {
     await preferences?.setInt('version', version);
   }
 
+  Future<int> getUpgradeVersion() async {
+    final preferences = await _store.value;
+    return preferences?.getInt('upgradeVersion') ?? 0;
+  }
+
+  Future<void> setUpgradeVersion(int version) async {
+    final preferences = await _store.value;
+    await preferences?.setInt('upgradeVersion', version);
+  }
+
   Future<void> saveShareState(SharedState shareState) async {
     final preferences = await _store.value;
     await preferences?.setString('sharedState', json.encode(shareState));

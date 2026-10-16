@@ -35,6 +35,9 @@ Widget _backButtonIcon(BuildContext context) =>
 Widget _closeButtonIcon(BuildContext context) =>
     const GlyphIcon(AppGlyphs.close);
 
+/// A rebuilt ThemeData never equals the last, and ThemeCrossFade fades on that.
+final _appThemes = <Brightness, ({Object inputs, ThemeData theme})>{};
+
 ThemeData watchAppTheme(WidgetRef ref, Brightness brightness) {
   final locale = ref.watch(appSettingProvider.select((state) => state.locale));
   final themeSetting = ref.watch(
@@ -43,7 +46,27 @@ ThemeData watchAppTheme(WidgetRef ref, Brightness brightness) {
     ),
   );
   final colorScheme = ref.watch(genColorSchemeProvider(brightness));
-  return ThemeData(
+  final plainDark = brightness == Brightness.dark && themeSetting.pureBlack
+      ? ref.watch(genColorSchemeProvider(brightness, pureBlack: false))
+      : null;
+  final locales = [
+    ?getLocaleForString(locale),
+    ...WidgetsBinding.instance.platformDispatcher.locales,
+  ];
+  final inputs = (
+    platform: defaultTargetPlatform,
+    themeSetting: themeSetting,
+    colorScheme: colorScheme,
+    plainDark: plainDark,
+    locales: locales.join(','),
+  );
+  if (_appThemes[brightness] case (
+    inputs: final cached,
+    :final theme,
+  ) when cached == inputs) {
+    return theme;
+  }
+  final theme = ThemeData(
     useMaterial3: true,
     pageTransitionsTheme: _pageTransitionsTheme,
     actionIconTheme: _actionIconTheme,
@@ -51,10 +74,7 @@ ThemeData watchAppTheme(WidgetRef ref, Brightness brightness) {
     fontFamily: themeSetting.fontFamily,
     fontFamilyFallback: appFontFamilyFallback(
       platform: defaultTargetPlatform,
-      locales: [
-        ?getLocaleForString(locale),
-        ...WidgetsBinding.instance.platformDispatcher.locales,
-      ],
+      locales: locales,
       fontFamily: themeSetting.fontFamily,
     ),
     extensions: [
@@ -62,12 +82,12 @@ ThemeData watchAppTheme(WidgetRef ref, Brightness brightness) {
         ElevatedColorScheme(
           // Plain dark is pure black a level up, with the seed's tint that a
           // lift from black would lose.
-          themeSetting.pureBlack
-              ? ref.watch(genColorSchemeProvider(brightness, pureBlack: false))
-              : colorScheme.elevated,
+          plainDark ?? colorScheme.elevated,
         ),
     ],
   ).withAppShapes.withAppSurfaces.withAppTypography;
+  _appThemes[brightness] = (inputs: inputs, theme: theme);
+  return theme;
 }
 
 class ThemeManager extends ConsumerWidget {

@@ -863,7 +863,7 @@ void main() {
       await tester.pumpWidget(
         TestApp(
           wrapInProviderScope: true,
-          homeBuilder: (child) => Theme(data: theme, child: child),
+          theme: theme,
           child: Builder(
             builder: (context) => TextButton(
               onPressed: () => showSnapSheet<void>(context, builder: _sheet),

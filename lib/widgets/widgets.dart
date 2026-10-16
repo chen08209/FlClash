@@ -1,6 +1,5 @@
 export 'active_polling.dart';
 export 'chip_title.dart';
-export 'color_scheme_box.dart';
 export 'config_item.dart';
 export 'icon.dart';
 export 'input.dart';
