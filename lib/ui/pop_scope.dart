@@ -31,6 +31,12 @@ class CommonPopScope extends StatelessWidget {
               if (didPop) {
                 return;
               }
+              // BackLayerScope adds its entry a frame after this builds, which
+              // rebuilds nothing here on a route with another below it.
+              if (route?.willHandlePopInternally == true) {
+                Navigator.of(context).pop();
+                return;
+              }
               final res = await onPop!(context);
               if (!context.mounted) {
                 return;

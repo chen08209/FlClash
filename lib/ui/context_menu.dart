@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import 'focus.dart';
 import 'popup.dart';
 import 'sortable.dart';
+import 'surface.dart';
 
 const _touchDevices = {
   PointerDeviceKind.touch,
@@ -30,18 +31,67 @@ class ContextMenuRegion extends StatefulWidget {
 class _ContextMenuRegionState extends State<ContextMenuRegion> {
   Timer? _holdTimer;
   LogicalKeyboardKey? _heldKey;
+  CommonPopupRoute<void>? _menu;
+
+  bool get _enabled {
+    final items = widget.menuItems;
+    return items != null &&
+        items.isNotEmpty &&
+        !SortableItem.isSorting(context);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _closeUnlessEnabled();
+  }
+
+  @override
+  void didUpdateWidget(ContextMenuRegion oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _closeUnlessEnabled();
+  }
 
   @override
   void dispose() {
     _holdTimer?.cancel();
+    _closeMenu();
     super.dispose();
   }
 
+  /// A row withdraws its menu while its item updates, which the open menu
+  /// would otherwise still act on.
+  void _closeUnlessEnabled() {
+    if (_enabled) {
+      return;
+    }
+    _holdTimer?.cancel();
+    _heldKey = null;
+    _closeMenu();
+  }
+
+  void _closeMenu() {
+    final menu = _menu;
+    if (menu == null) {
+      return;
+    }
+    _menu = null;
+    // This runs while the tree builds or unmounts, when nothing may pop.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (menu.isCurrent) {
+        menu.navigator!.pop();
+      }
+    });
+  }
+
   void _open(Offset globalPosition, {bool avoid = false}) {
+    final items = widget.menuItems;
     final navigator = Navigator.maybeOf(context);
     final navigatorBox = navigator?.context.findRenderObject();
     final box = context.findRenderObject();
-    if (navigator == null ||
+    if (items == null ||
+        items.isEmpty ||
+        navigator == null ||
         navigatorBox is! RenderBox ||
         box is! RenderBox ||
         !box.hasSize) {
@@ -52,18 +102,20 @@ class _ContextMenuRegionState extends State<ContextMenuRegion> {
       box.getTransformTo(navigatorBox),
       Offset.zero & box.size,
     );
+    final menu = _menu = CommonPopupRoute<void>(
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      placement: PopupPlacement.belowPoint,
+      elevated: ElevatedSurfaceTheme.isIn(context),
+      anchorOf: () => point & Size.zero,
+      avoid: avoid ? rowRect : null,
+      builder: (_) => CommonPopupMenu(items: items),
+    );
     unawaited(
-      navigator.push(
-        CommonPopupRoute<void>(
-          barrierLabel: MaterialLocalizations.of(
-            context,
-          ).modalBarrierDismissLabel,
-          placement: PopupPlacement.belowPoint,
-          anchorOf: () => point & Size.zero,
-          avoid: avoid ? rowRect : null,
-          builder: (_) => CommonPopupMenu(items: widget.menuItems!),
-        ),
-      ),
+      navigator.push(menu).whenComplete(() {
+        if (identical(_menu, menu)) {
+          _menu = null;
+        }
+      }),
     );
   }
 
@@ -138,9 +190,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion> {
 
   @override
   Widget build(BuildContext context) {
-    final items = widget.menuItems;
-    final enabled =
-        items != null && items.isNotEmpty && !SortableItem.isSorting(context);
+    final enabled = _enabled;
     return Focus(
       canRequestFocus: false,
       skipTraversal: true,

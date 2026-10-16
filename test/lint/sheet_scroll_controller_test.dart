@@ -11,6 +11,8 @@ const _allowed = {
   'lib/ui/inherited.dart',
   // A drag on the editor's completion overlay must never move a sheet.
   'lib/features/editor/completion_popup.dart',
+  // Nor a drag on a popup menu, which stands over the sheet it opened from.
+  'lib/ui/popup.dart',
 };
 
 int _lineOf(String source, int offset) =>

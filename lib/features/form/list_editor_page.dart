@@ -116,6 +116,8 @@ class _ListEditorPageState<T, K> extends ConsumerState<ListEditorPage<T, K>> {
       message: TextSpan(
         text: context.appLocalizations.deleteMultipTip(widget.title),
       ),
+      destructive: true,
+      confirmText: context.appLocalizations.delete,
     );
     if (res != true || !mounted) {
       return;
@@ -347,7 +349,6 @@ class ListEditorAddAction extends StatelessWidget {
       );
     }
     return CommonPopupBox(
-      anchorShift: Offset(0, context.isMobileView ? 0 : 20),
       targetBuilder: (open) => AppBarActionButton(
         data: IconButtonData(
           glyph: AppGlyphs.addCircle,

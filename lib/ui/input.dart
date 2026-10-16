@@ -314,11 +314,15 @@ class FilledInputTheme extends StatelessWidget {
     super.key,
     this.borderRadius = AppRadius.full,
     this.contentPadding,
+    this.fillColor,
     required this.child,
   });
 
   final BorderRadius borderRadius;
   final EdgeInsetsGeometry? contentPadding;
+
+  /// In place of the raised surface's.
+  final Color? fillColor;
   final Widget child;
 
   @override
@@ -329,7 +333,7 @@ class FilledInputTheme extends StatelessWidget {
     return InputDecorationTheme(
       data: InputDecorationTheme.of(context).copyWith(
         filled: true,
-        fillColor: context.raisedSurfaceLevel.colorOf(colorScheme),
+        fillColor: fillColor ?? context.raisedSurfaceLevel.colorOf(colorScheme),
         hoverColor: Colors.transparent,
         floatingLabelBehavior: FloatingLabelBehavior.never,
         contentPadding: contentPadding,

@@ -278,32 +278,58 @@ void main() {
     });
   }
 
-  testWidgets('only a page above the fixed navigation bar floats its primary '
-      'action', (tester) async {
-    Future<void> pump({required bool inBar}) => tester.pumpWidget(
+  testWidgets('a page keeps its primary action in its bar', (tester) async {
+    await tester.pumpWidget(
       TestApp(
         wrapInProviderScope: true,
-        child: PrimaryActionInBarScope(
-          inBar: inBar,
-          child: CommonScaffold(
-            title: 'Page',
-            primaryAction: IconButtonData(
-              glyph: AppGlyphs.add,
-              onPressed: () {},
-              tooltip: 'Add',
-            ),
-            body: const SizedBox.expand(),
+        child: CommonScaffold(
+          title: 'Page',
+          primaryAction: IconButtonData(
+            glyph: AppGlyphs.add,
+            onPressed: () {},
+            tooltip: 'Add',
           ),
+          body: const SizedBox.expand(),
         ),
       ),
     );
 
-    await pump(inBar: true);
     expect(_barButtons(tester), ['Add']);
     expect(find.byType(FloatingActionButton), findsNothing);
+  });
 
-    await pump(inBar: false);
+  testWidgets('a title menu opens from the title start and runs its items', (
+    tester,
+  ) async {
+    final taps = <String>[];
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        child: CommonScaffold(
+          title: 'Page',
+          titleMenuItems: [
+            CommonPopupMenuItem(
+              label: 'Rename',
+              onPressed: () => taps.add('Rename'),
+            ),
+          ],
+          body: const SizedBox.expand(),
+        ),
+      ),
+    );
+    expect(_inBar(find.byGlyph(AppGlyphs.chevronDown)), findsOneWidget);
     expect(_barButtons(tester), isEmpty);
-    expect(find.byType(FloatingActionButton), findsOneWidget);
+    final title = tester.getRect(_inBar(find.text('Page')));
+
+    await tester.tap(_inBar(find.text('Page')));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getRect(find.byType(PopupMenuCard)).left,
+      moreOrLessEquals(title.left),
+    );
+
+    await tester.tap(find.text('Rename'));
+    await tester.pumpAndSettle();
+    expect(taps, ['Rename']);
   });
 }

@@ -1,5 +1,6 @@
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/ui.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -14,6 +15,7 @@ Future<void> _pumpDialog(
   List<String> labels, {
   TextDirection textDirection = TextDirection.ltr,
   ValueChanged<String>? onPressed,
+  bool destructive = false,
 }) async {
   await tester.pumpWidget(
     TestApp(
@@ -24,6 +26,7 @@ Future<void> _pumpDialog(
           body: Center(
             child: CommonDialog(
               title: 'Title',
+              destructive: destructive,
               actions: [
                 for (final label in labels)
                   TextButton(
@@ -42,6 +45,18 @@ Future<void> _pumpDialog(
 
 Rect _rectOf(WidgetTester tester, String label) =>
     tester.getRect(find.widgetWithText(TextButton, label));
+
+Color? _labelColor(WidgetTester tester, String label) =>
+    tester.renderObject<RenderParagraph>(find.text(label)).text.style?.color;
+
+Color? _buttonFill(WidgetTester tester, String label) => tester
+    .widget<Material>(
+      find.descendant(
+        of: find.widgetWithText(TextButton, label),
+        matching: find.byType(Material),
+      ),
+    )
+    .color;
 
 Future<void> _pumpLauncher(WidgetTester tester) async {
   await tester.pumpWidget(
@@ -75,11 +90,11 @@ double _dialogScale(WidgetTester tester) => tester
     .entry(0, 0);
 
 double _dialogOpacity(WidgetTester tester) => tester
-    .widget<FadeTransition>(
+    .widget<LiquidGlassFade>(
       find
           .ancestor(
             of: find.byType(CommonDialog),
-            matching: find.byType(FadeTransition),
+            matching: find.byType(LiquidGlassFade),
           )
           .first,
     )
@@ -97,6 +112,20 @@ void main() {
     expect(no.top, yes.top);
     expect(no.width, yes.width);
     expect(no.right, lessThan(yes.left));
+  });
+
+  testWidgets('a destructive last action is red on the plain fill', (
+    tester,
+  ) async {
+    await _pumpDialog(tester, ['Cancel', 'Delete'], destructive: true);
+    final colorScheme = Theme.of(
+      tester.element(find.text('Delete')),
+    ).colorScheme;
+
+    expect(_labelColor(tester, 'Delete'), colorScheme.destructive);
+    expect(_labelColor(tester, 'Cancel'), colorScheme.onSurface);
+    expect(_buttonFill(tester, 'Delete'), _buttonFill(tester, 'Cancel'));
+    expect(_buttonFill(tester, 'Delete'), isNot(colorScheme.primary));
   });
 
   testWidgets('a row follows the reading direction', (tester) async {
@@ -161,6 +190,48 @@ void main() {
 
     await tester.pumpAndSettle();
     expect(find.byType(CommonDialog), findsNothing);
+  });
+
+  testWidgets('on glass a pane lies under the surface and fades with it', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (_, child) => LiquidGlassScope(
+          enabled: true,
+          child: LiquidGlassHost(enabled: true, child: child!),
+        ),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showFloatingDialog<void>(
+                context: context,
+                child: const CommonDialog(title: 'Title', child: Text('Body')),
+              ),
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(_dialogOpacity(tester), inExclusiveRange(0, 1));
+    expect(LiquidGlassHost.debugLastCapture!.panes, hasLength(1));
+
+    await tester.pumpAndSettle();
+    final surface = find
+        .descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(Material),
+        )
+        .first;
+    expect(
+      LiquidGlassHost.debugLastCapture!.panes.single.pane,
+      rectMoreOrLessEquals(tester.getRect(surface)),
+    );
   });
 
   testWidgets('a tap on the scrim dismisses a dismissible dialog', (

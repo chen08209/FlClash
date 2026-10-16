@@ -8,6 +8,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/profiles/custom/icon.dart';
+import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,7 +34,8 @@ class _IconSetsViewState extends ConsumerState<IconSetsView> {
   }
 
   Future<void> _handleImportFromUrl() async {
-    final res = await dialogs.showNamedUrlInput(
+    final res = await showNamedUrlForm(
+      context,
       title: context.appLocalizations.importUrl,
     );
     if (res == null || !mounted) {
@@ -80,7 +82,8 @@ class _IconSetsViewState extends ConsumerState<IconSetsView> {
       }
       return;
     }
-    final res = await dialogs.showNamedUrlInput(
+    final res = await showNamedUrlForm(
+      context,
       title: appLocalizations.options,
       label: iconSet.name,
       url: iconSet.url,
@@ -104,6 +107,8 @@ class _IconSetsViewState extends ConsumerState<IconSetsView> {
     final res = await dialogs.showMessage(
       title: appLocalizations.tip,
       message: TextSpan(text: appLocalizations.deleteTip(iconSet.name)),
+      destructive: true,
+      confirmText: appLocalizations.delete,
     );
     if (res == true && mounted) {
       ref.read(iconSetsProvider.notifier).del(iconSet.id);
@@ -220,7 +225,6 @@ class _IconSetsViewState extends ConsumerState<IconSetsView> {
       isLoading: ref.watch(loadingProvider(LoadingTag.iconSets)),
       actions: [
         CommonPopupBox(
-          anchorShift: Offset(0, ref.watch(isMobileViewProvider) ? 0 : 20),
           targetBuilder: (open) {
             return IconButton(
               tooltip: appLocalizations.add,

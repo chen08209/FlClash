@@ -64,7 +64,8 @@ class EmojiText extends StatelessWidget {
     this.style,
   });
 
-  List<TextSpan> _buildTextSpans(String emojis) {
+  /// The spans [EmojiText] lays [text] out in, emoji in their own font.
+  static TextSpan spanOf(String text, TextStyle? style) {
     final List<TextSpan> spans = [];
     final matches = emojiRegex().allMatches(text);
 
@@ -92,13 +93,14 @@ class EmojiText extends StatelessWidget {
       spans.add(TextSpan(text: text.substring(lastMatchEnd), style: style));
     }
 
-    return spans;
+    return TextSpan(children: spans);
   }
 
   @override
   Widget build(BuildContext context) {
     return Text.rich(
-      TextSpan(children: _buildTextSpans(text)),
+      spanOf(text, style),
+      style: style,
       maxLines: maxLines,
       overflow: overflow ?? TextOverflow.clip,
     );
