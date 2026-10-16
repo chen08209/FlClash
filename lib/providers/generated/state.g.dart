@@ -48,7 +48,7 @@ final class UpdateParamsProvider
   }
 }
 
-String _$updateParamsHash() => r'7b4c3cb2b45e7cd33dd2c57dc65c5067011438ff';
+String _$updateParamsHash() => r'e46998c222b0902ef6a76c25fe83c094a6369036';
 
 @ProviderFor(setupPatch)
 final setupPatchProvider = SetupPatchProvider._();
@@ -56,11 +56,30 @@ final setupPatchProvider = SetupPatchProvider._();
 final class SetupPatchProvider
     extends
         $FunctionalProvider<
-          ({bool appendSystemDns, PatchClashConfig patchConfig}),
-          ({bool appendSystemDns, PatchClashConfig patchConfig}),
-          ({bool appendSystemDns, PatchClashConfig patchConfig})
+          ({
+            bool appendSystemDns,
+            bool bypassPrivateRoute,
+            PatchClashConfig patchConfig,
+          }),
+          ({
+            bool appendSystemDns,
+            bool bypassPrivateRoute,
+            PatchClashConfig patchConfig,
+          }),
+          ({
+            bool appendSystemDns,
+            bool bypassPrivateRoute,
+            PatchClashConfig patchConfig,
+          })
         >
-    with $Provider<({bool appendSystemDns, PatchClashConfig patchConfig})> {
+    with
+        $Provider<
+          ({
+            bool appendSystemDns,
+            bool bypassPrivateRoute,
+            PatchClashConfig patchConfig,
+          })
+        > {
   SetupPatchProvider._()
     : super(
         from: null,
@@ -77,29 +96,49 @@ final class SetupPatchProvider
 
   @$internal
   @override
-  $ProviderElement<({bool appendSystemDns, PatchClashConfig patchConfig})>
+  $ProviderElement<
+    ({
+      bool appendSystemDns,
+      bool bypassPrivateRoute,
+      PatchClashConfig patchConfig,
+    })
+  >
   $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
-  ({bool appendSystemDns, PatchClashConfig patchConfig}) create(Ref ref) {
+  ({
+    bool appendSystemDns,
+    bool bypassPrivateRoute,
+    PatchClashConfig patchConfig,
+  })
+  create(Ref ref) {
     return setupPatch(ref);
   }
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(
-    ({bool appendSystemDns, PatchClashConfig patchConfig}) value,
+    ({
+      bool appendSystemDns,
+      bool bypassPrivateRoute,
+      PatchClashConfig patchConfig,
+    })
+    value,
   ) {
     return $ProviderOverride(
       origin: this,
       providerOverride:
           $SyncValueProvider<
-            ({bool appendSystemDns, PatchClashConfig patchConfig})
+            ({
+              bool appendSystemDns,
+              bool bypassPrivateRoute,
+              PatchClashConfig patchConfig,
+            })
           >(value),
     );
   }
 }
 
-String _$setupPatchHash() => r'64d8f97c3b7f367ab0065f9b1d606beb5e6b5ebf';
+String _$setupPatchHash() => r'd09fb41d40ced4cd47c9131fe55e983e35128724';
 
 @ProviderFor(trayState)
 final trayStateProvider = TrayStateProvider._();
@@ -140,7 +179,7 @@ final class TrayStateProvider
   }
 }
 
-String _$trayStateHash() => r'e3e841e2d6ae95e4eafe27996c7da33f82edcc80';
+String _$trayStateHash() => r'b7da57e41143cd8c284260d33b368b1be044bd01';
 
 /// Measured delays of the proxies the tray lists, by group and then proxy
 /// name. Resolved like a proxy card, so a nested group shows its selection.
@@ -3417,7 +3456,7 @@ final class SetupStateProvider
   }
 }
 
-String _$setupStateHash() => r'aa74b203b75682d0dbe067377d985378adb63709';
+String _$setupStateHash() => r'eef9f0d2ec0ecb6196c699b1e2c2a73d922f8964';
 
 final class SetupStateFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<SetupState>, int?> {

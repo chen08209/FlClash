@@ -1,10 +1,12 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/config/network.dart';
+import 'package:fl_clash/views/config/tun.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -189,19 +191,10 @@ void main() {
   });
 
   group('tun settings', () {
-    List<Widget> items({
-      bool isLinux = false,
-      bool isWindows = false,
-      bool isMipsStack = true,
-    }) {
-      return tunItems(
-        isLinux: isLinux,
-        isWindows: isWindows,
-        isMipsStack: isMipsStack,
-      );
-    }
+    List<Widget> items({bool isMipsStack = true}) =>
+        tunItems(isMipsStack: isMipsStack);
 
-    test('every platform gets the same route rows', () {
+    test('Android sets the routes its VPN service starts with', () {
       final types = items().map((item) => item.runtimeType);
       expect(types, contains(BypassPrivateRouteItem));
       expect(types, contains(RouteAddressItem));
@@ -209,9 +202,63 @@ void main() {
       expect(items(isMipsStack: false), hasLength(4));
     });
 
-    test('strict route is offered where sing-tun enforces it', () {
-      expect(items(isWindows: true), hasLength(6));
-      expect(items(isLinux: true), hasLength(6));
+    Widget desktopSection({bool isWindows = false}) =>
+        TunSection(isDesktop: true, isLinux: false, isWindows: isWindows);
+
+    void setOverrideKeys(Set<TunOverrideKey> keys) {
+      container
+          .read(patchClashConfigProvider.notifier)
+          .update((state) => state.copyWith(tunOverrideKeys: keys));
+    }
+
+    testWidgets('desktop adds an override from the last row of the section', (
+      tester,
+    ) async {
+      await pumpItem(tester, desktopSection());
+      final l = currentAppLocalizations;
+      expect(find.text(l.bypassPrivateRoute), findsOneWidget);
+      expect(find.text('MTU'), findsNothing);
+      expect(find.textContaining(l.tunOverrideDesc), findsOneWidget);
+
+      await tester.tap(find.text(l.addOverrideEntry));
+      await tester.pumpAndSettle();
+      expect(find.text(l.strictRoute), findsNothing);
+      await tester.tap(find.text('MTU'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(Offset.zero);
+      await tester.pumpAndSettle();
+
+      final config = container.read(patchClashConfigProvider);
+      expect(config.tunOverrideKeys, {TunOverrideKey.mtu});
+      expect(config.tunOverride.mtu, defaultTunMtu);
+      expect(find.text('MTU'), findsOneWidget);
+    });
+
+    testWidgets('a listed override leaves the section with its button', (
+      tester,
+    ) async {
+      setOverrideKeys({TunOverrideKey.strictRoute});
+      await pumpItem(tester, desktopSection(isWindows: true));
+      final l = currentAppLocalizations;
+      expect(find.text(l.strictRoute), findsOneWidget);
+      expect(find.textContaining(l.strictRouteDesc), findsOneWidget);
+
+      await tester.tap(find.byTooltip(l.remove));
+      await tester.pumpAndSettle();
+
+      expect(container.read(patchClashConfigProvider).tunOverrideKeys, isEmpty);
+      expect(find.text(l.strictRoute), findsNothing);
+    });
+
+    testWidgets('the add row leaves once every offered key is listed', (
+      tester,
+    ) async {
+      setOverrideKeys(
+        appTunOverrideSpec(isLinux: false, isWindows: false).values.toSet(),
+      );
+      await pumpItem(tester, desktopSection());
+
+      expect(find.text(currentAppLocalizations.addOverrideEntry), findsNothing);
     });
 
     testWidgets('a number shows the core default and resets to it', (
