@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
 import 'package:fl_clash/enum/enum.dart';
@@ -182,7 +183,9 @@ class _ThemeLivePreviewState extends ConsumerState<ThemeLivePreview>
       appSettingProvider.select((state) => state.tabAnimation),
     );
     final liquidGlass = ref.watch(
-      themeSettingProvider.select((state) => state.liquidGlass),
+      themeSettingProvider.select(
+        (state) => state.liquidGlass != LiquidGlassMode.none,
+      ),
     );
     final corner = AppCorner.fit(_phoneWidth);
     return Container(
@@ -227,7 +230,7 @@ class _ThemeLivePreviewState extends ConsumerState<ThemeLivePreview>
   }
 }
 
-enum _MiniPage { cards, list }
+enum _MiniPage { dashboard, proxies, profiles, tools }
 
 /// A phone-shaped sketch of the home page, drawn in [colorScheme].
 ///
@@ -261,11 +264,6 @@ class MiniScreen extends StatelessWidget {
   final TabAnimation tabAnimation;
   final ValueChanged<int>? onSelect;
 
-  bool get _hasFab {
-    final previous = this.previous;
-    return previous == null || progress > 0.5 ? selected == 0 : previous == 0;
-  }
-
   @override
   Widget build(BuildContext context) {
     final sketch = SizedBox.expand(
@@ -278,7 +276,6 @@ class MiniScreen extends StatelessWidget {
           previous: previous,
           progress: progress,
           tabAnimation: tabAnimation,
-          hasFab: _hasFab,
         ),
       ),
     );
@@ -291,7 +288,6 @@ class MiniScreen extends StatelessWidget {
         final geometry = _MiniGeometry(
           constraints.biggest,
           floatingBar: floatingBar,
-          hasFab: _hasFab,
         );
         return Stack(
           children: [
@@ -355,44 +351,26 @@ class _DiagonalClipper extends CustomClipper<Path> {
 }
 
 class _MiniGeometry {
-  _MiniGeometry(this.size, {required bool floatingBar, required bool hasFab})
+  _MiniGeometry(this.size, {required bool floatingBar})
     : unit = size.width / 20 {
     margin = unit * 1.5;
-    fabSize = unit * 3.2;
     final barHeight = floatingBar ? unit * 3.2 : unit * 3.6;
     pageBottom = floatingBar ? 0 : barHeight;
-    if (floatingBar) {
-      final right = margin + (hasFab ? fabSize + unit * 0.6 : 0);
-      bar = Rect.fromLTWH(
-        margin,
-        size.height - margin - barHeight,
-        size.width - right - margin,
-        barHeight,
-      );
-      fab = Rect.fromLTWH(
-        size.width - margin - fabSize,
-        size.height - margin - fabSize,
-        fabSize,
-        fabSize,
-      );
-    } else {
-      bar = Rect.fromLTWH(0, size.height - barHeight, size.width, barHeight);
-      fab = Rect.fromLTWH(
-        size.width - margin - fabSize * 1.6,
-        size.height - (barHeight + margin) - fabSize,
-        fabSize * 1.6,
-        fabSize,
-      );
-    }
+    bar = floatingBar
+        ? Rect.fromLTWH(
+            margin,
+            size.height - margin - barHeight,
+            size.width - margin * 2,
+            barHeight,
+          )
+        : Rect.fromLTWH(0, size.height - barHeight, size.width, barHeight);
   }
 
   final Size size;
   final double unit;
   late final double margin;
-  late final double fabSize;
   late final double pageBottom;
   late final Rect bar;
-  late final Rect fab;
 }
 
 class _MiniScreenPainter extends CustomPainter {
@@ -404,7 +382,6 @@ class _MiniScreenPainter extends CustomPainter {
     required this.previous,
     required this.progress,
     required this.tabAnimation,
-    required this.hasFab,
   });
 
   final ColorScheme colorScheme;
@@ -414,12 +391,11 @@ class _MiniScreenPainter extends CustomPainter {
   final int? previous;
   final double progress;
   final TabAnimation tabAnimation;
-  final bool hasFab;
 
   bool get _glass => floatingBar && liquidGlass;
 
   static _MiniPage _pageOf(int index) =>
-      index.isEven ? _MiniPage.cards : _MiniPage.list;
+      _MiniPage.values[index % _MiniPage.values.length];
 
   static void _fill(
     Canvas canvas,
@@ -433,28 +409,12 @@ class _MiniScreenPainter extends CustomPainter {
         .paint(canvas, rect.topLeft, ImageConfiguration(size: rect.size));
   }
 
-  static void _block(Canvas canvas, Rect rect, Color color, double extent) {
-    _fill(canvas, rect, color, AppShape.all(AppCorner.fit(extent)));
-  }
-
   @override
   void paint(Canvas canvas, Size size) {
-    final geometry = _MiniGeometry(
-      size,
-      floatingBar: floatingBar,
-      hasFab: hasFab,
-    );
+    final geometry = _MiniGeometry(size, floatingBar: floatingBar);
     _paintPages(canvas, geometry);
     final unit = geometry.unit;
     final dock = SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme);
-    if (hasFab && !floatingBar) {
-      _block(
-        canvas,
-        geometry.fab,
-        colorScheme.primaryContainer,
-        geometry.fabSize,
-      );
-    }
     final shadow = BoxShadow(
       color: colorScheme.shadow.withValues(alpha: 0.12),
       blurRadius: unit,
@@ -468,9 +428,6 @@ class _MiniScreenPainter extends CustomPainter {
       canvas.drawRect(geometry.bar, Paint()..color = dock);
     }
     _paintDestinations(canvas, geometry.bar, unit);
-    if (hasFab && floatingBar) {
-      _fill(canvas, geometry.fab, colorScheme.primaryContainer, AppShape.full);
-    }
   }
 
   void _paintPages(Canvas canvas, _MiniGeometry geometry) {
@@ -520,8 +477,13 @@ class _MiniScreenPainter extends CustomPainter {
           ..fillType = PathFillType.evenOdd
           ..addRect(bar.inflate(unit * 3))
           ..addPath(path, Offset.zero),
-      )
-      ..drawPath(path.shift(shadow.offset), shadow.toPaint())
+      );
+    AppShape.full.paintInterior(
+      canvas,
+      bar.shift(shadow.offset),
+      shadow.toPaint(),
+    );
+    canvas
       ..restore()
       ..save()
       ..clipPath(path)
@@ -564,7 +526,6 @@ class _MiniScreenPainter extends CustomPainter {
       return;
     }
     final size = geometry.size;
-    final unit = geometry.unit;
     final margin = geometry.margin;
     final content = Rect.fromLTRB(
       offset + margin,
@@ -578,152 +539,62 @@ class _MiniScreenPainter extends CustomPainter {
       canvas.save();
     }
     canvas.clipRect(content, doAntiAlias: false);
-    final left = content.left;
-    final width = content.width;
-    final card = SurfaceLevel.card.colorOf(colorScheme);
-    final line = colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
-    var top = content.top;
-    _fill(
+    _PageSketch(
       canvas,
-      Rect.fromLTWH(left, top, unit * 7, unit * 1.1),
-      colorScheme.onSurface.withValues(alpha: 0.72),
-      AppShape.full,
-    );
-    top += unit * 1.1 + unit * 0.5 + unit;
-    switch (_pageOf(index)) {
-      case _MiniPage.cards:
-        _block(
-          canvas,
-          Rect.fromLTWH(left, top, width, unit * 5),
-          card,
-          unit * 5,
-        );
-        _fill(
-          canvas,
-          Rect.fromLTWH(
-            left + unit,
-            top + (unit * 5 - unit * 2.2) / 2,
-            unit * 2.2,
-            unit * 2.2,
-          ),
-          colorScheme.primary,
-          AppShape.circle,
-        );
-        final lineLeft = left + unit + unit * 2.2 + unit;
-        final lineTop = top + (unit * 5 - (unit + unit * 0.6 + unit * 0.8)) / 2;
-        _fill(
-          canvas,
-          Rect.fromLTWH(lineLeft, lineTop, unit * 6, unit),
-          line,
-          AppShape.full,
-        );
-        _fill(
-          canvas,
-          Rect.fromLTWH(
-            lineLeft,
-            lineTop + unit + unit * 0.6,
-            unit * 3.5,
-            unit * 0.8,
-          ),
-          line,
-          AppShape.full,
-        );
-        top += unit * 5 + unit;
-        final half = (width - unit) / 2;
-        _block(
-          canvas,
-          Rect.fromLTWH(left, top, half, unit * 4),
-          card,
-          unit * 4,
-        );
-        final chosen = Rect.fromLTWH(left + half + unit, top, half, unit * 4);
-        _block(canvas, chosen, card, unit * 4);
-        _fill(
-          canvas,
-          Rect.fromCircle(
-            center: chosen.topRight + Offset(-unit * 1.3, unit * 1.3),
-            radius: unit * 0.7,
-          ),
-          colorScheme.primary,
-          AppShape.circle,
-        );
-        top += unit * 4 + unit;
-        for (var i = 0; i < 4; i++) {
-          _block(
-            canvas,
-            Rect.fromLTWH(left, top, width, unit * 4.5),
-            card,
-            unit * 4.5,
-          );
-          top += unit * 4.5 + unit;
-        }
-      case _MiniPage.list:
-        final lineLeft = left + unit * 2.2 + unit;
-        for (var i = 0; i < 9; i++) {
-          _fill(
-            canvas,
-            Rect.fromLTWH(
-              left,
-              top + (unit * 2.6 - unit * 2.2) / 2,
-              unit * 2.2,
-              unit * 2.2,
-            ),
-            SurfaceLevel.inset.colorOf(colorScheme),
-            AppShape.circle,
-          );
-          final lineTop =
-              top + (unit * 2.6 - (unit * 0.8 + unit * 0.5 + unit * 0.6)) / 2;
-          _fill(
-            canvas,
-            Rect.fromLTWH(
-              lineLeft,
-              lineTop,
-              unit * (8 - (i + index) % 3 * 1.5),
-              unit * 0.8,
-            ),
-            line,
-            AppShape.full,
-          );
-          _fill(
-            canvas,
-            Rect.fromLTWH(
-              lineLeft,
-              lineTop + unit * 0.8 + unit * 0.5,
-              unit * 4,
-              unit * 0.6,
-            ),
-            line.withValues(alpha: 0.2),
-            AppShape.full,
-          );
-          top += unit * 2.6 + unit;
-        }
-    }
+      colorScheme,
+      geometry.unit,
+      content,
+    ).paint(_pageOf(index));
     canvas.restore();
   }
 
   void _paintDestinations(Canvas canvas, Rect bar, double unit) {
     final cell = bar.width / MiniScreen.destinationCount;
+    final dark = colorScheme.brightness == Brightness.dark;
+    final indicator = _glass
+        ? colorScheme.onSurface.withValues(alpha: dark ? 0.14 : 0.08)
+        : SurfaceLevel.floatingOf(colorScheme).next.colorOf(colorScheme);
     for (var i = 0; i < MiniScreen.destinationCount; i++) {
       final center = Offset(bar.left + cell * i + cell / 2, bar.center.dy);
-      final dot = Rect.fromCenter(
-        center: center,
-        width: unit * 0.9,
-        height: unit * 0.9,
-      );
-      if (i != selected) {
-        _fill(canvas, dot, colorScheme.onSurfaceVariant, AppShape.circle);
-        continue;
+      final icon = center.translate(0, -unit * 0.4);
+      final isSelected = i == selected;
+      if (isSelected) {
+        _fill(
+          canvas,
+          floatingBar
+              ? Rect.fromCenter(
+                  center: center,
+                  width: cell - unit * 0.5,
+                  height: bar.height - unit * 0.5,
+                )
+              : Rect.fromCenter(
+                  center: icon,
+                  width: unit * 2.8,
+                  height: unit * 1.5,
+                ),
+          indicator,
+          AppShape.full,
+        );
       }
-      final dark = colorScheme.brightness == Brightness.dark;
+      final ink = isSelected
+          ? colorScheme.primary
+          : colorScheme.onSurfaceVariant;
       _fill(
         canvas,
-        Rect.fromCenter(center: center, width: unit * 2.8, height: unit * 1.6),
-        _glass
-            ? colorScheme.onSurface.withValues(alpha: dark ? 0.14 : 0.08)
-            : SurfaceLevel.floatingOf(colorScheme).next.colorOf(colorScheme),
+        Rect.fromCircle(center: icon, radius: unit * 0.45),
+        ink,
+        AppShape.circle,
+      );
+      _fill(
+        canvas,
+        Rect.fromCenter(
+          center: center.translate(0, unit * 0.8),
+          width: unit * 1.7,
+          height: unit * 0.35,
+        ),
+        isSelected ? ink : ink.withValues(alpha: 0.6),
         AppShape.full,
       );
-      _fill(canvas, dot, colorScheme.primary, AppShape.circle);
     }
   }
 
@@ -735,7 +606,245 @@ class _MiniScreenPainter extends CustomPainter {
         oldDelegate.selected != selected ||
         oldDelegate.previous != previous ||
         oldDelegate.progress != progress ||
-        oldDelegate.tabAnimation != tabAnimation ||
-        oldDelegate.hasFab != hasFab;
+        oldDelegate.tabAnimation != tabAnimation;
+  }
+}
+
+/// One page of a [MiniScreen] after the app's own, laid out in units of a
+/// twentieth of the screen's width from the top left of [content].
+class _PageSketch {
+  _PageSketch(this.canvas, this.colorScheme, this.unit, this.content)
+    : width = content.width / unit,
+      card = SurfaceLevel.card.colorOf(colorScheme),
+      inset = SurfaceLevel.inset.colorOf(colorScheme),
+      text = colorScheme.onSurface.withValues(alpha: 0.72),
+      line = colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+      faint = colorScheme.onSurfaceVariant.withValues(alpha: 0.16);
+
+  static const double _gap = 0.6;
+
+  final Canvas canvas;
+  final ColorScheme colorScheme;
+  final double unit;
+  final Rect content;
+  final double width;
+  final Color card;
+  final Color inset;
+  final Color text;
+  final Color line;
+  final Color faint;
+
+  void paint(_MiniPage page) {
+    switch (page) {
+      case _MiniPage.dashboard:
+        _dashboard(_header(actions: 1));
+      case _MiniPage.proxies:
+        _proxies(_header(actions: 2));
+      case _MiniPage.profiles:
+        _profiles(_header(actions: 2));
+      case _MiniPage.tools:
+        _tools(_header(actions: 0));
+    }
+  }
+
+  Rect _rect(double x, double y, double w, double h) => Rect.fromLTWH(
+    content.left + x * unit,
+    content.top + y * unit,
+    w * unit,
+    h * unit,
+  );
+
+  ShapeBorder _shape(double extent) =>
+      AppShape.all(AppCorner.fit(unit * extent));
+
+  void _block(Rect rect, Color color, {double extent = 5}) {
+    _MiniScreenPainter._fill(canvas, rect, color, _shape(extent));
+  }
+
+  void _pill(double x, double y, double w, double h, Color color) {
+    _MiniScreenPainter._fill(canvas, _rect(x, y, w, h), color, AppShape.full);
+  }
+
+  void _dot(double x, double y, double radius, Color color) {
+    _MiniScreenPainter._fill(
+      canvas,
+      _rect(x - radius, y - radius, radius * 2, radius * 2),
+      color,
+      AppShape.circle,
+    );
+  }
+
+  /// The title and the bar's round buttons; returns where the body starts.
+  double _header({required int actions}) {
+    _pill(0, 0.45, 7, 1.1, text);
+    for (var i = 0; i < actions; i++) {
+      final x = width - 1 - i * 2.4;
+      _dot(x, 1, 1, card);
+      _dot(x, 1, 0.3, line);
+    }
+    return 2.8;
+  }
+
+  void _dashboard(double top) {
+    var y = top;
+    final status = _rect(0, y, width, 6.2);
+    final buttonX = width - 3;
+    final buttonY = y + 3.1;
+    _block(status, card);
+    canvas
+      ..save()
+      ..clipPath(_shape(5).getOuterPath(status))
+      ..drawCircle(
+        _rect(buttonX, buttonY, 0, 0).topLeft,
+        unit * 4.6,
+        Paint()..color = colorScheme.primary.withValues(alpha: 0.1),
+      )
+      ..restore();
+    _dot(buttonX, buttonY, 1.8, colorScheme.primary);
+    for (final dx in [-0.675, 0.325]) {
+      _pill(buttonX + dx, buttonY - 0.6, 0.35, 1.2, colorScheme.onPrimary);
+    }
+    _pill(1, y + 0.9, 3, 0.7, line);
+    _dot(1.9, y + 3, 0.9, inset);
+    _pill(3.5, y + 2.3, 5, 0.9, text);
+    _pill(3.5, y + 3.5, 2.4, 0.7, inset);
+    _pill(1, y + 4.8, 2.4, 0.7, line);
+    _pill(4.6, y + 4.8, 3.6, 0.7, line);
+    y += 6.2 + _gap;
+
+    _block(_rect(0, y, width, 5.8), card);
+    _pill(1, y + 0.9, 4.5, 0.7, line);
+    final tileWidth = (width - 2.6) / 2;
+    for (var i = 0; i < 2; i++) {
+      final x = 1 + i * (tileWidth + 0.6);
+      final tile = _rect(x, y + 2.1, tileWidth, 2.9);
+      _block(tile, inset, extent: 2.9);
+      _pill(x + 0.6, y + 2.65, 2.4, 0.7, line);
+      _speedGraph(
+        tile,
+        phase: i * 1.7,
+        color: i == 0
+            ? colorScheme.primary.withValues(alpha: 0.5)
+            : colorScheme.primary,
+      );
+    }
+    y += 5.8 + _gap;
+
+    _block(_rect(0, y, width, 4.4), card);
+    _pill(1, y + 0.9, 4, 0.7, line);
+    final segment = (width - 2.6) / 3;
+    for (var i = 0; i < 3; i++) {
+      final x = 1 + i * (segment + 0.3);
+      _pill(x, y + 2.1, segment, 1.6, i == 0 ? colorScheme.primary : inset);
+      _dot(
+        x + segment / 2,
+        y + 2.9,
+        0.3,
+        i == 0 ? colorScheme.onPrimary : line,
+      );
+    }
+    y += 4.4 + _gap;
+
+    _block(_rect(0, y, width, 3), card);
+    _dot(1.9, y + 1.5, 0.9, colorScheme.primary);
+    _pill(3.4, y + 1.1, 2.4, 0.8, line);
+    _pill(width - 3.6, y + 0.8, 2.6, 1.4, colorScheme.primary);
+    _dot(width - 1.7, y + 1.5, 0.55, colorScheme.onPrimary);
+    y += 3 + _gap;
+
+    for (var i = 0; i < 3; i++) {
+      _block(_rect(0, y, width, 4.5), card);
+      _pill(1, y + 0.9, 3.5 + i % 2, 0.7, line);
+      y += 4.5 + _gap;
+    }
+  }
+
+  void _speedGraph(Rect tile, {required double phase, required Color color}) {
+    const steps = 16;
+    final path = Path();
+    for (var i = 0; i <= steps; i++) {
+      final x = tile.left + tile.width * i / steps;
+      final y =
+          tile.top +
+          tile.height * 0.68 +
+          math.sin(i * 0.9 + phase) * unit * 0.35;
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    final area = Path.from(path)
+      ..lineTo(tile.right, tile.bottom)
+      ..lineTo(tile.left, tile.bottom)
+      ..close();
+    canvas
+      ..save()
+      ..clipPath(_shape(2.9).getOuterPath(tile))
+      ..drawPath(area, Paint()..color = color.withValues(alpha: color.a * 0.2))
+      ..drawPath(
+        path,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = unit * 0.15
+          ..color = color,
+      )
+      ..restore();
+  }
+
+  void _proxies(double top) {
+    var y = top;
+    for (var i = 0; i < 9; i++) {
+      _block(_rect(0, y, width, 2.6), card);
+      _dot(1.5, y + 1.3, 0.8, inset);
+      _pill(3, y + 0.6, 3 + i % 3, 0.7, line);
+      _pill(3, y + 1.55, 4, 0.5, faint);
+      _pill(width - 4.4, y + 1.05, 1.8, 0.5, faint);
+      _dot(width - 1.3, y + 1.3, 0.55, inset);
+      y += 2.6 + _gap;
+    }
+  }
+
+  void _profiles(double top) {
+    var y = top;
+    for (var i = 0; i < 3; i++) {
+      _block(_rect(0, y, width, 2.8), card);
+      _pill(1, y + 0.7, 3.4 - i * 0.6, 0.75, line);
+      _pill(
+        4.8 - i * 0.6,
+        y + 0.72,
+        2.6,
+        0.7,
+        colorScheme.primary.withValues(alpha: 0.16),
+      );
+      _pill(1, y + 1.7, 3, 0.5, faint);
+      _pill(width - 4.1, y + 1.15, 1.6, 0.5, faint);
+      if (i == 0) {
+        _dot(width - 1.4, y + 1.4, 0.6, colorScheme.primary);
+      }
+      y += 2.8 + _gap;
+    }
+  }
+
+  void _tools(double top) {
+    const rowHeight = 2.4;
+    var y = top;
+    for (final rows in [4, 7]) {
+      _pill(0.8, y + 0.2, 1.6 + rows * 0.15, 0.5, faint);
+      y += 1.3;
+      _block(_rect(0, y, width, rows * rowHeight), card);
+      for (var i = 0; i < rows; i++) {
+        final row = y + i * rowHeight;
+        _dot(1.3, row + rowHeight / 2, 0.45, line);
+        _pill(2.6, row + 0.85, 4 + (i * 3 + rows) % 4, 0.7, line);
+        if (i < rows - 1) {
+          canvas.drawRect(
+            _rect(2.6, row + rowHeight - 0.03, width - 3.4, 0.06),
+            Paint()..color = faint,
+          );
+        }
+      }
+      y += rows * rowHeight + _gap * 2;
+    }
   }
 }

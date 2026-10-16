@@ -9,6 +9,7 @@ import 'package:fl_clash/ui/sheet.dart';
 import 'package:fl_clash/ui/sheet_header.dart';
 import 'package:fl_clash/ui/snap_sheet.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -154,6 +155,75 @@ void main() {
     expect(sheetTop(tester), closeTo(open, 1));
   });
 
+  testWidgets('a flick up from the short detent rises to the height of '
+      'content a little taller than it without dropping on the way', (
+    tester,
+  ) async {
+    await openSheet(tester, (_) => _list(14));
+
+    await tester.fling(content(), const Offset(0, -100), 3000);
+    var top = sheetTop(tester);
+    for (var frame = 0; frame < 40; frame++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(sheetTop(tester), lessThan(top + 8), reason: 'frame $frame');
+      top = sheetTop(tester);
+    }
+    await tester.pumpAndSettle();
+
+    expect(sheetTop(tester), greaterThan(_tallTop + 1));
+    expect(
+      tester.getBottomLeft(find.text('row 13')).dy,
+      lessThanOrEqualTo(_view.height),
+    );
+  });
+
+  testWidgets('a drag let go nearer the height of content a little taller '
+      'than the short detent than the detent opens the sheet to it', (
+    tester,
+  ) async {
+    await openSheet(tester, (_) => _list(14));
+    final short = sheetTop(tester);
+
+    final gesture = await tester.startGesture(tester.getCenter(content()));
+    for (var move = 0; move < 6; move++) {
+      await gesture.moveBy(const Offset(0, -20));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await tester.pump(const Duration(milliseconds: 100));
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(sheetTop(tester), lessThan(short - 1));
+    expect(
+      tester.getBottomLeft(find.text('row 13')).dy,
+      lessThanOrEqualTo(_view.height),
+    );
+  });
+
+  testWidgets('a wheel tick opens a sheet a little taller than the short '
+      'detent to its content height without dropping on the way', (
+    tester,
+  ) async {
+    await openSheet(tester, (_) => _list(14));
+    final pointer = TestPointer(1, PointerDeviceKind.mouse);
+    await tester.sendEventToBinding(pointer.hover(tester.getCenter(content())));
+
+    await tester.sendEventToBinding(pointer.scroll(const Offset(0, 50)));
+    var top = sheetTop(tester);
+    for (var frame = 0; frame < 40; frame++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(sheetTop(tester), lessThan(top + 8), reason: 'frame $frame');
+      top = sheetTop(tester);
+    }
+    await tester.pumpAndSettle();
+
+    expect(sheetTop(tester), greaterThan(_tallTop + 1));
+    expect(
+      tester.getBottomLeft(find.text('row 13')).dy,
+      lessThanOrEqualTo(_view.height),
+    );
+  });
+
   double rowBottom(WidgetTester tester, int row) =>
       tester.getBottomLeft(find.widgetWithText(ListTile, 'row $row')).dy;
 
@@ -211,21 +281,128 @@ void main() {
     expect(sheetTop(tester), closeTo(stackedSheetPeek, 1));
   });
 
-  testWidgets('a long sheet at the tall detent rises with the keyboard and '
-      'comes back down with it on every frame', (tester) async {
+  testWidgets('a long sheet at the tall detent rises with the keyboard into '
+      'the peek and comes back down with it on every frame', (tester) async {
     await openSheet(tester, (_) => _list(60));
     addTearDown(tester.view.resetViewInsets);
     await tester.fling(content(), const Offset(0, -200), 2000);
     await tester.pumpAndSettle();
     expect(sheetTop(tester), closeTo(_tallTop, 1));
 
-    for (final inset in [40.0, 120.0, 300.0, 200.0, 60.0, 20.0, 0.0]) {
+    var top = _tallTop;
+    var last = 0.0;
+    for (final inset in [40.0, 120.0, 300.0, 120.0, 40.0]) {
       tester.view.viewInsets = FakeViewPadding(bottom: inset);
       await tester.pump(const Duration(milliseconds: 16));
+      final moved = sheetTop(tester);
       expect(
-        sheetTop(tester),
-        closeTo(math.max(stackedSheetPeek, _tallTop - inset), 1),
+        moved,
+        inInclusiveRange(
+          math.max(stackedSheetPeek, _tallTop - inset) - 1,
+          _tallTop - 1,
+        ),
       );
+      expect(inset > last ? top - moved : moved - top, greaterThan(1));
+      top = moved;
+      last = inset;
+    }
+    expect(top, greaterThan(stackedSheetPeek + 1));
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(sheetTop(tester), closeTo(stackedSheetPeek, 1));
+    tester.view.resetViewInsets();
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(sheetTop(tester), closeTo(_tallTop, 1));
+  });
+
+  Future<List<double>> trackKeyboard(
+    WidgetTester tester,
+    Iterable<double> insets,
+  ) async {
+    final tops = <double>[];
+    for (final inset in insets) {
+      tester.view.viewInsets = FakeViewPadding(bottom: inset);
+      await tester.pump(const Duration(milliseconds: 16));
+      tops.add(sheetTop(tester));
+    }
+    return tops;
+  }
+
+  /// A keyboard moving at a steady speed never jolts the sheet: its speed
+  /// changes by a small part of the keyboard's from one frame to the next.
+  void expectEased(List<double> tops, double step) {
+    for (var index = 2; index < tops.length; index++) {
+      final speed = tops[index] - tops[index - 1];
+      final before = tops[index - 1] - tops[index - 2];
+      expect((speed - before).abs(), lessThan(step / 4));
+    }
+  }
+
+  testWidgets('a short sheet starts and stops rising with the keyboard and '
+      'keeps its content above it', (tester) async {
+    await openSheet(tester, (_) => _list(3));
+    addTearDown(tester.view.resetViewInsets);
+    final rest = sheetTop(tester);
+    const step = 10.0;
+    final insets = [for (var inset = 0.0; inset <= 400; inset += step) inset];
+
+    final rising = await trackKeyboard(tester, insets);
+    expect(rising.last, lessThan(rest - 1));
+    expect(rowBottom(tester, 2), lessThanOrEqualTo(_view.height - 400));
+    expectEased(rising, step);
+
+    final falling = await trackKeyboard(tester, insets.reversed);
+    expectEased(falling, step);
+    expect(falling.last, closeTo(rest, 0.01));
+  });
+
+  testWidgets('a long sheet at the tall detent slows into the peek with the '
+      'keyboard', (tester) async {
+    await openSheet(tester, (_) => _list(60));
+    addTearDown(tester.view.resetViewInsets);
+    await tester.fling(content(), const Offset(0, -200), 2000);
+    await tester.pumpAndSettle();
+    const step = 8.0;
+    final insets = [for (var inset = 0.0; inset <= 240; inset += step) inset];
+
+    final tops = await trackKeyboard(tester, insets);
+    expectEased(tops, step);
+    expect(tops.last, closeTo(stackedSheetPeek, 1));
+  });
+
+  testWidgets('the keyboard moves a sheet without laying out or painting its '
+      'content again', (tester) async {
+    for (final rows in [3, 60]) {
+      final counts = _Counts();
+      await openSheet(
+        tester,
+        (_) => CommonScaffold(
+          title: 'title',
+          body: _Counted(
+            counts: counts,
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                for (var index = 0; index < rows; index++)
+                  SizedBox(height: _rowHeight, child: Text('row $index')),
+              ],
+            ),
+          ),
+        ),
+      );
+      addTearDown(tester.view.resetViewInsets);
+      counts
+        ..layouts = 0
+        ..paints = 0;
+
+      final tops = await trackKeyboard(tester, [100, 200, 300, 200, 100, 0]);
+      expect(tops.toSet(), hasLength(greaterThan(2)), reason: '$rows rows');
+      expect(counts.layouts, 0, reason: '$rows rows');
+      expect(counts.paints, 0, reason: '$rows rows');
+
+      Navigator.of(tester.element(find.text('row 0'))).pop();
+      await tester.pumpAndSettle();
     }
   });
 
@@ -529,4 +706,37 @@ void main() {
     },
     variant: TargetPlatformVariant.only(TargetPlatform.macOS),
   );
+}
+
+class _Counts {
+  var layouts = 0;
+  var paints = 0;
+}
+
+class _Counted extends SingleChildRenderObjectWidget {
+  const _Counted({required this.counts, required super.child});
+
+  final _Counts counts;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderCounted(counts);
+}
+
+class _RenderCounted extends RenderProxyBox {
+  _RenderCounted(this.counts);
+
+  final _Counts counts;
+
+  @override
+  void performLayout() {
+    counts.layouts++;
+    super.performLayout();
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    counts.paints++;
+    super.paint(context, offset);
+  }
 }

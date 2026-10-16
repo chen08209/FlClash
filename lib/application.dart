@@ -156,14 +156,16 @@ class ApplicationState extends ConsumerState<Application> {
             ...GlobalMaterialLocalizations.delegates,
           ],
           builder: (context, child) {
-            return buildManagerStack(
-              isDesktop: system.isDesktop,
-              onConnectivityChanged: _handleConnectivityChanged,
-              terminateSignals: _terminateSignals,
-              child: RemoteFocusAdapter(
-                enabled: system.isTV,
-                floatingKeyboard: app?.floatingKeyboard,
-                child: child!,
+            return ThemeCrossFade(
+              child: buildManagerStack(
+                isDesktop: system.isDesktop,
+                onConnectivityChanged: _handleConnectivityChanged,
+                terminateSignals: _terminateSignals,
+                child: RemoteFocusAdapter(
+                  enabled: system.isTV,
+                  floatingKeyboard: app?.floatingKeyboard,
+                  child: child!,
+                ),
               ),
             );
           },
@@ -174,6 +176,7 @@ class ApplicationState extends ConsumerState<Application> {
           themeMode: themeProps.themeMode,
           theme: watchAppTheme(ref, Brightness.light),
           darkTheme: watchAppTheme(ref, Brightness.dark),
+          themeAnimationStyle: AnimationStyle.noAnimation,
           home: KeyboardInsetHold(child: child!),
         );
       },

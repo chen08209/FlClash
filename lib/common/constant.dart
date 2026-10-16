@@ -150,7 +150,7 @@ const proxiesListStoreKey = PageStorageKey<String>('proxies_list');
 const toolsStoreKey = PageStorageKey<String>('tools');
 const profilesStoreKey = PageStorageKey<String>('profiles');
 
-const defaultPrimaryColor = 0XFFD8C0C3;
+const defaultPrimaryColor = 0xFF007AFF;
 
 const maxLogsLength = 5000;
 const maxRequestsLength = 2000;
@@ -161,14 +161,16 @@ const pausedMaxDnsQueriesLength = maxDnsQueriesLength * 2;
 
 const trafficSampleLength = 30;
 
+// Apple's system colors, in the order of the macOS accent colors.
 const defaultPrimaryColors = [
-  0xFF795548,
-  0xFF03A9F4,
-  0xFFFFFF00,
-  0XFFBBC9CC,
-  0XFFABD397,
   defaultPrimaryColor,
-  0XFF665390,
+  0xFFAF52DE,
+  0xFFFF2D55,
+  0xFFFF3B30,
+  0xFFFF9500,
+  0xFFFFCC00,
+  0xFF34C759,
+  0xFF8E8E93,
 ];
 
 const scriptTemplate = '''
