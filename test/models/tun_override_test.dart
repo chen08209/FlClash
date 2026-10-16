@@ -26,11 +26,66 @@ void main() {
   });
 
   test('no TunOverrideKey is one the network settings write', () {
-    final networkKeys = defaultTun.toJson().keys.toSet();
+    final networkKeys = defaultTun.coreJson.keys.toSet();
 
     for (final key in TunOverrideKey.values) {
       expect(networkKeys, isNot(contains(key.path)));
     }
+  });
+
+  group('PatchClashConfig from before the TUN override', () {
+    PatchClashConfig decode(Map<String, Object?> json) =>
+        PatchClashConfig.fromJson(
+          jsonDecode(jsonEncode(json)) as Map<String, Object?>,
+        );
+
+    test('picks each network value changed from its default', () {
+      final config = decode({
+        'tun': {
+          'mtu': 1400,
+          'congestion-controller': 'cubic',
+          'strict-route': true,
+          'route-address': <String>[],
+          'route-exclude-address': ['10.0.0.0/8'],
+        },
+      });
+
+      expect(config.tunOverrideKeys, {
+        TunOverrideKey.mtu,
+        TunOverrideKey.strictRoute,
+        TunOverrideKey.routeExcludeAddress,
+      });
+      expect(config.tunOverride.mtu, 1400);
+      expect(config.tunOverride.strictRoute, isTrue);
+      expect(config.tunOverride.routeExcludeAddress, ['10.0.0.0/8']);
+      expect(config.tun.mtu, 1400);
+    });
+
+    test('a config saved with override keys is read as it is', () {
+      final json = const PatchClashConfig(tun: Tun(mtu: 1400)).toJson();
+
+      expect(decode(json).tunOverrideKeys, isEmpty);
+    });
+  });
+
+  test('a custom profile picks its own TUN keys over the app-wide ones', () {
+    const custom = ProfileOverrides(
+      tun: ProfileTun(mtu: 1400, gso: true),
+      tunOverrideKeys: {TunOverrideKey.mtu},
+    );
+    final merged = custom.overAppTun(
+      const ProfileTun(mtu: 1500, strictRoute: true),
+      {TunOverrideKey.mtu, TunOverrideKey.strictRoute},
+    );
+
+    expect(merged.tunOverrideKeys, {
+      TunOverrideKey.mtu,
+      TunOverrideKey.strictRoute,
+    });
+    expect(merged.tun.overrideJson(merged.tunOverrideKeys), {
+      'mtu': 1400,
+      'strict-route': true,
+    });
   });
 
   group('ProfileTun.overrideJson', () {
@@ -44,6 +99,21 @@ void main() {
         'exclude-interface': ['docker0'],
       });
       expect(tun.overrideJson({}), isEmpty);
+    });
+
+    test('writes user IDs and ports as the numbers the core parses', () {
+      const tun = ProfileTun(includeUid: [1000], excludeSrcPort: [22]);
+
+      expect(
+        tun.overrideJson({
+          TunOverrideKey.includeUid,
+          TunOverrideKey.excludeSrcPort,
+        }),
+        {
+          'include-uid': [1000],
+          'exclude-src-port': [22],
+        },
+      );
     });
 
     test('a list key without items writes nothing', () {

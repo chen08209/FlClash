@@ -116,7 +116,8 @@ class ProfileOverrideTarget<K extends OverrideKey, M>
     required this.get,
     required this.set,
     this.issues,
-  });
+    ConfigLabel? description,
+  }) : _description = description;
 
   final int profileId;
 
@@ -129,9 +130,13 @@ class ProfileOverrideTarget<K extends OverrideKey, M>
   )
   set;
 
+  final ConfigLabel? _description;
+
   @override
-  ConfigLabel get description =>
-      (l) => l.profileSettingsDesc;
+  ConfigLabel get description => _description ?? _profileSettingsDesc;
+
+  static String _profileSettingsDesc(AppLocalizations l) =>
+      l.profileSettingsDesc;
 
   @override
   ConfigLabel get entries =>
@@ -210,18 +215,19 @@ class ToggleOverrideField<M> extends ValueOverrideField<M, bool> {
   }
 }
 
-class OptionsOverrideField<M, T extends Enum> extends ValueOverrideField<M, T> {
+class OptionsOverrideField<M, T extends Object>
+    extends ValueOverrideField<M, T> {
   const OptionsOverrideField(
     this.options,
     super.select,
     super.update, {
-    this.labelOf = _enumName,
+    this.labelOf = _nameOf,
   });
 
   final List<T> options;
   final String Function(T value) labelOf;
 
-  static String _enumName(Enum value) => value.name;
+  static String _nameOf(Object value) => value is Enum ? value.name : '$value';
 
   @override
   Widget build(
@@ -375,6 +381,11 @@ abstract class OverrideSpec<K extends OverrideKey, M> {
     return (model: model, keys: state.keys.difference(keys));
   }
 
+  String? footerOf(Iterable<K> keys, AppLocalizations l) {
+    final lines = [for (final key in keys) ?description(key)?.call(l)];
+    return lines.isEmpty ? null : lines.join('\n');
+  }
+
   List<(String, List<K>)> sectionsOf(AppLocalizations l, Iterable<K> keys) {
     final sections = <String, List<K>>{};
     for (final key in keys) {
@@ -396,49 +407,56 @@ mixin OverrideQuickEdit<K extends OverrideKey, M> on OverrideSpec<K, M> {
   EditorSchema get schema;
 }
 
+void showOverrideAddSheet<K extends OverrideKey, M>(
+  BuildContext context,
+  WidgetRef ref,
+  OverrideSpec<K, M> spec,
+) {
+  final appLocalizations = context.appLocalizations;
+  final added = spec.target.read(ref).keys;
+  final remaining = spec.values.where((key) => !added.contains(key));
+  showSheet<void>(
+    context: context,
+    builder: (_) => SelectionSheet<K>(
+      title: spec.target.addEntry(appLocalizations),
+      sections: [
+        for (final (label, keys) in spec.sectionsOf(
+          appLocalizations,
+          remaining,
+        ))
+          SelectionSection(
+            label: label,
+            items: keys,
+            subtitleBuilder: (context, key) =>
+                spec.description(key)?.call(context.appLocalizations),
+          ),
+      ],
+      labelBuilder: (key) => spec.label(key, appLocalizations),
+      selectedOf: (_) => null,
+      removeOnSelect: true,
+      onSelected: (key) {
+        if (!context.mounted) {
+          return;
+        }
+        spec.target.update(
+          ref,
+          (state) => (
+            model: spec.fieldOf(key).reset(state.model, spec.defaults),
+            keys: {...state.keys, key},
+          ),
+        );
+      },
+    ),
+  );
+}
+
 class OverrideView<K extends OverrideKey, M> extends ConsumerWidget {
   const OverrideView({super.key, required this.spec});
 
   final OverrideSpec<K, M> spec;
 
-  void _handleAdd(BuildContext context, WidgetRef ref) {
-    final appLocalizations = context.appLocalizations;
-    final added = spec.target.read(ref).keys;
-    final remaining = spec.values.where((key) => !added.contains(key));
-    showSheet<void>(
-      context: context,
-      builder: (_) => SelectionSheet<K>(
-        title: spec.target.addEntry(appLocalizations),
-        sections: [
-          for (final (label, keys) in spec.sectionsOf(
-            appLocalizations,
-            remaining,
-          ))
-            SelectionSection(
-              label: label,
-              items: keys,
-              subtitleBuilder: (context, key) =>
-                  spec.description(key)?.call(context.appLocalizations),
-            ),
-        ],
-        labelBuilder: (key) => spec.label(key, appLocalizations),
-        selectedOf: (_) => null,
-        removeOnSelect: true,
-        onSelected: (key) {
-          if (!context.mounted) {
-            return;
-          }
-          spec.target.update(
-            ref,
-            (state) => (
-              model: spec.fieldOf(key).reset(state.model, spec.defaults),
-              keys: {...state.keys, key},
-            ),
-          );
-        },
-      ),
-    );
-  }
+  void _handleAdd(BuildContext context, WidgetRef ref) =>
+      showOverrideAddSheet(context, ref, spec);
 
   Future<void> _handleQuickEdit(
     BuildContext context,
@@ -498,6 +516,7 @@ class OverrideView<K extends OverrideKey, M> extends ConsumerWidget {
               '${compactError(error)}\n\n'
               '${currentAppLocalizations.discardChanges}',
         ),
+        destructive: true,
       );
       return res == true;
     }
@@ -557,13 +576,6 @@ class _OverrideList<K extends OverrideKey, M> extends ConsumerWidget {
 
   final OverrideSpec<K, M> spec;
 
-  String? _footerOf(List<K> keys, AppLocalizations appLocalizations) {
-    final lines = [
-      for (final key in keys) ?spec.description(key)?.call(appLocalizations),
-    ];
-    return lines.isEmpty ? null : lines.join('\n');
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
@@ -586,24 +598,13 @@ class _OverrideList<K extends OverrideKey, M> extends ConsumerWidget {
                 key: ValueKey(title),
                 child: generateAnimatedSection(
                   title: title,
-                  footer: _footerOf(keys, appLocalizations),
+                  footer: spec.footerOf(keys, appLocalizations),
                   items: [
                     for (final key in keys)
-                      KeyedSubtree(
+                      OverrideEntry(
                         key: ValueKey(key),
-                        child: spec
-                            .fieldOf(key)
-                            .build(
-                              spec.fieldOf(key) is ValueOverrideField &&
-                                      spec.target.emptyCancels
-                                  ? _ListedValue(spec, key)
-                                  : spec.target,
-                              title: (l) => spec.label(key, l),
-                              leading: _RemoveButton(
-                                spec: spec,
-                                overrideKey: key,
-                              ),
-                            ),
+                        spec: spec,
+                        overrideKey: key,
                       ),
                   ],
                 ),
@@ -611,10 +612,34 @@ class _OverrideList<K extends OverrideKey, M> extends ConsumerWidget {
           ],
         ),
         Padding(
-          padding: EdgeInsets.only(top: 16.mAp),
+          padding: EdgeInsets.only(top: 16.mAp(context)),
           child: ListFooter(text: spec.target.description(appLocalizations)),
         ),
       ],
+    );
+  }
+}
+
+/// A picked key's row, led by the button that takes it off the list.
+class OverrideEntry<K extends OverrideKey, M> extends StatelessWidget {
+  const OverrideEntry({
+    super.key,
+    required this.spec,
+    required this.overrideKey,
+  });
+
+  final OverrideSpec<K, M> spec;
+  final K overrideKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final field = spec.fieldOf(overrideKey);
+    return field.build(
+      field is ValueOverrideField && spec.target.emptyCancels
+          ? _ListedValue(spec, overrideKey)
+          : spec.target,
+      title: (l) => spec.label(overrideKey, l),
+      leading: _RemoveButton(spec: spec, overrideKey: overrideKey),
     );
   }
 }

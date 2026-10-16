@@ -47,6 +47,16 @@ const minTunMtu = 1280;
 const maxTunMtu = 65535;
 const defaultCongestionController = 'cubic';
 
+// The congestion controls mipstack registers, cubic first as its default.
+const congestionControllers = [
+  defaultCongestionController,
+  'reno',
+  'bbr',
+  'bbr3',
+];
+const defaultDnsHijack = ['any:53'];
+const defaultTunUdpTimeout = 300;
+
 const privateRouteAddress = [
   '0.0.0.0/8',
   '10.0.0.0/8',
@@ -972,14 +982,13 @@ Map<Object?, Object?> _rawSniff(Map<String, dynamic> raw) {
   };
 }
 
+/// The desktop TUN takes only [TunExt.coreJson]; Android's VPN starts from all.
 @freezed
 abstract class Tun with _$Tun {
   const factory Tun({
     @Default(false) bool enable,
     @Default(appName) String device,
-    @JsonKey(name: 'auto-route') @Default(false) bool autoRoute,
     @Default(TunStack.mips) TunStack stack,
-    @JsonKey(name: 'dns-hijack') @Default(['any:53']) List<String> dnsHijack,
     @JsonKey(name: 'route-address') @Default([]) List<String> routeAddress,
     @JsonKey(fromJson: _mtuFromJson) @Default(defaultTunMtu) int mtu,
     @JsonKey(
@@ -988,7 +997,6 @@ abstract class Tun with _$Tun {
     )
     @Default(defaultCongestionController)
     String congestionController,
-    @JsonKey(name: 'strict-route') @Default(false) bool strictRoute,
     @JsonKey(name: 'route-exclude-address')
     @Default([])
     List<String> routeExcludeAddress,
@@ -1026,10 +1034,13 @@ extension TunExt on Tun {
     return subtractCidrsTask(routeAddress, excluded, wholeWhenEmpty: true);
   }
 
-  Tun getRealTun({required bool bypassPrivateRoute}) => copyWith(
-    autoRoute: true,
-    routeExcludeAddress: excludedRoutes(bypassPrivateRoute: bypassPrivateRoute),
-  );
+  Map<String, Object?> get coreJson {
+    final json = toJson();
+    return {
+      for (final key in const ['enable', 'device', 'stack']) key: json[key],
+      'auto-route': true,
+    };
+  }
 }
 
 @freezed
@@ -1399,12 +1410,33 @@ extension NtpOverrideExt on Ntp {
 @freezed
 abstract class ProfileTun with _$ProfileTun {
   const factory ProfileTun({
+    @Default(defaultTunMtu) int mtu,
+    @Default(defaultCongestionController)
+    @JsonKey(name: 'congestion-controller')
+    String congestionController,
+    @Default(false) @JsonKey(name: 'strict-route') bool strictRoute,
+    @Default([]) @JsonKey(name: 'route-address') List<String> routeAddress,
+    @Default([])
+    @JsonKey(name: 'route-exclude-address')
+    List<String> routeExcludeAddress,
+    @Default(defaultDnsHijack)
+    @JsonKey(name: 'dns-hijack')
+    List<String> dnsHijack,
+    @Default(defaultTunUdpTimeout) @JsonKey(name: 'udp-timeout') int udpTimeout,
     @Default(false)
     @JsonKey(name: 'disable-icmp-forwarding')
     bool disableIcmpForwarding,
+    @Default(false) bool gso,
+    @Default([])
+    @JsonKey(name: 'include-interface')
+    List<String> includeInterface,
     @Default([])
     @JsonKey(name: 'exclude-interface')
     List<String> excludeInterface,
+    @Default([]) @JsonKey(name: 'include-uid') List<int> includeUid,
+    @Default([]) @JsonKey(name: 'exclude-uid') List<int> excludeUid,
+    @Default([]) @JsonKey(name: 'exclude-src-port') List<int> excludeSrcPort,
+    @Default([]) @JsonKey(name: 'exclude-dst-port') List<int> excludeDstPort,
   }) = _ProfileTun;
 
   factory ProfileTun.fromJson(Map<String, Object?> json) =>
@@ -1425,6 +1457,35 @@ Set<TunOverrideKey> _tunOverrideKeysFromJson(List<Object?> json) => {
 extension TunOverrideExt on ProfileTun {
   Map<String, Object?> overrideJson(Set<TunOverrideKey> keys) =>
       _overrideJson(toJson(), TunOverrideKey.values, keys);
+}
+
+/// Network TUN values changed from their defaults become app-wide overrides.
+Map<String, Object?> _withLegacyTunOverride(Map<String, Object?> json) {
+  final raw = json['tun'];
+  if (json.containsKey(_tunOverrideKeysJsonKey) || raw is! Map) {
+    return json;
+  }
+  final tun = Tun.safeFormJson(Map<String, Object?>.from(raw));
+  final override = ProfileTun(
+    mtu: tun.mtu,
+    congestionController: tun.congestionController,
+    strictRoute: raw['strict-route'] == true,
+    routeAddress: tun.routeAddress,
+    routeExcludeAddress: tun.routeExcludeAddress,
+  );
+  return {
+    ...json,
+    'tun-override': override.toJson(),
+    _tunOverrideKeysJsonKey: [
+      if (tun.mtu != defaultTunMtu) TunOverrideKey.mtu.path,
+      if (tun.congestionController != defaultCongestionController)
+        TunOverrideKey.congestionController.path,
+      if (override.strictRoute) TunOverrideKey.strictRoute.path,
+      if (tun.routeAddress.isNotEmpty) TunOverrideKey.routeAddress.path,
+      if (tun.routeExcludeAddress.isNotEmpty)
+        TunOverrideKey.routeExcludeAddress.path,
+    ],
+  };
 }
 
 @freezed
@@ -1570,6 +1631,17 @@ extension ProfileOverridesExt on ProfileOverrides {
 
   bool get customSnifferEnabled =>
       snifferOverrideKeys.contains(SnifferOverrideKey.enable) && sniffer.enable;
+
+  ProfileOverrides overAppTun(ProfileTun tun, Set<TunOverrideKey> keys) {
+    final own = this.tun.toJson();
+    return copyWith(
+      tun: ProfileTun.fromJson({
+        ...tun.toJson(),
+        for (final key in tunOverrideKeys) key.path: own[key.path],
+      }),
+      tunOverrideKeys: {...keys, ...tunOverrideKeys},
+    );
+  }
 }
 
 @freezed
@@ -1905,6 +1977,12 @@ abstract class PatchClashConfig with _$PatchClashConfig {
     @Default({})
     @JsonKey(name: _dnsOverrideKeysJsonKey, fromJson: _dnsOverrideKeysFromJson)
     Set<DnsOverrideKey> dnsOverrideKeys,
+    @Default(defaultProfileTun)
+    @JsonKey(name: 'tun-override', fromJson: ProfileTun.safeFromJson)
+    ProfileTun tunOverride,
+    @Default({})
+    @JsonKey(name: _tunOverrideKeysJsonKey, fromJson: _tunOverrideKeysFromJson)
+    Set<TunOverrideKey> tunOverrideKeys,
     @Default(defaultGeoXUrl)
     @JsonKey(
       name: 'geox-url',
@@ -1926,7 +2004,9 @@ abstract class PatchClashConfig with _$PatchClashConfig {
   }) = _PatchClashConfig;
 
   factory PatchClashConfig.fromJson(Map<String, Object?> json) =>
-      _$PatchClashConfigFromJson(_withLegacyDnsOverrideKeys(json));
+      _$PatchClashConfigFromJson(
+        _withLegacyTunOverride(_withLegacyDnsOverrideKeys(json)),
+      );
 
   factory PatchClashConfig.safeFormJson(Map<String, Object?>? json) {
     if (json == null) {
@@ -1938,12 +2018,11 @@ abstract class PatchClashConfig with _$PatchClashConfig {
 
 extension PatchClashConfigExt on PatchClashConfig {
   UpdateParams toUpdateParams({
-    required bool bypassPrivateRoute,
     required List<String> authentication,
     required bool skipCertVerify,
   }) {
     return UpdateParams(
-      tun: tun.getRealTun(bypassPrivateRoute: bypassPrivateRoute),
+      tun: tun,
       authentication: authentication,
       allowLan: allowLan,
       findProcessMode: findProcessMode,

@@ -246,9 +246,9 @@ func TestUpdateConfigPatchesOnlyTheTunFieldsItWasGiven(t *testing.T) {
 
 func TestUpdateConfigDecodesTheTunSettingsTheHostSends(t *testing.T) {
 	withCurrentConfig(t, &config.Config{General: &config.General{}, Controller: &config.Controller{}})
+	currentConfig.General.Tun.MTU = 1400
 	var params UpdateParams
-	payload := `{"tun":{"enable":true,"mtu":1400,"congestion-controller":"bbr","strict-route":true,
-		"route-exclude-address":["10.0.0.0/8"]}}`
+	payload := `{"tun":{"enable":true,"device":"FlClash","stack":"gvisor","auto-route":true,"mtu":9000}}`
 	if err := json.Unmarshal([]byte(payload), &params); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
@@ -257,11 +257,11 @@ func TestUpdateConfigDecodesTheTunSettingsTheHostSends(t *testing.T) {
 		t.Fatalf("updateConfig error: %v", err)
 	}
 	tun := currentConfig.General.Tun
-	if tun.MTU != 1400 || tun.CongestionController != "bbr" || !tun.StrictRoute {
-		t.Errorf("MTU = %d, CongestionController = %q, StrictRoute = %v", tun.MTU, tun.CongestionController, tun.StrictRoute)
+	if !tun.Enable || !tun.AutoRoute || tun.Device != "FlClash" || tun.Stack != constant.TunGvisor {
+		t.Errorf("Enable = %v, AutoRoute = %v, Device = %q, Stack = %v", tun.Enable, tun.AutoRoute, tun.Device, tun.Stack)
 	}
-	if len(tun.RouteExcludeAddress) != 1 || tun.RouteExcludeAddress[0] != netip.MustParsePrefix("10.0.0.0/8") {
-		t.Errorf("RouteExcludeAddress = %v", tun.RouteExcludeAddress)
+	if tun.MTU != 1400 {
+		t.Errorf("MTU = %d, want the profile's value kept", tun.MTU)
 	}
 }
 

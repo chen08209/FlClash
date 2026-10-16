@@ -45,7 +45,7 @@ abstract class ProfileBase with _$ProfileBase {
 @freezed
 abstract class UpdateParams with _$UpdateParams {
   const factory UpdateParams({
-    required Tun tun,
+    @JsonKey(toJson: _tunCoreJson) required Tun tun,
     @JsonKey(name: 'mixed-port') required int mixedPort,
     @JsonKey(name: 'allow-lan') required bool allowLan,
     @JsonKey(name: 'find-process-mode')
@@ -68,6 +68,8 @@ abstract class UpdateParams with _$UpdateParams {
   factory UpdateParams.fromJson(Map<String, dynamic> json) =>
       _$UpdateParamsFromJson(json);
 }
+
+Map<String, Object?> _tunCoreJson(Tun tun) => tun.coreJson;
 
 @freezed
 abstract class VpnOptions with _$VpnOptions {

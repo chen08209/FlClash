@@ -1375,6 +1375,11 @@ void main() {
       digest = 'second';
       await setupAction.applyProfile();
       expect(pushed, hasLength(2));
+
+      when(() => core.setupConfig(any())).thenAnswer((_) async => 'rejected');
+      digest = 'third';
+      expect(await setupAction.applyProfile(), isFalse);
+      expect(globalState.lastConfigCounts, (groups: 0, proxies: 0, rules: 0));
     });
 
     test('the preview shows the config the Core merges', () async {
