@@ -390,7 +390,7 @@ class _PolicyLink extends StatelessWidget {
   }
 }
 
-class _ConsentLayout extends StatefulWidget {
+class _ConsentLayout extends StatelessWidget {
   final double maxWidth;
   final double gutter;
   final bool compact;
@@ -404,47 +404,11 @@ class _ConsentLayout extends StatefulWidget {
   });
 
   @override
-  State<_ConsentLayout> createState() => _ConsentLayoutState();
-}
-
-class _ConsentLayoutState extends State<_ConsentLayout> {
-  static const _endTolerance = 1.0;
-
-  bool _readToEnd = false;
-
-  bool _handleNotification(Notification notification) {
-    if (_readToEnd) {
-      return false;
-    }
-    final metrics = switch (notification) {
-      ScrollNotification(depth: 0, :final metrics) ||
-      ScrollMetricsNotification(depth: 0, :final metrics) => metrics,
-      _ => null,
-    };
-    if (metrics != null && metrics.extentAfter <= _endTolerance) {
-      setState(() {
-        _readToEnd = true;
-      });
-    }
-    return false;
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Expanded(
-          child: NotificationListener<Notification>(
-            onNotification: _handleNotification,
-            child: widget.child,
-          ),
-        ),
-        _ConsentBar(
-          maxWidth: widget.maxWidth,
-          gutter: widget.gutter,
-          compact: widget.compact,
-          readToEnd: _readToEnd,
-        ),
+        Expanded(child: child),
+        _ConsentBar(maxWidth: maxWidth, gutter: gutter, compact: compact),
       ],
     );
   }
@@ -454,13 +418,11 @@ class _ConsentBar extends StatelessWidget {
   final double maxWidth;
   final double gutter;
   final bool compact;
-  final bool readToEnd;
 
   const _ConsentBar({
     required this.maxWidth,
     required this.gutter,
     required this.compact,
-    required this.readToEnd,
   });
 
   Widget _buildExitButton(BuildContext context) {
@@ -485,51 +447,32 @@ class _ConsentBar extends StatelessWidget {
     }
   }
 
-  Widget _buildAgreeButton(BuildContext context, {required String label}) {
+  Widget _buildAgreeButton(BuildContext context) {
     return ElasticButton(
       child: FilledButton(
-        onPressed: readToEnd ? () => _handleAgree(context) : null,
-        child: Text(label),
+        onPressed: () => _handleAgree(context),
+        child: Text(context.appLocalizations.agree),
       ),
     );
   }
 
   Widget _buildCompactActions(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
     return Row(
       children: [
         Expanded(child: _buildExitButton(context)),
         const SizedBox(width: 12),
-        Expanded(
-          child: _buildAgreeButton(
-            context,
-            label: readToEnd
-                ? appLocalizations.agree
-                : appLocalizations.disclaimerReadToEnd,
-          ),
-        ),
+        Expanded(child: _buildAgreeButton(context)),
       ],
     );
   }
 
   Widget _buildActions(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
     return Row(
       children: [
-        Expanded(
-          child: readToEnd
-              ? const SizedBox.shrink()
-              : Text(
-                  appLocalizations.disclaimerReadToEnd,
-                  style: AppTextStyle.subheadline
-                      .of(context)
-                      .copyWith(color: context.colorScheme.onSurfaceVariant),
-                ),
-        ),
-        const SizedBox(width: 12),
+        const Spacer(),
         _buildExitButton(context),
         const SizedBox(width: 12),
-        _buildAgreeButton(context, label: appLocalizations.agree),
+        _buildAgreeButton(context),
       ],
     );
   }
@@ -585,6 +528,7 @@ class _RestateDialog extends StatefulWidget {
 
 class _RestateDialogState extends State<_RestateDialog> {
   final _controller = TextEditingController();
+  bool _acknowledged = false;
 
   @override
   void dispose() {
@@ -608,56 +552,100 @@ class _RestateDialogState extends State<_RestateDialog> {
     );
   }
 
+  Widget _buildDialog({
+    required String title,
+    required String tip,
+    required String statement,
+    required bool canConfirm,
+    required Widget confirmation,
+  }) {
+    final appLocalizations = context.appLocalizations;
+    return CommonDialog(
+      title: title,
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop(false);
+          },
+          child: Text(appLocalizations.cancel),
+        ),
+        TextButton(
+          onPressed: canConfirm
+              ? () {
+                  Navigator.of(context).pop(true);
+                }
+              : null,
+          child: Text(appLocalizations.confirm),
+        ),
+      ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            tip,
+            style: AppTextStyle.subheadline
+                .of(context)
+                .copyWith(color: context.colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 12),
+          _buildStatement(statement),
+          const SizedBox(height: 16),
+          confirmation,
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     final statement = appLocalizations.disclaimerNoServiceStatement;
+    // Typing the statement out takes hundreds of presses on a remote.
+    if (RemoteFocusAdapter.isEnabledOf(context)) {
+      return _buildDialog(
+        title: appLocalizations.disclaimerAcknowledgeTitle,
+        tip: appLocalizations.disclaimerAcknowledgeTip,
+        statement: statement,
+        canConfirm: _acknowledged,
+        confirmation: generateSection(
+          items: [
+            ListItem.checkbox(
+              title: Text(appLocalizations.disclaimerAcknowledgeLabel),
+              value: _acknowledged,
+              onChanged: (value) {
+                setState(() => _acknowledged = value ?? false);
+              },
+            ),
+          ],
+        ),
+      );
+    }
     return ValueListenableBuilder<TextEditingValue>(
       valueListenable: _controller,
       builder: (context, value, _) {
         final restatement = _Restatement.of(value, statement);
-        return CommonDialog(
+        return _buildDialog(
           title: appLocalizations.disclaimerRestateTitle,
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(false);
-              },
-              child: Text(appLocalizations.cancel),
+          tip: appLocalizations.disclaimerRestateTip,
+          statement: statement,
+          canConfirm: restatement == _Restatement.complete,
+          confirmation: FilledInputTheme(
+            borderRadius: AppRadius.lg,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
             ),
-            TextButton(
-              onPressed: restatement == _Restatement.complete
-                  ? () {
-                      Navigator.of(context).pop(true);
-                    }
-                  : null,
-              child: Text(appLocalizations.confirm),
+            child: TextField(
+              controller: _controller,
+              minLines: 3,
+              maxLines: null,
+              decoration: InputDecoration(
+                hintText: appLocalizations.disclaimerRestateHint,
+                errorText: restatement == _Restatement.diverged
+                    ? appLocalizations.disclaimerRestateMismatch
+                    : null,
+              ),
             ),
-          ],
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                appLocalizations.disclaimerRestateTip,
-                style: AppTextStyle.subheadline
-                    .of(context)
-                    .copyWith(color: context.colorScheme.onSurfaceVariant),
-              ),
-              const SizedBox(height: 12),
-              _buildStatement(statement),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _controller,
-                minLines: 3,
-                maxLines: 6,
-                decoration: InputDecoration(
-                  hintText: appLocalizations.disclaimerRestateHint,
-                  errorText: restatement == _Restatement.diverged
-                      ? appLocalizations.disclaimerRestateMismatch
-                      : null,
-                ),
-              ),
-            ],
           ),
         );
       },

@@ -40,7 +40,7 @@ func classOfMessage(message Message) messageClass {
 		return stateMessageClass
 	case LogMessage, RequestMessage:
 		return bulkMessageClass
-	case DnsMessage:
+	case DnsMessage, RequestTrafficMessage:
 		return yieldingBulkMessageClass
 	default:
 		return priorityMessageClass
@@ -49,35 +49,37 @@ func classOfMessage(message Message) messageClass {
 
 // Request and DNS events fire per connection and per query for as long as the
 // Android service runs, engine or not; unheard, they are not worth encoding.
-func sendMessage(messageType MessageType, data any) {
+func sendMessage(messageType MessageType, data any) (queued bool) {
 	if !hasEventListener() {
-		return
+		return false
 	}
 	message := Message{Type: messageType, Data: data}
 	switch classOfMessage(message) {
 	case stateMessageClass:
-		enqueueState(stateMessageQueue, message)
+		return enqueueState(stateMessageQueue, message)
 	case bulkMessageClass:
-		enqueueLatest(bulkMessageQueue, message)
+		return enqueueLatest(bulkMessageQueue, message)
 	case yieldingBulkMessageClass:
-		enqueueState(bulkMessageQueue, message)
+		return enqueueState(bulkMessageQueue, message)
 	default:
-		enqueueLatest(priorityMessageQueue, message)
+		return enqueueLatest(priorityMessageQueue, message)
 	}
 }
 
-func enqueueState(queue chan Message, message Message) {
+func enqueueState(queue chan Message, message Message) bool {
 	select {
 	case queue <- message:
+		return true
 	default:
+		return false
 	}
 }
 
-func enqueueLatest(queue chan Message, message Message) {
+func enqueueLatest(queue chan Message, message Message) bool {
 	for attempt := 0; attempt < messageEvictAttempts; attempt++ {
 		select {
 		case queue <- message:
-			return
+			return true
 		default:
 		}
 
@@ -86,6 +88,7 @@ func enqueueLatest(queue chan Message, message Message) {
 		default:
 		}
 	}
+	return false
 }
 
 func runMessageBatcher(

@@ -77,37 +77,45 @@ class _RequestsViewState extends ConsumerState<RequestsView>
               label: appLocalizations.nullTip(appLocalizations.requests),
               illustration: NullStatusIllustration.requests,
             ),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: FloatingScrollbar(
-                controller: _scrollController,
-                hintBuilder: (fraction) {
-                  final index = (fraction * (requests.length - 1)).round();
-                  return requests[index].start.showFull;
-                },
-                child: ScrollToEndBox(
+            child: RecordTableFrame<TrackerInfo>(
+              tableId: 'requests',
+              items: requests,
+              reverse: true,
+              columnsOf: (width) =>
+                  trackerInfoColumns(context, width: width, isLive: false),
+              builder: (context, table, requests) => Align(
+                alignment: Alignment.topCenter,
+                child: FloatingScrollbar(
                   controller: _scrollController,
-                  enable: state.autoScrollToEnd,
-                  onCancelToEnd: () {
-                    _listController.setAutoScrollToEnd(false);
+                  hintBuilder: (fraction) {
+                    final index = (fraction * (requests.length - 1)).round();
+                    return requests[index].start.showFull;
                   },
-                  onResumeToEnd: () {
-                    _listController.resumeAutoScrollToEnd(
-                      ref.read(requestsProvider).list,
-                    );
-                  },
-                  child: TrackerInfoList(
-                    reverse: true,
-                    shrinkWrap: true,
-                    physics: _physics,
+                  child: ScrollToEndBox(
                     controller: _scrollController,
-                    padding: EdgeInsets.only(
-                      top: context.contentTopPadding,
-                      bottom: 16 + BottomInsetScope.of(context),
-                    ),
-                    trackerInfos: requests,
-                    detailTitle: appLocalizations.details(
-                      appLocalizations.request,
+                    enable: state.autoScrollToEnd,
+                    onCancelToEnd: () {
+                      _listController.setAutoScrollToEnd(false);
+                    },
+                    onResumeToEnd: () {
+                      _listController.resumeAutoScrollToEnd(
+                        ref.read(requestsProvider).list,
+                      );
+                    },
+                    child: TrackerInfoList(
+                      reverse: true,
+                      shrinkWrap: true,
+                      physics: _physics,
+                      controller: _scrollController,
+                      padding: EdgeInsets.only(
+                        top: context.contentTopPadding,
+                        bottom: 16 + BottomInsetScope.of(context),
+                      ),
+                      trackerInfos: requests,
+                      table: table,
+                      detailTitle: appLocalizations.details(
+                        appLocalizations.request,
+                      ),
                     ),
                   ),
                 ),

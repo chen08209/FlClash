@@ -76,8 +76,9 @@ const (
 	LoadedMessage    MessageType = "loaded"
 	GeoUpdateMessage MessageType = "geoUpdate"
 	// Named after the Dart enum value, which is how CoreEvent.fromJson decodes it.
-	RouteChangedMessage MessageType = "routeChanged"
-	DialerLoopMessage   MessageType = "dialerLoop"
+	RouteChangedMessage   MessageType = "routeChanged"
+	DialerLoopMessage     MessageType = "dialerLoop"
+	RequestTrafficMessage MessageType = "requestTraffic"
 )
 
 type Message struct {
