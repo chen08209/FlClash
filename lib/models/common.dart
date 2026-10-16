@@ -125,6 +125,18 @@ abstract class TrackerInfo with _$TrackerInfo {
       _$TrackerInfoFromJson(json);
 }
 
+/// Reads the Core's `getConnections` answer.
+List<TrackerInfo> trackerInfosOf(Object? data) {
+  final connections = data is Map ? data['connections'] : null;
+  if (connections is! List) {
+    return const [];
+  }
+  return [
+    for (final item in connections.whereType<Map>())
+      TrackerInfo.fromJson(Map<String, Object?>.from(item)),
+  ];
+}
+
 typedef RequestTraffic = ({int upload, int download});
 
 extension TrackerInfoExt on TrackerInfo {
@@ -494,11 +506,13 @@ abstract class Group with _$Group {
   factory Group.fromJson(Map<String, Object?> json) => _$GroupFromJson(json);
 }
 
+final _groupsByName = Expando<Map<String, Group>>();
+
 extension GroupsExt on List<Group> {
-  Group? getGroup(String groupName) {
-    final index = indexWhere((element) => element.name == groupName);
-    return index != -1 ? this[index] : null;
-  }
+  /// Indexed once per list, so a list must not change after its first lookup.
+  Group? getGroup(String groupName) => (_groupsByName[this] ??= {
+    for (final group in this) group.name: group,
+  })[groupName];
 }
 
 extension GroupExt on Group {

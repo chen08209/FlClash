@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 
@@ -15,9 +16,26 @@ Future<bool> _isSpilled(String file) async {
   return equals(dirname(file), directory);
 }
 
+/// Parsed where a transport decodes them, off the UI isolate for a large one.
+const _resultModels = <CoreMethod, Object? Function(Object?)>{
+  CoreMethod.getConnections: trackerInfosOf,
+};
+
+Map<String, Object?> withResultModel(
+  CoreMethod? method,
+  Map<String, Object?> response,
+) {
+  final model = _resultModels[method];
+  if (model == null || response['error'] != null || response['file'] != null) {
+    return response;
+  }
+  return {...response, 'result': model(response['result'])};
+}
+
 Future<CoreMethodResponse> resolveSpilledResponse(
-  CoreMethodResponse response,
-) async {
+  CoreMethodResponse response, {
+  CoreMethod? method,
+}) async {
   final file = response.file;
   if (file == null) {
     return response;
@@ -33,7 +51,7 @@ Future<CoreMethodResponse> resolveSpilledResponse(
   }
   try {
     return CoreMethodResponse.fromJson(
-      await compute(_readSpilledResponse, file),
+      await compute(_readSpilledResponse, (file, method)),
     );
   } catch (error) {
     return CoreMethodResponse(
@@ -43,13 +61,14 @@ Future<CoreMethodResponse> resolveSpilledResponse(
   }
 }
 
-Map<String, Object?> _readSpilledResponse(String path) {
+Map<String, Object?> _readSpilledResponse((String, CoreMethod?) request) {
+  final (path, method) = request;
   final file = File(path);
   try {
     final decoded = utf8.decoder
         .fuse(json.decoder)
         .convert(file.readAsBytesSync());
-    return Map<String, Object?>.from(decoded as Map);
+    return withResultModel(method, Map<String, Object?>.from(decoded as Map));
   } finally {
     try {
       file.deleteSync();

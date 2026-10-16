@@ -1,24 +1,24 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/service_probe.dart';
-import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/features.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/outbound_ip.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/providers/routed_probe.dart';
 import 'package:fl_clash/providers/service_status.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/dashboard/probe_start_hold.dart';
-import 'package:fl_clash/views/dashboard/widget_metrics.dart';
+import 'package:fl_clash/views/dashboard/layout.dart';
+import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/gestures.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_ui/material_ui.dart';
+
+import 'card.dart';
 
 String _statusLabel(BuildContext context, ServiceProbeStatus status) {
   final localizations = context.appLocalizations;
@@ -37,43 +37,111 @@ String _statusLabel(BuildContext context, ServiceProbeStatus status) {
   };
 }
 
-Color _statusColor(BuildContext context, ServiceProbeStatus status) {
+typedef _StatusColors = ({Color color, Color container, Color onContainer});
+
+_StatusColors _statusColors(BuildContext context, ServiceProbeStatus status) {
+  final colorScheme = context.colorScheme;
   return switch (status) {
-    ServiceProbeStatus.available => context.colorScheme.success,
+    ServiceProbeStatus.available => (
+      color: colorScheme.success,
+      container: colorScheme.successContainer,
+      onContainer: colorScheme.onSuccessContainer,
+    ),
     ServiceProbeStatus.restricted ||
     ServiceProbeStatus.disallowedIsp ||
     ServiceProbeStatus.blocked ||
     ServiceProbeStatus.unsupportedRegion ||
     ServiceProbeStatus.originalsOnly ||
-    ServiceProbeStatus.comingSoon => context.colorScheme.warning,
+    ServiceProbeStatus.comingSoon => (
+      color: colorScheme.warning,
+      container: colorScheme.warningContainer,
+      onContainer: colorScheme.onWarningContainer,
+    ),
     ServiceProbeStatus.unavailable ||
     ServiceProbeStatus.timeout ||
-    ServiceProbeStatus.failed => context.colorScheme.error,
+    ServiceProbeStatus.failed => (
+      color: colorScheme.error,
+      container: colorScheme.errorContainer,
+      onContainer: colorScheme.onErrorContainer,
+    ),
   };
 }
 
-(String, Color) _statusOf(
+Color _statusColor(BuildContext context, ServiceProbeStatus status) =>
+    _statusColors(context, status).color;
+
+_StatusColors _idleColors(BuildContext context) => (
+  color: context.colorScheme.onSurfaceVariant,
+  container: context.raisedSurfaceLevel.colorOf(context.colorScheme),
+  onContainer: context.colorScheme.onSurfaceVariant,
+);
+
+(String, _StatusColors) _statusOf(
   BuildContext context,
   ServiceCheck? check,
   ProbePhase phase,
 ) {
   final localizations = context.appLocalizations;
   if (phase == ProbePhase.probing) {
-    return (localizations.loading, context.colorScheme.onSurfaceVariant);
+    return (localizations.loading, _idleColors(context));
   }
   if (check != null) {
     return (
       _statusLabel(context, check.status),
-      _statusColor(context, check.status),
+      _statusColors(context, check.status),
     );
   }
   if (phase == ProbePhase.failed) {
     return (
       _statusLabel(context, ServiceProbeStatus.failed),
-      _statusColor(context, ServiceProbeStatus.failed),
+      _statusColors(context, ServiceProbeStatus.failed),
     );
   }
-  return (localizations.servicePending, context.colorScheme.onSurfaceVariant);
+  return (localizations.servicePending, _idleColors(context));
+}
+
+// The Core checks this many services at a time (serviceCheckConcurrency), so
+// a route change re-checks the whole card in one wave.
+const _shownServiceCount = 4;
+
+/// A service as the card shows it: a failure held through a start reads as
+/// still checking, without the result it replaced.
+class _ServiceView {
+  _ServiceView(this.target, ProbeEntry<ServiceCheck> entry, this.phase)
+    : check = phase == entry.phase ? entry.value : null;
+
+  final ServiceTarget target;
+  final ProbePhase phase;
+  final ServiceCheck? check;
+
+  bool get loading => phase == ProbePhase.probing && check == null;
+
+  bool get abnormal => switch (check) {
+    final check? => check.status != ServiceProbeStatus.available,
+    null => phase == ProbePhase.failed,
+  };
+
+  (String, Color) statusOf(BuildContext context) => switch (check) {
+    ServiceCheck(status: ServiceProbeStatus.available, :final delay) => (
+      delay != null
+          ? '$delay ms'
+          : _statusLabel(context, ServiceProbeStatus.available),
+      context.colorScheme.onSurfaceVariant,
+    ),
+    final ServiceCheck check => (
+      _statusLabel(context, check.status),
+      _statusColor(context, check.status),
+    ),
+    null => switch (_statusOf(context, null, phase)) {
+      (final label, final colors) => (label, colors.color),
+    },
+  };
+
+  Color? dotOf(BuildContext context) => switch (check) {
+    final check? => _statusColor(context, check.status),
+    null when phase == ProbePhase.failed => context.colorScheme.error,
+    null => null,
+  };
 }
 
 class ServiceStatusCard extends ConsumerStatefulWidget {
@@ -81,6 +149,303 @@ class ServiceStatusCard extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<ServiceStatusCard> createState() => _ServiceStatusCardState();
+}
+
+class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard>
+    with ProbeStartHold<ServiceStatusCard> {
+  late final ServiceStatus _services;
+  Set<ServiceTarget> _shown = const {};
+  Set<ServiceTarget> _watched = const {};
+  var _syncScheduled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _services = ref.read(serviceStatusProvider.notifier);
+  }
+
+  @override
+  void dispose() {
+    for (final target in _watched) {
+      _services.unwatch(target);
+    }
+    super.dispose();
+  }
+
+  void _watchShown(Set<ServiceTarget> shown) {
+    if (setEquals(shown, _shown)) return;
+    _shown = shown;
+    if (_syncScheduled) return;
+    _syncScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncScheduled = false;
+      if (!mounted) return;
+      final shown = _shown;
+      for (final target in shown.difference(_watched)) {
+        _services.watch(target);
+      }
+      for (final target in _watched.difference(shown)) {
+        _services.unwatch(target);
+      }
+      _watched = shown;
+    });
+  }
+
+  Future<void> _openSheet() => showServiceStatusSheet(context);
+
+  @override
+  Widget build(BuildContext context) {
+    final density = DashboardDensityScope.of(context);
+    final mobile = !density.isDesktop;
+    final appLocalizations = context.appLocalizations;
+    final shown = ref
+        .watch(enabledServiceTargetsProvider)
+        .take(_shownServiceCount)
+        .toList();
+    _watchShown(shown.toSet());
+    final state = ref.watch(serviceStatusProvider);
+    final services = [
+      for (final target in shown)
+        _ServiceView(
+          target,
+          state.entryOf(target),
+          shownPhase(state.entryOf(target)),
+        ),
+    ];
+    final problems = services.where((service) => service.abnormal).length;
+    final verdict = problems > 0
+        ? DashboardChip(
+            label: appLocalizations.serviceAbnormalCount(problems),
+            tone: DashboardChipTone.warn,
+          )
+        : services.every((service) => service.check != null)
+        ? DashboardChip(
+            label: appLocalizations.serviceAllAvailable,
+            tone: DashboardChipTone.ok,
+          )
+        : null;
+    final scale = DashboardDensityScope.scaleOf(context);
+    final grid = _ServiceGrid(
+      services: services,
+      fill: !mobile,
+      cellHeight:
+          (mobile
+              ? 50
+              : density.isCompact
+              ? 40
+              : 46) *
+          scale,
+      gap: density.isCompact ? 6 : 8,
+    );
+    return DashboardCard(
+      semanticLabel: appLocalizations.serviceStatus,
+      onTap: mobile ? _openSheet : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: mobile ? MainAxisSize.min : MainAxisSize.max,
+        children: [
+          DashboardCardHeader(
+            glyph: AppGlyphs.verified,
+            title: appLocalizations.serviceStatus,
+            chevron: mobile,
+            trailing: [
+              ?verdict,
+              if (!mobile)
+                Transform.translate(
+                  offset: const Offset(8, 0),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _CheckAllButton(
+                        loading: shown.any(state.isLoading),
+                        onPressed: () => _services.refresh(shown),
+                      ),
+                      DashboardIconButton(
+                        glyph: AppGlyphs.chevronForward,
+                        tooltip: appLocalizations.serviceStatus,
+                        onPressed: _openSheet,
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          if (mobile) const SizedBox(height: 12) else const Spacer(),
+          grid,
+        ],
+      ),
+    );
+  }
+}
+
+class _ServiceGrid extends StatelessWidget {
+  const _ServiceGrid({
+    required this.services,
+    required this.fill,
+    required this.cellHeight,
+    required this.gap,
+  });
+
+  static const _columns = 2;
+
+  final List<_ServiceView> services;
+
+  /// Keeps the two rows four services take on a card of fixed height, the
+  /// cells of a single row growing into tiles.
+  final bool fill;
+  final double cellHeight;
+  final double gap;
+
+  @override
+  Widget build(BuildContext context) {
+    if (fill && services.length <= _columns) {
+      return SizedBox(
+        height: cellHeight * 2 + gap,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: gap,
+          children: [
+            for (final service in services)
+              Expanded(
+                child: _ServiceCell(
+                  service: service,
+                  height: cellHeight,
+                  tile: true,
+                ),
+              ),
+          ],
+        ),
+      );
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      spacing: gap,
+      children: [
+        for (var start = 0; start < services.length; start += _columns)
+          Row(
+            spacing: gap,
+            children: [
+              for (final service in services.skip(start).take(_columns))
+                Expanded(
+                  child: _ServiceCell(service: service, height: cellHeight),
+                ),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+class _ServiceCell extends StatelessWidget {
+  const _ServiceCell({
+    required this.service,
+    required this.height,
+    this.tile = false,
+  });
+
+  static const _inset = 7.0;
+
+  // Lines the text up with the 12 a cell keeps clear at its end.
+  static const _tileText = EdgeInsetsDirectional.fromSTEB(5, 0, 5, 3);
+
+  final _ServiceView service;
+  final double height;
+
+  final bool tile;
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = service.statusOf(context);
+    final status = AppTextStyle.caption1
+        .of(context, emphasized: true)
+        .toTabular
+        .copyWith(color: color);
+    final badge = _ServiceBadge(
+      target: service.target,
+      size: height - _inset * 2,
+      radius: DashboardCorner.tab - _inset,
+      color: DashboardColors.of(context).card,
+      ink: context.colorScheme.onSurfaceVariant,
+      dot: service.dotOf(context),
+    );
+    final text = ExcludeSemantics(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            service.target.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyle.footnote.of(context, emphasized: true),
+          ),
+          if (service.loading)
+            SkeletonText(width: 44, style: status)
+          else
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: status,
+            ),
+        ],
+      ),
+    );
+    return Semantics(
+      label: service.target.label,
+      value: label,
+      liveRegion: true,
+      child: tile
+          ? DashboardBlock(
+              radius: DashboardCorner.tab,
+              padding: const EdgeInsets.all(_inset),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  badge,
+                  Padding(padding: _tileText, child: text),
+                ],
+              ),
+            )
+          : SizedBox(
+              height: height,
+              child: DashboardBlock(
+                radius: DashboardCorner.tab,
+                padding: const EdgeInsetsDirectional.fromSTEB(_inset, 0, 12, 0),
+                child: Row(
+                  spacing: 8,
+                  children: [
+                    badge,
+                    Expanded(child: text),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
+}
+
+class _CheckAllButton extends StatelessWidget {
+  const _CheckAllButton({required this.loading, required this.onPressed});
+
+  final bool loading;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) {
+      return const SizedBox.square(
+        dimension: 32,
+        child: Center(child: CommonCircleLoading(size: 18)),
+      );
+    }
+    return DashboardIconButton(
+      glyph: AppGlyphs.bolt,
+      tooltip: context.appLocalizations.serviceCheckAll,
+      onPressed: onPressed,
+    );
+  }
 }
 
 mixin _NodeAddressWatch<T extends ConsumerStatefulWidget> on ConsumerState<T> {
@@ -108,317 +473,13 @@ mixin _NodeAddressWatch<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   }
 }
 
-class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard>
-    with
-        ProbeStartHold<ServiceStatusCard>,
-        _NodeAddressWatch<ServiceStatusCard> {
-  static const _gap = 12.0;
-  // The badge sits the same distance from the start, top and bottom edges. At
-  // this inset a concentric radius would square it off, so it takes the card's
-  // own proportion of radius to height instead.
-  static const _badgeInsetShare = 0.7;
-
-  late final PageController _controller;
-  late final ServiceStatus _services;
-  ServiceTarget? _shown;
-  bool _scrolling = false;
-
-  static ServiceTarget _savedIn(List<ServiceTarget> targets, String? id) {
-    final saved = id == null ? null : ServiceTarget.byId(id);
-    return saved != null && targets.contains(saved) ? saved : targets.first;
-  }
-
-  ServiceTarget _targetIn(List<ServiceTarget> targets) =>
-      _savedIn(targets, ref.read(appSettingProvider).currentService);
-
-  void _select(ServiceTarget target) {
-    ref
-        .read(appSettingProvider.notifier)
-        .update((state) => state.copyWith(currentService: target.id));
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _services = ref.read(serviceStatusProvider.notifier);
-    final targets = ref.read(enabledServiceTargetsProvider);
-    _controller = PageController(
-      initialPage: targets.indexOf(_targetIn(targets)),
-    );
-  }
-
-  @override
-  void dispose() {
-    _show(null);
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _show(ServiceTarget? target) {
-    final previous = _shown;
-    if (target == previous) return;
-    _shown = target;
-    if (target != null) _services.watch(target);
-    if (previous != null) _services.unwatch(previous);
-  }
-
-  void _onTargetChanged(List<ServiceTarget> targets, int index) {
-    final target = targets[index];
-    if (target == _targetIn(targets)) return;
-    _select(target);
-  }
-
-  /// A swipe or an animated jump passes through the services in between; only
-  /// the one the pager settles on is worth a check.
-  bool _onPagerScroll(ScrollNotification notification) {
-    if (notification.depth != 0) return false;
-    if (notification is ScrollStartNotification) {
-      _scrolling = true;
-    } else if (notification is ScrollEndNotification) {
-      _show(_targetIn(ref.read(enabledServiceTargetsProvider)));
-      if (mounted) setState(() => _scrolling = false);
-    }
-    return false;
-  }
-
-  void _onTargetsChanged(
-    List<ServiceTarget>? previous,
-    List<ServiceTarget> next,
-  ) {
-    final current = _targetIn(previous ?? next);
-    final kept = next.contains(current);
-    final index = kept
-        ? next.indexOf(current)
-        : (previous?.indexOf(current) ?? 0).clamp(0, next.length - 1);
-    _select(next[index]);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_controller.hasClients) return;
-      if (_controller.page?.round() != index) _controller.jumpToPage(index);
-    });
-  }
-
-  Future<void> _openSheet() async {
-    final picked = await showServiceStatusSheet(context);
-    if (picked == null || !mounted) return;
-    final targets = ref.read(enabledServiceTargetsProvider);
-    final index = targets.indexOf(picked);
-    if (index < 0 || picked == _targetIn(targets)) return;
-    await _controller.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-    );
-  }
-
-  /// Only a service the pager has settled on is checked, so one still being
-  /// swiped past shows a result only if it is already current.
-  bool _isLoading(ProbePhase phase, {required bool settled}) =>
-      phase == ProbePhase.probing ||
-      ((_scrolling || !settled) && phase != ProbePhase.fresh);
-
-  Widget _buildPage(
-    ServiceTarget target, {
-    required bool settled,
-    required double badgeSize,
-    required double badgeRadius,
-  }) {
-    return Consumer(
-      builder: (context, ref, _) {
-        final entry = ref.watch(
-          serviceStatusProvider.select((state) => state.entryOf(target)),
-        );
-        final phase = settled ? shownPhase(entry) : entry.phase;
-        final loading = _isLoading(phase, settled: settled);
-        final check = entry.value;
-        final node = check?.node;
-        final ipEntry = node != null
-            ? ref.watch(
-                outboundIpProbeProvider.select((state) => state.entryOf(node)),
-              )
-            : null;
-        final outboundIp = ipEntry?.value;
-        final ipPending =
-            ipEntry != null &&
-            (settled ? shownPhase(ipEntry) : ipEntry.phase) !=
-                ProbePhase.failed &&
-            outboundIp == null;
-        final (label, color) = _statusOf(context, check, phase);
-        return _ServicePage(
-          target: target,
-          badgeSize: badgeSize,
-          badgeRadius: badgeRadius,
-          label: label,
-          color: color,
-          loading: loading,
-          region: check?.region,
-          node: node,
-          outboundIp: loading ? null : outboundIp,
-          ipPending: !loading && ipPending,
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    ref.listen(enabledServiceTargetsProvider, _onTargetsChanged);
-    final targets = ref.watch(enabledServiceTargetsProvider);
-    final target = _savedIn(
-      targets,
-      ref.watch(appSettingProvider.select((state) => state.currentService)),
-    );
-    if (!_scrolling) _show(target);
-    final entry = ref.watch(
-      serviceStatusProvider.select((state) => state.entryOf(target)),
-    );
-    final check = entry.value;
-    final loading = _isLoading(shownPhase(entry), settled: true);
-    _showNode(check?.node);
-
-    final inset = DashboardWidgetMetrics.insetOf(context);
-    final height = DashboardWidgetMetrics.heightOf(context, 1);
-    final badgeInset =
-        DashboardWidgetMetrics.radiusOf(context) * _badgeInsetShare;
-    final badgeSize = height - badgeInset * 2;
-    final badgeRadius =
-        badgeSize * DashboardWidgetMetrics.radiusOf(context) / height;
-    final index = targets.indexOf(target);
-    return SizedBox(
-      height: height,
-      child: CommonCard(
-        radius: DashboardWidgetMetrics.radiusOf(context),
-        onPressed: _openSheet,
-        child: Row(
-          children: [
-            Expanded(
-              child: _EdgeFade(
-                start: badgeInset,
-                end: _gap,
-                child: NotificationListener<ScrollNotification>(
-                  onNotification: _onPagerScroll,
-                  child: _ServicePager(
-                    controller: _controller,
-                    targets: targets,
-                    index: index,
-                    onChanged: (index) => _onTargetChanged(targets, index),
-                    itemBuilder: (context, item) => Padding(
-                      padding: EdgeInsetsDirectional.only(
-                        start: badgeInset,
-                        end: _gap,
-                      ),
-                      child: _buildPage(
-                        item,
-                        settled: item == target,
-                        badgeSize: badgeSize,
-                        badgeRadius: badgeRadius,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsetsDirectional.only(end: inset),
-              child: _ServiceAside(
-                loading: loading,
-                delay: check?.delay,
-                controller: _controller,
-                count: targets.length,
-                index: index,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ServicePage extends StatelessWidget {
-  const _ServicePage({
-    required this.target,
-    required this.badgeSize,
-    required this.badgeRadius,
-    required this.label,
-    required this.color,
-    required this.loading,
-    required this.region,
-    required this.node,
-    required this.outboundIp,
-    required this.ipPending,
-  });
-
-  final ServiceTarget target;
-  final double badgeSize;
-  final double badgeRadius;
-  final String label;
-  final Color color;
-  final bool loading;
-  final String? region;
-  final String? node;
-  final IpInfo? outboundIp;
-  final bool ipPending;
-
-  @override
-  Widget build(BuildContext context) {
-    final secondary = context.textTheme.bodySmall?.copyWith(
-      color: context.colorScheme.onSurfaceVariant,
-    );
-    return Row(
-      spacing: 12,
-      children: [
-        _ServiceBadge(
-          target: target,
-          size: badgeSize,
-          radius: badgeRadius,
-          dot: loading ? context.colorScheme.outlineVariant : color,
-        ),
-        Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 2,
-            children: [
-              _ServiceTitle(
-                name: target.label,
-                style: context.textTheme.titleMedium,
-                status: Semantics(
-                  liveRegion: true,
-                  label: loading ? label : null,
-                  child: loading
-                      ? SkeletonText(
-                          width: 48,
-                          style: context.textTheme.labelMedium,
-                        )
-                      : _StatusPill(label: label, color: color),
-                ),
-              ),
-              if (loading)
-                SkeletonText(width: 96, style: secondary)
-              else
-                _OutboundIpLine(
-                  ip: outboundIp,
-                  region: region,
-                  pending: ipPending,
-                  fallback: node,
-                  style: secondary,
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _ServiceTitle extends StatelessWidget {
-  const _ServiceTitle({required this.name, required this.status, this.style});
+  const _ServiceTitle({required this.name, required this.status});
 
   static const _statusShare = 0.6;
 
   final String name;
   final Widget status;
-  final TextStyle? style;
 
   @override
   Widget build(BuildContext context) {
@@ -429,12 +490,7 @@ class _ServiceTitle extends StatelessWidget {
         spacing: 8,
         children: [
           Flexible(
-            child: Text(
-              name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: style,
-            ),
+            child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
           ),
           ConstrainedBox(
             constraints: BoxConstraints(
@@ -449,16 +505,16 @@ class _ServiceTitle extends StatelessWidget {
 }
 
 class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.label, required this.color});
+  const _StatusPill({required this.label, required this.colors});
 
   final String label;
-  final Color color;
+  final _StatusColors colors;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: ShapeDecoration(
-        color: color.withValues(alpha: 0.14),
+        color: colors.container,
         shape: AppShape.full,
       ),
       child: Padding(
@@ -467,7 +523,9 @@ class _StatusPill extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: context.textTheme.labelMedium?.copyWith(color: color),
+          style: AppTextStyle.caption1
+              .of(context, emphasized: true)
+              .copyWith(color: colors.onContainer),
         ),
       ),
     );
@@ -550,190 +608,8 @@ class _NoValue extends StatelessWidget {
     return ExcludeSemantics(
       child: Text(
         '—',
-        style: style?.copyWith(color: context.colorScheme.outline),
+        style: style?.copyWith(color: context.colorScheme.onSurfaceVariant),
       ),
-    );
-  }
-}
-
-class _ServiceAside extends StatelessWidget {
-  const _ServiceAside({
-    required this.loading,
-    required this.delay,
-    required this.controller,
-    required this.count,
-    required this.index,
-  });
-
-  final bool loading;
-  final int? delay;
-  final PageController controller;
-  final int count;
-  final int index;
-
-  /// The pager beside this column must keep its width: a resize mid-swipe
-  /// cancels the page animation and lets it settle on the wrong service.
-  double _widthOf(BuildContext context, TextSpan widest) {
-    final painter = TextPainter(
-      text: widest,
-      textDirection: Directionality.of(context),
-      textScaler: MediaQuery.textScalerOf(context),
-      maxLines: 1,
-    )..layout();
-    final width = painter.width;
-    painter.dispose();
-    return max(width, _PageDots.widthOf(count));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final delay = this.delay;
-    final numeric = context.textTheme.titleMedium
-        ?.adjustSize(2)
-        .toSoftBold
-        .copyWith(fontFeatures: const [FontFeature.tabularFigures()]);
-    final unit = context.textTheme.labelSmall?.copyWith(
-      color: context.colorScheme.onSurfaceVariant,
-    );
-    TextSpan span(String value) => TextSpan(
-      text: value,
-      style: numeric,
-      children: [TextSpan(text: ' ms', style: unit)],
-    );
-    return SizedBox(
-      width: _widthOf(context, span('0000')),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        spacing: 8,
-        children: [
-          if (loading)
-            SkeletonText(width: 36, style: numeric)
-          else if (delay != null)
-            Text.rich(span('$delay'), maxLines: 1),
-          if (count > 1)
-            _PageDots(controller: controller, count: count, index: index),
-        ],
-      ),
-    );
-  }
-}
-
-class _PageDots extends StatelessWidget {
-  const _PageDots({
-    required this.controller,
-    required this.count,
-    required this.index,
-  });
-
-  static const _window = 7;
-  static const _size = 4.0;
-  static const _edgeSize = 2.5;
-  static const _activeWidth = 12.0;
-  static const _spacing = 3.0;
-
-  static double widthOf(int count) {
-    if (count < 2) return 0;
-    final shown = min(count, _window);
-    return (shown - 1) * (_size + _spacing) + _activeWidth;
-  }
-
-  final PageController controller;
-  final int count;
-  final int index;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    return ExcludeSemantics(
-      child: AnimatedBuilder(
-        animation: controller,
-        builder: (context, _) {
-          final page =
-              controller.hasClients && controller.position.hasContentDimensions
-              ? controller.page ?? index.toDouble()
-              : index.toDouble();
-          final shown = min(count, _window);
-          final first = (page.round() - _window ~/ 2).clamp(0, count - shown);
-          final last = first + shown - 1;
-          return SizedBox(
-            height: _size,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              spacing: _spacing,
-              children: [
-                for (var i = first; i <= last; i++)
-                  _dot(
-                    colorScheme,
-                    active: (1 - (page - i).abs()).clamp(0.0, 1.0),
-                    edge:
-                        (i == first && first > 0) ||
-                        (i == last && last < count - 1),
-                  ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _dot(
-    ColorScheme colorScheme, {
-    required double active,
-    required bool edge,
-  }) {
-    final size = edge ? _edgeSize : _size;
-    return SizedBox(
-      width: lerpDouble(size, _activeWidth, active),
-      height: size,
-      child: DecoratedBox(
-        decoration: ShapeDecoration(
-          color: Color.lerp(
-            colorScheme.outlineVariant,
-            colorScheme.primary,
-            active,
-          ),
-          shape: AppShape.full,
-        ),
-      ),
-    );
-  }
-}
-
-class _EdgeFade extends StatelessWidget {
-  const _EdgeFade({
-    required this.start,
-    required this.end,
-    required this.child,
-  });
-
-  final double start;
-  final double end;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final textDirection = Directionality.of(context);
-    return ShaderMask(
-      blendMode: BlendMode.dstIn,
-      shaderCallback: (bounds) => LinearGradient(
-        begin: AlignmentDirectional.centerStart,
-        end: AlignmentDirectional.centerEnd,
-        colors: const [
-          Colors.transparent,
-          Colors.black,
-          Colors.black,
-          Colors.transparent,
-        ],
-        stops: [
-          0,
-          (start / bounds.width).clamp(0.0, 0.5),
-          (1 - end / bounds.width).clamp(0.5, 1.0),
-          1,
-        ],
-      ).createShader(bounds, textDirection: textDirection),
-      child: child,
     );
   }
 }
@@ -747,6 +623,8 @@ class _ServiceBadge extends StatelessWidget {
     this.radius,
     this.dot,
     this.enabled = true,
+    this.color,
+    this.ink,
   });
 
   static const _glyphShare = 0.56;
@@ -756,6 +634,8 @@ class _ServiceBadge extends StatelessWidget {
   final double? radius;
   final Color? dot;
   final bool enabled;
+  final Color? color;
+  final Color? ink;
 
   @override
   Widget build(BuildContext context) {
@@ -763,9 +643,7 @@ class _ServiceBadge extends StatelessWidget {
     return CustomPaint(
       size: Size.square(size),
       painter: _BadgePainter(
-        color: enabled
-            ? colorScheme.secondaryContainer
-            : colorScheme.surfaceContainerHighest,
+        color: color ?? context.raisedSurfaceLevel.colorOf(colorScheme),
         radius: radius ?? AppCorner.fit(size),
         dot: dot,
         dotRadius: max(size / 10, 4),
@@ -780,9 +658,11 @@ class _ServiceBadge extends StatelessWidget {
             height: size * _glyphShare,
             excludeFromSemantics: true,
             theme: SvgTheme(
-              currentColor: enabled
-                  ? colorScheme.onSecondaryContainer
-                  : colorScheme.outline,
+              currentColor:
+                  ink ??
+                  (enabled
+                      ? colorScheme.onSurfaceVariant
+                      : colorScheme.onSurfaceVariant.opacity38),
             ),
           ),
         ),
@@ -842,8 +722,8 @@ class _BadgePainter extends CustomPainter {
       oldDelegate.ring != ring;
 }
 
-Future<ServiceTarget?> showServiceStatusSheet(BuildContext context) {
-  return showSheet<ServiceTarget>(
+Future<void> showServiceStatusSheet(BuildContext context) {
+  return showSheet<void>(
     context: context,
     props: nestedPagedSheetProps,
     builder: (_) =>
@@ -851,9 +731,7 @@ Future<ServiceTarget?> showServiceStatusSheet(BuildContext context) {
   );
 }
 
-/// Lists every enabled service at once, so the card's pager never has to be
-/// swiped through to find one. Tapping a row hands it back to the card.
-/// The rows read the cache and are only checked on request.
+/// Every enabled service, read from the cache and checked only on request.
 class ServiceStatusSheet extends ConsumerWidget {
   const ServiceStatusSheet({super.key});
 
@@ -861,11 +739,6 @@ class ServiceStatusSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final targets = ref.watch(enabledServiceTargetsProvider);
     final state = ref.watch(serviceStatusProvider);
-    final saved = ServiceTarget.byId(
-      ref.watch(appSettingProvider.select((state) => state.currentService)) ??
-          '',
-    );
-    final current = targets.contains(saved) ? saved : targets.first;
     final services = ref.read(serviceStatusProvider.notifier);
     final localizations = context.appLocalizations;
     return CommonScaffold(
@@ -902,8 +775,6 @@ class ServiceStatusSheet extends ConsumerWidget {
                   child: _ServiceRow(
                     target: target,
                     entry: state.entryOf(target),
-                    selected: target == current,
-                    onTap: () => context.safeNestedPop(target),
                     onCheck: () => services.refresh([target]),
                   ),
                 );
@@ -948,6 +819,8 @@ class ServiceManageView extends ConsumerWidget {
       });
     }
 
+    final shown = enabled.take(_shownServiceCount).toSet();
+
     Widget itemAt(int index) {
       final target = targets[index];
       final isEnabled = enabled.contains(target);
@@ -958,6 +831,7 @@ class ServiceManageView extends ConsumerWidget {
         index: index,
         position: ItemPosition.get(index, targets.length),
         enabled: isEnabled,
+        shown: shown.contains(target),
         onChanged: locked ? null : (value) => toggle(target, value),
       );
     }
@@ -996,6 +870,7 @@ class _ServiceManageItem extends StatelessWidget {
     required this.index,
     required this.position,
     required this.enabled,
+    required this.shown,
     required this.onChanged,
   });
 
@@ -1003,6 +878,7 @@ class _ServiceManageItem extends StatelessWidget {
   final int index;
   final ItemPosition position;
   final bool enabled;
+  final bool shown;
   final ValueChanged<bool>? onChanged;
 
   @override
@@ -1033,6 +909,9 @@ class _ServiceManageItem extends StatelessWidget {
                   ? null
                   : TextStyle(color: context.colorScheme.onSurfaceVariant),
             ),
+            subtitle: shown
+                ? Text(context.appLocalizations.serviceShownOnDashboard)
+                : null,
             trailing: Switch(value: enabled, onChanged: onChanged),
           ),
         ),
@@ -1045,15 +924,11 @@ class _ServiceRow extends ConsumerStatefulWidget {
   const _ServiceRow({
     required this.target,
     required this.entry,
-    required this.selected,
-    required this.onTap,
     required this.onCheck,
   });
 
   final ServiceTarget target;
   final ProbeEntry<ServiceCheck> entry;
-  final bool selected;
-  final VoidCallback onTap;
   final VoidCallback onCheck;
 
   @override
@@ -1065,9 +940,9 @@ class _ServiceRowState extends ConsumerState<_ServiceRow>
   @override
   Widget build(BuildContext context) {
     final localizations = context.appLocalizations;
-    final secondary = context.textTheme.bodySmall?.copyWith(
-      color: context.colorScheme.onSurfaceVariant,
-    );
+    final secondary = AppTextStyle.footnote
+        .of(context)
+        .copyWith(color: context.colorScheme.onSurfaceVariant);
     final target = widget.target;
     final entry = widget.entry;
     final check = entry.value;
@@ -1080,25 +955,24 @@ class _ServiceRowState extends ConsumerState<_ServiceRow>
           )
         : null;
     final outboundIp = ipEntry?.value;
-    final (label, color) = _statusOf(context, check, entry.phase);
+    final (label, colors) = _statusOf(context, check, entry.phase);
     return DecorationListItem(
-      isSelected: widget.selected,
       minVerticalPadding: _rowBadgeInset,
       contentPadding: const EdgeInsets.only(left: _rowBadgeInset, right: 4),
-      onPressed: widget.onTap,
+      onPressed: loading ? null : widget.onCheck,
       leading: _ServiceBadge(
         target: target,
         size: _rowBadgeSize,
         radius: _rowBadgeRadius,
         dot: loading
-            ? context.colorScheme.outlineVariant
+            ? context.colorScheme.onSurfaceVariant
             : check != null || entry.phase == ProbePhase.failed
-            ? color
+            ? colors.color
             : null,
       ),
       title: _ServiceTitle(
         name: target.label,
-        status: _StatusPill(label: label, color: color),
+        status: _StatusPill(label: label, colors: colors),
       ),
       // A one-line tile is shorter than a two-line one, so the line is always
       // there and a check does not resize the row.
@@ -1153,15 +1027,17 @@ class _ServiceRowTrailing extends StatelessWidget {
         if (delay != null)
           Text(
             '$delay ms',
-            style: numeric?.copyWith(
-              color: context.colorScheme.onSurface,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTextStyle.footnote
+                .of(context, emphasized: true)
+                .toTabular
+                .copyWith(color: context.colorScheme.onSurface),
           ),
         if (checkedAt != null)
           Text(
             checkedAt.showTime.trim(),
-            style: numeric?.copyWith(color: context.colorScheme.outline),
+            style: numeric?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
           ),
       ],
     );
@@ -1169,100 +1045,6 @@ class _ServiceRowTrailing extends StatelessWidget {
     return Tooltip(
       message: context.appLocalizations.serviceCheckedAt(checkedAt.showFull),
       child: column,
-    );
-  }
-}
-
-class _ServicePager extends StatefulWidget {
-  const _ServicePager({
-    required this.controller,
-    required this.targets,
-    required this.index,
-    required this.onChanged,
-    required this.itemBuilder,
-  });
-
-  final PageController controller;
-  final List<ServiceTarget> targets;
-  final int index;
-  final ValueChanged<int> onChanged;
-  final Widget Function(BuildContext context, ServiceTarget target) itemBuilder;
-
-  @override
-  State<_ServicePager> createState() => _ServicePagerState();
-}
-
-class _ServicePagerState extends State<_ServicePager> {
-  bool _moving = false;
-
-  Future<void> _select(int index) async {
-    if (_moving || !widget.controller.hasClients) return;
-    final next = index.clamp(0, widget.targets.length - 1);
-    if (next == widget.index) return;
-    _moving = true;
-    try {
-      await widget.controller.animateToPage(
-        next,
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-      );
-    } finally {
-      _moving = false;
-    }
-  }
-
-  void _onPointerSignal(PointerSignalEvent event) {
-    if (event is! PointerScrollEvent) return;
-    final delta = event.scrollDelta.dx.abs() > event.scrollDelta.dy.abs()
-        ? event.scrollDelta.dx
-        : event.scrollDelta.dy;
-    if (delta == 0) return;
-    GestureBinding.instance.pointerSignalResolver.register(event, (_) {
-      _select(widget.index + (delta > 0 ? 1 : -1));
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final index = widget.index;
-    final targets = widget.targets;
-    return CallbackShortcuts(
-      bindings: {
-        const SingleActivator(LogicalKeyboardKey.arrowLeft): () =>
-            _select(index - 1),
-        const SingleActivator(LogicalKeyboardKey.arrowRight): () =>
-            _select(index + 1),
-      },
-      child: Focus(
-        child: Semantics(
-          label: context.appLocalizations.serviceStatus,
-          value: targets[index].label,
-          increasedValue: index < targets.length - 1
-              ? targets[index + 1].label
-              : null,
-          decreasedValue: index > 0 ? targets[index - 1].label : null,
-          onIncrease: index < targets.length - 1
-              ? () => _select(index + 1)
-              : null,
-          onDecrease: index > 0 ? () => _select(index - 1) : null,
-          child: Listener(
-            onPointerSignal: _onPointerSignal,
-            child: ScrollConfiguration(
-              behavior: ScrollConfiguration.of(context).copyWith(
-                dragDevices: PointerDeviceKind.values.toSet(),
-                scrollbars: false,
-              ),
-              child: PageView.builder(
-                controller: widget.controller,
-                itemCount: targets.length,
-                onPageChanged: widget.onChanged,
-                itemBuilder: (context, itemIndex) =>
-                    widget.itemBuilder(context, targets[itemIndex]),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

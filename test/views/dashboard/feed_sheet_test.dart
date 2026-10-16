@@ -1,10 +1,10 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/dashboard/widgets/dns_queries.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/views/dashboard/widgets/connection_stats.dart';
 import 'package:fl_clash/views/dns_queries.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
@@ -19,6 +19,11 @@ import '../../helpers/test_profiles.dart';
 const _mobileSize = Size(400, 800);
 final _shortTop = _mobileSize.height * (1 - snapSheetDetents.first);
 final _tallTop = _mobileSize.height * (1 - snapSheetDetents.last);
+
+final _dnsStat = find.descendant(
+  of: find.byType(ConnectionStatsCard),
+  matching: find.text('DNS queries'),
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -66,7 +71,9 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: TestApp(
-          child: Scaffold(body: ListView(children: const [DnsQueriesCard()])),
+          child: Scaffold(
+            body: ListView(children: const [ConnectionStatsCard()]),
+          ),
         ),
       ),
     );
@@ -86,28 +93,12 @@ void main() {
     );
   }
 
-  testWidgets('shows the query count and follows it', (tester) async {
+  testWidgets('a wide window opens the DNS list beside the card', (
+    tester,
+  ) async {
     await pumpCard(tester);
 
-    expect(find.text('DNS queries'), findsOneWidget);
-    expect(find.text('0'), findsOneWidget);
-
-    container.read(dnsQueryCountProvider.notifier).value = 1234;
-    await tester.pump();
-
-    // The count repaints on the throttled cadence, not per query.
-    expect(find.text('0'), findsOneWidget);
-    await tester.pump(const Duration(milliseconds: 301));
-
-    expect(find.text('1.23K'), findsOneWidget);
-
-    await tester.pumpWidget(const SizedBox.shrink());
-  });
-
-  testWidgets('tapping the card opens the DNS list beside it', (tester) async {
-    await pumpCard(tester);
-
-    await tester.tap(find.byType(DnsQueriesCard));
+    await tester.tap(_dnsStat);
     await tester.pumpAndSettle();
 
     expect(find.byType(DnsQueriesView), findsOneWidget);
@@ -130,7 +121,7 @@ void main() {
       seedDnsQueries(40);
       await pumpCard(tester, size: _mobileSize);
 
-      await tester.tap(find.byType(DnsQueriesCard));
+      await tester.tap(_dnsStat);
       await tester.pumpAndSettle();
 
       expect(find.byType(DnsQueriesView), findsOneWidget);
@@ -152,7 +143,7 @@ void main() {
     seedDnsQueries(40);
     await pumpCard(tester, size: _mobileSize);
 
-    await tester.tap(find.byType(DnsQueriesCard));
+    await tester.tap(_dnsStat);
     await tester.pumpAndSettle();
 
     await tester.flingFrom(const Offset(200, 600), const Offset(0, -150), 900);
@@ -169,7 +160,7 @@ void main() {
     seedDnsQueries(40);
     await pumpCard(tester, size: _mobileSize);
 
-    await tester.tap(find.byType(DnsQueriesCard));
+    await tester.tap(_dnsStat);
     await tester.pumpAndSettle();
 
     await flingSheet(tester, -120);
@@ -218,7 +209,7 @@ void main() {
   Future<void> openTall(WidgetTester tester) async {
     seedDnsQueries(40);
     await pumpCard(tester, size: _mobileSize);
-    await tester.tap(find.byType(DnsQueriesCard));
+    await tester.tap(_dnsStat);
     await tester.pumpAndSettle();
     await flingSheet(tester, -120);
     await tester.pumpAndSettle();
@@ -243,7 +234,7 @@ void main() {
   ) async {
     seedDnsQueries(40);
     await pumpCard(tester, size: _mobileSize);
-    await tester.tap(find.byType(DnsQueriesCard));
+    await tester.tap(_dnsStat);
     await tester.pumpAndSettle();
 
     await slowDrag(tester, const Offset(200, 650), -250);
@@ -289,7 +280,7 @@ void main() {
       'list keeps to its end through every frame', (tester) async {
     seedDnsQueries(40);
     await pumpCard(tester, size: _mobileSize);
-    await tester.tap(find.byType(DnsQueriesCard));
+    await tester.tap(_dnsStat);
     await tester.pumpAndSettle();
     final position = tester
         .state<ScrollableState>(
@@ -318,12 +309,12 @@ void main() {
             time: DateTime.utc(2026, 9, 18, 4, 31),
           ),
         );
+    expect(sheetTop(tester), greaterThan(_tallTop + 1));
     for (var frame = 0; frame < 20; frame++) {
       await tester.pump(const Duration(milliseconds: 16));
       expect(position.pixels, position.maxScrollExtent);
     }
 
-    expect(sheetTop(tester), greaterThan(_tallTop + 1));
     expect(find.text('late.example'), findsOneWidget);
 
     await tester.pumpAndSettle();
@@ -342,7 +333,7 @@ void main() {
     seedDnsQueries(40);
     await pumpCard(tester, size: _mobileSize);
 
-    await tester.tap(find.byType(DnsQueriesCard));
+    await tester.tap(_dnsStat);
     await tester.pumpAndSettle();
 
     await flingSheet(tester, -120);
@@ -366,7 +357,7 @@ void main() {
     seedDnsQueries(40);
     await pumpCard(tester, size: _mobileSize);
 
-    await tester.tap(find.byType(DnsQueriesCard));
+    await tester.tap(_dnsStat);
     await tester.pumpAndSettle();
 
     final floor = sheetTop(tester);
@@ -394,7 +385,7 @@ void main() {
     seedDnsQueries(5);
     await pumpCard(tester, size: _mobileSize);
 
-    await tester.tap(find.byType(DnsQueriesCard));
+    await tester.tap(_dnsStat);
     await tester.pumpAndSettle();
     await tester.tap(find.byType(DnsQueryItem).hitTestable().first);
     await tester.pumpAndSettle();
@@ -421,7 +412,7 @@ void main() {
     seedDnsQueries(5);
     await pumpCard(tester);
 
-    await tester.tap(find.byType(DnsQueriesCard));
+    await tester.tap(_dnsStat);
     await tester.pumpAndSettle();
     await tester.tap(find.byType(DnsQueryItem).hitTestable().first);
     await tester.pumpAndSettle();
@@ -444,7 +435,7 @@ void main() {
     seedDnsQueries(40);
     await pumpCard(tester, size: _mobileSize);
 
-    await tester.tap(find.byType(DnsQueriesCard));
+    await tester.tap(_dnsStat);
     await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('Close'));

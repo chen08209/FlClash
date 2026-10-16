@@ -7,6 +7,8 @@ import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/paged_sheet.dart';
+import 'package:fl_clash/ui/popup.dart';
 import 'package:fl_clash/views/config/advanced.dart';
 import 'package:fl_clash/views/config/custom_resources.dart';
 import 'package:fl_clash/views/config/dns.dart';
@@ -25,12 +27,9 @@ import 'package:fl_clash/views/profiles/custom/custom.dart';
 import 'package:fl_clash/views/profiles/custom/custom_proxies.dart';
 import 'package:fl_clash/views/profiles/custom/rules.dart';
 import 'package:fl_clash/views/proxies/list.dart';
-import 'package:fl_clash/views/proxies/providers.dart';
 import 'package:fl_clash/views/proxies/tab.dart';
 import 'package:fl_clash/views/theme.dart';
 import 'package:fl_clash/views/views.dart';
-import 'package:fl_clash/widgets/paged_sheet.dart';
-import 'package:fl_clash/widgets/popup.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -39,8 +38,10 @@ import '../helpers/test_app.dart';
 import '../helpers/test_database_providers.dart';
 import '../helpers/test_profiles.dart';
 
-Finder _portField(String label) =>
-    find.ancestor(of: find.text(label), matching: find.byType(TextFormField));
+Finder _portField(String label) => find.descendant(
+  of: find.widgetWithText(FormRow, label),
+  matching: find.byType(TextFormField),
+);
 
 void main() {
   final cases = <String, Widget>{
@@ -65,7 +66,6 @@ void main() {
     'backup and restore': const BackupAndRestore(),
     'hotkeys': const HotKeyView(),
     'access control': const AccessView(),
-    'proxy providers': const ProvidersView(),
     'added rules': const AddedRulesView(),
     'scripts': const ScriptsView(),
     'user agents': const UserAgentsView(),
@@ -204,9 +204,7 @@ void main() {
     expect(tester.takeException(), null);
   });
 
-  testWidgets('port dialog validates the fields the expander hides', (
-    tester,
-  ) async {
+  testWidgets('the port form refuses an emptied port', (tester) async {
     tester.view.physicalSize = const Size(1000, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -233,17 +231,10 @@ void main() {
     await tester.tap(find.text('Port').first);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('Expand'));
-    await tester.pumpAndSettle();
-
     await tester.enterText(_portField('SOCKS port'), '');
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('Collapse'));
-    await tester.pumpAndSettle();
-    expect(_portField('SOCKS port'), findsNothing);
-
-    await tester.tap(find.text('Submit'));
+    await tester.tap(find.widgetWithText(TextButton, 'Save'));
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), null);
@@ -289,6 +280,10 @@ void main() {
     container
         .read(viewSizeProvider.notifier)
         .update((_) => const Size(1400, 1000));
+    container.listen(proxiesStyleSettingProvider, (_, _) {});
+    container
+        .read(proxiesStyleSettingProvider.notifier)
+        .update((state) => state.copyWith(type: ProxiesType.tab));
 
     await tester.pumpWidget(
       UncontrolledProviderScope(

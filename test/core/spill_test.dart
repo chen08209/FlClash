@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/core/spill.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 
@@ -47,6 +48,31 @@ void main() {
     expect(response.id, '2');
     expect(response.unwrap<Map<String, dynamic>>(), {'mode': 'rule'});
     expect(file.existsSync(), isFalse);
+  });
+
+  test('a spilled connection list arrives parsed', () async {
+    final file = spill(spillDirectory, {
+      'id': '4',
+      'result': {
+        'connections': [
+          {
+            'id': 'c1',
+            'metadata': {'network': 'tcp'},
+            'start': '2026-01-01',
+            'chains': ['DIRECT'],
+            'rule': 'MATCH',
+            'rulePayload': '',
+          },
+        ],
+      },
+    });
+
+    final response = await resolveSpilledResponse(
+      CoreMethodResponse(id: '4', file: file.path),
+      method: CoreMethod.getConnections,
+    );
+
+    expect(response.unwrap<List<TrackerInfo>>()?.single.id, 'c1');
   });
 
   test('refuses a file outside the spill directory', () async {

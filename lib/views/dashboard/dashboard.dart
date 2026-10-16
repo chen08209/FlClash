@@ -1,322 +1,355 @@
+import 'dart:math' as math;
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 
-import 'widget_metrics.dart';
+import 'edit.dart';
+import 'layout.dart';
+import 'style.dart';
 import 'widget_registry.dart';
 import 'widgets/core_status_button.dart';
-import 'widgets/start_button.dart';
+import 'widgets/widgets.dart';
 
-typedef _IsEditWidgetBuilder = Widget Function(bool isEdit);
+// Narrower columns leave the service grid's cells too tight for a status, so
+// the grid takes the memory card's column instead.
+const _memoryColumnMin = 290.0;
+
+const _maxColumnWidth = 440.0;
 
 class DashboardView extends ConsumerStatefulWidget {
-  const DashboardView({super.key});
+  const DashboardView({super.key, this.platform});
+
+  /// The host's platform when null.
+  final SupportPlatform? platform;
 
   @override
   ConsumerState<DashboardView> createState() => _DashboardViewState();
 }
 
 class _DashboardViewState extends ConsumerState<DashboardView> {
-  final key = GlobalKey<SuperGridState>();
-  final _isEditNotifier = ValueNotifier<bool>(false);
-  final _addedWidgetsNotifier = ValueNotifier<List<GridItem>>([]);
+  var _editing = false;
+  final _cardKeys = <DashboardWidget, GlobalKey>{};
+
+  void _setEditing(bool editing) {
+    setState(() => _editing = editing);
+  }
+
+  GlobalKey _cardKeyOf(DashboardWidget widget) =>
+      _cardKeys.putIfAbsent(widget, GlobalKey.new);
 
   @override
-  void initState() {
-    super.initState();
-    ref.listenManual(
-      dashboardStateProvider.select((state) => state.dashboardWidgets),
-      (_, dashboardWidgets) => _syncAddedWidgets(dashboardWidgets),
-      fireImmediately: true,
-    );
-  }
-
-  void _syncAddedWidgets(List<DashboardWidget> dashboardWidgets) {
-    bool onThisPlatform(DashboardWidget item) =>
-        item.platforms.contains(SupportPlatform.currentPlatform);
-    final shown = dashboardWidgets
-        .where(onThisPlatform)
-        .map((item) => item.widget)
-        .toSet();
-    _addedWidgetsNotifier.value = DashboardWidget.values
-        .where((item) => onThisPlatform(item) && !shown.contains(item.widget))
-        .map((item) => item.widget)
-        .toList();
-  }
-
-  @override
-  void dispose() {
-    _isEditNotifier.dispose();
-    _addedWidgetsNotifier.dispose();
-    super.dispose();
-  }
-
-  Widget _buildIsEdit(_IsEditWidgetBuilder builder) {
-    return ValueListenableBuilder(
-      valueListenable: _isEditNotifier,
-      builder: (_, isEdit, _) {
-        return builder(isEdit);
-      },
-    );
-  }
-
-  List<Widget> _buildActions(bool isEdit) {
-    return [
-      if (!isEdit && coreLib == null) const CoreStatusButton(),
-      if (isEdit)
-        ValueListenableBuilder(
-          valueListenable: _addedWidgetsNotifier,
-          builder: (_, addedChildren, child) {
-            if (addedChildren.isEmpty) {
-              return Container();
-            }
-            return child!;
-          },
-          child: IconButton(
-            tooltip: context.appLocalizations.addWidget,
-            onPressed: () {
-              _showAddWidgetsModal();
-            },
-            icon: const GlyphIcon(AppGlyphs.addCircle),
+  Widget build(BuildContext context) {
+    final platform = widget.platform ?? SupportPlatform.currentPlatform;
+    final viewSize = ref.watch(viewSizeProvider);
+    final sideWidth = ref.watch(sideWidthProvider);
+    final scale = math.max(1.0, MediaQuery.textScalerOf(context).scale(1));
+    final size = Size(viewSize.width - sideWidth, viewSize.height) / scale;
+    final editable = !DashboardDensity.of(size).isDesktop;
+    if (!editable) {
+      _editing = false;
+    }
+    final editing = _editing;
+    final gap = cardSpacingOf(context, ref.watch(viewModeProvider));
+    final appLocalizations = context.appLocalizations;
+    return CommonScaffold(
+      backgroundColor: DashboardColors.of(context).page,
+      title: editing
+          ? appLocalizations.editDashboard
+          : appLocalizations.dashboard,
+      backAction: editing ? () => _setEditing(false) : null,
+      actions: [if (!editing && coreLib == null) const CoreStatusButton()],
+      confirmationAction: editing
+          ? IconButtonData(
+              glyph: AppGlyphs.check,
+              tooltip: appLocalizations.done,
+              onPressed: () => _setEditing(false),
+            )
+          : null,
+      iconActions: [
+        if (editable && !editing)
+          IconButtonData(
+            glyph: AppGlyphs.edit,
+            tooltip: appLocalizations.editDashboard,
+            onPressed: () => _setEditing(true),
           ),
-        ),
-      FadeRotationScaleBox(
-        child: isEdit
-            ? IconButton(
-                tooltip: context.appLocalizations.save,
-                key: const ValueKey(true),
-                icon: const GlyphIcon(
-                  AppGlyphs.save,
-                  key: ValueKey('save-icon'),
-                ),
-                onPressed: _handleExitEdit,
-              )
-            : IconButton(
-                tooltip: context.appLocalizations.edit,
-                key: const ValueKey(false),
-                icon: const GlyphIcon(
-                  AppGlyphs.edit,
-                  key: ValueKey('edit-icon'),
-                ),
-                onPressed: _handleEnterEdit,
-              ),
+      ],
+      // The providers learn a resize a frame late, too late for the cards.
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final room = constraints.biggest / scale;
+          final layout = DashboardDensity.of(room);
+          return DashboardDensityScope(
+            density: layout,
+            scale: scale,
+            child: layout.isDesktop
+                ? _DesktopDashboard(
+                    platform: platform,
+                    columns: dashboardColumnsOf(room.width),
+                    gap: gap,
+                  )
+                : _MobileDashboard(
+                    platform: platform,
+                    gap: gap,
+                    editing: editing,
+                    cardKeyOf: _cardKeyOf,
+                    onDone: () => _setEditing(false),
+                  ),
+          );
+        },
       ),
-    ];
+    );
   }
+}
 
-  void _showAddWidgetsModal() {
-    showSnapSheet(
-      context,
-      detents: const [0.85],
-      builder: (sheetContext, scrollController) {
-        return ValueListenableBuilder(
-          valueListenable: _addedWidgetsNotifier,
-          builder: (_, value, _) {
-            return CommonScaffold(
-              body: _AddDashboardWidgetModal(
-                items: value,
-                scrollController: scrollController,
-                onAdd: (gridItem, from) =>
-                    _addWidget(sheetContext, gridItem, from),
+/// Four columns fill the window, the tables taking what the rows above them
+/// leave. A window too short for the tables, and every two column one, gets
+/// the summary cards instead, so no list scrolls inside a page that scrolls.
+class _DesktopDashboard extends StatelessWidget {
+  const _DesktopDashboard({
+    required this.platform,
+    required this.columns,
+    required this.gap,
+  });
+
+  final SupportPlatform platform;
+  final int columns;
+  final double gap;
+
+  @override
+  Widget build(BuildContext context) {
+    final density = DashboardDensityScope.of(context);
+    final compact = density.isCompact;
+    final scale = DashboardDensityScope.scaleOf(context);
+    final base = EdgeInsetsDirectional.fromSTEB(
+      16,
+      MediaQuery.paddingOf(context).top,
+      24,
+      24 + MediaQuery.paddingOf(context).bottom,
+    );
+    final topHeight = (compact ? 176 : 208) * scale;
+    final controlHeight = (compact ? 56 : 64) * scale;
+    final middleHeight = (compact ? 152 : 176) * scale;
+    final tablesHeight = connectionsTableMinHeight(density, scale);
+    final summaryHeight = (compact ? 112 : 120) * scale;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final room =
+            constraints.maxWidth - base.horizontal - gap * (columns - 1);
+        final column = math.min(room / columns, _maxColumnWidth * scale);
+        final inset = (room - column * columns) / 2;
+        final padding = base.copyWith(
+          start: base.start + inset,
+          end: base.end + inset,
+        );
+        double span(int columns) => column * columns + gap * (columns - 1);
+        Widget row(List<(int, Widget)> cards) => Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: gap,
+          children: [
+            for (final (columns, card) in cards)
+              SizedBox(
+                width: span(columns),
+                child: RepaintBoundary(child: card),
               ),
-              title: context.appLocalizations.add,
-            );
-          },
+          ],
+        );
+        Widget sized(double height, Widget child) =>
+            SizedBox(height: height, child: child);
+        final switches =
+            DashboardWidget.networkTakeover.platforms.contains(platform)
+            ? const [
+                (1, NetworkTakeoverTile(TakeoverSwitch.systemProxy)),
+                (1, NetworkTakeoverTile(TakeoverSwitch.tun)),
+              ]
+            : const [(2, VpnTile())];
+        final half = columns ~/ 2;
+        final summaries = row([
+          (half, const ConnectionStatsCard()),
+          (half, const ProxyGroupsSummaryCard()),
+        ]);
+        if (columns == 2) {
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: padding,
+            child: Column(
+              spacing: gap,
+              children: [
+                sized(
+                  topHeight,
+                  const RepaintBoundary(child: CurrentOutboundCard()),
+                ),
+                sized(
+                  topHeight,
+                  row(const [
+                    (1, SpeedCard(direction: TrafficDirection.upload)),
+                    (1, SpeedCard(direction: TrafficDirection.download)),
+                  ]),
+                ),
+                sized(
+                  controlHeight,
+                  const RepaintBoundary(child: OutboundModeBar()),
+                ),
+                sized(controlHeight, row(switches)),
+                sized(
+                  middleHeight,
+                  row(const [(1, IntranetIpCard()), (1, ProfilesCard())]),
+                ),
+                sized(
+                  middleHeight,
+                  row(const [(1, ServiceStatusCard()), (1, MemoryInfo())]),
+                ),
+                sized(summaryHeight, summaries),
+              ],
+            ),
+          );
+        }
+        final rows = [
+          sized(
+            topHeight,
+            row(const [
+              (2, CurrentOutboundCard()),
+              (1, SpeedCard(direction: TrafficDirection.upload)),
+              (1, SpeedCard(direction: TrafficDirection.download)),
+            ]),
+          ),
+          sized(
+            controlHeight,
+            row([(2, const OutboundModeBar()), ...switches]),
+          ),
+          sized(
+            middleHeight,
+            row([
+              (1, const IntranetIpCard()),
+              (1, const ProfilesCard()),
+              if (column >= _memoryColumnMin * scale) ...[
+                (1, const ServiceStatusCard()),
+                (1, const MemoryInfo()),
+              ] else
+                (2, const ServiceStatusCard()),
+            ]),
+          ),
+        ];
+        final rowsHeight =
+            padding.vertical +
+            topHeight +
+            controlHeight +
+            middleHeight +
+            gap * 3;
+        final tablesFit = constraints.maxHeight >= rowsHeight + tablesHeight;
+        final fills = constraints.maxHeight >= rowsHeight + summaryHeight;
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: fills ? constraints.maxHeight : null,
+            child: Padding(
+              padding: padding,
+              child: Column(
+                spacing: gap,
+                children: [
+                  ...rows,
+                  if (tablesFit)
+                    Expanded(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        spacing: gap,
+                        children: const [
+                          Expanded(
+                            flex: 3,
+                            child: RepaintBoundary(
+                              child: ConnectionsTableCard(),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: RepaintBoundary(child: ProxyGroupsCard()),
+                          ),
+                        ],
+                      ),
+                    )
+                  else if (fills)
+                    Expanded(child: summaries)
+                  else
+                    sized(summaryHeight, summaries),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );
   }
+}
 
-  void _addWidget(BuildContext sheetContext, GridItem item, Rect from) {
-    final grid = key.currentState;
-    if (grid == null) {
-      return;
-    }
-    Navigator.of(sheetContext).pop();
-    grid.addItem(item, from: from);
-  }
+class _MobileDashboard extends ConsumerWidget {
+  const _MobileDashboard({
+    required this.platform,
+    required this.gap,
+    required this.editing,
+    required this.cardKeyOf,
+    required this.onDone,
+  });
 
-  void _handleEnterEdit() {
-    _isEditNotifier.value = true;
-  }
-
-  void _handleExitEdit() {
-    _isEditNotifier.value = false;
-  }
-
-  void _saveDashboardWidgets(List<GridItem> items) {
-    final dashboardWidgets = items.map(dashboardWidgetOf).toList();
-    ref
-        .read(appSettingProvider.notifier)
-        .update((state) => state.copyWith(dashboardWidgets: dashboardWidgets));
-  }
+  final SupportPlatform platform;
+  final double gap;
+  final bool editing;
+  final GlobalKey Function(DashboardWidget widget) cardKeyOf;
+  final VoidCallback onDone;
 
   @override
-  Widget build(BuildContext context) {
-    final dashboardState = ref.watch(dashboardStateProvider);
-    final hasProfile = ref.watch(
-      profilesProvider.select((state) => state.isNotEmpty),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final saved = ref.watch(
+      dashboardStateProvider.select((state) => state.dashboardWidgets),
     );
-    final spacing = cardSpacing;
-    final children = [
-      ...dashboardState.dashboardWidgets
-          .where(
-            (item) => item.platforms.contains(SupportPlatform.currentPlatform),
-          )
-          .map((item) => item.widget),
-    ];
-    return _buildIsEdit(
-      (isEdit) => CommonScaffold(
-        title: context.appLocalizations.dashboard,
-        actions: _buildActions(isEdit),
-        floatingActionButton: hasProfile ? const StartButton() : null,
-        body: Builder(
-          builder: (context) {
-            final padding = const EdgeInsets.all(16).copyWith(
-              top: context.contentTopPadding,
-              bottom: 16 + BottomInsetScope.of(context),
-            );
-            return Align(
-              alignment: Alignment.topCenter,
-              // SingleChildScrollView snaps a bounce back to its edge whenever a
-              // card's refresh relays it out; a sliver viewport keeps the overscroll.
-              child: CustomScrollView(
-                slivers: [
-                  SliverPadding(
-                    padding: padding,
-                    sliver: SliverToBoxAdapter(
-                      child: Align(
-                        alignment: Alignment.topCenter,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: dashboardMaxGridWidth,
-                          ),
-                          child: LayoutBuilder(
-                            builder: (_, constraints) {
-                              final band = DashboardGridBand.of(
-                                constraints.maxWidth,
-                              );
-                              final columns = band.columns;
-                              final grid = SuperGrid(
-                                key: key,
-                                editing: isEdit,
-                                crossAxisCount: columns,
-                                crossAxisSpacing: spacing,
-                                mainAxisSpacing: spacing,
-                                onChanged: _saveDashboardWidgets,
-                                revealPadding: padding.copyWith(
-                                  left: 0,
-                                  right: 0,
-                                ),
-                                children: children,
-                              );
-                              return DashboardWidgetMetrics(
-                                unitHeight: dashboardUnitHeight(
-                                  constraints.maxWidth,
-                                ),
-                                child: isEdit
-                                    ? BackLayerScope(
-                                        onBack: _handleExitEdit,
-                                        child: grid,
-                                      )
-                                    : grid,
-                              );
-                            },
-                          ),
-                        ),
+    final top = MediaQuery.paddingOf(context).top + 4;
+    final bottom = 16 + BottomInsetScope.of(context);
+    return CustomScrollView(
+      // A viewport per card lays them all out and holds the scroll end still.
+      scrollCacheExtent: editing
+          ? ScrollCacheExtent.viewport(DashboardWidget.values.length.toDouble())
+          : null,
+      slivers: [
+        SliverLayoutBuilder(
+          builder: (context, constraints) {
+            final side = dashboardMobileSideOf(constraints.crossAxisExtent);
+            final widgets = [
+              for (final widget in saved)
+                if (widget.platforms.contains(platform)) widget,
+            ];
+            if (editing) {
+              return DashboardEditor(
+                platform: platform,
+                widgets: widgets,
+                cardKeyOf: cardKeyOf,
+                padding: EdgeInsets.fromLTRB(side, top, side, bottom),
+                gap: gap,
+                onDone: onDone,
+              );
+            }
+            return SliverPadding(
+              padding: EdgeInsets.fromLTRB(side, top, side, bottom),
+              // A lazy list estimates the cards it has not laid out from the
+              // ones it has; cards this uneven move the scroll end as it goes.
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  spacing: gap,
+                  children: [
+                    for (final widget in widgets)
+                      RepaintBoundary(
+                        key: cardKeyOf(widget),
+                        child: widget.card,
                       ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           },
-        ),
-      ),
-    );
-  }
-}
-
-typedef _AddCallback = void Function(GridItem item, Rect from);
-
-class _AddDashboardWidgetModal extends StatelessWidget {
-  final List<GridItem> items;
-  final ScrollController? scrollController;
-  final _AddCallback onAdd;
-
-  const _AddDashboardWidgetModal({
-    required this.items,
-    required this.scrollController,
-    required this.onAdd,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return DeferredPointerHandler(
-      child: SingleChildScrollView(
-        controller: scrollController,
-        padding: const EdgeInsets.all(
-          16,
-        ).copyWith(top: context.contentTopPadding),
-        child: Grid(
-          crossAxisCount: 8,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          children: items
-              .map(
-                (item) => item.wrap(
-                  builder: (child) {
-                    return _AddedContainer(
-                      onAdd: (from) => onAdd(item, from),
-                      child: child,
-                    );
-                  },
-                ),
-              )
-              .toList(),
-        ),
-      ),
-    );
-  }
-}
-
-class _AddedContainer extends StatelessWidget {
-  final Widget child;
-  final ValueChanged<Rect> onAdd;
-
-  const _AddedContainer({required this.child, required this.onAdd});
-
-  void _handleAdd(BuildContext context) {
-    final box = context.findRenderObject() as RenderBox?;
-    if (box == null || !box.hasSize) {
-      return;
-    }
-    onAdd(box.localToGlobal(Offset.zero) & box.size);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        ActivateBox(child: child),
-        Positioned(
-          top: -8,
-          right: -8,
-          child: DeferPointer(
-            child: ElasticButton(
-              child: CornerBadgeButton(
-                glyph: AppGlyphs.addCircle,
-                tooltip: context.appLocalizations.add,
-                onPressed: () => _handleAdd(context),
-              ),
-            ),
-          ),
         ),
       ],
     );
