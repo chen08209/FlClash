@@ -17,14 +17,12 @@ class FormSheetRoute<T> extends PopupRoute<T>
     with SheetCoverRouteMixin<T>, AlertMotionRouteMixin<T>, AlertHostRoute<T> {
   FormSheetRoute({
     required this.builder,
-    required this.capturedThemes,
     required this.barrierColor,
     required this.barrierLabel,
     this.backgroundColor,
   });
 
   final WidgetBuilder builder;
-  final CapturedThemes capturedThemes;
   final Color? backgroundColor;
 
   @override
@@ -57,13 +55,11 @@ class FormSheetRoute<T> extends PopupRoute<T>
     Animation<double> animation,
     Animation<double> secondaryAnimation,
   ) {
-    return capturedThemes.wrap(
-      ElevatedSurfaceTheme(
-        child: _FormSheet(
-          backgroundColor: backgroundColor,
-          dismissHandler: _dismissHandler,
-          builder: builder,
-        ),
+    return ElevatedSurfaceTheme(
+      child: _FormSheet(
+        backgroundColor: backgroundColor,
+        dismissHandler: _dismissHandler,
+        builder: builder,
       ),
     );
   }

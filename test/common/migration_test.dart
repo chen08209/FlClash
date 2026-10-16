@@ -1,7 +1,11 @@
 import 'dart:convert';
 
 import 'package:fl_clash/common/migration.dart';
+import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/ui/color.dart';
+import 'package:material_ui/material_ui.dart' show ThemeMode;
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -183,6 +187,109 @@ void main() {
       ]);
     });
 
+    group('upgrade', () {
+      Map<String, Object?> customized() =>
+          _createConfigMap()
+            ..['themeProps'] = {
+              'primaryColor': 0xFF123456,
+              'primaryColors': [0xFF795548, 0xFF123456],
+              'schemeVariant': 'tonalSpot',
+              'themeMode': 'dark',
+              'pureBlack': true,
+              'liquidGlass': true,
+              'systemFontFamily': 'Beta Serif',
+            };
+
+      test('starts theme colors over once and keeps the rest', () async {
+        final store = _FakeMigrationStore(
+          configMap: customized(),
+          version: Migration.currentVersion,
+          upgradeVersion: 0,
+        );
+
+        final config = await Migration(store: store).run();
+
+        final theme = config.themeProps;
+        expect(theme.primaryColor, defaultPrimaryColor);
+        expect(theme.primaryColors, defaultPrimaryColors);
+        expect(theme.colorStyle, ColorStyle.vivid);
+        expect(theme.themeMode, ThemeMode.dark);
+        expect(theme.pureBlack, isTrue);
+        expect(theme.liquidGlass, LiquidGlassMode.ultra);
+        expect(theme.fontFamily, 'Beta Serif');
+        expect(store.savedConfig, config);
+        expect(store.version, Migration.currentVersion);
+        expect(store.upgradeVersion, Migration.upgradeVersion);
+        expect(store.events, [
+          'getConfigMap',
+          'getVersion',
+          'saveConfig',
+          'setUpgradeVersion',
+        ]);
+
+        final later = _FakeMigrationStore(
+          configMap: jsonDecode(
+            jsonEncode(config.copyWith.themeProps(primaryColor: 0xFF123456)),
+          ),
+          version: store.version,
+          upgradeVersion: store.upgradeVersion,
+        );
+        final kept = await Migration(store: later).run();
+
+        expect(kept.themeProps.primaryColor, 0xFF123456);
+        expect(later.events, ['getConfigMap', 'getVersion']);
+      });
+
+      test('keeps standard glass on the ultra tier it became, once', () async {
+        Future<LiquidGlassMode> upgrade(String mode, int from) async {
+          final configMap = _createConfigMap();
+          (configMap['themeProps']! as Map<String, Object?>)['liquidGlass'] =
+              mode;
+          final store = _FakeMigrationStore(
+            configMap: configMap,
+            version: Migration.currentVersion,
+            upgradeVersion: from,
+          );
+          return (await Migration(store: store).run()).themeProps.liquidGlass;
+        }
+
+        expect(await upgrade('standard', 1), LiquidGlassMode.ultra);
+        expect(await upgrade('none', 1), LiquidGlassMode.none);
+        expect(await upgrade('standard', 2), LiquidGlassMode.standard);
+      });
+
+      test('a new install only records it', () async {
+        final store = _FakeMigrationStore(
+          configMap: null,
+          version: 0,
+          upgradeVersion: 0,
+        );
+
+        final config = await Migration(store: store).run();
+
+        expect(config.themeProps, defaultThemeProps);
+        expect(store.upgradeVersion, Migration.upgradeVersion);
+        expect(
+          store.events.where((event) => event == 'saveConfig'),
+          hasLength(1),
+        );
+      });
+
+      test('waits for the next launch when saving fails', () async {
+        final store = _FakeMigrationStore(
+          configMap: customized(),
+          version: Migration.currentVersion,
+          upgradeVersion: 0,
+          configSaveResult: false,
+        );
+
+        final config = await Migration(store: store).run();
+
+        expect(config.themeProps.primaryColor, 0xFF123456);
+        expect(store.upgradeVersion, 0);
+      });
+    });
+
     test('keeps what it can read of a damaged current config', () async {
       final configMap = _createConfigMap()
         ..['currentProfileId'] = 7
@@ -242,6 +349,7 @@ class _FakeMigrationStore implements MigrationStore {
   final List<String> events = [];
 
   int version;
+  int upgradeVersion;
   Config? savedConfig;
   MigrationData? restoredData;
   bool didClearClashConfig = false;
@@ -249,6 +357,7 @@ class _FakeMigrationStore implements MigrationStore {
   _FakeMigrationStore({
     required this.configMap,
     required this.version,
+    this.upgradeVersion = Migration.upgradeVersion,
     this.clashConfigMap,
     this.configSaveResult = true,
     this.available = true,
@@ -301,5 +410,14 @@ class _FakeMigrationStore implements MigrationStore {
   Future<void> setVersion(int version) async {
     events.add('setVersion');
     this.version = version;
+  }
+
+  @override
+  Future<int> getUpgradeVersion() async => upgradeVersion;
+
+  @override
+  Future<void> setUpgradeVersion(int version) async {
+    events.add('setUpgradeVersion');
+    upgradeVersion = version;
   }
 }

@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/feature.dart';
 import 'package:fl_clash/common/system_fonts.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -76,25 +78,171 @@ void main() {
   });
 
   group('primary color', () {
-    testWidgets('blocks the back gesture only while a color is removable', (
+    Finder swatch(int color) => find.byWidgetPredicate(
+      (widget) =>
+          widget is Semantics && widget.properties.label == Color(color).hex,
+    );
+
+    testWidgets('starts on blue among the system colors', (tester) async {
+      container
+          .read(themeSettingProvider.notifier)
+          .update((_) => defaultThemeProps);
+      await pumpThemeView(tester);
+
+      expect(readTheme().primaryColor, 0xFF007AFF);
+      for (final color in defaultPrimaryColors) {
+        expect(swatch(color), findsOneWidget);
+      }
+      expect(find.byTooltip('Reset'), findsNothing);
+    });
+
+    testWidgets('picks a color and the style of its scheme', (tester) async {
+      await pumpThemeView(tester);
+
+      await tester.tap(swatch(0xFFAF52DE));
+      await tester.pumpAndSettle();
+      expect(readTheme().primaryColor, 0xFFAF52DE);
+
+      await tester.tap(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics && widget.properties.label == 'Follow system',
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(readTheme().primaryColor, isNull);
+
+      await tester.tap(find.text('Color style'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Soft').last);
+      await tester.pumpAndSettle();
+      expect(readTheme().colorStyle, ColorStyle.soft);
+    });
+
+    testWidgets('deletes a color from its context menu', (tester) async {
+      await pumpThemeView(tester);
+      await tester.tap(swatch(0xFFFF9500));
+      await tester.pumpAndSettle();
+
+      await tester.longPress(swatch(0xFFFF9500));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+
+      expect(readTheme().primaryColors, isNot(contains(0xFFFF9500)));
+      expect(readTheme().primaryColor, defaultPrimaryColor);
+      expect(swatch(0xFFFF9500), findsNothing);
+    });
+
+    Future<void> editColor(WidgetTester tester, int color, String hex) async {
+      await tester.longPress(swatch(color));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Edit'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(HexColorField),
+          matching: find.byType(TextField),
+        ),
+        hex,
+      );
+      await tester.pump();
+      await tester.tap(find.byTooltip('Confirm'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('edits a color in place from its context menu', (tester) async {
+      await pumpThemeView(tester);
+      await tester.tap(swatch(0xFFFF9500));
+      await tester.pumpAndSettle();
+      final index = readTheme().primaryColors.indexOf(0xFFFF9500);
+
+      await editColor(tester, 0xFFFF9500, '123456');
+
+      expect(readTheme().primaryColors, isNot(contains(0xFFFF9500)));
+      expect(readTheme().primaryColors[index], 0xFF123456);
+      expect(readTheme().primaryColor, 0xFF123456);
+      expect(swatch(0xFF123456), findsOneWidget);
+    });
+
+    testWidgets('merges a color edited into one already listed', (
       tester,
     ) async {
       await pumpThemeView(tester);
-      RoutePopDisposition disposition() {
-        return ModalRoute.of(
-          tester.element(find.byType(ThemeView)),
-        )!.popDisposition;
+      await tester.tap(swatch(0xFF007AFF));
+      await tester.pumpAndSettle();
+      final count = readTheme().primaryColors.length;
+
+      await editColor(tester, 0xFFAF52DE, '007AFF');
+
+      expect(readTheme().primaryColors, hasLength(count - 1));
+      expect(readTheme().primaryColors, isNot(contains(0xFFAF52DE)));
+      expect(readTheme().primaryColor, 0xFF007AFF);
+      expect(swatch(0xFF007AFF), findsOneWidget);
+    });
+
+    testWidgets('adds a custom color once and selects it', (tester) async {
+      await pumpThemeView(tester);
+      final count = readTheme().primaryColors.length;
+
+      for (var i = 0; i < 2; i++) {
+        await tester.tap(find.byTooltip('Add'));
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.descendant(
+            of: find.byType(HexColorField),
+            matching: find.byType(TextField),
+          ),
+          '123456',
+        );
+        await tester.pump();
+        await tester.tap(find.byTooltip('Confirm'));
+        await tester.pumpAndSettle();
       }
 
-      expect(disposition(), isNot(RoutePopDisposition.doNotPop));
+      expect(readTheme().primaryColors, hasLength(count + 1));
+      expect(readTheme().primaryColors.last, 0xFF123456);
+      expect(readTheme().primaryColor, 0xFF123456);
+      expect(swatch(0xFF123456), findsOneWidget);
+    });
 
-      await tester.longPress(find.byType(ColorSchemeBox).at(1));
+    testWidgets('keeps the custom color palette clear of the edge back '
+        'swipe', (tester) async {
+      const size = Size(400, 860);
+      container.read(viewSizeProvider.notifier).value = size;
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      tester.view.systemGestureInsets = const FakeViewPadding(
+        left: 30,
+        right: 30,
+      );
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const TestApp(child: ThemeView()),
+        ),
+      );
       await tester.pumpAndSettle();
-      expect(disposition(), RoutePopDisposition.doNotPop);
 
-      await tester.tap(find.text('Cancel'));
+      await tester.scrollUntilVisible(
+        find.byTooltip('Add'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.byTooltip('Add'));
       await tester.pumpAndSettle();
-      expect(disposition(), isNot(RoutePopDisposition.doNotPop));
+
+      final pad = tester.getRect(
+        find.descendant(
+          of: find.byType(Palette),
+          matching: find.byType(AspectRatio),
+        ),
+      );
+      expect(pad.left, 30);
+      expect(pad.right, size.width - 30);
     });
   });
 
@@ -127,24 +275,26 @@ void main() {
   });
 
   group('liquid glass', () {
-    testWidgets('is off until chosen, and switches back', (tester) async {
+    testWidgets('is off until a tier is chosen, and switches back', (
+      tester,
+    ) async {
       await pumpThemeView(tester);
       final group = find.ancestor(
         of: find.text('Liquid Glass').first,
-        matching: find.byType(PreviewChoiceGroup<bool>),
+        matching: find.byType(PreviewChoiceGroup<LiquidGlassMode>),
       );
       Finder choice(String label) =>
           find.descendant(of: group, matching: find.text(label)).last;
 
-      expect(readTheme().liquidGlass, isFalse);
-
-      await tester.tap(choice('Liquid Glass'));
-      await tester.pumpAndSettle();
-      expect(readTheme().liquidGlass, isTrue);
+      expect(readTheme().liquidGlass, LiquidGlassMode.none);
 
       await tester.tap(choice('Standard'));
       await tester.pumpAndSettle();
-      expect(readTheme().liquidGlass, isFalse);
+      expect(readTheme().liquidGlass, LiquidGlassMode.standard);
+
+      await tester.tap(choice('None'));
+      await tester.pumpAndSettle();
+      expect(readTheme().liquidGlass, LiquidGlassMode.none);
     });
   });
 
@@ -234,7 +384,7 @@ void main() {
     String? previewFamilyOf(WidgetTester tester, String text) =>
         DefaultTextStyle.of(tester.element(inPage(text))).style.fontFamily;
 
-    Future<void> pumpPastArrivalHold(WidgetTester tester) async {
+    Future<void> pumpSettled(WidgetTester tester) async {
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
     }
@@ -242,7 +392,7 @@ void main() {
     Future<void> openFonts(WidgetTester tester) async {
       await tester.tap(find.text('Aa').first);
       await tester.pumpAndSettle();
-      await pumpPastArrivalHold(tester);
+      await pumpSettled(tester);
     }
 
     testWidgets('picks an installed font on its page and back to default', (
@@ -271,26 +421,50 @@ void main() {
       expect(readTheme().fontFamily, isNull);
     });
 
-    testWidgets('shows the loading illustration until the sheet has opened', (
-      tester,
-    ) async {
+    testWidgets('lists the fonts as the sheet opens and gives the names '
+        'their fonts once it has stopped', (tester) async {
       var reads = 0;
       systemFontFamiliesReader = () async {
         reads++;
-        return ['Alpha Sans'];
+        return ['Arrival Sans'];
       };
       await pumpThemeView(tester);
 
       await tester.tap(find.text('Aa').first);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
-      expect(find.byType(FontFamilyView), findsOneWidget);
-      expect(reads, 0);
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(reads, 1);
+      expect(fontsIllustration, findsNothing);
+      expect(inPage('Arrival Sans'), findsOneWidget);
+      expect(
+        isRouteMoving(tester.element(find.byType(FontFamilyView))),
+        isTrue,
+      );
+      expect(previewFamilyOf(tester, 'Arrival Sans'), isNot('Arrival Sans'));
+
+      await pumpSettled(tester);
+      expect(previewFamilyOf(tester, 'Arrival Sans'), 'Arrival Sans');
+    });
+
+    testWidgets('shows the loading illustration while the fonts take long', (
+      tester,
+    ) async {
+      final families = Completer<List<String>>();
+      systemFontFamiliesReader = () => families.future;
+      await pumpThemeView(tester);
+
+      await tester.tap(find.text('Aa').first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(fontsIllustration, findsNothing);
+
+      await tester.pump(const Duration(milliseconds: 300));
       expect(fontsIllustration, findsOneWidget);
       expect(inPage('Default'), findsNothing);
 
-      await pumpPastArrivalHold(tester);
-      expect(reads, 1);
+      families.complete(['Alpha Sans']);
+      await pumpSettled(tester);
       expect(inPage('Alpha Sans'), findsOneWidget);
       expect(fontsIllustration, findsNothing);
     });

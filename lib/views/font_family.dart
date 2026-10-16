@@ -39,23 +39,14 @@ class FontFamilyView extends ConsumerStatefulWidget {
 
 class _FontFamilyViewState extends ConsumerState<FontFamilyView> {
   List<_InstalledFont>? _installed;
-  var _loadStarted = false;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_loadStarted) {
-      return;
-    }
-    _loadStarted = true;
+  void initState() {
+    super.initState();
     unawaited(_load());
   }
 
   Future<void> _load() async {
-    await whenRouteSettled(context);
-    if (!mounted) {
-      return;
-    }
     final families = await loadSystemFontFamilies();
     if (mounted) {
       setState(() => _installed = families.map(_InstalledFont.new).toList());
@@ -166,21 +157,28 @@ class _FontLabelState extends State<_FontLabel> {
     }
     _scheduled = true;
     SchedulerBinding.instance
-      ..addPostFrameCallback((_) {
-        _scheduled = false;
-        while (_waiting.isNotEmpty) {
-          final next = _waiting.removeFirst();
-          final family = next.widget.family;
-          if (!next.mounted || next._isShown) {
-            continue;
-          }
-          _shown.add(family);
-          next.setState(() {});
-          break;
-        }
-        _schedule();
-      })
+      ..addPostFrameCallback(_showNext)
       ..ensureVisualUpdate();
+  }
+
+  static void _showNext(Duration _) {
+    final next = _waiting.firstOrNull;
+    if (next != null && next.mounted && isRouteMoving(next.context)) {
+      // The frames of the motion carry the queue until it stops.
+      SchedulerBinding.instance.addPostFrameCallback(_showNext);
+      return;
+    }
+    _scheduled = false;
+    while (_waiting.isNotEmpty) {
+      final label = _waiting.removeFirst();
+      if (!label.mounted || label._isShown) {
+        continue;
+      }
+      _shown.add(label.widget.family);
+      label.setState(() {});
+      break;
+    }
+    _schedule();
   }
 
   @override
