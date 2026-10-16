@@ -35,8 +35,7 @@ class ResourcesView extends ConsumerStatefulWidget {
   ConsumerState<ResourcesView> createState() => _ResourcesViewState();
 }
 
-class _ResourcesViewState extends ConsumerState<ResourcesView>
-    with RouteMotionHoldMixin<ResourcesView>, RouteSettledMixin<ResourcesView> {
+class _ResourcesViewState extends ConsumerState<ResourcesView> {
   _RemoteResources? _resources;
   var _fileInfos = const <String, FileInfo?>{};
 
@@ -46,10 +45,8 @@ class _ResourcesViewState extends ConsumerState<ResourcesView>
     ref.listenManual(iconSetsProvider, (_, _) => _refreshResources());
     ref.listenManual(clashProvidersProvider, (_, _) => _refreshResources());
     ref.listenManual(scriptsProvider, (_, _) => _refreshResources());
+    unawaited(_load());
   }
-
-  @override
-  void didSettleRoute() => unawaited(_load());
 
   Future<void> _load() async {
     await Future.wait<Object>([
@@ -101,7 +98,7 @@ class _ResourcesViewState extends ConsumerState<ResourcesView>
     if (_resources == null) {
       return;
     }
-    updateWhenRouteSettled(() => setState(() => _resources = _readResources()));
+    setState(() => _resources = _readResources());
   }
 
   Future<void> _updateAll() async {
@@ -120,6 +117,9 @@ class _ResourcesViewState extends ConsumerState<ResourcesView>
         value: updateInterval.toString(),
         suffixText: appLocalizations.hours,
         keyboardType: TextInputType.number,
+        inputFormatters: TextInputLimits.digitsOnly(
+          TextInputLimits.geoUpdateInterval,
+        ),
         validator: (value) {
           if (value == null || value.isEmpty) {
             return appLocalizations.emptyTip(
@@ -206,9 +206,10 @@ class _ResourcesViewState extends ConsumerState<ResourcesView>
         ),
       ],
       body: NullStatusSwitcher(
-        isEmpty: resources == null,
-        holdsArrival: true,
-        nullStatus: const NullStatus(illustration: NullStatusIllustration.data),
+        isLoading: resources == null,
+        loadingStatus: const NullStatus(
+          illustration: NullStatusIllustration.data,
+        ),
         child: ListView(
           padding: const EdgeInsets.symmetric(
             horizontal: 16,

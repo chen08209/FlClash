@@ -33,9 +33,8 @@ _ProxyGroup _$ProxyGroupFromJson(Map<String, dynamic> json) => _ProxyGroup(
   hashKey: json['hash-key'] as String?,
   defaultSelected: json['default-selected'] as String?,
   emptyFallback: json['empty-fallback'] as String?,
-  includeAll: json['include-all'] as bool?,
-  includeAllProxies: json['include-all-proxies'] as bool?,
-  includeAllProviders: json['include-all-providers'] as bool?,
+  includeAllProxies: _readIncludeAll(json, 'include-all-proxies') as bool?,
+  includeAllProviders: _readIncludeAll(json, 'include-all-providers') as bool?,
   hidden: json['hidden'] as bool?,
   icon: json['icon'] as String?,
   order: json['order'] as String?,
@@ -68,7 +67,6 @@ Map<String, dynamic> _$ProxyGroupToJson(_ProxyGroup instance) =>
       'hash-key': instance.hashKey,
       'default-selected': instance.defaultSelected,
       'empty-fallback': instance.emptyFallback,
-      'include-all': instance.includeAll,
       'include-all-proxies': instance.includeAllProxies,
       'include-all-providers': instance.includeAllProviders,
       'hidden': instance.hidden,
@@ -185,18 +183,6 @@ const _$ProxyFieldEnumMap = {
   ProxyField.routingMark: 'routingMark',
   ProxyField.ipVersion: 'ipVersion',
 };
-
-_RuleProvider _$RuleProviderFromJson(Map<String, dynamic> json) =>
-    _RuleProvider(name: json['name'] as String);
-
-Map<String, dynamic> _$RuleProviderToJson(_RuleProvider instance) =>
-    <String, dynamic>{'name': instance.name};
-
-_ProxyProvider _$ProxyProviderFromJson(Map<String, dynamic> json) =>
-    _ProxyProvider(name: json['name'] as String);
-
-Map<String, dynamic> _$ProxyProviderToJson(_ProxyProvider instance) =>
-    <String, dynamic>{'name': instance.name};
 
 _Sniffer _$SnifferFromJson(Map<String, dynamic> json) => _Sniffer(
   enable: json['enable'] as bool? ?? false,
@@ -771,11 +757,6 @@ _ClashConfig _$ClashConfigFromJson(Map<String, dynamic> json) => _ClashConfig(
   subRules: json['sub-rules'] == null
       ? const []
       : _genList(json['sub-rules'] as Map<String, dynamic>),
-  proxyTypeMap:
-      (json['proxyTypeMap'] as Map<String, dynamic>?)?.map(
-        (k, e) => MapEntry(k, e as String),
-      ) ??
-      const {},
 );
 
 Map<String, dynamic> _$ClashConfigToJson(_ClashConfig instance) =>
@@ -786,7 +767,6 @@ Map<String, dynamic> _$ClashConfigToJson(_ClashConfig instance) =>
       'proxy-providers': instance.proxyProviders,
       'rule-providers': instance.ruleProviders,
       'sub-rules': instance.subRules,
-      'proxyTypeMap': instance.proxyTypeMap,
     };
 
 _PatchClashConfig _$PatchClashConfigFromJson(Map<String, dynamic> json) =>

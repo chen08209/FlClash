@@ -4,11 +4,11 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart' hide FileInfo;
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -225,7 +225,11 @@ class _CustomProxiesViewState extends ConsumerState<CustomProxiesView> {
     if (!mounted) {
       return;
     }
-    final res = await dialogs.showMessage(message: TextSpan(text: message));
+    final res = await dialogs.showMessage(
+      message: TextSpan(text: message),
+      destructive: true,
+      confirmText: appLocalizations.delete,
+    );
     if (res != true || !mounted) {
       return;
     }
@@ -318,6 +322,7 @@ class _CustomProxiesViewState extends ConsumerState<CustomProxiesView> {
                 added.join(', '),
               ),
       ),
+      destructive: true,
     );
     return res == true;
   }
@@ -428,12 +433,11 @@ class _CustomProxiesViewState extends ConsumerState<CustomProxiesView> {
           nullStatus: NullStatus(
             label: appLocalizations.nullTip(appLocalizations.proxies),
             illustration: NullStatusIllustration.proxies,
-            action: ElasticButton(
-              child: FilledButton.tonalIcon(
-                onPressed: _handleAddOrUpdate,
-                icon: const GlyphIcon(AppGlyphs.addCircle, fill: 1),
-                label: Text(appLocalizations.add),
-              ),
+            action: TonalButton(
+              size: TonalButtonSize.bar,
+              glyph: AppGlyphs.addCircle,
+              label: appLocalizations.add,
+              onPressed: _handleAddOrUpdate,
             ),
           ),
           child: Builder(
@@ -646,6 +650,7 @@ class _ShareLinkDialogState extends State<_ShareLinkDialog> {
     final appLocalizations = context.appLocalizations;
     return CommonDialog(
       title: appLocalizations.quickEdit,
+      hasFields: true,
       actions: [
         TextButton(
           onPressed: _reading ? null : _submit,
@@ -656,11 +661,9 @@ class _ShareLinkDialogState extends State<_ShareLinkDialog> {
         controller: _controller,
         autofocus: true,
         minLines: 3,
-        maxLines: 6,
+        maxLines: null,
         keyboardType: TextInputType.url,
         decoration: InputDecoration(
-          labelText: 'URI',
-          alignLabelWithHint: true,
           hintText: 'vless://…',
           errorText: _error,
           errorMaxLines: 3,
@@ -971,10 +974,9 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
     ValueChanged<Object?>? onChanged,
   }) {
     final update = onChanged ?? (Object? value) => _update(key, value);
-    final field = TextFormField(
+    final field = FormRowTextField(
       key: ValueKey('$key-$_revision'),
       initialValue: value,
-      textAlign: TextAlign.end,
       obscureText: obscureText,
       keyboardType: digitsOnly ? TextInputType.number : TextInputType.text,
       inputFormatters: digitsOnly
@@ -985,10 +987,7 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
       onChanged: (value) {
         update(digitsOnly ? int.tryParse(value) : value);
       },
-      decoration: InputDecoration.collapsed(
-        border: const NoInputBorder(),
-        hintText: hintText ?? context.appLocalizations.optional,
-      ),
+      hintText: hintText ?? context.appLocalizations.optional,
     );
     return FormRow(
       title: title,
@@ -1163,7 +1162,7 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
           Flexible(
             child: Text(
               value,
-              style: context.listTitleStyle?.copyWith(
+              style: context.listTitleStyle.copyWith(
                 color: context.colorScheme.onSurfaceVariant,
               ),
             ),
@@ -1300,7 +1299,7 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
   Widget _buildEasyTierSection(CustomProxy proxy) {
     final appLocalizations = context.appLocalizations;
     final definition = proxy.definition;
-    return generateSectionV3(
+    return generateSection(
       title: appLocalizations.network,
       items: [
         _buildTextItem(
@@ -1353,7 +1352,11 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
     if (!mounted) {
       return;
     }
-    final res = await dialogs.showMessage(message: TextSpan(text: message));
+    final res = await dialogs.showMessage(
+      message: TextSpan(text: message),
+      destructive: true,
+      confirmText: appLocalizations.delete,
+    );
     if (res == true && mounted) {
       ref.read(customProxiesProvider.notifier).delAll([id]);
       context.safeNestedPop();
@@ -1409,11 +1412,10 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
     final easyTier = proxy.type == 'easytier';
     final fields = proxy.fields;
     return CommonScaffold(
-      iconActions: customFormActions(
-        context,
-        onQuickEdit: _handleQuickEdit,
-        onSave: _handleSave,
-      ),
+      iconActions: [
+        customQuickEditAction(context, onPressed: _handleQuickEdit),
+      ],
+      confirmationAction: customSaveAction(context, onPressed: _handleSave),
       body: CustomScrollView(
         slivers: [
           SliverCustomIssuesBanner(issues: issues),
@@ -1423,7 +1425,7 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
             ).copyWith(bottom: 20),
             sliver: SliverList.list(
               children: [
-                generateSectionV3(
+                generateSection(
                   title: appLocalizations.basicInfo,
                   items: [
                     _buildTextItem(
@@ -1463,7 +1465,7 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
                   ],
                 ),
                 if (easyTier) _buildEasyTierSection(proxy),
-                generateSectionV3(
+                generateSection(
                   title: appLocalizations.authentication,
                   items: [
                     for (final field in fields)
@@ -1471,7 +1473,7 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
                   ],
                 ),
                 _buildOptions(proxy),
-                generateSectionV3(
+                generateSection(
                   title: appLocalizations.action,
                   items: [
                     if (!_isNew)
@@ -1546,7 +1548,6 @@ class _ProxyValuesView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return ListEditorPage<String, String>(
       title: title,
-      selectionEnabled: true,
       idOf: (value) => value,
       itemsOf: (ref) => ref.watch(
         customProxyProvider.select((state) => state.stringsOf(field)),

@@ -61,6 +61,10 @@ const privateRouteAddress = [
   'ff00::/8',
 ];
 
+Object? _readIncludeAll(Map<dynamic, dynamic> json, String key) {
+  return json['include-all'] == true ? true : json[key];
+}
+
 @freezed
 abstract class ProxyGroup with _$ProxyGroup {
   const factory ProxyGroup({
@@ -86,9 +90,10 @@ abstract class ProxyGroup with _$ProxyGroup {
     @JsonKey(name: 'hash-key') String? hashKey,
     @JsonKey(name: 'default-selected') String? defaultSelected,
     @JsonKey(name: 'empty-fallback') String? emptyFallback,
-    @JsonKey(name: 'include-all') bool? includeAll,
-    @JsonKey(name: 'include-all-proxies') bool? includeAllProxies,
-    @JsonKey(name: 'include-all-providers') bool? includeAllProviders,
+    @JsonKey(name: 'include-all-proxies', readValue: _readIncludeAll)
+    bool? includeAllProxies,
+    @JsonKey(name: 'include-all-providers', readValue: _readIncludeAll)
+    bool? includeAllProviders,
     bool? hidden,
     String? icon,
     String? order,
@@ -123,10 +128,8 @@ extension ProxyGroupExt on ProxyGroup {
       if (excludeFilter?.isNotEmpty == true) 'exclude-filter': excludeFilter,
       if (excludeType?.isNotEmpty == true) 'exclude-type': excludeType,
       if (expectedStatus?.isNotEmpty == true) 'expected-status': expectedStatus,
-      if (includeAll != null) 'include-all': includeAll,
-      if (includeAllProxies != null) 'include-all-proxies': includeAllProxies,
-      if (includeAllProviders != null)
-        'include-all-providers': includeAllProviders,
+      if (includeAllProxies == true) 'include-all-proxies': true,
+      if (includeAllProviders == true) 'include-all-providers': true,
       if (hidden != null) 'hidden': hidden,
       if (icon?.isNotEmpty == true) 'icon': icon,
       if (type == GroupType.URLTest && tolerance != null)
@@ -849,22 +852,6 @@ extension CustomProfileDataExt on CustomProfileData {
       ruleTargets.contains(name) ||
       name == GroupName.GLOBAL.name ||
       namedProxies.contains(name);
-}
-
-@freezed
-abstract class RuleProvider with _$RuleProvider {
-  const factory RuleProvider({required String name}) = _RuleProvider;
-
-  factory RuleProvider.fromJson(Map<String, Object?> json) =>
-      _$RuleProviderFromJson(json);
-}
-
-@freezed
-abstract class ProxyProvider with _$ProxyProvider {
-  const factory ProxyProvider({required String name}) = _ProxyProvider;
-
-  factory ProxyProvider.fromJson(Map<String, Object?> json) =>
-      _$ProxyProviderFromJson(json);
 }
 
 @freezed
@@ -1869,7 +1856,6 @@ abstract class ClashConfig with _$ClashConfig {
     @JsonKey(name: 'sub-rules', fromJson: _genList)
     @Default([])
     List<String> subRules,
-    @Default({}) Map<String, String> proxyTypeMap,
   }) = _ClashConfig;
 
   factory ClashConfig.fromJson(Map<String, Object?> json) =>

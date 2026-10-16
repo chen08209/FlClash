@@ -94,6 +94,10 @@ void main() {
       expect(urlProfile.realAutoUpdate, true);
       expect(urlProfile.realLabel, 'Remote');
       expect(urlProfile.copyWith(label: '').realLabel, 'example.com');
+
+      expect(fileProfile.exportFileName, '7.yaml');
+      expect(urlProfile.exportFileName, 'Remote.yaml');
+      expect(urlProfile.copyWith(label: 'a.YML').exportFileName, 'a.YML');
     });
 
     test('an unnamed profile falls back to its url host, then its id', () {

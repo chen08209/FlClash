@@ -1,7 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -105,6 +105,7 @@ class _Title extends ConsumerWidget {
                 for (final type in ExtendType.values)
                   CommonCard(
                     isSelected: extendType == type,
+                    fillsSelection: true,
                     onPressed: () {
                       _handleChangeType(ref, profileId, type);
                     },
@@ -129,9 +130,11 @@ class _Title extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
               _getDesc(context, extendType),
-              style: context.textTheme.bodySmall?.copyWith(
-                color: context.colorScheme.onSurfaceVariant.opacity80,
-              ),
+              style: AppTextStyle.footnote
+                  .of(context)
+                  .copyWith(
+                    color: context.colorScheme.onSurfaceVariant.opacity80,
+                  ),
             ),
           ),
         ],
