@@ -76,6 +76,15 @@ void main() {
       expect(before, [1, 2]);
     });
 
+    test('replace swaps items in a new generation', () {
+      final first = FixedList(3, list: [1, 2, 3]);
+      final before = first.list;
+      final second = first.replace({0: 10, 2: 30});
+      expect(second.list, [10, 2, 30]);
+      expect(second.revision, first.revision + 1);
+      expect(before, [1, 2, 3]);
+    });
+
     test('append still honours maxLength', () {
       var list = FixedList<int>(2);
       for (var i = 1; i <= 4; i++) {
@@ -105,6 +114,18 @@ void main() {
       final current = items.sublist(0, 2);
       final latest = items.sublist(4, 6);
       expect(retainTrimmedHead(current, latest, 10), [...current, ...latest]);
+    });
+
+    test('finds where latest starts by key when it carries a copy', () {
+      final current = [(1, 'a'), (2, 'a'), (3, 'a'), (4, 'a')];
+      final latest = [(3, 'b'), (4, 'a'), (5, 'a')];
+      expect(retainTrimmedHead(current, latest, 10, keyOf: (item) => item.$1), [
+        (1, 'a'),
+        (2, 'a'),
+        (3, 'b'),
+        (4, 'a'),
+        (5, 'a'),
+      ]);
     });
 
     test('caps growth from the tail', () {

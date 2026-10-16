@@ -40,10 +40,13 @@ class TrackerSpeedRanker {
       ..clear()
       ..addAll(samples);
 
-    int bucketOf(TrackerInfo trackerInfo) {
-      final speed = samples[trackerInfo.id]!.rankSpeed;
-      return speed < 1 ? 0 : (log(speed) / ln2).floor() + 1;
-    }
+    final buckets = {
+      for (final MapEntry(key: id, value: sample) in samples.entries)
+        id: sample.rankSpeed < 1
+            ? 0
+            : (log(sample.rankSpeed) / ln2).floor() + 1,
+    };
+    int bucketOf(TrackerInfo trackerInfo) => buckets[trackerInfo.id]!;
 
     final ranked =
         [
