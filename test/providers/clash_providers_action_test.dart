@@ -690,5 +690,31 @@ void main() {
 
       expect(setup.forced, [true]);
     });
+
+    test(
+      'a group taking in every provider or proxy reapplies only on the named',
+      () async {
+        await testDatabase.proxyGroups.put(
+          const ProxyGroup(
+            id: 23,
+            name: 'All',
+            type: GroupType.Selector,
+            includeAllProxies: true,
+            includeAllProviders: true,
+            order: 'b',
+          ).toCompanion(profileId),
+        );
+
+        await action().applyIfReferenced(ProviderKind.proxy, {
+          'Elsewhere',
+        }, force: true);
+        await action().applyIfProxiesNamed({'Unnamed'});
+        await action().applyIfReferenced(ProviderKind.proxy, {
+          'Home',
+        }, force: true);
+
+        expect(setup.forced, [true]);
+      },
+    );
   });
 }

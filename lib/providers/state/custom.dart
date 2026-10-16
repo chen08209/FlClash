@@ -508,7 +508,7 @@ Set<String> _namesOnLoops(Map<String, List<String>> members) {
 }
 
 /// [target] and what under it leads back to [proxy], through a group's own
-/// list, include-all where no filter narrows it, or an app proxy's entry in
+/// list or, where an app proxy dials through another, that proxy's entry in
 /// [dialers]; empty when the dial does not loop. What filters and providers
 /// pick is left to the core, which fails a dial that comes back to its dialer.
 Set<String> dialerLoop(
@@ -519,7 +519,7 @@ Set<String> dialerLoop(
 }) => dialerLoopsOf(groups, proxy: proxy, dialers: dialers)(target);
 
 bool _takesInEveryProxy(ProxyGroup group) =>
-    (group.includeAll == true || group.includeAllProxies == true) &&
+    group.includeAllProxies == true &&
     (group.filter ?? '').isEmpty &&
     (group.excludeFilter ?? '').isEmpty &&
     (group.excludeType ?? '').isEmpty;
@@ -566,8 +566,7 @@ class _DialerGraph {
     }
   }
 
-  /// The proxy's own dialer is the dial being checked, never a way back; a
-  /// proxy without one is still taken in by every include-all group.
+  /// The proxy's own dialer is the dial being checked, never a way back.
   Set<String> Function(String target) loopsOf(String proxy) {
     if (!declared.contains(proxy)) {
       return (_) => const {};
@@ -792,9 +791,13 @@ List<CustomIssue> proxyGroupIssues(ProxyGroup group, CustomProfileData data) {
   final hasSource =
       proxies.isNotEmpty ||
       use.isNotEmpty ||
-      group.includeAll == true ||
       group.includeAllProxies == true ||
-      group.includeAllProviders == true;
+      group.includeAllProviders == true &&
+          data.proxyGroups.any(
+            (item) =>
+                item.id != group.id &&
+                (item.use?.any(data.proxyProviders.contains) ?? false),
+          );
   final missingProxies = [
     for (final item in proxies)
       if (!data.ruleTargets.contains(item) && !data.proxies.contains(item))
@@ -804,7 +807,9 @@ List<CustomIssue> proxyGroupIssues(ProxyGroup group, CustomProfileData data) {
   // The core takes only a proxy here, never a group, and refuses the whole
   // config otherwise.
   final invalidEmptyFallback =
-      emptyFallback.isNotEmpty && !reservedProxyNames.contains(emptyFallback);
+      emptyFallback.isNotEmpty &&
+      !reservedProxyNames.contains(emptyFallback) &&
+      !data.namedProxies.contains(emptyFallback);
   final missingProviders = use
       .where((item) => !data.proxyProviders.contains(item))
       .toList();

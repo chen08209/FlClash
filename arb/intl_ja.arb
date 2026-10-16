@@ -922,5 +922,7 @@
   "done": "完了",
   "dashboardAddableSection": "追加できるカード",
   "customImportDroppedSubRules": "{count, plural, other{カスタム設定はサブルールに対応していないため、SUB-RULE ルール {label} 件を破棄しました}}",
-  "customImportDroppedIncludeAll": "プロキシグループ {groups} の include-all を破棄しました。これらのグループで使うプロキシまたはプロキシプロバイダーを追加してください"
+  "autoInclude": "自動で含める",
+  "allReferencedProxies": "参照されているすべてのプロキシ",
+  "allReferencedProxyProviders": "参照されているすべてのプロキシプロバイダー"
 }

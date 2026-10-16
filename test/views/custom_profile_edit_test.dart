@@ -444,6 +444,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(offered('REJECT'), findsNothing);
+      await tester.tap(
+        find.descendant(
+          of: picker,
+          matching: find.textContaining('${l.filters} ('),
+        ),
+      );
+      await tester.pumpAndSettle();
       for (final header in [
         '${l.basicStrategy} (5)',
         '${l.localProxies} (1)',
@@ -452,13 +459,6 @@ void main() {
         await tester.tap(offered(header));
         await tester.pumpAndSettle();
       }
-      await tester.tap(
-        find.descendant(
-          of: picker,
-          matching: find.textContaining('${l.filters} ('),
-        ),
-      );
-      await tester.pumpAndSettle();
       expect(offered('DIRECT'), findsNothing);
       expect(offered('mine'), findsNothing);
       expect(offered(l.url), findsOneWidget);
@@ -472,6 +472,11 @@ void main() {
       expect(container.read(proxyGroupProvider).proxies, ['DIRECT']);
       await tester.tap(offered('REJECT'));
       await tester.tap(offered('Home'));
+      await Scrollable.ensureVisible(
+        tester.element(offered('p')),
+        alignment: 0.5,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(offered('p'));
       await tester.scrollUntilVisible(
         offered(_hongKong.label),
@@ -497,6 +502,82 @@ void main() {
       expect(group.proxies, ['DIRECT', 'REJECT', 'Home']);
       expect(group.use, ['p']);
       expect(group.filter, 'mine`${_hongKong.regex}');
+    });
+
+    testWidgets('the picker adds taking in every proxy or provider as a member '
+        'beside the named ones', (tester) async {
+      final l = currentAppLocalizations;
+      container = buildContainer(
+        _group(proxies: ['DIRECT']),
+        customProxies: const [_home],
+      );
+      final picker = find.byWidgetPredicate(
+        (widget) =>
+            widget.runtimeType.toString() == '_MemberPicker<ProxyGroup>',
+      );
+      Finder offered(String name) =>
+          find.descendant(of: picker, matching: find.text(name));
+      Finder listed(String name) => find.descendant(
+        of: find.byType(SuperSliverReorderableList),
+        matching: find.text(name),
+      );
+
+      await pumpGroupSheet(tester);
+      await tester.ensureVisible(find.text(l.addNodes));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l.addNodes));
+      await tester.pumpAndSettle();
+      for (final header in [
+        '${l.autoInclude} (2)',
+        '${l.proxyProviders} (1)',
+      ]) {
+        await tester.tap(offered(header));
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(offered('p'));
+      await tester.tap(offered(l.allReferencedProxyProviders));
+      await tester.tap(offered(l.allReferencedProxies));
+      await tester.pump();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      final group = container.read(proxyGroupProvider);
+      expect(group.proxies, ['DIRECT']);
+      expect(group.use, ['p']);
+      expect(group.includeAllProxies, isTrue);
+      expect(group.includeAllProviders, isTrue);
+      expect(listed(l.allReferencedProxies), findsOneWidget);
+      expect(listed(l.allReferencedProxyProviders), findsOneWidget);
+      expect(listed('p'), findsOneWidget);
+
+      await tester.ensureVisible(find.text(l.addNodes));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l.addNodes));
+      await tester.pumpAndSettle();
+      await tester.tap(offered('${l.localProxies} (1)'));
+      await tester.pumpAndSettle();
+      expect(offered('Home'), findsOneWidget);
+      for (final section in [l.autoInclude, l.proxyProviders]) {
+        expect(
+          find.descendant(
+            of: picker,
+            matching: find.textContaining('$section ('),
+          ),
+          findsNothing,
+        );
+      }
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.descendant(
+          of: rowOf(l.allReferencedProxyProviders),
+          matching: find.byTooltip(l.remove),
+        ),
+      );
+      await tester.pump();
+      expect(container.read(proxyGroupProvider).includeAllProviders, isNull);
+      expect(container.read(proxyGroupProvider).includeAllProxies, isTrue);
     });
 
     testWidgets('the picker adds exclude filters as members of their own', (

@@ -922,5 +922,7 @@
   "done": "Done",
   "dashboardAddableSection": "Available to add",
   "customImportDroppedSubRules": "{count, plural, =1{1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules} other{{label} SUB-RULE rules were dropped, since custom profiles do not support sub-rules}}",
-  "customImportDroppedIncludeAll": "Dropped include-all from the proxy groups {groups}; add the proxies or proxy providers they use"
+  "autoInclude": "Auto-include",
+  "allReferencedProxies": "All referenced proxies",
+  "allReferencedProxyProviders": "All referenced proxy providers"
 }

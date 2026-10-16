@@ -1,7 +1,8 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'form_row.dart';
@@ -153,13 +154,13 @@ class _Banner extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 8,
         children: [
-          GlyphIcon(glyph, size: 20.ap, color: foregroundColor),
+          GlyphIcon(glyph, size: 20.ap(context), color: foregroundColor),
           Expanded(
             child: Text(
               message,
-              style: context.textTheme.bodyMedium?.copyWith(
-                color: foregroundColor,
-              ),
+              style: AppTextStyle.subheadline
+                  .of(context)
+                  .copyWith(color: foregroundColor),
             ),
           ),
         ],

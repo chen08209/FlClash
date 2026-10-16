@@ -17,6 +17,10 @@ abstract final class TextInputLimits {
   static const portRange = 11;
   static const number = 10;
   static const interval = number;
+
+  /// mihomo multiplies these hours into a Duration, which overflows past
+  /// about 2.5 million and panics its update ticker.
+  static const geoUpdateInterval = 6;
   static const search = 256;
   static const rule = 1024;
   static const filter = 1024;

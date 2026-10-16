@@ -7717,13 +7717,33 @@ class AppLocalizations {
     );
   }
 
-  /// `Dropped include-all from the proxy groups {groups}; add the proxies or proxy providers they use`
-  String customImportDroppedIncludeAll(Object groups) {
+  /// `Auto-include`
+  String get autoInclude {
     return Intl.message(
-      'Dropped include-all from the proxy groups $groups; add the proxies or proxy providers they use',
-      name: 'customImportDroppedIncludeAll',
+      'Auto-include',
+      name: 'autoInclude',
       desc: '',
-      args: [groups],
+      args: [],
+    );
+  }
+
+  /// `All referenced proxies`
+  String get allReferencedProxies {
+    return Intl.message(
+      'All referenced proxies',
+      name: 'allReferencedProxies',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All referenced proxy providers`
+  String get allReferencedProxyProviders {
+    return Intl.message(
+      'All referenced proxy providers',
+      name: 'allReferencedProxyProviders',
+      desc: '',
+      args: [],
     );
   }
 }

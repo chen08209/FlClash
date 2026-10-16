@@ -4,10 +4,10 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
@@ -202,6 +202,8 @@ class _IconPickerViewState extends ConsumerState<IconPickerView> {
       message: TextSpan(
         text: appLocalizations.deleteTip(_iconLabel(context, icon)),
       ),
+      destructive: true,
+      confirmText: appLocalizations.delete,
     );
     if (res != true) {
       return;
@@ -405,7 +407,6 @@ class _CurrentIcon extends StatelessWidget {
     final description = _describe(context);
     final subtitle = description.subtitle;
     return CommonCard(
-      type: CommonCardType.filled,
       radius: AppCorner.xl,
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -429,7 +430,7 @@ class _CurrentIcon extends StatelessWidget {
                       description.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: context.textTheme.bodyLarge,
+                      style: AppTextStyle.body.of(context),
                     ),
                   ),
                   if (subtitle != null && subtitle.isNotEmpty)
@@ -437,9 +438,11 @@ class _CurrentIcon extends StatelessWidget {
                       subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: context.textTheme.bodySmall?.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
+                      style: AppTextStyle.footnote
+                          .of(context)
+                          .copyWith(
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
                     ),
                 ],
               ),
@@ -501,7 +504,7 @@ class SliverIconGrid extends StatelessWidget {
           mainAxisExtent:
               _iconPlateSize +
               _iconLabelGap +
-              globalState.measure.bodySmallHeight,
+              globalState.measure.textHeight(AppTextStyle.footnote),
         ),
         itemCount: icons.length,
         itemBuilder: (context, index) {
@@ -544,40 +547,43 @@ class _IconTile extends StatelessWidget {
         child: Column(
           spacing: _iconLabelGap,
           children: [
-            Material(
-              color: colorScheme.secondaryContainer,
-              shape: isSelected
-                  ? AppShape.md.copyWith(
-                      side: BorderSide(color: colorScheme.primary, width: 2),
-                    )
-                  : AppShape.md,
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                customBorder: AppShape.md,
-                onTap: onPressed,
-                onLongPress: onLongPress,
-                child: SizedBox.square(
-                  dimension: _iconPlateSize,
-                  child: Center(
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Material(
+                  color: context.raisedSurfaceLevel.colorOf(colorScheme),
+                  shape: AppShape.md,
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    customBorder: AppShape.md,
+                    onTap: onPressed,
+                    onLongPress: onLongPress,
                     child: SizedBox.square(
-                      dimension: _iconSize,
-                      child: IconTheme.merge(
-                        data: const IconThemeData(size: _iconSize),
-                        child: CommonTargetIcon(src: icon.url),
+                      dimension: _iconPlateSize,
+                      child: Center(
+                        child: SizedBox.square(
+                          dimension: _iconSize,
+                          child: IconTheme.merge(
+                            data: const IconThemeData(size: _iconSize),
+                            child: CommonTargetIcon(src: icon.url),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
+                if (isSelected)
+                  const Positioned(top: -4, right: -4, child: SelectionBadge()),
+              ],
             ),
             Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: context.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyle.footnote
+                  .of(context)
+                  .copyWith(color: colorScheme.onSurfaceVariant),
             ),
           ],
         ),

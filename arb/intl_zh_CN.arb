@@ -922,5 +922,7 @@
   "done": "完成",
   "dashboardAddableSection": "可添加",
   "customImportDroppedSubRules": "{count, plural, other{自定义配置不支持子规则，已丢弃 {label} 条 SUB-RULE 规则}}",
-  "customImportDroppedIncludeAll": "已丢弃策略组 {groups} 的 include-all，请为这些策略组添加代理或代理集"
+  "autoInclude": "自动包含",
+  "allReferencedProxies": "全部被引用的代理",
+  "allReferencedProxyProviders": "全部被引用的代理集"
 }

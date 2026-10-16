@@ -1,12 +1,11 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/profiles/custom/custom.dart';
 import 'package:fl_clash/views/profiles/extend/extend.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -22,28 +21,24 @@ const _infoGap = 4.0;
 
 double get _profileItemHeight {
   final measure = globalState.measure;
-  return max(
-        SourceIcon.size,
-        measure.titleMediumHeight + _infoGap + measure.bodySmallHeight,
-      ) +
+  return measure.textHeight(AppTextStyle.headline) +
+      _infoGap +
+      measure.textHeight(AppTextStyle.footnote) +
       2 * listRowVerticalPadding;
 }
 
 class ProfilesView extends ConsumerStatefulWidget {
-  const ProfilesView({super.key});
+  const ProfilesView({super.key, this.picker = false});
+
+  /// Clears the bar and opens at the top, for switching profiles from a sheet.
+  final bool picker;
 
   @override
   ConsumerState<ProfilesView> createState() => _ProfilesViewState();
 }
 
 class _ProfilesViewState extends ConsumerState<ProfilesView> {
-  Function? applyConfigDebounce;
   bool _isUpdating = false;
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   Future<void> _updateProfiles(List<Profile> profiles) async {
     if (_isUpdating == true) {
@@ -104,18 +99,19 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
         final appLocalizations = context.appLocalizations;
         final isLoading = ref.watch(loadingProvider(LoadingTag.profiles));
         final state = ref.watch(profilesStateProvider);
-        final spacing = cardSpacing;
+        final spacing = cardSpacingOf(context, ref.watch(viewModeProvider));
+        final picker = widget.picker;
         return CommonScaffold(
           isLoading: isLoading,
           title: appLocalizations.profiles,
-          primaryAction: state.profiles.isEmpty
+          primaryAction: state.profiles.isEmpty || picker
               ? null
               : IconButtonData(
                   glyph: AppGlyphs.addCircle,
                   onPressed: () => showAddProfilePage(context),
                   tooltip: appLocalizations.addProfile,
                 ),
-          iconActions: _buildActions(state.profiles),
+          iconActions: picker ? const [] : _buildActions(state.profiles),
           foldPrimaryAction: true,
           body: NullStatusSwitcher(
             isEmpty: state.profiles.isEmpty,
@@ -123,18 +119,18 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
               label: appLocalizations.nullTip(appLocalizations.profiles),
               description: appLocalizations.nullProfileDesc,
               illustration: NullStatusIllustration.profile,
-              action: ElasticButton(
-                child: FilledButton.tonalIcon(
-                  onPressed: () => showAddProfilePage(context),
-                  icon: const GlyphIcon(AppGlyphs.addCircle, fill: 1),
-                  label: Text(appLocalizations.addProfile),
-                ),
+              action: TonalButton(
+                size: TonalButtonSize.bar,
+                glyph: AppGlyphs.addCircle,
+                label: appLocalizations.addProfile,
+                onPressed: () => showAddProfilePage(context),
               ),
             ),
             child: _ProfilesGrid(
               profiles: state.profiles,
               currentProfileId: state.currentProfileId,
               spacing: spacing,
+              revealsSelected: !picker,
             ),
           ),
         );
@@ -148,11 +144,13 @@ class _ProfilesGrid extends ConsumerStatefulWidget {
     required this.profiles,
     required this.currentProfileId,
     required this.spacing,
+    required this.revealsSelected,
   });
 
   final List<Profile> profiles;
   final int? currentProfileId;
   final double spacing;
+  final bool revealsSelected;
 
   @override
   ConsumerState<_ProfilesGrid> createState() => _ProfilesGridState();
@@ -173,7 +171,9 @@ class _ProfilesGridState extends ConsumerState<_ProfilesGrid> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_revealed || !PageActivityScope.isActiveOf(context)) {
+    if (_revealed ||
+        !widget.revealsSelected ||
+        !PageActivityScope.isActiveOf(context)) {
       return;
     }
     _revealed = true;
@@ -196,7 +196,7 @@ class _ProfilesGridState extends ConsumerState<_ProfilesGrid> {
   int _columnsFor(double width) => getProfilesColumns(
     width - _horizontalPadding * 2,
     spacing: widget.spacing,
-    minItemWidth: profileItemMinWidth.ap,
+    minItemWidth: profileItemMinWidth.ap(context),
   );
 
   void _revealSelected() {
@@ -230,14 +230,14 @@ class _ProfilesGridState extends ConsumerState<_ProfilesGrid> {
   @override
   Widget build(BuildContext context) {
     final profiles = widget.profiles;
-    return LayoutBuilder(
-      builder: (_, constraints) {
+    return WidthBuilder(
+      builder: (_, width) {
         return GridView.builder(
           key: profilesStoreKey,
           controller: _controller,
           padding: _padding,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: _columnsFor(constraints.maxWidth),
+            crossAxisCount: _columnsFor(width),
             mainAxisSpacing: widget.spacing,
             crossAxisSpacing: widget.spacing,
             mainAxisExtent: _profileItemHeight,
@@ -286,6 +286,8 @@ class ProfileItem extends ConsumerWidget {
                 users.map((item) => item.realLabel).join(', '),
               ),
       ),
+      destructive: true,
+      confirmText: appLocalizations.delete,
     );
     if (res != true) {
       return;
@@ -296,34 +298,6 @@ class ProfileItem extends ConsumerWidget {
   Future<void> _handlePreview(BuildContext context) async {
     unawaited(
       BaseNavigator.push<String>(context, PreviewProfileView(profile: profile)),
-    );
-  }
-
-  void _handleShowSubscriptionInfo(BuildContext context) {
-    unawaited(
-      dialogs.showCommonDialog<void>(
-        context: context,
-        child: Builder(
-          builder: (context) {
-            return CommonDialog(
-              backgroundColor: context.colorScheme.surfaceContainerLow,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              title: context.appLocalizations.subscriptionInfo,
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text(context.appLocalizations.confirm),
-                ),
-              ],
-              child: SubscriptionInfoDetailView(
-                subscriptionInfo: profile.subscriptionInfo!,
-              ),
-            );
-          },
-        ),
-      ),
     );
   }
 
@@ -339,23 +313,25 @@ class ProfileItem extends ConsumerWidget {
   void _handleShowEditExtendPage(BuildContext context) {
     showExtend(
       context,
-      builder: (context) => EditProfileView(profile: profile, context: context),
+      builder: (context) => EditProfileView(profile: profile),
     );
   }
 
   SubscriptionInfo? get _subscriptionInfo =>
       profile.type == ProfileType.url ? profile.subscriptionInfo : null;
 
-  Widget? _buildTraffic(BuildContext context) {
+  String _subtitle(BuildContext context) {
     final info = _subscriptionInfo;
-    if (info?.usage == null) {
-      return null;
+    if (info != null && info.usage != null) {
+      final used = info.upload + info.download;
+      return '${used.traffic.show} / ${info.total.traffic.show}';
     }
-    final used = info!.upload + info.download;
-    return Text(
-      '${used.traffic.show} / ${info.total.traffic.show}',
-      style: context.textTheme.bodySmall?.toLighter,
-    );
+    final appLocalizations = context.appLocalizations;
+    return switch (profile.type) {
+      ProfileType.url => appLocalizations.remote,
+      ProfileType.file => appLocalizations.local,
+      ProfileType.custom => appLocalizations.custom,
+    };
   }
 
   Widget _buildTrailing(BuildContext context, {required bool isUpdating}) {
@@ -366,15 +342,11 @@ class ProfileItem extends ConsumerWidget {
         children: [...previousChildren, ?currentChild],
       ),
       child: isUpdating
-          ? const SizedBox.square(
-              key: ValueKey('updating'),
-              dimension: 24,
-              child: CommonCircleLoading(),
-            )
+          ? const CommonCircleLoading(key: ValueKey('updating'), size: 24)
           : LastUpdateTimeText(
               key: const ValueKey('lastUpdate'),
               lastUpdateDate: profile.lastUpdateDate,
-              style: context.textTheme.bodySmall?.toLighter,
+              style: AppTextStyle.footnote.of(context).toLighter,
               compact: true,
             ),
     );
@@ -395,7 +367,7 @@ class ProfileItem extends ConsumerWidget {
     final res = await globalState.safeRun<bool>(() async {
       final mFile = await profile.file;
       final value = await picker.saveFile(
-        profile.realLabel,
+        profile.exportFileName,
         mFile.readAsBytesSync(),
       );
       if (value == null) return false;
@@ -445,7 +417,7 @@ class ProfileItem extends ConsumerWidget {
         ),
         CommonPopupMenuItem(
           glyph: AppGlyphs.eye,
-          label: appLocalizations.finalConfig,
+          label: appLocalizations.runtimeConfig,
           onPressed: () {
             _handlePreview(context);
           },
@@ -473,7 +445,7 @@ class ProfileItem extends ConsumerWidget {
           subItems: [
             CommonPopupMenuItem(
               glyph: AppGlyphs.eye,
-              label: appLocalizations.finalConfig,
+              label: appLocalizations.runtimeConfig,
               onPressed: () {
                 _handlePreview(context);
               },
@@ -510,39 +482,35 @@ class ProfileItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isUpdating = ref.watch(isUpdatingProvider(profile.updatingKey));
     final subscriptionInfo = _subscriptionInfo;
-    final usage = subscriptionInfo?.usage;
+    final isSelected = profile.id == groupValue;
     return ContextMenuRegion(
       menuItems: isUpdating ? null : _menuItems(context, ref),
       child: CommonCard(
         enterActionsOnRight: true,
         radius: AppCorner.xl,
-        isSelected: profile.id == groupValue,
+        isSelected: isSelected,
         onPressed: () {
           onChanged(profile.id);
         },
         child: ListItem(
           key: Key(profile.id.toString()),
-          horizontalTitleGap: 12,
           minTileHeight: _profileItemHeight,
           minVerticalPadding: listRowVerticalPadding,
-          padding: const EdgeInsets.only(left: SourceIcon.inset, right: 16),
-          leading: SourceIcon(
-            kind: switch (profile.type) {
-              ProfileType.url => SourceKind.remote,
-              ProfileType.file => SourceKind.file,
-              ProfileType.custom => SourceKind.custom,
-            },
-            usage: usage,
-            tooltip: context.appLocalizations.subscriptionInfo,
-            onPressed: usage == null
-                ? null
-                : () => _handleShowSubscriptionInfo(context),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 8,
+            children: [
+              if (profile.type == ProfileType.custom)
+                _GroupsCountChip(profileId: profile.id)
+              else
+                _buildTrailing(context, isUpdating: isUpdating),
+              if (isSelected) const SelectionBadge(size: 24),
+            ],
           ),
-          trailing: _buildTrailing(context, isUpdating: isUpdating),
           title: _ProfileCardTitle(
             profile: profile,
             expire: subscriptionInfo?.expireDate,
-            info: _buildTraffic(context),
+            subtitle: _subtitle(context),
           ),
         ),
       ),
@@ -554,36 +522,56 @@ class _ProfileCardTitle extends StatelessWidget {
   const _ProfileCardTitle({
     required this.profile,
     required this.expire,
-    required this.info,
+    required this.subtitle,
   });
 
   final Profile profile;
   final DateTime? expire;
-  final Widget? info;
+  final String subtitle;
 
   @override
   Widget build(BuildContext context) {
-    final title = ChipTitle(
-      title: profile.realLabel,
-      expire: expire,
-      style: context.textTheme.titleMedium,
-    );
-    final info = this.info;
-    if (info == null) {
-      return title;
-    }
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        title,
+        ChipTitle(
+          title: profile.realLabel,
+          expire: expire,
+          style: AppTextStyle.headline.of(context),
+        ),
         const SizedBox(height: _infoGap),
-        DefaultTextStyle.merge(
+        Text(
+          subtitle,
+          style: AppTextStyle.footnote.of(context).toLighter,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          child: info,
         ),
       ],
+    );
+  }
+}
+
+/// Square-cornered so a lone digit never reads as a second [SelectionBadge].
+class _GroupsCountChip extends ConsumerWidget {
+  const _GroupsCountChip({required this.profileId});
+
+  final int profileId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(profileGroupsCountProvider(profileId)).value;
+    if (count == null) {
+      return const SizedBox.shrink();
+    }
+    final colorScheme = context.colorScheme;
+    return Tooltip(
+      message: context.appLocalizations.proxyGroupsCount(count, count.compact),
+      child: TonalChip(
+        label: count.compact,
+        color: colorScheme.primary.opacity15,
+        foregroundColor: colorScheme.primary,
+      ),
     );
   }
 }
@@ -624,22 +612,24 @@ class _ReorderableProfilesSheetState
 
   void _handleSave() {
     Navigator.of(context).pop();
-    ref.read(profilesProvider.notifier).reorder(profiles);
+    final latest = ref.read(profilesProvider);
+    final ids = {for (final profile in profiles) profile.id};
+    ref.read(profilesProvider.notifier).reorder([
+      for (final profile in profiles) ?latest.getProfile(profile.id),
+      for (final profile in latest)
+        if (!ids.contains(profile.id)) profile,
+    ]);
   }
 
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     return CommonScaffold(
-      actions: [
-        AppBarActionButton(
-          data: IconButtonData(
-            glyph: AppGlyphs.check,
-            onPressed: _handleSave,
-            tooltip: context.appLocalizations.save,
-          ),
-        ),
-      ],
+      confirmationAction: IconButtonData(
+        glyph: AppGlyphs.check,
+        onPressed: _handleSave,
+        tooltip: context.appLocalizations.save,
+      ),
       body: Padding(
         padding: const EdgeInsets.only(bottom: 32),
         child: ReorderableListView.builder(
