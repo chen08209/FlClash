@@ -14,11 +14,20 @@ final _utf8JsonDecoder = utf8.decoder.fuse(json.decoder);
 
 Object? _decodeUtf8Json(Uint8List data) => _utf8JsonDecoder.convert(data);
 
-Future<Object?> _decodeResponse(Uint8List data) async {
+Map<String, Object?> _decodeResponseOf((Uint8List, CoreMethod) request) {
+  final (data, method) = request;
+  final decoded = _decodeUtf8Json(data);
+  return withResultModel(method, Map<String, Object?>.from(decoded as Map));
+}
+
+Future<Map<String, Object?>> _decodeResponse(
+  Uint8List data,
+  CoreMethod method,
+) async {
   if (data.length < 51200) {
-    return _decodeUtf8Json(data);
+    return _decodeResponseOf((data, method));
   }
-  return compute(_decodeUtf8Json, data);
+  return compute(_decodeResponseOf, (data, method));
 }
 
 abstract mixin class ServiceListener {
@@ -82,9 +91,9 @@ class Service {
     if (data == null) {
       return null;
     }
-    final dataJson = await _decodeResponse(data);
     return resolveSpilledResponse(
-      CoreMethodResponse.fromJson(dataJson as Map<String, dynamic>),
+      CoreMethodResponse.fromJson(await _decodeResponse(data, call.method)),
+      method: call.method,
     );
   }
 

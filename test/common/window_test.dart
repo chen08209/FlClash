@@ -282,6 +282,18 @@ void main() {
     });
   });
 
+  group('fittedWindowSize', () {
+    test('keeps the default window size on a large screen', () {
+      expect(fittedWindowSize(const Size(1920, 1040)), defaultWindowSize);
+    });
+
+    test('leaves a margin of a small work area', () {
+      final size = fittedWindowSize(const Size(1366, 728));
+      expect(size.width, closeTo(1366 * 0.9, 0.001));
+      expect(size.height, closeTo(728 * 0.9, 0.001));
+    });
+  });
+
   test('maximized geometry is not captured', () async {
     isMaximized = true;
 

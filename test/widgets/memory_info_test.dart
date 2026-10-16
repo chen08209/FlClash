@@ -1,11 +1,13 @@
 import 'dart:async';
 
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/core.dart';
+import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/widgets/memory_info.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -59,6 +61,111 @@ void main() {
     await tester.pump();
 
     expect(readCount, 3);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a desktop MemoryInfo splits the total between app and core', (
+    tester,
+  ) async {
+    Future<MemorySnapshot> readMemory() async => const MemorySnapshot(
+      app: 300 * 1024 * 1024,
+      coreTotal: 100 * 1024 * 1024,
+    );
+
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        child: SizedBox(
+          width: 300,
+          height: 176,
+          child: DashboardDensityScope(
+            density: DashboardDensity.standard,
+            scale: 1,
+            child: MemoryInfo(memoryReader: readMemory),
+          ),
+        ),
+        homeBuilder: (child) => Scaffold(body: Center(child: child)),
+      ),
+    );
+    await tester.pump();
+
+    String shown(int bytes) => '${bytes.traffic.value} ${bytes.traffic.unit}';
+    expect(
+      find.text(shown(400 * 1024 * 1024), findRichText: true),
+      findsOneWidget,
+    );
+    expect(find.text(shown(300 * 1024 * 1024)), findsOneWidget);
+    expect(find.text(shown(100 * 1024 * 1024)), findsOneWidget);
+    expect(find.byTooltip('Memory info details'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a phone MemoryInfo splits the total like the desktop one', (
+    tester,
+  ) async {
+    Future<MemorySnapshot> readMemory() async => const MemorySnapshot(
+      app: 300 * 1024 * 1024,
+      coreTotal: 100 * 1024 * 1024,
+    );
+
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        child: SizedBox(
+          width: 380,
+          child: MemoryInfo(memoryReader: readMemory),
+        ),
+        homeBuilder: (child) => Scaffold(body: Center(child: child)),
+      ),
+    );
+    await tester.pump();
+
+    String shown(int bytes) => '${bytes.traffic.value} ${bytes.traffic.unit}';
+    expect(find.text(shown(300 * 1024 * 1024)), findsOneWidget);
+    expect(find.text(shown(100 * 1024 * 1024)), findsOneWidget);
+    expect(find.byTooltip('Memory info details'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a poll that barely moves the split leaves the bar still', (
+    tester,
+  ) async {
+    var app = 300 * 1024 * 1024;
+    var reads = 0;
+    Future<MemorySnapshot> readMemory() async {
+      reads++;
+      return MemorySnapshot(app: app, coreTotal: 100 * 1024 * 1024);
+    }
+
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        child: SizedBox(
+          width: 380,
+          child: MemoryInfo(memoryReader: readMemory),
+        ),
+        homeBuilder: (child) => Scaffold(body: Center(child: child)),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    app += 512 * 1024;
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    expect(reads, 2);
+    expect(tester.hasRunningAnimations, isFalse);
+
+    app = 100 * 1024 * 1024;
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
+    expect(reads, 3);
+    expect(tester.hasRunningAnimations, isTrue);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -181,6 +288,44 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('MemoryInfo rests while a page covers it', (tester) async {
+    var readCount = 0;
+
+    Future<MemorySnapshot> readMemory() async {
+      readCount++;
+      return MemorySnapshot(app: readCount);
+    }
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        child: MemoryInfo(memoryReader: readMemory),
+        homeBuilder: (child) => Scaffold(body: child),
+      ),
+    );
+    await tester.pump();
+    expect(readCount, 1);
+
+    final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+    unawaited(
+      navigator.push(MaterialPageRoute<void>(builder: (_) => const Scaffold())),
+    );
+    await tester.pumpAndSettle();
+    final covered = readCount;
+    await tester.pump(const Duration(seconds: 6));
+
+    expect(readCount, covered);
+
+    navigator.pop();
+    await tester.pump();
+
+    expect(readCount, covered + 1);
+
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('the default reader adds Core memory while connected', (
     tester,
   ) async {
@@ -263,6 +408,50 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(readCount, greaterThan(1));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('the detail sheet keeps reading once its card is gone', (
+    tester,
+  ) async {
+    var readCount = 0;
+
+    Future<MemorySnapshot> readMemory() async {
+      readCount++;
+      return MemorySnapshot(app: readCount);
+    }
+
+    final showCard = ValueNotifier(true);
+    addTearDown(showCard.dispose);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        homeBuilder: _scaffoldBody,
+        child: ValueListenableBuilder(
+          valueListenable: showCard,
+          builder: (_, show, _) => show
+              ? MemoryInfo(memoryReader: readMemory)
+              : const SizedBox.shrink(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byType(MemoryInfo));
+    await tester.pumpAndSettle();
+    expect(find.byType(MemoryDetailSheet), findsOneWidget);
+
+    showCard.value = false;
+    await tester.pump();
+    final before = readCount;
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
+
+    expect(find.byType(MemoryInfo), findsNothing);
+    expect(readCount, greaterThan(before));
+    expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -368,9 +557,14 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      await tester.tap(find.byType(CommonCard));
+      await tester.tap(find.byType(MemoryInfo));
       await tester.pumpAndSettle();
     }
+
+    Finder inSheet(String text) => find.descendant(
+      of: find.byType(MemoryDetailSheet),
+      matching: find.text(text),
+    );
 
     testWidgets('tapping the card lists the Core breakdown', (tester) async {
       await openSheet(
@@ -383,11 +577,11 @@ void main() {
       );
 
       expect(find.byType(MemoryDetailSheet), findsOneWidget);
-      expect(find.text('App'), findsOneWidget);
+      expect(inSheet('App'), findsOneWidget);
       expect(find.text('12MB'), findsOneWidget);
       expect(find.text('Resident memory'), findsOneWidget);
       expect(find.text('100%'), findsOneWidget);
-      expect(find.text('Core'), findsOneWidget);
+      expect(inSheet('Core'), findsOneWidget);
       expect(find.text('4MB'), findsOneWidget);
       expect(find.text('Heap in use'), findsOneWidget);
       expect(find.text('50%'), findsOneWidget);
@@ -417,7 +611,7 @@ void main() {
       );
 
       expect(find.text('App & shared'), findsOneWidget);
-      expect(find.text('App'), findsNothing);
+      expect(inSheet('App'), findsNothing);
       expect(find.text(_estimateSharedDesc), findsOneWidget);
       expect(find.text(_estimateDesc), findsNothing);
 
