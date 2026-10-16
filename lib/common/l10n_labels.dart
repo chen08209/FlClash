@@ -1,4 +1,5 @@
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/ui/color.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'app_localizations.dart';
@@ -95,19 +96,14 @@ extension RestoreStrategyL10n on RestoreStrategy {
   }
 }
 
-extension DynamicSchemeVariantL10n on DynamicSchemeVariant {
+extension ColorStyleL10n on ColorStyle {
   String get label {
     final appLocalizations = currentAppLocalizations;
     return switch (this) {
-      DynamicSchemeVariant.tonalSpot => appLocalizations.tonalSpotScheme,
-      DynamicSchemeVariant.fidelity => appLocalizations.fidelityScheme,
-      DynamicSchemeVariant.monochrome => appLocalizations.monochromeScheme,
-      DynamicSchemeVariant.neutral => appLocalizations.neutralScheme,
-      DynamicSchemeVariant.vibrant => appLocalizations.vibrantScheme,
-      DynamicSchemeVariant.expressive => appLocalizations.expressiveScheme,
-      DynamicSchemeVariant.content => appLocalizations.contentScheme,
-      DynamicSchemeVariant.rainbow => appLocalizations.rainbowScheme,
-      DynamicSchemeVariant.fruitSalad => appLocalizations.fruitSaladScheme,
+      ColorStyle.vivid => appLocalizations.vividStyle,
+      ColorStyle.tinted => appLocalizations.tintedStyle,
+      ColorStyle.soft => appLocalizations.softStyle,
+      ColorStyle.monochrome => appLocalizations.monochromeScheme,
     };
   }
 }
@@ -117,7 +113,10 @@ extension LocaleL10n on Locale {
     final appLocalizations = currentAppLocalizations;
     return switch (toString()) {
       'en' => appLocalizations.en,
+      'es' => appLocalizations.es,
+      'fr' => appLocalizations.fr,
       'ja' => appLocalizations.ja,
+      'ko' => appLocalizations.ko,
       'ru' => appLocalizations.ru,
       'zh_CN' => appLocalizations.zhCN,
       final code => code,
