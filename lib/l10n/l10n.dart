@@ -365,9 +365,24 @@ class AppLocalizations {
     return Intl.message('English', name: 'en', desc: '', args: []);
   }
 
+  /// `Spanish`
+  String get es {
+    return Intl.message('Spanish', name: 'es', desc: '', args: []);
+  }
+
+  /// `French`
+  String get fr {
+    return Intl.message('French', name: 'fr', desc: '', args: []);
+  }
+
   /// `Japanese`
   String get ja {
     return Intl.message('Japanese', name: 'ja', desc: '', args: []);
+  }
+
+  /// `Korean`
+  String get ko {
+    return Intl.message('Korean', name: 'ko', desc: '', args: []);
   }
 
   /// `Russian`
@@ -390,11 +405,11 @@ class AppLocalizations {
     return Intl.message('Extend', name: 'extend', desc: '', args: []);
   }
 
-  /// `Final config`
-  String get finalConfig {
+  /// `Runtime config`
+  String get runtimeConfig {
     return Intl.message(
-      'Final config',
-      name: 'finalConfig',
+      'Runtime config',
+      name: 'runtimeConfig',
       desc: '',
       args: [],
     );
@@ -665,10 +680,10 @@ class AppLocalizations {
     return Intl.message('Auto update', name: 'autoUpdate', desc: '', args: []);
   }
 
-  /// `Auto-update interval (minutes)`
+  /// `Auto-update interval`
   String get autoUpdateInterval {
     return Intl.message(
-      'Auto-update interval (minutes)',
+      'Auto-update interval',
       name: 'autoUpdateInterval',
       desc: '',
       args: [],
@@ -2650,16 +2665,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Read to the end`
-  String get disclaimerReadToEnd {
-    return Intl.message(
-      'Read to the end',
-      name: 'disclaimerReadToEnd',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Restate the statement`
   String get disclaimerRestateTitle {
     return Intl.message(
@@ -2695,6 +2700,36 @@ class AppLocalizations {
     return Intl.message(
       'Does not match the statement',
       name: 'disclaimerRestateMismatch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Confirm the statement`
+  String get disclaimerAcknowledgeTitle {
+    return Intl.message(
+      'Confirm the statement',
+      name: 'disclaimerAcknowledgeTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `To confirm you understand, read the following statement and check the box below:`
+  String get disclaimerAcknowledgeTip {
+    return Intl.message(
+      'To confirm you understand, read the following statement and check the box below:',
+      name: 'disclaimerAcknowledgeTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `I have read and understand this statement`
+  String get disclaimerAcknowledgeLabel {
+    return Intl.message(
+      'I have read and understand this statement',
+      name: 'disclaimerAcknowledgeLabel',
       desc: '',
       args: [],
     );
@@ -3365,34 +3400,54 @@ class AppLocalizations {
     return Intl.message('Pure black', name: 'pureBlack', desc: '', args: []);
   }
 
-  /// `Color schemes`
-  String get colorSchemes {
+  /// `Custom color`
+  String get customColor {
     return Intl.message(
-      'Color schemes',
-      name: 'colorSchemes',
+      'Custom color',
+      name: 'customColor',
       desc: '',
       args: [],
     );
   }
 
-  /// `Palette`
-  String get palette {
-    return Intl.message('Palette', name: 'palette', desc: '', args: []);
+  /// `Color style`
+  String get colorStyle {
+    return Intl.message('Color style', name: 'colorStyle', desc: '', args: []);
   }
 
-  /// `Tonal spot`
-  String get tonalSpotScheme {
-    return Intl.message(
-      'Tonal spot',
-      name: 'tonalSpotScheme',
-      desc: '',
-      args: [],
-    );
+  /// `Grid`
+  String get grid {
+    return Intl.message('Grid', name: 'grid', desc: '', args: []);
   }
 
-  /// `Fidelity`
-  String get fidelityScheme {
-    return Intl.message('Fidelity', name: 'fidelityScheme', desc: '', args: []);
+  /// `Spectrum`
+  String get spectrum {
+    return Intl.message('Spectrum', name: 'spectrum', desc: '', args: []);
+  }
+
+  /// `Sliders`
+  String get sliders {
+    return Intl.message('Sliders', name: 'sliders', desc: '', args: []);
+  }
+
+  /// `Hue`
+  String get hue {
+    return Intl.message('Hue', name: 'hue', desc: '', args: []);
+  }
+
+  /// `Saturation`
+  String get saturation {
+    return Intl.message('Saturation', name: 'saturation', desc: '', args: []);
+  }
+
+  /// `Brightness`
+  String get brightness {
+    return Intl.message('Brightness', name: 'brightness', desc: '', args: []);
+  }
+
+  /// `Hex`
+  String get hex {
+    return Intl.message('Hex', name: 'hex', desc: '', args: []);
   }
 
   /// `Monochrome`
@@ -3405,44 +3460,19 @@ class AppLocalizations {
     );
   }
 
-  /// `Neutral`
-  String get neutralScheme {
-    return Intl.message('Neutral', name: 'neutralScheme', desc: '', args: []);
+  /// `Vivid`
+  String get vividStyle {
+    return Intl.message('Vivid', name: 'vividStyle', desc: '', args: []);
   }
 
-  /// `Vibrant`
-  String get vibrantScheme {
-    return Intl.message('Vibrant', name: 'vibrantScheme', desc: '', args: []);
+  /// `Tinted`
+  String get tintedStyle {
+    return Intl.message('Tinted', name: 'tintedStyle', desc: '', args: []);
   }
 
-  /// `Expressive`
-  String get expressiveScheme {
-    return Intl.message(
-      'Expressive',
-      name: 'expressiveScheme',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Content`
-  String get contentScheme {
-    return Intl.message('Content', name: 'contentScheme', desc: '', args: []);
-  }
-
-  /// `Rainbow`
-  String get rainbowScheme {
-    return Intl.message('Rainbow', name: 'rainbowScheme', desc: '', args: []);
-  }
-
-  /// `Fruit salad`
-  String get fruitSaladScheme {
-    return Intl.message(
-      'Fruit salad',
-      name: 'fruitSaladScheme',
-      desc: '',
-      args: [],
-    );
+  /// `Soft`
+  String get softStyle {
+    return Intl.message('Soft', name: 'softStyle', desc: '', args: []);
   }
 
   /// `Developer mode`
@@ -5780,6 +5810,11 @@ class AppLocalizations {
     return Intl.message('hours', name: 'hours', desc: '', args: []);
   }
 
+  /// `minutes`
+  String get minutes {
+    return Intl.message('minutes', name: 'minutes', desc: '', args: []);
+  }
+
   /// `Geo`
   String get geoResources {
     return Intl.message('Geo', name: 'geoResources', desc: '', args: []);
@@ -6778,6 +6813,11 @@ class AppLocalizations {
     return Intl.message('Regex', name: 'regex', desc: '', args: []);
   }
 
+  /// `Match case`
+  String get matchCase {
+    return Intl.message('Match case', name: 'matchCase', desc: '', args: []);
+  }
+
   /// `Icon sets`
   String get iconSets {
     return Intl.message('Icon sets', name: 'iconSets', desc: '', args: []);
@@ -6838,6 +6878,16 @@ class AppLocalizations {
     return Intl.message(
       'TCP congestion control',
       name: 'congestionController',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `TCP congestion control works only with the mips stack.`
+  String get congestionControllerDesc {
+    return Intl.message(
+      'TCP congestion control works only with the mips stack.',
+      name: 'congestionControllerDesc',
       desc: '',
       args: [],
     );
@@ -6998,11 +7048,156 @@ class AppLocalizations {
     );
   }
 
-  /// `Excluded interfaces work only on Linux: traffic arriving on them, such as docker0, skips TUN.`
+  /// `Traffic arriving on excluded interfaces, such as docker0, skips TUN.`
   String get excludeInterfaceDesc {
     return Intl.message(
-      'Excluded interfaces work only on Linux: traffic arriving on them, such as docker0, skips TUN.',
+      'Traffic arriving on excluded interfaces, such as docker0, skips TUN.',
       name: 'excludeInterfaceDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Included interfaces`
+  String get includeInterface {
+    return Intl.message(
+      'Included interfaces',
+      name: 'includeInterface',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only traffic arriving on included interfaces goes through TUN, and excluded interfaces no longer apply.`
+  String get includeInterfaceDesc {
+    return Intl.message(
+      'Only traffic arriving on included interfaces goes through TUN, and excluded interfaces no longer apply.',
+      name: 'includeInterfaceDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Included user IDs`
+  String get includeUid {
+    return Intl.message(
+      'Included user IDs',
+      name: 'includeUid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only traffic from processes of included user IDs goes through TUN.`
+  String get includeUidDesc {
+    return Intl.message(
+      'Only traffic from processes of included user IDs goes through TUN.',
+      name: 'includeUidDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Excluded user IDs`
+  String get excludeUid {
+    return Intl.message(
+      'Excluded user IDs',
+      name: 'excludeUid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Traffic from processes of excluded user IDs skips TUN.`
+  String get excludeUidDesc {
+    return Intl.message(
+      'Traffic from processes of excluded user IDs skips TUN.',
+      name: 'excludeUidDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Excluded source ports`
+  String get excludeSrcPort {
+    return Intl.message(
+      'Excluded source ports',
+      name: 'excludeSrcPort',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Traffic from excluded source ports skips TUN.`
+  String get excludeSrcPortDesc {
+    return Intl.message(
+      'Traffic from excluded source ports skips TUN.',
+      name: 'excludeSrcPortDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Excluded destination ports`
+  String get excludeDstPort {
+    return Intl.message(
+      'Excluded destination ports',
+      name: 'excludeDstPort',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Traffic to excluded destination ports skips TUN.`
+  String get excludeDstPortDesc {
+    return Intl.message(
+      'Traffic to excluded destination ports skips TUN.',
+      name: 'excludeDstPortDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `UDP timeout`
+  String get udpTimeout {
+    return Intl.message('UDP timeout', name: 'udpTimeout', desc: '', args: []);
+  }
+
+  /// `The UDP timeout is in seconds and works only with the gvisor, system and mixed stacks.`
+  String get udpTimeoutDesc {
+    return Intl.message(
+      'The UDP timeout is in seconds and works only with the gvisor, system and mixed stacks.',
+      name: 'udpTimeoutDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Without this entry, TUN hijacks every DNS query to port 53 (any:53).`
+  String get dnsHijackDesc {
+    return Intl.message(
+      'Without this entry, TUN hijacks every DNS query to port 53 (any:53).',
+      name: 'dnsHijackDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Entries added here replace the TUN settings of every profile; anything not added keeps the profile's own setting. Entries a custom profile adds itself take precedence.`
+  String get tunOverrideDesc {
+    return Intl.message(
+      'Entries added here replace the TUN settings of every profile; anything not added keeps the profile\'s own setting. Entries a custom profile adds itself take precedence.',
+      name: 'tunOverrideDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Applies to this profile only and takes precedence over the TUN override entries in the network settings.`
+  String get profileTunSettingsDesc {
+    return Intl.message(
+      'Applies to this profile only and takes precedence over the TUN override entries in the network settings.',
+      name: 'profileTunSettingsDesc',
       desc: '',
       args: [],
     );
@@ -7628,6 +7823,21 @@ class AppLocalizations {
     return Intl.message('Traffic', name: 'traffic', desc: '', args: []);
   }
 
+  /// `Downloaded`
+  String get totalDownload {
+    return Intl.message(
+      'Downloaded',
+      name: 'totalDownload',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Uploaded`
+  String get totalUpload {
+    return Intl.message('Uploaded', name: 'totalUpload', desc: '', args: []);
+  }
+
   /// `From`
   String get initiatorShort {
     return Intl.message('From', name: 'initiatorShort', desc: '', args: []);
@@ -7729,7 +7939,10 @@ class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
   List<Locale> get supportedLocales {
     return const <Locale>[
       Locale.fromSubtags(languageCode: 'en'),
+      Locale.fromSubtags(languageCode: 'es'),
+      Locale.fromSubtags(languageCode: 'fr'),
       Locale.fromSubtags(languageCode: 'ja'),
+      Locale.fromSubtags(languageCode: 'ko'),
       Locale.fromSubtags(languageCode: 'ru'),
       Locale.fromSubtags(languageCode: 'zh', countryCode: 'CN'),
     ];
