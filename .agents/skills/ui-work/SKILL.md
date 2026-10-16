@@ -19,27 +19,41 @@ dialogs, and interaction behavior.
 - `.agents/rules.md` is binding here: the lint set (`child:` last, `const`, final locals), the superellipse corner API,
   and the widget-test facts under Testing Rules (`pumpAndSettle` never returns on `EditorView`, `dispose()` must not
   await, auto-dispose providers need a container-level hold, platform decisions are passed in as parameters).
+- A component that reads no provider, model or app string goes in `lib/ui/`; one built for an app feature goes in
+  `lib/widgets/`. The UI Layer section of `.agents/architecture.md` says how a `lib/ui` component gets app state.
 - Settings screens are built from the `ConfigToggleItem` family in `lib/widgets/config_item.dart`; the Settings Rows
   section of `.agents/architecture.md` says when a file-local helper or a named widget is warranted.
-- Every icon lives in `lib/icons/`, never the Material `Icons` font: reuse or add a glyph in `AppGlyphs` and show it
+- Every icon lives in `lib/ui/icons/`, never the Material `Icons` font: reuse or add a glyph in `AppGlyphs` and show it
   with `GlyphIcon`, or with `AnimatedGlyph` where it fills on selection. Glyphs are outlined, except inside a filled
   button, where they take `fill: 1`. The Icons section of `.agents/architecture.md` covers shape roles, the stroke, the
   fill animation, and when to fill.
+- Text sizes and weights come from `AppTextStyle` in `lib/ui/typography.dart`, Apple's iOS Dynamic Type scale, never a
+  Material `TextTheme` slot, a bare `fontSize`, or a `fontWeight`; the Typography section of `.agents/rules.md` has the
+  rule.
 - Modals dim what they cover with the Material 3 scrim (`ColorScheme.modalScrim`, `scrim` at 32%) and never blur it.
   Every modal brings its own scrim, including one opened from inside another, so do not make a barrier transparent to
   keep scrims from stacking.
 - A sheet's size belongs to its route, never to its content or call site: a bottom sheet rests at
-  `SheetProps.detents`, and a side sheet is as tall as the window and as wide as `ModalSideSheetRoute` makes it from
-  the window width (`lib/widgets/side_sheet.dart`, pinned by `test/widgets/side_sheet_width_test.dart`). Do not wrap a
-  sheet's content in a fixed width or height to resize one sheet.
+  `SheetProps.detents`, a side sheet is as tall as the window and as wide as `ModalSideSheetRoute` makes it from
+  the window width (`lib/ui/side_sheet.dart`, pinned by `test/widgets/side_sheet_width_test.dart`), and a form sheet
+  is a card `FormSheetRoute` caps in width and height (`lib/ui/form_sheet.dart`). Do not wrap a sheet's content in a
+  fixed width or height to resize one sheet.
+- A form with more than one value opens with `showFormSheet` and lays its values out in `FormRow`s, never as labeled
+  fields in a `CommonDialog`; a prompt for one value stays an alert. Forms in `.agents/architecture.md` has the rule.
+- A modal scrolls only once the window and keyboard leave it no room, and then through one scroll view: `CommonDialog`
+  caps its body at nothing but the space it is given, and a multi-line field in a dialog or sheet grows with its text
+  (`maxLines: null`) rather than scrolling inside a line count. With the keyboard up, a bottom sheet keeps what it
+  shows above the keyboard, rising past its tallest detent as far as a peek below the top (`_top` in
+  `lib/ui/snap_sheet.dart`).
 - The keyboard animates `MediaQuery.viewInsets` every frame. Read MediaQuery by aspect (`paddingOf`, `viewInsetsOf`)
   rather than `MediaQuery.of`, and wrap the page of a new route type in `KeyboardInsetHold`; Keyboard Insets in
   `.agents/architecture.md` has the reasons.
-- A page full of images loads them once its route has settled and builds no rows past the viewport until then:
-  `RouteSettledMixin` and `arrivalScrollCacheExtent`, described under Page Arrival in `.agents/architecture.md`.
-- A page that waits on its data as it arrives shows its illustration alone (`NullStatus` without a label, in a
-  `NullStatusSwitcher`) until all of it is ready, never a skeleton screen; Page Arrival in `.agents/architecture.md`
-  has the rule.
+- A page loads what it shows as it mounts, never once its route has settled; what waits out a transition is work
+  that repeats, such as a live feed's refreshes (`RouteMotionHoldMixin`), and the rows past the viewport
+  (`arrivalScrollCacheExtent`). Page Arrival in `.agents/architecture.md` has the rule.
+- A page that waits on its data shows nothing until all of it is ready (`NullStatusSwitcher.isLoading`), and a load
+  that can run long adds its illustration as `loadingStatus`, never a skeleton screen; Page Arrival in
+  `.agents/architecture.md` has the rule.
 - App bar buttons reach `CommonScaffold` as data (`primaryAction`, `iconActions`, `menuItems`) so it can fold them into
   its overflow menu; App Bar Actions in `.agents/architecture.md` has the rule.
 - A row's secondary actions open from a context menu, never a trailing more button; a list whose rows have one
@@ -57,7 +71,7 @@ dialogs, and interaction behavior.
 
 ## Corner Radii
 
-All corner radii come from `lib/common/shape.dart`: a token, a derived value, or a named off-scale value passed to its
+All corner radii come from `lib/ui/shape.dart`: a token, a derived value, or a named off-scale value passed to its
 builders. Never write a bare radius literal at a call site.
 
 The scale is picked by the component's **shortest side**. A radius that reads as a soft card at 64 dp tall
@@ -68,10 +82,10 @@ reads as a pill at 24 and as a square at 400, so one radius everywhere is the wr
 | `none` | 0 | - | square edges, and the flat side of a grouped run |
 | `xs` | 4 | inset blocks | tiles clipped inside an already rounded surface |
 | `sm` | 8 | up to 48 | chips, thumbs, swatches, small square tiles |
-| `md` | 16 | up to 64 | interactive chrome: inputs, menus, buttons, popups, FAB |
+| `md` | 16 | up to 64 | interactive chrome: inputs, menus, buttons, popups |
 | `lg` | 20 | 64 to 180 | mid-size cards: dashboard tiles, proxy node cards |
 | `xl` | 24 | full-bleed | anything spanning the whole width: list rows, grouped runs, group headers |
-| `xxl` | 28 | over 200 | sheets, dialogs, full-screen containers |
+| `xxl` | 28 | over 200 | sheets, full-screen containers |
 | `full` | 1000 | - | pills and circles: buttons, tracks, indicators, progress, avatars |
 
 - `AppCorner` holds the scale as `double`; `AppRadius` mirrors it as `BorderRadius` with `all`, `top`, and `vertical`
@@ -80,19 +94,21 @@ reads as a pill at 24 and as a square at 400, so one radius everywhere is the wr
   section of `.agents/rules.md` explains why and lists the superellipse API per layer.
 - `AppCorner.fit(shortestSide)` snaps to the largest token at or under one third of the shortest side. Use it whenever
   the size comes from a `LayoutBuilder` or scales with text.
-- `ThemeData.withAppShapes` in `lib/common/shape.dart` already applies the scale to card, dialog, bottom sheet, snack
+- `ThemeData.withAppShapes` in `lib/ui/shape.dart` already applies the scale to card, dialog, bottom sheet, snack
   bar, chip, menu, input, FAB, navigation indicator, progress, and the filled, text, outlined, elevated, and icon
   button themes. Do not restate those shapes at call sites, and
   leave `InputDecoration.border` unset so inputs inherit `AppShape.input`.
+- Colors of surfaces follow `.agents/surfaces.md`: fills by `SurfaceLevel`, no structural borders, and
+  `primaryContainer` only on a selected item.
 
 `xl` and `lg` exist because one token cannot serve both size classes. A full-bleed surface is wide and short, so its
 corner must be larger than its height alone suggests or it stops reading as a card; everything full-bleed shares `xl`
 (`CommonSelectedListItem`, the profiles card, the outer corners of a grouped run in `DecorationListItem`, the proxy
-group header in `lib/views/proxies/list.dart`) and does not use `fit()`. This is the one deliberate overshoot of the
+group card in `lib/views/proxies/list.dart`) and does not use `fit()`. This is the one deliberate overshoot of the
 one-third rule; the value stays under half a standard row so nothing clamps and every full-bleed surface renders the
-same radius. `lg` is for mid-size cards that are not full-bleed: a proxy node card at `ProxyCardType.min` is only about
-64 tall, which caps its radius at 21, so `xl` would break on a setting the user can change at any time while `lg`
-clears all three heights and the smallest dashboard tile.
+same radius. `lg` is for mid-size cards that are not full-bleed: a proxy node card in the tab view at
+`ProxyCardType.compact` is only about 64 tall, which caps its radius at 21, so `xl` would break on a setting the user
+can change at any time while `lg` clears both heights and the smallest dashboard tile.
 
 Outlined inputs use `AppInputBorder`, not `ShapedInputBorder` from `package:material_ui`. The package border subtracts
 the floating label's notch as a flat band along the top edge, which takes the corner curve with it at any radius from 8
@@ -100,12 +116,15 @@ up. `AppInputBorder` clips the notch region and paints the full superellipse thr
 `OutlineInputBorder` does by shortening the arc. It needs no `contentPadding` compensation.
 
 Nested radii are derived, never tokens: concentric corners need `outer = inner + inset`, so name the inset and compute
-the outer value, as `_cardRadius` in `lib/widgets/popup.dart`, `thumbRadius + _kThumbInset` in `lib/widgets/tab.dart`, and the
-selection ring in `lib/widgets/palette.dart` do. Adding a token for one of these is how a scale grows without bound.
+the outer value, as `_cardRadius` in `lib/ui/popup.dart` does. Adding a token for one of these is how a scale grows without
+bound. A card that also stands on its own elsewhere keeps its token when nested: the proxy node cards inside a proxies
+list group stay `lg` like those in the tab view, since deriving them from the group card's `xl` left them at 14, smaller
+than every other card in the app.
 
 A component the scale does not fit keeps its own value instead of growing the scale: name it once in the file and pass
-it to the `all`/`top`/`vertical` builders, as `_itemShape` in `lib/widgets/sidebar.dart` does with 10, between the
-chip-sized `sm` and the near-pill `md` on a 40 tall row. Reach for this only once the table and `fit()` are ruled out.
+it to the `all`/`top`/`vertical` builders, as `_itemShape` in `lib/ui/sidebar.dart` does with 10, between the
+chip-sized `sm` and the near-pill `md` on a 40 tall row, and `_dialogCorner` in `lib/ui/shape.dart` does with 34, the
+corner of an iOS alert. Reach for this only once the table and `fit()` are ruled out.
 
 ## Verification
 
