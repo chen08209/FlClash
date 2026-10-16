@@ -1,9 +1,8 @@
 import 'dart:ui' as ui;
 
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -69,7 +68,7 @@ void main() {
       TestApp(
         overrides: [_viewSizeOverride],
         child: Scaffold(
-          body: generateSectionV3(
+          body: generateSection(
             items: [
               ListItem.toggle(
                 title: const Text('Grouped'),
@@ -205,7 +204,7 @@ void main() {
     expect(_top(tester, 'c'), lessThan(_top(tester, 'a')));
   });
 
-  testWidgets('ListItem.options keeps a null option apart from dismissal', (
+  testWidgets('ListItem.options picks from a menu its value opens', (
     tester,
   ) async {
     final changes = <String?>[];
@@ -216,7 +215,6 @@ void main() {
         child: Scaffold(
           body: ListItem<String?>.options(
             title: const Text('Language'),
-            dialogTitle: 'Language',
             options: const [null, 'en'],
             value: 'en',
             textBuilder: (value) => value ?? 'Default',
@@ -226,91 +224,33 @@ void main() {
       ),
     );
 
+    expect(find.text('en'), findsOneWidget);
+    expect(find.byGlyph(AppGlyphs.picker), findsOneWidget);
+
     await tester.tap(find.text('Language'));
     await tester.pumpAndSettle();
+
+    expect(find.byType(CommonPopupMenu), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(CommonPopupMenu),
+        matching: find.byGlyph(AppGlyphs.check),
+      ),
+      findsOneWidget,
+    );
+
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
 
     expect(find.text('Default'), findsNothing);
     expect(changes, isEmpty);
 
-    await tester.tap(find.text('Language'));
+    await tester.tap(find.text('en'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Default'));
     await tester.pumpAndSettle();
 
     expect(changes, [null]);
-  });
-
-  testWidgets('OptionsDialog returns the tapped option', (tester) async {
-    String? selected;
-
-    await tester.pumpWidget(
-      TestApp(
-        overrides: [_viewSizeOverride],
-        child: Builder(
-          builder: (context) {
-            return FilledButton(
-              onPressed: () async {
-                selected = await showDialog<String>(
-                  context: context,
-                  builder: (_) => const OptionsDialog<String>(
-                    title: 'Options',
-                    options: ['One', 'Two'],
-                    value: 'One',
-                    textBuilder: _optionText,
-                  ),
-                );
-              },
-              child: const Text('Open'),
-            );
-          },
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Two'));
-    await tester.pumpAndSettle();
-
-    expect(selected, 'Two');
-  });
-
-  testWidgets('OptionsDialog cancel closes without a value', (tester) async {
-    String? selected = 'unset';
-
-    await tester.pumpWidget(
-      TestApp(
-        overrides: [_viewSizeOverride],
-        child: Builder(
-          builder: (context) {
-            return FilledButton(
-              onPressed: () async {
-                selected = await showDialog<String>(
-                  context: context,
-                  builder: (_) => const OptionsDialog<String>(
-                    title: 'Options',
-                    options: ['One', 'Two'],
-                    value: 'One',
-                    textBuilder: _optionText,
-                  ),
-                );
-              },
-              child: const Text('Open'),
-            );
-          },
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(OptionsDialog<String>), findsNothing);
-    expect(selected, isNull);
   });
 
   testWidgets('InputDialog validates, submits, and resets values', (
@@ -361,6 +301,83 @@ void main() {
     await tester.tap(find.text('Reset'));
     await tester.pumpAndSettle();
     expect(result, 'default');
+  });
+
+  testWidgets('InputDialog offers reset only while the text differs from it', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [_viewSizeOverride],
+        child: Builder(
+          builder: (context) {
+            return FilledButton(
+              onPressed: () => showDialog<String>(
+                context: context,
+                builder: (_) => const InputDialog(
+                  title: 'Value',
+                  value: 'changed',
+                  resetValue: 'default',
+                ),
+              ),
+              child: const Text('Open'),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    expect(find.text('Reset'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextFormField), 'default');
+    await tester.pump();
+    expect(find.text('Reset'), findsNothing);
+    expect(find.text('Cancel'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextFormField), 'other');
+    await tester.pump();
+    expect(find.text('Reset'), findsOneWidget);
+  });
+
+  testWidgets('InputDialog grows with a long value instead of scrolling it', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [_viewSizeOverride],
+        child: Builder(
+          builder: (context) {
+            return FilledButton(
+              onPressed: () => showDialog<String>(
+                context: context,
+                builder: (_) => const InputDialog(title: 'Value', value: ''),
+              ),
+              child: const Text('Open'),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextFormField),
+      List.filled(12, 'https://a.example').join('/'),
+    );
+    await tester.pumpAndSettle();
+
+    final scrollables = find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.byType(Scrollable),
+    );
+    expect(scrollables, findsWidgets);
+    for (final element in scrollables.evaluate()) {
+      final position = (element as StatefulElement).state as ScrollableState;
+      expect(position.position.maxScrollExtent, 0);
+    }
   });
 
   testWidgets('SecretTextFormField hides the text until revealed', (
@@ -624,8 +641,6 @@ void main() {
             title: 'Items',
             items: ['a', 'b'],
             titleBuilder: _textBuilder,
-            subtitleBuilder: _textBuilder,
-            leadingBuilder: _textBuilder,
             itemMaxLength: 4,
           ),
         ),
@@ -637,7 +652,7 @@ void main() {
     await tester.enterText(find.byType(TextFormField), 'c');
     await tester.tap(find.text('Confirm'));
     await tester.pumpAndSettle();
-    expect(find.text('c'), findsNWidgets(3));
+    expect(find.text('c'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Add'));
     await tester.pumpAndSettle();
@@ -654,14 +669,14 @@ void main() {
     await tester.enterText(find.byType(TextFormField), ' x ');
     await tester.tap(find.text('Confirm'));
     await tester.pumpAndSettle();
-    expect(find.text('x'), findsNWidgets(3));
+    expect(find.text('x'), findsOneWidget);
 
     await tester.tap(find.text('c').first);
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), 'd');
     await tester.tap(find.text('Confirm'));
     await tester.pumpAndSettle();
-    expect(find.text('d'), findsNWidgets(3));
+    expect(find.text('d'), findsOneWidget);
 
     await tester.tap(find.byType(Checkbox).first);
     await tester.pump();
@@ -689,7 +704,6 @@ void main() {
             entries: {'a': '1', 'b': '2'},
             titleBuilder: _entryTitle,
             subtitleBuilder: _entrySubtitle,
-            leadingBuilder: _entryTitle,
             keyMaxLength: 4,
             valueMaxLength: 4,
           ),
@@ -714,7 +728,7 @@ void main() {
     await tester.enterText(fields.last, '3');
     await tester.tap(find.text('Confirm'));
     await tester.pumpAndSettle();
-    expect(find.text('c'), findsNWidgets(2));
+    expect(find.text('c'), findsOneWidget);
 
     await tester.tap(find.byType(Checkbox).first);
     await tester.pump();
@@ -843,8 +857,6 @@ void main() {
     recorder.endRecording();
   });
 }
-
-String _optionText(String value) => value;
 
 String _scalarEntry(String? key, String value) => value;
 

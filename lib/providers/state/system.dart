@@ -134,18 +134,6 @@ TrayTitleState trayTitleState(Ref ref) {
 }
 
 @riverpod
-PackageListSelectorState packageListSelectorState(Ref ref) {
-  final packages = ref.watch(packagesProvider);
-  final accessControlProps = ref.watch(
-    vpnSettingProvider.select((state) => state.accessControlProps),
-  );
-  return PackageListSelectorState(
-    packages: packages,
-    accessControlProps: accessControlProps,
-  );
-}
-
-@riverpod
 HotKeyAction getHotKeyAction(Ref ref, HotAction hotAction) {
   return ref.watch(
     hotKeyActionsProvider.select((state) {

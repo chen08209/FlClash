@@ -1,6 +1,6 @@
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -48,9 +48,10 @@ class FilterRegexText extends StatelessWidget {
       regex,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: context.textTheme.bodySmall?.toJetBrainsMono.copyWith(
-        color: context.colorScheme.tertiary,
-      ),
+      style: AppTextStyle.footnote
+          .of(context)
+          .toJetBrainsMono
+          .copyWith(color: context.colorScheme.tertiary),
     );
   }
 }

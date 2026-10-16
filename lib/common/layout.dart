@@ -2,9 +2,10 @@ import 'dart:math';
 import 'dart:ui' show Size;
 
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/ui/ui.dart';
+import 'package:flutter/widgets.dart' show BuildContext;
 
 import 'constant.dart';
-import 'num.dart';
 
 double getWindowHeaderHeight({required bool isDesktop, required bool isMacOS}) {
   if (!isDesktop) return 0;
@@ -69,7 +70,12 @@ int getProxiesColumns(double viewWidth, ProxiesLayout proxiesLayout) {
   };
 }
 
-double get cardSpacing => 12.mAp;
+double cardSpacingOf(BuildContext context, ViewMode viewMode) =>
+    switch (viewMode) {
+      ViewMode.mobile => 8.0,
+      ViewMode.laptop => 12.0,
+      ViewMode.desktop => 16.0,
+    }.mAp(context);
 
 const profileItemMinWidth = 300.0;
 const _profilesMaxColumns = 3;

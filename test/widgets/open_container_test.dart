@@ -1,4 +1,5 @@
-import 'package:fl_clash/widgets/open_container.dart';
+import 'package:fl_clash/ui/open_container.dart';
+import 'package:fl_clash/ui/surface.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,7 +20,6 @@ void main() {
               width: 160,
               height: 80,
               child: OpenContainer<String>(
-                transitionDuration: const Duration(milliseconds: 200),
                 closedBuilder: (_, open) {
                   return FilledButton(
                     onPressed: open,
@@ -75,9 +75,6 @@ void main() {
               child: OpenContainer<void>(
                 closedShape: closedShape,
                 closedColor: Colors.red,
-                openColor: Colors.blue,
-                curve: Curves.linear,
-                transitionDuration: const Duration(milliseconds: 300),
                 closedBuilder: (_, open) {
                   return GestureDetector(
                     onTap: open,
@@ -117,30 +114,36 @@ void main() {
       ),
     );
 
+    final page = SurfaceLevel.page.colorOf(
+      Theme.of(tester.element(find.text('Card'))).colorScheme,
+    );
+    Rect at(double progress) =>
+        Rect.lerp(closedRect, Offset.zero & _viewSize, progress)!;
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 150));
-    final halfway = Rect.lerp(closedRect, Offset.zero & _viewSize, 0.5)!;
+    final opening = at(Curves.fastOutSlowIn.transform(0.5));
     expect(
       navigator,
       paints..path(
-        color: Colors.blue,
-        includes: [halfway.topLeft + const Offset(5, 5)],
-        excludes: [halfway.topLeft + const Offset(1, 1)],
+        color: page,
+        includes: [opening.centerLeft + const Offset(2, 0)],
+        excludes: [opening.centerLeft - const Offset(2, 0)],
       ),
     );
 
     await tester.pumpAndSettle();
-    expect(navigator, isNot(paints..path(color: Colors.blue)));
+    expect(navigator, isNot(paints..path(color: page)));
 
     await tester.tap(find.text('Page'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 150));
+    final closing = at(Curves.fastOutSlowIn.flipped.transform(0.5));
     expect(
       navigator,
       paints..path(
         color: Colors.red,
-        includes: [halfway.topLeft + const Offset(5, 5)],
-        excludes: [halfway.topLeft + const Offset(1, 1)],
+        includes: [closing.centerLeft + const Offset(2, 0)],
+        excludes: [closing.centerLeft - const Offset(2, 0)],
       ),
     );
 
@@ -160,8 +163,6 @@ void main() {
           body: Align(
             alignment: Alignment.topLeft,
             child: OpenContainer<String>(
-              tappable: false,
-              transitionDuration: const Duration(milliseconds: 300),
               closedBuilder: (_, open) {
                 return TextButton(
                   onPressed: open,

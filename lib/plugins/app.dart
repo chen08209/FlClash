@@ -73,22 +73,9 @@ class App {
     return packageNamesRaw.map((e) => e.toString()).toList();
   }
 
-  Future<bool?> requestNotificationsPermission() async {
-    return methodChannel.invokeMethod<bool>('requestNotificationsPermission');
-  }
-
-  Future<bool> openFile(String path) async {
-    return await methodChannel.invokeMethod<bool>('openFile', {'path': path}) ??
-        false;
-  }
-
   final Map<String, ImageProvider?> _packageIcons = {};
   final Map<String, Future<ImageProvider?>> _packageIconTasks = {};
   final TaskPool _packageIconPool = TaskPool(maxConcurrentIconLoads);
-
-  bool hasPackageIcon(String packageName) {
-    return _packageIcons.containsKey(packageName);
-  }
 
   ImageProvider? getCachedPackageIcon(String packageName) {
     return _packageIcons[packageName];

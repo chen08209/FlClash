@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/app_localizations.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/pages/scan.dart';
-import 'package:fl_clash/widgets/activate_box.dart';
-import 'package:fl_clash/widgets/null_status.dart';
+import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/ui/activate_box.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/null_status.dart';
+import 'package:fl_clash/ui/surface.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -686,6 +688,38 @@ void main() {
             .opacity,
         0,
       );
+    });
+  });
+
+  group('ScanPage theme', () {
+    testWidgets('the page takes the app dark theme in light mode', (
+      tester,
+    ) async {
+      await pumpScanPage(tester, onPopped: (_) {});
+      ProviderScope.containerOf(tester.element(find.byType(ScanPage)))
+          .read(themeSettingProvider.notifier)
+          .update(
+            (state) => state.copyWith(
+              themeMode: ThemeMode.light,
+              pureBlack: true,
+              fontFamily: 'Inter',
+            ),
+          );
+      await pumpFrames(tester);
+
+      final theme = Theme.of(
+        tester.element(
+          find.descendant(
+            of: find.byType(ScanPage),
+            matching: find.byType(Scaffold),
+          ),
+        ),
+      );
+      expect(theme.brightness, Brightness.dark);
+      expect(theme.colorScheme.surface, Colors.black);
+      expect(theme.extension<ElevatedColorScheme>(), isNotNull);
+      expect(theme.textTheme.bodyMedium!.fontFamily, 'Inter');
+      expect(theme.actionIconTheme?.backButtonIconBuilder, isNotNull);
     });
   });
 }

@@ -16,7 +16,7 @@ class DeveloperView extends ConsumerWidget {
 
   Widget _getDeveloperList(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
-    return generateSectionV3(
+    return generateSection(
       title: appLocalizations.options,
       items: [
         ListItem(
@@ -94,7 +94,7 @@ class DeveloperView extends ConsumerWidget {
           horizontal: 16,
         ).copyWith(top: context.contentTopPadding, bottom: 16),
         children: [
-          generateSectionV3(
+          generateSection(
             items: [
               ListItem.toggle(
                 title: Text(appLocalizations.developerMode),

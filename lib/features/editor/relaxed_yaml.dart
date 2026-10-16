@@ -56,8 +56,6 @@ class _Frame {
 
   _Frame(this.schema, this.indent, this.ownerIndent);
 
-  bool get isDict => schema.entry != null;
-
   MapEntry<String, YamlSchema>? field(String name) {
     final lower = name.toLowerCase();
     return schema

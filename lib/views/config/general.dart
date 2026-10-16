@@ -440,7 +440,7 @@ class GeneralView extends ConsumerWidget {
           horizontal: 16,
         ).copyWith(top: context.appBarInset, bottom: 16),
         children: [
-          generateSectionV3(
+          generateSection(
             title: appLocalizations.startupAndBackground,
             items: _startupItems(appLocalizations),
             footer: [
@@ -449,12 +449,12 @@ class GeneralView extends ConsumerWidget {
               appLocalizations.onDemandDesc,
             ].join('\n'),
           ),
-          generateSectionV3(
+          generateSection(
             title: appLocalizations.requestsAndUpdates,
             items: _requestItems(),
             footer: appLocalizations.checkCertificateDesc,
           ),
-          generateSectionV3(
+          generateSection(
             title: appLocalizations.inbound,
             items: _inboundItems(
               authentication: authentication,
@@ -465,17 +465,17 @@ class GeneralView extends ConsumerWidget {
               appLocalizations.authenticationDesc,
             ].join('\n'),
           ),
-          generateSectionV3(
+          generateSection(
             title: appLocalizations.connection,
             items: _connectionItems(),
             footer: appLocalizations.autoCloseConnectionsDesc,
           ),
-          generateSectionV3(
+          generateSection(
             title: appLocalizations.core,
             items: _coreItems(),
             footer: appLocalizations.ipv6Desc,
           ),
-          generateSectionV3(
+          generateSection(
             title: appLocalizations.logsAndDiagnostics,
             items: _logItems(),
             footer: [

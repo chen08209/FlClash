@@ -1,8 +1,9 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/status_manager.dart';
+import 'package:fl_clash/manager/theme_manager.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -10,7 +11,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 class TestApp extends StatelessWidget {
   final Widget child;
   final bool includeNavigatorKey;
-  final bool setTheme;
   final bool wrapInProviderScope;
   final bool withStatusManager;
   final List<Override> overrides;
@@ -21,7 +21,6 @@ class TestApp extends StatelessWidget {
     super.key,
     required this.child,
     this.includeNavigatorKey = true,
-    this.setTheme = true,
     this.wrapInProviderScope = false,
     this.withStatusManager = false,
     this.overrides = const [],
@@ -38,15 +37,15 @@ class TestApp extends StatelessWidget {
       locale: locale,
       localizationsDelegates: const [
         AppLocalizations.delegate,
+        AppUiLocalizations.delegate,
         ...GlobalMaterialLocalizations.delegates,
       ],
       supportedLocales: AppLocalizations.delegate.supportedLocales,
       builder: (context, child) {
-        globalState.measure = Measure.of(context, 1);
-        if (setTheme) {
-          globalState.theme = CommonTheme.of(context, 1);
-        }
-        return withStatusManager ? StatusManager(child: child!) : child!;
+        return wrapAppScopes(
+          context,
+          withStatusManager ? StatusManager(child: child!) : child!,
+        );
       },
       home: homeBuilder(child),
     );
@@ -54,4 +53,17 @@ class TestApp extends StatelessWidget {
         ? ProviderScope(overrides: overrides, child: app)
         : app;
   }
+}
+
+/// The scopes ThemeManager provides, for a test with its own MaterialApp.
+Widget wrapAppScopes(BuildContext context, Widget child) {
+  final measure = Measure.of(context, 1);
+  globalState.measure = measure;
+  final hasProviders =
+      context.findAncestorWidgetOfExactType<UncontrolledProviderScope>() !=
+      null;
+  return MeasureScope(
+    measure: measure,
+    child: hasProviders ? AppViewScope(child: child) : child,
+  );
 }

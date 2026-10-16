@@ -2,15 +2,13 @@ import 'dart:async';
 
 import 'package:fl_clash/common/cache.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/plugins/app.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_svg/svg.dart';
-
-import 'route_motion_hold.dart';
-import 'text.dart';
 
 const _maxCachedIconBytes = 16 << 20;
 
@@ -163,12 +161,12 @@ class GroupMonogram extends StatelessWidget {
         child: EmojiText(
           mark,
           maxLines: 1,
-          style: TextStyle(
-            fontSize: size * 0.62,
-            height: 1,
-            fontWeight: FontWeight.w600,
-            color: iconTheme.color,
-          ),
+          style: AppTextStyle.custom(
+            context,
+            size: size * 0.62,
+            leading: size * 0.62,
+            weight: FontWeight.w600,
+          ).copyWith(color: iconTheme.color),
         ),
       ),
     );
@@ -371,14 +369,8 @@ class _ImageCacheWidgetState extends State<ImageCacheWidget>
 class PackageIcon extends StatefulWidget {
   final String packageName;
   final double size;
-  final Widget? placeholder;
 
-  const PackageIcon({
-    super.key,
-    required this.packageName,
-    required this.size,
-    this.placeholder,
-  });
+  const PackageIcon({super.key, required this.packageName, required this.size});
 
   @override
   State<PackageIcon> createState() => _PackageIconState();
@@ -433,8 +425,7 @@ class _PackageIconState extends State<PackageIcon>
   Widget build(BuildContext context) {
     final icon = _icon;
     if (icon == null) {
-      return widget.placeholder ??
-          SizedBox(width: widget.size, height: widget.size);
+      return SizedBox(width: widget.size, height: widget.size);
     }
     return Image(
       image: icon,

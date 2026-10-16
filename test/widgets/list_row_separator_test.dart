@@ -10,6 +10,7 @@ void main() {
   Future<List<Finder>> pumpRows(
     WidgetTester tester, {
     int? selected,
+    int? invalid,
     Widget? leading,
     double top = 0,
   }) async {
@@ -18,13 +19,14 @@ void main() {
         child: Scaffold(
           body: Padding(
             padding: EdgeInsets.only(top: top),
-            child: generateSectionV3(
+            child: generateSection(
               items: [
                 for (var index = 0; index < 3; index++)
                   DecorationListItem(
                     leading: leading,
                     title: Text('row $index'),
                     isSelected: index == selected,
+                    invalid: index == invalid,
                     onPressed: () {},
                   ),
               ],
@@ -57,13 +59,22 @@ void main() {
     expect(tester.renderObject(rows[2]), isNot(separator(tester, rows[2])));
   });
 
-  testWidgets('a selected row drops the separators on both its edges', (
+  testWidgets('an invalid row drops the separators on both its edges', (
+    tester,
+  ) async {
+    final rows = await pumpRows(tester, invalid: 1);
+
+    expect(tester.renderObject(rows[0]), isNot(separator(tester, rows[0])));
+    expect(tester.renderObject(rows[1]), isNot(separator(tester, rows[1])));
+  });
+
+  testWidgets('a selected row keeps the separators on both its edges', (
     tester,
   ) async {
     final rows = await pumpRows(tester, selected: 1);
 
-    expect(tester.renderObject(rows[0]), isNot(separator(tester, rows[0])));
-    expect(tester.renderObject(rows[1]), isNot(separator(tester, rows[1])));
+    expect(tester.renderObject(rows[0]), separator(tester, rows[0]));
+    expect(tester.renderObject(rows[1]), separator(tester, rows[1]));
   });
 
   testWidgets('pressing a row hides the separator above it until release', (
@@ -154,7 +165,7 @@ void main() {
           body: ListView(
             controller: controller,
             children: [
-              generateSectionV3(
+              generateSection(
                 items: [
                   for (var index = 0; index < 3; index++)
                     DecorationListItem(
@@ -253,67 +264,5 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(tester.binding.hasScheduledFrame, isFalse);
-  });
-
-  testWidgets('a flat section runs its separators from the title to the edge', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      TestApp(
-        child: Scaffold(
-          body: ListView(
-            children: generateSection(
-              items: [
-                for (var index = 0; index < 3; index++)
-                  ListItem(
-                    leading: const Icon(Icons.language),
-                    title: Text('row $index'),
-                    onTap: () {},
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-    final rows = [
-      for (var index = 0; index < 3; index++)
-        find.ancestor(
-          of: find.text('row $index'),
-          matching: find.byType(ListTile),
-        ),
-    ];
-    RenderObject separatorOf(Finder row) {
-      RenderObject node = tester.renderObject(row);
-      while (node.runtimeType.toString() != '_RenderListRowSeparator') {
-        node = node.parent!;
-      }
-      return node;
-    }
-
-    final row = tester.getRect(rows[0]);
-    final title = tester.getRect(find.text('row 0'));
-    final thickness = 2 / tester.view.devicePixelRatio;
-    expect(
-      separatorOf(rows[0]),
-      separator(
-        tester,
-        rows[0],
-        rect: Rect.fromLTRB(
-          title.left - row.left,
-          row.height - thickness,
-          row.width,
-          row.height,
-        ),
-      ),
-    );
-    expect(separatorOf(rows[2]), isNot(separator(tester, rows[2])));
-
-    final gesture = await tester.startGesture(tester.getCenter(rows[1]));
-    await tester.pump(kPressTimeout);
-    expect(separatorOf(rows[0]), isNot(separator(tester, rows[0])));
-    expect(separatorOf(rows[1]), isNot(separator(tester, rows[1])));
-    await gesture.up();
-    await tester.pumpAndSettle();
   });
 }

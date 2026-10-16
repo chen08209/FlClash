@@ -7,8 +7,6 @@ import 'print.dart';
 import 'protocol.dart';
 import 'string.dart';
 
-typedef InstallConfigCallBack = void Function(String url);
-
 String? profileUrlFromQrCodes(Iterable<String?> values) {
   for (final value in values) {
     final text = value?.trim();

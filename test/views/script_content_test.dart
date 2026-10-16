@@ -125,10 +125,10 @@ void main() {
     await pumpScriptContent(tester);
 
     expect(find.text(currentAppLocalizations.extendScript), findsOneWidget);
-    expect(find.byType(Radio<int>), findsNothing);
+    expect(find.byType(DecorationListItem), findsNothing);
   });
 
-  testWidgets('marks the profile script as the selected radio', (tester) async {
+  testWidgets('checks only the profile script', (tester) async {
     container = buildContainer(
       scripts: [_script(10, 'alpha'), _script(11, 'beta')],
       selectedScriptId: 11,
@@ -136,11 +136,12 @@ void main() {
 
     await pumpScriptContent(tester);
 
-    final groups = tester
-        .widgetList<RadioGroup<int>>(find.byType(RadioGroup<int>))
-        .toList();
-    expect(groups, hasLength(1));
-    expect(groups.single.groupValue, 11);
+    Finder checkIn(String label) => find.descendant(
+      of: find.widgetWithText(DecorationListItem, label),
+      matching: find.byType(SelectionCheck),
+    );
+    expect(checkIn('beta'), findsOneWidget);
+    expect(checkIn('alpha'), findsNothing);
   });
 
   testWidgets('tapping an unselected script selects it', (tester) async {
@@ -166,17 +167,5 @@ void main() {
     await tester.pump();
 
     expect(selectedScriptId(), isNull);
-  });
-
-  testWidgets('tapping the radio selects the same script as the tile', (
-    tester,
-  ) async {
-    container = buildContainer(scripts: [_script(10, 'alpha')]);
-
-    await pumpScriptContent(tester);
-    await tester.tap(find.byType(Radio<int>));
-    await tester.pump();
-
-    expect(selectedScriptId(), 10);
   });
 }

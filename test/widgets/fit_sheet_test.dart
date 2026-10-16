@@ -1,12 +1,13 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/widgets/paged_sheet.dart';
-import 'package:fl_clash/widgets/scaffold.dart';
-import 'package:fl_clash/widgets/sheet.dart';
-import 'package:fl_clash/widgets/sheet_header.dart';
-import 'package:fl_clash/widgets/snap_sheet.dart';
+import 'package:fl_clash/ui/paged_sheet.dart';
+import 'package:fl_clash/ui/scaffold.dart';
+import 'package:fl_clash/ui/sheet.dart';
+import 'package:fl_clash/ui/sheet_header.dart';
+import 'package:fl_clash/ui/snap_sheet.dart';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -76,14 +77,14 @@ void main() {
 
   bool isOpen(WidgetTester tester) => tester.any(find.text('title'));
 
-  testWidgets('a short sheet rests at its content height and closes when '
+  testWidgets('a short sheet rests at the short detent and closes when '
       'its content is dragged down', (tester) async {
     final result = await openSheet(tester, (_) => _list(3));
     var closed = false;
     unawaited(result.then((_) => closed = true));
 
     final top = sheetTop(tester);
-    expect(top, greaterThan(_view.height / 2));
+    expect(top, closeTo(_view.height * (1 - snapSheetDetents.first), 1));
     expect(tester.getBottomLeft(find.text('row 2')).dy, lessThan(_view.height));
 
     await tester.drag(find.text('row 1'), const Offset(0, 40));
@@ -172,24 +173,18 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('a short sheet clears the bottom bars once, and the keyboard '
-      'carries it up past the short detent with its content right above it', (
-    tester,
-  ) async {
+  testWidgets('a short sheet keeps its content above the keyboard and comes '
+      'back to the short detent', (tester) async {
     await openSheet(tester, (_) => _list(3));
     tester.view.viewPadding = const FakeViewPadding(bottom: 30);
     tester.view.padding = const FakeViewPadding(bottom: 30);
     await tester.pumpAndSettle();
     final top = sheetTop(tester);
-    expect(rowBottom(tester, 2), closeTo(_view.height - 30, 1));
+    expect(top, closeTo(_view.height * (1 - snapSheetDetents.first), 1));
 
     const keyboard = 400.0;
     await raiseKeyboard(tester, keyboard);
-    expect(
-      sheetTop(tester),
-      lessThan(_view.height * (1 - snapSheetDetents.first)),
-    );
-    expect(rowBottom(tester, 2), closeTo(_view.height - keyboard, 1));
+    expect(rowBottom(tester, 2), lessThanOrEqualTo(_view.height - keyboard));
 
     tester.view.resetViewInsets();
     tester.view.padding = const FakeViewPadding(bottom: 30);
@@ -197,8 +192,8 @@ void main() {
     expect(sheetTop(tester), closeTo(top, 1));
   });
 
-  testWidgets('a long sheet opens to the tall detent while the keyboard is '
-      'still rising', (tester) async {
+  testWidgets('a long sheet opens past the tall detent to a peek below the '
+      'top while the keyboard is still rising', (tester) async {
     await openSheet(tester, (_) => _list(60));
     for (final inset in [80.0, 160.0]) {
       tester.view.viewInsets = FakeViewPadding(bottom: inset);
@@ -213,7 +208,63 @@ void main() {
       top = sheetTop(tester);
     }
     await tester.pumpAndSettle();
+    expect(sheetTop(tester), closeTo(stackedSheetPeek, 1));
+  });
+
+  testWidgets('a long sheet at the tall detent rises with the keyboard and '
+      'comes back down with it on every frame', (tester) async {
+    await openSheet(tester, (_) => _list(60));
+    addTearDown(tester.view.resetViewInsets);
+    await tester.fling(content(), const Offset(0, -200), 2000);
+    await tester.pumpAndSettle();
     expect(sheetTop(tester), closeTo(_tallTop, 1));
+
+    for (final inset in [40.0, 120.0, 300.0, 200.0, 60.0, 20.0, 0.0]) {
+      tester.view.viewInsets = FakeViewPadding(bottom: inset);
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(
+        sheetTop(tester),
+        closeTo(math.max(stackedSheetPeek, _tallTop - inset), 1),
+      );
+    }
+  });
+
+  testWidgets('a settle whose detent the keyboard moves every frame keeps '
+      'moving every frame', (tester) async {
+    await openSheet(tester, (_) => _list(60));
+    addTearDown(tester.view.resetViewInsets);
+
+    await tester.fling(content(), const Offset(0, -100), 2000);
+    var top = sheetTop(tester);
+    for (var frame = 1; frame <= 12; frame++) {
+      tester.view.viewInsets = FakeViewPadding(bottom: frame * 20.0);
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(sheetTop(tester), lessThan(top - 1));
+      top = sheetTop(tester);
+    }
+    await tester.pumpAndSettle();
+    expect(sheetTop(tester), closeTo(stackedSheetPeek, 1));
+  });
+
+  testWidgets('a sheet the tall detent would cut off above the keyboard '
+      'rises only as far as its content needs', (tester) async {
+    await openSheet(tester, (_) => _list(9));
+    const keyboard = 400.0;
+    await raiseKeyboard(tester, keyboard);
+
+    expect(sheetTop(tester), lessThan(_tallTop));
+    expect(sheetTop(tester), greaterThan(stackedSheetPeek));
+    expect(rowBottom(tester, 8), lessThanOrEqualTo(_view.height - keyboard));
+    expect(
+      tester.state<ScrollableState>(content()).position.maxScrollExtent,
+      0,
+    );
+
+    await lowerKeyboard(tester);
+    expect(
+      sheetTop(tester),
+      closeTo(_view.height * (1 - snapSheetDetents.first), 1),
+    );
   });
 
   testWidgets('a nested sheet keeps its content above the keyboard on every '
@@ -227,7 +278,7 @@ void main() {
     for (final inset in [100.0, 200.0, 300.0, 400.0, 250.0, 0.0]) {
       tester.view.viewInsets = FakeViewPadding(bottom: inset);
       await tester.pump();
-      expect(rowBottom(tester, 2), closeTo(_view.height - inset, 1));
+      expect(rowBottom(tester, 2), lessThanOrEqualTo(_view.height - inset + 1));
     }
   });
 
@@ -286,11 +337,56 @@ void main() {
 
     await tester.tap(find.text('next'));
     await tester.pumpAndSettle();
-    expect(sheetTop(tester), greaterThan(_view.height / 2));
+    expect(
+      sheetTop(tester),
+      closeTo(_view.height * (1 - snapSheetDetents.first), 1),
+    );
 
     await tester.pageBack();
     await tester.pumpAndSettle();
     expect(sheetTop(tester), closeTo(_tallTop, 1));
+  });
+
+  testWidgets('a nested sheet resting at its page height follows a shorter '
+      'page down on every frame of the push', (tester) async {
+    final shortTop = _view.height * (1 - snapSheetDetents.first);
+    await openSheet(
+      tester,
+      (_) => NestedPagedSheet(
+        builder: (context) => CommonScaffold(
+          title: 'title',
+          body: ListView(
+            shrinkWrap: true,
+            children: [
+              for (var index = 0; index < 11; index++)
+                ListTile(title: Text('row $index'), minTileHeight: _rowHeight),
+              ListTile(
+                title: const Text('next'),
+                minTileHeight: _rowHeight,
+                onTap: () => Navigator.of(
+                  context,
+                ).push(PagedSheetRoute(builder: (_) => _list(3))),
+              ),
+            ],
+          ),
+        ),
+      ),
+      props: nestedPagedSheetProps,
+    );
+    double top() => tester.getTopLeft(find.byType(SheetDragHandle).first).dy;
+    await tester.drag(find.text('row 2'), const Offset(0, -300));
+    await tester.pumpAndSettle();
+    var last = top();
+    expect(last, inExclusiveRange(_tallTop + 1, shortTop - 1));
+
+    await tester.tap(find.text('next'));
+    for (var frame = 0; frame < 30; frame++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(top(), greaterThanOrEqualTo(last - 0.5));
+      last = top();
+    }
+    await tester.pumpAndSettle();
+    expect(top(), closeTo(shortTop, 1));
   });
 
   testWidgets('a mouse moving over the sheet between frames finds it laid '

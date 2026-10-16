@@ -1,7 +1,4 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
@@ -212,7 +209,10 @@ class _SelectionSheetState<T> extends ConsumerState<SelectionSheet<T>>
   Widget _buildHeader(SelectionSection<T> section) {
     final header = Padding(
       padding: const EdgeInsets.only(bottom: 4),
-      child: ListHeader(title: section.label!, padding: baseInfoEdgeInsets),
+      child: ListHeader(
+        title: section.label!,
+        padding: baseInfoEdgeInsetsOf(context),
+      ),
     );
     if (!widget.removeOnSelect) {
       return header;
@@ -252,7 +252,7 @@ class _SelectionSheetState<T> extends ConsumerState<SelectionSheet<T>>
         subtitle: subtitle != null ? TooltipLabel(subtitle) : null,
         title: widget.titleBuilder?.call(item, title) ?? title,
         isSelected: isSelected,
-        trailing: isSelected ? const GlyphIcon(AppGlyphs.check) : null,
+        trailing: isSelected ? const SelectionCheck() : null,
       ),
     );
     if (!widget.removeOnSelect) {

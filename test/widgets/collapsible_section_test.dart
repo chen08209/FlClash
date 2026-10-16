@@ -1,4 +1,5 @@
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -53,6 +54,30 @@ void main() {
     await tester.tap(find.text('Nodes (3)'));
     await tester.pumpAndSettle();
     expect(opacityOf(tester, 'n0'), 1);
+  });
+
+  testWidgets('a keyboard reaches the header and folds the section', (
+    tester,
+  ) async {
+    await pumpSection(tester, 3);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    final outline = find.descendant(
+      of: find.byType(SliverCollapsibleSection),
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is DecoratedBox &&
+            ((widget.decoration as ShapeDecoration).shape as OutlinedBorder)
+                    .side
+                    .width ==
+                2,
+      ),
+    );
+    expect(outline, findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(find.text('n0'), findsNothing);
   });
 
   testWidgets('starts collapsed when asked to', (tester) async {

@@ -2,13 +2,13 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/ui/list.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod/misc.dart' show ProviderListenable;
 
 import 'input.dart';
-import 'list.dart';
 
 export 'package:riverpod/misc.dart' show ProviderListenable;
 
@@ -123,7 +123,6 @@ class ConfigToggleItem extends _ConfigItem<bool> {
     required super.selector,
     required super.title,
     required super.onChanged,
-    super.subtitle,
     super.leading,
   });
 
@@ -137,7 +136,6 @@ class ConfigToggleItem extends _ConfigItem<bool> {
     return ListItem.toggle(
       leading: leading,
       title: Text(title(appLocalizations)),
-      subtitle: buildSubtitle(appLocalizations),
       value: value,
       onChanged: (value) => onChanged(ref, value),
     );
@@ -169,17 +167,11 @@ class ConfigOptionsItem<T> extends _ConfigItem<T> {
     return ListItem<T>.options(
       leading: leading,
       title: Text(title(appLocalizations)),
-      subtitle: Text(subtitle?.call(appLocalizations) ?? textBuilder(value)),
-      dialogTitle: title(appLocalizations),
+      subtitle: buildSubtitle(appLocalizations),
       options: options,
       value: value,
       textBuilder: textBuilder,
-      onChanged: (value) {
-        if (value == null) {
-          return;
-        }
-        onChanged(ref, value);
-      },
+      onChanged: (value) => onChanged(ref, value),
     );
   }
 }
@@ -194,9 +186,7 @@ class ConfigTextItem extends _ConfigItem<String> {
     this.keyboardType,
     this.validator,
     this.normalize,
-    this.showValueAsSubtitle = true,
     this.allowEmpty = false,
-    super.subtitle,
     super.leading,
   });
 
@@ -204,7 +194,6 @@ class ConfigTextItem extends _ConfigItem<String> {
   final TextInputType? keyboardType;
   final ConfigValidator? validator;
   final String Function(String value)? normalize;
-  final bool showValueAsSubtitle;
   final bool allowEmpty;
 
   String? _normalize(String? value) {
@@ -226,9 +215,7 @@ class ConfigTextItem extends _ConfigItem<String> {
     return ListItem.input(
       leading: leading,
       title: Text(label),
-      subtitle: showValueAsSubtitle && value.isNotEmpty
-          ? Text(value)
-          : buildSubtitle(appLocalizations),
+      subtitle: value.isEmpty ? null : Text(value),
       dialogTitle: label,
       value: value,
       maxLength: maxLength,

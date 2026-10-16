@@ -1,6 +1,5 @@
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -177,6 +176,45 @@ void main() {
     expect(bar.right - tester.getRect(group).right, appBarActionInset(false));
   });
 
+  testWidgets('on glass a group is one pane, and a lone button its own', (
+    tester,
+  ) async {
+    await _pumpBar(
+      tester,
+      view: _desktop,
+      platform: TargetPlatform.android,
+      child: const LiquidGlassScope(
+        enabled: true,
+        child: CommonScaffold(
+          title: 'Title',
+          iconActions: [
+            IconButtonData(glyph: AppGlyphs.sync, onPressed: _noop),
+            IconButtonData(glyph: AppGlyphs.sort, onPressed: _noop),
+          ],
+          body: SizedBox(),
+        ),
+      ),
+    );
+
+    for (final button in [
+      find.byType(TonalButtonGroup),
+      find.byType(BackButton),
+    ]) {
+      expect(
+        find.descendant(of: button, matching: find.byType(LiquidGlass)),
+        findsOneWidget,
+      );
+    }
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(BackButton)),
+    );
+    await tester.pumpAndSettle();
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('raw action widgets press on their own, one gap apart', (
     tester,
   ) async {
@@ -282,6 +320,102 @@ void main() {
       expect(bar.right - action.right, appBarActionInset(compact));
     });
   }
+
+  for (final (name, view, compact, scaffold) in [
+    (
+      'a phone page',
+      _mobile,
+      true,
+      const CommonScaffold(title: 'Title', body: SizedBox()),
+    ),
+    (
+      'a phone page with a title widget',
+      _mobile,
+      true,
+      const CommonScaffold(titleWidget: Text('Title'), body: SizedBox()),
+    ),
+    (
+      'a desktop page with a title widget',
+      _desktop,
+      false,
+      const CommonScaffold(titleWidget: Text('Title'), body: SizedBox()),
+    ),
+    (
+      'a desktop page',
+      _desktop,
+      false,
+      const CommonScaffold(title: 'Title', body: SizedBox()),
+    ),
+  ]) {
+    testWidgets('$name sets its title a margin past the back button', (
+      tester,
+    ) async {
+      await _pumpBar(
+        tester,
+        view: view,
+        platform: TargetPlatform.android,
+        child: scaffold,
+      );
+      final back = tester.getRect(_container(find.byType(BackButton)));
+      final title = tester.getRect(
+        find.descendant(of: find.byType(AppBar), matching: find.text('Title')),
+      );
+
+      expect(title.left - back.right, appBarActionInset(compact));
+    });
+  }
+
+  for (final (name, view, compact) in [
+    ('a pushed phone page', _mobile, true),
+    ('a pushed desktop page', _desktop, false),
+  ]) {
+    testWidgets('$name keeps a long title a margin clear of its buttons', (
+      tester,
+    ) async {
+      final title = 'Title ' * 40;
+      await _pumpBar(
+        tester,
+        view: view,
+        platform: TargetPlatform.android,
+        child: CommonScaffold(
+          title: title,
+          actions: const [
+            IconButton(onPressed: _noop, icon: GlyphIcon(AppGlyphs.sync)),
+          ],
+          body: const SizedBox(),
+        ),
+      );
+      final rect = tester.getRect(find.text(title));
+      final back = tester.getRect(_container(find.byType(BackButton)));
+      final action = tester.getRect(
+        _container(find.widgetWithGlyph(IconButton, AppGlyphs.sync)),
+      );
+
+      expect(rect.left - back.right, appBarActionInset(compact));
+      expect(action.left - rect.right, appBarActionInset(compact));
+    });
+  }
+
+  testWidgets('a root page keeps its title at the leading edge', (
+    tester,
+  ) async {
+    tester.view.physicalSize = _mobile;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [viewSizeProvider.overrideWithBuild((_, _) => _mobile)],
+        child: const CommonScaffold(title: 'Title', body: SizedBox()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getRect(find.text('Title')).center.dx,
+      lessThan(_mobile.width / 2),
+    );
+  });
 
   testWidgets('searching keeps the bar buttons where they stood', (
     tester,

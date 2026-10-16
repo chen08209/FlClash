@@ -3,7 +3,13 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
-const _uiRoots = ['lib/views', 'lib/widgets', 'lib/pages', 'lib/features'];
+const _uiRoots = [
+  'lib/ui',
+  'lib/views',
+  'lib/widgets',
+  'lib/pages',
+  'lib/features',
+];
 
 const _forbidden = <String, String>{
   r'globalState\.container':

@@ -1,11 +1,16 @@
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/widgets/sidebar.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/sidebar.dart';
+import 'package:fl_clash/ui/surface.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
+
+final _paneFinder = find
+    .byWidgetPredicate((widget) => widget is Material && widget.elevation > 0)
+    .first;
 
 const _destinations = [
   SidebarDestination(glyph: AppGlyphs.dashboard, label: 'Dashboard'),
@@ -292,17 +297,12 @@ void main() {
         tester.getTopLeft(find.byTooltip('Collapse')),
         tester.getTopLeft(find.byTooltip('Expand')),
       );
-      final paneEdge = tester.widget<Material>(
-        find
-            .byWidgetPredicate(
-              (widget) =>
-                  widget is Material && widget.shape is BorderDirectional,
-            )
-            .first,
-      );
+      final colorScheme = Theme.of(tester.element(_sidebarFinder)).colorScheme;
+      final pane = tester.widget<Material>(_paneFinder);
+      expect(pane.color, colorScheme.chromeSurface);
       expect(
-        (paneEdge.shape! as BorderDirectional).end.color,
-        Theme.of(tester.element(_sidebarFinder)).colorScheme.outlineVariant,
+        (pane.shape! as BorderDirectional).end,
+        Divider.createBorderSide(tester.element(_sidebarFinder)),
       );
 
       await tester.tap(find.byTooltip('Collapse'));
@@ -325,14 +325,7 @@ void main() {
 
       await openOverlay(tester);
 
-      final pane = tester.getRect(
-        find
-            .byWidgetPredicate(
-              (widget) =>
-                  widget is Material && widget.shape is BorderDirectional,
-            )
-            .first,
-      );
+      final pane = tester.getRect(_paneFinder);
       expect(pane.topLeft, sidebar.topLeft);
       expect(pane.height, sidebar.height);
       expect(pane.width, 220 + safePadding.left);

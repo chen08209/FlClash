@@ -11,7 +11,6 @@ void main() {
       expect(appLocalizations.dashboard, isNotEmpty);
       expect(appLocalizations.proxies, isNotEmpty);
       expect(appLocalizations.settings, isNotEmpty);
-      expect(appLocalizations.hoursCount(2), contains('2'));
       expect(appLocalizations.secondsCount(30), contains('30'));
       expect(appLocalizations.geoUpdated('geoip'), contains('geoip'));
     }

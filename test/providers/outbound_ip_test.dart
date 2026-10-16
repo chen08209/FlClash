@@ -119,7 +119,7 @@ void main() {
     expect(entry.value?.ip, '2.2.2.2');
   });
 
-  test('a Core error is a failure until it is retried', () async {
+  test('a Core error is a failure until it is refreshed', () async {
     when(() => core.outboundIp(any())).thenAnswer(
       (_) async => const OutboundIpResult(
         error: 'timeout',
@@ -139,7 +139,7 @@ void main() {
     );
     verify(() => core.outboundIp(any())).called(1);
 
-    probe.retry(routedOutbound);
+    probe.refresh([routedOutbound]);
     await pumpEventQueue();
 
     verify(() => core.outboundIp(any())).called(1);

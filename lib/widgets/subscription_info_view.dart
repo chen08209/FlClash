@@ -1,9 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
-
-import 'list.dart';
-import 'text.dart';
 
 const _expireGap = 12.0;
 
@@ -40,10 +38,10 @@ class SubscriptionInfoView extends StatelessWidget {
     final expireShow = info.expire != 0
         ? DateTime.fromMillisecondsSinceEpoch(info.expire * 1000).show
         : context.appLocalizations.infiniteTime;
-    final valueStyle = context.textTheme.bodyMedium?.toSoftBold.copyWith(
-      color: context.colorScheme.onSurfaceVariant,
-    );
-    final metaStyle = context.textTheme.bodySmall?.toLight;
+    final valueStyle = AppTextStyle.subheadline
+        .of(context, emphasized: true)
+        .copyWith(color: context.colorScheme.onSurfaceVariant);
+    final metaStyle = AppTextStyle.footnote.of(context).toLight;
     final trafficLabel = '$useShow / $totalShow';
     final trafficText = Text(
       trafficLabel,
@@ -114,7 +112,7 @@ class SubscriptionInfoDetailView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          generateSectionV3(
+          generateSection(
             title: appLocalizations.trafficUsage,
             items: [
               _buildItem(
@@ -128,7 +126,7 @@ class SubscriptionInfoDetailView extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          generateSectionV3(
+          generateSection(
             title: appLocalizations.expireTime,
             items: [_buildItem(value: expire)],
           ),

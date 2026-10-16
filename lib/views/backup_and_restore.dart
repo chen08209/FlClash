@@ -3,20 +3,14 @@ import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/dav_client.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/widgets/navigation_dock.dart';
-import 'package:fl_clash/widgets/dialog.dart';
-import 'package:fl_clash/widgets/fade_box.dart';
-import 'package:fl_clash/widgets/input.dart';
-import 'package:fl_clash/widgets/list.dart';
-import 'package:fl_clash/widgets/loading.dart';
-import 'package:fl_clash/widgets/scaffold.dart';
-import 'package:fl_clash/widgets/text.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/ui.dart';
+import 'package:fl_clash/widgets/config_item.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -147,26 +141,6 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
         .update((state) => state?.copyWith(fileName: value));
   }
 
-  Future<void> _handleUpdateRestoreStrategy() async {
-    final restoreStrategy = ref.read(
-      appSettingProvider.select((state) => state.restoreStrategy),
-    );
-    final res = await dialogs.showCommonDialog(
-      child: OptionsDialog<RestoreStrategy>(
-        title: currentAppLocalizations.restoreStrategy,
-        options: RestoreStrategy.values,
-        textBuilder: (mode) => mode.label,
-        value: restoreStrategy,
-      ),
-    );
-    if (res == null) {
-      return;
-    }
-    ref
-        .read(appSettingProvider.notifier)
-        .update((state) => state.copyWith(restoreStrategy: res));
-  }
-
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
@@ -180,7 +154,7 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
           horizontal: 16,
         ).copyWith(top: context.appBarInset, bottom: 16),
         children: [
-          generateSectionV3(
+          generateSection(
             title: appLocalizations.remote,
             items: [
               if (dav == null)
@@ -188,13 +162,11 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
                   leading: const GlyphIcon(AppGlyphs.account),
                   title: Text(appLocalizations.noInfo),
                   subtitle: Text(appLocalizations.pleaseBindWebDAV),
-                  trailing: ElasticButton(
-                    child: FilledButton.tonal(
-                      onPressed: () {
-                        _showAddWebDAV(dav);
-                      },
-                      child: Text(appLocalizations.bind),
-                    ),
+                  trailing: TonalButton(
+                    label: appLocalizations.bind,
+                    onPressed: () {
+                      _showAddWebDAV(dav);
+                    },
                   ),
                 )
               else ...[
@@ -217,13 +189,11 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
                       ],
                     ),
                   ),
-                  trailing: ElasticButton(
-                    child: FilledButton.tonal(
-                      onPressed: () {
-                        _showAddWebDAV(dav);
-                      },
-                      child: Text(appLocalizations.edit),
-                    ),
+                  trailing: TonalButton(
+                    label: appLocalizations.edit,
+                    onPressed: () {
+                      _showAddWebDAV(dav);
+                    },
                   ),
                 ),
                 ListItem.input(
@@ -252,7 +222,7 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
               ],
             ],
           ),
-          generateSectionV3(
+          generateSection(
             title: appLocalizations.local,
             items: [
               ListItem(
@@ -269,10 +239,20 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
               ),
             ],
           ),
-          generateSectionV3(
+          generateSection(
             title: appLocalizations.options,
             items: [
-              _RestoreStrategyItem(onPressed: _handleUpdateRestoreStrategy),
+              ConfigOptionsItem<RestoreStrategy>(
+                title: (l) => l.restoreStrategy,
+                options: RestoreStrategy.values,
+                textBuilder: (strategy) => strategy.label,
+                selector: appSettingProvider.select(
+                  (state) => state.restoreStrategy,
+                ),
+                onChanged: (ref, value) => ref
+                    .read(appSettingProvider.notifier)
+                    .update((state) => state.copyWith(restoreStrategy: value)),
+              ),
             ],
           ),
         ],
@@ -294,11 +274,7 @@ class _DavConnectionIndicator extends StatelessWidget {
         return Center(
           child: FadeThroughBox(
             child: isConnected == null
-                ? const SizedBox(
-                    width: 12,
-                    height: 12,
-                    child: CommonCircleLoading(),
-                  )
+                ? const CommonCircleLoading(size: 12)
                 : Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -312,29 +288,6 @@ class _DavConnectionIndicator extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _RestoreStrategyItem extends ConsumerWidget {
-  const _RestoreStrategyItem({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final restoreStrategy = ref.watch(
-      appSettingProvider.select((state) => state.restoreStrategy),
-    );
-    return ListItem(
-      onTap: onPressed,
-      title: Text(context.appLocalizations.restoreStrategy),
-      trailing: ElasticButton(
-        child: FilledButton(
-          onPressed: onPressed,
-          child: Text(restoreStrategy.label),
-        ),
-      ),
     );
   }
 }
@@ -449,7 +402,7 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
             TextFormField(
               controller: _uriController,
               inputFormatters: TextInputLimits.limit(TextInputLimits.uri),
-              maxLines: 5,
+              maxLines: null,
               minLines: 1,
               textInputAction: TextInputAction.next,
               decoration: InputDecoration(

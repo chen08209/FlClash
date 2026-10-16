@@ -207,14 +207,16 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            ElasticButton(
-              child: IconButton.filledTonal(
-                tooltip: _isMore
-                    ? context.appLocalizations.showLess
-                    : context.appLocalizations.showMore,
-                onPressed: _handleMore,
-                iconSize: 20,
-                icon: CommonExpandIcon(expand: _isMore),
+            TonalButtonTheme(
+              size: TonalButtonSize.section,
+              child: ElasticPress(
+                child: IconButton(
+                  tooltip: _isMore
+                      ? context.appLocalizations.showLess
+                      : context.appLocalizations.showMore,
+                  onPressed: _handleMore,
+                  icon: CommonExpandIcon(expand: _isMore),
+                ),
               ),
             ),
             Row(

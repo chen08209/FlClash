@@ -3,9 +3,9 @@ library;
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -150,10 +150,9 @@ class RuleItem extends StatelessWidget {
                                   : rule.realTarget!,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: context
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.toJetBrainsMono
+                              style: AppTextStyle.subheadline
+                                  .of(context)
+                                  .toJetBrainsMono
                                   .copyWith(color: checkResult.color),
                             ),
                           ),
@@ -200,7 +199,7 @@ class _RuleItemLabel extends StatelessWidget {
                 content,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: context.listSubtitleStyle?.toJetBrainsMono.copyWith(
+                style: context.listSubtitleStyle.toJetBrainsMono.copyWith(
                   color: style.color?.opacity60,
                 ),
               ),
@@ -231,7 +230,7 @@ class RuleStatusItem extends StatelessWidget {
           rule.rawValue,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: context.textTheme.bodyMedium?.toJetBrainsMono,
+          style: AppTextStyle.subheadline.of(context).toJetBrainsMono,
         ),
       ),
       trailing: Switch(value: status, onChanged: onChange),
@@ -351,11 +350,10 @@ class _AddOrEditRuleDialogState extends State<AddOrEditRuleDialog> {
       ],
       child: DropdownMenuTheme(
         data: DropdownMenuThemeData(
-          inputDecorationTheme: InputDecorationTheme(
-            border: AppShape.input,
-            labelStyle: context.textTheme.bodyLarge?.copyWith(
-              overflow: TextOverflow.ellipsis,
-            ),
+          inputDecorationTheme: InputDecorationTheme.of(context).copyWith(
+            labelStyle: AppTextStyle.body
+                .of(context)
+                .copyWith(overflow: TextOverflow.ellipsis),
           ),
         ),
         child: Form(
@@ -365,28 +363,35 @@ class _AddOrEditRuleDialogState extends State<AddOrEditRuleDialog> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ElasticButton(
-                    child: FilledButton.tonal(
-                      onPressed: () async {
-                        _ruleAction =
-                            await dialogs.showCommonDialog<RuleAction>(
-                              context: context,
-                              child: OptionsDialog<RuleAction>(
-                                title: appLocalizations.ruleName,
-                                options: RuleAction.addedRuleActions,
-                                textBuilder: (item) => item.value,
-                                value: _ruleAction,
-                              ),
-                            ) ??
-                            _ruleAction;
-                        setState(() {});
-                      },
-                      child: Text(_ruleAction.value),
+                  CommonPopupBox(
+                    targetBuilder: (open) => TonalButtonGroup(
+                      size: TonalButtonSize.section,
+                      children: [
+                        FilledButton(
+                          onPressed: open,
+                          child: PopupValueText(_ruleAction.value),
+                        ),
+                      ],
+                    ),
+                    popupBuilder: (_) => CommonPopupMenu(
+                      items: [
+                        for (final action in RuleAction.addedRuleActions)
+                          CommonPopupMenuItem(
+                            label: action.value,
+                            checked: action == _ruleAction,
+                            onPressed: () {
+                              setState(() {
+                                _ruleAction = action;
+                              });
+                            },
+                          ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 24),
                   _RuleContentField(
                     controller: _contentController,
+                    ruleAction: _ruleAction,
                     onSubmitted: _handleSubmit,
                   ),
                   const SizedBox(height: 24),
@@ -439,10 +444,12 @@ class _AddOrEditRuleDialogState extends State<AddOrEditRuleDialog> {
 class _RuleContentField extends StatelessWidget {
   const _RuleContentField({
     required this.controller,
+    required this.ruleAction,
     required this.onSubmitted,
   });
 
   final TextEditingController controller;
+  final RuleAction ruleAction;
   final VoidCallback onSubmitted;
 
   @override
@@ -460,7 +467,10 @@ class _RuleContentField extends StatelessWidget {
         if (controller.text.isEmpty) {
           return appLocalizations.emptyTip(appLocalizations.content);
         }
-        return null;
+        return Rule(
+          ruleAction: ruleAction,
+          content: controller.text,
+        ).payloadError?.getMessage(context);
       },
     );
   }
@@ -522,10 +532,18 @@ class _RuleFlagChip extends StatelessWidget {
     return CommonCard(
       radius: AppCorner.sm,
       isSelected: isSelected,
+      fillsSelection: true,
       onPressed: onPressed,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        child: Text(label, style: context.textTheme.bodyMedium),
+        child: Text(
+          label,
+          style: AppTextStyle.subheadline
+              .of(context)
+              .copyWith(
+                color: isSelected ? context.colorScheme.onPrimary : null,
+              ),
+        ),
       ),
     );
   }

@@ -16,8 +16,6 @@ abstract class _EditViewState<W extends ConsumerStatefulWidget, T>
 
   Widget? buildSubtitle(T entry);
 
-  Widget? buildLeading(T entry);
-
   bool sameEntries(List<T> a, List<T> b);
 
   Object popResult(List<T> entries);
@@ -106,7 +104,6 @@ abstract class _EditViewState<W extends ConsumerStatefulWidget, T>
         position: position,
         child: SelectedDecorationListItem(
           title: buildTitle(entry),
-          leading: buildLeading(entry),
           subtitle: buildSubtitle(entry),
           isSelected: isSelected,
           isEditing: isEditing,
@@ -137,30 +134,34 @@ abstract class _EditViewState<W extends ConsumerStatefulWidget, T>
       },
       child: CommonScaffold(
         title: title,
-        actions: [
-          if (isEditing)
-            IconButton(
+        selectionActions: [
+          if (isEditing) ...[
+            IconButtonData(
+              glyph: AppGlyphs.delete,
               tooltip: appLocalizations.delete,
               onPressed: _handleDelete,
-              icon: const GlyphIcon(AppGlyphs.delete),
-            )
-          else if (!sameEntries(_entries, _initialEntries))
-            IconButton(
-              tooltip: appLocalizations.reset,
-              onPressed: _handleReset,
-              icon: const GlyphIcon(AppGlyphs.reset),
             ),
-          if (isEditing)
-            FilledButton(
+            IconButtonData(
+              glyph: AppGlyphs.selectAll,
+              tooltip: appLocalizations.selectAll,
               onPressed: _handleSelectAll,
-              child: Text(appLocalizations.selectAll),
-            )
-          else
-            IconButton(
+            ),
+          ],
+        ],
+        iconActions: [
+          if (!isEditing) ...[
+            if (!sameEntries(_entries, _initialEntries))
+              IconButtonData(
+                glyph: AppGlyphs.reset,
+                tooltip: appLocalizations.reset,
+                onPressed: _handleReset,
+              ),
+            IconButtonData(
+              glyph: AppGlyphs.addCircle,
               tooltip: appLocalizations.add,
               onPressed: _handleAdd,
-              icon: const GlyphIcon(AppGlyphs.addCircle),
             ),
+          ],
         ],
         body: NullStatusSwitcher(
           isEmpty: _entries.isEmpty,
@@ -210,9 +211,6 @@ class ListEditView extends ConsumerStatefulWidget {
   final String title;
   final List<String> items;
   final Widget Function(String item) titleBuilder;
-  final Widget Function(String item)? subtitleBuilder;
-  final Widget Function(String item)? leadingBuilder;
-  final String? valueLabel;
   final int? itemMaxLength;
   final String? Function(String item)? itemValidator;
 
@@ -221,9 +219,6 @@ class ListEditView extends ConsumerStatefulWidget {
     required this.title,
     required this.items,
     required this.titleBuilder,
-    this.leadingBuilder,
-    this.valueLabel,
-    this.subtitleBuilder,
     this.itemMaxLength,
     this.itemValidator,
   });
@@ -250,11 +245,8 @@ class _ListEditViewState extends _EditViewState<ListEditView, String> {
     if (widget.itemValidator?.call(entry) case final error?) {
       return Text(error, style: TextStyle(color: context.colorScheme.error));
     }
-    return widget.subtitleBuilder?.call(entry);
+    return null;
   }
-
-  @override
-  Widget? buildLeading(String entry) => widget.leadingBuilder?.call(entry);
 
   @override
   bool sameEntries(List<String> a, List<String> b) =>
@@ -270,7 +262,6 @@ class _ListEditViewState extends _EditViewState<ListEditView, String> {
       title: widget.title,
       entries: _entries,
       entry: entry,
-      valueLabel: widget.valueLabel,
       itemMaxLength: widget.itemMaxLength,
       itemValidator: widget.itemValidator,
     );
@@ -340,9 +331,6 @@ class MapEditView extends ConsumerStatefulWidget {
   final Map<String, String> entries;
   final Widget Function(MapEntry<String, String> item) titleBuilder;
   final Widget Function(MapEntry<String, String> item)? subtitleBuilder;
-  final Widget Function(MapEntry<String, String> item)? leadingBuilder;
-  final String? keyLabel;
-  final String? valueLabel;
   final int? keyMaxLength;
   final int? valueMaxLength;
 
@@ -351,9 +339,6 @@ class MapEditView extends ConsumerStatefulWidget {
     required this.title,
     required this.entries,
     required this.titleBuilder,
-    this.leadingBuilder,
-    this.keyLabel,
-    this.valueLabel,
     this.subtitleBuilder,
     this.keyMaxLength,
     this.valueMaxLength,
@@ -384,10 +369,6 @@ class _MapEditViewState
       widget.subtitleBuilder?.call(entry);
 
   @override
-  Widget? buildLeading(MapEntry<String, String> entry) =>
-      widget.leadingBuilder?.call(entry);
-
-  @override
   bool sameEntries(
     List<MapEntry<String, String>> a,
     List<MapEntry<String, String>> b,
@@ -397,9 +378,9 @@ class _MapEditViewState
   Object popResult(List<MapEntry<String, String>> entries) =>
       Map<String, String>.fromEntries(entries);
 
-  String get _keyLabel => widget.keyLabel ?? context.appLocalizations.key;
+  String get _keyLabel => context.appLocalizations.key;
 
-  String get _valueLabel => widget.valueLabel ?? context.appLocalizations.value;
+  String get _valueLabel => context.appLocalizations.value;
 
   ParsedInput<MapEntry<String, String>> _parseBatch(String text) {
     return parseMapInput(

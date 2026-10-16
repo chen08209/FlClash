@@ -1,8 +1,9 @@
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/widgets/null_status.dart';
-import 'package:fl_clash/widgets/paged_sheet.dart';
-import 'package:fl_clash/widgets/sheet.dart';
+import 'package:fl_clash/ui/null_status.dart';
+import 'package:fl_clash/ui/paged_sheet.dart';
+import 'package:fl_clash/ui/sheet.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -29,6 +30,7 @@ Widget _switcher({
   return MaterialApp(
     localizationsDelegates: const [
       AppLocalizations.delegate,
+      AppUiLocalizations.delegate,
       ...GlobalMaterialLocalizations.delegates,
     ],
     supportedLocales: AppLocalizations.delegate.supportedLocales,

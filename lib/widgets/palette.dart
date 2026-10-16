@@ -1,11 +1,11 @@
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:material_color_utilities/hct/hct.dart';
 
 import 'color_scheme_box.dart';
-import 'theme.dart';
 
 const _trackHeight = 20.0;
 const _thumbRadius = 14.0;
@@ -104,9 +104,9 @@ class _PaletteState extends State<Palette> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   context.appLocalizations.preview,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                  style: AppTextStyle.subheadline
+                      .of(context, emphasized: true)
+                      .copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
               ),
               PrimaryColorBox(
@@ -366,15 +366,13 @@ class _ToneCellState extends State<_ToneCell> {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   '${widget.tone}',
-                  style: TextStyle(
-                    color: foregroundColor.withValues(
-                      alpha: widget.isSelected ? 1 : 0.72,
-                    ),
-                    fontSize: 11,
-                    fontWeight: widget.isSelected
-                        ? FontWeight.w700
-                        : FontWeight.w500,
-                  ),
+                  style: AppTextStyle.caption2
+                      .of(context, emphasized: widget.isSelected)
+                      .copyWith(
+                        color: foregroundColor.withValues(
+                          alpha: widget.isSelected ? 1 : 0.72,
+                        ),
+                      ),
                 ),
               ),
             ),
@@ -414,10 +412,8 @@ class _ColorSchemePreview extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(_previewInset),
       decoration: ShapeDecoration(
-        color: colorScheme.surfaceContainer,
-        shape: AppShape.lg.copyWith(
-          side: BorderSide(color: colorScheme.outlineVariant),
-        ),
+        color: context.raisedSurfaceLevel.colorOf(colorScheme),
+        shape: AppShape.lg,
       ),
       child: LayoutBuilder(
         builder: (_, constraints) => Row(
@@ -437,11 +433,9 @@ class _ColorSchemePreview extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: Text(
                           label,
-                          style: TextStyle(
-                            color: onColor,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: AppTextStyle.caption2
+                              .of(context)
+                              .copyWith(color: onColor),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),

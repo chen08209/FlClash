@@ -3,9 +3,7 @@ import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/editor/editor.dart';
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -528,7 +526,7 @@ class _EditorTitleField extends StatelessWidget {
         counter: const SizedBox(),
         hintText: context.appLocalizations.unnamed,
       ),
-      style: context.textTheme.titleLarge,
+      style: AppTextStyle.pageTitle.of(context),
       autofocus: false,
     );
   }
@@ -582,10 +580,7 @@ class _EditorBody extends StatelessWidget {
               ? Container(
                   color: context.colorScheme.surface,
                   alignment: Alignment.center,
-                  child: const SizedBox.square(
-                    dimension: 200,
-                    child: CommonCircleLoading(),
-                  ),
+                  child: const CommonCircleLoading.page(),
                 )
               : const SizedBox.shrink(),
         ),
@@ -671,7 +666,7 @@ class _CodeEditorState extends ConsumerState<_CodeEditor> {
   // The bar floats over the text, which scrolls under it from a first line
   // held clear of it; an open find panel takes that clearance instead.
   void _updateInnerPadding(BuildContext context) {
-    final top = _findActive ? 0.0 : context.appBarInset;
+    final top = _findActive ? _findRowGap : context.appBarInset;
     if (top != _innerPadding.top) {
       _innerPadding = EdgeInsets.only(top: top, right: 16);
     }
@@ -689,18 +684,23 @@ class _CodeEditorState extends ConsumerState<_CodeEditor> {
         cursorBubbleColor: colorScheme.primary,
       );
     }
+    final appFont = AppTextStyle.footnote.of(context);
     final textStyle = TextStyle(
       fontSize: fontSize.value,
       fontFamily: FontFamily.jetBrainsMono.value,
+      fontFamilyFallback: [
+        FontFamily.twEmoji.value,
+        ?appFont.fontFamily,
+        ...?appFont.fontFamilyFallback,
+      ],
     );
     if (textStyle != _textStyle) {
       _textStyle = textStyle;
     }
-    final appFont = context.textTheme.bodySmall;
     _lineNumberStyle = TextStyle(
       fontSize: 12,
-      fontFamily: appFont?.fontFamily,
-      fontFamilyFallback: appFont?.fontFamilyFallback,
+      fontFamily: appFont.fontFamily,
+      fontFamilyFallback: appFont.fontFamilyFallback,
       fontFeatures: const [FontFeature.tabularFigures()],
     );
   }
@@ -797,7 +797,6 @@ class _CodeEditorState extends ConsumerState<_CodeEditor> {
       ref.watch(appSettingProvider.select((state) => state.editorFontSize)),
     );
     _updateInnerPadding(context);
-    final isMobileView = ref.watch(isMobileViewProvider);
     final lineWrap = ref.watch(
       appSettingProvider.select((state) => state.editorLineWrap),
     );
@@ -847,7 +846,6 @@ class _CodeEditorState extends ConsumerState<_CodeEditor> {
         controller: findController,
         topInset: context.appBarInset,
         readOnly: widget.readOnly,
-        isMobileView: isMobileView,
       ),
     );
   }
@@ -898,27 +896,30 @@ Map<String, TextStyle> _highlightTheme(
   };
 }
 
-const double _kDefaultFindPanelHeight = 52;
+const _findButtonSize = TonalButtonSize.bar;
+const double _findRowGap = 8;
+const double _findInlineMinWidth = 440;
+const _findPanelPadding = EdgeInsets.symmetric(horizontal: 16, vertical: 8);
 
 class FindPanel extends StatelessWidget implements PreferredSizeWidget {
   final FindController controller;
   final bool readOnly;
-  final bool isMobileView;
   final double topInset;
 
   const FindPanel({
     super.key,
     required this.controller,
     required this.readOnly,
-    required this.isMobileView,
     this.topInset = 0,
   });
 
   bool get _showReplace => controller.isReplaceMode && !readOnly;
 
   double get height {
-    final rows = (isMobileView ? 2 : 1) + (_showReplace ? 1 : 0);
-    return _kDefaultFindPanelHeight * rows + 8;
+    final rows = _showReplace ? 2 : 1;
+    return _findButtonSize.button * rows +
+        _findRowGap * (rows - 1) +
+        _findPanelPadding.vertical;
   }
 
   @override
@@ -941,219 +942,324 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
               controller.previous,
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          margin: EdgeInsets.only(top: topInset, bottom: 8),
-          color: context.colorScheme.surface,
-          alignment: Alignment.centerLeft,
-          height: height,
-          child: _buildFindInputView(context),
+          margin: EdgeInsets.only(top: topInset),
+          padding: _findPanelPadding,
+          color: context.surfaceLevel.colorOf(context.colorScheme),
+          child: LayoutBuilder(builder: _buildRows),
         ),
       ),
     );
   }
 
-  Widget _buildFindInputView(BuildContext context) {
+  // A table, so the replace field lines up with the find field above it
+  // whatever width the localized replace labels take. Too narrow for the
+  // buttons beside the field, they move under it.
+  Widget _buildRows(BuildContext context, BoxConstraints constraints) {
+    final appLocalizations = context.appLocalizations;
     final hasMatches = controller.matchCount > 0;
-    final String result;
-    if (!hasMatches) {
-      result = context.appLocalizations.none;
-    } else {
-      result = '${controller.currentMatchIndex + 1}/${controller.matchCount}';
-    }
-    final bar = CommonMinIconButtonTheme(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (!isMobileView) ...[
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 360),
-              child: _buildFindInput(context),
+    final findInput = _buildFindInput(context);
+    final controls = Row(
+      children: [
+        TonalButtonGroup(
+          size: _findButtonSize,
+          children: [
+            IconButton(
+              tooltip: appLocalizations.previousMatch,
+              onPressed: hasMatches ? controller.previous : null,
+              icon: const GlyphIcon(AppGlyphs.chevronUp),
             ),
-            const SizedBox(width: 12),
+            IconButton(
+              tooltip: appLocalizations.nextMatch,
+              onPressed: hasMatches ? controller.next : null,
+              icon: const GlyphIcon(AppGlyphs.chevronDown),
+            ),
           ],
-          Text(result, style: context.textTheme.bodyMedium),
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              spacing: 2,
-              children: [
-                _buildIconButton(
-                  onPressed: hasMatches ? controller.previous : null,
-                  icon: const GlyphIcon(AppGlyphs.arrowUp, size: 16),
-                  tooltip: context.appLocalizations.previousMatch,
-                ),
-                _buildIconButton(
-                  onPressed: hasMatches ? controller.next : null,
-                  icon: const GlyphIcon(AppGlyphs.arrowDown, size: 16),
-                  tooltip: context.appLocalizations.nextMatch,
-                ),
-                if (!readOnly)
-                  _buildIconButton(
-                    onPressed: controller.toggleReplaceMode,
-                    icon: const GlyphIcon(AppGlyphs.findReplace, size: 16),
-                    tooltip: context.appLocalizations.replace,
-                    isSelected: _showReplace,
-                  ),
-                const SizedBox(width: 2),
-                ElasticButton(
-                  child: IconButton.filledTonal(
-                    tooltip: context.appLocalizations.close,
-                    onPressed: controller.hide,
-                    icon: const GlyphIcon(AppGlyphs.close, size: 16, fill: 1),
-                  ),
-                ),
-              ],
-            ),
+        ),
+        if (!readOnly) ...[
+          const SizedBox(width: 8),
+          _FindBarButton(
+            glyph: AppGlyphs.swap,
+            tooltip: appLocalizations.replace,
+            selected: _showReplace,
+            onPressed: controller.toggleReplaceMode,
           ),
         ],
-      ),
+        const Spacer(),
+        const SizedBox(width: 8),
+        _FindBarButton(
+          glyph: AppGlyphs.close,
+          tooltip: appLocalizations.close,
+          onPressed: controller.hide,
+        ),
+      ],
     );
-    final replaceInput = _buildReplaceInput(context, hasMatches);
-    if (isMobileView) {
+    final replaceActions = TonalButtonGroup(
+      size: _findButtonSize,
+      children: [
+        FilledButton(
+          onPressed: hasMatches ? controller.replace : null,
+          child: Text(appLocalizations.replace),
+        ),
+        FilledButton(
+          onPressed: hasMatches ? controller.replaceAll : null,
+          child: Text(appLocalizations.replaceAll),
+        ),
+      ],
+    );
+    final inlineMinWidth = MediaQuery.textScalerOf(
+      context,
+    ).scale(_findInlineMinWidth);
+    if (constraints.maxWidth < inlineMinWidth) {
       return Column(
         mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        spacing: _findRowGap,
         children: [
-          bar,
-          const SizedBox(height: 12),
-          _buildFindInput(context),
-          if (_showReplace) ...[const SizedBox(height: 12), replaceInput],
+          findInput,
+          controls,
+          if (_showReplace)
+            Row(
+              spacing: 8,
+              children: [
+                Expanded(child: _buildReplaceInput(context)),
+                replaceActions,
+              ],
+            ),
         ],
       );
     }
-    if (!_showReplace) {
-      return bar;
-    }
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Table(
+      columnWidths: const {0: FlexColumnWidth(), 1: IntrinsicColumnWidth()},
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       children: [
-        bar,
-        const SizedBox(height: 12),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360),
-            child: replaceInput,
-          ),
+        TableRow(
+          children: [
+            findInput,
+            Padding(
+              padding: const EdgeInsetsDirectional.only(start: 8),
+              child: controls,
+            ),
+          ],
         ),
+        if (_showReplace)
+          TableRow(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: _findRowGap),
+                child: _buildReplaceInput(context),
+              ),
+              Padding(
+                padding: const EdgeInsetsDirectional.only(
+                  start: 8,
+                  top: _findRowGap,
+                ),
+                child: Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: replaceActions,
+                ),
+              ),
+            ],
+          ),
       ],
     );
   }
 
   Widget _buildFindInput(BuildContext context) {
-    return _buildInputRow(
-      field: _buildTextField(
-        context: context,
-        onSubmitted: () {
-          controller.next();
-          controller.findInputFocusNode.requestFocus();
-        },
-        controller: controller.findInputController,
-        focusNode: controller.findInputFocusNode,
-      ),
-      actions: [
-        _buildIconButton(
-          icon: Text('Aa', style: context.textTheme.bodySmall),
-          isSelected: controller.caseSensitive,
-          onPressed: controller.toggleCaseSensitive,
-        ),
-        _buildIconButton(
-          icon: Text('.*', style: context.textTheme.bodySmall),
-          isSelected: controller.isRegex,
-          onPressed: controller.toggleRegex,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildReplaceInput(BuildContext context, bool hasMatches) {
-    return _buildInputRow(
-      field: _buildTextField(
-        context: context,
-        onSubmitted: () {
-          if (controller.matchCount == 0) {
-            return;
-          }
-          controller.replace();
-          controller.replaceInputFocusNode.requestFocus();
-        },
-        controller: controller.replaceInputController,
-        focusNode: controller.replaceInputFocusNode,
-      ),
-      actions: [
-        _buildIconButton(
-          onPressed: hasMatches ? controller.replace : null,
-          icon: const GlyphIcon(AppGlyphs.check, size: 16),
-          tooltip: context.appLocalizations.replace,
-        ),
-        _buildIconButton(
-          onPressed: hasMatches ? controller.replaceAll : null,
-          icon: const GlyphIcon(AppGlyphs.checkDouble, size: 16),
-          tooltip: context.appLocalizations.replaceAll,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInputRow({
-    required Widget field,
-    required List<Widget> actions,
-  }) {
-    return CommonMinIconButtonTheme(
-      child: Row(
-        spacing: 8,
+    final String? result;
+    if (controller.findInputController.text.isEmpty) {
+      result = null;
+    } else if (controller.matchCount == 0) {
+      result = context.appLocalizations.none;
+    } else {
+      result = '${controller.currentMatchIndex + 1}/${controller.matchCount}';
+    }
+    return _FindField(
+      glyph: AppGlyphs.search,
+      hintText: context.appLocalizations.search,
+      controller: controller.findInputController,
+      focusNode: controller.findInputFocusNode,
+      onSubmitted: () {
+        controller.next();
+        controller.findInputFocusNode.requestFocus();
+      },
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Flexible(child: field),
-          ...actions,
+          if (result != null)
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 4),
+              child: Text(
+                result,
+                style: AppTextStyle.subheadline
+                    .of(context)
+                    .copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+              ),
+            ),
+          _FindOptionToggle(
+            glyph: AppGlyphs.matchCase,
+            tooltip: context.appLocalizations.matchCase,
+            selected: controller.caseSensitive,
+            onPressed: controller.toggleCaseSensitive,
+          ),
+          const SizedBox(width: 2),
+          _FindOptionToggle(
+            glyph: AppGlyphs.regex,
+            tooltip: context.appLocalizations.regex,
+            selected: controller.isRegex,
+            onPressed: controller.toggleRegex,
+          ),
+          const SizedBox(width: 4),
         ],
       ),
     );
   }
 
-  Widget _buildTextField({
-    required BuildContext context,
-    required TextEditingController controller,
-    required FocusNode focusNode,
-    required VoidCallback onSubmitted,
-  }) {
-    return SizedBox(
-      height: globalState.measure.bodyMediumHeight + 8 * 2,
-      child: TextField(
-        maxLines: 1,
-        focusNode: focusNode,
-        inputFormatters: TextInputLimits.limit(TextInputLimits.search),
-        style: context.textTheme.bodyMedium,
-        decoration: const InputDecoration(
-          contentPadding: EdgeInsets.symmetric(horizontal: 12),
+  Widget _buildReplaceInput(BuildContext context) {
+    return _FindField(
+      glyph: AppGlyphs.swap,
+      hintText: context.appLocalizations.replace,
+      controller: controller.replaceInputController,
+      focusNode: controller.replaceInputFocusNode,
+      onSubmitted: () {
+        if (controller.matchCount == 0) {
+          return;
+        }
+        controller.replace();
+        controller.replaceInputFocusNode.requestFocus();
+      },
+    );
+  }
+}
+
+/// Filled like a sheet's docked search rather than outlined like other
+/// inputs, since it is a search field too.
+class _FindField extends StatelessWidget {
+  const _FindField({
+    required this.glyph,
+    required this.hintText,
+    required this.controller,
+    required this.focusNode,
+    required this.onSubmitted,
+    this.trailing,
+  });
+
+  final Glyph glyph;
+  final String hintText;
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final VoidCallback onSubmitted;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final pill = AppShape.input.copyWith(borderRadius: AppRadius.full);
+    final height = _findButtonSize.button;
+    return TextField(
+      maxLines: 1,
+      controller: controller,
+      focusNode: focusNode,
+      textAlignVertical: TextAlignVertical.center,
+      inputFormatters: TextInputLimits.limit(TextInputLimits.search),
+      style: AppTextStyle.body.of(context),
+      onSubmitted: (_) => onSubmitted(),
+      // Not dense: a dense decorator fits its fill to the text and ignores the
+      // minimum height, which desktop's compact density left short of 44 dp.
+      decoration: InputDecoration(
+        constraints: BoxConstraints.tightFor(height: height),
+        filled: true,
+        fillColor: context.raisedSurfaceLevel.colorOf(colorScheme),
+        hintText: hintText,
+        border: pill.copyWith(borderSide: BorderSide.none),
+        enabledBorder: pill.copyWith(borderSide: BorderSide.none),
+        focusedBorder: pill.copyWith(
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
         ),
-        onSubmitted: (_) {
-          onSubmitted();
-        },
-        controller: controller,
+        contentPadding: const EdgeInsetsDirectional.only(end: 8),
+        prefixIcon: GlyphIcon(glyph, size: 20),
+        prefixIconConstraints: BoxConstraints.tightFor(width: height),
+        suffixIcon: trailing,
+        suffixIconConstraints: const BoxConstraints(),
       ),
     );
   }
+}
 
-  Widget _buildIconButton({
-    required Widget icon,
-    String? tooltip,
-    VoidCallback? onPressed,
-    bool isSelected = false,
-  }) {
-    if (isSelected) {
-      return ElasticButton(
-        enabled: onPressed != null,
-        child: IconButton.filledTonal(
-          tooltip: tooltip,
-          onPressed: onPressed,
-          icon: IconTheme.merge(
-            data: const IconThemeData(fill: 1),
-            child: icon,
+class _FindOptionToggle extends StatelessWidget {
+  const _FindOptionToggle({
+    required this.glyph,
+    required this.tooltip,
+    required this.selected,
+    required this.onPressed,
+  });
+
+  final Glyph glyph;
+  final String tooltip;
+  final bool selected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return ElasticPress(
+      child: IconButton(
+        tooltip: tooltip,
+        isSelected: selected,
+        onPressed: onPressed,
+        style: ElasticPress.buttonStyle.merge(
+          IconButton.styleFrom(
+            backgroundColor: selected ? colorScheme.primary : null,
+            foregroundColor: selected
+                ? colorScheme.onPrimary
+                : colorScheme.onSurfaceVariant,
+            fixedSize: Size.square(TonalButtonSize.compact.button),
+            minimumSize: Size.square(TonalButtonSize.compact.button),
+            padding: EdgeInsets.zero,
+            iconSize: TonalButtonSize.compact.icon,
+            visualDensity: VisualDensity.standard,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ),
-      );
-    }
-    return IconButton(tooltip: tooltip, onPressed: onPressed, icon: icon);
+        icon: AnimatedGlyph(glyph: glyph, filled: selected),
+      ),
+    );
+  }
+}
+
+class _FindBarButton extends StatelessWidget {
+  const _FindBarButton({
+    required this.glyph,
+    required this.tooltip,
+    required this.onPressed,
+    this.selected = false,
+  });
+
+  final Glyph glyph;
+  final String tooltip;
+  final VoidCallback onPressed;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return TonalButtonTheme(
+      size: _findButtonSize,
+      child: ElasticPress(
+        child: IconButton(
+          tooltip: tooltip,
+          isSelected: selected,
+          onPressed: onPressed,
+          style: selected
+              ? IconButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                )
+              : null,
+          icon: GlyphIcon(glyph),
+        ),
+      ),
+    );
   }
 }

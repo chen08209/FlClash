@@ -66,7 +66,6 @@ class _FiltersViewState extends ConsumerState<FiltersView> {
     final appLocalizations = context.appLocalizations;
     return ListEditorPage<Filter, String>(
       title: appLocalizations.filters,
-      selectionEnabled: true,
       idOf: (filter) => filter.label,
       itemsOf: (ref) =>
           ref.watch(appSettingProvider.select((state) => state.filters)),
@@ -260,7 +259,7 @@ class _FilterDialogState extends State<_FilterDialog> {
                 }
               },
               minLines: 1,
-              maxLines: 3,
+              maxLines: null,
               autocorrect: false,
               enableSuggestions: false,
               textInputAction: TextInputAction.done,

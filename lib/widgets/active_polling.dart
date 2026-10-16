@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:fl_clash/common/print.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/widgets/inherited.dart';
+import 'package:fl_clash/ui/inherited.dart';
 import 'package:flutter/widgets.dart';
 
 typedef PollGuard = bool Function();
@@ -125,5 +125,62 @@ mixin ActivePollingMixin<T extends StatefulWidget>
         _schedulePoll(generation);
       }
     }
+  }
+}
+
+typedef TickWidgetBuilder = Widget Function(BuildContext context, int tick);
+
+class TickBuilder extends StatefulWidget {
+  final Duration duration;
+  final TickWidgetBuilder builder;
+
+  const TickBuilder({super.key, required this.duration, required this.builder})
+    : assert(duration > Duration.zero);
+
+  @override
+  State<TickBuilder> createState() => _TickBuilderState();
+}
+
+class _TickBuilderState extends State<TickBuilder>
+    with WidgetsBindingObserver, ActivePollingMixin<TickBuilder> {
+  int _tick = 0;
+
+  @override
+  Duration get pollInterval => widget.duration;
+
+  @override
+  bool get pollOnStart => false;
+
+  @override
+  Future<void> poll(PollGuard isCurrent) async {
+    setState(() {
+      _tick++;
+    });
+  }
+
+  // Resuming restarts the interval, so a desktop window that loses focus more
+  // often than that would otherwise never tick.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final couldPoll = canPoll;
+    super.didChangeAppLifecycleState(state);
+    if (!couldPoll && canPoll) {
+      setState(() {
+        _tick++;
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant TickBuilder oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.duration != widget.duration) {
+      restartPolling();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.builder(context, _tick);
   }
 }
