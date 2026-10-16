@@ -1,5 +1,4 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/l10n/l10n.dart';
@@ -10,9 +9,12 @@ import 'package:fl_clash/views/connection/connections.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../helpers/test_app.dart';
 
 void main() {
   late ProviderContainer container;
@@ -134,6 +136,20 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('a wide table shows its whole protocol header', (tester) async {
+    await pumpConnections(
+      tester,
+      connectionsReader: () async => buildConnections(2),
+    );
+    tester.view.physicalSize = const Size(1600, 900);
+    await tester.pump(const Duration(seconds: 1));
+
+    final header = tester.renderObject<RenderParagraph>(find.text('Protocol'));
+    expect(header.didExceedMaxLines, isFalse);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('ConnectionsView polls only while the page is active', (
     tester,
   ) async {
@@ -234,13 +250,12 @@ class _TestApp extends StatelessWidget {
       navigatorKey: globalState.navigatorKey,
       localizationsDelegates: const [
         AppLocalizations.delegate,
+        AppUiLocalizations.delegate,
         ...GlobalMaterialLocalizations.delegates,
       ],
       supportedLocales: AppLocalizations.delegate.supportedLocales,
       builder: (context, child) {
-        globalState.measure = Measure.of(context, 1);
-        globalState.theme = CommonTheme.of(context, 1);
-        return child!;
+        return wrapAppScopes(context, child!);
       },
       home: child,
     );
