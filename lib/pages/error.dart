@@ -98,13 +98,8 @@ class _InitErrorScreenState extends State<InitErrorScreen> {
       context: context,
       child: Builder(
         builder: (context) {
-          return AlertDialog(
-            title: Text(appLocalizations.clearData),
-            content: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 300),
-              child: Text(appLocalizations.clearDataAndExitTip),
-            ),
-            actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+          return CommonDialog(
+            title: appLocalizations.clearData,
             actions: [
               TextButton(
                 onPressed: () {
@@ -119,6 +114,7 @@ class _InitErrorScreenState extends State<InitErrorScreen> {
                 child: Text(appLocalizations.confirm),
               ),
             ],
+            child: Text(appLocalizations.clearDataAndExitTip),
           );
         },
       ),

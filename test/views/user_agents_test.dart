@@ -169,7 +169,7 @@ void main() {
     await openMenu(tester, defaultUserAgents.last);
     await tester.tap(find.text(currentAppLocalizations.delete));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(currentAppLocalizations.confirm));
+    await tester.tap(find.text(currentAppLocalizations.delete));
     await tester.pumpAndSettle();
 
     expect(saved(), [defaultUserAgents.first]);
@@ -188,7 +188,7 @@ void main() {
     await openMenu(tester, defaultUserAgents.first);
     await tester.tap(find.text(currentAppLocalizations.delete));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(currentAppLocalizations.confirm));
+    await tester.tap(find.text(currentAppLocalizations.delete));
     await tester.pumpAndSettle();
 
     expect(saved(), [defaultUserAgents.last, 'Legacy/1.0']);

@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:fl_clash/common/input_limits.dart';
 import 'package:fl_clash/ui/context.dart';
 import 'package:fl_clash/ui/dialog.dart';
+import 'package:fl_clash/ui/focus.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/inherited.dart';
 import 'package:fl_clash/ui/input.dart';
@@ -524,7 +525,7 @@ class ListHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final padding = this.padding ?? listHeaderPadding;
+    final padding = this.padding ?? listHeaderPaddingOf(context);
     final lineHeight = MeasureScope.of(
       context,
     ).textHeight(AppTextStyle.footnote);
@@ -567,7 +568,8 @@ class ListFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       alignment: Alignment.centerLeft,
-      padding: EdgeInsets.only(left: 16.mAp, right: 16.mAp, top: 8.mAp),
+      padding:
+          const EdgeInsets.only(left: 16, right: 16, top: 8) * 1.mAp(context),
       child: Text(text, style: context.listCaptionStyle),
     );
   }

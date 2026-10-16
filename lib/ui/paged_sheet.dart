@@ -19,28 +19,13 @@ class PagedSheetRoute<T> extends PageRoute<T>
     with
         DragBackRouteMixin<T>,
         ResizableNavigatorRouteMixin<T>,
-        DeferredPushRouteMixin<T> {
+        DeferredPushRouteMixin<T>,
+        SharedXPageRouteMixin<T> {
   PagedSheetRoute({required this.builder});
 
   final WidgetBuilder builder;
 
   ScrollController? _sheetScroll;
-
-  @override
-  bool get maintainState => true;
-
-  /// Whether the page below sat still as this one came in, so it fades out on
-  /// this route's animation and leaves only the sheet's surface beneath.
-  bool _overSettledPage = false;
-
-  @override
-  void didChangePrevious(Route<dynamic>? previousRoute) {
-    super.didChangePrevious(previousRoute);
-    _overSettledPage =
-        previousRoute is PagedSheetRoute &&
-        previousRoute.animation!.isCompleted &&
-        previousRoute.secondaryAnimation!.isDismissed;
-  }
 
   @override
   void dispose() {
@@ -49,16 +34,11 @@ class PagedSheetRoute<T> extends PageRoute<T>
   }
 
   @override
-  Color? get barrierColor => null;
+  bool sharesMotionWith(Route<dynamic>? route) => route is PagedSheetRoute;
 
   @override
-  String? get barrierLabel => null;
-
-  @override
-  Duration get transitionDuration => SharedXPageTransition.duration;
-
-  @override
-  Duration get reverseTransitionDuration => SharedXPageTransition.duration;
+  Color backdropOf(Color surface, {required bool dragging}) =>
+      dragging ? surface : Colors.transparent;
 
   @override
   bool canTransitionFrom(TransitionRoute<dynamic> previousRoute) {
@@ -93,37 +73,6 @@ class PagedSheetRoute<T> extends PageRoute<T>
                 automaticallyInheritForPlatforms: TargetPlatform.values.toSet(),
                 child: page,
               ),
-      ),
-    );
-  }
-
-  @override
-  Widget buildTransitions(
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-    Widget child,
-  ) {
-    final color = _sheetColorOf(context);
-    final dragging = isDragBackActive;
-    return dragBackDetector(
-      dragBackSlide(
-        context,
-        animation,
-        SharedXPageTransition(
-          animation: dragging ? kAlwaysCompleteAnimation : animation,
-          secondaryAnimation: dragging
-              ? kAlwaysDismissedAnimation
-              : secondaryAnimation,
-          color: color,
-          slide: SharedXPageTransition.pageSlide,
-          overSettledPage: _overSettledPage,
-          uncoveredByGesture: navigator!.userGestureInProgress,
-          child: ColoredBox(
-            color: dragging ? color : Colors.transparent,
-            child: child,
-          ),
-        ),
       ),
     );
   }
@@ -253,8 +202,8 @@ class _NestedPagedSheetState extends State<NestedPagedSheet> {
       child: sheetProvider.copyWith(
         nestedNavigatorPop: _popSheet,
         onClose: _handlePop,
-        // A bottom sheet's route takes the taps outside it and the drag away.
-        child: sheetProvider.type == SheetType.bottomSheet
+        // A compact sheet's route takes the taps outside it and the drag away.
+        child: sheetProvider.type.isCompact
             ? sheet
             : SizedBox(
                 height: double.infinity,

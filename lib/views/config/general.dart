@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -9,7 +10,7 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-part 'general/port_dialog.dart';
+part 'general/port_form.dart';
 
 class LogLevelItem extends ConsumerWidget {
   const LogLevelItem({super.key});
@@ -85,8 +86,11 @@ class TestUrlItem extends ConsumerWidget {
 class PortItem extends ConsumerWidget {
   const PortItem({super.key});
 
-  Future<void> handleShowPortDialog() async {
-    await dialogs.showCommonDialog(child: const _PortDialog());
+  Future<void> handleShowPortForm(BuildContext context) async {
+    await showFormSheet<void>(
+      context: context,
+      builder: (_) => const _PortForm(),
+    );
   }
 
   @override
@@ -99,7 +103,7 @@ class PortItem extends ConsumerWidget {
       title: Text(appLocalizations.port),
       subtitle: Text('$mixedPort'),
       onTap: () {
-        handleShowPortDialog();
+        handleShowPortForm(context);
       },
     );
   }

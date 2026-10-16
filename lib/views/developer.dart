@@ -51,6 +51,7 @@ class DeveloperView extends ConsumerWidget {
               final coreAction = ref.read(coreActionProvider.notifier);
               final res = await dialogs.showMessage(
                 message: TextSpan(text: appLocalizations.confirmForceCrashCore),
+                destructive: true,
               );
               if (res != true) {
                 return;
@@ -64,6 +65,8 @@ class DeveloperView extends ConsumerWidget {
             final storeAction = ref.read(storeActionProvider.notifier);
             final res = await dialogs.showMessage(
               message: TextSpan(text: appLocalizations.confirmClearAllData),
+              destructive: true,
+              confirmText: appLocalizations.clearData,
             );
             if (res != true) {
               return;

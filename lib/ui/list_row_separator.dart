@@ -27,6 +27,7 @@ class _ListRowSeparator extends SingleChildRenderObjectWidget {
         separated: separated,
         emphasized: emphasized,
         states: states,
+        remote: RemoteFocusAdapter.isEnabledOf(context),
         endIndent: endIndent,
         color: _color(context),
         textDirection: Directionality.of(context),
@@ -42,6 +43,7 @@ class _ListRowSeparator extends SingleChildRenderObjectWidget {
       ..separated = separated
       ..emphasized = emphasized
       ..states = states
+      ..remote = RemoteFocusAdapter.isEnabledOf(context)
       ..endIndent = endIndent
       ..color = _color(context)
       ..textDirection = Directionality.of(context)
@@ -91,6 +93,7 @@ class _RenderListRowSeparator extends RenderProxyBox {
     required bool separated,
     required bool emphasized,
     required WidgetStatesController states,
+    required bool remote,
     required double endIndent,
     required Color color,
     required TextDirection textDirection,
@@ -98,6 +101,7 @@ class _RenderListRowSeparator extends RenderProxyBox {
   }) : _separated = separated,
        _emphasized = emphasized,
        _states = states,
+       _remote = remote,
        _endIndent = endIndent,
        _color = color,
        _textDirection = textDirection,
@@ -144,6 +148,16 @@ class _RenderListRowSeparator extends RenderProxyBox {
       value.addListener(_updateHighlighted);
     }
     _states = value;
+    _updateHighlighted();
+  }
+
+  bool _remote;
+
+  set remote(bool value) {
+    if (_remote == value) {
+      return;
+    }
+    _remote = value;
     _updateHighlighted();
   }
 
@@ -197,11 +211,9 @@ class _RenderListRowSeparator extends RenderProxyBox {
       return true;
     }
     final states = _states.value;
-    // InkWell only paints the focus overlay in traditional highlight mode.
     return states.contains(WidgetState.pressed) ||
         (states.contains(WidgetState.focused) &&
-            FocusManager.instance.highlightMode ==
-                FocusHighlightMode.traditional);
+            (_remote || FocusMovedByKey.instance.value));
   }
 
   void _updateHighlighted() {
@@ -253,6 +265,7 @@ class _RenderListRowSeparator extends RenderProxyBox {
   void attach(PipelineOwner owner) {
     super.attach(owner);
     _states.addListener(_updateHighlighted);
+    FocusMovedByKey.instance.addListener(_updateHighlighted);
     _highlighted = _resolveHighlighted();
     _PixelRealignment.watch(this);
   }
@@ -261,6 +274,7 @@ class _RenderListRowSeparator extends RenderProxyBox {
   void detach() {
     _PixelRealignment.unwatch(this);
     _states.removeListener(_updateHighlighted);
+    FocusMovedByKey.instance.removeListener(_updateHighlighted);
     super.detach();
   }
 

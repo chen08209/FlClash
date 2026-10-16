@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/dav_client.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/form/form.dart';
+import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -44,8 +46,9 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
   }
 
   Future<void> _showAddWebDAV(DAVProps? dav) async {
-    await dialogs.showCommonDialog<String>(
-      child: WebDAVFormDialog(dav: dav?.copyWith()),
+    await showFormSheet<void>(
+      context: context,
+      builder: (_) => WebDAVForm(dav: dav?.copyWith()),
     );
   }
 
@@ -331,21 +334,22 @@ class _RestoreOptionsDialogState extends State<RestoreOptionsDialog> {
   }
 }
 
-class WebDAVFormDialog extends ConsumerStatefulWidget {
+enum _DavField { uri, user, password }
+
+class WebDAVForm extends ConsumerStatefulWidget {
   final DAVProps? dav;
 
-  const WebDAVFormDialog({super.key, this.dav});
+  const WebDAVForm({super.key, this.dav});
 
   @override
-  ConsumerState<WebDAVFormDialog> createState() => _WebDAVFormDialogState();
+  ConsumerState<WebDAVForm> createState() => _WebDAVFormState();
 }
 
-class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
-  late TextEditingController _uriController;
-  late TextEditingController _userController;
-  late TextEditingController _passwordController;
-  final _obscureController = ValueNotifier<bool>(true);
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+class _WebDAVFormState extends ConsumerState<WebDAVForm> {
+  late final TextEditingController _uriController;
+  late final TextEditingController _userController;
+  late final TextEditingController _passwordController;
+  bool _attempted = false;
 
   @override
   void initState() {
@@ -355,8 +359,49 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
     _passwordController = TextEditingController(text: widget.dav?.password);
   }
 
+  @override
+  void dispose() {
+    _uriController.dispose();
+    _userController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  ({_DavField field, String message})? _issue(
+    AppLocalizations appLocalizations,
+  ) {
+    final uri = _uriController.text;
+    if (uri.isEmpty || !uri.isUrl) {
+      return (field: _DavField.uri, message: appLocalizations.addressTip);
+    }
+    if (_userController.text.isEmpty) {
+      return (
+        field: _DavField.user,
+        message: appLocalizations.emptyTip(appLocalizations.account),
+      );
+    }
+    if (_passwordController.text.isEmpty) {
+      return (
+        field: _DavField.password,
+        message: appLocalizations.emptyTip(appLocalizations.password),
+      );
+    }
+    return null;
+  }
+
+  void _handleChanged(String _) {
+    if (_attempted) {
+      setState(() {});
+    }
+  }
+
   void _submit() {
-    if (!_formKey.currentState!.validate()) return;
+    if (_issue(context.appLocalizations) != null) {
+      setState(() {
+        _attempted = true;
+      });
+      return;
+    }
     ref
         .read(davSettingProvider.notifier)
         .update(
@@ -376,104 +421,73 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
   }
 
   @override
-  void dispose() {
-    _obscureController.dispose();
-    _uriController.dispose();
-    _userController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonDialog(
+    final issue = _attempted ? _issue(appLocalizations) : null;
+    return FormPage(
       title: appLocalizations.webDAVConfiguration,
-      actions: [
-        if (widget.dav != null)
-          TextButton(onPressed: _delete, child: Text(appLocalizations.delete)),
-        TextButton(onPressed: _submit, child: Text(appLocalizations.save)),
-      ],
-      child: Form(
-        key: _formKey,
-        child: Wrap(
-          runSpacing: 16,
-          children: [
-            TextFormField(
-              controller: _uriController,
-              inputFormatters: TextInputLimits.limit(TextInputLimits.uri),
-              maxLines: null,
-              minLines: 1,
-              textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
-                prefixIcon: const GlyphIcon(AppGlyphs.link),
-                labelText: appLocalizations.address,
-                helperText: appLocalizations.addressHelp,
+      onSave: _submit,
+      error: issue?.message,
+      children: [
+        generateSection(
+          footer: appLocalizations.addressHelp,
+          items: [
+            FormRow(
+              title: appLocalizations.address,
+              invalid: issue?.field == _DavField.uri,
+              trailing: FormRowTextField(
+                controller: _uriController,
+                hintText: appLocalizations.required,
+                keyboardType: TextInputType.url,
+                textInputAction: TextInputAction.next,
+                autocorrect: false,
+                enableSuggestions: false,
+                inputFormatters: TextInputLimits.limit(TextInputLimits.uri),
+                onChanged: _handleChanged,
               ),
-              validator: (String? value) {
-                if (value == null || value.isEmpty || !value.isUrl) {
-                  return appLocalizations.addressTip;
-                }
-                return null;
-              },
             ),
-            TextFormField(
-              controller: _userController,
-              inputFormatters: TextInputLimits.limit(TextInputLimits.userName),
-              textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
-                prefixIcon: const GlyphIcon(AppGlyphs.account),
-                labelText: appLocalizations.account,
+            FormRow(
+              title: appLocalizations.account,
+              invalid: issue?.field == _DavField.user,
+              trailing: FormRowTextField(
+                controller: _userController,
+                hintText: appLocalizations.required,
+                textInputAction: TextInputAction.next,
+                autocorrect: false,
+                enableSuggestions: false,
+                inputFormatters: TextInputLimits.limit(
+                  TextInputLimits.userName,
+                ),
+                onChanged: _handleChanged,
               ),
-              validator: (String? value) {
-                if (value == null || value.isEmpty) {
-                  return appLocalizations.emptyTip(appLocalizations.account);
-                }
-                return null;
-              },
             ),
-            ValueListenableBuilder(
-              valueListenable: _obscureController,
-              builder: (_, obscure, _) {
-                return TextFormField(
-                  controller: _passwordController,
-                  inputFormatters: TextInputLimits.limit(
-                    TextInputLimits.password,
-                  ),
-                  obscureText: obscure,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) {
-                    _submit();
-                  },
-                  decoration: InputDecoration(
-                    prefixIcon: const GlyphIcon(AppGlyphs.password),
-                    suffixIcon: IconButton(
-                      tooltip: obscure
-                          ? context.appLocalizations.showPassword
-                          : context.appLocalizations.hidePassword,
-                      icon: GlyphIcon(
-                        obscure ? AppGlyphs.eye : AppGlyphs.eyeOff,
-                      ),
-                      onPressed: () {
-                        _obscureController.value = !obscure;
-                      },
-                    ),
-                    labelText: appLocalizations.password,
-                  ),
-                  validator: (String? value) {
-                    if (value == null || value.isEmpty) {
-                      return appLocalizations.emptyTip(
-                        appLocalizations.password,
-                      );
-                    }
-                    return null;
-                  },
-                );
-              },
+            FormRow(
+              title: appLocalizations.password,
+              invalid: issue?.field == _DavField.password,
+              trailing: FormRowSecretTextField(
+                controller: _passwordController,
+                hintText: appLocalizations.required,
+                textInputAction: TextInputAction.done,
+                inputFormatters: TextInputLimits.limit(
+                  TextInputLimits.password,
+                ),
+                onChanged: _handleChanged,
+                onFieldSubmitted: (_) => _submit(),
+              ),
             ),
           ],
         ),
-      ),
+        if (widget.dav != null)
+          generateSection(
+            items: [
+              FormRow(
+                title: appLocalizations.delete,
+                titleStyle: TextStyle(color: context.colorScheme.error),
+                onPressed: _delete,
+              ),
+            ],
+          ),
+      ],
     );
   }
 }

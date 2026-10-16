@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -86,6 +87,16 @@ ProviderContainer _containerFor(
   container.read(viewSizeProvider.notifier).update((_) => size);
   return container;
 }
+
+Finder _rowField(String title) => find.descendant(
+  of: find.widgetWithText(FormRow, title),
+  matching: find.byType(TextFormField),
+);
+
+Finder _formField(String title) => find.descendant(
+  of: find.widgetWithText(FormRow, title),
+  matching: find.byType(TextFormField),
+);
 
 void main() {
   late Directory home;
@@ -178,23 +189,14 @@ void main() {
     await tester.tap(find.text('Import from URL'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Name'),
-      'Ad block',
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'URL'),
-      'https://example.com/more.yaml',
-    );
+    await tester.enterText(_formField('Name'), 'Ad block');
+    await tester.enterText(_formField('URL'), 'https://example.com/more.yaml');
     await tester.tap(find.text('Submit'));
     await tester.pumpAndSettle();
 
     expect(action.put, isEmpty);
 
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Name'),
-      'Extra rules',
-    );
+    await tester.enterText(_formField('Name'), 'Extra rules');
     await tester.tap(find.text('Submit'));
     await tester.pumpAndSettle();
 
@@ -228,10 +230,7 @@ void main() {
     await tester.tap(find.text('Import from URL'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'URL'),
-      'https://example.com/ads.list',
-    );
+    await tester.enterText(_formField('URL'), 'https://example.com/ads.list');
     await tester.tap(find.text('Submit'));
     await tester.pumpAndSettle();
 
@@ -316,10 +315,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Import from URL'));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'URL'),
-      'https://example.com/mixed.list',
-    );
+    await tester.enterText(_formField('URL'), 'https://example.com/mixed.list');
     await tester.tap(find.text('Submit'));
     await tester.pumpAndSettle();
 
@@ -368,8 +364,8 @@ void main() {
     await tester.tap(find.text('Options'));
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(TextFormField, 'Name'), findsOneWidget);
-    expect(find.widgetWithText(TextFormField, 'URL'), findsNothing);
+    expect(_rowField('Name'), findsOneWidget);
+    expect(_rowField('URL'), findsNothing);
     expect(find.text('Behavior'), findsNothing);
     expect(find.text('Format'), findsNothing);
   });
@@ -459,11 +455,8 @@ void main() {
     expect(find.text('Behavior'), findsNothing);
     expect(find.text('Format'), findsNothing);
 
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'URL'),
-      'https://example.com/ads.list',
-    );
-    await tester.tap(find.text('Confirm'));
+    await tester.enterText(_rowField('URL'), 'https://example.com/ads.list');
+    await tester.tap(find.widgetWithText(TextButton, 'Save'));
     await tester.pumpAndSettle();
 
     expect(
@@ -498,7 +491,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Confirm'));
+    await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
 
     expect(action.deleted, [appRules]);
@@ -534,7 +527,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('used by Work'), findsOneWidget);
-      await tester.tap(find.text('Confirm'));
+      await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
 
       expect(action.deleted, [appRules]);

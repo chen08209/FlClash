@@ -7,7 +7,6 @@ import 'package:fl_clash/ui/drag_back.dart';
 import 'package:fl_clash/ui/keyboard_inset_hold.dart';
 import 'package:fl_clash/ui/page_transition.dart';
 import 'package:fl_clash/ui/sheet_navigator.dart';
-import 'package:fl_clash/ui/surface.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -184,30 +183,20 @@ class CommonDesktopRoute<T> extends PageRoute<T>
 }
 
 class CommonRoute<T> extends PageRoute<T>
-    with DragBackRouteMixin<T>, DeferredPushRouteMixin<T> {
+    with
+        DragBackRouteMixin<T>,
+        DeferredPushRouteMixin<T>,
+        SharedXPageRouteMixin<T> {
   final Widget Function(BuildContext context) builder;
 
   CommonRoute({required this.builder});
 
-  bool _overSettledPage = false;
+  @override
+  bool sharesMotionWith(Route<dynamic>? route) => route is CommonRoute;
 
   @override
-  void didChangePrevious(Route<dynamic>? previousRoute) {
-    super.didChangePrevious(previousRoute);
-    _overSettledPage =
-        previousRoute is CommonRoute &&
-        previousRoute.animation!.isCompleted &&
-        previousRoute.secondaryAnimation!.isDismissed;
-  }
-
-  @override
-  Color? get barrierColor => null;
-
-  @override
-  String? get barrierLabel => null;
-
-  @override
-  bool get maintainState => true;
+  Color backdropOf(Color surface, {required bool dragging}) =>
+      dragging ? Colors.transparent : surface;
 
   @override
   Widget buildPage(
@@ -221,38 +210,4 @@ class CommonRoute<T> extends PageRoute<T>
       child: KeyboardInsetHold(child: builder(context)),
     );
   }
-
-  @override
-  Widget buildTransitions(
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-    Widget child,
-  ) {
-    final dragging = isDragBackActive;
-    final surface = SurfaceLevel.page.colorOf(context.colorScheme);
-    return dragBackDetector(
-      dragBackSlide(
-        context,
-        animation,
-        SharedXPageTransition(
-          animation: dragging ? kAlwaysCompleteAnimation : animation,
-          secondaryAnimation: dragging
-              ? kAlwaysDismissedAnimation
-              : secondaryAnimation,
-          color: surface,
-          slide: SharedXPageTransition.pageSlide,
-          overSettledPage: _overSettledPage,
-          uncoveredByGesture: navigator!.userGestureInProgress,
-          child: ColoredBox(
-            color: dragging ? Colors.transparent : surface,
-            child: child,
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Duration get transitionDuration => SharedXPageTransition.duration;
 }

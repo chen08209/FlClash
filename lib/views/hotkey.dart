@@ -480,18 +480,24 @@ class _HotKeyRecorderState extends ConsumerState<HotKeyRecorder> {
       autofocus: true,
       child: CommonDialog(
         title: widget.hotKeyAction.action.label,
+        hasFields: true,
         actions: [
-          if (widget.hotKeyAction.key != null)
-            TextButton(
-              onPressed: _handleRemove,
-              child: Text(appLocalizations.remove),
-            ),
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
             },
             child: Text(appLocalizations.cancel),
           ),
+          if (widget.hotKeyAction.key != null)
+            TextButton(
+              onPressed: _handleRemove,
+              style: ButtonStyle(
+                foregroundColor: WidgetStatePropertyAll(
+                  context.colorScheme.destructive,
+                ),
+              ),
+              child: Text(appLocalizations.remove),
+            ),
           TextButton(
             onPressed: isValid ? _handleSave : null,
             child: Text(appLocalizations.save),

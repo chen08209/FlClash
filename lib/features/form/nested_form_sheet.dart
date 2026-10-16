@@ -14,7 +14,7 @@ Future<void> showNestedFormSheet<T>({
   required T Function(WidgetRef ref) currentOf,
   required WidgetBuilder formBuilder,
 }) {
-  return showSheet(
+  return showFormSheet(
     context: context,
     props: nestedPagedSheetProps,
     builder: (_) {

@@ -54,6 +54,7 @@ class _SearchFieldState extends State<SearchField> {
           inputFormatters: TextInputLimits.limit(TextInputLimits.search),
           onChanged: widget.onChanged,
           decoration: InputDecoration(
+            floatingLabelBehavior: FloatingLabelBehavior.never,
             hintText: localizations.search,
             prefixIcon: const GlyphIcon(AppGlyphs.search, size: 20),
             suffixIcon: value.text.isEmpty

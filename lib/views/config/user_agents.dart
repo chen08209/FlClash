@@ -87,6 +87,8 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
       message: TextSpan(
         text: appLocalizations.deleteTip(appLocalizations.userAgent),
       ),
+      destructive: true,
+      confirmText: appLocalizations.delete,
     );
     if (!mounted || res != true) {
       return;

@@ -247,10 +247,13 @@ class AppInputBorder extends InputBorder {
   int get hashCode => Object.hash(borderSide, borderRadius, gapPadding);
 }
 
+// UIAlertController's corner on iOS 27, rounder than a sheet's.
+const double _dialogCorner = 34;
+
 extension AppShapeThemeExt on ThemeData {
   ThemeData get withAppShapes => copyWith(
     cardTheme: cardTheme.copyWith(shape: AppShape.md),
-    dialogTheme: dialogTheme.copyWith(shape: AppShape.xxl),
+    dialogTheme: dialogTheme.copyWith(shape: AppShape.all(_dialogCorner)),
     bottomSheetTheme: bottomSheetTheme.copyWith(
       shape: AppShape.top(AppCorner.xxl),
     ),

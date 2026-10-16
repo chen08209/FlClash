@@ -34,21 +34,25 @@ class SheetDragHandle extends StatelessWidget {
   }
 }
 
-/// A drag handle over [appBar], together exactly [sheetAppBarHeight] tall.
+/// A drag handle, or its space, over [appBar], together exactly
+/// [sheetAppBarHeight] tall.
 class SheetToolBar extends StatelessWidget {
-  const SheetToolBar({super.key, required this.appBar});
+  const SheetToolBar({super.key, required this.appBar, this.dragHandle = true});
 
   static const _trailing =
       sheetAppBarHeight - SheetDragHandle.height - sheetToolbarHeight;
 
   final Widget appBar;
+  final bool dragHandle;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const SheetDragHandle(),
+        dragHandle
+            ? const SheetDragHandle()
+            : const SizedBox(height: SheetDragHandle.height),
         appBar,
         const SizedBox(height: _trailing),
       ],

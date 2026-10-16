@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
@@ -365,7 +366,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byType(TextFormField),
-      List.filled(12, 'https://a.example').join('/'),
+      List.filled(6, 'https://a.example').join('/'),
     );
     await tester.pumpAndSettle();
 
@@ -410,153 +411,7 @@ void main() {
     expect(controller.text, 'AGE-SECRET-KEY-1A');
   });
 
-  testWidgets(
-    'NamedUrlDialog puts the optional name first and focuses the url',
-    (tester) async {
-      List<NamedUrl>? result;
-
-      await tester.pumpWidget(
-        TestApp(
-          overrides: [_viewSizeOverride],
-          child: Builder(
-            builder: (context) {
-              return FilledButton(
-                onPressed: () async {
-                  result = await showDialog<List<NamedUrl>>(
-                    context: context,
-                    builder: (_) => const NamedUrlDialog(title: 'Import'),
-                  );
-                },
-                child: const Text('Open'),
-              );
-            },
-          ),
-        ),
-      );
-
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
-
-      final nameField = find.widgetWithText(TextFormField, 'Name');
-      final urlField = find.widgetWithText(TextFormField, 'URL');
-      expect(
-        tester.getTopLeft(nameField).dy,
-        lessThan(tester.getTopLeft(urlField).dy),
-      );
-      expect(find.text('Optional'), findsOneWidget);
-      expect(find.byTooltip('Batch import'), findsNothing);
-      expect(
-        tester
-            .widget<EditableText>(
-              find.descendant(
-                of: urlField,
-                matching: find.byType(EditableText),
-              ),
-            )
-            .focusNode
-            .hasFocus,
-        isTrue,
-      );
-
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pump();
-      expect(find.text('URL cannot be empty'), findsOneWidget);
-      expect(result, isNull);
-
-      await tester.enterText(nameField, 'Home');
-      await tester.testTextInput.receiveAction(TextInputAction.next);
-      await tester.pump();
-      expect(
-        tester
-            .widget<EditableText>(
-              find.descendant(
-                of: urlField,
-                matching: find.byType(EditableText),
-              ),
-            )
-            .focusNode
-            .hasFocus,
-        isTrue,
-      );
-
-      await tester.enterText(urlField, 'https://example.com/sub');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pumpAndSettle();
-      expect(result, [
-        (label: 'Home', url: 'https://example.com/sub', ageSecretKey: ''),
-      ]);
-    },
-  );
-
-  testWidgets(
-    'NamedUrlDialog batch previews, blocks invalid lines, and pops every url',
-    (tester) async {
-      List<NamedUrl>? result;
-
-      await tester.pumpWidget(
-        TestApp(
-          overrides: [_viewSizeOverride],
-          child: Builder(
-            builder: (context) {
-              return FilledButton(
-                onPressed: () async {
-                  result = await showDialog<List<NamedUrl>>(
-                    context: context,
-                    builder: (_) => const NamedUrlDialog(
-                      title: 'Import',
-                      batch: true,
-                      existingUrls: {'https://example.com/old'},
-                    ),
-                  );
-                },
-                child: const Text('Open'),
-              );
-            },
-          ),
-        ),
-      );
-
-      VoidCallback? submit() => tester
-          .widget<TextButton>(find.widgetWithText(TextButton, 'Submit'))
-          .onPressed;
-
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'URL'),
-        'https://example.com/a',
-      );
-      await tester.tap(find.byTooltip('Batch import'));
-      await tester.pumpAndSettle();
-      expect(find.text('Batch import'), findsOneWidget);
-      expect(find.byTooltip('Single import'), findsOneWidget);
-      expect(find.text('1 to add, 0 skipped as existing'), findsOneWidget);
-
-      await tester.enterText(
-        find.byType(TextField),
-        'https://example.com/a\nnot-a-url',
-      );
-      await tester.pump();
-      expect(find.text('Line 2: URL must be a URL'), findsOneWidget);
-      expect(submit(), isNull);
-
-      await tester.enterText(
-        find.byType(TextField),
-        'https://example.com/a\nhttps://example.com/old\n'
-        'https://example.com/b',
-      );
-      await tester.pump();
-      expect(find.text('2 to add, 1 skipped as existing'), findsOneWidget);
-      await tester.tap(find.text('Submit'));
-      await tester.pumpAndSettle();
-      expect(result, [
-        (label: '', url: 'https://example.com/a', ageSecretKey: ''),
-        (label: '', url: 'https://example.com/b', ageSecretKey: ''),
-      ]);
-    },
-  );
-
-  testWidgets('EntryDialog returns scalar and map values', (tester) async {
+  testWidgets('EntryDialog returns a scalar value', (tester) async {
     Object? result;
 
     await tester.pumpWidget(
@@ -564,40 +419,19 @@ void main() {
         overrides: [_viewSizeOverride],
         child: Builder(
           builder: (context) {
-            return Column(
-              children: [
-                FilledButton(
-                  onPressed: () async {
-                    result = await showDialog<List<String>>(
-                      context: context,
-                      builder: (_) => const EntryDialog<String>(
-                        title: 'Scalar',
-                        valueField: Field(label: 'Value', value: ''),
-                        valueMaxLength: 4,
-                        toEntry: _scalarEntry,
-                      ),
-                    );
-                  },
-                  child: const Text('Scalar'),
-                ),
-                FilledButton(
-                  onPressed: () async {
-                    result = await showDialog<List<MapEntry<String, String>>>(
-                      context: context,
-                      builder: (_) =>
-                          const EntryDialog<MapEntry<String, String>>(
-                            title: 'Pair',
-                            keyField: Field(label: 'Key', value: ''),
-                            valueField: Field(label: 'Value', value: ''),
-                            keyMaxLength: 3,
-                            valueMaxLength: 4,
-                            toEntry: _pairEntry,
-                          ),
-                    );
-                  },
-                  child: const Text('Pair'),
-                ),
-              ],
+            return FilledButton(
+              onPressed: () async {
+                result = await showDialog<List<String>>(
+                  context: context,
+                  builder: (_) => const EntryDialog<String>(
+                    title: 'Scalar',
+                    valueField: Field(label: 'Value', value: ''),
+                    valueMaxLength: 4,
+                    toEntry: _scalarEntry,
+                  ),
+                );
+              },
+              child: const Text('Scalar'),
             );
           },
         ),
@@ -613,17 +447,6 @@ void main() {
     await tester.tap(find.text('Confirm'));
     await tester.pumpAndSettle();
     expect(result, ['valu']);
-
-    await tester.tap(find.text('Pair'));
-    await tester.pumpAndSettle();
-    final fields = find.byType(TextFormField);
-    await tester.enterText(fields.first, 'key1');
-    await tester.enterText(fields.last, 'value');
-    await tester.tap(find.text('Confirm'));
-    await tester.pumpAndSettle();
-    final pair = (result! as List<MapEntry<String, String>>).single;
-    expect(pair.key, 'key');
-    expect(pair.value, 'valu');
   });
 
   testWidgets('ListEditView adds, edits, selects, and deletes items', (
@@ -681,10 +504,13 @@ void main() {
     await tester.tap(find.byType(Checkbox).first);
     await tester.pump();
     expect(find.byGlyph(AppGlyphs.delete), findsOneWidget);
-    await tester.tap(find.text('Select all'));
+    await tester.tap(find.byTooltip('Select all'));
     await tester.pump();
     await tester.tap(find.byGlyph(AppGlyphs.delete));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    expect(find.text('No data'), findsNothing);
+    await tester.tap(find.widgetWithText(TextButton, 'Delete'));
+    await tester.pumpAndSettle();
     expect(find.text('No data'), findsOneWidget);
   });
 
@@ -724,18 +550,28 @@ void main() {
     await tester.tap(find.byTooltip('Add'));
     await tester.pumpAndSettle();
     final fields = find.byType(TextFormField);
-    await tester.enterText(fields.first, 'c');
-    await tester.enterText(fields.last, '3');
-    await tester.tap(find.text('Confirm'));
+    await tester.tap(find.byTooltip('Confirm'));
     await tester.pumpAndSettle();
-    expect(find.text('c'), findsOneWidget);
+    expect(find.text('Key cannot be empty'), findsOneWidget);
+    await tester.enterText(fields.first, 'a');
+    await tester.pumpAndSettle();
+    expect(find.text('Key already exists'), findsOneWidget);
+    await tester.enterText(fields.first, 'ccccc');
+    await tester.enterText(fields.last, '33333');
+    await tester.tap(find.byTooltip('Confirm'));
+    await tester.pumpAndSettle();
+    expect(find.text('cccc'), findsOneWidget);
+    expect(find.text('3333'), findsOneWidget);
 
     await tester.tap(find.byType(Checkbox).first);
     await tester.pump();
-    await tester.tap(find.text('Select all'));
+    await tester.tap(find.byTooltip('Select all'));
     await tester.pump();
     await tester.tap(find.byGlyph(AppGlyphs.delete));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    expect(find.text('No data'), findsNothing);
+    await tester.tap(find.widgetWithText(TextButton, 'Delete'));
+    await tester.pumpAndSettle();
     expect(find.text('No data'), findsOneWidget);
   });
 
@@ -820,9 +656,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('1 to add, 0 skipped as existing'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'c 3\na 9\nd');
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('Line 3: Value cannot be empty'), findsOneWidget);
-    expect(_confirmButton(tester).onPressed, isNull);
+    await tester.tap(find.byTooltip('Confirm'));
+    await tester.pumpAndSettle();
+    expect(find.text('Line 3: Value cannot be empty'), findsOneWidget);
 
     await tester.enterText(
       find.byType(TextField),
@@ -830,7 +668,7 @@ void main() {
     );
     await tester.pump();
     expect(find.text('1 to add, 1 skipped as existing'), findsOneWidget);
-    await tester.tap(find.text('Confirm'));
+    await tester.tap(find.byTooltip('Confirm'));
     await tester.pumpAndSettle();
     expect(find.text('geosite:cn'), findsOneWidget);
     expect(find.text('tls://1.1.1.1:853'), findsOneWidget);
@@ -858,10 +696,7 @@ void main() {
   });
 }
 
-String _scalarEntry(String? key, String value) => value;
-
-MapEntry<String, String> _pairEntry(String? key, String value) =>
-    MapEntry(key!, value);
+String _scalarEntry(String value) => value;
 
 Widget _textBuilder(String value) {
   return Text(value);

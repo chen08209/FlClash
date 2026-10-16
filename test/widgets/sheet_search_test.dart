@@ -208,6 +208,13 @@ void main() {
     expect(focused, isA<AppInputBorder>());
     expect((focused! as AppInputBorder).borderRadius, AppRadius.full);
     expect(focused.borderSide.color, Theme.of(field).colorScheme.primary);
+    final decorator = tester.widget<InputDecorator>(
+      find.byType(InputDecorator),
+    );
+    expect(
+      decorator.decoration.floatingLabelBehavior,
+      FloatingLabelBehavior.never,
+    );
   });
 
   testWidgets('a docked field clears the bottom safe area once', (

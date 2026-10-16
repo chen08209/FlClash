@@ -116,7 +116,7 @@ void main() {
     await tester.pumpAndSettle();
     await _tapBarAction(tester, currentAppLocalizations.selectAll);
     await _tapBarAction(tester, currentAppLocalizations.delete);
-    await tester.tap(find.text(currentAppLocalizations.confirm));
+    await tester.tap(find.text(currentAppLocalizations.delete));
     await tester.pumpAndSettle();
 
     expect(rules.deleted, [
@@ -143,7 +143,7 @@ void main() {
     await tester.tap(find.byType(CommonCheckBox).last);
     await tester.pumpAndSettle();
     await _tapBarAction(tester, currentAppLocalizations.delete);
-    await tester.tap(find.text(currentAppLocalizations.confirm));
+    await tester.tap(find.text(currentAppLocalizations.delete));
     await tester.pumpAndSettle();
 
     expect(rules.deleted, [
@@ -205,7 +205,7 @@ void main() {
       await tester.pumpAndSettle();
       await _tapBarAction(tester, currentAppLocalizations.selectAll);
       await _tapBarAction(tester, currentAppLocalizations.delete);
-      await tester.tap(find.text(currentAppLocalizations.confirm));
+      await tester.tap(find.text(currentAppLocalizations.delete));
       await tester.pumpAndSettle();
 
       expect(rules.deleted, [

@@ -321,7 +321,7 @@ void main() {
 
     await tester.longPress(find.text('Proxy'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Confirm'));
+    await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
 
     expect(find.text('Proxy'), findsNothing);

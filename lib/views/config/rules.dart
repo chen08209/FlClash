@@ -32,8 +32,9 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
   }
 
   Future<void> _handleAddOrUpdate([Rule? rule]) async {
-    final res = await dialogs.showCommonDialog<Rule>(
-      child: AddOrEditRuleDialog(rule: rule),
+    final res = await showFormSheet<Rule>(
+      context: context,
+      builder: (_) => RuleForm(rule: rule),
     );
     if (res == null || !mounted) {
       return;
@@ -73,6 +74,8 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
       message: TextSpan(
         text: appLocalizations.deleteMultipTip(appLocalizations.rule),
       ),
+      destructive: true,
+      confirmText: appLocalizations.delete,
     );
     if (res != true || !mounted) {
       return;

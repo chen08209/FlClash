@@ -74,7 +74,7 @@ Future<void> _answerDialog(WidgetTester tester, {required bool confirm}) async {
   await tester.pumpAndSettle();
   final localizations = AppLocalizations.current;
   await tester.tap(
-    find.text(confirm ? localizations.confirm : localizations.cancel),
+    find.text(confirm ? localizations.delete : localizations.cancel),
   );
   await tester.pumpAndSettle();
 }

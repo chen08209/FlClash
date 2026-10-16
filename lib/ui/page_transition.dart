@@ -1,5 +1,70 @@
+import 'package:fl_clash/ui/drag_back.dart';
+import 'package:fl_clash/ui/surface.dart';
 import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
+
+/// The motion a pushed page and a page inside a sheet share: a
+/// [SharedXPageTransition] that a drag back from the edge takes over.
+mixin SharedXPageRouteMixin<T> on PageRoute<T>, DragBackRouteMixin<T> {
+  bool _overSettledPage = false;
+
+  bool sharesMotionWith(Route<dynamic>? route);
+
+  Color backdropOf(Color surface, {required bool dragging});
+
+  @override
+  bool get maintainState => true;
+
+  @override
+  Color? get barrierColor => null;
+
+  @override
+  String? get barrierLabel => null;
+
+  @override
+  Duration get transitionDuration => SharedXPageTransition.duration;
+
+  @override
+  void didChangePrevious(Route<dynamic>? previousRoute) {
+    super.didChangePrevious(previousRoute);
+    _overSettledPage =
+        previousRoute is TransitionRoute &&
+        sharesMotionWith(previousRoute) &&
+        previousRoute.animation!.isCompleted &&
+        previousRoute.secondaryAnimation!.isDismissed;
+  }
+
+  @override
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final surface = SurfaceLevel.page.colorOf(ColorScheme.of(context));
+    final dragging = isDragBackActive;
+    return dragBackDetector(
+      dragBackSlide(
+        context,
+        animation,
+        SharedXPageTransition(
+          animation: dragging ? kAlwaysCompleteAnimation : animation,
+          secondaryAnimation: dragging
+              ? kAlwaysDismissedAnimation
+              : secondaryAnimation,
+          color: surface,
+          slide: SharedXPageTransition.pageSlide,
+          overSettledPage: _overSettledPage,
+          uncoveredByGesture: navigator!.userGestureInProgress,
+          child: ColoredBox(
+            color: backdropOf(surface, dragging: dragging),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Slides pages by [slide] while they fade. A page fades by laying
 /// [color] over it wherever only that color lies beneath, since an opacity

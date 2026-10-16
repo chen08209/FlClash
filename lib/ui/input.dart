@@ -1,7 +1,9 @@
+import 'package:fl_clash/ui/context.dart';
 import 'package:fl_clash/ui/dialog.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/l10n.dart';
 import 'package:fl_clash/ui/shape.dart';
+import 'package:fl_clash/ui/surface.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -74,8 +76,7 @@ class _SecretTextFormFieldState extends State<SecretTextFormField> {
       keyboardType: TextInputType.visiblePassword,
       maxLines: _obscure ? 1 : widget.maxLines,
       minLines: 1,
-      maxLength: widget.maxLength,
-      inputFormatters: widget.inputFormatters,
+      inputFormatters: _limited(widget.inputFormatters, widget.maxLength),
       textInputAction: widget.textInputAction,
       onFieldSubmitted: widget.onFieldSubmitted,
       validator: widget.validator,
@@ -94,6 +95,17 @@ class _SecretTextFormFieldState extends State<SecretTextFormField> {
       ),
     );
   }
+}
+
+// A limit holds as iOS and macOS hold one, without a counter under the field.
+List<TextInputFormatter>? _limited(
+  List<TextInputFormatter>? formatters,
+  int? maxLength,
+) {
+  if (maxLength == null) {
+    return formatters;
+  }
+  return [...?formatters, LengthLimitingTextInputFormatter(maxLength)];
 }
 
 class InputDialog extends StatefulWidget {
@@ -179,11 +191,11 @@ class _InputDialogState extends State<InputDialog> {
     final localizations = UiLocalizations.of(context);
     final decoration = InputDecoration(
       suffixText: suffixText,
-      hintText: widget.hintText,
-      labelText: widget.labelText,
+      hintText: widget.hintText ?? widget.labelText,
     );
     return CommonDialog(
       title: title,
+      hasFields: true,
       actions: [
         ValueListenableBuilder(
           valueListenable: _textController,
@@ -226,8 +238,10 @@ class _InputDialogState extends State<InputDialog> {
             else
               TextFormField(
                 autofocus: widget.selectAll,
-                maxLength: widget.maxLength,
-                inputFormatters: widget.inputFormatters,
+                inputFormatters: _limited(
+                  widget.inputFormatters,
+                  widget.maxLength,
+                ),
                 keyboardType: widget.keyboardType ?? TextInputType.url,
                 maxLines: null,
                 minLines: 1,
@@ -292,4 +306,45 @@ class NoInputBorder extends InputBorder {
     double gapPercentage = 0.0,
     TextDirection? textDirection,
   }) {}
+}
+
+/// For a field with no grouped row to sit in; `.agents/surfaces.md` has why.
+class FilledInputTheme extends StatelessWidget {
+  const FilledInputTheme({
+    super.key,
+    this.borderRadius = AppRadius.full,
+    this.contentPadding,
+    required this.child,
+  });
+
+  final BorderRadius borderRadius;
+  final EdgeInsetsGeometry? contentPadding;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final shape = AppShape.input.copyWith(borderRadius: borderRadius);
+    final none = shape.copyWith(borderSide: BorderSide.none);
+    return InputDecorationTheme(
+      data: InputDecorationTheme.of(context).copyWith(
+        filled: true,
+        fillColor: context.raisedSurfaceLevel.colorOf(colorScheme),
+        hoverColor: Colors.transparent,
+        floatingLabelBehavior: FloatingLabelBehavior.never,
+        contentPadding: contentPadding,
+        border: none,
+        enabledBorder: none,
+        disabledBorder: none,
+        errorBorder: none,
+        focusedBorder: shape.copyWith(
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        ),
+        focusedErrorBorder: shape.copyWith(
+          borderSide: BorderSide(color: colorScheme.error, width: 2),
+        ),
+      ),
+      child: child,
+    );
+  }
 }

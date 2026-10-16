@@ -15,17 +15,14 @@ class _PortField {
   });
 }
 
-class _PortDialog extends ConsumerStatefulWidget {
-  const _PortDialog();
+class _PortForm extends ConsumerStatefulWidget {
+  const _PortForm();
 
   @override
-  ConsumerState<_PortDialog> createState() => _PortDialogState();
+  ConsumerState<_PortForm> createState() => _PortFormState();
 }
 
-class _PortDialogState extends ConsumerState<_PortDialog> {
-  final _formKey = GlobalKey<FormState>();
-  bool _isMore = false;
-
+class _PortFormState extends ConsumerState<_PortForm> {
   late final TextEditingController _mixedPortController;
   late final TextEditingController _portController;
   late final TextEditingController _socksPortController;
@@ -82,6 +79,8 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
   Future<void> _handleReset() async {
     final res = await dialogs.showMessage(
       message: TextSpan(text: context.appLocalizations.resetTip),
+      destructive: true,
+      confirmText: context.appLocalizations.reset,
     );
     if (res != true) {
       return;
@@ -102,26 +101,15 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
     }
   }
 
+  Map<_PortField, String> _issues(AppLocalizations appLocalizations) {
+    return {
+      for (final field in _fields)
+        field: ?validatePort(field, field.controller.text, appLocalizations),
+    };
+  }
+
   void _handleUpdate() {
-    final appLocalizations = context.appLocalizations;
-    final hasInvalid = _fields.any(
-      (field) =>
-          validatePort(field, field.controller.text, appLocalizations) != null,
-    );
-    if (hasInvalid) {
-      if (_isMore) {
-        _formKey.currentState?.validate();
-        return;
-      }
-      setState(() {
-        _isMore = true;
-      });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) {
-          return;
-        }
-        _formKey.currentState?.validate();
-      });
+    if (_issues(context.appLocalizations).isNotEmpty) {
       return;
     }
     ref
@@ -136,12 +124,6 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
           ),
         );
     Navigator.of(context).pop();
-  }
-
-  void _handleMore() {
-    setState(() {
-      _isMore = !_isMore;
-    });
   }
 
   @visibleForTesting
@@ -166,26 +148,11 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
     }
     final others = _fields
         .where((item) => item != field)
-        .map((item) => item.controller.text.trim());
-    if (others.contains(value.trim())) {
+        .map((item) => int.tryParse(item.controller.text.trim()));
+    if (others.contains(port)) {
       return appLocalizations.portConflictTip;
     }
     return null;
-  }
-
-  Widget _buildField(_PortField field, AppLocalizations appLocalizations) {
-    return TextFormField(
-      keyboardType: TextInputType.number,
-      maxLines: 1,
-      minLines: 1,
-      inputFormatters: TextInputLimits.digitsOnly(TextInputLimits.port),
-      controller: field.controller,
-      onFieldSubmitted: (_) {
-        _handleUpdate();
-      },
-      decoration: InputDecoration(labelText: field.label(appLocalizations)),
-      validator: (value) => validatePort(field, value, appLocalizations),
-    );
   }
 
   @override
@@ -201,62 +168,40 @@ class _PortDialogState extends ConsumerState<_PortDialog> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonDialog(
+    final issues = _issues(appLocalizations);
+    return FormPage(
       title: appLocalizations.port,
-      actions: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            TonalButtonTheme(
-              size: TonalButtonSize.section,
-              child: ElasticPress(
-                child: IconButton(
-                  tooltip: _isMore
-                      ? context.appLocalizations.showLess
-                      : context.appLocalizations.showMore,
-                  onPressed: _handleMore,
-                  icon: CommonExpandIcon(expand: _isMore),
+      onSave: _handleUpdate,
+      error: issues.values.firstOrNull,
+      children: [
+        generateSection(
+          items: [
+            for (final field in _fields)
+              FormRow(
+                title: field.label(appLocalizations),
+                invalid: issues.containsKey(field),
+                trailing: FormRowTextField(
+                  controller: field.controller,
+                  hintText: appLocalizations.required,
+                  keyboardType: TextInputType.number,
+                  textInputAction: field == _fields.last
+                      ? TextInputAction.done
+                      : TextInputAction.next,
+                  inputFormatters: TextInputLimits.digitsOnly(
+                    TextInputLimits.port,
+                  ),
+                  onChanged: (_) => setState(() {}),
+                  onFieldSubmitted: (_) => _handleUpdate(),
                 ),
               ),
-            ),
-            Row(
-              children: [
-                TextButton(
-                  onPressed: _handleReset,
-                  child: Text(appLocalizations.reset),
-                ),
-                const SizedBox(width: 4),
-                TextButton(
-                  onPressed: _handleUpdate,
-                  child: Text(appLocalizations.submit),
-                ),
-              ],
-            ),
+          ],
+        ),
+        generateSection(
+          items: [
+            FormRow(title: appLocalizations.reset, onPressed: _handleReset),
           ],
         ),
       ],
-      child: Form(
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        key: _formKey,
-        child: Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: AnimatedSize(
-            duration: midDuration,
-            curve: Curves.easeOutQuad,
-            alignment: Alignment.topCenter,
-            child: Column(
-              spacing: 24,
-              children: [
-                _buildField(_fields.first, appLocalizations),
-                if (_isMore)
-                  ..._fields
-                      .skip(1)
-                      .map((field) => _buildField(field, appLocalizations)),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

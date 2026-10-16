@@ -7,6 +7,7 @@ import 'package:fl_clash/ui/navigator.dart';
 import 'package:fl_clash/ui/view_scope.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'form_sheet.dart';
 import 'sheet_navigator.dart';
 import 'side_sheet.dart';
 import 'snap_sheet.dart';
@@ -27,7 +28,14 @@ class ExtendProps {
   const ExtendProps({this.forceFull = false});
 }
 
-enum SheetType { page, bottomSheet, sideSheet }
+enum SheetType {
+  page,
+  bottomSheet,
+  sideSheet,
+  formSheet;
+
+  bool get isCompact => this == bottomSheet || this == formSheet;
+}
 
 const stackedSheetPeek = 14.0;
 
@@ -39,30 +47,59 @@ Future<T?> showSheet<T>({
   required WidgetBuilder builder,
   SheetProps props = const SheetProps(),
 }) {
-  final isMobile = context.isMobileView;
-  final barrierColor = context.colorScheme.modalScrim;
-  if (isMobile) {
-    final navigator = sheetNavigatorOf(context);
-    return navigator.push(
-      SnapSheetRoute<T>(
-        builder: (sheetContext, _) => builder(sheetContext),
-        detents: props.detents,
-        fitsContent: true,
-        sheetBarrierColor: barrierColor,
-        barrierLabel: MaterialLocalizations.of(
-          context,
-        ).modalBarrierDismissLabel,
-        capturedThemes: InheritedTheme.capture(
-          from: context,
-          to: navigator.context,
-        ),
-      ),
-    );
+  if (context.isMobileView) {
+    return _showBottomSheet<T>(context, builder: builder, props: props);
   }
   return _showSideSheet<T>(
     context,
     backgroundColor: props.backgroundColor,
     builder: builder,
+  );
+}
+
+/// Opens a form: a bottom sheet in the mobile layout, and elsewhere a card
+/// centered over the navigator, as iPad and macOS present a form sheet.
+Future<T?> showFormSheet<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+  SheetProps props = const SheetProps(),
+}) {
+  if (context.isMobileView) {
+    return _showBottomSheet<T>(context, builder: builder, props: props);
+  }
+  final navigator = sheetNavigatorOf(context);
+  return navigator.push(
+    FormSheetRoute<T>(
+      builder: builder,
+      backgroundColor: props.backgroundColor,
+      barrierColor: context.colorScheme.modalScrim,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      capturedThemes: InheritedTheme.capture(
+        from: context,
+        to: navigator.context,
+      ),
+    ),
+  );
+}
+
+Future<T?> _showBottomSheet<T>(
+  BuildContext context, {
+  required WidgetBuilder builder,
+  required SheetProps props,
+}) {
+  final navigator = sheetNavigatorOf(context);
+  return navigator.push(
+    SnapSheetRoute<T>(
+      builder: (sheetContext, _) => builder(sheetContext),
+      detents: props.detents,
+      fitsContent: true,
+      sheetBarrierColor: context.colorScheme.modalScrim,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      capturedThemes: InheritedTheme.capture(
+        from: context,
+        to: navigator.context,
+      ),
+    ),
   );
 }
 
