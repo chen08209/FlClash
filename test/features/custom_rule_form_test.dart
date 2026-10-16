@@ -1,7 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -14,7 +13,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
@@ -66,6 +64,14 @@ class _TestClashProviders extends ClashProviders {
       ),
   ]);
 }
+
+/// The list of the open selection sheet, not the search field docked below it.
+final _selectionList = find
+    .descendant(
+      of: find.byWidgetPredicate((widget) => widget is SelectionSheet),
+      matching: find.byType(Scrollable),
+    )
+    .first;
 
 class _Harness {
   late final ProviderContainer container;
@@ -127,7 +133,9 @@ class _Harness {
   }
 
   Future<void> save(WidgetTester tester) async {
-    await tester.tap(find.byGlyph(AppGlyphs.check));
+    await tester.tap(
+      find.widgetWithText(TextButton, currentAppLocalizations.save),
+    );
     await tester.pumpAndSettle();
   }
 
@@ -137,7 +145,7 @@ class _Harness {
     await tester.scrollUntilVisible(
       find.text(action.name),
       300,
-      scrollable: find.byType(Scrollable).last,
+      scrollable: _selectionList,
     );
     // That leaves the row at the viewport's top, under the floating bar.
     await Scrollable.ensureVisible(
@@ -185,12 +193,31 @@ void main() {
     await tester.scrollUntilVisible(
       find.text(RuleAction.MATCH.name),
       300,
-      scrollable: find.byType(Scrollable).last,
+      scrollable: _selectionList,
     );
     await tester.pumpAndSettle();
 
     expect(find.text(RuleAction.NOT.name), findsOne);
     expect(find.text(RuleAction.SUB_RULE.name), findsNothing);
+  });
+
+  testWidgets('a SUB-RULE kept from before cannot be saved as one', (
+    tester,
+  ) async {
+    final harness = _Harness();
+    await harness.pump(
+      tester,
+      initialRules: [Rule.parse('SUB-RULE,(NETWORK,tcp),streaming')],
+    );
+    await tester.tap(find.text(RuleAction.SUB_RULE.name));
+    await tester.pumpAndSettle();
+    await harness.save(tester);
+
+    expect(
+      find.text(currentAppLocalizations.invalidSubRule('streaming')),
+      findsWidgets,
+    );
+    expect(harness.rules.puts, isEmpty);
   });
 
   testWidgets('the rule set sheet lists the app rule sets in one list', (
@@ -225,7 +252,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.text(RuleAction.MATCH.name),
       300,
-      scrollable: find.byType(Scrollable).last,
+      scrollable: _selectionList,
     );
     await tester.pumpAndSettle();
     await tester.tap(find.text(RuleAction.MATCH.name).last);
@@ -255,7 +282,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.text(RuleAction.NOT.name),
       300,
-      scrollable: find.byType(Scrollable).last,
+      scrollable: _selectionList,
     );
     await tester.pumpAndSettle();
     await tester.tap(find.text(RuleAction.NOT.name).last);
@@ -423,7 +450,12 @@ void main() {
 
     await tester.tap(find.text(l10n.delete));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.confirm));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(CommonDialog),
+        matching: find.text(l10n.delete),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(harness.rules.deletes, [rule.id]);

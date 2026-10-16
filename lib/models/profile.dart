@@ -144,6 +144,15 @@ extension ProfileExtension on Profile {
 
   String get fileName => '$id.yaml';
 
+  String get exportFileName {
+    final label = realLabel;
+    final lower = label.toLowerCase();
+    if (lower.endsWith('.yaml') || lower.endsWith('.yml')) {
+      return label;
+    }
+    return '$label.yaml';
+  }
+
   String get updatingKey => 'profile_$id';
 
   Future<Profile?> checkAndUpdateAndCopy({

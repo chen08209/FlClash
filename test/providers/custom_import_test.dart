@@ -20,6 +20,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:yaml/yaml.dart';
 
+import '../helpers/app_paths.dart';
 import '../helpers/test_profiles.dart';
 
 class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
@@ -513,23 +514,50 @@ proxy-groups:
       expect(config.proxyGroups.single.name, 'GLOBAL');
     });
 
-    test(
-      'drops include-all-providers and keeps the proxies of include-all',
-      () {
-        final config = _read('''
+    test('keeps the keys that take in every proxy or provider', () {
+      final config = _read('''
 proxy-groups:
-  - {name: All, type: select, include-all: true}
+  - {name: Plain, type: select, proxies: [DIRECT], include-all: false}
+  - {name: All, type: select, proxies: [DIRECT], include-all: true}
   - {name: Providers, type: select, include-all-providers: true}
 ''');
 
-        final [all, providers] = config.proxyGroups;
-        expect(all.includeAll, isNull);
-        expect(all.includeAllProxies, isTrue);
-        expect(all.includeAllProviders, isNull);
-        expect(providers.includeAllProviders, isNull);
-        expect(providers.includeAllProxies, isNull);
-      },
-    );
+      final [plain, all, providers] = config.proxyGroups;
+      expect(plain.definition, {
+        'name': 'Plain',
+        'type': 'select',
+        'proxies': ['DIRECT'],
+      });
+      expect(all.definition, {
+        'name': 'All',
+        'type': 'select',
+        'proxies': ['DIRECT'],
+        'include-all-proxies': true,
+        'include-all-providers': true,
+      });
+      expect(providers.definition, {
+        'name': 'Providers',
+        'type': 'select',
+        'include-all-providers': true,
+      });
+    });
+
+    test('drops the SUB-RULE lines, since there are no sub-rules', () {
+      final config = _read('''
+rules:
+  - SUB-RULE,(NETWORK,tcp),streaming
+  - MATCH,DIRECT
+sub-rules:
+  streaming:
+    - DOMAIN,video.example,DIRECT
+''');
+
+      expect(
+        [for (final rule in config.rules) rule.rawValue],
+        ['MATCH,DIRECT'],
+      );
+      expect(config.droppedSubRules, 1);
+    });
 
     test('renames the proxies DNS servers dial through', () {
       final config = _read(
@@ -657,10 +685,7 @@ tun:
     setUp(() async {
       await AppLocalizations.load(const Locale('en'));
       home = Directory.systemTemp.createTempSync('flclash-custom-import-');
-      AppPath.supportDirectory = () async => home;
-      AppPath.temporaryDirectory = () async => home;
-      AppPath.cacheDirectory = () async => home;
-      AppPath.downloadDirectory = () async => home;
+      await useAppPaths(home);
       testDatabase = db.Database(NativeDatabase.memory());
       db.database = testDatabase;
       await testDatabase.profiles.put(custom.toCompanion());

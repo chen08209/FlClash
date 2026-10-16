@@ -166,6 +166,23 @@ void main() {
       expect(rules.skip(1).map((rule) => rule.id), [1, 2]);
     });
 
+    testWidgets('drops the SUB-RULE lines', (tester) async {
+      final notifier = await pumpRules(tester);
+      final (:editor, :context) = await _openListEditor(tester);
+
+      final popped = await editor.onPop!(
+        context,
+        editor.title,
+        '- SUB-RULE,(NETWORK,tcp),streaming\n${editor.content}',
+      );
+
+      expect(popped, isTrue);
+      expect(notifier.replaced.single.map((rule) => rule.rawValue), [
+        'DOMAIN,a.com,DIRECT',
+        'MATCH,DIRECT',
+      ]);
+    });
+
     testWidgets('names the line of a rule the form would refuse', (
       tester,
     ) async {
@@ -203,7 +220,10 @@ void main() {
       expect(
         find.descendant(
           of: form,
-          matching: find.byTooltip(currentAppLocalizations.save),
+          matching: find.widgetWithText(
+            TextButton,
+            currentAppLocalizations.save,
+          ),
         ),
         findsOneWidget,
       );

@@ -50,6 +50,8 @@ class CustomProfileImport {
   final List<Rule> rules;
   final ProfileOverrides overrides;
 
+  final int droppedSubRules;
+
   const CustomProfileImport({
     required this.proxyProviders,
     required this.ruleProviders,
@@ -58,6 +60,7 @@ class CustomProfileImport {
     required this.proxyGroups,
     required this.rules,
     required this.overrides,
+    this.droppedSubRules = 0,
   });
 }
 
@@ -114,6 +117,14 @@ CustomProfileImport readCustomProfileImport(
     groupNames: app.groupNames,
   );
   final ruleSets = ruleProviders.names;
+  final rules = [
+    for (final item in _listOf(document['rules']))
+      _importRule(item.toString(), names: proxies.names, ruleSets: ruleSets),
+  ];
+  final keptRules = [
+    for (final rule in rules)
+      if (rule.ruleAction != RuleAction.SUB_RULE) rule,
+  ];
   return CustomProfileImport(
     proxyProviders: proxyProviders.added,
     ruleProviders: ruleProviders.added,
@@ -128,10 +139,8 @@ CustomProfileImport readCustomProfileImport(
           use: proxyProviders.names,
         ),
     ],
-    rules: [
-      for (final item in _listOf(document['rules']))
-        _importRule(item.toString(), names: proxies.names, ruleSets: ruleSets),
-    ],
+    rules: keptRules,
+    droppedSubRules: rules.length - keptRules.length,
     overrides: _importOverrides(
       document,
       names: proxies.names,
@@ -412,11 +421,7 @@ ProxyGroup _importGroup(
   required Map<String, String> use,
 }) {
   final json = _stringified({
-    // A custom profile has no include-all-providers, so include-all keeps
-    // only its proxies.
-    for (final MapEntry(:key, :value) in group.entries)
-      if (key != 'include-all' && key != 'include-all-providers') key: value,
-    if (group['include-all'] == true) 'include-all-proxies': true,
+    ...group,
     'id': 0,
     'name': name,
     if (group.containsKey('proxies'))

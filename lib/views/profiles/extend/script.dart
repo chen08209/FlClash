@@ -16,12 +16,6 @@ class ScriptContent extends ConsumerWidget {
     });
   }
 
-  void _handleRadioChange(WidgetRef ref, int profileId, int? scriptId) {
-    ref.read(profilesProvider.notifier).updateProfile(profileId, (state) {
-      return state.copyWith(scriptId: scriptId);
-    });
-  }
-
   @override
   Widget build(BuildContext context, ref) {
     final appLocalizations = context.appLocalizations;
@@ -44,24 +38,17 @@ class ScriptContent extends ConsumerWidget {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: RadioGroup<int>(
-              groupValue: scriptId,
-              onChanged: (value) {
-                _handleRadioChange(ref, profileId, value);
-              },
-              child: generateSectionV3(
-                items: [
-                  for (final script in scripts)
-                    _ScriptOption(
-                      label: script.label,
-                      value: script.id,
-                      isSelected: script.id == scriptId,
-                      onSelected: () {
-                        _handleChange(ref, profileId, script.id);
-                      },
-                    ),
-                ],
-              ),
+            child: generateSection(
+              items: [
+                for (final script in scripts)
+                  _ScriptOption(
+                    label: script.label,
+                    isSelected: script.id == scriptId,
+                    onSelected: () {
+                      _handleChange(ref, profileId, script.id);
+                    },
+                  ),
+              ],
             ),
           ),
         ),
@@ -82,13 +69,11 @@ class ScriptContent extends ConsumerWidget {
 class _ScriptOption extends StatelessWidget {
   const _ScriptOption({
     required this.label,
-    required this.value,
     required this.isSelected,
     required this.onSelected,
   });
 
   final String label;
-  final int value;
   final bool isSelected;
   final VoidCallback onSelected;
 
@@ -96,21 +81,8 @@ class _ScriptOption extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecorationListItem(
       isSelected: isSelected,
-      horizontalTitleGap: 8,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-      leading: SizedBox(
-        width: 24,
-        height: 24,
-        child: ExcludeFocus(
-          child: Radio<int>(
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            visualDensity: VisualDensity.compact,
-            toggleable: true,
-            value: value,
-          ),
-        ),
-      ),
       title: Text(label),
+      trailing: isSelected ? const SelectionCheck() : null,
       onPressed: onSelected,
     );
   }

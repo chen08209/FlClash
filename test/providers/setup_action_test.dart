@@ -1656,6 +1656,59 @@ void main() {
       expect((providers['plain'] as YamlMap).keys, {'type', 'path'});
     });
 
+    test('a custom profile group taking in every proxy or provider declares '
+        'none the profile does not name', () async {
+      final profile = Profile.custom(label: 'p');
+      final core = _MockCoreHandlerInterface();
+      final setupState = nullProfileSetupState.copyWith(
+        profileId: profile.id,
+        profileType: ProfileType.custom,
+        proxyGroups: [
+          const ProxyGroup(
+            id: 1,
+            name: 'g',
+            type: GroupType.Selector,
+            filter: 'HK',
+            includeAllProxies: true,
+            includeAllProviders: true,
+          ),
+          const ProxyGroup(
+            id: 2,
+            name: 'h',
+            type: GroupType.Selector,
+            proxies: ['mine'],
+            use: ['sub'],
+          ),
+        ],
+        profileProviders: const {'sub': 42, 'plain': 43},
+        appProxies: const [
+          CustomProxy(id: 11, definition: {'name': 'mine', 'type': 'direct'}),
+          CustomProxy(id: 15, definition: {'name': 'spare', 'type': 'direct'}),
+        ],
+      );
+      final scoped = ProviderContainer(
+        overrides: [
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          setupActionProvider.overrideWith(SetupAction.new),
+        ],
+      );
+      addTearDown(scoped.dispose);
+
+      final res = await scoped
+          .read(setupActionProvider.notifier)
+          .getProfile(
+            setupState: setupState,
+            patchConfig: const PatchClashConfig(),
+          );
+      final config = loadYaml(res.yaml) as YamlMap;
+
+      expect((config['proxy-providers'] as YamlMap).keys, {'sub'});
+      expect([for (final proxy in config['proxies']) proxy['name']], ['mine']);
+      final group = (config['proxy-groups'] as YamlList).first as YamlMap;
+      expect(group['include-all-proxies'], isTrue);
+      expect(group['include-all-providers'], isTrue);
+    });
+
     test('only a subscription profile runs its script extension', () async {
       final engine = scriptEvaluator;
       addTearDown(() => scriptEvaluator = engine);

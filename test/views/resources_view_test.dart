@@ -431,9 +431,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('shows the loading illustration until every row is ready', (
-    tester,
-  ) async {
+  testWidgets('shows every row in one step once all are ready', (tester) async {
     const size = Size(1000, 1400);
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -469,21 +467,13 @@ void main() {
     );
     await tester.tap(find.text('open'));
     await tester.pump();
-    await settle(tester);
-
-    final l10n = currentAppLocalizations;
-    final illustration = find.byKey(
-      const ValueKey(NullStatusIllustration.data),
-    );
-    expect(illustration, findsOneWidget);
     expect(find.text(GeoResource.MMDB.name), findsNothing);
 
-    await tester.pumpAndSettle();
+    final l10n = currentAppLocalizations;
     await pumpUntilFound(tester, find.text(GeoResource.MMDB.name));
     expect(find.text('Remote script'), findsOneWidget);
     expect(find.text(l10n.unknown), findsNWidgets(GeoResource.values.length));
     await tester.pumpAndSettle();
-    expect(illustration, findsNothing);
     expect(tester.takeException(), null);
 
     await tester.pumpWidget(const SizedBox.shrink());
