@@ -624,7 +624,6 @@ class _ProviderFormState extends State<_ProviderForm> {
                   keyboardType: TextInputType.url,
                   textInputAction: TextInputAction.done,
                   autocorrect: false,
-                  enableSuggestions: false,
                   onChanged: _handleChanged,
                   onFieldSubmitted: (_) => _handleSubmit(),
                 ),

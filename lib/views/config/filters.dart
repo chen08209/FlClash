@@ -269,7 +269,6 @@ class _FilterFormState extends State<_FilterForm> {
                 controller: _regexController,
                 hintText: r'(?i)hk|hong\s*kong',
                 autocorrect: false,
-                enableSuggestions: false,
                 textInputAction: TextInputAction.done,
                 inputFormatters: TextInputLimits.limit(TextInputLimits.filter),
                 onChanged: (_) {

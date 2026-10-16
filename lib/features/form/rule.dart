@@ -374,7 +374,6 @@ class _RuleFormState extends State<RuleForm> {
                 controller: _contentController,
                 hintText: appLocalizations.inputRuleContent,
                 autocorrect: false,
-                enableSuggestions: false,
                 inputFormatters: TextInputLimits.limit(TextInputLimits.rule),
                 onChanged: (_) {
                   if (_attempted) {

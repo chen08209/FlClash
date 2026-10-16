@@ -703,7 +703,6 @@ class _HexColorFieldState extends State<HexColorField> {
       child: TextField(
         controller: _controller,
         autocorrect: false,
-        enableSuggestions: false,
         textCapitalization: TextCapitalization.characters,
         style: const TextStyle(fontFeatures: [FontFeature.tabularFigures()]),
         decoration: InputDecoration(

@@ -296,7 +296,6 @@ class _NamedUrlFormState extends State<NamedUrlForm> {
                 ? TextInputAction.next
                 : TextInputAction.done,
             autocorrect: false,
-            enableSuggestions: false,
             inputFormatters: TextInputLimits.limit(TextInputLimits.url),
             onChanged: _handleChanged,
             onFieldSubmitted: (_) {

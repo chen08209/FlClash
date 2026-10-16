@@ -36,7 +36,6 @@ class BatchSection<T> extends StatelessWidget {
             maxLines: null,
             keyboardType: TextInputType.multiline,
             autocorrect: false,
-            enableSuggestions: false,
             onChanged: onChanged,
             decoration: InputDecoration.collapsed(
               border: const NoInputBorder(),
