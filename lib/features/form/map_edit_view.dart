@@ -288,7 +288,6 @@ class _MapEntryFormState extends State<_MapEntryForm> {
             hintText: appLocalizations.required,
             textInputAction: TextInputAction.next,
             autocorrect: false,
-            enableSuggestions: false,
             inputFormatters: keyMaxLength == null
                 ? null
                 : TextInputLimits.limit(keyMaxLength),
@@ -305,7 +304,6 @@ class _MapEntryFormState extends State<_MapEntryForm> {
             hintText: appLocalizations.required,
             textInputAction: TextInputAction.done,
             autocorrect: false,
-            enableSuggestions: false,
             inputFormatters: valueMaxLength == null
                 ? null
                 : TextInputLimits.limit(valueMaxLength),

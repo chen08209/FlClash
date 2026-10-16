@@ -75,6 +75,16 @@ clear of the button on either side.
 `test/lint/typography_test.dart` fails on `textTheme` anywhere in `lib/` but `typography.dart`, and on `fontSize:` or
 `fontWeight:` outside `lib/ui/`, except in the code editor, whose text follows the editor font-size setting.
 
+### Text Field Suggestions
+
+On Android, Flutter maps `enableSuggestions: false` to the visible-password input type, not only to "no suggestions"
+(`TextInputPlugin.inputTypeFromTextInputType` in the engine). Input methods then treat the field as a password: no
+clipboard panel, no Chinese layouts, and on some systems a secure keyboard. With the app's clipboard permission denied,
+that leaves no way to paste a link at all. Only the secret fields, `SecretTextFormField` and `FormRowSecretTextField`,
+ask for a password keyboard; a link, key, rule or regex field that should not be corrected sets `autocorrect: false`
+alone. `test/lint/text_field_suggestions_test.dart` fails on `enableSuggestions: false` or
+`TextInputType.visiblePassword` anywhere else in `lib/`.
+
 ### Length Units
 
 Flutter lengths are logical pixels, the unit Android calls dp. Comments, test names, docs and reports give them in dp,

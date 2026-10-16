@@ -441,7 +441,6 @@ class _WebDAVFormState extends ConsumerState<WebDAVForm> {
                 keyboardType: TextInputType.url,
                 textInputAction: TextInputAction.next,
                 autocorrect: false,
-                enableSuggestions: false,
                 inputFormatters: TextInputLimits.limit(TextInputLimits.uri),
                 onChanged: _handleChanged,
               ),
@@ -454,7 +453,6 @@ class _WebDAVFormState extends ConsumerState<WebDAVForm> {
                 hintText: appLocalizations.required,
                 textInputAction: TextInputAction.next,
                 autocorrect: false,
-                enableSuggestions: false,
                 inputFormatters: TextInputLimits.limit(
                   TextInputLimits.userName,
                 ),

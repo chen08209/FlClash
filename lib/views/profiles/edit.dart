@@ -454,7 +454,6 @@ class _ProfileUrlField extends StatelessWidget {
         keyboardType: TextInputType.url,
         textInputAction: TextInputAction.next,
         autocorrect: false,
-        enableSuggestions: false,
         inputFormatters: TextInputLimits.limit(TextInputLimits.url),
         onChanged: onChanged,
       ),
