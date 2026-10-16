@@ -2,11 +2,14 @@ import 'dart:math' as math;
 
 import 'package:fl_clash/ui/color.dart';
 import 'package:fl_clash/ui/context.dart';
+import 'package:fl_clash/ui/input.dart';
+import 'package:fl_clash/ui/liquid_glass.dart';
 import 'package:fl_clash/ui/motion.dart';
 import 'package:fl_clash/ui/navigation_dock.dart';
 import 'package:fl_clash/ui/shape.dart';
 import 'package:fl_clash/ui/surface.dart';
 import 'package:fl_clash/ui/typography.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -18,6 +21,10 @@ const double _alertWidth = 348;
 const double _contentMaxWidth = 300;
 // Material 3 sets a filled field's text 4 in past its content padding.
 const double _fieldInputGap = 4;
+const double _pressGrowth = 4;
+const double _pressPull = 3;
+const double _pressedFillShare = 0.4;
+const double _pressedDarkDefaultShare = 0.5;
 
 // UIAlertController on iOS 27 grows in from 1.2 times its size and only fades
 // out, both on one critically damped spring that settles in 0.404 s.
@@ -37,7 +44,7 @@ Future<T?> showFloatingDialog<T>({
 }) {
   return Navigator.of(context).push<T>(
     _AlertRoute<T>(
-      barrierColor: context.colorScheme.modalScrim,
+      barrierColor: context.colorScheme.alertScrim,
       barrierDismissible: dismissible,
       barrierLabel: dismissible
           ? MaterialLocalizations.of(context).modalBarrierDismissLabel
@@ -187,7 +194,7 @@ class _AlertTransitionState extends State<_AlertTransition> {
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
+    return LiquidGlassFade(
       opacity: widget.animation,
       child: AnimatedBuilder(
         animation: widget.animation,
@@ -195,6 +202,118 @@ class _AlertTransitionState extends State<_AlertTransition> {
         child: widget.child,
       ),
     );
+  }
+}
+
+RenderPhysicalShape? _surfaceIn(RenderObject node) {
+  if (node is RenderPhysicalShape) {
+    return node;
+  }
+  RenderPhysicalShape? surface;
+  node.visitChildren((child) => surface ??= _surfaceIn(child));
+  return surface;
+}
+
+Rect _surfaceRectIn(RenderBox box) {
+  final surface = _surfaceIn(box);
+  if (surface == null) {
+    return Offset.zero & box.size;
+  }
+  return MatrixUtils.transformRect(
+    surface.getTransformTo(box),
+    Offset.zero & surface.size,
+  );
+}
+
+/// An [AlertDialog] takes only a color, so the pane goes where its [Material]
+/// lays out its [PhysicalShape].
+class _AlertGlass extends SingleChildRenderObjectWidget {
+  const _AlertGlass({
+    required this.style,
+    required this.rim,
+    required this.shadows,
+    super.child,
+  });
+
+  final LiquidGlassStyle style;
+  final LiquidGlassRim rim;
+  final List<BoxShadow> shadows;
+
+  @override
+  _RenderAlertGlass createRenderObject(BuildContext context) {
+    return _RenderAlertGlass(style, rim, shadows);
+  }
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _RenderAlertGlass renderObject,
+  ) {
+    renderObject
+      ..style = style
+      ..rim = rim
+      ..shadows = shadows;
+  }
+}
+
+class _RenderAlertGlass extends RenderProxyBox {
+  _RenderAlertGlass(this._style, this._rim, this._shadows);
+
+  late final _pane = LiquidGlassPane(markNeedsPaint);
+
+  LiquidGlassStyle _style;
+  set style(LiquidGlassStyle value) {
+    if (value == _style) {
+      return;
+    }
+    _style = value;
+    markNeedsPaint();
+  }
+
+  LiquidGlassRim _rim;
+  set rim(LiquidGlassRim value) {
+    if (value == _rim) {
+      return;
+    }
+    _rim = value;
+    markNeedsPaint();
+  }
+
+  List<BoxShadow> _shadows;
+  set shadows(List<BoxShadow> value) {
+    if (listEquals(value, _shadows)) {
+      return;
+    }
+    _shadows = value;
+    markNeedsPaint();
+  }
+
+  @override
+  bool get alwaysNeedsCompositing => true;
+
+  @override
+  void dispose() {
+    _pane.dispose();
+    super.dispose();
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    if (_surfaceIn(this) == null) {
+      _pane.clear();
+    } else {
+      final rect = _surfaceRectIn(this).shift(offset);
+      _pane.paint(
+        context,
+        rect,
+        shape: LiquidGlassCorners.circular(AppCorner.alert),
+        style: _style,
+        shadows: _shadows,
+        rim: _rim,
+      );
+      _rim.paintLine(context.canvas, rect, AppCorner.alert);
+    }
+    super.paint(context, offset);
   }
 }
 
@@ -212,6 +331,9 @@ class CommonDialog extends StatelessWidget {
   /// Sets the fields in [child] as an iOS alert does: as wide as its buttons.
   final bool hasFields;
 
+  /// The last action destroys data: red on the plain fill, as in UIKit.
+  final bool destructive;
+
   const CommonDialog({
     super.key,
     required this.title,
@@ -220,35 +342,53 @@ class CommonDialog extends StatelessWidget {
     this.child,
     this.padding,
     this.hasFields = false,
+    this.destructive = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final actions = this.actions ?? const <Widget>[];
     final contentInset = hasFields ? _actionInset : _textInset;
-    return AlertDialog(
-      titleTextStyle: AppTextStyle.headline.of(context),
+    final glass = LiquidGlassScope.of(context);
+    final colorScheme = context.colorScheme;
+    final fill = glass ? glassFillOf(colorScheme) : null;
+    final dialog = AlertDialog(
+      backgroundColor: glass ? Colors.transparent : null,
+      titleTextStyle: hasFields
+          ? AppTextStyle.body.of(context)
+          : AppTextStyle.headline.of(context),
       contentTextStyle: AppTextStyle.subheadline
           .of(context)
-          .copyWith(color: context.colorScheme.onSurfaceVariant),
-      title: trailing == null
-          ? Text(title)
-          : Row(
-              children: [
-                Expanded(child: Text(title)),
-                trailing!,
-              ],
+          .copyWith(
+            color: colorScheme.onSurfaceVariant.withValues(
+              alpha: colorScheme.brightness == Brightness.dark ? 1 : 0.85,
             ),
-      actions: actions.isEmpty ? null : [AlertActions(actions: actions)],
+          ),
+      title: _buildTitle(),
+      actions: actions.isEmpty
+          ? null
+          : [
+              AlertActions(
+                actions: actions,
+                fill: fill,
+                destructive: destructive,
+              ),
+            ],
       actionsPadding: const EdgeInsets.fromLTRB(
         _actionInset,
         0,
         _actionInset,
         _actionInset,
       ),
-      titlePadding: const EdgeInsets.fromLTRB(_textInset, 24, _textInset, 0),
+      titlePadding: const EdgeInsets.fromLTRB(_textInset, 21, _textInset, 0),
       contentPadding:
-          padding ?? EdgeInsets.fromLTRB(contentInset, 16, contentInset, 24),
+          padding ??
+          EdgeInsets.fromLTRB(
+            contentInset,
+            hasFields ? 16 : 6,
+            contentInset,
+            20,
+          ),
       content: Container(
         constraints: BoxConstraints(
           maxWidth: padding == null
@@ -257,93 +397,247 @@ class CommonDialog extends StatelessWidget {
         ),
         width: double.infinity,
         child: SingleChildScrollView(
-          child: hasFields ? _AlertFieldTheme(child: child) : child,
+          child: hasFields
+              ? FilledInputTheme(
+                  fillColor: fill,
+                  borderRadius: AppRadius.all(_actionHeight / 2),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: _textInset - _actionInset - _fieldInputGap,
+                    vertical: 12,
+                  ),
+                  child: child ?? const SizedBox.shrink(),
+                )
+              : child,
         ),
       ),
     );
+    return ElasticPress(
+      pullPastEdges: true,
+      maxGrowth: _pressGrowth,
+      maxPull: _pressPull,
+      panelOf: _surfaceRectIn,
+      child: glass
+          ? _AlertGlass(
+              style: LiquidGlassStyle.alert(colorScheme),
+              rim: LiquidGlassRim.alert(colorScheme),
+              shadows: glassMenuShadows(colorScheme),
+              child: dialog,
+            )
+          : dialog,
+    );
+  }
+
+  Widget _buildTitle() {
+    final trailing = this.trailing;
+    if (!hasFields) {
+      return trailing == null
+          ? Text(title)
+          : Row(
+              children: [
+                Expanded(child: Text(title)),
+                trailing,
+              ],
+            );
+    }
+    final text = Text(title, textAlign: TextAlign.center);
+    if (trailing == null) {
+      return SizedBox(width: double.infinity, child: text);
+    }
+    return _CenteredTitle(title: text, trailing: trailing);
   }
 }
 
-class _AlertFieldTheme extends StatelessWidget {
-  const _AlertFieldTheme({required this.child});
-
-  final Widget? child;
+/// A title centred on its whole width, beside a control at its end.
+class _CenteredTitle extends MultiChildRenderObjectWidget {
+  _CenteredTitle({required Widget title, required Widget trailing})
+    : super(children: [title, trailing]);
 
   @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final shape = AppShape.input.copyWith(
-      borderRadius: AppRadius.all(_actionHeight / 2),
+  _RenderCenteredTitle createRenderObject(BuildContext context) {
+    return _RenderCenteredTitle(textDirection: Directionality.of(context));
+  }
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _RenderCenteredTitle renderObject,
+  ) {
+    renderObject.textDirection = Directionality.of(context);
+  }
+}
+
+class _RenderCenteredTitle extends RenderBox
+    with
+        ContainerRenderObjectMixin<RenderBox, MultiChildLayoutParentData>,
+        RenderBoxContainerDefaultsMixin<RenderBox, MultiChildLayoutParentData> {
+  _RenderCenteredTitle({required TextDirection textDirection})
+    : _textDirection = textDirection;
+
+  TextDirection _textDirection;
+
+  set textDirection(TextDirection value) {
+    if (value == _textDirection) {
+      return;
+    }
+    _textDirection = value;
+    markNeedsLayout();
+  }
+
+  RenderBox get _title => firstChild!;
+
+  RenderBox get _trailing => lastChild!;
+
+  @override
+  void setupParentData(RenderBox child) {
+    if (child.parentData is! MultiChildLayoutParentData) {
+      child.parentData = MultiChildLayoutParentData();
+    }
+  }
+
+  @override
+  double computeMinIntrinsicWidth(double height) =>
+      _title.getMinIntrinsicWidth(height) +
+      _trailing.getMinIntrinsicWidth(height) * 2;
+
+  @override
+  double computeMaxIntrinsicWidth(double height) =>
+      _title.getMaxIntrinsicWidth(height) +
+      _trailing.getMaxIntrinsicWidth(height) * 2;
+
+  @override
+  double computeMinIntrinsicHeight(double width) => math.max(
+    _title.getMinIntrinsicHeight(width),
+    _trailing.getMinIntrinsicHeight(width),
+  );
+
+  @override
+  double computeMaxIntrinsicHeight(double width) => math.max(
+    _title.getMaxIntrinsicHeight(width),
+    _trailing.getMaxIntrinsicHeight(width),
+  );
+
+  double _widthOf(BoxConstraints constraints, double side) =>
+      constraints.hasBoundedWidth
+      ? constraints.maxWidth
+      : _title.getMaxIntrinsicWidth(double.infinity) + side * 2;
+
+  BoxConstraints _titleConstraints(double width, double side) =>
+      BoxConstraints.tightFor(width: math.max(0.0, width - side * 2));
+
+  @override
+  Size computeDryLayout(covariant BoxConstraints constraints) {
+    final trailing = _trailing.getDryLayout(constraints.loosen());
+    final width = _widthOf(constraints, trailing.width);
+    final title = _title.getDryLayout(_titleConstraints(width, trailing.width));
+    return constraints.constrain(
+      Size(width, math.max(title.height, trailing.height)),
     );
-    final none = shape.copyWith(borderSide: BorderSide.none);
-    return InputDecorationTheme(
-      data: InputDecorationTheme.of(context).copyWith(
-        filled: true,
-        fillColor: context.raisedSurfaceLevel.colorOf(colorScheme),
-        hoverColor: Colors.transparent,
-        floatingLabelBehavior: FloatingLabelBehavior.never,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: _textInset - _actionInset - _fieldInputGap,
-          vertical: 12,
-        ),
-        border: none,
-        enabledBorder: none,
-        disabledBorder: none,
-        errorBorder: none,
-        focusedBorder: shape.copyWith(
-          borderSide: BorderSide(color: colorScheme.primary, width: 2),
-        ),
-        focusedErrorBorder: shape.copyWith(
-          borderSide: BorderSide(color: colorScheme.error, width: 2),
-        ),
-      ),
-      child: child ?? const SizedBox.shrink(),
+  }
+
+  @override
+  void performLayout() {
+    _trailing.layout(constraints.loosen(), parentUsesSize: true);
+    final side = _trailing.size.width;
+    final width = _widthOf(constraints, side);
+    _title.layout(_titleConstraints(width, side), parentUsesSize: true);
+    size = constraints.constrain(
+      Size(width, math.max(_title.size.height, _trailing.size.height)),
     );
+    final rtl = _textDirection == TextDirection.rtl;
+    (_title.parentData! as MultiChildLayoutParentData).offset = Offset(
+      side,
+      (size.height - _title.size.height) / 2,
+    );
+    (_trailing.parentData! as MultiChildLayoutParentData).offset = Offset(
+      rtl ? 0 : size.width - side,
+      (size.height - _trailing.size.height) / 2,
+    );
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    defaultPaint(context, offset);
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
+    return defaultHitTestChildren(result, position: position);
   }
 }
 
 /// Text buttons laid out and filled as [CommonDialog] sets its own.
 class AlertActions extends StatelessWidget {
-  const AlertActions({super.key, required this.actions});
+  const AlertActions({
+    super.key,
+    required this.actions,
+    this.fill,
+    this.destructive = false,
+  });
 
   final List<Widget> actions;
+
+  /// The plain buttons' fill, in place of the raised surface's.
+  final Color? fill;
+
+  final bool destructive;
 
   @override
   Widget build(BuildContext context) {
     return _AlertActions(
       children: [
         for (final (index, action) in actions.indexed)
-          _AlertAction(isDefault: index == actions.length - 1, child: action),
+          _AlertAction(
+            isDefault: !destructive && index == actions.length - 1,
+            destructive: destructive && index == actions.length - 1,
+            fill: fill,
+            child: action,
+          ),
       ],
     );
   }
 }
 
 class _AlertAction extends StatelessWidget {
-  const _AlertAction({required this.isDefault, required this.child});
+  const _AlertAction({
+    required this.isDefault,
+    required this.destructive,
+    required this.fill,
+    required this.child,
+  });
 
   final bool isDefault;
+  final bool destructive;
+  final Color? fill;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final fill = context.raisedSurfaceLevel.colorOf(colorScheme);
+    final fill = this.fill ?? context.raisedSurfaceLevel.colorOf(colorScheme);
     final foreground = isDefault
         ? colorScheme.onPrimary
+        : destructive
+        ? colorScheme.destructive
         : colorScheme.onSurface;
-    final child = this.child;
+    final background = isDefault ? colorScheme.primary : fill;
+    final pressedShare = switch ((isDefault, colorScheme.brightness)) {
+      (true, Brightness.dark) => _pressedDarkDefaultShare,
+      (false, Brightness.dark) => 1.0,
+      _ => _pressedFillShare,
+    };
     return TextButtonTheme(
       data: TextButtonThemeData(
         style:
             TextButton.styleFrom(
-              backgroundColor: isDefault ? colorScheme.primary : fill,
               foregroundColor: foreground,
-              disabledBackgroundColor: fill,
               disabledForegroundColor: colorScheme.onSurface.withValues(
                 alpha: 0.38,
               ),
-              textStyle: AppTextStyle.body.of(context, emphasized: isDefault),
+              textStyle: isDefault
+                  ? AppTextStyle.body.of(context, emphasized: true)
+                  : AppTextStyle.body
+                        .of(context)
+                        .copyWith(fontWeight: FontWeight.w500),
               minimumSize: const Size(0, _actionHeight),
               padding: const EdgeInsets.symmetric(horizontal: 16),
               shape: AppShape.full,
@@ -351,6 +645,13 @@ class _AlertAction extends StatelessWidget {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               splashFactory: NoSplash.splashFactory,
             ).copyWith(
+              backgroundColor: WidgetStateProperty<Color?>.fromMap({
+                WidgetState.disabled: fill,
+                WidgetState.pressed: background.withValues(
+                  alpha: background.a * pressedShare,
+                ),
+                WidgetState.any: background,
+              }),
               overlayColor: WidgetStateProperty<Color?>.fromMap({
                 WidgetState.focused: foreground.withValues(alpha: 0.1),
                 WidgetState.pressed: Colors.transparent,
@@ -359,13 +660,7 @@ class _AlertAction extends StatelessWidget {
               side: focusRingStyle(colorScheme, standsOff: isDefault).side,
             ),
       ),
-      child: ElasticPress(
-        enabled: switch (child) {
-          ButtonStyleButton(:final enabled) => enabled,
-          _ => true,
-        },
-        child: child,
-      ),
+      child: child,
     );
   }
 }

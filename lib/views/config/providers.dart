@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -10,7 +11,6 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ClashProvidersView extends ConsumerStatefulWidget {
@@ -82,7 +82,8 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
 
   Future<void> _handleImportFromUrl() async {
     final appLocalizations = context.appLocalizations;
-    final res = await dialogs.showNamedUrlsInput(
+    final res = await showNamedUrlsForm(
+      context,
       title: appLocalizations.importUrl,
       labelValidator: (value) => _validateLabel(value, optional: true),
       urlValidator: _validateProviderUrl,
@@ -240,7 +241,7 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
   }
 
   Future<void> _handleEditOptions(ClashProvider provider) =>
-      _showClashProviderOptions(ref, provider);
+      _showClashProviderOptions(context, ref, provider);
 
   Future<void> _handleDelete(ClashProvider provider) async {
     final appLocalizations = context.appLocalizations;
@@ -255,6 +256,8 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
                 users.map((profile) => profile.realLabel).join(', '),
               ),
       ),
+      destructive: true,
+      confirmText: appLocalizations.delete,
     );
     if (res != true) {
       return;
@@ -385,7 +388,6 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
       isLoading: ref.watch(loadingProvider(LoadingTag.ruleProviders)),
       actions: [
         CommonPopupBox(
-          anchorShift: Offset(0, ref.watch(isMobileViewProvider) ? 0 : 20),
           targetBuilder: (open) {
             return IconButton(
               tooltip: appLocalizations.add,
@@ -467,11 +469,13 @@ class _RuleSetUpdateTimeState extends ConsumerState<_RuleSetUpdateTime> {
 }
 
 Future<void> _showClashProviderOptions(
+  BuildContext context,
   WidgetRef ref,
   ClashProvider provider,
 ) async {
-  final res = await dialogs.showCommonDialog<ClashProvider>(
-    child: _ProviderDialog(
+  final res = await showFormSheet<ClashProvider>(
+    context: context,
+    builder: (_) => _ProviderForm(
       provider: provider,
       reservedLabels: {
         for (final item
@@ -506,20 +510,22 @@ String? _validateProviderUrl(String? value) {
   return null;
 }
 
-class _ProviderDialog extends StatefulWidget {
-  const _ProviderDialog({required this.provider, required this.reservedLabels});
+enum _ProviderField { label, url }
+
+class _ProviderForm extends StatefulWidget {
+  const _ProviderForm({required this.provider, required this.reservedLabels});
 
   final ClashProvider provider;
   final Set<String> reservedLabels;
 
   @override
-  State<_ProviderDialog> createState() => _ProviderDialogState();
+  State<_ProviderForm> createState() => _ProviderFormState();
 }
 
-class _ProviderDialogState extends State<_ProviderDialog> {
-  final _formKey = GlobalKey<FormState>();
+class _ProviderFormState extends State<_ProviderForm> {
   late final TextEditingController _labelController;
   late final TextEditingController _urlController;
+  bool _attempted = false;
 
   ClashProvider get _provider => widget.provider;
 
@@ -537,20 +543,40 @@ class _ProviderDialogState extends State<_ProviderDialog> {
     super.dispose();
   }
 
-  String? _validateLabel(String? value) {
+  ({_ProviderField field, String message})? _issue() {
     final appLocalizations = context.appLocalizations;
-    final label = value?.trim() ?? '';
+    final label = _labelController.text.trim();
     if (label.isEmpty) {
-      return appLocalizations.emptyTip(appLocalizations.name);
+      return (
+        field: _ProviderField.label,
+        message: appLocalizations.emptyTip(appLocalizations.name),
+      );
     }
     if (widget.reservedLabels.contains(label)) {
-      return appLocalizations.existsTip(appLocalizations.name);
+      return (
+        field: _ProviderField.label,
+        message: appLocalizations.existsTip(appLocalizations.name),
+      );
+    }
+    if (_provider.isRemote) {
+      if (_validateProviderUrl(_urlController.text) case final message?) {
+        return (field: _ProviderField.url, message: message);
+      }
     }
     return null;
   }
 
+  void _handleChanged(String _) {
+    if (_attempted) {
+      setState(() {});
+    }
+  }
+
   void _handleSubmit() {
-    if (_formKey.currentState?.validate() == false) {
+    if (_issue() != null) {
+      setState(() {
+        _attempted = true;
+      });
       return;
     }
     Navigator.of(context).pop(
@@ -561,61 +587,51 @@ class _ProviderDialogState extends State<_ProviderDialog> {
     );
   }
 
-  Widget _buildField({
-    required TextEditingController controller,
-    required String label,
-    FormFieldValidator<String>? validator,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-  }) {
-    return TextFormField(
-      controller: controller,
-      validator: validator,
-      keyboardType: keyboardType,
-      inputFormatters: inputFormatters,
-      decoration: InputDecoration(border: AppShape.input, labelText: label),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonDialog(
+    final issue = _attempted ? _issue() : null;
+    return FormPage(
       title: appLocalizations.options,
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          child: Text(appLocalizations.cancel),
-        ),
-        TextButton(
-          onPressed: _handleSubmit,
-          child: Text(appLocalizations.confirm),
-        ),
-      ],
-      child: Form(
-        key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: Wrap(
-          runSpacing: 16,
-          children: [
-            _buildField(
-              controller: _labelController,
-              label: appLocalizations.name,
-              validator: _validateLabel,
-              inputFormatters: TextInputLimits.limit(TextInputLimits.name),
+      onSave: _handleSubmit,
+      error: issue?.message,
+      children: [
+        generateSection(
+          items: [
+            FormRow(
+              title: appLocalizations.name,
+              invalid: issue?.field == _ProviderField.label,
+              trailing: FormRowTextField(
+                controller: _labelController,
+                hintText: appLocalizations.required,
+                textInputAction: _provider.isRemote
+                    ? TextInputAction.next
+                    : TextInputAction.done,
+                inputFormatters: TextInputLimits.limit(TextInputLimits.name),
+                onChanged: _handleChanged,
+                onFieldSubmitted: _provider.isRemote
+                    ? null
+                    : (_) => _handleSubmit(),
+              ),
             ),
             if (_provider.isRemote)
-              _buildField(
-                controller: _urlController,
-                label: appLocalizations.url,
-                validator: _validateProviderUrl,
-                keyboardType: TextInputType.url,
+              FormRow(
+                title: appLocalizations.url,
+                invalid: issue?.field == _ProviderField.url,
+                trailing: FormRowTextField(
+                  controller: _urlController,
+                  hintText: appLocalizations.required,
+                  keyboardType: TextInputType.url,
+                  textInputAction: TextInputAction.done,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  onChanged: _handleChanged,
+                  onFieldSubmitted: (_) => _handleSubmit(),
+                ),
               ),
           ],
         ),
-      ),
+      ],
     );
   }
 }

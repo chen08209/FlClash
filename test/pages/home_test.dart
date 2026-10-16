@@ -803,7 +803,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('a non-floating bottom bar leaves primary actions floating', (
+  testWidgets('a non-floating bottom bar leaves the page no bottom inset', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(500, 800);
@@ -813,10 +813,8 @@ void main() {
 
     Widget page(String label) {
       return Builder(
-        builder: (context) => Text(
-          'page:$label inBar:${PrimaryActionInBarScope.of(context)} '
-          'inset:${BottomInsetScope.of(context)}',
-        ),
+        builder: (context) =>
+            Text('page:$label inset:${BottomInsetScope.of(context)}'),
       );
     }
 
@@ -856,7 +854,7 @@ void main() {
     await tester.pump();
     expect(find.byType(FloatingNavigationBar), findsNothing);
     expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.text('page:dashboard inBar:false inset:0.0'), findsOneWidget);
+    expect(find.text('page:dashboard inset:0.0'), findsOneWidget);
 
     await tester.tap(_glyph(AppGlyphs.tools));
     await tester.pumpAndSettle();
@@ -872,7 +870,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(NavigationBar), findsNothing);
     expect(find.byType(FloatingNavigationBar), findsOneWidget);
-    expect(find.textContaining('page:tools inBar:true'), findsOneWidget);
+    expect(find.textContaining('page:tools inset:'), findsOneWidget);
+    expect(find.text('page:tools inset:0.0'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

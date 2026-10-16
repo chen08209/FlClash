@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -115,7 +116,6 @@ class ThemeManager extends ConsumerWidget {
 
     final measure = Measure.of(context, textScaleFactor);
     globalState.measure = measure;
-    UiTextScale.factor = textScaleFactor;
     return MeasureScope(
       measure: measure,
       child: AppViewScope(
@@ -167,11 +167,18 @@ class _LiquidGlassSetting extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final mode = ref.watch(
+      themeSettingProvider.select((state) => state.liquidGlass),
+    );
     return LiquidGlassScope(
-      enabled: ref.watch(
-        themeSettingProvider.select((state) => state.liquidGlass),
+      enabled: mode != LiquidGlassMode.none,
+      quality: mode == LiquidGlassMode.ultra
+          ? LiquidGlassQuality.ultra
+          : LiquidGlassQuality.standard,
+      child: LiquidGlassHost(
+        enabled: mode != LiquidGlassMode.none,
+        child: child,
       ),
-      child: child,
     );
   }
 }

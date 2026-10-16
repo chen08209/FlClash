@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import 'focus.dart';
 import 'popup.dart';
 import 'sortable.dart';
+import 'surface.dart';
 
 const _touchDevices = {
   PointerDeviceKind.touch,
@@ -59,6 +60,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion> {
             context,
           ).modalBarrierDismissLabel,
           placement: PopupPlacement.belowPoint,
+          elevated: ElevatedSurfaceTheme.isIn(context),
           anchorOf: () => point & Size.zero,
           avoid: avoid ? rowRect : null,
           builder: (_) => CommonPopupMenu(items: widget.menuItems!),

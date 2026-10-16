@@ -114,10 +114,22 @@ class ElevatedSurfaceTheme extends StatelessWidget {
 
   final Widget child;
 
+  static bool isIn(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<_ElevatedSurfaceScope>() != null;
+
   @override
   Widget build(BuildContext context) {
-    return Theme(data: Theme.of(context).elevated, child: child);
+    return _ElevatedSurfaceScope(
+      child: Theme(data: Theme.of(context).elevated, child: child),
+    );
   }
+}
+
+class _ElevatedSurfaceScope extends InheritedWidget {
+  const _ElevatedSurfaceScope({required super.child});
+
+  @override
+  bool updateShouldNotify(_ElevatedSurfaceScope oldWidget) => false;
 }
 
 extension AppSurfaceThemeExt on ThemeData {

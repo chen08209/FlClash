@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
@@ -136,4 +138,77 @@ void main() {
     expect(find.text('page action'), findsNothing);
     expect(find.byTooltip('search action'), findsOneWidget);
   });
+
+  testWidgets('system back exits search on a pushed page before its own '
+      'back handler', (tester) async {
+    var pageBackCount = 0;
+    await tester.pumpWidget(
+      const TestApp(wrapInProviderScope: true, child: SizedBox.shrink()),
+    );
+    unawaited(
+      tester
+          .state<NavigatorState>(find.byType(Navigator))
+          .push(
+            MaterialPageRoute<void>(
+              builder: (_) => CommonPopScope(
+                onPop: (_) {
+                  pageBackCount++;
+                  return false;
+                },
+                child: _page(onSearch: (_) {}),
+              ),
+            ),
+          ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byGlyph(AppGlyphs.search));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TextField), findsNothing);
+    expect(pageBackCount, 0);
+    expect(find.text('Page'), findsOneWidget);
+  });
+
+  testWidgets('a fresh search callback each build keeps search open', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const TestApp(wrapInProviderScope: true, child: _RebuildingSearchPage()),
+    );
+
+    await tester.tap(find.byGlyph(AppGlyphs.search));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'a');
+    await tester.pumpAndSettle();
+
+    expect(find.text('query=a'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
+  });
+}
+
+class _RebuildingSearchPage extends StatefulWidget {
+  const _RebuildingSearchPage();
+
+  @override
+  State<_RebuildingSearchPage> createState() => _RebuildingSearchPageState();
+}
+
+class _RebuildingSearchPageState extends State<_RebuildingSearchPage> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    return CommonScaffold(
+      title: 'Page',
+      searchState: AppBarSearchState(
+        onSearch: (value) => setState(() => _query = value),
+      ),
+      body: Text('query=$_query'),
+    );
+  }
 }

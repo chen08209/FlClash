@@ -52,10 +52,10 @@ void main() {
   ThemeProps readTheme() => container.read(themeSettingProvider);
 
   group('theme mode', () {
-    testWidgets('defaults to the dark theme', (tester) async {
+    testWidgets('defaults to following the system', (tester) async {
       await pumpThemeView(tester);
 
-      expect(readTheme().themeMode, ThemeMode.dark);
+      expect(readTheme().themeMode, ThemeMode.system);
     });
 
     testWidgets('switches to light and back to dark', (tester) async {
@@ -126,6 +126,28 @@ void main() {
     });
   });
 
+  group('liquid glass', () {
+    testWidgets('is off until chosen, and switches back', (tester) async {
+      await pumpThemeView(tester);
+      final group = find.ancestor(
+        of: find.text('Liquid Glass').first,
+        matching: find.byType(PreviewChoiceGroup<bool>),
+      );
+      Finder choice(String label) =>
+          find.descendant(of: group, matching: find.text(label)).last;
+
+      expect(readTheme().liquidGlass, isFalse);
+
+      await tester.tap(choice('Liquid Glass'));
+      await tester.pumpAndSettle();
+      expect(readTheme().liquidGlass, isTrue);
+
+      await tester.tap(choice('Standard'));
+      await tester.pumpAndSettle();
+      expect(readTheme().liquidGlass, isFalse);
+    });
+  });
+
   group('pure black', () {
     testWidgets('switches both ways', (tester) async {
       await pumpThemeView(tester);
@@ -136,7 +158,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(readTheme().pureBlack, isTrue);
 
-      await tester.tap(find.text('Standard'));
+      await tester.tap(find.text('Standard').first);
       await tester.pumpAndSettle();
       expect(readTheme().pureBlack, isFalse);
     });
