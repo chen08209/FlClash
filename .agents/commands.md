@@ -51,7 +51,7 @@ hooks:
 ```
 
 CI flips `setup` to `false` with `yq` in its throwaway checkout before
-`dart run tool/changelog.dart` and `flutter test`; no test loads the Go core. `rust_api`
+`dart run tool/changelog.dart` and `dart run tool/test.dart`; no test loads the Go core. `rust_api`
 stays on there because the editor tests in `test/plugins/code_forge/` and the socket
 test in `test/core/desktop/ipc_native_test.dart` load the Rust library the hook
 builds; the release-notes job, which runs no tests, flips both.
@@ -153,6 +153,22 @@ flutter test test/widgets/
 flutter test test/setup_test.dart
 flutter test plugins/proxy/test/proxy_test.dart
 ```
+
+For the whole suite, or a directory of more than a few files, use `tool/test.dart`, which is also what CI runs:
+
+```bash
+dart run tool/test.dart                                  # all of test/
+dart run tool/test.dart test/widgets test/views          # some paths
+dart run tool/test.dart -- --reporter expanded --coverage
+```
+
+Plain `flutter test` compiles each file into its own program and starts an engine for it, one file after another, and
+that dominates a full run: 329 files took 128 s on a 12-core Mac with at most four running at once. `tool/test.dart`
+imports the files into 32 generated entrypoints under `.dart_tool/test_bundles/` and runs those with one worker per
+core: about 60 s for the same run, and 67 s instead of 180–213 s with `--coverage`. Files in one entrypoint share an
+isolate, so a test can see state a file before it left behind; the script runs every file that failed there again on
+its own, lets that run decide, and names the files that only failed together. See the Shared Test Isolate section of
+`rules.md` before fixing one.
 
 `plugins/setup/setup_hooks/` is a pure Dart package and is tested with `dart test` from its own directory, which is
 also what CI runs; `tool/check_plugins.sh` does not descend into it. It must stay out of `flutter test`, because a test

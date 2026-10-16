@@ -56,12 +56,31 @@ with an enclosing clip or shape where it shows. Framework widgets that paint the
 decoration to override, such as the `Switch` track, are left as Material draws them. Tooltips take theirs from
 `withAppShapes`, which sets `tooltipTheme.decoration`.
 
+### Typography
+
+Text sizes follow Apple's iOS Dynamic Type scale at its default size, on every platform. `AppTextStyle` in
+`lib/ui/typography.dart` holds its eleven styles, `largeTitle` to `caption2`, with Apple's leading and weights, plus two
+steps the scale lacks: `display` for a dashboard figure and `pageTitle` for an app bar. Take one with
+`AppTextStyle.body.of(context)`, pass `emphasized: true` for the scale's emphasized weight (bold for the titles,
+semibold for the rest), and change color or family with `copyWith`; a weight is either regular or emphasized. Text
+sized to the shape it marks, such as a letter scaled to its icon, comes from `AppTextStyle.custom`. The dashboard's
+roles (`DashboardText` in `lib/views/dashboard/style.dart`) are built on the same types. `ThemeData.withAppTypography`
+maps Material's `TextTheme` slots onto the scale so Material components follow it; app code never reads those slots.
+
+App bar titles sit at the leading edge in `pageTitle` on a root page and on any desktop page, at the leading edge in
+`headline` on a pushed page in the mobile view, and in the bar's centre in `headline` on a bottom sheet. A title widget,
+such as the editor's name field, stays at the leading edge. Past a back button a title keeps the bar's action inset
+clear of the button on either side.
+
+`test/lint/typography_test.dart` fails on `textTheme` anywhere in `lib/` but `typography.dart`, and on `fontSize:` or
+`fontWeight:` outside `lib/ui/`, except in the code editor, whose text follows the editor font-size setting.
+
 ### Length Units
 
 Flutter lengths are logical pixels, the unit Android calls dp. Comments, test names, docs and reports give them in dp,
 as in `48 dp`, never px: a reader takes px for physical pixels and misjudges the size by the device pixel ratio. Write
 "physical pixel" in full where the code really works in them, as the hairline snapping in
-`lib/widgets/list_row_separator.dart` and the Win32 frame metrics in `plugins/window` do; raster image sizes in
+`lib/ui/list_row_separator.dart` and the Win32 frame metrics in `plugins/window` do; raster image sizes in
 `tool/` and CSS under `site/` keep px. `test/lint/length_unit_test.dart` fails on a number followed by px in `lib/`
 and `test/`.
 
@@ -102,7 +121,7 @@ judgment, and it lives in the rules below and in review. Whether comments are to
   that contains them. This does not need approval.
 - These are not comments and are exempt from every rule here, including the density count: analyzer and linter
   directives (`// ignore:`, `// ignore_for_file:`, `// coverage:ignore`), license and copyright headers,
-  code-generation markers, and comments inside vendored upstream code such as `lib/widgets/open_container.dart`.
+  code-generation markers, and comments inside vendored upstream code such as `lib/ui/open_container.dart`.
 
 ### Density
 
@@ -154,7 +173,8 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   A launch mode that runs the Core as any other user has to widen `admit` in `ipc/access.rs`, and Windows
   keeps its identity check on the Dart side, which compares the named-pipe peer PID with the Core it launched.
 - Keep the shared `CoreMethodCall`/`CoreMethodResponse` JSON envelope structurally identical across Dart, Go, the
-  gomobile binding, and desktop IPC. Do not double-encode `arguments`, `result`, or event batches.
+  gomobile binding, and desktop IPC. Do not double-encode `arguments`, `result`, or event batches. A response whose
+  `file` is set was spilled to disk; a transport resolves it with `resolveSpilledResponse` before reading `result`.
 - `core/message.go` carries three event queues, and the split is load-bearing: state (loaded, geo-update,
   route-changed), priority (every other event), and bulk (log, request, DNS). Priority and bulk evict their own oldest
   entry under backpressure, except DNS, which enters the bulk queue through `enqueueState` so a lookup burst cannot push
@@ -376,7 +396,31 @@ land.
 Prefer `coreHandlerProvider.overrideWithValue(CoreController.scoped(fake))` over `CoreController.test(fake)` in new and
 touched tests. `CoreController.test` claims the process-wide singleton, which makes a global read and a provider read
 resolve to the same fake, so it cannot fail on a call site that still reaches for the global. A test that does claim
-the singleton calls `CoreController.resetInstance()` in `tearDown`.
+the singleton calls `CoreController.resetInstance()` in `tearDown`. It also only reaches the global `coreController`
+when nothing has read it yet: that is a top-level `final`, bound to whichever instance existed at the first read, which
+in a shared isolate is another file's.
+
+### Shared Test Isolate
+
+`tool/test.dart` imports many test files into one entrypoint, so process-wide state outlives the file that set it, and
+every file's `main()` runs before any test of the entrypoint does. Keep `main()` to declarations and
+`TestWidgetsFlutterBinding.ensureInitialized()`: a mock installed there is replaced by the next file's before a test
+sees it. Set up what the tests need in `setUp` or `setUpAll` instead, from the helpers that rebind the singletons:
+
+- `appPath` resolves its directories once per process. Point them at a test's directory with `await useAppPaths(dir)`
+  from `test/helpers/app_paths.dart`, not with a `PathProviderPlatform` fake, which only works while nothing has asked
+  `appPath` yet.
+- `preferences` opens its store once per process. Use `await mockPreferences(values)` from
+  `test/helpers/preferences.dart` rather than `SharedPreferences.setMockInitialValues` alone, which leaves `preferences`
+  on the store it already opened.
+
+Both cache the resolved value, not the future that produced it. A future completed in one test's fake-async zone runs
+its listeners in that zone, so a later test that awaits it never resumes. Await the helpers outside `testWidgets`
+bodies for the same reason.
+
+A test that only passes in a fresh isolate is leaning on a global it did not set up: `database_test.dart` once caught
+its write failures only because `currentAppLocalizations` threw before anything had loaded them. The script reruns such
+a file alone so it cannot fail the run, and lists it; fix it where it reads the global.
 
 Construct the Android lib handler with `CoreLib.scoped(fakeService)`. The `service` global is gated on `Platform.isAndroid`
 and is therefore null on every test host, so a `CoreLib()` built from it silently takes the null-service fallback on every
@@ -460,9 +504,9 @@ A public top-level declaration that nothing outside its own file references is d
 riverpod notifier is reached through its generated provider) and barrels as neither. Files publishing only extensions or
 typedefs are skipped: those are reached through the types they attach to, never by name.
 
-`CommonScaffold` adds the height of its docked search and floating action button to `BottomInsetScope` around its
-body, so a page that reads `BottomInsetScope.of(context)` with the context it builds the scaffold from gets the inset
-without them, and the end of its content stays under the search field or the button. Read it below the scaffold,
+`CommonScaffold` adds the height of its docked search to `BottomInsetScope` around its body, so a page that reads
+`BottomInsetScope.of(context)` with the context it builds the scaffold from gets the inset without it, and the end of
+its content stays under the search field. Read it below the scaffold,
 inside `body: Builder(builder: (context) => ...)`. `test/lint/scaffold_bottom_inset_test.dart` enforces this by
 scanning `lib/`.
 
@@ -569,6 +613,12 @@ data move, or a test for one, check that the state it reads shipped: `git tag --
 introduced it, or `git show <tag>:<path>` for the file as the release had it. A state that only ever existed between
 two releases gets no migration; a development install holding it may lose that setting or fall back to its default.
 
+A release that resets or rewrites settings, instead of reading their old shape, adds a step to `_upgrades` in
+`lib/common/migration.dart` under the next `upgradeVersion`. A step takes and returns the `Config`, runs once on an
+install that already had settings, and never on a new one. Leave `currentVersion` for changes to the stored format:
+backups carry it, and an older app refuses a backup stamped newer than its own, so bumping it for a reset would strand
+backups between devices on different releases.
+
 The database takes one migration step per release. The newest step in `lib/database/database.dart` has not shipped
 while `schemaVersion` at the last release tag is below its number; a schema change then goes into that step, raising
 `schemaVersion` and the step's condition together so a development install runs the step again, instead of adding a
@@ -583,6 +633,7 @@ Do not manually edit generated files under:
 - `lib/models/generated/`
 - `lib/providers/generated/`
 - `lib/database/generated/`
+- `lib/ui/generated/`
 - `lib/l10n/intl/`
 
 After schema, model, or provider changes, run build generation and include focused tests when behavior changes.
@@ -596,7 +647,7 @@ l10n paths for that reason. It is harmless because the file only needs `Locale`,
 human writes takes Material from `material_ui`; `cupertino_ui` is banned outright and
 survives only as a transitive dependency of `material_ui`.
 
-Strings live in `arb/intl_{en,zh_CN,ja,ru}.arb` — flat JSON, no `@` metadata. Add a key to all four, then regenerate with
+Strings live in `arb/intl_{en,zh_CN,ja,ru,fr,es,ko}.arb` — flat JSON, no `@` metadata. Add a key to all seven, then regenerate with
 `dart run intl_utils:generate`, which rewrites `lib/l10n/`. A key present in only some locales silently falls back to
 English at runtime, so add the translation rather than leaving it out.
 
