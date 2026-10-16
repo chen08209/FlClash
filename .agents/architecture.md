@@ -1147,22 +1147,6 @@ NDK version stands in for the hook's cache.
   `com.follow.clash.core.mobile.**`, the classes gobind's C glue looks up by name.
 - The CI `android` job compiles `:core` without Flutter, so it passes `-Ptarget-platform=android-arm64` to build one ABI.
 
-#### Android Crash Symbols
-
-Crashlytics NDK symbolicates a native crash only from libraries that still carry their symbols, and AGP strips every
-`.so` it packages, so the Android build keeps symbols until `:app`'s own strip step and the APK does not grow:
-
-- `bindCore` drops `-s` and `-w` from `go_ldflags`, and gomobile strips nothing itself; the desktop Cores stay
-  stripped because nothing consumes their symbols.
-- `:core` sets `packaging.jniLibs.keepDebugSymbols` so its own strip task leaves `libclash.so` intact on the way into
-  `:app`'s merged native libs, which is where the Crashlytics plugin reads it.
-- `:app` turns on `nativeSymbolUploadEnabled` and finalizes `assembleRelease` and `bundleRelease` with
-  `uploadCrashlyticsSymbolFileRelease` only when release signing is configured, the same condition that marks a real
-  release build; the checked-in `google-services.json` is a placeholder, so a local upload is noise at best, and CI
-  supplies both files together. The Crashlytics plugin wires the R8 mapping upload itself but leaves the native symbol
-  upload to the caller, so nothing else triggers it. `generateCrashlyticsSymbolFileRelease` runs `dump_syms` over the
-  Go Core for every ABI, which is the other reason it stays off for unsigned builds.
-
 ## Local Plugins
 
 - `setup`: build-time harness for Go core artifacts and the Rust helper, driven by a Dart build hook; no runtime Dart API.

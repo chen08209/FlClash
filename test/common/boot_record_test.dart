@@ -94,7 +94,6 @@ void main() {
       final decision = resolveBootDecision(
         record: const BootRecord(stage: BootStage.running, profileId: 7),
         exitInfo: _exit(AppExitReason.crash),
-        crashReported: true,
       );
 
       expect(decision.recovery, BootRecovery.none);
@@ -102,21 +101,13 @@ void main() {
     });
 
     test('does nothing on a first launch', () {
-      final decision = resolveBootDecision(
-        record: null,
-        exitInfo: null,
-        crashReported: true,
-      );
+      final decision = resolveBootDecision(record: null, exitInfo: null);
 
       expect(decision.recovery, BootRecovery.none);
     });
 
     test('skips automatic setup after one interrupted launch', () {
-      final decision = resolveBootDecision(
-        record: _starting(),
-        exitInfo: null,
-        crashReported: false,
-      );
+      final decision = resolveBootDecision(record: _starting(), exitInfo: null);
 
       expect(decision.recovery, BootRecovery.skipAutoSetup);
       expect(decision.failureCount, 1);
@@ -128,7 +119,6 @@ void main() {
       final decision = resolveBootDecision(
         record: _starting(failureCount: 1),
         exitInfo: _exit(AppExitReason.crashNative),
-        crashReported: false,
       );
 
       expect(decision.recovery, BootRecovery.clearProfile);
@@ -141,7 +131,6 @@ void main() {
       final decision = resolveBootDecision(
         record: _starting(failureCount: 3, profileId: null),
         exitInfo: null,
-        crashReported: false,
       );
 
       expect(decision.recovery, BootRecovery.skipAutoSetup);
@@ -159,7 +148,6 @@ void main() {
         final decision = resolveBootDecision(
           record: _starting(failureCount: 1),
           exitInfo: _exit(reason),
-          crashReported: true,
         );
 
         expect(decision.recovery, BootRecovery.none, reason: reason.name);
@@ -171,7 +159,6 @@ void main() {
       final decision = resolveBootDecision(
         record: _starting(handledExitAt: _startedAt + 600),
         exitInfo: _exit(AppExitReason.userRequested),
-        crashReported: false,
       );
 
       expect(decision.recovery, BootRecovery.skipAutoSetup);
@@ -182,28 +169,10 @@ void main() {
       final decision = resolveBootDecision(
         record: _starting(),
         exitInfo: _exit(AppExitReason.userRequested, timestamp: _startedAt - 1),
-        crashReported: false,
       );
 
       expect(decision.recovery, BootRecovery.skipAutoSetup);
       expect(decision.exitReason, isNull);
-    });
-
-    test('a reported crash confirms an interruption it cannot cause', () {
-      final skipped = resolveBootDecision(
-        record: _starting(),
-        exitInfo: null,
-        crashReported: true,
-      );
-      final clean = resolveBootDecision(
-        record: const BootRecord(),
-        exitInfo: null,
-        crashReported: true,
-      );
-
-      expect(skipped.crashConfirmed, isTrue);
-      expect(skipped.recovery, BootRecovery.skipAutoSetup);
-      expect(clean.recovery, BootRecovery.none);
     });
   });
 }

@@ -35,8 +35,6 @@ internal interface ServiceStateHost {
 
     fun showToast(message: String)
 
-    fun setCrashlytics(enabled: Boolean)
-
     fun updateNotificationParams(params: NotificationParams)
 
     fun loadSharedState(): SharedState
@@ -101,8 +99,6 @@ internal object AndroidServiceStateHost : ServiceStateHost {
     override fun log(message: String) = GlobalState.log(message)
 
     override fun showToast(message: String) = GlobalState.application.showToast(message)
-
-    override fun setCrashlytics(enabled: Boolean) = GlobalState.setCrashlytics(enabled)
 
     override fun updateNotificationParams(params: NotificationParams) =
         ServiceConfig.updateNotificationParams(params)
