@@ -4,6 +4,7 @@ import 'package:fl_clash/ui/context.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/item_position.dart';
 import 'package:fl_clash/ui/shape.dart';
+import 'package:fl_clash/ui/surface.dart';
 import 'package:fl_clash/ui/typography.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -118,9 +119,7 @@ class _SliverCollapsibleSectionState extends State<SliverCollapsibleSection>
             child: DecoratedBox(
               decoration: ShapeDecoration(
                 shape: AppShape.md.copyWith(
-                  side: focused
-                      ? BorderSide(color: colorScheme.primary, width: 2)
-                      : BorderSide.none,
+                  side: focused ? focusRingSide(colorScheme) : BorderSide.none,
                 ),
               ),
               child: Padding(

@@ -1,4 +1,7 @@
+import 'dart:math' as math;
+
 import 'package:fl_clash/ui/context.dart';
+import 'package:fl_clash/ui/focus.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/measure.dart';
 import 'package:fl_clash/ui/metrics.dart';
@@ -34,10 +37,17 @@ class InfoHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    EdgeInsetsGeometry nextPadding = (padding ?? baseInfoEdgeInsets);
+    final actionInset = 8.mAp(context);
+    EdgeInsetsGeometry nextPadding = (padding ?? baseInfoEdgeInsetsOf(context));
     if (actions.isNotEmpty) {
-      nextPadding = nextPadding.subtract(EdgeInsets.symmetric(vertical: 8.mAp));
+      nextPadding = nextPadding.subtract(
+        EdgeInsets.symmetric(vertical: actionInset),
+      );
     }
+    final lineHeight = MeasureScope.of(context).cardHeaderHeight;
+    final rowHeight = info.glyph == null
+        ? lineHeight
+        : math.max(lineHeight, IconTheme.of(context).size ?? Glyph.size);
     return Padding(
       padding: nextPadding,
       child: Row(
@@ -54,7 +64,7 @@ class InfoHeader extends StatelessWidget {
                     glyph,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                 ],
                 Flexible(
                   flex: 1,
@@ -73,7 +83,7 @@ class InfoHeader extends StatelessWidget {
           const SizedBox(width: 8),
           if (actions.isNotEmpty)
             SizedBox(
-              height: MeasureScope.of(context).cardHeaderHeight + 16.ap,
+              height: rowHeight + actionInset * 2,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -122,15 +132,17 @@ class CommonCard extends StatelessWidget {
   final OutlinedBorder? shape;
   final WidgetStatesController? statesController;
 
-  BorderSide _buildBorderSide(BuildContext context, Set<WidgetState> states) {
-    if (!states.contains(WidgetState.focused)) {
+  BorderSide _buildBorderSide(
+    BuildContext context,
+    Set<WidgetState> states, {
+    required bool ringed,
+  }) {
+    if (!ringed || !states.contains(WidgetState.focused)) {
       return BorderSide.none;
     }
     final colorScheme = context.colorScheme;
-    return BorderSide(
-      color: isError ? colorScheme.error : colorScheme.primary,
-      width: 2,
-    );
+    final side = focusRingSide(colorScheme);
+    return isError ? side.copyWith(color: colorScheme.error) : side;
   }
 
   bool get _filled => isSelected && fillsSelection;
@@ -171,28 +183,37 @@ class CommonCard extends StatelessWidget {
   Widget _buildButton(BuildContext context, SurfaceLevel level) {
     final iconColor = _buildIconColor(context);
     final foregroundColor = _buildForegroundColor(context);
-    return FilledButton(
-      statesController: statesController,
-      clipBehavior: Clip.antiAlias,
-      style:
-          FilledButton.styleFrom(
-            padding: padding ?? EdgeInsets.zero,
-            shape: shape ?? AppShape.all(radius ?? AppCorner.md),
-            iconSize: commonCardIconSize,
-            iconColor: iconColor,
-            foregroundColor: foregroundColor,
-            disabledIconColor: inert ? iconColor : null,
-            disabledForegroundColor: inert ? foregroundColor : null,
-            elevation: 0,
-          ).copyWith(
-            backgroundColor: WidgetStatePropertyAll(
-              _buildBackgroundColor(context, level),
+    final remote = RemoteFocusAdapter.isEnabledOf(context);
+    return ValueListenableBuilder(
+      valueListenable: FocusMovedByKey.instance,
+      builder: (context, movedByKey, content) => FilledButton(
+        statesController: statesController,
+        clipBehavior: Clip.antiAlias,
+        style:
+            FilledButton.styleFrom(
+              padding: padding ?? EdgeInsets.zero,
+              shape: shape ?? AppShape.all(radius ?? AppCorner.md),
+              iconSize: commonCardIconSize,
+              iconColor: iconColor,
+              foregroundColor: foregroundColor,
+              disabledIconColor: inert ? iconColor : null,
+              disabledForegroundColor: inert ? foregroundColor : null,
+              elevation: 0,
+            ).copyWith(
+              backgroundColor: WidgetStatePropertyAll(
+                _buildBackgroundColor(context, level),
+              ),
+              side: WidgetStateProperty.resolveWith(
+                (states) => _buildBorderSide(
+                  context,
+                  states,
+                  ringed: remote || movedByKey,
+                ),
+              ),
             ),
-            side: WidgetStateProperty.resolveWith(
-              (states) => _buildBorderSide(context, states),
-            ),
-          ),
-      onPressed: inert ? null : onPressed,
+        onPressed: inert ? null : onPressed,
+        child: content,
+      ),
       child: Semantics(
         selected: isSelected ? true : null,
         child: SurfaceScope(level: level, child: child),

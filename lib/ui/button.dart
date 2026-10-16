@@ -214,21 +214,30 @@ class TonalButtonTheme extends StatelessWidget {
       );
     }
 
-    ButtonStyle feedback(Color? tint, ButtonStyle? pane) => ButtonStyle(
+    ButtonStyle feedback(
+      Color? tint,
+      ButtonStyle? pane, {
+      required bool standsOff,
+    }) => ButtonStyle(
       splashFactory: NoSplash.splashFactory,
       overlayColor: WidgetStateProperty<Color?>.fromMap({
         if (tint != null) WidgetState.focused: tint.withValues(alpha: 0.1),
         WidgetState.pressed: Colors.transparent,
         if (tint != null) WidgetState.hovered: tint.withValues(alpha: 0.08),
       }),
-    ).merge(pane);
+    ).merge(pane).merge(focusRingStyle(colorScheme, standsOff: standsOff));
     final iconPane = paneOf((states) => states.contains(WidgetState.selected));
     final filledPane = paneOf(
       (states) => !states.contains(WidgetState.disabled),
     );
+    final filledFeedback = feedback(
+      grouped ? foreground : null,
+      filledPane,
+      standsOff: !grouped,
+    );
     final themed = IconButtonTheme(
       data: IconButtonThemeData(
-        style: feedback(foreground, iconPane).merge(
+        style: feedback(foreground, iconPane, standsOff: paned).merge(
           IconButton.styleFrom(
             backgroundColor: fill,
             foregroundColor: foreground,
@@ -245,7 +254,7 @@ class TonalButtonTheme extends StatelessWidget {
       ),
       child: FilledButtonTheme(
         data: FilledButtonThemeData(
-          style: feedback(grouped ? foreground : null, filledPane).merge(
+          style: filledFeedback.merge(
             FilledButton.styleFrom(
               backgroundColor: grouped ? fill : null,
               foregroundColor: grouped

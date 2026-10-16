@@ -160,7 +160,11 @@ class ApplicationState extends ConsumerState<Application> {
               isDesktop: system.isDesktop,
               onConnectivityChanged: _handleConnectivityChanged,
               terminateSignals: _terminateSignals,
-              child: RemoteFocusAdapter(enabled: system.isTV, child: child!),
+              child: RemoteFocusAdapter(
+                enabled: system.isTV,
+                floatingKeyboard: app?.floatingKeyboard,
+                child: child!,
+              ),
             );
           },
           scrollBehavior: const BaseScrollBehavior(),

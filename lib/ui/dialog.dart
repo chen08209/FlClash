@@ -13,6 +13,11 @@ import 'package:material_ui/material_ui.dart';
 const double _actionGap = 8;
 const double _actionInset = 16;
 const double _actionHeight = 48;
+const double _textInset = 30;
+const double _alertWidth = 348;
+const double _contentMaxWidth = 300;
+// Material 3 sets a filled field's text 4 in past its content padding.
+const double _fieldInputGap = 4;
 
 // UIAlertController on iOS 27 grows in from 1.2 times its size and only fades
 // out, both on one critically damped spring that settles in 0.404 s.
@@ -45,7 +50,11 @@ Future<T?> showFloatingDialog<T>({
   );
 }
 
-class _AlertRoute<T> extends PopupRoute<T> with AlertMotionRouteMixin<T> {
+/// A route whose navigator an alert raised from inside it opens on.
+mixin AlertHostRoute<T> on ModalRoute<T> {}
+
+class _AlertRoute<T> extends PopupRoute<T>
+    with AlertMotionRouteMixin<T>, AlertHostRoute<T> {
   _AlertRoute({
     required this.barrierColor,
     required this.barrierDismissible,
@@ -200,6 +209,9 @@ class CommonDialog extends StatelessWidget {
   final List<Widget>? actions;
   final EdgeInsets? padding;
 
+  /// Sets the fields in [child] as an iOS alert does: as wide as its buttons.
+  final bool hasFields;
+
   const CommonDialog({
     super.key,
     required this.title,
@@ -207,11 +219,13 @@ class CommonDialog extends StatelessWidget {
     this.actions,
     this.child,
     this.padding,
+    this.hasFields = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final actions = this.actions ?? const <Widget>[];
+    final contentInset = hasFields ? _actionInset : _textInset;
     return AlertDialog(
       titleTextStyle: AppTextStyle.headline.of(context),
       contentTextStyle: AppTextStyle.subheadline
@@ -232,12 +246,58 @@ class CommonDialog extends StatelessWidget {
         _actionInset,
         _actionInset,
       ),
-      contentPadding: padding,
+      titlePadding: const EdgeInsets.fromLTRB(_textInset, 24, _textInset, 0),
+      contentPadding:
+          padding ?? EdgeInsets.fromLTRB(contentInset, 16, contentInset, 24),
       content: Container(
-        constraints: const BoxConstraints(maxWidth: 300),
+        constraints: BoxConstraints(
+          maxWidth: padding == null
+              ? _alertWidth - contentInset * 2
+              : _contentMaxWidth,
+        ),
         width: double.infinity,
-        child: SingleChildScrollView(child: child),
+        child: SingleChildScrollView(
+          child: hasFields ? _AlertFieldTheme(child: child) : child,
+        ),
       ),
+    );
+  }
+}
+
+class _AlertFieldTheme extends StatelessWidget {
+  const _AlertFieldTheme({required this.child});
+
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final shape = AppShape.input.copyWith(
+      borderRadius: AppRadius.all(_actionHeight / 2),
+    );
+    final none = shape.copyWith(borderSide: BorderSide.none);
+    return InputDecorationTheme(
+      data: InputDecorationTheme.of(context).copyWith(
+        filled: true,
+        fillColor: context.raisedSurfaceLevel.colorOf(colorScheme),
+        hoverColor: Colors.transparent,
+        floatingLabelBehavior: FloatingLabelBehavior.never,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: _textInset - _actionInset - _fieldInputGap,
+          vertical: 12,
+        ),
+        border: none,
+        enabledBorder: none,
+        disabledBorder: none,
+        errorBorder: none,
+        focusedBorder: shape.copyWith(
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        ),
+        focusedErrorBorder: shape.copyWith(
+          borderSide: BorderSide(color: colorScheme.error, width: 2),
+        ),
+      ),
+      child: child ?? const SizedBox.shrink(),
     );
   }
 }
@@ -296,6 +356,7 @@ class _AlertAction extends StatelessWidget {
                 WidgetState.pressed: Colors.transparent,
                 WidgetState.hovered: foreground.withValues(alpha: 0.08),
               }),
+              side: focusRingStyle(colorScheme, standsOff: isDefault).side,
             ),
       ),
       child: ElasticPress(

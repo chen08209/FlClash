@@ -395,21 +395,24 @@ class _SidebarButton extends StatelessWidget {
         container: true,
         button: true,
         selected: selected,
-        child: Material(
-          color: selected == true ? colors.selectedFill : Colors.transparent,
+        child: FocusRing(
           shape: _itemShape,
-          child: InkWell(
-            onTap: onTap,
-            customBorder: _itemShape,
-            mouseCursor: SystemMouseCursors.basic,
-            splashFactory: NoSplash.splashFactory,
-            overlayColor: colors.overlay,
-            child: Tooltip(
-              message: tooltip,
-              excludeFromSemantics: !tooltipIsLabel,
-              child: IconTheme.merge(
-                data: IconThemeData(size: _iconSize, color: colors.icon),
-                child: SizedBox(height: height, child: child),
+          child: Material(
+            color: selected == true ? colors.selectedFill : Colors.transparent,
+            shape: _itemShape,
+            child: InkWell(
+              onTap: onTap,
+              customBorder: _itemShape,
+              mouseCursor: SystemMouseCursors.basic,
+              splashFactory: NoSplash.splashFactory,
+              overlayColor: colors.overlay,
+              child: Tooltip(
+                message: tooltip,
+                excludeFromSemantics: !tooltipIsLabel,
+                child: IconTheme.merge(
+                  data: IconThemeData(size: _iconSize, color: colors.icon),
+                  child: SizedBox(height: height, child: child),
+                ),
               ),
             ),
           ),

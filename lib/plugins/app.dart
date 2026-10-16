@@ -15,6 +15,7 @@ class App {
   late MethodChannel methodChannel;
   Function()? onExit;
   Function()? onPackagesChanged;
+  final floatingKeyboard = ValueNotifier(false);
 
   App._internal() {
     methodChannel = const MethodChannel('$packageName/app');
@@ -26,6 +27,8 @@ class App {
           }
         case 'packagesChanged':
           onPackagesChanged?.call();
+        case 'floatingImeChanged':
+          floatingKeyboard.value = call.arguments as bool;
         default:
           throw MissingPluginException();
       }

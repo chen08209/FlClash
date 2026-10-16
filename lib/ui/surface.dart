@@ -137,6 +137,8 @@ extension AppSurfaceThemeExt on ThemeData {
     final card = SurfaceLevel.card.colorOf(colorScheme);
     final floatingLevel = SurfaceLevel.floatingOf(colorScheme);
     final floating = floatingLevel.colorOf(colorScheme);
+    final ring = focusRingStyle(colorScheme);
+    final standingRing = focusRingStyle(colorScheme, standsOff: true);
     return copyWith(
       dividerTheme: dividerTheme.copyWith(
         color: colorScheme.onSurface.withValues(alpha: 0.14),
@@ -165,6 +167,90 @@ extension AppSurfaceThemeExt on ThemeData {
       bottomSheetTheme: bottomSheetTheme.copyWith(
         backgroundColor: page,
         modalBackgroundColor: page,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: standingRing.merge(filledButtonTheme.style),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: ring.merge(textButtonTheme.style),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: ring.merge(outlinedButtonTheme.style),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: ring.merge(iconButtonTheme.style),
+      ),
+    );
+  }
+}
+
+const _focusRingWidth = 2.0;
+const _focusRingGap = 1.0;
+
+/// The focus ring of `.agents/surfaces.md`; one that [standsOff] clears the
+/// edge, which a primary fill or a button's own glass would hide it on.
+BorderSide focusRingSide(ColorScheme colorScheme, {bool standsOff = false}) =>
+    BorderSide(
+      color: colorScheme.primary,
+      width: _focusRingWidth,
+      strokeAlign: standsOff
+          ? 1 + 2 * _focusRingGap / _focusRingWidth
+          : BorderSide.strokeAlignInside,
+    );
+
+ButtonStyle focusRingStyle(ColorScheme colorScheme, {bool standsOff = false}) =>
+    ButtonStyle(
+      side: WidgetStateProperty<BorderSide?>.fromMap({
+        WidgetState.focused: focusRingSide(colorScheme, standsOff: standsOff),
+      }),
+    );
+
+/// [focusRingSide] on [shape] while focus is in [child], for ink not a button.
+class FocusRing extends StatefulWidget {
+  const FocusRing({
+    super.key,
+    required this.shape,
+    this.standsOff = false,
+    required this.child,
+  });
+
+  final OutlinedBorder shape;
+  final bool standsOff;
+  final Widget child;
+
+  @override
+  State<FocusRing> createState() => _FocusRingState();
+}
+
+class _FocusRingState extends State<FocusRing> {
+  var _focused = false;
+
+  void _handleFocusChange(bool focused) {
+    if (focused != _focused) {
+      setState(() => _focused = focused);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      includeSemantics: false,
+      onFocusChange: _handleFocusChange,
+      child: DecoratedBox(
+        position: DecorationPosition.foreground,
+        decoration: ShapeDecoration(
+          shape: widget.shape.copyWith(
+            side: _focused
+                ? focusRingSide(
+                    Theme.of(context).colorScheme,
+                    standsOff: widget.standsOff,
+                  )
+                : BorderSide.none,
+          ),
+        ),
+        child: widget.child,
       ),
     );
   }

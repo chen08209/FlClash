@@ -59,27 +59,40 @@ class SegmentedControl<T> extends StatelessWidget {
                   child: Semantics(
                     selected: option == value,
                     button: true,
-                    child: Material(
-                      type: MaterialType.transparency,
+                    child: FocusRing(
                       shape: AppShape.full,
-                      clipBehavior: Clip.antiAlias,
-                      child: InkWell(
-                        customBorder: AppShape.full,
-                        onTap: option == value ? null : () => onChanged(option),
-                        child: Center(
-                          child: AnimatedDefaultTextStyle(
-                            duration: const Duration(milliseconds: 200),
-                            style: AppTextStyle.subheadline
-                                .of(context, emphasized: option == value)
-                                .copyWith(
-                                  color: option == value
-                                      ? colorScheme.onPrimary
-                                      : colorScheme.onSurfaceVariant,
-                                ),
-                            child: Text(
-                              label,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                      standsOff: option == value,
+                      child: Material(
+                        type: MaterialType.transparency,
+                        shape: AppShape.full,
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
+                          customBorder: AppShape.full,
+                          mouseCursor: option == value
+                              ? SystemMouseCursors.basic
+                              : null,
+                          splashFactory: option == value
+                              ? NoSplash.splashFactory
+                              : null,
+                          // A null onTap would unfocus the selected segment.
+                          onTap: option == value
+                              ? () {}
+                              : () => onChanged(option),
+                          child: Center(
+                            child: AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 200),
+                              style: AppTextStyle.subheadline
+                                  .of(context, emphasized: option == value)
+                                  .copyWith(
+                                    color: option == value
+                                        ? colorScheme.onPrimary
+                                        : colorScheme.onSurfaceVariant,
+                                  ),
+                              child: Text(
+                                label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
                         ),

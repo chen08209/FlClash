@@ -598,7 +598,7 @@ class _TorchButton extends StatelessWidget {
                   iconSize: _torchIconSize,
                   backgroundColor: lit && !glass ? colorScheme.primary : null,
                   foregroundColor: lit ? colorScheme.onPrimary : null,
-                ),
+                ).merge(focusRingStyle(colorScheme, standsOff: lit && !glass)),
                 onPressed: controller.toggleTorch,
                 icon: const GlyphIcon(AppGlyphs.torchOff),
                 selectedIcon: GlyphIcon(

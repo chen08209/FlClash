@@ -278,13 +278,16 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                 tooltip: appLocalizations.search,
                 onPressed: isReady ? _handleSearch : null,
               ),
-              if (widget.onSave != null)
-                IconButtonData(
-                  glyph: AppGlyphs.check,
-                  tooltip: appLocalizations.save,
-                  onPressed: _barState.isDirty && !_saving ? _handleSave : null,
-                ),
             ],
+            confirmationAction: widget.onSave == null
+                ? null
+                : IconButtonData(
+                    glyph: AppGlyphs.check,
+                    tooltip: appLocalizations.save,
+                    onPressed: _barState.isDirty && !_saving
+                        ? _handleSave
+                        : null,
+                  ),
             menuItems: [
               CommonPopupMenuItem(
                 glyph: AppGlyphs.undo,
@@ -1208,20 +1211,22 @@ class _FindOptionToggle extends StatelessWidget {
         tooltip: tooltip,
         isSelected: selected,
         onPressed: onPressed,
-        style: ElasticPress.buttonStyle.merge(
-          IconButton.styleFrom(
-            backgroundColor: selected ? colorScheme.primary : null,
-            foregroundColor: selected
-                ? colorScheme.onPrimary
-                : colorScheme.onSurfaceVariant,
-            fixedSize: Size.square(TonalButtonSize.compact.button),
-            minimumSize: Size.square(TonalButtonSize.compact.button),
-            padding: EdgeInsets.zero,
-            iconSize: TonalButtonSize.compact.icon,
-            visualDensity: VisualDensity.standard,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-        ),
+        style: ElasticPress.buttonStyle
+            .merge(
+              IconButton.styleFrom(
+                backgroundColor: selected ? colorScheme.primary : null,
+                foregroundColor: selected
+                    ? colorScheme.onPrimary
+                    : colorScheme.onSurfaceVariant,
+                fixedSize: Size.square(TonalButtonSize.compact.button),
+                minimumSize: Size.square(TonalButtonSize.compact.button),
+                padding: EdgeInsets.zero,
+                iconSize: TonalButtonSize.compact.icon,
+                visualDensity: VisualDensity.standard,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            )
+            .merge(focusRingStyle(colorScheme, standsOff: selected)),
         icon: AnimatedGlyph(glyph: glyph, filled: selected),
       ),
     );
@@ -1255,7 +1260,7 @@ class _FindBarButton extends StatelessWidget {
               ? IconButton.styleFrom(
                   backgroundColor: colorScheme.primary,
                   foregroundColor: colorScheme.onPrimary,
-                )
+                ).merge(focusRingStyle(colorScheme, standsOff: true))
               : null,
           icon: GlyphIcon(glyph),
         ),
