@@ -91,17 +91,12 @@ void main() {
     });
 
     test('toUpdateParams sends geoXUrl to the Core under geox-url', () {
-      final params =
-          const PatchClashConfig(
-            geoXUrl: {
-              GeoResource.MMDB: 'https://example.com/geoip.metadb',
-              GeoResource.GEOSITE: 'https://example.com/geosite.dat',
-            },
-          ).toUpdateParams(
-            bypassPrivateRoute: false,
-            authentication: const [],
-            skipCertVerify: false,
-          );
+      final params = const PatchClashConfig(
+        geoXUrl: {
+          GeoResource.MMDB: 'https://example.com/geoip.metadb',
+          GeoResource.GEOSITE: 'https://example.com/geosite.dat',
+        },
+      ).toUpdateParams(authentication: const [], skipCertVerify: false);
 
       final json = jsonDecode(jsonEncode(params)) as Map<String, Object?>;
       expect(json['geox-url'], {
@@ -112,7 +107,6 @@ void main() {
 
     test('toUpdateParams sends skipCertVerify under skip-cert-verify', () {
       final params = const PatchClashConfig().toUpdateParams(
-        bypassPrivateRoute: false,
         authentication: const [],
         skipCertVerify: true,
       );
@@ -197,6 +191,17 @@ void main() {
         ],
       });
       expect(restored.dashboardWidgets, defaultDashboardWidgets);
+    });
+
+    test('an old dashboard emptied of cards keeps only the current '
+        'outbound', () {
+      for (final saved in [
+        <String>[],
+        ['runTime'],
+      ]) {
+        final restored = AppSettingProps.fromJson({'dashboardWidgets': saved});
+        expect(restored.dashboardWidgets, [DashboardWidget.currentOutbound]);
+      }
     });
 
     test('the outbound IP card left its place to the intranet one', () {
@@ -535,11 +540,7 @@ void main() {
     test('reaches the Core through the update params', () {
       final params = open
           .copyWith(secret: 'abc')
-          .toUpdateParams(
-            bypassPrivateRoute: false,
-            authentication: const [],
-            skipCertVerify: false,
-          );
+          .toUpdateParams(authentication: const [], skipCertVerify: false);
 
       expect(params.secret, 'abc');
       expect(params.toJson()['secret'], 'abc');
@@ -547,11 +548,8 @@ void main() {
   });
 
   group('PatchClashConfig.setupOnly', () {
-    UpdateParams liveParams(PatchClashConfig config) => config.toUpdateParams(
-      bypassPrivateRoute: false,
-      authentication: const [],
-      skipCertVerify: false,
-    );
+    UpdateParams liveParams(PatchClashConfig config) =>
+        config.toUpdateParams(authentication: const [], skipCertVerify: false);
 
     test('drops every field the update params patch live', () {
       final live = defaultClashConfig.copyWith(
@@ -593,6 +591,7 @@ void main() {
         defaultClashConfig.copyWith(globalUa: 'ua'),
         defaultClashConfig.copyWith(hosts: const {'a.test': '1.1.1.1'}),
         defaultClashConfig.copyWith(dns: defaultDns.copyWith(ipv6: true)),
+        defaultClashConfig.copyWith(tunOverrideKeys: {TunOverrideKey.gso}),
       ];
 
       for (final config in setupOnlyChanges) {
@@ -745,13 +744,15 @@ void main() {
       expect(modeOf(null), LiquidGlassMode.none);
       expect(modeOf(true), LiquidGlassMode.standard);
       expect(modeOf(false), LiquidGlassMode.none);
-      expect(
-        roundTrip(
-          const ThemeProps(liquidGlass: LiquidGlassMode.standard).toJson,
-          ThemeProps.fromJson,
-        ).liquidGlass,
-        LiquidGlassMode.standard,
-      );
+      for (final mode in LiquidGlassMode.values) {
+        expect(
+          roundTrip(
+            ThemeProps(liquidGlass: mode).toJson,
+            ThemeProps.fromJson,
+          ).liquidGlass,
+          mode,
+        );
+      }
     });
   });
 
@@ -1179,16 +1180,21 @@ void main() {
       );
     });
 
-    test('drops the include-all keys', () {
-      for (final key in [
-        'include-all',
-        'include-all-proxies',
-        'include-all-providers',
+    test('reads include-all as both include-all keys', () {
+      for (final (key, keys) in [
+        ('include-all', ['include-all-proxies', 'include-all-providers']),
+        ('include-all-proxies', ['include-all-proxies']),
+        ('include-all-providers', ['include-all-providers']),
       ]) {
+        final edited = group.withDefinitionYaml(
+          '${group.definitionYaml}$key: true\n',
+        );
+        expect(edited.definition, {
+          ...group.definition,
+          for (final key in keys) key: true,
+        }, reason: key);
         expect(
-          group
-              .withDefinitionYaml('${group.definitionYaml}$key: true\n')
-              .definition,
+          edited.withDefinitionYaml(group.definitionYaml).definition,
           group.definition,
           reason: key,
         );

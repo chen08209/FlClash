@@ -145,6 +145,12 @@ const _legacyDashboardWidgets = {
   'trafficUsage': DashboardWidget.networkSpeed,
 };
 
+const _retiredDashboardWidgets = {
+  'runTime',
+  'overrideDnsButton',
+  'overrideNtpButton',
+};
+
 /// The current outbound card cannot be removed: a list without it predates it.
 List<DashboardWidget> dashboardWidgetsFromJson(
   List<dynamic>? dashboardWidgets,
@@ -171,7 +177,8 @@ List<DashboardWidget> dashboardWidgetsFromJson(
   final kept = dashboardWidgets
       .map((e) => _legacyDashboardWidgets[e] ?? byName[e])
       .nonNulls;
-  if (kept.isEmpty) {
+  if (kept.isEmpty &&
+      !dashboardWidgets.every(_retiredDashboardWidgets.contains)) {
     return defaultDashboardWidgets;
   }
   return {DashboardWidget.currentOutbound, ...kept}.toList();

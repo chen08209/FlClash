@@ -720,19 +720,36 @@ void main() {
       return loadYaml(result.yaml) as YamlMap;
     }
 
-    test('tun settings replace the profile ones and leave the rest', () async {
+    test('tun takes its stack from the settings and the rest from the '
+        'profile', () async {
       final config = await runWith(
-        const PatchClashConfig(tun: Tun(mtu: 1400, strictRoute: true)),
+        const PatchClashConfig(tun: Tun(stack: TunStack.gvisor, mtu: 1400)),
         {
-          'tun': {'mtu': 9000, 'strict-route': false, 'udp-timeout': 60},
+          'tun': {
+            'stack': 'system',
+            'mtu': 1500,
+            'strict-route': true,
+            'udp-timeout': 60,
+          },
         },
       );
       final tun = config['tun'] as YamlMap;
 
-      expect(tun['mtu'], 1400);
+      expect(tun['stack'], 'gvisor');
+      expect(tun['auto-route'], true);
+      expect(tun['mtu'], 1500);
       expect(tun['strict-route'], true);
-      expect(tun['congestion-controller'], 'cubic');
+      expect(tun.containsKey('congestion-controller'), isFalse);
       expect(tun['udp-timeout'], 60);
+    });
+
+    test('tun detects the outbound interface over the profile', () async {
+      final config = await runWith(const PatchClashConfig(), {
+        'tun': {'auto-detect-interface': false},
+      });
+      final tun = config['tun'] as YamlMap;
+
+      expect(tun['auto-detect-interface'], true);
     });
 
     test('outbound settings start at the core defaults', () async {

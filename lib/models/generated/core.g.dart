@@ -90,7 +90,7 @@ _UpdateParams _$UpdateParamsFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$UpdateParamsToJson(_UpdateParams instance) =>
     <String, dynamic>{
-      'tun': instance.tun,
+      'tun': _tunCoreJson(instance.tun),
       'mixed-port': instance.mixedPort,
       'allow-lan': instance.allowLan,
       'find-process-mode': _$FindProcessModeEnumMap[instance.findProcessMode]!,

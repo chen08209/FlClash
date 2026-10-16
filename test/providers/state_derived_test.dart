@@ -1,6 +1,7 @@
 import 'package:fl_clash/common/app_ports.dart';
 import 'package:fl_clash/common/cidr.dart';
 import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/common/system.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
@@ -972,7 +973,19 @@ void main() {
         .update(
           (state) => state.copyWith(appendSystemDns: !state.appendSystemDns),
         );
-    expect(container.read(setupPatchProvider), isNot(withHosts));
+    final withSystemDns = container.read(setupPatchProvider);
+    expect(withSystemDns, isNot(withHosts));
+
+    container
+        .read(networkSettingProvider.notifier)
+        .update(
+          (state) =>
+              state.copyWith(bypassPrivateRoute: !state.bypassPrivateRoute),
+        );
+    expect(
+      container.read(setupPatchProvider),
+      system.isDesktop ? isNot(withSystemDns) : withSystemDns,
+    );
   });
 
   test('shared state carries the notification stop action switch', () async {
