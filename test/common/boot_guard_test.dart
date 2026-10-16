@@ -18,19 +18,13 @@ BootGuard _guard(
   _RecordStore store, {
   bool supported = true,
   AppExitInfo? exitInfo,
-  bool crashReported = false,
   int now = 5000,
-  void Function()? onCrashProbe,
 }) {
   return BootGuard(
     supported: supported,
     readRecord: store.read,
     writeRecord: store.write,
     readExitInfo: () async => exitInfo,
-    readCrashReport: () async {
-      onCrashProbe?.call();
-      return crashReported;
-    },
     now: () => now,
   );
 }
@@ -42,31 +36,13 @@ void main() {
       final store = _RecordStore();
       final guard = _guard(store);
 
-      final decision = await guard.evaluate(
-        profileId: 7,
-        crashlyticsEnabled: false,
-      );
+      final decision = await guard.evaluate(profileId: 7);
 
       expect(decision.recovery, BootRecovery.none);
       expect(store.record?.stage, BootStage.starting);
       expect(store.record?.profileId, 7);
       expect(store.record?.startedAt, 5000);
       expect(store.record?.failureCount, 0);
-    },
-  );
-
-  test(
-    'the Crashlytics probe stays out of the path unless it is enabled',
-    () async {
-      final store = _RecordStore();
-      var probes = 0;
-      final guard = _guard(store, onCrashProbe: () => probes++);
-
-      await guard.evaluate(profileId: 7, crashlyticsEnabled: false);
-      expect(probes, 0);
-
-      await guard.evaluate(profileId: 7, crashlyticsEnabled: true);
-      expect(probes, 1);
     },
   );
 
@@ -79,10 +55,7 @@ void main() {
       );
     final guard = _guard(store);
 
-    final decision = await guard.evaluate(
-      profileId: 7,
-      crashlyticsEnabled: false,
-    );
+    final decision = await guard.evaluate(profileId: 7);
 
     expect(decision.recovery, BootRecovery.skipAutoSetup);
     expect(store.record?.failureCount, 1);
@@ -100,10 +73,7 @@ void main() {
       );
     final guard = _guard(store);
 
-    final decision = await guard.evaluate(
-      profileId: 7,
-      crashlyticsEnabled: false,
-    );
+    final decision = await guard.evaluate(profileId: 7);
 
     expect(decision.recovery, BootRecovery.clearProfile);
     expect(store.record?.profileId, isNull);
@@ -121,7 +91,7 @@ void main() {
       ),
     );
 
-    await guard.evaluate(profileId: 7, crashlyticsEnabled: false);
+    await guard.evaluate(profileId: 7);
 
     expect(store.record?.handledExitAt, 4000);
 
@@ -133,10 +103,7 @@ void main() {
       ),
       now: 6000,
     );
-    final decision = await next.evaluate(
-      profileId: 7,
-      crashlyticsEnabled: false,
-    );
+    final decision = await next.evaluate(profileId: 7);
 
     expect(decision.recovery, BootRecovery.skipAutoSetup);
     expect(store.record?.handledExitAt, 4000);
@@ -145,7 +112,7 @@ void main() {
   test('a completed launch resets the failure count', () async {
     final store = _RecordStore();
     final guard = _guard(store);
-    await guard.evaluate(profileId: 7, crashlyticsEnabled: false);
+    await guard.evaluate(profileId: 7);
 
     await guard.markRunning();
 
@@ -161,7 +128,7 @@ void main() {
         startedAt: 1000,
       );
     final guard = _guard(store);
-    await guard.evaluate(profileId: 7, crashlyticsEnabled: false);
+    await guard.evaluate(profileId: 7);
 
     await guard.markRunning();
 
@@ -208,24 +175,14 @@ void main() {
         startedAt: 1000,
         failureCount: 1,
       );
-    var probes = 0;
-    final guard = _guard(
-      store,
-      supported: false,
-      crashReported: true,
-      onCrashProbe: () => probes++,
-    );
+    final guard = _guard(store, supported: false);
 
-    final decision = await guard.evaluate(
-      profileId: 7,
-      crashlyticsEnabled: true,
-    );
+    final decision = await guard.evaluate(profileId: 7);
     await guard.markRunning();
     await guard.markClosed();
 
     expect(decision.recovery, BootRecovery.none);
     expect(guard.decision.recovery, BootRecovery.none);
-    expect(probes, 0);
     expect(store.writes, 0);
     expect(store.record?.stage, BootStage.starting);
   });

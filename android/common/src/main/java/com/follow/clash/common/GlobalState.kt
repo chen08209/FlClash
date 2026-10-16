@@ -4,8 +4,6 @@ import android.app.ActivityManager
 import android.app.Application
 import android.os.Build
 import android.util.Log
-import com.google.firebase.FirebaseApp
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -34,19 +32,6 @@ object GlobalState : CoroutineScope by CoroutineScope(SupervisorJob() + Dispatch
 
     fun log(text: String) {
         Log.d("FlClash", text)
-    }
-
-    fun setCrashlytics(enable: Boolean) {
-        FirebaseApp.initializeApp(application)
-        FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = enable
-        if (enable) {
-            log("Crashlytics enabled")
-        }
-    }
-
-    fun didCrashOnPreviousExecution(): Boolean {
-        FirebaseApp.initializeApp(application)
-        return FirebaseCrashlytics.getInstance().didCrashOnPreviousExecution()
     }
 
     fun lastExitInfo(): Map<String, Any?>? {
