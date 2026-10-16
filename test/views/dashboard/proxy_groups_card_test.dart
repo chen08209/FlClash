@@ -1,13 +1,13 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/dashboard/widget_metrics.dart';
+import 'package:fl_clash/views/dashboard/layout.dart';
+import 'package:fl_clash/views/dashboard/widgets/card.dart';
 import 'package:fl_clash/views/dashboard/widgets/proxy_groups.dart';
-import 'package:fl_clash/views/dashboard/widgets/row_card.dart';
-import 'package:fl_clash/views/proxies/card.dart';
+import 'package:fl_clash/views/proxies/proxies.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -15,10 +15,14 @@ import 'package:material_ui/material_ui.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
 
-Group _group(String name, List<String> proxies) => Group(
+const _testUrl = 'https://test.example/generate_204';
+
+Group _group(String name, List<String> proxies, {String? now}) => Group(
   type: GroupType.Selector,
   name: name,
   hidden: false,
+  now: now,
+  testUrl: _testUrl,
   all: [for (final proxy in proxies) Proxy(name: proxy, type: 'ss')],
 );
 
@@ -27,24 +31,44 @@ void main() {
 
   setUp(() {
     container = ProviderContainer(
-      overrides: [profilesProvider.overrideWith(TestProfiles.new)],
+      overrides: [
+        profilesProvider.overrideWith(
+          () => TestProfiles([
+            const Profile(
+              id: 1,
+              label: 'P1',
+              autoUpdateDuration: Duration.zero,
+            ),
+          ]),
+        ),
+        coreStatusProvider.overrideWithBuild((_, _) => CoreStatus.connected),
+      ],
     );
     globalState.container = container;
     container.listen(groupsProvider, (_, _) {});
+    container.read(currentProfileIdProvider.notifier).value = 1;
+    container.listen(proxiesStyleSettingProvider, (_, _) {});
+    container
+        .read(proxiesStyleSettingProvider.notifier)
+        .update((state) => state.copyWith(type: ProxiesType.tab));
   });
 
   tearDown(() => container.dispose());
 
   Future<void> pumpCard(
     WidgetTester tester, {
-    double unitHeight = 80,
+    DashboardDensity density = DashboardDensity.standard,
     Size size = const Size(1200, 1000),
+    double? width,
+    double height = 420,
+    Widget card = const ProxyGroupsCard(),
   }) async {
     container.read(viewSizeProvider.notifier).value = size;
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    final desktop = density.isDesktop;
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -53,10 +77,12 @@ void main() {
             body: Align(
               alignment: Alignment.topLeft,
               child: SizedBox(
-                width: 320,
-                child: DashboardWidgetMetrics(
-                  unitHeight: unitHeight,
-                  child: const ProxyGroupsCard(),
+                width: width ?? (desktop ? 480 : 360),
+                height: desktop ? height : null,
+                child: DashboardDensityScope(
+                  density: density,
+                  scale: 1,
+                  child: card,
                 ),
               ),
             ),
@@ -67,204 +93,305 @@ void main() {
     await tester.pump();
   }
 
-  List<Group> manyGroups() => [
-    for (var index = 0; index < 8; index++) _group('G$index', ['N$index']),
-  ];
+  Finder name(String text) => find.text(text, findRichText: true);
 
-  Finder groupLabel(int index) => find.text('G$index', findRichText: true);
+  Finder inSheet(Finder finder) =>
+      find.descendant(of: find.byType(ProxiesView), matching: finder);
 
-  int shownRows(WidgetTester tester) {
-    final bottom = tester.getRect(find.byType(ProxyGroupsCard)).bottom;
-    return [
-      for (var index = 0; index < 8; index++)
-        if (tester.any(groupLabel(index)) &&
-            tester.getRect(groupLabel(index)).bottom <= bottom)
-          index,
-    ].length;
-  }
-
-  testWidgets('shows an empty state without proxy groups', (tester) async {
+  testWidgets('without groups both cards say why', (tester) async {
     await pumpCard(tester);
-
-    expect(find.byType(EmptyIllustration), findsOneWidget);
     expect(find.text('No Proxy group yet'), findsOneWidget);
+
+    await pumpCard(tester, density: DashboardDensity.mobile);
+    expect(find.text('No Proxy group yet'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
-  testWidgets('fits more groups as the card grows taller', (tester) async {
-    container.read(groupsProvider.notifier).value = manyGroups();
-
-    await pumpCard(tester);
-    final compact = shownRows(tester);
-    await pumpCard(tester, unitHeight: 120);
-    final tall = shownRows(tester);
-
-    expect(compact, greaterThan(1));
-    expect(compact, lessThan(8));
-    expect(tall, greaterThan(compact));
-  });
-
-  testWidgets('row corners stay under a third of the row height', (
+  testWidgets('the desktop summary says why in the main group\'s place', (
     tester,
   ) async {
-    container.read(groupsProvider.notifier).value = manyGroups();
-    for (final unitHeight in [80.0, 120.0]) {
-      await pumpCard(tester, unitHeight: unitHeight);
-      final pill = find.byType(RowCardPill).first;
-      final material = tester.widget<Material>(
-        find.descendant(of: pill, matching: find.byType(Material)).first,
-      );
-      final shape = material.shape! as RoundedSuperellipseBorder;
-      final radius = (shape.borderRadius as BorderRadius).topLeft.x;
-      expect(radius, greaterThan(0));
-      expect(radius, lessThanOrEqualTo(tester.getSize(pill).height / 3));
-    }
+    container.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+    await pumpCard(tester, height: 120, card: const ProxyGroupsSummaryCard());
+
+    expect(find.text('Core is not running'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
-  testWidgets('scrolls to the groups below the fold', (tester) async {
-    container.read(groupsProvider.notifier).value = manyGroups();
+  testWidgets('the desktop summary counts the groups instead of showing the '
+      'main one', (tester) async {
+    container.read(groupsProvider.notifier).value = [
+      _group('Auto', ['HK-01', 'SG-01'], now: 'HK-01'),
+      _group('Media', ['JP-01'], now: 'JP-01'),
+    ];
+    await pumpCard(
+      tester,
+      density: DashboardDensity.compact,
+      height: 112,
+      card: const ProxyGroupsSummaryCard(),
+    );
+
+    expect(find.text('2 groups', findRichText: true), findsOneWidget);
+    expect(name('HK-01'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byTooltip('Proxy group'));
+    await tester.pumpAndSettle();
+    expect(inSheet(name('SG-01')), findsOneWidget);
+  });
+
+  testWidgets('the phone card counts the groups as the desktop summary does', (
+    tester,
+  ) async {
+    container.read(groupsProvider.notifier).value = [
+      _group('Auto', ['HK-01'], now: 'HK-01'),
+      _group('Media', ['JP-01'], now: 'JP-01'),
+    ];
+    await pumpCard(
+      tester,
+      density: DashboardDensity.mobile,
+      card: const ProxyGroupsSummaryCard(),
+    );
+
+    expect(find.text('2 groups', findRichText: true), findsOneWidget);
+    expect(name('Auto'), findsNothing);
+    expect(name('HK-01'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byType(ProxyGroupsSummaryCard));
+    await tester.pumpAndSettle();
+    expect(inSheet(name('HK-01')), findsOneWidget);
+  });
+
+  testWidgets('a stopped Core is named instead of an empty list', (
+    tester,
+  ) async {
+    container.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
     await pumpCard(tester);
 
-    await tester.drag(groupLabel(0), const Offset(0, -600));
-    await tester.pumpAndSettle();
-
-    expect(shownRows(tester), greaterThan(0));
-    expect(tester.any(groupLabel(0)), isFalse);
-    expect(tester.any(groupLabel(7)), isTrue);
+    expect(find.text('Core is not running'), findsOneWidget);
   });
 
-  const wheelRest = Duration(milliseconds: 250);
-
-  Future<void> expectWheelRestsOnRow(WidgetTester tester) async {
-    final list = find.byType(ListView);
-    await tester.sendEventToBinding(
-      PointerScrollEvent(
-        position: tester.getCenter(list),
-        scrollDelta: const Offset(0, 10),
-      ),
-    );
-    await tester.pump(wheelRest);
-    await tester.pumpAndSettle();
-    final listView = tester.widget<ListView>(list);
-    expect(listView.controller!.offset, listView.itemExtent);
-  }
-
-  Future<void> resizeRows(WidgetTester tester) async {
-    final before = tester.widget<ListView>(find.byType(ListView)).itemExtent;
-    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
-    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-    await tester.pump();
-    final after = tester.widget<ListView>(find.byType(ListView)).itemExtent;
-    expect(after, isNot(before));
-  }
-
-  testWidgets('groups settle on rows of a new height', (tester) async {
+  testWidgets('the desktop card counts the groups in a chip by its title and '
+      'lists each as a tile', (tester) async {
     container.read(groupsProvider.notifier).value = [
-      for (var index = 0; index < 20; index++) _group('G$index', ['N$index']),
+      for (var index = 0; index < 6; index++)
+        _group('G$index', ['N$index'], now: 'N$index'),
     ];
     await pumpCard(tester);
-    await resizeRows(tester);
 
-    await expectWheelRestsOnRow(tester);
+    final count = find.descendant(
+      of: find.byTooltip('6 groups'),
+      matching: find.widgetWithText(DashboardChip, '6'),
+    );
+    expect(count, findsOneWidget);
+    final title = tester.getRect(find.text('Proxy group'));
+    expect(tester.getCenter(count).dy, moreOrLessEquals(title.center.dy));
+    expect(tester.getRect(count).left, moreOrLessEquals(title.right + 8));
+    for (var index = 0; index < 6; index++) {
+      expect(name('G$index'), findsWidgets);
+      expect(name('N$index'), findsOneWidget);
+    }
+    expect(find.text('+2'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
-  testWidgets('a tapped group opens its nodes in a sheet and the card keeps '
-      'its groups', (tester) async {
+  testWidgets('both cards draw icons whatever style the proxies page uses', (
+    tester,
+  ) async {
+    container.read(groupsProvider.notifier).value = [
+      _group('G0', ['N0'], now: 'N0'),
+      _group('G1', ['N1'], now: 'N1'),
+    ];
+    final inTiles = find.descendant(
+      of: find.byType(DashboardBlock),
+      matching: find.byType(GroupMonogram),
+    );
+
+    for (final style in ProxiesIconStyle.values) {
+      container.read(proxiesStyleSettingProvider.notifier).value = container
+          .read(proxiesStyleSettingProvider)
+          .copyWith(iconStyle: style);
+
+      await pumpCard(tester, height: 200);
+      expect(inTiles, findsNWidgets(2), reason: style.name);
+
+      await pumpCard(tester, density: DashboardDensity.mobile);
+      expect(find.byType(GroupMonogram), findsNWidgets(2), reason: style.name);
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a narrow card lists its tiles in one column', (tester) async {
+    container.read(groupsProvider.notifier).value = [
+      _group('G0', ['N0'], now: 'N0'),
+      _group('G1', ['N1'], now: 'N1'),
+    ];
+    await pumpCard(tester);
+    expect(tester.getTopLeft(name('N1')).dy, tester.getTopLeft(name('N0')).dy);
+
+    await pumpCard(tester, width: 340);
+    expect(tester.getTopLeft(name('N1')).dx, tester.getTopLeft(name('N0')).dx);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a timed out selection is counted in the header', (tester) async {
+    container.read(groupsProvider.notifier).value = [
+      _group('Auto', ['HK-01'], now: 'HK-01'),
+      _group('Media', ['JP-01'], now: 'JP-01'),
+    ];
+    container.read(delayDataSourceProvider.notifier).value = {
+      _testUrl: {'HK-01': 48, 'JP-01': -1},
+    };
+    await pumpCard(tester);
+
+    expect(find.text('48 ms'), findsOneWidget);
+    expect(find.text('1 timed out'), findsOneWidget);
+  });
+
+  testWidgets('a tile opens the sheet on its group', (tester) async {
     container.read(groupsProvider.notifier).value = [
       _group('Auto', ['HK-01']),
-      _group('Media', ['JP-01', 'US-01']),
+      _group('Media', ['JP-01', 'US-01'], now: 'JP-01'),
     ];
     await pumpCard(tester);
 
-    await tester.tap(find.text('Media', findRichText: true));
+    await tester.tap(name('Media').first);
     await tester.pumpAndSettle();
 
-    expect(find.byType(ProxyCard), findsNWidgets(2));
-    expect(find.text('JP-01', findRichText: true), findsOneWidget);
-    expect(find.text('US-01', findRichText: true), findsOneWidget);
-    expect(find.text('Auto', findRichText: true), findsOneWidget);
+    expect(inSheet(name('JP-01')), findsOneWidget);
+    expect(inSheet(name('US-01')), findsOneWidget);
+    expect(inSheet(name('HK-01')), findsNothing);
+    expect(container.read(currentProfileProvider)!.currentGroupName, 'Media');
   });
 
-  testWidgets('a group with few nodes opens a sheet only as tall as them', (
-    tester,
-  ) async {
-    const size = Size(400, 800);
+  testWidgets('the sheet switches groups and picks a proxy', (tester) async {
     container.read(groupsProvider.notifier).value = [
-      _group('Media', ['JP-01', 'US-01']),
+      _group('Auto', ['HK-01', 'SG-01'], now: 'HK-01'),
+      _group('Media', ['JP-01', 'US-01'], now: 'JP-01'),
     ];
-    await pumpCard(tester, size: size);
+    await pumpCard(tester, density: DashboardDensity.mobile);
 
-    await tester.tap(find.text('Media', findRichText: true));
+    await tester.tap(find.byType(ProxyGroupsSummaryCard));
     await tester.pumpAndSettle();
+    expect(inSheet(name('HK-01')), findsOneWidget);
 
-    expect(
-      tester.getTopLeft(find.byType(SheetDragHandle)).dy,
-      greaterThan(size.height * (1 - snapSheetDetents.first)),
-    );
-    expect(
-      tester.getBottomLeft(find.byType(ProxyCard).last).dy,
-      lessThan(size.height),
-    );
-  });
-
-  testWidgets('a mouse over a long group opening at its selected node '
-      'raises nothing', (tester) async {
-    const size = Size(400, 800);
-    container.read(groupsProvider.notifier).value = [
-      _group('Media', [
-        for (var index = 0; index < 60; index++) 'N$index',
-      ]).copyWith(now: 'N50'),
-    ];
-    await pumpCard(tester, size: size);
-    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
-    await mouse.addPointer(location: Offset(size.width / 2, size.height - 40));
-
-    await tester.tap(find.text('Media', findRichText: true));
+    await tester.tap(inSheet(name('Media')).first);
     await tester.pumpAndSettle();
+    expect(inSheet(name('HK-01')), findsNothing);
 
-    expect(tester.takeException(), isNull);
-    expect(
-      find.descendant(
-        of: find.byType(ProxyCard),
-        matching: find.text('N50', findRichText: true),
-      ),
-      findsOneWidget,
-    );
-    await mouse.removePointer();
+    await tester.tap(inSheet(name('US-01')));
+    await tester.pump();
+
+    expect(container.read(currentProfileProvider)!.selectedMap, {
+      'Media': 'US-01',
+    });
+    debouncer.cancel((FunctionTag.changeProxy, 'Media'));
   });
 
-  Future<Iterable<String?>> tooltipsFor(
-    WidgetTester tester, {
-    required String group,
-    required String selected,
-  }) async {
+  testWidgets('the sheet searches apart from the proxies page', (tester) async {
     container.read(groupsProvider.notifier).value = [
-      _group(group, [selected]).copyWith(now: selected),
+      _group('Auto', ['HK-01', 'SG-01']),
     ];
+    final query = queryProvider(QueryTag.proxies);
+    container.listen(query, (_, _) {});
+    container.read(query.notifier).value = 'HK';
     await pumpCard(tester);
-    return tester
-        .widgetList<Tooltip>(find.byType(Tooltip))
-        .map((tooltip) => tooltip.message);
+
+    await tester.tap(name('Auto').first);
+    await tester.pumpAndSettle();
+    expect(inSheet(name('SG-01')), findsOneWidget);
+
+    container.read(query.notifier).value = 'SG';
+    Navigator.of(tester.element(find.byType(ProxiesView))).pop();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ProxiesView), findsNothing);
+    expect(container.read(query), 'HK');
+  });
+
+  for (final (type, desktop, searching, mobile) in [
+    (ProxiesType.list, ['Close', 'Search'], ['Clear search'], ['Close']),
+    (
+      ProxiesType.tab,
+      ['Search', 'Delay test', 'Close'],
+      ['Clear search', 'Delay test'],
+      ['Delay test', 'Close'],
+    ),
+  ]) {
+    testWidgets('the sheet bar of the ${type.name} layout keeps search and '
+        'the delay test beside close', (tester) async {
+      container
+          .read(proxiesStyleSettingProvider.notifier)
+          .update((state) => state.copyWith(type: type));
+      container.read(groupsProvider.notifier).value = [
+        _group('Auto', ['HK-01', 'SG-01']),
+      ];
+      Iterable<String?> barButtons() => tester
+          .widgetList<AppBarActionButton>(
+            inSheet(find.byType(AppBarActionButton)),
+          )
+          .map((button) => button.data.tooltip);
+
+      await pumpCard(tester);
+      await tester.tap(name('Auto').first);
+      await tester.pumpAndSettle();
+      expect(barButtons(), unorderedEquals(desktop));
+      await tester.tap(inSheet(find.byTooltip('Search')));
+      await tester.pumpAndSettle();
+      expect(barButtons(), unorderedEquals(searching));
+      await tester.tap(inSheet(find.byTooltip('Back')));
+      await tester.pumpAndSettle();
+
+      Navigator.of(tester.element(find.byType(ProxiesView))).pop();
+      await tester.pumpAndSettle();
+      await pumpCard(
+        tester,
+        density: DashboardDensity.mobile,
+        size: const Size(400, 860),
+      );
+      await tester.tap(find.byType(ProxyGroupsSummaryCard));
+      await tester.pumpAndSettle();
+      expect(barButtons(), mobile);
+      expect(inSheet(find.byType(SearchField)), findsOneWidget);
+    });
   }
 
-  testWidgets('short names show in full without a tooltip', (tester) async {
-    expect(await tooltipsFor(tester, group: 'Auto', selected: 'HK'), isEmpty);
-  });
-
-  testWidgets('a long group name leaves the selected node whole', (
+  testWidgets('the list in a bottom sheet starts below the sheet bar', (
     tester,
   ) async {
-    const group = 'Streaming-Services-Regional-Unlock-Fallback';
-    expect(await tooltipsFor(tester, group: group, selected: 'VPS-HK-01'), [
-      group,
-    ]);
+    container.read(groupsProvider.notifier).value = [
+      _group('Auto', ['HK-01']),
+      _group('Media', ['JP-01']),
+    ];
+    container.listen(proxiesStyleSettingProvider, (_, _) {});
+    container
+        .read(proxiesStyleSettingProvider.notifier)
+        .update((state) => state.copyWith(type: ProxiesType.list));
+    await pumpCard(
+      tester,
+      density: DashboardDensity.mobile,
+      size: const Size(400, 860),
+    );
+    await tester.tap(find.byType(ProxyGroupsSummaryCard));
+    await tester.pumpAndSettle();
+
+    final barBottom = tester.getRect(inSheet(find.byType(AppBar))).bottom;
+    expect(
+      tester.getRect(inSheet(name('Auto'))).top,
+      greaterThanOrEqualTo(barBottom),
+    );
   });
 
-  testWidgets('a long selected node leaves the group name whole', (
-    tester,
-  ) async {
-    const selected = 'VPS-HongKong-Premium-Dedicated-Line-01-Backup-Route';
-    expect(await tooltipsFor(tester, group: 'Proxy', selected: selected), [
-      selected,
-    ]);
+  testWidgets('long names never overflow a tile', (tester) async {
+    container.read(groupsProvider.notifier).value = [
+      _group('Streaming-Services-Regional-Unlock-Fallback', [
+        'VPS-HongKong-Premium-Dedicated-Line-01-Backup-Route',
+      ], now: 'VPS-HongKong-Premium-Dedicated-Line-01-Backup-Route'),
+    ];
+    await pumpCard(tester);
+    expect(tester.takeException(), isNull);
+
+    await pumpCard(tester, density: DashboardDensity.mobile);
+    expect(tester.takeException(), isNull);
   });
 }

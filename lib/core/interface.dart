@@ -470,17 +470,8 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<List<TrackerInfo>> getConnections() async {
-    final data = await _invokeMethod<Map<String, dynamic>>(
-      method: CoreMethod.getConnections,
-    );
-    final connections = data?['connections'];
-    if (connections is! List) {
-      return [];
-    }
-    return connections
-        .whereType<Map>()
-        .map((item) => TrackerInfo.fromJson(Map<String, Object?>.from(item)))
-        .toList();
+    final data = await _invokeMethod<Object>(method: CoreMethod.getConnections);
+    return data is List<TrackerInfo> ? data : trackerInfosOf(data);
   }
 
   @override

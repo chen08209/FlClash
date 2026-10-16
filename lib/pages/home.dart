@@ -191,7 +191,6 @@ class _NavigationPage extends StatelessWidget {
     final scopedView = PageFocusScope(child: view);
     final keptView = KeepScope(
       key: ValueKey(item.label),
-      keep: item.keep,
       child: isMobile
           ? scopedView
           : Navigator(

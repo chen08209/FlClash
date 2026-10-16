@@ -1,31 +1,29 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/dashboard/widget_metrics.dart';
+import 'package:fl_clash/views/dashboard/layout.dart';
+import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:fl_clash/views/dashboard/widgets/profile_detail.dart';
 import 'package:fl_clash/views/dashboard/widgets/profiles.dart';
+import 'package:fl_clash/views/profiles/profiles.dart';
 import 'package:fl_clash/views/profiles/custom/custom.dart';
 import 'package:fl_clash/views/profiles/custom/rules.dart';
+import 'package:fl_clash/views/proxies/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:mocktail/mocktail.dart';
-import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart' show Override;
 
+import '../../helpers/app_paths.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
 
 const _gib = 1024 * 1024 * 1024;
-
-class _MockCore extends Mock implements CoreHandlerInterface {}
 
 class _TestProfileRules extends ProfileRules {
   @override
@@ -42,18 +40,6 @@ class _IdleSetupAction extends SetupAction {
   void autoApplyProfile() {}
 }
 
-class _FakePathProvider extends PathProviderPlatform {
-  @override
-  Future<String?> getApplicationSupportPath() async =>
-      Directory.systemTemp.path;
-
-  @override
-  Future<String?> getTemporaryPath() async => Directory.systemTemp.path;
-
-  @override
-  Future<String?> getApplicationCachePath() async => Directory.systemTemp.path;
-}
-
 ExternalProvider _provider(String name, String type, int count) =>
     ExternalProvider(
       name: name,
@@ -63,9 +49,14 @@ ExternalProvider _provider(String name, String type, int count) =>
       updateAt: DateTime(2026),
     );
 
-Profile _profile(int id, {SubscriptionInfo? info}) => Profile(
+Profile _profile(
+  int id, {
+  SubscriptionInfo? info,
+  ProfileType type = ProfileType.file,
+}) => Profile(
   id: id,
   label: 'P$id',
+  type: type,
   url: 'https://sub$id.example.com/link',
   autoUpdateDuration: Duration.zero,
   lastUpdateDate: DateTime.now().subtract(const Duration(minutes: 5)),
@@ -75,11 +66,10 @@ Profile _profile(int id, {SubscriptionInfo? info}) => Profile(
 void main() {
   late ProviderContainer container;
 
-  // appPath resolves its directories once per process; resolved inside a
-  // test's fake async zone, later tests never see the future complete.
   setUpAll(() async {
-    PathProviderPlatform.instance = _FakePathProvider();
-    await appPath.homeDirPath;
+    final home = Directory.systemTemp.createTempSync('profiles_card');
+    addTearDown(() => home.deleteSync(recursive: true));
+    await useAppPaths(home);
   });
 
   void setUpProfiles(
@@ -100,10 +90,24 @@ void main() {
     addTearDown(container.dispose);
   }
 
+  /// The counts are parsed in an isolate, which only runs in real time;
+  /// without [until] this waits for the card to stop loading them.
+  Future<void> settleCounts(WidgetTester tester, {Finder? until}) async {
+    bool done() => until != null
+        ? until.evaluate().isNotEmpty
+        : find.byType(SkeletonText).evaluate().isEmpty;
+    for (var i = 0; i < 40 && !done(); i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump();
+    }
+  }
+
   Future<void> pumpCard(
     WidgetTester tester, {
-    double unitHeight = 80,
-    double width = 320,
+    Widget card = const ProfilesCard(),
+    double width = 360,
   }) async {
     tester.view.physicalSize = const Size(1200, 1000);
     tester.view.devicePixelRatio = 1;
@@ -116,123 +120,157 @@ void main() {
           child: Scaffold(
             body: Align(
               alignment: Alignment.topLeft,
-              child: SizedBox(
-                width: width,
-                child: DashboardWidgetMetrics(
-                  unitHeight: unitHeight,
-                  child: const ProfilesCard(),
-                ),
-              ),
+              child: SizedBox(width: width, child: card),
             ),
           ),
         ),
       ),
     );
     await tester.pump();
+    await settleCounts(tester);
   }
+
+  Future<void> pumpDesktopCard(WidgetTester tester) => pumpCard(
+    tester,
+    card: const DashboardDensityScope(
+      density: DashboardDensity.standard,
+      scale: 1,
+      child: SizedBox(height: 176, child: ProfilesCard()),
+    ),
+    width: 300,
+  );
 
   Finder label(String text) => find.text(text, findRichText: true);
-
-  Future<void> openPicker(WidgetTester tester) async {
-    await tester.tap(find.byTooltip('Switch profile'));
-    await tester.pumpAndSettle();
-  }
 
   testWidgets('offers to add a profile without profiles', (tester) async {
     setUpProfiles([]);
     await pumpCard(tester);
 
     expect(find.text('Add profile'), findsOneWidget);
+
+    await pumpDesktopCard(tester);
+    expect(find.text('Add profile'), findsOneWidget);
     expect(find.byTooltip('Switch profile'), findsNothing);
   });
 
-  testWidgets('shows the current profile and its usage in one row', (
+  testWidgets('shows the current profile, its usage and when it ends', (
     tester,
   ) async {
+    final expiry = DateTime.now().add(const Duration(days: 30, hours: 1));
     setUpProfiles([
       _profile(
         1,
-        info: const SubscriptionInfo(
+        info: SubscriptionInfo(
           upload: _gib,
           download: 41 * _gib,
           total: 100 * _gib,
+          expire: expiry.millisecondsSinceEpoch ~/ 1000,
         ),
       ),
       _profile(2),
     ]);
     await pumpCard(tester);
 
-    expect(tester.getSize(find.byType(ProfilesCard)).height, 80);
     expect(label('P1'), findsOneWidget);
     expect(label('P2'), findsNothing);
-    expect(find.text('42%'), findsOneWidget);
-    expect(
-      tester
-          .widget<Tooltip>(
-            find.ancestor(of: find.text('42%'), matching: find.byType(Tooltip)),
-          )
-          .message,
-      '${(42 * _gib).traffic.show} / ${(100 * _gib).traffic.show}',
-    );
+    expect(find.textContaining('42%', findRichText: true), findsOneWidget);
+    expect(find.text('42 GB / 100 GB'), findsOneWidget);
+    expect(find.textContaining('30 days left'), findsOneWidget);
   });
 
-  testWidgets('hides the switch button with a single profile', (tester) async {
-    setUpProfiles([_profile(1)]);
-    await pumpCard(tester);
+  testWidgets('the desktop card puts the days left beside its update time', (
+    tester,
+  ) async {
+    final expiry = DateTime.now().add(const Duration(days: 30, hours: 1));
+    setUpProfiles([
+      _profile(
+        1,
+        type: ProfileType.url,
+        info: SubscriptionInfo(
+          upload: _gib,
+          download: 41 * _gib,
+          total: 100 * _gib,
+          expire: expiry.millisecondsSinceEpoch ~/ 1000,
+        ),
+      ),
+    ]);
+    await pumpDesktopCard(tester);
 
     expect(label('P1'), findsOneWidget);
+    expect(find.text('30 days left'), findsOneWidget);
+    expect(find.textContaining('42%', findRichText: true), findsOneWidget);
+    expect(find.text('42 GB / 100 GB'), findsOneWidget);
+    expect(find.byTooltip('Update'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a desktop card without a quota names where the profile is '
+      'from', (tester) async {
+    setUpProfiles([_profile(1)]);
+    await pumpDesktopCard(tester);
+
+    expect(find.text('Local'), findsOneWidget);
+    expect(find.textContaining('%', findRichText: true), findsNothing);
+    expect(find.byTooltip('Update'), findsNothing);
     expect(find.byTooltip('Switch profile'), findsNothing);
   });
 
-  testWidgets('switching picks a profile from a sheet', (tester) async {
+  testWidgets('the button beside the name switches the profile in a sheet', (
+    tester,
+  ) async {
     setUpProfiles([for (var id = 1; id <= 3; id++) _profile(id)]);
-    await pumpCard(tester);
+    await pumpDesktopCard(tester);
 
-    await openPicker(tester);
-    expect(find.byType(RadioGroup<int>), findsOneWidget);
-    await tester.tap(label('P3'));
+    expect(label('P1'), findsOneWidget);
+    await tester.tap(find.byTooltip('Switch profile'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ProfilesView), findsOneWidget);
+    await tester.tap(label('P3').last);
     await tester.pumpAndSettle();
 
     expect(container.read(currentProfileIdProvider), 3);
-    expect(find.byType(RadioGroup<int>), findsNothing);
-    expect(label('P3'), findsOneWidget);
+    expect(find.byType(ProfileDetailSheet), findsNothing);
   });
 
-  _MockCore appliedConfigCore() {
-    final core = _MockCore();
-    when(() => core.getConfig(any())).thenAnswer(
-      (_) async => {
-        'proxies': [{}, {}],
-        'proxy-groups': [{}],
-        'rule': ['MATCH,DIRECT', 'DOMAIN,a.com,DIRECT', 'GEOIP,CN,DIRECT'],
-      },
-    );
-    return core;
+  Future<File> writeAppliedConfig(WidgetTester tester) async {
+    final file = await tester.runAsync(() async {
+      final file = File(await appPath.configFilePath);
+      await file.writeAsString(
+        'proxies:\n'
+        '  - {name: a, type: ss}\n'
+        '  - {name: b, type: ss}\n'
+        'proxy-groups:\n'
+        '  - {name: g, type: select, proxies: [a]}\n'
+        'rules:\n'
+        '  - MATCH,DIRECT\n'
+        '  - DOMAIN,a.com,DIRECT\n'
+        '  - GEOIP,CN,DIRECT\n',
+      );
+      return file;
+    });
+    addTearDown(() async {
+      if (file!.existsSync()) file.deleteSync();
+    });
+    return file!;
   }
 
   Future<void> openDetail(WidgetTester tester) async {
     await tester.tap(label('P1'));
     await tester.pumpAndSettle();
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 50)),
-    );
+    await settleCounts(tester, until: find.text('3'));
     await tester.pumpAndSettle();
   }
 
   testWidgets('reopening on the same config skips the read', (tester) async {
-    final core = appliedConfigCore();
+    final config = await writeAppliedConfig(tester);
     globalState.lastConfigMd5 = 'applied';
     addTearDown(() => globalState.lastConfigMd5 = null);
-    setUpProfiles(
-      [_profile(1)],
-      overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
-      ],
-    );
+    setUpProfiles([_profile(1)]);
     container.listen(groupsProvider, (_, _) {});
     await pumpCard(tester);
 
     await openDetail(tester);
+    config.deleteSync();
     container.read(groupsProvider.notifier).value = [
       const Group(type: GroupType.Selector, name: 'G1'),
     ];
@@ -241,18 +279,159 @@ void main() {
     await tester.pumpAndSettle();
     await openDetail(tester);
 
-    expect(find.text('3'), findsOneWidget);
-    verify(() => core.getConfig(any())).called(1);
+    expect(
+      find.descendant(
+        of: find.byType(ProfileDetailSheet),
+        matching: find.text('3'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('counts recorded at the last apply skip the config file', (
+    tester,
+  ) async {
+    final config = await writeAppliedConfig(tester);
+    await tester.runAsync(
+      () => config.writeAsBytes(List.filled((8 << 20) + 1, 0x20)),
+    );
+    setUpProfiles([_profile(1)]);
+    await pumpDesktopCard(tester);
+    expect(find.byType(SkeletonText), findsNothing);
+    expect(find.text('—'), findsNWidgets(3));
+
+    globalState.lastConfigCounts = (groups: 4, proxies: 2048, rules: 9);
+    addTearDown(() => globalState.lastConfigCounts = null);
+    container.read(groupsProvider.notifier).value = [
+      const Group(type: GroupType.Selector, name: 'G1'),
+    ];
+    await tester.pump();
+
+    expect(find.text(dashboardCount(2048)), findsOneWidget);
+    expect(find.text('9'), findsOneWidget);
+    expect(find.byType(SkeletonText), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a card without a quota counts what its config holds', (
+    tester,
+  ) async {
+    await writeAppliedConfig(tester);
+    setUpProfiles(
+      [_profile(1)],
+      overrides: [
+        providersProvider.overrideWithBuild(
+          (_, _) => [_provider('nodes', 'Proxy', 5)],
+        ),
+      ],
+    );
+    await pumpDesktopCard(tester);
+    await settleCounts(tester, until: find.text('3'));
+
+    for (final (title, value) in [
+      ('Proxy group', '1'),
+      ('Proxies', '7'),
+      ('Rules', '3'),
+    ]) {
+      expect(
+        find.descendant(
+          of: find
+              .ancestor(of: find.text(title), matching: find.byType(Column))
+              .first,
+          matching: find.text(value),
+        ),
+        findsOneWidget,
+      );
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a narrow card drops words before it cuts the time or traffic', (
+    tester,
+  ) async {
+    final expiry = DateTime.now().add(const Duration(days: 30, hours: 1));
+    setUpProfiles([
+      _profile(
+        1,
+        type: ProfileType.url,
+        info: SubscriptionInfo(
+          upload: _gib,
+          download: 41 * _gib,
+          total: 100 * _gib,
+          expire: expiry.millisecondsSinceEpoch ~/ 1000,
+        ),
+      ),
+    ]);
+    await pumpCard(
+      tester,
+      card: const DashboardDensityScope(
+        density: DashboardDensity.standard,
+        scale: 1,
+        child: SizedBox(height: 176, child: ProfilesCard()),
+      ),
+      width: 600,
+    );
+    expect(find.textContaining('Updated'), findsOneWidget);
+    expect(find.textContaining('used', findRichText: true), findsOneWidget);
+
+    await pumpCard(
+      tester,
+      card: const DashboardDensityScope(
+        density: DashboardDensity.standard,
+        scale: 1,
+        child: SizedBox(height: 176, child: ProfilesCard()),
+      ),
+      width: 240,
+    );
+    expect(find.textContaining('Updated'), findsNothing);
+    expect(find.textContaining('minutes ago'), findsOneWidget);
+    expect(find.textContaining('used', findRichText: true), findsNothing);
+    expect(find.text('42 GB / 100 GB'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a compact card puts the days left beside the name and leaves '
+      'the update time to the details', (tester) async {
+    final expiry = DateTime.now().add(const Duration(days: 30, hours: 1));
+    setUpProfiles([
+      _profile(
+        1,
+        type: ProfileType.url,
+        info: SubscriptionInfo(
+          upload: _gib,
+          download: 41 * _gib,
+          total: 100 * _gib,
+          expire: expiry.millisecondsSinceEpoch ~/ 1000,
+        ),
+      ),
+      _profile(2),
+    ]);
+    await pumpCard(
+      tester,
+      card: const DashboardDensityScope(
+        density: DashboardDensity.compact,
+        scale: 1,
+        child: SizedBox(height: 152, child: ProfilesCard()),
+      ),
+      width: 220,
+    );
+
+    final name = tester.getRect(label('P1'));
+    final daysLeft = tester.getRect(find.text('30 days left'));
+    expect(daysLeft.center.dy, moreOrLessEquals(name.center.dy, epsilon: 1));
+    expect(find.byTooltip('Switch profile'), findsOneWidget);
+    expect(find.textContaining('minutes ago'), findsNothing);
+    expect(find.text('42 GB / 100 GB'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('tapping the card shows what the Core was handed', (
     tester,
   ) async {
-    final core = appliedConfigCore();
+    await writeAppliedConfig(tester);
     setUpProfiles(
       [_profile(1), _profile(2)],
       overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
         providersProvider.overrideWithBuild(
           (_, _) => [_provider('nodes', 'Proxy', 5)],
         ),
@@ -264,8 +443,16 @@ void main() {
     await openDetail(tester);
 
     expect(find.byType(ProfileDetailSheet), findsOneWidget);
-    expect(find.byTooltip('Final config'), findsOneWidget);
+    expect(find.byTooltip('Runtime config'), findsOneWidget);
     expect(find.byTooltip('Edit'), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byType(ExternalProvidersSliver),
+        matching: find.byType(ProviderItem),
+      ),
+      findsOneWidget,
+    );
+    expect(find.byTooltip('Update'), findsOneWidget);
     for (final (title, value) in [
       ('Proxy group', '1'),
       ('Proxies', '7'),
@@ -283,9 +470,8 @@ void main() {
     }
   });
 
-  testWidgets('tapping a custom profile edits it in a sheet, built once open', (
-    tester,
-  ) async {
+  testWidgets('tapping a custom profile edits it in a sheet, built as it '
+      'opens', (tester) async {
     final profile = Profile.custom(label: 'mine');
     setUpProfiles(
       [profile],
@@ -306,14 +492,14 @@ void main() {
     expect(find.byType(CustomProfileView), findsOneWidget);
     expect(
       find.byKey(const ValueKey(NullStatusIllustration.profile)),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.descendant(
         of: find.byType(CustomProfileView),
         matching: find.byType(CommonCard),
       ),
-      findsNothing,
+      findsWidgets,
     );
 
     await tester.pumpAndSettle();

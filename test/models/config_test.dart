@@ -149,6 +149,7 @@ void main() {
         'dashboardWidgets': ['networkSpeed', 'outboundModeV2', 'outboundMode'],
       });
       expect(restored.dashboardWidgets, [
+        DashboardWidget.currentOutbound,
         DashboardWidget.networkSpeed,
         DashboardWidget.outboundMode,
       ]);
@@ -157,8 +158,80 @@ void main() {
         'dashboardWidgets': ['outboundModeV2', 'trafficUsage'],
       });
       expect(alone.dashboardWidgets, [
+        DashboardWidget.currentOutbound,
         DashboardWidget.outboundMode,
-        DashboardWidget.trafficUsage,
+        DashboardWidget.networkSpeed,
+      ]);
+    });
+
+    test('the traffic usage card folds into the network speed one', () {
+      final restored = AppSettingProps.fromJson({
+        'dashboardWidgets': ['currentOutbound', 'trafficUsage', 'profiles'],
+      });
+      expect(restored.dashboardWidgets, [
+        DashboardWidget.currentOutbound,
+        DashboardWidget.networkSpeed,
+        DashboardWidget.profiles,
+      ]);
+
+      final both = AppSettingProps.fromJson({
+        'dashboardWidgets': ['currentOutbound', 'networkSpeed', 'trafficUsage'],
+      });
+      expect(both.dashboardWidgets, [
+        DashboardWidget.currentOutbound,
+        DashboardWidget.networkSpeed,
+      ]);
+    });
+
+    test('the old default dashboard becomes the new one', () {
+      final restored = AppSettingProps.fromJson({
+        'dashboardWidgets': [
+          'intranetIp',
+          'networkSpeed',
+          'systemProxyButton',
+          'tunButton',
+          'outboundModeV2',
+          'networkDetection',
+          'trafficUsage',
+        ],
+      });
+      expect(restored.dashboardWidgets, defaultDashboardWidgets);
+    });
+
+    test('the outbound IP card left its place to the intranet one', () {
+      final restored = AppSettingProps.fromJson({
+        'dashboardWidgets': [
+          'currentOutbound',
+          'networkDetection',
+          'profiles',
+          'intranetIp',
+        ],
+      });
+      expect(restored.dashboardWidgets, [
+        DashboardWidget.currentOutbound,
+        DashboardWidget.intranetIp,
+        DashboardWidget.profiles,
+      ]);
+    });
+
+    test('a changed old dashboard keeps its cards behind the current '
+        'outbound', () {
+      final restored = AppSettingProps.fromJson({
+        'dashboardWidgets': [
+          'profiles',
+          'connections',
+          'requests',
+          'runTime',
+          'tunButton',
+          'vpnButton',
+        ],
+      });
+      expect(restored.dashboardWidgets, [
+        DashboardWidget.currentOutbound,
+        DashboardWidget.profiles,
+        DashboardWidget.connectionStats,
+        DashboardWidget.networkTakeover,
+        DashboardWidget.vpnButton,
       ]);
     });
 
@@ -275,10 +348,10 @@ void main() {
       expect(props.width, 0);
     });
 
-    test('size extension defaults to 680x580 when empty', () {
+    test('size extension falls back to the default window size', () {
       const props = WindowProps();
-      expect(props.size.width, 680);
-      expect(props.size.height, 580);
+      expect(props.savedSize, isNull);
+      expect(props.size, defaultWindowSize);
     });
 
     test('size extension uses actual values', () {
@@ -531,21 +604,21 @@ void main() {
   group('ProxiesStyleProps JSON round-trip', () {
     test('default values', () {
       const props = ProxiesStyleProps();
-      expect(props.type, ProxiesType.tab);
+      expect(props.type, ProxiesType.list);
       expect(props.sortType, ProxiesSortType.none);
       expect(props.layout, ProxiesLayout.standard);
     });
 
     test('round-trip with custom values', () {
       const props = ProxiesStyleProps(
-        type: ProxiesType.list,
+        type: ProxiesType.tab,
         sortType: ProxiesSortType.delay,
       );
       final restored = roundTrip(
         () => props.toJson(),
         ProxiesStyleProps.fromJson,
       );
-      expect(restored.type, ProxiesType.list);
+      expect(restored.type, ProxiesType.tab);
       expect(restored.sortType, ProxiesSortType.delay);
     });
 
@@ -582,6 +655,30 @@ void main() {
       }
     });
 
+    test('reads the card sizes saved under their former names', () {
+      for (final (saved, cardType) in [
+        ('expand', ProxyCardType.loose),
+        ('shrink', ProxyCardType.standard),
+        ('min', ProxyCardType.compact),
+        ('nonsense', ProxyCardType.standard),
+      ]) {
+        expect(
+          ProxiesStyleProps.fromJson({'cardType': saved}).cardType,
+          cardType,
+        );
+      }
+    });
+
+    test('round-trips every card size under its own name', () {
+      for (final cardType in ProxyCardType.values) {
+        final restored = roundTrip(
+          () => ProxiesStyleProps(cardType: cardType).toJson(),
+          ProxiesStyleProps.fromJson,
+        );
+        expect(restored.cardType, cardType);
+      }
+    });
+
     test('round-trip keeps the timed-out node filter', () {
       final restored = roundTrip(
         () => const ProxiesStyleProps(hideTimeoutProxies: true).toJson(),
@@ -596,14 +693,14 @@ void main() {
       const props = ThemeProps();
       expect(props.primaryColor, null);
       expect(props.primaryColors, defaultPrimaryColors);
-      expect(props.themeMode, ThemeMode.dark);
+      expect(props.themeMode, ThemeMode.system);
       expect(props.pureBlack, false);
       expect(props.textScale.scale, 1.0);
     });
 
     test('safeFromJson returns default on null', () {
       final result = ThemeProps.safeFromJson(null);
-      expect(result.themeMode, ThemeMode.dark);
+      expect(result.themeMode, ThemeMode.system);
     });
 
     test('round-trip with custom values', () {
@@ -742,13 +839,13 @@ void main() {
 
     test('drops only the dashboard cards it does not know', () {
       final props = AppSettingProps.safeFromJson({
-        'dashboardWidgets': ['runTime', 'futureCard', 'requests'],
+        'dashboardWidgets': ['currentOutbound', 'futureCard', 'proxyGroups'],
         'hideIp': true,
       });
 
       expect(props.dashboardWidgets, [
-        DashboardWidget.runTime,
-        DashboardWidget.requests,
+        DashboardWidget.currentOutbound,
+        DashboardWidget.proxyGroups,
       ]);
       expect(props.hideIp, true);
     });
@@ -767,10 +864,10 @@ void main() {
       expect(
         dashboardWidgetsFromJson([
           'overrideDnsButton',
-          'runTime',
+          'memoryInfo',
           'overrideNtpButton',
         ]),
-        [DashboardWidget.runTime],
+        [DashboardWidget.currentOutbound, DashboardWidget.memoryInfo],
       );
     });
 
@@ -872,6 +969,20 @@ void main() {
       expect(restored.vpnProps.enable, false);
       expect(restored.windowProps.width, 1280);
       expect(restored.windowProps.height, 720);
+    });
+
+    test('a window saved under the old key opens at the default size', () {
+      final config = Config.fromJson({
+        'themeProps': const ThemeProps().toJson(),
+        'windowProps': const WindowProps(
+          width: 680,
+          height: 580,
+          left: 10,
+          top: 20,
+        ).toJson(),
+      });
+      expect(config.windowProps, defaultWindowProps);
+      expect(config.windowProps.size, defaultWindowSize);
     });
   });
 
@@ -1029,6 +1140,22 @@ void main() {
             .usePosition,
         isNull,
       );
+    });
+
+    test('drops the include-all keys', () {
+      for (final key in [
+        'include-all',
+        'include-all-proxies',
+        'include-all-providers',
+      ]) {
+        expect(
+          group
+              .withDefinitionYaml('${group.definitionYaml}$key: true\n')
+              .definition,
+          group.definition,
+          reason: key,
+        );
+      }
     });
 
     test('rejects YAML that is not a named and typed mapping', () {

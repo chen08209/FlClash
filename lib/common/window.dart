@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -50,10 +51,19 @@ class Window implements WindowPort {
     if (!system.isMacOS || version > 10) {
       await desktopWindow.setTitleBarStyle(TitleBarStyle.hidden);
     }
-    await desktopWindow.setSize(props.size);
+    await desktopWindow.setSize(props.savedSize ?? await _defaultSize());
     await desktopWindow.setMinimumSize(const Size(380, 400));
     await _windowPosition(props);
     await desktopWindow.setPreventClose(true);
+  }
+
+  Future<Size> _defaultSize() async {
+    try {
+      final display = await screenRetriever.getPrimaryDisplay();
+      return fittedWindowSize(display.visibleSize ?? display.size);
+    } catch (_) {
+      return defaultWindowSize;
+    }
   }
 
   Future<void> _windowPosition(WindowProps props) async {
@@ -202,6 +212,13 @@ class Window implements WindowPort {
     exit(0);
   }
 }
+
+/// Keeps a margin of the work area around a first window on a small screen.
+@visibleForTesting
+Size fittedWindowSize(Size visible) => Size(
+  math.min(defaultWindowSize.width, visible.width * 0.9),
+  math.min(defaultWindowSize.height, visible.height * 0.9),
+);
 
 /// On Windows the plugin scales by the window's monitor and screen_retriever by
 /// each display's own, so only physical pixels compare across mixed scales.
