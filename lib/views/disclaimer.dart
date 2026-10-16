@@ -20,12 +20,9 @@ class DisclaimerView extends StatelessWidget {
 
   const DisclaimerView({super.key, this.requireConsent = false});
 
-  static const _googlePrivacyUrl = 'https://policies.google.com/privacy';
-  static const _firebasePrivacyUrl =
-      'https://firebase.google.com/support/privacy';
   static const _maxContentWidth = 720.0;
 
-  List<({String title, String content})> _leadingTerms(AppLocalizations l) => [
+  List<({String title, String content})> _terms(AppLocalizations l) => [
     (
       title: l.disclaimerSoftwareTitle,
       content:
@@ -42,9 +39,7 @@ class DisclaimerView extends StatelessWidget {
     ),
     (title: l.disclaimerWarrantyTitle, content: l.disclaimerWarrantyContent),
     (title: l.disclaimerLiabilityTitle, content: l.disclaimerLiabilityContent),
-  ];
-
-  List<({String title, String content})> _trailingTerms(AppLocalizations l) => [
+    (title: l.disclaimerPrivacyTitle, content: l.disclaimerPrivacyContent),
     (title: l.disclaimerLicenseTitle, content: l.disclaimerLicenseContent),
     (title: l.disclaimerChangesTitle, content: l.disclaimerChangesContent),
     (title: l.disclaimerAcceptTitle, content: l.disclaimerAcceptContent),
@@ -132,52 +127,11 @@ class DisclaimerView extends StatelessWidget {
   }
 
   List<Widget> _buildTerms(AppLocalizations appLocalizations) {
-    final leadingTerms = _leadingTerms(appLocalizations);
-    final trailingTerms = _trailingTerms(appLocalizations);
-    final privacyIndex = leadingTerms.length + 1;
     return [
       _DisclaimerIntro(text: appLocalizations.disclaimerDesc),
-      for (final (index, term) in leadingTerms.indexed)
+      for (final (index, term) in _terms(appLocalizations).indexed)
         _DisclaimerTerm(
           index: index + 1,
-          title: term.title,
-          content: term.content,
-        ),
-      _DisclaimerTerm(
-        index: privacyIndex,
-        title: appLocalizations.disclaimerPrivacyTitle,
-        content: appLocalizations.disclaimerPrivacyContent,
-        children: [
-          _DataServiceCard(
-            glyph: AppGlyphs.error,
-            title: appLocalizations.disclaimerCrashlyticsTitle,
-            content: appLocalizations.disclaimerCrashlyticsContent,
-          ),
-          _DataServiceCard(
-            glyph: AppGlyphs.dataUsage,
-            title: appLocalizations.disclaimerAnalyticsTitle,
-            content: appLocalizations.disclaimerAnalyticsContent,
-          ),
-          _TermParagraphs(appLocalizations.disclaimerDataProcessingContent),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _PolicyLink(
-                label: appLocalizations.disclaimerGooglePrivacy,
-                url: _googlePrivacyUrl,
-              ),
-              _PolicyLink(
-                label: appLocalizations.disclaimerFirebasePrivacy,
-                url: _firebasePrivacyUrl,
-              ),
-            ],
-          ),
-        ],
-      ),
-      for (final (index, term) in trailingTerms.indexed)
-        _DisclaimerTerm(
-          index: privacyIndex + index + 1,
           title: term.title,
           content: term.content,
         ),
@@ -224,13 +178,11 @@ class _DisclaimerTerm extends StatelessWidget {
   final int index;
   final String title;
   final String content;
-  final List<Widget> children;
 
   const _DisclaimerTerm({
     required this.index,
     required this.title,
     required this.content,
-    this.children = const [],
   });
 
   static const _badgeSize = 28.0;
@@ -270,8 +222,6 @@ class _DisclaimerTerm extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _TermParagraphs(content),
-          for (final child in children)
-            Padding(padding: const EdgeInsets.only(top: 12), child: child),
         ],
       ),
     );
@@ -298,94 +248,6 @@ class _TermParagraphs extends StatelessWidget {
             child: Text(paragraph, style: style),
           ),
       ],
-    );
-  }
-}
-
-class _DataServiceCard extends StatelessWidget {
-  final Glyph glyph;
-  final String title;
-  final String content;
-
-  const _DataServiceCard({
-    required this.glyph,
-    required this.title,
-    required this.content,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final level = context.raisedSurfaceLevel;
-    return DecoratedBox(
-      decoration: ShapeDecoration(
-        color: level.colorOf(colorScheme),
-        shape: AppShape.xl,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                GlyphIcon(glyph, size: 20, color: colorScheme.primary),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: AppTextStyle.subheadline.of(
-                      context,
-                      emphasized: true,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                DecoratedBox(
-                  decoration: ShapeDecoration(
-                    color: level.next.colorOf(colorScheme),
-                    shape: AppShape.full,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 2,
-                    ),
-                    child: Text(
-                      context.appLocalizations.disclaimerAndroidOnly,
-                      style: AppTextStyle.caption2
-                          .of(context, emphasized: true)
-                          .copyWith(color: colorScheme.onSurfaceVariant),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _TermParagraphs(content),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PolicyLink extends StatelessWidget {
-  final String label;
-  final String url;
-
-  const _PolicyLink({required this.label, required this.url});
-
-  @override
-  Widget build(BuildContext context) {
-    return ElasticButton(
-      child: TextButton.icon(
-        onPressed: () {
-          dialogs.openUrl(url);
-        },
-        icon: const GlyphIcon(AppGlyphs.openExternal, size: 18),
-        label: Text(label),
-      ),
     );
   }
 }

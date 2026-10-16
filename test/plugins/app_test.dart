@@ -22,28 +22,6 @@ void main() {
     App().clearPackageIconCache();
   });
 
-  test('reads previous execution crash state from Android', () async {
-    MethodCall? receivedCall;
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (call) async {
-          receivedCall = call;
-          return true;
-        });
-
-    final didCrash = await App().didCrashOnPreviousExecution();
-
-    expect(didCrash, isTrue);
-    expect(receivedCall, isNotNull);
-    expect(receivedCall!.method, 'didCrashOnPreviousExecution');
-  });
-
-  test('uses false when Android returns no crash state', () async {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (_) async => null);
-
-    expect(await App().didCrashOnPreviousExecution(), isFalse);
-  });
-
   test('requests every package icon from Android only once', () async {
     var iconCallCount = 0;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -139,15 +117,6 @@ void main() {
     expect(await app.getPackageIcon('com.a'), isNull);
     expect(await app.getPackageIcon(''), isNull);
     expect(iconCallCount, 2);
-  });
-
-  test('uses false when crash detection is unavailable', () async {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (_) async {
-          throw PlatformException(code: 'unavailable');
-        });
-
-    expect(await App().didCrashOnPreviousExecution(), isFalse);
   });
 
   test('reads the last process exit info from Android', () async {

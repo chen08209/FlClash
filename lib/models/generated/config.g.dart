@@ -42,8 +42,6 @@ _AppSettingProps _$AppSettingPropsFromJson(
       _readSidebarExpanded(json, 'sidebarExpanded') as bool? ?? true,
   acceptedDisclaimerVersion:
       (json['acceptedDisclaimerVersion'] as num?)?.toInt() ?? 0,
-  crashlyticsTip: json['crashlyticsTip'] as bool? ?? false,
-  crashlytics: json['crashlytics'] as bool? ?? false,
   minimizeOnExit: json['minimizeOnExit'] as bool? ?? true,
   hidden: json['hidden'] as bool? ?? false,
   developerMode: json['developerMode'] as bool? ?? false,
@@ -108,8 +106,6 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'autoCheckUpdate': instance.autoCheckUpdate,
       'sidebarExpanded': instance.sidebarExpanded,
       'acceptedDisclaimerVersion': instance.acceptedDisclaimerVersion,
-      'crashlyticsTip': instance.crashlyticsTip,
-      'crashlytics': instance.crashlytics,
       'minimizeOnExit': instance.minimizeOnExit,
       'hidden': instance.hidden,
       'developerMode': instance.developerMode,
@@ -406,6 +402,7 @@ const _$ColorStyleEnumMap = {
 const _$LiquidGlassModeEnumMap = {
   LiquidGlassMode.none: 'none',
   LiquidGlassMode.standard: 'standard',
+  LiquidGlassMode.ultra: 'ultra',
 };
 
 _Config _$ConfigFromJson(Map<String, dynamic> json) => _Config(

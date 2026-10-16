@@ -11,7 +11,6 @@ class BootGuard {
   final Future<BootRecord?> Function() _readRecord;
   final Future<void> Function(BootRecord record) _writeRecord;
   final Future<AppExitInfo?> Function() _readExitInfo;
-  final Future<bool> Function() _readCrashReport;
   final int Function() _now;
 
   BootDecision _decision = const BootDecision();
@@ -21,34 +20,24 @@ class BootGuard {
     Future<BootRecord?> Function()? readRecord,
     Future<void> Function(BootRecord record)? writeRecord,
     Future<AppExitInfo?> Function()? readExitInfo,
-    Future<bool> Function()? readCrashReport,
     int Function()? now,
   }) : _supported = supported ?? system.isAndroid,
        _readRecord = readRecord ?? preferences.getBootRecord,
        _writeRecord = writeRecord ?? preferences.saveBootRecord,
        _readExitInfo = readExitInfo ?? system.lastExitInfo,
-       _readCrashReport = readCrashReport ?? system.didCrashOnPreviousExecution,
        _now = now ?? _currentMilliseconds;
 
   static int _currentMilliseconds() => DateTime.now().millisecondsSinceEpoch;
 
   BootDecision get decision => _decision;
 
-  Future<BootDecision> evaluate({
-    required int? profileId,
-    required bool crashlyticsEnabled,
-  }) async {
+  Future<BootDecision> evaluate({required int? profileId}) async {
     if (!_supported) {
       return _decision;
     }
     final record = await _readRecord();
     final exitInfo = await _readExitInfo();
-    final crashReported = crashlyticsEnabled && await _readCrashReport();
-    final decision = resolveBootDecision(
-      record: record,
-      exitInfo: exitInfo,
-      crashReported: crashReported,
-    );
+    final decision = resolveBootDecision(record: record, exitInfo: exitInfo);
     if (decision.isDegraded) {
       commonPrint.log(
         'Previous launch did not finish: $decision',

@@ -199,10 +199,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 result.success(openAppSettings())
             }
 
-            "didCrashOnPreviousExecution" -> reply(result) {
-                GlobalState.didCrashOnPreviousExecution()
-            }
-
             "getLastExitInfo" -> reply(result) {
                 GlobalState.lastExitInfo()
             }

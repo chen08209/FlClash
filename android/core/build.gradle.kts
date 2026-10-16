@@ -20,13 +20,6 @@ android {
         consumerProguardFiles("consumer-rules.pro")
     }
 
-    // :app strips what it packages; Crashlytics symbolication needs the unstripped libraries to reach its merge.
-    packaging {
-        jniLibs {
-            keepDebugSymbols += "**/*.so"
-        }
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -249,10 +242,9 @@ val bindCore =
         targets.set(gomobileTargets)
         androidApi.set(libs.versions.minSdk.get().toInt())
         tags.set(buildConfig.map { it["tags"].orEmpty() })
-        // Crashlytics symbolicates native crashes from the unstripped library :app merges, so the Core keeps its symbols.
         ldflags.set(
             buildConfig.map { config ->
-                val flags = config["go_ldflags"].orEmpty().split(" ").filter { it.isNotEmpty() && it != "-s" && it != "-w" }
+                val flags = config["go_ldflags"].orEmpty().split(" ").filter { it.isNotEmpty() }
                 val version = config["core_version"].orEmpty()
                 (flags + listOfNotNull(version.takeIf { it.isNotEmpty() }?.let { "-X=github.com/metacubex/mihomo/constant.Version=$it" }))
                     .joinToString(" ")

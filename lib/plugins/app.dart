@@ -147,22 +147,6 @@ class App {
     return methodChannel.invokeMethod<bool>('openAppSettings');
   }
 
-  Future<bool> didCrashOnPreviousExecution() async {
-    try {
-      final value = await methodChannel
-          .invokeMethod<bool>('didCrashOnPreviousExecution')
-          .timeout(_platformProbeTimeout);
-      return value ?? false;
-    } catch (error) {
-      commonPrint.log(
-        'Failed to read the previous-execution crash flag: '
-        '${compactError(error)}',
-        logLevel: LogLevel.warning,
-      );
-      return false;
-    }
-  }
-
   Future<AppExitInfo?> getLastExitInfo() async {
     try {
       final raw = await methodChannel
