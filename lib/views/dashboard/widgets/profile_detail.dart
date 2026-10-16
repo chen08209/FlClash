@@ -1,17 +1,20 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/profiles/preview.dart';
+import 'package:fl_clash/views/profiles/profiles.dart';
 import 'package:fl_clash/views/proxies/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:yaml/yaml.dart';
 
 const _statSpacing = 8.0;
 
@@ -27,20 +30,14 @@ void showProfileDetailSheet(BuildContext context) {
   showSheet<void>(context: context, builder: (_) => const ProfileDetailSheet());
 }
 
-typedef ConfigCounts = ({int groups, int proxies, int rules});
-
-typedef ProfileStats = ({int groups, int proxies, int rules, int providers});
-
-/// Counts what the Core was handed, extensions included, rather than what the
-/// profile file declares.
-ConfigCounts configCountsOf(Map<String, dynamic> config) {
-  int lengthOf(Object? value) => value is List ? value.length : 0;
-  return (
-    groups: lengthOf(config['proxy-groups']),
-    proxies: lengthOf(config['proxies']),
-    rules: lengthOf(config['rules']),
+void showProfilesSheet(BuildContext context) {
+  showSheet<void>(
+    context: context,
+    builder: (_) => const ProfilesView(picker: true),
   );
 }
+
+typedef ProfileStats = ({int groups, int proxies, int rules, int providers});
 
 ProfileStats profileStatsOf(
   ConfigCounts counts,
@@ -57,13 +54,89 @@ ProfileStats profileStatsOf(
   );
 }
 
-/// Kept until another config is applied: parsing one is slow on a large profile.
 ({String md5, ConfigCounts counts})? _countsCache;
 
+// package:yaml holds a document in many times its size.
+const _maxCountedConfigBytes = 8 << 20;
+
 ConfigCounts? _cachedCounts() {
+  if (globalState.lastConfigCounts case final counts?) {
+    return counts;
+  }
   final cache = _countsCache;
   final md5 = globalState.lastConfigMd5;
   return cache != null && cache.md5 == md5 ? cache.counts : null;
+}
+
+ConfigCounts? _countConfigFile(String path) {
+  final file = File(path);
+  if (file.lengthSync() > _maxCountedConfigBytes) {
+    return null;
+  }
+  final config = loadYaml(file.readAsStringSync());
+  return configCountsOf(config is Map ? config : const {});
+}
+
+/// Parsed in an isolate: a large profile takes far longer than a frame.
+Future<ConfigCounts?> _loadCounts() async {
+  if (_cachedCounts() case final counts?) {
+    return counts;
+  }
+  final md5 = globalState.lastConfigMd5;
+  final counts = await compute(_countConfigFile, await appPath.configFilePath);
+  if (md5 != null && counts != null) {
+    _countsCache = (md5: md5, counts: counts);
+  }
+  return counts;
+}
+
+mixin ConfigCountsWatch<T extends ConsumerStatefulWidget> on ConsumerState<T> {
+  ConfigCounts? configCounts = _cachedCounts();
+  bool configCountsFailed = false;
+  var _generation = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (configCounts == null) {
+      unawaited(_reloadCounts());
+    }
+  }
+
+  Future<void> _reloadCounts() async {
+    final generation = ++_generation;
+    ConfigCounts? counts;
+    var failed = false;
+    try {
+      counts = await _loadCounts();
+    } catch (error) {
+      commonPrint.log('read applied config error: $error');
+      failed = true;
+    }
+    if (!mounted || generation != _generation) {
+      return;
+    }
+    setState(() {
+      configCounts = counts ?? configCounts;
+      configCountsFailed = failed || counts == null;
+    });
+  }
+
+  /// Called from build: groups refresh after every applied setup.
+  void watchConfigCounts() {
+    ref.listen(groupsProvider, (_, _) {
+      final cached = _cachedCounts();
+      if (cached == null) {
+        unawaited(_reloadCounts());
+      } else if (cached != configCounts) {
+        _generation++;
+        setState(() {
+          configCounts = cached;
+          configCountsFailed = false;
+        });
+      }
+    });
+  }
 }
 
 class ProfileDetailSheet extends ConsumerStatefulWidget {
@@ -73,57 +146,8 @@ class ProfileDetailSheet extends ConsumerStatefulWidget {
   ConsumerState<ProfileDetailSheet> createState() => _ProfileDetailSheetState();
 }
 
-class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
-  ConfigCounts? _counts = _cachedCounts();
-  var _failed = false;
-  var _loadStarted = false;
-  var _generation = 0;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_loadStarted) {
-      return;
-    }
-    _loadStarted = true;
-    if (_counts == null) {
-      unawaited(_load(afterRoute: true));
-    }
-  }
-
-  // Decoding a large config mid-transition drops the sheet's frames.
-  Future<void> _load({bool afterRoute = false}) async {
-    final generation = ++_generation;
-    if (afterRoute) {
-      await whenRouteSettled(context);
-      if (!mounted) {
-        return;
-      }
-    }
-    final md5 = globalState.lastConfigMd5;
-    ConfigCounts? counts;
-    try {
-      counts = configCountsOf(
-        await ref.read(coreHandlerProvider).getAppliedConfig(),
-      );
-    } catch (error) {
-      commonPrint.log(
-        'read applied config error: $error',
-        logLevel: coreFailureLogLevel(error),
-      );
-    }
-    if (!mounted || generation != _generation) {
-      return;
-    }
-    if (counts != null && md5 != null) {
-      _countsCache = (md5: md5, counts: counts);
-    }
-    setState(() {
-      _counts = counts ?? _counts;
-      _failed = counts == null;
-    });
-  }
-
+class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet>
+    with ConfigCountsWatch<ProfileDetailSheet> {
   void _handlePreview(Profile profile) {
     unawaited(
       BaseNavigator.push<String>(context, PreviewProfileView(profile: profile)),
@@ -132,12 +156,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // Groups refresh after every applied setup, and after a proxy switch too.
-    ref.listen(groupsProvider, (_, _) {
-      if (_cachedCounts() == null) {
-        unawaited(_load());
-      }
-    });
+    watchConfigCounts();
     final profile = ref.watch(currentProfileProvider);
     if (profile == null) {
       return const SizedBox.shrink();
@@ -158,57 +177,63 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet> {
           ),
         IconButtonData(
           glyph: AppGlyphs.eye,
-          tooltip: appLocalizations.finalConfig,
+          tooltip: appLocalizations.runtimeConfig,
           onPressed: () => _handlePreview(profile),
         ),
       ],
-      body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-        ).copyWith(top: context.contentTopPadding, bottom: 20),
-        children: [
-          _StatsGrid(
-            stats: switch (_counts) {
-              final counts? => profileStatsOf(counts, providers),
-              null => null,
-            },
-            failed: _failed,
-          ),
-          if (subscriptionInfo != null && subscriptionInfo.total > 0)
-            generateSectionV3(
-              title: appLocalizations.subscriptionInfo,
-              items: [
-                ListItem(
-                  title: SubscriptionInfoView(
-                    subscriptionInfo: subscriptionInfo,
-                  ),
+      body: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+            ).copyWith(top: context.contentTopPadding, bottom: 20),
+            sliver: SliverMainAxisGroup(
+              slivers: [
+                SliverList.list(
+                  children: [
+                    _StatsGrid(
+                      stats: switch (configCounts) {
+                        final counts? => profileStatsOf(counts, providers),
+                        null => null,
+                      },
+                      failed: configCountsFailed,
+                    ),
+                    if (subscriptionInfo != null && subscriptionInfo.total > 0)
+                      generateSection(
+                        title: appLocalizations.subscriptionInfo,
+                        items: [
+                          ListItem(
+                            title: SubscriptionInfoView(
+                              subscriptionInfo: subscriptionInfo,
+                            ),
+                          ),
+                        ],
+                      ),
+                    generateSection(
+                      title: appLocalizations.profile,
+                      items: [
+                        _InfoRow(
+                          label: appLocalizations.lastUpdated,
+                          value: LastUpdateTimeText(
+                            lastUpdateDate: profile.lastUpdateDate,
+                          ),
+                        ),
+                        if (profile.type != ProfileType.custom)
+                          _InfoRow(
+                            label: appLocalizations.extendMode,
+                            value: Text(
+                              _extendLabel(context, profile.extendType),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
+                if (providers.isNotEmpty)
+                  ExternalProvidersSliver(providers: providers),
               ],
             ),
-          generateSectionV3(
-            title: appLocalizations.profile,
-            items: [
-              _InfoRow(
-                label: appLocalizations.lastUpdated,
-                value: LastUpdateTimeText(
-                  lastUpdateDate: profile.lastUpdateDate,
-                ),
-              ),
-              if (profile.type != ProfileType.custom)
-                _InfoRow(
-                  label: appLocalizations.extendMode,
-                  value: Text(_extendLabel(context, profile.extendType)),
-                ),
-            ],
           ),
-          if (providers.isNotEmpty)
-            generateSectionV3(
-              title: appLocalizations.providers,
-              items: [
-                for (final provider in providers)
-                  ExternalProviderItem(provider: provider),
-              ],
-            ),
         ],
       ),
     );
@@ -275,7 +300,7 @@ class _StatTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: ShapeDecoration(
-        color: colorScheme.surfaceContainer,
+        color: context.raisedSurfaceLevel.colorOf(colorScheme),
         shape: AppShape.all(AppCorner.lg),
       ),
       child: Column(
@@ -285,18 +310,17 @@ class _StatTile extends StatelessWidget {
           Text(
             value ?? '0',
             maxLines: 1,
-            style: context.textTheme.headlineSmall?.copyWith(
-              color: colorScheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTextStyle.title2
+                .of(context, emphasized: true)
+                .copyWith(color: colorScheme.onSurface),
           ),
           Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: context.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            style: AppTextStyle.footnote
+                .of(context)
+                .copyWith(color: colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -315,9 +339,9 @@ class _InfoRow extends StatelessWidget {
     return ListItem(
       title: Text(label),
       trailing: DefaultTextStyle.merge(
-        style: context.textTheme.bodyMedium?.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
-        ),
+        style: AppTextStyle.subheadline
+            .of(context)
+            .copyWith(color: context.colorScheme.onSurfaceVariant),
         child: value,
       ),
     );

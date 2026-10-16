@@ -1,21 +1,22 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/views/dashboard/widget_registry.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/access.dart';
 import 'package:fl_clash/views/dashboard/dashboard.dart';
+import 'package:fl_clash/views/dashboard/edit.dart';
 import 'package:fl_clash/views/logs.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart' show Override;
 
 import '../helpers/glyph_finders.dart';
+import '../helpers/test_app.dart';
 
 void main() {
   testWidgets('back layers are consumed from inner to outer', (tester) async {
@@ -27,6 +28,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        builder: (context, child) => wrapAppScopes(context, child!),
         home: CommonPopScope(
           onPop: (_) {
             rootBackCount++;
@@ -89,6 +91,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          builder: (context, child) => wrapAppScopes(context, child!),
           home: CommonPopScope(
             onPop: (_) {
               rootBackCount++;
@@ -147,6 +150,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        builder: (context, child) => wrapAppScopes(context, child!),
         home: ValueListenableBuilder(
           valueListenable: showLayer,
           builder: (_, value, _) {
@@ -183,8 +187,10 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp(
+          builder: (context, child) => wrapAppScopes(context, child!),
           localizationsDelegates: const [
             AppLocalizations.delegate,
+            AppUiLocalizations.delegate,
             ...GlobalMaterialLocalizations.delegates,
           ],
           supportedLocales: AppLocalizations.delegate.supportedLocales,
@@ -227,8 +233,10 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp(
+          builder: (context, child) => wrapAppScopes(context, child!),
           localizationsDelegates: const [
             AppLocalizations.delegate,
+            AppUiLocalizations.delegate,
             ...GlobalMaterialLocalizations.delegates,
           ],
           supportedLocales: AppLocalizations.delegate.supportedLocales,
@@ -253,6 +261,7 @@ void main() {
   testWidgets('inactive page scope exits dashboard edit layer', (tester) async {
     final container = ProviderContainer(
       overrides: [
+        _phoneView(tester),
         dashboardStateProvider.overrideWithValue(
           const DashboardState(dashboardWidgets: []),
         ),
@@ -269,22 +278,23 @@ void main() {
         child: _DashboardTestApp(
           child: _PageActivityTestScope(
             isActive: isActive,
-            child: const DashboardView(),
+            child: const DashboardView(platform: SupportPlatform.Android),
           ),
         ),
       ),
     );
     await tester.pump();
 
-    await tester.tap(find.byKey(const ValueKey('edit-icon')));
+    await tester.tap(find.byTooltip('Edit dashboard'));
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.byKey(const ValueKey('save-icon')), findsOneWidget);
+    expect(find.byType(DashboardEditor), findsOneWidget);
 
     isActive.value = false;
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.byKey(const ValueKey('edit-icon')), findsOneWidget);
+    expect(find.byType(DashboardEditor), findsNothing);
+    expect(find.byTooltip('Edit dashboard'), findsOneWidget);
   });
 
   testWidgets('inactive page scope exits access search layer', (tester) async {
@@ -317,11 +327,12 @@ void main() {
     expect(find.byType(TextField), findsNothing);
   });
 
-  testWidgets('save and system back cannot re-enter dashboard edit mode', (
+  testWidgets('done and system back cannot re-enter dashboard edit mode', (
     tester,
   ) async {
     final container = ProviderContainer(
       overrides: [
+        _phoneView(tester),
         dashboardStateProvider.overrideWithValue(
           const DashboardState(dashboardWidgets: []),
         ),
@@ -338,22 +349,22 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byKey(const ValueKey('edit-icon')));
+    await tester.tap(find.byTooltip('Edit dashboard'));
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.byKey(const ValueKey('save-icon')), findsOneWidget);
+    expect(find.byType(DashboardEditor), findsOneWidget);
 
-    tester.widget<IconButton>(find.byKey(const ValueKey(true))).onPressed!();
+    await tester.tap(find.byTooltip('Done'));
     await tester.binding.handlePopRoute();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.byKey(const ValueKey('edit-icon')), findsOneWidget);
+    expect(find.byType(DashboardEditor), findsNothing);
+    expect(find.byTooltip('Edit dashboard'), findsOneWidget);
   });
 
-  testWidgets('system back preserves a pending dashboard deletion', (
-    tester,
-  ) async {
+  testWidgets('system back keeps a card removed in edit mode', (tester) async {
     final container = ProviderContainer(
       overrides: [
+        _phoneView(tester),
         dashboardStateProvider.overrideWithValue(
           const DashboardState(
             dashboardWidgets: [
@@ -381,47 +392,51 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byKey(const ValueKey('edit-icon')));
+    await tester.tap(find.byTooltip('Edit dashboard'));
     await tester.pump(const Duration(milliseconds: 500));
 
-    final deleteButton = find.ancestor(
-      of: find.byGlyph(AppGlyphs.removeCircle).first,
-      matching: find.byType(IconButton),
-    );
-    tester.widget<IconButton>(deleteButton).onPressed!();
+    await tester.tap(find.byTooltip('Remove Network speed'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 301));
-    await tester.pump();
-    expect(tester.state<SuperGridState>(find.byType(SuperGrid)).items, [
-      DashboardWidget.outboundMode.widget,
-    ]);
     await tester.binding.handlePopRoute();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.byKey(const ValueKey('edit-icon')), findsOneWidget);
+    expect(find.byType(DashboardEditor), findsNothing);
     expect(container.read(appSettingProvider).dashboardWidgets, [
       DashboardWidget.outboundMode,
+      DashboardWidget.networkTakeover,
     ]);
   });
+}
+
+const _phoneSize = Size(412, 915);
+
+/// A phone's view, where the dashboard lays out the single column it edits.
+Override _phoneView(WidgetTester tester) {
+  tester.view.physicalSize = _phoneSize;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  return viewSizeProvider.overrideWithBuild((_, _) => _phoneSize);
 }
 
 class _DashboardTestApp extends StatelessWidget {
   final Widget child;
 
-  const _DashboardTestApp({this.child = const DashboardView()});
+  const _DashboardTestApp({
+    this.child = const DashboardView(platform: SupportPlatform.Android),
+  });
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       localizationsDelegates: const [
         AppLocalizations.delegate,
+        AppUiLocalizations.delegate,
         ...GlobalMaterialLocalizations.delegates,
       ],
       supportedLocales: AppLocalizations.delegate.supportedLocales,
       builder: (context, child) {
-        globalState.measure = Measure.of(context, 1);
-        globalState.theme = CommonTheme.of(context, 1);
-        return child!;
+        return wrapAppScopes(context, child!);
       },
       home: child,
     );

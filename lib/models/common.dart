@@ -125,6 +125,18 @@ abstract class TrackerInfo with _$TrackerInfo {
       _$TrackerInfoFromJson(json);
 }
 
+/// Reads the Core's `getConnections` answer.
+List<TrackerInfo> trackerInfosOf(Object? data) {
+  final connections = data is Map ? data['connections'] : null;
+  if (connections is! List) {
+    return const [];
+  }
+  return [
+    for (final item in connections.whereType<Map>())
+      TrackerInfo.fromJson(Map<String, Object?>.from(item)),
+  ];
+}
+
 typedef RequestTraffic = ({int upload, int download});
 
 extension TrackerInfoExt on TrackerInfo {
