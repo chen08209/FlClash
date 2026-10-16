@@ -449,6 +449,7 @@ class _WebDAVFormDialogState extends ConsumerState<WebDAVFormDialog> {
             TextFormField(
               controller: _uriController,
               inputFormatters: TextInputLimits.limit(TextInputLimits.uri),
+              keyboardType: TextInputType.url,
               maxLines: 5,
               minLines: 1,
               textInputAction: TextInputAction.next,
