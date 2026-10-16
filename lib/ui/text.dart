@@ -99,6 +99,7 @@ class EmojiText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text.rich(
       TextSpan(children: _buildTextSpans(text)),
+      style: style,
       maxLines: maxLines,
       overflow: overflow ?? TextOverflow.clip,
     );

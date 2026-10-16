@@ -1,4 +1,5 @@
-import 'package:fl_clash/common/common.dart';
+import 'dart:ui' show ImageFilter;
+
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/state.dart';
@@ -40,67 +41,22 @@ class PreviewChoiceGroup<T> extends StatelessWidget {
         InfoHeader(info: info),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
+          child: generateSection(
+            items: [
               for (final choice in choices)
-                _ChoiceButton(
-                  label: choice.label,
+                DecorationListItem(
+                  leading: ExcludeSemantics(child: choice.pictogram),
+                  title: Text(choice.label),
                   isSelected: choice.value == value,
+                  trailing: choice.value == value
+                      ? const SelectionCheck()
+                      : null,
                   onPressed: () => onChanged(choice.value),
-                  pictogram: choice.pictogram,
                 ),
             ],
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ChoiceButton extends StatelessWidget {
-  const _ChoiceButton({
-    required this.label,
-    required this.isSelected,
-    required this.onPressed,
-    required this.pictogram,
-  });
-
-  static const double _height = 48;
-
-  final String label;
-  final bool isSelected;
-  final VoidCallback onPressed;
-  final Widget pictogram;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      selected: isSelected,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: _height),
-        child: CommonCard(
-          isSelected: isSelected,
-          onPressed: onPressed,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 8,
-            children: [
-              ExcludeSemantics(child: pictogram),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
@@ -118,28 +74,21 @@ class MiniScreenThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shape = AppShape.sm.copyWith(
-      side: BorderSide(color: context.colorScheme.outlineVariant),
-    );
     return SizedBox(
       height: _height,
       width: _height * _screenSize.width / _shownHeight,
-      child: DecoratedBox(
-        position: DecorationPosition.foreground,
-        decoration: ShapeDecoration(shape: shape),
-        child: ClipRSuperellipse(
-          borderRadius: AppRadius.sm,
-          child: FittedBox(
-            child: SizedBox(
-              width: _screenSize.width,
-              height: _shownHeight,
-              child: ClipRect(
-                child: OverflowBox(
-                  alignment: Alignment.bottomCenter,
-                  minHeight: _screenSize.height,
-                  maxHeight: _screenSize.height,
-                  child: screen,
-                ),
+      child: ClipRSuperellipse(
+        borderRadius: AppRadius.sm,
+        child: FittedBox(
+          child: SizedBox(
+            width: _screenSize.width,
+            height: _shownHeight,
+            child: ClipRect(
+              child: OverflowBox(
+                alignment: Alignment.bottomCenter,
+                minHeight: _screenSize.height,
+                maxHeight: _screenSize.height,
+                child: screen,
               ),
             ),
           ),
@@ -232,45 +181,41 @@ class _ThemeLivePreviewState extends ConsumerState<ThemeLivePreview>
     final tabAnimation = ref.watch(
       appSettingProvider.select((state) => state.tabAnimation),
     );
+    final liquidGlass = ref.watch(
+      themeSettingProvider.select((state) => state.liquidGlass),
+    );
     final corner = AppCorner.fit(_phoneWidth);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.symmetric(vertical: 24),
       alignment: Alignment.center,
       decoration: ShapeDecoration(
-        color: context.colorScheme.surfaceContainerLow,
+        color: context.raisedSurfaceLevel.colorOf(context.colorScheme),
         shape: AppShape.xxl,
       ),
       child: SizedBox(
         width: _phoneWidth,
         child: AspectRatio(
           aspectRatio: 9 / 17,
-          child: DecoratedBox(
-            position: DecorationPosition.foreground,
-            decoration: ShapeDecoration(
-              shape: AppShape.all(corner).copyWith(
-                side: BorderSide(color: context.colorScheme.outlineVariant),
-              ),
-            ),
-            child: ClipRSuperellipse(
-              borderRadius: AppRadius.all(corner),
-              child: TweenAnimationBuilder<ColorScheme>(
-                tween: _ColorSchemeTween(end: colorScheme),
+          child: ClipRSuperellipse(
+            borderRadius: AppRadius.all(corner),
+            child: TweenAnimationBuilder<ColorScheme>(
+              tween: _ColorSchemeTween(end: colorScheme),
+              duration: _duration,
+              builder: (_, colorScheme, _) => AnimatedSwitcher(
                 duration: _duration,
-                builder: (_, colorScheme, _) => AnimatedSwitcher(
-                  duration: _duration,
-                  child: AnimatedBuilder(
-                    key: ValueKey(floatingBar),
-                    animation: _slideCurve,
-                    builder: (_, _) => MiniScreen(
-                      colorScheme: colorScheme,
-                      floatingBar: floatingBar,
-                      selected: _selected,
-                      previous: _previous,
-                      progress: _previous == null ? 1 : _slideCurve.value,
-                      tabAnimation: tabAnimation,
-                      onSelect: _select,
-                    ),
+                child: AnimatedBuilder(
+                  key: ValueKey((floatingBar, liquidGlass)),
+                  animation: _slideCurve,
+                  builder: (_, _) => MiniScreen(
+                    colorScheme: colorScheme,
+                    floatingBar: floatingBar,
+                    liquidGlass: liquidGlass,
+                    selected: _selected,
+                    previous: _previous,
+                    progress: _previous == null ? 1 : _slideCurve.value,
+                    tabAnimation: tabAnimation,
+                    onSelect: _select,
                   ),
                 ),
               ),
@@ -293,6 +238,7 @@ class MiniScreen extends StatelessWidget {
     super.key,
     required this.colorScheme,
     required this.floatingBar,
+    this.liquidGlass = false,
     this.selected = 0,
     this.previous,
     this.progress = 1,
@@ -304,6 +250,11 @@ class MiniScreen extends StatelessWidget {
 
   final ColorScheme colorScheme;
   final bool floatingBar;
+
+  /// Draws a floating bar as glass; a docked one stays a fill, as the app's
+  /// does.
+  final bool liquidGlass;
+
   final int selected;
   final int? previous;
   final double progress;
@@ -322,6 +273,7 @@ class MiniScreen extends StatelessWidget {
         painter: _MiniScreenPainter(
           colorScheme: colorScheme,
           floatingBar: floatingBar,
+          liquidGlass: liquidGlass,
           selected: selected,
           previous: previous,
           progress: progress,
@@ -447,6 +399,7 @@ class _MiniScreenPainter extends CustomPainter {
   const _MiniScreenPainter({
     required this.colorScheme,
     required this.floatingBar,
+    required this.liquidGlass,
     required this.selected,
     required this.previous,
     required this.progress,
@@ -456,11 +409,14 @@ class _MiniScreenPainter extends CustomPainter {
 
   final ColorScheme colorScheme;
   final bool floatingBar;
+  final bool liquidGlass;
   final int selected;
   final int? previous;
   final double progress;
   final TabAnimation tabAnimation;
   final bool hasFab;
+
+  bool get _glass => floatingBar && liquidGlass;
 
   static _MiniPage _pageOf(int index) =>
       index.isEven ? _MiniPage.cards : _MiniPage.list;
@@ -488,7 +444,41 @@ class _MiniScreenPainter extends CustomPainter {
       floatingBar: floatingBar,
       hasFab: hasFab,
     );
-    canvas.drawRect(Offset.zero & size, Paint()..color = colorScheme.surface);
+    _paintPages(canvas, geometry);
+    final unit = geometry.unit;
+    final dock = SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme);
+    if (hasFab && !floatingBar) {
+      _block(
+        canvas,
+        geometry.fab,
+        colorScheme.primaryContainer,
+        geometry.fabSize,
+      );
+    }
+    final shadow = BoxShadow(
+      color: colorScheme.shadow.withValues(alpha: 0.12),
+      blurRadius: unit,
+      offset: Offset(0, unit * 0.3),
+    );
+    if (_glass) {
+      _paintGlassBar(canvas, geometry, shadow);
+    } else if (floatingBar) {
+      _fill(canvas, geometry.bar, dock, AppShape.full, shadows: [shadow]);
+    } else {
+      canvas.drawRect(geometry.bar, Paint()..color = dock);
+    }
+    _paintDestinations(canvas, geometry.bar, unit);
+    if (hasFab && floatingBar) {
+      _fill(canvas, geometry.fab, colorScheme.primaryContainer, AppShape.full);
+    }
+  }
+
+  void _paintPages(Canvas canvas, _MiniGeometry geometry) {
+    final size = geometry.size;
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()..color = SurfaceLevel.page.colorOf(colorScheme),
+    );
     canvas.save();
     canvas.clipRect(Offset.zero & size, doAntiAlias: false);
     final previous = this.previous;
@@ -513,39 +503,53 @@ class _MiniScreenPainter extends CustomPainter {
       );
     }
     canvas.restore();
+  }
+
+  /// The page frosted under a tint, ringed with light and casting its shadow
+  /// only outside, after what [LiquidGlass] does at full size.
+  void _paintGlassBar(Canvas canvas, _MiniGeometry geometry, BoxShadow shadow) {
+    final bar = geometry.bar;
     final unit = geometry.unit;
-    if (hasFab && !floatingBar) {
-      _block(
-        canvas,
-        geometry.fab,
-        colorScheme.primaryContainer,
-        geometry.fabSize,
+    final path = AppShape.full.getOuterPath(bar);
+    final style = LiquidGlassStyle.pill(colorScheme);
+    final blur = unit * 0.4;
+    canvas
+      ..save()
+      ..clipPath(
+        Path()
+          ..fillType = PathFillType.evenOdd
+          ..addRect(bar.inflate(unit * 3))
+          ..addPath(path, Offset.zero),
+      )
+      ..drawPath(path.shift(shadow.offset), shadow.toPaint())
+      ..restore()
+      ..save()
+      ..clipPath(path)
+      ..saveLayer(
+        bar,
+        Paint()..imageFilter = ImageFilter.blur(sigmaX: blur, sigmaY: blur),
       );
-    }
-    if (floatingBar) {
-      _fill(
-        canvas,
-        geometry.bar,
-        colorScheme.surfaceContainer,
-        AppShape.full,
-        shadows: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.12),
-            blurRadius: unit,
-            offset: Offset(0, unit * 0.3),
-          ),
-        ],
-      );
-    } else {
-      canvas.drawRect(
-        geometry.bar,
-        Paint()..color = colorScheme.surfaceContainer,
-      );
-    }
-    _paintDestinations(canvas, geometry.bar, unit);
-    if (hasFab && floatingBar) {
-      _fill(canvas, geometry.fab, colorScheme.primaryContainer, AppShape.full);
-    }
+    _paintPages(canvas, geometry);
+    final rimWidth = unit * 0.15;
+    canvas
+      ..restore()
+      ..drawPath(path, Paint()..color = style.tint)
+      ..drawPath(
+        AppShape.full.getOuterPath(bar.deflate(rimWidth / 2)),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = rimWidth
+          ..shader = LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white.withValues(alpha: style.rim),
+              Colors.white.withValues(alpha: style.rim * 0.15),
+              Colors.white.withValues(alpha: style.rim * 0.5),
+            ],
+          ).createShader(bar),
+      )
+      ..restore();
   }
 
   void _paintPage(
@@ -576,7 +580,7 @@ class _MiniScreenPainter extends CustomPainter {
     canvas.clipRect(content, doAntiAlias: false);
     final left = content.left;
     final width = content.width;
-    final card = colorScheme.surfaceContainer;
+    final card = SurfaceLevel.card.colorOf(colorScheme);
     final line = colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
     var top = content.top;
     _fill(
@@ -632,14 +636,19 @@ class _MiniScreenPainter extends CustomPainter {
           card,
           unit * 4,
         );
-        _block(
+        final chosen = Rect.fromLTWH(left + half + unit, top, half, unit * 4);
+        _block(canvas, chosen, card, unit * 4);
+        _fill(
           canvas,
-          Rect.fromLTWH(left + half + unit, top, half, unit * 4),
-          colorScheme.secondaryContainer,
-          unit * 4,
+          Rect.fromCircle(
+            center: chosen.topRight + Offset(-unit * 1.3, unit * 1.3),
+            radius: unit * 0.7,
+          ),
+          colorScheme.primary,
+          AppShape.circle,
         );
         top += unit * 4 + unit;
-        for (var i = 0; i < 3; i++) {
+        for (var i = 0; i < 4; i++) {
           _block(
             canvas,
             Rect.fromLTWH(left, top, width, unit * 4.5),
@@ -650,7 +659,7 @@ class _MiniScreenPainter extends CustomPainter {
         }
       case _MiniPage.list:
         final lineLeft = left + unit * 2.2 + unit;
-        for (var i = 0; i < 7; i++) {
+        for (var i = 0; i < 9; i++) {
           _fill(
             canvas,
             Rect.fromLTWH(
@@ -659,9 +668,7 @@ class _MiniScreenPainter extends CustomPainter {
               unit * 2.2,
               unit * 2.2,
             ),
-            i == 0
-                ? colorScheme.tertiaryContainer
-                : colorScheme.secondaryContainer,
+            SurfaceLevel.inset.colorOf(colorScheme),
             AppShape.circle,
           );
           final lineTop =
@@ -707,13 +714,16 @@ class _MiniScreenPainter extends CustomPainter {
         _fill(canvas, dot, colorScheme.onSurfaceVariant, AppShape.circle);
         continue;
       }
+      final dark = colorScheme.brightness == Brightness.dark;
       _fill(
         canvas,
         Rect.fromCenter(center: center, width: unit * 2.8, height: unit * 1.6),
-        colorScheme.secondaryContainer,
+        _glass
+            ? colorScheme.onSurface.withValues(alpha: dark ? 0.14 : 0.08)
+            : SurfaceLevel.floatingOf(colorScheme).next.colorOf(colorScheme),
         AppShape.full,
       );
-      _fill(canvas, dot, colorScheme.onSecondaryContainer, AppShape.circle);
+      _fill(canvas, dot, colorScheme.primary, AppShape.circle);
     }
   }
 
@@ -721,6 +731,7 @@ class _MiniScreenPainter extends CustomPainter {
   bool shouldRepaint(_MiniScreenPainter oldDelegate) {
     return oldDelegate.colorScheme != colorScheme ||
         oldDelegate.floatingBar != floatingBar ||
+        oldDelegate.liquidGlass != liquidGlass ||
         oldDelegate.selected != selected ||
         oldDelegate.previous != previous ||
         oldDelegate.progress != progress ||

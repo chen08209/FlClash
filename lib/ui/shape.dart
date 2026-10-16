@@ -11,6 +11,9 @@ abstract final class AppCorner {
   static const double lg = 20;
   static const double xl = 24;
   static const double xxl = 28;
+
+  /// UIAlertController's corner on iOS 27, rounder than a sheet's.
+  static const double alert = 34;
   static const double full = 1000;
 
   static double fit(double shortestSide) {
@@ -201,7 +204,7 @@ class AppInputBorder extends InputBorder {
   }) {
     final outline = rect.deflate(borderSide.width / 2);
     if (gapStart == null || gapExtent <= 0.0 || gapPercentage == 0.0) {
-      _shape.paint(canvas, outline, textDirection: textDirection);
+      _shape.paint(canvas, rect, textDirection: textDirection);
       return;
     }
     final extent = lerpDouble(
@@ -228,7 +231,7 @@ class AppInputBorder extends InputBorder {
         ),
         clipOp: ClipOp.difference,
       );
-    _shape.paint(canvas, outline, textDirection: textDirection);
+    _shape.paint(canvas, rect, textDirection: textDirection);
     canvas.restore();
   }
 
@@ -247,13 +250,10 @@ class AppInputBorder extends InputBorder {
   int get hashCode => Object.hash(borderSide, borderRadius, gapPadding);
 }
 
-// UIAlertController's corner on iOS 27, rounder than a sheet's.
-const double _dialogCorner = 34;
-
 extension AppShapeThemeExt on ThemeData {
   ThemeData get withAppShapes => copyWith(
     cardTheme: cardTheme.copyWith(shape: AppShape.md),
-    dialogTheme: dialogTheme.copyWith(shape: AppShape.all(_dialogCorner)),
+    dialogTheme: dialogTheme.copyWith(shape: AppShape.all(AppCorner.alert)),
     bottomSheetTheme: bottomSheetTheme.copyWith(
       shape: AppShape.top(AppCorner.xxl),
     ),
