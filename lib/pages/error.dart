@@ -1,7 +1,7 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/widgets/navigation_dock.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
@@ -23,11 +23,11 @@ class InitErrorApp extends StatelessWidget {
   ThemeData _theme(Brightness brightness) {
     return ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
+      colorScheme: seededColorScheme(
         seedColor: const Color(defaultPrimaryColor),
         brightness: brightness,
       ),
-    ).withAppShapes;
+    ).withAppShapes.withAppSurfaces;
   }
 
   @override
@@ -98,13 +98,8 @@ class _InitErrorScreenState extends State<InitErrorScreen> {
       context: context,
       child: Builder(
         builder: (context) {
-          return AlertDialog(
-            title: Text(appLocalizations.clearData),
-            content: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 300),
-              child: Text(appLocalizations.clearDataAndExitTip),
-            ),
-            actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+          return CommonDialog(
+            title: appLocalizations.clearData,
             actions: [
               TextButton(
                 onPressed: () {
@@ -119,6 +114,7 @@ class _InitErrorScreenState extends State<InitErrorScreen> {
                 child: Text(appLocalizations.confirm),
               ),
             ],
+            child: Text(appLocalizations.clearDataAndExitTip),
           );
         },
       ),
@@ -160,7 +156,6 @@ class _InitErrorScreenState extends State<InitErrorScreen> {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     final colorScheme = context.colorScheme;
-    final textTheme = context.textTheme;
     return Scaffold(
       body: SafeArea(
         bottom: false,
@@ -196,38 +191,44 @@ class _InitErrorScreenState extends State<InitErrorScreen> {
                         const SizedBox(height: 20),
                         Text(
                           appLocalizations.initFailed,
-                          style: textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
+                          style: AppTextStyle.title2.of(
+                            context,
+                            emphasized: true,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           appLocalizations.initFailedTip,
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            height: 1.6,
-                          ),
+                          style: AppTextStyle.subheadline
+                              .of(context)
+                              .copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                height: 1.6,
+                              ),
                         ),
                         const SizedBox(height: 28),
                         _ErrorSection(
                           label: appLocalizations.errorDetails,
                           text: widget.error.toString(),
                           backgroundColor: colorScheme.errorContainer,
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onErrorContainer,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTextStyle.subheadline
+                              .of(context, emphasized: true)
+                              .copyWith(color: colorScheme.onErrorContainer),
                         ),
                         const SizedBox(height: 20),
                         _ErrorSection(
                           label: appLocalizations.stackTrace,
                           text: widget.stack.toString(),
-                          backgroundColor: colorScheme.surfaceContainerHighest,
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            fontFamily: 'monospace',
-                            height: 1.5,
+                          backgroundColor: context.raisedSurfaceLevel.colorOf(
+                            colorScheme,
                           ),
+                          style: AppTextStyle.footnote
+                              .of(context)
+                              .copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                fontFamily: 'monospace',
+                                height: 1.5,
+                              ),
                         ),
                       ],
                     ),
@@ -290,9 +291,7 @@ class _ErrorSection extends StatelessWidget {
       children: [
         Text(
           label,
-          style: context.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTextStyle.subheadline.of(context, emphasized: true),
         ),
         const SizedBox(height: 8),
         DecoratedBox(
@@ -318,11 +317,9 @@ class _ErrorActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+        color: SurfaceLevel.page.colorOf(context.colorScheme),
       ),
       child: SafeArea(
         top: false,

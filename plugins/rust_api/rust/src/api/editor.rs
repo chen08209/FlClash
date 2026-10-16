@@ -28,6 +28,10 @@ impl RopeBridge {
         }
     }
 
+    pub fn create_in_background(initial_text: String) -> Self {
+        Self::create(initial_text)
+    }
+
     #[frb(sync)]
     pub fn len_chars(&self) -> usize {
         self.buffer.len_chars()

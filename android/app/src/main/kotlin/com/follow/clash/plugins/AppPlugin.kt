@@ -20,6 +20,9 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.net.toUri
+import androidx.core.view.OnApplyWindowInsetsListener
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.follow.clash.R
 import com.follow.clash.common.Components
 import com.follow.clash.common.GlobalState
@@ -102,6 +105,22 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     private var skipNotificationPermissionRequest = false
+
+    @Suppress("DEPRECATION")
+    private val isTelevision by lazy {
+        val packageManager = GlobalState.application.packageManager
+        packageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION) ||
+            packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+    }
+
+    private var floatingIme = false
+
+    // A TV keyboard floats over the app and reports a zero-height IME inset.
+    private val imeInsetsListener = OnApplyWindowInsetsListener { view, insets ->
+        val ime = WindowInsetsCompat.Type.ime()
+        reportFloatingIme(insets.isVisible(ime) && insets.getInsets(ime).bottom == 0)
+        ViewCompat.onApplyWindowInsets(view, insets)
+    }
 
     private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -431,14 +450,34 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         activity = binding.activity
         binding.addActivityResultListener(activityResultListener)
         binding.addRequestPermissionsResultListener(permissionsResultListener)
+        if (isTelevision) {
+            ViewCompat.setOnApplyWindowInsetsListener(
+                binding.activity.window.decorView,
+                imeInsetsListener,
+            )
+        }
     }
 
     private fun detachFromActivity() {
+        if (isTelevision) {
+            activity?.window?.decorView?.let {
+                ViewCompat.setOnApplyWindowInsetsListener(it, null)
+            }
+            reportFloatingIme(false)
+        }
         activity = null
         val binding = activityBinding ?: return
         activityBinding = null
         binding.removeActivityResultListener(activityResultListener)
         binding.removeRequestPermissionsResultListener(permissionsResultListener)
+    }
+
+    private fun reportFloatingIme(floating: Boolean) {
+        if (floating == floatingIme) {
+            return
+        }
+        floatingIme = floating
+        channel.invokeMethod("floatingImeChanged", floating)
     }
 
     override fun onDetachedFromActivityForConfigChanges() {

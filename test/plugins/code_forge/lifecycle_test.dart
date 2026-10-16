@@ -276,6 +276,33 @@ void main() {
     expect(controller.rope.core.isDisposed, isFalse);
   });
 
+  group('loading a large document', () {
+    final document = 'a: 1\r\n' * 40000;
+
+    test('fills the controller once its rope is built', () async {
+      final controller = CodeForgeController();
+      addTearDown(controller.dispose);
+
+      final load = controller.loadText(document);
+      expect(controller.length, 0);
+
+      await load;
+      expect(controller.text, 'a: 1\n' * 40000);
+      expect(controller.lineCount, 40001);
+    });
+
+    test('gives way to text set while it builds', () async {
+      final controller = CodeForgeController();
+      addTearDown(controller.dispose);
+
+      final load = controller.loadText(document);
+      controller.text = 'b: 2';
+      await load;
+
+      expect(controller.text, 'b: 2');
+    });
+  });
+
   testWidgets('disposing the editor mid scroll to a line throws nothing', (
     tester,
   ) async {

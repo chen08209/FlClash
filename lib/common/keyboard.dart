@@ -1,6 +1,5 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 
 import 'system.dart';
 
@@ -161,9 +160,4 @@ final class ShortcutLabels {
   String text(Set<KeyboardModifier> modifiers, int key) {
     return parts(modifiers, key).join(isMacOS ? '' : '+');
   }
-}
-
-SingleActivator controlSingleActivator(LogicalKeyboardKey trigger) {
-  final control = system.isMacOS ? false : true;
-  return SingleActivator(trigger, control: control, meta: !control);
 }

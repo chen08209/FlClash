@@ -1,8 +1,8 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/config/user_agents.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -169,7 +169,7 @@ void main() {
     await openMenu(tester, defaultUserAgents.last);
     await tester.tap(find.text(currentAppLocalizations.delete));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(currentAppLocalizations.confirm));
+    await tester.tap(find.text(currentAppLocalizations.delete));
     await tester.pumpAndSettle();
 
     expect(saved(), [defaultUserAgents.first]);
@@ -188,7 +188,7 @@ void main() {
     await openMenu(tester, defaultUserAgents.first);
     await tester.tap(find.text(currentAppLocalizations.delete));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(currentAppLocalizations.confirm));
+    await tester.tap(find.text(currentAppLocalizations.delete));
     await tester.pumpAndSettle();
 
     expect(saved(), [defaultUserAgents.last, 'Legacy/1.0']);

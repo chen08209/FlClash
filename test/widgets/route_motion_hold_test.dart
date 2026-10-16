@@ -1,6 +1,12 @@
-import 'package:fl_clash/widgets/route_motion_hold.dart';
+import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/ui/paged_sheet.dart';
+import 'package:fl_clash/ui/route_motion_hold.dart';
+import 'package:fl_clash/ui/sheet.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+
+import '../helpers/test_app.dart';
 
 class _Feed extends StatefulWidget {
   const _Feed({required this.source});
@@ -31,9 +37,7 @@ class _FeedState extends State<_Feed> with RouteMotionHoldMixin<_Feed> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(body: Text('shown $_shown'));
-  }
+  Widget build(BuildContext context) => Text('shown $_shown');
 }
 
 class _Arrival extends StatefulWidget {
@@ -70,7 +74,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         navigatorKey: navigator,
-        home: _Feed(source: source),
+        home: Scaffold(body: _Feed(source: source)),
       ),
     );
   }
@@ -118,6 +122,77 @@ void main() {
     navigator.currentState!.didStopUserGesture();
     await tester.pump();
     expect(find.text('shown 3'), findsOneWidget);
+  });
+
+  group('under a sheet', () {
+    Future<void> pumpOpener(WidgetTester tester, Widget content) async {
+      const view = Size(400, 900);
+      tester.view.physicalSize = view;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        TestApp(
+          wrapInProviderScope: true,
+          child: Scaffold(
+            body: Column(
+              children: [
+                _Feed(source: source),
+                Builder(
+                  builder: (context) => TextButton(
+                    onPressed: () => showSnapSheet<void>(
+                      context,
+                      builder: (_, _) => content,
+                    ),
+                    child: const Text('open'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      ProviderScope.containerOf(
+        tester.element(find.text('open')),
+      ).read(viewSizeProvider.notifier).value = view;
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('open'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    testWidgets('holds the page below while a sheet slides over it', (
+      tester,
+    ) async {
+      await pumpOpener(tester, const Scaffold(body: Text('sheet')));
+
+      source.value = 1;
+      await tester.pump();
+      expect(find.text('shown 0'), findsOneWidget);
+
+      await tester.pumpAndSettle();
+      expect(find.text('shown 1'), findsOneWidget);
+    });
+
+    testWidgets('holds a page in a sheet while the sheet slides in', (
+      tester,
+    ) async {
+      final inSheet = ValueNotifier(0);
+      addTearDown(inSheet.dispose);
+      await pumpOpener(
+        tester,
+        NestedPagedSheet(
+          builder: (_) => Scaffold(body: _Feed(source: inSheet)),
+        ),
+      );
+
+      inSheet.value = 1;
+      await tester.pump();
+      expect(find.text('shown 0'), findsNWidgets(2));
+
+      await tester.pumpAndSettle();
+      expect(find.text('shown 1'), findsOneWidget);
+    });
   });
 
   group('RouteSettledMixin', () {

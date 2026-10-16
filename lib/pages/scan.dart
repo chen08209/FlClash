@@ -3,14 +3,11 @@ import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/manager/theme_manager.dart';
 import 'package:fl_clash/plugins/app.dart';
-import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/widgets/activate_box.dart';
-import 'package:fl_clash/widgets/navigation_dock.dart';
-import 'package:fl_clash/widgets/null_status.dart';
-import 'package:fl_clash/widgets/scaffold.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -190,15 +187,13 @@ class _ScanPageState extends ConsumerState<ScanPage>
 
   @override
   Widget build(BuildContext context) {
-    final theme = ThemeData(
-      useMaterial3: true,
-      colorScheme: ref.watch(genColorSchemeProvider(Brightness.dark)),
-    ).withAppShapes;
+    final theme = watchAppTheme(ref, Brightness.dark);
     final appLocalizations = context.appLocalizations;
+    final glass = LiquidGlassScope.of(context);
     return Theme(
       data: theme,
-      // `Theme` inserts no `IconTheme`, and `IconButton.filled` treats the
-      // app's light one as a custom color that overrides its defaults.
+      // `Theme` inserts no `IconTheme`, so the app's light one would color
+      // the icons here.
       child: IconTheme(
         data: theme.iconTheme,
         child: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -207,7 +202,7 @@ class _ScanPageState extends ConsumerState<ScanPage>
           child: Scaffold(
             body: LayoutBuilder(
               builder: (context, constraints) {
-                final hintStyle = Theme.of(context).textTheme.bodyMedium!;
+                final hintStyle = AppTextStyle.subheadline.of(context);
                 final layout = _ScanLayout(
                   size: constraints.biggest,
                   padding: MediaQuery.paddingOf(context),
@@ -247,29 +242,47 @@ class _ScanPageState extends ConsumerState<ScanPage>
                       top: 0,
                       left: 0,
                       right: 0,
-                      child: AppBar(
-                        backgroundColor: Colors.transparent,
-                        surfaceTintColor: Colors.transparent,
-                        automaticallyImplyLeading: false,
-                        leading: IconButton(
-                          tooltip: appLocalizations.close,
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          icon: const GlyphIcon(AppGlyphs.close),
-                        ),
-                        actions: genActions([
-                          IconButton(
-                            tooltip: appLocalizations.pickFromAlbum,
-                            onPressed: _pickFromAlbum,
-                            icon: const GlyphIcon(AppGlyphs.photos),
+                      child: TonalButtonTheme(
+                        glass: glass,
+                        child: AppBarInsetScope(
+                          child: AppBar(
+                            backgroundColor: Colors.transparent,
+                            surfaceTintColor: Colors.transparent,
+                            automaticallyImplyLeading: false,
+                            leading: Center(
+                              child: ElasticPress(
+                                child: AppBarActionButton(
+                                  data: IconButtonData(
+                                    glyph: AppGlyphs.close,
+                                    tooltip: appLocalizations.close,
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                            actions: genActions([
+                              ElasticPress(
+                                child: AppBarActionButton(
+                                  data: IconButtonData(
+                                    glyph: AppGlyphs.photos,
+                                    tooltip: appLocalizations.pickFromAlbum,
+                                    onPressed: _pickFromAlbum,
+                                  ),
+                                ),
+                              ),
+                            ], edge: AppBarActionEdge.container),
                           ),
-                        ], edge: AppBarActionEdge.icon),
+                        ),
                       ),
                     ),
                     Positioned.fromRect(
                       rect: layout.torch,
-                      child: _TorchButton(controller: _controller),
+                      child: TonalButtonTheme(
+                        glass: glass,
+                        child: _TorchButton(controller: _controller),
+                      ),
                     ),
                   ],
                 );
@@ -364,6 +377,7 @@ const _hintGap = 24.0;
 const _hintInset = 32.0;
 const _hintMaxLines = 2;
 const _torchSize = 64.0;
+const _torchIconSize = 32.0;
 const _torchBottomMargin = 48.0;
 const _torchSideMargin = 24.0;
 const _controlGap = 16.0;
@@ -397,7 +411,7 @@ class _ScanLayout {
         size.height - max(padding.bottom, _torchBottomMargin) - _torchSize;
     final scanWindow = _fitScanWindow(
       size: size,
-      top: padding.top + kToolbarHeight,
+      top: padding.top + pageToolbarHeight,
       bottom: torchTop - _controlGap - _hintGap - hintHeight,
       maxWidth: size.width,
     );
@@ -440,7 +454,10 @@ class _ScanLayout {
     );
     final torch = Rect.fromLTWH(
       size.width - padding.right - _torchSideMargin - _torchSize,
-      max(padding.top + kToolbarHeight, scanWindow.center.dy - _torchSize / 2),
+      max(
+        padding.top + pageToolbarHeight,
+        scanWindow.center.dy - _torchSize / 2,
+      ),
       _torchSize,
       _torchSize,
     );
@@ -510,12 +527,11 @@ class _ScannerError extends StatelessWidget {
         label: appLocalizations.cameraPermissionRequired,
         description: appLocalizations.cameraPermissionDesc,
         illustration: NullStatusIllustration.permission,
-        action: ElasticButton(
-          child: FilledButton.tonalIcon(
-            onPressed: onOpenSettings,
-            icon: const GlyphIcon(AppGlyphs.settings, fill: 1),
-            label: Text(appLocalizations.settings),
-          ),
+        action: TonalButton(
+          size: TonalButtonSize.bar,
+          glyph: AppGlyphs.settings,
+          label: appLocalizations.settings,
+          onPressed: onOpenSettings,
         ),
       ),
       MobileScannerErrorCode.unsupported => NullStatus(
@@ -525,18 +541,17 @@ class _ScannerError extends StatelessWidget {
       _ => NullStatus(
         label: appLocalizations.cameraUnavailable,
         illustration: NullStatusIllustration.camera,
-        action: ElasticButton(
-          child: FilledButton.tonalIcon(
-            onPressed: onRetry,
-            icon: const GlyphIcon(AppGlyphs.refresh, fill: 1),
-            label: Text(appLocalizations.retry),
-          ),
+        action: TonalButton(
+          size: TonalButtonSize.bar,
+          glyph: AppGlyphs.refresh,
+          label: appLocalizations.retry,
+          onPressed: onRetry,
         ),
       ),
     };
     final padding =
         MediaQuery.paddingOf(context) +
-        const EdgeInsets.only(top: kToolbarHeight);
+        const EdgeInsets.only(top: pageToolbarHeight);
     // `NullStatus` wraps into a second column once its height is bounded
     // below its content, so a short viewport scrolls it instead.
     return LayoutBuilder(
@@ -560,6 +575,8 @@ class _TorchButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final glass = TonalButtonTheme.glassOf(context);
     return ValueListenableBuilder<MobileScannerState>(
       valueListenable: controller,
       builder: (context, state, _) {
@@ -572,19 +589,22 @@ class _TorchButton extends StatelessWidget {
           child: AnimatedOpacity(
             opacity: available ? 1 : 0,
             duration: kThemeAnimationDuration,
-            child: ElasticButton(
-              child: IconButton.filled(
+            child: ElasticPress(
+              child: IconButton(
                 tooltip: context.appLocalizations.torch,
                 isSelected: lit,
-                iconSize: 32,
-                style: IconButton.styleFrom(fixedSize: const Size.square(64)),
+                style: IconButton.styleFrom(
+                  fixedSize: const Size.square(_torchSize),
+                  iconSize: _torchIconSize,
+                  backgroundColor: lit && !glass ? colorScheme.primary : null,
+                  foregroundColor: lit ? colorScheme.onPrimary : null,
+                ).merge(focusRingStyle(colorScheme, standsOff: lit && !glass)),
                 onPressed: controller.toggleTorch,
-                icon: const GlyphIcon(AppGlyphs.torchOff, fill: 1),
+                icon: const GlyphIcon(AppGlyphs.torchOff),
                 selectedIcon: GlyphIcon(
                   torchState == TorchState.auto
                       ? AppGlyphs.torchAuto
                       : AppGlyphs.torch,
-                  fill: 1,
                 ),
               ),
             ),

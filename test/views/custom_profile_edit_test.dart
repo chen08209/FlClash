@@ -480,6 +480,12 @@ void main() {
             .descendant(of: picker, matching: find.byType(Scrollable))
             .first,
       );
+      // Clears the docked search, which floats over the end of the list.
+      await Scrollable.ensureVisible(
+        tester.element(offered(_hongKong.label)),
+        alignment: 0.5,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(offered(_hongKong.label));
       await tester.pump();
       expect(find.byTooltip(l.confirm), findsNothing);

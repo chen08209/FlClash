@@ -1,13 +1,13 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -254,9 +254,13 @@ class NumberOverrideField<M> extends ValueOverrideField<M, int> {
   final int maxLength;
 
   String? _validate(String? value, ConfigLabel title) {
+    final label = title(currentAppLocalizations);
     final number = int.tryParse(value?.trim() ?? '');
-    return number == null || number < min || number > max
-        ? currentAppLocalizations.numberTip(title(currentAppLocalizations))
+    if (number == null) {
+      return currentAppLocalizations.numberTip(label);
+    }
+    return number < min || number > max
+        ? currentAppLocalizations.numberRangeTip(label, '$min', '$max')
         : null;
   }
 
@@ -535,12 +539,11 @@ class OverrideView<K extends OverrideKey, M> extends ConsumerWidget {
           label: appLocalizations.nullTip(target.entries(appLocalizations)),
           description: target.description(appLocalizations),
           illustration: spec.illustration,
-          action: ElasticButton(
-            child: FilledButton.tonalIcon(
-              onPressed: () => _handleAdd(context, ref),
-              icon: const GlyphIcon(AppGlyphs.addCircle, fill: 1),
-              label: Text(addEntry),
-            ),
+          action: TonalButton(
+            size: TonalButtonSize.bar,
+            glyph: AppGlyphs.addCircle,
+            label: addEntry,
+            onPressed: () => _handleAdd(context, ref),
           ),
         ),
         child: _OverrideList(spec: spec),

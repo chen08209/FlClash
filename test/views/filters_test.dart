@@ -1,6 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -28,10 +29,20 @@ void main() {
 
   Finder dialogField(int index) => find
       .descendant(
-        of: find.byType(CommonDialog),
+        of: find.byType(FormPage),
         matching: find.byType(TextFormField),
       )
       .at(index);
+
+  Finder banner(String text) =>
+      find.descendant(of: find.byType(ErrorBanner), matching: find.text(text));
+
+  Future<void> save(WidgetTester tester) async {
+    await tester.tap(
+      find.widgetWithText(TextButton, currentAppLocalizations.save),
+    );
+    await tester.pumpAndSettle();
+  }
 
   Future<void> pumpView(WidgetTester tester, {List<Filter>? filters}) async {
     tester.view.physicalSize = const Size(1000, 1600);
@@ -74,8 +85,7 @@ void main() {
   Future<void> submit(WidgetTester tester, String label, String regex) async {
     await tester.enterText(dialogField(0), label);
     await tester.enterText(dialogField(1), regex);
-    await tester.tap(find.text(currentAppLocalizations.confirm));
-    await tester.pumpAndSettle();
+    await save(tester);
   }
 
   testWidgets('lists the presets by their English labels', (tester) async {
@@ -110,29 +120,26 @@ void main() {
     await tester.pumpAndSettle();
     await submit(tester, taken, 'x');
     expect(
-      find.text(
-        currentAppLocalizations.existsTip(currentAppLocalizations.label),
-      ),
+      banner(currentAppLocalizations.existsTip(currentAppLocalizations.label)),
       findsOneWidget,
     );
 
     await submit(tester, ' ', ' ');
     expect(
-      find.text(
-        currentAppLocalizations.emptyTip(currentAppLocalizations.label),
-      ),
+      banner(currentAppLocalizations.emptyTip(currentAppLocalizations.label)),
       findsOneWidget,
     );
+
+    await tester.enterText(dialogField(0), 'Fresh');
+    await tester.pump();
     expect(
-      find.text(
-        currentAppLocalizations.emptyTip(currentAppLocalizations.regex),
-      ),
+      banner(currentAppLocalizations.emptyTip(currentAppLocalizations.regex)),
       findsOneWidget,
     );
     expect(saved(), defaultFilters);
   });
 
-  testWidgets('adding keeps the dialog open over what the core rejects', (
+  testWidgets('adding keeps the form open over what the core rejects', (
     tester,
   ) async {
     await pumpView(tester);
@@ -141,15 +148,14 @@ void main() {
     await tester.pumpAndSettle();
     await submit(tester, 'Broken', '(hk');
 
-    expect(find.text('missing closing )'), findsOneWidget);
+    expect(banner('missing closing )'), findsOneWidget);
     expect(saved(), defaultFilters);
     verify(() => core.validateFilters(['(hk'])).called(1);
 
     await tester.enterText(dialogField(1), 'hk');
     await tester.pump();
     expect(find.text('missing closing )'), findsNothing);
-    await tester.tap(find.text(currentAppLocalizations.confirm));
-    await tester.pumpAndSettle();
+    await save(tester);
 
     expect(saved().last, const Filter(label: 'Broken', regex: 'hk'));
   });
@@ -183,7 +189,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip(currentAppLocalizations.delete));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(currentAppLocalizations.confirm));
+    await tester.tap(find.text(currentAppLocalizations.delete));
     await tester.pumpAndSettle();
 
     expect(saved(), isEmpty);

@@ -6,9 +6,8 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/widgets/animated_visibility.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:fl_clash/widgets/icon.dart';
-import 'package:fl_clash/widgets/sidebar.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -190,18 +189,6 @@ class AppSidebarContainer extends ConsumerWidget {
 
   const AppSidebarContainer({super.key, required this.child});
 
-  Widget _buildBackground({
-    required Color color,
-    required Color edge,
-    required Widget child,
-  }) {
-    return Material(
-      color: color,
-      shape: BorderDirectional(end: BorderSide(color: edge)),
-      child: child,
-    );
-  }
-
   void _updateSideBarWidth(WidgetRef ref, double contentWidth) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(sideWidthProvider.notifier).value =
@@ -234,8 +221,8 @@ class AppSidebarContainer extends ConsumerWidget {
     final viewMode = navigationState.viewMode;
     final currentIndex = navigationState.currentIndex;
     final blur = ref.watch(windowBlurProvider);
-    final colorScheme = context.colorScheme;
-    final surfaceContainer = colorScheme.surfaceContainer;
+    final page = SurfaceLevel.page.colorOf(context.colorScheme);
+    final chrome = context.colorScheme.chromeSurface;
     void onSelected(int index) {
       _handleToPage(ref, navigationItems[index].label);
     }
@@ -243,16 +230,16 @@ class AppSidebarContainer extends ConsumerWidget {
     final hasSidebar = viewMode != ViewMode.mobile;
     final isLtr = Directionality.of(context) == TextDirection.ltr;
     return Container(
-      color: blur ? Colors.transparent : surfaceContainer,
+      color: blur ? Colors.transparent : page,
       child: Row(
         children: [
           AnimatedVisibility.sidebar(
             visible: hasSidebar,
-            child: _buildBackground(
+            child: Material(
               color: blur
-                  ? surfaceContainer.withValues(alpha: kSidebarBlurOpacity)
-                  : surfaceContainer,
-              edge: colorScheme.outlineVariant,
+                  ? chrome.withValues(alpha: kSidebarBlurOpacity)
+                  : chrome,
+              shape: BorderDirectional(end: Divider.createBorderSide(context)),
               child: MediaQuery.removePadding(
                 context: context,
                 removeLeft: !isLtr,

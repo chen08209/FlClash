@@ -1,8 +1,5 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/models/common.dart';
-import 'package:fl_clash/models/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
@@ -29,7 +26,6 @@ class ListEditorPage<T, K> extends ConsumerStatefulWidget {
   final List<CommonPopupMenuItem> addMenuItems;
   final String emptyLabel;
   final double? itemExtent;
-  final bool selectionEnabled;
   final K Function(T item) idOf;
   final void Function(Set<K> ids)? onDelete;
   final Iterable<String?> Function(T item)? searchFieldsOf;
@@ -46,7 +42,6 @@ class ListEditorPage<T, K> extends ConsumerStatefulWidget {
     this.addMenuItems = const [],
     required this.emptyLabel,
     this.itemExtent,
-    this.selectionEnabled = false,
     required this.idOf,
     this.onDelete,
     this.searchFieldsOf,
@@ -77,7 +72,7 @@ class _ListEditorPageState<T, K> extends ConsumerState<ListEditorPage<T, K>> {
   }
 
   Set<K> _liveSelection(List<T>? items) {
-    if (!widget.selectionEnabled || _selected.isEmpty || items == null) {
+    if (_selected.isEmpty || items == null) {
       return const {};
     }
     return items.map(widget.idOf).where(_selected.contains).toSet();
@@ -100,9 +95,6 @@ class _ListEditorPageState<T, K> extends ConsumerState<ListEditorPage<T, K>> {
   }
 
   void _handleToggleSelected(T item) {
-    if (!widget.selectionEnabled) {
-      return;
-    }
     setState(() {
       _selected = {..._selected}..addOrRemove(widget.idOf(item));
     });
@@ -355,11 +347,11 @@ class ListEditorAddAction extends StatelessWidget {
       );
     }
     return CommonPopupBox(
+      anchorShift: Offset(0, context.isMobileView ? 0 : 20),
       targetBuilder: (open) => AppBarActionButton(
         data: IconButtonData(
           glyph: AppGlyphs.addCircle,
-          onPressed: () =>
-              open(offset: Offset(0, context.isMobileView ? 0 : 20)),
+          onPressed: open,
           tooltip: appLocalizations.add,
         ),
       ),

@@ -265,4 +265,57 @@ void main() {
     expect(find.byType(CommonDialog), findsNothing);
     expect(find.byType(NestedFormSheet<ProxyGroup>), findsOneWidget);
   });
+
+  testWidgets('an alert from a page inside a form sheet opens where the '
+      'sheet sits', (tester) async {
+    tester.view.physicalSize = const Size(1000, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final container = ProviderContainer(
+      overrides: [
+        viewSizeProvider.overrideWithBuild((_, _) => const Size(1000, 800)),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    final pageNavigator = GlobalKey<NavigatorState>();
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: TestApp(
+          homeBuilder: (child) => Navigator(
+            key: pageNavigator,
+            pages: [MaterialPage(child: child)],
+            onDidRemovePage: (_) {},
+          ),
+          child: const Scaffold(body: SizedBox.shrink()),
+        ),
+      ),
+    );
+    unawaited(
+      pageNavigator.currentState!.push(
+        FormSheetRoute<void>(
+          barrierColor: Colors.black26,
+          barrierLabel: 'sheet',
+          builder: (_) => Navigator(
+            onGenerateRoute: (_) => PagedSheetRoute<void>(
+              builder: (_) => const Material(child: TextField(autofocus: true)),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    unawaited(dialogs.showMessage(message: const TextSpan(text: 'nested')));
+    await tester.pumpAndSettle();
+
+    final alertNavigator = tester.state<NavigatorState>(
+      find
+          .ancestor(of: find.text('nested'), matching: find.byType(Navigator))
+          .first,
+    );
+    expect(alertNavigator, same(pageNavigator.currentState));
+  });
 }

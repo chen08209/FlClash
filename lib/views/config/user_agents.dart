@@ -1,13 +1,10 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-const _defaultValue = '';
 
 List<String> _visibleUserAgents(List<String> saved, String? selected) =>
     {...saved, ?selected}.toList();
@@ -90,6 +87,8 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
       message: TextSpan(
         text: appLocalizations.deleteTip(appLocalizations.userAgent),
       ),
+      destructive: true,
+      confirmText: appLocalizations.delete,
     );
     if (!mounted || res != true) {
       return;
@@ -98,19 +97,6 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
     if (_selected == userAgent) {
       _select(null);
     }
-  }
-
-  Widget _buildRadioGroup(String? selected, Widget child) {
-    return RadioGroup<String>(
-      groupValue: selected ?? _defaultValue,
-      onChanged: (value) {
-        if (value == null) {
-          return;
-        }
-        _select(value == _defaultValue ? null : value);
-      },
-      child: child,
-    );
   }
 
   List<CommonPopupMenuItem> _buildMenuItems(String userAgent) {
@@ -145,7 +131,6 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
         child: ItemPositionProvider(
           position: ItemPosition.get(index + 1, entries.length + 1),
           child: _UserAgentItem(
-            value: userAgent,
             label: userAgent,
             isSelected: userAgent == selected,
             onSelected: () {
@@ -184,39 +169,33 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
           icon: const GlyphIcon(AppGlyphs.addCircle),
         ),
       ],
-      body: _buildRadioGroup(
-        selected,
-        ReorderableListView.builder(
-          padding: const EdgeInsets.all(
-            16,
-          ).copyWith(top: context.contentTopPadding),
-          buildDefaultDragHandles: false,
-          header: ItemPositionProvider(
-            position: ItemPosition.get(0, entries.length + 1),
-            child: _UserAgentItem(
-              value: _defaultValue,
-              label: appLocalizations.defaultText,
-              isSelected: selected == null,
-              onSelected: () {
-                _select(null);
-              },
-            ),
+      body: ReorderableListView.builder(
+        padding: const EdgeInsets.all(
+          16,
+        ).copyWith(top: context.contentTopPadding),
+        buildDefaultDragHandles: false,
+        header: ItemPositionProvider(
+          position: ItemPosition.get(0, entries.length + 1),
+          child: _UserAgentItem(
+            label: appLocalizations.defaultText,
+            isSelected: selected == null,
+            onSelected: () {
+              _select(null);
+            },
           ),
-          itemCount: entries.length,
-          itemBuilder: (_, index) => _buildItem(entries, index, selected),
-          // The drag proxy is built in the navigator overlay, outside the
-          // page's RadioGroup.
-          proxyDecorator: (_, index, animation) {
-            return commonProxyDecorator(
-              _buildRadioGroup(selected, _buildItem(entries, index, selected)),
-              index,
-              animation,
-            );
-          },
-          onReorderItem: (oldIndex, newIndex) {
-            _save(entries.copyAndReorder(oldIndex, newIndex));
-          },
         ),
+        itemCount: entries.length,
+        itemBuilder: (_, index) => _buildItem(entries, index, selected),
+        proxyDecorator: (_, index, animation) {
+          return commonProxyDecorator(
+            _buildItem(entries, index, selected),
+            index,
+            animation,
+          );
+        },
+        onReorderItem: (oldIndex, newIndex) {
+          _save(entries.copyAndReorder(oldIndex, newIndex));
+        },
       ),
     );
   }
@@ -224,14 +203,12 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
 
 class _UserAgentItem extends StatelessWidget {
   const _UserAgentItem({
-    required this.value,
     required this.label,
     required this.isSelected,
     required this.onSelected,
     this.trailing,
   });
 
-  final String value;
   final String label;
   final bool isSelected;
   final VoidCallback onSelected;
@@ -248,13 +225,7 @@ class _UserAgentItem extends StatelessWidget {
       ),
       leading: SizedBox.square(
         dimension: 24,
-        child: ExcludeFocus(
-          child: Radio<String>(
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            visualDensity: VisualDensity.compact,
-            value: value,
-          ),
-        ),
+        child: isSelected ? const Center(child: SelectionCheck()) : null,
       ),
       title: Text(label, maxLines: 2, overflow: TextOverflow.ellipsis),
       trailing: trailing,

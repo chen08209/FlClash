@@ -1,4 +1,4 @@
-import 'package:fl_clash/widgets/keyed_animated_list.dart';
+import 'package:fl_clash/ui/keyed_animated_list.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 

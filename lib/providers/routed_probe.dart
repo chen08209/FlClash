@@ -150,12 +150,6 @@ mixin RoutedProbe<K, V>
     state = RoutedProbeState(Map.of(state.entries)..remove(target));
   }
 
-  void retry(K target) {
-    if (_entryOf(target).phase == ProbePhase.failed) {
-      _mark(target);
-    }
-  }
-
   /// A refresh is the user asking, so it runs for targets nobody watches
   /// too; the answer lands in the cache and stays until the route moves.
   void refresh(Iterable<K> targets) {

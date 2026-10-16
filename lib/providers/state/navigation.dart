@@ -110,23 +110,6 @@ MoreToolsSelectorState moreToolsSelectorState(Ref ref) {
 }
 
 @riverpod
-bool isCurrentPage(
-  Ref ref,
-  PageLabel pageLabel, {
-  bool Function(PageLabel pageLabel, ViewMode viewMode)? handler,
-}) {
-  final currentPageLabel = ref.watch(currentPageLabelProvider);
-  if (pageLabel == currentPageLabel) {
-    return true;
-  }
-  if (handler != null) {
-    final viewMode = ref.watch(viewModeProvider);
-    return handler(currentPageLabel, viewMode);
-  }
-  return false;
-}
-
-@riverpod
 double overlayTopOffset(Ref ref) {
   final isMobileView = ref.watch(isMobileViewProvider);
   final version = ref.watch(versionProvider);

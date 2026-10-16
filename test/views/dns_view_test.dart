@@ -185,7 +185,7 @@ void main() {
     await tester.tap(find.text(currentAppLocalizations.dnsMode));
     await tester.pumpAndSettle();
 
-    expect(find.byType(OptionsDialog<(DnsMode,)?>), findsNothing);
+    expect(find.byType(CommonPopupMenu), findsNothing);
     expect(config().dnsOverrideKeys, {DnsOverrideKey.enhancedMode});
     expect(config().dns.enhancedMode, defaultDns.enhancedMode);
     expect(defaultDns.enhancedMode, DnsMode.redirHost);

@@ -410,7 +410,7 @@ class TunSection extends ConsumerWidget {
       ),
     );
     final appLocalizations = context.appLocalizations;
-    return generateSectionV3(
+    return generateSection(
       title: appLocalizations.tun,
       items: tunItems(
         isLinux: system.isLinux,
@@ -492,11 +492,11 @@ class VpnSections extends ConsumerWidget {
     );
     return Column(
       children: [
-        generateSectionV3(
+        generateSection(
           items: const [VPNItem()],
           footer: appLocalizations.vpnEnableDesc,
         ),
-        generateSectionV3(
+        generateSection(
           title: 'VPN',
           items: const [
             VpnSystemProxyItem(),
@@ -523,7 +523,7 @@ class SystemProxySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return generateSectionV3(
+    return generateSection(
       title: appLocalizations.system,
       items: [
         const SystemProxyItem(),
@@ -552,7 +552,7 @@ class NetworkOptionsSection extends ConsumerWidget {
         if (isCustomInterfaceName) appLocalizations.interfaceNameDesc,
       ],
     ];
-    return generateSectionV3(
+    return generateSection(
       title: appLocalizations.options,
       items: networkOptionsItems(
         isDesktop: system.isDesktop,
@@ -578,7 +578,7 @@ class NetworkListView extends StatelessWidget {
         if (system.isDesktop) const SystemProxySection(),
         const NetworkOptionsSection(),
         const TunSection(),
-        generateSectionV3(
+        generateSection(
           title: context.appLocalizations.outbound,
           items: outboundItems(
             isDesktop: system.isDesktop,

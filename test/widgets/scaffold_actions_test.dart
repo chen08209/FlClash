@@ -1,5 +1,4 @@
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -30,26 +29,20 @@ Future<List<String>> _pumpBar(
   await tester.pumpWidget(
     TestApp(
       wrapInProviderScope: true,
-      child: DockedPageScope(
-        docked: true,
-        child: CommonScaffold(
-          title: 'Page',
-          searchState: hasSearch ? AppBarSearchState(onSearch: (_) {}) : null,
-          primaryAction: primary == null
-              ? null
-              : action(primary, isLoading: primaryLoading),
-          iconActions: [for (final label in icons) action(label)],
-          foldPrimaryAction: foldPrimary,
-          selectionActions: [for (final label in selection) action(label)],
-          menuItems: [
-            for (final label in menuItems)
-              CommonPopupMenuItem(
-                label: label,
-                onPressed: () => taps.add(label),
-              ),
-          ],
-          body: const SizedBox.expand(),
-        ),
+      child: CommonScaffold(
+        title: 'Page',
+        searchState: hasSearch ? AppBarSearchState(onSearch: (_) {}) : null,
+        primaryAction: primary == null
+            ? null
+            : action(primary, isLoading: primaryLoading),
+        iconActions: [for (final label in icons) action(label)],
+        foldPrimaryAction: foldPrimary,
+        selectionActions: [for (final label in selection) action(label)],
+        menuItems: [
+          for (final label in menuItems)
+            CommonPopupMenuItem(label: label, onPressed: () => taps.add(label)),
+        ],
+        body: const SizedBox.expand(),
       ),
     ),
   );
@@ -249,5 +242,68 @@ void main() {
     await tester.tap(_inBar(find.byTooltip('Search')));
     await tester.pumpAndSettle();
     expectSplit('Clear search');
+  });
+
+  for (final (type, buttons) in [
+    (SheetType.bottomSheet, ['Delay test', 'Close']),
+    (SheetType.sideSheet, ['Search', 'Delay test', 'Close']),
+  ]) {
+    testWidgets('a ${type.name} groups its primary action with its close '
+        'button', (tester) async {
+      await tester.pumpWidget(
+        TestApp(
+          wrapInProviderScope: true,
+          child: SheetProvider(
+            type: type,
+            child: CommonScaffold(
+              title: 'Sheet',
+              searchState: AppBarSearchState(onSearch: (_) {}),
+              primaryAction: IconButtonData(
+                glyph: AppGlyphs.bolt,
+                onPressed: () {},
+                tooltip: 'Delay test',
+              ),
+              body: const SizedBox.expand(),
+            ),
+          ),
+        ),
+      );
+
+      expect(_barButtons(tester), buttons);
+      expect(
+        _inGroup('Close').evaluate().single,
+        _inGroup('Delay test').evaluate().single,
+      );
+      expect(_inGroup('Search'), findsNothing);
+    });
+  }
+
+  testWidgets('only a page above the fixed navigation bar floats its primary '
+      'action', (tester) async {
+    Future<void> pump({required bool inBar}) => tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        child: PrimaryActionInBarScope(
+          inBar: inBar,
+          child: CommonScaffold(
+            title: 'Page',
+            primaryAction: IconButtonData(
+              glyph: AppGlyphs.add,
+              onPressed: () {},
+              tooltip: 'Add',
+            ),
+            body: const SizedBox.expand(),
+          ),
+        ),
+      ),
+    );
+
+    await pump(inBar: true);
+    expect(_barButtons(tester), ['Add']);
+    expect(find.byType(FloatingActionButton), findsNothing);
+
+    await pump(inBar: false);
+    expect(_barButtons(tester), isEmpty);
+    expect(find.byType(FloatingActionButton), findsOneWidget);
   });
 }

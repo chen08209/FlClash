@@ -360,11 +360,35 @@ class CodeForgeController implements DeltaTextInputClient {
   /// Lines break at LF alone, and a line's text leaves out the CR of a CRLF
   /// pair that its offsets still count, so CRLF text comes in as LF.
   static String normalizeLineBreaks(String text) =>
-      text.replaceAll('\r\n', '\n');
+      text.contains('\r') ? text.replaceAll('\r\n', '\n') : text;
 
   /// Keeps the undo history; a caller loading another file clears it.
   set text(String newText) {
     final document = normalizeLineBreaks(newText);
+    _loadGeneration++;
+    _replaceDocument(document, Rope(document));
+  }
+
+  static const _backgroundLoadLength = 1 << 17;
+  int _loadGeneration = 0;
+
+  /// Sets [text], building a large document off the UI isolate.
+  Future<void> loadText(String newText) async {
+    final document = normalizeLineBreaks(newText);
+    if (document.length < _backgroundLoadLength) {
+      text = document;
+      return;
+    }
+    final generation = ++_loadGeneration;
+    final rope = await Rope.inBackground(document);
+    if (_isDisposed || generation != _loadGeneration) {
+      rope.dispose();
+      return;
+    }
+    _replaceDocument(document, rope);
+  }
+
+  void _replaceDocument(String document, Rope rope) {
     final previousLength = length;
     _flushTimer?.cancel();
     _debounceTimer?.cancel();
@@ -379,7 +403,7 @@ class CodeForgeController implements DeltaTextInputClient {
     }
     _pendingSelectionReplacement = null;
     _rope.dispose();
-    _rope = Rope(document);
+    _rope = rope;
     _currentVersion++;
     _lineEditLog.clear();
     _lineEditLogStart = _currentVersion;

@@ -62,7 +62,6 @@ void main() {
     expect(iconCallCount, 1);
     expect(results.first, isNotNull);
     expect(cached, same(results.first));
-    expect(app.hasPackageIcon('com.a'), isTrue);
     expect(app.getCachedPackageIcon('com.a'), same(results.first));
 
     await app.getPackageIcon('com.b');
@@ -140,8 +139,6 @@ void main() {
     expect(await app.getPackageIcon('com.a'), isNull);
     expect(await app.getPackageIcon(''), isNull);
     expect(iconCallCount, 2);
-    expect(app.hasPackageIcon('com.a'), isTrue);
-    expect(app.hasPackageIcon(''), isTrue);
   });
 
   test('uses false when crash detection is unavailable', () async {

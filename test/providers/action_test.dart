@@ -52,7 +52,7 @@ void main() {
       expect(profile?.url, edited.url);
     });
 
-    test('updates selection, inserts first profile, and reorders profiles', () {
+    test('updates selection and inserts the first profile', () {
       final first = Profile.normal(label: 'First');
       final second = Profile.normal(label: 'Second');
       final container = ProviderContainer(
@@ -75,9 +75,6 @@ void main() {
       action.putProfile(second);
       expect(container.read(currentProfileIdProvider), second.id);
       expect(container.read(profilesProvider), [updatedFirst, second]);
-
-      action.reorder([second, updatedFirst]);
-      expect(container.read(profilesProvider), [second, updatedFirst]);
     });
 
     test(
@@ -109,25 +106,6 @@ void main() {
         expect(container.read(profilesProvider), profiles);
       },
     );
-
-    test('setProfileAndAutoApply stores a non-current profile', () {
-      final current = Profile.normal(label: 'Current');
-      final other = Profile.normal(label: 'Other');
-      final container = ProviderContainer(
-        overrides: [
-          currentProfileIdProvider.overrideWithBuild((_, _) => current.id),
-          profilesProvider.overrideWith(() => TestProfiles([current])),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      container
-          .read(profilesActionProvider.notifier)
-          .setProfileAndAutoApply(other);
-
-      expect(container.read(profilesProvider), [current, other]);
-      expect(container.read(currentProfileIdProvider), current.id);
-    });
   });
 
   group('ScriptsAction', () {

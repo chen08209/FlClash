@@ -23,8 +23,9 @@ class _FiltersViewState extends ConsumerState<FiltersView> {
   }
 
   Future<void> _handleAddOrUpdate([Filter? filter]) async {
-    final res = await dialogs.showCommonDialog<Filter>(
-      child: _FilterDialog(
+    final res = await showFormSheet<Filter>(
+      context: context,
+      builder: (_) => _FilterForm(
         filter: filter,
         checkRegex: _checkRegex,
         reservedLabels: {
@@ -66,7 +67,6 @@ class _FiltersViewState extends ConsumerState<FiltersView> {
     final appLocalizations = context.appLocalizations;
     return ListEditorPage<Filter, String>(
       title: appLocalizations.filters,
-      selectionEnabled: true,
       idOf: (filter) => filter.label,
       itemsOf: (ref) =>
           ref.watch(appSettingProvider.select((state) => state.filters)),
@@ -133,27 +133,29 @@ class _FilterItem extends StatelessWidget {
   }
 }
 
-class _FilterDialog extends StatefulWidget {
+enum _FilterField { label, regex }
+
+class _FilterForm extends StatefulWidget {
   final Filter? filter;
   final Future<String?> Function(String regex) checkRegex;
   final Set<String> reservedLabels;
 
-  const _FilterDialog({
+  const _FilterForm({
     required this.filter,
     required this.checkRegex,
     required this.reservedLabels,
   });
 
   @override
-  State<_FilterDialog> createState() => _FilterDialogState();
+  State<_FilterForm> createState() => _FilterFormState();
 }
 
-class _FilterDialogState extends State<_FilterDialog> {
-  final _formKey = GlobalKey<FormState>();
+class _FilterFormState extends State<_FilterForm> {
   late final TextEditingController _labelController;
   late final TextEditingController _regexController;
   String? _regexError;
   bool _checking = false;
+  bool _attempted = false;
 
   @override
   void initState() {
@@ -169,28 +171,41 @@ class _FilterDialogState extends State<_FilterDialog> {
     super.dispose();
   }
 
-  String? _validateLabel(String? value) {
+  ({_FilterField field, String message})? _issue() {
     final appLocalizations = context.appLocalizations;
-    final label = value?.trim() ?? '';
+    final label = _labelController.text.trim();
     if (label.isEmpty) {
-      return appLocalizations.emptyTip(appLocalizations.label);
+      return (
+        field: _FilterField.label,
+        message: appLocalizations.emptyTip(appLocalizations.label),
+      );
     }
     if (widget.reservedLabels.contains(label)) {
-      return appLocalizations.existsTip(appLocalizations.label);
+      return (
+        field: _FilterField.label,
+        message: appLocalizations.existsTip(appLocalizations.label),
+      );
     }
-    return null;
-  }
-
-  String? _validateRegex(String? value) {
-    final appLocalizations = context.appLocalizations;
-    if (value == null || value.trim().isEmpty) {
-      return appLocalizations.emptyTip(appLocalizations.regex);
+    if (_regexController.text.trim().isEmpty) {
+      return (
+        field: _FilterField.regex,
+        message: appLocalizations.emptyTip(appLocalizations.regex),
+      );
+    }
+    if (_regexError case final error?) {
+      return (field: _FilterField.regex, message: error);
     }
     return null;
   }
 
   Future<void> _handleSubmit() async {
-    if (_checking || _formKey.currentState?.validate() == false) {
+    if (_checking) {
+      return;
+    }
+    if (_issue() != null) {
+      setState(() {
+        _attempted = true;
+      });
       return;
     }
     final filter = Filter(
@@ -207,6 +222,7 @@ class _FilterDialogState extends State<_FilterDialog> {
       if (mounted) {
         setState(() {
           _checking = false;
+          _attempted = true;
           _regexError = error;
         });
       }
@@ -219,62 +235,56 @@ class _FilterDialogState extends State<_FilterDialog> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonDialog(
+    final issue = _attempted ? _issue() : null;
+    return FormPage(
       title: widget.filter == null
           ? appLocalizations.add
           : appLocalizations.edit,
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          child: Text(appLocalizations.cancel),
-        ),
-        TextButton(
-          onPressed: _checking ? null : _handleSubmit,
-          child: Text(appLocalizations.confirm),
-        ),
-      ],
-      child: Form(
-        key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: Wrap(
-          runSpacing: 16,
-          children: [
-            TextFormField(
-              controller: _labelController,
-              autofocus: widget.filter == null,
-              validator: _validateLabel,
-              inputFormatters: TextInputLimits.limit(TextInputLimits.name),
-              decoration: InputDecoration(labelText: appLocalizations.label),
+      onSave: _handleSubmit,
+      saving: _checking,
+      error: issue?.message,
+      children: [
+        generateSection(
+          items: [
+            FormRow(
+              title: appLocalizations.label,
+              invalid: issue?.field == _FilterField.label,
+              trailing: FormRowTextField(
+                controller: _labelController,
+                autofocus: widget.filter == null,
+                hintText: appLocalizations.required,
+                textInputAction: TextInputAction.next,
+                inputFormatters: TextInputLimits.limit(TextInputLimits.name),
+                onChanged: (_) {
+                  if (_attempted) {
+                    setState(() {});
+                  }
+                },
+              ),
             ),
-            TextFormField(
-              controller: _regexController,
-              validator: _validateRegex,
-              forceErrorText: _regexError,
-              onChanged: (_) {
-                if (_regexError != null) {
-                  setState(() {
-                    _regexError = null;
-                  });
-                }
-              },
-              minLines: 1,
-              maxLines: 3,
-              autocorrect: false,
-              enableSuggestions: false,
-              textInputAction: TextInputAction.done,
-              inputFormatters: TextInputLimits.limit(TextInputLimits.filter),
-              onFieldSubmitted: (_) => _handleSubmit(),
-              decoration: InputDecoration(
-                labelText: appLocalizations.regex,
+            FormRow(
+              title: appLocalizations.regex,
+              invalid: issue?.field == _FilterField.regex,
+              trailing: FormRowTextField(
+                controller: _regexController,
                 hintText: r'(?i)hk|hong\s*kong',
-                errorMaxLines: 3,
+                autocorrect: false,
+                enableSuggestions: false,
+                textInputAction: TextInputAction.done,
+                inputFormatters: TextInputLimits.limit(TextInputLimits.filter),
+                onChanged: (_) {
+                  if (_attempted || _regexError != null) {
+                    setState(() {
+                      _regexError = null;
+                    });
+                  }
+                },
+                onFieldSubmitted: (_) => _handleSubmit(),
               ),
             ),
           ],
         ),
-      ),
+      ],
     );
   }
 }

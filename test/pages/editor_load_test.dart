@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:code_forge/code_forge.dart';
-import 'package:fl_clash/common/navigator.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/widgets/popup.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/navigator.dart';
+import 'package:fl_clash/ui/popup.dart';
 import 'package:flutter/gestures.dart' show kSecondaryButton;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -49,9 +49,33 @@ void main() {
     );
   });
 
-  testWidgets('loads only once the push transition has finished', (
+  testWidgets('mounts the editor once a large document is built', (
     tester,
   ) async {
+    final document = 'mode: rule\n' * 20000;
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [
+          viewSizeProvider.overrideWithBuild((_, _) => const Size(1200, 1000)),
+        ],
+        child: EditorPage(
+          title: 'Editor',
+          load: () async => document,
+          onSave: (_, _, _) {},
+        ),
+      ),
+    );
+    await settle(tester);
+
+    final editor = tester.widget<CodeForge>(find.byType(CodeForge));
+    expect(editor.controller.length, document.length);
+    expect(
+      editor.controller.selection,
+      const TextSelection.collapsed(offset: 0),
+    );
+  });
+
+  testWidgets('loads as the push transition starts', (tester) async {
     late BuildContext home;
     await tester.pumpWidget(
       TestApp(
@@ -67,7 +91,7 @@ void main() {
       ),
     );
     Animation<double>? transition;
-    AnimationStatus? statusAtLoad;
+    var loads = 0;
     unawaited(
       BaseNavigator.push<void>(
         home,
@@ -77,7 +101,7 @@ void main() {
             return EditorPage(
               title: 'Editor',
               load: () async {
-                statusAtLoad = transition!.status;
+                loads++;
                 return 'mode: rule';
               },
               onSave: (_, _, _) {},
@@ -86,9 +110,13 @@ void main() {
         ),
       ),
     );
-    await settle(tester, 12);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
 
-    expect(statusAtLoad, AnimationStatus.completed);
+    expect(transition!.status, AnimationStatus.forward);
+    expect(loads, 1);
+
+    await settle(tester, 12);
     expect(find.byType(CodeForge), findsOneWidget);
   });
 

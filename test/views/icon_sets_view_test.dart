@@ -1,3 +1,4 @@
+import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -115,6 +116,11 @@ Future<void> _openMenu(WidgetTester tester, String name) async {
   await tester.pumpAndSettle();
 }
 
+Finder _formField(String title) => find.descendant(
+  of: find.widgetWithText(FormRow, title),
+  matching: find.byType(TextFormField),
+);
+
 void main() {
   testWidgets('lists each set with its size and where it comes from', (
     tester,
@@ -140,10 +146,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Import from URL'));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'URL'),
-      'https://example.com/set.json',
-    );
+    await tester.enterText(_formField('URL'), 'https://example.com/set.json');
     await tester.tap(find.text('Submit'));
     await tester.pumpAndSettle();
 
@@ -163,10 +166,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Import from URL'));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'URL'),
-      'https://example.com/page.html',
-    );
+    await tester.enterText(_formField('URL'), 'https://example.com/page.html');
     await tester.tap(find.text('Submit'));
     await tester.pumpAndSettle();
 
@@ -189,7 +189,7 @@ void main() {
     await _openMenu(tester, 'Qure');
     await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Confirm'));
+    await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
 
     expect(iconSets.deleted, [_remote.id]);
@@ -225,7 +225,7 @@ void main() {
     await tester.tap(find.text('Options'));
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(TextFormField, 'URL'), findsNothing);
+    expect(_formField('URL'), findsNothing);
 
     await tester.enterText(find.byType(TextField), 'Flags');
     await tester.tap(find.text('Submit'));
