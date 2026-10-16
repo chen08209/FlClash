@@ -311,7 +311,6 @@ class ModalSideSheetRoute<T> extends PopupRoute<T>
     with DragBackRouteMixin<T>, SheetCoverRouteMixin<T> {
   ModalSideSheetRoute({
     required this.builder,
-    this.capturedThemes,
     this.barrierLabel,
     this.barrierOnTapHint,
     this.backgroundColor,
@@ -319,8 +318,6 @@ class ModalSideSheetRoute<T> extends PopupRoute<T>
   });
 
   final WidgetBuilder builder;
-
-  final CapturedThemes? capturedThemes;
 
   final Color? backgroundColor;
 
@@ -384,9 +381,7 @@ class ModalSideSheetRoute<T> extends PopupRoute<T>
       ),
     );
 
-    final Widget sideSheet = ElevatedSurfaceTheme(child: content);
-
-    return capturedThemes?.wrap(sideSheet) ?? sideSheet;
+    return ElevatedSurfaceTheme(child: content);
   }
 
   @override
@@ -433,10 +428,6 @@ Future<T?> showModalSideSheet<T>({
   return navigator.push(
     ModalSideSheetRoute<T>(
       builder: builder,
-      capturedThemes: InheritedTheme.capture(
-        from: context,
-        to: navigator.context,
-      ),
       barrierLabel: localizations.scrimLabel,
       barrierOnTapHint: localizations.scrimOnTapHint(
         localizations.bottomSheetLabel,

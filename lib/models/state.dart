@@ -1,4 +1,5 @@
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/ui/color.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -138,7 +139,7 @@ abstract class ThemeColorsSelectorState with _$ThemeColorsSelectorState {
   const factory ThemeColorsSelectorState({
     required int? primaryColor,
     required List<int> primaryColors,
-    required DynamicSchemeVariant schemeVariant,
+    required ColorStyle colorStyle,
     required bool isDefault,
   }) = _ThemeColorsSelectorState;
 }

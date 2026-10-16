@@ -40,6 +40,8 @@ const _projectionTime = 0.99 / (1 - 0.99) / 1000;
 
 const _settleTolerance = Tolerance(distance: 0.5, velocity: 10);
 
+const _peakEase = 120.0;
+
 /// [_settleTolerance] for a sheet about 500 pixels tall, in UIKit's 0.5 s.
 const _presentationTolerance = Tolerance(distance: 0.001, velocity: 0.02);
 
@@ -50,7 +52,6 @@ const _wheelTurnGap = Duration(milliseconds: 500);
 class SnapSheetRoute<T> extends PopupRoute<T> with SheetCoverRouteMixin<T> {
   SnapSheetRoute({
     required this.builder,
-    required this.capturedThemes,
     required this.sheetBarrierColor,
     required this.barrierLabel,
     this.detents = snapSheetDetents,
@@ -59,7 +60,6 @@ class SnapSheetRoute<T> extends PopupRoute<T> with SheetCoverRouteMixin<T> {
   });
 
   final SnapSheetBuilder builder;
-  final CapturedThemes capturedThemes;
   final Color sheetBarrierColor;
   final List<double> detents;
 
@@ -173,9 +173,7 @@ class SnapSheetRoute<T> extends PopupRoute<T> with SheetCoverRouteMixin<T> {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
   ) {
-    return capturedThemes.wrap(
-      ElevatedSurfaceTheme(child: _SnapSheet(route: this)),
-    );
+    return ElevatedSurfaceTheme(child: _SnapSheet(route: this));
   }
 }
 
@@ -197,6 +195,18 @@ class SnapSheetRoute<T> extends PopupRoute<T> with SheetCoverRouteMixin<T> {
     velocity: velocity.sign * math.min(strength, _hardestThrow) * reach,
     ratio: 1 - (1 - _thrownRatio) * math.min(strength / _fullThrow, 1),
   );
+}
+
+/// max(x, 0) with its corner rounded over [-width, width], never below it.
+double _rounded(double x, double width) {
+  if (x >= width) {
+    return x;
+  }
+  if (x <= -width) {
+    return 0;
+  }
+  final reach = x + width;
+  return reach * reach / (4 * width);
 }
 
 /// SpringSimulation picks its solution by the sign of a discriminant that a
@@ -311,6 +321,9 @@ class _SheetModel extends ChangeNotifier {
 
   /// Infinite while the content fills the height it was laid out within.
   double _fitHeight = double.infinity;
+  double _filledRoom = 0;
+  double? _measureRoom;
+  double _contentRoom = 0;
   double _contentLimit = 0;
   double contentHeight = 0;
   _RenderSheetContent? _content;
@@ -322,13 +335,12 @@ class _SheetModel extends ChangeNotifier {
   bool get _closing => _presentation.status == AnimationStatus.reverse;
 
   /// The tallest detent, lifted by the keyboard up to a peek below the top.
-  double get _top => math.max(
-    math.min(
-      _available - stackedSheetPeek,
-      detents.last * _available + _keyboard,
-    ),
-    0,
-  );
+  double get _top {
+    final peak = math.max(_available - stackedSheetPeek, 0.0);
+    final tallest = detents.last * _available;
+    final room = clampDouble(peak - tallest, 0, _peakEase);
+    return peak - _rounded(peak - tallest - _keyboard, room);
+  }
 
   /// A fit sheet follows its content up to each detent but never rests below
   /// the shortest one; each keeps what it shows above the keyboard.
@@ -344,8 +356,8 @@ class _SheetModel extends ChangeNotifier {
 
   double _stopFor(double detent, double shortest, double top) {
     final rest = clampDouble(_fitHeight, shortest, detent);
-    final shown = math.min(_fitHeight, rest);
-    return math.min(top, math.max(rest, shown + _keyboard));
+    final blank = rest - math.min(_fitHeight, rest);
+    return math.min(top, rest + _rounded(_keyboard - blank, blank / 2));
   }
 
   double get minHeight => _stops.first;
@@ -384,13 +396,29 @@ class _SheetModel extends ChangeNotifier {
       _Resting(:final stop) => stop,
       _ => null,
     };
-    _contentLimit = measured == null || !fitsContent
+    _contentRoom = measured == null || !fitsContent
         ? math.max(height, stops.first)
         : math.max(
             math.min(detents[measured] * available, _top - keyboard),
             height,
           );
+    if (!fitsContent || !_isShortOfLimit) {
+      _contentLimit = _contentRoom;
+    }
     return _contentLimit;
+  }
+
+  /// Short content lays out the same within its room and the limit it had.
+  bool get _isShortOfLimit =>
+      contentHeight <
+      math.min(_contentRoom, _contentLimit) - precisionErrorTolerance;
+
+  bool releaseLimit() {
+    if (_contentLimit == _contentRoom || _isShortOfLimit) {
+      return false;
+    }
+    _contentLimit = _contentRoom;
+    return true;
   }
 
   bool fitContent() {
@@ -401,11 +429,52 @@ class _SheetModel extends ChangeNotifier {
         : _fitHeight >= limit - precisionErrorTolerance
         ? _fitHeight
         : double.infinity;
+    return _refit(fit);
+  }
+
+  double get _tallestRoom =>
+      math.min(detents.last * _available, _top - _keyboard);
+
+  /// Content taller than the detent the sheet rests at is measured up to the
+  /// tallest one before the sheet moves, so a release lands where it ends.
+  void _measureBeforeMoving() {
+    final room = _tallestRoom;
+    if (!fitsContent ||
+        _fitHeight.isFinite ||
+        _contentLimit >= room - precisionErrorTolerance ||
+        _filledRoom >= room - precisionErrorTolerance) {
+      return;
+    }
+    _measureRoom = room;
+  }
+
+  void _measured(double natural, double room) {
+    final fills = natural >= room - precisionErrorTolerance;
+    _refit(fills ? double.infinity : natural);
+    if (fills) {
+      _filledRoom = room;
+    }
+  }
+
+  bool _refit(double fit) {
     if (fit == _fitHeight) {
       return false;
     }
+    _filledRoom = 0;
+    final shown = height;
     _fitHeight = fit;
+    _keepSettlingFrom(shown);
     return true;
+  }
+
+  void _keepSettlingFrom(double shown) {
+    final activity = _activity;
+    if (activity is! _Settling) {
+      return;
+    }
+    final offset = shown - _stops[activity.stop];
+    final launch = _launch(-offset, activity.velocity, overshoots: true);
+    _activity = _Settling(activity.stop, offset, launch.velocity, launch.ratio);
   }
 
   void endLayout() {
@@ -453,6 +522,9 @@ class _SheetModel extends ChangeNotifier {
     final height = this.height;
     _stopTicker();
     _activity = _Holding(height, dragged: dragged);
+    if (dragged) {
+      _measureBeforeMoving();
+    }
   }
 
   /// Returns how much of [delta], positive to grow, the sheet took: what is
@@ -572,6 +644,7 @@ class _SheetModel extends ChangeNotifier {
     }
     final launch = _launch(-offset, velocity, overshoots: true);
     _activity = _Settling(stop, offset, launch.velocity, launch.ratio);
+    _measureBeforeMoving();
     settling.value = true;
     if (!_ticker.isActive) {
       _lastTick = SchedulerBinding.instance.currentSystemFrameTimeStamp;
@@ -956,17 +1029,24 @@ class _RenderSheetViewport extends RenderBox
 
   @override
   void performLayout() {
-    final limit = _model.beginLayout(size.height, _keyboard);
+    var limit = _model.beginLayout(size.height, _keyboard);
     final content = _model._content;
     // The limit reaches the content outside its constraints, which may not
     // have changed.
-    if (content != null && content._limit != limit) {
+    if (content != null &&
+        (content._limit != limit || _model._measureRoom != null)) {
       invokeLayoutCallback<BoxConstraints>((_) => content.markNeedsLayout());
     }
     var height = _model.height;
     _layoutSheet(height);
+    if (content != null && _model.releaseLimit()) {
+      limit = _model._contentLimit;
+      invokeLayoutCallback<BoxConstraints>((_) => content.markNeedsLayout());
+      _layoutSheet(height);
+    }
     // Within the limit only the sheet around the content needs a new layout.
-    if (_model.fitsContent && _model.fitContent()) {
+    if (_model.fitsContent) {
+      _model.fitContent();
       final fitted = _model.height;
       if (fitted != height && fitted <= limit) {
         height = fitted;
@@ -983,14 +1063,14 @@ class _RenderSheetViewport extends RenderBox
       BoxConstraints(
         minWidth: size.width,
         maxWidth: size.width,
-        maxHeight: math.max(height, _model.minHeight) + _keyboard,
+        maxHeight: size.height,
       ),
       parentUsesSize: true,
     );
   }
 
   Matrix4 get _transform {
-    final sheet = child!.size.height;
+    final sheet = math.max(_shown, _model.minHeight) + _keyboard;
     final cover = _covering.value == null ? 0.0 : _cover.value;
     final scale = 1 - (1 - stackedSheetScale) * cover;
     final below = math.max(_model.minHeight - _shown, 0.0);
@@ -1107,6 +1187,15 @@ class _RenderSheetContent extends RenderProxyBox {
     final limit = _limit = model._contentLimit;
     final child = this.child;
     if (child != null) {
+      final room = model._measureRoom;
+      if (room != null) {
+        model._measureRoom = null;
+        child.layout(
+          BoxConstraints(minWidth: width, maxWidth: width, maxHeight: room),
+          parentUsesSize: true,
+        );
+        model._measured(child.size.height, room);
+      }
       child.layout(
         model.fitsContent
             ? BoxConstraints(minWidth: width, maxWidth: width, maxHeight: limit)

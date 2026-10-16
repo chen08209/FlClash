@@ -326,27 +326,30 @@ class CommonScaffoldState extends State<CommonScaffold> {
       ),
     );
     return Padding(
-      padding: EdgeInsets.only(
+      padding: const EdgeInsets.only(
         left: BottomInsetScope.dockedSearchMargin,
         right: BottomInsetScope.dockedSearchMargin,
-        bottom:
-            BottomInsetScope.dockedSearchMargin +
-            MediaQuery.paddingOf(context).bottom,
+        bottom: BottomInsetScope.dockedSearchMargin,
       ),
       // A surface of its own, so the list runs under it, not a sheet-wide band.
-      child: glass
-          ? LiquidGlass(
-              style: LiquidGlassStyle.pill(colorScheme),
-              shadows: dockGlassShadows(colorScheme),
-              child: field,
-            )
-          : DecoratedBox(
-              decoration: ShapeDecoration(
-                shape: AppShape.full,
-                shadows: dockShadows(colorScheme),
+      child: SafeArea(
+        left: false,
+        top: false,
+        right: false,
+        child: glass
+            ? LiquidGlass(
+                style: LiquidGlassStyle.pill(colorScheme),
+                shadows: dockGlassShadows(colorScheme),
+                child: field,
+              )
+            : DecoratedBox(
+                decoration: ShapeDecoration(
+                  shape: AppShape.full,
+                  shadows: dockShadows(colorScheme),
+                ),
+                child: field,
               ),
-              child: field,
-            ),
+      ),
     );
   }
 

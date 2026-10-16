@@ -32,14 +32,14 @@ void main() {
           accentColor: const Color(defaultPrimaryColor),
         );
 
-    final variant = container.read(themeSettingProvider).schemeVariant;
+    final style = container.read(themeSettingProvider).colorStyle;
 
     expect(
       container.read(genColorSchemeProvider(Brightness.light)),
       seededColorScheme(
         seedColor: lightSeed,
         brightness: Brightness.light,
-        variant: variant,
+        style: style,
       ),
     );
     expect(
@@ -47,7 +47,7 @@ void main() {
       seededColorScheme(
         seedColor: darkSeed,
         brightness: Brightness.dark,
-        variant: variant,
+        style: style,
       ),
     );
   });
@@ -91,7 +91,7 @@ void main() {
       seededColorScheme(
         seedColor: accent,
         brightness: Brightness.light,
-        variant: container.read(themeSettingProvider).schemeVariant,
+        style: container.read(themeSettingProvider).colorStyle,
       ),
     );
   });

@@ -357,15 +357,20 @@ _ThemeProps _$ThemePropsFromJson(Map<String, dynamic> json) => _ThemeProps(
   themeMode:
       $enumDecodeNullable(_$ThemeModeEnumMap, json['themeMode']) ??
       ThemeMode.system,
-  schemeVariant:
+  colorStyle:
       $enumDecodeNullable(
-        _$DynamicSchemeVariantEnumMap,
-        json['schemeVariant'],
+        _$ColorStyleEnumMap,
+        _readColorStyle(json, 'colorStyle'),
       ) ??
-      DynamicSchemeVariant.content,
+      ColorStyle.vivid,
   pureBlack: json['pureBlack'] as bool? ?? false,
   sidebarBlur: json['sidebarBlur'] as bool? ?? true,
-  liquidGlass: json['liquidGlass'] as bool? ?? false,
+  liquidGlass:
+      $enumDecodeNullable(
+        _$LiquidGlassModeEnumMap,
+        _readLiquidGlass(json, 'liquidGlass'),
+      ) ??
+      LiquidGlassMode.none,
   textScale: json['textScale'] == null
       ? const TextScale()
       : TextScale.fromJson(json['textScale'] as Map<String, dynamic>),
@@ -377,10 +382,10 @@ Map<String, dynamic> _$ThemePropsToJson(_ThemeProps instance) =>
       'primaryColor': instance.primaryColor,
       'primaryColors': instance.primaryColors,
       'themeMode': _$ThemeModeEnumMap[instance.themeMode]!,
-      'schemeVariant': _$DynamicSchemeVariantEnumMap[instance.schemeVariant]!,
+      'colorStyle': _$ColorStyleEnumMap[instance.colorStyle]!,
       'pureBlack': instance.pureBlack,
       'sidebarBlur': instance.sidebarBlur,
-      'liquidGlass': instance.liquidGlass,
+      'liquidGlass': _$LiquidGlassModeEnumMap[instance.liquidGlass]!,
       'textScale': instance.textScale,
       'systemFontFamily': instance.fontFamily,
     };
@@ -391,16 +396,16 @@ const _$ThemeModeEnumMap = {
   ThemeMode.dark: 'dark',
 };
 
-const _$DynamicSchemeVariantEnumMap = {
-  DynamicSchemeVariant.tonalSpot: 'tonalSpot',
-  DynamicSchemeVariant.fidelity: 'fidelity',
-  DynamicSchemeVariant.monochrome: 'monochrome',
-  DynamicSchemeVariant.neutral: 'neutral',
-  DynamicSchemeVariant.vibrant: 'vibrant',
-  DynamicSchemeVariant.expressive: 'expressive',
-  DynamicSchemeVariant.content: 'content',
-  DynamicSchemeVariant.rainbow: 'rainbow',
-  DynamicSchemeVariant.fruitSalad: 'fruitSalad',
+const _$ColorStyleEnumMap = {
+  ColorStyle.vivid: 'vivid',
+  ColorStyle.tinted: 'tinted',
+  ColorStyle.soft: 'soft',
+  ColorStyle.monochrome: 'monochrome',
+};
+
+const _$LiquidGlassModeEnumMap = {
+  LiquidGlassMode.none: 'none',
+  LiquidGlassMode.standard: 'standard',
 };
 
 _Config _$ConfigFromJson(Map<String, dynamic> json) => _Config(

@@ -74,10 +74,6 @@ Future<T?> showFormSheet<T>({
       backgroundColor: props.backgroundColor,
       barrierColor: context.colorScheme.modalScrim,
       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-      capturedThemes: InheritedTheme.capture(
-        from: context,
-        to: navigator.context,
-      ),
     ),
   );
 }
@@ -95,10 +91,6 @@ Future<T?> _showBottomSheet<T>(
       fitsContent: true,
       sheetBarrierColor: context.colorScheme.modalScrim,
       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-      capturedThemes: InheritedTheme.capture(
-        from: context,
-        to: navigator.context,
-      ),
     ),
   );
 }
@@ -200,10 +192,6 @@ Future<T?> showSnapSheet<T>(
           barrierLabel: MaterialLocalizations.of(
             context,
           ).modalBarrierDismissLabel,
-          capturedThemes: InheritedTheme.capture(
-            from: context,
-            to: navigator.context,
-          ),
         ),
       );
     } else {
