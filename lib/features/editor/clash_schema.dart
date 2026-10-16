@@ -88,7 +88,7 @@ enum EditorSchema {
   ntp(_ntp, 'ntp'),
   sniffer(_sniffer, 'sniffer'),
   proxy(_proxy),
-  proxyGroup(_proxyGroup, 'proxy-groups'),
+  proxyGroup(_customProxyGroup, 'proxy-groups'),
   rules(_rules),
   shareLinks(_str),
   provider(_providerFile);
@@ -1282,51 +1282,50 @@ const _healthCheck = YamlSchema.map({
   'expected-status': _str,
 });
 
-const _groupFilters = {
-  'include-all': _bool,
-  'include-all-proxies': _bool,
-  'include-all-providers': _bool,
+const _proxyGroupFields = {
+  'name': _str,
+  'type': YamlSchema.scalar(['select', 'url-test', 'fallback', 'load-balance']),
+  'proxies': YamlSchema.list(_policy),
+  'use': YamlSchema.list(YamlSchema.of(YamlScalar.proxyProvider)),
+  'use-position': YamlSchema.dict(_str),
+  'url': YamlSchema.scalar(['https://www.gstatic.com/generate_204']),
+  'interval': _str,
+  'lazy': _bool,
+  'timeout': _str,
+  'max-failed-times': _str,
+  'empty-fallback': _policy,
+  'expected-status': _str,
   'filter': _str,
   'exclude-filter': _str,
   'exclude-type': _str,
+  'disable-udp': _bool,
+  'hidden': _bool,
+  'icon': _str,
 };
 
-const _proxyGroup = YamlSchema.map(
-  {
-    'name': _str,
-    'type': YamlSchema.scalar([
-      'select',
-      'url-test',
-      'fallback',
-      'load-balance',
+const _proxyGroupVariants = {
+  'select': {'default-selected': _policy},
+  'url-test': {'tolerance': _str},
+  'load-balance': {
+    'strategy': YamlSchema.scalar([
+      'consistent-hashing',
+      'round-robin',
+      'sticky-sessions',
     ]),
-    'proxies': YamlSchema.list(_policy),
-    'use': YamlSchema.list(YamlSchema.of(YamlScalar.proxyProvider)),
-    'use-position': YamlSchema.dict(_str),
-    'url': YamlSchema.scalar(['https://www.gstatic.com/generate_204']),
-    'interval': _str,
-    'lazy': _bool,
-    'timeout': _str,
-    'max-failed-times': _str,
-    'empty-fallback': _policy,
-    'expected-status': _str,
-    ..._groupFilters,
-    'disable-udp': _bool,
-    'hidden': _bool,
-    'icon': _str,
+    'hash-key': YamlSchema.scalar(['in-user']),
   },
-  variants: {
-    'select': {'default-selected': _policy},
-    'url-test': {'tolerance': _str},
-    'load-balance': {
-      'strategy': YamlSchema.scalar([
-        'consistent-hashing',
-        'round-robin',
-        'sticky-sessions',
-      ]),
-      'hash-key': YamlSchema.scalar(['in-user']),
-    },
-  },
+};
+
+const _proxyGroup = YamlSchema.map({
+  ..._proxyGroupFields,
+  'include-all': _bool,
+  'include-all-proxies': _bool,
+  'include-all-providers': _bool,
+}, variants: _proxyGroupVariants);
+
+const _customProxyGroup = YamlSchema.map(
+  _proxyGroupFields,
+  variants: _proxyGroupVariants,
 );
 
 const _providerType = YamlSchema.scalar(['http', 'file', 'inline']);

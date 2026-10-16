@@ -120,6 +120,9 @@ class _ResourcesViewState extends ConsumerState<ResourcesView>
         value: updateInterval.toString(),
         suffixText: appLocalizations.hours,
         keyboardType: TextInputType.number,
+        inputFormatters: TextInputLimits.digitsOnly(
+          TextInputLimits.geoUpdateInterval,
+        ),
         validator: (value) {
           if (value == null || value.isEmpty) {
             return appLocalizations.emptyTip(

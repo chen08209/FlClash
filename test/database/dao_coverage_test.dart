@@ -337,9 +337,6 @@ void main() {
         hashKey: 'in-user',
         defaultSelected: 'Old',
         emptyFallback: 'Old',
-        includeAll: true,
-        includeAllProxies: false,
-        includeAllProviders: true,
         hidden: false,
         icon: 'https://icon.example',
         order: 'a',
@@ -360,12 +357,17 @@ void main() {
       final groups = await database.proxyGroupsDao.query(profile.id).get();
       expect(groups.first, first.copyWith(profileId: profile.id));
       expect(
+        await database.proxyGroupsDao
+            .profileGroupsCount(profile.id)
+            .getSingle(),
+        2,
+      );
+      expect(
         (await (database.select(
           database.proxyGroups,
         )..where((t) => t.id.equals(second.id))).getSingle()).definition,
         '{"default-selected":"Primary","empty-fallback":"Primary"}',
       );
-      expect(await database.proxyGroupsDao.count(profile.id).getSingle(), 2);
 
       await database.proxyGroupsDao.rewrite(
         groups,

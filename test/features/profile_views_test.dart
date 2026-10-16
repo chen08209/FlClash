@@ -233,7 +233,7 @@ void main() {
     }
 
     Finder tile(String label) =>
-        find.ancestor(of: find.text(label), matching: find.byType(CommonCard));
+        find.ancestor(of: find.text(label), matching: find.byType(ListItem));
 
     String? statusOf(WidgetTester tester, String label) {
       final l = currentAppLocalizations;
@@ -251,7 +251,7 @@ void main() {
           .data;
     }
 
-    testWidgets('leads its proxy groups with a tile per section', (
+    testWidgets('leads its proxy groups with a row per section', (
       tester,
     ) async {
       await pumpCustom(
@@ -319,7 +319,7 @@ void main() {
       expect(find.text(l.importFile), findsOneWidget);
     });
 
-    testWidgets('keeps its tiles above an empty group list', (tester) async {
+    testWidgets('keeps its rows above an empty group list', (tester) async {
       await pumpCustom(tester);
 
       final l = currentAppLocalizations;
@@ -364,6 +364,34 @@ void main() {
       await tester.tap(row(l.tun));
       await tester.pumpAndSettle();
       expect(find.byType(TunView), findsOneWidget);
+    });
+
+    testWidgets('renames the profile from its title menu', (tester) async {
+      await pumpCustom(tester);
+      final l = currentAppLocalizations;
+      Finder title(String label) =>
+          find.descendant(of: find.byType(AppBar), matching: find.text(label));
+
+      await tester.tap(title('mine'));
+      await tester.pumpAndSettle();
+      expect(find.text(l.runtimeConfig), findsOneWidget);
+      await tester.tap(find.text(l.rename));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(InputDialog),
+          matching: find.byType(EditableText),
+        ),
+        'theirs',
+      );
+      await tester.tap(find.text(l.submit));
+      await tester.pumpAndSettle();
+
+      expect(
+        globalState.container.read(profilesProvider).single.label,
+        'theirs',
+      );
+      expect(title('theirs'), findsOneWidget);
     });
   });
 
