@@ -4,12 +4,20 @@ go 1.27.0
 
 replace github.com/metacubex/mihomo => ./Clash.Meta
 
+// mihomo pins utls v1.8.x, where the "safari" and "firefox" fingerprints are
+// Safari 16.0 and Firefox 120 and offer no X25519MLKEM768 key share. REALITY
+// servers that only accept post-quantum hellos drop those. The v1.9.0-mod-meta
+// branch carries Safari 26.3 and Firefox 148; it is a branch, not a tag, hence
+// the pseudo-version.
+replace github.com/metacubex/utls => github.com/metacubex/utls v0.0.0-20261011131148-d4150a6c7c06
+
 require (
 	github.com/Microsoft/go-winio v0.6.2
 	github.com/dlclark/regexp2 v1.12.0
 	github.com/metacubex/http v0.1.8
 	github.com/metacubex/mihomo v0.0.0-00010101000000-000000000000
 	github.com/metacubex/tls v0.1.8
+	github.com/metacubex/utls v1.8.8
 	github.com/miekg/dns v1.1.63
 	go.yaml.in/yaml/v3 v3.0.5
 )
@@ -96,7 +104,6 @@ require (
 	github.com/metacubex/tailscale v0.0.0-20260821153257-ff0ecd818181 // indirect
 	github.com/metacubex/tailscale-wireguard-go v0.0.0-20260725073821-e61ab99cede2 // indirect
 	github.com/metacubex/tfo-go v0.0.0-20260623020846-376a77860b8c // indirect
-	github.com/metacubex/utls v1.8.8 // indirect
 	github.com/metacubex/wazero v0.0.0-20260628025728-9ae6bdcf2a7d // indirect
 	github.com/metacubex/wireguard-go v0.0.0-20250820062549-a6cecdd7f57f // indirect
 	github.com/metacubex/yamux v0.0.0-20250918083631-dd5f17c0be49 // indirect
