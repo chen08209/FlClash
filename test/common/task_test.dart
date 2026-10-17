@@ -385,6 +385,48 @@ void main() {
     expect(config['rules'], ['DOMAIN,custom.example,DIRECT']);
   });
 
+  test(
+    'makeRealProfileTask lets the profile geox-url win over the app one',
+    () async {
+      final result = await makeRealProfileTask(
+        const MakeRealProfileState(
+          profilesPath: '/profiles',
+          profileId: 21,
+          rawConfig: {
+            'geox-url': {
+              'mmdb': 'https://profile.example/geoip.metadb',
+              'geo-site': 'https://profile.example/GeoSite.dat',
+              'bogus': 'https://profile.example/bogus.bin',
+            },
+          },
+          realPatchConfig: PatchClashConfig(
+            geoXUrl: {
+              GeoResource.MMDB: 'https://app.example/geoip.metadb',
+              GeoResource.ASN: 'https://app.example/GeoLite2-ASN.mmdb',
+              GeoResource.GEOIP: 'https://app.example/geoip.dat',
+              GeoResource.GEOSITE: 'https://app.example/GeoSite.dat',
+            },
+          ),
+          overrideDns: false,
+          overrideNtp: false,
+          appendSystemDns: false,
+          proxyGroups: [],
+          rules: [],
+          addedRules: [],
+          defaultUA: 'Fallback-UA',
+        ),
+      );
+      final config = loadYaml(result.yaml) as YamlMap;
+
+      expect(config['geox-url'], {
+        'mmdb': 'https://profile.example/geoip.metadb',
+        'asn': 'https://app.example/GeoLite2-ASN.mmdb',
+        'geoip': 'https://app.example/geoip.dat',
+        'geosite': 'https://profile.example/GeoSite.dat',
+      });
+    },
+  );
+
   test('makeRealProfileTask keeps the DNS keys it cannot edit', () async {
     final rawConfig = await decodeJSONTask<Map<String, dynamic>>(
       jsonEncode({

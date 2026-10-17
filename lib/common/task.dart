@@ -270,7 +270,27 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
   injectUnconfinedProviders('proxy-providers', data.injectedProxyProviders);
   injectUnconfinedProviders('rule-providers', data.injectedRuleProviders);
   rawConfig['profile']['store-selected'] = false;
-  rawConfig['geox-url'] = realPatchConfig.geoXUrl.raw;
+  // Profile-pinned geox-url entries win per resource; the app fills the rest.
+  final profileGeoXUrl = rawConfig['geox-url'];
+  final geoXUrl = Map<String, String>.from(realPatchConfig.geoXUrl.raw);
+  if (profileGeoXUrl is Map) {
+    for (final entry in profileGeoXUrl.entries) {
+      final value = entry.value?.toString();
+      if (value == null || value.isEmpty) {
+        continue;
+      }
+      GeoResource? resource;
+      try {
+        resource = GeoResource.fromJson(entry.key.toString());
+      } on ArgumentError {
+        resource = null;
+      }
+      if (resource != null) {
+        geoXUrl[resource.configKey] = value;
+      }
+    }
+  }
+  rawConfig['geox-url'] = geoXUrl;
   rawConfig['global-ua'] = realPatchConfig.globalUa ?? defaultUA;
   if (rawConfig['hosts'] == null) {
     rawConfig['hosts'] = {};
