@@ -108,7 +108,6 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
         if (!isRunRequested) {
             return
         }
-        host.showToast(sharedState.stopTip)
         requestStop().await()
         host.notifyStopped()
     }
@@ -187,7 +186,6 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
 
     private suspend fun setupCore(): Boolean {
         applySharedState()
-        host.showToast(sharedState.startTip)
         return host.quickSetup(
             initParams(host.homeDirPath, host.sdkInt),
             Gson().toJson(sharedState.setupParams),
