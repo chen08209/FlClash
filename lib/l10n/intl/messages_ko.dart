@@ -205,20 +205,20 @@ class MessageLookup extends MessageLookupByLibrary {
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "about": MessageLookupByLibrary.simpleMessage("정보"),
-    "accessControl": MessageLookupByLibrary.simpleMessage("접근 제어"),
+    "accessControl": MessageLookupByLibrary.simpleMessage("앱 라우팅"),
     "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
       "선택한 앱만 VPN을 거칩니다",
     ),
     "accessControlDesc": MessageLookupByLibrary.simpleMessage(
-      "접근 제어는 프록시를 사용할 앱을 선택합니다.",
+      "앱 라우팅은 어떤 앱이 프록시를 사용할지 결정합니다.",
     ),
     "accessControlDisabledDesc": MessageLookupByLibrary.simpleMessage(
-      "앱 접근 제어가 꺼져 있습니다",
+      "앱 라우팅이 비활성화되어 있습니다.",
     ),
     "accessControlNotAllowDesc": MessageLookupByLibrary.simpleMessage(
       "선택한 앱은 VPN에서 제외됩니다",
     ),
-    "accessControlSettings": MessageLookupByLibrary.simpleMessage("접근 제어 설정"),
+    "accessControlSettings": MessageLookupByLibrary.simpleMessage("앱 라우팅 설정"),
     "account": MessageLookupByLibrary.simpleMessage("계정"),
     "action": MessageLookupByLibrary.simpleMessage("동작"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage("모든 지연 테스트"),
@@ -267,7 +267,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "allowedIps": MessageLookupByLibrary.simpleMessage("허용 IP"),
     "answers": MessageLookupByLibrary.simpleMessage("응답"),
     "app": MessageLookupByLibrary.simpleMessage("앱"),
-    "appAccessControl": MessageLookupByLibrary.simpleMessage("앱 접근 제어"),
+    "appAccessControl": MessageLookupByLibrary.simpleMessage("앱 라우팅"),
     "appIconDesign": MessageLookupByLibrary.simpleMessage("앱 아이콘 디자인"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("로컬 프록시 없음"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage("시스템 DNS 추가"),

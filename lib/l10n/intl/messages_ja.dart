@@ -204,20 +204,22 @@ class MessageLookup extends MessageLookupByLibrary {
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "about": MessageLookupByLibrary.simpleMessage("アプリについて"),
-    "accessControl": MessageLookupByLibrary.simpleMessage("アクセス制御"),
+    "accessControl": MessageLookupByLibrary.simpleMessage("アプリルーティング"),
     "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
       "選択したアプリのみVPNを経由します",
     ),
     "accessControlDesc": MessageLookupByLibrary.simpleMessage(
-      "アクセス制御では、プロキシを利用するアプリを選びます。",
+      "アプリルーティングは、どのアプリがプロキシを使うかを決めます。",
     ),
     "accessControlDisabledDesc": MessageLookupByLibrary.simpleMessage(
-      "アプリアクセス制御は無効です",
+      "アプリルーティングは無効です。",
     ),
     "accessControlNotAllowDesc": MessageLookupByLibrary.simpleMessage(
       "選択したアプリはVPNから除外されます",
     ),
-    "accessControlSettings": MessageLookupByLibrary.simpleMessage("アクセス制御の設定"),
+    "accessControlSettings": MessageLookupByLibrary.simpleMessage(
+      "アプリルーティング設定",
+    ),
     "account": MessageLookupByLibrary.simpleMessage("アカウント"),
     "action": MessageLookupByLibrary.simpleMessage("アクション"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage("すべての遅延をテスト"),
@@ -270,7 +272,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "allowedIps": MessageLookupByLibrary.simpleMessage("許可する IP"),
     "answers": MessageLookupByLibrary.simpleMessage("応答"),
     "app": MessageLookupByLibrary.simpleMessage("アプリ"),
-    "appAccessControl": MessageLookupByLibrary.simpleMessage("アプリアクセス制御"),
+    "appAccessControl": MessageLookupByLibrary.simpleMessage("アプリルーティング"),
     "appIconDesign": MessageLookupByLibrary.simpleMessage("アプリアイコンのデザイン"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("ローカルプロキシがありません"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage("システムDNSを追加"),

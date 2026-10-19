@@ -239,21 +239,23 @@ class MessageLookup extends MessageLookupByLibrary {
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "about": MessageLookupByLibrary.simpleMessage("À propos"),
-    "accessControl": MessageLookupByLibrary.simpleMessage("Contrôle d’accès"),
+    "accessControl": MessageLookupByLibrary.simpleMessage(
+      "Routage des applications",
+    ),
     "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
       "Seules les apps sélectionnées passent par le VPN",
     ),
     "accessControlDesc": MessageLookupByLibrary.simpleMessage(
-      "Le contrôle d’accès choisit les apps qui utilisent le proxy.",
+      "Le routage des applications détermine quelles applications utilisent le proxy.",
     ),
     "accessControlDisabledDesc": MessageLookupByLibrary.simpleMessage(
-      "Le contrôle d’accès des apps est désactivé",
+      "Le routage des applications est désactivé.",
     ),
     "accessControlNotAllowDesc": MessageLookupByLibrary.simpleMessage(
       "Les apps sélectionnées sont exclues du VPN",
     ),
     "accessControlSettings": MessageLookupByLibrary.simpleMessage(
-      "Réglages du contrôle d’accès",
+      "Paramètres du routage des applications",
     ),
     "account": MessageLookupByLibrary.simpleMessage("Compte"),
     "action": MessageLookupByLibrary.simpleMessage("Action"),
@@ -328,7 +330,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "answers": MessageLookupByLibrary.simpleMessage("Réponses"),
     "app": MessageLookupByLibrary.simpleMessage("App"),
     "appAccessControl": MessageLookupByLibrary.simpleMessage(
-      "Contrôle d’accès des apps",
+      "Routage des applications",
     ),
     "appIconDesign": MessageLookupByLibrary.simpleMessage(
       "Conception de l’icône de l’app",

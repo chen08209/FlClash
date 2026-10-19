@@ -275,7 +275,7 @@ abstract class AppSettingProps with _$AppSettingProps {
 abstract class AccessControlProps with _$AccessControlProps {
   const factory AccessControlProps({
     @Default(false) bool enable,
-    @Default(AccessControlMode.rejectSelected) AccessControlMode mode,
+    @Default(AccessControlMode.acceptSelected) AccessControlMode mode,
     @Default([]) List<String> acceptList,
     @Default([]) List<String> rejectList,
     @Default(AccessSortType.none) AccessSortType sort,
