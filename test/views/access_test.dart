@@ -332,10 +332,11 @@ void main() {
         }
       }
 
-      await tapMenuPath(['Access control', 'Turn off']);
+      final l10n = AppLocalizations.current;
+      await tapMenuPath([l10n.accessControl, l10n.turnOff]);
       expect(container.read(accessControlStateProvider).enable, isFalse);
 
-      await tapMenuPath(['Access control', 'Turn on']);
+      await tapMenuPath([l10n.accessControl, l10n.turnOn]);
       expect(container.read(accessControlStateProvider).enable, isTrue);
 
       await teardownView(tester);
@@ -498,7 +499,7 @@ void main() {
       seedAccessControl(
         const AccessControlProps(
           enable: true,
-          rejectList: ['com.android.settings'],
+          acceptList: ['com.android.settings'],
         ),
       );
       await pumpAccessView(tester);
@@ -514,7 +515,7 @@ void main() {
       final saved = container
           .read(vpnSettingProvider)
           .accessControlProps
-          .rejectList;
+          .acceptList;
       expect(saved, ['com.example.browser', 'com.example.chat']);
 
       await teardownView(tester);
