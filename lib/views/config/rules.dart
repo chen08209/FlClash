@@ -18,6 +18,19 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
   final _key = uniqueId;
   var _query = SearchQuery('');
   final _searchTexts = Expando<String>();
+  late SetupAction _setupAction;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupAction = ref.read(setupActionProvider.notifier);
+  }
+
+  @override
+  void dispose() {
+    _setupAction.autoApplyProfile();
+    super.dispose();
+  }
 
   List<Rule> _visibleRules(List<Rule> rules) {
     return rules

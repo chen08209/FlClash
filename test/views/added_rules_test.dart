@@ -25,6 +25,15 @@ class _RecordingGlobalRules extends TestGlobalRules {
   }
 }
 
+class _RecordingSetupAction extends SetupAction {
+  var autoApplyCalls = 0;
+
+  @override
+  void autoApplyProfile() {
+    autoApplyCalls += 1;
+  }
+}
+
 Rule _rule(int id, String content) {
   return Rule(
     id: id,
@@ -60,7 +69,10 @@ void main() {
 
     rules = _RecordingGlobalRules(initial);
     container = ProviderContainer(
-      overrides: [globalRulesProvider.overrideWith(() => rules)],
+      overrides: [
+        globalRulesProvider.overrideWith(() => rules),
+        setupActionProvider.overrideWith(_RecordingSetupAction.new),
+      ],
     );
     addTearDown(container.dispose);
     globalState.container = container;
@@ -260,5 +272,17 @@ void main() {
         unorderedEquals(<int>[1, 2]),
       ]);
     });
+  });
+
+  testWidgets('unmounting AddedRulesView applies the profile', (tester) async {
+    await pumpRules(tester, const []);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+
+    expect(
+      (container.read(setupActionProvider.notifier) as _RecordingSetupAction)
+          .autoApplyCalls,
+      1,
+    );
   });
 }
