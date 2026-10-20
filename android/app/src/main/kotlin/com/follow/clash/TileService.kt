@@ -1,11 +1,6 @@
 package com.follow.clash
 
-import android.annotation.SuppressLint
-import android.os.Build
 import android.service.quicksettings.Tile
-import com.follow.clash.common.QuickAction
-import com.follow.clash.common.quickIntent
-import com.follow.clash.common.toPendingIntent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,12 +20,14 @@ class TileService : android.service.quicksettings.TileService() {
         }
     }
 
-    // Always route through QuickActionActivity: startActivityAndCollapse is
-    // what closes the shade, so toggling the service in place would leave
-    // the panel open after a tap.
+    // Toggling used to go through an activity (startActivityAndCollapse), which
+    // collapsed the shade and brought the app forward on every tap. The tile is
+    // just another owner of the same intent, so it drives the service in place.
     override fun onClick() {
         super.onClick()
-        openQuickAction()
+        val current =
+            scope ?: CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate).also { scope = it }
+        current.launch { ServiceState.handleToggleAction() }
     }
 
     override fun onStopListening() {
@@ -47,17 +44,6 @@ class TileService : android.service.quicksettings.TileService() {
                 RunState.STOPPED -> Tile.STATE_INACTIVE
             }
             updateTile()
-        }
-    }
-
-    @SuppressLint("StartActivityAndCollapseDeprecated")
-    private fun openQuickAction() {
-        val intent = QuickAction.TOGGLE.quickIntent
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startActivityAndCollapse(intent.toPendingIntent)
-        } else {
-            @Suppress("DEPRECATION")
-            startActivityAndCollapse(intent)
         }
     }
 }

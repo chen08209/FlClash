@@ -692,15 +692,14 @@ class ServiceStateMachineTest {
     }
 
     @Test
-    fun `handleStopAction announces itself before stopping`() = runTest {
+    fun `handleStopAction stops without announcing itself`() = runTest {
         val host = FakeHost(backgroundScope)
         val machine = ServiceStateMachine(host)
-        machine.syncSharedState(configuredState().copy(stopTip = "Stopping..."))
         machine.requestStart().await()
 
         machine.handleStopAction()
 
-        assertEquals(listOf("Stopping..."), host.toasts)
+        assertTrue(host.toasts.isEmpty())
         assertEquals(1, host.stopCalls)
     }
 

@@ -530,20 +530,20 @@ class AppLocalizations {
     );
   }
 
-  /// `Access control`
+  /// `App routing`
   String get accessControl {
     return Intl.message(
-      'Access control',
+      'App routing',
       name: 'accessControl',
       desc: '',
       args: [],
     );
   }
 
-  /// `Access control picks which apps use the proxy.`
+  /// `App routing picks which apps use the proxy.`
   String get accessControlDesc {
     return Intl.message(
-      'Access control picks which apps use the proxy.',
+      'App routing picks which apps use the proxy.',
       name: 'accessControlDesc',
       desc: '',
       args: [],
@@ -815,10 +815,10 @@ class AppLocalizations {
     );
   }
 
-  /// `App access control`
+  /// `App routing`
   String get appAccessControl {
     return Intl.message(
-      'App access control',
+      'App routing',
       name: 'appAccessControl',
       desc: '',
       args: [],
@@ -845,10 +845,10 @@ class AppLocalizations {
     );
   }
 
-  /// `App access control is disabled`
+  /// `App routing is disabled.`
   String get accessControlDisabledDesc {
     return Intl.message(
-      'App access control is disabled',
+      'App routing is disabled.',
       name: 'accessControlDisabledDesc',
       desc: '',
       args: [],
@@ -4385,10 +4385,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Access control settings`
+  /// `App routing settings`
   String get accessControlSettings {
     return Intl.message(
-      'Access control settings',
+      'App routing settings',
       name: 'accessControlSettings',
       desc: '',
       args: [],

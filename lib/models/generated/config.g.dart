@@ -157,7 +157,7 @@ _AccessControlProps _$AccessControlPropsFromJson(Map<String, dynamic> json) =>
       enable: json['enable'] as bool? ?? false,
       mode:
           $enumDecodeNullable(_$AccessControlModeEnumMap, json['mode']) ??
-          AccessControlMode.rejectSelected,
+          AccessControlMode.acceptSelected,
       acceptList:
           (json['acceptList'] as List<dynamic>?)
               ?.map((e) => e as String)

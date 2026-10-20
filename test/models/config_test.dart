@@ -941,7 +941,7 @@ void main() {
       expect(config.vpnProps.accessControlProps.enable, true);
       expect(
         config.vpnProps.accessControlProps.mode,
-        AccessControlMode.rejectSelected,
+        AccessControlMode.acceptSelected,
       );
       expect(config.vpnProps.accessControlProps.acceptList, ['a']);
       expect(config.patchClashConfig.mixedPort, 7891);

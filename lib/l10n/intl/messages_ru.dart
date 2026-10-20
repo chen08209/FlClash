@@ -228,21 +228,21 @@ class MessageLookup extends MessageLookupByLibrary {
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "about": MessageLookupByLibrary.simpleMessage("О программе"),
-    "accessControl": MessageLookupByLibrary.simpleMessage("Контроль доступа"),
+    "accessControl": MessageLookupByLibrary.simpleMessage("Фильтр приложений"),
     "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
       "Через VPN проходят только выбранные приложения",
     ),
     "accessControlDesc": MessageLookupByLibrary.simpleMessage(
-      "Контроль доступа выбирает приложения, использующие прокси.",
+      "Фильтр приложений выбирает, какие приложения используют прокси.",
     ),
     "accessControlDisabledDesc": MessageLookupByLibrary.simpleMessage(
-      "Контроль доступа приложений отключён",
+      "Фильтр приложений отключён.",
     ),
     "accessControlNotAllowDesc": MessageLookupByLibrary.simpleMessage(
       "Выбранные приложения исключаются из VPN",
     ),
     "accessControlSettings": MessageLookupByLibrary.simpleMessage(
-      "Настройки контроля доступа",
+      "Настройки фильтра приложений",
     ),
     "account": MessageLookupByLibrary.simpleMessage("Аккаунт"),
     "action": MessageLookupByLibrary.simpleMessage("Действие"),
@@ -317,7 +317,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "answers": MessageLookupByLibrary.simpleMessage("Ответы"),
     "app": MessageLookupByLibrary.simpleMessage("Приложение"),
     "appAccessControl": MessageLookupByLibrary.simpleMessage(
-      "Контроль доступа приложений",
+      "Фильтр приложений",
     ),
     "appIconDesign": MessageLookupByLibrary.simpleMessage(
       "Дизайн значка приложения",

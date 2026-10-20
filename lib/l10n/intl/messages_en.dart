@@ -229,21 +229,21 @@ class MessageLookup extends MessageLookupByLibrary {
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "about": MessageLookupByLibrary.simpleMessage("About"),
-    "accessControl": MessageLookupByLibrary.simpleMessage("Access control"),
+    "accessControl": MessageLookupByLibrary.simpleMessage("App routing"),
     "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
       "Only selected apps go through the VPN",
     ),
     "accessControlDesc": MessageLookupByLibrary.simpleMessage(
-      "Access control picks which apps use the proxy.",
+      "App routing picks which apps use the proxy.",
     ),
     "accessControlDisabledDesc": MessageLookupByLibrary.simpleMessage(
-      "App access control is disabled",
+      "App routing is disabled.",
     ),
     "accessControlNotAllowDesc": MessageLookupByLibrary.simpleMessage(
       "Selected apps are excluded from the VPN",
     ),
     "accessControlSettings": MessageLookupByLibrary.simpleMessage(
-      "Access control settings",
+      "App routing settings",
     ),
     "account": MessageLookupByLibrary.simpleMessage("Account"),
     "action": MessageLookupByLibrary.simpleMessage("Action"),
@@ -311,9 +311,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "allowedIps": MessageLookupByLibrary.simpleMessage("Allowed IPs"),
     "answers": MessageLookupByLibrary.simpleMessage("Answers"),
     "app": MessageLookupByLibrary.simpleMessage("App"),
-    "appAccessControl": MessageLookupByLibrary.simpleMessage(
-      "App access control",
-    ),
+    "appAccessControl": MessageLookupByLibrary.simpleMessage("App routing"),
     "appIconDesign": MessageLookupByLibrary.simpleMessage("App icon design"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("No local proxies"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage(

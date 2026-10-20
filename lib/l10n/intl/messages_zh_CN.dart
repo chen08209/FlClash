@@ -201,20 +201,20 @@ class MessageLookup extends MessageLookupByLibrary {
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "about": MessageLookupByLibrary.simpleMessage("关于"),
-    "accessControl": MessageLookupByLibrary.simpleMessage("访问控制"),
+    "accessControl": MessageLookupByLibrary.simpleMessage("应用分流"),
     "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
       "只允许选中应用进入VPN",
     ),
     "accessControlDesc": MessageLookupByLibrary.simpleMessage(
-      "访问控制决定哪些应用使用代理。",
+      "应用分流决定哪些应用使用代理。",
     ),
     "accessControlDisabledDesc": MessageLookupByLibrary.simpleMessage(
-      "应用访问控制已关闭",
+      "应用分流已禁用。",
     ),
     "accessControlNotAllowDesc": MessageLookupByLibrary.simpleMessage(
       "选中应用将会被排除在VPN之外",
     ),
-    "accessControlSettings": MessageLookupByLibrary.simpleMessage("访问控制设置"),
+    "accessControlSettings": MessageLookupByLibrary.simpleMessage("应用分流设置"),
     "account": MessageLookupByLibrary.simpleMessage("账号"),
     "action": MessageLookupByLibrary.simpleMessage("操作"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage("测试全部延迟"),
@@ -263,7 +263,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "allowedIps": MessageLookupByLibrary.simpleMessage("允许的 IP"),
     "answers": MessageLookupByLibrary.simpleMessage("应答"),
     "app": MessageLookupByLibrary.simpleMessage("应用"),
-    "appAccessControl": MessageLookupByLibrary.simpleMessage("应用访问控制"),
+    "appAccessControl": MessageLookupByLibrary.simpleMessage("应用分流"),
     "appIconDesign": MessageLookupByLibrary.simpleMessage("应用图标设计"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("暂无本地代理"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage("追加系统DNS"),
