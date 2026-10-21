@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/netip"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/metacubex/http"
@@ -51,6 +52,7 @@ func handleOutboundIp(params *OutboundIpParams) *OutboundIpResult {
 	timeout := timeoutFromMillis(params.Timeout, defaultProbeTimeout)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
+	defer claimOutboundIp(epoch, cancel)()
 
 	answers := make(chan *OutboundIpResult, len(params.Urls))
 	next := 0
@@ -82,10 +84,34 @@ func handleOutboundIp(params *OutboundIpParams) *OutboundIpResult {
 		case <-stagger.C:
 			start()
 		case <-ctx.Done():
-			return failure(probeErrorTimeout)
+			return failure(probeErrorKind(ctx.Err()))
 		}
 	}
 	return failure(probeErrorFailed)
+}
+
+var (
+	outboundIpClaimsMu sync.Mutex
+	outboundIpClaims   = map[*context.CancelFunc]uint64{}
+)
+
+// Only an older epoch's lookup is stale; two targets of one epoch can share a request.
+func claimOutboundIp(epoch uint64, cancel context.CancelFunc) func() {
+	claim := &cancel
+	outboundIpClaimsMu.Lock()
+	for other, otherEpoch := range outboundIpClaims {
+		if otherEpoch < epoch {
+			(*other)()
+			delete(outboundIpClaims, other)
+		}
+	}
+	outboundIpClaims[claim] = epoch
+	outboundIpClaimsMu.Unlock()
+	return func() {
+		outboundIpClaimsMu.Lock()
+		delete(outboundIpClaims, claim)
+		outboundIpClaimsMu.Unlock()
+	}
 }
 
 func probeOutboundIpSource(ctx context.Context, url string, proxyName string, timeout time.Duration) *OutboundIpResult {

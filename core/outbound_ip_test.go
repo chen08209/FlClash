@@ -122,6 +122,66 @@ func TestHandleOutboundIpCancelsTheLosers(t *testing.T) {
 	}
 }
 
+func TestHandleOutboundIpCancelsALookupFromAnOlderEpoch(t *testing.T) {
+	recordRoutes(t)
+	withProbeProxies(t, "node-a")
+	reached := make(chan struct{}, 1)
+	hanging := probeServer(t, func(w http.ResponseWriter, r *http.Request) {
+		reached <- struct{}{}
+		select {
+		case <-r.Context().Done():
+		case <-time.After(3 * time.Second):
+		}
+	})
+	winning := probeServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("ip=203.0.113.9"))
+	})
+
+	stampRoute(1, 0)
+	older := make(chan *OutboundIpResult, 1)
+	go func() {
+		older <- handleOutboundIp(&OutboundIpParams{ProxyName: "node-a", Urls: []string{hanging.URL}, Timeout: 5000})
+	}()
+	<-reached
+	stampRoute(2, 0)
+	handleOutboundIp(&OutboundIpParams{ProxyName: "node-a", Urls: []string{winning.URL}, Timeout: 5000})
+
+	select {
+	case answer := <-older:
+		if answer.Error == "" || answer.CoreEpoch != 1 {
+			t.Errorf("older lookup = %+v, want a failure stamped with its own epoch", answer)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("the lookup from the older epoch kept running")
+	}
+}
+
+func TestHandleOutboundIpLeavesALookupFromTheSameEpoch(t *testing.T) {
+	recordRoutes(t)
+	withProbeProxies(t, "node-a")
+	reached := make(chan struct{}, 1)
+	slow := probeServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		reached <- struct{}{}
+		time.Sleep(300 * time.Millisecond)
+		_, _ = w.Write([]byte("ip=203.0.113.7"))
+	})
+	fast := probeServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("ip=203.0.113.9"))
+	})
+
+	stampRoute(1, 0)
+	first := make(chan *OutboundIpResult, 1)
+	go func() {
+		first <- handleOutboundIp(&OutboundIpParams{ProxyName: "node-a", Urls: []string{slow.URL}, Timeout: 5000})
+	}()
+	<-reached
+	handleOutboundIp(&OutboundIpParams{ProxyName: "node-a", Urls: []string{fast.URL}, Timeout: 5000})
+
+	if answer := <-first; answer.Body != "ip=203.0.113.7" {
+		t.Errorf("first lookup = %+v, want it to finish beside the second", answer)
+	}
+}
+
 func TestHandleOutboundIpReportsWhenEverySourceFails(t *testing.T) {
 	withProbeProxies(t, "node-a")
 	broken := probeServer(t, func(w http.ResponseWriter, _ *http.Request) {

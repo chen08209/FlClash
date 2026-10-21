@@ -126,4 +126,41 @@ void main() {
       expect(retryAuth, contains('realm="y"'));
     },
   );
+
+  DAVTransport partialTransport(String contentRange) {
+    final adapter = _ScriptedAdapter(
+      (options) => ResponseBody.fromBytes(
+        [1, 2, 3, 4],
+        206,
+        headers: {
+          'content-range': [contentRange],
+        },
+      ),
+    );
+    return DAVTransport(
+      uri: 'http://origin.example/base',
+      user: 'user',
+      password: 'pass',
+      dio: _dioWith(adapter),
+    );
+  }
+
+  test('a 206 that spans the whole object is read as the file', () async {
+    final bytes = await partialTransport('bytes 0-3/4').get('backup.zip');
+
+    expect(bytes, [1, 2, 3, 4]);
+  });
+
+  test('the bytes unit in Content-Range is case-insensitive', () async {
+    final bytes = await partialTransport('Bytes 0-3/4').get('backup.zip');
+
+    expect(bytes, [1, 2, 3, 4]);
+  });
+
+  test('a 206 that covers only part of the object fails', () async {
+    await expectLater(
+      partialTransport('bytes 0-3/10').get('backup.zip'),
+      throwsA(isA<DAVException>()),
+    );
+  });
 }

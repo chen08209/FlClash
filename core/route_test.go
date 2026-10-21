@@ -167,6 +167,23 @@ func TestRouteEpochFollowsStructuralChanges(t *testing.T) {
 	}
 }
 
+func TestStartingTheListenersAdvancesTheEpoch(t *testing.T) {
+	recorder := recordRoutes(t)
+	withCurrentConfig(t, nil)
+	t.Cleanup(func() { isRunning.Store(false) })
+	handleWatchRoute(true, 0)
+	before := routeState().CoreEpoch
+
+	handleStartListener()
+
+	if got := routeState().CoreEpoch; got != before+1 {
+		t.Errorf("epoch = %d after the listeners came up, want %d", got, before+1)
+	}
+	if len(recorder.published()) != 1 {
+		t.Error("starting the listeners did not publish the new epoch")
+	}
+}
+
 func TestProviderRefreshAdvancesTheEpoch(t *testing.T) {
 	recordRoutes(t)
 	subscription := newCachingProvider("subscription", "node-a")
