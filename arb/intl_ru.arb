@@ -175,6 +175,7 @@
   "clipboardWriteFailed": "Не удалось скопировать в буфер обмена. Возможно, выделение слишком велико",
   "paste": "Вставить",
   "testUrl": "URL для теста",
+  "delayTestTimeout": "Тайм-аут теста задержки",
   "sync": "Синхронизация",
   "exclude": "Скрыть из недавних задач",
   "compact": "Компактный",
@@ -936,5 +937,10 @@
   "allReferencedProxyProviders": "Все используемые провайдеры прокси",
   "clearDnsCache": "Очистить кэш DNS",
   "dnsCacheCleared": "Кэш DNS очищен",
-  "clearDnsCacheFailed": "Не удалось очистить кэш DNS"
+  "clearDnsCacheFailed": "Не удалось очистить кэш DNS",
+  "select": "Выбрать",
+  "preferred": "Предпочтительный",
+  "addToLocalProxies": "Добавить в локальные прокси",
+  "addedToLocalProxies": "«{name}» добавлен в локальные прокси",
+  "alreadyInLocalProxies": "«{name}» уже есть в локальных прокси"
 }

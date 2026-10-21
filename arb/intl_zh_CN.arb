@@ -175,6 +175,7 @@
   "clipboardWriteFailed": "无法复制到剪贴板，所选内容可能过大",
   "paste": "粘贴",
   "testUrl": "测速链接",
+  "delayTestTimeout": "延迟测试超时",
   "sync": "同步",
   "exclude": "从最近任务中隐藏",
   "compact": "紧凑",
@@ -936,5 +937,10 @@
   "allReferencedProxyProviders": "全部被引用的代理集",
   "clearDnsCache": "清除DNS缓存",
   "dnsCacheCleared": "DNS缓存已清除",
-  "clearDnsCacheFailed": "清除DNS缓存失败"
+  "clearDnsCacheFailed": "清除DNS缓存失败",
+  "select": "选中",
+  "preferred": "首选",
+  "addToLocalProxies": "添加到本地代理",
+  "addedToLocalProxies": "已将 {name} 添加到本地代理",
+  "alreadyInLocalProxies": "本地代理中已有 {name}"
 }

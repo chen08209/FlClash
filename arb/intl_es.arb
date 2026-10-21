@@ -175,6 +175,7 @@
   "clipboardWriteFailed": "No se pudo copiar al portapapeles. Puede que la selección sea demasiado grande",
   "paste": "Pegar",
   "testUrl": "URL de prueba",
+  "delayTestTimeout": "Tiempo de espera de la prueba de latencia",
   "sync": "Sincronizar",
   "exclude": "Ocultar de aplicaciones recientes",
   "compact": "Compacto",
@@ -936,5 +937,10 @@
   "allReferencedProxyProviders": "Todos los proveedores de proxies referenciados",
   "clearDnsCache": "Borrar la caché DNS",
   "dnsCacheCleared": "Caché DNS borrada",
-  "clearDnsCacheFailed": "No se pudo borrar la caché DNS"
+  "clearDnsCacheFailed": "No se pudo borrar la caché DNS",
+  "select": "Seleccionar",
+  "preferred": "Preferido",
+  "addToLocalProxies": "Añadir a proxies locales",
+  "addedToLocalProxies": "{name} añadido a proxies locales",
+  "alreadyInLocalProxies": "{name} ya está en proxies locales"
 }

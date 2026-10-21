@@ -410,6 +410,25 @@ _importProxies(
   );
 }
 
+/// The app proxy [definition] would be imported as: one that already holds it
+/// leaves nothing [added].
+({String name, Map<String, dynamic>? added}) importProxy(
+  Map<String, dynamic> definition, {
+  required List<Map<String, dynamic>> existing,
+  required Set<String> groupNames,
+}) {
+  final imported = _importProxies(
+    [definition],
+    groups: const [],
+    existing: existing,
+    groupNames: groupNames,
+  );
+  return (
+    name: imported.names.values.single,
+    added: imported.added.firstOrNull,
+  );
+}
+
 List<String> _renamedList(Object? value, Map<String, String> names) => {
   for (final item in _listOf(value)) names[item.toString()] ?? item.toString(),
 }.toList();
