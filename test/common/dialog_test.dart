@@ -137,23 +137,26 @@ void main() {
     expect(await result, isFalse);
   });
 
-  testWidgets('showMessage hides the cancel action when not cancelable', (
-    tester,
-  ) async {
+  testWidgets('showAlert offers a single acknowledging action', (tester) async {
     await _pumpHost(tester);
 
-    final result = dialogs.showMessage(
-      message: const TextSpan(text: 'body'),
-      cancelable: false,
-    );
+    final result = dialogs.showAlert(message: const TextSpan(text: 'body'));
     await tester.pumpAndSettle();
 
+    expect(find.text('body'), findsOneWidget);
     expect(find.text('Cancel'), findsNothing);
-    expect(find.text('Confirm'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextButton),
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('Confirm'));
     await tester.pumpAndSettle();
-    expect(await result, isTrue);
+    await result;
+    expect(find.text('body'), findsNothing);
   });
 
   testWidgets('showMessage scrolls a long message only once the window is '

@@ -33,9 +33,8 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
   void _handlePermanentlyDeniedLocationPermission() {
     if (_isMacOS) {
       final appLocalizations = context.appLocalizations;
-      dialogs.showMessage(
+      dialogs.showAlert(
         title: appLocalizations.locationPermissionRequired,
-        cancelable: false,
         message: TextSpan(
           style: AppTextStyle.subheadline.of(context),
           text: appLocalizations.locationPermissionGuide(appName),
@@ -368,7 +367,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
           SliverPadding(
             padding: const EdgeInsets.symmetric(
               horizontal: 16,
-            ).copyWith(top: context.appBarInset),
+            ).copyWith(top: context.contentTopPadding),
             sliver: SliverToBoxAdapter(child: _buildPrerequisites()),
           ),
           SliverPadding(

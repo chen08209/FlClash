@@ -825,41 +825,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Only selected apps go through the VPN`
-  String get accessControlAllowDesc {
-    return Intl.message(
-      'Only selected apps go through the VPN',
-      name: 'accessControlAllowDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Selected apps are excluded from the VPN`
-  String get accessControlNotAllowDesc {
-    return Intl.message(
-      'Selected apps are excluded from the VPN',
-      name: 'accessControlNotAllowDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `App access control is disabled`
-  String get accessControlDisabledDesc {
-    return Intl.message(
-      'App access control is disabled',
-      name: 'accessControlDisabledDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Selected`
-  String get selected {
-    return Intl.message('Selected', name: 'selected', desc: '', args: []);
-  }
-
   /// `Port`
   String get port {
     return Intl.message('Port', name: 'port', desc: '', args: []);
@@ -2800,16 +2765,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Leave out proxies whose last delay test timed out`
-  String get hideTimeoutProxiesDesc {
-    return Intl.message(
-      'Leave out proxies whose last delay test timed out',
-      name: 'hideTimeoutProxiesDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Stack mode`
   String get stackMode {
     return Intl.message('Stack mode', name: 'stackMode', desc: '', args: []);
@@ -4380,16 +4335,6 @@ class AppLocalizations {
     return Intl.message(
       'Don\'t remind me again',
       name: 'noLongerRemind',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Access control settings`
-  String get accessControlSettings {
-    return Intl.message(
-      'Access control settings',
-      name: 'accessControlSettings',
       desc: '',
       args: [],
     );

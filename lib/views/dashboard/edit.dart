@@ -164,7 +164,6 @@ class _DashboardEditorState extends ConsumerState<DashboardEditor>
     ];
     final scale = DashboardDensityScope.scaleOf(context);
     final sway = context.disableAnimations ? null : _sway;
-    final dragsAtOnce = desktopPlatforms.contains(widget.platform);
     final appLocalizations = context.appLocalizations;
 
     final revealPadding = EdgeInsets.only(
@@ -198,7 +197,6 @@ class _DashboardEditorState extends ConsumerState<DashboardEditor>
                       item: card,
                       cardKey: widget.cardKeyOf(card),
                       index: index,
-                      dragsAtOnce: dragsAtOnce,
                       sway: sway,
                       onRemove: card.removable ? () => _remove(card) : null,
                     ),
@@ -408,7 +406,6 @@ class _EditableCard extends StatelessWidget {
     required this.item,
     required this.cardKey,
     required this.index,
-    required this.dragsAtOnce,
     required this.sway,
     required this.onRemove,
   });
@@ -416,9 +413,6 @@ class _EditableCard extends StatelessWidget {
   final DashboardWidget item;
   final GlobalKey cardKey;
   final int index;
-
-  /// A mouse drags a card at once; a finger holds it first, so it scrolls.
-  final bool dragsAtOnce;
   final Animation<double>? sway;
   final VoidCallback? onRemove;
 
@@ -432,10 +426,7 @@ class _EditableCard extends StatelessWidget {
     final content = Stack(
       fit: StackFit.passthrough,
       children: [
-        if (dragsAtOnce)
-          ReorderableDragStartListener(index: index, child: card)
-        else
-          ReorderableDelayedDragStartListener(index: index, child: card),
+        ReorderableDelayedDragStartListener(index: index, child: card),
         if (onRemove != null)
           PositionedDirectional(
             top: 0,

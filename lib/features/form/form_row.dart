@@ -16,7 +16,7 @@ class InfoMessageButton extends StatelessWidget {
       child: IconButton(
         tooltip: context.appLocalizations.tip,
         onPressed: () {
-          dialogs.showMessage(message: TextSpan(text: message));
+          dialogs.showAlert(message: TextSpan(text: message));
         },
         icon: GlyphIcon(
           AppGlyphs.info,

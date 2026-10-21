@@ -367,7 +367,7 @@ void main() {
   });
 
   testWidgets('a narrow desktop window edits its cards in the card column, '
-      'dragged at once', (tester) async {
+      'held and dragged with a mouse too', (tester) async {
     seed(const [
       DashboardWidget.currentOutbound,
       DashboardWidget.networkTakeover,
@@ -392,6 +392,7 @@ void main() {
       tester.getCenter(card),
       kind: PointerDeviceKind.mouse,
     );
+    await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
     for (var step = 0; step < 4; step++) {
       await gesture.moveBy(Offset(0, -rise / 4));
       await tester.pump(const Duration(milliseconds: 100));

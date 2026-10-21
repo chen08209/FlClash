@@ -3,6 +3,7 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/switch.dart';
 import 'package:fl_clash/views/config/general.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -46,7 +47,7 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.widgetWithText(ListTile, 'External controller'),
-        matching: find.byType(Switch),
+        matching: find.byType(CommonSwitch),
       ),
     );
     await tester.pumpAndSettle();

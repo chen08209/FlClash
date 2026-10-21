@@ -220,7 +220,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     }
     if (_scripts.hasLabel(label, except: script)) {
       unawaited(
-        dialogs.showMessage(
+        dialogs.showAlert(
           message: TextSpan(
             text: appLocalizations.existsTip(appLocalizations.name),
           ),

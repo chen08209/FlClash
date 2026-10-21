@@ -471,17 +471,15 @@ class _RestateDialogState extends State<_RestateDialog> {
         tip: appLocalizations.disclaimerAcknowledgeTip,
         statement: statement,
         canConfirm: _acknowledged,
-        confirmation: generateSection(
-          items: [
-            ListItem.checkbox(
-              title: Text(appLocalizations.disclaimerAcknowledgeLabel),
-              value: _acknowledged,
-              onChanged: (value) {
-                setState(() => _acknowledged = value ?? false);
-              },
-            ),
-          ],
-        ),
+        confirmation: generateGroup([
+          ListItem.checkbox(
+            title: Text(appLocalizations.disclaimerAcknowledgeLabel),
+            value: _acknowledged,
+            onChanged: (value) {
+              setState(() => _acknowledged = value ?? false);
+            },
+          ),
+        ]),
       );
     }
     return ValueListenableBuilder<TextEditingValue>(

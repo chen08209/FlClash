@@ -245,11 +245,11 @@ void main() {
   });
 
   for (final (type, buttons) in [
-    (SheetType.bottomSheet, ['Delay test', 'Close']),
-    (SheetType.sideSheet, ['Search', 'Delay test', 'Close']),
+    (SheetType.bottomSheet, ['Close', 'Delay test']),
+    (SheetType.sideSheet, ['Close', 'Search', 'Delay test']),
   ]) {
-    testWidgets('a ${type.name} groups its primary action with its close '
-        'button', (tester) async {
+    testWidgets('a ${type.name} leads with its close button, primary action '
+        'or not', (tester) async {
       await tester.pumpWidget(
         TestApp(
           wrapInProviderScope: true,
@@ -270,11 +270,7 @@ void main() {
       );
 
       expect(_barButtons(tester), buttons);
-      expect(
-        _inGroup('Close').evaluate().single,
-        _inGroup('Delay test').evaluate().single,
-      );
-      expect(_inGroup('Search'), findsNothing);
+      expect(_inGroup('Close'), findsNothing);
     });
   }
 

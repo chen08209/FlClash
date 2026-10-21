@@ -17,7 +17,7 @@ import 'package:fl_clash/views/about.dart';
 import 'package:fl_clash/views/config/rules.dart';
 import 'package:fl_clash/views/config/scripts.dart';
 import 'package:fl_clash/views/profiles/extend/standard.dart';
-import 'package:fl_clash/views/proxies/setting.dart';
+import 'package:fl_clash/views/proxies/proxies.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
@@ -141,50 +141,101 @@ void main() {
     );
   });
 
-  testWidgets('proxies setting picks its style from a menu', (tester) async {
+  Future<void> openProxiesMenu(WidgetTester tester) async {
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byGlyph(AppGlyphs.more),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  Finder inMenu(Finder finder) =>
+      find.descendant(of: find.byType(CommonPopupMenu), matching: finder);
+
+  testWidgets('the proxies menu picks the style from a sub menu', (
+    tester,
+  ) async {
     final container = _containerFor(tester);
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(child: Scaffold(body: ProxiesSetting())),
+        child: const TestApp(child: ProxiesView()),
       ),
     );
     await tester.pump();
     final l10n = AppLocalizations.current;
 
-    expect(find.text(l10n.iconStyle), findsOneWidget);
+    await openProxiesMenu(tester);
+    expect(inMenu(find.text(l10n.iconStyle)), findsOneWidget);
 
-    await tester.tap(find.text(l10n.style));
+    await tester.tap(inMenu(find.text(l10n.style)));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(ProxiesType.tab.label));
+    await tester.tap(inMenu(find.text(ProxiesType.tab.label)));
     await tester.pumpAndSettle();
 
     expect(container.read(proxiesStyleSettingProvider).type, ProxiesType.tab);
-    expect(find.text(l10n.iconStyle), findsNothing);
+    expect(find.byType(CommonPopupMenu), findsNothing);
+
+    await openProxiesMenu(tester);
+    expect(inMenu(find.text(l10n.iconStyle)), findsNothing);
+    expect(
+      tester.getTopLeft(inMenu(find.text(l10n.scrollToSelected))).dy,
+      lessThan(tester.getTopLeft(inMenu(find.byType(Divider)).first).dy),
+    );
+    expect(
+      tester.getTopLeft(inMenu(find.byType(Divider)).first).dy,
+      lessThan(tester.getTopLeft(inMenu(find.text(l10n.style))).dy),
+    );
     expect(tester.takeException(), null);
   });
 
-  testWidgets('proxies setting sorts by delay when selected', (tester) async {
+  testWidgets('the proxies menu sorts by delay and hides timed-out proxies', (
+    tester,
+  ) async {
     final container = _containerFor(tester);
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(child: Scaffold(body: ProxiesSetting())),
+        child: const TestApp(child: ProxiesView()),
       ),
     );
     await tester.pump();
     final l10n = AppLocalizations.current;
 
-    await tester.tap(find.text(l10n.sort));
+    await openProxiesMenu(tester);
+    await tester.tap(inMenu(find.text(l10n.sort)));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.delay));
+    await tester.tap(inMenu(find.text(l10n.delay)));
     await tester.pumpAndSettle();
 
     expect(
       container.read(proxiesStyleSettingProvider).sortType,
       ProxiesSortType.delay,
+    );
+
+    await openProxiesMenu(tester);
+    expect(
+      inMenu(
+        find.descendant(
+          of: find.ancestor(
+            of: find.text(l10n.hideTimeoutProxies),
+            matching: find.byType(Row),
+          ),
+          matching: find.byGlyph(AppGlyphs.check),
+        ),
+      ),
+      findsNothing,
+    );
+    await tester.tap(inMenu(find.text(l10n.hideTimeoutProxies)));
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(proxiesStyleSettingProvider).hideTimeoutProxies,
+      isTrue,
     );
     expect(find.byType(CommonPopupMenu), findsNothing);
   });
@@ -437,7 +488,7 @@ void main() {
     final gesture = await tester.startGesture(
       tester.getCenter(find.byType(SortHandle).first),
     );
-    await tester.pump(kPressTimeout);
+    await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
     await gesture.moveTo(
       Offset(tester.getCenter(find.byType(SortHandle).first).dx, to.dy + 100),
     );

@@ -782,7 +782,7 @@ void main() {
 
   Finder switchOf(ServiceTarget target) => find.descendant(
     of: find.widgetWithText(DecorationListItem, target.label),
-    matching: find.byType(Switch),
+    matching: find.byType(CommonSwitch),
   );
 
   testWidgets('the tile and the sheet follow the saved order', (tester) async {
@@ -897,11 +897,11 @@ void main() {
     await openManage(tester);
 
     expect(
-      tester.widget<Switch>(switchOf(ServiceTarget.google)).onChanged,
+      tester.widget<CommonSwitch>(switchOf(ServiceTarget.google)).onChanged,
       isNull,
     );
     expect(
-      tester.widget<Switch>(switchOf(ServiceTarget.github)).onChanged,
+      tester.widget<CommonSwitch>(switchOf(ServiceTarget.github)).onChanged,
       isNotNull,
     );
   });

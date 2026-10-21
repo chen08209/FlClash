@@ -59,10 +59,9 @@ extension CustomIssuesExt on Iterable<CustomIssue> {
 }
 
 Future<void> showSaveBlocked(BuildContext context, String reason) {
-  return dialogs.showMessage(
+  return dialogs.showAlert(
     title: context.appLocalizations.cannotSave,
     message: TextSpan(text: reason),
-    cancelable: false,
   );
 }
 

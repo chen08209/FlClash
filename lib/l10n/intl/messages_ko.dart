@@ -206,19 +206,9 @@ class MessageLookup extends MessageLookupByLibrary {
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "about": MessageLookupByLibrary.simpleMessage("정보"),
     "accessControl": MessageLookupByLibrary.simpleMessage("접근 제어"),
-    "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
-      "선택한 앱만 VPN을 거칩니다",
-    ),
     "accessControlDesc": MessageLookupByLibrary.simpleMessage(
       "접근 제어는 프록시를 사용할 앱을 선택합니다.",
     ),
-    "accessControlDisabledDesc": MessageLookupByLibrary.simpleMessage(
-      "앱 접근 제어가 꺼져 있습니다",
-    ),
-    "accessControlNotAllowDesc": MessageLookupByLibrary.simpleMessage(
-      "선택한 앱은 VPN에서 제외됩니다",
-    ),
-    "accessControlSettings": MessageLookupByLibrary.simpleMessage("접근 제어 설정"),
     "account": MessageLookupByLibrary.simpleMessage("계정"),
     "action": MessageLookupByLibrary.simpleMessage("동작"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage("모든 지연 테스트"),
@@ -731,9 +721,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "hidePassword": MessageLookupByLibrary.simpleMessage("비밀번호 숨기기"),
     "hideTimeoutProxies": MessageLookupByLibrary.simpleMessage(
       "시간 초과된 프록시 숨기기",
-    ),
-    "hideTimeoutProxiesDesc": MessageLookupByLibrary.simpleMessage(
-      "마지막 지연 테스트에서 시간 초과된 프록시를 제외합니다",
     ),
     "hopInterval": MessageLookupByLibrary.simpleMessage("호핑 간격"),
     "host": MessageLookupByLibrary.simpleMessage("호스트"),
@@ -1364,7 +1351,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectAll": MessageLookupByLibrary.simpleMessage("모두 선택"),
     "selectRuleSet": MessageLookupByLibrary.simpleMessage("규칙 세트를 선택하세요"),
     "selectSplitStrategy": MessageLookupByLibrary.simpleMessage("분할 전략을 선택하세요"),
-    "selected": MessageLookupByLibrary.simpleMessage("선택됨"),
     "server": MessageLookupByLibrary.simpleMessage("서버"),
     "serviceAbnormalCount": m73,
     "serviceAllAvailable": MessageLookupByLibrary.simpleMessage("모두 사용 가능"),

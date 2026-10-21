@@ -321,6 +321,64 @@ void main() {
     });
   }
 
+  for (final (name, scaffold) in [
+    (
+      'nothing',
+      const CommonScaffold(
+        title: 'Title',
+        body: SizedBox(width: double.infinity, height: 200),
+      ),
+    ),
+    (
+      'a primary action',
+      const CommonScaffold(
+        title: 'Title',
+        primaryAction: IconButtonData(
+          glyph: AppGlyphs.sync,
+          onPressed: _noop,
+          tooltip: 'Sync',
+        ),
+        body: SizedBox(width: double.infinity, height: 200),
+      ),
+    ),
+    (
+      'icon actions',
+      const CommonScaffold(
+        title: 'Title',
+        iconActions: [
+          IconButtonData(glyph: AppGlyphs.sync, onPressed: _noop, tooltip: 'A'),
+          IconButtonData(glyph: AppGlyphs.edit, onPressed: _noop, tooltip: 'B'),
+        ],
+        body: SizedBox(width: double.infinity, height: 200),
+      ),
+    ),
+  ]) {
+    for (final type in [SheetType.bottomSheet, SheetType.sideSheet]) {
+      testWidgets('a ${type.name} leads its bar with close beside $name', (
+        tester,
+      ) async {
+        final bar = await _pumpBar(
+          tester,
+          view: type == SheetType.bottomSheet ? _mobile : _desktop,
+          platform: TargetPlatform.android,
+          child: SheetProvider(type: type, child: scaffold),
+        );
+        final close = tester.getRect(
+          _container(find.widgetWithGlyph(IconButton, AppGlyphs.close)),
+        );
+        final title = tester.getRect(
+          find.descendant(
+            of: find.byType(AppBar),
+            matching: find.text('Title'),
+          ),
+        );
+
+        expect(close.center.dx, lessThan(bar.center.dx));
+        expect(close.right, lessThanOrEqualTo(title.left));
+      });
+    }
+  }
+
   for (final (name, view, compact, scaffold) in [
     (
       'a phone page',

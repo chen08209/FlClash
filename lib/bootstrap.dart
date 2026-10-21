@@ -194,16 +194,14 @@ class Bootstrap {
       case BootRecovery.none:
         return;
       case BootRecovery.skipAutoSetup:
-        await dialogs.showMessage(
+        await dialogs.showAlert(
           title: currentAppLocalizations.launchInterrupted,
-          cancelable: false,
           dismissible: false,
           message: TextSpan(text: currentAppLocalizations.launchInterruptedTip),
         );
       case BootRecovery.clearProfile:
-        await dialogs.showMessage(
+        await dialogs.showAlert(
           title: currentAppLocalizations.crashDetected,
-          cancelable: false,
           dismissible: false,
           message: TextSpan(
             text: currentAppLocalizations.crashDetectedTip(_failedProfileLabel),

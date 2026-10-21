@@ -252,7 +252,7 @@ class _CustomProxiesViewState extends ConsumerState<CustomProxiesView> {
         for (final proxy in previous) proxy.definition,
       ]);
     } catch (error) {
-      await dialogs.showMessage(message: TextSpan(text: compactError(error)));
+      await dialogs.showAlert(message: TextSpan(text: compactError(error)));
       return;
     }
     if (!mounted) {
@@ -1050,7 +1050,7 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
       title: title,
       leading: leading,
       onPressed: () => onChanged(!value),
-      trailing: Switch(value: value, onChanged: onChanged),
+      trailing: CommonSwitch(value: value, onChanged: onChanged),
     );
   }
 

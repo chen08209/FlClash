@@ -220,10 +220,12 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text(l.addSettingEntry));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('UDP'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(l.ipVersion));
-    await tester.pumpAndSettle();
+    for (final option in ['UDP', l.ipVersion]) {
+      await tester.ensureVisible(find.text(option));
+      await tester.pump();
+      await tester.tap(find.text(option));
+      await tester.pumpAndSettle();
+    }
     await tester.pageBack();
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(TextButton, l.save));

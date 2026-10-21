@@ -411,9 +411,9 @@ void main() {
 
     final l10n = currentAppLocalizations;
     expect(find.text(l10n.additionalParameters), findsOne);
-    final switches = find.byType(Switch);
+    final switches = find.byType(CommonSwitch);
     expect(switches, findsNWidgets(2));
-    expect(tester.widgetList<Switch>(switches).map((s) => s.value), [
+    expect(tester.widgetList<CommonSwitch>(switches).map((s) => s.value), [
       false,
       false,
     ]);
@@ -423,7 +423,7 @@ void main() {
     await tester.tap(switches.at(1));
     await tester.pumpAndSettle();
 
-    expect(tester.widgetList<Switch>(switches).map((s) => s.value), [
+    expect(tester.widgetList<CommonSwitch>(switches).map((s) => s.value), [
       true,
       true,
     ]);

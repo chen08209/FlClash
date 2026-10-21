@@ -94,7 +94,7 @@ void main() {
     expect(overrides().tun, defaultProfileTun);
     expect(find.text(l.disableIcmpForwardingDesc), findsOneWidget);
 
-    await tester.tap(find.byType(Switch));
+    await tester.tap(find.byType(CommonSwitch));
     await tester.pump();
     expect(overrides().tun.disableIcmpForwarding, isTrue);
   });
