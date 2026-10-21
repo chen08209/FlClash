@@ -208,13 +208,20 @@ void main() {
     });
 
     test('watchRoute delegates to interface', () async {
-      const snapshot = RouteSnapshot(
-        coreEpoch: 3,
-        picksVersion: 1,
-        picks: {'Proxy': 'HK-01'},
-      );
+      const snapshot = RouteSnapshot(coreEpoch: 3, routeVersion: 1);
       when(() => mock.watchRoute(true)).thenAnswer((_) async => snapshot);
       expect(await controller.watchRoute(true), snapshot);
+    });
+
+    test('checkRoutes delegates to interface', () async {
+      const params = CheckRoutesParams(
+        routes: [
+          [RouteHit(host: 'example.com:443', exit: 'HK-01')],
+        ],
+      );
+      const check = RouteCheck(coreEpoch: 3, routeVersion: 2, held: [true]);
+      when(() => mock.checkRoutes(params)).thenAnswer((_) async => check);
+      expect(await controller.checkRoutes(params), check);
     });
   });
 

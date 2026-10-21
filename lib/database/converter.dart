@@ -84,3 +84,17 @@ class IconSetIconsConverter extends TypeConverter<List<IconSetIcon>, String> {
     return json.encode([for (final icon in value) icon.toJson()]);
   }
 }
+
+class IpQualityConverter extends TypeConverter<IpQuality, String> {
+  const IpQualityConverter();
+
+  @override
+  IpQuality fromSql(String fromDb) {
+    return IpQuality.fromJson(Map<String, Object?>.from(json.decode(fromDb)));
+  }
+
+  @override
+  String toSql(IpQuality value) {
+    return json.encode(value.toJson());
+  }
+}

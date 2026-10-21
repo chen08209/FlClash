@@ -67,7 +67,7 @@ func onGeoUpdate(geoType string, updating bool, skipped bool, updateErr error) {
 		releaseHookUpdate(geoUpdateScope + geoType)
 		scheduleReclaimOwnership()
 		if !skipped && updateErr == nil {
-			bumpRouteEpoch()
+			changeRoute(routeMoved)
 		}
 	}
 	status := GeoUpdateStatus{Type: geoType, Updating: updating, Skipped: skipped}

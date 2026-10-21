@@ -13,7 +13,6 @@ import 'package:material_ui/material_ui.dart';
 
 import 'card.dart';
 import 'connections_table.dart';
-import 'current_outbound.dart';
 
 const _stackedIcons = 4;
 
@@ -95,33 +94,6 @@ class _GroupIcon extends StatelessWidget {
   }
 }
 
-class _GroupDelay extends ConsumerWidget {
-  const _GroupDelay({required this.group});
-
-  final Group group;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final delay = ref.watch(
-      delayProvider(proxyName: group.name, testUrl: group.testUrl),
-    );
-    if (delay == null) {
-      return const SizedBox.shrink();
-    }
-    final colorScheme = context.colorScheme;
-    return Text(
-      delay > 0
-          ? '$delay ms'
-          : delayFailureText(delay, context.appLocalizations),
-      maxLines: 1,
-      style: AppTextStyle.caption1
-          .of(context, emphasized: true)
-          .toTabular
-          .copyWith(color: colorScheme.delayColor(delay > 0 ? delay : -1)),
-    );
-  }
-}
-
 class _SelectedName extends ConsumerWidget {
   const _SelectedName({required this.group});
 
@@ -130,14 +102,11 @@ class _SelectedName extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final name = ref.watch(selectedProxyNameProvider(group.name)) ?? '';
-    final base = DashboardText.rowTitle(context);
     return EmojiText(
       name.isEmpty ? '—' : name,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: isBuiltinOutbound(name)
-          ? base.copyWith(color: context.colorScheme.onSurfaceVariant)
-          : base,
+      style: DashboardText.label(context),
     );
   }
 }
@@ -267,7 +236,7 @@ class ProxyGroupsCard extends ConsumerWidget {
             ),
             height: tileHeight,
             gap: tileGap,
-            iconSize: _figureMetricsOf(density).icon,
+            iconSize: tileHeight - _blockInset * 2,
             bottom: padding.bottom,
           );
           return Column(
@@ -524,23 +493,11 @@ class _GroupTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  spacing: 8,
-                  children: [
-                    Expanded(
-                      child: EmojiText(
-                        group.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyle.caption1
-                            .of(context)
-                            .copyWith(
-                              color: context.colorScheme.onSurfaceVariant,
-                            ),
-                      ),
-                    ),
-                    _GroupDelay(group: group),
-                  ],
+                EmojiText(
+                  group.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: DashboardText.rowTitle(context),
                 ),
                 _SelectedName(group: group),
               ],

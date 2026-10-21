@@ -234,7 +234,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('a timed out selection is counted in the header', (tester) async {
+  testWidgets('a timed out selection is counted in the header, not on its '
+      'tile', (tester) async {
     container.read(groupsProvider.notifier).value = [
       _group('Auto', ['HK-01'], now: 'HK-01'),
       _group('Media', ['JP-01'], now: 'JP-01'),
@@ -244,7 +245,7 @@ void main() {
     };
     await pumpCard(tester);
 
-    expect(find.text('48 ms'), findsOneWidget);
+    expect(find.text('48 ms'), findsNothing);
     expect(find.text('1 timed out'), findsOneWidget);
   });
 

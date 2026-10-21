@@ -118,10 +118,11 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
       CoreMethod.compileRuleSet => {'behavior': 'ipcidr', 'format': 'text'},
       CoreMethod.getConnectionCount => 3,
       CoreMethod.validateFilters => ['', 'missing closing )'],
-      CoreMethod.watchRoute => {
+      CoreMethod.watchRoute => {'core-epoch': 1, 'route-version': 0},
+      CoreMethod.checkRoutes => {
         'core-epoch': 1,
-        'picks-version': 0,
-        'picks': <String, String>{},
+        'route-version': 3,
+        'held': [true, false],
       },
       _ => '',
     };
@@ -201,6 +202,26 @@ void main() {
     final route = await handler.watchRoute(true);
     expect(route, const RouteSnapshot(coreEpoch: 1));
     expect(handler.calls[CoreMethod.watchRoute], isTrue);
+    final check = await handler.checkRoutes(
+      const CheckRoutesParams(
+        routes: [
+          [RouteHit(host: 'example.com:443', proxy: 'DIRECT', exit: 'x')],
+          [],
+        ],
+      ),
+    );
+    expect(
+      check,
+      const RouteCheck(coreEpoch: 1, routeVersion: 3, held: [true, false]),
+    );
+    expect(jsonDecode(jsonEncode(handler.calls[CoreMethod.checkRoutes])), {
+      'routes': [
+        [
+          {'host': 'example.com:443', 'proxy': 'DIRECT', 'exit': 'x'},
+        ],
+        <Object?>[],
+      ],
+    });
     await handler.sideLoadExternalProvider(providerName: 'provider', data: 'x');
     await handler.asyncTestDelay(
       'https://example.com',

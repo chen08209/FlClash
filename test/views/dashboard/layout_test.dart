@@ -107,6 +107,7 @@ void main() {
     final intranet = rectOf(tester, IntranetIpCard);
     final profile = rectOf(tester, ProfilesCard);
     final service = rectOf(tester, ServiceStatusCard);
+    final memory = rectOf(tester, MemoryInfo);
     final table = rectOf(tester, ConnectionsTableCard);
     final groups = rectOf(tester, ProxyGroupsCard);
 
@@ -121,8 +122,13 @@ void main() {
     expect(intranet.height, 176);
     expect(profile.top, intranet.top);
     expect(profile.left, closeTo(intranet.right + 16, 0.01));
-    expect(service.width, closeTo(current.width, 0.01));
-    expect(find.byType(MemoryInfo), findsNothing);
+    expect(service.width, closeTo(upload.width, 0.01));
+    expect(
+      tester.widget<ServiceStatusCard>(find.byType(ServiceStatusCard)).columns,
+      1,
+    );
+    expect(memory.top, service.top);
+    expect(memory.left, closeTo(service.right + 16, 0.01));
     expect(table.top, intranet.bottom + 16);
     expect(table.width / groups.width, closeTo(1.5, 0.01));
     expect(groups.top, table.top);
@@ -166,14 +172,19 @@ void main() {
     }
   });
 
-  testWidgets('a wide window gives the memory card a column beside the '
-      'services', (tester) async {
+  testWidgets('a wide window pairs the services beside the memory card', (
+    tester,
+  ) async {
     await pumpDashboard(tester, const Size(1440, 900));
 
     final upload = rectOf(tester, SpeedCard);
     final service = rectOf(tester, ServiceStatusCard);
     final memory = rectOf(tester, MemoryInfo);
     expect(service.width, closeTo(upload.width, 0.01));
+    expect(
+      tester.widget<ServiceStatusCard>(find.byType(ServiceStatusCard)).columns,
+      2,
+    );
     expect(memory.top, service.top);
     expect(memory.left, closeTo(service.right + 16, 0.01));
     expect(

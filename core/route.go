@@ -2,10 +2,13 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"maps"
+	"slices"
 	"sync"
 	"time"
 
+	"github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/tunnel"
 )
 
@@ -13,10 +16,19 @@ import (
 // the picks are re-read on this timer while the host watches.
 const routePollInterval = time.Second
 
+// An answer outlives a move while the hosts it reached keep their exits.
+type routeChange int
+
+const (
+	routeUnchanged routeChange = iota
+	routeMoved
+	routeReset
+)
+
 type routeTracker struct {
 	mu               sync.Mutex
 	epoch            uint64
-	picksVersion     uint64
+	version          uint64
 	picks            map[string]string
 	providerVersions map[string]uint32
 	ruleSets         map[string]any
@@ -34,14 +46,9 @@ var (
 )
 
 func routeStateLocked() RouteState {
-	picks := currentRoute.picks
-	if picks == nil {
-		picks = map[string]string{}
-	}
 	return RouteState{
 		CoreEpoch:    currentRoute.epoch,
-		PicksVersion: currentRoute.picksVersion,
-		Picks:        maps.Clone(picks),
+		RouteVersion: currentRoute.version,
 	}
 }
 
@@ -51,10 +58,10 @@ func routeState() RouteState {
 	return routeStateLocked()
 }
 
-func routeStamp() (epoch, picksVersion uint64) {
+func routeStamp() (epoch, version uint64) {
 	currentRoute.mu.Lock()
 	defer currentRoute.mu.Unlock()
-	return currentRoute.epoch, currentRoute.picksVersion
+	return currentRoute.epoch, currentRoute.version
 }
 
 func readPicks() (map[string]string, map[string]uint32) {
@@ -83,31 +90,28 @@ func readRuleSets() map[string]any {
 	return ruleSets
 }
 
-// A provider that swapped its list is a structural change: the names may
-// survive while the servers behind them do not. The caller holds selectMu.
-func refreshRouteLocked(structural bool) {
+func refreshRouteLocked(change routeChange) {
 	picks, versions := readPicks()
 	ruleSets := readRuleSets()
 
 	currentRoute.mu.Lock()
-	if currentRoute.providerVersions != nil && !maps.Equal(versions, currentRoute.providerVersions) {
-		structural = true
-	}
-	if currentRoute.ruleSets != nil && !maps.Equal(ruleSets, currentRoute.ruleSets) {
-		structural = true
+	if currentRoute.providerVersions != nil && !maps.Equal(versions, currentRoute.providerVersions) ||
+		currentRoute.ruleSets != nil && !maps.Equal(ruleSets, currentRoute.ruleSets) ||
+		!maps.Equal(picks, currentRoute.picks) {
+		change = max(change, routeMoved)
 	}
 	currentRoute.providerVersions = versions
 	currentRoute.ruleSets = ruleSets
-	if structural {
+	currentRoute.picks = picks
+	if change == routeReset {
 		currentRoute.epoch++
 	}
-	changed := structural
-	if !maps.Equal(picks, currentRoute.picks) {
-		currentRoute.picks = picks
-		currentRoute.picksVersion++
-		changed = true
+	if change == routeUnchanged {
+		currentRoute.mu.Unlock()
+		return
 	}
-	if !changed || !currentRoute.watched {
+	currentRoute.version++
+	if !currentRoute.watched {
 		currentRoute.mu.Unlock()
 		return
 	}
@@ -116,16 +120,18 @@ func refreshRouteLocked(structural bool) {
 	publishRoute(state)
 }
 
-func refreshRoute() {
+func changeRoute(change routeChange) {
 	selectMu.Lock()
 	defer selectMu.Unlock()
-	refreshRouteLocked(false)
+	refreshRouteLocked(change)
+}
+
+func refreshRoute() {
+	changeRoute(routeUnchanged)
 }
 
 func bumpRouteEpoch() {
-	selectMu.Lock()
-	defer selectMu.Unlock()
-	refreshRouteLocked(true)
+	changeRoute(routeReset)
 }
 
 func handleWatchRoute(watch bool, seq uint64) RouteState {
@@ -181,4 +187,97 @@ func pollRoute(ctx context.Context) {
 			}
 		}
 	}
+}
+
+type RouteHit struct {
+	Host  string `json:"host"`
+	Proxy string `json:"proxy,omitempty"`
+	Exit  string `json:"exit"`
+}
+
+type CheckRoutesParams struct {
+	Routes [][]RouteHit `json:"routes"`
+}
+
+type RouteCheck struct {
+	CoreEpoch    uint64 `json:"core-epoch"`
+	RouteVersion uint64 `json:"route-version"`
+	Held         []bool `json:"held"`
+}
+
+// The stamp is read before any route resolves, so a move that lands meanwhile
+// is checked again under its own version rather than missed.
+func handleCheckRoutes(params *CheckRoutesParams) *RouteCheck {
+	epoch, version := routeStamp()
+	exits := map[RouteHit]string{}
+	held := make([]bool, len(params.Routes))
+	for index, route := range params.Routes {
+		held[index] = len(route) > 0
+		for _, hit := range route {
+			key := RouteHit{Host: hit.Host, Proxy: hit.Proxy}
+			exit, resolved := exits[key]
+			if !resolved {
+				exit = resolveExit(hit.Host, hit.Proxy)
+				exits[key] = exit
+			}
+			if exit != hit.Exit {
+				held[index] = false
+				break
+			}
+		}
+	}
+	return &RouteCheck{CoreEpoch: epoch, RouteVersion: version, Held: held}
+}
+
+func resolveExit(host string, proxyName string) string {
+	metadata, err := probeMetadata(host)
+	if proxyName != "" {
+		return exitThrough(lookupProxy(proxyName), metadata)
+	}
+	if err != nil {
+		return ""
+	}
+	proxy, err := tunnel.ResolveRoute(metadata)
+	if err != nil {
+		return ""
+	}
+	return exitThrough(proxy, metadata)
+}
+
+func exitThrough(proxy constant.Proxy, metadata *constant.Metadata) string {
+	for proxy != nil {
+		if proxy.Type() == constant.LoadBalance {
+			return exitName(proxy)
+		}
+		next := proxy.Unwrap(metadata, false)
+		if next == nil {
+			return exitName(proxy)
+		}
+		proxy = next
+	}
+	return ""
+}
+
+// Chains run from the hop that dialed out to the outermost group, so they are
+// read from the end to meet the load balancer exitThrough stops at.
+func exitOfChains(chains []string) string {
+	if len(chains) == 0 {
+		return ""
+	}
+	proxies := tunnel.AllProxies()
+	for _, name := range slices.Backward(chains[1:]) {
+		if proxy := proxies[name]; proxy != nil && proxy.Type() == constant.LoadBalance {
+			return exitName(proxy)
+		}
+	}
+	if leaf := proxies[chains[0]]; leaf != nil {
+		return exitName(leaf)
+	}
+	return ""
+}
+
+// A load balancer spreads connections without the route moving, so it is the
+// exit; the server counts since a provider can swap the node behind a name.
+func exitName(proxy constant.Proxy) string {
+	return fmt.Sprintf("%q %s %s", proxy.Name(), proxy.Type(), proxy.Addr())
 }

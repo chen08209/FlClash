@@ -120,7 +120,7 @@ mixin ConnectionsPolling<T extends ConsumerStatefulWidget>
     }
     try {
       if (pollsConnections) {
-        final next = await _core.getConnections();
+        final next = [...await _core.getConnections()];
         if (!isCurrent()) return;
         next.sort((a, b) => b.start.compareTo(a.start));
         final tcp = next

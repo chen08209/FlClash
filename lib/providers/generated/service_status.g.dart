@@ -50,7 +50,7 @@ final class ServiceStatusProvider
   }
 }
 
-String _$serviceStatusHash() => r'b7c838d77b69791dea64cb12fe9e6daf13762ea0';
+String _$serviceStatusHash() => r'e2c34347423e8589bd1657cd6a37acc5ae6ac76e';
 
 abstract class _$ServiceStatus
     extends $Notifier<RoutedProbeState<ServiceTarget, ServiceCheck>> {
@@ -72,6 +72,68 @@ abstract class _$ServiceStatus
                 RoutedProbeState<ServiceTarget, ServiceCheck>
               >,
               RoutedProbeState<ServiceTarget, ServiceCheck>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+/// How many of [enabledServiceTargets] the dashboard card has room for, which
+/// its sheet marks as shown there.
+
+@ProviderFor(ShownServiceCount)
+final shownServiceCountProvider = ShownServiceCountProvider._();
+
+/// How many of [enabledServiceTargets] the dashboard card has room for, which
+/// its sheet marks as shown there.
+final class ShownServiceCountProvider
+    extends $NotifierProvider<ShownServiceCount, int> {
+  /// How many of [enabledServiceTargets] the dashboard card has room for, which
+  /// its sheet marks as shown there.
+  ShownServiceCountProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'shownServiceCountProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$shownServiceCountHash();
+
+  @$internal
+  @override
+  ShownServiceCount create() => ShownServiceCount();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+}
+
+String _$shownServiceCountHash() => r'5ed23369fc7ba6ce8d809f06ff026cdbe60f5233';
+
+/// How many of [enabledServiceTargets] the dashboard card has room for, which
+/// its sheet marks as shown there.
+
+abstract class _$ShownServiceCount extends $Notifier<int> {
+  int build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<int, int>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<int, int>,
+              int,
               Object?,
               Object?
             >;

@@ -578,14 +578,6 @@ abstract class IpInfo with _$IpInfo {
     };
   }
 
-  static IpInfo fromIpAPIJson(Map<String, dynamic> json) {
-    return switch (json) {
-      {'query': final String ip, 'countryCode': final String countryCode} =>
-        IpInfo(ip: ip, countryCode: countryCode),
-      _ => throw const FormatException('invalid json'),
-    };
-  }
-
   static IpInfo fromIdentMeJson(Map<String, dynamic> json) {
     return switch (json) {
       {'ip': final String ip, 'cc': final String countryCode} => IpInfo(

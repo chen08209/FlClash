@@ -303,6 +303,17 @@ void main() {
     await teardown(tester);
   });
 
+  testWidgets('editing leaves done as the only way out in the bar', (
+    tester,
+  ) async {
+    await pumpEditor(tester);
+
+    expect(find.byTooltip('Done'), findsOneWidget);
+    expect(find.byTooltip('Back'), findsNothing);
+
+    await teardown(tester);
+  });
+
   testWidgets('editing keeps the cards where they stood, state and all', (
     tester,
   ) async {

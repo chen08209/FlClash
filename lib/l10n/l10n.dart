@@ -255,11 +255,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Check`
-  String get serviceCheck {
-    return Intl.message('Check', name: 'serviceCheck', desc: '', args: []);
-  }
-
   /// `Check all`
   String get serviceCheckAll {
     return Intl.message(
@@ -267,16 +262,6 @@ class AppLocalizations {
       name: 'serviceCheckAll',
       desc: '',
       args: [],
-    );
-  }
-
-  /// `Checked at {time}`
-  String serviceCheckedAt(Object time) {
-    return Intl.message(
-      'Checked at $time',
-      name: 'serviceCheckedAt',
-      desc: '',
-      args: [time],
     );
   }
 

@@ -207,19 +207,56 @@ Map<String, dynamic> _$ChangeProxyResultToJson(_ChangeProxyResult instance) =>
 _RouteSnapshot _$RouteSnapshotFromJson(Map<String, dynamic> json) =>
     _RouteSnapshot(
       coreEpoch: (json['core-epoch'] as num?)?.toInt() ?? 0,
-      picksVersion: (json['picks-version'] as num?)?.toInt() ?? 0,
-      picks:
-          (json['picks'] as Map<String, dynamic>?)?.map(
-            (k, e) => MapEntry(k, e as String),
-          ) ??
-          const {},
+      routeVersion: (json['route-version'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$RouteSnapshotToJson(_RouteSnapshot instance) =>
     <String, dynamic>{
       'core-epoch': instance.coreEpoch,
-      'picks-version': instance.picksVersion,
-      'picks': instance.picks,
+      'route-version': instance.routeVersion,
+    };
+
+_RouteHit _$RouteHitFromJson(Map<String, dynamic> json) => _RouteHit(
+  host: json['host'] as String? ?? '',
+  proxy: json['proxy'] as String? ?? '',
+  exit: json['exit'] as String? ?? '',
+);
+
+Map<String, dynamic> _$RouteHitToJson(_RouteHit instance) => <String, dynamic>{
+  'host': instance.host,
+  'proxy': instance.proxy,
+  'exit': instance.exit,
+};
+
+_CheckRoutesParams _$CheckRoutesParamsFromJson(Map<String, dynamic> json) =>
+    _CheckRoutesParams(
+      routes:
+          (json['routes'] as List<dynamic>?)
+              ?.map(
+                (e) => (e as List<dynamic>)
+                    .map((e) => RouteHit.fromJson(e as Map<String, dynamic>))
+                    .toList(),
+              )
+              .toList() ??
+          const [],
+    );
+
+Map<String, dynamic> _$CheckRoutesParamsToJson(_CheckRoutesParams instance) =>
+    <String, dynamic>{'routes': instance.routes};
+
+_RouteCheck _$RouteCheckFromJson(Map<String, dynamic> json) => _RouteCheck(
+  coreEpoch: (json['core-epoch'] as num?)?.toInt() ?? 0,
+  routeVersion: (json['route-version'] as num?)?.toInt() ?? 0,
+  held:
+      (json['held'] as List<dynamic>?)?.map((e) => e as bool).toList() ??
+      const [],
+);
+
+Map<String, dynamic> _$RouteCheckToJson(_RouteCheck instance) =>
+    <String, dynamic>{
+      'core-epoch': instance.coreEpoch,
+      'route-version': instance.routeVersion,
+      'held': instance.held,
     };
 
 _CoreEvent _$CoreEventFromJson(Map<String, dynamic> json) => _CoreEvent(
@@ -334,7 +371,17 @@ _OutboundIpResult _$OutboundIpResultFromJson(Map<String, dynamic> json) =>
           const [],
       error: json['error'] as String?,
       coreEpoch: (json['core-epoch'] as num?)?.toInt() ?? 0,
-      picksVersion: (json['picks-version'] as num?)?.toInt() ?? 0,
+      routeVersion: (json['route-version'] as num?)?.toInt() ?? 0,
+      hits:
+          (json['hits'] as List<dynamic>?)
+              ?.map((e) => RouteHit.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      nodeHits:
+          (json['node-hits'] as List<dynamic>?)
+              ?.map((e) => RouteHit.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
     );
 
 Map<String, dynamic> _$OutboundIpResultToJson(_OutboundIpResult instance) =>
@@ -345,7 +392,9 @@ Map<String, dynamic> _$OutboundIpResultToJson(_OutboundIpResult instance) =>
       'chains': instance.chains,
       'error': instance.error,
       'core-epoch': instance.coreEpoch,
-      'picks-version': instance.picksVersion,
+      'route-version': instance.routeVersion,
+      'hits': instance.hits,
+      'node-hits': instance.nodeHits,
     };
 
 _ServiceCheckParams _$ServiceCheckParamsFromJson(Map<String, dynamic> json) =>
@@ -377,7 +426,12 @@ _ServiceCheckItem _$ServiceCheckItemFromJson(Map<String, dynamic> json) =>
           const [],
       checkedAt: (json['checked-at'] as num?)?.toInt() ?? 0,
       coreEpoch: (json['core-epoch'] as num?)?.toInt() ?? 0,
-      picksVersion: (json['picks-version'] as num?)?.toInt() ?? 0,
+      routeVersion: (json['route-version'] as num?)?.toInt() ?? 0,
+      hits:
+          (json['hits'] as List<dynamic>?)
+              ?.map((e) => RouteHit.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
     );
 
 Map<String, dynamic> _$ServiceCheckItemToJson(_ServiceCheckItem instance) =>
@@ -389,7 +443,8 @@ Map<String, dynamic> _$ServiceCheckItemToJson(_ServiceCheckItem instance) =>
       'chains': instance.chains,
       'checked-at': instance.checkedAt,
       'core-epoch': instance.coreEpoch,
-      'picks-version': instance.picksVersion,
+      'route-version': instance.routeVersion,
+      'hits': instance.hits,
     };
 
 _CoreMemoryStats _$CoreMemoryStatsFromJson(Map<String, dynamic> json) =>
