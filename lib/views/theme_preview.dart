@@ -42,20 +42,16 @@ class PreviewChoiceGroup<T> extends StatelessWidget {
         InfoHeader(info: info),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: generateSection(
-            items: [
-              for (final choice in choices)
-                DecorationListItem(
-                  leading: ExcludeSemantics(child: choice.pictogram),
-                  title: Text(choice.label),
-                  isSelected: choice.value == value,
-                  trailing: choice.value == value
-                      ? const SelectionCheck()
-                      : null,
-                  onPressed: () => onChanged(choice.value),
-                ),
-            ],
-          ),
+          child: generateGroup([
+            for (final choice in choices)
+              DecorationListItem(
+                leading: ExcludeSemantics(child: choice.pictogram),
+                title: Text(choice.label),
+                isSelected: choice.value == value,
+                trailing: choice.value == value ? const SelectionCheck() : null,
+                onPressed: () => onChanged(choice.value),
+              ),
+          ]),
         ),
       ],
     );

@@ -240,20 +240,8 @@ class MessageLookup extends MessageLookupByLibrary {
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "about": MessageLookupByLibrary.simpleMessage("À propos"),
     "accessControl": MessageLookupByLibrary.simpleMessage("Contrôle d’accès"),
-    "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
-      "Seules les apps sélectionnées passent par le VPN",
-    ),
     "accessControlDesc": MessageLookupByLibrary.simpleMessage(
       "Le contrôle d’accès choisit les apps qui utilisent le proxy.",
-    ),
-    "accessControlDisabledDesc": MessageLookupByLibrary.simpleMessage(
-      "Le contrôle d’accès des apps est désactivé",
-    ),
-    "accessControlNotAllowDesc": MessageLookupByLibrary.simpleMessage(
-      "Les apps sélectionnées sont exclues du VPN",
-    ),
-    "accessControlSettings": MessageLookupByLibrary.simpleMessage(
-      "Réglages du contrôle d’accès",
     ),
     "account": MessageLookupByLibrary.simpleMessage("Compte"),
     "action": MessageLookupByLibrary.simpleMessage("Action"),
@@ -935,9 +923,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "hideTimeoutProxies": MessageLookupByLibrary.simpleMessage(
       "Masquer les proxys expirés",
-    ),
-    "hideTimeoutProxiesDesc": MessageLookupByLibrary.simpleMessage(
-      "Ignorer les proxys dont le dernier test de délai a expiré",
     ),
     "hopInterval": MessageLookupByLibrary.simpleMessage("Intervalle de saut"),
     "host": MessageLookupByLibrary.simpleMessage("Hôte"),
@@ -1743,7 +1728,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectSplitStrategy": MessageLookupByLibrary.simpleMessage(
       "Veuillez sélectionner une stratégie de répartition",
     ),
-    "selected": MessageLookupByLibrary.simpleMessage("Sélectionné"),
     "server": MessageLookupByLibrary.simpleMessage("Serveur"),
     "serviceAbnormalCount": m73,
     "serviceAllAvailable": MessageLookupByLibrary.simpleMessage(

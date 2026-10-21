@@ -564,8 +564,8 @@ the bar and never folds, and only a form sheet moves it to its foot (Forms). Bar
 select all included; the one text button is the custom profile's Import, a filled button whose `CommonPopupBox` opens
 the import menu. Actions on a multi-selection, such as delete and select all, go into
 `selectionActions` instead: the bar keeps them in sight as one button group that takes a single slot beside the search
-or clear button, so they never fold. A sheet's close button leads its bar when the bar has actions, except beside a
-primary action: then the two end the bar as one button group, as the proxies sheet's delay test and close do.
+or clear button, so they never fold. A sheet's close button always leads its bar, whatever actions follow, as SwiftUI
+places a close in `.cancellationAction`; a pushed page puts its back button there instead.
 
 Actions on what the page edits as a whole, such as renaming the custom profile or viewing its final config, go into
 `titleMenuItems` rather than the bar: the title shows a chevron and opens them, as an iOS document's title menu does.
@@ -585,9 +585,11 @@ to the bar's `TonalButtonTheme`,
 which puts a `LiquidGlass` pane behind each button through `ButtonStyle.backgroundBuilder` and one behind a
 `TonalButtonGroup`; the navigation dock's bar and lifted lens become panes as well, and so do a sheet's docked search,
 the cards of a `CommonPopupMenu`, and a `CommonDialog`. On the dashboard only the start button is a pane: its connected
-buttons and switches keep their fills, since each pane adds its area to a capture retaken whenever the dashboard
-redraws, which it does often. Each still swells on its own under `ElasticPress`, and a `DashboardConnectedGroup` paints
-the button pressed last over the neighbours it swells past. `lib/ui/liquid_glass.dart` holds the rest:
+buttons keep their fills like connected buttons elsewhere, and each pane would add its area to a capture retaken
+whenever the dashboard redraws, which it does often. Each still swells on its own under `ElasticPress`, and a
+`DashboardConnectedGroup` paints the button pressed last over the neighbours it swells past. A `CommonSwitch`, which
+every switch in the app is, is a pane only while held: its thumb lifts out past the solid track and turns into a clear
+lens over it, as iOS's does. `lib/ui/liquid_glass.dart` holds the rest:
 
 - A `LiquidGlassHost` over the app (`lib/ui/liquid_glass_capture.dart`, after g1455's atlas proxy) draws its panes
   without reading the backdrop. As the frame is composited, before its children, it redraws onto one small image what
@@ -610,9 +612,11 @@ the button pressed last over the neighbours it swells past. `lib/ui/liquid_glass
   opening it and 17, 9 and 5 closing it; scrolling took 18.8 render passes a frame in either tier against 23.6, and
   the lens 22 in `ultra` and 18 in `standard` against 30.
 - A pane over one painted before it in the same root reads a second image, a level up, with the first drawn in as
-  glass. Over means within 2.5 sigmas of its frost and as far as it bends, where a pane takes under 1% of what it
-  reads, rather than the 3 sigmas and 2 dp its slot holds: the bar's buttons stand 8 dp apart, inside the slot of the
-  overflow button, which went up a level and cost a second image every frame content moved under the bar. A pane's
+  glass, unless both stand in one `LiquidGlassGroup`: as iOS's GlassEffectContainer keeps glass from sampling glass,
+  the later one there reads what lies under the first, on the same level. Over means within 2.5 sigmas of its frost
+  and as far as it bends, where a pane takes under 1% of what it reads, rather than the 3 sigmas and 2 dp its slot
+  holds: the bar's buttons stand 8 dp apart, inside the slot of the overflow button, which went up a level and cost a
+  second image every frame content moved under the bar. A pane's
   root is the host or its nearest ancestor that draws offscreen: as a backdrop filter would there, it
   sees only that ancestor's content, without the ancestor's own effect, and replaces what it covers. A
   `LiquidGlassFade` is no root: as Core Animation fades a layer, its panes still read what lies behind it and fade with
@@ -622,7 +626,9 @@ the button pressed last over the neighbours it swells past. `lib/ui/liquid_glass
   from the last image rather than drawn and blurred again, and a slot without frost is a band of its own: dragging
   the lens redraws only its copy's slot, not the dock's haze or the buttons' frost. Not on Skia: an image there keeps
   what it was drawn from as long as it lives, so each capture copied from the last would hold every one before it,
-  and memory grows by a capture a frame. The dark line along the rim darkens the blurred capture there rather than the
+  and memory grows by a capture a frame. A pane gives up its capture, picture and shader both, once it lies out of
+  the host's reach or leaves the tree, as under a route that covers it, which keeps it alive while it is not drawn: the
+  shader holds the image it last sampled. The dark line along the rim darkens the blurred capture there rather than the
   sharp backdrop, a pixel or two wide.
 - Measured on an Android emulator rendering in software (SwiftShader, 1080×2400 at density 420), as raster-thread time a
   frame counting the captures that FrameTiming's raster span leaves out, median of three runs, each capture against
@@ -863,6 +869,9 @@ one sentence per setting that names it. A section header carries its title and a
 centered on the title. Every header stands as tall as one with a button, 6 dp clear of the group below, so headers
 match whether or not they carry actions. A group with a selection swaps them
 for delete and select all, never a text button. `generateSection` is the only section builder, and a sheet lays its groups inside the 16 dp inset the pages use.
+Every section keeps the same space above it, `ListSectionGap`, title or not, with its title standing in that space: the
+first section of a page sits that far below the bar, and sections are never spaced where they are placed.
+`generateGroup` gives the rows alone, for a group under a header its caller lays out, such as an `InfoHeader`.
 
 A row that opens a page, `ListItem.open` or `ListItem.next`, ends in `AppGlyphs.chevronForward` unless it passes its own
 `trailing`, as iOS settings rows do. A row that opens a dialog in place, `ListItem.input`, has no chevron. A setting

@@ -200,7 +200,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('IPv6'), findsOneWidget);
-    await tester.tap(find.byType(Switch).last);
+    await tester.tap(find.byType(CommonSwitch).last);
     await tester.pump();
     expect(config().dns.ipv6, isTrue);
 

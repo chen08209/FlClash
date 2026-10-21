@@ -63,6 +63,7 @@ export 'snap_sheet.dart';
 export 'sortable.dart';
 export 'super_reorderable_list.dart';
 export 'surface.dart';
+export 'switch.dart';
 export 'table_layout.dart';
 export 'text.dart';
 export 'text_loupe.dart';

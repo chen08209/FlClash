@@ -55,7 +55,7 @@ class BottomInsetScope extends InheritedWidget {
 /// The room content still has to leave at its top, where the scaffold has
 /// already placed something of its own there.
 class TopInsetScope extends InheritedWidget {
-  final double inset;
+  final double? inset;
 
   const TopInsetScope({super.key, required this.inset, required super.child});
 

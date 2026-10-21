@@ -106,7 +106,7 @@ void main() {
     await tester.pump();
 
     expect(find.text(currentAppLocalizations.status), findsOneWidget);
-    await tester.tap(find.byType(Switch).last);
+    await tester.tap(find.byType(CommonSwitch).last);
     await tester.pump();
     expect(config().sniffer.enable, isTrue);
 

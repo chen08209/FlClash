@@ -38,18 +38,16 @@ class ScriptContent extends ConsumerWidget {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: generateSection(
-              items: [
-                for (final script in scripts)
-                  _ScriptOption(
-                    label: script.label,
-                    isSelected: script.id == scriptId,
-                    onSelected: () {
-                      _handleChange(ref, profileId, script.id);
-                    },
-                  ),
-              ],
-            ),
+            child: generateGroup([
+              for (final script in scripts)
+                _ScriptOption(
+                  label: script.label,
+                  isSelected: script.id == scriptId,
+                  onSelected: () {
+                    _handleChange(ref, profileId, script.id);
+                  },
+                ),
+            ]),
           ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 16)),

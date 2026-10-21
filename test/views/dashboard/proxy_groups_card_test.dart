@@ -315,7 +315,7 @@ void main() {
       ProxiesType.tab,
       ['Search', 'Delay test', 'Close'],
       ['Clear search', 'Delay test'],
-      ['Delay test', 'Close'],
+      ['Close', 'Delay test'],
     ),
   ]) {
     testWidgets('the sheet bar of the ${type.name} layout keeps search and '

@@ -97,16 +97,25 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(currentAppLocalizations.geoResources), findsOneWidget);
-    expect(find.byType(DecorationListItem), findsNWidgets(4));
-    expect(find.byType(ItemPositionProvider), findsNWidgets(4));
-    expect(find.byType(Switch), findsNothing);
-    expect(
-      find.descendant(
-        of: find.byType(DecorationListItem),
-        matching: find.byGlyph(AppGlyphs.more),
-      ),
-      findsNothing,
-    );
+    for (final type in GeoResource.values) {
+      final row = find.ancestor(
+        of: find.text(type.name),
+        matching: find.byType(DecorationListItem),
+      );
+      expect(row, findsOneWidget);
+      expect(
+        find.ancestor(of: row, matching: find.byType(ItemPositionProvider)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: row, matching: find.byType(CommonSwitch)),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: row, matching: find.byGlyph(AppGlyphs.more)),
+        findsNothing,
+      );
+    }
     expect(find.byType(FutureBuilder<FileInfo?>), findsNWidgets(4));
     for (final url in defaultGeoXUrl.values) {
       expect(find.text(url), findsNothing);
@@ -127,7 +136,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('the bar menu switches auto update and sets its interval', (
+  testWidgets('a switch row turns auto update on and reveals its interval', (
     tester,
   ) async {
     const size = Size(1000, 1000);
@@ -145,34 +154,38 @@ void main() {
         child: const TestApp(child: ResourcesView()),
       ),
     );
+    final l10n = currentAppLocalizations;
+    await pumpUntilFound(tester, find.text(l10n.autoUpdate));
     await tester.pumpAndSettle();
 
-    final l10n = currentAppLocalizations;
     bool autoUpdate() => container.read(patchClashConfigProvider).geoAutoUpdate;
-    Future<void> tapMenuPath(List<String> labels) async {
-      await tester.tap(
-        find.descendant(
-          of: find.byType(AppBar),
-          matching: find.byGlyph(AppGlyphs.more),
-        ),
-      );
-      await tester.pumpAndSettle();
-      for (final label in labels) {
-        await tester.tap(find.text(label).last);
-        await tester.pumpAndSettle();
-      }
-    }
+    final interval = find.text(l10n.resourceUpdateInterval);
 
     expect(find.byTooltip(l10n.update), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byGlyph(AppGlyphs.more),
+      ),
+      findsNothing,
+    );
     expect(autoUpdate(), isFalse);
+    expect(interval, findsNothing);
 
-    await tapMenuPath([l10n.autoUpdate, l10n.turnOn]);
+    await tester.tap(find.text(l10n.autoUpdate));
+    await tester.pumpAndSettle();
     expect(autoUpdate(), isTrue);
+    expect(
+      tester.widget<CommonSwitch>(find.byType(CommonSwitch)).value,
+      isTrue,
+    );
+    expect(
+      find.text('${defaultClashConfig.geoUpdateInterval} ${l10n.hours}'),
+      findsOneWidget,
+    );
 
-    await tapMenuPath([l10n.autoUpdate, l10n.turnOff]);
-    expect(autoUpdate(), isFalse);
-
-    await tapMenuPath([l10n.resourceUpdateInterval]);
+    await tester.tap(interval);
+    await tester.pumpAndSettle();
     expect(find.byType(InputDialog), findsOneWidget);
     expect(
       find.text(defaultClashConfig.geoUpdateInterval.toString()),
@@ -185,6 +198,12 @@ void main() {
 
     expect(find.byType(InputDialog), findsNothing);
     expect(container.read(patchClashConfigProvider).geoUpdateInterval, 6);
+    expect(find.text('6 ${l10n.hours}'), findsOneWidget);
+
+    await tester.tap(find.byType(CommonSwitch));
+    await tester.pumpAndSettle();
+    expect(autoUpdate(), isFalse);
+    expect(interval, findsNothing);
     expect(tester.takeException(), null);
 
     await tester.pumpWidget(const SizedBox.shrink());

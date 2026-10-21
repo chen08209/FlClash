@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/metrics.dart';
 import 'package:fl_clash/ui/paged_sheet.dart';
 import 'package:fl_clash/ui/scaffold.dart';
 import 'package:fl_clash/ui/sheet.dart';
@@ -670,6 +671,7 @@ void main() {
       Widget page(String name, {VoidCallback? onNext}) => CommonScaffold(
         title: 'title',
         body: ListView(
+          padding: const EdgeInsets.only(top: sheetAppBarHeight),
           children: [
             if (onNext != null)
               TextButton(onPressed: onNext, child: const Text('next')),

@@ -203,13 +203,12 @@ class _FailureDetailsSheet extends StatelessWidget {
     return CommonScaffold(
       title: context.appLocalizations.errorDetails,
       body: SelectionArea(
-        child: ListView.separated(
+        child: ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
             top: context.contentTopPadding,
             bottom: 20 + context.bottomInset,
           ),
           itemCount: groups.length,
-          separatorBuilder: (_, _) => SizedBox(height: 24.mAp(context)),
           itemBuilder: (_, index) {
             final MapEntry(key: message, value: labels) = groups[index];
             return generateSection(

@@ -46,6 +46,8 @@ const double _jellyStretch = 0.2;
 const double _jellyBrake = 25;
 const double _jellySquash = 0.15;
 const double _jellyAspect = 1.4;
+// A fifth of a dp at each edge of the widest mobile lens, 134 dp lifted.
+const double _jellyRest = 3e-3;
 const double _glowReach = 28;
 const double _glowGrowth = 3;
 const double _glowPeak = 0.06;
@@ -148,9 +150,11 @@ Rect _lensRect({
 /// reads no elapsed time, so retargeting it on every pointer move holds the
 /// value still for as long as the finger keeps moving.
 class _Spring extends ChangeNotifier implements ValueListenable<double> {
-  _Spring(TickerProvider vsync, this._value) {
+  _Spring(TickerProvider vsync, this._value, {this.rest = 1e-3}) {
     _ticker = vsync.createTicker(_tick);
   }
+
+  final double rest;
 
   late final Ticker _ticker;
   double _value;
@@ -177,7 +181,16 @@ class _Spring extends ChangeNotifier implements ValueListenable<double> {
   }
 
   void springTo(double target, SpringDescription spring) {
-    _simulation = SpringSimulation(spring, _value, target, velocity);
+    _simulation = SpringSimulation(
+      spring,
+      _value,
+      target,
+      velocity,
+      tolerance: Tolerance(
+        distance: rest,
+        velocity: rest * math.sqrt(spring.stiffness / spring.mass),
+      ),
+    );
     _spring = spring;
     _target = target;
     if (_ticker.isActive) {
@@ -775,7 +788,7 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar>
   late final _Spring _hoverShow = _Spring(this, 0);
   late final _Spring _swell = _Spring(this, 0);
   late final _Spring _stretch = _Spring(this, 0);
-  late final _Spring _jelly = _Spring(this, 0);
+  late final _Spring _jelly = _Spring(this, 0, rest: _jellyRest);
   late final _Spring _glow = _Spring(this, 0);
   late final _Spring _glowSpread = _Spring(this, 0);
   final ValueNotifier<LiquidGlassGlow> _touchGlow = ValueNotifier(

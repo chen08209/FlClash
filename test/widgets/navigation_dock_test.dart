@@ -215,6 +215,20 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('the lens stops asking for frames once its wobble cannot show', (
+    tester,
+  ) async {
+    final container = await _pumpHome(tester);
+    container.read(currentPageLabelProvider.notifier).toPage(PageLabel.tools);
+    await tester.pump();
+    var elapsed = Duration.zero;
+    while (tester.binding.hasScheduledFrame && elapsed.inSeconds < 3) {
+      await tester.pump(const Duration(milliseconds: 16));
+      elapsed += const Duration(milliseconds: 16);
+    }
+    expect(elapsed, lessThan(const Duration(milliseconds: 1200)));
+  });
+
   testWidgets('a flick carries the lens on to the next item', (tester) async {
     final container = await _pumpHome(tester);
     final bar = tester.getRect(find.byType(FloatingNavigationBar));
