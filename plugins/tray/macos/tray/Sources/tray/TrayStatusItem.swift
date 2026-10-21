@@ -36,10 +36,6 @@ final class TrayStatusItem {
         }
     }
 
-    func setToolTip(_ toolTip: String) {
-        statusItem.button?.toolTip = toolTip
-    }
-
     func openMenu(_ menu: NSMenu) {
         statusItem.menu = menu
         statusItem.button?.performClick(nil)

@@ -54,6 +54,25 @@ void main() {
       }
     });
 
+    test('macOS shows the color icons once monochrome is off', () {
+      for (final (isStart, tunEnable, safeMode, status) in [
+        (false, false, false, 1),
+        (true, false, false, 2),
+        (true, true, false, 3),
+        (true, true, true, 4),
+      ]) {
+        expect(
+          macOS.getTrayIcon(
+            isStart: isStart,
+            tunEnable: tunEnable,
+            safeMode: safeMode,
+            monochrome: false,
+          ),
+          'assets/images/tray/unix/status_$status.png',
+        );
+      }
+    });
+
     test('safe mode shows its own icon whatever the core is doing', () {
       for (final (isStart, tunEnable) in [
         (false, false),

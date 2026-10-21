@@ -48,6 +48,7 @@ final class TrayMenuItemView: NSView {
     private static let metrics = Metrics.current
     private static let detailGap: CGFloat = 20
     private static let arrowGap: CGFloat = 6
+    private static let checkGap: CGFloat = 3
 
     private static let detailFont = NSFont.monospacedDigitSystemFont(
         ofSize: metrics.font.pointSize,
@@ -105,7 +106,12 @@ final class TrayMenuItemView: NSView {
             ? .selectedMenuItemTextColor
             : content.enabled ? .labelColor : .tertiaryLabelColor
         if content.checked {
-            drawSymbol(TrayMenuItemView.checkmark, x: metrics.stateX, color: primary)
+            drawSymbol(
+                TrayMenuItemView.checkmark,
+                x: metrics.stateX,
+                color: primary,
+                maxWidth: metrics.titleX - metrics.stateX - TrayMenuItemView.checkGap
+            )
         }
 
         var trailingX = bounds.width - metrics.trailing
@@ -152,8 +158,11 @@ final class TrayMenuItemView: NSView {
         )
     }
 
-    private func drawSymbol(_ image: NSImage, x: CGFloat, color: NSColor) {
-        let size = image.size
+    // Before macOS 26 the title starts closer to the state column than a
+    // checkmark at the menu font's size is wide, so the mark shrinks to fit.
+    private func drawSymbol(_ image: NSImage, x: CGFloat, color: NSColor, maxWidth: CGFloat = .infinity) {
+        let scale = min(1, maxWidth / image.size.width)
+        let size = NSSize(width: image.size.width * scale, height: image.size.height * scale)
         let rect = NSRect(
             x: x,
             y: ((bounds.height - size.height) / 2).rounded(),
