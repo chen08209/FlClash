@@ -375,6 +375,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "すべてのプロファイル、設定、ローカルデータを削除してアプリを終了します。もう一度開くと最初から始められます。",
     ),
     "clearDataFailed": m1,
+    "clearDnsCache": MessageLookupByLibrary.simpleMessage("DNSキャッシュをクリア"),
+    "clearDnsCacheFailed": MessageLookupByLibrary.simpleMessage(
+      "DNSキャッシュのクリアに失敗しました",
+    ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("検索をクリア"),
     "clientFingerprint": MessageLookupByLibrary.simpleMessage(
       "クライアントフィンガープリント",
@@ -597,6 +601,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage(
       "新しいバージョンが見つかりました",
     ),
+    "dnsCacheCleared": MessageLookupByLibrary.simpleMessage("DNSキャッシュをクリアしました"),
     "dnsHijackDesc": MessageLookupByLibrary.simpleMessage(
       "追加しない場合、ポート 53 宛てのすべての DNS 問い合わせをハイジャックします（any:53）。",
     ),

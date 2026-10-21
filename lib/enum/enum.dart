@@ -461,6 +461,7 @@ enum FunctionTag {
   coreErrorNotifier,
   dialerLoopNotifier,
   reloadPackages,
+  clearDnsCache,
 }
 
 enum DashboardWidget {

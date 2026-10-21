@@ -939,5 +939,8 @@
   "customImportDroppedSubRules": "{count, plural, other{カスタム設定はサブルールに対応していないため、SUB-RULE ルール {label} 件を破棄しました}}",
   "autoInclude": "自動で含める",
   "allReferencedProxies": "参照されているすべてのプロキシ",
-  "allReferencedProxyProviders": "参照されているすべてのプロキシプロバイダー"
+  "allReferencedProxyProviders": "参照されているすべてのプロキシプロバイダー",
+  "clearDnsCache": "DNSキャッシュをクリア",
+  "dnsCacheCleared": "DNSキャッシュをクリアしました",
+  "clearDnsCacheFailed": "DNSキャッシュのクリアに失敗しました"
 }

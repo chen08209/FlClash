@@ -939,5 +939,8 @@
   "customImportDroppedSubRules": "{count, plural, one{Пользовательские профили не поддерживают подправила, поэтому отброшено {label} правило SUB-RULE} few{Пользовательские профили не поддерживают подправила, поэтому отброшено {label} правила SUB-RULE} many{Пользовательские профили не поддерживают подправила, поэтому отброшено {label} правил SUB-RULE} other{Пользовательские профили не поддерживают подправила, поэтому отброшено {label} правила SUB-RULE}}",
   "autoInclude": "Автоматическое включение",
   "allReferencedProxies": "Все используемые прокси",
-  "allReferencedProxyProviders": "Все используемые провайдеры прокси"
+  "allReferencedProxyProviders": "Все используемые провайдеры прокси",
+  "clearDnsCache": "Очистить кэш DNS",
+  "dnsCacheCleared": "Кэш DNS очищен",
+  "clearDnsCacheFailed": "Не удалось очистить кэш DNS"
 }

@@ -71,6 +71,20 @@ class CoreAction extends _$CoreAction {
     await _core.closeConnections();
   }
 
+  Future<void> clearDnsCacheOnNetworkChange() async {
+    if (ref.read(coreStatusProvider) != CoreStatus.connected) {
+      return;
+    }
+    try {
+      await _core.clearDnsCache();
+    } catch (error) {
+      commonPrint.log(
+        'clearDnsCache error: $error',
+        logLevel: coreFailureLogLevel(error),
+      );
+    }
+  }
+
   Future<void> requestGc() async {
     await _core.requestGc();
   }
