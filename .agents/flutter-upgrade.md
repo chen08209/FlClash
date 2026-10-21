@@ -30,6 +30,22 @@ listed in the SDK's `CHANGELOG.md`.
   dashboard pages on an Intel Mac with its integrated GPU driving the built-in display; an external display can
   switch to the discrete GPU and hide the flicker.
 
+## Impeller disabled on Windows
+
+- **Bug:** [flutter/flutter#193504](https://github.com/flutter/flutter/issues/193504), reported here as #2423. From
+  3.47 the Windows embedder enables Impeller by default (`flutter_windows_engine.cc`). On some machines (seen on
+  Windows 11 26200 with an Intel Arc integrated GPU) dragging a window edge freezes the window on its last frame:
+  the EGL context is lost, no frame of the new size is ever produced, and every later frame is dropped while Dart
+  keeps running. A dump shows no thread blocked; hiding and showing the window leaves it white until the app is
+  restarted. Upstream could not reproduce it and the issue is still open.
+- **Workaround:** `wWinMain` in `windows/runner/main.cpp` calls
+  `project.set_impeller_switch(flutter::ImpellerSwitch::Disabled)`, so every Windows build renders with Skia. Release
+  builds ignore `FLUTTER_ENGINE_SWITCHES`, so users cannot turn Impeller off themselves.
+- **Side effect:** Windows draws Liquid Glass through its Skia fallback, and blur, shadows and text render as Skia
+  does; judge Windows visual reports against Skia.
+- **Remove when:** a stable `FLUTTER_VERSION` fixes #193504. Before dropping the call, build with Impeller on that SDK
+  and drag every window edge for a minute on a machine that reproduced the freeze; the window has to keep redrawing.
+
 ## Wrong-size back buffer on macOS
 
 - **Bug:** [flutter/flutter#185394](https://github.com/flutter/flutter/issues/185394). `removeSurfaceForSize:` in

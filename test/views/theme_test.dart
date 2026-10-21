@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/constant.dart';
-import 'package:fl_clash/common/feature.dart';
 import 'package:fl_clash/common/system_fonts.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -247,21 +246,13 @@ void main() {
   });
 
   group('sidebar blur', () {
-    testWidgets('stays hidden while the feature is off', (tester) async {
-      await pumpThemeView(tester);
-
-      expect(find.text('Sidebar blur'), findsNothing);
-    });
-
-    testWidgets('shows a working toggle only on supported platforms', (
+    testWidgets('starts off, with a working toggle on supported platforms', (
       tester,
     ) async {
-      feature = const Feature(sidebarBlur: true);
-      addTearDown(() => feature = const Feature());
       await pumpThemeView(tester);
-      final toggle = find.text('Sidebar blur');
+      final toggle = find.text('Background blur');
 
-      expect(readTheme().sidebarBlur, isTrue);
+      expect(readTheme().sidebarBlur, isFalse);
       if (!Platform.isMacOS && !Platform.isWindows) {
         expect(toggle, findsNothing);
         return;
@@ -270,7 +261,7 @@ void main() {
       expect(toggle, findsOneWidget);
       await tester.tap(toggle);
       await tester.pumpAndSettle();
-      expect(readTheme().sidebarBlur, isFalse);
+      expect(readTheme().sidebarBlur, isTrue);
     });
   });
 

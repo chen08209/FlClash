@@ -1598,7 +1598,9 @@ NDK version stands in for the hook's cache.
 - `proxy`: system proxy configuration. On Windows the package installer and uninstaller kill the app, and then run
   `FlClash.exe --clear-stale-proxy`, the installer once the new files are in place; the runner hands it to the plugin
   before any engine starts, and it turns off only a proxy still set to FlClash's `127.0.0.1:<port>` with nothing
-  listening on that port.
+  listening on that port. In the app `SystemProxyQueue` sets the system proxy when the Core starts with it on, and
+  stops it on a stop or exit only when this run set it, since a stop also clears a proxy, PAC or auto-detect setting
+  someone else made. Nothing is stored, so a launch leaves alone the proxy a crashed run left.
 - `rust_api`: runtime Flutter Rust Bridge FFI package built through Native Assets. See below.
 - `tray`: system tray for Linux, macOS and Windows. Written for FlClash; replaced the `tray_manager` fork.
 - `window`: desktop window control for Linux, macOS and Windows. Written for FlClash; replaced the
@@ -1709,19 +1711,22 @@ table. `lib/common/window.dart` and `lib/manager/window_manager.dart` are the on
 - macOS: `WindowPlugin.instance` is reached from `AppDelegate` for `applicationShouldTerminate` (emits
   `should-terminate`) and `applicationShouldHandleReopen` (emits `activate`); `MainFlutterWindow` calls
   `hiddenWindowAtLaunch()` so the first `order` keeps the window hidden until Dart shows it.
-- Window effects (`transparent`, `blur`, `acrylic`, `mica`) are capability-gated by `isEffectSupported`; the Flutter
-  content must paint a translucent background for them to show. `ThemeProps.sidebarBlur` (on by default) drives
-  them: `Window.setBlur` picks `blur` on macOS and `acrylic` (or `blur`) on Windows and caches only a successful
-  probe, so a platform that answered unsupported is asked again the next time blur is turned on. `WindowManager` reapplies it
-  whenever the setting or the app brightness changes and records the outcome in `windowBlurProvider`, and only the
-  sidebar and the caption strip paint translucently while it is on. On macOS the sidebar paints fully transparent
-  and the effect view follows the window's active state, which is the flutter_acrylic `TransparentMacOSSidebar`
-  look; Windows keeps a 50% tint because the accent effects blur too little for the rail to stay readable.
-- Sidebar blur is soft-disabled: `feature.sidebarBlur` (`lib/common/feature.dart`) is off unless the build passes
-  `--dart-define=FEATURE_SIDEBAR_BLUR=true`. While it is off the theme page hides the toggle and
-  `windowBlurRequestProvider` asks for no effect whatever `ThemeProps.sidebarBlur` holds. `WindowManager` still sends
-  that request at startup: the macOS plugin installs its effect view in `ensureInitialized` and leaves it active until
-  the first `setEffect`, so the `none` request is what makes the window opaque and parks the effect view.
+- Window effects (`transparent`, `blur`, `acrylic`, `mica`, `glass`) are capability-gated by `isEffectSupported`; the
+  Flutter content must paint a translucent background for them to show. `ThemeProps.sidebarBlur` (off by default)
+  drives them, taking the material the same release's system apps give their sidebars: `Window.setBlur` tries
+  `glass` then `blur` on macOS (Liquid Glass on 26+, the `.sidebar` vibrancy before) and `mica`, `acrylic`, then
+  `blur` on Windows (Mica on 11, acrylic from 10 1803, the plain accent blur before), and caches only a successful
+  probe, so a platform that answered unsupported is asked again the next time blur is turned on. Linux draws none,
+  as GNOME and KDE draw opaque sidebars. `WindowManager` reapplies it whenever the setting or the app brightness
+  changes and records in `windowBlurProvider` how opaque the sidebar and caption strip keep their own color over the
+  backdrop, null while there is none. Every material keeps that color at 50%, or the rail takes the hue of whatever lies
+  behind the window while the content beside it keeps the theme's; the Windows 10 accent effects also take the same
+  tint natively, as they draw nothing without one. Glass, the macOS vibrancy and Mica each go opaque on their own
+  where the system does (an inactive window, Reduce Transparency, transparency effects off).
+- Releases stored `sidebarBlur: true` while the toggle was hidden, so upgrade 4 in `lib/common/migration.dart` turns it
+  off once. With blur off, `WindowManager` still sends its request at startup: the macOS plugin installs its
+  effect view in `ensureInitialized` and leaves it active until the first `setEffect`, so the `none` request is what
+  makes the window opaque and parks the effect view.
 
 ## rust_api Crate Layout
 

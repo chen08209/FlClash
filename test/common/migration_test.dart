@@ -290,6 +290,23 @@ void main() {
         expect((await upgrade(3)).primaryColor, 0xFFFF9500);
       });
 
+      test('turns off the sidebar blur releases stored unseen, once', () async {
+        Future<bool> upgrade(int from) async {
+          final configMap = _createConfigMap();
+          (configMap['themeProps']! as Map<String, Object?>)['sidebarBlur'] =
+              true;
+          final store = _FakeMigrationStore(
+            configMap: configMap,
+            version: Migration.currentVersion,
+            upgradeVersion: from,
+          );
+          return (await Migration(store: store).run()).themeProps.sidebarBlur;
+        }
+
+        expect(await upgrade(3), isFalse);
+        expect(await upgrade(4), isTrue);
+      });
+
       test('a new install only records it', () async {
         final store = _FakeMigrationStore(
           configMap: null,

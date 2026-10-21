@@ -149,12 +149,25 @@ static FlMethodResponse* handle_is_visible(WindowPlugin* self, FlValue*) {
                       gtk_widget_is_visible(GTK_WIDGET(window)));
 }
 
+// A tray menu click reaches the app over D-Bus with no input event, so a plain
+// present carries the app's last user time and Mutter refuses the focus.
+static void present_window(GtkWindow* window) {
+#ifdef GDK_WINDOWING_X11
+  GdkWindow* gdk_window = gtk_widget_get_window(GTK_WIDGET(window));
+  if (gdk_window != nullptr && GDK_IS_X11_WINDOW(gdk_window)) {
+    gtk_window_present_with_time(window, gdk_x11_get_server_time(gdk_window));
+    return;
+  }
+#endif
+  gtk_window_present(window);
+}
+
 static FlMethodResponse* handle_focus(WindowPlugin* self, FlValue*) {
   GtkWindow* window = window_plugin_get_window(self);
   if (window == nullptr) {
     return not_ready_response();
   }
-  gtk_window_present(window);
+  present_window(window);
   return success_null();
 }
 
@@ -225,7 +238,7 @@ static FlMethodResponse* handle_restore(WindowPlugin* self, FlValue*) {
     return not_ready_response();
   }
   gtk_window_deiconify(window);
-  gtk_window_present(window);
+  present_window(window);
   return success_null();
 }
 
