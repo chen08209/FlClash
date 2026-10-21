@@ -15,10 +15,12 @@ final class TrayCapabilities {
   final bool iconEvents;
   final bool menuControl;
 
+  // AppKit can orphan a status item's tooltip panel across sleep and title
+  // resizes, leaving an empty box under the menu bar until the app quits.
   static const TrayCapabilities macOS = TrayCapabilities(
     supported: true,
     title: true,
-    toolTip: true,
+    toolTip: false,
     iconEvents: true,
     menuControl: true,
   );

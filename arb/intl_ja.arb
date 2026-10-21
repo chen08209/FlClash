@@ -564,6 +564,7 @@
   "backupFromNewerVersion": "このバックアップは新しいバージョンのアプリで作成されています。アプリを更新してから復元してください",
   "networkTimeoutError": "リクエストがタイムアウトしました。ネットワークまたはプロキシを確認してから再試行してください",
   "networkHostLookupError": "サーバーのアドレスを解決できませんでした。URL が正しいこと、DNS が使えることを確認してください",
+  "monochromeIcon": "モノクロームアイコン",
   "networkConnectionError": "サーバーに接続できませんでした。ネットワーク接続またはプロキシ設定を確認してください",
   "networkTlsError": "安全な接続に失敗しました。サーバー証明書が無効か、接続が傍受されている可能性があります",
   "networkCancelledError": "リクエストはキャンセルされました",

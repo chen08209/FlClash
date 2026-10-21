@@ -1257,6 +1257,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "minutesAgoShort": m48,
     "mixedPort": MessageLookupByLibrary.simpleMessage("Port mixte"),
     "mode": MessageLookupByLibrary.simpleMessage("Mode"),
+    "monochromeIcon": MessageLookupByLibrary.simpleMessage("Icône monochrome"),
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("Monochrome"),
     "monthsAgo": m49,
     "monthsAgoShort": m50,
