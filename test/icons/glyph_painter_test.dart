@@ -81,6 +81,7 @@ final _glyphs = {
   'sliders': AppGlyphs.sliders,
   'wrench': AppGlyphs.wrench,
   'toggle': AppGlyphs.toggle,
+  'toggleOn': AppGlyphs.toggleOn,
   'pin': AppGlyphs.pin,
   'eye': AppGlyphs.eye,
   'eyeOff': AppGlyphs.eyeOff,

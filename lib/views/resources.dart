@@ -160,6 +160,9 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
     final autoUpdate = ref.watch(
       patchClashConfigProvider.select((state) => state.geoAutoUpdate),
     );
+    final updateInterval = ref.watch(
+      patchClashConfigProvider.select((state) => state.geoUpdateInterval),
+    );
     final resources = _resources;
     final (:iconSets, :ruleProviders, :scripts) = resources ?? _noResources;
     final resourceKeys = [
@@ -182,29 +185,6 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
           onPressed: _updateAll,
         ),
       ],
-      menuItems: [
-        CommonPopupMenuItem(
-          glyph: AppGlyphs.toggle,
-          label: appLocalizations.autoUpdate,
-          subItems: [
-            CommonPopupMenuItem(
-              label: appLocalizations.turnOn,
-              checked: autoUpdate,
-              onPressed: () => _updateAutoUpdate(true),
-            ),
-            CommonPopupMenuItem(
-              label: appLocalizations.turnOff,
-              checked: !autoUpdate,
-              onPressed: () => _updateAutoUpdate(false),
-            ),
-          ],
-        ),
-        CommonPopupMenuItem(
-          glyph: AppGlyphs.clock,
-          label: appLocalizations.resourceUpdateInterval,
-          onPressed: _updateInterval,
-        ),
-      ],
       body: NullStatusSwitcher(
         isLoading: resources == null,
         loadingStatus: const NullStatus(
@@ -212,10 +192,25 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
         ),
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
-            top: context.appBarInset,
+            top: context.sectionsTopPadding,
             bottom: 16 + context.bottomInset,
           ),
           children: [
+            generateSection(
+              items: [
+                ListItem.toggle(
+                  title: Text(appLocalizations.autoUpdate),
+                  value: autoUpdate,
+                  onChanged: _updateAutoUpdate,
+                ),
+                if (autoUpdate)
+                  ListItem(
+                    title: Text(appLocalizations.resourceUpdateInterval),
+                    subtitle: Text('$updateInterval ${appLocalizations.hours}'),
+                    onTap: _updateInterval,
+                  ),
+              ],
+            ),
             generateSection(
               title: appLocalizations.geoResources,
               items: [
@@ -461,7 +456,7 @@ class _GeoResourceItem extends ConsumerWidget {
             .updateGeoResourceUrl(type, newUrl);
       } catch (e) {
         unawaited(
-          dialogs.showMessage(
+          dialogs.showAlert(
             title: type.name,
             message: TextSpan(text: e.toString()),
           ),

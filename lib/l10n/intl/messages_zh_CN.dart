@@ -202,19 +202,9 @@ class MessageLookup extends MessageLookupByLibrary {
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "about": MessageLookupByLibrary.simpleMessage("关于"),
     "accessControl": MessageLookupByLibrary.simpleMessage("访问控制"),
-    "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
-      "只允许选中应用进入VPN",
-    ),
     "accessControlDesc": MessageLookupByLibrary.simpleMessage(
       "访问控制决定哪些应用使用代理。",
     ),
-    "accessControlDisabledDesc": MessageLookupByLibrary.simpleMessage(
-      "应用访问控制已关闭",
-    ),
-    "accessControlNotAllowDesc": MessageLookupByLibrary.simpleMessage(
-      "选中应用将会被排除在VPN之外",
-    ),
-    "accessControlSettings": MessageLookupByLibrary.simpleMessage("访问控制设置"),
     "account": MessageLookupByLibrary.simpleMessage("账号"),
     "action": MessageLookupByLibrary.simpleMessage("操作"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage("测试全部延迟"),
@@ -678,9 +668,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "hideIp": MessageLookupByLibrary.simpleMessage("隐藏 IP"),
     "hidePassword": MessageLookupByLibrary.simpleMessage("隐藏密码"),
     "hideTimeoutProxies": MessageLookupByLibrary.simpleMessage("隐藏超时代理"),
-    "hideTimeoutProxiesDesc": MessageLookupByLibrary.simpleMessage(
-      "不显示上次延迟测试超时的代理",
-    ),
     "hopInterval": MessageLookupByLibrary.simpleMessage("跳跃间隔"),
     "host": MessageLookupByLibrary.simpleMessage("主机"),
     "hostname": MessageLookupByLibrary.simpleMessage("主机名"),
@@ -1260,7 +1247,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectAll": MessageLookupByLibrary.simpleMessage("全选"),
     "selectRuleSet": MessageLookupByLibrary.simpleMessage("请选择规则集"),
     "selectSplitStrategy": MessageLookupByLibrary.simpleMessage("请选择分流策略"),
-    "selected": MessageLookupByLibrary.simpleMessage("已选择"),
     "server": MessageLookupByLibrary.simpleMessage("服务器"),
     "serviceAbnormalCount": m73,
     "serviceAllAvailable": MessageLookupByLibrary.simpleMessage("全部可用"),

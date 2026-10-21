@@ -94,7 +94,7 @@ class DeveloperView extends ConsumerWidget {
       title: appLocalizations.developerMode,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
-          top: context.contentTopPadding,
+          top: context.sectionsTopPadding,
           bottom: 16 + context.bottomInset,
         ),
         children: [

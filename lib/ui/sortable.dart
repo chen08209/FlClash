@@ -47,12 +47,14 @@ class SortableItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sorting = SortModeScope.maybeOf(context)?.sorting ?? false;
     return _SortableItemScope(
-      data: (
+      data: (index: index, sorting: sorting),
+      child: ReorderableDelayedDragStartListener(
         index: index,
-        sorting: SortModeScope.maybeOf(context)?.sorting ?? false,
+        enabled: sorting,
+        child: child,
       ),
-      child: child,
     );
   }
 }
@@ -111,7 +113,7 @@ class DetailButton extends StatelessWidget {
   }
 }
 
-/// Drags on press; with focus, a select key lifts the row and the up and down
+/// Its row drags; with focus, a select key lifts the row and the up and down
 /// keys move it, so a remote or a keyboard can sort without a pointer.
 class SortHandle extends StatefulWidget {
   const SortHandle({super.key, required this.index});
@@ -201,32 +203,29 @@ class _SortHandleState extends State<SortHandle> {
         onKeyEvent: _handleKey,
         child: MouseRegion(
           cursor: SystemMouseCursors.grab,
-          child: ReorderableDragStartListener(
-            index: widget.index,
-            child: ColoredBox(
-              color: Colors.transparent,
-              child: SizedBox.square(
-                dimension: dimension,
-                child: Center(
-                  child: AnimatedContainer(
-                    duration: context.motionDuration(kThemeAnimationDuration),
-                    width: dimension - 8,
-                    height: dimension - 8,
-                    decoration: ShapeDecoration(
-                      shape: AppShape.circle,
-                      color: colorScheme.onSurface.withValues(
-                        alpha: _lifted
-                            ? 0.16
-                            : _focused
-                            ? 0.12
-                            : 0,
-                      ),
+          child: ColoredBox(
+            color: Colors.transparent,
+            child: SizedBox.square(
+              dimension: dimension,
+              child: Center(
+                child: AnimatedContainer(
+                  duration: context.motionDuration(kThemeAnimationDuration),
+                  width: dimension - 8,
+                  height: dimension - 8,
+                  decoration: ShapeDecoration(
+                    shape: AppShape.circle,
+                    color: colorScheme.onSurface.withValues(
+                      alpha: _lifted
+                          ? 0.16
+                          : _focused
+                          ? 0.12
+                          : 0,
                     ),
-                    child: Center(
-                      child: GlyphIcon(
-                        AppGlyphs.dragHandle,
-                        color: _lifted ? colorScheme.primary : null,
-                      ),
+                  ),
+                  child: Center(
+                    child: GlyphIcon(
+                      AppGlyphs.dragHandle,
+                      color: _lifted ? colorScheme.primary : null,
                     ),
                   ),
                 ),

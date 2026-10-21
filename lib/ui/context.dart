@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:fl_clash/ui/color.dart';
 import 'package:fl_clash/ui/inherited.dart';
 import 'package:fl_clash/ui/metrics.dart';
@@ -35,6 +37,11 @@ extension BuildContextExtension on BuildContext {
   double get contentTopPadding =>
       TopInsetScope.of(this) ??
       (isInCompactSheet ? sheetAppBarHeight : appBarInset + 12);
+
+  /// For a page that opens on a section: the section's own gap above it then
+  /// lands it where [contentTopPadding] puts any other page's content.
+  double get sectionsTopPadding =>
+      math.max(0, contentTopPadding - listHeaderPaddingOf(this).top);
 
   /// What the end of a body scrolls clear of: the system bar the body runs
   /// under and what floats over its foot. A docked search only counts below

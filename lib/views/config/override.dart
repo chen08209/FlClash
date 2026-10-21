@@ -583,7 +583,7 @@ class _OverrideList<K extends OverrideKey, M> extends ConsumerWidget {
     final entries = spec.values.where(keys.contains);
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
-        top: context.contentTopPadding,
+        top: context.sectionsTopPadding,
         bottom: 16 + context.bottomInset,
       ),
       children: [

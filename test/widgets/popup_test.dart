@@ -425,6 +425,83 @@ void main() {
     expect(find.byGlyph(AppGlyphs.check), findsOneWidget);
   });
 
+  testWidgets('a subtitle stands under its label, capped menu or not', (
+    tester,
+  ) async {
+    for (final maxVisibleItems in [null, 7]) {
+      final open = await pumpMenu(tester, [
+        const CommonPopupMenuItem(
+          label: 'Access',
+          subtitle: 'Selected 2',
+          checked: true,
+        ),
+        const CommonPopupMenuItem(label: 'Plain'),
+      ], maxVisibleItems: maxVisibleItems);
+      open();
+      await tester.pumpAndSettle();
+
+      final label = tester.getRect(find.text('Access'));
+      final subtitle = tester.getRect(find.text('Selected 2'));
+      expect(subtitle.top, greaterThanOrEqualTo(label.bottom));
+      expect(subtitle.left, label.left);
+      expect(
+        tester.getRect(find.text('Plain')).top,
+        greaterThanOrEqualTo(subtitle.bottom),
+      );
+
+      await tester.tapAt(Offset.zero);
+      await tester.pumpAndSettle();
+    }
+  });
+
+  testWidgets('a section sets its items apart under its title', (tester) async {
+    final taps = <String>[];
+    final open = await pumpMenu(tester, [
+      CommonPopupMenuItem(
+        label: 'On',
+        checked: true,
+        section: const CommonPopupMenuSection(title: 'Power'),
+        onPressed: () => taps.add('On'),
+      ),
+      CommonPopupMenuItem(label: 'Off', onPressed: () => taps.add('Off')),
+      CommonPopupMenuItem(
+        label: 'Settings',
+        section: const CommonPopupMenuSection(),
+        onPressed: () => taps.add('Settings'),
+      ),
+    ], maxVisibleItems: 7);
+    open();
+    await tester.pumpAndSettle();
+
+    final dividers = find.descendant(
+      of: find.byType(CommonPopupMenu),
+      matching: find.byType(Divider),
+    );
+    expect(dividers, findsOneWidget);
+    final title = tester.getRect(find.text('Power'));
+    final on = tester.getRect(find.text('On'));
+    final divider = tester.getRect(dividers);
+    expect(title.bottom, lessThanOrEqualTo(on.top));
+    expect(title.left, on.left);
+    expect(
+      divider.top,
+      greaterThanOrEqualTo(tester.getRect(find.text('Off')).bottom),
+    );
+    expect(
+      divider.bottom,
+      lessThanOrEqualTo(tester.getRect(find.text('Settings')).top),
+    );
+
+    await tester.tap(find.text('Power'));
+    await tester.pumpAndSettle();
+    expect(taps, isEmpty);
+    expect(find.byType(CommonPopupMenu), findsOneWidget);
+
+    await tester.tap(find.text('Off'));
+    await tester.pumpAndSettle();
+    expect(taps, ['Off']);
+  });
+
   testWidgets('the popup grows out of its anchor and closes back into it', (
     tester,
   ) async {

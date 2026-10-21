@@ -94,7 +94,7 @@ class _LogsViewState extends ConsumerState<LogsView>
     }, title: appLocalizations.exportLogs);
     if (res != true) return;
     unawaited(
-      dialogs.showMessage(
+      dialogs.showAlert(
         title: appLocalizations.tip,
         message: TextSpan(text: appLocalizations.exportSuccess),
       ),

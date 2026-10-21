@@ -205,19 +205,9 @@ class MessageLookup extends MessageLookupByLibrary {
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "about": MessageLookupByLibrary.simpleMessage("アプリについて"),
     "accessControl": MessageLookupByLibrary.simpleMessage("アクセス制御"),
-    "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
-      "選択したアプリのみVPNを経由します",
-    ),
     "accessControlDesc": MessageLookupByLibrary.simpleMessage(
       "アクセス制御では、プロキシを利用するアプリを選びます。",
     ),
-    "accessControlDisabledDesc": MessageLookupByLibrary.simpleMessage(
-      "アプリアクセス制御は無効です",
-    ),
-    "accessControlNotAllowDesc": MessageLookupByLibrary.simpleMessage(
-      "選択したアプリはVPNから除外されます",
-    ),
-    "accessControlSettings": MessageLookupByLibrary.simpleMessage("アクセス制御の設定"),
     "account": MessageLookupByLibrary.simpleMessage("アカウント"),
     "action": MessageLookupByLibrary.simpleMessage("アクション"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage("すべての遅延をテスト"),
@@ -742,9 +732,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "hidePassword": MessageLookupByLibrary.simpleMessage("パスワードを隠す"),
     "hideTimeoutProxies": MessageLookupByLibrary.simpleMessage(
       "タイムアウトしたプロキシを隠す",
-    ),
-    "hideTimeoutProxiesDesc": MessageLookupByLibrary.simpleMessage(
-      "前回の遅延テストがタイムアウトしたプロキシを表示しない",
     ),
     "hopInterval": MessageLookupByLibrary.simpleMessage("ホップ間隔"),
     "host": MessageLookupByLibrary.simpleMessage("ホスト"),
@@ -1393,7 +1380,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectSplitStrategy": MessageLookupByLibrary.simpleMessage(
       "振り分け戦略を選択してください",
     ),
-    "selected": MessageLookupByLibrary.simpleMessage("選択済み"),
     "server": MessageLookupByLibrary.simpleMessage("サーバー"),
     "serviceAbnormalCount": m73,
     "serviceAllAvailable": MessageLookupByLibrary.simpleMessage("すべて利用可能"),

@@ -1079,6 +1079,11 @@ abstract final class AppGlyphs {
     GlyphCircle(8.4, 12, 2.8, role: GlyphRole.detail, solid: true),
   ]);
 
+  static const toggleOn = Glyph([
+    GlyphBox(2.9, 6.5, 21.1, 17.5, 5.5),
+    GlyphCircle(15.6, 12, 2.8, role: GlyphRole.detail, solid: true),
+  ]);
+
   static const pin = Glyph([
     GlyphPolyline([
       GlyphVertex(15.42, 3.5, 1.5),

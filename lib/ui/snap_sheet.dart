@@ -38,6 +38,10 @@ const _hardestThrow = 0.75;
 /// UIScrollView.DecelerationRate.fast, which iOS projects a release with.
 const _projectionTime = 0.99 / (1 - 0.99) / 1000;
 
+/// UIKit's rubber band past the tallest detent, read from iOS 27.
+const _rubberBandExtent = 100.0;
+const _rubberBandCoefficient = 0.55;
+
 const _settleTolerance = Tolerance(distance: 0.5, velocity: 10);
 
 const _peakEase = 120.0;
@@ -209,6 +213,21 @@ double _rounded(double x, double width) {
   return reach * reach / (4 * width);
 }
 
+double _rubberBand(double overshoot, double extent) {
+  if (overshoot <= 0 || extent <= 0) {
+    return 0;
+  }
+  return (1 - 1 / (overshoot * _rubberBandCoefficient / extent + 1)) * extent;
+}
+
+double _overshootOf(double stretch, double extent) {
+  if (stretch <= 0 || extent <= 0) {
+    return 0;
+  }
+  final reach = math.min(stretch, extent * 0.99);
+  return extent / _rubberBandCoefficient * reach / (extent - reach);
+}
+
 /// SpringSimulation picks its solution by the sign of a discriminant that a
 /// critically damped spring leaves to rounding.
 class _SheetSpring extends Simulation {
@@ -273,9 +292,10 @@ class _Resting extends _Activity {
 }
 
 class _Holding extends _Activity {
-  _Holding(this.height, {required this.dragged});
+  _Holding(this.height, {required this.dragged, this.overshoot = 0});
 
   double height;
+  double overshoot;
   final bool dragged;
 }
 
@@ -334,9 +354,11 @@ class _SheetModel extends ChangeNotifier {
 
   bool get _closing => _presentation.status == AnimationStatus.reverse;
 
+  double get _peak => math.max(_available - stackedSheetPeek, 0.0);
+
   /// The tallest detent, lifted by the keyboard up to a peek below the top.
   double get _top {
-    final peak = math.max(_available - stackedSheetPeek, 0.0);
+    final peak = _peak;
     final tallest = detents.last * _available;
     final room = clampDouble(peak - tallest, 0, _peakEase);
     return peak - _rounded(peak - tallest - _keyboard, room);
@@ -368,9 +390,14 @@ class _SheetModel extends ChangeNotifier {
 
   double _heightIn(List<double> stops) => switch (_activity) {
     _Resting(:final stop) => stops[stop],
-    _Holding(:final height) => clampDouble(height, stops.first, stops.last),
+    _Holding(:final height, :final overshoot) =>
+      clampDouble(height, stops.first, stops.last) +
+          _rubberBand(overshoot, _stretchExtent(stops.last)),
     _Settling(:final stop, :final offset) => stops[stop] + offset,
   };
+
+  double _stretchExtent(double tallest) =>
+      clampDouble(_peak - _keyboard - tallest, 0, _rubberBandExtent);
 
   bool get isSettling => _activity is _Settling;
 
@@ -519,17 +546,22 @@ class _SheetModel extends ChangeNotifier {
     if (activity is _Holding && activity.dragged == dragged) {
       return;
     }
-    final height = this.height;
+    final stops = _stops;
+    final height = _heightIn(stops);
     _stopTicker();
-    _activity = _Holding(height, dragged: dragged);
+    _activity = _Holding(
+      math.min(height, stops.last),
+      dragged: dragged,
+      overshoot: _overshootOf(height - stops.last, _stretchExtent(stops.last)),
+    );
     if (dragged) {
       _measureBeforeMoving();
     }
   }
 
   /// Returns how much of [delta], positive to grow, the sheet took: what is
-  /// left past the tallest detent goes to the content.
-  double dragBy(double delta) {
+  /// left past the tallest detent goes to the content, or [stretches] it.
+  double dragBy(double delta, {bool stretches = false}) {
     // A drag the pop caught mid-gesture would hold the route from leaving.
     if (_closing) {
       return delta;
@@ -541,6 +573,9 @@ class _SheetModel extends ChangeNotifier {
     final extent = stops.first + _keyboard;
     var rest = delta;
     if (rest < 0) {
+      final relax = math.max(rest, -held.overshoot);
+      held.overshoot += relax;
+      rest -= relax;
       final shrink = math.max(rest, math.min(stops.first - held.height, 0.0));
       held.height += shrink;
       rest -= shrink;
@@ -559,6 +594,10 @@ class _SheetModel extends ChangeNotifier {
       final grow = math.min(rest, math.max(stops.last - held.height, 0.0));
       held.height += grow;
       rest -= grow;
+      if (stretches && _stretchExtent(stops.last) > 0) {
+        held.overshoot += rest;
+        rest = 0;
+      }
     }
     _changed();
     return delta - rest;
@@ -576,7 +615,7 @@ class _SheetModel extends ChangeNotifier {
     final stops = _stops;
     final shown = _presentation.value;
     final extent = stops.first + _keyboard;
-    final position = shown < 1 ? extent * shown : _keyboard + activity.height;
+    final position = shown < 1 ? extent * shown : _keyboard + _heightIn(stops);
     final projected = position + velocity * _projectionTime;
     var target = -1;
     var distance = projected.abs();
@@ -795,7 +834,7 @@ class _SnapSheetState extends State<_SnapSheet>
       onPointerSignal: _handlePointerSignal,
       child: GestureDetector(
         onVerticalDragUpdate: (details) =>
-            _model.dragBy(-details.primaryDelta!),
+            _model.dragBy(-details.primaryDelta!, stretches: true),
         onVerticalDragEnd: (details) =>
             _model.dragEnd(-(details.primaryVelocity ?? 0)),
         onVerticalDragCancel: () => _model.dragEnd(0),
@@ -1330,11 +1369,12 @@ class _SheetScrollPosition extends ScrollPositionWithSingleContext
 
   @override
   void beginActivity(ScrollActivity? newActivity) {
-    super.beginActivity(
-      newActivity.runtimeType == IdleScrollActivity && model.settling.value
-          ? _SettlingScrollActivity(this)
-          : newActivity,
-    );
+    if (newActivity.runtimeType == IdleScrollActivity && model.settling.value) {
+      newActivity!.dispose();
+      super.beginActivity(_SettlingScrollActivity(this));
+      return;
+    }
+    super.beginActivity(newActivity);
   }
 
   @override

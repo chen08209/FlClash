@@ -53,8 +53,8 @@ does. `CircleBorder` and `BoxShape.circle` are fine for something that is always
 
 APIs that accept only a `Radius`, such as `ScrollbarThemeData.radius`, keep circular corners; supply the superellipse
 with an enclosing clip or shape where it shows. Framework widgets that paint their own circular corners with no shape or
-decoration to override, such as the `Switch` track, are left as Material draws them. Tooltips take theirs from
-`withAppShapes`, which sets `tooltipTheme.decoration`.
+decoration to override are left as Material draws them; switches are `CommonSwitch`, drawn by the app. Tooltips take
+theirs from `withAppShapes`, which sets `tooltipTheme.decoration`.
 
 ### Typography
 

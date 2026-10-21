@@ -912,7 +912,7 @@ class _ServiceManageItem extends StatelessWidget {
             subtitle: shown
                 ? Text(context.appLocalizations.serviceShownOnDashboard)
                 : null,
-            trailing: Switch(value: enabled, onChanged: onChanged),
+            trailing: CommonSwitch(value: enabled, onChanged: onChanged),
           ),
         ),
       ),

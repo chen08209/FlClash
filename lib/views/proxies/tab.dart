@@ -189,7 +189,10 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
               child: Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(top: 4, bottom: 16),
+                    padding: EdgeInsets.only(
+                      top: context.contentTopPadding - context.appBarInset,
+                      bottom: 16,
+                    ),
                     child: GroupTabs(controller: controller, groups: groups),
                   ),
                   Expanded(

@@ -242,7 +242,8 @@ Widget generateAnimatedSection({
 }) {
   return Column(
     children: [
-      if (items.isNotEmpty && title != null) ListHeader(title: title),
+      if (items.isNotEmpty)
+        title != null ? ListHeader(title: title) : const ListSectionGap(),
       AnimatedEntries(grouped: true, children: items),
       if (items.isNotEmpty && footer != null) ListFooter(text: footer),
     ],

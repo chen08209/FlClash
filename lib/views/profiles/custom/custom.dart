@@ -184,10 +184,9 @@ class _CustomProfileViewState extends ConsumerState<CustomProfileView> {
       ];
       if (dropped.isNotEmpty && mounted) {
         unawaited(
-          dialogs.showMessage(
+          dialogs.showAlert(
             title: appLocalizations.import,
             message: TextSpan(text: dropped.join('\n\n')),
-            cancelable: false,
           ),
         );
       }

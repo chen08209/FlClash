@@ -164,7 +164,7 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
     }
     if (_reservedLabels(except: provider).contains(label)) {
       unawaited(
-        dialogs.showMessage(
+        dialogs.showAlert(
           message: TextSpan(
             text: appLocalizations.existsTip(appLocalizations.name),
           ),

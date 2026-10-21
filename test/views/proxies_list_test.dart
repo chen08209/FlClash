@@ -2,6 +2,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/context.dart';
 import 'package:fl_clash/views/proxies/card.dart';
 import 'package:fl_clash/views/proxies/list.dart';
 import 'package:fl_clash/views/views.dart';
@@ -63,12 +64,15 @@ void main() {
     await tester.pump();
 
     final barBottom = tester.getRect(find.byType(AppBar)).bottom;
-    expect(tester.getRect(find.byType(ListHeader)).top, barBottom + 8);
+    final contentTop = tester
+        .element(find.byType(ListHeader))
+        .contentTopPadding;
+    expect(tester.getRect(find.byType(ListHeader)).top, contentTop);
 
     await tester.drag(find.byType(ProxyCard).first, const Offset(0, -300));
     await tester.pump();
 
-    expect(tester.getRect(find.byType(ListHeader)).top, barBottom + 8);
+    expect(tester.getRect(find.byType(ListHeader)).top, contentTop);
     expect(
       find
           .byType(ProxyCard)
@@ -143,12 +147,11 @@ void main() {
     position.jumpTo(position.maxScrollExtent - 1000);
     await tester.pump();
 
-    final barBottom = tester.getRect(find.byType(AppBar)).bottom;
     final far = find.ancestor(
       of: find.text('Far'),
       matching: find.byType(ListHeader),
     );
-    expect(tester.getRect(far).top, barBottom + 8);
+    expect(tester.getRect(far).top, tester.element(far).contentTopPadding);
     expect(find.text('G0', skipOffstage: false), findsNothing);
     expect(tester.takeException(), isNull);
   });

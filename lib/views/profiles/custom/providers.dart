@@ -63,7 +63,7 @@ class CustomProvidersView extends ConsumerWidget {
         ),
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
-            top: context.contentTopPadding,
+            top: context.sectionsTopPadding,
             bottom: 16 + context.bottomInset,
           ),
           children: [
@@ -459,7 +459,7 @@ class _ProxyProviderOptionsViewState
       title: option.label(context.appLocalizations),
       leading: leading,
       onPressed: () => onChanged(!value),
-      trailing: Switch(value: value, onChanged: onChanged),
+      trailing: CommonSwitch(value: value, onChanged: onChanged),
     );
   }
 
@@ -604,7 +604,7 @@ class _ProxyProviderOptionsViewState
           SliverPadding(
             padding: const EdgeInsets.symmetric(
               horizontal: 16,
-            ).copyWith(top: context.contentTopPadding),
+            ).copyWith(top: context.sectionsTopPadding),
             sliver: const ProxyProviderFiltersSliver(),
           ),
           SliverPadding(

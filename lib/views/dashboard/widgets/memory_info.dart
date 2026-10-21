@@ -483,10 +483,7 @@ class _MemorySection extends StatelessWidget {
           curve: Easing.standard,
           child: FadeThroughBox(
             alignment: Alignment.topCenter,
-            child: KeyedSubtree(
-              key: contentKey,
-              child: generateSection(items: items),
-            ),
+            child: KeyedSubtree(key: contentKey, child: generateGroup(items)),
           ),
         ),
       ],

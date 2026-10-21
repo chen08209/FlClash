@@ -106,20 +106,20 @@ class _FadeScaleEnterBoxState extends State<FadeScaleEnterBox>
     with SingleTickerProviderStateMixin, _EnterAnimation {
   @override
   late final AnimationController _controller;
+  late final CurvedAnimation _curve;
   late Animation<double> _animation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: commonDuration);
-    _animation = Tween<double>(
-      begin: 0,
-      end: 1,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _curve = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    _animation = Tween<double>(begin: 0, end: 1).animate(_curve);
   }
 
   @override
   void dispose() {
+    _curve.dispose();
     _controller.dispose();
     super.dispose();
   }

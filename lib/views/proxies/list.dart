@@ -12,7 +12,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'card.dart';
 import 'common.dart';
 
-const _pinnedHeaderGap = 8.0;
 const _headerInset = 10.0;
 const _headerButtonInset = 4.0;
 const _groupInset = 16.0;
@@ -125,9 +124,7 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
     final offset = _getGroupOffset(groupName);
     _scrollToMakeVisibleWithPadding(
       containerHeight: max(
-        _controller.position.viewportDimension -
-            context.appBarInset -
-            _pinnedHeaderGap,
+        _controller.position.viewportDimension - context.contentTopPadding,
         0,
       ),
       pixels: pixels,
@@ -214,7 +211,6 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
                 onChange: _handleChange,
                 onScrollToSelected: _scrollToGroupSelected,
               );
-              final barInset = context.appBarInset;
               return CommonScrollBar(
                 controller: _controller,
                 thumbVisibility: true,
@@ -223,7 +219,7 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
                   controller: _controller,
                   slivers: [
                     PinnedHeaderSliver(
-                      child: SizedBox(height: barInset + _pinnedHeaderGap),
+                      child: SizedBox(height: context.contentTopPadding),
                     ),
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(
