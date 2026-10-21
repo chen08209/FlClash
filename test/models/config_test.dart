@@ -18,6 +18,18 @@ T roundTrip<T>(
 }
 
 void main() {
+  test(
+    'menu bar visibility defaults to shown and survives JSON round trips',
+    () {
+      expect(AppSettingProps.fromJson({}).hideMenuBarIcon, isFalse);
+      const settings = AppSettingProps(hideMenuBarIcon: true);
+      expect(
+        roundTrip(settings.toJson, AppSettingProps.fromJson).hideMenuBarIcon,
+        isTrue,
+      );
+    },
+  );
+
   group('GeoResource JSON', () {
     test('exposes mihomo raw config keys', () {
       expect(GeoResource.MMDB.configKey, 'mmdb');
@@ -236,7 +248,7 @@ void main() {
         DashboardWidget.currentOutbound,
         DashboardWidget.profiles,
         DashboardWidget.connectionStats,
-        DashboardWidget.networkTakeover,
+        DashboardWidget.tun,
         DashboardWidget.vpnButton,
       ]);
     });
@@ -244,6 +256,19 @@ void main() {
     test('consent saved before the disclaimer was versioned asks again', () {
       final restored = AppSettingProps.fromJson({'disclaimerAccepted': true});
       expect(restored.acceptedDisclaimerVersion, lessThan(disclaimerVersion));
+    });
+
+    test('the combined takeover card becomes independent controls', () {
+      final restored = AppSettingProps.fromJson({
+        'dashboardWidgets': ['currentOutbound', 'networkTakeover', 'profiles'],
+      });
+      expect(restored.dashboardWidgets, [
+        DashboardWidget.currentOutbound,
+        DashboardWidget.systemProxy,
+        DashboardWidget.tun,
+        DashboardWidget.wifiMode,
+        DashboardWidget.profiles,
+      ]);
     });
 
     test('every dashboard widget survives round-trip', () {

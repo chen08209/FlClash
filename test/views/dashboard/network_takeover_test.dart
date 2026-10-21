@@ -34,14 +34,14 @@ class _RowCase {
 final _rowCases = <_RowCase>[
   _RowCase(
     'system proxy',
-    const NetworkTakeoverCard(),
+    const NetworkTakeoverCard(TakeoverSwitch.systemProxy),
     'System proxy',
     (container) => container.read(networkSettingProvider).systemProxy,
     initial: true,
   ),
   _RowCase(
     'TUN',
-    const NetworkTakeoverCard(),
+    const NetworkTakeoverCard(TakeoverSwitch.tun),
     'TUN',
     (container) => container.read(patchClashConfigProvider).tun.enable,
   ),
@@ -86,8 +86,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Finder switchOf(_RowCase testCase) =>
-      find.byType(Switch).at(testCase.name == 'TUN' ? 1 : 0);
+  Finder switchOf(_RowCase testCase) => find.byType(Switch);
 
   for (final testCase in _rowCases) {
     testWidgets('the ${testCase.name} switch flips its setting both ways', (
@@ -128,7 +127,10 @@ void main() {
       'press', (tester) async {
     await pumpCard(
       tester,
-      const LiquidGlassScope(enabled: true, child: NetworkTakeoverCard()),
+      const LiquidGlassScope(
+        enabled: true,
+        child: NetworkTakeoverCard(TakeoverSwitch.tun),
+      ),
     );
     final tun = switchOf(_rowCases[1]);
 
@@ -149,9 +151,8 @@ void main() {
   });
 
   testWidgets('a row says what it is set to', (tester) async {
-    await pumpCard(tester, const NetworkTakeoverCard());
+    await pumpCard(tester, const NetworkTakeoverCard(TakeoverSwitch.tun));
 
-    expect(find.text('Port 7890'), findsOneWidget);
     expect(find.text(currentAppLocalizations.disabled), findsOneWidget);
 
     await tester.tap(switchOf(_rowCases[1]));

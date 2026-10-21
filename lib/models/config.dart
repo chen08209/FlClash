@@ -114,7 +114,9 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.networkSpeed,
   DashboardWidget.outboundMode,
   DashboardWidget.vpnButton,
-  DashboardWidget.networkTakeover,
+  DashboardWidget.systemProxy,
+  DashboardWidget.tun,
+  DashboardWidget.wifiMode,
   DashboardWidget.intranetIp,
   DashboardWidget.serviceStatus,
   DashboardWidget.profiles,
@@ -137,8 +139,8 @@ const _legacyDefaultDashboardWidgets = {
 const _legacyDashboardWidgets = {
   'networkDetection': DashboardWidget.intranetIp,
   'outboundModeV2': DashboardWidget.outboundMode,
-  'systemProxyButton': DashboardWidget.networkTakeover,
-  'tunButton': DashboardWidget.networkTakeover,
+  'systemProxyButton': DashboardWidget.systemProxy,
+  'tunButton': DashboardWidget.tun,
   'connections': DashboardWidget.connectionStats,
   'requests': DashboardWidget.connectionStats,
   'dnsQueries': DashboardWidget.connectionStats,
@@ -158,6 +160,15 @@ List<DashboardWidget> dashboardWidgetsFromJson(
   if (dashboardWidgets == null) {
     return defaultDashboardWidgets;
   }
+  dashboardWidgets = [
+    for (final name in dashboardWidgets)
+      if (name == 'networkTakeover') ...[
+        DashboardWidget.systemProxy.name,
+        DashboardWidget.tun.name,
+        DashboardWidget.wifiMode.name,
+      ] else
+        name,
+  ];
   final byName = DashboardWidget.values.asNameMap();
   if (dashboardWidgets.contains(DashboardWidget.currentOutbound.name)) {
     return dashboardWidgets
@@ -247,6 +258,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(false) bool developerMode,
     @Default(RestoreStrategy.compatible) RestoreStrategy restoreStrategy,
     @Default(true) bool showTrayTitle,
+    @Default(false) bool hideMenuBarIcon,
     @Default(true) bool checkCertificate,
     @Default(defaultUserAgents)
     @JsonKey(readValue: _readUserAgents)

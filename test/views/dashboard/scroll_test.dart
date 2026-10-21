@@ -77,7 +77,7 @@ void main() {
   ) async {
     final position = await pumpDashboard(
       tester,
-      const Size(1220, 900),
+      const Size(1220, 1100),
       SupportPlatform.MacOS,
     );
     expect(position.maxScrollExtent, 0);

@@ -14,7 +14,14 @@ import 'package:wifi_ssid/wifi_ssid.dart';
 import 'wifi_mode.dart';
 
 class OnDemandView extends ConsumerStatefulWidget {
-  const OnDemandView({super.key, this.isAndroid, this.isMacOS});
+  const OnDemandView({
+    super.key,
+    this.isAndroid,
+    this.isMacOS,
+    this.wifiModeOnly = false,
+  });
+
+  final bool wifiModeOnly;
 
   final bool? isAndroid;
   final bool? isMacOS;
@@ -377,7 +384,8 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
             padding: EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverToBoxAdapter(child: WifiModeSection()),
           ),
-          if (!ref.watch(wifiModeSettingProvider).enabled) ...[
+          if (!widget.wifiModeOnly &&
+              !ref.watch(wifiModeSettingProvider).enabled) ...[
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverToBoxAdapter(child: _buildExcludeSsidsHeader()),
@@ -396,7 +404,9 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
           ],
         ],
       ),
-      title: context.appLocalizations.onDemand,
+      title: widget.wifiModeOnly
+          ? context.appLocalizations.wifiMode
+          : context.appLocalizations.onDemand,
     );
   }
 }

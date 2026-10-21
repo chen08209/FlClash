@@ -54,6 +54,8 @@
   "tun": "TUN",
   "tunDesc": "TUN은 관리자 모드에서만 작동합니다.",
   "minimizeOnExit": "종료 시 최소화",
+  "hideMenuBarIcon": "메뉴 막대 아이콘 숨기기",
+  "hideMenuBarIconDesc": "백그라운드에서 계속 실행합니다. FlClash를 다시 열거나 표시/숨기기 단축키로 창을 표시할 수 있습니다.",
   "autoLaunch": "자동 실행",
   "silentLaunch": "백그라운드 실행",
   "silentLaunchDesc": "백그라운드 실행은 창을 표시하지 않고 시작합니다.",

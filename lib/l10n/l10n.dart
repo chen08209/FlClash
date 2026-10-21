@@ -445,6 +445,26 @@ class AppLocalizations {
     );
   }
 
+  /// `Hide menu bar icon`
+  String get hideMenuBarIcon {
+    return Intl.message(
+      'Hide menu bar icon',
+      name: 'hideMenuBarIcon',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Keep running in the background. Reopen FlClash or use the Show/Hide shortcut to bring the window back.`
+  String get hideMenuBarIconDesc {
+    return Intl.message(
+      'Keep running in the background. Reopen FlClash or use the Show/Hide shortcut to bring the window back.',
+      name: 'hideMenuBarIconDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Auto launch`
   String get autoLaunch {
     return Intl.message('Auto launch', name: 'autoLaunch', desc: '', args: []);

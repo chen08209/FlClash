@@ -54,6 +54,8 @@
   "tun": "TUN",
   "tunDesc": "TUN ne fonctionne qu’en mode administrateur.",
   "minimizeOnExit": "Réduire à la fermeture",
+  "hideMenuBarIcon": "Masquer l’icône de la barre des menus",
+  "hideMenuBarIconDesc": "L’application continue de fonctionner en arrière-plan. Rouvrez FlClash ou utilisez le raccourci Afficher/Masquer pour retrouver la fenêtre.",
   "autoLaunch": "Lancement automatique",
   "silentLaunch": "Lancement silencieux",
   "silentLaunchDesc": "Le lancement silencieux démarre l’app sans afficher la fenêtre.",

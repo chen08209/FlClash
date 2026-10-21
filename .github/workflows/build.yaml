@@ -7,6 +7,15 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Fork release tag (leave empty to build artifacts only)'
+        type: string
+        default: ''
+      include_macos_arm64:
+        description: 'Build macOS ARM64 as well'
+        type: boolean
+        default: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -101,7 +110,7 @@ jobs:
 
   desktop:
     name: Desktop ${{ matrix.platform }}
-    if: (github.event_name == 'workflow_dispatch' || !github.event.repository.private) && !(github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+    if: (github.event_name == 'workflow_dispatch' || !github.event.repository.private) && !(github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) && !(github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -322,35 +331,47 @@ jobs:
       - name: Run Windows service tests
         run: cargo test --manifest-path services/helper/Cargo.toml --features windows-service
 
-  build:
+  build-matrix:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.repository != 'chen08209/FlClash' || startsWith(github.ref, 'refs/tags/v')))
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - name: Select platforms
+        id: matrix
+        env:
+          INCLUDE_MACOS_ARM64: ${{ github.event_name != 'workflow_dispatch' || inputs.include_macos_arm64 }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          python3 - <<'PYTHON'
+          import json
+          import os
+          import re
+
+          tag = os.environ['RELEASE_TAG']
+          if tag and not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*', tag):
+              raise SystemExit('Use letters, numbers, dots, underscores or hyphens in the release tag.')
+          builds = [
+              {'platform': 'android', 'os': 'ubuntu-latest'},
+              {'platform': 'windows', 'os': 'windows-2022', 'arch': 'amd64'},
+              {'platform': 'linux', 'os': 'ubuntu-22.04', 'arch': 'amd64'},
+              {'platform': 'macos', 'os': 'macos-15-intel', 'arch': 'amd64'},
+              {'platform': 'macos', 'os': 'macos-latest', 'arch': 'arm64'},
+              {'platform': 'windows', 'os': 'windows-11-arm', 'arch': 'arm64', 'flutter-channel': 'master'},
+              {'platform': 'linux', 'os': 'ubuntu-24.04-arm', 'arch': 'arm64', 'flutter-channel': 'master'},
+          ]
+          if os.environ['INCLUDE_MACOS_ARM64'] != 'true':
+              builds = [b for b in builds if (b['platform'], b.get('arch')) != ('macos', 'arm64')]
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('matrix=' + json.dumps({'include': builds}) + '\n')
+          PYTHON
+
+  build:
+    needs: build-matrix
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - platform: android
-            os: ubuntu-latest
-          - platform: windows
-            os: Windows-2022
-            arch: amd64
-          - platform: linux
-            os: ubuntu-22.04
-            arch: amd64
-          - platform: macos
-            os: macos-15-intel
-            arch: amd64
-          - platform: macos
-            os: macos-latest
-            arch: arm64
-          - platform: windows
-            os: windows-11-arm
-            arch: arm64
-            flutter-channel: master
-          - platform: linux
-            os: ubuntu-24.04-arm
-            arch: arm64
-            flutter-channel: master
+      matrix: ${{ fromJSON(needs.build-matrix.outputs.matrix) }}
 
     steps:
       - name: Setup rust
@@ -459,6 +480,50 @@ jobs:
           path: ./dist
           overwrite: true
           if-no-files-found: error
+
+  fork-release:
+    if: github.repository != 'chen08209/FlClash' && github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
+    needs: [build, dart, plugins, go, android, rust, windows-helper-test]
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v4
+        with:
+          path: ./dist
+          pattern: artifact-*
+          merge-multiple: true
+
+      - name: Publish fork release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          (cd dist && sha256sum ./* > SHA256SUMS)
+          cat > release.md <<EOF
+          本次所选平台安装包由 GitHub Actions 构建并发布。
+
+          - 源码提交：$SOURCE_SHA
+          - 构建记录：$RUN_URL
+          - 包含仪表盘 Wi-Fi SSID 规则编辑、独立系统代理和虚拟网卡开关、拖拽崩溃规避及 macOS 隐藏菜单栏图标设置。
+          - Actions 构建包的校验值见 SHA256SUMS。
+          - 如包含 macos-arm64-ui-fix.dmg，该包为单独上传的本地 ARM64 构建，校验值见 SHA256SUMS-macos-arm64。
+          - 未配置 Android 发布密钥时，APK 使用开发应用标识和调试签名。
+          EOF
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            tag_sha=$(gh api "repos/$GH_REPO/commits/$RELEASE_TAG" --jq .sha)
+            test "$tag_sha" = "$SOURCE_SHA" || { echo 'Release tag points to a different commit.' >&2; exit 1; }
+            gh release upload "$RELEASE_TAG" ./dist/* --clobber
+            gh release edit "$RELEASE_TAG" --notes-file release.md
+          else
+            gh release create "$RELEASE_TAG" ./dist/* --target "$SOURCE_SHA" \
+              --title "FlClash $RELEASE_TAG" --notes-file release.md --prerelease
+          fi
 
   upload:
     if: github.repository == 'chen08209/FlClash' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')

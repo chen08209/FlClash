@@ -735,6 +735,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "hex": MessageLookupByLibrary.simpleMessage("16進数"),
     "hideFromList": MessageLookupByLibrary.simpleMessage("リストから隠す"),
     "hideIp": MessageLookupByLibrary.simpleMessage("IP を隠す"),
+    "hideMenuBarIcon": MessageLookupByLibrary.simpleMessage("メニューバーアイコンを非表示"),
+    "hideMenuBarIconDesc": MessageLookupByLibrary.simpleMessage(
+      "バックグラウンドで実行を続けます。FlClash を再度開くか、「表示/非表示」のショートカットでウィンドウを表示できます。",
+    ),
     "hidePassword": MessageLookupByLibrary.simpleMessage("パスワードを隠す"),
     "hideTimeoutProxies": MessageLookupByLibrary.simpleMessage(
       "タイムアウトしたプロキシを隠す",

@@ -674,6 +674,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "hex": MessageLookupByLibrary.simpleMessage("十六进制"),
     "hideFromList": MessageLookupByLibrary.simpleMessage("从列表中隐藏"),
     "hideIp": MessageLookupByLibrary.simpleMessage("隐藏 IP"),
+    "hideMenuBarIcon": MessageLookupByLibrary.simpleMessage("隐藏菜单栏图标"),
+    "hideMenuBarIconDesc": MessageLookupByLibrary.simpleMessage(
+      "应用继续在后台运行。重新打开 FlClash，或使用“显示/隐藏”快捷键唤回窗口。",
+    ),
     "hidePassword": MessageLookupByLibrary.simpleMessage("隐藏密码"),
     "hideTimeoutProxies": MessageLookupByLibrary.simpleMessage("隐藏超时代理"),
     "hideTimeoutProxiesDesc": MessageLookupByLibrary.simpleMessage(

@@ -724,6 +724,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "hex": MessageLookupByLibrary.simpleMessage("16진수"),
     "hideFromList": MessageLookupByLibrary.simpleMessage("목록에서 숨기기"),
     "hideIp": MessageLookupByLibrary.simpleMessage("IP 숨기기"),
+    "hideMenuBarIcon": MessageLookupByLibrary.simpleMessage("메뉴 막대 아이콘 숨기기"),
+    "hideMenuBarIconDesc": MessageLookupByLibrary.simpleMessage(
+      "백그라운드에서 계속 실행합니다. FlClash를 다시 열거나 표시/숨기기 단축키로 창을 표시할 수 있습니다.",
+    ),
     "hidePassword": MessageLookupByLibrary.simpleMessage("비밀번호 숨기기"),
     "hideTimeoutProxies": MessageLookupByLibrary.simpleMessage(
       "시간 초과된 프록시 숨기기",

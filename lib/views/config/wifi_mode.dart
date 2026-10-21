@@ -59,33 +59,31 @@ class WifiModeSection extends ConsumerWidget {
   }
 }
 
+Future<void> editWifiModeRule(
+  BuildContext context,
+  WidgetRef ref, [
+  MapEntry<String, Mode>? entry,
+]) async {
+  final settings = ref.read(wifiModeSettingProvider);
+  final result = await showFormSheet<MapEntry<String, Mode>>(
+    context: context,
+    builder: (_) => _WifiModeForm(
+      entry: entry,
+      initialSsid: ref.read(currentSSIDProvider),
+      reserved: settings.rules.keys.where((ssid) => ssid != entry?.key).toSet(),
+    ),
+  );
+  if (result == null || !context.mounted) return;
+  ref.read(wifiModeSettingProvider.notifier).update((state) {
+    final rules = {...state.rules};
+    if (entry != null) rules.remove(entry.key);
+    rules[result.key] = result.value;
+    return state.copyWith(rules: rules);
+  });
+}
+
 class _WifiModeRulesView extends ConsumerWidget {
   const _WifiModeRulesView();
-
-  Future<void> _edit(
-    BuildContext context,
-    WidgetRef ref, [
-    MapEntry<String, Mode>? entry,
-  ]) async {
-    final settings = ref.read(wifiModeSettingProvider);
-    final result = await showFormSheet<MapEntry<String, Mode>>(
-      context: context,
-      builder: (_) => _WifiModeForm(
-        entry: entry,
-        initialSsid: ref.read(currentSSIDProvider),
-        reserved: settings.rules.keys
-            .where((ssid) => ssid != entry?.key)
-            .toSet(),
-      ),
-    );
-    if (result == null || !context.mounted) return;
-    ref.read(wifiModeSettingProvider.notifier).update((state) {
-      final rules = {...state.rules};
-      if (entry != null) rules.remove(entry.key);
-      rules[result.key] = result.value;
-      return state.copyWith(rules: rules);
-    });
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -101,14 +99,16 @@ class _WifiModeRulesView extends ConsumerWidget {
             title: Text(entry.key),
             subtitle: Text(entry.value.label),
             isSelected: selected,
-            onPressed: editing ? toggle : () => _edit(context, ref, entry),
+            onPressed: editing
+                ? toggle
+                : () => editWifiModeRule(context, ref, entry),
             trailing: CommonCheckBox(
               value: selected,
               isCircle: true,
               onChanged: (_) => toggle(),
             ),
           ),
-      onAdd: () => _edit(context, ref),
+      onAdd: () => editWifiModeRule(context, ref),
       onDelete: (ssids) => ref
           .read(wifiModeSettingProvider.notifier)
           .update(

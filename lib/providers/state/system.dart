@@ -54,8 +54,11 @@ TrayState trayState(Ref ref) {
   );
   final appSetting = ref.watch(
     appSettingProvider.select(
-      (state) =>
-          (autoLaunch: state.autoLaunch, showTrayTitle: state.showTrayTitle),
+      (state) => (
+        autoLaunch: state.autoLaunch,
+        showTrayTitle: state.showTrayTitle,
+        hideMenuBarIcon: state.hideMenuBarIcon,
+      ),
     ),
   );
   final groups = ref.watch(currentGroupsStateProvider).value;
@@ -75,6 +78,7 @@ TrayState trayState(Ref ref) {
     groups: groups,
     selectedMap: selectedMap,
     showTrayTitle: appSetting.showTrayTitle,
+    hideMenuBarIcon: appSetting.hideMenuBarIcon,
     safeMode: safeMode,
     hotKeys: hotKeys,
   );

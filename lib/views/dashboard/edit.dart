@@ -213,10 +213,13 @@ class _DashboardEditorState extends ConsumerState<DashboardEditor>
                 child: spaced(
                   _LiftedCard(
                     animation: animation,
-                    child: AbsorbPointer(
-                      child: RepaintBoundary(
-                        key: widget.cardKeyOf(cards[index]),
-                        child: cards[index].card,
+                    // The preview must not reparent live nodes into the native AX tree.
+                    child: ExcludeSemantics(
+                      child: AbsorbPointer(
+                        child: RepaintBoundary(
+                          key: widget.cardKeyOf(cards[index]),
+                          child: cards[index].card,
+                        ),
                       ),
                     ),
                   ),

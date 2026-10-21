@@ -54,6 +54,8 @@
   "tun": "TUN",
   "tunDesc": "TUN は管理者モードでのみ有効です。",
   "minimizeOnExit": "終了時に最小化",
+  "hideMenuBarIcon": "メニューバーアイコンを非表示",
+  "hideMenuBarIconDesc": "バックグラウンドで実行を続けます。FlClash を再度開くか、「表示/非表示」のショートカットでウィンドウを表示できます。",
   "autoLaunch": "自動起動",
   "silentLaunch": "サイレント起動",
   "silentLaunchDesc": "サイレント起動ではウィンドウを表示しません。",

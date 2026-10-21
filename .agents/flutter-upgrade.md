@@ -50,6 +50,21 @@ listed in the SDK's `CHANGELOG.md`.
   3.47.x cherry-pick). Before dropping it, run a debug build without the guard on that SDK and drag a window edge
   back and forth for a minute; neither validation line may appear.
 
+## Dashboard drag preview on desktop
+
+- **Crash:** Flutter 3.47.6 on macOS can crash in
+  `AccessibilityBridge::CreateRemoveReparentedNodesUpdate`, at `child_ids.erase`,
+  during dashboard card reordering. The drag proxy reparents a keyed live card
+  from the list into an overlay.
+- **Workaround:** `DashboardEditor` excludes the floating drag preview from
+  semantics. The card keeps its widget state and returns to the semantics tree
+  after drop. The list retains its semantic reorder actions.
+- **Verification:** `test/views/dashboard/edit_test.dart` checks the actual
+  semantics tree during drag and after drop. Native accessibility remains a
+  separate macOS check; ordinary widget tests do not execute the native bridge.
+- **Remove when:** a pinned engine handles this reparenting safely, verified
+  with accessibility enabled during repeated dashboard drag and drop.
+
 ## Windows view visibility forwarded by the runner
 
 - **Bug:** the Windows embedder's `WindowsLifecycleManager` counts the Flutter view as a window of its own and keeps

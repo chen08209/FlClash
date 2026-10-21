@@ -176,6 +176,17 @@ void main() {
     expect(_RecordingSystemAction.updateTrayCount, 1);
   });
 
+  testWidgets('menu bar visibility changes refresh the tray', (tester) async {
+    await pumpTrayManager(tester);
+    _RecordingSystemAction.updateTrayCount = 0;
+    container
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(hideMenuBarIcon: true));
+    await tester.pumpAndSettle();
+    expect(_RecordingSystemAction.updateTrayCount, 1);
+    expect(container.read(trayStateProvider).hideMenuBarIcon, isTrue);
+  });
+
   testWidgets('an unchanged tray state does not touch the tray', (
     tester,
   ) async {

@@ -327,6 +327,21 @@ inside the hero has to be listed in `wireField` in `app.js`, or the capsules run
 site, in the public repository only; its Pages source has to be set to GitHub Actions once. The file names come from the
 release matrix in `build.yaml`, so a renamed artifact needs the same change in `buildsFor` in `site/assets/app.js`.
 
+## Fork Releases
+
+Run the existing `build.yaml` workflow on the branch that contains the release changes:
+
+```bash
+gh workflow run build.yaml --ref feature/wifi-ssid-mode \
+  -f release_tag=ssid-0.9.1-2026102101 -f include_macos_arm64=false
+```
+
+An empty `release_tag` builds Actions artifacts only. A non-empty tag publishes a fork pre-release after the
+selected release builds and required checks pass, with SHA-256 checksums and the exact source commit. Reusing a
+release tag is allowed only for the same commit. `include_macos_arm64=false` leaves out that package; it does not
+reuse or upload a local build. Release dispatches skip redundant desktop debug builds. The upstream publishing
+job stays separate, including its external distribution integrations.
+
 ## Verify
 
 In the public repository every branch push runs the `dart` job; in the private

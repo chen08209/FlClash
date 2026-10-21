@@ -84,6 +84,10 @@ class AppTray implements TrayPort {
     if (_isShutDown) {
       return;
     }
+    if (isMacOS && trayState.hideMenuBarIcon) {
+      await Tray.instance.hide();
+      return;
+    }
     await Tray.instance.show(
       TraySpec(
         icon: TrayIcon.asset(

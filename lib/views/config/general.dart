@@ -283,6 +283,12 @@ class GeneralView extends ConsumerWidget {
         select: (state) => state.minimizeOnExit,
         update: (state, value) => state.copyWith(minimizeOnExit: value),
       ),
+      if (system.isMacOS)
+        _appSettingToggle(
+          title: (l) => l.hideMenuBarIcon,
+          select: (state) => state.hideMenuBarIcon,
+          update: (state, value) => state.copyWith(hideMenuBarIcon: value),
+        ),
       if (system.isAndroid) ...[
         _appSettingToggle(
           title: (l) => l.exclude,
@@ -445,6 +451,7 @@ class GeneralView extends ConsumerWidget {
               if (system.isDesktop) appLocalizations.silentLaunchDesc,
               appLocalizations.autoRunDesc,
               appLocalizations.onDemandDesc,
+              if (system.isMacOS) appLocalizations.hideMenuBarIconDesc,
             ].join('\n'),
           ),
           generateSection(

@@ -111,51 +111,21 @@ String _titleOf(BuildContext context, TakeoverSwitch kind) => switch (kind) {
   TakeoverSwitch.tun => context.appLocalizations.tun,
 };
 
-/// Both switches in one card, for the card list of a narrow window.
 class NetworkTakeoverCard extends StatelessWidget {
-  const NetworkTakeoverCard({super.key});
+  const NetworkTakeoverCard(this.kind, {super.key});
+
+  final TakeoverSwitch kind;
 
   @override
   Widget build(BuildContext context) {
-    const metrics = _cardRowMetrics;
-    final appLocalizations = context.appLocalizations;
     return DashboardCard(
-      semanticLabel: appLocalizations.networkTakeover,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DashboardCardHeader(
-            glyph: AppGlyphs.shuffle,
-            title: appLocalizations.networkTakeover,
-          ),
-          const SizedBox(height: 12),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final showIcon = DashboardSwitchRow.iconFits(
-                context,
-                width: constraints.maxWidth,
-                iconSize: metrics.icon,
-                padding: metrics.padding,
-                titles: [
-                  for (final kind in TakeoverSwitch.values)
-                    _titleOf(context, kind),
-                ],
-              );
-              return Column(
-                spacing: 8,
-                children: [
-                  for (final kind in TakeoverSwitch.values)
-                    _TakeoverRow(
-                      kind: kind,
-                      metrics: metrics,
-                      showIcon: showIcon,
-                    ),
-                ],
-              );
-            },
-          ),
-        ],
+      semanticLabel: _titleOf(context, kind),
+      padding: EdgeInsets.zero,
+      child: _TakeoverRow(
+        kind: kind,
+        metrics: _cardRowMetrics,
+        showIcon: true,
+        color: Colors.transparent,
       ),
     );
   }

@@ -320,6 +320,9 @@ void main() {
     tester,
   ) async {
     final listener = await pumpWindowManager(tester);
+    container
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(hideMenuBarIcon: true));
 
     listener.onWindowActivate();
     listener.onWindowFocus();

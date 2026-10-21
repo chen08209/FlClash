@@ -54,6 +54,8 @@
   "tun": "TUN",
   "tunDesc": "TUN solo funciona en modo administrador.",
   "minimizeOnExit": "Minimizar al salir",
+  "hideMenuBarIcon": "Ocultar el icono de la barra de menús",
+  "hideMenuBarIconDesc": "La aplicación sigue funcionando en segundo plano. Vuelva a abrir FlClash o use el atajo Mostrar/Ocultar para recuperar la ventana.",
   "autoLaunch": "Inicio automático",
   "silentLaunch": "Inicio silencioso",
   "silentLaunchDesc": "El inicio silencioso arranca sin mostrar la ventana.",

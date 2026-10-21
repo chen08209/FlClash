@@ -49,6 +49,7 @@ _AppSettingProps _$AppSettingPropsFromJson(
       $enumDecodeNullable(_$RestoreStrategyEnumMap, json['restoreStrategy']) ??
       RestoreStrategy.compatible,
   showTrayTitle: json['showTrayTitle'] as bool? ?? true,
+  hideMenuBarIcon: json['hideMenuBarIcon'] as bool? ?? false,
   checkCertificate: json['checkCertificate'] as bool? ?? true,
   userAgents:
       (_readUserAgents(json, 'userAgents') as List<dynamic>?)
@@ -111,6 +112,7 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'developerMode': instance.developerMode,
       'restoreStrategy': _$RestoreStrategyEnumMap[instance.restoreStrategy]!,
       'showTrayTitle': instance.showTrayTitle,
+      'hideMenuBarIcon': instance.hideMenuBarIcon,
       'checkCertificate': instance.checkCertificate,
       'userAgents': instance.userAgents,
       'filters': instance.filters,
@@ -143,7 +145,9 @@ const _$DashboardWidgetEnumMap = {
   DashboardWidget.networkSpeed: 'networkSpeed',
   DashboardWidget.outboundMode: 'outboundMode',
   DashboardWidget.vpnButton: 'vpnButton',
-  DashboardWidget.networkTakeover: 'networkTakeover',
+  DashboardWidget.systemProxy: 'systemProxy',
+  DashboardWidget.tun: 'tun',
+  DashboardWidget.wifiMode: 'wifiMode',
   DashboardWidget.serviceStatus: 'serviceStatus',
   DashboardWidget.profiles: 'profiles',
   DashboardWidget.proxyGroups: 'proxyGroups',

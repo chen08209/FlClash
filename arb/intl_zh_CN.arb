@@ -54,6 +54,8 @@
   "tun": "虚拟网卡",
   "tunDesc": "虚拟网卡仅在管理员模式生效。",
   "minimizeOnExit": "退出时最小化",
+  "hideMenuBarIcon": "隐藏菜单栏图标",
+  "hideMenuBarIconDesc": "应用继续在后台运行。重新打开 FlClash，或使用“显示/隐藏”快捷键唤回窗口。",
   "autoLaunch": "自启动",
   "silentLaunch": "静默启动",
   "silentLaunchDesc": "静默启动时不显示窗口。",

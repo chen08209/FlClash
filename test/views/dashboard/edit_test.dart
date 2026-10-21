@@ -6,6 +6,7 @@ import 'package:fl_clash/views/dashboard/edit.dart';
 import 'package:fl_clash/views/dashboard/widgets/widgets.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -112,7 +113,7 @@ void main() {
     expect(find.byTooltip('Add Memory info'), findsOneWidget);
     expect(find.byType(SortHandle), findsNothing);
     // The desktop-only card has no row on a phone.
-    expect(find.byTooltip('Add Traffic takeover'), findsNothing);
+    expect(find.byTooltip('Add System proxy'), findsNothing);
     expect(tester.takeException(), isNull);
 
     await teardown(tester);
@@ -194,7 +195,7 @@ void main() {
   ) async {
     seed(const [
       DashboardWidget.currentOutbound,
-      DashboardWidget.networkTakeover,
+      DashboardWidget.systemProxy,
       DashboardWidget.networkSpeed,
       DashboardWidget.profiles,
     ]);
@@ -205,7 +206,7 @@ void main() {
 
     expect(saved(), const [
       DashboardWidget.currentOutbound,
-      DashboardWidget.networkTakeover,
+      DashboardWidget.systemProxy,
       DashboardWidget.profiles,
     ]);
 
@@ -279,6 +280,63 @@ void main() {
     expect(tester.state(find.byType(MemoryInfo)), same(memory));
     expect(tester.takeException(), isNull);
 
+    await teardown(tester);
+  });
+
+  testWidgets('drag preview leaves the semantics tree until drop', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    seed(const [
+      DashboardWidget.currentOutbound,
+      DashboardWidget.networkSpeed,
+      DashboardWidget.wifiMode,
+    ]);
+    await pumpEditor(
+      tester,
+      platform: SupportPlatform.MacOS,
+      size: const Size(620, 1400),
+    );
+    final card = find.byType(WifiModeCard);
+    final nodeId = tester.getSemantics(card).id;
+    Set<int> semanticIds() {
+      final ids = <int>{};
+      void visit(SemanticsNode node) {
+        ids.add(node.id);
+        node.visitChildren((child) {
+          visit(child);
+          return true;
+        });
+      }
+
+      visit(
+        tester
+            .binding
+            .renderViews
+            .single
+            .owner!
+            .semanticsOwner!
+            .rootSemanticsNode!,
+      );
+      return ids;
+    }
+
+    expect(semanticIds(), contains(nodeId));
+    final gesture = await tester.startGesture(
+      tester.getCenter(card),
+      kind: PointerDeviceKind.mouse,
+    );
+    await gesture.moveBy(const Offset(0, -40));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(WifiModeCard), findsOneWidget);
+    expect(semanticIds(), isNot(contains(nodeId)));
+    await gesture.moveTo(tester.getCenter(find.byType(NetworkSpeedCard)));
+    await tester.pump(const Duration(milliseconds: 100));
+    await gesture.up();
+    await settle(tester);
+    expect(semanticIds(), contains(tester.getSemantics(card).id));
+    expect(saved().indexOf(DashboardWidget.wifiMode), 1);
+    semantics.dispose();
     await teardown(tester);
   });
 
@@ -370,7 +428,7 @@ void main() {
       'dragged at once', (tester) async {
     seed(const [
       DashboardWidget.currentOutbound,
-      DashboardWidget.networkTakeover,
+      DashboardWidget.systemProxy,
       DashboardWidget.profiles,
     ]);
     await pumpEditor(
@@ -402,14 +460,14 @@ void main() {
     expect(saved(), const [
       DashboardWidget.currentOutbound,
       DashboardWidget.profiles,
-      DashboardWidget.networkTakeover,
+      DashboardWidget.systemProxy,
     ]);
 
-    await tester.tap(find.byTooltip('Remove Traffic takeover'));
+    await tester.tap(find.byTooltip('Remove System proxy'));
     await settle(tester);
 
-    expect(saved(), isNot(contains(DashboardWidget.networkTakeover)));
-    expect(find.byTooltip('Add Traffic takeover'), findsOneWidget);
+    expect(saved(), isNot(contains(DashboardWidget.systemProxy)));
+    expect(find.byTooltip('Add System proxy'), findsOneWidget);
 
     await teardown(tester);
   });

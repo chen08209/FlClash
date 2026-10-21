@@ -78,6 +78,48 @@ void main() {
     expect(calls, isEmpty);
   });
 
+  test(
+    'hidden macOS tray stays hidden through state and traffic updates',
+    () async {
+      final tray = AppTray.forPlatform(isMacOS: true, isWindows: false);
+      Future<void> update(TrayState state) => tray.update(
+        trayState: state,
+        traffic: const Traffic(),
+        read: container.read,
+      );
+      await update(_trayState());
+      calls.clear();
+      await update(_trayState().copyWith(hideMenuBarIcon: true));
+      expect(calls.map((call) => call.method), ['hide']);
+      calls.clear();
+      await update(_trayState(isStart: true).copyWith(hideMenuBarIcon: true));
+      await tray.updateTitle(showTrayTitle: true, traffic: const Traffic());
+      expect(calls, isEmpty);
+      await update(_trayState(isStart: true));
+      expect(calls.where((call) => call.method == 'show'), hasLength(1));
+    },
+  );
+
+  test('a hidden macOS tray is not created at startup', () async {
+    final tray = AppTray.forPlatform(isMacOS: true, isWindows: false);
+    await tray.update(
+      trayState: _trayState().copyWith(hideMenuBarIcon: true),
+      traffic: const Traffic(),
+      read: container.read,
+    );
+    expect(calls, isEmpty);
+  });
+
+  test('the macOS preference does not hide another platform tray', () async {
+    final tray = AppTray.forPlatform(isMacOS: false, isWindows: false);
+    await tray.update(
+      trayState: _trayState().copyWith(hideMenuBarIcon: true),
+      traffic: const Traffic(),
+      read: container.read,
+    );
+    expect(calls.where((call) => call.method == 'show'), hasLength(1));
+  });
+
   test('macOS shutdown leaves the status item to the process', () async {
     final tray = AppTray.forPlatform(isMacOS: true, isWindows: false);
     await tray.update(

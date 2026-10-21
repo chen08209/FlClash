@@ -95,49 +95,54 @@ void main() {
       .position
       .maxScrollExtent;
 
-  testWidgets('the desktop fills the window with four rows, the controls '
-      'under the exit', (tester) async {
-    await pumpDashboard(tester, const Size(1220, 824));
+  testWidgets(
+    'the desktop fills the window with inline Wi-Fi rules, the controls '
+    'under the exit',
+    (tester) async {
+      await pumpDashboard(tester, const Size(1220, 1100));
 
-    final current = rectOf(tester, CurrentOutboundCard);
-    final upload = rectOf(tester, SpeedCard);
-    final mode = rectOf(tester, OutboundModeBar);
-    final systemProxy = tester.getRect(find.byType(NetworkTakeoverTile).first);
-    final tun = tester.getRect(find.byType(NetworkTakeoverTile).last);
-    final intranet = rectOf(tester, IntranetIpCard);
-    final profile = rectOf(tester, ProfilesCard);
-    final service = rectOf(tester, ServiceStatusCard);
-    final table = rectOf(tester, ConnectionsTableCard);
-    final groups = rectOf(tester, ProxyGroupsCard);
+      final current = rectOf(tester, CurrentOutboundCard);
+      final upload = rectOf(tester, SpeedCard);
+      final mode = rectOf(tester, OutboundModeBar);
+      final systemProxy = tester.getRect(
+        find.byType(NetworkTakeoverTile).first,
+      );
+      final tun = tester.getRect(find.byType(NetworkTakeoverTile).last);
+      final intranet = rectOf(tester, IntranetIpCard);
+      final profile = rectOf(tester, ProfilesCard);
+      final service = rectOf(tester, ServiceStatusCard);
+      final table = rectOf(tester, ConnectionsTableCard);
+      final groups = rectOf(tester, ProxyGroupsCard);
 
-    expect(current.height, 208);
-    expect(current.width, closeTo(upload.width * 2 + 16, 0.01));
-    expect(mode.top, current.bottom + 16);
-    expect(mode.height, 64);
-    expect(mode.width, closeTo(current.width, 0.01));
-    expect(systemProxy.left, closeTo(upload.left, 0.01));
-    expect(tun.right, closeTo(upload.right + 16 + upload.width, 0.01));
-    expect(intranet.top, mode.bottom + 16);
-    expect(intranet.height, 176);
-    expect(profile.top, intranet.top);
-    expect(profile.left, closeTo(intranet.right + 16, 0.01));
-    expect(service.width, closeTo(current.width, 0.01));
-    expect(find.byType(MemoryInfo), findsNothing);
-    expect(table.top, intranet.bottom + 16);
-    expect(table.width / groups.width, closeTo(1.5, 0.01));
-    expect(groups.top, table.top);
-    expect(table.bottom, 824 - 24);
-    expect(scrollExtentOf(tester), 0);
-    expect(find.byType(OutboundModeCard), findsNothing);
-    expect(tester.takeException(), isNull);
+      expect(current.height, 208);
+      expect(current.width, closeTo(upload.width * 2 + 16, 0.01));
+      expect(mode.top, current.bottom + 16);
+      expect(mode.height, 64);
+      expect(mode.width, closeTo(current.width, 0.01));
+      expect(systemProxy.left, closeTo(upload.left, 0.01));
+      expect(tun.right, closeTo(upload.right + 16 + upload.width, 0.01));
+      expect(intranet.top, rectOf(tester, WifiModeCard).bottom + 16);
+      expect(intranet.height, 176);
+      expect(profile.top, intranet.top);
+      expect(profile.left, closeTo(intranet.right + 16, 0.01));
+      expect(service.width, closeTo(current.width, 0.01));
+      expect(find.byType(MemoryInfo), findsNothing);
+      expect(table.top, intranet.bottom + 16);
+      expect(table.width / groups.width, closeTo(1.5, 0.01));
+      expect(groups.top, table.top);
+      expect(table.bottom, 1100 - 24);
+      expect(scrollExtentOf(tester), 0);
+      expect(find.byType(OutboundModeCard), findsNothing);
+      expect(tester.takeException(), isNull);
 
-    await teardown(tester);
-  });
+      await teardown(tester);
+    },
+  );
 
   testWidgets('the table lines its text up with the column and its head with '
       'the group tiles', (tester) async {
     seedGroups(10);
-    for (final size in const [Size(1220, 824), Size(1000, 900)]) {
+    for (final size in const [Size(1220, 1100), Size(1000, 1200)]) {
       await pumpDashboard(tester, size);
 
       final head = tester.getRect(
@@ -198,7 +203,8 @@ void main() {
     );
 
     expect(rectOf(tester, CurrentOutboundCard).height, 208);
-    expect(find.byType(ConnectionsTableCard), findsOneWidget);
+    expect(find.byType(ConnectionStatsCard), findsOneWidget);
+    expect(find.byType(WifiModeCard), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await teardown(tester);
@@ -212,7 +218,7 @@ void main() {
     expect(rectOf(tester, CurrentOutboundCard).height, 176);
     expect(rectOf(tester, OutboundModeBar).height, 56);
     expect(rectOf(tester, IntranetIpCard).height, 152);
-    expect(scrollExtentOf(tester), 0);
+    expect(scrollExtentOf(tester), greaterThan(0));
     expect(tester.takeException(), isNull);
 
     await teardown(tester);
@@ -228,12 +234,12 @@ void main() {
     final groups = rectOf(tester, ProxyGroupsSummaryCard);
     expect(find.byType(ConnectionsTableCard), findsNothing);
     expect(find.byType(ProxyGroupsCard), findsNothing);
-    expect(stats.height, greaterThan(112));
-    expect(stats.bottom, 660 - 24);
+    expect(stats.height, 112);
+    expect(stats.bottom, greaterThan(660 - 24));
     expect(stats.width, closeTo(current.width, 0.01));
     expect(groups.top, stats.top);
     expect(find.text('12 groups', findRichText: true), findsOneWidget);
-    expect(scrollExtentOf(tester), 0);
+    expect(scrollExtentOf(tester), greaterThan(0));
     expect(find.byType(Scrollable), findsOneWidget);
     expect(tester.takeException(), isNull);
 
@@ -252,7 +258,7 @@ void main() {
 
   testWidgets('the tables take the bottom row once it holds a few '
       'connections', (tester) async {
-    await pumpDashboard(tester, const Size(924, 737));
+    await pumpDashboard(tester, const Size(924, 897));
 
     final table = rectOf(tester, ConnectionsTableCard);
     expect(table.height, lessThan(240));
@@ -285,7 +291,7 @@ void main() {
 
   testWidgets('a resize lays the cards out for the new width in its first '
       'frame, before the view size catches up', (tester) async {
-    await pumpDashboard(tester, const Size(1440, 900));
+    await pumpDashboard(tester, const Size(1440, 1100));
 
     tester.view.physicalSize = const Size(600, 800);
     await tester.pump();
@@ -298,7 +304,7 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(rectOf(tester, OutboundModeBar).width, 800 - 16 - 24);
 
-    tester.view.physicalSize = const Size(1440, 900);
+    tester.view.physicalSize = const Size(1440, 1100);
     await tester.pump();
     expect(tester.takeException(), isNull);
     expect(find.byType(ConnectionsTableCard), findsOneWidget);
@@ -357,7 +363,7 @@ void main() {
     expect(current.width, closeTo(upload.width * 2 + gap, 0.01));
     expect(mode.width, current.width);
     expect(tun.width, closeTo(upload.width, 0.01));
-    expect(intranet.top, tun.bottom + gap);
+    expect(intranet.top, rectOf(tester, WifiModeCard).bottom + gap);
     expect(profile.top, intranet.top);
     expect(profile.left, closeTo(intranet.right + gap, 0.01));
     final service = rectOf(tester, ServiceStatusCard);
@@ -414,7 +420,7 @@ void main() {
     final card = rectOf(tester, CurrentOutboundCard);
     expect(card.width, 560);
     expect(card.center.dx, closeTo(310, 0.01));
-    expect(find.byType(NetworkTakeoverCard), findsOneWidget);
+    expect(find.byType(NetworkTakeoverCard), findsNWidgets(2));
     expect(find.byType(VpnCard), findsNothing);
     expect(find.byType(OutboundModeCard), findsOneWidget);
     expect(find.byType(OutboundModeBar), findsNothing);

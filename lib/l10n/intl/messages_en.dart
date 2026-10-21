@@ -870,6 +870,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "hex": MessageLookupByLibrary.simpleMessage("Hex"),
     "hideFromList": MessageLookupByLibrary.simpleMessage("Hide from list"),
     "hideIp": MessageLookupByLibrary.simpleMessage("Hide IP"),
+    "hideMenuBarIcon": MessageLookupByLibrary.simpleMessage(
+      "Hide menu bar icon",
+    ),
+    "hideMenuBarIconDesc": MessageLookupByLibrary.simpleMessage(
+      "Keep running in the background. Reopen FlClash or use the Show/Hide shortcut to bring the window back.",
+    ),
     "hidePassword": MessageLookupByLibrary.simpleMessage("Hide password"),
     "hideTimeoutProxies": MessageLookupByLibrary.simpleMessage(
       "Hide timed-out proxies",

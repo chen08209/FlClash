@@ -66,7 +66,7 @@ void main() {
   tearDown(() => container.dispose());
 
   Future<void> pumpRequestsTable(WidgetTester tester) async {
-    const size = Size(1220, 824);
+    const size = Size(1220, 1100);
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
