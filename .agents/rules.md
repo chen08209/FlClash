@@ -513,11 +513,17 @@ A public top-level declaration that nothing outside its own file references is d
 riverpod notifier is reached through its generated provider) and barrels as neither. Files publishing only extensions or
 typedefs are skipped: those are reached through the types they attach to, never by name.
 
-`CommonScaffold` adds the height of its docked search to `BottomInsetScope` around its body, so a page that reads
-`BottomInsetScope.of(context)` with the context it builds the scaffold from gets the inset without it, and the end of
-its content stays under the search field. Read it below the scaffold,
-inside `body: Builder(builder: (context) => ...)`. `test/lint/scaffold_bottom_inset_test.dart` enforces this by
-scanning `lib/`.
+`CommonScaffold` runs its body under the system bar at the foot of the window, as Android's edge-to-edge guidance
+asks, and only the end of the content clears it. A three-button bar is no exception: `ThemeManager` leaves it
+Android's translucent scrim (`systemNavigationBarContrastEnforced`). Telling the two apart by the side back-swipe
+zones Flutter reports reserved a gesture handle again on a real phone, so no page asks which bar it has. A scroll view
+ends, and anything fixed at the foot of a body stands, `context.bottomInset` above the edge: `BottomInsetScope` (the
+home dock, a docked search) plus the system bar `MediaQuery` still carries. The home shell takes the system bar out of
+`MediaQuery` for its tabs because the dock's inset already counts it. A bare `BottomInsetScope.of` leaves the system
+bar out, so code outside `lib/ui` never reads it. The scaffold adds its docked search to the scope around its body, so a page with a `searchState` reads
+`context.bottomInset` below the scaffold, inside `body: Builder(builder: (context) => ...)`; read with the context the
+scaffold is built from, it leaves the end of the content under the search field.
+`test/lint/scaffold_bottom_inset_test.dart` enforces both by scanning `lib/`.
 
 Every reorderable list builds its drag proxy with `commonProxyDecorator`, which tells `DecorationListItem` it is lifted:
 the row drops its separator and rounds from its corners in the run to a card of its own as it lifts, and back as it

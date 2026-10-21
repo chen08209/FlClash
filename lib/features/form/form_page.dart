@@ -40,9 +40,10 @@ class FormPage extends StatelessWidget {
       ),
       body: ListView(
         shrinkWrap: true,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-        ).copyWith(top: context.contentTopPadding, bottom: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+          top: context.contentTopPadding,
+          bottom: 20 + context.bottomInset,
+        ),
         children: [
           ErrorBanner(message: error),
           ...children,

@@ -95,9 +95,10 @@ class _RulePresetSheetState extends State<RulePresetSheet> {
               tooltip: appLocalizations.confirm,
             ),
       body: ListView.builder(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-        ).copyWith(top: context.contentTopPadding, bottom: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+          top: context.contentTopPadding,
+          bottom: 20 + context.bottomInset,
+        ),
         itemCount: presets.length,
         itemBuilder: (context, index) {
           final preset = presets[index];

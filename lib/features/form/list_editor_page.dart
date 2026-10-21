@@ -244,7 +244,7 @@ class _ListEditorPageState<T, K> extends ConsumerState<ListEditorPage<T, K>> {
     16,
     context.contentTopPadding,
     16,
-    24 + BottomInsetScope.of(context),
+    24 + context.bottomInset,
   );
 
   /// Reuses each row it builds, so the list settling on its own rebuilds none.

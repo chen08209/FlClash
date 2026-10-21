@@ -451,7 +451,7 @@ class _CustomProxiesViewState extends ConsumerState<CustomProxiesView> {
                     16,
                     0,
                     16,
-                    16 + BottomInsetScope.of(context),
+                    16 + context.bottomInset,
                   ),
                   sliver: reorderable
                       ? SliverReorderableList(
@@ -1422,7 +1422,7 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
           SliverPadding(
             padding: const EdgeInsets.symmetric(
               horizontal: 16,
-            ).copyWith(bottom: 20),
+            ).copyWith(bottom: 20 + context.bottomInset),
             sliver: SliverList.list(
               children: [
                 generateSection(

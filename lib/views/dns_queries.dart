@@ -178,7 +178,7 @@ class _DnsQueriesViewState extends ConsumerState<DnsQueriesView>
                       controller: _scrollController,
                       padding: EdgeInsets.only(
                         top: context.contentTopPadding,
-                        bottom: 16 + BottomInsetScope.of(context),
+                        bottom: 16 + context.bottomInset,
                       ),
                       itemCount: dnsQueries.length,
                       extentEstimation:
@@ -426,9 +426,10 @@ class DnsQueryDetailView extends StatelessWidget {
       (appLocalizations.delay, '${dnsQuery.delay} ms'),
     ];
     return ListView(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-      ).copyWith(bottom: 20, top: context.contentTopPadding),
+      padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+        bottom: 20 + context.bottomInset,
+        top: context.contentTopPadding,
+      ),
       children: [
         generateSection(
           title: appLocalizations.basicInfo,

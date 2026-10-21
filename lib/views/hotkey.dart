@@ -107,9 +107,10 @@ class HotKeyView extends StatelessWidget {
     return BaseScaffold(
       title: appLocalizations.hotkeyManagement,
       body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-        ).copyWith(top: context.contentTopPadding, bottom: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+          top: context.contentTopPadding,
+          bottom: 20 + context.bottomInset,
+        ),
         children: [
           const _HotKeyIntro(),
           for (final (title, actions) in _sections(appLocalizations))

@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
-final _read = RegExp(r'BottomInsetScope\.of\((\w+)\)');
+final _scopeRead = RegExp(r'BottomInsetScope\.of\(');
+
+final _insetRead = RegExp(r'(\w+)\.bottomInset\b');
 
 final _parameterList = RegExp(r'\(([^()]*)\)\s*(?:async\s*)?(?:=>|\{)');
 
@@ -31,15 +33,10 @@ String _nestedBlockAt(List<String> lines, int start) {
 }
 
 /// A bare `context` that no enclosing closure or member declares is the
-/// `State` getter, so the scope it is read from is the whole class.
-bool _readsAboveScaffold(
-  List<String> lines,
-  int line,
-  int column,
-  String name,
-) {
+/// `State` getter, so the block it is read from is the whole class.
+String? _declaringBlock(List<String> lines, int line, int column, String name) {
   if (_declares(lines[line].substring(0, column), name)) {
-    return false;
+    return null;
   }
   var indent = _indentOf(lines[line]);
   for (var index = line - 1; index >= 0; index--) {
@@ -54,13 +51,13 @@ bool _readsAboveScaffold(
     }
     indent = lineIndent;
     if (_declares(text, name) || (lineIndent == 0 && name == 'context')) {
-      return _nestedBlockAt(lines, index).contains('CommonScaffold(');
+      return _nestedBlockAt(lines, index);
     }
     if (lineIndent == 0) {
-      return false;
+      return null;
     }
   }
-  return false;
+  return null;
 }
 
 void main() {
@@ -74,18 +71,32 @@ void main() {
         continue;
       }
       final path = p.relative(entity.path);
-      if (path == 'lib/ui/scaffold.dart') {
+      if (p.isWithin('lib/ui', path)) {
         continue;
       }
       final lines = entity.readAsLinesSync();
       for (final (index, line) in lines.indexed) {
-        for (final match in _read.allMatches(line)) {
-          if (_readsAboveScaffold(lines, index, match.start, match.group(1)!)) {
+        if (_scopeRead.hasMatch(line)) {
+          offenders.add(
+            '$path:${index + 1} — reads BottomInsetScope, which leaves out '
+            'the system bar the body runs under; read `context.bottomInset`.',
+          );
+        }
+        for (final match in _insetRead.allMatches(line)) {
+          final block = _declaringBlock(
+            lines,
+            index,
+            match.start,
+            match.group(1)!,
+          );
+          if (block != null &&
+              block.contains('CommonScaffold(') &&
+              block.contains('searchState:')) {
             offenders.add(
-              '$path:${index + 1} — reads BottomInsetScope with the context '
-              'its CommonScaffold is built with, above the scope that scaffold '
-              'adds for its docked search and floating action button, so the '
-              'end of the content stays under them; read it inside '
+              '$path:${index + 1} — reads the bottom inset with the context '
+              'its CommonScaffold is built with, above the room that scaffold '
+              'adds for its docked search, so the end of the content stays '
+              'under it; read it inside '
               '`body: Builder(builder: (context) => ...)`.',
             );
           }

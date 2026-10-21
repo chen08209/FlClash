@@ -197,9 +197,10 @@ class _IconSetsViewState extends ConsumerState<IconSetsView> {
         illustration: NullStatusIllustration.icons,
       ),
       child: ReorderableListView.builder(
-        padding: const EdgeInsets.all(
-          16,
-        ).copyWith(top: context.contentTopPadding),
+        padding: const EdgeInsets.all(16).copyWith(
+          top: context.contentTopPadding,
+          bottom: 16 + context.bottomInset,
+        ),
         buildDefaultDragHandles: false,
         itemCount: iconSets.length,
         itemBuilder: (_, index) => _buildItem(iconSets, index),
@@ -305,7 +306,7 @@ class _IconSetPreviewViewState extends ConsumerState<_IconSetPreviewView> {
               ),
               SliverIconGrid(icons: icons),
               SliverToBoxAdapter(
-                child: SizedBox(height: 20 + BottomInsetScope.of(context)),
+                child: SizedBox(height: 20 + context.bottomInset),
               ),
             ],
           ),

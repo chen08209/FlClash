@@ -808,7 +808,7 @@ class _MemberPickerState<M> extends ConsumerState<_MemberPicker<M>> {
                   16,
                   context.contentTopPadding,
                   16,
-                  16 + BottomInsetScope.of(context),
+                  16 + context.bottomInset,
                 ),
                 sliver: SliverMainAxisGroup(
                   slivers: [

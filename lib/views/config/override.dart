@@ -582,9 +582,10 @@ class _OverrideList<K extends OverrideKey, M> extends ConsumerWidget {
     final keys = ref.watch(spec.target.select((state) => state.keys));
     final entries = spec.values.where(keys.contains);
     return ListView(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-      ).copyWith(top: context.contentTopPadding, bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+        top: context.contentTopPadding,
+        bottom: 16 + context.bottomInset,
+      ),
       children: [
         if (spec.target.issues case final issues?)
           CustomIssuesBanner(issues: ref.watch(issues)),

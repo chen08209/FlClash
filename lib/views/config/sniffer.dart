@@ -249,9 +249,10 @@ class _SniffView extends ConsumerWidget {
     return BaseScaffold(
       title: overrideKey.label(appLocalizations),
       body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-        ).copyWith(top: context.contentTopPadding, bottom: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+          top: context.contentTopPadding,
+          bottom: 16 + context.bottomInset,
+        ),
         children: [
           generateSection(
             items: [

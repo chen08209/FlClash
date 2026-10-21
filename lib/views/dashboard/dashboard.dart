@@ -308,7 +308,7 @@ class _MobileDashboard extends ConsumerWidget {
       dashboardStateProvider.select((state) => state.dashboardWidgets),
     );
     final top = MediaQuery.paddingOf(context).top + 4;
-    final bottom = 16 + BottomInsetScope.of(context);
+    final bottom = 16 + context.bottomInset;
     return CustomScrollView(
       // A viewport per card lays them all out and holds the scroll end still.
       scrollCacheExtent: editing

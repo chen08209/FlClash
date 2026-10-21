@@ -42,6 +42,7 @@ class _ExtendViewState extends ConsumerState<ExtendView> {
               SliverToBoxAdapter(child: SizedBox(height: context.appBarInset)),
               const _Title(),
               const _Content(),
+              SliverToBoxAdapter(child: SizedBox(height: context.bottomInset)),
             ],
           ),
         ),
