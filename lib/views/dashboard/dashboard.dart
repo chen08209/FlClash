@@ -17,10 +17,6 @@ import 'widget_registry.dart';
 import 'widgets/core_status_button.dart';
 import 'widgets/widgets.dart';
 
-// Narrower columns leave the service grid's cells too tight for a status, so
-// the grid takes the memory card's column instead.
-const _memoryColumnMin = 290.0;
-
 const _maxColumnWidth = 440.0;
 
 class DashboardView extends ConsumerStatefulWidget {
@@ -47,14 +43,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   @override
   Widget build(BuildContext context) {
     final platform = widget.platform ?? SupportPlatform.currentPlatform;
-    final viewSize = ref.watch(viewSizeProvider);
-    final sideWidth = ref.watch(sideWidthProvider);
     final scale = math.max(1.0, MediaQuery.textScalerOf(context).scale(1));
-    final size = Size(viewSize.width - sideWidth, viewSize.height) / scale;
-    final editable = !DashboardDensity.of(size).isDesktop;
-    if (!editable) {
-      _editing = false;
-    }
     final editing = _editing;
     final gap = cardSpacingOf(context, ref.watch(viewModeProvider));
     final appLocalizations = context.appLocalizations;
@@ -73,7 +62,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
             )
           : null,
       iconActions: [
-        if (editable && !editing)
+        if (!editing)
           IconButtonData(
             glyph: AppGlyphs.edit,
             tooltip: appLocalizations.editDashboard,
@@ -86,9 +75,9 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           final room = constraints.biggest / scale;
           final layout = DashboardDensity.of(room);
           return DashboardDensityScope(
-            density: layout,
+            density: editing ? DashboardDensity.mobile : layout,
             scale: scale,
-            child: layout.isDesktop
+            child: layout.isDesktop && !editing
                 ? _DesktopDashboard(
                     platform: platform,
                     columns: dashboardColumnsOf(room.width),
@@ -152,105 +141,121 @@ class _DesktopDashboard extends ConsumerWidget {
           start: base.start + inset,
           end: base.end + inset,
         );
-        double span(int columns) => column * columns + gap * (columns - 1);
-        Widget row(List<(int, Widget)> cards) => Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: gap,
-          children: [
-            for (final (columns, card) in cards)
-              SizedBox(
-                width: span(columns),
-                child: RepaintBoundary(child: card),
-              ),
-          ],
+        final saved = ref.watch(
+          dashboardStateProvider.select((state) => state.dashboardWidgets),
         );
-        Widget sized(double height, Widget child) =>
-            SizedBox(height: height, child: child);
-        final switches =
-            DashboardWidget.systemProxy.platforms.contains(platform)
-            ? const [
-                (1, NetworkTakeoverTile(TakeoverSwitch.systemProxy)),
-                (1, NetworkTakeoverTile(TakeoverSwitch.tun)),
-              ]
-            : const [(2, VpnTile())];
-        final half = columns ~/ 2;
-        final summaries = row([
-          (half, const ConnectionStatsCard()),
-          (half, const ProxyGroupsSummaryCard()),
-        ]);
-        if (columns == 2) {
-          return SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: padding,
-            child: Column(
-              spacing: gap,
-              children: [
-                sized(
-                  topHeight,
-                  const RepaintBoundary(child: CurrentOutboundCard()),
+        final shown = {
+          for (final card in saved)
+            if (card.platforms.contains(platform)) card,
+        };
+        final width = column * columns + gap * (columns - 1);
+        Widget? row(
+          List<(DashboardWidget, int, Widget)> cards, {
+          bool alignColumns = true,
+        }) {
+          final visible = cards
+              .where((card) => shown.contains(card.$1))
+              .toList();
+          if (visible.isEmpty) return null;
+          final slots = visible.fold(0, (sum, card) => sum + card.$2);
+          final unit =
+              (width - gap * ((alignColumns ? slots : visible.length) - 1)) /
+              slots;
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: gap,
+            children: [
+              for (final (_, span, card) in visible)
+                SizedBox(
+                  width: unit * span + (alignColumns ? gap * (span - 1) : 0),
+                  child: RepaintBoundary(child: card),
                 ),
-                sized(
-                  topHeight,
-                  row(const [
-                    (1, SpeedCard(direction: TrafficDirection.upload)),
-                    (1, SpeedCard(direction: TrafficDirection.download)),
-                  ]),
-                ),
-                sized(
-                  controlHeight,
-                  const RepaintBoundary(child: OutboundModeBar()),
-                ),
-                sized(controlHeight, row(switches)),
-                sized(wifiHeight, const WifiModeCard()),
-                sized(
-                  middleHeight,
-                  row(const [(1, IntranetIpCard()), (1, ProfilesCard())]),
-                ),
-                sized(
-                  middleHeight,
-                  row(const [(1, ServiceStatusCard()), (1, MemoryInfo())]),
-                ),
-                sized(summaryHeight, summaries),
-              ],
-            ),
+            ],
           );
         }
-        final rows = [
-          sized(
-            topHeight,
-            row(const [
-              (2, CurrentOutboundCard()),
-              (1, SpeedCard(direction: TrafficDirection.upload)),
-              (1, SpeedCard(direction: TrafficDirection.download)),
-            ]),
+
+        final rows = <Widget>[];
+        var rowsHeight = padding.vertical;
+        void addRow(double height, List<(DashboardWidget, int, Widget)> cards) {
+          final content = row(cards);
+          if (content == null) return;
+          rows.add(SizedBox(height: height, child: content));
+          rowsHeight += height + gap;
+        }
+
+        const current = (
+          DashboardWidget.currentOutbound,
+          2,
+          CurrentOutboundCard(),
+        );
+        const speed = [
+          (
+            DashboardWidget.networkSpeed,
+            1,
+            SpeedCard(direction: TrafficDirection.upload),
           ),
-          sized(
-            controlHeight,
-            row([(2, const OutboundModeBar()), ...switches]),
-          ),
-          sized(wifiHeight, const WifiModeCard()),
-          sized(
-            middleHeight,
-            row([
-              (1, const IntranetIpCard()),
-              (1, const ProfilesCard()),
-              if (column >= _memoryColumnMin * scale) ...[
-                (1, const ServiceStatusCard()),
-                (1, const MemoryInfo()),
-              ] else
-                (2, const ServiceStatusCard()),
-            ]),
+          (
+            DashboardWidget.networkSpeed,
+            1,
+            SpeedCard(direction: TrafficDirection.download),
           ),
         ];
-        final rowsHeight =
-            padding.vertical +
-            topHeight +
-            controlHeight +
-            wifiHeight +
-            middleHeight +
-            gap * 4;
-        final tablesFit = constraints.maxHeight >= rowsHeight + tablesHeight;
-        final fills = constraints.maxHeight >= rowsHeight + summaryHeight;
+        const mode = (DashboardWidget.outboundMode, 2, OutboundModeBar());
+        const switches = [
+          (
+            DashboardWidget.systemProxy,
+            1,
+            NetworkTakeoverTile(TakeoverSwitch.systemProxy),
+          ),
+          (DashboardWidget.tun, 1, NetworkTakeoverTile(TakeoverSwitch.tun)),
+          (DashboardWidget.vpnButton, 2, VpnTile()),
+        ];
+        const details = [
+          (DashboardWidget.intranetIp, 1, IntranetIpCard()),
+          (DashboardWidget.profiles, 1, ProfilesCard()),
+        ];
+        final service = [
+          (
+            DashboardWidget.serviceStatus,
+            shown.contains(DashboardWidget.memoryInfo) ? 1 : 2,
+            const ServiceStatusCard(),
+          ),
+          (DashboardWidget.memoryInfo, 1, const MemoryInfo()),
+        ];
+        if (columns == 2) {
+          addRow(topHeight, [current]);
+          addRow(topHeight, speed);
+          addRow(controlHeight, [mode]);
+          addRow(controlHeight, switches);
+        } else {
+          addRow(topHeight, [current, ...speed]);
+          addRow(controlHeight, [mode, ...switches]);
+        }
+        addRow(wifiHeight, const [
+          (DashboardWidget.wifiMode, 1, WifiModeCard()),
+        ]);
+        if (columns == 2) {
+          addRow(middleHeight, details);
+          addRow(middleHeight, service);
+        } else {
+          addRow(middleHeight, [...details, ...service]);
+        }
+
+        final tablesFit =
+            columns == 4 && constraints.maxHeight >= rowsHeight + tablesHeight;
+        final footer = tablesFit
+            ? row(const [
+                (DashboardWidget.connectionStats, 3, ConnectionsTableCard()),
+                (DashboardWidget.proxyGroups, 2, ProxyGroupsCard()),
+              ], alignColumns: false)
+            : row(const [
+                (DashboardWidget.connectionStats, 1, ConnectionStatsCard()),
+                (DashboardWidget.proxyGroups, 1, ProxyGroupsSummaryCard()),
+              ]);
+        final fills =
+            columns == 4 &&
+            footer != null &&
+            constraints.maxHeight >= rowsHeight + summaryHeight;
         return SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: SizedBox(
@@ -261,29 +266,11 @@ class _DesktopDashboard extends ConsumerWidget {
                 spacing: gap,
                 children: [
                   ...rows,
-                  if (tablesFit)
-                    Expanded(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        spacing: gap,
-                        children: const [
-                          Expanded(
-                            flex: 3,
-                            child: RepaintBoundary(
-                              child: ConnectionsTableCard(),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: RepaintBoundary(child: ProxyGroupsCard()),
-                          ),
-                        ],
-                      ),
-                    )
-                  else if (fills)
-                    Expanded(child: summaries)
-                  else
-                    sized(summaryHeight, summaries),
+                  if (footer != null)
+                    if (fills)
+                      Expanded(child: footer)
+                    else
+                      SizedBox(height: summaryHeight, child: footer),
                 ],
               ),
             ),

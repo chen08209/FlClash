@@ -510,9 +510,9 @@ jobs:
 
           - 源码提交：$SOURCE_SHA
           - 构建记录：$RUN_URL
-          - 包含仪表盘 Wi-Fi SSID 规则编辑、独立系统代理和虚拟网卡开关、拖拽崩溃规避及 macOS 隐藏菜单栏图标设置。
+          - 包含宽窄窗口共用的仪表盘卡片添加和隐藏、Wi-Fi SSID 规则编辑、独立系统代理和虚拟网卡开关、拖拽崩溃规避及 macOS 隐藏菜单栏图标设置。
           - Actions 构建包的校验值见 SHA256SUMS。
-          - 如包含 macos-arm64-ui-fix.dmg，该包为单独上传的本地 ARM64 构建，校验值见 SHA256SUMS-macos-arm64。
+          - macOS ARM64 如已单独上传，则为本地构建，校验值见 SHA256SUMS-macos-arm64。
           - 未配置 Android 发布密钥时，APK 使用开发应用标识和调试签名。
           EOF
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then

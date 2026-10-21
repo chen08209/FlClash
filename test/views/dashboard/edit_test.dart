@@ -472,22 +472,20 @@ void main() {
     await teardown(tester);
   });
 
-  testWidgets('a landscape phone gets the fixed grid without an edit mode', (
+  testWidgets('a landscape phone can edit the same saved cards', (
     tester,
   ) async {
     seed(const [DashboardWidget.currentOutbound, DashboardWidget.profiles]);
     await pumpDashboard(tester, size: const Size(915, 412));
 
-    expect(find.byTooltip('Edit dashboard'), findsNothing);
+    expect(find.byTooltip('Edit dashboard'), findsOneWidget);
     expect(find.byType(DashboardEditor), findsNothing);
-    expect(find.byType(OutboundModeBar), findsOneWidget);
+    expect(find.byType(OutboundModeBar), findsNothing);
 
     await teardown(tester);
   });
 
-  testWidgets('turning to the fixed grid ends editing for good', (
-    tester,
-  ) async {
+  testWidgets('resizing preserves editing and the saved cards', (tester) async {
     seed(const [DashboardWidget.currentOutbound, DashboardWidget.profiles]);
     await pumpEditor(tester);
     expect(find.byType(DashboardEditor), findsOneWidget);
@@ -499,26 +497,68 @@ void main() {
     }
 
     await resize(const Size(915, 412));
-    expect(find.byType(DashboardEditor), findsNothing);
+    expect(find.byType(DashboardEditor), findsOneWidget);
     await resize(const Size(412, 1400));
-    expect(find.byType(DashboardEditor), findsNothing);
-    expect(find.byTooltip('Edit dashboard'), findsOneWidget);
+    expect(find.byType(DashboardEditor), findsOneWidget);
+    expect(saved(), [
+      DashboardWidget.currentOutbound,
+      DashboardWidget.profiles,
+    ]);
 
     await teardown(tester);
   });
 
-  testWidgets('the desktop grid keeps its fixed layout without an edit mode', (
-    tester,
-  ) async {
-    await pumpDashboard(
+  for (final width in [800.0, 1440.0]) {
+    testWidgets('the $width desktop can hide and add cards across widths', (
       tester,
-      platform: SupportPlatform.MacOS,
-      size: const Size(1220, 900),
-    );
+    ) async {
+      seed(const [DashboardWidget.currentOutbound, DashboardWidget.memoryInfo]);
+      await pumpDashboard(
+        tester,
+        platform: SupportPlatform.MacOS,
+        size: Size(width, 1000),
+      );
+      expect(find.byType(MemoryInfo), findsOneWidget);
+      expect(find.byType(OutboundModeBar), findsNothing);
+      expect(find.byType(NetworkTakeoverTile), findsNothing);
+      expect(find.byType(WifiModeCard), findsNothing);
+      expect(find.byType(ConnectionsTableCard), findsNothing);
+      expect(find.byType(ProxyGroupsCard), findsNothing);
 
-    expect(find.byTooltip('Edit dashboard'), findsNothing);
-    expect(find.byType(DashboardEditor), findsNothing);
+      await edit(tester);
+      await tester.tap(find.byTooltip('Remove Memory info'));
+      await settle(tester);
+      await tester.tap(find.byTooltip('Done'));
+      await settle(tester);
+      expect(saved(), [DashboardWidget.currentOutbound]);
+      expect(find.byType(MemoryInfo), findsNothing);
 
-    await teardown(tester);
-  });
+      tester.view.physicalSize = const Size(620, 1000);
+      container.read(viewSizeProvider.notifier).value = const Size(620, 1000);
+      await settle(tester);
+      expect(find.byType(MemoryInfo), findsNothing);
+      tester.view.physicalSize = Size(width, 1000);
+      container.read(viewSizeProvider.notifier).value = Size(width, 1000);
+      await settle(tester);
+
+      await edit(tester);
+      final add = find.byTooltip('Add Memory info');
+      await tester.scrollUntilVisible(
+        add,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(add);
+      await settle(tester);
+      await tester.tap(find.byTooltip('Done'));
+      await settle(tester);
+      expect(saved(), [
+        DashboardWidget.currentOutbound,
+        DashboardWidget.memoryInfo,
+      ]);
+      expect(find.byType(MemoryInfo), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await teardown(tester);
+    });
+  }
 }

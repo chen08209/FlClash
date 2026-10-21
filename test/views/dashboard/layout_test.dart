@@ -139,6 +139,35 @@ void main() {
     },
   );
 
+  for (final footer in [
+    DashboardWidget.connectionStats,
+    DashboardWidget.proxyGroups,
+  ]) {
+    testWidgets('a lone $footer fills the wide dashboard row', (tester) async {
+      container
+          .read(appSettingProvider.notifier)
+          .update(
+            (state) => state.copyWith(
+              dashboardWidgets: [DashboardWidget.currentOutbound, footer],
+            ),
+          );
+      await pumpDashboard(tester, const Size(1220, 1100));
+      final current = rectOf(tester, CurrentOutboundCard);
+      final type = footer == DashboardWidget.connectionStats
+          ? ConnectionsTableCard
+          : ProxyGroupsCard;
+      final bottom = rectOf(tester, type);
+      expect(bottom.width, closeTo(current.width, 0.01));
+      expect(bottom.top, current.bottom + 16);
+      expect(bottom.bottom, 1100 - 24);
+      expect(find.byType(ProfilesCard), findsNothing);
+      expect(find.byType(ServiceStatusCard), findsNothing);
+      expect(find.byType(WifiModeCard), findsNothing);
+      expect(tester.takeException(), isNull);
+      await teardown(tester);
+    });
+  }
+
   testWidgets('the table lines its text up with the column and its head with '
       'the group tiles', (tester) async {
     seedGroups(10);
@@ -173,6 +202,16 @@ void main() {
 
   testWidgets('a wide window gives the memory card a column beside the '
       'services', (tester) async {
+    container
+        .read(appSettingProvider.notifier)
+        .update(
+          (state) => state.copyWith(
+            dashboardWidgets: [
+              ...state.dashboardWidgets,
+              DashboardWidget.memoryInfo,
+            ],
+          ),
+        );
     await pumpDashboard(tester, const Size(1440, 900));
 
     final upload = rectOf(tester, SpeedCard);
@@ -277,6 +316,16 @@ void main() {
   testWidgets('a wide window centres columns that stop growing', (
     tester,
   ) async {
+    container
+        .read(appSettingProvider.notifier)
+        .update(
+          (state) => state.copyWith(
+            dashboardWidgets: [
+              ...state.dashboardWidgets,
+              DashboardWidget.memoryInfo,
+            ],
+          ),
+        );
     await pumpDashboard(tester, const Size(2560, 1440));
 
     final current = rectOf(tester, CurrentOutboundCard);
@@ -346,6 +395,16 @@ void main() {
   testWidgets('a mid-width window stacks the same cards in two columns', (
     tester,
   ) async {
+    container
+        .read(appSettingProvider.notifier)
+        .update(
+          (state) => state.copyWith(
+            dashboardWidgets: [
+              ...state.dashboardWidgets,
+              DashboardWidget.memoryInfo,
+            ],
+          ),
+        );
     await pumpDashboard(tester, const Size(800, 900));
     final gap = cardSpacingOf(
       tester.element(find.byType(CurrentOutboundCard)),
