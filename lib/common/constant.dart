@@ -162,13 +162,14 @@ const pausedMaxDnsQueriesLength = maxDnsQueriesLength * 2;
 
 const trafficSampleLength = 30;
 
-// Apple's system colors, in the order of the macOS accent colors.
+// iOS 27's system colors but the deeper blue of earlier iOS, in the order of the
+// macOS accent colors.
 const defaultPrimaryColors = [
   defaultPrimaryColor,
-  0xFFAF52DE,
+  0xFFCB30E0,
   0xFFFF2D55,
-  0xFFFF3B30,
-  0xFFFF9500,
+  0xFFFF383C,
+  0xFFFF8D28,
   0xFFFFCC00,
   0xFF34C759,
   0xFF8E8E93,
