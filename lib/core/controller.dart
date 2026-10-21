@@ -279,8 +279,12 @@ class CoreController {
     return _interface.stopListener();
   }
 
-  Future<Delay?> getDelay(String url, String proxyName) async {
-    return _interface.asyncTestDelay(url, proxyName);
+  Future<Delay?> getDelay(
+    String url,
+    String proxyName,
+    Duration timeout,
+  ) async {
+    return _interface.asyncTestDelay(url, proxyName, timeout);
   }
 
   Future<ProbeResult?> probe(ProbeParams params) => _interface.probe(params);
@@ -306,6 +310,10 @@ class CoreController {
     return _interface.getProfileOutbounds(
       await appPath.getProfilePath(id.toString()),
     );
+  }
+
+  Future<Map<String, dynamic>?> getProxyDefinition(String name) {
+    return _interface.getProxyDefinition(name);
   }
 
   Future<String> buildProfile(SetupBase base) async {

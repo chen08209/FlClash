@@ -92,6 +92,12 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
         ],
         'proxy-groups': <Object>[],
       },
+      CoreMethod.getProxyDefinition when arguments == 'a' => {
+        'name': 'a',
+        'type': 'ss',
+        'plugin-opts': {'mode': 'websocket'},
+      },
+      CoreMethod.getProxyDefinition => null,
       CoreMethod.buildProfile => '/home/responses/1.yaml',
       CoreMethod.getProfileBase => {
         'config': {'mode': 'rule', 'rule': null},
@@ -119,7 +125,7 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
       },
       _ => '',
     };
-    return result as T;
+    return result as T?;
   }
 }
 
@@ -196,7 +202,11 @@ void main() {
     expect(route, const RouteSnapshot(coreEpoch: 1));
     expect(handler.calls[CoreMethod.watchRoute], isTrue);
     await handler.sideLoadExternalProvider(providerName: 'provider', data: 'x');
-    await handler.asyncTestDelay('https://example.com', 'DIRECT');
+    await handler.asyncTestDelay(
+      'https://example.com',
+      'DIRECT',
+      const Duration(seconds: 8),
+    );
     await handler.probe(
       const ProbeParams(
         url: 'https://example.com',
@@ -368,7 +378,11 @@ void main() {
       const Traffic(up: 12, down: 34),
     );
     expect(
-      await handler.asyncTestDelay('https://example.com', 'DIRECT'),
+      await handler.asyncTestDelay(
+        'https://example.com',
+        'DIRECT',
+        const Duration(seconds: 8),
+      ),
       const Delay(name: 'DIRECT', url: 'https://example.com', value: 42),
     );
     expect(
@@ -431,6 +445,21 @@ void main() {
     ]);
     expect(handler.calls[CoreMethod.buildProfile], base.toJson());
     expect(built, '/home/responses/1.yaml');
+  });
+
+  test('a proxy definition crosses as a nested mapping or null', () async {
+    final handler = _RecordingCoreHandler();
+
+    final definition = await handler.getProxyDefinition('a');
+    final missing = await handler.getProxyDefinition('from-provider');
+
+    expect(handler.calls[CoreMethod.getProxyDefinition], 'from-provider');
+    expect(definition, {
+      'name': 'a',
+      'type': 'ss',
+      'plugin-opts': {'mode': 'websocket'},
+    });
+    expect(missing, isNull);
   });
 
   test('setupConfig names a base only when the Core applies one', () async {

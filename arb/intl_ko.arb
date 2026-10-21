@@ -175,6 +175,7 @@
   "clipboardWriteFailed": "클립보드에 복사하지 못했습니다. 선택 영역이 너무 클 수 있습니다",
   "paste": "붙여넣기",
   "testUrl": "테스트 URL",
+  "delayTestTimeout": "지연 테스트 시간 제한",
   "sync": "동기화",
   "exclude": "최근 작업에서 숨기기",
   "compact": "간결하게",
@@ -936,5 +937,10 @@
   "allReferencedProxyProviders": "참조된 모든 프록시 공급자",
   "clearDnsCache": "DNS 캐시 지우기",
   "dnsCacheCleared": "DNS 캐시를 지웠습니다",
-  "clearDnsCacheFailed": "DNS 캐시를 지우지 못했습니다"
+  "clearDnsCacheFailed": "DNS 캐시를 지우지 못했습니다",
+  "select": "선택",
+  "preferred": "우선",
+  "addToLocalProxies": "로컬 프록시에 추가",
+  "addedToLocalProxies": "{name}을(를) 로컬 프록시에 추가했습니다",
+  "alreadyInLocalProxies": "{name}은(는) 이미 로컬 프록시에 있습니다"
 }

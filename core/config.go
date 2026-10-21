@@ -11,6 +11,7 @@ import (
 
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/inbound"
+	"github.com/metacubex/mihomo/adapter/provider"
 	"github.com/metacubex/mihomo/component/age"
 	"github.com/metacubex/mihomo/component/auth"
 	"github.com/metacubex/mihomo/component/dialer"
@@ -71,6 +72,29 @@ func handleGetConfig(path string) (*config.RawConfig, error) {
 	return unmarshalRawConfig(buf)
 }
 
+func handleGetProxyDefinition(name string) (map[string]any, error) {
+	raw, err := handleGetConfig(runningConfigPath())
+	if err != nil {
+		return nil, err
+	}
+	if proxy := lookupProxy(name); proxy != nil {
+		if pdName := proxy.ProxyInfo().ProviderName; pdName != "" {
+			pd, running := tunnel.ProvidersSnapshot()[pdName]
+			mapping, declared := raw.ProxyProvider[pdName]
+			if !running || !declared {
+				return nil, nil
+			}
+			return provider.ProxyMapping(pd, mapping, name)
+		}
+	}
+	for _, mapping := range raw.Proxy {
+		if mapping["name"] == name {
+			return mapping, nil
+		}
+	}
+	return nil, nil
+}
+
 func handleValidateConfig(path string) error {
 	_, err := handleGetConfig(path)
 	return err
@@ -112,8 +136,12 @@ func withPlatformLimits(cfg *config.Config) *config.Config {
 	return cfg
 }
 
+func runningConfigPath() string {
+	return filepath.Join(constant.Path.HomeDir(), "config.yaml")
+}
+
 func loadSetupConfig(params *SetupParams) (*config.Config, error) {
-	path := filepath.Join(constant.Path.HomeDir(), "config.yaml")
+	path := runningConfigPath()
 	if params.Base != nil {
 		return loadConfigWithBase(params.Base, path)
 	}

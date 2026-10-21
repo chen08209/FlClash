@@ -288,6 +288,101 @@ void main() {
     expect(tester.getRect(find.byType(ProxyCard).first).top, grid.top);
   });
 
+  testWidgets('a long press on a card offers to select it and to add it to '
+      'the local proxies, one from a provider too', (tester) async {
+    const group = Group(
+      type: GroupType.Selector,
+      name: 'B',
+      all: [
+        Proxy(name: 'B-0', type: 'ss'),
+        Proxy(name: 'B-1', type: 'ss', providerName: 'sub'),
+      ],
+    );
+    globalContainer.read(groupsProvider.notifier).value = [group];
+    final profile = globalContainer.read(currentProfileProvider)!;
+    globalContainer
+        .read(profilesProvider.notifier)
+        .put(profile.copyWith(selectedMap: {'B': 'B-0'}));
+    globalContainer
+        .read(_tabStateProvider.notifier)
+        .set(_tabState([_group('A'), group]));
+    await pumpTabView(tester);
+    await tester.pumpAndSettle();
+    final menu = find.byType(CommonPopupMenu);
+
+    await tester.longPress(find.text('B-0', findRichText: true));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(of: menu, matching: find.text('Select')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: menu, matching: find.byGlyph(AppGlyphs.check)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: menu, matching: find.text('Add to local proxies')),
+      findsOneWidget,
+    );
+
+    await tester.tapAt(Offset.zero);
+    await tester.pumpAndSettle();
+    await tester.longPress(find.text('B-1', findRichText: true));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(of: menu, matching: find.text('Select')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: menu, matching: find.text('Add to local proxies')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('a custom profile offers to add only the proxies of a provider, '
+      'as its own are the local proxies', (tester) async {
+    const group = Group(
+      type: GroupType.Selector,
+      name: 'B',
+      all: [
+        Proxy(name: 'B-0', type: 'ss'),
+        Proxy(name: 'B-1', type: 'ss', providerName: 'sub'),
+      ],
+    );
+    globalContainer.read(groupsProvider.notifier).value = [group];
+    final profile = globalContainer.read(currentProfileProvider)!;
+    globalContainer
+        .read(profilesProvider.notifier)
+        .put(profile.copyWith(type: ProfileType.custom));
+    globalContainer
+        .read(_tabStateProvider.notifier)
+        .set(_tabState([_group('A'), group]));
+    await pumpTabView(tester);
+    await tester.pumpAndSettle();
+    final menu = find.byType(CommonPopupMenu);
+
+    await tester.longPress(find.text('B-0', findRichText: true));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(of: menu, matching: find.text('Select')),
+      findsOneWidget,
+    );
+    expect(find.text('Add to local proxies'), findsNothing);
+
+    await tester.tapAt(Offset.zero);
+    await tester.pumpAndSettle();
+    await tester.longPress(find.text('B-1', findRichText: true));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(of: menu, matching: find.text('Add to local proxies')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('a new current group leaves the visible cards as they were', (
     tester,
   ) async {
