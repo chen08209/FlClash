@@ -344,10 +344,14 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   authorization, because CoreWLAN reaches `wifid` over XPC and a wedged daemon would freeze the window. Windows is the
   outstanding exception: `WlanQueryInterface` still runs inline, since replying off-thread there needs a window-message
   hop that the plugin API does not provide.
-- The delayed DNS re-check `NetworkObserveModule.onLosing` posts is deliberately left un-deduplicated. The runnable
-  re-reads `networkInfos` and does nothing when `onLost` already dropped the network, `updateDns` calls into the Core
-  only when the resolved list or the preferred network changed, and `stop()` clears the handler queue, so a network that
-  reports `onLosing` repeatedly costs two comparisons per event. Holding the pending `Runnable` to `removeCallbacks` it changes no behaviour and adds
+- Android's `system` nameserver resolves only through the DNS `NetworkObserver` reports; mihomo builds it with no
+  fallback, so with no list every lookup through it fails at once. The Core tests delays and updates providers with no
+  service running, so the observer lives for the process from the first `init` or native `quickSetup` and never sends
+  an empty list on a service stop.
+- The delayed DNS re-check `NetworkObserver.onLosing` posts is deliberately left un-deduplicated. The runnable
+  re-reads `networkInfos` and does nothing when `onLost` already dropped the network, and `updateDns` calls into the
+  Core only when the resolved list or the preferred network changed, so a network that reports `onLosing` repeatedly
+  costs two comparisons per event. Holding the pending `Runnable` to `removeCallbacks` it changes no behaviour and adds
   state that has to stay in sync with the map.
 
 ## UI Isolate Work

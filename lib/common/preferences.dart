@@ -61,6 +61,22 @@ class Preferences {
     await preferences?.setString('sharedState', json.encode(shareState));
   }
 
+  /// The md5 of the config.yaml the Core last accepted, which is also what
+  /// the Android service applies when it starts without Flutter.
+  Future<String?> getAppliedConfigMd5() async {
+    final preferences = await _store.value;
+    return preferences?.getString(appliedConfigMd5Key);
+  }
+
+  Future<void> saveAppliedConfigMd5(String? md5) async {
+    final preferences = await _store.value;
+    if (md5 == null) {
+      await preferences?.remove(appliedConfigMd5Key);
+    } else {
+      await preferences?.setString(appliedConfigMd5Key, md5);
+    }
+  }
+
   Future<Map<String, Object?>?> getConfigMap() async {
     try {
       final preferences = await _store.value;

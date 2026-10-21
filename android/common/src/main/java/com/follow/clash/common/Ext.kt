@@ -118,5 +118,13 @@ fun Context.receiveBroadcastFlow(
         }
     }
     registerReceiverCompat(receiver, filter, exported)
-    awaitClose { unregisterReceiver(receiver) }
+    awaitClose {
+        // Cancellation reaches here on another thread, so a Service whose
+        // onDestroy cancelled the collector may already have had the system
+        // drop its leaked receivers, and unregistering again then throws.
+        try {
+            unregisterReceiver(receiver)
+        } catch (_: IllegalArgumentException) {
+        }
+    }
 }
