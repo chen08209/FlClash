@@ -465,7 +465,7 @@ abstract class ThemeProps with _$ThemeProps {
     @JsonKey(readValue: _readColorStyle)
     ColorStyle colorStyle,
     @Default(false) bool pureBlack,
-    @Default(true) bool sidebarBlur,
+    @Default(false) bool sidebarBlur,
     @Default(LiquidGlassMode.none)
     @JsonKey(readValue: _readLiquidGlass)
     LiquidGlassMode liquidGlass,

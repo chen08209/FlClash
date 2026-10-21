@@ -96,7 +96,7 @@ and decoration state.
 
 ### Effects
 
-`effect` is one of `none`, `transparent`, `blur`, `acrylic`, `mica`. Linux
+`effect` is one of `none`, `transparent`, `blur`, `acrylic`, `mica`, `glass`. Linux
 supports only `none`: no desktop-neutral blur protocol exists for GTK 3, and a
 transparent window without blur is not a useful effect.
 
@@ -106,12 +106,16 @@ transparent window without blur is not a useful effect.
 | `transparent` | transparent gradient accent | clear window |
 | `blur` | `ACCENT_ENABLE_BLURBEHIND` | `NSVisualEffectView` `.sidebar`, behind-window blending, follows the window's active state |
 | `acrylic` | `ACCENT_ENABLE_ACRYLICBLURBEHIND` (Windows 10 1803+) | `NSVisualEffectView` `.fullScreenUI` |
-| `mica` | `DWMSBT_MAINWINDOW` on Windows 11 | unsupported |
+| `mica` | `DWMSBT_MAINWINDOW` on Windows 11 22H2+, `DWMWA_MICA_EFFECT` on 21H2 | unsupported |
+| `glass` | unsupported | `NSGlassEffectView` in the variant AppKit gives a split view's sidebar, on macOS 26+ while sidebars there are glass; opaque window |
 
 The accent effects leave the DWM frame margins at zero: Windows fills a frame
 extended into the client area with an opaque material that covers them. `mica`
 extends the whole frame, which the system backdrop needs, and the Windows 10
-top border below extends the top. The accent effects go through
+top border below extends the top. DWM draws the caption buttons into a frame
+extended under a hidden caption, offset from the application's own once the
+window is maximized, so a hidden title bar under `mica` clears `WS_SYSMENU` as
+`windowButtonVisibility: false` does. The accent effects go through
 `SetWindowCompositionAttribute`, so `isEffectSupported` is false for them on a
 user32 without it rather than reporting an effect that draws nothing.
 
@@ -144,6 +148,15 @@ below it before the view controller, so Flutter never receives clicks. `none`
 and `transparent` mask the material out with an empty `maskImage` and leave
 the view inactive instead of swapping view controllers.
 
+`glass` cannot lie beneath the Flutter view for the same reason, so it holds
+the Flutter view as its `contentView`, the way a split view's sidebar glass
+holds the sidebar, and every other effect moves the Flutter view back into the
+effect view and drops the glass. Its variant is not public: the plugin reads
+it, with the adaptive appearance, off the sidebar of a split view it lays out
+offscreen once, so the glass follows each release's own sidebar (flush with
+the window in macOS 27, floating in 26). A split view without sidebar glass,
+as in an app that opts out of the new design, makes `glass` unsupported.
+
 ## Lifecycle
 
 The engine reports `AppLifecycleState` from its own view of the window. Where
@@ -174,11 +187,12 @@ through `WindowPluginForwardVisibility` (see Runner hooks).
 
 ## Unused contract surface
 
-The application drives only `none`, `blur` and `acrylic`, always passes
+The application drives only `none`, `glass` and `blur` on macOS and `none`,
+`mica`, `acrylic` and `blur` on Windows, always passes
 `windowButtonVisibility: true`, and calls `setRoundedCorners` for Windows
-alone. `transparent`, `mica`, hidden caption buttons and the macOS
-`setRoundedCorners` no-op stay in the contract so every platform answers the
-same table; they have no application caller today.
+alone. `transparent`, the macOS `acrylic`, hidden caption buttons and the
+macOS `setRoundedCorners` no-op stay in the contract so every platform answers
+the same table; they have no application caller today.
 
 ## Runner hooks
 

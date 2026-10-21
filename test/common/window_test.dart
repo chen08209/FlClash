@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/window.dart';
 import 'package:fl_clash/models/config.dart';
 import 'package:flutter/services.dart';
@@ -101,11 +100,11 @@ void main() {
       tint: tint,
     );
 
-    expect(first, isFalse);
-    expect(second, isTrue);
+    expect(first, isNull);
+    expect(second, 0.5);
     expect(
       methodCalls.where((call) => call.method == 'isEffectSupported'),
-      hasLength(Platform.isWindows ? 3 : 2),
+      hasLength(Platform.isWindows ? 4 : 3),
     );
     expect(methodCalls.last.arguments['effect'], isNot('none'));
   });
@@ -119,17 +118,17 @@ void main() {
     );
 
     if (Platform.isLinux) {
-      expect(active, isFalse);
+      expect(active, isNull);
       expect(methodCalls, isEmpty);
       return;
     }
 
-    expect(active, isTrue);
+    expect(active, 0.5);
     expect(calls.last, 'setEffect');
     expect(methodCalls.last.arguments, {
-      'effect': Platform.isWindows ? 'acrylic' : 'blur',
+      'effect': Platform.isWindows ? 'mica' : 'glass',
       'tint': Platform.isWindows
-          ? tint.withValues(alpha: kSidebarBlurOpacity).toARGB32()
+          ? tint.withValues(alpha: 0.5).toARGB32()
           : null,
       'brightness': 'dark',
     });
@@ -143,7 +142,7 @@ void main() {
       tint: tint,
     );
 
-    expect(active, isFalse);
+    expect(active, isNull);
     if (Platform.isLinux) {
       expect(methodCalls, isEmpty);
       return;
@@ -152,7 +151,7 @@ void main() {
     expect(methodCalls.last.arguments, {
       'effect': 'none',
       'tint': Platform.isWindows
-          ? tint.withValues(alpha: kSidebarBlurOpacity).toARGB32()
+          ? tint.withValues(alpha: 0.5).toARGB32()
           : null,
       'brightness': 'light',
     });

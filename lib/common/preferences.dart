@@ -165,6 +165,20 @@ class Preferences {
     await sharedPreferencesIns?.remove(systemDnsRecordKey);
   }
 
+  Future<bool> getSystemProxyApplied() async {
+    final sharedPreferencesIns = await _store.value;
+    return sharedPreferencesIns?.getBool(systemProxyAppliedKey) ?? false;
+  }
+
+  Future<void> saveSystemProxyApplied(bool applied) async {
+    final sharedPreferencesIns = await _store.value;
+    if (applied) {
+      await sharedPreferencesIns?.setBool(systemProxyAppliedKey, true);
+    } else {
+      await sharedPreferencesIns?.remove(systemProxyAppliedKey);
+    }
+  }
+
   Future<BootRecord?> getBootRecord() async {
     try {
       final sharedPreferencesIns = await _store.value;

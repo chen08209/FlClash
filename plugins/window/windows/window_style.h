@@ -20,6 +20,7 @@ enum class Effect {
   kBlur,
   kAcrylic,
   kMica,
+  kGlass,
 };
 
 std::optional<TitleBarStyle> ParseTitleBarStyle(const std::string& value);
