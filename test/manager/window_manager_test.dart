@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/app_ports.dart';
-import 'package:fl_clash/common/feature.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/window_manager.dart';
 import 'package:fl_clash/models/config.dart';
@@ -48,13 +47,13 @@ class _RecordingWindowPort implements WindowPort {
   final blurRequests = <_BlurRequest>[];
 
   @override
-  Future<bool> setBlur({
+  Future<double?> setBlur({
     required bool enabled,
     required Brightness brightness,
     required Color tint,
   }) async {
     blurRequests.add((enabled: enabled, brightness: brightness, tint: tint));
-    return enabled && supportsBlur;
+    return enabled && supportsBlur ? 0 : null;
   }
 
   @override
@@ -249,21 +248,22 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('sidebar blur starts off and start-up still asks for no effect', (
+    tester,
+  ) async {
+    await pumpWindowManager(tester);
+    await tester.pumpAndSettle();
+
+    expect(container.read(themeSettingProvider).sidebarBlur, isFalse);
+    expect(window.blurRequests.single.enabled, isFalse);
+    expect(container.read(windowBlurProvider), isNull);
+  });
+
   group('sidebar blur', () {
-    setUp(() => feature = const Feature(sidebarBlur: true));
-
-    tearDown(() => feature = const Feature());
-
-    testWidgets('a disabled feature drops the backdrop despite the setting', (
-      tester,
-    ) async {
-      feature = const Feature();
-      await pumpWindowManager(tester);
-      await tester.pumpAndSettle();
-
-      expect(container.read(themeSettingProvider).sidebarBlur, isTrue);
-      expect(window.blurRequests.single.enabled, isFalse);
-      expect(container.read(windowBlurProvider), isFalse);
+    setUp(() {
+      container
+          .read(themeSettingProvider.notifier)
+          .update((state) => state.copyWith(sidebarBlur: true));
     });
 
     testWidgets('is applied on start and mirrored into the provider', (
@@ -275,7 +275,7 @@ void main() {
       expect(window.blurRequests, hasLength(1));
       expect(window.blurRequests.single.enabled, isTrue);
       expect(window.blurRequests.single.brightness, Brightness.dark);
-      expect(container.read(windowBlurProvider), isTrue);
+      expect(container.read(windowBlurProvider), 0);
     });
 
     testWidgets('a platform without a backdrop leaves the provider off', (
@@ -285,7 +285,7 @@ void main() {
       await pumpWindowManager(tester);
       await tester.pumpAndSettle();
 
-      expect(container.read(windowBlurProvider), isFalse);
+      expect(container.read(windowBlurProvider), isNull);
     });
 
     testWidgets('turning the setting off drops the backdrop', (tester) async {
@@ -298,7 +298,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(window.blurRequests.last.enabled, isFalse);
-      expect(container.read(windowBlurProvider), isFalse);
+      expect(container.read(windowBlurProvider), isNull);
     });
 
     testWidgets('a theme mode change reapplies the effect', (tester) async {
@@ -312,7 +312,7 @@ void main() {
 
       expect(window.blurRequests.last.enabled, isTrue);
       expect(window.blurRequests.last.brightness, Brightness.light);
-      expect(container.read(windowBlurProvider), isTrue);
+      expect(container.read(windowBlurProvider), 0);
     });
   });
 

@@ -1630,20 +1630,25 @@ class AppLocalizations {
     );
   }
 
-  /// `Sidebar blur`
-  String get sidebarBlur {
+  /// `Sidebar`
+  String get sidebar {
+    return Intl.message('Sidebar', name: 'sidebar', desc: '', args: []);
+  }
+
+  /// `Background blur`
+  String get backgroundBlur {
     return Intl.message(
-      'Sidebar blur',
-      name: 'sidebarBlur',
+      'Background blur',
+      name: 'backgroundBlur',
       desc: '',
       args: [],
     );
   }
 
-  /// `Show the blurred desktop behind the window through the sidebar`
+  /// `Background blur lets the desktop behind the window show through the sidebar.`
   String get sidebarBlurDesc {
     return Intl.message(
-      'Show the blurred desktop behind the window through the sidebar',
+      'Background blur lets the desktop behind the window show through the sidebar.',
       name: 'sidebarBlurDesc',
       desc: '',
       args: [],

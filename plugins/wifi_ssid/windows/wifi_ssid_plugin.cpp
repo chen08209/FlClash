@@ -5,6 +5,9 @@
 
 #include <flutter/method_channel.h>
 #include <flutter/standard_method_codec.h>
+#include <winrt/Windows.Devices.WiFi.h>
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.Security.Authorization.AppCapabilityAccess.h>
 
 #include <memory>
 #include <string>
@@ -14,7 +17,18 @@ namespace wifi_ssid {
 
 namespace {
 
+using winrt::Windows::Devices::WiFi::WiFiAdapter;
+using winrt::Windows::Security::Authorization::AppCapabilityAccess::
+    AppCapability;
+using winrt::Windows::Security::Authorization::AppCapabilityAccess::
+    AppCapabilityAccessStatus;
+
 constexpr int kPermissionGranted = 0;
+constexpr int kPermissionDenied = 1;
+constexpr int kPermissionPermanentlyDenied = 2;
+// From Windows 11 24H2 the WLAN API withholds the SSID without location consent.
+constexpr DWORD kLocationGatedBuild = 26100;
+constexpr UINT kPermissionRequestDone = WM_APP + 0x5753;
 constexpr char kChannelName[] = "wifi_ssid";
 constexpr char kGetSsidMethod[] = "getSsid";
 constexpr char kCheckPermissionMethod[] = "checkPermission";
@@ -85,6 +99,35 @@ using ScopedInterfaceList =
 using ScopedConnectionAttributes =
     std::unique_ptr<WLAN_CONNECTION_ATTRIBUTES, WlanMemoryDeleter>;
 
+bool IsLocationGated() {
+  using RtlGetVersionFn = LONG(WINAPI *)(PRTL_OSVERSIONINFOW);
+  const auto rtl_get_version = reinterpret_cast<RtlGetVersionFn>(
+      GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "RtlGetVersion"));
+  RTL_OSVERSIONINFOW version{sizeof(version)};
+  return rtl_get_version != nullptr && rtl_get_version(&version) == 0 &&
+         version.dwBuildNumber >= kLocationGatedBuild;
+}
+
+int LocationPermission() {
+  static const bool gated = IsLocationGated();
+  if (!gated) {
+    return kPermissionGranted;
+  }
+  try {
+    switch (AppCapability::Create(L"wiFiControl").CheckAccess()) {
+      case AppCapabilityAccessStatus::UserPromptRequired:
+        return kPermissionDenied;
+      case AppCapabilityAccessStatus::DeniedByUser:
+      case AppCapabilityAccessStatus::DeniedBySystem:
+        return kPermissionPermanentlyDenied;
+      default:
+        return kPermissionGranted;
+    }
+  } catch (const winrt::hresult_error &) {
+    return kPermissionGranted;
+  }
+}
+
 }  // namespace
 
 void WifiSsidPlugin::RegisterWithRegistrar(
@@ -93,7 +136,7 @@ void WifiSsidPlugin::RegisterWithRegistrar(
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           registrar->messenger(), kChannelName,
           &flutter::StandardMethodCodec::GetInstance());
-  auto plugin = std::make_unique<WifiSsidPlugin>();
+  auto plugin = std::make_unique<WifiSsidPlugin>(registrar);
 
   channel->SetMethodCallHandler(
       [plugin_pointer = plugin.get()](const auto &call, auto result) {
@@ -102,21 +145,68 @@ void WifiSsidPlugin::RegisterWithRegistrar(
   registrar->AddPlugin(std::move(plugin));
 }
 
-WifiSsidPlugin::WifiSsidPlugin() = default;
+WifiSsidPlugin::WifiSsidPlugin(flutter::PluginRegistrarWindows *registrar)
+    : registrar_(registrar) {
+  window_proc_id_ = registrar_->RegisterTopLevelWindowProcDelegate(
+      [this](HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
+        return HandleWindowProc(window, message, wparam, lparam);
+      });
+}
 
-WifiSsidPlugin::~WifiSsidPlugin() = default;
+WifiSsidPlugin::~WifiSsidPlugin() {
+  registrar_->UnregisterTopLevelWindowProcDelegate(window_proc_id_);
+}
 
 void WifiSsidPlugin::HandleMethodCall(
     const flutter::MethodCall<flutter::EncodableValue> &method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
   if (method_call.method_name() == kGetSsidMethod) {
     GetSsid(std::move(result));
-  } else if (method_call.method_name() == kCheckPermissionMethod ||
-             method_call.method_name() == kRequestPermissionMethod) {
-    result->Success(flutter::EncodableValue(kPermissionGranted));
+  } else if (method_call.method_name() == kCheckPermissionMethod) {
+    result->Success(flutter::EncodableValue(LocationPermission()));
+  } else if (method_call.method_name() == kRequestPermissionMethod) {
+    RequestPermission(std::move(result));
   } else {
     result->NotImplemented();
   }
+}
+
+// RequestAccessAsync completes once the user answers, off the platform thread.
+void WifiSsidPlugin::RequestPermission(
+    std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
+  const int permission = LocationPermission();
+  if (permission != kPermissionDenied || pending_permission_request_) {
+    result->Success(flutter::EncodableValue(permission));
+    return;
+  }
+  HWND window = GetAncestor(registrar_->GetView()->GetNativeWindow(), GA_ROOT);
+  pending_permission_request_ = std::move(result);
+  if (window == nullptr) {
+    FinishPermissionRequest();
+    return;
+  }
+  try {
+    WiFiAdapter::RequestAccessAsync().Completed([window](auto &&, auto &&) {
+      PostMessageW(window, kPermissionRequestDone, 0, 0);
+    });
+  } catch (const winrt::hresult_error &) {
+    FinishPermissionRequest();
+  }
+}
+
+void WifiSsidPlugin::FinishPermissionRequest() {
+  if (auto result = std::move(pending_permission_request_)) {
+    result->Success(flutter::EncodableValue(LocationPermission()));
+  }
+}
+
+std::optional<LRESULT> WifiSsidPlugin::HandleWindowProc(HWND, UINT message,
+                                                        WPARAM, LPARAM) {
+  if (message != kPermissionRequestDone) {
+    return std::nullopt;
+  }
+  FinishPermissionRequest();
+  return 0;
 }
 
 void WifiSsidPlugin::GetSsid(

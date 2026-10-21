@@ -72,6 +72,11 @@ sudo apt-get install libayatana-appindicator3-1   # Debian and Ubuntu
 sudo dnf install libayatana-appindicator-gtk3     # Fedora
 ```
 
+**Unattended desktop**
+
+FlClash starts the core only after the disclaimer is accepted. Where nobody can click it, such as a container, set
+`FLCLASH_ACCEPT_DISCLAIMER=1` in the app's environment to accept it on first launch.
+
 ## Usage
 
 **Import a profile from a link.** Opening a link in this form imports the subscription into FlClash. The `clashmeta://`
