@@ -127,6 +127,40 @@ class Dialogs {
     );
   }
 
+  Future<void> showQrCode({
+    required String title,
+    required String data,
+    String? message,
+  }) {
+    return showCommonDialog<void>(
+      child: Builder(
+        builder: (context) => CommonDialog(
+          title: title,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(context.appLocalizations.close),
+            ),
+          ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 16,
+            children: [
+              if (QrCodeView.fits(data)) ...[
+                QrCodeView(data: data),
+                if (message != null) Text(message, textAlign: TextAlign.center),
+              ] else
+                Text(
+                  context.appLocalizations.qrcodeTooLongTip,
+                  textAlign: TextAlign.center,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<String?> showUrlInput({required String title, String value = ''}) {
     final appLocalizations = currentAppLocalizations;
     return showCommonDialog<String>(

@@ -43,12 +43,17 @@ class ClashProvidersAction extends _$ClashProvidersAction {
     if (previous != null && previous.fileName != next.fileName) {
       unawaited(_clearCache(previous));
     }
-    unawaited(
-      applyIfReferenced(ProviderKind.rule, {
-        next.label,
-        ?previous?.label,
-      }, force: content != null || download),
-    );
+    final reread = content != null || download;
+    if (reread && next == before) {
+      unawaited(_reloadIfReferenced(next));
+    } else {
+      unawaited(
+        applyIfReferenced(ProviderKind.rule, {
+          next.label,
+          ?previous?.label,
+        }, force: reread),
+      );
+    }
     return next;
   }
 
@@ -228,14 +233,46 @@ class ClashProvidersAction extends _$ClashProvidersAction {
     Future<bool> Function(int profileId) isReferenced, {
     bool force = false,
   }) async {
-    final profile = ref.read(currentProfileProvider);
-    if (profile == null ||
-        profile.type != ProfileType.custom ||
-        !await isReferenced(profile.id)) {
+    if (!await _currentUses(isReferenced)) {
       return;
     }
     ref
         .read(setupActionProvider.notifier)
         .applyProfileDebounce(silence: true, force: force);
+  }
+
+  /// A reapply would close every connection and reset the route.
+  Future<void> _reloadIfReferenced(ClashProvider provider) async {
+    if (!await _currentUses(
+      (profileId) =>
+          _isReferenced(profileId, ProviderKind.rule, {provider.label}),
+    )) {
+      return;
+    }
+    try {
+      final message = await _core.updateExternalProvider(
+        providerName: provider.label,
+      );
+      if (message.isEmpty) {
+        return;
+      }
+    } catch (error) {
+      commonPrint.log(
+        'reload ${provider.label} failed: $error',
+        logLevel: coreFailureLogLevel(error),
+      );
+    }
+    ref
+        .read(setupActionProvider.notifier)
+        .applyProfileDebounce(silence: true, force: true);
+  }
+
+  Future<bool> _currentUses(
+    Future<bool> Function(int profileId) isReferenced,
+  ) async {
+    final profile = ref.read(currentProfileProvider);
+    return profile != null &&
+        profile.type == ProfileType.custom &&
+        await isReferenced(profile.id);
   }
 }

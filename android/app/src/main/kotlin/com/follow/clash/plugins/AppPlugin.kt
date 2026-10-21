@@ -185,6 +185,10 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 requestInstalledAppsPermission { granted -> result.success(granted) }
             }
 
+            "requestLocalNetworkPermission" -> {
+                requestLocalNetworkPermission { granted -> result.success(granted) }
+            }
+
             "getPackageIcon" -> {
                 handleGetPackageIcon(call, result)
             }
