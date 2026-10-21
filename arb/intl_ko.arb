@@ -939,5 +939,8 @@
   "customImportDroppedSubRules": "{count, plural, other{사용자 지정 프로필은 하위 규칙을 지원하지 않아 SUB-RULE 규칙 {label}개를 제외했습니다}}",
   "autoInclude": "자동 포함",
   "allReferencedProxies": "참조된 모든 프록시",
-  "allReferencedProxyProviders": "참조된 모든 프록시 공급자"
+  "allReferencedProxyProviders": "참조된 모든 프록시 공급자",
+  "clearDnsCache": "DNS 캐시 지우기",
+  "dnsCacheCleared": "DNS 캐시를 지웠습니다",
+  "clearDnsCacheFailed": "DNS 캐시를 지우지 못했습니다"
 }

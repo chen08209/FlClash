@@ -431,14 +431,19 @@ force or is being asked again. The full design is `docs/plans/probe-route-consis
 parts.
 
 - The Core is the source of truth for the route. `core/route.go` keeps a structural epoch (advanced by a config
-  apply, a mode or IPv6 switch, any proxy provider whose version changed, and any rule set that loaded new content,
-  whether the user or its own interval updated it) and a `picks` map from each Selector, URLTest and Fallback group
+  apply, a mode or IPv6 switch, any proxy provider whose version changed, any rule set that loaded new content,
+  whether the user or its own interval updated it, and a start: the listeners coming up and, on Android, the TUN
+  after them) and a `picks` map from each Selector, URLTest and Fallback group
   to what it resolves to right now, versioned on every change. `handleChangeProxy` re-reads the picks under
   `selectMu` and answers `ChangeProxyResult{changed}`, so the connection reset only runs when the pick moved. A
   health check moving a URLTest pick has no mihomo hook, so the picks are polled every second while the host watches
   (`watchRoute(true)`) and the listeners are up; the same poll notices a provider or rule set that updated in the
   background. Every probe answer carries the counters it started under; `routeChanged` publishes the state whenever
-  it differs from the last read.
+  it differs from the last read. A start moves the epoch because `isStartProvider` flips before the Core is told,
+  so the probes sent at the tap leave ahead of the TUN routes and over DNS connections `handleStartListener` resets,
+  and an Android start acknowledges before the VPN exists. Outbound IP lookups are cancelled by the first lookup
+  under a newer epoch, which frees their probe slots; lookups under one epoch are left alone, since the routed
+  target while stopped and a pinned `DIRECT` send the same request.
 - `routeTrackerProvider` in `lib/providers/route_state.dart` merges that with the host's side: `proxied` (running and
   not suspended), a host epoch that a connectivity event moves, and `synced`, which is false until `watchRoute` has
   returned a snapshot and again after a Core disconnect. Nothing is fresh while unsynced, so a cache never judges

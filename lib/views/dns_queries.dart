@@ -1,7 +1,9 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
@@ -95,6 +97,28 @@ class _DnsQueriesViewState extends ConsumerState<DnsQueriesView>
     }, duration: renderThrottleDuration);
   }
 
+  Future<void> _clearDnsCache() async {
+    final appLocalizations = context.appLocalizations;
+    var cleared = false;
+    try {
+      cleared = await ref.read(coreHandlerProvider).clearDnsCache();
+    } catch (error) {
+      commonPrint.log(
+        'clearDnsCache error: $error',
+        logLevel: coreFailureLogLevel(error),
+      );
+    }
+    if (!mounted) {
+      return;
+    }
+    context.showNotifier(
+      cleared
+          ? appLocalizations.dnsCacheCleared
+          : appLocalizations.clearDnsCacheFailed,
+      level: cleared ? MessageLevel.success : MessageLevel.error,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
@@ -102,6 +126,13 @@ class _DnsQueriesViewState extends ConsumerState<DnsQueriesView>
       title: PageLabel.dns.label,
       searchState: AppBarSearchState(onSearch: _listController.search),
       onKeywordsUpdate: _listController.updateKeywords,
+      iconActions: [
+        IconButtonData(
+          glyph: AppGlyphs.broom,
+          tooltip: appLocalizations.clearDnsCache,
+          onPressed: _clearDnsCache,
+        ),
+      ],
       body: ValueListenableBuilder<DnsQueriesState>(
         valueListenable: _listController,
         builder: (context, state, _) {

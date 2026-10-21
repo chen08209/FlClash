@@ -7836,6 +7836,36 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Clear DNS cache`
+  String get clearDnsCache {
+    return Intl.message(
+      'Clear DNS cache',
+      name: 'clearDnsCache',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS cache cleared`
+  String get dnsCacheCleared {
+    return Intl.message(
+      'DNS cache cleared',
+      name: 'dnsCacheCleared',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Failed to clear DNS cache`
+  String get clearDnsCacheFailed {
+    return Intl.message(
+      'Failed to clear DNS cache',
+      name: 'clearDnsCacheFailed',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

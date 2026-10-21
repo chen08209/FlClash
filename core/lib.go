@@ -275,6 +275,7 @@ func StartTun(callbacks TunCallbacks, fd int, stack, address, dns, options strin
 		handleStartListener()
 	} else {
 		handleResetConnections()
+		bumpRouteEpoch()
 	}
 	return true
 }

@@ -131,6 +131,12 @@ class ApplicationState extends ConsumerState<Application> {
     commonPrint.log('connectivityChanged ${results.toString()}');
     unawaited(systemDnsCoordinator?.resync() ?? Future.value());
     unawaited(ref.read(systemActionProvider.notifier).updateLocalIp());
+    // Android's NetworkObserveModule tells the Core about a new network itself.
+    if (system.isDesktop) {
+      unawaited(
+        ref.read(coreActionProvider.notifier).clearDnsCacheOnNetworkChange(),
+      );
+    }
     final hasVpn = results.contains(ConnectivityResult.vpn);
     if (_preHasVpn == hasVpn) {
       ref.read(routeTrackerProvider.notifier).bumpHostEpoch();
