@@ -1,6 +1,5 @@
-package com.follow.clash.service.modules
+package com.follow.clash.service
 
-import android.app.Service
 import android.net.ConnectivityManager
 import android.net.LinkProperties
 import android.net.Network
@@ -11,8 +10,8 @@ import android.net.NetworkRequest
 import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
-import android.os.Looper
 import androidx.core.content.getSystemService
+import com.follow.clash.common.GlobalState
 import com.follow.clash.core.Core
 import java.net.Inet4Address
 import java.net.Inet6Address
@@ -27,15 +26,20 @@ private data class NetworkInfo(
         get() = if (losingUntilMillis > System.currentTimeMillis()) 10 else 0
 }
 
-internal class NetworkObserveModule(private val service: Service) : ServiceModule {
+// Outlives every service run: the Core also tests delays and updates providers
+// while stopped, and a `system` nameserver has no upstream until DNS arrives here.
+object NetworkObserver {
 
     private val networkInfos = ConcurrentHashMap<Network, NetworkInfo>()
     private val connectivity by lazy {
-        service.getSystemService<ConnectivityManager>()
+        GlobalState.application.getSystemService<ConnectivityManager>()
     }
-    private val handler = Handler(networkObserveLooper)
+    private val handler by lazy {
+        Handler(HandlerThread("NetworkObserve").apply { start() }.looper)
+    }
     private var currentDnsList = listOf<String>()
     private var currentNetwork: Network? = null
+    private var started = false
 
     private val request = NetworkRequest.Builder().apply {
         addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
@@ -85,9 +89,12 @@ internal class NetworkObserveModule(private val service: Service) : ServiceModul
         handler.postDelayed(updateDnsTask, DNS_UPDATE_DELAY_MILLIS)
     }
 
-    override fun start() {
-        updateDns()
-        connectivity?.registerNetworkCallback(request, callback)
+    @Synchronized
+    fun start() {
+        if (started) return
+        runCatching { requireNotNull(connectivity).registerNetworkCallback(request, callback) }
+            .onSuccess { started = true }
+            .onFailure { error -> GlobalState.log("Unable to observe networks: $error") }
     }
 
     private fun networkPriority(entry: Map.Entry<Network, NetworkInfo>): Int {
@@ -130,25 +137,10 @@ internal class NetworkObserveModule(private val service: Service) : ServiceModul
         }
         currentNetwork = network
     }
-
-    override fun stop() {
-        handler.removeCallbacksAndMessages(null)
-        try {
-            connectivity?.unregisterNetworkCallback(callback)
-        } finally {
-            networkInfos.clear()
-            updateDns()
-            currentNetwork = null
-        }
-    }
 }
 
 private const val DNS_PORT = 53
 private const val DNS_UPDATE_DELAY_MILLIS = 200L
-
-private val networkObserveLooper: Looper by lazy {
-    HandlerThread("NetworkObserve").apply { start() }.looper
-}
 
 private fun InetAddress.asSocketAddressText(port: Int): String = when (this) {
     is Inet6Address -> "[$hostAddress]:$port"
