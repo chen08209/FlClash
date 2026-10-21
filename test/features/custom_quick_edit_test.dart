@@ -153,7 +153,7 @@ void main() {
       final popped = await editor.onPop!(
         context,
         editor.title,
-        '- DOMAIN,b.com,DIRECT\n${editor.content}',
+        EditorContent.text('- DOMAIN,b.com,DIRECT\n${editor.content}'),
       );
 
       expect(popped, isTrue);
@@ -173,7 +173,9 @@ void main() {
       final popped = await editor.onPop!(
         context,
         editor.title,
-        '- SUB-RULE,(NETWORK,tcp),streaming\n${editor.content}',
+        EditorContent.text(
+          '- SUB-RULE,(NETWORK,tcp),streaming\n${editor.content}',
+        ),
       );
 
       expect(popped, isTrue);
@@ -192,8 +194,9 @@ void main() {
       final popped = editor.onPop!(
         context,
         editor.title,
-        '- MATCH,DIRECT\n- DST-PORT,http,DIRECT\n',
+        const EditorContent.text('- MATCH,DIRECT\n- DST-PORT,http,DIRECT\n'),
       );
+      await tester.pump();
       await tester.pump();
 
       expect(
@@ -341,7 +344,7 @@ void main() {
       final popped = await editor.onPop!(
         context,
         editor.title,
-        'ss://home#Home\nvless://new#New',
+        const EditorContent.text('ss://home#Home\nvless://new#New'),
       );
 
       expect(popped, isTrue);
@@ -372,7 +375,11 @@ void main() {
       final (:editor, :context) = await _openListEditor(tester);
       final prompt = currentAppLocalizations.proxiesReplacedTip('Home', 'Away');
 
-      var popped = editor.onPop!(context, editor.title, 'ss://home#Away');
+      var popped = editor.onPop!(
+        context,
+        editor.title,
+        const EditorContent.text('ss://home#Away'),
+      );
       await tester.pumpAndSettle();
       expect(find.text(prompt), findsOneWidget);
       await tester.tap(find.text(currentAppLocalizations.cancel));
@@ -380,7 +387,11 @@ void main() {
       expect(await popped, isFalse);
       expect(proxies.replaced, isEmpty);
 
-      popped = editor.onPop!(context, editor.title, 'ss://home#Away');
+      popped = editor.onPop!(
+        context,
+        editor.title,
+        const EditorContent.text('ss://home#Away'),
+      );
       await tester.pumpAndSettle();
       await tester.tap(find.text(currentAppLocalizations.confirm));
       await tester.pumpAndSettle();
@@ -398,7 +409,11 @@ void main() {
       final proxies = await pumpProxies(tester, const []);
       final (:editor, :context) = await _openListEditor(tester);
 
-      final popped = editor.onPop!(context, editor.title, '\nhello');
+      final popped = editor.onPop!(
+        context,
+        editor.title,
+        const EditorContent.text('\nhello'),
+      );
       await tester.pump();
       await tester.pump();
 

@@ -1,4 +1,4 @@
-use crate::editor::{self, Buffer};
+use crate::editor::{self, Buffer, OpenError};
 use flutter_rust_bridge::frb;
 
 #[derive(Clone, Debug)]
@@ -15,9 +15,55 @@ pub struct GuideBlock {
     pub leading_spaces: i32,
 }
 
+#[derive(Debug)]
+pub enum EditorOpenErrorKind {
+    NotFound,
+    NotUtf8,
+    Unreadable,
+}
+
+#[derive(Debug)]
+pub struct EditorOpenError {
+    pub kind: EditorOpenErrorKind,
+    pub message: String,
+}
+
+impl From<OpenError> for EditorOpenError {
+    fn from(error: OpenError) -> Self {
+        let (kind, message) = match error {
+            OpenError::NotFound(message) => (EditorOpenErrorKind::NotFound, message),
+            OpenError::NotUtf8(message) => (EditorOpenErrorKind::NotUtf8, message),
+            OpenError::Unreadable(message) => (EditorOpenErrorKind::Unreadable, message),
+        };
+        Self { kind, message }
+    }
+}
+
 #[frb(opaque)]
 pub struct RopeBridge {
     buffer: Buffer,
+}
+
+#[frb(opaque)]
+pub struct RopeUpload {
+    bytes: Vec<u8>,
+}
+
+impl RopeUpload {
+    #[frb(sync)]
+    pub fn new(capacity: usize) -> Self {
+        Self {
+            bytes: Vec::with_capacity(capacity),
+        }
+    }
+
+    pub fn push(&mut self, chunk: Vec<u8>) {
+        self.bytes.extend_from_slice(&chunk);
+    }
+
+    pub fn finish(&mut self) -> Result<RopeBridge, EditorOpenError> {
+        RopeBridge::from_utf8(std::mem::take(&mut self.bytes))
+    }
 }
 
 impl RopeBridge {
@@ -28,8 +74,39 @@ impl RopeBridge {
         }
     }
 
-    pub fn create_in_background(initial_text: String) -> Self {
-        Self::create(initial_text)
+    pub fn open_file(path: String) -> Result<Self, EditorOpenError> {
+        Ok(Self {
+            buffer: Buffer::open_file(&path)?,
+        })
+    }
+
+    pub fn from_utf8(bytes: Vec<u8>) -> Result<Self, EditorOpenError> {
+        Ok(Self {
+            buffer: Buffer::from_utf8(bytes)?,
+        })
+    }
+
+    #[frb(sync)]
+    pub fn snapshot(&self) -> Self {
+        Self {
+            buffer: self.buffer.copy(),
+        }
+    }
+
+    pub fn utf8_bytes(&self) -> Vec<u8> {
+        self.buffer.utf8_bytes()
+    }
+
+    #[frb(sync)]
+    pub fn same_text(
+        &self,
+        original: &RopeBridge,
+        splice_start: usize,
+        splice_len: usize,
+        splice_text: String,
+    ) -> bool {
+        self.buffer
+            .same_text(&original.buffer, splice_start, splice_len, &splice_text)
     }
 
     #[frb(sync)]

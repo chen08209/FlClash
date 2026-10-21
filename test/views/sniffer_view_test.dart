@@ -193,7 +193,7 @@ void main() {
     final popped = await editor.onPop!(
       context,
       currentAppLocalizations.sniffer,
-      'sniff:\n  http:\n    ports: [80]\n',
+      const EditorContent.text('sniff:\n  http:\n    ports: [80]\n'),
     );
     expect(popped, isTrue);
     expect(config().snifferOverrideKeys, {SnifferOverrideKey.sniffHttp});

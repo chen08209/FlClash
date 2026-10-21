@@ -559,7 +559,7 @@ void main() {
       finder.isRegex = true;
       finder.find(r'\d');
       finder.replaceInputController.text = '9';
-      finder.replaceAll();
+      await finder.replaceAll();
       await tester.pump(const Duration(milliseconds: 300));
       await settle(tester);
       expect(visibleText(controller), 'z: 9\na:\nc: 9');
@@ -600,7 +600,7 @@ void main() {
 
     finder.find('vmess');
     finder.replaceInputController.text = 'trojan';
-    finder.replaceAll();
+    await finder.replaceAll();
     await settle(tester);
     expect(controller.getFoldStartForLine(line + 2), line);
 
@@ -608,7 +608,7 @@ void main() {
     finder.find(r'^  - name: node [14]\n(.*\n){5}');
     expect(finder.matchCount, 2);
     finder.replaceInputController.text = '';
-    finder.replaceAll();
+    await finder.replaceAll();
     await tester.pump(const Duration(milliseconds: 300));
     await settle(tester);
     expect(controller.lineCount, 1 + 4 * _blockLines);

@@ -189,15 +189,20 @@ void main() {
     fail('$name never offered the edit entry');
   }
 
+  String? shownText(WidgetTester tester) =>
+      tester.state<EditorViewState>(find.byType(EditorView)).controller?.text;
+
+  Finder editorShowing(bool Function(String text) matches) =>
+      find.byElementPredicate((element) {
+        final state = element is StatefulElement ? element.state : null;
+        final text = state is EditorViewState ? state.controller?.text : null;
+        return text != null && matches(text);
+      });
+
   Future<EditorPage> openEditor(WidgetTester tester, String name) async {
     await openMenuWithEdit(tester, name);
     await tester.tap(find.text(currentAppLocalizations.edit));
-    await pumpUntil(
-      tester,
-      find.byWidgetPredicate(
-        (widget) => widget is EditorView && widget.content?.isNotEmpty == true,
-      ),
-    );
+    await pumpUntil(tester, editorShowing((text) => text.isNotEmpty));
     return tester.widget<EditorPage>(find.byType(EditorPage));
   }
 
@@ -555,15 +560,12 @@ void main() {
     await pump(tester, container);
 
     final editor = await openEditor(tester, 'editable');
-    expect(
-      tester.widget<EditorView>(find.byType(EditorView)).content,
-      'payload:\n  - old\n',
-    );
+    expect(shownText(tester), 'payload:\n  - old\n');
 
     editor.onSave!(
       tester.element(find.byType(EditorPage)),
       'editable',
-      'payload:\n  - new\n',
+      const EditorContent.text('payload:\n  - new\n'),
     );
     await pumpUntil(tester, find.byType(EditorPage), found: false);
 
@@ -589,9 +591,7 @@ void main() {
     await pump(tester, container);
     await openMenuWithEdit(tester, 'tapped');
     await closeMenu(tester);
-    final loaded = find.byWidgetPredicate(
-      (widget) => widget is EditorView && widget.content == 'payload:\n',
-    );
+    final loaded = editorShowing((text) => text == 'payload:\n');
 
     await tester.tap(find.text('without-file'));
     await tester.pumpAndSettle();
@@ -630,7 +630,7 @@ void main() {
     editor.onSave!(
       tester.element(find.byType(EditorPage)),
       'rejected',
-      'payload: broken\n',
+      const EditorContent.text('payload: broken\n'),
     );
     await pumpUntil(tester, find.text('invalid payload'));
 
@@ -652,9 +652,11 @@ void main() {
 
     final editor = await openEditor(tester, 'leaving');
     final context = tester.element(find.byType(EditorPage));
-    expect(await editor.onPop!(context, 'leaving', 'payload:\n'), isTrue);
-
-    final popped = editor.onPop!(context, 'leaving', 'payload: changed\n');
+    final popped = editor.onPop!(
+      context,
+      'leaving',
+      const EditorContent.text('payload: changed\n'),
+    );
     await pumpTransitions(tester);
     expect(find.text(currentAppLocalizations.saveChanges), findsOneWidget);
     await tester.tap(find.text(currentAppLocalizations.cancel));
