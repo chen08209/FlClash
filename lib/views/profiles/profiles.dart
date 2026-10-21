@@ -458,6 +458,18 @@ class ProfileItem extends ConsumerWidget {
                   _handleCopyLink(context);
                 },
               ),
+            if (isUrl)
+              CommonPopupMenuItem(
+                glyph: AppGlyphs.qrCode,
+                label: appLocalizations.qrcode,
+                onPressed: () {
+                  dialogs.showQrCode(
+                    title: profile.realLabel,
+                    data: profile.url,
+                    message: appLocalizations.shareQrcodeTip,
+                  );
+                },
+              ),
             CommonPopupMenuItem(
               glyph: AppGlyphs.export,
               label: appLocalizations.exportFile,

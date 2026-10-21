@@ -59,28 +59,49 @@ class _MapEditViewState extends EditViewState<MapEditView, _Entry> {
 
   @override
   Future<List<_Entry>?> showEntryEditor(_Entry? entry) {
-    return showFormSheet<List<_Entry>>(
-      context: context,
-      builder: (_) => _MapEntryForm(
-        listTitle: widget.title,
-        entry: entry,
-        existingKeys: entries.map(idOf).toSet(),
-        keyMaxLength: widget.keyMaxLength,
-        valueMaxLength: widget.valueMaxLength,
-      ),
+    return showMapEntryForm(
+      context,
+      listTitle: widget.title,
+      entry: entry,
+      existingKeys: entries.map(idOf).toSet(),
+      keyMaxLength: widget.keyMaxLength,
+      valueMaxLength: widget.valueMaxLength,
     );
   }
 }
 
+/// Adds when [entry] is null, and then a batch may add several entries.
+Future<List<MapEntry<String, String>>?> showMapEntryForm(
+  BuildContext context, {
+  required String listTitle,
+  MapEntry<String, String>? entry,
+  required Set<String> existingKeys,
+  int? keyMaxLength,
+  int? valueMaxLength,
+  bool ignoreKeyCase = false,
+}) {
+  return showFormSheet<List<_Entry>>(
+    context: context,
+    builder: (_) => _MapEntryForm(
+      listTitle: listTitle,
+      entry: entry,
+      existingKeys: existingKeys,
+      keyMaxLength: keyMaxLength,
+      valueMaxLength: valueMaxLength,
+      ignoreKeyCase: ignoreKeyCase,
+    ),
+  );
+}
+
 enum _MapEntryField { key, value }
 
-/// Adds when [entry] is null, and then a batch may add several entries.
 class _MapEntryForm extends StatefulWidget {
   final String listTitle;
   final _Entry? entry;
   final Set<String> existingKeys;
   final int? keyMaxLength;
   final int? valueMaxLength;
+  final bool ignoreKeyCase;
 
   const _MapEntryForm({
     required this.listTitle,
@@ -88,6 +109,7 @@ class _MapEntryForm extends StatefulWidget {
     required this.existingKeys,
     required this.keyMaxLength,
     required this.valueMaxLength,
+    required this.ignoreKeyCase,
   });
 
   @override
@@ -116,6 +138,7 @@ class _MapEntryFormState extends State<_MapEntryForm> {
         existingKeys: widget.existingKeys,
         keyMaxLength: widget.keyMaxLength,
         valueMaxLength: widget.valueMaxLength,
+        ignoreKeyCase: widget.ignoreKeyCase,
       ),
       issueMessage: _batchIssueMessage,
     );
@@ -154,6 +177,15 @@ class _MapEntryFormState extends State<_MapEntryForm> {
     };
   }
 
+  bool _isTakenKey(String key) {
+    String fold(String value) =>
+        widget.ignoreKeyCase ? value.toLowerCase() : value;
+    final ownKey = widget.entry?.key;
+    return widget.existingKeys.any(
+      (existing) => existing != ownKey && fold(existing) == fold(key),
+    );
+  }
+
   ({_MapEntryField field, String message})? _issue() {
     final appLocalizations = context.appLocalizations;
     final key = _keyController.text.trim();
@@ -163,7 +195,7 @@ class _MapEntryFormState extends State<_MapEntryForm> {
         message: appLocalizations.emptyTip(_keyLabel),
       );
     }
-    if (key != widget.entry?.key && widget.existingKeys.contains(key)) {
+    if (_isTakenKey(key)) {
       return (
         field: _MapEntryField.key,
         message: appLocalizations.existsTip(_keyLabel),

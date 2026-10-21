@@ -52,8 +52,23 @@ Widget _sectionRow(
   return ListItem(
     leading: GlyphIcon(glyph),
     title: Text(title),
-    subtitle: state,
-    trailing: const GlyphIcon(AppGlyphs.chevronForward),
+    trailing: Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 4,
+      children: [
+        Flexible(
+          child: DefaultTextStyle.merge(
+            style: context.listTitleStyle.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            child: state,
+          ),
+        ),
+        const GlyphIcon(AppGlyphs.chevronForward),
+      ],
+    ),
     onTap: () => _push(context, view),
   );
 }

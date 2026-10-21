@@ -1598,6 +1598,201 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('an http proxy edits the headers it sends', (tester) async {
+    _setViewport(tester);
+    final proxies = _RecordingCustomProxies(const [
+      CustomProxy(
+        id: 1,
+        definition: {
+          'name': 'Example HTTP',
+          'type': 'http',
+          'server': 'proxy.example.com',
+          'port': 443,
+          'headers': {'Host': 'origin.example.com:443'},
+        },
+      ),
+    ]);
+    final core = _MockCore();
+    registerFallbackValue(<Map<String, dynamic>>[]);
+    when(() => core.validateProxies(any())).thenAnswer((_) async => ['']);
+    final container = ProviderContainer(
+      overrides: [
+        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        customGroupNamesProvider.overrideWith(
+          (_) => Stream.value(const <String>{}),
+        ),
+        customProxiesProvider.overrideWith(() => proxies),
+        clashProvidersActionProvider.overrideWith(
+          _RecordingClashProvidersAction.new,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container
+        .read(viewSizeProvider.notifier)
+        .update((_) => const Size(500, 1000));
+    Finder row(String title) => find.widgetWithText(FormRow, title);
+    Finder fieldIn(String title) =>
+        find.descendant(of: row(title), matching: find.byType(TextFormField));
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: CustomProxiesView()),
+      ),
+    );
+    await tester.pump();
+    final l10n = AppLocalizations.current;
+    await tester.tap(find.text('Example HTTP'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      row(l10n.requestHeaders),
+      200,
+      scrollable: find
+          .ancestor(of: row(l10n.port), matching: find.byType(Scrollable))
+          .first,
+    );
+    await Scrollable.ensureVisible(
+      tester.element(row(l10n.requestHeaders)),
+      alignment: 0.5,
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: row(l10n.requestHeaders),
+        matching: find.text(l10n.itemsCount(1)),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(row(l10n.requestHeaders));
+    await tester.pumpAndSettle();
+    expect(find.text('origin.example.com:443'), findsOneWidget);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(ListEditorPage<MapEntry<String, String>, String>),
+        matching: find.byTooltip(l10n.add),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(fieldIn(l10n.key), 'X-Auth-Token');
+    await tester.enterText(fieldIn(l10n.value), 'example-token');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(find.text('example-token'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: row(l10n.requestHeaders),
+        matching: find.text(l10n.itemsCount(2)),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip(l10n.save));
+    await tester.pumpAndSettle();
+
+    expect(proxies.saved.single.definition['headers'], {
+      'Host': 'origin.example.com:443',
+      'X-Auth-Token': 'example-token',
+    });
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('switching HTTPUpgrade on offers its fast open', (tester) async {
+    _setViewport(tester);
+    final proxies = _RecordingCustomProxies(const [
+      CustomProxy(
+        id: 1,
+        definition: {
+          'name': 'Upgrade',
+          'type': 'vless',
+          'server': 'upgrade.example.com',
+          'port': 443,
+          'uuid': '00000000-0000-0000-0000-000000000000',
+          'network': 'ws',
+          'ws-opts': {'path': '/', 'v2ray-http-upgrade': false},
+        },
+      ),
+    ]);
+    final core = _MockCore();
+    registerFallbackValue(<Map<String, dynamic>>[]);
+    when(() => core.validateProxies(any())).thenAnswer((_) async => ['']);
+    final container = ProviderContainer(
+      overrides: [
+        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        customGroupNamesProvider.overrideWith(
+          (_) => Stream.value(const <String>{}),
+        ),
+        customProxiesProvider.overrideWith(() => proxies),
+        clashProvidersActionProvider.overrideWith(
+          _RecordingClashProvidersAction.new,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container
+        .read(viewSizeProvider.notifier)
+        .update((_) => const Size(500, 1000));
+    Finder row(String title) => find.widgetWithText(FormRow, title);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: CustomProxiesView()),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.text('Upgrade'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      row('HTTPUpgrade'),
+      200,
+      scrollable: find
+          .ancestor(
+            of: row('WebSocket Path'),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await Scrollable.ensureVisible(
+      tester.element(row('HTTPUpgrade')),
+      alignment: 0.5,
+    );
+    await tester.pumpAndSettle();
+
+    expect(row('HTTPUpgrade Fast Open'), findsNothing);
+
+    await tester.tap(
+      find.descendant(
+        of: row('HTTPUpgrade'),
+        matching: find.byType(CommonSwitch),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(row('HTTPUpgrade Fast Open'), findsOneWidget);
+
+    await tester.tap(
+      find.descendant(
+        of: row('HTTPUpgrade'),
+        matching: find.byType(CommonSwitch),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(row('HTTPUpgrade Fast Open'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('an app-level proxy saves outside a profile and reapplies on '
       'leaving', (tester) async {
     _setViewport(tester);
