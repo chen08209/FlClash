@@ -1,4 +1,9 @@
+import 'dart:typed_data';
+
 import 'package:rust_api/editor.dart';
+
+/// From this many UTF-16 code units on, text is handled off the UI isolate.
+const backgroundTextLength = 1 << 17;
 
 class Rope {
   final RopeBridge _rope;
@@ -9,9 +14,27 @@ class Rope {
 
   Rope._(this._rope);
 
-  /// Builds the buffer on a Rust worker thread instead of the calling isolate.
-  static Future<Rope> inBackground(String initialText) async =>
-      Rope._(await RopeBridge.createInBackground(initialText: initialText));
+  static Future<Rope> openFile(String path) async =>
+      Rope._(await RopeBridge.openFile(path: path));
+
+  static Future<Rope> fromUtf8(Uint8List bytes) async =>
+      Rope._(await RopeBridge.fromUtf8(bytes: bytes));
+
+  Rope snapshot() => Rope._(_rope.snapshot());
+
+  Future<Uint8List> utf8Bytes() => _rope.utf8Bytes();
+
+  bool sameText(
+    Rope original, {
+    int spliceStart = 0,
+    int spliceLength = 0,
+    String spliceText = '',
+  }) => _rope.sameText(
+    original: original._rope,
+    spliceStart: BigInt.from(spliceStart),
+    spliceLen: BigInt.from(spliceLength),
+    spliceText: spliceText,
+  );
 
   int get length => _rope.lenChars().toInt();
 

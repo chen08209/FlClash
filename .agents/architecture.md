@@ -986,8 +986,8 @@ held back until the route settles slides in as an empty page and pops in once th
 than the frames a load costs. What a transition must not carry is work that repeats on every refresh or every frame.
 
 - Loads start as the widget mounts, never behind `whenRouteSettled`. `CommonTargetIcon` and `PackageIcon` show what is
-  already in memory at once and load the rest right away; the editor reads its file and mounts CodeForge as soon as the
-  content is in. An icon still loading leaves a blank slot of its size and shows its fallback only once the load ends
+  already in memory at once and load the rest right away; the editor has Rust open its file and mounts CodeForge as
+  soon as the document is in, so the text itself never passes through the UI isolate. An icon still loading leaves a blank slot of its size and shows its fallback only once the load ends
   without an image, so a grid of placeholders is never painted only to be replaced. `whenRouteSettled`
   (`lib/ui/navigator.dart`) is left for sequencing navigation, such as opening a page once the sheet above it is gone.
 - A live feed holds its refreshes while its page moves and replays the latest once it is still, so a list does not
@@ -1555,9 +1555,14 @@ NDK version stands in for the hook's cache.
 concern into `lib/code_forge/controller/` extensions. `CodeForge` builds `_CodeFieldRenderer`, whose painting, layout,
 folding, caret, gutter and pointer code sit in `lib/code_forge/code_area/` part files.
 
-- `loadText` builds a document of 128K characters or more on a Rust worker thread (`RopeBridge.createInBackground`),
-  so a large file does not stall the frame it arrives in; `EditorView` loads through it, and a later `text =` or
-  `loadText` supersedes one still building.
+- A document arrives as a `CodeForgeDocument`, which `load` swaps in as a copy of its rope that costs nothing to make.
+  `openFile` reads the file, checks it is UTF-8 and turns CRLF into LF on a Rust worker thread; `fromText` encodes a
+  string of 128K UTF-16 code units or more in an isolate first. `EditorPage` drops a document that a later one
+  supersedes while it builds.
+- A text that long is never held as a Dart string. `isModified` compares the rope with a copy of the one loaded inside
+  Rust; `readBytes` and `readText` copy it out off the UI isolate; find searches, and replace-all rewrites, a byte copy
+  in an isolate, keeps the matches packed in an `Int32List`, and records replace-all as one `DocumentOperation` that
+  swaps whole ropes. `EditorPage` hands its callbacks an `EditorContent` to read the text from for the same reason.
 - Rust counts offsets in Unicode scalars and Flutter in UTF-16 code units. Convert at the boundary with
   `text_offsets.dart`; a mixed-up offset only shows up with astral characters such as emoji, so tests use them.
 - The renderer learns what changed from `takeChange()`, whose `lines` (first line, lines removed, lines inserted) let it
@@ -1591,7 +1596,8 @@ folding, caret, gutter and pointer code sit in `lib/code_forge/code_area/` part 
   one document. A folded range, and the folded ranges inside it that it folds again when it opens, outlive an edit
   only while the text still gives that range. An edit reports the lines it changed, not where in them, so a fold
   heading a line inside an edit that changes the line count is opened rather than guessed at; `replaceText`, which
-  find's replace-all uses, rewrites only the span that differs to keep that to the lines between its matches.
+  find's replace-all uses on a shorter text, rewrites only the span that differs to keep that to the lines between its
+  matches.
 - The caret never rests on a line a fold hides: folding over it moves it to the heading line, the keyboard steps over
   the fold, and a caret put there any other way opens it.
 - The controller reaches the mounted editor only through the `CodeForgeView` it attaches, which the editor's state
@@ -1676,8 +1682,8 @@ the singleton entry point: `RustLib.init()` runs before any call and `RustLib.di
   thread of its own and holds no global state, so I/O is event-driven on every platform and closing or dropping the
   handle releases the socket. It serves one peer at a time; a second one waits in the backlog.
 - `script/` runs profile override scripts on QuickJS through `rquickjs`.
-- `editor/` backs `plugins/code_forge`: a `ropey` buffer, fold ranges and bracket matching, indent guides for the
-  viewport, and completion words. `api/editor.rs` exposes the buffer as the opaque `RopeBridge`; the selection
+- `editor/` backs `plugins/code_forge`: a `ropey` buffer that opens files and UTF-8 bytes and compares and copies its
+  text itself, fold ranges and bracket matching, indent guides for the viewport, and completion words. `api/editor.rs` exposes the buffer as the opaque `RopeBridge`; the selection
   stays in Dart. Only the editor imports this module, through `lib/editor.dart`, so `lib/rust_api.dart` keeps its
   generic names such as `GuideBlock` out of app code.
 - `hotkey/` registers desktop global shortcuts through `global-hotkey`: `keys` maps Flutter USB HID usages to key

@@ -35,7 +35,7 @@ class ProfilesAction extends _$ProfilesAction {
     }
   }
 
-  Future<String> validateConfigWithData(String data) async {
+  Future<String> validateConfigWithData(List<int> data) async {
     return _core.validateConfigWithData(data);
   }
 

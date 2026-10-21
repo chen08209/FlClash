@@ -18,6 +18,8 @@ extension _ControllerEditPipeline on CodeForgeController {
         :final selectionAfter,
       ):
         _editRope(offset, offset + deletedLength, insertedText, selectionAfter);
+      case DocumentOperation(:final after, :final selectionAfter):
+        _replaceRope(after.snapshot(), selectionAfter);
       case CompoundOperation(:final operations):
         for (final op in operations) {
           _applyUndoRedoOperation(op);
@@ -25,6 +27,36 @@ extension _ControllerEditPipeline on CodeForgeController {
         return;
     }
     notifyListeners();
+  }
+
+  // History gets a copy of [next], which the controller goes on editing.
+  void _replaceRope(Rope next, TextSelection after) {
+    final before = _selection;
+    _flushBuffer();
+    final previous = _rope;
+    final removed = previous.length, removedLines = previous.lineCount;
+    _rope = next;
+    _currentVersion++;
+    _selection = TextSelection.collapsed(
+      offset: min(after.extentOffset, next.length),
+    );
+    _recordLineEdit(0, removedLines - 1, next.lineCount - 1);
+    _pendingSelectionReplacement = null;
+    _notifyEdit(0, removed, next.length);
+    if (_recordsUndo) {
+      _undoController!.recordEdit(
+        DocumentOperation(
+          before: previous,
+          after: next.snapshot(),
+          selectionBefore: before,
+          selectionAfter: _selection,
+        ),
+      );
+    } else {
+      previous.dispose();
+    }
+    _imeSelectionNeedsResync = true;
+    _invalidateImeSnapshotAndScheduleSync();
   }
 
   bool get _recordsUndo {

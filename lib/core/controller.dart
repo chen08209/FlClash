@@ -158,10 +158,10 @@ class CoreController {
     return _interface.decodeShareLinks(lines);
   }
 
-  Future<String> validateConfigWithData(String data) async {
+  Future<String> validateConfigWithData(List<int> data) async {
     final path = await appPath.tempFilePath;
     final file = File(path);
-    await file.safeWriteAsString(data);
+    await file.safeWriteAsBytes(data);
     final res = await _interface.validateConfig(path);
     await File(path).safeDelete();
     return res;

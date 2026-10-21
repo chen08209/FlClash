@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:code_forge/code_forge.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -30,7 +31,7 @@ void main() {
         ],
         child: EditorPage(
           title: 'Editor',
-          load: () => content.future,
+          load: () async => CodeForgeDocument.fromText(await content.future),
           onSave: (_, _, _) {},
         ),
       ),
@@ -60,7 +61,7 @@ void main() {
         ],
         child: EditorPage(
           title: 'Editor',
-          load: () async => document,
+          load: () => CodeForgeDocument.fromText(document),
           onSave: (_, _, _) {},
         ),
       ),
@@ -100,9 +101,9 @@ void main() {
             transition = ModalRoute.of(context)!.animation;
             return EditorPage(
               title: 'Editor',
-              load: () async {
+              load: () {
                 loads++;
-                return 'mode: rule';
+                return CodeForgeDocument.fromText('mode: rule');
               },
               onSave: (_, _, _) {},
             );
@@ -136,6 +137,9 @@ void main() {
         ),
       ),
     );
+    final directory = Directory.systemTemp.createTempSync('editor_crlf');
+    addTearDown(() => directory.deleteSync(recursive: true));
+    final file = File('${directory.path}/config.yaml')..writeAsStringSync(crlf);
     var confirms = 0;
     unawaited(
       BaseNavigator.push<void>(
@@ -143,7 +147,7 @@ void main() {
         EditorPage(
           title: 'Editor',
           content: loaded ? null : crlf,
-          load: loaded ? () async => crlf : null,
+          load: loaded ? () => openEditorFile(file.path) : null,
           onSave: (_, _, _) {},
           onPop: (_, _, _) async {
             confirms++;
@@ -302,9 +306,13 @@ void main() {
         EditorPage(
           title: 'Editor',
           content: 'mode: rule',
-          onSave: (context, _, content) {
-            saved.add(content);
-            return (save ?? (context) => Navigator.of(context).pop())(context);
+          onSave: (context, _, content) async {
+            final FutureOr<void> Function(BuildContext) finish =
+                save ?? (context) => Navigator.of(context).pop();
+            saved.add(await content.readText());
+            if (context.mounted) {
+              await finish(context);
+            }
           },
         ),
       ),
@@ -381,7 +389,7 @@ void main() {
         child: EditorPage(
           title: 'Editor',
           titleEditable: true,
-          load: () => content.future,
+          load: () async => CodeForgeDocument.fromText(await content.future),
           onSave: (_, _, _) {},
         ),
       ),

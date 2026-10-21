@@ -6,7 +6,7 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 Future<List<RustFoldRange>> foldsComputeAll({
   required RopeBridge rope,
@@ -53,10 +53,8 @@ abstract class RopeBridge implements RustOpaqueInterface {
       .api
       .crateApiEditorRopeBridgeCreate(initialText: initialText);
 
-  static Future<RopeBridge> createInBackground({required String initialText}) =>
-      RustLib.instance.api.crateApiEditorRopeBridgeCreateInBackground(
-        initialText: initialText,
-      );
+  static Future<RopeBridge> fromUtf8({required List<int> bytes}) =>
+      RustLib.instance.api.crateApiEditorRopeBridgeFromUtf8(bytes: bytes);
 
   String getText();
 
@@ -70,10 +68,44 @@ abstract class RopeBridge implements RustOpaqueInterface {
 
   BigInt lineToChar({required BigInt lineIdx});
 
+  static Future<RopeBridge> openFile({required String path}) =>
+      RustLib.instance.api.crateApiEditorRopeBridgeOpenFile(path: path);
+
   void remove({required BigInt start, required BigInt end});
 
+  bool sameText({
+    required RopeBridge original,
+    required BigInt spliceStart,
+    required BigInt spliceLen,
+    required String spliceText,
+  });
+
   String slice({required BigInt start, required BigInt end});
+
+  RopeBridge snapshot();
+
+  Future<Uint8List> utf8Bytes();
 }
+
+class EditorOpenError implements FrbException {
+  final EditorOpenErrorKind kind;
+  final String message;
+
+  const EditorOpenError({required this.kind, required this.message});
+
+  @override
+  int get hashCode => kind.hashCode ^ message.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is EditorOpenError &&
+          runtimeType == other.runtimeType &&
+          kind == other.kind &&
+          message == other.message;
+}
+
+enum EditorOpenErrorKind { notFound, notUtf8, unreadable }
 
 class GuideBlock {
   final int startLine;

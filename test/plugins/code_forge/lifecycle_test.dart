@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:code_forge/code_forge.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -276,30 +279,116 @@ void main() {
     expect(controller.rope.core.isDisposed, isFalse);
   });
 
+  group('opening a document', () {
+    late Directory directory;
+    setUp(
+      () => directory = Directory.systemTemp.createTempSync('code_forge_open'),
+    );
+    tearDown(() => directory.deleteSync(recursive: true));
+
+    test('reads a CRLF file as LF and loads it unmodified', () async {
+      final file = File('${directory.path}/a.yaml')
+        ..writeAsStringSync('a: 1\r\nb: 2\r\n');
+      final document = await CodeForgeDocument.openFile(file.path);
+      final controller = CodeForgeController()..load(document);
+      addTearDown(controller.dispose);
+      document.dispose();
+
+      expect(controller.text, 'a: 1\nb: 2\n');
+      expect(controller.isModified, isFalse);
+    });
+
+    test('tells a missing file from one that is not UTF-8', () async {
+      final binary = File('${directory.path}/b')
+        ..writeAsBytesSync([0xff, 0x41]);
+
+      await expectLater(
+        CodeForgeDocument.openFile('${directory.path}/missing'),
+        throwsA(isA<PathNotFoundException>()),
+      );
+      await expectLater(
+        CodeForgeDocument.openFile(binary.path),
+        throwsFormatException,
+      );
+    });
+  });
+
+  test('a text edited back to the one loaded is not modified', () {
+    final controller = CodeForgeController()..text = 'mode: rule';
+    addTearDown(controller.dispose);
+
+    controller.replaceRange(6, 10, 'RULE');
+    expect(controller.isModified, isTrue);
+    controller.replaceRange(6, 10, 'rule');
+    expect(controller.isModified, isFalse);
+  });
+
+  testWidgets('a line typed back to the one loaded is not modified', (
+    tester,
+  ) async {
+    final controller = CodeForgeController()..text = 'mode: rule';
+    await pumpEditor(tester, controller);
+    await focusEditor(tester);
+    controller.selection = const TextSelection.collapsed(offset: 10);
+    await tester.pump();
+
+    await sendDeltas(tester, [textDelta('mode: rule', 's', 10, 10)]);
+    expect(controller.isModified, isTrue);
+    await sendDeltas(tester, [
+      textDelta('mode: rules', '', 10, 11),
+      textDelta('mode: rule', 'x', 9, 10),
+    ]);
+    await sendDeltas(tester, [textDelta('mode: rulx', 'e', 9, 10)]);
+
+    expect(controller.isBufferActive, isTrue);
+    expect(controller.isModified, isFalse);
+    await settle(tester, 2);
+  });
+
+  test('replacing the whole document is one undo step', () async {
+    final undo = UndoRedoController();
+    final controller = CodeForgeController()
+      ..text = 'a: 1\n'
+      ..setUndoController(undo);
+    addTearDown(controller.dispose);
+    addTearDown(undo.dispose);
+    final document = await CodeForgeDocument.fromText('b: 2\n');
+    controller.replaceDocument(document);
+    document.dispose();
+    expect(controller.text, 'b: 2\n');
+    expect(controller.isModified, isTrue);
+
+    undo.undo();
+    expect(controller.text, 'a: 1\n');
+    expect(controller.isModified, isFalse);
+    undo.redo();
+    expect(controller.text, 'b: 2\n');
+  });
+
   group('loading a large document', () {
     final document = 'a: 1\r\n' * 40000;
 
     test('fills the controller once its rope is built', () async {
       final controller = CodeForgeController();
       addTearDown(controller.dispose);
+      final built = await CodeForgeDocument.fromText(document);
+      addTearDown(built.dispose);
 
-      final load = controller.loadText(document);
-      expect(controller.length, 0);
-
-      await load;
+      controller.load(built);
       expect(controller.text, 'a: 1\n' * 40000);
       expect(controller.lineCount, 40001);
     });
 
-    test('gives way to text set while it builds', () async {
+    test('reads it back as UTF-8 and as text', () async {
+      final text = '名: 値\n' * 40000;
       final controller = CodeForgeController();
       addTearDown(controller.dispose);
+      final built = await CodeForgeDocument.fromText(text);
+      addTearDown(built.dispose);
+      controller.load(built);
 
-      final load = controller.loadText(document);
-      controller.text = 'b: 2';
-      await load;
-
-      expect(controller.text, 'b: 2');
+      expect(utf8.decode(await controller.readBytes()), text);
+      expect(await controller.readText(), text);
     });
   });
 

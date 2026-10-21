@@ -7,12 +7,15 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
+import '../plugins/code_forge/support.dart' show initEditorNative;
 
 final _viewSizeOverride = viewSizeProvider.overrideWithBuild(
   (_, _) => const Size(1200, 1000),
 );
 
 void main() {
+  setUpAll(initEditorNative);
+
   testWidgets('shows the unavailable state without the native editor library', (
     tester,
   ) async {
@@ -83,4 +86,4 @@ void main() {
   });
 }
 
-void _noopSave(BuildContext context, String title, String content) {}
+void _noopSave(BuildContext context, String title, EditorContent content) {}

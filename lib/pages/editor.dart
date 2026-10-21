@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io' show PathNotFoundException;
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -18,6 +20,7 @@ import 'package:code_forge/code_forge.dart'
         CodeForgeContextMenuRequest,
         CodeForgeCompletionSource,
         CodeForgeController,
+        CodeForgeDocument,
         CodeForgeKeyboardShortcuts,
         CodeSelectionStyle,
         FindController,
@@ -29,6 +32,7 @@ import 'package:re_highlight/styles/atom-one-dark.dart';
 import 'package:re_highlight/styles/atom-one-light.dart';
 import 'package:rust_api/rust_api.dart' show isRustLibInitialized;
 
+export 'package:code_forge/code_forge.dart' show CodeForgeDocument;
 export 'package:fl_clash/features/editor/editor.dart'
     show EditorSchema, readRelaxed;
 
@@ -37,11 +41,57 @@ export 'package:fl_clash/features/editor/editor.dart'
 @visibleForTesting
 bool Function() editorNativeReady = () => isRustLibInitialized;
 
-/// [load] runs as the page mounts; read files in it via [readTextFileTask].
+/// Opens [path] off the UI isolate, or [ifMissing] when nothing is there.
+Future<CodeForgeDocument> openEditorFile(
+  String path, {
+  String ifMissing = '',
+}) async {
+  try {
+    return await CodeForgeDocument.openFile(path);
+  } on PathNotFoundException {
+    return CodeForgeDocument.fromText(ifMissing);
+  }
+}
+
+/// The edited text, read off the UI isolate when it is long.
+abstract interface class EditorContent {
+  @visibleForTesting
+  const factory EditorContent.text(String text) = _TextContent;
+
+  Future<String> readText();
+
+  Future<Uint8List> readBytes();
+}
+
+class _EditedContent implements EditorContent {
+  const _EditedContent(this._controller);
+
+  final CodeForgeController _controller;
+
+  @override
+  Future<String> readText() => _controller.readText();
+
+  @override
+  Future<Uint8List> readBytes() => _controller.readBytes();
+}
+
+class _TextContent implements EditorContent {
+  const _TextContent(this._text);
+
+  final String _text;
+
+  @override
+  Future<String> readText() async => _text;
+
+  @override
+  Future<Uint8List> readBytes() async => utf8.encode(_text);
+}
+
+/// [load] runs as the page mounts; open files in it with [openEditorFile].
 class EditorPage extends ConsumerStatefulWidget {
   final String title;
   final String? content;
-  final Future<String> Function()? load;
+  final Future<CodeForgeDocument> Function()? load;
   final Language language;
   final bool titleEditable;
 
@@ -50,13 +100,15 @@ class EditorPage extends ConsumerStatefulWidget {
   final FutureOr<void> Function(
     BuildContext context,
     String title,
-    String content,
+    EditorContent content,
   )?
   onSave;
+
+  /// Asked only when the text or the title has changed.
   final Future<bool> Function(
     BuildContext context,
     String title,
-    String content,
+    EditorContent content,
   )?
   onPop;
   final bool? readOnly;
@@ -84,7 +136,8 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   late UndoRedoController _undoController;
   late TextEditingController _titleController;
   late bool readOnly = false;
-  String? _loaded;
+  CodeForgeDocument? _document;
+  var _openGeneration = 0;
   bool _saving = false;
   ({bool isDirty, bool canUndo, bool canRedo}) _barState = (
     isDirty: false,
@@ -93,18 +146,6 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   );
 
   EditorViewState? get _editor => _editorKey.currentState;
-
-  String? get _original {
-    if (widget.load != null) {
-      return _loaded;
-    }
-    final content = widget.content;
-    return content == null
-        ? null
-        : CodeForgeController.normalizeLineBreaks(content);
-  }
-
-  String get _content => _editor?.content ?? _original ?? '';
 
   CodeForgeKeyboardShortcuts get _shortcuts =>
       CodeForgeKeyboardShortcuts.forPlatform(defaultTargetPlatform);
@@ -122,9 +163,11 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     ),
   };
 
-  bool get _isDirty =>
-      _original != null &&
-      ((_editor?.isModified ?? false) || _titleController.text != widget.title);
+  bool get _isDirty {
+    final controller = _editor?.controller;
+    return controller != null &&
+        (controller.isModified || _titleController.text != widget.title);
+  }
 
   @override
   void initState() {
@@ -134,8 +177,26 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     _titleController = TextEditingController(text: widget.title)
       ..addListener(_syncBarState);
     final load = widget.load;
+    final content = widget.content;
+    if (!editorNativeReady()) {
+      return;
+    }
     if (load != null) {
-      unawaited(_load(load));
+      unawaited(_open(load));
+    } else if (content != null) {
+      unawaited(_open(() => CodeForgeDocument.fromText(content)));
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant EditorPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final content = widget.content;
+    if (widget.load == null &&
+        content != null &&
+        content != oldWidget.content &&
+        editorNativeReady()) {
+      unawaited(_open(() => CodeForgeDocument.fromText(content)));
     }
   }
 
@@ -159,19 +220,21 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     setState(() => _barState = _currentBarState);
   }
 
-  Future<void> _load(Future<String> Function() load) async {
-    final content = await globalState.safeRun(() async {
+  Future<void> _open(Future<CodeForgeDocument> Function() open) async {
+    final generation = ++_openGeneration;
+    final document = await globalState.safeRun(() async {
       try {
-        return await load();
+        return await open();
       } catch (_) {
         if (!mounted) return null;
         rethrow;
       }
     }, silence: false);
-    if (!mounted) {
+    if (!mounted || generation != _openGeneration) {
+      document?.dispose();
       return;
     }
-    if (content == null) {
+    if (document == null) {
       // The error dialog is on top, so pop() would close it instead.
       final route = ModalRoute.of(context);
       if (route != null) {
@@ -179,16 +242,19 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       }
       return;
     }
+    final previous = _document;
     setState(() {
-      _loaded = CodeForgeController.normalizeLineBreaks(content);
+      _document = document;
       _barState = _currentBarState;
     });
+    previous?.dispose();
   }
 
   @override
   void dispose() {
     _undoController.dispose();
     _titleController.dispose();
+    _document?.dispose();
     super.dispose();
   }
 
@@ -213,7 +279,11 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     if (route != null && !route.isCurrent) {
       Navigator.of(context).popUntil((above) => above == route);
     }
-    final saved = onSave(context, _titleController.text, _content);
+    final saved = onSave(
+      context,
+      _titleController.text,
+      _EditedContent(_editor!.controller!),
+    );
     if (saved is! Future<void>) {
       return;
     }
@@ -231,7 +301,11 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     if (onPop == null || !_isDirty) {
       return true;
     }
-    final res = await onPop(context, _titleController.text, _content);
+    final res = await onPop(
+      context,
+      _titleController.text,
+      _EditedContent(_editor!.controller!),
+    );
     return res && context.mounted;
   }
 
@@ -323,7 +397,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
               absorbing: _saving,
               child: EditorView(
                 key: _editorKey,
-                content: _original,
+                document: _document,
                 language: widget.language,
                 schema: widget.schema,
                 readOnly: readOnly,
@@ -342,7 +416,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
 /// of it. It shows its unavailable state when `main` did not initialise
 /// `RustLib`.
 class EditorView extends ConsumerStatefulWidget {
-  final String? content;
+  final CodeForgeDocument? document;
   final Language language;
   final EditorSchema schema;
   final bool readOnly;
@@ -351,7 +425,7 @@ class EditorView extends ConsumerStatefulWidget {
 
   const EditorView({
     super.key,
-    required this.content,
+    required this.document,
     this.language = Language.yaml,
     this.schema = EditorSchema.config,
     this.readOnly = false,
@@ -368,27 +442,8 @@ class EditorViewState extends ConsumerState<EditorView> {
   FindController? _findController;
   UndoRedoController? _ownedUndoController;
   Object? _initError;
-  String? _pendingContent;
-  var _building = false;
 
   CodeForgeController? get controller => _controller;
-
-  String get content => _controller?.text ?? _pendingContent ?? '';
-
-  int _loadedLength = 0;
-
-  /// Whether the document differs from [EditorView.content]. A length change
-  /// answers without copying the whole document out of the rope.
-  bool get isModified {
-    final controller = _controller;
-    final original = widget.content;
-    if (controller == null || original == null) {
-      return false;
-    }
-    return controller.isComposingActive ||
-        controller.length != _loadedLength ||
-        controller.text != original;
-  }
 
   UndoRedoController get _undoController =>
       widget.undoController ?? (_ownedUndoController ??= UndoRedoController());
@@ -396,71 +451,45 @@ class EditorViewState extends ConsumerState<EditorView> {
   @override
   void initState() {
     super.initState();
-    _pendingContent = widget.content;
     if (!editorNativeReady()) {
       _initError = StateError('RustLib is not initialized');
       return;
     }
-    // onReady sets the page's state, which no build in progress may.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        unawaited(_createController());
-      }
-    });
-  }
-
-  // Filling the controller before CodeForge mounts spares it laying out an
-  // empty document only to replace it.
-  Future<void> _createController() async {
-    var content = _pendingContent;
-    if (_initError != null ||
-        _controller != null ||
-        _building ||
-        content == null) {
-      return;
-    }
-    _building = true;
-    final controller = CodeForgeController();
-    while (true) {
-      await _loadContent(controller, content!);
-      if (!mounted) {
-        controller.dispose();
-        return;
-      }
-      if (_pendingContent == content) {
-        break;
-      }
-      content = _pendingContent;
-    }
-    _building = false;
-    setState(() {
-      _controller = controller;
-      _findController = FindController(controller);
-    });
-    widget.onReady?.call();
+    _show(widget.document);
   }
 
   @override
   void didUpdateWidget(covariant EditorView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (_initError == null && !identical(widget.document, oldWidget.document)) {
+      _show(widget.document);
+    }
+  }
+
+  // The first document fills the controller before CodeForge mounts, which
+  // spares it laying out an empty one. A later one waits for the frame,
+  // since loading notifies the page, which no build in progress may set.
+  void _show(CodeForgeDocument? document) {
+    if (document == null) {
+      return;
+    }
+    final controller = _controller;
+    if (controller == null) {
+      _controller = _load(CodeForgeController(), document);
+      _findController = FindController(_controller!);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          widget.onReady?.call();
+        }
+      });
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final content = widget.content;
-      if (!mounted || content == null || oldWidget.content == content) {
-        return;
+      final document = widget.document;
+      if (mounted && document != null) {
+        _load(controller, document);
+        _undoController.clear();
       }
-      final controller = _controller;
-      if (controller == null) {
-        _pendingContent = content;
-        unawaited(_createController());
-        return;
-      }
-      unawaited(
-        _loadContent(controller, content).then((_) {
-          if (mounted) {
-            _undoController.clear();
-          }
-        }),
-      );
     });
   }
 
@@ -472,14 +501,12 @@ class EditorViewState extends ConsumerState<EditorView> {
     super.dispose();
   }
 
-  Future<void> _loadContent(
+  CodeForgeController _load(
     CodeForgeController controller,
-    String content,
-  ) async {
-    await controller.loadText(content);
-    controller.selection = const TextSelection.collapsed(offset: 0);
-    _loadedLength = controller.length;
-  }
+    CodeForgeDocument document,
+  ) => controller
+    ..load(document)
+    ..selection = const TextSelection.collapsed(offset: 0);
 
   void search({bool replace = false}) {
     _findController?.show(replace: replace && !widget.readOnly);
@@ -496,8 +523,7 @@ class EditorViewState extends ConsumerState<EditorView> {
       language: widget.language,
       schema: widget.schema,
       error: _initError,
-      isLoading:
-          _initError == null && (widget.content == null || controller == null),
+      isLoading: _initError == null && controller == null,
     );
   }
 }

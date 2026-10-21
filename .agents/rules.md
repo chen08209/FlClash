@@ -374,6 +374,8 @@ it there is.
   costs the UI isolate on every emission, and any write to that table makes it emit again.
 - Bounded work stays where it is: a provider recompute that reuses a cache, a single-item update, a search filter over
   a list sized for scrolling.
+- An editor document stays in the Rust rope. Open a file for `EditorPage` with `openEditorFile` rather than reading it
+  into a string, and read an edited one through `EditorContent`; a profile can be tens of megabytes.
 - Decide on measurements taken at the expected maximum. A `flutter test` probe that counts provider recomputes, times
   the provider body and hooks `debugOnRebuildDirtyWidget` shows what reruns and how it scales; its JIT timings are not
   device numbers, so a case near the line is settled with a profile build. No gate checks this rule.

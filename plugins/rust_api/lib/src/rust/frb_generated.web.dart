@@ -80,10 +80,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String dco_decode_String(dynamic raw);
 
   @protected
+  bool dco_decode_bool(dynamic raw);
+
+  @protected
   int dco_decode_box_autoadd_u_32(dynamic raw);
 
   @protected
   BigInt dco_decode_box_autoadd_usize(dynamic raw);
+
+  @protected
+  EditorOpenError dco_decode_editor_open_error(dynamic raw);
+
+  @protected
+  EditorOpenErrorKind dco_decode_editor_open_error_kind(dynamic raw);
 
   @protected
   GuideBlock dco_decode_guide_block(dynamic raw);
@@ -207,10 +216,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
+  bool sse_decode_bool(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
 
   @protected
   BigInt sse_decode_box_autoadd_usize(SseDeserializer deserializer);
+
+  @protected
+  EditorOpenError sse_decode_editor_open_error(SseDeserializer deserializer);
+
+  @protected
+  EditorOpenErrorKind sse_decode_editor_open_error_kind(
+    SseDeserializer deserializer,
+  );
 
   @protected
   GuideBlock sse_decode_guide_block(SseDeserializer deserializer);
@@ -288,9 +308,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   BigInt sse_decode_usize(SseDeserializer deserializer);
 
   @protected
-  bool sse_decode_bool(SseDeserializer deserializer);
-
-  @protected
   void sse_encode_AnyhowException(
     AnyhowException self,
     SseSerializer serializer,
@@ -354,10 +371,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
+  void sse_encode_bool(bool self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_usize(BigInt self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_editor_open_error(
+    EditorOpenError self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_editor_open_error_kind(
+    EditorOpenErrorKind self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_guide_block(GuideBlock self, SseSerializer serializer);
@@ -448,9 +480,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_usize(BigInt self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_bool(bool self, SseSerializer serializer);
 }
 
 // Section: wire_class
