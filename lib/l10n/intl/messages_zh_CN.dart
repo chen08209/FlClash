@@ -443,6 +443,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "delay": MessageLookupByLibrary.simpleMessage("延迟"),
     "delayFailed": MessageLookupByLibrary.simpleMessage("失败"),
     "delayTest": MessageLookupByLibrary.simpleMessage("延迟测试"),
+    "delayTestTimeout": MessageLookupByLibrary.simpleMessage("延迟测试超时"),
     "delete": MessageLookupByLibrary.simpleMessage("删除"),
     "deleteMultipTip": m19,
     "deleteTip": m20,

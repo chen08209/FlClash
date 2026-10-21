@@ -175,6 +175,7 @@
   "clipboardWriteFailed": "Couldn't copy to the clipboard. The selection may be too large",
   "paste": "Paste",
   "testUrl": "Test URL",
+  "delayTestTimeout": "Delay test timeout",
   "sync": "Sync",
   "exclude": "Hide from recent tasks",
   "compact": "Compact",
@@ -936,5 +937,10 @@
   "allReferencedProxyProviders": "All referenced proxy providers",
   "clearDnsCache": "Clear DNS cache",
   "dnsCacheCleared": "DNS cache cleared",
-  "clearDnsCacheFailed": "Failed to clear DNS cache"
+  "clearDnsCacheFailed": "Failed to clear DNS cache",
+  "select": "Select",
+  "preferred": "Preferred",
+  "addToLocalProxies": "Add to local proxies",
+  "addedToLocalProxies": "Added {name} to local proxies",
+  "alreadyInLocalProxies": "{name} is already in local proxies"
 }

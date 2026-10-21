@@ -1067,6 +1067,13 @@ func TestProxyViewKeepsWhatTheHostReads(t *testing.T) {
 	if want := map[string]any{"name": "node-a", "type": "Direct"}; fmt.Sprint(node) != fmt.Sprint(want) {
 		t.Errorf("node view = %v, want %v", node, want)
 	}
+	fromProvider := encode(adapter.NewProxy(outbound.NewDirectWithOption(outbound.DirectOption{
+		BasicOption: outbound.BasicOption{ProviderName: "subscription"},
+		Name:        "node-p",
+	})))
+	if fromProvider["provider-name"] != "subscription" {
+		t.Errorf("provider node view = %v, want its provider-name", fromProvider)
+	}
 
 	members := []constant.Proxy{namedProxy("node-a"), namedProxy("node-b")}
 	pd, err := provider.NewCompatibleProvider(
