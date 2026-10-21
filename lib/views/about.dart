@@ -64,9 +64,10 @@ class AboutView extends ConsumerWidget {
       isLoading: isLoading,
       title: appLocalizations.about,
       body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-        ).copyWith(top: context.contentTopPadding, bottom: 32),
+        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+          top: context.contentTopPadding,
+          bottom: 32 + context.bottomInset,
+        ),
         children: [
           _AboutHero(
             isCheckingUpdate: isLoading,

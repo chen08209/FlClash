@@ -365,7 +365,7 @@ class _IconPickerViewState extends ConsumerState<IconPickerView> {
               _buildGrid(source, source.icons),
             ],
             SliverToBoxAdapter(
-              child: SizedBox(height: 20 + BottomInsetScope.of(context)),
+              child: SizedBox(height: 20 + context.bottomInset),
             ),
           ],
         ),

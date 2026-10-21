@@ -1374,7 +1374,7 @@ class _EditProxyGroupViewState extends ConsumerState<EditProxyGroupView> {
           SliverPadding(
             padding: const EdgeInsets.symmetric(
               horizontal: 16,
-            ).copyWith(bottom: 20),
+            ).copyWith(bottom: 20 + context.bottomInset),
             sliver: SliverList.list(
               children: [
                 _buildOptions(emptyFallbackIssues: emptyFallbackIssues),

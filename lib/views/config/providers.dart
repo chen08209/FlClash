@@ -360,9 +360,10 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
         label: appLocalizations.nullTip(appLocalizations.ruleProviders),
       ),
       child: ReorderableListView.builder(
-        padding: const EdgeInsets.all(
-          16,
-        ).copyWith(top: context.contentTopPadding),
+        padding: const EdgeInsets.all(16).copyWith(
+          top: context.contentTopPadding,
+          bottom: 16 + context.bottomInset,
+        ),
         buildDefaultDragHandles: false,
         itemCount: providers.length,
         itemBuilder: (_, index) => _buildItem(providers, index),

@@ -25,11 +25,13 @@ class _FakeScannerPlatform extends MobileScannerPlatform {
 
   int startCalls = 0;
   int stopCalls = 0;
+  int pauseCalls = 0;
   int disposeCalls = 0;
   int toggleTorchCalls = 0;
   TorchState initialTorchState = TorchState.off;
   MobileScannerException? startError;
   Completer<void>? startGate;
+  Completer<void>? pauseGate;
 
   void emit(BarcodeCapture capture) => _barcodes.add(capture);
 
@@ -72,6 +74,12 @@ class _FakeScannerPlatform extends MobileScannerPlatform {
   @override
   Future<void> stop() async {
     stopCalls++;
+  }
+
+  @override
+  Future<void> pause() async {
+    pauseCalls++;
+    await pauseGate?.future;
   }
 
   @override
@@ -396,6 +404,75 @@ void main() {
 
       expect(find.byType(ScanPage), findsOneWidget);
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('ScanPage leaving', () {
+    testWidgets('the close button pauses the camera before the page leaves', (
+      tester,
+    ) async {
+      final gate = Completer<void>();
+      platform.pauseGate = gate;
+      var popped = false;
+      await pumpScanPage(tester, onPopped: (_) => popped = true);
+
+      await tester.tap(find.byTooltip(currentAppLocalizations.close));
+      await tester.pump();
+
+      expect(platform.pauseCalls, 1);
+      expect(popped, isFalse);
+
+      gate.complete();
+      await tester.pumpAndSettle();
+
+      expect(popped, isTrue);
+      expect(find.byType(ScanPage), findsNothing);
+    });
+
+    testWidgets('a back while the camera runs pauses it first', (tester) async {
+      final gate = Completer<void>();
+      platform.pauseGate = gate;
+      var popped = false;
+      await pumpScanPage(tester, onPopped: (_) => popped = true);
+      final context = tester.element(find.byType(ScanPage));
+
+      expect(
+        ModalRoute.of(context)!.popDisposition,
+        RoutePopDisposition.doNotPop,
+      );
+
+      unawaited(Navigator.of(context).maybePop());
+      await tester.pump();
+
+      expect(platform.pauseCalls, 1);
+      expect(popped, isFalse);
+
+      gate.complete();
+      await tester.pumpAndSettle();
+
+      expect(popped, isTrue);
+    });
+
+    testWidgets('a captured code leaves on the last frame', (tester) async {
+      await pumpScanPage(tester, onPopped: (_) {});
+
+      platform.emit(
+        _capture(type: BarcodeType.url, rawValue: 'https://sub.example/x'),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      final cover = tester.widget<AnimatedOpacity>(
+        find.ancestor(
+          of: find.byWidgetPredicate(
+            (widget) => widget is ColoredBox && widget.color == Colors.black,
+          ),
+          matching: find.byType(AnimatedOpacity),
+        ),
+      );
+      expect(find.byType(ScanPage), findsOneWidget);
+      expect(cover.opacity, 0);
+      expect(platform.pauseCalls, 1);
     });
   });
 

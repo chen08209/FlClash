@@ -875,6 +875,66 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('the dock over the system bar leaves the content one clearance', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(500, 800)
+      ..devicePixelRatio = 1
+      ..padding = const FakeViewPadding(bottom: 24);
+    addTearDown(tester.view.reset);
+
+    double? inset;
+    final container = ProviderContainer(
+      overrides: [
+        navigationItemsStateProvider.overrideWithValue(
+          NavigationItemsState(
+            value: [
+              for (final (glyph, label) in [
+                (AppGlyphs.dashboard, PageLabel.dashboard),
+                (AppGlyphs.tools, PageLabel.tools),
+              ])
+                NavigationItem(
+                  glyph: glyph,
+                  label: label,
+                  builder: (_) => CommonScaffold(
+                    title: label.name,
+                    body: Builder(
+                      builder: (context) {
+                        inset = context.bottomInset;
+                        return const SizedBox.expand(key: ValueKey('body'));
+                      },
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container.read(viewSizeProvider.notifier).value = const Size(500, 800);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+      ),
+    );
+    await tester.pump();
+
+    final dockInset = NavigationDock.insetOf(
+      tester.element(find.byType(NavigationDock)),
+    );
+    final bodyBottom = tester
+        .getRect(find.byKey(const ValueKey('body')))
+        .bottom;
+    expect(bodyBottom, 800);
+    expect(bodyBottom - inset!, 800 - dockInset);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('the fade tab switch cross-fades the pages in place', (
     tester,
   ) async {

@@ -586,9 +586,10 @@ class NetworkListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-      ).copyWith(top: context.contentTopPadding, bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+        top: context.contentTopPadding,
+        bottom: 16 + context.bottomInset,
+      ),
       children: [
         if (system.isAndroid) const VpnSections(),
         if (system.isDesktop) const SystemProxySection(),

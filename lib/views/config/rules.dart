@@ -182,7 +182,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
     16,
     context.contentTopPadding,
     16,
-    16 + BottomInsetScope.of(context),
+    16 + context.bottomInset,
   );
 
   Widget _buildRuleItem(List<Rule> rules, int index, Set<dynamic> selected) {

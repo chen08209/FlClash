@@ -165,7 +165,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
                 controller: _scrollController,
                 padding: EdgeInsets.only(
                   top: context.contentTopPadding,
-                  bottom: 16 + BottomInsetScope.of(context),
+                  bottom: 16 + context.bottomInset,
                 ),
                 trackerInfos: connections,
                 table: table,

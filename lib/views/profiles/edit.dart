@@ -357,7 +357,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
               builder: (context) => ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
                   top: context.contentTopPadding,
-                  bottom: BottomInsetScope.of(context) + 16,
+                  bottom: context.bottomInset + 16,
                 ),
                 children: [
                   ErrorBanner(message: issue?.message),

@@ -164,6 +164,32 @@ void main() {
     });
   });
 
+  group('whenRouteUncovered', () {
+    testWidgets('waits for the page above to finish leaving', (tester) async {
+      setViewWidth(400);
+      await pumpHost(tester);
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      final pageContext = tester.element(find.text('pushed page'));
+      unawaited(
+        BaseNavigator.push(pageContext, const Scaffold(body: Text('top'))),
+      );
+      await tester.pumpAndSettle();
+
+      Navigator.of(tester.element(find.text('top'))).pop();
+      var uncovered = false;
+      unawaited(whenRouteUncovered(pageContext).then((_) => uncovered = true));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(uncovered, isFalse);
+
+      await tester.pumpAndSettle();
+
+      expect(uncovered, isTrue);
+    });
+  });
+
   group('drag back', () {
     Future<void> openPage(
       WidgetTester tester,

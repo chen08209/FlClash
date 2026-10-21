@@ -184,9 +184,10 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet>
       body: CustomScrollView(
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-            ).copyWith(top: context.contentTopPadding, bottom: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+              top: context.contentTopPadding,
+              bottom: 20 + context.bottomInset,
+            ),
             sliver: SliverMainAxisGroup(
               slivers: [
                 SliverList.list(

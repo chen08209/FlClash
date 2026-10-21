@@ -40,18 +40,22 @@ class AddProfileView extends ConsumerWidget {
     unawaited(ref.read(profilesActionProvider.notifier).addProfileFormFile());
   }
 
-  Future<void> _toScan(WidgetRef ref) async {
+  Future<void> _toScan(BuildContext pageContext, WidgetRef ref) async {
     final profilesAction = ref.read(profilesActionProvider.notifier);
     if (system.isDesktop) {
       unawaited(profilesAction.addProfileFormQrCode());
       return;
     }
     final url = await BaseNavigator.push(context, const ScanPage());
-    if (url != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        unawaited(profilesAction.addProfileFromLink(url));
-      });
+    if (url == null) {
+      return;
     }
+    if (pageContext.mounted) {
+      await whenRouteUncovered(pageContext);
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(profilesAction.addProfileFromLink(url));
+    });
   }
 
   Future<void> _toAdd(WidgetRef ref) async {
@@ -123,13 +127,16 @@ class AddProfileView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     return ListView(
-      padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 16),
+      padding: EdgeInsets.only(
+        top: context.contentTopPadding,
+        bottom: 16 + context.bottomInset,
+      ),
       children: [
         ListItem(
           leading: const GlyphIcon(AppGlyphs.qrCode),
           title: Text(appLocalizations.qrcode),
           subtitle: Text(appLocalizations.qrcodeDesc),
-          onTap: () => _toScan(ref),
+          onTap: () => _toScan(context, ref),
         ),
         ListItem(
           leading: const GlyphIcon(AppGlyphs.importFile),

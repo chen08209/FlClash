@@ -391,7 +391,7 @@ class _EditGlobalAddedRulesState extends ConsumerState<_EditGlobalAddedRules> {
                   ),
                 ),
                 SliverToBoxAdapter(
-                  child: SizedBox(height: 12 + BottomInsetScope.of(context)),
+                  child: SizedBox(height: 12 + context.bottomInset),
                 ),
               ],
             ),
