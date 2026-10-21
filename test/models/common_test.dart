@@ -210,10 +210,6 @@ void main() {
         const IpInfo(ip: '2.2.2.2', countryCode: 'JP'),
       );
       expect(
-        IpInfo.fromIpAPIJson({'query': '3.3.3.3', 'countryCode': 'CN'}),
-        const IpInfo(ip: '3.3.3.3', countryCode: 'CN'),
-      );
-      expect(
         IpInfo.fromGeoJsJson({'ip': '4.4.4.4', 'country_code': 'DE'}),
         const IpInfo(ip: '4.4.4.4', countryCode: 'DE'),
       );

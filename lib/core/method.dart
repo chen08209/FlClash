@@ -53,6 +53,7 @@ enum CoreMethod {
   clearEffect,
   updateDns,
   watchRoute,
+  checkRoutes,
 }
 
 class CoreMethodCall {

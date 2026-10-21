@@ -209,10 +209,11 @@ func updateConfig(params *UpdateParams) error {
 		general.UnifiedDelay = *params.UnifiedDelay
 		adapter.UnifiedDelay.Store(general.UnifiedDelay)
 	}
-	// IPv6 belongs with mode: turning it on moves a direct dial to another exit address.
-	routeChanged := false
+	routeChange := routeUnchanged
 	if params.Mode != nil {
-		routeChanged = routeChanged || general.Mode != *params.Mode
+		if general.Mode != *params.Mode {
+			routeChange = routeMoved
+		}
 		general.Mode = *params.Mode
 		tunnel.SetMode(general.Mode)
 	}
@@ -220,8 +221,12 @@ func updateConfig(params *UpdateParams) error {
 		general.LogLevel = *params.LogLevel
 		log.SetLevel(general.LogLevel)
 	}
+	// Turning IPv6 on moves a direct dial to another exit address while the
+	// route it takes stays the same.
 	if params.IPv6 != nil {
-		routeChanged = routeChanged || general.IPv6 != *params.IPv6
+		if general.IPv6 != *params.IPv6 {
+			routeChange = routeReset
+		}
 		general.IPv6 = *params.IPv6
 		resolver.DisableIPv6 = !general.IPv6
 	}
@@ -241,8 +246,8 @@ func updateConfig(params *UpdateParams) error {
 		setGeoResourceUrl(geoType, link)
 	}
 	syncGeoUpdater(params.GeoAutoUpdate, params.GeoUpdateInterval)
-	if routeChanged {
-		bumpRouteEpoch()
+	if routeChange != routeUnchanged {
+		changeRoute(routeChange)
 	}
 	return nil
 }

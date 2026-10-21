@@ -73,7 +73,7 @@ OutboundIpResult _address({int coreEpoch = 1}) => OutboundIpResult(
   url: 'https://www.cloudflare.com/cdn-cgi/trace',
   body: 'ip=$_ip\nloc=GB\n',
   coreEpoch: coreEpoch,
-  picksVersion: 1,
+  routeVersion: 1,
 );
 
 Widget _card({DashboardDensity density = DashboardDensity.standard}) =>
@@ -126,7 +126,7 @@ Widget _probingApp(
       routeTrackerProvider.overrideWithBuild(
         (ref, _) => RouteState(
           coreEpoch: 1,
-          picksVersion: 1,
+          routeVersion: 1,
           hostEpoch: 1,
           proxied: ref.watch(isStartProvider),
           synced: true,
@@ -420,7 +420,7 @@ void main() {
 
       start(tester);
       await tester.pump();
-      await tester.pump(commonDuration);
+      await tester.pump(probeSettleDuration);
       expect(phaseOf(tester), ProbePhase.failed);
       expect(find.text('Check failed'), findsNothing);
       expect(find.byType(SkeletonText), findsNWidgets(2));
@@ -428,7 +428,8 @@ void main() {
       epoch = 2;
       containerOf(tester)
           .read(routeTrackerProvider.notifier)
-          .applySnapshot(const RouteSnapshot(coreEpoch: 2, picksVersion: 1));
+          .applySnapshot(const RouteSnapshot(coreEpoch: 2, routeVersion: 1));
+      await tester.pump(probeSettleDuration);
       await tester.pumpAndSettle();
       await tester.pump(const Duration(milliseconds: 700));
       expect(find.text(_ip), findsOneWidget);
@@ -452,7 +453,7 @@ void main() {
 
       start(tester);
       await tester.pump();
-      await tester.pump(commonDuration);
+      await tester.pump(probeSettleDuration);
       await tester.tap(find.byTooltip('Retry'));
       await tester.pump();
       expect(phaseOf(tester), ProbePhase.failed);

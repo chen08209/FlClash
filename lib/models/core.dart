@@ -162,12 +162,45 @@ abstract class ChangeProxyResult with _$ChangeProxyResult {
 abstract class RouteSnapshot with _$RouteSnapshot {
   const factory RouteSnapshot({
     @JsonKey(name: 'core-epoch') @Default(0) int coreEpoch,
-    @JsonKey(name: 'picks-version') @Default(0) int picksVersion,
-    @Default({}) Map<String, String> picks,
+    @JsonKey(name: 'route-version') @Default(0) int routeVersion,
   }) = _RouteSnapshot;
 
   factory RouteSnapshot.fromJson(Map<String, Object?> json) =>
       _$RouteSnapshotFromJson(json);
+}
+
+/// [exit] is the Core's name for where a connection left, only compared whole.
+@freezed
+abstract class RouteHit with _$RouteHit {
+  const factory RouteHit({
+    @Default('') String host,
+    @Default('') String proxy,
+    @Default('') String exit,
+  }) = _RouteHit;
+
+  factory RouteHit.fromJson(Map<String, Object?> json) =>
+      _$RouteHitFromJson(json);
+}
+
+@freezed
+abstract class CheckRoutesParams with _$CheckRoutesParams {
+  const factory CheckRoutesParams({@Default([]) List<List<RouteHit>> routes}) =
+      _CheckRoutesParams;
+
+  factory CheckRoutesParams.fromJson(Map<String, Object?> json) =>
+      _$CheckRoutesParamsFromJson(json);
+}
+
+@freezed
+abstract class RouteCheck with _$RouteCheck {
+  const factory RouteCheck({
+    @JsonKey(name: 'core-epoch') @Default(0) int coreEpoch,
+    @JsonKey(name: 'route-version') @Default(0) int routeVersion,
+    @Default([]) List<bool> held,
+  }) = _RouteCheck;
+
+  factory RouteCheck.fromJson(Map<String, Object?> json) =>
+      _$RouteCheckFromJson(json);
 }
 
 @freezed
@@ -240,7 +273,9 @@ abstract class OutboundIpResult with _$OutboundIpResult {
     @Default([]) List<String> chains,
     String? error,
     @JsonKey(name: 'core-epoch') @Default(0) int coreEpoch,
-    @JsonKey(name: 'picks-version') @Default(0) int picksVersion,
+    @JsonKey(name: 'route-version') @Default(0) int routeVersion,
+    @Default([]) List<RouteHit> hits,
+    @JsonKey(name: 'node-hits') @Default([]) List<RouteHit> nodeHits,
   }) = _OutboundIpResult;
 
   factory OutboundIpResult.fromJson(Map<String, Object?> json) =>
@@ -269,7 +304,8 @@ abstract class ServiceCheckItem with _$ServiceCheckItem {
     @Default([]) List<String> chains,
     @JsonKey(name: 'checked-at') @Default(0) int checkedAt,
     @JsonKey(name: 'core-epoch') @Default(0) int coreEpoch,
-    @JsonKey(name: 'picks-version') @Default(0) int picksVersion,
+    @JsonKey(name: 'route-version') @Default(0) int routeVersion,
+    @Default([]) List<RouteHit> hits,
   }) = _ServiceCheckItem;
 
   factory ServiceCheckItem.fromJson(Map<String, Object?> json) =>

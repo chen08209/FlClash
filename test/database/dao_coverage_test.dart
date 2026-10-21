@@ -1130,4 +1130,36 @@ void main() {
     expect(iconSets.first.icons, icons);
     expect(iconSets.last.url, 'https://example.com/set.json');
   });
+
+  test('ip qualities DAO keeps fresh records and drops expired ones', () async {
+    const maxAge = Duration(days: 3);
+    const stale = IpQuality(
+      ip: '203.0.113.1',
+      source: IpQualitySource.ipLocate,
+      type: IpType.hosting,
+    );
+    const current = IpQuality(
+      ip: '203.0.113.2',
+      source: IpQualitySource.ipLocate,
+      type: IpType.residential,
+      organization: 'Example Broadband',
+      asn: 64500,
+    );
+    final now = DateTime.now();
+    await database.ipQualities.put(
+      IpQualitiesCompanion.insert(
+        ip: stale.ip,
+        quality: stale,
+        checkedAt: now.subtract(const Duration(days: 4)),
+      ),
+    );
+
+    expect(await database.ipQualitiesDao.fresh(stale.ip, maxAge), equals(null));
+
+    await database.ipQualitiesDao.put(current, now, maxAge);
+
+    final record = await database.ipQualitiesDao.fresh(current.ip, maxAge);
+    expect(record?.quality, current);
+    expect(await database.ipQualities.count.getSingle(), 1);
+  });
 }

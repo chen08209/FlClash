@@ -122,6 +122,18 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.connectionStats,
 ];
 
+/// A phone starts without the VPN switch and the diagnostic cards, which stay
+/// addable. The field default keeps the shared list because it must be const.
+final List<DashboardWidget> platformDefaultDashboardWidgets = system.isAndroid
+    ? const [
+        DashboardWidget.currentOutbound,
+        DashboardWidget.networkSpeed,
+        DashboardWidget.outboundMode,
+        DashboardWidget.profiles,
+        DashboardWidget.proxyGroups,
+      ]
+    : defaultDashboardWidgets;
+
 const _legacyDefaultDashboardWidgets = {
   'networkSpeed',
   'systemProxyButton',
@@ -156,7 +168,7 @@ List<DashboardWidget> dashboardWidgetsFromJson(
   List<dynamic>? dashboardWidgets,
 ) {
   if (dashboardWidgets == null) {
-    return defaultDashboardWidgets;
+    return platformDefaultDashboardWidgets;
   }
   final byName = DashboardWidget.values.asNameMap();
   if (dashboardWidgets.contains(DashboardWidget.currentOutbound.name)) {
@@ -172,14 +184,14 @@ List<DashboardWidget> dashboardWidgetsFromJson(
   };
   if (names.length == _legacyDefaultDashboardWidgets.length &&
       names.containsAll(_legacyDefaultDashboardWidgets)) {
-    return defaultDashboardWidgets;
+    return platformDefaultDashboardWidgets;
   }
   final kept = dashboardWidgets
       .map((e) => _legacyDashboardWidgets[e] ?? byName[e])
       .nonNulls;
   if (kept.isEmpty &&
       !dashboardWidgets.every(_retiredDashboardWidgets.contains)) {
-    return defaultDashboardWidgets;
+    return platformDefaultDashboardWidgets;
   }
   return {DashboardWidget.currentOutbound, ...kept}.toList();
 }
@@ -522,6 +534,9 @@ abstract class Config with _$Config {
       return Config(
         themeProps: defaultThemeProps,
         hotKeyActions: defaultHotKeyActions,
+        appSettingProps: AppSettingProps(
+          dashboardWidgets: platformDefaultDashboardWidgets,
+        ),
       );
     }
     return Config.fromJson(json);

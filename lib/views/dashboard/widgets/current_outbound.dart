@@ -719,7 +719,7 @@ class _StartToggleState extends ConsumerState<_StartToggle>
     duration: _morphDuration,
     value: widget.running ? 1 : 0,
   );
-  late final Animation<double> _progress = CurvedAnimation(
+  late final CurvedAnimation _progress = CurvedAnimation(
     parent: _controller,
     curve: Curves.easeOutBack,
     reverseCurve: Curves.easeInCubic,
@@ -748,6 +748,7 @@ class _StartToggleState extends ConsumerState<_StartToggle>
 
   @override
   void dispose() {
+    _progress.dispose();
     _controller.dispose();
     super.dispose();
   }

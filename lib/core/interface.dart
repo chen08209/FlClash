@@ -68,6 +68,8 @@ mixin CoreInterface {
 
   Future<RouteSnapshot?> watchRoute(bool watch);
 
+  Future<RouteCheck?> checkRoutes(CheckRoutesParams params);
+
   Future<bool> startListener();
 
   Future<bool> stopListener();
@@ -428,6 +430,16 @@ abstract class CoreHandlerInterface with CoreInterface {
       arguments: watch,
     );
     return data == null ? null : RouteSnapshot.fromJson(data);
+  }
+
+  @override
+  Future<RouteCheck?> checkRoutes(CheckRoutesParams params) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.checkRoutes,
+      arguments: params.toJson(),
+      timeout: coreGuardFor(probeTimeoutDuration.inMilliseconds),
+    );
+    return data == null ? null : RouteCheck.fromJson(data);
   }
 
   @override

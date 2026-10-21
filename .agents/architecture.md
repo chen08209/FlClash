@@ -434,16 +434,21 @@ A probe result on the dashboard — the exit IP, a node's exit IP, a service che
 force or is being asked again. The full design is `docs/plans/probe-route-consistency.md`; the mechanism has three
 parts.
 
-- The Core is the source of truth for the route. `core/route.go` keeps a structural epoch (advanced by a config
-  apply, a mode or IPv6 switch, any proxy provider whose version changed, any rule set that loaded new content,
-  whether the user or its own interval updated it, and a start: the listeners coming up and, on Android, the TUN
-  after them) and a `picks` map from each Selector, URLTest and Fallback group
-  to what it resolves to right now, versioned on every change. `handleChangeProxy` re-reads the picks under
-  `selectMu` and answers `ChangeProxyResult{changed}`, so the connection reset only runs when the pick moved. A
-  health check moving a URLTest pick has no mihomo hook, so the picks are polled every second while the host watches
-  (`watchRoute(true)`) and the listeners are up; the same poll notices a provider or rule set that updated in the
-  background. Every probe answer carries the counters it started under; `routeChanged` publishes the state whenever
-  it differs from the last read. A start moves the epoch because `isStartProvider` flips before the Core is told,
+- The Core is the source of truth for the route. `core/route.go` keeps two counters. The epoch is a reset, which
+  no answer outlives: a config apply, an IPv6 switch, and a start (the listeners coming up and, on Android, the TUN
+  after them). The route version is a move, which may send a host to another exit: a Selector, URLTest or Fallback
+  pick changing, a proxy provider whose version changed, a rule set that loaded new content, a GeoIP or GeoSite
+  update, and a mode switch. `handleChangeProxy` re-reads the picks under `selectMu` and answers
+  `ChangeProxyResult{changed}`, so the connection reset only runs when the pick moved. A health check moving a
+  URLTest pick has no mihomo hook, so the picks are polled every second while the host watches (`watchRoute(true)`)
+  and the listeners are up; the same poll notices a provider or rule set that updated in the background, which in
+  this fork includes every provider an apply loads, since `loadProvider` returns before they finish. Every probe answer
+  carries the counters it started under and its hits: each host it dialed, the proxy it was pinned to, and the exit
+  it left through, read off the tracked chain or, for a connection that never reached the tracker, matched again.
+  An exit is the last hop with its server address, or a load balancer, which spreads connections without the route
+  moving. `checkRoutes` matches those hosts again through `tunnel.ResolveRoute`, a fork patch that runs the rules
+  without dialing, and reports per answer whether every exit held. `routeChanged` publishes the counters whenever
+  they differ from the last read. A start resets the epoch because `isStartProvider` flips before the Core is told,
   so the probes sent at the tap leave ahead of the TUN routes and over DNS connections `handleStartListener` resets,
   and an Android start acknowledges before the VPN exists. Outbound IP lookups are cancelled by the first lookup
   under a newer epoch, which frees their probe slots; lookups under one epoch are left alone, since the routed
@@ -458,10 +463,18 @@ parts.
   itself when the event listener is cleared, because an engine that goes away never sends `watchRoute(false)`.
 - `RoutedProbe` in `lib/providers/routed_probe.dart` is the one cache both `OutboundIpProbe` and `ServiceStatus` mix
   in. A widget `watch`es the target it shows and `unwatch`es on the way out; only watched targets are probed, one
-  request in flight per target. An answer is stamped with the Core's counters and the host state at launch, and
-  `RouteState.isFresh` walks its chain against the picks, so a selection change only invalidates results that went
-  through the changed group while an epoch change invalidates everything. A stale watched entry is asked again at
-  once; an unwatched one is dropped. Nothing launches while the app is hidden: what falls due waits for it to be shown.
+  request in flight per target. An answer is stamped with the Core's counters, its hits and the host state at
+  launch. A reset (`RouteState.hasMovedSince`: the Core epoch, the host epoch or `proxied`) invalidates everything:
+  a stale watched entry shows as checking at once and is asked again after `probeMoveSettleDuration`, since a start
+  moves it three times within about 150 ms (`proxied`, then the listeners, then the Android TUN) and the user is
+  watching for the new address. A new route version keeps every answer on show and, once `probeSettleDuration` has
+  passed the next pick poll, sends their hits to `checkRoutes` in one call; only an answer whose exit moved is
+  dropped and asked again, and one that held takes the checked version. An answer that lands under an older version
+  than the state is held back as checking until its own check returns, so it never shows and then flips. An ask
+  that is not the user's or a reset's waits out `probeThrottleDuration` since the target's last probe, so a config
+  load whose providers, rule sets and url-test picks land over a few seconds moves an exit at most one probe more.
+  A `refresh` waits for neither, and an unwatched entry whose exit moved is dropped. Nothing launches or checks
+  while the app is hidden: what falls due waits for it to be shown.
   Failures wait for `retry`, `refresh`, or the app resuming (`markResumed`), and
   a service check that timed out is a failure that still shows its status. `refresh` is the user's own request and
   runs for unwatched targets too: the service sheet reads the cache and never watches its rows, because one service
@@ -469,8 +482,10 @@ parts.
 
 `ipQuality(ip)` in `lib/providers/ip_quality.dart` is keyed by the outbound IP found, so a route change reaches it as
 a new IP and an unchanged IP reuses the result. A lookup races its sources the way the IP check does and takes the
-first one that determines a type. A success is kept for the session with `ref.keepAlive()`; a failure is not cached,
-and Riverpod's automatic retry is off because a retry after an HTTP 429 spends the same per-outbound-IP quota again.
+first one that determines a type. A success is saved to the `IpQualities` table and answers for that IP, across
+restarts, until `ipQualityMaxAge` (three days) has passed; a shown result is asked again when it expires,
+and invalidating the provider (the sheet's check again) skips the saved record. A failure is not saved, and Riverpod's
+automatic retry is off because a retry after an HTTP 429 spends the same per-outbound-IP quota again.
 
 ## UI Layer
 
@@ -1278,6 +1293,7 @@ Tables:
 - `IconRecords` (`icon_records`)
 - `IconSets` (`icon_sets`)
 - `ClashProviders` (`clash_providers`)
+- `IpQualities` (`ip_qualities`): a cache of IP quality lookups that backups carry and a restore never reads.
 
 `Profiles.type` is `file`, `url` or `custom`, fixed when the profile is created. A rule belongs to whoever its
 `profile_id` names: no profile makes it global, a file or url profile's rules are what its standard extension adds, and

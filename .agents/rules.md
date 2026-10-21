@@ -312,8 +312,9 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
 - Every `BroadcastReceiver.goAsync()` path must finish its `PendingResult` exactly once. A watchdog may release the
   broadcast lease, but must not cancel, reverse, or otherwise redefine the service operation.
 - Anything that probes through the outbound route is a `RoutedProbe` judged against `routeTrackerProvider` (Route
-  Consistency in `.agents/architecture.md`); the Core stamps every answer and publishes its picks, so do not add a
-  change signal, a trigger counter, or a `coreStatusProvider` watch of your own.
+  Consistency in `.agents/architecture.md`); the Core stamps every answer with its counters and hits and checks the
+  hits again on a move, so do not add a change signal, a trigger counter, or a `coreStatusProvider` watch of your
+  own.
 - Presentation smoothing such as `CoreStatusButton`'s connecting hold must remain local display state. It must not delay or
   overwrite `coreStatusProvider`, and a real failure must bypass/cancel the hold immediately.
 - Safe mode (`SAFE_MODE` define, see the safe mode section of `.agents/architecture.md`) is consulted by each host

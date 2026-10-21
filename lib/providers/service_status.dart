@@ -37,8 +37,8 @@ class ServiceStatus extends _$ServiceStatus
         target: ProbeAnswer(
           value: check,
           coreEpoch: check.coreEpoch,
-          picksVersion: check.picksVersion,
-          chains: check.chains,
+          routeVersion: check.routeVersion,
+          hits: check.hits,
         ),
     };
   }

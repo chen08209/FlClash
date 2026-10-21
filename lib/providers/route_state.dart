@@ -20,8 +20,7 @@ part 'generated/route_state.g.dart';
 class RouteState {
   const RouteState({
     this.coreEpoch = 0,
-    this.picksVersion = 0,
-    this.picks = const {},
+    this.routeVersion = 0,
     this.hostEpoch = 0,
     this.proxied = false,
     this.synced = false,
@@ -30,8 +29,7 @@ class RouteState {
   });
 
   final int coreEpoch;
-  final int picksVersion;
-  final Map<String, String> picks;
+  final int routeVersion;
   final int hostEpoch;
   final bool proxied;
   final bool synced;
@@ -40,8 +38,7 @@ class RouteState {
 
   RouteState copyWith({
     int? coreEpoch,
-    int? picksVersion,
-    Map<String, String>? picks,
+    int? routeVersion,
     int? hostEpoch,
     bool? proxied,
     bool? synced,
@@ -50,8 +47,7 @@ class RouteState {
   }) {
     return RouteState(
       coreEpoch: coreEpoch ?? this.coreEpoch,
-      picksVersion: picksVersion ?? this.picksVersion,
-      picks: picks ?? this.picks,
+      routeVersion: routeVersion ?? this.routeVersion,
       hostEpoch: hostEpoch ?? this.hostEpoch,
       proxied: proxied ?? this.proxied,
       synced: synced ?? this.synced,
@@ -60,39 +56,22 @@ class RouteState {
     );
   }
 
-  /// A chain stays fresh while every group on it still picks the hop below
-  /// it; groups the picks do not name, load balancers among them, cannot
-  /// contradict it. An answer with no chain is tied to the selection version
-  /// it was made under instead.
-  bool isFresh(RouteStamp stamp) {
-    if (!synced ||
-        stamp.coreEpoch != coreEpoch ||
-        stamp.hostEpoch != hostEpoch ||
-        stamp.proxied != proxied) {
-      return false;
-    }
-    final chains = stamp.chains;
-    if (chains.isEmpty) {
-      return stamp.picksVersion == picksVersion;
-    }
-    for (var i = chains.length - 1; i >= 1; i--) {
-      final next = picks[chains[i]];
-      if (next != null && next != chains[i - 1]) {
-        return false;
-      }
-    }
-    return true;
-  }
+  bool isFresh(RouteStamp stamp) =>
+      synced && !hasMovedSince(stamp) && stamp.routeVersion == routeVersion;
+
+  bool hasMovedSince(RouteStamp stamp) =>
+      stamp.coreEpoch != coreEpoch ||
+      stamp.hostEpoch != hostEpoch ||
+      stamp.proxied != proxied;
 
   bool isBehind(RouteStamp stamp) =>
-      stamp.coreEpoch > coreEpoch || stamp.picksVersion > picksVersion;
+      stamp.coreEpoch > coreEpoch || stamp.routeVersion > routeVersion;
 
   @override
   bool operator ==(Object other) =>
       other is RouteState &&
       other.coreEpoch == coreEpoch &&
-      other.picksVersion == picksVersion &&
-      mapEquals(other.picks, picks) &&
+      other.routeVersion == routeVersion &&
       other.hostEpoch == hostEpoch &&
       other.proxied == proxied &&
       other.synced == synced &&
@@ -102,10 +81,7 @@ class RouteState {
   @override
   int get hashCode => Object.hash(
     coreEpoch,
-    picksVersion,
-    Object.hashAllUnordered(
-      picks.entries.map((entry) => Object.hash(entry.key, entry.value)),
-    ),
+    routeVersion,
     hostEpoch,
     proxied,
     synced,
@@ -115,39 +91,47 @@ class RouteState {
 }
 
 /// The route a probe answer was produced under: the Core's counters when it
-/// started, the host's when it was sent, and the chain it went through.
+/// started, the host's when it was sent, and the connections it made.
 @immutable
 class RouteStamp {
   const RouteStamp({
     required this.coreEpoch,
-    required this.picksVersion,
+    required this.routeVersion,
     required this.hostEpoch,
     required this.proxied,
-    this.chains = const [],
+    this.hits = const [],
   });
 
   final int coreEpoch;
-  final int picksVersion;
+  final int routeVersion;
   final int hostEpoch;
   final bool proxied;
-  final List<String> chains;
+  final List<RouteHit> hits;
+
+  RouteStamp verifiedAt(int routeVersion) => RouteStamp(
+    coreEpoch: coreEpoch,
+    routeVersion: routeVersion,
+    hostEpoch: hostEpoch,
+    proxied: proxied,
+    hits: hits,
+  );
 
   @override
   bool operator ==(Object other) =>
       other is RouteStamp &&
       other.coreEpoch == coreEpoch &&
-      other.picksVersion == picksVersion &&
+      other.routeVersion == routeVersion &&
       other.hostEpoch == hostEpoch &&
       other.proxied == proxied &&
-      listEquals(other.chains, chains);
+      listEquals(other.hits, hits);
 
   @override
   int get hashCode => Object.hash(
     coreEpoch,
-    picksVersion,
+    routeVersion,
     hostEpoch,
     proxied,
-    Object.hashAll(chains),
+    Object.hashAll(hits),
   );
 }
 
@@ -221,8 +205,7 @@ class RouteTracker extends _$RouteTracker {
   void applySnapshot(RouteSnapshot snapshot) {
     state = state.copyWith(
       coreEpoch: snapshot.coreEpoch,
-      picksVersion: snapshot.picksVersion,
-      picks: snapshot.picks,
+      routeVersion: snapshot.routeVersion,
       hostEpoch: state.synced ? state.hostEpoch : state.hostEpoch + 1,
       synced: true,
       live: true,

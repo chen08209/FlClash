@@ -423,19 +423,14 @@ void main() {
     coreEventManager.sendEvent(
       const CoreEvent(
         type: CoreEventType.routeChanged,
-        data: {
-          'core-epoch': 7,
-          'picks-version': 42,
-          'picks': {'Proxy': 'HK-01'},
-        },
+        data: {'core-epoch': 7, 'route-version': 42},
       ),
     );
     await tester.pump();
 
     final route = container.read(routeTrackerProvider);
     expect(route.coreEpoch, 7);
-    expect(route.picksVersion, 42);
-    expect(route.picks, {'Proxy': 'HK-01'});
+    expect(route.routeVersion, 42);
     expect(route.synced, isTrue);
 
     await tester.pumpWidget(const SizedBox.shrink());

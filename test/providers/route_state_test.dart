@@ -33,69 +33,45 @@ class _RunStateReaderState extends ConsumerState<_RunStateReader> {
   Widget build(BuildContext context) => const SizedBox.shrink();
 }
 
-const _picks = {'Proxy': 'Nested', 'Nested': 'HK-01', 'Auto': 'JP-02'};
-
 const _state = RouteState(
   coreEpoch: 3,
-  picksVersion: 5,
-  picks: _picks,
+  routeVersion: 5,
   hostEpoch: 2,
   proxied: true,
   synced: true,
 );
 
-const _snapshot = RouteSnapshot(
-  coreEpoch: 3,
-  picksVersion: 1,
-  picks: {'Proxy': 'HK-01'},
-);
+const _snapshot = RouteSnapshot(coreEpoch: 3, routeVersion: 1);
 
 RouteStamp _stamp({
   int coreEpoch = 3,
-  int picksVersion = 5,
+  int routeVersion = 5,
   int hostEpoch = 2,
   bool proxied = true,
-  List<String> chains = const ['HK-01', 'Nested', 'Proxy'],
 }) => RouteStamp(
   coreEpoch: coreEpoch,
-  picksVersion: picksVersion,
+  routeVersion: routeVersion,
   hostEpoch: hostEpoch,
   proxied: proxied,
-  chains: chains,
+  hits: const [RouteHit(host: 'example.com:443', exit: 'HK-01')],
 );
 
 void main() {
   group('isFresh', () {
-    test('holds while every group on the chain still picks the hop below', () {
+    test('holds under the route version it was made or checked at', () {
       expect(_state.isFresh(_stamp()), isTrue);
+      expect(_state.isFresh(_stamp(routeVersion: 4)), isFalse);
+      expect(_state.isFresh(_stamp(routeVersion: 4).verifiedAt(5)), isTrue);
     });
 
-    test('fails once a group on the chain picks another hop', () {
-      final moved = _state.copyWith(picks: {..._picks, 'Nested': 'HK-02'});
-      expect(moved.isFresh(_stamp()), isFalse);
-    });
-
-    test('ignores a group the chain did not go through', () {
-      final moved = _state.copyWith(picks: {..._picks, 'Auto': 'JP-03'});
-      expect(moved.isFresh(_stamp()), isTrue);
-    });
-
-    test('ignores a group the picks do not name', () {
-      final balanced = _state.copyWith(picks: {'Proxy': 'Balance'});
-      expect(
-        balanced.isFresh(_stamp(chains: ['HK-01', 'Balance', 'Proxy'])),
-        isTrue,
-      );
-    });
-
-    test('ties an answer without a chain to the selection version', () {
-      expect(_state.isFresh(_stamp(chains: [])), isTrue);
-      expect(_state.isFresh(_stamp(chains: [], picksVersion: 4)), isFalse);
+    test('a newer route version is no move', () {
+      expect(_state.hasMovedSince(_stamp(routeVersion: 4)), isFalse);
     });
 
     test('fails on either epoch', () {
       expect(_state.isFresh(_stamp(coreEpoch: 4)), isFalse);
       expect(_state.isFresh(_stamp(hostEpoch: 1)), isFalse);
+      expect(_state.hasMovedSince(_stamp(coreEpoch: 4)), isTrue);
     });
 
     test('fails across the proxy switch', () {
@@ -111,7 +87,7 @@ void main() {
     expect(_state.isBehind(_stamp()), isFalse);
     expect(_state.isBehind(_stamp(coreEpoch: 2)), isFalse);
     expect(_state.isBehind(_stamp(coreEpoch: 4)), isTrue);
-    expect(_state.isBehind(_stamp(picksVersion: 6)), isTrue);
+    expect(_state.isBehind(_stamp(routeVersion: 6)), isTrue);
   });
 
   group('RouteTracker', () {
@@ -201,7 +177,7 @@ void main() {
         final state = stateOf(container);
         expect(state.synced, isTrue);
         expect(state.coreEpoch, 3);
-        expect(state.picks, {'Proxy': 'HK-01'});
+        expect(state.routeVersion, 1);
         expect(state.hostEpoch, 1);
 
         tracker.detach();
@@ -355,17 +331,12 @@ void main() {
         await pumpEventQueue();
 
         tracker.applySnapshot(
-          const RouteSnapshot(
-            coreEpoch: 4,
-            picksVersion: 2,
-            picks: {'Proxy': 'HK-02'},
-          ),
+          const RouteSnapshot(coreEpoch: 4, routeVersion: 2),
         );
 
         final state = stateOf(container);
         expect(state.coreEpoch, 4);
-        expect(state.picksVersion, 2);
-        expect(state.picks, {'Proxy': 'HK-02'});
+        expect(state.routeVersion, 2);
         expect(state.hostEpoch, 1);
       },
     );

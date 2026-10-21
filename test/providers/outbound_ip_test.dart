@@ -17,7 +17,7 @@ const _answer = OutboundIpResult(
   body: 'ip=2.2.2.2\nloc=US\n',
   chains: ['HK-01'],
   coreEpoch: 1,
-  picksVersion: 1,
+  routeVersion: 1,
 );
 
 void main() {
@@ -33,7 +33,7 @@ void main() {
         routeTrackerProvider.overrideWithBuild(
           (_, _) => RouteState(
             coreEpoch: 1,
-            picksVersion: 1,
+            routeVersion: 1,
             hostEpoch: 1,
             proxied: proxied,
             synced: true,
@@ -100,9 +100,17 @@ void main() {
       (_) async => const OutboundIpResult(
         url: 'https://www.cloudflare.com/cdn-cgi/trace',
         body: 'ip=2.2.2.2\nloc=US\n',
-        chains: ['HK-01', 'Proxy'],
+        chains: ['HK-01', 'Balance', 'Proxy'],
         coreEpoch: 1,
-        picksVersion: 1,
+        routeVersion: 1,
+        hits: [RouteHit(host: 'www.cloudflare.com:443', exit: 'Balance')],
+        nodeHits: [
+          RouteHit(
+            host: 'www.cloudflare.com:443',
+            proxy: 'HK-01',
+            exit: 'HK-01',
+          ),
+        ],
       ),
     );
     final container = build();
@@ -117,6 +125,9 @@ void main() {
     final entry = container.read(outboundIpProbeProvider).entryOf('HK-01');
     expect(entry.phase, ProbePhase.fresh);
     expect(entry.value?.ip, '2.2.2.2');
+    expect(entry.stamp?.hits, const [
+      RouteHit(host: 'www.cloudflare.com:443', proxy: 'HK-01', exit: 'HK-01'),
+    ]);
   });
 
   test('a Core error is a failure until it is refreshed', () async {
@@ -124,7 +135,7 @@ void main() {
       (_) async => const OutboundIpResult(
         error: 'timeout',
         coreEpoch: 1,
-        picksVersion: 1,
+        routeVersion: 1,
       ),
     );
     final container = build();

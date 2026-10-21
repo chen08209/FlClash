@@ -211,6 +211,10 @@ class CoreController {
     return _interface.watchRoute(watch);
   }
 
+  Future<RouteCheck?> checkRoutes(CheckRoutesParams params) {
+    return _interface.checkRoutes(params);
+  }
+
   Future<List<TrackerInfo>> getConnections() async {
     return _interface.getConnections();
   }
