@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -151,7 +150,7 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
 
   Future<void> _handleEditorSave(
     String title,
-    String content, {
+    EditorContent content, {
     ClashProvider? provider,
   }) async {
     final appLocalizations = context.appLocalizations;
@@ -175,7 +174,11 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
     }
     final next =
         provider?.copyWith(label: label) ?? ClashProvider.create(label: label);
-    if (!await _put(next, previous: provider, content: utf8.encode(content))) {
+    if (!await _put(
+      next,
+      previous: provider,
+      content: await content.readBytes(),
+    )) {
       return;
     }
     if (mounted) {
@@ -185,13 +188,9 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
 
   Future<bool> _handleEditorPop(
     String title,
-    String content,
-    String raw, {
+    EditorContent content, {
     ClashProvider? provider,
   }) async {
-    if (content == raw && title == (provider?.label ?? '')) {
-      return true;
-    }
     final res = await dialogs.showMessage(
       message: TextSpan(text: context.appLocalizations.saveChanges),
     );
@@ -206,19 +205,20 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
   }
 
   void _handleToEditor([ClashProvider? provider]) {
-    late final String raw;
     unawaited(
       BaseNavigator.push(
         context,
         EditorPage(
           titleEditable: true,
           title: provider?.label ?? '',
-          load: () async => raw = (await provider?.content) ?? '',
+          load: () async => provider == null
+              ? CodeForgeDocument.fromText('')
+              : openEditorFile(await provider.path),
           schema: EditorSchema.provider,
           onSave: (_, title, content) =>
               _handleEditorSave(title, content, provider: provider),
           onPop: (_, title, content) =>
-              _handleEditorPop(title, content, raw, provider: provider),
+              _handleEditorPop(title, content, provider: provider),
         ),
       ),
     );
@@ -232,8 +232,10 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
         EditorPage(
           title: provider.label,
           load: () async => provider.isTextContent
-              ? (await provider.content) ?? ''
-              : core.dumpRuleSet(await provider.path),
+              ? openEditorFile(await provider.path)
+              : CodeForgeDocument.fromText(
+                  await core.dumpRuleSet(await provider.path),
+                ),
           schema: EditorSchema.provider,
         ),
       ),

@@ -795,8 +795,6 @@ extension ClashProviderExt on ClashProvider {
 
   Future<FileInfo?> get fileInfo async => File(await path).getFileInfo();
 
-  Future<String?> get content async => readTextFileTask(await path);
-
   ClashProvider withInfo(RuleSetInfo info) {
     return copyWith(behavior: info.behavior, format: info.format);
   }

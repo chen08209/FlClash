@@ -206,7 +206,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
   Future<void> _handleEditorSave(
     BuildContext _,
     String title,
-    String content, {
+    EditorContent content, {
     Script? script,
   }) async {
     final appLocalizations = context.appLocalizations;
@@ -230,7 +230,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     }
     final newScript =
         await (script?.copyWith(label: label) ?? Script.create(label: label))
-            .save(content);
+            .save(await content.readText());
     _scriptsAction.putScript(newScript);
     if (mounted) {
       Navigator.of(context).pop();
@@ -240,14 +240,10 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
   Future<bool> _handleEditorPop(
     BuildContext _,
     String title,
-    String content,
-    String raw, {
+    EditorContent content, {
     Script? script,
   }) async {
     final appLocalizations = context.appLocalizations;
-    if (content == raw && title == (script?.label ?? '')) {
-      return true;
-    }
     final res = await dialogs.showMessage(
       message: TextSpan(text: appLocalizations.saveChanges),
     );
@@ -263,7 +259,6 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
   }
 
   void _handleToEditor([Script? script]) {
-    late final String raw;
     unawaited(
       BaseNavigator.push(
         context,
@@ -273,16 +268,12 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
           onSave: (context, title, content) =>
               _handleEditorSave(context, title, content, script: script),
           onPop: (context, title, content) {
-            return _handleEditorPop(
-              context,
-              title,
-              content,
-              raw,
-              script: script,
-            );
+            return _handleEditorPop(context, title, content, script: script);
           },
           language: Language.javaScript,
-          load: () async => raw = (await script?.content) ?? scriptTemplate,
+          load: () async => script == null
+              ? CodeForgeDocument.fromText(scriptTemplate)
+              : openEditorFile(await script.path, ifMissing: scriptTemplate),
         ),
       ),
     );

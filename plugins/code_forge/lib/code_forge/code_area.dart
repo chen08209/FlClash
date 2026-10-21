@@ -45,6 +45,10 @@ class CodeForge extends StatefulWidget {
   /// The controller for managing undo/redo operations.
   final UndoRedoController? undoController;
 
+  /// Scrolls the text vertically, read once as the editor mounts; the host
+  /// owns it. An internal one is created when null.
+  final ScrollController? verticalScrollController;
+
   /// The syntax highlighting theme as a map of token types to [TextStyle].
   final Map<String, TextStyle> editorTheme;
 
@@ -137,6 +141,7 @@ class CodeForge extends StatefulWidget {
     required this.suggestionPopupBuilder,
     this.undoController,
     this.findController,
+    this.verticalScrollController,
     this.textStyle,
     this.innerPadding,
     this.readOnly = false,

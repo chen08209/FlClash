@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/services.dart' show TextRange;
 
 /// The document and the rope count Unicode scalar values; Dart strings,
@@ -30,7 +32,8 @@ extension TextOffsets on String {
     return substring(from, end == null ? length : toUtf16Offset(end));
   }
 
-  List<TextRange> toScalarRanges(Iterable<TextRange> ranges) {
+  /// Each range's start and end in turn.
+  Int32List toScalarRanges(Iterable<TextRange> ranges) {
     var utf16 = 0;
     var scalar = 0;
     int advance(int target) {
@@ -45,10 +48,9 @@ extension TextOffsets on String {
       return scalar;
     }
 
-    return [
-      for (final range in ranges)
-        TextRange(start: advance(range.start), end: advance(range.end)),
-    ];
+    return Int32List.fromList([
+      for (final range in ranges) ...[advance(range.start), advance(range.end)],
+    ]);
   }
 
   bool isLowSurrogateAt(int index) =>

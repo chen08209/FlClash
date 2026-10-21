@@ -171,7 +171,7 @@ void main() {
     expect(finder.matchCount, 1);
 
     finder.replaceInputController.text = '53';
-    finder.replaceAll();
+    await finder.replaceAll();
     await settle(tester, 2);
     expect(controller.getLineText(7), '  - DST-PORT,53,DIRECT');
     expect(controller.getLineText(4), '    port: 8080');
@@ -194,7 +194,7 @@ void main() {
     expect(finder.matchCount, 2);
 
     finder.replaceInputController.text = '    listen';
-    finder.replaceAll();
+    await finder.replaceAll();
     await settle(tester, 2);
     expect(controller.getLineText(2), '    listen: 80');
     expect(controller.getLineText(4), '    listen: 8080');
@@ -256,7 +256,7 @@ void main() {
     testWidgets('is kept by replaceAll', (tester) async {
       final (controller, finder) = await composeAtFirstMatch(tester);
 
-      finder.replaceAll();
+      await finder.replaceAll();
       await settle(tester, 2);
       expect(controller.isComposingActive, isFalse);
       expect(controller.getLineText(2), '    port: s80');
@@ -336,4 +336,74 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(finder.matchCount, 1);
   });
+
+  testWidgets('a long text is searched and rewritten off the UI isolate', (
+    tester,
+  ) async {
+    final text = 'rules:\n${'  - DOMAIN-SUFFIX,example.com,Proxy\n' * 5000}';
+    final undo = UndoRedoController();
+    addTearDown(undo.dispose);
+    final (controller, finder) = await pumpFind(
+      tester,
+      undoController: undo,
+      text: text,
+    );
+    Future<void> settleUntil(bool Function() done) async {
+      for (var i = 0; i < 100 && !done(); i++) {
+        await settle(tester, 1);
+      }
+    }
+
+    finder.isActive = true;
+    finder.find('example.com');
+    expect(finder.matchCount, 0);
+    await settleUntil(() => finder.matchCount > 0);
+    expect(finder.matchCount, 5000);
+    expect(controller.searchHighlights, hasLength(5000));
+    expect(controller.searchHighlights.where((h) => h.isCurrentMatch), [
+      isA<SearchHighlight>().having((h) => h.start, 'start', 25),
+    ]);
+
+    finder.find('Proxy');
+    finder.isActive = false;
+    await settle(tester, 4);
+    expect(controller.searchHighlights, isEmpty);
+    finder.isActive = true;
+    finder.find('example.com');
+    await settleUntil(() => finder.matchCount > 0);
+
+    finder.replaceInputController.text = 'example.org';
+    await tester.runAsync(finder.replaceAll);
+    await settleUntil(() => finder.matchCount == 0);
+    expect(controller.text, text.replaceAll('example.com', 'example.org'));
+
+    undo.undo();
+    await settle(tester, 2);
+    expect(controller.text, text);
+    expect(controller.isModified, isFalse);
+  });
+
+  testWidgets(
+    'replace ignores matches of a query that was switched away from',
+    (tester) async {
+      final text = 'rules:\n${'  - DOMAIN-SUFFIX,example.com,Proxy\n' * 5000}';
+      final (controller, finder) = await pumpFind(tester, text: text);
+      Future<void> settleUntil(bool Function() done) async {
+        for (var i = 0; i < 100 && !done(); i++) {
+          await settle(tester, 1);
+        }
+      }
+
+      finder.isActive = true;
+      finder.find('example.com');
+      await settleUntil(() => finder.matchCount > 0);
+      finder.find('Proxy');
+      expect(finder.matchCount, 0);
+
+      finder.replaceInputController.text = 'example.org';
+      finder.replace();
+      await settle(tester, 2);
+      expect(controller.text, text);
+    },
+  );
 }
