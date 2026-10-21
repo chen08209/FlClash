@@ -470,8 +470,8 @@ class OverrideView<K extends OverrideKey, M> extends ConsumerWidget {
       content: raw,
       schema: quickEdit.schema,
       readOnly: false,
-      onPop: (_, _, content) =>
-          _handleQuickEditPop(ref, quickEdit, content, raw),
+      onPop: (_, _, content) async =>
+          _handleQuickEditPop(ref, quickEdit, await content.readText(), raw),
     );
     return sheetNavigatorOf(context).push(
       context.isMobileView
