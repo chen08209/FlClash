@@ -1,4 +1,3 @@
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
@@ -56,11 +55,11 @@ Future<Widget> _buildScrollbar(
 
 void main() {
   group('BaseScrollBehavior', () {
-    test('enables mouse dragging only on desktop', () {
+    test('scrolls by dragging with a mouse too, as on an Android TV', () {
       final devices = const BaseScrollBehavior().dragDevices;
       expect(devices, contains(PointerDeviceKind.touch));
       expect(devices, contains(PointerDeviceKind.trackpad));
-      expect(devices.contains(PointerDeviceKind.mouse), system.isDesktop);
+      expect(devices, contains(PointerDeviceKind.mouse));
     });
 
     testWidgets('leaves horizontal scrollables unwrapped', (tester) async {

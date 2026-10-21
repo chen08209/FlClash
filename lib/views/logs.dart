@@ -157,7 +157,7 @@ class _LogsViewState extends ConsumerState<LogsView>
                     controller: _scrollController,
                     padding: EdgeInsets.only(
                       top: context.contentTopPadding,
-                      bottom: 16 + BottomInsetScope.of(context),
+                      bottom: 16 + context.bottomInset,
                     ),
                     itemCount: logs.length,
                     extentEstimation: recordListExtentEstimation,

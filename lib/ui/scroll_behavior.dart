@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 
@@ -26,8 +25,7 @@ class BaseScrollBehavior extends MaterialScrollBehavior {
     PointerDeviceKind.stylus,
     PointerDeviceKind.invertedStylus,
     PointerDeviceKind.trackpad,
-    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux)
-      PointerDeviceKind.mouse,
+    PointerDeviceKind.mouse,
     PointerDeviceKind.unknown,
   };
 

@@ -765,7 +765,7 @@ class ServiceStatusSheet extends ConsumerWidget {
             child: SizedBox(height: context.contentTopPadding),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + context.bottomInset),
             sliver: SliverList.builder(
               itemCount: targets.length,
               itemBuilder: (context, index) {
@@ -851,7 +851,7 @@ class ServiceManageView extends ConsumerWidget {
                 commonProxyDecorator(itemAt(index), index, animation),
             onReorderItem: reorder,
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          SliverToBoxAdapter(child: SizedBox(height: 16 + context.bottomInset)),
         ],
       ),
     );

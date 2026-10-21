@@ -101,7 +101,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
             left: 16,
             right: 16,
             top: context.appBarInset,
-            bottom: 20 + BottomInsetScope.of(context),
+            bottom: 20 + context.bottomInset,
           ),
         ),
       ),

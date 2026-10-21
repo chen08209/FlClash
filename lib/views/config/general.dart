@@ -436,7 +436,7 @@ class GeneralView extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(
           horizontal: 16,
-        ).copyWith(top: context.appBarInset, bottom: 16),
+        ).copyWith(top: context.appBarInset, bottom: 16 + context.bottomInset),
         children: [
           generateSection(
             title: appLocalizations.startupAndBackground,

@@ -27,6 +27,7 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+/.widget_preview/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages

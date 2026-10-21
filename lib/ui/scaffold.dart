@@ -734,6 +734,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
     final sortableBody = SortModeScope(sorting: _sorting, child: widget.body);
     final body = SafeArea(
       top: !barFloats,
+      bottom: false,
       child: ValueListenableBuilder(
         valueListenable: _keywordsNotifier,
         builder: (context, keywords, _) {
