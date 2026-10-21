@@ -224,7 +224,10 @@ ParsedInput<MapEntry<String, String>> parseMapInput(
   Set<String> existingKeys = const {},
   int? keyMaxLength,
   int? valueMaxLength,
+  bool ignoreKeyCase = false,
 }) {
+  String foldKey(String key) => ignoreKeyCase ? key.toLowerCase() : key;
+  final takenKeys = existingKeys.map(foldKey).toSet();
   final entries = <MapEntry<String, String>>[];
   final issues = <InputIssue>[];
   final seen = <String>{};
@@ -266,10 +269,11 @@ ParsedInput<MapEntry<String, String>> parseMapInput(
       );
       continue;
     }
-    if (!seen.add(entry.key)) {
+    final key = foldKey(entry.key);
+    if (!seen.add(key)) {
       continue;
     }
-    if (existingKeys.contains(entry.key)) {
+    if (takenKeys.contains(key)) {
       skippedExisting++;
       continue;
     }

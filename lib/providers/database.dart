@@ -202,8 +202,16 @@ class Profiles extends _$Profiles {
   /// A new provider label follows into custom profiles whatever path set it.
   void put(Profile profile) {
     final newProfile = labeled(profile);
-    final previousLabel = state.getProfile(profile.id)?.realLabel;
-    var next = state.copyAndPut(newProfile, (item) => item.id == newProfile.id);
+    final previous = state.getProfile(profile.id);
+    final previousLabel = previous?.realLabel;
+    // A new profile goes where the query sorts it, so the read-back after the
+    // write does not move it.
+    var next = previous == null
+        ? ([...state]..insert(
+            lowerBound(state, newProfile, compare: ProfilesDao.compare),
+            newProfile,
+          ))
+        : state.copyAndPut(newProfile, (item) => item.id == newProfile.id);
     if (newProfile.type == ProfileType.custom ||
         previousLabel == null ||
         previousLabel == newProfile.realLabel) {

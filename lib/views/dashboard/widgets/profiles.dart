@@ -8,7 +8,6 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
-import 'package:fl_clash/views/profiles/add.dart';
 import 'package:fl_clash/views/profiles/custom/custom.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -46,7 +45,7 @@ String _expiryText(BuildContext context, DateTime expiry) =>
 void _openProfile(BuildContext context, Profile? profile) {
   switch (profile) {
     case null:
-      showAddProfilePage(context);
+      showProfilesSheet(context);
     case Profile(type: ProfileType.custom, :final id):
       showCustomProfileSheet(context, id);
     case _:

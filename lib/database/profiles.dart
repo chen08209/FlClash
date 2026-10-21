@@ -101,6 +101,14 @@ class ProfilesDao extends DatabaseAccessor<Database> with _$ProfilesDaoMixin {
     );
   }
 
+  /// The order [query] reads profiles back in.
+  static int compare(Profile a, Profile b) => switch ((a.order, b.order)) {
+    (final x?, final y?) when x != y => x.compareTo(y),
+    (null, _?) => 1,
+    (_?, null) => -1,
+    _ => a.id.compareTo(b.id),
+  };
+
   Future<void> setAll(Iterable<Profile> profiles) async {
     await batch((b) async {
       setAllWithBatch(b, profiles);

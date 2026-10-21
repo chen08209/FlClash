@@ -458,23 +458,19 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1));
     }
 
-    testWidgets('replaces the add page and opens under a default name', (
-      tester,
-    ) async {
+    Widget addMenu() => AddProfileMenu(
+      builder: (open) =>
+          FilledButton(onPressed: open, child: const Text('home')),
+    );
+
+    testWidgets('opens from the add menu under a default name', (tester) async {
       setViewport(tester);
       final container = buildContainer(const []);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: TestApp(
-            child: Builder(
-              builder: (context) => FilledButton(
-                onPressed: () => showAddProfilePage(context),
-                child: const Text('home'),
-              ),
-            ),
-          ),
+          child: TestApp(child: addMenu()),
         ),
       );
       await tester.tap(find.text('home'));
@@ -485,7 +481,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(TextFormField), findsNothing);
-      expect(find.byType(AddProfileView, skipOffstage: false), findsNothing);
       expect(editor, findsOneWidget);
       expect(container.read(profilesProvider).single.label, l.unnamed);
 
@@ -494,7 +489,7 @@ void main() {
       expect(container.read(profilesProvider), isEmpty);
     });
 
-    testWidgets('opens in the tab the add sheet came from on desktop', (
+    testWidgets('opens in the tab the add menu came from on desktop', (
       tester,
     ) async {
       setViewport(tester);
@@ -507,16 +502,7 @@ void main() {
           child: TestApp(
             child: Navigator(
               key: tabNavigator,
-              pages: [
-                MaterialPage(
-                  child: Builder(
-                    builder: (context) => FilledButton(
-                      onPressed: () => showAddProfilePage(context),
-                      child: const Text('home'),
-                    ),
-                  ),
-                ),
-              ],
+              pages: [MaterialPage(child: addMenu())],
               onDidRemovePage: (_) {},
             ),
           ),
@@ -526,21 +512,8 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(find.text(currentAppLocalizations.customProfile));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
-
-      expect(find.byType(AddProfileView), findsOneWidget);
-      expect(editor, findsNothing);
-      expect(container.read(profilesProvider), isEmpty);
-
-      await tester.pumpAndSettle();
-      expect(find.byType(AddProfileView, skipOffstage: false), findsNothing);
-      expect(editor, findsNothing);
-
-      await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
 
-      expect(find.byType(AddProfileView, skipOffstage: false), findsNothing);
       expect(
         find.descendant(of: find.byKey(tabNavigator), matching: editor),
         findsOneWidget,

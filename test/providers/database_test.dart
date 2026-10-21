@@ -168,6 +168,31 @@ void main() {
       expect(scoped.read(profilesProvider).map((item) => item.id), [1, 2]);
     });
 
+    test('a new profile sorts last before and after its write lands', () async {
+      notifier.put(profile(1, label: 'First'));
+      await pumpEventQueue();
+
+      notifier.put(profile(2, label: 'Second'));
+      expect(read().map((item) => item.id), [1, 2]);
+
+      await pumpEventQueue();
+      expect(read().map((item) => item.id), [1, 2]);
+    });
+
+    test('a new profile takes its place in the query order at once', () async {
+      notifier.put(profile(3, label: 'Third'));
+      await pumpEventQueue();
+      notifier.reorder(read());
+      await pumpEventQueue();
+
+      notifier.put(profile(2, label: 'Second'));
+      notifier.put(profile(1, label: 'First'));
+      expect(read().map((item) => item.id), [3, 1, 2]);
+
+      await pumpEventQueue();
+      expect(read().map((item) => item.id), [3, 1, 2]);
+    });
+
     test('put falls back to the id when the profile has no label', () async {
       // Profile.normal() leaves the label empty when the download exposed no
       // filename, and optimizeLabel is the only thing that names it.
@@ -280,7 +305,7 @@ void main() {
       final failure = captureWriteFailure(
         () => notifier.put(profile(2, label: 'Lost')),
       );
-      expect(read().map((item) => item.id), [2, 1], reason: 'optimistic');
+      expect(read().map((item) => item.id), [1, 2], reason: 'optimistic');
 
       await failure;
       expect(read().map((item) => item.id), [1], reason: 'rolled back');

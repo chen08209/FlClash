@@ -49,12 +49,6 @@ class BaseNavigator {
     );
     return completer.future;
   }
-
-  static Future<T?> pushReplacement<T>(BuildContext context, Widget child) {
-    return Navigator.of(
-      context,
-    ).pushReplacement<T, void>(_routeOf(context, child));
-  }
 }
 
 class _DropWatch extends StatefulWidget {

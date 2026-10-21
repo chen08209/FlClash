@@ -104,26 +104,31 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
         return CommonScaffold(
           isLoading: isLoading,
           title: appLocalizations.profiles,
-          primaryAction: state.profiles.isEmpty || picker
-              ? null
-              : IconButtonData(
-                  glyph: AppGlyphs.addCircle,
-                  onPressed: () => showAddProfilePage(context),
-                  tooltip: appLocalizations.addProfile,
-                ),
           iconActions: picker ? const [] : _buildActions(state.profiles),
-          foldPrimaryAction: true,
+          actions: state.profiles.isEmpty || picker
+              ? null
+              : [
+                  AddProfileMenu(
+                    builder: (open) => IconButton(
+                      tooltip: appLocalizations.addProfile,
+                      onPressed: open,
+                      icon: const GlyphIcon(AppGlyphs.addCircle),
+                    ),
+                  ),
+                ],
           body: NullStatusSwitcher(
             isEmpty: state.profiles.isEmpty,
             nullStatus: NullStatus(
               label: appLocalizations.nullTip(appLocalizations.profiles),
               description: appLocalizations.nullProfileDesc,
               illustration: NullStatusIllustration.profile,
-              action: TonalButton(
-                size: TonalButtonSize.bar,
-                glyph: AppGlyphs.addCircle,
-                label: appLocalizations.addProfile,
-                onPressed: () => showAddProfilePage(context),
+              action: AddProfileMenu(
+                builder: (open) => TonalButton(
+                  size: TonalButtonSize.bar,
+                  glyph: AppGlyphs.addCircle,
+                  label: appLocalizations.addProfile,
+                  onPressed: open,
+                ),
               ),
             ),
             child: _ProfilesGrid(
@@ -456,6 +461,18 @@ class ProfileItem extends ConsumerWidget {
                 label: appLocalizations.copyLink,
                 onPressed: () {
                   _handleCopyLink(context);
+                },
+              ),
+            if (isUrl)
+              CommonPopupMenuItem(
+                glyph: AppGlyphs.qrCode,
+                label: appLocalizations.qrcode,
+                onPressed: () {
+                  dialogs.showQrCode(
+                    title: profile.realLabel,
+                    data: profile.url,
+                    message: appLocalizations.shareQrcodeTip,
+                  );
                 },
               ),
             CommonPopupMenuItem(
