@@ -175,6 +175,7 @@
   "clipboardWriteFailed": "Impossible de copier dans le presse-papiers. La sélection est peut-être trop volumineuse",
   "paste": "Coller",
   "testUrl": "URL de test",
+  "delayTestTimeout": "Délai d’expiration du test de latence",
   "sync": "Synchroniser",
   "exclude": "Masquer des tâches récentes",
   "compact": "Compact",
@@ -936,5 +937,10 @@
   "allReferencedProxyProviders": "Tous les fournisseurs de proxys référencés",
   "clearDnsCache": "Vider le cache DNS",
   "dnsCacheCleared": "Cache DNS vidé",
-  "clearDnsCacheFailed": "Échec du vidage du cache DNS"
+  "clearDnsCacheFailed": "Échec du vidage du cache DNS",
+  "select": "Sélectionner",
+  "preferred": "Préféré",
+  "addToLocalProxies": "Ajouter aux proxys locaux",
+  "addedToLocalProxies": "{name} ajouté aux proxys locaux",
+  "alreadyInLocalProxies": "{name} est déjà dans les proxys locaux"
 }

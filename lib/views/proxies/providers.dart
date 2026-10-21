@@ -311,16 +311,22 @@ class _ExternalProviderItem extends StatelessWidget {
     final appLocalizations = context.appLocalizations;
     final count = provider.count;
     final updateAt = provider.updateAt;
+    final subscriptionInfo = provider.subscriptionInfo;
+    final usage = subscriptionInfo?.usage;
     return DecorationListItem(
       onPressed: onPressed,
       title: ChipTitle(
         title: provider.name,
-        expire: provider.subscriptionInfo?.expireDate,
+        chip: usage == null ? null : count.compact,
+        expire: subscriptionInfo?.expireDate,
       ),
-      subtitle: Text(switch (provider.type) {
-        'Proxy' => appLocalizations.proxiesCount(count, count.compact),
-        _ => appLocalizations.rulesCount(count, count.compact),
-      }),
+      subtitle: switch ((subscriptionInfo, usage)) {
+        (final info?, final usage?) => _TrafficMeter(info: info, usage: usage),
+        _ => Text(switch (provider.type) {
+          'Proxy' => appLocalizations.proxiesCount(count, count.compact),
+          _ => appLocalizations.rulesCount(count, count.compact),
+        }),
+      },
       trailing: AnimatedSwitcher(
         duration: context.motionDuration(commonDuration),
         layoutBuilder: (current, previous) => Stack(
@@ -338,6 +344,34 @@ class _ExternalProviderItem extends StatelessWidget {
                 style: context.listCaptionStyle,
               ),
       ),
+    );
+  }
+}
+
+class _TrafficMeter extends StatelessWidget {
+  final SubscriptionInfo info;
+  final double usage;
+
+  const _TrafficMeter({required this.info, required this.usage});
+
+  @override
+  Widget build(BuildContext context) {
+    final used = info.upload + info.download;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 6,
+      children: [
+        Text(
+          '${used.traffic.show} / ${info.total.traffic.show}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        LinearProgressIndicator(
+          minHeight: 4,
+          value: usage,
+          backgroundColor: context.colorScheme.primary.opacity15,
+        ),
+      ],
     );
   }
 }

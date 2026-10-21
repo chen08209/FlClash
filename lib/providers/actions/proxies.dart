@@ -15,9 +15,10 @@ class _DelayTestTarget {
 typedef _DelayTestBatch = ({List<Proxy> proxies, String? testUrl});
 
 class _DelayTestJob {
-  _DelayTestJob(Iterable<String> keys) : held = keys.toSet();
+  _DelayTestJob(Iterable<String> keys, this.timeout) : held = keys.toSet();
 
   final Set<String> held;
+  final Duration timeout;
   final Set<String> startedOnDispatch = {};
   bool cancelled = false;
 }
@@ -283,6 +284,37 @@ class ProxiesAction extends _$ProxiesAction {
     }
   }
 
+  Future<void> addToLocalProxies(String proxyName) async {
+    final appLocalizations = currentAppLocalizations;
+    final definition = await _core.getProxyDefinition(proxyName);
+    if (definition == null) {
+      throw MessageException(
+        appLocalizations.customIssueMissingProxies(proxyName),
+      );
+    }
+    final (proxies, groupNames) = await (
+      database.customProxiesDao.query().get(),
+      database.proxyGroupsDao.names().get(),
+    ).wait;
+    final (:name, :added) = importProxy(
+      definition,
+      existing: [for (final proxy in proxies) proxy.definition],
+      groupNames: groupNames.toSet(),
+    );
+    if (added == null) {
+      dialogs.showNotifier(appLocalizations.alreadyInLocalProxies(name));
+      return;
+    }
+    final order = indexing.generateKeyBetween(
+      proxies.map((proxy) => proxy.order).nonNulls.lastOrNull,
+      null,
+    );
+    await database.customProxies.put(
+      CustomProxy.fromDefinition(added).copyWith(order: order).toCompanion(),
+    );
+    dialogs.showNotifier(appLocalizations.addedToLocalProxies(name));
+  }
+
   Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) {
     return _runDelayTests([
       (proxies: [proxy], testUrl: testUrl),
@@ -369,7 +401,10 @@ class ProxiesAction extends _$ProxiesAction {
       return;
     }
     final pending = ref.read(pendingDelayTestsProvider.notifier);
-    final job = _DelayTestJob(targets.map((target) => target.key));
+    final job = _DelayTestJob(
+      targets.map((target) => target.key),
+      Duration(milliseconds: ref.read(appSettingProvider).delayTestTimeout),
+    );
     _delayTestJobs.add(job);
     // TaskPool.run starts a task synchronously while it has an idle slot.
     job.startedOnDispatch.addAll(
@@ -405,7 +440,11 @@ class ProxiesAction extends _$ProxiesAction {
       _scheduleDelayFlush();
     }
     try {
-      final delay = await _core.getDelay(target.testUrl, target.proxyName);
+      final delay = await _core.getDelay(
+        target.testUrl,
+        target.proxyName,
+        job.timeout,
+      );
       if (delay != null && !job.cancelled) {
         setDelay(delay);
       }

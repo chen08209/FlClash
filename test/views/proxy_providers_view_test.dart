@@ -304,6 +304,73 @@ void main() {
     expect(tester.takeException(), null);
   });
 
+  testWidgets('a provider with a traffic quota shows its usage below the name '
+      'and moves the count beside it', (tester) async {
+    final container = containerFor(tester, [
+      _provider(
+        'metered',
+        count: 128,
+        subscriptionInfo: const SubscriptionInfo(
+          upload: 1024,
+          download: 2048,
+          total: 1073741824,
+        ),
+      ),
+      _provider('unmetered', subscriptionInfo: const SubscriptionInfo()),
+    ]);
+    await pump(tester, container);
+
+    final l10n = currentAppLocalizations;
+    Finder rowOf(String name) => find.ancestor(
+      of: find.text(name),
+      matching: find.byType(DecorationListItem),
+    );
+    final metered = rowOf('metered');
+    final usage = find.descendant(
+      of: metered,
+      matching: find.text('3KB / 1GB'),
+    );
+    final meter = find.descendant(
+      of: metered,
+      matching: find.byType(LinearProgressIndicator),
+    );
+    expect(
+      find.descendant(
+        of: metered,
+        matching: find.widgetWithText(TonalChip, '128'),
+      ),
+      findsOne,
+    );
+    expect(find.text(l10n.proxiesCount(128, '128')), findsNothing);
+    expect(
+      tester.getTopLeft(usage).dy,
+      greaterThanOrEqualTo(tester.getBottomLeft(find.text('metered')).dy),
+    );
+    expect(
+      tester.getTopLeft(meter).dy,
+      greaterThanOrEqualTo(tester.getBottomLeft(usage).dy),
+    );
+    expect(
+      tester.widget<LinearProgressIndicator>(meter).value,
+      3072 / 1073741824,
+    );
+
+    final unmetered = rowOf('unmetered');
+    expect(
+      find.descendant(
+        of: unmetered,
+        matching: find.text(l10n.proxiesCount(3, '3')),
+      ),
+      findsOne,
+    );
+    expect(
+      find.descendant(of: unmetered, matching: find.byType(TonalChip)),
+      findsNothing,
+    );
+    expect(find.byType(LinearProgressIndicator), findsOne);
+    expect(tester.takeException(), null);
+  });
+
   testWidgets('offers sync only for HTTP-backed providers', (tester) async {
     final container = containerFor(tester, [
       _provider('http-one'),
@@ -339,8 +406,6 @@ void main() {
     await pump(tester, container);
 
     final l10n = currentAppLocalizations;
-    expect(find.byType(SubscriptionInfoView), findsNothing);
-
     await openMenu(tester, 'with-subscription');
     expect(find.text(l10n.subscriptionInfo), findsOne);
     await closeMenu(tester);

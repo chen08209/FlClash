@@ -17,6 +17,7 @@ void main() {
   late CoreController controller;
 
   setUpAll(() {
+    registerFallbackValue(Duration.zero);
     registerFallbackValue(
       const SetupParams(selectedMap: {}, testUrl: 'http://x.com'),
     );
@@ -308,10 +309,14 @@ void main() {
 
   group('misc methods', () {
     test('getDelay delegates structured delay', () async {
-      when(() => mock.asyncTestDelay(any(), any())).thenAnswer(
+      when(() => mock.asyncTestDelay(any(), any(), any())).thenAnswer(
         (_) async => const Delay(name: 'P1', value: 100, url: 'test.com'),
       );
-      final result = await controller.getDelay('test.com', 'P1');
+      final result = await controller.getDelay(
+        'test.com',
+        'P1',
+        const Duration(seconds: 1),
+      );
       expect(result?.name, 'P1');
       expect(result?.value, 100);
     });

@@ -59,6 +59,7 @@ const (
 	getConfigMethod                CoreMethod = "getConfig"
 	getProfileBaseMethod           CoreMethod = "getProfileBase"
 	getProfileOutboundsMethod      CoreMethod = "getProfileOutbounds"
+	getProxyDefinitionMethod       CoreMethod = "getProxyDefinition"
 	buildProfileMethod             CoreMethod = "buildProfile"
 	dumpRuleSetMethod              CoreMethod = "dumpRuleSet"
 	compileRuleSetMethod           CoreMethod = "compileRuleSet"
@@ -253,8 +254,9 @@ type ProxiesData struct {
 }
 
 type nodeView struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
+	Name         string `json:"name"`
+	Type         string `json:"type"`
+	ProviderName string `json:"provider-name,omitempty"`
 }
 
 type GeoUpdateStatus struct {
