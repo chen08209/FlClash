@@ -39,7 +39,7 @@ struct WindowStyle {
         window.standardWindowButton(.zoomButton)?.isHidden = !windowButtonVisibility
 
         switch effect {
-        case .none:
+        case .none, .glass:
             window.isOpaque = true
             window.backgroundColor = .windowBackgroundColor
         case .transparent, .blur, .acrylic, .mica:
@@ -47,6 +47,8 @@ struct WindowStyle {
             window.backgroundColor = .clear
         }
         window.hasShadow = true
+        // Glass picks its light or dark material from the window, not its own view.
+        window.appearance = effect == .glass ? effectAppearance : nil
 
         WindowEffectView.apply(effect, tint: effectTint, appearance: effectAppearance, to: window)
     }

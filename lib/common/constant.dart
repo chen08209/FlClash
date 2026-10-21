@@ -92,9 +92,6 @@ const ASN = 'ASN.mmdb';
 const GEOIP = 'GEOIP.dat';
 const GEOSITE = 'GEOSITE.dat';
 
-/// The macOS sidebar material is the finished look; the Windows accent
-/// effects need a tint over them to keep the rail readable.
-final double kSidebarBlurOpacity = system.isMacOS ? 0 : 0.5;
 final double kHeaderHeight = getWindowHeaderHeight(
   isDesktop: system.isDesktop,
   isMacOS: system.isMacOS,

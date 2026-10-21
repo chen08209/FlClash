@@ -62,6 +62,7 @@ void main() {
     bool batteryIgnored = false,
     bool isAndroid = false,
     bool isMacOS = false,
+    bool isWindows = false,
     bool isStart = false,
     Locale? locale,
     Size size = const Size(1400, 1000),
@@ -91,7 +92,11 @@ void main() {
         container: container,
         child: TestApp(
           locale: locale,
-          child: OnDemandView(isAndroid: isAndroid, isMacOS: isMacOS),
+          child: OnDemandView(
+            isAndroid: isAndroid,
+            isMacOS: isMacOS,
+            isWindows: isWindows,
+          ),
         ),
       ),
     );
@@ -242,6 +247,25 @@ void main() {
 
     expect(requests, 1);
     expect(find.text('Location permission required'), findsOneWidget);
+  });
+
+  testWidgets('Windows refused location access offers the settings', (
+    tester,
+  ) async {
+    const channel = MethodChannel('wifi_ssid');
+    final messenger = tester.binding.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(
+      channel,
+      (_) async => WifiSsidPermission.permanentlyDenied.index,
+    );
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    await pumpView(tester, isWindows: true);
+
+    await tester.tap(find.text('Tap to authorize'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Location permission required'), findsOneWidget);
+    expect(find.text('Go'), findsOneWidget);
   });
 
   testWidgets('Android also asks to be left out of battery optimization', (

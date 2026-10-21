@@ -109,11 +109,25 @@ begin
   Result := True;
 end;
 
+// path_provider names these folders after CompanyName and ProductName in
+// windows/runner/Runner.rc.
+procedure RemoveUserData;
+begin
+  DelTree(ExpandConstant('{userappdata}\com.follow\clash'), True, True, True);
+  DelTree(ExpandConstant('{localappdata}\com.follow\clash'), True, True, True);
+  RemoveDir(ExpandConstant('{userappdata}\com.follow'));
+  RemoveDir(ExpandConstant('{localappdata}\com.follow'));
+end;
+
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   if CurUninstallStep = usPostUninstall then
   begin
     RemoveUserRegistrations;
+    if not UninstallSilent and (MsgBox(CustomMessage('RemoveUserData'), mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES) then
+    begin
+      RemoveUserData;
+    end;
   end;
 end;
 
@@ -147,6 +161,9 @@ Name: "chineseSimplified"; MessagesFile: {% if locale.file %}{{ locale.file }}{%
 {% if locale.lang == 'tr' %}Name: "turkish"; MessagesFile: "compiler:Languages\\Turkish.isl"{% endif %}
 {% if locale.lang == 'uk' %}Name: "ukrainian"; MessagesFile: "compiler:Languages\\Ukrainian.isl"{% endif %}
 {% endfor %}
+
+[CustomMessages]
+english.RemoveUserData=Also delete your profiles and settings?
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: {% if CREATE_DESKTOP_ICON != true %}unchecked{% else %}checkedonce{% endif %}

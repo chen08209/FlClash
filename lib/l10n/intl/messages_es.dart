@@ -374,6 +374,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Intervalo de actualización automática",
     ),
     "back": MessageLookupByLibrary.simpleMessage("Atrás"),
+    "backgroundBlur": MessageLookupByLibrary.simpleMessage(
+      "Desenfoque de fondo",
+    ),
     "backup": MessageLookupByLibrary.simpleMessage("Copia de seguridad"),
     "backupAndRestore": MessageLookupByLibrary.simpleMessage(
       "Copia de seguridad y restauración",
@@ -1843,11 +1846,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Botón de detener en la notificación",
     ),
     "showPassword": MessageLookupByLibrary.simpleMessage("Mostrar contraseña"),
-    "sidebarBlur": MessageLookupByLibrary.simpleMessage(
-      "Desenfoque de la barra lateral",
-    ),
+    "sidebar": MessageLookupByLibrary.simpleMessage("Barra lateral"),
     "sidebarBlurDesc": MessageLookupByLibrary.simpleMessage(
-      "Muestra el escritorio desenfocado detrás de la ventana a través de la barra lateral",
+      "El desenfoque de fondo deja ver el escritorio detrás de la ventana a través de la barra lateral.",
     ),
     "silentLaunch": MessageLookupByLibrary.simpleMessage("Inicio silencioso"),
     "silentLaunchDesc": MessageLookupByLibrary.simpleMessage(

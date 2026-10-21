@@ -808,7 +808,7 @@ final class WindowBlurRequestProvider
   }
 }
 
-String _$windowBlurRequestHash() => r'e22ea22957373c5b864e3fb80af56a2d08646666';
+String _$windowBlurRequestHash() => r'90b7a731689db7fa39d979866c428843b1073cf8';
 
 @ProviderFor(currentBrightness)
 final currentBrightnessProvider = CurrentBrightnessProvider._();

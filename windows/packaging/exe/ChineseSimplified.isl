@@ -392,3 +392,4 @@ AssocingFileExtension=正在将 %2 文件扩展名与 %1 建立关联...
 AutoStartProgramGroupDescription=启动组：
 AutoStartProgram=自动启动 %1
 AddonHostProgramNotFound=%1无法找到您所选择的文件夹。%n%n您想要继续吗？
+RemoveUserData=是否同时删除配置文件和设置？

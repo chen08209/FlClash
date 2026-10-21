@@ -15,8 +15,13 @@ namespace {
 #ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
 #endif
+#ifndef DWMWA_MICA_EFFECT
+#define DWMWA_MICA_EFFECT 1029
+#endif
 // The pre-20H1 value of the same attribute.
 #define DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 19
+
+constexpr int kSystemBackdropBuild = 22621;
 
 enum WindowCornerPreference {
   kDwmwcpDoNotRound = 1,
@@ -111,6 +116,7 @@ std::optional<Effect> ParseEffect(const std::string& value) {
   if (value == "blur") return Effect::kBlur;
   if (value == "acrylic") return Effect::kAcrylic;
   if (value == "mica") return Effect::kMica;
+  if (value == "glass") return Effect::kGlass;
   return std::nullopt;
 }
 
@@ -137,6 +143,8 @@ bool IsEffectSupported(Effect effect) {
       return has_accent && WindowsBuildNumber() >= 17134;
     case Effect::kMica:
       return WindowsBuildNumber() >= 22000;
+    case Effect::kGlass:
+      return false;
   }
   return false;
 }
@@ -172,6 +180,7 @@ void WindowStyle::Apply(HWND hwnd) const {
 
   switch (effect) {
     case Effect::kNone:
+    case Effect::kGlass:
       break;
     case Effect::kTransparent:
       accent_state = kAccentEnableTransparentGradient;
@@ -209,9 +218,12 @@ void WindowStyle::Apply(HWND hwnd) const {
                             &corner_preference, sizeof(corner_preference));
   }
 
-  if (IsWindows11OrGreater()) {
+  if (WindowsBuildNumber() >= kSystemBackdropBuild) {
     ::DwmSetWindowAttribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE, &backdrop_type,
                             sizeof(backdrop_type));
+  } else if (IsWindows11OrGreater()) {
+    const BOOL mica = effect == Effect::kMica ? TRUE : FALSE;
+    ::DwmSetWindowAttribute(hwnd, DWMWA_MICA_EFFECT, &mica, sizeof(mica));
   }
 
   // The system backdrops pick their light or dark material from this
@@ -227,7 +239,8 @@ void WindowStyle::Apply(HWND hwnd) const {
   // WS_SYSMENU also gates WS_MINIMIZEBOX/WS_MAXIMIZEBOX, so clearing it is
   // what hides the caption buttons for a hidden title bar.
   const bool hide_buttons =
-      title_bar_style == TitleBarStyle::kHidden && !window_button_visibility;
+      title_bar_style == TitleBarStyle::kHidden &&
+      (!window_button_visibility || effect == Effect::kMica);
   LONG_PTR style_bits = ::GetWindowLongPtrW(hwnd, GWL_STYLE);
   style_bits = hide_buttons ? (style_bits & ~WS_SYSMENU)
                             : (style_bits | WS_SYSMENU);

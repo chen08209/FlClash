@@ -11,10 +11,13 @@ final systemProxyQueue = proxy == null ? null : SystemProxyQueue(proxy!);
 
 /// Exit's stop goes through the same queue as every other change, so a start
 /// still waiting behind a slow call cannot turn the proxy back on after it.
+/// A stop also clears settings someone else made, so it only undoes a start
+/// of this run.
 class SystemProxyQueue {
   final Proxy _proxy;
   Future<void> _tail = Future.value();
   bool _closed = false;
+  bool _applied = false;
 
   SystemProxyQueue(this._proxy);
 
@@ -23,23 +26,35 @@ class SystemProxyQueue {
       if (_closed) {
         return;
       }
-      final applied = state.isStart && state.systemProxy
-          ? await _proxy.startProxy(state.port, state.bassDomain)
-          : await _proxy.stopProxy();
-      if (!applied) {
-        commonPrint.log(
-          'update system proxy failed',
-          logLevel: LogLevel.warning,
-        );
+      if (state.isStart && state.systemProxy) {
+        _applied = true;
+        if (!await _proxy.startProxy(state.port, state.bassDomain)) {
+          _logFailure();
+        }
+      } else {
+        await _stop();
       }
     });
   }
 
   Future<void> close() {
     _closed = true;
-    return _enqueue(() async {
-      await _proxy.stopProxy();
-    });
+    return _enqueue(_stop);
+  }
+
+  Future<void> _stop() async {
+    if (!_applied) {
+      return;
+    }
+    if (!await _proxy.stopProxy()) {
+      _logFailure();
+      return;
+    }
+    _applied = false;
+  }
+
+  void _logFailure() {
+    commonPrint.log('update system proxy failed', logLevel: LogLevel.warning);
   }
 
   Future<void> _enqueue(Future<void> Function() task) {

@@ -97,9 +97,9 @@ typedef WindowBlurRequest = ({bool enabled, Brightness brightness, Color tint});
 
 @riverpod
 WindowBlurRequest windowBlurRequest(Ref ref) {
-  final enabled =
-      feature.sidebarBlur &&
-      ref.watch(themeSettingProvider.select((state) => state.sidebarBlur));
+  final enabled = ref.watch(
+    themeSettingProvider.select((state) => state.sidebarBlur),
+  );
   final brightness = ref.watch(currentBrightnessProvider);
   final colorScheme = ref.watch(genColorSchemeProvider(brightness));
   return (
