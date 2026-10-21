@@ -23,7 +23,6 @@ internal class ServiceModules(private val service: Service) {
         val nextScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val nextModules = listOf(
             NotificationModule(service, nextScope),
-            NetworkObserveModule(service),
         )
         val startedModules = mutableListOf<ServiceModule>()
 

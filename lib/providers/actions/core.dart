@@ -19,6 +19,7 @@ class CoreAction extends _$CoreAction {
       commonPrint.log('init result: $res');
     } else {
       await ref.read(proxiesActionProvider.notifier).updateGroups();
+      await ref.read(providersProvider.notifier).syncProviders();
     }
   }
 
