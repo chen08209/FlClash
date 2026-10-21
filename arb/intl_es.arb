@@ -564,6 +564,7 @@
   "backupFromNewerVersion": "Esta copia de seguridad procede de una versión más reciente de la app. Actualiza la app antes de restaurarla",
   "networkTimeoutError": "Se agotó el tiempo de espera de la solicitud. Comprueba tu red o el proxy e inténtalo de nuevo",
   "networkHostLookupError": "No se pudo resolver la dirección del servidor. Comprueba que la URL sea correcta y que el DNS funcione",
+  "monochromeIcon": "Icono monocromo",
   "networkConnectionError": "No se pudo conectar con el servidor. Comprueba tu conexión de red o los ajustes del proxy",
   "networkTlsError": "Falló la conexión segura. Puede que el certificado del servidor no sea válido o que la conexión esté siendo interceptada",
   "networkCancelledError": "Se canceló la solicitud",

@@ -564,6 +564,7 @@
   "backupFromNewerVersion": "该备份来自更高版本的应用，请先更新应用再恢复",
   "networkTimeoutError": "请求超时，请检查网络或代理后重试",
   "networkHostLookupError": "无法解析服务器地址，请确认链接正确且 DNS 可用",
+  "monochromeIcon": "单色图标",
   "networkConnectionError": "无法连接到服务器，请检查网络连接或代理设置",
   "networkTlsError": "安全连接失败，服务器证书可能无效，或连接被拦截",
   "networkCancelledError": "请求已取消",

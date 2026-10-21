@@ -564,6 +564,7 @@
   "backupFromNewerVersion": "Cette sauvegarde provient d’une version plus récente de l’app. Mettez l’app à jour avant de la restaurer",
   "networkTimeoutError": "La requête a expiré. Vérifiez votre réseau ou votre proxy, puis réessayez",
   "networkHostLookupError": "Impossible de résoudre l’adresse du serveur. Vérifiez que l’URL est correcte et que le DNS fonctionne",
+  "monochromeIcon": "Icône monochrome",
   "networkConnectionError": "Impossible de se connecter au serveur. Vérifiez votre connexion réseau ou vos réglages de proxy",
   "networkTlsError": "Échec de la connexion sécurisée. Le certificat du serveur est peut-être invalide, ou la connexion est interceptée",
   "networkCancelledError": "La requête a été annulée",
