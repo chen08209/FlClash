@@ -258,6 +258,38 @@ void main() {
         expect(await upgrade('standard', 2), LiquidGlassMode.standard);
       });
 
+      test('moves presets picked before to the current system colors, '
+          'once', () async {
+        Future<ThemeProps> upgrade(int from) async {
+          final configMap = _createConfigMap();
+          (configMap['themeProps']! as Map<String, Object?>)
+            ..['primaryColor'] = 0xFFFF9500
+            ..['primaryColors'] = [
+              0xFF007AFF,
+              0xFFAF52DE,
+              0xFFCB30E0,
+              0xFFFF9500,
+              0xFF123456,
+            ];
+          final store = _FakeMigrationStore(
+            configMap: configMap,
+            version: Migration.currentVersion,
+            upgradeVersion: from,
+          );
+          return (await Migration(store: store).run()).themeProps;
+        }
+
+        final moved = await upgrade(2);
+        expect(moved.primaryColor, 0xFFFF8D28);
+        expect(moved.primaryColors, [
+          0xFF007AFF,
+          0xFFCB30E0,
+          0xFFFF8D28,
+          0xFF123456,
+        ]);
+        expect((await upgrade(3)).primaryColor, 0xFFFF9500);
+      });
+
       test('a new install only records it', () async {
         final store = _FakeMigrationStore(
           configMap: null,

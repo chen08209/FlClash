@@ -54,24 +54,6 @@ const _itemArrowPadding = EdgeInsets.only(
 
 const _dividerHeight = _cardInset * 2 + 1;
 
-// Soft and wide like HyperOS menus rather than a Material elevation.
-List<BoxShadow> _cardShadows(ColorScheme colorScheme, [double depth = 1]) {
-  final strength = colorScheme.brightness == Brightness.dark ? 3.0 : 1.0;
-  final alpha = strength * depth;
-  return [
-    BoxShadow(
-      color: colorScheme.shadow.withValues(alpha: 0.05 * alpha),
-      blurRadius: 10,
-      offset: const Offset(0, 2),
-    ),
-    BoxShadow(
-      color: colorScheme.shadow.withValues(alpha: 0.04 * alpha),
-      blurRadius: 30,
-      offset: const Offset(0, 4),
-    ),
-  ];
-}
-
 const _maxContentBlur = 8.0;
 
 const _overshootPerLongestSide = 0.1;
@@ -233,6 +215,8 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
 
   final _press = _CarriedPress();
 
+  final _surface = _PopupSurface();
+
   @override
   void install() {
     super.install();
@@ -320,6 +304,7 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
       child: _PopupScope(
         platter: _platter,
         press: _press,
+        surface: _surface,
         runPicked: _runPicked,
         child: builder(context),
       ),
@@ -371,14 +356,13 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
               moveY: _moveY,
               content: _content,
               platter: _platter,
+              surface: _surface,
               sourceColor: sourceColor,
               sourceImage: sourceImage,
               surfaceColor: SurfaceLevel.floatingOf(
                 colorScheme,
               ).colorOf(colorScheme),
-              shadows: glass
-                  ? glassMenuShadows(colorScheme)
-                  : _cardShadows(colorScheme),
+              shadows: menuShadows(colorScheme),
               glass: glass
                   ? (
                       from: LiquidGlassStyle.regular(colorScheme),
@@ -420,16 +404,24 @@ class _CarriedPress {
   VoidCallback? onCancel;
 }
 
+/// The part of the popup's box that returns into its control, when not all
+/// of it: a menu returns its open sub menu alone, as iOS does.
+class _PopupSurface {
+  Rect? Function(RenderBox popup)? rectIn;
+}
+
 class _PopupScope extends InheritedWidget {
   const _PopupScope({
     required this.platter,
     required this.press,
+    required this.surface,
     required this.runPicked,
     required super.child,
   });
 
   final ValueListenable<bool> platter;
   final _CarriedPress press;
+  final _PopupSurface surface;
   final ValueSetter<VoidCallback> runPicked;
 
   static _PopupScope? maybeOf(BuildContext context) =>
@@ -439,6 +431,7 @@ class _PopupScope extends InheritedWidget {
   bool updateShouldNotify(_PopupScope oldWidget) =>
       platter != oldWidget.platter ||
       press != oldWidget.press ||
+      surface != oldWidget.surface ||
       runPicked != oldWidget.runPicked;
 }
 
@@ -451,6 +444,7 @@ class _PopupMorph extends SingleChildRenderObjectWidget {
     required this.moveY,
     required this.content,
     required this.platter,
+    required this.surface,
     required this.sourceColor,
     required this.sourceImage,
     required this.surfaceColor,
@@ -466,6 +460,7 @@ class _PopupMorph extends SingleChildRenderObjectWidget {
   final Animation<double> moveY;
   final Animation<double> content;
   final ValueListenable<bool> platter;
+  final _PopupSurface surface;
   final Color sourceColor;
   final ValueListenable<ui.Image?>? sourceImage;
   final Color surfaceColor;
@@ -485,6 +480,7 @@ class _PopupMorph extends SingleChildRenderObjectWidget {
       moveY: moveY,
       content: content,
       platter: platter,
+      surface: surface,
       sourceColor: sourceColor,
       sourceImage: sourceImage,
       surfaceColor: surfaceColor,
@@ -506,6 +502,7 @@ class _PopupMorph extends SingleChildRenderObjectWidget {
       ..moveY = moveY
       ..content = content
       ..platter = platter
+      ..surface = surface
       ..sourceColor = sourceColor
       ..sourceImage = sourceImage
       ..surfaceColor = surfaceColor
@@ -537,6 +534,7 @@ class _RenderPopupMorph extends RenderProxyBox {
     required this.moveY,
     required this.content,
     required ValueListenable<bool> platter,
+    required this.surface,
     required Color sourceColor,
     required ValueListenable<ui.Image?>? sourceImage,
     required Color surfaceColor,
@@ -557,6 +555,7 @@ class _RenderPopupMorph extends RenderProxyBox {
   Animation<double> moveX;
   Animation<double> moveY;
   Animation<double> content;
+  _PopupSurface surface;
 
   Rect _anchor;
 
@@ -588,6 +587,7 @@ class _RenderPopupMorph extends RenderProxyBox {
 
   _MorphFrame? _closingFrame;
   double _closingFrom = 1;
+  Rect? _closingSurface;
 
   void _handleStatusChanged(AnimationStatus status) {
     if (status != AnimationStatus.reverse) {
@@ -595,6 +595,7 @@ class _RenderPopupMorph extends RenderProxyBox {
     }
     _closingFrom = _animation.value;
     _closingFrame = _frame();
+    _closingSurface = hasSize ? surface.rectIn?.call(this) : null;
   }
 
   /// Where the opening stands, or null once it has settled.
@@ -731,13 +732,19 @@ class _RenderPopupMorph extends RenderProxyBox {
       final start =
           frame ??
           (grow: 1.0, moveX: 1.0, moveY: 1.0, reveal: 1.0, platter: true);
-      _paintFrame(context, offset, (
-        grow: start.grow * (1 - _returnSpring.transform(dismissal)),
-        moveX: start.moveX * (1 - _returnXSpring.transform(dismissal)),
-        moveY: start.moveY * (1 - _returnYSpring.transform(dismissal)),
-        reveal: start.reveal * (1 - _contentOut.transform(dismissal)),
-        platter: true,
-      ), returning: true);
+      _paintFrame(
+        context,
+        offset,
+        (
+          grow: start.grow * (1 - _returnSpring.transform(dismissal)),
+          moveX: start.moveX * (1 - _returnXSpring.transform(dismissal)),
+          moveY: start.moveY * (1 - _returnYSpring.transform(dismissal)),
+          reveal: start.reveal * (1 - _contentOut.transform(dismissal)),
+          platter: true,
+        ),
+        returning: true,
+        surface: _closingSurface,
+      );
       return;
     }
     final shrink = Curves.easeOut.transform(dismissal);
@@ -768,6 +775,7 @@ class _RenderPopupMorph extends RenderProxyBox {
     Offset offset,
     _MorphFrame? frame, {
     bool returning = false,
+    Rect? surface,
   }) {
     final child = this.child!;
     if (frame == null) {
@@ -777,12 +785,13 @@ class _RenderPopupMorph extends RenderProxyBox {
     }
     final from = _localAnchor;
     final bounds = Offset.zero & size;
+    final card = surface ?? bounds;
     final progress = frame.grow;
-    final extent = Size.lerp(from.size, bounds.size, progress)!;
+    final extent = Size.lerp(from.size, card.size, progress)!;
     final rect = Rect.fromCenter(
       center: Offset(
-        lerpDouble(from.center.dx, bounds.center.dx, frame.moveX)!,
-        lerpDouble(from.center.dy, bounds.center.dy, frame.moveY)!,
+        lerpDouble(from.center.dx, card.center.dx, frame.moveX)!,
+        lerpDouble(from.center.dy, card.center.dy, frame.moveY)!,
       ),
       width: math.max(0.0, extent.width),
       height: math.max(0.0, extent.height),
@@ -887,7 +896,7 @@ class _RenderPopupMorph extends RenderProxyBox {
     }
     // Opening, the content fills the platter and is cut to it; returning, it
     // shrinks whole inside it.
-    final transform = _contentTransform(rect, fit: returning);
+    final transform = _contentTransform(rect, fit: returning, content: card);
     final sigma = _maxContentBlur * (1 - reveal);
     void paintContent(PaintingContext context, Offset offset) =>
         context.pushOpacity(
@@ -913,14 +922,15 @@ class _RenderPopupMorph extends RenderProxyBox {
     context.pushClipPath(needsCompositing, offset, bounds, clip, paintContent);
   }
 
-  Matrix4 _contentTransform(Rect rect, {bool fit = false}) {
+  Matrix4 _contentTransform(Rect rect, {bool fit = false, Rect? content}) {
+    final source = content ?? Offset.zero & size;
     final scale = (fit ? math.min : math.max)(
-      rect.width / size.width,
-      rect.height / size.height,
+      rect.width / source.width,
+      rect.height / source.height,
     );
     return Matrix4.translationValues(rect.center.dx, rect.center.dy, 0)
       ..scaleByDouble(scale, scale, 1, 1)
-      ..translateByDouble(-size.width / 2, -size.height / 2, 0, 1);
+      ..translateByDouble(-source.center.dx, -source.center.dy, 0, 1);
   }
 }
 
@@ -1644,11 +1654,13 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
   ValueListenable<bool>? _platter;
   late Listenable _motion = _unfold;
   _CarriedPress? _carried;
+  _PopupSurface? _surface;
   ValueSetter<VoidCallback>? _runPicked;
 
   final List<_MenuStep> _path = [];
   bool _folding = false;
   final _menuKey = GlobalKey();
+  final _cardKeys = <GlobalKey>[];
   final _checkedKey = GlobalKey();
   ScrollController? _lazyController;
 
@@ -1682,6 +1694,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
       ?..onMove = _slideCarried
       ..onRelease = _releaseCarried
       ..onCancel = _cancelCarried;
+    _surface = scope?.surface?..rectIn = _topCardIn;
   }
 
   @override
@@ -1690,6 +1703,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
       ?..onMove = null
       ..onRelease = null
       ..onCancel = null;
+    _surface?.rectIn = null;
     _dwell?.cancel();
     _unfold.dispose();
     _lazyController?.dispose();
@@ -1829,6 +1843,25 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
       );
     }
     return levels;
+  }
+
+  GlobalKey _cardKeyAt(int index) {
+    while (_cardKeys.length <= index) {
+      _cardKeys.add(GlobalKey());
+    }
+    return _cardKeys[index];
+  }
+
+  Rect? _topCardIn(RenderBox popup) {
+    final top = _resolveLevels().length - 1;
+    if (top == 0 || top >= _cardKeys.length) {
+      return null;
+    }
+    final card = _cardKeys[top].currentContext?.findRenderObject();
+    if (card is! _RenderPopupMenuCard || !card.hasSize || !card.attached) {
+      return null;
+    }
+    return MatrixUtils.transformRect(card.getTransformTo(popup), card._rect);
   }
 
   void _push(BuildContext itemContext, int index) {
@@ -2240,6 +2273,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
   Widget _buildLevel(
     BuildContext context,
     _MenuLevel level, {
+    required GlobalKey cardKey,
     required int depth,
     required double pivot,
     required int? covered,
@@ -2274,47 +2308,50 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
                   : step == null
                   ? 1.0
                   : settled;
-              return Transform(
-                transform: Matrix4.diagonal3Values(scale, scale, 1),
-                alignment: Alignment.topRight,
-                origin: Offset(0, pivot),
-                child: PopupMenuCard(
-                  grow: step == null ? 1 : unfold,
-                  origin: step == null
-                      ? null
-                      : (
-                          top: step.itemTop - level.top,
-                          height: step.itemHeight,
-                        ),
-                  shadows: glass == null
-                      ? _cardShadows(colorScheme, shadow)
-                      : glassMenuShadows(colorScheme, shadow),
-                  fill: fill,
-                  dim: colorScheme.surface.withValues(
-                    alpha: math.min(0.4, _levelFadeStep * distance),
-                  ),
-                  glass: step == null
-                      ? glass
-                      : glass?.scale(_glassSpan.transform(unfold)),
-                  rim: step == null
-                      ? rim
-                      : rim?.scale(_glassSpan.transform(unfold)),
-                  bare: _platter?.value ?? false,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minWidth: lerpDouble(
-                        level.fromWidth,
-                        level.minWidth,
-                        width,
-                      )!,
-                      maxWidth: lerpDouble(
-                        level.fromWidth,
-                        level.maxWidth,
-                        width,
-                      )!,
-                      maxHeight: _maxHeightOf(context, level),
+              final bare = _platter?.value ?? false;
+              return Opacity(
+                opacity: receding && bare ? 0 : 1,
+                child: Transform(
+                  transform: Matrix4.diagonal3Values(scale, scale, 1),
+                  alignment: Alignment.topRight,
+                  origin: Offset(0, pivot),
+                  child: PopupMenuCard(
+                    key: cardKey,
+                    grow: step == null ? 1 : unfold,
+                    origin: step == null
+                        ? null
+                        : (
+                            top: step.itemTop - level.top,
+                            height: step.itemHeight,
+                          ),
+                    shadows: menuShadows(colorScheme, shadow),
+                    fill: fill,
+                    dim: colorScheme.surface.withValues(
+                      alpha: math.min(0.4, _levelFadeStep * distance),
                     ),
-                    child: child,
+                    glass: step == null
+                        ? glass
+                        : glass?.scale(_glassSpan.transform(unfold)),
+                    rim: step == null
+                        ? rim
+                        : rim?.scale(_glassSpan.transform(unfold)),
+                    bare: bare,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: lerpDouble(
+                          level.fromWidth,
+                          level.minWidth,
+                          width,
+                        )!,
+                        maxWidth: lerpDouble(
+                          level.fromWidth,
+                          level.maxWidth,
+                          width,
+                        )!,
+                        maxHeight: _maxHeightOf(context, level),
+                      ),
+                      child: child,
+                    ),
                   ),
                 ),
               );
@@ -2387,6 +2424,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
                   child: _buildLevel(
                     context,
                     levels[index],
+                    cardKey: _cardKeyAt(index),
                     depth: topIndex - index,
                     pivot: index < topIndex
                         ? _path[index].itemTop - levels[index].top

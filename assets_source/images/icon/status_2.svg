@@ -28,9 +28,9 @@
 
   <g transform="translate(15.77, 15.77) scale(0.86856, 0.86856)" filter="url(#glow-shadow)">
     <g transform="translate(45.96154, 43.846153) scale(0.63461536, 0.63461536)">
-      <use href="#shape-top" fill="#6666FB"/>
-      <use href="#shape-mid" fill="#2F71C4"/>
-      <use href="#shape-bot" fill="#53B7F2"/>
+      <use href="#shape-top" fill="#6665E9"/>
+      <use href="#shape-mid" fill="#317DE9"/>
+      <use href="#shape-bot" fill="#5AAFEB"/>
     </g>
   </g>
 </svg>

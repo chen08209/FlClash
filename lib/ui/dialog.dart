@@ -420,7 +420,7 @@ class CommonDialog extends StatelessWidget {
           ? _AlertGlass(
               style: LiquidGlassStyle.alert(colorScheme),
               rim: LiquidGlassRim.alert(colorScheme),
-              shadows: glassMenuShadows(colorScheme),
+              shadows: menuShadows(colorScheme),
               child: dialog,
             )
           : dialog,

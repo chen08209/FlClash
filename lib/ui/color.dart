@@ -45,13 +45,13 @@ ColorScheme seededColorScheme({
   final tint = style == ColorStyle.tinted
       ? min(source.chroma / _tintDivisor, _maxTintChroma)
       : null;
-  Color neutral(DynamicColor role, double maxChroma) {
+  Color neutral(DynamicColor role, double maxChroma, [double? darkTone]) {
     final palette = role.palette(scheme);
     return Color(
       Hct.from(
         palette.hue,
         tint ?? min(palette.chroma, maxChroma),
-        role.getTone(scheme),
+        (dark ? darkTone : null) ?? role.getTone(scheme),
       ).toInt(),
     );
   }
@@ -98,7 +98,13 @@ ColorScheme seededColorScheme({
     errorContainer: role(MaterialDynamicColors.errorContainer),
     onErrorContainer: role(MaterialDynamicColors.onErrorContainer),
     outline: role(MaterialDynamicColors.outline),
-    onSurface: role(MaterialDynamicColors.onSurface),
+    onSurface: dark
+        ? Color(
+            MaterialDynamicColors.onSurface
+                .palette(scheme)
+                .get(_darkOnSurfaceTone),
+          )
+        : role(MaterialDynamicColors.onSurface),
     onSurfaceVariant: role(MaterialDynamicColors.onSurfaceVariant),
     inverseSurface: role(MaterialDynamicColors.inverseSurface),
     onInverseSurface: role(MaterialDynamicColors.inverseOnSurface),
@@ -119,14 +125,17 @@ ColorScheme seededColorScheme({
     surfaceContainer: neutral(
       MaterialDynamicColors.surfaceContainer,
       _surfaceChroma,
+      _darkCardTone,
     ),
     surfaceContainerHigh: neutral(
       MaterialDynamicColors.surfaceContainerHigh,
       _surfaceChroma,
+      _darkBlockTone,
     ),
     surfaceContainerHighest: neutral(
       MaterialDynamicColors.surfaceContainerHighest,
       _surfaceChroma,
+      _darkInsetTone,
     ),
     outlineVariant: neutral(MaterialDynamicColors.outlineVariant, 4),
   );
@@ -141,6 +150,14 @@ const _tintDivisor = 6.0;
 const _maxTintChroma = 10.0;
 
 const _primaryContainerChroma = 48.0;
+
+const _darkOnSurfaceTone = 97;
+
+const _darkCardTone = 15.0;
+
+const _darkBlockTone = 21.0;
+
+const _darkInsetTone = 27.0;
 
 const _minAccentTone = 35.0;
 

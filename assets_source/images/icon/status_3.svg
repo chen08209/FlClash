@@ -32,9 +32,9 @@
     <circle cx="120" cy="120" r="42" fill="none" stroke="#FFD25F" stroke-width="3" opacity="0.78"/>
     <g transform="translate(15.77, 15.77) scale(0.86856, 0.86856)" filter="url(#glow-shadow)">
         <g transform="translate(45.96154, 43.846153) scale(0.63461536, 0.63461536)">
-            <use href="#shape-top" fill="#7367FF"/>
-            <use href="#shape-mid" fill="#1685D8"/>
-            <use href="#shape-bot" fill="#12C8FF"/>
+            <use href="#shape-top" fill="#7266ED"/>
+            <use href="#shape-mid" fill="#048EF7"/>
+            <use href="#shape-bot" fill="#2FC0FA"/>
         </g>
     </g>
 </svg>
