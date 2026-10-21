@@ -584,7 +584,7 @@ void main() {
       final gesture = await tester.startGesture(
         tester.getCenter(find.byType(SortHandle).first),
       );
-      await tester.pump(kPressTimeout);
+      await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
       await gesture.moveBy(const Offset(0, 20));
       await tester.pump();
       await gesture.moveBy(Offset(0, rowHeight.height * 2));

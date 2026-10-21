@@ -7,7 +7,7 @@ import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/widgets/card.dart';
 import 'package:fl_clash/views/dashboard/widgets/network_takeover.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/rendering.dart';
+import 'package:flutter/gestures.dart' show kPressTimeout;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -87,7 +87,7 @@ void main() {
   }
 
   Finder switchOf(_RowCase testCase) =>
-      find.byType(Switch).at(testCase.name == 'TUN' ? 1 : 0);
+      find.byType(DashboardSwitch).at(testCase.name == 'TUN' ? 1 : 0);
 
   for (final testCase in _rowCases) {
     testWidgets('the ${testCase.name} switch flips its setting both ways', (
@@ -96,13 +96,16 @@ void main() {
       await pumpCard(tester, testCase.card);
 
       expect(testCase.read(container), testCase.initial);
-      expect(tester.widget<Switch>(switchOf(testCase)).value, testCase.initial);
+      expect(
+        tester.widget<DashboardSwitch>(switchOf(testCase)).value,
+        testCase.initial,
+      );
 
       await tester.tap(switchOf(testCase));
       await tester.pumpAndSettle();
       expect(testCase.read(container), !testCase.initial);
       expect(
-        tester.widget<Switch>(switchOf(testCase)).value,
+        tester.widget<DashboardSwitch>(switchOf(testCase)).value,
         !testCase.initial,
       );
 
@@ -124,28 +127,29 @@ void main() {
     });
   }
 
-  testWidgets('a switch keeps its track with glass on and swells under a '
-      'press', (tester) async {
+  testWidgets('on glass a held switch turns its thumb into a lens', (
+    tester,
+  ) async {
     await pumpCard(
       tester,
       const LiquidGlassScope(enabled: true, child: NetworkTakeoverCard()),
     );
     final tun = switchOf(_rowCases[1]);
+    Finder lensOf(Finder toggle) =>
+        find.descendant(of: toggle, matching: find.byType(LiquidGlass));
 
     expect(find.byType(LiquidGlass), findsNothing);
 
-    final press = find.ancestor(of: tun, matching: find.byType(ElasticPress));
     final gesture = await tester.startGesture(tester.getCenter(tun));
-    await tester.pump();
+    await tester.pump(kPressTimeout);
     await tester.pump(const Duration(milliseconds: 100));
-    expect(
-      tester.renderObject<RenderProxyBox>(press).child!.debugLayer,
-      isA<TransformLayer>(),
-    );
+    expect(lensOf(tun), findsOneWidget);
+    expect(lensOf(switchOf(_rowCases[0])), findsNothing);
     await gesture.up();
     await tester.pumpAndSettle();
 
     expect(container.read(patchClashConfigProvider).tun.enable, isTrue);
+    expect(find.byType(LiquidGlass), findsNothing);
   });
 
   testWidgets('a row says what it is set to', (tester) async {
@@ -195,7 +199,7 @@ void main() {
 
     await pumpTile(160);
     expect(find.byType(ShapeBadge), findsNothing);
-    expect(find.byType(Switch), findsOneWidget);
+    expect(find.byType(DashboardSwitch), findsOneWidget);
     expect(
       tester.getTopLeft(find.text('System proxy')).dx,
       dashboardCardPadding(DashboardDensity.compact).left,

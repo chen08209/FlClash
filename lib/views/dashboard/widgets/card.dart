@@ -627,8 +627,6 @@ void strokeUnitShape(Canvas canvas, Path path, double extent, BorderSide side) {
     ..restore();
 }
 
-/// The M3 switch at 52 × 32 with a 24 dp thumb in both states and no outline,
-/// so an off switch reads as a solid track.
 class DashboardSwitch extends StatelessWidget {
   const DashboardSwitch({
     super.key,
@@ -641,52 +639,21 @@ class DashboardSwitch extends StatelessWidget {
   final ValueChanged<bool>? onChanged;
   final String? semanticLabel;
 
-  static const _thumbIcon = WidgetStatePropertyAll(Icon(null));
-
-  /// A shrink-wrapped Switch still lays out 4 dp above and below its track,
-  /// which would set the height of every row it sits in.
-  static const trackWidth = 52.0;
-  static const _trackHeight = 32.0;
+  /// A switch lays out past its track, which would set every row's height.
+  static const trackWidth = CommonSwitch.trackWidth;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final colors = DashboardColors.of(context);
-    return Semantics(
-      label: semanticLabel,
-      child: ElasticPress(
-        enabled: onChanged != null,
-        child: SizedBox(
-          width: trackWidth,
-          height: _trackHeight,
-          child: OverflowBox(
-            maxWidth: double.infinity,
-            maxHeight: double.infinity,
-            child: Switch(
-              value: value,
-              onChanged: onChanged,
-              padding: EdgeInsets.zero,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              thumbIcon: _thumbIcon,
-              overlayColor: const WidgetStateMapper<Color?>({
-                WidgetState.pressed: Colors.transparent,
-              }),
-              trackOutlineColor: const WidgetStatePropertyAll(
-                Colors.transparent,
-              ),
-              trackOutlineWidth: const WidgetStatePropertyAll(0),
-              trackColor: WidgetStateProperty.resolveWith(
-                (states) => states.contains(WidgetState.selected)
-                    ? colorScheme.primary
-                    : colors.track,
-              ),
-              thumbColor: WidgetStateProperty.resolveWith(
-                (states) => states.contains(WidgetState.selected)
-                    ? colorScheme.onPrimary
-                    : colors.thumb,
-              ),
-            ),
-          ),
+    return SizedBox(
+      width: trackWidth,
+      height: CommonSwitch.trackHeight,
+      child: OverflowBox(
+        maxWidth: double.infinity,
+        maxHeight: double.infinity,
+        child: CommonSwitch(
+          value: value,
+          onChanged: onChanged,
+          semanticLabel: semanticLabel,
         ),
       ),
     );

@@ -103,6 +103,8 @@ final _optionSheet = find.byWidgetPredicate(
 Future<void> _addOption(WidgetTester tester, String label) async {
   await _openOptions(tester);
   final option = find.descendant(of: _optionSheet, matching: find.text(label));
+  await tester.ensureVisible(option);
+  await tester.pump();
   await tester.tap(option);
   await tester.pumpAndSettle();
   expect(option, findsNothing);
@@ -873,10 +875,10 @@ void main() {
       await pumpGroupSheet(tester);
       await _addOption(tester, currentAppLocalizations.testWhenUsed);
 
-      final lazy = tester.widget<Switch>(
+      final lazy = tester.widget<CommonSwitch>(
         find.descendant(
           of: _rowOf(currentAppLocalizations.testWhenUsed),
-          matching: find.byType(Switch),
+          matching: find.byType(CommonSwitch),
         ),
       );
       expect(lazy.value, isTrue);

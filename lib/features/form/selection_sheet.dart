@@ -135,6 +135,14 @@ class _SelectionSheetState<T> extends ConsumerState<SelectionSheet<T>>
     return sections.where((section) => section.items.isNotEmpty).toList();
   }
 
+  int? _indexOf(SelectionSection<T> section, Key key) {
+    if (key is! ValueKey<T>) {
+      return null;
+    }
+    final index = section.items.indexOf(key.value);
+    return index == -1 ? null : index;
+  }
+
   int _countOf(List<SelectionSection<T>> sections) =>
       sections.fold(0, (value, section) => value + section.items.length);
 
@@ -207,13 +215,10 @@ class _SelectionSheetState<T> extends ConsumerState<SelectionSheet<T>>
   }
 
   Widget _buildHeader(SelectionSection<T> section) {
-    final header = Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: ListHeader(
-        title: section.label!,
-        padding: baseInfoEdgeInsetsOf(context),
-      ),
-    );
+    final label = section.label;
+    final header = label != null
+        ? ListHeader(title: label)
+        : const ListSectionGap();
     if (!widget.removeOnSelect) {
       return header;
     }
@@ -259,6 +264,7 @@ class _SelectionSheetState<T> extends ConsumerState<SelectionSheet<T>>
       return row;
     }
     return EntryTransition(
+      key: ValueKey(item),
       animation: _transitions.animationOf(item),
       leaving: _transitions.isLeaving(item),
       child: row,
@@ -306,11 +312,10 @@ class _SelectionSheetState<T> extends ConsumerState<SelectionSheet<T>>
                 child: SizedBox(height: context.contentTopPadding),
               ),
               for (final (sectionIndex, section) in sections.indexed) ...[
-                if (section.label != null)
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    sliver: SliverToBoxAdapter(child: _buildHeader(section)),
-                  ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverToBoxAdapter(child: _buildHeader(section)),
+                ),
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SuperSliverList.builder(
@@ -318,6 +323,9 @@ class _SelectionSheetState<T> extends ConsumerState<SelectionSheet<T>>
                         ? _revealController
                         : null,
                     itemCount: section.items.length,
+                    findChildIndexCallback: widget.removeOnSelect
+                        ? (key) => _indexOf(section, key)
+                        : null,
                     itemBuilder: (context, index) {
                       final item = section.items[index];
                       return _buildItem(

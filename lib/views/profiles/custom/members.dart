@@ -476,33 +476,36 @@ class _MembersSliverState<M> extends ConsumerState<_MembersSliver<M>>
         key: ValueKey(member),
         animation: _transitions.animationOf(member),
         leaving: _transitions.isLeaving(member),
-        child: ItemPositionProvider(
-          position: _transitions.positionOf(member),
-          child: _MemberRow(
-            member: member,
-            index: index,
-            title: switch (member.kind) {
-              _MemberKind.allProxies => appLocalizations.allReferencedProxies,
-              _MemberKind.allProviders =>
-                appLocalizations.allReferencedProxyProviders,
-              _MemberKind.filter ||
-              _MemberKind.excludeFilter => presets[name] ?? name,
-              _MemberKind.proxy || _MemberKind.provider => name,
-            },
-            subtitle: switch (member.kind) {
-              _MemberKind.proxy =>
-                groupTypes[name] ??
-                    nodeTypes[name] ??
-                    (RuleTarget.baseTargets.contains(name)
-                        ? appLocalizations.basicStrategy
-                        : null),
-              _MemberKind.provider => appLocalizations.proxyProviders,
-              _MemberKind.allProxies ||
-              _MemberKind.allProviders => appLocalizations.autoInclude,
-              _MemberKind.filter => appLocalizations.filters,
-              _MemberKind.excludeFilter => appLocalizations.excludeFilter,
-            },
-            onRemove: () => _update((state) => state..remove(member)),
+        child: ReorderableDelayedDragStartListener(
+          index: index,
+          child: ItemPositionProvider(
+            position: _transitions.positionOf(member),
+            child: _MemberRow(
+              member: member,
+              index: index,
+              title: switch (member.kind) {
+                _MemberKind.allProxies => appLocalizations.allReferencedProxies,
+                _MemberKind.allProviders =>
+                  appLocalizations.allReferencedProxyProviders,
+                _MemberKind.filter ||
+                _MemberKind.excludeFilter => presets[name] ?? name,
+                _MemberKind.proxy || _MemberKind.provider => name,
+              },
+              subtitle: switch (member.kind) {
+                _MemberKind.proxy =>
+                  groupTypes[name] ??
+                      nodeTypes[name] ??
+                      (RuleTarget.baseTargets.contains(name)
+                          ? appLocalizations.basicStrategy
+                          : null),
+                _MemberKind.provider => appLocalizations.proxyProviders,
+                _MemberKind.allProxies ||
+                _MemberKind.allProviders => appLocalizations.autoInclude,
+                _MemberKind.filter => appLocalizations.filters,
+                _MemberKind.excludeFilter => appLocalizations.excludeFilter,
+              },
+              onRemove: () => _update((state) => state..remove(member)),
+            ),
           ),
         ),
       );

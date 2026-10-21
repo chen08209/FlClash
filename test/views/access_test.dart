@@ -171,29 +171,50 @@ void main() {
       await teardownView(tester);
     });
 
-    testWidgets('the settings sheet shows system apps from a toggle', (
+    testWidgets('the settings sub menu shows system apps from a check', (
       tester,
     ) async {
       seedAccessControl(const AccessControlProps(enable: true));
       await pumpAccessView(tester);
       final l10n = AppLocalizations.current;
+      Finder inMenu(Finder finder) =>
+          find.descendant(of: find.byType(CommonPopupMenu), matching: finder);
 
       await openBarMenu(tester);
-      await tester.tap(
-        find
-            .descendant(
-              of: find.byType(CommonPopupMenu),
-              matching: find.text(l10n.settings),
-            )
-            .last,
-      );
+      await tester.tap(inMenu(find.text(l10n.settings)).last);
       await tester.pumpAndSettle();
-      await tester.tap(find.text(l10n.systemApp));
+      expect(inMenu(find.text(l10n.source)), findsOneWidget);
+      await tester.tap(inMenu(find.text(l10n.systemApp)));
       await tester.pumpAndSettle();
 
       final state = container.read(accessControlStateProvider);
       expect(state.isFilterSystemApp, isFalse);
       expect(state.isFilterNonInternetApp, isTrue);
+      expect(find.byType(CommonPopupMenu), findsNothing);
+      expect(find.text('Settings'), findsOneWidget);
+
+      await teardownView(tester);
+    });
+
+    testWidgets('the settings sub menu switches the mode', (tester) async {
+      seedAccessControl(const AccessControlProps(enable: true));
+      await pumpAccessView(tester);
+      final l10n = AppLocalizations.current;
+      Finder inMenu(Finder finder) =>
+          find.descendant(of: find.byType(CommonPopupMenu), matching: finder);
+
+      await openBarMenu(tester);
+      await tester.tap(inMenu(find.text(l10n.settings)).last);
+      await tester.pumpAndSettle();
+      await tester.tap(inMenu(find.text(l10n.whitelistMode)));
+      await tester.pumpAndSettle();
+
+      expect(
+        container.read(accessControlStateProvider).mode,
+        AccessControlMode.acceptSelected,
+      );
+      await openBarMenu(tester);
+      expect(inMenu(find.text(l10n.whitelistMode)), findsOneWidget);
 
       await teardownView(tester);
     });
@@ -291,20 +312,31 @@ void main() {
       await teardownView(tester);
     });
 
-    testWidgets('the bar menu selects then clears every visible app', (
+    testWidgets('select all stands beside search, then folds for save', (
       tester,
     ) async {
       seedAccessControl(const AccessControlProps(enable: true));
       await pumpAccessView(tester);
 
-      await openBarMenu(tester);
-      await tester.tap(find.text('Select all'));
+      expect(
+        find.ancestor(
+          of: find.byTooltip('Select all'),
+          matching: find.ancestor(
+            of: find.byTooltip('Search'),
+            matching: find.byType(TonalButtonGroup),
+          ),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.byTooltip('Select all'));
       await tester.pumpAndSettle();
       expect(
         [...container.read(accessControlStateProvider).currentList]..sort(),
         ['com.example.browser', 'com.example.chat'],
       );
 
+      expect(find.byTooltip('Save'), findsOneWidget);
+      expect(find.byTooltip('Deselect all'), findsNothing);
       await openBarMenu(tester);
       await tester.tap(find.text('Deselect all'));
       await tester.pumpAndSettle();
@@ -313,29 +345,37 @@ void main() {
       await teardownView(tester);
     });
 
-    testWidgets('the bar menu turns access control off and on', (tester) async {
+    testWidgets('the bar menu turns access control on and off in a section', (
+      tester,
+    ) async {
       seedAccessControl(const AccessControlProps(enable: true));
       await pumpAccessView(tester);
+      final l10n = AppLocalizations.current;
+      Finder inMenu(Finder finder) =>
+          find.descendant(of: find.byType(CommonPopupMenu), matching: finder);
+      Finder checkOn(String label) => inMenu(
+        find.descendant(
+          of: find.ancestor(of: find.text(label), matching: find.byType(Row)),
+          matching: find.byGlyph(AppGlyphs.check),
+        ),
+      );
 
-      Future<void> tapMenuPath(List<String> labels) async {
-        await openBarMenu(tester);
-        for (final label in labels) {
-          await tester.tap(
-            find
-                .descendant(
-                  of: find.byType(CommonPopupMenu),
-                  matching: find.text(label),
-                )
-                .last,
-          );
-          await tester.pumpAndSettle();
-        }
-      }
+      await openBarMenu(tester);
+      expect(inMenu(find.text(l10n.accessControl)), findsOneWidget);
+      expect(inMenu(find.text(l10n.blacklistMode)), findsOneWidget);
+      expect(checkOn(l10n.turnOn), findsOneWidget);
+      expect(checkOn(l10n.turnOff), findsNothing);
 
-      await tapMenuPath(['Access control', 'Turn off']);
+      await tester.tap(inMenu(find.text(l10n.turnOff)));
+      await tester.pumpAndSettle();
       expect(container.read(accessControlStateProvider).enable, isFalse);
 
-      await tapMenuPath(['Access control', 'Turn on']);
+      await openBarMenu(tester);
+      expect(checkOn(l10n.turnOn), findsNothing);
+      expect(checkOn(l10n.turnOff), findsOneWidget);
+
+      await tester.tap(inMenu(find.text(l10n.turnOn)));
+      await tester.pumpAndSettle();
       expect(container.read(accessControlStateProvider).enable, isTrue);
 
       await teardownView(tester);

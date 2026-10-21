@@ -51,7 +51,7 @@ void main() {
     );
 
     final tile = tester.widget<ListTile>(find.byType(ListTile));
-    final control = tester.widget<Switch>(find.byType(Switch));
+    final control = tester.widget<CommonSwitch>(find.byType(CommonSwitch));
 
     expect(tile.onTap, isNull);
     expect(control.onChanged, isNull);

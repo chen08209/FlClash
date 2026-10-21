@@ -324,7 +324,10 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
             FormRow(
               title: appLocalizations.autoUpdate,
               onPressed: () => _setAutoUpdate(!_autoUpdate),
-              trailing: Switch(value: _autoUpdate, onChanged: _setAutoUpdate),
+              trailing: CommonSwitch(
+                value: _autoUpdate,
+                onChanged: _setAutoUpdate,
+              ),
             ),
             if (_autoUpdate)
               _AutoUpdateIntervalField(
@@ -334,10 +337,14 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
               ),
           ],
         ),
-      _ProfileFileItem(
-        fileInfoNotifier: _fileInfoNotifier,
-        onEdit: _editProfileFile,
-        onUpload: _uploadProfileFile,
+      generateSection(
+        items: [
+          _ProfileFileItem(
+            fileInfoNotifier: _fileInfoNotifier,
+            onEdit: _editProfileFile,
+            onUpload: _uploadProfileFile,
+          ),
+        ],
       ),
     ];
     return FocusTraversalGroup(
@@ -365,7 +372,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                 ),
                 children: [
                   ErrorBanner(message: issue?.message),
-                  ...sections.separated(const SizedBox(height: 24)),
+                  ...sections,
                 ],
               ),
             ),
@@ -573,26 +580,23 @@ class _ProfileFileItem extends StatelessWidget {
           alignment: Alignment.centerLeft,
           child: fileInfo == null
               ? Container()
-              : ItemPositionProvider(
-                  position: ItemPosition.startAndEnd,
-                  child: ContextMenuRegion(
-                    menuItems: _menuItems(context),
-                    child: DecorationListItem(
-                      contentPadding: const EdgeInsets.only(left: 16),
-                      title: Text(appLocalizations.profile),
-                      subtitle: _buildSubtitle(context, fileInfo),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            fileInfo.size.traffic.show,
-                            style: context.listCaptionStyle,
-                          ),
-                          const DisclosureIndicator(),
-                        ],
-                      ),
-                      onPressed: onEdit,
+              : ContextMenuRegion(
+                  menuItems: _menuItems(context),
+                  child: DecorationListItem(
+                    contentPadding: const EdgeInsets.only(left: 16),
+                    title: Text(appLocalizations.profile),
+                    subtitle: _buildSubtitle(context, fileInfo),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          fileInfo.size.traffic.show,
+                          style: context.listCaptionStyle,
+                        ),
+                        const DisclosureIndicator(),
+                      ],
                     ),
+                    onPressed: onEdit,
                   ),
                 ),
         );

@@ -213,6 +213,34 @@ void main() {
     expect(await _behind(tester, upper, const Offset(325, 225)), _red);
   });
 
+  testWidgets('panes in one group share a level and read past each other', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        LiquidGlassGroup(
+          child: Stack(
+            children: [
+              const Positioned.fill(child: ColoredBox(color: _red)),
+              _pane(
+                const Rect.fromLTWH(100, 100, 200, 100),
+                style: const LiquidGlassStyle(tint: _blue, blur: 0),
+              ),
+              _pane(const Rect.fromLTWH(250, 150, 100, 100)),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final capture = _capture();
+    final [lower, upper] = capture.panes;
+    expect([lower.level, upper.level], [0, 0]);
+    expect(upper.atlas, same(lower.atlas));
+    expect(capture.snapshots, 1);
+    expect(await _behind(tester, upper, const Offset(275, 175)), _red);
+  });
+
   testWidgets('a pane stays on its level beside one past its frost', (
     tester,
   ) async {
@@ -440,5 +468,41 @@ void main() {
     );
 
     expect(LiquidGlassHost.debugLastCapture, isNull);
+  });
+
+  testWidgets('a pane that leaves the tree lets go of its capture', (
+    tester,
+  ) async {
+    final held = LiquidGlassHost.debugHeldCaptures;
+    Widget scene({required bool offstage, bool enabled = true}) => _app(
+      Stack(
+        children: [
+          const Positioned.fill(child: ColoredBox(color: _red)),
+          _pane(const Rect.fromLTWH(100, 100, 200, 100)),
+          Positioned.fill(
+            child: Offstage(
+              offstage: offstage,
+              child: Stack(
+                children: [_pane(const Rect.fromLTWH(100, 300, 200, 100))],
+              ),
+            ),
+          ),
+        ],
+      ),
+      enabled: enabled,
+    );
+
+    await tester.pumpWidget(scene(offstage: false));
+    expect(LiquidGlassHost.debugHeldCaptures, held + 2);
+
+    await tester.pumpWidget(scene(offstage: true));
+    expect(_capture().panes, hasLength(1));
+    expect(LiquidGlassHost.debugHeldCaptures, held + 1);
+
+    await tester.pumpWidget(scene(offstage: false));
+    expect(LiquidGlassHost.debugHeldCaptures, held + 2);
+
+    await tester.pumpWidget(scene(offstage: false, enabled: false));
+    expect(LiquidGlassHost.debugHeldCaptures, held);
   });
 }

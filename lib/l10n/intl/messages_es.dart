@@ -235,20 +235,8 @@ class MessageLookup extends MessageLookupByLibrary {
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "about": MessageLookupByLibrary.simpleMessage("Acerca de"),
     "accessControl": MessageLookupByLibrary.simpleMessage("Control de acceso"),
-    "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
-      "Solo las apps seleccionadas usan la VPN",
-    ),
     "accessControlDesc": MessageLookupByLibrary.simpleMessage(
       "El control de acceso elige qué apps usan el proxy.",
-    ),
-    "accessControlDisabledDesc": MessageLookupByLibrary.simpleMessage(
-      "El control de acceso de apps está desactivado",
-    ),
-    "accessControlNotAllowDesc": MessageLookupByLibrary.simpleMessage(
-      "Las apps seleccionadas quedan excluidas de la VPN",
-    ),
-    "accessControlSettings": MessageLookupByLibrary.simpleMessage(
-      "Ajustes de control de acceso",
     ),
     "account": MessageLookupByLibrary.simpleMessage("Cuenta"),
     "action": MessageLookupByLibrary.simpleMessage("Acción"),
@@ -938,9 +926,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "hidePassword": MessageLookupByLibrary.simpleMessage("Ocultar contraseña"),
     "hideTimeoutProxies": MessageLookupByLibrary.simpleMessage(
       "Ocultar proxies sin respuesta",
-    ),
-    "hideTimeoutProxiesDesc": MessageLookupByLibrary.simpleMessage(
-      "Omite los proxies cuya última prueba de latencia superó el tiempo de espera",
     ),
     "hopInterval": MessageLookupByLibrary.simpleMessage("Intervalo de salto"),
     "host": MessageLookupByLibrary.simpleMessage("Host"),
@@ -1744,7 +1729,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectSplitStrategy": MessageLookupByLibrary.simpleMessage(
       "Selecciona una estrategia de división",
     ),
-    "selected": MessageLookupByLibrary.simpleMessage("Seleccionado"),
     "server": MessageLookupByLibrary.simpleMessage("Servidor"),
     "serviceAbnormalCount": m73,
     "serviceAllAvailable": MessageLookupByLibrary.simpleMessage(

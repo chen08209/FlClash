@@ -415,6 +415,46 @@ void main() {
     await close(tester);
   });
 
+  testWidgets('a drag on the handle past the tallest detent rubber-bands the '
+      'sheet and it springs back from there', (tester) async {
+    await openSheet(tester);
+    final expanded = _mobile.height * (1 - snapSheetDetents.last);
+    final collapsed = _mobile.height * (1 - snapSheetDetents.first);
+    final extent = min(100.0, expanded - stackedSheetPeek);
+    final overshoot = 600 - kDragSlopDefault - (collapsed - expanded);
+    final stretch = (1 - 1 / (overshoot * 0.55 / extent + 1)) * extent;
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(SheetDragHandle)),
+    );
+    for (var i = 0; i < 60; i++) {
+      await gesture.moveBy(const Offset(0, -10));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    expect(sheetTop(tester), closeTo(expanded - stretch, 2));
+
+    await gesture.up();
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(sheetTop(tester), lessThan(expanded - stretch / 2));
+
+    final again = await tester.startGesture(
+      tester.getCenter(find.byType(SheetDragHandle)),
+    );
+    await again.moveBy(const Offset(0, -kDragSlopDefault - 1));
+    await tester.pump(const Duration(milliseconds: 16));
+    final caught = sheetTop(tester);
+    await again.moveBy(const Offset(0, -1));
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(caught, lessThan(expanded - 5));
+    expect(sheetTop(tester), closeTo(caught, 1));
+
+    await again.up();
+    await tester.pumpAndSettle();
+    expect(sheetTop(tester), closeTo(expanded, 1));
+
+    await close(tester);
+  });
+
   testWidgets('a sideways wheel tick leaves a settling sheet on its way', (
     tester,
   ) async {
