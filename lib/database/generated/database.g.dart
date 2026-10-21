@@ -4332,6 +4332,271 @@ class ProxyDialersCompanion extends UpdateCompanion<RawProxyDialer> {
   }
 }
 
+class $IpQualitiesTable extends IpQualities
+    with TableInfo<$IpQualitiesTable, IpQualityRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $IpQualitiesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ipMeta = const VerificationMeta('ip');
+  @override
+  late final GeneratedColumn<String> ip = GeneratedColumn<String>(
+    'ip',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<IpQuality, String> quality =
+      GeneratedColumn<String>(
+        'quality',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<IpQuality>($IpQualitiesTable.$converterquality);
+  static const VerificationMeta _checkedAtMeta = const VerificationMeta(
+    'checkedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> checkedAt = GeneratedColumn<DateTime>(
+    'checked_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [ip, quality, checkedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ip_qualities';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<IpQualityRecord> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('ip')) {
+      context.handle(_ipMeta, ip.isAcceptableOrUnknown(data['ip']!, _ipMeta));
+    } else if (isInserting) {
+      context.missing(_ipMeta);
+    }
+    if (data.containsKey('checked_at')) {
+      context.handle(
+        _checkedAtMeta,
+        checkedAt.isAcceptableOrUnknown(data['checked_at']!, _checkedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_checkedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {ip};
+  @override
+  IpQualityRecord map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return IpQualityRecord(
+      ip: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ip'],
+      )!,
+      quality: $IpQualitiesTable.$converterquality.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}quality'],
+        )!,
+      ),
+      checkedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}checked_at'],
+      )!,
+    );
+  }
+
+  @override
+  $IpQualitiesTable createAlias(String alias) {
+    return $IpQualitiesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<IpQuality, String> $converterquality =
+      const IpQualityConverter();
+}
+
+class IpQualityRecord extends DataClass implements Insertable<IpQualityRecord> {
+  final String ip;
+  final IpQuality quality;
+  final DateTime checkedAt;
+  const IpQualityRecord({
+    required this.ip,
+    required this.quality,
+    required this.checkedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['ip'] = Variable<String>(ip);
+    {
+      map['quality'] = Variable<String>(
+        $IpQualitiesTable.$converterquality.toSql(quality),
+      );
+    }
+    map['checked_at'] = Variable<DateTime>(checkedAt);
+    return map;
+  }
+
+  IpQualitiesCompanion toCompanion(bool nullToAbsent) {
+    return IpQualitiesCompanion(
+      ip: Value(ip),
+      quality: Value(quality),
+      checkedAt: Value(checkedAt),
+    );
+  }
+
+  factory IpQualityRecord.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return IpQualityRecord(
+      ip: serializer.fromJson<String>(json['ip']),
+      quality: serializer.fromJson<IpQuality>(json['quality']),
+      checkedAt: serializer.fromJson<DateTime>(json['checkedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ip': serializer.toJson<String>(ip),
+      'quality': serializer.toJson<IpQuality>(quality),
+      'checkedAt': serializer.toJson<DateTime>(checkedAt),
+    };
+  }
+
+  IpQualityRecord copyWith({
+    String? ip,
+    IpQuality? quality,
+    DateTime? checkedAt,
+  }) => IpQualityRecord(
+    ip: ip ?? this.ip,
+    quality: quality ?? this.quality,
+    checkedAt: checkedAt ?? this.checkedAt,
+  );
+  IpQualityRecord copyWithCompanion(IpQualitiesCompanion data) {
+    return IpQualityRecord(
+      ip: data.ip.present ? data.ip.value : this.ip,
+      quality: data.quality.present ? data.quality.value : this.quality,
+      checkedAt: data.checkedAt.present ? data.checkedAt.value : this.checkedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('IpQualityRecord(')
+          ..write('ip: $ip, ')
+          ..write('quality: $quality, ')
+          ..write('checkedAt: $checkedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(ip, quality, checkedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is IpQualityRecord &&
+          other.ip == this.ip &&
+          other.quality == this.quality &&
+          other.checkedAt == this.checkedAt);
+}
+
+class IpQualitiesCompanion extends UpdateCompanion<IpQualityRecord> {
+  final Value<String> ip;
+  final Value<IpQuality> quality;
+  final Value<DateTime> checkedAt;
+  final Value<int> rowid;
+  const IpQualitiesCompanion({
+    this.ip = const Value.absent(),
+    this.quality = const Value.absent(),
+    this.checkedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  IpQualitiesCompanion.insert({
+    required String ip,
+    required IpQuality quality,
+    required DateTime checkedAt,
+    this.rowid = const Value.absent(),
+  }) : ip = Value(ip),
+       quality = Value(quality),
+       checkedAt = Value(checkedAt);
+  static Insertable<IpQualityRecord> custom({
+    Expression<String>? ip,
+    Expression<String>? quality,
+    Expression<DateTime>? checkedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ip != null) 'ip': ip,
+      if (quality != null) 'quality': quality,
+      if (checkedAt != null) 'checked_at': checkedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  IpQualitiesCompanion copyWith({
+    Value<String>? ip,
+    Value<IpQuality>? quality,
+    Value<DateTime>? checkedAt,
+    Value<int>? rowid,
+  }) {
+    return IpQualitiesCompanion(
+      ip: ip ?? this.ip,
+      quality: quality ?? this.quality,
+      checkedAt: checkedAt ?? this.checkedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ip.present) {
+      map['ip'] = Variable<String>(ip.value);
+    }
+    if (quality.present) {
+      map['quality'] = Variable<String>(
+        $IpQualitiesTable.$converterquality.toSql(quality.value),
+      );
+    }
+    if (checkedAt.present) {
+      map['checked_at'] = Variable<DateTime>(checkedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('IpQualitiesCompanion(')
+          ..write('ip: $ip, ')
+          ..write('quality: $quality, ')
+          ..write('checkedAt: $checkedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$Database extends GeneratedDatabase {
   _$Database(QueryExecutor e) : super(e);
   $DatabaseManager get managers => $DatabaseManager(this);
@@ -4345,6 +4610,7 @@ abstract class _$Database extends GeneratedDatabase {
   late final $ClashProvidersTable clashProviders = $ClashProvidersTable(this);
   late final $CustomProxiesTable customProxies = $CustomProxiesTable(this);
   late final $ProxyDialersTable proxyDialers = $ProxyDialersTable(this);
+  late final $IpQualitiesTable ipQualities = $IpQualitiesTable(this);
   late final Index idxRuleTarget = Index(
     'idx_rule_target',
     'CREATE INDEX idx_rule_target ON rules (rule_target)',
@@ -4376,6 +4642,7 @@ abstract class _$Database extends GeneratedDatabase {
   late final ProxyDialersDao proxyDialersDao = ProxyDialersDao(
     this as Database,
   );
+  late final IpQualitiesDao ipQualitiesDao = IpQualitiesDao(this as Database);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4391,6 +4658,7 @@ abstract class _$Database extends GeneratedDatabase {
     clashProviders,
     customProxies,
     proxyDialers,
+    ipQualities,
     idxRuleTarget,
     idxRulesProfileOrder,
     idxProxyGroupsProfileOrder,
@@ -7994,6 +8262,178 @@ typedef $$ProxyDialersTableProcessedTableManager =
       RawProxyDialer,
       PrefetchHooks Function({bool profileId, bool proxyId})
     >;
+typedef $$IpQualitiesTableCreateCompanionBuilder =
+    IpQualitiesCompanion Function({
+      required String ip,
+      required IpQuality quality,
+      required DateTime checkedAt,
+      Value<int> rowid,
+    });
+typedef $$IpQualitiesTableUpdateCompanionBuilder =
+    IpQualitiesCompanion Function({
+      Value<String> ip,
+      Value<IpQuality> quality,
+      Value<DateTime> checkedAt,
+      Value<int> rowid,
+    });
+
+class $$IpQualitiesTableFilterComposer
+    extends Composer<_$Database, $IpQualitiesTable> {
+  $$IpQualitiesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ip => $composableBuilder(
+    column: $table.ip,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<IpQuality, IpQuality, String> get quality =>
+      $composableBuilder(
+        column: $table.quality,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get checkedAt => $composableBuilder(
+    column: $table.checkedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$IpQualitiesTableOrderingComposer
+    extends Composer<_$Database, $IpQualitiesTable> {
+  $$IpQualitiesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ip => $composableBuilder(
+    column: $table.ip,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get quality => $composableBuilder(
+    column: $table.quality,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get checkedAt => $composableBuilder(
+    column: $table.checkedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$IpQualitiesTableAnnotationComposer
+    extends Composer<_$Database, $IpQualitiesTable> {
+  $$IpQualitiesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ip =>
+      $composableBuilder(column: $table.ip, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<IpQuality, String> get quality =>
+      $composableBuilder(column: $table.quality, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get checkedAt =>
+      $composableBuilder(column: $table.checkedAt, builder: (column) => column);
+}
+
+class $$IpQualitiesTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $IpQualitiesTable,
+          IpQualityRecord,
+          $$IpQualitiesTableFilterComposer,
+          $$IpQualitiesTableOrderingComposer,
+          $$IpQualitiesTableAnnotationComposer,
+          $$IpQualitiesTableCreateCompanionBuilder,
+          $$IpQualitiesTableUpdateCompanionBuilder,
+          (
+            IpQualityRecord,
+            BaseReferences<_$Database, $IpQualitiesTable, IpQualityRecord>,
+          ),
+          IpQualityRecord,
+          PrefetchHooks Function()
+        > {
+  $$IpQualitiesTableTableManager(_$Database db, $IpQualitiesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$IpQualitiesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$IpQualitiesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$IpQualitiesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> ip = const Value.absent(),
+                Value<IpQuality> quality = const Value.absent(),
+                Value<DateTime> checkedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => IpQualitiesCompanion(
+                ip: ip,
+                quality: quality,
+                checkedAt: checkedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ip,
+                required IpQuality quality,
+                required DateTime checkedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => IpQualitiesCompanion.insert(
+                ip: ip,
+                quality: quality,
+                checkedAt: checkedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$IpQualitiesTable, IpQualityRecord>(table),
+                  BaseReferences<
+                    _$Database,
+                    $IpQualitiesTable,
+                    IpQualityRecord
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$IpQualitiesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $IpQualitiesTable,
+      IpQualityRecord,
+      $$IpQualitiesTableFilterComposer,
+      $$IpQualitiesTableOrderingComposer,
+      $$IpQualitiesTableAnnotationComposer,
+      $$IpQualitiesTableCreateCompanionBuilder,
+      $$IpQualitiesTableUpdateCompanionBuilder,
+      (
+        IpQualityRecord,
+        BaseReferences<_$Database, $IpQualitiesTable, IpQualityRecord>,
+      ),
+      IpQualityRecord,
+      PrefetchHooks Function()
+    >;
 
 class $DatabaseManager {
   final _$Database _db;
@@ -8018,6 +8458,8 @@ class $DatabaseManager {
       $$CustomProxiesTableTableManager(_db, _db.customProxies);
   $$ProxyDialersTableTableManager get proxyDialers =>
       $$ProxyDialersTableTableManager(_db, _db.proxyDialers);
+  $$IpQualitiesTableTableManager get ipQualities =>
+      $$IpQualitiesTableTableManager(_db, _db.ipQualities);
 }
 
 mixin _$ProfilesDaoMixin on DatabaseAccessor<Database> {
@@ -8144,4 +8586,16 @@ class ProxyDialersDaoManager {
       $$CustomProxiesTableTableManager(_db.attachedDatabase, _db.customProxies);
   $$ProxyDialersTableTableManager get proxyDialers =>
       $$ProxyDialersTableTableManager(_db.attachedDatabase, _db.proxyDialers);
+}
+
+mixin _$IpQualitiesDaoMixin on DatabaseAccessor<Database> {
+  $IpQualitiesTable get ipQualities => attachedDatabase.ipQualities;
+  IpQualitiesDaoManager get managers => IpQualitiesDaoManager(this);
+}
+
+class IpQualitiesDaoManager {
+  final _$IpQualitiesDaoMixin _db;
+  IpQualitiesDaoManager(this._db);
+  $$IpQualitiesTableTableManager get ipQualities =>
+      $$IpQualitiesTableTableManager(_db.attachedDatabase, _db.ipQualities);
 }

@@ -420,7 +420,7 @@ void main() {
 
       start(tester);
       await tester.pump();
-      await tester.pump(commonDuration);
+      await tester.pump(probeSettleDuration);
       expect(phaseOf(tester), ProbePhase.failed);
       expect(find.text('Check failed'), findsNothing);
       expect(find.byType(SkeletonText), findsNWidgets(2));
@@ -429,6 +429,7 @@ void main() {
       containerOf(tester)
           .read(routeTrackerProvider.notifier)
           .applySnapshot(const RouteSnapshot(coreEpoch: 2, picksVersion: 1));
+      await tester.pump(probeSettleDuration);
       await tester.pumpAndSettle();
       await tester.pump(const Duration(milliseconds: 700));
       expect(find.text(_ip), findsOneWidget);
@@ -452,7 +453,7 @@ void main() {
 
       start(tester);
       await tester.pump();
-      await tester.pump(commonDuration);
+      await tester.pump(probeSettleDuration);
       await tester.tap(find.byTooltip('Retry'));
       await tester.pump();
       expect(phaseOf(tester), ProbePhase.failed);

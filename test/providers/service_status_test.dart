@@ -117,9 +117,10 @@ void main() {
     expect(state.isLoading(ServiceTarget.github), isTrue);
   });
 
-  test(
-    'a route change asks the Core again at once, not behind the stale checks',
-    () async {
+  testWidgets(
+    'a route change asks the Core again once it settles, not behind the stale '
+    'checks',
+    (tester) async {
       final scope = container();
       when(() => core.serviceCheck(any())).thenAnswer((invocation) {
         sweeps.add(invocation.positionalArguments.single as ServiceCheckParams);
@@ -127,11 +128,11 @@ void main() {
       });
       final notifier = notifierOf(scope);
       ServiceTarget.values.forEach(notifier.watch);
-      await pumpEventQueue();
+      await tester.pump();
       expect(sweeps, hasLength(ServiceTarget.values.length));
 
       scope.read(routeTrackerProvider.notifier).bumpHostEpoch();
-      await pumpEventQueue();
+      await tester.pump(probeSettleDuration);
 
       expect(sweeps.skip(ServiceTarget.values.length).map((s) => s.names), [
         for (final target in ServiceTarget.values) [target.id],
@@ -237,51 +238,52 @@ void main() {
     },
   );
 
-  test('drops results once the route has changed under them', () async {
+  testWidgets('drops results once the route has changed under them', (
+    tester,
+  ) async {
     final scope = container();
     notifierOf(scope).watch(ServiceTarget.youtube);
-    await pumpEventQueue();
+    await tester.pump();
     expect(stateOf(scope).valueOf(ServiceTarget.youtube), isNotNull);
 
     scope.read(routeTrackerProvider.notifier).bumpHostEpoch();
 
     expect(stateOf(scope).valueOf(ServiceTarget.youtube), isNull);
     expect(stateOf(scope).isLoading(ServiceTarget.youtube), isTrue);
-    await pumpEventQueue();
+    await tester.pump(probeSettleDuration);
     expect(sweeps, hasLength(2));
     expect(stateOf(scope).valueOf(ServiceTarget.youtube), isNotNull);
   });
 
-  test(
-    'an answer that arrives after the route changed is asked again',
-    () async {
-      final scope = container();
-      final gate = Completer<List<ServiceCheckItem>>();
-      var first = true;
-      when(() => core.serviceCheck(any())).thenAnswer((invocation) {
-        final params =
-            invocation.positionalArguments.single as ServiceCheckParams;
-        sweeps.add(params);
-        if (first) {
-          first = false;
-          return gate.future;
-        }
-        return Future.value([for (final name in params.names) _item(name)]);
-      });
-      notifierOf(scope).watch(ServiceTarget.youtube);
-      await pumpEventQueue();
+  testWidgets('an answer that arrives after the route changed is asked again', (
+    tester,
+  ) async {
+    final scope = container();
+    final gate = Completer<List<ServiceCheckItem>>();
+    var first = true;
+    when(() => core.serviceCheck(any())).thenAnswer((invocation) {
+      final params =
+          invocation.positionalArguments.single as ServiceCheckParams;
+      sweeps.add(params);
+      if (first) {
+        first = false;
+        return gate.future;
+      }
+      return Future.value([for (final name in params.names) _item(name)]);
+    });
+    notifierOf(scope).watch(ServiceTarget.youtube);
+    await tester.pump();
 
-      scope.read(routeTrackerProvider.notifier).bumpHostEpoch();
-      gate.complete([_item('youtube')]);
-      await pumpEventQueue();
+    scope.read(routeTrackerProvider.notifier).bumpHostEpoch();
+    gate.complete([_item('youtube')]);
+    await tester.pump(probeSettleDuration);
 
-      expect(sweeps, hasLength(2));
-      expect(
-        stateOf(scope).entryOf(ServiceTarget.youtube).phase,
-        ProbePhase.fresh,
-      );
-    },
-  );
+    expect(sweeps, hasLength(2));
+    expect(
+      stateOf(scope).entryOf(ServiceTarget.youtube).phase,
+      ProbePhase.fresh,
+    );
+  });
 
   test(
     'enabled targets follow the saved order and skip turned-off services',

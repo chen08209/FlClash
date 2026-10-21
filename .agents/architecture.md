@@ -460,8 +460,15 @@ parts.
   in. A widget `watch`es the target it shows and `unwatch`es on the way out; only watched targets are probed, one
   request in flight per target. An answer is stamped with the Core's counters and the host state at launch, and
   `RouteState.isFresh` walks its chain against the picks, so a selection change only invalidates results that went
-  through the changed group while an epoch change invalidates everything. A stale watched entry is asked again at
-  once; an unwatched one is dropped. Nothing launches while the app is hidden: what falls due waits for it to be shown.
+  through the changed group while an epoch change invalidates everything. A stale watched entry shows as checking at
+  once and is asked again once the route has settled, so asking at each step does not spend a probe on every route
+  but the last. A move (`RouteState.hasMovedSince`: the Core epoch, the host epoch or `proxied`) waits
+  `probeMoveSettleDuration`, since a start moves it three times within about 150 ms (`proxied`, then the listeners,
+  then the Android TUN) and the user is watching for the new address. A re-pick alone waits `probeSettleDuration`,
+  past the next pick poll, because groups rebuilt together re-pick on neighbouring polls; a move during that wait cuts
+  it short. A newly watched target, a
+  `refresh` and a resumed retry do not wait; an unwatched stale entry is dropped. Nothing launches while the app is
+  hidden: what falls due waits for it to be shown.
   Failures wait for `retry`, `refresh`, or the app resuming (`markResumed`), and
   a service check that timed out is a failure that still shows its status. `refresh` is the user's own request and
   runs for unwatched targets too: the service sheet reads the cache and never watches its rows, because one service
@@ -469,8 +476,10 @@ parts.
 
 `ipQuality(ip)` in `lib/providers/ip_quality.dart` is keyed by the outbound IP found, so a route change reaches it as
 a new IP and an unchanged IP reuses the result. A lookup races its sources the way the IP check does and takes the
-first one that determines a type. A success is kept for the session with `ref.keepAlive()`; a failure is not cached,
-and Riverpod's automatic retry is off because a retry after an HTTP 429 spends the same per-outbound-IP quota again.
+first one that determines a type. A success is saved to the `IpQualities` table and answers for that IP, across
+restarts, until `ipQualityMaxAge` (three days) has passed; a shown result is asked again when it expires,
+and invalidating the provider (the sheet's check again) skips the saved record. A failure is not saved, and Riverpod's
+automatic retry is off because a retry after an HTTP 429 spends the same per-outbound-IP quota again.
 
 ## UI Layer
 
@@ -1243,6 +1252,7 @@ Tables:
 - `IconRecords` (`icon_records`)
 - `IconSets` (`icon_sets`)
 - `ClashProviders` (`clash_providers`)
+- `IpQualities` (`ip_qualities`): a cache of IP quality lookups that backups carry and a restore never reads.
 
 `Profiles.type` is `file`, `url` or `custom`, fixed when the profile is created. A rule belongs to whoever its
 `profile_id` names: no profile makes it global, a file or url profile's rules are what its standard extension adds, and

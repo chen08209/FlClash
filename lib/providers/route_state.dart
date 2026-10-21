@@ -65,10 +65,7 @@ class RouteState {
   /// contradict it. An answer with no chain is tied to the selection version
   /// it was made under instead.
   bool isFresh(RouteStamp stamp) {
-    if (!synced ||
-        stamp.coreEpoch != coreEpoch ||
-        stamp.hostEpoch != hostEpoch ||
-        stamp.proxied != proxied) {
+    if (!synced || hasMovedSince(stamp)) {
       return false;
     }
     final chains = stamp.chains;
@@ -83,6 +80,12 @@ class RouteState {
     }
     return true;
   }
+
+  /// Whether more than a group's pick changed since [stamp] was made.
+  bool hasMovedSince(RouteStamp stamp) =>
+      stamp.coreEpoch != coreEpoch ||
+      stamp.hostEpoch != hostEpoch ||
+      stamp.proxied != proxied;
 
   bool isBehind(RouteStamp stamp) =>
       stamp.coreEpoch > coreEpoch || stamp.picksVersion > picksVersion;
