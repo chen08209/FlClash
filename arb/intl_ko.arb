@@ -676,7 +676,7 @@
   "excludeSsidsDesc": "제외 SSID의 Wi-Fi에 연결되면 앱의 실행 상태가 자동으로 전환됩니다.",
   "ssidsEmpty": "SSID가 비어 있습니다",
   "onDemand": "필요 시 실행",
-  "onDemandDesc": "필요 시 실행은 제외된 Wi-Fi에서 프록시를 일시 중지합니다.",
+  "onDemandDesc": "Wi-Fi SSID에 따라 모드를 전환하거나 제외한 Wi-Fi에서 프록시를 일시 중지합니다.",
   "locationPermissionDeniedMessage": "위치 권한이 거부되어 현재 Wi-Fi 이름을 읽을 수 없습니다. 시스템 설정에서 위치 권한을 직접 켜 주세요.",
   "addSsid": "SSID 추가",
   "editSsid": "SSID 편집",
@@ -939,5 +939,12 @@
   "customImportDroppedSubRules": "{count, plural, other{사용자 지정 프로필은 하위 규칙을 지원하지 않아 SUB-RULE 규칙 {label}개를 제외했습니다}}",
   "autoInclude": "자동 포함",
   "allReferencedProxies": "참조된 모든 프록시",
-  "allReferencedProxyProviders": "참조된 모든 프록시 공급자"
+  "allReferencedProxyProviders": "참조된 모든 프록시 공급자",
+  "wifiMode": "Wi-Fi별 모드 전환",
+  "wifiModeRules": "SSID 모드 규칙",
+  "wifiModeFallback": "기본 아웃바운드 모드",
+  "currentSsid": "현재 Wi-Fi SSID",
+  "ssidUnavailable": "읽을 수 없거나 Wi-Fi에 연결되지 않음",
+  "wifiModeDesc": "FlClash 실행 중 SSID가 정확히 일치하면 모드를 전환합니다. 다른 네트워크나 읽을 수 없는 SSID에는 기본 모드를 사용합니다. 설정은 로컬에 저장되며 구독 YAML을 사용하지 않습니다. 활성화 중에는 SSID 제외가 적용되지 않습니다. 수동 모드는 네트워크나 이 설정이 변경될 때까지 유지됩니다.",
+  "ssidTooLong": "SSID는 UTF-8 기준 32바이트를 넘을 수 없습니다."
 }

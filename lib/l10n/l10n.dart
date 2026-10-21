@@ -5620,10 +5620,10 @@ class AppLocalizations {
     return Intl.message('On demand', name: 'onDemand', desc: '', args: []);
   }
 
-  /// `On demand pauses the proxy on excluded Wi-Fi.`
+  /// `Switch the outbound mode by Wi-Fi SSID, or pause the proxy on excluded Wi-Fi.`
   String get onDemandDesc {
     return Intl.message(
-      'On demand pauses the proxy on excluded Wi-Fi.',
+      'Switch the outbound mode by Wi-Fi SSID, or pause the proxy on excluded Wi-Fi.',
       name: 'onDemandDesc',
       desc: '',
       args: [],
@@ -7832,6 +7832,76 @@ class AppLocalizations {
     return Intl.message(
       'All referenced proxy providers',
       name: 'allReferencedProxyProviders',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Wi-Fi mode switching`
+  String get wifiMode {
+    return Intl.message(
+      'Wi-Fi mode switching',
+      name: 'wifiMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `SSID mode rules`
+  String get wifiModeRules {
+    return Intl.message(
+      'SSID mode rules',
+      name: 'wifiModeRules',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Default outbound mode`
+  String get wifiModeFallback {
+    return Intl.message(
+      'Default outbound mode',
+      name: 'wifiModeFallback',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Current Wi-Fi SSID`
+  String get currentSsid {
+    return Intl.message(
+      'Current Wi-Fi SSID',
+      name: 'currentSsid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unavailable or not connected to Wi-Fi`
+  String get ssidUnavailable {
+    return Intl.message(
+      'Unavailable or not connected to Wi-Fi',
+      name: 'ssidUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Match the SSID exactly and switch the outbound mode while FlClash is running. Other networks or an unavailable SSID use the default mode. Settings are stored locally and do not use subscription YAML. SSID exclusions are inactive while this is enabled. Manual mode changes last until the network or these settings change.`
+  String get wifiModeDesc {
+    return Intl.message(
+      'Match the SSID exactly and switch the outbound mode while FlClash is running. Other networks or an unavailable SSID use the default mode. Settings are stored locally and do not use subscription YAML. SSID exclusions are inactive while this is enabled. Manual mode changes last until the network or these settings change.',
+      name: 'wifiModeDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `An SSID must not exceed 32 UTF-8 bytes.`
+  String get ssidTooLong {
+    return Intl.message(
+      'An SSID must not exceed 32 UTF-8 bytes.',
+      name: 'ssidTooLong',
       desc: '',
       args: [],
     );

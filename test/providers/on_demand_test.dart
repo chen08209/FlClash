@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/plugins/battery.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/on_demand.dart';
@@ -67,6 +68,20 @@ void main() {
         container.read(locationPermissionsProvider),
         WifiSsidPermission.granted,
       );
+    });
+
+    test('mode automation requests permission without exclusions', () async {
+      container.dispose();
+      container = ProviderContainer(
+        overrides: [
+          wifiModeSettingProvider.overrideWithValue(
+            const WifiModeSettings(enabled: true),
+          ),
+        ],
+      );
+      answer((call) async => call.method == 'checkPermission' ? 1 : 0);
+      await notifier().refresh();
+      expect(calls, ['checkPermission', 'requestPermission']);
     });
 
     test('a safe mode build neither checks nor requests location', () async {

@@ -443,6 +443,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "currentOutboundDesc": MessageLookupByLibrary.simpleMessage(
       "起動ボタンがあるため削除できません",
     ),
+    "currentSsid": MessageLookupByLibrary.simpleMessage("現在の Wi-Fi SSID"),
     "custom": MessageLookupByLibrary.simpleMessage("カスタム"),
     "customColor": MessageLookupByLibrary.simpleMessage("カスタムカラー"),
     "customImportDroppedSubRules": m5,
@@ -1067,7 +1068,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "obfsPassword": MessageLookupByLibrary.simpleMessage("難読化パスワード"),
     "onDemand": MessageLookupByLibrary.simpleMessage("オンデマンド"),
     "onDemandDesc": MessageLookupByLibrary.simpleMessage(
-      "オンデマンドは、除外した Wi-Fi に接続している間プロキシを一時停止します。",
+      "Wi-Fi の SSID に応じて送信モードを切り替えるか、除外した Wi-Fi でプロキシを一時停止します。",
     ),
     "onlyStatisticsProxy": MessageLookupByLibrary.simpleMessage(
       "プロキシトラフィックのみ集計",
@@ -1468,6 +1469,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "splitStrategyNotEmpty": MessageLookupByLibrary.simpleMessage(
       "振り分け戦略は空にできません",
     ),
+    "ssidTooLong": MessageLookupByLibrary.simpleMessage(
+      "SSID は UTF-8 で 32 バイト以内にしてください。",
+    ),
+    "ssidUnavailable": MessageLookupByLibrary.simpleMessage(
+      "取得できないか Wi-Fi に未接続",
+    ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSIDが空です"),
     "stackMode": MessageLookupByLibrary.simpleMessage("スタックモード"),
     "stackTrace": MessageLookupByLibrary.simpleMessage("スタックトレース"),
@@ -1581,6 +1588,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV設定"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
+    "wifiMode": MessageLookupByLibrary.simpleMessage("Wi-Fi によるモード切替"),
+    "wifiModeDesc": MessageLookupByLibrary.simpleMessage(
+      "FlClash の実行中、SSID の完全一致で送信モードを切り替えます。他のネットワークや SSID を取得できない場合は既定のモードを使います。設定はローカルに保存され、購読 YAML は使いません。有効時は SSID 除外を適用しません。手動変更はネットワークまたはこの設定が変わるまで保持されます。",
+    ),
+    "wifiModeFallback": MessageLookupByLibrary.simpleMessage("既定の送信モード"),
+    "wifiModeRules": MessageLookupByLibrary.simpleMessage("SSID モードルール"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("システムに書き込む"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "システムに書き込むを有効にするとシステムクロックも設定します。Android では無視されます。",

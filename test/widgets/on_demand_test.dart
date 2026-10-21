@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/on_demand.dart';
 import 'package:fl_clash/providers/state.dart';
@@ -345,6 +347,65 @@ void main() {
     expect(find.text('Ignore battery optimization'), findsNothing);
     expect(find.text('Location permission'), findsNothing);
     expect(find.bySemanticsLabel('Tap to authorize'), findsNothing);
+  });
+  testWidgets('mode settings show the SSID and disable suspension', (
+    tester,
+  ) async {
+    await pumpView(tester, ssids: ['Home']);
+    container.read(wifiModeSettingProvider.notifier).value =
+        const WifiModeSettings(enabled: true, rules: {'Home': Mode.direct});
+    container.read(currentSSIDProvider.notifier).value = 'Home';
+    await tester.pumpAndSettle();
+    expect(find.text('Current Wi-Fi SSID'), findsOneWidget);
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Exclude SSIDs'), findsNothing);
+    expect(container.read(suspendProvider), isFalse);
+  });
+
+  testWidgets('SSID rules accept a custom name and a chosen mode', (
+    tester,
+  ) async {
+    await pumpView(tester);
+    await tester.tap(find.text('SSID mode rules'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Add').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'My own Wi-Fi');
+    await tester.tap(find.text('Outbound mode').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Global').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Save').last);
+    await tester.pumpAndSettle();
+    expect(container.read(wifiModeSettingProvider).rules, {
+      'My own Wi-Fi': Mode.global,
+    });
+  });
+  testWidgets('SSID validation rejects oversized UTF-8 and duplicate names', (
+    tester,
+  ) async {
+    await pumpView(tester);
+    container.read(wifiModeSettingProvider.notifier).value =
+        const WifiModeSettings(rules: {'Home': Mode.direct});
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('SSID mode rules'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Add').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, '家' * 11);
+    await tester.tap(find.byTooltip('Save').last);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('An SSID must not exceed 32 UTF-8 bytes.'),
+      findsOneWidget,
+    );
+    await tester.enterText(find.byType(TextField).last, 'Home');
+    await tester.tap(find.byTooltip('Save').last);
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Save'), findsOneWidget);
+    expect(container.read(wifiModeSettingProvider).rules, {
+      'Home': Mode.direct,
+    });
   });
 }
 

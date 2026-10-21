@@ -520,6 +520,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "currentOutboundDesc": MessageLookupByLibrary.simpleMessage(
       "Holds the start button and can\'t be removed",
     ),
+    "currentSsid": MessageLookupByLibrary.simpleMessage("Current Wi-Fi SSID"),
     "custom": MessageLookupByLibrary.simpleMessage("Custom"),
     "customColor": MessageLookupByLibrary.simpleMessage("Custom color"),
     "customImportDroppedSubRules": m5,
@@ -1243,7 +1244,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "onDemand": MessageLookupByLibrary.simpleMessage("On demand"),
     "onDemandDesc": MessageLookupByLibrary.simpleMessage(
-      "On demand pauses the proxy on excluded Wi-Fi.",
+      "Switch the outbound mode by Wi-Fi SSID, or pause the proxy on excluded Wi-Fi.",
     ),
     "onlyStatisticsProxy": MessageLookupByLibrary.simpleMessage(
       "Only count proxy traffic",
@@ -1710,6 +1711,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "splitStrategyNotEmpty": MessageLookupByLibrary.simpleMessage(
       "Split strategy cannot be empty",
     ),
+    "ssidTooLong": MessageLookupByLibrary.simpleMessage(
+      "An SSID must not exceed 32 UTF-8 bytes.",
+    ),
+    "ssidUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Unavailable or not connected to Wi-Fi",
+    ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSIDs are empty"),
     "stackMode": MessageLookupByLibrary.simpleMessage("Stack mode"),
     "stackTrace": MessageLookupByLibrary.simpleMessage("Stack trace"),
@@ -1839,6 +1846,14 @@ class MessageLookup extends MessageLookupByLibrary {
       "WebDAV configuration",
     ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("Whitelist mode"),
+    "wifiMode": MessageLookupByLibrary.simpleMessage("Wi-Fi mode switching"),
+    "wifiModeDesc": MessageLookupByLibrary.simpleMessage(
+      "Match the SSID exactly and switch the outbound mode while FlClash is running. Other networks or an unavailable SSID use the default mode. Settings are stored locally and do not use subscription YAML. SSID exclusions are inactive while this is enabled. Manual mode changes last until the network or these settings change.",
+    ),
+    "wifiModeFallback": MessageLookupByLibrary.simpleMessage(
+      "Default outbound mode",
+    ),
+    "wifiModeRules": MessageLookupByLibrary.simpleMessage("SSID mode rules"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("Write to system"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Write to system also sets the system clock; Android ignores it.",

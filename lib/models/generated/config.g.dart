@@ -405,6 +405,31 @@ const _$LiquidGlassModeEnumMap = {
   LiquidGlassMode.ultra: 'ultra',
 };
 
+_WifiModeSettings _$WifiModeSettingsFromJson(Map<String, dynamic> json) =>
+    _WifiModeSettings(
+      enabled: json['enabled'] as bool? ?? false,
+      rules:
+          (json['rules'] as Map<String, dynamic>?)?.map(
+            (k, e) => MapEntry(k, $enumDecode(_$ModeEnumMap, e)),
+          ) ??
+          const {},
+      fallback:
+          $enumDecodeNullable(_$ModeEnumMap, json['fallback']) ?? Mode.rule,
+    );
+
+Map<String, dynamic> _$WifiModeSettingsToJson(_WifiModeSettings instance) =>
+    <String, dynamic>{
+      'enabled': instance.enabled,
+      'rules': instance.rules.map((k, e) => MapEntry(k, _$ModeEnumMap[e]!)),
+      'fallback': _$ModeEnumMap[instance.fallback]!,
+    };
+
+const _$ModeEnumMap = {
+  Mode.rule: 'rule',
+  Mode.global: 'global',
+  Mode.direct: 'direct',
+};
+
 _Config _$ConfigFromJson(Map<String, dynamic> json) => _Config(
   currentProfileId: (json['currentProfileId'] as num?)?.toInt(),
   hotKeyActions:
@@ -447,6 +472,11 @@ _Config _$ConfigFromJson(Map<String, dynamic> json) => _Config(
           ?.map((e) => e as String)
           .toList() ??
       const [],
+  wifiModeSettings: json['wifiModeSettings'] == null
+      ? const WifiModeSettings()
+      : WifiModeSettings.fromJson(
+          json['wifiModeSettings'] as Map<String, dynamic>,
+        ),
 );
 
 Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
@@ -461,4 +491,5 @@ Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
   'windowGeometry': instance.windowProps,
   'patchClashConfig': instance.patchClashConfig,
   'excludeSSIDs': instance.excludeSSIDs,
+  'wifiModeSettings': instance.wifiModeSettings,
 };

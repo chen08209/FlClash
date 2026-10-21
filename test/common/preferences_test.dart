@@ -4,6 +4,7 @@ import 'package:fl_clash/common/boot_record.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/preferences.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -50,6 +51,11 @@ void main() {
         themeProps: defaultThemeProps,
         currentProfileId: 42,
         excludeSSIDs: ['home'],
+        wifiModeSettings: WifiModeSettings(
+          enabled: true,
+          rules: {'ASUS395': Mode.direct, 'Office': Mode.global},
+          fallback: Mode.rule,
+        ),
       );
 
       expect(await preferences.saveConfig(config), isTrue);
@@ -58,6 +64,7 @@ void main() {
       expect(restored, isNotNull);
       expect(restored!.currentProfileId, 42);
       expect(restored.excludeSSIDs, ['home']);
+      expect(restored.wifiModeSettings, config.wifiModeSettings);
     });
 
     test('getConfigMap returns null for malformed JSON', () async {

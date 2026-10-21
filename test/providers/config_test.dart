@@ -232,14 +232,25 @@ void main() {
 
   group('buildConfigOverrides', () {
     test('produces correct overrides', () {
-      const config = Config(themeProps: ThemeProps(), currentProfileId: 7);
+      const config = Config(
+        themeProps: ThemeProps(),
+        currentProfileId: 7,
+        wifiModeSettings: WifiModeSettings(
+          enabled: true,
+          rules: {'Home': Mode.direct},
+        ),
+      );
       final overrides = buildConfigOverrides(config);
-      expect(overrides.length, 11);
+      expect(overrides.length, 12);
 
       final overrideContainer = ProviderContainer(overrides: overrides);
       addTearDown(overrideContainer.dispose);
 
       expect(overrideContainer.read(currentProfileIdProvider), 7);
+      expect(
+        overrideContainer.read(wifiModeSettingProvider),
+        config.wifiModeSettings,
+      );
       expect(
         overrideContainer.read(patchClashConfigProvider),
         config.patchClashConfig,

@@ -408,6 +408,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "createProfileFromUrlTip": m4,
     "creationTime": MessageLookupByLibrary.simpleMessage("创建时间"),
     "currentOutboundDesc": MessageLookupByLibrary.simpleMessage("含启动键，不可移除"),
+    "currentSsid": MessageLookupByLibrary.simpleMessage("当前 Wi-Fi SSID"),
     "custom": MessageLookupByLibrary.simpleMessage("自定义"),
     "customColor": MessageLookupByLibrary.simpleMessage("自定义颜色"),
     "customImportDroppedSubRules": m5,
@@ -970,7 +971,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "obfsPassword": MessageLookupByLibrary.simpleMessage("混淆密码"),
     "onDemand": MessageLookupByLibrary.simpleMessage("按需运行"),
     "onDemandDesc": MessageLookupByLibrary.simpleMessage(
-      "按需运行会在连上排除的 Wi-Fi 时暂停代理。",
+      "按 Wi-Fi SSID 切换出站模式，或在连上排除的 Wi-Fi 时暂停代理。",
     ),
     "onlyStatisticsProxy": MessageLookupByLibrary.simpleMessage("仅统计代理流量"),
     "optional": MessageLookupByLibrary.simpleMessage("可选"),
@@ -1323,6 +1324,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "speedStatistics": MessageLookupByLibrary.simpleMessage("网速统计"),
     "splitStrategy": MessageLookupByLibrary.simpleMessage("分流策略"),
     "splitStrategyNotEmpty": MessageLookupByLibrary.simpleMessage("分流策略不能为空"),
+    "ssidTooLong": MessageLookupByLibrary.simpleMessage(
+      "SSID 不能超过 32 个 UTF-8 字节。",
+    ),
+    "ssidUnavailable": MessageLookupByLibrary.simpleMessage("无法读取或未连接 Wi-Fi"),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSIDs为空"),
     "stackMode": MessageLookupByLibrary.simpleMessage("栈模式"),
     "stackTrace": MessageLookupByLibrary.simpleMessage("堆栈信息"),
@@ -1432,6 +1437,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV配置"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("白名单模式"),
+    "wifiMode": MessageLookupByLibrary.simpleMessage("按 Wi-Fi 切换模式"),
+    "wifiModeDesc": MessageLookupByLibrary.simpleMessage(
+      "FlClash 运行时，根据 SSID 精确匹配并切换出站模式；其他网络或无法读取 SSID 时使用默认模式。设置保存在本地，不依赖订阅 YAML。启用后，排除 SSID 功能暂停生效。手动切换模式会保持到网络或此处设置发生变化。",
+    ),
+    "wifiModeFallback": MessageLookupByLibrary.simpleMessage("默认出站模式"),
+    "wifiModeRules": MessageLookupByLibrary.simpleMessage("SSID 模式规则"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("写入系统"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "写入系统会同时设置系统时钟，Android 上不生效。",

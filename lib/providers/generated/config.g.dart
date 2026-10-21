@@ -581,6 +581,58 @@ abstract class _$ExcludeSSIDs extends $Notifier<List<String>> {
   }
 }
 
+@ProviderFor(WifiModeSetting)
+final wifiModeSettingProvider = WifiModeSettingProvider._();
+
+final class WifiModeSettingProvider
+    extends $NotifierProvider<WifiModeSetting, WifiModeSettings> {
+  WifiModeSettingProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'wifiModeSettingProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$wifiModeSettingHash();
+
+  @$internal
+  @override
+  WifiModeSetting create() => WifiModeSetting();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(WifiModeSettings value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<WifiModeSettings>(value),
+    );
+  }
+}
+
+String _$wifiModeSettingHash() => r'8ef19844f0e7bd55be09eb6fa2c8f056610c2082';
+
+abstract class _$WifiModeSetting extends $Notifier<WifiModeSettings> {
+  WifiModeSettings build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<WifiModeSettings, WifiModeSettings>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<WifiModeSettings, WifiModeSettings>,
+              WifiModeSettings,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(_config)
 final configProvider = _ConfigProvider._();
 
@@ -619,4 +671,4 @@ final class _ConfigProvider extends $FunctionalProvider<Config, Config, Config>
   }
 }
 
-String _$_configHash() => r'a9e717216fc1ca6b3526907bd578c4982bb6961a';
+String _$_configHash() => r'1e4897206245cc5aaec90a90f23a6bb094d222f5';

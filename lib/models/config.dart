@@ -482,6 +482,18 @@ abstract class ThemeProps with _$ThemeProps {
 }
 
 @freezed
+abstract class WifiModeSettings with _$WifiModeSettings {
+  const factory WifiModeSettings({
+    @Default(false) bool enabled,
+    @Default({}) Map<String, Mode> rules,
+    @Default(Mode.rule) Mode fallback,
+  }) = _WifiModeSettings;
+
+  factory WifiModeSettings.fromJson(Map<String, Object?> json) =>
+      _$WifiModeSettingsFromJson(json);
+}
+
+@freezed
 abstract class Config with _$Config {
   const factory Config({
     int? currentProfileId,
@@ -500,6 +512,7 @@ abstract class Config with _$Config {
     WindowProps windowProps,
     @Default(defaultClashConfig) PatchClashConfig patchClashConfig,
     @Default([]) List<String> excludeSSIDs,
+    @Default(WifiModeSettings()) WifiModeSettings wifiModeSettings,
   }) = _Config;
 
   factory Config.fromJson(Map<String, Object?> json) =>

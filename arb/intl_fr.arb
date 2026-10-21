@@ -676,7 +676,7 @@
   "excludeSsidsDesc": "Lorsque vous êtes connecté à un Wi-Fi dont le SSID est exclu, l’état d’exécution de l’app change automatiquement.",
   "ssidsEmpty": "Les SSID sont vides",
   "onDemand": "À la demande",
-  "onDemandDesc": "À la demande met le proxy en pause sur les Wi-Fi exclus.",
+  "onDemandDesc": "Change le mode selon le SSID Wi-Fi ou suspend le proxy sur les réseaux Wi-Fi exclus.",
   "locationPermissionDeniedMessage": "L’autorisation de localisation a été refusée ; le nom du Wi-Fi actuel ne peut donc pas être lu. Veuillez l’activer manuellement dans les réglages du système.",
   "addSsid": "Ajouter un SSID",
   "editSsid": "Modifier le SSID",
@@ -939,5 +939,12 @@
   "customImportDroppedSubRules": "{count, plural, =1{1 règle SUB-RULE a été abandonnée, car les profils personnalisés ne prennent pas en charge les sous-règles} other{{label} règles SUB-RULE ont été abandonnées, car les profils personnalisés ne prennent pas en charge les sous-règles}}",
   "autoInclude": "Inclure automatiquement",
   "allReferencedProxies": "Tous les proxys référencés",
-  "allReferencedProxyProviders": "Tous les fournisseurs de proxys référencés"
+  "allReferencedProxyProviders": "Tous les fournisseurs de proxys référencés",
+  "wifiMode": "Mode selon le Wi-Fi",
+  "wifiModeRules": "Règles de mode SSID",
+  "wifiModeFallback": "Mode de sortie par défaut",
+  "currentSsid": "SSID Wi-Fi actuel",
+  "ssidUnavailable": "Indisponible ou Wi-Fi déconnecté",
+  "wifiModeDesc": "Pendant que FlClash fonctionne, le mode change selon une correspondance exacte du SSID. Les autres réseaux ou un SSID indisponible utilisent le mode par défaut. Les réglages sont locaux, sans YAML d’abonnement. Les exclusions SSID sont inactives lorsque cette fonction est activée. Le choix manuel reste actif jusqu’au changement du réseau ou de ces réglages.",
+  "ssidTooLong": "Le SSID ne doit pas dépasser 32 octets UTF-8."
 }

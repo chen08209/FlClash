@@ -607,7 +607,7 @@ final class SuspendProvider extends $FunctionalProvider<bool, bool, bool>
   }
 }
 
-String _$suspendHash() => r'9ab9210f4f3c70f63d9858d492a9c09b3fb24bf1';
+String _$suspendHash() => r'6879fd551d8571d07b07a815282ddb6262c83b67';
 
 @ProviderFor(DynamicColor)
 final dynamicColorProvider = DynamicColorProvider._();

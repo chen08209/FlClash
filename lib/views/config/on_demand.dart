@@ -11,6 +11,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wifi_ssid/wifi_ssid.dart';
 
+import 'wifi_mode.dart';
+
 class OnDemandView extends ConsumerStatefulWidget {
   const OnDemandView({super.key, this.isAndroid, this.isMacOS});
 
@@ -371,21 +373,27 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
             ).copyWith(top: context.appBarInset),
             sliver: SliverToBoxAdapter(child: _buildPrerequisites()),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverToBoxAdapter(child: _buildExcludeSsidsHeader()),
+          const SliverPadding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverToBoxAdapter(child: WifiModeSection()),
           ),
-          _buildExcludeSsidsList(excludeSSIDs, selectedItems),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-            ).copyWith(bottom: 16),
-            sliver: SliverToBoxAdapter(
-              child: ListFooter(
-                text: context.appLocalizations.excludeSsidsDesc,
+          if (!ref.watch(wifiModeSettingProvider).enabled) ...[
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: SliverToBoxAdapter(child: _buildExcludeSsidsHeader()),
+            ),
+            _buildExcludeSsidsList(excludeSSIDs, selectedItems),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+              ).copyWith(bottom: 16),
+              sliver: SliverToBoxAdapter(
+                child: ListFooter(
+                  text: context.appLocalizations.excludeSsidsDesc,
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
       title: context.appLocalizations.onDemand,

@@ -561,6 +561,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "currentOutboundDesc": MessageLookupByLibrary.simpleMessage(
       "Contiene el botón de inicio y no se puede quitar",
     ),
+    "currentSsid": MessageLookupByLibrary.simpleMessage("SSID Wi-Fi actual"),
     "custom": MessageLookupByLibrary.simpleMessage("Personalizado"),
     "customColor": MessageLookupByLibrary.simpleMessage("Color personalizado"),
     "customImportDroppedSubRules": m5,
@@ -1336,7 +1337,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "onDemand": MessageLookupByLibrary.simpleMessage("Bajo demanda"),
     "onDemandDesc": MessageLookupByLibrary.simpleMessage(
-      "Bajo demanda pausa el proxy en las redes Wi-Fi excluidas.",
+      "Cambia el modo según el SSID Wi-Fi o pausa el proxy en redes Wi-Fi excluidas.",
     ),
     "onlyStatisticsProxy": MessageLookupByLibrary.simpleMessage(
       "Contar solo el tráfico del proxy",
@@ -1841,6 +1842,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "splitStrategyNotEmpty": MessageLookupByLibrary.simpleMessage(
       "La estrategia de división no puede estar vacía",
     ),
+    "ssidTooLong": MessageLookupByLibrary.simpleMessage(
+      "El SSID no debe superar los 32 bytes UTF-8.",
+    ),
+    "ssidUnavailable": MessageLookupByLibrary.simpleMessage(
+      "No disponible o sin conexión Wi-Fi",
+    ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("No hay SSID"),
     "stackMode": MessageLookupByLibrary.simpleMessage("Modo de pila"),
     "stackTrace": MessageLookupByLibrary.simpleMessage("Seguimiento de pila"),
@@ -1980,6 +1987,16 @@ class MessageLookup extends MessageLookupByLibrary {
       "Configuración de WebDAV",
     ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("Modo lista blanca"),
+    "wifiMode": MessageLookupByLibrary.simpleMessage("Modo según Wi-Fi"),
+    "wifiModeDesc": MessageLookupByLibrary.simpleMessage(
+      "Mientras FlClash está en ejecución, cambia el modo si el SSID coincide exactamente. Otras redes o un SSID no disponible usan el modo predeterminado. Los ajustes son locales y no usan YAML de suscripción. Las exclusiones de SSID no se aplican mientras esta función está activa. El modo manual se mantiene hasta que cambie la red o estos ajustes.",
+    ),
+    "wifiModeFallback": MessageLookupByLibrary.simpleMessage(
+      "Modo de salida predeterminado",
+    ),
+    "wifiModeRules": MessageLookupByLibrary.simpleMessage(
+      "Reglas de modo SSID",
+    ),
     "writeToSystem": MessageLookupByLibrary.simpleMessage(
       "Escribir en el sistema",
     ),

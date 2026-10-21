@@ -541,6 +541,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "currentOutboundDesc": MessageLookupByLibrary.simpleMessage(
       "Содержит кнопку запуска, удалить нельзя",
     ),
+    "currentSsid": MessageLookupByLibrary.simpleMessage("Текущий SSID Wi-Fi"),
     "custom": MessageLookupByLibrary.simpleMessage("Вручную"),
     "customColor": MessageLookupByLibrary.simpleMessage("Свой цвет"),
     "customImportDroppedSubRules": m5,
@@ -1296,7 +1297,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "obfsPassword": MessageLookupByLibrary.simpleMessage("Пароль обфускации"),
     "onDemand": MessageLookupByLibrary.simpleMessage("По условию"),
     "onDemandDesc": MessageLookupByLibrary.simpleMessage(
-      "«По условию» приостанавливает прокси в исключённых сетях Wi-Fi.",
+      "Переключение режима по SSID Wi-Fi или приостановка прокси в исключённых сетях.",
     ),
     "onlyStatisticsProxy": MessageLookupByLibrary.simpleMessage(
       "Учитывать только трафик прокси",
@@ -1793,6 +1794,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "splitStrategyNotEmpty": MessageLookupByLibrary.simpleMessage(
       "Стратегия распределения не может быть пустой",
     ),
+    "ssidTooLong": MessageLookupByLibrary.simpleMessage(
+      "SSID не должен превышать 32 байта UTF-8.",
+    ),
+    "ssidUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Недоступен или Wi-Fi не подключён",
+    ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("Список SSID пуст"),
     "stackMode": MessageLookupByLibrary.simpleMessage("Режим стека"),
     "stackTrace": MessageLookupByLibrary.simpleMessage("Трассировка стека"),
@@ -1935,6 +1942,16 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage(
       "Режим белого списка",
+    ),
+    "wifiMode": MessageLookupByLibrary.simpleMessage("Режим по Wi-Fi"),
+    "wifiModeDesc": MessageLookupByLibrary.simpleMessage(
+      "Во время работы FlClash режим меняется при точном совпадении SSID. Для других сетей или недоступного SSID используется режим по умолчанию. Настройки локальные, без YAML подписки. Исключения SSID не действуют, пока функция включена. Ручной выбор сохраняется до смены сети или этих настроек.",
+    ),
+    "wifiModeFallback": MessageLookupByLibrary.simpleMessage(
+      "Режим по умолчанию",
+    ),
+    "wifiModeRules": MessageLookupByLibrary.simpleMessage(
+      "Правила режима SSID",
     ),
     "writeToSystem": MessageLookupByLibrary.simpleMessage(
       "Записывать в систему",

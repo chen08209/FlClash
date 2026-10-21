@@ -9,6 +9,46 @@ part of '../on_demand.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(ssidRequired)
+final ssidRequiredProvider = SsidRequiredProvider._();
+
+final class SsidRequiredProvider extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  SsidRequiredProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'ssidRequiredProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$ssidRequiredHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    return ssidRequired(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$ssidRequiredHash() => r'a9648c0530f5826068a6400c2a5094160580503e';
+
 @ProviderFor(LocationPermissions)
 final locationPermissionsProvider = LocationPermissionsProvider._();
 
@@ -42,7 +82,7 @@ final class LocationPermissionsProvider
 }
 
 String _$locationPermissionsHash() =>
-    r'e6e5d8a46af321983b65e81759facb07eee5f94c';
+    r'a9391c69b7fb34942dfab8f19eebaf538707ad49';
 
 abstract class _$LocationPermissions extends $Notifier<WifiSsidPermission> {
   WifiSsidPermission build();

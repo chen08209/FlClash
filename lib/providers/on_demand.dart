@@ -13,6 +13,13 @@ import 'config.dart';
 
 part 'generated/on_demand.g.dart';
 
+@riverpod
+bool ssidRequired(Ref ref) {
+  final excluded = ref.watch(excludeSSIDsProvider).isNotEmpty;
+  final automaticMode = ref.watch(wifiModeSettingProvider).enabled;
+  return excluded || automaticMode;
+}
+
 @Riverpod(keepAlive: true)
 class LocationPermissions extends _$LocationPermissions {
   bool _requesting = false;
@@ -41,7 +48,7 @@ class LocationPermissions extends _$LocationPermissions {
         state != WifiSsidPermission.permanentlyDenied) {
       state = permission;
     }
-    if (ref.read(excludeSSIDsProvider).isEmpty) {
+    if (!ref.read(ssidRequiredProvider)) {
       _autoRequested = false;
       return;
     }

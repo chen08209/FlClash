@@ -430,6 +430,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "currentOutboundDesc": MessageLookupByLibrary.simpleMessage(
       "시작 버튼이 있어 제거할 수 없습니다",
     ),
+    "currentSsid": MessageLookupByLibrary.simpleMessage("현재 Wi-Fi SSID"),
     "custom": MessageLookupByLibrary.simpleMessage("사용자 지정"),
     "customColor": MessageLookupByLibrary.simpleMessage("사용자 지정 색상"),
     "customImportDroppedSubRules": m5,
@@ -1050,7 +1051,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "obfsPassword": MessageLookupByLibrary.simpleMessage("난독화 비밀번호"),
     "onDemand": MessageLookupByLibrary.simpleMessage("필요 시 실행"),
     "onDemandDesc": MessageLookupByLibrary.simpleMessage(
-      "필요 시 실행은 제외된 Wi-Fi에서 프록시를 일시 중지합니다.",
+      "Wi-Fi SSID에 따라 모드를 전환하거나 제외한 Wi-Fi에서 프록시를 일시 중지합니다.",
     ),
     "onlyStatisticsProxy": MessageLookupByLibrary.simpleMessage("프록시 트래픽만 집계"),
     "optional": MessageLookupByLibrary.simpleMessage("선택 사항"),
@@ -1439,6 +1440,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "splitStrategyNotEmpty": MessageLookupByLibrary.simpleMessage(
       "분할 전략을 입력하세요",
     ),
+    "ssidTooLong": MessageLookupByLibrary.simpleMessage(
+      "SSID는 UTF-8 기준 32바이트를 넘을 수 없습니다.",
+    ),
+    "ssidUnavailable": MessageLookupByLibrary.simpleMessage(
+      "읽을 수 없거나 Wi-Fi에 연결되지 않음",
+    ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSID가 비어 있습니다"),
     "stackMode": MessageLookupByLibrary.simpleMessage("스택 모드"),
     "stackTrace": MessageLookupByLibrary.simpleMessage("스택 트레이스"),
@@ -1556,6 +1563,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV 구성"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("화이트리스트 모드"),
+    "wifiMode": MessageLookupByLibrary.simpleMessage("Wi-Fi별 모드 전환"),
+    "wifiModeDesc": MessageLookupByLibrary.simpleMessage(
+      "FlClash 실행 중 SSID가 정확히 일치하면 모드를 전환합니다. 다른 네트워크나 읽을 수 없는 SSID에는 기본 모드를 사용합니다. 설정은 로컬에 저장되며 구독 YAML을 사용하지 않습니다. 활성화 중에는 SSID 제외가 적용되지 않습니다. 수동 모드는 네트워크나 이 설정이 변경될 때까지 유지됩니다.",
+    ),
+    "wifiModeFallback": MessageLookupByLibrary.simpleMessage("기본 아웃바운드 모드"),
+    "wifiModeRules": MessageLookupByLibrary.simpleMessage("SSID 모드 규칙"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("시스템에 기록"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "시스템에 기록하면 시스템 시계도 설정합니다. Android에서는 무시됩니다.",

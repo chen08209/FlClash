@@ -676,7 +676,7 @@
   "excludeSsidsDesc": "When connected to Wi-Fi with an excluded SSID, the app's running state switches automatically.",
   "ssidsEmpty": "SSIDs are empty",
   "onDemand": "On demand",
-  "onDemandDesc": "On demand pauses the proxy on excluded Wi-Fi.",
+  "onDemandDesc": "Switch the outbound mode by Wi-Fi SSID, or pause the proxy on excluded Wi-Fi.",
   "locationPermissionDeniedMessage": "Location permission was denied, so the current Wi-Fi name cannot be read. Please enable location permission manually in system settings.",
   "addSsid": "Add SSID",
   "editSsid": "Edit SSID",
@@ -939,5 +939,12 @@
   "customImportDroppedSubRules": "{count, plural, =1{1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules} other{{label} SUB-RULE rules were dropped, since custom profiles do not support sub-rules}}",
   "autoInclude": "Auto-include",
   "allReferencedProxies": "All referenced proxies",
-  "allReferencedProxyProviders": "All referenced proxy providers"
+  "allReferencedProxyProviders": "All referenced proxy providers",
+  "wifiMode": "Wi-Fi mode switching",
+  "wifiModeRules": "SSID mode rules",
+  "wifiModeFallback": "Default outbound mode",
+  "currentSsid": "Current Wi-Fi SSID",
+  "ssidUnavailable": "Unavailable or not connected to Wi-Fi",
+  "wifiModeDesc": "Match the SSID exactly and switch the outbound mode while FlClash is running. Other networks or an unavailable SSID use the default mode. Settings are stored locally and do not use subscription YAML. SSID exclusions are inactive while this is enabled. Manual mode changes last until the network or these settings change.",
+  "ssidTooLong": "An SSID must not exceed 32 UTF-8 bytes."
 }

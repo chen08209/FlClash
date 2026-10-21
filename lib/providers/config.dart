@@ -95,6 +95,12 @@ class ExcludeSSIDs extends _$ExcludeSSIDs with AutoDisposeNotifierMixin {
   }
 }
 
+@riverpod
+class WifiModeSetting extends _$WifiModeSetting with AutoDisposeNotifierMixin {
+  @override
+  WifiModeSettings build() => const WifiModeSettings();
+}
+
 @Riverpod(name: 'configProvider')
 Config _config(Ref ref) {
   final appSettingProps = ref.watch(appSettingProvider);
@@ -120,6 +126,7 @@ Config _config(Ref ref) {
     proxiesStyleProps: proxiesStyleProps,
     patchClashConfig: patchClashConfig,
     excludeSSIDs: excludeSSIDs,
+    wifiModeSettings: ref.watch(wifiModeSettingProvider),
   );
 }
 
@@ -137,6 +144,7 @@ void writeConfig(Ref ref, Config config) {
   ref.read(patchClashConfigProvider.notifier).value = config.patchClashConfig
       .ensureControllerSecret();
   ref.read(excludeSSIDsProvider.notifier).value = config.excludeSSIDs;
+  ref.read(wifiModeSettingProvider.notifier).value = config.wifiModeSettings;
 }
 
 List<Override> buildConfigOverrides(Config config) {
@@ -158,5 +166,8 @@ List<Override> buildConfigOverrides(Config config) {
       (_, _) => config.patchClashConfig,
     ),
     excludeSSIDsProvider.overrideWithBuild((_, _) => config.excludeSSIDs),
+    wifiModeSettingProvider.overrideWithBuild(
+      (_, _) => config.wifiModeSettings,
+    ),
   ];
 }

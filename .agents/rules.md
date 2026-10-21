@@ -333,8 +333,9 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   natively until it lands, so `Tray` still treats it as visible and `hide` reaches native to delete an add that may
   have landed. Any test that mocks the `tray` channel must return `true` from `show`.
 - Reading the Wi-Fi SSID is opt-in work, not ambient state. `ConnectivityManager` reads it only while `excludeSSIDs` is
-  non-empty, because that list is its only consumer through `suspendProvider`, and the read costs a blocking platform
-  call plus a location permission on Android and macOS. A second consumer must widen that gate, not drop it.
+  non-empty or `wifiModeSettings.enabled` is true. The read costs a platform call plus a location permission on Android
+  and macOS. Mode automation polls while on Wi-Fi to detect SSID changes without a connectivity-type change; it takes
+  precedence over SSID suspension. A second consumer must widen that gate, not drop it.
 - On Android the `wifi_ssid` permission is only `granted` once `ACCESS_BACKGROUND_LOCATION` is held too (Q+). Fine
   location alone reads the SSID in the foreground but returns `UNKNOWN_SSID` once the app is backgrounded, which is
   where on-demand spends most of its time. `getSsid` itself only needs fine location, so the split stays inside the

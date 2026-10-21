@@ -676,7 +676,7 @@
   "excludeSsidsDesc": "除外した SSID の Wi-Fi に接続すると、アプリの実行状態が自動的に切り替わります。",
   "ssidsEmpty": "SSIDが空です",
   "onDemand": "オンデマンド",
-  "onDemandDesc": "オンデマンドは、除外した Wi-Fi に接続している間プロキシを一時停止します。",
+  "onDemandDesc": "Wi-Fi の SSID に応じて送信モードを切り替えるか、除外した Wi-Fi でプロキシを一時停止します。",
   "locationPermissionDeniedMessage": "位置情報の権限が拒否されたため、現在の Wi-Fi 名を取得できません。システム設定で位置情報の権限を手動で有効にしてください。",
   "addSsid": "SSIDを追加",
   "editSsid": "SSIDを編集",
@@ -939,5 +939,12 @@
   "customImportDroppedSubRules": "{count, plural, other{カスタム設定はサブルールに対応していないため、SUB-RULE ルール {label} 件を破棄しました}}",
   "autoInclude": "自動で含める",
   "allReferencedProxies": "参照されているすべてのプロキシ",
-  "allReferencedProxyProviders": "参照されているすべてのプロキシプロバイダー"
+  "allReferencedProxyProviders": "参照されているすべてのプロキシプロバイダー",
+  "wifiMode": "Wi-Fi によるモード切替",
+  "wifiModeRules": "SSID モードルール",
+  "wifiModeFallback": "既定の送信モード",
+  "currentSsid": "現在の Wi-Fi SSID",
+  "ssidUnavailable": "取得できないか Wi-Fi に未接続",
+  "wifiModeDesc": "FlClash の実行中、SSID の完全一致で送信モードを切り替えます。他のネットワークや SSID を取得できない場合は既定のモードを使います。設定はローカルに保存され、購読 YAML は使いません。有効時は SSID 除外を適用しません。手動変更はネットワークまたはこの設定が変わるまで保持されます。",
+  "ssidTooLong": "SSID は UTF-8 で 32 バイト以内にしてください。"
 }

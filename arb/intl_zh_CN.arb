@@ -676,7 +676,7 @@
   "excludeSsidsDesc": "连接到被排除 SSID 的 Wi-Fi 时，将会自动切换应用运行状态。",
   "ssidsEmpty": "SSIDs为空",
   "onDemand": "按需运行",
-  "onDemandDesc": "按需运行会在连上排除的 Wi-Fi 时暂停代理。",
+  "onDemandDesc": "按 Wi-Fi SSID 切换出站模式，或在连上排除的 Wi-Fi 时暂停代理。",
   "locationPermissionDeniedMessage": "位置权限已被拒绝，无法获取当前 Wi-Fi 名称。请前往系统设置手动开启位置权限。",
   "addSsid": "添加SSID",
   "editSsid": "编辑SSID",
@@ -939,5 +939,12 @@
   "customImportDroppedSubRules": "{count, plural, other{自定义配置不支持子规则，已丢弃 {label} 条 SUB-RULE 规则}}",
   "autoInclude": "自动包含",
   "allReferencedProxies": "全部被引用的代理",
-  "allReferencedProxyProviders": "全部被引用的代理集"
+  "allReferencedProxyProviders": "全部被引用的代理集",
+  "wifiMode": "按 Wi-Fi 切换模式",
+  "wifiModeRules": "SSID 模式规则",
+  "wifiModeFallback": "默认出站模式",
+  "currentSsid": "当前 Wi-Fi SSID",
+  "ssidUnavailable": "无法读取或未连接 Wi-Fi",
+  "wifiModeDesc": "FlClash 运行时，根据 SSID 精确匹配并切换出站模式；其他网络或无法读取 SSID 时使用默认模式。设置保存在本地，不依赖订阅 YAML。启用后，排除 SSID 功能暂停生效。手动切换模式会保持到网络或此处设置发生变化。",
+  "ssidTooLong": "SSID 不能超过 32 个 UTF-8 字节。"
 }

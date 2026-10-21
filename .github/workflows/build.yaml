@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/v') }}
 
 env:
-  IS_STABLE: ${{ !contains(github.ref, '-') }}
+  IS_STABLE: ${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') }}
   # See CI Caches in .agents/commands.md.
   BRANCH_CACHE: ${{ !startsWith(github.ref, 'refs/tags/') }}
   FLUTTER_VERSION: '3.47.6'
@@ -323,10 +323,10 @@ jobs:
         run: cargo test --manifest-path services/helper/Cargo.toml --features windows-service
 
   build:
-    # Releases publish where the release links point: the public repository.
-    if: github.repository == 'chen08209/FlClash' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.repository != 'chen08209/FlClash' || startsWith(github.ref, 'refs/tags/v')))
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - platform: android
@@ -369,12 +369,21 @@ jobs:
 
       - name: Setup Android Signing
         if: startsWith(matrix.platform,'android')
+        env:
+          KEYSTORE: ${{ secrets.KEYSTORE }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          echo "${{ secrets.KEYSTORE }}" | base64 --decode > android/app/keystore.jks
+          if [[ -z "$KEYSTORE" ]]; then
+            echo 'No release keystore configured; using the development application ID and debug signing.'
+            exit 0
+          fi
+          printf '%s' "$KEYSTORE" | base64 --decode > android/app/keystore.jks
           {
-            echo "keyAlias=${{ secrets.KEY_ALIAS }}"
-            echo "storePassword=${{ secrets.STORE_PASSWORD }}"
-            echo "keyPassword=${{ secrets.KEY_PASSWORD }}"
+            printf 'keyAlias=%s\n' "$KEY_ALIAS"
+            printf 'storePassword=%s\n' "$STORE_PASSWORD"
+            printf 'keyPassword=%s\n' "$KEY_PASSWORD"
           } >> android/local.properties
 
       - name: Setup Go
@@ -441,7 +450,7 @@ jobs:
       - name: Setup
         env:
           ANDROID_NDK_HOME: ${{ steps.build-ndk.outputs.ndk-path }}
-        run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
+        run: dart setup.dart ${{ matrix.platform }} ${{ (env.IS_STABLE == 'true' || github.repository != 'chen08209/FlClash') && '--env stable' || '' }} -v
 
       - name: Upload
         uses: actions/upload-artifact@v4
@@ -449,8 +458,10 @@ jobs:
           name: artifact-${{ matrix.platform }}${{ matrix.arch && format('-{0}', matrix.arch) }}
           path: ./dist
           overwrite: true
+          if-no-files-found: error
 
   upload:
+    if: github.repository == 'chen08209/FlClash' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
     needs: [ build, dart, plugins, go, android, rust, windows-helper-test ]
