@@ -18,7 +18,7 @@ Android lib mode:
   a `MethodChannel.Result` may be answered from any thread. `${packageName}/core` is handled on a serial background
   task queue and answered from the Core's goroutine, an event batch is encoded on the Core's thread and only sent on
   the main one, `ForceGC` (called from `onLowMemory`/`onTrimMemory`) collects on its own goroutine, and
-  `NetworkObserveModule` refreshes DNS on its own looper.
+  `NetworkObserver` refreshes DNS on its own looper.
 - `lib/core/lib.dart` (`CoreLib`) implements the shared Core interface, gates method calls on its connection completer,
   initializes and synchronizes Android shared state, and closes the native service path exactly once.
 - Because Core is in the application process on Android, application RSS already includes Core memory.
@@ -314,6 +314,10 @@ Quick Settings, notification, revoke, and Always-on VPN paths converge on the sa
   because only Flutter can apply the current profile. Without Flutter, native code claims the intent, restores
   `SharedState` from preferences, runs `quickSetup`, checks VPN permission, and runs the start; claiming first is what
   makes a second action during the setup toggle that start off instead of racing a second setup against it.
+- An engine that attaches to a run the service already has, started that way or outliving the last engine, adopts it:
+  `SetupAction.initStatus` restores the md5 of the config.yaml the Core last accepted and pushes the profile only when it
+  now builds differently. Pushing the same config again rebuilds every proxy group, and mihomo keeps a url-test group's
+  unmeasured pick for ten seconds, so the dashboard's exit and service checks ran a second time once it moved.
 - A stop never needs Flutter. `handleStopAction()` stops the service natively whether or not an engine is attached, so
   the tile, the notification action and a revoke work even when Flutter's own idea of the state is wrong.
 - Whenever the run ends without Flutter having asked for it (a start that failed, a native stop, a revoke, a lost

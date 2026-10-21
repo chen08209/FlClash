@@ -28,6 +28,18 @@ void main() {
     store = await SharedPreferences.getInstance();
   });
 
+  group('applied config md5', () {
+    test('round-trips a written md5 and forgets a cleared one', () async {
+      expect(await preferences.getAppliedConfigMd5(), isNull);
+
+      await preferences.saveAppliedConfigMd5('abc');
+      expect(await preferences.getAppliedConfigMd5(), 'abc');
+
+      await preferences.saveAppliedConfigMd5(null);
+      expect(store.containsKey(appliedConfigMd5Key), isFalse);
+    });
+  });
+
   group('version', () {
     test('defaults to 0 when never written', () async {
       expect(await preferences.getVersion(), 0);
