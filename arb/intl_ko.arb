@@ -564,6 +564,7 @@
   "backupFromNewerVersion": "이 백업은 더 최신 버전의 앱에서 만들어졌습니다. 복원하기 전에 앱을 업데이트하세요",
   "networkTimeoutError": "요청 시간이 초과되었습니다. 네트워크나 프록시를 확인한 후 다시 시도하세요",
   "networkHostLookupError": "서버 주소를 확인할 수 없습니다. URL이 올바른지, DNS가 정상인지 확인하세요",
+  "monochromeIcon": "모노크롬 아이콘",
   "networkConnectionError": "서버에 연결할 수 없습니다. 네트워크 연결이나 프록시 설정을 확인하세요",
   "networkTlsError": "보안 연결에 실패했습니다. 서버 인증서가 올바르지 않거나 연결이 가로채이고 있을 수 있습니다",
   "networkCancelledError": "요청이 취소되었습니다",

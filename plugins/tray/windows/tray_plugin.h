@@ -58,6 +58,7 @@ class TrayPlugin : public flutter::Plugin {
   bool icon_requested_ = false;
 
   UINT taskbar_created_message_ = 0;
+  void(WINAPI* flush_menu_themes_)() = nullptr;
   int window_proc_id_ = -1;
 };
 

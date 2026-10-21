@@ -51,6 +51,7 @@ _AppSettingProps _$AppSettingPropsFromJson(
       $enumDecodeNullable(_$RestoreStrategyEnumMap, json['restoreStrategy']) ??
       RestoreStrategy.compatible,
   showTrayTitle: json['showTrayTitle'] as bool? ?? true,
+  monochromeTrayIcon: json['monochromeTrayIcon'] as bool? ?? true,
   checkCertificate: json['checkCertificate'] as bool? ?? true,
   userAgents:
       (_readUserAgents(json, 'userAgents') as List<dynamic>?)
@@ -114,6 +115,7 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'developerMode': instance.developerMode,
       'restoreStrategy': _$RestoreStrategyEnumMap[instance.restoreStrategy]!,
       'showTrayTitle': instance.showTrayTitle,
+      'monochromeTrayIcon': instance.monochromeTrayIcon,
       'checkCertificate': instance.checkCertificate,
       'userAgents': instance.userAgents,
       'filters': instance.filters,

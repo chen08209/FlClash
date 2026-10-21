@@ -58,6 +58,56 @@ std::wstring Utf16FromUtf8(const std::string& value) {
   return result;
 }
 
+// Undocumented uxtheme ordinals Explorer uses for dark Win32 menus.
+constexpr DWORD kFirstBuildWithPreferredAppModeOrdinal = 18362;
+
+enum class PreferredAppMode { kDefault, kAllowDark };
+using SetPreferredAppModeFn = PreferredAppMode(WINAPI*)(PreferredAppMode);
+using FlushMenuThemesFn = void(WINAPI*)();
+using RtlGetVersionFn = LONG(WINAPI*)(OSVERSIONINFOW*);
+
+bool IsPreferredAppModeSupported() {
+  const HMODULE ntdll = ::GetModuleHandleW(L"ntdll.dll");
+  const auto rtl_get_version =
+      ntdll == nullptr ? nullptr
+                       : reinterpret_cast<RtlGetVersionFn>(
+                             ::GetProcAddress(ntdll, "RtlGetVersion"));
+  if (rtl_get_version == nullptr) {
+    return false;
+  }
+  OSVERSIONINFOW info{};
+  info.dwOSVersionInfoSize = sizeof(info);
+  return rtl_get_version(&info) == 0 &&
+         info.dwBuildNumber >= kFirstBuildWithPreferredAppModeOrdinal;
+}
+
+FlushMenuThemesFn AllowDarkMenus() {
+  if (!IsPreferredAppModeSupported()) {
+    return nullptr;
+  }
+  const HMODULE uxtheme =
+      ::LoadLibraryExW(L"uxtheme.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+  if (uxtheme == nullptr) {
+    return nullptr;
+  }
+  const auto set_preferred_app_mode = reinterpret_cast<SetPreferredAppModeFn>(
+      ::GetProcAddress(uxtheme, MAKEINTRESOURCEA(135)));
+  const auto flush_menu_themes = reinterpret_cast<FlushMenuThemesFn>(
+      ::GetProcAddress(uxtheme, MAKEINTRESOURCEA(136)));
+  if (set_preferred_app_mode == nullptr || flush_menu_themes == nullptr) {
+    return nullptr;
+  }
+  set_preferred_app_mode(PreferredAppMode::kAllowDark);
+  flush_menu_themes();
+  return flush_menu_themes;
+}
+
+bool IsColorSetChange(UINT message, LPARAM lparam) {
+  return message == WM_SETTINGCHANGE && lparam != 0 &&
+         ::lstrcmpW(reinterpret_cast<LPCWSTR>(lparam), L"ImmersiveColorSet") ==
+             0;
+}
+
 }  // namespace
 
 void TrayPlugin::RegisterWithRegistrar(
@@ -84,6 +134,7 @@ TrayPlugin::TrayPlugin(
         return HandleWindowProc(window, message, wparam, lparam);
       });
   taskbar_created_message_ = ::RegisterWindowMessageW(L"TaskbarCreated");
+  flush_menu_themes_ = AllowDarkMenus();
 }
 
 TrayPlugin::~TrayPlugin() {
@@ -284,6 +335,11 @@ std::optional<LRESULT> TrayPlugin::HandleWindowProc(HWND window,
     } else if (lparam == WM_RBUTTONUP) {
       SendEvent("onMenuRequested", flutter::EncodableValue());
     }
+    return std::nullopt;
+  }
+
+  if (flush_menu_themes_ != nullptr && IsColorSetChange(message, lparam)) {
+    flush_menu_themes_();
     return std::nullopt;
   }
 
