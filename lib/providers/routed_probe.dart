@@ -76,11 +76,12 @@ class ProbeAnswer<V> {
 mixin RoutedProbe<K, V>
     on AnyNotifier<RoutedProbeState<K, V>, RoutedProbeState<K, V>> {
   final Map<K, int> _watchers = {};
-  final Map<K, ({bool keepValue, bool forced, bool supersede})> _due = {};
+  final Map<K, _Due> _due = {};
   final Map<K, int> _inFlight = {};
   int _runs = 0;
   final Map<K, RouteState> _staleUnder = {};
   bool _scheduled = false;
+  Timer? _settle;
   RouteState _route = const RouteState();
 
   /// May also answer targets it was not asked for; a fresh one of those is
@@ -92,7 +93,14 @@ mixin RoutedProbe<K, V>
   bool isFailure(V value) => false;
 
   @protected
+  Duration get settleDuration => probeSettleDuration;
+
+  @protected
   RoutedProbeState<K, V> buildProbe() {
+    ref.onDispose(() {
+      _settle?.cancel();
+      _settle = null;
+    });
     _route = ref.read(routeTrackerProvider);
     ref.listen(routeTrackerProvider, _onRoute);
     ref.listen(appVisibleProvider, (_, visible) {
@@ -169,6 +177,7 @@ mixin RoutedProbe<K, V>
       keepValue: keepValue || (previous?.keepValue ?? false),
       forced: forced || (previous?.forced ?? false),
       supersede: previous?.supersede ?? false,
+      settle: false,
     );
     _schedule();
   }
@@ -189,7 +198,12 @@ mixin RoutedProbe<K, V>
     final route = _route;
     final targets = <K>[];
     final entries = Map<K, ProbeEntry<V>>.of(state.entries);
+    final settling = <K, _Due>{};
     for (final MapEntry(key: target, value: due) in _due.entries) {
+      if (due.settle && _settle != null) {
+        settling[target] = due;
+        continue;
+      }
       final wanted = due.forced || _watchers.containsKey(target);
       if (!wanted || (_inFlight.containsKey(target) && !due.supersede)) {
         continue;
@@ -200,7 +214,9 @@ mixin RoutedProbe<K, V>
         value: due.keepValue ? entries[target]?.value : null,
       );
     }
-    _due.clear();
+    _due
+      ..clear()
+      ..addAll(settling);
     if (targets.isEmpty) {
       return;
     }
@@ -317,7 +333,12 @@ mixin RoutedProbe<K, V>
       } else if (resumed &&
           entry.phase == ProbePhase.failed &&
           _watchers.containsKey(target)) {
-        _due[target] = (keepValue: false, forced: false, supersede: false);
+        _due[target] = (
+          keepValue: false,
+          forced: false,
+          supersede: false,
+          settle: false,
+        );
       }
     }
     if (!mapEquals(entries, state.entries)) {
@@ -329,14 +350,30 @@ mixin RoutedProbe<K, V>
   }
 
   /// A stale entry is asked again while someone watches it and forgotten
-  /// otherwise; either way its old value is never shown.
+  /// otherwise; either way its old value is never shown. The question waits
+  /// for the route to settle, which a start moves three times in 150 ms.
   void _invalidate(K target, Map<K, ProbeEntry<V>> entries) {
     if (_watchers.containsKey(target)) {
       entries[target] = ProbeEntry(phase: ProbePhase.probing);
-      _due[target] = (keepValue: false, forced: false, supersede: true);
+      _due[target] = (
+        keepValue: false,
+        forced: false,
+        supersede: true,
+        settle: true,
+      );
+      _settle ??= Timer(settleDuration, _settled);
     } else {
       _inFlight.remove(target);
       entries.remove(target);
     }
   }
+
+  void _settled() {
+    _settle = null;
+    if (ref.mounted && _due.isNotEmpty) {
+      _schedule();
+    }
+  }
 }
+
+typedef _Due = ({bool keepValue, bool forced, bool supersede, bool settle});

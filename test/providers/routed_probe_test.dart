@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -18,7 +19,12 @@ class _MockCore extends Mock implements CoreHandlerInterface {}
 class _Probe extends Notifier<RoutedProbeState<String, String>>
     with RoutedProbe<String, String> {
   final calls = <String>[];
+  final routes = <RouteState>[];
   final pending = <Completer<Map<String, ProbeAnswer<String>>>>[];
+  Duration settle = Duration.zero;
+
+  @override
+  Duration get settleDuration => settle;
 
   @override
   RoutedProbeState<String, String> build() => buildProbe();
@@ -32,6 +38,7 @@ class _Probe extends Notifier<RoutedProbeState<String, String>>
     RouteState route,
   ) {
     calls.add(target);
+    routes.add(route);
     final completer = Completer<Map<String, ProbeAnswer<String>>>();
     pending.add(completer);
     return completer.future;
@@ -166,6 +173,54 @@ void main() {
     });
     await pumpEventQueue();
     expect(container.read(_probeProvider).entryOf('a').phase, ProbePhase.fresh);
+  });
+
+  testWidgets('a burst of route changes is probed once it settles', (
+    tester,
+  ) async {
+    final container = build();
+    final probe = container.read(_probeProvider.notifier)
+      ..settle = probeSettleDuration;
+    probe.watch('a');
+    await tester.pump();
+    probe.answer({
+      'a': _ok(['HK-01', 'Proxy']),
+    });
+    await tester.pump();
+
+    for (var i = 0; i < 3; i++) {
+      trackerOf(container).bumpHostEpoch();
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    expect(container.read(_probeProvider).isLoading('a'), isTrue);
+    expect(probe.calls, ['a']);
+
+    await tester.pump(probeSettleDuration);
+    expect(probe.calls, ['a', 'a']);
+    expect(probe.routes.last.hostEpoch, _route.hostEpoch + 3);
+  });
+
+  testWidgets('a refresh does not wait for the route to settle', (
+    tester,
+  ) async {
+    final container = build();
+    final probe = container.read(_probeProvider.notifier)
+      ..settle = probeSettleDuration;
+    probe.watch('a');
+    await tester.pump();
+    probe.answer({
+      'a': _ok(['HK-01', 'Proxy']),
+    });
+    await tester.pump();
+
+    trackerOf(container).bumpHostEpoch();
+    await tester.pump();
+    probe.refresh(['a']);
+    await tester.pump();
+    expect(probe.calls, ['a', 'a']);
+
+    await tester.pump(probeSettleDuration);
+    expect(probe.calls, ['a', 'a']);
   });
 
   test('a pick change lets the running probe land', () async {

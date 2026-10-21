@@ -12,6 +12,7 @@ part of '../ip_quality.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
+
 /// @nodoc
 mixin _$IpQuality {
 
@@ -22,6 +23,8 @@ mixin _$IpQuality {
 @pragma('vm:prefer-inline')
 $IpQualityCopyWith<IpQuality> get copyWith => _$IpQualityCopyWithImpl<IpQuality>(this as IpQuality, _$identity);
 
+  /// Serializes this IpQuality to a JSON map.
+  Map<String, dynamic> toJson();
 
 
 @override
@@ -30,7 +33,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is IpQuality&&(identical(other.ip, _this.ip) || other.ip == _this.ip)&&(identical(other.source, _this.source) || other.source == _this.source)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.organization, _this.organization) || other.organization == _this.organization)&&(identical(other.asn, _this.asn) || other.asn == _this.asn)&&(identical(other.isProxy, _this.isProxy) || other.isProxy == _this.isProxy)&&(identical(other.isVpn, _this.isVpn) || other.isVpn == _this.isVpn)&&(identical(other.isTor, _this.isTor) || other.isTor == _this.isTor)&&(identical(other.isAbuser, _this.isAbuser) || other.isAbuser == _this.isAbuser));
 }
 
-
+@JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as IpQuality;
@@ -217,11 +220,11 @@ return $default(_that.ip,_that.source,_that.type,_that.organization,_that.asn,_t
 }
 
 /// @nodoc
-
+@JsonSerializable()
 
 class _IpQuality implements IpQuality {
   const _IpQuality({required this.ip, required this.source, required this.type, this.organization, this.asn, this.isProxy = false, this.isVpn = false, this.isTor = false, this.isAbuser = false});
-  
+  factory _IpQuality.fromJson(Map<String, dynamic> json) => _$IpQualityFromJson(json);
 
 @override final  String ip;
 @override final  IpQualitySource source;
@@ -239,14 +242,17 @@ class _IpQuality implements IpQuality {
 @pragma('vm:prefer-inline')
 _$IpQualityCopyWith<_IpQuality> get copyWith => __$IpQualityCopyWithImpl<_IpQuality>(this, _$identity);
 
-
+@override
+Map<String, dynamic> toJson() {
+  return _$IpQualityToJson(this, );
+}
 
 @override
 bool operator ==(Object other) {
     return identical(this, other) || (other.runtimeType == runtimeType&&other is _IpQuality&&(identical(other.ip, ip) || other.ip == ip)&&(identical(other.source, source) || other.source == source)&&(identical(other.type, type) || other.type == type)&&(identical(other.organization, organization) || other.organization == organization)&&(identical(other.asn, asn) || other.asn == asn)&&(identical(other.isProxy, isProxy) || other.isProxy == isProxy)&&(identical(other.isVpn, isVpn) || other.isVpn == isVpn)&&(identical(other.isTor, isTor) || other.isTor == isTor)&&(identical(other.isAbuser, isAbuser) || other.isAbuser == isAbuser));
 }
 
-
+@JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
     return Object.hash(runtimeType,ip,source,type,organization,asn,isProxy,isVpn,isTor,isAbuser);

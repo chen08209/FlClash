@@ -2,6 +2,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'generated/ip_quality.freezed.dart';
+part 'generated/ip_quality.g.dart';
 
 @freezed
 abstract class IpQuality with _$IpQuality {
@@ -16,6 +17,9 @@ abstract class IpQuality with _$IpQuality {
     @Default(false) bool isTor,
     @Default(false) bool isAbuser,
   }) = _IpQuality;
+
+  factory IpQuality.fromJson(Map<String, Object?> json) =>
+      _$IpQualityFromJson(json);
 }
 
 extension IpQualityExt on IpQuality {

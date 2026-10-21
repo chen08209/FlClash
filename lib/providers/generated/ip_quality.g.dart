@@ -51,8 +51,53 @@ final class IpQualityFailureCooldownProvider
 String _$ipQualityFailureCooldownHash() =>
     r'173ce54985dc17ba4d9118d84b8a22fd0fa49f24';
 
+@ProviderFor(ipQualityMaxAge)
+final ipQualityMaxAgeProvider = IpQualityMaxAgeProvider._();
+
+final class IpQualityMaxAgeProvider
+    extends $FunctionalProvider<Duration, Duration, Duration>
+    with $Provider<Duration> {
+  IpQualityMaxAgeProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'ipQualityMaxAgeProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$ipQualityMaxAgeHash();
+
+  @$internal
+  @override
+  $ProviderElement<Duration> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  Duration create(Ref ref) {
+    return ipQualityMaxAge(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Duration value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Duration>(value),
+    );
+  }
+}
+
+String _$ipQualityMaxAgeHash() => r'74aa9def150c9c1955f8c09d6eec1e9038754551';
+
+/// Invalidating skips the stored record and asks the sources again.
+
 @ProviderFor(ipQuality)
 final ipQualityProvider = IpQualityFamily._();
+
+/// Invalidating skips the stored record and asks the sources again.
 
 final class IpQualityProvider
     extends
@@ -62,6 +107,7 @@ final class IpQualityProvider
           FutureOr<IpQuality>
         >
     with $FutureModifier<IpQuality>, $FutureProvider<IpQuality> {
+  /// Invalidating skips the stored record and asks the sources again.
   IpQualityProvider._({
     required IpQualityFamily super.from,
     required String super.argument,
@@ -105,7 +151,9 @@ final class IpQualityProvider
   }
 }
 
-String _$ipQualityHash() => r'cf9d456ef98e242ae1d529bf5beb139eea325a13';
+String _$ipQualityHash() => r'120254d66bea59cae892cd3dcc86ad651c22b3c2';
+
+/// Invalidating skips the stored record and asks the sources again.
 
 final class IpQualityFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<IpQuality>, String> {
@@ -117,6 +165,8 @@ final class IpQualityFamily extends $Family
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
+
+  /// Invalidating skips the stored record and asks the sources again.
 
   IpQualityProvider call(String ip) =>
       IpQualityProvider._(argument: ip, from: this);
