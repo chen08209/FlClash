@@ -438,6 +438,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "This deletes all profiles, settings, and local data, then closes the app. Open it again to start fresh.",
     ),
     "clearDataFailed": m1,
+    "clearDnsCache": MessageLookupByLibrary.simpleMessage("Clear DNS cache"),
+    "clearDnsCacheFailed": MessageLookupByLibrary.simpleMessage(
+      "Failed to clear DNS cache",
+    ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("Clear search"),
     "clientFingerprint": MessageLookupByLibrary.simpleMessage(
       "Client fingerprint",
@@ -701,6 +705,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "disconnected": MessageLookupByLibrary.simpleMessage("Disconnected"),
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage(
       "New version found",
+    ),
+    "dnsCacheCleared": MessageLookupByLibrary.simpleMessage(
+      "DNS cache cleared",
     ),
     "dnsHijackDesc": MessageLookupByLibrary.simpleMessage(
       "Without this entry, TUN hijacks every DNS query to port 53 (any:53).",

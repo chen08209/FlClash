@@ -1,16 +1,24 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/dns_queries.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+
+class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 const _tableSize = Size(1400, 1000);
 const _listSize = Size(600, 1000);
@@ -44,10 +52,15 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late ProviderContainer container;
+  late _MockCoreHandlerInterface core;
 
   setUp(() {
+    core = _MockCoreHandlerInterface();
     container = ProviderContainer(
-      overrides: [profilesProvider.overrideWith(TestProfiles.new)],
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+      ],
     );
     globalState.container = container;
     container
@@ -68,6 +81,7 @@ void main() {
   Future<void> pumpDnsQueries(
     WidgetTester tester, {
     Size size = _tableSize,
+    bool withStatusManager = false,
   }) async {
     container.read(viewSizeProvider.notifier).update((_) => size);
     tester.view.physicalSize = size;
@@ -78,7 +92,10 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(child: DnsQueriesView()),
+        child: TestApp(
+          withStatusManager: withStatusManager,
+          child: const DnsQueriesView(),
+        ),
       ),
     );
     await tester.pump();
@@ -360,6 +377,39 @@ void main() {
       tester.getTopLeft(errorText).dy,
       greaterThan(tester.getBottomLeft(errorHeader).dy),
     );
+
+    await teardownView(tester);
+  });
+
+  testWidgets('the broom clears the DNS cache and says so', (tester) async {
+    when(core.clearDnsCache).thenAnswer((_) async => true);
+    await pumpDnsQueries(tester, withStatusManager: true);
+
+    await tester.tap(find.byGlyph(AppGlyphs.broom));
+    await tester.pumpAndSettle();
+
+    verify(core.clearDnsCache).called(1);
+    expect(find.text('DNS cache cleared'), findsOneWidget);
+
+    await teardownView(tester);
+  });
+
+  testWidgets('a Core that cannot clear the DNS cache reports it', (
+    tester,
+  ) async {
+    when(core.clearDnsCache).thenThrow(
+      const CoreMethodException(
+        code: 'transport_disconnected',
+        message: 'Core is not running',
+      ),
+    );
+    await pumpDnsQueries(tester, withStatusManager: true);
+
+    await tester.tap(find.byGlyph(AppGlyphs.broom));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Failed to clear DNS cache'), findsOneWidget);
+    expect(find.text('DNS cache cleared'), findsNothing);
 
     await teardownView(tester);
   });

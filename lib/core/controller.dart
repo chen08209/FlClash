@@ -231,6 +231,10 @@ class CoreController {
     await _interface.resetConnections();
   }
 
+  Future<bool> clearDnsCache() async {
+    return _interface.clearDnsCache();
+  }
+
   Future<List<ExternalProvider>> getExternalProviders() async {
     return _interface.getExternalProviders();
   }

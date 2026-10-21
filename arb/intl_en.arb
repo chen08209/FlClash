@@ -939,5 +939,8 @@
   "customImportDroppedSubRules": "{count, plural, =1{1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules} other{{label} SUB-RULE rules were dropped, since custom profiles do not support sub-rules}}",
   "autoInclude": "Auto-include",
   "allReferencedProxies": "All referenced proxies",
-  "allReferencedProxyProviders": "All referenced proxy providers"
+  "allReferencedProxyProviders": "All referenced proxy providers",
+  "clearDnsCache": "Clear DNS cache",
+  "dnsCacheCleared": "DNS cache cleared",
+  "clearDnsCacheFailed": "Failed to clear DNS cache"
 }

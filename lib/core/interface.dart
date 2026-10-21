@@ -108,6 +108,8 @@ mixin CoreInterface {
   FutureOr<bool> closeConnections();
 
   FutureOr<bool> resetConnections();
+
+  FutureOr<bool> clearDnsCache();
 }
 
 abstract class CoreHandlerInterface with CoreInterface {
@@ -489,6 +491,11 @@ abstract class CoreHandlerInterface with CoreInterface {
   Future<bool> resetConnections() async {
     return await _invokeMethod<bool>(method: CoreMethod.resetConnections) ??
         false;
+  }
+
+  @override
+  Future<bool> clearDnsCache() async {
+    return await _invokeMethod<bool>(method: CoreMethod.clearDnsCache) ?? false;
   }
 
   @override

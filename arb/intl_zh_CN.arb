@@ -939,5 +939,8 @@
   "customImportDroppedSubRules": "{count, plural, other{自定义配置不支持子规则，已丢弃 {label} 条 SUB-RULE 规则}}",
   "autoInclude": "自动包含",
   "allReferencedProxies": "全部被引用的代理",
-  "allReferencedProxyProviders": "全部被引用的代理集"
+  "allReferencedProxyProviders": "全部被引用的代理集",
+  "clearDnsCache": "清除DNS缓存",
+  "dnsCacheCleared": "DNS缓存已清除",
+  "clearDnsCacheFailed": "清除DNS缓存失败"
 }
