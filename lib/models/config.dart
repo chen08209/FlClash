@@ -192,7 +192,11 @@ Object? _readTabAnimation(Map<dynamic, dynamic> json, String key) {
   if (json.containsKey(key)) {
     return json[key];
   }
-  return json['isAnimateToPage'] == false ? TabAnimation.fade.name : null;
+  return switch (json['isAnimateToPage']) {
+    true => TabAnimation.slide.name,
+    false => TabAnimation.fade.name,
+    _ => null,
+  };
 }
 
 Object? _readUserAgents(Map<dynamic, dynamic> json, String key) {
@@ -233,7 +237,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(false) bool openLogs,
     @Default(true) bool closeConnections,
     @Default(defaultTestUrl) String testUrl,
-    @Default(TabAnimation.slide)
+    @Default(TabAnimation.fade)
     @JsonKey(readValue: _readTabAnimation)
     TabAnimation tabAnimation,
     @Default(true) bool floatingNavigationBar,

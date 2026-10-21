@@ -18,6 +18,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:material_ui/material_ui.dart';
 
+import 'goo.dart';
 import 'liquid_glass.dart';
 import 'navigation_dock.dart' show ElasticPress, ElasticPressHandle;
 import 'text.dart';
@@ -54,31 +55,13 @@ const _itemArrowPadding = EdgeInsets.only(
 
 const _dividerHeight = _cardInset * 2 + 1;
 
-// Soft and wide like HyperOS menus rather than a Material elevation.
-List<BoxShadow> _cardShadows(ColorScheme colorScheme, [double depth = 1]) {
-  final strength = colorScheme.brightness == Brightness.dark ? 3.0 : 1.0;
-  final alpha = strength * depth;
-  return [
-    BoxShadow(
-      color: colorScheme.shadow.withValues(alpha: 0.05 * alpha),
-      blurRadius: 10,
-      offset: const Offset(0, 2),
-    ),
-    BoxShadow(
-      color: colorScheme.shadow.withValues(alpha: 0.04 * alpha),
-      blurRadius: 30,
-      offset: const Offset(0, 4),
-    ),
-  ];
-}
-
 const _maxContentBlur = 8.0;
 
 const _overshootPerLongestSide = 0.1;
 
-const _openDuration = Duration(milliseconds: 750);
+const _openDuration = Duration(milliseconds: 450);
 
-const _dismissDuration = Duration(milliseconds: 300);
+const _dismissDuration = Duration(milliseconds: 500);
 
 const _shrinkDuration = Duration(milliseconds: 200);
 
@@ -93,52 +76,43 @@ final _openSeconds = _secondsOf(_openDuration);
 
 final _dismissSeconds = _secondsOf(_dismissDuration);
 
-const _contentOut = Interval(0, 0.5, curve: Curves.easeOut);
+// iOS 27 returns a menu into its button as one drop of glass: the platter
+// dips away, then shrinks into the button, which re-forms out of a droplet
+// and rises past its place. iOS lays a menu over its button; one here opens
+// beside it, so it dips half as far, or the two would part.
+final _droplet = SpringSimulation(dropletSpring, 0, 1, 0);
+const _dropletBlend = 28.0;
+const _dropletContentOut = 0.1;
+const _dropletGlyphIn = 0.47;
+const _dropletGlyphCurve = Cubic(0.25, 0.1, 0.25, 1);
 
-final _returnSpring = SpringCurve(
-  SpringDescription.withDurationAndBounce(
-    duration: const Duration(milliseconds: 260),
-  ),
-  seconds: _dismissSeconds,
-);
+// Inside the button by then, the platter stops swelling it and the glass eases
+// back to the button's, so the last frame is the button itself.
+const _dropletAbsorbed = Interval(0.6, 0.9, curve: Curves.easeInOut);
 
-final _returnXSpring = SpringCurve(
-  SpringDescription.withDurationAndBounce(
-    duration: const Duration(milliseconds: 220),
-  ),
-  seconds: _dismissSeconds,
+// As measured on iOS 27 (.agents/architecture.md, Popup Motion): one spring
+// opens the menu, a later one squares off its capsule corners.
+final _open = SpringSimulation(
+  SpringDescription.withDampingRatio(mass: 1, stiffness: 400, ratio: 0.754),
+  0,
+  1,
+  0,
 );
-
-final _returnYSpring = SpringCurve(
-  SpringDescription.withDurationAndBounce(
-    duration: const Duration(milliseconds: 290),
-  ),
-  seconds: _dismissSeconds,
+final _corners = SpringSimulation(
+  SpringDescription.withDampingRatio(mass: 1, stiffness: 324, ratio: 0.75),
+  1,
+  0,
+  0,
 );
-
-final _growSpring = SpringCurve(
-  SpringDescription.withDurationAndBounce(
-    duration: const Duration(milliseconds: 500),
-    bounce: 0.3,
-  ),
-  seconds: _openSeconds,
-);
-
-final _moveYSpring = SpringCurve(
-  SpringDescription.withDurationAndBounce(
-    duration: const Duration(milliseconds: 340),
-    bounce: 0.12,
-  ),
-  seconds: _openSeconds,
-);
-
-final _moveXSpring = SpringCurve(
-  SpringDescription.withDurationAndBounce(
-    duration: const Duration(milliseconds: 520),
-    bounce: 0.2,
-  ),
-  seconds: _openSeconds,
-);
+const _cornersDelay = 0.07;
+const _cornersReachPerWidth = 0.48;
+const _openContentBlur = 4.0;
+const _openBlurBump = 1.9;
+const _unseenBlur = 0.1;
+const _platterInControl = 0.41;
+const _dropletShare = 0.25;
+const _rimDepth = 8.0;
+const _glyphUnderAt = 0.25;
 
 const _dwellDuration = Duration(milliseconds: 400);
 
@@ -213,26 +187,6 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
     return super.didPop(result);
   }
 
-  late final CurvedAnimation _grow = CurvedAnimation(
-    parent: animation!,
-    curve: _growSpring,
-  );
-
-  late final CurvedAnimation _moveX = CurvedAnimation(
-    parent: animation!,
-    curve: _moveXSpring,
-  );
-
-  late final CurvedAnimation _moveY = CurvedAnimation(
-    parent: animation!,
-    curve: _moveYSpring,
-  );
-
-  late final CurvedAnimation _content = CurvedAnimation(
-    parent: animation!,
-    curve: const Interval(0.04, 0.45, curve: Curves.easeOutCubic),
-  );
-
   final _unfolded = ValueNotifier<bool>(false);
 
   /// Whether the platter shows rather than the cards, which on glass stand
@@ -242,6 +196,8 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
   final _pin = _PopupPin();
 
   final _press = _CarriedPress();
+
+  final _surface = _PopupSurface();
 
   @override
   void install() {
@@ -264,8 +220,7 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
       }
       return;
     }
-    _platter.value =
-        !animation.isCompleted && _content.value < 1 && !_unfolded.value;
+    _platter.value = !animation.isCompleted && !_unfolded.value;
   }
 
   @override
@@ -273,10 +228,6 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
     animation
       ?..removeListener(_updatePlatter)
       ..removeStatusListener(_handleStatusChanged);
-    _grow.dispose();
-    _moveX.dispose();
-    _moveY.dispose();
-    _content.dispose();
     _unfolded.dispose();
     _platter.dispose();
     super.dispose();
@@ -330,6 +281,7 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
       child: _PopupScope(
         platter: _platter,
         press: _press,
+        surface: _surface,
         runPicked: _runPicked,
         child: builder(context),
       ),
@@ -376,24 +328,22 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
             child: _PopupMorph(
               anchor: anchor,
               animation: animation,
-              grow: _grow,
-              moveX: _moveX,
-              moveY: _moveY,
-              content: _content,
               platter: _platter,
+              surface: _surface,
               sourceColor: sourceColor,
               sourceImage: sourceImage,
               surfaceColor: SurfaceLevel.floatingOf(
                 colorScheme,
               ).colorOf(colorScheme),
-              shadows: glass
-                  ? glassMenuShadows(colorScheme)
-                  : _cardShadows(colorScheme),
+              shadows: menuShadows(colorScheme),
               glass: glass
                   ? (
                       from: LiquidGlassStyle.regular(colorScheme),
                       to: LiquidGlassStyle.menu(colorScheme),
                       rim: LiquidGlassRim.menu(colorScheme),
+                      coarse:
+                          LiquidGlassScope.qualityOf(context) ==
+                          LiquidGlassQuality.standard,
                     )
                   : null,
               child: child,
@@ -420,6 +370,7 @@ typedef _PlatterGlass = ({
   LiquidGlassStyle from,
   LiquidGlassStyle to,
   LiquidGlassRim rim,
+  bool coarse,
 });
 
 /// The press that opened a popup on its control's pointer down. Its events
@@ -430,16 +381,24 @@ class _CarriedPress {
   VoidCallback? onCancel;
 }
 
+/// The part of the popup's box that returns into its control, when not all
+/// of it: a menu returns its open sub menu alone, as iOS does.
+class _PopupSurface {
+  Rect? Function(RenderBox popup)? rectIn;
+}
+
 class _PopupScope extends InheritedWidget {
   const _PopupScope({
     required this.platter,
     required this.press,
+    required this.surface,
     required this.runPicked,
     required super.child,
   });
 
   final ValueListenable<bool> platter;
   final _CarriedPress press;
+  final _PopupSurface surface;
   final ValueSetter<VoidCallback> runPicked;
 
   static _PopupScope? maybeOf(BuildContext context) =>
@@ -449,6 +408,7 @@ class _PopupScope extends InheritedWidget {
   bool updateShouldNotify(_PopupScope oldWidget) =>
       platter != oldWidget.platter ||
       press != oldWidget.press ||
+      surface != oldWidget.surface ||
       runPicked != oldWidget.runPicked;
 }
 
@@ -456,11 +416,8 @@ class _PopupMorph extends SingleChildRenderObjectWidget {
   const _PopupMorph({
     required this.anchor,
     required this.animation,
-    required this.grow,
-    required this.moveX,
-    required this.moveY,
-    required this.content,
     required this.platter,
+    required this.surface,
     required this.sourceColor,
     required this.sourceImage,
     required this.surfaceColor,
@@ -471,11 +428,8 @@ class _PopupMorph extends SingleChildRenderObjectWidget {
 
   final Rect anchor;
   final Animation<double> animation;
-  final Animation<double> grow;
-  final Animation<double> moveX;
-  final Animation<double> moveY;
-  final Animation<double> content;
   final ValueListenable<bool> platter;
+  final _PopupSurface surface;
   final Color sourceColor;
   final ValueListenable<ui.Image?>? sourceImage;
   final Color surfaceColor;
@@ -490,11 +444,8 @@ class _PopupMorph extends SingleChildRenderObjectWidget {
     return _RenderPopupMorph(
       anchor: anchor,
       animation: animation,
-      grow: grow,
-      moveX: moveX,
-      moveY: moveY,
-      content: content,
       platter: platter,
+      surface: surface,
       sourceColor: sourceColor,
       sourceImage: sourceImage,
       surfaceColor: surfaceColor,
@@ -511,11 +462,8 @@ class _PopupMorph extends SingleChildRenderObjectWidget {
     renderObject
       ..anchor = anchor
       ..animation = animation
-      ..grow = grow
-      ..moveX = moveX
-      ..moveY = moveY
-      ..content = content
       ..platter = platter
+      ..surface = surface
       ..sourceColor = sourceColor
       ..sourceImage = sourceImage
       ..surfaceColor = surfaceColor
@@ -524,29 +472,25 @@ class _PopupMorph extends SingleChildRenderObjectWidget {
   }
 }
 
-typedef _MorphFrame = ({
-  double grow,
-  double moveX,
-  double moveY,
-  double reveal,
-  bool platter,
+typedef _MorphFrame = ({double time, bool platter});
+
+typedef _Opening = ({
+  Rect platter,
+  double radius,
+  Rect? droplet,
+  double progress,
 });
 
-/// Grows the popup out of its anchor the way iOS 26 menus leave their button:
-/// a platter flies from the anchor's capsule to the card's center on an arc,
-/// growing on its own spring, while the content rides inside it, scaling,
-/// fading and sharpening in. Closing returns it into its control the same way,
-/// the content blurring out first; with no control to return into, the popup
-/// shrinks toward its anchor as it fades.
+/// Grows the popup out of its anchor the way iOS 27 menus leave their button,
+/// and returns it into its control, as one drop of glass with it, the content
+/// blurring out first; with no control to return into, the popup shrinks
+/// toward its anchor as it fades.
 class _RenderPopupMorph extends RenderProxyBox {
   _RenderPopupMorph({
     required Rect anchor,
     required Animation<double> animation,
-    required this.grow,
-    required this.moveX,
-    required this.moveY,
-    required this.content,
     required ValueListenable<bool> platter,
+    required this.surface,
     required Color sourceColor,
     required ValueListenable<ui.Image?>? sourceImage,
     required Color surfaceColor,
@@ -563,10 +507,7 @@ class _RenderPopupMorph extends RenderProxyBox {
 
   late final _pane = LiquidGlassPane(markNeedsPaint);
 
-  Animation<double> grow;
-  Animation<double> moveX;
-  Animation<double> moveY;
-  Animation<double> content;
+  _PopupSurface surface;
 
   Rect _anchor;
 
@@ -598,6 +539,7 @@ class _RenderPopupMorph extends RenderProxyBox {
 
   _MorphFrame? _closingFrame;
   double _closingFrom = 1;
+  Rect? _closingSurface;
 
   void _handleStatusChanged(AnimationStatus status) {
     if (status != AnimationStatus.reverse) {
@@ -605,6 +547,7 @@ class _RenderPopupMorph extends RenderProxyBox {
     }
     _closingFrom = _animation.value;
     _closingFrame = _frame();
+    _closingSurface = hasSize ? surface.rectIn?.call(this) : null;
   }
 
   /// Where the opening stands, or null once it has settled.
@@ -612,13 +555,7 @@ class _RenderPopupMorph extends RenderProxyBox {
     if (_animation.value >= 1) {
       return null;
     }
-    return (
-      grow: grow.value,
-      moveX: moveX.value,
-      moveY: moveY.value,
-      reveal: content.value,
-      platter: _platter.value,
-    );
+    return (time: _animation.value * _openSeconds, platter: _platter.value);
   }
 
   ValueListenable<bool> _platter;
@@ -738,16 +675,7 @@ class _RenderPopupMorph extends RenderProxyBox {
         ? 1.0
         : (1 - _animation.value / from).clamp(0.0, 1.0);
     if (_sourceImage != null) {
-      final start =
-          frame ??
-          (grow: 1.0, moveX: 1.0, moveY: 1.0, reveal: 1.0, platter: true);
-      _paintFrame(context, offset, (
-        grow: start.grow * (1 - _returnSpring.transform(dismissal)),
-        moveX: start.moveX * (1 - _returnXSpring.transform(dismissal)),
-        moveY: start.moveY * (1 - _returnYSpring.transform(dismissal)),
-        reveal: start.reveal * (1 - _contentOut.transform(dismissal)),
-        platter: true,
-      ), returning: true);
+      _paintReturn(context, offset, frame, dismissal * _dismissSeconds);
       return;
     }
     final shrink = Curves.easeOut.transform(dismissal);
@@ -773,32 +701,73 @@ class _RenderPopupMorph extends RenderProxyBox {
     );
   }
 
-  void _paintFrame(
-    PaintingContext context,
-    Offset offset,
-    _MorphFrame? frame, {
-    bool returning = false,
-  }) {
+  _Opening _openingOf(double time, Rect card) {
+    final anchor = _localAnchor;
+    final progress = _open.x(time);
+    final scale = lerpDouble(
+      _platterInControl * anchor.shortestSide / card.width,
+      1,
+      progress,
+    )!;
+    final height = lerpDouble(card.width, card.height, progress)!;
+    final toCard = card.center.dy - anchor.center.dy;
+    final distance = toCard.abs();
+    final dip = _sourceImage == null
+        ? 0.0
+        : toCard.sign *
+              (math.min(1.0, distance / 30) * 23 + 0.124 * distance) *
+              riseAndFall(time, 0.098, 3.3);
+    final platter = Rect.fromCenter(
+      center:
+          Offset.lerp(anchor.center, card.center, progress)! + Offset(0, dip),
+      width: math.max(0.0, card.width * scale),
+      height: math.max(0.0, height * scale),
+    );
+    final corners =
+        _cardRadius +
+        card.width *
+            _cornersReachPerWidth *
+            _corners.x(math.max(0.0, time - _cornersDelay));
+    Rect? droplet;
+    if (_sourceImage != null) {
+      final extent = anchor.size * lerpDouble(1, _dropletShare, progress)!;
+      final inner = card.deflate(
+        anchor.longestSide * _dropletShare / 2 + _dropletBlend + _rimDepth,
+      );
+      final sunk = Offset.lerp(anchor.center, card.center, _dropletShare)!;
+      final target = inner.isEmpty
+          ? card.center
+          : Offset(
+              sunk.dx.clamp(inner.left, inner.right),
+              sunk.dy.clamp(inner.top, inner.bottom),
+            );
+      droplet = Rect.fromCenter(
+        center: Offset.lerp(anchor.center, target, progress)!,
+        width: extent.width,
+        height: extent.height,
+      );
+    }
+    return (
+      platter: platter,
+      radius: math.max(0.0, math.min(height / 2, corners) * scale),
+      droplet: droplet,
+      progress: progress,
+    );
+  }
+
+  void _paintFrame(PaintingContext context, Offset offset, _MorphFrame? frame) {
     final child = this.child!;
-    if (frame == null) {
+    if (frame == null || size.isEmpty) {
       _pane.clear();
       context.paintChild(child, offset);
       return;
     }
-    final from = _localAnchor;
+    final anchor = _localAnchor;
     final bounds = Offset.zero & size;
-    final progress = frame.grow;
-    final extent = Size.lerp(from.size, bounds.size, progress)!;
-    final rect = Rect.fromCenter(
-      center: Offset(
-        lerpDouble(from.center.dx, bounds.center.dx, frame.moveX)!,
-        lerpDouble(from.center.dy, bounds.center.dy, frame.moveY)!,
-      ),
-      width: math.max(0.0, extent.width),
-      height: math.max(0.0, extent.height),
+    final (:platter, :radius, :droplet, :progress) = _openingOf(
+      frame.time,
+      bounds,
     );
-    final radius = lerpDouble(from.shortestSide / 2, _cardRadius, progress)!;
-    final clip = AppShape.all(math.max(0.0, radius)).getOuterPath(rect);
     final sourceImage = _sourceImage;
     final image = sourceImage?.value;
     // The source control stays visible until its snapshot exists, so the
@@ -806,46 +775,268 @@ class _RenderPopupMorph extends RenderProxyBox {
     if (sourceImage != null && image == null) {
       return;
     }
-    final reveal = frame.reveal;
-    // The card paints the same surface and shadow as the platter, so once it
-    // is revealed, or a sub menu leaves the root's bounds, the platter steps
-    // aside instead of clipping the levels until the spring settles.
-    if (!frame.platter && !size.isEmpty) {
+    final content = _contentTransform(platter, platter.width / size.width);
+    // The card paints the same surface and shadow as the platter, so once a
+    // sub menu leaves the root's bounds, the platter steps aside instead of
+    // clipping the levels until the springs settle.
+    if (!frame.platter) {
       _pane.clear();
       context.pushTransform(
         needsCompositing,
         offset,
-        _contentTransform(rect),
+        content,
         (context, offset) => context.paintChild(child, offset),
       );
       return;
     }
     final glass = _glass;
     final settled = progress.clamp(0.0, 1.0);
-    final rim = glass?.rim.scale(settled);
-    // Returning cards keep their own fill and shadow as they fade into the
-    // platter's; on glass they stand bare and the platter holds throughout.
-    final platter = returning && glass == null ? 1 - reveal : 1.0;
-    final path = clip.shift(offset);
+    final clip = AppShape.all(radius).getOuterPath(platter);
+    final depth = droplet == null
+        ? _rimDepth
+        : gooPairDepth(platter, radius, droplet, _dropletBlend);
+    final merged = depth >= 0;
+    final outline = merged
+        ? clip
+        : gooPairOutline(
+            platter,
+            radius,
+            droplet!,
+            _dropletBlend,
+            coarse: glass?.coarse ?? false,
+          );
+    final rim = merged
+        ? glass?.rim.scale(settled * math.min(1.0, depth / _rimDepth))
+        : null;
+    final path = outline.shift(offset);
     if (glass != null) {
+      final shape = outline.getBounds();
       // Frosted as the card and shadowed after, so one capture serves the morph.
       _pane.paint(
         context,
-        rect.shift(offset),
-        shape: LiquidGlassCorners.circular(math.max(0.0, radius)),
+        (merged ? platter : shape).shift(offset),
+        shape: merged
+            ? LiquidGlassCorners.circular(radius)
+            : LiquidGlassGoo(
+                outline.shift(-shape.topLeft),
+                [platter.shift(-shape.topLeft), droplet!.shift(-shape.topLeft)],
+                const [_dropletBlend],
+                firstRadius: math.max(radius, 1e-3),
+              ),
         style: LiquidGlassStyle.lerp(
           glass.from,
           glass.to,
           settled,
         ).copyWith(blur: glass.to.blur),
         hold: bounds
-            .expandToInclude(from)
+            .expandToInclude(anchor)
             .inflate(size.longestSide * _overshootPerLongestSide)
             .shift(offset),
         rim: rim,
       );
     }
-    final canvas = context.canvas;
+    _paintShadows(context.canvas, path, platter.shift(offset), radius, settled);
+    final Color fill;
+    if (glass == null) {
+      fill = Color.lerp(_sourceColor, _surfaceColor, settled)!;
+    } else {
+      fill = _sourceColor.withValues(alpha: _sourceColor.a * (1 - settled));
+    }
+    context.canvas.drawPath(path, Paint()..color = fill);
+    rim?.paintLine(context.canvas, platter.shift(offset), radius);
+    if (image != null && droplet != null) {
+      final under = math.min(1.0, settled / _glyphUnderAt);
+      _paintSource(
+        context.canvas,
+        image,
+        droplet.shift(offset),
+        1 - under,
+        blur: _openContentBlur * under,
+      );
+    }
+    if (settled > 0) {
+      context.pushClipPath(
+        needsCompositing,
+        offset,
+        bounds,
+        clip,
+        (context, offset) => _paintContent(
+          context,
+          offset,
+          settled,
+          math.sqrt(
+            math.pow(_openContentBlur * (1 - settled), 2) +
+                math.pow(
+                  _openBlurBump * riseAndFall(frame.time, 0.069, 2.1),
+                  2,
+                ),
+          ),
+          content,
+        ),
+      );
+    }
+  }
+
+  /// The return into the control [time] seconds on, from [start] or the card.
+  void _paintReturn(
+    PaintingContext context,
+    Offset offset,
+    _MorphFrame? start,
+    double time,
+  ) {
+    final image = _sourceImage!.value;
+    if (image == null) {
+      return;
+    }
+    final anchor = _localAnchor;
+    final bounds = Offset.zero & size;
+    final card = _closingSurface ?? bounds;
+    if (card.isEmpty) {
+      _pane.clear();
+      return;
+    }
+    final opening = start == null ? null : _openingOf(start.time, card);
+    final from = opening?.platter ?? card;
+    final fromRadius = opening?.radius ?? _cardRadius;
+    final fromDroplet =
+        opening?.droplet ??
+        Rect.fromCenter(
+          center: Offset.lerp(anchor.center, from.center, _dropletShare)!,
+          width: anchor.width * _dropletShare,
+          height: anchor.height * _dropletShare,
+        );
+    // The springs still ring a little when the route ends; ease that out so
+    // the control takes over exactly where the droplet lands.
+    final ringing =
+        1 - Curves.easeIn.transform(((time - 0.4) / 0.1).clamp(0.0, 1.0));
+    final progress = 1 + (_droplet.x(time) - 1) * ringing;
+    final toCard = from.center.dy - anchor.center.dy;
+    final away = toCard.sign;
+    final dip =
+        math.min(0.21 * toCard.abs(), 22.0) * riseAndFall(time, 0.072, 2.4);
+    final lift =
+        math.min(0.25 * toCard.abs(), 19.0) * riseAndFall(time, 0.176, 4.9);
+    final scale = lerpDouble(
+      1,
+      _platterInControl *
+          anchor.shortestSide /
+          math.max(from.width, from.height),
+      progress,
+    )!;
+    final platter = Rect.fromCenter(
+      center:
+          Offset.lerp(from.center, anchor.center, progress)! +
+          Offset(0, away * dip * ringing),
+      width: math.max(0.0, from.width * scale),
+      height: math.max(
+        0.0,
+        lerpDouble(from.height, from.width, progress)! * scale,
+      ),
+    );
+    final platterRadius = math.max(
+      0.0,
+      lerpDouble(fromRadius, from.width / 2, progress)! * scale,
+    );
+    final droplet = Rect.fromCenter(
+      center:
+          Offset.lerp(fromDroplet.center, anchor.center, progress)! -
+          Offset(0, away * lift * ringing),
+      width: lerpDouble(fromDroplet.width, anchor.width, progress)!,
+      height: lerpDouble(fromDroplet.height, anchor.height, progress)!,
+    );
+    final absorbed = _dropletAbsorbed.transform(
+      (time / _dismissSeconds).clamp(0.0, 1.0),
+    );
+    final blend = _dropletBlend * math.min(1.0, time / 0.05) * (1 - absorbed);
+    final glass = _glass;
+    final outline = gooPairOutline(
+      platter,
+      platterRadius,
+      droplet,
+      blend,
+      coarse: glass?.coarse ?? false,
+    );
+    final shape = outline.getBounds();
+    final reveal =
+        (opening?.progress.clamp(0.0, 1.0) ?? 1) *
+        (1 -
+            Curves.easeOut.transform(
+              (time / _dropletContentOut).clamp(0.0, 1.0),
+            ));
+    final remaining = (1 - progress).clamp(0.0, 1.0);
+    final path = outline.shift(offset);
+    if (glass != null) {
+      _pane.paint(
+        context,
+        shape.shift(offset),
+        shape: LiquidGlassGoo(
+          outline.shift(-shape.topLeft),
+          [platter.shift(-shape.topLeft), droplet.shift(-shape.topLeft)],
+          [blend],
+          firstRadius: math.max(platterRadius, 1e-3),
+        ),
+        style: LiquidGlassStyle.lerp(
+          glass.from,
+          glass.to,
+          remaining,
+        ).copyWith(blur: lerpDouble(glass.to.blur, glass.from.blur, absorbed)),
+        hold: bounds
+            .expandToInclude(from)
+            .expandToInclude(anchor.inflate(anchor.longestSide))
+            .inflate(size.longestSide * _overshootPerLongestSide)
+            .shift(offset),
+        holdFrost: absorbed > 0 ? glass.from.blur : null,
+      );
+    }
+    // Returning cards keep their own shadow as they fade into the platter's,
+    // which fills under them from the start so the page does not show
+    // through; on glass they stand bare and the platter holds throughout.
+    _paintShadows(
+      context.canvas,
+      path,
+      platter.shift(offset),
+      platterRadius,
+      remaining * (glass == null ? 1 - reveal : 1.0),
+    );
+    final Color fill;
+    if (glass == null) {
+      fill = Color.lerp(_surfaceColor, _sourceColor, progress)!;
+    } else {
+      fill = _sourceColor.withValues(alpha: _sourceColor.a * (1 - remaining));
+    }
+    context.canvas.drawPath(path, Paint()..color = fill);
+    _paintSource(
+      context.canvas,
+      image,
+      droplet.shift(offset),
+      lerpDouble(
+        0.2,
+        1,
+        _dropletGlyphCurve.transform((time / _dropletGlyphIn).clamp(0.0, 1.0)),
+      )!,
+    );
+    if (reveal > 0 && !size.isEmpty) {
+      _paintContent(
+        context,
+        offset,
+        reveal,
+        _maxContentBlur * (1 - reveal),
+        _contentTransform(
+          platter,
+          math.min(platter.width / card.width, platter.height / card.height),
+          content: card,
+        ),
+      );
+    }
+  }
+
+  void _paintShadows(
+    Canvas canvas,
+    Path path,
+    Rect rect,
+    double radius,
+    double strength,
+  ) {
     final reach = _shadows.fold(
       0.0,
       (reach, shadow) =>
@@ -860,77 +1051,81 @@ class _RenderPopupMorph extends RenderProxyBox {
           ..addRect(path.getBounds().inflate(reach))
           ..addPath(path, Offset.zero),
       );
-    final corners = AppRadius.all(math.max(0.0, radius));
+    final corners = AppRadius.all(radius);
     for (final shadow in _shadows) {
       canvas.drawRSuperellipse(
-        corners.toRSuperellipse(rect.shift(offset + shadow.offset)),
+        corners.toRSuperellipse(rect.shift(shadow.offset)),
         shadow.toPaint()
-          ..color = shadow.color.withValues(
-            alpha: shadow.color.a * settled * platter,
-          ),
+          ..color = shadow.color.withValues(alpha: shadow.color.a * strength),
       );
     }
     canvas.restore();
-    final Color fill;
-    if (glass == null) {
-      final surface = Color.lerp(_sourceColor, _surfaceColor, settled)!;
-      fill = surface.withValues(alpha: surface.a * platter);
-    } else {
-      fill = _sourceColor.withValues(alpha: _sourceColor.a * (1 - settled));
-    }
-    canvas.drawPath(path, Paint()..color = fill);
-    rim?.paintLine(context.canvas, rect.shift(offset), math.max(0.0, radius));
-    final glyph = 1 - reveal;
-    if (image != null && glyph > 0) {
-      final source = from.shift(rect.center - from.center + offset);
-      context.canvas.drawImageRect(
-        image,
-        Offset.zero & Size(image.width.toDouble(), image.height.toDouble()),
-        source,
-        Paint()
-          ..color = Color.fromRGBO(0, 0, 0, glyph)
-          ..filterQuality = FilterQuality.medium,
-      );
-    }
-    if (reveal <= 0 || size.isEmpty) {
-      return;
-    }
-    // Opening, the content fills the platter and is cut to it; returning, it
-    // shrinks whole inside it.
-    final transform = _contentTransform(rect, fit: returning);
-    final sigma = _maxContentBlur * (1 - reveal);
-    void paintContent(PaintingContext context, Offset offset) =>
-        context.pushOpacity(
-          offset,
-          Color.getAlphaFromOpacity(reveal),
-          (context, offset) => context.pushLayer(
-            ImageFilterLayer(
-              imageFilter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-            ),
-            (context, offset) => context.pushTransform(
-              needsCompositing,
-              offset,
-              transform,
-              (context, offset) => context.paintChild(child, offset),
-            ),
-            offset,
-          ),
-        );
-    if (returning) {
-      paintContent(context, offset);
-      return;
-    }
-    context.pushClipPath(needsCompositing, offset, bounds, clip, paintContent);
   }
 
-  Matrix4 _contentTransform(Rect rect, {bool fit = false}) {
-    final scale = (fit ? math.min : math.max)(
-      rect.width / size.width,
-      rect.height / size.height,
+  void _paintSource(
+    Canvas canvas,
+    ui.Image image,
+    Rect rect,
+    double opacity, {
+    double blur = 0,
+  }) {
+    if (Color.getAlphaFromOpacity(opacity) == 0) {
+      return;
+    }
+    canvas.drawImageRect(
+      image,
+      Offset.zero & Size(image.width.toDouble(), image.height.toDouble()),
+      rect,
+      Paint()
+        ..color = Color.fromRGBO(0, 0, 0, opacity)
+        ..filterQuality = FilterQuality.medium
+        ..imageFilter = blur > 0
+            ? ImageFilter.blur(sigmaX: blur, sigmaY: blur)
+            : null,
     );
+  }
+
+  void _paintContent(
+    PaintingContext context,
+    Offset offset,
+    double reveal,
+    double blur,
+    Matrix4 transform,
+  ) {
+    void paintChild(PaintingContext context, Offset offset) =>
+        context.pushTransform(
+          needsCompositing,
+          offset,
+          transform,
+          (context, offset) => context.paintChild(child!, offset),
+        );
+    void paintBlurred(PaintingContext context, Offset offset) {
+      if (blur < _unseenBlur) {
+        paintChild(context, offset);
+        return;
+      }
+      context.pushLayer(
+        ImageFilterLayer(
+          imageFilter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        ),
+        paintChild,
+        offset,
+      );
+    }
+
+    final alpha = Color.getAlphaFromOpacity(reveal);
+    if (alpha == 255) {
+      paintBlurred(context, offset);
+      return;
+    }
+    context.pushOpacity(offset, alpha, paintBlurred);
+  }
+
+  Matrix4 _contentTransform(Rect rect, double scale, {Rect? content}) {
+    final source = content ?? Offset.zero & size;
     return Matrix4.translationValues(rect.center.dx, rect.center.dy, 0)
       ..scaleByDouble(scale, scale, 1, 1)
-      ..translateByDouble(-size.width / 2, -size.height / 2, 0, 1);
+      ..translateByDouble(-source.center.dx, -source.center.dy, 0, 1);
   }
 }
 
@@ -1654,11 +1849,13 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
   ValueListenable<bool>? _platter;
   late Listenable _motion = _unfold;
   _CarriedPress? _carried;
+  _PopupSurface? _surface;
   ValueSetter<VoidCallback>? _runPicked;
 
   final List<_MenuStep> _path = [];
   bool _folding = false;
   final _menuKey = GlobalKey();
+  final _cardKeys = <GlobalKey>[];
   final _checkedKey = GlobalKey();
   ScrollController? _lazyController;
 
@@ -1692,6 +1889,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
       ?..onMove = _slideCarried
       ..onRelease = _releaseCarried
       ..onCancel = _cancelCarried;
+    _surface = scope?.surface?..rectIn = _topCardIn;
   }
 
   @override
@@ -1700,6 +1898,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
       ?..onMove = null
       ..onRelease = null
       ..onCancel = null;
+    _surface?.rectIn = null;
     _dwell?.cancel();
     _unfold.dispose();
     _lazyController?.dispose();
@@ -1839,6 +2038,25 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
       );
     }
     return levels;
+  }
+
+  GlobalKey _cardKeyAt(int index) {
+    while (_cardKeys.length <= index) {
+      _cardKeys.add(GlobalKey());
+    }
+    return _cardKeys[index];
+  }
+
+  Rect? _topCardIn(RenderBox popup) {
+    final top = _resolveLevels().length - 1;
+    if (top == 0 || top >= _cardKeys.length) {
+      return null;
+    }
+    final card = _cardKeys[top].currentContext?.findRenderObject();
+    if (card is! _RenderPopupMenuCard || !card.hasSize || !card.attached) {
+      return null;
+    }
+    return MatrixUtils.transformRect(card.getTransformTo(popup), card._rect);
   }
 
   void _push(BuildContext itemContext, int index) {
@@ -2250,6 +2468,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
   Widget _buildLevel(
     BuildContext context,
     _MenuLevel level, {
+    required GlobalKey cardKey,
     required int depth,
     required double pivot,
     required int? covered,
@@ -2284,47 +2503,50 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
                   : step == null
                   ? 1.0
                   : settled;
-              return Transform(
-                transform: Matrix4.diagonal3Values(scale, scale, 1),
-                alignment: Alignment.topRight,
-                origin: Offset(0, pivot),
-                child: PopupMenuCard(
-                  grow: step == null ? 1 : unfold,
-                  origin: step == null
-                      ? null
-                      : (
-                          top: step.itemTop - level.top,
-                          height: step.itemHeight,
-                        ),
-                  shadows: glass == null
-                      ? _cardShadows(colorScheme, shadow)
-                      : glassMenuShadows(colorScheme, shadow),
-                  fill: fill,
-                  dim: colorScheme.surface.withValues(
-                    alpha: math.min(0.4, _levelFadeStep * distance),
-                  ),
-                  glass: step == null
-                      ? glass
-                      : glass?.scale(_glassSpan.transform(unfold)),
-                  rim: step == null
-                      ? rim
-                      : rim?.scale(_glassSpan.transform(unfold)),
-                  bare: _platter?.value ?? false,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minWidth: lerpDouble(
-                        level.fromWidth,
-                        level.minWidth,
-                        width,
-                      )!,
-                      maxWidth: lerpDouble(
-                        level.fromWidth,
-                        level.maxWidth,
-                        width,
-                      )!,
-                      maxHeight: _maxHeightOf(context, level),
+              final bare = _platter?.value ?? false;
+              return Opacity(
+                opacity: receding && bare ? 0 : 1,
+                child: Transform(
+                  transform: Matrix4.diagonal3Values(scale, scale, 1),
+                  alignment: Alignment.topRight,
+                  origin: Offset(0, pivot),
+                  child: PopupMenuCard(
+                    key: cardKey,
+                    grow: step == null ? 1 : unfold,
+                    origin: step == null
+                        ? null
+                        : (
+                            top: step.itemTop - level.top,
+                            height: step.itemHeight,
+                          ),
+                    shadows: menuShadows(colorScheme, shadow),
+                    fill: fill,
+                    dim: colorScheme.surface.withValues(
+                      alpha: math.min(0.4, _levelFadeStep * distance),
                     ),
-                    child: child,
+                    glass: step == null
+                        ? glass
+                        : glass?.scale(_glassSpan.transform(unfold)),
+                    rim: step == null
+                        ? rim
+                        : rim?.scale(_glassSpan.transform(unfold)),
+                    bare: bare,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: lerpDouble(
+                          level.fromWidth,
+                          level.minWidth,
+                          width,
+                        )!,
+                        maxWidth: lerpDouble(
+                          level.fromWidth,
+                          level.maxWidth,
+                          width,
+                        )!,
+                        maxHeight: _maxHeightOf(context, level),
+                      ),
+                      child: child,
+                    ),
                   ),
                 ),
               );
@@ -2397,6 +2619,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
                   child: _buildLevel(
                     context,
                     levels[index],
+                    cardKey: _cardKeyAt(index),
                     depth: topIndex - index,
                     pivot: index < topIndex
                         ? _path[index].itemTop - levels[index].top

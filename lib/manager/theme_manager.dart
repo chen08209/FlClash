@@ -40,24 +40,18 @@ final _appThemes = <Brightness, ({Object inputs, ThemeData theme})>{};
 
 ThemeData watchAppTheme(WidgetRef ref, Brightness brightness) {
   final locale = ref.watch(appSettingProvider.select((state) => state.locale));
-  final themeSetting = ref.watch(
-    themeSettingProvider.select(
-      (state) => (fontFamily: state.fontFamily, pureBlack: state.pureBlack),
-    ),
+  final fontFamily = ref.watch(
+    themeSettingProvider.select((state) => state.fontFamily),
   );
   final colorScheme = ref.watch(genColorSchemeProvider(brightness));
-  final plainDark = brightness == Brightness.dark && themeSetting.pureBlack
-      ? ref.watch(genColorSchemeProvider(brightness, pureBlack: false))
-      : null;
   final locales = [
     ?getLocaleForString(locale),
     ...WidgetsBinding.instance.platformDispatcher.locales,
   ];
   final inputs = (
     platform: defaultTargetPlatform,
-    themeSetting: themeSetting,
+    fontFamily: fontFamily,
     colorScheme: colorScheme,
-    plainDark: plainDark,
     locales: locales.join(','),
   );
   if (_appThemes[brightness] case (
@@ -71,19 +65,15 @@ ThemeData watchAppTheme(WidgetRef ref, Brightness brightness) {
     pageTransitionsTheme: _pageTransitionsTheme,
     actionIconTheme: _actionIconTheme,
     colorScheme: colorScheme,
-    fontFamily: themeSetting.fontFamily,
+    fontFamily: fontFamily,
     fontFamilyFallback: appFontFamilyFallback(
       platform: defaultTargetPlatform,
       locales: locales,
-      fontFamily: themeSetting.fontFamily,
+      fontFamily: fontFamily,
     ),
     extensions: [
       if (brightness == Brightness.dark)
-        ElevatedColorScheme(
-          // Plain dark is pure black a level up, with the seed's tint that a
-          // lift from black would lose.
-          plainDark ?? colorScheme.elevated,
-        ),
+        ElevatedColorScheme(colorScheme.elevated),
     ],
   ).withAppShapes.withAppSurfaces.withAppTypography;
   _appThemes[brightness] = (inputs: inputs, theme: theme);

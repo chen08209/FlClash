@@ -61,21 +61,29 @@ void main() {
           );
           final reason = '$seed $style $brightness';
           final gray = style != ColorStyle.tinted;
-          final surfaces = {
-            scheme.surfaceDim: material.surfaceDim,
-            scheme.surfaceContainerLowest: material.surfaceContainerLowest,
-            scheme.surfaceContainerLow: material.surfaceContainerLow,
-            scheme.surfaceContainer: material.surfaceContainer,
-            scheme.surfaceContainerHigh: material.surfaceContainerHigh,
-            scheme.surfaceContainerHighest: material.surfaceContainerHighest,
-          };
-          for (final MapEntry(key: ours, value: theirs) in surfaces.entries) {
+          final surfaces = [
+            (scheme.surfaceDim, material.surfaceDim, null),
+            (
+              scheme.surfaceContainerLowest,
+              material.surfaceContainerLowest,
+              null,
+            ),
+            (scheme.surfaceContainerLow, material.surfaceContainerLow, null),
+            (scheme.surfaceContainer, material.surfaceContainer, 15.0),
+            (scheme.surfaceContainerHigh, material.surfaceContainerHigh, 21.0),
+            (
+              scheme.surfaceContainerHighest,
+              material.surfaceContainerHighest,
+              27.0,
+            ),
+          ];
+          for (final (ours, theirs, darkTone) in surfaces) {
             if (gray) {
               expect(_hct(ours).chroma, _grayish(theirs, 3.1), reason: reason);
             }
             expect(
               _hct(ours).tone,
-              closeTo(_hct(theirs).tone, 0.6),
+              closeTo((dark ? darkTone : null) ?? _hct(theirs).tone, 0.6),
               reason: reason,
             );
           }
@@ -110,7 +118,15 @@ void main() {
           if (!_accentStyles.contains(style)) {
             expect(scheme.primary, material.primary, reason: reason);
           }
-          expect(scheme.onSurface, material.onSurface, reason: reason);
+          if (dark) {
+            expect(
+              _hct(scheme.onSurface).tone,
+              closeTo(97, 0.5),
+              reason: reason,
+            );
+          } else {
+            expect(scheme.onSurface, material.onSurface, reason: reason);
+          }
         }
       }
     }
