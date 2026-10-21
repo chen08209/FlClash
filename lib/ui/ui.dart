@@ -44,6 +44,7 @@ export 'page_transition.dart';
 export 'paged_sheet.dart';
 export 'pop_scope.dart';
 export 'popup.dart';
+export 'qr_code.dart';
 export 'route_motion_hold.dart';
 export 'scaffold.dart';
 export 'scroll.dart';

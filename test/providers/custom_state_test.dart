@@ -948,6 +948,49 @@ void main() {
       expect(optionsOf('kcptun'), isNot(contains(ProxyField.pluginHost)));
       expect(optionsOf('shadow-tls'), contains(ProxyField.pluginHost));
       expect(optionsOf('shadow-tls'), isNot(contains(ProxyField.pluginMode)));
+      expect(
+        optionsOf('shadow-tls'),
+        containsAll([ProxyField.pluginPassword, ProxyField.pluginVersion]),
+      );
+      expect(
+        optionsOf('restls'),
+        containsAll([ProxyField.pluginPassword, ProxyField.pluginVersionHint]),
+      );
+      expect(
+        optionsOf('jls'),
+        containsAll([ProxyField.pluginUsername, ProxyField.pluginPassword]),
+      );
+
+      const pluginStructs = {
+        'obfs': 'simpleObfsOption',
+        'v2ray-plugin': 'v2rayObfsOption',
+        'gost-plugin': 'gostObfsOption',
+        'shadow-tls': 'shadowTLSOption',
+        'restls': 'restlsOption',
+        'jls': 'jlsOption',
+        'kcptun': 'kcpTunOption',
+      };
+      expect(
+        pluginStructs.keys,
+        const CustomProxy(
+          id: 0,
+          definition: {'type': 'ss'},
+        ).choicesOf(ProxyField.plugin),
+      );
+      for (final MapEntry(key: plugin, value: struct)
+          in pluginStructs.entries) {
+        final read = {
+          for (final match in RegExp(
+            r'obfs:"([^",]+)',
+          ).allMatches(structs[struct]!))
+            match.group(1)!,
+        };
+        for (final field in optionsOf(plugin)) {
+          if (field.path.first == 'plugin-opts') {
+            expect(read, contains(field.path.last), reason: '$plugin $field');
+          }
+        }
+      }
     });
 
     test('the form asks for the credentials each struct reads', () {
@@ -1058,10 +1101,12 @@ void main() {
         'vmess': {ProxyField.cipher},
         'hysteria2': {ProxyField.obfs},
       };
+      const elsewhereForEveryType = {ProxyField.pluginVersionHint};
       for (final type in customProxyTypes) {
         final proxy = CustomProxy(id: 0, definition: {'type': type});
         for (final field in ProxyField.values) {
-          if (elsewhere[type]?.contains(field) ?? false) {
+          if (elsewhereForEveryType.contains(field) ||
+              (elsewhere[type]?.contains(field) ?? false)) {
             continue;
           }
           for (final choice in proxy.choicesOf(field)) {
@@ -1112,12 +1157,74 @@ void main() {
     );
   });
 
+  test('a header map leaves Host to its own field and keeps listed values', () {
+    const proxy = CustomProxy(
+      id: 0,
+      definition: {
+        'type': 'vmess',
+        'network': 'http',
+        'http-opts': {
+          'headers': {
+            'Host': ['a.example', 'b.example'],
+            'Accept': ['text/html', 'application/xml'],
+          },
+        },
+      },
+    );
+
+    expect(proxy.stringMapOf(ProxyField.httpHeaders), {
+      'Accept': 'text/html, application/xml',
+    });
+    expect(
+      proxy.withEntries(ProxyField.httpHeaders, {
+        'Accept': 'text/html, application/xml',
+        'Connection': 'keep-alive',
+      }).definition['http-opts'],
+      {
+        'headers': {
+          'Host': ['a.example', 'b.example'],
+          'Accept': ['text/html', 'application/xml'],
+          'Connection': ['keep-alive'],
+        },
+      },
+    );
+    expect(
+      proxy.withEntries(ProxyField.httpHeaders, {}).definition['http-opts'],
+      {
+        'headers': {
+          'Host': ['a.example', 'b.example'],
+        },
+      },
+    );
+
+    const ws = CustomProxy(
+      id: 0,
+      definition: {
+        'type': 'vless',
+        'network': 'ws',
+        'ws-opts': {
+          'headers': {'host': 'a.example', 'User-Agent': 'a'},
+        },
+      },
+    );
+    expect(ws.stringMapOf(ProxyField.wsHeaders), {'User-Agent': 'a'});
+    expect(
+      ws.withEntries(ProxyField.wsHeaders, {
+        'User-Agent': 'b',
+      }).definition['ws-opts'],
+      {
+        'headers': {'host': 'a.example', 'User-Agent': 'b'},
+      },
+    );
+  });
+
   test('a changed value drops the options only the old one made available', () {
     const proxy = CustomProxy(
       id: 0,
       definition: {
         'type': 'vless',
         'network': 'ws',
+        'packet-encoding': 'xudp',
         'ws-opts': {
           'path': '/a',
           'headers': {'Host': 'a.example'},
@@ -1129,7 +1236,7 @@ void main() {
     expect(proxy.withField(ProxyField.network, 'grpc').definition, {
       'type': 'vless',
       'network': 'grpc',
-      'ws-opts': {'max-early-data': 2048},
+      'packet-encoding': 'xudp',
     });
     expect(
       const CustomProxy(
