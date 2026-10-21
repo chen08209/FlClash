@@ -888,13 +888,16 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    for (final (page, sheet) in [
-      (plain, plain.elevated),
-      (plain.toPureBlack(true), plain),
-    ]) {
+    for (final page in [plain, plain.toPureBlack(true)]) {
+      final sheet = page.elevated;
+      expect(sheet.surface, SurfaceLevel.card.colorOf(page));
       expect(
-        sheet.surface.tone,
-        closeTo(SurfaceLevel.card.colorOf(page).tone, 0.5),
+        SurfaceLevel.card.colorOf(sheet),
+        SurfaceLevel.block.colorOf(page),
+      );
+      expect(
+        SurfaceLevel.block.colorOf(sheet),
+        SurfaceLevel.inset.colorOf(page),
       );
       final theme = ThemeData(
         colorScheme: page,

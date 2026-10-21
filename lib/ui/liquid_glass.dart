@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:fl_clash/ui/color.dart';
 import 'package:fl_clash/ui/context.dart';
 import 'package:fl_clash/ui/shape.dart';
 import 'package:flutter/foundation.dart';
@@ -119,7 +120,7 @@ class LiquidGlassStyle {
     final dark = colorScheme.brightness == Brightness.dark;
     return dark
         ? LiquidGlassStyle(
-            tint: colorScheme.surfaceContainerHighest.withValues(alpha: 0.62),
+            tint: _darkGlassTint(colorScheme).withValues(alpha: 0.62),
             contrast: -0.4,
             saturation: 2.84,
             rim: 0.28,
@@ -147,7 +148,7 @@ class LiquidGlassStyle {
     final dark = colorScheme.brightness == Brightness.dark;
     return dark
         ? LiquidGlassStyle(
-            tint: colorScheme.surfaceContainerHighest.withValues(alpha: 0.48),
+            tint: _darkGlassTint(colorScheme).withValues(alpha: 0.48),
             contrast: -0.4,
             blur: 0,
             haze: 0.72,
@@ -172,7 +173,7 @@ class LiquidGlassStyle {
     final dark = colorScheme.brightness == Brightness.dark;
     return dark
         ? LiquidGlassStyle(
-            tint: colorScheme.surfaceContainerHighest.withValues(alpha: 0.63),
+            tint: _darkGlassTint(colorScheme).withValues(alpha: 0.63),
             contrast: -0.53,
             blur: 12,
             saturation: 1.75,
@@ -425,19 +426,29 @@ class LiquidGlassStyle {
   }
 }
 
-/// An iOS 27 menu's or alert's, measured over white.
-List<BoxShadow> glassMenuShadows(ColorScheme colorScheme, [double depth = 1]) {
+const _darkGlassTintOverCard = 7.0;
+
+final _darkGlassTints = <Color, Color>{};
+
+Color _darkGlassTint(ColorScheme colorScheme) {
+  final card = colorScheme.surfaceContainer;
+  if (_darkGlassTints.length > 8) {
+    _darkGlassTints.clear();
+  }
+  return _darkGlassTints.putIfAbsent(
+    card,
+    () => card.shiftTone(_darkGlassTintOverCard),
+  );
+}
+
+/// An iOS 27 menu's or alert's, measured over white below, above and beside
+/// it: one wide shadow, glass or not.
+List<BoxShadow> menuShadows(ColorScheme colorScheme, [double depth = 1]) {
   final strength = colorScheme.brightness == Brightness.dark ? 1.5 : 1.0;
-  final alpha = strength * depth;
   return [
     BoxShadow(
-      color: colorScheme.shadow.withValues(alpha: 0.09 * alpha),
-      blurRadius: 16.5,
-      offset: const Offset(0, 4),
-    ),
-    BoxShadow(
-      color: colorScheme.shadow.withValues(alpha: 0.045 * alpha),
-      blurRadius: 42,
+      color: colorScheme.shadow.withValues(alpha: 0.118 * strength * depth),
+      blurRadius: 29,
       offset: const Offset(0, 8),
     ),
   ];

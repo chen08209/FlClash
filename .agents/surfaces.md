@@ -19,7 +19,10 @@ it sits on, which `SurfaceScope` passes down the tree.
 
 Light mode alternates gray and paper: a near-white card on a gray page, a gray block in the card. The card is tone 98,
 not pure white, and the page tone 94: pure white beside a tinted gray made the white glare and the gray look soiled. Dark mode only
-lightens, because a darker step inside a lighter surface reads as a hole rather than a layer. `inset` is the floor;
+lightens, because a darker step inside a lighter surface reads as a hole rather than a layer, and it steps further:
+tones 6, 15, 21, 27 where light steps by 4, as iOS 27 sets its dark grouped card about 2.3 times as far off the page
+as its light one. At Material's dark tones a card stood barely clear of the page, and on pure black hardly at all.
+`inset` is the floor;
 nothing nests below it, so a design that needs a fifth level needs fewer containers instead.
 
 - A widget never picks its level at the call site. `CommonCard` and the other shared surfaces read
@@ -27,10 +30,9 @@ nothing nests below it, so a design that needs a fifth level needs fewer contain
   inside a card. A branch on `isInBottomSheet` or on where a widget is placed to choose its fill is the bug this
   replaces.
 - Sheets are `page` level, like a page, so a section looks the same in a sheet and in a page. In dark mode a sheet
-  presents a level up, as iOS presents a sheet on its elevated backgrounds: `ColorScheme.elevated` lifts every
-  surface role by the step from `page` to `card`, so the sheet's page takes the tone of the cards it covers and every
-  level inside it follows. Under pure black the sheet takes the plain dark scheme instead, which is the same step up
-  and keeps the seed's tint that a lift from black would lose. `ElevatedColorScheme` carries the result and the sheet
+  presents a level up, as iOS presents a sheet on its elevated backgrounds: `ColorScheme.elevated` moves every level
+  up one, so the sheet's page takes the tone of the cards it covers, its cards the tone of a block, and its blocks
+  the tone of an inset, under pure black too. `ElevatedColorScheme` carries the result and the sheet
   routes apply it through `ElevatedSurfaceTheme`; a sheet opened from a sheet keeps the same lift. A scrim barely
   darkens a dark page, so a dark sheet at the page's own tone read as more of the page rather than a layer over it,
   a covered sheet's peek vanished, and on black the edge and corners went with it. Light mode keeps its levels,
@@ -42,11 +44,14 @@ nothing nests below it, so a design that needs a fifth level needs fewer contain
   blurred shadow each costs raster time for no extra layering. A render object that paints a shadow itself draws it
   with `drawRSuperellipse`, as `ShapeDecoration` does: Impeller blurs a superellipse in one analytic pass, but a path
   through an offscreen Gaussian blur on every frame, which made the shadows the largest raster cost of an opening menu.
+  A shadow is black at an opacity, so one measured on iOS darkens FlClash's surfaces as it darkens iOS's own: the
+  surfaces differ from iOS's too little to call for retuning, and over the dark page, which is not black, a shadow
+  shows where iOS's would not.
 
 ## The Seeded Scheme
 
 `seededColorScheme` in `lib/ui/color.dart` builds every app scheme: Material's scheme for the seed and the
-`ColorStyle` picked in the theme settings, with three groups of roles replaced. Everything else stays Material,
+`ColorStyle` picked in the theme settings, with four groups of roles replaced. Everything else stays Material,
 including `toPureBlack` applied after it.
 
 The four styles each change something a reader sees at once. Material's nine variants mostly moved secondary and
@@ -76,6 +81,13 @@ tertiary, which the app barely shows, so most of them looked alike once surfaces
   its system colors, within 50 to 75, and puts dark text on it above 60. Material sets primary at tone 40 and 80 for
   any seed, which turned iOS blue into navy in light and a pastel in dark. `soft` and `monochrome` keep Material's
   primary, since moving away from the seed is what they are for.
+- **Dark spreads its levels and lifts its titles.** `surfaceContainer`, `surfaceContainerHigh`, and
+  `surfaceContainerHighest` sit at tones 15, 21, and 27, not Material's 12, 17, and 22, for the steps under Levels.
+  `onSurface` sits at 97, not 90, which left a dark title about an eighth weaker than a light one; iOS 27 gives `label`
+  the same contrast in both modes. Dark `onSurfaceVariant`, `outline`, and the accent already fall off from light about
+  as iOS 27's `secondaryLabel`, `tertiaryLabel`, and `systemBlue` do. Weigh text across the modes with APCA: WCAG's
+  ratio overrates light text on a dark surface and points the other way. Dark Liquid Glass keeps the tint it was
+  fitted to iOS 27 with, Material's old `surfaceContainerHighest`, seven tones over the card (`_darkGlassTint`).
 
 ## State
 

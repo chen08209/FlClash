@@ -35,7 +35,7 @@ _AppSettingProps _$AppSettingPropsFromJson(
         _$TabAnimationEnumMap,
         _readTabAnimation(json, 'tabAnimation'),
       ) ??
-      TabAnimation.slide,
+      TabAnimation.fade,
   floatingNavigationBar: json['floatingNavigationBar'] as bool? ?? true,
   autoCheckUpdate: json['autoCheckUpdate'] as bool? ?? true,
   sidebarExpanded:

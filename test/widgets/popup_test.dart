@@ -2142,4 +2142,56 @@ void main() {
     await tester.pump();
     expect(bare(), isTrue);
   });
+
+  testWidgets('a menu returns its open sub menu alone into the button', (
+    tester,
+  ) async {
+    final open = await pumpMenu(tester, [
+      const CommonPopupMenuItem(label: 'first'),
+      const CommonPopupMenuItem(
+        label: 'parent',
+        subItems: [CommonPopupMenuItem(label: 'child')],
+      ),
+    ]);
+    final morph = find.byWidgetPredicate(
+      (widget) => widget.runtimeType.toString() == '_PopupMorph',
+    );
+    double opacityOf(Finder card) => tester
+        .widget<Opacity>(
+          find.ancestor(of: card, matching: find.byType(Opacity)).first,
+        )
+        .opacity;
+    Rect platter() {
+      Rect? shadow;
+      expect(
+        tester.renderObject(morph),
+        paints..everything((method, arguments) {
+          if (method == #drawRSuperellipse) {
+            shadow ??= (arguments.first as RSuperellipse).outerRect;
+          }
+          return true;
+        }),
+      );
+      return shadow!.shift(
+        -menuShadows(const ColorScheme.light()).single.offset,
+      );
+    }
+
+    open();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('parent'));
+    await tester.pumpAndSettle();
+    final subMenu = tester
+        .getRect(surfaces.last)
+        .shift(-tester.getTopLeft(morph));
+    expect(subMenu.size, isNot(tester.getSize(morph)));
+
+    await tester.tapAt(Offset.zero);
+    await tester.pump();
+
+    expect(opacityOf(surfaces.first), 0);
+    expect(opacityOf(surfaces.last), 1);
+    expect(platter(), rectMoreOrLessEquals(subMenu));
+    await tester.pumpAndSettle();
+  });
 }

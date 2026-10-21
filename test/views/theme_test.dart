@@ -99,9 +99,9 @@ void main() {
     testWidgets('picks a color and the style of its scheme', (tester) async {
       await pumpThemeView(tester);
 
-      await tester.tap(swatch(0xFFAF52DE));
+      await tester.tap(swatch(0xFFCB30E0));
       await tester.pumpAndSettle();
-      expect(readTheme().primaryColor, 0xFFAF52DE);
+      expect(readTheme().primaryColor, 0xFFCB30E0);
 
       await tester.tap(
         find.byWidgetPredicate(
@@ -121,19 +121,19 @@ void main() {
 
     testWidgets('deletes a color from its context menu', (tester) async {
       await pumpThemeView(tester);
-      await tester.tap(swatch(0xFFFF9500));
+      await tester.tap(swatch(0xFFFF8D28));
       await tester.pumpAndSettle();
 
-      await tester.longPress(swatch(0xFFFF9500));
+      await tester.longPress(swatch(0xFFFF8D28));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
 
-      expect(readTheme().primaryColors, isNot(contains(0xFFFF9500)));
+      expect(readTheme().primaryColors, isNot(contains(0xFFFF8D28)));
       expect(readTheme().primaryColor, defaultPrimaryColor);
-      expect(swatch(0xFFFF9500), findsNothing);
+      expect(swatch(0xFFFF8D28), findsNothing);
     });
 
     Future<void> editColor(WidgetTester tester, int color, String hex) async {
@@ -155,13 +155,13 @@ void main() {
 
     testWidgets('edits a color in place from its context menu', (tester) async {
       await pumpThemeView(tester);
-      await tester.tap(swatch(0xFFFF9500));
+      await tester.tap(swatch(0xFFFF8D28));
       await tester.pumpAndSettle();
-      final index = readTheme().primaryColors.indexOf(0xFFFF9500);
+      final index = readTheme().primaryColors.indexOf(0xFFFF8D28);
 
-      await editColor(tester, 0xFFFF9500, '123456');
+      await editColor(tester, 0xFFFF8D28, '123456');
 
-      expect(readTheme().primaryColors, isNot(contains(0xFFFF9500)));
+      expect(readTheme().primaryColors, isNot(contains(0xFFFF8D28)));
       expect(readTheme().primaryColors[index], 0xFF123456);
       expect(readTheme().primaryColor, 0xFF123456);
       expect(swatch(0xFF123456), findsOneWidget);
@@ -175,10 +175,10 @@ void main() {
       await tester.pumpAndSettle();
       final count = readTheme().primaryColors.length;
 
-      await editColor(tester, 0xFFAF52DE, '007AFF');
+      await editColor(tester, 0xFFCB30E0, '007AFF');
 
       expect(readTheme().primaryColors, hasLength(count - 1));
-      expect(readTheme().primaryColors, isNot(contains(0xFFAF52DE)));
+      expect(readTheme().primaryColors, isNot(contains(0xFFCB30E0)));
       expect(readTheme().primaryColor, 0xFF007AFF);
       expect(swatch(0xFF007AFF), findsOneWidget);
     });
@@ -334,15 +334,15 @@ void main() {
     testWidgets('picks a sliding or fading tab switch', (tester) async {
       await pumpThemeView(tester);
 
-      expect(readSetting().tabAnimation, TabAnimation.slide);
-
-      await tester.tap(find.text('Fade'));
-      await tester.pumpAndSettle();
       expect(readSetting().tabAnimation, TabAnimation.fade);
 
       await tester.tap(find.text('Slide'));
       await tester.pumpAndSettle();
       expect(readSetting().tabAnimation, TabAnimation.slide);
+
+      await tester.tap(find.text('Fade'));
+      await tester.pumpAndSettle();
+      expect(readSetting().tabAnimation, TabAnimation.fade);
     });
 
     testWidgets('the preview switches to the destination tapped', (

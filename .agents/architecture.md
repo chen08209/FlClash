@@ -737,9 +737,10 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
   bars' rim: as iOS 27 draws it around both, measured in the simulator, the dark
   line lies just outside the glass, darkest along the sides, and the highlight is light added to the glass, brightest
   at the middle of the top and bottom, about half as bright where a corner begins, a fifth where it ends and gone
-  down the sides, fading over about 5 dp inward; a menu's line is lighter than an alert's. A glass menu and a glass alert cast iOS 27's shadow as
-  measured over white, a deep one under a wide one, half again as dark in dark mode, where a solid menu keeps its
-  softer one.
+  down the sides, fading over about 5 dp inward; a menu's line is lighter than an alert's. A menu, glass or solid,
+  and a glass alert cast iOS 27's shadow (`menuShadows`) as measured over white below, above and beside them: a
+  single wide one set 8 dp down, half again as dark in dark mode. Two blurs of different widths read as a band around
+  the card.
 - The optics bend with a circular bevel whose width and depth shrink to fit a small pane, so the rim shows the content
   squeezed and mirrored. The materials are iOS 27's as codenameone/CodenameOne#5906 fitted them (`pill` for the dock,
   `regular` for buttons): the backdrop passes through as `offset + scale * saturated backdrop`, the tint at
@@ -797,7 +798,9 @@ opening; one opened at a point (a context menu) has no control to return into an
 A sub menu is a `PopupMenuCard` laid out once at full size. One spring (`_unfold` in `lib/ui/popup.dart`) moves
 its surface and clip from the item that opened it to its bounds, recedes the parent, and reveals the items, so a fold
 caught mid-unfold turns back with the speed it had. The parent's item hides under the sub menu's header, which draws
-it again, and the sub menu is removed only once it stands on that item.
+it again, and the sub menu is removed only once it stands on that item. A popup closed with a sub menu open returns
+that sub menu alone, as iOS does: the platter starts from its card (`_PopupSurface`) and the levels below drop out,
+since bare glass cards would show the parent's rows through the sub menu.
 
 A `CommonPopupBox` opens on its button's pointer down, as an iOS menu that is a button's primary action does, and the
 press carries on into the menu. `_PopupPressRecognizer` claims the pointer then, so the button's own tap and its
