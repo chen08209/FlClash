@@ -26,9 +26,10 @@ class ProxiesSetting extends ConsumerWidget {
       ),
     );
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-      ).copyWith(top: context.contentTopPadding, bottom: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+        top: context.contentTopPadding,
+        bottom: 32 + context.bottomInset,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

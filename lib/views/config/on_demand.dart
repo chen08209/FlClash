@@ -379,7 +379,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
           SliverPadding(
             padding: const EdgeInsets.symmetric(
               horizontal: 16,
-            ).copyWith(bottom: 16),
+            ).copyWith(bottom: 16 + context.bottomInset),
             sliver: SliverToBoxAdapter(
               child: ListFooter(
                 text: context.appLocalizations.excludeSsidsDesc,

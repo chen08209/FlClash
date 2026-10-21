@@ -659,9 +659,13 @@ class _CodeEditorState extends ConsumerState<_CodeEditor> {
   // The bar floats over the text, which scrolls under it from a first line
   // held clear of it; an open find panel takes that clearance instead.
   void _updateInnerPadding(BuildContext context) {
-    final top = _findActive ? _findRowGap : context.appBarInset;
-    if (top != _innerPadding.top) {
-      _innerPadding = EdgeInsets.only(top: top, right: 16);
+    final padding = EdgeInsets.only(
+      top: _findActive ? _findRowGap : context.appBarInset,
+      right: 16,
+      bottom: context.bottomInset,
+    );
+    if (padding != _innerPadding) {
+      _innerPadding = padding;
     }
   }
 

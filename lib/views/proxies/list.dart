@@ -263,9 +263,7 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
                             ),
                     ),
                     SliverToBoxAdapter(
-                      child: SizedBox(
-                        height: 16 + BottomInsetScope.of(context),
-                      ),
+                      child: SizedBox(height: 16 + context.bottomInset),
                     ),
                   ],
                 ),

@@ -1,3 +1,4 @@
+import 'package:fl_clash/ui/context.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/inherited.dart';
 import 'package:fl_clash/ui/models.dart';
@@ -73,6 +74,45 @@ void main() {
     );
     expect(contentInset, navigationInset);
     expect(find.byType(FloatingActionButton), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('runs the body under the system bar and leaves it to the end '
+      'of the content, read above the scaffold or below it', (tester) async {
+    const systemBar = 24.0;
+    tester.view
+      ..devicePixelRatio = 1
+      ..padding = const FakeViewPadding(bottom: systemBar);
+    addTearDown(tester.view.reset);
+    double? aboveInset;
+    double? belowInset;
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        includeNavigatorKey: false,
+        child: Builder(
+          builder: (context) {
+            aboveInset = context.bottomInset;
+            return CommonScaffold(
+              title: 'title',
+              body: Builder(
+                builder: (context) {
+                  belowInset = context.bottomInset;
+                  return Container(key: const ValueKey('body'));
+                },
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    expect(
+      tester.getRect(find.byKey(const ValueKey('body'))).bottom,
+      tester.view.physicalSize.height,
+    );
+    expect(aboveInset, systemBar);
+    expect(belowInset, systemBar);
     expect(tester.takeException(), isNull);
   });
 }
