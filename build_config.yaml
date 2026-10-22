@@ -1,6 +1,6 @@
 tags: with_gvisor
 go_ldflags: "-w -s"
-core_version: v1.19.32
+core_version: v1.19.33
 core_dir: core
 core_name: FlClashCore
 output_dir: libclash
