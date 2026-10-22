@@ -197,20 +197,20 @@ shows the mode picker and text field only on desktop.
 
 ### Network Settings
 
-Every `Tun` field is written over the profile's `tun` section and hot-applied through `tunSchema`, and the other keys of
-that section keep the profile's value; `test/models/tun_test.dart` keeps the model, `RawTun` and `tunSchema` in step.
-Beyond what FlClash always managed, `Tun` carries only the keys worth tuning: `mtu`, the mips stack's
-`congestion-controller`, and `strict-route` where sing-tun enforces it (Linux and Windows).
+`Tun` holds what Android's VPN service starts from: the switch, device and stack, `mtu`, the mips stack's
+`congestion-controller` and the route lists. The desktop TUN takes only `Tun.coreJson` from it, written over the
+profile's `tun` section and patched on every update through `tunSchema`; MTU, congestion control, strict route and the
+route lists reach it as TUN override keys (see DNS, NTP and Sniffer Overrides). `test/models/tun_test.dart` keeps every
+`Tun` key within mihomo's `RawTun` and `coreJson` equal to the keys of `tunSchema`.
 
-Routing is the same on every platform: `route-address` (empty routes everything), `route-exclude-address`, and
-`NetworkProps.bypassPrivateRoute`, which adds `privateRouteAddress` to the exclusions in `Tun.getRealTun`. Desktop hands
-both lists to sing-tun. VpnService can only add routes before Android 13, so `Tun.vpnRouteAddress` cuts the exclusions
-out of the routes with `subtractCidrs` and lists every family it routes; `VpnService.addRoutes` routes everything only
-for an empty list. A config saved with the old `routeMode` keeps its choice: `bypassPrivate`, which ignored the route
-list, loads with the flag on and the list cleared, and `config` with the flag off. Others were left out on purpose: no stack in the vendored sing-tun reads `endpoint-independent-nat`, the
-default mips stack ignores `udp-timeout`, and the rest are platform plumbing few users need. Android builds its TUN from
-the VpnService descriptor in `core/tun/tun.go`, so only MTU and the congestion controller reach it, through `VpnOptions`
-and the `options` argument of `startTUN`; the VpnService builder takes the same MTU.
+`NetworkProps.bypassPrivateRoute` adds `privateRouteAddress` to the excluded routes, through `TunExt.excludedRoutes` on
+Android and `_makeRealProfileTask` on desktop. VpnService can only add routes before Android 13, so
+`Tun.vpnRouteAddress` cuts the exclusions out of the routes with `subtractCidrs` and lists every family it routes;
+`VpnService.addRoutes` routes everything only for an empty list. A config saved with the old `routeMode` keeps its
+choice: `bypassPrivate`, which ignored the route list, loads with the flag on and the list cleared, and `config` with
+the flag off. No stack in the vendored sing-tun reads `endpoint-independent-nat`, so it is not offered. Android builds
+its TUN from the VpnService descriptor in `core/tun/tun.go`, so only MTU and the congestion controller reach it,
+through `VpnOptions` and the `options` argument of `startTun`; the VpnService builder takes the same MTU.
 
 The TUN fields start at mihomo's own defaults, and a saved zero MTU or empty congestion controller, which mihomo reads
 as those defaults, decodes to them. The outbound rows are plain settings written over every profile, and changing one
@@ -294,7 +294,7 @@ Android deliberately keeps Flutter requests optimistic and the native layer auth
   reported as running but that neither a stop nor a revoke could reach.
 - The Core listens exactly while `runtime` is set: a successful start ends in `Core.startListener()` and every path
   that clears `runtime` calls `Core.stopListener()`. Both return at once when the Core is already there, which is the
-  usual case, since `startTUN`/`stopTun` and Flutter's own `startListener`/`stopListener` got there first. They matter
+  usual case, since `startTun`/`stopTun` and Flutter's own `startListener`/`stopListener` got there first. They matter
   when nothing else does: a proxy-only run stopped from the tile used to keep the mixed port open with nothing
   reported as running. A start closes after itself the same way: Flutter's `startListener` and the native `quickSetup`
   both open the ports before any service exists, so a start that ends without a `runtime`, refused or cancelled, stops
@@ -431,8 +431,7 @@ failure shows at once, a stop cancels it, and a failure still standing when it e
 ## Route Consistency
 
 A probe result on the dashboard — the exit IP, a node's exit IP, a service check — either describes the route in
-force or is being asked again. The full design is `docs/plans/probe-route-consistency.md`; the mechanism has three
-parts.
+force or is being asked again. The mechanism has three parts.
 
 - The Core is the source of truth for the route. `core/route.go` keeps two counters. The epoch is a reset, which
   no answer outlives: a config apply, an IPv6 switch, and a start (the listeners coming up and, on Android, the TUN
@@ -684,8 +683,8 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
   closing it 41, 1 and 3; dragging the dock's lens 39, 38 and 42. One pixel adds about half what three do while
   content scrolls, and about as much while a page switches, where the capture's size is not what costs, or while the
   lens moves, which both capture at full resolution. Three was measured before a menu's capture was held to eight
-  screen pixels to one, and two, which glass uses, has not been timed. Ultra, which read the backdrop under each pane,
-  added 27 to 61 ms to the same frames and was dropped. A software renderer weighs passes and texture reads unlike a
+  screen pixels to one, and two, which glass uses, has not been timed. Reading the backdrop under each pane
+  instead adds 27 to 61 ms to the same frames. A software renderer weighs passes and texture reads unlike a
   phone's GPU, so the figures rank the captures rather than price them; no phone has measured them. A still screen
   draws no frames.
 - Rendered under `flutter test --enable-impeller` at density 3, against a capture with a sigma over three pixels, one
@@ -825,7 +824,7 @@ pointer's moves and release keep reaching the button, so the box hands them on (
 `ElasticPress` around it. The menu follows them only once they leave the slop, since it covers the button and a press
 let go where it went down would pick what now lies under it, and drives its own `ElasticPress` with them through
 `ElasticPress.maybeOf`. The box tells a disabled button by the `onTap` of its first `InkResponse`, and holds the popup's
-`anchorShift`, since it opens before the button's `onPressed` would run.
+`placement`, since it opens before the button's `onPressed` would run.
 
 The menu stands in an `ElasticPress` of its own with `pullPastEdges`: it swells under a press and stretches only toward
 a finger that strays past it, so sliding over the items or scrolling leaves it in place. A press on a row belongs to the

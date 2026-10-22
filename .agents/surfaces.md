@@ -123,7 +123,8 @@ Color marks the one item that differs, never the structure around it.
 - **Marks** that only identify, a country badge, a group or service icon, a source avatar, sit on a neutral well with
   `onSurfaceVariant`.
 - `primaryContainer`, `secondaryContainer`, and `tertiaryContainer` are neither surface nor selection fills. Keep
-  them out of cards, rows, marks, and navigation indicators.
+  them out of cards, rows, marks, and navigation indicators. The code editor's completion popup is the one exception:
+  it fills the highlighted suggestion with `primaryContainer` (`lib/features/editor/completion_popup.dart`).
 
 ## Borders That Stay
 

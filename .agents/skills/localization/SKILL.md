@@ -45,5 +45,6 @@ Do not use this for README translation sync or manual edits to generated localiz
 
 ## Pitfalls
 
-- If ja/ru still show English, fix ja/ru source ARB values and regenerate. Do not edit generated Dart.
+- A locale that still shows English lacks the key or carries an English value in its source ARB; fix that ARB and
+  regenerate. Do not edit generated Dart.
 - Ignore `lib/l10n/intl/**` and `lib/**/generated/**` during text scans.

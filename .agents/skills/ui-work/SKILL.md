@@ -30,9 +30,9 @@ dialogs, and interaction behavior.
 - Text sizes and weights come from `AppTextStyle` in `lib/ui/typography.dart`, Apple's iOS Dynamic Type scale, never a
   Material `TextTheme` slot, a bare `fontSize`, or a `fontWeight`; the Typography section of `.agents/rules.md` has the
   rule.
-- Modals dim what they cover with the Material 3 scrim (`ColorScheme.modalScrim`, `scrim` at 32%) and never blur it.
-  Every modal brings its own scrim, including one opened from inside another, so do not make a barrier transparent to
-  keep scrims from stacking.
+- Modals dim what they cover and never blur it: sheets with the Material 3 scrim (`ColorScheme.modalScrim`, `scrim` at
+  32%), alerts with `ColorScheme.alertScrim`, the lighter dim iOS 27 puts behind an alert. Every modal brings its own
+  scrim, including one opened from inside another, so do not make a barrier transparent to keep scrims from stacking.
 - A sheet's size belongs to its route, never to its content or call site: a bottom sheet rests at
   `SheetProps.detents`, a side sheet is as tall as the window and as wide as `ModalSideSheetRoute` makes it from
   the window width (`lib/ui/side_sheet.dart`, pinned by `test/widgets/side_sheet_width_test.dart`), and a form sheet
@@ -86,6 +86,7 @@ reads as a pill at 24 and as a square at 400, so one radius everywhere is the wr
 | `lg` | 20 | 64 to 180 | mid-size cards: dashboard tiles, proxy node cards |
 | `xl` | 24 | full-bleed | anything spanning the whole width: list rows, grouped runs, group headers |
 | `xxl` | 28 | over 200 | sheets, full-screen containers |
+| `alert` | 34 | - | alerts, the corner of iOS 27's UIAlertController; on `AppCorner` only, passed to the builders |
 | `full` | 1000 | - | pills and circles: buttons, tracks, indicators, progress, avatars |
 
 - `AppCorner` holds the scale as `double`; `AppRadius` mirrors it as `BorderRadius` with `all`, `top`, and `vertical`
@@ -98,12 +99,12 @@ reads as a pill at 24 and as a square at 400, so one radius everywhere is the wr
   bar, chip, menu, input, FAB, navigation indicator, progress, and the filled, text, outlined, elevated, and icon
   button themes. Do not restate those shapes at call sites, and
   leave `InputDecoration.border` unset so inputs inherit `AppShape.input`.
-- Colors of surfaces follow `.agents/surfaces.md`: fills by `SurfaceLevel`, no structural borders, and
-  `primaryContainer` only on a selected item.
+- Colors of surfaces follow `.agents/surfaces.md`: fills by `SurfaceLevel`, no structural borders, and a selected
+  item keeping its fill under a `SelectionCheck` or `SelectionBadge`, with no container role on a card or row.
 
 `xl` and `lg` exist because one token cannot serve both size classes. A full-bleed surface is wide and short, so its
 corner must be larger than its height alone suggests or it stops reading as a card; everything full-bleed shares `xl`
-(`CommonSelectedListItem`, the profiles card, the outer corners of a grouped run in `DecorationListItem`, the proxy
+(the profiles card, the outer corners of a grouped run in `DecorationListItem`, the proxy
 group card in `lib/views/proxies/list.dart`) and does not use `fit()`. This is the one deliberate overshoot of the
 one-third rule; the value stays under half a standard row so nothing clamps and every full-bleed surface renders the
 same radius. `lg` is for mid-size cards that are not full-bleed: a proxy node card in the tab view at
@@ -123,8 +124,7 @@ than every other card in the app.
 
 A component the scale does not fit keeps its own value instead of growing the scale: name it once in the file and pass
 it to the `all`/`top`/`vertical` builders, as `_itemShape` in `lib/ui/sidebar.dart` does with 10, between the
-chip-sized `sm` and the near-pill `md` on a 40 tall row, and `_dialogCorner` in `lib/ui/shape.dart` does with 34, the
-corner of an iOS alert. Reach for this only once the table and `fit()` are ruled out.
+chip-sized `sm` and the near-pill `md` on a 40 tall row. Reach for this only once the table and `fit()` are ruled out.
 
 ## Verification
 
