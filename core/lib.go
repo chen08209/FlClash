@@ -48,12 +48,13 @@ func (th *TunHandler) start(fd int, stack, address, dns, options string) bool {
 	th.mu.Lock()
 	th.initHook()
 	th.mu.Unlock()
+	platform.ProtectExistingSockets(th.callbacks.Protect)
 
 	// t.Start runs outside th.mu on purpose. The hook is live from initHook
 	// onwards, and a socket opened anywhere inside Start reaches handleProtect
 	// on this very goroutine — an RLock taken while this one holds the write
-	// lock deadlocks the start outright. Nothing is lost by dropping it: both
-	// hooks return early until th.listener is set, which is below.
+	// lock deadlocks the start outright. Socket protection is already available;
+	// process lookup waits until th.listener is set below.
 	tunListener := t.Start(fd, stack, address, dns, options)
 
 	th.mu.Lock()
@@ -89,7 +90,7 @@ func (th *TunHandler) handleProtect(fd int) {
 	th.mu.RLock()
 	defer th.mu.RUnlock()
 
-	if th.listener == nil || th.callbacks == nil {
+	if th.callbacks == nil {
 		return
 	}
 	th.callbacks.Protect(fd)
