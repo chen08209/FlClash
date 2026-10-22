@@ -10,19 +10,18 @@ Future<List<String>> _pumpBar(
   WidgetTester tester, {
   bool hasSearch = false,
   String? primary,
-  bool primaryLoading = false,
-  bool foldPrimary = false,
+  Set<String> loading = const {},
   List<String> icons = const [],
   List<String> menuItems = const [],
   List<String> selection = const [],
 }) async {
   final taps = <String>[];
-  IconButtonData action(String label, {bool isLoading = false}) {
+  IconButtonData action(String label) {
     return IconButtonData(
       glyph: AppGlyphs.add,
       onPressed: () => taps.add(label),
       tooltip: label,
-      isLoading: isLoading,
+      isLoading: loading.contains(label),
     );
   }
 
@@ -32,11 +31,8 @@ Future<List<String>> _pumpBar(
       child: CommonScaffold(
         title: 'Page',
         searchState: hasSearch ? AppBarSearchState(onSearch: (_) {}) : null,
-        primaryAction: primary == null
-            ? null
-            : action(primary, isLoading: primaryLoading),
+        primaryAction: primary == null ? null : action(primary),
         iconActions: [for (final label in icons) action(label)],
-        foldPrimaryAction: foldPrimary,
         selectionActions: [for (final label in selection) action(label)],
         menuItems: [
           for (final label in menuItems)
@@ -162,28 +158,25 @@ void main() {
     ]);
   });
 
-  testWidgets('a bar that folds its primary action keeps icons in sight', (
-    tester,
-  ) async {
+  testWidgets('a running action folds in disabled', (tester) async {
     final taps = await _pumpBar(
       tester,
       primary: 'Add',
-      primaryLoading: true,
-      foldPrimary: true,
       icons: ['Update', 'Sort', 'Filter'],
+      loading: {'Filter'},
     );
 
-    expect(_barButtons(tester), ['Update', 'Sort', 'More']);
+    expect(_barButtons(tester), ['Add', 'Update', 'More']);
 
     await _openMenu(tester);
     expect(_menuLabels(tester, ['Add', 'Update', 'Sort', 'Filter']), [
-      'Add',
+      'Sort',
       'Filter',
     ]);
 
-    await tester.tap(find.text('Add'));
+    await tester.tap(find.text('Filter'));
     await tester.pumpAndSettle();
-    expect(taps, isEmpty, reason: 'a running action folds in disabled');
+    expect(taps, isEmpty);
   });
 
   testWidgets('a selection keeps its actions grouped beside the search', (

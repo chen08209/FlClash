@@ -595,29 +595,9 @@ class AppLocalizations {
     return Intl.message('Link', name: 'link', desc: '', args: []);
   }
 
-  /// `Obtain a profile from a subscription link or a proxy share link`
-  String get linkDesc {
-    return Intl.message(
-      'Obtain a profile from a subscription link or a proxy share link',
-      name: 'linkDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `File`
   String get file {
     return Intl.message('File', name: 'file', desc: '', args: []);
-  }
-
-  /// `Upload a profile file directly`
-  String get fileDesc {
-    return Intl.message(
-      'Upload a profile file directly',
-      name: 'fileDesc',
-      desc: '',
-      args: [],
-    );
   }
 
   /// `Name`
@@ -740,16 +720,6 @@ class AppLocalizations {
     return Intl.message(
       'Send from phone',
       name: 'sendFromPhone',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Scan with your phone and send a link to this device`
-  String get sendFromPhoneDesc {
-    return Intl.message(
-      'Scan with your phone and send a link to this device',
-      name: 'sendFromPhoneDesc',
       desc: '',
       args: [],
     );
@@ -922,6 +892,47 @@ class AppLocalizations {
       name: 'appAccessControl',
       desc: '',
       args: [],
+    );
+  }
+
+  /// `Only selected apps go through the VPN`
+  String get accessControlAllowDesc {
+    return Intl.message(
+      'Only selected apps go through the VPN',
+      name: 'accessControlAllowDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Selected apps are excluded from the VPN`
+  String get accessControlNotAllowDesc {
+    return Intl.message(
+      'Selected apps are excluded from the VPN',
+      name: 'accessControlNotAllowDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `App access control is disabled`
+  String get accessControlDisabledDesc {
+    return Intl.message(
+      'App access control is disabled',
+      name: 'accessControlDisabledDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count, plural, other{{count} selected}}`
+  String accessControlSelectedCount(num count) {
+    return Intl.plural(
+      count,
+      other: '$count selected',
+      name: 'accessControlSelectedCount',
+      desc: '',
+      args: [count],
     );
   }
 
@@ -4513,16 +4524,6 @@ class AppLocalizations {
   /// `Custom`
   String get customProfile {
     return Intl.message('Custom', name: 'customProfile', desc: '', args: []);
-  }
-
-  /// `Assemble proxy groups and rules from app proxies and other profiles`
-  String get customProfileDesc {
-    return Intl.message(
-      'Assemble proxy groups and rules from app proxies and other profiles',
-      name: 'customProfileDesc',
-      desc: '',
-      args: [],
-    );
   }
 
   /// `Custom profile resources`

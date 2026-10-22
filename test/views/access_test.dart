@@ -312,6 +312,53 @@ void main() {
       await teardownView(tester);
     });
 
+    testWidgets('the bar at the foot says access control is off and turns '
+        'it on', (tester) async {
+      seedAccessControl(const AccessControlProps());
+      await pumpAccessView(tester);
+      final l10n = AppLocalizations.current;
+
+      expect(find.text(l10n.accessControlDisabledDesc), findsOneWidget);
+      await tester.tap(find.widgetWithText(TonalButton, l10n.turnOn));
+      await tester.pump();
+
+      expect(container.read(accessControlStateProvider).enable, isTrue);
+      expect(find.text(l10n.accessControlDisabledDesc), findsNothing);
+      expect(find.text(l10n.accessControlNotAllowDesc), findsOneWidget);
+
+      await teardownView(tester);
+    });
+
+    testWidgets('the bar at the foot follows the mode and counts the '
+        'selected apps', (tester) async {
+      seedAccessControl(
+        const AccessControlProps(
+          enable: true,
+          rejectList: ['com.example.browser'],
+        ),
+      );
+      await pumpAccessView(tester);
+      final l10n = AppLocalizations.current;
+
+      expect(find.text(l10n.accessControlNotAllowDesc), findsOneWidget);
+      expect(find.text(l10n.accessControlSelectedCount(1)), findsOneWidget);
+
+      await tester.tap(find.text('Chat'));
+      await tester.pump();
+      expect(find.text(l10n.accessControlSelectedCount(2)), findsOneWidget);
+
+      container
+          .read(accessControlStateProvider.notifier)
+          .update(
+            (state) => state.copyWith(mode: AccessControlMode.acceptSelected),
+          );
+      await tester.pump();
+      expect(find.text(l10n.accessControlAllowDesc), findsOneWidget);
+      expect(find.text(l10n.accessControlSelectedCount(0)), findsOneWidget);
+
+      await teardownView(tester);
+    });
+
     testWidgets('select all stands beside search, then folds for save', (
       tester,
     ) async {

@@ -60,12 +60,12 @@ class CommonScaffold extends StatefulWidget {
   /// Answers a form: last in the bar, and in a form sheet the filled default
   /// at its foot beside cancel, where SwiftUI sets one on macOS.
   final IconButtonData? confirmationAction;
-
-  /// Folds [primaryAction] ahead of [iconActions], so a bar without search
-  /// keeps the first of them in sight instead.
-  final bool foldPrimaryAction;
   final AppBarSearchState? searchState;
   final List<IconButtonData> searchActions;
+
+  /// Keeps search a button in the bar on a phone page that would dock it at
+  /// its foot, for one whose foot carries a bar of its own.
+  final bool searchInBar;
 
   /// Shown searching or not and never folded; the first two share a button
   /// group and any after them stand alone.
@@ -89,12 +89,12 @@ class CommonScaffold extends StatefulWidget {
     this.isLoading = false,
     this.searchState,
     this.searchActions = const [],
+    this.searchInBar = false,
     this.selectionActions = const [],
     this.primaryAction,
     this.iconActions = const [],
     this.menuItems = const [],
     this.confirmationAction,
-    this.foldPrimaryAction = false,
     this.onKeywordsUpdate,
     this.resizeToAvoidBottomInset,
     this.canSort = false,
@@ -593,7 +593,6 @@ class CommonScaffoldState extends State<CommonScaffold>
     final fold = _foldBarActions(
       hasLead: lead != null,
       primary: primaryAction,
-      foldPrimary: widget.foldPrimaryAction,
       icons: [
         if (widget.canSort)
           sortModeAction(context, sorting: false, onPressed: _toggleSorting),
@@ -881,6 +880,7 @@ class CommonScaffoldState extends State<CommonScaffold>
     final form = _SheetForm.of(
       context,
       searchState: widget.searchState,
+      searchInBar: widget.searchInBar,
       hasConfirmationAction: widget.confirmationAction != null,
     );
     final isCompact = form.isCompact;
@@ -2038,7 +2038,6 @@ class _SelectionButtons {
 _foldBarActions({
   required bool hasLead,
   IconButtonData? primary,
-  bool foldPrimary = false,
   List<IconButtonData> icons = const [],
   IconButtonData? confirmation,
   int widgetCount = 0,
@@ -2051,9 +2050,7 @@ _foldBarActions({
     return (shown: [...foldable, ?confirmation], overflow: menuItems);
   }
   final slots = _maxBarButtons - 1 - fixed;
-  final kept = (foldPrimary ? [...icons, ?primary] : foldable)
-      .take(slots < 0 ? 0 : slots)
-      .toList();
+  final kept = foldable.take(slots < 0 ? 0 : slots).toList();
   bool isKept(IconButtonData data) => kept.any((it) => identical(it, data));
   return (
     shown: [
@@ -2142,6 +2139,7 @@ class _SheetForm {
   factory _SheetForm.of(
     BuildContext context, {
     required AppBarSearchState? searchState,
+    required bool searchInBar,
     required bool hasConfirmationAction,
   }) {
     final provider = SheetProvider.of(context);
@@ -2151,7 +2149,8 @@ class _SheetForm {
     // foot, a glass field in sight at rest.
     final docksSearch =
         isCompact ||
-        (!isModal &&
+        (!searchInBar &&
+            !isModal &&
             ViewScope.isMobileOf(context) &&
             ModalRoute.of(context)?.impliesAppBarDismissal == true);
     return _SheetForm(
