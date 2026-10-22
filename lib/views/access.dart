@@ -360,7 +360,10 @@ class _AccessViewState extends ConsumerState<AccessView>
             controller: _controller,
             child: ListView.builder(
               controller: _controller,
-              padding: EdgeInsets.only(bottom: context.bottomInset),
+              padding: EdgeInsets.only(
+                top: context.contentTopPadding,
+                bottom: context.bottomInset,
+              ),
               scrollCacheExtent: arrivalScrollCacheExtent(routeSettled),
               itemCount: packages.length,
               itemExtent: 72,
@@ -459,10 +462,16 @@ class _AccessViewState extends ConsumerState<AccessView>
             : null,
         iconActions: [?selectAllAction],
         menuItems: _buildMenuItems(context, accessControl),
-        body: AppBarClearance(
-          child: needsInstalledAppsPermission
-              ? _buildInstalledAppsPermissionStatus()
-              : DisabledMask(
+        body: needsInstalledAppsPermission
+            ? _buildInstalledAppsPermissionStatus()
+            : FloatingFootBar(
+                bar: _AccessStatus(
+                  accessControl: accessControl,
+                  selectedCount: valueList.length,
+                  onEnable: () =>
+                      _update((state) => state.copyWith(enable: true)),
+                ),
+                body: DisabledMask(
                   status: !accessControl.enable,
                   child: _buildContent(
                     packages: viewPackages,
@@ -470,7 +479,69 @@ class _AccessViewState extends ConsumerState<AccessView>
                     isSearching: query.isNotEmpty,
                   ),
                 ),
-        ),
+              ),
+      ),
+    );
+  }
+}
+
+class _AccessStatus extends StatelessWidget {
+  const _AccessStatus({
+    required this.accessControl,
+    required this.selectedCount,
+    required this.onEnable,
+  });
+
+  final AccessControlProps accessControl;
+  final int selectedCount;
+  final VoidCallback onEnable;
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    final colorScheme = context.colorScheme;
+    final enabled = accessControl.enable;
+    final description = enabled
+        ? switch (accessControl.mode) {
+            AccessControlMode.acceptSelected =>
+              appLocalizations.accessControlAllowDesc,
+            AccessControlMode.rejectSelected =>
+              appLocalizations.accessControlNotAllowDesc,
+          }
+        : appLocalizations.accessControlDisabledDesc;
+    return Padding(
+      padding: EdgeInsetsDirectional.fromSTEB(16, 6, enabled ? 16 : 8, 6),
+      child: Row(
+        spacing: 12,
+        children: [
+          GlyphIcon(
+            enabled ? AppGlyphs.appsList : AppGlyphs.info,
+            size: 20,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          Expanded(
+            child: Text(
+              description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyle.footnote
+                  .of(context)
+                  .copyWith(color: colorScheme.onSurface),
+            ),
+          ),
+          if (enabled)
+            TonalChip(
+              label: appLocalizations.accessControlSelectedCount(selectedCount),
+              color: colorScheme.primary.opacity15,
+              foregroundColor: colorScheme.primary,
+            )
+          else
+            TonalButton(
+              size: TonalButtonSize.compact,
+              label: appLocalizations.turnOn,
+              onPressed: onEnable,
+            ),
+        ],
       ),
     );
   }

@@ -940,6 +940,47 @@ class AppLocalizations {
     );
   }
 
+  /// `Only selected apps go through the VPN`
+  String get accessControlAllowDesc {
+    return Intl.message(
+      'Only selected apps go through the VPN',
+      name: 'accessControlAllowDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Selected apps are excluded from the VPN`
+  String get accessControlNotAllowDesc {
+    return Intl.message(
+      'Selected apps are excluded from the VPN',
+      name: 'accessControlNotAllowDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `App access control is disabled`
+  String get accessControlDisabledDesc {
+    return Intl.message(
+      'App access control is disabled',
+      name: 'accessControlDisabledDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count, plural, other{{count} selected}}`
+  String accessControlSelectedCount(num count) {
+    return Intl.plural(
+      count,
+      other: '$count selected',
+      name: 'accessControlSelectedCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
   /// `Port`
   String get port {
     return Intl.message('Port', name: 'port', desc: '', args: []);
