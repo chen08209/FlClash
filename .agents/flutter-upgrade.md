@@ -6,10 +6,9 @@ entry together with its workaround; add one whenever a new workaround is pinned 
 
 ## Stable cadence
 
-Flutter ships a stable release about once a quarter, three minor versions apart (3.41 in February, 3.44 in May, 3.47
-in August 2026). The two minors in between (3.48, 3.49) are beta only, so a fix that lands on `main` reaches stable
-in the next multiple, 3.50, expected around mid-November 2026. Hotfix releases (3.47.x) carry only cherry-picks
-listed in the SDK's `CHANGELOG.md`.
+Flutter ships a stable release about once a quarter, three minor versions apart (3.41, 3.44, 3.47). The two minors in
+between are beta only, so a fix that lands on `main` reaches the next stable minor, three above the current one.
+Hotfix releases (3.47.x) carry only cherry-picks listed in the SDK's `CHANGELOG.md`.
 
 ## Impeller disabled on Intel macOS release builds
 

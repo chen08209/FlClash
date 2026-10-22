@@ -120,6 +120,7 @@ Generated output paths, configured in `build.yaml`:
 - `lib/models/generated/*.g.dart`, `*.freezed.dart`.
 - `lib/providers/generated/*.g.dart`.
 - `lib/database/generated/*.g.dart`.
+- `lib/ui/generated/*.freezed.dart`.
 
 Tray and Windows app icons are generated, not hand-edited. `assets_source/images/icon/*.svg` is
 the source of truth; the script needs `rsvg-convert` (librsvg) on `PATH`:
@@ -341,14 +342,14 @@ flutter pub get
 dart format --output=none --set-exit-if-changed lib test tool plugins setup.dart
 flutter analyze --no-fatal-infos
 dart run tool/changelog.dart verify   # main and tags only
-flutter test --reporter expanded --coverage
+dart run tool/test.dart -- --reporter expanded --coverage
 dart run tool/check_coverage.dart coverage/lcov.info 75
 ```
 
 `tool/hooks/` holds the scripts the git hooks run, and `tool/hooks/test.sh` runs every `*_test.sh` beside them, so a
 new hook script needs only its test file next to it, not a workflow step.
 
-Run `flutter analyze` before committing; CI fails on anything it reports.
+Run `flutter analyze --no-fatal-infos` before committing; CI runs the same command and fails on a warning or error.
 
 Release builds run only for `v*` tag pushes; pull requests trigger nothing.
 Root analysis excludes `plugins/**`, and root tests do not discover nested

@@ -21,8 +21,7 @@ individual `analysis_options.yaml`; those files carry only their own `analyzer.e
 
 Failures whose whole content is a message meant for the user throw
 `MessageException` from `lib/common/exception.dart`. Its `toString()` is the bare
-message, which is what `globalState.safeRun` surfaces in the dialog, so the
-user-facing text is unchanged from the older `throw someMessage` idiom while the
+message, which is what `globalState.safeRun` surfaces in the dialog, and the
 throw stays catchable as an `Exception` and carries a stack trace. Assert on it
 with `isA<MessageException>().having((e) => e.message, 'message', ...)`, not on a
 raw string.
