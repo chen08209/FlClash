@@ -27,8 +27,9 @@ void main() {
     ).readAsStringSync();
   });
 
-  test('macOS tray title is self-drawn instead of using NSTextField', () {
-    expect(titleViewSource, contains('final class TrayTitleView: NSView'));
+  test('macOS tray title uses a template image instead of NSTextField', () {
+    expect(titleViewSource, contains('final class TrayTitleView: NSImageView'));
+    expect(titleViewSource, contains('image.isTemplate = true'));
     expect(titleViewSource, isNot(contains('NSTextField')));
   });
 
