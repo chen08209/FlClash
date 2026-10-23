@@ -551,8 +551,8 @@ pixel-aligned stroke of Windows' 10-pixel caption glyphs on every platform.
 
 `CommonScaffold` keeps at most three buttons in sight in its bar, the overflow menu button included. A page hands it
 what may fold as data: `primaryAction`, `iconActions`, `menuItems`, and `searchActions` while searching; custom widgets
-passed through `actions` never fold. Past three, two buttons stay beside the overflow menu: the search button (the clear
-button while searching) when there is one, then foldable actions, primary action first unless `foldPrimaryAction` puts
+passed through `actions` never fold. Past three, two buttons stay beside the overflow menu: the search button when
+there is one, then foldable actions, primary action first unless `foldPrimaryAction` puts
 the icon actions ahead of it;
 everything else goes into one overflow menu, primary action first, and a folded action that is loading shows as a
 disabled item. The bar reads as one button group of two beside a single button: the overflow menu button when
@@ -564,8 +564,30 @@ the bar and never folds, and only a form sheet moves it to its foot (Forms). Bar
 select all included; the one text button is the custom profile's Import, a filled button whose `CommonPopupBox` opens
 the import menu. Actions on a multi-selection, such as delete and select all, go into
 `selectionActions` instead: the bar keeps them in sight as one button group that takes a single slot beside the search
-or clear button, so they never fold. A sheet's close button always leads its bar, whatever actions follow, as SwiftUI
+button, so they never fold. A sheet's close button always leads its bar, whatever actions follow, as SwiftUI
 places a close in `.cancellationAction`; a pushed page puts its back button there instead.
+
+The search button opens its field in place, as iOS 27 does on a page above a tab bar, measured in the simulator: the
+button's group grows into the field on one spring while what it covers fades out, and the selection and
+`searchActions` buttons lead the field. A compact bar, a phone's or a side sheet's, gives the field its whole width,
+title and back or close button included, and ends it with a cancel button that clears the query and closes it; a
+regular bar keeps its title and opens a 280 dp field at its end, as iPadOS does, which folds back once it is left empty
+and loses focus. Closing, the field settles on the button group before it fades, so the group's glyphs come up inside
+one pill. A bottom sheet, and a phone page pushed over the one with the tab bar, keep their field docked over their foot
+instead, as iOS 27 docks the search of a page with no tab bar under it: in sight at rest, with a cancel button beside
+it while the field has focus or a query, under a bar that keeps its own buttons. The buttons beside a field share its
+`TextFieldTapRegion`, since a mouse press anywhere else takes the field's focus before the button sees a tap.
+
+Every search field is a `SearchField`: iOS 27's glyph and filled clear button, and a focus ring only where a key or a
+remote moved focus. The bar's field, the docked one and the editor's find bar stand with the buttons beside them on one
+`GooSurface` (`lib/ui/goo.dart`), which draws its `GooPane`s, pills in rows, as one fill or one pane of glass. A field
+swells and stretches under a finger as a button does, and a pressed pane flows into its neighbors in the row, as iOS
+merges glass that shares a container; at rest the blend reaches no further than buttons stand apart, so nothing bulges.
+The buttons beside a bar's or a sheet's field grow out of its ends as it opens and sink back as it closes. Under a
+`GooSurface`, `TonalButtonTheme` puts each icon button on a pane and `TonalButtonGroup` its group on one; every button
+beside a search field is a bar button that way, the docked field's cancel in `TonalButtonSize.docked`, as tall as the
+field, never a bare Material one. The outline is a path built from the same smooth minimum the glass shader blends with
+(`gooGeometry`), so the clip and the bevel agree.
 
 Actions on what the page edits as a whole, such as renaming the custom profile or viewing its final config, go into
 `titleMenuItems` rather than the bar: the title shows a chevron and opens them, as an iOS document's title menu does.
@@ -583,7 +605,8 @@ down through `SheetCoverRouteMixin`, as `SnapSheetRoute` and `ModalSideSheetRout
 `standard` and `ultra` with that `LiquidGlassQuality`, from `ThemeManager`. With it on, `CommonScaffold` passes `glass`
 to the bar's `TonalButtonTheme`,
 which puts a `LiquidGlass` pane behind each button through `ButtonStyle.backgroundBuilder` and one behind a
-`TonalButtonGroup`; the navigation dock's bar and lifted lens become panes as well, and so do a sheet's docked search,
+`TonalButtonGroup`; the navigation dock's bar and lifted lens become panes as well, and so do a `GooSurface`, which
+holds the bar's search and a docked search,
 the cards of a `CommonPopupMenu`, and a `CommonDialog`. On the dashboard only the start button is a pane: its connected
 buttons keep their fills like connected buttons elsewhere, and each pane would add its area to a capture retaken
 whenever the dashboard redraws, which it does often. Each still swells on its own under `ElasticPress`, and a
@@ -603,16 +626,23 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
   Each pane paints the shader over its part of that image as an ordinary paint, one read a sample where its frost is
   even. No pane ends the frame's render pass or copies the surface, and the glass never trails the content by a frame.
   A pane outside any host draws only its tint and rim.
-- `ultra` draws all of the glass below. `standard` leaves out what costs most for least: a haze becomes the whole
-  frost, so the dock takes one shrunken slot in place of a sharp one at the screen's resolution, and its text no
-  longer shows faintly through; a lens's rim parts no colors; the lifted lens's copy goes unwarped, tinted with the
-  light its pane would add; and the dock casts no shadow, which is under 3/255. The host applies the style changes to
-  every pane it draws, the dock the rest. A config saved with `standard` before `ultra` existed moves to `ultra` once
-  (`Migration.upgradeVersion` 2), since that was its look. On the SwiftShader emulator, as raster time a frame over
-  glass off, median of four alternating runs, the glass before the tiers, `ultra` and `standard` added 16.4, 13.5 and
-  9.5 ms scrolling, 52, 40 and 17 dragging the lens, 34, 26 and 18 scrolling under an open menu, 22, 13 and 11
-  opening it and 17, 9 and 5 closing it; scrolling took 18.8 render passes a frame in either tier against 23.6, and
-  the lens 22 in `ultra` and 18 in `standard` against 30.
+- `ultra` draws all of the glass below. `standard` leaves out what costs most for least: a haze becomes the whole frost,
+  so the dock takes one shrunken slot in place of a sharp one at the screen's resolution, and its text no longer shows
+  faintly through; a lens's rim parts no colors; and the lifted lens's copy goes unwarped, tinted with the light its
+  pane would add. The host applies the style changes to every pane it draws, the dock the rest. A popup's drop of glass
+  traces its outline (`gooPairOutline`) on 64 rays to 0.15 dp rather than 128 to 0.05, at half the cost and a few pixels
+  off along its neck at density 3. A config saved with `standard` before `ultra` existed moves to `ultra` once
+  (`Migration.upgradeVersion` 2), since that was its look. On the SwiftShader emulator (1080×2400 at density 420, ms a
+  frame over glass off, median of three alternating runs), `ultra` and `standard` add 11.6 and 7.5 scrolling under the
+  bar and the dock, 34.5 and 16.5 dragging the lens, 10.1 and 9.0 opening and closing a menu, 20.4 and 16.0 scrolling
+  under it, 15.8 and 10.9 under the docked search, 12.1 and 7.5 flipping a switch and 26.5 and 23.4 opening and closing
+  an alert. Of the lens's extra 18, the warped copy takes 13, the rim blur's taps 11 and the parted colors 7, which
+  overlap; the haze adds 3 to 5 wherever content moves under the dock or the docked search and 8 under the lens. Nothing
+  else is worth leaving to `ultra`: the contrast and frost taps, the line and the highlight each cost under a
+  millisecond in every scene, and the rim blur and the shadows of the lens, menus and alerts 1 to 3.5 ms for 14 to
+  81/255 of change. What `standard` still adds is the shader drawing each pane, about as dear there with one sample as
+  with all of it, and a capture of 2.5 to 4.7 ms each frame content moves under a pane; an alert also fades through an
+  offscreen layer (6.5 ms).
 - A pane over one painted before it in the same root reads a second image, a level up, with the first drawn in as
   glass, unless both stand in one `LiquidGlassGroup`: as iOS's GlassEffectContainer keeps glass from sampling glass,
   the later one there reads what lies under the first, on the same level. Over means within 2.5 sigmas of its frost
@@ -632,6 +662,13 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
   the host's reach or leaves the tree, as under a route that covers it, which keeps it alive while it is not drawn: the
   shader holds the image it last sampled. The dark line along the rim darkens the blurred capture there rather than the
   sharp backdrop, a pixel or two wide.
+- A capture holds still while what it shows moves by part of one of its pixels. Impeller blurs a sigma over about
+  5.7 pixels from a copy shrunk to what the layer covers, so a band clears all of its rect before its slots draw: when
+  it covered only its content, a slot growing or shrinking by a pixel as its pane moved, or one cut off by the screen's
+  edge, shrank that copy by other than half, and at density 3 the docked search's standard frost jumped by 1.5/255 every
+  1.3 dp it moved. Each picture also lands on a whole pixel of the capture, as text rounds each line to one: a list
+  under the glass moving by part of a pixel jumped its lines one at a time while their rows glided, and the frost
+  shimmered every frame (up to 3.6/255 at density 2), where now it steps once a pixel of the capture, by under 0.7.
 - Measured on an Android emulator rendering in software (SwiftShader, 1080×2400 at density 420), as raster-thread time a
   frame counting the captures that FrameTiming's raster span leaves out, median of three runs, each capture against
   none in a run of its own: scrolling Tools takes 43 ms with none, 6 more with a sigma over one pixel of the capture and
@@ -666,26 +703,39 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
   shows, opening and returning, so one pane bends the backdrop at a time. The platter takes the `menu` glass's frost
   from the start and, as the cards do, paints with a `hold` over all it may sweep: the host captures that once and
   keeps it while the pane moves inside, its frost neither grows nor falls by a tenth, as a folding sub menu's glass
-  does, and the page holds still, so a menu opening captures three times and closing twice rather than every frame.
+  does, and the page holds still, so a menu opening and closing each capture twice rather than every frame.
   On the SwiftShader emulator that cut a menu's frames from 17 render passes to 12.4, against 11.1 without glass, but
   saved time only within noise: what glass still adds there, about half again a frame, is the shader over the
   growing platter. A held pane casts its shadow after itself, over its capture rather than in it, since a shadow moving with it would
-  renew the capture. The anchor's snapshot is taken under `LiquidGlass.withoutPanes`: offscreen a pane has no
-  backdrop and would come out a flat tint. A menu opened at a point fades out under the layer a `LiquidGlassFade`
+  renew the capture. Once the returning platter is inside its button, the glass eases back to the button's frost so
+  the last frame is the button itself; a falling frost would renew the capture each tenth, about a dozen times, so the
+  pane holds one taken at the button's frost (`holdFrost`) and the shader frosts past it until the two meet. Skia has
+  no shader to frost past a capture and renews it as before. The anchor's snapshot is taken under
+  `LiquidGlass.withoutPanes`: offscreen a pane has no backdrop and would come out a flat tint. A menu opened at a point fades out under the layer a `LiquidGlassFade`
   pushes, so its glass keeps reading the page as it goes.
 - An alert on glass takes the `alert` glass, the `menu` glass frosted wider, under its `AlertDialog`'s surface, which
   it finds as the dialog's `Material` lays it out, since a dialog takes only a color. Its route fades it under a
-  `LiquidGlassFade`, so the glass keeps its full blur and fades with the text, as UIKit fades an alert and its glass on
-  one layer. Its plain buttons and fields fill with `glassFillOf`, black or in dark mode white at 13%: iOS 27 shifts
-  them from the glass under them by about 30/255, darker or lighter, a blend Flutter has no mode for, which 13% meets
-  over the glass an alert shows on a page. Its route dims by `alertScrim`, iOS's fifth in light mode and near half in
-  dark mode, not Material's third, so the glass reads the backdrop iOS's reads; under Material's a light alert came
-  out grey. Measured against UIKit over the same page, the title sits 21 dp down, a message 6 dp under it and a field
-  16, the buttons 20 under either; plain button labels take the medium weight, and a light message takes
-  `onSurfaceVariant` at 85%, as light as iOS's vibrant secondary label. UIKit sets a title with no message centred in
-  the body weight, so an alert with fields (`hasFields`) does too, with room for a trailing control's width kept on
-  both sides to hold the title on the alert's centre. A destructive action takes `ColorScheme.destructive`, iOS's
-  systemRed: Material's `error` read dull in light mode and pink at tone 80 on dark glass.
+  `LiquidGlassFade`, so the glass keeps its full blur and fades with the text, as UIKit fades an alert and its glass
+  on one layer. Its scrim is a `LiquidGlassVeil`, which the host leaves out of the capture of a pane above it where it
+  lies evenly over all the slot shows, under no effect or narrower clip, with nothing drawn over it before the pane:
+  the shader lays its color over what the samples come to, the same as blurring it in, since an even color blurs to
+  itself. The glass holds its capture over all a press may cover (`hold`), and keeps its frost at 16 dp of the screen
+  as it grows in from 1.2 times its size and swells under a press (`steadyFrost`), where it would have frosted up to a
+  fifth more while the alert is all but clear, so it captures once as it opens, rather than every frame its scrim
+  fades and its size moves, and not at all as it is pressed or closes. Its shadow lies over its capture, as a held
+  pane's does, which leaves its rim's outermost pixels up to 15/255 lighter and the rest within 2/255 of before. On
+  the SwiftShader emulator, median of three alternating runs, that took opening and closing an alert from 45.2 to 42.2
+  ms a frame and pressing it from 44.4 to 41.4, in either tier within half a millisecond. Its plain buttons and fields
+  fill with `glassFillOf`, black or in dark mode white at 13%: iOS 27 shifts them from the glass under them by about
+  30/255, darker or lighter, a blend Flutter has no mode for, which 13% meets over the glass an alert shows on a page.
+  Its route dims by `alertScrim`, iOS's fifth in light mode and near half in dark mode, not Material's third, so the
+  glass reads the backdrop iOS's reads; under Material's a light alert came out grey. Measured against UIKit over the
+  same page, the title sits 21 dp down, a message 6 dp under it and a field 16, the buttons 20 under either; plain
+  button labels take the medium weight, and a light message takes `onSurfaceVariant` at 85%, as light as iOS's vibrant
+  secondary label. UIKit sets a title with no message centred in the body weight, so an alert with fields
+  (`hasFields`) does too, with room for a trailing control's width kept on both sides to hold the title on the alert's
+  centre. A destructive action takes `ColorScheme.destructive`, iOS's systemRed: Material's `error` read dull in light
+  mode and pink at tone 80 on dark glass.
 - A press anywhere on an alert swells the whole alert, glass and content, as UIKit swells it, measured at 4 pt on its
   320 width, and a drag past its edges stretches it about 3 pt; the button under the finger does not swell, it fades
   its fill to 40%, or a dark default button's to 50%, while a dark plain button keeps its fill. `ElasticPress` takes
@@ -730,11 +780,11 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
 - The `pill`'s frost, line and shadow follow iOS 27's tab bar at rest, measured in the simulator over solid fills and a
   black and white split: 28% of the backdrop shows sharp and 72% through a blur of 15.6 dp, so a stripe under the bar
   spreads over its neighbours; iOS mixes the two brighter toward white, as if it blurred in linear light, which the
-  engine's blur cannot. Dark mode draws no line, as iOS draws none along a dark bar's top and bottom. Glass bars cast
-  1.3% black blurred 3.8 dp and dropped 6.5 dp, shading only below and by 3/255 at most, in both modes; the solid
-  dock keeps its wider shadow. The sharp part needs no blur pass of its own, so on the SwiftShader emulator the haze
-  added half a render pass a frame scrolling Tools, about four on the dashboard, where it no longer shares the start
-  button's blur, and no time beyond the noise of three alternating runs. Its colors are deliberately not iOS's: iOS's
+  engine's blur cannot. Dark mode draws no line, as iOS draws none along a dark bar's top and bottom. iOS's glass bars
+  cast 1.3% black blurred 3.8 dp and dropped 6.5 dp, shading only below and by 3/255 at most in both modes; the glass
+  dock, docked search and foot bar leave it out, as it cost 1 to 4 ms a frame on the SwiftShader emulator, and the
+  solid dock keeps its wider shadow. The sharp part needs no blur pass of its own, but it is captured at the screen's
+  resolution, which is what the haze costs. Its colors are deliberately not iOS's: iOS's
   bar takes no `contrast`, its selection platter is a color matrix of the bar and its icons are vibrant, where the
   dock keeps the theme's.
 - The dock and its lens follow UIKit's tab bar as codenameone/CodenameOne#5906 measured it frame by frame: 86 dp a
@@ -751,6 +801,11 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
   a third, as iOS does, and the lens casts a soft shadow 8 dp down. A press lights the bar through `LiquidGlass.glow`:
   a wash over the whole pane, brightest at the finger, that spreads out as it fades. A `pressed` pane, as a glass
   button's or a `TonalButtonGroup`'s is, hears the pointer on what it wraps and lights from the finger the same way.
+- A pointer swells the dock to 40% of a press, as iPadOS lifts a bar under its pointer, and a button under
+  `TonalButtonTheme` the same way through `ElasticHover`. No Material state layer goes over those buttons: a hover only
+  lifts one and a key's focus only rings it. A `TonalButtonGroup` of several also marks the button under the pointer at
+  8%, as the dock marks its destination. A hover neither lights the glass nor flows a pane into its neighbors; only a
+  press does, so `ElasticPress.liftOf` reads the press alone.
 
 ## Popup Motion
 
@@ -758,6 +813,17 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
 so closing returns it into the control on the same platter, its content blurring out first. Apple documents only the
 opening; one opened at a point (a context menu) has no control to return into and shrinks toward the point to
 `_dismissScale` as it fades, as iOS context menus do.
+
+The opening follows iOS 27 as traced from a bar button's menu. One spring (`_open`, stiffness 400, damping ratio 0.754)
+swells a round platter, the size the return ends at, from the control's center into the card: its height eases from
+the card's width to its own and its center dips away from the control, further the further the card's center lies.
+The control's glass sinks a quarter of the way in as a droplet a quarter its size, flowing into the platter as goo,
+and its glyph fades out under the platter's frost within the first quarter of the spring; iOS traces a copy of the
+glyph grown with the platter too, but none shows. The corners stay a capsule until a second spring (`_corners`), 70 ms
+later, squares them off with a small undershoot. The content fades in with the spring, blurred by 4 dp of what is
+left of it and by a bump iOS lays over the whole menu, 1.9 dp at about 70 ms. The opening ends at 450 ms, with every
+spring within a dp of rest, rather than once they settle: a card taking over sooner would ride the last undershoot
+back up to full size, and its held capture renews whenever its frost grows, so on every frame of that.
 
 A sub menu is a `PopupMenuCard` laid out once at full size. One spring (`_unfold` in `lib/ui/popup.dart`) moves
 its surface and clip from the item that opened it to its bounds, recedes the parent, and reveals the items, so a fold

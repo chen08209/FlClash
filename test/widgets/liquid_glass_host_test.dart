@@ -39,29 +39,40 @@ Widget _pane(Rect rect, {LiquidGlassStyle style = _clear, Widget? child}) =>
 LiquidGlassCapture _capture() => LiquidGlassHost.debugLastCapture!;
 
 class _HeldPane extends LeafRenderObjectWidget {
-  const _HeldPane(this.rect, this.hold);
+  const _HeldPane(
+    this.rect,
+    this.hold, {
+    this.style = _clear,
+    this.steadyFrost = false,
+  });
 
   final Rect rect;
   final Rect hold;
+  final LiquidGlassStyle style;
+  final bool steadyFrost;
 
   @override
   RenderObject createRenderObject(BuildContext context) =>
-      _RenderHeldPane(rect, hold);
+      _RenderHeldPane(rect, hold, style, steadyFrost);
 
   @override
   void updateRenderObject(BuildContext context, _RenderHeldPane renderObject) {
     renderObject
       ..rect = rect
       ..hold = hold
+      ..style = style
+      ..steadyFrost = steadyFrost
       ..markNeedsPaint();
   }
 }
 
 class _RenderHeldPane extends RenderBox {
-  _RenderHeldPane(this.rect, this.hold);
+  _RenderHeldPane(this.rect, this.hold, this.style, this.steadyFrost);
 
   Rect rect;
   Rect hold;
+  LiquidGlassStyle style;
+  bool steadyFrost;
   late final _pane = LiquidGlassPane(markNeedsPaint);
 
   @override
@@ -85,8 +96,9 @@ class _RenderHeldPane extends RenderBox {
       context,
       rect.shift(offset),
       shape: LiquidGlassCorners.circular(0),
-      style: _clear,
+      style: style,
       hold: hold.shift(offset),
+      steadyFrost: steadyFrost,
     );
   }
 }
@@ -183,6 +195,145 @@ void main() {
 
     await tester.pumpWidget(scene(const Rect.fromLTWH(500, 500, 50, 50)));
     expect(_capture().snapshots, 1);
+  });
+
+  testWidgets('a steady pane shrinking within its hold keeps one capture', (
+    tester,
+  ) async {
+    const rect = Rect.fromLTWH(100, 100, 200, 100);
+    const frost = LiquidGlassStyle(tint: Colors.transparent, blur: 12);
+    Widget scene(double scale) => _app(
+      Stack(
+        children: [
+          const Positioned.fill(
+            child: RepaintBoundary(child: ColoredBox(color: _red)),
+          ),
+          Positioned.fill(
+            child: Transform.scale(
+              scale: scale,
+              alignment: Alignment.topLeft,
+              origin: rect.center,
+              child: const _HeldPane(
+                rect,
+                rect,
+                style: frost,
+                steadyFrost: true,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    await tester.pumpWidget(scene(1.2));
+    expect(_capture().snapshots, 1);
+    final first = _capture().panes.single;
+
+    for (final scale in [1.1, 1.0]) {
+      await tester.pumpWidget(scene(scale));
+      expect(_capture().snapshots, 0);
+      expect(_capture().panes.single.atlas, same(first.atlas));
+    }
+  });
+
+  testWidgets('a pane reads past a veil, which fades without a capture', (
+    tester,
+  ) async {
+    Widget scene(Color veil) => _app(
+      Stack(
+        children: [
+          const Positioned.fill(
+            child: RepaintBoundary(child: ColoredBox(color: _red)),
+          ),
+          Positioned.fill(
+            child: LiquidGlassVeil(color: AlwaysStoppedAnimation(veil)),
+          ),
+          _pane(const Rect.fromLTWH(100, 100, 200, 100)),
+        ],
+      ),
+    );
+
+    await tester.pumpWidget(scene(const Color(0x40000000)));
+    final first = _capture().panes.single;
+    expect(await _behind(tester, first, const Offset(200, 150)), _red);
+
+    await tester.pumpWidget(scene(const Color(0x80000000)));
+    expect(_capture().snapshots, 0);
+    expect(_capture().panes.single.atlas, same(first.atlas));
+  });
+
+  testWidgets('a veil with content drawn over it lies in the capture', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        Stack(
+          children: [
+            const Positioned.fill(child: ColoredBox(color: _red)),
+            const Positioned.fill(
+              child: LiquidGlassVeil(
+                color: AlwaysStoppedAnimation(Color(0x80000000)),
+              ),
+            ),
+            const Positioned(
+              left: 100,
+              top: 100,
+              width: 100,
+              height: 100,
+              child: ColoredBox(color: _green),
+            ),
+            _pane(const Rect.fromLTWH(100, 100, 200, 100)),
+          ],
+        ),
+      ),
+    );
+
+    final pane = _capture().panes.single;
+    expect(await _behind(tester, pane, const Offset(150, 150)), _green);
+    final veiled = await _behind(tester, pane, const Offset(250, 150));
+    expect(veiled.r, inExclusiveRange(0.4, 0.6));
+    expect(veiled.a, 1);
+  });
+
+  testWidgets('content moving by part of a capture pixel captures alike', (
+    tester,
+  ) async {
+    Widget scene(double top) => _app(
+      Stack(
+        children: [
+          Positioned(
+            left: 120,
+            top: top,
+            width: 160,
+            height: 13,
+            child: const RepaintBoundary(child: ColoredBox(color: _red)),
+          ),
+          _pane(
+            const Rect.fromLTWH(100, 100, 200, 40),
+            style: const LiquidGlassStyle(tint: Colors.transparent, blur: 8),
+          ),
+        ],
+      ),
+    );
+    Future<List<int>> slot() async {
+      final pane = _capture().panes.single;
+      expect(pane.scale, lessThan(1));
+      final bytes = (await tester.runAsync(pane.atlas.toByteData))!;
+      final place = pane.place;
+      return [
+        for (var y = place.top.toInt(); y < place.bottom; y++)
+          ...bytes.buffer.asUint8List(
+            (y * pane.atlas.width + place.left.toInt()) * 4,
+            place.width.toInt() * 4,
+          ),
+      ];
+    }
+
+    await tester.pumpWidget(scene(104));
+    final still = await slot();
+    await tester.pumpWidget(scene(104.5));
+    expect(_capture().snapshots, 1);
+    expect(await slot(), still);
   });
 
   testWidgets('a pane over another reads a capture with that one drawn in', (

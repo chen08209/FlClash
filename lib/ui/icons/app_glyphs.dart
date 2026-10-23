@@ -408,6 +408,18 @@ abstract final class AppGlyphs {
     ], role: GlyphRole.line),
   ]);
 
+  static const clearField = Glyph([
+    GlyphCircle(12, 12, 8.8),
+    GlyphPolyline([
+      GlyphVertex(9.3, 9.3),
+      GlyphVertex(14.7, 14.7),
+    ], role: GlyphRole.detail),
+    GlyphPolyline([
+      GlyphVertex(14.7, 9.3),
+      GlyphVertex(9.3, 14.7),
+    ], role: GlyphRole.detail),
+  ]);
+
   static const check = Glyph([
     GlyphPolyline([
       GlyphVertex(4.8, 12.5),
@@ -478,9 +490,9 @@ abstract final class AppGlyphs {
   ]);
 
   static const more = Glyph([
-    GlyphCircle(12, 5.5, 1.4, role: GlyphRole.line, solid: true),
-    GlyphCircle(12, 12, 1.4, role: GlyphRole.line, solid: true),
-    GlyphCircle(12, 18.5, 1.4, role: GlyphRole.line, solid: true),
+    GlyphCircle(12, 4.2, 1.65, role: GlyphRole.line, solid: true),
+    GlyphCircle(12, 12, 1.65, role: GlyphRole.line, solid: true),
+    GlyphCircle(12, 19.8, 1.65, role: GlyphRole.line, solid: true),
   ]);
 
   static const moreCircle = Glyph([

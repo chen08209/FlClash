@@ -564,7 +564,7 @@ void main() {
     await tester.tap(find.byGlyph(AppGlyphs.more));
     await settle(tester, 8);
     await tester.tap(find.byGlyph(AppGlyphs.undo));
-    await settle(tester, 8);
+    await settle(tester, 12);
 
     expect(controller.isComposingActive, isFalse);
     expect(controller.text, 'mode: rule');

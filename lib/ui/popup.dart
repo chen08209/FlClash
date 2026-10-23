@@ -203,6 +203,16 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
   Duration get reverseTransitionDuration =>
       sourceImage == null ? _shrinkDuration : _dismissDuration;
 
+  // A controller reverses over the share of its duration it had run, so a
+  // popup closed while opening would rush the return its morph times in full.
+  @override
+  bool didPop(T? result) {
+    final controller = this.controller!;
+    controller.reverseDuration =
+        reverseTransitionDuration * (1 / math.max(controller.value, 1e-3));
+    return super.didPop(result);
+  }
+
   late final CurvedAnimation _grow = CurvedAnimation(
     parent: animation!,
     curve: _growSpring,

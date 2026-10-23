@@ -246,28 +246,17 @@ List<BoxShadow> dockShadows(ColorScheme colorScheme) {
   ];
 }
 
-// iOS 27 shades its glass bars only below, faintly, and no darker in dark mode.
-List<BoxShadow> dockGlassShadows(ColorScheme colorScheme) => [
-  BoxShadow(
-    color: colorScheme.shadow.withValues(alpha: 0.013),
-    blurRadius: 3.8,
-    offset: const Offset(0, 6.5),
-  ),
-];
-
 /// What the dock's parts stand on: a floating surface, or glass.
 class _DockSurface extends StatelessWidget {
   const _DockSurface({
     required this.glass,
     required this.style,
-    required this.shadows,
     required this.glow,
     required this.child,
   });
 
   final bool glass;
   final LiquidGlassStyle style;
-  final List<BoxShadow> shadows;
   final ValueListenable<LiquidGlassGlow> glow;
   final Widget child;
 
@@ -277,12 +266,8 @@ class _DockSurface extends StatelessWidget {
     if (glass) {
       return ValueListenableBuilder(
         valueListenable: glow,
-        builder: (_, glow, child) => LiquidGlass(
-          style: style,
-          shadows: shadows,
-          glow: glow,
-          child: child,
-        ),
+        builder: (_, glow, child) =>
+            LiquidGlass(style: style, glow: glow, child: child),
         child: child,
       );
     }
@@ -465,6 +450,10 @@ class ElasticPress extends StatefulWidget {
   static ElasticPressHandle? maybeOf(BuildContext context) =>
       context.findAncestorStateOfType<_ElasticPressState>();
 
+  /// How far a full press scales a panel whose longest side is [side].
+  static double growthOf(double side, {double maxGrowth = _maxPressGrowth}) =>
+      math.min(_pressGrowth * 2, maxGrowth / side);
+
   /// Where [box] paints under the presses around it, in its own coordinates.
   static Rect paintBoundsOf(RenderBox box) {
     final bounds = Offset.zero & box.size;
@@ -485,6 +474,32 @@ class ElasticPress extends StatefulWidget {
     return MatrixUtils.transformRect(rest.multiplied(painted), bounds);
   }
 
+  /// Calls [onMove] as presses around [box] move it, until the result is called.
+  static VoidCallback followPresses(RenderObject box, VoidCallback onMove) {
+    final presses = [
+      for (var node = box.parent; node != null; node = node.parent)
+        if (node is _RenderPressTransform) node,
+    ];
+    for (final press in presses) {
+      press._followers.add(onMove);
+    }
+    return () {
+      for (final press in presses) {
+        press._followers.remove(onMove);
+      }
+    };
+  }
+
+  /// How far a press, never a hover, swells the nearest press around [box].
+  static double liftOf(RenderBox box) {
+    for (var node = box.parent; node != null; node = node.parent) {
+      if (node is _RenderPressTransform) {
+        return node._press;
+      }
+    }
+    return 0;
+  }
+
   @override
   State<ElasticPress> createState() => _ElasticPressState();
 }
@@ -496,16 +511,25 @@ abstract interface class ElasticPressHandle {
   void drag(Offset position);
 
   void release();
+
+  void hover(bool entered);
 }
 
 class _ElasticPressState extends State<ElasticPress>
     with TickerProviderStateMixin
     implements ElasticPressHandle {
   late final _Spring _lift = _Spring(this, 0);
+  late final _Spring _hover = _Spring(this, 0);
   late final _Spring _pullX = _Spring(this, 0);
   late final _Spring _pullY = _Spring(this, 0);
-  late final Listenable _motion = Listenable.merge([_lift, _pullX, _pullY]);
+  late final Listenable _motion = Listenable.merge([
+    _lift,
+    _hover,
+    _pullX,
+    _pullY,
+  ]);
   int? _pointer;
+  var _hovers = 0;
   Offset _origin = Offset.zero;
   bool _releasing = false;
 
@@ -518,6 +542,7 @@ class _ElasticPressState extends State<ElasticPress>
   @override
   void dispose() {
     _lift.dispose();
+    _hover.dispose();
     _pullX.dispose();
     _pullY.dispose();
     super.dispose();
@@ -606,6 +631,18 @@ class _ElasticPressState extends State<ElasticPress>
   void release() => _release();
 
   @override
+  void hover(bool entered) {
+    if (!mounted) {
+      return;
+    }
+    _hovers = math.max(0, _hovers + (entered ? 1 : -1));
+    _hover.springTo(
+      widget.enabled && _hovers > 0 ? _hoverSwell : 0,
+      _settleSpring,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Listener(
       onPointerDown: _handlePointerDown,
@@ -615,7 +652,8 @@ class _ElasticPressState extends State<ElasticPress>
       child: AnimatedBuilder(
         animation: _motion,
         builder: (_, child) => _PressTransform(
-          lift: _lift.value,
+          lift: _lift.value + (1 - _lift.value) * _hover.value,
+          press: _lift.value,
           pull: Offset(_pullX.value, _pullY.value),
           maxGrowth: widget.maxGrowth,
           panelOf: widget.panelOf,
@@ -623,6 +661,51 @@ class _ElasticPressState extends State<ElasticPress>
         ),
         child: widget.child,
       ),
+    );
+  }
+}
+
+/// Lifts the [ElasticPress] around [child] part way while a pointer hovers over
+/// it, as iPadOS lifts a button under its pointer.
+class ElasticHover extends StatefulWidget {
+  const ElasticHover({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<ElasticHover> createState() => _ElasticHoverState();
+}
+
+class _ElasticHoverState extends State<ElasticHover> {
+  ElasticPressHandle? _entered;
+
+  void _handleEnter(PointerEnterEvent event) {
+    if (_entered != null) {
+      return;
+    }
+    _entered = ElasticPress.maybeOf(context)?..hover(true);
+  }
+
+  void _handleExit(PointerExitEvent event) => _leave();
+
+  void _leave() {
+    _entered?.hover(false);
+    _entered = null;
+  }
+
+  @override
+  void dispose() {
+    _leave();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      opaque: false,
+      onEnter: _handleEnter,
+      onExit: _handleExit,
+      child: widget.child,
     );
   }
 }
@@ -671,20 +754,22 @@ class ElasticButton extends StatelessWidget {
 class _PressTransform extends SingleChildRenderObjectWidget {
   const _PressTransform({
     required this.lift,
+    double? press,
     required this.pull,
     this.maxGrowth = _maxPressGrowth,
     this.panelOf,
     super.child,
-  });
+  }) : press = press ?? lift;
 
   final double lift;
+  final double press;
   final Offset pull;
   final double maxGrowth;
   final Rect Function(RenderBox box)? panelOf;
 
   @override
   RenderObject createRenderObject(BuildContext context) {
-    return _RenderPressTransform(lift: lift, pull: pull)
+    return _RenderPressTransform(lift: lift, press: press, pull: pull)
       ..maxGrowth = maxGrowth
       ..panelOf = panelOf;
   }
@@ -696,6 +781,7 @@ class _PressTransform extends SingleChildRenderObjectWidget {
   ) {
     renderObject
       ..lift = lift
+      ..press = press
       ..pull = pull
       ..maxGrowth = maxGrowth
       ..panelOf = panelOf;
@@ -703,21 +789,35 @@ class _PressTransform extends SingleChildRenderObjectWidget {
 }
 
 class _RenderPressTransform extends RenderProxyBox {
-  _RenderPressTransform({required double lift, required Offset pull})
-    : _lift = lift,
-      _pull = pull;
+  _RenderPressTransform({
+    required double lift,
+    required double press,
+    required Offset pull,
+  }) : _lift = lift,
+       _press = press,
+       _pull = pull;
 
   double _lift;
+  double _press;
   Offset _pull;
   double maxGrowth = _maxPressGrowth;
   Rect Function(RenderBox box)? panelOf;
+  final _followers = <VoidCallback>[];
 
   set lift(double value) {
     if (value == _lift) {
       return;
     }
     _lift = value;
-    markNeedsPaint();
+    _moved();
+  }
+
+  set press(double value) {
+    if (value == _press) {
+      return;
+    }
+    _press = value;
+    _moved();
   }
 
   set pull(Offset value) {
@@ -725,13 +825,21 @@ class _RenderPressTransform extends RenderProxyBox {
       return;
     }
     _pull = value;
+    _moved();
+  }
+
+  void _moved() {
     markNeedsPaint();
+    for (final follower in _followers) {
+      follower();
+    }
   }
 
   Matrix4 get _transform {
     final panel = panelOf?.call(this) ?? Offset.zero & size;
     final swell =
-        1 + _lift * math.min(_pressGrowth * 2, maxGrowth / panel.longestSide);
+        1 +
+        _lift * ElasticPress.growthOf(panel.longestSide, maxGrowth: maxGrowth);
     final scaleX = swell * (1 + _pull.dx.abs() / panel.width * _pullStretch);
     final scaleY = swell * (1 + _pull.dy.abs() / panel.height * _pullStretch);
     final center = panel.center;
@@ -1165,7 +1273,6 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar>
     final bar = _DockSurface(
       glass: glass,
       style: LiquidGlassStyle.pill(colorScheme),
-      shadows: ultra ? dockGlassShadows(colorScheme) : const [],
       glow: _touchGlow,
       child: Material(
         color: glass

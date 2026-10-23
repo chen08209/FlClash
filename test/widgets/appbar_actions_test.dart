@@ -1,6 +1,7 @@
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -16,6 +17,29 @@ final _views = {'a mobile view': _mobile, 'a desktop view': _desktop};
 
 Finder _container(Finder button) =>
     find.descendant(of: button, matching: find.byType(Material)).first;
+
+final _markPainter = find.descendant(
+  of: find.descendant(
+    of: find.byType(TonalButtonGroup),
+    matching: find.byType(Positioned),
+  ),
+  matching: find.byType(CustomPaint),
+);
+
+Rect _markOf(WidgetTester tester) {
+  final painter = tester.renderObject<RenderBox>(_markPainter);
+  Rect? bounds;
+  expect(
+    painter,
+    paints..everything((method, arguments) {
+      if (method == #drawPath) {
+        bounds = (arguments.first as Path).getBounds();
+      }
+      return true;
+    }),
+  );
+  return MatrixUtils.transformRect(painter.getTransformTo(null), bounds!);
+}
 
 Iterable<Rect> _clipsAbove(RenderObject box) sync* {
   var child = box;
@@ -213,6 +237,97 @@ void main() {
     await gesture.up();
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a pointer marks the button of a group under it and slides the '
+      'mark to the next', (tester) async {
+    await _pumpBar(
+      tester,
+      view: _desktop,
+      platform: TargetPlatform.android,
+      child: const CommonScaffold(
+        title: 'Title',
+        iconActions: [
+          IconButtonData(glyph: AppGlyphs.sync, onPressed: _noop),
+          IconButtonData(glyph: AppGlyphs.sort, onPressed: _noop),
+        ],
+        body: SizedBox(),
+      ),
+    );
+    final first = tester.getRect(
+      find.widgetWithGlyph(IconButton, AppGlyphs.sync),
+    );
+    final second = tester.getRect(
+      find.widgetWithGlyph(IconButton, AppGlyphs.sort),
+    );
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer(location: Offset.zero);
+
+    await mouse.moveTo(first.center);
+    await tester.pumpAndSettle();
+    final marked = _markOf(tester);
+    expect(marked.center, first.center);
+    expect(first.intersect(marked), marked);
+    expect(marked.height, lessThan(first.height));
+
+    await mouse.moveTo(second.center);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 40));
+    expect(
+      _markOf(tester).center.dx,
+      inExclusiveRange(first.center.dx, second.center.dx),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      _markOf(tester).center,
+      offsetMoreOrLessEquals(second.center, epsilon: 0.1),
+    );
+
+    await mouse.moveTo(Offset.zero);
+    await tester.pumpAndSettle();
+    expect(tester.renderObject(_markPainter), paintsNothing);
+  });
+
+  testWidgets('a mark stays on its button while a closing search regrows '
+      'the group', (tester) async {
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        child: CommonScaffold(
+          title: 'Title',
+          searchState: AppBarSearchState(onSearch: (_) {}),
+          iconActions: const [
+            IconButtonData(glyph: AppGlyphs.sync, onPressed: _noop),
+          ],
+          body: const SizedBox(),
+        ),
+      ),
+    );
+    await tester.tap(find.byGlyph(AppGlyphs.search));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Cancel'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    final sync = find.widgetWithGlyph(IconButton, AppGlyphs.sync);
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer(location: tester.getCenter(sync));
+    await tester.pump();
+
+    final group = tester.getSize(find.byType(TonalButtonGroup)).width;
+    for (var frame = 0; frame < 8; frame++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(
+        _markOf(tester).center.dx,
+        moreOrLessEquals(tester.getCenter(sync).dx, epsilon: 0.5),
+      );
+    }
+    expect(
+      tester.getSize(find.byType(TonalButtonGroup)).width,
+      greaterThan(group),
+    );
+    await tester.pumpAndSettle();
   });
 
   testWidgets('raw action widgets press on their own, one gap apart', (
@@ -475,46 +590,67 @@ void main() {
     );
   });
 
-  testWidgets('searching keeps the bar buttons where they stood', (
+  testWidgets('search opens across a phone bar beside its cancel button', (
+    tester,
+  ) async {
+    tester.view.physicalSize = _mobile;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [viewSizeProvider.overrideWithBuild((_, _) => _mobile)],
+        child: CommonScaffold(
+          title: 'Title',
+          searchState: AppBarSearchState(onSearch: (_) {}),
+          body: const SizedBox(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final search = find.widgetWithGlyph(IconButton, AppGlyphs.search);
+    final button = tester.getRect(_container(search));
+
+    await tester.tap(search);
+    await tester.pumpAndSettle();
+    final field = tester.getRect(find.byType(SearchField));
+    final cancel = tester.getRect(
+      _container(find.widgetWithGlyph(IconButton, AppGlyphs.close)),
+    );
+
+    expect(find.text('Title'), findsNothing);
+    expect(field.left, appBarActionInset(true));
+    expect(field.height, TonalButtonSize.bar.button);
+    expect(field.center.dy, button.center.dy);
+    expect(cancel.left - field.right, 12);
+    expect(cancel.right, _mobile.width - appBarActionInset(true));
+    expect(cancel.center.dy, button.center.dy);
+  });
+
+  testWidgets('search opens at the end of a desktop bar under its title', (
     tester,
   ) async {
     await _pumpBar(
       tester,
-      view: _mobile,
-      platform: TargetPlatform.android,
+      view: _desktop,
+      platform: TargetPlatform.macOS,
       child: CommonScaffold(
         title: 'Title',
         searchState: AppBarSearchState(onSearch: (_) {}),
         body: const SizedBox(),
       ),
     );
-    final leading = find.descendant(
-      of: find.byType(AppBar),
-      matching: find.byType(IconButton),
-    );
-    Color? glyphColor(Finder button) => IconTheme.of(
-      tester.element(
-        find
-            .descendant(
-              of: button,
-              matching: find.byWidgetPredicate(
-                (widget) => widget is Icon || widget is GlyphIcon,
-              ),
-            )
-            .first,
-      ),
-    ).color;
-    final back = tester.getRect(_container(leading.first));
-    final backColor = glyphColor(leading.first);
     final search = find.widgetWithGlyph(IconButton, AppGlyphs.search);
-    final trailing = tester.getRect(_container(search));
+    final button = tester.getRect(_container(search));
 
     await tester.tap(search);
     await tester.pumpAndSettle();
-    final clear = find.widgetWithGlyph(IconButton, AppGlyphs.close);
+    final field = tester.getRect(find.byType(SearchField));
 
-    expect(tester.getRect(_container(leading.first)), back);
-    expect(glyphColor(leading.first), backColor);
-    expect(tester.getRect(_container(clear)).right, trailing.right);
+    expect(find.text('Title'), findsOneWidget);
+    expect(find.widgetWithGlyph(IconButton, AppGlyphs.close), findsNothing);
+    expect(field.size, Size(280, TonalButtonSize.bar.button));
+    expect(field.right, button.right);
+    expect(field.center.dy, button.center.dy);
   });
 }

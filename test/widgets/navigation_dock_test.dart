@@ -622,6 +622,63 @@ void main() {
     expect(painted(), resting);
   });
 
+  testWidgets('a pointer lifts a tonal button part way, with no state layer', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      TestApp(
+        child: Center(
+          child: TonalButtonTheme(
+            child: ElasticPress(
+              child: IconButton(
+                tooltip: _addLabel,
+                onPressed: () {},
+                icon: const GlyphIcon(AppGlyphs.add),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    final press = find.byType(ElasticPress);
+    final resting = tester.getRect(press);
+    double width() =>
+        _painted(tester, tester.renderObject(press), resting).width;
+    final ink = tester.widget<InkWell>(
+      find.descendant(
+        of: find.byType(IconButton),
+        matching: find.byType(InkWell),
+      ),
+    );
+    for (final state in [
+      WidgetState.hovered,
+      WidgetState.focused,
+      WidgetState.pressed,
+    ]) {
+      expect(ink.overlayColor!.resolve({state}), Colors.transparent);
+    }
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    await mouse.moveTo(resting.center);
+    await tester.pumpAndSettle();
+    final hovered = width();
+    expect(hovered, greaterThan(resting.width * 1.05));
+
+    await mouse.down(resting.center);
+    await tester.pumpAndSettle();
+    expect(width(), greaterThan(hovered));
+
+    await mouse.up();
+    await tester.pumpAndSettle();
+    expect(width(), moreOrLessEquals(hovered));
+
+    await mouse.moveTo(Offset.zero);
+    await tester.pumpAndSettle();
+    expect(width(), resting.width);
+    await mouse.removePointer();
+  });
+
   testWidgets(
     'an elastic button leaves a press to the swell and keeps the icon theme',
     (tester) async {

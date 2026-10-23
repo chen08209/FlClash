@@ -372,7 +372,7 @@ void main() {
     await tester.tap(find.byTooltip('Add'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Start from scratch'));
-    await settle(tester, 18);
+    await settle(tester, 22);
 
     await tester.enterText(
       find.descendant(

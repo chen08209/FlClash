@@ -64,9 +64,7 @@ Future<void> _search(WidgetTester tester, String query) async {
 }
 
 Future<void> _tapBarAction(WidgetTester tester, String tooltip) async {
-  await tester.tap(
-    find.descendant(of: find.byType(AppBar), matching: find.byTooltip(tooltip)),
-  );
+  await tester.tap(find.byTooltip(tooltip).hitTestable());
   await tester.pumpAndSettle();
 }
 

@@ -20,6 +20,7 @@ const double _heldFrostShare = 0.9;
 // Offsets into a pane's mapping, in the order of the shader's uniforms.
 const _hazeSample = 10;
 const _hazeShare = 18;
+const _veilColor = 19;
 const _noHaze = <double>[0, 0, 1, 1, 0, 0, 0, 0];
 
 typedef LiquidGlassCapture = ({
@@ -117,15 +118,26 @@ class _RenderLiquidGlassFade extends RenderProxyBox {
       return;
     }
     if (attached) {
-      _opacity.removeListener(markNeedsPaint);
-      value.addListener(markNeedsPaint);
+      _opacity.removeListener(_handleOpacity);
+      value.addListener(_handleOpacity);
     }
     _opacity = value;
-    markNeedsPaint();
+    _handleOpacity();
   }
 
   int get _alpha =>
       ui.Color.getAlphaFromOpacity(_opacity.value.clamp(0.0, 1.0));
+
+  late bool _visible = _alpha != 0;
+
+  void _handleOpacity() {
+    markNeedsPaint();
+    final visible = _alpha != 0;
+    if (visible != _visible) {
+      _visible = visible;
+      markNeedsSemanticsUpdate();
+    }
+  }
 
   @override
   bool get alwaysNeedsCompositing => child != null;
@@ -133,12 +145,13 @@ class _RenderLiquidGlassFade extends RenderProxyBox {
   @override
   void attach(PipelineOwner owner) {
     super.attach(owner);
-    _opacity.addListener(markNeedsPaint);
+    _opacity.addListener(_handleOpacity);
+    _handleOpacity();
   }
 
   @override
   void detach() {
-    _opacity.removeListener(markNeedsPaint);
+    _opacity.removeListener(_handleOpacity);
     super.detach();
   }
 
@@ -164,13 +177,97 @@ class _RenderLiquidGlassFade extends RenderProxyBox {
 
   @override
   void visitChildrenForSemantics(RenderObjectVisitor visitor) {
-    if (_alpha != 0) {
+    if (_visible) {
       super.visitChildrenForSemantics(visitor);
     }
   }
 }
 
 class _LiquidGlassFadeLayer extends OpacityLayer {}
+
+/// Dims what it covers by [color], under [child], as a modal barrier does. An
+/// even scrim blurs to itself, so a pane above takes it from the shader rather
+/// than its capture, and a scrim fading renews none.
+class LiquidGlassVeil extends SingleChildRenderObjectWidget {
+  const LiquidGlassVeil({super.key, required this.color, super.child});
+
+  final Animation<Color?> color;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) {
+    return _RenderLiquidGlassVeil(color);
+  }
+
+  @override
+  void updateRenderObject(BuildContext context, RenderObject renderObject) {
+    (renderObject as _RenderLiquidGlassVeil).color = color;
+  }
+}
+
+class _RenderLiquidGlassVeil extends RenderProxyBox {
+  _RenderLiquidGlassVeil(this._color);
+
+  final _layer = LayerHandle<_LiquidGlassVeilLayer>();
+
+  Animation<Color?> _color;
+  set color(Animation<Color?> value) {
+    if (value == _color) {
+      return;
+    }
+    if (attached) {
+      _color.removeListener(markNeedsPaint);
+      value.addListener(markNeedsPaint);
+    }
+    _color = value;
+    markNeedsPaint();
+  }
+
+  @override
+  bool get alwaysNeedsCompositing => true;
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    _color.addListener(markNeedsPaint);
+  }
+
+  @override
+  void detach() {
+    _color.removeListener(markNeedsPaint);
+    super.detach();
+  }
+
+  @override
+  void dispose() {
+    _layer.layer = null;
+    super.dispose();
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    final color = _color.value;
+    if (color == null || color.a == 0) {
+      _layer.layer = null;
+    } else {
+      final layer = _layer.layer ??= _LiquidGlassVeilLayer();
+      layer
+        ..color = color
+        ..rect = offset & size;
+      context.pushLayer(
+        layer,
+        (context, _) =>
+            context.canvas.drawRect(layer.rect, Paint()..color = color),
+        Offset.zero,
+      );
+    }
+    super.paint(context, offset);
+  }
+}
+
+class _LiquidGlassVeilLayer extends ContainerLayer {
+  Color color = const Color(0x00000000);
+  Rect rect = Rect.zero;
+}
 
 class _LiquidGlassHostBox extends SingleChildRenderObjectWidget {
   const _LiquidGlassHostBox({
@@ -402,13 +499,18 @@ class _LiquidGlassHostLayer extends ContainerLayer {
     for (Layer? child = layer.firstChild; child != null;) {
       switch (child) {
         case final _LiquidGlassLayer pane:
+          final style = switch (quality) {
+            LiquidGlassQuality.standard => pane.style._standard,
+            LiquidGlassQuality.ultra => pane.style,
+          };
+          final storage = toHost.storage;
+          final stretch = math.max(storage[0].abs(), storage[5].abs());
           found.add(
             _Behind(
               pane,
-              switch (quality) {
-                LiquidGlassQuality.standard => pane.style._standard,
-                LiquidGlassQuality.ultra => pane.style,
-              },
+              pane.steadyFrost && stretch > 0
+                  ? style.copyWith(blur: style.blur / stretch)
+                  : style,
               toHost,
               root,
               rootToHost,
@@ -459,18 +561,21 @@ class _LiquidGlassHostLayer extends ContainerLayer {
     final needed = device.inflate(reach).intersect(bounds);
     final covered = sweep.inflate(reach).intersect(bounds);
     final longest = math.max(covered.width, covered.height) * devicePixelRatio;
+    final captured = hold != null && pane.program != null
+        ? math.min(blur, pane.holdFrost ?? blur)
+        : blur;
     final divisor = math.max(
       math.min(
         _maxDivisor,
         math.max(
           1,
-          (blur * stretch * devicePixelRatio / _captureFrost).floor(),
+          (captured * stretch * devicePixelRatio / _captureFrost).floor(),
         ),
       ),
       (longest / _maxCaptureSide).ceil(),
     );
     final scale = devicePixelRatio / divisor;
-    final frost = blur * stretch * scale;
+    final frost = captured * stretch * scale;
     final softness = divisor > 1 ? _captureSoftness : 0.0;
     final blurSigma = frost > softness
         ? math.sqrt(frost * frost - softness * softness)
@@ -542,7 +647,14 @@ class _LiquidGlassHostLayer extends ContainerLayer {
       final sigma = entries.first.blurSigma;
       final drawn = <Object?>[sigma, rect.size];
       final recorder = ui.PictureRecorder();
-      final canvas = Canvas(recorder);
+      // Impeller scales a wide blur to what its layer covers (architecture.md).
+      final canvas = Canvas(recorder)
+        ..drawRect(
+          Offset.zero & rect.size,
+          Paint()
+            ..color = Colors.transparent
+            ..blendMode = BlendMode.src,
+        );
       for (final entry in entries) {
         final place = entry.place.shift(-rect.topLeft);
         drawn
@@ -556,7 +668,7 @@ class _LiquidGlassHostLayer extends ContainerLayer {
           ..scale(entry.texelsPerDp)
           ..translate(-entry.slot.left, -entry.slot.top)
           ..transform(entry.rootToHost.storage);
-        _Replay(canvas, drawn, entry).run();
+        entry.veil = _Replay(canvas, drawn, entry).run();
         canvas.restore();
       }
       bands.add((rect: rect, sigma: sigma, drawn: drawn));
@@ -661,6 +773,10 @@ class _LiquidGlassHostLayer extends ContainerLayer {
         entry.heldFrost,
         ...haze == null ? _noHaze : _sampling(haze),
         if (haze == null) 0 else entry.style.haze,
+        entry.veil.r,
+        entry.veil.g,
+        entry.veil.b,
+        entry.veil.a,
       ],
       identical(entry.root, this) ? BlendMode.srcOver : BlendMode.src,
       entry.style,
@@ -754,6 +870,7 @@ class _Behind {
   int level = 0;
   ui.Image? atlas;
   _Behind? haze;
+  Color veil = const Color(0x00000000);
 }
 
 /// The transform a layer gives its children, from what it holds now:
@@ -818,7 +935,13 @@ class _Replay {
   final _entered = <(ContainerLayer, Matrix4?, bool)>[];
   final _saves = <int>[];
 
-  void run() => _walk(entry.root, root: true);
+  Color? _veil;
+
+  /// Replays the slot, answering the veil left for the shader to lay over it.
+  Color run() {
+    _walk(entry.root, root: true);
+    return _veil ?? const Color(0x00000000);
+  }
 
   bool _walk(ContainerLayer layer, {required bool root}) {
     if (!root && !entry.ancestors.contains(layer) && !_mayShow(layer)) {
@@ -843,6 +966,11 @@ class _Replay {
               when _shows(recorded.canvasBounds.inflate(_overflow))) {
             _draw(picture);
           }
+        case final _LiquidGlassVeilLayer veil when _liesEvenly(veil):
+          final under = _veil;
+          _veil = under == null
+              ? veil.color
+              : Color.alphaBlend(veil.color, under);
         case final ContainerLayer container:
           reached = _walk(container, root: false);
       }
@@ -864,12 +992,64 @@ class _Replay {
   bool _shows(Rect bounds) =>
       MatrixUtils.transformRect(_toHost.last, bounds).overlaps(entry.slot);
 
+  bool _liesEvenly(_LiquidGlassVeilLayer veil) {
+    final toHost = _toHost.last;
+    final m = toHost.storage;
+    if (m[1] != 0 ||
+        m[4] != 0 ||
+        m[3] != 0 ||
+        m[7] != 0 ||
+        !_encloses(MatrixUtils.transformRect(toHost, veil.rect), entry.slot)) {
+      return false;
+    }
+    for (final (index, (layer, _, root)) in _entered.indexed) {
+      final clip = layer.describeClipBounds();
+      if (!root && _effectOf(layer) != null ||
+          clip != null &&
+              !_encloses(
+                MatrixUtils.transformRect(_toHost[index + 1], clip),
+                entry.slot,
+              )) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   void _draw(ui.Picture picture) {
+    // What the canvas has applied so far lay over the veil too, and neither
+    // tints nor cuts it.
+    if (_veil case final veil?) {
+      canvas.drawPaint(Paint()..color = veil);
+      drawn.add(veil);
+      _veil = null;
+    }
     while (_saves.length < _entered.length) {
       _saves.add(_apply(_entered[_saves.length]));
     }
-    canvas.drawPicture(picture);
+    final shift = _wholeTexelShift();
+    canvas
+      ..save()
+      ..translate(shift.dx, shift.dy)
+      ..drawPicture(picture)
+      ..restore();
     drawn.add(picture);
+  }
+
+  Offset _wholeTexelShift() {
+    final m = _toHost.last.storage;
+    if (m[1] != 0 || m[4] != 0 || m[3] != 0 || m[7] != 0) {
+      return Offset.zero;
+    }
+    final scale = entry.texelsPerDp;
+    double by(double translation, double stretch) {
+      final texels = translation * scale;
+      return stretch == 0
+          ? 0
+          : (texels.roundToDouble() - texels) / (scale * stretch);
+    }
+
+    return Offset(by(m[12], m[0]), by(m[13], m[5]));
   }
 
   int _apply((ContainerLayer, Matrix4?, bool) entered) {
@@ -882,24 +1062,7 @@ class _Replay {
       drawn.addAll(geometry.storage);
       saves++;
     }
-    final effect = root
-        ? null
-        : switch (layer) {
-            OpacityLayer(:final alpha?) when alpha < 255 => (
-              Paint()..color = Color.fromARGB(alpha, 0, 0, 0),
-              alpha,
-            ),
-            ColorFilterLayer(:final colorFilter?) => (
-              Paint()..colorFilter = colorFilter,
-              colorFilter,
-            ),
-            ImageFilterLayer(:final imageFilter?) => (
-              Paint()..imageFilter = imageFilter,
-              imageFilter,
-            ),
-            ShaderMaskLayer(:final shader) => (Paint(), shader),
-            _ => null,
-          };
+    final effect = root ? null : _effectOf(layer);
     if (effect case (final paint, final key)?) {
       canvas.saveLayer(null, paint);
       drawn
@@ -912,6 +1075,23 @@ class _Replay {
     }
     return saves;
   }
+
+  static (Paint, Object?)? _effectOf(ContainerLayer layer) => switch (layer) {
+    OpacityLayer(:final alpha?) when alpha < 255 => (
+      Paint()..color = Color.fromARGB(alpha, 0, 0, 0),
+      alpha,
+    ),
+    ColorFilterLayer(:final colorFilter?) => (
+      Paint()..colorFilter = colorFilter,
+      colorFilter,
+    ),
+    ImageFilterLayer(:final imageFilter?) => (
+      Paint()..imageFilter = imageFilter,
+      imageFilter,
+    ),
+    ShaderMaskLayer(:final shader) => (Paint(), shader),
+    _ => null,
+  };
 
   bool _clip(ContainerLayer layer) {
     final Object clip;

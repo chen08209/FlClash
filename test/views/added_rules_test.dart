@@ -38,7 +38,7 @@ Finder _barAction(String tooltip) =>
     find.descendant(of: find.byType(AppBar), matching: find.byTooltip(tooltip));
 
 Future<void> _tapBarAction(WidgetTester tester, String tooltip) async {
-  await tester.tap(_barAction(tooltip));
+  await tester.tap(find.byTooltip(tooltip).hitTestable());
   await tester.pumpAndSettle();
 }
 

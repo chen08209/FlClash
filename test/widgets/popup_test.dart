@@ -1118,6 +1118,41 @@ void main() {
     expect(picked, ['two']);
   });
 
+  testWidgets('a menu picked from as it opens takes its whole return', (
+    tester,
+  ) async {
+    final picked = await pumpButtonMenu(tester);
+    await tester.tap(find.text('menu'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('two'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(CommonPopupMenu), findsOneWidget);
+    expect(picked, isEmpty);
+
+    await tester.pumpAndSettle();
+    expect(picked, ['two']);
+  });
+
+  testWidgets('a menu closed mid-opening in a window laid out to nothing '
+      'returns without painting', (tester) async {
+    await pumpButtonMenu(tester);
+    await tester.tap(find.text('menu'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+
+    final menu = tester.element(find.byType(CommonPopupMenu));
+    tester.view.physicalSize = Size.zero;
+    addTearDown(tester.view.resetPhysicalSize);
+    await tester.pump();
+    Navigator.of(menu).pop();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CommonPopupMenu), findsNothing);
+  });
+
   testWidgets('a pick from a popup at a point runs at once', (tester) async {
     late BuildContext context;
     final picked = <String>[];

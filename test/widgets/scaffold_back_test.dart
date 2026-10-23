@@ -214,7 +214,7 @@ void main() {
     expect(find.byType(TextField), findsOneWidget);
 
     await tester.binding.handlePopRoute();
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.byType(TextField), findsNothing);
     expect(rootBackCount, 0);

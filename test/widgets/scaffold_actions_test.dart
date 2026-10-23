@@ -59,6 +59,13 @@ List<String> _barButtons(WidgetTester tester) => [
     button.tooltip ?? '',
 ];
 
+List<String> _shownButtons(WidgetTester tester) => [
+  for (final button in tester.widgetList<IconButton>(
+    find.byType(IconButton).hitTestable(),
+  ))
+    button.tooltip ?? '',
+];
+
 Future<void> _openMenu(WidgetTester tester) async {
   await tester.tap(_inBar(find.byGlyph(AppGlyphs.more)));
   await tester.pumpAndSettle();
@@ -207,11 +214,9 @@ void main() {
 
     await tester.tap(_inBar(find.byTooltip('Search')));
     await tester.pumpAndSettle();
-    expect(
-      _barButtons(tester),
-      containsAllInOrder(['Clear search', 'Delete', 'Select all']),
-    );
-    expect(_inBar(find.byGlyph(AppGlyphs.more)), findsNothing);
+    expect(_shownButtons(tester), ['Delete', 'Select all', 'Cancel']);
+    expect(_inGroup('Delete'), findsOneWidget);
+    expect(find.byGlyph(AppGlyphs.more), findsNothing);
 
     await tester.tap(find.byTooltip('Select all'));
     expect(taps, ['Select all']);
@@ -226,22 +231,19 @@ void main() {
       selection: ['Delete', 'Select all', 'Copy'],
     );
 
-    void expectSplit(String lead) {
-      expect(
-        _barButtons(tester),
-        containsAllInOrder([lead, 'Delete', 'Select all', 'Copy']),
-      );
+    void expectSplit(List<String> buttons) {
+      expect(_shownButtons(tester), buttons);
       expect(_inGroup('Delete'), findsOneWidget);
       expect(_inGroup('Select all'), findsOneWidget);
       expect(_inGroup('Copy'), findsNothing);
-      expect(_inBar(find.byGlyph(AppGlyphs.more)), findsNothing);
+      expect(find.byGlyph(AppGlyphs.more), findsNothing);
     }
 
-    expectSplit('Search');
+    expectSplit(['Search', 'Delete', 'Select all', 'Copy']);
 
     await tester.tap(_inBar(find.byTooltip('Search')));
     await tester.pumpAndSettle();
-    expectSplit('Clear search');
+    expectSplit(['Delete', 'Select all', 'Copy', 'Cancel']);
   });
 
   for (final (type, buttons) in [

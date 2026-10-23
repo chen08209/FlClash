@@ -125,16 +125,17 @@ Color marks the one item that differs, never the structure around it.
   UIAlertController sets them: as wide as the buttons, in their fill, with their text in line with the title and the
   label as the placeholder (`CommonDialog.hasFields`); a field under a filled block of text in an alert takes the
   block's width and corner instead. The custom color's hex field, because its card holds only fills, the color
-  previews, where an outline was the one stroked thing. Search fields are filled pills. A sheet's docked search,
-  because the list scrolls under it: it floats like the dock, with the floating fill and the dock's shadow, or the
-  dock's glass. The editor's find bar, because its fields sit in a row of filled pill buttons: they take the buttons'
-  fill, one level above the bar. All of these stroke only while focused. Any other field, one standing alone on a page,
-  is outlined, with the floating label notched into the stroke: `ThemeData.withAppShapes` gives every input
-  `AppShape.input`, so call sites leave `border` unset. A lone field is never filled: here a fill means structure, so
-  one read as one more card or row, and in light mode the hover overlay brought it down to the page's own tone. No
-  field counts its characters, as none does on iOS or macOS; a length limit holds through its formatter. Material
-  strokes a filled field's whole outline in `onSurfaceVariant`, which ringed the pill brighter than anything else in a
-  dark sheet.
+  previews, where an outline was the one stroked thing. All of these stroke only while focused. Search fields are filled
+  pills on the `GooSurface` they share with the buttons beside them, and ring only focus a key or a remote moved there,
+  as cards do: a tap leaves focus to the caret, as on iOS. A docked search, a sheet's or a pushed phone page's, because
+  the list scrolls under it: it floats like the dock, with the floating fill and the dock's shadow, or the dock's glass.
+  The editor's find bar, because its fields sit in a row of filled pill buttons: they take the buttons' fill, one level
+  above the bar. Any other field, one standing alone on a page, is outlined, with the floating label notched into the
+  stroke: `ThemeData.withAppShapes` gives every input `AppShape.input`, so call sites leave `border` unset. A lone field
+  is never filled: here a fill means structure, so one read as one more card or row, and in light mode the hover overlay
+  brought it down to the page's own tone. No field counts its characters, as none does on iOS or macOS; a length limit
+  holds through its formatter. Material strokes a filled field's whole outline in `onSurfaceVariant`, which ringed the
+  pill brighter than anything else in a dark sheet.
 - **Window chrome**: the desktop sidebar's inner edge and the title bar's bottom edge draw a divider where they meet
   the content. The chrome fill alone left the edge to a four-tone step, which read as a smudge rather than a boundary.
 
@@ -162,7 +163,7 @@ twice as much on the dark page as on the light one and carried the seed's tint.
   The selected destination keeps its neutral fill and primary bar, which already marks it with color.
 - The mobile dock and the docked navigation bar are floats; their indicator is a neutral platter one level above
   them, and the selected destination's content takes primary, as iOS's tab bar marks its selection.
-- With Liquid Glass on (Theme settings), the dock, the buttons of a page's bar, a sheet's docked search, popup
+- With Liquid Glass on (Theme settings), the dock, the buttons of a page's bar, a docked search, popup
   menus, and alerts are glass from `lib/ui/liquid_glass.dart` instead of a fill, and the dock's platter takes the
   secondary hue and chroma at tone 90, or at tone 4 in dark, which sinks it below the bar as iOS 27 does.
 - The proxies page's group tabs are compact choice chips, the current group in the chosen segment's solid `primary`.

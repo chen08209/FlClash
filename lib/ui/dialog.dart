@@ -113,23 +113,21 @@ mixin AlertMotionRouteMixin<T> on PopupRoute<T> {
 
   @override
   Widget buildModalBarrier() {
-    final barrierColor = this.barrierColor;
-    if (offstage || barrierColor == null) {
-      return ModalBarrier(
-        dismissible: barrierDismissible,
-        semanticsLabel: barrierLabel,
-        barrierSemanticsDismissible: semanticsDismissible,
-        onDismiss: onBarrierDismiss,
-      );
-    }
-    return AnimatedModalBarrier(
-      color: _spring.drive(
-        ColorTween(begin: barrierColor.withValues(alpha: 0), end: barrierColor),
-      ),
+    final barrier = ModalBarrier(
       dismissible: barrierDismissible,
       semanticsLabel: barrierLabel,
       barrierSemanticsDismissible: semanticsDismissible,
       onDismiss: onBarrierDismiss,
+    );
+    final barrierColor = this.barrierColor;
+    if (offstage || barrierColor == null) {
+      return barrier;
+    }
+    return LiquidGlassVeil(
+      color: _spring.drive(
+        ColorTween(begin: barrierColor.withValues(alpha: 0), end: barrierColor),
+      ),
+      child: barrier,
     );
   }
 
@@ -303,12 +301,15 @@ class _RenderAlertGlass extends RenderProxyBox {
       _pane.clear();
     } else {
       final rect = _surfaceRectIn(this).shift(offset);
+      // One capture serves the entry's scale and a press.
       _pane.paint(
         context,
         rect,
         shape: LiquidGlassCorners.circular(AppCorner.alert),
         style: _style,
         shadows: _shadows,
+        hold: rect.inflate(_pressGrowth + _pressPull),
+        steadyFrost: true,
         rim: _rim,
       );
       _rim.paintLine(context.canvas, rect, AppCorner.alert);
