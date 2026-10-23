@@ -26,15 +26,12 @@ class ScriptContent extends ConsumerWidget {
     final scripts = ref.watch(scriptsProvider).value ?? [];
     return SliverMainAxisGroup(
       slivers: [
-        const SliverToBoxAdapter(child: SizedBox(height: 24)),
         SliverToBoxAdapter(
-          child: Column(
-            children: [
-              InfoHeader(info: Info(label: appLocalizations.extendScript)),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ListHeader(title: appLocalizations.extendScript),
           ),
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 8)),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),

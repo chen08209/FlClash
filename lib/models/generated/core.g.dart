@@ -65,14 +65,14 @@ _UpdateParams _$UpdateParamsFromJson(Map<String, dynamic> json) =>
       ),
       mode: $enumDecode(_$ModeEnumMap, json['mode']),
       logLevel: $enumDecode(_$LogLevelEnumMap, json['log-level']),
-      ipv6: json['ipv6'] as bool,
-      tcpConcurrent: json['tcp-concurrent'] as bool,
+      ipv6: json['ipv6'] as bool?,
+      tcpConcurrent: json['tcp-concurrent'] as bool?,
       externalController: $enumDecode(
         _$ExternalControllerStatusEnumMap,
         json['external-controller'],
       ),
       secret: json['secret'] as String? ?? '',
-      unifiedDelay: json['unified-delay'] as bool,
+      unifiedDelay: json['unified-delay'] as bool?,
       authentication:
           (json['authentication'] as List<dynamic>?)
               ?.map((e) => e as String)

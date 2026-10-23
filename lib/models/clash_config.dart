@@ -2080,6 +2080,36 @@ Map<String, String> _geoXUrlToJson(Map<GeoResource, String> value) {
   return value.raw;
 }
 
+const _generalOverrideKeysJsonKey = 'general-override-keys';
+
+Set<GeneralOverrideKey> _generalOverrideKeysFromJson(List<Object?> json) => {
+  for (final path in json)
+    ?GeneralOverrideKey.values.firstWhereOrNull((key) => key.path == path),
+};
+
+/// Forced over every profile until they became optional overrides.
+const _legacyForcedGeneralKeys = [
+  GeneralOverrideKey.unifiedDelay,
+  GeneralOverrideKey.tcpConcurrent,
+  GeneralOverrideKey.ipv6,
+  GeneralOverrideKey.geodataLoader,
+];
+
+Map<String, Object?> _withLegacyGeneralOverrideKeys(Map<String, Object?> json) {
+  if (json.containsKey(_generalOverrideKeysJsonKey)) {
+    return json;
+  }
+  final testUrl = json[GeneralOverrideKey.testUrl.path];
+  return {
+    ...json,
+    _generalOverrideKeysJsonKey: [
+      for (final key in _legacyForcedGeneralKeys) key.path,
+      if (testUrl != null && testUrl != defaultTestUrl)
+        GeneralOverrideKey.testUrl.path,
+    ],
+  };
+}
+
 @freezed
 abstract class PatchClashConfig with _$PatchClashConfig {
   const factory PatchClashConfig({
@@ -2139,11 +2169,20 @@ abstract class PatchClashConfig with _$PatchClashConfig {
     @Default({}) Map<String, String> hosts,
     @Default(false) @JsonKey(name: 'geo-auto-update') bool geoAutoUpdate,
     @Default(24) @JsonKey(name: 'geo-update-interval') int geoUpdateInterval,
+    @Default(defaultTestUrl) @JsonKey(name: 'test-url') String testUrl,
+    @Default({})
+    @JsonKey(
+      name: _generalOverrideKeysJsonKey,
+      fromJson: _generalOverrideKeysFromJson,
+    )
+    Set<GeneralOverrideKey> generalOverrideKeys,
   }) = _PatchClashConfig;
 
   factory PatchClashConfig.fromJson(Map<String, Object?> json) =>
       _$PatchClashConfigFromJson(
-        _withLegacyTunOverride(_withLegacyDnsOverrideKeys(json)),
+        _withLegacyGeneralOverrideKeys(
+          _withLegacyTunOverride(_withLegacyDnsOverrideKeys(json)),
+        ),
       );
 
   factory PatchClashConfig.safeFormJson(Map<String, Object?>? json) {
@@ -2155,6 +2194,15 @@ abstract class PatchClashConfig with _$PatchClashConfig {
 }
 
 extension PatchClashConfigExt on PatchClashConfig {
+  T? _picked<T>(GeneralOverrideKey key, T value) =>
+      generalOverrideKeys.contains(key) ? value : null;
+
+  Map<String, Object?> get generalOverrideJson => _overrideJson(
+    toJson(),
+    GeneralOverrideKey.values,
+    generalOverrideKeys.difference(const {GeneralOverrideKey.testUrl}),
+  );
+
   UpdateParams toUpdateParams({
     required List<String> authentication,
     required bool skipCertVerify,
@@ -2166,11 +2214,11 @@ extension PatchClashConfigExt on PatchClashConfig {
       findProcessMode: findProcessMode,
       mode: mode,
       logLevel: logLevel,
-      ipv6: ipv6,
-      tcpConcurrent: tcpConcurrent,
+      ipv6: _picked(GeneralOverrideKey.ipv6, ipv6),
+      tcpConcurrent: _picked(GeneralOverrideKey.tcpConcurrent, tcpConcurrent),
       externalController: externalController,
       secret: secret,
-      unifiedDelay: unifiedDelay,
+      unifiedDelay: _picked(GeneralOverrideKey.unifiedDelay, unifiedDelay),
       mixedPort: mixedPort,
       geoAutoUpdate: geoAutoUpdate,
       geoUpdateInterval: geoUpdateInterval,

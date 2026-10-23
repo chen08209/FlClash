@@ -514,9 +514,7 @@ void main() {
     expect(find.text('No data'), findsOneWidget);
   });
 
-  testWidgets('ListEditView hands its items back to a drag back', (
-    tester,
-  ) async {
+  Future<Object? Function()> openListEditView(WidgetTester tester) async {
     Object? result;
     await tester.pumpWidget(
       ProviderScope(
@@ -545,11 +543,29 @@ void main() {
     );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
+    expect(find.byTooltip('Save'), findsNothing);
     await tester.tap(find.byTooltip('Add'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), 'c');
     await tester.tap(find.text('Confirm'));
     await tester.pumpAndSettle();
+    return () => result;
+  }
+
+  testWidgets('ListEditView hands its items back once saved', (tester) async {
+    final result = await openListEditView(tester);
+
+    await tester.tap(find.byTooltip('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('open'), findsOneWidget);
+    expect(result(), ['a', 'b', 'c']);
+  });
+
+  testWidgets('ListEditView asks before dropping unsaved items', (
+    tester,
+  ) async {
+    final result = await openListEditView(tester);
 
     await tester.timedDrag(
       find.text('a'),
@@ -557,9 +573,16 @@ void main() {
       const Duration(seconds: 1),
     );
     await tester.pumpAndSettle();
+    expect(find.text('open'), findsNothing);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Save the changes?'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
 
     expect(find.text('open'), findsOneWidget);
-    expect(result, ['a', 'b', 'c']);
+    expect(result(), isNull);
   });
 
   testWidgets('MapEditView adds, reorders, selects, and deletes entries', (

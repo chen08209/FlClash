@@ -6,7 +6,6 @@ abstract class EditViewState<W extends ConsumerStatefulWidget, T>
   List<T> _entries = [];
   late final List<T> _initialEntries;
   final _selectionKey = uniqueId;
-  bool _routeTakesResult = false;
 
   String get title;
 
@@ -34,16 +33,6 @@ abstract class EditViewState<W extends ConsumerStatefulWidget, T>
     super.initState();
     _entries = List<T>.from(initialEntries);
     _initialEntries = List<T>.from(_entries);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final route = ModalRoute.of(context);
-    _routeTakesResult = route is DragBackRouteMixin;
-    if (route is DragBackRouteMixin) {
-      route.pageResult = () => popResult(_entries);
-    }
   }
 
   void _handleReorder(int oldIndex, int newIndex) {
@@ -101,6 +90,22 @@ abstract class EditViewState<W extends ConsumerStatefulWidget, T>
     setState(() {});
   }
 
+  void _handleSave() {
+    Navigator.of(context).pop(popResult(_entries));
+  }
+
+  Future<void> _handleBack() async {
+    final res = await dialogs.showSaveChanges();
+    if (res == null || !mounted) {
+      return;
+    }
+    if (res) {
+      _handleSave();
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
+
   Future<void> _handleReset() async {
     final res = await dialogs.showMessage(
       message: TextSpan(text: context.appLocalizations.resetPageChangesTip),
@@ -148,20 +153,28 @@ abstract class EditViewState<W extends ConsumerStatefulWidget, T>
     final appLocalizations = context.appLocalizations;
     final selected = ref.watch(itemsProvider(_selectionKey));
     final isEditing = selected.isNotEmpty;
+    final hasChanges = !sameEntries(_entries, _initialEntries);
     return CommonPopScope(
       onPop: isEditing
           ? (_) {
               ref.read(itemsProvider(_selectionKey).notifier).value = {};
               return false;
             }
-          : _routeTakesResult
-          ? null
-          : (_) {
-              Navigator.of(context).pop(popResult(_entries));
+          : hasChanges
+          ? (_) {
+              _handleBack();
               return false;
-            },
+            }
+          : null,
       child: CommonScaffold(
         title: title,
+        confirmationAction: !isEditing && hasChanges
+            ? IconButtonData(
+                glyph: AppGlyphs.check,
+                onPressed: _handleSave,
+                tooltip: appLocalizations.save,
+              )
+            : null,
         selectionActions: [
           if (isEditing) ...[
             IconButtonData(
@@ -178,7 +191,7 @@ abstract class EditViewState<W extends ConsumerStatefulWidget, T>
         ],
         iconActions: [
           if (!isEditing) ...[
-            if (!sameEntries(_entries, _initialEntries))
+            if (hasChanges)
               IconButtonData(
                 glyph: AppGlyphs.reset,
                 tooltip: appLocalizations.reset,

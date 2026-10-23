@@ -576,11 +576,12 @@ The bar holds `primaryAction` everywhere, a phone's home page above the fixed na
 the app floats an action button: a secondary action such as selecting every app goes into `menuItems`. Saving or
 confirming, in a page, a side sheet or a form, is a check in `confirmationAction`, never among `iconActions`: it ends
 the bar and never folds, and only a form sheet moves it to its foot (Forms). Bar buttons are glyphs with tooltips,
-select all included; the one text button is the custom profile's Import, a filled button whose `CommonPopupBox` opens
-the import menu. Actions on a multi-selection, such as delete and select all, go into
-`selectionActions` instead: the bar keeps them in sight as one button group that takes a single slot beside the search
-button, so they never fold. A sheet's close button always leads its bar, whatever actions follow, as SwiftUI
-places a close in `.cancellationAction`; a pushed page puts its back button there instead.
+select all included. Two text buttons are filled buttons in `actions`: the custom profile's Import, whose
+`CommonPopupBox` opens the import menu, and the extension page's Apply now, which is not a save. Actions on a
+multi-selection, such as delete and select all, go into `selectionActions` instead: the bar keeps them in sight as
+one button group that takes a single slot beside the search button, so they never fold. A sheet's close button
+always leads its bar, whatever actions follow, as SwiftUI places a close in `.cancellationAction`; a pushed page puts
+its back button there instead.
 
 The search button opens its field in place, as iOS 27 does on a page above a tab bar, measured in the simulator: the
 button's group grows into the field on one spring while what it covers fades out, and the selection and

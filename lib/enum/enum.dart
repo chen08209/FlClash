@@ -389,6 +389,22 @@ enum TunOverrideKey with OverrideKey {
   final String path;
 }
 
+/// Top-level profile keys, except `test-url`: the Core takes that one apart
+/// as the URL of every group and provider that names none.
+@JsonEnum(valueField: 'path')
+enum GeneralOverrideKey with OverrideKey {
+  testUrl('test-url'),
+  unifiedDelay('unified-delay'),
+  tcpConcurrent('tcp-concurrent'),
+  ipv6('ipv6'),
+  geodataLoader('geodata-loader');
+
+  const GeneralOverrideKey(this.path);
+
+  @override
+  final String path;
+}
+
 enum ExternalControllerStatus {
   @JsonValue('')
   close(''),

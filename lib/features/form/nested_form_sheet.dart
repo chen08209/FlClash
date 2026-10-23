@@ -88,9 +88,7 @@ class _NestedFormSheetState<T> extends ConsumerState<NestedFormSheet<T>> {
 
   Future<void> _handleExit() async {
     if (_changed) {
-      final res = await dialogs.showMessage(
-        message: TextSpan(text: context.appLocalizations.saveChanges),
-      );
+      final res = await dialogs.showSaveChanges();
       if (res == null || !mounted) {
         return;
       }

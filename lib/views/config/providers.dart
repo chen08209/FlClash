@@ -191,9 +191,7 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
     EditorContent content, {
     ClashProvider? provider,
   }) async {
-    final res = await dialogs.showMessage(
-      message: TextSpan(text: context.appLocalizations.saveChanges),
-    );
+    final res = await dialogs.showSaveChanges();
     if (res == null) {
       return false;
     }

@@ -21,9 +21,11 @@ running config and calls the runtime setter for each one, or `updateListeners` f
 
 The update path carries these fields:
 
-- From `PatchClashConfig`: `mode`, `log-level`, `mixed-port`, `allow-lan`, `ipv6`, `find-process-mode`,
-  `tcp-concurrent`, `unified-delay`, `external-controller`, `secret`, `geo-auto-update`, `geo-update-interval`,
-  `geox-url`, and the `tun` keys of `Tun.coreJson`: `enable`, `device`, `stack`, and `auto-route`, always on.
+- From `PatchClashConfig`: `mode`, `log-level`, `mixed-port`, `allow-lan`, `find-process-mode`, `external-controller`,
+  `secret`, `geo-auto-update`, `geo-update-interval`, `geox-url`, and the `tun` keys of `Tun.coreJson`: `enable`,
+  `device`, `stack`, and `auto-route`, always on.
+- From `PatchClashConfig`, only while picked in `generalOverrideKeys`: `ipv6`, `tcp-concurrent` and `unified-delay`.
+  Unpicked, they go as null and Go leaves the profile's value running.
 - From other settings: `NetworkProps.authentication`, and `AppSettingProps.checkCertificate`, sent as
   `skip-cert-verify`.
 
@@ -38,7 +40,9 @@ To move a setting onto this path:
 3. Reset it in `PatchClashConfig.setupOnly`. If you skip this, every change also reloads the profile. The
    `PatchClashConfig.setupOnly` test in `test/models/config_test.dart` fails until its fixture changes the field and
    `setupOnly` resets it.
-4. Keep writing it in `_makeRealProfileTask`, so a full apply hands the Core the same value.
+4. Keep writing it in `_makeRealProfileTask`, so a full apply hands the Core the same value. A general override is
+   written there through `generalOverrideJson` and sent by `toUpdateParams` only while picked, so both paths leave an
+   unpicked one to the profile.
 
 Prefer update whenever Go has a setter for the setting, because an apply reloads the whole config.
 
@@ -52,23 +56,42 @@ rebuilds the profile YAML and hands it to Go's `applyConfig` through `setupConfi
 - `NetworkProps.bypassPrivateRoute` on desktop, where the task adds the private ranges to the TUN's final
   `route-exclude-address`.
 
-A change to anything else in `PatchClashConfig` therefore reaches it. Today that is the DNS and TUN overrides (`dns`,
-`dnsOverrideKeys`, `tunOverride`, `tunOverrideKeys`), `hosts`, the extra inbound ports (`port`, `socks-port`,
-`redir-port`, `tproxy-port`), the dialer options (`keep-alive-*`, `disable-keep-alive`, `interface-name`, its mode,
-`routing-mark`), `geodata-loader` and `global-ua`. A new `PatchClashConfig` field written by `_makeRealProfileTask` lands here without further work. A value
-the profile build reads from another settings object has to be added to `setupPatchProvider`.
+A change to anything else in `PatchClashConfig` therefore reaches it. Today that is the DNS, TUN and general overrides
+(`dns`, `dnsOverrideKeys`, `tunOverride`, `tunOverrideKeys`, `generalOverrideKeys`, `geodata-loader`, `testUrl`),
+`hosts`, the extra inbound ports (`port`, `socks-port`, `redir-port`, `tproxy-port`), the dialer options
+(`keep-alive-*`, `disable-keep-alive`, `interface-name`, its mode, `routing-mark`) and `global-ua`. A new
+`PatchClashConfig` field written by `_makeRealProfileTask` lands here without further work. A value the profile build
+reads from another settings object has to be added to `setupPatchProvider`.
+
+`applyProfileDebounce` waits for the changes to stop for at least 2 s, and no less than the last push to the Core
+took, up to 10 s. The floor takes in a few switches flipped in a row and keeps a change made just before leaving a page
+from reloading during the transition; the push time keeps a run of changes on a large profile from queuing one reload
+right behind another. The push is timed from building the profile to the groups refreshed after it: a subscription
+refresh or an authorization prompt before it waits on the network or the user, and an apply that sends nothing leaves
+the time as it was. The ceiling covers a push held up by a rule-set download or a Core timeout, which every caller,
+subscription updates and the start's catch-up apply included, would otherwise wait out. A setting therefore reaches the
+Core a little after it is changed, not at once; until then the Core keeps running what it had.
+
+A page waits for its own close to apply only behind a save or an apply-now button. The list editors
+(`EditViewState`: Hosts, bypass domains, route addresses, DNS lists and policies, sniff ports) hand their entries back
+through their save button alone, and leaving with unsaved entries asks first.
 
 An apply without `force` sends nothing when the md5 of the generated YAML has not changed. A value that only
-`SetupParams` carries never changes the YAML, so this path does not deliver it. `testUrl` is that case: Go's default
-health-check URL follows it only when some other change or a `force` apply reaches the Core.
+`SetupParams` carries never changes the YAML, so this path does not deliver it. `PatchClashConfig.testUrl` is that
+case, so `CoreManager` asks for a `force` apply when it changes.
 
 Profile content does not go through `setupPatchProvider`. `setupStateProvider` reads rules, groups and scripts from the
 database once instead of watching them. Content is applied explicitly by whatever changes it:
 
-- Profile editors call `autoApplyProfile` when they close.
-- Subscription updates, scripts and app-level providers call `applyProfileDebounce`.
+- The profile's edit form, the custom profile editor, whose edits make a working profile only together, and the
+  extension page call `autoApplyProfile` when they close. The extension page also shows an apply-now button while its
+  profile is the current one and holds changes not applied yet, for applying them without leaving: changes made on
+  the page, and whatever `inputsApplied` found unapplied when it opened.
+- Subscription updates, scripts and app-level providers call `applyProfileDebounce`. The global added rules are the
+  one content `CoreManager` watches, small enough to keep watched, so no writer has to remember the apply: any change
+  to them calls `applyIfGlobalRulesUsed`, since only a profile with the standard extension takes them in.
 - A profile switch runs `fullSetup`.
-- A start applies again with `force` unless the last apply saw the same inputs (`_inputsApplied`), the `testUrl` and
+- A start applies again with `force` unless the last apply saw the same inputs (`inputsApplied`), the `testUrl` and
   `skipCertVerify` that only `SetupParams` carries included.
 
 ## Restart
@@ -139,9 +162,11 @@ For a new or moved setting, answer each question. More than one answer can be ye
 
 Tests that hold these rules:
 
-- `test/models/config_test.dart` (`PatchClashConfig.setupOnly`).
+- `test/models/config_test.dart` (`PatchClashConfig.setupOnly`, the general overrides and their migration).
+- `test/common/task_general_override_test.dart` (only picked general overrides reach the generated config).
+- `test/views/general_config_test.dart` (removing an override resets its value).
 - `test/models/core_test.dart` (`VpnOptions.effective`).
 - `test/providers/state_derived_test.dart` (the setup patch).
 - `test/manager/core_manager_test.dart` (update against apply).
 - `test/manager/vpn_manager_test.dart` (the restart notice).
-- `test/providers/setup_action_test.dart` (running options, suspension, `restartVpn`).
+- `test/providers/setup_action_test.dart` (running options, suspension, `restartVpn`, the apply debounce).

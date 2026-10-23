@@ -243,10 +243,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     EditorContent content, {
     Script? script,
   }) async {
-    final appLocalizations = context.appLocalizations;
-    final res = await dialogs.showMessage(
-      message: TextSpan(text: appLocalizations.saveChanges),
-    );
+    final res = await dialogs.showSaveChanges();
     if (res == null) {
       return false;
     }

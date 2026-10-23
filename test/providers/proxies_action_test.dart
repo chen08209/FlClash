@@ -41,9 +41,8 @@ final _delayKey = delayTestKey(_testUrl, 'HK-01');
 
 ProviderContainer _delayContainer(ProviderContainer Function() build) {
   final container = build();
-  container.read(appSettingProvider.notifier).value = const AppSettingProps(
-    testUrl: _testUrl,
-  );
+  container.read(patchClashConfigProvider.notifier).value =
+      const PatchClashConfig(testUrl: _testUrl);
   return container;
 }
 

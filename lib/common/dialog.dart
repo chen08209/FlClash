@@ -62,6 +62,15 @@ class Dialogs {
     );
   }
 
+  /// Asked on leaving with unsaved changes: true saves, false leaves without
+  /// saving, and null, the alert dismissed, stays.
+  Future<bool?> showSaveChanges({String? title}) {
+    return showMessage(
+      title: title,
+      message: TextSpan(text: currentAppLocalizations.saveChanges),
+    );
+  }
+
   /// A message with nothing to decide, acknowledged with a single button.
   Future<void> showAlert({
     required InlineSpan message,

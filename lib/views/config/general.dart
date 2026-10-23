@@ -5,11 +5,13 @@ import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/config/on_demand.dart';
+import 'package:fl_clash/views/config/override.dart';
 import 'package:fl_clash/views/config/user_agents.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+part 'general/overrides.dart';
 part 'general/port_form.dart';
 
 class LogLevelItem extends ConsumerWidget {
@@ -42,43 +44,6 @@ class UaItem extends ConsumerWidget {
       title: Text(appLocalizations.userAgent),
       subtitle: Text(globalUa ?? appLocalizations.defaultText),
       widget: const UserAgentsView(),
-    );
-  }
-}
-
-class TestUrlItem extends ConsumerWidget {
-  const TestUrlItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
-    final testUrl = ref.watch(
-      appSettingProvider.select((state) => state.testUrl),
-    );
-    return ListItem.input(
-      title: Text(appLocalizations.testUrl),
-      subtitle: Text(testUrl),
-      resetValue: defaultTestUrl,
-      dialogTitle: appLocalizations.testUrl,
-      value: testUrl,
-      maxLength: TextInputLimits.url,
-      validator: (String? value) {
-        if (value == null || value.isEmpty) {
-          return appLocalizations.emptyTip(appLocalizations.testUrl);
-        }
-        if (!value.isUrl) {
-          return appLocalizations.urlTip(appLocalizations.testUrl);
-        }
-        return null;
-      },
-      onChanged: (String? value) {
-        if (value == null) {
-          return;
-        }
-        ref
-            .read(appSettingProvider.notifier)
-            .update((state) => state.copyWith(testUrl: value));
-      },
     );
   }
 }
@@ -151,6 +116,9 @@ class HostsItem extends ConsumerWidget {
         subtitleBuilder: (item) => Text(item.value),
       ),
       onChanged: (value) {
+        if (value is! Map<String, String>) {
+          return;
+        }
         ref
             .read(patchClashConfigProvider.notifier)
             .update((state) => state.copyWith(hosts: value));
@@ -350,18 +318,7 @@ class GeneralView extends ConsumerWidget {
 
   List<Widget> _connectionItems() {
     return [
-      const TestUrlItem(),
       const DelayTestTimeoutItem(),
-      _clashToggle(
-        title: (l) => l.unifiedDelay,
-        select: (state) => state.unifiedDelay,
-        update: (state, value) => state.copyWith(unifiedDelay: value),
-      ),
-      _clashToggle(
-        title: (l) => l.tcpConcurrent,
-        select: (state) => state.tcpConcurrent,
-        update: (state, value) => state.copyWith(tcpConcurrent: value),
-      ),
       _clashToggle(
         title: (l) => l.findProcessMode,
         select: (state) => state.findProcessMode == FindProcessMode.always,
@@ -400,13 +357,9 @@ class GeneralView extends ConsumerWidget {
 
   List<Widget> _coreItems() {
     return [
-      _clashToggle(
-        title: (l) => 'IPv6',
-        select: (state) => state.ipv6,
-        update: (state, value) => state.copyWith(ipv6: value),
-      ),
-      const HostsItem(),
+      const HostsItem(key: ValueKey(#hosts)),
       ConfigToggleItem(
+        key: const ValueKey(#appendSystemDns),
         title: (l) => l.appendSystemDns,
         selector: networkSettingProvider.select(
           (state) => state.appendSystemDns,
@@ -414,15 +367,6 @@ class GeneralView extends ConsumerWidget {
         onChanged: (ref, value) => ref
             .read(networkSettingProvider.notifier)
             .update((state) => state.copyWith(appendSystemDns: value)),
-      ),
-      _clashToggle(
-        title: (l) => l.geodataLoader,
-        select: (state) => state.geodataLoader == GeodataLoader.memconservative,
-        update: (state, value) => state.copyWith(
-          geodataLoader: value
-              ? GeodataLoader.memconservative
-              : GeodataLoader.standard,
-        ),
       ),
     ];
   }
@@ -487,10 +431,10 @@ class GeneralView extends ConsumerWidget {
             items: _connectionItems(),
             footer: appLocalizations.autoCloseConnectionsDesc,
           ),
-          generateSection(
+          OverrideSection(
             title: appLocalizations.core,
+            spec: _generalOverrideSpec,
             items: _coreItems(),
-            footer: appLocalizations.ipv6Desc,
           ),
           generateSection(
             title: appLocalizations.logsAndDiagnostics,

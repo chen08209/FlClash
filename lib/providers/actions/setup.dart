@@ -42,6 +42,7 @@ class SetupAction extends _$SetupAction {
   _RunRequest? _latestRunRequest;
   DateTime? _startTime;
   _SetupInputs? _appliedInputs;
+  var _lastPushDuration = Duration.zero;
   var _pendingForceApply = false;
 
   bool get _isRunning => _startTime != null && _startTime!.isBeforeNow;
@@ -67,7 +68,7 @@ class SetupAction extends _$SetupAction {
     final appSetting = ref.read(appSettingProvider);
     return SetupParams(
       selectedMap: selectedMap,
-      testUrl: appSetting.testUrl,
+      testUrl: ref.read(patchClashConfigProvider).testUrl,
       skipCertVerify: !appSetting.checkCertificate,
     );
   }
@@ -211,8 +212,8 @@ class SetupAction extends _$SetupAction {
       _rollbackRunning(request);
       rethrow;
     }
-    final inputsApplied = await _inputsApplied();
-    if (_isCurrent(request) && !inputsApplied) {
+    final applied = await inputsApplied();
+    if (_isCurrent(request) && !applied) {
       applyProfileDebounce(force: true, silence: true);
     }
     return true;
@@ -338,13 +339,31 @@ class SetupAction extends _$SetupAction {
     });
   }
 
+  @protected
+  Duration get minApplyDebounce => const Duration(seconds: 2);
+
+  /// A push held up by a rule-set download or a Core timeout says little
+  /// about the load, yet would hold back every apply after it.
+  @protected
+  Duration get maxApplyDebounce => const Duration(seconds: 10);
+
   void applyProfileDebounce({bool silence = false, bool force = false}) {
     _pendingForceApply |= force;
-    debouncer.call(FunctionTag.applyProfile, (silence) {
-      final force = _pendingForceApply;
-      _pendingForceApply = false;
-      applyProfile(silence: silence, force: force);
-    }, args: [silence]);
+    debouncer.call(
+      FunctionTag.applyProfile,
+      (silence) {
+        final force = _pendingForceApply;
+        _pendingForceApply = false;
+        applyProfile(silence: silence, force: force);
+      },
+      args: [silence],
+      duration: Duration(
+        microseconds: _lastPushDuration.inMicroseconds.clamp(
+          minApplyDebounce.inMicroseconds,
+          maxApplyDebounce.inMicroseconds,
+        ),
+      ),
+    );
   }
 
   void changeMode(Mode mode) {
@@ -362,13 +381,24 @@ class SetupAction extends _$SetupAction {
   /// already runs is not rebuilt, which on a large profile takes a while.
   void autoApplyProfile() {
     runAfterFrame(() async {
-      if (!await _inputsApplied()) {
+      if (!await inputsApplied()) {
         await applyProfile();
       }
     });
   }
 
-  Future<bool> _inputsApplied() async {
+  void applyIfGlobalRulesUsed() {
+    final profile = ref.read(currentProfileProvider);
+    if (profile == null ||
+        profile.type == ProfileType.custom ||
+        profile.extendType != ExtendType.standard) {
+      return;
+    }
+    applyProfileDebounce(silence: true);
+  }
+
+  /// Whether the Core runs what the current profile and settings make now.
+  Future<bool> inputsApplied() async {
     final applied = _appliedInputs;
     if (applied == null) {
       return false;
@@ -700,6 +730,7 @@ class SetupAction extends _$SetupAction {
     if (!shouldContinueSetup) {
       return _SetupTaskResult.handoffToCoreRestart;
     }
+    final pushWatch = Stopwatch()..start();
     final realPatchConfig = _effectivePatchConfig(patchConfig);
     final networkSetting = ref.read(networkSettingProvider);
     SetupState? setupState;
@@ -779,6 +810,7 @@ class SetupAction extends _$SetupAction {
       silence: true,
       tag: !silence ? LoadingTag.proxies : null,
     );
+    _lastPushDuration = pushWatch.elapsed;
     if (handoffFailure != null) {
       Error.throwWithStackTrace(handoffFailure!.$1, handoffFailure!.$2);
     }

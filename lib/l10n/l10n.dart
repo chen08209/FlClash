@@ -3355,6 +3355,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Apply now`
+  String get applyNow {
+    return Intl.message('Apply now', name: 'applyNow', desc: '', args: []);
+  }
+
+  /// `Applied`
+  String get applied {
+    return Intl.message('Applied', name: 'applied', desc: '', args: []);
+  }
+
   /// `Can't save`
   String get cannotSave {
     return Intl.message('Can\'t save', name: 'cannotSave', desc: '', args: []);
@@ -7143,6 +7153,16 @@ class AppLocalizations {
     return Intl.message(
       'Entries added here replace the TUN settings of every profile; anything not added keeps the profile\'s own setting. Entries a custom profile adds itself take precedence.',
       name: 'tunOverrideDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Entries added here replace the setting of every profile; anything not added keeps the profile's own setting, or the core default when the profile has none.`
+  String get generalOverrideDesc {
+    return Intl.message(
+      'Entries added here replace the setting of every profile; anything not added keeps the profile\'s own setting, or the core default when the profile has none.',
+      name: 'generalOverrideDesc',
       desc: '',
       args: [],
     );

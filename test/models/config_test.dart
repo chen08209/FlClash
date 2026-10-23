@@ -136,7 +136,6 @@ void main() {
       expect(restored.restoreStrategy, RestoreStrategy.compatible);
       expect(restored.userAgents, defaultUserAgents);
       expect(restored.filters, defaultFilters);
-      expect(restored.testUrl, defaultTestUrl);
     });
 
     test('a saved outboundModeV2 card folds into outboundMode', () {
@@ -258,7 +257,6 @@ void main() {
         onlyStatisticsProxy: true,
         autoLaunch: true,
         closeConnections: false,
-        testUrl: 'https://custom.test',
         userAgents: ['CustomUA/1.0'],
         filters: [Filter(label: 'Asia', regex: 'hk`jp')],
       );
@@ -270,7 +268,6 @@ void main() {
       expect(restored.onlyStatisticsProxy, true);
       expect(restored.autoLaunch, true);
       expect(restored.closeConnections, false);
-      expect(restored.testUrl, 'https://custom.test');
       expect(restored.userAgents, ['CustomUA/1.0']);
       expect(restored.filters, [const Filter(label: 'Asia', regex: 'hk`jp')]);
     });
@@ -547,6 +544,64 @@ void main() {
     });
   });
 
+  group('PatchClashConfig general overrides', () {
+    Map<String, Object?> savedBefore(Map<String, Object?> changes) => {
+      ...(jsonDecode(jsonEncode(defaultClashConfig)) as Map<String, Object?>)
+        ..remove('general-override-keys')
+        ..remove('test-url'),
+      ...changes,
+    };
+
+    test('a legacy config keeps overriding what it used to, defaults '
+        'included', () {
+      final config = PatchClashConfig.fromJson(
+        savedBefore({'tcp-concurrent': false}),
+      );
+
+      expect(config.generalOverrideKeys, {
+        GeneralOverrideKey.unifiedDelay,
+        GeneralOverrideKey.tcpConcurrent,
+        GeneralOverrideKey.ipv6,
+        GeneralOverrideKey.geodataLoader,
+      });
+      expect(config.tcpConcurrent, false);
+      expect(config.ipv6, false);
+      expect(config.unifiedDelay, true);
+    });
+
+    test('saved keys are taken as they are', () {
+      final config = PatchClashConfig.fromJson({
+        ...savedBefore({'ipv6': true}),
+        'general-override-keys': ['unified-delay'],
+      });
+
+      expect(config.generalOverrideKeys, {GeneralOverrideKey.unifiedDelay});
+    });
+
+    test('only picked keys reach the Core live', () {
+      final json = defaultClashConfig
+          .copyWith(
+            ipv6: true,
+            tcpConcurrent: false,
+            generalOverrideKeys: {GeneralOverrideKey.ipv6},
+          )
+          .toUpdateParams(authentication: const [], skipCertVerify: false)
+          .toJson();
+
+      expect(json['ipv6'], true);
+      expect(json['tcp-concurrent'], isNull);
+      expect(json['unified-delay'], isNull);
+    });
+
+    test('picking a key reloads the profile', () {
+      final picked = defaultClashConfig.copyWith(
+        generalOverrideKeys: {GeneralOverrideKey.ipv6},
+      );
+
+      expect(picked.setupOnly, isNot(defaultClashConfig.setupOnly));
+    });
+  });
+
   group('PatchClashConfig.setupOnly', () {
     UpdateParams liveParams(PatchClashConfig config) =>
         config.toUpdateParams(authentication: const [], skipCertVerify: false);
@@ -592,6 +647,8 @@ void main() {
         defaultClashConfig.copyWith(hosts: const {'a.test': '1.1.1.1'}),
         defaultClashConfig.copyWith(dns: defaultDns.copyWith(ipv6: true)),
         defaultClashConfig.copyWith(tunOverrideKeys: {TunOverrideKey.gso}),
+        defaultClashConfig.copyWith(geodataLoader: GeodataLoader.standard),
+        defaultClashConfig.copyWith(testUrl: 'https://probe.test/204'),
       ];
 
       for (final config in setupOnlyChanges) {
@@ -856,6 +913,31 @@ void main() {
 
       expect(config.networkProps.bypassPrivateRoute, false);
       expect(config.patchClashConfig.tun.routeAddress, ['10.0.0.0/8']);
+    });
+
+    test('a legacy custom test URL becomes a general override', () {
+      final config = Config.realFromJson({
+        'themeProps': const ThemeProps().toJson(),
+        'appSettingProps': {'testUrl': 'https://probe.test/204'},
+      });
+
+      expect(config.patchClashConfig.testUrl, 'https://probe.test/204');
+      expect(
+        config.patchClashConfig.generalOverrideKeys,
+        contains(GeneralOverrideKey.testUrl),
+      );
+    });
+
+    test('a legacy default test URL stays unpicked', () {
+      final config = Config.realFromJson({
+        'themeProps': const ThemeProps().toJson(),
+        'appSettingProps': {'testUrl': defaultTestUrl},
+      });
+
+      expect(
+        config.patchClashConfig.generalOverrideKeys,
+        isNot(contains(GeneralOverrideKey.testUrl)),
+      );
     });
 
     for (final (overrideDns, keys) in [

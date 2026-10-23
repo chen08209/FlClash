@@ -933,6 +933,10 @@ _PatchClashConfig _$PatchClashConfigFromJson(Map<String, dynamic> json) =>
           const {},
       geoAutoUpdate: json['geo-auto-update'] as bool? ?? false,
       geoUpdateInterval: (json['geo-update-interval'] as num?)?.toInt() ?? 24,
+      testUrl: json['test-url'] as String? ?? defaultTestUrl,
+      generalOverrideKeys: json['general-override-keys'] == null
+          ? const {}
+          : _generalOverrideKeysFromJson(json['general-override-keys'] as List),
     );
 
 Map<String, dynamic> _$PatchClashConfigToJson(_PatchClashConfig instance) =>
@@ -974,6 +978,10 @@ Map<String, dynamic> _$PatchClashConfigToJson(_PatchClashConfig instance) =>
       'hosts': instance.hosts,
       'geo-auto-update': instance.geoAutoUpdate,
       'geo-update-interval': instance.geoUpdateInterval,
+      'test-url': instance.testUrl,
+      'general-override-keys': instance.generalOverrideKeys
+          .map((e) => _$GeneralOverrideKeyEnumMap[e]!)
+          .toList(),
     };
 
 const _$ModeEnumMap = {
@@ -1009,4 +1017,12 @@ const _$GeodataLoaderEnumMap = {
 const _$ExternalControllerStatusEnumMap = {
   ExternalControllerStatus.close: '',
   ExternalControllerStatus.open: '127.0.0.1:9090',
+};
+
+const _$GeneralOverrideKeyEnumMap = {
+  GeneralOverrideKey.testUrl: 'test-url',
+  GeneralOverrideKey.unifiedDelay: 'unified-delay',
+  GeneralOverrideKey.tcpConcurrent: 'tcp-concurrent',
+  GeneralOverrideKey.ipv6: 'ipv6',
+  GeneralOverrideKey.geodataLoader: 'geodata-loader',
 };

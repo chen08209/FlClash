@@ -132,46 +132,39 @@ class _StandardContentState extends ConsumerState<StandardContent> {
             },
       child: SliverMainAxisGroup(
         slivers: [
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
           SliverToBoxAdapter(
-            child: Column(
-              children: [
-                ListHeader(
-                  title: appLocalizations.addedRules,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16.mAp(context),
-                    vertical: 8.mAp(context),
-                  ),
-                  actions: [
-                    if (selectedRules.isNotEmpty) ...[
-                      IconButtonData(
-                        glyph: AppGlyphs.delete,
-                        tooltip: appLocalizations.delete,
-                        onPressed: _handleDelete,
-                      ),
-                      IconButtonData(
-                        glyph: AppGlyphs.selectAll,
-                        tooltip: appLocalizations.selectAll,
-                        onPressed: _handleSelectAll,
-                      ),
-                    ] else ...[
-                      IconButtonData(
-                        glyph: AppGlyphs.rulePresets,
-                        tooltip: appLocalizations.quickActions,
-                        onPressed: _handleQuickActions,
-                      ),
-                      IconButtonData(
-                        glyph: AppGlyphs.addCircle,
-                        tooltip: appLocalizations.add,
-                        onPressed: _handleAddOrUpdate,
-                      ),
-                    ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: ListHeader(
+                title: appLocalizations.addedRules,
+                actions: [
+                  if (selectedRules.isNotEmpty) ...[
+                    IconButtonData(
+                      glyph: AppGlyphs.delete,
+                      tooltip: appLocalizations.delete,
+                      onPressed: _handleDelete,
+                    ),
+                    IconButtonData(
+                      glyph: AppGlyphs.selectAll,
+                      tooltip: appLocalizations.selectAll,
+                      onPressed: _handleSelectAll,
+                    ),
+                  ] else ...[
+                    IconButtonData(
+                      glyph: AppGlyphs.rulePresets,
+                      tooltip: appLocalizations.quickActions,
+                      onPressed: _handleQuickActions,
+                    ),
+                    IconButtonData(
+                      glyph: AppGlyphs.addCircle,
+                      tooltip: appLocalizations.add,
+                      onPressed: _handleAddOrUpdate,
+                    ),
                   ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
           SliverReorderableList(
             itemCount: addedRules.length,
             itemBuilder: (_, index) =>

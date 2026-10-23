@@ -56,6 +56,16 @@ class _MessageFailureSetupAction extends SetupAction {
   }
 }
 
+class _UnflooredDebounceSetupAction extends SetupAction {
+  @override
+  Duration get minApplyDebounce => Duration.zero;
+}
+
+class _CappedDebounceSetupAction extends _UnflooredDebounceSetupAction {
+  @override
+  Duration get maxApplyDebounce => const Duration(milliseconds: 300);
+}
+
 class TestCommonAction extends CommonAction {
   int trafficUpdates = 0;
 
@@ -80,6 +90,9 @@ class TestSetupAction extends SetupAction {
 
   @override
   Future<DateTime?> serviceStartTime() async => serviceStart;
+
+  @override
+  Duration get minApplyDebounce => const Duration(milliseconds: 100);
 
   @override
   Future<AuthorizeCode> authorizeCore() async {
@@ -985,7 +998,7 @@ void main() {
       notifier.applyProfileDebounce(force: true);
       expect(action.applyProfileCalls, 0);
 
-      await Future<void>.delayed(const Duration(milliseconds: 800));
+      await Future<void>.delayed(const Duration(milliseconds: 300));
       expect(action.applyProfileCalls, 1);
     });
 
@@ -994,9 +1007,9 @@ void main() {
 
       notifier.applyProfileDebounce(force: true);
       notifier.applyProfileDebounce();
-      await Future<void>.delayed(const Duration(milliseconds: 800));
+      await Future<void>.delayed(const Duration(milliseconds: 300));
       notifier.applyProfileDebounce();
-      await Future<void>.delayed(const Duration(milliseconds: 800));
+      await Future<void>.delayed(const Duration(milliseconds: 300));
 
       expect(action.appliedForce, [true, false]);
     });
@@ -1008,13 +1021,42 @@ void main() {
       notifier.applyProfileDebounce(force: true);
       await notifier.setRunning(false);
 
-      await Future<void>.delayed(const Duration(milliseconds: 800));
+      await Future<void>.delayed(const Duration(milliseconds: 300));
       expect(action.applyProfileCalls, 0);
 
       notifier.applyProfileDebounce();
-      await Future<void>.delayed(const Duration(milliseconds: 800));
+      await Future<void>.delayed(const Duration(milliseconds: 300));
       expect(action.appliedForce, [false]);
     });
+  });
+
+  group('applyIfGlobalRulesUsed', () {
+    for (final (name, profile, applies) in [
+      ('a standard extension', Profile.normal(label: 'p'), true),
+      (
+        'a script extension',
+        Profile.normal(label: 'p').copyWith(extendType: ExtendType.script),
+        false,
+      ),
+      ('a custom profile', Profile.custom(label: 'p'), false),
+    ]) {
+      test('${applies ? 'applies' : 'leaves alone'} $name', () async {
+        final setupAction = TestSetupAction();
+        final scoped = ProviderContainer(
+          overrides: [
+            profilesProvider.overrideWith(() => TestProfiles([profile])),
+            currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+            setupActionProvider.overrideWith(() => setupAction),
+          ],
+        );
+        addTearDown(scoped.dispose);
+
+        scoped.read(setupActionProvider.notifier).applyIfGlobalRulesUsed();
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+
+        expect(setupAction.applyProfileCalls, applies ? 1 : 0);
+      });
+    }
   });
 
   group('_setupConfig via the real SetupAction', () {
@@ -1251,6 +1293,79 @@ void main() {
       verify(() => core.getProfileBase(any())).called(1);
       // Queued behind the rebuild: one that outlasts the pump would compare
       // against the md5 tearDown resets and push into a disposed container.
+      await setupAction.applyProfile();
+    });
+
+    test('a debounced apply waits as long as the last push to the Core took, '
+        'whatever an apply that sent nothing took since', () async {
+      final profile = Profile.normal(label: 'p');
+      final core = _MockCoreHandlerInterface();
+      when(
+        () => core.getProfileBase(any()),
+      ).thenAnswer((_) async => const ProfileBase(config: {}, digest: 'd'));
+      when(() => core.setupConfig(any())).thenAnswer((_) async {
+        await Future<void>.delayed(const Duration(seconds: 1));
+        return '';
+      });
+      final scoped = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(() => TestProfiles([profile])),
+          currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+          setupStateProvider.overrideWith(
+            (_, _) => nullProfileSetupState.copyWith(profileId: profile.id),
+          ),
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          setupActionProvider.overrideWith(_UnflooredDebounceSetupAction.new),
+        ],
+      );
+      addTearDown(scoped.dispose);
+      final setupAction = scoped.read(setupActionProvider.notifier);
+
+      await setupAction.applyProfile(force: true);
+      await setupAction.applyProfile();
+      verify(() => core.setupConfig(any())).called(1);
+      clearInteractions(core);
+
+      setupAction.applyProfileDebounce(silence: true, force: true);
+      await Future<void>.delayed(const Duration(milliseconds: 800));
+      verifyNever(() => core.getProfileBase(any()));
+      await Future<void>.delayed(const Duration(seconds: 1));
+      verify(() => core.getProfileBase(any())).called(1);
+      // Queued behind the forced push, so the container outlives it.
+      await setupAction.applyProfile();
+    });
+
+    test('a slow push holds a debounced apply back no longer than the '
+        'ceiling', () async {
+      final profile = Profile.normal(label: 'p');
+      final core = _MockCoreHandlerInterface();
+      when(
+        () => core.getProfileBase(any()),
+      ).thenAnswer((_) async => const ProfileBase(config: {}, digest: 'd'));
+      when(() => core.setupConfig(any())).thenAnswer((_) async {
+        await Future<void>.delayed(const Duration(seconds: 1));
+        return '';
+      });
+      final scoped = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(() => TestProfiles([profile])),
+          currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+          setupStateProvider.overrideWith(
+            (_, _) => nullProfileSetupState.copyWith(profileId: profile.id),
+          ),
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          setupActionProvider.overrideWith(_CappedDebounceSetupAction.new),
+        ],
+      );
+      addTearDown(scoped.dispose);
+      final setupAction = scoped.read(setupActionProvider.notifier);
+
+      await setupAction.applyProfile(force: true);
+      clearInteractions(core);
+
+      setupAction.applyProfileDebounce(silence: true, force: true);
+      await Future<void>.delayed(const Duration(milliseconds: 650));
+      verify(() => core.getProfileBase(any())).called(1);
       await setupAction.applyProfile();
     });
 
@@ -1536,7 +1651,7 @@ void main() {
             ),
             coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
             commonActionProvider.overrideWith(TestCommonAction.new),
-            setupActionProvider.overrideWith(SetupAction.new),
+            setupActionProvider.overrideWith(_UnflooredDebounceSetupAction.new),
           ],
         );
         addTearDown(scoped.dispose);
@@ -1550,8 +1665,8 @@ void main() {
         verifyNever(() => core.setupConfig(any()));
 
         await setupAction.setRunning(false);
-        scoped.read(appSettingProvider.notifier).value = scoped
-            .read(appSettingProvider)
+        scoped.read(patchClashConfigProvider.notifier).value = scoped
+            .read(patchClashConfigProvider)
             .copyWith(testUrl: 'https://example.com/204');
         await setupAction.setRunning(true);
         await Future<void>.delayed(const Duration(milliseconds: 800));

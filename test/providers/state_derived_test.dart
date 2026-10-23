@@ -139,7 +139,7 @@ void main() {
         .read(patchClashConfigProvider.notifier)
         .update((state) => state.copyWith(mode: Mode.rule));
     container
-        .read(appSettingProvider.notifier)
+        .read(patchClashConfigProvider.notifier)
         .update((state) => state.copyWith(testUrl: testUrl));
     container
         .read(delayDataSourceProvider.notifier)
@@ -170,7 +170,7 @@ void main() {
         .read(patchClashConfigProvider.notifier)
         .update((state) => state.copyWith(mode: Mode.rule));
     container
-        .read(appSettingProvider.notifier)
+        .read(patchClashConfigProvider.notifier)
         .update((state) => state.copyWith(testUrl: testUrl));
     container
         .read(proxiesStyleSettingProvider.notifier)
@@ -250,7 +250,7 @@ void main() {
         .read(patchClashConfigProvider.notifier)
         .update((state) => state.copyWith(mode: Mode.rule));
     container
-        .read(appSettingProvider.notifier)
+        .read(patchClashConfigProvider.notifier)
         .update((state) => state.copyWith(testUrl: testUrl));
     for (final node in nodes) {
       container
@@ -295,7 +295,7 @@ void main() {
         .read(patchClashConfigProvider.notifier)
         .update((state) => state.copyWith(mode: Mode.rule));
     container
-        .read(appSettingProvider.notifier)
+        .read(patchClashConfigProvider.notifier)
         .update((state) => state.copyWith(testUrl: testUrl));
     container
         .read(delayDataSourceProvider.notifier)
@@ -338,7 +338,7 @@ void main() {
         .read(patchClashConfigProvider.notifier)
         .update((state) => state.copyWith(mode: Mode.rule));
     container
-        .read(appSettingProvider.notifier)
+        .read(patchClashConfigProvider.notifier)
         .update((state) => state.copyWith(testUrl: testUrl));
     container
         .read(proxiesStyleSettingProvider.notifier)

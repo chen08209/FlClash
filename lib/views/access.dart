@@ -174,11 +174,7 @@ class _AccessViewState extends ConsumerState<AccessView>
   }
 
   Future<void> _handleBack() async {
-    final appLocalizations = context.appLocalizations;
-    final res = await dialogs.showMessage(
-      title: appLocalizations.tip,
-      message: TextSpan(text: appLocalizations.saveChanges),
-    );
+    final res = await dialogs.showSaveChanges();
     if (res == null) {
       return;
     }

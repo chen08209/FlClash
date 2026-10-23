@@ -282,7 +282,10 @@ class ConfigListEditItem extends _ConfigItem<List<String>> {
         titleBuilder: (item) => Text(item),
       ),
       onChanged: (items) {
-        final next = List<String>.from(items as List);
+        if (items is! List) {
+          return;
+        }
+        final next = List<String>.from(items);
         if (!listEquals(next, value)) {
           onChanged(ref, next);
         }

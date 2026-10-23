@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/views/config/override.dart';
@@ -409,35 +408,11 @@ class TunSection extends ConsumerWidget {
         footer: appLocalizations.bypassPrivateRouteDesc,
       );
     }
-    final spec = appTunOverrideSpec(isLinux: isLinux, isWindows: isWindows);
-    final picked = ref.watch(
-      patchClashConfigProvider.select((state) => state.tunOverrideKeys),
-    );
-    final listed = [
-      for (final key in spec.values)
-        if (picked.contains(key)) key,
-    ];
-    void handleAdd() => showOverrideAddSheet(context, ref, spec);
-    return generateAnimatedSection(
+    return OverrideSection(
       title: appLocalizations.tun,
-      items: [
-        const BypassPrivateRouteItem(key: ValueKey(#bypassPrivateRoute)),
-        for (final key in listed)
-          OverrideEntry(key: ValueKey(key), spec: spec, overrideKey: key),
-        if (listed.length < spec.values.length)
-          FormRow(
-            key: const ValueKey(#add),
-            leading: EntryButton.add(onPressed: handleAdd),
-            title: spec.target.addEntry(appLocalizations),
-            titleStyle: TextStyle(color: context.colorScheme.primary),
-            onPressed: handleAdd,
-          ),
-      ],
-      footer: [
-        appLocalizations.bypassPrivateRouteDesc,
-        appLocalizations.tunOverrideDesc,
-        ?spec.footerOf(listed, appLocalizations),
-      ].join('\n'),
+      spec: appTunOverrideSpec(isLinux: isLinux, isWindows: isWindows),
+      items: const [BypassPrivateRouteItem(key: ValueKey(#bypassPrivateRoute))],
+      footer: [appLocalizations.bypassPrivateRouteDesc],
     );
   }
 }

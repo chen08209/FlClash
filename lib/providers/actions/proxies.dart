@@ -121,7 +121,7 @@ class ProxiesAction extends _$ProxiesAction {
           );
           final delayMap = ref.read(delayDataSourceProvider);
           final testUrl = ref.read(
-            appSettingProvider.select((state) => state.testUrl),
+            patchClashConfigProvider.select((state) => state.testUrl),
           );
           final selectedMap = ref.read(
             currentProfileProvider.select((state) => state?.selectedMap ?? {}),

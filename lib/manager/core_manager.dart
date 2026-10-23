@@ -8,6 +8,7 @@ import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
+import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/route_state.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:material_ui/material_ui.dart';
@@ -53,7 +54,19 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       if (prev != next) {
         ref
             .read(setupActionProvider.notifier)
-            .applyProfileDebounce(silence: true);
+            .applyProfileDebounce(
+              silence: true,
+              // The test URL changes no YAML, so only a forced apply hands
+              // it over.
+              force:
+                  prev != null &&
+                  prev.patchConfig.testUrl != next.patchConfig.testUrl,
+            );
+      }
+    });
+    ref.listenManual(globalRulesProvider, (prev, next) {
+      if (prev?.value != null && next.hasValue) {
+        ref.read(setupActionProvider.notifier).applyIfGlobalRulesUsed();
       }
     });
     ref.listenManual(appSettingProvider.select((state) => state.openLogs), (

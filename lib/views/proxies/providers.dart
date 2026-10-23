@@ -463,10 +463,7 @@ class _EditProviderViewState extends ConsumerState<_EditProviderView> {
   }
 
   Future<bool> _handlePop(BuildContext context, EditorContent content) async {
-    final res = await dialogs.showMessage(
-      title: widget.provider.name,
-      message: TextSpan(text: context.appLocalizations.saveChanges),
-    );
+    final res = await dialogs.showSaveChanges(title: widget.provider.name);
     if (res == null) {
       return false;
     }

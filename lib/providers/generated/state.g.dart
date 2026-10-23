@@ -138,7 +138,7 @@ final class SetupPatchProvider
   }
 }
 
-String _$setupPatchHash() => r'd09fb41d40ced4cd47c9131fe55e983e35128724';
+String _$setupPatchHash() => r'283e94846903bafab1c22985b6f90d4c0e2a4697';
 
 @ProviderFor(trayState)
 final trayStateProvider = TrayStateProvider._();
@@ -236,7 +236,7 @@ final class TrayDelaysProvider
   }
 }
 
-String _$trayDelaysHash() => r'266ed418b13319a7fcc6a3d8307b6786f6ce89bf';
+String _$trayDelaysHash() => r'e0c9bc51a20c911d9b4cbb6ee667f38e9b9218d5';
 
 @ProviderFor(trayTitleState)
 final trayTitleStateProvider = TrayTitleStateProvider._();
@@ -437,7 +437,7 @@ final class SharedStateProvider
   }
 }
 
-String _$sharedStateHash() => r'c78c01097468ec6de887e0c94a9d5432403730a1';
+String _$sharedStateHash() => r'98486029d33bd542b933d43e0c92a1f74aaa69a0';
 
 @ProviderFor(vpnRouteAddress)
 final vpnRouteAddressProvider = VpnRouteAddressProvider._();
@@ -2256,7 +2256,7 @@ final class RealTestUrlProvider
   }
 }
 
-String _$realTestUrlHash() => r'6d68caa7a526b6788e3e4899d3ec8ad1c065b15e';
+String _$realTestUrlHash() => r'1e133ef3e72c2b04bc23f0fe9d33db0af94c9086';
 
 final class RealTestUrlFamily extends $Family
     with $FunctionalFamilyOverride<String, String?> {

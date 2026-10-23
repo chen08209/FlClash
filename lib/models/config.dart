@@ -248,7 +248,6 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(false) bool autoRun,
     @Default(false) bool openLogs,
     @Default(true) bool closeConnections,
-    @Default(defaultTestUrl) String testUrl,
     @Default(defaultDelayTestTimeout) int delayTestTimeout,
     @Default(TabAnimation.fade)
     @JsonKey(readValue: _readTabAnimation)
@@ -525,7 +524,7 @@ abstract class Config with _$Config {
 
   factory Config.strictFromJson(Map<String, Object?> json) =>
       _withLegacyOverrideDns(
-        _$ConfigFromJson(_withLegacyRouteMode(json)),
+        _$ConfigFromJson(_withLegacyTestUrl(_withLegacyRouteMode(json))),
         json,
       );
 
@@ -556,6 +555,26 @@ Config _withLegacyOverrideDns(Config config, Map<String, Object?> json) {
         )
       : <DnsOverrideKey>{};
   return config.copyWith.patchClashConfig(dnsOverrideKeys: keys);
+}
+
+/// The test URL moved from the app settings into the general overrides.
+Map<String, Object?> _withLegacyTestUrl(Map<String, Object?> json) {
+  final app = json['appSettingProps'];
+  final testUrl = app is Map ? app['testUrl'] : null;
+  final clash = json['patchClashConfig'] ?? const <String, Object?>{};
+  if (testUrl is! String ||
+      testUrl.isEmpty ||
+      clash is! Map ||
+      clash.containsKey(GeneralOverrideKey.testUrl.path)) {
+    return json;
+  }
+  return {
+    ...json,
+    'patchClashConfig': {
+      ...Map<String, Object?>.from(clash),
+      GeneralOverrideKey.testUrl.path: testUrl,
+    },
+  };
 }
 
 Map<String, Object?> _withLegacyRouteMode(Map<String, Object?> json) {

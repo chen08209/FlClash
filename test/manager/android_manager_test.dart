@@ -96,9 +96,8 @@ void main() {
     await pumpAndroidManager(tester);
     expect(store.getString('sharedState'), isNull);
 
-    container.read(appSettingProvider.notifier).value = const AppSettingProps(
-      testUrl: 'http://shared.test',
-    );
+    container.read(patchClashConfigProvider.notifier).value =
+        const PatchClashConfig(testUrl: 'http://shared.test');
     await tester.pump();
     await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();

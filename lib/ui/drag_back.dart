@@ -19,13 +19,6 @@ mixin DragBackRouteMixin<T> on ModalRoute<T> {
   bool _dragBackActive = false;
   FocusNode? _focusBeforeDragBack;
 
-  /// What a page hands back to its opener when a pop brings no result of its
-  /// own, as a drag back's does, so the page need not veto pops to answer.
-  ValueGetter<Object?>? pageResult;
-
-  @override
-  T? get currentResult => pageResult?.call() as T?;
-
   /// While true the route's own transition should follow the finger linearly,
   /// through the release until the route settles.
   bool get isDragBackActive => _dragBackActive;
