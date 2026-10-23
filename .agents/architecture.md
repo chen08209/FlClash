@@ -551,8 +551,8 @@ pixel-aligned stroke of Windows' 10-pixel caption glyphs on every platform.
 
 `CommonScaffold` keeps at most three buttons in sight in its bar, the overflow menu button included. A page hands it
 what may fold as data: `primaryAction`, `iconActions`, `menuItems`, and `searchActions` while searching; custom widgets
-passed through `actions` never fold. Past three, two buttons stay beside the overflow menu: the search button (the clear
-button while searching) when there is one, then foldable actions, primary action first unless `foldPrimaryAction` puts
+passed through `actions` never fold. Past three, two buttons stay beside the overflow menu: the search button when
+there is one, then foldable actions, primary action first unless `foldPrimaryAction` puts
 the icon actions ahead of it;
 everything else goes into one overflow menu, primary action first, and a folded action that is loading shows as a
 disabled item. The bar reads as one button group of two beside a single button: the overflow menu button when
@@ -564,8 +564,30 @@ the bar and never folds, and only a form sheet moves it to its foot (Forms). Bar
 select all included; the one text button is the custom profile's Import, a filled button whose `CommonPopupBox` opens
 the import menu. Actions on a multi-selection, such as delete and select all, go into
 `selectionActions` instead: the bar keeps them in sight as one button group that takes a single slot beside the search
-or clear button, so they never fold. A sheet's close button always leads its bar, whatever actions follow, as SwiftUI
+button, so they never fold. A sheet's close button always leads its bar, whatever actions follow, as SwiftUI
 places a close in `.cancellationAction`; a pushed page puts its back button there instead.
+
+The search button opens its field in place, as iOS 27 does on a page above a tab bar, measured in the simulator: the
+button's group grows into the field on one spring while what it covers fades out, and the selection and
+`searchActions` buttons lead the field. A compact bar, a phone's or a side sheet's, gives the field its whole width,
+title and back or close button included, and ends it with a cancel button that clears the query and closes it; a
+regular bar keeps its title and opens a 280 dp field at its end, as iPadOS does, which folds back once it is left empty
+and loses focus. Closing, the field settles on the button group before it fades, so the group's glyphs come up inside
+one pill. A bottom sheet, and a phone page pushed over the one with the tab bar, keep their field docked over their foot
+instead, as iOS 27 docks the search of a page with no tab bar under it: in sight at rest, with a cancel button beside
+it while the field has focus or a query, under a bar that keeps its own buttons. The buttons beside a field share its
+`TextFieldTapRegion`, since a mouse press anywhere else takes the field's focus before the button sees a tap.
+
+Every search field is a `SearchField`: iOS 27's glyph and filled clear button, and a focus ring only where a key or a
+remote moved focus. The bar's field, the docked one and the editor's find bar stand with the buttons beside them on one
+`GooSurface` (`lib/ui/goo.dart`), which draws its `GooPane`s, pills in rows, as one fill or one pane of glass. A field
+swells and stretches under a finger as a button does, and a pressed pane flows into its neighbors in the row, as iOS
+merges glass that shares a container; at rest the blend reaches no further than buttons stand apart, so nothing bulges.
+The buttons beside a bar's or a sheet's field grow out of its ends as it opens and sink back as it closes. Under a
+`GooSurface`, `TonalButtonTheme` puts each icon button on a pane and `TonalButtonGroup` its group on one; every button
+beside a search field is a bar button that way, the docked field's cancel in `TonalButtonSize.docked`, as tall as the
+field, never a bare Material one. The outline is a path built from the same smooth minimum the glass shader blends with
+(`gooGeometry`), so the clip and the bevel agree.
 
 Actions on what the page edits as a whole, such as renaming the custom profile or viewing its final config, go into
 `titleMenuItems` rather than the bar: the title shows a chevron and opens them, as an iOS document's title menu does.
@@ -583,7 +605,8 @@ down through `SheetCoverRouteMixin`, as `SnapSheetRoute` and `ModalSideSheetRout
 `standard` and `ultra` with that `LiquidGlassQuality`, from `ThemeManager`. With it on, `CommonScaffold` passes `glass`
 to the bar's `TonalButtonTheme`,
 which puts a `LiquidGlass` pane behind each button through `ButtonStyle.backgroundBuilder` and one behind a
-`TonalButtonGroup`; the navigation dock's bar and lifted lens become panes as well, and so do a sheet's docked search,
+`TonalButtonGroup`; the navigation dock's bar and lifted lens become panes as well, and so do a `GooSurface`, which
+holds the bar's search and a docked search,
 the cards of a `CommonPopupMenu`, and a `CommonDialog`. On the dashboard only the start button is a pane: its connected
 buttons keep their fills like connected buttons elsewhere, and each pane would add its area to a capture retaken
 whenever the dashboard redraws, which it does often. Each still swells on its own under `ElasticPress`, and a
@@ -632,6 +655,13 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
   the host's reach or leaves the tree, as under a route that covers it, which keeps it alive while it is not drawn: the
   shader holds the image it last sampled. The dark line along the rim darkens the blurred capture there rather than the
   sharp backdrop, a pixel or two wide.
+- A capture holds still while what it shows moves by part of one of its pixels. Impeller blurs a sigma over about
+  5.7 pixels from a copy shrunk to what the layer covers, so a band clears all of its rect before its slots draw: when
+  it covered only its content, a slot growing or shrinking by a pixel as its pane moved, or one cut off by the screen's
+  edge, shrank that copy by other than half, and at density 3 the docked search's standard frost jumped by 1.5/255 every
+  1.3 dp it moved. Each picture also lands on a whole pixel of the capture, as text rounds each line to one: a list
+  under the glass moving by part of a pixel jumped its lines one at a time while their rows glided, and the frost
+  shimmered every frame (up to 3.6/255 at density 2), where now it steps once a pixel of the capture, by under 0.7.
 - Measured on an Android emulator rendering in software (SwiftShader, 1080×2400 at density 420), as raster-thread time a
   frame counting the captures that FrameTiming's raster span leaves out, median of three runs, each capture against
   none in a run of its own: scrolling Tools takes 43 ms with none, 6 more with a sigma over one pixel of the capture and
@@ -751,6 +781,11 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
   a third, as iOS does, and the lens casts a soft shadow 8 dp down. A press lights the bar through `LiquidGlass.glow`:
   a wash over the whole pane, brightest at the finger, that spreads out as it fades. A `pressed` pane, as a glass
   button's or a `TonalButtonGroup`'s is, hears the pointer on what it wraps and lights from the finger the same way.
+- A pointer swells the dock to 40% of a press, as iPadOS lifts a bar under its pointer, and a button under
+  `TonalButtonTheme` the same way through `ElasticHover`. No Material state layer goes over those buttons: a hover only
+  lifts one and a key's focus only rings it. A `TonalButtonGroup` of several also marks the button under the pointer at
+  8%, as the dock marks its destination. A hover neither lights the glass nor flows a pane into its neighbors; only a
+  press does, so `ElasticPress.liftOf` reads the press alone.
 
 ## Popup Motion
 

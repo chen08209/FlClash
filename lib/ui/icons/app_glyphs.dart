@@ -408,6 +408,18 @@ abstract final class AppGlyphs {
     ], role: GlyphRole.line),
   ]);
 
+  static const clearField = Glyph([
+    GlyphCircle(12, 12, 8.8),
+    GlyphPolyline([
+      GlyphVertex(9.3, 9.3),
+      GlyphVertex(14.7, 14.7),
+    ], role: GlyphRole.detail),
+    GlyphPolyline([
+      GlyphVertex(14.7, 9.3),
+      GlyphVertex(9.3, 14.7),
+    ], role: GlyphRole.detail),
+  ]);
+
   static const check = Glyph([
     GlyphPolyline([
       GlyphVertex(4.8, 12.5),

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
@@ -141,9 +142,17 @@ void main() {
 
   testWidgets('system back exits search on a pushed page before its own '
       'back handler', (tester) async {
+    const view = Size(1200, 800);
+    tester.view.physicalSize = view;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     var pageBackCount = 0;
     await tester.pumpWidget(
-      const TestApp(wrapInProviderScope: true, child: SizedBox.shrink()),
+      TestApp(
+        wrapInProviderScope: true,
+        overrides: [viewSizeProvider.overrideWithBuild((_, _) => view)],
+        child: const SizedBox.shrink(),
+      ),
     );
     unawaited(
       tester
@@ -188,6 +197,84 @@ void main() {
 
     expect(find.text('query=a'), findsOneWidget);
     expect(find.byType(TextField), findsOneWidget);
+  });
+
+  testWidgets('cancel on a phone bar clears the query and closes the field', (
+    tester,
+  ) async {
+    final searches = <String>[];
+    await tester.pumpWidget(
+      TestApp(wrapInProviderScope: true, child: _page(onSearch: searches.add)),
+    );
+
+    await tester.tap(find.byGlyph(AppGlyphs.search));
+    await tester.pumpAndSettle();
+    expect(find.text('Page'), findsNothing);
+    await tester.enterText(find.byType(TextField), 'needle');
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(searches, ['needle', '']);
+    expect(find.byType(TextField), findsNothing);
+    expect(find.text('Page'), findsOneWidget);
+  });
+
+  testWidgets(
+    'a closing bar field gives way to its buttons before it settles',
+    (tester) async {
+      await tester.pumpWidget(
+        TestApp(wrapInProviderScope: true, child: _page(onSearch: (_) {})),
+      );
+      await tester.tap(find.byGlyph(AppGlyphs.search));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Cancel'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(tester.binding.hasScheduledFrame, isTrue);
+      expect(
+        tester
+            .widget<LiquidGlassFade>(find.byType(LiquidGlassFade))
+            .opacity
+            .value,
+        0,
+      );
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets('a desktop bar folds its search back once left empty', (
+    tester,
+  ) async {
+    const view = Size(1200, 800);
+    tester.view.physicalSize = view;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [viewSizeProvider.overrideWithBuild((_, _) => view)],
+        child: _page(onSearch: (_) {}),
+      ),
+    );
+
+    await tester.tap(find.byGlyph(AppGlyphs.search));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'needle');
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), '');
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TextField), findsNothing);
+    expect(find.byGlyph(AppGlyphs.search), findsOneWidget);
   });
 }
 

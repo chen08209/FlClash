@@ -1,5 +1,6 @@
 import 'package:fl_clash/ui/context.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/inherited.dart';
 import 'package:fl_clash/ui/metrics.dart';
 import 'package:fl_clash/ui/shape.dart';
 import 'package:fl_clash/ui/surface.dart';
@@ -7,6 +8,7 @@ import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'card.dart';
+import 'goo.dart';
 import 'liquid_glass.dart';
 import 'navigation_dock.dart';
 
@@ -45,6 +47,7 @@ class MoreActionButton extends StatelessWidget {
 
 enum TonalButtonSize {
   bar(button: 44, icon: 24),
+  docked(button: BottomInsetScope.dockedSearchHeight, icon: 24),
   section(button: 36, icon: 20),
   compact(button: 32, icon: 20);
 
@@ -96,9 +99,13 @@ class _TonalButtonGroupState extends State<TonalButtonGroup> {
     final colorScheme = context.colorScheme;
     final buttons = TonalButtonTheme(
       grouped: true,
+      marksHover: widget.children.length > 1,
       size: widget.size,
       child: Row(mainAxisSize: MainAxisSize.min, children: widget.children),
     );
+    if (GooSurface.of(context)) {
+      return ElasticPress(child: GooPane(child: buttons));
+    }
     return ElasticPress(
       child: TonalButtonTheme.glassOf(context)
           ? Listener(
@@ -171,17 +178,22 @@ class TonalButton extends StatelessWidget {
 
 /// Fills every button below and, as iOS does, leaves a press to the swell of
 /// [ElasticPress]; inside a [TonalButtonGroup] the group is filled. With
-/// [glass] the fills are panes of [LiquidGlass], a filled button's tinted.
+/// [glass] the fills are panes of [LiquidGlass], a filled button's tinted;
+/// under a [GooSurface] an icon button stands on a pane of it.
 class TonalButtonTheme extends StatelessWidget {
   const TonalButtonTheme({
     super.key,
     this.grouped = false,
+    this.marksHover = false,
     this.glass = false,
     this.size = TonalButtonSize.bar,
     required this.child,
   });
 
   final bool grouped;
+
+  /// Marks the button under a pointer, as the dock marks its destination.
+  final bool marksHover;
   final bool glass;
   final TonalButtonSize size;
   final Widget child;
@@ -194,8 +206,9 @@ class TonalButtonTheme extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final paned = glass && !grouped;
-    final fill = grouped || paned
+    final goo = !grouped && GooSurface.of(context);
+    final paned = glass && !grouped && !goo;
+    final fill = grouped || paned || goo
         ? Colors.transparent
         : context.raisedSurfaceLevel.colorOf(colorScheme);
     final foreground = colorScheme.onSurface;
@@ -214,30 +227,34 @@ class TonalButtonTheme extends StatelessWidget {
       );
     }
 
-    ButtonStyle feedback(
-      Color? tint,
-      ButtonStyle? pane, {
-      required bool standsOff,
-    }) => ButtonStyle(
-      splashFactory: NoSplash.splashFactory,
-      overlayColor: WidgetStateProperty<Color?>.fromMap({
-        if (tint != null) WidgetState.focused: tint.withValues(alpha: 0.1),
-        WidgetState.pressed: Colors.transparent,
-        if (tint != null) WidgetState.hovered: tint.withValues(alpha: 0.08),
-      }),
-    ).merge(pane).merge(focusRingStyle(colorScheme, standsOff: standsOff));
-    final iconPane = paneOf((states) => states.contains(WidgetState.selected));
+    ButtonStyle feedback(ButtonStyle? pane, {required bool standsOff}) {
+      final behind = pane?.backgroundBuilder;
+      return ButtonStyle(
+        splashFactory: NoSplash.splashFactory,
+        overlayColor: WidgetStateProperty<Color?>.fromMap({
+          WidgetState.pressed: Colors.transparent,
+          WidgetState.hovered: marksHover
+              ? foreground.withValues(alpha: 0.08)
+              : Colors.transparent,
+          WidgetState.any: Colors.transparent,
+        }),
+        backgroundColor: pane?.backgroundColor,
+        backgroundBuilder: (context, states, child) => ElasticHover(
+          child: behind == null ? child! : behind(context, states, child),
+        ),
+      ).merge(focusRingStyle(colorScheme, standsOff: standsOff));
+    }
+
+    final iconPane = goo
+        ? GooSurface.buttonStyle
+        : paneOf((states) => states.contains(WidgetState.selected));
     final filledPane = paneOf(
       (states) => !states.contains(WidgetState.disabled),
     );
-    final filledFeedback = feedback(
-      grouped ? foreground : null,
-      filledPane,
-      standsOff: !grouped,
-    );
+    final filledFeedback = feedback(filledPane, standsOff: !grouped);
     final themed = IconButtonTheme(
       data: IconButtonThemeData(
-        style: feedback(foreground, iconPane, standsOff: paned).merge(
+        style: feedback(iconPane, standsOff: paned).merge(
           IconButton.styleFrom(
             backgroundColor: fill,
             foregroundColor: foreground,

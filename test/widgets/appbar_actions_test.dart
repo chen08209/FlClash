@@ -475,46 +475,67 @@ void main() {
     );
   });
 
-  testWidgets('searching keeps the bar buttons where they stood', (
+  testWidgets('search opens across a phone bar beside its cancel button', (
+    tester,
+  ) async {
+    tester.view.physicalSize = _mobile;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [viewSizeProvider.overrideWithBuild((_, _) => _mobile)],
+        child: CommonScaffold(
+          title: 'Title',
+          searchState: AppBarSearchState(onSearch: (_) {}),
+          body: const SizedBox(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final search = find.widgetWithGlyph(IconButton, AppGlyphs.search);
+    final button = tester.getRect(_container(search));
+
+    await tester.tap(search);
+    await tester.pumpAndSettle();
+    final field = tester.getRect(find.byType(SearchField));
+    final cancel = tester.getRect(
+      _container(find.widgetWithGlyph(IconButton, AppGlyphs.close)),
+    );
+
+    expect(find.text('Title'), findsNothing);
+    expect(field.left, appBarActionInset(true));
+    expect(field.height, TonalButtonSize.bar.button);
+    expect(field.center.dy, button.center.dy);
+    expect(cancel.left - field.right, 12);
+    expect(cancel.right, _mobile.width - appBarActionInset(true));
+    expect(cancel.center.dy, button.center.dy);
+  });
+
+  testWidgets('search opens at the end of a desktop bar under its title', (
     tester,
   ) async {
     await _pumpBar(
       tester,
-      view: _mobile,
-      platform: TargetPlatform.android,
+      view: _desktop,
+      platform: TargetPlatform.macOS,
       child: CommonScaffold(
         title: 'Title',
         searchState: AppBarSearchState(onSearch: (_) {}),
         body: const SizedBox(),
       ),
     );
-    final leading = find.descendant(
-      of: find.byType(AppBar),
-      matching: find.byType(IconButton),
-    );
-    Color? glyphColor(Finder button) => IconTheme.of(
-      tester.element(
-        find
-            .descendant(
-              of: button,
-              matching: find.byWidgetPredicate(
-                (widget) => widget is Icon || widget is GlyphIcon,
-              ),
-            )
-            .first,
-      ),
-    ).color;
-    final back = tester.getRect(_container(leading.first));
-    final backColor = glyphColor(leading.first);
     final search = find.widgetWithGlyph(IconButton, AppGlyphs.search);
-    final trailing = tester.getRect(_container(search));
+    final button = tester.getRect(_container(search));
 
     await tester.tap(search);
     await tester.pumpAndSettle();
-    final clear = find.widgetWithGlyph(IconButton, AppGlyphs.close);
+    final field = tester.getRect(find.byType(SearchField));
 
-    expect(tester.getRect(_container(leading.first)), back);
-    expect(glyphColor(leading.first), backColor);
-    expect(tester.getRect(_container(clear)).right, trailing.right);
+    expect(find.text('Title'), findsOneWidget);
+    expect(find.widgetWithGlyph(IconButton, AppGlyphs.close), findsNothing);
+    expect(field.size, Size(280, TonalButtonSize.bar.button));
+    expect(field.right, button.right);
+    expect(field.center.dy, button.center.dy);
   });
 }

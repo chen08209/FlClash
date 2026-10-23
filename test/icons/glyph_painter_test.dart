@@ -41,6 +41,7 @@ final _glyphs = {
   'remove': AppGlyphs.remove,
   'addCircle': AppGlyphs.addCircle,
   'removeCircle': AppGlyphs.removeCircle,
+  'clearField': AppGlyphs.clearField,
   'close': AppGlyphs.close,
   'check': AppGlyphs.check,
   'checkDouble': AppGlyphs.checkDouble,

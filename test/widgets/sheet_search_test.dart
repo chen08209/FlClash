@@ -1,6 +1,8 @@
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -89,6 +91,59 @@ void main() {
     }
   });
 
+  testWidgets('a phone page pushed over another docks its search at its foot', (
+    tester,
+  ) async {
+    for (final (view, docks) in [
+      (const Size(400, 900), true),
+      (const Size(1200, 800), false),
+    ]) {
+      tester.view.physicalSize = view;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        TestApp(
+          overrides: [viewSizeProvider.overrideWithBuild((_, _) => view)],
+          homeBuilder: (page) => Navigator(
+            onGenerateInitialRoutes: (_, _) => [
+              MaterialPageRoute<void>(builder: (_) => const SizedBox()),
+              MaterialPageRoute<void>(builder: (_) => page),
+            ],
+          ),
+          child: CommonScaffold(
+            title: 'title',
+            searchState: AppBarSearchState(onSearch: queries.add),
+            body: const SizedBox.expand(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final barButton = find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byGlyph(AppGlyphs.search),
+      );
+      expect(barButton, docks ? findsNothing : findsOneWidget, reason: '$view');
+      if (!docks) {
+        continue;
+      }
+      final field = find.byType(SearchField);
+      expect(
+        tester.getRect(field).bottom,
+        view.height - BottomInsetScope.dockedSearchMargin,
+      );
+
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+      await tester.pumpAndSettle();
+      expect(
+        tester.getRect(field).bottom,
+        view.height - 300 - BottomInsetScope.dockedSearchMargin,
+      );
+      tester.view.resetViewInsets();
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
   Future<void> openModalSheet(
     WidgetTester tester, {
     Widget? body,
@@ -145,25 +200,35 @@ void main() {
     );
   });
 
-  testWidgets('a docked field carries its own opaque surface', (tester) async {
+  GooSurface dockOf(WidgetTester tester) => tester.widget<GooSurface>(
+    find.ancestor(
+      of: find.byType(SearchField),
+      matching: find.byType(GooSurface),
+    ),
+  );
+
+  testWidgets('a docked field stands on an opaque surface of its own', (
+    tester,
+  ) async {
     await openModalSheet(tester);
 
-    final decoration = tester
-        .widget<TextField>(find.byType(TextField))
-        .decoration!;
     final field = tester.element(find.byType(TextField));
-    final theme = Theme.of(field);
-    final inputTheme = InputDecorationTheme.of(field);
-    final fill = decoration.fillColor ?? inputTheme.fillColor;
+    final colorScheme = Theme.of(field).colorScheme;
+    final dock = dockOf(tester);
 
-    expect(decoration.filled ?? inputTheme.filled, isTrue);
+    expect(dock.glass, isNull);
     expect(
-      fill,
-      SurfaceLevel.floatingOf(theme.colorScheme).colorOf(theme.colorScheme),
+      dock.color,
+      SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme),
     );
-    expect(fill!.a, 1);
+    expect(dock.color.a, 1);
+    expect(dock.shadows, isNotEmpty);
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).decoration!.filled,
+      isFalse,
+    );
     // The dock itself paints nothing, so no band spans the sheet behind it.
-    final dock = tester.widget<Material>(
+    final material = tester.widget<Material>(
       find
           .ancestor(
             of: find.byType(SearchField),
@@ -171,7 +236,7 @@ void main() {
           )
           .first,
     );
-    expect(dock.type, MaterialType.transparency);
+    expect(material.type, MaterialType.transparency);
   });
 
   testWidgets('a docked field stands on glass in place of its fill', (
@@ -179,42 +244,133 @@ void main() {
   ) async {
     await openModalSheet(tester, glass: true);
 
-    expect(
-      find.ancestor(
-        of: find.byType(SearchField),
-        matching: find.byType(LiquidGlass),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      InputDecorationTheme.of(tester.element(find.byType(TextField))).filled,
-      isFalse,
-    );
+    expect(dockOf(tester).glass, isNotNull);
   });
 
-  testWidgets('a docked field is a pill that strokes only while focused', (
+  Future<void> openSnapSheet(WidgetTester tester) async {
+    const size = Size(400, 900);
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [viewSizeProvider.overrideWithBuild((_, _) => size)],
+        homeBuilder: (home) => RemoteFocusAdapter(enabled: false, child: home),
+        child: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSnapSheet(
+              context,
+              builder: (_, controller) => CommonScaffold(
+                title: 'title',
+                searchState: AppBarSearchState(onSearch: queries.add),
+                body: ListView.builder(
+                  controller: controller,
+                  itemCount: 60,
+                  itemBuilder: (_, index) =>
+                      SizedBox(height: 40, child: Text('$index')),
+                ),
+              ),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> closeSnapSheet(WidgetTester tester) async {
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
+  }
+
+  testWidgets('a docked field rings only focus a key moved there', (
     tester,
   ) async {
-    await openModalSheet(tester);
+    await openSnapSheet(tester);
+    InputBorder focusedBorder() => tester
+        .widget<InputDecorator>(find.byType(InputDecorator))
+        .decoration
+        .focusedBorder!;
 
-    final field = tester.element(find.byType(TextField));
-    final inputTheme = InputDecorationTheme.of(field);
-    final border = inputTheme.border;
-    final focused = inputTheme.focusedBorder;
+    expect(focusedBorder(), isA<AppInputBorder>());
+    expect((focusedBorder() as AppInputBorder).borderRadius, AppRadius.full);
+    await tester.tap(find.byType(TextField));
+    await tester.pumpAndSettle();
+    expect(focusedBorder().borderSide, BorderSide.none);
 
-    expect(border, isA<AppInputBorder>());
-    expect((border! as AppInputBorder).borderRadius, AppRadius.full);
-    expect(border.borderSide, BorderSide.none);
-    expect(focused, isA<AppInputBorder>());
-    expect((focused! as AppInputBorder).borderRadius, AppRadius.full);
-    expect(focused.borderSide.color, Theme.of(field).colorScheme.primary);
-    final decorator = tester.widget<InputDecorator>(
-      find.byType(InputDecorator),
-    );
+    final focusNode = tester
+        .widget<TextField>(find.byType(TextField))
+        .focusNode!;
+    focusNode.unfocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    focusNode.requestFocus();
+    await tester.pumpAndSettle();
     expect(
-      decorator.decoration.floatingLabelBehavior,
-      FloatingLabelBehavior.never,
+      focusedBorder().borderSide.color,
+      Theme.of(tester.element(find.byType(TextField))).colorScheme.primary,
     );
+
+    await closeSnapSheet(tester);
+  });
+
+  testWidgets('a docked field offers cancel while it is in use', (
+    tester,
+  ) async {
+    await openSnapSheet(tester);
+    final cancel = find.byTooltip('Cancel').hitTestable();
+    expect(cancel, findsNothing);
+
+    await tester.tap(find.byType(TextField));
+    await tester.pumpAndSettle();
+    expect(cancel, findsOneWidget);
+    expect(
+      tester.getRect(cancel).left -
+          tester.getRect(find.byType(SearchField)).right,
+      12,
+    );
+    // A bar's button, as tall as the field and in the bar's foreground.
+    expect(tester.getSize(cancel), Size.square(TonalButtonSize.docked.button));
+    final glyph = find.descendant(of: cancel, matching: find.byType(GlyphIcon));
+    expect(
+      IconTheme.of(tester.element(glyph)).color,
+      Theme.of(tester.element(glyph)).colorScheme.onSurface,
+    );
+    await tester.enterText(find.byType(TextField), 'wiki');
+
+    await tester.tap(cancel);
+    await tester.pumpAndSettle();
+
+    expect(queries, ['wiki', '']);
+    expect(find.byType(SearchField), findsOneWidget);
+    expect(cancel, findsNothing);
+
+    await closeSnapSheet(tester);
+  });
+
+  testWidgets('a mouse press on cancel leaves the field until it lets go', (
+    tester,
+  ) async {
+    await openSnapSheet(tester);
+    await tester.tap(find.byType(TextField));
+    await tester.pumpAndSettle();
+    final cancel = find.byTooltip('Cancel').hitTestable();
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(cancel),
+      kind: PointerDeviceKind.mouse,
+    );
+    await tester.pumpAndSettle();
+    expect(cancel, findsOneWidget);
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(cancel, findsNothing);
+    expect(queries, ['']);
+
+    await closeSnapSheet(tester);
   });
 
   testWidgets('a docked field clears the bottom safe area once', (

@@ -185,6 +185,47 @@ void main() {
     expect(_capture().snapshots, 1);
   });
 
+  testWidgets('content moving by part of a capture pixel captures alike', (
+    tester,
+  ) async {
+    Widget scene(double top) => _app(
+      Stack(
+        children: [
+          Positioned(
+            left: 120,
+            top: top,
+            width: 160,
+            height: 13,
+            child: const RepaintBoundary(child: ColoredBox(color: _red)),
+          ),
+          _pane(
+            const Rect.fromLTWH(100, 100, 200, 40),
+            style: const LiquidGlassStyle(tint: Colors.transparent, blur: 8),
+          ),
+        ],
+      ),
+    );
+    Future<List<int>> slot() async {
+      final pane = _capture().panes.single;
+      expect(pane.scale, lessThan(1));
+      final bytes = (await tester.runAsync(pane.atlas.toByteData))!;
+      final place = pane.place;
+      return [
+        for (var y = place.top.toInt(); y < place.bottom; y++)
+          ...bytes.buffer.asUint8List(
+            (y * pane.atlas.width + place.left.toInt()) * 4,
+            place.width.toInt() * 4,
+          ),
+      ];
+    }
+
+    await tester.pumpWidget(scene(104));
+    final still = await slot();
+    await tester.pumpWidget(scene(104.5));
+    expect(_capture().snapshots, 1);
+    expect(await slot(), still);
+  });
+
   testWidgets('a pane over another reads a capture with that one drawn in', (
     tester,
   ) async {

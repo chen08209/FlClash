@@ -999,7 +999,10 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
           margin: EdgeInsets.only(top: topInset),
           padding: _findPanelPadding,
           color: context.surfaceLevel.colorOf(context.colorScheme),
-          child: LayoutBuilder(builder: _buildRows),
+          child: GooSurface(
+            color: context.raisedSurfaceLevel.colorOf(context.colorScheme),
+            child: LayoutBuilder(builder: _buildRows),
+          ),
         ),
       ),
     );
@@ -1164,7 +1167,6 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
             selected: controller.isRegex,
             onPressed: controller.toggleRegex,
           ),
-          const SizedBox(width: 4),
         ],
       ),
     );
@@ -1187,8 +1189,7 @@ class FindPanel extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-/// Filled like a sheet's docked search rather than outlined like other
-/// inputs, since it is a search field too.
+/// A search field among the bar's buttons, on the surface they share.
 class _FindField extends StatelessWidget {
   const _FindField({
     required this.glyph,
@@ -1208,34 +1209,17 @@ class _FindField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final pill = AppShape.input.copyWith(borderRadius: AppRadius.full);
-    final height = _findButtonSize.button;
-    return TextField(
-      maxLines: 1,
-      controller: controller,
-      focusNode: focusNode,
-      textAlignVertical: TextAlignVertical.center,
-      inputFormatters: TextInputLimits.limit(TextInputLimits.search),
-      style: AppTextStyle.body.of(context),
-      onSubmitted: (_) => onSubmitted(),
-      // Not dense: a dense decorator fits its fill to the text and ignores the
-      // minimum height, which desktop's compact density left short of 44 dp.
-      decoration: InputDecoration(
-        constraints: BoxConstraints.tightFor(height: height),
-        filled: true,
-        fillColor: context.raisedSurfaceLevel.colorOf(colorScheme),
-        hintText: hintText,
-        border: pill.copyWith(borderSide: BorderSide.none),
-        enabledBorder: pill.copyWith(borderSide: BorderSide.none),
-        focusedBorder: pill.copyWith(
-          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+    return ElasticPress(
+      child: GooPane(
+        child: SearchField(
+          height: _findButtonSize.button,
+          glyph: glyph,
+          hintText: hintText,
+          controller: controller,
+          focusNode: focusNode,
+          onSubmitted: onSubmitted,
+          trailing: trailing,
         ),
-        contentPadding: const EdgeInsetsDirectional.only(end: 8),
-        prefixIcon: GlyphIcon(glyph, size: 20),
-        prefixIconConstraints: BoxConstraints.tightFor(width: height),
-        suffixIcon: trailing,
-        suffixIconConstraints: const BoxConstraints(),
       ),
     );
   }

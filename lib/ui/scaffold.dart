@@ -1,12 +1,11 @@
 import 'dart:math' as math;
+import 'dart:ui' show lerpDouble;
 
-import 'package:fl_clash/common/input_limits.dart';
 import 'package:fl_clash/common/iterable.dart';
 import 'package:fl_clash/ui/context.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/keyboard.dart';
 import 'package:fl_clash/ui/l10n.dart';
-import 'package:fl_clash/ui/measure.dart';
 import 'package:fl_clash/ui/metrics.dart';
 import 'package:fl_clash/ui/models.dart';
 import 'package:fl_clash/ui/pop_scope.dart';
@@ -15,6 +14,8 @@ import 'package:fl_clash/ui/surface.dart';
 import 'package:fl_clash/ui/typography.dart';
 import 'package:fl_clash/ui/view_scope.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/physics.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
@@ -22,9 +23,11 @@ import 'builder.dart';
 import 'button.dart';
 import 'chip.dart';
 import 'dialog.dart';
+import 'goo.dart';
 import 'inherited.dart';
 import 'liquid_glass.dart';
 import 'loading.dart';
+import 'motion.dart';
 import 'navigation_dock.dart';
 import 'popup.dart';
 import 'search_field.dart';
@@ -101,12 +104,26 @@ class CommonScaffold extends StatefulWidget {
   State<CommonScaffold> createState() => CommonScaffoldState();
 }
 
-class CommonScaffoldState extends State<CommonScaffold> {
+class CommonScaffoldState extends State<CommonScaffold>
+    with SingleTickerProviderStateMixin {
   late final ValueNotifier<AppBarState> _appBarState;
   final ValueNotifier<bool> _loadingNotifier = ValueNotifier(false);
   final ValueNotifier<List<String>> _keywordsNotifier = ValueNotifier([]);
   final _textController = TextEditingController();
   final _searchFocusNode = FocusNode();
+  late final _searchMotion = AnimationController.unbounded(vsync: this);
+  late final Animation<double> _barUnderSearch = _searchMotion.drive(
+    _FadeUnderSearch(),
+  );
+  late final Animation<double> _searchOverBar = _searchMotion.drive(
+    _FadeOverBar(),
+  );
+  final _searchOrigin = ValueNotifier<Rect?>(null);
+  final _searchCovered = ValueNotifier(false);
+  final _searchButtonKey = GlobalKey();
+  final _barKey = GlobalKey();
+  var _searchFillsBar = true;
+  var _searchDocked = false;
   var _sorting = false;
 
   bool get _isSearch {
@@ -118,6 +135,12 @@ class CommonScaffoldState extends State<CommonScaffold> {
     super.initState();
     _appBarState = ValueNotifier(AppBarState(searchState: widget.searchState));
     _loadingNotifier.value = widget.isLoading;
+    _searchFocusNode.addListener(_handleSearchFocusChange);
+    _searchMotion.addStatusListener((status) {
+      if (!status.isAnimating) {
+        _searchCovered.value = _isSearch;
+      }
+    });
     HardwareKeyboard.instance.addHandler(_handleSearchShortcut);
   }
 
@@ -128,7 +151,47 @@ class CommonScaffoldState extends State<CommonScaffold> {
   }
 
   void _handleToSearch() {
+    _searchOrigin.value = _measureSearchOrigin();
     _updateSearchState((state) => state?.copyWith(query: ''));
+    _moveSearch(1);
+  }
+
+  Rect? _measureSearchOrigin() {
+    final button = _searchButtonKey.currentContext?.findRenderObject();
+    final bar = _barKey.currentContext?.findRenderObject();
+    if (button is! RenderBox || bar is! RenderBox || !button.hasSize) {
+      return null;
+    }
+    return button.localToGlobal(Offset.zero, ancestor: bar) & button.size;
+  }
+
+  void _moveSearch(double target) {
+    _searchCovered.value = false;
+    if (context.disableAnimations) {
+      _searchMotion.value = target;
+      _searchCovered.value = _isSearch;
+      return;
+    }
+    _searchMotion.animateWith(
+      SpringSimulation(
+        _searchSpring,
+        _searchMotion.value,
+        target,
+        _searchMotion.velocity,
+        snapToEnd: true,
+      ),
+    );
+  }
+
+  // A bar's field at its end folds back once left empty, as a toolbar search
+  // field does on macOS; one across the bar waits for its cancel button.
+  void _handleSearchFocusChange() {
+    if (_searchFocusNode.hasFocus ||
+        _searchFillsBar ||
+        _textController.text.isNotEmpty) {
+      return;
+    }
+    handleExitSearching();
   }
 
   void _toggleSorting() {
@@ -147,7 +210,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
         !_isFrontmost) {
       return false;
     }
-    if (_isSearch || context.isInCompactSheet) {
+    if (_isSearch || _searchDocked) {
       _searchFocusNode.requestFocus();
       _textController.selection = TextSelection(
         baseOffset: 0,
@@ -180,36 +243,6 @@ class CommonScaffoldState extends State<CommonScaffold> {
     return true;
   }
 
-  Color get _searchingBackgroundColor =>
-      SurfaceLevel.card.colorOf(context.colorScheme);
-
-  Widget _buildSearchingAppBarTheme(Widget child) {
-    return Builder(
-      builder: (context) {
-        final theme = Theme.of(context);
-        return Theme(
-          data: theme.copyWith(
-            appBarTheme: theme.appBarTheme.copyWith(
-              backgroundColor: _searchingBackgroundColor,
-              titleTextStyle: AppTextStyle.body.of(context),
-              toolbarTextStyle: AppTextStyle.subheadline.of(context),
-            ),
-          ),
-          child: SurfaceScope(
-            level: SurfaceLevel.card,
-            child: InputDecorationTheme(
-              data: InputDecorationThemeData(
-                hintStyle: theme.inputDecorationTheme.hintStyle,
-                border: InputBorder.none,
-              ),
-              child: child,
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   @override
   void didUpdateWidget(CommonScaffold oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -218,6 +251,10 @@ class CommonScaffoldState extends State<CommonScaffold> {
       _appBarState.value = _appBarState.value.copyWith(
         searchState: widget.searchState?.copyWith(query: query),
       );
+      if (widget.searchState == null) {
+        _searchMotion.value = 0;
+        _searchCovered.value = false;
+      }
     }
     if (oldWidget.isLoading != widget.isLoading) {
       _loadingNotifier.value = widget.isLoading;
@@ -234,20 +271,25 @@ class CommonScaffoldState extends State<CommonScaffold> {
     }
   }
 
-  void _handleClear() {
-    if (_textController.text.isNotEmpty) {
-      _handleClearInput();
-      return;
-    }
-    _popAppBarLayer();
-  }
-
   void handleExitSearching() {
     if (!_isSearch) {
       return;
     }
     _handleClearInput();
+    _searchFocusNode.unfocus();
     _updateSearchState((state) => state?.copyWith(query: null));
+    _moveSearch(0);
+    // The covered bar, search button included, returns with the next frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _searchOrigin.value = _measureSearchOrigin() ?? _searchOrigin.value;
+      }
+    });
+  }
+
+  void _handleCancelDockedSearch() {
+    _handleClearInput();
+    _searchFocusNode.unfocus();
   }
 
   void _handleExitAppBarLayer() {
@@ -270,6 +312,9 @@ class CommonScaffoldState extends State<CommonScaffold> {
     _appBarState.dispose();
     _textController.dispose();
     _searchFocusNode.dispose();
+    _searchMotion.dispose();
+    _searchOrigin.dispose();
+    _searchCovered.dispose();
     _loadingNotifier.dispose();
     _keywordsNotifier.dispose();
     super.dispose();
@@ -295,28 +340,28 @@ class CommonScaffoldState extends State<CommonScaffold> {
   Widget _buildDockedSearch(AppBarSearchState searchState) {
     final colorScheme = context.colorScheme;
     final glass = LiquidGlassScope.of(context);
-    final pill = AppShape.input.copyWith(borderRadius: AppRadius.full);
-    final fieldPadding =
-        (BottomInsetScope.dockedSearchHeight -
-            MeasureScope.of(context).textHeight(AppTextStyle.body)) /
-        2;
-    final field = InputDecorationTheme(
-      data: InputDecorationTheme.of(context).copyWith(
-        filled: !glass,
-        fillColor: SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme),
-        border: pill.copyWith(borderSide: BorderSide.none),
-        focusedBorder: pill.copyWith(
-          borderSide: BorderSide(color: colorScheme.primary, width: 2),
-        ),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: fieldPadding,
+    const height = BottomInsetScope.dockedSearchHeight;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    final field = ElasticPress(
+      child: GooPane(
+        child: SearchField(
+          height: height,
+          controller: _textController,
+          focusNode: _searchFocusNode,
+          onChanged: searchState.onSearch,
         ),
       ),
-      child: SearchField(
-        controller: _textController,
-        focusNode: _searchFocusNode,
-        onChanged: searchState.onSearch,
+    );
+    final cancel = TextFieldTapRegion(
+      child: TonalButtonTheme(
+        size: TonalButtonSize.docked,
+        child: _barButton(
+          IconButtonData(
+            glyph: AppGlyphs.close,
+            tooltip: UiLocalizations.of(context).cancel,
+            onPressed: _handleCancelDockedSearch,
+          ),
+        ),
       ),
     );
     return Padding(
@@ -330,19 +375,71 @@ class CommonScaffoldState extends State<CommonScaffold> {
         left: false,
         top: false,
         right: false,
-        child: glass
-            ? LiquidGlass(
-                style: LiquidGlassStyle.pill(colorScheme),
-                shadows: dockGlassShadows(colorScheme),
-                child: field,
-              )
-            : DecoratedBox(
-                decoration: ShapeDecoration(
-                  shape: AppShape.full,
-                  shadows: dockShadows(colorScheme),
-                ),
-                child: field,
-              ),
+        child: GooSurface(
+          glass: glass ? LiquidGlassStyle.pill(colorScheme) : null,
+          color: SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme),
+          shadows: glass
+              ? dockGlassShadows(colorScheme)
+              : dockShadows(colorScheme),
+          child: ListenableBuilder(
+            listenable: Listenable.merge([_searchFocusNode, _textController]),
+            builder: (context, _) {
+              final active =
+                  _searchFocusNode.hasFocus || _textController.text.isNotEmpty;
+              // iOS 27 offers the cancel button while its bottom field is in
+              // use, drawn out of the field's end.
+              return TweenAnimationBuilder<double>(
+                tween: Tween(end: active ? 1 : 0),
+                duration: context.motionDuration(_searchSettleDuration),
+                curve: _searchCurve,
+                builder: (_, t, _) {
+                  final grown = math.max(t, 0.0);
+                  return SizedBox(
+                    height: height,
+                    child: Stack(
+                      children: [
+                        PositionedDirectional(
+                          top: 0,
+                          end: 0,
+                          width: height,
+                          height: height,
+                          child: ExcludeFocus(
+                            excluding: !active,
+                            child: ExcludeSemantics(
+                              excluding: !active,
+                              child: IgnorePointer(
+                                ignoring: !active,
+                                child: Transform(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  transform: Matrix4.translationValues(
+                                    (rtl ? -1 : 1) * height / 2 * (1 - t),
+                                    0,
+                                    0,
+                                  )..scaleByDouble(grown, grown, 1, 1),
+                                  child: Opacity(
+                                    opacity: _shownAt(t),
+                                    child: cancel,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        PositionedDirectional(
+                          top: 0,
+                          bottom: 0,
+                          start: 0,
+                          end: (height + _searchFieldGap) * grown,
+                          child: field,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
       ),
     );
   }
@@ -375,7 +472,7 @@ class CommonScaffoldState extends State<CommonScaffold> {
     if (button == null) {
       return null;
     }
-    final hidden = _sorting && !_isSearch;
+    final hidden = _sorting;
     return Center(
       child: ExcludeFocus(
         excluding: hidden,
@@ -398,13 +495,6 @@ class CommonScaffoldState extends State<CommonScaffold> {
     VoidCallback? backAction, {
     required _SheetPop? pop,
   }) {
-    if (_isSearch) {
-      return IconButton(
-        tooltip: UiLocalizations.of(context).back,
-        onPressed: _popAppBarLayer,
-        icon: const GlyphIcon(AppGlyphs.arrowBack),
-      );
-    }
     if (pop != null) {
       return pop.atFoot
           ? null
@@ -429,36 +519,20 @@ class CommonScaffoldState extends State<CommonScaffold> {
         : const BackButton();
   }
 
-  Widget _buildTitle(AppBarSearchState? startState, {required bool compact}) {
-    final localizations = UiLocalizations.of(context);
-    return _isSearch
-        ? TextField(
-            autofocus: true,
-            controller: _textController,
-            focusNode: _searchFocusNode,
-            textInputAction: TextInputAction.search,
-            inputFormatters: TextInputLimits.limit(TextInputLimits.search),
-            style: AppTextStyle.body.of(context),
-            onChanged: (value) {
-              if (startState != null) {
-                startState.onSearch(value);
-              }
-            },
-            decoration: InputDecoration(hintText: localizations.search),
-          )
-        : widget.titleWidget ??
-              (widget.titleMenuItems.isEmpty
-                  ? Text(widget.title!)
-                  : CommonPopupBox(
-                      placement: PopupPlacement.overAnchorStart,
-                      targetBuilder: (open) => _TitleMenuButton(
-                        title: widget.title!,
-                        compact: compact,
-                        onPressed: open,
-                      ),
-                      popupBuilder: (_) =>
-                          CommonPopupMenu(items: widget.titleMenuItems),
-                    ));
+  Widget _buildTitle({required bool compact}) {
+    return widget.titleWidget ??
+        (widget.titleMenuItems.isEmpty
+            ? Text(widget.title!)
+            : CommonPopupBox(
+                placement: PopupPlacement.overAnchorStart,
+                targetBuilder: (open) => _TitleMenuButton(
+                  title: widget.title!,
+                  compact: compact,
+                  onPressed: open,
+                ),
+                popupBuilder: (_) =>
+                    CommonPopupMenu(items: widget.titleMenuItems),
+              ));
   }
 
   List<Widget> _buildActions(
@@ -480,81 +554,99 @@ class CommonScaffoldState extends State<CommonScaffold> {
           ),
       ], edge: AppBarActionEdge.container);
     }
-    final localizations = UiLocalizations.of(context);
-    final lead = _isSearch
-        ? IconButtonData(
-            glyph: AppGlyphs.close,
-            tooltip: localizations.clearSearch,
-            onPressed: _handleClear,
-          )
-        : hasSearch && !form.hasDockedSearch
+    final lead = hasSearch && !form.hasDockedSearch
         ? IconButtonData(
             glyph: AppGlyphs.search,
-            tooltip: localizations.search,
+            tooltip: UiLocalizations.of(context).search,
             onPressed: _handleToSearch,
           )
         : null;
-    final widgets = _isSearch
-        ? const <Widget>[]
-        : widget.actions ?? const <Widget>[];
-    final selection = widget.selectionActions;
-    final selectionGroup = selection.take(_maxGroupedActions);
-    final selectionSingles = selection.skip(_maxGroupedActions);
-    final selectionCount =
-        (selection.isEmpty ? 0 : 1) + selectionSingles.length;
+    final widgets = widget.actions ?? const <Widget>[];
+    final selection = _SelectionButtons(widget.selectionActions);
     final atFoot = form.pop?.atFoot == true;
-    final fold = _isSearch
-        ? _foldBarActions(
-            hasLead: true,
-            icons: widget.searchActions,
-            widgetCount: selectionCount,
-          )
-        : _foldBarActions(
-            hasLead: lead != null,
-            primary: primaryAction,
-            foldPrimary: widget.foldPrimaryAction,
-            icons: [
-              if (widget.canSort)
-                sortModeAction(
-                  context,
-                  sorting: false,
-                  onPressed: _toggleSorting,
-                ),
-              ...widget.iconActions,
-            ],
-            confirmation: atFoot ? null : widget.confirmationAction,
-            widgetCount: widgets.length + selectionCount,
-            menuItems: widget.menuItems,
-          );
+    final fold = _foldBarActions(
+      hasLead: lead != null,
+      primary: primaryAction,
+      foldPrimary: widget.foldPrimaryAction,
+      icons: [
+        if (widget.canSort)
+          sortModeAction(context, sorting: false, onPressed: _toggleSorting),
+        ...widget.iconActions,
+      ],
+      confirmation: atFoot ? null : widget.confirmationAction,
+      widgetCount: widgets.length + selection.slots,
+      menuItems: widget.menuItems,
+    );
     final shown = [?lead, ...fold.shown];
     final grouped = shown.length > 1 ? shown.take(_maxGroupedActions) : null;
-    return genActions([
+    final actions = [
       if (grouped != null)
         TonalButtonGroup(
           children: [
             for (final data in grouped) AppBarActionButton(data: data),
           ],
         ),
-      for (final data in shown.skip(grouped?.length ?? 0))
-        ElasticPress(
-          enabled: !data.isLoading && data.onPressed != null,
-          child: AppBarActionButton(data: data),
-        ),
-      if (selection.isNotEmpty)
-        TonalButtonGroup(
-          children: [
-            for (final data in selectionGroup) AppBarActionButton(data: data),
-          ],
-        ),
-      for (final data in selectionSingles)
-        ElasticPress(
-          enabled: !data.isLoading && data.onPressed != null,
-          child: AppBarActionButton(data: data),
-        ),
+      for (final data in shown.skip(grouped?.length ?? 0)) _barButton(data),
+      ...selection.build(),
       for (final action in widgets) ElasticPress(child: action),
       if (fold.overflow.isNotEmpty)
         ElasticPress(child: _OverflowMenuButton(items: fold.overflow)),
-    ], edge: AppBarActionEdge.container);
+    ];
+    if (lead != null) {
+      actions.first = KeyedSubtree(key: _searchButtonKey, child: actions.first);
+    }
+    return genActions(actions, edge: AppBarActionEdge.container);
+  }
+
+  Widget _buildBarSearch({required bool fills}) {
+    final selection = _SelectionButtons(widget.selectionActions);
+    final fold = _foldBarActions(
+      hasLead: fills,
+      icons: widget.searchActions,
+      widgetCount: selection.slots,
+    );
+    final colorScheme = context.colorScheme;
+    final actions = [
+      ...selection.build(),
+      for (final data in fold.shown) _barButton(data),
+      if (fold.overflow.isNotEmpty)
+        ElasticPress(child: _OverflowMenuButton(items: fold.overflow)),
+    ];
+    final buttonCount =
+        selection.buttons + fold.shown.length + (fold.overflow.isEmpty ? 0 : 1);
+    return _BarSearch(
+      motion: _searchMotion,
+      opacity: _searchOverBar,
+      origin: _searchOrigin,
+      searching: _isSearch,
+      actions: actions,
+      actionsWidth:
+          buttonCount * TonalButtonSize.bar.button +
+          math.max(0, actions.length - 1) * _barButtonGap,
+      cancel: fills
+          ? _barButton(
+              IconButtonData(
+                glyph: AppGlyphs.close,
+                tooltip: UiLocalizations.of(context).cancel,
+                onPressed: _popAppBarLayer,
+              ),
+            )
+          : null,
+      glass: LiquidGlassScope.of(context)
+          ? LiquidGlassStyle.regular(colorScheme)
+          : null,
+      color: context.raisedSurfaceLevel.colorOf(colorScheme),
+      // The field's own buttons stay off the bar's button fills and glass.
+      field: IconButtonTheme(
+        data: IconButtonTheme.of(context),
+        child: SearchField(
+          autofocus: true,
+          controller: _textController,
+          focusNode: _searchFocusNode,
+          onChanged: (value) => _appBarState.value.searchState?.onSearch(value),
+        ),
+      ),
+    );
   }
 
   Widget _buildFootActions(IconButtonData confirmation) {
@@ -577,15 +669,24 @@ class CommonScaffoldState extends State<CommonScaffold> {
     );
   }
 
-  Widget _buildAppBarWrap(Widget child) {
-    final appBar = TonalButtonTheme(
+  Widget _buildAppBarWrap(Widget appBar, {required bool barSearch}) {
+    return TonalButtonTheme(
       glass: LiquidGlassScope.of(context),
-      child: _isSearch ? _buildSearchingAppBarTheme(child) : child,
+      child: Stack(
+        key: _barKey,
+        fit: StackFit.passthrough,
+        children: [
+          appBar,
+          if (barSearch)
+            Positioned.fill(child: _buildBarSearch(fills: _searchFillsBar)),
+          if (_isSearch || _sorting)
+            BackLayerScope(
+              onBack: _handleExitAppBarLayer,
+              child: const SizedBox.shrink(),
+            ),
+        ],
+      ),
     );
-    if (_isSearch || _sorting) {
-      return BackLayerScope(onBack: _handleExitAppBarLayer, child: appBar);
-    }
-    return appBar;
   }
 
   Widget _buildFloatingHeader(Widget appBar) {
@@ -622,53 +723,64 @@ class CommonScaffoldState extends State<CommonScaffold> {
         alignment: Alignment.bottomCenter,
         clipBehavior: Clip.none,
         children: [
-          ValueListenableBuilder<AppBarState>(
-            valueListenable: _appBarState,
-            builder: (_, state, _) {
+          ListenableBuilder(
+            listenable: Listenable.merge([_appBarState, _searchCovered]),
+            builder: (_, _) {
+              final state = _appBarState.value;
               final leading = _buildLeading(backAction, pop: form.pop);
-              final appBar = _buildAppBarWrap(
-                AppBar(
-                  clipBehavior: Clip.none,
-                  automaticallyImplyLeading: false,
-                  animateColor: true,
-                  // A searching bar carries its own opaque theme.
-                  forceMaterialTransparency: isCompact || !_isSearch,
-                  toolbarHeight: isCompact ? sheetToolbarHeight : null,
-                  centerTitle: isCompact,
-                  titleTextStyle: _isSearch
-                      ? null
-                      : compactTitle
-                      ? AppTextStyle.headline.of(context)
-                      : AppTextStyle.pageTitle.of(context),
-                  leading: leading,
-                  // The leading slot already trails its button by a margin.
-                  titleSpacing: leading == null ? null : 0,
-                  title: leading == null || isCompact || _isSearch
-                      ? _buildTitle(state.searchState, compact: compactTitle)
-                      : Padding(
-                          padding: EdgeInsetsDirectional.only(
-                            end: titleEndInset,
-                          ),
-                          child: _buildTitle(
-                            state.searchState,
-                            compact: compactTitle,
-                          ),
-                        ),
-                  actions: [
+              final barSearch =
+                  state.searchState != null && !form.hasDockedSearch;
+              final covered = barSearch && _searchCovered.value;
+              final hidesBar = covered && _searchFillsBar;
+              Widget underSearch(Widget child, {required bool fades}) =>
+                  barSearch && fades
+                  ? _UnderBarSearch(
+                      opacity: _barUnderSearch,
+                      searching: _isSearch,
+                      child: child,
+                    )
+                  : child;
+              final appBar = AppBar(
+                clipBehavior: Clip.none,
+                automaticallyImplyLeading: false,
+                animateColor: true,
+                forceMaterialTransparency: true,
+                toolbarHeight: isCompact ? sheetToolbarHeight : null,
+                centerTitle: isCompact,
+                titleTextStyle: compactTitle
+                    ? AppTextStyle.headline.of(context)
+                    : AppTextStyle.pageTitle.of(context),
+                leading: hidesBar ? null : leading,
+                // The leading slot already trails its button by a margin.
+                titleSpacing: leading == null ? null : 0,
+                title: hidesBar
+                    ? null
+                    : leading == null || isCompact
+                    ? _buildTitle(compact: compactTitle)
+                    : Padding(
+                        padding: EdgeInsetsDirectional.only(end: titleEndInset),
+                        child: _buildTitle(compact: compactTitle),
+                      ),
+                actions: [
+                  if (!covered)
                     for (final action in _buildActions(
                       state.searchState != null,
                       widget.primaryAction,
                       form,
                     ))
-                      FadeTransition(opacity: uncovered, child: action),
-                  ],
-                ),
+                      FadeTransition(
+                        opacity: uncovered,
+                        child: underSearch(action, fades: !_searchFillsBar),
+                      ),
+                ],
+              );
+              final bar = _buildAppBarWrap(
+                underSearch(appBar, fades: _searchFillsBar),
+                barSearch: barSearch,
               );
               return isCompact
-                  ? appBar
-                  : _buildFloatingHeader(
-                      _WindowControlsClearance(child: appBar),
-                    );
+                  ? bar
+                  : _buildFloatingHeader(_WindowControlsClearance(child: bar));
             },
           ),
           ValueListenableBuilder(
@@ -694,6 +806,8 @@ class CommonScaffoldState extends State<CommonScaffold> {
       hasConfirmationAction: widget.confirmationAction != null,
     );
     final isCompact = form.isCompact;
+    _searchFillsBar = _isCompactBar(context, ViewScope.isMobileOf(context));
+    _searchDocked = form.hasDockedSearch;
     final bottomInset = BottomInsetScope.of(context);
     // A detent sheet fills the height its detent gives it and clips its own
     // corners; any other bottom sheet sizes to its content and brings both.
@@ -761,11 +875,26 @@ class CommonScaffoldState extends State<CommonScaffold> {
           )
         : body;
     if (!isCompact) {
+      final docked = form.dockedSearch;
       return AppBarInsetScope(
         child: Scaffold(
           appBar: appBar,
           extendBodyBehindAppBar: barFloats,
-          body: _BodyScope(child: content),
+          body: _BodyScope(
+            child: docked == null
+                ? content
+                : Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      content,
+                      if (!_sorting)
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: _buildDockedSearch(docked),
+                        ),
+                    ],
+                  ),
+          ),
           resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
           backgroundColor: widget.backgroundColor,
         ),
@@ -813,6 +942,226 @@ class CommonScaffoldState extends State<CommonScaffold> {
               child: hugging,
             )
           : hugging,
+    );
+  }
+}
+
+// iOS 27's bar search opening, as the simulator shows it: about 3% over, at
+// its peak 0.24 s in.
+final _searchSpring = SpringDescription.withDampingRatio(
+  mass: 1,
+  stiffness: 390,
+  ratio: 0.75,
+);
+const _searchSettleDuration = Duration(milliseconds: 450);
+final _searchCurve = SpringCurve(_searchSpring, seconds: 0.45);
+const double _searchFieldGap = 12;
+const double _regularSearchWidth = 280;
+
+double _shownAt(double t) => ((t - 0.5) / 0.4).clamp(0.0, 1.0);
+
+// Below this much of its spring the field stands on the button group it grows
+// from, the group in full beneath it, and fades: the group's glyphs come up
+// inside one pill, with no edge of the field beside it.
+const double _searchHandover = 0.2;
+
+class _FadeUnderSearch extends Animatable<double> {
+  @override
+  double transform(double t) =>
+      1 - ((t - _searchHandover) / _searchHandover).clamp(0.0, 1.0);
+}
+
+class _FadeOverBar extends Animatable<double> {
+  @override
+  double transform(double t) => (t / _searchHandover).clamp(0.0, 1.0);
+}
+
+/// What a bar's search covers: faded out as the field opens over it, and out
+/// of reach while it is open.
+class _UnderBarSearch extends StatelessWidget {
+  const _UnderBarSearch({
+    required this.opacity,
+    required this.searching,
+    required this.child,
+  });
+
+  final Animation<double> opacity;
+  final bool searching;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: opacity,
+      child: ExcludeFocus(
+        excluding: searching,
+        child: ExcludeSemantics(
+          excluding: searching,
+          child: IgnorePointer(ignoring: searching, child: child),
+        ),
+      ),
+    );
+  }
+}
+
+/// The field a bar's search button opens into, grown out of that button on
+/// [motion]: across the bar to a [cancel] button where there is one, as iOS
+/// 27 opens one over a page above a tab bar, else at the bar's end, as iPadOS
+/// does. The [actions] that still apply while searching lead the field. The
+/// buttons beside it grow out of its ends and flow into it under a press, as
+/// iOS's do.
+class _BarSearch extends StatelessWidget {
+  const _BarSearch({
+    required this.motion,
+    required this.opacity,
+    required this.origin,
+    required this.searching,
+    required this.actions,
+    required this.actionsWidth,
+    required this.cancel,
+    required this.glass,
+    required this.color,
+    required this.field,
+  });
+
+  final Animation<double> motion;
+  final Animation<double> opacity;
+  final ValueListenable<Rect?> origin;
+  final bool searching;
+  final List<Widget> actions;
+  final double actionsWidth;
+  final Widget? cancel;
+  final LiquidGlassStyle? glass;
+  final Color color;
+  final Widget field;
+
+  @override
+  Widget build(BuildContext context) {
+    final padding = MediaQuery.paddingOf(context);
+    final cancel = this.cancel;
+    final inset = appBarActionInset(cancel != null);
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    final height = TonalButtonSize.bar.button;
+    return ExcludeFocus(
+      excluding: !searching,
+      child: IgnorePointer(
+        ignoring: !searching,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final top =
+                constraints.maxHeight - (pageToolbarHeight + height) / 2;
+            final start = (rtl ? padding.right : padding.left) + inset;
+            final end = width - (rtl ? padding.left : padding.right) - inset;
+            final actionsRoom = actionsWidth > 0
+                ? actionsWidth + _searchFieldGap
+                : 0.0;
+            final fieldEnd = cancel == null
+                ? end
+                : end - height - _searchFieldGap;
+            final fieldStart = cancel == null
+                ? math.max(start + actionsRoom, end - _regularSearchWidth)
+                : start + actionsRoom;
+            final actionsStart = fieldStart - actionsRoom;
+            Rect place(double from, double to) => Rect.fromLTRB(
+              rtl ? width - to : from,
+              top,
+              rtl ? width - from : to,
+              top + height,
+            );
+            final slot = place(fieldStart, math.max(fieldStart, fieldEnd));
+            final actionsRect = place(
+              actionsStart,
+              actionsStart + actionsWidth,
+            );
+            final search = AnimatedBuilder(
+              animation: Listenable.merge([motion, origin]),
+              child: OverflowBox(
+                alignment: AlignmentDirectional.centerStart,
+                minWidth: slot.width,
+                maxWidth: slot.width,
+                child: field,
+              ),
+              builder: (_, content) {
+                if (!searching && !motion.isAnimating) {
+                  return const SizedBox.shrink();
+                }
+                final t = motion.value;
+                final shown = _shownAt(t);
+                final grown = math.max(
+                  0.0,
+                  (t - _searchHandover) / (1 - _searchHandover),
+                );
+                final from = origin.value ?? place(fieldEnd - height, fieldEnd);
+                final fieldRect = Rect.lerp(from, slot, grown)!;
+                Widget grow(Rect rest, Widget child, {required bool leads}) {
+                  final facesRight = leads != rtl;
+                  final edge = facesRight ? rest.right : rest.left;
+                  final reach = lerpDouble(
+                    height / 2,
+                    -_searchFieldGap,
+                    grown,
+                  )!;
+                  final anchor = facesRight
+                      ? fieldRect.left + reach
+                      : fieldRect.right - reach;
+                  return Positioned.fromRect(
+                    rect: rest,
+                    child: Transform(
+                      alignment: facesRight
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      transform: Matrix4.translationValues(anchor - edge, 0, 0)
+                        ..scaleByDouble(grown, grown, 1, 1),
+                      child: Opacity(opacity: shown, child: child),
+                    ),
+                  );
+                }
+
+                return TextFieldTapRegion(
+                  child: Stack(
+                    children: [
+                      Positioned.fromRect(
+                        rect: fieldRect,
+                        child: ElasticPress(
+                          child: GooPane(
+                            child: ClipRSuperellipse(
+                              borderRadius: AppRadius.full,
+                              child: Opacity(opacity: shown, child: content),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (actions.isNotEmpty)
+                        grow(
+                          actionsRect,
+                          Row(
+                            children: [
+                              ...actions.separated(
+                                const SizedBox(width: _barButtonGap),
+                              ),
+                            ],
+                          ),
+                          leads: true,
+                        ),
+                      if (cancel != null)
+                        grow(place(end - height, end), cancel, leads: false),
+                    ],
+                  ),
+                );
+              },
+            );
+            return LiquidGlassFade(
+              opacity: opacity,
+              child: GooSurface(
+                glass: glass,
+                color: color,
+                child: TonalButtonTheme(glass: glass != null, child: search),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }
@@ -986,6 +1335,35 @@ class _FocusClearOfBarState extends State<_FocusClearOfBar> {
 const _maxBarButtons = 3;
 const _maxGroupedActions = 2;
 
+Widget _barButton(IconButtonData data) => ElasticPress(
+  enabled: !data.isLoading && data.onPressed != null,
+  child: AppBarActionButton(data: data),
+);
+
+/// [CommonScaffold.selectionActions] as the bar shows them, searching or not.
+class _SelectionButtons {
+  const _SelectionButtons(this.actions);
+
+  final List<IconButtonData> actions;
+
+  Iterable<IconButtonData> get _singles => actions.skip(_maxGroupedActions);
+
+  int get slots => (actions.isEmpty ? 0 : 1) + _singles.length;
+
+  int get buttons => actions.length;
+
+  List<Widget> build() => [
+    if (actions.isNotEmpty)
+      TonalButtonGroup(
+        children: [
+          for (final data in actions.take(_maxGroupedActions))
+            AppBarActionButton(data: data),
+        ],
+      ),
+    for (final data in _singles) _barButton(data),
+  ];
+}
+
 ({List<IconButtonData> shown, List<CommonPopupMenuItem> overflow})
 _foldBarActions({
   required bool hasLead,
@@ -1077,8 +1455,9 @@ class AppBarActionButton extends StatelessWidget {
 /// What the surface a scaffold sits on asks of its chrome.
 ///
 /// A sheet page is a pushed route and wears a page's chrome. A bottom sheet
-/// floats its bar over the body and searches from a field docked over its
-/// foot instead of a button that takes the bar over.
+/// floats its bar over the body; it and a phone page pushed over the one with
+/// the tab bar search from a field docked over their foot instead of a button
+/// that takes the bar over.
 class _SheetForm {
   const _SheetForm({
     required this.isCompact,
@@ -1095,10 +1474,17 @@ class _SheetForm {
     final provider = SheetProvider.of(context);
     final isModal = provider != null && provider.type != SheetType.page;
     final isCompact = provider?.type.isCompact ?? false;
+    // iOS 27 docks the search of a phone page with no tab bar under it at its
+    // foot, a glass field in sight at rest.
+    final docksSearch =
+        isCompact ||
+        (!isModal &&
+            ViewScope.isMobileOf(context) &&
+            ModalRoute.of(context)?.impliesAppBarDismissal == true);
     return _SheetForm(
       isCompact: isCompact,
       hasDragHandle: provider?.type == SheetType.bottomSheet,
-      dockedSearch: isCompact ? searchState : null,
+      dockedSearch: docksSearch ? searchState : null,
       pop: !isModal
           ? null
           : _SheetPop.of(

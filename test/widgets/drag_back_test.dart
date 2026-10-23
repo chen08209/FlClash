@@ -411,6 +411,68 @@ void main() {
     });
   });
 
+  group('a focused field on a page', () {
+    late FocusNode focus;
+
+    setUp(() => focus = FocusNode());
+    tearDown(() => focus.dispose());
+
+    Future<void> openPage(WidgetTester tester) async {
+      await _pumpOpener(
+        tester,
+        (context) => Navigator.of(context).push(
+          CommonRoute<void>(
+            builder: (_) => Scaffold(
+              body: Column(
+                children: [
+                  const SizedBox(height: 200, child: Text('page')),
+                  TextField(focusNode: focus),
+                  TextButton(onPressed: () {}, child: const Text('button')),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      focus.requestFocus();
+      await tester.pump();
+      expect(focus.hasFocus, isTrue);
+    }
+
+    testWidgets('keeps focus while a press slides toward the leading end', (
+      tester,
+    ) async {
+      await openPage(tester);
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.text('button')),
+      );
+      for (var i = 0; i < 10; i++) {
+        await gesture.moveBy(const Offset(-12, 0));
+        await tester.pump(const Duration(milliseconds: 16));
+        expect(navigator.userGestureInProgress, isFalse);
+      }
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(focus.hasFocus, isTrue);
+      expect(find.text('page'), findsOneWidget);
+    });
+
+    testWidgets('takes focus back once a drag back settles on the page', (
+      tester,
+    ) async {
+      await openPage(tester);
+
+      await _dragRight(tester, find.text('button'), 100);
+      await tester.pumpAndSettle();
+
+      expect(find.text('page'), findsOneWidget);
+      expect(focus.hasFocus, isTrue);
+    });
+  });
+
   group('the page under a drag back', () {
     Future<double> labelContrast(WidgetTester tester) async {
       final label = tester.getRect(find.text('below'));
