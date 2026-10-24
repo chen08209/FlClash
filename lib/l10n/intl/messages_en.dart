@@ -822,6 +822,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "followSystem": MessageLookupByLibrary.simpleMessage("Follow system"),
     "fontFamily": MessageLookupByLibrary.simpleMessage("Font family"),
     "fontSize": MessageLookupByLibrary.simpleMessage("Size"),
+    "fontWeight": MessageLookupByLibrary.simpleMessage("Font weight"),
+    "fontWeightPreview": MessageLookupByLibrary.simpleMessage(
+      "Text in the app will have this weight",
+    ),
     "forceDnsMapping": MessageLookupByLibrary.simpleMessage(
       "Force DNS mapping",
     ),

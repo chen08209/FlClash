@@ -879,6 +879,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "followSystem": MessageLookupByLibrary.simpleMessage("Seguir el sistema"),
     "fontFamily": MessageLookupByLibrary.simpleMessage("Familia de fuente"),
     "fontSize": MessageLookupByLibrary.simpleMessage("Tamaño"),
+    "fontWeight": MessageLookupByLibrary.simpleMessage("Grosor de la fuente"),
+    "fontWeightPreview": MessageLookupByLibrary.simpleMessage(
+      "El texto de la app tendrá este grosor",
+    ),
     "forceDnsMapping": MessageLookupByLibrary.simpleMessage("Forzar mapeo DNS"),
     "forceDnsMappingDesc": MessageLookupByLibrary.simpleMessage(
       "Forzar mapeo DNS también analiza las conexiones cuyo dominio provino de un mapeo DNS.",

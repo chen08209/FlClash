@@ -440,6 +440,8 @@
   "clearData": "Effacer les données",
   "textScale": "Taille du texte",
   "textScalePreview": "Le texte de l’app ressemblera à ceci",
+  "fontWeight": "Graisse de la police",
+  "fontWeightPreview": "Le texte de l’app aura cette graisse",
   "followSystem": "Suivre le système",
   "internet": "Internet",
   "systemApp": "Apps système",

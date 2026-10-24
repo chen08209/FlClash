@@ -440,6 +440,8 @@
   "clearData": "清除数据",
   "textScale": "文本缩放",
   "textScalePreview": "应用内的文字将以这个大小显示",
+  "fontWeight": "字体粗细",
+  "fontWeightPreview": "应用内的文字将以这个粗细显示",
   "followSystem": "跟随系统",
   "internet": "互联网",
   "systemApp": "系统应用",

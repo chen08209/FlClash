@@ -686,6 +686,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "followSystem": MessageLookupByLibrary.simpleMessage("시스템 설정 따르기"),
     "fontFamily": MessageLookupByLibrary.simpleMessage("글꼴"),
     "fontSize": MessageLookupByLibrary.simpleMessage("크기"),
+    "fontWeight": MessageLookupByLibrary.simpleMessage("글꼴 두께"),
+    "fontWeightPreview": MessageLookupByLibrary.simpleMessage(
+      "앱의 글자가 이 두께로 표시됩니다",
+    ),
     "forceDnsMapping": MessageLookupByLibrary.simpleMessage("DNS 매핑 강제"),
     "forceDnsMappingDesc": MessageLookupByLibrary.simpleMessage(
       "DNS 매핑 강제는 DNS 매핑에서 도메인을 얻은 연결도 스니핑합니다.",

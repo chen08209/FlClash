@@ -465,6 +465,8 @@ abstract class ThemeProps with _$ThemeProps {
     @JsonKey(readValue: _readLiquidGlass)
     LiquidGlassMode liquidGlass,
     @Default(TextScale()) TextScale textScale,
+    // A zero-centred signed offset, ±1000, applied to every text style's weight.
+    @Default(0) int fontWeightAdjustment,
     // `fontFamily` held the names of a removed enum, which old configs may
     // still carry.
     @JsonKey(name: 'systemFontFamily') String? fontFamily,

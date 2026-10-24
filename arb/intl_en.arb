@@ -440,6 +440,8 @@
   "clearData": "Clear data",
   "textScale": "Text scaling",
   "textScalePreview": "Text in the app will look like this",
+  "fontWeight": "Font weight",
+  "fontWeightPreview": "Text in the app will have this weight",
   "followSystem": "Follow system",
   "internet": "Internet",
   "systemApp": "System apps",
