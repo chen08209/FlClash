@@ -55,12 +55,18 @@ class RemoteFocusAdapter extends StatefulWidget {
 
   /// Whether a keyboard is up that covers the screen without insetting it.
   final ValueListenable<bool>? floatingKeyboard;
+  final Future<TextEditingValue?> Function(
+    TextInputConfiguration configuration,
+    TextEditingValue value,
+  )?
+  nativeTextInput;
   final Widget child;
 
   const RemoteFocusAdapter({
     super.key,
     required this.enabled,
     this.floatingKeyboard,
+    this.nativeTextInput,
     required this.child,
   });
 
@@ -97,6 +103,7 @@ class _RemoteFocusAdapterState extends State<RemoteFocusAdapter> {
                 // Keys bubble outward; the keyboard must hear those arrows take.
                 child: _RemoteKeyboard(
                   floatingKeyboard: widget.floatingKeyboard,
+                  nativeTextInput: widget.nativeTextInput,
                   child: FocusTraversalGroup(
                     policy: _policy,
                     child: widget.child,

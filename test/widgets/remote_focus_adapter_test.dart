@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -8,12 +10,15 @@ Widget _buildApp({
   required bool enabled,
   required Widget home,
   ValueListenable<bool>? floatingKeyboard,
+  Future<TextEditingValue?> Function(TextInputConfiguration, TextEditingValue)?
+  nativeTextInput,
 }) {
   return MaterialApp(
     builder: (context, child) {
       return RemoteFocusAdapter(
         enabled: enabled,
         floatingKeyboard: floatingKeyboard,
+        nativeTextInput: nativeTextInput,
         child: child!,
       );
     },
@@ -95,6 +100,101 @@ TextEditingController _controllerOf(WidgetTester tester, Key key) {
 }
 
 void main() {
+  testWidgets('remote native input commits through formatters and onChanged', (
+    tester,
+  ) async {
+    final controller = TextEditingController(text: 'old');
+    addTearDown(controller.dispose);
+    final changed = <String>[];
+    await tester.pumpWidget(
+      _buildApp(
+        enabled: true,
+        nativeTextInput: (configuration, value) async {
+          expect(configuration.inputType, TextInputType.url);
+          expect(value.text, 'old');
+          return const TextEditingValue(
+            text: 'https://example.com/sub ',
+            selection: TextSelection.collapsed(offset: 24),
+          );
+        },
+        home: Scaffold(
+          body: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.url,
+            inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
+            onChanged: changed.add,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.select);
+    await tester.pump();
+    expect(controller.text, 'https://example.com/sub');
+    expect(changed, ['https://example.com/sub']);
+  });
+
+  testWidgets('native input cancels, prevents duplicates and can reopen', (
+    tester,
+  ) async {
+    final controller = TextEditingController(text: 'keep');
+    addTearDown(controller.dispose);
+    var pending = Completer<TextEditingValue?>();
+    var calls = 0;
+    await tester.pumpWidget(
+      _buildApp(
+        enabled: true,
+        nativeTextInput: (_, _) {
+          calls++;
+          return pending.future;
+        },
+        home: Scaffold(
+          body: TextField(controller: controller, autofocus: true),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.select);
+    await tester.sendKeyEvent(LogicalKeyboardKey.select);
+    expect(calls, 1);
+    pending.complete(null);
+    await tester.pump();
+    expect(controller.text, 'keep');
+    pending = Completer<TextEditingValue?>();
+    await tester.sendKeyEvent(LogicalKeyboardKey.gameButtonA);
+    expect(calls, 2);
+    await tester.pumpWidget(const SizedBox());
+    pending.complete(const TextEditingValue(text: 'too late'));
+    await tester.pump();
+    expect(controller.text, 'keep');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('native input errors release the pending request for retry', (
+    tester,
+  ) async {
+    var calls = 0;
+    await tester.pumpWidget(
+      _buildApp(
+        enabled: true,
+        nativeTextInput: (_, _) async {
+          calls++;
+          throw PlatformException(code: 'ACTIVITY_UNAVAILABLE');
+        },
+        home: const Scaffold(body: TextField(autofocus: true)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.select);
+    await tester.pump();
+    expect(tester.takeException(), isA<PlatformException>());
+    await tester.sendKeyEvent(LogicalKeyboardKey.select);
+    await tester.pump();
+    expect(calls, 2);
+    expect(tester.takeException(), isA<PlatformException>());
+  });
+
   testWidgets('a pushed dialog focuses its first control', (tester) async {
     await tester.pumpWidget(
       _buildApp(

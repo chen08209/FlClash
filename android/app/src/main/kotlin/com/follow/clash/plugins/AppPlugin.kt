@@ -52,6 +52,8 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
     private var activity: Activity? = null
 
+    private val tvTextInput = TvTextInput()
+
     private var activityBinding: ActivityPluginBinding? = null
 
     private val activityResultListener =
@@ -144,6 +146,14 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
     override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
+            "editText" -> onMainThread {
+                if (isTelevision) {
+                    tvTextInput.show(activity, call, result)
+                } else {
+                    result.notImplemented()
+                }
+            }
+
             "moveTaskToBack" -> {
                 activity?.moveTaskToBack(true)
                 result.success(true)
@@ -426,6 +436,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        tvTextInput.dismiss()
         packageChangeContext?.unregisterReceiver(packageChangeReceiver)
         packageChangeContext = null
         channel.setMethodCallHandler(null)
@@ -455,6 +466,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     private fun detachFromActivity() {
+        tvTextInput.dismiss()
         if (isTelevision) {
             activity?.window?.decorView?.let {
                 ViewCompat.setOnApplyWindowInsetsListener(it, null)

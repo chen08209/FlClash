@@ -6,9 +6,18 @@ const _maxRevealFrames = 30;
 
 /// A text field the remote focuses opens the keyboard only on select.
 class _RemoteKeyboard extends StatefulWidget {
-  const _RemoteKeyboard({required this.floatingKeyboard, required this.child});
+  const _RemoteKeyboard({
+    required this.floatingKeyboard,
+    required this.nativeTextInput,
+    required this.child,
+  });
 
   final ValueListenable<bool>? floatingKeyboard;
+  final Future<TextEditingValue?> Function(
+    TextInputConfiguration configuration,
+    TextEditingValue value,
+  )?
+  nativeTextInput;
   final Widget child;
 
   @override
@@ -19,6 +28,7 @@ class _RemoteKeyboardState extends State<_RemoteKeyboard> {
   FocusNode? _outgoing;
   bool _usingRemote = false;
   bool _openedKeyboard = false;
+  bool _editingNatively = false;
 
   @override
   void initState() {
@@ -136,6 +146,9 @@ class _RemoteKeyboardState extends State<_RemoteKeyboard> {
     if (event is KeyUpEvent) {
       return KeyEventResult.ignored;
     }
+    if (_editingNatively) {
+      return KeyEventResult.handled;
+    }
     _usingRemote = true;
     // The keyboard takes the remote's keys while it is up, so one reaching the
     // app means BACK has closed it.
@@ -147,9 +160,40 @@ class _RemoteKeyboardState extends State<_RemoteKeyboard> {
     if (editable == null) {
       return KeyEventResult.ignored;
     }
+    if (widget.nativeTextInput != null) {
+      unawaited(_editNatively(editable));
+      return KeyEventResult.handled;
+    }
     editable.requestKeyboard();
     _openedKeyboard = true;
     return KeyEventResult.handled;
+  }
+
+  Future<void> _editNatively(EditableTextState editable) async {
+    _editingNatively = true;
+    try {
+      final value = await widget.nativeTextInput!(
+        editable.textInputConfiguration,
+        editable.widget.controller.value,
+      );
+      if (mounted && editable.mounted && value != null) {
+        editable.userUpdateTextEditingValue(
+          value,
+          SelectionChangedCause.keyboard,
+        );
+      }
+    } catch (error, stack) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stack,
+          library: 'TV input',
+        ),
+      );
+    } finally {
+      _editingNatively = false;
+      _openedKeyboard = false;
+    }
   }
 
   @override

@@ -164,6 +164,7 @@ class ApplicationState extends ConsumerState<Application> {
                 child: RemoteFocusAdapter(
                   enabled: system.isTV,
                   floatingKeyboard: app?.floatingKeyboard,
+                  nativeTextInput: app?.editText,
                   child: child!,
                 ),
               ),
