@@ -44,6 +44,17 @@ class App {
     return methodChannel.invokeMethod<bool>('moveTaskToBack');
   }
 
+  Future<TextEditingValue?> editText(
+    TextInputConfiguration configuration,
+    TextEditingValue value,
+  ) async {
+    final result = await methodChannel.invokeMapMethod<String, dynamic>(
+      'editText',
+      {'configuration': configuration.toJson(), 'value': value.toJSON()},
+    );
+    return result == null ? null : TextEditingValue.fromJSON(result);
+  }
+
   Future<List<Package>> getPackages() async {
     final packagesString = await methodChannel.invokeMethod<String>(
       'getPackages',
