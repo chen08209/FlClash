@@ -18,6 +18,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <map>
 
 #pragma comment(lib, "wininet")
 #pragma comment(lib, "Rasapi32")
@@ -143,6 +144,156 @@ bool NotifySettingsChanged()
   return changed && refreshed;
 }
 
+
+constexpr const wchar_t* const kProxyUrlEnvVars[] = {
+    L"HTTP_PROXY", L"HTTPS_PROXY", L"http_proxy", L"https_proxy"};
+constexpr const wchar_t* const kNoProxyEnvVars[] = {L"NO_PROXY", L"no_proxy"};
+constexpr const wchar_t* const kAllProxyEnvVars[] = {
+    L"HTTP_PROXY", L"HTTPS_PROXY", L"NO_PROXY",
+    L"http_proxy", L"https_proxy", L"no_proxy"};
+
+struct ProxyEnvironmentBackup
+{
+  bool taken = false;
+  std::map<std::wstring, std::optional<std::wstring>> originals;
+};
+
+ProxyEnvironmentBackup g_proxyEnvironmentBackup;
+
+std::wstring BuildNoProxyList(const flutter::EncodableList& bypassDomain)
+{
+  std::wstring noProxy;
+  for (const auto& domain : bypassDomain)
+  {
+    const auto& value = std::get<std::string>(domain);
+    if (!noProxy.empty())
+    {
+      noProxy += L",";
+    }
+    noProxy += Utf8ToWide(value);
+  }
+  return noProxy;
+}
+
+bool SetUserEnvironmentVariable(const std::wstring& name, const std::wstring& value)
+{
+  if (SetEnvironmentVariableW(name.c_str(), value.c_str()) == FALSE)
+  {
+    return false;
+  }
+  HKEY key = nullptr;
+  if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Environment", 0, KEY_SET_VALUE, &key) !=
+      ERROR_SUCCESS)
+  {
+    return false;
+  }
+  const LSTATUS status = RegSetValueExW(
+      key, name.c_str(), 0, REG_SZ, reinterpret_cast<const BYTE*>(value.c_str()),
+      static_cast<DWORD>((value.size() + 1) * sizeof(wchar_t)));
+  RegCloseKey(key);
+  return status == ERROR_SUCCESS;
+}
+
+bool DeleteUserEnvironmentVariable(const std::wstring& name)
+{
+  if (SetEnvironmentVariableW(name.c_str(), nullptr) == FALSE)
+  {
+    return false;
+  }
+  HKEY key = nullptr;
+  if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Environment", 0, KEY_SET_VALUE, &key) !=
+      ERROR_SUCCESS)
+  {
+    return false;
+  }
+  const LSTATUS status = RegDeleteValueW(key, name.c_str());
+  RegCloseKey(key);
+  return status == ERROR_SUCCESS || status == ERROR_FILE_NOT_FOUND;
+}
+
+std::optional<std::wstring> ReadUserEnvironmentVariable(const std::wstring& name)
+{
+  HKEY key = nullptr;
+  if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Environment", 0, KEY_READ, &key) !=
+      ERROR_SUCCESS)
+  {
+    return std::nullopt;
+  }
+  std::optional<std::wstring> value;
+  DWORD dataSize = 0;
+  if (RegQueryValueExW(key, name.c_str(), nullptr, nullptr, nullptr, &dataSize) ==
+          ERROR_SUCCESS &&
+      dataSize >= sizeof(wchar_t))
+  {
+    value = std::wstring(dataSize / sizeof(wchar_t), L'\0');
+    if (RegQueryValueExW(key, name.c_str(), nullptr, nullptr,
+                         reinterpret_cast<LPBYTE>(value->data()),
+                         &dataSize) == ERROR_SUCCESS)
+    {
+      while (!value->empty() && value->back() == L'\0')
+      {
+        value->pop_back();
+      }
+    }
+    else
+    {
+      value.reset();
+    }
+  }
+  RegCloseKey(key);
+  return value;
+}
+
+void BroadcastEnvironmentChange()
+{
+  SendMessageTimeoutW(HWND_BROADCAST, WM_SETTINGCHANGE, 0, L"Environment",
+                      SMTO_BLOCK, 5000, nullptr);
+}
+
+void BackupProxyEnvironment()
+{
+  if (g_proxyEnvironmentBackup.taken)
+  {
+    return;
+  }
+  for (const auto* name : kAllProxyEnvVars)
+  {
+    g_proxyEnvironmentBackup.originals[name] = ReadUserEnvironmentVariable(name);
+  }
+  g_proxyEnvironmentBackup.taken = true;
+}
+
+bool ApplyProxyEnvironment(const std::wstring& proxyUrl, const std::wstring& noProxy)
+{
+  bool success = true;
+  for (const auto* name : kProxyUrlEnvVars)
+  {
+    success = SetUserEnvironmentVariable(name, proxyUrl) && success;
+  }
+  for (const auto* name : kNoProxyEnvVars)
+  {
+    success = SetUserEnvironmentVariable(name, noProxy) && success;
+  }
+  return success;
+}
+
+bool RestoreProxyEnvironment()
+{
+  if (!g_proxyEnvironmentBackup.taken)
+  {
+    return true;
+  }
+  bool success = true;
+  for (const auto& [name, original] : g_proxyEnvironmentBackup.originals)
+  {
+    success = (original.has_value() ? SetUserEnvironmentVariable(name, *original)
+                                    : DeleteUserEnvironmentVariable(name)) &&
+        success;
+  }
+  g_proxyEnvironmentBackup = ProxyEnvironmentBackup{};
+  return success;
+}
+
 bool startProxy(const int port, const flutter::EncodableList& bypassDomain)
 {
   auto url = kProxyServerPrefix + std::to_wstring(port);
@@ -165,7 +316,19 @@ bool startProxy(const int port, const flutter::EncodableList& bypassDomain)
 
   const bool optionsApplied = ApplyOptionsToConnections(list);
   const bool settingsNotified = NotifySettingsChanged();
-  return optionsApplied && settingsNotified;
+
+  // Point CLI, Node.js, Python and Electron apps at the proxy as well. These
+  // read the HTTP(S)_PROXY/NO_PROXY environment variables rather than the
+  // WinINET registry, so the system-proxy setting alone leaves them going
+  // direct. The previous values are restored by stopProxy.
+  BackupProxyEnvironment();
+  const bool envApplied =
+      ApplyProxyEnvironment(L"http://" + url, BuildNoProxyList(bypassDomain));
+  if (envApplied)
+  {
+    BroadcastEnvironmentChange();
+  }
+  return optionsApplied && settingsNotified && envApplied;
 }
 
 bool stopProxy()
@@ -182,7 +345,15 @@ bool stopProxy()
 
   const bool optionsApplied = ApplyOptionsToConnections(list);
   const bool settingsNotified = NotifySettingsChanged();
-  return optionsApplied && settingsNotified;
+
+  // Restore the proxy environment variables to whatever they were before the
+  // proxy was applied, or remove them if they were unset.
+  const bool envRestored = RestoreProxyEnvironment();
+  if (envRestored)
+  {
+    BroadcastEnvironmentChange();
+  }
+  return optionsApplied && settingsNotified && envRestored;
 }
 
 std::optional<int> ProxyPort(const std::wstring& server)
