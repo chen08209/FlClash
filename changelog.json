@@ -2,6 +2,103 @@
   "schemaVersion": 2,
   "versions": [
     {
+      "version": "0.9.2",
+      "tag": "v0.9.2",
+      "date": "2026-10-24",
+      "prerelease": false,
+      "groups": [
+        {
+          "type": "feat",
+          "entries": [
+            {
+              "id": "e8aac17",
+              "scope": "access",
+              "text": "Access control state shown in a bar at the bottom"
+            },
+            {
+              "id": "5d6552d",
+              "scope": "config",
+              "text": "Optional general overrides; settings apply sooner"
+            },
+            {
+              "id": "8176cce",
+              "scope": "dashboard",
+              "text": "IP quality cached for 3 days; simpler Android dashboard"
+            },
+            {
+              "id": "0817c3b",
+              "text": "Update the core to mihomo v1.19.33"
+            },
+            {
+              "id": "bbfafde",
+              "scope": "tray",
+              "text": "Colored tray status icons; monochrome option on macOS"
+            },
+            {
+              "id": "6928521",
+              "scope": "desktop",
+              "text": "Sidebar blur; Windows fixes; keeps system proxies FlClash didn't set"
+            },
+            {
+              "id": "eaaf3e3",
+              "scope": "profiles",
+              "text": "Profile QR codes, phone-to-TV links, more proxy fields"
+            },
+            {
+              "id": "0f9f89c",
+              "scope": "proxies",
+              "text": "Add proxies to local proxies; adjustable delay test timeout"
+            },
+            {
+              "id": "a4fc067",
+              "scope": "theme",
+              "text": "Higher-contrast dark mode and a refreshed app icon"
+            },
+            {
+              "id": "0d98a9d",
+              "scope": "ui",
+              "text": "iOS-style docked search and menus; bar buttons lift on hover"
+            },
+            {
+              "id": "ae902ed",
+              "scope": "ui",
+              "text": "iOS-style switches, stretchy sheets, menus and long-press reordering"
+            },
+            {
+              "id": "4837fb3",
+              "scope": "ui",
+              "text": "Pages scroll under the Android navigation bar"
+            },
+            {
+              "id": "09e7e56",
+              "scope": "core",
+              "text": "Clear the DNS cache by hand or on network change"
+            }
+          ]
+        },
+        {
+          "type": "fix",
+          "entries": [
+            {
+              "id": "99b3381",
+              "scope": "android",
+              "text": "Opening the app no longer reloads a running VPN"
+            }
+          ]
+        },
+        {
+          "type": "perf",
+          "entries": [
+            {
+              "id": "7035edd",
+              "scope": "editor",
+              "text": "Smoother editor for large files and in sheets"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.9.1",
       "tag": "v0.9.1",
       "date": "2026-10-17",
