@@ -1,4 +1,7 @@
 {
+  "applicationProxyIncludeHistory": "Incluir historial de aplicaciones",
+  "applicationProxyHistoryScope": "Perfil actual · Aplicaciones registradas y reglas guardadas",
+  "applicationProxyHistoryCoverage": "Las aplicaciones detectadas por FlClash se guardan en este dispositivo. Puede editar sus reglas sin conexiones activas. Las estadísticas solo incluyen conexiones activas.",
   "applicationProxy": "Proxy por aplicación",
   "applicationProxyInvalidProcess": "No se puede establecer una regla de aplicación para este proceso.",
   "applicationProxyFollowRules": "Seguir reglas",

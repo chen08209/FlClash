@@ -345,6 +345,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationProxyFollowRules": MessageLookupByLibrary.simpleMessage(
       "Follow rules",
     ),
+    "applicationProxyHistoryCoverage": MessageLookupByLibrary.simpleMessage(
+      "Apps observed by FlClash are stored on this device. Historical apps can be edited while offline. Only active connections contribute to traffic statistics.",
+    ),
+    "applicationProxyHistoryScope": MessageLookupByLibrary.simpleMessage(
+      "Current profile · Recorded apps and saved app rules",
+    ),
+    "applicationProxyIncludeHistory": MessageLookupByLibrary.simpleMessage(
+      "Include app history",
+    ),
     "applicationProxyInvalidProcess": MessageLookupByLibrary.simpleMessage(
       "This process cannot be used in an app rule.",
     ),

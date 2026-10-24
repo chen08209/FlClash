@@ -88,6 +88,35 @@ void main() {
     await database.close();
   });
 
+  test('subscription metadata updates preserve per-profile application rules', () async {
+    await action.setApplicationProxy(
+      profileId: 1,
+      application: _application,
+      target: 'DIRECT',
+    );
+    final saved = (await database.rulesDao.queryApplicationRules(1).get()).single;
+    final profile = (await database.profilesDao.get(1))!.copyWith(
+      type: ProfileType.url,
+      url: 'https://example.invalid/subscription',
+    );
+    await database.profilesDao.putAll([
+      profile.copyWith(
+        label: 'Updated subscription',
+        lastUpdateDate: DateTime.utc(2026, 10, 24),
+      ).toCompanion(),
+    ]);
+
+    final retained = (await database.rulesDao.queryApplicationRules(1).get()).single;
+    expect(retained.id, saved.id);
+    expect(retained.content, saved.content);
+    expect(retained.ruleTarget, 'DIRECT');
+    expect(
+      (await database.rulesDao.queryAddedRules(1).get()).single.ruleTarget,
+      'DIRECT',
+    );
+    expect(await database.rulesDao.queryApplicationRules(2).get(), isEmpty);
+  });
+
   test('the app rule precedes catch-all and global rules in the current profile', () async {
     await database.rulesDao.putRule(
       const Rule(id: 10, ruleAction: RuleAction.MATCH, ruleTarget: 'Proxy', order: 'a0'),

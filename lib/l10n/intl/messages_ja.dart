@@ -299,6 +299,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationProxyFollowRules": MessageLookupByLibrary.simpleMessage(
       "ルールに従う",
     ),
+    "applicationProxyHistoryCoverage": MessageLookupByLibrary.simpleMessage(
+      "FlClash が識別したアプリをこの端末に保存します。接続のないアプリもルールを変更できます。通信統計は現在の接続のみを集計します。",
+    ),
+    "applicationProxyHistoryScope": MessageLookupByLibrary.simpleMessage(
+      "現在のプロファイル · 記録済みアプリと保存済みルール",
+    ),
+    "applicationProxyIncludeHistory": MessageLookupByLibrary.simpleMessage(
+      "過去のアプリも表示",
+    ),
     "applicationProxyInvalidProcess": MessageLookupByLibrary.simpleMessage(
       "このプロセスにはアプリのルールを設定できません。",
     ),

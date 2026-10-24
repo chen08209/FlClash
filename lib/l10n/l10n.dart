@@ -55,6 +55,36 @@ class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
+  /// `Include app history`
+  String get applicationProxyIncludeHistory {
+    return Intl.message(
+      'Include app history',
+      name: 'applicationProxyIncludeHistory',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Current profile · Recorded apps and saved app rules`
+  String get applicationProxyHistoryScope {
+    return Intl.message(
+      'Current profile · Recorded apps and saved app rules',
+      name: 'applicationProxyHistoryScope',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Apps observed by FlClash are stored on this device. Historical apps can be edited while offline. Only active connections contribute to traffic statistics.`
+  String get applicationProxyHistoryCoverage {
+    return Intl.message(
+      'Apps observed by FlClash are stored on this device. Historical apps can be edited while offline. Only active connections contribute to traffic statistics.',
+      name: 'applicationProxyHistoryCoverage',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `App proxy`
   String get applicationProxy {
     return Intl.message(

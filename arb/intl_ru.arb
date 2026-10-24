@@ -1,4 +1,7 @@
 {
+  "applicationProxyIncludeHistory": "Показывать историю приложений",
+  "applicationProxyHistoryScope": "Текущий профиль · Записанные приложения и сохранённые правила",
+  "applicationProxyHistoryCoverage": "Приложения, обнаруженные FlClash, сохраняются на этом устройстве. Их правила можно менять без активных соединений. Статистика учитывает только активные соединения.",
   "applicationProxy": "Прокси приложений",
   "applicationProxyInvalidProcess": "Для этого процесса нельзя задать правило приложения.",
   "applicationProxyFollowRules": "По правилам",

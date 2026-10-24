@@ -14,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../helpers/preferences.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
 
@@ -55,6 +56,7 @@ void main() {
   late _SetupAction action;
 
   setUp(() async {
+    await mockPreferences();
     previousDatabase = db.database;
     database = db.Database(NativeDatabase.memory());
     db.database = database;
@@ -96,6 +98,7 @@ void main() {
     WidgetTester tester, {
     List<TrackerInfo>? connections,
     bool stale = false,
+    bool includeHistory = false,
     double width = 900,
     Widget? child,
   }) async {
@@ -124,6 +127,10 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    if (includeHistory) {
+      await tester.tap(find.byType(FilterChip));
+      await tester.pumpAndSettle();
+    }
   }
 
   Future<void> waitForApply(WidgetTester tester) async {
@@ -140,6 +147,53 @@ void main() {
     await waitForApply(tester);
   }
 
+  testWidgets('history toggle restores a disconnected app and permits policy edits', (
+    tester,
+  ) async {
+    await pumpPanel(tester);
+    expect(tester.widget<FilterChip>(find.byType(FilterChip)).selected, isFalse);
+    expect(find.text('browser'), findsOneWidget);
+
+    await pumpPanel(tester, connections: const []);
+    expect(find.text('browser'), findsNothing);
+    expect(find.text('No active connections'), findsOneWidget);
+
+    await tester.tap(find.byType(FilterChip));
+    await tester.pumpAndSettle();
+    expect(tester.widget<FilterChip>(find.byType(FilterChip)).selected, isTrue);
+    expect(find.text('browser'), findsOneWidget);
+    expect(find.text('No active connections'), findsOneWidget);
+
+    await chooseDirect(tester);
+    await tester.pumpAndSettle();
+    expect(
+      (await database.rulesDao.queryApplicationRules(1).get()).single.ruleTarget,
+      'DIRECT',
+    );
+    expect(find.widgetWithText(TextButton, 'Direct'), findsOneWidget);
+
+    await tester.tap(find.byType(FilterChip));
+    await tester.pumpAndSettle();
+    expect(find.text('browser'), findsNothing);
+    await tester.tap(find.byType(FilterChip));
+    await tester.pumpAndSettle();
+    expect(find.text('browser'), findsOneWidget);
+    expect(find.widgetWithText(TextButton, 'Direct'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('recorded apps remain available after the panel is reopened', (
+    tester,
+  ) async {
+    await pumpPanel(tester);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await pumpPanel(tester, connections: const [], includeHistory: true);
+
+    expect(find.text('browser'), findsOneWidget);
+    expect(find.widgetWithText(TextButton, 'Follow rules'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('actual mixed routing and an idle configured policy stay separate', (tester) async {
     await database.rulesDao.putRule(
       const Rule(
@@ -150,10 +204,14 @@ void main() {
       ),
       profileId: 1,
     );
-    await pumpPanel(tester, connections: [
-      _connection('1'),
-      _connection('2', outbound: 'DIRECT'),
-    ]);
+    await pumpPanel(
+      tester,
+      connections: [
+        _connection('1'),
+        _connection('2', outbound: 'DIRECT'),
+      ],
+      includeHistory: true,
+    );
 
     expect(find.text('browser'), findsOneWidget);
     expect(find.text('Mixed'), findsOneWidget);
@@ -237,7 +295,7 @@ void main() {
         profileId: 1,
       );
     }
-    await pumpPanel(tester);
+    await pumpPanel(tester, includeHistory: true);
     expect(find.text('app-119'), findsNothing);
 
     await tester.scrollUntilVisible(

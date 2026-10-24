@@ -26,11 +26,15 @@ ApplicationConnection _connection(
 ApplicationProxySnapshot _snapshot(
   List<ApplicationConnection> connections, {
   List<Rule> rules = const [],
+  List<ApplicationProcess> history = const [],
+  bool includeHistory = true,
   bool windows = false,
   DateTime? at,
   ApplicationProxySnapshot? previous,
 }) => aggregateApplicationProxies((
   connections: connections,
+  history: history,
+  includeHistory: includeHistory,
   rules: rules,
   sampledAt: at ?? _time,
   previousSamples: previous?.samples ?? const {},
@@ -39,6 +43,84 @@ ApplicationProxySnapshot _snapshot(
 ));
 
 void main() {
+  test('active-only mode hides idle rules and historical applications', () {
+    final snapshot = _snapshot(
+      [_connection('active')],
+      history: const [(process: 'closed', path: '/apps/closed')],
+      includeHistory: false,
+      rules: [
+        const Rule(
+          ruleAction: RuleAction.PROCESS_PATH,
+          content: '/apps/configured',
+          ruleTarget: 'DIRECT',
+        ),
+      ],
+    );
+
+    expect(snapshot.applications, hasLength(1));
+    expect(snapshot.applications.single.identity!.content, '/apps/browser');
+    expect(snapshot.applications.single.connections, 1);
+  });
+
+  test('closed applications remain editable without contributing old traffic', () {
+    final snapshot = _snapshot(
+      [],
+      history: const [
+        (process: 'browser', path: '/apps/browser'),
+        (process: '', path: ''),
+      ],
+      previous: _snapshot([_connection('closed', download: 2000)]),
+    );
+
+    final row = snapshot.applications.single;
+    expect(row.identity!.canRoute, isTrue);
+    expect(row.identity!.content, '/apps/browser');
+    expect(row.route, ApplicationRoute.idle);
+    expect(row.connections, 0);
+    expect(row.download, 0);
+    expect(row.downloadSpeed, 0);
+    expect(row.uploadSpeed, 0);
+    expect(snapshot.samples, isEmpty);
+  });
+
+  test('history uses current rules and survives returning to follow rules', () {
+    const history = [(process: 'browser', path: '/apps/browser')];
+    final configured = _snapshot(
+      [],
+      history: history,
+      rules: [
+        const Rule(
+          ruleAction: RuleAction.PROCESS_NAME,
+          content: 'browser',
+          ruleTarget: 'DIRECT',
+        ),
+      ],
+    );
+    expect(configured.applications, hasLength(1));
+    expect(configured.applications.single.target, 'DIRECT');
+    expect(configured.applications.single.route, ApplicationRoute.idle);
+
+    final following = _snapshot([], history: history);
+    expect(following.applications, hasLength(1));
+    expect(following.applications.single.target, isNull);
+    expect(following.applications.single.identity!.content, '/apps/browser');
+  });
+
+  test('live and recorded Windows applications are merged without double counting', () {
+    final snapshot = _snapshot(
+      [_connection('active', path: r'C:\Apps\Browser.exe', download: 500)],
+      windows: true,
+      history: const [
+        (process: 'Browser.exe', path: 'c:/apps/browser.exe'),
+        (process: 'Browser.exe', path: r'C:\Apps\Browser.exe'),
+      ],
+    );
+
+    expect(snapshot.applications, hasLength(1));
+    expect(snapshot.applications.single.connections, 1);
+    expect(snapshot.applications.single.download, 500);
+  });
+
   test('Windows paths ignore casing and separators, but keep installs apart', () {
     final snapshot = _snapshot([
       _connection('1', path: r'C:\Apps\Browser.exe'),

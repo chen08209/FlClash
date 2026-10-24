@@ -368,6 +368,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationProxyFollowRules": MessageLookupByLibrary.simpleMessage(
       "Seguir reglas",
     ),
+    "applicationProxyHistoryCoverage": MessageLookupByLibrary.simpleMessage(
+      "Las aplicaciones detectadas por FlClash se guardan en este dispositivo. Puede editar sus reglas sin conexiones activas. Las estadísticas solo incluyen conexiones activas.",
+    ),
+    "applicationProxyHistoryScope": MessageLookupByLibrary.simpleMessage(
+      "Perfil actual · Aplicaciones registradas y reglas guardadas",
+    ),
+    "applicationProxyIncludeHistory": MessageLookupByLibrary.simpleMessage(
+      "Incluir historial de aplicaciones",
+    ),
     "applicationProxyInvalidProcess": MessageLookupByLibrary.simpleMessage(
       "No se puede establecer una regla de aplicación para este proceso.",
     ),

@@ -1,4 +1,7 @@
 {
+  "applicationProxyIncludeHistory": "Include app history",
+  "applicationProxyHistoryScope": "Current profile · Recorded apps and saved app rules",
+  "applicationProxyHistoryCoverage": "Apps observed by FlClash are stored on this device. Historical apps can be edited while offline. Only active connections contribute to traffic statistics.",
   "applicationProxy": "App proxy",
   "applicationProxyInvalidProcess": "This process cannot be used in an app rule.",
   "applicationProxyFollowRules": "Follow rules",

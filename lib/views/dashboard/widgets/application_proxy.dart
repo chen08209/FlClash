@@ -27,14 +27,16 @@ class _ApplicationProxyViewState extends ConsumerState<_ApplicationProxyView>
     return CommonScaffold(
       title: context.appLocalizations.applicationProxy,
       body: Builder(
-        builder: (context) => Padding(
-          padding: EdgeInsets.fromLTRB(16, 16, 16, context.bottomInset + 16),
-          child: ApplicationProxyPanel(
-            connections: connections,
-            sampledAt: connectionsSampledAt,
-            stale: connectionsStale,
-            rowHeight: 44 * MediaQuery.textScalerOf(context).scale(1),
-            scrollController: widget.scrollController,
+        builder: (context) => AppBarClearance(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, context.bottomInset + 16),
+            child: ApplicationProxyPanel(
+              connections: connections,
+              sampledAt: connectionsSampledAt,
+              stale: connectionsStale,
+              rowHeight: 44 * MediaQuery.textScalerOf(context).scale(1),
+              scrollController: widget.scrollController,
+            ),
           ),
         ),
       ),
@@ -70,6 +72,7 @@ class ApplicationProxyPanel extends ConsumerStatefulWidget {
 class _ApplicationProxyPanelState extends ConsumerState<ApplicationProxyPanel> {
   String? _saving;
   String? _error;
+  bool _includeHistory = false;
 
   @override
   void initState() {
@@ -92,8 +95,6 @@ class _ApplicationProxyPanelState extends ConsumerState<ApplicationProxyPanel> {
       _saving = application.key;
       _error = null;
     });
-    // ignore: avoid_print
-    print('>>> _change start key=${application.key} mounted=$mounted');
     try {
       final applied = await ref
           .read(setupActionProvider.notifier)
@@ -102,20 +103,14 @@ class _ApplicationProxyPanelState extends ConsumerState<ApplicationProxyPanel> {
             application: application,
             target: target,
           );
-      // ignore: avoid_print
-      print('>>> _change returned applied=$applied');
       if (!applied && mounted && ref.read(currentProfileIdProvider) == profileId) {
         setState(() => _error = l.applicationProxyApplyFailed);
       }
     } catch (error) {
-      // ignore: avoid_print
-      print('>>> _change error $error');
       if (mounted && ref.read(currentProfileIdProvider) == profileId) {
         setState(() => _error = error.toString());
       }
     } finally {
-      // ignore: avoid_print
-      print('>>> _change finally mounted=$mounted');
       if (mounted) setState(() => _saving = null);
     }
   }
@@ -134,11 +129,6 @@ class _ApplicationProxyPanelState extends ConsumerState<ApplicationProxyPanel> {
       String value => value,
     };
     final enabled = editable && identity?.canRoute == true && _saving == null;
-    // ignore: avoid_print
-    print(
-      '>>> _policy saving=$_saving identityKey=${identity?.key} '
-      'identityNull=${identity == null} enabled=$enabled',
-    );
     return CommonPopupBox(
       targetBuilder: (open) => TextButton(
         onPressed: enabled ? open : null,
@@ -184,8 +174,6 @@ class _ApplicationProxyPanelState extends ConsumerState<ApplicationProxyPanel> {
   @override
   Widget build(BuildContext context) {
     final l = context.appLocalizations;
-    // ignore: avoid_print
-    print('>>> panel build saving=$_saving');
     final profile = ref.watch(currentProfileProvider);
     final profileId = profile?.id;
     final editable = profile != null &&
@@ -194,6 +182,7 @@ class _ApplicationProxyPanelState extends ConsumerState<ApplicationProxyPanel> {
     final rulesState = profileId == null || !editable
         ? const AsyncData<List<Rule>>([])
         : ref.watch(applicationRulesProvider(profileId));
+    final history = ref.watch(applicationProxyHistoryProvider).value ?? const [];
     final patch = ref.watch(patchClashConfigProvider);
     final invalidTarget = RegExp(r'[,\r\n]');
     final groups = ref.watch(groupsProvider)
@@ -222,7 +211,9 @@ class _ApplicationProxyPanelState extends ConsumerState<ApplicationProxyPanel> {
         (state) => state.copyWith(findProcessMode: FindProcessMode.always),
       );
     } else {
-      notice = l.applicationProxyScope;
+      notice = _includeHistory
+          ? l.applicationProxyHistoryScope
+          : l.applicationProxyScope;
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -247,15 +238,33 @@ class _ApplicationProxyPanelState extends ConsumerState<ApplicationProxyPanel> {
                   ),
                 ),
               ),
+              Tooltip(
+                message: l.applicationProxyCoverage,
+                child: const GlyphIcon(AppGlyphs.info, size: 16),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: _cellInset),
+          child: Wrap(
+            spacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Tooltip(
+                message: l.applicationProxyHistoryCoverage,
+                child: FilterChip(
+                  label: Text(l.applicationProxyIncludeHistory),
+                  selected: _includeHistory,
+                  showCheckmark: true,
+                  onSelected: (value) => setState(() => _includeHistory = value),
+                ),
+              ),
               if (action != null)
                 TextButton(
                   onPressed: _saving == null ? onAction : null,
                   child: Text(action),
                 ),
-              Tooltip(
-                message: l.applicationProxyCoverage,
-                child: const GlyphIcon(AppGlyphs.info, size: 16),
-              ),
             ],
           ),
         ),
@@ -268,6 +277,8 @@ class _ApplicationProxyPanelState extends ConsumerState<ApplicationProxyPanel> {
               : _ApplicationRows(
                   key: ValueKey(profileId),
                   connections: widget.connections,
+                  history: history,
+                  includeHistory: _includeHistory,
                   sampledAt: widget.sampledAt,
                   stale: widget.stale,
                   rules: rulesState.value!,
@@ -289,7 +300,7 @@ class _ApplicationProxyPanelState extends ConsumerState<ApplicationProxyPanel> {
   }
 }
 
-class _ApplicationRows extends StatefulWidget {
+class _ApplicationRows extends ConsumerStatefulWidget {
   const _ApplicationRows({
     super.key,
     required this.connections,
@@ -300,6 +311,8 @@ class _ApplicationRows extends StatefulWidget {
     required this.aggregator,
     required this.rowHeight,
     required this.policyBuilder,
+    required this.history,
+    required this.includeHistory,
     this.scrollController,
     this.onCountChanged,
   });
@@ -310,16 +323,18 @@ class _ApplicationRows extends StatefulWidget {
   final List<Rule> rules;
   final bool isWindows;
   final ApplicationProxyAggregator aggregator;
+  final List<ApplicationProcess> history;
+  final bool includeHistory;
   final double rowHeight;
   final Widget Function(ApplicationProxyInfo application) policyBuilder;
   final ScrollController? scrollController;
   final ValueChanged<int>? onCountChanged;
 
   @override
-  State<_ApplicationRows> createState() => _ApplicationRowsState();
+  ConsumerState<_ApplicationRows> createState() => _ApplicationRowsState();
 }
 
-class _ApplicationRowsState extends State<_ApplicationRows>
+class _ApplicationRowsState extends ConsumerState<_ApplicationRows>
     with RouteMotionHoldMixin<_ApplicationRows> {
   ApplicationProxySnapshot? _snapshot;
   int _generation = 0;
@@ -336,6 +351,8 @@ class _ApplicationRowsState extends State<_ApplicationRows>
     super.didUpdateWidget(oldWidget);
     if (!identical(widget.connections, oldWidget.connections) ||
         widget.sampledAt != oldWidget.sampledAt ||
+        !identical(widget.history, oldWidget.history) ||
+        widget.includeHistory != oldWidget.includeHistory ||
         !identical(widget.rules, oldWidget.rules)) {
       unawaited(_refresh());
     }
@@ -344,8 +361,16 @@ class _ApplicationRowsState extends State<_ApplicationRows>
   Future<void> _refresh() async {
     final generation = ++_generation;
     try {
+      final connections = applicationConnectionsOf(widget.connections);
+      await ref.read(applicationProxyHistoryProvider.notifier).remember([
+        for (final connection in connections)
+          (process: connection.process, path: connection.path),
+      ]);
+      if (!mounted || generation != _generation) return;
       final snapshot = await widget.aggregator((
-        connections: applicationConnectionsOf(widget.connections),
+        connections: connections,
+        history: ref.read(applicationProxyHistoryProvider).value ?? const [],
+        includeHistory: widget.includeHistory,
         rules: widget.rules,
         sampledAt: widget.sampledAt,
         previousSamples: _snapshot?.samples ?? const {},
@@ -380,13 +405,15 @@ class _ApplicationRowsState extends State<_ApplicationRows>
   @override
   Widget build(BuildContext context) {
     final l = context.appLocalizations;
-    // ignore: avoid_print
-    print('>>> rows build');
     if (_failed) return Center(child: Text(l.error));
     final applications = _snapshot?.applications;
     if (applications == null) return const SizedBox.shrink();
     if (applications.isEmpty) {
-      return Center(child: Text(l.applicationProxyNoConnections));
+      return Center(
+        child: Text(
+          widget.includeHistory ? l.noData : l.applicationProxyNoConnections,
+        ),
+      );
     }
     return _Table<ApplicationProxyInfo>(
       tableId: 'dashboard.applications',

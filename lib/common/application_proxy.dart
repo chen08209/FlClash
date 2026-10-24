@@ -53,6 +53,8 @@ typedef ApplicationConnection = ({
   int download,
 });
 
+typedef ApplicationProcess = ({String process, String path});
+
 List<ApplicationConnection> applicationConnectionsOf(
   List<TrackerInfo> connections,
 ) => [
@@ -115,6 +117,8 @@ class ApplicationProxySnapshot {
 
 typedef ApplicationProxyInput = ({
   List<ApplicationConnection> connections,
+  List<ApplicationProcess> history,
+  bool includeHistory,
   List<Rule> rules,
   DateTime? sampledAt,
   Map<String, ApplicationTrafficSample> previousSamples,
@@ -147,6 +151,41 @@ ApplicationProxySnapshot aggregateApplicationProxies(
         target: entry.value.rule.ruleTarget,
       ),
   };
+  ApplicationIdentity? identityOf(String process, String processPath) {
+    final path = ApplicationIdentity(
+      action: RuleAction.PROCESS_PATH,
+      content: processPath,
+      windows: input.windows,
+    );
+    final name = ApplicationIdentity(
+      action: RuleAction.PROCESS_NAME,
+      content: process,
+      windows: input.windows,
+    );
+    final pathRule = configured[path.key];
+    final nameRule = configured[name.key];
+    if (pathRule != null &&
+        (nameRule == null || pathRule.index < nameRule.index)) {
+      return pathRule.identity;
+    }
+    if (nameRule != null) return nameRule.identity;
+    if (path.canRoute) return path;
+    if (name.canRoute) return name;
+    if (path.content.isNotEmpty) return path;
+    if (name.content.isNotEmpty) return name;
+    return null;
+  }
+
+  if (input.includeHistory) {
+    for (final process in input.history) {
+      final identity = identityOf(process.process, process.path);
+      if (identity == null) continue;
+      applications.putIfAbsent(
+        identity.key,
+        () => ApplicationProxyInfo(identity),
+      );
+    }
+  }
   final samples = <String, ApplicationTrafficSample>{};
   final previousTime = input.previousAt;
   final sampledAt = input.sampledAt;
@@ -154,35 +193,7 @@ ApplicationProxySnapshot aggregateApplicationProxies(
       ? sampledAt.difference(previousTime).inMicroseconds / 1000000
       : null;
   for (final connection in input.connections) {
-    final path = ApplicationIdentity(
-      action: RuleAction.PROCESS_PATH,
-      content: connection.path,
-      windows: input.windows,
-    );
-    final name = ApplicationIdentity(
-      action: RuleAction.PROCESS_NAME,
-      content: connection.process,
-      windows: input.windows,
-    );
-    final pathRule = configured[path.key];
-    final nameRule = configured[name.key];
-    final ApplicationIdentity? identity;
-    if (pathRule != null &&
-        (nameRule == null || pathRule.index < nameRule.index)) {
-      identity = pathRule.identity;
-    } else if (nameRule != null) {
-      identity = nameRule.identity;
-    } else if (path.canRoute) {
-      identity = path;
-    } else if (name.canRoute) {
-      identity = name;
-    } else if (path.content.isNotEmpty) {
-      identity = path;
-    } else if (name.content.isNotEmpty) {
-      identity = name;
-    } else {
-      identity = null;
-    }
+    final identity = identityOf(connection.process, connection.path);
     final application = applications.putIfAbsent(
       identity?.key ?? '',
       () => ApplicationProxyInfo(identity),
@@ -236,13 +247,15 @@ ApplicationProxySnapshot aggregateApplicationProxies(
       downloadSpeed: downloadSpeed,
     );
   }
-  final rows = applications.values.toList()
-    ..sort((a, b) {
-      final active = b.connections.compareTo(a.connections);
-      return active != 0
-          ? active
-          : (a.identity?.key ?? '').compareTo(b.identity?.key ?? '');
-    });
+  final rows = applications.values
+      .where((application) => input.includeHistory || application.connections > 0)
+      .toList();
+  rows.sort((a, b) {
+    final active = b.connections.compareTo(a.connections);
+    return active != 0
+        ? active
+        : (a.identity?.key ?? '').compareTo(b.identity?.key ?? '');
+  });
   return ApplicationProxySnapshot(
     applications: rows,
     samples: samples,

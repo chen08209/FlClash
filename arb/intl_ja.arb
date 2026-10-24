@@ -1,4 +1,7 @@
 {
+  "applicationProxyIncludeHistory": "過去のアプリも表示",
+  "applicationProxyHistoryScope": "現在のプロファイル · 記録済みアプリと保存済みルール",
+  "applicationProxyHistoryCoverage": "FlClash が識別したアプリをこの端末に保存します。接続のないアプリもルールを変更できます。通信統計は現在の接続のみを集計します。",
   "applicationProxy": "アプリ別プロキシ",
   "applicationProxyInvalidProcess": "このプロセスにはアプリのルールを設定できません。",
   "applicationProxyFollowRules": "ルールに従う",

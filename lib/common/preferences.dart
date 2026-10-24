@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:fl_clash/common/application_proxy.dart';
 import 'package:fl_clash/common/boot_record.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/system_dns.dart';
@@ -185,6 +186,36 @@ class Preferences {
   Future<void> saveBootRecord(BootRecord record) async {
     final sharedPreferencesIns = await _store.value;
     await sharedPreferencesIns?.setString(bootRecordKey, json.encode(record));
+  }
+
+  Future<List<ApplicationProcess>> getApplicationProxyHistory() async {
+    try {
+      final store = await _store.value;
+      final raw = store?.getString('applicationProxyHistory');
+      if (raw == null) return const [];
+      final entries = json.decode(raw) as List;
+      return [
+        for (final entry in entries)
+          if (entry case {'process': String process, 'path': String path})
+            (process: process, path: path),
+      ];
+    } catch (error) {
+      commonPrint.log('getApplicationProxyHistory error: $error');
+      return const [];
+    }
+  }
+
+  Future<void> saveApplicationProxyHistory(
+    List<ApplicationProcess> history,
+  ) async {
+    final store = await _store.value;
+    await store?.setString(
+      'applicationProxyHistory',
+      json.encode([
+        for (final process in history)
+          {'process': process.process, 'path': process.path},
+      ]),
+    );
   }
 
   Future<void> clearPreferences() async {

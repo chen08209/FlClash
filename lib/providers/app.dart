@@ -6,6 +6,7 @@ import 'dart:ui' show Locale;
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/application_proxy.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -61,6 +62,11 @@ class Requests extends _$Requests with AutoDisposeNotifierMixin {
       return;
     }
     this.value = state.append(value);
+    unawaited(
+      ref.read(applicationProxyHistoryProvider.notifier).remember([
+        (process: value.metadata.process, path: value.metadata.processPath),
+      ]),
+    );
   }
 
   void updateTraffic(Map<String, RequestTraffic> traffic) {

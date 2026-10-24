@@ -290,6 +290,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "开启进程识别后，可识别发起连接的应用。",
     ),
     "applicationProxyFollowRules": MessageLookupByLibrary.simpleMessage("跟随规则"),
+    "applicationProxyHistoryCoverage": MessageLookupByLibrary.simpleMessage(
+      "历史记录仅包含 FlClash 识别过的应用，并保存在本机。离线应用也可设置规则，连接和流量统计仅包含当前活动连接。",
+    ),
+    "applicationProxyHistoryScope": MessageLookupByLibrary.simpleMessage(
+      "当前配置 · 已记录的应用及已保存的应用规则",
+    ),
+    "applicationProxyIncludeHistory": MessageLookupByLibrary.simpleMessage(
+      "显示历史应用",
+    ),
     "applicationProxyInvalidProcess": MessageLookupByLibrary.simpleMessage(
       "无法为此进程设置应用规则。",
     ),
