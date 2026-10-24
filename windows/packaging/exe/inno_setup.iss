@@ -163,6 +163,7 @@ Name: "chineseSimplified"; MessagesFile: {% if locale.file %}{{ locale.file }}{%
 {% endfor %}
 
 [CustomMessages]
+chineseSimplified.RemoveUserData=是否同时删除配置文件和设置？
 english.RemoveUserData=Also delete your profiles and settings?
 russian.RemoveUserData=Также удалить ваши профили и настройки?
 
