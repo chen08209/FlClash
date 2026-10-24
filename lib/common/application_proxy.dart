@@ -35,6 +35,15 @@ class ApplicationIdentity {
             .toLowerCase()
       : value;
 
+  bool matchesProcess(ApplicationProcess process) {
+    final value = switch (action) {
+      RuleAction.PROCESS_PATH => process.path,
+      RuleAction.PROCESS_NAME => process.process,
+      _ => null,
+    };
+    return value != null && _normalize(value) == _normalize(content);
+  }
+
   bool matchesRule(Rule rule) =>
       rule.ruleAction == action &&
       !rule.src &&
@@ -68,6 +77,16 @@ List<ApplicationConnection> applicationConnectionsOf(
       upload: connection.upload,
       download: connection.download,
     ),
+];
+
+List<String> applicationConnectionIdsOf(
+  ({
+    Map<String, ApplicationProcess> connections,
+    ApplicationIdentity application,
+  }) input,
+) => [
+  for (final connection in input.connections.entries)
+    if (input.application.matchesProcess(connection.value)) connection.key,
 ];
 
 class ApplicationProxyInfo {

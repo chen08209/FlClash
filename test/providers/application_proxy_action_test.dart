@@ -1,21 +1,30 @@
+import 'dart:async';
+
 import 'package:drift/native.dart';
 import 'package:fl_clash/common/application_proxy.dart';
 import 'package:fl_clash/common/exception.dart';
+import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/database/database.dart' as db;
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 
 import '../helpers/test_profiles.dart';
+
+class _MockCore extends Mock implements CoreHandlerInterface {}
 
 class _SetupAction extends SetupAction {
   int applyCalls = 0;
   bool applied = true;
   Error? applyError;
+  Future<bool> Function()? onApply;
 
   @override
   void build() {}
@@ -29,7 +38,7 @@ class _SetupAction extends SetupAction {
     applyCalls++;
     final error = applyError;
     if (error != null) throw error;
-    return applied;
+    return onApply == null ? applied : await onApply!();
   }
 }
 
@@ -39,6 +48,16 @@ const _application = ApplicationIdentity(
   windows: true,
 );
 
+TrackerInfo _connection(String id, {String path = r'C:\Apps\browser.exe'}) =>
+    TrackerInfo(
+      id: id,
+      start: DateTime.utc(2026, 10, 24),
+      metadata: Metadata(process: 'browser.exe', processPath: path),
+      chains: const ['DIRECT'],
+      rule: 'MATCH',
+      rulePayload: '',
+    );
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -46,6 +65,7 @@ void main() {
   late db.Database database;
   late ProviderContainer container;
   late _SetupAction action;
+  late _MockCore core;
 
   setUpAll(() => AppLocalizations.load(const Locale('en')));
 
@@ -61,8 +81,12 @@ void main() {
       for (final profile in profiles) profile.toCompanion(),
     ]);
     action = _SetupAction();
+    core = _MockCore();
+    when(core.getConnections).thenAnswer((_) async => []);
+    when(() => core.closeConnection(any())).thenAnswer((_) async => true);
     container = ProviderContainer(
       overrides: [
+        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
         profilesProvider.overrideWith(() => TestProfiles(profiles)),
         currentProfileIdProvider.overrideWithBuild((_, _) => 1),
         setupActionProvider.overrideWith(() => action),
@@ -75,6 +99,7 @@ void main() {
         ),
       ],
     );
+    globalState.container = container;
     container.listen(currentProfileIdProvider, (_, _) {});
     container.listen(patchClashConfigProvider, (_, _) {});
     container.listen(profilesProvider, (_, _) {});
@@ -86,6 +111,157 @@ void main() {
     container.dispose();
     db.database = previousDatabase;
     await database.close();
+  });
+
+  test('policy changes apply before closing only the selected application', () async {
+    var applied = false;
+    action.onApply = () async {
+      verifyNever(core.getConnections);
+      applied = true;
+      return true;
+    };
+    when(core.getConnections).thenAnswer((_) async {
+      expect(applied, isTrue);
+      return [
+        _connection('browser-1'),
+        _connection('browser-2', path: 'c:/apps/BROWSER.exe'),
+        _connection('other-install', path: r'D:\Apps\browser.exe'),
+        _connection('editor', path: r'C:\Apps\editor.exe'),
+      ];
+    });
+
+    expect(await action.setApplicationProxy(
+      profileId: 1,
+      application: _application,
+      target: 'DIRECT',
+    ), isTrue);
+
+    verify(() => core.closeConnection('browser-1')).called(1);
+    verify(() => core.closeConnection('browser-2')).called(1);
+    verifyNever(() => core.closeConnection('other-install'));
+    verifyNever(() => core.closeConnection('editor'));
+    verifyNever(core.closeConnections);
+  });
+
+  test('returning to follow rules also closes the application connections', () async {
+    when(core.getConnections).thenAnswer((_) async => [_connection('browser')]);
+    await action.setApplicationProxy(
+      profileId: 1,
+      application: _application,
+      target: 'DIRECT',
+    );
+    clearInteractions(core);
+
+    await action.setApplicationProxy(
+      profileId: 1,
+      application: _application,
+      target: null,
+    );
+
+    expect(await database.rulesDao.queryApplicationRules(1).get(), isEmpty);
+    verify(() => core.closeConnection('browser')).called(1);
+  });
+
+  test('failed applies preserve existing connections', () async {
+    action.applied = false;
+    expect(await action.setApplicationProxy(
+      profileId: 1,
+      application: _application,
+      target: 'DIRECT',
+    ), isFalse);
+    verifyNever(core.getConnections);
+    verifyNever(() => core.closeConnection(any()));
+  });
+
+  test('switching profiles away and back cancels stale connection termination', () async {
+    final entered = Completer<void>();
+    final apply = Completer<bool>();
+    action.onApply = () {
+      entered.complete();
+      return apply.future;
+    };
+    final save = action.setApplicationProxy(
+      profileId: 1,
+      application: _application,
+      target: 'DIRECT',
+    );
+    await entered.future;
+    container.read(currentProfileIdProvider.notifier).value = 2;
+    container.read(currentProfileIdProvider.notifier).value = 1;
+    apply.complete(true);
+
+    expect(await save, isTrue);
+    verifyNever(core.getConnections);
+    verifyNever(() => core.closeConnection(any()));
+  });
+
+  test('a superseded application edit cannot terminate connections again', () async {
+    final entered = Completer<void>();
+    final firstApply = Completer<bool>();
+    action.onApply = () {
+      if (action.applyCalls == 1) {
+        entered.complete();
+        return firstApply.future;
+      }
+      return Future.value(true);
+    };
+    when(core.getConnections).thenAnswer((_) async => [_connection('browser')]);
+    final first = action.setApplicationProxy(
+      profileId: 1,
+      application: _application,
+      target: 'DIRECT',
+    );
+    await entered.future;
+    await action.setApplicationProxy(
+      profileId: 1,
+      application: _application,
+      target: 'Proxy',
+    );
+    firstApply.complete(true);
+    expect(await first, isTrue);
+
+    verify(() => core.closeConnection('browser')).called(1);
+    expect(
+      (await database.rulesDao.queryApplicationRules(1).get()).single.ruleTarget,
+      'Proxy',
+    );
+  });
+
+  test('connections that expired before close are already complete', () async {
+    var lists = 0;
+    when(core.getConnections).thenAnswer((_) async {
+      return lists++ == 0 ? [_connection('expired')] : [];
+    });
+    when(() => core.closeConnection('expired')).thenAnswer((_) async => false);
+
+    expect(await action.setApplicationProxy(
+      profileId: 1,
+      application: _application,
+      target: 'DIRECT',
+    ), isTrue);
+  });
+
+  test('connection-close failures keep the saved rule and report the failure', () async {
+    when(core.getConnections).thenAnswer((_) async => [_connection('browser')]);
+    when(() => core.closeConnection('browser')).thenAnswer((_) async => false);
+
+    final l = AppLocalizations.current;
+    await expectLater(
+      action.setApplicationProxy(
+        profileId: 1,
+        application: _application,
+        target: 'DIRECT',
+      ),
+      throwsA(isA<MessageException>().having(
+        (error) => error.message,
+        'message',
+        l.failedItem(l.closeConnections, l.error),
+      )),
+    );
+    expect(
+      (await database.rulesDao.queryApplicationRules(1).get()).single.ruleTarget,
+      'DIRECT',
+    );
   });
 
   test('subscription metadata updates preserve per-profile application rules', () async {

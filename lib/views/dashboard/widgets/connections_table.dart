@@ -79,7 +79,7 @@ void openDashboardFeed(BuildContext context, DashboardFeed feed) {
         ),
         DashboardFeed.requests => RequestsView(scrollController: controller),
         DashboardFeed.dns => DnsQueriesView(scrollController: controller),
-        DashboardFeed.applications => _ApplicationProxyView(
+        DashboardFeed.applications => ApplicationProxyView(
           scrollController: controller,
         ),
       },

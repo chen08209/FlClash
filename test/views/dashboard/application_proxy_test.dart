@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:drift/native.dart';
 import 'package:fl_clash/common/application_proxy.dart';
+import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/database/database.dart' as db;
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -9,14 +11,18 @@ import 'package:fl_clash/providers/application_proxy.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
+import 'package:fl_clash/views/navigation.dart';
 import 'package:fl_clash/views/dashboard/widgets/connections_table.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/preferences.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
+
+class _MockCore extends Mock implements CoreHandlerInterface {}
 
 class _SetupAction extends SetupAction {
   Completer<bool>? pending;
@@ -63,8 +69,11 @@ void main() {
     const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
     await database.profilesDao.putAll([profile.toCompanion()]);
     action = _SetupAction();
+    final core = _MockCore();
+    when(core.getConnections).thenAnswer((_) async => []);
     container = ProviderContainer(
       overrides: [
+        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
         profilesProvider.overrideWith(() => TestProfiles(const [profile])),
         currentProfileIdProvider.overrideWithBuild((_, _) => 1),
         coreStatusProvider.overrideWithBuild((_, _) => CoreStatus.connected),
@@ -146,6 +155,32 @@ void main() {
     await tester.tap(find.text('Direct'));
     await waitForApply(tester);
   }
+
+  testWidgets('the desktop menu opens the full application page and its history filter', (
+    tester,
+  ) async {
+    container.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+    await container.read(applicationProxyHistoryProvider.notifier).remember(
+      const [(process: 'browser', path: '/apps/browser')],
+    );
+    final item = Navigation().getItems().singleWhere(
+      (item) => item.label == PageLabel.applicationProxy,
+    );
+    expect(item.modes, contains(NavigationItemMode.desktop));
+    expect(item.modes, contains(NavigationItemMode.moreFull));
+
+    await pumpPanel(tester, child: Builder(builder: item.builder));
+    expect(find.byType(ApplicationProxyView), findsOneWidget);
+    expect(find.byType(ApplicationProxyPanel), findsOneWidget);
+    expect(tester.widget<FilterChip>(find.byType(FilterChip)).selected, isFalse);
+    expect(find.text('browser'), findsNothing);
+
+    await tester.tap(find.byType(FilterChip));
+    await tester.pumpAndSettle();
+    expect(find.text('browser'), findsOneWidget);
+    expect(find.widgetWithText(TextButton, 'Follow rules'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('history toggle restores a disconnected app and permits policy edits', (
     tester,

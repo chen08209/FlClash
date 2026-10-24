@@ -43,6 +43,30 @@ ApplicationProxySnapshot _snapshot(
 ));
 
 void main() {
+  test('connection selection respects process-name and process-path scopes', () {
+    const connections = {
+      'primary': (process: 'browser.exe', path: r'C:\Apps\browser.exe'),
+      'second': (process: 'browser.exe', path: r'D:\Apps\browser.exe'),
+      'editor': (process: 'editor.exe', path: r'C:\Apps\editor.exe'),
+    };
+    expect(applicationConnectionIdsOf((
+      connections: connections,
+      application: const ApplicationIdentity(
+        action: RuleAction.PROCESS_PATH,
+        content: 'c:/apps/BROWSER.exe',
+        windows: true,
+      ),
+    )), ['primary']);
+    expect(applicationConnectionIdsOf((
+      connections: connections,
+      application: const ApplicationIdentity(
+        action: RuleAction.PROCESS_NAME,
+        content: 'BROWSER.EXE',
+        windows: true,
+      ),
+    )), ['primary', 'second']);
+  });
+
   test('active-only mode hides idle rules and historical applications', () {
     final snapshot = _snapshot(
       [_connection('active')],

@@ -223,8 +223,8 @@ class CoreController {
     return _interface.getConnectionCount();
   }
 
-  Future<void> closeConnection(String id) async {
-    await _interface.closeConnection(id);
+  Future<bool> closeConnection(String id) async {
+    return _interface.closeConnection(id);
   }
 
   Future<void> closeConnections() async {

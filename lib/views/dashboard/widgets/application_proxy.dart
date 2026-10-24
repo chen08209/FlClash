@@ -1,21 +1,21 @@
 part of 'connections_table.dart';
 
-class _ApplicationProxyView extends ConsumerStatefulWidget {
-  const _ApplicationProxyView({this.scrollController});
+class ApplicationProxyView extends ConsumerStatefulWidget {
+  const ApplicationProxyView({super.key, this.scrollController});
 
   final ScrollController? scrollController;
 
   @override
-  ConsumerState<_ApplicationProxyView> createState() =>
+  ConsumerState<ApplicationProxyView> createState() =>
       _ApplicationProxyViewState();
 }
 
-class _ApplicationProxyViewState extends ConsumerState<_ApplicationProxyView>
+class _ApplicationProxyViewState extends ConsumerState<ApplicationProxyView>
     with
         WidgetsBindingObserver,
-        ActivePollingMixin<_ApplicationProxyView>,
-        RouteMotionHoldMixin<_ApplicationProxyView>,
-        ConnectionsPolling<_ApplicationProxyView> {
+        ActivePollingMixin<ApplicationProxyView>,
+        RouteMotionHoldMixin<ApplicationProxyView>,
+        ConnectionsPolling<ApplicationProxyView> {
   @override
   bool get pollsConnections => true;
 
