@@ -196,8 +196,12 @@ Future<int> _package(
   }
 
   final process = await Process.start(
-    'flutter_distributor',
+    'dart',
     [
+      'pub',
+      'global',
+      'run',
+      'flutter_distributor:main',
       'package',
       '--skip-clean',
       '--platform',
@@ -212,14 +216,9 @@ Future<int> _package(
     ],
     includeParentEnvironment: true,
     runInShell: Platform.isWindows,
+    mode: ProcessStartMode.inheritStdio,
   );
 
-  process.stdout.listen((data) {
-    stdout.write(utf8.decode(data));
-  });
-  process.stderr.listen((data) {
-    stderr.write(utf8.decode(data));
-  });
   final exitCode = await process.exitCode;
   return exitCode;
 }

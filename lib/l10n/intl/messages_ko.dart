@@ -282,6 +282,42 @@ class MessageLookup extends MessageLookupByLibrary {
     "appIconDesign": MessageLookupByLibrary.simpleMessage("앱 아이콘 디자인"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("로컬 프록시 없음"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage("시스템 DNS 추가"),
+    "applicationProxy": MessageLookupByLibrary.simpleMessage("앱별 프록시"),
+    "applicationProxyApplyFailed": MessageLookupByLibrary.simpleMessage(
+      "규칙이 저장되었지만 적용하지 못했습니다. 현재 프로필을 다시 적용하세요.",
+    ),
+    "applicationProxyBlocked": MessageLookupByLibrary.simpleMessage("차단됨"),
+    "applicationProxyCoverage": MessageLookupByLibrary.simpleMessage(
+      "FlClash가 수신한 트래픽만 표시합니다. 시스템 프록시를 무시하는 앱도 포함하려면 TUN을 활성화하세요. 변경 사항은 새 연결에 적용되며, 트래픽 합계는 현재 활성 연결만 포함합니다.",
+    ),
+    "applicationProxyEnableProcess": MessageLookupByLibrary.simpleMessage(
+      "앱을 식별하려면 프로세스 감지를 활성화하세요.",
+    ),
+    "applicationProxyFollowRules": MessageLookupByLibrary.simpleMessage(
+      "규칙 따르기",
+    ),
+    "applicationProxyInvalidProcess": MessageLookupByLibrary.simpleMessage(
+      "이 프로세스에는 앱 규칙을 설정할 수 없습니다.",
+    ),
+    "applicationProxyMixed": MessageLookupByLibrary.simpleMessage("혼합"),
+    "applicationProxyNoConnections": MessageLookupByLibrary.simpleMessage(
+      "활성 연결 없음",
+    ),
+    "applicationProxyNoProfile": MessageLookupByLibrary.simpleMessage(
+      "앱의 경로를 변경하려면 프로필을 선택하세요.",
+    ),
+    "applicationProxyRefreshFailed": MessageLookupByLibrary.simpleMessage(
+      "새로 고침에 실패했습니다. 마지막으로 수신한 연결을 표시합니다.",
+    ),
+    "applicationProxyRuleMode": MessageLookupByLibrary.simpleMessage(
+      "앱 규칙은 규칙 모드에서 적용됩니다. 기존 연결은 현재 경로를 유지합니다.",
+    ),
+    "applicationProxyScope": MessageLookupByLibrary.simpleMessage(
+      "현재 프로필 · FlClash가 수신한 활성 연결",
+    ),
+    "applicationProxyScriptUnsupported": MessageLookupByLibrary.simpleMessage(
+      "표준 확장과 사용자 지정 프로필에서 앱 규칙을 변경할 수 있습니다. 스크립트 확장은 여기서 보기만 가능합니다.",
+    ),
     "authentication": MessageLookupByLibrary.simpleMessage("인증"),
     "authenticationDesc": MessageLookupByLibrary.simpleMessage(
       "인증을 켜면 로컬 프록시 포트에서 사용자 이름과 비밀번호를 요구합니다.",

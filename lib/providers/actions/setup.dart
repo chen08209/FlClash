@@ -338,6 +338,68 @@ class SetupAction extends _$SetupAction {
     });
   }
 
+  Future<bool> setApplicationProxy({
+    required int profileId,
+    required ApplicationIdentity application,
+    required String? target,
+  }) async {
+    final profile = ref.read(profileProvider(profileId));
+    if (ref.read(currentProfileIdProvider) != profileId || profile == null) {
+      throw MessageException(currentAppLocalizations.applicationProxyNoProfile);
+    }
+    if (profile.type != ProfileType.custom &&
+        profile.extendType != ExtendType.standard) {
+      throw MessageException(
+        currentAppLocalizations.applicationProxyScriptUnsupported,
+      );
+    }
+    if (!application.canRoute) {
+      throw MessageException(
+        currentAppLocalizations.applicationProxyInvalidProcess,
+      );
+    }
+    if (target != null &&
+        (target.trim().isEmpty ||
+            RegExp(r'[,\r\n]').hasMatch(target) ||
+            (target != RuleTarget.DIRECT.value &&
+                !ref.read(groupsProvider).any((group) => group.name == target)))) {
+      throw MessageException(currentAppLocalizations.invalidPolicy(target));
+    }
+    await database.transaction(() async {
+      final rules = await database.rulesDao.queryApplicationRules(profileId).get();
+      final matches = rules.where(application.matchesRule).toList();
+      if (target == null) {
+        await database.rulesDao.delRules(matches.map((rule) => rule.id));
+        return;
+      }
+      final firstOrder = await database.rulesDao.firstProfileRuleOrder(profileId);
+      await database.rulesDao.putRule(
+        Rule(
+          id: matches.firstOrNull?.id ?? snowflake.id,
+          ruleAction: application.action,
+          content: application.content,
+          ruleTarget: target,
+          order: indexing.generateKeyBetween(null, firstOrder),
+        ),
+        profileId: profileId,
+      );
+      await database.rulesDao.delRules(matches.skip(1).map((rule) => rule.id));
+    });
+    ref.invalidate(setupStateProvider(profileId));
+    if (ref.read(currentProfileIdProvider) != profileId) return true;
+    if (target != null) {
+      ref.read(patchClashConfigProvider.notifier).update(
+        (state) => state.copyWith(findProcessMode: FindProcessMode.always),
+      );
+    }
+    if (ref.read(coreStatusProvider) != CoreStatus.connected) return true;
+    try {
+      return await applyProfile(silence: true);
+    } catch (_) {
+      throw MessageException(currentAppLocalizations.applicationProxyApplyFailed);
+    }
+  }
+
   void applyProfileDebounce({bool silence = false, bool force = false}) {
     _pendingForceApply |= force;
     debouncer.call(FunctionTag.applyProfile, (silence) {

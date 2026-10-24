@@ -350,6 +350,46 @@ class MessageLookup extends MessageLookupByLibrary {
     "appendSystemDns": MessageLookupByLibrary.simpleMessage(
       "Añadir DNS del sistema",
     ),
+    "applicationProxy": MessageLookupByLibrary.simpleMessage(
+      "Proxy por aplicación",
+    ),
+    "applicationProxyApplyFailed": MessageLookupByLibrary.simpleMessage(
+      "La regla se guardó, pero no pudo aplicarse. Vuelva a aplicar el perfil actual.",
+    ),
+    "applicationProxyBlocked": MessageLookupByLibrary.simpleMessage(
+      "Bloqueado",
+    ),
+    "applicationProxyCoverage": MessageLookupByLibrary.simpleMessage(
+      "Solo se muestra el tráfico recibido por FlClash. Active TUN para incluir aplicaciones que ignoran el proxy del sistema. Los cambios se aplican a las conexiones nuevas. Los totales solo incluyen las conexiones activas.",
+    ),
+    "applicationProxyEnableProcess": MessageLookupByLibrary.simpleMessage(
+      "Active la detección de procesos para identificar las aplicaciones.",
+    ),
+    "applicationProxyFollowRules": MessageLookupByLibrary.simpleMessage(
+      "Seguir reglas",
+    ),
+    "applicationProxyInvalidProcess": MessageLookupByLibrary.simpleMessage(
+      "No se puede establecer una regla de aplicación para este proceso.",
+    ),
+    "applicationProxyMixed": MessageLookupByLibrary.simpleMessage("Mixto"),
+    "applicationProxyNoConnections": MessageLookupByLibrary.simpleMessage(
+      "Sin conexiones activas",
+    ),
+    "applicationProxyNoProfile": MessageLookupByLibrary.simpleMessage(
+      "Seleccione un perfil para cambiar el enrutamiento de las aplicaciones.",
+    ),
+    "applicationProxyRefreshFailed": MessageLookupByLibrary.simpleMessage(
+      "Error al actualizar. Se muestran las últimas conexiones recibidas.",
+    ),
+    "applicationProxyRuleMode": MessageLookupByLibrary.simpleMessage(
+      "Las reglas de aplicaciones se aplican en el modo de reglas. Las conexiones existentes conservan sus rutas.",
+    ),
+    "applicationProxyScope": MessageLookupByLibrary.simpleMessage(
+      "Perfil actual · Conexiones activas recibidas por FlClash",
+    ),
+    "applicationProxyScriptUnsupported": MessageLookupByLibrary.simpleMessage(
+      "Las reglas de aplicaciones se pueden cambiar en extensiones estándar y perfiles personalizados. Las extensiones de script son de solo lectura aquí.",
+    ),
     "authentication": MessageLookupByLibrary.simpleMessage("Autenticación"),
     "authenticationDesc": MessageLookupByLibrary.simpleMessage(
       "La autenticación pide usuario y contraseña en el puerto del proxy local.",
@@ -1031,9 +1071,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Introduce el contenido de la regla",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "Se denegó el permiso de lista de apps, por lo que no se pueden mostrar las apps instaladas. Concédelo manualmente en los ajustes del sistema.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "Se denegó el permiso de lista de apps, por lo que no se pueden mostrar las apps instaladas. Concédelo manualmente en los ajustes del sistema.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Este sistema oculta la lista de apps instaladas hasta que se concede el permiso. Autorízalo para configurar el proxy por app.",
     ),

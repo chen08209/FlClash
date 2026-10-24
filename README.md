@@ -8,7 +8,7 @@ A multi-platform proxy client based on ClashMeta. Simple to use, open source and
 
 **English** · [简体中文](README_zh_CN.md)
 
-[![Release](https://img.shields.io/github/v/release/chen08209/FlClash?style=flat-square&label=release)](https://github.com/chen08209/FlClash/releases/latest)
+[![Release](https://img.shields.io/github/v/release/chen08209/FlClash?style=flat-square&label=release)](https://github.com/chen08209/FlClash/releases/latest) ``
 [![Downloads](https://img.shields.io/github/downloads/chen08209/FlClash/total?style=flat-square&logo=github)](https://github.com/chen08209/FlClash/releases)
 [![License](https://img.shields.io/github/license/chen08209/FlClash?style=flat-square)](LICENSE)
 [![Telegram](https://img.shields.io/badge/Telegram-channel-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://t.me/FlClash)

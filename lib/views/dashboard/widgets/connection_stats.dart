@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -9,8 +10,6 @@ import 'package:material_ui/material_ui.dart';
 import 'card.dart';
 import 'connections_table.dart';
 
-/// The counts of the three feeds, each opening its list, for the phone and
-/// for a desktop page too short for the table.
 class ConnectionStatsCard extends ConsumerStatefulWidget {
   const ConnectionStatsCard({super.key});
 
@@ -64,6 +63,11 @@ class _ConnectionStatsCardState extends ConsumerState<ConnectionStatsCard>
               builder: (_, count) => _Count(count),
             ),
           ),
+          _Stat(
+            feed: DashboardFeed.applications,
+            shape: shape,
+            count: const GlyphIcon(AppGlyphs.appsList, size: 26),
+          ),
         ],
       ),
     );
@@ -100,7 +104,7 @@ class _Stat extends StatelessWidget {
     return Expanded(
       child: Semantics(
         button: true,
-        label: feed.page.label,
+        label: feed.label,
         child: FocusRing(
           shape: shape,
           child: InkWell(
@@ -115,7 +119,7 @@ class _Stat extends StatelessWidget {
                 children: [
                   count,
                   Text(
-                    feed.page.label,
+                    feed.label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: DashboardText.label(context),

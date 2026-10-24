@@ -55,6 +55,146 @@ class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
+  /// `App proxy`
+  String get applicationProxy {
+    return Intl.message(
+      'App proxy',
+      name: 'applicationProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This process cannot be used in an app rule.`
+  String get applicationProxyInvalidProcess {
+    return Intl.message(
+      'This process cannot be used in an app rule.',
+      name: 'applicationProxyInvalidProcess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Follow rules`
+  String get applicationProxyFollowRules {
+    return Intl.message(
+      'Follow rules',
+      name: 'applicationProxyFollowRules',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The rule was saved, but could not be applied. Apply the current profile to retry.`
+  String get applicationProxyApplyFailed {
+    return Intl.message(
+      'The rule was saved, but could not be applied. Apply the current profile to retry.',
+      name: 'applicationProxyApplyFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select a profile to adjust app routing.`
+  String get applicationProxyNoProfile {
+    return Intl.message(
+      'Select a profile to adjust app routing.',
+      name: 'applicationProxyNoProfile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `App rules can be adjusted in standard extensions and custom profiles. Script extensions are read-only here.`
+  String get applicationProxyScriptUnsupported {
+    return Intl.message(
+      'App rules can be adjusted in standard extensions and custom profiles. Script extensions are read-only here.',
+      name: 'applicationProxyScriptUnsupported',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `App rules apply in rule mode. Existing connections keep their current routes.`
+  String get applicationProxyRuleMode {
+    return Intl.message(
+      'App rules apply in rule mode. Existing connections keep their current routes.',
+      name: 'applicationProxyRuleMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enable process detection to identify apps.`
+  String get applicationProxyEnableProcess {
+    return Intl.message(
+      'Enable process detection to identify apps.',
+      name: 'applicationProxyEnableProcess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Current profile · Active connections received by FlClash`
+  String get applicationProxyScope {
+    return Intl.message(
+      'Current profile · Active connections received by FlClash',
+      name: 'applicationProxyScope',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only traffic received by FlClash is shown. Enable TUN to include apps that ignore the system proxy. Changes apply to new connections. Traffic totals cover currently active connections.`
+  String get applicationProxyCoverage {
+    return Intl.message(
+      'Only traffic received by FlClash is shown. Enable TUN to include apps that ignore the system proxy. Changes apply to new connections. Traffic totals cover currently active connections.',
+      name: 'applicationProxyCoverage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No active connections`
+  String get applicationProxyNoConnections {
+    return Intl.message(
+      'No active connections',
+      name: 'applicationProxyNoConnections',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Mixed`
+  String get applicationProxyMixed {
+    return Intl.message(
+      'Mixed',
+      name: 'applicationProxyMixed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Blocked`
+  String get applicationProxyBlocked {
+    return Intl.message(
+      'Blocked',
+      name: 'applicationProxyBlocked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Refresh failed. Showing the last received connections.`
+  String get applicationProxyRefreshFailed {
+    return Intl.message(
+      'Refresh failed. Showing the last received connections.',
+      name: 'applicationProxyRefreshFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Rule`
   String get rule {
     return Intl.message('Rule', name: 'rule', desc: '', args: []);
@@ -7978,8 +8118,7 @@ class AppLocalizations {
   String customImportDroppedSubRules(num count, Object label) {
     return Intl.plural(
       count,
-      one:
-          '1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules',
+      one: '1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules',
       other:
           '$label SUB-RULE rules were dropped, since custom profiles do not support sub-rules',
       name: 'customImportDroppedSubRules',

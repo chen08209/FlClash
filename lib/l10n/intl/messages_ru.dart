@@ -339,6 +339,46 @@ class MessageLookup extends MessageLookupByLibrary {
     "appendSystemDns": MessageLookupByLibrary.simpleMessage(
       "Добавлять системный DNS",
     ),
+    "applicationProxy": MessageLookupByLibrary.simpleMessage(
+      "Прокси приложений",
+    ),
+    "applicationProxyApplyFailed": MessageLookupByLibrary.simpleMessage(
+      "Правило сохранено, но не применено. Повторно примените текущий профиль.",
+    ),
+    "applicationProxyBlocked": MessageLookupByLibrary.simpleMessage(
+      "Заблокировано",
+    ),
+    "applicationProxyCoverage": MessageLookupByLibrary.simpleMessage(
+      "Показан только трафик, принятый FlClash. Включите TUN для приложений, игнорирующих системный прокси. Изменения действуют для новых соединений. Объём трафика учитывает только текущие соединения.",
+    ),
+    "applicationProxyEnableProcess": MessageLookupByLibrary.simpleMessage(
+      "Включите определение процессов для распознавания приложений.",
+    ),
+    "applicationProxyFollowRules": MessageLookupByLibrary.simpleMessage(
+      "По правилам",
+    ),
+    "applicationProxyInvalidProcess": MessageLookupByLibrary.simpleMessage(
+      "Для этого процесса нельзя задать правило приложения.",
+    ),
+    "applicationProxyMixed": MessageLookupByLibrary.simpleMessage("Смешанный"),
+    "applicationProxyNoConnections": MessageLookupByLibrary.simpleMessage(
+      "Нет активных соединений",
+    ),
+    "applicationProxyNoProfile": MessageLookupByLibrary.simpleMessage(
+      "Выберите профиль для изменения маршрутизации приложений.",
+    ),
+    "applicationProxyRefreshFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось обновить. Показаны последние полученные соединения.",
+    ),
+    "applicationProxyRuleMode": MessageLookupByLibrary.simpleMessage(
+      "Правила приложений действуют в режиме правил. Существующие соединения сохраняют свои маршруты.",
+    ),
+    "applicationProxyScope": MessageLookupByLibrary.simpleMessage(
+      "Текущий профиль · Активные соединения, принятые FlClash",
+    ),
+    "applicationProxyScriptUnsupported": MessageLookupByLibrary.simpleMessage(
+      "Правила приложений можно менять в стандартных расширениях и пользовательских профилях. Скриптовые расширения доступны только для просмотра.",
+    ),
     "authentication": MessageLookupByLibrary.simpleMessage("Аутентификация"),
     "authenticationDesc": MessageLookupByLibrary.simpleMessage(
       "Аутентификация требует логин и пароль для локального порта прокси.",
@@ -998,9 +1038,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Введите содержимое правила",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Эта система не выдаёт список установленных приложений без разрешения. Предоставьте его, чтобы настроить прокси для отдельных приложений.",
     ),
