@@ -251,8 +251,13 @@ void main() {
 
     test('closeConnection delegates', () async {
       when(() => mock.closeConnection('id1')).thenAnswer((_) async => true);
-      await controller.closeConnection('id1');
+      expect(await controller.closeConnection('id1'), isTrue);
       verify(() => mock.closeConnection('id1')).called(1);
+    });
+
+    test('closeConnection preserves a missing or failed result', () async {
+      when(() => mock.closeConnection('missing')).thenAnswer((_) async => false);
+      expect(await controller.closeConnection('missing'), isFalse);
     });
   });
 

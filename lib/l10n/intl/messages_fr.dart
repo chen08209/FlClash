@@ -351,6 +351,53 @@ class MessageLookup extends MessageLookupByLibrary {
     "appendSystemDns": MessageLookupByLibrary.simpleMessage(
       "Ajouter le DNS du système",
     ),
+    "applicationProxy": MessageLookupByLibrary.simpleMessage(
+      "Proxy par application",
+    ),
+    "applicationProxyApplyFailed": MessageLookupByLibrary.simpleMessage(
+      "La règle a été enregistrée, mais son application a échoué. Réappliquez le profil actuel.",
+    ),
+    "applicationProxyBlocked": MessageLookupByLibrary.simpleMessage("Bloqué"),
+    "applicationProxyCoverage": MessageLookupByLibrary.simpleMessage(
+      "Seul le trafic reçu par FlClash est affiché. Activez TUN pour inclure les applications qui ignorent le proxy système. Les modifications concernent les nouvelles connexions. Les volumes ne couvrent que les connexions actives.",
+    ),
+    "applicationProxyEnableProcess": MessageLookupByLibrary.simpleMessage(
+      "Activez la détection des processus pour identifier les applications.",
+    ),
+    "applicationProxyFollowRules": MessageLookupByLibrary.simpleMessage(
+      "Suivre les règles",
+    ),
+    "applicationProxyHistoryCoverage": MessageLookupByLibrary.simpleMessage(
+      "Les applications détectées par FlClash sont conservées sur cet appareil. Leurs règles restent modifiables sans connexion active. Les statistiques concernent uniquement les connexions actives.",
+    ),
+    "applicationProxyHistoryScope": MessageLookupByLibrary.simpleMessage(
+      "Profil actuel · Applications enregistrées et règles sauvegardées",
+    ),
+    "applicationProxyIncludeHistory": MessageLookupByLibrary.simpleMessage(
+      "Inclure les applications passées",
+    ),
+    "applicationProxyInvalidProcess": MessageLookupByLibrary.simpleMessage(
+      "Impossible de définir une règle d\'application pour ce processus.",
+    ),
+    "applicationProxyMixed": MessageLookupByLibrary.simpleMessage("Mixte"),
+    "applicationProxyNoConnections": MessageLookupByLibrary.simpleMessage(
+      "Aucune connexion active",
+    ),
+    "applicationProxyNoProfile": MessageLookupByLibrary.simpleMessage(
+      "Sélectionnez un profil pour modifier le routage des applications.",
+    ),
+    "applicationProxyRefreshFailed": MessageLookupByLibrary.simpleMessage(
+      "Échec de l\'actualisation. Les dernières connexions reçues sont affichées.",
+    ),
+    "applicationProxyRuleMode": MessageLookupByLibrary.simpleMessage(
+      "Les règles des applications s\'appliquent en mode règles. Les connexions existantes conservent leur routage.",
+    ),
+    "applicationProxyScope": MessageLookupByLibrary.simpleMessage(
+      "Profil actuel · Connexions actives reçues par FlClash",
+    ),
+    "applicationProxyScriptUnsupported": MessageLookupByLibrary.simpleMessage(
+      "Les règles des applications sont modifiables dans les extensions standard et les profils personnalisés. Les extensions de script sont en lecture seule ici.",
+    ),
     "authentication": MessageLookupByLibrary.simpleMessage("Authentification"),
     "authenticationDesc": MessageLookupByLibrary.simpleMessage(
       "L’authentification demande un nom d’utilisateur et un mot de passe sur le port du proxy local.",
@@ -1030,9 +1077,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Saisissez le contenu de la règle",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "L’autorisation de la liste des apps a été refusée ; les apps installées ne peuvent donc pas être listées. Veuillez l’accorder manuellement dans les réglages du système.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "L’autorisation de la liste des apps a été refusée ; les apps installées ne peuvent donc pas être listées. Veuillez l’accorder manuellement dans les réglages du système.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Ce système masque la liste des apps installées tant que l’autorisation n’est pas accordée. Accordez-la pour configurer le proxy par app.",
     ),

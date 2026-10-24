@@ -331,6 +331,51 @@ class MessageLookup extends MessageLookupByLibrary {
     "appendSystemDns": MessageLookupByLibrary.simpleMessage(
       "Append system DNS",
     ),
+    "applicationProxy": MessageLookupByLibrary.simpleMessage("App proxy"),
+    "applicationProxyApplyFailed": MessageLookupByLibrary.simpleMessage(
+      "The rule was saved, but could not be applied. Apply the current profile to retry.",
+    ),
+    "applicationProxyBlocked": MessageLookupByLibrary.simpleMessage("Blocked"),
+    "applicationProxyCoverage": MessageLookupByLibrary.simpleMessage(
+      "Only traffic received by FlClash is shown. Enable TUN to include apps that ignore the system proxy. Changes apply to new connections. Traffic totals cover currently active connections.",
+    ),
+    "applicationProxyEnableProcess": MessageLookupByLibrary.simpleMessage(
+      "Enable process detection to identify apps.",
+    ),
+    "applicationProxyFollowRules": MessageLookupByLibrary.simpleMessage(
+      "Follow rules",
+    ),
+    "applicationProxyHistoryCoverage": MessageLookupByLibrary.simpleMessage(
+      "Apps observed by FlClash are stored on this device. Historical apps can be edited while offline. Only active connections contribute to traffic statistics.",
+    ),
+    "applicationProxyHistoryScope": MessageLookupByLibrary.simpleMessage(
+      "Current profile · Recorded apps and saved app rules",
+    ),
+    "applicationProxyIncludeHistory": MessageLookupByLibrary.simpleMessage(
+      "Include app history",
+    ),
+    "applicationProxyInvalidProcess": MessageLookupByLibrary.simpleMessage(
+      "This process cannot be used in an app rule.",
+    ),
+    "applicationProxyMixed": MessageLookupByLibrary.simpleMessage("Mixed"),
+    "applicationProxyNoConnections": MessageLookupByLibrary.simpleMessage(
+      "No active connections",
+    ),
+    "applicationProxyNoProfile": MessageLookupByLibrary.simpleMessage(
+      "Select a profile to adjust app routing.",
+    ),
+    "applicationProxyRefreshFailed": MessageLookupByLibrary.simpleMessage(
+      "Refresh failed. Showing the last received connections.",
+    ),
+    "applicationProxyRuleMode": MessageLookupByLibrary.simpleMessage(
+      "App rules apply in rule mode. Existing connections keep their current routes.",
+    ),
+    "applicationProxyScope": MessageLookupByLibrary.simpleMessage(
+      "Current profile · Active connections received by FlClash",
+    ),
+    "applicationProxyScriptUnsupported": MessageLookupByLibrary.simpleMessage(
+      "App rules can be adjusted in standard extensions and custom profiles. Script extensions are read-only here.",
+    ),
     "authentication": MessageLookupByLibrary.simpleMessage("Authentication"),
     "authenticationDesc": MessageLookupByLibrary.simpleMessage(
       "Authentication asks for a username and password on the local proxy port.",
@@ -964,9 +1009,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Enter the rule content",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "This system hides the installed app list until the permission is granted. Authorize it to configure the per-app proxy.",
     ),

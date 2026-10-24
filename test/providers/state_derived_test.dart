@@ -391,6 +391,15 @@ void main() {
 
     container
         .read(currentPageLabelProvider.notifier)
+        .toPage(PageLabel.applicationProxy);
+    final applications = container.read(navigationStateProvider);
+    expect(
+      applications.navigationItems[applications.currentIndex].label,
+      PageLabel.applicationProxy,
+    );
+
+    container
+        .read(currentPageLabelProvider.notifier)
         .toPage(PageLabel.resources);
     expect(container.read(navigationStateProvider).currentIndex, 0);
   });

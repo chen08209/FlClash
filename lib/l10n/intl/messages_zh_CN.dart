@@ -278,6 +278,49 @@ class MessageLookup extends MessageLookupByLibrary {
     "appIconDesign": MessageLookupByLibrary.simpleMessage("应用图标设计"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("暂无本地代理"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage("追加系统DNS"),
+    "applicationProxy": MessageLookupByLibrary.simpleMessage("应用代理"),
+    "applicationProxyApplyFailed": MessageLookupByLibrary.simpleMessage(
+      "规则已保存，但应用失败。请重新应用当前配置后重试。",
+    ),
+    "applicationProxyBlocked": MessageLookupByLibrary.simpleMessage("已拦截"),
+    "applicationProxyCoverage": MessageLookupByLibrary.simpleMessage(
+      "这里只显示进入 FlClash 的流量。启用 TUN 可接管不使用系统代理的应用。策略修改对新连接生效，累计流量仅包含当前活动连接。",
+    ),
+    "applicationProxyEnableProcess": MessageLookupByLibrary.simpleMessage(
+      "开启进程识别后，可识别发起连接的应用。",
+    ),
+    "applicationProxyFollowRules": MessageLookupByLibrary.simpleMessage("跟随规则"),
+    "applicationProxyHistoryCoverage": MessageLookupByLibrary.simpleMessage(
+      "历史记录仅包含 FlClash 识别过的应用，并保存在本机。离线应用也可设置规则，连接和流量统计仅包含当前活动连接。",
+    ),
+    "applicationProxyHistoryScope": MessageLookupByLibrary.simpleMessage(
+      "当前配置 · 已记录的应用及已保存的应用规则",
+    ),
+    "applicationProxyIncludeHistory": MessageLookupByLibrary.simpleMessage(
+      "显示历史应用",
+    ),
+    "applicationProxyInvalidProcess": MessageLookupByLibrary.simpleMessage(
+      "无法为此进程设置应用规则。",
+    ),
+    "applicationProxyMixed": MessageLookupByLibrary.simpleMessage("混合"),
+    "applicationProxyNoConnections": MessageLookupByLibrary.simpleMessage(
+      "无活动连接",
+    ),
+    "applicationProxyNoProfile": MessageLookupByLibrary.simpleMessage(
+      "请选择配置后调整应用代理。",
+    ),
+    "applicationProxyRefreshFailed": MessageLookupByLibrary.simpleMessage(
+      "刷新失败，当前显示上次获取的连接。",
+    ),
+    "applicationProxyRuleMode": MessageLookupByLibrary.simpleMessage(
+      "应用规则在规则模式下生效，已有连接保持原来的出站。",
+    ),
+    "applicationProxyScope": MessageLookupByLibrary.simpleMessage(
+      "当前配置 · 仅统计进入 FlClash 的活动连接",
+    ),
+    "applicationProxyScriptUnsupported": MessageLookupByLibrary.simpleMessage(
+      "标准扩展和自定义配置支持调整应用规则；脚本扩展在此仅支持查看。",
+    ),
     "authentication": MessageLookupByLibrary.simpleMessage("认证"),
     "authenticationDesc": MessageLookupByLibrary.simpleMessage(
       "认证开启后，使用本地代理端口需要账号密码。",

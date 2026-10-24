@@ -285,6 +285,51 @@ class MessageLookup extends MessageLookupByLibrary {
     "appIconDesign": MessageLookupByLibrary.simpleMessage("アプリアイコンのデザイン"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("ローカルプロキシがありません"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage("システムDNSを追加"),
+    "applicationProxy": MessageLookupByLibrary.simpleMessage("アプリ別プロキシ"),
+    "applicationProxyApplyFailed": MessageLookupByLibrary.simpleMessage(
+      "ルールは保存されましたが、適用に失敗しました。現在のプロファイルを再適用してください。",
+    ),
+    "applicationProxyBlocked": MessageLookupByLibrary.simpleMessage("ブロック済み"),
+    "applicationProxyCoverage": MessageLookupByLibrary.simpleMessage(
+      "FlClash が受信した通信のみ表示します。システムプロキシを使わないアプリも含めるには TUN を有効にしてください。変更は新しい接続に適用され、通信量は現在の接続のみを集計します。",
+    ),
+    "applicationProxyEnableProcess": MessageLookupByLibrary.simpleMessage(
+      "アプリを識別するにはプロセス検出を有効にしてください。",
+    ),
+    "applicationProxyFollowRules": MessageLookupByLibrary.simpleMessage(
+      "ルールに従う",
+    ),
+    "applicationProxyHistoryCoverage": MessageLookupByLibrary.simpleMessage(
+      "FlClash が識別したアプリをこの端末に保存します。接続のないアプリもルールを変更できます。通信統計は現在の接続のみを集計します。",
+    ),
+    "applicationProxyHistoryScope": MessageLookupByLibrary.simpleMessage(
+      "現在のプロファイル · 記録済みアプリと保存済みルール",
+    ),
+    "applicationProxyIncludeHistory": MessageLookupByLibrary.simpleMessage(
+      "過去のアプリも表示",
+    ),
+    "applicationProxyInvalidProcess": MessageLookupByLibrary.simpleMessage(
+      "このプロセスにはアプリのルールを設定できません。",
+    ),
+    "applicationProxyMixed": MessageLookupByLibrary.simpleMessage("混在"),
+    "applicationProxyNoConnections": MessageLookupByLibrary.simpleMessage(
+      "アクティブな接続なし",
+    ),
+    "applicationProxyNoProfile": MessageLookupByLibrary.simpleMessage(
+      "アプリの経路を変更するにはプロファイルを選択してください。",
+    ),
+    "applicationProxyRefreshFailed": MessageLookupByLibrary.simpleMessage(
+      "更新に失敗しました。最後に取得した接続を表示しています。",
+    ),
+    "applicationProxyRuleMode": MessageLookupByLibrary.simpleMessage(
+      "アプリのルールはルールモードで有効です。既存の接続は現在の経路を維持します。",
+    ),
+    "applicationProxyScope": MessageLookupByLibrary.simpleMessage(
+      "現在のプロファイル · FlClash が受信したアクティブな接続",
+    ),
+    "applicationProxyScriptUnsupported": MessageLookupByLibrary.simpleMessage(
+      "標準拡張とカスタムプロファイルではアプリのルールを変更できます。スクリプト拡張では表示のみ可能です。",
+    ),
     "authentication": MessageLookupByLibrary.simpleMessage("認証"),
     "authenticationDesc": MessageLookupByLibrary.simpleMessage(
       "認証を有効にすると、ローカルプロキシポートの利用にユーザー名とパスワードが必要になります。",

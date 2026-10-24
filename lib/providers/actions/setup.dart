@@ -43,6 +43,7 @@ class SetupAction extends _$SetupAction {
   DateTime? _startTime;
   _SetupInputs? _appliedInputs;
   var _pendingForceApply = false;
+  final _applicationProxyIntents = <(int, String), Object>{};
 
   bool get _isRunning => _startTime != null && _startTime!.isBeforeNow;
 
@@ -336,6 +337,142 @@ class SetupAction extends _$SetupAction {
       );
       if (message.isNotEmpty) throw MessageException(message);
     });
+  }
+
+  Future<bool> setApplicationProxy({
+    required int profileId,
+    required ApplicationIdentity application,
+    required String? target,
+  }) async {
+    final profile = ref.read(profileProvider(profileId));
+    if (ref.read(currentProfileIdProvider) != profileId || profile == null) {
+      throw MessageException(currentAppLocalizations.applicationProxyNoProfile);
+    }
+    if (profile.type != ProfileType.custom &&
+        profile.extendType != ExtendType.standard) {
+      throw MessageException(
+        currentAppLocalizations.applicationProxyScriptUnsupported,
+      );
+    }
+    if (!application.canRoute) {
+      throw MessageException(
+        currentAppLocalizations.applicationProxyInvalidProcess,
+      );
+    }
+    if (target != null &&
+        (target.trim().isEmpty ||
+            RegExp(r'[,\r\n]').hasMatch(target) ||
+            (target != RuleTarget.DIRECT.value &&
+                !ref.read(groupsProvider).any((group) => group.name == target)))) {
+      throw MessageException(currentAppLocalizations.invalidPolicy(target));
+    }
+    final key = (profileId, application.key);
+    final intent = Object();
+    _applicationProxyIntents[key] = intent;
+    final profileChanges = ref.container.listen(currentProfileIdProvider, (previous, next) {
+      if (previous != next && identical(_applicationProxyIntents[key], intent)) {
+        _applicationProxyIntents.remove(key);
+      }
+    });
+    bool isCurrent() =>
+        ref.mounted &&
+        identical(_applicationProxyIntents[key], intent) &&
+        ref.read(currentProfileIdProvider) == profileId;
+    try {
+      await database.transaction(() async {
+        final rules = await database.rulesDao.queryApplicationRules(profileId).get();
+        if (!ref.mounted || !identical(_applicationProxyIntents[key], intent)) {
+          return;
+        }
+        final matches = rules.where(application.matchesRule).toList();
+        if (target == null) {
+          await database.rulesDao.delRules(matches.map((rule) => rule.id));
+          return;
+        }
+        final firstOrder = await database.rulesDao.firstProfileRuleOrder(profileId);
+        await database.rulesDao.putRule(
+          Rule(
+            id: matches.firstOrNull?.id ?? snowflake.id,
+            ruleAction: application.action,
+            content: application.content,
+            ruleTarget: target,
+            order: indexing.generateKeyBetween(null, firstOrder),
+          ),
+          profileId: profileId,
+        );
+        await database.rulesDao.delRules(matches.skip(1).map((rule) => rule.id));
+      });
+      if (!ref.mounted) return true;
+      ref.invalidate(setupStateProvider(profileId));
+      if (!isCurrent()) return true;
+      if (target != null) {
+        ref.read(patchClashConfigProvider.notifier).update(
+          (state) => state.copyWith(findProcessMode: FindProcessMode.always),
+        );
+      }
+      if (ref.read(coreStatusProvider) != CoreStatus.connected) return true;
+      final bool applied;
+      try {
+        applied = await applyProfile(silence: true);
+      } catch (_) {
+        if (!isCurrent()) return true;
+        throw MessageException(currentAppLocalizations.applicationProxyApplyFailed);
+      }
+      if (!isCurrent()) return true;
+      if (!applied) return false;
+      if (ref.read(coreStatusProvider) != CoreStatus.connected) return true;
+      try {
+        await _closeApplicationConnections(application, isCurrent);
+      } catch (error) {
+        if (!isCurrent()) return true;
+        commonPrint.log(
+          'close application connections error: ${compactError(error)}',
+        );
+        final l = currentAppLocalizations;
+        throw MessageException(l.failedItem(l.closeConnections, l.error));
+      }
+      return true;
+    } finally {
+      profileChanges.close();
+      if (identical(_applicationProxyIntents[key], intent)) {
+        _applicationProxyIntents.remove(key);
+      }
+    }
+  }
+
+  Future<void> _closeApplicationConnections(
+    ApplicationIdentity application,
+    bool Function() isCurrent,
+  ) async {
+    final connections = await _core.getConnections();
+    if (!isCurrent() || connections.isEmpty) return;
+    final ids = await compute(applicationConnectionIdsOf, (
+      connections: {
+        for (final connection in connections)
+          connection.id: (
+            process: connection.metadata.process,
+            path: connection.metadata.processPath,
+          ),
+      },
+      application: application,
+    ));
+    if (!isCurrent() || ids.isEmpty) return;
+    var next = 0;
+    final failed = <String>{};
+    Future<void> closeNext() async {
+      while (isCurrent() && next < ids.length) {
+        final id = ids[next++];
+        if (!await _core.closeConnection(id)) failed.add(id);
+      }
+    }
+    await Future.wait([
+      for (var worker = 0; worker < 8; worker++) closeNext(),
+    ]);
+    if (!isCurrent() || failed.isEmpty) return;
+    final remaining = await _core.getConnections();
+    if (isCurrent() && remaining.any((item) => failed.contains(item.id))) {
+      throw StateError('Application connections are still active');
+    }
   }
 
   void applyProfileDebounce({bool silence = false, bool force = false}) {

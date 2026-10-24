@@ -62,6 +62,24 @@ class RulesDao extends DatabaseAccessor<Database> with _$RulesDaoMixin {
     return _ownedBy(profileId).map((item) => item.toRule());
   }
 
+  Selectable<Rule> queryApplicationRules(int profileId) {
+    final query = _ownedBy(profileId)
+      ..where(
+        (t) =>
+            t.ruleAction.isInValues([
+              RuleAction.PROCESS_NAME,
+              RuleAction.PROCESS_PATH,
+            ]) &
+            t.src.equals(false),
+      );
+    return query.map((item) => item.toRule());
+  }
+
+  Future<String?> firstProfileRuleOrder(int profileId) async {
+    final first = await (_ownedBy(profileId)..limit(1)).getSingleOrNull();
+    return first?.order;
+  }
+
   Selectable<int> profileRulesCount(int profileId) {
     return _ownedBy(profileId).count;
   }

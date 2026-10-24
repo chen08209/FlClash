@@ -3,6 +3,21 @@ import 'package:fl_clash/ui/color.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'app_localizations.dart';
+import 'application_proxy.dart';
+
+extension ApplicationRouteL10n on ApplicationRoute {
+  String get label {
+    final l = currentAppLocalizations;
+    return switch (this) {
+      ApplicationRoute.proxy => l.proxies,
+      ApplicationRoute.direct => l.direct,
+      ApplicationRoute.mixed => l.applicationProxyMixed,
+      ApplicationRoute.blocked => l.applicationProxyBlocked,
+      ApplicationRoute.unknown => l.unknown,
+      ApplicationRoute.idle => l.applicationProxyNoConnections,
+    };
+  }
+}
 
 extension PageLabelL10n on PageLabel {
   String get label {
@@ -17,6 +32,7 @@ extension PageLabelL10n on PageLabel {
       PageLabel.resources => appLocalizations.resources,
       PageLabel.connections => appLocalizations.liveConnections,
       PageLabel.dns => appLocalizations.dnsQueries,
+      PageLabel.applicationProxy => appLocalizations.applicationProxy,
     };
   }
 }
