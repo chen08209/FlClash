@@ -181,9 +181,15 @@ String? getFileNameForDisposition(String? disposition) {
     orElse: () => '',
   );
   if (fileNamePointKey.isNotEmpty) {
-    final res = parameters[fileNamePointKey]?.split("''") ?? [];
-    if (res.length >= 2) {
-      return Uri.decodeComponent(res[1]);
+    final res = parameters[fileNamePointKey]?.split("'") ?? [];
+    if (res.length == 3) {
+      try {
+        return Uri.decodeComponent(res[2]);
+      } on FormatException {
+        return parameters['filename'];
+      } on ArgumentError {
+        return parameters['filename'];
+      }
     }
   }
   final fileNameKey = parameters.keys.firstWhere(
