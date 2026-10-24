@@ -14,6 +14,7 @@ Compression=lzma
 SolidCompression=yes
 SetupIconFile={{SETUP_ICON_FILE}}
 WizardStyle=modern
+UsePreviousLanguage=no
 PrivilegesRequired={{PRIVILEGES_REQUIRED}}
 ArchitecturesAllowed={{ARCH}}
 ArchitecturesInstallIn64BitMode={{ARCH}}
@@ -163,7 +164,9 @@ Name: "chineseSimplified"; MessagesFile: {% if locale.file %}{{ locale.file }}{%
 {% endfor %}
 
 [CustomMessages]
-english.RemoveUserData=Also delete your profiles and settings?
+chineseSimplified.RemoveUserData=删除 FlClash 的配置文件和设置？
+english.RemoveUserData=Delete FlClash profiles and settings?
+russian.RemoveUserData=Удалить профили и настройки FlClash?
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: {% if CREATE_DESKTOP_ICON != true %}unchecked{% else %}checkedonce{% endif %}

@@ -10,9 +10,10 @@ output_base_file_name: FlClash.exe
 # absolute path via Directory.current.
 setup_icon_file: windows\runner\resources\app_icon.ico
 locales:
+  - lang: en
   # Written into the .iss verbatim, so this one stays relative to the generated
   # script in dist/.
   - lang: zh
     file: ..\windows\packaging\exe\ChineseSimplified.isl
-  - lang: en
+  - lang: ru
 privileges_required: admin
