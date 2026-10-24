@@ -510,6 +510,65 @@ void main() {
       }
     });
 
+    testWidgets('holds the preview queue while the list scrolls', (
+      tester,
+    ) async {
+      final families = [for (var i = 0; i < 200; i++) 'Scroll Font $i'];
+      systemFontFamiliesReader = () async => families;
+      await pumpThemeView(tester);
+      await tester.tap(find.text('Aa').first);
+      await pumpSettled(tester);
+
+      final list = find.descendant(
+        of: find.byType(FontFamilyView),
+        matching: find.byType(CustomScrollView),
+      );
+      final controller = tester.widget<CustomScrollView>(list).controller!;
+      bool previewed(String family) =>
+          find
+              .descendant(
+                of: find.text(family),
+                matching: find.byType(DefaultTextStyle),
+              )
+              .evaluate()
+              .isNotEmpty &&
+          DefaultTextStyle.of(
+                tester.element(inPage(family)),
+              ).style.fontFamily ==
+              family;
+
+      unawaited(
+        controller.animateTo(
+          controller.position.maxScrollExtent,
+          duration: const Duration(seconds: 2),
+          curve: Curves.linear,
+        ),
+      );
+      // While the list moves, no newly visible row switches to its own font.
+      final entering = <String>{};
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+        entering.addAll([
+          for (final family in families)
+            if (find.text(family).evaluate().isNotEmpty && previewed(family))
+              family,
+        ]);
+      }
+      expect(
+        entering.where((family) => int.parse(family.split(' ').last) >= 44),
+        isEmpty,
+      );
+
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await tester.pumpAndSettle();
+      expect(
+        families.where((family) => inPage(family).evaluate().isNotEmpty),
+        isNotEmpty,
+      );
+    });
+
     testWidgets('still offers the default when no font can be listed', (
       tester,
     ) async {
