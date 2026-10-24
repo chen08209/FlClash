@@ -164,6 +164,7 @@ Name: "chineseSimplified"; MessagesFile: {% if locale.file %}{{ locale.file }}{%
 
 [CustomMessages]
 english.RemoveUserData=Also delete your profiles and settings?
+russian.RemoveUserData=Также удалить ваши профили и настройки?
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: {% if CREATE_DESKTOP_ICON != true %}unchecked{% else %}checkedonce{% endif %}

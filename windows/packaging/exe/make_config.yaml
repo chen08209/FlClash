@@ -15,4 +15,5 @@ locales:
   - lang: zh
     file: ..\windows\packaging\exe\ChineseSimplified.isl
   - lang: en
+  - lang: ru
 privileges_required: admin
