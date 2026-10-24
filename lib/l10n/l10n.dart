@@ -3505,6 +3505,21 @@ class AppLocalizations {
     );
   }
 
+  /// `Font weight`
+  String get fontWeight {
+    return Intl.message('Font weight', name: 'fontWeight', desc: '', args: []);
+  }
+
+  /// `Text in the app will have this weight`
+  String get fontWeightPreview {
+    return Intl.message(
+      'Text in the app will have this weight',
+      name: 'fontWeightPreview',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Follow system`
   String get followSystem {
     return Intl.message(

@@ -857,6 +857,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "followSystem": MessageLookupByLibrary.simpleMessage("Как в системе"),
     "fontFamily": MessageLookupByLibrary.simpleMessage("Шрифт"),
     "fontSize": MessageLookupByLibrary.simpleMessage("Размер"),
+    "fontWeight": MessageLookupByLibrary.simpleMessage("Насыщенность шрифта"),
+    "fontWeightPreview": MessageLookupByLibrary.simpleMessage(
+      "Такой будет насыщенность текста в приложении",
+    ),
     "forceDnsMapping": MessageLookupByLibrary.simpleMessage(
       "Принудительно для DNS-сопоставлений",
     ),

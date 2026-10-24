@@ -42,7 +42,11 @@ ThemeData watchAppTheme(WidgetRef ref, Brightness brightness) {
   final locale = ref.watch(appSettingProvider.select((state) => state.locale));
   final themeSetting = ref.watch(
     themeSettingProvider.select(
-      (state) => (fontFamily: state.fontFamily, pureBlack: state.pureBlack),
+      (state) => (
+        fontFamily: state.fontFamily,
+        pureBlack: state.pureBlack,
+        fontWeightAdjustment: state.fontWeightAdjustment,
+      ),
     ),
   );
   final colorScheme = ref.watch(genColorSchemeProvider(brightness));
@@ -53,11 +57,13 @@ ThemeData watchAppTheme(WidgetRef ref, Brightness brightness) {
     ?getLocaleForString(locale),
     ...WidgetsBinding.instance.platformDispatcher.locales,
   ];
+  final fontWeightAdjustment = themeSetting.fontWeightAdjustment;
   final inputs = (
     platform: defaultTargetPlatform,
     themeSetting: themeSetting,
     colorScheme: colorScheme,
     plainDark: plainDark,
+    fontWeightAdjustment: fontWeightAdjustment,
     locales: locales.join(','),
   );
   if (_appThemes[brightness] case (
@@ -66,26 +72,29 @@ ThemeData watchAppTheme(WidgetRef ref, Brightness brightness) {
   ) when cached == inputs) {
     return theme;
   }
-  final theme = ThemeData(
-    useMaterial3: true,
-    pageTransitionsTheme: _pageTransitionsTheme,
-    actionIconTheme: _actionIconTheme,
-    colorScheme: colorScheme,
-    fontFamily: themeSetting.fontFamily,
-    fontFamilyFallback: appFontFamilyFallback(
-      platform: defaultTargetPlatform,
-      locales: locales,
-      fontFamily: themeSetting.fontFamily,
-    ),
-    extensions: [
-      if (brightness == Brightness.dark)
-        ElevatedColorScheme(
-          // Plain dark is pure black a level up, with the seed's tint that a
-          // lift from black would lose.
-          plainDark ?? colorScheme.elevated,
+  final theme =
+      ThemeData(
+        useMaterial3: true,
+        pageTransitionsTheme: _pageTransitionsTheme,
+        actionIconTheme: _actionIconTheme,
+        colorScheme: colorScheme,
+        fontFamily: themeSetting.fontFamily,
+        fontFamilyFallback: appFontFamilyFallback(
+          platform: defaultTargetPlatform,
+          locales: locales,
+          fontFamily: themeSetting.fontFamily,
         ),
-    ],
-  ).withAppShapes.withAppSurfaces.withAppTypography;
+        extensions: [
+          if (brightness == Brightness.dark)
+            ElevatedColorScheme(
+              // Plain dark is pure black a level up, with the seed's tint that a
+              // lift from black would lose.
+              plainDark ?? colorScheme.elevated,
+            ),
+        ],
+      ).withAppShapes.withAppSurfaces.withAppTypography(
+        adjustment: fontWeightAdjustment,
+      );
   _appThemes[brightness] = (inputs: inputs, theme: theme);
   return theme;
 }

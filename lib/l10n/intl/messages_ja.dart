@@ -697,6 +697,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "followSystem": MessageLookupByLibrary.simpleMessage("システムに従う"),
     "fontFamily": MessageLookupByLibrary.simpleMessage("フォント"),
     "fontSize": MessageLookupByLibrary.simpleMessage("サイズ"),
+    "fontWeight": MessageLookupByLibrary.simpleMessage("フォントの太さ"),
+    "fontWeightPreview": MessageLookupByLibrary.simpleMessage(
+      "アプリ内の文字はこの太さで表示されます",
+    ),
     "forceDnsMapping": MessageLookupByLibrary.simpleMessage("DNSマッピングを強制"),
     "forceDnsMappingDesc": MessageLookupByLibrary.simpleMessage(
       "DNS マッピングを強制すると、DNS マッピングでドメインを得た接続もスニッフィングします。",

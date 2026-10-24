@@ -440,6 +440,8 @@
   "clearData": "데이터 지우기",
   "textScale": "글자 크기 조절",
   "textScalePreview": "앱의 글자가 이렇게 표시됩니다",
+  "fontWeight": "글꼴 두께",
+  "fontWeightPreview": "앱의 글자가 이 두께로 표시됩니다",
   "followSystem": "시스템 설정 따르기",
   "internet": "인터넷",
   "systemApp": "시스템 앱",

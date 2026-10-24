@@ -42,6 +42,8 @@ class ThemeView extends StatelessWidget {
           _FontFamilyItem(),
           SizedBox(height: 16),
           _TextScaleFactorItem(),
+          SizedBox(height: 16),
+          _FontWeightItem(),
         ],
       ),
     );
@@ -1056,6 +1058,154 @@ class _TextScaleFactorItemState extends ConsumerState<_TextScaleFactorItem> {
                 ),
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FontWeightItem extends ConsumerStatefulWidget {
+  const _FontWeightItem();
+
+  @override
+  ConsumerState<_FontWeightItem> createState() => _FontWeightItemState();
+}
+
+class _FontWeightItemState extends ConsumerState<_FontWeightItem> {
+  int? _draft;
+
+  void _update(int adjustment) {
+    setState(() => _draft = null);
+    ref
+        .read(themeSettingProvider.notifier)
+        .update((state) => state.copyWith(fontWeightAdjustment: adjustment));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    final colorScheme = context.colorScheme;
+    final stored = ref.watch(
+      themeSettingProvider.select((state) => state.fontWeightAdjustment),
+    );
+    final adjustment = (_draft ?? stored)
+        .clamp(minFontWeightAdjustment, maxFontWeightAdjustment)
+        .toInt();
+    final bodyWeight = baseFontWeight + adjustment;
+    final level = context.raisedSurfaceLevel;
+    final divisions =
+        ((maxFontWeightAdjustment - minFontWeightAdjustment) /
+                fontWeightAdjustmentStep)
+            .round();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InfoHeader(
+          info: Info(label: appLocalizations.fontWeight, glyph: AppGlyphs.font),
+          actions: [
+            if (adjustment != 0) _ResetButton(onPressed: () => _update(0)),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            decoration: ShapeDecoration(
+              color: level.colorOf(colorScheme),
+              shape: AppShape.lg,
+            ),
+            child: Theme(
+              data: Theme.of(context).withAppTypography(adjustment: adjustment),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    spacing: 12,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          spacing: 4,
+                          children: [
+                            Text('Aa', style: AppTextStyle.title3.of(context)),
+                            Text(
+                              appLocalizations.fontWeightPreview,
+                              style: AppTextStyle.subheadline
+                                  .of(context)
+                                  .copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: ShapeDecoration(
+                          color: level.next.colorOf(colorScheme),
+                          shape: AppShape.full,
+                        ),
+                        child: Text(
+                          bodyWeight.toString(),
+                          style: AppTextStyle.subheadline
+                              .of(context, emphasized: true)
+                              .copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  MediaQuery.withNoTextScaling(
+                    child: Row(
+                      spacing: 12,
+                      children: [
+                        ExcludeSemantics(
+                          child: Text(
+                            'A',
+                            style: AppTextStyle.footnote
+                                .of(context)
+                                .copyWith(color: colorScheme.onSurfaceVariant),
+                          ),
+                        ),
+                        Expanded(
+                          child: SliderTheme(
+                            data: SliderDefaultsM3(context),
+                            child: Slider(
+                              padding: EdgeInsets.zero,
+                              min: minFontWeightAdjustment.toDouble(),
+                              max: maxFontWeightAdjustment.toDouble(),
+                              divisions: divisions,
+                              value: adjustment.toDouble(),
+                              label: bodyWeight.toString(),
+                              onChanged: (value) =>
+                                  setState(() => _draft = value.round()),
+                              onChangeEnd: (value) => _update(value.round()),
+                            ),
+                          ),
+                        ),
+                        ExcludeSemantics(
+                          child: Text(
+                            'A',
+                            style: AppTextStyle.title2
+                                .of(context, emphasized: true)
+                                .copyWith(color: colorScheme.onSurfaceVariant),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ],

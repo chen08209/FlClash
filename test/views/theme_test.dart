@@ -538,15 +538,21 @@ void main() {
       await pumpThemeView(tester);
 
       expect(readTheme().textScale.enable, isFalse);
-      expect(tester.widget<Slider>(find.byType(Slider)).onChanged, isNull);
+      expect(
+        tester.widget<Slider>(find.byType(Slider).first).onChanged,
+        isNull,
+      );
 
-      await tester.tap(find.text('Custom'));
+      await tester.tap(find.text('Custom').first);
       await tester.pumpAndSettle();
 
       expect(readTheme().textScale.enable, isTrue);
-      expect(tester.widget<Slider>(find.byType(Slider)).onChanged, isNotNull);
+      expect(
+        tester.widget<Slider>(find.byType(Slider).first).onChanged,
+        isNotNull,
+      );
 
-      await tester.tap(find.text('Follow system'));
+      await tester.tap(find.text('Follow system').first);
       await tester.pumpAndSettle();
 
       expect(readTheme().textScale.enable, isFalse);
@@ -554,11 +560,11 @@ void main() {
 
     testWidgets('writes the scale only when the drag ends', (tester) async {
       await pumpThemeView(tester);
-      await tester.tap(find.text('Custom'));
+      await tester.tap(find.text('Custom').first);
       await tester.pumpAndSettle();
-      final before = readTheme().textScale.scale;
 
-      final slider = find.byType(Slider);
+      final before = readTheme().textScale.scale;
+      final slider = find.byType(Slider).first;
       final gesture = await tester.startGesture(tester.getCenter(slider));
       await gesture.moveBy(const Offset(120, 0));
       await tester.pump();

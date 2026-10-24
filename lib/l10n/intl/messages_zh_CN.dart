@@ -640,6 +640,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "followSystem": MessageLookupByLibrary.simpleMessage("跟随系统"),
     "fontFamily": MessageLookupByLibrary.simpleMessage("字体"),
     "fontSize": MessageLookupByLibrary.simpleMessage("大小"),
+    "fontWeight": MessageLookupByLibrary.simpleMessage("字体粗细"),
+    "fontWeightPreview": MessageLookupByLibrary.simpleMessage("应用内的文字将以这个粗细显示"),
     "forceDnsMapping": MessageLookupByLibrary.simpleMessage("强制DNS映射"),
     "forceDnsMappingDesc": MessageLookupByLibrary.simpleMessage(
       "强制 DNS 映射对通过 DNS 映射得到域名的连接也进行嗅探。",

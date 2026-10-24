@@ -440,6 +440,8 @@
   "clearData": "データを消去",
   "textScale": "テキストの拡大縮小",
   "textScalePreview": "アプリ内の文字はこの大きさで表示されます",
+  "fontWeight": "フォントの太さ",
+  "fontWeightPreview": "アプリ内の文字はこの太さで表示されます",
   "followSystem": "システムに従う",
   "internet": "インターネット",
   "systemApp": "システムアプリ",

@@ -878,6 +878,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "followSystem": MessageLookupByLibrary.simpleMessage("Suivre le système"),
     "fontFamily": MessageLookupByLibrary.simpleMessage("Police"),
     "fontSize": MessageLookupByLibrary.simpleMessage("Taille"),
+    "fontWeight": MessageLookupByLibrary.simpleMessage("Graisse de la police"),
+    "fontWeightPreview": MessageLookupByLibrary.simpleMessage(
+      "Le texte de l’app aura cette graisse",
+    ),
     "forceDnsMapping": MessageLookupByLibrary.simpleMessage(
       "Forcer le mappage DNS",
     ),
