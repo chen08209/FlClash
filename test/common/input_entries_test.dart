@@ -135,6 +135,22 @@ void main() {
   });
 
   group('parseMapInput', () {
+    test('reports keys and values the validators reject', () {
+      final parsed = parseMapInput(
+        'x-hwid: abc\n'
+        'bad(name) value\n'
+        'x-device-model: Пиксель',
+        isValidKey: (key) => !key.contains('('),
+        isValidValue: (value) => value.codeUnits.every((unit) => unit < 128),
+      );
+
+      expect(Map.fromEntries(parsed.entries), {'x-hwid': 'abc'});
+      expect(parsed.issues, const [
+        InputIssue(line: 2, raw: 'bad(name)', kind: InputIssueKind.invalidKey),
+        InputIssue(line: 3, raw: 'Пиксель', kind: InputIssueKind.invalidValue),
+      ]);
+    });
+
     test('splits on the first whitespace and keeps colons', () {
       final parsed = parseMapInput(
         'geosite:cn tls://1.1.1.1:853\n'

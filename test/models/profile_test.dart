@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -52,6 +54,15 @@ void main() {
   });
 
   group('Profile factories', () {
+    test('JSON without headers reads as sending none', () {
+      final json =
+          jsonDecode(jsonEncode(Profile.normal(url: 'https://example.com')))
+                as Map<String, Object?>
+            ..remove('headers');
+
+      expect(Profile.fromJson(json).headers, isEmpty);
+    });
+
     test('normal takes its type from whether it has a url', () {
       expect(Profile.normal().type, ProfileType.file);
       expect(

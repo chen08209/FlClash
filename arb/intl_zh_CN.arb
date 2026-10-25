@@ -466,6 +466,7 @@
   "interval": "间隔",
   "existsTip": "{label}当前已存在",
   "maxLengthTip": "{label}最多{max}个字符",
+  "invalidCharactersTip": "{label}包含不允许的字符",
   "singleAdd": "单条添加",
   "batchAdd": "批量添加",
   "batchListInputTip": "每行一项，也可用逗号分隔",

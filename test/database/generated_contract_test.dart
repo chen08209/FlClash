@@ -14,6 +14,7 @@ void main() {
       currentGroupName: 'Select',
       url: 'https://example.com/profile.yaml',
       ageSecretKey: 'AGE-SECRET-KEY-1',
+      headers: const {'x-hwid': 'abc'},
       lastUpdateDate: date,
       extendType: ExtendType.script,
       scriptId: 2,
@@ -34,8 +35,8 @@ void main() {
       ),
     );
 
-    expect(profile.toColumns(true), hasLength(17));
-    expect(profile.toCompanion(true).toColumns(true), hasLength(17));
+    expect(profile.toColumns(true), hasLength(18));
+    expect(profile.toCompanion(true).toColumns(true), hasLength(18));
     expect(RawProfile.fromJson(profile.toJson()).toJson(), profile.toJson());
     expect(profile.copyWith(label: 'Next').label, 'Next');
     expect(
@@ -66,7 +67,7 @@ void main() {
       unfoldSet: {},
     );
     expect(emptyProfile.toColumns(true), hasLength(9));
-    expect(emptyProfile.toColumns(false), hasLength(17));
+    expect(emptyProfile.toColumns(false), hasLength(18));
     expect(emptyProfile.toCompanion(true).toColumns(true), hasLength(9));
 
     final insertedProfile = ProfilesCompanion.insert(
@@ -89,6 +90,7 @@ void main() {
         currentGroupName: const Variable('group'),
         url: const Variable('url'),
         ageSecretKey: const Variable('AGE-SECRET-KEY-1'),
+        headers: const Variable('{}'),
         lastUpdateDate: Variable(date),
         extendType: const Variable('standard'),
         scriptId: const Variable(2),
@@ -101,7 +103,7 @@ void main() {
         order: const Variable(1),
         overrides: const Variable('{}'),
       ).toColumns(false),
-      hasLength(17),
+      hasLength(18),
     );
 
     final script = RawScript(id: 2, label: 'Script', lastUpdateTime: date);

@@ -12,6 +12,8 @@ abstract final class TextInputLimits {
   static const userName = 128;
   static const password = 512;
   static const userAgent = 512;
+  static const headerName = 256;
+  static const headerValue = url;
   static const fileName = 255;
   static const port = 5;
   static const portRange = 11;

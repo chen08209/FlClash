@@ -40,8 +40,12 @@ class Request {
     );
   }
 
-  Future<Response<T>> _download<T>(String url, ResponseType responseType) {
-    final target = downloadTarget(url);
+  Future<Response<T>> _download<T>(
+    String url,
+    ResponseType responseType, {
+    Map<String, String> headers = const {},
+  }) {
+    final target = downloadTarget(url, headers: headers);
     final cancelToken = CancelToken();
     return _clashDio
         .getUri<T>(
@@ -61,9 +65,16 @@ class Request {
         );
   }
 
-  Future<Response<Uint8List>> getFileResponseForUrl(String url) async {
+  Future<Response<Uint8List>> getFileResponseForUrl(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {
     try {
-      return await _download<Uint8List>(url, ResponseType.bytes);
+      return await _download<Uint8List>(
+        url,
+        ResponseType.bytes,
+        headers: headers,
+      );
     } catch (e) {
       commonPrint.log(
         'getFileResponseForUrl error ${compactError(e)}',
@@ -149,20 +160,43 @@ Uint8List decompressUnlabeled(Uint8List bytes) {
 
 /// dart:io turns [Uri.userInfo] into Basic credentials still percent-encoded.
 @visibleForTesting
-({Uri uri, Map<String, Object> headers}) downloadTarget(String url) {
+({Uri uri, Map<String, Object> headers}) downloadTarget(
+  String url, {
+  Map<String, String> headers = const {},
+}) {
   final uri = url.webUri ?? Uri.parse(url);
+  headers = {
+    for (final MapEntry(:key, :value) in headers.entries)
+      if (!_framingHeaders.contains(key.toLowerCase())) key: value,
+  };
   if (uri.userInfo.isEmpty) {
-    return (uri: uri, headers: const {});
+    return (uri: uri, headers: headers);
   }
   final credentials = uri.userInfo.split(':').map(_decodeUserInfo).join(':');
   return (
     uri: uri.replace(userInfo: ''),
     headers: {
+      for (final MapEntry(:key, :value) in headers.entries)
+        if (key.toLowerCase() != HttpHeaders.authorizationHeader) key: value,
       HttpHeaders.authorizationHeader:
           'Basic ${base64.encode(utf8.encode(credentials))}',
     },
   );
 }
+
+/// dart:io frames the body from these, and a GET carries none.
+const _framingHeaders = {
+  HttpHeaders.contentLengthHeader,
+  HttpHeaders.transferEncodingHeader,
+};
+
+final _headerName = RegExp(r"^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$");
+final _headerValue = RegExp(r'^[\x20-\x7E\t]*$');
+
+/// What dart:io accepts; it throws on anything else, non-ASCII values included.
+bool isHeaderName(String name) => _headerName.hasMatch(name);
+
+bool isHeaderValue(String value) => _headerValue.hasMatch(value);
 
 String _decodeUserInfo(String value) {
   try {

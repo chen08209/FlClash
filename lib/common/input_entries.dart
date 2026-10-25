@@ -4,6 +4,7 @@ import 'string.dart';
 
 enum InputIssueKind {
   keyTooLong,
+  invalidKey,
   valueTooLong,
   missingValue,
   invalidUrl,
@@ -225,6 +226,8 @@ ParsedInput<MapEntry<String, String>> parseMapInput(
   int? keyMaxLength,
   int? valueMaxLength,
   bool ignoreKeyCase = false,
+  bool Function(String key)? isValidKey,
+  bool Function(String value)? isValidValue,
 }) {
   String foldKey(String key) => ignoreKeyCase ? key.toLowerCase() : key;
   final takenKeys = existingKeys.map(foldKey).toSet();
@@ -265,6 +268,26 @@ ParsedInput<MapEntry<String, String>> parseMapInput(
           line: index + 1,
           raw: entry.value,
           kind: InputIssueKind.valueTooLong,
+        ),
+      );
+      continue;
+    }
+    if (isValidKey != null && !isValidKey(entry.key)) {
+      issues.add(
+        InputIssue(
+          line: index + 1,
+          raw: entry.key,
+          kind: InputIssueKind.invalidKey,
+        ),
+      );
+      continue;
+    }
+    if (isValidValue != null && !isValidValue(entry.value)) {
+      issues.add(
+        InputIssue(
+          line: index + 1,
+          raw: entry.value,
+          kind: InputIssueKind.invalidValue,
         ),
       );
       continue;

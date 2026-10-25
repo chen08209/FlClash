@@ -13,6 +13,7 @@ import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -33,6 +34,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
   late final TextEditingController _ageSecretKeyController;
   late final TextEditingController _autoUpdateDurationController;
   late bool _autoUpdate;
+  late Map<String, String> _headers;
   Uint8List? _editedData;
   bool _attempted = false;
   final _fileInfoNotifier = ValueNotifier<FileInfo?>(null);
@@ -48,6 +50,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       text: widget.profile.ageSecretKey,
     );
     _autoUpdate = widget.profile.autoUpdate;
+    _headers = widget.profile.headers;
     _autoUpdateDurationController = TextEditingController(
       text: widget.profile.autoUpdateDuration.inMinutes.toString(),
     );
@@ -130,6 +133,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     var profile = current.copyWith(
       url: _urlController.text,
       ageSecretKey: _ageSecretKeyController.text.trim(),
+      headers: _headers,
       label: _labelController.text,
       autoUpdate: _autoUpdate,
       autoUpdateDuration: interval != null && interval > 0
@@ -140,7 +144,8 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     final appLocalizations = context.appLocalizations;
     final hasUpdate =
         current.url != profile.url ||
-        current.ageSecretKey != profile.ageSecretKey;
+        current.ageSecretKey != profile.ageSecretKey ||
+        !mapEquals(current.headers, profile.headers);
     if (_fileData != null) {
       if (profile.type == ProfileType.url && _autoUpdate) {
         final res = await dialogs.showMessage(
@@ -177,6 +182,34 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     if (mounted) {
       Navigator.of(context).pop();
     }
+  }
+
+  Future<void> _editHeaders() async {
+    final appLocalizations = context.appLocalizations;
+    final res = await showExtend<Object>(
+      context,
+      builder: (_) => MapEditView(
+        title: appLocalizations.requestHeaders,
+        entries: _headers,
+        keyMaxLength: TextInputLimits.headerName,
+        valueMaxLength: TextInputLimits.headerValue,
+        ignoreKeyCase: true,
+        keyValidator: (key) => isHeaderName(key)
+            ? null
+            : appLocalizations.invalidCharactersTip(appLocalizations.key),
+        valueValidator: (value) => isHeaderValue(value)
+            ? null
+            : appLocalizations.invalidCharactersTip(appLocalizations.value),
+        titleBuilder: (item) => Text(item.key),
+        subtitleBuilder: (item) => Text(item.value),
+      ),
+    );
+    if (res is! Map<String, String> || !mounted) {
+      return;
+    }
+    setState(() {
+      _headers = res;
+    });
   }
 
   void _setAutoUpdate(bool value) {
@@ -316,6 +349,11 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
               onChanged: _handleChanged,
             ),
           _AgeSecretKeyField(controller: _ageSecretKeyController),
+          if (isUrl)
+            _RequestHeadersItem(
+              count: _headers.length,
+              onPressed: _editHeaders,
+            ),
         ],
       ),
       if (isUrl)
@@ -486,6 +524,39 @@ class _AgeSecretKeyField extends StatelessWidget {
         controller: controller,
         hintText: appLocalizations.optional,
         textInputAction: TextInputAction.next,
+      ),
+    );
+  }
+}
+
+class _RequestHeadersItem extends StatelessWidget {
+  const _RequestHeadersItem({required this.count, required this.onPressed});
+
+  final int count;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return FormRow(
+      title: appLocalizations.requestHeaders,
+      onPressed: onPressed,
+      trailing: Row(
+        spacing: 4,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              count == 0
+                  ? appLocalizations.none
+                  : appLocalizations.itemsCount(count),
+              style: context.listTitleStyle.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          const GlyphIcon(AppGlyphs.chevronForward),
+        ],
       ),
     );
   }

@@ -466,6 +466,7 @@
   "interval": "Intervalle",
   "existsTip": "{label} existe déjà",
   "maxLengthTip": "{label} ne doit pas dépasser {max} caractères",
+  "invalidCharactersTip": "{label} contient des caractères non autorisés",
   "singleAdd": "Ajout unique",
   "batchAdd": "Ajout groupé",
   "batchListInputTip": "Un élément par ligne, ou séparés par des virgules",

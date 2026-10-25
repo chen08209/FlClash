@@ -466,6 +466,7 @@
   "interval": "간격",
   "existsTip": "{label}이(가) 이미 있습니다",
   "maxLengthTip": "{label}은(는) 최대 {max}자까지 입력할 수 있습니다",
+  "invalidCharactersTip": "{label}에 허용되지 않는 문자가 포함되어 있습니다",
   "singleAdd": "개별 추가",
   "batchAdd": "일괄 추가",
   "batchListInputTip": "한 줄에 하나씩 또는 쉼표로 구분하여 입력하세요",

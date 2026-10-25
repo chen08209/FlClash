@@ -143,6 +143,50 @@ void main() {
         );
       }
     });
+
+    test('adds the given headers, dropping an Authorization only for '
+        'credentials in the URL', () {
+      const headers = {'x-hwid': 'abc', 'authorization': 'Bearer t'};
+
+      expect(
+        downloadTarget('https://example.com/a.yaml', headers: headers).headers,
+        headers,
+      );
+      expect(
+        downloadTarget(
+          'https://me:pw@example.com/a.yaml',
+          headers: {...headers, 'Authorization': 'Bearer u'},
+        ).headers,
+        {
+          'x-hwid': 'abc',
+          HttpHeaders.authorizationHeader:
+              'Basic ${base64.encode(utf8.encode('me:pw'))}',
+        },
+      );
+    });
+  });
+
+  test('drops the headers that frame a body a GET never sends', () {
+    final target = downloadTarget(
+      'https://example.com/a.yaml',
+      headers: {
+        'Content-Length': '5',
+        'transfer-encoding': 'chunked',
+        'x': 'y',
+      },
+    );
+
+    expect(target.headers, {'x': 'y'});
+  });
+
+  test('header validators follow what dart:io sends', () {
+    expect(
+      ['x-hwid', 'User-Agent', "a!#\$%&'*+.^_`|~9"].every(isHeaderName),
+      isTrue,
+    );
+    expect(['', 'a b', 'x:y', 'bad(name)', 'имя'].any(isHeaderName), isFalse);
+    expect(['Pixel 8 Pro', 'a\tb', ''].every(isHeaderValue), isTrue);
+    expect(['a\r\nb', 'a\nb', 'Пиксель'].any(isHeaderValue), isFalse);
   });
 
   group('decompressUnlabeled', () {

@@ -24,6 +24,7 @@ void main() {
         label: 'First',
         currentGroupName: 'Selector',
         url: 'https://first.example',
+        headers: const {'x-hwid': 'abc'},
         lastUpdateDate: DateTime(2026, 1, 2),
         autoUpdateDuration: const Duration(hours: 6),
         subscriptionInfo: const SubscriptionInfo(

@@ -466,6 +466,7 @@
   "interval": "間隔",
   "existsTip": "{label}はすでに存在します",
   "maxLengthTip": "{label}は最大{max}文字です",
+  "invalidCharactersTip": "{label}に使用できない文字が含まれています",
   "singleAdd": "個別追加",
   "batchAdd": "一括追加",
   "batchListInputTip": "1行に1項目、またはカンマ区切りで入力してください",

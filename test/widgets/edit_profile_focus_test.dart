@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -202,5 +203,20 @@ void main() {
     final saved = globalState.container.read(profilesProvider).single;
     expect(saved.autoUpdate, isFalse);
     expect(saved.autoUpdateDuration, profile.autoUpdateDuration);
+  });
+
+  testWidgets('only a url profile lists its request headers', (tester) async {
+    final l10n = currentAppLocalizations;
+    await pumpEditProfile(
+      tester,
+      profile: _urlProfile().copyWith(headers: {'x-hwid': 'abc'}),
+    );
+
+    expect(find.widgetWithText(FormRow, l10n.requestHeaders), findsOneWidget);
+    expect(find.text(l10n.itemsCount(1)), findsOneWidget);
+
+    await pumpEditProfile(tester, profile: Profile.normal(label: 'local'));
+
+    expect(find.text(l10n.requestHeaders), findsNothing);
   });
 }

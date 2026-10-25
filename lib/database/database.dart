@@ -53,7 +53,7 @@ class Database extends _$Database {
   Database([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 21;
+  int get schemaVersion => 22;
 
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {
@@ -116,6 +116,9 @@ class Database extends _$Database {
         }
         if (from < 21) {
           await _createTableIfMissing(m, ipQualities);
+        }
+        if (from < 22) {
+          await _addColumnIfMissing(m, profiles, profiles.headers);
         }
       }),
       beforeOpen: (_) => customStatement('PRAGMA foreign_keys = ON'),

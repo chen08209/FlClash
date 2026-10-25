@@ -466,6 +466,7 @@
   "interval": "Интервал",
   "existsTip": "«{label}» уже существует",
   "maxLengthTip": "«{label}» — не более {max} символов",
+  "invalidCharactersTip": "«{label}» содержит недопустимые символы",
   "singleAdd": "По одному",
   "batchAdd": "Массовое добавление",
   "batchListInputTip": "По одному значению на строку или через запятую",

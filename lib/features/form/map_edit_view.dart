@@ -18,6 +18,9 @@ class MapEditView extends ConsumerStatefulWidget {
   final Widget Function(MapEntry<String, String> item)? subtitleBuilder;
   final int? keyMaxLength;
   final int? valueMaxLength;
+  final bool ignoreKeyCase;
+  final String? Function(String key)? keyValidator;
+  final String? Function(String value)? valueValidator;
 
   const MapEditView({
     super.key,
@@ -27,6 +30,9 @@ class MapEditView extends ConsumerStatefulWidget {
     this.subtitleBuilder,
     this.keyMaxLength,
     this.valueMaxLength,
+    this.ignoreKeyCase = false,
+    this.keyValidator,
+    this.valueValidator,
   });
 
   @override
@@ -66,6 +72,9 @@ class _MapEditViewState extends EditViewState<MapEditView, _Entry> {
       existingKeys: entries.map(idOf).toSet(),
       keyMaxLength: widget.keyMaxLength,
       valueMaxLength: widget.valueMaxLength,
+      ignoreKeyCase: widget.ignoreKeyCase,
+      keyValidator: widget.keyValidator,
+      valueValidator: widget.valueValidator,
     );
   }
 }
@@ -79,6 +88,8 @@ Future<List<MapEntry<String, String>>?> showMapEntryForm(
   int? keyMaxLength,
   int? valueMaxLength,
   bool ignoreKeyCase = false,
+  String? Function(String key)? keyValidator,
+  String? Function(String value)? valueValidator,
 }) {
   return showFormSheet<List<_Entry>>(
     context: context,
@@ -89,6 +100,8 @@ Future<List<MapEntry<String, String>>?> showMapEntryForm(
       keyMaxLength: keyMaxLength,
       valueMaxLength: valueMaxLength,
       ignoreKeyCase: ignoreKeyCase,
+      keyValidator: keyValidator,
+      valueValidator: valueValidator,
     ),
   );
 }
@@ -102,6 +115,8 @@ class _MapEntryForm extends StatefulWidget {
   final int? keyMaxLength;
   final int? valueMaxLength;
   final bool ignoreKeyCase;
+  final String? Function(String key)? keyValidator;
+  final String? Function(String value)? valueValidator;
 
   const _MapEntryForm({
     required this.listTitle,
@@ -110,6 +125,8 @@ class _MapEntryForm extends StatefulWidget {
     required this.keyMaxLength,
     required this.valueMaxLength,
     required this.ignoreKeyCase,
+    required this.keyValidator,
+    required this.valueValidator,
   });
 
   @override
@@ -139,10 +156,15 @@ class _MapEntryFormState extends State<_MapEntryForm> {
         keyMaxLength: widget.keyMaxLength,
         valueMaxLength: widget.valueMaxLength,
         ignoreKeyCase: widget.ignoreKeyCase,
+        isValidKey: _validOrNull(widget.keyValidator),
+        isValidValue: _validOrNull(widget.valueValidator),
       ),
       issueMessage: _batchIssueMessage,
     );
   }
+
+  bool Function(String)? _validOrNull(String? Function(String)? validator) =>
+      validator == null ? null : (text) => validator(text) == null;
 
   @override
   void initState() {
@@ -172,8 +194,9 @@ class _MapEntryFormState extends State<_MapEntryForm> {
         widget.valueMaxLength!,
       ),
       InputIssueKind.missingValue => appLocalizations.emptyTip(_valueLabel),
-      InputIssueKind.invalidUrl ||
-      InputIssueKind.invalidValue => appLocalizations.urlTip(_valueLabel),
+      InputIssueKind.invalidKey => widget.keyValidator!(issue.raw)!,
+      InputIssueKind.invalidValue => widget.valueValidator!(issue.raw)!,
+      InputIssueKind.invalidUrl => appLocalizations.urlTip(_valueLabel),
     };
   }
 
@@ -201,11 +224,20 @@ class _MapEntryFormState extends State<_MapEntryForm> {
         message: appLocalizations.existsTip(_keyLabel),
       );
     }
-    if (_valueController.text.trim().isEmpty) {
+    final keyError = widget.keyValidator?.call(key);
+    if (keyError != null) {
+      return (field: _MapEntryField.key, message: keyError);
+    }
+    final value = _valueController.text.trim();
+    if (value.isEmpty) {
       return (
         field: _MapEntryField.value,
         message: appLocalizations.emptyTip(_valueLabel),
       );
+    }
+    final valueError = widget.valueValidator?.call(value);
+    if (valueError != null) {
+      return (field: _MapEntryField.value, message: valueError);
     }
     return null;
   }

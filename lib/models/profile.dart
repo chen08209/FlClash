@@ -69,6 +69,7 @@ abstract class Profile with _$Profile {
     String? currentGroupName,
     @Default('') String url,
     @Default('') String ageSecretKey,
+    @Default({}) Map<String, String> headers,
     DateTime? lastUpdateDate,
     required Duration autoUpdateDuration,
     SubscriptionInfo? subscriptionInfo,
@@ -183,7 +184,7 @@ extension ProfileExtension on Profile {
   }
 
   Future<Profile> update({required ValidateConfig validate}) async {
-    final response = await request.getFileResponseForUrl(url);
+    final response = await request.getFileResponseForUrl(url, headers: headers);
     final disposition = response.headers.value('content-disposition');
     final userinfo = response.headers.value('subscription-userinfo');
     return copyWith(
