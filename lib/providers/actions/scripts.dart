@@ -20,12 +20,40 @@ class ScriptsAction extends _$ScriptsAction {
     }
   }
 
-  void _applyIfInUse(int scriptId) {
-    final profile = ref.read(currentProfileProvider);
-    if (profile?.extendType != ExtendType.script ||
-        profile?.scriptId != scriptId) {
+  void deleteScript(int scriptId) {
+    ref.read(scriptsProvider.notifier).del(scriptId);
+    if (ref.read(appSettingProvider).globalScriptId == scriptId) {
+      setGlobalScript(null);
+    }
+  }
+
+  void setGlobalScript(int? scriptId) {
+    final previous = ref.read(appSettingProvider).globalScriptId;
+    if (previous == scriptId) {
       return;
     }
+    final effective = _currentEffectiveScriptId();
+    ref
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(globalScriptId: scriptId));
+    if (effective != _currentEffectiveScriptId()) {
+      _applyProfile();
+    }
+  }
+
+  int? _currentEffectiveScriptId() {
+    return ref
+        .read(currentProfileProvider)
+        ?.effectiveScriptId(ref.read(appSettingProvider).globalScriptId);
+  }
+
+  void _applyIfInUse(int scriptId) {
+    if (_currentEffectiveScriptId() == scriptId) {
+      _applyProfile();
+    }
+  }
+
+  void _applyProfile() {
     ref.read(setupActionProvider.notifier).applyProfileDebounce(silence: true);
   }
 }

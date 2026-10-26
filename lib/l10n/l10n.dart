@@ -7663,8 +7663,7 @@ class AppLocalizations {
   String customImportDroppedSubRules(num count, Object label) {
     return Intl.plural(
       count,
-      one:
-          '1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules',
+      one: '1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules',
       other:
           '$label SUB-RULE rules were dropped, since custom profiles do not support sub-rules',
       name: 'customImportDroppedSubRules',
@@ -9068,6 +9067,26 @@ class AppLocalizations {
     return Intl.message(
       'These domains are resolved by Fallback directly.',
       name: 'fallbackFilterDomainDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Set as global script`
+  String get setAsGlobalScript {
+    return Intl.message(
+      'Set as global script',
+      name: 'setAsGlobalScript',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Cancel global script`
+  String get unsetGlobalScript {
+    return Intl.message(
+      'Cancel global script',
+      name: 'unsetGlobalScript',
       desc: '',
       args: [],
     );

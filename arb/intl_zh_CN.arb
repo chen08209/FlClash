@@ -1076,5 +1076,7 @@
   "fakeipFilterDesc": "这些域名不使用 Fake-IP，返回真实 IP；过滤模式为 whitelist 时则只有它们使用 Fake-IP。",
   "fallbackFilterGeositeDesc": "属于这些 GeoSite 分类的域名直接使用 Fallback 解析。",
   "fallbackFilterIpcidrDesc": "Nameserver 返回这些网段内的 IP 时，改用 Fallback 的结果。",
-  "fallbackFilterDomainDesc": "这些域名直接使用 Fallback 解析。"
+  "fallbackFilterDomainDesc": "这些域名直接使用 Fallback 解析。",
+  "setAsGlobalScript": "设为全局脚本",
+  "unsetGlobalScript": "取消全局脚本"
 }
