@@ -195,6 +195,28 @@ subscription's value cannot survive into the generated profile, `follow` leaves 
 is installed (`core/lib.go` `installHooks`, vendored `dialer.go`), so `NetworkListView` in `lib/views/config/network.dart`
 shows the mode picker and text field only on desktop.
 
+### Egress Bootstrap
+
+The first config apply of a core process runs before the TUN listener installs `dialer.DefaultInterfaceFinder`:
+`applyConfig` calls `hub.ApplyConfig`, and only the `updateListeners` that follows reaches `listener.ReCreateTun`,
+which is where sing-tun creates its finder. FlClash leaves `interface-name` empty so auto-detect owns the egress, so a
+dial made in that window and still resolving when sing-tun's auto-route lands goes out unbound, is captured by the
+new TUN default route, and comes back into the core, which fails it as a dialer loop. The client sees an outbound
+outage that lasts out the TCP retries, which on Windows is the ~60 seconds reported in #2853.
+
+`prepareEgress` in `core/egress.go` answers that by pinning `general.Interface` to the interface the OS would pick
+anyway, and `finishEgress` releases the pin once the finder is installed and every later dial consults it instead.
+The pin is skipped where it must not change behaviour: `interface-name` is already set, the TUN or `auto-route` or
+`auto-detect-interface` is off, or the finder is already installed, which is every apply after the first one. Only the
+copy handed to that one apply carries the pin, the stored config keeps the interface the profile asked for, and the
+release is a `CompareAndSwap` back to the empty interface the app manages, so an interface a later apply wrote
+survives. The release restores the empty interface rather than a configured one because the pin is only ever taken
+when the interface was empty, and `dialer.DefaultInterface` takes precedence over the finder.
+
+The interface is detected on Windows only, in `core/egress_windows.go`, with the monitors sing-tun's own default
+interface monitor uses; elsewhere the detector answers `""` and nothing is pinned. The change is on the FlClash side
+of the mihomo boundary: `core/Clash.Meta` and the vendored sing-tun are untouched.
+
 ### Network Settings
 
 `Tun` holds what Android's VPN service starts from: the switch, device and stack, `mtu`, the mips stack's
