@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/dns"
+	"github.com/metacubex/mihomo/hub"
 	"github.com/metacubex/mihomo/tunnel/statistic"
 )
 
@@ -59,6 +60,30 @@ func handleClearDnsCache() {
 func handleResetNetwork() {
 	handleCloseConnections()
 	handleClearDnsCache()
+	reloadOutboundsOnNetworkChange()
+}
+
+// Outbound state such as a WireGuard tunnel keeps the socket it was created
+// with, bound to whatever network was in use at the time. When the device
+// switches networks (e.g. cellular -> Wi-Fi) the old network can stay up but
+// stop carrying traffic, and the tunnel never notices: it keeps dialing over
+// the dead path until the app restarts. Reapplying the running config
+// rebuilds every outbound, so its sockets are created on the network now in
+// use and tunnels re-handshake right away.
+func reloadOutboundsOnNetworkChange() {
+	configMu.Lock()
+	defer configMu.Unlock()
+	if !isRunning.Load() || currentConfig == nil {
+		return
+	}
+	cfg, err := loadConfig(runningConfigPath())
+	if err != nil {
+		return
+	}
+	currentConfig = cfg
+	hub.ApplyConfig(cfg)
+	bumpRouteEpoch()
+	updateListeners(cfg)
 }
 
 func handleCloseConnection(connectionId string) bool {
