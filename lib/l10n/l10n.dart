@@ -7943,8 +7943,7 @@ class AppLocalizations {
   String customImportDroppedSubRules(num count, Object label) {
     return Intl.plural(
       count,
-      one:
-          '1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules',
+      one: '1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules',
       other:
           '$label SUB-RULE rules were dropped, since custom profiles do not support sub-rules',
       name: 'customImportDroppedSubRules',
@@ -8050,6 +8049,121 @@ class AppLocalizations {
       name: 'alreadyInLocalProxies',
       desc: '',
       args: [name],
+    );
+  }
+
+  /// `Hotspot settings changed elsewhere; automatic control has stopped`
+  String get hotspotOwnershipChanged {
+    return Intl.message(
+      'Hotspot settings changed elsewhere; automatic control has stopped',
+      name: 'hotspotOwnershipChanged',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hotspot sharing with routing`
+  String get hotspotSharing {
+    return Intl.message(
+      'Hotspot sharing with routing',
+      name: 'hotspotSharing',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{ssid} · {count} connected devices`
+  String hotspotConnected(Object ssid, Object count) {
+    return Intl.message(
+      '$ssid · $count connected devices',
+      name: 'hotspotConnected',
+      desc: '',
+      args: [ssid, count],
+    );
+  }
+
+  /// `Could not stop the hotspot; turn it off in Windows Settings`
+  String get hotspotStopFailed {
+    return Intl.message(
+      'Could not stop the hotspot; turn it off in Windows Settings',
+      name: 'hotspotStopFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Devices connected to the PC hotspot use the current routing rules without an HTTP proxy. Stop other hotspot sharing before enabling. Disabling stops the hotspot started by this feature.`
+  String get hotspotSharingDescription {
+    return Intl.message(
+      'Devices connected to the PC hotspot use the current routing rules without an HTTP proxy. Stop other hotspot sharing before enabling. Disabling stops the hotspot started by this feature.',
+      name: 'hotspotSharingDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Off`
+  String get hotspotOff {
+    return Intl.message('Off', name: 'hotspotOff', desc: '', args: []);
+  }
+
+  /// `Hotspot bypassed TUN; stopping this sharing was attempted`
+  String get hotspotBypass {
+    return Intl.message(
+      'Hotspot bypassed TUN; stopping this sharing was attempted',
+      name: 'hotspotBypass',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Another hotspot is running; stop it before enabling`
+  String get hotspotExisting {
+    return Intl.message(
+      'Another hotspot is running; stop it before enabling',
+      name: 'hotspotExisting',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hotspot operation failed; check Windows hotspot and Wi-Fi`
+  String get hotspotFailed {
+    return Intl.message(
+      'Hotspot operation failed; check Windows hotspot and Wi-Fi',
+      name: 'hotspotFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Start the proxy, enable TUN and use Rule mode first`
+  String get hotspotRequiresTun {
+    return Intl.message(
+      'Start the proxy, enable TUN and use Rule mode first',
+      name: 'hotspotRequiresTun',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Updating hotspot sharing…`
+  String get hotspotWorking {
+    return Intl.message(
+      'Updating hotspot sharing…',
+      name: 'hotspotWorking',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Preview only in safe mode; hotspot is unchanged`
+  String get hotspotSafeMode {
+    return Intl.message(
+      'Preview only in safe mode; hotspot is unchanged',
+      name: 'hotspotSafeMode',
+      desc: '',
+      args: [],
     );
   }
 }

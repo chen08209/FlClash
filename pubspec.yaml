@@ -101,6 +101,7 @@ flutter:
     - assets/images/
     - assets/images/avatar/
     - assets/images/services/
+    - assets/windows/
     - core/Clash.Meta/component/ca/ca-certificates.crt
     - path: assets/images/tray/unix/
       platforms: [ linux, macos ]

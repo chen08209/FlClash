@@ -6,6 +6,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/views/config/override.dart';
 import 'package:fl_clash/views/config/tun.dart';
+import 'package:fl_clash/views/config/hotspot.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -569,6 +570,7 @@ class NetworkListView extends StatelessWidget {
         if (system.isAndroid) const VpnSections(),
         if (system.isDesktop) const SystemProxySection(),
         const NetworkOptionsSection(),
+        if (system.isWindows) const HotspotSharingSection(),
         TunSection(
           isDesktop: system.isDesktop,
           isLinux: system.isLinux,

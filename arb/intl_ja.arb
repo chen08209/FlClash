@@ -963,5 +963,17 @@
   "preferred": "優先",
   "addToLocalProxies": "ローカルプロキシに追加",
   "addedToLocalProxies": "{name} をローカルプロキシに追加しました",
-  "alreadyInLocalProxies": "{name} はすでにローカルプロキシにあります"
+  "alreadyInLocalProxies": "{name} はすでにローカルプロキシにあります",
+  "hotspotOwnershipChanged": "他の操作で設定が変更されたため、自動制御を停止しました",
+  "hotspotSharing": "ルール付きホットスポット共有",
+  "hotspotConnected": "{ssid} · 接続端末 {count} 台",
+  "hotspotStopFailed": "停止できません。Windows の設定で手動で停止してください",
+  "hotspotSharingDescription": "PC のホットスポットに接続した端末に現在のルールを適用します。HTTP プロキシの設定は不要です。有効にする前に他の共有を停止してください。無効にすると本機能が起動したホットスポットを停止します。",
+  "hotspotOff": "オフ",
+  "hotspotBypass": "TUN を経由していません。共有の停止を試みました",
+  "hotspotExisting": "別のホットスポットを先に停止してください",
+  "hotspotFailed": "操作に失敗しました。Windows のホットスポットと Wi-Fi を確認してください",
+  "hotspotRequiresTun": "先にプロキシと TUN を起動し、ルールモードにしてください",
+  "hotspotWorking": "共有を更新しています…",
+  "hotspotSafeMode": "セーフモードはプレビューのみです"
 }

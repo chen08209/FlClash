@@ -40,7 +40,8 @@ class CoreAction extends _$CoreAction {
   }
 
   @protected
-  Future<CoreLifecycleResult> restartLifecycle() {
+  Future<CoreLifecycleResult> restartLifecycle() async {
+    await ref.read(hotspotControllerProvider.notifier).shutdown();
     return _core.restart();
   }
 

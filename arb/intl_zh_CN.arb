@@ -963,5 +963,17 @@
   "preferred": "首选",
   "addToLocalProxies": "添加到本地代理",
   "addedToLocalProxies": "已将 {name} 添加到本地代理",
-  "alreadyInLocalProxies": "本地代理中已有 {name}"
+  "alreadyInLocalProxies": "本地代理中已有 {name}",
+  "hotspotOwnershipChanged": "热点设置已被其他操作更改，已停止自动接管",
+  "hotspotSharing": "热点共享分流",
+  "hotspotConnected": "{ssid} · 已连接 {count} 台设备",
+  "hotspotStopFailed": "热点停止失败，请在 Windows 设置中手动关闭热点",
+  "hotspotSharingDescription": "手机连接电脑热点即可沿用当前规则分流，无需设置 HTTP 代理。开启前请先关闭其他热点共享；关闭本功能会停止由它启动的热点。",
+  "hotspotOff": "已关闭",
+  "hotspotBypass": "热点未经过 TUN，已尝试停止本次共享",
+  "hotspotExisting": "已有其他热点在运行，请先关闭后再开启本功能",
+  "hotspotFailed": "热点操作失败，请检查 Windows 热点与无线网卡状态",
+  "hotspotRequiresTun": "请先启动代理，开启 TUN 并使用规则模式",
+  "hotspotWorking": "正在更新热点共享…",
+  "hotspotSafeMode": "安全模式仅预览，不修改热点"
 }

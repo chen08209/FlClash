@@ -963,5 +963,17 @@
   "preferred": "Preferred",
   "addToLocalProxies": "Add to local proxies",
   "addedToLocalProxies": "Added {name} to local proxies",
-  "alreadyInLocalProxies": "{name} is already in local proxies"
+  "alreadyInLocalProxies": "{name} is already in local proxies",
+  "hotspotOwnershipChanged": "Hotspot settings changed elsewhere; automatic control has stopped",
+  "hotspotSharing": "Hotspot sharing with routing",
+  "hotspotConnected": "{ssid} · {count} connected devices",
+  "hotspotStopFailed": "Could not stop the hotspot; turn it off in Windows Settings",
+  "hotspotSharingDescription": "Devices connected to the PC hotspot use the current routing rules without an HTTP proxy. Stop other hotspot sharing before enabling. Disabling stops the hotspot started by this feature.",
+  "hotspotOff": "Off",
+  "hotspotBypass": "Hotspot bypassed TUN; stopping this sharing was attempted",
+  "hotspotExisting": "Another hotspot is running; stop it before enabling",
+  "hotspotFailed": "Hotspot operation failed; check Windows hotspot and Wi-Fi",
+  "hotspotRequiresTun": "Start the proxy, enable TUN and use Rule mode first",
+  "hotspotWorking": "Updating hotspot sharing…",
+  "hotspotSafeMode": "Preview only in safe mode; hotspot is unchanged"
 }

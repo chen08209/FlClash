@@ -310,7 +310,10 @@ class SetupAction extends _$SetupAction {
   }
 
   @protected
-  Future<bool> setCoreRunning(bool running) {
+  Future<bool> setCoreRunning(bool running) async {
+    if (!running) {
+      await ref.read(hotspotControllerProvider.notifier).shutdown();
+    }
     return running ? _core.startListener() : _core.stopListener();
   }
 
@@ -323,6 +326,9 @@ class SetupAction extends _$SetupAction {
   Future<void> updateConfig() async {
     await globalState.safeRun(() async {
       final patchConfig = ref.read(patchClashConfigProvider);
+      if (!patchConfig.tun.enable || patchConfig.mode != Mode.rule) {
+        await ref.read(hotspotControllerProvider.notifier).shutdown();
+      }
       final shouldContinueSetup = await requestAdmin(patchConfig.tun.enable);
       if (!shouldContinueSetup) {
         await _restartCoreAfterAuthorization();

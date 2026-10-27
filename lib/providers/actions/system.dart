@@ -33,10 +33,15 @@ class SystemAction extends _$SystemAction {
   }
 
   @protected
-  Duration get exitWatchdogDuration => const Duration(seconds: 3);
+  Duration get exitWatchdogDuration =>
+      (ref.read(hotspotControllerProvider).managed ||
+          ref.read(hotspotControllerProvider).busy)
+      ? const Duration(seconds: 120)
+      : const Duration(seconds: 3);
 
   @protected
   Future<void> cleanupExitResources(bool needSave) async {
+    await ref.read(hotspotControllerProvider.notifier).shutdown();
     final saveOperation = needSave ? _savePreferencesSafely() : null;
     final tray = trayPort;
     if (tray != null) {
