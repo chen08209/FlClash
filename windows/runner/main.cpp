@@ -7,6 +7,9 @@
 #include <window/window_plugin_c_api.h>
 
 #include <algorithm>
+#include <cstdlib>
+#include <iterator>
+#include <string>
 
 #include "flutter_window.h"
 #include "utils.h"
@@ -15,13 +18,43 @@
 // path is what normally turns the system proxy off.
 constexpr char kClearStaleProxyArgument[] = "--clear-stale-proxy";
 
+constexpr char kWatchProxyArgument[] = "--watch-proxy";
+
+// The Core outlives the app by up to its exit timeout, and a skipped live port answers like a cleared one.
+constexpr DWORD kProxyRetryDelaysMs[] = {0, 1000, 2000, 4000};
+
+int RunWatchProxy(const std::string &pid_argument) {
+  const DWORD pid = static_cast<DWORD>(
+      std::strtoul(pid_argument.c_str(), nullptr, 10));
+  if (const HANDLE process = OpenProcess(SYNCHRONIZE, FALSE, pid)) {
+    WaitForSingleObject(process, INFINITE);
+    CloseHandle(process);
+  }
+  for (const DWORD delay : kProxyRetryDelaysMs) {
+    Sleep(delay);
+    ProxyPluginClearStaleProxy();
+  }
+  return EXIT_SUCCESS;
+}
+
+std::vector<std::string>::const_iterator FindArgument(
+    const std::vector<std::string> &arguments, const char *name) {
+  return std::find(arguments.begin(), arguments.end(), name);
+}
+
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
   std::vector<std::string> command_line_arguments =
       GetCommandLineArguments();
-  if (std::find(command_line_arguments.begin(), command_line_arguments.end(),
-                kClearStaleProxyArgument) != command_line_arguments.end()) {
+  if (FindArgument(command_line_arguments, kClearStaleProxyArgument) !=
+      command_line_arguments.end()) {
     return ProxyPluginClearStaleProxy() ? EXIT_SUCCESS : EXIT_FAILURE;
+  }
+  if (const auto watch = FindArgument(command_line_arguments,
+                                      kWatchProxyArgument);
+      watch != command_line_arguments.end() &&
+      std::next(watch) != command_line_arguments.end()) {
+    return RunWatchProxy(*std::next(watch));
   }
 
   if (HWND running = WindowPluginFindRunningWindow()) {
@@ -29,6 +62,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     WindowPluginActivateWindow(running);
     return EXIT_SUCCESS;
   }
+
+  ProxyPluginClearStaleProxy();
 
   // Attach to console when present (e.g., 'flutter run') or create a
   // new console when running with a debugger.
