@@ -143,6 +143,34 @@ bool NotifySettingsChanged()
   return changed && refreshed;
 }
 
+// Armed once per process by StartProxy to clear the proxy after a force-close.
+void ArmProxyWatcher()
+{
+  static bool armed = false;
+  if (armed)
+  {
+    return;
+  }
+  armed = true;
+  wchar_t path[MAX_PATH];
+  if (GetModuleFileNameW(nullptr, path, MAX_PATH) == 0)
+  {
+    return;
+  }
+  std::wstring command = L"\"" + std::wstring(path) + L"\" --watch-proxy " +
+                         std::to_wstring(GetCurrentProcessId());
+  STARTUPINFOW startup = {};
+  startup.cb = sizeof(startup);
+  PROCESS_INFORMATION information = {};
+  if (CreateProcessW(nullptr, command.data(), nullptr, nullptr, FALSE,
+                     CREATE_NO_WINDOW, nullptr, nullptr, &startup,
+                     &information))
+  {
+    CloseHandle(information.hProcess);
+    CloseHandle(information.hThread);
+  }
+}
+
 bool startProxy(const int port, const flutter::EncodableList& bypassDomain)
 {
   auto url = kProxyServerPrefix + std::to_wstring(port);
@@ -444,6 +472,7 @@ namespace proxy
       }
       // A start that reports failure can still have written the setting.
       proxy_applied_ = true;
+      ArmProxyWatcher();
       result->Success(startProxy(*port, *bypassDomain));
     }
     else

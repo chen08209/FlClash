@@ -1646,7 +1646,11 @@ NDK version stands in for the hook's cache.
   before any engine starts, and it turns off only a proxy still set to FlClash's `127.0.0.1:<port>` with nothing
   listening on that port. In the app `SystemProxyQueue` sets the system proxy when the Core starts with it on, and
   stops it on a stop or exit only when this run set it, since a stop also clears a proxy, PAC or auto-detect setting
-  someone else made. Nothing is stored, so a launch leaves alone the proxy a crashed run left.
+  someone else made. A force-close runs no exit path, so `StartProxy` arms one `FlClash.exe --watch-proxy <pid>` child
+  per process: it waits for the app to end, retries the stale clear on a short schedule that covers the Core's exit
+  cleanup, and exits. A launch that finds no other instance clears what a crashed run left behind the same way, and
+  a proxy whose port is listening is never touched, so a tree kill that takes the watcher with it is repaired by the
+  next launch.
 - `rust_api`: runtime Flutter Rust Bridge FFI package built through Native Assets. See below.
 - `tray`: system tray for Linux, macOS and Windows. Written for FlClash; replaced the `tray_manager` fork.
 - `window`: desktop window control for Linux, macOS and Windows. Written for FlClash; replaced the
