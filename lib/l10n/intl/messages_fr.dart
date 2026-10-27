@@ -1829,6 +1829,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "serviceUnsupportedRegion": MessageLookupByLibrary.simpleMessage(
       "Région non prise en charge",
     ),
+    "setAsGlobalScript": MessageLookupByLibrary.simpleMessage(
+      "Définir comme script global",
+    ),
     "settingEntries": MessageLookupByLibrary.simpleMessage("réglages"),
     "settings": MessageLookupByLibrary.simpleMessage("Paramètres"),
     "settingsCount": m77,
@@ -2012,6 +2015,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "unnamed": MessageLookupByLibrary.simpleMessage("Sans nom"),
     "unpinWindow": MessageLookupByLibrary.simpleMessage(
       "Désépingler la fenêtre",
+    ),
+    "unsetGlobalScript": MessageLookupByLibrary.simpleMessage(
+      "Annuler le script global",
     ),
     "update": MessageLookupByLibrary.simpleMessage("Mettre à jour"),
     "upload": MessageLookupByLibrary.simpleMessage("Envoi"),

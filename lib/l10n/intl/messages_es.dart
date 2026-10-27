@@ -1832,6 +1832,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "serviceUnsupportedRegion": MessageLookupByLibrary.simpleMessage(
       "Región no compatible",
     ),
+    "setAsGlobalScript": MessageLookupByLibrary.simpleMessage(
+      "Establecer como script global",
+    ),
     "settingEntries": MessageLookupByLibrary.simpleMessage("ajustes"),
     "settings": MessageLookupByLibrary.simpleMessage("Ajustes"),
     "settingsCount": m77,
@@ -2012,6 +2015,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "unmaximize": MessageLookupByLibrary.simpleMessage("Restaurar tamaño"),
     "unnamed": MessageLookupByLibrary.simpleMessage("Sin nombre"),
     "unpinWindow": MessageLookupByLibrary.simpleMessage("Desfijar ventana"),
+    "unsetGlobalScript": MessageLookupByLibrary.simpleMessage(
+      "Quitar script global",
+    ),
     "update": MessageLookupByLibrary.simpleMessage("Actualizar"),
     "upload": MessageLookupByLibrary.simpleMessage("Subida"),
     "uploadBandwidth": MessageLookupByLibrary.simpleMessage(

@@ -138,7 +138,7 @@ final class SetupPatchProvider
   }
 }
 
-String _$setupPatchHash() => r'283e94846903bafab1c22985b6f90d4c0e2a4697';
+String _$setupPatchHash() => r'd09fb41d40ced4cd47c9131fe55e983e35128724';
 
 @ProviderFor(trayState)
 final trayStateProvider = TrayStateProvider._();
@@ -3498,7 +3498,7 @@ final class SetupStateProvider
   }
 }
 
-String _$setupStateHash() => r'eef9f0d2ec0ecb6196c699b1e2c2a73d922f8964';
+String _$setupStateHash() => r'308442e2258eb63ec0e2909db914033c6f6560d4';
 
 final class SetupStateFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<SetupState>, int?> {

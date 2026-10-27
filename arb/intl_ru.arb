@@ -963,5 +963,7 @@
   "preferred": "Предпочтительный",
   "addToLocalProxies": "Добавить в локальные прокси",
   "addedToLocalProxies": "«{name}» добавлен в локальные прокси",
-  "alreadyInLocalProxies": "«{name}» уже есть в локальных прокси"
+  "alreadyInLocalProxies": "«{name}» уже есть в локальных прокси",
+  "setAsGlobalScript": "Сделать глобальным скриптом",
+  "unsetGlobalScript": "Отменить глобальный скрипт"
 }

@@ -46,7 +46,9 @@ Future<ClashConfig> clashConfig(Ref ref, int profileId) async {
 @riverpod
 Future<SetupState> setupState(Ref ref, int? profileId) async {
   final profile = ref.watch(profileProvider(profileId));
-  final scriptId = profile?.scriptId;
+  final scriptId = profile?.effectiveScriptId(
+    ref.watch(appSettingProvider.select((state) => state.globalScriptId)),
+  );
   final profileLastUpdateDate = profile?.lastUpdateDate?.millisecondsSinceEpoch;
   final profileType = profile?.type ?? ProfileType.file;
   final extendType = profile?.extendType ?? ExtendType.standard;
@@ -90,9 +92,10 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
             in await database.proxyDialersDao.query(profileId).get())
           dialer.proxyId: dialer.target,
       };
-    } else if (extendType == ExtendType.standard) {
-      addedRules = await database.rulesDao.queryAddedRules(profileId).get();
-    } else if (extendType == ExtendType.script) {
+    } else {
+      if (extendType == ExtendType.standard) {
+        addedRules = await database.rulesDao.queryAddedRules(profileId).get();
+      }
       script = scriptId == null
           ? null
           : await database.scriptsDao.get(scriptId).getSingleOrNull();

@@ -8052,6 +8052,26 @@ class AppLocalizations {
       args: [name],
     );
   }
+
+  /// `Set as global script`
+  String get setAsGlobalScript {
+    return Intl.message(
+      'Set as global script',
+      name: 'setAsGlobalScript',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Cancel global script`
+  String get unsetGlobalScript {
+    return Intl.message(
+      'Cancel global script',
+      name: 'unsetGlobalScript',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

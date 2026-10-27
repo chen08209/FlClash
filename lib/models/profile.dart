@@ -136,6 +136,16 @@ extension ProfilesExt on List<Profile> {
 }
 
 extension ProfileExtension on Profile {
+  /// A profile's own script wins; without one the global script applies.
+  int? effectiveScriptId(int? globalScriptId) {
+    if (type == ProfileType.custom) {
+      return null;
+    }
+    return extendType == ExtendType.script
+        ? scriptId ?? globalScriptId
+        : globalScriptId;
+  }
+
   bool get realAutoUpdate => type == ProfileType.url && autoUpdate;
 
   String get realLabel => label.takeFirstValid([defaultLabel]);

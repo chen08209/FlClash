@@ -23,6 +23,9 @@ class ScriptContent extends ConsumerWidget {
     final scriptId = ref.watch(
       profileProvider(profileId).select((state) => state?.scriptId),
     );
+    final globalScriptId = ref.watch(
+      appSettingProvider.select((state) => state.globalScriptId),
+    );
     final scripts = ref.watch(scriptsProvider).value ?? [];
     return SliverMainAxisGroup(
       slivers: [
@@ -39,6 +42,7 @@ class ScriptContent extends ConsumerWidget {
               for (final script in scripts)
                 _ScriptOption(
                   label: script.label,
+                  isGlobal: script.id == globalScriptId,
                   isSelected: script.id == scriptId,
                   onSelected: () {
                     _handleChange(ref, profileId, script.id);
@@ -64,11 +68,13 @@ class ScriptContent extends ConsumerWidget {
 class _ScriptOption extends StatelessWidget {
   const _ScriptOption({
     required this.label,
+    required this.isGlobal,
     required this.isSelected,
     required this.onSelected,
   });
 
   final String label;
+  final bool isGlobal;
   final bool isSelected;
   final VoidCallback onSelected;
 
@@ -77,6 +83,12 @@ class _ScriptOption extends StatelessWidget {
     return DecorationListItem(
       isSelected: isSelected,
       title: Text(label),
+      subtitle: isGlobal
+          ? Text(
+              context.appLocalizations.global,
+              style: context.listCaptionStyle,
+            )
+          : null,
       trailing: isSelected ? const SelectionCheck() : null,
       onPressed: onSelected,
     );

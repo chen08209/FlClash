@@ -963,5 +963,7 @@
   "preferred": "Preferred",
   "addToLocalProxies": "Add to local proxies",
   "addedToLocalProxies": "Added {name} to local proxies",
-  "alreadyInLocalProxies": "{name} is already in local proxies"
+  "alreadyInLocalProxies": "{name} is already in local proxies",
+  "setAsGlobalScript": "Set as global script",
+  "unsetGlobalScript": "Cancel global script"
 }

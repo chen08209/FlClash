@@ -1773,6 +1773,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "serviceUnsupportedRegion": MessageLookupByLibrary.simpleMessage(
       "Регион не поддерживается",
     ),
+    "setAsGlobalScript": MessageLookupByLibrary.simpleMessage(
+      "Сделать глобальным скриптом",
+    ),
     "settingEntries": MessageLookupByLibrary.simpleMessage("параметры"),
     "settings": MessageLookupByLibrary.simpleMessage("Настройки"),
     "settingsCount": m77,
@@ -1955,6 +1958,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "unmaximize": MessageLookupByLibrary.simpleMessage("Свернуть в окно"),
     "unnamed": MessageLookupByLibrary.simpleMessage("Без названия"),
     "unpinWindow": MessageLookupByLibrary.simpleMessage("Открепить окно"),
+    "unsetGlobalScript": MessageLookupByLibrary.simpleMessage(
+      "Отменить глобальный скрипт",
+    ),
     "update": MessageLookupByLibrary.simpleMessage("Обновить"),
     "upload": MessageLookupByLibrary.simpleMessage("Отдача"),
     "uploadBandwidth": MessageLookupByLibrary.simpleMessage("Скорость отдачи"),

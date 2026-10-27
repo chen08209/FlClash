@@ -87,6 +87,7 @@ _AppSettingProps _$AppSettingPropsFromJson(
         ),
       ) ??
       const {},
+  globalScriptId: (json['globalScriptId'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
@@ -123,6 +124,7 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'serviceOrder': instance.serviceOrder,
       'disabledServices': instance.disabledServices,
       'tableColumnWidths': instance.tableColumnWidths,
+      'globalScriptId': instance.globalScriptId,
     };
 
 const _$TabAnimationEnumMap = {

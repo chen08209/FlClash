@@ -8,6 +8,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
@@ -45,7 +46,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     if (res != true || !mounted) {
       return;
     }
-    ref.read(scriptsProvider.notifier).del(script.id);
+    _scriptsAction.deleteScript(script.id);
     unawaited(_clearEffect(script.id));
   }
 
@@ -83,7 +84,10 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     );
   }
 
-  List<CommonPopupMenuItem> _buildMenuItems(Script script) {
+  List<CommonPopupMenuItem> _buildMenuItems(
+    Script script, {
+    required bool isGlobal,
+  }) {
     final appLocalizations = context.appLocalizations;
     return [
       CommonPopupMenuItem(
@@ -91,6 +95,15 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
         label: appLocalizations.edit,
         onPressed: () {
           _handleToEditor(script);
+        },
+      ),
+      CommonPopupMenuItem(
+        glyph: AppGlyphs.layers,
+        label: isGlobal
+            ? appLocalizations.unsetGlobalScript
+            : appLocalizations.setAsGlobalScript,
+        onPressed: () {
+          _scriptsAction.setGlobalScript(isGlobal ? null : script.id);
         },
       ),
       if (script.url != null) ...[
@@ -126,33 +139,41 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
       key: ValueKey(script.id),
       index: index,
       child: Consumer(
-        builder: (_, ref, child) => ContextMenuRegion(
-          menuItems: ref.watch(isUpdatingProvider(script.updatingKey))
-              ? null
-              : _buildMenuItems(script),
-          child: child!,
-        ),
-        child: ItemPositionProvider(
-          position: ItemPosition.get(index, scripts.length),
-          child: DecorationListItem(
-            contentPadding: const EdgeInsets.only(left: 16),
-            title: Text(
-              script.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+        builder: (_, ref, _) {
+          final isGlobal = ref.watch(
+            appSettingProvider.select(
+              (state) => state.globalScriptId == script.id,
             ),
-            subtitle: Text(
-              script.url != null
-                  ? context.appLocalizations.remote
-                  : context.appLocalizations.local,
-              style: context.listCaptionStyle,
+          );
+          final appLocalizations = context.appLocalizations;
+          final source = script.url != null
+              ? appLocalizations.remote
+              : appLocalizations.local;
+          return ContextMenuRegion(
+            menuItems: ref.watch(isUpdatingProvider(script.updatingKey))
+                ? null
+                : _buildMenuItems(script, isGlobal: isGlobal),
+            child: ItemPositionProvider(
+              position: ItemPosition.get(index, scripts.length),
+              child: DecorationListItem(
+                contentPadding: const EdgeInsets.only(left: 16),
+                title: Text(
+                  script.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(
+                  isGlobal ? '$source · ${appLocalizations.global}' : source,
+                  style: context.listCaptionStyle,
+                ),
+                trailing: _ScriptTrailing(script: script),
+                onPressed: () {
+                  _handleToEditor(script);
+                },
+              ),
             ),
-            trailing: _ScriptTrailing(script: script),
-            onPressed: () {
-              _handleToEditor(script);
-            },
-          ),
-        ),
+          );
+        },
       ),
     );
   }

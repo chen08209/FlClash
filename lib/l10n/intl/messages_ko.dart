@@ -1425,6 +1425,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "serviceUnsupportedRegion": MessageLookupByLibrary.simpleMessage(
       "지원하지 않는 지역",
     ),
+    "setAsGlobalScript": MessageLookupByLibrary.simpleMessage("전역 스크립트로 설정"),
     "settingEntries": MessageLookupByLibrary.simpleMessage("설정"),
     "settings": MessageLookupByLibrary.simpleMessage("설정"),
     "settingsCount": m77,
@@ -1579,6 +1580,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "unmaximize": MessageLookupByLibrary.simpleMessage("이전 크기로 복원"),
     "unnamed": MessageLookupByLibrary.simpleMessage("이름 없음"),
     "unpinWindow": MessageLookupByLibrary.simpleMessage("창 고정 해제"),
+    "unsetGlobalScript": MessageLookupByLibrary.simpleMessage("전역 스크립트 해제"),
     "update": MessageLookupByLibrary.simpleMessage("업데이트"),
     "upload": MessageLookupByLibrary.simpleMessage("업로드"),
     "uploadBandwidth": MessageLookupByLibrary.simpleMessage("업로드 대역폭"),

@@ -963,5 +963,7 @@
   "preferred": "우선",
   "addToLocalProxies": "로컬 프록시에 추가",
   "addedToLocalProxies": "{name}을(를) 로컬 프록시에 추가했습니다",
-  "alreadyInLocalProxies": "{name}은(는) 이미 로컬 프록시에 있습니다"
+  "alreadyInLocalProxies": "{name}은(는) 이미 로컬 프록시에 있습니다",
+  "setAsGlobalScript": "전역 스크립트로 설정",
+  "unsetGlobalScript": "전역 스크립트 해제"
 }
