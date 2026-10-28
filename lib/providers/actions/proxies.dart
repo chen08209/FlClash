@@ -284,6 +284,24 @@ class ProxiesAction extends _$ProxiesAction {
     }
   }
 
+  Future<void> copyProxy(String proxyName) async {
+    final appLocalizations = currentAppLocalizations;
+    final definition = await _core.getProxyDefinition(proxyName);
+    if (definition == null) {
+      throw MessageException(
+        appLocalizations.customIssueMissingProxies(proxyName),
+      );
+    }
+    await Clipboard.setData(
+      ClipboardData(
+        text: yaml.encode({
+          'proxies': [definition],
+        }),
+      ),
+    );
+    dialogs.showNotifier(appLocalizations.copySuccess);
+  }
+
   Future<void> addToLocalProxies(String proxyName) async {
     final appLocalizations = currentAppLocalizations;
     final definition = await _core.getProxyDefinition(proxyName);

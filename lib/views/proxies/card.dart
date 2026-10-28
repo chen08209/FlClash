@@ -32,11 +32,8 @@ void selectGroupProxy(
   );
 }
 
-/// Built-ins and groups have no definition, and a custom profile's own proxies
-/// are the local proxies already.
-bool _isAddableToLocal(Proxy proxy, {required bool isCustomProfile}) {
-  return (proxy.providerName != null || !isCustomProfile) &&
-      !reservedCustomProxyNames.contains(proxy.name) &&
+bool _hasDefinition(Proxy proxy) {
+  return !reservedCustomProxyNames.contains(proxy.name) &&
       GroupTypeExtension.getGroupType(proxy.type) == null;
 }
 
@@ -96,6 +93,11 @@ class ProxyCard extends ConsumerWidget {
     globalState.safeRun(() => proxiesAction.addToLocalProxies(proxy.name));
   }
 
+  void _handleCopy(WidgetRef ref) {
+    final proxiesAction = ref.read(proxiesActionProvider.notifier);
+    globalState.safeRun(() => proxiesAction.copyProxy(proxy.name));
+  }
+
   List<CommonPopupMenuItem> _menuItems(
     BuildContext context,
     WidgetRef ref, {
@@ -124,6 +126,12 @@ class ProxyCard extends ConsumerWidget {
           glyph: AppGlyphs.listAdd,
           label: appLocalizations.addToLocalProxies,
           onPressed: () => _handleAddToLocalProxies(ref),
+        ),
+      if (_hasDefinition(proxy))
+        CommonPopupMenuItem(
+          glyph: AppGlyphs.copy,
+          label: appLocalizations.copy,
+          onPressed: () => _handleCopy(ref),
         ),
     ];
   }
@@ -195,7 +203,9 @@ class ProxyCard extends ConsumerWidget {
             ref,
             inUse: inUse,
             pinned: pinned,
-            addable: _isAddableToLocal(proxy, isCustomProfile: isCustomProfile),
+            addable:
+                _hasDefinition(proxy) &&
+                (proxy.providerName != null || !isCustomProfile),
           ),
           child: CommonCard(
             radius: AppCorner.lg,

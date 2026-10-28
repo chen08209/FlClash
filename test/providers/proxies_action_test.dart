@@ -16,9 +16,11 @@ import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod/riverpod.dart';
+import 'package:yaml/yaml.dart';
 
 import '../helpers/test_profiles.dart';
 
@@ -937,6 +939,108 @@ void main() {
 
       expect(message, 'invalid payload');
       verifyNever(() => core.getExternalProvider(any()));
+    });
+  });
+
+  group('copyProxy', () {
+    late List<String> copied;
+
+    setUp(() {
+      copied = [];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+            if (call.method == 'Clipboard.setData') {
+              copied.add((call.arguments as Map)['text'] as String);
+            }
+            return null;
+          });
+    });
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    test(
+      'copies the full node as Clash YAML without changing selection',
+      () async {
+        const definition = {
+          'name': 'Mieru 🇺🇸 : #1',
+          'type': 'mieru',
+          'server': 'node.example.com',
+          'port': 443,
+          'username': 'user',
+          'password': 'true: #secret\nsecond line',
+          'transport': 'TCP',
+          'multiplexing': 'MULTIPLEXING_HIGH',
+          'dialer-proxy': 'Relay',
+        };
+        when(
+          () => core.getProxyDefinition('Mieru 🇺🇸 : #1'),
+        ).thenAnswer((_) async => definition);
+        final profile = _selectedProfile('Other node');
+        final container = buildContainer(profile: profile);
+
+        await actionOf(container).copyProxy('Mieru 🇺🇸 : #1');
+
+        expect(copied, hasLength(1));
+        expect(loadYaml(copied.single), {
+          'proxies': [definition],
+        });
+        expect(
+          container.read(profilesProvider).single.selectedMap,
+          profile.selectedMap,
+        );
+        verifyNever(() => core.changeProxy(any()));
+      },
+    );
+
+    test('leaves the clipboard alone when the node is gone', () async {
+      when(() => core.getProxyDefinition('Gone')).thenAnswer((_) async => null);
+
+      await expectLater(
+        actionOf(buildContainer()).copyProxy('Gone'),
+        throwsA(
+          isA<MessageException>().having(
+            (error) => error.message,
+            'message',
+            currentAppLocalizations.customIssueMissingProxies('Gone'),
+          ),
+        ),
+      );
+
+      expect(copied, isEmpty);
+    });
+
+    test(
+      'propagates a core failure without copying partial information',
+      () async {
+        when(
+          () => core.getProxyDefinition('HK'),
+        ).thenThrow(StateError('offline'));
+
+        await expectLater(
+          actionOf(buildContainer()).copyProxy('HK'),
+          throwsStateError,
+        );
+
+        expect(copied, isEmpty);
+      },
+    );
+
+    test('propagates a clipboard failure', () async {
+      when(() => core.getProxyDefinition('HK')).thenAnswer(
+        (_) async => {'name': 'HK', 'type': 'ss', 'server': 'hk.example.com'},
+      );
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+            throw PlatformException(code: 'clipboard_unavailable');
+          });
+
+      await expectLater(
+        actionOf(buildContainer()).copyProxy('HK'),
+        throwsA(isA<PlatformException>()),
+      );
     });
   });
 

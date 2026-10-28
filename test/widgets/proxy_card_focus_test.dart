@@ -11,11 +11,24 @@ import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+import '../helpers/context_menu.dart';
 
 const _testUrl = 'https://example.com/generate_204';
 
 class _RecordingProxiesAction extends ProxiesAction {
   static final List<String> tested = [];
+  static final List<String> copied = [];
+  static final List<String> selected = [];
+
+  @override
+  void changeProxyDebounce(String groupName, String proxyName) {
+    selected.add(proxyName);
+  }
+
+  @override
+  Future<void> copyProxy(String proxyName) async {
+    copied.add(proxyName);
+  }
 
   @override
   Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
@@ -30,6 +43,8 @@ void main() {
 
   setUp(() {
     _RecordingProxiesAction.tested.clear();
+    _RecordingProxiesAction.copied.clear();
+    _RecordingProxiesAction.selected.clear();
     container = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(TestProfiles.new),
@@ -47,7 +62,11 @@ void main() {
 
   tearDown(() => container.dispose());
 
-  Future<void> pumpCards(WidgetTester tester, ProxyCardType type) async {
+  Future<void> pumpCards(
+    WidgetTester tester,
+    ProxyCardType type, {
+    String proxyType = 'Shadowsocks',
+  }) async {
     tester.view.physicalSize = const Size(900, 600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -67,7 +86,7 @@ void main() {
                     key: ValueKey('proxy $index'),
                     groupName: 'group',
                     testUrl: _testUrl,
-                    proxy: Proxy(name: 'proxy $index', type: 'Shadowsocks'),
+                    proxy: Proxy(name: 'proxy $index', type: proxyType),
                     groupType: GroupType.Selector,
                     type: type,
                   ),
@@ -94,6 +113,25 @@ void main() {
   }
 
   for (final type in ProxyCardType.values) {
+    testWidgets('right click copies the targeted ${type.name} node', (
+      tester,
+    ) async {
+      await pumpCards(tester, type);
+
+      await rightClick(tester, find.byType(ProxyCard).at(1));
+      await tester.pumpAndSettle();
+      expect(find.text('Copy'), findsOneWidget);
+      expect(_RecordingProxiesAction.copied, isEmpty);
+      expect(_RecordingProxiesAction.selected, isEmpty);
+
+      await tester.tap(find.text('Copy'));
+      await tester.pumpAndSettle();
+
+      expect(_RecordingProxiesAction.copied, ['proxy 1']);
+      expect(_RecordingProxiesAction.selected, isEmpty);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('arrow right from a ${type.name} proxy card focuses its '
         'delay control', (tester) async {
       await pumpCards(tester, type);
@@ -116,6 +154,31 @@ void main() {
       }
     });
   }
+
+  testWidgets('a group without a node definition has no copy action', (
+    tester,
+  ) async {
+    await pumpCards(tester, ProxyCardType.standard, proxyType: 'Selector');
+
+    await rightClick(tester, find.byType(ProxyCard).first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Select'), findsOneWidget);
+    expect(find.text('Copy'), findsNothing);
+  });
+
+  testWidgets('the keyboard context menu can copy a node', (tester) async {
+    await pumpCards(tester, ProxyCardType.standard);
+    await focusCard(tester, 0);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.contextMenu);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Copy'));
+    await tester.pumpAndSettle();
+
+    expect(_RecordingProxiesAction.copied, ['proxy 0']);
+    expect(_RecordingProxiesAction.selected, isEmpty);
+  });
 
   testWidgets('tab walks card to card without stopping on the delay control', (
     tester,
