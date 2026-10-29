@@ -224,6 +224,12 @@ them `not_implemented`, and `SetMitmPressure` does nothing. The app keeps its pa
 `mitmFeature` (`FEATURE_MITM`, off by default), which closes every entry and sends the core no modules or capture.
 Turn it on only with a core that has MITM.
 
+Consent to a module's scripts covers `mitmScriptScope`: every line declaring a script, as written, and every line run
+now, which names its script by a hash of the content. An update that adds to that scope turns the module off until the
+user accepts again, whether it comes by hand, which asks at once, or by auto update, which says so in a banner. None of
+this has met users: settle its interaction, listed in the MITM section of the core integration notes
+(`docs/rust-core/integration.md`, local only), before turning the flag on.
+
 ## Lifecycle Ownership And Convergence
 
 ### Shared Flutter Layer
@@ -508,11 +514,12 @@ automatic retry is off because a retry after an HTTP 429 spends the same per-out
 
 The UI comes in two layers, plus the app's own widgets:
 
-- `plugins/prism_ui` is the UI library: the components and design tokens that know nothing of FlClash. Shapes,
+- `prism_ui`, a path dependency on the submodule `plugins/prism_ui` (repository `chen08209/prism_ui`), is the UI library; `prism_ui/lib/` paths in these docs are in that submodule: the components and design tokens that know nothing of FlClash. Shapes,
   surfaces, motion, colors, the scaffold's layout (`PrismScaffold`, `ScaffoldBar`, `AppBar`), sheets, popups, list rows and groups, buttons, glass, and the glyph engine with the few
   glyphs the components draw themselves (`Glyphs`). It ships no app assets and names nothing from the app; its own
-  shader goes with it as `packages/prism_ui/shaders/liquid_glass.frag`. It is meant to become a library shared
-  beyond this repository, so its `pubspec.yaml` is the boundary: it cannot import `package:fl_clash`, Riverpod, or
+  shader goes with it as `packages/prism_ui/shaders/liquid_glass.frag`. A change to it lands and publishes there
+  first, then this app moves its version constraint. Its `pubspec.yaml`
+  is the boundary: it cannot import `package:fl_clash`, Riverpod, or
   anything else it does not declare.
 - `lib/ui/` is what FlClash adds on top: the app's glyphs (`AppGlyphs`), the fonts it bundles (`FontFamily`,
   `toJetBrainsMono`), the illustrations of its empty pages (`NullStatusIllustration`), the delay colors,
@@ -520,11 +527,11 @@ The UI comes in two layers, plus the app's own widgets:
   mode, keywords, action folding, form sheet foot) and `ListItem` (rows that open a page, menu or dialog). Its barrel `ui/ui.dart` re-exports `prism_ui`, and `ui/icons/icons.dart` re-exports the
   package's icons, so app code imports one barrel for both layers.
 - Code ported from other packages keeps only what the app uses, under its upstream license header:
-  `plugins/prism_ui/lib/hct/` (material_color_utilities, the three scheme variants at standard contrast),
+  `prism_ui/lib/hct/` (material_color_utilities, the three scheme variants at standard contrast),
   `lib/shapes/` (material_new_shapes) and `lib/sliver_list/` (super_sliver_list) in the package, and the QR encoder
   `lib/ui/qr_matrix.dart` in the app. What belongs to the app's own content stays out of the package: QR codes
-  and the emoji pattern live in `lib/ui/`, and `PrismApp.emojiFont` hands the pattern down. Native code goes in a
-  plugin nested under `plugins/prism_ui/plugins/`.
+  and the emoji pattern live in `lib/ui/`, and `PrismApp.emojiFont` hands the pattern down. The package has no native code: the app reads the
+  system's colors through `plugins/dynamic_color` and hands them down as seeds.
 - `lib/widgets/` holds the components built from them that read a provider or a model: settings rows, subscription
   and profile pieces. `widgets/widgets.dart` re-exports `ui/ui.dart`.
 
@@ -540,16 +547,16 @@ gives `EmojiText` the emoji font, which the app passes `PrismApp` as the bundled
 barrel, and none may import Riverpod. A component that needs app state reads what the app provides above its
 navigator:
 
-- `ViewScope` (`plugins/prism_ui/lib/view_scope.dart`): the window size, whether the layout is mobile, and the window controls
+- `ViewScope` (`prism_ui/lib/view_scope.dart`): the window size, whether the layout is mobile, and the window controls
   over a page. `AppViewScope` in `lib/manager/theme_manager.dart` fills it from `viewSizeProvider`,
   `isMobileViewProvider` and `versionProvider`. It is an `InheritedModel`, so a reader of one value does not rebuild
   when another changes; `context.isMobileView` reads it without listening.
-- `MeasureScope` (`plugins/prism_ui/lib/measure.dart`): the `Measure` `PrismApp` builds at the app text scale, which
+- `MeasureScope` (`prism_ui/lib/measure.dart`): the `Measure` `PrismApp` builds at the app text scale, which
   `ThemeManager` also assigns to `globalState.measure`.
 - The `MediaQuery` text scaler that `PrismApp` sets from its `textScale`: the app text scale behind `.ap(context)`, `.mAp(context)` and
-  the `...Of(context)` paddings in `plugins/prism_ui/lib/metrics.dart`. Reading it there makes a widget sized by them rebuild when the
+  the `...Of(context)` paddings in `prism_ui/lib/metrics.dart`. Reading it there makes a widget sized by them rebuild when the
   scale changes; a global copy or a top-level final would keep the scale it was first read at.
-- `UiLocalizations` (`plugins/prism_ui/lib/l10n.dart`): the strings the components show themselves. `AppUiLocalizations.delegate`
+- `UiLocalizations` (`prism_ui/lib/l10n.dart`): the strings the components show themselves. `AppUiLocalizations.delegate`
   in `lib/common/app_localizations.dart` serves them from the ARB strings; a new one needs a getter on both.
 
 A test that builds its own app registers `AppUiLocalizations.delegate` and returns `wrapAppScopes` from
@@ -557,7 +564,7 @@ A test that builds its own app registers `AppUiLocalizations.delegate` and retur
 
 ## Icons
 
-`plugins/prism_ui/lib/icons/` holds the glyph engine and `lib/ui/icons/` the app's glyphs; between them they hold
+`prism_ui/lib/icons/` holds the glyph engine and `lib/ui/icons/` the app's glyphs; between them they hold
 every icon the app shows. Nothing in `lib/` uses the Material icon font, and
 `test/lint/material_icons_test.dart` fails on any `Icons.*` or `AnimatedIcons.*`, so every icon shares one stroke and
 can animate its shape.
@@ -598,7 +605,7 @@ tab bar it fills every destination and marks the selected one by colour alone.
 Framework widgets that draw their own icon take it from the theme: a `DropdownMenu` is given its chevrons. The bar's
 back and close buttons are the scaffold's own, with `Glyphs.backFor` picking the platform's back glyph. A framework widget added later that paints a Material icon needs the same treatment.
 
-Empty states draw no image assets either. `NullStatus` in `plugins/prism_ui/lib/null_status.dart` shows the glyph of
+Empty states draw no image assets either. `NullStatus` in `prism_ui/lib/null_status.dart` shows the glyph of
 its `Illustration` (for the app's pages, a `NullStatusIllustration` in `lib/ui/null_status_illustration.dart`) filled
 on a shape and among accent marks, each picked at random when it mounts: a circle, a scallop (`cookie9Sided`,
 `cookie12Sided`) or a rounded square, as a freer shape cuts in too close to the glyph, and one of
@@ -642,7 +649,7 @@ it while the field has focus or a query, under a bar that keeps its own buttons.
 
 Every search field is a `SearchField`: iOS 27's glyph and filled clear button, and a focus ring only where a key or a
 remote moved focus. The bar's field, the docked one and the editor's find bar stand with the buttons beside them on one
-`GooSurface` (`plugins/prism_ui/lib/goo.dart`), which draws its `GooPane`s, pills in rows, as one fill or one pane of glass. A field
+`GooSurface` (`prism_ui/lib/goo.dart`), which draws its `GooPane`s, pills in rows, as one fill or one pane of glass. A field
 swells and stretches under a finger as a button does, and a pressed pane flows into its neighbors in the row, as iOS
 merges glass that shares a container; at rest the blend reaches no further than buttons stand apart, so nothing bulges.
 The buttons beside a bar's or a sheet's field grow out of its ends as it opens and sink back as it closes. Under a
@@ -659,7 +666,7 @@ drop of glass stands 12 by 6 dp clear of the text and fades in over 100 ms and o
 
 A bar under a sheet drops its actions and keeps its title and back or close button. `Scaffold` fades the actions
 out with the entrance of a sheet laid over its page, or over the sheet it is a page of, so none on the layer below
-reads as an action of the sheet on top; `sheetCoverOf` in `plugins/prism_ui/lib/sheet_navigator.dart` reads that entrance, which a sheet route hands
+reads as an action of the sheet on top; `sheetCoverOf` in `prism_ui/lib/sheet_navigator.dart` reads that entrance, which a sheet route hands
 down through `SheetCoverRouteMixin`, as `SnapSheetRoute` and `ModalSideSheetRoute` do.
 
 ## Liquid Glass
@@ -677,9 +684,9 @@ whenever the dashboard redraws, which it does often. Each still swells on its ow
 every switch in the app is, is a pane only while held and while its thumb crosses to a value it was not dragged to,
 such as one a tap on the switch or on its row set: the thumb lifts out past the solid track and turns into a clear lens
 over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's replica of the iOS 26 switch does.
-`plugins/prism_ui/lib/liquid_glass.dart` holds the rest:
+`prism_ui/lib/liquid_glass.dart` holds the rest:
 
-- A `LiquidGlassHost` over the app (`plugins/prism_ui/lib/liquid_glass_capture.dart`, after g1455's atlas proxy) draws its panes
+- A `LiquidGlassHost` over the app (`prism_ui/lib/liquid_glass_capture.dart`, after g1455's atlas proxy) draws its panes
   without reading the backdrop. As the frame is composited, before its children, it redraws onto one small image what
   each pane under it would read: the layers painted before the pane, within its reach, shrunk as far as a sigma of the
   pane's frost still spans two of the image's pixels, twice where g1455 records its regular finish, and never past
@@ -776,6 +783,9 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
   no shader to frost past a capture and renews it as before. The anchor's snapshot is taken under
   `LiquidGlass.withoutPanes`: offscreen a pane has no backdrop and would come out a flat tint. A menu opened at a point fades out under the layer a `LiquidGlassFade`
   pushes, so its glass keeps reading the page as it goes.
+- The edit menu of a touch selection fades under a `LiquidGlassFade`, as a plain `Opacity` would be a root with nothing
+  to read until fully opaque, and its color jumped there. It holds over all it will cover under `steadyFrost`, and both
+  keep its haze as well, so it captures once as it opens and not at all as it closes.
 - An alert on glass takes the `alert` glass, the `menu` glass frosted wider, under the `AlertDialog`'s surface, which it lays
   out itself. Its route fades it under a
   `LiquidGlassFade`, so the glass keeps its full blur and fades with the text, as UIKit fades an alert and its glass
@@ -841,7 +851,7 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
   In dark mode the tint is
   the scheme's `surfaceContainerHighest` at iOS's alpha: iOS's mid grey lifts a dark page into a grey haze. The tint
   thickens over content much darker than it, or with a negative `contrast` much lighter.
-- A banner (`BannerHost`, `plugins/prism_ui/lib/banner.dart`, which `PrismApp` mounts) takes the `banner` glass,
+- A banner (`BannerHost`, `prism_ui/lib/banner.dart`, which `PrismApp` mounts) takes the `banner` glass,
   fitted to iOS 27's notification banner in the simulator: it lets a 10 dp stripe through at about a quarter of the
   contrast it passes a solid ground at, the share the `pill` keeps sharp, so it takes the pill's haze, under a tint with
   no `contrast`, since iOS's banner passes the backdrop's lightness through where the buttons' glass thickens over it.
@@ -897,7 +907,7 @@ left of it and by a bump iOS lays over the whole menu, 1.9 dp at about 70 ms. Th
 spring within a dp of rest, rather than once they settle: a card taking over sooner would ride the last undershoot
 back up to full size, and its held capture renews whenever its frost grows, so on every frame of that.
 
-A sub menu is a `PopupMenuCard` laid out once at full size. One spring (`_unfold` in `plugins/prism_ui/lib/popup.dart`) moves
+A sub menu is a `PopupMenuCard` laid out once at full size. One spring (`_unfold` in `prism_ui/lib/popup.dart`) moves
 its surface and clip from the item that opened it to its bounds, recedes the parent, and reveals the items, so a fold
 caught mid-unfold turns back with the speed it had. The parent's item hides under the sub menu's header, which draws
 it again, and the sub menu is removed only once it stands on that item. A popup closed with a sub menu open returns
@@ -973,7 +983,7 @@ few keys of a `tun` section the network settings own, so its spec does not mix i
 ## Where A Route Opens
 
 On desktop each navigation destination has its own `Navigator` (`_NavigationPage` in `lib/pages/home.dart`); on mobile
-there is none, and everything goes on the root navigator, `rootNavigatorKey` in `plugins/prism_ui/lib/navigator.dart`. A route
+there is none, and everything goes on the root navigator, `rootNavigatorKey` in `prism_ui/lib/navigator.dart`. A route
 takes the navigator of the context it opens from: `BaseNavigator.push`, `showExtend`, `showSheet`, `showFormSheet` and
 `showSnapSheet` all do, so a page or sheet opened from a destination stays beside the navigation rail, leaves the rail usable, and
 stays in that destination's stack when the user switches away and back. `sheetNavigatorOf` lifts a sheet out of a
@@ -1035,7 +1045,7 @@ takes its width from its labels measured as `EmojiText` lays them out.
 
 ## Forms
 
-A form that edits more than one value opens with `showFormSheet` (`plugins/prism_ui/lib/sheet.dart`): a bottom sheet in the mobile
+A form that edits more than one value opens with `showFormSheet` (`prism_ui/lib/sheet.dart`): a bottom sheet in the mobile
 layout, and elsewhere a card `FormSheetRoute` centers over the navigator, as iPad and macOS present a form sheet, moving
 as an alert does. Both give the page `SheetType.bottomSheet` or `SheetType.formSheet`, compact sheets that share
 `Scaffold`'s sheet bar, so one page serves both: `FormPage` for a plain form, or the page a `NestedPagedSheet`
@@ -1062,14 +1072,14 @@ which runs every one of those rebuilds inside the layout phase; in a profile tra
 `BUILD`.
 
 - A page the user is not typing in holds its bottom inset through `KeyboardInsetHold`
-  (`plugins/prism_ui/lib/keyboard_inset_hold.dart`). Pages under another route and inactive tabs are still laid out, offstage or
+  (`prism_ui/lib/keyboard_inset_hold.dart`). Pages under another route and inactive tabs are still laid out, offstage or
   not, and without it every page the app keeps relaid out, and rebuilt under its `LayoutBuilder`s, with each frame of a
   keyboard raised by a dialog or sheet on top. The home route, each home tab, `CardPageRoute`, `FadePageRoute` and
   the open-container route wrap their page in one; a new page route type does the same.
 - A widget high in the tree reads the aspect it needs (`MediaQuery.paddingOf`, `viewInsetsOf`, ...), never
   `MediaQuery.of` or `MediaQuery.removePadding(context: ...)` on its own context, which subscribes it to every inset
   change. Move such a read into a small widget of its own below it, as `_AppMediaQuery` in `ThemeManager`,
-  `_BodyPadding` in `lib/pages/home.dart`, `_KeyboardViewport` in `plugins/prism_ui/lib/snap_sheet.dart` and the `SafeArea` around
+  `_BodyPadding` in `lib/pages/home.dart`, `_KeyboardViewport` in `prism_ui/lib/snap_sheet.dart` and the `SafeArea` around
   the docked search field in `Scaffold` do.
 - A bottom sheet makes room for the keyboard itself: the keyboard raises the sheet's foot (Bottom Sheet Motion), and
   `_WithoutKeyboard` removes the bottom inset from the content's `MediaQuery`, so nothing inside a sheet,
@@ -1159,7 +1169,7 @@ than the frames a load costs. What a transition must not carry is work that repe
   itself never passes through the UI isolate. An icon still loading leaves a blank slot of its size and shows its
   fallback only once the load ends
   without an image, so a grid of placeholders is never painted only to be replaced. `whenRouteSettled`
-  (`plugins/prism_ui/lib/navigator.dart`) is left for sequencing navigation, such as opening a page once the sheet above it is gone.
+  (`prism_ui/lib/navigator.dart`) is left for sequencing navigation, such as opening a page once the sheet above it is gone.
 - Two views arrive after the motion. `EditorPage` keeps the document it opened until its route has settled and only
   then mounts CodeForge, showing a spinner only if the file is still being read: the mount lays out, folds and
   highlights a screen of text in one frame, which a phone cannot fit in a transition frame whatever the file's size.
@@ -1169,7 +1179,7 @@ than the frames a load costs. What a transition must not carry is work that repe
   apps landing while its page moves reads as dropped frames. The spinner only repaints its own boundary. A list
   already read shows from the first frame.
 - A live feed holds its refreshes while its page moves and replays the latest once it is still, so a list does not
-  re-rank, reorder or grow under a transition. `RouteMotionHoldMixin` (`plugins/prism_ui/lib/route_motion_hold.dart`) holds them
+  re-rank, reorder or grow under a transition. `RouteMotionHoldMixin` (`prism_ui/lib/route_motion_hold.dart`) holds them
   while `isRouteMoving`: the page's route or a sheet carrying it is pushed, popped or dragged, a page is pushed over it,
   or a sheet covers it (`sheetCoverOf`), and until what the stop set off, such as the bar items fading in, has finished
   (`whenNothingAnimates`). The connections, requests, logs and DNS pages and the dashboard's live connections table use
@@ -1196,7 +1206,7 @@ than the frames a load costs. What a transition must not carry is work that repe
   dashboard's service status.
 - `GlyphPainter` paints a translucent glyph through an offscreen layer. A placeholder repeated in every tile blends its
   color over the surface instead of carrying an alpha.
-- `PagedSheetRoute` and `CardPageRoute` share `CardRouteMixin` (`plugins/prism_ui/lib/page_transition.dart`), iOS 27's push as
+- `PagedSheetRoute` and `CardPageRoute` share `CardRouteMixin` (`prism_ui/lib/page_transition.dart`), iOS 27's push as
   measured on the simulator, so a page moves alike in a sheet and on its own: a critically damped 0.3 s spring set off
   at nine times its distance a second, the page below sliding back three tenths and dimming. A run of the route's
   controller that starts between frames is read a frame ahead (`DeferredPushRouteMixin`), since its first tick would
@@ -1214,7 +1224,10 @@ than the frames a load costs. What a transition must not carry is work that repe
   leaves them to the host above while the page is live, which it finds among its parent layers. A bar item lifted into
   its overlay retakes the snapshot of its route (`retakeSnapshot`). The card moves on whole physical pixels so the
   snapshot draws as sharp as the page, and its shadow is the falloff past its leading edge, a gradient, not a blurred
-  card. `FadePageRoute` fades in place through a plain 200 ms `FadeTransition`.
+  card. A pop starts at once and snapshots the page leaving even though, on a phone, that snapshot costs the raster
+  thread 6 to 13 ms for the custom profile page, with or without glass: holding the pop still for one or two frames
+  first moved its missed vsyncs a frame later without fewer of them, and drawing the leaving page live dropped more.
+  `FadePageRoute` fades in place through a plain 200 ms `FadeTransition`.
 
 ## State Management
 
@@ -1271,7 +1284,7 @@ itself live in one. Code without a `Ref` reaches providers through
 path that never validates never resolves the controller.
 
 The UI layer must not reach a process-wide singleton directly.
-`test/lint/ui_layer_singleton_test.dart` scans `plugins/prism_ui/lib`, `lib/ui`, `lib/views`, `lib/widgets`,
+`test/lint/ui_layer_singleton_test.dart` scans `lib/ui`, `lib/views`, `lib/widgets`,
 `lib/pages` and `lib/features` for `globalState.container` and the bare
 `coreController` global and fails the run on either. Widgets that need Core hold
 `CoreController get _core => ref.read(coreHandlerProvider)`.
@@ -1290,7 +1303,7 @@ plus `safeRun`/`loadingRun`. Startup orchestration is **not** on it: `init` and
 window, the autostart entry, the tray and the permission prompts. Providers are
 generated into `lib/providers/generated/`.
 
-The root navigator key lives in `plugins/prism_ui/lib/navigator.dart` as `rootNavigatorKey`;
+The root navigator key lives in `prism_ui/lib/navigator.dart` as `rootNavigatorKey`;
 `globalState.navigatorKey` is a getter onto it. `lib/common/dialog.dart` reaches
 the key directly and does not import `lib/state.dart`.
 
@@ -1497,7 +1510,7 @@ sits below `CoreManager` because its `onConnectivityChanged` callback reads
 Core-backed state, so Core must already be mounted when it fires. `ThemeManager`
 sits above the platform managers so a platform manager can read the theme.
 
-The stack is `PrismApp`'s `builder`. `PrismApp` (`plugins/prism_ui/lib/app.dart`)
+The stack is `PrismApp`'s `builder`. `PrismApp` (`prism_ui/lib/app.dart`)
 puts the app-wide layers every component expects above it, each from an argument
 the app passes: the theme cross-fade, the text scale and its `MeasureScope`, the
 `LiquidGlassHost`, the emoji font and the `BannerHost`, whose banners are glass

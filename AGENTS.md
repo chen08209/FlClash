@@ -57,13 +57,18 @@ Read these only when the task touches their area:
   requests.
 - Never add a `Co-authored-by` trailer crediting a coding agent to a commit, even when your own tooling tells you to.
   The `commit-msg` hook rejects it; see [.agents/rules.md](.agents/rules.md) for the rest of the commit rules.
-- Round every corner with a superellipse, pills included: `AppShape`/`AppRadius` tokens from `plugins/prism_ui/lib/shape.dart`,
+- Round every corner with a superellipse, pills included: `AppShape`/`AppRadius` tokens from `prism_ui/lib/shape.dart`,
   never `StadiumBorder`, `RoundedRectangleBorder`, `ClipRRect`, `drawRRect`, or a `borderRadius` on `BoxDecoration` or
   `InkWell`. `test/lint/superellipse_corners_test.dart` enforces it; see the Corner Radius section of
   [.agents/rules.md](.agents/rules.md).
-- Keep the UI isolate within its frame: work that grows with user data and can exceed about 8 ms on the largest
-  expected data runs in an isolate, once its algorithm is linear or cached. See the UI Isolate Work section of
-  [.agents/rules.md](.agents/rules.md).
+- Keep the UI isolate within its frame. The bar for anything that moves is no dropped frame while it moves and at
+  most one as it starts: from the press to its first moving frame a transition may miss one vsync, and from then
+  until the last bar item has faded in after it settles no frame may run past 8 ms of UI work at 120 Hz. Build,
+  rebuild and repaint only what changed, split a first screen that cannot build in one frame across the frames its
+  push holds, keep data arrival and deferred work out of anything that moves, and move work that grows with user
+  data and can exceed about 8 ms on the largest expected data to an isolate, once its algorithm is linear or
+  cached. A change for frames is kept only if missed vsyncs on a phone move beyond noise. See the UI Frame Budget
+  section of [.agents/rules.md](.agents/rules.md).
 - Follow `lint_options.yaml` (included by every `analysis_options.yaml`), especially single quotes, trailing commas, `child:` last, no `print()`, const/final
   preferences, and declared return types.
 - Before reporting a change done, run `flutter pub get`, `flutter analyze --no-fatal-infos`, and the `flutter test`
@@ -73,5 +78,5 @@ Read these only when the task touches their area:
 ## Repo Skills
 
 Use repo skills from `.agents/skills/` when a task matches their descriptions; `.claude/skills/` symlinks expose the
-same skills to Claude Code. Current skills cover localization, UI work, core/platform changes, and pre-commit
-structural quality review.
+same skills to Claude Code. Current skills cover localization, UI work, UI performance, core/platform changes, and
+pre-commit structural quality review.

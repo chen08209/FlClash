@@ -6,7 +6,7 @@ for. The dashboard set this direction; every other screen follows it, and compon
 
 ## Levels
 
-`SurfaceLevel` in `plugins/prism_ui/lib/surface.dart` names four depths. Each surface takes the level one deeper than the one
+`SurfaceLevel` in `prism_ui/lib/surface.dart` names four depths. Each surface takes the level one deeper than the one
 it sits on, which `SurfaceScope` passes down the tree.
 
 | Level   | Light                     | Dark                      | Holds                                                   |
@@ -49,7 +49,7 @@ nothing nests below it, so a design that needs a fifth level needs fewer contain
 
 ## The Seeded Scheme
 
-`seededColorScheme` in `plugins/prism_ui/lib/color.dart` builds every app scheme: Material's scheme for the seed and the
+`seededColorScheme` in `prism_ui/lib/color.dart` builds every app scheme: Material's scheme for the seed and the
 `ColorStyle` picked in the theme settings, with four groups of roles replaced. Everything else stays Material,
 including `toPureBlack` applied after it.
 
@@ -95,7 +95,7 @@ Color marks the one item that differs, never the structure around it.
 - **Selected**, one of several rows, cards, or tiles: the item keeps its level's fill and a primary mark says which,
   as iOS checks the option picked from a list. A row in a grouped run takes `SelectionCheck` at its edge; a card that
   stands on its own, a profile or a proxy, and a tile take the filled `SelectionBadge`, which holds its own beside a
-  40 dp icon well where the bare check read as small and thin (`plugins/prism_ui/lib/selection_mark.dart`). `Card.isSelected` only reports the state to
+  40 dp icon well where the bare check read as small and thin (`prism_ui/lib/selection_mark.dart`). `Card.isSelected` only reports the state to
   accessibility. Fills were tried and rejected: a wash of primary landed on a gray that did not read as a choice, and
   `primaryContainer` read as a warning under rose seeds in light and as a heavy slab in dark, muddied the translucent
   marks on it, and cut a grouped run in two.
@@ -153,7 +153,7 @@ Color marks the one item that differs, never the structure around it.
 - **Window chrome**: the desktop sidebar's inner edge and the title bar's bottom edge draw a divider where they meet
   the content. The chrome fill alone left the edge to a four-tone step, which read as a smudge rather than a boundary.
 
-Nothing else draws an outline. Rows in a grouped run are separated by the hairline from `plugins/prism_ui/lib/list_row_separator.dart`, which divides
+Nothing else draws an outline. Rows in a grouped run are separated by the hairline from `prism_ui/lib/list_row_separator.dart`, which divides
 one surface and does not outline it. Record lists, requests, connections, logs, and DNS queries, are not grouped: they
 run to thousands of tall rows, and one card that long reads as a slab rather than a group. A stacked row of three or
 four lines is already its own block, so each is a card of its own, `RecordListItem`: the raised fill at `xl`, 16 dp
@@ -178,7 +178,7 @@ simulator. Nothing scales.
   `kPressTimeout` or on release. Release, a scroll, or another recognizer taking the pointer fades it out over 200 ms;
   the activate key flashes it. On Android the press also sends a 617 ms sparkle from where it landed toward the
   center with `InkSparkle`'s shader (`shaders/ink_sparkle.frag`, run by `PressSparkles` in
-  `plugins/prism_ui/lib/press_sparkle.dart`), from the center for a key, so a quick tap still answers; other
+  `prism_ui/lib/press_sparkle.dart`), from the center for a key, so a quick tap still answers; other
   platforms show the state layer alone, as Material's desktop highlight does. The content color is `onSurface` on a
   neutral card or row, `onPrimary` on a card that fills its selection (`PressSurface.inkColor`), the foreground where
   one is set. The sparkle waits for the shader to load and is skipped under reduced motion.
@@ -195,14 +195,14 @@ simulator. Nothing scales.
   button groups keep their pointer capsule, a lone bar button its lift, and the window's caption buttons shade as the
   system's do.
 - A control inside a card, a switch, an icon button, a delay label, takes its own press and leaves the card unlit:
-  `CardSurface` (`plugins/prism_ui/lib/card_surface.dart`) skips a press whose hit lands on anything with a semantic tap.
+  `CardSurface` (`prism_ui/lib/card_surface.dart`) skips a press whose hit lands on anything with a semantic tap.
 
-`PressSurface` (`plugins/prism_ui/lib/press_surface.dart`) owns the press, the ink, the focus ring, and the fill's
+`PressSurface` (`prism_ui/lib/press_surface.dart`) owns the press, the ink, the focus ring, and the fill's
 transitions, drawn by `CardSurface`, one render object that lays out, paints, and hit-tests the surface. `Card` is a
 `PressSurface` with the card's fill and content styles; a row that is not a card, such as a record or a bare `ListItem`, takes a
-`PressSurface` of its own, transparent where the row has no fill. `IconButton` (`plugins/prism_ui/lib/common_button.dart`)
+`PressSurface` of its own, transparent where the row has no fill. `IconButton` (`prism_ui/lib/common_button.dart`)
 is a `PressSurface` laid out and colored as a Material 3 icon button, styled by `ButtonStyle` and
-`ButtonTheme`. Rows lay out with `ListRow` (`plugins/prism_ui/lib/list_row.dart`),
+`ButtonTheme`. Rows lay out with `ListRow` (`prism_ui/lib/list_row.dart`),
 the geometry of a Material 3 list tile without its ink, so nothing in a list needs a `Material` ancestor.
 
 ## Navigation
@@ -216,7 +216,7 @@ the geometry of a Material 3 list tile without its ink, so nothing in a list nee
 - The mobile dock and the docked navigation bar are floats; their indicator is a neutral platter one level above
   them, and the selected destination's content takes primary, as iOS's tab bar marks its selection.
 - With Liquid Glass on (Theme settings), the dock, the buttons of a page's bar, a docked search, popup
-  menus, and alerts are glass from `plugins/prism_ui/lib/liquid_glass.dart` instead of a fill, and the dock's platter takes the
+  menus, and alerts are glass from `prism_ui/lib/liquid_glass.dart` instead of a fill, and the dock's platter takes the
   secondary hue and chroma at tone 90, or at tone 4 in dark, which sinks it below the bar as iOS 27 does.
 - The proxies page's group tabs are compact choice chips, the current group in the chosen segment's solid `primary`.
   Once they overflow, a tonal button at their end opens every group as a popup menu, the current one checked and
@@ -224,9 +224,9 @@ the geometry of a Material 3 list tile without its ink, so nothing in a list nee
 
 ## Where It Lives
 
-- `plugins/prism_ui/lib/surface.dart`: `SurfaceLevel`, `SurfaceScope`, `context.surfaceLevel`, `context.raisedSurfaceLevel`,
+- `prism_ui/lib/surface.dart`: `SurfaceLevel`, `SurfaceScope`, `context.surfaceLevel`, `context.raisedSurfaceLevel`,
   and `ColorScheme.chromeSurface`.
-- `plugins/prism_ui/lib/color.dart`: `seededColorScheme` and the status palettes; `lib/ui/delay_color.dart` maps a
+- `prism_ui/lib/color.dart`: `seededColorScheme` and the status palettes; `lib/ui/delay_color.dart` maps a
   delay onto them.
 - `lib/views/dashboard/style.dart`: `DashboardColors` maps `page`, `card`, `tone`, and `tone2` onto the levels and
   adds the dashboard's switch, series, and status colors.

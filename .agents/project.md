@@ -1,6 +1,6 @@
 # Project Context
 
-FlClash is a multi-platform proxy client based on ClashMeta (mihomo), built with Flutter. It supports Android, Windows, macOS, and Linux, drawing its own components in `plugins/prism_ui`: a Material You color scheme with Apple's Human Interface interaction conventions.
+FlClash is a multi-platform proxy client based on ClashMeta (mihomo), built with Flutter. It supports Android, Windows, macOS, and Linux, drawing its own components in the `prism_ui` package: a color system of its own with Apple's Human Interface interaction conventions.
 
 ## Version Notes
 
@@ -80,7 +80,7 @@ what has to change upstream before the pin can move, so the next
 `flutter pub outdated` run does not rediscover it.
 
 `_initDynamicColor` in `lib/bootstrap.dart` takes the system's seeds and accent color from `DynamicColorPlugin`,
-in the plugin nested at `plugins/prism_ui/plugins/dynamic_color`, which keeps the native side out of the UI library's
+in the plugin at `plugins/dynamic_color`, which keeps the native side out of the UI library's
 own tree. Everything downstream sees `DynamicColorSeeds`.
 
 ## Build Dependencies
