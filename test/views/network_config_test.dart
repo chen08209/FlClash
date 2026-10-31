@@ -305,6 +305,38 @@ void main() {
       expect(container.read(patchClashConfigProvider).tun.mtu, 9000);
     });
 
+    testWidgets('a Core without the TUN congestion controls hides them', (
+      tester,
+    ) async {
+      Future<void> openCongestion() async {
+        await pumpItem(tester, items()[1]);
+        await tester.tap(
+          find.text(currentAppLocalizations.congestionController),
+        );
+        await tester.pumpAndSettle();
+      }
+
+      await openCongestion();
+      expect(find.text('bbr3'), findsOneWidget);
+
+      container
+          .read(coreCapabilitiesStateProvider.notifier)
+          .value = const CoreCapabilities(
+        implementation: 'concord',
+        version: '0.1.0',
+        proxyTypes: {'ss'},
+        transports: {'ws'},
+        ruleTypes: {'MATCH'},
+      );
+      await tester.tapAt(Offset.zero);
+      await tester.pumpAndSettle();
+      await openCongestion();
+
+      expect(find.text('reno'), findsOneWidget);
+      expect(find.text('bbr'), findsNothing);
+      expect(find.text('bbr3'), findsNothing);
+    });
+
     test('keep-alive rows stay off Android and the mark is Linux only', () {
       expect(outboundItems(isDesktop: false, isLinux: false), isEmpty);
       expect(outboundItems(isDesktop: true, isLinux: false), hasLength(3));

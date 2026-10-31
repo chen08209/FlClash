@@ -1603,6 +1603,67 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('the type picker offers only the types the Core runs', (
+    tester,
+  ) async {
+    _setViewport(tester);
+    final proxies = _RecordingCustomProxies(const [
+      CustomProxy(id: 1, definition: {'name': 'Home', 'type': 'ss'}),
+    ]);
+    final core = _MockCore();
+    registerFallbackValue(<Map<String, dynamic>>[]);
+    when(() => core.validateProxies(any())).thenAnswer((_) async => const {});
+    final container = ProviderContainer(
+      overrides: [
+        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        customGroupNamesProvider.overrideWith(
+          (_) => Stream.value(const <String>{}),
+        ),
+        customProxiesProvider.overrideWith(() => proxies),
+        clashProvidersActionProvider.overrideWith(
+          _RecordingClashProvidersAction.new,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container
+        .read(viewSizeProvider.notifier)
+        .update((_) => const Size(500, 1000));
+    container
+        .read(coreCapabilitiesStateProvider.notifier)
+        .value = const CoreCapabilities(
+      implementation: 'concord',
+      version: '0.1.0',
+      proxyTypes: {'ss', 'vmess'},
+      transports: {'ws'},
+      ruleTypes: {'MATCH'},
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: CustomProxiesView()),
+      ),
+    );
+    await tester.pump();
+    final l10n = currentAppLocalizations;
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FormRow, l10n.proxyType));
+    await tester.pumpAndSettle();
+
+    final sheet = find.byWidgetPredicate((widget) => widget is SelectionSheet);
+    Finder offered(String type) =>
+        find.descendant(of: sheet, matching: find.text(type));
+    expect(offered('vmess'), findsOneWidget);
+    expect(offered('ss'), findsOneWidget);
+    expect(offered('easytier'), findsNothing);
+    expect(offered('tailscale'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('an http proxy edits the headers it sends', (tester) async {
     _setViewport(tester);
     final proxies = _RecordingCustomProxies(const [

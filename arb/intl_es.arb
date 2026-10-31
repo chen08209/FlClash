@@ -1093,5 +1093,6 @@
   "coreStartingDesc": "Conectando con el núcleo",
   "coreRunning": "Núcleo en ejecución",
   "coreRunningDesc": "La app está conectada al núcleo",
-  "forceRestartCore": "Forzar reinicio"
+  "forceRestartCore": "Forzar reinicio",
+  "configWarnings": "Advertencias de configuración"
 }

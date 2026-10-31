@@ -74,6 +74,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           ? appLocalizations.editDashboard
           : appLocalizations.dashboard,
       actions: [
+        if (!editable) const ConfigWarningsButton(),
         if (!editing) const LiveStatusButton(),
         if (editable && !editing)
           AppBarActionButton(
@@ -356,13 +357,18 @@ class _MobileDashboard extends ConsumerWidget {
               sliver: SliverToBoxAdapter(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: gap,
                   children: [
-                    for (final widget in widgets)
-                      RepaintBoundary(
-                        key: cardKeyOf(widget),
-                        child: widget.card,
-                      ),
+                    ConfigWarningsSlot(gap: gap),
+                    Column(
+                      spacing: gap,
+                      children: [
+                        for (final widget in widgets)
+                          RepaintBoundary(
+                            key: cardKeyOf(widget),
+                            child: widget.card,
+                          ),
+                      ],
+                    ),
                   ],
                 ),
               ),

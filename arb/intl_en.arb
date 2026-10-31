@@ -1202,5 +1202,6 @@
   "coreStartingDesc": "Connecting to the core",
   "coreRunning": "Core running",
   "coreRunningDesc": "The app is connected to the core",
-  "forceRestartCore": "Force restart"
+  "forceRestartCore": "Force restart",
+  "configWarnings": "Config warnings"
 }

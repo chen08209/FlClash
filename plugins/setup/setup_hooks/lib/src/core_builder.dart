@@ -96,7 +96,7 @@ final class CoreBuilder implements Builder {
   BuildRequest? requestFor(BuildInput input) {
     if (!input.config.buildCodeAssets) return null;
     final code = input.config.code;
-    // Android's Core is the gomobile AAR the :core Gradle module builds.
+    // Android's Core is the library the :core Gradle module builds.
     final platform = switch (code.targetOS) {
       OS.linux => 'linux',
       OS.macOS => 'macos',

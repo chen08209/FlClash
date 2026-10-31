@@ -39,4 +39,4 @@ categories:
 
 startup_notify: true
 
-startup_wm_class: com.follow.clash
+startup_wm_class: com.follow.clash.rs

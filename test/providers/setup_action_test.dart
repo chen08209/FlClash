@@ -1171,6 +1171,77 @@ void main() {
       },
     );
 
+    test('the warnings of a setup are kept, whether the Core took it or '
+        'rejected it', () async {
+      final profile = Profile.normal(label: 'p', url: 'http://127.0.0.1:9/');
+      final core = _MockCoreHandlerInterface();
+      const warning = ConfigWarning(
+        level: ConfigWarningLevel.warning,
+        path: 'proxies[1]',
+        message: 'unsupported',
+      );
+      var rejecting = false;
+      when(() => core.setupConfig(any())).thenAnswer((_) async {
+        if (rejecting) {
+          throw const CoreMethodException(
+            code: 'config_rejected',
+            message: 'rejected',
+          );
+        }
+      });
+      when(() => core.getConfigWarnings()).thenAnswer((_) async => [warning]);
+      final scoped = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(() => TestProfiles([profile])),
+          currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+          setupStateProvider.overrideWith((_, _) => nullProfileSetupState),
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          setupActionProvider.overrideWith(SetupAction.new),
+        ],
+      );
+      addTearDown(scoped.dispose);
+      final setupAction = scoped.read(setupActionProvider.notifier);
+      final warnings = configWarningsStateProvider.notifier;
+
+      expect(await setupAction.applyProfile(force: true), isTrue);
+      expect(scoped.read(configWarningsStateProvider), [warning]);
+
+      scoped.read(warnings).value = const [];
+      rejecting = true;
+      expect(await setupAction.applyProfile(force: true), isFalse);
+      expect(scoped.read(configWarningsStateProvider), [warning]);
+    });
+
+    test(
+      'a Core that cannot report warnings leaves the setup applied',
+      () async {
+        final profile = Profile.normal(label: 'p', url: 'http://127.0.0.1:9/');
+        final core = _MockCoreHandlerInterface();
+        when(() => core.setupConfig(any())).thenAnswer((_) async {});
+        when(() => core.getConfigWarnings()).thenThrow(
+          const CoreMethodException(code: 'no_response', message: 'gone'),
+        );
+        final scoped = ProviderContainer(
+          overrides: [
+            profilesProvider.overrideWith(() => TestProfiles([profile])),
+            currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+            setupStateProvider.overrideWith((_, _) => nullProfileSetupState),
+            coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+            setupActionProvider.overrideWith(SetupAction.new),
+          ],
+        );
+        addTearDown(scoped.dispose);
+
+        expect(
+          await scoped
+              .read(setupActionProvider.notifier)
+              .applyProfile(force: true),
+          isTrue,
+        );
+        expect(scoped.read(configWarningsStateProvider), isEmpty);
+      },
+    );
+
     test(
       'a profile that fails to build still pushes the empty config to core',
       () async {

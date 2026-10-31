@@ -2,8 +2,10 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/config/override.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 extension on TunOverrideKey {
   String label(AppLocalizations l) => switch (this) {
@@ -42,6 +44,10 @@ extension on TunOverrideKey {
     TunOverrideKey.excludeDstPort => null,
   };
 }
+
+final tunCongestionAvailable = coreCapabilitiesStateProvider.select(
+  (capabilities) => capabilities.supportsTunCongestionController,
+);
 
 // Where sing-tun reads each key: strict-route in its Linux and Windows
 // routing, the Linux-only ones in its Linux device setup and routing rules.
@@ -188,6 +194,7 @@ class _TunOverrideSpec extends OverrideSpec<TunOverrideKey, ProfileTun> {
       congestionControllers,
       (tun) => tun.congestionController,
       (tun, value) => tun.copyWith(congestionController: value),
+      available: tunCongestionAvailable,
     ),
     TunOverrideKey.strictRoute => ToggleOverrideField(
       (tun) => tun.strictRoute,

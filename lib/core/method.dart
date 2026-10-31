@@ -9,11 +9,13 @@ enum CoreMethod {
   coreGc('core.gc'),
   coreMemory('core.memory'),
   coreCrash('core.crash'),
+  coreCapabilities('core.capabilities'),
   configSetup('config.setup'),
   configUpdate('config.update'),
   configValidate('config.validate'),
   configDecrypt('config.decrypt'),
   configRead('config.read'),
+  configWarnings('config.warnings'),
   profileBase('profile.base'),
   profileOutbounds('profile.outbounds'),
   profileBuild('profile.build'),
@@ -189,6 +191,9 @@ class CoreMethodException implements Exception {
     'transport_error',
     'core_unavailable',
   }.contains(code);
+
+  /// A method this Core does not have, as opposed to one that failed.
+  bool get isNotImplemented => code == 'not_implemented';
 
   @override
   String toString() => 'CoreMethodException($code, $message, $details)';

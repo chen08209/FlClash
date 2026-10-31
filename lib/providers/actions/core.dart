@@ -12,6 +12,7 @@ class CoreAction extends _$CoreAction {
 
   Future<void> initCore() async {
     final isInit = await _core.isInit;
+    await _loadCapabilities();
 
     final version = ref.read(versionProvider);
     if (!isInit) {
@@ -19,6 +20,18 @@ class CoreAction extends _$CoreAction {
     } else {
       await ref.read(proxiesActionProvider.notifier).updateGroups();
       await ref.read(providersProvider.notifier).syncProviders();
+    }
+  }
+
+  Future<void> _loadCapabilities() async {
+    try {
+      final capabilities = await _core.getCapabilities();
+      ref.read(coreCapabilitiesStateProvider.notifier).value = capabilities;
+    } catch (error) {
+      commonPrint.log(
+        'core capabilities unavailable: ${compactError(error)}',
+        logLevel: coreFailureLogLevel(error),
+      );
     }
   }
 

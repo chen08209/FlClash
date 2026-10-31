@@ -239,6 +239,31 @@ void main() {
     expect({for (final method in CoreMethod.values) method.wireName}, goNames);
   });
 
+  test(
+    'the Dart method table matches the Concord protocol schema',
+    () async {
+      final schema =
+          json.decode(await File('concord/schema/protocol.json').readAsString())
+              as Map<String, dynamic>;
+
+      expect(
+        {for (final method in CoreMethod.values) method.wireName},
+        {
+          ...(schema['methods'] as List).cast<String>(),
+          CoreMethod.message.wireName,
+        },
+      );
+      final eventTypes = {for (final type in CoreEventType.values) type.name};
+      expect(
+        eventTypes.containsAll((schema['events'] as List).cast<String>()),
+        isTrue,
+      );
+    },
+    skip: File('concord/schema/protocol.json').existsSync()
+        ? false
+        : 'the Concord workspace is not checked out',
+  );
+
   test('core interface sends structured request parameters', () async {
     final handler = _RecordingCoreHandler();
 

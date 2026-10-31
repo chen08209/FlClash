@@ -2,6 +2,7 @@ import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p;
 
 import 'build_cache.dart';
+import 'concord_builder.dart';
 import 'fingerprint.dart';
 import 'go_builder.dart';
 import 'options.dart';
@@ -54,13 +55,22 @@ Future<BuildReport> buildPlatform(BuildRequest request) async {
     final dir => collectPackageInputs(dir),
   };
 
-  final core = await GoBuilder(
-    rootDir: rootDir,
-    config: config,
-    cache: cache,
-    notice: notice,
-    harnessInputs: harnessInputs,
-  ).build(target);
+  final core = await switch (config.coreImpl) {
+    CoreImpl.go => GoBuilder(
+      rootDir: rootDir,
+      config: config,
+      cache: cache,
+      notice: notice,
+      harnessInputs: harnessInputs,
+    ).build(target),
+    CoreImpl.concord => ConcordBuilder(
+      rootDir: rootDir,
+      config: config,
+      cache: cache,
+      notice: notice,
+      harnessInputs: harnessInputs,
+    ).build(target),
+  };
   if (!target.hasHelper) {
     _log.info('Done in ${stopwatch.elapsed}: ${core.primaryOutput}');
     return _report([core]);

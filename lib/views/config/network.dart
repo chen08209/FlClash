@@ -385,6 +385,7 @@ List<Widget> tunItems({required bool isMipsStack}) {
       ConfigOptionsItem<String>(
         title: (l) => l.congestionController,
         options: congestionControllers,
+        available: tunCongestionAvailable,
         textBuilder: (value) => value,
         selector: patchClashConfigProvider.select(
           (state) => state.tun.congestionController,

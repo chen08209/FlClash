@@ -6677,6 +6677,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Force restart'**
   String get forceRestartCore;
+
+  /// No description provided for @configWarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Config warnings'**
+  String get configWarnings;
 }
 
 class _AppLocalizationsDelegate

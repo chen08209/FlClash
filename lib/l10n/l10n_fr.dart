@@ -3822,4 +3822,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get forceRestartCore => 'Forcer le redémarrage';
+
+  @override
+  String get configWarnings => 'Avertissements de configuration';
 }

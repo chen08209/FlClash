@@ -45,6 +45,18 @@ class SetupAction extends _$SetupAction {
   var _lastPushDuration = Duration.zero;
   var _pendingForceApply = false;
 
+  Future<void> _loadConfigWarnings() async {
+    try {
+      final warnings = await _core.getConfigWarnings();
+      ref.read(configWarningsStateProvider.notifier).value = warnings;
+    } catch (error) {
+      commonPrint.log(
+        'config warnings unavailable: ${compactError(error)}',
+        logLevel: coreFailureLogLevel(error),
+      );
+    }
+  }
+
   bool get _isRunning => _startTime != null && _startTime!.isBeforeNow;
 
   @override
@@ -821,6 +833,7 @@ class SetupAction extends _$SetupAction {
             if (error.code != 'config_rejected') {
               rethrow;
             }
+            await _loadConfigWarnings();
             globalState.lastConfigCounts = configCountsOf(const {});
             await globalState.safeRun(() => onUpdated?.call());
             throw MessageException(error.message);
@@ -832,6 +845,7 @@ class SetupAction extends _$SetupAction {
           }
           rethrow;
         }
+        await _loadConfigWarnings();
         globalState.lastConfigMd5 = yamlMd5;
         globalState.lastConfigCounts =
             realProfile?.counts ?? configCountsOf(const {});

@@ -193,6 +193,118 @@ abstract class _$UpdateDownloadState extends $Notifier<UpdateDownload?> {
   }
 }
 
+@ProviderFor(CoreCapabilitiesState)
+final coreCapabilitiesStateProvider = CoreCapabilitiesStateProvider._();
+
+final class CoreCapabilitiesStateProvider
+    extends $NotifierProvider<CoreCapabilitiesState, CoreCapabilities> {
+  CoreCapabilitiesStateProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'coreCapabilitiesStateProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$coreCapabilitiesStateHash();
+
+  @$internal
+  @override
+  CoreCapabilitiesState create() => CoreCapabilitiesState();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CoreCapabilities value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CoreCapabilities>(value),
+    );
+  }
+}
+
+String _$coreCapabilitiesStateHash() =>
+    r'd1e986c16b1dac28ab6480019ee33108da0ef185';
+
+abstract class _$CoreCapabilitiesState extends $Notifier<CoreCapabilities> {
+  CoreCapabilities build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<CoreCapabilities, CoreCapabilities>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<CoreCapabilities, CoreCapabilities>,
+              CoreCapabilities,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+/// The warnings of the config the Core last set up; they end with the Core.
+
+@ProviderFor(ConfigWarningsState)
+final configWarningsStateProvider = ConfigWarningsStateProvider._();
+
+/// The warnings of the config the Core last set up; they end with the Core.
+final class ConfigWarningsStateProvider
+    extends $NotifierProvider<ConfigWarningsState, List<ConfigWarning>> {
+  /// The warnings of the config the Core last set up; they end with the Core.
+  ConfigWarningsStateProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'configWarningsStateProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$configWarningsStateHash();
+
+  @$internal
+  @override
+  ConfigWarningsState create() => ConfigWarningsState();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<ConfigWarning> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<ConfigWarning>>(value),
+    );
+  }
+}
+
+String _$configWarningsStateHash() =>
+    r'c4f8b209ad1f4c7a4fde22f64d59004dca258e0f';
+
+/// The warnings of the config the Core last set up; they end with the Core.
+
+abstract class _$ConfigWarningsState extends $Notifier<List<ConfigWarning>> {
+  List<ConfigWarning> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<List<ConfigWarning>, List<ConfigWarning>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<ConfigWarning>, List<ConfigWarning>>,
+              List<ConfigWarning>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(Logs)
 final logsProvider = LogsProvider._();
 

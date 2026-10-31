@@ -3769,4 +3769,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get forceRestartCore => 'Принудительный перезапуск';
+
+  @override
+  String get configWarnings => 'Предупреждения конфигурации';
 }

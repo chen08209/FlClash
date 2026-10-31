@@ -1093,5 +1093,6 @@
   "coreStartingDesc": "コアに接続しています",
   "coreRunning": "コアは実行中",
   "coreRunningDesc": "アプリはコアに接続されています",
-  "forceRestartCore": "強制再起動"
+  "forceRestartCore": "強制再起動",
+  "configWarnings": "設定の警告"
 }

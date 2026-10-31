@@ -1093,5 +1093,6 @@
   "coreStartingDesc": "Connexion au cœur",
   "coreRunning": "Cœur en marche",
   "coreRunningDesc": "L’application est connectée au cœur",
-  "forceRestartCore": "Forcer le redémarrage"
+  "forceRestartCore": "Forcer le redémarrage",
+  "configWarnings": "Avertissements de configuration"
 }

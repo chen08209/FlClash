@@ -87,7 +87,7 @@ Use `flutter test`, not `dart test`, because models pull in Flutter types.
 A development build takes over the host exactly like a release: it creates the TUN device, sets the system proxy, on
 macOS registers the TUN as the system resolver, registers itself as the login item, and on Windows and Linux starts its
 Core through the shared privileged Helper, which stops the Core an installed FlClash is running. Only the data directory
-is kept apart, and only for some builds: a macOS debug build is `com.follow.clash.debug` and an Android debug build `com.follow.clash.dev`,
+is kept apart, and only for some builds: a macOS debug build is `com.follow.clash.rs.debug` and an Android debug build `com.follow.clash.rs.dev`,
 while profile and release builds, and every build on Windows and Linux, share the directory and preferences of the
 installed app. Safe mode keeps all of the host changes off and never opens the Core's listeners or external
 controller, so it does not compete with the installed app for the mixed, DNS, RESTful API and other loopback ports:
@@ -256,6 +256,41 @@ export JAVA_HOME="$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home"
 
 Always-on VPN entry, system VPN revoke, actual permission UI, and rapid device start/stop still require Android device or
 emulator validation; Kotlin compilation cannot prove those system callbacks.
+
+## Concord Core
+
+Concord is the Rust core in `concord/` (see Concord Core in `architecture.md`). Select it with `core_impl: concord` in
+`build_config.yaml`; `go` stays the default. A normal `flutter test`, `flutter run` or `dart setup.dart` build then
+compiles it through the setup hook, and Android through the `:core` Gradle module, so `cargo` and the toolchain pinned in
+`concord/rust-toolchain.toml` must be installed.
+
+Work inside it from `concord/`:
+
+```bash
+cargo build --release -p concord-desktop          # target/release/FlClashCore
+cargo fmt --check
+cargo clippy --workspace --all-targets -- -D warnings
+CONCORD_REQUIRE_APP_TREE=1 cargo test --workspace
+cargo run -p xtask -- check-layers
+cargo run -p xtask -- schema                      # rewrite concord/schema/, then commit it
+cargo run -p xtask -- schema --check
+cargo deny check
+cargo run -p xtask -- check-size target/release/FlClashCore 15000000
+```
+
+`CONCORD_REQUIRE_APP_TREE=1` turns the protocol contract tests that read `lib/` and `test/fixtures/` from a skip into a
+failure when the FlClash tree is missing. Tests marked `#[ignore]` need an external peer; `concord/README.md` lists the
+environment variables. `tools/wire-diff` compares the Go and Rust cores method by method and needs both built with
+their test hooks.
+
+Disk: the workspace has one target directory, `concord/target`, and it grows past 10 GB with debug, release and the
+Android and Windows targets. Never point cargo at another target directory, never keep one per crate or per agent, and
+do not `cargo clean` a tree someone else is building. Release uses fat LTO, so build it only when its size or speed is
+the question. Run `cargo` with `CARGO_INCREMENTAL=0` and without a stale `all_proxy`.
+
+CI runs the `rust-core` job in `build.yaml`, and `concord/.github/workflows/ci.yaml` runs the same steps inside the
+Concord repository. The first checks `chen08209/concord` out into `concord/` with the `CONCORD_TOKEN` secret and is not
+a release gate: `upload` does not wait for it.
 
 ## Changelog And Release
 

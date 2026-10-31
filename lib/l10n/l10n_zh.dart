@@ -3556,4 +3556,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get forceRestartCore => '强制重启';
+
+  @override
+  String get configWarnings => '配置警告';
 }

@@ -517,4 +517,28 @@ void main() {
       expect(container.read(coreStatusProvider), CoreStatus.disconnected);
     });
   });
+  group('ConfigWarningsState provider', () {
+    const warning = ConfigWarning(
+      level: ConfigWarningLevel.warning,
+      path: 'proxies[1]',
+      message: 'removed',
+    );
+
+    test('the warnings end with the connection to the core', () {
+      container.read(configWarningsStateProvider);
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      container.read(configWarningsStateProvider.notifier).value = [warning];
+      expect(container.read(configWarningsStateProvider), [warning]);
+
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connecting;
+
+      expect(container.read(configWarningsStateProvider), isEmpty);
+    });
+
+    test('a core that reports nothing supports everything', () {
+      final capabilities = container.read(coreCapabilitiesStateProvider);
+
+      expect(capabilities.restricted, isFalse);
+    });
+  });
 }

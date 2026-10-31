@@ -21,6 +21,10 @@ const (
 	coreGCMethod          CoreMethod = "core.gc"
 	coreMemoryMethod      CoreMethod = "core.memory"
 	coreCrashMethod       CoreMethod = "core.crash"
+	// Only the Rust core handles these; the host reads not_implemented as a
+	// core that supports everything and warns about nothing.
+	coreCapabilitiesMethod CoreMethod = "core.capabilities"
+	configWarningsMethod   CoreMethod = "config.warnings"
 
 	configSetupMethod    CoreMethod = "config.setup"
 	configUpdateMethod   CoreMethod = "config.update"

@@ -1093,5 +1093,6 @@
   "coreStartingDesc": "正在连接核心",
   "coreRunning": "核心运行中",
   "coreRunningDesc": "应用已连接到核心",
-  "forceRestartCore": "强制重启"
+  "forceRestartCore": "强制重启",
+  "configWarnings": "配置警告"
 }

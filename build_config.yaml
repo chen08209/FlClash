@@ -1,3 +1,5 @@
+core_impl: go
+concord_dir: concord
 tags: with_gvisor
 go_ldflags: "-w -s"
 core_version: v1.19.34

@@ -1093,5 +1093,6 @@
   "coreStartingDesc": "코어에 연결하는 중",
   "coreRunning": "코어 실행 중",
   "coreRunningDesc": "앱이 코어에 연결되어 있습니다",
-  "forceRestartCore": "강제 다시 시작"
+  "forceRestartCore": "강제 다시 시작",
+  "configWarnings": "구성 경고"
 }

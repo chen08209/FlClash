@@ -1093,5 +1093,6 @@
   "coreStartingDesc": "Подключение к ядру",
   "coreRunning": "Ядро работает",
   "coreRunningDesc": "Приложение подключено к ядру",
-  "forceRestartCore": "Принудительный перезапуск"
+  "forceRestartCore": "Принудительный перезапуск",
+  "configWarnings": "Предупреждения конфигурации"
 }

@@ -6,8 +6,12 @@ import 'package:yaml/yaml.dart';
 
 final _log = Logger('options');
 
+enum CoreImpl { go, concord }
+
 class BuildConfig {
   const BuildConfig({
+    required this.coreImpl,
+    required this.concordDir,
     required this.tags,
     required this.goLdflags,
     required this.coreVersion,
@@ -18,6 +22,8 @@ class BuildConfig {
     required this.helperName,
   });
 
+  final CoreImpl coreImpl;
+  final String concordDir;
   final String tags;
   final String goLdflags;
   final String coreVersion;
@@ -28,6 +34,8 @@ class BuildConfig {
   final String helperName;
 
   static const _defaults = BuildConfig(
+    coreImpl: CoreImpl.go,
+    concordDir: 'concord',
     tags: 'with_gvisor',
     goLdflags: '-w -s',
     coreVersion: '',
@@ -47,6 +55,10 @@ class BuildConfig {
     final yaml = loadYaml(file.readAsStringSync()) as YamlMap?;
     if (yaml == null) return _defaults;
     return BuildConfig(
+      coreImpl: CoreImpl.values.byName(
+        yaml['core_impl'] as String? ?? _defaults.coreImpl.name,
+      ),
+      concordDir: yaml['concord_dir'] as String? ?? _defaults.concordDir,
       tags: yaml['tags'] as String? ?? _defaults.tags,
       goLdflags: yaml['go_ldflags'] as String? ?? _defaults.goLdflags,
       coreVersion: yaml['core_version'] as String? ?? _defaults.coreVersion,
@@ -59,6 +71,8 @@ class BuildConfig {
   }
 
   Map<String, String> toFingerprintMap() => {
+    'core_impl': coreImpl.name,
+    'concord_dir': concordDir,
     'tags': tags,
     'go_ldflags': goLdflags,
     'core_version': coreVersion,

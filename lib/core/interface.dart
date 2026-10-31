@@ -119,6 +119,34 @@ abstract class CoreHandlerInterface {
 
   Future<void> crash() => _command(CoreMethod.coreCrash);
 
+  Future<CoreCapabilities> getCapabilities() async {
+    try {
+      return await _query(
+        CoreMethod.coreCapabilities,
+        _model(CoreCapabilities.fromJson),
+      );
+    } on CoreMethodException catch (error) {
+      if (error.isNotImplemented) {
+        return const CoreCapabilities.everything();
+      }
+      rethrow;
+    }
+  }
+
+  Future<List<ConfigWarning>> getConfigWarnings() async {
+    try {
+      return await _query(
+        CoreMethod.configWarnings,
+        _models(ConfigWarning.fromJson),
+      );
+    } on CoreMethodException catch (error) {
+      if (error.isNotImplemented) {
+        return const [];
+      }
+      rethrow;
+    }
+  }
+
   Future<void> setupConfig(SetupParams params) {
     return _command(CoreMethod.configSetup, arguments: params.toJson());
   }

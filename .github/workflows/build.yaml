@@ -19,6 +19,9 @@ env:
   FLUTTER_VERSION: '3.50.0'
   GO_VERSION: '1.27.1'
   NDK_VERSION: r28c
+  # Pinned by hash, so a new bundle from https://curl.se/docs/caextract.html is a reviewed bump.
+  CA_BUNDLE: cacert-2026-09-25.pem
+  CA_BUNDLE_SHA256: a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505
 
 jobs:
   dart:
@@ -314,6 +317,76 @@ jobs:
           cargo test --manifest-path services/helper/Cargo.toml
           cargo test --manifest-path plugins/rust_api/rust/Cargo.toml
 
+  rust-core:
+    name: Rust core
+    if: *checks
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_COLOR: always
+      # The release budget in bytes for FlClashCore. The design target is 15 MB.
+      CORE_MAX_BYTES: 15000000
+      CONCORD_REQUIRE_APP_TREE: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # The Concord workspace is its own private repository until it replaces core/.
+      - name: Checkout Concord
+        uses: actions/checkout@v4
+        with:
+          repository: chen08209/concord
+          path: concord
+          token: ${{ secrets.CONCORD_TOKEN }}
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: concord
+          save-if: ${{ env.BRANCH_CACHE }}
+
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny@0.20.2
+
+      - name: Fetch CA certificates
+        run: |
+          bundle=concord/assets/ca-certificates.crt
+          curl -fsSL --retry 3 -o "$bundle" "https://curl.se/ca/$CA_BUNDLE"
+          echo "$CA_BUNDLE_SHA256  $bundle" | sha256sum -c -
+
+      - name: Check format
+        working-directory: concord
+        run: cargo fmt --check
+
+      - name: Clippy
+        working-directory: concord
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Run tests
+        working-directory: concord
+        run: cargo test --workspace
+
+      - name: Check crate layers
+        working-directory: concord
+        run: cargo run -p xtask -- check-layers
+
+      - name: Check generated schema
+        working-directory: concord
+        run: cargo run -p xtask -- schema --check
+
+      - name: Check dependencies
+        working-directory: concord
+        run: cargo deny check
+
+      - name: Build release core
+        working-directory: concord
+        run: cargo build --release -p concord-desktop
+
+      - name: Check binary size
+        working-directory: concord
+        run: cargo run -p xtask -- check-size target/release/FlClashCore "$CORE_MAX_BYTES"
+
   windows-helper-test:
     name: Windows helper test
     if: *checks
@@ -475,16 +548,13 @@ jobs:
           flutter pub get
 
       # The core embeds this bundle and FlClashHttpOverrides.trustCoreRoots loads it for Dart.
-      # Pinned by hash, so a new bundle from https://curl.se/docs/caextract.html is a reviewed bump.
       - name: Fetch CA certificates
         shell: bash
-        env:
-          CA_BUNDLE: cacert-2026-09-25.pem
-          CA_BUNDLE_SHA256: a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505
         run: |
           bundle=core/Clash.Meta/component/ca/ca-certificates.crt
           curl -fsSL --retry 3 -o "$bundle" "https://curl.se/ca/$CA_BUNDLE"
           echo "$CA_BUNDLE_SHA256  $bundle" | sha256sum -c -
+          if [ -d concord/assets ]; then cp "$bundle" concord/assets/ca-certificates.crt; fi
 
       - name: Setup
         env:

@@ -156,6 +156,8 @@ func TestEveryCoreMethodConstantIsDispatchable(t *testing.T) {
 	notDispatched := map[CoreMethod]string{
 		messageMethod:                 "core-to-host event envelope, never received",
 		coreCrashMethod:               "handled by the dispatcher so it bypasses panic recovery",
+		coreCapabilitiesMethod:        "only the Rust core answers it",
+		configWarningsMethod:          "only the Rust core answers it",
 		mitmCertificateMethod:         mitmAbsent,
 		mitmGenerateCertificateMethod: mitmAbsent,
 		mitmValidateMethod:            mitmAbsent,

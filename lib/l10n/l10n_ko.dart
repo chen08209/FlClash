@@ -3677,4 +3677,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get forceRestartCore => '강제 다시 시작';
+
+  @override
+  String get configWarnings => '구성 경고';
 }

@@ -79,3 +79,6 @@ devtools_options.yaml
 .fvm/
 .fvmrc
 /coverage/lcov.info
+
+# Own repository, selected with concord_dir in build_config.yaml.
+/concord/

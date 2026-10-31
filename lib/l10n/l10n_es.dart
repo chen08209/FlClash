@@ -3816,4 +3816,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get forceRestartCore => 'Forzar reinicio';
+
+  @override
+  String get configWarnings => 'Advertencias de configuración';
 }

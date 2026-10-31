@@ -3604,4 +3604,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get forceRestartCore => '強制再起動';
+
+  @override
+  String get configWarnings => '設定の警告';
 }

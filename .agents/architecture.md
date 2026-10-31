@@ -363,6 +363,25 @@ Quick Settings, notification, revoke, and Always-on VPN paths converge on the sa
   watchdog calls `PendingResult.finish()` exactly once; the watchdog releases Android's broadcast lease and does not
   cancel or redefine the underlying lifecycle intent.
 
+### Concord Core
+
+`concord/` is the Rust replacement for the Go core: its own git repository (remote `chen08209/concord`), checked out in
+the FlClash root and not tracked by it. It reads the same Clash YAML and speaks the same frame protocol and JNI surface,
+so Dart calls it exactly as it calls `core/`. `core_impl: go|concord` in `build_config.yaml` selects the core and
+`concord_dir` names the workspace (default `concord`). On desktop `plugins/setup/setup_hooks/lib/src/concord_builder.dart`
+runs `cargo build --release -p concord-desktop` and installs the result as `FlClashCore`; on Android the `:core` module's
+`cargoCore` task builds `concord-android` into `libconcord.so`.
+
+The two cores share one contract. `concord/schema/protocol.json` lists the methods and event types the Rust core
+publishes; `cargo run -p xtask -- schema` regenerates it. `concord/crates/api/tests/protocol_contract.rs` checks it
+against `lib/core/method.dart`, `CoreEventType` and `test/fixtures/core_protocol.json`, and
+`test/core/protocol_contract_test.dart` checks the Dart table against it when `concord/` is present. A new method goes in
+Go, in Rust's `crates/api/src/methods.rs` table and in `CoreMethod`, or the suites fail. `core.capabilities` and
+`config.warnings` answer only from Concord; Go answers `not_implemented` and Dart keeps its old behavior.
+
+The behaviors Dart depends on without the method signatures showing them are listed with their tests in
+`concord/docs/behaviour-checklist.md`. Concord's crate layering is enforced by `cargo run -p xtask -- check-layers`.
+
 ## Core Protocol And Event Delivery
 
 The shared protocol uses `CoreMethodCall(id, method, arguments)` and `CoreMethodResponse(id, result, error)` in both
