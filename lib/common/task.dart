@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/mitm_module.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
@@ -245,7 +246,15 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
       }
     }
   }
-  rawConfig['mitm'] = realPatchConfig.mitm.toJson();
+  final mitm = mergeMitmModules(realPatchConfig.mitm.hostname, [
+    for (final module in data.mitmModules)
+      parseMitmModule(
+        module.content,
+        values: module.arguments,
+        resources: module.resources,
+      ),
+  ]);
+  rawConfig['mitm'] = realPatchConfig.mitm.coreJson(mitm.mitm);
   if (rawConfig['profile'] == null) {
     rawConfig['profile'] = {};
   }
@@ -370,7 +379,7 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
         .map((item) => item.definition)
         .toList();
   }
-  rawConfig['rules'] = rules;
+  rawConfig['rules'] = [...mitm.rules, ...rules];
   final yaml = await _encodeYaml(Map<String, dynamic>.from(rawConfig));
   return (yaml: yaml, md5: yaml.toMd5(), counts: configCountsOf(rawConfig));
 }

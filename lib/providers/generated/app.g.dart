@@ -49,6 +49,44 @@ final class SafeModeProvider extends $FunctionalProvider<bool, bool, bool>
 
 String _$safeModeHash() => r'3ef07344f5a8dbf775ccf0a4861c0317ec8b2266';
 
+/// Android: su is there and granted FlClash's last request.
+
+@ProviderFor(rootAccess)
+final rootAccessProvider = RootAccessProvider._();
+
+/// Android: su is there and granted FlClash's last request.
+
+final class RootAccessProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  /// Android: su is there and granted FlClash's last request.
+  RootAccessProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'rootAccessProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$rootAccessHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    return rootAccess(ref);
+  }
+}
+
+String _$rootAccessHash() => r'59f43852dbede9ebe3301b885d63cd0a3961126d';
+
 @ProviderFor(AuthorizedTunEnable)
 final authorizedTunEnableProvider = AuthorizedTunEnableProvider._();
 

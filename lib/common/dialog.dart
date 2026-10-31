@@ -169,7 +169,11 @@ class Dialogs {
     );
   }
 
-  Future<String?> showUrlInput({required String title, String value = ''}) {
+  Future<String?> showUrlInput({
+    required String title,
+    String value = '',
+    bool Function(String value)? accepts,
+  }) {
     final appLocalizations = currentAppLocalizations;
     return showCommonDialog<String>(
       child: InputDialog(
@@ -181,7 +185,7 @@ class Dialogs {
           if (value == null || value.isEmpty) {
             return appLocalizations.emptyTip(appLocalizations.value);
           }
-          if (!value.isUrl) {
+          if (!(accepts?.call(value) ?? value.isUrl)) {
             return appLocalizations.urlTip(appLocalizations.value);
           }
           return null;

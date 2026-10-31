@@ -89,7 +89,7 @@ class VpnService : SystemVpnService(), ManagedService {
         }
 
     override fun onLowMemory() {
-        Core.forceGC()
+        lowCoreMemory()
         super.onLowMemory()
     }
 

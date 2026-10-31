@@ -211,7 +211,7 @@ class TrackerTargetText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final port = trackerInfo.metadata.destinationPort;
-    return Text.rich(
+    final target = Text.rich(
       TextSpan(
         children: [
           TextSpan(text: trackerInfo.title),
@@ -222,6 +222,16 @@ class TrackerTargetText extends StatelessWidget {
             ),
         ],
       ),
+    );
+    if (!trackerInfo.metadata.mitm) {
+      return target;
+    }
+    return Row(
+      spacing: 6,
+      children: [
+        Flexible(child: target),
+        const RecordLabel(label: 'MITM'),
+      ],
     );
   }
 }

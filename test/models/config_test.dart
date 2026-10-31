@@ -90,12 +90,16 @@ void main() {
     });
 
     test('toUpdateParams sends geoXUrl to the Core under geox-url', () {
-      final params = const PatchClashConfig(
-        geoXUrl: {
-          GeoResource.MMDB: 'https://example.com/geoip.metadb',
-          GeoResource.GEOSITE: 'https://example.com/geosite.dat',
-        },
-      ).toUpdateParams(authentication: const [], skipCertVerify: false);
+      final params =
+          const PatchClashConfig(
+            geoXUrl: {
+              GeoResource.MMDB: 'https://example.com/geoip.metadb',
+              GeoResource.GEOSITE: 'https://example.com/geosite.dat',
+            },
+          ).toUpdateParams(
+            authentication: const [],
+            options: const CoreOptions(testUrl: ''),
+          );
 
       final json = jsonDecode(jsonEncode(params)) as Map<String, Object?>;
       expect(json['geox-url'], {
@@ -104,14 +108,25 @@ void main() {
       });
     });
 
-    test('toUpdateParams sends skipCertVerify under skip-cert-verify', () {
+    test('toUpdateParams sends the Core options under options', () {
       final params = const PatchClashConfig().toUpdateParams(
         authentication: const [],
-        skipCertVerify: true,
+        options: const CoreOptions(
+          testUrl: 'http://t',
+          skipCertVerify: true,
+          delayTestTimeout: 5000,
+          mitmCapture: true,
+        ),
       );
 
       final json = jsonDecode(jsonEncode(params)) as Map<String, Object?>;
-      expect(json['skip-cert-verify'], isTrue);
+      expect(json['options'], {
+        'test-url': 'http://t',
+        'skip-cert-verify': true,
+        'delay-test-timeout': 5000,
+        'mitm-capture': true,
+      });
+      expect(json, isNot(contains('mitm')));
     });
   });
 
@@ -429,6 +444,139 @@ void main() {
     });
   });
 
+  group('Mitm', () {
+    test('speaks the keys of the Core MITM config', () {
+      const props = Mitm(
+        enable: true,
+        hostname: ['*.example.com'],
+        skipServerCertVerify: true,
+        autoQuicBlock: false,
+        h2: true,
+        decryptUntrusted: true,
+        trustedFingerprint: 'AB:CD',
+        capture: true,
+        captureEntries: 5000,
+      );
+
+      final json = jsonDecode(jsonEncode(props)) as Map<String, Object?>;
+
+      expect(json, {
+        'enable': true,
+        'hostname': ['*.example.com'],
+        'skip-server-cert-verify': true,
+        'auto-quic-block': false,
+        'h2': true,
+        'decrypt-untrusted': true,
+        'trusted-fingerprint': 'AB:CD',
+        'capture': true,
+        'capture-entries': 5000,
+      });
+      expect(Mitm.fromJson(json), props);
+    });
+
+    group('the Core section', () {
+      test('decrypts HTTPS only with the CA this device trusts', () {
+        expect(defaultMitm.coreJson(const MitmRules())['decrypt-tls'], isFalse);
+
+        final trusted = const Mitm(
+          trustedFingerprint: 'AB:CD',
+        ).coreJson(const MitmRules());
+
+        expect(trusted['decrypt-tls'], isTrue);
+        expect(trusted['ca-fingerprint'], 'AB:CD');
+        expect(trusted, isNot(contains('trusted-fingerprint')));
+        expect(trusted, isNot(contains('decrypt-untrusted')));
+      });
+
+      test('bounds what decryption holds with the keys the Core reads', () {
+        final limits =
+            defaultMitm.coreJson(const MitmRules())['limits']
+                as Map<String, Object?>;
+
+        expect(limits['max-body-size'], 4 << 20);
+        expect(
+          {
+            'max-body-size',
+            'body-buffer',
+            'certificate-cache',
+            'max-sessions',
+            'script-concurrency',
+            'script-memory',
+            'capture-entries',
+            'capture-bytes',
+          }.containsAll(limits.keys),
+          isTrue,
+        );
+      });
+
+      test('the capture limit reaches the Core among the limits', () {
+        final json = const Mitm(
+          captureEntries: 5000,
+        ).coreJson(const MitmRules());
+
+        expect(json, isNot(contains('capture-entries')));
+        expect((json['limits'] as Map)['capture-entries'], 5000);
+        expect(
+          (defaultMitm.coreJson(const MitmRules())['limits']
+              as Map)['capture-entries'],
+          2000,
+        );
+      });
+
+      test('decrypts with any CA for the LAN', () {
+        final json = const Mitm(
+          decryptUntrusted: true,
+          trustedFingerprint: 'AB:CD',
+        ).coreJson(const MitmRules());
+
+        expect(json['decrypt-tls'], isTrue);
+        expect(json['ca-fingerprint'], '');
+      });
+    });
+
+    test('a clash config saved before MITM existed reads it as off', () {
+      final config = PatchClashConfig.fromJson({'mixed-port': 7890});
+
+      expect(config.mitm, defaultMitm);
+      expect(config.mitm.enable, isFalse);
+      expect(config.mitm.autoQuicBlock, isTrue);
+    });
+
+    test('the Core section takes every list, hostnames included, from the '
+        'rules', () {
+      const rules = MitmRules(
+        hostname: ['-own.a.com', 'a.com'],
+        urlRewrite: ['u'],
+        headerRewrite: ['h'],
+        bodyRewrite: ['b'],
+        mapLocal: ['m'],
+        script: ['s'],
+      );
+
+      final json = const Mitm(hostname: ['ignored.com']).coreJson(rules);
+
+      for (final list in MitmList.values) {
+        expect(json[list.key], rules.linesOf(list));
+      }
+    });
+
+    test('is applied with the profile, so setupOnly keeps it', () {
+      const mitm = Mitm(enable: true, hostname: ['a.com']);
+
+      expect(const PatchClashConfig(mitm: mitm).setupOnly.mitm, mitm);
+    });
+
+    test('capture reaches the Core in its options, so setupOnly drops it', () {
+      const mitm = Mitm(enable: true, capture: true);
+
+      expect(
+        const PatchClashConfig(mitm: mitm).setupOnly.mitm,
+        mitm.copyWith(capture: false),
+      );
+      expect(mitm.coreJson(const MitmRules()), isNot(contains('capture')));
+    });
+  });
+
   group('PatchClashConfig JSON round-trip', () {
     test('defaults match Clash patch defaults', () {
       const config = PatchClashConfig();
@@ -536,7 +684,10 @@ void main() {
     test('reaches the Core through the update params', () {
       final params = open
           .copyWith(secret: 'abc')
-          .toUpdateParams(authentication: const [], skipCertVerify: false);
+          .toUpdateParams(
+            authentication: const [],
+            options: const CoreOptions(testUrl: ''),
+          );
 
       expect(params.secret, 'abc');
       expect(params.toJson()['secret'], 'abc');
@@ -584,7 +735,10 @@ void main() {
             tcpConcurrent: false,
             generalOverrideKeys: {GeneralOverrideKey.ipv6},
           )
-          .toUpdateParams(authentication: const [], skipCertVerify: false)
+          .toUpdateParams(
+            authentication: const [],
+            options: const CoreOptions(testUrl: ''),
+          )
           .toJson();
 
       expect(json['ipv6'], true);
@@ -602,8 +756,10 @@ void main() {
   });
 
   group('PatchClashConfig.setupOnly', () {
-    UpdateParams liveParams(PatchClashConfig config) =>
-        config.toUpdateParams(authentication: const [], skipCertVerify: false);
+    UpdateParams liveParams(PatchClashConfig config) => config.toUpdateParams(
+      authentication: const [],
+      options: const CoreOptions(testUrl: ''),
+    );
 
     test('drops every field the update params patch live', () {
       final live = defaultClashConfig.copyWith(
@@ -621,6 +777,7 @@ void main() {
         geoAutoUpdate: true,
         geoUpdateInterval: 6,
         geoXUrl: {...defaultGeoXUrl, GeoResource.MMDB: 'https://mmdb.test'},
+        testUrl: 'https://probe.test/204',
       );
 
       final defaults = defaultClashConfig.toJson();
@@ -647,7 +804,6 @@ void main() {
         defaultClashConfig.copyWith(dns: defaultDns.copyWith(ipv6: true)),
         defaultClashConfig.copyWith(tunOverrideKeys: {TunOverrideKey.gso}),
         defaultClashConfig.copyWith(geodataLoader: GeodataLoader.standard),
-        defaultClashConfig.copyWith(testUrl: 'https://probe.test/204'),
       ];
 
       for (final config in setupOnlyChanges) {

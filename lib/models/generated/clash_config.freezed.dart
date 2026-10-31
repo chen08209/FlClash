@@ -7803,7 +7803,7 @@ $MitmCopyWith<$Res> get mitm {
 /// @nodoc
 mixin _$Mitm {
 
- bool get enable; List<String> get hostname;@JsonKey(name: 'skip-server-cert-verify') bool get skipServerCertVerify;@JsonKey(name: 'auto-quic-block') bool get autoQuicBlock;@JsonKey(name: 'url-rewrite') List<String> get urlRewrite;@JsonKey(name: 'header-rewrite') List<String> get headerRewrite;@JsonKey(name: 'body-rewrite') List<String> get bodyRewrite;@JsonKey(name: 'map-local') List<String> get mapLocal;
+ bool get enable; List<String> get hostname;@JsonKey(name: 'skip-server-cert-verify') bool get skipServerCertVerify;@JsonKey(name: 'auto-quic-block') bool get autoQuicBlock; bool get h2;@JsonKey(name: 'decrypt-untrusted') bool get decryptUntrusted;@JsonKey(name: 'trusted-fingerprint') String? get trustedFingerprint; bool get capture;@JsonKey(name: 'capture-entries') int? get captureEntries;
 /// Create a copy of Mitm
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -7817,20 +7817,20 @@ $MitmCopyWith<Mitm> get copyWith => _$MitmCopyWithImpl<Mitm>(this as Mitm, _$ide
 @override
 bool operator ==(Object other) {
   final _this = this as Mitm;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Mitm&&(identical(other.enable, _this.enable) || other.enable == _this.enable)&&const DeepCollectionEquality().equals(other.hostname, _this.hostname)&&(identical(other.skipServerCertVerify, _this.skipServerCertVerify) || other.skipServerCertVerify == _this.skipServerCertVerify)&&(identical(other.autoQuicBlock, _this.autoQuicBlock) || other.autoQuicBlock == _this.autoQuicBlock)&&const DeepCollectionEquality().equals(other.urlRewrite, _this.urlRewrite)&&const DeepCollectionEquality().equals(other.headerRewrite, _this.headerRewrite)&&const DeepCollectionEquality().equals(other.bodyRewrite, _this.bodyRewrite)&&const DeepCollectionEquality().equals(other.mapLocal, _this.mapLocal));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Mitm&&(identical(other.enable, _this.enable) || other.enable == _this.enable)&&const DeepCollectionEquality().equals(other.hostname, _this.hostname)&&(identical(other.skipServerCertVerify, _this.skipServerCertVerify) || other.skipServerCertVerify == _this.skipServerCertVerify)&&(identical(other.autoQuicBlock, _this.autoQuicBlock) || other.autoQuicBlock == _this.autoQuicBlock)&&(identical(other.h2, _this.h2) || other.h2 == _this.h2)&&(identical(other.decryptUntrusted, _this.decryptUntrusted) || other.decryptUntrusted == _this.decryptUntrusted)&&(identical(other.trustedFingerprint, _this.trustedFingerprint) || other.trustedFingerprint == _this.trustedFingerprint)&&(identical(other.capture, _this.capture) || other.capture == _this.capture)&&(identical(other.captureEntries, _this.captureEntries) || other.captureEntries == _this.captureEntries));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as Mitm;
-  return Object.hash(runtimeType,_this.enable,const DeepCollectionEquality().hash(_this.hostname),_this.skipServerCertVerify,_this.autoQuicBlock,const DeepCollectionEquality().hash(_this.urlRewrite),const DeepCollectionEquality().hash(_this.headerRewrite),const DeepCollectionEquality().hash(_this.bodyRewrite),const DeepCollectionEquality().hash(_this.mapLocal));
+  return Object.hash(runtimeType,_this.enable,const DeepCollectionEquality().hash(_this.hostname),_this.skipServerCertVerify,_this.autoQuicBlock,_this.h2,_this.decryptUntrusted,_this.trustedFingerprint,_this.capture,_this.captureEntries);
 }
 
 @override
 String toString() {
   final _this = this as Mitm;
-  return 'Mitm(enable: ${_this.enable}, hostname: ${_this.hostname}, skipServerCertVerify: ${_this.skipServerCertVerify}, autoQuicBlock: ${_this.autoQuicBlock}, urlRewrite: ${_this.urlRewrite}, headerRewrite: ${_this.headerRewrite}, bodyRewrite: ${_this.bodyRewrite}, mapLocal: ${_this.mapLocal})';
+  return 'Mitm(enable: ${_this.enable}, hostname: ${_this.hostname}, skipServerCertVerify: ${_this.skipServerCertVerify}, autoQuicBlock: ${_this.autoQuicBlock}, h2: ${_this.h2}, decryptUntrusted: ${_this.decryptUntrusted}, trustedFingerprint: ${_this.trustedFingerprint}, capture: ${_this.capture}, captureEntries: ${_this.captureEntries})';
 }
 
 
@@ -7841,7 +7841,7 @@ abstract mixin class $MitmCopyWith<$Res>  {
   factory $MitmCopyWith(Mitm value, $Res Function(Mitm) _then) = _$MitmCopyWithImpl;
 @useResult
 $Res call({
- bool enable, List<String> hostname,@JsonKey(name: 'skip-server-cert-verify') bool skipServerCertVerify,@JsonKey(name: 'auto-quic-block') bool autoQuicBlock,@JsonKey(name: 'url-rewrite') List<String> urlRewrite,@JsonKey(name: 'header-rewrite') List<String> headerRewrite,@JsonKey(name: 'body-rewrite') List<String> bodyRewrite,@JsonKey(name: 'map-local') List<String> mapLocal
+ bool enable, List<String> hostname,@JsonKey(name: 'skip-server-cert-verify') bool skipServerCertVerify,@JsonKey(name: 'auto-quic-block') bool autoQuicBlock, bool h2,@JsonKey(name: 'decrypt-untrusted') bool decryptUntrusted,@JsonKey(name: 'trusted-fingerprint') String? trustedFingerprint, bool capture,@JsonKey(name: 'capture-entries') int? captureEntries
 });
 
 
@@ -7858,17 +7858,18 @@ class _$MitmCopyWithImpl<$Res>
 
 /// Create a copy of Mitm
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? enable = null,Object? hostname = null,Object? skipServerCertVerify = null,Object? autoQuicBlock = null,Object? urlRewrite = null,Object? headerRewrite = null,Object? bodyRewrite = null,Object? mapLocal = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? enable = null,Object? hostname = null,Object? skipServerCertVerify = null,Object? autoQuicBlock = null,Object? h2 = null,Object? decryptUntrusted = null,Object? trustedFingerprint = freezed,Object? capture = null,Object? captureEntries = freezed,}) {
   return _then(Mitm(
 enable: null == enable ? _self.enable : enable // ignore: cast_nullable_to_non_nullable
 as bool,hostname: null == hostname ? _self.hostname : hostname // ignore: cast_nullable_to_non_nullable
 as List<String>,skipServerCertVerify: null == skipServerCertVerify ? _self.skipServerCertVerify : skipServerCertVerify // ignore: cast_nullable_to_non_nullable
 as bool,autoQuicBlock: null == autoQuicBlock ? _self.autoQuicBlock : autoQuicBlock // ignore: cast_nullable_to_non_nullable
-as bool,urlRewrite: null == urlRewrite ? _self.urlRewrite : urlRewrite // ignore: cast_nullable_to_non_nullable
-as List<String>,headerRewrite: null == headerRewrite ? _self.headerRewrite : headerRewrite // ignore: cast_nullable_to_non_nullable
-as List<String>,bodyRewrite: null == bodyRewrite ? _self.bodyRewrite : bodyRewrite // ignore: cast_nullable_to_non_nullable
-as List<String>,mapLocal: null == mapLocal ? _self.mapLocal : mapLocal // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as bool,h2: null == h2 ? _self.h2 : h2 // ignore: cast_nullable_to_non_nullable
+as bool,decryptUntrusted: null == decryptUntrusted ? _self.decryptUntrusted : decryptUntrusted // ignore: cast_nullable_to_non_nullable
+as bool,trustedFingerprint: freezed == trustedFingerprint ? _self.trustedFingerprint : trustedFingerprint // ignore: cast_nullable_to_non_nullable
+as String?,capture: null == capture ? _self.capture : capture // ignore: cast_nullable_to_non_nullable
+as bool,captureEntries: freezed == captureEntries ? _self.captureEntries : captureEntries // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -7953,10 +7954,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool enable,  List<String> hostname, @JsonKey(name: 'skip-server-cert-verify')  bool skipServerCertVerify, @JsonKey(name: 'auto-quic-block')  bool autoQuicBlock, @JsonKey(name: 'url-rewrite')  List<String> urlRewrite, @JsonKey(name: 'header-rewrite')  List<String> headerRewrite, @JsonKey(name: 'body-rewrite')  List<String> bodyRewrite, @JsonKey(name: 'map-local')  List<String> mapLocal)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool enable,  List<String> hostname, @JsonKey(name: 'skip-server-cert-verify')  bool skipServerCertVerify, @JsonKey(name: 'auto-quic-block')  bool autoQuicBlock,  bool h2, @JsonKey(name: 'decrypt-untrusted')  bool decryptUntrusted, @JsonKey(name: 'trusted-fingerprint')  String? trustedFingerprint,  bool capture, @JsonKey(name: 'capture-entries')  int? captureEntries)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Mitm() when $default != null:
-return $default(_that.enable,_that.hostname,_that.skipServerCertVerify,_that.autoQuicBlock,_that.urlRewrite,_that.headerRewrite,_that.bodyRewrite,_that.mapLocal);case _:
+return $default(_that.enable,_that.hostname,_that.skipServerCertVerify,_that.autoQuicBlock,_that.h2,_that.decryptUntrusted,_that.trustedFingerprint,_that.capture,_that.captureEntries);case _:
   return orElse();
 
 }
@@ -7974,10 +7975,10 @@ return $default(_that.enable,_that.hostname,_that.skipServerCertVerify,_that.aut
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool enable,  List<String> hostname, @JsonKey(name: 'skip-server-cert-verify')  bool skipServerCertVerify, @JsonKey(name: 'auto-quic-block')  bool autoQuicBlock, @JsonKey(name: 'url-rewrite')  List<String> urlRewrite, @JsonKey(name: 'header-rewrite')  List<String> headerRewrite, @JsonKey(name: 'body-rewrite')  List<String> bodyRewrite, @JsonKey(name: 'map-local')  List<String> mapLocal)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool enable,  List<String> hostname, @JsonKey(name: 'skip-server-cert-verify')  bool skipServerCertVerify, @JsonKey(name: 'auto-quic-block')  bool autoQuicBlock,  bool h2, @JsonKey(name: 'decrypt-untrusted')  bool decryptUntrusted, @JsonKey(name: 'trusted-fingerprint')  String? trustedFingerprint,  bool capture, @JsonKey(name: 'capture-entries')  int? captureEntries)  $default,) {final _that = this;
 switch (_that) {
 case _Mitm():
-return $default(_that.enable,_that.hostname,_that.skipServerCertVerify,_that.autoQuicBlock,_that.urlRewrite,_that.headerRewrite,_that.bodyRewrite,_that.mapLocal);case _:
+return $default(_that.enable,_that.hostname,_that.skipServerCertVerify,_that.autoQuicBlock,_that.h2,_that.decryptUntrusted,_that.trustedFingerprint,_that.capture,_that.captureEntries);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -7994,10 +7995,10 @@ return $default(_that.enable,_that.hostname,_that.skipServerCertVerify,_that.aut
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool enable,  List<String> hostname, @JsonKey(name: 'skip-server-cert-verify')  bool skipServerCertVerify, @JsonKey(name: 'auto-quic-block')  bool autoQuicBlock, @JsonKey(name: 'url-rewrite')  List<String> urlRewrite, @JsonKey(name: 'header-rewrite')  List<String> headerRewrite, @JsonKey(name: 'body-rewrite')  List<String> bodyRewrite, @JsonKey(name: 'map-local')  List<String> mapLocal)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool enable,  List<String> hostname, @JsonKey(name: 'skip-server-cert-verify')  bool skipServerCertVerify, @JsonKey(name: 'auto-quic-block')  bool autoQuicBlock,  bool h2, @JsonKey(name: 'decrypt-untrusted')  bool decryptUntrusted, @JsonKey(name: 'trusted-fingerprint')  String? trustedFingerprint,  bool capture, @JsonKey(name: 'capture-entries')  int? captureEntries)?  $default,) {final _that = this;
 switch (_that) {
 case _Mitm() when $default != null:
-return $default(_that.enable,_that.hostname,_that.skipServerCertVerify,_that.autoQuicBlock,_that.urlRewrite,_that.headerRewrite,_that.bodyRewrite,_that.mapLocal);case _:
+return $default(_that.enable,_that.hostname,_that.skipServerCertVerify,_that.autoQuicBlock,_that.h2,_that.decryptUntrusted,_that.trustedFingerprint,_that.capture,_that.captureEntries);case _:
   return null;
 
 }
@@ -8009,7 +8010,7 @@ return $default(_that.enable,_that.hostname,_that.skipServerCertVerify,_that.aut
 @JsonSerializable()
 
 class _Mitm implements Mitm {
-  const _Mitm({this.enable = false,  List<String> hostname = const [], @JsonKey(name: 'skip-server-cert-verify') this.skipServerCertVerify = false, @JsonKey(name: 'auto-quic-block') this.autoQuicBlock = true, @JsonKey(name: 'url-rewrite')  List<String> urlRewrite = const [], @JsonKey(name: 'header-rewrite')  List<String> headerRewrite = const [], @JsonKey(name: 'body-rewrite')  List<String> bodyRewrite = const [], @JsonKey(name: 'map-local')  List<String> mapLocal = const []}): _hostname = hostname,_urlRewrite = urlRewrite,_headerRewrite = headerRewrite,_bodyRewrite = bodyRewrite,_mapLocal = mapLocal;
+  const _Mitm({this.enable = false,  List<String> hostname = const [], @JsonKey(name: 'skip-server-cert-verify') this.skipServerCertVerify = false, @JsonKey(name: 'auto-quic-block') this.autoQuicBlock = true, this.h2 = false, @JsonKey(name: 'decrypt-untrusted') this.decryptUntrusted = false, @JsonKey(name: 'trusted-fingerprint') this.trustedFingerprint, this.capture = false, @JsonKey(name: 'capture-entries') this.captureEntries}): _hostname = hostname;
   factory _Mitm.fromJson(Map<String, dynamic> json) => _$MitmFromJson(json);
 
 @override@JsonKey() final  bool enable;
@@ -8022,34 +8023,11 @@ class _Mitm implements Mitm {
 
 @override@JsonKey(name: 'skip-server-cert-verify') final  bool skipServerCertVerify;
 @override@JsonKey(name: 'auto-quic-block') final  bool autoQuicBlock;
- final  List<String> _urlRewrite;
-@override@JsonKey(name: 'url-rewrite') List<String> get urlRewrite {
-  if (_urlRewrite is EqualUnmodifiableListView) return _urlRewrite;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_urlRewrite);
-}
-
- final  List<String> _headerRewrite;
-@override@JsonKey(name: 'header-rewrite') List<String> get headerRewrite {
-  if (_headerRewrite is EqualUnmodifiableListView) return _headerRewrite;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_headerRewrite);
-}
-
- final  List<String> _bodyRewrite;
-@override@JsonKey(name: 'body-rewrite') List<String> get bodyRewrite {
-  if (_bodyRewrite is EqualUnmodifiableListView) return _bodyRewrite;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_bodyRewrite);
-}
-
- final  List<String> _mapLocal;
-@override@JsonKey(name: 'map-local') List<String> get mapLocal {
-  if (_mapLocal is EqualUnmodifiableListView) return _mapLocal;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_mapLocal);
-}
-
+@override@JsonKey() final  bool h2;
+@override@JsonKey(name: 'decrypt-untrusted') final  bool decryptUntrusted;
+@override@JsonKey(name: 'trusted-fingerprint') final  String? trustedFingerprint;
+@override@JsonKey() final  bool capture;
+@override@JsonKey(name: 'capture-entries') final  int? captureEntries;
 
 /// Create a copy of Mitm
 /// with the given fields replaced by the non-null parameter values.
@@ -8064,18 +8042,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Mitm&&(identical(other.enable, enable) || other.enable == enable)&&const DeepCollectionEquality().equals(other.hostname, _hostname)&&(identical(other.skipServerCertVerify, skipServerCertVerify) || other.skipServerCertVerify == skipServerCertVerify)&&(identical(other.autoQuicBlock, autoQuicBlock) || other.autoQuicBlock == autoQuicBlock)&&const DeepCollectionEquality().equals(other.urlRewrite, _urlRewrite)&&const DeepCollectionEquality().equals(other.headerRewrite, _headerRewrite)&&const DeepCollectionEquality().equals(other.bodyRewrite, _bodyRewrite)&&const DeepCollectionEquality().equals(other.mapLocal, _mapLocal));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Mitm&&(identical(other.enable, enable) || other.enable == enable)&&const DeepCollectionEquality().equals(other.hostname, _hostname)&&(identical(other.skipServerCertVerify, skipServerCertVerify) || other.skipServerCertVerify == skipServerCertVerify)&&(identical(other.autoQuicBlock, autoQuicBlock) || other.autoQuicBlock == autoQuicBlock)&&(identical(other.h2, h2) || other.h2 == h2)&&(identical(other.decryptUntrusted, decryptUntrusted) || other.decryptUntrusted == decryptUntrusted)&&(identical(other.trustedFingerprint, trustedFingerprint) || other.trustedFingerprint == trustedFingerprint)&&(identical(other.capture, capture) || other.capture == capture)&&(identical(other.captureEntries, captureEntries) || other.captureEntries == captureEntries));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,enable,const DeepCollectionEquality().hash(_hostname),skipServerCertVerify,autoQuicBlock,const DeepCollectionEquality().hash(_urlRewrite),const DeepCollectionEquality().hash(_headerRewrite),const DeepCollectionEquality().hash(_bodyRewrite),const DeepCollectionEquality().hash(_mapLocal));
+    return Object.hash(runtimeType,enable,const DeepCollectionEquality().hash(_hostname),skipServerCertVerify,autoQuicBlock,h2,decryptUntrusted,trustedFingerprint,capture,captureEntries);
 }
 
 @override
 String toString() {
-    return 'Mitm(enable: $enable, hostname: $hostname, skipServerCertVerify: $skipServerCertVerify, autoQuicBlock: $autoQuicBlock, urlRewrite: $urlRewrite, headerRewrite: $headerRewrite, bodyRewrite: $bodyRewrite, mapLocal: $mapLocal)';
+    return 'Mitm(enable: $enable, hostname: $hostname, skipServerCertVerify: $skipServerCertVerify, autoQuicBlock: $autoQuicBlock, h2: $h2, decryptUntrusted: $decryptUntrusted, trustedFingerprint: $trustedFingerprint, capture: $capture, captureEntries: $captureEntries)';
 }
 
 
@@ -8086,7 +8064,7 @@ abstract mixin class _$MitmCopyWith<$Res> implements $MitmCopyWith<$Res> {
   factory _$MitmCopyWith(_Mitm value, $Res Function(_Mitm) _then) = __$MitmCopyWithImpl;
 @override @useResult
 $Res call({
- bool enable, List<String> hostname,@JsonKey(name: 'skip-server-cert-verify') bool skipServerCertVerify,@JsonKey(name: 'auto-quic-block') bool autoQuicBlock,@JsonKey(name: 'url-rewrite') List<String> urlRewrite,@JsonKey(name: 'header-rewrite') List<String> headerRewrite,@JsonKey(name: 'body-rewrite') List<String> bodyRewrite,@JsonKey(name: 'map-local') List<String> mapLocal
+ bool enable, List<String> hostname,@JsonKey(name: 'skip-server-cert-verify') bool skipServerCertVerify,@JsonKey(name: 'auto-quic-block') bool autoQuicBlock, bool h2,@JsonKey(name: 'decrypt-untrusted') bool decryptUntrusted,@JsonKey(name: 'trusted-fingerprint') String? trustedFingerprint, bool capture,@JsonKey(name: 'capture-entries') int? captureEntries
 });
 
 
@@ -8103,17 +8081,18 @@ class __$MitmCopyWithImpl<$Res>
 
 /// Create a copy of Mitm
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? enable = null,Object? hostname = null,Object? skipServerCertVerify = null,Object? autoQuicBlock = null,Object? urlRewrite = null,Object? headerRewrite = null,Object? bodyRewrite = null,Object? mapLocal = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? enable = null,Object? hostname = null,Object? skipServerCertVerify = null,Object? autoQuicBlock = null,Object? h2 = null,Object? decryptUntrusted = null,Object? trustedFingerprint = freezed,Object? capture = null,Object? captureEntries = freezed,}) {
   return _then(_Mitm(
 enable: null == enable ? _self.enable : enable // ignore: cast_nullable_to_non_nullable
 as bool,hostname: null == hostname ? _self._hostname : hostname // ignore: cast_nullable_to_non_nullable
 as List<String>,skipServerCertVerify: null == skipServerCertVerify ? _self.skipServerCertVerify : skipServerCertVerify // ignore: cast_nullable_to_non_nullable
 as bool,autoQuicBlock: null == autoQuicBlock ? _self.autoQuicBlock : autoQuicBlock // ignore: cast_nullable_to_non_nullable
-as bool,urlRewrite: null == urlRewrite ? _self._urlRewrite : urlRewrite // ignore: cast_nullable_to_non_nullable
-as List<String>,headerRewrite: null == headerRewrite ? _self._headerRewrite : headerRewrite // ignore: cast_nullable_to_non_nullable
-as List<String>,bodyRewrite: null == bodyRewrite ? _self._bodyRewrite : bodyRewrite // ignore: cast_nullable_to_non_nullable
-as List<String>,mapLocal: null == mapLocal ? _self._mapLocal : mapLocal // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as bool,h2: null == h2 ? _self.h2 : h2 // ignore: cast_nullable_to_non_nullable
+as bool,decryptUntrusted: null == decryptUntrusted ? _self.decryptUntrusted : decryptUntrusted // ignore: cast_nullable_to_non_nullable
+as bool,trustedFingerprint: freezed == trustedFingerprint ? _self.trustedFingerprint : trustedFingerprint // ignore: cast_nullable_to_non_nullable
+as String?,capture: null == capture ? _self.capture : capture // ignore: cast_nullable_to_non_nullable
+as bool,captureEntries: freezed == captureEntries ? _self.captureEntries : captureEntries // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

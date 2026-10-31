@@ -445,16 +445,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Silent launch starts without showing the window.`
-  String get silentLaunchDesc {
-    return Intl.message(
-      'Silent launch starts without showing the window.',
-      name: 'silentLaunchDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Auto run`
   String get autoRun {
     return Intl.message('Auto run', name: 'autoRun', desc: '', args: []);
@@ -520,16 +510,6 @@ class AppLocalizations {
     return Intl.message(
       'Access control',
       name: 'accessControl',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Access control picks which apps use the proxy.`
-  String get accessControlDesc {
-    return Intl.message(
-      'Access control picks which apps use the proxy.',
-      name: 'accessControlDesc',
       desc: '',
       args: [],
     );
@@ -1141,16 +1121,6 @@ class AppLocalizations {
     return Intl.message('Address', name: 'address', desc: '', args: []);
   }
 
-  /// `WebDAV server address`
-  String get addressHelp {
-    return Intl.message(
-      'WebDAV server address',
-      name: 'addressHelp',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Please enter a valid WebDAV address`
   String get addressTip {
     return Intl.message(
@@ -1171,16 +1141,6 @@ class AppLocalizations {
     return Intl.message(
       'Authentication',
       name: 'authentication',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Authentication asks for a username and password on the local proxy port.`
-  String get authenticationDesc {
-    return Intl.message(
-      'Authentication asks for a username and password on the local proxy port.',
-      name: 'authenticationDesc',
       desc: '',
       args: [],
     );
@@ -1586,16 +1546,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Auto close connections drops open connections when you switch proxies.`
-  String get autoCloseConnectionsDesc {
-    return Intl.message(
-      'Auto close connections drops open connections when you switch proxies.',
-      name: 'autoCloseConnectionsDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Only count proxy traffic`
   String get onlyStatisticsProxy {
     return Intl.message(
@@ -1636,16 +1586,6 @@ class AppLocalizations {
     return Intl.message(
       'Background blur',
       name: 'backgroundBlur',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Background blur lets the desktop behind the window show through the sidebar.`
-  String get sidebarBlurDesc {
-    return Intl.message(
-      'Background blur lets the desktop behind the window show through the sidebar.',
-      name: 'sidebarBlurDesc',
       desc: '',
       args: [],
     );
@@ -1796,16 +1736,6 @@ class AppLocalizations {
     return Intl.message('Value', name: 'value', desc: '', args: []);
   }
 
-  /// `VPN routes all system traffic through VpnService automatically.`
-  String get vpnEnableDesc {
-    return Intl.message(
-      'VPN routes all system traffic through VpnService automatically.',
-      name: 'vpnEnableDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Options`
   String get options {
     return Intl.message('Options', name: 'options', desc: '', args: []);
@@ -1911,16 +1841,6 @@ class AppLocalizations {
     );
   }
 
-  /// `NTP takes the time from an NTP server instead of the system clock.`
-  String get ntpStatusDesc {
-    return Intl.message(
-      'NTP takes the time from an NTP server instead of the system clock.',
-      name: 'ntpStatusDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Server`
   String get server {
     return Intl.message('Server', name: 'server', desc: '', args: []);
@@ -1941,16 +1861,6 @@ class AppLocalizations {
     return Intl.message(
       'Dialer proxy',
       name: 'dialerProxy',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Dialer proxy is the outbound used to reach the NTP server.`
-  String get dialerProxyDesc {
-    return Intl.message(
-      'Dialer proxy is the outbound used to reach the NTP server.',
-      name: 'dialerProxyDesc',
       desc: '',
       args: [],
     );
@@ -1981,31 +1891,11 @@ class AppLocalizations {
     return Intl.message('Sniffer', name: 'sniffer', desc: '', args: []);
   }
 
-  /// `The sniffer reads the domain from TLS, HTTP and QUIC traffic so rules can match it.`
-  String get snifferStatusDesc {
-    return Intl.message(
-      'The sniffer reads the domain from TLS, HTTP and QUIC traffic so rules can match it.',
-      name: 'snifferStatusDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Override destination`
   String get overrideDestination {
     return Intl.message(
       'Override destination',
       name: 'overrideDestination',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Override destination connects to the sniffed domain instead of the original address.`
-  String get overrideDestinationDesc {
-    return Intl.message(
-      'Override destination connects to the sniffed domain instead of the original address.',
-      name: 'overrideDestinationDesc',
       desc: '',
       args: [],
     );
@@ -2041,16 +1931,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Parse pure IP sniffs connections that carry only an IP address.`
-  String get parsePureIpDesc {
-    return Intl.message(
-      'Parse pure IP sniffs connections that carry only an IP address.',
-      name: 'parsePureIpDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Force domains`
   String get forceDomain {
     return Intl.message(
@@ -2074,16 +1954,6 @@ class AppLocalizations {
   /// `Skip domains`
   String get skipDomain {
     return Intl.message('Skip domains', name: 'skipDomain', desc: '', args: []);
-  }
-
-  /// `A sniffed domain on the Skip domains list is not used.`
-  String get skipDomainDesc {
-    return Intl.message(
-      'A sniffed domain on the Skip domains list is not used.',
-      name: 'skipDomainDesc',
-      desc: '',
-      args: [],
-    );
   }
 
   /// `Skip source addresses`
@@ -2351,16 +2221,6 @@ class AppLocalizations {
     return Intl.message(
       'Fake-IP filter mode',
       name: 'fakeipFilterMode',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `In Fake-IP filter mode, blacklist excludes matches, whitelist fakes only matches, and rule matches as rules.`
-  String get fakeipFilterModeDesc {
-    return Intl.message(
-      'In Fake-IP filter mode, blacklist excludes matches, whitelist fakes only matches, and rule matches as rules.',
-      name: 'fakeipFilterModeDesc',
       desc: '',
       args: [],
     );
@@ -2831,16 +2691,6 @@ class AppLocalizations {
     return Intl.message('No network', name: 'noNetwork', desc: '', args: []);
   }
 
-  /// `With IPv6 on, the VPN allows IPv6 inbound.`
-  String get ipv6InboundDesc {
-    return Intl.message(
-      'With IPv6 on, the VPN allows IPv6 inbound.',
-      name: 'ipv6InboundDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Export logs`
   String get exportLogs {
     return Intl.message('Export logs', name: 'exportLogs', desc: '', args: []);
@@ -3021,16 +2871,6 @@ class AppLocalizations {
     return Intl.message(
       'Interface name',
       name: 'interfaceName',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Interface name is the network interface outbound connections use.`
-  String get interfaceNameDesc {
-    return Intl.message(
-      'Interface name is the network interface outbound connections use.',
-      name: 'interfaceNameDesc',
       desc: '',
       args: [],
     );
@@ -3296,16 +3136,6 @@ class AppLocalizations {
     return Intl.message(
       'Advanced configuration',
       name: 'advancedConfig',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Advanced configuration holds network, DNS, added rules, and scripts.`
-  String get advancedConfigDesc {
-    return Intl.message(
-      'Advanced configuration holds network, DNS, added rules, and scripts.',
-      name: 'advancedConfigDesc',
       desc: '',
       args: [],
     );
@@ -4541,16 +4371,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Custom profile resources are the proxies, rule providers, filters, and icon sets you add yourself for custom profiles to use.`
-  String get customProfileResourcesDesc {
-    return Intl.message(
-      'Custom profile resources are the proxies, rule providers, filters, and icon sets you add yourself for custom profiles to use.',
-      name: 'customProfileResourcesDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Unknown network error`
   String get unknownNetworkError {
     return Intl.message(
@@ -5641,16 +5461,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Ignore battery optimization keeps the app running in the background.`
-  String get batteryOptimizationDesc {
-    return Intl.message(
-      'Ignore battery optimization keeps the app running in the background.',
-      name: 'batteryOptimizationDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Location permission`
   String get locationPermission {
     return Intl.message(
@@ -5704,16 +5514,6 @@ class AppLocalizations {
   /// `On demand`
   String get onDemand {
     return Intl.message('On demand', name: 'onDemand', desc: '', args: []);
-  }
-
-  /// `On demand pauses the proxy on excluded Wi-Fi.`
-  String get onDemandDesc {
-    return Intl.message(
-      'On demand pauses the proxy on excluded Wi-Fi.',
-      name: 'onDemandDesc',
-      desc: '',
-      args: [],
-    );
   }
 
   /// `Location permission was denied, so the current Wi-Fi name cannot be read. Please enable location permission manually in system settings.`
@@ -5969,16 +5769,6 @@ class AppLocalizations {
     return Intl.message(
       'Choose from album',
       name: 'pickFromAlbum',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Block connection`
-  String get blockConnection {
-    return Intl.message(
-      'Block connection',
-      name: 'blockConnection',
       desc: '',
       args: [],
     );
@@ -6979,16 +6769,6 @@ class AppLocalizations {
     );
   }
 
-  /// `With Bypass private addresses on, LAN, loopback and multicast addresses skip TUN.`
-  String get bypassPrivateRouteDesc {
-    return Intl.message(
-      'With Bypass private addresses on, LAN, loopback and multicast addresses skip TUN.',
-      name: 'bypassPrivateRouteDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Disable ICMP forwarding`
   String get disableIcmpForwarding {
     return Intl.message(
@@ -7014,16 +6794,6 @@ class AppLocalizations {
     return Intl.message(
       'Excluded interfaces',
       name: 'excludeInterface',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Traffic arriving on excluded interfaces, such as docker0, skips TUN.`
-  String get excludeInterfaceDesc {
-    return Intl.message(
-      'Traffic arriving on excluded interfaces, such as docker0, skips TUN.',
-      name: 'excludeInterfaceDesc',
       desc: '',
       args: [],
     );
@@ -7059,31 +6829,11 @@ class AppLocalizations {
     );
   }
 
-  /// `Only traffic from processes of included user IDs goes through TUN.`
-  String get includeUidDesc {
-    return Intl.message(
-      'Only traffic from processes of included user IDs goes through TUN.',
-      name: 'includeUidDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Excluded user IDs`
   String get excludeUid {
     return Intl.message(
       'Excluded user IDs',
       name: 'excludeUid',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Traffic from processes of excluded user IDs skips TUN.`
-  String get excludeUidDesc {
-    return Intl.message(
-      'Traffic from processes of excluded user IDs skips TUN.',
-      name: 'excludeUidDesc',
       desc: '',
       args: [],
     );
@@ -7099,31 +6849,11 @@ class AppLocalizations {
     );
   }
 
-  /// `Traffic from excluded source ports skips TUN.`
-  String get excludeSrcPortDesc {
-    return Intl.message(
-      'Traffic from excluded source ports skips TUN.',
-      name: 'excludeSrcPortDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Excluded destination ports`
   String get excludeDstPort {
     return Intl.message(
       'Excluded destination ports',
       name: 'excludeDstPort',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Traffic to excluded destination ports skips TUN.`
-  String get excludeDstPortDesc {
-    return Intl.message(
-      'Traffic to excluded destination ports skips TUN.',
-      name: 'excludeDstPortDesc',
       desc: '',
       args: [],
     );
@@ -7663,6 +7393,11 @@ class AppLocalizations {
     return Intl.message('Running', name: 'running', desc: '', args: []);
   }
 
+  /// `Root`
+  String get root {
+    return Intl.message('Root', name: 'root', desc: '', args: []);
+  }
+
   /// `Not running`
   String get notRunning {
     return Intl.message('Not running', name: 'notRunning', desc: '', args: []);
@@ -8055,6 +7790,1296 @@ class AppLocalizations {
       name: 'alreadyInLocalProxies',
       desc: '',
       args: [name],
+    );
+  }
+
+  /// `MITM`
+  String get mitm {
+    return Intl.message('MITM', name: 'mitm', desc: '', args: []);
+  }
+
+  /// `HTTPS decryption`
+  String get httpsDecryption {
+    return Intl.message(
+      'HTTPS decryption',
+      name: 'httpsDecryption',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP capture`
+  String get httpCapture {
+    return Intl.message(
+      'HTTP capture',
+      name: 'httpCapture',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Records requests to the hosts listed under Hostname, to view in connection details. Records stay in memory only.`
+  String get httpCaptureDesc {
+    return Intl.message(
+      'Records requests to the hosts listed under Hostname, to view in connection details. Records stay in memory only.',
+      name: 'httpCaptureDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No host is listed, so nothing is recorded. Add hosts under Hostname on the MITM page, or from the details of a connection.`
+  String get httpCaptureNoHosts {
+    return Intl.message(
+      'No host is listed, so nothing is recorded. Add hosts under Hostname on the MITM page, or from the details of a connection.',
+      name: 'httpCaptureNoHosts',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Maximum records`
+  String get httpCaptureLimit {
+    return Intl.message(
+      'Maximum records',
+      name: 'httpCaptureLimit',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The oldest records go first once this many are kept or they fill {memory} of memory. Each body keeps its first {body}.`
+  String httpCaptureLimitDesc(Object memory, Object body) {
+    return Intl.message(
+      'The oldest records go first once this many are kept or they fill $memory of memory. Each body keeps its first $body.',
+      name: 'httpCaptureLimitDesc',
+      desc: '',
+      args: [memory, body],
+    );
+  }
+
+  /// `HTTP requests`
+  String get httpRequests {
+    return Intl.message(
+      'HTTP requests',
+      name: 'httpRequests',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Requests made before capture was on, or since cleared, are not listed.`
+  String get httpRequestsMissing {
+    return Intl.message(
+      'Requests made before capture was on, or since cleared, are not listed.',
+      name: 'httpRequestsMissing',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This request is no longer kept`
+  String get httpRequestCleared {
+    return Intl.message(
+      'This request is no longer kept',
+      name: 'httpRequestCleared',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Capture is off`
+  String get httpCaptureOff {
+    return Intl.message(
+      'Capture is off',
+      name: 'httpCaptureOff',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `In progress`
+  String get inProgress {
+    return Intl.message('In progress', name: 'inProgress', desc: '', args: []);
+  }
+
+  /// `Method`
+  String get method {
+    return Intl.message('Method', name: 'method', desc: '', args: []);
+  }
+
+  /// `Original URL`
+  String get originalUrl {
+    return Intl.message(
+      'Original URL',
+      name: 'originalUrl',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Time to first byte`
+  String get timeToFirstByte {
+    return Intl.message(
+      'Time to first byte',
+      name: 'timeToFirstByte',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Request body`
+  String get requestBody {
+    return Intl.message(
+      'Request body',
+      name: 'requestBody',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response`
+  String get response {
+    return Intl.message('Response', name: 'response', desc: '', args: []);
+  }
+
+  /// `Response body`
+  String get responseBody {
+    return Intl.message(
+      'Response body',
+      name: 'responseBody',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response headers`
+  String get responseHeaders {
+    return Intl.message(
+      'Response headers',
+      name: 'responseHeaders',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Matched rules`
+  String get matchedRules {
+    return Intl.message(
+      'Matched rules',
+      name: 'matchedRules',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Overview`
+  String get overview {
+    return Intl.message('Overview', name: 'overview', desc: '', args: []);
+  }
+
+  /// `View all`
+  String get viewAll {
+    return Intl.message('View all', name: 'viewAll', desc: '', args: []);
+  }
+
+  /// `Copy as Base64`
+  String get copyAsBase64 {
+    return Intl.message(
+      'Copy as Base64',
+      name: 'copyAsBase64',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy as cURL`
+  String get copyAsCurl {
+    return Intl.message('Copy as cURL', name: 'copyAsCurl', desc: '', args: []);
+  }
+
+  /// `Close connection`
+  String get closeConnection {
+    return Intl.message(
+      'Close connection',
+      name: 'closeConnection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy host`
+  String get copyHost {
+    return Intl.message('Copy host', name: 'copyHost', desc: '', args: []);
+  }
+
+  /// `Copy destination`
+  String get copyDestination {
+    return Intl.message(
+      'Copy destination',
+      name: 'copyDestination',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy request`
+  String get copyRequest {
+    return Intl.message(
+      'Copy request',
+      name: 'copyRequest',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy response`
+  String get copyResponse {
+    return Intl.message(
+      'Copy response',
+      name: 'copyResponse',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy response body`
+  String get copyResponseBody {
+    return Intl.message(
+      'Copy response body',
+      name: 'copyResponseBody',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Read as Protobuf without its schema: field numbers only, and the types are guesses.`
+  String get httpBodyProtobufGuess {
+    return Intl.message(
+      'Read as Protobuf without its schema: field numbers only, and the types are guesses.',
+      name: 'httpBodyProtobufGuess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Export HAR`
+  String get exportHar {
+    return Intl.message('Export HAR', name: 'exportHar', desc: '', args: []);
+  }
+
+  /// `Add a reject rule`
+  String get mitmAddRejectRule {
+    return Intl.message(
+      'Add a reject rule',
+      name: 'mitmAddRejectRule',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add a map local rule`
+  String get mitmAddMapLocalRule {
+    return Intl.message(
+      'Add a map local rule',
+      name: 'mitmAddMapLocalRule',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Contains private data`
+  String get httpExportPrivateTitle {
+    return Intl.message(
+      'Contains private data',
+      name: 'httpExportPrivateTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `A request can carry cookies, tokens, passwords and form contents. Check what you share, and with whom.`
+  String get httpExportPrivate {
+    return Intl.message(
+      'A request can carry cookies, tokens, passwords and form contents. Check what you share, and with whom.',
+      name: 'httpExportPrivate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This module is a Stash override, so the rule was copied for you to add by hand.`
+  String get mitmRuleCopiedForStash {
+    return Intl.message(
+      'This module is a Stash override, so the rule was copied for you to add by hand.',
+      name: 'mitmRuleCopiedForStash',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Binary data`
+  String get binaryData {
+    return Intl.message('Binary data', name: 'binaryData', desc: '', args: []);
+  }
+
+  /// `Not recorded while memory was short.`
+  String get httpBodyNotKept {
+    return Intl.message(
+      'Not recorded while memory was short.',
+      name: 'httpBodyNotKept',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only the start of this body was recorded.`
+  String get httpBodyTruncated {
+    return Intl.message(
+      'Only the start of this body was recorded.',
+      name: 'httpBodyTruncated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Could not decode {encoding}, so this is the data as it was sent.`
+  String httpBodyUndecoded(Object encoding) {
+    return Intl.message(
+      'Could not decode $encoding, so this is the data as it was sent.',
+      name: 'httpBodyUndecoded',
+      desc: '',
+      args: [encoding],
+    );
+  }
+
+  /// `FlClash will be able to read everything sent to the decrypted hosts, cookies and passwords included. Turn this on only for hosts you mean to rewrite.`
+  String get mitmEnableTip {
+    return Intl.message(
+      'FlClash will be able to read everything sent to the decrypted hosts, cookies and passwords included. Turn this on only for hosts you mean to rewrite.',
+      name: 'mitmEnableTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Certificate`
+  String get certificate {
+    return Intl.message('Certificate', name: 'certificate', desc: '', args: []);
+  }
+
+  /// `Generate certificate`
+  String get generateCertificate {
+    return Intl.message(
+      'Generate certificate',
+      name: 'generateCertificate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Regenerate certificate`
+  String get regenerateCertificate {
+    return Intl.message(
+      'Regenerate certificate',
+      name: 'regenerateCertificate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The new certificate replaces the current one, which FlClash takes out of this device's trusted roots where it can. Every other device that trusts the current one has to install the new one.`
+  String get regenerateCertificateTip {
+    return Intl.message(
+      'The new certificate replaces the current one, which FlClash takes out of this device\'s trusted roots where it can. Every other device that trusts the current one has to install the new one.',
+      name: 'regenerateCertificateTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Export certificate`
+  String get exportCertificate {
+    return Intl.message(
+      'Export certificate',
+      name: 'exportCertificate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Install to system`
+  String get installCertificate {
+    return Intl.message(
+      'Install to system',
+      name: 'installCertificate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Certificate installed`
+  String get installCertificateSuccess {
+    return Intl.message(
+      'Certificate installed',
+      name: 'installCertificateSuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Valid until {date}`
+  String validUntil(Object date) {
+    return Intl.message(
+      'Valid until $date',
+      name: 'validUntil',
+      desc: '',
+      args: [date],
+    );
+  }
+
+  /// `Export it and trust it on the devices you want to decrypt.`
+  String get mitmCertificateExportTip {
+    return Intl.message(
+      'Export it and trust it on the devices you want to decrypt.',
+      name: 'mitmCertificateExportTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Trusted`
+  String get mitmTrustReady {
+    return Intl.message('Trusted', name: 'mitmTrustReady', desc: '', args: []);
+  }
+
+  /// `Not fully trusted`
+  String get mitmTrustUntrusted {
+    return Intl.message(
+      'Not fully trusted',
+      name: 'mitmTrustUntrusted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not installed`
+  String get mitmTrustNotInstalled {
+    return Intl.message(
+      'Not installed',
+      name: 'mitmTrustNotInstalled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Checking…`
+  String get mitmTrustChecking {
+    return Intl.message(
+      'Checking…',
+      name: 'mitmTrustChecking',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Trust certificate`
+  String get trustCertificate {
+    return Intl.message(
+      'Trust certificate',
+      name: 'trustCertificate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only apps that trust user certificates, mostly browsers, are decrypted.`
+  String get mitmCertificateAndroidReadyTip {
+    return Intl.message(
+      'Only apps that trust user certificates, mostly browsers, are decrypted.',
+      name: 'mitmCertificateAndroidReadyTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Flatpak browsers need the exported certificate imported by hand.`
+  String get mitmCertificateLinuxTip {
+    return Intl.message(
+      'Flatpak browsers need the exported certificate imported by hand.',
+      name: 'mitmCertificateLinuxTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Chrome and Firefox keep their own certificate stores, which need certutil: {command}`
+  String mitmCertutilMissing(Object command) {
+    return Intl.message(
+      'Chrome and Firefox keep their own certificate stores, which need certutil: $command',
+      name: 'mitmCertutilMissing',
+      desc: '',
+      args: [command],
+    );
+  }
+
+  /// `Not yet in: {stores}`
+  String mitmMissingStores(Object stores) {
+    return Intl.message(
+      'Not yet in: $stores',
+      name: 'mitmMissingStores',
+      desc: '',
+      args: [stores],
+    );
+  }
+
+  /// `Adding the certificate to the system's trusted roots failed`
+  String get mitmSystemStoreFailed {
+    return Intl.message(
+      'Adding the certificate to the system\'s trusted roots failed',
+      name: 'mitmSystemStoreFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No Magisk, KernelSU or APatch was found to keep the certificate. Install it again after the device restarts.`
+  String get mitmRootUntilReboot {
+    return Intl.message(
+      'No Magisk, KernelSU or APatch was found to keep the certificate. Install it again after the device restarts.',
+      name: 'mitmRootUntilReboot',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The certificate takes effect after the device restarts.`
+  String get mitmRootPendingReboot {
+    return Intl.message(
+      'The certificate takes effect after the device restarts.',
+      name: 'mitmRootPendingReboot',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Root was found, so the certificate goes into the system's trusted certificates as a FlClash MITM CA module for Magisk, KernelSU or APatch. Every app on this device will then trust it, and anyone holding its private key could decrypt this device's HTTPS traffic. To undo it, regenerate the certificate or remove the module in the root manager and restart. If root is denied, it is installed as a user certificate instead.`
+  String get mitmInstallSystemCaTip {
+    return Intl.message(
+      'Root was found, so the certificate goes into the system\'s trusted certificates as a FlClash MITM CA module for Magisk, KernelSU or APatch. Every app on this device will then trust it, and anyone holding its private key could decrypt this device\'s HTTPS traffic. To undo it, regenerate the certificate or remove the module in the root manager and restart. If root is denied, it is installed as a user certificate instead.',
+      name: 'mitmInstallSystemCaTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No root was found, so the certificate can only be installed as a user certificate. Only apps that trust user certificates, mostly browsers, are decrypted; other apps fail on the hosts you list, so leave those hosts out. On Android 11 and later you finish the install yourself in system settings.`
+  String get mitmInstallUserCaTip {
+    return Intl.message(
+      'No root was found, so the certificate can only be installed as a user certificate. Only apps that trust user certificates, mostly browsers, are decrypted; other apps fail on the hosts you list, so leave those hosts out. On Android 11 and later you finish the install yourself in system settings.',
+      name: 'mitmInstallUserCaTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Saved {fileName} to Downloads. Install it in Settings under Security › Encryption & credentials › Install a certificate › CA certificate.`
+  String mitmCertificateSavedTip(Object fileName) {
+    return Intl.message(
+      'Saved $fileName to Downloads. Install it in Settings under Security › Encryption & credentials › Install a certificate › CA certificate.',
+      name: 'mitmCertificateSavedTip',
+      desc: '',
+      args: [fileName],
+    );
+  }
+
+  /// `Open settings`
+  String get openSettings {
+    return Intl.message(
+      'Open settings',
+      name: 'openSettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Remove the old certificate, {name}, in Settings under Security › Encryption & credentials › Trusted credentials › User, then install the new one.`
+  String mitmRemoveOldCertificateTip(Object name) {
+    return Intl.message(
+      'Remove the old certificate, $name, in Settings under Security › Encryption & credentials › Trusted credentials › User, then install the new one.',
+      name: 'mitmRemoveOldCertificateTip',
+      desc: '',
+      args: [name],
+    );
+  }
+
+  /// `The old certificate, {name}, could not be removed. Remove it from the trusted roots yourself.`
+  String mitmOldCertificateLeftTip(Object name) {
+    return Intl.message(
+      'The old certificate, $name, could not be removed. Remove it from the trusted roots yourself.',
+      name: 'mitmOldCertificateLeftTip',
+      desc: '',
+      args: [name],
+    );
+  }
+
+  /// `The old certificate, {name}, is still among the system's trusted CAs. Allow FlClash root access in your root manager and regenerate, or remove the FlClash MITM CA module there and restart.`
+  String mitmOldSystemCertificateLeftTip(Object name) {
+    return Intl.message(
+      'The old certificate, $name, is still among the system\'s trusted CAs. Allow FlClash root access in your root manager and regenerate, or remove the FlClash MITM CA module there and restart.',
+      name: 'mitmOldSystemCertificateLeftTip',
+      desc: '',
+      args: [name],
+    );
+  }
+
+  /// `Decrypt this host`
+  String get mitmDecryptHost {
+    return Intl.message(
+      'Decrypt this host',
+      name: 'mitmDecryptHost',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add {host} to the hostname list? FlClash can then read what is sent to it, cookies and passwords included.`
+  String mitmDecryptHostTip(Object host) {
+    return Intl.message(
+      'Add $host to the hostname list? FlClash can then read what is sent to it, cookies and passwords included.',
+      name: 'mitmDecryptHostTip',
+      desc: '',
+      args: [host],
+    );
+  }
+
+  /// `The client refused the certificate. Install the CA, or exclude this host if the app pins its certificate.`
+  String get mitmClientRefusedCertificate {
+    return Intl.message(
+      'The client refused the certificate. Install the CA, or exclude this host if the app pins its certificate.',
+      name: 'mitmClientRefusedCertificate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Exclude from decryption`
+  String get mitmExcludeHost {
+    return Intl.message(
+      'Exclude from decryption',
+      name: 'mitmExcludeHost',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add -{host} to the top of the hostname list? The host is then never decrypted.`
+  String mitmExcludeHostTip(Object host) {
+    return Intl.message(
+      'Add -$host to the top of the hostname list? The host is then never decrypted.',
+      name: 'mitmExcludeHostTip',
+      desc: '',
+      args: [host],
+    );
+  }
+
+  /// `URL rewrite`
+  String get urlRewrite {
+    return Intl.message('URL rewrite', name: 'urlRewrite', desc: '', args: []);
+  }
+
+  /// `Header rewrite`
+  String get headerRewrite {
+    return Intl.message(
+      'Header rewrite',
+      name: 'headerRewrite',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Body rewrite`
+  String get bodyRewrite {
+    return Intl.message(
+      'Body rewrite',
+      name: 'bodyRewrite',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Map local`
+  String get mapLocal {
+    return Intl.message('Map local', name: 'mapLocal', desc: '', args: []);
+  }
+
+  /// `A leading - excludes a host, and the first match decides.`
+  String get mitmHostnameDesc {
+    return Intl.message(
+      'A leading - excludes a host, and the first match decides.',
+      name: 'mitmHostnameDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Modules`
+  String get mitmModules {
+    return Intl.message('Modules', name: 'mitmModules', desc: '', args: []);
+  }
+
+  /// `Module`
+  String get mitmModule {
+    return Intl.message('Module', name: 'mitmModule', desc: '', args: []);
+  }
+
+  /// `This is not a Surge module, a Loon plugin, a Quantumult X snippet or a Stash override`
+  String get mitmModuleInvalid {
+    return Intl.message(
+      'This is not a Surge module, a Loon plugin, a Quantumult X snippet or a Stash override',
+      name: 'mitmModuleInvalid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Arguments`
+  String get arguments {
+    return Intl.message('Arguments', name: 'arguments', desc: '', args: []);
+  }
+
+  /// `Routing rules`
+  String get mitmRoutingRules {
+    return Intl.message(
+      'Routing rules',
+      name: 'mitmRoutingRules',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Ignored lines`
+  String get mitmIgnoredLines {
+    return Intl.message(
+      'Ignored lines',
+      name: 'mitmIgnoredLines',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Routing rules go in front of the profile’s own.`
+  String get mitmModuleRulesDesc {
+    return Intl.message(
+      'Routing rules go in front of the profile’s own.',
+      name: 'mitmModuleRulesDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Written for {system}; some lines may not match apps on this device.`
+  String mitmModuleSystemTip(Object system) {
+    return Intl.message(
+      'Written for $system; some lines may not match apps on this device.',
+      name: 'mitmModuleSystemTip',
+      desc: '',
+      args: [system],
+    );
+  }
+
+  /// `The [{section}] section is not supported`
+  String mitmSkipSection(Object section) {
+    return Intl.message(
+      'The [$section] section is not supported',
+      name: 'mitmSkipSection',
+      desc: '',
+      args: [section],
+    );
+  }
+
+  /// `This setting is not supported`
+  String get mitmSkipSetting {
+    return Intl.message(
+      'This setting is not supported',
+      name: 'mitmSkipSetting',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This script type is not supported`
+  String get mitmSkipScriptType {
+    return Intl.message(
+      'This script type is not supported',
+      name: 'mitmSkipScriptType',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This rule type is not supported`
+  String get mitmSkipRule {
+    return Intl.message(
+      'This rule type is not supported',
+      name: 'mitmSkipRule',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only the DIRECT and REJECT policies are supported`
+  String get mitmSkipPolicy {
+    return Intl.message(
+      'Only the DIRECT and REJECT policies are supported',
+      name: 'mitmSkipPolicy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `jq rewrites are not supported`
+  String get mitmSkipJq {
+    return Intl.message(
+      'jq rewrites are not supported',
+      name: 'mitmSkipJq',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `JSON body rewrites are not supported`
+  String get mitmSkipJsonBody {
+    return Intl.message(
+      'JSON body rewrites are not supported',
+      name: 'mitmSkipJsonBody',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rewriting all headers as one text is not supported`
+  String get mitmSkipRawHeader {
+    return Intl.message(
+      'Rewriting all headers as one text is not supported',
+      name: 'mitmSkipRawHeader',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Conditional rewrites are not supported`
+  String get mitmSkipConditional {
+    return Intl.message(
+      'Conditional rewrites are not supported',
+      name: 'mitmSkipConditional',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The file this line names is not attached; use a URL or attach it`
+  String get mitmSkipRelativeData {
+    return Intl.message(
+      'The file this line names is not attached; use a URL or attach it',
+      name: 'mitmSkipRelativeData',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Its file has not been downloaded`
+  String get mitmSkipNotDownloaded {
+    return Intl.message(
+      'Its file has not been downloaded',
+      name: 'mitmSkipNotDownloaded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This line cannot be read`
+  String get mitmSkipUnreadable {
+    return Intl.message(
+      'This line cannot be read',
+      name: 'mitmSkipUnreadable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add a local file`
+  String get mitmAddLocalFile {
+    return Intl.message(
+      'Add a local file',
+      name: 'mitmAddLocalFile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `New module`
+  String get mitmNewModule {
+    return Intl.message(
+      'New module',
+      name: 'mitmNewModule',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Attachments`
+  String get mitmAttachments {
+    return Intl.message(
+      'Attachments',
+      name: 'mitmAttachments',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Lines refer to attachments by file name, as in script-path=a.js.`
+  String get mitmAttachmentsDesc {
+    return Intl.message(
+      'Lines refer to attachments by file name, as in script-path=a.js.',
+      name: 'mitmAttachmentsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The file is larger than {size} MB`
+  String mitmFileTooLarge(Object size) {
+    return Intl.message(
+      'The file is larger than $size MB',
+      name: 'mitmFileTooLarge',
+      desc: '',
+      args: [size],
+    );
+  }
+
+  /// `Turned off by an argument`
+  String get mitmSkipDisabled {
+    return Intl.message(
+      'Turned off by an argument',
+      name: 'mitmSkipDisabled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This event is not supported`
+  String get mitmSkipEvent {
+    return Intl.message(
+      'This event is not supported',
+      name: 'mitmSkipEvent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Run now`
+  String get mitmRunScript {
+    return Intl.message('Run now', name: 'mitmRunScript', desc: '', args: []);
+  }
+
+  /// `The script finished without output`
+  String get mitmScriptNoOutput {
+    return Intl.message(
+      'The script finished without output',
+      name: 'mitmScriptNoOutput',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Run this module's scripts?`
+  String get mitmScriptRiskTitle {
+    return Intl.message(
+      'Run this module\'s scripts?',
+      name: 'mitmScriptRiskTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Its scripts read and change the traffic of the hosts they match, cookies and tokens included, and can send requests of their own. Turn it on only if you trust where it comes from.`
+  String get mitmScriptRisk {
+    return Intl.message(
+      'Its scripts read and change the traffic of the hosts they match, cookies and tokens included, and can send requests of their own. Turn it on only if you trust where it comes from.',
+      name: 'mitmScriptRisk',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Skip server certificate verification`
+  String get skipServerCertVerify {
+    return Intl.message(
+      'Skip server certificate verification',
+      name: 'skipServerCertVerify',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Block QUIC`
+  String get blockQuic {
+    return Intl.message('Block QUIC', name: 'blockQuic', desc: '', args: []);
+  }
+
+  /// `HTTP/2`
+  String get http2 {
+    return Intl.message('HTTP/2', name: 'http2', desc: '', args: []);
+  }
+
+  /// `Decrypt without local trust`
+  String get decryptUntrusted {
+    return Intl.message(
+      'Decrypt without local trust',
+      name: 'decryptUntrusted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{invalid} of {total} invalid`
+  String invalidOfCount(Object invalid, Object total) {
+    return Intl.message(
+      '$invalid of $total invalid',
+      name: 'invalidOfCount',
+      desc: '',
+      args: [invalid, total],
+    );
+  }
+
+  /// `One item per line`
+  String get batchLineInputTip {
+    return Intl.message(
+      'One item per line',
+      name: 'batchLineInputTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Downloading update`
+  String get downloadingUpdate {
+    return Intl.message(
+      'Downloading update',
+      name: 'downloadingUpdate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Update failed`
+  String get updateFailed {
+    return Intl.message(
+      'Update failed',
+      name: 'updateFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Update download test`
+  String get updateDownloadTest {
+    return Intl.message(
+      'Update download test',
+      name: 'updateDownloadTest',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Downloading the update. Follow its progress on the dashboard.`
+  String get updateDownloadStarted {
+    return Intl.message(
+      'Downloading the update. Follow its progress on the dashboard.',
+      name: 'updateDownloadStarted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Update ready`
+  String get updateReady {
+    return Intl.message(
+      'Update ready',
+      name: 'updateReady',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The update has downloaded. Tap to install it.`
+  String get updateReadyTip {
+    return Intl.message(
+      'The update has downloaded. Tap to install it.',
+      name: 'updateReadyTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stop downloading the update?`
+  String get stopUpdateDownloadTip {
+    return Intl.message(
+      'Stop downloading the update?',
+      name: 'stopUpdateDownloadTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The update could not be installed. You can download it from the release page instead.`
+  String get updateInstallFailed {
+    return Intl.message(
+      'The update could not be installed. You can download it from the release page instead.',
+      name: 'updateInstallFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The downloaded update could not be verified.`
+  String get updateNotVerified {
+    return Intl.message(
+      'The downloaded update could not be verified.',
+      name: 'updateNotVerified',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `FlClash closes to install the update and opens again when it is done.`
+  String get updateRestartTip {
+    return Intl.message(
+      'FlClash closes to install the update and opens again when it is done.',
+      name: 'updateRestartTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The update could not be downloaded.`
+  String get updateDownloadFailed {
+    return Intl.message(
+      'The update could not be downloaded.',
+      name: 'updateDownloadFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Resolves the hostnames of the other DNS servers. Use IP addresses only.`
+  String get defaultNameserverDesc {
+    return Intl.message(
+      'Resolves the hostnames of the other DNS servers. Use IP addresses only.',
+      name: 'defaultNameserverDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The default DNS servers, such as 223.5.5.5, tls://1.1.1.1 or https://dns.google/dns-query.`
+  String get nameserverDesc {
+    return Intl.message(
+      'The default DNS servers, such as 223.5.5.5, tls://1.1.1.1 or https://dns.google/dns-query.',
+      name: 'nameserverDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Used instead of Nameserver when the fallback filter treats its answer as polluted.`
+  String get fallbackDesc {
+    return Intl.message(
+      'Used instead of Nameserver when the fallback filter treats its answer as polluted.',
+      name: 'fallbackDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Resolves proxy server hostnames only.`
+  String get proxyServerNameserverDesc {
+    return Intl.message(
+      'Resolves proxy server hostnames only.',
+      name: 'proxyServerNameserverDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Matching proxy server hostnames use the DNS server given here instead of Proxy Server Nameserver.`
+  String get proxyServerNameserverPolicyDesc {
+    return Intl.message(
+      'Matching proxy server hostnames use the DNS server given here instead of Proxy Server Nameserver.',
+      name: 'proxyServerNameserverPolicyDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Resolves domains for connections that go direct.`
+  String get directNameserverDesc {
+    return Intl.message(
+      'Resolves domains for connections that go direct.',
+      name: 'directNameserverDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Matching domains use the DNS server given here instead of Nameserver and Fallback.`
+  String get nameserverPolicyDesc {
+    return Intl.message(
+      'Matching domains use the DNS server given here instead of Nameserver and Fallback.',
+      name: 'nameserverPolicyDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `These domains get real IPs instead of Fake-IPs. In whitelist mode, only they get Fake-IPs.`
+  String get fakeipFilterDesc {
+    return Intl.message(
+      'These domains get real IPs instead of Fake-IPs. In whitelist mode, only they get Fake-IPs.',
+      name: 'fakeipFilterDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Domains in these GeoSite categories are resolved by Fallback directly.`
+  String get fallbackFilterGeositeDesc {
+    return Intl.message(
+      'Domains in these GeoSite categories are resolved by Fallback directly.',
+      name: 'fallbackFilterGeositeDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `When Nameserver returns an IP in these ranges, the Fallback answer is used.`
+  String get fallbackFilterIpcidrDesc {
+    return Intl.message(
+      'When Nameserver returns an IP in these ranges, the Fallback answer is used.',
+      name: 'fallbackFilterIpcidrDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `These domains are resolved by Fallback directly.`
+  String get fallbackFilterDomainDesc {
+    return Intl.message(
+      'These domains are resolved by Fallback directly.',
+      name: 'fallbackFilterDomainDesc',
+      desc: '',
+      args: [],
     );
   }
 }

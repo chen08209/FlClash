@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/core/event.dart';
 import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/core/interface.dart';
@@ -28,31 +29,22 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
   Future<CoreLifecycleResult> close() => start();
 
   @override
-  Future<T?> invokeMethod<T>({
+  Future<Object?> invokeMethod({
     required CoreMethod method,
     Object? arguments,
     Duration? timeout,
   }) async {
     calls[method] = arguments;
-    final result = switch (method) {
-      CoreMethod.initClash => true as T,
-      CoreMethod.getTraffic ||
-      CoreMethod.getTotalTraffic => {'up': 12, 'down': 34},
-      CoreMethod.asyncTestDelay => {
+    return switch (method) {
+      CoreMethod.coreInitialized => true,
+      CoreMethod.trafficCurrent ||
+      CoreMethod.trafficTotal => {'up': 12, 'down': 34},
+      CoreMethod.proxyTestDelay => {
         'name': 'DIRECT',
         'url': 'https://example.com',
         'value': 42,
       },
-      CoreMethod.probe => {
-        'status-code': 204,
-        'delay': 17,
-        'body': '',
-        'url': 'https://example.com/',
-        'chains': ['DIRECT'],
-        'rule': 'Match',
-        'rule-payload': '',
-      },
-      CoreMethod.getConnections => {
+      CoreMethod.connectionList => {
         'connections': [
           {
             'id': 'connection-1',
@@ -66,7 +58,7 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
           },
         ],
       },
-      CoreMethod.getExternalProviders => [
+      CoreMethod.providerList => [
         {
           'name': 'provider-1',
           'type': 'Proxy',
@@ -75,31 +67,32 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
           'update-at': '2024-01-01T00:00:00.000Z',
         },
       ],
-      CoreMethod.getExternalProvider => {
+      CoreMethod.providerGet => {
         'name': 'provider-1',
         'type': 'Proxy',
         'count': 1,
         'vehicle-type': 'HTTP',
         'update-at': '2024-01-01T00:00:00.000Z',
       },
-      CoreMethod.getConfig => {
+      CoreMethod.configRead => {
         'mode': 'rule',
         'rule': ['MATCH,DIRECT'],
       },
-      CoreMethod.getProfileOutbounds => {
+      CoreMethod.profileOutbounds => {
         'proxies': [
           {'name': 'a', 'type': 'ss'},
         ],
         'proxy-groups': <Object>[],
       },
-      CoreMethod.getProxyDefinition when arguments == 'a' => {
-        'name': 'a',
-        'type': 'ss',
-        'plugin-opts': {'mode': 'websocket'},
-      },
-      CoreMethod.getProxyDefinition => null,
-      CoreMethod.buildProfile => '/home/responses/1.yaml',
-      CoreMethod.getProfileBase => {
+      CoreMethod.proxyDefinition
+          when arguments is Map && arguments['name'] == 'a' =>
+        {
+          'name': 'a',
+          'type': 'ss',
+          'plugin-opts': {'mode': 'websocket'},
+        },
+      CoreMethod.profileBuild => '/home/responses/1.yaml',
+      CoreMethod.profileBase => {
         'config': {'mode': 'rule', 'rule': null},
         'digest': 'abc',
         'match-rules': ['MATCH,DIRECT'],
@@ -107,37 +100,70 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
         'proxy-groups': 1,
         'rules': 3,
       },
-      CoreMethod.getMemoryStats => {
+      CoreMethod.coreMemory => {
         'rss': 2048,
-        'heapInuse': 1024,
-        'heapIdle': 256,
-        'stackInuse': 64,
-        'runtimeOther': 32,
+        'heap-inuse': 1024,
+        'heap-idle': 256,
+        'stack-inuse': 64,
+        'runtime-other': 32,
       },
-      CoreMethod.changeProxy => {'message': '', 'changed': true},
-      CoreMethod.compileRuleSet => {'behavior': 'ipcidr', 'format': 'text'},
-      CoreMethod.getConnectionCount => 3,
-      CoreMethod.validateFilters => ['', 'missing closing )'],
-      CoreMethod.watchRoute => {'core-epoch': 1, 'route-version': 0},
-      CoreMethod.checkRoutes => {
+      CoreMethod.proxySelect => {'message': '', 'changed': true},
+      CoreMethod.ruleSetCompile => {'behavior': 'ipcidr', 'format': 'text'},
+      CoreMethod.ruleSetDump => '/home/responses/2.yaml',
+      CoreMethod.configDecrypt => 'mode: rule',
+      CoreMethod.connectionCount => 3,
+      CoreMethod.proxyValidate || CoreMethod.filterValidate => [
+        {'index': 1, 'message': 'missing closing )'},
+      ],
+      CoreMethod.mitmValidate => {
+        'url-rewrite': [
+          {'index': 1, 'message': 'unknown type "x"'},
+        ],
+      },
+      CoreMethod.mitmCertificate => {
+        'pem': '-----BEGIN CERTIFICATE-----',
+        'fingerprint': 'AB:CD',
+        'subject': 'FlClash CA 0000ABCD',
+        'not-before': '2026-10-20T00:00:00Z',
+        'not-after': '2036-10-22T00:00:00Z',
+      },
+      CoreMethod.mitmIssueCertificate => '-----BEGIN CERTIFICATE-----',
+      CoreMethod.mitmExchanges => {
+        'capturing': true,
+        'since': '2026-10-28T00:00:00Z',
+        'exchanges': [
+          {
+            'id': 7,
+            'start': '2026-10-28T00:00:01Z',
+            'pending': true,
+            'duration': 12,
+            'method': 'GET',
+            'url': 'https://a.test/x',
+            'status': 0,
+            'request-size': 0,
+            'response-size': 0,
+          },
+        ],
+      },
+      CoreMethod.routeWatch => {'core-epoch': 1, 'route-version': 0},
+      CoreMethod.routeCheck => {
         'core-epoch': 1,
         'route-version': 3,
         'held': [true, false],
       },
-      _ => '',
+      _ => null,
     };
-    return result as T?;
   }
 }
 
 class _FailingConfigCoreHandler extends _RecordingCoreHandler {
   @override
-  Future<T?> invokeMethod<T>({
+  Future<Object?> invokeMethod({
     required CoreMethod method,
     Object? arguments,
     Duration? timeout,
   }) async {
-    if (method == CoreMethod.getConfig) {
+    if (method == CoreMethod.configRead) {
       throw const CoreMethodException(
         code: 'core_error',
         message: 'config not found',
@@ -154,12 +180,12 @@ class _FailingConfigCoreHandler extends _RecordingCoreHandler {
 
 class _EmptyConfigCoreHandler extends _RecordingCoreHandler {
   @override
-  Future<T?> invokeMethod<T>({
+  Future<Object?> invokeMethod({
     required CoreMethod method,
     Object? arguments,
     Duration? timeout,
   }) async {
-    if (method == CoreMethod.getConfig) {
+    if (method == CoreMethod.configRead) {
       return null;
     }
     return super.invokeMethod(
@@ -181,11 +207,25 @@ void main() {
       Map<String, Object?>.from(fixture['methodCall'] as Map),
     );
 
-    expect(call.method, CoreMethod.updateConfig);
+    expect(call.method, CoreMethod.configUpdate);
     expect(call.arguments, isA<Map<String, dynamic>>());
     expect((call.arguments as Map)['mixed-port'], 7890);
     expect(call.toJson(), containsPair('arguments', call.arguments));
     expect(call.toJson(), isNot(contains('data')));
+  });
+
+  test('the Dart and Go method tables name the same methods', () async {
+    final protocol = await File('core/protocol.go').readAsString();
+    final goNames = {
+      for (final match in RegExp(
+        r'^\s*\w+Method\s+CoreMethod\s*=\s*"([^"]+)"',
+        multiLine: true,
+      ).allMatches(protocol))
+        match.group(1)!,
+    };
+
+    expect(goNames, isNotEmpty);
+    expect({for (final method in CoreMethod.values) method.wireName}, goNames);
   });
 
   test('core interface sends structured request parameters', () async {
@@ -193,7 +233,10 @@ void main() {
 
     await handler.init(const InitParams(homeDir: '/tmp/flclash', version: 35));
     await handler.setupConfig(
-      const SetupParams(selectedMap: {'GLOBAL': 'DIRECT'}, testUrl: 'test'),
+      const SetupParams(
+        selectedMap: {'GLOBAL': 'DIRECT'},
+        options: CoreOptions(testUrl: 'test'),
+      ),
     );
     final switched = await handler.changeProxy(
       const ChangeProxyParams(groupName: 'GLOBAL', proxyName: 'DIRECT'),
@@ -201,7 +244,6 @@ void main() {
     expect(switched, const ChangeProxyResult(changed: true));
     final route = await handler.watchRoute(true);
     expect(route, const RouteSnapshot(coreEpoch: 1));
-    expect(handler.calls[CoreMethod.watchRoute], isTrue);
     final check = await handler.checkRoutes(
       const CheckRoutesParams(
         routes: [
@@ -214,7 +256,39 @@ void main() {
       check,
       const RouteCheck(coreEpoch: 1, routeVersion: 3, held: [true, false]),
     );
-    expect(jsonDecode(jsonEncode(handler.calls[CoreMethod.checkRoutes])), {
+    await handler.sideLoadExternalProvider(providerName: 'provider', data: 'x');
+    await handler.testDelay(
+      const TestDelayParams(
+        proxyName: 'DIRECT',
+        testUrl: 'https://example.com',
+        timeout: 8000,
+      ),
+    );
+    await handler.clearEffect(42);
+    await handler.getTraffic(true);
+    await handler.closeConnection('connection-1');
+    await handler.updateGeoData('GeoIp');
+
+    for (final method in CoreMethod.values) {
+      if (handler.calls[method] case final Object arguments) {
+        expect(arguments, isA<Map>(), reason: method.wireName);
+      }
+    }
+    expect(handler.calls[CoreMethod.coreInit], {
+      'home-dir': '/tmp/flclash',
+      'version': 35,
+    });
+    expect(json.decode(json.encode(handler.calls[CoreMethod.configSetup])), {
+      'selected-map': {'GLOBAL': 'DIRECT'},
+      'options': {
+        'test-url': 'test',
+        'skip-cert-verify': false,
+        'delay-test-timeout': defaultDelayTestTimeout,
+        'mitm-capture': false,
+      },
+    });
+    expect(handler.calls[CoreMethod.routeWatch], {'watch': true});
+    expect(json.decode(json.encode(handler.calls[CoreMethod.routeCheck])), {
       'routes': [
         [
           {'host': 'example.com:443', 'proxy': 'DIRECT', 'exit': 'x'},
@@ -222,57 +296,110 @@ void main() {
         <Object?>[],
       ],
     });
-    await handler.sideLoadExternalProvider(providerName: 'provider', data: 'x');
-    await handler.asyncTestDelay(
-      'https://example.com',
-      'DIRECT',
-      const Duration(seconds: 8),
-    );
-    await handler.probe(
-      const ProbeParams(
-        url: 'https://example.com',
-        proxyName: 'DIRECT',
-        timeout: 1000,
-        maxBody: 64,
-      ),
-    );
-    await handler.clearEffect(42);
-
-    for (final method in [
-      CoreMethod.initClash,
-      CoreMethod.setupConfig,
-      CoreMethod.changeProxy,
-      CoreMethod.sideLoadExternalProvider,
-      CoreMethod.asyncTestDelay,
-      CoreMethod.probe,
-    ]) {
-      expect(handler.calls[method], isA<Map>());
-    }
-    expect(handler.calls[CoreMethod.probe], {
-      'url': 'https://example.com',
-      'proxy-name': 'DIRECT',
-      'headers': <String, String>{},
-      'timeout': 1000,
-      'max-body': 64,
+    expect(handler.calls[CoreMethod.providerSideLoad], {
+      'name': 'provider',
+      'data': 'x',
     });
-    expect(handler.calls[CoreMethod.clearEffect], 42);
+    expect(handler.calls[CoreMethod.proxyTestDelay], {
+      'proxy-name': 'DIRECT',
+      'test-url': 'https://example.com',
+      'timeout': 8000,
+    });
+    expect(handler.calls[CoreMethod.profileClearEffect], {'profile-id': 42});
+    expect(handler.calls[CoreMethod.trafficCurrent], {'only-proxy': true});
+    expect(handler.calls[CoreMethod.connectionClose], {'id': 'connection-1'});
+    expect(handler.calls[CoreMethod.geoUpdate], {'type': 'GeoIp'});
   });
 
-  test('validateFilters sends the filters and reads one error each', () async {
+  test('a list validation reads only the entries the Core refuses', () async {
     final handler = _RecordingCoreHandler();
 
-    final errors = await handler.validateFilters(['hk`jp', '(hk']);
+    final filters = await handler.validateFilters(['hk`jp', '(hk']);
+    final proxies = await handler.validateProxies([
+      {'name': 'a'},
+      {'name': 'b'},
+    ]);
 
-    expect(handler.calls[CoreMethod.validateFilters], ['hk`jp', '(hk']);
-    expect(errors, ['', 'missing closing )']);
+    expect(handler.calls[CoreMethod.filterValidate], {
+      'filters': ['hk`jp', '(hk'],
+    });
+    expect(filters, {1: 'missing closing )'});
+    expect(proxies, {1: 'missing closing )'});
+  });
+
+  test('validateMitm sends the section and reads issues by list', () async {
+    final handler = _RecordingCoreHandler();
+    const rules = MitmRules(urlRewrite: ['^a _ reject', '^b c x']);
+
+    final issues = await handler.validateMitm(rules);
+
+    expect(handler.calls[CoreMethod.mitmValidate], rules.toJson());
+    expect(issues, {
+      MitmList.urlRewrite: {1: 'unknown type "x"'},
+    });
+  });
+
+  test('captured requests are listed by connection and read by id', () async {
+    final handler = _RecordingCoreHandler();
+
+    final list = await handler.getMitmExchanges('connection-1');
+    final cleared = await handler.getMitmExchange(7);
+
+    expect(handler.calls[CoreMethod.mitmExchanges], {'id': 'connection-1'});
+    expect(handler.calls[CoreMethod.mitmExchange], {'id': 7});
+    expect(list.capturing, isTrue);
+    expect(list.since, DateTime.utc(2026, 10, 28));
+    expect(list.exchanges.single.pending, isTrue);
+    expect(cleared, isNull);
+  });
+
+  test('the MITM certificate is read, and a missing answer fails', () async {
+    final handler = _RecordingCoreHandler();
+
+    final certificate = await handler.getMitmCertificate();
+
+    expect(certificate?.subject, 'FlClash CA 0000ABCD');
+    expect(certificate?.notAfter, DateTime.utc(2036, 10, 22));
+    await expectLater(
+      handler.generateMitmCertificate(),
+      throwsA(
+        isA<CoreMethodException>().having(
+          (error) => error.code,
+          'code',
+          'empty_result',
+        ),
+      ),
+    );
+  });
+
+  test('a check leaf is signed for the host it names', () async {
+    final handler = _RecordingCoreHandler();
+
+    final pem = await handler.issueMitmCertificate('check.invalid');
+
+    expect(pem, '-----BEGIN CERTIFICATE-----');
+    expect(handler.calls[CoreMethod.mitmIssueCertificate], {
+      'host': 'check.invalid',
+    });
+  });
+
+  test('a command answers nothing and a query answers its result', () async {
+    final handler = _RecordingCoreHandler();
+
+    await handler.forceGc();
+    await handler.closeConnections();
+
+    expect(await handler.isInit, isTrue);
+    expect(await handler.validateConfig('/config.yaml'), isNull);
+    expect(handler.calls[CoreMethod.configValidate], {'path': '/config.yaml'});
   });
 
   test('dumpRuleSet sends the rule set path', () async {
     final handler = _RecordingCoreHandler();
 
-    await handler.dumpRuleSet('/rules.mrs');
+    expect(await handler.dumpRuleSet('/rules.mrs'), '/home/responses/2.yaml');
 
-    expect(handler.calls[CoreMethod.dumpRuleSet], '/rules.mrs');
+    expect(handler.calls[CoreMethod.ruleSetDump], {'path': '/rules.mrs'});
   });
 
   test('decryptConfig sends the path and the age key', () async {
@@ -280,7 +407,7 @@ void main() {
 
     await handler.decryptConfig('/profile.yaml', 'AGE-SECRET-KEY-1A');
 
-    expect(handler.calls[CoreMethod.decryptConfig], {
+    expect(handler.calls[CoreMethod.configDecrypt], {
       'path': '/profile.yaml',
       'age-secret-key': 'AGE-SECRET-KEY-1A',
     });
@@ -296,7 +423,7 @@ void main() {
         url: 'https://example.com/r.list',
       );
 
-      expect(handler.calls[CoreMethod.compileRuleSet], {
+      expect(handler.calls[CoreMethod.ruleSetCompile], {
         'name': 'abc',
         'url': 'https://example.com/r.list',
       });
@@ -399,24 +526,14 @@ void main() {
       const Traffic(up: 12, down: 34),
     );
     expect(
-      await handler.asyncTestDelay(
-        'https://example.com',
-        'DIRECT',
-        const Duration(seconds: 8),
+      await handler.testDelay(
+        const TestDelayParams(
+          proxyName: 'DIRECT',
+          testUrl: 'https://example.com',
+          timeout: 8000,
+        ),
       ),
       const Delay(name: 'DIRECT', url: 'https://example.com', value: 42),
-    );
-    expect(
-      await handler.probe(
-        const ProbeParams(url: 'https://example.com', timeout: 1000),
-      ),
-      const ProbeResult(
-        statusCode: 204,
-        delay: 17,
-        url: 'https://example.com/',
-        chains: ['DIRECT'],
-        rule: 'Match',
-      ),
     );
     expect((await handler.getConnections()).single.id, 'connection-1');
     expect(await handler.getConnectionCount(), 3);
@@ -425,13 +542,13 @@ void main() {
       (await handler.getExternalProvider('provider-1'))?.name,
       'provider-1',
     );
-    expect(await handler.getConfig('/config.yaml'), {
+    expect(await handler.readConfig('/config.yaml'), {
       'mode': 'rule',
       'rule': ['MATCH,DIRECT'],
     });
     final memory = await handler.getMemoryStats();
-    expect(memory?.rss, 2048);
-    expect(memory?.runtimeTotal, 1024 + 256 + 64 + 32);
+    expect(memory.rss, 2048);
+    expect(memory.runtimeTotal, 1024 + 256 + 64 + 32);
   });
 
   test('getProfileBase sends the path and reads what the Core kept', () async {
@@ -439,7 +556,7 @@ void main() {
 
     final base = await handler.getProfileBase('/profiles/1.yaml');
 
-    expect(handler.calls[CoreMethod.getProfileBase], '/profiles/1.yaml');
+    expect(handler.calls[CoreMethod.profileBase], {'path': '/profiles/1.yaml'});
     expect(
       base,
       const ProfileBase(
@@ -460,11 +577,13 @@ void main() {
     final outbounds = await handler.getProfileOutbounds('/profiles/1.yaml');
     final built = await handler.buildProfile(base);
 
-    expect(handler.calls[CoreMethod.getProfileOutbounds], '/profiles/1.yaml');
+    expect(handler.calls[CoreMethod.profileOutbounds], {
+      'path': '/profiles/1.yaml',
+    });
     expect(outbounds['proxies'], [
       {'name': 'a', 'type': 'ss'},
     ]);
-    expect(handler.calls[CoreMethod.buildProfile], base.toJson());
+    expect(handler.calls[CoreMethod.profileBuild], base.toJson());
     expect(built, '/home/responses/1.yaml');
   });
 
@@ -474,7 +593,9 @@ void main() {
     final definition = await handler.getProxyDefinition('a');
     final missing = await handler.getProxyDefinition('from-provider');
 
-    expect(handler.calls[CoreMethod.getProxyDefinition], 'from-provider');
+    expect(handler.calls[CoreMethod.proxyDefinition], {
+      'name': 'from-provider',
+    });
     expect(definition, {
       'name': 'a',
       'type': 'ss',
@@ -485,9 +606,12 @@ void main() {
 
   test('setupConfig names a base only when the Core applies one', () async {
     final handler = _RecordingCoreHandler();
-    const params = SetupParams(selectedMap: {}, testUrl: 'test');
+    const params = SetupParams(
+      selectedMap: {},
+      options: CoreOptions(testUrl: 'test'),
+    );
     Object? sent() =>
-        json.decode(json.encode(handler.calls[CoreMethod.setupConfig]));
+        json.decode(json.encode(handler.calls[CoreMethod.configSetup]));
 
     await handler.setupConfig(params);
     expect(sent(), isNot(contains('base')));
@@ -503,11 +627,11 @@ void main() {
     });
   });
 
-  test('getConfig preserves structured core errors', () async {
+  test('readConfig preserves structured core errors', () async {
     final handler = _FailingConfigCoreHandler();
 
     await expectLater(
-      handler.getConfig('/missing.yaml'),
+      handler.readConfig('/missing.yaml'),
       throwsA(
         isA<CoreMethodException>()
             .having((error) => error.code, 'code', 'core_error')
@@ -518,11 +642,11 @@ void main() {
     );
   });
 
-  test('getConfig rejects empty transport results', () async {
+  test('readConfig rejects empty transport results', () async {
     final handler = _EmptyConfigCoreHandler();
 
     await expectLater(
-      handler.getConfig('/config.yaml'),
+      handler.readConfig('/config.yaml'),
       throwsA(
         isA<CoreMethodException>().having(
           (error) => error.code,
@@ -552,8 +676,8 @@ void main() {
       Map<String, Object?>.from(fixture['spilledResponse'] as Map),
     );
 
-    expect(success.unwrap<String>(), '');
-    expect(success.toJson(), containsPair('result', ''));
+    expect(success.unwrap<Object?>(), isNull);
+    expect(success.toJson(), containsPair('result', null));
     expect(structured.result, isA<Map>());
     expect(structured.result, isNot(isA<String>()));
     expect(structured.unwrap<Map<String, dynamic>>()?['up'], 12);

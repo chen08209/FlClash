@@ -25,8 +25,11 @@ import 'package:code_forge/code_forge.dart'
         CodeSelectionStyle,
         FindController,
         UndoRedoController;
+import 'package:re_highlight/languages/ini.dart';
 import 'package:re_highlight/languages/javascript.dart';
 import 'package:re_highlight/languages/json.dart';
+import 'package:re_highlight/languages/plaintext.dart';
+import 'package:re_highlight/languages/xml.dart';
 import 'package:re_highlight/languages/yaml.dart';
 import 'package:re_highlight/styles/atom-one-dark.dart';
 import 'package:re_highlight/styles/atom-one-light.dart';
@@ -95,6 +98,9 @@ class EditorPage extends ConsumerStatefulWidget {
   final Language language;
   final bool titleEditable;
 
+  /// Applied to what opens as one edit, which leaves it to save and undo.
+  final String Function(String text)? edit;
+
   /// A returned future is the save still running: until it completes the
   /// page takes no second save and no pointer.
   final FutureOr<void> Function(
@@ -120,6 +126,7 @@ class EditorPage extends ConsumerStatefulWidget {
     this.content,
     this.load,
     this.titleEditable = false,
+    this.edit,
     this.onSave,
     this.onPop,
     this.readOnly,
@@ -218,8 +225,24 @@ class _EditorPageState extends ConsumerState<EditorPage>
   }
 
   void _handleReady() {
-    _editor?.controller?.addListener(_syncBarState);
+    final controller = _editor?.controller;
+    controller?.addListener(_syncBarState);
     _syncBarState();
+    final edit = widget.edit;
+    if (controller != null && edit != null) {
+      unawaited(_applyEdit(controller, edit));
+    }
+  }
+
+  Future<void> _applyEdit(
+    CodeForgeController controller,
+    String Function(String text) edit,
+  ) async {
+    final document = await CodeForgeDocument.fromText(edit(controller.text));
+    if (mounted && _editor?.controller == controller) {
+      controller.replaceDocument(document);
+    }
+    document.dispose();
   }
 
   @override
@@ -564,7 +587,6 @@ class _EditorTitleField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
-      contextMenuBuilder: TextSelectionMenu.editableText,
       maxLength: TextInputLimits.name,
       enabled: enabled,
       controller: controller,
@@ -918,6 +940,9 @@ class _CodeEditorState extends ConsumerState<_CodeEditor> {
         Language.yaml => langYaml,
         Language.javaScript => langJavascript,
         Language.json => langJson,
+        Language.ini => langIni,
+        Language.xml => langXml,
+        Language.text => langPlaintext,
       },
       editorTheme: _editorTheme,
       tabSize: 2,

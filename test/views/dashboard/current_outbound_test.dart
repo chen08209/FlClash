@@ -166,6 +166,11 @@ DashboardChip _chip(WidgetTester tester, String label) =>
     );
 
 void main() {
+  setUp(() {
+    mitmFeature = true;
+    addTearDown(() => mitmFeature = false);
+  });
+
   setUpAll(() => registerFallbackValue(const OutboundIpParams(timeout: 0)));
 
   group('the exit address', () {

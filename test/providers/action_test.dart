@@ -262,31 +262,27 @@ void main() {
   });
 
   group('CoreAction', () {
-    test(
-      'clears the DNS cache on a network change only while connected',
-      () async {
-        final core = _MockCoreHandlerInterface();
-        when(core.clearDnsCache).thenAnswer((_) async => true);
-        final container = ProviderContainer(
-          overrides: [
-            coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
-          ],
-        );
-        addTearDown(container.dispose);
-        final action = container.read(coreActionProvider.notifier);
+    test('reports a network change to the Core only while connected', () async {
+      final core = _MockCoreHandlerInterface();
+      when(core.reportNetworkChange).thenAnswer((_) async => true);
+      final container = ProviderContainer(
+        overrides: [
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        ],
+      );
+      addTearDown(container.dispose);
+      final action = container.read(coreActionProvider.notifier);
 
-        await action.clearDnsCacheOnNetworkChange();
-        verifyNever(core.clearDnsCache);
+      await action.reportNetworkChange();
+      verifyNever(core.reportNetworkChange);
 
-        container.read(coreStatusProvider.notifier).value =
-            CoreStatus.connected;
-        await action.clearDnsCacheOnNetworkChange();
-        verify(core.clearDnsCache).called(1);
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      await action.reportNetworkChange();
+      verify(core.reportNetworkChange).called(1);
 
-        when(core.clearDnsCache).thenThrow(StateError('disconnected'));
-        await expectLater(action.clearDnsCacheOnNetworkChange(), completes);
-      },
-    );
+      when(core.reportNetworkChange).thenThrow(StateError('disconnected'));
+      await expectLater(action.reportNetworkChange(), completes);
+    });
 
     test('applies the profile after restarting a stopped core', () async {
       final container = ProviderContainer(

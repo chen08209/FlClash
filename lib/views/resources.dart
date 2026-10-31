@@ -4,6 +4,7 @@ import 'dart:isolate';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/mitm/module_editor.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -21,12 +22,14 @@ typedef _RemoteResources = ({
   List<IconSet> iconSets,
   List<ClashProvider> ruleProviders,
   List<Script> scripts,
+  List<MitmModule> modules,
 });
 
 const _RemoteResources _noResources = (
   iconSets: <IconSet>[],
   ruleProviders: <ClashProvider>[],
   scripts: <Script>[],
+  modules: <MitmModule>[],
 );
 
 class ResourcesView extends ConsumerStatefulWidget {
@@ -46,6 +49,7 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
     ref.listenManual(iconSetsProvider, (_, _) => _refreshResources());
     ref.listenManual(clashProvidersProvider, (_, _) => _refreshResources());
     ref.listenManual(scriptsProvider, (_, _) => _refreshResources());
+    ref.listenManual(mitmModulesProvider, (_, _) => _refreshResources());
     unawaited(_load());
   }
 
@@ -54,6 +58,7 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
       ref.read(iconSetsProvider.future),
       ref.read(clashProvidersProvider.future),
       ref.read(scriptsProvider.future),
+      ref.read(mitmModulesProvider.future),
     ]).catchError((Object _) => const <Object>[]);
     if (!mounted) {
       return;
@@ -84,6 +89,11 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
     scripts: [
       for (final script in ref.read(scriptsProvider).value ?? <Script>[])
         if (script.url != null) script,
+    ],
+    modules: [
+      for (final module
+          in ref.read(mitmModulesProvider).value ?? <MitmModule>[])
+        if (mitmFeature && module.isRemote) module,
     ],
   );
 
@@ -157,12 +167,14 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
       patchClashConfigProvider.select((state) => state.geoUpdateInterval),
     );
     final resources = _resources;
-    final (:iconSets, :ruleProviders, :scripts) = resources ?? _noResources;
+    final (:iconSets, :ruleProviders, :scripts, :modules) =
+        resources ?? _noResources;
     final resourceKeys = [
       for (final geoResource in GeoResource.values) geoResource.updatingKey,
       for (final iconSet in iconSets) iconSet.updatingKey,
       for (final provider in ruleProviders) provider.updatingKey,
       for (final script in scripts) script.updatingKey,
+      for (final module in modules) module.updatingKey,
     ];
     final isUpdating = ref.watch(
       updatingKeysProvider.select((keys) => resourceKeys.any(keys.contains)),
@@ -246,6 +258,13 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
                       key: ValueKey(script.id),
                     ),
                   ),
+                  if (mitmFeature)
+                    generateSliverSection(
+                      title: appLocalizations.mitmModules,
+                      items: modules,
+                      itemBuilder: (module) =>
+                          _ModuleItem(module, key: ValueKey(module.id)),
+                    ),
                 ],
               ),
             ),
@@ -617,6 +636,24 @@ class _ScriptItem extends ConsumerWidget {
         onSync: () =>
             ref.read(resourcesActionProvider.notifier).updateScript(script),
       ),
+    );
+  }
+}
+
+class _ModuleItem extends ConsumerWidget {
+  final MitmModule module;
+
+  const _ModuleItem(this.module, {super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return _ResourceItem(
+      title: module.name,
+      url: module.url,
+      chip: null,
+      lastUpdateTime: module.lastUpdateTime,
+      isUpdating: ref.watch(isUpdatingProvider(module.updatingKey)),
+      onSync: () => updateMitmModule(ref, module),
     );
   }
 }

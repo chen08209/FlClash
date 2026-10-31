@@ -346,6 +346,45 @@ void main() {
     expect(await canSaveAfter(6, 12, 'rule'), isFalse);
   });
 
+  testWidgets('an edit handed to the page opens to save, and undoes', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [
+          viewSizeProvider.overrideWithBuild((_, _) => const Size(1200, 1000)),
+        ],
+        child: EditorPage(
+          title: 'Editor',
+          content: 'mode: rule',
+          edit: (text) => '$text\nipv6: true',
+          onSave: (_, _, _) {},
+        ),
+      ),
+    );
+    await settle(tester);
+    final controller = tester
+        .widget<CodeForge>(find.byType(CodeForge))
+        .controller;
+    bool canSave() =>
+        tester
+            .widget<IconButton>(
+              find.widgetWithGlyph(IconButton, AppGlyphs.check),
+            )
+            .onPressed !=
+        null;
+
+    expect(controller.text, 'mode: rule\nipv6: true');
+    expect(canSave(), isTrue);
+
+    await tester.tap(find.byGlyph(AppGlyphs.more));
+    await settle(tester, 8);
+    await tester.tap(find.byGlyph(AppGlyphs.undo));
+    await settle(tester, 12);
+    expect(controller.text, 'mode: rule');
+    expect(controller.isModified, isFalse);
+  });
+
   testWidgets('typing over the selection closes its context menu', (
     tester,
   ) async {

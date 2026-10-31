@@ -173,6 +173,7 @@ class Bootstrap {
     }
     _container.read(initProvider.notifier).value = true;
     unawaited(_container.read(resourcesActionProvider.notifier).autoUpdate());
+    unawaited(_container.read(mitmModulesActionProvider.notifier).autoUpdate());
     await bootGuard.markRunning();
     unawaited(_container.read(locationPermissionsProvider.notifier).refresh());
   }

@@ -104,6 +104,8 @@ abstract class Metadata with _$Metadata {
     @Default('') String sourceIPASN,
     @Default('') String specialRules,
     @Default('') String specialProxy,
+    @Default(false) bool mitm,
+    @Default(false) bool mitmRefused,
   }) = _Metadata;
 
   factory Metadata.fromJson(Map<String, Object?> json) =>
@@ -758,6 +760,33 @@ extension ScriptExt on Script {
     final response = await request.getTextResponseForUrl(url!);
     return save(response.data ?? '');
   }
+}
+
+@freezed
+abstract class MitmModule with _$MitmModule {
+  const factory MitmModule({
+    required int id,
+    required String name,
+    @Default('') String description,
+    String? url,
+    @Default(true) bool enabled,
+    int? order,
+    @Default({}) Map<String, String> arguments,
+    @Default({}) Map<String, String> resources,
+    String? system,
+
+    /// Its scripts FlClash runs, which turning it on asks about first.
+    @Default(0) int scripts,
+    required DateTime lastUpdateTime,
+  }) = _MitmModule;
+}
+
+extension MitmModuleExt on MitmModule {
+  bool get isRemote => url != null;
+
+  String get fileName => '$id.txt';
+
+  String get updatingKey => 'mitm_module_$id';
 }
 
 @freezed

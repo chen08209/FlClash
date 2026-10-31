@@ -24,6 +24,11 @@ import '../helpers/test_database_providers.dart';
 import 'package:prism_ui/prism_ui.dart';
 
 void main() {
+  setUp(() {
+    mitmFeature = true;
+    addTearDown(() => mitmFeature = false);
+  });
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory home;
@@ -51,6 +56,7 @@ void main() {
     List<IconSet> iconSets = const [],
     List<ClashProvider> ruleProviders = const [],
     List<Script> scripts = const [],
+    List<MitmModule> modules = const [],
   }) {
     final container = ProviderContainer(
       overrides: [
@@ -59,6 +65,7 @@ void main() {
           () => TestClashProviders(ruleProviders),
         ),
         scriptsProvider.overrideWith(() => TestScripts(scripts)),
+        mitmModulesProvider.overrideWith(() => TestMitmModules(modules)),
       ],
     );
     addTearDown(container.dispose);
@@ -75,6 +82,32 @@ void main() {
     }
     fail('timed out waiting for $finder');
   }
+
+  testWidgets('only a subscribed module is listed among the resources', (
+    tester,
+  ) async {
+    final date = DateTime(2026);
+    final container = createContainer(
+      modules: [
+        MitmModule(
+          id: 1,
+          name: 'Subscribed',
+          url: 'https://example.com/a.sgmodule',
+          lastUpdateTime: date,
+        ),
+        MitmModule(id: 2, name: 'Written here', lastUpdateTime: date),
+      ],
+    );
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: ResourcesView()),
+      ),
+    );
+    await pumpUntilFound(tester, find.text('Subscribed'));
+
+    expect(find.text('Written here'), findsNothing);
+  });
 
   testWidgets('a geo row opens its link editor without a per-row action', (
     tester,

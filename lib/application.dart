@@ -48,9 +48,7 @@ Widget buildManagerStack({
         )
       : AndroidManager(child: TileManager(child: state));
   return AppEnvManager(
-    child: LocaleManager(
-      child: ThemeManager(child: StatusManager(child: platformState)),
-    ),
+    child: LocaleManager(child: ThemeManager(child: platformState)),
   );
 }
 
@@ -120,6 +118,7 @@ class ApplicationState extends ConsumerState<Application> {
     _autoUpdateProfilesTaskTimer = Timer(const Duration(minutes: 20), () async {
       await ref.read(profilesActionProvider.notifier).autoUpdateProfiles();
       await ref.read(resourcesActionProvider.notifier).autoUpdate();
+      await ref.read(mitmModulesActionProvider.notifier).autoUpdate();
       if (!mounted) {
         return;
       }
@@ -139,8 +138,8 @@ class ApplicationState extends ConsumerState<Application> {
       // Android's NetworkObserver tells the Core about a new network itself.
       if (system.isDesktop) {
         debouncer.call(
-          FunctionTag.clearDnsCache,
-          ref.read(coreActionProvider.notifier).clearDnsCacheOnNetworkChange,
+          FunctionTag.networkChange,
+          ref.read(coreActionProvider.notifier).reportNetworkChange,
           duration: const Duration(milliseconds: 200),
         );
       }
@@ -156,6 +155,7 @@ class ApplicationState extends ConsumerState<Application> {
           appSettingProvider.select((state) => state.locale),
         );
         final themeProps = ref.watch(themeSettingProvider);
+        final textScale = themeProps.textScale;
         return PrismApp(
           debugShowCheckedModeBanner: false,
           navigatorKey: globalState.navigatorKey,
@@ -166,17 +166,11 @@ class ApplicationState extends ConsumerState<Application> {
             GlobalWidgetsLocalizations.delegate,
           ],
           builder: (context, child) {
-            return ThemeCrossFade(
-              child: buildManagerStack(
-                isDesktop: system.isDesktop,
-                onConnectivityChanged: _handleConnectivityChanged,
-                terminateSignals: _terminateSignals,
-                child: RemoteFocusAdapter(
-                  enabled: system.isTV,
-                  floatingKeyboard: app?.floatingKeyboard,
-                  child: Overlay.wrap(child: child!),
-                ),
-              ),
+            return buildManagerStack(
+              isDesktop: system.isDesktop,
+              onConnectivityChanged: _handleConnectivityChanged,
+              terminateSignals: _terminateSignals,
+              child: child!,
             );
           },
           title: appName,
@@ -185,6 +179,19 @@ class ApplicationState extends ConsumerState<Application> {
           themeMode: themeProps.themeMode,
           theme: watchAppTheme(ref, Brightness.light),
           darkTheme: watchAppTheme(ref, Brightness.dark),
+          textScale: textScale.enable ? textScale.scale : null,
+          minTextScale: minTextScale,
+          maxTextScale: maxTextScale,
+          liquidGlass: switch (themeProps.liquidGlass) {
+            LiquidGlassMode.none => null,
+            LiquidGlassMode.ultra => LiquidGlassQuality.ultra,
+            LiquidGlassMode.standard => LiquidGlassQuality.standard,
+          },
+          emojiFont: (family: FontFamily.twEmoji.value, pattern: emojiPattern),
+          stackedBanners: !ref.watch(isMobileViewProvider),
+          bannerTopInset: ref.watch(overlayTopOffsetProvider),
+          remoteFocus: system.isTV,
+          floatingKeyboard: app?.floatingKeyboard,
           onGenerateRoute: (settings) => HomeRoute(
             settings: settings,
             builder: (_) => KeyboardInsetHold(child: child!),

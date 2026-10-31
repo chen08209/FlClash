@@ -1,3 +1,4 @@
+pub mod charset;
 pub mod editor;
 pub mod hotkey;
 pub mod init;

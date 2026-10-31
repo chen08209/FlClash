@@ -24,7 +24,7 @@ _SharedState _$SharedStateFromJson(Map<String, dynamic> json) => _SharedState(
 
 Map<String, dynamic> _$SharedStateToJson(_SharedState instance) =>
     <String, dynamic>{
-      'setupParams': instance.setupParams,
+      'setupParams': ?instance.setupParams,
       'vpnOptions': instance.vpnOptions,
       'stopTip': instance.stopTip,
       'startTip': instance.startTip,

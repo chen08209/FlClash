@@ -63,10 +63,11 @@ class ResourcesAction extends _$ResourcesAction {
       }
     }
 
-    final (iconSets, scripts, providers) = await (
+    final (iconSets, scripts, providers, modules) = await (
       database.iconSetsDao.query().get(),
       database.scriptsDao.query().get(),
       database.clashProvidersDao.query().get(),
+      database.mitmModulesDao.query().get(),
     ).wait;
     await Future.wait([
       for (final geoResource in GeoResource.values)
@@ -95,6 +96,15 @@ class ResourcesAction extends _$ResourcesAction {
       for (final script in scripts)
         if (script.url != null)
           update(script.updatingKey, script.label, () => updateScript(script)),
+      for (final module in modules)
+        if (mitmFeature && module.isRemote)
+          update(
+            module.updatingKey,
+            module.name,
+            () => ref
+                .read(mitmModulesActionProvider.notifier)
+                .updateModule(module),
+          ),
     ]);
     return failures;
   }

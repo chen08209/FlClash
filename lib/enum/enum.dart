@@ -4,11 +4,10 @@ import 'dart:io';
 
 import 'package:fl_clash/common/context.dart';
 import 'package:fl_clash/common/system.dart';
-import 'package:fl_clash/ui/color.dart';
-import 'package:fl_clash/ui/surface.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 enum SupportPlatform {
   Windows,
@@ -429,7 +428,7 @@ enum FunctionTag {
   coreErrorNotifier,
   dialerLoopNotifier,
   reloadPackages,
-  clearDnsCache,
+  networkChange,
 }
 
 enum DashboardWidget {
@@ -809,7 +808,7 @@ enum TabAnimation { slide, fade }
 
 enum LiquidGlassMode { none, standard, ultra }
 
-enum Language { yaml, javaScript, json }
+enum Language { yaml, javaScript, json, ini, xml, text }
 
 enum ScrollPositionCacheKey { proxiesTabList }
 
@@ -824,7 +823,26 @@ enum LoadingTag {
   access,
   proxies,
   checkUpdate,
+  mitm,
 }
+
+/// The lists of `Mitm`, named by the Core's JSON keys.
+enum MitmList {
+  hostname('hostname'),
+  urlRewrite('url-rewrite'),
+  headerRewrite('header-rewrite'),
+  bodyRewrite('body-rewrite'),
+  mapLocal('map-local'),
+  script('script');
+
+  final String key;
+
+  const MitmList(this.key);
+}
+
+enum MitmTrust { notGenerated, notInstalled, untrusted, ready }
+
+enum MitmInstallOutcome { installed, untilReboot, prompted, saved }
 
 enum CoreStatus { connecting, connected, disconnected }
 

@@ -32,6 +32,10 @@ const watchExecution = false;
 
 const safeModeBuild = bool.fromEnvironment('SAFE_MODE');
 
+/// The bundled core has no MITM, so this stays off until one that has it ships.
+/// Not const so tests can cover both states.
+bool mitmFeature = const bool.fromEnvironment('FEATURE_MITM');
+
 const disclaimerVersion = 1;
 
 String _randomPipeId() {
@@ -113,6 +117,11 @@ const providersDirectoryName = 'providers';
 const proxiesProviderDirectoryName = 'proxies';
 const rulesProviderDirectoryName = 'rules';
 
+/// The Core reads the CA here, and map-local files only from [mitmResourcesDirectoryName].
+const mitmDirectoryName = 'mitm';
+const mitmModulesDirectoryName = 'modules';
+const mitmResourcesDirectoryName = 'resources';
+
 const localhost = '127.0.0.1';
 const clashConfigKey = 'clash_config';
 const configKey = 'config';
@@ -148,6 +157,7 @@ const stringListEquality = ListEquality<String>();
 const intListEquality = ListEquality<int>();
 const ruleListEquality = ListEquality<Rule>();
 const scriptListEquality = ListEquality<Script>();
+const mitmModuleListEquality = ListEquality<MitmModule>();
 const profileListEquality = ListEquality<Profile>();
 const proxyGroupsEquality = ListEquality<ProxyGroup>();
 const customProxiesEquality = ListEquality<CustomProxy>();

@@ -4,17 +4,12 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-String _ruleText(TrackerInfo trackerInfo) {
-  final rule = trackerInfo.rule;
-  final rulePayload = trackerInfo.rulePayload;
-  if (rulePayload.isNotEmpty) {
-    return '$rule($rulePayload)';
-  }
-  return rule;
-}
+import 'detail_tabs.dart';
+import 'mitm_exchanges.dart';
 
 String _endpointText(String ip, String port) {
   if (ip.isEmpty) {
@@ -42,19 +37,56 @@ void showTrackerInfoDetail(
   );
 }
 
+List<PopupMenuItem> trackerInfoMenuItems(
+  BuildContext context,
+  TrackerInfo trackerInfo, {
+  ValueChanged<TrackerInfo>? onClose,
+}) {
+  final appLocalizations = context.appLocalizations;
+  final metadata = trackerInfo.metadata;
+  final destination = _endpointText(
+    metadata.destinationIP,
+    metadata.destinationPort,
+  );
+  Future<void> copy(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    dialogs.showBanner(currentAppLocalizations.copySuccess);
+  }
+
+  return [
+    if (metadata.host.isNotEmpty)
+      PopupMenuItem(
+        glyph: AppGlyphs.copy,
+        label: appLocalizations.copyHost,
+        onPressed: () => copy(metadata.host),
+      ),
+    if (destination.isNotEmpty)
+      PopupMenuItem(
+        glyph: AppGlyphs.copy,
+        label: appLocalizations.copyDestination,
+        onPressed: () => copy(destination),
+      ),
+    if (onClose != null)
+      PopupMenuItem(
+        glyph: AppGlyphs.block,
+        label: appLocalizations.closeConnection,
+        section: const PopupMenuSection(),
+        onPressed: () => onClose(trackerInfo),
+      ),
+  ];
+}
+
 class TrackerInfoItem extends ConsumerWidget {
   final TrackerInfo trackerInfo;
   final bool isLive;
-  final Function(String)? onClickKeyword;
-  final Widget? action;
+  final ValueChanged<TrackerInfo>? onClose;
   final String detailTitle;
 
   const TrackerInfoItem({
     super.key,
     required this.trackerInfo,
     this.isLive = false,
-    this.onClickKeyword,
-    this.action,
+    this.onClose,
     required this.detailTitle,
   });
 
@@ -66,13 +98,12 @@ class TrackerInfoItem extends ConsumerWidget {
             state.findProcessMode == FindProcessMode.always && system.isAndroid,
       ),
     );
-    return RecordListItem(
-      onTap: () => showTrackerInfoDetail(context, trackerInfo, detailTitle),
-      header: _buildHeader(context),
-      body: _TrackerInfoBody(
-        trackerInfo: trackerInfo,
-        showIcon: showIcon,
-        onClickKeyword: onClickKeyword,
+    return ContextMenuRegion(
+      menuItems: trackerInfoMenuItems(context, trackerInfo, onClose: onClose),
+      child: RecordListItem(
+        onTap: () => showTrackerInfoDetail(context, trackerInfo, detailTitle),
+        header: _buildHeader(context),
+        body: _TrackerInfoBody(trackerInfo: trackerInfo, showIcon: showIcon),
       ),
     );
   }
@@ -84,10 +115,14 @@ class TrackerInfoItem extends ConsumerWidget {
           .of(context, emphasized: true)
           .copyWith(color: context.colorScheme.onSurfaceVariant),
     );
+    final mitm = trackerInfo.metadata.mitm;
     if (!isLive) {
       return RecordHeader(
-        trailing: action,
-        children: [RecordTimestamp(trackerInfo.start.showFull), network],
+        children: [
+          RecordTimestamp(trackerInfo.start.showFull),
+          network,
+          if (mitm) const RecordLabel(label: 'MITM'),
+        ],
       );
     }
     final color = context.colorScheme.onSurfaceVariant;
@@ -96,30 +131,24 @@ class TrackerInfoItem extends ConsumerWidget {
       child: GlyphIcon(glyph, size: 12, color: color),
     );
     return RecordHeader(
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        spacing: 4,
-        children: [
-          Text.rich(
+      trailing: Text.rich(
+        TextSpan(
+          children: [
+            arrow(AppGlyphs.arrowUp),
             TextSpan(
-              children: [
-                arrow(AppGlyphs.arrowUp),
-                TextSpan(
-                  text: ' ${(trackerInfo.uploadSpeed ?? 0).traffic.show}/s   ',
-                ),
-                arrow(AppGlyphs.arrowDown),
-                TextSpan(
-                  text: ' ${(trackerInfo.downloadSpeed ?? 0).traffic.show}/s',
-                ),
-              ],
+              text: ' ${(trackerInfo.uploadSpeed ?? 0).traffic.show}/s   ',
             ),
-          ),
-          ?action,
-        ],
+            arrow(AppGlyphs.arrowDown),
+            TextSpan(
+              text: ' ${(trackerInfo.downloadSpeed ?? 0).traffic.show}/s',
+            ),
+          ],
+        ),
       ),
       children: [
         Text(trackerInfo.start.getLastUpdateTimeDesc(context, compact: true)),
         network,
+        if (mitm) const RecordLabel(label: 'MITM'),
       ],
     );
   }
@@ -128,15 +157,10 @@ class TrackerInfoItem extends ConsumerWidget {
 class _TrackerInfoBody extends StatelessWidget {
   final TrackerInfo trackerInfo;
   final bool showIcon;
-  final Function(String)? onClickKeyword;
 
-  const _TrackerInfoBody({
-    required this.trackerInfo,
-    required this.showIcon,
-    this.onClickKeyword,
-  });
+  const _TrackerInfoBody({required this.trackerInfo, required this.showIcon});
 
-  Widget _buildTitle(RecordTextStyles styles) {
+  Widget _buildTitle(BuildContext context, RecordTextStyles styles) {
     final metadata = trackerInfo.metadata;
     final title = Text.rich(
       TextSpan(
@@ -161,7 +185,10 @@ class _TrackerInfoBody extends StatelessWidget {
       spacing: 8,
       children: [
         GestureDetector(
-          onTap: () => onClickKeyword?.call(process),
+          onTap: () => RecordFilterScope.add(
+            context,
+            RecordFilter(RecordFacetKind.app, process),
+          ),
           child: PackageIcon(packageName: process, size: 24),
         ),
         Flexible(child: title),
@@ -174,7 +201,7 @@ class _TrackerInfoBody extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final styles = RecordTextStyles.of(context);
     final metadata = trackerInfo.metadata;
-    final rule = _ruleText(trackerInfo);
+    final rule = trackerInfo.ruleText;
     final source = [
       trackerInfo.progressText,
       _endpointText(metadata.sourceIP, metadata.sourcePort),
@@ -183,7 +210,7 @@ class _TrackerInfoBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 4,
       children: [
-        _buildTitle(styles),
+        _buildTitle(context, styles),
         Wrap(
           spacing: 6,
           runSpacing: 4,
@@ -201,7 +228,10 @@ class _TrackerInfoBody extends StatelessWidget {
                       label: chain,
                       color: context.raisedSurfaceLevel.colorOf(colorScheme),
                       foregroundColor: colorScheme.onSurfaceVariant,
-                      onPressed: () => onClickKeyword?.call(chain),
+                      onPressed: () => RecordFilterScope.add(
+                        context,
+                        RecordFilter(RecordFacetKind.proxy, chain),
+                      ),
                     ),
                   ),
                 ],
@@ -214,7 +244,75 @@ class _TrackerInfoBody extends StatelessWidget {
   }
 }
 
-class TrackerInfoDetailView extends StatelessWidget {
+/// Adds the host of a connection to the hostnames or excludes it, so that the
+/// list can be filled from what the apps really connect to.
+class _MitmHostSection extends ConsumerWidget {
+  final Metadata metadata;
+
+  const _MitmHostSection({required this.metadata});
+
+  Future<void> _confirm(
+    BuildContext context,
+    WidgetRef ref, {
+    required String title,
+    required String tip,
+    required Mitm Function(Mitm) update,
+  }) async {
+    final res = await dialogs.showMessage(
+      title: title,
+      message: TextSpan(text: tip),
+    );
+    if (res != true) {
+      return;
+    }
+    ref
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(mitm: update(state.mitm)));
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final host = metadata.host;
+    final (enable, hostname) = ref.watch(
+      patchClashConfigProvider.select(
+        (state) => (state.mitm.enable, state.mitm.hostname),
+      ),
+    );
+    if (!enable || host.isEmpty || metadata.network.toLowerCase() != 'tcp') {
+      return const SizedBox.shrink();
+    }
+    final appLocalizations = context.appLocalizations;
+    final decrypted = metadata.mitm || metadata.mitmRefused;
+    final excludes =
+        !hostname.contains('-$host') && (decrypted || hostname.contains(host));
+    final title = excludes
+        ? appLocalizations.mitmExcludeHost
+        : appLocalizations.mitmDecryptHost;
+    return generateSection(
+      title: appLocalizations.mitm,
+      items: [
+        ListItem(
+          title: Text(title),
+          onTap: () => _confirm(
+            context,
+            ref,
+            title: title,
+            tip: excludes
+                ? appLocalizations.mitmExcludeHostTip(host)
+                : appLocalizations.mitmDecryptHostTip(host),
+            update: (mitm) =>
+                excludes ? mitm.excludingHost(host) : mitm.decryptingHost(host),
+          ),
+        ),
+      ],
+      footer: metadata.mitmRefused
+          ? appLocalizations.mitmClientRefusedCertificate
+          : null,
+    );
+  }
+}
+
+class TrackerInfoDetailView extends ConsumerWidget {
   final TrackerInfo trackerInfo;
 
   const TrackerInfoDetailView({super.key, required this.trackerInfo});
@@ -249,8 +347,7 @@ class TrackerInfoDetailView extends StatelessWidget {
     ];
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildOverview(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     final metadata = trackerInfo.metadata;
     return ListView(
@@ -265,7 +362,7 @@ class TrackerInfoDetailView extends StatelessWidget {
             (appLocalizations.creationTime, trackerInfo.start.showFull),
             (appLocalizations.networkType, metadata.network),
             (appLocalizations.process, trackerInfo.progressText),
-            (appLocalizations.rule, _ruleText(trackerInfo)),
+            (appLocalizations.rule, trackerInfo.ruleText),
             (appLocalizations.upload, trackerInfo.upload.traffic.show),
             (appLocalizations.download, trackerInfo.download.traffic.show),
           ]),
@@ -301,6 +398,29 @@ class TrackerInfoDetailView extends StatelessWidget {
             _buildChains(context),
           ],
         ),
+        if (mitmFeature) _MitmHostSection(metadata: metadata),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
+    final capturing =
+        trackerInfo.metadata.mitm &&
+        ref.watch(
+          patchClashConfigProvider.select(
+            (state) => state.mitm.enable && state.mitm.capture,
+          ),
+        );
+    return DetailTabs(
+      tabs: [
+        (appLocalizations.overview, _buildOverview),
+        if (capturing)
+          (
+            appLocalizations.httpRequests,
+            (_) => MitmExchangesView(trackerInfo: trackerInfo),
+          ),
       ],
     );
   }

@@ -86,6 +86,20 @@ extension HotActionL10n on HotAction {
   }
 }
 
+extension MitmListL10n on MitmList {
+  String get label {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      MitmList.hostname => appLocalizations.hostname,
+      MitmList.urlRewrite => appLocalizations.urlRewrite,
+      MitmList.headerRewrite => appLocalizations.headerRewrite,
+      MitmList.bodyRewrite => appLocalizations.bodyRewrite,
+      MitmList.mapLocal => appLocalizations.mapLocal,
+      MitmList.script => appLocalizations.script,
+    };
+  }
+}
+
 extension RestoreStrategyL10n on RestoreStrategy {
   String get label {
     final appLocalizations = currentAppLocalizations;

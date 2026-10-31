@@ -11,9 +11,9 @@ import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/route_state.dart';
 import 'package:fl_clash/providers/state.dart';
-import 'package:fl_clash/ui/banner.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:prism_ui/banner.dart';
 
 class CoreManager extends ConsumerStatefulWidget {
   final Widget child;
@@ -61,6 +61,24 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     ref.listenManual(globalRulesProvider, (prev, next) {
       if (prev?.value != null && next.hasValue) {
         ref.read(setupActionProvider.notifier).applyIfGlobalRulesUsed();
+      }
+    });
+    ref.listenManual(
+      patchClashConfigProvider.select((state) => state.mitm.enable),
+      (prev, next) {
+        if (prev == false && next) {
+          unawaited(ref.read(mitmModulesActionProvider.notifier).autoUpdate());
+        }
+      },
+    );
+    ref.listenManual(mitmModulesProvider, (prev, next) {
+      if (mitmFeature &&
+          prev?.value != null &&
+          next.hasValue &&
+          ref.read(patchClashConfigProvider).mitm.enable) {
+        ref
+            .read(setupActionProvider.notifier)
+            .applyProfileDebounce(silence: true);
       }
     });
     ref.listenManual(appSettingProvider.select((state) => state.openLogs), (

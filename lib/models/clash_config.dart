@@ -16,6 +16,7 @@ const defaultDns = Dns();
 const defaultNtp = Ntp();
 const defaultSniffer = Sniffer();
 const defaultProfileTun = ProfileTun();
+const defaultMitm = Mitm();
 
 /// What a profile that brings no DNS section of its own is given, so the core
 /// always resolves. The user's own override set starts empty.
@@ -2176,6 +2177,7 @@ abstract class PatchClashConfig with _$PatchClashConfig {
       fromJson: _generalOverrideKeysFromJson,
     )
     Set<GeneralOverrideKey> generalOverrideKeys,
+    @Default(defaultMitm) Mitm mitm,
   }) = _PatchClashConfig;
 
   factory PatchClashConfig.fromJson(Map<String, Object?> json) =>
@@ -2193,6 +2195,139 @@ abstract class PatchClashConfig with _$PatchClashConfig {
   }
 }
 
+/// Written over every profile's `mitm` section, so only the app turns it on.
+@freezed
+abstract class Mitm with _$Mitm {
+  const factory Mitm({
+    @Default(false) bool enable,
+    @Default([]) List<String> hostname,
+    @Default(false)
+    @JsonKey(name: 'skip-server-cert-verify')
+    bool skipServerCertVerify,
+    @Default(true) @JsonKey(name: 'auto-quic-block') bool autoQuicBlock,
+    @Default(false) bool h2,
+    @Default(false) @JsonKey(name: 'decrypt-untrusted') bool decryptUntrusted,
+    @JsonKey(name: 'trusted-fingerprint') String? trustedFingerprint,
+    @Default(false) bool capture,
+    @JsonKey(name: 'capture-entries') int? captureEntries,
+  }) = _Mitm;
+
+  factory Mitm.fromJson(Map<String, Object?> json) => _$MitmFromJson(json);
+}
+
+/// A body rewrite holds about ten times the body, a script on JSON twenty.
+const _desktopMitmLimits = {
+  'max-body-size': 4 << 20,
+  'body-buffer': 32 << 20,
+  'certificate-cache': 1024,
+  'script-concurrency': 4,
+  'script-memory': 256 << 20,
+  'capture-entries': 2000,
+  'capture-bytes': 64 << 20,
+};
+
+const _androidMitmLimits = {
+  'max-body-size': 2 << 20,
+  'body-buffer': 8 << 20,
+  'certificate-cache': 256,
+  'max-sessions': 256,
+  'script-concurrency': 2,
+  'script-memory': 64 << 20,
+  'capture-entries': 500,
+  'capture-bytes': 16 << 20,
+};
+
+/// Past the top option the byte limit drops records before the count does.
+const _desktopMitmCaptureOptions = [500, 1000, 2000, 5000, 10000, 20000];
+const _androidMitmCaptureOptions = [200, 500, 1000, 2000, 5000];
+
+List<int> mitmCaptureOptions({required bool isAndroid}) =>
+    isAndroid ? _androidMitmCaptureOptions : _desktopMitmCaptureOptions;
+
+Map<String, Object> _mitmLimits({required bool isAndroid}) =>
+    isAndroid ? _androidMitmLimits : _desktopMitmLimits;
+
+int mitmCaptureBytes({required bool isAndroid}) =>
+    _mitmLimits(isAndroid: isAndroid)['capture-bytes']! as int;
+
+int mitmMaxBodySize({required bool isAndroid}) =>
+    _mitmLimits(isAndroid: isAndroid)['max-body-size']! as int;
+
+extension MitmExt on Mitm {
+  int captureLimit({required bool isAndroid}) =>
+      captureEntries ??
+      _mitmLimits(isAndroid: isAndroid)['capture-entries']! as int;
+
+  /// Ahead of the list, since the first match decides.
+  Mitm decryptingHost(String host) => copyWith(
+    hostname: [
+      host,
+      for (final line in hostname)
+        if (line != host && line != '-$host') line,
+    ],
+  );
+
+  /// Ahead of the list, since the first match decides.
+  Mitm excludingHost(String host) => copyWith(
+    hostname: [
+      '-$host',
+      for (final line in hostname)
+        if (line != host && line != '-$host') line,
+    ],
+  );
+
+  /// The hostnames come from [rules] alone, which the user's own lead.
+  Map<String, Object?> coreJson(MitmRules rules) {
+    final json = toJson()
+      ..remove('hostname')
+      ..remove('decrypt-untrusted')
+      ..remove('trusted-fingerprint')
+      ..remove('capture')
+      ..remove('capture-entries');
+    return {
+      ...json,
+      ...rules.toJson(),
+      'decrypt-tls': decryptUntrusted || trustedFingerprint != null,
+      'ca-fingerprint': decryptUntrusted ? '' : trustedFingerprint ?? '',
+      'limits': {
+        ..._mitmLimits(isAndroid: system.isAndroid),
+        'capture-entries': ?captureEntries,
+      },
+    };
+  }
+}
+
+class MitmRules {
+  const MitmRules({
+    this.hostname = const [],
+    this.urlRewrite = const [],
+    this.headerRewrite = const [],
+    this.bodyRewrite = const [],
+    this.mapLocal = const [],
+    this.script = const [],
+  });
+
+  final List<String> hostname;
+  final List<String> urlRewrite;
+  final List<String> headerRewrite;
+  final List<String> bodyRewrite;
+  final List<String> mapLocal;
+  final List<String> script;
+
+  List<String> linesOf(MitmList list) => switch (list) {
+    MitmList.hostname => hostname,
+    MitmList.urlRewrite => urlRewrite,
+    MitmList.headerRewrite => headerRewrite,
+    MitmList.bodyRewrite => bodyRewrite,
+    MitmList.mapLocal => mapLocal,
+    MitmList.script => script,
+  };
+
+  Map<String, Object?> toJson() => {
+    for (final list in MitmList.values) list.key: linesOf(list),
+  };
+}
+
 extension PatchClashConfigExt on PatchClashConfig {
   T? _picked<T>(GeneralOverrideKey key, T value) =>
       generalOverrideKeys.contains(key) ? value : null;
@@ -2205,7 +2340,7 @@ extension PatchClashConfigExt on PatchClashConfig {
 
   UpdateParams toUpdateParams({
     required List<String> authentication,
-    required bool skipCertVerify,
+    required CoreOptions options,
   }) {
     return UpdateParams(
       tun: tun,
@@ -2223,7 +2358,7 @@ extension PatchClashConfigExt on PatchClashConfig {
       geoAutoUpdate: geoAutoUpdate,
       geoUpdateInterval: geoUpdateInterval,
       geoXUrl: geoXUrl.raw,
-      skipCertVerify: skipCertVerify,
+      options: options,
     );
   }
 
@@ -2244,6 +2379,8 @@ extension PatchClashConfigExt on PatchClashConfig {
     geoAutoUpdate: defaultClashConfig.geoAutoUpdate,
     geoUpdateInterval: defaultClashConfig.geoUpdateInterval,
     geoXUrl: defaultClashConfig.geoXUrl,
+    testUrl: defaultClashConfig.testUrl,
+    mitm: mitm.copyWith(capture: defaultClashConfig.mitm.capture),
   );
 
   PatchClashConfig ensureControllerSecret() {

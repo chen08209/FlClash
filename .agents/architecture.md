@@ -170,8 +170,8 @@ or a remote party reaching the privileged Core's control or filesystem APIs is a
 
 A process running as the same account is not stopped. It can ask the Helper to start the Core
 against a socket or pipe it owns, or run a setuid Core against a port it listens on, and so become the host that drives
-a privileged Core: `initClash` chooses the home directory every path check anchors on, and `getConfig`,
-`getProfileBase`, `getProfileOutbounds` and a `setupConfig` or `buildProfile` base read any path.
+a privileged Core: `core.init` chooses the home directory every path check anchors on, and `config.read`,
+`profile.base`, `profile.outbounds` and a `config.setup` or `profile.build` base read any path.
 The Core connects to whatever address it is given and cannot tell that host from FlClash. An account check cannot
 distinguish it from a same-account process that can already read FlClash's memory and files. This remains a user-to-root
 or user-to-SYSTEM privilege escalation, not a complete security fix. An open external
@@ -215,6 +215,14 @@ through `VpnOptions` and the `options` argument of `startTun`; the VpnService bu
 The TUN fields start at mihomo's own defaults, and a saved zero MTU or empty congestion controller, which mihomo reads
 as those defaults, decodes to them. The outbound rows are plain settings written over every profile, and changing one
 re-applies the profile; keep-alive is forced off on Android, and only Linux honours `routing-mark`.
+
+## HTTPS Decryption
+
+The bundled core has no MITM: it stays private, on `feature/mitm` in FlClash-internal and `feature/mitm-latest` in
+Clash.Meta-internal, with the architecture notes of that version. The core keeps the `mitm.*` method names and answers
+them `not_implemented`, and `SetMitmPressure` does nothing. The app keeps its pages, modules and trust stores behind
+`mitmFeature` (`FEATURE_MITM`, off by default), which closes every entry and sends the core no modules or capture.
+Turn it on only with a core that has MITM.
 
 ## Lifecycle Ownership And Convergence
 
@@ -343,19 +351,29 @@ directions. The envelope is the only JSON serialization layer: keep arguments, r
 values rather than embedding pre-encoded JSON strings. Plain domain strings, such as country codes or provider contents,
 remain strings.
 
+A method's wire name is `area.verb`, declared once in `core/protocol.go`; `CoreMethod.wireName` mirrors the list, and
+`test/core/protocol_contract_test.dart` fails when the two differ. Arguments are a JSON object with kebab-case keys,
+never a bare value. A command answers `null`, a query its value, and a lookup `null` for nothing found. A failure
+travels only in `error`, never as a message in `result`, and a list validation answers `[{index, message}]` for just
+the entries it refuses. `CoreHandlerInterface` returns the decoded result or throws: a `CoreMethodException` for what
+the Core reports, for a Core out of reach (`core_unavailable`, `transport_*`, `no_response`) or for a query that
+answered nothing (`empty_result`), and a `TimeoutException` for no answer in time; `isUnansweredCoreError` tells a Core
+that never answered from one that refused. `config.setup` on a profile the Core cannot load applies the default config
+and answers `config_rejected`, which `SetupAction` reports as that profile's error.
+
 A response over 1 MiB goes to a file under `<home>/responses/`, and the envelope carries only its `file`
 (`core/spill.go`). Sent inline, Android copies it into the Java heap three times (the gomobile `byte[]`, the codec and a
 direct buffer), and desktop IPC drops a frame above `maxIPCFrameSize`. `lib/core/spill.dart` reads a spilled file only
-from that directory, decodes it in an isolate and deletes it; `initClash` clears what an earlier run left.
+from that directory, decodes it in an isolate and deletes it; `core.init` clears what an earlier run left.
 
-A profile file's proxies, groups and rules never cross the bridge. `getProfileBase` returns the config without
+A profile file's proxies, groups and rules never cross the bridge. `profile.base` returns the config without
 `proxies`, `proxy-groups`, `sub-rules` and `rules`, with their counts, the profile's MATCH rules and a sha256 digest.
 `SetupAction.getProfile` patches it as before and sends the result as `SetupParams.base.overlay`. `core/profile_base.go`
 puts the profile's bulk sections into the overlay, appends the profile's rules after the overlay's, writes `config.yaml`
 for the Android service and the controller's reload, and parses it. `config.yaml` is encoded a slice at a time, because on a
-profile of 100k proxies and 2M rules one `Encode` call doubles the peak heap. The preview reads the YAML `buildProfile`
+profile of 100k proxies and 2M rules one `Encode` call doubles the peak heap. The preview reads the YAML `profile.build`
 merges into the spill directory, and the extend page only the names
-and types `getProfileOutbounds` lists; a script extension still needs the whole config from `getConfig`.
+and types `profile.outbounds` lists; a script extension still needs the whole config from `config.read`.
 
 Go event delivery is intentionally non-blocking:
 
@@ -501,6 +519,12 @@ The UI comes in two layers, plus the app's own widgets:
   `ProfileIdProvider`, and the page chrome built on the package's slots: `Scaffold` in `ui/scaffold/` (search, sort
   mode, keywords, action folding, form sheet foot) and `ListItem` (rows that open a page, menu or dialog). Its barrel `ui/ui.dart` re-exports `prism_ui`, and `ui/icons/icons.dart` re-exports the
   package's icons, so app code imports one barrel for both layers.
+- Code ported from other packages keeps only what the app uses, under its upstream license header:
+  `plugins/prism_ui/lib/hct/` (material_color_utilities, the three scheme variants at standard contrast),
+  `lib/shapes/` (material_new_shapes) and `lib/sliver_list/` (super_sliver_list) in the package, and the QR encoder
+  `lib/ui/qr_matrix.dart` in the app. What belongs to the app's own content stays out of the package: QR codes
+  and the emoji pattern live in `lib/ui/`, and `PrismApp.emojiFont` hands the pattern down. Native code goes in a
+  plugin nested under `plugins/prism_ui/plugins/`.
 - `lib/widgets/` holds the components built from them that read a provider or a model: settings rows, subscription
   and profile pieces. `widgets/widgets.dart` re-exports `ui/ui.dart`.
 
@@ -577,7 +601,7 @@ back and close buttons are the scaffold's own, with `Glyphs.backFor` picking the
 Empty states draw no image assets either. `NullStatus` in `plugins/prism_ui/lib/null_status.dart` shows the glyph of
 its `Illustration` (for the app's pages, a `NullStatusIllustration` in `lib/ui/null_status_illustration.dart`) filled
 on a shape and among accent marks, each picked at random when it mounts: a circle, a scallop (`cookie9Sided`,
-`cookie12Sided`) or a rounded square, as a freer `material_new_shapes` shape cuts in too close to the glyph, and one of
+`cookie12Sided`) or a rounded square, as a freer shape cuts in too close to the glyph, and one of
 eight arrangements of marks. It enters with one of three choreographies, also picked at random: the shape spins in,
 morphs out of a circle, or springs in while the accents orbit into place. It takes one color, `primary` or `error`:
 the shape is that color at 15%, the glyph and strong marks the color itself.
@@ -915,7 +939,7 @@ a tap, read-only unless it is a local text file the app owns, and keeps a second
 for a proxy provider backed by a text file, the options dialog for an app rule provider.
 
 A long press can mean only one thing on a row. Where rows have no context menu, as in a plain list editor, the global or
-profile rules, the on-demand SSIDs or the custom proxies, a long press on the row drags it and there is no sort button.
+profile rules, the on-demand SSIDs or the custom proxies, the row drags from itself and there is no sort button.
 Where they have one, the list reorders only in a sort mode. When the list is the page, `Scaffold` owns the mode as
 it owns search and selection, and the page passes `canSort` for the toggle in its bar. Changes apply as they are made,
 so nothing confirms them: while the mode is on, the bar shows only its toggle, selected, and the back or close button
@@ -923,13 +947,16 @@ fades in place rather than offer the same way out twice, as iOS hides its back b
 ends the mode. A list that is one section of its page, as the custom profile's proxy groups are, keeps its own
 `SortModeScope` around its rows and its toggle in its header and leaves the page bar alone, back button included; its
 header keeps adding while it sorts, and a system back ends its mode before it leaves the page. Each row sits in a
-`SortableItem`, which reads the scope: while it sorts `DecorationListItem` drops its tap and context menu, a long press
-anywhere on the row drags it, and `SortableTrailing` springs a `SortHandle` in from the row's trailing edge while the
+`SortableItem`, which reads the scope: while it sorts `DecorationListItem` drops its tap and context menu, anywhere on
+the row drags it, and `SortableTrailing` springs a `SortHandle` in from the row's trailing edge while the
 trailing it replaces shrinks away. The motion is painted, not built, and the row relayouts only while the two widths
 differ, since every row on screen animates at once. A page that only reorders, such as the profiles sort sheet or a
-group's members, shows its `SortHandle`s without a mode. Every drag waits for a long press, with a mouse too and on the
-dashboard's edit mode as well, so a swipe that starts on a row or its handle scrolls; a handle only marks the row, which
-carries the `ReorderableDelayedDragStartListener` itself, so a long press anywhere on the row lifts it. With focus a
+group's members, shows its `SortHandle`s without a mode. A row lifts through `ReorderDragStartListener`, by the pointer
+and not the platform, the dashboard's edit mode included: every pointer but a mouse or trackpad waits for a long press,
+so a swipe that starts on a row or its handle scrolls; those two need none, with a wheel to scroll and a right click for
+the menu, so a vertical drag from a row reorders where it would scroll, and a click or a sideways drag still reaches what the row
+holds. `BaseScrollBehavior` lets a mouse drag scroll at the same 1 dp, and the row wins that tie only because its
+recognizer is nearer the pointer, so a larger threshold would hand the drag to the scroll view. A handle only marks the row, which carries the listener itself, so a press anywhere on the row lifts it. With focus a
 select key lifts a handle's row for the up and down keys to move through the enclosing `SliverReorderableList`'s own
 `onReorderItem`, which is how a remote sorts.
 
@@ -1133,10 +1160,14 @@ than the frames a load costs. What a transition must not carry is work that repe
   fallback only once the load ends
   without an image, so a grid of placeholders is never painted only to be replaced. `whenRouteSettled`
   (`plugins/prism_ui/lib/navigator.dart`) is left for sequencing navigation, such as opening a page once the sheet above it is gone.
-- The editor is the one view that arrives after the motion. `EditorPage` keeps the document it opened until its route
-  has settled and only then mounts CodeForge, showing a spinner only if the file is still being read: the mount lays
-  out, folds and highlights a screen of text in one frame, which a phone cannot fit in a transition frame whatever the
-  file's size.
+- Two views arrive after the motion. `EditorPage` keeps the document it opened until its route has settled and only
+  then mounts CodeForge, showing a spinner only if the file is still being read: the mount lays out, folds and
+  highlights a screen of text in one frame, which a phone cannot fit in a transition frame whatever the file's size.
+  `AccessView` reads the installed apps only once its route has settled and its bar items have faded in
+  (`whenNothingAnimates`, not counting its own spinner), and slides in with that spinner when this run has not read
+  them yet (`NullStatusSwitcher` with `holdsArrival: false`): the read can outlast `arrivalHoldLimit`, and a list of
+  apps landing while its page moves reads as dropped frames. The spinner only repaints its own boundary. A list
+  already read shows from the first frame.
 - A live feed holds its refreshes while its page moves and replays the latest once it is still, so a list does not
   re-rank, reorder or grow under a transition. `RouteMotionHoldMixin` (`plugins/prism_ui/lib/route_motion_hold.dart`) holds them
   while `isRouteMoving`: the page's route or a sheet carrying it is pushed, popped or dragged, a page is pushed over it,
@@ -1171,13 +1202,16 @@ than the frames a load costs. What a transition must not carry is work that repe
   (`ArrivingSimulation`): the controller holds an overshoot there, and a page gone off the screen would otherwise
   keep the routes below from taking taps for another half second. A spring back from a drag runs on the drag's
   follower instead, which lets it overshoot past rest as iOS's does.
-- A moving card page is drawn from a snapshot taken as it sets off, the page below too, and live again once it
-  rests: Impeller would draw it again in full every frame. With glass on only a receding page is, its glass being
-  lifted out of it, since a pane riding a sliding page would come out a flat tint offscreen. Content that changes
-  under a moving page shows once it rests, which Page Arrival keeps rare; a bar item lifted into its overlay retakes
-  the snapshot of its route (`retakeSnapshot`). The card moves on whole physical pixels so the snapshot draws as
-  sharp as the page, and its shadow is the falloff past its leading edge, a gradient, not a blurred card.
-  `FadePageRoute` fades in place through a plain 200 ms `FadeTransition`.
+- A card page going out of view, covered by a push or popping or dragged away, is drawn from a snapshot taken as it
+  sets off, and live again once it rests: Impeller would draw it again in full every frame. A page coming into view,
+  pushed or uncovered, stays live, since a snapshot of it would hold what it showed when last covered, such as a press
+  ripple its stopped tickers froze, until it rests; for the same reason a press surface drops its sparkles once its
+  tickers stop. The snapshot has no `LiquidGlassHost` over it, so each page holds one of its own: it takes the page's
+  panes while the snapshot is taken, so that glass in the snapshot is drawn from a capture of the page alone, and
+  leaves them to the host above while the page is live, which it finds among its parent layers. A bar item lifted into
+  its overlay retakes the snapshot of its route (`retakeSnapshot`). The card moves on whole physical pixels so the
+  snapshot draws as sharp as the page, and its shadow is the falloff past its leading edge, a gradient, not a blurred
+  card. `FadePageRoute` fades in place through a plain 200 ms `FadeTransition`.
 
 ## State Management
 
@@ -1380,6 +1414,8 @@ Tables:
 - `IconSets` (`icon_sets`)
 - `ClashProviders` (`clash_providers`)
 - `IpQualities` (`ip_qualities`): a cache of IP quality lookups that backups carry and a restore never reads.
+- `MitmModules` (`mitm_modules`): the Surge modules and Loon plugins of HTTPS decryption, with their argument values;
+  their content and the files they download live under `mitm/` (HTTPS Decryption).
 
 `Profiles.type` is `file`, `url` or `custom`, fixed when the profile is created. A rule belongs to whoever its
 `profile_id` names: no profile makes it global, a file or url profile's rules are what its standard extension adds, and
@@ -1546,6 +1582,9 @@ rewritten; each owner reads the flag where it would otherwise act:
   OS; the in-window `Shortcuts` (close window, escape) stay.
 - URL schemes and launcher shortcuts: `Window.init` skips the Windows registry and Linux desktop-entry registration
   of the `clash` schemes, and Android never calls `initShortcuts`.
+- Trust store: `MitmTrustState` neither installs a CA nor removes the one a new CA replaces, and the HTTPS
+  decryption page offers no install row, so no CA reaches or leaves the keychain, the Windows root store, the Linux
+  anchors and NSS databases, or Android's installer; the read-only trust check and the export still work.
 - Presentation: `AppEnvManager` shows a `SAFE MODE` banner ahead of the channel banner, and `TrayState.safeMode` gives
   the tray the `status_4` bug icon, a suffixed tooltip and a menu of only show and exit. `trayStateProvider` and
   `trayTitleStateProvider` report `showTrayTitle: false`, so the macOS menu bar carries no traffic title.
@@ -1851,7 +1890,10 @@ targets on first use.
 `frb_generated.io.dart`, `frb_generated.web.dart`, one `lib/src/rust/api/<module>.dart` per Rust API module, and
 `rust/src/frb_generated.rs`; none of them is edited by hand. A new Rust function is a public function in `rust/src/api/`,
 plus `pub mod <name>;` in `api/mod.rs` and an export from `lib/rust_api.dart` when it starts a new module. `RustLib` is
-the singleton entry point: `RustLib.init()` runs before any call and `RustLib.dispose()` on teardown.
+the singleton entry point: `RustLib.init()` runs before any call and `RustLib.dispose()` on teardown. It is initialized on
+the main isolate only, so an isolate hands its result back and the main isolate makes the call; `transcodeCharset` returns
+UTF-8 bytes rather than a `String` so that decoding them stays off the UI isolate as well (`mitmBody` in
+`lib/providers/mitm.dart`).
 
 `plugins/rust_api/rust/src/` separates the bridge boundary from the code behind it:
 

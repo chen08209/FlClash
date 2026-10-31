@@ -18,6 +18,11 @@ import 'package:riverpod/riverpod.dart';
 import '../helpers/test_profiles.dart';
 
 void main() {
+  setUp(() {
+    mitmFeature = true;
+    addTearDown(() => mitmFeature = false);
+  });
+
   late ProviderContainer container;
 
   setUp(() {
@@ -945,6 +950,34 @@ void main() {
     await container.read(vpnOptionsProvider.future);
     expect(container.read(sharedStateProvider).vpnOptions?.systemProxy, true);
     expect(container.read(updateParamsProvider).authentication, isEmpty);
+  });
+
+  test('capture reaches the Core in its options, never by a re-apply', () {
+    container.listen(setupPatchProvider, (_, _) {});
+    container.listen(updateParamsProvider, (_, _) {});
+    final setup = container.read(setupPatchProvider);
+
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update(
+          (state) => state.copyWith(mitm: state.mitm.copyWith(capture: true)),
+        );
+
+    expect(container.read(setupPatchProvider), setup);
+    expect(container.read(updateParamsProvider).options.mitmCapture, isTrue);
+  });
+
+  test('capture never reaches a Core built without MITM', () {
+    mitmFeature = false;
+    container.listen(updateParamsProvider, (_, _) {});
+
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update(
+          (state) => state.copyWith(mitm: state.mitm.copyWith(capture: true)),
+        );
+
+    expect(container.read(updateParamsProvider).options.mitmCapture, isFalse);
   });
 
   test('the setup patch changes only with what a re-apply carries', () {

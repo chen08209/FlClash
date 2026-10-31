@@ -167,6 +167,7 @@ void main() {
       final sent = json.decode(calls.single.arguments as String);
       expect(sent['currentProfileName'], 'profile');
       expect(sent['onlyStatisticsProxy'], isTrue);
+      expect(sent, isNot(contains('setupParams')));
     });
   });
 

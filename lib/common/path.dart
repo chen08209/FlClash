@@ -135,6 +135,18 @@ class AppPath {
     return join(scriptsDir, '$fileName.js');
   }
 
+  Future<String> get mitmModulesDirPath async {
+    return join(await homeDirPath, mitmDirectoryName, mitmModulesDirectoryName);
+  }
+
+  Future<String> get mitmResourcesDirPath async {
+    return join(
+      await homeDirPath,
+      mitmDirectoryName,
+      mitmResourcesDirectoryName,
+    );
+  }
+
   Future<String> get providerCacheRootPath async {
     final directory = await homeDirPath;
     return join(directory, providersDirectoryName);

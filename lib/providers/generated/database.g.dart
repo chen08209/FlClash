@@ -183,6 +183,51 @@ abstract class _$Scripts extends $StreamNotifier<List<Script>> {
   }
 }
 
+@ProviderFor(MitmModules)
+final mitmModulesProvider = MitmModulesProvider._();
+
+final class MitmModulesProvider
+    extends $StreamNotifierProvider<MitmModules, List<MitmModule>> {
+  MitmModulesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'mitmModulesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$mitmModulesHash();
+
+  @$internal
+  @override
+  MitmModules create() => MitmModules();
+}
+
+String _$mitmModulesHash() => r'f7ff19a7e8b913c8987f0176eadc80222882e633';
+
+abstract class _$MitmModules extends $StreamNotifier<List<MitmModule>> {
+  Stream<List<MitmModule>> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref =
+        this.ref as $Ref<AsyncValue<List<MitmModule>>, List<MitmModule>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<MitmModule>>, List<MitmModule>>,
+              AsyncValue<List<MitmModule>>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(ClashProviders)
 final clashProvidersProvider = ClashProvidersProvider._();
 

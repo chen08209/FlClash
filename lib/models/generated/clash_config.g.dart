@@ -1038,24 +1038,11 @@ _Mitm _$MitmFromJson(Map<String, dynamic> json) => _Mitm(
       const [],
   skipServerCertVerify: json['skip-server-cert-verify'] as bool? ?? false,
   autoQuicBlock: json['auto-quic-block'] as bool? ?? true,
-  urlRewrite:
-      (json['url-rewrite'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList() ??
-      const [],
-  headerRewrite:
-      (json['header-rewrite'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList() ??
-      const [],
-  bodyRewrite:
-      (json['body-rewrite'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList() ??
-      const [],
-  mapLocal:
-      (json['map-local'] as List<dynamic>?)?.map((e) => e as String).toList() ??
-      const [],
+  h2: json['h2'] as bool? ?? false,
+  decryptUntrusted: json['decrypt-untrusted'] as bool? ?? false,
+  trustedFingerprint: json['trusted-fingerprint'] as String?,
+  capture: json['capture'] as bool? ?? false,
+  captureEntries: (json['capture-entries'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$MitmToJson(_Mitm instance) => <String, dynamic>{
@@ -1063,8 +1050,9 @@ Map<String, dynamic> _$MitmToJson(_Mitm instance) => <String, dynamic>{
   'hostname': instance.hostname,
   'skip-server-cert-verify': instance.skipServerCertVerify,
   'auto-quic-block': instance.autoQuicBlock,
-  'url-rewrite': instance.urlRewrite,
-  'header-rewrite': instance.headerRewrite,
-  'body-rewrite': instance.bodyRewrite,
-  'map-local': instance.mapLocal,
+  'h2': instance.h2,
+  'decrypt-untrusted': instance.decryptUntrusted,
+  'trusted-fingerprint': instance.trustedFingerprint,
+  'capture': instance.capture,
+  'capture-entries': instance.captureEntries,
 };

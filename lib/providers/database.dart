@@ -5,7 +5,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/ui/banner.dart';
+import 'package:prism_ui/banner.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'generated/database.g.dart';
@@ -379,6 +379,66 @@ class Scripts extends _$Scripts with AsyncNotifierMixin, OptimisticMixin {
     AsyncValue<List<Script>> next,
   ) {
     return !scriptListEquality.equals(previous.value, next.value);
+  }
+}
+
+@riverpod
+class MitmModules extends _$MitmModules
+    with AsyncNotifierMixin, OptimisticMixin {
+  @override
+  Stream<List<MitmModule>> build() {
+    final query = database.mitmModulesDao.query();
+    return settled(query.watch(), query.get);
+  }
+
+  @override
+  List<MitmModule> get value => state.value ?? [];
+
+  void put(MitmModule module, {bool first = false}) {
+    final next = List<MitmModule>.from(value);
+    final index = next.indexWhere((item) => item.id == module.id);
+    if (index == -1 && first) {
+      _reorder([module, ...next]);
+      return;
+    }
+    final saved = index == -1 ? module.copyWith(order: next.length) : module;
+    if (index == -1) {
+      next.add(saved);
+    } else {
+      next[index] = saved;
+    }
+    optimistic(next, () => database.mitmModules.put(saved.toCompanion()));
+  }
+
+  void del(int id) {
+    final next = List<MitmModule>.from(value);
+    final index = next.indexWhere((item) => item.id == id);
+    if (index == -1) return;
+    next.removeAt(index);
+    optimistic(next, () => database.mitmModules.remove((t) => t.id.equals(id)));
+  }
+
+  void order(int oldIndex, int newIndex) {
+    _reorder(value.copyAndReorder(oldIndex, newIndex));
+  }
+
+  void _reorder(List<MitmModule> next) {
+    final changed = <MitmModulesCompanion>[];
+    next.forEachIndexed((index, item) {
+      if (item.order != index) {
+        next[index] = item.copyWith(order: index);
+        changed.add(item.toCompanion(index));
+      }
+    });
+    optimistic(next, () => database.mitmModulesDao.putAll(changed));
+  }
+
+  @override
+  bool updateShouldNotify(
+    AsyncValue<List<MitmModule>> previous,
+    AsyncValue<List<MitmModule>> next,
+  ) {
+    return !mitmModuleListEquality.equals(previous.value, next.value);
   }
 }
 

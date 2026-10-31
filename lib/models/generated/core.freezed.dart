@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SetupParams {
 
-@JsonKey(name: 'selected-map') Map<String, String> get selectedMap;@JsonKey(name: 'test-url') String get testUrl;@JsonKey(name: 'skip-cert-verify') bool get skipCertVerify;@JsonKey(includeIfNull: false) SetupBase? get base;
+@JsonKey(includeIfNull: false) SetupBase? get base;@JsonKey(name: 'selected-map') Map<String, String> get selectedMap; CoreOptions get options;
 /// Create a copy of SetupParams
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,20 +30,20 @@ $SetupParamsCopyWith<SetupParams> get copyWith => _$SetupParamsCopyWithImpl<Setu
 @override
 bool operator ==(Object other) {
   final _this = this as SetupParams;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SetupParams&&const DeepCollectionEquality().equals(other.selectedMap, _this.selectedMap)&&(identical(other.testUrl, _this.testUrl) || other.testUrl == _this.testUrl)&&(identical(other.skipCertVerify, _this.skipCertVerify) || other.skipCertVerify == _this.skipCertVerify)&&(identical(other.base, _this.base) || other.base == _this.base));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SetupParams&&(identical(other.base, _this.base) || other.base == _this.base)&&const DeepCollectionEquality().equals(other.selectedMap, _this.selectedMap)&&(identical(other.options, _this.options) || other.options == _this.options));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as SetupParams;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.selectedMap),_this.testUrl,_this.skipCertVerify,_this.base);
+  return Object.hash(runtimeType,_this.base,const DeepCollectionEquality().hash(_this.selectedMap),_this.options);
 }
 
 @override
 String toString() {
   final _this = this as SetupParams;
-  return 'SetupParams(selectedMap: ${_this.selectedMap}, testUrl: ${_this.testUrl}, skipCertVerify: ${_this.skipCertVerify}, base: ${_this.base})';
+  return 'SetupParams(base: ${_this.base}, selectedMap: ${_this.selectedMap}, options: ${_this.options})';
 }
 
 
@@ -54,11 +54,11 @@ abstract mixin class $SetupParamsCopyWith<$Res>  {
   factory $SetupParamsCopyWith(SetupParams value, $Res Function(SetupParams) _then) = _$SetupParamsCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'selected-map') Map<String, String> selectedMap,@JsonKey(name: 'test-url') String testUrl,@JsonKey(name: 'skip-cert-verify') bool skipCertVerify,@JsonKey(includeIfNull: false) SetupBase? base
+@JsonKey(includeIfNull: false) SetupBase? base,@JsonKey(name: 'selected-map') Map<String, String> selectedMap, CoreOptions options
 });
 
 
-$SetupBaseCopyWith<$Res>? get base;
+$SetupBaseCopyWith<$Res>? get base;$CoreOptionsCopyWith<$Res> get options;
 
 }
 /// @nodoc
@@ -71,13 +71,12 @@ class _$SetupParamsCopyWithImpl<$Res>
 
 /// Create a copy of SetupParams
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? selectedMap = null,Object? testUrl = null,Object? skipCertVerify = null,Object? base = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? base = freezed,Object? selectedMap = null,Object? options = null,}) {
   return _then(SetupParams(
-selectedMap: null == selectedMap ? _self.selectedMap : selectedMap // ignore: cast_nullable_to_non_nullable
-as Map<String, String>,testUrl: null == testUrl ? _self.testUrl : testUrl // ignore: cast_nullable_to_non_nullable
-as String,skipCertVerify: null == skipCertVerify ? _self.skipCertVerify : skipCertVerify // ignore: cast_nullable_to_non_nullable
-as bool,base: freezed == base ? _self.base : base // ignore: cast_nullable_to_non_nullable
-as SetupBase?,
+base: freezed == base ? _self.base : base // ignore: cast_nullable_to_non_nullable
+as SetupBase?,selectedMap: null == selectedMap ? _self.selectedMap : selectedMap // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,options: null == options ? _self.options : options // ignore: cast_nullable_to_non_nullable
+as CoreOptions,
   ));
 }
 /// Create a copy of SetupParams
@@ -91,6 +90,15 @@ $SetupBaseCopyWith<$Res>? get base {
 
   return $SetupBaseCopyWith<$Res>(_self.base!, (value) {
     return _then(_self.copyWith(base: value));
+  });
+}/// Create a copy of SetupParams
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$CoreOptionsCopyWith<$Res> get options {
+  
+  return $CoreOptionsCopyWith<$Res>(_self.options, (value) {
+    return _then(_self.copyWith(options: value));
   });
 }
 }
@@ -174,10 +182,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'selected-map')  Map<String, String> selectedMap, @JsonKey(name: 'test-url')  String testUrl, @JsonKey(name: 'skip-cert-verify')  bool skipCertVerify, @JsonKey(includeIfNull: false)  SetupBase? base)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(includeIfNull: false)  SetupBase? base, @JsonKey(name: 'selected-map')  Map<String, String> selectedMap,  CoreOptions options)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SetupParams() when $default != null:
-return $default(_that.selectedMap,_that.testUrl,_that.skipCertVerify,_that.base);case _:
+return $default(_that.base,_that.selectedMap,_that.options);case _:
   return orElse();
 
 }
@@ -195,10 +203,10 @@ return $default(_that.selectedMap,_that.testUrl,_that.skipCertVerify,_that.base)
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'selected-map')  Map<String, String> selectedMap, @JsonKey(name: 'test-url')  String testUrl, @JsonKey(name: 'skip-cert-verify')  bool skipCertVerify, @JsonKey(includeIfNull: false)  SetupBase? base)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(includeIfNull: false)  SetupBase? base, @JsonKey(name: 'selected-map')  Map<String, String> selectedMap,  CoreOptions options)  $default,) {final _that = this;
 switch (_that) {
 case _SetupParams():
-return $default(_that.selectedMap,_that.testUrl,_that.skipCertVerify,_that.base);case _:
+return $default(_that.base,_that.selectedMap,_that.options);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -215,10 +223,10 @@ return $default(_that.selectedMap,_that.testUrl,_that.skipCertVerify,_that.base)
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'selected-map')  Map<String, String> selectedMap, @JsonKey(name: 'test-url')  String testUrl, @JsonKey(name: 'skip-cert-verify')  bool skipCertVerify, @JsonKey(includeIfNull: false)  SetupBase? base)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(includeIfNull: false)  SetupBase? base, @JsonKey(name: 'selected-map')  Map<String, String> selectedMap,  CoreOptions options)?  $default,) {final _that = this;
 switch (_that) {
 case _SetupParams() when $default != null:
-return $default(_that.selectedMap,_that.testUrl,_that.skipCertVerify,_that.base);case _:
+return $default(_that.base,_that.selectedMap,_that.options);case _:
   return null;
 
 }
@@ -230,9 +238,10 @@ return $default(_that.selectedMap,_that.testUrl,_that.skipCertVerify,_that.base)
 @JsonSerializable()
 
 class _SetupParams implements SetupParams {
-  const _SetupParams({@JsonKey(name: 'selected-map') required  Map<String, String> selectedMap, @JsonKey(name: 'test-url') required this.testUrl, @JsonKey(name: 'skip-cert-verify') this.skipCertVerify = false, @JsonKey(includeIfNull: false) this.base}): _selectedMap = selectedMap;
+  const _SetupParams({@JsonKey(includeIfNull: false) this.base, @JsonKey(name: 'selected-map') required  Map<String, String> selectedMap, required this.options}): _selectedMap = selectedMap;
   factory _SetupParams.fromJson(Map<String, dynamic> json) => _$SetupParamsFromJson(json);
 
+@override@JsonKey(includeIfNull: false) final  SetupBase? base;
  final  Map<String, String> _selectedMap;
 @override@JsonKey(name: 'selected-map') Map<String, String> get selectedMap {
   if (_selectedMap is EqualUnmodifiableMapView) return _selectedMap;
@@ -240,9 +249,7 @@ class _SetupParams implements SetupParams {
   return EqualUnmodifiableMapView(_selectedMap);
 }
 
-@override@JsonKey(name: 'test-url') final  String testUrl;
-@override@JsonKey(name: 'skip-cert-verify') final  bool skipCertVerify;
-@override@JsonKey(includeIfNull: false) final  SetupBase? base;
+@override final  CoreOptions options;
 
 /// Create a copy of SetupParams
 /// with the given fields replaced by the non-null parameter values.
@@ -257,18 +264,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SetupParams&&const DeepCollectionEquality().equals(other.selectedMap, _selectedMap)&&(identical(other.testUrl, testUrl) || other.testUrl == testUrl)&&(identical(other.skipCertVerify, skipCertVerify) || other.skipCertVerify == skipCertVerify)&&(identical(other.base, base) || other.base == base));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SetupParams&&(identical(other.base, base) || other.base == base)&&const DeepCollectionEquality().equals(other.selectedMap, _selectedMap)&&(identical(other.options, options) || other.options == options));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_selectedMap),testUrl,skipCertVerify,base);
+    return Object.hash(runtimeType,base,const DeepCollectionEquality().hash(_selectedMap),options);
 }
 
 @override
 String toString() {
-    return 'SetupParams(selectedMap: $selectedMap, testUrl: $testUrl, skipCertVerify: $skipCertVerify, base: $base)';
+    return 'SetupParams(base: $base, selectedMap: $selectedMap, options: $options)';
 }
 
 
@@ -279,11 +286,11 @@ abstract mixin class _$SetupParamsCopyWith<$Res> implements $SetupParamsCopyWith
   factory _$SetupParamsCopyWith(_SetupParams value, $Res Function(_SetupParams) _then) = __$SetupParamsCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'selected-map') Map<String, String> selectedMap,@JsonKey(name: 'test-url') String testUrl,@JsonKey(name: 'skip-cert-verify') bool skipCertVerify,@JsonKey(includeIfNull: false) SetupBase? base
+@JsonKey(includeIfNull: false) SetupBase? base,@JsonKey(name: 'selected-map') Map<String, String> selectedMap, CoreOptions options
 });
 
 
-@override $SetupBaseCopyWith<$Res>? get base;
+@override $SetupBaseCopyWith<$Res>? get base;@override $CoreOptionsCopyWith<$Res> get options;
 
 }
 /// @nodoc
@@ -296,13 +303,12 @@ class __$SetupParamsCopyWithImpl<$Res>
 
 /// Create a copy of SetupParams
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? selectedMap = null,Object? testUrl = null,Object? skipCertVerify = null,Object? base = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? base = freezed,Object? selectedMap = null,Object? options = null,}) {
   return _then(_SetupParams(
-selectedMap: null == selectedMap ? _self._selectedMap : selectedMap // ignore: cast_nullable_to_non_nullable
-as Map<String, String>,testUrl: null == testUrl ? _self.testUrl : testUrl // ignore: cast_nullable_to_non_nullable
-as String,skipCertVerify: null == skipCertVerify ? _self.skipCertVerify : skipCertVerify // ignore: cast_nullable_to_non_nullable
-as bool,base: freezed == base ? _self.base : base // ignore: cast_nullable_to_non_nullable
-as SetupBase?,
+base: freezed == base ? _self.base : base // ignore: cast_nullable_to_non_nullable
+as SetupBase?,selectedMap: null == selectedMap ? _self._selectedMap : selectedMap // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,options: null == options ? _self.options : options // ignore: cast_nullable_to_non_nullable
+as CoreOptions,
   ));
 }
 
@@ -318,7 +324,295 @@ $SetupBaseCopyWith<$Res>? get base {
   return $SetupBaseCopyWith<$Res>(_self.base!, (value) {
     return _then(_self.copyWith(base: value));
   });
+}/// Create a copy of SetupParams
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$CoreOptionsCopyWith<$Res> get options {
+  
+  return $CoreOptionsCopyWith<$Res>(_self.options, (value) {
+    return _then(_self.copyWith(options: value));
+  });
 }
+}
+
+
+/// @nodoc
+mixin _$CoreOptions {
+
+@JsonKey(name: 'test-url') String get testUrl;@JsonKey(name: 'skip-cert-verify') bool get skipCertVerify;@JsonKey(name: 'delay-test-timeout') int get delayTestTimeout;@JsonKey(name: 'mitm-capture') bool get mitmCapture;
+/// Create a copy of CoreOptions
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CoreOptionsCopyWith<CoreOptions> get copyWith => _$CoreOptionsCopyWithImpl<CoreOptions>(this as CoreOptions, _$identity);
+
+  /// Serializes this CoreOptions to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as CoreOptions;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CoreOptions&&(identical(other.testUrl, _this.testUrl) || other.testUrl == _this.testUrl)&&(identical(other.skipCertVerify, _this.skipCertVerify) || other.skipCertVerify == _this.skipCertVerify)&&(identical(other.delayTestTimeout, _this.delayTestTimeout) || other.delayTestTimeout == _this.delayTestTimeout)&&(identical(other.mitmCapture, _this.mitmCapture) || other.mitmCapture == _this.mitmCapture));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as CoreOptions;
+  return Object.hash(runtimeType,_this.testUrl,_this.skipCertVerify,_this.delayTestTimeout,_this.mitmCapture);
+}
+
+@override
+String toString() {
+  final _this = this as CoreOptions;
+  return 'CoreOptions(testUrl: ${_this.testUrl}, skipCertVerify: ${_this.skipCertVerify}, delayTestTimeout: ${_this.delayTestTimeout}, mitmCapture: ${_this.mitmCapture})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $CoreOptionsCopyWith<$Res>  {
+  factory $CoreOptionsCopyWith(CoreOptions value, $Res Function(CoreOptions) _then) = _$CoreOptionsCopyWithImpl;
+@useResult
+$Res call({
+@JsonKey(name: 'test-url') String testUrl,@JsonKey(name: 'skip-cert-verify') bool skipCertVerify,@JsonKey(name: 'delay-test-timeout') int delayTestTimeout,@JsonKey(name: 'mitm-capture') bool mitmCapture
+});
+
+
+
+
+}
+/// @nodoc
+class _$CoreOptionsCopyWithImpl<$Res>
+    implements $CoreOptionsCopyWith<$Res> {
+  _$CoreOptionsCopyWithImpl(this._self, this._then);
+
+  final CoreOptions _self;
+  final $Res Function(CoreOptions) _then;
+
+/// Create a copy of CoreOptions
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? testUrl = null,Object? skipCertVerify = null,Object? delayTestTimeout = null,Object? mitmCapture = null,}) {
+  return _then(CoreOptions(
+testUrl: null == testUrl ? _self.testUrl : testUrl // ignore: cast_nullable_to_non_nullable
+as String,skipCertVerify: null == skipCertVerify ? _self.skipCertVerify : skipCertVerify // ignore: cast_nullable_to_non_nullable
+as bool,delayTestTimeout: null == delayTestTimeout ? _self.delayTestTimeout : delayTestTimeout // ignore: cast_nullable_to_non_nullable
+as int,mitmCapture: null == mitmCapture ? _self.mitmCapture : mitmCapture // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [CoreOptions].
+extension CoreOptionsPatterns on CoreOptions {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _CoreOptions value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _CoreOptions() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _CoreOptions value)  $default,){
+final _that = this;
+switch (_that) {
+case _CoreOptions():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _CoreOptions value)?  $default,){
+final _that = this;
+switch (_that) {
+case _CoreOptions() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'test-url')  String testUrl, @JsonKey(name: 'skip-cert-verify')  bool skipCertVerify, @JsonKey(name: 'delay-test-timeout')  int delayTestTimeout, @JsonKey(name: 'mitm-capture')  bool mitmCapture)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _CoreOptions() when $default != null:
+return $default(_that.testUrl,_that.skipCertVerify,_that.delayTestTimeout,_that.mitmCapture);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'test-url')  String testUrl, @JsonKey(name: 'skip-cert-verify')  bool skipCertVerify, @JsonKey(name: 'delay-test-timeout')  int delayTestTimeout, @JsonKey(name: 'mitm-capture')  bool mitmCapture)  $default,) {final _that = this;
+switch (_that) {
+case _CoreOptions():
+return $default(_that.testUrl,_that.skipCertVerify,_that.delayTestTimeout,_that.mitmCapture);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'test-url')  String testUrl, @JsonKey(name: 'skip-cert-verify')  bool skipCertVerify, @JsonKey(name: 'delay-test-timeout')  int delayTestTimeout, @JsonKey(name: 'mitm-capture')  bool mitmCapture)?  $default,) {final _that = this;
+switch (_that) {
+case _CoreOptions() when $default != null:
+return $default(_that.testUrl,_that.skipCertVerify,_that.delayTestTimeout,_that.mitmCapture);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _CoreOptions implements CoreOptions {
+  const _CoreOptions({@JsonKey(name: 'test-url') required this.testUrl, @JsonKey(name: 'skip-cert-verify') this.skipCertVerify = false, @JsonKey(name: 'delay-test-timeout') this.delayTestTimeout = defaultDelayTestTimeout, @JsonKey(name: 'mitm-capture') this.mitmCapture = false});
+  factory _CoreOptions.fromJson(Map<String, dynamic> json) => _$CoreOptionsFromJson(json);
+
+@override@JsonKey(name: 'test-url') final  String testUrl;
+@override@JsonKey(name: 'skip-cert-verify') final  bool skipCertVerify;
+@override@JsonKey(name: 'delay-test-timeout') final  int delayTestTimeout;
+@override@JsonKey(name: 'mitm-capture') final  bool mitmCapture;
+
+/// Create a copy of CoreOptions
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$CoreOptionsCopyWith<_CoreOptions> get copyWith => __$CoreOptionsCopyWithImpl<_CoreOptions>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$CoreOptionsToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CoreOptions&&(identical(other.testUrl, testUrl) || other.testUrl == testUrl)&&(identical(other.skipCertVerify, skipCertVerify) || other.skipCertVerify == skipCertVerify)&&(identical(other.delayTestTimeout, delayTestTimeout) || other.delayTestTimeout == delayTestTimeout)&&(identical(other.mitmCapture, mitmCapture) || other.mitmCapture == mitmCapture));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,testUrl,skipCertVerify,delayTestTimeout,mitmCapture);
+}
+
+@override
+String toString() {
+    return 'CoreOptions(testUrl: $testUrl, skipCertVerify: $skipCertVerify, delayTestTimeout: $delayTestTimeout, mitmCapture: $mitmCapture)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$CoreOptionsCopyWith<$Res> implements $CoreOptionsCopyWith<$Res> {
+  factory _$CoreOptionsCopyWith(_CoreOptions value, $Res Function(_CoreOptions) _then) = __$CoreOptionsCopyWithImpl;
+@override @useResult
+$Res call({
+@JsonKey(name: 'test-url') String testUrl,@JsonKey(name: 'skip-cert-verify') bool skipCertVerify,@JsonKey(name: 'delay-test-timeout') int delayTestTimeout,@JsonKey(name: 'mitm-capture') bool mitmCapture
+});
+
+
+
+
+}
+/// @nodoc
+class __$CoreOptionsCopyWithImpl<$Res>
+    implements _$CoreOptionsCopyWith<$Res> {
+  __$CoreOptionsCopyWithImpl(this._self, this._then);
+
+  final _CoreOptions _self;
+  final $Res Function(_CoreOptions) _then;
+
+/// Create a copy of CoreOptions
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? testUrl = null,Object? skipCertVerify = null,Object? delayTestTimeout = null,Object? mitmCapture = null,}) {
+  return _then(_CoreOptions(
+testUrl: null == testUrl ? _self.testUrl : testUrl // ignore: cast_nullable_to_non_nullable
+as String,skipCertVerify: null == skipCertVerify ? _self.skipCertVerify : skipCertVerify // ignore: cast_nullable_to_non_nullable
+as bool,delayTestTimeout: null == delayTestTimeout ? _self.delayTestTimeout : delayTestTimeout // ignore: cast_nullable_to_non_nullable
+as int,mitmCapture: null == mitmCapture ? _self.mitmCapture : mitmCapture // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
 }
 
 
@@ -895,7 +1189,7 @@ as int,
 /// @nodoc
 mixin _$UpdateParams {
 
-@JsonKey(toJson: _tunCoreJson) Tun get tun;@JsonKey(name: 'mixed-port') int get mixedPort;@JsonKey(name: 'allow-lan') bool get allowLan;@JsonKey(name: 'find-process-mode') FindProcessMode get findProcessMode; Mode get mode;@JsonKey(name: 'log-level') LogLevel get logLevel; bool? get ipv6;@JsonKey(name: 'tcp-concurrent') bool? get tcpConcurrent;@JsonKey(name: 'external-controller') ExternalControllerStatus get externalController; String get secret;@JsonKey(name: 'unified-delay') bool? get unifiedDelay; List<String> get authentication;@JsonKey(name: 'geo-auto-update') bool get geoAutoUpdate;@JsonKey(name: 'geo-update-interval') int get geoUpdateInterval;@JsonKey(name: 'geox-url') Map<String, String> get geoXUrl;@JsonKey(name: 'skip-cert-verify') bool get skipCertVerify;
+@JsonKey(toJson: _tunCoreJson) Tun get tun;@JsonKey(name: 'mixed-port') int get mixedPort;@JsonKey(name: 'allow-lan') bool get allowLan;@JsonKey(name: 'find-process-mode') FindProcessMode get findProcessMode; Mode get mode;@JsonKey(name: 'log-level') LogLevel get logLevel; bool? get ipv6;@JsonKey(name: 'tcp-concurrent') bool? get tcpConcurrent;@JsonKey(name: 'external-controller') ExternalControllerStatus get externalController; String get secret;@JsonKey(name: 'unified-delay') bool? get unifiedDelay; List<String> get authentication;@JsonKey(name: 'geo-auto-update') bool get geoAutoUpdate;@JsonKey(name: 'geo-update-interval') int get geoUpdateInterval;@JsonKey(name: 'geox-url') Map<String, String> get geoXUrl; CoreOptions get options;
 /// Create a copy of UpdateParams
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -909,20 +1203,20 @@ $UpdateParamsCopyWith<UpdateParams> get copyWith => _$UpdateParamsCopyWithImpl<U
 @override
 bool operator ==(Object other) {
   final _this = this as UpdateParams;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UpdateParams&&(identical(other.tun, _this.tun) || other.tun == _this.tun)&&(identical(other.mixedPort, _this.mixedPort) || other.mixedPort == _this.mixedPort)&&(identical(other.allowLan, _this.allowLan) || other.allowLan == _this.allowLan)&&(identical(other.findProcessMode, _this.findProcessMode) || other.findProcessMode == _this.findProcessMode)&&(identical(other.mode, _this.mode) || other.mode == _this.mode)&&(identical(other.logLevel, _this.logLevel) || other.logLevel == _this.logLevel)&&(identical(other.ipv6, _this.ipv6) || other.ipv6 == _this.ipv6)&&(identical(other.tcpConcurrent, _this.tcpConcurrent) || other.tcpConcurrent == _this.tcpConcurrent)&&(identical(other.externalController, _this.externalController) || other.externalController == _this.externalController)&&(identical(other.secret, _this.secret) || other.secret == _this.secret)&&(identical(other.unifiedDelay, _this.unifiedDelay) || other.unifiedDelay == _this.unifiedDelay)&&const DeepCollectionEquality().equals(other.authentication, _this.authentication)&&(identical(other.geoAutoUpdate, _this.geoAutoUpdate) || other.geoAutoUpdate == _this.geoAutoUpdate)&&(identical(other.geoUpdateInterval, _this.geoUpdateInterval) || other.geoUpdateInterval == _this.geoUpdateInterval)&&const DeepCollectionEquality().equals(other.geoXUrl, _this.geoXUrl)&&(identical(other.skipCertVerify, _this.skipCertVerify) || other.skipCertVerify == _this.skipCertVerify));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UpdateParams&&(identical(other.tun, _this.tun) || other.tun == _this.tun)&&(identical(other.mixedPort, _this.mixedPort) || other.mixedPort == _this.mixedPort)&&(identical(other.allowLan, _this.allowLan) || other.allowLan == _this.allowLan)&&(identical(other.findProcessMode, _this.findProcessMode) || other.findProcessMode == _this.findProcessMode)&&(identical(other.mode, _this.mode) || other.mode == _this.mode)&&(identical(other.logLevel, _this.logLevel) || other.logLevel == _this.logLevel)&&(identical(other.ipv6, _this.ipv6) || other.ipv6 == _this.ipv6)&&(identical(other.tcpConcurrent, _this.tcpConcurrent) || other.tcpConcurrent == _this.tcpConcurrent)&&(identical(other.externalController, _this.externalController) || other.externalController == _this.externalController)&&(identical(other.secret, _this.secret) || other.secret == _this.secret)&&(identical(other.unifiedDelay, _this.unifiedDelay) || other.unifiedDelay == _this.unifiedDelay)&&const DeepCollectionEquality().equals(other.authentication, _this.authentication)&&(identical(other.geoAutoUpdate, _this.geoAutoUpdate) || other.geoAutoUpdate == _this.geoAutoUpdate)&&(identical(other.geoUpdateInterval, _this.geoUpdateInterval) || other.geoUpdateInterval == _this.geoUpdateInterval)&&const DeepCollectionEquality().equals(other.geoXUrl, _this.geoXUrl)&&(identical(other.options, _this.options) || other.options == _this.options));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as UpdateParams;
-  return Object.hash(runtimeType,_this.tun,_this.mixedPort,_this.allowLan,_this.findProcessMode,_this.mode,_this.logLevel,_this.ipv6,_this.tcpConcurrent,_this.externalController,_this.secret,_this.unifiedDelay,const DeepCollectionEquality().hash(_this.authentication),_this.geoAutoUpdate,_this.geoUpdateInterval,const DeepCollectionEquality().hash(_this.geoXUrl),_this.skipCertVerify);
+  return Object.hash(runtimeType,_this.tun,_this.mixedPort,_this.allowLan,_this.findProcessMode,_this.mode,_this.logLevel,_this.ipv6,_this.tcpConcurrent,_this.externalController,_this.secret,_this.unifiedDelay,const DeepCollectionEquality().hash(_this.authentication),_this.geoAutoUpdate,_this.geoUpdateInterval,const DeepCollectionEquality().hash(_this.geoXUrl),_this.options);
 }
 
 @override
 String toString() {
   final _this = this as UpdateParams;
-  return 'UpdateParams(tun: ${_this.tun}, mixedPort: ${_this.mixedPort}, allowLan: ${_this.allowLan}, findProcessMode: ${_this.findProcessMode}, mode: ${_this.mode}, logLevel: ${_this.logLevel}, ipv6: ${_this.ipv6}, tcpConcurrent: ${_this.tcpConcurrent}, externalController: ${_this.externalController}, secret: ${_this.secret}, unifiedDelay: ${_this.unifiedDelay}, authentication: ${_this.authentication}, geoAutoUpdate: ${_this.geoAutoUpdate}, geoUpdateInterval: ${_this.geoUpdateInterval}, geoXUrl: ${_this.geoXUrl}, skipCertVerify: ${_this.skipCertVerify})';
+  return 'UpdateParams(tun: ${_this.tun}, mixedPort: ${_this.mixedPort}, allowLan: ${_this.allowLan}, findProcessMode: ${_this.findProcessMode}, mode: ${_this.mode}, logLevel: ${_this.logLevel}, ipv6: ${_this.ipv6}, tcpConcurrent: ${_this.tcpConcurrent}, externalController: ${_this.externalController}, secret: ${_this.secret}, unifiedDelay: ${_this.unifiedDelay}, authentication: ${_this.authentication}, geoAutoUpdate: ${_this.geoAutoUpdate}, geoUpdateInterval: ${_this.geoUpdateInterval}, geoXUrl: ${_this.geoXUrl}, options: ${_this.options})';
 }
 
 
@@ -933,11 +1227,11 @@ abstract mixin class $UpdateParamsCopyWith<$Res>  {
   factory $UpdateParamsCopyWith(UpdateParams value, $Res Function(UpdateParams) _then) = _$UpdateParamsCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(toJson: _tunCoreJson) Tun tun,@JsonKey(name: 'mixed-port') int mixedPort,@JsonKey(name: 'allow-lan') bool allowLan,@JsonKey(name: 'find-process-mode') FindProcessMode findProcessMode, Mode mode,@JsonKey(name: 'log-level') LogLevel logLevel, bool? ipv6,@JsonKey(name: 'tcp-concurrent') bool? tcpConcurrent,@JsonKey(name: 'external-controller') ExternalControllerStatus externalController, String secret,@JsonKey(name: 'unified-delay') bool? unifiedDelay, List<String> authentication,@JsonKey(name: 'geo-auto-update') bool geoAutoUpdate,@JsonKey(name: 'geo-update-interval') int geoUpdateInterval,@JsonKey(name: 'geox-url') Map<String, String> geoXUrl,@JsonKey(name: 'skip-cert-verify') bool skipCertVerify
+@JsonKey(toJson: _tunCoreJson) Tun tun,@JsonKey(name: 'mixed-port') int mixedPort,@JsonKey(name: 'allow-lan') bool allowLan,@JsonKey(name: 'find-process-mode') FindProcessMode findProcessMode, Mode mode,@JsonKey(name: 'log-level') LogLevel logLevel, bool? ipv6,@JsonKey(name: 'tcp-concurrent') bool? tcpConcurrent,@JsonKey(name: 'external-controller') ExternalControllerStatus externalController, String secret,@JsonKey(name: 'unified-delay') bool? unifiedDelay, List<String> authentication,@JsonKey(name: 'geo-auto-update') bool geoAutoUpdate,@JsonKey(name: 'geo-update-interval') int geoUpdateInterval,@JsonKey(name: 'geox-url') Map<String, String> geoXUrl, CoreOptions options
 });
 
 
-$TunCopyWith<$Res> get tun;
+$TunCopyWith<$Res> get tun;$CoreOptionsCopyWith<$Res> get options;
 
 }
 /// @nodoc
@@ -950,7 +1244,7 @@ class _$UpdateParamsCopyWithImpl<$Res>
 
 /// Create a copy of UpdateParams
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? tun = null,Object? mixedPort = null,Object? allowLan = null,Object? findProcessMode = null,Object? mode = null,Object? logLevel = null,Object? ipv6 = freezed,Object? tcpConcurrent = freezed,Object? externalController = null,Object? secret = null,Object? unifiedDelay = freezed,Object? authentication = null,Object? geoAutoUpdate = null,Object? geoUpdateInterval = null,Object? geoXUrl = null,Object? skipCertVerify = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? tun = null,Object? mixedPort = null,Object? allowLan = null,Object? findProcessMode = null,Object? mode = null,Object? logLevel = null,Object? ipv6 = freezed,Object? tcpConcurrent = freezed,Object? externalController = null,Object? secret = null,Object? unifiedDelay = freezed,Object? authentication = null,Object? geoAutoUpdate = null,Object? geoUpdateInterval = null,Object? geoXUrl = null,Object? options = null,}) {
   return _then(UpdateParams(
 tun: null == tun ? _self.tun : tun // ignore: cast_nullable_to_non_nullable
 as Tun,mixedPort: null == mixedPort ? _self.mixedPort : mixedPort // ignore: cast_nullable_to_non_nullable
@@ -967,8 +1261,8 @@ as bool?,authentication: null == authentication ? _self.authentication : authent
 as List<String>,geoAutoUpdate: null == geoAutoUpdate ? _self.geoAutoUpdate : geoAutoUpdate // ignore: cast_nullable_to_non_nullable
 as bool,geoUpdateInterval: null == geoUpdateInterval ? _self.geoUpdateInterval : geoUpdateInterval // ignore: cast_nullable_to_non_nullable
 as int,geoXUrl: null == geoXUrl ? _self.geoXUrl : geoXUrl // ignore: cast_nullable_to_non_nullable
-as Map<String, String>,skipCertVerify: null == skipCertVerify ? _self.skipCertVerify : skipCertVerify // ignore: cast_nullable_to_non_nullable
-as bool,
+as Map<String, String>,options: null == options ? _self.options : options // ignore: cast_nullable_to_non_nullable
+as CoreOptions,
   ));
 }
 /// Create a copy of UpdateParams
@@ -979,6 +1273,15 @@ $TunCopyWith<$Res> get tun {
   
   return $TunCopyWith<$Res>(_self.tun, (value) {
     return _then(_self.copyWith(tun: value));
+  });
+}/// Create a copy of UpdateParams
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$CoreOptionsCopyWith<$Res> get options {
+  
+  return $CoreOptionsCopyWith<$Res>(_self.options, (value) {
+    return _then(_self.copyWith(options: value));
   });
 }
 }
@@ -1062,10 +1365,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(toJson: _tunCoreJson)  Tun tun, @JsonKey(name: 'mixed-port')  int mixedPort, @JsonKey(name: 'allow-lan')  bool allowLan, @JsonKey(name: 'find-process-mode')  FindProcessMode findProcessMode,  Mode mode, @JsonKey(name: 'log-level')  LogLevel logLevel,  bool? ipv6, @JsonKey(name: 'tcp-concurrent')  bool? tcpConcurrent, @JsonKey(name: 'external-controller')  ExternalControllerStatus externalController,  String secret, @JsonKey(name: 'unified-delay')  bool? unifiedDelay,  List<String> authentication, @JsonKey(name: 'geo-auto-update')  bool geoAutoUpdate, @JsonKey(name: 'geo-update-interval')  int geoUpdateInterval, @JsonKey(name: 'geox-url')  Map<String, String> geoXUrl, @JsonKey(name: 'skip-cert-verify')  bool skipCertVerify)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(toJson: _tunCoreJson)  Tun tun, @JsonKey(name: 'mixed-port')  int mixedPort, @JsonKey(name: 'allow-lan')  bool allowLan, @JsonKey(name: 'find-process-mode')  FindProcessMode findProcessMode,  Mode mode, @JsonKey(name: 'log-level')  LogLevel logLevel,  bool? ipv6, @JsonKey(name: 'tcp-concurrent')  bool? tcpConcurrent, @JsonKey(name: 'external-controller')  ExternalControllerStatus externalController,  String secret, @JsonKey(name: 'unified-delay')  bool? unifiedDelay,  List<String> authentication, @JsonKey(name: 'geo-auto-update')  bool geoAutoUpdate, @JsonKey(name: 'geo-update-interval')  int geoUpdateInterval, @JsonKey(name: 'geox-url')  Map<String, String> geoXUrl,  CoreOptions options)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UpdateParams() when $default != null:
-return $default(_that.tun,_that.mixedPort,_that.allowLan,_that.findProcessMode,_that.mode,_that.logLevel,_that.ipv6,_that.tcpConcurrent,_that.externalController,_that.secret,_that.unifiedDelay,_that.authentication,_that.geoAutoUpdate,_that.geoUpdateInterval,_that.geoXUrl,_that.skipCertVerify);case _:
+return $default(_that.tun,_that.mixedPort,_that.allowLan,_that.findProcessMode,_that.mode,_that.logLevel,_that.ipv6,_that.tcpConcurrent,_that.externalController,_that.secret,_that.unifiedDelay,_that.authentication,_that.geoAutoUpdate,_that.geoUpdateInterval,_that.geoXUrl,_that.options);case _:
   return orElse();
 
 }
@@ -1083,10 +1386,10 @@ return $default(_that.tun,_that.mixedPort,_that.allowLan,_that.findProcessMode,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(toJson: _tunCoreJson)  Tun tun, @JsonKey(name: 'mixed-port')  int mixedPort, @JsonKey(name: 'allow-lan')  bool allowLan, @JsonKey(name: 'find-process-mode')  FindProcessMode findProcessMode,  Mode mode, @JsonKey(name: 'log-level')  LogLevel logLevel,  bool? ipv6, @JsonKey(name: 'tcp-concurrent')  bool? tcpConcurrent, @JsonKey(name: 'external-controller')  ExternalControllerStatus externalController,  String secret, @JsonKey(name: 'unified-delay')  bool? unifiedDelay,  List<String> authentication, @JsonKey(name: 'geo-auto-update')  bool geoAutoUpdate, @JsonKey(name: 'geo-update-interval')  int geoUpdateInterval, @JsonKey(name: 'geox-url')  Map<String, String> geoXUrl, @JsonKey(name: 'skip-cert-verify')  bool skipCertVerify)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(toJson: _tunCoreJson)  Tun tun, @JsonKey(name: 'mixed-port')  int mixedPort, @JsonKey(name: 'allow-lan')  bool allowLan, @JsonKey(name: 'find-process-mode')  FindProcessMode findProcessMode,  Mode mode, @JsonKey(name: 'log-level')  LogLevel logLevel,  bool? ipv6, @JsonKey(name: 'tcp-concurrent')  bool? tcpConcurrent, @JsonKey(name: 'external-controller')  ExternalControllerStatus externalController,  String secret, @JsonKey(name: 'unified-delay')  bool? unifiedDelay,  List<String> authentication, @JsonKey(name: 'geo-auto-update')  bool geoAutoUpdate, @JsonKey(name: 'geo-update-interval')  int geoUpdateInterval, @JsonKey(name: 'geox-url')  Map<String, String> geoXUrl,  CoreOptions options)  $default,) {final _that = this;
 switch (_that) {
 case _UpdateParams():
-return $default(_that.tun,_that.mixedPort,_that.allowLan,_that.findProcessMode,_that.mode,_that.logLevel,_that.ipv6,_that.tcpConcurrent,_that.externalController,_that.secret,_that.unifiedDelay,_that.authentication,_that.geoAutoUpdate,_that.geoUpdateInterval,_that.geoXUrl,_that.skipCertVerify);case _:
+return $default(_that.tun,_that.mixedPort,_that.allowLan,_that.findProcessMode,_that.mode,_that.logLevel,_that.ipv6,_that.tcpConcurrent,_that.externalController,_that.secret,_that.unifiedDelay,_that.authentication,_that.geoAutoUpdate,_that.geoUpdateInterval,_that.geoXUrl,_that.options);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1103,10 +1406,10 @@ return $default(_that.tun,_that.mixedPort,_that.allowLan,_that.findProcessMode,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(toJson: _tunCoreJson)  Tun tun, @JsonKey(name: 'mixed-port')  int mixedPort, @JsonKey(name: 'allow-lan')  bool allowLan, @JsonKey(name: 'find-process-mode')  FindProcessMode findProcessMode,  Mode mode, @JsonKey(name: 'log-level')  LogLevel logLevel,  bool? ipv6, @JsonKey(name: 'tcp-concurrent')  bool? tcpConcurrent, @JsonKey(name: 'external-controller')  ExternalControllerStatus externalController,  String secret, @JsonKey(name: 'unified-delay')  bool? unifiedDelay,  List<String> authentication, @JsonKey(name: 'geo-auto-update')  bool geoAutoUpdate, @JsonKey(name: 'geo-update-interval')  int geoUpdateInterval, @JsonKey(name: 'geox-url')  Map<String, String> geoXUrl, @JsonKey(name: 'skip-cert-verify')  bool skipCertVerify)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(toJson: _tunCoreJson)  Tun tun, @JsonKey(name: 'mixed-port')  int mixedPort, @JsonKey(name: 'allow-lan')  bool allowLan, @JsonKey(name: 'find-process-mode')  FindProcessMode findProcessMode,  Mode mode, @JsonKey(name: 'log-level')  LogLevel logLevel,  bool? ipv6, @JsonKey(name: 'tcp-concurrent')  bool? tcpConcurrent, @JsonKey(name: 'external-controller')  ExternalControllerStatus externalController,  String secret, @JsonKey(name: 'unified-delay')  bool? unifiedDelay,  List<String> authentication, @JsonKey(name: 'geo-auto-update')  bool geoAutoUpdate, @JsonKey(name: 'geo-update-interval')  int geoUpdateInterval, @JsonKey(name: 'geox-url')  Map<String, String> geoXUrl,  CoreOptions options)?  $default,) {final _that = this;
 switch (_that) {
 case _UpdateParams() when $default != null:
-return $default(_that.tun,_that.mixedPort,_that.allowLan,_that.findProcessMode,_that.mode,_that.logLevel,_that.ipv6,_that.tcpConcurrent,_that.externalController,_that.secret,_that.unifiedDelay,_that.authentication,_that.geoAutoUpdate,_that.geoUpdateInterval,_that.geoXUrl,_that.skipCertVerify);case _:
+return $default(_that.tun,_that.mixedPort,_that.allowLan,_that.findProcessMode,_that.mode,_that.logLevel,_that.ipv6,_that.tcpConcurrent,_that.externalController,_that.secret,_that.unifiedDelay,_that.authentication,_that.geoAutoUpdate,_that.geoUpdateInterval,_that.geoXUrl,_that.options);case _:
   return null;
 
 }
@@ -1118,7 +1421,7 @@ return $default(_that.tun,_that.mixedPort,_that.allowLan,_that.findProcessMode,_
 @JsonSerializable()
 
 class _UpdateParams implements UpdateParams {
-  const _UpdateParams({@JsonKey(toJson: _tunCoreJson) required this.tun, @JsonKey(name: 'mixed-port') required this.mixedPort, @JsonKey(name: 'allow-lan') required this.allowLan, @JsonKey(name: 'find-process-mode') required this.findProcessMode, required this.mode, @JsonKey(name: 'log-level') required this.logLevel, this.ipv6, @JsonKey(name: 'tcp-concurrent') this.tcpConcurrent, @JsonKey(name: 'external-controller') required this.externalController, this.secret = '', @JsonKey(name: 'unified-delay') this.unifiedDelay,  List<String> authentication = const [], @JsonKey(name: 'geo-auto-update') this.geoAutoUpdate = false, @JsonKey(name: 'geo-update-interval') this.geoUpdateInterval = 24, @JsonKey(name: 'geox-url')  Map<String, String> geoXUrl = const {}, @JsonKey(name: 'skip-cert-verify') this.skipCertVerify = false}): _authentication = authentication,_geoXUrl = geoXUrl;
+  const _UpdateParams({@JsonKey(toJson: _tunCoreJson) required this.tun, @JsonKey(name: 'mixed-port') required this.mixedPort, @JsonKey(name: 'allow-lan') required this.allowLan, @JsonKey(name: 'find-process-mode') required this.findProcessMode, required this.mode, @JsonKey(name: 'log-level') required this.logLevel, this.ipv6, @JsonKey(name: 'tcp-concurrent') this.tcpConcurrent, @JsonKey(name: 'external-controller') required this.externalController, this.secret = '', @JsonKey(name: 'unified-delay') this.unifiedDelay,  List<String> authentication = const [], @JsonKey(name: 'geo-auto-update') this.geoAutoUpdate = false, @JsonKey(name: 'geo-update-interval') this.geoUpdateInterval = 24, @JsonKey(name: 'geox-url')  Map<String, String> geoXUrl = const {}, required this.options}): _authentication = authentication,_geoXUrl = geoXUrl;
   factory _UpdateParams.fromJson(Map<String, dynamic> json) => _$UpdateParamsFromJson(json);
 
 @override@JsonKey(toJson: _tunCoreJson) final  Tun tun;
@@ -1148,7 +1451,7 @@ class _UpdateParams implements UpdateParams {
   return EqualUnmodifiableMapView(_geoXUrl);
 }
 
-@override@JsonKey(name: 'skip-cert-verify') final  bool skipCertVerify;
+@override final  CoreOptions options;
 
 /// Create a copy of UpdateParams
 /// with the given fields replaced by the non-null parameter values.
@@ -1163,18 +1466,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _UpdateParams&&(identical(other.tun, tun) || other.tun == tun)&&(identical(other.mixedPort, mixedPort) || other.mixedPort == mixedPort)&&(identical(other.allowLan, allowLan) || other.allowLan == allowLan)&&(identical(other.findProcessMode, findProcessMode) || other.findProcessMode == findProcessMode)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.logLevel, logLevel) || other.logLevel == logLevel)&&(identical(other.ipv6, ipv6) || other.ipv6 == ipv6)&&(identical(other.tcpConcurrent, tcpConcurrent) || other.tcpConcurrent == tcpConcurrent)&&(identical(other.externalController, externalController) || other.externalController == externalController)&&(identical(other.secret, secret) || other.secret == secret)&&(identical(other.unifiedDelay, unifiedDelay) || other.unifiedDelay == unifiedDelay)&&const DeepCollectionEquality().equals(other.authentication, _authentication)&&(identical(other.geoAutoUpdate, geoAutoUpdate) || other.geoAutoUpdate == geoAutoUpdate)&&(identical(other.geoUpdateInterval, geoUpdateInterval) || other.geoUpdateInterval == geoUpdateInterval)&&const DeepCollectionEquality().equals(other.geoXUrl, _geoXUrl)&&(identical(other.skipCertVerify, skipCertVerify) || other.skipCertVerify == skipCertVerify));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _UpdateParams&&(identical(other.tun, tun) || other.tun == tun)&&(identical(other.mixedPort, mixedPort) || other.mixedPort == mixedPort)&&(identical(other.allowLan, allowLan) || other.allowLan == allowLan)&&(identical(other.findProcessMode, findProcessMode) || other.findProcessMode == findProcessMode)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.logLevel, logLevel) || other.logLevel == logLevel)&&(identical(other.ipv6, ipv6) || other.ipv6 == ipv6)&&(identical(other.tcpConcurrent, tcpConcurrent) || other.tcpConcurrent == tcpConcurrent)&&(identical(other.externalController, externalController) || other.externalController == externalController)&&(identical(other.secret, secret) || other.secret == secret)&&(identical(other.unifiedDelay, unifiedDelay) || other.unifiedDelay == unifiedDelay)&&const DeepCollectionEquality().equals(other.authentication, _authentication)&&(identical(other.geoAutoUpdate, geoAutoUpdate) || other.geoAutoUpdate == geoAutoUpdate)&&(identical(other.geoUpdateInterval, geoUpdateInterval) || other.geoUpdateInterval == geoUpdateInterval)&&const DeepCollectionEquality().equals(other.geoXUrl, _geoXUrl)&&(identical(other.options, options) || other.options == options));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,tun,mixedPort,allowLan,findProcessMode,mode,logLevel,ipv6,tcpConcurrent,externalController,secret,unifiedDelay,const DeepCollectionEquality().hash(_authentication),geoAutoUpdate,geoUpdateInterval,const DeepCollectionEquality().hash(_geoXUrl),skipCertVerify);
+    return Object.hash(runtimeType,tun,mixedPort,allowLan,findProcessMode,mode,logLevel,ipv6,tcpConcurrent,externalController,secret,unifiedDelay,const DeepCollectionEquality().hash(_authentication),geoAutoUpdate,geoUpdateInterval,const DeepCollectionEquality().hash(_geoXUrl),options);
 }
 
 @override
 String toString() {
-    return 'UpdateParams(tun: $tun, mixedPort: $mixedPort, allowLan: $allowLan, findProcessMode: $findProcessMode, mode: $mode, logLevel: $logLevel, ipv6: $ipv6, tcpConcurrent: $tcpConcurrent, externalController: $externalController, secret: $secret, unifiedDelay: $unifiedDelay, authentication: $authentication, geoAutoUpdate: $geoAutoUpdate, geoUpdateInterval: $geoUpdateInterval, geoXUrl: $geoXUrl, skipCertVerify: $skipCertVerify)';
+    return 'UpdateParams(tun: $tun, mixedPort: $mixedPort, allowLan: $allowLan, findProcessMode: $findProcessMode, mode: $mode, logLevel: $logLevel, ipv6: $ipv6, tcpConcurrent: $tcpConcurrent, externalController: $externalController, secret: $secret, unifiedDelay: $unifiedDelay, authentication: $authentication, geoAutoUpdate: $geoAutoUpdate, geoUpdateInterval: $geoUpdateInterval, geoXUrl: $geoXUrl, options: $options)';
 }
 
 
@@ -1185,11 +1488,11 @@ abstract mixin class _$UpdateParamsCopyWith<$Res> implements $UpdateParamsCopyWi
   factory _$UpdateParamsCopyWith(_UpdateParams value, $Res Function(_UpdateParams) _then) = __$UpdateParamsCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(toJson: _tunCoreJson) Tun tun,@JsonKey(name: 'mixed-port') int mixedPort,@JsonKey(name: 'allow-lan') bool allowLan,@JsonKey(name: 'find-process-mode') FindProcessMode findProcessMode, Mode mode,@JsonKey(name: 'log-level') LogLevel logLevel, bool? ipv6,@JsonKey(name: 'tcp-concurrent') bool? tcpConcurrent,@JsonKey(name: 'external-controller') ExternalControllerStatus externalController, String secret,@JsonKey(name: 'unified-delay') bool? unifiedDelay, List<String> authentication,@JsonKey(name: 'geo-auto-update') bool geoAutoUpdate,@JsonKey(name: 'geo-update-interval') int geoUpdateInterval,@JsonKey(name: 'geox-url') Map<String, String> geoXUrl,@JsonKey(name: 'skip-cert-verify') bool skipCertVerify
+@JsonKey(toJson: _tunCoreJson) Tun tun,@JsonKey(name: 'mixed-port') int mixedPort,@JsonKey(name: 'allow-lan') bool allowLan,@JsonKey(name: 'find-process-mode') FindProcessMode findProcessMode, Mode mode,@JsonKey(name: 'log-level') LogLevel logLevel, bool? ipv6,@JsonKey(name: 'tcp-concurrent') bool? tcpConcurrent,@JsonKey(name: 'external-controller') ExternalControllerStatus externalController, String secret,@JsonKey(name: 'unified-delay') bool? unifiedDelay, List<String> authentication,@JsonKey(name: 'geo-auto-update') bool geoAutoUpdate,@JsonKey(name: 'geo-update-interval') int geoUpdateInterval,@JsonKey(name: 'geox-url') Map<String, String> geoXUrl, CoreOptions options
 });
 
 
-@override $TunCopyWith<$Res> get tun;
+@override $TunCopyWith<$Res> get tun;@override $CoreOptionsCopyWith<$Res> get options;
 
 }
 /// @nodoc
@@ -1202,7 +1505,7 @@ class __$UpdateParamsCopyWithImpl<$Res>
 
 /// Create a copy of UpdateParams
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? tun = null,Object? mixedPort = null,Object? allowLan = null,Object? findProcessMode = null,Object? mode = null,Object? logLevel = null,Object? ipv6 = freezed,Object? tcpConcurrent = freezed,Object? externalController = null,Object? secret = null,Object? unifiedDelay = freezed,Object? authentication = null,Object? geoAutoUpdate = null,Object? geoUpdateInterval = null,Object? geoXUrl = null,Object? skipCertVerify = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? tun = null,Object? mixedPort = null,Object? allowLan = null,Object? findProcessMode = null,Object? mode = null,Object? logLevel = null,Object? ipv6 = freezed,Object? tcpConcurrent = freezed,Object? externalController = null,Object? secret = null,Object? unifiedDelay = freezed,Object? authentication = null,Object? geoAutoUpdate = null,Object? geoUpdateInterval = null,Object? geoXUrl = null,Object? options = null,}) {
   return _then(_UpdateParams(
 tun: null == tun ? _self.tun : tun // ignore: cast_nullable_to_non_nullable
 as Tun,mixedPort: null == mixedPort ? _self.mixedPort : mixedPort // ignore: cast_nullable_to_non_nullable
@@ -1219,8 +1522,8 @@ as bool?,authentication: null == authentication ? _self._authentication : authen
 as List<String>,geoAutoUpdate: null == geoAutoUpdate ? _self.geoAutoUpdate : geoAutoUpdate // ignore: cast_nullable_to_non_nullable
 as bool,geoUpdateInterval: null == geoUpdateInterval ? _self.geoUpdateInterval : geoUpdateInterval // ignore: cast_nullable_to_non_nullable
 as int,geoXUrl: null == geoXUrl ? _self._geoXUrl : geoXUrl // ignore: cast_nullable_to_non_nullable
-as Map<String, String>,skipCertVerify: null == skipCertVerify ? _self.skipCertVerify : skipCertVerify // ignore: cast_nullable_to_non_nullable
-as bool,
+as Map<String, String>,options: null == options ? _self.options : options // ignore: cast_nullable_to_non_nullable
+as CoreOptions,
   ));
 }
 
@@ -1233,7 +1536,2050 @@ $TunCopyWith<$Res> get tun {
   return $TunCopyWith<$Res>(_self.tun, (value) {
     return _then(_self.copyWith(tun: value));
   });
+}/// Create a copy of UpdateParams
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$CoreOptionsCopyWith<$Res> get options {
+  
+  return $CoreOptionsCopyWith<$Res>(_self.options, (value) {
+    return _then(_self.copyWith(options: value));
+  });
 }
+}
+
+
+/// @nodoc
+mixin _$MitmCertificate {
+
+ String get pem; String get fingerprint; String get subject;@JsonKey(name: 'not-before') DateTime get notBefore;@JsonKey(name: 'not-after') DateTime get notAfter;
+/// Create a copy of MitmCertificate
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MitmCertificateCopyWith<MitmCertificate> get copyWith => _$MitmCertificateCopyWithImpl<MitmCertificate>(this as MitmCertificate, _$identity);
+
+  /// Serializes this MitmCertificate to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as MitmCertificate;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmCertificate&&(identical(other.pem, _this.pem) || other.pem == _this.pem)&&(identical(other.fingerprint, _this.fingerprint) || other.fingerprint == _this.fingerprint)&&(identical(other.subject, _this.subject) || other.subject == _this.subject)&&(identical(other.notBefore, _this.notBefore) || other.notBefore == _this.notBefore)&&(identical(other.notAfter, _this.notAfter) || other.notAfter == _this.notAfter));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as MitmCertificate;
+  return Object.hash(runtimeType,_this.pem,_this.fingerprint,_this.subject,_this.notBefore,_this.notAfter);
+}
+
+@override
+String toString() {
+  final _this = this as MitmCertificate;
+  return 'MitmCertificate(pem: ${_this.pem}, fingerprint: ${_this.fingerprint}, subject: ${_this.subject}, notBefore: ${_this.notBefore}, notAfter: ${_this.notAfter})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MitmCertificateCopyWith<$Res>  {
+  factory $MitmCertificateCopyWith(MitmCertificate value, $Res Function(MitmCertificate) _then) = _$MitmCertificateCopyWithImpl;
+@useResult
+$Res call({
+ String pem, String fingerprint, String subject,@JsonKey(name: 'not-before') DateTime notBefore,@JsonKey(name: 'not-after') DateTime notAfter
+});
+
+
+
+
+}
+/// @nodoc
+class _$MitmCertificateCopyWithImpl<$Res>
+    implements $MitmCertificateCopyWith<$Res> {
+  _$MitmCertificateCopyWithImpl(this._self, this._then);
+
+  final MitmCertificate _self;
+  final $Res Function(MitmCertificate) _then;
+
+/// Create a copy of MitmCertificate
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? pem = null,Object? fingerprint = null,Object? subject = null,Object? notBefore = null,Object? notAfter = null,}) {
+  return _then(MitmCertificate(
+pem: null == pem ? _self.pem : pem // ignore: cast_nullable_to_non_nullable
+as String,fingerprint: null == fingerprint ? _self.fingerprint : fingerprint // ignore: cast_nullable_to_non_nullable
+as String,subject: null == subject ? _self.subject : subject // ignore: cast_nullable_to_non_nullable
+as String,notBefore: null == notBefore ? _self.notBefore : notBefore // ignore: cast_nullable_to_non_nullable
+as DateTime,notAfter: null == notAfter ? _self.notAfter : notAfter // ignore: cast_nullable_to_non_nullable
+as DateTime,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [MitmCertificate].
+extension MitmCertificatePatterns on MitmCertificate {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _MitmCertificate value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _MitmCertificate() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _MitmCertificate value)  $default,){
+final _that = this;
+switch (_that) {
+case _MitmCertificate():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _MitmCertificate value)?  $default,){
+final _that = this;
+switch (_that) {
+case _MitmCertificate() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String pem,  String fingerprint,  String subject, @JsonKey(name: 'not-before')  DateTime notBefore, @JsonKey(name: 'not-after')  DateTime notAfter)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _MitmCertificate() when $default != null:
+return $default(_that.pem,_that.fingerprint,_that.subject,_that.notBefore,_that.notAfter);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String pem,  String fingerprint,  String subject, @JsonKey(name: 'not-before')  DateTime notBefore, @JsonKey(name: 'not-after')  DateTime notAfter)  $default,) {final _that = this;
+switch (_that) {
+case _MitmCertificate():
+return $default(_that.pem,_that.fingerprint,_that.subject,_that.notBefore,_that.notAfter);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String pem,  String fingerprint,  String subject, @JsonKey(name: 'not-before')  DateTime notBefore, @JsonKey(name: 'not-after')  DateTime notAfter)?  $default,) {final _that = this;
+switch (_that) {
+case _MitmCertificate() when $default != null:
+return $default(_that.pem,_that.fingerprint,_that.subject,_that.notBefore,_that.notAfter);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _MitmCertificate implements MitmCertificate {
+  const _MitmCertificate({required this.pem, required this.fingerprint, required this.subject, @JsonKey(name: 'not-before') required this.notBefore, @JsonKey(name: 'not-after') required this.notAfter});
+  factory _MitmCertificate.fromJson(Map<String, dynamic> json) => _$MitmCertificateFromJson(json);
+
+@override final  String pem;
+@override final  String fingerprint;
+@override final  String subject;
+@override@JsonKey(name: 'not-before') final  DateTime notBefore;
+@override@JsonKey(name: 'not-after') final  DateTime notAfter;
+
+/// Create a copy of MitmCertificate
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$MitmCertificateCopyWith<_MitmCertificate> get copyWith => __$MitmCertificateCopyWithImpl<_MitmCertificate>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$MitmCertificateToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmCertificate&&(identical(other.pem, pem) || other.pem == pem)&&(identical(other.fingerprint, fingerprint) || other.fingerprint == fingerprint)&&(identical(other.subject, subject) || other.subject == subject)&&(identical(other.notBefore, notBefore) || other.notBefore == notBefore)&&(identical(other.notAfter, notAfter) || other.notAfter == notAfter));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,pem,fingerprint,subject,notBefore,notAfter);
+}
+
+@override
+String toString() {
+    return 'MitmCertificate(pem: $pem, fingerprint: $fingerprint, subject: $subject, notBefore: $notBefore, notAfter: $notAfter)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$MitmCertificateCopyWith<$Res> implements $MitmCertificateCopyWith<$Res> {
+  factory _$MitmCertificateCopyWith(_MitmCertificate value, $Res Function(_MitmCertificate) _then) = __$MitmCertificateCopyWithImpl;
+@override @useResult
+$Res call({
+ String pem, String fingerprint, String subject,@JsonKey(name: 'not-before') DateTime notBefore,@JsonKey(name: 'not-after') DateTime notAfter
+});
+
+
+
+
+}
+/// @nodoc
+class __$MitmCertificateCopyWithImpl<$Res>
+    implements _$MitmCertificateCopyWith<$Res> {
+  __$MitmCertificateCopyWithImpl(this._self, this._then);
+
+  final _MitmCertificate _self;
+  final $Res Function(_MitmCertificate) _then;
+
+/// Create a copy of MitmCertificate
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? pem = null,Object? fingerprint = null,Object? subject = null,Object? notBefore = null,Object? notAfter = null,}) {
+  return _then(_MitmCertificate(
+pem: null == pem ? _self.pem : pem // ignore: cast_nullable_to_non_nullable
+as String,fingerprint: null == fingerprint ? _self.fingerprint : fingerprint // ignore: cast_nullable_to_non_nullable
+as String,subject: null == subject ? _self.subject : subject // ignore: cast_nullable_to_non_nullable
+as String,notBefore: null == notBefore ? _self.notBefore : notBefore // ignore: cast_nullable_to_non_nullable
+as DateTime,notAfter: null == notAfter ? _self.notAfter : notAfter // ignore: cast_nullable_to_non_nullable
+as DateTime,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$MitmScriptOutput {
+
+ List<String> get logs; String get result; String get error;
+/// Create a copy of MitmScriptOutput
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MitmScriptOutputCopyWith<MitmScriptOutput> get copyWith => _$MitmScriptOutputCopyWithImpl<MitmScriptOutput>(this as MitmScriptOutput, _$identity);
+
+  /// Serializes this MitmScriptOutput to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as MitmScriptOutput;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmScriptOutput&&const DeepCollectionEquality().equals(other.logs, _this.logs)&&(identical(other.result, _this.result) || other.result == _this.result)&&(identical(other.error, _this.error) || other.error == _this.error));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as MitmScriptOutput;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.logs),_this.result,_this.error);
+}
+
+@override
+String toString() {
+  final _this = this as MitmScriptOutput;
+  return 'MitmScriptOutput(logs: ${_this.logs}, result: ${_this.result}, error: ${_this.error})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MitmScriptOutputCopyWith<$Res>  {
+  factory $MitmScriptOutputCopyWith(MitmScriptOutput value, $Res Function(MitmScriptOutput) _then) = _$MitmScriptOutputCopyWithImpl;
+@useResult
+$Res call({
+ List<String> logs, String result, String error
+});
+
+
+
+
+}
+/// @nodoc
+class _$MitmScriptOutputCopyWithImpl<$Res>
+    implements $MitmScriptOutputCopyWith<$Res> {
+  _$MitmScriptOutputCopyWithImpl(this._self, this._then);
+
+  final MitmScriptOutput _self;
+  final $Res Function(MitmScriptOutput) _then;
+
+/// Create a copy of MitmScriptOutput
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? logs = null,Object? result = null,Object? error = null,}) {
+  return _then(MitmScriptOutput(
+logs: null == logs ? _self.logs : logs // ignore: cast_nullable_to_non_nullable
+as List<String>,result: null == result ? _self.result : result // ignore: cast_nullable_to_non_nullable
+as String,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [MitmScriptOutput].
+extension MitmScriptOutputPatterns on MitmScriptOutput {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _MitmScriptOutput value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _MitmScriptOutput() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _MitmScriptOutput value)  $default,){
+final _that = this;
+switch (_that) {
+case _MitmScriptOutput():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _MitmScriptOutput value)?  $default,){
+final _that = this;
+switch (_that) {
+case _MitmScriptOutput() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<String> logs,  String result,  String error)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _MitmScriptOutput() when $default != null:
+return $default(_that.logs,_that.result,_that.error);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<String> logs,  String result,  String error)  $default,) {final _that = this;
+switch (_that) {
+case _MitmScriptOutput():
+return $default(_that.logs,_that.result,_that.error);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<String> logs,  String result,  String error)?  $default,) {final _that = this;
+switch (_that) {
+case _MitmScriptOutput() when $default != null:
+return $default(_that.logs,_that.result,_that.error);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _MitmScriptOutput implements MitmScriptOutput {
+  const _MitmScriptOutput({ List<String> logs = const [], this.result = '', this.error = ''}): _logs = logs;
+  factory _MitmScriptOutput.fromJson(Map<String, dynamic> json) => _$MitmScriptOutputFromJson(json);
+
+ final  List<String> _logs;
+@override@JsonKey() List<String> get logs {
+  if (_logs is EqualUnmodifiableListView) return _logs;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_logs);
+}
+
+@override@JsonKey() final  String result;
+@override@JsonKey() final  String error;
+
+/// Create a copy of MitmScriptOutput
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$MitmScriptOutputCopyWith<_MitmScriptOutput> get copyWith => __$MitmScriptOutputCopyWithImpl<_MitmScriptOutput>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$MitmScriptOutputToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmScriptOutput&&const DeepCollectionEquality().equals(other.logs, _logs)&&(identical(other.result, result) || other.result == result)&&(identical(other.error, error) || other.error == error));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_logs),result,error);
+}
+
+@override
+String toString() {
+    return 'MitmScriptOutput(logs: $logs, result: $result, error: $error)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$MitmScriptOutputCopyWith<$Res> implements $MitmScriptOutputCopyWith<$Res> {
+  factory _$MitmScriptOutputCopyWith(_MitmScriptOutput value, $Res Function(_MitmScriptOutput) _then) = __$MitmScriptOutputCopyWithImpl;
+@override @useResult
+$Res call({
+ List<String> logs, String result, String error
+});
+
+
+
+
+}
+/// @nodoc
+class __$MitmScriptOutputCopyWithImpl<$Res>
+    implements _$MitmScriptOutputCopyWith<$Res> {
+  __$MitmScriptOutputCopyWithImpl(this._self, this._then);
+
+  final _MitmScriptOutput _self;
+  final $Res Function(_MitmScriptOutput) _then;
+
+/// Create a copy of MitmScriptOutput
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? logs = null,Object? result = null,Object? error = null,}) {
+  return _then(_MitmScriptOutput(
+logs: null == logs ? _self._logs : logs // ignore: cast_nullable_to_non_nullable
+as List<String>,result: null == result ? _self.result : result // ignore: cast_nullable_to_non_nullable
+as String,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$MitmExchangeSummary {
+
+ int get id; DateTime get start; bool get pending; int get duration; String get method; String get url; int get status;@JsonKey(name: 'request-size') int get requestSize;@JsonKey(name: 'response-size') int get responseSize; String get error;
+/// Create a copy of MitmExchangeSummary
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MitmExchangeSummaryCopyWith<MitmExchangeSummary> get copyWith => _$MitmExchangeSummaryCopyWithImpl<MitmExchangeSummary>(this as MitmExchangeSummary, _$identity);
+
+  /// Serializes this MitmExchangeSummary to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as MitmExchangeSummary;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmExchangeSummary&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.start, _this.start) || other.start == _this.start)&&(identical(other.pending, _this.pending) || other.pending == _this.pending)&&(identical(other.duration, _this.duration) || other.duration == _this.duration)&&(identical(other.method, _this.method) || other.method == _this.method)&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.requestSize, _this.requestSize) || other.requestSize == _this.requestSize)&&(identical(other.responseSize, _this.responseSize) || other.responseSize == _this.responseSize)&&(identical(other.error, _this.error) || other.error == _this.error));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as MitmExchangeSummary;
+  return Object.hash(runtimeType,_this.id,_this.start,_this.pending,_this.duration,_this.method,_this.url,_this.status,_this.requestSize,_this.responseSize,_this.error);
+}
+
+@override
+String toString() {
+  final _this = this as MitmExchangeSummary;
+  return 'MitmExchangeSummary(id: ${_this.id}, start: ${_this.start}, pending: ${_this.pending}, duration: ${_this.duration}, method: ${_this.method}, url: ${_this.url}, status: ${_this.status}, requestSize: ${_this.requestSize}, responseSize: ${_this.responseSize}, error: ${_this.error})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MitmExchangeSummaryCopyWith<$Res>  {
+  factory $MitmExchangeSummaryCopyWith(MitmExchangeSummary value, $Res Function(MitmExchangeSummary) _then) = _$MitmExchangeSummaryCopyWithImpl;
+@useResult
+$Res call({
+ int id, DateTime start, bool pending, int duration, String method, String url, int status,@JsonKey(name: 'request-size') int requestSize,@JsonKey(name: 'response-size') int responseSize, String error
+});
+
+
+
+
+}
+/// @nodoc
+class _$MitmExchangeSummaryCopyWithImpl<$Res>
+    implements $MitmExchangeSummaryCopyWith<$Res> {
+  _$MitmExchangeSummaryCopyWithImpl(this._self, this._then);
+
+  final MitmExchangeSummary _self;
+  final $Res Function(MitmExchangeSummary) _then;
+
+/// Create a copy of MitmExchangeSummary
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? start = null,Object? pending = null,Object? duration = null,Object? method = null,Object? url = null,Object? status = null,Object? requestSize = null,Object? responseSize = null,Object? error = null,}) {
+  return _then(MitmExchangeSummary(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,start: null == start ? _self.start : start // ignore: cast_nullable_to_non_nullable
+as DateTime,pending: null == pending ? _self.pending : pending // ignore: cast_nullable_to_non_nullable
+as bool,duration: null == duration ? _self.duration : duration // ignore: cast_nullable_to_non_nullable
+as int,method: null == method ? _self.method : method // ignore: cast_nullable_to_non_nullable
+as String,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as int,requestSize: null == requestSize ? _self.requestSize : requestSize // ignore: cast_nullable_to_non_nullable
+as int,responseSize: null == responseSize ? _self.responseSize : responseSize // ignore: cast_nullable_to_non_nullable
+as int,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [MitmExchangeSummary].
+extension MitmExchangeSummaryPatterns on MitmExchangeSummary {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _MitmExchangeSummary value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _MitmExchangeSummary() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _MitmExchangeSummary value)  $default,){
+final _that = this;
+switch (_that) {
+case _MitmExchangeSummary():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _MitmExchangeSummary value)?  $default,){
+final _that = this;
+switch (_that) {
+case _MitmExchangeSummary() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  DateTime start,  bool pending,  int duration,  String method,  String url,  int status, @JsonKey(name: 'request-size')  int requestSize, @JsonKey(name: 'response-size')  int responseSize,  String error)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _MitmExchangeSummary() when $default != null:
+return $default(_that.id,_that.start,_that.pending,_that.duration,_that.method,_that.url,_that.status,_that.requestSize,_that.responseSize,_that.error);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  DateTime start,  bool pending,  int duration,  String method,  String url,  int status, @JsonKey(name: 'request-size')  int requestSize, @JsonKey(name: 'response-size')  int responseSize,  String error)  $default,) {final _that = this;
+switch (_that) {
+case _MitmExchangeSummary():
+return $default(_that.id,_that.start,_that.pending,_that.duration,_that.method,_that.url,_that.status,_that.requestSize,_that.responseSize,_that.error);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  DateTime start,  bool pending,  int duration,  String method,  String url,  int status, @JsonKey(name: 'request-size')  int requestSize, @JsonKey(name: 'response-size')  int responseSize,  String error)?  $default,) {final _that = this;
+switch (_that) {
+case _MitmExchangeSummary() when $default != null:
+return $default(_that.id,_that.start,_that.pending,_that.duration,_that.method,_that.url,_that.status,_that.requestSize,_that.responseSize,_that.error);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _MitmExchangeSummary implements MitmExchangeSummary {
+  const _MitmExchangeSummary({required this.id, required this.start, this.pending = false, this.duration = 0, this.method = '', this.url = '', this.status = 0, @JsonKey(name: 'request-size') this.requestSize = 0, @JsonKey(name: 'response-size') this.responseSize = 0, this.error = ''});
+  factory _MitmExchangeSummary.fromJson(Map<String, dynamic> json) => _$MitmExchangeSummaryFromJson(json);
+
+@override final  int id;
+@override final  DateTime start;
+@override@JsonKey() final  bool pending;
+@override@JsonKey() final  int duration;
+@override@JsonKey() final  String method;
+@override@JsonKey() final  String url;
+@override@JsonKey() final  int status;
+@override@JsonKey(name: 'request-size') final  int requestSize;
+@override@JsonKey(name: 'response-size') final  int responseSize;
+@override@JsonKey() final  String error;
+
+/// Create a copy of MitmExchangeSummary
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$MitmExchangeSummaryCopyWith<_MitmExchangeSummary> get copyWith => __$MitmExchangeSummaryCopyWithImpl<_MitmExchangeSummary>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$MitmExchangeSummaryToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmExchangeSummary&&(identical(other.id, id) || other.id == id)&&(identical(other.start, start) || other.start == start)&&(identical(other.pending, pending) || other.pending == pending)&&(identical(other.duration, duration) || other.duration == duration)&&(identical(other.method, method) || other.method == method)&&(identical(other.url, url) || other.url == url)&&(identical(other.status, status) || other.status == status)&&(identical(other.requestSize, requestSize) || other.requestSize == requestSize)&&(identical(other.responseSize, responseSize) || other.responseSize == responseSize)&&(identical(other.error, error) || other.error == error));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,id,start,pending,duration,method,url,status,requestSize,responseSize,error);
+}
+
+@override
+String toString() {
+    return 'MitmExchangeSummary(id: $id, start: $start, pending: $pending, duration: $duration, method: $method, url: $url, status: $status, requestSize: $requestSize, responseSize: $responseSize, error: $error)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$MitmExchangeSummaryCopyWith<$Res> implements $MitmExchangeSummaryCopyWith<$Res> {
+  factory _$MitmExchangeSummaryCopyWith(_MitmExchangeSummary value, $Res Function(_MitmExchangeSummary) _then) = __$MitmExchangeSummaryCopyWithImpl;
+@override @useResult
+$Res call({
+ int id, DateTime start, bool pending, int duration, String method, String url, int status,@JsonKey(name: 'request-size') int requestSize,@JsonKey(name: 'response-size') int responseSize, String error
+});
+
+
+
+
+}
+/// @nodoc
+class __$MitmExchangeSummaryCopyWithImpl<$Res>
+    implements _$MitmExchangeSummaryCopyWith<$Res> {
+  __$MitmExchangeSummaryCopyWithImpl(this._self, this._then);
+
+  final _MitmExchangeSummary _self;
+  final $Res Function(_MitmExchangeSummary) _then;
+
+/// Create a copy of MitmExchangeSummary
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? start = null,Object? pending = null,Object? duration = null,Object? method = null,Object? url = null,Object? status = null,Object? requestSize = null,Object? responseSize = null,Object? error = null,}) {
+  return _then(_MitmExchangeSummary(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,start: null == start ? _self.start : start // ignore: cast_nullable_to_non_nullable
+as DateTime,pending: null == pending ? _self.pending : pending // ignore: cast_nullable_to_non_nullable
+as bool,duration: null == duration ? _self.duration : duration // ignore: cast_nullable_to_non_nullable
+as int,method: null == method ? _self.method : method // ignore: cast_nullable_to_non_nullable
+as String,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as int,requestSize: null == requestSize ? _self.requestSize : requestSize // ignore: cast_nullable_to_non_nullable
+as int,responseSize: null == responseSize ? _self.responseSize : responseSize // ignore: cast_nullable_to_non_nullable
+as int,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$MitmExchangeList {
+
+ bool get capturing; DateTime? get since; List<MitmExchangeSummary> get exchanges; bool get closed;
+/// Create a copy of MitmExchangeList
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MitmExchangeListCopyWith<MitmExchangeList> get copyWith => _$MitmExchangeListCopyWithImpl<MitmExchangeList>(this as MitmExchangeList, _$identity);
+
+  /// Serializes this MitmExchangeList to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as MitmExchangeList;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmExchangeList&&(identical(other.capturing, _this.capturing) || other.capturing == _this.capturing)&&(identical(other.since, _this.since) || other.since == _this.since)&&const DeepCollectionEquality().equals(other.exchanges, _this.exchanges)&&(identical(other.closed, _this.closed) || other.closed == _this.closed));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as MitmExchangeList;
+  return Object.hash(runtimeType,_this.capturing,_this.since,const DeepCollectionEquality().hash(_this.exchanges),_this.closed);
+}
+
+@override
+String toString() {
+  final _this = this as MitmExchangeList;
+  return 'MitmExchangeList(capturing: ${_this.capturing}, since: ${_this.since}, exchanges: ${_this.exchanges}, closed: ${_this.closed})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MitmExchangeListCopyWith<$Res>  {
+  factory $MitmExchangeListCopyWith(MitmExchangeList value, $Res Function(MitmExchangeList) _then) = _$MitmExchangeListCopyWithImpl;
+@useResult
+$Res call({
+ bool capturing, DateTime? since, List<MitmExchangeSummary> exchanges, bool closed
+});
+
+
+
+
+}
+/// @nodoc
+class _$MitmExchangeListCopyWithImpl<$Res>
+    implements $MitmExchangeListCopyWith<$Res> {
+  _$MitmExchangeListCopyWithImpl(this._self, this._then);
+
+  final MitmExchangeList _self;
+  final $Res Function(MitmExchangeList) _then;
+
+/// Create a copy of MitmExchangeList
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? capturing = null,Object? since = freezed,Object? exchanges = null,Object? closed = null,}) {
+  return _then(MitmExchangeList(
+capturing: null == capturing ? _self.capturing : capturing // ignore: cast_nullable_to_non_nullable
+as bool,since: freezed == since ? _self.since : since // ignore: cast_nullable_to_non_nullable
+as DateTime?,exchanges: null == exchanges ? _self.exchanges : exchanges // ignore: cast_nullable_to_non_nullable
+as List<MitmExchangeSummary>,closed: null == closed ? _self.closed : closed // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [MitmExchangeList].
+extension MitmExchangeListPatterns on MitmExchangeList {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _MitmExchangeList value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _MitmExchangeList() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _MitmExchangeList value)  $default,){
+final _that = this;
+switch (_that) {
+case _MitmExchangeList():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _MitmExchangeList value)?  $default,){
+final _that = this;
+switch (_that) {
+case _MitmExchangeList() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool capturing,  DateTime? since,  List<MitmExchangeSummary> exchanges,  bool closed)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _MitmExchangeList() when $default != null:
+return $default(_that.capturing,_that.since,_that.exchanges,_that.closed);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool capturing,  DateTime? since,  List<MitmExchangeSummary> exchanges,  bool closed)  $default,) {final _that = this;
+switch (_that) {
+case _MitmExchangeList():
+return $default(_that.capturing,_that.since,_that.exchanges,_that.closed);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool capturing,  DateTime? since,  List<MitmExchangeSummary> exchanges,  bool closed)?  $default,) {final _that = this;
+switch (_that) {
+case _MitmExchangeList() when $default != null:
+return $default(_that.capturing,_that.since,_that.exchanges,_that.closed);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _MitmExchangeList implements MitmExchangeList {
+  const _MitmExchangeList({this.capturing = false, this.since,  List<MitmExchangeSummary> exchanges = const [], this.closed = false}): _exchanges = exchanges;
+  factory _MitmExchangeList.fromJson(Map<String, dynamic> json) => _$MitmExchangeListFromJson(json);
+
+@override@JsonKey() final  bool capturing;
+@override final  DateTime? since;
+ final  List<MitmExchangeSummary> _exchanges;
+@override@JsonKey() List<MitmExchangeSummary> get exchanges {
+  if (_exchanges is EqualUnmodifiableListView) return _exchanges;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_exchanges);
+}
+
+@override@JsonKey() final  bool closed;
+
+/// Create a copy of MitmExchangeList
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$MitmExchangeListCopyWith<_MitmExchangeList> get copyWith => __$MitmExchangeListCopyWithImpl<_MitmExchangeList>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$MitmExchangeListToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmExchangeList&&(identical(other.capturing, capturing) || other.capturing == capturing)&&(identical(other.since, since) || other.since == since)&&const DeepCollectionEquality().equals(other.exchanges, _exchanges)&&(identical(other.closed, closed) || other.closed == closed));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,capturing,since,const DeepCollectionEquality().hash(_exchanges),closed);
+}
+
+@override
+String toString() {
+    return 'MitmExchangeList(capturing: $capturing, since: $since, exchanges: $exchanges, closed: $closed)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$MitmExchangeListCopyWith<$Res> implements $MitmExchangeListCopyWith<$Res> {
+  factory _$MitmExchangeListCopyWith(_MitmExchangeList value, $Res Function(_MitmExchangeList) _then) = __$MitmExchangeListCopyWithImpl;
+@override @useResult
+$Res call({
+ bool capturing, DateTime? since, List<MitmExchangeSummary> exchanges, bool closed
+});
+
+
+
+
+}
+/// @nodoc
+class __$MitmExchangeListCopyWithImpl<$Res>
+    implements _$MitmExchangeListCopyWith<$Res> {
+  __$MitmExchangeListCopyWithImpl(this._self, this._then);
+
+  final _MitmExchangeList _self;
+  final $Res Function(_MitmExchangeList) _then;
+
+/// Create a copy of MitmExchangeList
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? capturing = null,Object? since = freezed,Object? exchanges = null,Object? closed = null,}) {
+  return _then(_MitmExchangeList(
+capturing: null == capturing ? _self.capturing : capturing // ignore: cast_nullable_to_non_nullable
+as bool,since: freezed == since ? _self.since : since // ignore: cast_nullable_to_non_nullable
+as DateTime?,exchanges: null == exchanges ? _self._exchanges : exchanges // ignore: cast_nullable_to_non_nullable
+as List<MitmExchangeSummary>,closed: null == closed ? _self.closed : closed // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$MitmAction {
+
+ String get kind; String get phase; String get detail;
+/// Create a copy of MitmAction
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MitmActionCopyWith<MitmAction> get copyWith => _$MitmActionCopyWithImpl<MitmAction>(this as MitmAction, _$identity);
+
+  /// Serializes this MitmAction to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as MitmAction;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmAction&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.phase, _this.phase) || other.phase == _this.phase)&&(identical(other.detail, _this.detail) || other.detail == _this.detail));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as MitmAction;
+  return Object.hash(runtimeType,_this.kind,_this.phase,_this.detail);
+}
+
+@override
+String toString() {
+  final _this = this as MitmAction;
+  return 'MitmAction(kind: ${_this.kind}, phase: ${_this.phase}, detail: ${_this.detail})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MitmActionCopyWith<$Res>  {
+  factory $MitmActionCopyWith(MitmAction value, $Res Function(MitmAction) _then) = _$MitmActionCopyWithImpl;
+@useResult
+$Res call({
+ String kind, String phase, String detail
+});
+
+
+
+
+}
+/// @nodoc
+class _$MitmActionCopyWithImpl<$Res>
+    implements $MitmActionCopyWith<$Res> {
+  _$MitmActionCopyWithImpl(this._self, this._then);
+
+  final MitmAction _self;
+  final $Res Function(MitmAction) _then;
+
+/// Create a copy of MitmAction
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? kind = null,Object? phase = null,Object? detail = null,}) {
+  return _then(MitmAction(
+kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as String,phase: null == phase ? _self.phase : phase // ignore: cast_nullable_to_non_nullable
+as String,detail: null == detail ? _self.detail : detail // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [MitmAction].
+extension MitmActionPatterns on MitmAction {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _MitmAction value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _MitmAction() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _MitmAction value)  $default,){
+final _that = this;
+switch (_that) {
+case _MitmAction():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _MitmAction value)?  $default,){
+final _that = this;
+switch (_that) {
+case _MitmAction() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String kind,  String phase,  String detail)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _MitmAction() when $default != null:
+return $default(_that.kind,_that.phase,_that.detail);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String kind,  String phase,  String detail)  $default,) {final _that = this;
+switch (_that) {
+case _MitmAction():
+return $default(_that.kind,_that.phase,_that.detail);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String kind,  String phase,  String detail)?  $default,) {final _that = this;
+switch (_that) {
+case _MitmAction() when $default != null:
+return $default(_that.kind,_that.phase,_that.detail);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _MitmAction implements MitmAction {
+  const _MitmAction({required this.kind, this.phase = '', this.detail = ''});
+  factory _MitmAction.fromJson(Map<String, dynamic> json) => _$MitmActionFromJson(json);
+
+@override final  String kind;
+@override@JsonKey() final  String phase;
+@override@JsonKey() final  String detail;
+
+/// Create a copy of MitmAction
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$MitmActionCopyWith<_MitmAction> get copyWith => __$MitmActionCopyWithImpl<_MitmAction>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$MitmActionToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmAction&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.detail, detail) || other.detail == detail));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,kind,phase,detail);
+}
+
+@override
+String toString() {
+    return 'MitmAction(kind: $kind, phase: $phase, detail: $detail)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$MitmActionCopyWith<$Res> implements $MitmActionCopyWith<$Res> {
+  factory _$MitmActionCopyWith(_MitmAction value, $Res Function(_MitmAction) _then) = __$MitmActionCopyWithImpl;
+@override @useResult
+$Res call({
+ String kind, String phase, String detail
+});
+
+
+
+
+}
+/// @nodoc
+class __$MitmActionCopyWithImpl<$Res>
+    implements _$MitmActionCopyWith<$Res> {
+  __$MitmActionCopyWithImpl(this._self, this._then);
+
+  final _MitmAction _self;
+  final $Res Function(_MitmAction) _then;
+
+/// Create a copy of MitmAction
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? kind = null,Object? phase = null,Object? detail = null,}) {
+  return _then(_MitmAction(
+kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as String,phase: null == phase ? _self.phase : phase // ignore: cast_nullable_to_non_nullable
+as String,detail: null == detail ? _self.detail : detail // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$MitmExchange {
+
+ int get id; DateTime get start; bool get pending; int get duration; int get ttfb; String get method; String get url;@JsonKey(name: 'original-url') String get originalUrl; String get proto; int get status;@JsonKey(name: 'request-size') int get requestSize;@JsonKey(name: 'response-size') int get responseSize; String get error; String get connection;@JsonKey(name: 'request-header') Map<String, List<String>> get requestHeader;@JsonKey(name: 'response-header') Map<String, List<String>> get responseHeader; List<MitmAction> get actions;
+/// Create a copy of MitmExchange
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MitmExchangeCopyWith<MitmExchange> get copyWith => _$MitmExchangeCopyWithImpl<MitmExchange>(this as MitmExchange, _$identity);
+
+  /// Serializes this MitmExchange to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as MitmExchange;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmExchange&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.start, _this.start) || other.start == _this.start)&&(identical(other.pending, _this.pending) || other.pending == _this.pending)&&(identical(other.duration, _this.duration) || other.duration == _this.duration)&&(identical(other.ttfb, _this.ttfb) || other.ttfb == _this.ttfb)&&(identical(other.method, _this.method) || other.method == _this.method)&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.originalUrl, _this.originalUrl) || other.originalUrl == _this.originalUrl)&&(identical(other.proto, _this.proto) || other.proto == _this.proto)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.requestSize, _this.requestSize) || other.requestSize == _this.requestSize)&&(identical(other.responseSize, _this.responseSize) || other.responseSize == _this.responseSize)&&(identical(other.error, _this.error) || other.error == _this.error)&&(identical(other.connection, _this.connection) || other.connection == _this.connection)&&const DeepCollectionEquality().equals(other.requestHeader, _this.requestHeader)&&const DeepCollectionEquality().equals(other.responseHeader, _this.responseHeader)&&const DeepCollectionEquality().equals(other.actions, _this.actions));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as MitmExchange;
+  return Object.hash(runtimeType,_this.id,_this.start,_this.pending,_this.duration,_this.ttfb,_this.method,_this.url,_this.originalUrl,_this.proto,_this.status,_this.requestSize,_this.responseSize,_this.error,_this.connection,const DeepCollectionEquality().hash(_this.requestHeader),const DeepCollectionEquality().hash(_this.responseHeader),const DeepCollectionEquality().hash(_this.actions));
+}
+
+@override
+String toString() {
+  final _this = this as MitmExchange;
+  return 'MitmExchange(id: ${_this.id}, start: ${_this.start}, pending: ${_this.pending}, duration: ${_this.duration}, ttfb: ${_this.ttfb}, method: ${_this.method}, url: ${_this.url}, originalUrl: ${_this.originalUrl}, proto: ${_this.proto}, status: ${_this.status}, requestSize: ${_this.requestSize}, responseSize: ${_this.responseSize}, error: ${_this.error}, connection: ${_this.connection}, requestHeader: ${_this.requestHeader}, responseHeader: ${_this.responseHeader}, actions: ${_this.actions})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MitmExchangeCopyWith<$Res>  {
+  factory $MitmExchangeCopyWith(MitmExchange value, $Res Function(MitmExchange) _then) = _$MitmExchangeCopyWithImpl;
+@useResult
+$Res call({
+ int id, DateTime start, bool pending, int duration, int ttfb, String method, String url,@JsonKey(name: 'original-url') String originalUrl, String proto, int status,@JsonKey(name: 'request-size') int requestSize,@JsonKey(name: 'response-size') int responseSize, String error, String connection,@JsonKey(name: 'request-header') Map<String, List<String>> requestHeader,@JsonKey(name: 'response-header') Map<String, List<String>> responseHeader, List<MitmAction> actions
+});
+
+
+
+
+}
+/// @nodoc
+class _$MitmExchangeCopyWithImpl<$Res>
+    implements $MitmExchangeCopyWith<$Res> {
+  _$MitmExchangeCopyWithImpl(this._self, this._then);
+
+  final MitmExchange _self;
+  final $Res Function(MitmExchange) _then;
+
+/// Create a copy of MitmExchange
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? start = null,Object? pending = null,Object? duration = null,Object? ttfb = null,Object? method = null,Object? url = null,Object? originalUrl = null,Object? proto = null,Object? status = null,Object? requestSize = null,Object? responseSize = null,Object? error = null,Object? connection = null,Object? requestHeader = null,Object? responseHeader = null,Object? actions = null,}) {
+  return _then(MitmExchange(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,start: null == start ? _self.start : start // ignore: cast_nullable_to_non_nullable
+as DateTime,pending: null == pending ? _self.pending : pending // ignore: cast_nullable_to_non_nullable
+as bool,duration: null == duration ? _self.duration : duration // ignore: cast_nullable_to_non_nullable
+as int,ttfb: null == ttfb ? _self.ttfb : ttfb // ignore: cast_nullable_to_non_nullable
+as int,method: null == method ? _self.method : method // ignore: cast_nullable_to_non_nullable
+as String,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,originalUrl: null == originalUrl ? _self.originalUrl : originalUrl // ignore: cast_nullable_to_non_nullable
+as String,proto: null == proto ? _self.proto : proto // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as int,requestSize: null == requestSize ? _self.requestSize : requestSize // ignore: cast_nullable_to_non_nullable
+as int,responseSize: null == responseSize ? _self.responseSize : responseSize // ignore: cast_nullable_to_non_nullable
+as int,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,connection: null == connection ? _self.connection : connection // ignore: cast_nullable_to_non_nullable
+as String,requestHeader: null == requestHeader ? _self.requestHeader : requestHeader // ignore: cast_nullable_to_non_nullable
+as Map<String, List<String>>,responseHeader: null == responseHeader ? _self.responseHeader : responseHeader // ignore: cast_nullable_to_non_nullable
+as Map<String, List<String>>,actions: null == actions ? _self.actions : actions // ignore: cast_nullable_to_non_nullable
+as List<MitmAction>,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [MitmExchange].
+extension MitmExchangePatterns on MitmExchange {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _MitmExchange value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _MitmExchange() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _MitmExchange value)  $default,){
+final _that = this;
+switch (_that) {
+case _MitmExchange():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _MitmExchange value)?  $default,){
+final _that = this;
+switch (_that) {
+case _MitmExchange() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  DateTime start,  bool pending,  int duration,  int ttfb,  String method,  String url, @JsonKey(name: 'original-url')  String originalUrl,  String proto,  int status, @JsonKey(name: 'request-size')  int requestSize, @JsonKey(name: 'response-size')  int responseSize,  String error,  String connection, @JsonKey(name: 'request-header')  Map<String, List<String>> requestHeader, @JsonKey(name: 'response-header')  Map<String, List<String>> responseHeader,  List<MitmAction> actions)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _MitmExchange() when $default != null:
+return $default(_that.id,_that.start,_that.pending,_that.duration,_that.ttfb,_that.method,_that.url,_that.originalUrl,_that.proto,_that.status,_that.requestSize,_that.responseSize,_that.error,_that.connection,_that.requestHeader,_that.responseHeader,_that.actions);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  DateTime start,  bool pending,  int duration,  int ttfb,  String method,  String url, @JsonKey(name: 'original-url')  String originalUrl,  String proto,  int status, @JsonKey(name: 'request-size')  int requestSize, @JsonKey(name: 'response-size')  int responseSize,  String error,  String connection, @JsonKey(name: 'request-header')  Map<String, List<String>> requestHeader, @JsonKey(name: 'response-header')  Map<String, List<String>> responseHeader,  List<MitmAction> actions)  $default,) {final _that = this;
+switch (_that) {
+case _MitmExchange():
+return $default(_that.id,_that.start,_that.pending,_that.duration,_that.ttfb,_that.method,_that.url,_that.originalUrl,_that.proto,_that.status,_that.requestSize,_that.responseSize,_that.error,_that.connection,_that.requestHeader,_that.responseHeader,_that.actions);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  DateTime start,  bool pending,  int duration,  int ttfb,  String method,  String url, @JsonKey(name: 'original-url')  String originalUrl,  String proto,  int status, @JsonKey(name: 'request-size')  int requestSize, @JsonKey(name: 'response-size')  int responseSize,  String error,  String connection, @JsonKey(name: 'request-header')  Map<String, List<String>> requestHeader, @JsonKey(name: 'response-header')  Map<String, List<String>> responseHeader,  List<MitmAction> actions)?  $default,) {final _that = this;
+switch (_that) {
+case _MitmExchange() when $default != null:
+return $default(_that.id,_that.start,_that.pending,_that.duration,_that.ttfb,_that.method,_that.url,_that.originalUrl,_that.proto,_that.status,_that.requestSize,_that.responseSize,_that.error,_that.connection,_that.requestHeader,_that.responseHeader,_that.actions);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _MitmExchange implements MitmExchange {
+  const _MitmExchange({required this.id, required this.start, this.pending = false, this.duration = 0, this.ttfb = 0, this.method = '', this.url = '', @JsonKey(name: 'original-url') this.originalUrl = '', this.proto = '', this.status = 0, @JsonKey(name: 'request-size') this.requestSize = 0, @JsonKey(name: 'response-size') this.responseSize = 0, this.error = '', this.connection = '', @JsonKey(name: 'request-header')  Map<String, List<String>> requestHeader = const {}, @JsonKey(name: 'response-header')  Map<String, List<String>> responseHeader = const {},  List<MitmAction> actions = const []}): _requestHeader = requestHeader,_responseHeader = responseHeader,_actions = actions;
+  factory _MitmExchange.fromJson(Map<String, dynamic> json) => _$MitmExchangeFromJson(json);
+
+@override final  int id;
+@override final  DateTime start;
+@override@JsonKey() final  bool pending;
+@override@JsonKey() final  int duration;
+@override@JsonKey() final  int ttfb;
+@override@JsonKey() final  String method;
+@override@JsonKey() final  String url;
+@override@JsonKey(name: 'original-url') final  String originalUrl;
+@override@JsonKey() final  String proto;
+@override@JsonKey() final  int status;
+@override@JsonKey(name: 'request-size') final  int requestSize;
+@override@JsonKey(name: 'response-size') final  int responseSize;
+@override@JsonKey() final  String error;
+@override@JsonKey() final  String connection;
+ final  Map<String, List<String>> _requestHeader;
+@override@JsonKey(name: 'request-header') Map<String, List<String>> get requestHeader {
+  if (_requestHeader is EqualUnmodifiableMapView) return _requestHeader;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_requestHeader);
+}
+
+ final  Map<String, List<String>> _responseHeader;
+@override@JsonKey(name: 'response-header') Map<String, List<String>> get responseHeader {
+  if (_responseHeader is EqualUnmodifiableMapView) return _responseHeader;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_responseHeader);
+}
+
+ final  List<MitmAction> _actions;
+@override@JsonKey() List<MitmAction> get actions {
+  if (_actions is EqualUnmodifiableListView) return _actions;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_actions);
+}
+
+
+/// Create a copy of MitmExchange
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$MitmExchangeCopyWith<_MitmExchange> get copyWith => __$MitmExchangeCopyWithImpl<_MitmExchange>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$MitmExchangeToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmExchange&&(identical(other.id, id) || other.id == id)&&(identical(other.start, start) || other.start == start)&&(identical(other.pending, pending) || other.pending == pending)&&(identical(other.duration, duration) || other.duration == duration)&&(identical(other.ttfb, ttfb) || other.ttfb == ttfb)&&(identical(other.method, method) || other.method == method)&&(identical(other.url, url) || other.url == url)&&(identical(other.originalUrl, originalUrl) || other.originalUrl == originalUrl)&&(identical(other.proto, proto) || other.proto == proto)&&(identical(other.status, status) || other.status == status)&&(identical(other.requestSize, requestSize) || other.requestSize == requestSize)&&(identical(other.responseSize, responseSize) || other.responseSize == responseSize)&&(identical(other.error, error) || other.error == error)&&(identical(other.connection, connection) || other.connection == connection)&&const DeepCollectionEquality().equals(other.requestHeader, _requestHeader)&&const DeepCollectionEquality().equals(other.responseHeader, _responseHeader)&&const DeepCollectionEquality().equals(other.actions, _actions));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,id,start,pending,duration,ttfb,method,url,originalUrl,proto,status,requestSize,responseSize,error,connection,const DeepCollectionEquality().hash(_requestHeader),const DeepCollectionEquality().hash(_responseHeader),const DeepCollectionEquality().hash(_actions));
+}
+
+@override
+String toString() {
+    return 'MitmExchange(id: $id, start: $start, pending: $pending, duration: $duration, ttfb: $ttfb, method: $method, url: $url, originalUrl: $originalUrl, proto: $proto, status: $status, requestSize: $requestSize, responseSize: $responseSize, error: $error, connection: $connection, requestHeader: $requestHeader, responseHeader: $responseHeader, actions: $actions)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$MitmExchangeCopyWith<$Res> implements $MitmExchangeCopyWith<$Res> {
+  factory _$MitmExchangeCopyWith(_MitmExchange value, $Res Function(_MitmExchange) _then) = __$MitmExchangeCopyWithImpl;
+@override @useResult
+$Res call({
+ int id, DateTime start, bool pending, int duration, int ttfb, String method, String url,@JsonKey(name: 'original-url') String originalUrl, String proto, int status,@JsonKey(name: 'request-size') int requestSize,@JsonKey(name: 'response-size') int responseSize, String error, String connection,@JsonKey(name: 'request-header') Map<String, List<String>> requestHeader,@JsonKey(name: 'response-header') Map<String, List<String>> responseHeader, List<MitmAction> actions
+});
+
+
+
+
+}
+/// @nodoc
+class __$MitmExchangeCopyWithImpl<$Res>
+    implements _$MitmExchangeCopyWith<$Res> {
+  __$MitmExchangeCopyWithImpl(this._self, this._then);
+
+  final _MitmExchange _self;
+  final $Res Function(_MitmExchange) _then;
+
+/// Create a copy of MitmExchange
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? start = null,Object? pending = null,Object? duration = null,Object? ttfb = null,Object? method = null,Object? url = null,Object? originalUrl = null,Object? proto = null,Object? status = null,Object? requestSize = null,Object? responseSize = null,Object? error = null,Object? connection = null,Object? requestHeader = null,Object? responseHeader = null,Object? actions = null,}) {
+  return _then(_MitmExchange(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,start: null == start ? _self.start : start // ignore: cast_nullable_to_non_nullable
+as DateTime,pending: null == pending ? _self.pending : pending // ignore: cast_nullable_to_non_nullable
+as bool,duration: null == duration ? _self.duration : duration // ignore: cast_nullable_to_non_nullable
+as int,ttfb: null == ttfb ? _self.ttfb : ttfb // ignore: cast_nullable_to_non_nullable
+as int,method: null == method ? _self.method : method // ignore: cast_nullable_to_non_nullable
+as String,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,originalUrl: null == originalUrl ? _self.originalUrl : originalUrl // ignore: cast_nullable_to_non_nullable
+as String,proto: null == proto ? _self.proto : proto // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as int,requestSize: null == requestSize ? _self.requestSize : requestSize // ignore: cast_nullable_to_non_nullable
+as int,responseSize: null == responseSize ? _self.responseSize : responseSize // ignore: cast_nullable_to_non_nullable
+as int,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,connection: null == connection ? _self.connection : connection // ignore: cast_nullable_to_non_nullable
+as String,requestHeader: null == requestHeader ? _self._requestHeader : requestHeader // ignore: cast_nullable_to_non_nullable
+as Map<String, List<String>>,responseHeader: null == responseHeader ? _self._responseHeader : responseHeader // ignore: cast_nullable_to_non_nullable
+as Map<String, List<String>>,actions: null == actions ? _self._actions : actions // ignore: cast_nullable_to_non_nullable
+as List<MitmAction>,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$MitmBody {
+
+ String get data; bool get truncated; String get encoding;
+/// Create a copy of MitmBody
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MitmBodyCopyWith<MitmBody> get copyWith => _$MitmBodyCopyWithImpl<MitmBody>(this as MitmBody, _$identity);
+
+  /// Serializes this MitmBody to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as MitmBody;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmBody&&(identical(other.data, _this.data) || other.data == _this.data)&&(identical(other.truncated, _this.truncated) || other.truncated == _this.truncated)&&(identical(other.encoding, _this.encoding) || other.encoding == _this.encoding));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as MitmBody;
+  return Object.hash(runtimeType,_this.data,_this.truncated,_this.encoding);
+}
+
+@override
+String toString() {
+  final _this = this as MitmBody;
+  return 'MitmBody(data: ${_this.data}, truncated: ${_this.truncated}, encoding: ${_this.encoding})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MitmBodyCopyWith<$Res>  {
+  factory $MitmBodyCopyWith(MitmBody value, $Res Function(MitmBody) _then) = _$MitmBodyCopyWithImpl;
+@useResult
+$Res call({
+ String data, bool truncated, String encoding
+});
+
+
+
+
+}
+/// @nodoc
+class _$MitmBodyCopyWithImpl<$Res>
+    implements $MitmBodyCopyWith<$Res> {
+  _$MitmBodyCopyWithImpl(this._self, this._then);
+
+  final MitmBody _self;
+  final $Res Function(MitmBody) _then;
+
+/// Create a copy of MitmBody
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? data = null,Object? truncated = null,Object? encoding = null,}) {
+  return _then(MitmBody(
+data: null == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
+as String,truncated: null == truncated ? _self.truncated : truncated // ignore: cast_nullable_to_non_nullable
+as bool,encoding: null == encoding ? _self.encoding : encoding // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [MitmBody].
+extension MitmBodyPatterns on MitmBody {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _MitmBody value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _MitmBody() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _MitmBody value)  $default,){
+final _that = this;
+switch (_that) {
+case _MitmBody():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _MitmBody value)?  $default,){
+final _that = this;
+switch (_that) {
+case _MitmBody() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String data,  bool truncated,  String encoding)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _MitmBody() when $default != null:
+return $default(_that.data,_that.truncated,_that.encoding);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String data,  bool truncated,  String encoding)  $default,) {final _that = this;
+switch (_that) {
+case _MitmBody():
+return $default(_that.data,_that.truncated,_that.encoding);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String data,  bool truncated,  String encoding)?  $default,) {final _that = this;
+switch (_that) {
+case _MitmBody() when $default != null:
+return $default(_that.data,_that.truncated,_that.encoding);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _MitmBody implements MitmBody {
+  const _MitmBody({this.data = '', this.truncated = false, this.encoding = ''});
+  factory _MitmBody.fromJson(Map<String, dynamic> json) => _$MitmBodyFromJson(json);
+
+@override@JsonKey() final  String data;
+@override@JsonKey() final  bool truncated;
+@override@JsonKey() final  String encoding;
+
+/// Create a copy of MitmBody
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$MitmBodyCopyWith<_MitmBody> get copyWith => __$MitmBodyCopyWithImpl<_MitmBody>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$MitmBodyToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmBody&&(identical(other.data, data) || other.data == data)&&(identical(other.truncated, truncated) || other.truncated == truncated)&&(identical(other.encoding, encoding) || other.encoding == encoding));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,data,truncated,encoding);
+}
+
+@override
+String toString() {
+    return 'MitmBody(data: $data, truncated: $truncated, encoding: $encoding)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$MitmBodyCopyWith<$Res> implements $MitmBodyCopyWith<$Res> {
+  factory _$MitmBodyCopyWith(_MitmBody value, $Res Function(_MitmBody) _then) = __$MitmBodyCopyWithImpl;
+@override @useResult
+$Res call({
+ String data, bool truncated, String encoding
+});
+
+
+
+
+}
+/// @nodoc
+class __$MitmBodyCopyWithImpl<$Res>
+    implements _$MitmBodyCopyWith<$Res> {
+  __$MitmBodyCopyWithImpl(this._self, this._then);
+
+  final _MitmBody _self;
+  final $Res Function(_MitmBody) _then;
+
+/// Create a copy of MitmBody
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? data = null,Object? truncated = null,Object? encoding = null,}) {
+  return _then(_MitmBody(
+data: null == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
+as String,truncated: null == truncated ? _self.truncated : truncated // ignore: cast_nullable_to_non_nullable
+as bool,encoding: null == encoding ? _self.encoding : encoding // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
 }
 
 
@@ -3770,6 +6116,282 @@ as dynamic,
 
 
 /// @nodoc
+mixin _$TestDelayParams {
+
+@JsonKey(name: 'proxy-name') String get proxyName;@JsonKey(name: 'test-url') String get testUrl; int get timeout;
+/// Create a copy of TestDelayParams
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$TestDelayParamsCopyWith<TestDelayParams> get copyWith => _$TestDelayParamsCopyWithImpl<TestDelayParams>(this as TestDelayParams, _$identity);
+
+  /// Serializes this TestDelayParams to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as TestDelayParams;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TestDelayParams&&(identical(other.proxyName, _this.proxyName) || other.proxyName == _this.proxyName)&&(identical(other.testUrl, _this.testUrl) || other.testUrl == _this.testUrl)&&(identical(other.timeout, _this.timeout) || other.timeout == _this.timeout));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as TestDelayParams;
+  return Object.hash(runtimeType,_this.proxyName,_this.testUrl,_this.timeout);
+}
+
+@override
+String toString() {
+  final _this = this as TestDelayParams;
+  return 'TestDelayParams(proxyName: ${_this.proxyName}, testUrl: ${_this.testUrl}, timeout: ${_this.timeout})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $TestDelayParamsCopyWith<$Res>  {
+  factory $TestDelayParamsCopyWith(TestDelayParams value, $Res Function(TestDelayParams) _then) = _$TestDelayParamsCopyWithImpl;
+@useResult
+$Res call({
+@JsonKey(name: 'proxy-name') String proxyName,@JsonKey(name: 'test-url') String testUrl, int timeout
+});
+
+
+
+
+}
+/// @nodoc
+class _$TestDelayParamsCopyWithImpl<$Res>
+    implements $TestDelayParamsCopyWith<$Res> {
+  _$TestDelayParamsCopyWithImpl(this._self, this._then);
+
+  final TestDelayParams _self;
+  final $Res Function(TestDelayParams) _then;
+
+/// Create a copy of TestDelayParams
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? proxyName = null,Object? testUrl = null,Object? timeout = null,}) {
+  return _then(TestDelayParams(
+proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
+as String,testUrl: null == testUrl ? _self.testUrl : testUrl // ignore: cast_nullable_to_non_nullable
+as String,timeout: null == timeout ? _self.timeout : timeout // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [TestDelayParams].
+extension TestDelayParamsPatterns on TestDelayParams {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _TestDelayParams value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _TestDelayParams() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _TestDelayParams value)  $default,){
+final _that = this;
+switch (_that) {
+case _TestDelayParams():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _TestDelayParams value)?  $default,){
+final _that = this;
+switch (_that) {
+case _TestDelayParams() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'proxy-name')  String proxyName, @JsonKey(name: 'test-url')  String testUrl,  int timeout)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _TestDelayParams() when $default != null:
+return $default(_that.proxyName,_that.testUrl,_that.timeout);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'proxy-name')  String proxyName, @JsonKey(name: 'test-url')  String testUrl,  int timeout)  $default,) {final _that = this;
+switch (_that) {
+case _TestDelayParams():
+return $default(_that.proxyName,_that.testUrl,_that.timeout);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'proxy-name')  String proxyName, @JsonKey(name: 'test-url')  String testUrl,  int timeout)?  $default,) {final _that = this;
+switch (_that) {
+case _TestDelayParams() when $default != null:
+return $default(_that.proxyName,_that.testUrl,_that.timeout);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _TestDelayParams implements TestDelayParams {
+  const _TestDelayParams({@JsonKey(name: 'proxy-name') required this.proxyName, @JsonKey(name: 'test-url') required this.testUrl, required this.timeout});
+  factory _TestDelayParams.fromJson(Map<String, dynamic> json) => _$TestDelayParamsFromJson(json);
+
+@override@JsonKey(name: 'proxy-name') final  String proxyName;
+@override@JsonKey(name: 'test-url') final  String testUrl;
+@override final  int timeout;
+
+/// Create a copy of TestDelayParams
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$TestDelayParamsCopyWith<_TestDelayParams> get copyWith => __$TestDelayParamsCopyWithImpl<_TestDelayParams>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$TestDelayParamsToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TestDelayParams&&(identical(other.proxyName, proxyName) || other.proxyName == proxyName)&&(identical(other.testUrl, testUrl) || other.testUrl == testUrl)&&(identical(other.timeout, timeout) || other.timeout == timeout));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,proxyName,testUrl,timeout);
+}
+
+@override
+String toString() {
+    return 'TestDelayParams(proxyName: $proxyName, testUrl: $testUrl, timeout: $timeout)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$TestDelayParamsCopyWith<$Res> implements $TestDelayParamsCopyWith<$Res> {
+  factory _$TestDelayParamsCopyWith(_TestDelayParams value, $Res Function(_TestDelayParams) _then) = __$TestDelayParamsCopyWithImpl;
+@override @useResult
+$Res call({
+@JsonKey(name: 'proxy-name') String proxyName,@JsonKey(name: 'test-url') String testUrl, int timeout
+});
+
+
+
+
+}
+/// @nodoc
+class __$TestDelayParamsCopyWithImpl<$Res>
+    implements _$TestDelayParamsCopyWith<$Res> {
+  __$TestDelayParamsCopyWithImpl(this._self, this._then);
+
+  final _TestDelayParams _self;
+  final $Res Function(_TestDelayParams) _then;
+
+/// Create a copy of TestDelayParams
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? proxyName = null,Object? testUrl = null,Object? timeout = null,}) {
+  return _then(_TestDelayParams(
+proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
+as String,testUrl: null == testUrl ? _self.testUrl : testUrl // ignore: cast_nullable_to_non_nullable
+as String,timeout: null == timeout ? _self.timeout : timeout // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
 mixin _$Delay {
 
  String get name; String get url; int? get value;
@@ -5230,7 +7852,7 @@ as List<RouteHit>,
 /// @nodoc
 mixin _$CoreMemoryStats {
 
- int get rss; int get heapInuse; int get heapIdle; int get stackInuse; int get runtimeOther;
+ int get rss;@JsonKey(name: 'heap-inuse') int get heapInuse;@JsonKey(name: 'heap-idle') int get heapIdle;@JsonKey(name: 'stack-inuse') int get stackInuse;@JsonKey(name: 'runtime-other') int get runtimeOther;
 /// Create a copy of CoreMemoryStats
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -5268,7 +7890,7 @@ abstract mixin class $CoreMemoryStatsCopyWith<$Res>  {
   factory $CoreMemoryStatsCopyWith(CoreMemoryStats value, $Res Function(CoreMemoryStats) _then) = _$CoreMemoryStatsCopyWithImpl;
 @useResult
 $Res call({
- int rss, int heapInuse, int heapIdle, int stackInuse, int runtimeOther
+ int rss,@JsonKey(name: 'heap-inuse') int heapInuse,@JsonKey(name: 'heap-idle') int heapIdle,@JsonKey(name: 'stack-inuse') int stackInuse,@JsonKey(name: 'runtime-other') int runtimeOther
 });
 
 
@@ -5377,7 +7999,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int rss,  int heapInuse,  int heapIdle,  int stackInuse,  int runtimeOther)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int rss, @JsonKey(name: 'heap-inuse')  int heapInuse, @JsonKey(name: 'heap-idle')  int heapIdle, @JsonKey(name: 'stack-inuse')  int stackInuse, @JsonKey(name: 'runtime-other')  int runtimeOther)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CoreMemoryStats() when $default != null:
 return $default(_that.rss,_that.heapInuse,_that.heapIdle,_that.stackInuse,_that.runtimeOther);case _:
@@ -5398,7 +8020,7 @@ return $default(_that.rss,_that.heapInuse,_that.heapIdle,_that.stackInuse,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int rss,  int heapInuse,  int heapIdle,  int stackInuse,  int runtimeOther)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int rss, @JsonKey(name: 'heap-inuse')  int heapInuse, @JsonKey(name: 'heap-idle')  int heapIdle, @JsonKey(name: 'stack-inuse')  int stackInuse, @JsonKey(name: 'runtime-other')  int runtimeOther)  $default,) {final _that = this;
 switch (_that) {
 case _CoreMemoryStats():
 return $default(_that.rss,_that.heapInuse,_that.heapIdle,_that.stackInuse,_that.runtimeOther);case _:
@@ -5418,7 +8040,7 @@ return $default(_that.rss,_that.heapInuse,_that.heapIdle,_that.stackInuse,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int rss,  int heapInuse,  int heapIdle,  int stackInuse,  int runtimeOther)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int rss, @JsonKey(name: 'heap-inuse')  int heapInuse, @JsonKey(name: 'heap-idle')  int heapIdle, @JsonKey(name: 'stack-inuse')  int stackInuse, @JsonKey(name: 'runtime-other')  int runtimeOther)?  $default,) {final _that = this;
 switch (_that) {
 case _CoreMemoryStats() when $default != null:
 return $default(_that.rss,_that.heapInuse,_that.heapIdle,_that.stackInuse,_that.runtimeOther);case _:
@@ -5433,14 +8055,14 @@ return $default(_that.rss,_that.heapInuse,_that.heapIdle,_that.stackInuse,_that.
 @JsonSerializable()
 
 class _CoreMemoryStats implements CoreMemoryStats {
-  const _CoreMemoryStats({this.rss = 0, this.heapInuse = 0, this.heapIdle = 0, this.stackInuse = 0, this.runtimeOther = 0});
+  const _CoreMemoryStats({this.rss = 0, @JsonKey(name: 'heap-inuse') this.heapInuse = 0, @JsonKey(name: 'heap-idle') this.heapIdle = 0, @JsonKey(name: 'stack-inuse') this.stackInuse = 0, @JsonKey(name: 'runtime-other') this.runtimeOther = 0});
   factory _CoreMemoryStats.fromJson(Map<String, dynamic> json) => _$CoreMemoryStatsFromJson(json);
 
 @override@JsonKey() final  int rss;
-@override@JsonKey() final  int heapInuse;
-@override@JsonKey() final  int heapIdle;
-@override@JsonKey() final  int stackInuse;
-@override@JsonKey() final  int runtimeOther;
+@override@JsonKey(name: 'heap-inuse') final  int heapInuse;
+@override@JsonKey(name: 'heap-idle') final  int heapIdle;
+@override@JsonKey(name: 'stack-inuse') final  int stackInuse;
+@override@JsonKey(name: 'runtime-other') final  int runtimeOther;
 
 /// Create a copy of CoreMemoryStats
 /// with the given fields replaced by the non-null parameter values.
@@ -5477,7 +8099,7 @@ abstract mixin class _$CoreMemoryStatsCopyWith<$Res> implements $CoreMemoryStats
   factory _$CoreMemoryStatsCopyWith(_CoreMemoryStats value, $Res Function(_CoreMemoryStats) _then) = __$CoreMemoryStatsCopyWithImpl;
 @override @useResult
 $Res call({
- int rss, int heapInuse, int heapIdle, int stackInuse, int runtimeOther
+ int rss,@JsonKey(name: 'heap-inuse') int heapInuse,@JsonKey(name: 'heap-idle') int heapIdle,@JsonKey(name: 'stack-inuse') int stackInuse,@JsonKey(name: 'runtime-other') int runtimeOther
 });
 
 

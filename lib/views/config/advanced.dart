@@ -2,6 +2,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:fl_clash/views/config/dns.dart';
+import 'package:fl_clash/views/config/mitm.dart';
 import 'package:fl_clash/views/config/network.dart';
 import 'package:fl_clash/views/config/scripts.dart';
 import 'package:flutter/widgets.dart';
@@ -38,6 +39,12 @@ class AdvancedConfigView extends StatelessWidget {
         leading: const GlyphIcon(AppGlyphs.code),
         widget: const ScriptsView(),
       ),
+      if (mitmFeature)
+        ListItem.open(
+          title: Text(appLocalizations.mitm),
+          leading: const GlyphIcon(AppGlyphs.lockOpen),
+          widget: MitmView(isAndroid: system.isAndroid),
+        ),
     ];
     return BaseScaffold(
       title: appLocalizations.advancedConfig,

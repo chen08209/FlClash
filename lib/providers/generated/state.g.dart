@@ -48,7 +48,48 @@ final class UpdateParamsProvider
   }
 }
 
-String _$updateParamsHash() => r'e46998c222b0902ef6a76c25fe83c094a6369036';
+String _$updateParamsHash() => r'1613b6a3bfcd12d659c60d1fa8289ea257d662b4';
+
+@ProviderFor(coreOptions)
+final coreOptionsProvider = CoreOptionsProvider._();
+
+final class CoreOptionsProvider
+    extends $FunctionalProvider<CoreOptions, CoreOptions, CoreOptions>
+    with $Provider<CoreOptions> {
+  CoreOptionsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'coreOptionsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$coreOptionsHash();
+
+  @$internal
+  @override
+  $ProviderElement<CoreOptions> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  CoreOptions create(Ref ref) {
+    return coreOptions(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CoreOptions value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CoreOptions>(value),
+    );
+  }
+}
+
+String _$coreOptionsHash() => r'ef7cb84b1c8ad89180f56c91cf863376c1ff9db5';
 
 @ProviderFor(setupPatch)
 final setupPatchProvider = SetupPatchProvider._();
@@ -138,7 +179,7 @@ final class SetupPatchProvider
   }
 }
 
-String _$setupPatchHash() => r'283e94846903bafab1c22985b6f90d4c0e2a4697';
+String _$setupPatchHash() => r'd09fb41d40ced4cd47c9131fe55e983e35128724';
 
 @ProviderFor(trayState)
 final trayStateProvider = TrayStateProvider._();
@@ -437,7 +478,7 @@ final class SharedStateProvider
   }
 }
 
-String _$sharedStateHash() => r'98486029d33bd542b933d43e0c92a1f74aaa69a0';
+String _$sharedStateHash() => r'bad20df240acfd1b384cad3655a58987a992a4ca';
 
 @ProviderFor(vpnRouteAddress)
 final vpnRouteAddressProvider = VpnRouteAddressProvider._();
@@ -1366,7 +1407,7 @@ final class CustomProxyCoreErrorsProvider
 }
 
 String _$customProxyCoreErrorsHash() =>
-    r'a5d5015b5e8ed8d7591bca190a5c242073020a70';
+    r'70fdfb0aa37db78a313d7f2e8a0bccccfee87b34';
 
 @ProviderFor(customProxyListIssues)
 final customProxyListIssuesProvider = CustomProxyListIssuesProvider._();
@@ -3618,7 +3659,7 @@ final class SetupStateProvider
   }
 }
 
-String _$setupStateHash() => r'eef9f0d2ec0ecb6196c699b1e2c2a73d922f8964';
+String _$setupStateHash() => r'4cfdb0a779dc8097c8c1027b73252f19f925a3ad';
 
 final class SetupStateFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<SetupState>, int?> {

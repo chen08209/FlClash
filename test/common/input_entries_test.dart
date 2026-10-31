@@ -2,6 +2,28 @@ import 'package:fl_clash/common/input_entries.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('parseLineInput', () {
+    test('keeps the commas and quotes of a line', () {
+      final parsed = parseLineInput(
+        '^https://a\\.com/(\\d{1,3}) https://b.com/\$1 302\r\n\n'
+        'http-response ^https://a "\\"ad\\":true" x\n',
+      );
+
+      expect(parsed.entries, [
+        r'^https://a\.com/(\d{1,3}) https://b.com/$1 302',
+        r'http-response ^https://a "\"ad\":true" x',
+      ]);
+      expect(parsed.isValid, isTrue);
+    });
+
+    test('drops repeats and counts the lines already listed', () {
+      final parsed = parseLineInput('a b\na b\nc d', existing: {'c d'});
+
+      expect(parsed.entries, ['a b']);
+      expect(parsed.skippedExisting, 1);
+    });
+  });
+
   group('parseListInput', () {
     test('splits on newlines and both comma widths', () {
       final parsed = parseListInput('a, b，c\r\nd\n\n e ');

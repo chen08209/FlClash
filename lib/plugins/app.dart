@@ -230,6 +230,71 @@ class App {
     return methodChannel.invokeMethod<bool>('openAppSettings');
   }
 
+  Future<({bool user, bool system, bool root})> locateCaCertificate(
+    List<int> der,
+  ) async {
+    final found = await methodChannel.invokeMapMethod<String, bool>(
+      'locateCaCertificate',
+      {'der': Uint8List.fromList(der)},
+    );
+    return (
+      user: found?['user'] == true,
+      system: found?['system'] == true,
+      root: found?['root'] == true,
+    );
+  }
+
+  /// Null when su was denied.
+  Future<MitmInstallOutcome?> installCaCertificateWithRoot(
+    List<int> der,
+  ) async {
+    final outcome = await methodChannel.invokeMethod<String>(
+      'installCaCertificateWithRoot',
+      {'der': Uint8List.fromList(der)},
+    );
+    return switch (outcome) {
+      'installed' => MitmInstallOutcome.installed,
+      'untilReboot' => MitmInstallOutcome.untilReboot,
+      _ => null,
+    };
+  }
+
+  Future<bool> hasRootAccess() async {
+    return await methodChannel.invokeMethod<bool>('hasRootAccess') ?? false;
+  }
+
+  Future<bool> removeCaCertificateWithRoot(List<int> der) async {
+    final removed = await methodChannel.invokeMethod<bool>(
+      'removeCaCertificateWithRoot',
+      {'der': Uint8List.fromList(der)},
+    );
+    return removed == true;
+  }
+
+  /// Saves [der] to Downloads where Android no longer takes it from an app;
+  /// null when the system's installer would not open.
+  Future<MitmInstallOutcome?> installCaCertificate(
+    List<int> der, {
+    required String name,
+    required String fileName,
+  }) async {
+    final outcome = await methodChannel.invokeMethod<String>(
+      'installCaCertificate',
+      {'der': Uint8List.fromList(der), 'name': name, 'fileName': fileName},
+    );
+    return switch (outcome) {
+      'prompted' => MitmInstallOutcome.prompted,
+      'saved' => MitmInstallOutcome.saved,
+      _ => null,
+    };
+  }
+
+  Future<bool?> openCertificateSettings({bool userCredentials = false}) {
+    return methodChannel.invokeMethod<bool>('openCertificateSettings', {
+      'userCredentials': userCredentials,
+    });
+  }
+
   Future<AppExitInfo?> getLastExitInfo() async {
     try {
       final raw = await methodChannel

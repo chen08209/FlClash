@@ -82,6 +82,32 @@ String _unquote(String value) {
   return value;
 }
 
+/// Keeps each line whole: a rewrite rule's commas and quotes are its own.
+ParsedInput<String> parseLineInput(
+  String text, {
+  Set<String> existing = const {},
+}) {
+  final entries = <String>[];
+  final seen = <String>{};
+  var skippedExisting = 0;
+  for (final line in text.split(_lineSeparator)) {
+    final value = line.trim();
+    if (value.isEmpty || !seen.add(value)) {
+      continue;
+    }
+    if (existing.contains(value)) {
+      skippedExisting++;
+      continue;
+    }
+    entries.add(value);
+  }
+  return ParsedInput(
+    entries: entries,
+    skippedExisting: skippedExisting,
+    issues: const [],
+  );
+}
+
 ParsedInput<String> parseListInput(
   String text, {
   Set<String> existing = const {},

@@ -64,10 +64,11 @@ class BackupAction extends _$BackupAction {
   Future<String> _createArchive(String workDir) async {
     final databaseSnapshotPath = join(workDir, backupDatabaseName);
     await database.customStatement('VACUUM INTO ?', [databaseSnapshotPath]);
-    final (profileIds, scriptIds, providers) = await (
+    final (profileIds, scriptIds, providers, mitmModules) = await (
       database.profilesDao.query().map((item) => item.id).get(),
       database.scriptsDao.query().map((item) => item.id).get(),
       database.clashProvidersDao.query().get(),
+      database.mitmModulesDao.query().get(),
     ).wait;
     final configMap = ref.read(configProvider).toJson();
     configMap['version'] = await preferences.getVersion();
@@ -81,6 +82,7 @@ class BackupAction extends _$BackupAction {
         profileIds: profileIds,
         scriptIds: scriptIds,
         providers: providers,
+        mitmModules: mitmModules,
       ),
     ));
     return archivePath;
@@ -113,6 +115,7 @@ class BackupAction extends _$BackupAction {
         clashProviders: data.clashProviders,
         customProxies: data.customProxies,
         proxyDialers: data.proxyDialers,
+        mitmModules: data.mitmModules,
         isOverride: isOverride,
       );
     } catch (_) {
@@ -122,6 +125,7 @@ class BackupAction extends _$BackupAction {
     await _clearReplacedProviderCaches(previousProviders);
     await _clearOutdatedCompiledRuleSets(data.clashProviders);
     if (config == null) {
+      await _restoreMitmModules();
       return;
     }
     // A desktop backup carries no package lists; the apps picked here stay.
@@ -137,6 +141,15 @@ class BackupAction extends _$BackupAction {
         ),
       ),
     );
+    await _restoreMitmModules();
+  }
+
+  Future<void> _restoreMitmModules() async {
+    final action = ref.read(mitmModulesActionProvider.notifier);
+    await action.clean();
+    if (ref.mounted) {
+      unawaited(action.autoUpdate());
+    }
   }
 
   /// The files go in before the rows that name them, so the returned callback

@@ -700,8 +700,9 @@ void main() {
   group('makeRealProfileTask network settings', () {
     Future<YamlMap> runWith(
       PatchClashConfig realPatchConfig,
-      Map<String, dynamic> rawConfig,
-    ) async {
+      Map<String, dynamic> rawConfig, {
+      List<MitmModuleSource> mitmModules = const [],
+    }) async {
       final result = await makeRealProfileTask(
         MakeRealProfileState(
           profilesPath: '/profiles',
@@ -715,6 +716,7 @@ void main() {
           rules: const [],
           addedRules: const [],
           defaultUA: 'FlClash-Test',
+          mitmModules: mitmModules,
         ),
       );
       return loadYaml(result.yaml) as YamlMap;
@@ -787,6 +789,54 @@ void main() {
       expect(mitm['enable'], isTrue);
       expect(mitm['hostname'], ['a.com']);
       expect(mitm['url-rewrite'], isEmpty);
+      expect(mitm['decrypt-tls'], isFalse);
+      expect(mitm, isNot(contains('trusted-fingerprint')));
+    });
+
+    test('HTTPS is decrypted with the CA the device trusts', () async {
+      final config = await runWith(
+        const PatchClashConfig(
+          mitm: Mitm(enable: true, trustedFingerprint: 'AB:CD'),
+        ),
+        const {},
+      );
+      final mitm = config['mitm'] as YamlMap;
+
+      expect(mitm['decrypt-tls'], isTrue);
+      expect(mitm['ca-fingerprint'], 'AB:CD');
+    });
+
+    test('modules join the mitm lists and lead the rules', () async {
+      final config = await runWith(
+        const PatchClashConfig(
+          mitm: Mitm(enable: true, hostname: ['-own.example.com']),
+        ),
+        {
+          'rules': ['MATCH,DIRECT'],
+        },
+        mitmModules: const [
+          MitmModuleSource(
+            content: '''
+#!arguments=Host:module.example.com
+[MITM]
+hostname = %APPEND% {{{Host}}}
+[URL Rewrite]
+^https://module _ reject
+[Rule]
+DOMAIN-SUFFIX,ads.example.com,REJECT
+''',
+            arguments: {'Host': '*.example.com'},
+          ),
+        ],
+      );
+      final mitm = config['mitm'] as YamlMap;
+
+      expect(mitm['hostname'], ['-own.example.com', '*.example.com']);
+      expect(mitm['url-rewrite'], ['^https://module _ reject']);
+      expect(config['rules'], [
+        'DOMAIN-SUFFIX,ads.example.com,REJECT',
+        'MATCH,DIRECT',
+      ]);
     });
 
     test('a profile cannot turn MITM on while the app has it off', () async {

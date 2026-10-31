@@ -1,0 +1,6 @@
+id=flclash_mitm_ca
+name=FlClash MITM CA
+version=1
+versionCode=1
+author=FlClash
+description=Adds FlClash's MITM certificate to the system's trusted CAs.

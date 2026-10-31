@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -8,14 +9,28 @@ part 'generated/core.g.dart';
 @freezed
 abstract class SetupParams with _$SetupParams {
   const factory SetupParams({
-    @JsonKey(name: 'selected-map') required Map<String, String> selectedMap,
-    @JsonKey(name: 'test-url') required String testUrl,
-    @Default(false) @JsonKey(name: 'skip-cert-verify') bool skipCertVerify,
     @JsonKey(includeIfNull: false) SetupBase? base,
+    @JsonKey(name: 'selected-map') required Map<String, String> selectedMap,
+    required CoreOptions options,
   }) = _SetupParams;
 
   factory SetupParams.fromJson(Map<String, dynamic> json) =>
       _$SetupParamsFromJson(json);
+}
+
+@freezed
+abstract class CoreOptions with _$CoreOptions {
+  const factory CoreOptions({
+    @JsonKey(name: 'test-url') required String testUrl,
+    @Default(false) @JsonKey(name: 'skip-cert-verify') bool skipCertVerify,
+    @Default(defaultDelayTestTimeout)
+    @JsonKey(name: 'delay-test-timeout')
+    int delayTestTimeout,
+    @Default(false) @JsonKey(name: 'mitm-capture') bool mitmCapture,
+  }) = _CoreOptions;
+
+  factory CoreOptions.fromJson(Map<String, Object?> json) =>
+      _$CoreOptionsFromJson(json);
 }
 
 @freezed
@@ -62,11 +77,128 @@ abstract class UpdateParams with _$UpdateParams {
     @Default(false) @JsonKey(name: 'geo-auto-update') bool geoAutoUpdate,
     @Default(24) @JsonKey(name: 'geo-update-interval') int geoUpdateInterval,
     @Default({}) @JsonKey(name: 'geox-url') Map<String, String> geoXUrl,
-    @Default(false) @JsonKey(name: 'skip-cert-verify') bool skipCertVerify,
+    required CoreOptions options,
   }) = _UpdateParams;
 
   factory UpdateParams.fromJson(Map<String, dynamic> json) =>
       _$UpdateParamsFromJson(json);
+}
+
+/// The CA the Core signs decrypted hosts' certificates with.
+@freezed
+abstract class MitmCertificate with _$MitmCertificate {
+  const factory MitmCertificate({
+    required String pem,
+    required String fingerprint,
+    required String subject,
+    @JsonKey(name: 'not-before') required DateTime notBefore,
+    @JsonKey(name: 'not-after') required DateTime notAfter,
+  }) = _MitmCertificate;
+
+  factory MitmCertificate.fromJson(Map<String, Object?> json) =>
+      _$MitmCertificateFromJson(json);
+}
+
+@freezed
+abstract class MitmScriptOutput with _$MitmScriptOutput {
+  const factory MitmScriptOutput({
+    @Default([]) List<String> logs,
+    @Default('') String result,
+    @Default('') String error,
+  }) = _MitmScriptOutput;
+
+  factory MitmScriptOutput.fromJson(Map<String, Object?> json) =>
+      _$MitmScriptOutputFromJson(json);
+}
+
+/// Times are in milliseconds, sizes those of the client's bodies.
+@freezed
+abstract class MitmExchangeSummary with _$MitmExchangeSummary {
+  const factory MitmExchangeSummary({
+    required int id,
+    required DateTime start,
+    @Default(false) bool pending,
+    @Default(0) int duration,
+    @Default('') String method,
+    @Default('') String url,
+    @Default(0) int status,
+    @Default(0) @JsonKey(name: 'request-size') int requestSize,
+    @Default(0) @JsonKey(name: 'response-size') int responseSize,
+    @Default('') String error,
+  }) = _MitmExchangeSummary;
+
+  factory MitmExchangeSummary.fromJson(Map<String, Object?> json) =>
+      _$MitmExchangeSummaryFromJson(json);
+}
+
+/// Every request that started after [since] is still kept.
+@freezed
+abstract class MitmExchangeList with _$MitmExchangeList {
+  const factory MitmExchangeList({
+    @Default(false) bool capturing,
+    DateTime? since,
+    @Default([]) List<MitmExchangeSummary> exchanges,
+    @Default(false) bool closed,
+  }) = _MitmExchangeList;
+
+  factory MitmExchangeList.fromJson(Map<String, Object?> json) =>
+      _$MitmExchangeListFromJson(json);
+}
+
+@freezed
+abstract class MitmAction with _$MitmAction {
+  const factory MitmAction({
+    required String kind,
+    @Default('') String phase,
+    @Default('') String detail,
+  }) = _MitmAction;
+
+  factory MitmAction.fromJson(Map<String, Object?> json) =>
+      _$MitmActionFromJson(json);
+}
+
+@freezed
+abstract class MitmExchange with _$MitmExchange {
+  const factory MitmExchange({
+    required int id,
+    required DateTime start,
+    @Default(false) bool pending,
+    @Default(0) int duration,
+    @Default(0) int ttfb,
+    @Default('') String method,
+    @Default('') String url,
+    @Default('') @JsonKey(name: 'original-url') String originalUrl,
+    @Default('') String proto,
+    @Default(0) int status,
+    @Default(0) @JsonKey(name: 'request-size') int requestSize,
+    @Default(0) @JsonKey(name: 'response-size') int responseSize,
+    @Default('') String error,
+    @Default('') String connection,
+    @Default({})
+    @JsonKey(name: 'request-header')
+    Map<String, List<String>> requestHeader,
+    @Default({})
+    @JsonKey(name: 'response-header')
+    Map<String, List<String>> responseHeader,
+    @Default([]) List<MitmAction> actions,
+  }) = _MitmExchange;
+
+  factory MitmExchange.fromJson(Map<String, Object?> json) =>
+      _$MitmExchangeFromJson(json);
+}
+
+/// One side of a request as kept, decoded unless [encoding] names the coding
+/// the Core could not undo; [data] is Base64.
+@freezed
+abstract class MitmBody with _$MitmBody {
+  const factory MitmBody({
+    @Default('') String data,
+    @Default(false) bool truncated,
+    @Default('') String encoding,
+  }) = _MitmBody;
+
+  factory MitmBody.fromJson(Map<String, Object?> json) =>
+      _$MitmBodyFromJson(json);
 }
 
 Map<String, Object?> _tunCoreJson(Tun tun) => tun.coreJson;
@@ -213,6 +345,18 @@ abstract class CoreEvent with _$CoreEvent {
 }
 
 @freezed
+abstract class TestDelayParams with _$TestDelayParams {
+  const factory TestDelayParams({
+    @JsonKey(name: 'proxy-name') required String proxyName,
+    @JsonKey(name: 'test-url') required String testUrl,
+    required int timeout,
+  }) = _TestDelayParams;
+
+  factory TestDelayParams.fromJson(Map<String, Object?> json) =>
+      _$TestDelayParamsFromJson(json);
+}
+
+@freezed
 abstract class Delay with _$Delay {
   const factory Delay({required String name, required String url, int? value}) =
       _Delay;
@@ -284,10 +428,10 @@ abstract class ServiceCheckItem with _$ServiceCheckItem {
 abstract class CoreMemoryStats with _$CoreMemoryStats {
   const factory CoreMemoryStats({
     @Default(0) int rss,
-    @Default(0) int heapInuse,
-    @Default(0) int heapIdle,
-    @Default(0) int stackInuse,
-    @Default(0) int runtimeOther,
+    @Default(0) @JsonKey(name: 'heap-inuse') int heapInuse,
+    @Default(0) @JsonKey(name: 'heap-idle') int heapIdle,
+    @Default(0) @JsonKey(name: 'stack-inuse') int stackInuse,
+    @Default(0) @JsonKey(name: 'runtime-other') int runtimeOther,
   }) = _CoreMemoryStats;
 
   factory CoreMemoryStats.fromJson(Map<String, Object?> json) =>
