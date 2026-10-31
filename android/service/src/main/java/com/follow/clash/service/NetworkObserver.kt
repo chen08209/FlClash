@@ -21,6 +21,8 @@ import java.util.concurrent.ConcurrentHashMap
 private data class NetworkInfo(
     @Volatile var losingUntilMillis: Long = 0,
     @Volatile var dnsList: List<InetAddress> = emptyList(),
+    @Volatile var interfaceName: String = "",
+    @Volatile var gateway: String = "",
 ) {
     val priorityPenalty: Int
         get() = if (losingUntilMillis > System.currentTimeMillis()) 10 else 0
@@ -39,6 +41,8 @@ object NetworkObserver {
     }
     private var currentDnsList = listOf<String>()
     private var currentNetwork: Network? = null
+    private var currentInterfaceName = ""
+    private var currentGateway = ""
     private var started = false
 
     private val request = NetworkRequest.Builder().apply {
@@ -75,7 +79,14 @@ object NetworkObserver {
         }
 
         override fun onLinkPropertiesChanged(network: Network, linkProperties: LinkProperties) {
-            networkInfos[network]?.dnsList = linkProperties.dnsServers
+            val info = networkInfos[network] ?: return
+            info.dnsList = linkProperties.dnsServers
+            info.interfaceName = linkProperties.interfaceName.orEmpty()
+            info.gateway = linkProperties.routes
+                .firstOrNull { it.isDefaultRoute && it.gateway != null }
+                ?.gateway
+                ?.hostAddress
+                .orEmpty()
             scheduleUpdateDns()
         }
     }
@@ -128,6 +139,18 @@ object NetworkObserver {
         if (dnsList != currentDnsList) {
             currentDnsList = dnsList
             Core.updateDNS(dnsList.joinToString(","))
+        }
+        val interfaceName = preferred?.value?.interfaceName.orEmpty()
+        val gateway = preferred?.value?.gateway.orEmpty()
+        // tsnet cannot observe Android's connectivity callbacks, so pass the
+        // default interface along before closing sockets bound to the old one.
+        if (interfaceName != currentInterfaceName || gateway != currentGateway) {
+            currentInterfaceName = interfaceName
+            currentGateway = gateway
+            GlobalState.log(
+                "Default network: $interfaceName" + if (gateway.isNotEmpty()) " ($gateway)" else "",
+            )
+            Core.updateNetwork(interfaceName, gateway)
         }
         val network = preferred?.key ?: return
         // Sockets protected onto the network we left stay bound to it; closing

@@ -3,6 +3,7 @@ module core
 go 1.27.0
 
 replace github.com/metacubex/mihomo => ./Clash.Meta
+replace github.com/metacubex/tailscale => github.com/YuliZheng/tailscale v0.0.0-20261031162711-834a9a759830
 
 require (
 	github.com/Microsoft/go-winio v0.6.2
