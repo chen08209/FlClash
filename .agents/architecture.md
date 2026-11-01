@@ -330,8 +330,10 @@ Quick Settings, notification, revoke, and Always-on VPN paths converge on the sa
   makes a second action during the setup toggle that start off instead of racing a second setup against it.
 - An engine that attaches to a run the service already has, started that way or outliving the last engine, adopts it:
   `SetupAction.initStatus` restores the md5 of the config.yaml the Core last accepted and pushes the profile only when it
-  now builds differently. Pushing the same config again rebuilds every proxy group, and mihomo keeps a url-test group's
-  unmeasured pick for ten seconds, so the dashboard's exit and service checks ran a second time once it moved.
+  now builds differently. Pushing the same config again rebuilds every proxy group, and a url-test group starts over on
+  an unmeasured pick, so the dashboard's exit and service checks ran a second time once it moved. A fork patch holds
+  such a pick for one second instead of mihomo's ten-second cache, which outlasted the exit IP's timeout, and moves on
+  as soon as a member is measured.
 - A stop never needs Flutter. `handleStopAction()` stops the service natively whether or not an engine is attached, so
   the tile, the notification action and a revoke work even when Flutter's own idea of the state is wrong.
 - Whenever the run ends without Flutter having asked for it (a start that failed, a native stop, a revoke, a lost
