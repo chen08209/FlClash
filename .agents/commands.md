@@ -206,6 +206,20 @@ What those suites own:
 - `test/widgets/core_status_button_test.dart`: 600-millisecond connecting presentation hold, immediate failure display,
   long-running connecting state, and disconnected restart.
 
+## Android 16 KB Verification
+
+```bash
+python3 -m unittest discover -s test/tool -p '*_test.py'
+flutter build apk --release --target-platform android-arm64,android-x64 --split-per-abi
+python3 tool/check_android_page_sizes.py build/app/outputs/flutter-apk
+```
+
+The checker accepts APK paths or directories and needs only Python 3. It rejects missing APKs and incompatible
+64-bit ELF or uncompressed ZIP alignment. It reports 32-bit libraries separately without requiring 16 KB alignment.
+CI checks an arm64 release APK on branch builds and every release APK before upload. On a dedicated 16 KB device or
+emulator, also verify installation, launch, profile application and VPN operation; confirm the page size with
+`adb shell getconf PAGE_SIZE` and disable page-size compatibility mode for that validation.
+
 ## Native Component Verification
 
 The CI Go-wrapper checks can be reproduced without CGO, the Android files included:

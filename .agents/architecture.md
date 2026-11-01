@@ -1636,7 +1636,22 @@ NDK version stands in for the hook's cache.
   needs no change.
 - The AAR's own `proguard.txt` goes with the rest of it. `android/core/consumer-rules.pro` keeps `go.**` and
   `com.follow.clash.core.mobile.**`, the classes gobind's C glue looks up by name.
-- The CI `android` job compiles `:core` without Flutter, so it passes `-Ptarget-platform=android-arm64` to build one ABI.
+- The CI `android` unit tests compile `:core` with `-Ptarget-platform=android-arm64`. The job then builds an arm64
+  release APK and checks its native libraries with `tool/check_android_page_sizes.py`; release packaging checks every
+  APK under `dist/` before uploading.
+
+Android's Go binding and `rust_api` cdylib explicitly link with both `max-page-size=16384` and
+`common-page-size=16384`, so LOAD alignment and the GNU_RELRO end stay compatible with 16 KB devices. Rust's flags
+live in its Android-only `build.rs` branch; Go's flags belong to `GomobileBind`, not the desktop build hook.
+[Upstream PR #2058](https://github.com/chen08209/FlClash/pull/2058) proposed the Go linker flag for the previous build
+path but closed without merging; its CMake and `flutter_js` changes no longer match this architecture.
+
+The APK check reads every arm64-v8a and x86_64 shared library, including third-party libraries, checks ELF LOAD
+alignment, and checks the ZIP data offset of uncompressed libraries. Compressed libraries still need the ELF
+checks. The 32-bit ABIs are reported as skipped because Android's 16 KB requirement applies to 64-bit devices.
+RELRO end alignment alone is not a compatibility test: the linker rounds protection to pages, and padding may
+keep writable data outside those pages. This artifact check does not replace a launch and VPN test on a device
+where `adb shell getconf PAGE_SIZE` is 16384.
 
 ## Local Plugins
 
