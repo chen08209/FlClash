@@ -8,7 +8,6 @@ import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/core.dart';
-import 'package:fl_clash/views/connection/connections.dart';
 import 'package:fl_clash/views/connection/requests.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
@@ -52,10 +51,10 @@ enum DashboardFeed {
   requests,
   dns;
 
-  PageLabel get page => switch (this) {
-    connections => PageLabel.connections,
-    requests => PageLabel.requests,
-    dns => PageLabel.dns,
+  String get label => switch (this) {
+    connections => currentAppLocalizations.liveConnections,
+    requests => currentAppLocalizations.recentRequests,
+    dns => PageLabel.dns.label,
   };
 }
 
@@ -67,10 +66,14 @@ void openDashboardFeed(BuildContext context, DashboardFeed feed) {
         : double.maxFinite,
     builder: (_, controller) => NestedPagedSheet(
       builder: (_) => switch (feed) {
-        DashboardFeed.connections => ConnectionsView(
+        DashboardFeed.connections => RequestsView(
           scrollController: controller,
+          initialFeed: RequestFeed.live,
         ),
-        DashboardFeed.requests => RequestsView(scrollController: controller),
+        DashboardFeed.requests => RequestsView(
+          scrollController: controller,
+          initialFeed: RequestFeed.recent,
+        ),
         DashboardFeed.dns => DnsQueriesView(scrollController: controller),
       },
     ),
@@ -306,10 +309,10 @@ class _ConnectionsTableCardState extends ConsumerState<ConnectionsTableCard>
           outer: headerHeight / 2,
           inner: 8,
           background: DashboardColors.of(context).tone,
-          semanticLabel: feed.page.label,
+          semanticLabel: feed.label,
           onTap: () => _select(feed),
           builder: (foreground) => _FeedSegment(
-            label: feed.page.label,
+            label: feed.label,
             count: count,
             height: headerHeight,
             foreground: foreground,

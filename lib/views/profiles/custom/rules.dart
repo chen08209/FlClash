@@ -9,8 +9,6 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'quick_edit.dart';
-
 class CustomRulesView extends ConsumerStatefulWidget {
   final int profileId;
 
@@ -89,7 +87,7 @@ class _CustomRulesViewState extends ConsumerState<CustomRulesView> {
       return Future.value();
     }
     final notifier = ref.read(provider.notifier);
-    return showCustomQuickEdit(
+    return showQuickEdit(
       context,
       title: appLocalizations.rule,
       content: encodeRuleList(previous),

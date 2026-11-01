@@ -8,7 +8,6 @@ import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/config/advanced.dart';
-import 'package:fl_clash/views/config/custom_resources.dart';
 import 'package:fl_clash/views/config/dns.dart';
 import 'package:fl_clash/views/config/filters.dart';
 import 'package:fl_clash/views/config/general.dart';
@@ -48,7 +47,7 @@ void main() {
     'dashboard': const DashboardView(),
     'proxies': const ProxiesView(),
     'profiles': const ProfilesView(),
-    'requests': const RequestsView(),
+    'requests': const RequestsView(initialFeed: RequestFeed.recent),
     'dns queries': const DnsQueriesView(),
     'resources': const ResourcesView(),
     'logs': const LogsView(),
@@ -60,7 +59,6 @@ void main() {
     'tun config': TunView(1),
     'network config': const HostScaffold(body: NetworkListView()),
     'advanced config': const AdvancedConfigView(),
-    'custom profile resources': const CustomResourcesView(),
     'on demand config': const OnDemandView(),
     'theme': const ThemeView(),
     'backup and restore': const BackupAndRestore(),
@@ -121,7 +119,6 @@ void main() {
     'Backup and restore': BackupAndRestore,
     'General': GeneralView,
     'Advanced configuration': AdvancedConfigView,
-    'Custom profile resources': CustomResourcesView,
   };
 
   for (final entry in toolDestinations.entries) {
@@ -161,6 +158,49 @@ void main() {
       expect(tester.takeException(), null);
     });
   }
+
+  testWidgets('custom resources list directly in advanced config', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = ProviderContainer(
+      overrides: [profilesProvider.overrideWith(TestProfiles.new)],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container
+        .read(viewSizeProvider.notifier)
+        .update((_) => const Size(1400, 1000));
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: ToolsView()),
+      ),
+    );
+    await tester.pump();
+
+    final advanced = find.text('Advanced configuration');
+    await tester.scrollUntilVisible(
+      advanced,
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(advanced);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Custom'), findsOneWidget);
+
+    await tester.tap(find.text('Filters'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(FiltersView), findsOneWidget);
+    expect(tester.takeException(), null);
+  });
 
   testWidgets('user agent item opens the page that applies a preset', (
     tester,

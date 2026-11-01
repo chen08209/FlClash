@@ -17,7 +17,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'icon.dart';
 import 'members.dart';
-import 'quick_edit.dart';
 
 const _defaultEmptyFallback = 'COMPATIBLE';
 
@@ -1144,7 +1143,7 @@ class _EditProxyGroupViewState extends ConsumerState<EditProxyGroupView> {
 
   Future<void> _handleQuickEdit() {
     final group = ref.read(proxyGroupProvider);
-    return showCustomQuickEdit(
+    return showQuickEdit(
       context,
       title: group.name.isEmpty
           ? context.appLocalizations.quickEdit

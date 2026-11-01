@@ -405,11 +405,7 @@ class GeneralView extends ConsumerWidget {
           generateSection(
             title: appLocalizations.startupAndBackground,
             items: _startupItems(appLocalizations),
-            footer: [
-              if (system.isDesktop) appLocalizations.silentLaunchDesc,
-              appLocalizations.autoRunDesc,
-              appLocalizations.onDemandDesc,
-            ].join('\n'),
+            footer: appLocalizations.autoRunDesc,
           ),
           generateSection(
             title: appLocalizations.requestsAndUpdates,
@@ -422,15 +418,11 @@ class GeneralView extends ConsumerWidget {
               authentication: authentication,
               externalController: externalController,
             ),
-            footer: [
-              appLocalizations.externalControllerDesc,
-              appLocalizations.authenticationDesc,
-            ].join('\n'),
+            footer: appLocalizations.externalControllerDesc,
           ),
           generateSection(
             title: appLocalizations.connection,
             items: _connectionItems(),
-            footer: appLocalizations.autoCloseConnectionsDesc,
           ),
           OverrideSection(
             title: appLocalizations.core,

@@ -5,7 +5,6 @@ import 'package:fl_clash/features/connection/tracker_info_list.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/connection/connections.dart';
 import 'package:fl_clash/views/connection/requests.dart';
 import 'package:fl_clash/views/dashboard/widgets/connection_stats.dart';
 import 'package:fl_clash/views/dns_queries.dart';
@@ -142,7 +141,7 @@ void main() {
     await pumpCard(tester);
 
     for (final (label, view) in [
-      ('Live connections', ConnectionsView),
+      ('Live connections', RequestsView),
       ('Recent requests', RequestsView),
       ('DNS queries', DnsQueriesView),
     ]) {
@@ -159,6 +158,58 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(view), findsNothing);
     }
+
+    await teardownCard(tester);
+  });
+
+  testWidgets('a sheet switching feeds opens each at its own start', (
+    tester,
+  ) async {
+    when(() => core.getConnections()).thenAnswer(
+      (_) async => [for (var i = 0; i < 100; i++) _request(1000 + i)],
+    );
+    final notifier = container.read(requestsProvider.notifier);
+    for (var i = 0; i < 100; i++) {
+      notifier.addRequest(_request(i));
+    }
+    await pumpCard(tester);
+    await tester.tap(_stat('Recent requests'));
+    await tester.pumpAndSettle();
+    ScrollPosition position() => tester
+        .state<ScrollableState>(
+          find
+              .descendant(
+                of: find.byType(RequestsView),
+                matching: find.byWidgetPredicate(
+                  (widget) =>
+                      widget is Scrollable &&
+                      axisDirectionToAxis(widget.axisDirection) ==
+                          Axis.vertical,
+                ),
+              )
+              .first,
+        )
+        .position;
+    expect(position().pixels, position().maxScrollExtent);
+
+    await tester.tap(find.text('Recent requests').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Running'));
+    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+    expect(position().pixels, 0);
+
+    await tester.tap(find.text('Running').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Recent requests').last);
+    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(position().pixels, position().maxScrollExtent);
 
     await teardownCard(tester);
   });

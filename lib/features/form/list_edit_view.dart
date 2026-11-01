@@ -1,4 +1,14 @@
-part of 'input.dart';
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/models/common.dart';
+import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/foundation.dart' show listEquals;
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'list_editor_page.dart';
+import 'quick_edit.dart';
 
 /// Public for `MapEditView`, whose entries are entered in a form.
 abstract class EditViewState<W extends ConsumerStatefulWidget, T>
@@ -8,6 +18,8 @@ abstract class EditViewState<W extends ConsumerStatefulWidget, T>
   final _selectionKey = uniqueId;
 
   String get title;
+
+  String? get description;
 
   List<T> get initialEntries;
 
@@ -24,9 +36,10 @@ abstract class EditViewState<W extends ConsumerStatefulWidget, T>
   @protected
   List<T> get entries => _entries;
 
-  /// Adds when [entry] is null and edits it otherwise; an add may return
-  /// several entries from batch mode.
-  Future<List<T>?> showEntryEditor(T? entry);
+  /// Adds when [entry] is null and edits it otherwise.
+  Future<T?> showEntryEditor(T? entry);
+
+  Future<void> showQuickEdit(List<T> entries, ValueChanged<List<T>> onChanged);
 
   @override
   void initState() {
@@ -55,16 +68,23 @@ abstract class EditViewState<W extends ConsumerStatefulWidget, T>
   }
 
   Future<void> _handleAdd() async {
-    final entries = await showEntryEditor(null);
-    if (!mounted || entries == null || entries.isEmpty) return;
-    _entries = [..._entries, ...entries];
+    final added = await showEntryEditor(null);
+    if (!mounted || added == null) return;
+    _entries = [..._entries, added];
     setState(() {});
   }
 
+  Future<void> _handleQuickEdit() {
+    return showQuickEdit(_entries, (entries) {
+      if (!mounted) return;
+      _entries = entries;
+      setState(() {});
+    });
+  }
+
   Future<void> _handleEdit(T entry) async {
-    final entries = await showEntryEditor(entry);
-    if (!mounted || entries == null || entries.isEmpty) return;
-    final next = entries.single;
+    final next = await showEntryEditor(entry);
+    if (!mounted || next == null) return;
     final id = idOf(entry);
     _entries = [
       for (final current in _entries)
@@ -127,7 +147,7 @@ abstract class EditViewState<W extends ConsumerStatefulWidget, T>
     required bool isEditing,
   }) {
     final position = ItemPosition.get(index, length);
-    return ReorderableDelayedDragStartListener(
+    return ReorderDragStartListener(
       key: ValueKey(idOf(entry)),
       index: index,
       child: ItemPositionProvider(
@@ -190,35 +210,36 @@ abstract class EditViewState<W extends ConsumerStatefulWidget, T>
           ],
         ],
         iconActions: [
-          if (!isEditing) ...[
-            if (hasChanges)
-              IconButtonData(
-                glyph: AppGlyphs.reset,
-                tooltip: appLocalizations.reset,
-                onPressed: _handleReset,
-              ),
+          if (!isEditing && hasChanges)
             IconButtonData(
-              glyph: AppGlyphs.addCircle,
-              tooltip: appLocalizations.add,
-              onPressed: _handleAdd,
+              glyph: AppGlyphs.reset,
+              tooltip: appLocalizations.reset,
+              onPressed: _handleReset,
             ),
-          ],
+        ],
+        actions: [
+          if (!isEditing)
+            ListEditorAddAction(
+              onAdd: _handleAdd,
+              onQuickEdit: _handleQuickEdit,
+            ),
         ],
         body: NullStatusSwitcher(
           isEmpty: _entries.isEmpty,
           nullStatus: NullStatus(
             label: appLocalizations.noData,
+            description: description,
             illustration: NullStatusIllustration.data,
           ),
-          child: ReorderableListView.builder(
+          child: PrismReorderableListView(
             padding: EdgeInsets.only(
               bottom: 16 + context.bottomInset,
               top: context.contentTopPadding,
               left: 16,
               right: 16,
             ),
-            buildDefaultDragHandles: false,
             itemCount: _entries.length,
+            footer: description == null ? null : ListFooter(text: description!),
             itemBuilder: (context, index) {
               final entry = _entries[index];
               return _buildEntry(
@@ -251,8 +272,71 @@ abstract class EditViewState<W extends ConsumerStatefulWidget, T>
   }
 }
 
+class ConfigListEditItem extends ConsumerWidget {
+  const ConfigListEditItem({
+    super.key,
+    required this.selector,
+    required this.title,
+    required this.onChanged,
+    this.itemMaxLength,
+    this.itemValidator,
+    this.description,
+    this.subtitle,
+    this.leading,
+  });
+
+  final ProviderListenable<List<String>> selector;
+  final ConfigLabel title;
+  final ConfigWriter<List<String>> onChanged;
+  final int? itemMaxLength;
+  final ConfigValidator? itemValidator;
+  final ConfigLabel? description;
+  final ConfigLabel? subtitle;
+  final Widget? leading;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
+    final value = ref.watch(selector);
+    final subtitle = this.subtitle;
+    final label = title(appLocalizations);
+    final itemValidator = this.itemValidator;
+    return ListItem.open(
+      leading: leading,
+      title: Text(label),
+      subtitle: Text(
+        subtitle != null
+            ? subtitle(appLocalizations)
+            : value.isEmpty
+            ? appLocalizations.none
+            : appLocalizations.itemsCount(value.length),
+      ),
+      widget: ListEditView(
+        title: label,
+        description: description?.call(appLocalizations),
+        items: value,
+        itemMaxLength: itemMaxLength,
+        itemValidator: itemValidator == null
+            ? null
+            : (item) => itemValidator(item, appLocalizations),
+        titleBuilder: (item) => Text(item),
+      ),
+      onChanged: (items) {
+        if (items is! List) {
+          return;
+        }
+        final next = List<String>.from(items);
+        if (!listEquals(next, value)) {
+          onChanged(ref, next);
+        }
+      },
+    );
+  }
+}
+
 class ListEditView extends ConsumerStatefulWidget {
   final String title;
+  final String? description;
   final List<String> items;
   final Widget Function(String item) titleBuilder;
   final int? itemMaxLength;
@@ -261,6 +345,7 @@ class ListEditView extends ConsumerStatefulWidget {
   const ListEditView({
     super.key,
     required this.title,
+    this.description,
     required this.items,
     required this.titleBuilder,
     this.itemMaxLength,
@@ -274,6 +359,9 @@ class ListEditView extends ConsumerStatefulWidget {
 class _ListEditViewState extends EditViewState<ListEditView, String> {
   @override
   String get title => widget.title;
+
+  @override
+  String? get description => widget.description;
 
   @override
   List<String> get initialEntries => widget.items;
@@ -300,21 +388,34 @@ class _ListEditViewState extends EditViewState<ListEditView, String> {
   Object popResult(List<String> entries) => entries;
 
   @override
-  Future<List<String>?> showEntryEditor(String? entry) {
+  Future<String?> showEntryEditor(String? entry) {
     return showListEntryDialog(
       context,
-      title: widget.title,
       entries: _entries,
       entry: entry,
       itemMaxLength: widget.itemMaxLength,
       itemValidator: widget.itemValidator,
     );
   }
+
+  @override
+  Future<void> showQuickEdit(
+    List<String> entries,
+    ValueChanged<List<String>> onChanged,
+  ) {
+    return showListQuickEdit(
+      context,
+      title: widget.title,
+      items: entries,
+      itemMaxLength: widget.itemMaxLength,
+      itemValidator: widget.itemValidator,
+      onChanged: onChanged,
+    );
+  }
 }
 
-Future<List<String>?> showListEntryDialog(
+Future<String?> showListEntryDialog(
   BuildContext context, {
-  required String title,
   required List<String> entries,
   String? entry,
   String? valueLabel,
@@ -342,30 +443,12 @@ Future<List<String>?> showListEntryDialog(
     return itemValidator?.call(next);
   }
 
-  return dialogs.showCommonDialog<List<String>>(
+  return dialogs.showCommonDialog<String>(
     child: EntryDialog<String>(
       title: entry == null ? appLocalizations.add : appLocalizations.edit,
       valueField: Field(label: label, value: entry ?? '', validator: validator),
       valueMaxLength: itemMaxLength,
       toEntry: (value) => parseListInput(value).entries.single,
-      batch: entry != null
-          ? null
-          : BatchInput(
-              label: title,
-              formatTip: appLocalizations.batchListInputTip,
-              parse: (text) => parseListInput(
-                text,
-                existing: entries.toSet(),
-                maxLength: itemMaxLength,
-                isValid: itemValidator == null
-                    ? null
-                    : (item) => itemValidator(item) == null,
-              ),
-              issueMessage: (issue) => switch (issue.kind) {
-                InputIssueKind.invalidValue => itemValidator!(issue.raw)!,
-                _ => appLocalizations.maxLengthTip(label, itemMaxLength!),
-              },
-            ),
     ),
   );
 }

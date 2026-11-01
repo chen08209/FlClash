@@ -301,10 +301,9 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
         if (_isAndroid) _buildBatteryOptimizationItem(),
         if (_needsLocationPermission) _buildLocationPermissionItem(),
       ],
-      footer: [
-        if (_isAndroid) appLocalizations.batteryOptimizationDesc,
-        if (_needsLocationPermission) appLocalizations.locationPermissionDesc,
-      ].join('\n'),
+      footer: _needsLocationPermission
+          ? appLocalizations.locationPermissionDesc
+          : null,
     );
   }
 

@@ -121,6 +121,21 @@ enum LogLevel { debug, info, warning, error, silent }
 
 enum RecordTone { neutral, warning, error }
 
+enum RecordFacetKind {
+  network,
+  rule,
+  mitm,
+  app,
+  proxy,
+  level,
+  type,
+  initiator,
+  cache,
+  rcode,
+}
+
+enum RecordGrouping { app, host, rule, exit }
+
 extension RecordToneExt on RecordTone {
   Color? accentColor(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -266,6 +281,7 @@ enum DnsOverrideKey with OverrideKey {
   static const normalProfileKeys = {
     listen,
     ipv6,
+    preferH3,
     enhancedMode,
     fakeIpFilter,
     fakeIpFilterMode,
@@ -514,7 +530,6 @@ enum PageLabel {
   logs,
   requests,
   resources,
-  connections,
   dns,
 }
 
@@ -845,5 +860,7 @@ enum MitmTrust { notGenerated, notInstalled, untrusted, ready }
 enum MitmInstallOutcome { installed, untilReboot, prompted, saved }
 
 enum CoreStatus { connecting, connected, disconnected }
+
+enum RequestFeed { recent, live }
 
 enum UpdatingScope { core, local }

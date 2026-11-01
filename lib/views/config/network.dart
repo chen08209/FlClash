@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/views/config/override.dart';
@@ -405,14 +406,12 @@ class TunSection extends ConsumerWidget {
       return generateSection(
         title: appLocalizations.tun,
         items: tunItems(isMipsStack: isMipsStack),
-        footer: appLocalizations.bypassPrivateRouteDesc,
       );
     }
     return OverrideSection(
       title: appLocalizations.tun,
       spec: appTunOverrideSpec(isLinux: isLinux, isWindows: isWindows),
       items: const [BypassPrivateRouteItem(key: ValueKey(#bypassPrivateRoute))],
-      footer: [appLocalizations.bypassPrivateRouteDesc],
     );
   }
 }
@@ -483,10 +482,7 @@ class VpnSections extends ConsumerWidget {
     );
     return Column(
       children: [
-        generateSection(
-          items: const [VPNItem()],
-          footer: appLocalizations.vpnEnableDesc,
-        ),
+        generateSection(items: const [VPNItem()]),
         generateSection(
           title: 'VPN',
           items: const [
@@ -500,7 +496,6 @@ class VpnSections extends ConsumerWidget {
             if (authenticationEnable)
               appLocalizations.authenticationSystemProxyDesc,
             appLocalizations.bypassDomainDesc,
-            appLocalizations.ipv6InboundDesc,
           ].join('\n'),
         ),
       ],
@@ -521,7 +516,6 @@ class SystemProxySection extends StatelessWidget {
         const BypassDomainItem(),
         if (system.isWindows) const LoopbackItem(),
       ],
-      footer: appLocalizations.bypassDomainDesc,
     );
   }
 }
@@ -537,12 +531,6 @@ class NetworkOptionsSection extends ConsumerWidget {
       ),
     );
     final appLocalizations = context.appLocalizations;
-    final footer = [
-      if (system.isDesktop) ...[
-        appLocalizations.tunDesc,
-        if (isCustomInterfaceName) appLocalizations.interfaceNameDesc,
-      ],
-    ];
     return generateSection(
       title: appLocalizations.options,
       items: networkOptionsItems(
@@ -550,7 +538,7 @@ class NetworkOptionsSection extends ConsumerWidget {
         isMacOS: system.isMacOS,
         isCustomInterfaceName: isCustomInterfaceName,
       ),
-      footer: footer.isEmpty ? null : footer.join('\n'),
+      footer: system.isDesktop ? appLocalizations.tunDesc : null,
     );
   }
 }

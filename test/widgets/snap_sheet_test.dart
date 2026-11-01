@@ -142,7 +142,7 @@ void main() {
     );
     final floating = clip().clipRSuperellipse!;
     expect(floating.tlRadius.x, AppCorner.xxl);
-    expect(floating.blRadius.x, 38);
+    expect(floating.blRadius.x, AppCorner.xxl);
 
     await tester.drag(content(), const Offset(0, -400));
     await tester.pumpAndSettle();

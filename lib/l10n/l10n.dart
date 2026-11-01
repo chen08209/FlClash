@@ -2321,10 +2321,10 @@ class AppLocalizations {
     return Intl.message('Disclaimer', name: 'disclaimer', desc: '', args: []);
   }
 
-  /// `Before using FlClash ("the Software"), please read this statement carefully and make sure you understand all of it. Tapping "Agree" means you have read, understood, and accept every term below. If you do not agree, tap "Exit" and stop using the Software.`
+  /// `Before using FlClash ("the Software"), please read this statement carefully and make sure you understand it. Tapping "Agree" means you have read and understood what follows. If you do not want to continue, tap "Exit".`
   String get disclaimerDesc {
     return Intl.message(
-      'Before using FlClash ("the Software"), please read this statement carefully and make sure you understand all of it. Tapping "Agree" means you have read, understood, and accept every term below. If you do not agree, tap "Exit" and stop using the Software.',
+      'Before using FlClash ("the Software"), please read this statement carefully and make sure you understand it. Tapping "Agree" means you have read and understood what follows. If you do not want to continue, tap "Exit".',
       name: 'disclaimerDesc',
       desc: '',
       args: [],
@@ -2361,20 +2361,20 @@ class AppLocalizations {
     );
   }
 
-  /// `Restrictions on use`
+  /// `About use`
   String get disclaimerUsageTitle {
     return Intl.message(
-      'Restrictions on use',
+      'About use',
       name: 'disclaimerUsageTitle',
       desc: '',
       args: [],
     );
   }
 
-  /// `The Software is intended only for non-commercial uses such as learning, exchange, and technical research. Using it for any commercial purpose is strictly prohibited, including but not limited to paid distribution, bundled sales, use as part of a commercial service, or doing business in the name of the Software. Any commercial activity is unrelated to the Software and its developers.\n\nUsing the Software for anything that violates the laws and regulations of your country or region is strictly prohibited, including but not limited to bypassing lawfully imposed network access restrictions, spreading illegal content, launching network attacks, or infringing the lawful rights of others.`
+  /// `Any commercial activity anyone carries out with the Software, including paid distribution, bundled sales, or use as part of a commercial service, is unrelated to the Software's developers, who do not endorse, support, or guarantee it.\n\nYou are responsible for complying with the laws where you live, and you bear the consequences of any unlawful use of the Software.`
   String get disclaimerUsageContent {
     return Intl.message(
-      'The Software is intended only for non-commercial uses such as learning, exchange, and technical research. Using it for any commercial purpose is strictly prohibited, including but not limited to paid distribution, bundled sales, use as part of a commercial service, or doing business in the name of the Software. Any commercial activity is unrelated to the Software and its developers.\n\nUsing the Software for anything that violates the laws and regulations of your country or region is strictly prohibited, including but not limited to bypassing lawfully imposed network access restrictions, spreading illegal content, launching network attacks, or infringing the lawful rights of others.',
+      'Any commercial activity anyone carries out with the Software, including paid distribution, bundled sales, or use as part of a commercial service, is unrelated to the Software\'s developers, who do not endorse, support, or guarantee it.\n\nYou are responsible for complying with the laws where you live, and you bear the consequences of any unlawful use of the Software.',
       name: 'disclaimerUsageContent',
       desc: '',
       args: [],
@@ -2491,10 +2491,10 @@ class AppLocalizations {
     );
   }
 
-  /// `The Software is open source under the GPL-3.0 license. You may use, modify, and distribute it freely as long as you comply with that license, which requires derivative works to be released under GPL-3.0 as well and the original copyright notices to be kept.\n\nThird-party components in the Software, including the Clash.Meta core, follow their own licenses. The original authors are not responsible for any issue arising from modified or redistributed versions.`
+  /// `The Software is open source under the GPL-3.0 license. Under that license you may run, study, modify, and distribute it; when you distribute the Software or a modified version, you must provide its source code under GPL-3.0 as well and keep the original copyright notices.\n\nThird-party components in the Software, including the Clash.Meta core, follow their own licenses. The original authors are not responsible for any problem arising from versions modified or distributed by others.`
   String get disclaimerLicenseContent {
     return Intl.message(
-      'The Software is open source under the GPL-3.0 license. You may use, modify, and distribute it freely as long as you comply with that license, which requires derivative works to be released under GPL-3.0 as well and the original copyright notices to be kept.\n\nThird-party components in the Software, including the Clash.Meta core, follow their own licenses. The original authors are not responsible for any issue arising from modified or redistributed versions.',
+      'The Software is open source under the GPL-3.0 license. Under that license you may run, study, modify, and distribute it; when you distribute the Software or a modified version, you must provide its source code under GPL-3.0 as well and keep the original copyright notices.\n\nThird-party components in the Software, including the Clash.Meta core, follow their own licenses. The original authors are not responsible for any problem arising from versions modified or distributed by others.',
       name: 'disclaimerLicenseContent',
       desc: '',
       args: [],
@@ -2511,30 +2511,30 @@ class AppLocalizations {
     );
   }
 
-  /// `The developers may revise this statement with any release, and the revision takes effect when that release is published. Continuing to use the Software after updating means you accept the revised statement.`
+  /// `This statement may be revised in later releases; each release carries the version that applies to it.`
   String get disclaimerChangesContent {
     return Intl.message(
-      'The developers may revise this statement with any release, and the revision takes effect when that release is published. Continuing to use the Software after updating means you accept the revised statement.',
+      'This statement may be revised in later releases; each release carries the version that applies to it.',
       name: 'disclaimerChangesContent',
       desc: '',
       args: [],
     );
   }
 
-  /// `Acceptance`
+  /// `Relation to the open-source license`
   String get disclaimerAcceptTitle {
     return Intl.message(
-      'Acceptance',
+      'Relation to the open-source license',
       name: 'disclaimerAcceptTitle',
       desc: '',
       args: [],
     );
   }
 
-  /// `By installing, copying, or using the Software, you are deemed to have read and agreed to this entire statement. If you disagree with any of its terms, stop using and uninstall the Software immediately.`
+  /// `This statement explains the nature, risks, and responsibilities of using the Software. It is not an additional term beyond GPL-3.0 and does not limit any right that license grants you, including to run, copy, modify, and distribute the Software. Where the two differ, GPL-3.0 prevails.`
   String get disclaimerAcceptContent {
     return Intl.message(
-      'By installing, copying, or using the Software, you are deemed to have read and agreed to this entire statement. If you disagree with any of its terms, stop using and uninstall the Software immediately.',
+      'This statement explains the nature, risks, and responsibilities of using the Software. It is not an additional term beyond GPL-3.0 and does not limit any right that license grants you, including to run, copy, modify, and distribute the Software. Where the two differ, GPL-3.0 prevails.',
       name: 'disclaimerAcceptContent',
       desc: '',
       args: [],
@@ -2729,6 +2729,11 @@ class AppLocalizations {
   /// `Filter`
   String get filter {
     return Intl.message('Filter', name: 'filter', desc: '', args: []);
+  }
+
+  /// `Group by`
+  String get groupBy {
+    return Intl.message('Group by', name: 'groupBy', desc: '', args: []);
   }
 
   /// `Hide timed-out proxies`
@@ -3571,36 +3576,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Single add`
-  String get singleAdd {
-    return Intl.message('Single add', name: 'singleAdd', desc: '', args: []);
-  }
-
-  /// `Batch add`
-  String get batchAdd {
-    return Intl.message('Batch add', name: 'batchAdd', desc: '', args: []);
-  }
-
-  /// `One item per line, or separated by commas`
-  String get batchListInputTip {
-    return Intl.message(
-      'One item per line, or separated by commas',
-      name: 'batchListInputTip',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `One entry per line: key, a space, then value`
-  String get batchMapInputTip {
-    return Intl.message(
-      'One entry per line: key, a space, then value',
-      name: 'batchMapInputTip',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Single import`
   String get singleImport {
     return Intl.message(
@@ -4361,14 +4336,9 @@ class AppLocalizations {
     return Intl.message('Custom', name: 'customProfile', desc: '', args: []);
   }
 
-  /// `Custom profile resources`
-  String get customProfileResources {
-    return Intl.message(
-      'Custom profile resources',
-      name: 'customProfileResources',
-      desc: '',
-      args: [],
-    );
+  /// `Custom`
+  String get customResources {
+    return Intl.message('Custom', name: 'customResources', desc: '', args: []);
   }
 
   /// `Unknown network error`
@@ -8810,6 +8780,16 @@ class AppLocalizations {
       name: 'mitmScriptRisk',
       desc: '',
       args: [],
+    );
+  }
+
+  /// `{name} changed its scripts and was turned off`
+  String mitmModuleScriptsChanged(Object name) {
+    return Intl.message(
+      '$name changed its scripts and was turned off',
+      name: 'mitmModuleScriptsChanged',
+      desc: '',
+      args: [name],
     );
   }
 

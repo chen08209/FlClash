@@ -41,6 +41,42 @@ class _FeedState extends State<_Feed> with RouteMotionHoldMixin<_Feed> {
   Widget build(BuildContext context) => Text('shown $_shown');
 }
 
+class _FirstContent extends StatefulWidget {
+  const _FirstContent({required this.source});
+
+  final ValueNotifier<int> source;
+
+  @override
+  State<_FirstContent> createState() => _FirstContentState();
+}
+
+class _FirstContentState extends State<_FirstContent>
+    with RouteMotionHoldMixin<_FirstContent> {
+  int? _shown;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.source.addListener(_handleSource);
+  }
+
+  @override
+  void dispose() {
+    widget.source.removeListener(_handleSource);
+    super.dispose();
+  }
+
+  void _handleSource() {
+    showFirstContent(() => setState(() => _shown = widget.source.value));
+  }
+
+  @override
+  Widget build(BuildContext context) => ArrivalHold(
+    ready: _shown != null,
+    child: Text(_shown == null ? 'waiting' : 'shown $_shown'),
+  );
+}
+
 class _Arrival extends StatefulWidget {
   const _Arrival({required this.settles});
 
@@ -143,6 +179,91 @@ void main() {
     navigator.currentState!.didStopUserGesture();
     await tester.pump();
     expect(find.text('shown 3'), findsOneWidget);
+  });
+
+  testWidgets('keeps holding until what the stop set off has finished', (
+    tester,
+  ) async {
+    final fade = AnimationController(
+      vsync: const TestVSync(),
+      duration: const Duration(milliseconds: 200),
+    );
+    addTearDown(fade.dispose);
+    await tester.pumpWidget(
+      HostApp(
+        navigatorKey: navigator,
+        home: HostScaffold(body: _Feed(source: source)),
+      ),
+    );
+    navigator.currentState!.push(
+      CardPageRoute<void>(builder: (_) => const HostScaffold()),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    source.value = 1;
+    final route = ModalRoute.of(
+      tester.element(find.byType(_Feed, skipOffstage: false)),
+    )!;
+    var settledAt = false;
+    void startFade(AnimationStatus status) {
+      if (!route.secondaryAnimation!.isAnimating && !settledAt) {
+        settledAt = true;
+        fade.forward();
+      }
+    }
+
+    route.secondaryAnimation!.addStatusListener(startFade);
+    addTearDown(
+      () => route.secondaryAnimation!.removeStatusListener(startFade),
+    );
+    while (!settledAt) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.pump(const Duration(milliseconds: 16));
+
+    expect(find.text('shown 0', skipOffstage: false), findsOneWidget);
+
+    await tester.pumpAndSettle();
+    expect(find.text('shown 1', skipOffstage: false), findsOneWidget);
+  });
+
+  group('showFirstContent', () {
+    testWidgets('shows at once while the push is held for it', (tester) async {
+      await tester.pumpWidget(
+        HostApp(navigatorKey: navigator, home: const HostScaffold()),
+      );
+      navigator.currentState!.push(
+        CardPageRoute<void>(builder: (_) => _FirstContent(source: source)),
+      );
+      await tester.pump();
+
+      source.value = 1;
+      await tester.pump();
+
+      expect(find.text('shown 1'), findsOneWidget);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('waits for the route once the push has begun', (tester) async {
+      await tester.pumpWidget(
+        HostApp(navigatorKey: navigator, home: const HostScaffold()),
+      );
+      navigator.currentState!.push(
+        CardPageRoute<void>(builder: (_) => _FirstContent(source: source)),
+      );
+      await tester.pump();
+      await tester.pump(arrivalHoldLimit);
+      await tester.pump(const Duration(milliseconds: 32));
+      await tester.pump(const Duration(milliseconds: 32));
+
+      source.value = 1;
+      await tester.pump();
+      expect(find.text('waiting'), findsOneWidget);
+
+      await tester.pumpAndSettle();
+      expect(find.text('shown 1'), findsOneWidget);
+    });
   });
 
   group('under a sheet', () {

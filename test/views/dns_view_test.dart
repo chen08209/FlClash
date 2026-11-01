@@ -136,6 +136,16 @@ void main() {
     expect(config().dns.ipv6, defaultDns.ipv6);
   });
 
+  testWidgets('offers Prefer H3 for every subscription', (tester) async {
+    await pumpView(tester);
+
+    await openAddSheet(tester);
+    await tester.tap(find.text('Prefer H3'));
+    await tester.pumpAndSettle();
+
+    expect(config().dnsOverrideKeys, {DnsOverrideKey.preferH3});
+  });
+
   testWidgets('the empty page says where the entries apply and adds from it', (
     tester,
   ) async {

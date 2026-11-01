@@ -38,13 +38,18 @@ void main() {
     List<String> domains(DnsQueriesState state) =>
         state.list.map((dnsQuery) => dnsQuery.domain).toList();
 
-    test('keywords match the chips a query shows', () {
-      expect(domains(state.copyWith(keywords: ['App'])), ['a.test']);
-      expect(domains(state.copyWith(keywords: ['AAAA'])), ['b.test']);
-      expect(domains(state.copyWith(keywords: ['NXDOMAIN'])), ['c.test']);
-      expect(domains(state.copyWith(keywords: ['NOERROR'])), isEmpty);
-      expect(domains(state.copyWith(keywords: ['Direct'])), ['d.test']);
-      expect(domains(state.copyWith(keywords: ['Cache'])), ['d.test']);
+    List<String> filtered(RecordFacetKind kind, String value) => state.list
+        .whereFilters(dnsQueryFacets, [RecordFilter(kind, value)])
+        .map((dnsQuery) => dnsQuery.domain)
+        .toList();
+
+    test('filters match the chips a query shows', () {
+      expect(filtered(RecordFacetKind.initiator, 'App'), ['a.test']);
+      expect(filtered(RecordFacetKind.type, 'AAAA'), ['b.test']);
+      expect(filtered(RecordFacetKind.rcode, 'NXDOMAIN'), ['c.test']);
+      expect(filtered(RecordFacetKind.rcode, 'NOERROR'), isEmpty);
+      expect(filtered(RecordFacetKind.initiator, 'Direct'), ['d.test']);
+      expect(filtered(RecordFacetKind.cache, 'Cache'), ['d.test']);
     });
 
     test('the initiator and a cache hit are chips', () {
@@ -87,11 +92,10 @@ void main() {
       expect(domains(state.copyWith(query: 'a.test aaaa')), isEmpty);
     });
 
-    test('is searching once a query or a keyword is set', () {
+    test('is searching once a query is set', () {
       expect(state.isSearching, isFalse);
       expect(state.copyWith(query: '  ').isSearching, isFalse);
       expect(state.copyWith(query: 'a').isSearching, isTrue);
-      expect(state.copyWith(keywords: ['A']).isSearching, isTrue);
     });
   });
 
@@ -99,7 +103,7 @@ void main() {
     Log log(LogLevel level, String payload) =>
         Log(logLevel: level, payload: payload, dateTime: '2024-01-01');
 
-    test('returns all logs when no keywords and empty query', () {
+    test('returns all logs when the query is empty', () {
       final state = LogsState(
         logs: [
           log(LogLevel.info, 'test message'),
@@ -109,16 +113,16 @@ void main() {
       expect(state.list.length, 2);
     });
 
-    test('filters by keyword matching log level', () {
-      final state = LogsState(
-        logs: [
-          log(LogLevel.info, 'info msg'),
-          log(LogLevel.error, 'error msg'),
-        ],
-        keywords: ['error'],
-      );
-      expect(state.list.length, 1);
-      expect(state.list[0].logLevel, LogLevel.error);
+    test('filters by log level', () {
+      final logs =
+          [
+            log(LogLevel.info, 'info msg'),
+            log(LogLevel.error, 'error msg'),
+          ].whereFilters(logFacets, const [
+            RecordFilter(RecordFacetKind.level, 'error'),
+          ]).toList();
+      expect(logs.length, 1);
+      expect(logs[0].logLevel, LogLevel.error);
     });
 
     test('filters by query matching payload', () {
@@ -202,33 +206,31 @@ void main() {
       rulePayload: rulePayload,
     );
 
-    test('returns all when no keywords and empty query', () {
+    test('returns all when the query is empty', () {
       final state = TrackerInfosState(trackerInfos: [tracker('1')]);
       expect(state.list.length, 1);
     });
 
-    test('filters by keyword matching chain name', () {
-      final state = TrackerInfosState(
-        trackerInfos: [
-          tracker('1', chains: ['proxy-a', 'proxy-b']),
-          tracker('2', chains: ['proxy-c']),
-        ],
-        keywords: ['proxy-a'],
-      );
-      expect(state.list.length, 1);
-      expect(state.list[0].id, '1');
+    test('filters by a proxy anywhere in the chain', () {
+      final infos =
+          [
+            tracker('1', chains: ['proxy-a', 'proxy-b']),
+            tracker('2', chains: ['proxy-c']),
+          ].whereFilters(trackerInfoFacets, const [
+            RecordFilter(RecordFacetKind.proxy, 'proxy-b'),
+          ]).toList();
+      expect(infos.map((info) => info.id), ['1']);
     });
 
-    test('filters by keyword matching process', () {
-      final state = TrackerInfosState(
-        trackerInfos: [
-          tracker('1', metadata: meta(process: 'chrome')),
-          tracker('2', metadata: meta(process: 'firefox')),
-        ],
-        keywords: ['firefox'],
-      );
-      expect(state.list.length, 1);
-      expect(state.list[0].id, '2');
+    test('filters by process', () {
+      final infos =
+          [
+            tracker('1', metadata: meta(process: 'chrome')),
+            tracker('2', metadata: meta(process: 'firefox')),
+          ].whereFilters(trackerInfoFacets, const [
+            RecordFilter(RecordFacetKind.app, 'firefox'),
+          ]).toList();
+      expect(infos.map((info) => info.id), ['2']);
     });
 
     test('query matches host', () {

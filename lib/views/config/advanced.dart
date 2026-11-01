@@ -2,9 +2,13 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:fl_clash/views/config/dns.dart';
+import 'package:fl_clash/views/config/filters.dart';
+import 'package:fl_clash/views/config/icon_sets.dart';
 import 'package:fl_clash/views/config/mitm.dart';
 import 'package:fl_clash/views/config/network.dart';
+import 'package:fl_clash/views/config/providers.dart';
 import 'package:fl_clash/views/config/scripts.dart';
+import 'package:fl_clash/views/profiles/custom/custom_proxies.dart';
 import 'package:flutter/widgets.dart';
 
 import 'rules.dart';
@@ -46,6 +50,28 @@ class AdvancedConfigView extends StatelessWidget {
           widget: MitmView(isAndroid: system.isAndroid),
         ),
     ];
+    final customItems = [
+      ListItem.open(
+        title: Text(appLocalizations.proxies),
+        leading: const GlyphIcon(AppGlyphs.proxies),
+        widget: const CustomProxiesView(),
+      ),
+      ListItem.open(
+        title: Text(appLocalizations.ruleProviders),
+        leading: const GlyphIcon(AppGlyphs.resources),
+        widget: const ClashProvidersView(),
+      ),
+      ListItem.open(
+        title: Text(appLocalizations.filters),
+        leading: const GlyphIcon(AppGlyphs.filter),
+        widget: const FiltersView(),
+      ),
+      ListItem.open(
+        title: Text(appLocalizations.iconSets),
+        leading: const GlyphIcon(AppGlyphs.photos),
+        widget: const IconSetsView(),
+      ),
+    ];
     return BaseScaffold(
       title: appLocalizations.advancedConfig,
       body: ListView(
@@ -53,7 +79,13 @@ class AdvancedConfigView extends StatelessWidget {
           top: context.sectionsTopPadding,
           bottom: 16 + context.bottomInset,
         ),
-        children: [generateSection(items: items)],
+        children: [
+          generateSection(items: items),
+          generateSection(
+            title: appLocalizations.customResources,
+            items: customItems,
+          ),
+        ],
       ),
     );
   }

@@ -1,22 +1,20 @@
-import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/features/features.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/connection/connections.dart';
+import 'package:fl_clash/views/connection/requests.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
-import 'package:material_ui/material_ui.dart'
-    show GlobalMaterialLocalizations, MaterialApp;
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../helpers/test_app.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 void main() {
   late ProviderContainer container;
@@ -66,7 +64,10 @@ void main() {
         child: _TestApp(
           child: PageActivityScope(
             isActive: isPageActive,
-            child: ConnectionsView(connectionsReader: connectionsReader),
+            child: RequestsView(
+              initialFeed: RequestFeed.live,
+              connectionsReader: connectionsReader,
+            ),
           ),
         ),
       ),
@@ -74,7 +75,7 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('ConnectionsView lazily builds every connection', (tester) async {
+  testWidgets('the live feed lazily builds every connection', (tester) async {
     final connections = buildConnections(100);
 
     await pumpConnections(tester, connectionsReader: () async => connections);
@@ -102,11 +103,53 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('a row blocks its own connection and refreshes the list', (
+  testWidgets(
+    'a row closes its own connection from its menu and refreshes the list',
+    (tester) async {
+      final core = _MockCoreHandlerInterface();
+      when(() => core.closeConnection(any())).thenAnswer((_) async {});
+      container.dispose();
+      container = ProviderContainer(
+        overrides: [
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        ],
+      );
+      globalState.container = container;
+      var connections = buildConnections(2);
+      var readCount = 0;
+
+      await pumpConnections(
+        tester,
+        connectionsReader: () async {
+          readCount++;
+          return connections;
+        },
+      );
+      await tester.pump(const Duration(seconds: 1));
+      final reads = readCount;
+
+      expect(find.byTooltip('Close connection'), findsNothing);
+      await tester.longPress(find.textContaining('host-0.com'));
+      await tester.pumpAndSettle();
+      connections = connections.sublist(1);
+      await tester.tap(find.text('Close connection'));
+      await tester.pumpAndSettle();
+
+      verify(() => core.closeConnection('0')).called(1);
+      expect(readCount, greaterThan(reads));
+      expect(find.textContaining('host-0.com'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets('a failed close still refreshes the list and raises nothing', (
     tester,
   ) async {
     final core = _MockCoreHandlerInterface();
-    when(() => core.closeConnection(any())).thenAnswer((_) async {});
+    when(
+      () => core.closeConnection(any()),
+    ).thenAnswer((_) async => throw Exception('closed already'));
     container.dispose();
     container = ProviderContainer(
       overrides: [
@@ -114,26 +157,86 @@ void main() {
       ],
     );
     globalState.container = container;
-    var connections = buildConnections(2);
     var readCount = 0;
 
     await pumpConnections(
       tester,
       connectionsReader: () async {
         readCount++;
-        return connections;
+        return buildConnections(2);
       },
     );
     await tester.pump(const Duration(seconds: 1));
     final reads = readCount;
-    connections = connections.sublist(1);
 
-    await tester.tap(find.byTooltip('Block connection').first);
+    await tester.longPress(find.textContaining('host-0.com'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Close connection'));
     await tester.pumpAndSettle();
 
     verify(() => core.closeConnection('0')).called(1);
     expect(readCount, greaterThan(reads));
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('coming back to a feed whose first read fails shows no '
+      'connection from the last visit', (tester) async {
+    var fails = false;
+    await pumpConnections(
+      tester,
+      connectionsReader: () async {
+        if (fails) {
+          throw Exception('core gone');
+        }
+        return buildConnections(2);
+      },
+    );
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.textContaining('host-0.com'), findsOneWidget);
+
+    fails = true;
+    await tester.tap(find.text('Running'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Recent requests'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Recent requests'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Running').last);
+    await tester.pumpAndSettle();
+
     expect(find.textContaining('host-0.com'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a Core that is not connected is not asked and lists nothing', (
+    tester,
+  ) async {
+    final core = _MockCoreHandlerInterface();
+    container.dispose();
+    container = ProviderContainer(
+      overrides: [
+        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+      ],
+    );
+    globalState.container = container;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const _TestApp(
+          child: RequestsView(initialFeed: RequestFeed.live),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    verifyNever(() => core.getConnections());
+    expect(find.byType(NullStatus), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -152,7 +255,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('ConnectionsView polls only while the page is active', (
+  testWidgets('the live feed polls only while the page is active', (
     tester,
   ) async {
     var readCount = 0;
@@ -177,7 +280,10 @@ void main() {
         child: _TestApp(
           child: PageActivityScope(
             isActive: true,
-            child: ConnectionsView(connectionsReader: readConnections),
+            child: RequestsView(
+              initialFeed: RequestFeed.live,
+              connectionsReader: readConnections,
+            ),
           ),
         ),
       ),
@@ -197,7 +303,10 @@ void main() {
         child: _TestApp(
           child: PageActivityScope(
             isActive: false,
-            child: ConnectionsView(connectionsReader: readConnections),
+            child: RequestsView(
+              initialFeed: RequestFeed.live,
+              connectionsReader: readConnections,
+            ),
           ),
         ),
       ),
@@ -210,7 +319,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('ConnectionsView stops polling while the app is paused', (
+  testWidgets('the live feed stops polling while the app is paused', (
     tester,
   ) async {
     var readCount = 0;
@@ -248,14 +357,8 @@ class _TestApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return HostApp(
       navigatorKey: globalState.navigatorKey,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        AppUiLocalizations.delegate,
-        ...GlobalMaterialLocalizations.delegates,
-      ],
-      supportedLocales: AppLocalizations.delegate.supportedLocales,
       builder: (context, child) {
         return wrapAppScopes(context, child!);
       },

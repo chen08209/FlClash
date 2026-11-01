@@ -10,6 +10,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:prism_ui/icons/glyph.dart';
 
 import 'clash_config.dart';
+import 'record_filter.dart';
 
 part 'generated/common.freezed.dart';
 
@@ -163,6 +164,8 @@ extension TrackerInfoExt on TrackerInfo {
     return process.trim();
   }
 
+  String get ruleText => rulePayload.isNotEmpty ? '$rule($rulePayload)' : rule;
+
   List<String> get searchFields => [
     metadata.network,
     metadata.host,
@@ -202,11 +205,25 @@ abstract class Log with _$Log {
   factory Log.fromJson(Map<String, Object?> json) => _$LogFromJson(json);
 }
 
+final _logPayloads = Expando<LogPayload>();
+
+extension LogExt on Log {
+  LogPayload get parsed => _logPayloads[this] ??= LogPayload.parse(payload);
+}
+
+final logFacets = <RecordFacet<Log>>[
+  RecordFacet(
+    RecordFacetKind.level,
+    (log) => [log.logLevel.name],
+    offered: true,
+    order: [for (final level in LogLevel.values) level.name],
+  ),
+];
+
 @freezed
 abstract class LogsState with _$LogsState {
   const factory LogsState({
     @Default([]) List<Log> logs,
-    @Default([]) List<String> keywords,
     @Default('') String query,
     @Default(true) bool autoScrollToEnd,
   }) = _LogsState;
@@ -215,17 +232,14 @@ abstract class LogsState with _$LogsState {
 final _logSearchTexts = Expando<String>();
 
 extension LogsStateExt on LogsState {
-  bool get isSearching => keywords.isNotEmpty || SearchQuery(query).isNotEmpty;
+  bool get isSearching => SearchQuery(query).isNotEmpty;
 
   List<Log> get list {
     final searchQuery = SearchQuery(query);
-    if (keywords.isEmpty && searchQuery.isEmpty) {
+    if (searchQuery.isEmpty) {
       return logs;
     }
     return logs
-        .where(
-          (log) => keywords.every((keyword) => keyword == log.logLevel.name),
-        )
         .whereMatches(
           searchQuery,
           (log) => [log.payload, log.logLevel.name],
@@ -235,11 +249,35 @@ extension LogsStateExt on LogsState {
   }
 }
 
+final trackerInfoFacets = <RecordFacet<TrackerInfo>>[
+  RecordFacet(
+    RecordFacetKind.network,
+    (info) => [info.metadata.network],
+    offered: true,
+    order: const ['tcp', 'udp'],
+    labelOf: (value) => value.toUpperCase(),
+  ),
+  RecordFacet(RecordFacetKind.rule, (info) => [info.rule], offered: true),
+  RecordFacet(
+    RecordFacetKind.mitm,
+    (info) => [if (info.metadata.mitm) 'MITM'],
+    offered: true,
+  ),
+  RecordFacet(RecordFacetKind.app, (info) => [info.metadata.process]),
+  RecordFacet(RecordFacetKind.proxy, (info) => info.chains),
+];
+
+final trackerInfoGroupers = <RecordGrouper<TrackerInfo>>[
+  RecordGrouper(RecordGrouping.app, (info) => info.metadata.process),
+  RecordGrouper(RecordGrouping.host, (info) => info.title),
+  RecordGrouper(RecordGrouping.rule, (info) => info.ruleText),
+  RecordGrouper(RecordGrouping.exit, (info) => info.chains.firstOrNull ?? ''),
+];
+
 @freezed
 abstract class TrackerInfosState with _$TrackerInfosState {
   const factory TrackerInfosState({
     @Default([]) List<TrackerInfo> trackerInfos,
-    @Default([]) List<String> keywords,
     @Default('') String query,
     @Default(true) bool autoScrollToEnd,
   }) = _TrackerInfosState;
@@ -248,21 +286,14 @@ abstract class TrackerInfosState with _$TrackerInfosState {
 final _trackerInfoSearchTexts = Expando<String>();
 
 extension TrackerInfosStateExt on TrackerInfosState {
-  bool get isSearching => keywords.isNotEmpty || SearchQuery(query).isNotEmpty;
+  bool get isSearching => SearchQuery(query).isNotEmpty;
 
   List<TrackerInfo> get list {
     final searchQuery = SearchQuery(query);
-    if (keywords.isEmpty && searchQuery.isEmpty) {
+    if (searchQuery.isEmpty) {
       return trackerInfos;
     }
     return trackerInfos
-        .where(
-          (trackerInfo) => keywords.every(
-            (keyword) =>
-                keyword == trackerInfo.metadata.process ||
-                trackerInfo.chains.contains(keyword),
-          ),
-        )
         .whereMatches(
           searchQuery,
           (trackerInfo) => trackerInfo.searchFields,
@@ -299,14 +330,19 @@ extension DnsQueryExt on DnsQuery {
 
   String get summary => error.isNotEmpty ? error : answers.join(', ');
 
-  List<String> get tags => [type, ...resultTags];
+  List<String> get tags => [
+    type,
+    for (final filter in resultFilters) filter.value,
+  ];
 
-  List<String> get resultTags {
+  List<RecordFilter> get resultFilters {
     final initiator = this.initiator;
     return [
-      if (initiator != null) initiator.label,
-      if (cached) currentAppLocalizations.cache,
-      if (hasFailureRcode) rcode,
+      if (initiator != null)
+        RecordFilter(RecordFacetKind.initiator, initiator.label),
+      if (cached)
+        RecordFilter(RecordFacetKind.cache, currentAppLocalizations.cache),
+      if (hasFailureRcode) RecordFilter(RecordFacetKind.rcode, rcode),
     ];
   }
 
@@ -324,22 +360,37 @@ extension DnsQueryExt on DnsQuery {
 abstract class DnsQueriesState with _$DnsQueriesState {
   const factory DnsQueriesState({
     @Default([]) List<DnsQuery> dnsQueries,
-    @Default([]) List<String> keywords,
     @Default('') String query,
     @Default(true) bool autoScrollToEnd,
   }) = _DnsQueriesState;
 }
 
+final dnsQueryFacets = <RecordFacet<DnsQuery>>[
+  RecordFacet(RecordFacetKind.type, (query) => [query.type], offered: true),
+  for (final kind in const [
+    RecordFacetKind.initiator,
+    RecordFacetKind.cache,
+    RecordFacetKind.rcode,
+  ])
+    RecordFacet(
+      kind,
+      (query) => [
+        for (final filter in query.resultFilters)
+          if (filter.kind == kind) filter.value,
+      ],
+      offered: true,
+    ),
+];
+
 extension DnsQueriesStateExt on DnsQueriesState {
-  bool get isSearching => keywords.isNotEmpty || SearchQuery(query).isNotEmpty;
+  bool get isSearching => SearchQuery(query).isNotEmpty;
 
   List<DnsQuery> get list {
     final searchQuery = SearchQuery(query);
-    if (keywords.isEmpty && searchQuery.isEmpty) {
+    if (searchQuery.isEmpty) {
       return dnsQueries;
     }
     return dnsQueries
-        .where((dnsQuery) => keywords.every(dnsQuery.tags.contains))
         .whereMatches(searchQuery, (dnsQuery) => dnsQuery.searchFields)
         .toList();
   }

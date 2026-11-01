@@ -373,7 +373,7 @@ void main() {
                 ),
                 NavigationItem(
                   glyph: AppGlyphs.connections,
-                  label: PageLabel.connections,
+                  label: PageLabel.requests,
                   modes: const [
                     NavigationItemMode.desktop,
                     NavigationItemMode.more,

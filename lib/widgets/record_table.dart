@@ -181,6 +181,8 @@ class _RecordTableFrameState<T> extends ConsumerState<RecordTableFrame<T>>
     with TableColumnWidthsMixin<RecordTableFrame<T>> {
   final _sorter = RecordSorter<T>();
   RecordSort? _sort;
+  RecordTable<T>? _table;
+  Object? _tableInputs;
 
   @override
   String get tableId => widget.tableId;
@@ -189,9 +191,25 @@ class _RecordTableFrameState<T> extends ConsumerState<RecordTableFrame<T>>
     if (width < _recordTableMinWidth) {
       return null;
     }
+    final rowHeight =
+        MediaQuery.textScalerOf(context).scale(_recordCellLineHeight) +
+        _recordRowPadding * 2;
+    // Rows are memoized on the table, so a refresh must get the same one.
+    final inputs = (
+      width,
+      columnWidths,
+      rowHeight,
+      Localizations.localeOf(context),
+      Theme.of(context),
+    );
+    final table = _table;
+    if (table != null && inputs == _tableInputs) {
+      return table;
+    }
     final columns = widget.columnsOf(width);
     final layouts = [for (final column in columns) column.layout];
-    return RecordTable._(
+    _tableInputs = inputs;
+    return _table = RecordTable._(
       columns: columns,
       layouts: layouts,
       widths: tableColumnWidths(
@@ -199,9 +217,7 @@ class _RecordTableFrameState<T> extends ConsumerState<RecordTableFrame<T>>
         width - _recordTableMargin * 2,
         columnWidths,
       ),
-      rowHeight:
-          MediaQuery.textScalerOf(context).scale(_recordCellLineHeight) +
-          _recordRowPadding * 2,
+      rowHeight: rowHeight,
     );
   }
 

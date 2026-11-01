@@ -499,6 +499,94 @@ rules:
       expect(config.rules.single.ruleTarget, 'G');
     });
 
+    test('takes a proxy the file repeats whole as its first holder', () {
+      final config = _read('''
+proxies:
+  - {name: A, type: ss, server: a.example.com, dialer-proxy: G}
+  - {name: A, type: ss, server: a.example.com, dialer-proxy: H}
+proxy-groups:
+  - {name: G, type: select, proxies: [A]}
+  - {name: H, type: select, proxies: [A]}
+''');
+
+      expect([for (final proxy in config.proxies) proxy['name']], ['A']);
+      expect(config.dialers, {'A': 'G'});
+    });
+
+    test('moves a proxy, not the file\'s group of its name, off another '
+        'profile\'s groups', () {
+      final config = _read('''
+proxies:
+  - {name: Auto, type: ss, server: a.example.com}
+proxy-groups:
+  - {name: Auto, type: select, proxies: [DIRECT]}
+''', _app(groupNames: {'Auto'}));
+
+      expect([for (final proxy in config.proxies) proxy['name']], ['Auto-01']);
+      expect(config.proxyGroups.single.name, 'Auto');
+    });
+
+    test('tells accounts of a type without credentials by its key', () {
+      List<Object?> namesOf(String proxy, String held) => [
+        for (final item in _read(
+          'proxies:\n  - $proxy\n',
+          _app(proxies: [Map.of(loadYaml(held) as Map).cast()]),
+        ).proxies)
+          item['name'],
+      ];
+      const held = '{name: S, type: snell, server: s.example.com, psk: old}';
+
+      expect(
+        namesOf(
+          '{name: S, type: snell, server: s.example.com, psk: old, udp: true}',
+          held,
+        ),
+        isEmpty,
+      );
+      expect(
+        namesOf(
+          '{name: S, type: snell, server: s.example.com, psk: new}',
+          held,
+        ),
+        ['S-01'],
+      );
+    });
+
+    test('reads names trimmed, with references following', () {
+      final config = _read(
+        '''
+proxies:
+  - {name: "HK ", type: ss, server: new.example.com}
+proxy-groups:
+  - {name: " G", type: select, proxies: ["HK "]}
+rules:
+  - MATCH,G
+''',
+        _app(
+          proxies: [
+            {'name': 'HK', 'type': 'ss', 'server': 'old.example.com'},
+          ],
+        ),
+      );
+
+      expect([for (final proxy in config.proxies) proxy['name']], ['HK-01']);
+      expect(config.proxyGroups.single.name, 'G');
+      expect(config.proxyGroups.single.proxies, ['HK-01']);
+    });
+
+    test('names a proxy without one after its server', () {
+      final config = _read('''
+proxies:
+  - {type: ss, server: a.example.com}
+  - {type: ss, server: b.example.com}
+''');
+
+      expect(
+        [for (final proxy in config.proxies) proxy['name']],
+        ['a.example.com', 'b.example.com'],
+      );
+    });
+
     test('moves a proxy off a name the Core keeps, but not a group', () {
       final config = _read('''
 proxies:

@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
@@ -24,12 +25,8 @@ extension on SnifferOverrideKey {
   };
 
   ConfigLabel? get description => switch (this) {
-    SnifferOverrideKey.enable => (l) => l.snifferStatusDesc,
-    SnifferOverrideKey.overrideDest => (l) => l.overrideDestinationDesc,
     SnifferOverrideKey.forceDnsMapping => (l) => l.forceDnsMappingDesc,
-    SnifferOverrideKey.parsePureIp => (l) => l.parsePureIpDesc,
     SnifferOverrideKey.forceDomain => (l) => l.forceDomainDesc,
-    SnifferOverrideKey.skipDomain => (l) => l.skipDomainDesc,
     _ => null,
   };
 }

@@ -1171,10 +1171,13 @@ than the frames a load costs. What a transition must not carry is work that repe
 - A live feed holds its refreshes while its page moves and replays the latest once it is still, so a list does not
   re-rank, reorder or grow under a transition. `RouteMotionHoldMixin` (`plugins/prism_ui/lib/route_motion_hold.dart`) holds them
   while `isRouteMoving`: the page's route or a sheet carrying it is pushed, popped or dragged, a page is pushed over it,
-  or a sheet covers it (`sheetCoverOf`). The connections, requests, logs and DNS pages and the dashboard's live
-  connections table use it. A feed's first content is no refresh and shows at once, as `ConnectionsView` applies its
-  first poll, and a held poll keeps the time it was read at, which `TrackerSpeedRanker` derives speeds from. Per-frame
-  work spread over frames pauses the same way: the font family page switches one name to its own family per frame and
+  or a sheet covers it (`sheetCoverOf`), and until what the stop set off, such as the bar items fading in, has finished
+  (`whenNothingAnimates`). The connections, requests, logs and DNS pages and the dashboard's live connections table use
+  it. A feed's first content is no refresh: `showFirstContent` applies it at once while `ArrivalHold` still holds the
+  push, and past `arrivalHoldLimit` keeps it until the route has settled, as `RequestsView` does with its first poll. A
+  feed that trims at a cap lists through `RecordFeedList`, whose rows follow their keys and keep their stripes, so a
+  refresh builds only what it added. A held poll keeps the time it was read at, which `TrackerSpeedRanker` derives
+  speeds from. Per-frame work spread over frames pauses the same way: the font family page switches one name to its own family per frame and
   stops while `isRouteMoving`.
 - A scroll view of image tiles takes `arrivalCacheExtent` from `ArrivalCacheExtentMixin`: the rows past the viewport
   would otherwise be built in the same frame as the ones on screen, which for a screen of icon cards is most of the

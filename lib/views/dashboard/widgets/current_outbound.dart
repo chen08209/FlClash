@@ -96,9 +96,22 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
         : isStart
         ? (appLocalizations.running, DashboardChipTone.ok)
         : (appLocalizations.notRunning, DashboardChipTone.idle);
-    return DashboardCard(
-      padding: EdgeInsets.zero,
-      semanticLabel: appLocalizations.status,
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: rootAccess ? 1 : 0),
+      duration: context.motionDuration(commonDuration),
+      builder: (context, root, child) => DashboardCard(
+        padding: EdgeInsets.zero,
+        semanticLabel: rootAccess
+            ? '${appLocalizations.status} ${appLocalizations.root}'
+            : appLocalizations.status,
+        side: root == 0
+            ? BorderSide.none
+            : BorderSide(
+                color: context.colorScheme.primary.withValues(alpha: root),
+                width: 1.5,
+              ),
+        child: child!,
+      ),
       child: Stack(
         children: [
           Positioned.fill(

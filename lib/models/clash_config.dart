@@ -466,6 +466,22 @@ extension CustomProxyExt on CustomProxy {
         field,
   ];
 
+  /// What tells one account on a server from another, in a type that has no
+  /// [credentials] the key it signs in with.
+  List<ProxyField> get accountKeys => [
+    for (final field in fields)
+      if (const {
+        ProxyField.username,
+        ProxyField.password,
+        ProxyField.uuid,
+        ProxyField.psk,
+        ProxyField.key,
+        ProxyField.privateKey,
+        ProxyField.authStr,
+      }.contains(field))
+        field,
+  ];
+
   /// The keys the form adds one at a time, each left to the core's default
   /// until then.
   List<ProxyField> get options {

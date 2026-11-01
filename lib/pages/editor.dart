@@ -595,7 +595,7 @@ class _EditorTitleField extends StatelessWidget {
         counter: const SizedBox(),
         hintText: context.appLocalizations.unnamed,
       ),
-      style: AppTextStyle.pageTitle.of(context),
+      style: DefaultTextStyle.of(context).style,
       autofocus: false,
     );
   }

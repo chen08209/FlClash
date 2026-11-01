@@ -172,9 +172,8 @@ void main() {
       await teardownView(tester);
     });
 
-    testWidgets('the settings sub menu shows system apps from a check', (
-      tester,
-    ) async {
+    testWidgets('the settings sub menu shows system apps from a check and '
+        'stays open', (tester) async {
       seedAccessControl(const AccessControlProps(enable: true));
       await pumpAccessView(tester);
       final l10n = AppLocalizations.current;
@@ -191,8 +190,17 @@ void main() {
       final state = container.read(accessControlStateProvider);
       expect(state.isFilterSystemApp, isFalse);
       expect(state.isFilterNonInternetApp, isTrue);
-      expect(find.byType(PopupMenu), findsNothing);
-      expect(find.text('Settings'), findsOneWidget);
+      expect(inMenu(find.text(l10n.source)), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.ancestor(
+            of: inMenu(find.text(l10n.systemApp)),
+            matching: find.byType(Row),
+          ),
+          matching: find.byGlyph(AppGlyphs.check),
+        ),
+        findsOneWidget,
+      );
 
       await teardownView(tester);
     });

@@ -71,6 +71,7 @@ void main() {
       ],
     );
     globalState.container = container;
+    container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
   });
 
   tearDown(() => container.dispose());

@@ -432,7 +432,6 @@ class _WebDAVFormState extends ConsumerState<WebDAVForm> {
       error: issue?.message,
       children: [
         generateSection(
-          footer: appLocalizations.addressHelp,
           items: [
             FormRow(
               title: appLocalizations.address,

@@ -248,6 +248,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(false) bool autoRun,
     @Default(false) bool openLogs,
     @Default(true) bool closeConnections,
+    @Default(RequestFeed.live) RequestFeed requestFeed,
     @Default(defaultDelayTestTimeout) int delayTestTimeout,
     @Default(TabAnimation.fade)
     @JsonKey(readValue: _readTabAnimation)
@@ -275,6 +276,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default([]) List<String> serviceOrder,
     @Default([]) List<String> disabledServices,
     @Default({}) Map<String, Map<String, double>> tableColumnWidths,
+    @Default({}) Map<String, String> recordGroupings,
   }) = _AppSettingProps;
 
   factory AppSettingProps.fromJson(Map<String, Object?> json) =>

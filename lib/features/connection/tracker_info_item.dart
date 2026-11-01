@@ -26,14 +26,15 @@ void showTrackerInfoDetail(
   TrackerInfo trackerInfo,
   String title,
 ) {
-  showInSheet<void>(
-    context,
-    builder: (_) {
-      return Scaffold(
+  showSheet<void>(
+    context: context,
+    props: nestedPagedSheetProps,
+    builder: (_) => NestedPagedSheet(
+      builder: (_) => Scaffold(
         body: TrackerInfoDetailView(trackerInfo: trackerInfo),
         title: title,
-      );
-    },
+      ),
+    ),
   );
 }
 
@@ -82,12 +83,16 @@ class TrackerInfoItem extends ConsumerWidget {
   final ValueChanged<TrackerInfo>? onClose;
   final String detailTitle;
 
+  /// What the detail opens on, where a memoized row outlives its traffic.
+  final ValueGetter<TrackerInfo>? latest;
+
   const TrackerInfoItem({
     super.key,
     required this.trackerInfo,
     this.isLive = false,
     this.onClose,
     required this.detailTitle,
+    this.latest,
   });
 
   @override
@@ -101,7 +106,11 @@ class TrackerInfoItem extends ConsumerWidget {
     return ContextMenuRegion(
       menuItems: trackerInfoMenuItems(context, trackerInfo, onClose: onClose),
       child: RecordListItem(
-        onTap: () => showTrackerInfoDetail(context, trackerInfo, detailTitle),
+        onTap: () => showTrackerInfoDetail(
+          context,
+          latest?.call() ?? trackerInfo,
+          detailTitle,
+        ),
         header: _buildHeader(context),
         body: _TrackerInfoBody(trackerInfo: trackerInfo, showIcon: showIcon),
       ),

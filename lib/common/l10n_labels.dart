@@ -13,9 +13,8 @@ extension PageLabelL10n on PageLabel {
       PageLabel.profiles => appLocalizations.profiles,
       PageLabel.tools => appLocalizations.tools,
       PageLabel.logs => appLocalizations.logs,
-      PageLabel.requests => appLocalizations.recentRequests,
+      PageLabel.requests => appLocalizations.requests,
       PageLabel.resources => appLocalizations.resources,
-      PageLabel.connections => appLocalizations.liveConnections,
       PageLabel.dns => appLocalizations.dnsQueries,
     };
   }
@@ -134,6 +133,36 @@ extension LocaleL10n on Locale {
       'ru' => appLocalizations.ru,
       'zh_CN' => appLocalizations.zhCN,
       final code => code,
+    };
+  }
+}
+
+extension RecordFacetKindL10n on RecordFacetKind {
+  String? get title {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      RecordFacetKind.network => appLocalizations.protocol,
+      RecordFacetKind.rule => appLocalizations.rule,
+      RecordFacetKind.level => appLocalizations.logLevel,
+      RecordFacetKind.mitm ||
+      RecordFacetKind.app ||
+      RecordFacetKind.proxy ||
+      RecordFacetKind.type ||
+      RecordFacetKind.initiator ||
+      RecordFacetKind.cache ||
+      RecordFacetKind.rcode => null,
+    };
+  }
+}
+
+extension RecordGroupingL10n on RecordGrouping {
+  String get label {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      RecordGrouping.app => appLocalizations.app,
+      RecordGrouping.host => appLocalizations.host,
+      RecordGrouping.rule => appLocalizations.rule,
+      RecordGrouping.exit => appLocalizations.outboundExit,
     };
   }
 }

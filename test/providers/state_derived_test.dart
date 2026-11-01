@@ -377,7 +377,7 @@ void main() {
     );
     expect(
       mobile.map((item) => item.label),
-      isNot(contains(PageLabel.connections)),
+      isNot(contains(PageLabel.requests)),
     );
 
     container
@@ -385,13 +385,13 @@ void main() {
         .update((_) => const Size(1200, 800));
     container
         .read(currentPageLabelProvider.notifier)
-        .toPage(PageLabel.connections);
+        .toPage(PageLabel.requests);
     final desktop = container.read(navigationStateProvider);
     expect(desktop.viewMode, ViewMode.desktop);
     expect(desktop.currentIndex, greaterThan(0));
     expect(
       desktop.navigationItems[desktop.currentIndex].label,
-      PageLabel.connections,
+      PageLabel.requests,
     );
 
     container

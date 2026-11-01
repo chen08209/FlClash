@@ -72,6 +72,7 @@ Future<ProviderContainer> _pumpDetail(
   bool capture = true,
   MitmBody responseBody = const MitmBody(),
   List<MitmModule> modules = const [],
+  bool inSheet = false,
 }) async {
   final contentType = mitmHeaderValue(
     (exchange ?? _exchange).responseHeader,
@@ -105,10 +106,18 @@ Future<ProviderContainer> _pumpDetail(
       container: container,
       child: TestApp(
         homeBuilder: (child) => HostScaffold(body: child),
-        child: SheetProvider(
-          type: SheetType.page,
-          child: TrackerInfoDetailView(trackerInfo: _decrypted),
-        ),
+        child: inSheet
+            ? Builder(
+                builder: (context) => GestureDetector(
+                  onTap: () =>
+                      showTrackerInfoDetail(context, _decrypted, 'Detail'),
+                  child: const Text('open'),
+                ),
+              )
+            : SheetProvider(
+                type: SheetType.page,
+                child: TrackerInfoDetailView(trackerInfo: _decrypted),
+              ),
       ),
     ),
   );
@@ -163,6 +172,31 @@ Future<void> _scrollTo(WidgetTester tester, Finder finder) {
 }
 
 void main() {
+  testWidgets('a request opens as a page of its connection\'s sheet', (
+    tester,
+  ) async {
+    await _pumpDetail(
+      tester,
+      list: MitmExchangeList(capturing: true, exchanges: [_summary(_exchange)]),
+      exchange: _exchange,
+      inSheet: true,
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    final pages = Navigator.of(
+      tester.element(find.byType(TrackerInfoDetailView)),
+    );
+    expect(pages.widget, isA<SheetPagesNavigator>());
+
+    await _openRequest(tester);
+
+    final request = find.byType(MitmExchangeView);
+    expect(ModalRoute.of(tester.element(request)), isA<PagedSheetRoute>());
+    expect(Navigator.of(tester.element(request)), same(pages));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('a read that fails says so rather than showing no requests', (
     tester,
   ) async {

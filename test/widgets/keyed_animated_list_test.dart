@@ -125,4 +125,44 @@ void main() {
     expect(find.text('10'), findsOneWidget);
     expect(topOf(tester, '10'), 400);
   });
+
+  testWidgets('a row keeps its state as it settles', (tester) async {
+    var mounts = 0;
+    Widget build(List<String> items) => HostApp(
+      home: HostScaffold(
+        body: KeyedAnimatedList<String>(
+          items: items,
+          keyOf: (item) => item,
+          itemBuilder: (_, item) => _CountsMounts(onMount: () => mounts++),
+        ),
+      ),
+    );
+    await tester.pumpWidget(build(const ['a']));
+    await tester.pumpWidget(build(const ['b', 'a']));
+    await tester.pump();
+    expect(mounts, 2);
+
+    await tester.pumpAndSettle();
+    expect(mounts, 2);
+  });
+}
+
+class _CountsMounts extends StatefulWidget {
+  const _CountsMounts({required this.onMount});
+
+  final VoidCallback onMount;
+
+  @override
+  State<_CountsMounts> createState() => _CountsMountsState();
+}
+
+class _CountsMountsState extends State<_CountsMounts> {
+  @override
+  void initState() {
+    super.initState();
+    widget.onMount();
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox(height: 40);
 }

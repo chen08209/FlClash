@@ -13,8 +13,6 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'quick_edit.dart';
-
 extension on ProxyField {
   String label(AppLocalizations l) => switch (this) {
     ProxyField.username => l.username,
@@ -305,7 +303,7 @@ class _CustomProxiesViewState extends ConsumerState<CustomProxiesView> {
       return;
     }
     final notifier = ref.read(customProxiesProvider.notifier);
-    return showCustomQuickEdit(
+    return showQuickEdit(
       context,
       title: appLocalizations.proxies,
       content: ShareLinkEdit.textOf(links),
@@ -706,7 +704,6 @@ class _ShareLinkDialogState extends State<_ShareLinkDialog> {
         ),
       ],
       child: TextField(
-        contextMenuBuilder: TextSelectionMenu.editableText,
         controller: _controller,
         autofocus: true,
         minLines: 3,
@@ -1604,20 +1601,29 @@ class _ProxyValuesView extends ConsumerWidget {
   ]) async {
     final res = await showListEntryDialog(
       context,
-      title: title,
       entries: _valuesOf(ref),
       entry: value,
       itemMaxLength: itemMaxLength,
     );
-    if (res == null || res.isEmpty || !context.mounted) {
+    if (res == null || !context.mounted) {
       return;
     }
     final values = _valuesOf(ref);
     _save(
       ref,
       value == null
-          ? [...values, ...res]
-          : [for (final item in values) item == value ? res.single : item],
+          ? [...values, res]
+          : [for (final item in values) item == value ? res : item],
+    );
+  }
+
+  Future<void> _handleQuickEdit(BuildContext context, WidgetRef ref) {
+    return showListQuickEdit(
+      context,
+      title: title,
+      items: _valuesOf(ref),
+      itemMaxLength: itemMaxLength,
+      onChanged: (values) => _save(ref, values),
     );
   }
 
@@ -1648,6 +1654,7 @@ class _ProxyValuesView extends ConsumerWidget {
       onReorder: (oldIndex, newIndex) =>
           _save(ref, _valuesOf(ref).copyAndReorder(oldIndex, newIndex)),
       onAdd: () => _handleAddOrUpdate(context, ref),
+      onQuickEdit: () => _handleQuickEdit(context, ref),
       onDelete: (values) => _save(ref, [
         for (final value in _valuesOf(ref))
           if (!values.contains(value)) value,
@@ -1681,7 +1688,6 @@ class _ProxyEntriesView extends ConsumerWidget {
   ]) async {
     final res = await showMapEntryForm(
       context,
-      listTitle: title,
       entry: entry,
       existingKeys: {
         ..._entriesOf(ref).keys,
@@ -1691,18 +1697,28 @@ class _ProxyEntriesView extends ConsumerWidget {
       valueMaxLength: field.maxLength,
       ignoreKeyCase: true,
     );
-    if (res == null || res.isEmpty || !context.mounted) {
+    if (res == null || !context.mounted) {
       return;
     }
     final entries = _entriesOf(ref).entries;
     _save(
       ref,
       entry == null
-          ? [...entries, ...res]
-          : [
-              for (final item in entries)
-                item.key == entry.key ? res.single : item,
-            ],
+          ? [...entries, res]
+          : [for (final item in entries) item.key == entry.key ? res : item],
+    );
+  }
+
+  Future<void> _handleQuickEdit(BuildContext context, WidgetRef ref) {
+    return showMapQuickEdit(
+      context,
+      title: title,
+      entries: _entriesOf(ref).entries,
+      keyMaxLength: TextInputLimits.name,
+      valueMaxLength: field.maxLength,
+      ignoreKeyCase: true,
+      reservedKeys: ref.read(customProxyProvider).ownedKeysOf(field),
+      onChanged: (entries) => _save(ref, entries),
     );
   }
 
@@ -1739,6 +1755,7 @@ class _ProxyEntriesView extends ConsumerWidget {
         _entriesOf(ref).entries.toList().copyAndReorder(oldIndex, newIndex),
       ),
       onAdd: () => _handleAddOrUpdate(context, ref),
+      onQuickEdit: () => _handleQuickEdit(context, ref),
       onDelete: (keys) => _save(ref, [
         for (final entry in _entriesOf(ref).entries)
           if (!keys.contains(entry.key)) entry,

@@ -35,11 +35,11 @@ extension on TunOverrideKey {
     TunOverrideKey.disableIcmpForwarding => (l) => l.disableIcmpForwardingDesc,
     TunOverrideKey.gso => null,
     TunOverrideKey.includeInterface => (l) => l.includeInterfaceDesc,
-    TunOverrideKey.excludeInterface => (l) => l.excludeInterfaceDesc,
-    TunOverrideKey.includeUid => (l) => l.includeUidDesc,
-    TunOverrideKey.excludeUid => (l) => l.excludeUidDesc,
-    TunOverrideKey.excludeSrcPort => (l) => l.excludeSrcPortDesc,
-    TunOverrideKey.excludeDstPort => (l) => l.excludeDstPortDesc,
+    TunOverrideKey.excludeInterface ||
+    TunOverrideKey.includeUid ||
+    TunOverrideKey.excludeUid ||
+    TunOverrideKey.excludeSrcPort ||
+    TunOverrideKey.excludeDstPort => null,
   };
 }
 

@@ -330,10 +330,14 @@ class ListOverrideField<M> extends ValueOverrideField<M, List<String>> {
     super.update, {
     required this.itemMaxLength,
     this.itemValidator,
+    this.description,
   });
 
   final int itemMaxLength;
   final ConfigValidator? itemValidator;
+
+  /// Shown on the list's own page, so long lists do not crowd the section.
+  final ConfigLabel? description;
 
   @override
   Widget build(
@@ -348,6 +352,7 @@ class ListOverrideField<M> extends ValueOverrideField<M, List<String>> {
       onChanged: model.modelWriter(update),
       itemMaxLength: itemMaxLength,
       itemValidator: itemValidator,
+      description: description,
     );
   }
 }

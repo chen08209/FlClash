@@ -19,8 +19,6 @@ extension on NtpOverrideKey {
   };
 
   ConfigLabel? get description => switch (this) {
-    NtpOverrideKey.enable => (l) => l.ntpStatusDesc,
-    NtpOverrideKey.dialerProxy => (l) => l.dialerProxyDesc,
     NtpOverrideKey.writeToSystem => (l) => l.writeToSystemDesc,
     _ => null,
   };

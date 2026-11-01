@@ -35,12 +35,6 @@ class Navigation implements NavigationPort {
         glyph: AppGlyphs.requests,
         label: PageLabel.requests,
         builder: (_) => const RequestsView(),
-        modes: [NavigationItemMode.moreFull],
-      ),
-      NavigationItem(
-        glyph: AppGlyphs.connections,
-        label: PageLabel.connections,
-        builder: (_) => const ConnectionsView(),
         modes: [NavigationItemMode.desktop, NavigationItemMode.moreFull],
       ),
       NavigationItem(

@@ -2,13 +2,10 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/l10n/l10n.dart';
-import 'package:flutter/foundation.dart' show listEquals;
+import 'package:fl_clash/ui/list_item.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:prism_ui/list.dart';
 import 'package:riverpod/misc.dart' show ProviderListenable;
-
-import 'input.dart';
 
 export 'package:riverpod/misc.dart' show ProviderListenable;
 
@@ -233,62 +230,6 @@ class ConfigTextItem extends _ConfigItem<String> {
           return;
         }
         onChanged(ref, normalized);
-      },
-    );
-  }
-}
-
-class ConfigListEditItem extends _ConfigItem<List<String>> {
-  const ConfigListEditItem({
-    super.key,
-    required super.selector,
-    required super.title,
-    required super.onChanged,
-    this.itemMaxLength,
-    this.itemValidator,
-    super.subtitle,
-    super.leading,
-  });
-
-  final int? itemMaxLength;
-  final ConfigValidator? itemValidator;
-
-  @override
-  Widget buildItem(
-    BuildContext context,
-    WidgetRef ref,
-    AppLocalizations appLocalizations,
-    List<String> value,
-  ) {
-    final label = title(appLocalizations);
-    final itemValidator = this.itemValidator;
-    return ListItem.open(
-      leading: leading,
-      title: Text(label),
-      subtitle:
-          buildSubtitle(appLocalizations) ??
-          Text(
-            value.isEmpty
-                ? appLocalizations.none
-                : appLocalizations.itemsCount(value.length),
-          ),
-      widget: ListEditView(
-        title: label,
-        items: value,
-        itemMaxLength: itemMaxLength,
-        itemValidator: itemValidator == null
-            ? null
-            : (item) => itemValidator(item, appLocalizations),
-        titleBuilder: (item) => Text(item),
-      ),
-      onChanged: (items) {
-        if (items is! List) {
-          return;
-        }
-        final next = List<String>.from(items);
-        if (!listEquals(next, value)) {
-          onChanged(ref, next);
-        }
       },
     );
   }

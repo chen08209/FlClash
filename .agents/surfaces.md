@@ -113,6 +113,8 @@ Color marks the one item that differs, never the structure around it.
   Material's `error`; harmonizing pulled orange toward red under rose seeds until warning and error matched. Text takes
   tone 40 in light and 80 in dark, a chip takes `successContainer`/`warningContainer` (90/30) with the `on` role
   (30/90). A delay under 600 ms is success, above it warning, a failure error: `ColorScheme.delayColor`.
+- **Root access** on the dashboard's status card: a 1.5 dp `primary` border over its content, with no chip.
+  Its fill stays at its level, and a screen reader gets the state from the card's label.
 - **Destructive** action in an alert: `ColorScheme.destructive`, iOS 27's systemRed in both modes, not `error`. A
   menu's `danger` item still takes `error`.
 - **Data series** on one chart: the first is primary, the second primary at 45% over the card

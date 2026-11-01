@@ -110,7 +110,7 @@ class _Stat extends StatelessWidget {
           children: [
             count,
             Text(
-              feed.page.label,
+              feed.label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: DashboardText.label(context),

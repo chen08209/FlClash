@@ -302,6 +302,42 @@ void main() {
     await teardownView(tester);
   });
 
+  testWidgets('a wide page pins the offered values as toggles', (tester) async {
+    seedDnsQueries([
+      _dnsQuery('alpha.test'),
+      _dnsQuery('beta.test', type: 'AAAA'),
+      _dnsQuery('gamma.test', cached: true),
+      _dnsQuery('delta.test', rcode: 'NXDOMAIN', answers: const []),
+    ]);
+
+    await pumpDnsQueries(tester);
+
+    for (final label in ['A', 'AAAA', 'Cache', 'NXDOMAIN']) {
+      expect(find.widgetWithText(Chip, label), findsOneWidget);
+    }
+    await tester.tap(find.widgetWithText(Chip, 'AAAA'));
+    await tester.pumpAndSettle();
+    expect(find.text('beta.test'), findsOneWidget);
+    expect(find.text('alpha.test'), findsNothing);
+
+    await tester.tap(find.widgetWithText(Chip, 'AAAA'));
+    await tester.pumpAndSettle();
+    expect(find.text('alpha.test'), findsOneWidget);
+  });
+
+  testWidgets('a query arriving later offers its value', (tester) async {
+    seedDnsQueries([_dnsQuery('alpha.test')]);
+
+    await pumpDnsQueries(tester);
+    expect(find.widgetWithText(Chip, 'AAAA'), findsNothing);
+
+    seedDnsQueries([_dnsQuery('beta.test', type: 'AAAA')]);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+
+    expect(find.widgetWithText(Chip, 'AAAA'), findsOneWidget);
+  });
+
   testWidgets('tapping a query opens its details', (tester) async {
     seedDnsQueries([
       _dnsQuery(
@@ -409,4 +445,34 @@ void main() {
 
     await teardownView(tester);
   });
+
+  for (final (name, size, rowType) in const [
+    ('list', _listSize, DnsQueryItem),
+    ('table', _tableSize, RecordTableRow),
+  ]) {
+    testWidgets('a full $name builds only the query added', (tester) async {
+      seedDnsQueries([
+        for (var index = 0; index < 500; index++) _dnsQuery('d$index.test'),
+      ]);
+      await pumpDnsQueries(tester, size: size);
+      await tester.pump(const Duration(seconds: 1));
+
+      var built = 0;
+      debugOnRebuildDirtyWidget = (element, _) {
+        if (element.widget.runtimeType == rowType) {
+          built++;
+        }
+      };
+      addTearDown(() => debugOnRebuildDirtyWidget = null);
+      container
+          .read(dnsQueriesProvider.notifier)
+          .addQuery(_dnsQuery('new.test'));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump();
+      debugOnRebuildDirtyWidget = null;
+
+      expect(built, 1);
+      await teardownView(tester);
+    });
+  }
 }

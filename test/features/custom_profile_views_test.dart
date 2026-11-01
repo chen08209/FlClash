@@ -1561,6 +1561,13 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(PopupMenu),
+        matching: find.text(l10n.add),
+      ),
+    );
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.descendant(
         of: find.byType(EntryDialog<String>),
@@ -1673,6 +1680,13 @@ void main() {
       find.descendant(
         of: find.byType(ListEditorPage<MapEntry<String, String>, String>),
         matching: find.byTooltip(l10n.add),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(PopupMenu),
+        matching: find.text(l10n.add),
       ),
     );
     await tester.pumpAndSettle();

@@ -12,11 +12,6 @@ import 'ip_quality_text.dart';
 import 'labels.dart';
 
 Future<void> showIpQualitySheet(BuildContext context, {required String ip}) {
-  if (isSheetPage(context)) {
-    return Navigator.of(
-      context,
-    ).push(PagedSheetRoute(builder: (_) => _IpQualitySheet(ip: ip)));
-  }
   return showSheet<void>(
     context: context,
     builder: (_) => _IpQualitySheet(ip: ip),

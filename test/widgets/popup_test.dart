@@ -154,7 +154,9 @@ void main() {
     await tester.pumpWidget(
       TestApp(
         theme: ThemeData(
-          elevatedColorScheme: ColorScheme.dark(surfaceContainerHigh: lifted),
+          elevatedColorScheme: const ColorScheme.dark(
+            surfaceContainerHigh: lifted,
+          ),
         ),
         homeBuilder: (child) => HostScaffold(body: Center(child: child)),
         child: ElevatedSurfaceTheme(
@@ -419,6 +421,40 @@ void main() {
       findsOneWidget,
     );
     expect(find.byGlyph(AppGlyphs.check), findsOneWidget);
+  });
+
+  testWidgets('an item that keeps the menu open toggles its check in place', (
+    tester,
+  ) async {
+    var toggles = 0;
+    var picked = 0;
+    final open = await pumpMenu(tester, [
+      PopupMenuItem(
+        label: 'many',
+        checked: false,
+        keepsOpen: true,
+        onPressed: () => toggles++,
+      ),
+      PopupMenuItem(label: 'one', onPressed: () => picked++),
+    ]);
+    open();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('many'));
+    await tester.pumpAndSettle();
+    expect(toggles, 1);
+    expect(find.byType(PopupMenu), findsOneWidget);
+    expect(find.byGlyph(AppGlyphs.check), findsOneWidget);
+
+    await tester.tap(find.text('many'));
+    await tester.pumpAndSettle();
+    expect(toggles, 2);
+    expect(find.byGlyph(AppGlyphs.check), findsNothing);
+
+    await tester.tap(find.text('one'));
+    await tester.pumpAndSettle();
+    expect(picked, 1);
+    expect(find.byType(PopupMenu), findsNothing);
   });
 
   testWidgets('a subtitle stands under its label, capped menu or not', (

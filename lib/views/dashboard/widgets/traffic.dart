@@ -230,8 +230,8 @@ class NetworkSpeedCard extends ConsumerWidget {
   }
 }
 
-/// Keeps one shape at every width: the chart takes the height the tile's
-/// aspect ratio leaves under the text, down to [_minChartHeight].
+/// Keeps one shape at every width, growing only when the text needs more. The
+/// chart fills the tile under the title row, behind the figure and the total.
 class _SpeedTile extends StatelessWidget {
   const _SpeedTile({
     required this.direction,
@@ -245,32 +245,24 @@ class _SpeedTile extends StatelessWidget {
   final num total;
   final FixedList<Traffic> traffics;
 
-  static const _aspectRatio = 1.06;
-  static const _padding = EdgeInsets.fromLTRB(16, 14, 16, 0);
+  static const _aspectRatio = 1.45;
+  static const _padding = EdgeInsets.fromLTRB(16, 14, 16, 12);
   static const _titleGap = 4.0;
-  static const _chartGap = 12.0;
   static const _bleed = 2.0;
-  static const _minChartHeight = 36.0;
 
   @override
   Widget build(BuildContext context) {
     final color = direction.glyphColorOf(context);
     final show = speed.traffic;
     final scale = DashboardDensityScope.scaleOf(context);
-    final textHeight =
-        _padding.top +
-        _titleGap +
-        (AppTextStyle.footnote.leading +
-                AppTextStyle.title1.leading +
-                AppTextStyle.caption1.leading) *
-            scale;
+    final chartTop =
+        _padding.top + _titleGap + AppTextStyle.footnote.leading * scale;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final chartHeight = math.max(
-          _minChartHeight,
-          constraints.maxWidth / _aspectRatio - textHeight - _chartGap + _bleed,
-        );
         return Container(
+          constraints: BoxConstraints(
+            minHeight: constraints.maxWidth / _aspectRatio,
+          ),
           clipBehavior: Clip.antiAlias,
           decoration: ShapeDecoration(
             color: DashboardColors.of(context).tone,
@@ -281,16 +273,14 @@ class _SpeedTile extends StatelessWidget {
               Positioned(
                 left: -_bleed,
                 right: -_bleed,
+                top: chartTop,
                 bottom: -_bleed,
-                height: chartHeight,
                 child: RepaintBoundary(
                   child: _SpeedChart(direction: direction, traffics: traffics),
                 ),
               ),
               Padding(
-                padding: _padding.copyWith(
-                  bottom: chartHeight - _bleed + _chartGap,
-                ),
+                padding: _padding,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

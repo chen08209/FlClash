@@ -764,23 +764,17 @@ class _SidebarBlurItem extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              generateGroup([
-                ConfigToggleItem(
-                  title: (l) => l.backgroundBlur,
-                  selector: themeSettingProvider.select(
-                    (state) => state.sidebarBlur,
-                  ),
-                  onChanged: (ref, value) => ref
-                      .read(themeSettingProvider.notifier)
-                      .update((state) => state.copyWith(sidebarBlur: value)),
-                ),
-              ]),
-              ListFooter(text: appLocalizations.sidebarBlurDesc),
-            ],
-          ),
+          child: generateGroup([
+            ConfigToggleItem(
+              title: (l) => l.backgroundBlur,
+              selector: themeSettingProvider.select(
+                (state) => state.sidebarBlur,
+              ),
+              onChanged: (ref, value) => ref
+                  .read(themeSettingProvider.notifier)
+                  .update((state) => state.copyWith(sidebarBlur: value)),
+            ),
+          ]),
         ),
       ],
     );

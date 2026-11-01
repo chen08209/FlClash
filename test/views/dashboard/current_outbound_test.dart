@@ -97,12 +97,14 @@ Widget _card({DashboardDensity density = DashboardDensity.standard}) =>
 Widget _app(
   Future<IpQuality> Function(Ref ref, String ip) quality, {
   DashboardDensity density = DashboardDensity.standard,
+  bool root = false,
 }) {
   return TestApp(
     locale: const Locale('en'),
     overrides: [
       profilesProvider.overrideWithValue(const [_profile]),
       suspendProvider.overrideWithValue(false),
+      rootAccessProvider.overrideWith((_) async => root),
       outboundIpProbeProvider.overrideWithBuild(
         (_, _) => const RoutedProbeState({
           routedOutbound: ProbeEntry(
@@ -172,6 +174,36 @@ void main() {
   });
 
   setUpAll(() => registerFallbackValue(const OutboundIpParams(timeout: 0)));
+
+  group('root access', () {
+    testWidgets('fades in a border and names it only to a screen reader', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(_app((_, _) async => _residential, root: true));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 150));
+
+      final midway = tester.widget<DashboardCard>(find.byType(DashboardCard));
+      expect(midway.side.color.a, inExclusiveRange(0, 1));
+
+      await tester.pump(commonDuration);
+
+      final card = tester.widget<DashboardCard>(find.byType(DashboardCard));
+      expect(card.side.color.a, closeTo(1, 0.01));
+      expect(find.text('Root'), findsNothing);
+      expect(find.bySemanticsLabel(RegExp('Status Root')), findsOneWidget);
+      semantics.dispose();
+    });
+
+    testWidgets('leaves the card plain without it', (tester) async {
+      await tester.pumpWidget(_app((_, _) async => _residential));
+      await tester.pump(commonDuration);
+
+      final card = tester.widget<DashboardCard>(find.byType(DashboardCard));
+      expect(card.side, BorderSide.none);
+    });
+  });
 
   group('the exit address', () {
     testWidgets('shows with its country, type, quality and organization', (
