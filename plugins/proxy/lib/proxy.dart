@@ -50,6 +50,15 @@ class Proxy {
     };
   }
 
+  /// The loopback port a system proxy still points at, or null when none is
+  /// on. Only macOS keeps that setting across a killed run.
+  Future<int?> readLoopbackProxyPort() async {
+    return switch (Platform.operatingSystem) {
+      'macos' => await _macosProxy.readLoopbackProxyPort(),
+      String() => null,
+    };
+  }
+
   Future<bool> stopProxy() async {
     return switch (Platform.operatingSystem) {
       'macos' => await _macosProxy.stop(),
