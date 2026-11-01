@@ -407,6 +407,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "clientFingerprint": MessageLookupByLibrary.simpleMessage("클라이언트 핑거프린트"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage("클립보드로 내보내기"),
     "clipboardImport": MessageLookupByLibrary.simpleMessage("클립보드에서 가져오기"),
+    "clipboardNoPackageNames": MessageLookupByLibrary.simpleMessage(
+      "클립보드에 유효한 패키지 이름이 없습니다",
+    ),
     "clipboardWriteFailed": MessageLookupByLibrary.simpleMessage(
       "클립보드에 복사하지 못했습니다. 선택 영역이 너무 클 수 있습니다",
     ),

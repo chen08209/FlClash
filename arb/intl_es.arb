@@ -215,6 +215,7 @@
   "action": "Acción",
   "intelligentSelected": "Selección inteligente",
   "clipboardImport": "Importar desde el portapapeles",
+  "clipboardNoPackageNames": "No hay nombres de paquete válidos en el portapapeles",
   "clipboardExport": "Exportar al portapapeles",
   "layout": "Diseño",
   "tight": "Ajustado",

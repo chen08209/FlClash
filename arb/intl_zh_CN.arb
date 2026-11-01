@@ -215,6 +215,7 @@
   "action": "操作",
   "intelligentSelected": "智能选择",
   "clipboardImport": "剪贴板导入",
+  "clipboardNoPackageNames": "剪贴板中没有有效的包名",
   "clipboardExport": "导出剪贴板",
   "layout": "布局",
   "tight": "紧凑",

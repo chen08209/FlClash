@@ -215,6 +215,7 @@
   "action": "Действие",
   "intelligentSelected": "Умный выбор",
   "clipboardImport": "Импорт из буфера обмена",
+  "clipboardNoPackageNames": "В буфере обмена нет допустимых имён пакетов",
   "clipboardExport": "Экспорт в буфер обмена",
   "layout": "Макет",
   "tight": "Плотный",

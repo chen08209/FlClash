@@ -1666,6 +1666,16 @@ class AppLocalizations {
     );
   }
 
+  /// `No package names found in the clipboard`
+  String get clipboardNoPackageNames {
+    return Intl.message(
+      'No package names found in the clipboard',
+      name: 'clipboardNoPackageNames',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Export to clipboard`
   String get clipboardExport {
     return Intl.message(

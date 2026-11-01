@@ -391,6 +391,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "clientFingerprint": MessageLookupByLibrary.simpleMessage("客户端指纹"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage("导出剪贴板"),
     "clipboardImport": MessageLookupByLibrary.simpleMessage("剪贴板导入"),
+    "clipboardNoPackageNames": MessageLookupByLibrary.simpleMessage(
+      "剪贴板中没有有效的包名",
+    ),
     "clipboardWriteFailed": MessageLookupByLibrary.simpleMessage(
       "无法复制到剪贴板，所选内容可能过大",
     ),

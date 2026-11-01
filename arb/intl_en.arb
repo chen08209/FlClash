@@ -215,6 +215,7 @@
   "action": "Action",
   "intelligentSelected": "Smart selection",
   "clipboardImport": "Import from clipboard",
+  "clipboardNoPackageNames": "No package names found in the clipboard",
   "clipboardExport": "Export to clipboard",
   "layout": "Layout",
   "tight": "Tight",

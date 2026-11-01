@@ -215,6 +215,7 @@
   "action": "동작",
   "intelligentSelected": "스마트 선택",
   "clipboardImport": "클립보드에서 가져오기",
+  "clipboardNoPackageNames": "클립보드에 유효한 패키지 이름이 없습니다",
   "clipboardExport": "클립보드로 내보내기",
   "layout": "레이아웃",
   "tight": "좁게",

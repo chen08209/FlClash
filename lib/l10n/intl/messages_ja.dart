@@ -415,6 +415,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "clipboardExport": MessageLookupByLibrary.simpleMessage("クリップボードへエクスポート"),
     "clipboardImport": MessageLookupByLibrary.simpleMessage("クリップボードからインポート"),
+    "clipboardNoPackageNames": MessageLookupByLibrary.simpleMessage(
+      "クリップボードに有効なパッケージ名がありません",
+    ),
     "clipboardWriteFailed": MessageLookupByLibrary.simpleMessage(
       "クリップボードにコピーできませんでした。選択範囲が大きすぎる可能性があります",
     ),

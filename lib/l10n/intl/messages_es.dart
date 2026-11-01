@@ -527,6 +527,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "clipboardImport": MessageLookupByLibrary.simpleMessage(
       "Importar desde el portapapeles",
     ),
+    "clipboardNoPackageNames": MessageLookupByLibrary.simpleMessage(
+      "No hay nombres de paquete válidos en el portapapeles",
+    ),
     "clipboardWriteFailed": MessageLookupByLibrary.simpleMessage(
       "No se pudo copiar al portapapeles. Puede que la selección sea demasiado grande",
     ),

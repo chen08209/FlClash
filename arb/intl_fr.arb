@@ -215,6 +215,7 @@
   "action": "Action",
   "intelligentSelected": "Sélection intelligente",
   "clipboardImport": "Importer depuis le presse-papiers",
+  "clipboardNoPackageNames": "Aucun nom de package valide dans le presse-papiers",
   "clipboardExport": "Exporter vers le presse-papiers",
   "layout": "Disposition",
   "tight": "Serrée",

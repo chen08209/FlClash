@@ -486,6 +486,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "clipboardImport": MessageLookupByLibrary.simpleMessage(
       "Import from clipboard",
     ),
+    "clipboardNoPackageNames": MessageLookupByLibrary.simpleMessage(
+      "No package names found in the clipboard",
+    ),
     "clipboardWriteFailed": MessageLookupByLibrary.simpleMessage(
       "Couldn\'t copy to the clipboard. The selection may be too large",
     ),

@@ -506,6 +506,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "clipboardImport": MessageLookupByLibrary.simpleMessage(
       "Импорт из буфера обмена",
     ),
+    "clipboardNoPackageNames": MessageLookupByLibrary.simpleMessage(
+      "В буфере обмена нет допустимых имён пакетов",
+    ),
     "clipboardWriteFailed": MessageLookupByLibrary.simpleMessage(
       "Не удалось скопировать в буфер обмена. Возможно, выделение слишком велико",
     ),

@@ -215,6 +215,7 @@
   "action": "アクション",
   "intelligentSelected": "スマート選択",
   "clipboardImport": "クリップボードからインポート",
+  "clipboardNoPackageNames": "クリップボードに有効なパッケージ名がありません",
   "clipboardExport": "クリップボードへエクスポート",
   "layout": "レイアウト",
   "tight": "コンパクト",

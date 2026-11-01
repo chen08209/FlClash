@@ -527,6 +527,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "clipboardImport": MessageLookupByLibrary.simpleMessage(
       "Importer depuis le presse-papiers",
     ),
+    "clipboardNoPackageNames": MessageLookupByLibrary.simpleMessage(
+      "Aucun nom de package valide dans le presse-papiers",
+    ),
     "clipboardWriteFailed": MessageLookupByLibrary.simpleMessage(
       "Impossible de copier dans le presse-papiers. La sélection est peut-être trop volumineuse",
     ),

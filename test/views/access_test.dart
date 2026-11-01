@@ -10,6 +10,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/access.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -48,6 +49,16 @@ class _TestSystemAction extends SystemAction {
   int requestCount = 0;
   int loadCount = 0;
   List<Package> grantedPackages = const [];
+  Error? chinaPackagesError;
+  List<String> chinaPackages = const [];
+
+  @override
+  Future<List<String>> getChinaPackageNames() async {
+    if (chinaPackagesError case final error?) {
+      throw error;
+    }
+    return chinaPackages;
+  }
 
   @override
   Future<List<Package>> getPackages() async {
@@ -356,6 +367,12 @@ void main() {
       await tester.pump();
       expect(find.text(l10n.accessControlSelectedCount(2)), findsOneWidget);
 
+      container.read(queryProvider(QueryTag.access).notifier).value = 'chat';
+      await tester.pump();
+      expect(find.text(l10n.accessControlSelectedCount(2)), findsOneWidget);
+      container.read(queryProvider(QueryTag.access).notifier).value = '';
+      await tester.pump();
+
       container
           .read(accessControlStateProvider.notifier)
           .update(
@@ -556,6 +573,23 @@ void main() {
       await teardownView(tester);
     });
 
+    testWidgets('keeps the list and offers the permission when it is denied', (
+      tester,
+    ) async {
+      systemAction.installedAppsPermissionGranted = false;
+      seedAccessControl(const AccessControlProps(enable: true));
+
+      await pumpAccessView(tester);
+      await tester.pumpAndSettle();
+
+      final l10n = AppLocalizations.current;
+      expect(find.text('Browser'), findsOneWidget);
+      expect(find.text(l10n.installedAppsPermissionRequired), findsOneWidget);
+      expect(find.text(l10n.authorize), findsOneWidget);
+
+      await teardownView(tester);
+    });
+
     testWidgets('keeps the plain empty status once the permission is held', (
       tester,
     ) async {
@@ -625,13 +659,13 @@ void main() {
       await teardownView(tester);
     });
 
-    testWidgets('drops hidden packages and sorts what it persists', (
+    testWidgets('keeps hidden packages and sorts what it persists', (
       tester,
     ) async {
       seedAccessControl(
         const AccessControlProps(
           enable: true,
-          rejectList: ['com.android.settings'],
+          rejectList: ['com.android.settings', 'com.gone.app'],
         ),
       );
       await pumpAccessView(tester);
@@ -648,7 +682,128 @@ void main() {
           .read(vpnSettingProvider)
           .accessControlProps
           .rejectList;
-      expect(saved, ['com.example.browser', 'com.example.chat']);
+      expect(saved, [
+        'com.android.settings',
+        'com.example.browser',
+        'com.example.chat',
+        'com.gone.app',
+      ]);
+
+      await teardownView(tester);
+    });
+  });
+
+  group('intelligent selection', () {
+    Future<void> runIntelligentSelection(WidgetTester tester) async {
+      final l10n = AppLocalizations.current;
+      Finder inMenu(Finder finder) =>
+          find.descendant(of: find.byType(PopupMenu), matching: finder);
+      await openBarMenu(tester);
+      await tester.tap(inMenu(find.text(l10n.action)));
+      await tester.pumpAndSettle();
+      await tester.tap(inMenu(find.text(l10n.intelligentSelected)));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('leaves the lists alone when the scan fails', (tester) async {
+      systemAction.chinaPackagesError = StateError('scan failed');
+      const props = AccessControlProps(
+        enable: true,
+        acceptList: ['com.example.chat'],
+        rejectList: ['com.example.browser'],
+      );
+      seedAccessControl(props);
+      await pumpAccessView(tester);
+
+      await runIntelligentSelection(tester);
+
+      expect(container.read(accessControlStateProvider), props);
+
+      await teardownView(tester);
+    });
+
+    testWidgets('sorts only the visible apps', (tester) async {
+      systemAction.chinaPackages = const [
+        'com.example.chat',
+        'com.android.settings',
+      ];
+      seedAccessControl(
+        const AccessControlProps(
+          enable: true,
+          acceptList: ['com.android.settings', 'com.example.chat'],
+        ),
+      );
+      await pumpAccessView(tester);
+
+      await runIntelligentSelection(tester);
+
+      final state = container.read(accessControlStateProvider);
+      expect(state.acceptList, ['com.android.settings', 'com.example.browser']);
+      expect(state.rejectList, ['com.example.chat']);
+
+      await teardownView(tester);
+    });
+  });
+
+  group('clipboard import', () {
+    Future<void> importText(WidgetTester tester, String text) async {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async => call.method == 'Clipboard.getData'
+            ? <String, Object?>{'text': text}
+            : null,
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      final l10n = AppLocalizations.current;
+      Finder inMenu(Finder finder) =>
+          find.descendant(of: find.byType(PopupMenu), matching: finder);
+      await openBarMenu(tester);
+      await tester.tap(inMenu(find.text(l10n.action)));
+      await tester.pumpAndSettle();
+      await tester.tap(inMenu(find.text(l10n.clipboardImport)));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('trims lines and drops what is not a package name', (
+      tester,
+    ) async {
+      seedAccessControl(const AccessControlProps(enable: true));
+      await pumpAccessView(tester);
+
+      await importText(
+        tester,
+        'com.example.chat\r\n  com.example.browser \n\nnot a package\n',
+      );
+
+      expect(container.read(accessControlStateProvider).rejectList, [
+        'com.example.chat',
+        'com.example.browser',
+      ]);
+
+      await teardownView(tester);
+    });
+
+    testWidgets('keeps the list when nothing is a package name', (
+      tester,
+    ) async {
+      seedAccessControl(
+        const AccessControlProps(
+          enable: true,
+          rejectList: ['com.example.chat'],
+        ),
+      );
+      await pumpAccessView(tester);
+
+      await importText(tester, 'hello world');
+
+      expect(container.read(accessControlStateProvider).rejectList, [
+        'com.example.chat',
+      ]);
 
       await teardownView(tester);
     });
