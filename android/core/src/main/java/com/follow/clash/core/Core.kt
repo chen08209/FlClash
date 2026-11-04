@@ -21,6 +21,11 @@ object Core {
 
     fun resetNetwork() = Mobile.resetNetwork()
 
+    fun updateNetwork(
+        ifName: String,
+        gateway: String,
+    ) = Mobile.updateNetwork(ifName, gateway)
+
     private fun parseInetSocketAddress(address: String): InetSocketAddress {
         val uri = URI("tcp://$address")
         val host = requireNotNull(uri.host) { "Missing host in address: $address" }

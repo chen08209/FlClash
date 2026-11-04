@@ -20,6 +20,7 @@ import (
 	"github.com/metacubex/mihomo/dns"
 	"github.com/metacubex/mihomo/listener/sing_tun"
 	"github.com/metacubex/mihomo/log"
+	"github.com/metacubex/tailscale/net/netmon"
 )
 
 type TunCallbacks interface {
@@ -395,4 +396,10 @@ func UpdateDns(value string) {
 func ResetNetwork() {
 	defer recoverExport("resetNetwork")
 	safeGo("resetNetwork", handleResetNetwork)
+}
+
+// UpdateNetwork tells embedded tsnet about Android's new default network.
+func UpdateNetwork(ifName, gateway string) {
+	defer recoverExport("updateNetwork")
+	netmon.NotifyNetworkChange(ifName, gateway)
 }
