@@ -524,7 +524,14 @@ final class HelperLauncherResolver implements DesktopCoreLauncherResolver {
 
   @override
   Future<CoreProcessLauncher> resolve() async {
-    if (!hasHelper) return directLauncher;
+    if (!hasHelper) {
+      commonPrint.log(
+        'No Helper service is available; the Core will launch directly '
+        'without elevation, so TUN stays down unless the app is elevated',
+        logLevel: LogLevel.warning,
+      );
+      return directLauncher;
+    }
     final readiness = await helperReady();
     if (readiness == HelperReadiness.ready) {
       return FallbackCoreLauncher(
@@ -532,6 +539,12 @@ final class HelperLauncherResolver implements DesktopCoreLauncherResolver {
         fallback: directLauncher,
       );
     }
+    commonPrint.log(
+      'Helper service is not ready (${readiness.name}); the Core will launch '
+      'directly without elevation, so TUN stays down unless the app is '
+      'elevated',
+      logLevel: LogLevel.warning,
+    );
     return directLauncher;
   }
 }
