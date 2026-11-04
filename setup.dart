@@ -124,13 +124,15 @@ List<String> createFlutterBuildArgs({
   return flutterBuildArgs;
 }
 
-Map<String, String> createBuildEnvironment(String env) {
+Map<String, String> createBuildEnvironment(
+  String env, {
+  bool appTrafficCustomBuild = false,
+  String? updateRepository,
+}) {
   return {
     'APP_ENV': env,
-    if (Platform.environment['APP_TRAFFIC_CUSTOM_BUILD'] == 'true')
-      'APP_TRAFFIC_CUSTOM_BUILD': 'true',
-    if (Platform.environment['APP_UPDATE_REPOSITORY']
-        case final String repository)
+    if (appTrafficCustomBuild) 'APP_TRAFFIC_CUSTOM_BUILD': 'true',
+    if (updateRepository case final String repository)
       'APP_UPDATE_REPOSITORY': repository,
   };
 }
@@ -171,7 +173,16 @@ Future<int> _package(
   required bool verbose,
 }) async {
   final file = File(p.join(rootDir, 'env.json'));
-  await file.writeAsString(jsonEncode(createBuildEnvironment(env)));
+  await file.writeAsString(
+    jsonEncode(
+      createBuildEnvironment(
+        env,
+        appTrafficCustomBuild:
+            Platform.environment['APP_TRAFFIC_CUSTOM_BUILD'] == 'true',
+        updateRepository: Platform.environment['APP_UPDATE_REPOSITORY'],
+      ),
+    ),
+  );
 
   final flutterBuildArgs = createFlutterBuildArgs(
     platform: platform,

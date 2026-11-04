@@ -25,6 +25,25 @@ void main() {
       expect(setup.createBuildEnvironment('dev'), {'APP_ENV': 'dev'});
     });
 
+    test(
+      'custom update settings are included only when explicitly supplied',
+      () {
+        expect(
+          setup.createBuildEnvironment(
+            'stable',
+            appTrafficCustomBuild: true,
+            updateRepository: 'owner/FlClash',
+          ),
+          {
+            'APP_ENV': 'stable',
+            'APP_TRAFFIC_CUSTOM_BUILD': 'true',
+            'APP_UPDATE_REPOSITORY': 'owner/FlClash',
+          },
+        );
+        expect(setup.createBuildEnvironment('stable'), {'APP_ENV': 'stable'});
+      },
+    );
+
     test('omits verbose from flutter build args by default', () {
       final args = setup.createFlutterBuildArgs(
         platform: 'android',
