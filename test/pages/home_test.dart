@@ -11,6 +11,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/config/general.dart';
+import 'package:fl_clash/views/dashboard/dashboard.dart';
 import 'package:fl_clash/views/navigation.dart';
 import 'package:fl_clash/views/tools.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -23,6 +24,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/host_scaffold.dart';
+import '../helpers/test_profiles.dart';
 
 Finder _glyph(Glyph glyph) => find.byGlyph(glyph);
 
@@ -1153,6 +1155,59 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('mobile pages scroll on controllers of their own, not the '
+      'route\'s primary one they would share', (tester) async {
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        navigationItemsStateProvider.overrideWithValue(
+          NavigationItemsState(
+            value: [
+              NavigationItem(
+                glyph: AppGlyphs.dashboard,
+                label: PageLabel.dashboard,
+                builder: (_) =>
+                    const DashboardView(platform: SupportPlatform.Android),
+              ),
+              NavigationItem(
+                glyph: AppGlyphs.tools,
+                label: PageLabel.tools,
+                builder: (_) => const ToolsView(),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container.read(viewSizeProvider.notifier).value = const Size(400, 800);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+      ),
+    );
+    await tester.pump();
+    container.read(currentPageLabelProvider.notifier).toPage(PageLabel.tools);
+    await tester.pumpAndSettle();
+
+    final primary = PrimaryScrollController.of(
+      tester.element(find.byType(ToolsView)),
+    );
+    expect(find.byType(DashboardView, skipOffstage: false), findsOneWidget);
+    expect(primary.hasClients, isFalse);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 5));
+  });
 
   testWidgets('a far mobile page switch builds no page in between', (
     tester,
