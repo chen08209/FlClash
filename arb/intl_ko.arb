@@ -1076,5 +1076,17 @@
   "fakeipFilterDesc": "이 도메인에는 Fake-IP 대신 실제 IP를 반환합니다. whitelist 모드에서는 이 도메인만 Fake-IP를 사용합니다.",
   "fallbackFilterGeositeDesc": "이 GeoSite 분류의 도메인은 바로 Fallback으로 확인합니다.",
   "fallbackFilterIpcidrDesc": "Nameserver가 이 범위의 IP를 반환하면 Fallback 결과를 사용합니다.",
-  "fallbackFilterDomainDesc": "이 도메인은 바로 Fallback으로 확인합니다."
+  "fallbackFilterDomainDesc": "이 도메인은 바로 Fallback으로 확인합니다.",
+  "appTraffic": "앱 트래픽",
+  "appTrafficDesc": "앱별 구독 프록시 트래픽 보기",
+  "appTrafficScope": "프록시를 통해 실제로 전송된 트래픽만 집계합니다. DIRECT 연결은 제외합니다. 매초 갱신되며 재시작 후에도 유지됩니다.",
+  "today": "오늘",
+  "lastSevenDays": "최근 7일",
+  "allTime": "전체 기간",
+  "allSubscriptions": "모든 구독",
+  "clearTrafficStatistics": "트래픽 통계 지우기",
+  "clearTrafficStatisticsConfirm": "선택한 구독의 모든 앱 트래픽 기록을 삭제합니다. 이 작업은 취소할 수 없습니다.",
+  "noAppTraffic": "이 기간에 프록시 트래픽이 없습니다",
+  "unknownApplication": "알 수 없는 앱",
+  "customBuildUpdateTip": "이 사용자 지정 빌드를 업데이트해도 앱 트래픽 통계가 유지됩니다."
 }

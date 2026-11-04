@@ -1076,5 +1076,17 @@
   "fakeipFilterDesc": "Ces domaines reçoivent leur vraie IP au lieu d’une Fake-IP. En mode whitelist, eux seuls reçoivent une Fake-IP.",
   "fallbackFilterGeositeDesc": "Les domaines de ces catégories GeoSite sont résolus directement par Fallback.",
   "fallbackFilterIpcidrDesc": "Si Nameserver renvoie une IP de ces plages, la réponse de Fallback est utilisée.",
-  "fallbackFilterDomainDesc": "Ces domaines sont résolus directement par Fallback."
+  "fallbackFilterDomainDesc": "Ces domaines sont résolus directement par Fallback.",
+  "appTraffic": "Trafic des applications",
+  "appTrafficDesc": "Trafic du proxy par application",
+  "appTrafficScope": "Seul le trafic réellement envoyé par un proxy est compté. Les connexions DIRECT sont exclues. Les données sont actualisées chaque seconde et conservées après redémarrage.",
+  "today": "Aujourd’hui",
+  "lastSevenDays": "7 derniers jours",
+  "allTime": "Toute la période",
+  "allSubscriptions": "Tous les abonnements",
+  "clearTrafficStatistics": "Effacer les statistiques",
+  "clearTrafficStatisticsConfirm": "Tout l’historique du trafic des applications des abonnements sélectionnés sera supprimé. Cette action est irréversible.",
+  "noAppTraffic": "Aucun trafic proxy sur cette période",
+  "unknownApplication": "Application inconnue",
+  "customBuildUpdateTip": "Les mises à jour de cette version conservent les statistiques par application."
 }

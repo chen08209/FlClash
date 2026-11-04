@@ -1,4 +1,5 @@
 export 'app.dart';
+export 'app_traffic.dart';
 export 'changelog.dart';
 export 'clash_config.dart';
 export 'common.dart';

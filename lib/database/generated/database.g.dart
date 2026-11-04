@@ -5241,6 +5241,684 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
   }
 }
 
+class $AppTrafficRecordsTable extends AppTrafficRecords
+    with TableInfo<$AppTrafficRecordsTable, AppTrafficRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AppTrafficRecordsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _dayMeta = const VerificationMeta('day');
+  @override
+  late final GeneratedColumn<int> day = GeneratedColumn<int>(
+    'day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _profileIdMeta = const VerificationMeta(
+    'profileId',
+  );
+  @override
+  late final GeneratedColumn<int> profileId = GeneratedColumn<int>(
+    'profile_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _profileLabelMeta = const VerificationMeta(
+    'profileLabel',
+  );
+  @override
+  late final GeneratedColumn<String> profileLabel = GeneratedColumn<String>(
+    'profile_label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _applicationIdMeta = const VerificationMeta(
+    'applicationId',
+  );
+  @override
+  late final GeneratedColumn<String> applicationId = GeneratedColumn<String>(
+    'application_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _applicationLabelMeta = const VerificationMeta(
+    'applicationLabel',
+  );
+  @override
+  late final GeneratedColumn<String> applicationLabel = GeneratedColumn<String>(
+    'application_label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _processPathMeta = const VerificationMeta(
+    'processPath',
+  );
+  @override
+  late final GeneratedColumn<String> processPath = GeneratedColumn<String>(
+    'process_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _proxyMeta = const VerificationMeta('proxy');
+  @override
+  late final GeneratedColumn<String> proxy = GeneratedColumn<String>(
+    'proxy',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _providerMeta = const VerificationMeta(
+    'provider',
+  );
+  @override
+  late final GeneratedColumn<String> provider = GeneratedColumn<String>(
+    'provider',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _uploadMeta = const VerificationMeta('upload');
+  @override
+  late final GeneratedColumn<int> upload = GeneratedColumn<int>(
+    'upload',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _downloadMeta = const VerificationMeta(
+    'download',
+  );
+  @override
+  late final GeneratedColumn<int> download = GeneratedColumn<int>(
+    'download',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    day,
+    profileId,
+    profileLabel,
+    applicationId,
+    applicationLabel,
+    processPath,
+    proxy,
+    provider,
+    upload,
+    download,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'app_traffic_records';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AppTrafficRecord> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('day')) {
+      context.handle(
+        _dayMeta,
+        day.isAcceptableOrUnknown(data['day']!, _dayMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dayMeta);
+    }
+    if (data.containsKey('profile_id')) {
+      context.handle(
+        _profileIdMeta,
+        profileId.isAcceptableOrUnknown(data['profile_id']!, _profileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_profileIdMeta);
+    }
+    if (data.containsKey('profile_label')) {
+      context.handle(
+        _profileLabelMeta,
+        profileLabel.isAcceptableOrUnknown(
+          data['profile_label']!,
+          _profileLabelMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_profileLabelMeta);
+    }
+    if (data.containsKey('application_id')) {
+      context.handle(
+        _applicationIdMeta,
+        applicationId.isAcceptableOrUnknown(
+          data['application_id']!,
+          _applicationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_applicationIdMeta);
+    }
+    if (data.containsKey('application_label')) {
+      context.handle(
+        _applicationLabelMeta,
+        applicationLabel.isAcceptableOrUnknown(
+          data['application_label']!,
+          _applicationLabelMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_applicationLabelMeta);
+    }
+    if (data.containsKey('process_path')) {
+      context.handle(
+        _processPathMeta,
+        processPath.isAcceptableOrUnknown(
+          data['process_path']!,
+          _processPathMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_processPathMeta);
+    }
+    if (data.containsKey('proxy')) {
+      context.handle(
+        _proxyMeta,
+        proxy.isAcceptableOrUnknown(data['proxy']!, _proxyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_proxyMeta);
+    }
+    if (data.containsKey('provider')) {
+      context.handle(
+        _providerMeta,
+        provider.isAcceptableOrUnknown(data['provider']!, _providerMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_providerMeta);
+    }
+    if (data.containsKey('upload')) {
+      context.handle(
+        _uploadMeta,
+        upload.isAcceptableOrUnknown(data['upload']!, _uploadMeta),
+      );
+    }
+    if (data.containsKey('download')) {
+      context.handle(
+        _downloadMeta,
+        download.isAcceptableOrUnknown(data['download']!, _downloadMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {
+    day,
+    profileId,
+    applicationId,
+    proxy,
+    provider,
+  };
+  @override
+  AppTrafficRecord map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AppTrafficRecord(
+      day: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}day'],
+      )!,
+      profileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}profile_id'],
+      )!,
+      profileLabel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}profile_label'],
+      )!,
+      applicationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}application_id'],
+      )!,
+      applicationLabel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}application_label'],
+      )!,
+      processPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}process_path'],
+      )!,
+      proxy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}proxy'],
+      )!,
+      provider: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provider'],
+      )!,
+      upload: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}upload'],
+      )!,
+      download: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}download'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $AppTrafficRecordsTable createAlias(String alias) {
+    return $AppTrafficRecordsTable(attachedDatabase, alias);
+  }
+}
+
+class AppTrafficRecord extends DataClass
+    implements Insertable<AppTrafficRecord> {
+  final int day;
+  final int profileId;
+  final String profileLabel;
+  final String applicationId;
+  final String applicationLabel;
+  final String processPath;
+  final String proxy;
+  final String provider;
+  final int upload;
+  final int download;
+  final int updatedAt;
+  const AppTrafficRecord({
+    required this.day,
+    required this.profileId,
+    required this.profileLabel,
+    required this.applicationId,
+    required this.applicationLabel,
+    required this.processPath,
+    required this.proxy,
+    required this.provider,
+    required this.upload,
+    required this.download,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['day'] = Variable<int>(day);
+    map['profile_id'] = Variable<int>(profileId);
+    map['profile_label'] = Variable<String>(profileLabel);
+    map['application_id'] = Variable<String>(applicationId);
+    map['application_label'] = Variable<String>(applicationLabel);
+    map['process_path'] = Variable<String>(processPath);
+    map['proxy'] = Variable<String>(proxy);
+    map['provider'] = Variable<String>(provider);
+    map['upload'] = Variable<int>(upload);
+    map['download'] = Variable<int>(download);
+    map['updated_at'] = Variable<int>(updatedAt);
+    return map;
+  }
+
+  AppTrafficRecordsCompanion toCompanion(bool nullToAbsent) {
+    return AppTrafficRecordsCompanion(
+      day: Value(day),
+      profileId: Value(profileId),
+      profileLabel: Value(profileLabel),
+      applicationId: Value(applicationId),
+      applicationLabel: Value(applicationLabel),
+      processPath: Value(processPath),
+      proxy: Value(proxy),
+      provider: Value(provider),
+      upload: Value(upload),
+      download: Value(download),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory AppTrafficRecord.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AppTrafficRecord(
+      day: serializer.fromJson<int>(json['day']),
+      profileId: serializer.fromJson<int>(json['profileId']),
+      profileLabel: serializer.fromJson<String>(json['profileLabel']),
+      applicationId: serializer.fromJson<String>(json['applicationId']),
+      applicationLabel: serializer.fromJson<String>(json['applicationLabel']),
+      processPath: serializer.fromJson<String>(json['processPath']),
+      proxy: serializer.fromJson<String>(json['proxy']),
+      provider: serializer.fromJson<String>(json['provider']),
+      upload: serializer.fromJson<int>(json['upload']),
+      download: serializer.fromJson<int>(json['download']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'day': serializer.toJson<int>(day),
+      'profileId': serializer.toJson<int>(profileId),
+      'profileLabel': serializer.toJson<String>(profileLabel),
+      'applicationId': serializer.toJson<String>(applicationId),
+      'applicationLabel': serializer.toJson<String>(applicationLabel),
+      'processPath': serializer.toJson<String>(processPath),
+      'proxy': serializer.toJson<String>(proxy),
+      'provider': serializer.toJson<String>(provider),
+      'upload': serializer.toJson<int>(upload),
+      'download': serializer.toJson<int>(download),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+    };
+  }
+
+  AppTrafficRecord copyWith({
+    int? day,
+    int? profileId,
+    String? profileLabel,
+    String? applicationId,
+    String? applicationLabel,
+    String? processPath,
+    String? proxy,
+    String? provider,
+    int? upload,
+    int? download,
+    int? updatedAt,
+  }) => AppTrafficRecord(
+    day: day ?? this.day,
+    profileId: profileId ?? this.profileId,
+    profileLabel: profileLabel ?? this.profileLabel,
+    applicationId: applicationId ?? this.applicationId,
+    applicationLabel: applicationLabel ?? this.applicationLabel,
+    processPath: processPath ?? this.processPath,
+    proxy: proxy ?? this.proxy,
+    provider: provider ?? this.provider,
+    upload: upload ?? this.upload,
+    download: download ?? this.download,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  AppTrafficRecord copyWithCompanion(AppTrafficRecordsCompanion data) {
+    return AppTrafficRecord(
+      day: data.day.present ? data.day.value : this.day,
+      profileId: data.profileId.present ? data.profileId.value : this.profileId,
+      profileLabel: data.profileLabel.present
+          ? data.profileLabel.value
+          : this.profileLabel,
+      applicationId: data.applicationId.present
+          ? data.applicationId.value
+          : this.applicationId,
+      applicationLabel: data.applicationLabel.present
+          ? data.applicationLabel.value
+          : this.applicationLabel,
+      processPath: data.processPath.present
+          ? data.processPath.value
+          : this.processPath,
+      proxy: data.proxy.present ? data.proxy.value : this.proxy,
+      provider: data.provider.present ? data.provider.value : this.provider,
+      upload: data.upload.present ? data.upload.value : this.upload,
+      download: data.download.present ? data.download.value : this.download,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppTrafficRecord(')
+          ..write('day: $day, ')
+          ..write('profileId: $profileId, ')
+          ..write('profileLabel: $profileLabel, ')
+          ..write('applicationId: $applicationId, ')
+          ..write('applicationLabel: $applicationLabel, ')
+          ..write('processPath: $processPath, ')
+          ..write('proxy: $proxy, ')
+          ..write('provider: $provider, ')
+          ..write('upload: $upload, ')
+          ..write('download: $download, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    day,
+    profileId,
+    profileLabel,
+    applicationId,
+    applicationLabel,
+    processPath,
+    proxy,
+    provider,
+    upload,
+    download,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AppTrafficRecord &&
+          other.day == this.day &&
+          other.profileId == this.profileId &&
+          other.profileLabel == this.profileLabel &&
+          other.applicationId == this.applicationId &&
+          other.applicationLabel == this.applicationLabel &&
+          other.processPath == this.processPath &&
+          other.proxy == this.proxy &&
+          other.provider == this.provider &&
+          other.upload == this.upload &&
+          other.download == this.download &&
+          other.updatedAt == this.updatedAt);
+}
+
+class AppTrafficRecordsCompanion extends UpdateCompanion<AppTrafficRecord> {
+  final Value<int> day;
+  final Value<int> profileId;
+  final Value<String> profileLabel;
+  final Value<String> applicationId;
+  final Value<String> applicationLabel;
+  final Value<String> processPath;
+  final Value<String> proxy;
+  final Value<String> provider;
+  final Value<int> upload;
+  final Value<int> download;
+  final Value<int> updatedAt;
+  final Value<int> rowid;
+  const AppTrafficRecordsCompanion({
+    this.day = const Value.absent(),
+    this.profileId = const Value.absent(),
+    this.profileLabel = const Value.absent(),
+    this.applicationId = const Value.absent(),
+    this.applicationLabel = const Value.absent(),
+    this.processPath = const Value.absent(),
+    this.proxy = const Value.absent(),
+    this.provider = const Value.absent(),
+    this.upload = const Value.absent(),
+    this.download = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AppTrafficRecordsCompanion.insert({
+    required int day,
+    required int profileId,
+    required String profileLabel,
+    required String applicationId,
+    required String applicationLabel,
+    required String processPath,
+    required String proxy,
+    required String provider,
+    this.upload = const Value.absent(),
+    this.download = const Value.absent(),
+    required int updatedAt,
+    this.rowid = const Value.absent(),
+  }) : day = Value(day),
+       profileId = Value(profileId),
+       profileLabel = Value(profileLabel),
+       applicationId = Value(applicationId),
+       applicationLabel = Value(applicationLabel),
+       processPath = Value(processPath),
+       proxy = Value(proxy),
+       provider = Value(provider),
+       updatedAt = Value(updatedAt);
+  static Insertable<AppTrafficRecord> custom({
+    Expression<int>? day,
+    Expression<int>? profileId,
+    Expression<String>? profileLabel,
+    Expression<String>? applicationId,
+    Expression<String>? applicationLabel,
+    Expression<String>? processPath,
+    Expression<String>? proxy,
+    Expression<String>? provider,
+    Expression<int>? upload,
+    Expression<int>? download,
+    Expression<int>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (day != null) 'day': day,
+      if (profileId != null) 'profile_id': profileId,
+      if (profileLabel != null) 'profile_label': profileLabel,
+      if (applicationId != null) 'application_id': applicationId,
+      if (applicationLabel != null) 'application_label': applicationLabel,
+      if (processPath != null) 'process_path': processPath,
+      if (proxy != null) 'proxy': proxy,
+      if (provider != null) 'provider': provider,
+      if (upload != null) 'upload': upload,
+      if (download != null) 'download': download,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AppTrafficRecordsCompanion copyWith({
+    Value<int>? day,
+    Value<int>? profileId,
+    Value<String>? profileLabel,
+    Value<String>? applicationId,
+    Value<String>? applicationLabel,
+    Value<String>? processPath,
+    Value<String>? proxy,
+    Value<String>? provider,
+    Value<int>? upload,
+    Value<int>? download,
+    Value<int>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return AppTrafficRecordsCompanion(
+      day: day ?? this.day,
+      profileId: profileId ?? this.profileId,
+      profileLabel: profileLabel ?? this.profileLabel,
+      applicationId: applicationId ?? this.applicationId,
+      applicationLabel: applicationLabel ?? this.applicationLabel,
+      processPath: processPath ?? this.processPath,
+      proxy: proxy ?? this.proxy,
+      provider: provider ?? this.provider,
+      upload: upload ?? this.upload,
+      download: download ?? this.download,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (day.present) {
+      map['day'] = Variable<int>(day.value);
+    }
+    if (profileId.present) {
+      map['profile_id'] = Variable<int>(profileId.value);
+    }
+    if (profileLabel.present) {
+      map['profile_label'] = Variable<String>(profileLabel.value);
+    }
+    if (applicationId.present) {
+      map['application_id'] = Variable<String>(applicationId.value);
+    }
+    if (applicationLabel.present) {
+      map['application_label'] = Variable<String>(applicationLabel.value);
+    }
+    if (processPath.present) {
+      map['process_path'] = Variable<String>(processPath.value);
+    }
+    if (proxy.present) {
+      map['proxy'] = Variable<String>(proxy.value);
+    }
+    if (provider.present) {
+      map['provider'] = Variable<String>(provider.value);
+    }
+    if (upload.present) {
+      map['upload'] = Variable<int>(upload.value);
+    }
+    if (download.present) {
+      map['download'] = Variable<int>(download.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppTrafficRecordsCompanion(')
+          ..write('day: $day, ')
+          ..write('profileId: $profileId, ')
+          ..write('profileLabel: $profileLabel, ')
+          ..write('applicationId: $applicationId, ')
+          ..write('applicationLabel: $applicationLabel, ')
+          ..write('processPath: $processPath, ')
+          ..write('proxy: $proxy, ')
+          ..write('provider: $provider, ')
+          ..write('upload: $upload, ')
+          ..write('download: $download, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$Database extends GeneratedDatabase {
   _$Database(QueryExecutor e) : super(e);
   $DatabaseManager get managers => $DatabaseManager(this);
@@ -5256,6 +5934,8 @@ abstract class _$Database extends GeneratedDatabase {
   late final $ProxyDialersTable proxyDialers = $ProxyDialersTable(this);
   late final $IpQualitiesTable ipQualities = $IpQualitiesTable(this);
   late final $MitmModulesTable mitmModules = $MitmModulesTable(this);
+  late final $AppTrafficRecordsTable appTrafficRecords =
+      $AppTrafficRecordsTable(this);
   late final Index idxRuleTarget = Index(
     'idx_rule_target',
     'CREATE INDEX idx_rule_target ON rules (rule_target)',
@@ -5271,6 +5951,10 @@ abstract class _$Database extends GeneratedDatabase {
   late final Index lastAccessedUrl = Index(
     'last_accessed_url',
     'CREATE INDEX last_accessed_url ON icon_records (last_accessed, url)',
+  );
+  late final Index idxAppTrafficProfileDay = Index(
+    'idx_app_traffic_profile_day',
+    'CREATE INDEX idx_app_traffic_profile_day ON app_traffic_records (profile_id, day)',
   );
   late final ProfilesDao profilesDao = ProfilesDao(this as Database);
   late final ScriptsDao scriptsDao = ScriptsDao(this as Database);
@@ -5289,6 +5973,7 @@ abstract class _$Database extends GeneratedDatabase {
   );
   late final IpQualitiesDao ipQualitiesDao = IpQualitiesDao(this as Database);
   late final MitmModulesDao mitmModulesDao = MitmModulesDao(this as Database);
+  late final AppTrafficDao appTrafficDao = AppTrafficDao(this as Database);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5306,10 +5991,12 @@ abstract class _$Database extends GeneratedDatabase {
     proxyDialers,
     ipQualities,
     mitmModules,
+    appTrafficRecords,
     idxRuleTarget,
     idxRulesProfileOrder,
     idxProxyGroupsProfileOrder,
     lastAccessedUrl,
+    idxAppTrafficProfileDay,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -9412,6 +10099,346 @@ typedef $$MitmModulesTableProcessedTableManager =
       RawMitmModule,
       PrefetchHooks Function()
     >;
+typedef $$AppTrafficRecordsTableCreateCompanionBuilder =
+    AppTrafficRecordsCompanion Function({
+      required int day,
+      required int profileId,
+      required String profileLabel,
+      required String applicationId,
+      required String applicationLabel,
+      required String processPath,
+      required String proxy,
+      required String provider,
+      Value<int> upload,
+      Value<int> download,
+      required int updatedAt,
+      Value<int> rowid,
+    });
+typedef $$AppTrafficRecordsTableUpdateCompanionBuilder =
+    AppTrafficRecordsCompanion Function({
+      Value<int> day,
+      Value<int> profileId,
+      Value<String> profileLabel,
+      Value<String> applicationId,
+      Value<String> applicationLabel,
+      Value<String> processPath,
+      Value<String> proxy,
+      Value<String> provider,
+      Value<int> upload,
+      Value<int> download,
+      Value<int> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$AppTrafficRecordsTableFilterComposer
+    extends Composer<_$Database, $AppTrafficRecordsTable> {
+  $$AppTrafficRecordsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get day => $composableBuilder(
+    column: $table.day,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get profileId => $composableBuilder(
+    column: $table.profileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get profileLabel => $composableBuilder(
+    column: $table.profileLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get applicationId => $composableBuilder(
+    column: $table.applicationId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get applicationLabel => $composableBuilder(
+    column: $table.applicationLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get processPath => $composableBuilder(
+    column: $table.processPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get proxy => $composableBuilder(
+    column: $table.proxy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provider => $composableBuilder(
+    column: $table.provider,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get upload => $composableBuilder(
+    column: $table.upload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get download => $composableBuilder(
+    column: $table.download,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AppTrafficRecordsTableOrderingComposer
+    extends Composer<_$Database, $AppTrafficRecordsTable> {
+  $$AppTrafficRecordsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get day => $composableBuilder(
+    column: $table.day,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get profileId => $composableBuilder(
+    column: $table.profileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get profileLabel => $composableBuilder(
+    column: $table.profileLabel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get applicationId => $composableBuilder(
+    column: $table.applicationId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get applicationLabel => $composableBuilder(
+    column: $table.applicationLabel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get processPath => $composableBuilder(
+    column: $table.processPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get proxy => $composableBuilder(
+    column: $table.proxy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provider => $composableBuilder(
+    column: $table.provider,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get upload => $composableBuilder(
+    column: $table.upload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get download => $composableBuilder(
+    column: $table.download,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AppTrafficRecordsTableAnnotationComposer
+    extends Composer<_$Database, $AppTrafficRecordsTable> {
+  $$AppTrafficRecordsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get day =>
+      $composableBuilder(column: $table.day, builder: (column) => column);
+
+  GeneratedColumn<int> get profileId =>
+      $composableBuilder(column: $table.profileId, builder: (column) => column);
+
+  GeneratedColumn<String> get profileLabel => $composableBuilder(
+    column: $table.profileLabel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get applicationId => $composableBuilder(
+    column: $table.applicationId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get applicationLabel => $composableBuilder(
+    column: $table.applicationLabel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get processPath => $composableBuilder(
+    column: $table.processPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get proxy =>
+      $composableBuilder(column: $table.proxy, builder: (column) => column);
+
+  GeneratedColumn<String> get provider =>
+      $composableBuilder(column: $table.provider, builder: (column) => column);
+
+  GeneratedColumn<int> get upload =>
+      $composableBuilder(column: $table.upload, builder: (column) => column);
+
+  GeneratedColumn<int> get download =>
+      $composableBuilder(column: $table.download, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$AppTrafficRecordsTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $AppTrafficRecordsTable,
+          AppTrafficRecord,
+          $$AppTrafficRecordsTableFilterComposer,
+          $$AppTrafficRecordsTableOrderingComposer,
+          $$AppTrafficRecordsTableAnnotationComposer,
+          $$AppTrafficRecordsTableCreateCompanionBuilder,
+          $$AppTrafficRecordsTableUpdateCompanionBuilder,
+          (
+            AppTrafficRecord,
+            BaseReferences<
+              _$Database,
+              $AppTrafficRecordsTable,
+              AppTrafficRecord
+            >,
+          ),
+          AppTrafficRecord,
+          PrefetchHooks Function()
+        > {
+  $$AppTrafficRecordsTableTableManager(
+    _$Database db,
+    $AppTrafficRecordsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AppTrafficRecordsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AppTrafficRecordsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AppTrafficRecordsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> day = const Value.absent(),
+                Value<int> profileId = const Value.absent(),
+                Value<String> profileLabel = const Value.absent(),
+                Value<String> applicationId = const Value.absent(),
+                Value<String> applicationLabel = const Value.absent(),
+                Value<String> processPath = const Value.absent(),
+                Value<String> proxy = const Value.absent(),
+                Value<String> provider = const Value.absent(),
+                Value<int> upload = const Value.absent(),
+                Value<int> download = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AppTrafficRecordsCompanion(
+                day: day,
+                profileId: profileId,
+                profileLabel: profileLabel,
+                applicationId: applicationId,
+                applicationLabel: applicationLabel,
+                processPath: processPath,
+                proxy: proxy,
+                provider: provider,
+                upload: upload,
+                download: download,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int day,
+                required int profileId,
+                required String profileLabel,
+                required String applicationId,
+                required String applicationLabel,
+                required String processPath,
+                required String proxy,
+                required String provider,
+                Value<int> upload = const Value.absent(),
+                Value<int> download = const Value.absent(),
+                required int updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => AppTrafficRecordsCompanion.insert(
+                day: day,
+                profileId: profileId,
+                profileLabel: profileLabel,
+                applicationId: applicationId,
+                applicationLabel: applicationLabel,
+                processPath: processPath,
+                proxy: proxy,
+                provider: provider,
+                upload: upload,
+                download: download,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$AppTrafficRecordsTable, AppTrafficRecord>(table),
+                  BaseReferences<
+                    _$Database,
+                    $AppTrafficRecordsTable,
+                    AppTrafficRecord
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AppTrafficRecordsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $AppTrafficRecordsTable,
+      AppTrafficRecord,
+      $$AppTrafficRecordsTableFilterComposer,
+      $$AppTrafficRecordsTableOrderingComposer,
+      $$AppTrafficRecordsTableAnnotationComposer,
+      $$AppTrafficRecordsTableCreateCompanionBuilder,
+      $$AppTrafficRecordsTableUpdateCompanionBuilder,
+      (
+        AppTrafficRecord,
+        BaseReferences<_$Database, $AppTrafficRecordsTable, AppTrafficRecord>,
+      ),
+      AppTrafficRecord,
+      PrefetchHooks Function()
+    >;
 
 class $DatabaseManager {
   final _$Database _db;
@@ -9440,6 +10467,8 @@ class $DatabaseManager {
       $$IpQualitiesTableTableManager(_db, _db.ipQualities);
   $$MitmModulesTableTableManager get mitmModules =>
       $$MitmModulesTableTableManager(_db, _db.mitmModules);
+  $$AppTrafficRecordsTableTableManager get appTrafficRecords =>
+      $$AppTrafficRecordsTableTableManager(_db, _db.appTrafficRecords);
 }
 
 mixin _$ProfilesDaoMixin on DatabaseAccessor<Database> {
@@ -9590,4 +10619,20 @@ class MitmModulesDaoManager {
   MitmModulesDaoManager(this._db);
   $$MitmModulesTableTableManager get mitmModules =>
       $$MitmModulesTableTableManager(_db.attachedDatabase, _db.mitmModules);
+}
+
+mixin _$AppTrafficDaoMixin on DatabaseAccessor<Database> {
+  $AppTrafficRecordsTable get appTrafficRecords =>
+      attachedDatabase.appTrafficRecords;
+  AppTrafficDaoManager get managers => AppTrafficDaoManager(this);
+}
+
+class AppTrafficDaoManager {
+  final _$AppTrafficDaoMixin _db;
+  AppTrafficDaoManager(this._db);
+  $$AppTrafficRecordsTableTableManager get appTrafficRecords =>
+      $$AppTrafficRecordsTableTableManager(
+        _db.attachedDatabase,
+        _db.appTrafficRecords,
+      );
 }

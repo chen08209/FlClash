@@ -1076,5 +1076,17 @@
   "fakeipFilterDesc": "这些域名不使用 Fake-IP，返回真实 IP；过滤模式为 whitelist 时则只有它们使用 Fake-IP。",
   "fallbackFilterGeositeDesc": "属于这些 GeoSite 分类的域名直接使用 Fallback 解析。",
   "fallbackFilterIpcidrDesc": "Nameserver 返回这些网段内的 IP 时，改用 Fallback 的结果。",
-  "fallbackFilterDomainDesc": "这些域名直接使用 Fallback 解析。"
+  "fallbackFilterDomainDesc": "这些域名直接使用 Fallback 解析。",
+  "appTraffic": "应用流量",
+  "appTrafficDesc": "查看各应用消耗的订阅代理流量",
+  "appTrafficScope": "仅统计实际经订阅代理转发的流量，DIRECT 直连不计入。数据每秒更新，重启后保留。",
+  "today": "今天",
+  "lastSevenDays": "近 7 天",
+  "allTime": "全部时间",
+  "allSubscriptions": "全部订阅",
+  "clearTrafficStatistics": "清除流量统计",
+  "clearTrafficStatisticsConfirm": "将清除当前订阅筛选范围内的全部应用流量历史，且无法撤销。",
+  "noAppTraffic": "当前范围暂无订阅代理流量",
+  "unknownApplication": "未知应用",
+  "customBuildUpdateTip": "此定制版的更新会保留应用流量统计功能。"
 }

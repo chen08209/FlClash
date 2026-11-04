@@ -1,0 +1,111 @@
+name: Custom app traffic release
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: custom-app-traffic-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.repository != 'chen08209/FlClash'
+    runs-on: macos-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      APP_TRAFFIC_CUSTOM_BUILD: 'true'
+      APP_UPDATE_REPOSITORY: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          submodules: recursive
+      - name: Check the upstream release
+        id: upstream
+        run: |
+          tag=$(gh api repos/chen08209/FlClash/releases/latest --jq .tag_name)
+          previous=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .body 2>/dev/null || true)
+          if [ "$GITHUB_EVENT_NAME" != workflow_dispatch ] && printf '%s' "$previous" | grep -Fq "flclash-upstream-tag: $tag"; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config --global url.https://github.com/.insteadOf git@github.com:
+          git fetch --no-tags https://github.com/chen08209/FlClash.git "refs/tags/$tag"
+          python3 tool/sync_custom_upstream.py FETCH_HEAD
+          flutter_version=$(git show FETCH_HEAD:.github/workflows/build.yaml | sed -n "s/.*FLUTTER_VERSION: '\([^']*\)'.*/\1/p" | head -n 1)
+          go_version=$(git show FETCH_HEAD:.github/workflows/build.yaml | sed -n "s/.*GO_VERSION: '\([^']*\)'.*/\1/p" | head -n 1)
+          echo "flutter=$flutter_version" >> "$GITHUB_OUTPUT"
+          echo "go=$go_version" >> "$GITHUB_OUTPUT"
+          rust_version=$(sed -n 's/^channel = "\([^"]*\)"/\1/p' plugins/rust_api/rust/rust-toolchain.toml)
+          echo "rust=$rust_version" >> "$GITHUB_OUTPUT"
+          echo "RUSTUP_TOOLCHAIN=$rust_version" >> "$GITHUB_ENV"
+          git submodule update --init --recursive
+      - uses: subosito/flutter-action@v2
+        if: steps.upstream.outputs.changed == 'true'
+        with:
+          flutter-version: ${{ steps.upstream.outputs.flutter }}
+          cache: true
+      - uses: actions/setup-go@v5
+        if: steps.upstream.outputs.changed == 'true'
+        with:
+          go-version: ${{ steps.upstream.outputs.go }}
+          cache-dependency-path: core/go.sum
+      - uses: dtolnay/rust-toolchain@master
+        if: steps.upstream.outputs.changed == 'true'
+        with:
+          toolchain: ${{ steps.upstream.outputs.rust }}
+      - uses: Swatinem/rust-cache@v2
+        if: steps.upstream.outputs.changed == 'true'
+        with:
+          workspaces: plugins/rust_api/rust
+      - name: Generate and verify the integrated feature
+        if: steps.upstream.outputs.changed == 'true'
+        run: |
+          flutter pub get
+          dart run intl_utils:generate
+          dart run build_runner build --delete-conflicting-outputs
+          dart format lib test tool setup.dart
+          flutter analyze --no-fatal-infos
+          dart run tool/test.dart -- --reporter expanded
+          CGO_ENABLED=0 go -C core test .
+          CGO_ENABLED=0 go -C core vet . ./cmd/...
+          test -f lib/views/traffic/app_traffic.dart
+          test -f lib/database/app_traffic.dart
+          git add -u
+          if git rev-parse -q --verify MERGE_HEAD >/dev/null; then
+            git commit -m 'chore: sync upstream while retaining app traffic'
+          elif ! git diff --cached --quiet; then
+            git commit -m 'chore: regenerate custom release sources'
+          fi
+          git push origin HEAD:main
+      - uses: actions/setup-node@v4
+        if: steps.upstream.outputs.changed == 'true'
+        with:
+          node-version: 22
+      - name: Build and publish the verified Mac update
+        if: steps.upstream.outputs.changed == 'true'
+        run: |
+          test "$(uname -m)" = arm64
+          npm install -g appdmg
+          version=$(sed -n 's/^version: \([^+]*\).*/\1/p' pubspec.yaml)
+          build=$(date -u +%Y%m%d%H)
+          source=$(git rev-parse HEAD)
+          sed -i '' -E "s/^version:.*/version: $version+$build/" pubspec.yaml
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          dart setup.dart macos --env stable
+          file="dist/FlClash-$version-macos-arm64.dmg"
+          hdiutil verify "$file"
+          (cd dist && shasum -a 256 "FlClash-$version-macos-arm64.dmg" > SHA256SUMS)
+          tag="v$version+$build"
+          printf '增加了流量统计功能\n\n<!-- flclash-update-build: %s -->\n<!-- flclash-upstream-tag: %s -->\n' "$build" '${{ steps.upstream.outputs.tag }}' > release-notes.md
+          gh release create "$tag" "$file" dist/SHA256SUMS --target "$source" --title "FlClash $version 应用流量定制版" --notes-file release-notes.md --latest

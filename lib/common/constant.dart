@@ -130,6 +130,10 @@ const bootRecordKey = 'boot_record';
 const appliedConfigMd5Key = 'applied_config_md5';
 const defaultSystemDnsFallback = '223.5.5.5';
 const repository = 'chen08209/FlClash';
+const updateRepository = String.fromEnvironment(
+  'APP_UPDATE_REPOSITORY',
+  defaultValue: repository,
+);
 const maxMobileWidth = 600;
 const maxLaptopWidth = 840;
 const defaultTestUrl = 'https://www.gstatic.com/generate_204';

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
+import 'package:fl_clash/database/database.dart';
+import 'package:fl_clash/manager/app_traffic_tracker.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
@@ -27,6 +29,18 @@ class CoreManager extends ConsumerStatefulWidget {
 class _CoreContainerState extends ConsumerState<CoreManager>
     with CoreEventListener {
   CoreController get _core => ref.read(coreHandlerProvider);
+  late final _trafficTracker = AppTrafficTracker(
+    persist: database.appTrafficDao.addAll,
+    resolveProfile: () {
+      final profile = ref.read(currentProfileProvider);
+      return AppTrafficProfileContext(
+        id: profile?.id ?? 0,
+        label: profile?.label ?? '',
+      );
+    },
+  );
+  Timer? _trafficTimer;
+  bool _trafficCaptureRunning = false;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +51,10 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   void initState() {
     super.initState();
     coreEventManager.addListener(this);
+    _trafficTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => unawaited(_captureAppTraffic()),
+    );
     ref.read(updatingActionProvider.notifier);
     // A rejected profile stays selected on purpose: silently reverting to
     // the previous one hides the error and looks like the switch was lost.
@@ -110,8 +128,40 @@ class _CoreContainerState extends ConsumerState<CoreManager>
 
   @override
   void dispose() {
+    _trafficTimer?.cancel();
     coreEventManager.removeListener(this);
     super.dispose();
+  }
+
+  Future<void> _captureAppTraffic() async {
+    if (_trafficCaptureRunning ||
+        !mounted ||
+        ref.read(coreStatusProvider) != CoreStatus.connected) {
+      return;
+    }
+    _trafficCaptureRunning = true;
+    try {
+      final connections = await _core.getConnections();
+      if (mounted) {
+        await _trafficTracker.observeSnapshot(connections);
+      }
+    } catch (error) {
+      commonPrint.log(
+        'capture app traffic error: $error',
+        logLevel: coreFailureLogLevel(error),
+      );
+    } finally {
+      _trafficCaptureRunning = false;
+    }
+  }
+
+  @override
+  void onConnectionClosed(TrackerInfo trackerInfo) {
+    unawaited(
+      _trafficTracker.observeClosed(trackerInfo).catchError((Object error) {
+        commonPrint.log('persist app traffic error: $error');
+      }),
+    );
   }
 
   @override
@@ -154,6 +204,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
 
   @override
   void onRequest(TrackerInfo trackerInfo) async {
+    _trafficTracker.observeStart(trackerInfo);
     ref.read(requestsProvider.notifier).addRequest(trackerInfo);
     ref.read(requestCountProvider.notifier).update((count) => count + 1);
     super.onRequest(trackerInfo);

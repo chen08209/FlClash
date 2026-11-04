@@ -107,10 +107,11 @@ class Request {
   /// Null when this build is current; throws when GitHub cannot be asked.
   Future<Map<String, dynamic>?> checkForUpdate() async {
     final release = await latestRelease();
-    final remoteVersion = release['tag_name'] as String;
-    final version = globalState.packageInfo.version;
-    final hasUpdate =
-        compareVersions(remoteVersion.replaceAll('v', ''), version) > 0;
+    final hasUpdate = hasReleaseUpdate(
+      release,
+      globalState.packageInfo.version,
+      globalState.packageInfo.buildNumber,
+    );
     return hasUpdate ? release : null;
   }
 
@@ -118,7 +119,7 @@ class Request {
   Future<Map<String, dynamic>> latestRelease() async {
     try {
       final response = await dio.get<Map<String, dynamic>>(
-        'https://api.github.com/repos/$repository/releases/latest',
+        'https://api.github.com/repos/$updateRepository/releases/latest',
         options: Options(responseType: ResponseType.json),
       );
       return response.data!;
@@ -129,7 +130,7 @@ class Request {
       );
     }
     final response = await dio.get<void>(
-      'https://github.com/$repository/releases/latest',
+      'https://github.com/$updateRepository/releases/latest',
       options: Options(
         followRedirects: false,
         validateStatus: (status) => status != null && status < 400,

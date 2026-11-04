@@ -125,7 +125,14 @@ List<String> createFlutterBuildArgs({
 }
 
 Map<String, String> createBuildEnvironment(String env) {
-  return {'APP_ENV': env};
+  return {
+    'APP_ENV': env,
+    if (Platform.environment['APP_TRAFFIC_CUSTOM_BUILD'] == 'true')
+      'APP_TRAFFIC_CUSTOM_BUILD': 'true',
+    if (Platform.environment['APP_UPDATE_REPOSITORY']
+        case final String repository)
+      'APP_UPDATE_REPOSITORY': repository,
+  };
 }
 
 /// Packages whose build hook `pubspec.yaml` turns into a no-op.

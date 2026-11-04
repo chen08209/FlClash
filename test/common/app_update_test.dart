@@ -38,13 +38,16 @@ void main() {
       );
     });
 
-    test('leaves macOS and Linux to the release page', () {
-      for (final abi in [
-        Abi.macosArm64,
-        Abi.macosX64,
-        Abi.linuxX64,
-        Abi.linuxArm64,
-      ]) {
+    test('names both macOS packages and leaves Linux to the release page', () {
+      expect(
+        selfUpdateAssetSuffix(Abi.macosArm64, windowsInstalled: false),
+        'macos-arm64.dmg',
+      );
+      expect(
+        selfUpdateAssetSuffix(Abi.macosX64, windowsInstalled: false),
+        'macos-amd64.dmg',
+      );
+      for (final abi in [Abi.linuxX64, Abi.linuxArm64]) {
         expect(selfUpdateAssetSuffix(abi, windowsInstalled: true), isNull);
       }
     });
@@ -54,6 +57,23 @@ void main() {
     expect(
       releaseAssetName('v0.9.3', 'android-arm64-v8a.apk'),
       'FlClash-0.9.3-android-arm64-v8a.apk',
+    );
+  });
+
+  test('custom releases compare their build and keep normal asset names', () {
+    const release = {'tag_name': 'v0.9.3+2026110403'};
+    expect(
+      hasReleaseUpdate(release, '0.9.3', '2026110402', includeBuild: true),
+      isTrue,
+    );
+    expect(
+      hasReleaseUpdate(release, '0.9.3', '2026110403', includeBuild: true),
+      isFalse,
+    );
+    expect(hasReleaseUpdate(release, '0.9.3', '2026110402'), isFalse);
+    expect(
+      releaseAssetName(release['tag_name']!, 'macos-arm64.dmg'),
+      'FlClash-0.9.3-macos-arm64.dmg',
     );
   });
 

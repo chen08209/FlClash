@@ -365,6 +365,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "allReferencedProxyProviders": MessageLookupByLibrary.simpleMessage(
       "Tous les fournisseurs de proxys référencés",
     ),
+    "allSubscriptions": MessageLookupByLibrary.simpleMessage(
+      "Tous les abonnements",
+    ),
+    "allTime": MessageLookupByLibrary.simpleMessage("Toute la période"),
     "allowBypass": MessageLookupByLibrary.simpleMessage(
       "Autoriser les apps à contourner le VPN",
     ),
@@ -381,6 +385,15 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage(
       "Aucun proxy local",
+    ),
+    "appTraffic": MessageLookupByLibrary.simpleMessage(
+      "Trafic des applications",
+    ),
+    "appTrafficDesc": MessageLookupByLibrary.simpleMessage(
+      "Trafic du proxy par application",
+    ),
+    "appTrafficScope": MessageLookupByLibrary.simpleMessage(
+      "Seul le trafic réellement envoyé par un proxy est compté. Les connexions DIRECT sont exclues. Les données sont actualisées chaque seconde et conservées après redémarrage.",
     ),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage(
       "Ajouter le DNS du système",
@@ -518,6 +531,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Échec du vidage du cache DNS",
     ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("Effacer la recherche"),
+    "clearTrafficStatistics": MessageLookupByLibrary.simpleMessage(
+      "Effacer les statistiques",
+    ),
+    "clearTrafficStatisticsConfirm": MessageLookupByLibrary.simpleMessage(
+      "Tout l’historique du trafic des applications des abonnements sélectionnés sera supprimé. Cette action est irréversible.",
+    ),
     "clientFingerprint": MessageLookupByLibrary.simpleMessage(
       "Empreinte client",
     ),
@@ -619,6 +638,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Contient le bouton de démarrage et ne peut pas être retiré",
     ),
     "custom": MessageLookupByLibrary.simpleMessage("Personnalisé"),
+    "customBuildUpdateTip": MessageLookupByLibrary.simpleMessage(
+      "Les mises à jour de cette version conservent les statistiques par application.",
+    ),
     "customColor": MessageLookupByLibrary.simpleMessage(
       "Couleur personnalisée",
     ),
@@ -1250,6 +1272,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "label": MessageLookupByLibrary.simpleMessage("Libellé"),
     "language": MessageLookupByLibrary.simpleMessage("Langue"),
     "large": MessageLookupByLibrary.simpleMessage("Grande"),
+    "lastSevenDays": MessageLookupByLibrary.simpleMessage("7 derniers jours"),
     "lastUpdated": MessageLookupByLibrary.simpleMessage("Dernière mise à jour"),
     "launchInterrupted": MessageLookupByLibrary.simpleMessage(
       "Démarrage inachevé",
@@ -1550,6 +1573,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkType": MessageLookupByLibrary.simpleMessage("Type de réseau"),
     "nextMatch": MessageLookupByLibrary.simpleMessage("Résultat suivant"),
     "no": MessageLookupByLibrary.simpleMessage("Non"),
+    "noAppTraffic": MessageLookupByLibrary.simpleMessage(
+      "Aucun trafic proxy sur cette période",
+    ),
     "noData": MessageLookupByLibrary.simpleMessage("Aucune donnée"),
     "noInfo": MessageLookupByLibrary.simpleMessage("Aucune information"),
     "noLongerRemind": MessageLookupByLibrary.simpleMessage(
@@ -2221,6 +2247,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "timeout": MessageLookupByLibrary.simpleMessage("Expiré"),
     "tintedStyle": MessageLookupByLibrary.simpleMessage("Teinté"),
     "tip": MessageLookupByLibrary.simpleMessage("Astuce"),
+    "today": MessageLookupByLibrary.simpleMessage("Aujourd’hui"),
     "toggle": MessageLookupByLibrary.simpleMessage("Basculer"),
     "tolerance": MessageLookupByLibrary.simpleMessage("Tolérance"),
     "tools": MessageLookupByLibrary.simpleMessage("Outils"),
@@ -2260,6 +2287,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "undo": MessageLookupByLibrary.simpleMessage("Annuler"),
     "unifiedDelay": MessageLookupByLibrary.simpleMessage("Délai unifié"),
     "unknown": MessageLookupByLibrary.simpleMessage("Inconnu"),
+    "unknownApplication": MessageLookupByLibrary.simpleMessage(
+      "Application inconnue",
+    ),
     "unknownNetworkError": MessageLookupByLibrary.simpleMessage(
       "Erreur réseau inconnue",
     ),
