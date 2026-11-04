@@ -152,7 +152,8 @@ abstract class GomobileBind : DefaultTask() {
                 "-androidapi=${androidApi.get()}",
                 "-javapkg=com.follow.clash.core",
                 "-tags=${tags.get()}",
-                "-ldflags=${ldflags.get()} -X=runtime.godebugDefault=${godebug.toString().trim()}",
+                "-ldflags=${ldflags.get()} -X=runtime.godebugDefault=${godebug.toString().trim()} " +
+                    "-extldflags=-Wl,-z,max-page-size=16384,-z,common-page-size=16384",
                 "-o",
                 aar.get().asFile.path,
                 "./mobile",

@@ -37,6 +37,9 @@ jobs:
       - name: Test git hooks
         run: bash tool/hooks/test.sh
 
+      - name: Test Android page size checks
+        run: python3 -m unittest discover -s test/tool -p '*_test.py'
+
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
         with:
@@ -213,7 +216,7 @@ jobs:
           GOOS=android GOARCH=arm64 go vet "-tags=$tags" . ./mobile ./tun ./platform
 
   android:
-    name: Android unit tests
+    name: Android
     if: *checks
     runs-on: ubuntu-latest
     steps:
@@ -240,6 +243,13 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: plugins/rust_api/rust
+          cache-directories: .dart_tool/hooks_runner
+          save-if: ${{ env.BRANCH_CACHE }}
 
       - name: Setup NDK
         uses: nttld/setup-ndk@v1
@@ -277,6 +287,12 @@ jobs:
           ./gradlew :common:testDebugUnitTest :service:testDebugUnitTest :app:testDebugUnitTest \
             -Ptarget-platform=android-arm64 \
             -x :app:compileFlutterBuildDebug -x :app:copyFlutterAssetsDebug
+
+      - name: Build Android APK for page size verification
+        run: flutter build apk --release --target-platform android-arm64 --split-per-abi
+
+      - name: Verify Android 16 KB page sizes
+        run: python3 tool/check_android_page_sizes.py build/app/outputs/flutter-apk
 
   rust:
     name: Rust
@@ -444,6 +460,10 @@ jobs:
         env:
           ANDROID_NDK_HOME: ${{ steps.build-ndk.outputs.ndk-path }}
         run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
+
+      - name: Verify Android 16 KB page sizes
+        if: matrix.platform == 'android'
+        run: python3 tool/check_android_page_sizes.py dist
 
       - name: Upload
         uses: actions/upload-artifact@v4
