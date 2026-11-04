@@ -124,8 +124,17 @@ List<String> createFlutterBuildArgs({
   return flutterBuildArgs;
 }
 
-Map<String, String> createBuildEnvironment(String env) {
-  return {'APP_ENV': env};
+Map<String, String> createBuildEnvironment(
+  String env, {
+  bool appTrafficCustomBuild = false,
+  String? updateRepository,
+}) {
+  return {
+    'APP_ENV': env,
+    if (appTrafficCustomBuild) 'APP_TRAFFIC_CUSTOM_BUILD': 'true',
+    if (updateRepository case final String repository)
+      'APP_UPDATE_REPOSITORY': repository,
+  };
 }
 
 /// Packages whose build hook `pubspec.yaml` turns into a no-op.
@@ -164,7 +173,16 @@ Future<int> _package(
   required bool verbose,
 }) async {
   final file = File(p.join(rootDir, 'env.json'));
-  await file.writeAsString(jsonEncode(createBuildEnvironment(env)));
+  await file.writeAsString(
+    jsonEncode(
+      createBuildEnvironment(
+        env,
+        appTrafficCustomBuild:
+            Platform.environment['APP_TRAFFIC_CUSTOM_BUILD'] == 'true',
+        updateRepository: Platform.environment['APP_UPDATE_REPOSITORY'],
+      ),
+    ),
+  );
 
   final flutterBuildArgs = createFlutterBuildArgs(
     platform: platform,

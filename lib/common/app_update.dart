@@ -12,6 +12,7 @@ import 'package:flutter/services.dart' show PlatformException;
 import 'package:path/path.dart';
 
 const releaseChecksumsName = 'SHA256SUMS';
+const appTrafficCustomBuild = bool.fromEnvironment('APP_TRAFFIC_CUSTOM_BUILD');
 
 sealed class UpdateDownload {
   const UpdateDownload(this.tag);
@@ -48,6 +49,8 @@ String? selfUpdateAssetSuffix(Abi abi, {required bool windowsInstalled}) {
     Abi.androidArm64 => 'android-arm64-v8a.apk',
     Abi.androidArm => 'android-armeabi-v7a.apk',
     Abi.androidX64 => 'android-x86_64.apk',
+    Abi.macosArm64 => 'macos-arm64.dmg',
+    Abi.macosX64 => 'macos-amd64.dmg',
     Abi.windowsX64 when windowsInstalled => 'windows-amd64-setup.exe',
     Abi.windowsArm64 when windowsInstalled => 'windows-arm64-setup.exe',
     _ => null,
@@ -55,12 +58,36 @@ String? selfUpdateAssetSuffix(Abi abi, {required bool windowsInstalled}) {
 }
 
 String releaseAssetName(String tag, String suffix) {
-  final version = tag.startsWith('v') ? tag.substring(1) : tag;
+  final version = (tag.startsWith('v') ? tag.substring(1) : tag)
+      .split('+')
+      .first;
   return '$appName-$version-$suffix';
 }
 
+bool hasReleaseUpdate(
+  Map<String, dynamic> release,
+  String installedVersion,
+  String installedBuild, {
+  bool includeBuild = appTrafficCustomBuild,
+}) {
+  final tag = (release['tag_name'] as String).replaceFirst(RegExp(r'^v'), '');
+  final parts = tag.split('+');
+  final comparison = compareVersions(parts.first, installedVersion);
+  if (comparison != 0) return comparison > 0;
+  if (!includeBuild) return false;
+  final build = parts.length > 1
+      ? parts.last
+      : RegExp(
+          r'flclash-update-build: (\d+)',
+        ).firstMatch(release['body'] as String? ?? '')?.group(1);
+  return (int.tryParse(build ?? '') ?? 0) > (int.tryParse(installedBuild) ?? 0);
+}
+
 Uri releaseAssetUri(String tag, String name) {
-  return Uri.https('github.com', '/$repository/releases/download/$tag/$name');
+  return Uri.https(
+    'github.com',
+    '/$updateRepository/releases/download/$tag/$name',
+  );
 }
 
 final _checksumLine = RegExp(r'^([0-9a-fA-F]{64}) [ *](?:\./)?(.+)$');

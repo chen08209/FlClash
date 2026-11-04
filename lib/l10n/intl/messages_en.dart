@@ -346,6 +346,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "allReferencedProxyProviders": MessageLookupByLibrary.simpleMessage(
       "All referenced proxy providers",
     ),
+    "allSubscriptions": MessageLookupByLibrary.simpleMessage(
+      "All subscriptions",
+    ),
+    "allTime": MessageLookupByLibrary.simpleMessage("All time"),
     "allowBypass": MessageLookupByLibrary.simpleMessage(
       "Allow apps to bypass VPN",
     ),
@@ -359,6 +363,13 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "appIconDesign": MessageLookupByLibrary.simpleMessage("App icon design"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("No local proxies"),
+    "appTraffic": MessageLookupByLibrary.simpleMessage("App Traffic"),
+    "appTrafficDesc": MessageLookupByLibrary.simpleMessage(
+      "View subscription proxy traffic by application",
+    ),
+    "appTrafficScope": MessageLookupByLibrary.simpleMessage(
+      "Only traffic sent through subscription proxies is counted. DIRECT connections are excluded. Data updates every second and is retained after restart.",
+    ),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage(
       "Append system DNS",
     ),
@@ -477,6 +488,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Failed to clear DNS cache",
     ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("Clear search"),
+    "clearTrafficStatistics": MessageLookupByLibrary.simpleMessage(
+      "Clear traffic statistics",
+    ),
+    "clearTrafficStatisticsConfirm": MessageLookupByLibrary.simpleMessage(
+      "This clears all app traffic history in the selected subscription scope and cannot be undone.",
+    ),
     "clientFingerprint": MessageLookupByLibrary.simpleMessage(
       "Client fingerprint",
     ),
@@ -572,6 +589,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Holds the start button and can\'t be removed",
     ),
     "custom": MessageLookupByLibrary.simpleMessage("Custom"),
+    "customBuildUpdateTip": MessageLookupByLibrary.simpleMessage(
+      "Updates for this custom build retain app traffic statistics.",
+    ),
     "customColor": MessageLookupByLibrary.simpleMessage("Custom color"),
     "customImportDroppedSubRules": m8,
     "customIssueCoreRejected": m9,
@@ -1161,6 +1181,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "label": MessageLookupByLibrary.simpleMessage("Label"),
     "language": MessageLookupByLibrary.simpleMessage("Language"),
     "large": MessageLookupByLibrary.simpleMessage("Large"),
+    "lastSevenDays": MessageLookupByLibrary.simpleMessage("Last 7 days"),
     "lastUpdated": MessageLookupByLibrary.simpleMessage("Last updated"),
     "launchInterrupted": MessageLookupByLibrary.simpleMessage(
       "Launch did not finish",
@@ -1441,6 +1462,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkType": MessageLookupByLibrary.simpleMessage("Network type"),
     "nextMatch": MessageLookupByLibrary.simpleMessage("Next match"),
     "no": MessageLookupByLibrary.simpleMessage("No"),
+    "noAppTraffic": MessageLookupByLibrary.simpleMessage(
+      "No subscription proxy traffic in this range",
+    ),
     "noData": MessageLookupByLibrary.simpleMessage("No data"),
     "noInfo": MessageLookupByLibrary.simpleMessage("No info"),
     "noLongerRemind": MessageLookupByLibrary.simpleMessage(
@@ -2052,6 +2076,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "timeout": MessageLookupByLibrary.simpleMessage("Timeout"),
     "tintedStyle": MessageLookupByLibrary.simpleMessage("Tinted"),
     "tip": MessageLookupByLibrary.simpleMessage("Tip"),
+    "today": MessageLookupByLibrary.simpleMessage("Today"),
     "toggle": MessageLookupByLibrary.simpleMessage("Toggle"),
     "tolerance": MessageLookupByLibrary.simpleMessage("Tolerance"),
     "tools": MessageLookupByLibrary.simpleMessage("Tools"),
@@ -2091,6 +2116,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "undo": MessageLookupByLibrary.simpleMessage("Undo"),
     "unifiedDelay": MessageLookupByLibrary.simpleMessage("Unified delay"),
     "unknown": MessageLookupByLibrary.simpleMessage("Unknown"),
+    "unknownApplication": MessageLookupByLibrary.simpleMessage(
+      "Unknown application",
+    ),
     "unknownNetworkError": MessageLookupByLibrary.simpleMessage(
       "Unknown network error",
     ),

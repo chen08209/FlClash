@@ -34,10 +34,14 @@ type requestTrafficWatch struct {
 	mu       sync.Mutex
 	requests map[string]*watchedRequest
 	running  bool
+	closed   func(statistic.Tracker) bool
 }
 
 var currentRequestTraffic = requestTrafficWatch{
 	requests: map[string]*watchedRequest{},
+	closed: func(tracker statistic.Tracker) bool {
+		return sendMessage(ConnectionClosedMessage, appTrafficConnection(tracker.Info()))
+	},
 }
 
 func (w *requestTrafficWatch) add(tracker statistic.Tracker) (start bool) {
@@ -82,6 +86,9 @@ func (w *requestTrafficWatch) collect(
 	}
 	for id, request := range w.requests {
 		if request.closedReports > 0 && (queued || request.closedReports > requestTrafficCloseRetries) {
+			if w.closed != nil && !w.closed(request.tracker) && request.closedReports <= requestTrafficCloseRetries {
+				continue
+			}
 			delete(w.requests, id)
 		}
 	}

@@ -38,7 +38,7 @@ func classOfMessage(message Message) messageClass {
 	switch message.Type {
 	case LoadedMessage, GeoUpdateMessage, RouteChangedMessage:
 		return stateMessageClass
-	case LogMessage, RequestMessage:
+	case LogMessage, RequestMessage, ConnectionClosedMessage:
 		return bulkMessageClass
 	case DnsMessage, RequestTrafficMessage:
 		return yieldingBulkMessageClass

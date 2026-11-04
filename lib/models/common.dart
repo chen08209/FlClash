@@ -122,6 +122,8 @@ abstract class TrackerInfo with _$TrackerInfo {
     required DateTime start,
     required Metadata metadata,
     required List<String> chains,
+    @Default([]) List<String> providerChains,
+    @Default(false) bool direct,
     required String rule,
     required String rulePayload,
     int? downloadSpeed,

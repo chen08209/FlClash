@@ -28,6 +28,8 @@ abstract mixin class CoreEventListener {
 
   void onRequest(TrackerInfo connection) {}
 
+  void onConnectionClosed(TrackerInfo connection) {}
+
   void onRequestTraffic(Map<String, RequestTraffic> traffic) {}
 
   void onDns(DnsQuery dnsQuery) {}
@@ -64,6 +66,9 @@ class CoreEventManager {
               break;
             case CoreEventType.request:
               listener.onRequest(TrackerInfo.fromJson(event.data));
+              break;
+            case CoreEventType.connectionClosed:
+              listener.onConnectionClosed(TrackerInfo.fromJson(event.data));
               break;
             case CoreEventType.requestTraffic:
               listener.onRequestTraffic({

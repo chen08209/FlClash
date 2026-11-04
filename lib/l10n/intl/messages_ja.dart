@@ -305,6 +305,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "allReferencedProxyProviders": MessageLookupByLibrary.simpleMessage(
       "参照されているすべてのプロキシプロバイダー",
     ),
+    "allSubscriptions": MessageLookupByLibrary.simpleMessage("すべてのサブスクリプション"),
+    "allTime": MessageLookupByLibrary.simpleMessage("全期間"),
     "allowBypass": MessageLookupByLibrary.simpleMessage("アプリによるVPNバイパスを許可"),
     "allowLan": MessageLookupByLibrary.simpleMessage("LANプロキシ"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("許可する IP"),
@@ -314,6 +316,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "appAccessControl": MessageLookupByLibrary.simpleMessage("アプリアクセス制御"),
     "appIconDesign": MessageLookupByLibrary.simpleMessage("アプリアイコンのデザイン"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("ローカルプロキシがありません"),
+    "appTraffic": MessageLookupByLibrary.simpleMessage("アプリ通信量"),
+    "appTrafficDesc": MessageLookupByLibrary.simpleMessage(
+      "アプリ別のサブスクリプションプロキシ通信量を表示",
+    ),
+    "appTrafficScope": MessageLookupByLibrary.simpleMessage(
+      "サブスクリプションプロキシを経由した通信量のみを集計します。DIRECT 接続は除外されます。データは毎秒更新され、再起動後も保持されます。",
+    ),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage("システムDNSを追加"),
     "applied": MessageLookupByLibrary.simpleMessage("適用しました"),
     "applyNow": MessageLookupByLibrary.simpleMessage("今すぐ適用"),
@@ -410,6 +419,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "DNSキャッシュのクリアに失敗しました",
     ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("検索をクリア"),
+    "clearTrafficStatistics": MessageLookupByLibrary.simpleMessage("通信量統計を消去"),
+    "clearTrafficStatisticsConfirm": MessageLookupByLibrary.simpleMessage(
+      "選択したサブスクリプション範囲のアプリ通信量履歴をすべて消去します。この操作は元に戻せません。",
+    ),
     "clientFingerprint": MessageLookupByLibrary.simpleMessage(
       "クライアントフィンガープリント",
     ),
@@ -489,6 +502,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "起動ボタンがあるため削除できません",
     ),
     "custom": MessageLookupByLibrary.simpleMessage("カスタム"),
+    "customBuildUpdateTip": MessageLookupByLibrary.simpleMessage(
+      "このカスタムビルドの更新ではアプリ通信量統計が保持されます。",
+    ),
     "customColor": MessageLookupByLibrary.simpleMessage("カスタムカラー"),
     "customImportDroppedSubRules": m8,
     "customIssueCoreRejected": m9,
@@ -997,6 +1013,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "label": MessageLookupByLibrary.simpleMessage("ラベル"),
     "language": MessageLookupByLibrary.simpleMessage("言語"),
     "large": MessageLookupByLibrary.simpleMessage("大"),
+    "lastSevenDays": MessageLookupByLibrary.simpleMessage("過去 7 日間"),
     "lastUpdated": MessageLookupByLibrary.simpleMessage("最終更新"),
     "launchInterrupted": MessageLookupByLibrary.simpleMessage("起動が完了しませんでした"),
     "launchInterruptedTip": MessageLookupByLibrary.simpleMessage(
@@ -1237,6 +1254,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkType": MessageLookupByLibrary.simpleMessage("ネットワーク種別"),
     "nextMatch": MessageLookupByLibrary.simpleMessage("次の一致"),
     "no": MessageLookupByLibrary.simpleMessage("いいえ"),
+    "noAppTraffic": MessageLookupByLibrary.simpleMessage(
+      "この範囲にはサブスクリプションプロキシ通信量がありません",
+    ),
     "noData": MessageLookupByLibrary.simpleMessage("データがありません"),
     "noInfo": MessageLookupByLibrary.simpleMessage("情報がありません"),
     "noLongerRemind": MessageLookupByLibrary.simpleMessage("今後表示しない"),
@@ -1758,6 +1778,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "timeout": MessageLookupByLibrary.simpleMessage("タイムアウト"),
     "tintedStyle": MessageLookupByLibrary.simpleMessage("ティント"),
     "tip": MessageLookupByLibrary.simpleMessage("ヒント"),
+    "today": MessageLookupByLibrary.simpleMessage("今日"),
     "toggle": MessageLookupByLibrary.simpleMessage("切り替え"),
     "tolerance": MessageLookupByLibrary.simpleMessage("許容値"),
     "tools": MessageLookupByLibrary.simpleMessage("ツール"),
@@ -1793,6 +1814,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "undo": MessageLookupByLibrary.simpleMessage("元に戻す"),
     "unifiedDelay": MessageLookupByLibrary.simpleMessage("統一遅延"),
     "unknown": MessageLookupByLibrary.simpleMessage("不明"),
+    "unknownApplication": MessageLookupByLibrary.simpleMessage("不明なアプリ"),
     "unknownNetworkError": MessageLookupByLibrary.simpleMessage("不明なネットワークエラー"),
     "unmaximize": MessageLookupByLibrary.simpleMessage("元に戻す"),
     "unnamed": MessageLookupByLibrary.simpleMessage("名称未設定"),

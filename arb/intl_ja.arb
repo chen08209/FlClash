@@ -1076,5 +1076,17 @@
   "fakeipFilterDesc": "これらのドメインには Fake-IP ではなく実際の IP を返します。whitelist モードでは、これらだけが Fake-IP を使います。",
   "fallbackFilterGeositeDesc": "これらの GeoSite カテゴリのドメインは、直接 Fallback で解決します。",
   "fallbackFilterIpcidrDesc": "Nameserver がこれらの範囲の IP を返したときは、Fallback の結果を使います。",
-  "fallbackFilterDomainDesc": "これらのドメインは、直接 Fallback で解決します。"
+  "fallbackFilterDomainDesc": "これらのドメインは、直接 Fallback で解決します。",
+  "appTraffic": "アプリ通信量",
+  "appTrafficDesc": "アプリ別のサブスクリプションプロキシ通信量を表示",
+  "appTrafficScope": "サブスクリプションプロキシを経由した通信量のみを集計します。DIRECT 接続は除外されます。データは毎秒更新され、再起動後も保持されます。",
+  "today": "今日",
+  "lastSevenDays": "過去 7 日間",
+  "allTime": "全期間",
+  "allSubscriptions": "すべてのサブスクリプション",
+  "clearTrafficStatistics": "通信量統計を消去",
+  "clearTrafficStatisticsConfirm": "選択したサブスクリプション範囲のアプリ通信量履歴をすべて消去します。この操作は元に戻せません。",
+  "noAppTraffic": "この範囲にはサブスクリプションプロキシ通信量がありません",
+  "unknownApplication": "不明なアプリ",
+  "customBuildUpdateTip": "このカスタムビルドの更新ではアプリ通信量統計が保持されます。"
 }

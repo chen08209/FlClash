@@ -20,8 +20,30 @@ func handleResetTraffic() {
 	statistic.DefaultManager.ResetStatistic()
 }
 
-func handleGetConnections() *statistic.Snapshot {
-	return statistic.DefaultManager.Snapshot()
+type AppTrafficConnection struct {
+	*statistic.TrackerInfo
+	Direct bool `json:"direct"`
+}
+
+func appTrafficConnection(info *statistic.TrackerInfo) *AppTrafficConnection {
+	return &AppTrafficConnection{
+		TrackerInfo: info,
+		Direct:      statistic.IsDirect(info.Chain.Last()),
+	}
+}
+
+type ConnectionSnapshot struct {
+	*statistic.Snapshot
+	Connections []*AppTrafficConnection `json:"connections"`
+}
+
+func handleGetConnections() *ConnectionSnapshot {
+	snapshot := statistic.DefaultManager.Snapshot()
+	connections := make([]*AppTrafficConnection, 0, len(snapshot.Connections))
+	for _, info := range snapshot.Connections {
+		connections = append(connections, appTrafficConnection(info))
+	}
+	return &ConnectionSnapshot{Snapshot: snapshot, Connections: connections}
 }
 
 func handleGetConnectionCount() int {

@@ -137,3 +137,32 @@ func TestRequestTrafficGivesUpOnAClosedRequestItCannotReport(t *testing.T) {
 		t.Fatal("a closed request outlived its retries")
 	}
 }
+
+func TestAppTrafficCloseReportsFinalBytesAndRetries(t *testing.T) {
+	tracker := newPipeTracker(t)
+	var totals []int64
+	accepted := false
+	watch := requestTrafficWatch{
+		requests: map[string]*watchedRequest{},
+		closed: func(tracker statistic.Tracker) bool {
+			totals = append(totals, tracker.Info().UploadTotal.Load())
+			return accepted
+		},
+	}
+	watch.add(tracker)
+	closed := func(string) bool { return false }
+	collectDelivered(&watch, closed)
+	if _, err := tracker.Write([]byte("short request")); err != nil {
+		t.Fatal(err)
+	}
+	if _, watching := collectDelivered(&watch, closed); !watching {
+		t.Fatal("closed request lost before final traffic was accepted")
+	}
+	accepted = true
+	if _, watching := collectDelivered(&watch, closed); watching {
+		t.Fatal("closed request retained after final traffic was accepted")
+	}
+	if len(totals) != 2 || totals[0] != 13 || totals[1] != 13 {
+		t.Fatalf("final totals: %v", totals)
+	}
+}

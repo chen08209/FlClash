@@ -11,6 +11,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
 part 'clash_providers.dart';
+part 'app_traffic.dart';
 part 'converter.dart';
 part 'custom_proxies.dart';
 part 'dialers.dart';
@@ -37,6 +38,7 @@ part 'scripts.dart';
     ProxyDialers,
     IpQualities,
     MitmModules,
+    AppTrafficRecords,
   ],
   daos: [
     ProfilesDao,
@@ -50,6 +52,7 @@ part 'scripts.dart';
     ProxyDialersDao,
     IpQualitiesDao,
     MitmModulesDao,
+    AppTrafficDao,
   ],
 )
 class Database extends _$Database {
@@ -73,7 +76,7 @@ class Database extends _$Database {
           await m.createTable(iconRecords);
           await _migrateV1Rules();
         }
-        if (from < 3) {
+        if (from < 4) {
           await _addColumnIfMissing(m, profiles, profiles.matchTarget);
         }
         if (from < 4) {
@@ -127,7 +130,10 @@ class Database extends _$Database {
           await m.alterTable(TableMigration(mitmModules));
         }
       }),
-      beforeOpen: (_) => customStatement('PRAGMA foreign_keys = ON'),
+      beforeOpen: (_) async {
+        await _createTableIfMissing(createMigrator(), appTrafficRecords);
+        await customStatement('PRAGMA foreign_keys = ON');
+      },
     );
   }
 

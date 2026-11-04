@@ -9072,6 +9072,111 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `App Traffic`
+  String get appTraffic {
+    return Intl.message('App Traffic', name: 'appTraffic', desc: '', args: []);
+  }
+
+  /// `View subscription proxy traffic by application`
+  String get appTrafficDesc {
+    return Intl.message(
+      'View subscription proxy traffic by application',
+      name: 'appTrafficDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only traffic sent through subscription proxies is counted. DIRECT connections are excluded. Data updates every second and is retained after restart.`
+  String get appTrafficScope {
+    return Intl.message(
+      'Only traffic sent through subscription proxies is counted. DIRECT connections are excluded. Data updates every second and is retained after restart.',
+      name: 'appTrafficScope',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Today`
+  String get today {
+    return Intl.message('Today', name: 'today', desc: '', args: []);
+  }
+
+  /// `Last 7 days`
+  String get lastSevenDays {
+    return Intl.message(
+      'Last 7 days',
+      name: 'lastSevenDays',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All time`
+  String get allTime {
+    return Intl.message('All time', name: 'allTime', desc: '', args: []);
+  }
+
+  /// `All subscriptions`
+  String get allSubscriptions {
+    return Intl.message(
+      'All subscriptions',
+      name: 'allSubscriptions',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear traffic statistics`
+  String get clearTrafficStatistics {
+    return Intl.message(
+      'Clear traffic statistics',
+      name: 'clearTrafficStatistics',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This clears all app traffic history in the selected subscription scope and cannot be undone.`
+  String get clearTrafficStatisticsConfirm {
+    return Intl.message(
+      'This clears all app traffic history in the selected subscription scope and cannot be undone.',
+      name: 'clearTrafficStatisticsConfirm',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No subscription proxy traffic in this range`
+  String get noAppTraffic {
+    return Intl.message(
+      'No subscription proxy traffic in this range',
+      name: 'noAppTraffic',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unknown application`
+  String get unknownApplication {
+    return Intl.message(
+      'Unknown application',
+      name: 'unknownApplication',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Updates for this custom build retain app traffic statistics.`
+  String get customBuildUpdateTip {
+    return Intl.message(
+      'Updates for this custom build retain app traffic statistics.',
+      name: 'customBuildUpdateTip',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

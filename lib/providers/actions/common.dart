@@ -153,7 +153,15 @@ class CommonAction extends _$CommonAction {
       final suffix = selfUpdateSuffix;
       final res = await dialogs.showMessage(
         title: currentAppLocalizations.discoverNewVersion,
-        message: _releaseSpan(context, tag, data['body'] as String?),
+        message: TextSpan(
+          children: [
+            if (appTrafficCustomBuild)
+              TextSpan(
+                text: '${currentAppLocalizations.customBuildUpdateTip}\n\n',
+              ),
+            _releaseSpan(context, tag, data['body'] as String?),
+          ],
+        ),
         confirmText: suffix == null
             ? currentAppLocalizations.goDownload
             : currentAppLocalizations.update,
@@ -182,7 +190,9 @@ class CommonAction extends _$CommonAction {
 
   void _openReleasePage() {
     unawaited(
-      launchUrl(Uri.parse('https://github.com/$repository/releases/latest')),
+      launchUrl(
+        Uri.parse('https://github.com/$updateRepository/releases/latest'),
+      ),
     );
   }
 
@@ -270,6 +280,17 @@ class CommonAction extends _$CommonAction {
   Future<void> installUpdate() async {
     final download = ref.read(updateDownloadStateProvider);
     if (download is! UpdateReady) return;
+    if (system.isMacOS) {
+      try {
+        await startMacOSUpdate(download.path);
+        await ref.read(systemActionProvider.notifier).handleExit();
+      } catch (error) {
+        await _showUpdateFailure(
+          userFacingErrorMessage(error, currentAppLocalizations),
+        );
+      }
+      return;
+    }
     if (system.isAndroid) {
       ref.read(updateDownloadStateProvider.notifier).value = null;
       final status = await app?.installPackage(download.path);

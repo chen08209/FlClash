@@ -282,6 +282,19 @@ void main() {
     return database;
   }
 
+  test(
+    'an official v23 install gains the traffic table without a version collision',
+    () async {
+      raw.execute('DROP TABLE app_traffic_records');
+      expect(_userVersion(raw), 23);
+
+      final migrated = await openAndMigrate();
+
+      expect(await migrated.appTrafficDao.queryUsage().get(), isEmpty);
+      expect(_userVersion(raw), 23);
+    },
+  );
+
   test('a v1 database is left at the current schema version', () async {
     _downgradeToV1(raw);
     expect(_userVersion(raw), 1);
@@ -300,6 +313,28 @@ void main() {
     expect(_columnsOf(raw, 'profiles'), contains('match_target'));
     expect(_userVersion(raw), 23);
   });
+
+  test(
+    'custom v3 keeps app traffic and adds the skipped profile column',
+    () async {
+      _downgradeToV2(raw);
+      raw.execute('PRAGMA user_version = 3');
+      raw.execute(
+        'INSERT INTO app_traffic_records '
+        '(day, profile_id, profile_label, application_id, application_label, '
+        'process_path, proxy, provider, upload, download, updated_at) '
+        "VALUES (0, 1, 'Plan', 'browser', 'Browser', '', 'Proxy', '', 12, 34, 0)",
+      );
+
+      final migrated = await openAndMigrate();
+
+      expect(_columnsOf(raw, 'profiles'), contains('match_target'));
+      expect(_userVersion(raw), migrated.schemaVersion);
+      final usage = await migrated.appTrafficDao.queryUsage().getSingle();
+      expect(usage.upload, 12);
+      expect(usage.download, 34);
+    },
+  );
 
   test('the v4 upgrade adds url to scripts', () async {
     _downgradeToV3(raw);

@@ -354,6 +354,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "allReferencedProxyProviders": MessageLookupByLibrary.simpleMessage(
       "Все используемые провайдеры прокси",
     ),
+    "allSubscriptions": MessageLookupByLibrary.simpleMessage("Все подписки"),
+    "allTime": MessageLookupByLibrary.simpleMessage("За всё время"),
     "allowBypass": MessageLookupByLibrary.simpleMessage(
       "Разрешить приложениям обходить VPN",
     ),
@@ -370,6 +372,13 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage(
       "Нет локальных прокси",
+    ),
+    "appTraffic": MessageLookupByLibrary.simpleMessage("Трафик приложений"),
+    "appTrafficDesc": MessageLookupByLibrary.simpleMessage(
+      "Трафик прокси-подписок по приложениям",
+    ),
+    "appTrafficScope": MessageLookupByLibrary.simpleMessage(
+      "Учитывается только трафик через прокси подписок. Прямые соединения DIRECT исключены. Данные обновляются каждую секунду и сохраняются после перезапуска.",
     ),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage(
       "Добавлять системный DNS",
@@ -497,6 +506,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Не удалось очистить кэш DNS",
     ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("Очистить поиск"),
+    "clearTrafficStatistics": MessageLookupByLibrary.simpleMessage(
+      "Очистить статистику трафика",
+    ),
+    "clearTrafficStatisticsConfirm": MessageLookupByLibrary.simpleMessage(
+      "Вся история трафика приложений для выбранных подписок будет удалена без возможности восстановления.",
+    ),
     "clientFingerprint": MessageLookupByLibrary.simpleMessage(
       "Отпечаток клиента",
     ),
@@ -600,6 +615,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Содержит кнопку запуска, удалить нельзя",
     ),
     "custom": MessageLookupByLibrary.simpleMessage("Вручную"),
+    "customBuildUpdateTip": MessageLookupByLibrary.simpleMessage(
+      "Обновления этой сборки сохраняют статистику трафика приложений.",
+    ),
     "customColor": MessageLookupByLibrary.simpleMessage("Свой цвет"),
     "customImportDroppedSubRules": m8,
     "customIssueCoreRejected": m9,
@@ -1211,6 +1229,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "label": MessageLookupByLibrary.simpleMessage("Метка"),
     "language": MessageLookupByLibrary.simpleMessage("Язык"),
     "large": MessageLookupByLibrary.simpleMessage("Крупный"),
+    "lastSevenDays": MessageLookupByLibrary.simpleMessage("Последние 7 дней"),
     "lastUpdated": MessageLookupByLibrary.simpleMessage("Последнее обновление"),
     "launchInterrupted": MessageLookupByLibrary.simpleMessage(
       "Запуск не завершён",
@@ -1513,6 +1532,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkType": MessageLookupByLibrary.simpleMessage("Тип сети"),
     "nextMatch": MessageLookupByLibrary.simpleMessage("Следующее совпадение"),
     "no": MessageLookupByLibrary.simpleMessage("Нет"),
+    "noAppTraffic": MessageLookupByLibrary.simpleMessage(
+      "В этом диапазоне нет трафика через прокси подписок",
+    ),
     "noData": MessageLookupByLibrary.simpleMessage("Нет данных"),
     "noInfo": MessageLookupByLibrary.simpleMessage("Нет информации"),
     "noLongerRemind": MessageLookupByLibrary.simpleMessage(
@@ -2160,6 +2182,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "timeout": MessageLookupByLibrary.simpleMessage("Тайм-аут"),
     "tintedStyle": MessageLookupByLibrary.simpleMessage("Тонированный"),
     "tip": MessageLookupByLibrary.simpleMessage("Подсказка"),
+    "today": MessageLookupByLibrary.simpleMessage("Сегодня"),
     "toggle": MessageLookupByLibrary.simpleMessage("Переключить"),
     "tolerance": MessageLookupByLibrary.simpleMessage("Допуск"),
     "tools": MessageLookupByLibrary.simpleMessage("Инструменты"),
@@ -2201,6 +2224,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "undo": MessageLookupByLibrary.simpleMessage("Отменить"),
     "unifiedDelay": MessageLookupByLibrary.simpleMessage("Единая задержка"),
     "unknown": MessageLookupByLibrary.simpleMessage("Неизвестно"),
+    "unknownApplication": MessageLookupByLibrary.simpleMessage(
+      "Неизвестное приложение",
+    ),
     "unknownNetworkError": MessageLookupByLibrary.simpleMessage(
       "Неизвестная сетевая ошибка",
     ),

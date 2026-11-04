@@ -305,6 +305,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "allReferencedProxyProviders": MessageLookupByLibrary.simpleMessage(
       "참조된 모든 프록시 공급자",
     ),
+    "allSubscriptions": MessageLookupByLibrary.simpleMessage("모든 구독"),
+    "allTime": MessageLookupByLibrary.simpleMessage("전체 기간"),
     "allowBypass": MessageLookupByLibrary.simpleMessage("앱의 VPN 우회 허용"),
     "allowLan": MessageLookupByLibrary.simpleMessage("LAN 허용"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("허용 IP"),
@@ -314,6 +316,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "appAccessControl": MessageLookupByLibrary.simpleMessage("앱 접근 제어"),
     "appIconDesign": MessageLookupByLibrary.simpleMessage("앱 아이콘 디자인"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("로컬 프록시 없음"),
+    "appTraffic": MessageLookupByLibrary.simpleMessage("앱 트래픽"),
+    "appTrafficDesc": MessageLookupByLibrary.simpleMessage("앱별 구독 프록시 트래픽 보기"),
+    "appTrafficScope": MessageLookupByLibrary.simpleMessage(
+      "프록시를 통해 실제로 전송된 트래픽만 집계합니다. DIRECT 연결은 제외합니다. 매초 갱신되며 재시작 후에도 유지됩니다.",
+    ),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage("시스템 DNS 추가"),
     "applied": MessageLookupByLibrary.simpleMessage("적용했습니다"),
     "applyNow": MessageLookupByLibrary.simpleMessage("지금 적용"),
@@ -404,6 +411,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "DNS 캐시를 지우지 못했습니다",
     ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("검색 지우기"),
+    "clearTrafficStatistics": MessageLookupByLibrary.simpleMessage(
+      "트래픽 통계 지우기",
+    ),
+    "clearTrafficStatisticsConfirm": MessageLookupByLibrary.simpleMessage(
+      "선택한 구독의 모든 앱 트래픽 기록을 삭제합니다. 이 작업은 취소할 수 없습니다.",
+    ),
     "clientFingerprint": MessageLookupByLibrary.simpleMessage("클라이언트 핑거프린트"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage("클립보드로 내보내기"),
     "clipboardImport": MessageLookupByLibrary.simpleMessage("클립보드에서 가져오기"),
@@ -479,6 +492,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "시작 버튼이 있어 제거할 수 없습니다",
     ),
     "custom": MessageLookupByLibrary.simpleMessage("사용자 지정"),
+    "customBuildUpdateTip": MessageLookupByLibrary.simpleMessage(
+      "이 사용자 지정 빌드를 업데이트해도 앱 트래픽 통계가 유지됩니다.",
+    ),
     "customColor": MessageLookupByLibrary.simpleMessage("사용자 지정 색상"),
     "customImportDroppedSubRules": m8,
     "customIssueCoreRejected": m9,
@@ -981,6 +997,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "label": MessageLookupByLibrary.simpleMessage("레이블"),
     "language": MessageLookupByLibrary.simpleMessage("언어"),
     "large": MessageLookupByLibrary.simpleMessage("크게"),
+    "lastSevenDays": MessageLookupByLibrary.simpleMessage("최근 7일"),
     "lastUpdated": MessageLookupByLibrary.simpleMessage("마지막 업데이트"),
     "launchInterrupted": MessageLookupByLibrary.simpleMessage("시작이 완료되지 않음"),
     "launchInterruptedTip": MessageLookupByLibrary.simpleMessage(
@@ -1221,6 +1238,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkType": MessageLookupByLibrary.simpleMessage("네트워크 유형"),
     "nextMatch": MessageLookupByLibrary.simpleMessage("다음 결과"),
     "no": MessageLookupByLibrary.simpleMessage("아니요"),
+    "noAppTraffic": MessageLookupByLibrary.simpleMessage("이 기간에 프록시 트래픽이 없습니다"),
     "noData": MessageLookupByLibrary.simpleMessage("데이터 없음"),
     "noInfo": MessageLookupByLibrary.simpleMessage("정보 없음"),
     "noLongerRemind": MessageLookupByLibrary.simpleMessage("다시 알리지 않음"),
@@ -1730,6 +1748,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "timeout": MessageLookupByLibrary.simpleMessage("시간 초과"),
     "tintedStyle": MessageLookupByLibrary.simpleMessage("틴트"),
     "tip": MessageLookupByLibrary.simpleMessage("안내"),
+    "today": MessageLookupByLibrary.simpleMessage("오늘"),
     "toggle": MessageLookupByLibrary.simpleMessage("전환"),
     "tolerance": MessageLookupByLibrary.simpleMessage("허용 오차"),
     "tools": MessageLookupByLibrary.simpleMessage("도구"),
@@ -1765,6 +1784,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "undo": MessageLookupByLibrary.simpleMessage("실행 취소"),
     "unifiedDelay": MessageLookupByLibrary.simpleMessage("통합 지연"),
     "unknown": MessageLookupByLibrary.simpleMessage("알 수 없음"),
+    "unknownApplication": MessageLookupByLibrary.simpleMessage("알 수 없는 앱"),
     "unknownNetworkError": MessageLookupByLibrary.simpleMessage(
       "알 수 없는 네트워크 오류",
     ),

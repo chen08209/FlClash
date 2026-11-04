@@ -9,6 +9,7 @@ extension PageLabelL10n on PageLabel {
     final appLocalizations = currentAppLocalizations;
     return switch (this) {
       PageLabel.dashboard => appLocalizations.dashboard,
+      PageLabel.appTraffic => appLocalizations.appTraffic,
       PageLabel.proxies => appLocalizations.proxies,
       PageLabel.profiles => appLocalizations.profiles,
       PageLabel.tools => appLocalizations.tools,

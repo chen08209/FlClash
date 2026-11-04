@@ -1076,5 +1076,17 @@
   "fakeipFilterDesc": "Эти домены получают реальные IP вместо Fake-IP. В режиме whitelist Fake-IP получают только они.",
   "fallbackFilterGeositeDesc": "Домены из этих категорий GeoSite сразу разрешаются через Fallback.",
   "fallbackFilterIpcidrDesc": "Если Nameserver возвращает IP из этих диапазонов, используется ответ Fallback.",
-  "fallbackFilterDomainDesc": "Эти домены сразу разрешаются через Fallback."
+  "fallbackFilterDomainDesc": "Эти домены сразу разрешаются через Fallback.",
+  "appTraffic": "Трафик приложений",
+  "appTrafficDesc": "Трафик прокси-подписок по приложениям",
+  "appTrafficScope": "Учитывается только трафик через прокси подписок. Прямые соединения DIRECT исключены. Данные обновляются каждую секунду и сохраняются после перезапуска.",
+  "today": "Сегодня",
+  "lastSevenDays": "Последние 7 дней",
+  "allTime": "За всё время",
+  "allSubscriptions": "Все подписки",
+  "clearTrafficStatistics": "Очистить статистику трафика",
+  "clearTrafficStatisticsConfirm": "Вся история трафика приложений для выбранных подписок будет удалена без возможности восстановления.",
+  "noAppTraffic": "В этом диапазоне нет трафика через прокси подписок",
+  "unknownApplication": "Неизвестное приложение",
+  "customBuildUpdateTip": "Обновления этой сборки сохраняют статистику трафика приложений."
 }

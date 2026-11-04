@@ -187,6 +187,7 @@ enum ResultType {
 }
 
 enum CoreEventType {
+  connectionClosed,
   log,
   delay,
   request,
@@ -523,6 +524,7 @@ extension GeoResourceExt on GeoResource {
 }
 
 enum PageLabel {
+  appTraffic,
   dashboard,
   proxies,
   profiles,

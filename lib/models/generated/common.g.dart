@@ -88,6 +88,12 @@ _TrackerInfo _$TrackerInfoFromJson(Map<String, dynamic> json) => _TrackerInfo(
   start: DateTime.parse(json['start'] as String),
   metadata: Metadata.fromJson(json['metadata'] as Map<String, dynamic>),
   chains: (json['chains'] as List<dynamic>).map((e) => e as String).toList(),
+  providerChains:
+      (json['providerChains'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
+  direct: json['direct'] as bool? ?? false,
   rule: json['rule'] as String,
   rulePayload: json['rulePayload'] as String,
   downloadSpeed: (json['downloadSpeed'] as num?)?.toInt(),
@@ -102,6 +108,8 @@ Map<String, dynamic> _$TrackerInfoToJson(_TrackerInfo instance) =>
       'start': instance.start.toIso8601String(),
       'metadata': instance.metadata,
       'chains': instance.chains,
+      'providerChains': instance.providerChains,
+      'direct': instance.direct,
       'rule': instance.rule,
       'rulePayload': instance.rulePayload,
       'downloadSpeed': instance.downloadSpeed,
