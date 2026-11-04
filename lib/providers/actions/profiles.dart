@@ -153,8 +153,24 @@ class ProfilesAction extends _$ProfilesAction {
         await clearEffect(profile.id);
         return;
       }
+      final folderMatch = RegExp(
+        r'^[\[【\(@](.*?)[\]】\)]',
+      ).firstMatch(latest.label);
+      String finalLabel = latest.label.takeFirstValid([updated.label]);
+      if (folderMatch != null) {
+        final folderPrefix = folderMatch.group(0)!;
+        if (!finalLabel.startsWith(folderPrefix)) {
+          final clean = finalLabel
+              .replaceFirst(
+                RegExp(r'^[\[【\(@].*?[\]】\)]\s*'),
+                '',
+              )
+              .trim();
+          finalLabel = '$folderPrefix $clean';
+        }
+      }
       final newProfile = latest.copyWith(
-        label: latest.label.takeFirstValid([updated.label]),
+        label: finalLabel,
         subscriptionInfo: updated.subscriptionInfo,
         lastUpdateDate: updated.lastUpdateDate,
       );

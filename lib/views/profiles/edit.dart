@@ -28,6 +28,7 @@ class EditProfileView extends ConsumerStatefulWidget {
 }
 
 class _EditProfileViewState extends ConsumerState<EditProfileView> {
+  late final TextEditingController _folderController;
   late final TextEditingController _labelController;
   late final TextEditingController _urlController;
   late final TextEditingController _ageSecretKeyController;
@@ -42,7 +43,17 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
   @override
   void initState() {
     super.initState();
-    _labelController = TextEditingController(text: widget.profile.label);
+    final initialLabel = widget.profile.label;
+    final match = RegExp(
+      r'^[\[【\(@](.*?)[\]】\)]\s*(.*)$',
+    ).firstMatch(initialLabel);
+    if (match != null) {
+      _folderController = TextEditingController(text: match.group(1));
+      _labelController = TextEditingController(text: match.group(2));
+    } else {
+      _folderController = TextEditingController();
+      _labelController = TextEditingController(text: initialLabel);
+    }
     _urlController = TextEditingController(text: widget.profile.url);
     _ageSecretKeyController = TextEditingController(
       text: widget.profile.ageSecretKey,
@@ -127,10 +138,14 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
         ref.read(profilesProvider).getProfile(widget.profile.id) ??
         widget.profile;
     final interval = int.tryParse(_autoUpdateDurationController.text);
+    final folder = _folderController.text.trim();
+    final pureLabel = _labelController.text.trim();
+    final fullLabel = folder.isNotEmpty ? '[$folder] $pureLabel' : pureLabel;
+
     var profile = current.copyWith(
       url: _urlController.text,
       ageSecretKey: _ageSecretKeyController.text.trim(),
-      label: _labelController.text,
+      label: fullLabel,
       autoUpdate: _autoUpdate,
       autoUpdateDuration: interval != null && interval > 0
           ? Duration(minutes: interval)
@@ -287,6 +302,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
 
   @override
   void dispose() {
+    _folderController.dispose();
     _labelController.dispose();
     _urlController.dispose();
     _ageSecretKeyController.dispose();
@@ -307,6 +323,10 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           _ProfileNameField(
             controller: _labelController,
             invalid: issue?.field == _ProfileField.label,
+            onChanged: _handleChanged,
+          ),
+          _ProfileFolderField(
+            controller: _folderController,
             onChanged: _handleChanged,
           ),
           if (isUrl)
@@ -431,6 +451,30 @@ class _ProfileNameField extends StatelessWidget {
       trailing: FormRowTextField(
         controller: controller,
         hintText: appLocalizations.required,
+        textInputAction: TextInputAction.next,
+        inputFormatters: TextInputLimits.limit(TextInputLimits.name),
+        onChanged: onChanged,
+      ),
+    );
+  }
+}
+
+class _ProfileFolderField extends StatelessWidget {
+  const _ProfileFolderField({
+    required this.controller,
+    required this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return FormRow(
+      title: '所属文件夹',
+      trailing: FormRowTextField(
+        controller: controller,
+        hintText: '如: 免费 / 付费 (选填)',
         textInputAction: TextInputAction.next,
         inputFormatters: TextInputLimits.limit(TextInputLimits.name),
         onChanged: onChanged,

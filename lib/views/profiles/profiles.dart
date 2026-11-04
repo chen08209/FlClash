@@ -16,16 +16,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'add.dart';
 import 'edit.dart';
 import 'preview.dart';
+import 'widgets/profile_folder_view.dart';
 
 const _infoGap = 4.0;
 
-double get _profileItemHeight {
+double get profileItemHeight {
   final measure = globalState.measure;
   return measure.textHeight(AppTextStyle.headline) +
       _infoGap +
       measure.textHeight(AppTextStyle.footnote) +
       2 * listRowVerticalPadding;
 }
+
+double get _profileItemHeight => profileItemHeight;
 
 class ProfilesView extends ConsumerStatefulWidget {
   const ProfilesView({super.key, this.picker = false});
@@ -39,6 +42,7 @@ class ProfilesView extends ConsumerStatefulWidget {
 
 class _ProfilesViewState extends ConsumerState<ProfilesView> {
   bool _isUpdating = false;
+  bool _folderMode = true; // 默认开启文件夹分类模式
 
   Future<void> _updateProfiles(List<Profile> profiles) async {
     if (_isUpdating == true) {
@@ -69,6 +73,15 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
   List<IconButtonData> _buildActions(List<Profile> profiles) {
     return profiles.isNotEmpty
         ? [
+            IconButtonData(
+              glyph: _folderMode ? AppGlyphs.layers : AppGlyphs.filter,
+              onPressed: () {
+                setState(() {
+                  _folderMode = !_folderMode;
+                });
+              },
+              tooltip: _folderMode ? '切换为平铺视图' : '切换为文件夹视图',
+            ),
             IconButtonData(
               glyph: AppGlyphs.sync,
               onPressed: () {
@@ -131,12 +144,18 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
                 ),
               ),
             ),
-            child: _ProfilesGrid(
-              profiles: state.profiles,
-              currentProfileId: state.currentProfileId,
-              spacing: spacing,
-              revealsSelected: !picker,
-            ),
+            child: _folderMode
+                ? ProfileFolderView(
+                    profiles: state.profiles,
+                    currentProfileId: state.currentProfileId,
+                    spacing: spacing,
+                  )
+                : _ProfilesGrid(
+                    profiles: state.profiles,
+                    currentProfileId: state.currentProfileId,
+                    spacing: spacing,
+                    revealsSelected: !picker,
+                  ),
           ),
         );
       },
@@ -269,12 +288,14 @@ class ProfileItem extends ConsumerWidget {
   final Profile profile;
   final int? groupValue;
   final void Function(int? value) onChanged;
+  final String? displayLabel;
 
   const ProfileItem({
     super.key,
     required this.profile,
     required this.groupValue,
     required this.onChanged,
+    this.displayLabel,
   });
 
   Future<void> _handleDeleteProfile(BuildContext context, WidgetRef ref) async {
@@ -528,6 +549,7 @@ class ProfileItem extends ConsumerWidget {
             profile: profile,
             expire: subscriptionInfo?.expireDate,
             subtitle: _subtitle(context),
+            displayLabel: displayLabel,
           ),
         ),
       ),
@@ -540,11 +562,13 @@ class _ProfileCardTitle extends StatelessWidget {
     required this.profile,
     required this.expire,
     required this.subtitle,
+    this.displayLabel,
   });
 
   final Profile profile;
   final DateTime? expire;
   final String subtitle;
+  final String? displayLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -553,7 +577,7 @@ class _ProfileCardTitle extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ChipTitle(
-          title: profile.realLabel,
+          title: displayLabel ?? profile.realLabel,
           expire: expire,
           style: AppTextStyle.headline.of(context),
         ),
