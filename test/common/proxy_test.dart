@@ -9,6 +9,7 @@ class _FakeProxy implements Proxy {
   final List<String> calls = [];
   Future<bool>? held;
   Error? failure;
+  int? loopbackPort;
 
   Future<bool> _call(String name) async {
     calls.add(name);
@@ -29,6 +30,9 @@ class _FakeProxy implements Proxy {
 
   @override
   Future<bool> stopProxy() => _call('stop');
+
+  @override
+  Future<int?> readLoopbackProxyPort() async => loopbackPort;
 }
 
 ProxyState _state({required bool isStart}) {
@@ -103,5 +107,49 @@ void main() {
     await queue.close();
 
     expect(proxy.calls, ['start 7890', 'stop', 'stop']);
+  });
+
+  group('recoverStale', () {
+    test('clears a system proxy a killed run left on a dead port', () async {
+      final proxy = _FakeProxy()..loopbackPort = 7890;
+      final queue = SystemProxyQueue(proxy, loopbackFree: (_) async => true);
+
+      await queue.recoverStale();
+
+      expect(proxy.calls, ['stop']);
+    });
+
+    test('leaves a proxy another process still answers for', () async {
+      final proxy = _FakeProxy()..loopbackPort = 7890;
+      final queue = SystemProxyQueue(proxy, loopbackFree: (_) async => false);
+
+      await queue.recoverStale();
+
+      expect(proxy.calls, isEmpty);
+    });
+
+    test('clears nothing when no loopback proxy is set', () async {
+      final proxy = _FakeProxy();
+      final queue = SystemProxyQueue(
+        proxy,
+        loopbackFree: (_) async => fail('nothing to probe'),
+      );
+
+      await queue.recoverStale();
+
+      expect(proxy.calls, isEmpty);
+    });
+
+    test('a failed clear does not stall the queue', () async {
+      final proxy = _FakeProxy()
+        ..loopbackPort = 7890
+        ..failure = StateError('gone');
+      final queue = SystemProxyQueue(proxy, loopbackFree: (_) async => true);
+
+      await queue.recoverStale();
+      await queue.apply(_state(isStart: true));
+
+      expect(proxy.calls, ['stop', 'start 7890']);
+    });
   });
 }

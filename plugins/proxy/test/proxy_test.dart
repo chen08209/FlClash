@@ -430,6 +430,79 @@ USB 10/100/1000 LAN
     });
   });
 
+  group('macOS loopback proxy detection', () {
+    MacosProxy proxyReturning(String stdout) {
+      return MacosProxy(
+        commandRunner: ProxyCommandRunner((
+          executable,
+          arguments, {
+          runInShell = false,
+        }) async {
+          expect(executable, '/usr/sbin/scutil');
+          expect(arguments, ['--proxy']);
+          return ProcessResult(0, 0, stdout, '');
+        }),
+      );
+    }
+
+    test('reads the port of an enabled loopback proxy', () async {
+      final proxy = proxyReturning('''
+<dictionary> {
+  HTTPEnable : 1
+  HTTPPort : 7890
+  HTTPProxy : 127.0.0.1
+}
+''');
+
+      expect(await proxy.readLoopbackProxyPort(), 7890);
+    });
+
+    test('reads a quoted IPv6 loopback from the socks proxy', () async {
+      final proxy = proxyReturning('''
+<dictionary> {
+  HTTPEnable : 0
+  SOCKSEnable : 1
+  SOCKSPort : 1080
+  SOCKSProxy : "::1"
+}
+''');
+
+      expect(await proxy.readLoopbackProxyPort(), 1080);
+    });
+
+    test('ignores a disabled or remote proxy', () async {
+      final proxy = proxyReturning('''
+<dictionary> {
+  HTTPEnable : 0
+  HTTPPort : 7890
+  HTTPProxy : 127.0.0.1
+  HTTPSEnable : 1
+  HTTPSPort : 8080
+  HTTPSProxy : proxy.example.com
+  SOCKSEnable : 0
+  SOCKSPort : 7890
+  SOCKSProxy : 127.0.0.1
+}
+''');
+
+      expect(await proxy.readLoopbackProxyPort(), isNull);
+    });
+
+    test('reports no proxy when scutil cannot run', () async {
+      final proxy = MacosProxy(
+        commandRunner: ProxyCommandRunner((
+          executable,
+          arguments, {
+          runInShell = false,
+        }) async {
+          throw ProcessException(executable, arguments);
+        }),
+      );
+
+      expect(await proxy.readLoopbackProxyPort(), isNull);
+    });
+  });
+
   group('windowsBypassList', () {
     test('adds the intranet token once', () {
       expect(windowsBypassList(['localhost', '127.*', '<local>']), [

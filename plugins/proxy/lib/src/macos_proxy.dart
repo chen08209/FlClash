@@ -22,6 +22,20 @@ class MacosProxy {
     return _commandRunner.run(services.expand(MacosProxyCommands.buildStop));
   }
 
+  /// The loopback port the system proxy is enabled for, or null when none is.
+  Future<int?> readLoopbackProxyPort() async {
+    final ProcessResult result;
+    try {
+      result = await _commandRunner.process('/usr/sbin/scutil', ['--proxy']);
+    } on ProcessException {
+      return null;
+    }
+    if (result.exitCode != 0) {
+      return null;
+    }
+    return MacosProxyCommands.parseLoopbackProxyPort(result.stdout.toString());
+  }
+
   Future<List<String>> _networkServices() async {
     try {
       final result = await _commandRunner.process('/usr/sbin/networksetup', [
@@ -116,6 +130,45 @@ class MacosProxyCommands {
       service,
       if (bypassDomain.isEmpty) 'Empty' else ...bypassDomain,
     ]);
+  }
+
+  /// Reads what `scutil --proxy` reports; only a loopback host answers.
+  static int? parseLoopbackProxyPort(String stdout) {
+    final values = <String, String>{};
+    for (final line in stdout.split('\n')) {
+      final separator = line.indexOf(' : ');
+      if (separator == -1) {
+        continue;
+      }
+      final key = line.substring(0, separator).trim();
+      values[key] = _withoutQuotes(line.substring(separator + 3).trim());
+    }
+    for (final kind in const ['HTTP', 'HTTPS', 'SOCKS']) {
+      if (values['${kind}Enable'] != '1') {
+        continue;
+      }
+      final host = values['${kind}Proxy'];
+      final port = int.tryParse(values['${kind}Port'] ?? '');
+      if (host == null ||
+          port == null ||
+          port < 1 ||
+          port > 65535 ||
+          !_isLoopbackHost(host)) {
+        continue;
+      }
+      return port;
+    }
+    return null;
+  }
+
+  static const _loopbackHosts = {'localhost', '::1', '0:0:0:0:0:0:0:1'};
+
+  static bool _isLoopbackHost(String host) {
+    return _loopbackHosts.contains(host) || host.startsWith('127.');
+  }
+
+  static String _withoutQuotes(String value) {
+    return value.replaceAll('"', '');
   }
 
   static List<String> parseNetworkServices(String stdout) {
