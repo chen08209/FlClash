@@ -37,12 +37,8 @@ void main() {
       );
     });
 
-    test('macOS keeps the template icon in every state', () {
-      for (final (isStart, tunEnable) in [
-        (false, false),
-        (true, false),
-        (true, true),
-      ]) {
+    test('macOS 开启时保留现有模板图标', () {
+      for (final (isStart, tunEnable) in [(true, false), (true, true)]) {
         expect(
           macOS.getTrayIcon(
             isStart: isStart,
@@ -54,9 +50,24 @@ void main() {
       }
     });
 
-    test('macOS shows the color icons once monochrome is off', () {
+    test('macOS 关闭时使用灰色图标', () {
+      for (final monochrome in [true, false]) {
+        for (final tunEnable in [true, false]) {
+          expect(
+            macOS.getTrayIcon(
+              isStart: false,
+              tunEnable: tunEnable,
+              safeMode: false,
+              monochrome: monochrome,
+            ),
+            'assets/images/tray/macos/status_inactive.png',
+          );
+        }
+      }
+    });
+
+    test('macOS 关闭单色选项后仍使用现有彩色运行图标', () {
       for (final (isStart, tunEnable, safeMode, status) in [
-        (false, false, false, 1),
         (true, false, false, 2),
         (true, true, false, 3),
         (true, true, true, 4),

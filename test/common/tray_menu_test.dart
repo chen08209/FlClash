@@ -44,6 +44,7 @@ HotKeyAction _bind(HotAction action, PhysicalKeyboardKey key) {
 
 TrayState _trayState({
   bool isStart = false,
+  bool suspended = false,
   bool tunEnable = false,
   bool systemProxy = false,
   bool autoLaunch = false,
@@ -61,6 +62,7 @@ TrayState _trayState({
     systemProxy: systemProxy,
     tunEnable: tunEnable,
     isStart: isStart,
+    suspended: suspended,
     groups: groups,
     selectedMap: const {},
     showTrayTitle: showTrayTitle,
@@ -260,6 +262,77 @@ void main() {
       isFalse,
     );
   });
+
+  for (final suspended in [false, true]) {
+    test('macOS 暂停状态为 $suspended 时，取消单色图标后菜单仍随设置刷新', () async {
+      MethodCall? displayedCall;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(_channel, (call) async {
+            if (call.method == 'show') {
+              final icon = (call.arguments as Map)['icon'] as Map;
+              if ((icon['reps'] as List).isEmpty) {
+                return false;
+              }
+              displayedCall = call;
+            }
+            return true;
+          });
+
+      final initial = _trayState(isStart: suspended, suspended: suspended);
+      await update(initial);
+      final l10n = currentAppLocalizations;
+      expect(_item(displayedCall, l10n.monochromeIcon)['checked'], isTrue);
+
+      final color = initial.copyWith(monochromeTrayIcon: false);
+      await update(color);
+      expect(_item(displayedCall, l10n.monochromeIcon)['checked'], isFalse);
+
+      await update(color.copyWith(mode: Mode.global, showTrayTitle: true));
+      expect(_item(displayedCall, Mode.global.label)['checked'], isTrue);
+      expect(_item(displayedCall, Mode.rule.label)['checked'], isFalse);
+      expect(_item(displayedCall, l10n.speedStatistics)['checked'], isTrue);
+
+      await update(initial);
+      expect(_item(displayedCall, l10n.monochromeIcon)['checked'], isTrue);
+      expect(_item(displayedCall, Mode.rule.label)['checked'], isTrue);
+      expect(_item(displayedCall, l10n.speedStatistics)['checked'], isFalse);
+    });
+  }
+
+  for (final monochrome in [true, false]) {
+    test('macOS 单色选项为 $monochrome 时，关闭和暂停显示灰色，恢复后还原图标', () async {
+      final activePath = monochrome
+          ? 'assets/images/tray/macos/status_1.png'
+          : 'assets/images/tray/unix/status_2.png';
+      for (final (isStart, suspended, path) in [
+        (true, false, activePath),
+        (false, false, 'assets/images/tray/macos/status_inactive.png'),
+        (true, false, activePath),
+        (true, true, 'assets/images/tray/macos/status_inactive.png'),
+        (true, false, activePath),
+      ]) {
+        await update(
+          _trayState(
+            isStart: isStart,
+            suspended: suspended,
+            monochromeTrayIcon: monochrome,
+          ),
+        );
+
+        final icon = (showCall()!.arguments as Map)['icon'] as Map;
+        expect(icon['isTemplate'], monochrome && isStart && !suspended);
+        final reps = (icon['reps'] as List).cast<Map>();
+        for (final rep in reps) {
+          final scale = (rep['scale'] as num).toInt();
+          final variant = scale == 1
+              ? path
+              : path.replaceFirst('/status_', '/$scale.0x/status_');
+          expect(rep['bytes'], base64Encode(File(variant).readAsBytesSync()));
+        }
+        expect(reps, hasLength(4));
+      }
+    });
+  }
 
   test('skips the platform call when the tray state is unchanged', () async {
     await update(_trayState(isStart: true));

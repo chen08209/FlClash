@@ -60,6 +60,9 @@ class AppTray implements TrayPort {
     required bool safeMode,
     bool monochrome = true,
   }) {
+    if (isMacOS && !isStart && !safeMode) {
+      return 'assets/images/tray/macos/status_inactive.png';
+    }
     final status = switch ((
       safeMode,
       _isTemplate(monochrome) || !isStart,
@@ -93,16 +96,19 @@ class AppTray implements TrayPort {
     if (_isShutDown) {
       return;
     }
+    final isStart = trayState.isStart && !trayState.suspended;
     await Tray.instance.show(
       TraySpec(
         icon: TrayIcon.asset(
           getTrayIcon(
-            isStart: trayState.isStart && !trayState.suspended,
+            isStart: isStart,
             tunEnable: trayState.tunEnable,
             safeMode: trayState.safeMode,
             monochrome: trayState.monochromeTrayIcon,
           ),
-          isTemplate: _isTemplate(trayState.monochromeTrayIcon),
+          isTemplate:
+              _isTemplate(trayState.monochromeTrayIcon) &&
+              (isStart || trayState.safeMode),
           size: isMacOS ? 18 : 16,
         ),
         toolTip: trayState.safeMode
