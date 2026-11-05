@@ -1,8 +1,11 @@
 package com.follow.clash
 
 import android.annotation.SuppressLint
+import android.content.ComponentName
+import android.net.VpnService
 import android.os.Build
 import android.service.quicksettings.Tile
+import com.follow.clash.common.GlobalState
 import com.follow.clash.common.QuickAction
 import com.follow.clash.common.quickIntent
 import com.follow.clash.common.toPendingIntent
@@ -15,6 +18,10 @@ import kotlinx.coroutines.launch
 class TileService : android.service.quicksettings.TileService() {
     private var scope: CoroutineScope? = null
 
+    private val defaultLabel by lazy {
+        packageManager.getServiceInfo(ComponentName(this, javaClass), 0).loadLabel(packageManager)
+    }
+
     override fun onStartListening() {
         super.onStartListening()
         scope?.cancel()
@@ -25,12 +32,13 @@ class TileService : android.service.quicksettings.TileService() {
         }
     }
 
-    // Always route through QuickActionActivity: startActivityAndCollapse is
-    // what closes the shade, so toggling the service in place would leave
-    // the panel open after a tap.
     override fun onClick() {
         super.onClick()
-        openQuickAction()
+        if (needsVpnConsent()) {
+            openQuickAction()
+            return
+        }
+        GlobalState.launch { ServiceState.handleToggleAction() }
     }
 
     override fun onStopListening() {
@@ -39,6 +47,10 @@ class TileService : android.service.quicksettings.TileService() {
         super.onStopListening()
     }
 
+    // The consent dialog is an activity, so only a start that still needs it leaves the shade.
+    private fun needsVpnConsent(): Boolean =
+        !ServiceState.isRunRequested && VpnService.prepare(this) != null
+
     private fun updateTile(runState: RunState) {
         qsTile?.apply {
             state = when (runState) {
@@ -46,6 +58,8 @@ class TileService : android.service.quicksettings.TileService() {
                 RunState.STARTING, RunState.STOPPING -> Tile.STATE_UNAVAILABLE
                 RunState.STOPPED -> Tile.STATE_INACTIVE
             }
+            // OEM shades such as ColorOS render only the label, never the subtitle.
+            label = application.sharedState.currentProfileName.ifBlank { defaultLabel }
             updateTile()
         }
     }
