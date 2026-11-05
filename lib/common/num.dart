@@ -44,7 +44,7 @@ extension NumExt on num {
       unitIndex++;
     }
     return TrafficShow(
-      value: size.toStringAsFixed(0),
+      value: size.toStringAsFixed(unitIndex >= TrafficUnit.MB.index ? 1 : 0),
       unit: ' ${units[unitIndex].name}',
     );
   }
