@@ -66,6 +66,19 @@ void main() {
 
       expect(decode(json).tunOverrideKeys, isEmpty);
     });
+
+    test('the old 9000 default heals in overrides too', () {
+      final json = const PatchClashConfig(
+        tun: Tun(mtu: 9000),
+        tunOverride: ProfileTun(mtu: 9000),
+        tunOverrideKeys: {TunOverrideKey.mtu},
+      ).toJson();
+
+      final config = decode(json);
+
+      expect(config.tun.mtu, defaultTunMtu);
+      expect(config.tunOverride.mtu, defaultTunMtu);
+    });
   });
 
   test('a custom profile picks its own TUN keys over the app-wide ones', () {

@@ -40,6 +40,10 @@ void main() {
     expect(Tun.fromJson({'mtu': 1500}).mtu, 1500);
   });
 
+  test('a saved 9000 default reads as the new default', () {
+    expect(Tun.fromJson({'mtu': 9000}).mtu, defaultTunMtu);
+  });
+
   test('the desktop TUN takes only its switch, device and stack, routed', () {
     const tun = Tun(
       enable: true,

@@ -43,7 +43,16 @@ const defaultGeoXUrl = {
 
 const defaultMixedPort = 7890;
 const defaultKeepAliveInterval = 30;
-const defaultTunMtu = 9000;
+
+/// A jumbo 9000 MTU does not survive most real-world paths (NAT, PPPoE,
+/// international links) and stalls large downloads while small requests
+/// still work; 1500 is the safe Ethernet default (see #1583, #2834).
+const defaultTunMtu = 1500;
+
+/// Configs saved before the default changed carry 9000 as an untouched
+/// default, not a user choice; reading it back as unset lets them heal to
+/// the new default instead of being pinned as an override forever.
+const legacyTunMtu = 9000;
 const minTunMtu = 1280;
 const maxTunMtu = 65535;
 const defaultCongestionController = 'cubic';
@@ -1167,8 +1176,12 @@ abstract class Tun with _$Tun {
   }
 }
 
-int _mtuFromJson(int value) =>
-    value > 0 ? value.clamp(minTunMtu, maxTunMtu) : defaultTunMtu;
+int _mtuFromJson(int value) {
+  if (value <= 0 || value == legacyTunMtu) {
+    return defaultTunMtu;
+  }
+  return value.clamp(minTunMtu, maxTunMtu);
+}
 
 String _congestionControllerFromJson(String value) =>
     value.isEmpty ? defaultCongestionController : value;
@@ -1595,11 +1608,17 @@ abstract class ProfileTun with _$ProfileTun {
   }) = _ProfileTun;
 
   factory ProfileTun.fromJson(Map<String, Object?> json) =>
-      _$ProfileTunFromJson(json);
+      _healLegacyTunMtu(_$ProfileTunFromJson(json));
 
   factory ProfileTun.safeFromJson(Map<String, Object?> json) {
     return decodeSalvaging('tun override', json, ProfileTun.fromJson);
   }
+}
+
+/// A 9000 in an override block was picked while it was still the default, so
+/// it heals like any other legacy default instead of pinning jumbo frames.
+ProfileTun _healLegacyTunMtu(ProfileTun tun) {
+  return tun.mtu == legacyTunMtu ? tun.copyWith(mtu: defaultTunMtu) : tun;
 }
 
 const _tunOverrideKeysJsonKey = 'tun-override-keys';

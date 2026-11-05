@@ -28,7 +28,10 @@ data class VpnOptions(
     val congestionController: String? = null,
 )
 
-private const val DEFAULT_TUN_MTU = 9000
+// A jumbo 9000 MTU does not survive most real-world paths (NAT, PPPoE,
+// international links) and stalls large downloads while small requests
+// still work; 1500 is the safe Ethernet default (see #1583, #2834).
+private const val DEFAULT_TUN_MTU = 1500
 
 // establish() rejects an MTU above 65535, and below 1280 the kernel drops the
 // IPv6 address.

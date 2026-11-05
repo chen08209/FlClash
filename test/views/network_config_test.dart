@@ -268,7 +268,7 @@ void main() {
     ) async {
       await pumpItem(tester, items().first);
       final l = currentAppLocalizations;
-      expect(find.text('9000'), findsOneWidget);
+      expect(find.text('1500'), findsOneWidget);
 
       await tester.tap(find.text('MTU'));
       await tester.pumpAndSettle();
@@ -281,7 +281,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text(l.reset));
       await tester.pumpAndSettle();
-      expect(container.read(patchClashConfigProvider).tun.mtu, 9000);
+      expect(container.read(patchClashConfigProvider).tun.mtu, 1500);
     });
 
     test('keep-alive rows stay off Android and the mark is Linux only', () {
