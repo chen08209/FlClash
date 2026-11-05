@@ -57,7 +57,7 @@ void main() {
   });
 
   group('num.shortTraffic', () {
-    test('no decimal places', () {
+    test('kilobytes have no decimal places', () {
       final result = 1536.shortTraffic;
       expect(result.value, '2');
       expect(result.unit, ' KB');
@@ -67,6 +67,18 @@ void main() {
       final result = 500.shortTraffic;
       expect(result.value, '500');
       expect(result.unit, ' B');
+    });
+
+    test('megabytes have one decimal place', () {
+      final result = (1024 * 1024 * 2.25).shortTraffic;
+      expect(result.value, '2.3');
+      expect(result.unit, ' MB');
+    });
+
+    test('whole gigabytes keep the decimal zero', () {
+      final result = (1024 * 1024 * 1024 * 3).shortTraffic;
+      expect(result.value, '3.0');
+      expect(result.unit, ' GB');
     });
   });
 }
