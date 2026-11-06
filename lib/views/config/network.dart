@@ -133,10 +133,31 @@ class Ipv6Item extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    return _vpnToggle(
+    return ConfigToggleItem(
       title: (l) => 'IPv6',
-      select: (state) => state.ipv6,
-      update: (state, value) => state.copyWith(ipv6: value),
+      selector: vpnSettingProvider.select((state) => state.ipv6),
+      onChanged: (toggleRef, value) {
+        toggleRef
+            .read(vpnSettingProvider.notifier)
+            .update((state) => state.copyWith(ipv6: value));
+        // The VPN flag alone leaves the core resolver and DNS on IPv4.
+        toggleRef
+            .read(patchClashConfigProvider.notifier)
+            .update(
+              (state) => state.copyWith(
+                ipv6: value,
+                generalOverrideKeys: {
+                  ...state.generalOverrideKeys,
+                  GeneralOverrideKey.ipv6,
+                },
+                dns: state.dns.copyWith(ipv6: value),
+                dnsOverrideKeys: {
+                  ...state.dnsOverrideKeys,
+                  DnsOverrideKey.ipv6,
+                },
+              ),
+            );
+      },
     );
   }
 }
