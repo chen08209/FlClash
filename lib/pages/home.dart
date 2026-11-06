@@ -8,7 +8,6 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:prism_ui/prism_ui.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -66,9 +65,17 @@ class _HomeShell extends ConsumerWidget {
     final state = ref.watch(navigationStateProvider);
     final isMobile = state.viewMode == ViewMode.mobile;
     final navigationItems = state.navigationItems;
-    final floating = ref.watch(
-      appSettingProvider.select((state) => state.floatingNavigationBar),
+    final navigationBarStyle = ref.watch(
+      appSettingProvider.select((state) => state.navigationBarStyle),
     );
+    final bottomInset = switch (navigationBarStyle) {
+      NavigationBarStyle.floating when isMobile => NavigationDock.insetOf(
+        context,
+      ),
+      NavigationBarStyle.floatingFab when isMobile =>
+        ExpressiveNavigationBar.insetOf(context),
+      NavigationBarStyle.docked || _ => 0.0,
+    };
     return Surface(
       color: SurfaceLevel.page.colorOf(context.colorScheme),
       child: Column(
@@ -80,9 +87,7 @@ class _HomeShell extends ConsumerWidget {
                   child: FocusTraversalGroup(
                     policy: PageTraversalPolicy(),
                     child: BottomInsetScope(
-                      inset: isMobile && floating
-                          ? NavigationDock.insetOf(context)
-                          : 0,
+                      inset: bottomInset,
                       child: _BodyPadding(isMobile: isMobile, child: child),
                     ),
                   ),
@@ -92,7 +97,9 @@ class _HomeShell extends ConsumerWidget {
                   end: 0,
                   bottom: 0,
                   child: AnimatedVisibility.bottomNavigation(
-                    visible: isMobile && floating,
+                    visible:
+                        isMobile &&
+                        navigationBarStyle == NavigationBarStyle.floating,
                     child: BarItemPresence.held(
                       child: _NavigationPadding(
                         child: NavigationDock(
@@ -112,11 +119,31 @@ class _HomeShell extends ConsumerWidget {
                     ),
                   ),
                 ),
+                PositionedDirectional(
+                  start: 0,
+                  end: 0,
+                  bottom: 0,
+                  child: AnimatedVisibility.bottomNavigation(
+                    visible:
+                        isMobile &&
+                        navigationBarStyle == NavigationBarStyle.floatingFab,
+                    child: BarItemPresence.held(
+                      child: _NavigationPadding(
+                        child: _ExpressiveHomeBar(
+                          navigationItems: navigationItems,
+                          selectedIndex: state.currentIndex,
+                          onSelect: (label) => _handleToPage(label, ref),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
           AnimatedVisibility.bottomNavigation(
-            visible: isMobile && !floating,
+            visible:
+                isMobile && navigationBarStyle == NavigationBarStyle.docked,
             child: _NavigationPadding(
               child: NavigationBar(
                 destinations: [
@@ -137,6 +164,63 @@ class _HomeShell extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ExpressiveHomeBar extends ConsumerWidget {
+  const _ExpressiveHomeBar({
+    required this.navigationItems,
+    required this.selectedIndex,
+    required this.onSelect,
+  });
+
+  final List<NavigationItem> navigationItems;
+  final int selectedIndex;
+  final ValueChanged<PageLabel> onSelect;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasProfile = ref.watch(
+      profilesProvider.select((profiles) => profiles.isNotEmpty),
+    );
+    final vibrant = ref.watch(
+      themeSettingProvider.select(
+        (state) => state.colorStyle == ColorStyle.vibrant,
+      ),
+    );
+    final running = ref.watch(isStartProvider);
+    final suspended = running && ref.watch(suspendProvider);
+    final appLocalizations = context.appLocalizations;
+    final actionLabel = suspended
+        ? appLocalizations.suspended
+        : running
+        ? appLocalizations.stop
+        : appLocalizations.start;
+    final activeLabel =
+        navigationItems.isNotEmpty &&
+            selectedIndex >= 0 &&
+            selectedIndex < navigationItems.length
+        ? navigationItems[selectedIndex].label
+        : PageLabel.dashboard;
+    return ExpressiveNavigationBar(
+      destinations: [
+        for (final item in navigationItems)
+          NavigationDockDestination(glyph: item.glyph, label: item.label.label),
+      ],
+      selectedIndex: selectedIndex,
+      vibrant: vibrant,
+      onSelected: (index) => onSelect(navigationItems[index].label),
+      action: ExpressiveNavigationAction(
+        visible: activeLabel != PageLabel.dashboard,
+        enabled: hasProfile,
+        running: running,
+        suspended: suspended,
+        label: actionLabel,
+        onPressed: () {
+          ref.read(commonActionProvider.notifier).toggleRunning();
+        },
       ),
     );
   }

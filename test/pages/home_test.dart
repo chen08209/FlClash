@@ -926,7 +926,10 @@ void main() {
     container.read(viewSizeProvider.notifier).value = const Size(500, 800);
     container
         .read(appSettingProvider.notifier)
-        .update((state) => state.copyWith(floatingNavigationBar: false));
+        .update(
+          (state) =>
+              state.copyWith(navigationBarStyle: NavigationBarStyle.docked),
+        );
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -936,6 +939,7 @@ void main() {
     );
     await tester.pump();
     expect(find.byType(FloatingNavigationBar), findsNothing);
+    expect(find.byType(ExpressiveNavigationBar), findsNothing);
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.text('page:dashboard inset:0.0'), findsOneWidget);
 
@@ -949,9 +953,28 @@ void main() {
 
     container
         .read(appSettingProvider.notifier)
-        .update((state) => state.copyWith(floatingNavigationBar: true));
+        .update(
+          (state) => state.copyWith(
+            navigationBarStyle: NavigationBarStyle.floatingFab,
+          ),
+        );
     await tester.pumpAndSettle();
     expect(find.byType(NavigationBar), findsNothing);
+    expect(find.byType(FloatingNavigationBar), findsNothing);
+    expect(find.byType(ExpressiveNavigationBar), findsOneWidget);
+    expect(find.byType(ExpressiveNavigationFab), findsOneWidget);
+    expect(find.textContaining('page:tools inset:'), findsOneWidget);
+    expect(find.text('page:tools inset:0.0'), findsNothing);
+
+    container
+        .read(appSettingProvider.notifier)
+        .update(
+          (state) =>
+              state.copyWith(navigationBarStyle: NavigationBarStyle.floating),
+        );
+    await tester.pumpAndSettle();
+    expect(find.byType(NavigationBar), findsNothing);
+    expect(find.byType(ExpressiveNavigationBar), findsNothing);
     expect(find.byType(FloatingNavigationBar), findsOneWidget);
     expect(find.textContaining('page:tools inset:'), findsOneWidget);
     expect(find.text('page:tools inset:0.0'), findsNothing);

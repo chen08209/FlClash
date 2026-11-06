@@ -2,6 +2,7 @@ export 'package:prism_ui/prism_ui.dart';
 
 export 'delay_color.dart';
 export 'emoji.dart';
+export 'expressive_navigation_bar.dart';
 export 'fonts.dart';
 export 'list_item.dart';
 export 'null_status_illustration.dart';

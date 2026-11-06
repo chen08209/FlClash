@@ -6,7 +6,6 @@ import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:prism_ui/prism_ui.dart';
 
 class PreviewChoice<T> {
   const PreviewChoice({
@@ -172,8 +171,8 @@ class _ThemeLivePreviewState extends ConsumerState<ThemeLivePreview>
       ThemeMode.system => MediaQuery.platformBrightnessOf(context),
     };
     final colorScheme = ref.watch(genColorSchemeProvider(brightness));
-    final floatingBar = ref.watch(
-      appSettingProvider.select((state) => state.floatingNavigationBar),
+    final navigationBarStyle = ref.watch(
+      appSettingProvider.select((state) => state.navigationBarStyle),
     );
     final tabAnimation = ref.watch(
       appSettingProvider.select((state) => state.tabAnimation),
@@ -181,6 +180,11 @@ class _ThemeLivePreviewState extends ConsumerState<ThemeLivePreview>
     final liquidGlass = ref.watch(
       themeSettingProvider.select(
         (state) => state.liquidGlass != LiquidGlassMode.none,
+      ),
+    );
+    final vibrant = ref.watch(
+      themeSettingProvider.select(
+        (state) => state.colorStyle == ColorStyle.vibrant,
       ),
     );
     final corner = AppCorner.fit(_phoneWidth);
@@ -204,12 +208,13 @@ class _ThemeLivePreviewState extends ConsumerState<ThemeLivePreview>
               builder: (_, colorScheme, _) => AnimatedSwitcher(
                 duration: _duration,
                 child: AnimatedBuilder(
-                  key: ValueKey((floatingBar, liquidGlass)),
+                  key: ValueKey((navigationBarStyle, liquidGlass, vibrant)),
                   animation: _slideCurve,
                   builder: (_, _) => MiniScreen(
                     colorScheme: colorScheme,
-                    floatingBar: floatingBar,
+                    navigationBarStyle: navigationBarStyle,
                     liquidGlass: liquidGlass,
+                    vibrant: vibrant,
                     selected: _selected,
                     previous: _previous,
                     progress: _previous == null ? 1 : _slideCurve.value,
@@ -236,8 +241,9 @@ class MiniScreen extends StatelessWidget {
   const MiniScreen({
     super.key,
     required this.colorScheme,
-    required this.floatingBar,
+    required this.navigationBarStyle,
     this.liquidGlass = false,
+    this.vibrant = false,
     this.selected = 0,
     this.previous,
     this.progress = 1,
@@ -248,12 +254,13 @@ class MiniScreen extends StatelessWidget {
   static const int destinationCount = 4;
 
   final ColorScheme colorScheme;
-  final bool floatingBar;
+  final NavigationBarStyle navigationBarStyle;
 
-  /// Draws a floating bar as glass; a docked one stays a fill, as the app's
-  /// does.
+  /// Draws the standard floating dock as glass; M3E floating FAB and docked
+  /// bars stay solid fills, as the app's do.
   final bool liquidGlass;
 
+  final bool vibrant;
   final int selected;
   final int? previous;
   final double progress;
@@ -266,8 +273,9 @@ class MiniScreen extends StatelessWidget {
       child: CustomPaint(
         painter: _MiniScreenPainter(
           colorScheme: colorScheme,
-          floatingBar: floatingBar,
+          navigationBarStyle: navigationBarStyle,
           liquidGlass: liquidGlass,
+          vibrant: vibrant,
           selected: selected,
           previous: previous,
           progress: progress,
@@ -283,7 +291,8 @@ class MiniScreen extends StatelessWidget {
       builder: (_, constraints) {
         final geometry = _MiniGeometry(
           constraints.biggest,
-          floatingBar: floatingBar,
+          navigationBarStyle: navigationBarStyle,
+          selected: selected,
         );
         return Stack(
           children: [
@@ -347,19 +356,49 @@ class _DiagonalClipper extends CustomClipper<Path> {
 }
 
 class _MiniGeometry {
-  _MiniGeometry(this.size, {required bool floatingBar})
-    : unit = size.width / 20 {
+  _MiniGeometry(
+    this.size, {
+    required NavigationBarStyle navigationBarStyle,
+    required int selected,
+  }) : unit = size.width / 20 {
     margin = unit * 1.5;
-    final barHeight = floatingBar ? unit * 3.2 : unit * 3.6;
-    pageBottom = floatingBar ? 0 : barHeight;
-    bar = floatingBar
-        ? Rect.fromLTWH(
-            margin,
-            size.height - margin - barHeight,
-            size.width - margin * 2,
+    final isFloating = navigationBarStyle.isFloating;
+    final barHeight = isFloating ? unit * 3.2 : unit * 3.6;
+    pageBottom = isFloating ? 0 : barHeight;
+    final top = size.height - margin - barHeight;
+    switch (navigationBarStyle) {
+      case NavigationBarStyle.floating:
+        bar = Rect.fromLTWH(margin, top, size.width - margin * 2, barHeight);
+        fab = null;
+      case NavigationBarStyle.docked:
+        bar = Rect.fromLTWH(0, size.height - barHeight, size.width, barHeight);
+        fab = null;
+      case NavigationBarStyle.floatingFab:
+        final expressiveTop = top - unit * 0.35;
+        if (selected != 0) {
+          final gap = unit * 0.8;
+          fab = Rect.fromLTWH(
+            size.width - margin - barHeight,
+            expressiveTop,
             barHeight,
-          )
-        : Rect.fromLTWH(0, size.height - barHeight, size.width, barHeight);
+            barHeight,
+          );
+          bar = Rect.fromLTWH(
+            margin,
+            expressiveTop,
+            size.width - margin * 2 - barHeight - gap,
+            barHeight,
+          );
+        } else {
+          fab = null;
+          bar = Rect.fromLTWH(
+            margin * 1.5,
+            expressiveTop,
+            size.width - margin * 3,
+            barHeight,
+          );
+        }
+    }
   }
 
   final Size size;
@@ -367,13 +406,15 @@ class _MiniGeometry {
   late final double margin;
   late final double pageBottom;
   late final Rect bar;
+  late final Rect? fab;
 }
 
 class _MiniScreenPainter extends CustomPainter {
   const _MiniScreenPainter({
     required this.colorScheme,
-    required this.floatingBar,
+    required this.navigationBarStyle,
     required this.liquidGlass,
+    required this.vibrant,
     required this.selected,
     required this.previous,
     required this.progress,
@@ -381,14 +422,16 @@ class _MiniScreenPainter extends CustomPainter {
   });
 
   final ColorScheme colorScheme;
-  final bool floatingBar;
+  final NavigationBarStyle navigationBarStyle;
   final bool liquidGlass;
+  final bool vibrant;
   final int selected;
   final int? previous;
   final double progress;
   final TabAnimation tabAnimation;
 
-  bool get _glass => floatingBar && liquidGlass;
+  bool get _glass =>
+      navigationBarStyle == NavigationBarStyle.floating && liquidGlass;
 
   static _MiniPage _pageOf(int index) =>
       _MiniPage.values[index % _MiniPage.values.length];
@@ -418,10 +461,19 @@ class _MiniScreenPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final geometry = _MiniGeometry(size, floatingBar: floatingBar);
+    final geometry = _MiniGeometry(
+      size,
+      navigationBarStyle: navigationBarStyle,
+      selected: selected,
+    );
     _paintPages(canvas, geometry);
     final unit = geometry.unit;
-    final dock = SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme);
+    final dock = navigationBarStyle == NavigationBarStyle.floatingFab
+        ? ExpressiveNavigationBar.colorsOf(
+            colorScheme,
+            vibrant: vibrant,
+          ).container
+        : SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme);
     final shadow = BoxShadow(
       color: colorScheme.shadow.withValues(alpha: 0.12),
       blurRadius: unit,
@@ -429,10 +481,40 @@ class _MiniScreenPainter extends CustomPainter {
     );
     if (_glass) {
       _paintGlassBar(canvas, geometry, shadow);
-    } else if (floatingBar) {
+    } else if (navigationBarStyle.isFloating) {
       _fill(canvas, geometry.bar, dock, AppShape.full, shadows: [shadow]);
     } else {
       canvas.drawRect(geometry.bar, Paint()..color = dock);
+    }
+    if (navigationBarStyle == NavigationBarStyle.floatingFab) {
+      _paintExpressiveDestinations(canvas, geometry.bar, unit);
+      if (geometry.fab case final fab?) {
+        final fabColors = ExpressiveNavigationBar.fabColorsOf(
+          colorScheme,
+          vibrant: vibrant,
+          enabled: true,
+        );
+        _fill(
+          canvas,
+          fab,
+          fabColors.container,
+          AppShape.circle,
+          shadows: [
+            BoxShadow(
+              color: fabColors.shadow,
+              blurRadius: unit,
+              offset: Offset(0, unit * 0.3),
+            ),
+          ],
+        );
+        _fill(
+          canvas,
+          Rect.fromCircle(center: fab.center, radius: unit * 0.52),
+          fabColors.foreground,
+          AppShape.circle,
+        );
+      }
+      return;
     }
     _paintDestinations(canvas, geometry.bar, unit);
   }
@@ -579,7 +661,7 @@ class _MiniScreenPainter extends CustomPainter {
       if (isSelected) {
         _fill(
           canvas,
-          floatingBar
+          navigationBarStyle.isFloating
               ? Rect.fromCenter(
                   center: center,
                   width: cell - unit * 0.5,
@@ -616,11 +698,64 @@ class _MiniScreenPainter extends CustomPainter {
     }
   }
 
+  void _paintExpressiveDestinations(Canvas canvas, Rect bar, double unit) {
+    final colors = ExpressiveNavigationBar.colorsOf(
+      colorScheme,
+      vibrant: vibrant,
+    );
+    final pad = unit * 0.35;
+    final inner = bar.deflate(pad);
+    const selectedFlex = 1.8;
+    const totalFlex = (MiniScreen.destinationCount - 1) + selectedFlex;
+    var left = inner.left;
+    for (var i = 0; i < MiniScreen.destinationCount; i++) {
+      final isSelected = i == selected;
+      final itemWidth =
+          inner.width * (isSelected ? selectedFlex : 1) / totalFlex;
+      final rect = Rect.fromLTWH(left, inner.top, itemWidth, inner.height);
+      left += itemWidth;
+      if (isSelected) {
+        _fill(canvas, rect, colors.indicator, AppShape.full);
+        final iconCenter = Offset(rect.left + unit * 1.05, rect.center.dy);
+        _fill(
+          canvas,
+          Rect.fromCircle(center: iconCenter, radius: unit * 0.42),
+          colors.selectedForeground,
+          AppShape.circle,
+        );
+        final labelLeft = iconCenter.dx + unit * 0.68;
+        final labelRight = math.max(
+          labelLeft + unit * 0.6,
+          rect.right - unit * 0.65,
+        );
+        _fill(
+          canvas,
+          Rect.fromLTRB(
+            labelLeft,
+            rect.center.dy - unit * 0.2,
+            labelRight,
+            rect.center.dy + unit * 0.2,
+          ),
+          colors.selectedForeground,
+          AppShape.full,
+        );
+      } else {
+        _fill(
+          canvas,
+          Rect.fromCircle(center: rect.center, radius: unit * 0.42),
+          colors.unselectedForeground,
+          AppShape.circle,
+        );
+      }
+    }
+  }
+
   @override
   bool shouldRepaint(_MiniScreenPainter oldDelegate) {
     return oldDelegate.colorScheme != colorScheme ||
-        oldDelegate.floatingBar != floatingBar ||
+        oldDelegate.navigationBarStyle != navigationBarStyle ||
         oldDelegate.liquidGlass != liquidGlass ||
+        oldDelegate.vibrant != vibrant ||
         oldDelegate.selected != selected ||
         oldDelegate.previous != previous ||
         oldDelegate.progress != progress ||

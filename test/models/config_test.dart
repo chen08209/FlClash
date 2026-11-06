@@ -144,6 +144,7 @@ void main() {
       expect(restored.openLogs, false);
       expect(restored.closeConnections, true);
       expect(restored.tabAnimation, TabAnimation.fade);
+      expect(restored.navigationBarStyle, NavigationBarStyle.floating);
       expect(restored.autoCheckUpdate, true);
       expect(restored.sidebarExpanded, true);
       expect(restored.minimizeOnExit, true);
@@ -321,6 +322,28 @@ void main() {
           'tabAnimation': 'slide',
         }).tabAnimation,
         TabAnimation.slide,
+      );
+    });
+
+    test('a legacy floatingNavigationBar sets the navigation bar style', () {
+      expect(
+        AppSettingProps.fromJson({
+          'floatingNavigationBar': true,
+        }).navigationBarStyle,
+        NavigationBarStyle.floating,
+      );
+      expect(
+        AppSettingProps.fromJson({
+          'floatingNavigationBar': false,
+        }).navigationBarStyle,
+        NavigationBarStyle.docked,
+      );
+      expect(
+        AppSettingProps.fromJson({
+          'floatingNavigationBar': false,
+          'navigationBarStyle': 'floatingFab',
+        }).navigationBarStyle,
+        NavigationBarStyle.floatingFab,
       );
     });
 
@@ -935,7 +958,7 @@ void main() {
 
       expect(styleOf('content'), ColorStyle.vivid);
       expect(styleOf('fidelity'), ColorStyle.vivid);
-      expect(styleOf('vibrant'), ColorStyle.vivid);
+      expect(styleOf('vibrant'), ColorStyle.vibrant);
       expect(styleOf('tonalSpot'), ColorStyle.soft);
       expect(styleOf('neutral'), ColorStyle.soft);
       expect(styleOf('monochrome'), ColorStyle.monochrome);

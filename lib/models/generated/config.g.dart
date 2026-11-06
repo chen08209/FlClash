@@ -40,7 +40,12 @@ _AppSettingProps _$AppSettingPropsFromJson(
         _readTabAnimation(json, 'tabAnimation'),
       ) ??
       TabAnimation.fade,
-  floatingNavigationBar: json['floatingNavigationBar'] as bool? ?? true,
+  navigationBarStyle:
+      $enumDecodeNullable(
+        _$NavigationBarStyleEnumMap,
+        _readNavigationBarStyle(json, 'navigationBarStyle'),
+      ) ??
+      NavigationBarStyle.floating,
   autoCheckUpdate: json['autoCheckUpdate'] as bool? ?? true,
   sidebarExpanded:
       _readSidebarExpanded(json, 'sidebarExpanded') as bool? ?? true,
@@ -113,7 +118,8 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'requestFeed': _$RequestFeedEnumMap[instance.requestFeed]!,
       'delayTestTimeout': instance.delayTestTimeout,
       'tabAnimation': _$TabAnimationEnumMap[instance.tabAnimation]!,
-      'floatingNavigationBar': instance.floatingNavigationBar,
+      'navigationBarStyle':
+          _$NavigationBarStyleEnumMap[instance.navigationBarStyle]!,
       'autoCheckUpdate': instance.autoCheckUpdate,
       'sidebarExpanded': instance.sidebarExpanded,
       'acceptedDisclaimerVersion': instance.acceptedDisclaimerVersion,
@@ -143,6 +149,12 @@ const _$RequestFeedEnumMap = {
 const _$TabAnimationEnumMap = {
   TabAnimation.slide: 'slide',
   TabAnimation.fade: 'fade',
+};
+
+const _$NavigationBarStyleEnumMap = {
+  NavigationBarStyle.floating: 'floating',
+  NavigationBarStyle.docked: 'docked',
+  NavigationBarStyle.floatingFab: 'floatingFab',
 };
 
 const _$RestoreStrategyEnumMap = {
@@ -412,6 +424,7 @@ const _$ThemeModeEnumMap = {
 
 const _$ColorStyleEnumMap = {
   ColorStyle.vivid: 'vivid',
+  ColorStyle.vibrant: 'vibrant',
   ColorStyle.tinted: 'tinted',
   ColorStyle.soft: 'soft',
   ColorStyle.monochrome: 'monochrome',

@@ -468,13 +468,13 @@ void main() {
     expect(positioned, findsOneWidget);
   });
 
-  for (final floating in [true, false]) {
+  for (final style in NavigationBarStyle.values) {
     testWidgets('a phone page shows its primary action in its bar above a '
-        '${floating ? 'floating' : 'fixed'} navigation bar', (tester) async {
+        '${style.name} navigation bar', (tester) async {
       final container = await _pumpHome(tester);
       container
           .read(appSettingProvider.notifier)
-          .update((state) => state.copyWith(floatingNavigationBar: floating));
+          .update((state) => state.copyWith(navigationBarStyle: style));
       container
           .read(currentPageLabelProvider.notifier)
           .toPage(PageLabel.profiles);
