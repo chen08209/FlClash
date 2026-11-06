@@ -114,6 +114,7 @@ extension ColorStyleL10n on ColorStyle {
     final appLocalizations = currentAppLocalizations;
     return switch (this) {
       ColorStyle.vivid => appLocalizations.vividStyle,
+      ColorStyle.vibrant => appLocalizations.vibrantStyle,
       ColorStyle.tinted => appLocalizations.tintedStyle,
       ColorStyle.soft => appLocalizations.softStyle,
       ColorStyle.monochrome => appLocalizations.monochromeScheme,

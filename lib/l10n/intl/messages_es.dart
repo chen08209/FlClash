@@ -2308,6 +2308,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "username": MessageLookupByLibrary.simpleMessage("Usuario"),
     "validUntil": m99,
     "value": MessageLookupByLibrary.simpleMessage("Valor"),
+    "vibrantStyle": MessageLookupByLibrary.simpleMessage("Vibrante"),
     "view": MessageLookupByLibrary.simpleMessage("Ver"),
     "viewAll": MessageLookupByLibrary.simpleMessage("Ver todo"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("IPv4 virtual"),

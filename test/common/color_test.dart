@@ -27,6 +27,7 @@ final _materialVariants =
       })
     >{
       ColorStyle.vivid: DynamicScheme.content,
+      ColorStyle.vibrant: DynamicScheme.vibrant,
       ColorStyle.tinted: DynamicScheme.content,
       ColorStyle.soft: DynamicScheme.tonalSpot,
       ColorStyle.monochrome: DynamicScheme.monochrome,
@@ -72,7 +73,8 @@ void main() {
             ),
           );
           final reason = '$seed $style $brightness';
-          final gray = style != ColorStyle.tinted;
+          final gray =
+              style != ColorStyle.tinted && style != ColorStyle.vibrant;
           final surfaces = [
             (scheme.surfaceDim, material.surfaceDim, null),
             (
@@ -119,7 +121,7 @@ void main() {
           );
           expect(
             _hct(scheme.primaryContainer).chroma,
-            lessThan(48.5),
+            lessThan(style == ColorStyle.vibrant ? 64.5 : 48.5),
             reason: reason,
           );
           expect(
@@ -204,6 +206,41 @@ void main() {
     );
     expect(_hct(graphite.surfaceContainer).chroma, lessThan(3.1));
   });
+
+  test(
+    'vibrant boosts chroma on muted seeds, rotates accents, and tints surfaces',
+    () {
+      const mutedRose = Color(0xFFD8C0C3);
+      final light = seededColorScheme(
+        seedColor: mutedRose,
+        brightness: Brightness.light,
+        style: ColorStyle.vibrant,
+      );
+      final vividLight = seededColorScheme(
+        seedColor: mutedRose,
+        brightness: Brightness.light,
+        style: ColorStyle.vivid,
+      );
+      final dark = seededColorScheme(
+        seedColor: const Color(0xFF007AFF),
+        brightness: Brightness.dark,
+        style: ColorStyle.vibrant,
+      );
+
+      expect(
+        _hct(light.primary).chroma,
+        greaterThan(_hct(vividLight.primary).chroma + 25),
+      );
+      final tertiaryHueDiff =
+          ((_hct(light.tertiary).hue - _hct(light.primary).hue).abs() % 360);
+      expect(min(tertiaryHueDiff, 360 - tertiaryHueDiff), greaterThan(15));
+      expect(_hct(light.surfaceContainer).chroma, greaterThan(4));
+      expect(_hct(dark.surfaceContainer).tone, closeTo(15, 0.6));
+      expect(_hct(dark.surfaceContainerHigh).tone, closeTo(21, 0.6));
+      expect(_hct(dark.surfaceContainerHighest).tone, closeTo(27, 0.6));
+      expect(dark.toPureBlack(true).surface, Colors.black);
+    },
+  );
 
   test('a primary kept from the seed stays readable under its text', () {
     for (var hue = 0.0; hue < 360; hue += 30) {

@@ -467,6 +467,7 @@ Object? _readColorStyle(Map<dynamic, dynamic> json, String key) {
     return json[key];
   }
   return switch (json['schemeVariant']) {
+    'vibrant' => ColorStyle.vibrant.name,
     'monochrome' => ColorStyle.monochrome.name,
     'tonalSpot' || 'neutral' => ColorStyle.soft.name,
     _ => null,

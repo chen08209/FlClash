@@ -3341,6 +3341,11 @@ class AppLocalizations {
     return Intl.message('Vivid', name: 'vividStyle', desc: '', args: []);
   }
 
+  /// `Vibrant`
+  String get vibrantStyle {
+    return Intl.message('Vibrant', name: 'vibrantStyle', desc: '', args: []);
+  }
+
   /// `Tinted`
   String get tintedStyle {
     return Intl.message('Tinted', name: 'tintedStyle', desc: '', args: []);

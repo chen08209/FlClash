@@ -423,6 +423,7 @@
   "hex": "Hex",
   "monochromeScheme": "Monochrome",
   "vividStyle": "Vivid",
+  "vibrantStyle": "Vibrant",
   "tintedStyle": "Tinted",
   "softStyle": "Soft",
   "developerMode": "Developer mode",

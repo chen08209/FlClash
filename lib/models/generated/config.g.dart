@@ -424,6 +424,7 @@ const _$ThemeModeEnumMap = {
 
 const _$ColorStyleEnumMap = {
   ColorStyle.vivid: 'vivid',
+  ColorStyle.vibrant: 'vibrant',
   ColorStyle.tinted: 'tinted',
   ColorStyle.soft: 'soft',
   ColorStyle.monochrome: 'monochrome',

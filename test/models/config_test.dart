@@ -958,7 +958,7 @@ void main() {
 
       expect(styleOf('content'), ColorStyle.vivid);
       expect(styleOf('fidelity'), ColorStyle.vivid);
-      expect(styleOf('vibrant'), ColorStyle.vivid);
+      expect(styleOf('vibrant'), ColorStyle.vibrant);
       expect(styleOf('tonalSpot'), ColorStyle.soft);
       expect(styleOf('neutral'), ColorStyle.soft);
       expect(styleOf('monochrome'), ColorStyle.monochrome);

@@ -182,6 +182,11 @@ class _ThemeLivePreviewState extends ConsumerState<ThemeLivePreview>
         (state) => state.liquidGlass != LiquidGlassMode.none,
       ),
     );
+    final vibrant = ref.watch(
+      themeSettingProvider.select(
+        (state) => state.colorStyle == ColorStyle.vibrant,
+      ),
+    );
     final corner = AppCorner.fit(_phoneWidth);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -203,12 +208,13 @@ class _ThemeLivePreviewState extends ConsumerState<ThemeLivePreview>
               builder: (_, colorScheme, _) => AnimatedSwitcher(
                 duration: _duration,
                 child: AnimatedBuilder(
-                  key: ValueKey((navigationBarStyle, liquidGlass)),
+                  key: ValueKey((navigationBarStyle, liquidGlass, vibrant)),
                   animation: _slideCurve,
                   builder: (_, _) => MiniScreen(
                     colorScheme: colorScheme,
                     navigationBarStyle: navigationBarStyle,
                     liquidGlass: liquidGlass,
+                    vibrant: vibrant,
                     selected: _selected,
                     previous: _previous,
                     progress: _previous == null ? 1 : _slideCurve.value,
@@ -237,6 +243,7 @@ class MiniScreen extends StatelessWidget {
     required this.colorScheme,
     required this.navigationBarStyle,
     this.liquidGlass = false,
+    this.vibrant = false,
     this.selected = 0,
     this.previous,
     this.progress = 1,
@@ -253,6 +260,7 @@ class MiniScreen extends StatelessWidget {
   /// bars stay solid fills, as the app's do.
   final bool liquidGlass;
 
+  final bool vibrant;
   final int selected;
   final int? previous;
   final double progress;
@@ -267,6 +275,7 @@ class MiniScreen extends StatelessWidget {
           colorScheme: colorScheme,
           navigationBarStyle: navigationBarStyle,
           liquidGlass: liquidGlass,
+          vibrant: vibrant,
           selected: selected,
           previous: previous,
           progress: progress,
@@ -405,6 +414,7 @@ class _MiniScreenPainter extends CustomPainter {
     required this.colorScheme,
     required this.navigationBarStyle,
     required this.liquidGlass,
+    required this.vibrant,
     required this.selected,
     required this.previous,
     required this.progress,
@@ -414,6 +424,7 @@ class _MiniScreenPainter extends CustomPainter {
   final ColorScheme colorScheme;
   final NavigationBarStyle navigationBarStyle;
   final bool liquidGlass;
+  final bool vibrant;
   final int selected;
   final int? previous;
   final double progress;
@@ -458,7 +469,10 @@ class _MiniScreenPainter extends CustomPainter {
     _paintPages(canvas, geometry);
     final unit = geometry.unit;
     final dock = navigationBarStyle == NavigationBarStyle.floatingFab
-        ? ExpressiveNavigationBar.colorsOf(colorScheme).container
+        ? ExpressiveNavigationBar.colorsOf(
+            colorScheme,
+            vibrant: vibrant,
+          ).container
         : SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme);
     final shadow = BoxShadow(
       color: colorScheme.shadow.withValues(alpha: 0.12),
@@ -475,14 +489,19 @@ class _MiniScreenPainter extends CustomPainter {
     if (navigationBarStyle == NavigationBarStyle.floatingFab) {
       _paintExpressiveDestinations(canvas, geometry.bar, unit);
       if (geometry.fab case final fab?) {
+        final fabColors = ExpressiveNavigationBar.fabColorsOf(
+          colorScheme,
+          vibrant: vibrant,
+          enabled: true,
+        );
         _fill(
           canvas,
           fab,
-          colorScheme.primary,
+          fabColors.container,
           AppShape.circle,
           shadows: [
             BoxShadow(
-              color: colorScheme.primary.withValues(alpha: 0.28),
+              color: fabColors.shadow,
               blurRadius: unit,
               offset: Offset(0, unit * 0.3),
             ),
@@ -491,7 +510,7 @@ class _MiniScreenPainter extends CustomPainter {
         _fill(
           canvas,
           Rect.fromCircle(center: fab.center, radius: unit * 0.52),
-          colorScheme.onPrimary,
+          fabColors.foreground,
           AppShape.circle,
         );
       }
@@ -680,7 +699,10 @@ class _MiniScreenPainter extends CustomPainter {
   }
 
   void _paintExpressiveDestinations(Canvas canvas, Rect bar, double unit) {
-    final colors = ExpressiveNavigationBar.colorsOf(colorScheme);
+    final colors = ExpressiveNavigationBar.colorsOf(
+      colorScheme,
+      vibrant: vibrant,
+    );
     final pad = unit * 0.35;
     final inner = bar.deflate(pad);
     const selectedFlex = 1.8;
@@ -733,6 +755,7 @@ class _MiniScreenPainter extends CustomPainter {
     return oldDelegate.colorScheme != colorScheme ||
         oldDelegate.navigationBarStyle != navigationBarStyle ||
         oldDelegate.liquidGlass != liquidGlass ||
+        oldDelegate.vibrant != vibrant ||
         oldDelegate.selected != selected ||
         oldDelegate.previous != previous ||
         oldDelegate.progress != progress ||

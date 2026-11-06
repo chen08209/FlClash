@@ -1807,6 +1807,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "username": MessageLookupByLibrary.simpleMessage("사용자 이름"),
     "validUntil": m99,
     "value": MessageLookupByLibrary.simpleMessage("값"),
+    "vibrantStyle": MessageLookupByLibrary.simpleMessage("생동감"),
     "view": MessageLookupByLibrary.simpleMessage("보기"),
     "viewAll": MessageLookupByLibrary.simpleMessage("모두 보기"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("가상 IPv4"),

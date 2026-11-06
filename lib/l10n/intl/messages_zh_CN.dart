@@ -1657,6 +1657,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "username": MessageLookupByLibrary.simpleMessage("用户名"),
     "validUntil": m99,
     "value": MessageLookupByLibrary.simpleMessage("值"),
+    "vibrantStyle": MessageLookupByLibrary.simpleMessage("活力"),
     "view": MessageLookupByLibrary.simpleMessage("查看"),
     "viewAll": MessageLookupByLibrary.simpleMessage("查看全部"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("虚拟 IPv4"),

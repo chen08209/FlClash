@@ -128,21 +128,40 @@ typedef ExpressiveToolbarColors = ({
   Color unselectedForeground,
 });
 
+typedef ExpressiveFabColors = ({
+  Color container,
+  Color foreground,
+  Color shadow,
+});
+
 class ExpressiveNavigationBar extends StatelessWidget {
   const ExpressiveNavigationBar({
     super.key,
     required this.destinations,
     required this.selectedIndex,
     required this.onSelected,
+    this.vibrant = false,
     this.action,
   });
 
   final List<NavigationDockDestination> destinations;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
+  final bool vibrant;
   final ExpressiveNavigationAction? action;
 
-  static ExpressiveToolbarColors colorsOf(ColorScheme colorScheme) {
+  static ExpressiveToolbarColors colorsOf(
+    ColorScheme colorScheme, {
+    bool vibrant = false,
+  }) {
+    if (vibrant) {
+      return (
+        container: colorScheme.primaryContainer,
+        indicator: colorScheme.primary,
+        selectedForeground: colorScheme.onPrimary,
+        unselectedForeground: colorScheme.onPrimaryContainer,
+      );
+    }
     final monochrome =
         colorScheme.primary == Colors.black ||
         colorScheme.primary == Colors.white;
@@ -155,6 +174,34 @@ class ExpressiveNavigationBar extends StatelessWidget {
           ? colorScheme.onSecondaryContainer
           : colorScheme.onPrimaryContainer,
       unselectedForeground: colorScheme.onSurfaceVariant,
+    );
+  }
+
+  static ExpressiveFabColors fabColorsOf(
+    ColorScheme colorScheme, {
+    required bool vibrant,
+    required bool enabled,
+  }) {
+    if (!enabled) {
+      return (
+        container: colorScheme.surfaceContainerHigh,
+        foreground: colorScheme.onSurfaceVariant.withValues(alpha: 0.38),
+        shadow: colorScheme.shadow.withValues(
+          alpha: colorScheme.brightness == Brightness.dark ? 0.24 : 0.08,
+        ),
+      );
+    }
+    if (vibrant) {
+      return (
+        container: colorScheme.tertiaryContainer,
+        foreground: colorScheme.onTertiaryContainer,
+        shadow: colorScheme.tertiary.withValues(alpha: 0.28),
+      );
+    }
+    return (
+      container: colorScheme.primary,
+      foreground: colorScheme.onPrimary,
+      shadow: colorScheme.primary.withValues(alpha: 0.3),
     );
   }
 
@@ -197,10 +244,15 @@ class ExpressiveNavigationBar extends StatelessWidget {
                 child: _ExpressiveToolbar(
                   destinations: destinations,
                   selectedIndex: selectedIndex,
+                  vibrant: vibrant,
                   onSelected: onSelected,
                 ),
               ),
-              _AnimatedFabSlot(action: action, dimension: height),
+              _AnimatedFabSlot(
+                action: action,
+                dimension: height,
+                vibrant: vibrant,
+              ),
             ],
           ),
         ),
@@ -243,11 +295,13 @@ class _ExpressiveToolbar extends StatefulWidget {
   const _ExpressiveToolbar({
     required this.destinations,
     required this.selectedIndex,
+    required this.vibrant,
     required this.onSelected,
   });
 
   final List<NavigationDockDestination> destinations;
   final int selectedIndex;
+  final bool vibrant;
   final ValueChanged<int> onSelected;
 
   @override
@@ -349,7 +403,10 @@ class _ExpressiveToolbarState extends State<_ExpressiveToolbar>
       return const SizedBox.shrink();
     }
     final colorScheme = context.colorScheme;
-    final colors = ExpressiveNavigationBar.colorsOf(colorScheme);
+    final colors = ExpressiveNavigationBar.colorsOf(
+      colorScheme,
+      vibrant: widget.vibrant,
+    );
     final labelStyle = AppTextStyle.footnote.of(context, emphasized: true);
     final labelWidths = _resolveLabelWidths(
       context,
@@ -528,10 +585,15 @@ class _ToolbarItem extends StatelessWidget {
 }
 
 class _AnimatedFabSlot extends StatefulWidget {
-  const _AnimatedFabSlot({required this.action, required this.dimension});
+  const _AnimatedFabSlot({
+    required this.action,
+    required this.dimension,
+    required this.vibrant,
+  });
 
   final ExpressiveNavigationAction? action;
   final double dimension;
+  final bool vibrant;
 
   @override
   State<_AnimatedFabSlot> createState() => _AnimatedFabSlotState();
@@ -611,6 +673,7 @@ class _AnimatedFabSlotState extends State<_AnimatedFabSlot>
                       enabled: action.enabled,
                       running: action.running,
                       suspended: action.suspended,
+                      vibrant: widget.vibrant,
                       label: action.label,
                       onPressed: action.onPressed,
                     ),
@@ -634,6 +697,7 @@ class ExpressiveNavigationFab extends StatefulWidget {
     required this.suspended,
     required this.label,
     required this.onPressed,
+    this.vibrant = false,
   });
 
   final double dimension;
@@ -642,6 +706,7 @@ class ExpressiveNavigationFab extends StatefulWidget {
   final bool suspended;
   final String label;
   final VoidCallback onPressed;
+  final bool vibrant;
 
   @override
   State<ExpressiveNavigationFab> createState() =>
@@ -688,17 +753,14 @@ class _ExpressiveNavigationFabState extends State<ExpressiveNavigationFab>
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     final enabled = widget.enabled;
-    final fill = enabled
-        ? colorScheme.primary
-        : colorScheme.surfaceContainerHigh;
-    final ink = enabled
-        ? colorScheme.onPrimary
-        : colorScheme.onSurfaceVariant.withValues(alpha: 0.38);
-    final shadow = enabled
-        ? colorScheme.primary.withValues(alpha: 0.3)
-        : colorScheme.shadow.withValues(
-            alpha: colorScheme.brightness == Brightness.dark ? 0.24 : 0.08,
-          );
+    final colors = ExpressiveNavigationBar.fabColorsOf(
+      colorScheme,
+      vibrant: widget.vibrant,
+      enabled: enabled,
+    );
+    final fill = colors.container;
+    final ink = colors.foreground;
+    final shadow = colors.shadow;
     final stateDuration = context.motionDuration(_stateDuration);
     final iconSize = widget.dimension * 0.36;
     return Tooltip(

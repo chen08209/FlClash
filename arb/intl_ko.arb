@@ -423,6 +423,7 @@
   "hex": "16진수",
   "monochromeScheme": "모노크롬",
   "vividStyle": "선명",
+  "vibrantStyle": "생동감",
   "tintedStyle": "틴트",
   "softStyle": "부드러움",
   "developerMode": "개발자 모드",

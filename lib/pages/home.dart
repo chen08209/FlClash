@@ -185,6 +185,11 @@ class _ExpressiveHomeBar extends ConsumerWidget {
     final hasProfile = ref.watch(
       profilesProvider.select((profiles) => profiles.isNotEmpty),
     );
+    final vibrant = ref.watch(
+      themeSettingProvider.select(
+        (state) => state.colorStyle == ColorStyle.vibrant,
+      ),
+    );
     final running = ref.watch(isStartProvider);
     final suspended = running && ref.watch(suspendProvider);
     final appLocalizations = context.appLocalizations;
@@ -205,6 +210,7 @@ class _ExpressiveHomeBar extends ConsumerWidget {
           NavigationDockDestination(glyph: item.glyph, label: item.label.label),
       ],
       selectedIndex: selectedIndex,
+      vibrant: vibrant,
       onSelected: (index) => onSelect(navigationItems[index].label),
       action: ExpressiveNavigationAction(
         visible: activeLabel != PageLabel.dashboard,

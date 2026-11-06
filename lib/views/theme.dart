@@ -65,15 +65,18 @@ class _ThemeModeItem extends ConsumerWidget {
     );
     final navigationBarStyle = ref.watch(_navigationBarStyleProvider);
     final liquidGlass = ref.watch(_liquidGlassProvider);
+    final vibrant = ref.watch(_vibrantProvider);
     final light = MiniScreen(
       colorScheme: ref.watch(genColorSchemeProvider(Brightness.light)),
       navigationBarStyle: navigationBarStyle,
       liquidGlass: liquidGlass,
+      vibrant: vibrant,
     );
     final dark = MiniScreen(
       colorScheme: ref.watch(genColorSchemeProvider(Brightness.dark)),
       navigationBarStyle: navigationBarStyle,
       liquidGlass: liquidGlass,
+      vibrant: vibrant,
     );
     return PreviewChoiceGroup<ThemeMode>(
       info: Info(label: appLocalizations.themeMode, glyph: AppGlyphs.sun),
@@ -560,6 +563,10 @@ final _liquidGlassProvider = themeSettingProvider.select(
   (state) => state.liquidGlass != LiquidGlassMode.none,
 );
 
+final _vibrantProvider = themeSettingProvider.select(
+  (state) => state.colorStyle == ColorStyle.vibrant,
+);
+
 class _PureBlackItem extends ConsumerWidget {
   const _PureBlackItem();
 
@@ -571,6 +578,7 @@ class _PureBlackItem extends ConsumerWidget {
     );
     final navigationBarStyle = ref.watch(_navigationBarStyleProvider);
     final liquidGlass = ref.watch(_liquidGlassProvider);
+    final vibrant = ref.watch(_vibrantProvider);
     Widget preview(bool pureBlack) => MiniScreenThumb(
       screen: MiniScreen(
         colorScheme: ref.watch(
@@ -578,6 +586,7 @@ class _PureBlackItem extends ConsumerWidget {
         ),
         navigationBarStyle: navigationBarStyle,
         liquidGlass: liquidGlass,
+        vibrant: vibrant,
       ),
     );
     return PreviewChoiceGroup<bool>(
@@ -615,6 +624,7 @@ class _NavigationBarItem extends ConsumerWidget {
     final appLocalizations = context.appLocalizations;
     final navigationBarStyle = ref.watch(_navigationBarStyleProvider);
     final liquidGlass = ref.watch(_liquidGlassProvider);
+    final vibrant = ref.watch(_vibrantProvider);
     final colorScheme = context.colorScheme;
     return PreviewChoiceGroup<NavigationBarStyle>(
       info: Info(
@@ -651,6 +661,7 @@ class _NavigationBarItem extends ConsumerWidget {
             screen: MiniScreen(
               colorScheme: colorScheme,
               navigationBarStyle: NavigationBarStyle.floatingFab,
+              vibrant: vibrant,
               selected: 1,
             ),
           ),
@@ -676,12 +687,14 @@ class _TabAnimationItem extends ConsumerWidget {
     );
     final navigationBarStyle = ref.watch(_navigationBarStyleProvider);
     final liquidGlass = ref.watch(_liquidGlassProvider);
+    final vibrant = ref.watch(_vibrantProvider);
     final colorScheme = context.colorScheme;
     Widget switching(TabAnimation tabAnimation) => MiniScreenThumb(
       screen: MiniScreen(
         colorScheme: colorScheme,
         navigationBarStyle: navigationBarStyle,
         liquidGlass: liquidGlass,
+        vibrant: vibrant,
         selected: 1,
         previous: 0,
         progress: 0.55,
@@ -1157,6 +1170,7 @@ class _CustomColorPreview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final navigationBarStyle = ref.watch(_navigationBarStyleProvider);
     final liquidGlass = ref.watch(_liquidGlassProvider);
+    final vibrant = ref.watch(_vibrantProvider);
     final level = context.raisedSurfaceLevel;
     Widget screen(Brightness brightness) => ExcludeSemantics(
       child: SizedBox.fromSize(
@@ -1172,6 +1186,7 @@ class _CustomColorPreview extends ConsumerWidget {
                 ),
                 navigationBarStyle: navigationBarStyle,
                 liquidGlass: liquidGlass,
+                vibrant: vibrant,
               ),
             ),
           ),

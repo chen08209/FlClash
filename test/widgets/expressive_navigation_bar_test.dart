@@ -223,6 +223,56 @@ void main() {
   });
 
   testWidgets(
+    'switches bar, active pill, and companion FAB to M3E Vibrant colors',
+    (tester) async {
+      final (container, _) = await _pumpExpressiveHome(tester);
+      container
+          .read(themeSettingProvider.notifier)
+          .update((state) => state.copyWith(colorStyle: ColorStyle.vibrant));
+      container
+          .read(currentPageLabelProvider.notifier)
+          .toPage(PageLabel.profiles);
+      await tester.pumpAndSettle();
+
+      final bar = find.byType(ExpressiveNavigationBar);
+      final context = tester.element(bar);
+      final colorScheme = context.colorScheme;
+      final toolbarBox = tester.widget<DecoratedBox>(
+        find.descendant(of: bar, matching: find.byType(DecoratedBox)).first,
+      );
+      expect(
+        (toolbarBox.decoration as ShapeDecoration).color,
+        colorScheme.primaryContainer,
+      );
+
+      final surfaces = tester
+          .widgetList<PressSurface>(
+            find.descendant(of: bar, matching: find.byType(PressSurface)),
+          )
+          .toList();
+      final selectedSurface = surfaces[2];
+      final unselectedSurface = surfaces[0];
+      expect(selectedSurface.fill, colorScheme.primary);
+      expect(selectedSurface.foreground, colorScheme.onPrimary);
+      expect(unselectedSurface.foreground, colorScheme.onPrimaryContainer);
+
+      final fabFinder = find.byType(ExpressiveNavigationFab);
+      expect(tester.widget<ExpressiveNavigationFab>(fabFinder).vibrant, isTrue);
+      final fabGlyph = tester.widget<GlyphIcon>(
+        find.descendant(of: fabFinder, matching: find.byType(GlyphIcon)),
+      );
+      expect(fabGlyph.color, colorScheme.onTertiaryContainer);
+      final fabColors = ExpressiveNavigationBar.fabColorsOf(
+        colorScheme,
+        vibrant: true,
+        enabled: true,
+      );
+      expect(fabColors.container, colorScheme.tertiaryContainer);
+      expect(fabColors.foreground, colorScheme.onTertiaryContainer);
+    },
+  );
+
+  testWidgets(
     'keeps FAB morph and selection repaints inside its own boundary',
     (tester) async {
       var selected = 1;
