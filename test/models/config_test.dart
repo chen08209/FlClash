@@ -394,6 +394,7 @@ void main() {
       expect(props.systemProxy, true);
       expect(props.ipv6, false);
       expect(props.allowBypass, true);
+      expect(props.dualAppCapture, false);
       expect(props.dnsHijacking, false);
       expect(props.accessControlProps.enable, false);
     });
@@ -412,12 +413,14 @@ void main() {
         enable: false,
         systemProxy: false,
         ipv6: true,
+        dualAppCapture: true,
         accessControlProps: accessControl,
       );
       final restored = roundTrip(() => props.toJson(), VpnProps.fromJson);
       expect(restored.enable, false);
       expect(restored.systemProxy, false);
       expect(restored.ipv6, true);
+      expect(restored.dualAppCapture, true);
     });
   });
 
@@ -1175,6 +1178,7 @@ void main() {
       expect(config.appSettingProps.locale, isNull);
       expect(config.appSettingProps.acceptedDisclaimerVersion, 3);
       expect(config.vpnProps.ipv6, false);
+      expect(config.vpnProps.dualAppCapture, false);
       expect(config.vpnProps.accessControlProps.enable, true);
       expect(
         config.vpnProps.accessControlProps.mode,

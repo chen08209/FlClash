@@ -1,12 +1,14 @@
 package com.follow.clash.service
 
 import android.content.Intent
+import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.ProxyInfo
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.os.UserManager
 import androidx.core.content.getSystemService
 import com.follow.clash.common.AccessControlMode
 import com.follow.clash.common.GlobalState
@@ -17,6 +19,7 @@ import com.follow.clash.service.models.VpnOptions
 import com.follow.clash.service.models.getIpv4RouteAddress
 import com.follow.clash.service.models.getIpv6RouteAddress
 import com.follow.clash.service.models.toCIDR
+import com.follow.clash.service.models.applyingDualAppCapture
 import com.follow.clash.service.models.tunMtu
 import com.follow.clash.service.models.tunOptions
 import com.follow.clash.service.modules.ServiceModules
@@ -123,26 +126,30 @@ class VpnService : SystemVpnService(), ManagedService {
     }
 
     private fun handleStart(options: VpnOptions) {
+        val tunnel = options.applyingDualAppCapture()
+        if (tunnel.dualAppCapture) {
+            logVisibleUsers()
+        }
         val fd = with(Builder()) {
-            addAddressAndRoutes(options)
-            addDnsServers(options)
-            setMtu(options.tunMtu)
-            configureAccessControl(options)
+            addAddressAndRoutes(tunnel)
+            addDnsServers(tunnel)
+            setMtu(tunnel.tunMtu)
+            configureAccessControl(tunnel)
             setSession(getString(CommonR.string.app_name))
             setBlocking(false)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 setMetered(false)
             }
-            if (options.allowBypass) {
+            if (tunnel.allowBypass) {
                 allowBypass()
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && options.systemProxy) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && tunnel.systemProxy) {
                 GlobalState.log("Enable VPN HTTP proxy")
                 setHttpProxy(
                     ProxyInfo.buildDirectProxy(
                         LOCAL_HOST,
-                        options.port,
-                        options.bypassDomain,
+                        tunnel.port,
+                        tunnel.bypassDomain,
                     ),
                 )
             }
@@ -163,10 +170,10 @@ class VpnService : SystemVpnService(), ManagedService {
                         protect = this::protect,
                         resolveUid = this::resolveUid,
                         resolvePackage = this::resolvePackage,
-                        stack = options.stack,
-                        address = options.tunAddress,
-                        dns = options.tunDns,
-                        options = options.tunOptions,
+                        stack = tunnel.stack,
+                        address = tunnel.tunAddress,
+                        dns = tunnel.tunDns,
+                        options = tunnel.tunOptions,
                     ),
                 ) { "Core rejected the tun file descriptor" }
             } catch (error: Exception) {
@@ -174,6 +181,22 @@ class VpnService : SystemVpnService(), ManagedService {
                 throw error
             }
         }
+    }
+
+    private fun logVisibleUsers() {
+        val users = runCatching {
+            getSystemService<UserManager>()?.userProfiles?.map { it.toString() }
+        }.getOrNull()
+        val launchers = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            runCatching {
+                getSystemService<LauncherApps>()?.profiles?.map { it.toString() }
+            }.getOrNull()
+        } else {
+            null
+        }
+        GlobalState.log(
+            "Dual-app capture user profiles=$users launcher profiles=$launchers",
+        )
     }
 
     private fun Builder.addAddressAndRoutes(options: VpnOptions) {

@@ -777,6 +777,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "downloadingUpdate": MessageLookupByLibrary.simpleMessage(
       "Downloading update",
     ),
+    "dualAppCapture": MessageLookupByLibrary.simpleMessage(
+      "Capture system dual apps",
+    ),
+    "dualAppCaptureAccessDesc": MessageLookupByLibrary.simpleMessage(
+      "Dual-app capture is on, so this list is not applied.",
+    ),
+    "dualAppCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "Routes this user through the VPN and holds per-app lists, bypass, and the VPN proxy off. A system clone is included only when the phone attaches that user; Android does not let an app request it. IPv6 still follows its own switch.",
+    ),
     "duration": MessageLookupByLibrary.simpleMessage("Duration"),
     "edit": MessageLookupByLibrary.simpleMessage("Edit"),
     "editDashboard": MessageLookupByLibrary.simpleMessage("Edit dashboard"),
@@ -1048,9 +1057,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "installCertificateSuccess": MessageLookupByLibrary.simpleMessage(
       "Certificate installed",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "This system hides the installed app list until the permission is granted. Authorize it to configure the per-app proxy.",
     ),

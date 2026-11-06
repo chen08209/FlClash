@@ -38,6 +38,11 @@ final _toggleCases = <_ToggleCase>[
     (c) => c.read(patchClashConfigProvider).tun.enable,
   ),
   _ToggleCase(
+    'dual-app capture',
+    const DualAppCaptureItem(),
+    (c) => c.read(vpnSettingProvider).dualAppCapture,
+  ),
+  _ToggleCase(
     'allow bypass',
     const AllowBypassItem(),
     (c) => c.read(vpnSettingProvider).allowBypass,

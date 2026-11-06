@@ -650,6 +650,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "download": MessageLookupByLibrary.simpleMessage("다운로드"),
     "downloadBandwidth": MessageLookupByLibrary.simpleMessage("다운로드 대역폭"),
     "downloadingUpdate": MessageLookupByLibrary.simpleMessage("업데이트 다운로드 중"),
+    "dualAppCapture": MessageLookupByLibrary.simpleMessage("시스템 듀얼 앱 포함"),
+    "dualAppCaptureAccessDesc": MessageLookupByLibrary.simpleMessage(
+      "듀얼 앱 포함이 켜져 있어 이 목록은 VPN에 적용되지 않습니다.",
+    ),
+    "dualAppCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "이 사용자의 트래픽을 모두 VPN으로 보내고, 앱별 목록과 우회, VPN 프록시는 꺼 둡니다. 시스템 복제 앱은 기기가 그 사용자를 VPN에 붙일 때만 포함되며, 앱이 직접 요청할 수는 없습니다. IPv6는 자체 스위치를 따릅니다.",
+    ),
     "duration": MessageLookupByLibrary.simpleMessage("소요 시간"),
     "edit": MessageLookupByLibrary.simpleMessage("편집"),
     "editDashboard": MessageLookupByLibrary.simpleMessage("대시보드 편집"),

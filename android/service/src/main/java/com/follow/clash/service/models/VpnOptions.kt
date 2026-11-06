@@ -26,7 +26,20 @@ data class VpnOptions(
     val routeAddress: List<String>,
     val mtu: Int = 0,
     val congestionController: String? = null,
+    val dualAppCapture: Boolean = false,
 )
+
+// Builder package lists become UIDs of this user only. A system clone is
+// another user, and there is no API to add its range.
+fun VpnOptions.applyingDualAppCapture(): VpnOptions {
+    if (!dualAppCapture) return this
+    return copy(
+        allowBypass = false,
+        systemProxy = false,
+        routeAddress = emptyList(),
+        accessControlProps = accessControlProps.copy(enable = false),
+    )
+}
 
 private const val DEFAULT_TUN_MTU = 9000
 

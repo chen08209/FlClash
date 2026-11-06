@@ -117,17 +117,26 @@ asks for nothing. The tap runs `SetupAction.restartVpn`: a stop, then a start, a
 | `enable`               | `VpnProps.enable`, off in safe mode                           | always                                 |
 | `stack`                | `Tun.stack`                                                   | with the VPN                           |
 | `ipv6`, `dnsHijacking` | `VpnProps`                                                    | with the VPN                           |
-| `allowBypass`          | `VpnProps`                                                    | with the VPN                           |
-| `accessControlProps`   | `VpnProps.accessControlProps`                                 | `enable`, `mode` and that mode's list  |
-| `systemProxy`          | `VpnProps.systemProxy`, off under local auth or safe mode     | with the VPN                           |
+| `allowBypass`          | `VpnProps`                                                    | with the VPN, forced off while `dualAppCapture` |
+| `dualAppCapture`       | `VpnProps`                                                    | with the VPN                           |
+| `accessControlProps`   | `VpnProps.accessControlProps`                                 | `enable`, `mode` and that mode's list; `enable` forced off while `dualAppCapture` |
+| `systemProxy`          | `VpnProps.systemProxy`, off under local auth or safe mode     | with the VPN, forced off while `dualAppCapture` |
 | `port`                 | `PatchClashConfig.mixedPort`                                  | with `systemProxy`                     |
 | `bypassDomain`         | `NetworkProps.bypassDomain`                                   | with `systemProxy`                     |
-| `routeAddress`         | `Tun.routeAddress` and `bypassPrivateRoute`                   | with the VPN                           |
+| `routeAddress`         | `Tun.routeAddress` and `bypassPrivateRoute`                   | with the VPN, emptied while `dualAppCapture` |
 | `mtu`                  | `Tun`                                                         | with the VPN                           |
 | `congestionController` | `Tun`                                                         | with the VPN                           |
 
 The service never reads the access list's sort and filter fields. `effective` resets them, along with every field
 the table does not mark as read, so changing them does not ask for a restart.
+
+`dualAppCapture` is applied by `VpnOptions.applyingDualAppCapture` before `VpnService.handleStart` builds the
+tunnel, and `effective` applies the same function first. While it is on, bypass, the VPN HTTP proxy, per-app
+lists, and the route list are not part of the tunnel: the builder installs a default route for every UID of this
+user and does not call `allowBypass`. Those saved settings come back when the switch is turned off. Changing them
+while the switch is on does not ask for a restart. A system clone cannot be added by package name.
+`VpnService.Builder` has no UID argument, and Android expands package names to UIDs for the calling user and its
+restricted profiles only, not for a clone user such as HyperOS user 999.
 
 To add a VPN option:
 

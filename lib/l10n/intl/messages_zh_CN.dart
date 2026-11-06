@@ -606,6 +606,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "download": MessageLookupByLibrary.simpleMessage("下载"),
     "downloadBandwidth": MessageLookupByLibrary.simpleMessage("下行带宽"),
     "downloadingUpdate": MessageLookupByLibrary.simpleMessage("正在下载更新"),
+    "dualAppCapture": MessageLookupByLibrary.simpleMessage("接管系统双开"),
+    "dualAppCaptureAccessDesc": MessageLookupByLibrary.simpleMessage(
+      "系统双开接管已开启，此列表不会应用到 VPN。",
+    ),
+    "dualAppCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "本用户流量全部进入 VPN，分应用、绕过和 VPN 代理在关闭本项前不生效。系统双开只有在系统把该用户挂到这条 VPN 上时才会进入，应用无法自行要求。IPv6 仍由它自己的开关决定。",
+    ),
     "duration": MessageLookupByLibrary.simpleMessage("时长"),
     "edit": MessageLookupByLibrary.simpleMessage("编辑"),
     "editDashboard": MessageLookupByLibrary.simpleMessage("编辑仪表盘"),

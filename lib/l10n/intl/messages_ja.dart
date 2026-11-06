@@ -660,6 +660,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "download": MessageLookupByLibrary.simpleMessage("ダウンロード"),
     "downloadBandwidth": MessageLookupByLibrary.simpleMessage("ダウンロード帯域幅"),
     "downloadingUpdate": MessageLookupByLibrary.simpleMessage("更新をダウンロード中"),
+    "dualAppCapture": MessageLookupByLibrary.simpleMessage("システムのデュアルアプリを取り込む"),
+    "dualAppCaptureAccessDesc": MessageLookupByLibrary.simpleMessage(
+      "デュアルアプリの取り込み中は、このリストは VPN に適用されません。",
+    ),
+    "dualAppCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "このユーザーの通信をすべて VPN に入れ、アプリごとのリスト、バイパス、VPN プロキシはオフのままです。システムのクローンは、端末がそのユーザーを VPN に含めたときだけ入ります。アプリから要求はできません。IPv6 は専用のスイッチに従います。",
+    ),
     "duration": MessageLookupByLibrary.simpleMessage("経過時間"),
     "edit": MessageLookupByLibrary.simpleMessage("編集"),
     "editDashboard": MessageLookupByLibrary.simpleMessage("ダッシュボードを編集"),

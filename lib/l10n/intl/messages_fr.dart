@@ -826,6 +826,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "downloadingUpdate": MessageLookupByLibrary.simpleMessage(
       "Téléchargement de la mise à jour",
     ),
+    "dualAppCapture": MessageLookupByLibrary.simpleMessage(
+      "Capturer les apps système clonées",
+    ),
+    "dualAppCaptureAccessDesc": MessageLookupByLibrary.simpleMessage(
+      "La capture des clones est activée : cette liste n’est pas appliquée au VPN.",
+    ),
+    "dualAppCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "Tout le trafic de cet utilisateur entre dans le VPN. Les listes par appli, le contournement et le proxy VPN restent sans effet. Un clone système n’est inclus que si le téléphone rattache cet utilisateur. Une appli ne peut pas le demander. IPv6 suit son propre réglage.",
+    ),
     "duration": MessageLookupByLibrary.simpleMessage("Durée"),
     "edit": MessageLookupByLibrary.simpleMessage("Modifier"),
     "editDashboard": MessageLookupByLibrary.simpleMessage(
@@ -1127,9 +1136,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "installCertificateSuccess": MessageLookupByLibrary.simpleMessage(
       "Certificat installé",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "L’autorisation de la liste des apps a été refusée ; les apps installées ne peuvent donc pas être listées. Veuillez l’accorder manuellement dans les réglages du système.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "L’autorisation de la liste des apps a été refusée ; les apps installées ne peuvent donc pas être listées. Veuillez l’accorder manuellement dans les réglages du système.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Ce système masque la liste des apps installées tant que l’autorisation n’est pas accordée. Accordez-la pour configurer le proxy par app.",
     ),

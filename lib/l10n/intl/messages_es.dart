@@ -826,6 +826,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "downloadingUpdate": MessageLookupByLibrary.simpleMessage(
       "Descargando actualización",
     ),
+    "dualAppCapture": MessageLookupByLibrary.simpleMessage(
+      "Capturar apps duales del sistema",
+    ),
+    "dualAppCaptureAccessDesc": MessageLookupByLibrary.simpleMessage(
+      "La captura de apps duales está activa, así que esta lista no se aplica a la VPN.",
+    ),
+    "dualAppCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "Todo el tráfico de este usuario entra en la VPN. Las listas por app, el desvío y el proxy VPN quedan sin efecto. Un clon del sistema solo entra si el teléfono une a ese usuario. Una app no puede pedirlo. IPv6 sigue su propio ajuste.",
+    ),
     "duration": MessageLookupByLibrary.simpleMessage("Duración"),
     "edit": MessageLookupByLibrary.simpleMessage("Editar"),
     "editDashboard": MessageLookupByLibrary.simpleMessage("Editar panel"),
@@ -1125,9 +1134,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "installCertificateSuccess": MessageLookupByLibrary.simpleMessage(
       "Certificado instalado",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "Se denegó el permiso de lista de apps, por lo que no se pueden mostrar las apps instaladas. Concédelo manualmente en los ajustes del sistema.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "Se denegó el permiso de lista de apps, por lo que no se pueden mostrar las apps instaladas. Concédelo manualmente en los ajustes del sistema.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Este sistema oculta la lista de apps instaladas hasta que se concede el permiso. Autorízalo para configurar el proxy por app.",
     ),

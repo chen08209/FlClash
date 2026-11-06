@@ -107,6 +107,7 @@ void main() {
           ),
         ),
         options.copyWith(enable: false),
+        options.copyWith(dualAppCapture: true),
       ];
 
       for (final changed in changes) {
@@ -157,8 +158,45 @@ void main() {
       final proxyOnly = options.copyWith(enable: false);
 
       expect(
-        proxyOnly.copyWith(ipv6: true, stack: 'gvisor', mtu: 1500).effective,
+        proxyOnly
+            .copyWith(
+              ipv6: true,
+              stack: 'gvisor',
+              mtu: 1500,
+              dualAppCapture: true,
+            )
+            .effective,
         proxyOnly.effective,
+      );
+    });
+
+    test('dual-app capture opens this user and ignores the per-app tunnel', () {
+      final captured = options.copyWith(dualAppCapture: true).effective;
+
+      expect(captured.dualAppCapture, isTrue);
+      expect(captured.allowBypass, isFalse);
+      expect(captured.systemProxy, isFalse);
+      expect(captured.port, 0);
+      expect(captured.bypassDomain, isEmpty);
+      expect(captured.routeAddress, isEmpty);
+      expect(captured.accessControlProps.enable, isFalse);
+      expect(captured.ipv6, options.ipv6);
+      expect(captured.stack, options.stack);
+      expect(
+        options
+            .copyWith(
+              dualAppCapture: true,
+              allowBypass: true,
+              systemProxy: true,
+              port: 1,
+              bypassDomain: const ['other.test'],
+              routeAddress: const ['10.0.0.0/8'],
+              accessControlProps: options.accessControlProps.copyWith(
+                acceptList: const ['z.app'],
+              ),
+            )
+            .effective,
+        captured,
       );
     });
   });
