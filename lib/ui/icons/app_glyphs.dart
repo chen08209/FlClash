@@ -1083,6 +1083,25 @@ abstract final class AppGlyphs {
     ], role: GlyphRole.line),
   ]);
 
+  static const radar = Glyph([
+    GlyphCircle(12, 12, 8.6),
+    GlyphCircle(12, 12, 4.4, role: GlyphRole.line),
+    GlyphPolyline([
+      GlyphVertex(12, 12),
+      GlyphVertex(18.1, 5.9),
+    ], role: GlyphRole.line),
+    GlyphCircle(15.2, 15.6, 1.1, solid: true),
+  ]);
+
+  static const nodeGroup = Glyph([
+    GlyphCircle(12, 5.4, 2.3),
+    GlyphCircle(4.8, 18, 2.3),
+    GlyphCircle(19.2, 18, 2.3),
+    GlyphLink(Offset(12, 5.4), Offset(4.8, 18), 2.3),
+    GlyphLink(Offset(12, 5.4), Offset(19.2, 18), 2.3),
+    GlyphLink(Offset(4.8, 18), Offset(19.2, 18), 2.3),
+  ]);
+
   static const sun = Glyph([
     GlyphCircle(12, 12, 4),
     GlyphPolyline([
@@ -1449,22 +1468,6 @@ abstract final class AppGlyphs {
       GlyphVertex(13.4, 16.4, 0.5),
       GlyphVertex(15, 12.3, 0.5),
       GlyphVertex(17.6, 12.3),
-    ], role: GlyphRole.detail),
-  ]);
-
-  static const verified = Glyph([
-    GlyphPolyline([
-      GlyphVertex(12, 2.9, 1.5),
-      GlyphVertex(19.6, 5.5, 2),
-      GlyphVertex(19.6, 12.5, 5),
-      GlyphVertex(12, 21.1, 2.5),
-      GlyphVertex(4.4, 12.5, 5),
-      GlyphVertex(4.4, 5.5, 2),
-    ], closed: true),
-    GlyphPolyline([
-      GlyphVertex(8.7, 11.8),
-      GlyphVertex(11, 14.1),
-      GlyphVertex(15.3, 9.6),
     ], role: GlyphRole.detail),
   ]);
 

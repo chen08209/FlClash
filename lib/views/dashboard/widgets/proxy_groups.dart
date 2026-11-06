@@ -176,7 +176,7 @@ class _GroupsEmpty extends ConsumerWidget {
             color: DashboardColors.of(context).tone,
             size: 64,
             child: GlyphIcon(
-              AppGlyphs.layers,
+              AppGlyphs.nodeGroup,
               size: 26,
               color: colorScheme.onSurfaceVariant,
             ),
@@ -279,7 +279,7 @@ class _GroupsHeader extends StatelessWidget {
     final appLocalizations = context.appLocalizations;
     final mobile = !DashboardDensityScope.of(context).isDesktop;
     return DashboardCardHeader(
-      glyph: AppGlyphs.layers,
+      glyph: AppGlyphs.nodeGroup,
       title: appLocalizations.proxyGroup,
       chevron: mobile && groups.isNotEmpty,
       leading: [

@@ -225,7 +225,7 @@ class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard>
         mainAxisSize: mobile ? MainAxisSize.min : MainAxisSize.max,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.verified,
+            glyph: AppGlyphs.radar,
             title: appLocalizations.serviceStatus,
             chevron: mobile,
             trailing: [
