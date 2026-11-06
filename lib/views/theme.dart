@@ -63,16 +63,16 @@ class _ThemeModeItem extends ConsumerWidget {
     final themeMode = ref.watch(
       themeSettingProvider.select((state) => state.themeMode),
     );
-    final floatingBar = ref.watch(_floatingBarProvider);
+    final navigationBarStyle = ref.watch(_navigationBarStyleProvider);
     final liquidGlass = ref.watch(_liquidGlassProvider);
     final light = MiniScreen(
       colorScheme: ref.watch(genColorSchemeProvider(Brightness.light)),
-      floatingBar: floatingBar,
+      navigationBarStyle: navigationBarStyle,
       liquidGlass: liquidGlass,
     );
     final dark = MiniScreen(
       colorScheme: ref.watch(genColorSchemeProvider(Brightness.dark)),
-      floatingBar: floatingBar,
+      navigationBarStyle: navigationBarStyle,
       liquidGlass: liquidGlass,
     );
     return PreviewChoiceGroup<ThemeMode>(
@@ -552,8 +552,8 @@ class _AddColorButton extends StatelessWidget {
   }
 }
 
-final _floatingBarProvider = appSettingProvider.select(
-  (state) => state.floatingNavigationBar,
+final _navigationBarStyleProvider = appSettingProvider.select(
+  (state) => state.navigationBarStyle,
 );
 
 final _liquidGlassProvider = themeSettingProvider.select(
@@ -569,14 +569,14 @@ class _PureBlackItem extends ConsumerWidget {
     final pureBlack = ref.watch(
       themeSettingProvider.select((state) => state.pureBlack),
     );
-    final floatingBar = ref.watch(_floatingBarProvider);
+    final navigationBarStyle = ref.watch(_navigationBarStyleProvider);
     final liquidGlass = ref.watch(_liquidGlassProvider);
     Widget preview(bool pureBlack) => MiniScreenThumb(
       screen: MiniScreen(
         colorScheme: ref.watch(
           genColorSchemeProvider(Brightness.dark, pureBlack: pureBlack),
         ),
-        floatingBar: floatingBar,
+        navigationBarStyle: navigationBarStyle,
         liquidGlass: liquidGlass,
       ),
     );
@@ -613,39 +613,53 @@ class _NavigationBarItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
-    final floatingBar = ref.watch(_floatingBarProvider);
+    final navigationBarStyle = ref.watch(_navigationBarStyleProvider);
     final liquidGlass = ref.watch(_liquidGlassProvider);
     final colorScheme = context.colorScheme;
-    return PreviewChoiceGroup<bool>(
+    return PreviewChoiceGroup<NavigationBarStyle>(
       info: Info(
         label: appLocalizations.navigationBarStyle,
         glyph: AppGlyphs.layers,
       ),
-      value: floatingBar,
+      value: navigationBarStyle,
       choices: [
         PreviewChoice(
-          value: true,
-          label: appLocalizations.floating,
+          value: NavigationBarStyle.floating,
+          label: NavigationBarStyle.floating.label,
           pictogram: MiniScreenThumb(
             screen: MiniScreen(
               colorScheme: colorScheme,
-              floatingBar: true,
+              navigationBarStyle: NavigationBarStyle.floating,
               liquidGlass: liquidGlass,
             ),
           ),
         ),
         PreviewChoice(
-          value: false,
-          label: appLocalizations.docked,
+          value: NavigationBarStyle.docked,
+          label: NavigationBarStyle.docked.label,
           pictogram: MiniScreenThumb(
-            screen: MiniScreen(colorScheme: colorScheme, floatingBar: false),
+            screen: MiniScreen(
+              colorScheme: colorScheme,
+              navigationBarStyle: NavigationBarStyle.docked,
+            ),
+          ),
+        ),
+        PreviewChoice(
+          value: NavigationBarStyle.floatingFab,
+          label: NavigationBarStyle.floatingFab.label,
+          pictogram: MiniScreenThumb(
+            screen: MiniScreen(
+              colorScheme: colorScheme,
+              navigationBarStyle: NavigationBarStyle.floatingFab,
+              selected: 1,
+            ),
           ),
         ),
       ],
       onChanged: (value) {
         ref
             .read(appSettingProvider.notifier)
-            .update((state) => state.copyWith(floatingNavigationBar: value));
+            .update((state) => state.copyWith(navigationBarStyle: value));
       },
     );
   }
@@ -660,13 +674,13 @@ class _TabAnimationItem extends ConsumerWidget {
     final tabAnimation = ref.watch(
       appSettingProvider.select((state) => state.tabAnimation),
     );
-    final floatingBar = ref.watch(_floatingBarProvider);
+    final navigationBarStyle = ref.watch(_navigationBarStyleProvider);
     final liquidGlass = ref.watch(_liquidGlassProvider);
     final colorScheme = context.colorScheme;
     Widget switching(TabAnimation tabAnimation) => MiniScreenThumb(
       screen: MiniScreen(
         colorScheme: colorScheme,
-        floatingBar: floatingBar,
+        navigationBarStyle: navigationBarStyle,
         liquidGlass: liquidGlass,
         selected: 1,
         previous: 0,
@@ -713,7 +727,7 @@ class _LiquidGlassItem extends ConsumerWidget {
     Widget preview(bool liquidGlass) => MiniScreenThumb(
       screen: MiniScreen(
         colorScheme: colorScheme,
-        floatingBar: true,
+        navigationBarStyle: NavigationBarStyle.floating,
         liquidGlass: liquidGlass,
         selected: 1,
       ),
@@ -1141,7 +1155,7 @@ class _CustomColorPreview extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final floatingBar = ref.watch(_floatingBarProvider);
+    final navigationBarStyle = ref.watch(_navigationBarStyleProvider);
     final liquidGlass = ref.watch(_liquidGlassProvider);
     final level = context.raisedSurfaceLevel;
     Widget screen(Brightness brightness) => ExcludeSemantics(
@@ -1156,7 +1170,7 @@ class _CustomColorPreview extends ConsumerWidget {
                 colorScheme: ref.watch(
                   genColorSchemeProvider(brightness, color: color),
                 ),
-                floatingBar: floatingBar,
+                navigationBarStyle: navigationBarStyle,
                 liquidGlass: liquidGlass,
               ),
             ),

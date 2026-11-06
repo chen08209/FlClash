@@ -121,6 +121,17 @@ extension ColorStyleL10n on ColorStyle {
   }
 }
 
+extension NavigationBarStyleL10n on NavigationBarStyle {
+  String get label {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      NavigationBarStyle.floating => appLocalizations.floating,
+      NavigationBarStyle.docked => appLocalizations.docked,
+      NavigationBarStyle.floatingFab => appLocalizations.floatingFab,
+    };
+  }
+}
+
 extension LocaleL10n on Locale {
   String get label {
     final appLocalizations = currentAppLocalizations;

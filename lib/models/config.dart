@@ -211,6 +211,17 @@ Object? _readTabAnimation(Map<dynamic, dynamic> json, String key) {
   };
 }
 
+Object? _readNavigationBarStyle(Map<dynamic, dynamic> json, String key) {
+  if (json.containsKey(key)) {
+    return json[key];
+  }
+  return switch (json['floatingNavigationBar']) {
+    true => NavigationBarStyle.floating.name,
+    false => NavigationBarStyle.docked.name,
+    _ => null,
+  };
+}
+
 Object? _readUserAgents(Map<dynamic, dynamic> json, String key) {
   if (json.containsKey(key)) {
     return json[key];
@@ -253,7 +264,9 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(TabAnimation.fade)
     @JsonKey(readValue: _readTabAnimation)
     TabAnimation tabAnimation,
-    @Default(true) bool floatingNavigationBar,
+    @Default(NavigationBarStyle.floating)
+    @JsonKey(readValue: _readNavigationBarStyle)
+    NavigationBarStyle navigationBarStyle,
     @Default(true) bool autoCheckUpdate,
     @Default(true)
     @JsonKey(readValue: _readSidebarExpanded)

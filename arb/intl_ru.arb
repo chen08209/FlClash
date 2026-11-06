@@ -408,6 +408,7 @@
   "navigationBarStyle": "Нижняя панель",
   "floating": "Плавающая",
   "docked": "Закреплённая",
+  "floatingFab": "Плавающая с кнопкой",
   "slide": "Сдвиг",
   "fade": "Растворение",
   "pureBlack": "Чисто чёрный",

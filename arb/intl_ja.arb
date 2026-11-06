@@ -408,6 +408,7 @@
   "navigationBarStyle": "ボトムバー",
   "floating": "フローティング",
   "docked": "固定",
+  "floatingFab": "フローティングボタン",
   "slide": "スライド",
   "fade": "フェード",
   "pureBlack": "ピュアブラック",

@@ -408,6 +408,7 @@
   "navigationBarStyle": "Bottom bar",
   "floating": "Floating",
   "docked": "Docked",
+  "floatingFab": "Floating FAB",
   "slide": "Slide",
   "fade": "Fade",
   "pureBlack": "Pure black",

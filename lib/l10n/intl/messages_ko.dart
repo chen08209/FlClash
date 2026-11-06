@@ -733,6 +733,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "filters": MessageLookupByLibrary.simpleMessage("필터"),
     "findProcessMode": MessageLookupByLibrary.simpleMessage("프로세스 찾기"),
     "floating": MessageLookupByLibrary.simpleMessage("플로팅"),
+    "floatingFab": MessageLookupByLibrary.simpleMessage("플로팅 버튼"),
     "followProfile": MessageLookupByLibrary.simpleMessage("프로필 따르기"),
     "followSystem": MessageLookupByLibrary.simpleMessage("시스템 설정 따르기"),
     "fontFamily": MessageLookupByLibrary.simpleMessage("글꼴"),

@@ -408,6 +408,7 @@
   "navigationBarStyle": "Barra inferior",
   "floating": "Flotante",
   "docked": "Fija",
+  "floatingFab": "Flotante con botón",
   "slide": "Deslizar",
   "fade": "Fundido",
   "pureBlack": "Negro puro",

@@ -878,6 +878,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "filters": MessageLookupByLibrary.simpleMessage("Filters"),
     "findProcessMode": MessageLookupByLibrary.simpleMessage("Find process"),
     "floating": MessageLookupByLibrary.simpleMessage("Floating"),
+    "floatingFab": MessageLookupByLibrary.simpleMessage("Floating FAB"),
     "followProfile": MessageLookupByLibrary.simpleMessage("Follow profile"),
     "followSystem": MessageLookupByLibrary.simpleMessage("Follow system"),
     "fontFamily": MessageLookupByLibrary.simpleMessage("Font family"),

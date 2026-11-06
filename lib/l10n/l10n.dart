@@ -3251,6 +3251,16 @@ class AppLocalizations {
     return Intl.message('Docked', name: 'docked', desc: '', args: []);
   }
 
+  /// `Floating FAB`
+  String get floatingFab {
+    return Intl.message(
+      'Floating FAB',
+      name: 'floatingFab',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Slide`
   String get slide {
     return Intl.message('Slide', name: 'slide', desc: '', args: []);

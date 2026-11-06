@@ -408,6 +408,7 @@
   "navigationBarStyle": "하단 바",
   "floating": "플로팅",
   "docked": "고정",
+  "floatingFab": "플로팅 버튼",
   "slide": "슬라이드",
   "fade": "페이드",
   "pureBlack": "퓨어 블랙",

@@ -821,6 +821,14 @@ enum RestoreStrategy { compatible, override }
 
 enum TabAnimation { slide, fade }
 
+enum NavigationBarStyle {
+  floating,
+  docked,
+  floatingFab;
+
+  bool get isFloating => this != docked;
+}
+
 enum LiquidGlassMode { none, standard, ultra }
 
 enum Language { yaml, javaScript, json, ini, xml, text }

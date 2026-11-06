@@ -685,6 +685,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "filters": MessageLookupByLibrary.simpleMessage("筛选"),
     "findProcessMode": MessageLookupByLibrary.simpleMessage("查找进程"),
     "floating": MessageLookupByLibrary.simpleMessage("悬浮"),
+    "floatingFab": MessageLookupByLibrary.simpleMessage("悬浮按钮"),
     "followProfile": MessageLookupByLibrary.simpleMessage("跟随配置"),
     "followSystem": MessageLookupByLibrary.simpleMessage("跟随系统"),
     "fontFamily": MessageLookupByLibrary.simpleMessage("字体"),

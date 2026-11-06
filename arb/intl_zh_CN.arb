@@ -408,6 +408,7 @@
   "navigationBarStyle": "底栏",
   "floating": "悬浮",
   "docked": "固定",
+  "floatingFab": "悬浮按钮",
   "slide": "滑动",
   "fade": "淡入",
   "pureBlack": "纯黑",
