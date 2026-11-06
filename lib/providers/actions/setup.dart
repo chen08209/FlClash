@@ -485,7 +485,21 @@ class SetupAction extends _$SetupAction {
   }) async {
     final profileId = setupState.profileId;
     if (profileId == null) {
-      return (yaml: '', md5: '', counts: configCountsOf(const {}), base: null);
+      final yaml = await encodeYamlTask(
+        inboundConfigOf(
+          patchConfig,
+          authentication: ref
+              .read(networkSettingProvider)
+              .authentication
+              .credentials,
+        ),
+      );
+      return (
+        yaml: yaml,
+        md5: yaml.toMd5(),
+        counts: configCountsOf(const {}),
+        base: null,
+      );
     }
     final defaultUA = globalState.packageInfo.ua;
     final networkSetting = ref.read(

@@ -109,6 +109,21 @@ String? lastMatchTarget(List<String> rules) {
   return null;
 }
 
+Map<String, dynamic> inboundConfigOf(
+  PatchClashConfig config, {
+  required List<String> authentication,
+}) => {
+  'mixed-port': config.mixedPort,
+  'port': config.port,
+  'socks-port': config.socksPort,
+  'redir-port': config.redirPort,
+  'tproxy-port': config.tproxyPort,
+  'allow-lan': config.allowLan,
+  // A profile's skip-auth-prefixes could exempt loopback from authentication.
+  'authentication': authentication,
+  'skip-auth-prefixes': const <String>[],
+};
+
 Future<RealProfile> makeRealProfileTask(MakeRealProfileState data) async {
   return compute<MakeRealProfileState, RealProfile>(_makeRealProfileTask, data);
 }
@@ -188,23 +203,14 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
   rawConfig['external-ui-url'] = '';
   rawConfig.addAll(realPatchConfig.generalOverrideJson);
   rawConfig['log-level'] = realPatchConfig.logLevel.name;
-  rawConfig['port'] = 0;
-  rawConfig['socks-port'] = 0;
   rawConfig['keep-alive-interval'] = realPatchConfig.keepAliveInterval;
   rawConfig['keep-alive-idle'] = realPatchConfig.keepAliveIdle;
   rawConfig['disable-keep-alive'] = realPatchConfig.disableKeepAlive;
   rawConfig['routing-mark'] = realPatchConfig.routingMark;
-  rawConfig['mixed-port'] = realPatchConfig.mixedPort;
-  rawConfig['port'] = realPatchConfig.port;
-  rawConfig['socks-port'] = realPatchConfig.socksPort;
-  rawConfig['redir-port'] = realPatchConfig.redirPort;
-  rawConfig['tproxy-port'] = realPatchConfig.tproxyPort;
+  rawConfig.addAll(
+    inboundConfigOf(realPatchConfig, authentication: data.authentication),
+  );
   rawConfig['find-process-mode'] = realPatchConfig.findProcessMode.name;
-  rawConfig['allow-lan'] = realPatchConfig.allowLan;
-  // The app owns local inbound authentication; a profile-provided
-  // skip-auth-prefixes could silently exempt loopback and defeat it.
-  rawConfig['authentication'] = data.authentication;
-  rawConfig['skip-auth-prefixes'] = [];
   rawConfig['mode'] = realPatchConfig.mode.name;
   // auto-route is always on, so without auto-detect-interface the core sends
   // its own outbound back into the TUN unless interface-name binds it, and

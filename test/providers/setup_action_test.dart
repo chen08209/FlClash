@@ -1931,6 +1931,31 @@ void main() {
       expect(group['include-all-providers'], isTrue);
     });
 
+    test('without a profile the Core still opens the mixed port the Android '
+        'VPN advertises as its HTTP proxy', () async {
+      final core = _MockCoreHandlerInterface();
+      final scoped = ProviderContainer(
+        overrides: [
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          setupActionProvider.overrideWith(SetupAction.new),
+        ],
+      );
+      addTearDown(scoped.dispose);
+
+      final res = await scoped
+          .read(setupActionProvider.notifier)
+          .getProfile(
+            setupState: nullProfileSetupState,
+            patchConfig: const PatchClashConfig(mixedPort: 7899),
+          );
+      final config = loadYaml(res.yaml) as YamlMap;
+
+      verifyNever(() => core.readConfig(any()));
+      expect(config['mixed-port'], 7899);
+      expect(config['skip-auth-prefixes'], isEmpty);
+      expect(res.md5, isNotEmpty);
+    });
+
     test('only a subscription profile runs its script extension', () async {
       final engine = scriptEvaluator;
       addTearDown(() => scriptEvaluator = engine);
