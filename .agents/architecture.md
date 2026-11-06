@@ -379,7 +379,9 @@ checks every `CoreApi` call's parameters and every DTO's reads against that file
 called there or listed as not called by Dart.
 
 The behaviors Dart depends on without the method signatures showing them are listed with their tests in
-`concord/docs/behaviour-checklist.md`. Concord's crate layering is enforced by `cargo run -p xtask -- check-layers`.
+`concord/.agents/behaviour-checklist.md`. Concord's internals (crate layers, data path, performance standard, benchmarks,
+known gaps against Go) are documented in the Concord repository itself, from `concord/AGENTS.md`; this file keeps only
+how FlClash builds, hosts and talks to it.
 
 ## Core Protocol And Event Delivery
 

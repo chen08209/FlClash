@@ -292,7 +292,7 @@ cargo run -p xtask -- check-size target/release/concord 15000000
 ```
 
 `CONCORD_REQUIRE_APP_TREE=1` turns the contract tests that read `lib/` from a skip into a failure when the FlClash tree
-is missing. Tests marked `#[ignore]` need an external peer; `concord/README.md` lists the environment variables.
+is missing. Tests marked `#[ignore]` need an external peer; `concord/.agents/commands.md` lists the environment variables.
 
 Disk: the workspace has one target directory, `concord/target`, and it grows past 10 GB with debug, release and the
 Android and Windows targets. Never point cargo at another target directory, never keep one per crate or per agent, and

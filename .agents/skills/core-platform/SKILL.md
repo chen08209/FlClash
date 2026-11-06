@@ -18,6 +18,8 @@ build hooks, system proxy, tray, VPN, TUN, or platform-specific desktop/mobile b
   optimistic Android commands arbitrated by `ServiceState`, callbacks are not user intent, `goAsync()` finishes once).
 - `.agents/setting-changes.md`: a setting the Core or the Android VPN reads is patched live, re-applied with the
   profile, or left to a restart the user confirms; it says which, and what adding a setting to each path takes.
+- `concord/AGENTS.md` and `concord/.agents/`: for a change inside `concord/`, Concord's own layering, fix rules,
+  performance gate and known gaps. This skill covers only the integration side.
 - `.agents/architecture.md`: Core Integration, Lifecycle Ownership And Convergence, Core Protocol And Event Delivery,
   Safe Mode, Build System, and Rust Helper Service describe the current mechanisms, including the Helper protocol,
   the applied/coalesced/superseded outcomes, and the leftover lease.

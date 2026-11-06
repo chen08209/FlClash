@@ -25,6 +25,8 @@ Read these only when the task touches their area:
 - [.agents/flutter-upgrade.md](.agents/flutter-upgrade.md): SDK-pinned workarounds to recheck before changing the
   Flutter version.
 - [.agents/skills.md](.agents/skills.md): index of repo-scoped skills in `.agents/skills/`.
+- [concord/AGENTS.md](concord/AGENTS.md): the Rust core's own rules, architecture, performance standard and known
+  gaps, for any change inside `concord/`.
 
 ## Highest Priority Rules
 
