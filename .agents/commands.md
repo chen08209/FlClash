@@ -35,6 +35,15 @@ Flutter hides the hook's output on success, so to see why the Core was or was
 not rebuilt read `.dart_tool/setup_build_cache/hook.log`; each invocation starts
 with a `===` line carrying its timestamp and target.
 
+Both Rust builds, the Helper and `rust_api`, pass `--remap-path-prefix` so no
+local path lands in a binary. With neither `RUSTFLAGS` nor
+`CARGO_ENCODED_RUSTFLAGS` set, the flags go into `CARGO_TARGET_<TRIPLE>_RUSTFLAGS`,
+which Cargo joins with `target.<triple>.rustflags` from a Cargo config but which
+leaves `build.rustflags` unread, so put custom flags under the target table.
+Either variable set, or a home, checkout or Cargo home path with a space, sends
+the flags through `CARGO_ENCODED_RUSTFLAGS` instead, and Cargo then reads no
+rustflags from its config.
+
 The hook runs for `flutter test` and for `dart run` of any root-package script
 too, so a pure Dart test run needs the Go toolchain, and on Linux and Windows
 also `cargo` and `rustc` — the Helper fingerprint shells out to both even on a

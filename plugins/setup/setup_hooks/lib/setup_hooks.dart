@@ -1,4 +1,5 @@
 export 'src/build.dart' show BuildReport, BuildRequest;
 export 'src/core_builder.dart' show CoreBuilder;
 export 'src/error.dart';
-export 'src/target.dart' show Target;
+export 'src/path_remap.dart' show trimmedPathEnvironment;
+export 'src/target.dart' show Target, rustTargetTriple;
