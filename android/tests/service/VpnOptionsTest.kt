@@ -1,10 +1,12 @@
 package com.follow.clash.service.models
 
 import com.follow.clash.common.AccessControlMode
+import com.google.gson.Gson
 import com.google.gson.JsonParser
 import java.net.Inet4Address
 import java.net.Inet6Address
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -141,6 +143,67 @@ class RouteAddressTest {
         assertThrows(IllegalArgumentException::class.java) {
             options.getIpv4RouteAddress()
         }
+    }
+}
+
+class DualAppCaptureTest {
+    @Test
+    fun `leaves a normal tunnel untouched`() {
+        val options = optionsWithRoutes(listOf("10.0.0.0/8"))
+
+        assertEquals(options, options.applyingDualAppCapture())
+    }
+
+    @Test
+    fun `opens every uid of this user`() {
+        val options = optionsWithRoutes(listOf("10.0.0.0/8")).copy(
+            allowBypass = true,
+            systemProxy = true,
+            dualAppCapture = true,
+            accessControlProps = AccessControlProps(
+                enable = true,
+                mode = AccessControlMode.ACCEPT_SELECTED,
+                acceptList = listOf("com.openai.chatgpt"),
+                rejectList = emptyList(),
+            ),
+        )
+
+        val tunnel = options.applyingDualAppCapture()
+
+        assertTrue(tunnel.dualAppCapture)
+        assertFalse(tunnel.allowBypass)
+        assertFalse(tunnel.systemProxy)
+        assertTrue(tunnel.routeAddress.isEmpty())
+        assertFalse(tunnel.accessControlProps.enable)
+        assertEquals(listOf("com.openai.chatgpt"), tunnel.accessControlProps.acceptList)
+    }
+
+    @Test
+    fun `a payload from before the switch stays off`() {
+        val options = Gson().fromJson(
+            """
+            {
+              "enable": true,
+              "port": 7890,
+              "ipv6": false,
+              "dnsHijacking": false,
+              "accessControlProps": {
+                "enable": false,
+                "mode": "rejectSelected",
+                "acceptList": [],
+                "rejectList": []
+              },
+              "allowBypass": true,
+              "systemProxy": false,
+              "bypassDomain": [],
+              "stack": "gvisor",
+              "routeAddress": []
+            }
+            """.trimIndent(),
+            VpnOptions::class.java,
+        )
+
+        assertFalse(options.dualAppCapture)
     }
 }
 

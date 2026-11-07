@@ -1216,6 +1216,36 @@ class AppLocalizations {
     );
   }
 
+  /// `Capture system dual apps`
+  String get dualAppCapture {
+    return Intl.message(
+      'Capture system dual apps',
+      name: 'dualAppCapture',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Routes this user through the VPN and holds per-app lists, bypass, and the VPN proxy off. A system clone is included only when the phone attaches that user; Android does not let an app request it. IPv6 still follows its own switch.`
+  String get dualAppCaptureDesc {
+    return Intl.message(
+      'Routes this user through the VPN and holds per-app lists, bypass, and the VPN proxy off. A system clone is included only when the phone attaches that user; Android does not let an app request it. IPv6 still follows its own switch.',
+      name: 'dualAppCaptureDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Dual-app capture is on, so this list is not applied.`
+  String get dualAppCaptureAccessDesc {
+    return Intl.message(
+      'Dual-app capture is on, so this list is not applied.',
+      name: 'dualAppCaptureAccessDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `External controller`
   String get externalController {
     return Intl.message(

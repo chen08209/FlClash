@@ -809,6 +809,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "downloadingUpdate": MessageLookupByLibrary.simpleMessage(
       "Загрузка обновления",
     ),
+    "dualAppCapture": MessageLookupByLibrary.simpleMessage(
+      "Захватывать системные клоны",
+    ),
+    "dualAppCaptureAccessDesc": MessageLookupByLibrary.simpleMessage(
+      "Захват клонов включён, поэтому этот список к VPN не применяется.",
+    ),
+    "dualAppCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "Весь трафик этого пользователя идёт в VPN, а списки приложений, обход и VPN-прокси не действуют. Системный клон попадает в туннель, только если система сама присоединяет его пользователя. Приложение не может этого потребовать. IPv6 по-прежнему зависит от своего переключателя.",
+    ),
     "duration": MessageLookupByLibrary.simpleMessage("Длительность"),
     "edit": MessageLookupByLibrary.simpleMessage("Редактировать"),
     "editDashboard": MessageLookupByLibrary.simpleMessage("Изменить панель"),
@@ -1096,9 +1105,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "installCertificateSuccess": MessageLookupByLibrary.simpleMessage(
       "Сертификат установлен",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Эта система не выдаёт список установленных приложений без разрешения. Предоставьте его, чтобы настроить прокси для отдельных приложений.",
     ),

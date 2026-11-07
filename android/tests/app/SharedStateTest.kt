@@ -70,6 +70,7 @@ class SharedStateTest {
             state.vpnOptions?.accessControlProps?.mode,
         )
         assertEquals(listOf("0.0.0.0/0"), state.vpnOptions?.routeAddress)
+        assertEquals(false, state.vpnOptions?.dualAppCapture)
         assertEquals(
             "auto",
             state.setupParams?.getAsJsonObject("selected-map")?.get("GLOBAL")?.asString,

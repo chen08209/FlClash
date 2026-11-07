@@ -277,6 +277,7 @@ Future<VpnOptions> vpnOptions(Ref ref) async {
     dnsHijacking: vpnSetting.dnsHijacking,
     accessControlProps: vpnSetting.accessControlProps,
     allowBypass: vpnSetting.allowBypass,
+    dualAppCapture: vpnSetting.dualAppCapture,
     bypassDomain: networkSetting.bypassDomain,
     routeAddress: await routeAddress,
     mtu: tun.mtu,

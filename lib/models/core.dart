@@ -218,6 +218,7 @@ abstract class VpnOptions with _$VpnOptions {
     @Default([]) List<String> routeAddress,
     @Default(0) int mtu,
     @Default('') String congestionController,
+    @Default(false) bool dualAppCapture,
   }) = _VpnOptions;
 
   factory VpnOptions.fromJson(Map<String, Object?> json) =>
@@ -227,7 +228,8 @@ abstract class VpnOptions with _$VpnOptions {
 extension VpnOptionsExt on VpnOptions {
   /// Only what `ServiceController.start` and `VpnService.handleStart` read.
   VpnOptions get effective {
-    if (!enable) {
+    final options = applyingDualAppCapture;
+    if (!options.enable) {
       return const VpnOptions(
         enable: false,
         port: 0,
@@ -240,11 +242,11 @@ extension VpnOptionsExt on VpnOptions {
         stack: '',
       );
     }
-    final accessControl = accessControlProps;
+    final accessControl = options.accessControlProps;
     final accepts = accessControl.mode == AccessControlMode.acceptSelected;
-    return copyWith(
-      port: systemProxy ? port : 0,
-      bypassDomain: systemProxy ? bypassDomain : const [],
+    return options.copyWith(
+      port: options.systemProxy ? options.port : 0,
+      bypassDomain: options.systemProxy ? options.bypassDomain : const [],
       accessControlProps: accessControl.enable
           ? AccessControlProps(
               enable: true,
@@ -253,6 +255,17 @@ extension VpnOptionsExt on VpnOptions {
               rejectList: accepts ? const [] : accessControl.rejectList,
             )
           : const AccessControlProps(),
+    );
+  }
+
+  /// Mirrors `VpnOptions.applyingDualAppCapture` in the Android service.
+  VpnOptions get applyingDualAppCapture {
+    if (!dualAppCapture) return this;
+    return copyWith(
+      allowBypass: false,
+      systemProxy: false,
+      routeAddress: const [],
+      accessControlProps: accessControlProps.copyWith(enable: false),
     );
   }
 }

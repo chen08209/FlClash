@@ -39,11 +39,13 @@ ConfigWriter<T> _tunWriter<T>(_TunUpdate<T> update) {
 
 ConfigToggleItem _vpnToggle({
   required ConfigLabel title,
+  ConfigLabel? subtitle,
   required bool Function(VpnProps state) select,
   required _VpnUpdate<bool> update,
 }) {
   return ConfigToggleItem(
     title: title,
+    subtitle: subtitle,
     selector: vpnSettingProvider.select(select),
     onChanged: _vpnWriter(update),
   );
@@ -85,6 +87,20 @@ class TUNItem extends ConsumerWidget {
       onChanged: _tunWriter(
         (state, value) => state.copyWith.tun(enable: value),
       ),
+    );
+  }
+}
+
+class DualAppCaptureItem extends ConsumerWidget {
+  const DualAppCaptureItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    return _vpnToggle(
+      title: (l) => l.dualAppCapture,
+      subtitle: (l) => l.dualAppCaptureDesc,
+      select: (state) => state.dualAppCapture,
+      update: (state, value) => state.copyWith(dualAppCapture: value),
     );
   }
 }
@@ -486,6 +502,7 @@ class VpnSections extends ConsumerWidget {
         generateSection(
           title: 'VPN',
           items: const [
+            DualAppCaptureItem(),
             VpnSystemProxyItem(),
             BypassDomainItem(),
             AllowBypassItem(),

@@ -354,6 +354,7 @@ abstract class VpnProps with _$VpnProps {
     @Default(true) bool systemProxy,
     @Default(false) bool ipv6,
     @Default(true) bool allowBypass,
+    @Default(false) bool dualAppCapture,
     @Default(false) bool dnsHijacking,
     @Default(defaultAccessControlProps) AccessControlProps accessControlProps,
   }) = _VpnProps;

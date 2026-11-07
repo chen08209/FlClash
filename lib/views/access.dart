@@ -554,7 +554,12 @@ class _AccessStatus extends ConsumerWidget {
     final colorScheme = context.colorScheme;
     final enabled = accessControl.enable;
     final authorizes = enabled && onAuthorize != null;
-    final description = authorizes
+    final dualAppCapture = ref.watch(
+      vpnSettingProvider.select((state) => state.dualAppCapture),
+    );
+    final description = dualAppCapture
+        ? appLocalizations.dualAppCaptureAccessDesc
+        : authorizes
         ? appLocalizations.installedAppsPermissionRequired
         : enabled
         ? switch (accessControl.mode) {
