@@ -296,13 +296,22 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
       baselineDns.overrideJson(baselineDnsOverrideKeys),
     );
   }
-  rawDns = mergeDnsOverride(
-    rawDns,
-    overrides.dns.overrideJson(
-      overrides.dnsOverrideKeys,
-      keepEmpty: data.keepEmptyDnsOverrides,
-    ),
+  final dnsOverride = overrides.dns.overrideJson(
+    overrides.dnsOverrideKeys,
+    keepEmpty: data.keepEmptyDnsOverrides,
   );
+  final respectRules = DnsOverrideKey.respectRules.path;
+  final proxyNameserver = DnsOverrideKey.proxyServerNameserver.path;
+  final profileServers = rawDns[proxyNameserver];
+  final overrideServers = dnsOverride[proxyNameserver];
+  if ((dnsOverride[respectRules] ?? rawDns[respectRules]) == true &&
+      profileServers is List &&
+      profileServers.isNotEmpty &&
+      overrideServers is List &&
+      overrideServers.isEmpty) {
+    dnsOverride.remove(proxyNameserver);
+  }
+  rawDns = mergeDnsOverride(rawDns, dnsOverride);
   rawConfig['dns'] = rawDns;
   final ntpOverride = overrides.ntp.overrideJson(overrides.ntpOverrideKeys);
   if (ntpOverride.isNotEmpty) {

@@ -102,6 +102,85 @@ void main() {
     expect(dns['listen'], '0.0.0.0:53');
   });
 
+  test(
+    'keeps the profile proxy nameserver when respect-rules stays on',
+    () async {
+      final dns = await _dnsOf(
+        rawConfig: {
+          'dns': {
+            ..._profileDns,
+            'respect-rules': true,
+            'proxy-server-nameserver': ['9.9.9.9'],
+          },
+        },
+        dns: const Dns(),
+        keys: {DnsOverrideKey.proxyServerNameserver},
+        keepEmpty: true,
+      );
+
+      expect(dns['respect-rules'], true);
+      expect(dns['proxy-server-nameserver'], ['9.9.9.9']);
+    },
+  );
+
+  test('keeps the profile proxy nameserver when an override enables '
+      'respect-rules', () async {
+    final dns = await _dnsOf(
+      rawConfig: {
+        'dns': {
+          ..._profileDns,
+          'respect-rules': false,
+          'proxy-server-nameserver': ['9.9.9.9'],
+        },
+      },
+      dns: const Dns(respectRules: true),
+      keys: {DnsOverrideKey.respectRules, DnsOverrideKey.proxyServerNameserver},
+      keepEmpty: true,
+    );
+
+    expect(dns['respect-rules'], true);
+    expect(dns['proxy-server-nameserver'], ['9.9.9.9']);
+  });
+
+  test('clears the profile proxy nameserver when an override disables '
+      'respect-rules', () async {
+    final dns = await _dnsOf(
+      rawConfig: {
+        'dns': {
+          ..._profileDns,
+          'respect-rules': true,
+          'proxy-server-nameserver': ['9.9.9.9'],
+        },
+      },
+      dns: const Dns(respectRules: false),
+      keys: {DnsOverrideKey.respectRules, DnsOverrideKey.proxyServerNameserver},
+      keepEmpty: true,
+    );
+
+    expect(dns['respect-rules'], false);
+    expect(dns['proxy-server-nameserver'], isEmpty);
+  });
+
+  test(
+    'replaces the profile proxy nameserver with a non-empty override',
+    () async {
+      final dns = await _dnsOf(
+        rawConfig: {
+          'dns': {
+            ..._profileDns,
+            'respect-rules': true,
+            'proxy-server-nameserver': ['9.9.9.9'],
+          },
+        },
+        dns: const Dns(proxyServerNameserver: ['1.1.1.1']),
+        keys: {DnsOverrideKey.proxyServerNameserver},
+        keepEmpty: true,
+      );
+
+      expect(dns['proxy-server-nameserver'], ['1.1.1.1']);
+    },
+  );
+
   test('an app entry emptied over a subscription replaces its value, save '
       'nameserver', () async {
     final dns = await _dnsOf(
