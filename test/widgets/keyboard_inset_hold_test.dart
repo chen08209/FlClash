@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:fl_clash/ui/inherited.dart';
-import 'package:fl_clash/ui/keyboard_inset_hold.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:prism_ui/prism_ui.dart';
+import '../helpers/test_app.dart';
 
 class _InsetProbe extends StatelessWidget {
   const _InsetProbe(this.builds);
@@ -13,7 +13,7 @@ class _InsetProbe extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     builds.add(MediaQuery.viewInsetsOf(context).bottom);
-    return const Material(
+    return const Surface(
       child: Align(
         alignment: Alignment.topCenter,
         child: SizedBox(width: 200, child: TextField()),
@@ -47,7 +47,7 @@ void main() {
   Future<void> openDialog(WidgetTester tester) async {
     useKeyboardView(tester);
     await tester.pumpWidget(
-      MaterialApp(home: KeyboardInsetHold(child: _InsetProbe(builds))),
+      HostApp(home: KeyboardInsetHold(child: _InsetProbe(builds))),
     );
     unawaited(
       showDialog<void>(
@@ -109,7 +109,7 @@ void main() {
     tester,
   ) async {
     Widget tab({required bool isActive}) {
-      return MaterialApp(
+      return HostApp(
         home: PageActivityScope(
           isActive: isActive,
           child: KeyboardInsetHold(child: _InsetProbe(builds)),

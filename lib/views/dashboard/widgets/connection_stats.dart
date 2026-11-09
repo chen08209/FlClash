@@ -3,8 +3,8 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
 
 import 'card.dart';
 import 'connections_table.dart';
@@ -98,32 +98,24 @@ class _Stat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Semantics(
-        button: true,
-        label: feed.page.label,
-        child: FocusRing(
-          shape: shape,
-          child: InkWell(
-            customBorder: shape,
-            hoverColor: DashboardColors.of(context).tone,
-            onTap: () => openDashboardFeed(context, feed),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 2,
-                children: [
-                  count,
-                  Text(
-                    feed.page.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: DashboardText.label(context),
-                  ),
-                ],
-              ),
+      child: PressSurface(
+        fill: Colors.transparent,
+        shape: shape,
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        childFills: true,
+        onPressed: () => openDashboardFeed(context, feed),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          spacing: 2,
+          children: [
+            count,
+            Text(
+              feed.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: DashboardText.label(context),
             ),
-          ),
+          ],
         ),
       ),
     );

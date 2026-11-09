@@ -8,14 +8,13 @@ import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/core.dart';
-import 'package:fl_clash/views/connection/connections.dart';
 import 'package:fl_clash/views/connection/requests.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:fl_clash/views/dns_queries.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
 
 import 'card.dart';
 import 'current_outbound.dart';
@@ -52,10 +51,10 @@ enum DashboardFeed {
   requests,
   dns;
 
-  PageLabel get page => switch (this) {
-    connections => PageLabel.connections,
-    requests => PageLabel.requests,
-    dns => PageLabel.dns,
+  String get label => switch (this) {
+    connections => currentAppLocalizations.liveConnections,
+    requests => currentAppLocalizations.recentRequests,
+    dns => PageLabel.dns.label,
   };
 }
 
@@ -67,10 +66,14 @@ void openDashboardFeed(BuildContext context, DashboardFeed feed) {
         : double.maxFinite,
     builder: (_, controller) => NestedPagedSheet(
       builder: (_) => switch (feed) {
-        DashboardFeed.connections => ConnectionsView(
+        DashboardFeed.connections => RequestsView(
           scrollController: controller,
+          initialFeed: RequestFeed.live,
         ),
-        DashboardFeed.requests => RequestsView(scrollController: controller),
+        DashboardFeed.requests => RequestsView(
+          scrollController: controller,
+          initialFeed: RequestFeed.recent,
+        ),
         DashboardFeed.dns => DnsQueriesView(scrollController: controller),
       },
     ),
@@ -306,10 +309,10 @@ class _ConnectionsTableCardState extends ConsumerState<ConnectionsTableCard>
           outer: headerHeight / 2,
           inner: 8,
           background: DashboardColors.of(context).tone,
-          semanticLabel: feed.page.label,
+          semanticLabel: feed.label,
           onTap: () => _select(feed),
           builder: (foreground) => _FeedSegment(
-            label: feed.page.label,
+            label: feed.label,
             count: count,
             height: headerHeight,
             foreground: foreground,
@@ -523,7 +526,7 @@ class _TableState<T> extends ConsumerState<_Table<T>>
           color: DashboardColors.of(context).tone,
           shape: shape,
         );
-        final body = ListView.builder(
+        final body = PrismListView(
           padding: const EdgeInsets.only(top: 2),
           itemExtent: rowHeight,
           itemCount: items.length,
@@ -553,8 +556,7 @@ class _TableState<T> extends ConsumerState<_Table<T>>
           children: [
             DecoratedBox(
               decoration: fill,
-              child: Material(
-                type: MaterialType.transparency,
+              child: Surface.transparent(
                 shape: shape,
                 clipBehavior: Clip.antiAlias,
                 child: TableColumnResizer(

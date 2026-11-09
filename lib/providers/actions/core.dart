@@ -15,8 +15,7 @@ class CoreAction extends _$CoreAction {
 
     final version = ref.read(versionProvider);
     if (!isInit) {
-      final res = await _core.init(version);
-      commonPrint.log('init result: $res');
+      await _core.init(version);
     } else {
       await ref.read(proxiesActionProvider.notifier).updateGroups();
       await ref.read(providersProvider.notifier).syncProviders();
@@ -30,7 +29,7 @@ class CoreAction extends _$CoreAction {
       await _applyLifecycleResult(result);
     } catch (error) {
       ref.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
-      dialogs.showNotifier(error.toString(), level: MessageLevel.error);
+      dialogs.showBanner(error.toString(), level: BannerLevel.error);
     }
   }
 
@@ -61,6 +60,9 @@ class CoreAction extends _$CoreAction {
       await initCore();
       ref.read(coreStatusProvider.notifier).value = CoreStatus.connected;
     }
+    if (mitmFeature && ref.read(patchClashConfigProvider).mitm.enable) {
+      unawaited(ref.read(mitmTrustStateProvider.notifier).refresh());
+    }
     return true;
   }
 
@@ -72,22 +74,22 @@ class CoreAction extends _$CoreAction {
     await _core.closeConnections();
   }
 
-  Future<void> clearDnsCacheOnNetworkChange() async {
+  Future<void> reportNetworkChange() async {
     if (ref.read(coreStatusProvider) != CoreStatus.connected) {
       return;
     }
     try {
-      await _core.clearDnsCache();
+      await _core.reportNetworkChange();
     } catch (error) {
       commonPrint.log(
-        'clearDnsCache error: $error',
+        'reportNetworkChange error: $error',
         logLevel: coreFailureLogLevel(error),
       );
     }
   }
 
-  Future<void> requestGc() async {
-    await _core.requestGc();
+  Future<void> forceGc() async {
+    await _core.forceGc();
   }
 
   Future<void> crash() async {

@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
+import 'sources.dart';
+
 final _filledButton = RegExp(
-  r'\b(?:IconButton\.filled(?:Tonal)?|FilledButton(?:\.tonal|\.icon|\.tonalIcon)?'
+  r'\b(?:IconButton\.filled|FilledButton(?:\.icon)?'
   r'|(?:Common)?FloatingActionButton(?:\.extended|\.small|\.large)?)\(',
 );
 final _glyphIcon = RegExp(r'\bGlyphIcon\(');
@@ -35,7 +37,7 @@ void main() {
   test('glyphs inside filled buttons are drawn filled', () {
     final offenders = <String>[];
 
-    for (final entity in Directory('lib').listSync(recursive: true)) {
+    for (final entity in sourceEntities()) {
       if (entity is! File ||
           !entity.path.endsWith('.dart') ||
           entity.path.contains('/generated/')) {

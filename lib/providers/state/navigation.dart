@@ -120,5 +120,6 @@ double overlayTopOffset(Ref ref) {
     version: version,
     isMobileView: isMobileView,
   );
-  return pageToolbarHeight + (showsHeader ? kHeaderHeight : 0);
+  // The window controls over a page sit within its app bar.
+  return (showsHeader ? kHeaderHeight : 0) + bannerBarClearance;
 }

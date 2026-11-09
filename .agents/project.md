@@ -1,6 +1,6 @@
 # Project Context
 
-FlClash is a multi-platform proxy client based on ClashMeta (mihomo), built with Flutter. It supports Android, Windows, macOS, and Linux, using Material You from `material_ui` as the base with Apple's Human Interface interaction conventions layered on top.
+FlClash is a multi-platform proxy client based on ClashMeta (mihomo), built with Flutter. It supports Android, Windows, macOS, and Linux, drawing its own components in the `prism_ui` package: a color system of its own with Apple's Human Interface interaction conventions.
 
 ## Version Notes
 
@@ -64,8 +64,8 @@ upstream's MIT notice stays in `plugins/code_forge/LICENSE`.
 `flutter pub outdated` lists only upstream-held entries, so treat them as
 resolved-until-the-ceiling-moves rather than as debt:
 
-- `intl` is intentionally unbounded (`any`) and `material_color_utilities` is
-  resolved by the Flutter SDK; neither is a bound this repository sets.
+- `intl` is intentionally unbounded (`any`), which is not a bound this repository
+  sets.
 
 The `riverpod` set, `build_runner`, `drift_dev` and `intl_utils` resolve to their
 latest releases. Two are held back:
@@ -79,11 +79,9 @@ When an upgrade fails version solving, record the blocker here with
 what has to change upstream before the pin can move, so the next
 `flutter pub outdated` run does not rediscover it.
 
-`_initDynamicColor` in `lib/bootstrap.dart` reads the `dynamic_color` method
-channel directly and decodes the palette list into a `TonalPalette`, instead of
-going through `DynamicColorPlugin.getCorePalette()` and its deprecated
-`CorePalette` return type. Everything downstream sees `DynamicColorSeeds`, so a
-non-deprecated plugin accessor changes only that one function.
+`_initDynamicColor` in `lib/bootstrap.dart` takes the system's seeds and accent color from `DynamicColorPlugin`,
+in the plugin at `plugins/dynamic_color`, which keeps the native side out of the UI library's
+own tree. Everything downstream sees `DynamicColorSeeds`.
 
 ## Build Dependencies
 

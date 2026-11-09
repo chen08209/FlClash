@@ -1,10 +1,12 @@
-import 'package:fl_clash/ui/side_sheet.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/prism_ui.dart';
+import '../helpers/host_scaffold.dart';
+import '../helpers/test_app.dart';
 
 Widget _opener({required ValueSetter<BuildContext> onPressed}) {
-  return MaterialApp(
-    home: Scaffold(
+  return HostApp(
+    home: HostScaffold(
       body: Builder(
         builder: (context) {
           return FilledButton(
@@ -23,22 +25,22 @@ void main() {
     addTearDown(controller.dispose);
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      HostApp(
+        home: HostScaffold(
           body: SideSheet(
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFF44336),
             builder: (_) => const Text('Content'),
           ),
         ),
       ),
     );
 
-    final material = tester.widget<Material>(
+    final material = tester.widget<Surface>(
       find
-          .ancestor(of: find.text('Content'), matching: find.byType(Material))
+          .ancestor(of: find.text('Content'), matching: find.byType(Surface))
           .first,
     );
-    expect(material.color, Colors.red);
+    expect(material.color, const Color(0xFFF44336));
     expect(controller.duration, const Duration(milliseconds: 300));
     expect(controller.reverseDuration, const Duration(milliseconds: 200));
   });
@@ -53,8 +55,8 @@ void main() {
           onPressed: (context) async {
             result = await showModalSideSheet<String>(
               context: context,
-              barrierColor: Colors.black45,
-              backgroundColor: Colors.green,
+              barrierColor: const Color(0x73000000),
+              backgroundColor: const Color(0xFF4CAF50),
               builder: (context) {
                 return TextButton(
                   onPressed: () => Navigator.pop(context, 'done'),
@@ -87,9 +89,9 @@ void main() {
     var completed = false;
 
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         theme: ThemeData(platform: TargetPlatform.iOS),
-        home: Scaffold(
+        home: HostScaffold(
           body: Builder(
             builder: (context) {
               return FilledButton(
@@ -139,7 +141,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final sheet = tester.getRect(find.byType(SideSheet));
-    final barrier = tester.getSemantics(find.bySemanticsLabel('Scrim')).rect;
+    final barrier = tester.getSemantics(find.bySemanticsLabel('Close')).rect;
     expect(barrier.width, closeTo(sheet.left, 0.1));
     expect(
       barrier.height,

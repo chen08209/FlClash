@@ -9,13 +9,15 @@ import 'package:fl_clash/views/dashboard/dashboard.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:prism_ui/prism_list.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
+import '../../helpers/host_scaffold.dart';
 
 class _MockCore extends Mock implements CoreHandlerInterface {}
 
@@ -177,7 +179,7 @@ void main() {
       UncontrolledProviderScope(
         container: connections,
         child: const TestApp(
-          child: Scaffold(
+          child: HostScaffold(
             body: SizedBox(
               width: 960,
               height: 600,
@@ -197,8 +199,8 @@ void main() {
     expect(find.text('TCP 130'), findsOneWidget);
     expect(find.text('UDP 20'), findsOneWidget);
     expect(find.text('host-149.test'), findsOneWidget);
-    final list = tester.widget<ListView>(find.byType(ListView));
-    expect(list.childrenDelegate.estimatedChildCount, 100);
+    final list = tester.widget<PrismListView>(find.byType(PrismListView));
+    expect(list.itemCount, 100);
     expect(find.text('host-0.test'), findsNothing);
 
     await tester.tap(find.text('Download'));

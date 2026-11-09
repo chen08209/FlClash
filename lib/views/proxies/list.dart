@@ -6,7 +6,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'card.dart';
@@ -211,7 +211,7 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
                 onChange: _handleChange,
                 onScrollToSelected: _scrollToGroupSelected,
               );
-              return CommonScrollBar(
+              return Scrollbar(
                 controller: _controller,
                 thumbVisibility: true,
                 child: CustomScrollView(
@@ -611,7 +611,7 @@ class ListHeader extends ConsumerWidget {
         ? SurfaceLevel.floatingOf(colorScheme)
         : context.raisedSurfaceLevel;
     final radius = AppCorner.xl.ap(context);
-    final card = CommonCard(
+    final card = Card(
       enterActionsOnRight: true,
       enterAnimated: enterAnimated,
       key: key,
@@ -664,7 +664,7 @@ class ListHeader extends ConsumerWidget {
       child: Padding(
         padding: const EdgeInsets.all(_headerButtonInset),
         child: SurfaceScope(
-          // CommonCard fills one level above its scope.
+          // Card fills one level above its scope.
           level: SurfaceLevel.values[level.index - 1],
           child: card,
         ),
@@ -838,7 +838,7 @@ class _GroupActions extends StatelessWidget {
                   tooltip: context.appLocalizations.delayTest,
                   onPressed: isDelayTesting ? null : onDelayTest,
                   icon: isDelayTesting
-                      ? CommonCircleLoading(size: TonalButtonSize.compact.icon)
+                      ? const ActivityIndicator(size: 24)
                       : const GlyphIcon(AppGlyphs.bolt),
                 ),
               ],
@@ -857,7 +857,7 @@ class _GroupActions extends StatelessWidget {
                   ? context.appLocalizations.showLess
                   : context.appLocalizations.showMore,
               onPressed: onToggle,
-              icon: CommonExpandIcon(expand: isExpand),
+              icon: ExpandIcon(expand: isExpand),
             ),
           ),
         ],

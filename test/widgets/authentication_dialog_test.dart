@@ -4,12 +4,14 @@ import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/config/general.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+import '../helpers/host_scaffold.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 const _initial = AuthenticationProps(
   enable: true,
@@ -39,7 +41,7 @@ Future<ProviderContainer> _openDialog(WidgetTester tester, Widget item) async {
     UncontrolledProviderScope(
       container: container,
       child: TestApp(
-        child: Scaffold(body: ListView(children: [item])),
+        child: HostScaffold(body: ListView(children: [item])),
       ),
     ),
   );

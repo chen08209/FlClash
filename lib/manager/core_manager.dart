@@ -11,8 +11,9 @@ import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/route_state.dart';
 import 'package:fl_clash/providers/state.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:prism_ui/banner.dart';
 
 class CoreManager extends ConsumerStatefulWidget {
   final Widget child;
@@ -54,19 +55,30 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       if (prev != next) {
         ref
             .read(setupActionProvider.notifier)
-            .applyProfileDebounce(
-              silence: true,
-              // The test URL changes no YAML, so only a forced apply hands
-              // it over.
-              force:
-                  prev != null &&
-                  prev.patchConfig.testUrl != next.patchConfig.testUrl,
-            );
+            .applyProfileDebounce(silence: true);
       }
     });
     ref.listenManual(globalRulesProvider, (prev, next) {
       if (prev?.value != null && next.hasValue) {
         ref.read(setupActionProvider.notifier).applyIfGlobalRulesUsed();
+      }
+    });
+    ref.listenManual(
+      patchClashConfigProvider.select((state) => state.mitm.enable),
+      (prev, next) {
+        if (prev == false && next) {
+          unawaited(ref.read(mitmModulesActionProvider.notifier).autoUpdate());
+        }
+      },
+    );
+    ref.listenManual(mitmModulesProvider, (prev, next) {
+      if (mitmFeature &&
+          prev?.value != null &&
+          next.hasValue &&
+          ref.read(patchClashConfigProvider).mitm.enable) {
+        ref
+            .read(setupActionProvider.notifier)
+            .applyProfileDebounce(silence: true);
       }
     });
     ref.listenManual(appSettingProvider.select((state) => state.openLogs), (
@@ -118,7 +130,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     if (log.logLevel == LogLevel.error) {
       throttler.call(
         FunctionTag.coreErrorNotifier,
-        () => dialogs.showNotifier(log.payload, level: MessageLevel.error),
+        () => dialogs.showBanner(log.payload, level: BannerLevel.error),
         duration: const Duration(seconds: 3),
         fire: true,
       );
@@ -130,9 +142,9 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   void onDialerLoop(String proxyName) {
     throttler.call(
       FunctionTag.dialerLoopNotifier,
-      () => dialogs.showNotifier(
+      () => dialogs.showBanner(
         currentAppLocalizations.dialerProxyLoopStopped(proxyName),
-        level: MessageLevel.error,
+        level: BannerLevel.error,
       ),
       duration: const Duration(seconds: 3),
       fire: true,
@@ -183,7 +195,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     }
     ref.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
     if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
-      context.showNotifier(message, level: MessageLevel.error);
+      dialogs.showBanner(message, level: BannerLevel.error);
     }
     super.onCrash(message);
   }

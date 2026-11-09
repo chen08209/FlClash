@@ -6,7 +6,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/config.dart';
 import 'package:flutter/foundation.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window/window.dart';
 
@@ -126,9 +126,11 @@ class Window implements WindowPort {
     if (cached != null) {
       return cached;
     }
+    // Windows 10's acrylic accent makes the window trail the pointer while it
+    // is dragged, so Windows 10 takes the plain accent blur.
     final candidates = system.isMacOS
         ? const [WindowEffect.glass, WindowEffect.blur]
-        : const [WindowEffect.mica, WindowEffect.acrylic, WindowEffect.blur];
+        : const [WindowEffect.mica, WindowEffect.blur];
     for (final effect in candidates) {
       if (await desktopWindow.isEffectSupported(effect)) {
         return _blurEffect = effect;

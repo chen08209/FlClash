@@ -10,12 +10,13 @@ import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/widgets/memory_info.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
@@ -35,7 +36,7 @@ void main() {
       TestApp(
         wrapInProviderScope: true,
         child: MemoryInfo(memoryReader: readMemory),
-        homeBuilder: (child) => Scaffold(body: child),
+        homeBuilder: (child) => HostScaffold(body: child),
       ),
     );
     await tester.pump();
@@ -85,7 +86,7 @@ void main() {
             child: MemoryInfo(memoryReader: readMemory),
           ),
         ),
-        homeBuilder: (child) => Scaffold(body: Center(child: child)),
+        homeBuilder: (child) => HostScaffold(body: Center(child: child)),
       ),
     );
     await tester.pump();
@@ -118,7 +119,7 @@ void main() {
           width: 380,
           child: MemoryInfo(memoryReader: readMemory),
         ),
-        homeBuilder: (child) => Scaffold(body: Center(child: child)),
+        homeBuilder: (child) => HostScaffold(body: Center(child: child)),
       ),
     );
     await tester.pump();
@@ -149,7 +150,7 @@ void main() {
           width: 380,
           child: MemoryInfo(memoryReader: readMemory),
         ),
-        homeBuilder: (child) => Scaffold(body: Center(child: child)),
+        homeBuilder: (child) => HostScaffold(body: Center(child: child)),
       ),
     );
     await tester.pump();
@@ -186,7 +187,7 @@ void main() {
       TestApp(
         wrapInProviderScope: true,
         child: MemoryInfo(memoryReader: readMemory),
-        homeBuilder: (child) => Scaffold(body: child),
+        homeBuilder: (child) => HostScaffold(body: child),
       ),
     );
     await tester.pump();
@@ -226,7 +227,7 @@ void main() {
       TestApp(
         wrapInProviderScope: true,
         child: MemoryInfo(memoryReader: readMemory),
-        homeBuilder: (child) => Scaffold(body: child),
+        homeBuilder: (child) => HostScaffold(body: child),
       ),
     );
     await tester.pump();
@@ -260,7 +261,7 @@ void main() {
           isActive: isPageActive,
           child: MemoryInfo(memoryReader: readMemory),
         ),
-        homeBuilder: (child) => Scaffold(body: child),
+        homeBuilder: (child) => HostScaffold(body: child),
       );
     }
 
@@ -301,7 +302,7 @@ void main() {
       TestApp(
         wrapInProviderScope: true,
         child: MemoryInfo(memoryReader: readMemory),
-        homeBuilder: (child) => Scaffold(body: child),
+        homeBuilder: (child) => HostScaffold(body: child),
       ),
     );
     await tester.pump();
@@ -309,7 +310,7 @@ void main() {
 
     final navigator = tester.state<NavigatorState>(find.byType(Navigator));
     unawaited(
-      navigator.push(MaterialPageRoute<void>(builder: (_) => const Scaffold())),
+      navigator.push(HostPageRoute<void>(builder: (_) => const HostScaffold())),
     );
     await tester.pumpAndSettle();
     final covered = readCount;
@@ -686,7 +687,7 @@ void main() {
 
     testWidgets('the release action asks the Core to collect', (tester) async {
       final coreInterface = _MockCoreHandlerInterface();
-      when(() => coreInterface.forceGc()).thenAnswer((_) async => true);
+      when(() => coreInterface.forceGc()).thenAnswer((_) async {});
       await openSheet(
         tester,
         reader: () async => const MemorySnapshot(app: 1024),
@@ -697,12 +698,12 @@ void main() {
       await tester.pump();
 
       verify(() => coreInterface.forceGc()).called(1);
-      expect(find.byType(CommonCircleLoading), findsOneWidget);
+      expect(find.byType(ActivityIndicator), findsOneWidget);
 
       await tester.pump(const Duration(milliseconds: 600));
       await tester.pump();
 
-      expect(find.byType(CommonCircleLoading), findsNothing);
+      expect(find.byType(ActivityIndicator), findsNothing);
 
       await tester.pumpWidget(const SizedBox.shrink());
     });
@@ -716,7 +717,7 @@ const _estimateSharedDesc =
     'The Core runs inside the app process. Its share is estimated from '
     'runtime stats, and the rest counts as app and shared memory.';
 
-Widget _scaffoldBody(Widget child) => Scaffold(body: child);
+Widget _scaffoldBody(Widget child) => HostScaffold(body: child);
 
 ProviderContainer _containerWith(
   CoreHandlerInterface coreInterface,

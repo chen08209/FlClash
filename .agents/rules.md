@@ -38,41 +38,35 @@ the superellipse API at each layer:
   `BoxDecoration(borderRadius: ...)`; borders move to the shape's `side`, and a `Container` with
   `clipBehavior` still clips to the shape path.
 - Canvas: `canvas.drawRSuperellipse(RSuperellipse.fromRectAndRadius(...))` instead of `drawRRect`.
-- Ink: `InkWell.customBorder` with an `AppShape` instead of `InkWell.borderRadius`.
 
 Passing `BorderRadius.circular(x)` as the `borderRadius` argument of these APIs is expected — it only
 carries the corner magnitude; the rendered geometry stays a superellipse.
 
 Pills are no exception. `StadiumBorder` joins its round caps to the straight sides with a curvature jump, while
 `AppShape.full`, a superellipse at full radius, blends them, and on a square it renders the exact circle, so it serves
-circles too. Material 3 defaults every button, icon button, segmented button, and search bar to `StadiumBorder`;
-`ThemeData.withAppShapes` replaces that for the button themes, and a local `FilledButtonTheme` or `IconButtonTheme`
-replaces the app's, so merge the ambient `XButtonTheme.of(context).style` into it, as `CommonMinFilledButtonTheme`
-does. `CircleBorder` and `BoxShape.circle` are fine for something that is always square.
+circles too. The buttons of `prism_ui/lib/common_button.dart` default to `AppShape.full`, and `ButtonTheme.merge`
+keeps what the ambient theme sets. `CircleBorder` and `BoxShape.circle` are fine for something that is always square.
 
-APIs that accept only a `Radius`, such as `ScrollbarThemeData.radius`, keep circular corners; supply the superellipse
-with an enclosing clip or shape where it shows. Framework widgets that paint their own circular corners with no shape or
-decoration to override are left as Material draws them; switches are `CommonSwitch`, drawn by the app. Tooltips take
-theirs from `withAppShapes`, which sets `tooltipTheme.decoration`.
+APIs that accept only a `Radius` keep circular corners; supply the superellipse with an enclosing clip or shape where it
+shows.
 
 ### Typography
 
 Text sizes follow Apple's iOS Dynamic Type scale at its default size, on every platform. `AppTextStyle` in
-`lib/ui/typography.dart` holds its eleven styles, `largeTitle` to `caption2`, with Apple's leading and weights, plus two
+`prism_ui/lib/typography.dart` holds its eleven styles, `largeTitle` to `caption2`, with Apple's leading and weights, plus two
 steps the scale lacks: `display` for a dashboard figure and `pageTitle` for an app bar. Take one with
 `AppTextStyle.body.of(context)`, pass `emphasized: true` for the scale's emphasized weight (bold for the titles,
 semibold for the rest), and change color or family with `copyWith`; a weight is either regular or emphasized. Text
 sized to the shape it marks, such as a letter scaled to its icon, comes from `AppTextStyle.custom`. The dashboard's
-roles (`DashboardText` in `lib/views/dashboard/style.dart`) are built on the same types. `ThemeData.withAppTypography`
-maps Material's `TextTheme` slots onto the scale so Material components follow it; app code never reads those slots.
+roles (`DashboardText` in `lib/views/dashboard/style.dart`) are built on the same types.
 
 App bar titles sit at the leading edge in `pageTitle` on a root page and on any desktop page, at the leading edge in
 `headline` on a pushed page in the mobile view, and in the bar's centre in `headline` on a bottom sheet. A title widget,
 such as the editor's name field, stays at the leading edge. Past a back button a title keeps the bar's action inset
 clear of the button on either side.
 
-`test/lint/typography_test.dart` fails on `textTheme` anywhere in `lib/` but `typography.dart`, and on `fontSize:` or
-`fontWeight:` outside `lib/ui/`, except in the code editor, whose text follows the editor font-size setting.
+`test/lint/typography_test.dart` fails on `textTheme` anywhere in `lib/` or `prism_ui` but `typography.dart`, and on `fontSize:` or
+`fontWeight:` in the app, except in the code editor, whose text follows the editor font-size setting.
 
 ### Text Field Suggestions
 
@@ -84,12 +78,22 @@ ask for a password keyboard; a link, key, rule or regex field that should not be
 alone. `test/lint/text_field_suggestions_test.dart` fails on `enableSuggestions: false` or
 `TextInputType.visiblePassword` anywhere else in `lib/`.
 
+### Text Selection Menu
+
+Selected text opens `TextSelectionMenu`, never the toolbar Flutter draws per platform; `TextField`, `TextFormField`,
+`SelectableText` and `SelectionArea` default to it (`prism_ui/lib/text_selection_menu.dart`). By touch that is
+`EditMenuRoute` (`prism_ui/lib/edit_menu.dart`), iOS 27's capsule of labels beside the selection, unfolding from
+a chevron into a card when they do not fit; by pointer it is a `PopupMenu`. The editor opens the same two. The menu
+keeps to cut, copy, paste, select and select all, and offers select all whenever some text is left unselected, which
+iOS drops. Handles, selection color, caret and `TextLoupe` follow the same measurements. Gestures stay each platform's
+own: a long press on Android selects a word.
+
 ### Length Units
 
 Flutter lengths are logical pixels, the unit Android calls dp. Comments, test names, docs and reports give them in dp,
 as in `48 dp`, never px: a reader takes px for physical pixels and misjudges the size by the device pixel ratio. Write
 "physical pixel" in full where the code really works in them, as the hairline snapping in
-`lib/ui/list_row_separator.dart` and the Win32 frame metrics in `plugins/window` do; raster image sizes in
+`prism_ui/lib/list_row_separator.dart` and the Win32 frame metrics in `plugins/window` do; raster image sizes in
 `tool/` and CSS under `site/` keep px. `test/lint/length_unit_test.dart` fails on a number followed by px in `lib/`
 and `test/`.
 
@@ -130,7 +134,7 @@ judgment, and it lives in the rules below and in review. Whether comments are to
   that contains them. This does not need approval.
 - These are not comments and are exempt from every rule here, including the density count: analyzer and linter
   directives (`// ignore:`, `// ignore_for_file:`, `// coverage:ignore`), license and copyright headers,
-  code-generation markers, and comments inside vendored upstream code such as `lib/ui/open_container.dart`.
+  code-generation markers, and comments inside vendored upstream code such as `prism_ui/lib/open_container.dart`.
 
 ### Density
 
@@ -251,7 +255,7 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   shared deadline, a node that waited behind a saturated semaphore reached `URLTest` with almost nothing left, so a bulk
   test of a large subscription reported whatever sat at the back of the queue as unreachable.
 - A delay test that the Core does not answer is a fault of the Core or the channel, never a verdict on the proxy:
-  `handleTestDelay` returns within its two timeouts on every path. `asyncTestDelay` therefore returns null instead of a
+  `handleTestDelay` returns within its two timeouts on every path. `testDelay` therefore throws instead of answering a
   `-1` delay, and `ProxiesAction` leaves the last measurement in place and abandons the rest of the run. Writing a
   timeout there is what made a reachable node read as unreachable whenever the host deadline beat the Core's.
 - Delay-test progress lives in `pendingDelayTestsProvider`, not as a sentinel value in `DelayDataSource`. A delay of 0
@@ -354,11 +358,70 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   costs two comparisons per event. Holding the pending `Runnable` to `removeCallbacks` it changes no behaviour and adds
   state that has to stay in sync with the map.
 
-## UI Isolate Work
+## UI Frame Budget
 
-Everything the UI isolate runs synchronously shares a frame with build, layout and paint: 16 ms at 60 Hz, 8 ms at
-120 Hz. Computation may take as long as it needs anywhere else, so this rule is about where work runs, not how much of
-it there is.
+A frame is 16 ms at 60 Hz and 8 ms at 120 Hz, and on Android the UI isolate runs on the platform's main thread. The
+bar for a push, a pop, a sheet, a menu or a tab switch is no dropped frame while it moves and at most one as it
+starts. From the press to the first frame that moves, one vsync may be missed: that is where a page's first build and
+the snapshot of the page it covers land, and a frame late there delays the motion rather than breaking it, provided
+the still frames are split so that only one runs over. From the first moving frame until the last bar item has faded
+in after the route settles, every frame stays within 8 ms, since one over shows as a skipped step at the spring's
+fastest; that holds for whatever else moves meanwhile, such as the menu a push was opened from closing. Most
+frames this app has dropped were not spent computing: a page built every row it had, rebuilt the whole screen for
+one edited item, repainted a route for one spinner, blurred offscreen per tile, or received its data halfway
+through its push. Check a UI change against these before moving anything to an isolate:
+
+- Build what is on screen. A list that grows with the user's data is a lazy sliver (`SliverPrismList`,
+  `generateSliverSection` in `prism_ui/lib/list.dart`, `ListView.custom` with an `itemExtentBuilder` for a
+  strip of chips), never `ListView(children:)`, a `Column`, `generateSection`, or a `SliverMainAxisGroup` whose
+  children all build at once. A settings page of a fixed 15 to 30 rows is bounded and stays eager.
+- Lazy lists go through `prism_ui/lib/prism_list.dart` (`PrismListView`, `SliverPrismList`, and the
+  reorderable pair): Flutter's `ListView.builder` and `SliverList` lay out every row a scrollbar drag passes, about
+  250 rows a frame on a 5000-row list, where these place the skipped rows at `estimatedItemExtent`. Give rows of one
+  fixed height `itemExtent`, and a gap between rows `gap`, not a separator. `test/lint/prism_list_test.dart` holds
+  the few short lists allowed to stay on Flutter's.
+- Rebuild what changed. Editing one item rebuilds that row: a row whose inputs are equal returns its last subtree
+  through `MemoBuilder` (`prism_ui/lib/builder.dart`), with everything its builder reads from outside its own
+  context in `inputs`. A value one widget shows, such as the current group or a test in progress, is watched by that
+  widget through a narrower provider or a `ValueNotifier`, not by the page. Content laid out inside a sheet takes
+  `WidthBuilder`, not `LayoutBuilder`, since a dragged sheet lays it out at every height.
+- Repaint what moved. A rebuild under a `LayoutBuilder` repaints the nearest repaint boundary (Rebuild Scopes in
+  `.agents/architecture.md`), so anything that animates for long, such as a spinner, a live value, or a card in a grid
+  where any card animates, sits in a `RepaintBoundary` of its own.
+- Keep the raster cheap. Impeller pays each offscreen pass again every frame and has no raster cache. A shadow is drawn
+  with `drawRSuperellipse` (`.agents/surfaces.md`); a blur repeated per tile is a `MaskFilter.blur` on the shape, not an
+  `ImageFilter.blur` layer; `Opacity` over a subtree, a translucent glyph, and an `SvgPicture` with a `colorFilter` each
+  cost a layer. A page that scales as a whole is drawn from a `SnapshotWidget` while it scales,
+  since Impeller rasterizes text again at every step of a scale.
+- Keep transitions clear. Page Arrival in `.agents/architecture.md` is binding: a page holds its push until its first
+  content is in (`NullStatusSwitcher`, `ArrivalHold`), a feed holds its refreshes while its route moves, and the editor
+  mounts once its route settles. A route's transition wrapper keeps one structure for every state: switching it moves
+  the page under a `GlobalKey`, which rebuilds every element with an inherited dependency.
+- Split a first screen that overruns a frame. The frames a push holds still are frames too: a first screen that takes
+  more than 8 ms to build and lay out is built in parts across them, each part one frame, and the push holds for the
+  last (`ArrivalHold`). `CustomProfileView` builds its proxy groups a frame after its overview this way; one frame of
+  both took 9 to 15 ms on a phone while the menu it was opened from closed.
+- Build no rows ahead while anything moves. A list on a page coming in takes its cache extent from
+  `ArrivalCacheExtentMixin` or `ArrivalCacheExtentBuilder`: none until its route settles and no ticker runs, since the
+  rows built ahead at the moment the route settles overran a frame of the bar items still fading in.
+- Put work off until nothing animates with `whenNothingAnimates` (`prism_ui/lib/route_motion_hold.dart`), never
+  with `scheduleTask(..., Priority.idle)`: while a ticker runs, the scheduler posts that task again on every turn of
+  the event loop and spins the UI isolate.
+- Stop what nobody sees. Polls and tickers follow Background Work in `.agents/architecture.md`.
+- Decide on measurements taken at the largest data the app expects, with the `ui-performance` skill. Rebuild, repaint,
+  query and capture counts are deterministic and can be pinned in a widget test, as
+  `test/widgets/scaffold_repaint_test.dart` and `test/widgets/route_transition_repaint_test.dart` do; `flutter test`
+  timings are JIT and only rank variants against each other, so a case near the budget is settled on a 120 Hz phone:
+  missed vsyncs from `atrace`, release builds of the base and the change installed in turn, and frame times from a
+  profile build to find the cause. A missed vsync before the page moves counts against the one allowed at the start,
+  and any after it fails the bar. Accessibility services, which many users run, make every frame that changes a
+  route spend 5 to 7 ms on semantics; measure with the phone as it is used. A change that leaves missed vsyncs within
+  noise is reverted, however sound its reasoning. No gate checks this section.
+
+### UI Isolate Work
+
+Everything the UI isolate runs synchronously shares a frame with build, layout and paint. Computation may take as long
+as it needs anywhere else, so this part is about where work runs, not how much of it there is.
 
 - Work that grows with the user's data (profiles, rules, proxies, groups, dialers, icons, connections) and can take
   more than about 8 ms on the largest data the app expects runs in an isolate, through `compute` or `Isolate.run`.
@@ -373,12 +436,17 @@ it there is.
 - drift runs SQL on its own isolate but maps rows into models on the caller's, so a watched query over a large table
   costs the UI isolate on every emission, and any write to that table makes it emit again.
 - Bounded work stays where it is: a provider recompute that reuses a cache, a single-item update, a search filter over
-  a list sized for scrolling.
+  a list sized for scrolling. Moving it costs more than it saves: an isolate is spawned and its input copied on the
+  UI isolate, and drift's `computeWithDatabase` over 20,000 rules blocked the UI isolate as long as mapping them in place.
+- Reach for Rust when Dart is measurably not enough. If a computation is still too slow for its use once it is linear
+  and off the UI isolate, costs too much to copy across isolates, or needs a codec or parser Dart has no solid package
+  for, reuse `plugins/rust_api` (`rust/src/api/`, regenerated as `.agents/commands.md` says, tested with `cargo test`)
+  before adding a Dart port or a pub package that wraps native code of its own: the library already ships on every
+  platform. A Dart version that meets its budget at the largest data stays in Dart, since a bridge call and a crate
+  have a cost of their own, and `flutter test` needs the Rust library built to reach it. Data the Core produces and
+  already transforms, such as decompressing a captured body, stays in Go.
 - An editor document stays in the Rust rope. Open a file for `EditorPage` with `openEditorFile` rather than reading it
   into a string, and read an edited one through `EditorContent`; a profile can be tens of megabytes.
-- Decide on measurements taken at the expected maximum. A `flutter test` probe that counts provider recomputes, times
-  the provider body and hooks `debugOnRebuildDirtyWidget` shows what reruns and how it scales; its JIT timings are not
-  device numbers, so a case near the line is settled with a profile build. No gate checks this rule.
 
 ## Testing Rules
 
@@ -502,11 +570,11 @@ behind `system.isMacOS` is unreachable from a macOS test host, so extract it —
 
 A tooltip needs an `Overlay` ancestor at build time, not at hover time: `RawTooltip` builds an `OverlayPortal`, so a
 button whose `tooltip` has nowhere to go throws "No Overlay widget found" and takes its whole subtree down with it.
-Everything `buildManagerStack` wraps around `MaterialApp.builder`'s child sits *above* the app Navigator and therefore
+Everything `buildManagerStack` wraps around `PrismApp.builder`'s child sits *above* the app Navigator and therefore
 above the only Overlay in the tree. A manager that renders a tooltip — `WindowHeaderLayout` and its caption buttons are
 the case that broke Windows while macOS, which renders a bare title there, stayed clean — hosts its own with
 `Overlay.wrap`, spanning the window so the tooltip is not clipped to the widget that owns it. A test only reproduces this
-by mirroring that topology: build the widget from `MaterialApp.builder`, never from `home:`.
+by mirroring that topology: build the widget from the app's `builder`, never from `home:`.
 
 A public top-level declaration that nothing outside its own file references is dead, and no lint catches it:
 `unused_element` covers only private ones, and a barrel `export` keeps a dead file compiling and off every
@@ -515,14 +583,14 @@ A public top-level declaration that nothing outside its own file references is d
 riverpod notifier is reached through its generated provider) and barrels as neither. Files publishing only extensions or
 typedefs are skipped: those are reached through the types they attach to, never by name.
 
-`CommonScaffold` runs its body under the system bar at the foot of the window, as Android's edge-to-edge guidance
+`Scaffold` runs its body under the system bar at the foot of the window, as Android's edge-to-edge guidance
 asks, and only the end of the content clears it. A three-button bar is no exception: `ThemeManager` leaves it
 Android's translucent scrim (`systemNavigationBarContrastEnforced`). Telling the two apart by the side back-swipe
 zones Flutter reports reserved a gesture handle again on a real phone, so no page asks which bar it has. A scroll view
 ends, and anything fixed at the foot of a body stands, `context.bottomInset` above the edge: `BottomInsetScope` (the
 home dock, a docked search) plus the system bar `MediaQuery` still carries. The home shell takes the system bar out of
 `MediaQuery` for its tabs because the dock's inset already counts it. A bare `BottomInsetScope.of` leaves the system
-bar out, so code outside `lib/ui` never reads it. The scaffold adds its docked search to the scope around its body, so a page with a `searchState` reads
+bar out, so code outside `prism_ui` never reads it. The scaffold adds its docked search to the scope around its body, so a page with a `searchState` reads
 `context.bottomInset` below the scaffold, inside `body: Builder(builder: (context) => ...)`; read with the context the
 scaffold is built from, it leaves the end of the content under the search field.
 `test/lint/scaffold_bottom_inset_test.dart` enforces both by scanning `lib/`.
@@ -650,7 +718,6 @@ Do not manually edit generated files under:
 - `lib/models/generated/`
 - `lib/providers/generated/`
 - `lib/database/generated/`
-- `lib/ui/generated/`
 - `lib/l10n/intl/`
 
 After schema, model, or provider changes, run build generation and include focused tests when behavior changes.
@@ -658,11 +725,12 @@ After schema, model, or provider changes, run build generation and include focus
 `lib/l10n/l10n.dart` is the one file that still imports `package:flutter/material.dart`.
 `intl_utils` hardcodes that import in its own template, so regenerating rewrites it and
 there is nothing to fix here; `test/lint/design_package_test.dart` exempts the generated
-l10n paths for that reason. It is harmless because the file only needs `Locale`,
-`BuildContext`, `Localizations` and `LocalizationsDelegate`, which the legacy library and
-`material_ui` both re-export from the same `package:flutter/widgets.dart`. Everything a
-human writes takes Material from `material_ui`; `cupertino_ui` is banned outright and
-survives only as a transitive dependency of `material_ui`.
+l10n paths for that reason. It only needs what `package:flutter/widgets.dart` exports.
+
+The project has no design library: `material_ui`, `cupertino_ui` and the SDK's
+`material.dart` and `cupertino.dart` are banned by the same test, and the lock file holds
+neither package. Widgets come from `package:flutter/widgets.dart` and components, the
+`ThemeData` and the `ColorScheme` from `prism_ui`.
 
 Strings live in `arb/intl_{en,zh_CN,ja,ru,fr,es,ko}.arb` — flat JSON, no `@` metadata. Add a key to all seven, then regenerate with
 `dart run intl_utils:generate`, which rewrites `lib/l10n/`. A key present in only some locales silently falls back to

@@ -22,7 +22,7 @@ import 'package:fl_clash/views/profiles/custom/dialers.dart';
 import 'package:fl_clash/views/profiles/custom/groups.dart';
 import 'package:fl_clash/views/profiles/custom/rules.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -31,6 +31,11 @@ import 'package:mocktail/mocktail.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+
+final _back = find.ancestor(
+  of: find.byTooltip('Back'),
+  matching: find.byType(IconButton),
+);
 
 class _TestProfileRules extends ProfileRules {
   final List<Rule> initial;
@@ -125,7 +130,7 @@ final _testCustomDataProvider =
     NotifierProvider<_TestCustomData, CustomProfileData>(_TestCustomData.new);
 
 Future<void> _dismissSaveBlocked(WidgetTester tester, String reason) async {
-  final dialog = find.byType(CommonDialog);
+  final dialog = find.byType(AlertDialog);
   expect(
     find.descendant(
       of: dialog,
@@ -155,12 +160,10 @@ Future<void> _expectClosesWithoutIssues(WidgetTester tester) async {
   expect(form, findsNothing);
 }
 
-Finder _menuItem(String label) => find.descendant(
-  of: find.byType(CommonPopupMenu),
-  matching: find.text(label),
-);
+Finder _menuItem(String label) =>
+    find.descendant(of: find.byType(PopupMenu), matching: find.text(label));
 
-Widget _proxyGroupsPage(int profileId) => CommonScaffold(
+Widget _proxyGroupsPage(int profileId) => Scaffold(
   title: 'Groups',
   body: CustomScrollView(slivers: [CustomProxyGroupsSection(profileId)]),
 );
@@ -237,9 +240,7 @@ Future<_TestProxyGroups> _pumpProxyGroups(
       tester
           .state<NavigatorState>(find.byType(Navigator).first)
           .push(
-            MaterialPageRoute<void>(
-              builder: (_) => _proxyGroupsPage(profile.id),
-            ),
+            HostPageRoute<void>(builder: (_) => _proxyGroupsPage(profile.id)),
           ),
     );
     await tester.pumpAndSettle();
@@ -287,7 +288,7 @@ Future<_TestProfileRules> _pumpRules(WidgetTester tester) async {
 
 void main() {
   group('rules list menu', () {
-    final menu = find.byType(CommonPopupMenu);
+    final menu = find.byType(PopupMenu);
     Finder menuItem(String label) =>
         find.descendant(of: menu, matching: find.text(label));
 
@@ -366,7 +367,7 @@ void main() {
   ) async {
     await _pumpRules(tester);
 
-    await tester.tap(find.byType(CommonCheckBox).at(0));
+    await tester.tap(find.byType(Checkbox).at(0));
     await tester.pump();
 
     expect(find.byTooltip(AppLocalizations.current.copy), findsNothing);
@@ -388,9 +389,7 @@ void main() {
 
     final rows = find.byType(DecorationListItem);
     expect(rows, findsNWidgets(3));
-    final color = Theme.of(
-      tester.element(rows.first),
-    ).colorScheme.outlineVariant;
+    final color = Divider.colorOf(tester.element(rows.first));
     final separator = paints
       ..something(
         (method, arguments) =>
@@ -406,7 +405,7 @@ void main() {
   testWidgets('groups list deletes the checked groups', (tester) async {
     final notifier = await _pumpProxyGroups(tester);
 
-    await tester.tap(find.byType(CommonCheckBox).at(0));
+    await tester.tap(find.byType(Checkbox).at(0));
     await tester.pump();
     await tester.tap(find.text('Group 2'));
     await tester.pump();
@@ -421,7 +420,7 @@ void main() {
   });
 
   group('groups list menu', () {
-    final menu = find.byType(CommonPopupMenu);
+    final menu = find.byType(PopupMenu);
     Finder menuItem(String label) =>
         find.descendant(of: menu, matching: find.text(label));
 
@@ -551,7 +550,7 @@ void main() {
       );
       await tester.tap(
         find.descendant(
-          of: find.byType(CommonDialog),
+          of: find.byType(AlertDialog),
           matching: find.text(AppLocalizations.current.delete),
         ),
       );
@@ -579,7 +578,7 @@ void main() {
 
       await tester.tap(find.byGlyph(AppGlyphs.sort));
       await tester.pumpAndSettle();
-      expect(find.byType(CommonCheckBox).hitTestable(), findsNothing);
+      expect(find.byType(Checkbox).hitTestable(), findsNothing);
 
       final gesture = await tester.startGesture(
         tester.getCenter(find.byType(SortHandle).first),
@@ -606,12 +605,12 @@ void main() {
 
       await tester.tap(find.byTooltip(l10n.sort));
       await tester.pumpAndSettle();
-      expect(find.byType(CommonCheckBox).hitTestable(), findsNothing);
-      expect(find.byType(BackButton).hitTestable(), findsOneWidget);
+      expect(find.byType(Checkbox).hitTestable(), findsNothing);
+      expect(_back.hitTestable(), findsOneWidget);
 
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
-      expect(find.byType(CommonCheckBox).hitTestable(), findsNWidgets(3));
+      expect(find.byType(Checkbox).hitTestable(), findsNWidgets(3));
 
       await tester.tap(find.byTooltip(l10n.sort));
       await tester.pumpAndSettle();
@@ -625,7 +624,7 @@ void main() {
     testWidgets('stays closed while groups are being checked', (tester) async {
       await _pumpProxyGroups(tester);
 
-      await tester.tap(find.byType(CommonCheckBox).at(0));
+      await tester.tap(find.byType(Checkbox).at(0));
       await tester.pump();
       await rightClick(tester, 'Group 1');
 
@@ -970,7 +969,7 @@ void main() {
       tester,
     ) async {
       final form = await openNewGroup(tester);
-      final checked = Completer<List<String>>();
+      final checked = Completer<Map<int, String>>();
       when(() => core.validateFilters(any())).thenAnswer((_) => checked.future);
       form.update(
         (state) => state.copyWith(
@@ -985,8 +984,8 @@ void main() {
       );
       await tester.pump();
       form.update((state) => state.copyWith(name: 'Later'));
-      when(() => core.validateFilters(any())).thenAnswer((_) async => ['', '']);
-      checked.complete(['', '']);
+      when(() => core.validateFilters(any())).thenAnswer((_) async => const {});
+      checked.complete(const {});
       await _expectClosesWithoutIssues(tester);
 
       expect(proxyGroups.value.map((group) => group.name), ['Later']);
@@ -1014,7 +1013,7 @@ void main() {
     ];
     final core = _MockCore();
     registerFallbackValue(<String>[]);
-    when(() => core.validateFilters(any())).thenAnswer((_) async => ['', '']);
+    when(() => core.validateFilters(any())).thenAnswer((_) async => const {});
     final container = ProviderContainer(
       overrides: [
         coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
@@ -1265,7 +1264,7 @@ void main() {
     expect(find.text('vless'), findsOneWidget);
     expect(find.text('hk.example.com:8388'), findsNothing);
     expect(find.byType(MetaChip), findsNothing);
-    expect(find.byType(SliverReorderableList), findsOneWidget);
+    expect(find.byType(SliverPrismReorderableList), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -1284,7 +1283,7 @@ void main() {
     tester,
   ) async {
     _setViewport(tester);
-    final validated = Completer<List<String>>();
+    final validated = Completer<Map<int, String>>();
     final proxies = _RecordingCustomProxies();
     final core = _MockCore();
     registerFallbackValue(<Map<String, dynamic>>[]);
@@ -1324,7 +1323,7 @@ void main() {
     await tester.tap(find.byTooltip('Save'));
     await tester.pump();
 
-    validated.complete(['']);
+    validated.complete(const {});
     await tester.pumpAndSettle();
 
     expect(proxies.saved.map((proxy) => proxy.name), ['Mine']);
@@ -1340,11 +1339,11 @@ void main() {
     registerFallbackValue(<Map<String, dynamic>>[]);
     when(() => core.validateProxies(any())).thenAnswer((invocation) async {
       await Future<void>.delayed(const Duration(milliseconds: 50));
-      return [
-        for (final definition
-            in invocation.positionalArguments.single as List<Object?>)
-          (definition! as Map)['server'] == null ? 'missing server' : '',
-      ];
+      return {
+        for (final (index, definition)
+            in (invocation.positionalArguments.single as List<Object?>).indexed)
+          if ((definition! as Map)['server'] == null) index: 'missing server',
+      };
     });
     final container = ProviderContainer(
       overrides: [
@@ -1395,7 +1394,7 @@ void main() {
     registerFallbackValue(<Map<String, dynamic>>[]);
     when(
       () => core.validateProxies(any()),
-    ).thenAnswer((_) async => ['missing server']);
+    ).thenAnswer((_) async => const {0: 'missing server'});
     final container = ProviderContainer(
       overrides: [
         coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
@@ -1511,7 +1510,7 @@ void main() {
     ]);
     final core = _MockCore();
     registerFallbackValue(<Map<String, dynamic>>[]);
-    when(() => core.validateProxies(any())).thenAnswer((_) async => ['']);
+    when(() => core.validateProxies(any())).thenAnswer((_) async => const {});
     final container = ProviderContainer(
       overrides: [
         coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
@@ -1559,6 +1558,13 @@ void main() {
       find.descendant(
         of: find.byType(ListEditorPage<String, String>),
         matching: find.byTooltip(l10n.add),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(PopupMenu),
+        matching: find.text(l10n.add),
       ),
     );
     await tester.pumpAndSettle();
@@ -1614,7 +1620,7 @@ void main() {
     ]);
     final core = _MockCore();
     registerFallbackValue(<Map<String, dynamic>>[]);
-    when(() => core.validateProxies(any())).thenAnswer((_) async => ['']);
+    when(() => core.validateProxies(any())).thenAnswer((_) async => const {});
     final container = ProviderContainer(
       overrides: [
         coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
@@ -1677,6 +1683,13 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(PopupMenu),
+        matching: find.text(l10n.add),
+      ),
+    );
+    await tester.pumpAndSettle();
     await tester.enterText(fieldIn(l10n.key), 'X-Auth-Token');
     await tester.enterText(fieldIn(l10n.value), 'example-token');
     await tester.testTextInput.receiveAction(TextInputAction.done);
@@ -1723,7 +1736,7 @@ void main() {
     ]);
     final core = _MockCore();
     registerFallbackValue(<Map<String, dynamic>>[]);
-    when(() => core.validateProxies(any())).thenAnswer((_) async => ['']);
+    when(() => core.validateProxies(any())).thenAnswer((_) async => const {});
     final container = ProviderContainer(
       overrides: [
         coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
@@ -1771,20 +1784,14 @@ void main() {
     expect(row('HTTPUpgrade Fast Open'), findsNothing);
 
     await tester.tap(
-      find.descendant(
-        of: row('HTTPUpgrade'),
-        matching: find.byType(CommonSwitch),
-      ),
+      find.descendant(of: row('HTTPUpgrade'), matching: find.byType(Switch)),
     );
     await tester.pumpAndSettle();
 
     expect(row('HTTPUpgrade Fast Open'), findsOneWidget);
 
     await tester.tap(
-      find.descendant(
-        of: row('HTTPUpgrade'),
-        matching: find.byType(CommonSwitch),
-      ),
+      find.descendant(of: row('HTTPUpgrade'), matching: find.byType(Switch)),
     );
     await tester.pumpAndSettle();
 
@@ -1800,7 +1807,7 @@ void main() {
     final action = _RecordingClashProvidersAction();
     final core = _MockCore();
     registerFallbackValue(<Map<String, dynamic>>[]);
-    when(() => core.validateProxies(any())).thenAnswer((_) async => ['']);
+    when(() => core.validateProxies(any())).thenAnswer((_) async => const {});
     final container = ProviderContainer(
       overrides: [
         coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
@@ -1849,7 +1856,7 @@ void main() {
     final action = _RecordingClashProvidersAction();
     final core = _MockCore();
     registerFallbackValue(<Map<String, dynamic>>[]);
-    when(() => core.validateProxies(any())).thenAnswer((_) async => ['']);
+    when(() => core.validateProxies(any())).thenAnswer((_) async => const {});
     final container = ProviderContainer(
       overrides: [
         coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
@@ -2012,7 +2019,7 @@ void main() {
         child: TestApp(
           child: Navigator(
             key: pageNavigator,
-            pages: [MaterialPage(child: _proxyGroupsPage(profile.id))],
+            pages: [RootPage(child: _proxyGroupsPage(profile.id))],
             onDidRemovePage: (_) {},
           ),
         ),

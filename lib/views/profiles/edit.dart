@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -13,7 +12,8 @@ import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 enum _ProfileField { label, url, autoUpdateInterval }
@@ -187,17 +187,17 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
   }
 
   Future<void> _handleSaveEdit(BuildContext context, Uint8List data) async {
-    final message = await globalState.safeRun<String>(() async {
-      final message = await ref
+    final issue = await globalState.safeRun(
+      () => ref
           .read(profilesActionProvider.notifier)
-          .validateConfigWithData(data);
-      return message;
-    }, silence: false);
-    if (message?.isNotEmpty == true) {
+          .validateConfigWithData(data),
+      silence: false,
+    );
+    if (issue != null) {
       unawaited(
         dialogs.showAlert(
           title: currentAppLocalizations.tip,
-          message: TextSpan(text: message),
+          message: TextSpan(text: issue),
         ),
       );
       return;
@@ -324,10 +324,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
             FormRow(
               title: appLocalizations.autoUpdate,
               onPressed: () => _setAutoUpdate(!_autoUpdate),
-              trailing: CommonSwitch(
-                value: _autoUpdate,
-                onChanged: _setAutoUpdate,
-              ),
+              trailing: Switch(value: _autoUpdate, onChanged: _setAutoUpdate),
             ),
             if (_autoUpdate)
               _AutoUpdateIntervalField(
@@ -350,14 +347,14 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     return FocusTraversalGroup(
       policy: PageTraversalPolicy(),
       child: PageFocusScope(
-        child: CommonPopScope(
+        child: PopGuard(
           onPop: _fileData == null
               ? null
               : (_) {
                   _handleBack();
                   return false;
                 },
-          child: CommonScaffold(
+          child: Scaffold(
             title: appLocalizations.edit,
             confirmationAction: IconButtonData(
               glyph: AppGlyphs.check,
@@ -554,15 +551,15 @@ class _ProfileFileItem extends StatelessWidget {
     return LastUpdateTimeText(lastUpdateDate: lastModified, style: style);
   }
 
-  List<CommonPopupMenuItem> _menuItems(BuildContext context) {
+  List<PopupMenuItem> _menuItems(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     return [
-      CommonPopupMenuItem(
+      PopupMenuItem(
         glyph: AppGlyphs.edit,
         label: appLocalizations.edit,
         onPressed: onEdit,
       ),
-      CommonPopupMenuItem(
+      PopupMenuItem(
         glyph: AppGlyphs.upload,
         label: appLocalizations.upload,
         onPressed: onUpload,

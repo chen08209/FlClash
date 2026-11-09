@@ -105,8 +105,8 @@ func handleGetExternalProviders() []ExternalProvider {
 	return eps
 }
 
-func handleGetExternalProvider(name string) *ExternalProvider {
-	p, exist := lookupExternalProvider(name)
+func handleGetExternalProvider(params NameParams) *ExternalProvider {
+	p, exist := lookupExternalProvider(params.Name)
 	if !exist {
 		return nil
 	}
@@ -267,7 +267,8 @@ func updateExternalProvider(name string, update func(cp.Provider) *MethodError) 
 	return nil
 }
 
-func handleUpdateExternalProvider(name string) error {
+func handleUpdateExternalProvider(params NameParams) error {
+	name := params.Name
 	return updateExternalProvider(name, func(p cp.Provider) *MethodError {
 		if err := p.Update(); err != nil {
 			return providerUpdateError(name, err)
@@ -277,7 +278,7 @@ func handleUpdateExternalProvider(name string) error {
 }
 
 func handleSideLoadExternalProvider(params *SideLoadParams) error {
-	name := params.ProviderName
+	name := params.Name
 	return updateExternalProvider(name, func(p cp.Provider) *MethodError {
 		if err := sideUpdateExternalProvider(p, []byte(params.Data)); err != nil {
 			return providerError("provider_update_error", name, err)
@@ -286,8 +287,8 @@ func handleSideLoadExternalProvider(params *SideLoadParams) error {
 	})
 }
 
-func handleDumpRuleSet(path string) (string, error) {
-	buf, err := os.ReadFile(path)
+func handleDumpRuleSet(params PathParams) (string, error) {
+	buf, err := os.ReadFile(params.Path)
 	if err != nil {
 		return "", err
 	}
@@ -311,7 +312,8 @@ func providerPaths(homeDir string, profileId int64) (root string, target string)
 	return root, filepath.Join(root, strconv.FormatInt(profileId, 10))
 }
 
-func handleClearEffect(profileId int64) error {
+func handleClearEffect(params ClearEffectParams) error {
+	profileId := params.ProfileID
 	if !isInit.Load() {
 		return errNotInitialized
 	}

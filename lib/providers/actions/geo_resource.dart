@@ -52,10 +52,7 @@ class GeoResourceAction extends _$GeoResourceAction {
     _manualUpdates[geoResource] = announceSuccess;
     final operation = _startUpdating(geoResource);
     try {
-      final message = await _core.updateGeoData(geoResource.name);
-      if (message.isNotEmpty) {
-        throw MessageException(message);
-      }
+      await _core.updateGeoData(geoResource.name);
     } catch (_) {
       if (previous != null) {
         _manualUpdates[geoResource] = previous;
@@ -80,13 +77,13 @@ class GeoResourceAction extends _$GeoResourceAction {
         ? null
         : _manualUpdates.remove(geoResource);
     if (announceSuccess != null && error != null && error.isNotEmpty) {
-      dialogs.showNotifier(error, level: MessageLevel.error);
+      dialogs.showBanner(error, level: BannerLevel.error);
     } else if (announceSuccess == true) {
       final l10n = currentAppLocalizations;
       final message = skipped
           ? l10n.geoSkipped(geoResource.name)
           : l10n.geoUpdated(geoResource.name);
-      dialogs.showNotifier(message);
+      dialogs.showBanner(message);
     }
     if (updating) {
       _startUpdating(geoResource);

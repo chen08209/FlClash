@@ -1,12 +1,13 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/config/tun.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -94,7 +95,7 @@ void main() {
     expect(overrides().tun, defaultProfileTun);
     expect(find.text(l.disableIcmpForwardingDesc), findsOneWidget);
 
-    await tester.tap(find.byType(CommonSwitch));
+    await tester.tap(find.byType(Switch));
     await tester.pump();
     expect(overrides().tun.disableIcmpForwarding, isTrue);
   });

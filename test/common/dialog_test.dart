@@ -1,18 +1,18 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/manager/status_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:fl_clash/views/disclaimer.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 Future<ProviderContainer> _pumpHost(
   WidgetTester tester, {
@@ -33,12 +33,10 @@ Future<ProviderContainer> _pumpHost(
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: RemoteFocusAdapter(
-        enabled: remote,
-        child: TestApp(
-          homeBuilder: homeBuilder ?? (child) => child,
-          child: const Scaffold(body: SizedBox.shrink()),
-        ),
+      child: TestApp(
+        remoteFocus: remote,
+        homeBuilder: homeBuilder ?? (child) => child,
+        child: const HostScaffold(body: SizedBox.shrink()),
       ),
     ),
   );
@@ -75,9 +73,9 @@ Future<void> _agreeAndRestate(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-/// The real manager stack mounts [StatusManager] above the app navigator, so
-/// [Dialogs.showNotifier] can reach it from `navigatorKey.currentContext`.
-Future<void> _pumpStatusManagerHost(WidgetTester tester) async {
+/// [PrismApp] mounts the [BannerHost] above its navigator, so
+/// [Dialogs.showBanner] can reach it from `navigatorKey.currentContext`.
+Future<void> _pumpBannerHost(WidgetTester tester) async {
   tester.view.physicalSize = const Size(1000, 800);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -93,15 +91,14 @@ Future<void> _pumpStatusManagerHost(WidgetTester tester) async {
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: MaterialApp(
+      child: PrismApp(
         navigatorKey: globalState.navigatorKey,
-        localizationsDelegates: const [AppLocalizations.delegate],
         supportedLocales: AppLocalizations.delegate.supportedLocales,
         builder: (context, child) {
-          globalState.measure = Measure.of(context, 1);
-          return StatusManager(child: child!);
+          globalState.measure = MeasureScope.of(context);
+          return child!;
         },
-        home: const Scaffold(body: SizedBox.shrink()),
+        home: const HostScaffold(body: SizedBox.shrink()),
       ),
     ),
   );
@@ -517,25 +514,26 @@ void main() {
     expect(find.text('Exit'), findsNothing);
   });
 
-  testWidgets('showNotifier delivers text through the StatusManager host', (
+  testWidgets(
+    'showBanner delivers text through the banner host PrismApp mounts',
+    (tester) async {
+      await _pumpBannerHost(tester);
+
+      dialogs.showBanner('something happened');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('something happened'), findsOneWidget);
+      expect(tester.takeException(), null);
+    },
+  );
+
+  testWidgets('showBanner drops empty text before reaching the host', (
     tester,
   ) async {
-    await _pumpStatusManagerHost(tester);
+    await _pumpBannerHost(tester);
 
-    dialogs.showNotifier('something happened');
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    expect(find.text('something happened'), findsOneWidget);
-    expect(tester.takeException(), null);
-  });
-
-  testWidgets('showNotifier drops empty text before reaching the host', (
-    tester,
-  ) async {
-    await _pumpStatusManagerHost(tester);
-
-    dialogs.showNotifier('');
+    dialogs.showBanner('');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -543,12 +541,21 @@ void main() {
     expect(tester.takeException(), null);
   });
 
-  testWidgets('showNotifier is inert without a StatusManager ancestor', (
+  testWidgets('showBanner is inert without a BannerHost ancestor', (
     tester,
   ) async {
-    await _pumpHost(tester);
+    await tester.pumpWidget(
+      WidgetsApp(
+        navigatorKey: globalState.navigatorKey,
+        color: const Color(0xFF000000),
+        onGenerateRoute: (settings) => CardPageRoute<void>(
+          settings: settings,
+          builder: (_) => const SizedBox.shrink(),
+        ),
+      ),
+    );
 
-    dialogs.showNotifier('no host listening');
+    dialogs.showBanner('no host listening');
     await tester.pumpAndSettle();
 
     expect(find.text('no host listening'), findsNothing);

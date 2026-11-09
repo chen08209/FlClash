@@ -7,12 +7,14 @@ import 'package:fl_clash/views/proxies/card.dart';
 import 'package:fl_clash/views/proxies/list.dart';
 import 'package:fl_clash/widgets/widgets.dart' hide ListHeader;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+import '../helpers/host_scaffold.dart';
+import 'package:prism_ui/prism_ui.dart' hide ListHeader;
 
 class _RecordingProxiesAction extends ProxiesAction {
   static final List<String> tested = [];
@@ -71,7 +73,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: TestApp(
-          homeBuilder: (child) => Scaffold(
+          homeBuilder: (child) => HostScaffold(
             body: Builder(
               builder: (context) => MediaQuery(
                 data: MediaQuery.of(
@@ -355,7 +357,7 @@ void main() {
     expect(
       find.descendant(
         of: headerOf('G0'),
-        matching: find.byType(CommonCircleLoading),
+        matching: find.byType(ActivityIndicator),
       ),
       findsOneWidget,
     );
@@ -366,6 +368,6 @@ void main() {
     container.read(delayTestingGroupsProvider.notifier).stop('G0');
     await tester.pump();
 
-    expect(find.byType(CommonCircleLoading), findsNothing);
+    expect(find.byType(ActivityIndicator), findsNothing);
   });
 }

@@ -1,9 +1,13 @@
 import 'dart:math';
 
-import 'package:fl_clash/ui/color.dart';
-import 'package:material_color_utilities/hct/hct.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:fl_clash/ui/delay_color.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/hct/dynamic_color.dart';
+import 'package:prism_ui/hct/dynamic_scheme.dart';
+import 'package:prism_ui/hct/hct.dart';
+import 'package:prism_ui/hct/material_dynamic_colors.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 Hct _hct(Color color) => Hct.fromInt(color.toARGB32());
 
@@ -14,12 +18,19 @@ Matcher _grayish(Color material, double limit) =>
 
 const _accentStyles = {ColorStyle.vivid, ColorStyle.tinted};
 
-const _materialVariants = {
-  ColorStyle.vivid: DynamicSchemeVariant.content,
-  ColorStyle.tinted: DynamicSchemeVariant.content,
-  ColorStyle.soft: DynamicSchemeVariant.tonalSpot,
-  ColorStyle.monochrome: DynamicSchemeVariant.monochrome,
-};
+final _materialVariants =
+    <
+      ColorStyle,
+      DynamicScheme Function({
+        required Hct sourceColorHct,
+        required bool isDark,
+      })
+    >{
+      ColorStyle.vivid: DynamicScheme.content,
+      ColorStyle.tinted: DynamicScheme.content,
+      ColorStyle.soft: DynamicScheme.tonalSpot,
+      ColorStyle.monochrome: DynamicScheme.monochrome,
+    };
 
 double _contrast(Color a, Color b) {
   final lighter = max(a.computeLuminance(), b.computeLuminance());
@@ -29,7 +40,7 @@ double _contrast(Color a, Color b) {
 
 void main() {
   test('opacity extensions use their named alpha values', () {
-    const color = Colors.blue;
+    const color = Color(0xFF2196F3);
     const tolerance = 0.0001;
 
     expect(color.opacity80.a, closeTo(0.8, tolerance));
@@ -54,10 +65,11 @@ void main() {
             brightness: brightness,
             style: style,
           );
-          final material = ColorScheme.fromSeed(
-            seedColor: seed,
-            brightness: brightness,
-            dynamicSchemeVariant: _materialVariants[style]!,
+          final material = _RawRoles(
+            _materialVariants[style]!(
+              sourceColorHct: Hct.fromInt(seed.toARGB32()),
+              isDark: dark,
+            ),
           );
           final reason = '$seed $style $brightness';
           final gray = style != ColorStyle.tinted;
@@ -242,4 +254,27 @@ void main() {
     expect(rose.delayColor(800), rose.warning);
     expect(rose.delayColor(-1), rose.error);
   });
+}
+
+class _RawRoles {
+  const _RawRoles(this._scheme);
+
+  final DynamicScheme _scheme;
+
+  Color _of(DynamicColor role) => Color(role.getArgb(_scheme));
+
+  Color get onSurface => _of(MaterialDynamicColors.onSurface);
+  Color get primary => _of(MaterialDynamicColors.primary);
+  Color get surface => _of(MaterialDynamicColors.surface);
+  Color get surfaceBright => _of(MaterialDynamicColors.surfaceBright);
+  Color get surfaceContainer => _of(MaterialDynamicColors.surfaceContainer);
+  Color get surfaceContainerHigh =>
+      _of(MaterialDynamicColors.surfaceContainerHigh);
+  Color get surfaceContainerHighest =>
+      _of(MaterialDynamicColors.surfaceContainerHighest);
+  Color get surfaceContainerLow =>
+      _of(MaterialDynamicColors.surfaceContainerLow);
+  Color get surfaceContainerLowest =>
+      _of(MaterialDynamicColors.surfaceContainerLowest);
+  Color get surfaceDim => _of(MaterialDynamicColors.surfaceDim);
 }

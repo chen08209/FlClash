@@ -7,8 +7,9 @@ import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/rendering.dart';
-import 'package:material_new_shapes/material_new_shapes.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
+import 'package:prism_ui/shapes/shapes.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 EdgeInsets dashboardCardPadding(DashboardDensity density) => switch (density) {
   DashboardDensity.standard => const EdgeInsets.symmetric(
@@ -36,12 +37,16 @@ class DashboardCard extends StatelessWidget {
     this.onTap,
     this.semanticLabel,
     this.clipBehavior = Clip.none,
+    this.side = BorderSide.none,
     required this.child,
   });
 
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
   final String? semanticLabel;
+
+  /// Drawn over the content, which may bleed to the card's edge.
+  final BorderSide side;
 
   /// Off by default so a control swelling under an [ElasticPress] can paint
   /// past the card's edge; only a card whose own content bleeds clips.
@@ -56,31 +61,31 @@ class DashboardCard extends StatelessWidget {
       padding: padding ?? dashboardCardPadding(density),
       child: child,
     );
-    return Semantics(
-      container: true,
-      label: semanticLabel,
-      child: Container(
-        clipBehavior: clipBehavior,
-        decoration: ShapeDecoration(
-          color: DashboardColors.of(context).card,
-          shape: shape,
-          shadows: DashboardShadows.e1(context),
-        ),
-        child: Material(
-          type: MaterialType.transparency,
-          child: onTap == null
-              ? content
-              : FocusRing(
-                  shape: shape,
-                  child: InkWell(
-                    customBorder: shape,
-                    onTap: onTap,
-                    child: content,
-                  ),
-                ),
-        ),
+    final onTap = this.onTap;
+    final card = Container(
+      clipBehavior: clipBehavior,
+      decoration: ShapeDecoration(
+        color: DashboardColors.of(context).card,
+        shape: shape,
+        shadows: DashboardShadows.e1(context),
       ),
+      foregroundDecoration: side == BorderSide.none
+          ? null
+          : ShapeDecoration(shape: shape.copyWith(side: side)),
+      child: onTap == null
+          ? content
+          : PressSurface(
+              fill: Colors.transparent,
+              shape: shape,
+              onPressed: onTap,
+              childFills: true,
+              child: Semantics(label: semanticLabel, child: content),
+            ),
     );
+    if (onTap != null) {
+      return card;
+    }
+    return Semantics(container: true, label: semanticLabel, child: card);
   }
 }
 
@@ -408,15 +413,11 @@ class DashboardConnectedButton extends StatelessWidget {
                   color: Color.lerp(background, colorScheme.primary, amount),
                   shape: shape,
                 ),
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: InkWell(
-                    customBorder: shape,
-                    splashFactory: NoSplash.splashFactory,
-                    highlightColor: Colors.transparent,
-                    onTap: onTap,
-                    child: child,
-                  ),
+                child: PressRegion(
+                  shape: shape,
+                  overlay: PressRegion.hoverOverlay,
+                  onTap: onTap,
+                  child: child!,
                 ),
               ),
             );
@@ -508,28 +509,20 @@ class DashboardBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final shape = AppShape.all(radius);
     final content = Padding(padding: padding, child: child);
-    return Container(
-      decoration: ShapeDecoration(
-        color: color ?? DashboardColors.of(context).tone,
-        shape: shape,
-      ),
-      child: onTap == null
-          ? content
-          : Material(
-              type: MaterialType.transparency,
-              child: Semantics(
-                button: true,
-                label: semanticLabel,
-                child: FocusRing(
-                  shape: shape,
-                  child: InkWell(
-                    customBorder: shape,
-                    onTap: onTap,
-                    child: content,
-                  ),
-                ),
-              ),
-            ),
+    final fill = color ?? DashboardColors.of(context).tone;
+    final onTap = this.onTap;
+    if (onTap == null) {
+      return DecoratedBox(
+        decoration: ShapeDecoration(color: fill, shape: shape),
+        child: content,
+      );
+    }
+    return PressSurface(
+      fill: fill,
+      shape: shape,
+      onPressed: onTap,
+      childFills: true,
+      child: Semantics(label: semanticLabel, child: content),
     );
   }
 }
@@ -640,17 +633,17 @@ class DashboardSwitch extends StatelessWidget {
   final String? semanticLabel;
 
   /// A switch lays out past its track, which would set every row's height.
-  static const trackWidth = CommonSwitch.trackWidth;
+  static const trackWidth = Switch.trackWidth;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: trackWidth,
-      height: CommonSwitch.trackHeight,
+      height: Switch.trackHeight,
       child: OverflowBox(
         maxWidth: double.infinity,
         maxHeight: double.infinity,
-        child: CommonSwitch(
+        child: Switch(
           value: value,
           onChanged: onChanged,
           semanticLabel: semanticLabel,
@@ -850,10 +843,10 @@ class DashboardIconButton extends StatelessWidget {
           tooltip: tooltip,
           padding: EdgeInsets.zero,
           iconSize: glyphSize,
-          style: IconButton.styleFrom(
+          style: ButtonStyle.from(
             minimumSize: const Size.square(size),
             fixedSize: const Size.square(size),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            tapTargetSize: TapTargetSize.shrinkWrap,
             foregroundColor: context.colorScheme.onSurfaceVariant,
           ),
           onPressed: onPressed,

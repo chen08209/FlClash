@@ -1,11 +1,13 @@
-import 'package:fl_clash/ui/keyed_animated_list.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/prism_ui.dart';
+import '../helpers/host_scaffold.dart';
+import '../helpers/test_app.dart';
 
 void main() {
   Widget buildList(List<String> items) {
-    return MaterialApp(
-      home: Scaffold(
+    return HostApp(
+      home: HostScaffold(
         body: KeyedAnimatedList<String>(
           items: items,
           keyOf: (item) => item,
@@ -89,6 +91,7 @@ void main() {
   ) async {
     final visible = [for (var i = 0; i < 30; i++) '$i'];
     await tester.pumpWidget(buildList(visible));
+    await tester.pumpAndSettle();
     await tester.pumpWidget(
       buildList([...visible, for (var i = 30; i < 70; i++) '$i']),
     );
@@ -122,4 +125,44 @@ void main() {
     expect(find.text('10'), findsOneWidget);
     expect(topOf(tester, '10'), 400);
   });
+
+  testWidgets('a row keeps its state as it settles', (tester) async {
+    var mounts = 0;
+    Widget build(List<String> items) => HostApp(
+      home: HostScaffold(
+        body: KeyedAnimatedList<String>(
+          items: items,
+          keyOf: (item) => item,
+          itemBuilder: (_, item) => _CountsMounts(onMount: () => mounts++),
+        ),
+      ),
+    );
+    await tester.pumpWidget(build(const ['a']));
+    await tester.pumpWidget(build(const ['b', 'a']));
+    await tester.pump();
+    expect(mounts, 2);
+
+    await tester.pumpAndSettle();
+    expect(mounts, 2);
+  });
+}
+
+class _CountsMounts extends StatefulWidget {
+  const _CountsMounts({required this.onMount});
+
+  final VoidCallback onMount;
+
+  @override
+  State<_CountsMounts> createState() => _CountsMountsState();
+}
+
+class _CountsMountsState extends State<_CountsMounts> {
+  @override
+  void initState() {
+    super.initState();
+    widget.onMount();
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox(height: 40);
 }

@@ -301,15 +301,18 @@ class RouteTracker extends _$RouteTracker {
       return;
     }
     unawaited(
-      ref.read(coreHandlerProvider).watchRoute(false).catchError((
-        Object error,
-      ) {
-        commonPrint.log(
-          'watchRoute release failed: $error',
-          logLevel: coreFailureLogLevel(error),
-        );
-        return null;
-      }),
+      ref
+          .read(coreHandlerProvider)
+          .watchRoute(false)
+          .then<void>(
+            (_) {},
+            onError: (Object error) {
+              commonPrint.log(
+                'watchRoute release failed: $error',
+                logLevel: coreFailureLogLevel(error),
+              );
+            },
+          ),
     );
   }
 

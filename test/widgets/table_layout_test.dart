@@ -1,5 +1,5 @@
-import 'package:fl_clash/ui/table_layout.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/table_layout.dart';
 
 const _columns = [
   TableColumn('time', 'Time', width: 80),

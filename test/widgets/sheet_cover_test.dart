@@ -1,14 +1,19 @@
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
 
+final _back = find.ancestor(
+  of: find.byTooltip('Back'),
+  matching: find.byType(IconButton),
+);
+
 Widget _scaffold(String name, {Widget? body}) {
-  return CommonScaffold(
+  return Scaffold(
     title: name,
     actions: [TextButton(onPressed: () {}, child: Text('$name action'))],
     body: body ?? const SizedBox.expand(),
@@ -65,6 +70,7 @@ void main() {
       );
 
       await tester.tap(find.text('open'));
+      await tester.pump();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
       expect(
@@ -130,8 +136,8 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     expect(_opacityOf(tester, find.text('Page action')), 0);
-    expect(find.byType(BackButton), findsOneWidget);
-    expect(_opacityOf(tester, find.byType(BackButton)), 1);
+    expect(_back, findsOneWidget);
+    expect(_opacityOf(tester, _back), 1);
   });
 
   testWidgets('a sheet page steps back with the sheet it is on', (

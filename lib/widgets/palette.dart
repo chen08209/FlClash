@@ -3,8 +3,9 @@ import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/foundation.dart' show clampDouble;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
-import 'package:material_color_utilities/hct/hct.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/foundation.dart' show listEquals;
+import 'package:flutter/widgets.dart';
+import 'package:prism_ui/hct/hct.dart';
 
 const _trackHeight = 20.0;
 const _thumbRadius = 14.0;
@@ -512,83 +513,65 @@ class _GradientSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SliderTheme(
-      data: SliderDefaultsM3(context).copyWith(
-        trackShape: _GradientTrackShape(
-          colors: colors,
-          outlineColor: Theme.of(context).colorScheme.outlineVariant,
-        ),
-        trackHeight: _trackHeight,
-        thumbShape: _ColorThumbShape(color: thumbColor),
-        overlayShape: SliderComponentShape.noOverlay,
+    return Slider(
+      shape: _GradientSliderShape(
+        colors: colors,
+        outlineColor: context.colorScheme.outlineVariant,
+        thumbColor: thumbColor,
       ),
-      child: Slider(
-        padding: EdgeInsets.zero,
-        value: value,
-        min: 0,
-        max: max,
-        onChanged: onChanged,
-      ),
+      value: value,
+      min: 0,
+      max: max,
+      onChanged: onChanged,
     );
   }
 }
 
-class _GradientTrackShape extends SliderTrackShape {
-  const _GradientTrackShape({required this.colors, required this.outlineColor});
+class _GradientSliderShape extends SliderShape {
+  const _GradientSliderShape({
+    required this.colors,
+    required this.outlineColor,
+    required this.thumbColor,
+  });
 
   final List<Color> colors;
   final Color outlineColor;
+  final Color thumbColor;
+
+  @override
+  double get height => _thumbRadius * 2;
 
   // The thumb travels between the pill's end caps so it never overhangs them.
   @override
-  Rect getPreferredRect({
-    required RenderBox parentBox,
-    Offset offset = Offset.zero,
-    required SliderThemeData sliderTheme,
-    bool isEnabled = false,
-    bool isDiscrete = false,
-  }) {
-    final trackHeight = sliderTheme.trackHeight ?? _trackHeight;
-    return Rect.fromLTWH(
-      offset.dx + _thumbRadius,
-      offset.dy + (parentBox.size.height - trackHeight) / 2,
-      parentBox.size.width - _thumbRadius * 2,
-      trackHeight,
-    );
-  }
+  double get thumbInset => _thumbRadius;
 
   @override
   void paint(
-    PaintingContext context,
-    Offset offset, {
-    required RenderBox parentBox,
-    required SliderThemeData sliderTheme,
-    required Animation<double> enableAnimation,
+    Canvas canvas,
+    Size size, {
+    required double value,
+    required double activation,
+    required bool enabled,
+    required int? divisions,
     required TextDirection textDirection,
-    required Offset thumbCenter,
-    Offset? secondaryOffset,
-    bool isDiscrete = false,
-    bool isEnabled = false,
   }) {
-    final valueRect = getPreferredRect(
-      parentBox: parentBox,
-      offset: offset,
-      sliderTheme: sliderTheme,
-    );
-    final rect = Rect.fromLTRB(
-      valueRect.left - _thumbRadius,
-      valueRect.top,
-      valueRect.right + _thumbRadius,
-      valueRect.bottom,
-    );
+    final top = (size.height - _trackHeight) / 2;
+    final rect = Rect.fromLTWH(0, top, size.width, _trackHeight);
     final shape = RSuperellipse.fromRectAndRadius(
       rect,
       const Radius.circular(AppCorner.full),
     );
-    final canvas = context.canvas;
     canvas.drawRSuperellipse(
       shape,
-      Paint()..shader = LinearGradient(colors: colors).createShader(valueRect),
+      Paint()
+        ..shader = LinearGradient(colors: colors).createShader(
+          Rect.fromLTWH(
+            _thumbRadius,
+            top,
+            size.width - _thumbRadius * 2,
+            _trackHeight,
+          ),
+        ),
     );
     canvas.drawRSuperellipse(
       shape,
@@ -597,40 +580,26 @@ class _GradientTrackShape extends SliderTrackShape {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1,
     );
-  }
-}
-
-class _ColorThumbShape extends SliderComponentShape {
-  const _ColorThumbShape({required this.color});
-
-  final Color color;
-
-  @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) =>
-      const Size.fromRadius(_thumbRadius);
-
-  @override
-  void paint(
-    PaintingContext context,
-    Offset center, {
-    required Animation<double> activationAnimation,
-    required Animation<double> enableAnimation,
-    required bool isDiscrete,
-    required TextPainter labelPainter,
-    required RenderBox parentBox,
-    required SliderThemeData sliderTheme,
-    required TextDirection textDirection,
-    required double value,
-    required double textScaleFactor,
-    required Size sizeWithOverflow,
-  }) {
+    final travel = size.width - _thumbRadius * 2;
+    final t = textDirection == TextDirection.ltr ? value : 1 - value;
     _paintColorThumb(
-      context.canvas,
-      center,
-      _thumbRadius + activationAnimation.value * 2,
-      color,
+      canvas,
+      Offset(_thumbRadius + travel * t, size.height / 2),
+      _thumbRadius + activation * 2,
+      thumbColor,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is _GradientSliderShape &&
+      listEquals(other.colors, colors) &&
+      other.outlineColor == outlineColor &&
+      other.thumbColor == thumbColor;
+
+  @override
+  int get hashCode =>
+      Object.hash(Object.hashAll(colors), outlineColor, thumbColor);
 }
 
 void _paintColorThumb(

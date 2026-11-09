@@ -41,7 +41,7 @@ func dispatchMethodCall(call *MethodCall, reply func(data []byte)) {
 	call.seq = methodCallSeq.Add(1)
 	// A developer-only fatal-path test. It runs outside every recovery so the
 	// core process terminates; on Android that is the whole application.
-	if call.Method == crashMethod {
+	if call.Method == coreCrashMethod {
 		go handleCrash()
 		return
 	}
@@ -151,94 +151,97 @@ func withFallible[P, R any](run func(P) (R, error)) methodHandler {
 	}
 }
 
-// The host reads the result of these methods as a message that is empty on
-// success. A *MethodError is the structured form and still fails the call.
-func withMessage[P any](run func(P) error) methodHandler {
-	return withFallible(func(params P) (string, error) {
-		err := run(params)
-		var methodErr *MethodError
-		if err == nil || errors.As(err, &methodErr) {
-			return "", err
-		}
-		return err.Error(), nil
-	})
-}
-
 func withoutArguments[R any](run func() R) methodHandler {
 	return func(*MethodCall) (any, error) {
 		return run(), nil
 	}
 }
 
-func acknowledged(run func()) methodHandler {
+func fallibleWithoutArguments[R any](run func() (R, error)) methodHandler {
+	return func(*MethodCall) (any, error) {
+		return run()
+	}
+}
+
+// command answers null, or the error run returns.
+func command[P any](run func(P) error) methodHandler {
+	return func(call *MethodCall) (any, error) {
+		params, err := decodeArguments[P](call)
+		if err != nil {
+			return nil, err
+		}
+		return nil, run(params)
+	}
+}
+
+func action(run func()) methodHandler {
 	return func(*MethodCall) (any, error) {
 		run()
-		return true, nil
+		return nil, nil
 	}
 }
 
 var methodHandlers = map[CoreMethod]methodHandler{
-	initClashMethod:                withArguments(handleInitClash),
-	getIsInitMethod:                withoutArguments(handleGetIsInit),
-	forceGcMethod:                  acknowledged(handleForceGC),
-	shutdownMethod:                 withoutArguments(handleShutdown),
-	startListenerMethod:            withoutArguments(handleStartListener),
-	stopListenerMethod:             withoutArguments(handleStopListener),
-	getMemoryStatsMethod:           withoutArguments(handleGetMemoryStats),
-	startLogMethod:                 acknowledged(handleStartLog),
-	stopLogMethod:                  acknowledged(handleStopLog),
-	validateConfigMethod:           withMessage(handleValidateConfig),
-	decryptConfigMethod:            withFallible(handleDecryptConfig),
-	getConfigMethod:                withFallible(handleGetConfig),
-	getProfileBaseMethod:           withFallible(handleGetProfileBase),
-	getProfileOutboundsMethod:      withFallible(handleGetProfileOutbounds),
-	getProxyDefinitionMethod:       withFallible(handleGetProxyDefinition),
-	buildProfileMethod:             withFallible(handleBuildProfile),
-	setupConfigMethod:              withMessage(handleSetupConfig),
-	updateConfigMethod:             withMessage(updateConfig),
-	validateProxiesMethod:          withArguments(handleValidateProxies),
-	validateFiltersMethod:          withArguments(handleValidateFilters),
-	convertProxiesMethod:           withFallible(handleConvertProxies),
-	encodeShareLinksMethod:         withArguments(handleEncodeShareLinks),
-	decodeShareLinksMethod:         withArguments(handleDecodeShareLinks),
-	getProxiesMethod:               withoutArguments(handleGetProxies),
-	changeProxyMethod:              withArguments(handleChangeProxy),
-	asyncTestDelayMethod:           withArguments(handleTestDelay),
-	watchRouteMethod:               watchRouteHandler,
-	checkRoutesMethod:              withArguments(handleCheckRoutes),
-	probeMethod:                    withArguments(handleProbe),
-	outboundIpMethod:               withArguments(handleOutboundIp),
-	serviceCheckMethod:             withArguments(handleServiceCheck),
-	getTrafficMethod:               withArguments(handleGetTraffic),
-	getTotalTrafficMethod:          withArguments(handleGetTotalTraffic),
-	resetTrafficMethod:             acknowledged(handleResetTraffic),
-	getConnectionsMethod:           withoutArguments(handleGetConnections),
-	getConnectionCountMethod:       withoutArguments(handleGetConnectionCount),
-	closeConnectionsMethod:         withoutArguments(handleCloseConnections),
-	resetConnectionsMethod:         withoutArguments(handleResetConnections),
-	clearDnsCacheMethod:            acknowledged(handleClearDnsCache),
-	closeConnectionMethod:          withArguments(handleCloseConnection),
-	getExternalProvidersMethod:     withoutArguments(handleGetExternalProviders),
-	getExternalProviderMethod:      withArguments(handleGetExternalProvider),
-	updateExternalProviderMethod:   withMessage(handleUpdateExternalProvider),
-	sideLoadExternalProviderMethod: withMessage(handleSideLoadExternalProvider),
-	updateGeoDataMethod:            withMessage(handleUpdateGeoData),
-	dumpRuleSetMethod:              withFallible(handleDumpRuleSet),
-	compileRuleSetMethod:           withFallible(handleCompileRuleSet),
-	clearEffectMethod:              withMessage(handleClearEffect),
+	coreInitMethod:        command(handleInit),
+	coreInitializedMethod: withoutArguments(handleInitialized),
+	coreGCMethod:          action(handleForceGC),
+	coreMemoryMethod:      withoutArguments(handleGetMemoryStats),
+
+	configSetupMethod:    command(handleSetupConfig),
+	configUpdateMethod:   command(updateConfig),
+	configValidateMethod: withArguments(handleValidateConfig),
+	configDecryptMethod:  withFallible(handleDecryptConfig),
+	configReadMethod:     withFallible(handleReadConfig),
+
+	profileBaseMethod:        withFallible(handleGetProfileBase),
+	profileOutboundsMethod:   withFallible(handleGetProfileOutbounds),
+	profileBuildMethod:       withFallible(handleBuildProfile),
+	profileClearEffectMethod: command(handleClearEffect),
+
+	proxyListMethod:       withoutArguments(handleGetProxies),
+	proxySelectMethod:     withArguments(handleChangeProxy),
+	proxyDefinitionMethod: withFallible(handleGetProxyDefinition),
+	proxyTestDelayMethod:  withArguments(handleTestDelay),
+	proxyValidateMethod:   withArguments(handleValidateProxies),
+	proxyConvertMethod:    withFallible(handleConvertProxies),
+	shareLinkEncodeMethod: withArguments(handleEncodeShareLinks),
+	shareLinkDecodeMethod: withArguments(handleDecodeShareLinks),
+	filterValidateMethod:  withArguments(handleValidateFilters),
+
+	providerListMethod:     withoutArguments(handleGetExternalProviders),
+	providerGetMethod:      withArguments(handleGetExternalProvider),
+	providerUpdateMethod:   command(handleUpdateExternalProvider),
+	providerSideLoadMethod: command(handleSideLoadExternalProvider),
+	ruleSetDumpMethod:      withFallible(handleDumpRuleSet),
+	ruleSetCompileMethod:   withFallible(handleCompileRuleSet),
+	geoUpdateMethod:        command(handleUpdateGeoData),
+
+	trafficCurrentMethod:     withArguments(handleGetTraffic),
+	trafficTotalMethod:       withArguments(handleGetTotalTraffic),
+	trafficResetMethod:       action(handleResetTraffic),
+	connectionListMethod:     withoutArguments(handleGetConnections),
+	connectionCountMethod:    withoutArguments(handleGetConnectionCount),
+	connectionCloseMethod:    command(handleCloseConnection),
+	connectionCloseAllMethod: action(handleCloseConnections),
+	connectionResetMethod:    action(handleResetConnections),
+	dnsClearCacheMethod:      action(handleClearDnsCache),
+	networkChangedMethod:     action(handleNetworkChanged),
+
+	logStartMethod:      action(handleStartLog),
+	logStopMethod:       action(handleStopLog),
+	listenerStartMethod: action(handleStartListener),
+	listenerStopMethod:  action(handleStopListener),
+	routeWatchMethod:    watchRouteHandler,
+	routeCheckMethod:    withArguments(handleCheckRoutes),
+
+	probeOutboundIPMethod: withArguments(handleOutboundIp),
+	probeServicesMethod:   withArguments(handleServiceCheck),
 }
 
 func watchRouteHandler(call *MethodCall) (any, error) {
-	watch, err := decodeArguments[bool](call)
+	params, err := decodeArguments[WatchParams](call)
 	if err != nil {
 		return nil, err
 	}
-	return handleWatchRoute(watch, call.seq), nil
-}
-
-func registerMethod(method CoreMethod, handler methodHandler) {
-	if _, exists := methodHandlers[method]; exists {
-		panic(fmt.Sprintf("duplicate handler for method %s", method))
-	}
-	methodHandlers[method] = handler
+	return handleWatchRoute(params.Watch, call.seq), nil
 }

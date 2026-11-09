@@ -1,7 +1,7 @@
 import 'package:code_forge/code_forge.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support.dart';
@@ -507,5 +507,90 @@ void main() {
       selectionRect!.bottom - origin.dy,
       editorTopPadding + editorLineHeight * 4,
     );
+  });
+
+  Future<Rect?> requestSelectionRect(
+    WidgetTester tester,
+    TextSelection Function(CodeForgeController) selectionOf,
+  ) async {
+    final controller = CodeForgeController()..text = _lines.join('\n');
+    Rect? selectionRect;
+    await pumpEditor(
+      tester,
+      controller,
+      onContextMenu: (context, request) =>
+          selectionRect = request.selectionRect,
+    );
+    controller.selection = selectionOf(controller);
+    await settle(tester, 2);
+    await tester.tapAt(
+      tester.getTopLeft(find.byType(CodeForge)) +
+          const Offset(_textX, editorTopPadding + editorLineHeight * 6.5),
+      buttons: kSecondaryButton,
+    );
+    await settle(tester, 2);
+    return selectionRect;
+  }
+
+  testWidgets('the context menu stands on the caret, not the press', (
+    tester,
+  ) async {
+    final rect = await requestSelectionRect(
+      tester,
+      (controller) =>
+          TextSelection.collapsed(offset: controller.getLineStartOffset(1) + 2),
+    );
+    final origin = tester.getTopLeft(find.byType(CodeForge));
+
+    expect(rect!.width, 0);
+    expect(rect.left - origin.dx, lessThan(_textX / 2));
+    expect(rect.top - origin.dy, editorTopPadding + editorLineHeight);
+    expect(rect.height, editorLineHeight);
+  });
+
+  testWidgets('a kept menu reads the selection select all left', (
+    tester,
+  ) async {
+    final controller = CodeForgeController()..text = _lines.join('\n');
+    CodeForgeContextMenuRequest? request;
+    await pumpEditor(
+      tester,
+      controller,
+      onContextMenu: (context, value) => request = value,
+    );
+    controller.selection = const TextSelection.collapsed(offset: 1);
+    await settle(tester, 2);
+    await tester.tapAt(
+      tester.getTopLeft(find.byType(CodeForge)) +
+          const Offset(_textX, editorTopPadding + editorLineHeight * 6.5),
+      buttons: kSecondaryButton,
+    );
+    await settle(tester, 2);
+    expect(request!.hasSelection, isFalse);
+    expect(request!.isAllSelected, isFalse);
+
+    request!.selectAll();
+
+    expect(request!.hasSelection, isTrue);
+    expect(request!.isAllSelected, isTrue);
+  });
+
+  testWidgets('a selection in one row gives the menu only its span', (
+    tester,
+  ) async {
+    final caret = await requestSelectionRect(
+      tester,
+      (controller) =>
+          TextSelection.collapsed(offset: controller.getLineStartOffset(1) + 1),
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    final rect = await requestSelectionRect(tester, (controller) {
+      final start = controller.getLineStartOffset(1) + 1;
+      return TextSelection(baseOffset: start, extentOffset: start + 2);
+    });
+
+    expect(rect!.left, caret!.left);
+    expect(rect.width, greaterThan(0));
+    expect(rect.width, lessThan(100));
   });
 }

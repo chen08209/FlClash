@@ -13,7 +13,8 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:fl_clash/widgets/config_item.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class BackupAndRestore extends ConsumerStatefulWidget {
@@ -149,7 +150,7 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
     final appLocalizations = context.appLocalizations;
     final dav = ref.watch(davSettingProvider);
     final isLoading = ref.watch(loadingProvider(LoadingTag.backup_restore));
-    return CommonScaffold(
+    return Scaffold(
       isLoading: isLoading,
       title: appLocalizations.backupAndRestore,
       body: ListView(
@@ -278,7 +279,7 @@ class _DavConnectionIndicator extends StatelessWidget {
         return Center(
           child: FadeThroughBox(
             child: isConnected == null
-                ? const CommonCircleLoading(size: 12)
+                ? const ActivityIndicator(size: 12)
                 : Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -312,7 +313,7 @@ class _RestoreOptionsDialogState extends State<RestoreOptionsDialog> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonDialog(
+    return AlertDialog(
       title: appLocalizations.restore,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
       child: Wrap(
@@ -431,7 +432,6 @@ class _WebDAVFormState extends ConsumerState<WebDAVForm> {
       error: issue?.message,
       children: [
         generateSection(
-          footer: appLocalizations.addressHelp,
           items: [
             FormRow(
               title: appLocalizations.address,

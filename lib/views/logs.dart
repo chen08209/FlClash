@@ -7,19 +7,14 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:super_sliver_list/super_sliver_list.dart';
 
 class LogListController extends ValueNotifier<LogsState> {
   LogListController() : super(const LogsState());
 
   void search(String query) {
     value = value.copyWith(query: query);
-  }
-
-  void updateKeywords(List<String> keywords) {
-    value = value.copyWith(keywords: keywords);
   }
 
   void setLogs(List<Log> logs) {
@@ -52,6 +47,7 @@ class LogsView extends ConsumerStatefulWidget {
 class _LogsViewState extends ConsumerState<LogsView>
     with RouteMotionHoldMixin<LogsView> {
   final _listController = LogListController();
+  final _filters = RecordFilterController<Log>(facets: logFacets);
   late final ScrollController _scrollController;
   late final _physics = FollowEndScrollPhysics(
     isFollowing: () => _listController.value.autoScrollToEnd,
@@ -64,7 +60,7 @@ class _LogsViewState extends ConsumerState<LogsView>
       context,
       initialScrollOffset: double.maxFinite,
     );
-    _listController.setLogs(ref.read(logsProvider).list);
+    _setLogs(ref.read(logsProvider).list);
     ref.listenManual(logsProvider.select((state) => state.revision), (_, _) {
       updateLogsThrottler();
     });
@@ -83,6 +79,7 @@ class _LogsViewState extends ConsumerState<LogsView>
   @override
   void dispose() {
     _listController.dispose();
+    _filters.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -101,83 +98,102 @@ class _LogsViewState extends ConsumerState<LogsView>
     );
   }
 
+  void _setLogs(List<Log> logs) {
+    _listController.setLogs(logs);
+    _filters.offer(_listController.value.logs);
+  }
+
   void updateLogsThrottler() {
     throttler.call(FunctionTag.logs, () {
       if (!mounted) {
         return;
       }
-      updateWhenRouteSettled(
-        () => _listController.setLogs(ref.read(logsProvider).list),
-      );
+      updateWhenRouteSettled(() => _setLogs(ref.read(logsProvider).list));
     }, duration: renderThrottleDuration);
   }
 
   @override
   Widget build(BuildContext context) {
+    final body = RecordFilterScope(
+      onFilter: _filters.add,
+      child: _buildBody(context),
+    );
+    return ListenableBuilder(
+      listenable: Listenable.merge([_filters, _filters.options]),
+      child: body,
+      builder: (context, body) {
+        final pinned = !ViewScope.isMobileOf(context);
+        return Scaffold(
+          iconActions: _buildActions(),
+          keywords: _filters.keywordsOf(pinned: pinned),
+          menuItems: _filters.menuItems(context, pinned: pinned),
+          searchState: AppBarSearchState(onSearch: _listController.search),
+          title: context.appLocalizations.logs,
+          body: body!,
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonScaffold(
-      iconActions: _buildActions(),
-      onKeywordsUpdate: _listController.updateKeywords,
-      searchState: AppBarSearchState(onSearch: _listController.search),
-      title: appLocalizations.logs,
-      body: ValueListenableBuilder<LogsState>(
-        valueListenable: _listController,
-        builder: (context, state, _) {
-          final logs = state.list;
-          return NullStatusSwitcher(
-            isEmpty: logs.isEmpty,
-            isSearching: state.isSearching,
-            nullStatus: NullStatus(
-              illustration: NullStatusIllustration.logs,
-              label: appLocalizations.nullTip(appLocalizations.logs),
-            ),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: FloatingScrollbar(
-                controller: _scrollController,
-                hintBuilder: (fraction) {
-                  final index = (fraction * (logs.length - 1)).round();
-                  return logs[index].dateTime;
-                },
-                child: ScrollToEndBox(
-                  onCancelToEnd: () {
-                    _listController.setAutoScrollToEnd(false);
-                  },
-                  onResumeToEnd: () {
-                    _listController.resumeAutoScrollToEnd(
-                      ref.read(logsProvider).list,
-                    );
-                  },
-                  controller: _scrollController,
-                  enable: state.autoScrollToEnd,
-                  child: SuperListView.separated(
-                    physics: _physics,
-                    reverse: true,
-                    shrinkWrap: true,
-                    controller: _scrollController,
-                    padding: EdgeInsets.only(
-                      top: context.contentTopPadding,
-                      bottom: 16 + context.bottomInset,
-                    ),
-                    itemCount: logs.length,
-                    extentEstimation: recordListExtentEstimation,
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(height: recordListGap),
-                    itemBuilder: (_, index) {
-                      final log = logs[index];
-                      return LogItem(
-                        log: log,
-                        onClick: (value) {
-                          context.commonScaffoldState?.addKeyword(value);
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-          );
+    return ListenableBuilder(
+      listenable: Listenable.merge([_listController, _filters]),
+      builder: (context, _) {
+        final state = _listController.value;
+        final logs = _filters.apply(state.list);
+        return NullStatusSwitcher(
+          isEmpty: logs.isEmpty,
+          isSearching: state.isSearching || _filters.isFiltering,
+          nullStatus: NullStatus(
+            illustration: NullStatusIllustration.logs,
+            label: appLocalizations.nullTip(appLocalizations.logs),
+          ),
+          child: _buildList(context, state, logs),
+        );
+      },
+    );
+  }
+
+  Widget _buildList(BuildContext context, LogsState state, List<Log> logs) {
+    final padding = EdgeInsets.only(
+      top: context.contentTopPadding,
+      bottom: 16 + context.bottomInset,
+    );
+    return Align(
+      alignment: Alignment.topCenter,
+      child: FloatingScrollbar(
+        controller: _scrollController,
+        hintBuilder: (fraction) {
+          final index = (fraction * (logs.length - 1)).round();
+          return logs[index].dateTime;
         },
+        child: ScrollToEndBox(
+          onCancelToEnd: () {
+            _listController.setAutoScrollToEnd(false);
+          },
+          onResumeToEnd: () {
+            _listController.resumeAutoScrollToEnd(ref.read(logsProvider).list);
+            _filters.offer(_listController.value.logs);
+          },
+          controller: _scrollController,
+          enable: state.autoScrollToEnd,
+          child: RecordFeedList<Log>(
+            physics: _physics,
+            reverse: true,
+            shrinkWrap: true,
+            controller: _scrollController,
+            padding: padding,
+            items: logs,
+            keyOf: ObjectKey.new,
+            gap: recordListGap,
+            estimatedItemExtent: recordListEstimatedExtent,
+            itemBuilder: (log, _, _) => MemoBuilder(
+              inputs: [log],
+              builder: (_) => LogItem(log: log),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -185,9 +201,8 @@ class _LogsViewState extends ConsumerState<LogsView>
 
 class LogItem extends StatelessWidget {
   final Log log;
-  final Function(String)? onClick;
 
-  const LogItem({super.key, required this.log, this.onClick});
+  const LogItem({super.key, required this.log});
 
   @override
   Widget build(BuildContext context) {
@@ -196,7 +211,7 @@ class LogItem extends StatelessWidget {
       LogLevel.error => RecordTone.error,
       LogLevel.info || LogLevel.debug || LogLevel.silent => RecordTone.neutral,
     };
-    final payload = LogPayload.parse(log.payload);
+    final payload = log.parsed;
     return RecordListItem(
       onTap: () {},
       header: RecordHeader(
@@ -205,7 +220,10 @@ class LogItem extends StatelessWidget {
           RecordLabel(
             label: log.logLevel.name,
             tone: tone,
-            onPressed: () => onClick?.call(log.logLevel.name),
+            onPressed: () => RecordFilterScope.add(
+              context,
+              RecordFilter(RecordFacetKind.level, log.logLevel.name),
+            ),
           ),
         ],
       ),

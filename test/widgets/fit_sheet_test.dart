@@ -3,31 +3,27 @@ import 'dart:math' as math;
 
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/ui/metrics.dart';
-import 'package:fl_clash/ui/paged_sheet.dart';
-import 'package:fl_clash/ui/scaffold.dart';
-import 'package:fl_clash/ui/sheet.dart';
-import 'package:fl_clash/ui/sheet_header.dart';
-import 'package:fl_clash/ui/snap_sheet.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 const _view = Size(400, 900);
 final _tallTop = _view.height * (1 - snapSheetDetents.last);
 const _rowHeight = 48.0;
 
 Widget _list(int rows) {
-  return CommonScaffold(
+  return Scaffold(
     title: 'title',
     body: ListView(
       shrinkWrap: true,
       children: [
         for (var index = 0; index < rows; index++)
-          ListTile(
+          TestRow(
             title: Text('row $index'),
             minTileHeight: _rowHeight,
             onTap: () {},
@@ -226,7 +222,7 @@ void main() {
   });
 
   double rowBottom(WidgetTester tester, int row) =>
-      tester.getBottomLeft(find.widgetWithText(ListTile, 'row $row')).dy;
+      tester.getBottomLeft(find.widgetWithText(TestRow, 'row $row')).dy;
 
   Future<void> raiseKeyboard(WidgetTester tester, double height) async {
     for (final inset in [height / 4, height / 2, height * 3 / 4, height]) {
@@ -378,7 +374,7 @@ void main() {
       final counts = _Counts();
       await openSheet(
         tester,
-        (_) => CommonScaffold(
+        (_) => Scaffold(
           title: 'title',
           body: _Counted(
             counts: counts,
@@ -484,7 +480,7 @@ void main() {
 
   testWidgets('a nested sheet opened to the tall detent stays there across '
       'a shorter page', (tester) async {
-    Widget page({required VoidCallback onNext}) => CommonScaffold(
+    Widget page({required VoidCallback onNext}) => Scaffold(
       title: 'title',
       body: ListView(
         children: [
@@ -531,14 +527,14 @@ void main() {
     await openSheet(
       tester,
       (_) => NestedPagedSheet(
-        builder: (context) => CommonScaffold(
+        builder: (context) => Scaffold(
           title: 'title',
           body: ListView(
             shrinkWrap: true,
             children: [
               for (var index = 0; index < 11; index++)
-                ListTile(title: Text('row $index'), minTileHeight: _rowHeight),
-              ListTile(
+                TestRow(title: Text('row $index'), minTileHeight: _rowHeight),
+              TestRow(
                 title: const Text('next'),
                 minTileHeight: _rowHeight,
                 onTap: () => Navigator.of(
@@ -668,7 +664,7 @@ void main() {
     'still hand a drag down to the sheet',
     (tester) async {
       final dismissals = <bool>[];
-      Widget page(String name, {VoidCallback? onNext}) => CommonScaffold(
+      Widget page(String name, {VoidCallback? onNext}) => Scaffold(
         title: 'title',
         body: ListView(
           padding: const EdgeInsets.only(top: sheetAppBarHeight),

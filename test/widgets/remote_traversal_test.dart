@@ -1,8 +1,11 @@
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:prism_ui/prism_ui.dart';
+import '../helpers/host_scaffold.dart';
+import '../helpers/test_app.dart';
 
 Widget _button(String label) {
   return SizedBox(
@@ -35,16 +38,15 @@ Widget _buildApp({
       return scoped;
     }
     return Navigator(
-      pages: [MaterialPage(child: scoped)],
+      pages: [RootPage(child: scoped)],
       onDidRemovePage: (_) {},
     );
   }
 
-  return MaterialApp(
+  return HostApp(
     navigatorKey: navigatorKey,
-    builder: (context, child) =>
-        RemoteFocusAdapter(enabled: remote, child: child!),
-    home: Scaffold(
+    remoteFocus: remote,
+    home: HostScaffold(
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -106,8 +108,8 @@ void main() {
       ),
     );
     navigatorKey.currentState!.push(
-      MaterialPageRoute<void>(
-        builder: (_) => Material(child: Center(child: _button('agree'))),
+      HostPageRoute<void>(
+        builder: (_) => Surface(child: Center(child: _button('agree'))),
       ),
     );
     await tester.pumpAndSettle();

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -96,7 +97,7 @@ void main() {
     setUp(() {
       core = _MockCore();
       when(() => core.watchRoute(true)).thenAnswer((_) async => _snapshot);
-      when(() => core.watchRoute(false)).thenAnswer((_) async => null);
+      when(() => core.watchRoute(false)).thenAnswer((_) async => _snapshot);
     });
 
     ProviderContainer build({
@@ -229,9 +230,9 @@ void main() {
     );
 
     test('a read asked for while one is on the way runs after it', () async {
-      final reads = <Completer<RouteSnapshot?>>[];
+      final reads = <Completer<RouteSnapshot>>[];
       when(() => core.watchRoute(true)).thenAnswer((_) {
-        final read = Completer<RouteSnapshot?>();
+        final read = Completer<RouteSnapshot>();
         reads.add(read);
         return read.future;
       });
@@ -256,9 +257,9 @@ void main() {
     testWidgets('a read the Core leaves unanswered is asked again', (
       tester,
     ) async {
-      final answers = <RouteSnapshot? Function()>[
-        () => throw Exception('no_response'),
-        () => null,
+      final answers = <RouteSnapshot Function()>[
+        () => throw const CoreMethodException(code: 'no_response', message: ''),
+        () => throw TimeoutException('no answer'),
         () => _snapshot,
       ];
       when(
@@ -278,7 +279,9 @@ void main() {
     });
 
     testWidgets('letting go stops asking again', (tester) async {
-      when(() => core.watchRoute(true)).thenAnswer((_) async => null);
+      when(
+        () => core.watchRoute(true),
+      ).thenAnswer((_) async => throw TimeoutException('no answer'));
       final container = build();
       final tracker = trackerOf(container);
       tracker.attach();

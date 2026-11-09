@@ -1,22 +1,21 @@
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
 
 ThemeData _theme(Brightness brightness) {
   final colorScheme = ColorScheme.fromSeed(
-    seedColor: Colors.blue,
+    seedColor: const Color(0xFF2196F3),
     brightness: brightness,
   );
   return ThemeData(
     colorScheme: colorScheme,
-    extensions: [
-      if (brightness == Brightness.dark)
-        ElevatedColorScheme(colorScheme.elevated),
-    ],
+    elevatedColorScheme: brightness == Brightness.dark
+        ? colorScheme.elevated
+        : null,
   );
 }
 
@@ -43,7 +42,7 @@ Future<ValueNotifier<ThemeMode>> _pumpPage(
           theme: _theme(Brightness.light),
           darkTheme: _theme(Brightness.dark),
           themeMode: themeMode,
-          child: CommonScaffold(
+          child: Scaffold(
             title: 'Page',
             body: Builder(builder: body),
           ),
@@ -56,13 +55,12 @@ Future<ValueNotifier<ThemeMode>> _pumpPage(
 
 void main() {
   late PopupOpen open;
-  final popupBox = CommonPopupBox(
+  final popupBox = PopupAnchor(
     targetBuilder: (value) {
       open = value;
       return const SizedBox(width: 40, height: 40);
     },
-    popupBuilder: (_) =>
-        const CommonPopupMenu(items: [CommonPopupMenuItem(label: 'item')]),
+    popupBuilder: (_) => const PopupMenu(items: [PopupMenuItem(label: 'item')]),
   );
 
   Color fillOf(WidgetTester tester) =>
@@ -105,7 +103,7 @@ void main() {
     mode.value = ThemeMode.dark;
     await tester.pumpAndSettle();
 
-    final elevated = dark.extension<ElevatedColorScheme>()!.colorScheme;
+    final elevated = dark.elevatedColorScheme!;
     expect(_floatingFill(elevated), isNot(_floatingFill(dark.colorScheme)));
     expect(fillOf(tester), _floatingFill(elevated));
   });

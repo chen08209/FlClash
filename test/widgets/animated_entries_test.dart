@@ -1,11 +1,13 @@
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../helpers/host_scaffold.dart';
+import '../helpers/test_app.dart';
 
 void main() {
   Widget buildEntries(List<String> items, {bool grouped = false}) {
-    return MaterialApp(
-      home: Scaffold(
+    return HostApp(
+      home: HostScaffold(
         body: AnimatedEntries(
           grouped: grouped,
           children: [

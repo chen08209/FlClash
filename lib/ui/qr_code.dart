@@ -1,6 +1,7 @@
-import 'package:fl_clash/ui/shape.dart';
-import 'package:material_ui/material_ui.dart';
-import 'package:qr/qr.dart';
+import 'package:flutter/widgets.dart';
+import 'package:prism_ui/prism_ui.dart';
+
+import 'qr_matrix.dart';
 
 /// Dark modules on white whatever the theme: camera apps read an inverted code
 /// poorly, and the quiet zone the standard asks for is part of the white.
@@ -12,23 +13,14 @@ class QrCodeView extends StatelessWidget {
 
   static const _quietZone = 4;
 
-  static QrCode? _encode(String data) {
-    try {
-      return QrCode(payload: QrPayload.fromString(data));
-    } on InputTooLongException {
-      return null;
-    }
-  }
-
-  static bool fits(String data) => _encode(data) != null;
+  static bool fits(String data) => QrMatrix.encode(data) != null;
 
   @override
   Widget build(BuildContext context) {
-    final code = _encode(data);
-    if (code == null) {
+    final matrix = QrMatrix.encode(data);
+    if (matrix == null) {
       return SelectableText(data, textAlign: TextAlign.center);
     }
-    final image = QrImage(code);
     return Semantics(
       image: true,
       label: data,
@@ -41,7 +33,7 @@ class QrCodeView extends StatelessWidget {
               shape: AppShape.md,
               color: Colors.white,
             ),
-            child: CustomPaint(painter: _QrPainter(image)),
+            child: CustomPaint(painter: _QrPainter(matrix)),
           ),
         ),
       ),
@@ -50,19 +42,19 @@ class QrCodeView extends StatelessWidget {
 }
 
 class _QrPainter extends CustomPainter {
-  final QrImage image;
+  final QrMatrix matrix;
 
-  _QrPainter(this.image);
+  _QrPainter(this.matrix);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final count = image.moduleCount;
+    final count = matrix.size;
     final module = size.shortestSide / (count + QrCodeView._quietZone * 2);
     final origin = module * QrCodeView._quietZone;
     final path = Path();
     for (var y = 0; y < count; y++) {
       for (var x = 0; x < count; x++) {
-        if (image.isDark(y, x)) {
+        if (matrix.isDark(y, x)) {
           path.addRect(
             Rect.fromLTWH(
               origin + x * module,
@@ -78,5 +70,5 @@ class _QrPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_QrPainter oldDelegate) => oldDelegate.image != image;
+  bool shouldRepaint(_QrPainter oldDelegate) => oldDelegate.matrix != matrix;
 }

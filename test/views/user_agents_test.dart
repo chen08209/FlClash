@@ -5,7 +5,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/config/user_agents.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -13,6 +13,7 @@ import '../helpers/context_menu.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 void main() {
   late ProviderContainer container;
@@ -73,7 +74,7 @@ void main() {
       findsNWidgets(defaultUserAgents.length),
     );
     await openMenu(tester, currentAppLocalizations.defaultText);
-    expect(find.byType(CommonPopupMenu), findsNothing);
+    expect(find.byType(PopupMenu), findsNothing);
     await openMenu(tester, defaultUserAgents.first);
     expect(find.text(currentAppLocalizations.edit), findsOneWidget);
   });
@@ -91,7 +92,7 @@ void main() {
     await tester.tap(find.text(defaultUserAgents.last));
     await openMenu(tester, defaultUserAgents.last);
     expect(selected(), isNull);
-    expect(find.byType(CommonPopupMenu), findsNothing);
+    expect(find.byType(PopupMenu), findsNothing);
 
     final sortButton = find.widgetWithGlyph(IconButton, AppGlyphs.sort);
     expect(tester.widget<IconButton>(sortButton).isSelected, isTrue);

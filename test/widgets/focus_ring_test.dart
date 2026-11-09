@@ -1,35 +1,40 @@
-import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
+import '../helpers/host_scaffold.dart';
+import '../helpers/test_app.dart';
 
 final _theme = ThemeData(
-  colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-).withAppShapes.withAppSurfaces;
+  colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF009688)),
+);
 
 Color get _primary => _theme.colorScheme.primary;
 
 Future<List<FocusNode>> _pump(
   WidgetTester tester,
-  List<Widget Function(FocusNode node)> builders,
-) async {
+  List<Widget Function(FocusNode node)> builders, {
+  bool remote = false,
+}) async {
   final nodes = [for (final _ in builders) FocusNode()];
   for (final node in nodes) {
     addTearDown(node.dispose);
   }
   await tester.pumpWidget(
-    MaterialApp(
+    HostApp(
       theme: _theme,
-      home: Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 16,
-            children: [
-              for (final (index, builder) in builders.indexed)
-                builder(nodes[index]),
-            ],
+      home: RemoteFocusAdapter(
+        enabled: remote,
+        child: HostScaffold(
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 16,
+              children: [
+                for (final (index, builder) in builders.indexed)
+                  builder(nodes[index]),
+              ],
+            ),
           ),
         ),
       ),
@@ -46,12 +51,11 @@ Future<void> _focus(WidgetTester tester, FocusNode node) async {
   await tester.pumpAndSettle();
 }
 
-BorderSide _buttonSide(WidgetTester tester, Key key) {
-  final material = tester.widget<Material>(
-    find.descendant(of: find.byKey(key), matching: find.byType(Material)).first,
-  );
-  return (material.shape! as OutlinedBorder).side;
-}
+BorderSide _cardSide(WidgetTester tester, Key key) => tester
+    .widget<CardSurface>(
+      find.descendant(of: find.byKey(key), matching: find.byType(CardSurface)),
+    )
+    .side;
 
 BorderSide _ringSide(WidgetTester tester, Key key) {
   final box = tester.widget<DecoratedBox>(
@@ -72,87 +76,6 @@ Matcher _ring({required bool standsOff}) => isA<BorderSide>()
     );
 
 void main() {
-  testWidgets('themed buttons ring their edge, a filled one stands off', (
-    tester,
-  ) async {
-    const icon = Key('icon');
-    const text = Key('text');
-    const filled = Key('filled');
-    const outlined = Key('outlined');
-    final nodes = await _pump(tester, [
-      (node) => IconButton(
-        key: icon,
-        focusNode: node,
-        tooltip: 'icon',
-        onPressed: () {},
-        icon: const GlyphIcon(AppGlyphs.add),
-      ),
-      (node) => TextButton(
-        key: text,
-        focusNode: node,
-        onPressed: () {},
-        child: const Text('text'),
-      ),
-      (node) => FilledButton(
-        key: filled,
-        focusNode: node,
-        onPressed: () {},
-        child: const Text('filled'),
-      ),
-      (node) => OutlinedButton(
-        key: outlined,
-        focusNode: node,
-        onPressed: () {},
-        child: const Text('outlined'),
-      ),
-    ]);
-
-    for (final key in [icon, text, filled]) {
-      expect(_buttonSide(tester, key).style, BorderStyle.none);
-    }
-    expect(_buttonSide(tester, outlined).width, 1);
-    await _focus(tester, nodes[0]);
-    expect(_buttonSide(tester, icon), _ring(standsOff: false));
-    await _focus(tester, nodes[1]);
-    expect(_buttonSide(tester, text), _ring(standsOff: false));
-    expect(_buttonSide(tester, icon).style, BorderStyle.none);
-    await _focus(tester, nodes[2]);
-    expect(_buttonSide(tester, filled), _ring(standsOff: true));
-    await _focus(tester, nodes[3]);
-    expect(_buttonSide(tester, outlined), _ring(standsOff: false));
-  });
-
-  testWidgets('tonal bar buttons keep the ring their own theme replaces', (
-    tester,
-  ) async {
-    const icon = Key('icon');
-    const filled = Key('filled');
-    final nodes = await _pump(tester, [
-      (node) => TonalButtonTheme(
-        child: IconButton(
-          key: icon,
-          focusNode: node,
-          tooltip: 'icon',
-          onPressed: () {},
-          icon: const GlyphIcon(AppGlyphs.add),
-        ),
-      ),
-      (node) => TonalButtonTheme(
-        child: FilledButton(
-          key: filled,
-          focusNode: node,
-          onPressed: () {},
-          child: const Text('filled'),
-        ),
-      ),
-    ]);
-
-    await _focus(tester, nodes[0]);
-    expect(_buttonSide(tester, icon), _ring(standsOff: false));
-    await _focus(tester, nodes[1]);
-    expect(_buttonSide(tester, filled), _ring(standsOff: true));
-  });
-
   testWidgets('a focus ring follows focus into its ink control', (
     tester,
   ) async {
@@ -164,11 +87,12 @@ void main() {
           key: key,
           shape: AppShape.full,
           standsOff: standsOff,
-          child: InkWell(
-            focusNode: node,
-            customBorder: AppShape.full,
+          child: PressRegion(
             onTap: () {},
-            child: const SizedBox(width: 80, height: 40),
+            child: Focus(
+              focusNode: node,
+              child: const SizedBox(width: 80, height: 40),
+            ),
           ),
         ),
     ]);
@@ -197,23 +121,20 @@ void main() {
         ),
       ),
     ]);
-    BorderSide ringOf(String label) {
-      final box = tester.widget<DecoratedBox>(
-        find
-            .descendant(
-              of: find.ancestor(
-                of: find.text(label),
-                matching: find.byType(FocusRing),
-              ),
-              matching: find.byType(DecoratedBox),
-            )
-            .first,
-      );
-      return ((box.decoration as ShapeDecoration).shape as OutlinedBorder).side;
-    }
+    BorderSide ringOf(String label) => tester
+        .widget<CardSurface>(
+          find.ancestor(
+            of: find.text(label),
+            matching: find.byType(CardSurface),
+          ),
+        )
+        .side;
 
     final node = Focus.of(tester.element(find.text('b')));
-    await _focus(tester, node);
+    await _focus(tester, Focus.of(tester.element(find.text('a'))));
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pumpAndSettle();
+    expect(node.hasPrimaryFocus, isTrue);
     expect(ringOf('b'), _ring(standsOff: false));
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
@@ -225,11 +146,11 @@ void main() {
 
   Future<void> pumpRow(WidgetTester tester, {required bool remote}) async {
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         theme: _theme,
         home: RemoteFocusAdapter(
           enabled: remote,
-          child: Scaffold(
+          child: HostScaffold(
             body: Column(
               children: [
                 const TextField(key: Key('before')),
@@ -257,20 +178,20 @@ void main() {
 
     await tester.tap(find.byKey(const Key('field')));
     await tester.pumpAndSettle();
-    expect(_buttonSide(tester, row).style, BorderStyle.none);
+    expect(_cardSide(tester, row).style, BorderStyle.none);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     await tester.pumpAndSettle();
-    expect(_buttonSide(tester, row).style, BorderStyle.none);
+    expect(_cardSide(tester, row).style, BorderStyle.none);
 
     await tester.tap(find.byKey(const Key('before')));
     await tester.pumpAndSettle();
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await tester.pumpAndSettle();
-    expect(_buttonSide(tester, row), _ring(standsOff: false));
+    expect(_cardSide(tester, row), _ring(standsOff: false));
 
     await tester.tap(find.byKey(const Key('field')));
     await tester.pumpAndSettle();
-    expect(_buttonSide(tester, row).style, BorderStyle.none);
+    expect(_cardSide(tester, row).style, BorderStyle.none);
   });
 
   testWidgets('a row rings any focus while a remote drives it', (tester) async {
@@ -278,6 +199,6 @@ void main() {
 
     await tester.showKeyboard(find.byKey(const Key('field')));
     await tester.pumpAndSettle();
-    expect(_buttonSide(tester, const Key('row')), _ring(standsOff: false));
+    expect(_cardSide(tester, const Key('row')), _ring(standsOff: false));
   });
 }

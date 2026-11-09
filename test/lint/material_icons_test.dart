@@ -2,13 +2,15 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
+import 'sources.dart';
+
 final _materialIcon = RegExp(r'\b(?:Animated)?Icons\.\w+');
 
 void main() {
   test('lib draws its icons from AppGlyphs, not Material icons', () {
     final offenders = <String>[];
 
-    for (final entity in Directory('lib').listSync(recursive: true)) {
+    for (final entity in sourceEntities()) {
       if (entity is! File ||
           !entity.path.endsWith('.dart') ||
           entity.path.contains('/generated/')) {

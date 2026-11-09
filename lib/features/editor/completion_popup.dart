@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:code_forge/code_forge.dart' show CodeForgeSuggestionDetails;
 import 'package:fl_clash/ui/ui.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 const _suggestionInset = 8.0;
 const _suggestionItemGap = 4.0;
@@ -115,18 +115,15 @@ class _EditorCompletionPopupState extends State<EditorCompletionPopup> {
     final detail = suggestion.detail;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: _suggestionItemGap / 2),
-      child: InkWell(
+      child: PressRegion(
         canRequestFocus: false,
-        customBorder: _suggestionItemShape,
-        splashColor: Colors.transparent,
+        shape: _suggestionItemShape,
+        fill: selected ? colorScheme.primaryContainer : null,
+        overlay: PressRegion.pressOverlay,
         onTap: () => widget.details.onAccept(index),
-        child: Ink(
+        child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: _suggestionItemPadding,
-          ),
-          decoration: ShapeDecoration(
-            color: selected ? colorScheme.primaryContainer : null,
-            shape: _suggestionItemShape,
           ),
           child: Row(
             children: [
@@ -178,8 +175,7 @@ class _EditorCompletionPopupState extends State<EditorCompletionPopup> {
             .clamp(math.min(_suggestionMinWidth, maxWidth), maxWidth)
             .toDouble();
         final rowWidth = math.max(0.0, width - _itemInset * 2);
-        return Material(
-          type: MaterialType.card,
+        return Surface(
           elevation: 8,
           color: SurfaceLevel.floatingOf(
             context.colorScheme,

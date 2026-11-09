@@ -1,16 +1,17 @@
-import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/config/icon_sets.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/context_menu.dart';
 import '../helpers/test_app.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 class _TestIconSets extends IconSets {
   _TestIconSets(this.initial);
@@ -254,7 +255,7 @@ void main() {
         builder: (context) => TextButton(
           onPressed: () => Navigator.of(
             context,
-          ).push(MaterialPageRoute<void>(builder: (_) => const IconSetsView())),
+          ).push(HostPageRoute<void>(builder: (_) => const IconSetsView())),
           child: const Text('open'),
         ),
       ),

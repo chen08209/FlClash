@@ -23,7 +23,7 @@ final _requestEncoder = JsonUtf8Encoder();
 final _frameDecoder = utf8.decoder.fuse(json.decoder);
 
 abstract interface class CoreRpcChannel {
-  Future<T?> invoke<T>({
+  Future<Object?> invoke({
     required CoreMethod method,
     Object? arguments,
     Duration? timeout,
@@ -64,7 +64,7 @@ final class CoreRpcClient implements CoreRpcChannel {
   int get pendingCount => _pending.length;
 
   @override
-  Future<T?> invoke<T>({
+  Future<Object?> invoke({
     required CoreMethod method,
     Object? arguments,
     Duration? timeout,
@@ -86,10 +86,10 @@ final class CoreRpcClient implements CoreRpcChannel {
         completer.future,
       ]);
       if (completer.isCompleted) {
-        return await completer.future as T?;
+        return await completer.future;
       }
       if (stopwatch.elapsed >= requestTimeout) {
-        throw TimeoutException('Core method ${method.name} timed out');
+        throw TimeoutException('Core method ${method.wireName} timed out');
       }
       transport.send(
         _requestEncoder.convert(
@@ -97,20 +97,19 @@ final class CoreRpcClient implements CoreRpcChannel {
         ),
       );
       return await _awaitResponse(
-            method: method,
-            completer: completer,
-            idleTimeout: requestTimeout,
-            elapsed: stopwatch,
-          )
-          as T?;
+        method: method,
+        completer: completer,
+        idleTimeout: requestTimeout,
+        elapsed: stopwatch,
+      );
     } on TimeoutException {
       commonPrint.log(
-        'Core method ${method.name} timed out after '
+        'Core method ${method.wireName} timed out after '
         '${stopwatch.elapsedMilliseconds}ms',
         logLevel: LogLevel.warning,
       );
       _removePending(id, completer);
-      return null;
+      rethrow;
     } on CoreMethodException {
       _pending.remove(id);
       rethrow;
@@ -118,7 +117,7 @@ final class CoreRpcClient implements CoreRpcChannel {
       _removePending(id, completer);
       throw CoreMethodException(
         code: 'transport_error',
-        message: 'Unable to send ${method.name} to Core',
+        message: 'Unable to send ${method.wireName} to Core',
         details: error.toString(),
       );
     } finally {
@@ -151,7 +150,7 @@ final class CoreRpcClient implements CoreRpcChannel {
         hardDeadline - elapsed.elapsed,
       );
       if (remaining <= Duration.zero) {
-        throw TimeoutException('Core method ${method.name} timed out');
+        throw TimeoutException('Core method ${method.wireName} timed out');
       }
       try {
         return await completer.future.timeout(remaining);
@@ -193,7 +192,7 @@ final class CoreRpcClient implements CoreRpcChannel {
   void _handleMethodCall(CoreMethodCall call) {
     if (call.method != CoreMethod.message) {
       commonPrint.log(
-        'Unknown core callback method: ${call.method.name}',
+        'Unknown core callback method: ${call.method.wireName}',
         logLevel: LogLevel.warning,
       );
       return;

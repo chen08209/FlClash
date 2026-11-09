@@ -6,6 +6,7 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/migration.dart';
+import 'package:fl_clash/common/mitm_module.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
@@ -32,16 +33,29 @@ abstract final class BackupEntries {
   static String provider(ClashProvider provider) =>
       '$providersDirectoryName/$rulesProviderDirectoryName/${provider.fileName}';
 
-  /// A remote provider's cache belongs to the Core and downloads again.
+  static String mitmModule(MitmModule module) =>
+      '$mitmDirectoryName/$mitmModulesDirectoryName/${module.fileName}';
+
+  static String mitmResource(String name) =>
+      '$mitmDirectoryName/$mitmResourcesDirectoryName/$name';
+
+  /// A remote provider's cache belongs to the Core and downloads again, as
+  /// does what a module downloads; only a local module's attachments do not.
   static List<String> of({
     required Iterable<int> profileIds,
     required Iterable<int> scriptIds,
     required Iterable<ClashProvider> providers,
+    Iterable<MitmModule> mitmModules = const [],
   }) {
+    final localModules = mitmModules.where((item) => !item.isRemote);
     return [
       ...profileIds.map(profile),
       ...scriptIds.map(script),
       ...providers.where((item) => !item.isRemote).map(provider),
+      ...localModules.map(mitmModule),
+      ...{
+        for (final module in localModules) ...mitmAttachments(module).values,
+      }.where(_isResourceName).map(mitmResource),
     ];
   }
 
@@ -50,8 +64,17 @@ abstract final class BackupEntries {
       profileIds: data.profiles.map((item) => item.id),
       scriptIds: data.scripts.map((item) => item.id),
       providers: data.clashProviders,
+      mitmModules: data.mitmModules,
     );
   }
+
+  /// One that climbed out of the resources directory could carry the CA key.
+  static bool _isResourceName(String name) =>
+      name.isNotEmpty &&
+      name != '.' &&
+      name != '..' &&
+      !name.contains('/') &&
+      !name.contains(r'\');
 
   static String resolve(String root, String entry) {
     return joinAll([root, ...posix.split(entry)]);
@@ -185,6 +208,7 @@ Future<MigrationData> readBackupArchive({
       database.clashProvidersDao.query().get(),
       database.customProxiesDao.query().get(),
       database.proxyDialers.readable((row) => row.toProxyDialer()).get(),
+      database.mitmModulesDao.query().get(),
     ]);
     return MigrationData(
       configMap: configMap,
@@ -196,6 +220,7 @@ Future<MigrationData> readBackupArchive({
       clashProviders: results[5].cast<ClashProvider>(),
       customProxies: results[6].cast<CustomProxy>(),
       proxyDialers: results[7].cast<ProxyDialer>(),
+      mitmModules: results[8].cast<MitmModule>(),
     );
   } finally {
     await database.close();

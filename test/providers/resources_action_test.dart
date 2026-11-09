@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/database/database.dart' as db;
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
@@ -30,7 +31,12 @@ void main() {
     when(() => core.updateGeoData(any())).thenAnswer((invocation) async {
       final name = invocation.positionalArguments.single as String;
       final count = requests[name] = (requests[name] ?? 0) + 1;
-      return count == 1 ? '' : 'geo update already in progress';
+      if (count > 1) {
+        throw const CoreMethodException(
+          code: 'core_error',
+          message: 'geo update already in progress',
+        );
+      }
     });
     container = ProviderContainer(
       overrides: [

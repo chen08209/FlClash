@@ -2,10 +2,11 @@ import 'package:fl_clash/features/form/rule_preset.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 void main() {
   group('RulePreset', () {
@@ -40,7 +41,7 @@ void main() {
         child: Builder(
           builder: (context) => FilledButton(
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
+              HostPageRoute<void>(
                 builder: (_) => RulePresetSheet(onAdd: added.add),
               ),
             ),

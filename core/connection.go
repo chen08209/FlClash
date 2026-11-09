@@ -6,13 +6,13 @@ import (
 	"github.com/metacubex/mihomo/tunnel/statistic"
 )
 
-func handleGetTraffic(onlyStatisticsProxy bool) Traffic {
-	up, down := statistic.DefaultManager.NowTraffic(onlyStatisticsProxy)
+func handleGetTraffic(params TrafficParams) Traffic {
+	up, down := statistic.DefaultManager.NowTraffic(params.OnlyProxy)
 	return Traffic{Up: up, Down: down}
 }
 
-func handleGetTotalTraffic(onlyStatisticsProxy bool) Traffic {
-	up, down := statistic.DefaultManager.TotalTraffic(onlyStatisticsProxy)
+func handleGetTotalTraffic(params TrafficParams) Traffic {
+	up, down := statistic.DefaultManager.TotalTraffic(params.OnlyProxy)
 	return Traffic{Up: up, Down: down}
 }
 
@@ -33,17 +33,15 @@ func handleGetConnectionCount() int {
 	return count
 }
 
-func handleCloseConnections() bool {
+func handleCloseConnections() {
 	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
 		_ = c.Close()
 		return true
 	})
-	return true
 }
 
-func handleResetConnections() bool {
+func handleResetConnections() {
 	resolver.ResetConnection()
-	return true
 }
 
 // A network change clears rather than waits out the TTLs: mihomo serves an
@@ -54,18 +52,23 @@ func handleClearDnsCache() {
 	dns.ClearAll()
 }
 
+// handleNetworkChanged is how the desktop host reports a new network, which
+// Android's NetworkObserver reports through handleResetNetwork.
+func handleNetworkChanged() {
+	handleClearDnsCache()
+}
+
 // A connection that went out over a network the device has left hangs until
 // TCP gives up on it, and so do the DNS clients' pooled connections.
 func handleResetNetwork() {
 	handleCloseConnections()
-	handleClearDnsCache()
+	handleNetworkChanged()
 }
 
-func handleCloseConnection(connectionId string) bool {
-	c := statistic.DefaultManager.Get(connectionId)
-	if c == nil {
-		return false
+// A connection that is already gone is closed as far as the host is concerned.
+func handleCloseConnection(params IDParams) error {
+	if c := statistic.DefaultManager.Get(params.ID); c != nil {
+		_ = c.Close()
 	}
-	_ = c.Close()
-	return true
+	return nil
 }

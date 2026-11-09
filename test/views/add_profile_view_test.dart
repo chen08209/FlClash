@@ -6,12 +6,14 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/add.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+import '../helpers/host_scaffold.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 class _RecordingProfilesAction extends ProfilesAction {
   final batches = <List<String>>[];
@@ -67,7 +69,7 @@ Future<void> _openMenu(WidgetTester tester, ProviderContainer container) async {
     UncontrolledProviderScope(
       container: container,
       child: TestApp(
-        child: Scaffold(
+        child: HostScaffold(
           body: Center(
             child: AddProfileMenu(
               builder: (open) =>

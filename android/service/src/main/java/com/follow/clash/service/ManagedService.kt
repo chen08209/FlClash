@@ -27,9 +27,15 @@ internal fun Service.notifyVpnRevoked() {
 // and Android 14 stopped delivering the running levels this answers to.
 @Suppress("DEPRECATION")
 internal fun trimCoreMemory(level: Int) {
+    MitmPressure.onTrimMemory(level)
     if (level == ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW ||
         level == ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL
     ) {
         Core.forceGC()
     }
+}
+
+internal fun lowCoreMemory() {
+    MitmPressure.onLowMemory()
+    Core.forceGC()
 }

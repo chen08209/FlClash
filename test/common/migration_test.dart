@@ -1,12 +1,11 @@
 import 'dart:convert';
 
-import 'package:fl_clash/common/migration.dart';
 import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/common/migration.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/ui/color.dart';
-import 'package:material_ui/material_ui.dart' show ThemeMode;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 void main() {
   group('Migration', () {

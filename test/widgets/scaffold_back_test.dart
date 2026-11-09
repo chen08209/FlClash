@@ -1,6 +1,4 @@
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -10,7 +8,7 @@ import 'package:fl_clash/views/dashboard/dashboard.dart';
 import 'package:fl_clash/views/dashboard/edit.dart';
 import 'package:fl_clash/views/logs.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart' show Override;
@@ -27,9 +25,9 @@ void main() {
     var rootBackCount = 0;
 
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         builder: (context, child) => wrapAppScopes(context, child!),
-        home: CommonPopScope(
+        home: PopGuard(
           onPop: (_) {
             rootBackCount++;
             return false;
@@ -90,9 +88,9 @@ void main() {
       var rootBackCount = 0;
 
       await tester.pumpWidget(
-        MaterialApp(
+        HostApp(
           builder: (context, child) => wrapAppScopes(context, child!),
-          home: CommonPopScope(
+          home: PopGuard(
             onPop: (_) {
               rootBackCount++;
               return false;
@@ -149,7 +147,7 @@ void main() {
     var backCount = 0;
 
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         builder: (context, child) => wrapAppScopes(context, child!),
         home: ValueListenableBuilder(
           valueListenable: showLayer,
@@ -186,20 +184,14 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: MaterialApp(
+        child: HostApp(
           builder: (context, child) => wrapAppScopes(context, child!),
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            AppUiLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
-          home: CommonPopScope(
+          home: PopGuard(
             onPop: (_) {
               rootBackCount++;
               return false;
             },
-            child: CommonScaffold(
+            child: Scaffold(
               title: 'Logs',
               searchState: AppBarSearchState(onSearch: (_) {}),
               body: const SizedBox(),
@@ -220,6 +212,37 @@ void main() {
     expect(rootBackCount, 0);
   });
 
+  testWidgets('search cancel closes only its own layer', (tester) async {
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        child: Scaffold(
+          title: 'Page',
+          searchState: AppBarSearchState(onSearch: (_) {}),
+          body: const SizedBox.expand(),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byGlyph(AppGlyphs.search));
+    await tester.pumpAndSettle();
+    final route = ModalRoute.of(tester.element(find.byType(TextField)))!;
+    var otherRemoved = false;
+    route.addLocalHistoryEntry(
+      LocalHistoryEntry(
+        impliesAppBarDismissal: false,
+        onRemove: () => otherRemoved = true,
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TextField), findsNothing);
+    expect(otherRemoved, isFalse);
+    expect(route.willHandlePopInternally, isTrue);
+  });
+
   testWidgets('inactive page scope exits the kept search layer', (
     tester,
   ) async {
@@ -232,14 +255,8 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: MaterialApp(
+        child: HostApp(
           builder: (context, child) => wrapAppScopes(context, child!),
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            AppUiLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
           home: _PageActivityTestScope(
             isActive: isActive,
             child: const LogsView(),
@@ -428,13 +445,7 @@ class _DashboardTestApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        AppUiLocalizations.delegate,
-        ...GlobalMaterialLocalizations.delegates,
-      ],
-      supportedLocales: AppLocalizations.delegate.supportedLocales,
+    return HostApp(
       builder: (context, child) {
         return wrapAppScopes(context, child!);
       },

@@ -1,20 +1,18 @@
 import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/ui/paged_sheet.dart';
-import 'package:fl_clash/ui/scaffold.dart';
-import 'package:fl_clash/ui/sheet.dart';
-import 'package:fl_clash/ui/side_sheet.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:fl_clash/ui/ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 typedef _Opener = void Function(BuildContext context);
 
 Widget _page() {
-  return CommonScaffold(
+  return Scaffold(
     title: 'title',
     body: ListView(
-      children: [for (var i = 0; i < 3; i++) ListTile(title: Text('row $i'))],
+      children: [for (var i = 0; i < 3; i++) TestRow(title: Text('row $i'))],
     ),
   );
 }
@@ -53,8 +51,8 @@ void main() {
             Expanded(
               child: Navigator(
                 onGenerateInitialRoutes: (_, _) => [
-                  MaterialPageRoute<void>(
-                    builder: (context) => Scaffold(
+                  HostPageRoute<void>(
+                    builder: (context) => HostScaffold(
                       body: TextButton(
                         onPressed: () => opener(context),
                         child: const Text('open'),

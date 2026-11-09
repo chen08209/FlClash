@@ -60,7 +60,7 @@ void main() {
     await mockPreferences();
     await preferences.setVersion(7);
     core = _MockCoreHandlerInterface();
-    when(() => core.clearEffect(any())).thenAnswer((_) async => '');
+    when(() => core.clearEffect(any())).thenAnswer((_) async {});
     testDatabase = db.Database(NativeDatabase.memory());
     db.database = testDatabase;
     _RecordingSystemAction.exits.clear();

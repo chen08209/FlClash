@@ -1,15 +1,15 @@
 import 'package:fl_clash/ui/icons/icons.dart';
-import 'package:fl_clash/ui/sidebar.dart';
-import 'package:fl_clash/ui/surface.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 final _paneFinder = find
-    .byWidgetPredicate((widget) => widget is Material && widget.elevation > 0)
+    .byWidgetPredicate((widget) => widget is Surface && widget.elevation > 0)
     .first;
 
 const _destinations = [
@@ -39,7 +39,7 @@ Widget _sidebar({
   EdgeInsets safePadding = EdgeInsets.zero,
 }) {
   return TestApp(
-    child: Scaffold(
+    child: HostScaffold(
       body: Row(
         children: [
           SizedBox(
@@ -256,7 +256,7 @@ void main() {
       find
           .ancestor(
             of: _glyph(AppGlyphs.dashboard),
-            matching: find.byType(Material),
+            matching: find.byType(PressRegion),
           )
           .first,
     );
@@ -298,7 +298,7 @@ void main() {
         tester.getTopLeft(find.byTooltip('Expand')),
       );
       final colorScheme = Theme.of(tester.element(_sidebarFinder)).colorScheme;
-      final pane = tester.widget<Material>(_paneFinder);
+      final pane = tester.widget<Surface>(_paneFinder);
       expect(pane.color, colorScheme.chromeSurface);
       expect(
         (pane.shape! as BorderDirectional).end,

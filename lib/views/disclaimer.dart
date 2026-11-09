@@ -3,7 +3,7 @@ import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// True only after "Agree" and the restatement; any other way out declines.
@@ -82,12 +82,12 @@ class DisclaimerView extends StatelessWidget {
       children: terms,
     );
     if (!requireConsent) {
-      return CommonScaffold(title: appLocalizations.disclaimer, body: body);
+      return Scaffold(title: appLocalizations.disclaimer, body: body);
     }
     return Consumer(
       builder: (context, ref, _) {
         if (ref.watch(isMobileViewProvider)) {
-          return CommonScaffold(
+          return Scaffold(
             title: appLocalizations.disclaimer,
             body: _ConsentLayout(
               maxWidth: _maxContentWidth,
@@ -97,8 +97,9 @@ class DisclaimerView extends StatelessWidget {
             ),
           );
         }
-        return Scaffold(
-          body: SafeArea(
+        return Surface(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: SafeArea(
             child: _ConsentLayout(
               maxWidth: _maxContentWidth,
               gutter: _desktopGutter,
@@ -424,7 +425,7 @@ class _RestateDialogState extends State<_RestateDialog> {
     required Widget confirmation,
   }) {
     final appLocalizations = context.appLocalizations;
-    return CommonDialog(
+    return AlertDialog(
       title: title,
       actions: [
         TextButton(

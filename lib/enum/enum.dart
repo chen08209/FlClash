@@ -4,12 +4,10 @@ import 'dart:io';
 
 import 'package:fl_clash/common/context.dart';
 import 'package:fl_clash/common/system.dart';
-import 'package:fl_clash/ui/color.dart';
-import 'package:fl_clash/ui/icons/icons.dart';
-import 'package:fl_clash/ui/surface.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 enum SupportPlatform {
   Windows,
@@ -123,6 +121,21 @@ enum LogLevel { debug, info, warning, error, silent }
 
 enum RecordTone { neutral, warning, error }
 
+enum RecordFacetKind {
+  network,
+  rule,
+  mitm,
+  app,
+  proxy,
+  level,
+  type,
+  initiator,
+  cache,
+  rcode,
+}
+
+enum RecordGrouping { app, host, rule, exit }
+
 extension RecordToneExt on RecordTone {
   Color? accentColor(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -148,53 +161,6 @@ extension RecordToneExt on RecordTone {
       RecordTone.neutral => context.raisedSurfaceLevel.colorOf(colorScheme),
       RecordTone.warning => colorScheme.warningContainer,
       RecordTone.error => colorScheme.errorContainer,
-    };
-  }
-}
-
-enum MessageLevel { info, success, warning, error }
-
-extension MessageLevelExt on MessageLevel {
-  Glyph? get glyph {
-    return switch (this) {
-      MessageLevel.info => null,
-      MessageLevel.success => AppGlyphs.checkCircle,
-      MessageLevel.warning => AppGlyphs.warning,
-      MessageLevel.error => AppGlyphs.error,
-    };
-  }
-
-  Color containerColor(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return switch (this) {
-      MessageLevel.error => colorScheme.errorContainer,
-      _ => SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme),
-    };
-  }
-
-  Color contentColor(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return switch (this) {
-      MessageLevel.error => colorScheme.onErrorContainer,
-      _ => colorScheme.onSurfaceVariant,
-    };
-  }
-
-  Color iconColor(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return switch (this) {
-      MessageLevel.info => colorScheme.onSurfaceVariant,
-      MessageLevel.success => colorScheme.success,
-      MessageLevel.warning => colorScheme.warning,
-      MessageLevel.error => colorScheme.onErrorContainer,
-    };
-  }
-
-  Duration get duration {
-    return switch (this) {
-      MessageLevel.info || MessageLevel.success => const Duration(seconds: 3),
-      MessageLevel.warning => const Duration(seconds: 5),
-      MessageLevel.error => const Duration(seconds: 6),
     };
   }
 }
@@ -315,6 +281,7 @@ enum DnsOverrideKey with OverrideKey {
   static const normalProfileKeys = {
     listen,
     ipv6,
+    preferH3,
     enhancedMode,
     fakeIpFilter,
     fakeIpFilterMode,
@@ -477,7 +444,7 @@ enum FunctionTag {
   coreErrorNotifier,
   dialerLoopNotifier,
   reloadPackages,
-  clearDnsCache,
+  networkChange,
 }
 
 enum DashboardWidget {
@@ -563,7 +530,6 @@ enum PageLabel {
   logs,
   requests,
   resources,
-  connections,
   dns,
 }
 
@@ -857,7 +823,7 @@ enum TabAnimation { slide, fade }
 
 enum LiquidGlassMode { none, standard, ultra }
 
-enum Language { yaml, javaScript, json }
+enum Language { yaml, javaScript, json, ini, xml, text }
 
 enum ScrollPositionCacheKey { proxiesTabList }
 
@@ -872,8 +838,29 @@ enum LoadingTag {
   access,
   proxies,
   checkUpdate,
+  mitm,
 }
 
+/// The lists of `Mitm`, named by the Core's JSON keys.
+enum MitmList {
+  hostname('hostname'),
+  urlRewrite('url-rewrite'),
+  headerRewrite('header-rewrite'),
+  bodyRewrite('body-rewrite'),
+  mapLocal('map-local'),
+  script('script');
+
+  final String key;
+
+  const MitmList(this.key);
+}
+
+enum MitmTrust { notGenerated, notInstalled, untrusted, ready }
+
+enum MitmInstallOutcome { installed, untilReboot, prompted, saved }
+
 enum CoreStatus { connecting, connected, disconnected }
+
+enum RequestFeed { recent, live }
 
 enum UpdatingScope { core, local }

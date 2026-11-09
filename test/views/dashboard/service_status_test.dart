@@ -21,13 +21,14 @@ import 'package:fl_clash/views/dashboard/widgets/card.dart';
 import 'package:fl_clash/views/dashboard/widgets/service_status.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/glyph_finders.dart';
 import '../../helpers/test_app.dart';
+import '../../helpers/host_scaffold.dart';
 
 class _MockCore extends Mock implements CoreHandlerInterface {}
 
@@ -76,7 +77,7 @@ void main() {
   }
 
   Widget app({
-    FutureOr<OutboundIpResult?> Function(OutboundIpParams params)? outboundIp,
+    FutureOr<OutboundIpResult> Function(OutboundIpParams params)? outboundIp,
     bool started = true,
     AppSettingProps settings = const AppSettingProps(),
     double width = 360,
@@ -86,7 +87,7 @@ void main() {
     IpQuality? ipQuality,
   }) {
     when(() => core.outboundIp(any())).thenAnswer((invocation) async {
-      if (outboundIp == null) return Completer<OutboundIpResult?>().future;
+      if (outboundIp == null) return Completer<OutboundIpResult>().future;
       return outboundIp(
         invocation.positionalArguments.single as OutboundIpParams,
       );
@@ -114,7 +115,7 @@ void main() {
               : Completer<IpQuality>().future,
         ),
       ],
-      child: Scaffold(
+      child: HostScaffold(
         body: Center(
           child: SizedBox(
             width: width,
@@ -373,7 +374,7 @@ void main() {
 
   Future<Finder> openCheckedSheet(
     WidgetTester tester, {
-    required FutureOr<OutboundIpResult?> Function(OutboundIpParams params)
+    required FutureOr<OutboundIpResult> Function(OutboundIpParams params)
     outboundIp,
   }) async {
     answer(
@@ -425,7 +426,7 @@ void main() {
     },
   );
 
-  testWidgets('an address in the sheet opens its quality as a page of it', (
+  testWidgets('an address in the sheet opens its quality in a sheet over it', (
     tester,
   ) async {
     final sheet = await openCheckedSheet(
@@ -441,13 +442,13 @@ void main() {
     await tester.pump(commonDuration * 2);
     final title = find.text('Outbound IP');
     expect(title, findsOneWidget);
-    expect(find.byType(ServiceStatusSheet), findsNothing);
+    expect(find.byType(ServiceStatusSheet), findsOneWidget);
     expect(
       Navigator.of(tester.element(title)).widget,
-      isA<SheetPagesNavigator>(),
+      isNot(isA<SheetPagesNavigator>()),
     );
 
-    await tester.tap(find.byTooltip('Back'));
+    await tester.tap(find.byTooltip('Close').hitTestable());
     await tester.pump();
     await tester.pump(commonDuration * 2);
     expect(find.byType(ServiceStatusSheet), findsOneWidget);
@@ -500,7 +501,10 @@ void main() {
         for (var i = 1; i < heights.length; i++) {
           expect(heights[i], lessThanOrEqualTo(heights[i - 1]));
         }
-        expect(heights.last, 800 * snapSheetDetents.first);
+        expect(
+          tester.getRect(find.byType(PagedSheet)).top,
+          moreOrLessEquals(800 * (1 - snapSheetDetents.first)),
+        );
 
         await tester.pumpWidget(const SizedBox());
         await tester.pump(const Duration(seconds: 1));
@@ -536,7 +540,7 @@ void main() {
             find
                 .ancestor(
                   of: find.text('Outbound IP'),
-                  matching: find.byType(CommonScaffold),
+                  matching: find.byType(Scaffold),
                 )
                 .first,
           )
@@ -554,7 +558,10 @@ void main() {
   testWidgets('a sheet row falls back to the node without an address', (
     tester,
   ) async {
-    final sheet = await openCheckedSheet(tester, outboundIp: (_) => null);
+    final sheet = await openCheckedSheet(
+      tester,
+      outboundIp: (_) => throw TimeoutException('no answer'),
+    );
 
     expect(
       find.descendant(of: sheet, matching: find.text('HK-01')),
@@ -606,14 +613,13 @@ void main() {
       ),
       findsNothing,
     );
-    final list = tester.widget<SliverList>(
+    final list = tester.widget<SliverPrismList>(
       find.descendant(
         of: find.byType(ServiceStatusSheet),
-        matching: find.byType(SliverList),
+        matching: find.byType(SliverPrismList),
       ),
     );
-    final delegate = list.delegate as SliverChildBuilderDelegate;
-    expect(delegate.childCount, ServiceTarget.values.length);
+    expect(list.itemCount, ServiceTarget.values.length);
     for (final tooltip in ['Check all', 'Manage services']) {
       expect(
         find.ancestor(
@@ -647,7 +653,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final sheet = tester.getSize(find.byType(ServiceStatusSheet)).height;
-    final row = tester.getSize(find.byType(ListTile)).height;
+    final row = tester.getSize(find.byType(ListRow)).height;
     expect(sheet, lessThan(sheetAppBarHeight + row * 3));
   });
 
@@ -764,7 +770,7 @@ void main() {
     await tester.tap(find.byType(ServiceStatusCard));
     await tester.pumpAndSettle();
 
-    final row = find.widgetWithText(ListTile, ServiceTarget.claude.label);
+    final row = find.widgetWithText(ListRow, ServiceTarget.claude.label);
     await tester.ensureVisible(row);
     await tester.pumpAndSettle();
     final unchecked = tester.getSize(row).height;
@@ -816,7 +822,7 @@ void main() {
 
   Finder switchOf(ServiceTarget target) => find.descendant(
     of: find.widgetWithText(DecorationListItem, target.label),
-    matching: find.byType(CommonSwitch),
+    matching: find.byType(Switch),
   );
 
   testWidgets('the tile and the sheet follow the saved order', (tester) async {
@@ -960,11 +966,11 @@ void main() {
     await openManage(tester);
 
     expect(
-      tester.widget<CommonSwitch>(switchOf(ServiceTarget.google)).onChanged,
+      tester.widget<Switch>(switchOf(ServiceTarget.google)).onChanged,
       isNull,
     );
     expect(
-      tester.widget<CommonSwitch>(switchOf(ServiceTarget.github)).onChanged,
+      tester.widget<Switch>(switchOf(ServiceTarget.github)).onChanged,
       isNotNull,
     );
   });

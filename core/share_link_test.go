@@ -227,7 +227,7 @@ func TestShareLinksReadBackThroughTheConverter(t *testing.T) {
 	for _, tc := range cases {
 		name, _ := tc.proxy["name"].(string)
 		t.Run(name, func(t *testing.T) {
-			links := handleEncodeShareLinks([]map[string]any{tc.proxy})
+			links := handleEncodeShareLinks(ProxiesParams{Proxies: []map[string]any{tc.proxy}})
 			if !strings.HasPrefix(links[0], tc.prefix) {
 				t.Errorf("link %q does not start with %q", links[0], tc.prefix)
 			}
@@ -245,7 +245,7 @@ func TestShareLinksReadBackThroughTheConverter(t *testing.T) {
 }
 
 func TestShareLinksLeaveOutWhatNoLinkCarries(t *testing.T) {
-	links := handleEncodeShareLinks([]map[string]any{
+	links := handleEncodeShareLinks(ProxiesParams{Proxies: []map[string]any{
 		{"name": "wg", "type": "wireguard", "server": "a.example", "port": 51820},
 		{"name": "no server", "type": "ss", "cipher": "aes-128-gcm", "password": "p"},
 		{"name": "ssr v6", "type": "ssr", "server": "2001:db8::1", "port": 443},
@@ -263,7 +263,7 @@ func TestShareLinksLeaveOutWhatNoLinkCarries(t *testing.T) {
 			"password": "p", "network": "ws",
 			"ws-opts": map[string]any{"path": "/ws", "headers": map[string]any{"Host": "cdn.example"}},
 		},
-	})
+	}})
 	for i, link := range links {
 		if link != "" {
 			t.Errorf("mapping %d encoded to %q", i, link)
@@ -272,11 +272,11 @@ func TestShareLinksLeaveOutWhatNoLinkCarries(t *testing.T) {
 }
 
 func TestDecodeShareLinksAnswersEveryLine(t *testing.T) {
-	results := handleDecodeShareLinks([]string{
+	results := handleDecodeShareLinks(LinesParams{Lines: []string{
 		"trojan://pw@a.example:443#one",
 		"not a link",
 		"socks5://b.example:1080#two",
-	})
+	}})
 	if len(results) != 3 || len(results[0]) != 1 || len(results[1]) != 0 || len(results[2]) != 1 {
 		t.Fatalf("results = %v", results)
 	}

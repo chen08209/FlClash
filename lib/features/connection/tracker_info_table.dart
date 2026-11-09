@@ -1,9 +1,10 @@
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 import 'tracker_info_item.dart';
 
@@ -13,7 +14,6 @@ List<RecordColumn<TrackerInfo>> trackerInfoColumns(
   BuildContext context, {
   required double width,
   required bool isLive,
-  Widget? Function(TrackerInfo trackerInfo)? actionBuilder,
 }) {
   final appLocalizations = context.appLocalizations;
   final wide = width >= recordWideTableWidth;
@@ -117,11 +117,6 @@ List<RecordColumn<TrackerInfo>> trackerInfoColumns(
         sortKey: (info) => -info.start.microsecondsSinceEpoch,
         descendingFirst: true,
       ),
-    if (actionBuilder != null)
-      RecordColumn(
-        const TableColumn('action', '', width: 44, resizable: false),
-        cell: (_, info) => actionBuilder(info) ?? const SizedBox.shrink(),
-      ),
   ];
 }
 
@@ -163,6 +158,7 @@ class TrackerInfoTableRow extends StatelessWidget {
   final RecordTable<TrackerInfo> table;
   final bool striped;
   final String detailTitle;
+  final ValueChanged<TrackerInfo>? onClose;
 
   const TrackerInfoTableRow({
     super.key,
@@ -170,15 +166,19 @@ class TrackerInfoTableRow extends StatelessWidget {
     required this.table,
     required this.striped,
     required this.detailTitle,
+    this.onClose,
   });
 
   @override
   Widget build(BuildContext context) {
-    return RecordTableRow(
-      table: table,
-      striped: striped,
-      onTap: () => showTrackerInfoDetail(context, trackerInfo, detailTitle),
-      cells: table.cellsOf(context, trackerInfo),
+    return ContextMenuRegion(
+      menuItems: trackerInfoMenuItems(context, trackerInfo, onClose: onClose),
+      child: RecordTableRow(
+        table: table,
+        striped: striped,
+        onTap: () => showTrackerInfoDetail(context, trackerInfo, detailTitle),
+        cells: table.cellsOf(context, trackerInfo),
+      ),
     );
   }
 }
@@ -198,7 +198,10 @@ class _ExitChip extends StatelessWidget {
       label: exit,
       color: context.raisedSurfaceLevel.colorOf(colorScheme),
       foregroundColor: colorScheme.onSurfaceVariant,
-      onPressed: () => context.commonScaffoldState?.addKeyword(exit),
+      onPressed: () => RecordFilterScope.add(
+        context,
+        RecordFilter(RecordFacetKind.proxy, exit),
+      ),
     );
   }
 }
@@ -211,7 +214,7 @@ class TrackerTargetText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final port = trackerInfo.metadata.destinationPort;
-    return Text.rich(
+    final target = Text.rich(
       TextSpan(
         children: [
           TextSpan(text: trackerInfo.title),
@@ -222,6 +225,16 @@ class TrackerTargetText extends StatelessWidget {
             ),
         ],
       ),
+    );
+    if (!trackerInfo.metadata.mitm) {
+      return target;
+    }
+    return Row(
+      spacing: 6,
+      children: [
+        Flexible(child: target),
+        const RecordLabel(label: 'MITM'),
+      ],
     );
   }
 }

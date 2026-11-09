@@ -1,8 +1,10 @@
 import 'package:fl_clash/widgets/palette.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 void main() {
   late ValueNotifier<Color> controller;
@@ -14,7 +16,7 @@ void main() {
     return tester.pumpWidget(
       TestApp(
         wrapInProviderScope: true,
-        child: Scaffold(
+        child: HostScaffold(
           body: ListView(
             controller: scroll,
             children: [
@@ -107,7 +109,7 @@ void main() {
     Future<void> pumpField(WidgetTester tester) {
       return tester.pumpWidget(
         TestApp(
-          child: Scaffold(
+          child: HostScaffold(
             body: ValueListenableBuilder(
               valueListenable: controller,
               builder: (_, color, _) => HexColorField(

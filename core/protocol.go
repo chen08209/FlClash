@@ -3,7 +3,6 @@ package core
 import (
 	"time"
 
-	"github.com/metacubex/http"
 	"github.com/metacubex/mihomo/adapter/provider"
 	P "github.com/metacubex/mihomo/component/process"
 	"github.com/metacubex/mihomo/config"
@@ -14,58 +13,76 @@ import (
 
 type CoreMethod string
 
+// Named area.verb. A method's arguments are an object or nothing, and a
+// command answers null: whatever goes wrong is a MethodError.
 const (
-	messageMethod                  CoreMethod = "message"
-	initClashMethod                CoreMethod = "initClash"
-	getIsInitMethod                CoreMethod = "getIsInit"
-	forceGcMethod                  CoreMethod = "forceGc"
-	shutdownMethod                 CoreMethod = "shutdown"
-	validateConfigMethod           CoreMethod = "validateConfig"
-	decryptConfigMethod            CoreMethod = "decryptConfig"
-	validateProxiesMethod          CoreMethod = "validateProxies"
-	validateFiltersMethod          CoreMethod = "validateFilters"
-	convertProxiesMethod           CoreMethod = "convertProxies"
-	encodeShareLinksMethod         CoreMethod = "encodeShareLinks"
-	decodeShareLinksMethod         CoreMethod = "decodeShareLinks"
-	updateConfigMethod             CoreMethod = "updateConfig"
-	getProxiesMethod               CoreMethod = "getProxies"
-	changeProxyMethod              CoreMethod = "changeProxy"
-	getTrafficMethod               CoreMethod = "getTraffic"
-	getTotalTrafficMethod          CoreMethod = "getTotalTraffic"
-	resetTrafficMethod             CoreMethod = "resetTraffic"
-	asyncTestDelayMethod           CoreMethod = "asyncTestDelay"
-	probeMethod                    CoreMethod = "probe"
-	outboundIpMethod               CoreMethod = "outboundIp"
-	serviceCheckMethod             CoreMethod = "serviceCheck"
-	getConnectionsMethod           CoreMethod = "getConnections"
-	getConnectionCountMethod       CoreMethod = "getConnectionCount"
-	closeConnectionsMethod         CoreMethod = "closeConnections"
-	resetConnectionsMethod         CoreMethod = "resetConnections"
-	clearDnsCacheMethod            CoreMethod = "clearDnsCache"
-	closeConnectionMethod          CoreMethod = "closeConnection"
-	getExternalProvidersMethod     CoreMethod = "getExternalProviders"
-	getExternalProviderMethod      CoreMethod = "getExternalProvider"
-	getMemoryStatsMethod           CoreMethod = "getMemoryStats"
-	updateGeoDataMethod            CoreMethod = "updateGeoData"
-	updateExternalProviderMethod   CoreMethod = "updateExternalProvider"
-	sideLoadExternalProviderMethod CoreMethod = "sideLoadExternalProvider"
-	startLogMethod                 CoreMethod = "startLog"
-	stopLogMethod                  CoreMethod = "stopLog"
-	startListenerMethod            CoreMethod = "startListener"
-	stopListenerMethod             CoreMethod = "stopListener"
-	updateDnsMethod                CoreMethod = "updateDns"
-	crashMethod                    CoreMethod = "crash"
-	setupConfigMethod              CoreMethod = "setupConfig"
-	getConfigMethod                CoreMethod = "getConfig"
-	getProfileBaseMethod           CoreMethod = "getProfileBase"
-	getProfileOutboundsMethod      CoreMethod = "getProfileOutbounds"
-	getProxyDefinitionMethod       CoreMethod = "getProxyDefinition"
-	buildProfileMethod             CoreMethod = "buildProfile"
-	dumpRuleSetMethod              CoreMethod = "dumpRuleSet"
-	compileRuleSetMethod           CoreMethod = "compileRuleSet"
-	clearEffectMethod              CoreMethod = "clearEffect"
-	watchRouteMethod               CoreMethod = "watchRoute"
-	checkRoutesMethod              CoreMethod = "checkRoutes"
+	coreInitMethod        CoreMethod = "core.init"
+	coreInitializedMethod CoreMethod = "core.initialized"
+	coreGCMethod          CoreMethod = "core.gc"
+	coreMemoryMethod      CoreMethod = "core.memory"
+	coreCrashMethod       CoreMethod = "core.crash"
+
+	configSetupMethod    CoreMethod = "config.setup"
+	configUpdateMethod   CoreMethod = "config.update"
+	configValidateMethod CoreMethod = "config.validate"
+	configDecryptMethod  CoreMethod = "config.decrypt"
+	configReadMethod     CoreMethod = "config.read"
+
+	profileBaseMethod        CoreMethod = "profile.base"
+	profileOutboundsMethod   CoreMethod = "profile.outbounds"
+	profileBuildMethod       CoreMethod = "profile.build"
+	profileClearEffectMethod CoreMethod = "profile.clearEffect"
+
+	proxyListMethod       CoreMethod = "proxy.list"
+	proxySelectMethod     CoreMethod = "proxy.select"
+	proxyDefinitionMethod CoreMethod = "proxy.definition"
+	proxyTestDelayMethod  CoreMethod = "proxy.testDelay"
+	proxyValidateMethod   CoreMethod = "proxy.validate"
+	proxyConvertMethod    CoreMethod = "proxy.convert"
+	shareLinkEncodeMethod CoreMethod = "shareLink.encode"
+	shareLinkDecodeMethod CoreMethod = "shareLink.decode"
+	filterValidateMethod  CoreMethod = "filter.validate"
+
+	providerListMethod     CoreMethod = "provider.list"
+	providerGetMethod      CoreMethod = "provider.get"
+	providerUpdateMethod   CoreMethod = "provider.update"
+	providerSideLoadMethod CoreMethod = "provider.sideLoad"
+	ruleSetDumpMethod      CoreMethod = "ruleSet.dump"
+	ruleSetCompileMethod   CoreMethod = "ruleSet.compile"
+	geoUpdateMethod        CoreMethod = "geo.update"
+
+	trafficCurrentMethod     CoreMethod = "traffic.current"
+	trafficTotalMethod       CoreMethod = "traffic.total"
+	trafficResetMethod       CoreMethod = "traffic.reset"
+	connectionListMethod     CoreMethod = "connection.list"
+	connectionCountMethod    CoreMethod = "connection.count"
+	connectionCloseMethod    CoreMethod = "connection.close"
+	connectionCloseAllMethod CoreMethod = "connection.closeAll"
+	connectionResetMethod    CoreMethod = "connection.reset"
+	dnsClearCacheMethod      CoreMethod = "dns.clearCache"
+	networkChangedMethod     CoreMethod = "network.changed"
+
+	logStartMethod      CoreMethod = "log.start"
+	logStopMethod       CoreMethod = "log.stop"
+	listenerStartMethod CoreMethod = "listener.start"
+	listenerStopMethod  CoreMethod = "listener.stop"
+	routeWatchMethod    CoreMethod = "route.watch"
+	routeCheckMethod    CoreMethod = "route.check"
+
+	probeOutboundIPMethod CoreMethod = "probe.outboundIp"
+	probeServicesMethod   CoreMethod = "probe.services"
+
+	mitmCertificateMethod         CoreMethod = "mitm.certificate"
+	mitmGenerateCertificateMethod CoreMethod = "mitm.generateCertificate"
+	mitmValidateMethod            CoreMethod = "mitm.validate"
+	mitmIssueCertificateMethod    CoreMethod = "mitm.issueCertificate"
+	mitmRunScriptMethod           CoreMethod = "mitm.runScript"
+	mitmExchangesMethod           CoreMethod = "mitm.exchanges"
+	mitmExchangeMethod            CoreMethod = "mitm.exchange"
+	mitmBodyMethod                CoreMethod = "mitm.body"
+
+	// The envelope of a batch of events, which the Core sends and never receives.
+	messageMethod CoreMethod = "message"
 )
 
 type MessageType string
@@ -99,10 +116,19 @@ type DecryptConfigParams struct {
 }
 
 type SetupParams struct {
-	SelectedMap    map[string]string `json:"selected-map"`
-	TestURL        string            `json:"test-url"`
-	SkipCertVerify bool              `json:"skip-cert-verify"`
-	Base           *SetupBase        `json:"base,omitempty"`
+	Base        *SetupBase        `json:"base,omitempty"`
+	SelectedMap map[string]string `json:"selected-map"`
+	Options     CoreOptions       `json:"options"`
+}
+
+type CoreOptions struct {
+	// An empty one keeps the URL in force.
+	TestURL        string `json:"test-url"`
+	SkipCertVerify bool   `json:"skip-cert-verify"`
+	// In milliseconds, for every delay test whose config names no timeout; zero
+	// keeps the timeout in force.
+	DelayTestTimeout int64 `json:"delay-test-timeout"`
+	MITMCapture      bool  `json:"mitm-capture"`
 }
 
 type SetupBase struct {
@@ -145,7 +171,7 @@ type UpdateParams struct {
 	GeoAutoUpdate      *bool              `json:"geo-auto-update"`
 	GeoUpdateInterval  *int               `json:"geo-update-interval"`
 	GeoXUrl            map[string]string  `json:"geox-url"`
-	SkipCertVerify     *bool              `json:"skip-cert-verify"`
+	Options            *CoreOptions       `json:"options"`
 }
 
 type tunSchema struct {
@@ -155,9 +181,54 @@ type tunSchema struct {
 	AutoRoute *bool              `yaml:"auto-route" json:"auto-route"`
 }
 
+type PathParams struct {
+	Path string `json:"path"`
+}
+
+type NameParams struct {
+	Name string `json:"name"`
+}
+
+type IDParams struct {
+	ID string `json:"id"`
+}
+
+type WatchParams struct {
+	Watch bool `json:"watch"`
+}
+
+type TrafficParams struct {
+	OnlyProxy bool `json:"only-proxy"`
+}
+
+type ClearEffectParams struct {
+	ProfileID int64 `json:"profile-id"`
+}
+
+type GeoUpdateParams struct {
+	Type string `json:"type"`
+}
+
+type ProxiesParams struct {
+	Proxies []map[string]any `json:"proxies"`
+}
+
+type LinesParams struct {
+	Lines []string `json:"lines"`
+}
+
+type FiltersParams struct {
+	Filters []string `json:"filters"`
+}
+
+type ValidationIssue struct {
+	Index   int    `json:"index"`
+	Message string `json:"message"`
+}
+
 type SideLoadParams struct {
-	ProviderName string `json:"providerName"`
-	Data         string `json:"data"`
+	Name string `json:"name"`
+	Data string `json:"data"`
 }
 
 type CompileRuleSetParams struct {
@@ -197,35 +268,6 @@ type Delay struct {
 	Value int32  `json:"value"`
 }
 
-type ProbeParams struct {
-	Url       string            `json:"url"`
-	ProxyName string            `json:"proxy-name"`
-	Headers   map[string]string `json:"headers"`
-	Timeout   int64             `json:"timeout"`
-	MaxBody   int64             `json:"max-body"`
-}
-
-type ProbeResult struct {
-	StatusCode  int      `json:"status-code"`
-	Delay       int64    `json:"delay"`
-	Body        string   `json:"body"`
-	Url         string   `json:"url"`
-	Chains      []string `json:"chains"`
-	Rule        string   `json:"rule"`
-	RulePayload string   `json:"rule-payload"`
-	Error       string   `json:"error,omitempty"`
-	Message     string   `json:"message,omitempty"`
-
-	CoreEpoch    uint64 `json:"core-epoch"`
-	RouteVersion uint64 `json:"route-version"`
-
-	// Unexported, so it never reaches Dart: only the in-core checks read
-	// response headers, and ProbeResult is the shape the Dart side decodes.
-	header    http.Header
-	lowerBody string
-	hits      []RouteHit
-}
-
 type Traffic struct {
 	Up   int64 `json:"up"`
 	Down int64 `json:"down"`
@@ -233,10 +275,10 @@ type Traffic struct {
 
 type MemoryStats struct {
 	Rss          uint64 `json:"rss"`
-	HeapInuse    uint64 `json:"heapInuse"`
-	HeapIdle     uint64 `json:"heapIdle"`
-	StackInuse   uint64 `json:"stackInuse"`
-	RuntimeOther uint64 `json:"runtimeOther"`
+	HeapInuse    uint64 `json:"heap-inuse"`
+	HeapIdle     uint64 `json:"heap-idle"`
+	StackInuse   uint64 `json:"stack-inuse"`
+	RuntimeOther uint64 `json:"runtime-other"`
 }
 
 type ExternalProvider struct {

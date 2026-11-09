@@ -5,6 +5,7 @@ import 'package:fl_clash/common/exception.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:mocktail/mocktail.dart';
@@ -17,9 +18,14 @@ void main() {
   late CoreController controller;
 
   setUpAll(() {
-    registerFallbackValue(Duration.zero);
     registerFallbackValue(
-      const SetupParams(selectedMap: {}, testUrl: 'http://x.com'),
+      const TestDelayParams(proxyName: 'P', testUrl: 'U', timeout: 0),
+    );
+    registerFallbackValue(
+      const SetupParams(
+        selectedMap: {},
+        options: CoreOptions(testUrl: 'http://x.com'),
+      ),
     );
     registerFallbackValue(const InitParams(homeDir: '.', version: 1));
     registerFallbackValue(
@@ -34,6 +40,7 @@ void main() {
         tcpConcurrent: false,
         externalController: ExternalControllerStatus.close,
         unifiedDelay: false,
+        options: CoreOptions(testUrl: 'http://x.com'),
       ),
     );
     registerFallbackValue(
@@ -92,7 +99,7 @@ void main() {
     });
 
     test('crash delegates to interface', () async {
-      when(() => mock.crash()).thenAnswer((_) async => true);
+      when(() => mock.crash()).thenAnswer((_) async {});
 
       await controller.crash();
 
@@ -102,9 +109,9 @@ void main() {
 
   group('config methods', () {
     test('validateConfig delegates to interface', () async {
-      when(() => mock.validateConfig('/path')).thenAnswer((_) async => 'ok');
+      when(() => mock.validateConfig('/path')).thenAnswer((_) async => 'bad');
       final result = await controller.validateConfig('/path');
-      expect(result, 'ok');
+      expect(result, 'bad');
       verify(() => mock.validateConfig('/path')).called(1);
     });
 
@@ -115,7 +122,7 @@ void main() {
       setUp(() {
         dir = Directory.systemTemp.createTempSync('validate_profile_test');
         path = '${dir.path}/profile.yaml';
-        when(() => mock.validateConfig(path)).thenAnswer((_) async => '');
+        when(() => mock.validateConfig(path)).thenAnswer((_) async => null);
       });
 
       tearDown(() => dir.deleteSync(recursive: true));
@@ -128,7 +135,10 @@ void main() {
           () => mock.decryptConfig(path, 'AGE-SECRET-KEY-1A'),
         ).thenAnswer((_) async => 'proxies: []');
 
-        expect(await controller.validateProfile(path, 'AGE-SECRET-KEY-1A'), '');
+        expect(
+          await controller.validateProfile(path, 'AGE-SECRET-KEY-1A'),
+          isNull,
+        );
         expect(File(path).readAsStringSync(), 'proxies: []');
       });
 
@@ -147,7 +157,10 @@ void main() {
       test('leaves a plain config as it is', () async {
         File(path).writeAsStringSync('proxies: []');
 
-        expect(await controller.validateProfile(path, 'AGE-SECRET-KEY-1A'), '');
+        expect(
+          await controller.validateProfile(path, 'AGE-SECRET-KEY-1A'),
+          isNull,
+        );
         verifyNever(() => mock.decryptConfig(any(), any()));
         expect(File(path).readAsStringSync(), 'proxies: []');
       });
@@ -165,19 +178,23 @@ void main() {
         tcpConcurrent: false,
         externalController: ExternalControllerStatus.close,
         unifiedDelay: false,
+        options: CoreOptions(testUrl: 'http://x.com'),
       );
-      when(() => mock.updateConfig(params)).thenAnswer((_) async => 'ok');
-      final result = await controller.updateConfig(params);
-      expect(result, 'ok');
+      when(() => mock.updateConfig(params)).thenAnswer((_) async {});
+      await controller.updateConfig(params);
+      verify(() => mock.updateConfig(params)).called(1);
     });
 
     test('setupConfig waits for asynchronous preload', () async {
-      const params = SetupParams(selectedMap: {}, testUrl: 'http://x.com');
+      const params = SetupParams(
+        selectedMap: {},
+        options: CoreOptions(testUrl: 'http://x.com'),
+      );
       final preloadCompleter = Completer<void>();
       final events = <String>[];
       when(() => mock.setupConfig(params)).thenAnswer((_) {
         events.add('setup');
-        return Future.value('ok');
+        return Future.value();
       });
 
       final setupFuture = controller.setupConfig(
@@ -195,7 +212,8 @@ void main() {
       expect(completed, isFalse);
 
       preloadCompleter.complete();
-      expect(await setupFuture, 'ok');
+      await setupFuture;
+      expect(completed, isTrue);
     });
   });
 
@@ -250,7 +268,7 @@ void main() {
     });
 
     test('closeConnection delegates', () async {
-      when(() => mock.closeConnection('id1')).thenAnswer((_) async => true);
+      when(() => mock.closeConnection('id1')).thenAnswer((_) async {});
       await controller.closeConnection('id1');
       verify(() => mock.closeConnection('id1')).called(1);
     });
@@ -310,52 +328,58 @@ void main() {
         () => mock.getMemoryStats(),
       ).thenAnswer((_) async => const CoreMemoryStats(rss: 2048));
       final result = await controller.getMemoryStats();
-      expect(result?.rss, 2048);
+      expect(result.rss, 2048);
     });
   });
 
   group('misc methods', () {
-    test('getDelay delegates structured delay', () async {
-      when(() => mock.asyncTestDelay(any(), any(), any())).thenAnswer(
+    test('testDelay delegates structured delay', () async {
+      when(() => mock.testDelay(any())).thenAnswer(
         (_) async => const Delay(name: 'P1', value: 100, url: 'test.com'),
       );
-      final result = await controller.getDelay(
-        'test.com',
-        'P1',
-        const Duration(seconds: 1),
+      final result = await controller.testDelay(
+        const TestDelayParams(
+          proxyName: 'P1',
+          testUrl: 'test.com',
+          timeout: 1000,
+        ),
       );
-      expect(result?.name, 'P1');
-      expect(result?.value, 100);
+      expect(result.name, 'P1');
+      expect(result.value, 100);
     });
 
-    test('startListener delegates', () async {
-      when(() => mock.startListener()).thenAnswer((_) async => true);
-      final result = await controller.startListener();
-      expect(result, true);
+    test('listener commands delegate', () async {
+      when(() => mock.startListener()).thenAnswer((_) async {});
+      when(() => mock.stopListener()).thenAnswer((_) async {});
+      await controller.startListener();
+      await controller.stopListener();
+      verify(() => mock.startListener()).called(1);
+      verify(() => mock.stopListener()).called(1);
     });
 
-    test('stopListener delegates', () async {
-      when(() => mock.stopListener()).thenAnswer((_) async => false);
-      final result = await controller.stopListener();
-      expect(result, false);
+    test('updateGeoData surfaces what the Core refuses', () async {
+      when(() => mock.updateGeoData('MMDB')).thenAnswer(
+        (_) async => throw const CoreMethodException(
+          code: 'core_error',
+          message: 'busy',
+        ),
+      );
+      await expectLater(
+        controller.updateGeoData('MMDB'),
+        throwsA(isA<CoreMethodException>()),
+      );
     });
 
-    test('updateGeoData delegates', () async {
-      when(() => mock.updateGeoData('MMDB')).thenAnswer((_) async => 'ok');
-      final result = await controller.updateGeoData('MMDB');
-      expect(result, 'ok');
-    });
-
-    test('requestGc delegates to forceGc', () async {
-      when(() => mock.forceGc()).thenAnswer((_) async => true);
-      await controller.requestGc();
+    test('forceGc delegates', () async {
+      when(() => mock.forceGc()).thenAnswer((_) async {});
+      await controller.forceGc();
       verify(() => mock.forceGc()).called(1);
     });
 
     test('clearEffect delegates', () async {
-      when(() => mock.clearEffect(42)).thenAnswer((_) async => 'ok');
-      final result = await controller.clearEffect(42);
-      expect(result, 'ok');
+      when(() => mock.clearEffect(42)).thenAnswer((_) async {});
+      await controller.clearEffect(42);
+      verify(() => mock.clearEffect(42)).called(1);
     });
   });
 }

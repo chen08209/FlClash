@@ -109,7 +109,6 @@ void main() {
     ) async {
       reloads.add(invocation.positionalArguments.single as String);
       if (reloadError case final error?) throw error;
-      return '';
     });
     when(() => core.compileRuleSet(any(), url: any(named: 'url'))).thenAnswer((
       invocation,

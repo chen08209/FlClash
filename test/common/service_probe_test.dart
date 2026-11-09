@@ -212,7 +212,7 @@ void main() {
     });
 
     test('gives up on an error, an empty body or an unparseable one', () async {
-      final answers = <OutboundIpResult?>[
+      final answers = <OutboundIpResult>[
         const OutboundIpResult(error: 'timeout'),
         const OutboundIpResult(url: 'https://api.country.is'),
         const OutboundIpResult(url: 'https://api.country.is', body: 'garbage'),
@@ -220,13 +220,12 @@ void main() {
           url: 'https://unknown.example',
           body: 'ip=1.2.3.4',
         ),
-        null,
       ];
       when(
         () => core.outboundIp(any()),
       ).thenAnswer((_) async => answers.removeAt(0));
 
-      for (var attempt = 0; attempt < 5; attempt++) {
+      for (var attempt = 0; attempt < 4; attempt++) {
         expect(
           parseOutboundIp(await lookupOutboundIp(controller, 'HK-01')),
           isNull,

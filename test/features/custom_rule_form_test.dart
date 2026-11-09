@@ -9,12 +9,13 @@ import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/custom/rules.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 class _RecordingProfileRules extends ProfileRules {
   _RecordingProfileRules(this.initial);
@@ -124,10 +125,7 @@ class _Harness {
     await tester.tap(find.byTooltip(currentAppLocalizations.add));
     await tester.pumpAndSettle();
     await tester.tap(
-      find.descendant(
-        of: find.byType(CommonPopupMenu),
-        matching: find.text(label),
-      ),
+      find.descendant(of: find.byType(PopupMenu), matching: find.text(label)),
     );
     await tester.pumpAndSettle();
   }
@@ -371,7 +369,7 @@ void main() {
 
     await tester.tap(find.byTooltip(l10n.add));
     await tester.pumpAndSettle();
-    final menu = find.byType(CommonPopupMenu);
+    final menu = find.byType(PopupMenu);
     for (final label in [l10n.add, l10n.quickActions, l10n.quickEdit]) {
       expect(find.descendant(of: menu, matching: find.text(label)), findsOne);
     }
@@ -411,9 +409,9 @@ void main() {
 
     final l10n = currentAppLocalizations;
     expect(find.text(l10n.additionalParameters), findsOne);
-    final switches = find.byType(CommonSwitch);
+    final switches = find.byType(Switch);
     expect(switches, findsNWidgets(2));
-    expect(tester.widgetList<CommonSwitch>(switches).map((s) => s.value), [
+    expect(tester.widgetList<Switch>(switches).map((s) => s.value), [
       false,
       false,
     ]);
@@ -423,7 +421,7 @@ void main() {
     await tester.tap(switches.at(1));
     await tester.pumpAndSettle();
 
-    expect(tester.widgetList<CommonSwitch>(switches).map((s) => s.value), [
+    expect(tester.widgetList<Switch>(switches).map((s) => s.value), [
       true,
       true,
     ]);
@@ -452,7 +450,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(
       find.descendant(
-        of: find.byType(CommonDialog),
+        of: find.byType(AlertDialog),
         matching: find.text(l10n.delete),
       ),
     );

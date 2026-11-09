@@ -41,9 +41,10 @@ extension _RendererGutter on _CodeFieldRenderer {
       activeLastLine--;
     }
 
-    final activeLineColor = baseLineNumberStyle?.color ?? Colors.white;
+    final activeLineColor =
+        baseLineNumberStyle?.color ?? const Color(0xFFFFFFFF);
     final inactiveLineColor =
-        baseLineNumberStyle?.color?.withAlpha(120) ?? Colors.grey;
+        baseLineNumberStyle?.color?.withAlpha(120) ?? const Color(0xFF9E9E9E);
 
     for (final i in _paintLines) {
       final contentTop = _lineTop(i);
@@ -74,15 +75,12 @@ extension _RendererGutter on _CodeFieldRenderer {
         final isInsideFoldedParent = _isLineFolded(i);
 
         if (!isInsideFoldedParent) {
-          final icon = foldRange.isFolded
-              ? Icons.chevron_right_outlined
-              : Icons.keyboard_arrow_down_outlined;
           final iconColor = gutterStyle.foldIconColor ?? lineNumberStyle.color;
 
           _drawFoldIcon(
             canvas,
             offset,
-            icon,
+            foldRange.isFolded,
             iconColor!,
             _foldIconSize,
             contentTop,
@@ -104,36 +102,34 @@ extension _RendererGutter on _CodeFieldRenderer {
   void _drawFoldIcon(
     Canvas canvas,
     Offset offset,
-    IconData icon,
+    bool folded,
     Color color,
-    double fontSize,
+    double size,
     double contentTop,
   ) {
-    final iconPainter = TextPainter(
-      text: TextSpan(
-        text: String.fromCharCode(icon.codePoint),
-        style: TextStyle(
-          color: color,
-          fontSize: fontSize,
-          fontFamily: icon.fontFamily,
-          package: icon.fontPackage,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
+    final center = Offset(
+      offset.dx + _gutterWidth - _foldIconStripWidth / 2,
+      _screenY(offset, contentTop) + _lineHeight / 2,
     );
-    iconPainter.layout();
-    final iconX =
-        offset.dx +
-        _gutterWidth -
-        (_foldIconStripWidth + iconPainter.width) / 2;
-    iconPainter.paint(
-      canvas,
-      Offset(
-        iconX,
-        _screenY(offset, contentTop) + (_lineHeight - iconPainter.height) / 2,
-      ),
+    final reach = size * 0.22;
+    final path = folded
+        ? (Path()
+            ..moveTo(center.dx - reach / 2, center.dy - reach)
+            ..lineTo(center.dx + reach / 2, center.dy)
+            ..lineTo(center.dx - reach / 2, center.dy + reach))
+        : (Path()
+            ..moveTo(center.dx - reach, center.dy - reach / 2)
+            ..lineTo(center.dx, center.dy + reach / 2)
+            ..lineTo(center.dx + reach, center.dy - reach / 2));
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = size * 0.1
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
     );
-    iconPainter.dispose();
   }
 
   void _drawIndentGuides(

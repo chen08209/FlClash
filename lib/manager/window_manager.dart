@@ -9,7 +9,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/foundation.dart' show ValueListenable;
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window/window.dart';
 
@@ -444,8 +444,8 @@ class WindowHeaderBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     final backdropOpacity = this.backdropOpacity;
-    return Material(
-      color: backdropOpacity != null ? Colors.transparent : null,
+    return Surface(
+      color: backdropOpacity != null ? Colors.transparent : colorScheme.surface,
       shape: Border(bottom: Divider.createBorderSide(context)),
       child: SizedBox(
         height: height,
@@ -476,21 +476,27 @@ class WindowHeaderBar extends StatelessWidget {
                 top: 0,
                 bottom: 0,
                 right: 0,
-                child: IconButtonTheme(
-                  data: IconButtonThemeData(
-                    style: ButtonStyle(
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      minimumSize: WidgetStatePropertyAll(
-                        getCaptionButtonSize(height),
-                      ),
-                      maximumSize: WidgetStatePropertyAll(
-                        getCaptionButtonSize(height),
-                      ),
-                      padding: const WidgetStatePropertyAll(EdgeInsets.zero),
-                      shape: const WidgetStatePropertyAll(AppShape.none),
+                child: ButtonTheme(
+                  // Caption buttons answer a pointer as the system's do.
+                  data: ButtonThemeData(
+                    icon: ButtonStyle(
+                      tapTargetSize: TapTargetSize.shrinkWrap,
+                      minimumSize: getCaptionButtonSize(height),
+                      maximumSize: getCaptionButtonSize(height),
+                      padding: EdgeInsets.zero,
+                      shape: AppShape.none,
                       foregroundColor: WidgetStatePropertyAll(
-                        context.colorScheme.onSurface,
+                        colorScheme.onSurface,
                       ),
+                      overlayColor: WidgetStateProperty.fromMap({
+                        WidgetState.pressed:
+                            colorScheme.onSurfaceVariant.opacity10,
+                        WidgetState.hovered: colorScheme.onSurfaceVariant
+                            .withValues(alpha: 0.08),
+                        WidgetState.focused:
+                            colorScheme.onSurfaceVariant.opacity10,
+                      }),
+                      pressLook: PressLook.none,
                     ),
                   ),
                   child: actions!,
@@ -546,10 +552,10 @@ class WindowHeaderActions extends StatelessWidget {
                     ? appLocalizations.unpinWindow
                     : appLocalizations.pinWindow,
                 style: const ButtonStyle(
-                  shape: WidgetStatePropertyAll(CircleBorder()),
-                  minimumSize: WidgetStatePropertyAll(Size.zero),
-                  maximumSize: WidgetStatePropertyAll(Size.infinite),
-                  iconSize: WidgetStatePropertyAll(pinIconSize),
+                  shape: AppShape.circle,
+                  minimumSize: Size.zero,
+                  maximumSize: Size.infinite,
+                  iconSize: pinIconSize,
                 ),
                 onPressed: onPin,
                 icon: AnimatedGlyph(

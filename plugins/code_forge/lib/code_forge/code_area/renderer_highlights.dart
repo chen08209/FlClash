@@ -378,31 +378,71 @@ extension _RendererHighlights on _CodeFieldRenderer {
 
   Rect? getVisibleSelectionRect() {
     final selection = controller.selection;
-    if (selection.isCollapsed) return null;
-    double rowTop(int offset) {
-      final line = controller.getLineAtOffset(offset);
-      final text = _lineText(line);
-      final box = _boxBefore(
-        line,
-        text,
-        text.toUtf16Offset(offset - controller.getLineStartOffset(line)),
-      );
-      final top = box == null ? 0.0 : _rowTopForBox(box);
-      return _screenY(Offset.zero, _lineTop(line) + top);
+    if (selection.isCollapsed) return _visibleCaretRect();
+    final startRow = _selectionRowTop(selection.start);
+    final endRow = _selectionRowTop(selection.end - 1);
+    var left = _gutterWidth;
+    var right = size.width;
+    if (startRow == endRow) {
+      final startX = _selectionRowX(selection.start);
+      final endX = _selectionRowX(selection.end);
+      // A start that opens a wrapped row reports the end of the row before it.
+      if (startX < endX) {
+        left = startX;
+        right = endX;
+      }
     }
-
     final rows = Rect.fromLTRB(
-      _gutterWidth,
-      rowTop(selection.start),
-      size.width,
-      rowTop(selection.end - 1) + _lineHeight + (isMobile ? _handleSize : 0),
-    ).intersect(Offset.zero & size);
+      left,
+      startRow,
+      right,
+      endRow + _lineHeight + (isMobile ? _handleSize : 0),
+    ).intersect(Rect.fromLTRB(_gutterWidth, 0, size.width, size.height));
     return rows.isEmpty
         ? null
         : Rect.fromPoints(
             localToGlobal(rows.topLeft),
             localToGlobal(rows.bottomRight),
           );
+  }
+
+  Rect? _visibleCaretRect() {
+    final caret = _getCaretInfo();
+    final x = _screenX(Offset.zero, caret.offset.dx);
+    final y = _screenY(Offset.zero, caret.offset.dy);
+    final visible =
+        x >= _gutterWidth &&
+        x <= size.width &&
+        y >= 0 &&
+        y + caret.height <= size.height;
+    if (!visible) return null;
+    return Rect.fromPoints(
+      localToGlobal(Offset(x, y)),
+      localToGlobal(Offset(x, y + caret.height)),
+    );
+  }
+
+  double _selectionRowTop(int offset) {
+    final line = controller.getLineAtOffset(offset);
+    final text = _lineText(line);
+    final box = _boxBefore(
+      line,
+      text,
+      text.toUtf16Offset(offset - controller.getLineStartOffset(line)),
+    );
+    final top = box == null ? 0.0 : _rowTopForBox(box);
+    return _screenY(Offset.zero, _lineTop(line) + top);
+  }
+
+  double _selectionRowX(int offset) {
+    final line = controller.getLineAtOffset(offset);
+    final text = _lineText(line);
+    final box = _boxBefore(
+      line,
+      text,
+      text.toUtf16Offset(offset - controller.getLineStartOffset(line)),
+    );
+    return _screenX(Offset.zero, box?.right ?? 0);
   }
 
   Offset _selectionHandleAnchor(Offset offset, int line, int column) {
@@ -442,7 +482,9 @@ extension _RendererHighlights on _CodeFieldRenderer {
     final screenX = _screenX(offset, 0);
 
     final highlightColor =
-        (textStyle?.color ?? editorTheme['root']?.color ?? Colors.yellow)
+        (textStyle?.color ??
+                editorTheme['root']?.color ??
+                const Color(0xFFFFEB3B))
             .withValues(alpha: opacity);
 
     final paint = Paint()

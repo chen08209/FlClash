@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
+import 'sources.dart';
+
 final _circularApi = RegExp(
   r'\b(?:RoundedRectangleBorder|ContinuousRectangleBorder|StadiumBorder'
   r'|ClipRRect|drawRRect|drawDRRect|addRRect|clipRRect)\b|\bRRect\.',
@@ -38,7 +40,7 @@ void main() {
   test('lib rounds corners with superellipses, not circular arcs', () {
     final offenders = <String>[];
 
-    for (final entity in Directory('lib').listSync(recursive: true)) {
+    for (final entity in sourceEntities()) {
       if (entity is! File ||
           !entity.path.endsWith('.dart') ||
           entity.path.contains('/generated/')) {

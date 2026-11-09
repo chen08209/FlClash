@@ -5,7 +5,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/rendering.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
@@ -67,7 +67,7 @@ void main() {
     for (final target in RuleTarget.baseTargetNames) {
       await tester.pumpWidget(
         TestApp(
-          child: Material(
+          child: Surface(
             child: RuleItem(
               isSelected: false,
               rule: Rule(content: 'example.com', ruleTarget: target),
@@ -88,7 +88,7 @@ void main() {
   testWidgets('a rule without content centers its action', (tester) async {
     await tester.pumpWidget(
       TestApp(
-        child: Material(
+        child: Surface(
           child: Center(
             child: SizedBox(
               width: 600,
@@ -121,7 +121,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       TestApp(
-        child: Material(
+        child: Surface(
           child: Center(
             child: SizedBox(
               width: 480,

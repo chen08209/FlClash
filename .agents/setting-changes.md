@@ -26,8 +26,10 @@ The update path carries these fields:
   `device`, `stack`, and `auto-route`, always on.
 - From `PatchClashConfig`, only while picked in `generalOverrideKeys`: `ipv6`, `tcp-concurrent` and `unified-delay`.
   Unpicked, they go as null and Go leaves the profile's value running.
-- From other settings: `NetworkProps.authentication`, and `AppSettingProps.checkCertificate`, sent as
-  `skip-cert-verify`.
+- `NetworkProps.authentication`, and `coreOptionsProvider`'s `CoreOptions`, sent as `options`:
+  `PatchClashConfig.testUrl`, `AppSettingProps.checkCertificate` as `skip-cert-verify`, and `Mitm.capture` as
+  `mitm-capture`, which `setupOnly` resets and `coreJson` leaves out of the `mitm` section.
+  `SetupParams.options` carries the same object, so a Core holds them from its first config.
 
 On desktop, `updateListeners` rebuilds the TUN from the patched `tun`. Enabling TUN may need authorization first. When
 `requestAdmin` gets it newly granted, `updateConfig` restarts the Core instead of patching it. On Android,
@@ -57,11 +59,11 @@ rebuilds the profile YAML and hands it to Go's `applyConfig` through `setupConfi
   `route-exclude-address`.
 
 A change to anything else in `PatchClashConfig` therefore reaches it. Today that is the DNS, TUN and general overrides
-(`dns`, `dnsOverrideKeys`, `tunOverride`, `tunOverrideKeys`, `generalOverrideKeys`, `geodata-loader`, `testUrl`),
-`hosts`, the extra inbound ports (`port`, `socks-port`, `redir-port`, `tproxy-port`), the dialer options
-(`keep-alive-*`, `disable-keep-alive`, `interface-name`, its mode, `routing-mark`) and `global-ua`. A new
-`PatchClashConfig` field written by `_makeRealProfileTask` lands here without further work. A value the profile build
-reads from another settings object has to be added to `setupPatchProvider`.
+(`dns`, `dnsOverrideKeys`, `tunOverride`, `tunOverrideKeys`, `generalOverrideKeys`, `geodata-loader`), `hosts`, the
+extra inbound ports (`port`, `socks-port`, `redir-port`, `tproxy-port`), the dialer options (`keep-alive-*`,
+`disable-keep-alive`, `interface-name`, its mode, `routing-mark`), `global-ua` and `mitm` but its `capture`, which the
+task writes over the profile's own section. A new `PatchClashConfig` field written by `_makeRealProfileTask` lands here without further
+work. A value the profile build reads from another settings object has to be added to `setupPatchProvider`.
 
 `applyProfileDebounce` waits for the changes to stop for at least 2 s, and no less than the last push to the Core
 took, up to 10 s. The floor takes in a few switches flipped in a row and keeps a change made just before leaving a page
@@ -77,8 +79,8 @@ A page waits for its own close to apply only behind a save or an apply-now butto
 through their save button alone, and leaving with unsaved entries asks first.
 
 An apply without `force` sends nothing when the md5 of the generated YAML has not changed. A value that only
-`SetupParams` carries never changes the YAML, so this path does not deliver it. `PatchClashConfig.testUrl` is that
-case, so `CoreManager` asks for a `force` apply when it changes.
+`SetupParams` carries never changes the YAML, so this path does not deliver it; `CoreOptions` reach a running Core
+through the update path instead.
 
 Profile content does not go through `setupPatchProvider`. `setupStateProvider` reads rules, groups and scripts from the
 database once instead of watching them. Content is applied explicitly by whatever changes it:
@@ -91,8 +93,8 @@ database once instead of watching them. Content is applied explicitly by whateve
   one content `CoreManager` watches, small enough to keep watched, so no writer has to remember the apply: any change
   to them calls `applyIfGlobalRulesUsed`, since only a profile with the standard extension takes them in.
 - A profile switch runs `fullSetup`.
-- A start applies again with `force` unless the last apply saw the same inputs (`inputsApplied`), the `testUrl` and
-  `skipCertVerify` that only `SetupParams` carries included.
+- A start applies again with `force` unless the last apply saw the same inputs (`inputsApplied`), the `CoreOptions`
+  in `SetupParams` included.
 
 ## Restart
 

@@ -1,10 +1,11 @@
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 void _noop() {}
 
@@ -85,7 +86,7 @@ void main() {
               child: ElasticPress(
                 child: GooPane(
                   child: ColoredBox(
-                    color: Colors.blue,
+                    color: Color(0xFF2196F3),
                     child: SizedBox.square(dimension: 44),
                   ),
                 ),
@@ -124,7 +125,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       TestApp(
-        child: Material(
+        child: Surface(
           child: Center(
             child: SizedBox(
               width: 300,

@@ -1,11 +1,13 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/features.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 TrackerInfo _tracker({
   String rule = 'DOMAIN-SUFFIX',
@@ -44,7 +46,8 @@ void main() {
   ) async {
     await tester.pumpWidget(
       TestApp(
-        homeBuilder: (child) => Scaffold(body: child),
+        wrapInProviderScope: true,
+        homeBuilder: (child) => HostScaffold(body: child),
         child: SheetProvider(
           type: SheetType.page,
           child: TrackerInfoDetailView(
@@ -85,7 +88,8 @@ void main() {
   testWidgets('TrackerInfoDetailView omits empty fields', (tester) async {
     await tester.pumpWidget(
       TestApp(
-        homeBuilder: (child) => Scaffold(body: child),
+        wrapInProviderScope: true,
+        homeBuilder: (child) => HostScaffold(body: child),
         child: SheetProvider(
           type: SheetType.page,
           child: TrackerInfoDetailView(trackerInfo: _tracker()),
@@ -101,18 +105,20 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('TrackerInfoItem shows all chains and forwards their clicks', (
+  testWidgets('TrackerInfoItem shows all chains and filters by them', (
     tester,
   ) async {
-    final clicked = <String>[];
+    final clicked = <RecordFilter>[];
     await tester.pumpWidget(
       TestApp(
         wrapInProviderScope: true,
-        homeBuilder: (child) => Scaffold(body: child),
-        child: TrackerInfoItem(
-          trackerInfo: _tracker(chains: const ['Proxy A', 'Proxy B']),
-          detailTitle: 'detail',
-          onClickKeyword: clicked.add,
+        homeBuilder: (child) => HostScaffold(body: child),
+        child: RecordFilterScope(
+          onFilter: clicked.add,
+          child: TrackerInfoItem(
+            trackerInfo: _tracker(chains: const ['Proxy A', 'Proxy B']),
+            detailTitle: 'detail',
+          ),
         ),
       ),
     );
@@ -126,7 +132,10 @@ void main() {
     await tester.tap(find.text('Proxy B'));
     await tester.pump();
 
-    expect(clicked, ['Proxy A', 'Proxy B']);
+    expect(clicked, const [
+      RecordFilter(RecordFacetKind.proxy, 'Proxy A'),
+      RecordFilter(RecordFacetKind.proxy, 'Proxy B'),
+    ]);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -137,7 +146,7 @@ void main() {
     await tester.pumpWidget(
       TestApp(
         wrapInProviderScope: true,
-        homeBuilder: (child) => Scaffold(body: child),
+        homeBuilder: (child) => HostScaffold(body: child),
         child: TrackerInfoItem(
           trackerInfo: _tracker(
             rulePayload: 'example.com',
@@ -175,14 +184,13 @@ void main() {
       await tester.pumpWidget(
         TestApp(
           wrapInProviderScope: true,
-          homeBuilder: (child) => Scaffold(body: child),
+          homeBuilder: (child) => HostScaffold(body: child),
           child: TrackerInfoItem(
             key: ValueKey(isLive),
             trackerInfo: _tracker(
               host: 'example.com',
             ).copyWith(uploadSpeed: 2048, downloadSpeed: 4096),
             isLive: isLive,
-            action: const SizedBox(key: ValueKey('action')),
             detailTitle: 'detail',
           ),
         ),
@@ -197,13 +205,6 @@ void main() {
     await pumpItem(isLive: true);
     expect(find.text(DateTime(2026, 1, 1, 10, 30).showFull), findsNothing);
     expect(find.textContaining('4KB/s'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(RecordHeader),
-        matching: find.byKey(const ValueKey('action')),
-      ),
-      findsOneWidget,
-    );
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -213,7 +214,8 @@ void main() {
   ) async {
     await tester.pumpWidget(
       TestApp(
-        homeBuilder: (child) => Scaffold(body: child),
+        wrapInProviderScope: true,
+        homeBuilder: (child) => HostScaffold(body: child),
         child: SheetProvider(
           type: SheetType.page,
           child: TrackerInfoDetailView(

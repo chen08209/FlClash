@@ -2,13 +2,13 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
+import 'sources.dart';
+
 /// The one button that carries its label on an enclosing [Tooltip] instead of
 /// its own `tooltip:`. Nesting a second tooltip inside would fight it.
 const _wrappedInTooltip = 'lib/views/dashboard/widgets/core_status_button.dart';
 
-final _iconButton = RegExp(
-  r'\bIconButton(?:\.(?:filled|filledTonal|outlined))?\(',
-);
+final _iconButton = RegExp(r'\bCommonIconButton(?:\.filled)?\(');
 
 Iterable<File> _dartFilesIn(String root) sync* {
   final directory = Directory(root);
@@ -38,10 +38,12 @@ String _arguments(String source, int start) {
 }
 
 void main() {
-  test('every icon-only IconButton carries a tooltip', () {
+  test('every IconButton carries a tooltip', () {
     final unlabelled = <String>[];
 
-    for (final file in _dartFilesIn('lib')) {
+    for (final file in [
+      for (final root in sourceRoots) ..._dartFilesIn(root),
+    ]) {
       final source = file.readAsStringSync();
       if (file.path == _wrappedInTooltip) continue;
 

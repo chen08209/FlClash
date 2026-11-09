@@ -65,9 +65,8 @@ func TestSkipCertVerifyLeavesExplicitCAOptionsStrict(t *testing.T) {
 func TestUpdateConfigAppliesSkipCertVerify(t *testing.T) {
 	withCurrentConfig(t, &config.Config{General: &config.General{}, Controller: &config.Controller{}})
 	withSkipCertVerify(t, false)
-	skip := true
 
-	if err := updateConfig(&UpdateParams{SkipCertVerify: &skip}); err != nil {
+	if err := updateConfig(&UpdateParams{Options: &CoreOptions{SkipCertVerify: true}}); err != nil {
 		t.Fatalf("updateConfig error: %v", err)
 	}
 	if !skipCertVerify.Load() {
@@ -77,6 +76,6 @@ func TestUpdateConfigAppliesSkipCertVerify(t *testing.T) {
 		t.Fatalf("updateConfig error: %v", err)
 	}
 	if !skipCertVerify.Load() {
-		t.Error("an update without skip-cert-verify reset the download policy")
+		t.Error("an update without options reset the download policy")
 	}
 }

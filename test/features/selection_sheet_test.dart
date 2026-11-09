@@ -3,10 +3,11 @@ import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 final _proxyTypes = {
   for (var i = 1; i <= sheetSearchMinItemCount; i++)
@@ -95,7 +96,7 @@ void main() {
       ),
     );
     globalState.navigatorKey.currentState!.push(
-      MaterialPageRoute<void>(
+      HostPageRoute<void>(
         builder: (_) => SheetProvider(
           type: SheetType.bottomSheet,
           child: SelectionSheet<String>(

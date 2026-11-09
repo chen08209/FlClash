@@ -9,19 +9,20 @@ import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:fl_clash/views/dashboard/widgets/profile_detail.dart';
 import 'package:fl_clash/views/dashboard/widgets/profiles.dart';
-import 'package:fl_clash/views/profiles/profiles.dart';
 import 'package:fl_clash/views/profiles/custom/custom.dart';
 import 'package:fl_clash/views/profiles/custom/rules.dart';
+import 'package:fl_clash/views/profiles/profiles.dart';
 import 'package:fl_clash/views/proxies/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart' show Override;
 
 import '../../helpers/app_paths.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
+import '../../helpers/host_scaffold.dart';
 
 const _gib = 1024 * 1024 * 1024;
 
@@ -117,7 +118,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: TestApp(
-          child: Scaffold(
+          child: HostScaffold(
             body: Align(
               alignment: Alignment.topLeft,
               child: SizedBox(width: width, child: card),
@@ -491,13 +492,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(CustomProfileView), findsOneWidget);
     expect(
-      find.byKey(const ValueKey(NullStatusIllustration.profile)),
+      find.byKey(const ValueKey<Illustration>(NullStatusIllustration.profile)),
       findsNothing,
     );
     expect(
       find.descendant(
         of: find.byType(CustomProfileView),
-        matching: find.byType(CommonCard),
+        matching: find.byType(Card),
       ),
       findsWidgets,
     );
@@ -512,7 +513,7 @@ void main() {
     );
 
     await tester.tap(
-      find.ancestor(of: find.text('Rule'), matching: find.byType(CommonCard)),
+      find.ancestor(of: find.text('Rule'), matching: find.byType(Card)),
     );
     await tester.pumpAndSettle();
 

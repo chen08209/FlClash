@@ -13,7 +13,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/proxies/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -23,6 +23,7 @@ import '../helpers/context_menu.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../plugins/code_forge/support.dart' show initEditorNative;
+import '../helpers/host_scaffold.dart';
 
 class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
@@ -31,7 +32,7 @@ class _ProvidersSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
+    return HostScaffold(
       body: CustomScrollView(
         slivers: [
           ExternalProvidersSliver(providers: ref.watch(providersProvider)),
@@ -113,18 +114,11 @@ void main() {
     return container;
   }
 
-  Future<void> pump(
-    WidgetTester tester,
-    ProviderContainer container, {
-    bool withStatusManager = false,
-  }) async {
+  Future<void> pump(WidgetTester tester, ProviderContainer container) async {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: TestApp(
-          withStatusManager: withStatusManager,
-          child: const _ProvidersSection(),
-        ),
+        child: const TestApp(child: _ProvidersSection()),
       ),
     );
     await tester.pumpAndSettle();
@@ -230,7 +224,7 @@ void main() {
     final container = containerFor(tester, providers);
     await pump(tester, container);
 
-    expect(find.byType(SliverList), findsOneWidget);
+    expect(find.byType(SliverPrismList), findsOneWidget);
     expect(find.text('proxy-0'), findsOneWidget);
     expect(find.text('proxy-49'), findsNothing);
   });
@@ -443,7 +437,7 @@ void main() {
     final container = containerFor(tester, [provider]);
     await pump(tester, container);
 
-    expect(find.byType(CommonCircleLoading), findsNothing);
+    expect(find.byType(ActivityIndicator), findsNothing);
 
     final updating = container.read(updatingKeysProvider.notifier);
     updating.start(provider.updatingKey);
@@ -451,8 +445,8 @@ void main() {
     await rightClick(tester, find.text('http-one'));
     await settleTrailing(tester);
 
-    expect(find.byType(CommonCircleLoading), findsOne);
-    expect(find.byType(CommonPopupMenu), findsNothing);
+    expect(find.byType(ActivityIndicator), findsOne);
+    expect(find.byType(PopupMenu), findsNothing);
   });
 
   testWidgets('keeps loading state for virtualized offscreen rows', (
@@ -482,7 +476,7 @@ void main() {
     expect(
       find.descendant(
         of: providerRow,
-        matching: find.byType(CommonCircleLoading),
+        matching: find.byType(ActivityIndicator),
       ),
       findsOneWidget,
     );
@@ -500,9 +494,7 @@ void main() {
     when(
       () => core.updateExternalProvider('proxy-a'),
     ).thenAnswer((_) => completer.future);
-    when(
-      () => core.updateExternalProvider('rule-a'),
-    ).thenAnswer((_) async => '');
+    when(() => core.updateExternalProvider('rule-a')).thenAnswer((_) async {});
     when(() => core.getExternalProvider(any())).thenAnswer(
       (invocation) async =>
           _provider(invocation.positionalArguments.first as String),
@@ -522,10 +514,7 @@ void main() {
     );
     for (final pending in [header, pendingRow]) {
       expect(
-        find.descendant(
-          of: pending,
-          matching: find.byType(CommonCircleLoading),
-        ),
+        find.descendant(of: pending, matching: find.byType(ActivityIndicator)),
         findsOne,
       );
     }
@@ -536,7 +525,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.pump(const Duration(milliseconds: 700));
 
-    expect(find.byType(CommonCircleLoading), findsNothing);
+    expect(find.byType(ActivityIndicator), findsNothing);
     expect(find.byGlyph(AppGlyphs.sync), findsOne);
     verify(() => core.updateExternalProvider('proxy-a')).called(1);
     verify(() => core.updateExternalProvider('rule-a')).called(1);
@@ -555,7 +544,7 @@ void main() {
     when(
       () => core.getProxies(),
     ).thenAnswer((_) async => const ProxiesData(proxies: {}, all: []));
-    await pump(tester, container, withStatusManager: true);
+    await pump(tester, container);
 
     await tester.tap(find.byGlyph(AppGlyphs.sync));
     await tester.pumpAndSettle();
@@ -613,7 +602,7 @@ void main() {
         providerName: 'editable',
         data: any(named: 'data'),
       ),
-    ).thenAnswer((_) async => '');
+    ).thenAnswer((_) async {});
     when(
       () => core.getExternalProvider('editable'),
     ).thenAnswer((_) async => provider);
@@ -686,7 +675,12 @@ void main() {
         providerName: 'rejected',
         data: any(named: 'data'),
       ),
-    ).thenAnswer((_) async => 'invalid payload');
+    ).thenAnswer(
+      (_) async => throw const CoreMethodException(
+        code: 'core_error',
+        message: 'invalid payload',
+      ),
+    );
 
     final container = containerFor(tester, [provider]);
     await pump(tester, container);
@@ -777,18 +771,18 @@ void main() {
     final container = containerFor(tester, [provider]);
     await pump(tester, container);
 
-    expect(find.byType(CommonCircleLoading), findsNothing);
+    expect(find.byType(ActivityIndicator), findsNothing);
 
     await openMenu(tester, 'http-one');
     await tester.tap(find.text(currentAppLocalizations.sync));
     await settleTrailing(tester);
 
-    expect(find.byType(CommonCircleLoading), findsOne);
+    expect(find.byType(ActivityIndicator), findsOne);
 
     completer.complete('');
     await tester.pumpAndSettle();
     await tester.pump(const Duration(milliseconds: 700));
 
-    expect(find.byType(CommonCircleLoading), findsNothing);
+    expect(find.byType(ActivityIndicator), findsNothing);
   });
 }

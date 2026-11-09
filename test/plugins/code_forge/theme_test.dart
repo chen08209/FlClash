@@ -1,9 +1,10 @@
 import 'dart:ui' as ui;
 
 import 'package:code_forge/code_forge.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/prism_ui.dart';
 import 'package:re_highlight/styles/atom-one-light.dart';
 
 import 'support.dart';

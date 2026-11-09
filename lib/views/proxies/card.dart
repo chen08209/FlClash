@@ -5,7 +5,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void selectGroupProxy(
@@ -26,10 +26,18 @@ void selectGroupProxy(
         .changeProxyDebounce(groupName, nextProxyName);
     return;
   }
-  dialogs.showNotifier(
+  dialogs.showBanner(
     currentAppLocalizations.notSelectedTip,
-    level: MessageLevel.warning,
+    level: BannerLevel.warning,
   );
+}
+
+/// Built-ins and groups have no definition, and a custom profile's own proxies
+/// are the local proxies already.
+bool _isAddableToLocal(Proxy proxy, {required bool isCustomProfile}) {
+  return (proxy.providerName != null || !isCustomProfile) &&
+      !reservedCustomProxyNames.contains(proxy.name) &&
+      GroupTypeExtension.getGroupType(proxy.type) == null;
 }
 
 bool _hasDefinition(Proxy proxy) {
@@ -98,7 +106,7 @@ class ProxyCard extends ConsumerWidget {
     globalState.safeRun(() => proxiesAction.copyProxy(proxy.name));
   }
 
-  List<CommonPopupMenuItem> _menuItems(
+  List<PopupMenuItem> _menuItems(
     BuildContext context,
     WidgetRef ref, {
     required bool inUse,
@@ -108,27 +116,27 @@ class ProxyCard extends ConsumerWidget {
     final appLocalizations = context.appLocalizations;
     return [
       if (groupType == GroupType.Selector)
-        CommonPopupMenuItem(
+        PopupMenuItem(
           glyph: AppGlyphs.checkCircle,
           label: appLocalizations.select,
           checked: inUse,
           onPressed: () => _handleSelect(ref),
         )
       else if (groupType.isComputedSelected)
-        CommonPopupMenuItem(
+        PopupMenuItem(
           glyph: AppGlyphs.pin,
           label: appLocalizations.preferred,
           checked: pinned,
           onPressed: () => _handleSelect(ref),
         ),
       if (addable)
-        CommonPopupMenuItem(
+        PopupMenuItem(
           glyph: AppGlyphs.listAdd,
           label: appLocalizations.addToLocalProxies,
           onPressed: () => _handleAddToLocalProxies(ref),
         ),
       if (_hasDefinition(proxy))
-        CommonPopupMenuItem(
+        PopupMenuItem(
           glyph: AppGlyphs.copy,
           label: appLocalizations.copy,
           onPressed: () => _handleCopy(ref),
@@ -203,38 +211,33 @@ class ProxyCard extends ConsumerWidget {
             ref,
             inUse: inUse,
             pinned: pinned,
-            addable:
-                _hasDefinition(proxy) &&
-                (proxy.providerName != null || !isCustomProfile),
+            addable: _isAddableToLocal(proxy, isCustomProfile: isCustomProfile),
           ),
-          child: CommonCard(
+          child: Card(
             radius: AppCorner.lg,
             enterActionsOnRight: true,
             key: key,
             onPressed: () => _handleSelect(ref),
             isSelected: inUse,
-            child: Container(
-              alignment: Alignment.centerLeft,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 4,
-                    children: [
-                      Expanded(child: proxyNameText),
-                      if (pinned)
-                        SelectionBadge.preferred(inUse: inUse)
-                      else if (inUse)
-                        const SelectionBadge(),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  details,
-                ],
-              ),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 4,
+                  children: [
+                    Expanded(child: proxyNameText),
+                    if (pinned)
+                      SelectionBadge(glyph: Glyphs.pin, tonal: !inUse)
+                    else if (inUse)
+                      const SelectionBadge(),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                details,
+              ],
             ),
           ),
         );
@@ -375,7 +378,7 @@ class _DelayTextState extends ConsumerState<_DelayText> {
                     height: measure.textHeight(AppTextStyle.caption2),
                     width: measure.textHeight(AppTextStyle.caption2),
                     child: _withFocusRing(context, switch (phase) {
-                      DelayTestPhase.running => CommonCircleLoading(
+                      DelayTestPhase.running => ActivityIndicator(
                         size: measure.textHeight(AppTextStyle.caption2),
                       ),
                       DelayTestPhase.queued => GlyphIcon(
@@ -383,7 +386,7 @@ class _DelayTextState extends ConsumerState<_DelayText> {
                         size: measure.textHeight(AppTextStyle.caption2),
                         color: context.colorScheme.onSurfaceVariant.opacity38,
                       ),
-                      null => Tooltip(
+                      null => HoverTooltip(
                         message: context.appLocalizations.delayTest,
                         child: GestureDetector(
                           behavior: HitTestBehavior.opaque,

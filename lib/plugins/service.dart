@@ -83,13 +83,16 @@ class Service {
     });
   }
 
-  Future<CoreMethodResponse?> invokeMethod(CoreMethodCall call) async {
+  Future<CoreMethodResponse> invokeMethod(CoreMethodCall call) async {
     final data = await _coreChannel.invokeMethod<Uint8List>(
       'invokeMethod',
       json.encode(call),
     );
     if (data == null) {
-      return null;
+      throw CoreMethodException(
+        code: 'no_response',
+        message: 'Core did not answer ${call.method.wireName}',
+      );
     }
     return resolveSpilledResponse(
       CoreMethodResponse.fromJson(await _decodeResponse(data, call.method)),

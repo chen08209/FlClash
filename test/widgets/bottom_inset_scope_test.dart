@@ -1,10 +1,7 @@
-import 'package:fl_clash/ui/context.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
-import 'package:fl_clash/ui/inherited.dart';
-import 'package:fl_clash/ui/models.dart';
-import 'package:fl_clash/ui/scaffold.dart';
+import 'package:fl_clash/ui/ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
 
@@ -34,7 +31,7 @@ void main() {
       includeNavigatorKey: false,
       child: BottomInsetScope(
         inset: inset,
-        child: CommonScaffold(
+        child: Scaffold(
           title: 'title',
           body: contentProbe(),
           primaryAction: primaryAction,
@@ -73,7 +70,6 @@ void main() {
       buildWith(inset: navigationInset, primaryAction: _addAction),
     );
     expect(contentInset, navigationInset);
-    expect(find.byType(FloatingActionButton), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -93,7 +89,7 @@ void main() {
         child: Builder(
           builder: (context) {
             aboveInset = context.bottomInset;
-            return CommonScaffold(
+            return Scaffold(
               title: 'title',
               body: Builder(
                 builder: (context) {

@@ -4,11 +4,12 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 Future<void> _sendFind(WidgetTester tester, {bool settle = true}) async {
   final modifier = controlSingleActivator(LogicalKeyboardKey.keyF).meta
@@ -33,7 +34,7 @@ Widget _page({
   List<Widget> actions = const [],
   List<IconButtonData> searchActions = const [],
 }) {
-  return CommonScaffold(
+  return Scaffold(
     title: 'Page',
     searchState: onSearch == null
         ? null
@@ -87,8 +88,8 @@ void main() {
     final navigator = tester.state<NavigatorState>(find.byType(Navigator));
 
     navigator.push(
-      MaterialPageRoute<void>(
-        builder: (_) => const Scaffold(body: Text('covering route')),
+      HostPageRoute<void>(
+        builder: (_) => const HostScaffold(body: Text('covering route')),
       ),
     );
     await tester.pumpAndSettle();
@@ -166,8 +167,8 @@ void main() {
       tester
           .state<NavigatorState>(find.byType(Navigator))
           .push(
-            MaterialPageRoute<void>(
-              builder: (_) => CommonPopScope(
+            HostPageRoute<void>(
+              builder: (_) => PopGuard(
                 onPop: (_) {
                   pageBackCount++;
                   return false;
@@ -300,7 +301,7 @@ void main() {
     await tester.pumpWidget(
       TestApp(
         wrapInProviderScope: true,
-        child: CommonScaffold(
+        child: Scaffold(
           title: 'Page',
           searchState: AppBarSearchState(onSearch: (_) {}),
           iconActions: [IconButtonData(glyph: AppGlyphs.add, onPressed: () {})],
@@ -330,8 +331,8 @@ void main() {
         child: Builder(
           builder: (context) => TextButton(
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => CommonScaffold(
+              HostPageRoute<void>(
+                builder: (_) => Scaffold(
                   title: 'Page',
                   searchInBar: true,
                   searchState: AppBarSearchState(onSearch: (_) {}),
@@ -464,7 +465,7 @@ class _RebuildingSearchPageState extends State<_RebuildingSearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    return CommonScaffold(
+    return Scaffold(
       title: 'Page',
       searchState: AppBarSearchState(
         onSearch: (value) => setState(() => _query = value),

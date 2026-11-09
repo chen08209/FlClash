@@ -1,7 +1,5 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/manager/status_manager.dart';
 import 'package:fl_clash/manager/vpn_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
@@ -9,9 +7,12 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/banner.dart';
+import 'package:prism_ui/prism_ui.dart';
+import '../helpers/test_app.dart';
 
 class _RestartRecordingSetupAction extends SetupAction {
   int restarts = 0;
@@ -47,16 +48,14 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: MaterialApp(
+        child: HostApp(
           navigatorKey: globalState.navigatorKey,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            AppUiLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
           builder: (_, child) {
-            return StatusManager(child: VpnManager(child: child!));
+            return BannerHost(
+              stacked: false,
+              topInset: 0,
+              child: VpnManager(child: child!),
+            );
           },
           home: const SizedBox(),
         ),
@@ -103,7 +102,7 @@ void main() {
     expect(tip(), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 500));
-    await tester.tap(find.text(currentAppLocalizations.restart));
+    await tester.tap(tip());
     await tester.pump();
     expect(setupAction.restarts, 1);
     await drainTimers(tester);

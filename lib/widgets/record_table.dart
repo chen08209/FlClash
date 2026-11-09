@@ -2,8 +2,8 @@ import 'package:collection/collection.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
 
 const _recordTableMinWidth = 720.0;
 const recordWideTableWidth = 1000.0;
@@ -144,11 +144,6 @@ class RecordTable<T> {
   List<Widget> cellsOf(BuildContext context, T item) => [
     for (final column in columns) column.cell(context, item),
   ];
-
-  /// For a list separated by zero-height dividers, which sit at odd indexes.
-  double estimateExtent(int? index, double crossAxisExtent) {
-    return index != null && index.isEven ? rowHeight : 0;
-  }
 }
 
 /// Builds a record list as a table once it is wide enough, with the column
@@ -186,6 +181,8 @@ class _RecordTableFrameState<T> extends ConsumerState<RecordTableFrame<T>>
     with TableColumnWidthsMixin<RecordTableFrame<T>> {
   final _sorter = RecordSorter<T>();
   RecordSort? _sort;
+  RecordTable<T>? _table;
+  Object? _tableInputs;
 
   @override
   String get tableId => widget.tableId;
@@ -194,9 +191,25 @@ class _RecordTableFrameState<T> extends ConsumerState<RecordTableFrame<T>>
     if (width < _recordTableMinWidth) {
       return null;
     }
+    final rowHeight =
+        MediaQuery.textScalerOf(context).scale(_recordCellLineHeight) +
+        _recordRowPadding * 2;
+    // Rows are memoized on the table, so a refresh must get the same one.
+    final inputs = (
+      width,
+      columnWidths,
+      rowHeight,
+      Localizations.localeOf(context),
+      Theme.of(context),
+    );
+    final table = _table;
+    if (table != null && inputs == _tableInputs) {
+      return table;
+    }
     final columns = widget.columnsOf(width);
     final layouts = [for (final column in columns) column.layout];
-    return RecordTable._(
+    _tableInputs = inputs;
+    return _table = RecordTable._(
       columns: columns,
       layouts: layouts,
       widths: tableColumnWidths(
@@ -204,9 +217,7 @@ class _RecordTableFrameState<T> extends ConsumerState<RecordTableFrame<T>>
         width - _recordTableMargin * 2,
         columnWidths,
       ),
-      rowHeight:
-          MediaQuery.textScalerOf(context).scale(_recordCellLineHeight) +
-          _recordRowPadding * 2,
+      rowHeight: rowHeight,
     );
   }
 
@@ -297,7 +308,7 @@ class _RecordTableHeader<T> extends StatelessWidget {
     );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: _recordTableMargin),
-      child: Material(
+      child: Surface(
         color: context.raisedSurfaceLevel.colorOf(colorScheme),
         shape: AppShape.all(AppCorner.fit(height)),
         clipBehavior: Clip.antiAlias,
@@ -400,8 +411,11 @@ class RecordHeaderCell extends StatelessWidget {
     if (onTap == null) {
       return content;
     }
-    return InkWell(
-      onTap: onTap,
+    return PressSurface(
+      fill: Colors.transparent,
+      shape: AppShape.all(AppCorner.none),
+      childFills: true,
+      onPressed: onTap,
       child: SizedBox.expand(child: content),
     );
   }
@@ -427,36 +441,28 @@ class RecordTableRow extends StatelessWidget {
     final style = AppTextStyle.subheadline.of(context);
     final shape = AppShape.all(AppCorner.fit(table.rowHeight));
     final level = striped ? context.raisedSurfaceLevel : context.surfaceLevel;
-    final fill = striped ? level.colorOf(colorScheme) : null;
-    Widget row = Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: shape,
-        child: DefaultTextStyle(
-          style: style.copyWith(
-            color: colorScheme.onSurface,
-            height: _recordCellLineHeight / style.fontSize!,
-            fontFeatures: const [FontFeature.tabularFigures()],
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          child: TableCells(
-            columns: table.layouts,
-            widths: table.widths,
-            height: table.rowHeight,
-            inset: _recordCellInset,
-            cells: cells,
-          ),
+    final row = PressSurface(
+      fill: striped ? level.colorOf(colorScheme) : Colors.transparent,
+      shape: shape,
+      childFills: true,
+      onPressed: onTap,
+      child: DefaultTextStyle(
+        style: style.copyWith(
+          color: colorScheme.onSurface,
+          height: _recordCellLineHeight / style.fontSize!,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        child: TableCells(
+          columns: table.layouts,
+          widths: table.widths,
+          height: table.rowHeight,
+          inset: _recordCellInset,
+          cells: cells,
         ),
       ),
     );
-    if (fill != null) {
-      row = DecoratedBox(
-        decoration: ShapeDecoration(color: fill, shape: shape),
-        child: row,
-      );
-    }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: _recordTableMargin),
       child: SurfaceScope(level: level, child: row),

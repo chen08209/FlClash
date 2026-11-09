@@ -6,13 +6,15 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/widgets/outbound_mode.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../../helpers/glyph_finders.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
+import 'package:prism_ui/prism_ui.dart';
+import '../../helpers/host_scaffold.dart';
 
 void main() {
   late ProviderContainer container;
@@ -36,7 +38,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: TestApp(
-          child: Scaffold(
+          child: HostScaffold(
             body: Align(
               alignment: Alignment.topLeft,
               child: SizedBox(
@@ -56,7 +58,7 @@ void main() {
   }
 
   Finder buttonOf(Mode mode) => find
-      .ancestor(of: find.text(mode.label), matching: find.byType(InkWell))
+      .ancestor(of: find.text(mode.label), matching: find.byType(PressRegion))
       .first;
 
   ShapeDecoration decorationOf(WidgetTester tester, Mode mode) {

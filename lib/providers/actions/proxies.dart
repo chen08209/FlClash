@@ -198,9 +198,9 @@ class ProxiesAction extends _$ProxiesAction {
         logLevel: coreFailureLogLevel(error),
       );
       profilesAction.updateCurrentSelectedMap(groupName, rollbackName);
-      dialogs.showNotifier(
+      dialogs.showBanner(
         currentAppLocalizations.changeProxyFailedTip,
-        level: MessageLevel.error,
+        level: BannerLevel.error,
       );
       return;
     }
@@ -221,7 +221,7 @@ class ProxiesAction extends _$ProxiesAction {
     }
   }
 
-  Future<String> updateProvider(
+  Future<void> updateProvider(
     ExternalProvider provider, {
     bool showLoading = false,
   }) async {
@@ -236,16 +236,12 @@ class ProxiesAction extends _$ProxiesAction {
       );
       final ruleSet = await clashProvidersAction.remoteProviderOf(provider);
       if (ruleSet != null && !await clashProvidersAction.syncRemote(ruleSet)) {
-        return '';
+        return;
       }
-      final message = await _core.updateExternalProvider(
-        providerName: provider.name,
-      );
-      if (message.isNotEmpty) return message;
+      await _core.updateExternalProvider(provider.name);
       ref
           .read(providersProvider.notifier)
           .setProvider(await _core.getExternalProvider(provider.name));
-      return '';
     } finally {
       if (operation != null) {
         ref
@@ -255,7 +251,7 @@ class ProxiesAction extends _$ProxiesAction {
     }
   }
 
-  Future<String> sideLoadExternalProvider(
+  Future<void> sideLoadExternalProvider(
     ExternalProvider provider,
     String data, {
     bool showLoading = false,
@@ -266,15 +262,13 @@ class ProxiesAction extends _$ProxiesAction {
               .start(provider.updatingKey, scope: UpdatingScope.core)
         : null;
     try {
-      final message = await _core.sideLoadExternalProvider(
+      await _core.sideLoadExternalProvider(
         providerName: provider.name,
         data: data,
       );
-      if (message.isNotEmpty) return message;
       ref
           .read(providersProvider.notifier)
           .setProvider(await _core.getExternalProvider(provider.name));
-      return '';
     } finally {
       if (operation != null) {
         ref
@@ -320,7 +314,7 @@ class ProxiesAction extends _$ProxiesAction {
       groupNames: groupNames.toSet(),
     );
     if (added == null) {
-      dialogs.showNotifier(appLocalizations.alreadyInLocalProxies(name));
+      dialogs.showBanner(appLocalizations.alreadyInLocalProxies(name));
       return;
     }
     final order = indexing.generateKeyBetween(
@@ -330,7 +324,7 @@ class ProxiesAction extends _$ProxiesAction {
     await database.customProxies.put(
       CustomProxy.fromDefinition(added).copyWith(order: order).toCompanion(),
     );
-    dialogs.showNotifier(appLocalizations.addedToLocalProxies(name));
+    dialogs.showBanner(appLocalizations.addedToLocalProxies(name));
   }
 
   Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) {
@@ -458,12 +452,14 @@ class ProxiesAction extends _$ProxiesAction {
       _scheduleDelayFlush();
     }
     try {
-      final delay = await _core.getDelay(
-        target.testUrl,
-        target.proxyName,
-        job.timeout,
+      final delay = await _core.testDelay(
+        TestDelayParams(
+          proxyName: target.proxyName,
+          testUrl: target.testUrl,
+          timeout: job.timeout.inMilliseconds,
+        ),
       );
-      if (delay != null && !job.cancelled) {
+      if (!job.cancelled) {
         setDelay(delay);
       }
     } catch (error) {

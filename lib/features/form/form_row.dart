@@ -3,7 +3,8 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 class InfoMessageButton extends StatelessWidget {
   final String message;
@@ -12,7 +13,7 @@ class InfoMessageButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CommonMinIconButtonTheme(
+    return MinIconButtonTheme(
       child: IconButton(
         tooltip: context.appLocalizations.tip,
         onPressed: () {
@@ -40,7 +41,7 @@ class EntryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonMinIconButtonTheme(
+    return MinIconButtonTheme(
       child: ElasticButton(
         child: IconButton(
           tooltip: _add ? appLocalizations.add : appLocalizations.remove,
@@ -180,14 +181,9 @@ class FormRowTextField extends StatelessWidget {
       TextDirection.ltr => 1.0,
       TextDirection.rtl => -1.0,
     };
-    return InputDecorationTheme(
-      data: InputDecorationTheme.of(
-        context,
-      ).copyWith(floatingLabelBehavior: FloatingLabelBehavior.never),
-      child: Transform.translate(
-        offset: Offset(_caretMargin * towardEnd, 0),
-        child: _buildField(context),
-      ),
+    return Transform.translate(
+      offset: Offset(_caretMargin * towardEnd, 0),
+      child: _buildField(context),
     );
   }
 
@@ -278,7 +274,7 @@ class _FormRowSecretTextFieldState extends State<FormRowSecretTextField> {
             onFieldSubmitted: widget.onFieldSubmitted,
           ),
         ),
-        CommonMinIconButtonTheme(
+        MinIconButtonTheme(
           child: IconButton(
             tooltip: _obscure
                 ? appLocalizations.showPassword

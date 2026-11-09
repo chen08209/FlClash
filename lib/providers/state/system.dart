@@ -5,16 +5,37 @@ UpdateParams updateParams(Ref ref) {
   final authentication = ref.watch(
     networkSettingProvider.select((state) => state.authentication),
   );
-  final checkCertificate = ref.watch(
-    appSettingProvider.select((state) => state.checkCertificate),
-  );
+  final options = ref.watch(coreOptionsProvider);
   return ref.watch(
     patchClashConfigProvider.select(
       (state) => state.toUpdateParams(
         authentication: authentication.credentials,
-        skipCertVerify: !checkCertificate,
+        options: options,
       ),
     ),
+  );
+}
+
+@riverpod
+CoreOptions coreOptions(Ref ref) {
+  final (:testUrl, :mitmCapture) = ref.watch(
+    patchClashConfigProvider.select(
+      (state) => (testUrl: state.testUrl, mitmCapture: state.mitm.capture),
+    ),
+  );
+  final (:checkCertificate, :delayTestTimeout) = ref.watch(
+    appSettingProvider.select(
+      (state) => (
+        checkCertificate: state.checkCertificate,
+        delayTestTimeout: state.delayTestTimeout,
+      ),
+    ),
+  );
+  return CoreOptions(
+    testUrl: testUrl,
+    skipCertVerify: !checkCertificate,
+    delayTestTimeout: delayTestTimeout,
+    mitmCapture: mitmFeature && mitmCapture,
   );
 }
 
@@ -193,9 +214,6 @@ SharedState sharedState(Ref ref) {
   final currentProfileName = currentProfile.label;
   final selectedMap = currentProfile.selectedMap;
   final onlyStatisticsProxy = appSetting.onlyStatisticsProxy;
-  final testUrl = ref.watch(
-    patchClashConfigProvider.select((state) => state.testUrl),
-  );
   return SharedState(
     currentProfileName: currentProfileName,
     onlyStatisticsProxy: onlyStatisticsProxy,
@@ -206,8 +224,7 @@ SharedState sharedState(Ref ref) {
     localNetworkTip: currentAppLocalizations.localNetworkDeniedTip,
     setupParams: SetupParams(
       selectedMap: selectedMap,
-      testUrl: testUrl,
-      skipCertVerify: !appSetting.checkCertificate,
+      options: ref.watch(coreOptionsProvider),
     ),
     vpnOptions: ref.watch(vpnOptionsProvider).value,
   );
@@ -270,8 +287,10 @@ Future<VpnOptions> vpnOptions(Ref ref) async {
 @riverpod
 class AccessControlState extends _$AccessControlState
     with AutoDisposeNotifierMixin {
+  /// A draft of the saved props, which the access page edits until it saves.
   @override
-  AccessControlProps build() => const AccessControlProps();
+  AccessControlProps build() =>
+      ref.read(vpnSettingProvider.select((state) => state.accessControlProps));
 }
 
 @riverpod

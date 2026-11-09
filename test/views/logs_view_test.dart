@@ -1,17 +1,19 @@
 import 'dart:math';
 
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/views.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/scrollbar.dart';
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 void main() {
   const logCount = 200;
@@ -124,7 +126,7 @@ void main() {
   testWidgets('a one-line log is only as tall as its content', (tester) async {
     await tester.pumpWidget(
       const TestApp(
-        child: Scaffold(
+        child: HostScaffold(
           body: Column(
             children: [
               LogItem(
@@ -144,18 +146,20 @@ void main() {
   });
 
   testWidgets('tapping the level reports it for filtering', (tester) async {
-    String? clicked;
+    RecordFilter? clicked;
     await tester.pumpWidget(
       TestApp(
-        child: Scaffold(
-          body: LogItem(
-            log: const Log(
-              logLevel: LogLevel.warning,
-              payload:
-                  '[TCP] dial Proxy 10.0.0.2:1 --> a.example:443 error: EOF',
-              dateTime: '2024-01-01 12:00:00',
+        child: HostScaffold(
+          body: RecordFilterScope(
+            onFilter: (filter) => clicked = filter,
+            child: const LogItem(
+              log: Log(
+                logLevel: LogLevel.warning,
+                payload:
+                    '[TCP] dial Proxy 10.0.0.2:1 --> a.example:443 error: EOF',
+                dateTime: '2024-01-01 12:00:00',
+              ),
             ),
-            onClick: (value) => clicked = value,
           ),
         ),
       ),
@@ -163,7 +167,7 @@ void main() {
 
     await tester.tap(find.text('warning'));
 
-    expect(clicked, 'warning');
+    expect(clicked, const RecordFilter(RecordFacetKind.level, 'warning'));
   });
 
   group('LogListController', () {
@@ -195,5 +199,29 @@ void main() {
       controller.setLogs(logs.sublist(30, 130));
       expect(controller.value.logs, logs.sublist(30, 130));
     });
+  });
+
+  testWidgets('a full list builds only the log added', (tester) async {
+    await pumpLogsView(tester);
+    final notifier = container.read(logsProvider.notifier);
+    for (var i = logCount; i < maxLogsLength; i++) {
+      notifier.add(Log(payload: 'log $i', dateTime: '2024-01-01 12:00:00'));
+    }
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump();
+
+    var built = 0;
+    debugOnRebuildDirtyWidget = (element, _) {
+      if (element.widget is LogItem) {
+        built++;
+      }
+    };
+    addTearDown(() => debugOnRebuildDirtyWidget = null);
+    notifier.add(const Log(payload: 'new', dateTime: '2024-01-01 12:00:00'));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump();
+    debugOnRebuildDirtyWidget = null;
+
+    expect(built, 1);
   });
 }

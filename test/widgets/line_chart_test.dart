@@ -1,6 +1,6 @@
-import 'package:fl_clash/ui/line_chart.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:prism_ui/line_chart.dart';
 
 const _color = Color(0xFF3366FF);
 

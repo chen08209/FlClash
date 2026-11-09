@@ -1,15 +1,16 @@
-import 'package:fl_clash/ui/builder.dart';
-import 'package:fl_clash/ui/inherited.dart';
 import 'package:fl_clash/widgets/active_polling.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/builder.dart';
+import 'package:prism_ui/inherited.dart';
+import '../helpers/test_app.dart';
 
 void main() {
   testWidgets('TickBuilder rebuilds on the configured interval', (
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         home: TickBuilder(
           duration: const Duration(seconds: 1),
           builder: (_, tick) => Text('tick: $tick'),
@@ -30,7 +31,7 @@ void main() {
     tester,
   ) async {
     Widget buildApp({required bool isPageActive}) {
-      return MaterialApp(
+      return HostApp(
         home: PageActivityScope(
           isActive: isPageActive,
           child: TickBuilder(
@@ -62,7 +63,7 @@ void main() {
   ) async {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         home: TickBuilder(
           duration: const Duration(seconds: 1),
           builder: (_, tick) => Text('tick: $tick'),
@@ -90,7 +91,7 @@ void main() {
   testWidgets('TickBuilder catches up when focus returns', (tester) async {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         home: TickBuilder(
           duration: const Duration(minutes: 1),
           builder: (_, tick) => Text('tick: $tick'),
@@ -154,6 +155,51 @@ void main() {
   ) async {
     final builder = WidthBuilder(
       builder: (context, _) =>
+          Text('scale: ${MediaQuery.textScalerOf(context).scale(1)}'),
+    );
+    Widget app(double scale) => MediaQuery(
+      data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+      child: Directionality(textDirection: TextDirection.ltr, child: builder),
+    );
+
+    await tester.pumpWidget(app(1));
+    expect(find.text('scale: 1.0'), findsOneWidget);
+
+    await tester.pumpWidget(app(1.5));
+    expect(find.text('scale: 1.5'), findsOneWidget);
+  });
+
+  testWidgets('MemoBuilder builds again only when its inputs change', (
+    tester,
+  ) async {
+    var builds = 0;
+    Widget app(int input, String label) => Directionality(
+      textDirection: TextDirection.ltr,
+      child: MemoBuilder(
+        inputs: [input],
+        builder: (_) {
+          builds++;
+          return Text(label);
+        },
+      ),
+    );
+
+    await tester.pumpWidget(app(1, 'first'));
+    await tester.pumpWidget(app(1, 'second'));
+    expect(builds, 1);
+    expect(find.text('first'), findsOneWidget);
+
+    await tester.pumpWidget(app(2, 'second'));
+    expect(builds, 2);
+    expect(find.text('second'), findsOneWidget);
+  });
+
+  testWidgets('MemoBuilder follows what its builder depends on', (
+    tester,
+  ) async {
+    final builder = MemoBuilder(
+      inputs: const [],
+      builder: (context) =>
           Text('scale: ${MediaQuery.textScalerOf(context).scale(1)}'),
     );
     Widget app(double scale) => MediaQuery(

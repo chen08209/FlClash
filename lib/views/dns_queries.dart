@@ -6,19 +6,14 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:super_sliver_list/super_sliver_list.dart';
 
 class DnsQueryListController extends ValueNotifier<DnsQueriesState> {
   DnsQueryListController() : super(const DnsQueriesState());
 
   void search(String query) {
     value = value.copyWith(query: query);
-  }
-
-  void updateKeywords(List<String> keywords) {
-    value = value.copyWith(keywords: keywords);
   }
 
   void setDnsQueries(List<DnsQuery> dnsQueries) {
@@ -57,6 +52,7 @@ class DnsQueriesView extends ConsumerStatefulWidget {
 class _DnsQueriesViewState extends ConsumerState<DnsQueriesView>
     with RouteMotionHoldMixin<DnsQueriesView> {
   final _listController = DnsQueryListController();
+  final _filters = RecordFilterController<DnsQuery>(facets: dnsQueryFacets);
   late final ScrollController _scrollController;
   late final _physics = FollowEndScrollPhysics(
     isFollowing: () => _listController.value.autoScrollToEnd,
@@ -68,7 +64,7 @@ class _DnsQueriesViewState extends ConsumerState<DnsQueriesView>
     _scrollController =
         widget.scrollController ??
         sheetScrollController(context, initialScrollOffset: double.maxFinite);
-    _listController.setDnsQueries(ref.read(dnsQueriesProvider).list);
+    _setDnsQueries(ref.read(dnsQueriesProvider).list);
     ref.listenManual(dnsQueriesProvider.select((state) => state.revision), (
       _,
       _,
@@ -80,10 +76,16 @@ class _DnsQueriesViewState extends ConsumerState<DnsQueriesView>
   @override
   void dispose() {
     _listController.dispose();
+    _filters.dispose();
     if (widget.scrollController == null) {
       _scrollController.dispose();
     }
     super.dispose();
+  }
+
+  void _setDnsQueries(List<DnsQuery> dnsQueries) {
+    _listController.setDnsQueries(dnsQueries);
+    _filters.offer(_listController.value.dnsQueries);
   }
 
   void _updateDnsQueriesThrottler() {
@@ -92,7 +94,7 @@ class _DnsQueriesViewState extends ConsumerState<DnsQueriesView>
         return;
       }
       updateWhenRouteSettled(
-        () => _listController.setDnsQueries(ref.read(dnsQueriesProvider).list),
+        () => _setDnsQueries(ref.read(dnsQueriesProvider).list),
       );
     }, duration: renderThrottleDuration);
   }
@@ -101,7 +103,8 @@ class _DnsQueriesViewState extends ConsumerState<DnsQueriesView>
     final appLocalizations = context.appLocalizations;
     var cleared = false;
     try {
-      cleared = await ref.read(coreHandlerProvider).clearDnsCache();
+      await ref.read(coreHandlerProvider).clearDnsCache();
+      cleared = true;
     } catch (error) {
       commonPrint.log(
         'clearDnsCache error: $error',
@@ -111,113 +114,127 @@ class _DnsQueriesViewState extends ConsumerState<DnsQueriesView>
     if (!mounted) {
       return;
     }
-    context.showNotifier(
+    dialogs.showBanner(
       cleared
           ? appLocalizations.dnsCacheCleared
           : appLocalizations.clearDnsCacheFailed,
-      level: cleared ? MessageLevel.success : MessageLevel.error,
+      level: cleared ? BannerLevel.success : BannerLevel.error,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonScaffold(
-      title: PageLabel.dns.label,
-      searchState: AppBarSearchState(onSearch: _listController.search),
-      onKeywordsUpdate: _listController.updateKeywords,
-      iconActions: [
-        IconButtonData(
-          glyph: AppGlyphs.broom,
-          tooltip: appLocalizations.clearDnsCache,
-          onPressed: _clearDnsCache,
-        ),
-      ],
-      body: ValueListenableBuilder<DnsQueriesState>(
-        valueListenable: _listController,
-        builder: (context, state, _) {
-          final dnsQueries = state.list;
-          return NullStatusSwitcher(
-            isEmpty: dnsQueries.isEmpty,
-            isSearching: state.isSearching,
-            nullStatus: NullStatus(
-              label: appLocalizations.nullTip(appLocalizations.dnsQueries),
-              illustration: NullStatusIllustration.dns,
+    final body = RecordFilterScope(
+      onFilter: _filters.add,
+      child: _buildBody(context),
+    );
+    return ListenableBuilder(
+      listenable: Listenable.merge([_filters, _filters.options]),
+      child: body,
+      builder: (context, body) {
+        final pinned = !ViewScope.isMobileOf(context);
+        return Scaffold(
+          title: PageLabel.dns.label,
+          searchState: AppBarSearchState(onSearch: _listController.search),
+          keywords: _filters.keywordsOf(pinned: pinned),
+          menuItems: _filters.menuItems(context, pinned: pinned),
+          iconActions: [
+            IconButtonData(
+              glyph: AppGlyphs.broom,
+              tooltip: appLocalizations.clearDnsCache,
+              onPressed: _clearDnsCache,
             ),
-            child: RecordTableFrame<DnsQuery>(
-              tableId: 'dns',
-              items: dnsQueries,
-              reverse: true,
-              columnsOf: (width) => _dnsQueryColumns(
-                context,
-                wide: width >= recordWideTableWidth,
-              ),
-              builder: (context, table, dnsQueries) => Align(
-                alignment: Alignment.topCenter,
-                child: FloatingScrollbar(
+          ],
+          body: body!,
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return ListenableBuilder(
+      listenable: Listenable.merge([_listController, _filters]),
+      builder: (context, _) {
+        final state = _listController.value;
+        final dnsQueries = _filters.apply(state.list);
+        return NullStatusSwitcher(
+          isEmpty: dnsQueries.isEmpty,
+          isSearching: state.isSearching || _filters.isFiltering,
+          nullStatus: NullStatus(
+            label: appLocalizations.nullTip(appLocalizations.dnsQueries),
+            illustration: NullStatusIllustration.dns,
+          ),
+          child: RecordTableFrame<DnsQuery>(
+            tableId: 'dns',
+            items: dnsQueries,
+            reverse: true,
+            columnsOf: (width) =>
+                _dnsQueryColumns(context, wide: width >= recordWideTableWidth),
+            builder: (context, table, dnsQueries) => Align(
+              alignment: Alignment.topCenter,
+              child: FloatingScrollbar(
+                controller: _scrollController,
+                hintBuilder: (fraction) {
+                  final index = (fraction * (dnsQueries.length - 1)).round();
+                  return dnsQueries[index].time.showFull;
+                },
+                child: ScrollToEndBox(
                   controller: _scrollController,
-                  hintBuilder: (fraction) {
-                    final index = (fraction * (dnsQueries.length - 1)).round();
-                    return dnsQueries[index].time.showFull;
+                  enable: state.autoScrollToEnd,
+                  onCancelToEnd: () {
+                    _listController.setAutoScrollToEnd(false);
                   },
-                  child: ScrollToEndBox(
+                  onResumeToEnd: () {
+                    _listController.resumeAutoScrollToEnd(
+                      ref.read(dnsQueriesProvider).list,
+                    );
+                    _filters.offer(_listController.value.dnsQueries);
+                  },
+                  child: RecordFeedList<DnsQuery>(
+                    reverse: true,
+                    shrinkWrap: true,
+                    physics: _physics,
                     controller: _scrollController,
-                    enable: state.autoScrollToEnd,
-                    onCancelToEnd: () {
-                      _listController.setAutoScrollToEnd(false);
-                    },
-                    onResumeToEnd: () {
-                      _listController.resumeAutoScrollToEnd(
-                        ref.read(dnsQueriesProvider).list,
-                      );
-                    },
-                    child: SuperListView.separated(
-                      reverse: true,
-                      shrinkWrap: true,
-                      physics: _physics,
-                      controller: _scrollController,
-                      padding: EdgeInsets.only(
-                        top: context.contentTopPadding,
-                        bottom: 16 + context.bottomInset,
-                      ),
-                      itemCount: dnsQueries.length,
-                      extentEstimation:
-                          table?.estimateExtent ?? recordListExtentEstimation,
-                      separatorBuilder: (_, _) => table == null
-                          ? const SizedBox(height: recordListGap)
-                          : const SizedBox.shrink(),
-                      itemBuilder: (_, index) {
-                        if (table != null) {
-                          return _DnsQueryTableRow(
-                            dnsQuery: dnsQueries[index],
-                            table: table,
-                            striped: index.isOdd,
-                          );
-                        }
-                        return DnsQueryItem(
-                          dnsQuery: dnsQueries[index],
-                          onClickKeyword: (value) {
-                            context.commonScaffoldState?.addKeyword(value);
-                          },
-                        );
-                      },
+                    padding: EdgeInsets.only(
+                      top: context.contentTopPadding,
+                      bottom: 16 + context.bottomInset,
+                    ),
+                    items: dnsQueries,
+                    keyOf: ObjectKey.new,
+                    gap: table == null ? recordListGap : 0,
+                    estimatedItemExtent:
+                        table?.rowHeight ?? recordListEstimatedExtent,
+                    itemBuilder: (dnsQuery, striped, _) => MemoBuilder(
+                      inputs: [
+                        dnsQuery,
+                        if (table != null) ...[table, striped],
+                      ],
+                      builder: (_) => table == null
+                          ? DnsQueryItem(dnsQuery: dnsQuery)
+                          : _DnsQueryTableRow(
+                              dnsQuery: dnsQuery,
+                              table: table,
+                              striped: striped,
+                            ),
                     ),
                   ),
                 ),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
 
 void _showDnsQueryDetail(BuildContext context, DnsQuery dnsQuery) {
-  showInSheet<void>(
-    context,
+  showSheet<void>(
+    context: context,
     builder: (_) {
-      return CommonScaffold(
+      return Scaffold(
         body: DnsQueryDetailView(dnsQuery: dnsQuery),
         title: context.appLocalizations.details('DNS'),
       );
@@ -245,13 +262,16 @@ List<RecordColumn<DnsQuery>> _dnsQueryColumns(
     ),
     RecordColumn(
       TableColumn('type', appLocalizations.ipType, width: 72),
-      cell: (_, query) => _DnsKeyword(query.type),
+      cell: (_, query) =>
+          _DnsKeyword(RecordFilter(RecordFacetKind.type, query.type)),
       sortKey: (query) => query.type,
     ),
     RecordColumn(
       TableColumn('initiator', appLocalizations.initiatorShort, width: 72),
       cell: (_, query) => switch (query.initiator) {
-        final initiator? => _DnsKeyword(initiator.label),
+        final initiator? => _DnsKeyword(
+          RecordFilter(RecordFacetKind.initiator, initiator.label),
+        ),
         null => const RecordCellText(''),
       },
       sortKey: (query) => query.initiator?.label ?? '',
@@ -277,17 +297,17 @@ List<RecordColumn<DnsQuery>> _dnsQueryColumns(
 }
 
 class _DnsKeyword extends StatelessWidget {
-  final String label;
+  final RecordFilter filter;
   final RecordTone tone;
 
-  const _DnsKeyword(this.label, {this.tone = RecordTone.neutral});
+  const _DnsKeyword(this.filter, {this.tone = RecordTone.neutral});
 
   @override
   Widget build(BuildContext context) {
     return RecordLabel(
-      label: label,
+      label: filter.value,
       tone: tone,
-      onPressed: () => context.commonScaffoldState?.addKeyword(label),
+      onPressed: () => RecordFilterScope.add(context, filter),
     );
   }
 }
@@ -303,9 +323,14 @@ class _DnsResult extends StatelessWidget {
     return Row(
       spacing: 6,
       children: [
-        if (dnsQuery.cached) _DnsKeyword(context.appLocalizations.cache),
-        if (dnsQuery.hasFailureRcode)
-          _DnsKeyword(dnsQuery.rcode, tone: RecordTone.error),
+        for (final filter in dnsQuery.resultFilters)
+          if (filter.kind != RecordFacetKind.initiator)
+            _DnsKeyword(
+              filter,
+              tone: filter.kind == RecordFacetKind.rcode
+                  ? RecordTone.error
+                  : RecordTone.neutral,
+            ),
         if (summary.isNotEmpty)
           Flexible(
             child: Text(
@@ -346,9 +371,8 @@ class _DnsQueryTableRow extends StatelessWidget {
 
 class DnsQueryItem extends StatelessWidget {
   final DnsQuery dnsQuery;
-  final ValueChanged<String>? onClickKeyword;
 
-  const DnsQueryItem({super.key, required this.dnsQuery, this.onClickKeyword});
+  const DnsQueryItem({super.key, required this.dnsQuery});
 
   @override
   Widget build(BuildContext context) {
@@ -361,10 +385,7 @@ class DnsQueryItem extends StatelessWidget {
         trailing: Text('${dnsQuery.delay} ms'),
         children: [
           RecordTimestamp(dnsQuery.time.showFull),
-          RecordLabel(
-            label: dnsQuery.type,
-            onPressed: () => onClickKeyword?.call(dnsQuery.type),
-          ),
+          _DnsKeyword(RecordFilter(RecordFacetKind.type, dnsQuery.type)),
         ],
       ),
       body: Column(
@@ -386,13 +407,12 @@ class DnsQueryItem extends StatelessWidget {
             runSpacing: 4,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              for (final tag in dnsQuery.resultTags)
-                RecordLabel(
-                  label: tag,
-                  tone: dnsQuery.hasFailureRcode && tag == dnsQuery.rcode
+              for (final filter in dnsQuery.resultFilters)
+                _DnsKeyword(
+                  filter,
+                  tone: filter.kind == RecordFacetKind.rcode
                       ? RecordTone.error
                       : RecordTone.neutral,
-                  onPressed: () => onClickKeyword?.call(tag),
                 ),
               if (dnsQuery.upstream.isNotEmpty)
                 Text(dnsQuery.upstream, style: styles.secondary),
@@ -459,7 +479,7 @@ class DnsQueryDetailView extends StatelessWidget {
 Future<void> _copy(BuildContext context, String text) async {
   await Clipboard.setData(ClipboardData(text: text));
   if (!context.mounted) return;
-  context.showNotifier(context.appLocalizations.copySuccess);
+  dialogs.showBanner(context.appLocalizations.copySuccess);
 }
 
 class _ErrorRow extends StatelessWidget {

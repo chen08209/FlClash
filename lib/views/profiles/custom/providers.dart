@@ -8,31 +8,9 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/profiles/custom/members.dart';
-import 'package:fl_clash/views/profiles/custom/quick_edit.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-typedef ReferencedProviders = ({List<String> proxy, List<String> rule});
-
-/// A custom profile declares only the providers its groups and rules name, so
-/// naming one is what lists it here.
-ReferencedProviders referencedProviders(WidgetRef ref, int profileId) {
-  final groups = ref.watch(proxyGroupsProvider(profileId)).value ?? const [];
-  final rules = ref.watch(profileRulesProvider(profileId)).value ?? const [];
-  final overrideRuleSets = ref.watch(
-    profileProvider(
-      profileId,
-    ).select((profile) => SelectValue(profile?.overrides.ruleSets ?? const {})),
-  );
-  return (
-    proxy: {for (final group in groups) ...?group.use}.toList(),
-    rule: {
-      for (final rule in rules) ...rule.ruleSets,
-      ...overrideRuleSets.value,
-    }.toList(),
-  );
-}
 
 class CustomProvidersView extends ConsumerWidget {
   final int profileId;
@@ -42,7 +20,9 @@ class CustomProvidersView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
-    final (:proxy, :rule) = referencedProviders(ref, profileId);
+    final (:proxy, :rule) = ref.watch(
+      customReferencedProvidersProvider(profileId),
+    );
     final data = ref.watch(customProfileDataProvider(profileId));
     final profiles = {
       for (final profile in ref.watch(profilesProvider))
@@ -53,7 +33,7 @@ class CustomProvidersView extends ConsumerWidget {
           in ref.watch(clashProvidersProvider).value ?? const <ClashProvider>[])
         provider.label: provider,
     };
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.providers,
       body: NullStatusSwitcher(
         isEmpty: proxy.isEmpty && rule.isEmpty,
@@ -459,7 +439,7 @@ class _ProxyProviderOptionsViewState
       title: option.label(context.appLocalizations),
       leading: leading,
       onPressed: () => onChanged(!value),
-      trailing: CommonSwitch(value: value, onChanged: onChanged),
+      trailing: Switch(value: value, onChanged: onChanged),
     );
   }
 
@@ -596,7 +576,7 @@ class _ProxyProviderOptionsViewState
         if (!_shown.contains(option)) option,
     ];
     void handleAdd() => _handleAddOption(remaining);
-    return CommonScaffold(
+    return Scaffold(
       title: widget.name,
       confirmationAction: customSaveAction(context, onPressed: _handleSave),
       body: CustomScrollView(

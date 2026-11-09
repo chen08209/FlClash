@@ -1,10 +1,11 @@
-import 'package:fl_clash/ui/fade_box.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/fade_box.dart';
+import '../helpers/test_app.dart';
 
 void main() {
   Widget host(Widget child, {required bool disableAnimations}) {
-    return MaterialApp(
+    return HostApp(
       home: MediaQuery(
         data: MediaQueryData(disableAnimations: disableAnimations),
         child: child,

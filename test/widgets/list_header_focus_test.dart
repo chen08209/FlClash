@@ -1,18 +1,17 @@
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/proxies/list.dart';
 import 'package:fl_clash/views/proxies/proxies.dart';
-import 'package:material_ui/material_ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+import 'package:prism_ui/prism_ui.dart' hide ListHeader;
 
 void main() {
   Future<ProviderContainer> pumpListLayout(
@@ -62,13 +61,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: MaterialApp(
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            AppUiLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
+        child: HostApp(
           builder: (context, child) {
             return wrapAppScopes(context, child!);
           },
@@ -85,7 +78,7 @@ void main() {
     final ctx = FocusManager.instance.primaryFocus?.context;
     if (ctx == null) return false;
     return ctx.findAncestorWidgetOfExactType<ListHeader>() != null &&
-        ctx.findAncestorWidgetOfExactType<FilledButton>() != null &&
+        ctx.findAncestorWidgetOfExactType<Card>() != null &&
         ctx.findAncestorWidgetOfExactType<IconButton>() == null;
   }
 

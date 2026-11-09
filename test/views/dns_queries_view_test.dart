@@ -9,7 +9,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/dns_queries.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -81,7 +81,6 @@ void main() {
   Future<void> pumpDnsQueries(
     WidgetTester tester, {
     Size size = _tableSize,
-    bool withStatusManager = false,
   }) async {
     container.read(viewSizeProvider.notifier).update((_) => size);
     tester.view.physicalSize = size;
@@ -92,10 +91,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: TestApp(
-          withStatusManager: withStatusManager,
-          child: const DnsQueriesView(),
-        ),
+        child: const TestApp(child: DnsQueriesView()),
       ),
     );
     await tester.pump();
@@ -306,6 +302,42 @@ void main() {
     await teardownView(tester);
   });
 
+  testWidgets('a wide page pins the offered values as toggles', (tester) async {
+    seedDnsQueries([
+      _dnsQuery('alpha.test'),
+      _dnsQuery('beta.test', type: 'AAAA'),
+      _dnsQuery('gamma.test', cached: true),
+      _dnsQuery('delta.test', rcode: 'NXDOMAIN', answers: const []),
+    ]);
+
+    await pumpDnsQueries(tester);
+
+    for (final label in ['A', 'AAAA', 'Cache', 'NXDOMAIN']) {
+      expect(find.widgetWithText(Chip, label), findsOneWidget);
+    }
+    await tester.tap(find.widgetWithText(Chip, 'AAAA'));
+    await tester.pumpAndSettle();
+    expect(find.text('beta.test'), findsOneWidget);
+    expect(find.text('alpha.test'), findsNothing);
+
+    await tester.tap(find.widgetWithText(Chip, 'AAAA'));
+    await tester.pumpAndSettle();
+    expect(find.text('alpha.test'), findsOneWidget);
+  });
+
+  testWidgets('a query arriving later offers its value', (tester) async {
+    seedDnsQueries([_dnsQuery('alpha.test')]);
+
+    await pumpDnsQueries(tester);
+    expect(find.widgetWithText(Chip, 'AAAA'), findsNothing);
+
+    seedDnsQueries([_dnsQuery('beta.test', type: 'AAAA')]);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+
+    expect(find.widgetWithText(Chip, 'AAAA'), findsOneWidget);
+  });
+
   testWidgets('tapping a query opens its details', (tester) async {
     seedDnsQueries([
       _dnsQuery(
@@ -383,7 +415,7 @@ void main() {
 
   testWidgets('the broom clears the DNS cache and says so', (tester) async {
     when(core.clearDnsCache).thenAnswer((_) async => true);
-    await pumpDnsQueries(tester, withStatusManager: true);
+    await pumpDnsQueries(tester);
 
     await tester.tap(find.byGlyph(AppGlyphs.broom));
     await tester.pumpAndSettle();
@@ -403,7 +435,7 @@ void main() {
         message: 'Core is not running',
       ),
     );
-    await pumpDnsQueries(tester, withStatusManager: true);
+    await pumpDnsQueries(tester);
 
     await tester.tap(find.byGlyph(AppGlyphs.broom));
     await tester.pumpAndSettle();
@@ -413,4 +445,34 @@ void main() {
 
     await teardownView(tester);
   });
+
+  for (final (name, size, rowType) in const [
+    ('list', _listSize, DnsQueryItem),
+    ('table', _tableSize, RecordTableRow),
+  ]) {
+    testWidgets('a full $name builds only the query added', (tester) async {
+      seedDnsQueries([
+        for (var index = 0; index < 500; index++) _dnsQuery('d$index.test'),
+      ]);
+      await pumpDnsQueries(tester, size: size);
+      await tester.pump(const Duration(seconds: 1));
+
+      var built = 0;
+      debugOnRebuildDirtyWidget = (element, _) {
+        if (element.widget.runtimeType == rowType) {
+          built++;
+        }
+      };
+      addTearDown(() => debugOnRebuildDirtyWidget = null);
+      container
+          .read(dnsQueriesProvider.notifier)
+          .addQuery(_dnsQuery('new.test'));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump();
+      debugOnRebuildDirtyWidget = null;
+
+      expect(built, 1);
+      await teardownView(tester);
+    });
+  }
 }

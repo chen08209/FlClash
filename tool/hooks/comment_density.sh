@@ -19,6 +19,7 @@ is_checkable() {
   case "$file" in
     */build/* | */generated/* | */l10n/intl/* | */l10n/l10n.dart | */Clash.Meta/* | */.dart_tool/*) return 1 ;;
     *.g.dart | *.freezed.dart | */frb_generated*.dart | */frb_generated.rs | */open_container.dart) return 1 ;;
+    */prism_ui/lib/hct/* | */prism_ui/lib/shapes/* | */prism_ui/lib/sliver_list/* | */qr_matrix.dart) return 1 ;;
   esac
   return 0
 }

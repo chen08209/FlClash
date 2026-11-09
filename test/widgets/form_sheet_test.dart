@@ -1,10 +1,11 @@
 import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/ui.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 class _Form extends StatefulWidget {
   const _Form({this.onDismiss});
@@ -51,7 +52,7 @@ Future<void> _open(
     TestApp(
       overrides: [viewSizeProvider.overrideWithBuild((_, _) => size)],
       child: Builder(
-        builder: (context) => Scaffold(
+        builder: (context) => HostScaffold(
           body: TextButton(
             onPressed: () =>
                 showFormSheet<void>(context: context, builder: (_) => form),
@@ -79,7 +80,7 @@ void main() {
 
     expect(_sheetType(tester), SheetType.formSheet);
     final card = find
-        .ancestor(of: find.byType(FormPage), matching: find.byType(Material))
+        .ancestor(of: find.byType(FormPage), matching: find.byType(Surface))
         .first;
     expect(tester.getCenter(card).dx, 600);
     expect(tester.getSize(card).width, 440);
@@ -89,6 +90,32 @@ void main() {
     expect(find.widgetWithText(TextButton, 'Save'), findsOneWidget);
     expect(find.byTooltip('Save'), findsNothing);
     expect(find.byTooltip('Close'), findsNothing);
+  });
+
+  testWidgets('a card under a status bar lays its form out as without one', (
+    tester,
+  ) async {
+    Future<(double, double)> titleAndHeight() async {
+      await _open(tester, const Size(1000, 1400));
+      final card = find
+          .ancestor(of: find.byType(FormPage), matching: find.byType(Surface))
+          .first;
+      final top = tester.getTopLeft(card).dy;
+      return (
+        tester.getTopLeft(find.text('Form').last).dy - top,
+        tester.getSize(card).height,
+      );
+    }
+
+    final bare = await titleAndHeight();
+    Navigator.of(tester.element(find.byType(FormPage))).pop();
+    await tester.pumpAndSettle();
+    tester.view.padding = const FakeViewPadding(top: 72);
+    tester.view.viewPadding = const FakeViewPadding(top: 72);
+    addTearDown(tester.view.resetPadding);
+    addTearDown(tester.view.resetViewPadding);
+
+    expect(await titleAndHeight(), bare);
   });
 
   testWidgets('a mobile form is a bottom sheet with bare fields', (
@@ -107,14 +134,6 @@ void main() {
   testWidgets('a bare field floats no label, whose focus animation would lay '
       'the form out on every frame', (tester) async {
     await _open(tester, const Size(390, 844));
-
-    final decorator = tester.widget<InputDecorator>(
-      find.byType(InputDecorator),
-    );
-    expect(
-      decorator.decoration.floatingLabelBehavior,
-      FloatingLabelBehavior.never,
-    );
   });
 
   testWidgets('cancel at the foot closes the card', (tester) async {

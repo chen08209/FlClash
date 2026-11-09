@@ -23,7 +23,7 @@ class _Probe extends Notifier<RoutedProbeState<String, String>>
   final pending = <Completer<Map<String, ProbeAnswer<String>>>>[];
   final checks = <List<List<RouteHit>>>[];
   final moved = <String>{};
-  Future<RouteCheck?> Function()? checkAnswer;
+  Future<RouteCheck> Function()? checkAnswer;
   Duration settle = Duration.zero;
   Duration moveSettle = Duration.zero;
   Duration throttle = Duration.zero;
@@ -56,7 +56,7 @@ class _Probe extends Notifier<RoutedProbeState<String, String>>
   }
 
   @override
-  Future<RouteCheck?> checkRoutes(List<List<RouteHit>> routes) {
+  Future<RouteCheck> checkRoutes(List<List<RouteHit>> routes) {
     checks.add(routes);
     final answer = checkAnswer;
     if (answer != null) {
@@ -237,7 +237,7 @@ void main() {
     probe.answer({'a': _ok('a.example:443')});
     await pumpEventQueue();
 
-    final check = Completer<RouteCheck?>();
+    final check = Completer<RouteCheck>();
     probe.checkAnswer = () => check.future;
     moveRoute(container, 2);
     await pumpEventQueue();
@@ -405,7 +405,7 @@ void main() {
     expect(probe.calls, hasLength(2));
     expect(probe.checks, isEmpty);
 
-    final check = Completer<RouteCheck?>();
+    final check = Completer<RouteCheck>();
     probe.checkAnswer = () => check.future;
     probe.answer({'a': _ok('a.example:443')});
     probe.answer({'b': _ok('b.example:443')});
@@ -649,7 +649,9 @@ void main() {
 
     ProviderContainer live(RouteSnapshot Function() snapshot) {
       when(() => core.watchRoute(true)).thenAnswer((_) async => snapshot());
-      when(() => core.watchRoute(false)).thenAnswer((_) async => null);
+      when(
+        () => core.watchRoute(false),
+      ).thenAnswer((_) async => RouteSnapshot(coreEpoch: snapshot().coreEpoch));
       final container = ProviderContainer(
         overrides: [
           initProvider.overrideWithBuild((_, _) => true),

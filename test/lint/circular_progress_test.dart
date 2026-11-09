@@ -2,13 +2,15 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
+import 'sources.dart';
+
 final _circularProgress = RegExp(r'\bCircularProgressIndicator\b');
 
 void main() {
-  test('lib shows circular loading with CommonCircleLoading', () {
+  test('lib shows circular loading with ActivityIndicator', () {
     final offenders = <String>[];
 
-    for (final entity in Directory('lib').listSync(recursive: true)) {
+    for (final entity in sourceEntities()) {
       if (entity is! File ||
           !entity.path.endsWith('.dart') ||
           entity.path.contains('/generated/')) {
@@ -18,7 +20,7 @@ void main() {
       for (var i = 0; i < lines.length; i++) {
         if (_circularProgress.hasMatch(lines[i])) {
           offenders.add(
-            '${entity.path}:${i + 1} — use CommonCircleLoading, sized as the '
+            '${entity.path}:${i + 1} — use ActivityIndicator, sized as the '
             'glyph it stands in for.',
           );
         }

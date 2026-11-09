@@ -7,15 +7,15 @@ import (
 )
 
 // Splits and compiles each value as adapter/outboundgroup reads a filter.
-func handleValidateFilters(filters []string) []string {
-	results := make([]string, len(filters))
-	for i, filter := range filters {
+func handleValidateFilters(params FiltersParams) []ValidationIssue {
+	issues := []ValidationIssue{}
+	for i, filter := range params.Filters {
 		for _, part := range strings.Split(filter, "`") {
 			if _, err := regexp2.Compile(part, regexp2.None); err != nil {
-				results[i] = err.Error()
+				issues = append(issues, ValidationIssue{Index: i, Message: err.Error()})
 				break
 			}
 		}
 	}
-	return results
+	return issues
 }

@@ -3,8 +3,8 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
@@ -15,7 +15,7 @@ void main() {
   setUp(() => queries = []);
 
   Widget scaffold({required SheetType? type, Widget? body}) {
-    final scaffold = CommonScaffold(
+    final scaffold = Scaffold(
       title: 'title',
       searchState: AppBarSearchState(onSearch: queries.add),
       body: body ?? const SizedBox(),
@@ -106,11 +106,11 @@ void main() {
           overrides: [viewSizeProvider.overrideWithBuild((_, _) => view)],
           homeBuilder: (page) => Navigator(
             onGenerateInitialRoutes: (_, _) => [
-              MaterialPageRoute<void>(builder: (_) => const SizedBox()),
-              MaterialPageRoute<void>(builder: (_) => page),
+              HostPageRoute<void>(builder: (_) => const SizedBox()),
+              HostPageRoute<void>(builder: (_) => page),
             ],
           ),
-          child: CommonScaffold(
+          child: Scaffold(
             title: 'title',
             searchState: AppBarSearchState(onSearch: queries.add),
             body: const SizedBox.expand(),
@@ -156,11 +156,11 @@ void main() {
         overrides: [viewSizeProvider.overrideWithBuild((_, _) => view)],
         homeBuilder: (page) => Navigator(
           onGenerateInitialRoutes: (_, _) => [
-            MaterialPageRoute<void>(builder: (_) => const SizedBox()),
-            MaterialPageRoute<void>(builder: (_) => page),
+            HostPageRoute<void>(builder: (_) => const SizedBox()),
+            HostPageRoute<void>(builder: (_) => page),
           ],
         ),
-        child: CommonScaffold(
+        child: Scaffold(
           title: 'title',
           searchState: AppBarSearchState(onSearch: queries.add),
           searchInBar: true,
@@ -186,26 +186,26 @@ void main() {
     bool glass = false,
   }) async {
     await tester.pumpWidget(
-      LiquidGlassScope(
-        enabled: glass,
-        child: TestApp(
-          wrapInProviderScope: true,
-          child: Builder(
-            builder: (context) => TextButton(
-              onPressed: () => showModalBottomSheet<void>(
-                context: context,
-                isScrollControlled: true,
-                builder: (_) => SheetProvider(
+      TestApp(
+        wrapInProviderScope: true,
+        liquidGlass: glass ? LiquidGlassQuality.ultra : null,
+        child: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showDialog<void>(
+              context: context,
+              builder: (_) => Align(
+                alignment: Alignment.bottomCenter,
+                child: SheetProvider(
                   type: SheetType.bottomSheet,
-                  child: CommonScaffold(
+                  child: Scaffold(
                     title: 'title',
                     searchState: AppBarSearchState(onSearch: queries.add),
                     body: body ?? const SizedBox(height: 200),
                   ),
                 ),
               ),
-              child: const Text('open'),
             ),
+            child: const Text('open'),
           ),
         ),
       ),
@@ -264,15 +264,15 @@ void main() {
       isFalse,
     );
     // The dock itself paints nothing, so no band spans the sheet behind it.
-    final material = tester.widget<Material>(
+    final material = tester.widget<Surface>(
       find
           .ancestor(
             of: find.byType(SearchField),
-            matching: find.byType(Material),
+            matching: find.byType(Surface),
           )
           .first,
     );
-    expect(material.type, MaterialType.transparency);
+    expect(material.color, isNull);
   });
 
   testWidgets('a docked field stands on glass in place of its fill', (
@@ -296,7 +296,7 @@ void main() {
           builder: (context) => TextButton(
             onPressed: () => showSnapSheet(
               context,
-              builder: (_, controller) => CommonScaffold(
+              builder: (_, controller) => Scaffold(
                 title: 'title',
                 searchState: AppBarSearchState(onSearch: queries.add),
                 body: ListView.builder(
@@ -362,10 +362,11 @@ void main() {
     await tester.tap(find.byType(TextField));
     await tester.pumpAndSettle();
     expect(cancel, findsOneWidget);
+    final scale = tester.getRect(cancel).width / tester.getSize(cancel).width;
     expect(
       tester.getRect(cancel).left -
           tester.getRect(find.byType(SearchField)).right,
-      12,
+      moreOrLessEquals(12 * scale),
     );
     // A bar's button, as tall as the field and in the bar's foreground.
     expect(tester.getSize(cancel), Size.square(TonalButtonSize.docked.button));
@@ -441,7 +442,7 @@ void main() {
           builder: (context) => TextButton(
             onPressed: () => showSheet<void>(
               context: context,
-              builder: (_) => CommonScaffold(
+              builder: (_) => Scaffold(
                 title: 'title',
                 searchState: AppBarSearchState(onSearch: queries.add),
                 body: const SizedBox(height: 200),
@@ -480,7 +481,7 @@ void main() {
           builder: (context) => TextButton(
             onPressed: () => showSnapSheet(
               context,
-              builder: (_, controller) => CommonScaffold(
+              builder: (_, controller) => Scaffold(
                 title: 'title',
                 searchState: AppBarSearchState(onSearch: queries.add),
                 body: ListView.builder(

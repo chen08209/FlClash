@@ -12,7 +12,7 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'card.dart';
@@ -313,7 +313,7 @@ class _MemoryDetailSheetState extends ConsumerState<MemoryDetailSheet>
   /// Resolves to the bytes freed.
   Future<int> _release() async {
     final before = _snapshot.total;
-    await ref.read(coreHandlerProvider).requestGc();
+    await ref.read(coreHandlerProvider).forceGc();
     if (!mounted) {
       return 0;
     }
@@ -332,7 +332,7 @@ class _MemoryDetailSheetState extends ConsumerState<MemoryDetailSheet>
     setState(() => _isReleasing = true);
     final appLocalizations = context.appLocalizations;
     String message;
-    var level = MessageLevel.success;
+    var level = BannerLevel.success;
     try {
       final (freed, _) = await (
         _release(),
@@ -347,13 +347,13 @@ class _MemoryDetailSheetState extends ConsumerState<MemoryDetailSheet>
         logLevel: coreFailureLogLevel(error),
       );
       message = appLocalizations.releaseMemoryFailed;
-      level = MessageLevel.error;
+      level = BannerLevel.error;
     }
     if (!mounted) {
       return;
     }
     setState(() => _isReleasing = false);
-    context.showNotifier(message, level: level);
+    dialogs.showBanner(message, level: level);
   }
 
   List<Widget> _appItems(
@@ -411,7 +411,7 @@ class _MemoryDetailSheetState extends ConsumerState<MemoryDetailSheet>
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.memoryInfo,
       actions: [
         AppBarActionButton(

@@ -9,12 +9,13 @@ import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/config/ntp.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 const _profileId = 1;
 
@@ -143,7 +144,7 @@ void main() {
 
     await addKey(tester, currentAppLocalizations.writeToSystem);
 
-    expect(find.byType(CommonDialog), findsNothing);
+    expect(find.byType(AlertDialog), findsNothing);
     expect(config().ntpOverrideKeys, {NtpOverrideKey.writeToSystem});
     expect(config().ntp.writeToSystem, defaultNtp.writeToSystem);
   });
@@ -178,7 +179,7 @@ void main() {
 
     double heightOf(String title) => tester
         .getSize(
-          find.ancestor(of: find.text(title), matching: find.byType(ListTile)),
+          find.ancestor(of: find.text(title), matching: find.byType(ListRow)),
         )
         .height;
     expect(config().ntp.dialerProxy, isEmpty);
@@ -196,7 +197,7 @@ void main() {
     await tester.pump();
 
     expect(find.text(currentAppLocalizations.status), findsOneWidget);
-    await tester.tap(find.byType(CommonSwitch).last);
+    await tester.tap(find.byType(Switch).last);
     await tester.pump();
     expect(config().ntp.enable, isTrue);
 
@@ -239,7 +240,7 @@ void main() {
 
     await tester.tap(
       find.descendant(
-        of: find.ancestor(of: status, matching: find.byType(ListTile)),
+        of: find.ancestor(of: status, matching: find.byType(ListRow)),
         matching: find.byTooltip(currentAppLocalizations.remove),
       ),
     );

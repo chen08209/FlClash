@@ -159,7 +159,9 @@ extension _RendererLayout on _CodeFieldRenderer {
 
   void _applyColors() {
     final color =
-        _textStyle?.color ?? _editorTheme['root']?.color ?? Colors.black;
+        _textStyle?.color ??
+        _editorTheme['root']?.color ??
+        const Color(0xFF000000);
     _uiTextStyle = ui.TextStyle(
       color: color,
       fontSize: _textStyle?.fontSize ?? 14.0,

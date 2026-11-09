@@ -3,8 +3,10 @@ import 'dart:ui' as ui;
 
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:prism_ui/prism_ui.dart';
+import '../helpers/test_app.dart';
 
 void main() {
   test('a profile reads how far an outline reaches each way', () {
@@ -84,14 +86,14 @@ void main() {
   testWidgets('a pane shaped by a clipper keeps to its path', (tester) async {
     final key = GlobalKey();
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         home: Center(
           child: RepaintBoundary(
             key: key,
             child: const SizedBox.square(
               dimension: 40,
               child: LiquidGlass(
-                style: LiquidGlassStyle(tint: Colors.blue),
+                style: LiquidGlassStyle(tint: Color(0xFF2196F3)),
                 clipper: _Diamond(),
               ),
             ),
@@ -120,13 +122,15 @@ void main() {
   ) async {
     final key = GlobalKey();
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         home: Center(
           child: RepaintBoundary(
             key: key,
             child: const SizedBox.square(
               dimension: 40,
-              child: LiquidGlass(style: LiquidGlassStyle(tint: Colors.blue)),
+              child: LiquidGlass(
+                style: LiquidGlassStyle(tint: Color(0xFF2196F3)),
+              ),
             ),
           ),
         ),

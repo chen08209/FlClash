@@ -1,4 +1,4 @@
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 /// This class provides styling options for code selection in the code editor.
 class CodeSelectionStyle {
@@ -14,7 +14,7 @@ class CodeSelectionStyle {
   CodeSelectionStyle({
     this.cursorColor,
     this.selectionColor = const Color(0x6E2195F3),
-    this.cursorBubbleColor = Colors.blue,
+    this.cursorBubbleColor = const Color(0xFF2196F3),
   });
 }
 

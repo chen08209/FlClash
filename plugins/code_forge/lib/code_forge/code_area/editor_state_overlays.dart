@@ -16,24 +16,18 @@ extension _EditorStateOverlays on _CodeForgeState {
   void _handleContextMenuRequest(Offset offset) {
     final stack = _editorStackKey.currentContext?.findRenderObject();
     if (stack is! RenderBox || !stack.attached) return;
-    final selection = _controller.selection;
-    final selectionRect = _renderer?.getVisibleSelectionRect();
     widget.onContextMenu(
       context,
       CodeForgeContextMenuRequest(
         globalPosition: stack.localToGlobal(offset),
-        hasSelection: !selection.isCollapsed,
-        selectionRect: selectionRect,
-        isAllSelected:
-            selection.start == 0 && selection.end == _controller.length,
+        selection: () => _controller.selection,
+        length: () => _controller.length,
+        selectionRect: () => _renderer?.getVisibleSelectionRect(),
         readOnly: _readOnly,
         copy: _controller.copy,
         cut: _controller.cut,
         paste: () => _controller.paste(),
-        selectAll: () {
-          _controller.selectAll();
-          if (_isMobile) _handleContextMenuRequest(offset);
-        },
+        selectAll: _controller.selectAll,
       ),
     );
   }

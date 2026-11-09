@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:re_highlight/re_highlight.dart';
 import 'package:rust_api/editor.dart';
 
@@ -241,36 +241,46 @@ class _CodeField extends LeafRenderObjectWidget {
   }
 }
 
+/// What a context menu needs of the editor. The selection getters read the
+/// editor as it stands now, so a menu kept open follows a change it made.
 class CodeForgeContextMenuRequest {
   final Offset globalPosition;
-  final bool hasSelection;
+  final TextSelection Function() _selection;
+  final int Function() _length;
+  final Rect? Function() _selectionRect;
 
-  /// The on-screen rows of the selection, in global coordinates; null when
-  /// the selection is collapsed or scrolled out of view.
-  final Rect? selectionRect;
+  bool get hasSelection => !_selection().isCollapsed;
 
-  final bool isAllSelected;
+  bool get isAllSelected {
+    final selection = _selection();
+    return selection.start == 0 && selection.end == _length();
+  }
+
+  /// Where the selection stands on screen in global coordinates: the caret
+  /// when collapsed, the selected span of a single row, or the rows of several;
+  /// null when scrolled out of view.
+  Rect? get selectionRect => _selectionRect();
+
   final bool readOnly;
 
   final VoidCallback copy;
   final VoidCallback cut;
   final VoidCallback paste;
-
-  /// On mobile, also asks for the menu again, now for the whole document, the
-  /// way the platform toolbars stay up after select all.
   final VoidCallback selectAll;
 
   const CodeForgeContextMenuRequest({
     required this.globalPosition,
-    required this.hasSelection,
-    this.selectionRect,
-    required this.isAllSelected,
+    required TextSelection Function() selection,
+    required int Function() length,
+    required Rect? Function() selectionRect,
     required this.readOnly,
     required this.copy,
     required this.cut,
     required this.paste,
     required this.selectAll,
-  });
+  }) : _selection = selection,
+       _length = length,
+       _selectionRect = selectionRect;
 }
 
 class CodeForgeScrollbarDetails {

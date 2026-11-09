@@ -12,12 +12,13 @@ import 'package:fl_clash/views/navigation.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 const _mobileSize = Size(400, 800);
 
@@ -36,7 +37,7 @@ IconButtonData _addAction() {
 }
 
 Widget _page(String title, {IconButtonData? primaryAction}) {
-  return CommonScaffold(
+  return Scaffold(
     title: title,
     primaryAction: primaryAction,
     body: Text('page:$title'),
@@ -128,7 +129,6 @@ void main() {
     final container = await _pumpHome(tester);
 
     final bar = tester.getRect(find.byType(FloatingNavigationBar));
-    expect(find.byType(FloatingActionButton), findsNothing);
     expect(bar.center.dx, _mobileSize.width / 2);
 
     await tester.drag(
@@ -303,7 +303,7 @@ void main() {
       await tester.pumpWidget(
         TestApp(
           wrapInProviderScope: true,
-          homeBuilder: (child) => Scaffold(
+          homeBuilder: (child) => HostScaffold(
             body: Align(
               alignment: Alignment.bottomCenter,
               child: LiquidGlassScope(
@@ -489,7 +489,6 @@ void main() {
         find.ancestor(of: action, matching: find.byType(AppBar)),
         findsOneWidget,
       );
-      expect(find.byType(FloatingActionButton), findsNothing);
       expect(tester.takeException(), isNull);
     });
   }
@@ -505,7 +504,7 @@ void main() {
     Future<Rect> pumpBar(int count) async {
       await tester.pumpWidget(
         TestApp(
-          child: Scaffold(
+          child: HostScaffold(
             body: Align(
               alignment: Alignment.bottomCenter,
               child: NavigationDock(
@@ -544,7 +543,7 @@ void main() {
     Future<List<Text>> pumpLabels(String label) async {
       await tester.pumpWidget(
         TestApp(
-          child: Scaffold(
+          child: HostScaffold(
             body: Align(
               alignment: Alignment.bottomCenter,
               child: NavigationDock(
@@ -597,7 +596,7 @@ void main() {
         child: Center(
           child: ElasticPress(
             child: ColoredBox(
-              color: Colors.blue,
+              color: Color(0xFF2196F3),
               child: SizedBox.square(dimension: 40),
             ),
           ),
@@ -644,19 +643,14 @@ void main() {
     final resting = tester.getRect(press);
     double width() =>
         _painted(tester, tester.renderObject(press), resting).width;
-    final ink = tester.widget<InkWell>(
+    CardSurface surface() => tester.widget<CardSurface>(
       find.descendant(
         of: find.byType(IconButton),
-        matching: find.byType(InkWell),
+        matching: find.byType(CardSurface),
       ),
     );
-    for (final state in [
-      WidgetState.hovered,
-      WidgetState.focused,
-      WidgetState.pressed,
-    ]) {
-      expect(ink.overlayColor!.resolve({state}), Colors.transparent);
-    }
+    final fill = surface().fill;
+    expect(surface().look, PressLook.none);
 
     final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
     await mouse.addPointer(location: Offset.zero);
@@ -664,12 +658,57 @@ void main() {
     await tester.pumpAndSettle();
     final hovered = width();
     expect(hovered, greaterThan(resting.width * 1.05));
+    expect(surface().fill, fill);
 
     await mouse.down(resting.center);
     await tester.pumpAndSettle();
     expect(width(), greaterThan(hovered));
+    expect(surface().fill, fill);
 
     await mouse.up();
+    await tester.pumpAndSettle();
+    expect(width(), moreOrLessEquals(hovered));
+
+    await mouse.moveTo(Offset.zero);
+    await tester.pumpAndSettle();
+    expect(width(), resting.width);
+    await mouse.removePointer();
+  });
+
+  testWidgets('a pointer trembling on the edge of a tonal button keeps it '
+      'lifted', (tester) async {
+    await tester.pumpWidget(
+      TestApp(
+        child: Center(
+          child: TonalButton(
+            size: TonalButtonSize.bar,
+            glyph: AppGlyphs.sync,
+            label: _addLabel,
+            onPressed: () {},
+          ),
+        ),
+      ),
+    );
+    final press = find.byType(ElasticPress);
+    final resting = tester.getRect(press);
+    double width() =>
+        _painted(tester, tester.renderObject(press), resting).width;
+    final inside = resting.centerRight - const Offset(1, 0);
+    final outside = resting.centerRight + const Offset(1, 0);
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: outside);
+    await tester.pumpAndSettle();
+    expect(width(), resting.width);
+
+    await mouse.moveTo(inside);
+    await tester.pumpAndSettle();
+    final hovered = width();
+    expect(hovered, greaterThan(resting.width));
+    for (var i = 0; i < 7; i++) {
+      await mouse.moveTo(i.isEven ? outside : inside);
+      await tester.pump(const Duration(milliseconds: 50));
+    }
     await tester.pumpAndSettle();
     expect(width(), moreOrLessEquals(hovered));
 
@@ -684,7 +723,7 @@ void main() {
     (tester) async {
       await tester.pumpWidget(
         TestApp(
-          child: Scaffold(
+          child: HostScaffold(
             body: IconTheme.merge(
               data: const IconThemeData(fill: 1),
               child: Row(
@@ -702,40 +741,25 @@ void main() {
                       child: const Text(_addLabel),
                     ),
                   ),
-                  ElasticButton(
-                    child: FloatingActionButton(
-                      heroTag: null,
-                      onPressed: () {},
-                      child: const GlyphIcon(AppGlyphs.copy),
-                    ),
-                  ),
                 ],
               ),
             ),
           ),
         ),
       );
-      InkWell inkOf(Type button) => tester.widget<InkWell>(
-        find.descendant(
-          of: find.byType(button),
-          matching: find.byType(InkWell),
-        ),
-      );
       for (final button in [IconButton, FilledButton]) {
-        final ink = inkOf(button);
-        expect(ink.splashFactory, NoSplash.splashFactory);
         expect(
-          ink.overlayColor!.resolve({WidgetState.pressed}),
-          Colors.transparent,
+          tester
+              .widget<CardSurface>(
+                find.descendant(
+                  of: find.byType(button),
+                  matching: find.byType(CardSurface),
+                ),
+              )
+              .look,
+          PressLook.none,
         );
       }
-      final fabInk = find.descendant(
-        of: find.byType(FloatingActionButton),
-        matching: find.byType(InkWell),
-      );
-      final fabTheme = Theme.of(tester.element(fabInk));
-      expect(fabTheme.splashFactory, NoSplash.splashFactory);
-      expect(fabTheme.highlightColor, Colors.transparent);
       expect(
         IconTheme.of(tester.element(find.byType(GlyphIcon).first)).fill,
         1,

@@ -43,8 +43,12 @@ class _TestProxyDialers extends ProxyDialers {
 }
 
 class _TestProfileRules extends ProfileRules {
+  final List<Rule> initial;
+
+  _TestProfileRules([this.initial = const []]);
+
   @override
-  Stream<List<Rule>> build(int profileId) => Stream.value(const []);
+  Stream<List<Rule>> build(int profileId) => Stream.value(initial);
 }
 
 class _TestProxyGroups extends ProxyGroups {
@@ -352,6 +356,51 @@ void main() {
     issues = container.read(customProfileIssuesProvider(profileId));
     expect(issues.dns, isEmpty);
     expect(issues.ntp, isEmpty);
+  });
+
+  test('a large profile is checked off the UI isolate and keeps the last '
+      'result until the next is in', () async {
+    final rules = [
+      for (var index = 0; index < 3000; index++)
+        Rule(
+          id: index,
+          ruleAction: RuleAction.DOMAIN,
+          content: 'host$index',
+          ruleTarget: index.isEven ? 'Group' : 'Gone',
+        ),
+    ];
+    final container = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        clashProvidersProvider.overrideWith(() => _TestClashProviders([])),
+        profileRulesProvider.overrideWith2((_) => _TestProfileRules(rules)),
+        customProxiesProvider.overrideWith(_TestCustomProxies.new),
+        proxyDialersProvider.overrideWith2((_) => _TestProxyDialers()),
+        proxyGroupsProvider.overrideWith2(
+          (_) => _TestProxyGroups([proxyGroup]),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final checked = Completer<CustomProfileIssues>();
+    container.listen(customProfileIssuesProvider(profileId), (_, next) {
+      if (next.rules.isNotEmpty && !checked.isCompleted) {
+        checked.complete(next);
+      }
+    });
+    await _loadSources(container);
+    await container.read(profileRulesProvider(profileId).future);
+
+    expect(
+      container.read(customProfileIssuesProvider(profileId)),
+      const CustomProfileIssues(),
+    );
+    final issues = await checked.future.timeout(const Duration(seconds: 10));
+    expect(issues.rules.keys, [
+      for (var index = 1; index < 3000; index += 2) index,
+    ]);
+    expect(issues.rules[1], [const CustomIssue.missingTarget('Gone')]);
+    expect(issues.proxyGroups.keys, {7});
   });
 
   test('dialers resolve per profile and count only for the app proxies a group '

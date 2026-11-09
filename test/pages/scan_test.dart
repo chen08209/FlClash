@@ -3,15 +3,13 @@ import 'dart:async';
 import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/pages/scan.dart';
 import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/ui/activate_box.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
-import 'package:fl_clash/ui/null_status.dart';
-import 'package:fl_clash/ui/surface.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
@@ -158,16 +156,14 @@ void main() {
       unawaited(
         navigator
             .push<void>(
-              MaterialPageRoute<void>(builder: (_) => const Text('below')),
+              HostPageRoute<void>(builder: (_) => const Text('below')),
             )
             .then((_) => onBelowPopped()),
       );
     }
     unawaited(
       navigator
-          .push<String>(
-            MaterialPageRoute<String>(builder: (_) => const ScanPage()),
-          )
+          .push<String>(HostPageRoute<String>(builder: (_) => const ScanPage()))
           .then(onPopped),
     );
     await tester.pump();
@@ -765,7 +761,7 @@ void main() {
       final settings = tester.getRect(
         find.ancestor(
           of: find.text(currentAppLocalizations.settings),
-          matching: find.bySubtype<FilledButton>(),
+          matching: find.byType(FilledButton),
         ),
       );
       final close = tester.getRect(
@@ -840,15 +836,14 @@ void main() {
         tester.element(
           find.descendant(
             of: find.byType(ScanPage),
-            matching: find.byType(Scaffold),
+            matching: find.byType(AppBar),
           ),
         ),
       );
       expect(theme.brightness, Brightness.dark);
       expect(theme.colorScheme.surface, Colors.black);
-      expect(theme.extension<ElevatedColorScheme>(), isNotNull);
-      expect(theme.textTheme.bodyMedium!.fontFamily, 'Inter');
-      expect(theme.actionIconTheme?.backButtonIconBuilder, isNotNull);
+      expect(theme.elevatedColorScheme, isNotNull);
+      expect(theme.bodyTextStyle.fontFamily, 'Inter');
     });
   });
 }

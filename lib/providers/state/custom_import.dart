@@ -306,7 +306,7 @@ Object? _comparable(Map<String, dynamic> definition) =>
 List<Object?>? _identityOf(Map<String, dynamic> definition) {
   final proxy = CustomProxy(id: 0, definition: definition);
   final server = proxy.server;
-  if (server == null || server.isEmpty || proxy.credentials.isEmpty) {
+  if (server == null || server.isEmpty || proxy.accountKeys.isEmpty) {
     return null;
   }
   return [
@@ -314,8 +314,7 @@ List<Object?>? _identityOf(Map<String, dynamic> definition) {
     proxy.type,
     server,
     proxy.port,
-    for (final credential in proxy.credentials)
-      proxy.valueOf(credential)?.toString(),
+    for (final key in proxy.accountKeys) proxy.valueOf(key)?.toString(),
   ];
 }
 
@@ -355,11 +354,13 @@ _importProxies(
   final existingNames = {for (final item in existing) _nameOf(item)};
   final kept = {
     for (final proxy in proxies)
-      if (!existingNames.contains(_nameOf(proxy)) &&
-          !groupNames.contains(_nameOf(proxy)))
-        _nameOf(proxy),
+      if (linkProxyName(proxy) case final name
+          when !existingNames.contains(name) && !groupNames.contains(name))
+        name,
     for (final group in groups)
-      if (!existingNames.contains(_nameOf(group))) _nameOf(group),
+      if (_nameOf(group).trim() case final name
+          when !existingNames.contains(name))
+        name,
   };
   final taken = {
     ...reservedCustomProxyNames,
@@ -373,35 +374,45 @@ _importProxies(
   final names = <String, String>{};
   final proxyNames = <String>[];
   final added = <Map<String, dynamic>>[];
+  final repeats = HashMap<List<Object?>, String>(
+    equals: equality.equals,
+    hashCode: equality.hash,
+  );
   for (final proxy in proxies) {
-    final name = _nameOf(proxy);
-    final definition = _withoutDialer(proxy);
+    final name = linkProxyName(proxy);
+    final definition = {..._withoutDialer(proxy), 'name': name};
+    final comparable = _comparable(definition);
     final String imported;
-    if (held[_comparable(definition)] case final same?) {
+    if (held[comparable] case final same?) {
       imported = same;
     } else if (identities.contains(_identityOf(definition))) {
       imported = name;
+    } else if (repeats[[name, comparable]] case final first?) {
+      imported = first;
     } else {
-      imported = reservedCustomProxyNames.contains(name)
+      imported =
+          reservedCustomProxyNames.contains(name) || groupNames.contains(name)
           ? freeProxyName(name, taken)
           : freeName(name);
+      repeats[[name, comparable]] = imported;
       added.add({...definition, 'name': imported});
     }
-    names.putIfAbsent(name, () => imported);
+    names.putIfAbsent(_nameOf(proxy), () => imported);
     proxyNames.add(imported);
   }
   final importedGroupNames = <String>[];
   for (final group in groups) {
-    final imported = freeName(_nameOf(group));
+    final imported = freeName(_nameOf(group).trim());
     names.putIfAbsent(_nameOf(group), () => imported);
     importedGroupNames.add(imported);
   }
-  final dialers = {
-    for (final (index, proxy) in proxies.indexed)
-      if (proxy['dialer-proxy']?.toString() case final dialer?
-          when dialer.isNotEmpty)
-        proxyNames[index]: names[dialer] ?? dialer,
-  };
+  final dialers = <String, String>{};
+  for (final (index, proxy) in proxies.indexed) {
+    if (proxy['dialer-proxy']?.toString() case final dialer?
+        when dialer.isNotEmpty) {
+      dialers.putIfAbsent(proxyNames[index], () => names[dialer] ?? dialer);
+    }
+  }
   return (
     names: names,
     importedGroupNames: importedGroupNames,

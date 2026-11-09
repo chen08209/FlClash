@@ -3,7 +3,7 @@ import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class CustomProxyDialersView extends ConsumerWidget {
@@ -90,14 +90,17 @@ class CustomProxyDialersView extends ConsumerWidget {
             for (final proxy in all)
               if (named.value.contains(proxy.name)) proxy,
           ];
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.dialerProxy,
       body: NullStatusSwitcher(
         isLoading: proxies == null,
         isEmpty: proxies?.isEmpty ?? true,
         isSearching: false,
-        nullStatus: NullStatus(label: appLocalizations.appProxiesEmpty),
-        child: ListView.builder(
+        nullStatus: NullStatus(
+          label: appLocalizations.appProxiesEmpty,
+          illustration: NullStatusIllustration.data,
+        ),
+        child: PrismListView(
           padding: EdgeInsets.fromLTRB(
             16,
             context.contentTopPadding,

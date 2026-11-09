@@ -9,7 +9,7 @@ import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 typedef OverrideState<K extends OverrideKey, M> = ({M model, Set<K> keys});
@@ -330,10 +330,14 @@ class ListOverrideField<M> extends ValueOverrideField<M, List<String>> {
     super.update, {
     required this.itemMaxLength,
     this.itemValidator,
+    this.description,
   });
 
   final int itemMaxLength;
   final ConfigValidator? itemValidator;
+
+  /// Shown on the list's own page, so long lists do not crowd the section.
+  final ConfigLabel? description;
 
   @override
   Widget build(
@@ -348,6 +352,7 @@ class ListOverrideField<M> extends ValueOverrideField<M, List<String>> {
       onChanged: model.modelWriter(update),
       itemMaxLength: itemMaxLength,
       itemValidator: itemValidator,
+      description: description,
     );
   }
 }
@@ -477,8 +482,8 @@ class OverrideView<K extends OverrideKey, M> extends ConsumerWidget {
     );
     return sheetNavigatorOf(context).push(
       context.isMobileView
-          ? CommonRoute(builder: (_) => page)
-          : CommonDesktopRoute(builder: (_) => page),
+          ? CardPageRoute(builder: (_) => page)
+          : FadePageRoute(builder: (_) => page),
     );
   }
 
@@ -538,7 +543,7 @@ class OverrideView<K extends OverrideKey, M> extends ConsumerWidget {
       ),
     );
     final addEntry = target.addEntry(appLocalizations);
-    return CommonScaffold(
+    return Scaffold(
       title: spec.title(appLocalizations),
       iconActions: [
         if (!isEmpty)

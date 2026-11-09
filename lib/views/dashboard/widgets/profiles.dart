@@ -10,11 +10,12 @@ import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:fl_clash/views/profiles/custom/custom.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
 
 import 'card.dart';
 import 'profile_detail.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 typedef _Usage = ({int used, int total, double share});
 
@@ -229,7 +230,7 @@ class _SyncButton extends ConsumerWidget {
     if (isUpdating) {
       return const SizedBox.square(
         dimension: 32,
-        child: Center(child: CommonCircleLoading(size: 18)),
+        child: Center(child: ActivityIndicator(size: 18)),
       );
     }
     return DashboardIconButton(

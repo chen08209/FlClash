@@ -52,18 +52,18 @@ class StoreAction extends _$StoreAction {
         }
       }
     }
-    final clearResults = await Future.wait(
+    await Future.wait(
       profileIds.map((profileId) async {
         try {
-          return await _core.clearEffect(profileId);
+          await _core.clearEffect(profileId);
         } catch (error) {
-          return 'clearEffect($profileId) failed: $error';
+          commonPrint.log(
+            'clearEffect($profileId) failed: $error',
+            logLevel: LogLevel.warning,
+          );
         }
       }),
     );
-    for (final error in clearResults.where((error) => error.isNotEmpty)) {
-      commonPrint.log(error, logLevel: LogLevel.warning);
-    }
     await clearAppData();
     unawaited(ref.read(systemActionProvider.notifier).handleExit(false));
   }

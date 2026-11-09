@@ -9,6 +9,7 @@ crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
 flutter_rust_bridge = "=2.13.0"
+encoding_rs = "0.8"
 rquickjs = { version = "0.12", default-features = false }
 ropey = { version = "1.6.1", default-features = false, features = ["simd"] }
 

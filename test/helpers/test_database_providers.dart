@@ -36,3 +36,12 @@ class TestClashProviders extends ClashProviders {
   @override
   Stream<List<ClashProvider>> build() => Stream.value(initial);
 }
+
+class TestMitmModules extends MitmModules {
+  final List<MitmModule> initial;
+
+  TestMitmModules([this.initial = const []]);
+
+  @override
+  Stream<List<MitmModule>> build() => Stream.value(initial);
+}

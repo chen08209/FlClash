@@ -375,7 +375,8 @@ class _CodeFieldRenderer extends RenderBox implements MouseTrackerAnnotation {
     final canvas = context.canvas;
     final viewTop = _paintViewTop;
     final viewBottom = viewTop + vscrollController.position.viewportDimension;
-    final bgColor = editorTheme['root']?.backgroundColor ?? Colors.white;
+    final bgColor =
+        editorTheme['root']?.backgroundColor ?? const Color(0xFFFFFFFF);
     final textColor = textStyle?.color ?? editorTheme['root']!.color!;
 
     canvas.save();

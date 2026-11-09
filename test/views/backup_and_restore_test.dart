@@ -8,13 +8,14 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:fl_clash/views/backup_and_restore.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+import '../helpers/host_scaffold.dart';
 
 const _existing = DAVProps(
   uri: 'https://dav.example.com/remote',
@@ -50,7 +51,7 @@ void main() {
         container: container,
         child: TestApp(
           child: Builder(
-            builder: (context) => Scaffold(
+            builder: (context) => HostScaffold(
               body: TextButton(
                 onPressed: () =>
                     showFormSheet<void>(context: context, builder: (_) => form),
@@ -92,7 +93,7 @@ void main() {
           container: container,
           child: TestApp(
             child: Builder(
-              builder: (context) => Scaffold(
+              builder: (context) => HostScaffold(
                 body: TextButton(
                   onPressed: () async {
                     chosen = await showDialog<RestoreOption>(

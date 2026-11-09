@@ -1,7 +1,7 @@
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
 
@@ -17,7 +17,7 @@ void main() {
         wrapInProviderScope: true,
         child: RepaintBoundary(
           key: pageKey,
-          child: CommonScaffold(
+          child: Scaffold(
             title: 'Page',
             body: Column(
               children: [

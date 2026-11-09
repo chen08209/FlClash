@@ -250,12 +250,8 @@ class ClashProvidersAction extends _$ClashProvidersAction {
       return;
     }
     try {
-      final message = await _core.updateExternalProvider(
-        providerName: provider.label,
-      );
-      if (message.isEmpty) {
-        return;
-      }
+      await _core.updateExternalProvider(provider.label);
+      return;
     } catch (error) {
       commonPrint.log(
         'reload ${provider.label} failed: $error',

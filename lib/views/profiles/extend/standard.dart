@@ -6,7 +6,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/config/rules.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class StandardContent extends ConsumerStatefulWidget {
@@ -93,7 +93,7 @@ class _StandardContentState extends ConsumerState<StandardContent> {
 
   Widget _buildRuleItem(List<Rule> rules, int index, Set<dynamic> selected) {
     final rule = rules[index];
-    return ReorderableDelayedDragStartListener(
+    return ReorderDragStartListener(
       key: ObjectKey(rule),
       index: index,
       child: ItemPositionProvider(
@@ -123,7 +123,7 @@ class _StandardContentState extends ConsumerState<StandardContent> {
     _profileId = ProfileIdProvider.of(context)!.profileId;
     final addedRules = ref.watch(profileRulesProvider(_profileId)).value ?? [];
     final selectedRules = ref.watch(itemsProvider(_key));
-    return CommonPopScope(
+    return PopGuard(
       onPop: selectedRules.isEmpty
           ? null
           : (_) {
@@ -165,7 +165,7 @@ class _StandardContentState extends ConsumerState<StandardContent> {
               ),
             ),
           ),
-          SliverReorderableList(
+          SliverPrismReorderableList(
             itemCount: addedRules.length,
             itemBuilder: (_, index) =>
                 _buildRuleItem(addedRules, index, selectedRules),
@@ -332,7 +332,7 @@ class _EditGlobalAddedRulesState extends ConsumerState<_EditGlobalAddedRules> {
     final rules = (rulesState.value ?? [])
         .whereMatches(_query, (rule) => rule.searchFields, texts: _searchTexts)
         .toList();
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.editGlobalRules,
       searchState: AppBarSearchState(onSearch: _handleSearch),
       body: NullStatusSwitcher(

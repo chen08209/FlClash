@@ -1,27 +1,27 @@
 import 'dart:async';
 
 import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/ui/paged_sheet.dart';
-import 'package:fl_clash/ui/scaffold.dart';
-import 'package:fl_clash/ui/sheet.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:fl_clash/ui/ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 const _view = Size(400, 900);
 const _stackedWidth = 400 * stackedSheetScale;
+const _tallest = SheetProps(detents: [0.9]);
 
 Widget _page(String name, int rows, {VoidCallback? onNext}) {
-  return CommonScaffold(
+  return Scaffold(
     key: ValueKey(name),
     title: 'Page $name',
     body: ListView(
       shrinkWrap: true,
       children: [
         for (var index = 0; index < rows; index++)
-          ListTile(title: Text('$name row $index'), onTap: () {}),
-        if (onNext != null) ListTile(title: const Text('next'), onTap: onNext),
+          TestRow(title: Text('$name row $index'), onTap: () {}),
+        if (onNext != null) TestRow(title: const Text('next'), onTap: onNext),
       ],
     ),
   );
@@ -112,7 +112,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('A')), findsNothing);
-    expect(_rectOf(tester, 'B').width, 400);
+    expect(
+      _rectOf(tester, 'B').width,
+      tester.getRect(find.byType(PagedSheet)).width,
+    );
   });
 
   testWidgets('a sheet shrinks back behind a sheet opened over it but not '
@@ -121,11 +124,15 @@ void main() {
     await openSheet(tester, (context) {
       sheetContext = context;
       return _page('A', 8);
-    }, props: const SheetProps());
+    }, props: _tallest);
     final rest = _rectOf(tester, 'A');
 
     unawaited(
-      showSheet<void>(context: sheetContext, builder: (_) => _page('B', 2)),
+      showSheet<void>(
+        context: sheetContext,
+        props: _tallest,
+        builder: (_) => _page('B', 2),
+      ),
     );
     await tester.pumpAndSettle();
     final covered = _rectOf(tester, 'A');
@@ -140,7 +147,7 @@ void main() {
     unawaited(
       showDialog<void>(
         context: sheetContext,
-        builder: (_) => const AlertDialog(content: Text('dialog')),
+        builder: (_) => const AlertDialog(title: '', child: Text('dialog')),
       ),
     );
     await tester.pumpAndSettle();
@@ -154,10 +161,14 @@ void main() {
     await openSheet(tester, (context) {
       sheetContext = context;
       return _page('A', 20);
-    }, props: const SheetProps());
+    }, props: _tallest);
     final rest = _rectOf(tester, 'A');
     unawaited(
-      showSheet<void>(context: sheetContext, builder: (_) => _page('B', 20)),
+      showSheet<void>(
+        context: sheetContext,
+        props: _tallest,
+        builder: (_) => _page('B', 20),
+      ),
     );
     await tester.pumpAndSettle();
     expect(_rectOf(tester, 'A').width, closeTo(_stackedWidth, 0.1));
@@ -183,5 +194,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('B')), findsNothing);
     expect(_rectOf(tester, 'A'), rest);
+  });
+
+  testWidgets('a sheet stays as it is behind a sheet short of its tallest '
+      'detent', (tester) async {
+    late BuildContext sheetContext;
+    await openSheet(tester, (context) {
+      sheetContext = context;
+      return _page('A', 20);
+    }, props: _tallest);
+    final rest = _rectOf(tester, 'A');
+
+    unawaited(
+      showSheet<void>(context: sheetContext, builder: (_) => _page('B', 20)),
+    );
+    await tester.pumpAndSettle();
+    expect(_rectOf(tester, 'A'), rest);
+    expect(_rectOf(tester, 'B').top, greaterThan(rest.top));
   });
 }

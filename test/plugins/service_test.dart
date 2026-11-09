@@ -167,6 +167,7 @@ void main() {
       final sent = json.decode(calls.single.arguments as String);
       expect(sent['currentProfileName'], 'profile');
       expect(sent['onlyStatisticsProxy'], isTrue);
+      expect(sent, isNot(contains('setupParams')));
     });
   });
 
@@ -282,7 +283,7 @@ void main() {
       final response = await Service().invokeMethod(
         const CoreMethodCall(
           id: '7',
-          method: CoreMethod.getTraffic,
+          method: CoreMethod.trafficCurrent,
           arguments: true,
         ),
       );
@@ -291,13 +292,13 @@ void main() {
           json.decode(calls.single.arguments as String) as Map<String, Object?>;
       expect(calls.single.method, 'invokeMethod');
       expect(sent['id'], '7');
-      expect(sent['method'], CoreMethod.getTraffic.name);
+      expect(sent['method'], CoreMethod.trafficCurrent.wireName);
       expect(
         sent['arguments'],
         isTrue,
         reason: 'arguments stay structured JSON, never a pre-encoded string',
       );
-      expect(response!.id, '7');
+      expect(response.id, '7');
       expect(response.result, {'up': 1});
       expect(response.error, isNull);
     });
@@ -311,10 +312,10 @@ void main() {
       );
 
       final response = await Service().invokeMethod(
-        const CoreMethodCall(id: '3', method: CoreMethod.getProxies),
+        const CoreMethodCall(id: '3', method: CoreMethod.proxyList),
       );
 
-      expect(response!.result, names);
+      expect(response.result, names);
     });
 
     test('reads an envelope the Core spilled to a file', () async {
@@ -335,21 +336,27 @@ void main() {
       );
 
       final response = await Service().invokeMethod(
-        const CoreMethodCall(id: '8', method: CoreMethod.getConfig),
+        const CoreMethodCall(id: '8', method: CoreMethod.configRead),
       );
 
-      expect(response!.result, 'big');
+      expect(response.result, 'big');
       expect(file.existsSync(), isFalse);
     });
 
-    test('returns null when the platform sends no envelope', () async {
+    test('fails when the platform sends no envelope', () async {
       mockCoreChannel((_) async => null);
 
-      expect(
-        await Service().invokeMethod(
-          const CoreMethodCall(method: CoreMethod.getTraffic),
+      await expectLater(
+        Service().invokeMethod(
+          const CoreMethodCall(method: CoreMethod.trafficCurrent),
         ),
-        isNull,
+        throwsA(
+          isA<CoreMethodException>().having(
+            (error) => error.code,
+            'code',
+            'no_response',
+          ),
+        ),
       );
     });
 
@@ -365,10 +372,10 @@ void main() {
       );
 
       final response = await Service().invokeMethod(
-        const CoreMethodCall(id: '1', method: CoreMethod.getTraffic),
+        const CoreMethodCall(id: '1', method: CoreMethod.trafficCurrent),
       );
 
-      expect(response!.error, isNotNull);
+      expect(response.error, isNotNull);
       expect(response.error!.code, 'unavailable');
       expect(response.error!.message, 'core down');
     });

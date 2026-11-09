@@ -5,15 +5,16 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/ui/switch.dart';
 import 'package:fl_clash/views/config/network.dart';
 import 'package:fl_clash/views/config/tun.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+import '../helpers/host_scaffold.dart';
 
 class _ToggleCase {
   final String name;
@@ -99,7 +100,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: TestApp(
-          child: Scaffold(body: ListView(children: [item])),
+          child: HostScaffold(body: ListView(children: [item])),
         ),
       ),
     );
@@ -113,11 +114,11 @@ void main() {
 
         expect(testCase.read(container), testCase.initial);
 
-        await tester.tap(find.byType(CommonSwitch));
+        await tester.tap(find.byType(Switch));
         await tester.pumpAndSettle();
         expect(testCase.read(container), !testCase.initial);
 
-        await tester.tap(find.byType(CommonSwitch));
+        await tester.tap(find.byType(Switch));
         await tester.pumpAndSettle();
         expect(testCase.read(container), testCase.initial);
       });
@@ -130,7 +131,7 @@ void main() {
       final initial = container.read(patchClashConfigProvider).tun.stack;
       final target = TunStack.values.firstWhere((item) => item != initial);
 
-      await tester.tap(find.byType(ListTile).first);
+      await tester.tap(find.byType(ListRow).first);
       await tester.pumpAndSettle();
       await tester.tap(find.text(target.name).last);
       await tester.pumpAndSettle();
@@ -149,7 +150,7 @@ void main() {
         (item) => item != initial,
       );
 
-      await tester.tap(find.byType(ListTile).first);
+      await tester.tap(find.byType(ListRow).first);
       await tester.pumpAndSettle();
       await tester.tap(find.text(_interfaceNameModeLabel(target)).last);
       await tester.pumpAndSettle();

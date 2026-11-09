@@ -113,7 +113,7 @@ mixin RoutedProbe<K, V>
   Duration get throttleDuration => probeThrottleDuration;
 
   @protected
-  Future<RouteCheck?> checkRoutes(List<List<RouteHit>> routes) => ref
+  Future<RouteCheck> checkRoutes(List<List<RouteHit>> routes) => ref
       .read(coreHandlerProvider)
       .checkRoutes(CheckRoutesParams(routes: routes));
 

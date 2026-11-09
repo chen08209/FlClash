@@ -33,14 +33,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
-  animations:
-    dependency: "direct main"
-    description:
-      name: animations
-      sha256: "5ec868ffa78851e6f3f32e9377b780c7ae2087a5523d8b5e6df59bd8287ac5dd"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.0.0"
   app_links:
     dependency: "direct main"
     description:
@@ -288,14 +280,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.7"
-  cupertino_ui:
-    dependency: transitive
-    description:
-      name: cupertino_ui
-      sha256: c23816577a1280cff409e989541767887011f8f1d8c1863a794ed308af46f2a9
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.1"
   dart_style:
     dependency: transitive
     description:
@@ -371,19 +355,10 @@ packages:
   dynamic_color:
     dependency: "direct main"
     description:
-      name: dynamic_color
-      sha256: "869b3bce0100eb519768ecd71c0111f0b5ea679f5f62e1f59c49d80067e730c5"
-      url: "https://pub.dev"
-    source: hosted
+      path: "plugins/dynamic_color"
+      relative: true
+    source: path
     version: "2.1.0"
-  emoji_regex:
-    dependency: "direct main"
-    description:
-      name: emoji_regex
-      sha256: "3a25dd4d16f98b6f76dc37cc9ae49b8511891ac4b87beac9443a1e9f4634b6c7"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.5"
   fake_async:
     dependency: transitive
     description:
@@ -518,7 +493,7 @@ packages:
     source: hosted
     version: "6.0.0"
   flutter_localizations:
-    dependency: transitive
+    dependency: "direct main"
     description: flutter
     source: sdk
     version: "0.0.0"
@@ -838,29 +813,13 @@ packages:
     source: hosted
     version: "0.12.20"
   material_color_utilities:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: material_color_utilities
       sha256: "9c337007e82b1889149c82ed242ed1cb24a66044e30979c44912381e9be4c48b"
       url: "https://pub.dev"
     source: hosted
     version: "0.13.0"
-  material_new_shapes:
-    dependency: "direct main"
-    description:
-      name: material_new_shapes
-      sha256: e4bc375205e187e8fb232573387112dd8c0dd45b03af8aa2b3c79eb4b9e3e0dc
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.0"
-  material_ui:
-    dependency: "direct main"
-    description:
-      name: material_ui
-      sha256: "32d98f11cf5942a095a8c3e01b03e4de3b17941437713dcf36b1088fb62e23d2"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.5.0"
   meta:
     dependency: transitive
     description:
@@ -1069,6 +1028,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.5.2"
+  prism_ui:
+    dependency: "direct main"
+    description:
+      path: "plugins/prism_ui"
+      relative: true
+    source: path
+    version: "0.1.2"
   proxy:
     dependency: "direct main"
     description:
@@ -1092,14 +1058,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.6.0"
-  qr:
-    dependency: "direct main"
-    description:
-      name: qr
-      sha256: "5adccca7f0274326125fcdbf97328f5d6b1b2d7fb8a52a01cef9f40d96a759d9"
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.0.0"
   re_highlight:
     dependency: "direct main"
     description:
@@ -1470,14 +1428,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.1"
-  super_sliver_list:
-    dependency: "direct main"
-    description:
-      name: super_sliver_list
-      sha256: b1e1e64d08ce40e459b9bb5d9f8e361617c26b8c9f3bb967760b0f436b6e3f56
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.4.1"
   synchronized:
     dependency: transitive
     description:

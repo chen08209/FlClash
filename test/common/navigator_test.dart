@@ -1,14 +1,15 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/ui/navigator.dart';
-import 'package:fl_clash/ui/surface.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../helpers/hand_over.dart';
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -27,19 +28,10 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: MaterialApp(
+        child: HostApp(
           builder: (context, child) => wrapAppScopes(context, child!),
-          home: Builder(
-            builder: (context) => Scaffold(
-              body: TextButton(
-                onPressed: () => BaseNavigator.push(
-                  context,
-                  const Scaffold(body: Text('pushed page')),
-                ),
-                child: const Text('open'),
-              ),
-            ),
-          ),
+          onGenerateRoute: (settings) =>
+              HomeRoute<void>(settings: settings, builder: _opener),
         ),
       ),
     );
@@ -60,9 +52,8 @@ void main() {
       expect(find.text('pushed page'), findsOneWidget);
     });
 
-    testWidgets('slides the mobile route in from a quarter of its width', (
-      tester,
-    ) async {
+    testWidgets('slides the mobile route in from its trailing edge on '
+        "iOS's spring", (tester) async {
       setViewWidth(400);
       await pumpHost(tester);
 
@@ -71,22 +62,80 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      final page = find.text('pushed page');
+      final page = find.ancestor(
+        of: find.text('pushed page'),
+        matching: find.byType(HostScaffold),
+      );
       final progress = ModalRoute.of(tester.element(page))!.animation!.value;
-      final width = tester
-          .getSize(find.ancestor(of: page, matching: find.byType(Scaffold)))
-          .width;
-      expect(progress, inExclusiveRange(0, 1));
+      // A critically damped 0.3 s spring setting off at nine times its
+      // distance a second, 0.1 s past its first frame, which it shows a frame
+      // in.
+      const omega = 2 * math.pi / 0.3;
+      const time = 0.1 + 1 / 60;
+      final spring = 1 - (1 + (omega - 9) * time) * math.exp(-omega * time);
+      expect(progress, closeTo(spring, 0.01));
       expect(
         tester.getTopLeft(page).dx,
-        closeTo(
-          width / 4 * (1 - Curves.easeInOutCubicEmphasized.transform(progress)),
-          0.5,
-        ),
+        closeTo(tester.getSize(page).width * (1 - progress), 0.5),
       );
     });
 
-    testWidgets('uses the shared-axis route on a mobile view', (tester) async {
+    for (final glass in [false, true]) {
+      testWidgets(
+        glass
+            ? 'draws pages leaving view from snapshots under glass'
+            : 'draws pages leaving view from snapshots and the rest live',
+        (tester) async {
+          setViewWidth(400);
+          await tester.pumpWidget(
+            UncontrolledProviderScope(
+              container: container,
+              child: HostApp(
+                builder: (context, child) => LiquidGlassScope(
+                  enabled: glass,
+                  child: wrapAppScopes(context, child!),
+                ),
+                onGenerateRoute: (settings) =>
+                    HomeRoute<void>(settings: settings, builder: _opener),
+              ),
+            ),
+          );
+          bool snapshots(String text) => tester
+              .widget<SnapshotWidget>(
+                find
+                    .ancestor(
+                      of: find.text(text, skipOffstage: false),
+                      matching: find.byType(
+                        SnapshotWidget,
+                        skipOffstage: false,
+                      ),
+                    )
+                    .first,
+              )
+              .controller
+              .allowSnapshotting;
+
+          await tester.tap(find.text('open'));
+          await tester.pump();
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 60));
+          expect(snapshots('pushed page'), isFalse);
+          expect(snapshots('open'), isTrue);
+
+          await tester.pumpAndSettle();
+          expect(snapshots('pushed page'), isFalse);
+          expect(snapshots('open'), isFalse);
+
+          Navigator.of(tester.element(find.text('pushed page'))).pop();
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 60));
+          expect(snapshots('pushed page'), isTrue);
+          expect(snapshots('open'), isFalse);
+        },
+      );
+    }
+
+    testWidgets('uses the card route on a mobile view', (tester) async {
       setViewWidth(400);
       await pumpHost(tester);
 
@@ -96,57 +145,206 @@ void main() {
       expect(find.text('pushed page'), findsOneWidget);
     });
 
-    testWidgets('hands over from the page below without either showing '
-        'through the other', (tester) async {
+    testWidgets('every frame of a push and a pop shows a page, drawn from its '
+        'snapshot or live', (tester) async {
+      const below = Color(0xFFFF0000);
+      const pushed = Color(0xFF0000FF);
       setViewWidth(400);
-      late BuildContext home;
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: MaterialApp(
+          child: HostApp(
             builder: (context, child) => wrapAppScopes(context, child!),
-            theme: ThemeData().withAppSurfaces,
-            home: Builder(
-              builder: (context) {
-                home = context;
-                return const Scaffold(body: Center(child: Text('home')));
-              },
+            onGenerateRoute: (settings) => HomeRoute<void>(
+              settings: settings,
+              builder: (context) => GestureDetector(
+                key: const Key('below'),
+                onTap: () => BaseNavigator.push(
+                  context,
+                  const ColoredBox(color: pushed, child: SizedBox.expand()),
+                ),
+                child: const ColoredBox(color: below, child: SizedBox.expand()),
+              ),
             ),
           ),
         ),
       );
-      final ink = await pixelAt(tester, inkPointOf(tester, 'home'));
-      final surface = await pixelAt(
-        tester,
-        tester.getRect(find.text('home')).centerRight + const Offset(20, 0),
-      );
+      await tester.pump();
 
-      unawaited(
-        BaseNavigator.push(
-          home,
-          const Scaffold(
-            body: Align(alignment: Alignment(0, 0.5), child: Text('next')),
+      Future<Color?> lastFrameShown() async {
+        Color? shown;
+        for (var frame = 0; frame < 90; frame++) {
+          await tester.pump(const Duration(milliseconds: 16));
+          final ratio = tester.view.devicePixelRatio;
+          final size = tester.view.physicalSize;
+          final layer =
+              tester.binding.renderViews.first.debugLayer! as OffsetLayer;
+          final bytes = await tester.runAsync(() async {
+            final image = await layer.toImage(Offset.zero & size);
+            return image.toByteData();
+          });
+          final x = (20 * ratio).floor();
+          final y = (size.height / 2).floor();
+          final offset = (y * size.width.toInt() + x) * 4;
+          final [r, _, b, _] = bytes!.buffer.asUint8List(offset, 4);
+          if (r > 128 && b < 32) {
+            shown = below;
+          } else if (b > 128 && r < 32) {
+            shown = pushed;
+          } else {
+            fail('frame $frame shows neither page: r $r, b $b');
+          }
+        }
+        return shown;
+      }
+
+      await tester.tap(find.byKey(const Key('below')));
+      await tester.pump();
+      expect(await lastFrameShown(), pushed);
+      Navigator.of(tester.element(find.byType(ColoredBox).last)).pop();
+      await tester.pump();
+      expect(await lastFrameShown(), below);
+    });
+
+    testWidgets('slides the page below back by three tenths and dims it', (
+      tester,
+    ) async {
+      setViewWidth(400);
+      await pumpHost(tester);
+      final origin = tester.getTopLeft(find.text('open')).dx;
+
+      await tester.tap(find.text('open'));
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 60));
+
+      final route = ModalRoute.of(tester.element(find.text('pushed page')))!;
+      final progress = route.animation!.value;
+      final width = tester.getSize(find.byType(HostScaffold).first).width;
+      expect(progress, inExclusiveRange(0, 1));
+      expect(
+        tester.getTopLeft(find.text('open')).dx,
+        closeTo(origin - 0.3 * width * progress, 0.5),
+      );
+      expect(
+        find.byType(HostApp),
+        paints..something((method, arguments) {
+          if (method != #drawRect) {
+            return false;
+          }
+          final color = (arguments[1] as Paint).color;
+          return color.r == 0 && (color.a - 0.1 * progress).abs() < 1e-3;
+        }),
+      );
+    });
+
+    testWidgets('rounds a moving page with the display corners', (
+      tester,
+    ) async {
+      setViewWidth(400);
+      const corners = BorderRadius.all(Radius.circular(40));
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: HostApp(
+            builder: (context, child) => MediaQuery(
+              data: MediaQueryData(
+                size: MediaQuery.sizeOf(context),
+                displayCornerRadii: corners,
+              ),
+              child: wrapAppScopes(context, child!),
+            ),
+            onGenerateRoute: (settings) =>
+                HomeRoute<void>(settings: settings, builder: _opener),
           ),
         ),
       );
-      await expectHandOver(
-        tester,
-        ['home', 'next'],
-        ink: ink,
-        surface: surface,
-        floor: 0.25,
-      );
-      expect(find.text('home'), findsNothing);
+      Iterable<ClipRSuperellipseLayer> cardClips() => tester.layers
+          .whereType<ClipRSuperellipseLayer>()
+          .where((layer) => layer.clipRSuperellipse?.tlRadius.x == 40);
 
-      Navigator.of(tester.element(find.text('next'))).pop();
-      await expectHandOver(
-        tester,
-        ['home', 'next'],
-        ink: ink,
-        surface: surface,
-        floor: 0.25,
+      await tester.tap(find.text('open'));
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 60));
+      expect(cardClips(), hasLength(2));
+
+      await tester.pumpAndSettle();
+      expect(cardClips(), isEmpty);
+    });
+
+    testWidgets('keeps the first page built while pages slide over it', (
+      tester,
+    ) async {
+      setViewWidth(400);
+      var builds = 0;
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: HostApp(
+            builder: (context, child) => wrapAppScopes(context, child!),
+            onGenerateRoute: (settings) => HomeRoute<void>(
+              settings: settings,
+              builder: (_) => HostScaffold(
+                body: Builder(
+                  builder: (context) {
+                    builds++;
+                    Theme.of(context);
+                    return TextButton(
+                      onPressed: () => BaseNavigator.push(
+                        context,
+                        const HostScaffold(body: Text('pushed page')),
+                      ),
+                      child: const Text('open'),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
       );
-      expect(find.text('next'), findsNothing);
+      final origin = tester.getTopLeft(find.text('open')).dx;
+      builds = 0;
+
+      await tester.tap(find.text('open'));
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 60));
+      expect(tester.getTopLeft(find.text('open')).dx, lessThan(origin));
+      await tester.pumpAndSettle();
+      Navigator.of(tester.element(find.text('pushed page'))).pop();
+      await tester.pumpAndSettle();
+
+      expect(builds, 0);
+    });
+
+    testWidgets('stays on screen when a pop only drops a local history entry', (
+      tester,
+    ) async {
+      setViewWidth(400);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: HostApp(
+            builder: (context, child) => wrapAppScopes(context, child!),
+            onGenerateRoute: (settings) => HomeRoute<void>(
+              settings: settings,
+              builder: (_) => const HostScaffold(body: Text('home')),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final context = tester.element(find.text('home'));
+      final route = ModalRoute.of(context)!;
+      route.addLocalHistoryEntry(LocalHistoryEntry());
+
+      Navigator.of(context).pop();
+      await tester.pumpAndSettle();
+
+      expect(route.isActive, isTrue);
+      expect(route.animation!.value, 1);
     });
 
     testWidgets('pops back to the origin', (tester) async {
@@ -172,7 +370,7 @@ void main() {
       await tester.pumpAndSettle();
       final pageContext = tester.element(find.text('pushed page'));
       unawaited(
-        BaseNavigator.push(pageContext, const Scaffold(body: Text('top'))),
+        BaseNavigator.push(pageContext, const HostScaffold(body: Text('top'))),
       );
       await tester.pumpAndSettle();
 
@@ -200,10 +398,10 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: MaterialApp(
+          child: HostApp(
             builder: (context, child) => wrapAppScopes(context, child!),
             home: Builder(
-              builder: (context) => Scaffold(
+              builder: (context) => HostScaffold(
                 body: TextButton(
                   onPressed: () => BaseNavigator.push(context, page),
                   child: const Text('open'),
@@ -217,39 +415,44 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    const page = Scaffold(body: Center(child: Text('pushed page')));
+    const page = HostScaffold(body: Center(child: Text('pushed page')));
+
+    Future<void> dragAndRest(WidgetTester tester, double share) async {
+      final width = tester.getSize(find.byType(HostScaffold).last).width;
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.text('pushed page')),
+      );
+      await gesture.moveBy(const Offset(31, 0));
+      for (var i = 0; i < 10; i++) {
+        await gesture.moveBy(Offset(width * share / 10, 0));
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      await tester.pump(const Duration(milliseconds: 200));
+      await gesture.up();
+      await tester.pumpAndSettle();
+    }
 
     for (final width in [400.0, 1400.0]) {
-      testWidgets('pops after a long right drag at width $width', (
+      testWidgets('pops when let go at rest past 0.4665 of width $width', (
         tester,
       ) async {
         await openPage(tester, width, page);
 
-        await tester.timedDrag(
-          find.text('pushed page'),
-          Offset(tester.getSize(find.byType(Scaffold).last).width * 0.7, 0),
-          const Duration(seconds: 1),
-        );
-        await tester.pumpAndSettle();
+        await dragAndRest(tester, 0.48);
 
         expect(find.text('pushed page'), findsNothing);
         expect(find.text('open'), findsOneWidget);
       });
 
-      testWidgets('stays after a short slow right drag at width $width', (
+      testWidgets('stays when let go at rest short of it at width $width', (
         tester,
       ) async {
         await openPage(tester, width, page);
 
-        await tester.timedDrag(
-          find.text('pushed page'),
-          const Offset(80, 0),
-          const Duration(seconds: 1),
-        );
-        await tester.pumpAndSettle();
+        await dragAndRest(tester, 0.45);
 
         expect(find.text('pushed page'), findsOneWidget);
-        expect(tester.getTopLeft(find.byType(Scaffold).last), Offset.zero);
+        expect(tester.getTopLeft(find.byType(HostScaffold).last), Offset.zero);
       });
     }
 
@@ -281,7 +484,7 @@ void main() {
       await openPage(
         tester,
         400,
-        Scaffold(
+        HostScaffold(
           body: ListView(
             scrollDirection: Axis.horizontal,
             children: [
@@ -308,7 +511,7 @@ void main() {
 
   group('route configuration', () {
     test('desktop route exposes a transparent barrier and keeps state', () {
-      final route = CommonDesktopRoute<void>(builder: (_) => const SizedBox());
+      final route = FadePageRoute<void>(builder: (_) => const SizedBox());
 
       expect(route.barrierColor, isNull);
       expect(route.barrierLabel, isNull);
@@ -320,17 +523,24 @@ void main() {
       );
     });
 
-    test('mobile route uses the longer shared-axis duration', () {
-      final route = CommonRoute<void>(builder: (_) => const SizedBox());
+    test('mobile route exposes a transparent barrier and keeps state', () {
+      final route = CardPageRoute<void>(builder: (_) => const SizedBox());
 
       expect(route.barrierColor, isNull);
       expect(route.barrierLabel, isNull);
       expect(route.maintainState, isTrue);
-      expect(route.transitionDuration, const Duration(milliseconds: 450));
-      expect(
-        route.reverseTransitionDuration,
-        const Duration(milliseconds: 450),
-      );
     });
   });
+}
+
+Widget _opener(BuildContext context) {
+  return HostScaffold(
+    body: TextButton(
+      onPressed: () => BaseNavigator.push(
+        context,
+        const HostScaffold(body: Text('pushed page')),
+      ),
+      child: const Text('open'),
+    ),
+  );
 }

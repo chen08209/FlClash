@@ -7,7 +7,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wifi_ssid/wifi_ssid.dart';
@@ -154,7 +154,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     required bool isEditing,
   }) {
     final position = ItemPosition.get(index, length);
-    return ReorderableDelayedDragStartListener(
+    return ReorderDragStartListener(
       key: ValueKey(ssid),
       index: index,
       child: Padding(
@@ -204,10 +204,10 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     required VoidCallback onPressed,
   }) {
     final appLocalizations = context.appLocalizations;
-    return CommonMinFilledButtonTheme(
+    return MinFilledButtonTheme(
       child: ElasticButton(
         child: FilledButton(
-          style: FilledButton.styleFrom(
+          style: ButtonStyle.from(
             backgroundColor: authorized
                 ? null
                 : context.colorScheme.errorContainer,
@@ -271,7 +271,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
               onPressed: _handleRequestIgnoreBatteryOptimization,
             ),
           ),
-          if (isLoading) const CommonCircleLoading(size: 24),
+          if (isLoading) const ActivityIndicator(size: 24),
         ],
       ),
     );
@@ -301,10 +301,9 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
         if (_isAndroid) _buildBatteryOptimizationItem(),
         if (_needsLocationPermission) _buildLocationPermissionItem(),
       ],
-      footer: [
-        if (_isAndroid) appLocalizations.batteryOptimizationDesc,
-        if (_needsLocationPermission) appLocalizations.locationPermissionDesc,
-      ].join('\n'),
+      footer: _needsLocationPermission
+          ? appLocalizations.locationPermissionDesc
+          : null,
     );
   }
 
@@ -362,7 +361,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     );
     return SliverPadding(
       padding: const EdgeInsets.only(top: 12),
-      sliver: SliverReorderableList(
+      sliver: SliverPrismReorderableList(
         itemBuilder: (_, index) => itemAt(index),
         proxyDecorator: (child, index, animation) =>
             commonProxyDecorator(itemAt(index), index, animation),
@@ -376,7 +375,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
   Widget build(BuildContext context) {
     final excludeSSIDs = ref.watch(excludeSSIDsProvider);
     final selectedItems = ref.watch(itemsProvider(key));
-    return CommonScaffold(
+    return Scaffold(
       body: CustomScrollView(
         slivers: [
           SliverPadding(

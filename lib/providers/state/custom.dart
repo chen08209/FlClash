@@ -152,8 +152,8 @@ Future<Map<int, String>> customProxyCoreErrors(Ref ref) async {
     final results = await ref
         .read(coreHandlerProvider)
         .validateProxies(unchecked);
-    for (final (index, message) in results.indexed) {
-      verdicts[unchecked[index]] = message;
+    for (final (index, definition) in unchecked.indexed) {
+      verdicts[definition] = results[index] ?? '';
     }
   }
   return {
@@ -612,6 +612,9 @@ class _DialLoops {
   final throughGroups = <String, List<CustomIssue>>{};
 
   _DialLoops(Iterable<ProxyGroup> groups, Map<String, String> dialers) {
+    if (dialers.isEmpty) {
+      return;
+    }
     final graph = _DialerGraph(groups, dialers);
     final dials = [
       for (final MapEntry(key: proxy, value: target) in dialers.entries)
@@ -879,25 +882,53 @@ List<CustomIssue> customRuleIssues(Rule rule, CustomProfileData data) {
       : [CustomIssue.missingTarget(target ?? '')];
 }
 
+typedef ReferencedProviders = ({List<String> proxy, List<String> rule});
+
+/// A custom profile declares only the providers its groups and rules name.
 @riverpod
-CustomProfileIssues customProfileIssues(Ref ref, int profileId) {
-  final data = ref.watch(customProfileDataProvider(profileId));
-  final appProxies =
-      ref.watch(customProxiesProvider).value ?? const <CustomProxy>[];
-  final rules =
-      ref.watch(profileRulesProvider(profileId)).value ?? const <Rule>[];
-  final overrides = ref.watch(
+ReferencedProviders customReferencedProviders(Ref ref, int profileId) {
+  final groups = ref.watch(proxyGroupsProvider(profileId)).value ?? const [];
+  final rules = ref.watch(profileRulesProvider(profileId)).value ?? const [];
+  final overrideRuleSets = ref.watch(
     profileProvider(
       profileId,
-    ).select((profile) => profile?.overrides ?? const ProfileOverrides()),
+    ).select((profile) => SelectValue(profile?.overrides.ruleSets ?? const {})),
   );
-  if (data == null) {
-    return const CustomProfileIssues();
-  }
+  return (
+    proxy: {for (final group in groups) ...?group.use}.toList(),
+    rule: {
+      for (final rule in rules) ...rule.ruleSets,
+      ...overrideRuleSets.value,
+    }.toList(),
+  );
+}
+
+/// Below this many rules and group members a check costs less than handing
+/// its input to an isolate.
+const _inlineCheckWork = 2000;
+
+final _groupWork = Expando<int>();
+
+int _groupWorkOf(CustomProfileData data) {
+  return _groupWork[data] ??= data.proxyGroups.fold<int>(
+    data.proxyGroups.length,
+    (work, group) => work + (group.proxies?.length ?? 0),
+  );
+}
+
+typedef _IssueInput = ({
+  CustomProfileData data,
+  List<Rule> rules,
+  List<CustomProxy> dialed,
+  List<String> dnsProxies,
+  String? ntpProxy,
+});
+
+CustomProfileIssues _collectIssues(_IssueInput input) {
+  final data = input.data;
   final missingDnsProxies = [
-    if (overrides.customDnsEnabled)
-      for (final name in overrides.dnsProxies)
-        if (!data.isRuleTarget(name)) name,
+    for (final name in input.dnsProxies)
+      if (!data.isRuleTarget(name)) name,
   ];
   Map<int, List<CustomIssue>> collect<T>(
     Iterable<T> items,
@@ -918,12 +949,12 @@ CustomProfileIssues customProfileIssues(Ref ref, int profileId) {
       (item) => proxyGroupIssues(item, data),
     ),
     rules: collect(
-      rules,
+      input.rules,
       (item) => item.id,
       (item) => customRuleIssues(item, data),
     ),
     dialers: collect(
-      appProxies.where((item) => data.namedProxies.contains(item.name)),
+      input.dialed,
       (item) => item.id,
       (item) => proxyDialerIssues(item, data.dialers[item.name], data),
     ),
@@ -932,11 +963,92 @@ CustomProfileIssues customProfileIssues(Ref ref, int profileId) {
         CustomIssue.missingProxies(missingDnsProxies),
     ],
     ntp: [
-      if (overrides.ntpProxy case final name?
-          when overrides.customNtpEnabled && !data.isRuleTarget(name))
+      if (input.ntpProxy case final name? when !data.isRuleTarget(name))
         CustomIssue.missingDialer(name),
     ],
   );
+}
+
+/// Keeps the last result while a large profile is checked in an isolate.
+@Riverpod(name: 'customProfileIssuesProvider')
+class CustomProfileIssuesState extends _$CustomProfileIssuesState {
+  late final _check = LatestCompute<_IssueInput, CustomProfileIssues>(
+    _collectIssues,
+    (issues) => state = issues,
+  );
+
+  @override
+  CustomProfileIssues build(int profileId) {
+    ref.onDispose(_check.cancel);
+    final data = ref.watch(customProfileDataProvider(profileId));
+    final appProxies =
+        ref.watch(customProxiesProvider).value ?? const <CustomProxy>[];
+    final rules =
+        ref.watch(profileRulesProvider(profileId)).value ?? const <Rule>[];
+    final overrides = ref.watch(
+      profileProvider(
+        profileId,
+      ).select((profile) => profile?.overrides ?? const ProfileOverrides()),
+    );
+    if (data == null) {
+      return const CustomProfileIssues();
+    }
+    final _IssueInput input = (
+      data: data,
+      rules: rules,
+      dialed: [
+        for (final proxy in appProxies)
+          if (data.dialers.containsKey(proxy.name) &&
+              data.namedProxies.contains(proxy.name))
+            proxy,
+      ],
+      dnsProxies: overrides.customDnsEnabled
+          ? overrides.dnsProxies.toList()
+          : const <String>[],
+      ntpProxy: overrides.customNtpEnabled ? overrides.ntpProxy : null,
+    );
+    if (rules.length + _groupWorkOf(data) < _inlineCheckWork) {
+      return _collectIssues(input);
+    }
+    _check.run(input);
+    return stateOrNull ?? const CustomProfileIssues();
+  }
+}
+
+typedef _GroupIssueInput = ({ProxyGroup group, CustomProfileData data});
+
+List<CustomIssue> _groupIssuesOf(_GroupIssueInput input) =>
+    proxyGroupIssues(input.group, input.data);
+
+class ProxyGroupIssueCheck {
+  final void Function(List<CustomIssue> issues) onIssues;
+  late final _check = LatestCompute<_GroupIssueInput, List<CustomIssue>>(
+    _groupIssuesOf,
+    onIssues,
+  );
+
+  ProxyGroupIssueCheck(this.onIssues);
+
+  void run(ProxyGroup group, CustomProfileData data) {
+    if (_groupWorkOf(data) < _inlineCheckWork) {
+      _check.cancel();
+      onIssues(proxyGroupIssues(group, data));
+      return;
+    }
+    _check.run((group: group, data: data));
+  }
+
+  void cancel() => _check.cancel();
+
+  static Future<List<CustomIssue>> once(
+    ProxyGroup group,
+    CustomProfileData data,
+  ) async {
+    if (_groupWorkOf(data) < _inlineCheckWork) {
+      return proxyGroupIssues(group, data);
+    }
+    return compute(_groupIssuesOf, (group: group, data: data));
+  }
 }
 
 @Riverpod(name: 'proxyGroupProvider')

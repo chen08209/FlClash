@@ -15,9 +15,11 @@ import (
 	"time"
 
 	"github.com/metacubex/mihomo/adapter/inbound"
+	"github.com/metacubex/mihomo/adapter/provider"
 	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
+	cp "github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/hub/route"
 	authStore "github.com/metacubex/mihomo/listener/auth"
 	"github.com/metacubex/mihomo/log"
@@ -104,26 +106,21 @@ func TestUpdateConfigRejectsAnUnappliedConfig(t *testing.T) {
 	}
 }
 
-// The host reads updateConfig's result as a message, so the failure has to
-// arrive as one rather than as the envelope's error.
-func TestUpdateConfigMethodReportsAnUnappliedConfigAsAMessage(t *testing.T) {
+func TestUpdateConfigMethodReportsAnUnappliedConfigAsAnError(t *testing.T) {
 	withCurrentConfig(t, nil)
 
 	frame := handleMethodCall(&MethodCall{
 		ID:        "1",
-		Method:    updateConfigMethod,
+		Method:    configUpdateMethod,
 		Arguments: json.RawMessage(`{}`),
 	})
 
-	var envelope struct {
-		Result string       `json:"result"`
-		Error  *MethodError `json:"error"`
-	}
+	var envelope MethodResponse
 	if err := json.Unmarshal(frame, &envelope); err != nil {
 		t.Fatalf("response is not valid JSON: %v", err)
 	}
-	if envelope.Error != nil || envelope.Result != errConfigNotApplied.Error() {
-		t.Errorf("envelope = %+v, want the message %q as the result", envelope, errConfigNotApplied)
+	if envelope.Error == nil || envelope.Error.Message != errConfigNotApplied.Error() || envelope.Result != nil {
+		t.Errorf("envelope = %+v, want the error %q", envelope, errConfigNotApplied)
 	}
 }
 
@@ -499,7 +496,7 @@ func TestDelayTestSlotsBoundConcurrency(t *testing.T) {
 }
 
 func TestHandleUpdateGeoDataRejectsAnUnknownResource(t *testing.T) {
-	if err := handleUpdateGeoData("NOPE"); err == nil {
+	if err := handleUpdateGeoData(GeoUpdateParams{Type: "NOPE"}); err == nil {
 		t.Error("an unknown geo resource reported success and silently did nothing")
 	}
 	if _, exists := geoResources["MMDB"]; !exists {
@@ -586,7 +583,7 @@ func TestHandleUpdateGeoDataRunsOneUpdatePerResource(t *testing.T) {
 		},
 	})
 
-	if err := handleUpdateGeoData(resource); err != nil {
+	if err := handleUpdateGeoData(GeoUpdateParams{Type: resource}); err != nil {
 		t.Fatalf("handleUpdateGeoData = %v, want no error", err)
 	}
 	select {
@@ -595,7 +592,7 @@ func TestHandleUpdateGeoDataRunsOneUpdatePerResource(t *testing.T) {
 		t.Fatal("the first update never started")
 	}
 
-	if err := handleUpdateGeoData(resource); err == nil {
+	if err := handleUpdateGeoData(GeoUpdateParams{Type: resource}); err == nil {
 		t.Fatal("the duplicate request reported no error while an update was already in flight")
 	}
 	select {
@@ -632,7 +629,7 @@ func TestGeoUpdateHookBlocksAManualUpdateOfTheSameResource(t *testing.T) {
 
 	updater.GeoUpdateHook(resource, true, false, nil)
 
-	if err := handleUpdateGeoData(resource); err == nil {
+	if err := handleUpdateGeoData(GeoUpdateParams{Type: resource}); err == nil {
 		t.Fatal("handleUpdateGeoData reported no error while the hook already claimed this resource")
 	}
 	select {
@@ -668,7 +665,7 @@ func TestGeoUpdateHookDoesNotReleaseAManualClaim(t *testing.T) {
 		},
 	})
 
-	if err := handleUpdateGeoData(resource); err != nil {
+	if err := handleUpdateGeoData(GeoUpdateParams{Type: resource}); err != nil {
 		t.Fatalf("handleUpdateGeoData = %v, want no error", err)
 	}
 	select {
@@ -680,7 +677,7 @@ func TestGeoUpdateHookDoesNotReleaseAManualClaim(t *testing.T) {
 	updater.GeoUpdateHook(resource, true, false, nil)
 	updater.GeoUpdateHook(resource, false, false, nil)
 
-	if err := handleUpdateGeoData(resource); err == nil {
+	if err := handleUpdateGeoData(GeoUpdateParams{Type: resource}); err == nil {
 		t.Fatal("the duplicate request reported no error while the manual claim was still held")
 	}
 	select {
@@ -791,7 +788,7 @@ func withSetupConfig(t *testing.T, apply func(*SetupParams) error) {
 func TestHandleSetupConfigKeepsTheListenerWhenTheProfileFails(t *testing.T) {
 	withSetupConfig(t, func(*SetupParams) error { return errors.New("bad profile") })
 
-	err := handleSetupConfig(defaultSetupParams())
+	err := handleSetupConfig(&SetupParams{})
 
 	if err == nil || err.Error() != "bad profile" {
 		t.Fatalf("handleSetupConfig = %v, want the apply error", err)
@@ -801,10 +798,32 @@ func TestHandleSetupConfigKeepsTheListenerWhenTheProfileFails(t *testing.T) {
 	}
 }
 
+func TestApplyConfigTellsARejectedProfileFromAFailedCall(t *testing.T) {
+	home := t.TempDir()
+	previous := constant.Path.HomeDir()
+	constant.SetHomeDir(home)
+	t.Cleanup(func() { constant.SetHomeDir(previous) })
+	withCurrentConfig(t, nil)
+	keepTunnel(t)
+	if err := os.WriteFile(filepath.Join(home, "config.yaml"), []byte("proxies: [unterminated\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := applyConfig(&SetupParams{})
+
+	var methodErr *MethodError
+	if !errors.As(err, &methodErr) || methodErr.Code != "config_rejected" {
+		t.Fatalf("applyConfig = %v, want a config_rejected error", err)
+	}
+	if currentConfig == nil {
+		t.Error("the default config did not take the rejected one's place")
+	}
+}
+
 func TestHandleSetupConfigLeavesTheListenerAloneOnSuccess(t *testing.T) {
 	withSetupConfig(t, func(*SetupParams) error { return nil })
 
-	if err := handleSetupConfig(defaultSetupParams()); err != nil {
+	if err := handleSetupConfig(&SetupParams{}); err != nil {
 		t.Fatalf("handleSetupConfig = %v, want no error", err)
 	}
 	if !isRunning.Load() {
@@ -989,6 +1008,31 @@ func TestTestDelayDoesNotSpendTheProbeBudgetQueueing(t *testing.T) {
 	// handleTestDelay released the slot it was handed; put it back so the
 	// cleanup above drains what it put in.
 	delayTestSlots <- struct{}{}
+}
+
+func TestTestDelayKeepsToTheTimeoutTheGroupNames(t *testing.T) {
+	const named = 100 * time.Millisecond
+	testURL := "http://" + blackHoleServer(t).String()
+
+	node := namedProxy("node")
+	health := provider.NewHealthCheck([]constant.Proxy{node}, testURL, uint(named.Milliseconds()), 0, true, nil)
+	group, err := provider.NewCompatibleProvider("group", []constant.Proxy{node}, health)
+	if err != nil {
+		t.Fatalf("NewCompatibleProvider: %v", err)
+	}
+	tunnel.UpdateProxies(map[string]constant.Proxy{"node": node}, map[string]cp.ProxyProvider{"group": group})
+	t.Cleanup(func() { tunnel.UpdateProxies(nil, nil) })
+
+	start := time.Now()
+	delay := handleTestDelay(&TestDelayParams{ProxyName: "node", TestUrl: testURL, Timeout: 5000})
+	elapsed := time.Since(start)
+
+	if delay == nil || delay.Value != delayTimedOut {
+		t.Fatalf("delay = %+v, want a timeout", delay)
+	}
+	if elapsed > time.Second {
+		t.Errorf("handleTestDelay returned after %v, want the %v the group names rather than the host's 5s", elapsed, named)
+	}
 }
 
 func TestTestDelayStopsQueueingOnceTheTimeoutIsSpent(t *testing.T) {

@@ -937,6 +937,9 @@ _PatchClashConfig _$PatchClashConfigFromJson(Map<String, dynamic> json) =>
       generalOverrideKeys: json['general-override-keys'] == null
           ? const {}
           : _generalOverrideKeysFromJson(json['general-override-keys'] as List),
+      mitm: json['mitm'] == null
+          ? defaultMitm
+          : Mitm.fromJson(json['mitm'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$PatchClashConfigToJson(_PatchClashConfig instance) =>
@@ -982,6 +985,7 @@ Map<String, dynamic> _$PatchClashConfigToJson(_PatchClashConfig instance) =>
       'general-override-keys': instance.generalOverrideKeys
           .map((e) => _$GeneralOverrideKeyEnumMap[e]!)
           .toList(),
+      'mitm': instance.mitm,
     };
 
 const _$ModeEnumMap = {
@@ -1025,4 +1029,30 @@ const _$GeneralOverrideKeyEnumMap = {
   GeneralOverrideKey.tcpConcurrent: 'tcp-concurrent',
   GeneralOverrideKey.ipv6: 'ipv6',
   GeneralOverrideKey.geodataLoader: 'geodata-loader',
+};
+
+_Mitm _$MitmFromJson(Map<String, dynamic> json) => _Mitm(
+  enable: json['enable'] as bool? ?? false,
+  hostname:
+      (json['hostname'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const [],
+  skipServerCertVerify: json['skip-server-cert-verify'] as bool? ?? false,
+  autoQuicBlock: json['auto-quic-block'] as bool? ?? true,
+  h2: json['h2'] as bool? ?? false,
+  decryptUntrusted: json['decrypt-untrusted'] as bool? ?? false,
+  trustedFingerprint: json['trusted-fingerprint'] as String?,
+  capture: json['capture'] as bool? ?? false,
+  captureEntries: (json['capture-entries'] as num?)?.toInt(),
+);
+
+Map<String, dynamic> _$MitmToJson(_Mitm instance) => <String, dynamic>{
+  'enable': instance.enable,
+  'hostname': instance.hostname,
+  'skip-server-cert-verify': instance.skipServerCertVerify,
+  'auto-quic-block': instance.autoQuicBlock,
+  'h2': instance.h2,
+  'decrypt-untrusted': instance.decryptUntrusted,
+  'trusted-fingerprint': instance.trustedFingerprint,
+  'capture': instance.capture,
+  'capture-entries': instance.captureEntries,
 };

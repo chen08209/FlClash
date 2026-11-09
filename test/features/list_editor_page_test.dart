@@ -3,11 +3,13 @@ import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
+import 'package:prism_ui/prism_ui.dart';
+import '../helpers/host_scaffold.dart';
 
 class _EditorHarness extends StatelessWidget {
   final ValueNotifier<List<String>?> items;
@@ -29,7 +31,7 @@ class _EditorHarness extends StatelessWidget {
       itemsOf: (_) => items.value,
       itemBuilder:
           (context, ref, item, index, isEditing, isSelected, onToggleSelected) {
-            return ListTile(
+            return TestRow(
               title: Text(item),
               onTap: onToggleSelected,
               trailing: isSelected ? const GlyphIcon(AppGlyphs.check) : null,
@@ -48,7 +50,7 @@ class _EditorHarness extends StatelessWidget {
         viewSizeProvider.overrideWithBuild((_, _) => const Size(1200, 800)),
       ],
       child: inBottomSheet
-          ? Material(
+          ? Surface(
               child: SheetProvider(type: SheetType.bottomSheet, child: page),
             )
           : page,
@@ -177,7 +179,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      tester.getBottomLeft(find.widgetWithText(ListTile, 'item 39')).dy,
+      tester.getBottomLeft(find.widgetWithText(TestRow, 'item 39')).dy,
       lessThanOrEqualTo(tester.getTopLeft(find.byType(SearchField)).dy),
     );
 
@@ -191,13 +193,13 @@ void main() {
     addTearDown(items.dispose);
     await tester.pumpWidget(_EditorHarness(items: items, searchable: true));
     await tester.pump();
-    expect(find.byType(ReorderableListView), findsOneWidget);
+    expect(find.byType(PrismReorderableListView), findsOneWidget);
 
     await _search(tester, 'MA');
     expect(find.text('gamma'), findsOneWidget);
     expect(find.text('alpha'), findsNothing);
     expect(find.text('beta'), findsNothing);
-    expect(find.byType(ReorderableListView), findsNothing);
+    expect(find.byType(PrismReorderableListView), findsNothing);
 
     await tester.enterText(find.byType(TextField), 'zeta');
     await tester.pump();
@@ -206,7 +208,7 @@ void main() {
     await tester.enterText(find.byType(TextField), '');
     await tester.pump();
     expect(find.text('alpha'), findsOneWidget);
-    expect(find.byType(ReorderableListView), findsOneWidget);
+    expect(find.byType(PrismReorderableListView), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -268,7 +270,7 @@ void main() {
     expect(find.byGlyph(AppGlyphs.check), findsOneWidget);
     expect(
       find.descendant(
-        of: find.widgetWithText(ListTile, 'beta'),
+        of: find.widgetWithText(TestRow, 'beta'),
         matching: find.byGlyph(AppGlyphs.check),
       ),
       findsOneWidget,
@@ -421,7 +423,7 @@ void main() {
       itemBuilder:
           (context, ref, item, index, isEditing, isSelected, onToggleSelected) {
             builds[index] = (builds[index] ?? 0) + 1;
-            return ListTile(title: Text(item));
+            return TestRow(title: Text(item));
           },
       itemExtent: 50,
       onReorder: (oldIndex, newIndex) {},
@@ -454,7 +456,7 @@ void main() {
           .getTopLeft(
             find.ancestor(
               of: find.text('item ${arrived.length - 1}'),
-              matching: find.byType(ListTile),
+              matching: find.byType(TestRow),
             ),
           )
           .dy,

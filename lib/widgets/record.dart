@@ -2,7 +2,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/services.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 class RecordTextStyles {
   final TextStyle title;
@@ -33,14 +33,7 @@ class RecordTextStyles {
 
 const recordListGap = 8.0;
 
-double recordListExtentEstimation(int? index, double crossAxisExtent) {
-  return switch (index) {
-    // SuperSliverList gives every child the null estimate unless it is 0.
-    null => 0,
-    _ when index.isEven => 100,
-    _ => recordListGap,
-  };
-}
+const recordListEstimatedExtent = 100.0;
 
 class RecordListItem extends StatelessWidget {
   final Widget header;
@@ -56,34 +49,25 @@ class RecordListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const shape = AppShape.xl;
     final level = context.raisedSurfaceLevel;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: DecoratedBox(
-        decoration: ShapeDecoration(
-          color: level.colorOf(context.colorScheme),
-          shape: shape,
-        ),
-        child: Material(
-          type: MaterialType.transparency,
-          child: SurfaceScope(
-            level: level,
-            child: ListTileTheme.merge(
-              shape: shape,
-              child: ListItem(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-                minVerticalPadding: 0,
-                minTileHeight: 0,
-                horizontalTitleGap: 12,
-                tileTitleAlignment: ListTileTitleAlignment.top,
-                onTap: onTap,
-                title: header,
-                subtitle: Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: body,
-                ),
-              ),
+      child: PressSurface(
+        fill: level.colorOf(context.colorScheme),
+        shape: AppShape.xl,
+        onPressed: onTap,
+        child: SurfaceScope(
+          level: level,
+          child: ListRow(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+            minVerticalPadding: 0,
+            minHeight: 0,
+            horizontalTitleGap: 12,
+            alignment: ListRowAlignment.top,
+            title: header,
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: body,
             ),
           ),
         ),
@@ -188,7 +172,7 @@ class DetailRow extends StatelessWidget {
   Future<void> _copy(BuildContext context, String text) async {
     await Clipboard.setData(ClipboardData(text: text));
     if (!context.mounted) return;
-    context.showNotifier(context.appLocalizations.copySuccess);
+    dialogs.showBanner(context.appLocalizations.copySuccess);
   }
 
   @override

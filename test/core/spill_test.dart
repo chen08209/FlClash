@@ -69,7 +69,7 @@ void main() {
 
     final response = await resolveSpilledResponse(
       CoreMethodResponse(id: '4', file: file.path),
-      method: CoreMethod.getConnections,
+      method: CoreMethod.connectionList,
     );
 
     expect(response.unwrap<List<TrackerInfo>>()?.single.id, 'c1');

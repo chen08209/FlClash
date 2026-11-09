@@ -15,13 +15,14 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/custom/custom_proxies.dart';
 import 'package:fl_clash/views/profiles/custom/rules.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 class _RecordingRules extends ProfileRules {
   final List<Rule> initial;
@@ -89,10 +90,8 @@ Future<({EditorPage editor, BuildContext context})> _openEditor(
   );
 }
 
-Finder _menuItem(String label) => find.descendant(
-  of: find.byType(CommonPopupMenu),
-  matching: find.text(label),
-);
+Finder _menuItem(String label) =>
+    find.descendant(of: find.byType(PopupMenu), matching: find.text(label));
 
 Future<({EditorPage editor, BuildContext context})> _openListEditor(
   WidgetTester tester,
@@ -245,11 +244,7 @@ void main() {
 
     setUp(() {
       core = _MockCore();
-      when(() => core.validateProxies(any())).thenAnswer(
-        (invocation) async => [
-          for (final _ in invocation.positionalArguments.first as List) '',
-        ],
-      );
+      when(() => core.validateProxies(any())).thenAnswer((_) async => const {});
     });
 
     void decodesTo(Map<String, List<Map<String, dynamic>>> proxiesByLink) {
@@ -309,7 +304,7 @@ void main() {
     );
 
     Finder linkField() => find.descendant(
-      of: find.byType(CommonDialog),
+      of: find.byType(AlertDialog),
       matching: find.byType(TextField),
     );
 
@@ -474,7 +469,7 @@ void main() {
       await tester.enterText(linkField(), ' vless://u-1@b.example:443\n');
       await confirm(tester);
 
-      expect(find.byType(CommonDialog), findsNothing);
+      expect(find.byType(AlertDialog), findsNothing);
       expect(readForm(tester).id, -1);
       expect(readForm(tester).definition, {
         'name': 'b.example',
@@ -529,7 +524,7 @@ void main() {
       );
       await confirm(tester);
 
-      expect(find.byType(CommonDialog), findsNothing);
+      expect(find.byType(AlertDialog), findsNothing);
       expect(readForm(tester), mine);
       verifyNever(() => core.decodeShareLinks(any()));
 

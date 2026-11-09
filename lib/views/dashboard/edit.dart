@@ -8,12 +8,13 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
 
 import 'layout.dart';
 import 'style.dart';
 import 'widget_registry.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 const _rowHeight = 64.0;
 const _rowGap = 8.0;
@@ -426,7 +427,7 @@ class _EditableCard extends StatelessWidget {
     final content = Stack(
       fit: StackFit.passthrough,
       children: [
-        ReorderableDelayedDragStartListener(index: index, child: card),
+        ReorderDragStartListener(index: index, child: card),
         if (onRemove != null)
           PositionedDirectional(
             top: 0,
@@ -505,7 +506,7 @@ class _LiftedCard extends StatelessWidget {
           ),
         );
       },
-      child: Material(type: MaterialType.transparency, child: child),
+      child: Surface.transparent(child: child),
     );
   }
 }
@@ -622,12 +623,12 @@ class _RoundButton extends StatelessWidget {
       child: IconButton(
         tooltip: tooltip,
         padding: EdgeInsets.zero,
-        style: IconButton.styleFrom(
+        style: ButtonStyle.from(
           backgroundColor: background,
           foregroundColor: foreground,
           minimumSize: const Size.square(28),
           fixedSize: const Size.square(28),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          tapTargetSize: TapTargetSize.shrinkWrap,
         ),
         onPressed: onPressed,
         icon: GlyphIcon(glyph, size: 16, color: foreground),

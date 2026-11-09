@@ -50,7 +50,10 @@ void main() {
       final profile = Profile.normal(label: 'p');
       final bytes = Uint8List.fromList(utf8.encode('proxies: []'));
 
-      final saved = await profile.saveFile(bytes, validate: (_, _) async => '');
+      final saved = await profile.saveFile(
+        bytes,
+        validate: (_, _) async => null,
+      );
 
       expect(saved.lastUpdateDate, isNotNull);
       final savedFile = await profile.file;
@@ -68,7 +71,7 @@ void main() {
         bytes,
         validate: (_, key) async {
           ageSecretKey = key;
-          return '';
+          return null;
         },
       );
 

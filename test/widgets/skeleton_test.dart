@@ -1,7 +1,7 @@
-import 'package:fl_clash/ui/skeleton.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 import '../helpers/test_app.dart';
 
@@ -11,7 +11,7 @@ void main() {
   Widget line({bool disableAnimations = false}) => TestApp(
     child: MediaQuery(
       data: MediaQueryData(disableAnimations: disableAnimations),
-      child: const Material(
+      child: const Surface(
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,

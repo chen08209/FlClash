@@ -1,7 +1,7 @@
 {
   "methodCall": {
-    "id": "updateConfig#contract",
-    "method": "updateConfig",
+    "id": "config.update#contract",
+    "method": "config.update",
     "arguments": {
       "mixed-port": 7890,
       "allow-lan": true,
@@ -28,23 +28,23 @@
     ]
   },
   "successResponse": {
-    "id": "updateConfig#contract",
-    "result": ""
+    "id": "config.update#contract",
+    "result": null
   },
   "structuredResponse": {
-    "id": "getTraffic#contract",
+    "id": "traffic.current#contract",
     "result": {
       "up": 12,
       "down": 34
     }
   },
   "spilledResponse": {
-    "id": "getConfig#spilled",
+    "id": "config.read#spilled",
     "result": null,
     "file": "/home/responses/1234.json"
   },
   "errorResponse": {
-    "id": "getConfig#contract",
+    "id": "config.read#contract",
     "result": null,
     "error": {
       "code": "core_error",

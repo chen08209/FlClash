@@ -1,6 +1,6 @@
-import 'package:fl_clash/ui/caret_popup.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:prism_ui/caret_popup.dart';
 
 void main() {
   const areaKey = Key('area');

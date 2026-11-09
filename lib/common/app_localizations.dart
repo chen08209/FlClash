@@ -4,8 +4,8 @@ import 'package:fl_clash/common/network_error.dart';
 import 'package:fl_clash/core/desktop/launch_policy.dart';
 import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/ui/l10n.dart';
 import 'package:flutter/widgets.dart';
+import 'package:prism_ui/l10n.dart';
 
 final currentAppLocalizations = AppLocalizations.current;
 
@@ -30,7 +30,16 @@ class AppUiLocalizations implements UiLocalizations {
   String get close => _localizations.close;
 
   @override
+  String get copy => _localizations.copy;
+
+  @override
+  String get cut => _localizations.cut;
+
+  @override
   String get hidePassword => _localizations.hidePassword;
+
+  @override
+  String get dialog => _localizations.dialog;
 
   @override
   String get more => _localizations.more;
@@ -39,10 +48,19 @@ class AppUiLocalizations implements UiLocalizations {
   String get noSearchResults => _localizations.noSearchResults;
 
   @override
+  String get paste => _localizations.paste;
+
+  @override
   String get reset => _localizations.reset;
 
   @override
   String get search => _localizations.search;
+
+  @override
+  String get select => _localizations.select;
+
+  @override
+  String get selectAll => _localizations.selectAll;
 
   @override
   String get showLess => _localizations.showLess;
@@ -96,6 +114,8 @@ String userFacingErrorMessage(Object error, AppLocalizations appLocalizations) {
       switch (error) {
         AgeSecretKeyRequiredException() =>
           appLocalizations.ageSecretKeyRequiredTip,
+        ReleaseNotVerifiedException() => appLocalizations.updateNotVerified,
+        SystemDownloadException() => appLocalizations.updateDownloadFailed,
         CoreMethodException(code: 'rule_set_empty') =>
           appLocalizations.ruleSetEmptyTip,
         CoreMethodException(code: 'rule_set_mixed') =>

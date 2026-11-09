@@ -597,6 +597,58 @@ void main() {
       );
     });
 
+    test('local modules and their attachments are kept, '
+        'and nothing else under mitm', () async {
+      final database = db.Database(NativeDatabase(File(databasePath)));
+      final local = MitmModule(
+        id: 4,
+        name: 'Local',
+        resources: const {'own.json': 'own.json', 'key': '../ca.key'},
+        lastUpdateTime: DateTime(2026),
+      );
+      final remote = local.copyWith(
+        id: 5,
+        url: 'https://a.example.com/m',
+        resources: const {'https://a.example.com/a.js': 'a.js', 'b.js': 'b.js'},
+      );
+      await database.mitmModulesDao.putAll([
+        local.toCompanion(),
+        remote.toCompanion(),
+      ]);
+      await database.close();
+      writeFile(join(home.path, 'mitm', 'modules', '4.txt'), 'local module');
+      writeFile(join(home.path, 'mitm', 'modules', '5.txt'), 'remote module');
+      writeFile(join(home.path, 'mitm', 'resources', 'own.json'), '{}');
+      writeFile(join(home.path, 'mitm', 'resources', 'a.js'), 'a');
+      writeFile(join(home.path, 'mitm', 'resources', 'b.js'), 'b');
+      writeFile(join(home.path, 'mitm', 'ca.key'), 'secret');
+
+      final archivePath = await backup(
+        configMap: const {'version': 1},
+        entries: BackupEntries.of(
+          profileIds: const [],
+          scriptIds: const [],
+          providers: const [],
+          mitmModules: [local, remote],
+        ),
+      );
+      final data = await restore(archivePath);
+
+      expect(data.mitmModules.map((module) => module.id), [4, 5]);
+      expect(BackupEntries.ofData(data), [
+        'mitm/modules/4.txt',
+        'mitm/resources/own.json',
+      ]);
+      expect(
+        BackupEntries.ofData(data).map(
+          (entry) => File(
+            BackupEntries.resolve(staging.path, entry),
+          ).readAsStringSync(),
+        ),
+        ['local module', '{}'],
+      );
+    });
+
     test('a version 0 archive goes through the legacy migration', () async {
       await seedDatabase();
       writeFile(join(home.path, 'profiles', 'legacy.yaml'), 'proxies: []');

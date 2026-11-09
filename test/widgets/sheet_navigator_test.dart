@@ -1,12 +1,10 @@
 import 'dart:async';
 
 import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/ui/sheet.dart';
-import 'package:fl_clash/ui/sheet_navigator.dart';
-import 'package:fl_clash/ui/side_sheet.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 import '../helpers/test_app.dart';
 
@@ -16,7 +14,7 @@ void main() {
 
   Widget pages(Widget child) => SheetPagesNavigator(
     onGenerateInitialRoutes: (_, _) => [
-      MaterialPageRoute<void>(builder: (_) => child),
+      HostPageRoute<void>(builder: (_) => child),
     ],
   );
 
@@ -24,12 +22,12 @@ void main() {
     return tester.pumpWidget(
       ProviderScope(
         overrides: [isMobileViewProvider.overrideWithValue(isMobileView)],
-        child: MaterialApp(
+        child: HostApp(
           builder: (context, child) => wrapAppScopes(context, child!),
           home: Navigator(
             key: hostKey,
             onGenerateInitialRoutes: (_, _) => [
-              MaterialPageRoute<void>(
+              HostPageRoute<void>(
                 builder: (_) => pages(
                   pages(
                     Builder(

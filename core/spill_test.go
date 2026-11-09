@@ -30,8 +30,8 @@ func getConfigCall(t *testing.T, id string) *MethodCall {
 	if err := os.WriteFile(path, []byte("mode: rule\nrules:\n  - MATCH,DIRECT\n"), 0o600); err != nil {
 		t.Fatalf("write profile: %v", err)
 	}
-	arguments, _ := json.Marshal(path)
-	return &MethodCall{ID: id, Method: getConfigMethod, Arguments: arguments}
+	arguments, _ := json.Marshal(PathParams{Path: path})
+	return &MethodCall{ID: id, Method: configReadMethod, Arguments: arguments}
 }
 
 func TestHandleMethodCallSpillsALargeResultToAFile(t *testing.T) {

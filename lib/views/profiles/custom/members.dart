@@ -6,7 +6,7 @@ import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart' hide FileInfo;
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// `proxies` names a group's proxies, `use` its providers, `use-position` where
@@ -472,39 +472,45 @@ class _MembersSliverState<M> extends ConsumerState<_MembersSliver<M>>
     Widget itemAt(int index) {
       final member = entries[index];
       final name = member.name;
+      final position = _transitions.positionOf(member);
+      final title = switch (member.kind) {
+        _MemberKind.allProxies => appLocalizations.allReferencedProxies,
+        _MemberKind.allProviders =>
+          appLocalizations.allReferencedProxyProviders,
+        _MemberKind.filter ||
+        _MemberKind.excludeFilter => presets[name] ?? name,
+        _MemberKind.proxy || _MemberKind.provider => name,
+      };
+      final subtitle = switch (member.kind) {
+        _MemberKind.proxy =>
+          groupTypes[name] ??
+              nodeTypes[name] ??
+              (RuleTarget.baseTargets.contains(name)
+                  ? appLocalizations.basicStrategy
+                  : null),
+        _MemberKind.provider => appLocalizations.proxyProviders,
+        _MemberKind.allProxies ||
+        _MemberKind.allProviders => appLocalizations.autoInclude,
+        _MemberKind.filter => appLocalizations.filters,
+        _MemberKind.excludeFilter => appLocalizations.excludeFilter,
+      };
       return EntryTransition(
         key: ValueKey(member),
         animation: _transitions.animationOf(member),
         leaving: _transitions.isLeaving(member),
-        child: ReorderableDelayedDragStartListener(
-          index: index,
-          child: ItemPositionProvider(
-            position: _transitions.positionOf(member),
-            child: _MemberRow(
-              member: member,
-              index: index,
-              title: switch (member.kind) {
-                _MemberKind.allProxies => appLocalizations.allReferencedProxies,
-                _MemberKind.allProviders =>
-                  appLocalizations.allReferencedProxyProviders,
-                _MemberKind.filter ||
-                _MemberKind.excludeFilter => presets[name] ?? name,
-                _MemberKind.proxy || _MemberKind.provider => name,
-              },
-              subtitle: switch (member.kind) {
-                _MemberKind.proxy =>
-                  groupTypes[name] ??
-                      nodeTypes[name] ??
-                      (RuleTarget.baseTargets.contains(name)
-                          ? appLocalizations.basicStrategy
-                          : null),
-                _MemberKind.provider => appLocalizations.proxyProviders,
-                _MemberKind.allProxies ||
-                _MemberKind.allProviders => appLocalizations.autoInclude,
-                _MemberKind.filter => appLocalizations.filters,
-                _MemberKind.excludeFilter => appLocalizations.excludeFilter,
-              },
-              onRemove: () => _update((state) => state..remove(member)),
+        child: MemoBuilder(
+          inputs: [member, index, position, title, subtitle],
+          builder: (_) => ReorderDragStartListener(
+            index: index,
+            child: ItemPositionProvider(
+              position: position,
+              child: _MemberRow(
+                member: member,
+                index: index,
+                title: title,
+                subtitle: subtitle,
+                onRemove: () => _update((state) => state..remove(member)),
+              ),
             ),
           ),
         ),
@@ -516,7 +522,7 @@ class _MembersSliverState<M> extends ConsumerState<_MembersSliver<M>>
         SliverToBoxAdapter(
           child: ListHeader(title: _host.title(appLocalizations)),
         ),
-        SuperSliverReorderableList(
+        SliverPrismReorderableList(
           itemBuilder: (_, index) => itemAt(index),
           itemCount: entries.length,
           proxyDecorator: (child, index, animation) =>
@@ -794,7 +800,7 @@ class _MemberPickerState<M> extends ConsumerState<_MemberPicker<M>> {
       0,
       (count, category) => count + category.entries.length,
     );
-    return CommonScaffold(
+    return Scaffold(
       title: _host.addLabel(appLocalizations),
       searchState: _query.isNotEmpty || total >= sheetSearchMinItemCount
           ? AppBarSearchState(onSearch: _handleSearch)
@@ -803,7 +809,10 @@ class _MemberPickerState<M> extends ConsumerState<_MemberPicker<M>> {
         builder: (context) => NullStatusSwitcher(
           isEmpty: categories.isEmpty,
           isSearching: _query.isNotEmpty,
-          nullStatus: NullStatus(label: appLocalizations.noData),
+          nullStatus: NullStatus(
+            label: appLocalizations.noData,
+            illustration: NullStatusIllustration.data,
+          ),
           child: CustomScrollView(
             slivers: [
               SliverPadding(
@@ -840,18 +849,21 @@ class _MemberPickerState<M> extends ConsumerState<_MemberPicker<M>> {
     final member = (kind: kind, name: entry.name);
     final isSelected = _selected.contains(member);
     final subtitle = entry.subtitle;
-    return DecorationListItem(
-      isSelected: isSelected,
-      onPressed: () => _handleToggle(member),
-      title: TooltipText(
-        text: Text(entry.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+    return MemoBuilder(
+      inputs: [entry, isSelected],
+      builder: (_) => DecorationListItem(
+        isSelected: isSelected,
+        onPressed: () => _handleToggle(member),
+        title: TooltipText(
+          text: Text(entry.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        ),
+        subtitle: switch (subtitle) {
+          null => null,
+          _ when kind.isFilter => FilterRegexText(subtitle),
+          _ => TooltipLabel(subtitle, maxLines: 1),
+        },
+        trailing: isSelected ? const SelectionCheck() : null,
       ),
-      subtitle: switch (subtitle) {
-        null => null,
-        _ when kind.isFilter => FilterRegexText(subtitle),
-        _ => TooltipLabel(subtitle, maxLines: 1),
-      },
-      trailing: isSelected ? const SelectionCheck() : null,
     );
   }
 }

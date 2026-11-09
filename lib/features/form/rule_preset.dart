@@ -3,7 +3,7 @@ import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 enum RulePreset {
   blockQuic(AppGlyphs.block, [
@@ -85,7 +85,7 @@ class _RulePresetSheetState extends State<RulePresetSheet> {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     const presets = RulePreset.values;
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.quickActions,
       confirmationAction: _selected.isEmpty
           ? null
@@ -94,7 +94,7 @@ class _RulePresetSheetState extends State<RulePresetSheet> {
               onPressed: _handleConfirm,
               tooltip: appLocalizations.confirm,
             ),
-      body: ListView.builder(
+      body: PrismListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
           top: context.contentTopPadding,
           bottom: 20 + context.bottomInset,

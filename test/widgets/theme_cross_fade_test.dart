@@ -1,7 +1,8 @@
-import 'package:fl_clash/ui/theme_cross_fade.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:prism_ui/prism_ui.dart';
+import '../helpers/test_app.dart';
 
 const _red = Color(0xFFFF0000);
 const _blue = Color(0xFF0000FF);
@@ -24,11 +25,9 @@ void main() {
         key: shotKey,
         child: ValueListenableBuilder(
           valueListenable: background,
-          builder: (_, color, _) => MaterialApp(
+          builder: (_, color, _) => HostApp(
             debugShowCheckedModeBanner: false,
             theme: ThemeData(scaffoldBackgroundColor: color),
-            themeAnimationStyle: AnimationStyle.noAnimation,
-            builder: (_, child) => ThemeCrossFade(child: child!),
             home: Builder(
               builder: (context) => ColoredBox(
                 color: Theme.of(

@@ -1,8 +1,9 @@
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 void main() {
   Rect rowRect(WidgetTester tester, String title) =>
@@ -13,7 +14,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       TestApp(
-        child: Scaffold(
+        child: HostScaffold(
           body: ListView(
             padding: EdgeInsets.zero,
             children: [
@@ -54,7 +55,7 @@ void main() {
         late double contentTop;
         await tester.pumpWidget(
           TestApp(
-            child: Scaffold(
+            child: HostScaffold(
               body: Builder(
                 builder: (context) {
                   contentTop = context.contentTopPadding;
@@ -86,7 +87,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       TestApp(
-        child: Scaffold(
+        child: HostScaffold(
           body: Column(
             children: [
               generateGroup([const DecorationListItem(title: Text('row'))]),

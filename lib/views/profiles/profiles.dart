@@ -9,8 +9,8 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/profiles/custom/custom.dart';
 import 'package:fl_clash/views/profiles/extend/extend.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'add.dart';
@@ -101,7 +101,7 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
         final state = ref.watch(profilesStateProvider);
         final spacing = cardSpacingOf(context, ref.watch(viewModeProvider));
         final picker = widget.picker;
-        return CommonScaffold(
+        return Scaffold(
           isLoading: isLoading,
           title: appLocalizations.profiles,
           iconActions: picker ? const [] : _buildActions(state.profiles),
@@ -347,7 +347,7 @@ class ProfileItem extends ConsumerWidget {
         children: [...previousChildren, ?currentChild],
       ),
       child: isUpdating
-          ? const CommonCircleLoading(key: ValueKey('updating'), size: 24)
+          ? const ActivityIndicator(key: ValueKey('updating'), size: 24)
           : LastUpdateTimeText(
               key: const ValueKey('lastUpdate'),
               lastUpdateDate: profile.lastUpdateDate,
@@ -360,9 +360,9 @@ class ProfileItem extends ConsumerWidget {
   Future<void> _handleCopyLink(BuildContext context) async {
     await Clipboard.setData(ClipboardData(text: profile.url));
     if (context.mounted) {
-      context.showNotifier(
+      dialogs.showBanner(
         context.appLocalizations.copySuccess,
-        level: MessageLevel.success,
+        level: BannerLevel.success,
       );
     }
   }
@@ -379,9 +379,9 @@ class ProfileItem extends ConsumerWidget {
       return true;
     }, title: appLocalizations.tip);
     if (res == true && context.mounted) {
-      context.showNotifier(
+      dialogs.showBanner(
         appLocalizations.exportSuccess,
-        level: MessageLevel.success,
+        level: BannerLevel.success,
       );
     }
   }
@@ -402,25 +402,25 @@ class ProfileItem extends ConsumerWidget {
     }
   }
 
-  List<CommonPopupMenuItem> _menuItems(BuildContext context, WidgetRef ref) {
+  List<PopupMenuItem> _menuItems(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     final isUrl = profile.type == ProfileType.url;
     final isCustom = profile.type == ProfileType.custom;
     return [
-      CommonPopupMenuItem(
+      PopupMenuItem(
         glyph: AppGlyphs.edit,
         label: appLocalizations.edit,
         onPressed: () => _handleEdit(context),
       ),
       if (isCustom) ...[
-        CommonPopupMenuItem(
+        PopupMenuItem(
           glyph: AppGlyphs.textShort,
           label: appLocalizations.rename,
           onPressed: () {
             renameProfile(context, ref, profile);
           },
         ),
-        CommonPopupMenuItem(
+        PopupMenuItem(
           glyph: AppGlyphs.eye,
           label: appLocalizations.runtimeConfig,
           onPressed: () {
@@ -428,7 +428,7 @@ class ProfileItem extends ConsumerWidget {
           },
         ),
       ] else
-        CommonPopupMenuItem(
+        PopupMenuItem(
           glyph: AppGlyphs.puzzle,
           label: appLocalizations.extend,
           onPressed: () {
@@ -436,7 +436,7 @@ class ProfileItem extends ConsumerWidget {
           },
         ),
       if (isUrl)
-        CommonPopupMenuItem(
+        PopupMenuItem(
           glyph: AppGlyphs.sync,
           label: appLocalizations.sync,
           onPressed: () {
@@ -444,11 +444,11 @@ class ProfileItem extends ConsumerWidget {
           },
         ),
       if (!isCustom)
-        CommonPopupMenuItem(
+        PopupMenuItem(
           glyph: AppGlyphs.moreCircle,
           label: appLocalizations.more,
           subItems: [
-            CommonPopupMenuItem(
+            PopupMenuItem(
               glyph: AppGlyphs.eye,
               label: appLocalizations.runtimeConfig,
               onPressed: () {
@@ -456,7 +456,7 @@ class ProfileItem extends ConsumerWidget {
               },
             ),
             if (isUrl)
-              CommonPopupMenuItem(
+              PopupMenuItem(
                 glyph: AppGlyphs.copy,
                 label: appLocalizations.copyLink,
                 onPressed: () {
@@ -464,7 +464,7 @@ class ProfileItem extends ConsumerWidget {
                 },
               ),
             if (isUrl)
-              CommonPopupMenuItem(
+              PopupMenuItem(
                 glyph: AppGlyphs.qrCode,
                 label: appLocalizations.qrcode,
                 onPressed: () {
@@ -475,7 +475,7 @@ class ProfileItem extends ConsumerWidget {
                   );
                 },
               ),
-            CommonPopupMenuItem(
+            PopupMenuItem(
               glyph: AppGlyphs.export,
               label: appLocalizations.exportFile,
               onPressed: () {
@@ -484,7 +484,7 @@ class ProfileItem extends ConsumerWidget {
             ),
           ],
         ),
-      CommonPopupMenuItem(
+      PopupMenuItem(
         danger: true,
         glyph: AppGlyphs.delete,
         label: appLocalizations.delete,
@@ -502,7 +502,7 @@ class ProfileItem extends ConsumerWidget {
     final isSelected = profile.id == groupValue;
     return ContextMenuRegion(
       menuItems: isUpdating ? null : _menuItems(context, ref),
-      child: CommonCard(
+      child: Card(
         enterActionsOnRight: true,
         radius: AppCorner.xl,
         isSelected: isSelected,
@@ -616,7 +616,7 @@ class _ReorderableProfilesSheetState
   Widget _buildItem(int index) {
     final position = ItemPosition.get(index, profiles.length);
     final profile = profiles[index];
-    return ReorderableDelayedDragStartListener(
+    return ReorderDragStartListener(
       key: Key(profile.id.toString()),
       index: index,
       child: ItemPositionProvider(
@@ -644,14 +644,13 @@ class _ReorderableProfilesSheetState
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonScaffold(
+    return Scaffold(
       confirmationAction: IconButtonData(
         glyph: AppGlyphs.check,
         onPressed: _handleSave,
         tooltip: context.appLocalizations.save,
       ),
-      body: ReorderableListView.builder(
-        buildDefaultDragHandles: false,
+      body: PrismReorderableListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
           top: context.contentTopPadding,
           bottom: 32 + context.bottomInset,

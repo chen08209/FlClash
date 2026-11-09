@@ -74,10 +74,10 @@ void main() {
       offenders,
       isEmpty,
       reason:
-          'lib/ui holds the components that know nothing of the app. It may '
-          'use lib/common files whose own imports stay out of the app, never '
-          'the lib/common/common.dart barrel, and gets app state through '
-          'ViewScope, MeasureScope and UiLocalizations instead:\n'
+          'lib/ui holds what FlClash adds to prism_ui and knows nothing of the '
+          'app either. It may use lib/common files whose own imports stay out '
+          'of the app, never the lib/common/common.dart barrel, and gets app '
+          'state through ViewScope, MeasureScope and UiLocalizations instead:\n'
           '${offenders.join('\n')}',
     );
   });

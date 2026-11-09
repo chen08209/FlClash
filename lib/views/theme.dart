@@ -10,7 +10,7 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/font_family.dart';
 import 'package:fl_clash/views/theme_preview.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ThemeView extends StatelessWidget {
@@ -359,12 +359,12 @@ class _ColorSwatches extends ConsumerWidget {
                     menuItems: color == null
                         ? null
                         : [
-                            CommonPopupMenuItem(
+                            PopupMenuItem(
                               glyph: AppGlyphs.edit,
                               label: appLocalizations.edit,
                               onPressed: () => onEdit(color),
                             ),
-                            CommonPopupMenuItem(
+                            PopupMenuItem(
                               danger: true,
                               glyph: AppGlyphs.delete,
                               label: appLocalizations.delete,
@@ -382,7 +382,7 @@ class _ColorSwatches extends ConsumerWidget {
   }
 }
 
-class _ColorSwatch extends StatefulWidget {
+class _ColorSwatch extends StatelessWidget {
   const _ColorSwatch({
     required this.color,
     required this.systemColor,
@@ -405,88 +405,73 @@ class _ColorSwatch extends StatefulWidget {
   final bool isSelected;
   final String label;
   final VoidCallback onPressed;
-  final List<CommonPopupMenuItem>? menuItems;
-
-  @override
-  State<_ColorSwatch> createState() => _ColorSwatchState();
-}
-
-class _ColorSwatchState extends State<_ColorSwatch> {
-  bool _focused = false;
+  final List<PopupMenuItem>? menuItems;
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.color;
-    final fill = color ?? widget.systemColor;
-    final selected = widget.isSelected;
+    final fill = color ?? systemColor;
+    final selected = isSelected;
     final check = ThemeData.estimateBrightnessForColor(fill) == Brightness.dark
         ? Colors.white
         : Colors.black;
-    final swatch = Semantics(
-      button: true,
-      selected: selected,
-      label: widget.label,
-      child: SizedBox.square(
-        dimension: _ColorSwatch.size,
-        child: Material(
-          type: MaterialType.transparency,
-          shape: AppShape.circle,
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            customBorder: AppShape.circle,
-            onTap: widget.onPressed,
-            onFocusChange: (value) => setState(() => _focused = value),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                AnimatedOpacity(
-                  opacity: selected || _focused ? 1 : 0,
-                  duration: _ColorSwatch._duration,
-                  child: DecoratedBox(
-                    decoration: ShapeDecoration(
-                      shape: AppShape.circle.copyWith(
-                        side: BorderSide(
-                          color: selected ? fill : context.colorScheme.primary,
-                          width: _ColorSwatch._ring,
-                        ),
-                      ),
-                    ),
-                    child: const SizedBox.expand(),
-                  ),
-                ),
-                SizedBox.square(
-                  dimension: _ColorSwatch.dot,
-                  child: DecoratedBox(
-                    decoration: ShapeDecoration(
-                      color: fill,
-                      shape: AppShape.circle,
+    final swatch = SizedBox.square(
+      dimension: size,
+      child: PressSurface(
+        fill: Colors.transparent,
+        shape: AppShape.circle,
+        ringStandsOff: selected,
+        selected: selected,
+        childFills: true,
+        onPressed: onPressed,
+        child: Semantics(
+          label: label,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              AnimatedOpacity(
+                opacity: selected ? 1 : 0,
+                duration: _duration,
+                child: DecoratedBox(
+                  decoration: ShapeDecoration(
+                    shape: AppShape.circle.copyWith(
+                      side: BorderSide(color: fill, width: _ring),
                     ),
                   ),
+                  child: const SizedBox.expand(),
                 ),
-                if (color == null)
-                  const Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: _EyedropperBadge(size: _ColorSwatch._badge),
-                  ),
-                AnimatedScale(
-                  scale: selected ? 1 : 0,
-                  duration: _ColorSwatch._duration,
-                  curve: Curves.easeOutBack,
-                  child: GlyphIcon(
-                    AppGlyphs.check,
-                    size: 18,
-                    fill: 1,
-                    color: check,
+              ),
+              SizedBox.square(
+                dimension: dot,
+                child: DecoratedBox(
+                  decoration: ShapeDecoration(
+                    color: fill,
+                    shape: AppShape.circle,
                   ),
                 ),
-              ],
-            ),
+              ),
+              if (color == null)
+                const Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: _EyedropperBadge(size: _badge),
+                ),
+              AnimatedScale(
+                scale: selected ? 1 : 0,
+                duration: _duration,
+                curve: Curves.easeOutBack,
+                child: GlyphIcon(
+                  AppGlyphs.check,
+                  size: 18,
+                  fill: 1,
+                  color: check,
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
-    final menuItems = widget.menuItems;
+    final menuItems = this.menuItems;
     if (menuItems == null) {
       return swatch;
     }
@@ -539,31 +524,25 @@ class _AddColorButton extends StatelessWidget {
     final colorScheme = context.colorScheme;
     return Tooltip(
       message: context.appLocalizations.add,
-      child: Semantics(
-        button: true,
-        child: SizedBox.square(
-          dimension: _ColorSwatch.size,
-          child: Material(
-            type: MaterialType.transparency,
-            shape: AppShape.circle,
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              customBorder: AppShape.circle,
-              onTap: onPressed,
-              child: Center(
-                child: Container(
-                  width: _ColorSwatch.dot,
-                  height: _ColorSwatch.dot,
-                  decoration: ShapeDecoration(
-                    color: context.raisedSurfaceLevel.colorOf(colorScheme),
-                    shape: AppShape.circle,
-                  ),
-                  child: GlyphIcon(
-                    AppGlyphs.add,
-                    size: 20,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
+      child: SizedBox.square(
+        dimension: _ColorSwatch.size,
+        child: PressSurface(
+          fill: Colors.transparent,
+          shape: AppShape.circle,
+          childFills: true,
+          onPressed: onPressed,
+          child: Center(
+            child: Container(
+              width: _ColorSwatch.dot,
+              height: _ColorSwatch.dot,
+              decoration: ShapeDecoration(
+                color: context.raisedSurfaceLevel.colorOf(colorScheme),
+                shape: AppShape.circle,
+              ),
+              child: GlyphIcon(
+                AppGlyphs.add,
+                size: 20,
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -785,23 +764,17 @@ class _SidebarBlurItem extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              generateGroup([
-                ConfigToggleItem(
-                  title: (l) => l.backgroundBlur,
-                  selector: themeSettingProvider.select(
-                    (state) => state.sidebarBlur,
-                  ),
-                  onChanged: (ref, value) => ref
-                      .read(themeSettingProvider.notifier)
-                      .update((state) => state.copyWith(sidebarBlur: value)),
-                ),
-              ]),
-              ListFooter(text: appLocalizations.sidebarBlurDesc),
-            ],
-          ),
+          child: generateGroup([
+            ConfigToggleItem(
+              title: (l) => l.backgroundBlur,
+              selector: themeSettingProvider.select(
+                (state) => state.sidebarBlur,
+              ),
+              onChanged: (ref, value) => ref
+                  .read(themeSettingProvider.notifier)
+                  .update((state) => state.copyWith(sidebarBlur: value)),
+            ),
+          ]),
         ),
       ],
     );
@@ -851,11 +824,13 @@ class _FontFamilyItem extends ConsumerWidget {
       ),
     );
     final cardColor = context.raisedSurfaceLevel.colorOf(colorScheme);
-    Widget card(VoidCallback onTap) => Material(
-      color: cardColor,
+    Widget card(VoidCallback onTap) => PressSurface(
+      fill: cardColor,
       shape: AppShape.lg,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(customBorder: AppShape.lg, onTap: onTap, child: preview),
+      childFills: true,
+      clipsChild: true,
+      onPressed: onTap,
+      child: preview,
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -868,7 +843,6 @@ class _FontFamilyItem extends ConsumerWidget {
           child: context.isMobileView
               ? OpenContainer<void>(
                   closedShape: AppShape.lg,
-                  closedColor: cardColor,
                   closedBuilder: (_, open) => card(open),
                   openBuilder: (_, _) => const FontFamilyView(),
                 )
@@ -1030,21 +1004,17 @@ class _TextScaleFactorItemState extends ConsumerState<_TextScaleFactorItem> {
                             ),
                           ),
                           Expanded(
-                            child: SliderTheme(
-                              data: SliderDefaultsM3(context),
-                              child: Slider(
-                                padding: EdgeInsets.zero,
-                                min: minTextScale,
-                                max: maxTextScale,
-                                divisions: divisions,
-                                value: scale,
-                                label: percent,
-                                onChanged: textScale.enable
-                                    ? (value) => setState(() => _draft = value)
-                                    : null,
-                                onChangeEnd: (value) => _update(
-                                  (state) => state.copyWith(scale: value),
-                                ),
+                            child: Slider(
+                              min: minTextScale,
+                              max: maxTextScale,
+                              divisions: divisions,
+                              value: scale,
+                              label: percent,
+                              onChanged: textScale.enable
+                                  ? (value) => setState(() => _draft = value)
+                                  : null,
+                              onChangeEnd: (value) => _update(
+                                (state) => state.copyWith(scale: value),
                               ),
                             ),
                           ),
@@ -1130,7 +1100,7 @@ class _CustomColorSheetState extends State<_CustomColorSheet> {
     final appLocalizations = context.appLocalizations;
     // Clears Android's edge back-swipe zone; exclusion rects stop at 200 dp.
     final gestureInsets = MediaQuery.systemGestureInsetsOf(context);
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.customColor,
       confirmationAction: IconButtonData(
         glyph: AppGlyphs.check,

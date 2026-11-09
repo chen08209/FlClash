@@ -1,10 +1,11 @@
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 final _viewSizeOverride = viewSizeProvider.overrideWithBuild(
   (_, _) => const Size(400, 800),
@@ -22,9 +23,9 @@ Future<void> _pumpDialog(
       overrides: [_viewSizeOverride],
       child: Directionality(
         textDirection: textDirection,
-        child: Scaffold(
+        child: HostScaffold(
           body: Center(
-            child: CommonDialog(
+            child: AlertDialog(
               title: 'Title',
               destructive: destructive,
               actions: [
@@ -49,25 +50,25 @@ Rect _rectOf(WidgetTester tester, String label) =>
 Color? _labelColor(WidgetTester tester, String label) =>
     tester.renderObject<RenderParagraph>(find.text(label)).text.style?.color;
 
-Color? _buttonFill(WidgetTester tester, String label) => tester
-    .widget<Material>(
+Color _buttonFill(WidgetTester tester, String label) => tester
+    .widget<CardSurface>(
       find.descendant(
         of: find.widgetWithText(TextButton, label),
-        matching: find.byType(Material),
+        matching: find.byType(CardSurface),
       ),
     )
-    .color;
+    .fill;
 
 Future<void> _pumpLauncher(WidgetTester tester) async {
   await tester.pumpWidget(
     TestApp(
       overrides: [_viewSizeOverride],
-      child: Scaffold(
+      child: HostScaffold(
         body: Builder(
           builder: (context) => TextButton(
             onPressed: () => showFloatingDialog<void>(
               context: context,
-              child: const CommonDialog(title: 'Title', child: Text('Body')),
+              child: const AlertDialog(title: 'Title', child: Text('Body')),
             ),
             child: const Text('Open'),
           ),
@@ -81,7 +82,7 @@ double _dialogScale(WidgetTester tester) => tester
     .widget<Transform>(
       find
           .ancestor(
-            of: find.byType(CommonDialog),
+            of: find.byType(AlertDialog),
             matching: find.byType(Transform),
           )
           .first,
@@ -93,7 +94,7 @@ double _dialogOpacity(WidgetTester tester) => tester
     .widget<LiquidGlassFade>(
       find
           .ancestor(
-            of: find.byType(CommonDialog),
+            of: find.byType(AlertDialog),
             matching: find.byType(LiquidGlassFade),
           )
           .first,
@@ -182,31 +183,31 @@ void main() {
     expect(_dialogScale(tester), 1);
     expect(_dialogOpacity(tester), 1);
 
-    Navigator.of(tester.element(find.byType(CommonDialog))).pop();
+    Navigator.of(tester.element(find.byType(AlertDialog))).pop();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     expect(_dialogScale(tester), 1);
     expect(_dialogOpacity(tester), inExclusiveRange(0, 1));
 
     await tester.pumpAndSettle();
-    expect(find.byType(CommonDialog), findsNothing);
+    expect(find.byType(AlertDialog), findsNothing);
   });
 
   testWidgets('on glass a pane lies under the surface and fades with it', (
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         builder: (_, child) => LiquidGlassScope(
           enabled: true,
           child: LiquidGlassHost(enabled: true, child: child!),
         ),
-        home: Scaffold(
+        home: HostScaffold(
           body: Builder(
             builder: (context) => TextButton(
               onPressed: () => showFloatingDialog<void>(
                 context: context,
-                child: const CommonDialog(title: 'Title', child: Text('Body')),
+                child: const AlertDialog(title: 'Title', child: Text('Body')),
               ),
               child: const Text('Open'),
             ),
@@ -225,13 +226,35 @@ void main() {
     final surface = find
         .descendant(
           of: find.byType(AlertDialog),
-          matching: find.byType(Material),
+          matching: find.byType(Surface),
         )
         .first;
     expect(
       LiquidGlassHost.debugLastCapture!.panes.single.pane,
       rectMoreOrLessEquals(tester.getRect(surface)),
     );
+  });
+
+  testWidgets('an alert casts no shadow through its clear glass', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const HostApp(
+        home: LiquidGlassScope(
+          enabled: true,
+          child: AlertDialog(title: 'Title', child: Text('Body')),
+        ),
+      ),
+    );
+    final surface = tester.renderObject<RenderPhysicalShape>(
+      find
+          .descendant(
+            of: find.byType(AlertDialog),
+            matching: find.byType(PhysicalShape),
+          )
+          .first,
+    );
+    expect(surface.elevation, 0);
   });
 
   testWidgets('a tap on the scrim dismisses a dismissible dialog', (
@@ -243,6 +266,6 @@ void main() {
 
     await tester.tapAt(const Offset(4, 4));
     await tester.pumpAndSettle();
-    expect(find.byType(CommonDialog), findsNothing);
+    expect(find.byType(AlertDialog), findsNothing);
   });
 }

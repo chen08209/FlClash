@@ -3,16 +3,15 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
+import 'sources.dart';
+
 final _plainController = RegExp(r'\bScrollController\(');
 
 final _primaryOptOut = RegExp(r'\bprimary:\s*false\b');
 
 const _allowed = {
-  'lib/ui/inherited.dart',
   // A drag on the editor's completion overlay must never move a sheet.
   'lib/features/editor/completion_popup.dart',
-  // Nor a drag on a popup menu, which stands over the sheet it opened from.
-  'lib/ui/popup.dart',
   // Nor a drag along the proxies group chips, which run across the sheet.
   'lib/views/proxies/group_tabs.dart',
 };
@@ -24,7 +23,7 @@ void main() {
   test('scroll views in lib let a bottom sheet take their drags', () {
     final offenders = <String>[];
 
-    for (final entity in Directory('lib').listSync(recursive: true)) {
+    for (final entity in sourceEntities()) {
       if (entity is! File ||
           !entity.path.endsWith('.dart') ||
           entity.path.contains('/generated/')) {

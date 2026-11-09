@@ -1,0 +1,27 @@
+name: dynamic_color
+description: The system's accent color and wallpaper palette, from the native half of the dynamic_color package without its Material half.
+version: 2.1.0
+publish_to: none
+
+environment:
+  sdk: '>=3.10.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: io.material.plugins.dynamic_color
+        pluginClass: DynamicColorPlugin
+      linux:
+        pluginClass: DynamicColorPlugin
+      macos:
+        pluginClass: DynamicColorPlugin
+      windows:
+        pluginClass: DynamicColorPluginCApi

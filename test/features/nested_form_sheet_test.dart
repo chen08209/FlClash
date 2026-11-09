@@ -8,11 +8,12 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 const _group = ProxyGroup(id: 1, name: 'g', type: GroupType.Selector);
 
@@ -40,7 +41,7 @@ class _ProbeFormState extends ConsumerState<_ProbeForm> {
     final height = isBottomSheet
         ? ref.read(viewSizeProvider).height * 0.6
         : double.maxFinite;
-    return CommonScaffold(
+    return Scaffold(
       body: Container(
         constraints: BoxConstraints(maxHeight: height),
         child: ListView(
@@ -48,7 +49,7 @@ class _ProbeFormState extends ConsumerState<_ProbeForm> {
           padding: const EdgeInsets.all(16),
           children: [
             for (var index = 0; index < 8; index++)
-              ListTile(title: Text('row $index')),
+              TestRow(title: Text('row $index')),
             Text(name),
             FilledButton(
               onPressed: () {
@@ -220,7 +221,7 @@ void main() {
 
     await harness.closeBySystemBack(tester);
 
-    expect(find.byType(CommonDialog), findsNothing);
+    expect(find.byType(AlertDialog), findsNothing);
     expect(harness.saveCalls, 0);
     expect(find.byType(NestedFormSheet<ProxyGroup>), findsOneWidget);
   });
@@ -262,7 +263,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(harness.saveCalls, 1);
-    expect(find.byType(CommonDialog), findsNothing);
+    expect(find.byType(AlertDialog), findsNothing);
     expect(find.byType(NestedFormSheet<ProxyGroup>), findsOneWidget);
   });
 
@@ -286,21 +287,21 @@ void main() {
         child: TestApp(
           homeBuilder: (child) => Navigator(
             key: pageNavigator,
-            pages: [MaterialPage(child: child)],
+            pages: [RootPage(child: child)],
             onDidRemovePage: (_) {},
           ),
-          child: const Scaffold(body: SizedBox.shrink()),
+          child: const HostScaffold(body: SizedBox.shrink()),
         ),
       ),
     );
     unawaited(
       pageNavigator.currentState!.push(
         FormSheetRoute<void>(
-          barrierColor: Colors.black26,
+          barrierColor: const Color(0x42000000),
           barrierLabel: 'sheet',
           builder: (_) => Navigator(
             onGenerateRoute: (_) => PagedSheetRoute<void>(
-              builder: (_) => const Material(child: TextField(autofocus: true)),
+              builder: (_) => const Surface(child: TextField(autofocus: true)),
             ),
           ),
         ),

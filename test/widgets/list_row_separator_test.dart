@@ -1,10 +1,12 @@
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 void main() {
   Future<List<Finder>> pumpRows(
@@ -16,7 +18,7 @@ void main() {
   }) async {
     await tester.pumpWidget(
       TestApp(
-        child: Scaffold(
+        child: HostScaffold(
           body: Padding(
             padding: EdgeInsets.only(top: top),
             child: generateSection(
@@ -42,7 +44,7 @@ void main() {
   }
 
   PaintPattern separator(WidgetTester tester, Finder row, {Rect? rect}) {
-    final color = Theme.of(tester.element(row)).colorScheme.outlineVariant;
+    final color = Divider.colorOf(tester.element(row));
     return paints..something(
       (method, arguments) =>
           method == #drawRect &&
@@ -107,7 +109,10 @@ void main() {
   });
 
   testWidgets('the separator starts where the title starts', (tester) async {
-    final rows = await pumpRows(tester, leading: const Icon(Icons.language));
+    final rows = await pumpRows(
+      tester,
+      leading: const SizedBox.square(dimension: 24),
+    );
 
     final row = tester.getRect(rows[0]);
     final title = tester.getRect(find.text('row 0'));
@@ -161,7 +166,7 @@ void main() {
     addTearDown(controller.dispose);
     await tester.pumpWidget(
       TestApp(
-        child: Scaffold(
+        child: HostScaffold(
           body: ListView(
             controller: controller,
             children: [
@@ -217,7 +222,7 @@ void main() {
     late StateSetter rebuild;
     await tester.pumpWidget(
       TestApp(
-        child: Scaffold(
+        child: HostScaffold(
           body: StatefulBuilder(
             builder: (context, setState) {
               rebuild = setState;

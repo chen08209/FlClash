@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
+import 'sources.dart';
+
 final _scopeRead = RegExp(r'BottomInsetScope\.of\(');
 
 final _insetRead = RegExp(r'(\w+)\.bottomInset\b');
@@ -64,16 +66,13 @@ void main() {
   test('pages read the bottom inset below the scaffold that adds to it', () {
     final offenders = <String>[];
 
-    for (final entity in Directory('lib').listSync(recursive: true)) {
+    for (final entity in sourceEntities()) {
       if (entity is! File ||
           !entity.path.endsWith('.dart') ||
           entity.path.contains('/generated/')) {
         continue;
       }
       final path = p.relative(entity.path);
-      if (p.isWithin('lib/ui', path)) {
-        continue;
-      }
       final lines = entity.readAsLinesSync();
       for (final (index, line) in lines.indexed) {
         if (_scopeRead.hasMatch(line)) {
@@ -90,11 +89,11 @@ void main() {
             match.group(1)!,
           );
           if (block != null &&
-              block.contains('CommonScaffold(') &&
+              block.contains('Scaffold(') &&
               block.contains('searchState:')) {
             offenders.add(
               '$path:${index + 1} — reads the bottom inset with the context '
-              'its CommonScaffold is built with, above the room that scaffold '
+              'its Scaffold is built with, above the room that scaffold '
               'adds for its docked search, so the end of the content stays '
               'under it; read it inside '
               '`body: Builder(builder: (context) => ...)`.',

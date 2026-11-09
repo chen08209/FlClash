@@ -42,7 +42,8 @@ func releaseGeoUpdate(geoType string) {
 	releaseUpdate(geoUpdateScope + geoType)
 }
 
-func handleUpdateGeoData(geoType string) error {
+func handleUpdateGeoData(params GeoUpdateParams) error {
+	geoType := params.Type
 	resource, exist := geoResources[geoType]
 	if !exist {
 		logError("updateGeoData: unknown geo resource %q", geoType)

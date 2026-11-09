@@ -1,19 +1,18 @@
 import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/gestures.dart' show kPressTimeout;
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 void main() {
   late bool value;
-  late List<bool> highlights;
   late int rowTaps;
 
   setUp(() {
     value = false;
-    highlights = [];
     rowTaps = 0;
   });
 
@@ -26,23 +25,22 @@ void main() {
       TestApp(
         child: LiquidGlassScope(
           enabled: glass,
-          child: Scaffold(
+          child: HostScaffold(
             body: StatefulBuilder(
               builder: (context, setState) => ListView(
                 children: [
-                  InkWell(
+                  PressRegion(
                     onTap: () {
                       rowTaps++;
                       if (rowFlips) {
                         setState(() => value = !value);
                       }
                     },
-                    onHighlightChanged: highlights.add,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Align(
                         alignment: Alignment.centerRight,
-                        child: CommonSwitch(
+                        child: Switch(
                           value: value,
                           onChanged: (next) => setState(() => value = next),
                         ),
@@ -59,7 +57,7 @@ void main() {
     );
   }
 
-  Finder switchFinder() => find.byType(CommonSwitch);
+  Finder switchFinder() => find.byType(Switch);
 
   // The track is drawn first, the thumb over it.
   Finder thumbFinder() => find
@@ -79,13 +77,11 @@ void main() {
     final rest = tester.getSize(thumbFinder());
 
     final gesture = await hold(tester);
-
-    expect(highlights, isEmpty);
     expect(rest, const Size.square(24));
     expect(tester.getSize(thumbFinder()), const Size.square(40));
     expect(
       tester.getSize(thumbFinder()).height,
-      greaterThan(CommonSwitch.trackHeight),
+      greaterThan(Switch.trackHeight),
     );
 
     await gesture.up();
@@ -93,7 +89,6 @@ void main() {
 
     expect(value, isTrue);
     expect(rowTaps, 0);
-    expect(highlights, isEmpty);
     expect(tester.getSize(thumbFinder()), const Size.square(24));
   });
 
@@ -139,7 +134,7 @@ void main() {
     );
     expect(
       tester.getSize(thumbFinder()).height,
-      greaterThan(CommonSwitch.trackHeight),
+      greaterThan(Switch.trackHeight),
     );
 
     await tester.pumpAndSettle();
@@ -154,7 +149,7 @@ void main() {
     await pump(tester, glass: true, rowFlips: true);
 
     await tester.tapAt(
-      tester.getTopLeft(find.byType(InkWell).first) + const Offset(24, 24),
+      tester.getTopLeft(find.byType(PressRegion).first) + const Offset(24, 24),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 150));
@@ -197,7 +192,6 @@ void main() {
     final scrollable = tester.state<ScrollableState>(find.byType(Scrollable));
     expect(scrollable.position.pixels, greaterThan(0));
     expect(value, isFalse);
-    expect(highlights, isEmpty);
   });
 
   testWidgets('a scroll that starts on a held switch still scrolls', (
@@ -216,15 +210,14 @@ void main() {
     final scrollable = tester.state<ScrollableState>(find.byType(Scrollable));
     expect(scrollable.position.pixels, greaterThan(0));
     expect(value, isFalse);
-    expect(highlights, isEmpty);
   });
 
   testWidgets('the keyboard focuses and flips it', (tester) async {
     await tester.pumpWidget(
       TestApp(
-        child: Scaffold(
+        child: HostScaffold(
           body: StatefulBuilder(
-            builder: (context, setState) => CommonSwitch(
+            builder: (context, setState) => Switch(
               value: value,
               onChanged: (next) => setState(() => value = next),
             ),
@@ -243,8 +236,8 @@ void main() {
   testWidgets('without onChanged it neither presses nor flips', (tester) async {
     await tester.pumpWidget(
       const TestApp(
-        child: Scaffold(
-          body: Center(child: CommonSwitch(value: false, onChanged: null)),
+        child: HostScaffold(
+          body: Center(child: Switch(value: false, onChanged: null)),
         ),
       ),
     );

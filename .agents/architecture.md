@@ -170,8 +170,8 @@ or a remote party reaching the privileged Core's control or filesystem APIs is a
 
 A process running as the same account is not stopped. It can ask the Helper to start the Core
 against a socket or pipe it owns, or run a setuid Core against a port it listens on, and so become the host that drives
-a privileged Core: `initClash` chooses the home directory every path check anchors on, and `getConfig`,
-`getProfileBase`, `getProfileOutbounds` and a `setupConfig` or `buildProfile` base read any path.
+a privileged Core: `core.init` chooses the home directory every path check anchors on, and `config.read`,
+`profile.base`, `profile.outbounds` and a `config.setup` or `profile.build` base read any path.
 The Core connects to whatever address it is given and cannot tell that host from FlClash. An account check cannot
 distinguish it from a same-account process that can already read FlClash's memory and files. This remains a user-to-root
 or user-to-SYSTEM privilege escalation, not a complete security fix. An open external
@@ -215,6 +215,20 @@ through `VpnOptions` and the `options` argument of `startTun`; the VpnService bu
 The TUN fields start at mihomo's own defaults, and a saved zero MTU or empty congestion controller, which mihomo reads
 as those defaults, decodes to them. The outbound rows are plain settings written over every profile, and changing one
 re-applies the profile; keep-alive is forced off on Android, and only Linux honours `routing-mark`.
+
+## HTTPS Decryption
+
+The bundled core has no MITM: it stays private, on `feature/mitm` in FlClash-internal and `feature/mitm-latest` in
+Clash.Meta-internal, with the architecture notes of that version. The core keeps the `mitm.*` method names and answers
+them `not_implemented`, and `SetMitmPressure` does nothing. The app keeps its pages, modules and trust stores behind
+`mitmFeature` (`FEATURE_MITM`, off by default), which closes every entry and sends the core no modules or capture.
+Turn it on only with a core that has MITM.
+
+Consent to a module's scripts covers `mitmScriptScope`: every line declaring a script, as written, and every line run
+now, which names its script by a hash of the content. An update that adds to that scope turns the module off until the
+user accepts again, whether it comes by hand, which asks at once, or by auto update, which says so in a banner. None of
+this has met users: settle its interaction, listed in the MITM section of the core integration notes
+(`docs/rust-core/integration.md`, local only), before turning the flag on.
 
 ## Lifecycle Ownership And Convergence
 
@@ -316,8 +330,10 @@ Quick Settings, notification, revoke, and Always-on VPN paths converge on the sa
   makes a second action during the setup toggle that start off instead of racing a second setup against it.
 - An engine that attaches to a run the service already has, started that way or outliving the last engine, adopts it:
   `SetupAction.initStatus` restores the md5 of the config.yaml the Core last accepted and pushes the profile only when it
-  now builds differently. Pushing the same config again rebuilds every proxy group, and mihomo keeps a url-test group's
-  unmeasured pick for ten seconds, so the dashboard's exit and service checks ran a second time once it moved.
+  now builds differently. Pushing the same config again rebuilds every proxy group, and a url-test group starts over on
+  an unmeasured pick, so the dashboard's exit and service checks ran a second time once it moved. A fork patch holds
+  such a pick for one second instead of mihomo's ten-second cache, which outlasted the exit IP's timeout, and moves on
+  as soon as a member is measured.
 - A stop never needs Flutter. `handleStopAction()` stops the service natively whether or not an engine is attached, so
   the tile, the notification action and a revoke work even when Flutter's own idea of the state is wrong.
 - Whenever the run ends without Flutter having asked for it (a start that failed, a native stop, a revoke, a lost
@@ -343,19 +359,29 @@ directions. The envelope is the only JSON serialization layer: keep arguments, r
 values rather than embedding pre-encoded JSON strings. Plain domain strings, such as country codes or provider contents,
 remain strings.
 
+A method's wire name is `area.verb`, declared once in `core/protocol.go`; `CoreMethod.wireName` mirrors the list, and
+`test/core/protocol_contract_test.dart` fails when the two differ. Arguments are a JSON object with kebab-case keys,
+never a bare value. A command answers `null`, a query its value, and a lookup `null` for nothing found. A failure
+travels only in `error`, never as a message in `result`, and a list validation answers `[{index, message}]` for just
+the entries it refuses. `CoreHandlerInterface` returns the decoded result or throws: a `CoreMethodException` for what
+the Core reports, for a Core out of reach (`core_unavailable`, `transport_*`, `no_response`) or for a query that
+answered nothing (`empty_result`), and a `TimeoutException` for no answer in time; `isUnansweredCoreError` tells a Core
+that never answered from one that refused. `config.setup` on a profile the Core cannot load applies the default config
+and answers `config_rejected`, which `SetupAction` reports as that profile's error.
+
 A response over 1 MiB goes to a file under `<home>/responses/`, and the envelope carries only its `file`
 (`core/spill.go`). Sent inline, Android copies it into the Java heap three times (the gomobile `byte[]`, the codec and a
 direct buffer), and desktop IPC drops a frame above `maxIPCFrameSize`. `lib/core/spill.dart` reads a spilled file only
-from that directory, decodes it in an isolate and deletes it; `initClash` clears what an earlier run left.
+from that directory, decodes it in an isolate and deletes it; `core.init` clears what an earlier run left.
 
-A profile file's proxies, groups and rules never cross the bridge. `getProfileBase` returns the config without
+A profile file's proxies, groups and rules never cross the bridge. `profile.base` returns the config without
 `proxies`, `proxy-groups`, `sub-rules` and `rules`, with their counts, the profile's MATCH rules and a sha256 digest.
 `SetupAction.getProfile` patches it as before and sends the result as `SetupParams.base.overlay`. `core/profile_base.go`
 puts the profile's bulk sections into the overlay, appends the profile's rules after the overlay's, writes `config.yaml`
 for the Android service and the controller's reload, and parses it. `config.yaml` is encoded a slice at a time, because on a
-profile of 100k proxies and 2M rules one `Encode` call doubles the peak heap. The preview reads the YAML `buildProfile`
+profile of 100k proxies and 2M rules one `Encode` call doubles the peak heap. The preview reads the YAML `profile.build`
 merges into the spill directory, and the extend page only the names
-and types `getProfileOutbounds` lists; a script extension still needs the whole config from `getConfig`.
+and types `profile.outbounds` lists; a script extension still needs the whole config from `config.read`.
 
 Go event delivery is intentionally non-blocking:
 
@@ -488,32 +514,60 @@ automatic retry is off because a retry after an HTTP 429 spends the same per-out
 
 ## UI Layer
 
-`lib/ui/` holds the components and design tokens that know nothing of the app: shapes, surfaces, motion, colors, the
-scaffold, sheets, popups, lists and the glyphs under `lib/ui/icons/`. `lib/widgets/` holds the components built from
-them that do: settings rows, subscription and profile pieces, anything that reads a provider or a model.
-`widgets/widgets.dart` re-exports `ui/ui.dart`, so app code imports either barrel.
+The UI comes in two layers, plus the app's own widgets:
+
+- `prism_ui`, a path dependency on the submodule `plugins/prism_ui` (repository `chen08209/prism_ui`), is the UI library; `prism_ui/lib/` paths in these docs are in that submodule: the components and design tokens that know nothing of FlClash. Shapes,
+  surfaces, motion, colors, the scaffold's layout (`PrismScaffold`, `ScaffoldBar`, `AppBar`), sheets, popups, list rows and groups, buttons, glass, and the glyph engine with the few
+  glyphs the components draw themselves (`Glyphs`). It ships no app assets and names nothing from the app; its own
+  shader goes with it as `packages/prism_ui/shaders/liquid_glass.frag`. A change to it lands and publishes there
+  first, then this app moves its version constraint. Its `pubspec.yaml`
+  is the boundary: it cannot import `package:fl_clash`, Riverpod, or
+  anything else it does not declare.
+- `lib/ui/` is what FlClash adds on top: the app's glyphs (`AppGlyphs`), the fonts it bundles (`FontFamily`,
+  `toJetBrainsMono`), the illustrations of its empty pages (`NullStatusIllustration`), the delay colors,
+  `ProfileIdProvider`, and the page chrome built on the package's slots: `Scaffold` in `ui/scaffold/` (search, sort
+  mode, keywords, action folding, form sheet foot) and `ListItem` (rows that open a page, menu or dialog). Its barrel `ui/ui.dart` re-exports `prism_ui`, and `ui/icons/icons.dart` re-exports the
+  package's icons, so app code imports one barrel for both layers.
+- Code ported from other packages keeps only what the app uses, under its upstream license header:
+  `prism_ui/lib/hct/` (material_color_utilities, the three scheme variants at standard contrast),
+  `lib/shapes/` (material_new_shapes) and `lib/sliver_list/` (super_sliver_list) in the package, and the QR encoder
+  `lib/ui/qr_matrix.dart` in the app. What belongs to the app's own content stays out of the package: QR codes
+  and the emoji pattern live in `lib/ui/`, and `PrismApp.emojiFont` hands the pattern down. The package has no native code: the app reads the
+  system's colors through `plugins/dynamic_color` and hands them down as seeds.
+- `lib/widgets/` holds the components built from them that read a provider or a model: settings rows, subscription
+  and profile pieces. `widgets/widgets.dart` re-exports `ui/ui.dart`.
+
+A component that decides what a page does rather than how it lays out belongs in `lib/ui/`, on the slots the package
+exposes: `PrismScaffold` takes a bar, header, foot and foot actions and knows nothing of what fills them.
+
+Where the package needs something only the app knows, it takes it from above instead of naming it: `EmojiFont`
+gives `EmojiText` the emoji font, which the app passes `PrismApp` as the bundled Twemoji, and `NullStatus` draws any
+`Illustration`, which `NullStatusIllustration` implements.
 
 `test/lint/ui_layering_test.dart` walks the imports of every file under `lib/ui`. Nothing they reach may leave
-`lib/ui`, except `lib/common` files whose own imports stay out of the app, never the `common.dart` barrel, and none
-may import Riverpod. A component that needs app state reads what the app provides above its navigator:
+`lib/ui` and `prism_ui`, except `lib/common` files whose own imports stay out of the app, never the `common.dart`
+barrel, and none may import Riverpod. A component that needs app state reads what the app provides above its
+navigator:
 
-- `ViewScope` (`lib/ui/view_scope.dart`): the window size, whether the layout is mobile, and the window controls
+- `ViewScope` (`prism_ui/lib/view_scope.dart`): the window size, whether the layout is mobile, and the window controls
   over a page. `AppViewScope` in `lib/manager/theme_manager.dart` fills it from `viewSizeProvider`,
   `isMobileViewProvider` and `versionProvider`. It is an `InheritedModel`, so a reader of one value does not rebuild
   when another changes; `context.isMobileView` reads it without listening.
-- `MeasureScope` (`lib/ui/measure.dart`): the `Measure` that `ThemeManager` also assigns to `globalState.measure`.
-- The `MediaQuery` text scaler that `ThemeManager` sets: the app text scale behind `.ap(context)`, `.mAp(context)` and
-  the `...Of(context)` paddings in `lib/ui/metrics.dart`. Reading it there makes a widget sized by them rebuild when the
+- `MeasureScope` (`prism_ui/lib/measure.dart`): the `Measure` `PrismApp` builds at the app text scale, which
+  `ThemeManager` also assigns to `globalState.measure`.
+- The `MediaQuery` text scaler that `PrismApp` sets from its `textScale`: the app text scale behind `.ap(context)`, `.mAp(context)` and
+  the `...Of(context)` paddings in `prism_ui/lib/metrics.dart`. Reading it there makes a widget sized by them rebuild when the
   scale changes; a global copy or a top-level final would keep the scale it was first read at.
-- `UiLocalizations` (`lib/ui/l10n.dart`): the strings the components show themselves. `AppUiLocalizations.delegate`
+- `UiLocalizations` (`prism_ui/lib/l10n.dart`): the strings the components show themselves. `AppUiLocalizations.delegate`
   in `lib/common/app_localizations.dart` serves them from the ARB strings; a new one needs a getter on both.
 
-A test that builds its own `MaterialApp` registers `AppUiLocalizations.delegate` and returns `wrapAppScopes` from
+A test that builds its own app registers `AppUiLocalizations.delegate` and returns `wrapAppScopes` from
 `test/helpers/test_app.dart` in its builder, as `TestApp` does.
 
 ## Icons
 
-`lib/ui/icons/` holds every icon the app shows. Nothing in `lib/` uses the Material icon font, and
+`prism_ui/lib/icons/` holds the glyph engine and `lib/ui/icons/` the app's glyphs; between them they hold
+every icon the app shows. Nothing in `lib/` uses the Material icon font, and
 `test/lint/material_icons_test.dart` fails on any `Icons.*` or `AnimatedIcons.*`, so every icon shares one stroke and
 can animate its shape.
 A `Glyph` is a list of shapes on a 24-unit grid, stroked at `Glyph.strokeWidth` with round caps and joins and
@@ -535,36 +589,38 @@ cross the fill, and a cutout clears only the glyph's own pixels. `GlyphIcon` sho
 its size, color, and fill from `IconTheme` unless it is given its own, as `Icon` does, and mirroring it in right-to-left
 text when `Glyph.matchTextDirection` is set.
 `AnimatedGlyph` drives a `GlyphIcon` from its `filled` flag and pops briefly when it fills. A glyph whose shape follows
-some other state, like the sidebar toggle that tracks the pane's width, is a builder in `AppGlyphs` such as
-`AppGlyphs.sidebar(progress)`. A new glyph goes in `AppGlyphs` and in the list `test/icons/glyph_painter_test.dart` runs
+some other state, like the sidebar toggle that tracks the pane's width, is a builder such as
+`Glyphs.sidebar(progress)`. A glyph a `prism_ui` component draws goes in `Glyphs`, which `AppGlyphs` forwards under
+the same name; any other glyph goes in `AppGlyphs`. Either way it goes in the list `test/icons/glyph_painter_test.dart` runs
 through its checks; it is named for what it means in the app, one glyph per meaning, with SF Symbols and Fluent as the
 reference for the metaphor. Tests find one with `find.byGlyph` from `test/helpers/glyph_finders.dart`.
 
-Icons are outlined by default and filled inside a filled button: `IconButton.filled` and `.filledTonal`, and
-`FilledButton` in its tonal and icon forms draw their glyph with `fill: 1`, because an outline on a tinted
-container reads weaker than the container it sits in. A glyph with no body only thickens its lines and still takes
+Icons are outlined by default and filled inside a filled button: `IconButton.filled` and
+`FilledButton.icon` draw their glyph with `fill: 1`, because an outline on a tinted container reads weaker than
+the container it sits in. A glyph with no body only thickens its lines and still takes
 `fill: 1`, so the rule holds if the glyph later gains one. `test/lint/filled_button_glyphs_test.dart` checks every
 `GlyphIcon` written inside such a button; an icon that reaches the button from elsewhere, as through a helper that picks
 the button variant, gets its fill by hand or from `IconThemeData.fill`. Everywhere else fill marks state only: the
 selected destination, a pinned window, a lit torch. The phone's floating navigation bar is the one exception: like an iOS
 tab bar it fills every destination and marks the selected one by colour alone.
 
-Framework widgets that draw their own icon take it from the theme: the `ActionIconThemeData` in `lib/application.dart`
-supplies the back and close buttons, with `AppGlyphs.backFor` picking the platform's back glyph, and a `DropdownMenu`
-is given its chevrons. A framework widget added later that paints a Material icon needs the same treatment.
+Framework widgets that draw their own icon take it from the theme: a `DropdownMenu` is given its chevrons. The bar's
+back and close buttons are the scaffold's own, with `Glyphs.backFor` picking the platform's back glyph. A framework widget added later that paints a Material icon needs the same treatment.
 
-Empty states draw no image assets either. `NullStatus` in `lib/ui/null_status.dart` shows the glyph for its
-meaning filled on a Material 3 Expressive shape from `material_new_shapes`, with a few accent marks, and enters with
-one of three choreographies picked at random: the shape spins in, morphs out of a circle, or springs in while the
-accents orbit into place. The glyph takes `onPrimaryContainer`, not `primary`: the `content` scheme variant can leave
-`primaryContainer` as light as `primary` in dark mode.
+Empty states draw no image assets either. `NullStatus` in `prism_ui/lib/null_status.dart` shows the glyph of
+its `Illustration` (for the app's pages, a `NullStatusIllustration` in `lib/ui/null_status_illustration.dart`) filled
+on a shape and among accent marks, each picked at random when it mounts: a circle, a scallop (`cookie9Sided`,
+`cookie12Sided`) or a rounded square, as a freer shape cuts in too close to the glyph, and one of
+eight arrangements of marks. It enters with one of three choreographies, also picked at random: the shape spins in,
+morphs out of a circle, or springs in while the accents orbit into place. It takes one color, `primary` or `error`:
+the shape is that color at 15%, the glyph and strong marks the color itself.
 
 `CaptionIcon` is the one icon that does not follow the glyph grid: the window caption buttons keep the one pixel,
 pixel-aligned stroke of Windows' 10-pixel caption glyphs on every platform.
 
 ## App Bar Actions
 
-`CommonScaffold` keeps at most three buttons in sight in its bar, the overflow menu button included. A page hands it
+`Scaffold` (`lib/ui/scaffold/`) keeps at most three buttons in sight in its bar, the overflow menu button included. A page hands it
 what may fold as data: `primaryAction`, `iconActions`, `menuItems`, and `searchActions` while searching; custom widgets
 passed through `actions` never fold. Past three, two buttons stay beside the overflow menu: the search button when
 there is one, then foldable actions, primary action first;
@@ -576,7 +632,7 @@ the app floats an action button: a secondary action such as selecting every app 
 confirming, in a page, a side sheet or a form, is a check in `confirmationAction`, never among `iconActions`: it ends
 the bar and never folds, and only a form sheet moves it to its foot (Forms). Bar buttons are glyphs with tooltips,
 select all included. Two text buttons are filled buttons in `actions`: the custom profile's Import, whose
-`CommonPopupBox` opens the import menu, and the extension page's Apply now, which is not a save. Actions on a
+`PopupAnchor` opens the import menu, and the extension page's Apply now, which is not a save. Actions on a
 multi-selection, such as delete and select all, go into `selectionActions` instead: the bar keeps them in sight as
 one button group that takes a single slot beside the search button, so they never fold. A sheet's close button
 always leads its bar, whatever actions follow, as SwiftUI places a close in `.cancellationAction`; a pushed page puts
@@ -595,7 +651,7 @@ it while the field has focus or a query, under a bar that keeps its own buttons.
 
 Every search field is a `SearchField`: iOS 27's glyph and filled clear button, and a focus ring only where a key or a
 remote moved focus. The bar's field, the docked one and the editor's find bar stand with the buttons beside them on one
-`GooSurface` (`lib/ui/goo.dart`), which draws its `GooPane`s, pills in rows, as one fill or one pane of glass. A field
+`GooSurface` (`prism_ui/lib/goo.dart`), which draws its `GooPane`s, pills in rows, as one fill or one pane of glass. A field
 swells and stretches under a finger as a button does, and a pressed pane flows into its neighbors in the row, as iOS
 merges glass that shares a container; at rest the blend reaches no further than buttons stand apart, so nothing bulges.
 The buttons beside a bar's or a sheet's field grow out of its ends as it opens and sink back as it closes. Under a
@@ -607,31 +663,32 @@ field, never a bare Material one. The outline is a path built from the same smoo
 Actions on what the page edits as a whole, such as renaming the custom profile or viewing its final config, go into
 `titleMenuItems` rather than the bar: the title shows a chevron and opens them, as an iOS document's title menu does.
 The menu opens from the title's start edge (`PopupPlacement.overAnchorStart`), since the bar's own menus, which open
-from their end edge, would cover the back button there.
+from their end edge, would cover the back button there. The title has no glass at rest (`PopupAnchor.bare`), so its
+drop of glass stands 12 by 6 dp clear of the text and fades in over 100 ms and out as the return is absorbed.
 
-A bar under a sheet drops its actions and keeps its title and back or close button. `CommonScaffold` fades the actions
+A bar under a sheet drops its actions and keeps its title and back or close button. `Scaffold` fades the actions
 out with the entrance of a sheet laid over its page, or over the sheet it is a page of, so none on the layer below
-reads as an action of the sheet on top; `sheetCoverOf` in `lib/ui/sheet_navigator.dart` reads that entrance, which a sheet route hands
+reads as an action of the sheet on top; `sheetCoverOf` in `prism_ui/lib/sheet_navigator.dart` reads that entrance, which a sheet route hands
 down through `SheetCoverRouteMixin`, as `SnapSheetRoute` and `ModalSideSheetRoute` do.
 
 ## Liquid Glass
 
 `ThemeProps.liquidGlass` picks a `LiquidGlassMode`, `none` by default, and reaches widgets as `LiquidGlassScope`, on for
-`standard` and `ultra` with that `LiquidGlassQuality`, from `ThemeManager`. With it on, `CommonScaffold` passes `glass`
-to the bar's `TonalButtonTheme`,
+`standard` and `ultra` with that `LiquidGlassQuality`, from `PrismApp`'s `liquidGlass`. With it on, `Scaffold`
+passes `glass` to the bar's `TonalButtonTheme`,
 which puts a `LiquidGlass` pane behind each button through `ButtonStyle.backgroundBuilder` and one behind a
 `TonalButtonGroup`; the navigation dock's bar and lifted lens become panes as well, and so do a `GooSurface`, which
 holds the bar's search and a docked search,
-the cards of a `CommonPopupMenu`, and a `CommonDialog`. On the dashboard only the start button is a pane: its connected
+the cards of a `PopupMenu`, and an `AlertDialog`. On the dashboard only the start button is a pane: its connected
 buttons keep their fills like connected buttons elsewhere, and each pane would add its area to a capture retaken
 whenever the dashboard redraws, which it does often. Each still swells on its own under `ElasticPress`, and a
-`DashboardConnectedGroup` paints the button pressed last over the neighbours it swells past. A `CommonSwitch`, which
+`DashboardConnectedGroup` paints the button pressed last over the neighbours it swells past. A `Switch`, which
 every switch in the app is, is a pane only while held and while its thumb crosses to a value it was not dragged to,
 such as one a tap on the switch or on its row set: the thumb lifts out past the solid track and turns into a clear lens
 over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's replica of the iOS 26 switch does.
-`lib/ui/liquid_glass.dart` holds the rest:
+`prism_ui/lib/liquid_glass.dart` holds the rest:
 
-- A `LiquidGlassHost` over the app (`lib/ui/liquid_glass_capture.dart`, after g1455's atlas proxy) draws its panes
+- A `LiquidGlassHost` over the app (`prism_ui/lib/liquid_glass_capture.dart`, after g1455's atlas proxy) draws its panes
   without reading the backdrop. As the frame is composited, before its children, it redraws onto one small image what
   each pane under it would read: the layers painted before the pane, within its reach, shrunk as far as a sigma of the
   pane's frost still spans two of the image's pixels, twice where g1455 records its regular finish, and never past
@@ -713,7 +770,7 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
   blur, saturation, brightness, tint, and a rim, with no refraction; the tint is not thickened there, as it is where a
   pane has no capture, since the capture holds the blur. `flutter test --enable-impeller` runs the shader, so `toImage`
   shows the real glass.
-- A popup grows out of its anchor on a platter (`CommonPopupRoute`). On glass the platter is a `LiquidGlassPane`
+- A popup grows out of its anchor on a platter (`AnchoredPopupRoute`). On glass the platter is a `LiquidGlassPane`
   easing from the button's `regular` glass to the thicker `menu` glass, and the menu's cards stand `bare` while it
   shows, opening and returning, so one pane bends the backdrop at a time. The platter takes the `menu` glass's frost
   from the start and, as the cards do, paints with a `hold` over all it may sweep: the host captures that once and
@@ -728,8 +785,11 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
   no shader to frost past a capture and renews it as before. The anchor's snapshot is taken under
   `LiquidGlass.withoutPanes`: offscreen a pane has no backdrop and would come out a flat tint. A menu opened at a point fades out under the layer a `LiquidGlassFade`
   pushes, so its glass keeps reading the page as it goes.
-- An alert on glass takes the `alert` glass, the `menu` glass frosted wider, under its `AlertDialog`'s surface, which
-  it finds as the dialog's `Material` lays it out, since a dialog takes only a color. Its route fades it under a
+- The edit menu of a touch selection fades under a `LiquidGlassFade`, as a plain `Opacity` would be a root with nothing
+  to read until fully opaque, and its color jumped there. It holds over all it will cover under `steadyFrost`, and both
+  keep its haze as well, so it captures once as it opens and not at all as it closes.
+- An alert on glass takes the `alert` glass, the `menu` glass frosted wider, under the `AlertDialog`'s surface, which it lays
+  out itself. Its route fades it under a
   `LiquidGlassFade`, so the glass keeps its full blur and fades with the text, as UIKit fades an alert and its glass
   on one layer. Its scrim is a `LiquidGlassVeil`, which the host leaves out of the capture of a pane above it where it
   lies evenly over all the slot shows, under no effect or narrower clip, with nothing drawn over it before the pane:
@@ -754,7 +814,7 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
 - A press anywhere on an alert swells the whole alert, glass and content, as UIKit swells it, measured at 4 pt on its
   320 width, and a drag past its edges stretches it about 3 pt; the button under the finger does not swell, it fades
   its fill to 40%, or a dark default button's to 50%, while a dark plain button keeps its fill. `ElasticPress` takes
-  the swell and the pull in dp and finds the surface through `panelOf`, since an `AlertDialog` spans the screen
+  the swell and the pull in dp and finds the surface through `panelOf`, since the `AlertDialog` inside spans the screen
   around it.
 - The `menu` and `alert` glass follow iOS 27's menus and alerts as the simulator showed them over solid, striped and
   split grounds, keeping the scheme's tint: in light mode the glass passes the backdrop at 45%, doubled in saturation
@@ -793,6 +853,14 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
   In dark mode the tint is
   the scheme's `surfaceContainerHighest` at iOS's alpha: iOS's mid grey lifts a dark page into a grey haze. The tint
   thickens over content much darker than it, or with a negative `contrast` much lighter.
+- A banner (`BannerHost`, `prism_ui/lib/banner.dart`, which `PrismApp` mounts) takes the `banner` glass,
+  fitted to iOS 27's notification banner in the simulator: it lets a 10 dp stripe through at about a quarter of the
+  contrast it passes a solid ground at, the share the `pill` keeps sharp, so it takes the pill's haze, under a tint with
+  no `contrast`, since iOS's banner passes the backdrop's lightness through where the buttons' glass thickens over it.
+  Over black and white it fills at 131 and 252 in light mode and 29 and 177 in dark mode, against iOS's 131.5, 252, 31
+  and 180; iOS's dark banner lifts mid grey further than a tint can. Its rim is the buttons'. A success, warning or
+  error banner tints it with the level's container colour at 80%, as a solid banner fills with that colour: the fill
+  alone tells the levels apart.
 - The `pill`'s frost, line and shadow follow iOS 27's tab bar at rest, measured in the simulator over solid fills and a
   black and white split: 28% of the backdrop shows sharp and 72% through a blur of 15.6 dp, so a stripe under the bar
   spreads over its neighbours; iOS mixes the two brighter toward white, as if it blurred in linear light, which the
@@ -825,7 +893,7 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
 
 ## Popup Motion
 
-`CommonPopupRoute` follows WWDC25's account of iOS 26 menus: one that grows out of a control keeps the two continuous,
+`AnchoredPopupRoute` follows WWDC25's account of iOS 26 menus: one that grows out of a control keeps the two continuous,
 so closing returns it into the control on the same platter, its content blurring out first. Apple documents only the
 opening; one opened at a point (a context menu) has no control to return into and shrinks toward the point to
 `_dismissScale` as it fades, as iOS context menus do.
@@ -841,14 +909,14 @@ left of it and by a bump iOS lays over the whole menu, 1.9 dp at about 70 ms. Th
 spring within a dp of rest, rather than once they settle: a card taking over sooner would ride the last undershoot
 back up to full size, and its held capture renews whenever its frost grows, so on every frame of that.
 
-A sub menu is a `PopupMenuCard` laid out once at full size. One spring (`_unfold` in `lib/ui/popup.dart`) moves
+A sub menu is a `PopupMenuCard` laid out once at full size. One spring (`_unfold` in `prism_ui/lib/popup.dart`) moves
 its surface and clip from the item that opened it to its bounds, recedes the parent, and reveals the items, so a fold
 caught mid-unfold turns back with the speed it had. The parent's item hides under the sub menu's header, which draws
 it again, and the sub menu is removed only once it stands on that item. A popup closed with a sub menu open returns
 that sub menu alone, as iOS does: the platter starts from its card (`_PopupSurface`) and the levels below drop out,
 since bare glass cards would show the parent's rows through the sub menu.
 
-A `CommonPopupBox` opens on its button's pointer down, as an iOS menu that is a button's primary action does, and the
+A `PopupAnchor` opens on its button's pointer down, as an iOS menu that is a button's primary action does, and the
 press carries on into the menu. `_PopupPressRecognizer` claims the pointer then, so the button's own tap and its
 tooltip's long press stand down. In a scroll view, as the settings rows are, it first waits `kPressTimeout`, as iOS
 scroll views hold back a touch, so a drag from the button scrolls and a quicker tap opens the popup on its release. The
@@ -883,21 +951,24 @@ a tap, read-only unless it is a local text file the app owns, and keeps a second
 for a proxy provider backed by a text file, the options dialog for an app rule provider.
 
 A long press can mean only one thing on a row. Where rows have no context menu, as in a plain list editor, the global or
-profile rules, the on-demand SSIDs or the custom proxies, a long press on the row drags it and there is no sort button.
-Where they have one, the list reorders only in a sort mode. When the list is the page, `CommonScaffold` owns the mode as
+profile rules, the on-demand SSIDs or the custom proxies, the row drags from itself and there is no sort button.
+Where they have one, the list reorders only in a sort mode. When the list is the page, `Scaffold` owns the mode as
 it owns search and selection, and the page passes `canSort` for the toggle in its bar. Changes apply as they are made,
 so nothing confirms them: while the mode is on, the bar shows only its toggle, selected, and the back or close button
 fades in place rather than offer the same way out twice, as iOS hides its back button while editing; a system back still
 ends the mode. A list that is one section of its page, as the custom profile's proxy groups are, keeps its own
 `SortModeScope` around its rows and its toggle in its header and leaves the page bar alone, back button included; its
 header keeps adding while it sorts, and a system back ends its mode before it leaves the page. Each row sits in a
-`SortableItem`, which reads the scope: while it sorts `DecorationListItem` drops its tap and context menu, a long press
-anywhere on the row drags it, and `SortableTrailing` springs a `SortHandle` in from the row's trailing edge while the
+`SortableItem`, which reads the scope: while it sorts `DecorationListItem` drops its tap and context menu, anywhere on
+the row drags it, and `SortableTrailing` springs a `SortHandle` in from the row's trailing edge while the
 trailing it replaces shrinks away. The motion is painted, not built, and the row relayouts only while the two widths
 differ, since every row on screen animates at once. A page that only reorders, such as the profiles sort sheet or a
-group's members, shows its `SortHandle`s without a mode. Every drag waits for a long press, with a mouse too and on the
-dashboard's edit mode as well, so a swipe that starts on a row or its handle scrolls; a handle only marks the row, which
-carries the `ReorderableDelayedDragStartListener` itself, so a long press anywhere on the row lifts it. With focus a
+group's members, shows its `SortHandle`s without a mode. A row lifts through `ReorderDragStartListener`, by the pointer
+and not the platform, the dashboard's edit mode included: every pointer but a mouse or trackpad waits for a long press,
+so a swipe that starts on a row or its handle scrolls; those two need none, with a wheel to scroll and a right click for
+the menu, so a vertical drag from a row reorders where it would scroll, and a click or a sideways drag still reaches what the row
+holds. `BaseScrollBehavior` lets a mouse drag scroll at the same 1 dp, and the row wins that tie only because its
+recognizer is nearer the pointer, so a larger threshold would hand the drag to the scroll view. A handle only marks the row, which carries the listener itself, so a press anywhere on the row lifts it. With focus a
 select key lifts a handle's row for the up and down keys to move through the enclosing `SliverReorderableList`'s own
 `onReorderItem`, which is how a remote sorts.
 
@@ -914,7 +985,7 @@ few keys of a `tun` section the network settings own, so its spec does not mix i
 ## Where A Route Opens
 
 On desktop each navigation destination has its own `Navigator` (`_NavigationPage` in `lib/pages/home.dart`); on mobile
-there is none, and everything goes on the root navigator, `rootNavigatorKey` in `lib/ui/navigator.dart`. A route
+there is none, and everything goes on the root navigator, `rootNavigatorKey` in `prism_ui/lib/navigator.dart`. A route
 takes the navigator of the context it opens from: `BaseNavigator.push`, `showExtend`, `showSheet`, `showFormSheet` and
 `showSnapSheet` all do, so a page or sheet opened from a destination stays beside the navigation rail, leaves the rail usable, and
 stays in that destination's stack when the user switches away and back. `sheetNavigatorOf` lifts a sheet out of a
@@ -961,13 +1032,13 @@ rather than `contentTopPadding`, so that space lands the first title or group wh
 included, starts its content; an `ErrorBanner`, which can open such a page, keeps the same space above it.
 `generateGroup` gives the rows alone, for a group under a header its caller lays out, such as an `InfoHeader`.
 
-A row that opens a page, `ListItem.open` or `ListItem.next`, ends in `AppGlyphs.chevronForward` unless it passes its own
+A row that opens a page, `ListItem.open`, ends in `AppGlyphs.chevronForward` unless it passes its own
 `trailing`, as iOS settings rows do. A row that opens a dialog in place, `ListItem.input`, has no chevron. A setting
 that takes one of a few values is an iOS pop-up row, `ListItem.options` or `ConfigOptionsItem`: it ends in its value and
-`AppGlyphs.picker`, and a tap anywhere on it opens a `CommonPopupMenu` out of that value with the current option
+`AppGlyphs.picker`, and a tap anywhere on it opens a `PopupMenu` out of that value with the current option
 checked. Its items are text alone, as an iOS picker's are; glyphs belong to menus of actions. One value is never picked
 from a radio dialog or a row of selectable chips; a button that picks one, as the theme's scheme variant does, opens the
-same menu through a `CommonPopupBox`. A pick from a menu that returns into its control runs only once the popup has
+same menu through a `PopupAnchor`. A pick from a menu that returns into its control runs only once the popup has
 landed, so a setting that rebuilds the app, such as the language, never does so under the returning platter; the
 control shows its value with `PopupValueText`, which blurs across to the new value while the control eases to its
 width. A menu opened at a point, as a context menu or the editor's is, runs its pick at once. A menu capped by
@@ -976,10 +1047,10 @@ takes its width from its labels measured as `EmojiText` lays them out.
 
 ## Forms
 
-A form that edits more than one value opens with `showFormSheet` (`lib/ui/sheet.dart`): a bottom sheet in the mobile
+A form that edits more than one value opens with `showFormSheet` (`prism_ui/lib/sheet.dart`): a bottom sheet in the mobile
 layout, and elsewhere a card `FormSheetRoute` centers over the navigator, as iPad and macOS present a form sheet, moving
 as an alert does. Both give the page `SheetType.bottomSheet` or `SheetType.formSheet`, compact sheets that share
-`CommonScaffold`'s sheet bar, so one page serves both: `FormPage` for a plain form, or the page a `NestedPagedSheet`
+`Scaffold`'s sheet bar, so one page serves both: `FormPage` for a plain form, or the page a `NestedPagedSheet`
 pushes for the custom profile editors. Its values sit in `FormRow`s inside `generateSection` groups, each field a
 `FormRowTextField`, bare and set against the end in both, so a focused field's only outline is its row's focus ring.
 `RenderEditable` ends a field's text short of its end by the caret's margin, so the field ends its hint as short and
@@ -989,7 +1060,7 @@ save is the scaffold's `confirmationAction`: last in a bottom sheet's bar, and i
 Cancel, which takes the close's place, in a row of alert buttons at the first page's foot, as SwiftUI places a
 confirmation action on macOS; other actions, such as quick edit, stay in the bar. A row cannot hold an error line, so a
 save the form refuses marks the row `invalid` and says why in the `ErrorBanner` above the groups, which follows each
-edit from then on. A prompt for one value, such as a URL import, a rename or a password, stays an alert (`CommonDialog`,
+edit from then on. A prompt for one value, such as a URL import, a rename or a password, stays an alert (`AlertDialog`,
 `InputDialog`), as on every Apple platform; a key with its value, as `MapEditView` adds, is two values and a form.
 An alert raised while focus is in a form sheet opens on the sheet's
 navigator, centered on the card rather than on the window: `Dialogs` follows the focused route when it is an
@@ -1003,43 +1074,46 @@ which runs every one of those rebuilds inside the layout phase; in a profile tra
 `BUILD`.
 
 - A page the user is not typing in holds its bottom inset through `KeyboardInsetHold`
-  (`lib/ui/keyboard_inset_hold.dart`). Pages under another route and inactive tabs are still laid out, offstage or
+  (`prism_ui/lib/keyboard_inset_hold.dart`). Pages under another route and inactive tabs are still laid out, offstage or
   not, and without it every page the app keeps relaid out, and rebuilt under its `LayoutBuilder`s, with each frame of a
-  keyboard raised by a dialog or sheet on top. The home route, each home tab, `CommonRoute`, `CommonDesktopRoute` and
+  keyboard raised by a dialog or sheet on top. The home route, each home tab, `CardPageRoute`, `FadePageRoute` and
   the open-container route wrap their page in one; a new page route type does the same.
 - A widget high in the tree reads the aspect it needs (`MediaQuery.paddingOf`, `viewInsetsOf`, ...), never
   `MediaQuery.of` or `MediaQuery.removePadding(context: ...)` on its own context, which subscribes it to every inset
   change. Move such a read into a small widget of its own below it, as `_AppMediaQuery` in `ThemeManager`,
-  `_BodyPadding` in `lib/pages/home.dart`, `_KeyboardViewport` in `lib/ui/snap_sheet.dart` and the `SafeArea` around
-  the docked search field in `CommonScaffold` do.
+  `_BodyPadding` in `lib/pages/home.dart`, `_KeyboardViewport` in `prism_ui/lib/snap_sheet.dart` and the `SafeArea` around
+  the docked search field in `Scaffold` do.
 - A bottom sheet makes room for the keyboard itself: the keyboard raises the sheet's foot (Bottom Sheet Motion), and
   `_WithoutKeyboard` removes the bottom inset from the content's `MediaQuery`, so nothing inside a sheet,
-  `CommonScaffold` included, adds keyboard space. A nested sheet must not carry the keyboard through its pages:
+  `Scaffold` included, adds keyboard space. A nested sheet must not carry the keyboard through its pages:
   `NavigatorResizable` learns a page's new size a frame late, and the sheet would trail the keyboard by a frame.
 - The keyboard moves a bottom sheet as it is painted. `_RenderSheetViewport` lays the surface out as tall as the view
   whatever the keyboard, and a fit sheet keeps the limit its short content was laid out within while the keyboard
   changes the room above it, until the content reaches either (`releaseLimit`). A keyboard frame then lays out and
   paints nothing inside the sheet unless what it shows changes.
-- A field without a label says `floatingLabelBehavior: FloatingLabelBehavior.never`, as `FormRowTextField` and
-  `SearchField` do. `InputDecorator` animates the floating label of an empty field on focus even when there is none,
-  `InputDecoration.collapsed` included, and each frame of it lays the decorator out and, inside a sheet, the whole
-  form, through the first frames of the keyboard.
 
 ## Rebuild Scopes
 
 A `LayoutBuilder` runs the rebuilds of everything under it inside its own layout, so a widget rebuilding there marks
 the builder for layout, and that climbs to the nearest relayout boundary. Flutter marks every render object it lays
-out for paint, so the nearest repaint boundary above that path repaints too. Under the material `Scaffold`'s body
-`LayoutBuilder` (it has one with `extendBodyBehindAppBar`) that was the page and its background, and under the home
-shell's `LayoutBuilder` the whole home route: a spinner turning in a page, or the dock's lens moving, relaid out and
-repainted the page on every frame, and the glass over it captured every band again, the bar's included, though
-nothing under the bar had changed.
+out for paint, so the nearest repaint boundary above that path repaints too. Under the home shell's `LayoutBuilder`
+that was the whole home route: a spinner turning in a page, or the dock's lens moving, relaid out and repainted the
+page on every frame, and the glass over it captured every band again, the bar's included, though nothing under the
+bar had changed. `Scaffold` itself lays out without one: its body takes the bar's height from the bar's preferred
+size, not from a layout.
 
 So the body and the dock each take their rebuilds in a scope of their own: a `LayoutBuilder` under a repaint boundary
-that is also a relayout boundary. `CommonScaffold`'s `_BodyScope` sizes itself to the most the scaffold allows, which
+that is also a relayout boundary. `Scaffold`'s `_BodyScope` sizes itself to the most the scaffold allows, which
 the scaffold never reads back, and lays the body out under it as before; `NavigationDock` sizes itself as it always
 was, full width and its bar's height, and lays its boundary out tight. A rebuild inside either relays out and
 repaints only that layer.
+
+`ThemeManager`'s view-size `LayoutBuilder` encloses the whole app, so every rebuild outside a nearer scope runs in its
+layout, among them each route's transition builder on every frame of a push or pop. It sits between two repaint
+boundaries, so such a frame repaints that one builder rather than the app from the root. A bar item lifted into an
+overlay (`BarItemPresence`) and a row a push opens from (`OpenContainer`) each keep a boundary of their own as well:
+the one animates over the routes, and the other's ink keeps spreading through the push, which would otherwise repaint
+the overlay or the whole section with them on every frame. `test/widgets/route_transition_repaint_test.dart` pins this.
 
 ## Bottom Sheet Motion
 
@@ -1067,6 +1141,16 @@ by the simulator's touch injection, logging the presented view's presentation la
   full speed. Short content now eases into the rise over half its blank, which can leave the sheet up to an eighth of
   the blank higher than its content needs, and the tallest detent slows into the peek over as much keyboard again as
   it takes to get there, up to `_peakEase`.
+- Below its tallest detent a sheet floats as a card, as iOS 27's medium sheet does: it shrinks about its top to leave
+  `sheetFloatInset` (8 dp) at each side and at its foot and its foot rounds to 38, in step with how far it is from the
+  tallest detent (`_SheetModel.float`); the keyboard lifts it to the full width. Its top corners stay 38 at every
+  detent, as iOS 27's measure in pixels, or the display's own where those are tighter. Content that fills the sheet
+  lays out taller (`slackFor`) so that, shrunk, it still reaches the card's foot. Flutter measures a whole gesture at
+  the scale the sheet had when the finger came down, so the model converts drags at that scale (`fingerDown`) and
+  hands the content what is left in its pixels now. A bar item lifted out of a floating sheet lays out at its slot's
+  size and paints at the slot's scale. A sheet page's bar items ride the page through a push rather than hold still as
+  a full screen push's do (`PagedSheetRoute.computeBarItems`): the sheet resizes with the push, and an item held still
+  drifted off its slot.
 
 `_SheetModel` keeps the sheet as an activity, resting at a detent, held at a height or settling toward a detent as an
 offset from it, and layout resolves the detents again every frame from the view, the keyboard and the content. A
@@ -1087,41 +1171,65 @@ than the frames a load costs. What a transition must not carry is work that repe
   itself never passes through the UI isolate. An icon still loading leaves a blank slot of its size and shows its
   fallback only once the load ends
   without an image, so a grid of placeholders is never painted only to be replaced. `whenRouteSettled`
-  (`lib/ui/navigator.dart`) is left for sequencing navigation, such as opening a page once the sheet above it is gone.
-- The editor is the one view that arrives after the motion. `EditorPage` keeps the document it opened until its route
-  has settled and only then mounts CodeForge, showing a spinner only if the file is still being read: the mount lays
-  out, folds and highlights a screen of text in one frame, which a phone cannot fit in a transition frame whatever the
-  file's size.
+  (`prism_ui/lib/navigator.dart`) is left for sequencing navigation, such as opening a page once the sheet above it is gone.
+- Two views arrive after the motion. `EditorPage` keeps the document it opened until its route has settled and only
+  then mounts CodeForge, showing a spinner only if the file is still being read: the mount lays out, folds and
+  highlights a screen of text in one frame, which a phone cannot fit in a transition frame whatever the file's size.
+  `AccessView` reads the installed apps only once its route has settled and its bar items have faded in
+  (`whenNothingAnimates`, not counting its own spinner), and slides in with that spinner when this run has not read
+  them yet (`NullStatusSwitcher` with `holdsArrival: false`): the read can outlast `arrivalHoldLimit`, and a list of
+  apps landing while its page moves reads as dropped frames. The spinner only repaints its own boundary. A list
+  already read shows from the first frame.
 - A live feed holds its refreshes while its page moves and replays the latest once it is still, so a list does not
-  re-rank, reorder or grow under a transition. `RouteMotionHoldMixin` (`lib/ui/route_motion_hold.dart`) holds them
+  re-rank, reorder or grow under a transition. `RouteMotionHoldMixin` (`prism_ui/lib/route_motion_hold.dart`) holds them
   while `isRouteMoving`: the page's route or a sheet carrying it is pushed, popped or dragged, a page is pushed over it,
-  or a sheet covers it (`sheetCoverOf`). The connections, requests, logs and DNS pages and the dashboard's live
-  connections table use it. A feed's first content is no refresh and shows at once, as `ConnectionsView` applies its
-  first poll, and a held poll keeps the time it was read at, which `TrackerSpeedRanker` derives speeds from. Per-frame
-  work spread over frames pauses the same way: the font family page switches one name to its own family per frame and
+  or a sheet covers it (`sheetCoverOf`), and until what the stop set off, such as the bar items fading in, has finished
+  (`whenNothingAnimates`). The connections, requests, logs and DNS pages and the dashboard's live connections table use
+  it. A feed's first content is no refresh: `showFirstContent` applies it at once while `ArrivalHold` still holds the
+  push, and past `arrivalHoldLimit` keeps it until the route has settled, as `RequestsView` does with its first poll. A
+  feed that trims at a cap lists through `RecordFeedList`, whose rows follow their keys and keep their stripes, so a
+  refresh builds only what it added. A held poll keeps the time it was read at, which `TrackerSpeedRanker` derives
+  speeds from. Per-frame work spread over frames pauses the same way: the font family page switches one name to its own family per frame and
   stops while `isRouteMoving`.
-- A scroll view of image tiles takes `arrivalScrollCacheExtent(routeSettled)` from `RouteSettledMixin`: the rows past
-  the viewport would otherwise be built in the same frame as the ones on screen, which for a screen of icon cards is
-  most of the push. The icon grids (`IconGridScrollView`) and the access control list do this, and so does
-  `ListEditorPage`, whose rows are heavy enough that only its list rebuilds as the route settles, reusing the rows
-  already built.
+- A scroll view of image tiles takes `arrivalCacheExtent` from `ArrivalCacheExtentMixin`: the rows past the viewport
+  would otherwise be built in the same frame as the ones on screen, which for a screen of icon cards is most of the
+  push. The extent widens at the end of the first frame after the route settles that leaves no ticker running: on a
+  phone, the rows built ahead as the route settled overran a frame of the bar items still fading in. The icon grids
+  (`IconGridScrollView`) and the access control list do this, and so does `ListEditorPage`, whose rows are heavy
+  enough that only its list rebuilds as the extent widens, reusing the rows already built.
 - A page whose content waits on what it loads (lists read from the database, file sizes, the installed fonts) shows
   nothing until all of it is in, then the finished content in one step: `NullStatusSwitcher.isLoading`. A load that can
-  run long also gives the switcher a `loadingStatus`, its `NullStatus` illustration with no label, which takes the
-  place of a first load still running after about a route transition (400 ms); one that ends sooner goes straight to
-  its content, so the illustration never flashes. The custom profile, resources and font family pages set one. Never a
+  run long also gives the switcher a `loadingStatus`, its `NullStatus` illustration with no label or a page
+  `ActivityIndicator`, which takes the place of a first load still running after about a route transition (400 ms);
+  one that ends sooner goes straight to its content, so it never flashes. The custom profile, resources and font
+  family pages show the illustration; access control, which waits on the system's app list, shows the spinner. Never a
   skeleton screen of placeholder rows: it has to guess how many rows are coming, fills in piece by piece, and rebuilds
   every row it stood in for. `SkeletonText` is for a single value inside a card that is already on screen, such as the
   dashboard's service status.
 - `GlyphPainter` paints a translucent glyph through an offscreen layer. A placeholder repeated in every tile blends its
   color over the surface instead of carrying an alpha.
-- `PagedSheetRoute` and `CommonRoute` share
-  `SharedXPageTransition` (`lib/ui/page_transition.dart`) and its `pageSlide`, a quarter of the page's width as
-  Android 14 slides pages, so a page moves alike in a sheet and on its own. The transition fades a page by painting the surface over it
-  and needs no opacity layer: the page on top shows only on its side of the point where the two fades cross, opaque
-  over the other, so neither shows through the other. A page below that does not fade with it, such as the home
-  route under a `CommonRoute`, is faded by the page on top painting the surface over it. `CommonDesktopRoute` fades in
-  place through a plain 200 ms `FadeTransition`.
+- `PagedSheetRoute` and `CardPageRoute` share `CardRouteMixin` (`prism_ui/lib/page_transition.dart`), iOS 27's push as
+  measured on the simulator, so a page moves alike in a sheet and on its own: a critically damped 0.3 s spring set off
+  at nine times its distance a second, the page below sliding back three tenths and dimming. A run of the route's
+  controller that starts between frames is read a frame ahead (`DeferredPushRouteMixin`), since its first tick would
+  show again what is on screen; the value it starts from stays put, as the route below links its secondary animation
+  only while the two still meet. A settle or a release that pops ends once it reaches its bound
+  (`ArrivingSimulation`): the controller holds an overshoot there, and a page gone off the screen would otherwise
+  keep the routes below from taking taps for another half second. A spring back from a drag runs on the drag's
+  follower instead, which lets it overshoot past rest as iOS's does.
+- A card page going out of view, covered by a push or popping or dragged away, is drawn from a snapshot taken as it
+  sets off, and live again once it rests: Impeller would draw it again in full every frame. A page coming into view,
+  pushed or uncovered, stays live, since a snapshot of it would hold what it showed when last covered, such as a press
+  ripple its stopped tickers froze, until it rests; for the same reason a press surface drops its sparkles once its
+  tickers stop. The snapshot has no `LiquidGlassHost` over it, so each page holds one of its own: it takes the page's
+  panes while the snapshot is taken, so that glass in the snapshot is drawn from a capture of the page alone, and
+  leaves them to the host above while the page is live, which it finds among its parent layers. A bar item lifted into
+  its overlay retakes the snapshot of its route (`retakeSnapshot`). The card moves on whole physical pixels so the
+  snapshot draws as sharp as the page, and its shadow is the falloff past its leading edge, a gradient, not a blurred
+  card. A pop starts at once and snapshots the page leaving even though, on a phone, that snapshot costs the raster
+  thread 6 to 13 ms for the custom profile page, with or without glass: holding the pop still for one or two frames
+  first moved its missed vsyncs a frame later without fewer of them, and drawing the leaving page live dropped more.
+  `FadePageRoute` fades in place through a plain 200 ms `FadeTransition`.
 
 ## State Management
 
@@ -1187,7 +1295,7 @@ The UI layer must not reach a process-wide singleton directly.
 context-derived caches assigned by `ThemeManager`, and tests already scope them by
 assigning in the app builder (see `wrapAppScopes` in `test/helpers/test_app.dart`);
 moving them into providers would touch every layout call site without changing
-behaviour. `lib/ui` cannot read `globalState`, so it takes the same `Measure` from
+behaviour. `prism_ui` cannot read `globalState`, so it takes the same `Measure` from
 `MeasureScope`; see UI Layer.
 
 `globalState` in `lib/state.dart` is a singleton holding ambient app state — the
@@ -1197,7 +1305,7 @@ plus `safeRun`/`loadingRun`. Startup orchestration is **not** on it: `init` and
 window, the autostart entry, the tray and the permission prompts. Providers are
 generated into `lib/providers/generated/`.
 
-The root navigator key lives in `lib/ui/navigator.dart` as `rootNavigatorKey`;
+The root navigator key lives in `prism_ui/lib/navigator.dart` as `rootNavigatorKey`;
 `globalState.navigatorKey` is a getter onto it. `lib/common/dialog.dart` reaches
 the key directly and does not import `lib/state.dart`.
 
@@ -1324,6 +1432,8 @@ Tables:
 - `IconSets` (`icon_sets`)
 - `ClashProviders` (`clash_providers`)
 - `IpQualities` (`ip_qualities`): a cache of IP quality lookups that backups carry and a restore never reads.
+- `MitmModules` (`mitm_modules`): the Surge modules and Loon plugins of HTTPS decryption, with their argument values;
+  their content and the files they download live under `mitm/` (HTTPS Decryption).
 
 `Profiles.type` is `file`, `url` or `custom`, fixed when the profile is created. A rule belongs to whoever its
 `profile_id` names: no profile makes it global, a file or url profile's rules are what its standard extension adds, and
@@ -1385,7 +1495,7 @@ fails startup or a whole restore.
 Managers are nested `InheritedWidget`/`StatefulWidget` components built by `buildManagerStack()` in `lib/application.dart`:
 
 ```text
-AppEnvManager > LocaleManager > StatusManager > ThemeManager
+AppEnvManager > LocaleManager > ThemeManager
   > [Desktop: WindowManager > TrayManager > HotKeyManager > ProxyManager]
     [Mobile:  AndroidManager > TileManager]
   > AppStateManager > CoreManager > ConnectivityManager
@@ -1399,9 +1509,17 @@ manager appears on desktop.
 
 The order is an ownership contract, not a layout detail. `ConnectivityManager`
 sits below `CoreManager` because its `onConnectivityChanged` callback reads
-Core-backed state, so Core must already be mounted when it fires. `StatusManager`
-and `ThemeManager` sit above the platform managers so a platform manager can
-surface a message or read the theme.
+Core-backed state, so Core must already be mounted when it fires. `ThemeManager`
+sits above the platform managers so a platform manager can read the theme.
+
+The stack is `PrismApp`'s `builder`. `PrismApp` (`prism_ui/lib/app.dart`)
+puts the app-wide layers every component expects above it, each from an argument
+the app passes: the theme cross-fade, the text scale and its `MeasureScope`, the
+`LiquidGlassHost`, the emoji font and the `BannerHost`, whose banners are glass
+and scale their text, so they sit inside both. It hands the builder its navigator
+already inside `RemoteFocusAdapter` and the root `Overlay`. `ThemeManager` keeps
+what follows providers: the view size and `AppViewScope`, the safe-area clamp and
+the Android system bars.
 
 `buildManagerStack()` is a pure function of `isDesktop`, the connectivity
 callback, and the app content, so `test/application_test.dart` asserts the whole
@@ -1482,6 +1600,9 @@ rewritten; each owner reads the flag where it would otherwise act:
   OS; the in-window `Shortcuts` (close window, escape) stay.
 - URL schemes and launcher shortcuts: `Window.init` skips the Windows registry and Linux desktop-entry registration
   of the `clash` schemes, and Android never calls `initShortcuts`.
+- Trust store: `MitmTrustState` neither installs a CA nor removes the one a new CA replaces, and the HTTPS
+  decryption page offers no install row, so no CA reaches or leaves the keychain, the Windows root store, the Linux
+  anchors and NSS databases, or Android's installer; the read-only trust check and the export still work.
 - Presentation: `AppEnvManager` shows a `SAFE MODE` banner ahead of the channel banner, and `TrayState.safeMode` gives
   the tray the `status_4` bug icon, a suffixed tooltip and a menu of only show and exit. `trayStateProvider` and
   `trayTitleStateProvider` report `showTrayTitle: false`, so the macOS menu bar carries no traffic title.
@@ -1787,7 +1908,10 @@ targets on first use.
 `frb_generated.io.dart`, `frb_generated.web.dart`, one `lib/src/rust/api/<module>.dart` per Rust API module, and
 `rust/src/frb_generated.rs`; none of them is edited by hand. A new Rust function is a public function in `rust/src/api/`,
 plus `pub mod <name>;` in `api/mod.rs` and an export from `lib/rust_api.dart` when it starts a new module. `RustLib` is
-the singleton entry point: `RustLib.init()` runs before any call and `RustLib.dispose()` on teardown.
+the singleton entry point: `RustLib.init()` runs before any call and `RustLib.dispose()` on teardown. It is initialized on
+the main isolate only, so an isolate hands its result back and the main isolate makes the call; `transcodeCharset` returns
+UTF-8 bytes rather than a `String` so that decoding them stays off the UI isolate as well (`mitmBody` in
+`lib/providers/mitm.dart`).
 
 `plugins/rust_api/rust/src/` separates the bridge boundary from the code behind it:
 

@@ -1,11 +1,13 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/state.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:prism_ui/banner.dart';
 
 class VpnManager extends ConsumerStatefulWidget {
   final Widget child;
@@ -35,15 +37,12 @@ class _VpnContainerState extends ConsumerState<VpnManager> {
   }
 
   void _showRestartTip() {
-    dialogs.showNotifier(
+    dialogs.showBanner(
       currentAppLocalizations.vpnConfigChangeDetected,
-      level: MessageLevel.warning,
-      actionState: MessageActionState(
-        actionText: currentAppLocalizations.restart,
-        action: () async {
-          await ref.read(setupActionProvider.notifier).restartVpn();
-        },
-      ),
+      level: BannerLevel.warning,
+      onTap: () {
+        unawaited(ref.read(setupActionProvider.notifier).restartVpn());
+      },
     );
   }
 

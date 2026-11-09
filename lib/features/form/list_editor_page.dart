@@ -1,8 +1,8 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 typedef ListEditorItemBuilder<T> =
@@ -23,13 +23,13 @@ class ListEditorPage<T, K> extends ConsumerStatefulWidget {
   final void Function(int oldIndex, int newIndex) onReorder;
   final VoidCallback onAdd;
   final VoidCallback? onQuickEdit;
-  final List<CommonPopupMenuItem> addMenuItems;
+  final List<PopupMenuItem> addMenuItems;
   final String emptyLabel;
   final double? itemExtent;
   final K Function(T item) idOf;
   final void Function(Set<K> ids)? onDelete;
   final Iterable<String?> Function(T item)? searchFieldsOf;
-  final List<CommonPopupMenuItem> Function(T item)? menuItemsOf;
+  final List<PopupMenuItem> Function(T item)? menuItemsOf;
 
   const ListEditorPage({
     super.key,
@@ -137,33 +137,45 @@ class _ListEditorPageState<T, K> extends ConsumerState<ListEditorPage<T, K>> {
     required bool reorderable,
   }) {
     final id = widget.idOf(item);
-    final menuItems = selected.isEmpty ? widget.menuItemsOf?.call(item) : null;
-    final child = ItemPositionProvider(
-      position: ItemPosition.get(index, total),
-      child: widget.itemBuilder(
-        context,
-        ref,
+    final position = ItemPosition.get(index, total);
+    final isEditing = selected.isNotEmpty;
+    final isSelected = selected.contains(id);
+    return MemoBuilder(
+      key: ValueKey(id),
+      inputs: [
+        widget,
         item,
         index,
-        selected.isNotEmpty,
-        selected.contains(id),
-        () => _handleToggleSelected(item),
-      ),
+        position,
+        isEditing,
+        isSelected,
+        reorderable,
+      ],
+      builder: (_) {
+        final child = ItemPositionProvider(
+          position: position,
+          child: widget.itemBuilder(
+            context,
+            ref,
+            item,
+            index,
+            isEditing,
+            isSelected,
+            () => _handleToggleSelected(item),
+          ),
+        );
+        if (widget.menuItemsOf == null) {
+          return reorderable
+              ? ReorderDragStartListener(index: index, child: child)
+              : child;
+        }
+        final row = ContextMenuRegion(
+          menuItems: isEditing ? null : widget.menuItemsOf!(item),
+          child: child,
+        );
+        return reorderable ? SortableItem(index: index, child: row) : row;
+      },
     );
-    if (widget.menuItemsOf == null) {
-      return reorderable
-          ? ReorderableDelayedDragStartListener(
-              key: ValueKey(id),
-              index: index,
-              child: child,
-            )
-          : KeyedSubtree(key: ValueKey(id), child: child);
-    }
-    final row = ContextMenuRegion(menuItems: menuItems, child: child);
-    if (!reorderable) {
-      return KeyedSubtree(key: ValueKey(id), child: row);
-    }
-    return SortableItem(key: ValueKey(id), index: index, child: row);
   }
 
   @override
@@ -195,7 +207,7 @@ class _ListEditorPageState<T, K> extends ConsumerState<ListEditorPage<T, K>> {
         tooltip: appLocalizations.selectAll,
       ),
     ];
-    return CommonScaffold(
+    return Scaffold(
       canSort:
           widget.menuItemsOf != null &&
           !isSelecting &&
@@ -217,7 +229,10 @@ class _ListEditorPageState<T, K> extends ConsumerState<ListEditorPage<T, K>> {
         isLoading: loadedItems == null,
         isEmpty: items.isEmpty,
         isSearching: isSearching,
-        nullStatus: NullStatus(label: widget.emptyLabel),
+        nullStatus: NullStatus(
+          label: widget.emptyLabel,
+          illustration: NullStatusIllustration.data,
+        ),
         child: Builder(
           builder: (context) {
             final rowAt = _rowsOf(
@@ -226,9 +241,9 @@ class _ListEditorPageState<T, K> extends ConsumerState<ListEditorPage<T, K>> {
               selected,
               reorderable: !isSearching,
             );
-            return CommonScrollBar(
+            return Scrollbar(
               controller: _scrollController,
-              child: _ArrivalScroll(
+              child: ArrivalCacheExtentBuilder(
                 builder: (cacheExtent) => isSearching
                     ? _buildSearchResults(context, items, rowAt, cacheExtent)
                     : _buildReorderableList(context, items, rowAt, cacheExtent),
@@ -271,9 +286,8 @@ class _ListEditorPageState<T, K> extends ConsumerState<ListEditorPage<T, K>> {
     Widget Function(int index) rowAt,
     ScrollCacheExtent? cacheExtent,
   ) {
-    return ReorderableListView.builder(
-      scrollController: _scrollController,
-      buildDefaultDragHandles: false,
+    return PrismReorderableListView(
+      controller: _scrollController,
       padding: _listPadding(context),
       scrollCacheExtent: cacheExtent,
       itemBuilder: (_, index) => rowAt(index),
@@ -293,7 +307,7 @@ class _ListEditorPageState<T, K> extends ConsumerState<ListEditorPage<T, K>> {
     Widget Function(int index) rowAt,
     ScrollCacheExtent? cacheExtent,
   ) {
-    return ListView.builder(
+    return PrismListView(
       controller: _scrollController,
       padding: _listPadding(context),
       scrollCacheExtent: cacheExtent,
@@ -304,29 +318,10 @@ class _ListEditorPageState<T, K> extends ConsumerState<ListEditorPage<T, K>> {
   }
 }
 
-class _ArrivalScroll extends StatefulWidget {
-  const _ArrivalScroll({required this.builder});
-
-  final Widget Function(ScrollCacheExtent? cacheExtent) builder;
-
-  @override
-  State<_ArrivalScroll> createState() => _ArrivalScrollState();
-}
-
-class _ArrivalScrollState extends State<_ArrivalScroll>
-    with RouteSettledMixin<_ArrivalScroll> {
-  @override
-  void didSettleRoute() => setState(() {});
-
-  @override
-  Widget build(BuildContext context) =>
-      widget.builder(arrivalScrollCacheExtent(routeSettled));
-}
-
 class ListEditorAddAction extends StatelessWidget {
   final VoidCallback onAdd;
   final VoidCallback? onQuickEdit;
-  final List<CommonPopupMenuItem> menuItems;
+  final List<PopupMenuItem> menuItems;
 
   const ListEditorAddAction({
     super.key,
@@ -348,7 +343,7 @@ class ListEditorAddAction extends StatelessWidget {
         ),
       );
     }
-    return CommonPopupBox(
+    return PopupAnchor(
       targetBuilder: (open) => AppBarActionButton(
         data: IconButtonData(
           glyph: AppGlyphs.addCircle,
@@ -356,16 +351,16 @@ class ListEditorAddAction extends StatelessWidget {
           tooltip: appLocalizations.add,
         ),
       ),
-      popupBuilder: (_) => CommonPopupMenu(
+      popupBuilder: (_) => PopupMenu(
         items: [
-          CommonPopupMenuItem(
+          PopupMenuItem(
             glyph: AppGlyphs.add,
             label: appLocalizations.add,
             onPressed: onAdd,
           ),
           ...menuItems,
           if (onQuickEdit != null)
-            CommonPopupMenuItem(
+            PopupMenuItem(
               glyph: AppGlyphs.compose,
               label: appLocalizations.quickEdit,
               onPressed: onQuickEdit,

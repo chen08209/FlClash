@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:prism_ui/prism_ui.dart';
+import '../helpers/test_app.dart';
 
 const _red = Color(0xFFFF0000);
 const _green = Color(0xFF00FF00);
@@ -22,7 +25,7 @@ Widget _app(
   Widget child, {
   bool enabled = true,
   LiquidGlassQuality quality = LiquidGlassQuality.ultra,
-}) => MaterialApp(
+}) => HostApp(
   home: LiquidGlassScope(
     enabled: true,
     quality: quality,
@@ -139,6 +142,59 @@ void main() {
     expect(pane.pane, const Rect.fromLTWH(100, 100, 200, 100));
     expect(pane.level, 0);
     expect(await _behind(tester, pane, const Offset(200, 150)), _red);
+  });
+
+  testWidgets('a host within a snapshot takes the panes the snapshot holds', (
+    tester,
+  ) async {
+    final controller = SnapshotController(allowSnapshotting: true);
+    addTearDown(controller.dispose);
+    Widget scene({required bool inner}) => _app(
+      SnapshotWidget(
+        controller: controller,
+        mode: SnapshotMode.permissive,
+        child: LiquidGlassHost(
+          enabled: inner,
+          child: Stack(
+            children: [
+              const Positioned.fill(child: ColoredBox(color: _red)),
+              _pane(const Rect.fromLTWH(100, 100, 200, 100)),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(scene(inner: false));
+    expect(LiquidGlassHost.debugHeldCaptures, 0);
+
+    controller.clear();
+    await tester.pumpWidget(scene(inner: true));
+    expect(LiquidGlassHost.debugHeldCaptures, 1);
+  });
+
+  testWidgets('a host within another leaves its panes to the outer one', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        LiquidGlassHost(
+          enabled: true,
+          child: Stack(
+            children: [
+              const Positioned.fill(child: ColoredBox(color: _red)),
+              _pane(const Rect.fromLTWH(100, 100, 200, 100)),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final before = LiquidGlassHost.debugCaptures;
+    tester.binding.scheduleFrame();
+    await tester.pump();
+    expect(LiquidGlassHost.debugCaptures - before, 1);
+    expect(_capture().panes, hasLength(1));
   });
 
   testWidgets('a frame that leaves the backdrop as it was keeps the capture', (
@@ -573,6 +629,93 @@ void main() {
     expect(faded.g, inExclusiveRange(0, 1));
     expect(await _behind(tester, pane, const Offset(250, 150)), _red);
   });
+
+  testWidgets('an edit menu reads the page behind it as it fades in', (
+    tester,
+  ) async {
+    final navigator = GlobalKey<NavigatorState>();
+    final selection = ValueNotifier(const Rect.fromLTWH(180, 80, 40, 20));
+    addTearDown(selection.dispose);
+    await tester.pumpWidget(
+      HostApp(
+        navigatorKey: navigator,
+        builder: (context, child) => LiquidGlassScope(
+          enabled: true,
+          quality: LiquidGlassQuality.standard,
+          child: LiquidGlassHost(enabled: true, child: child!),
+        ),
+        home: const ColoredBox(color: _red, child: SizedBox.expand()),
+      ),
+    );
+    unawaited(
+      navigator.currentState!.push(
+        EditMenuRoute(
+          barrierLabel: 'close',
+          selection: selection,
+          items: ValueNotifier([
+            PopupMenuItem(label: 'Copy', onPressed: () {}),
+          ]),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    final pane = _capture().panes.single;
+    expect(await _behind(tester, pane, pane.pane.center), _red);
+
+    await tester.pumpAndSettle();
+  });
+
+  for (final quality in LiquidGlassQuality.values) {
+    testWidgets('an edit menu opens and closes on one capture ($quality)', (
+      tester,
+    ) async {
+      final navigator = GlobalKey<NavigatorState>();
+      final selection = ValueNotifier(const Rect.fromLTWH(180, 80, 40, 20));
+      addTearDown(selection.dispose);
+      await tester.pumpWidget(
+        HostApp(
+          navigatorKey: navigator,
+          builder: (context, child) => LiquidGlassScope(
+            enabled: true,
+            quality: quality,
+            child: LiquidGlassHost(enabled: true, child: child!),
+          ),
+          home: const ColoredBox(color: _red, child: SizedBox.expand()),
+        ),
+      );
+      unawaited(
+        navigator.currentState!.push(
+          EditMenuRoute(
+            barrierLabel: 'close',
+            selection: selection,
+            items: ValueNotifier([
+              PopupMenuItem(label: 'Copy', onPressed: () {}),
+            ]),
+          ),
+        ),
+      );
+      await tester.pump();
+      var snapshots = _capture().snapshots;
+      for (var frame = 0; frame < 30; frame++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        snapshots += _capture().snapshots;
+      }
+      expect(snapshots, lessThanOrEqualTo(1));
+
+      navigator.currentState!.pop();
+      await tester.pump();
+      snapshots = _capture().snapshots;
+      for (var frame = 0; frame < 9; frame++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        snapshots += _capture().snapshots;
+      }
+      expect(snapshots, 0);
+
+      await tester.pumpAndSettle();
+    });
+  }
 
   testWidgets('a frosted pane reads a capture that holds its blur', (
     tester,

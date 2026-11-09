@@ -2,17 +2,19 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
+import 'sources.dart';
+
 final _passwordInputType = RegExp(
   r'\benableSuggestions:\s*false\b|\bTextInputType\.visiblePassword\b',
 );
 
-const _secretFields = {'lib/ui/input.dart', 'lib/features/form/form_row.dart'};
+const _secretFields = {'lib/features/form/form_row.dart'};
 
 void main() {
   test('only secret fields ask Android for a password keyboard', () {
     final offenders = <String>[];
 
-    for (final entity in Directory('lib').listSync(recursive: true)) {
+    for (final entity in sourceEntities()) {
       if (entity is! File ||
           !entity.path.endsWith('.dart') ||
           entity.path.contains('/generated/') ||

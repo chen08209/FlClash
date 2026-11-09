@@ -2,17 +2,16 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/manager/status_manager.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/test_app.dart';
 import 'helpers/test_profiles.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -38,16 +37,13 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: MaterialApp(
+        child: HostApp(
           navigatorKey: globalState.navigatorKey,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            AppUiLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
           builder: (context, child) {
-            return wrapAppScopes(context, StatusManager(child: child!));
+            return wrapAppScopes(
+              context,
+              BannerHost(stacked: false, topInset: 0, child: child!),
+            );
           },
           home: const SizedBox(key: Key('child')),
         ),
@@ -232,11 +228,12 @@ void main() {
 
       expect(peak, 2);
       expect(find.byType(AlertDialog), findsNothing);
-      expect(find.text('2 items failed'), findsOneWidget);
+      final failed = find.text(currentAppLocalizations.failedCount(2));
+      expect(failed, findsOneWidget);
 
-      await tester.tap(find.text('View'));
+      await tester.tap(failed);
       await tester.pumpAndSettle();
-      expect(find.text('2 items failed'), findsNothing);
+      expect(failed, findsNothing);
       expect(find.text('Error details'), findsOneWidget);
       expect(find.text('item 1'), findsOneWidget);
       expect(find.text('item 3'), findsOneWidget);

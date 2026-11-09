@@ -1,6 +1,6 @@
 import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 Widget _icon({required bool filled, IconThemeData? theme}) {
   final icon = AnimatedGlyph(glyph: AppGlyphs.profiles, filled: filled);

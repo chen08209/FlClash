@@ -1,7 +1,8 @@
 import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/gestures.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../helpers/test_app.dart';
 
 const _metricsAxis = AxisDirection.down;
 
@@ -31,7 +32,7 @@ Future<Widget> _buildScrollbar(
   addTearDown(controller.dispose);
 
   await tester.pumpWidget(
-    MaterialApp(
+    HostApp(
       theme: ThemeData(platform: platform),
       home: Builder(
         builder: (context) {
@@ -81,7 +82,7 @@ void main() {
         axis: Axis.vertical,
         platform: TargetPlatform.macOS,
       );
-      expect(result, isA<CommonScrollBar>());
+      expect(result, isA<Scrollbar>());
     });
 
     testWidgets('leaves vertical mobile scrollables unwrapped', (tester) async {
@@ -115,7 +116,7 @@ void main() {
         axis: Axis.vertical,
         platform: TargetPlatform.android,
       );
-      expect(result, isA<CommonScrollBar>());
+      expect(result, isA<Scrollbar>());
     });
 
     testWidgets('ShowBarScrollBehavior leaves horizontal scrollables alone', (
@@ -235,5 +236,34 @@ void main() {
         160,
       );
     });
+  });
+
+  testWidgets('a list opened past its end shows its end in the first frame', (
+    tester,
+  ) async {
+    late ScrollController atEnd;
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: Builder(
+          builder: (context) {
+            atEnd = sheetScrollController(
+              context,
+              initialScrollOffset: double.maxFinite,
+            );
+            return ListView.builder(
+              controller: atEnd,
+              itemCount: 100,
+              itemExtent: 50,
+              itemBuilder: (_, index) => Text('$index'),
+            );
+          },
+        ),
+      ),
+    );
+    addTearDown(atEnd.dispose);
+
+    expect(find.text('99'), findsOneWidget);
+    expect(atEnd.offset, atEnd.position.maxScrollExtent);
   });
 }

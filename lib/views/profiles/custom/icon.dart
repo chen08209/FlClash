@@ -10,7 +10,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const _recommendedKey = 'recommended';
@@ -316,7 +316,7 @@ class _IconPickerViewState extends ConsumerState<IconPickerView> {
     final isEmpty = _query.isNotEmpty
         ? searchSlivers.isEmpty
         : source == null && !isLoading;
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.icon,
       searchState: AppBarSearchState(onSearch: _handleSearch),
       iconActions: [
@@ -353,7 +353,7 @@ class _IconPickerViewState extends ConsumerState<IconPickerView> {
                       ? appLocalizations.noSearchResults
                       : appLocalizations.iconSetsEmptyTip,
                   illustration: _query.isNotEmpty
-                      ? NullStatusIllustration.search
+                      ? Illustration.search
                       : NullStatusIllustration.icons,
                 ),
               )
@@ -406,7 +406,7 @@ class _CurrentIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final description = _describe(context);
     final subtitle = description.subtitle;
-    return CommonCard(
+    return Card(
       radius: AppCorner.xl,
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -465,14 +465,11 @@ class IconGridScrollView extends StatefulWidget {
 }
 
 class _IconGridScrollViewState extends State<IconGridScrollView>
-    with RouteSettledMixin<IconGridScrollView> {
-  @override
-  void didSettleRoute() => setState(() {});
-
+    with ArrivalCacheExtentMixin<IconGridScrollView> {
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
-      scrollCacheExtent: arrivalScrollCacheExtent(routeSettled),
+      scrollCacheExtent: arrivalCacheExtent,
       slivers: widget.slivers,
     );
   }
@@ -550,23 +547,19 @@ class _IconTile extends StatelessWidget {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                Material(
-                  color: context.raisedSurfaceLevel.colorOf(colorScheme),
+                PressSurface(
+                  fill: context.raisedSurfaceLevel.colorOf(colorScheme),
                   shape: AppShape.md,
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    customBorder: AppShape.md,
-                    onTap: onPressed,
-                    onLongPress: onLongPress,
-                    child: SizedBox.square(
-                      dimension: _iconPlateSize,
-                      child: Center(
-                        child: SizedBox.square(
-                          dimension: _iconSize,
-                          child: IconTheme.merge(
-                            data: const IconThemeData(size: _iconSize),
-                            child: CommonTargetIcon(src: icon.url),
-                          ),
+                  clipsChild: true,
+                  onPressed: onPressed,
+                  child: SizedBox.square(
+                    dimension: _iconPlateSize,
+                    child: Center(
+                      child: SizedBox.square(
+                        dimension: _iconSize,
+                        child: IconTheme.merge(
+                          data: const IconThemeData(size: _iconSize),
+                          child: CommonTargetIcon(src: icon.url),
                         ),
                       ),
                     ),

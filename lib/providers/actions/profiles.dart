@@ -35,7 +35,7 @@ class ProfilesAction extends _$ProfilesAction {
     }
   }
 
-  Future<String> validateConfigWithData(List<int> data) async {
+  Future<String?> validateConfigWithData(List<int> data) async {
     return _core.validateConfigWithData(data);
   }
 
@@ -466,10 +466,7 @@ class ProfilesAction extends _$ProfilesAction {
       await profileFile.safeDelete(recursive: true);
     }
     try {
-      final error = await _core.clearEffect(profileId);
-      if (error.isNotEmpty) {
-        commonPrint.log(error, logLevel: LogLevel.warning);
-      }
+      await _core.clearEffect(profileId);
     } catch (error) {
       commonPrint.log(
         'clearEffect($profileId) failed: $error',

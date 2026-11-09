@@ -1,7 +1,7 @@
-import 'package:fl_clash/ui/activate_box.dart';
-import 'package:fl_clash/ui/disabled_mask.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/prism_ui.dart';
+import '../helpers/test_app.dart';
 
 void main() {
   testWidgets('ActivateBox blocks pointer events when inactive', (
@@ -10,7 +10,7 @@ void main() {
     var taps = 0;
 
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         home: ActivateBox(
           active: false,
           child: TextButton(onPressed: () => taps++, child: const Text('tap')),
@@ -27,7 +27,7 @@ void main() {
     var taps = 0;
 
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         home: ActivateBox(
           active: true,
           child: TextButton(onPressed: () => taps++, child: const Text('tap')),
@@ -44,17 +44,13 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: DisabledMask(status: true, child: Text('disabled')),
-      ),
+      const HostApp(home: DisabledMask(status: true, child: Text('disabled'))),
     );
 
     expect(find.byType(ColorFiltered), findsOneWidget);
 
     await tester.pumpWidget(
-      const MaterialApp(
-        home: DisabledMask(status: false, child: Text('enabled')),
-      ),
+      const HostApp(home: DisabledMask(status: false, child: Text('enabled'))),
     );
 
     expect(find.byType(ColorFiltered), findsNothing);

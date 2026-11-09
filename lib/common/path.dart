@@ -89,6 +89,15 @@ class AppPath {
     return join(mTempDir.path, 'temp$uniqueId');
   }
 
+  /// On Android the app's external downloads directory, the one the system
+  /// download manager can write to.
+  Future<String> get updateDirPath async {
+    final directory = system.isAndroid
+        ? await downloadDirPath
+        : (await cacheDir.future).path;
+    return join(directory, 'update');
+  }
+
   Future<String> get lockFilePath async {
     final homeDirPath = await appPath.homeDirPath;
     return join(homeDirPath, 'FlClash.lock');
@@ -119,8 +128,23 @@ class AppPath {
   }
 
   Future<String> getScriptPath(String fileName) async {
-    final path = await scriptsDirPath;
-    return join(path, '$fileName.js');
+    return scriptPathIn(await scriptsDirPath, fileName);
+  }
+
+  static String scriptPathIn(String scriptsDir, String fileName) {
+    return join(scriptsDir, '$fileName.js');
+  }
+
+  Future<String> get mitmModulesDirPath async {
+    return join(await homeDirPath, mitmDirectoryName, mitmModulesDirectoryName);
+  }
+
+  Future<String> get mitmResourcesDirPath async {
+    return join(
+      await homeDirPath,
+      mitmDirectoryName,
+      mitmResourcesDirectoryName,
+    );
   }
 
   Future<String> get providerCacheRootPath async {
@@ -128,12 +152,12 @@ class AppPath {
     return join(directory, providersDirectoryName);
   }
 
+  Future<String> get ruleProviderCacheDirPath async {
+    return join(await providerCacheRootPath, rulesProviderDirectoryName);
+  }
+
   Future<String> getProviderCachePath(String fileName) async {
-    return join(
-      await providerCacheRootPath,
-      rulesProviderDirectoryName,
-      fileName,
-    );
+    return join(await ruleProviderCacheDirPath, fileName);
   }
 
   Future<String> getProvidersRootPath() async {

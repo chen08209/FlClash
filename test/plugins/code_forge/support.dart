@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:code_forge/code_forge.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/gestures.dart' show kDoubleTapTimeout;
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart'
     show ExternalLibrary;
@@ -11,6 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:re_highlight/languages/yaml.dart';
 import 'package:re_highlight/styles/atom-one-light.dart';
 import 'package:rust_api/rust_api.dart' show RustLib;
+import '../../helpers/host_scaffold.dart';
+import '../../helpers/test_app.dart';
 
 const _libraryStem = 'rust_api';
 
@@ -102,7 +104,7 @@ Future<void> pumpEditor(
     finderBuilder: finderBuilder,
   );
   await tester.pumpWidget(
-    MaterialApp(home: Scaffold(body: wrap?.call(editor) ?? editor)),
+    HostApp(home: HostScaffold(body: wrap?.call(editor) ?? editor)),
   );
   await settle(tester);
 }

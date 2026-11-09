@@ -1,15 +1,18 @@
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
+import '../helpers/host_scaffold.dart';
+import 'package:prism_ui/prism_ui.dart';
+import '../helpers/test_app.dart';
 
 Widget _buildApp({
   required bool enabled,
   required Widget home,
   ValueListenable<bool>? floatingKeyboard,
 }) {
-  return MaterialApp(
+  return HostApp(
     builder: (context, child) {
       return RemoteFocusAdapter(
         enabled: enabled,
@@ -22,7 +25,7 @@ Widget _buildApp({
 }
 
 Widget _buildForm() {
-  return Scaffold(
+  return HostScaffold(
     body: Column(
       children: [
         const TextField(key: ValueKey('name')),
@@ -71,7 +74,7 @@ bool _onActionRow(WidgetTester tester) {
 }
 
 Widget _buildFieldsBelowButton() {
-  return Scaffold(
+  return HostScaffold(
     body: Column(
       children: [
         TextButton(onPressed: () {}, child: const Text('top')),
@@ -99,7 +102,7 @@ void main() {
     await tester.pumpWidget(
       _buildApp(
         enabled: true,
-        home: Scaffold(
+        home: HostScaffold(
           body: Builder(
             builder: (context) => TextButton(
               key: const ValueKey('open'),
@@ -107,7 +110,7 @@ void main() {
                 showDialog<void>(
                   context: context,
                   builder: (_) => AlertDialog(
-                    title: const Text('title'),
+                    title: 'title',
                     actions: [
                       TextButton(
                         key: const ValueKey('ok'),
@@ -136,7 +139,7 @@ void main() {
     await tester.pumpWidget(
       _buildApp(
         enabled: false,
-        home: Scaffold(
+        home: HostScaffold(
           body: Builder(
             builder: (context) => TextButton(
               key: const ValueKey('open'),
@@ -144,6 +147,7 @@ void main() {
                 showDialog<void>(
                   context: context,
                   builder: (_) => AlertDialog(
+                    title: 'title',
                     actions: [
                       TextButton(
                         key: const ValueKey('ok'),
@@ -214,7 +218,7 @@ void main() {
   });
 
   Widget buildList(ScrollController controller) {
-    return Scaffold(
+    return HostScaffold(
       body: ListView(
         controller: controller,
         children: [
@@ -280,7 +284,7 @@ void main() {
     await tester.pumpWidget(
       _buildApp(
         enabled: true,
-        home: Scaffold(
+        home: HostScaffold(
           body: Column(
             children: [
               Expanded(
@@ -355,14 +359,15 @@ void main() {
     await tester.pumpWidget(
       _buildApp(
         enabled: true,
-        home: Scaffold(
+        home: HostScaffold(
           body: Builder(
             builder: (context) => TextButton(
               onPressed: () {
                 showDialog<void>(
                   context: context,
                   builder: (_) => const AlertDialog(
-                    content: TextField(key: ValueKey('field'), autofocus: true),
+                    title: 'title',
+                    child: TextField(key: ValueKey('field'), autofocus: true),
                   ),
                 );
               },
@@ -517,14 +522,15 @@ void main() {
       _buildApp(
         enabled: true,
         floatingKeyboard: floating,
-        home: Scaffold(
+        home: HostScaffold(
           body: Builder(
             builder: (context) => TextButton(
               onPressed: () {
                 showDialog<void>(
                   context: context,
                   builder: (_) => const AlertDialog(
-                    content: SingleChildScrollView(
+                    title: 'title',
+                    child: SingleChildScrollView(
                       child: Column(
                         children: [
                           SizedBox(height: 360),

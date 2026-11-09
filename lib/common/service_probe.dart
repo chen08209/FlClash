@@ -173,7 +173,7 @@ final Map<String, IpInfo Function(String)> ipInfoSources = {
 };
 
 /// Raw so the route stamp survives; [parseOutboundIp] reads the address.
-Future<OutboundIpResult?> lookupOutboundIp(
+Future<OutboundIpResult> lookupOutboundIp(
   CoreController core,
   String proxyName, {
   Duration timeout = outboundIpTimeoutDuration,
@@ -187,8 +187,8 @@ Future<OutboundIpResult?> lookupOutboundIp(
   );
 }
 
-IpInfo? parseOutboundIp(OutboundIpResult? result) {
-  if (result == null || result.error != null || result.body.isEmpty) {
+IpInfo? parseOutboundIp(OutboundIpResult result) {
+  if (result.error != null || result.body.isEmpty) {
     return null;
   }
   final parse = ipInfoSources[result.url];

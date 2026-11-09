@@ -1,13 +1,12 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/edit.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,6 +15,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../helpers/app_paths.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+import '../helpers/host_scaffold.dart';
 
 /// The edit page disposes the profile by scheduling an auto-apply; keep that a
 /// no-op so the setup machinery never runs in a widget test.
@@ -61,27 +61,22 @@ Future<FocusNode> pumpEditProfile(
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: MaterialApp(
+      child: HostApp(
         navigatorKey: globalState.navigatorKey,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          AppUiLocalizations.delegate,
-          ...GlobalMaterialLocalizations.delegates,
-        ],
-        supportedLocales: AppLocalizations.delegate.supportedLocales,
         builder: (context, child) {
           return wrapAppScopes(context, child!);
         },
-        home: Scaffold(
+        home: HostScaffold(
           body: Column(
             children: [
               Focus(focusNode: outsideFocus, child: const SizedBox()),
               Expanded(
                 child: Navigator(
                   pages: [
-                    MaterialPage(
+                    const RootPage(child: SizedBox.shrink()),
+                    RootPage(
                       child: Builder(
-                        builder: (context) => Scaffold(
+                        builder: (context) => HostScaffold(
                           body: EditProfileView(
                             profile: profile ?? _urlProfile(),
                           ),
@@ -144,7 +139,6 @@ void main() {
       await tester.pump();
     }
     expect(_isTextFieldFocused(), isTrue);
-    expect(find.byType(FloatingActionButton), findsNothing);
     expect(find.byTooltip('Save'), findsOneWidget);
   });
 
@@ -193,7 +187,7 @@ void main() {
     );
 
     await tester.enterText(interval, '');
-    await tester.tap(find.byType(CommonSwitch));
+    await tester.tap(find.byType(Switch));
     await tester.pump();
     await tester.tap(find.byTooltip('Save'));
     await tester.pump();

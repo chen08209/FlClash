@@ -13,8 +13,8 @@ import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ExternalProvidersSliver extends ConsumerStatefulWidget {
@@ -40,15 +40,7 @@ class _ExternalProvidersSliverState
       await Future.wait(
         widget.providers.map((provider) async {
           try {
-            final message = await proxiesAction.updateProvider(
-              provider,
-              showLoading: true,
-            );
-            if (message.isNotEmpty) {
-              messages.add(
-                UpdatingMessage(label: provider.name, message: message),
-              );
-            }
+            await proxiesAction.updateProvider(provider, showLoading: true);
           } catch (error) {
             messages.add(
               UpdatingMessage(
@@ -87,7 +79,7 @@ class _ExternalProvidersSliverState
             ],
           ),
         ),
-        SliverList.builder(
+        SliverPrismList(
           itemCount: providers.length,
           itemBuilder: (_, index) {
             final provider = providers[index];
@@ -157,13 +149,10 @@ class _ProviderItemState extends ConsumerState<ProviderItem> {
   Future<void> _handleUpdateProvider() async {
     if (!_isSyncable) return;
     final proxiesAction = ref.read(proxiesActionProvider.notifier);
-    await globalState.safeRun(() async {
-      final message = await proxiesAction.updateProvider(
-        provider,
-        showLoading: true,
-      );
-      if (message.isNotEmpty) throw MessageException(message);
-    }, silence: false);
+    await globalState.safeRun(
+      () => proxiesAction.updateProvider(provider, showLoading: true),
+      silence: false,
+    );
     proxiesAction.updateGroupsDebounce();
   }
 
@@ -213,7 +202,7 @@ class _ProviderItemState extends ConsumerState<ProviderItem> {
       dialogs.showCommonDialog<void>(
         child: Builder(
           builder: (context) {
-            return CommonDialog(
+            return AlertDialog(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               title: context.appLocalizations.subscriptionInfo,
               actions: [
@@ -234,12 +223,12 @@ class _ProviderItemState extends ConsumerState<ProviderItem> {
     );
   }
 
-  List<CommonPopupMenuItem> _menuItems(BuildContext context) {
+  List<PopupMenuItem> _menuItems(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     final subscriptionInfo = provider.subscriptionInfo;
     return [
       if (_file == _ProviderFile.text)
-        CommonPopupMenuItem(
+        PopupMenuItem(
           glyph: AppGlyphs.edit,
           label: appLocalizations.edit,
           onPressed: () {
@@ -247,14 +236,14 @@ class _ProviderItemState extends ConsumerState<ProviderItem> {
           },
         ),
       if (_file == _ProviderFile.ruleSet)
-        CommonPopupMenuItem(
+        PopupMenuItem(
           glyph: AppGlyphs.eye,
           label: appLocalizations.preview,
           onPressed: () {
             _handlePreviewProvider(context);
           },
         ),
-      CommonPopupMenuItem(
+      PopupMenuItem(
         glyph: AppGlyphs.upload,
         label: appLocalizations.upload,
         onPressed: () {
@@ -262,7 +251,7 @@ class _ProviderItemState extends ConsumerState<ProviderItem> {
         },
       ),
       if (_isSyncable)
-        CommonPopupMenuItem(
+        PopupMenuItem(
           glyph: AppGlyphs.sync,
           label: appLocalizations.sync,
           onPressed: () {
@@ -270,7 +259,7 @@ class _ProviderItemState extends ConsumerState<ProviderItem> {
           },
         ),
       if (subscriptionInfo != null && subscriptionInfo.total > 0)
-        CommonPopupMenuItem(
+        PopupMenuItem(
           glyph: AppGlyphs.dataUsage,
           label: appLocalizations.subscriptionInfo,
           onPressed: _handleShowSubscriptionInfo,
@@ -334,7 +323,7 @@ class _ExternalProviderItem extends StatelessWidget {
           children: [...previous, ?current],
         ),
         child: isUpdating
-            ? const CommonCircleLoading(key: ValueKey('loading'), size: 24)
+            ? const ActivityIndicator(key: ValueKey('loading'), size: 24)
             : LastUpdateTimeText(
                 key: const ValueKey('time'),
                 lastUpdateDate: updateAt.microsecondsSinceEpoch > 0
@@ -429,10 +418,9 @@ Future<void> _sideLoadProvider(
   final path = provider.path;
   if (path == null) return;
   final data = _decodeProviderFile(bytes);
-  final message = await ref
+  await ref
       .read(proxiesActionProvider.notifier)
       .sideLoadExternalProvider(provider, data, showLoading: true);
-  if (message.isNotEmpty) throw MessageException(message);
   await File(path).safeWriteAsBytes(bytes);
 }
 

@@ -1,12 +1,12 @@
 import 'dart:io';
 
-import 'package:fl_clash/common/app_localizations.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/pages/error.dart';
 import 'package:flutter/foundation.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/prism_ui.dart';
+import '../helpers/test_app.dart';
 
 final _stack = StackTrace.fromString('#0 boot (package:fl_clash/main.dart:1)');
 
@@ -15,14 +15,8 @@ Widget _screen({
   AsyncCallback? onClearData,
   AsyncCallback? onExit,
 }) {
-  return MaterialApp(
+  return HostApp(
     theme: theme,
-    localizationsDelegates: const [
-      AppLocalizations.delegate,
-      AppUiLocalizations.delegate,
-      ...GlobalMaterialLocalizations.delegates,
-    ],
-    supportedLocales: AppLocalizations.delegate.supportedLocales,
     home: InitErrorScreen(
       error: StateError('boot failed'),
       stack: _stack,

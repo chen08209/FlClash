@@ -1,25 +1,26 @@
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 void _noop() {}
 
 const _width = 520.0;
 
 List<Widget> _actions() => const [
-  CommonMinIconButtonTheme(
-    child: IconButton.filledTonal(
+  MinIconButtonTheme(
+    child: IconButton(
       tooltip: 'Delete',
       onPressed: _noop,
       icon: GlyphIcon(AppGlyphs.delete, fill: 1),
     ),
   ),
-  CommonMinIconButtonTheme(
-    child: IconButton.filledTonal(
+  MinIconButtonTheme(
+    child: IconButton(
       tooltip: 'Select all',
       onPressed: _noop,
       icon: GlyphIcon(AppGlyphs.selectAll),
@@ -46,7 +47,7 @@ Future<void> _pumpHeader(WidgetTester tester, Widget header) async {
       child: Builder(
         builder: (context) {
           globalState.measure = Measure.of(context, 1);
-          return Material(child: header);
+          return Surface(child: header);
         },
       ),
     ),

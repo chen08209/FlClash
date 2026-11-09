@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../helpers/host_scaffold.dart';
+import '../helpers/test_app.dart';
 
 Widget _buildPage({bool wrapNavigator = false}) {
-  final page = Scaffold(
+  final page = HostScaffold(
     body: Column(
       children: [
         for (var i = 0; i < 3; i++)
@@ -16,11 +18,12 @@ Widget _buildPage({bool wrapNavigator = false}) {
             onPressed: () {},
             child: Text('item $i'),
           ),
+        IconButton(
+          tooltip: 'add',
+          onPressed: () {},
+          icon: const GlyphIcon(AppGlyphs.add, fill: 1),
+        ),
       ],
-    ),
-    floatingActionButton: FloatingActionButton(
-      onPressed: () {},
-      child: const GlyphIcon(AppGlyphs.add, fill: 1),
     ),
   );
   final scopedPage = PageFocusScope(child: page);
@@ -28,7 +31,7 @@ Widget _buildPage({bool wrapNavigator = false}) {
     policy: PageTraversalPolicy(),
     child: wrapNavigator
         ? Navigator(
-            pages: [MaterialPage(child: scopedPage)],
+            pages: [RootPage(child: scopedPage)],
             onDidRemovePage: (_) {},
           )
         : scopedPage,
@@ -42,7 +45,7 @@ Future<FocusNode> _pumpWithOutsideFocus(
   final outsideFocus = FocusNode();
   addTearDown(outsideFocus.dispose);
   await tester.pumpWidget(
-    MaterialApp(
+    HostApp(
       home: Column(
         children: [
           Focus(focusNode: outsideFocus, child: const SizedBox()),
@@ -59,7 +62,7 @@ Future<FocusNode> _pumpWithOutsideFocus(
 
 bool _isFabFocused() {
   final context = FocusManager.instance.primaryFocus?.context;
-  return context?.findAncestorWidgetOfExactType<FloatingActionButton>() != null;
+  return context?.findAncestorWidgetOfExactType<IconButton>() != null;
 }
 
 String? _focusedItemKey() {
@@ -167,7 +170,7 @@ void main() {
       addTearDown(node.dispose);
     }
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         home: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -207,7 +210,7 @@ void main() {
     final barFocus = FocusNode();
     addTearDown(barFocus.dispose);
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         home: Column(
           children: [
             Expanded(child: _buildPage()),
@@ -241,7 +244,7 @@ void main() {
     final sidebarFocus = FocusNode();
     addTearDown(sidebarFocus.dispose);
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         home: Row(
           children: [
             Focus(
@@ -273,7 +276,7 @@ void main() {
     final coveredFocus = FocusNode();
     addTearDown(coveredFocus.dispose);
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         home: Row(
           children: [
             Focus(
@@ -288,7 +291,7 @@ void main() {
     unawaited(
       tester
           .state<NavigatorState>(find.byType(Navigator))
-          .push(MaterialPageRoute<void>(builder: (_) => _buildPage())),
+          .push(HostPageRoute<void>(builder: (_) => _buildPage())),
     );
     await tester.pumpAndSettle();
 

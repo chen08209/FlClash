@@ -1,28 +1,22 @@
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 void main() {
   testWidgets('hides expiry when both values do not fit', (tester) async {
     const trafficLabel = '1KB / 1GB';
 
     await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          AppUiLocalizations.delegate,
-          ...GlobalMaterialLocalizations.delegates,
-        ],
-        supportedLocales: AppLocalizations.delegate.supportedLocales,
+      HostApp(
         builder: (context, child) {
           return wrapAppScopes(context, child!);
         },
-        home: const Scaffold(
+        home: const HostScaffold(
           body: SizedBox(
             width: 120,
             child: SubscriptionInfoView(
@@ -52,15 +46,9 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         builder: (context, child) => wrapAppScopes(context, child!),
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          AppUiLocalizations.delegate,
-          ...GlobalMaterialLocalizations.delegates,
-        ],
-        supportedLocales: AppLocalizations.delegate.supportedLocales,
-        home: const Scaffold(
+        home: const HostScaffold(
           body: SizedBox(
             width: 300,
             child: SubscriptionInfoView(
@@ -89,17 +77,11 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          AppUiLocalizations.delegate,
-          ...GlobalMaterialLocalizations.delegates,
-        ],
-        supportedLocales: AppLocalizations.delegate.supportedLocales,
+      HostApp(
         builder: (context, child) {
           return wrapAppScopes(context, child!);
         },
-        home: const Scaffold(
+        home: const HostScaffold(
           body: SubscriptionInfoDetailView(
             subscriptionInfo: SubscriptionInfo(
               upload: 1024,

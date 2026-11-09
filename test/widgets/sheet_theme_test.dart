@@ -1,14 +1,14 @@
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
 
 ThemeData _theme(Brightness brightness) => ThemeData(
   colorScheme: ColorScheme.fromSeed(
-    seedColor: Colors.blue,
+    seedColor: const Color(0xFF2196F3),
     brightness: brightness,
   ),
 );
@@ -33,7 +33,7 @@ Future<ValueNotifier<ThemeMode>> _openFromPage(
           theme: _theme(Brightness.light),
           darkTheme: _theme(Brightness.dark),
           themeMode: themeMode,
-          child: CommonScaffold(
+          child: Scaffold(
             title: 'Page',
             body: Builder(
               builder: (context) => TextButton(
@@ -52,9 +52,9 @@ Future<ValueNotifier<ThemeMode>> _openFromPage(
 }
 
 Color? _sheetColor(WidgetTester tester) => tester
-    .widget<Material>(
+    .widget<Surface>(
       find
-          .ancestor(of: find.text('sheet'), matching: find.byType(Material))
+          .ancestor(of: find.text('sheet'), matching: find.byType(Surface))
           .first,
     )
     .color;

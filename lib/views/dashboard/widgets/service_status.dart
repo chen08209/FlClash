@@ -9,14 +9,14 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/providers/routed_probe.dart';
 import 'package:fl_clash/providers/service_status.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
-import 'package:fl_clash/views/dashboard/probe_start_hold.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
+import 'package:fl_clash/views/dashboard/probe_start_hold.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:material_ui/material_ui.dart';
 
 import 'card.dart';
 
@@ -413,7 +413,7 @@ class _CheckAllButton extends StatelessWidget {
     if (loading) {
       return const SizedBox.square(
         dimension: 32,
-        child: Center(child: CommonCircleLoading(size: 18)),
+        child: Center(child: ActivityIndicator(size: 18)),
       );
     }
     return DashboardIconButton(
@@ -503,12 +503,10 @@ class _OutboundIpLine extends StatelessWidget {
     if (ip == null) return line;
     return Tooltip(
       message: context.appLocalizations.outboundIp,
-      child: InkWell(
+      child: PressRegion(
         onTap: () => showIpQualitySheet(context, ip: ip.ip),
-        customBorder: AppShape.xs,
-        hoverColor: Colors.transparent,
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
+        shape: AppShape.xs,
+        overlay: PressRegion.focusOverlay,
         child: line,
       ),
     );
@@ -658,7 +656,7 @@ class ServiceStatusSheet extends ConsumerWidget {
     final state = ref.watch(serviceStatusProvider);
     final services = ref.read(serviceStatusProvider.notifier);
     final localizations = context.appLocalizations;
-    return CommonScaffold(
+    return Scaffold(
       title: localizations.serviceStatus,
       iconActions: [
         IconButtonData(
@@ -683,7 +681,7 @@ class ServiceStatusSheet extends ConsumerWidget {
           ),
           SliverPadding(
             padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + context.bottomInset),
-            sliver: SliverList.builder(
+            sliver: SliverPrismList(
               itemCount: targets.length,
               itemBuilder: (context, index) {
                 final target = targets[index];
@@ -753,7 +751,7 @@ class ServiceManageView extends ConsumerWidget {
       );
     }
 
-    return CommonScaffold(
+    return Scaffold(
       title: context.appLocalizations.serviceManage,
       body: CustomScrollView(
         shrinkWrap: true,
@@ -761,7 +759,7 @@ class ServiceManageView extends ConsumerWidget {
           SliverToBoxAdapter(
             child: SizedBox(height: context.contentTopPadding),
           ),
-          SliverReorderableList(
+          SliverPrismReorderableList(
             itemBuilder: (_, index) => itemAt(index),
             itemCount: targets.length,
             proxyDecorator: (child, index, animation) =>
@@ -802,7 +800,7 @@ class _ServiceManageItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onChanged = this.onChanged;
-    return ReorderableDelayedDragStartListener(
+    return ReorderDragStartListener(
       index: index,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -830,7 +828,7 @@ class _ServiceManageItem extends StatelessWidget {
             subtitle: shown
                 ? Text(context.appLocalizations.serviceShownOnDashboard)
                 : null,
-            trailing: CommonSwitch(value: enabled, onChanged: onChanged),
+            trailing: Switch(value: enabled, onChanged: onChanged),
           ),
         ),
       ),

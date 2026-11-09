@@ -5,7 +5,10 @@
 // pending, and the next JNI call on that thread aborts the process.
 package mobile
 
-import "core"
+import (
+	"core"
+	_ "core/timezone"
+)
 
 type ResultHandler interface {
 	OnResult(data []byte) error
@@ -82,6 +85,10 @@ func StopListener() {
 
 func ForceGC() {
 	core.ForceGC()
+}
+
+func SetMitmPressure(level int32) {
+	core.SetMitmPressure(level)
 }
 
 func UpdateDns(value string) {

@@ -115,55 +115,68 @@ class CoreLib extends CoreHandlerInterface {
   // The service opens and closes the Core's listeners itself and reports a run
   // that ends, so once it takes the command the Core's own answer is moot.
   @override
-  Future<bool> startListener() async {
-    await super.startListener();
-    return await _service?.start() ?? false;
+  Future<void> startListener() async {
+    await _ignoreUnanswered(super.startListener);
+    if (!await _service!.start()) {
+      throw const CoreMethodException(
+        code: 'service_refused',
+        message: 'The Android service did not start',
+      );
+    }
   }
 
   @override
-  Future<bool> stopListener() async {
-    final serviceStopped = await _service?.stop() ?? false;
-    await super.stopListener();
-    return serviceStopped;
+  Future<void> stopListener() async {
+    final serviceStopped = await _service!.stop();
+    await _ignoreUnanswered(super.stopListener);
+    if (!serviceStopped) {
+      throw const CoreMethodException(
+        code: 'service_refused',
+        message: 'The Android service did not stop',
+      );
+    }
+  }
+
+  Future<void> _ignoreUnanswered(Future<void> Function() command) async {
+    try {
+      await command();
+    } catch (error) {
+      if (!isUnansweredCoreError(error)) {
+        rethrow;
+      }
+    }
   }
 
   @override
-  Future<T?> invokeMethod<T>({
+  Future<Object?> invokeMethod({
     required CoreMethod method,
     Object? arguments,
     Duration? timeout,
   }) {
-    final call = _invokeMethod<T>(method: method, arguments: arguments);
+    final call = _send(method: method, arguments: arguments);
     return call.withTimeout(
       timeout: timeout,
       onTimeout: () {
         unawaited(call.then(discardSpilledFile, onError: (_) {}));
-        return null;
+        throw TimeoutException('Core method ${method.wireName} timed out');
       },
     );
   }
 
-  Future<T?> _invokeMethod<T>({
-    required CoreMethod method,
-    Object? arguments,
-  }) async {
+  Future<Object?> _send({required CoreMethod method, Object? arguments}) async {
     try {
       await _connectedCompleter.future.timeout(coreConnectionWaitDuration);
-    } catch (error) {
-      commonPrint.log(
-        'Invoke method ${method.name} before connection timed out: $error',
-        logLevel: coreFailureLogLevel(error),
+    } on TimeoutException {
+      throw CoreMethodException(
+        code: 'core_unavailable',
+        message: 'Core is not connected for ${method.wireName}',
       );
-      return null;
     }
     final id = '${++_methodCallId}';
-    final response = await _service?.invokeMethod(
+    final response = await _service!.invokeMethod(
       CoreMethodCall(id: id, method: method, arguments: arguments),
     );
-    if (response == null) {
-      return null;
-    }
-    return response.unwrap<T>();
+    return response.unwrap<Object?>();
   }
 }
 

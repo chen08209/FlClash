@@ -1,10 +1,12 @@
 import 'package:code_forge/code_forge.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:re_highlight/languages/yaml.dart';
 import 'package:re_highlight/styles/atom-one-light.dart';
 
 import 'support.dart';
+import '../../helpers/host_scaffold.dart';
+import '../../helpers/test_app.dart';
 
 const _glyphWidth = 16.0;
 const _gutterWidth = 57.6;
@@ -23,8 +25,8 @@ void main() {
     final controller = CodeForgeController()
       ..text = [for (var i = 0; i < 40; i++) 'a' * 60].join('\n');
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      HostApp(
+        home: HostScaffold(
           body: CodeForge(
             controller: controller,
             language: langYaml,

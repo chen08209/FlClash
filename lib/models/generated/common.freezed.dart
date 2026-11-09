@@ -580,7 +580,7 @@ as int,
 /// @nodoc
 mixin _$Metadata {
 
- int get uid; String get network; String get sourceIP; String get sourcePort; String get destinationIP; String get destinationPort; String get host; DnsMode? get dnsMode; String get process; String get processPath; String get remoteDestination; List<String> get sourceGeoIP; List<String> get destinationGeoIP; String get destinationIPASN; String get sourceIPASN; String get specialRules; String get specialProxy;
+ int get uid; String get network; String get sourceIP; String get sourcePort; String get destinationIP; String get destinationPort; String get host; DnsMode? get dnsMode; String get process; String get processPath; String get remoteDestination; List<String> get sourceGeoIP; List<String> get destinationGeoIP; String get destinationIPASN; String get sourceIPASN; String get specialRules; String get specialProxy; bool get mitm; bool get mitmRefused;
 /// Create a copy of Metadata
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -594,20 +594,20 @@ $MetadataCopyWith<Metadata> get copyWith => _$MetadataCopyWithImpl<Metadata>(thi
 @override
 bool operator ==(Object other) {
   final _this = this as Metadata;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Metadata&&(identical(other.uid, _this.uid) || other.uid == _this.uid)&&(identical(other.network, _this.network) || other.network == _this.network)&&(identical(other.sourceIP, _this.sourceIP) || other.sourceIP == _this.sourceIP)&&(identical(other.sourcePort, _this.sourcePort) || other.sourcePort == _this.sourcePort)&&(identical(other.destinationIP, _this.destinationIP) || other.destinationIP == _this.destinationIP)&&(identical(other.destinationPort, _this.destinationPort) || other.destinationPort == _this.destinationPort)&&(identical(other.host, _this.host) || other.host == _this.host)&&(identical(other.dnsMode, _this.dnsMode) || other.dnsMode == _this.dnsMode)&&(identical(other.process, _this.process) || other.process == _this.process)&&(identical(other.processPath, _this.processPath) || other.processPath == _this.processPath)&&(identical(other.remoteDestination, _this.remoteDestination) || other.remoteDestination == _this.remoteDestination)&&const DeepCollectionEquality().equals(other.sourceGeoIP, _this.sourceGeoIP)&&const DeepCollectionEquality().equals(other.destinationGeoIP, _this.destinationGeoIP)&&(identical(other.destinationIPASN, _this.destinationIPASN) || other.destinationIPASN == _this.destinationIPASN)&&(identical(other.sourceIPASN, _this.sourceIPASN) || other.sourceIPASN == _this.sourceIPASN)&&(identical(other.specialRules, _this.specialRules) || other.specialRules == _this.specialRules)&&(identical(other.specialProxy, _this.specialProxy) || other.specialProxy == _this.specialProxy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Metadata&&(identical(other.uid, _this.uid) || other.uid == _this.uid)&&(identical(other.network, _this.network) || other.network == _this.network)&&(identical(other.sourceIP, _this.sourceIP) || other.sourceIP == _this.sourceIP)&&(identical(other.sourcePort, _this.sourcePort) || other.sourcePort == _this.sourcePort)&&(identical(other.destinationIP, _this.destinationIP) || other.destinationIP == _this.destinationIP)&&(identical(other.destinationPort, _this.destinationPort) || other.destinationPort == _this.destinationPort)&&(identical(other.host, _this.host) || other.host == _this.host)&&(identical(other.dnsMode, _this.dnsMode) || other.dnsMode == _this.dnsMode)&&(identical(other.process, _this.process) || other.process == _this.process)&&(identical(other.processPath, _this.processPath) || other.processPath == _this.processPath)&&(identical(other.remoteDestination, _this.remoteDestination) || other.remoteDestination == _this.remoteDestination)&&const DeepCollectionEquality().equals(other.sourceGeoIP, _this.sourceGeoIP)&&const DeepCollectionEquality().equals(other.destinationGeoIP, _this.destinationGeoIP)&&(identical(other.destinationIPASN, _this.destinationIPASN) || other.destinationIPASN == _this.destinationIPASN)&&(identical(other.sourceIPASN, _this.sourceIPASN) || other.sourceIPASN == _this.sourceIPASN)&&(identical(other.specialRules, _this.specialRules) || other.specialRules == _this.specialRules)&&(identical(other.specialProxy, _this.specialProxy) || other.specialProxy == _this.specialProxy)&&(identical(other.mitm, _this.mitm) || other.mitm == _this.mitm)&&(identical(other.mitmRefused, _this.mitmRefused) || other.mitmRefused == _this.mitmRefused));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as Metadata;
-  return Object.hash(runtimeType,_this.uid,_this.network,_this.sourceIP,_this.sourcePort,_this.destinationIP,_this.destinationPort,_this.host,_this.dnsMode,_this.process,_this.processPath,_this.remoteDestination,const DeepCollectionEquality().hash(_this.sourceGeoIP),const DeepCollectionEquality().hash(_this.destinationGeoIP),_this.destinationIPASN,_this.sourceIPASN,_this.specialRules,_this.specialProxy);
+  return Object.hashAll([runtimeType,_this.uid,_this.network,_this.sourceIP,_this.sourcePort,_this.destinationIP,_this.destinationPort,_this.host,_this.dnsMode,_this.process,_this.processPath,_this.remoteDestination,const DeepCollectionEquality().hash(_this.sourceGeoIP),const DeepCollectionEquality().hash(_this.destinationGeoIP),_this.destinationIPASN,_this.sourceIPASN,_this.specialRules,_this.specialProxy,_this.mitm,_this.mitmRefused]);
 }
 
 @override
 String toString() {
   final _this = this as Metadata;
-  return 'Metadata(uid: ${_this.uid}, network: ${_this.network}, sourceIP: ${_this.sourceIP}, sourcePort: ${_this.sourcePort}, destinationIP: ${_this.destinationIP}, destinationPort: ${_this.destinationPort}, host: ${_this.host}, dnsMode: ${_this.dnsMode}, process: ${_this.process}, processPath: ${_this.processPath}, remoteDestination: ${_this.remoteDestination}, sourceGeoIP: ${_this.sourceGeoIP}, destinationGeoIP: ${_this.destinationGeoIP}, destinationIPASN: ${_this.destinationIPASN}, sourceIPASN: ${_this.sourceIPASN}, specialRules: ${_this.specialRules}, specialProxy: ${_this.specialProxy})';
+  return 'Metadata(uid: ${_this.uid}, network: ${_this.network}, sourceIP: ${_this.sourceIP}, sourcePort: ${_this.sourcePort}, destinationIP: ${_this.destinationIP}, destinationPort: ${_this.destinationPort}, host: ${_this.host}, dnsMode: ${_this.dnsMode}, process: ${_this.process}, processPath: ${_this.processPath}, remoteDestination: ${_this.remoteDestination}, sourceGeoIP: ${_this.sourceGeoIP}, destinationGeoIP: ${_this.destinationGeoIP}, destinationIPASN: ${_this.destinationIPASN}, sourceIPASN: ${_this.sourceIPASN}, specialRules: ${_this.specialRules}, specialProxy: ${_this.specialProxy}, mitm: ${_this.mitm}, mitmRefused: ${_this.mitmRefused})';
 }
 
 
@@ -618,7 +618,7 @@ abstract mixin class $MetadataCopyWith<$Res>  {
   factory $MetadataCopyWith(Metadata value, $Res Function(Metadata) _then) = _$MetadataCopyWithImpl;
 @useResult
 $Res call({
- int uid, String network, String sourceIP, String sourcePort, String destinationIP, String destinationPort, String host, DnsMode? dnsMode, String process, String processPath, String remoteDestination, List<String> sourceGeoIP, List<String> destinationGeoIP, String destinationIPASN, String sourceIPASN, String specialRules, String specialProxy
+ int uid, String network, String sourceIP, String sourcePort, String destinationIP, String destinationPort, String host, DnsMode? dnsMode, String process, String processPath, String remoteDestination, List<String> sourceGeoIP, List<String> destinationGeoIP, String destinationIPASN, String sourceIPASN, String specialRules, String specialProxy, bool mitm, bool mitmRefused
 });
 
 
@@ -635,7 +635,7 @@ class _$MetadataCopyWithImpl<$Res>
 
 /// Create a copy of Metadata
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? uid = null,Object? network = null,Object? sourceIP = null,Object? sourcePort = null,Object? destinationIP = null,Object? destinationPort = null,Object? host = null,Object? dnsMode = freezed,Object? process = null,Object? processPath = null,Object? remoteDestination = null,Object? sourceGeoIP = null,Object? destinationGeoIP = null,Object? destinationIPASN = null,Object? sourceIPASN = null,Object? specialRules = null,Object? specialProxy = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? uid = null,Object? network = null,Object? sourceIP = null,Object? sourcePort = null,Object? destinationIP = null,Object? destinationPort = null,Object? host = null,Object? dnsMode = freezed,Object? process = null,Object? processPath = null,Object? remoteDestination = null,Object? sourceGeoIP = null,Object? destinationGeoIP = null,Object? destinationIPASN = null,Object? sourceIPASN = null,Object? specialRules = null,Object? specialProxy = null,Object? mitm = null,Object? mitmRefused = null,}) {
   return _then(Metadata(
 uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
 as int,network: null == network ? _self.network : network // ignore: cast_nullable_to_non_nullable
@@ -654,7 +654,9 @@ as List<String>,destinationIPASN: null == destinationIPASN ? _self.destinationIP
 as String,sourceIPASN: null == sourceIPASN ? _self.sourceIPASN : sourceIPASN // ignore: cast_nullable_to_non_nullable
 as String,specialRules: null == specialRules ? _self.specialRules : specialRules // ignore: cast_nullable_to_non_nullable
 as String,specialProxy: null == specialProxy ? _self.specialProxy : specialProxy // ignore: cast_nullable_to_non_nullable
-as String,
+as String,mitm: null == mitm ? _self.mitm : mitm // ignore: cast_nullable_to_non_nullable
+as bool,mitmRefused: null == mitmRefused ? _self.mitmRefused : mitmRefused // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -739,10 +741,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int uid,  String network,  String sourceIP,  String sourcePort,  String destinationIP,  String destinationPort,  String host,  DnsMode? dnsMode,  String process,  String processPath,  String remoteDestination,  List<String> sourceGeoIP,  List<String> destinationGeoIP,  String destinationIPASN,  String sourceIPASN,  String specialRules,  String specialProxy)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int uid,  String network,  String sourceIP,  String sourcePort,  String destinationIP,  String destinationPort,  String host,  DnsMode? dnsMode,  String process,  String processPath,  String remoteDestination,  List<String> sourceGeoIP,  List<String> destinationGeoIP,  String destinationIPASN,  String sourceIPASN,  String specialRules,  String specialProxy,  bool mitm,  bool mitmRefused)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Metadata() when $default != null:
-return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.destinationIP,_that.destinationPort,_that.host,_that.dnsMode,_that.process,_that.processPath,_that.remoteDestination,_that.sourceGeoIP,_that.destinationGeoIP,_that.destinationIPASN,_that.sourceIPASN,_that.specialRules,_that.specialProxy);case _:
+return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.destinationIP,_that.destinationPort,_that.host,_that.dnsMode,_that.process,_that.processPath,_that.remoteDestination,_that.sourceGeoIP,_that.destinationGeoIP,_that.destinationIPASN,_that.sourceIPASN,_that.specialRules,_that.specialProxy,_that.mitm,_that.mitmRefused);case _:
   return orElse();
 
 }
@@ -760,10 +762,10 @@ return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.de
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int uid,  String network,  String sourceIP,  String sourcePort,  String destinationIP,  String destinationPort,  String host,  DnsMode? dnsMode,  String process,  String processPath,  String remoteDestination,  List<String> sourceGeoIP,  List<String> destinationGeoIP,  String destinationIPASN,  String sourceIPASN,  String specialRules,  String specialProxy)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int uid,  String network,  String sourceIP,  String sourcePort,  String destinationIP,  String destinationPort,  String host,  DnsMode? dnsMode,  String process,  String processPath,  String remoteDestination,  List<String> sourceGeoIP,  List<String> destinationGeoIP,  String destinationIPASN,  String sourceIPASN,  String specialRules,  String specialProxy,  bool mitm,  bool mitmRefused)  $default,) {final _that = this;
 switch (_that) {
 case _Metadata():
-return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.destinationIP,_that.destinationPort,_that.host,_that.dnsMode,_that.process,_that.processPath,_that.remoteDestination,_that.sourceGeoIP,_that.destinationGeoIP,_that.destinationIPASN,_that.sourceIPASN,_that.specialRules,_that.specialProxy);case _:
+return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.destinationIP,_that.destinationPort,_that.host,_that.dnsMode,_that.process,_that.processPath,_that.remoteDestination,_that.sourceGeoIP,_that.destinationGeoIP,_that.destinationIPASN,_that.sourceIPASN,_that.specialRules,_that.specialProxy,_that.mitm,_that.mitmRefused);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -780,10 +782,10 @@ return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.de
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int uid,  String network,  String sourceIP,  String sourcePort,  String destinationIP,  String destinationPort,  String host,  DnsMode? dnsMode,  String process,  String processPath,  String remoteDestination,  List<String> sourceGeoIP,  List<String> destinationGeoIP,  String destinationIPASN,  String sourceIPASN,  String specialRules,  String specialProxy)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int uid,  String network,  String sourceIP,  String sourcePort,  String destinationIP,  String destinationPort,  String host,  DnsMode? dnsMode,  String process,  String processPath,  String remoteDestination,  List<String> sourceGeoIP,  List<String> destinationGeoIP,  String destinationIPASN,  String sourceIPASN,  String specialRules,  String specialProxy,  bool mitm,  bool mitmRefused)?  $default,) {final _that = this;
 switch (_that) {
 case _Metadata() when $default != null:
-return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.destinationIP,_that.destinationPort,_that.host,_that.dnsMode,_that.process,_that.processPath,_that.remoteDestination,_that.sourceGeoIP,_that.destinationGeoIP,_that.destinationIPASN,_that.sourceIPASN,_that.specialRules,_that.specialProxy);case _:
+return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.destinationIP,_that.destinationPort,_that.host,_that.dnsMode,_that.process,_that.processPath,_that.remoteDestination,_that.sourceGeoIP,_that.destinationGeoIP,_that.destinationIPASN,_that.sourceIPASN,_that.specialRules,_that.specialProxy,_that.mitm,_that.mitmRefused);case _:
   return null;
 
 }
@@ -795,7 +797,7 @@ return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.de
 @JsonSerializable()
 
 class _Metadata implements Metadata {
-  const _Metadata({this.uid = 0, this.network = '', this.sourceIP = '', this.sourcePort = '', this.destinationIP = '', this.destinationPort = '', this.host = '', this.dnsMode, this.process = '', this.processPath = '', this.remoteDestination = '',  List<String> sourceGeoIP = const [],  List<String> destinationGeoIP = const [], this.destinationIPASN = '', this.sourceIPASN = '', this.specialRules = '', this.specialProxy = ''}): _sourceGeoIP = sourceGeoIP,_destinationGeoIP = destinationGeoIP;
+  const _Metadata({this.uid = 0, this.network = '', this.sourceIP = '', this.sourcePort = '', this.destinationIP = '', this.destinationPort = '', this.host = '', this.dnsMode, this.process = '', this.processPath = '', this.remoteDestination = '',  List<String> sourceGeoIP = const [],  List<String> destinationGeoIP = const [], this.destinationIPASN = '', this.sourceIPASN = '', this.specialRules = '', this.specialProxy = '', this.mitm = false, this.mitmRefused = false}): _sourceGeoIP = sourceGeoIP,_destinationGeoIP = destinationGeoIP;
   factory _Metadata.fromJson(Map<String, dynamic> json) => _$MetadataFromJson(json);
 
 @override@JsonKey() final  int uid;
@@ -827,6 +829,8 @@ class _Metadata implements Metadata {
 @override@JsonKey() final  String sourceIPASN;
 @override@JsonKey() final  String specialRules;
 @override@JsonKey() final  String specialProxy;
+@override@JsonKey() final  bool mitm;
+@override@JsonKey() final  bool mitmRefused;
 
 /// Create a copy of Metadata
 /// with the given fields replaced by the non-null parameter values.
@@ -841,18 +845,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Metadata&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.network, network) || other.network == network)&&(identical(other.sourceIP, sourceIP) || other.sourceIP == sourceIP)&&(identical(other.sourcePort, sourcePort) || other.sourcePort == sourcePort)&&(identical(other.destinationIP, destinationIP) || other.destinationIP == destinationIP)&&(identical(other.destinationPort, destinationPort) || other.destinationPort == destinationPort)&&(identical(other.host, host) || other.host == host)&&(identical(other.dnsMode, dnsMode) || other.dnsMode == dnsMode)&&(identical(other.process, process) || other.process == process)&&(identical(other.processPath, processPath) || other.processPath == processPath)&&(identical(other.remoteDestination, remoteDestination) || other.remoteDestination == remoteDestination)&&const DeepCollectionEquality().equals(other.sourceGeoIP, _sourceGeoIP)&&const DeepCollectionEquality().equals(other.destinationGeoIP, _destinationGeoIP)&&(identical(other.destinationIPASN, destinationIPASN) || other.destinationIPASN == destinationIPASN)&&(identical(other.sourceIPASN, sourceIPASN) || other.sourceIPASN == sourceIPASN)&&(identical(other.specialRules, specialRules) || other.specialRules == specialRules)&&(identical(other.specialProxy, specialProxy) || other.specialProxy == specialProxy));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Metadata&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.network, network) || other.network == network)&&(identical(other.sourceIP, sourceIP) || other.sourceIP == sourceIP)&&(identical(other.sourcePort, sourcePort) || other.sourcePort == sourcePort)&&(identical(other.destinationIP, destinationIP) || other.destinationIP == destinationIP)&&(identical(other.destinationPort, destinationPort) || other.destinationPort == destinationPort)&&(identical(other.host, host) || other.host == host)&&(identical(other.dnsMode, dnsMode) || other.dnsMode == dnsMode)&&(identical(other.process, process) || other.process == process)&&(identical(other.processPath, processPath) || other.processPath == processPath)&&(identical(other.remoteDestination, remoteDestination) || other.remoteDestination == remoteDestination)&&const DeepCollectionEquality().equals(other.sourceGeoIP, _sourceGeoIP)&&const DeepCollectionEquality().equals(other.destinationGeoIP, _destinationGeoIP)&&(identical(other.destinationIPASN, destinationIPASN) || other.destinationIPASN == destinationIPASN)&&(identical(other.sourceIPASN, sourceIPASN) || other.sourceIPASN == sourceIPASN)&&(identical(other.specialRules, specialRules) || other.specialRules == specialRules)&&(identical(other.specialProxy, specialProxy) || other.specialProxy == specialProxy)&&(identical(other.mitm, mitm) || other.mitm == mitm)&&(identical(other.mitmRefused, mitmRefused) || other.mitmRefused == mitmRefused));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,uid,network,sourceIP,sourcePort,destinationIP,destinationPort,host,dnsMode,process,processPath,remoteDestination,const DeepCollectionEquality().hash(_sourceGeoIP),const DeepCollectionEquality().hash(_destinationGeoIP),destinationIPASN,sourceIPASN,specialRules,specialProxy);
+    return Object.hashAll([runtimeType,uid,network,sourceIP,sourcePort,destinationIP,destinationPort,host,dnsMode,process,processPath,remoteDestination,const DeepCollectionEquality().hash(_sourceGeoIP),const DeepCollectionEquality().hash(_destinationGeoIP),destinationIPASN,sourceIPASN,specialRules,specialProxy,mitm,mitmRefused]);
 }
 
 @override
 String toString() {
-    return 'Metadata(uid: $uid, network: $network, sourceIP: $sourceIP, sourcePort: $sourcePort, destinationIP: $destinationIP, destinationPort: $destinationPort, host: $host, dnsMode: $dnsMode, process: $process, processPath: $processPath, remoteDestination: $remoteDestination, sourceGeoIP: $sourceGeoIP, destinationGeoIP: $destinationGeoIP, destinationIPASN: $destinationIPASN, sourceIPASN: $sourceIPASN, specialRules: $specialRules, specialProxy: $specialProxy)';
+    return 'Metadata(uid: $uid, network: $network, sourceIP: $sourceIP, sourcePort: $sourcePort, destinationIP: $destinationIP, destinationPort: $destinationPort, host: $host, dnsMode: $dnsMode, process: $process, processPath: $processPath, remoteDestination: $remoteDestination, sourceGeoIP: $sourceGeoIP, destinationGeoIP: $destinationGeoIP, destinationIPASN: $destinationIPASN, sourceIPASN: $sourceIPASN, specialRules: $specialRules, specialProxy: $specialProxy, mitm: $mitm, mitmRefused: $mitmRefused)';
 }
 
 
@@ -863,7 +867,7 @@ abstract mixin class _$MetadataCopyWith<$Res> implements $MetadataCopyWith<$Res>
   factory _$MetadataCopyWith(_Metadata value, $Res Function(_Metadata) _then) = __$MetadataCopyWithImpl;
 @override @useResult
 $Res call({
- int uid, String network, String sourceIP, String sourcePort, String destinationIP, String destinationPort, String host, DnsMode? dnsMode, String process, String processPath, String remoteDestination, List<String> sourceGeoIP, List<String> destinationGeoIP, String destinationIPASN, String sourceIPASN, String specialRules, String specialProxy
+ int uid, String network, String sourceIP, String sourcePort, String destinationIP, String destinationPort, String host, DnsMode? dnsMode, String process, String processPath, String remoteDestination, List<String> sourceGeoIP, List<String> destinationGeoIP, String destinationIPASN, String sourceIPASN, String specialRules, String specialProxy, bool mitm, bool mitmRefused
 });
 
 
@@ -880,7 +884,7 @@ class __$MetadataCopyWithImpl<$Res>
 
 /// Create a copy of Metadata
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? uid = null,Object? network = null,Object? sourceIP = null,Object? sourcePort = null,Object? destinationIP = null,Object? destinationPort = null,Object? host = null,Object? dnsMode = freezed,Object? process = null,Object? processPath = null,Object? remoteDestination = null,Object? sourceGeoIP = null,Object? destinationGeoIP = null,Object? destinationIPASN = null,Object? sourceIPASN = null,Object? specialRules = null,Object? specialProxy = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? uid = null,Object? network = null,Object? sourceIP = null,Object? sourcePort = null,Object? destinationIP = null,Object? destinationPort = null,Object? host = null,Object? dnsMode = freezed,Object? process = null,Object? processPath = null,Object? remoteDestination = null,Object? sourceGeoIP = null,Object? destinationGeoIP = null,Object? destinationIPASN = null,Object? sourceIPASN = null,Object? specialRules = null,Object? specialProxy = null,Object? mitm = null,Object? mitmRefused = null,}) {
   return _then(_Metadata(
 uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
 as int,network: null == network ? _self.network : network // ignore: cast_nullable_to_non_nullable
@@ -899,7 +903,9 @@ as List<String>,destinationIPASN: null == destinationIPASN ? _self.destinationIP
 as String,sourceIPASN: null == sourceIPASN ? _self.sourceIPASN : sourceIPASN // ignore: cast_nullable_to_non_nullable
 as String,specialRules: null == specialRules ? _self.specialRules : specialRules // ignore: cast_nullable_to_non_nullable
 as String,specialProxy: null == specialProxy ? _self.specialProxy : specialProxy // ignore: cast_nullable_to_non_nullable
-as String,
+as String,mitm: null == mitm ? _self.mitm : mitm // ignore: cast_nullable_to_non_nullable
+as bool,mitmRefused: null == mitmRefused ? _self.mitmRefused : mitmRefused // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -1506,7 +1512,7 @@ as String,
 /// @nodoc
 mixin _$LogsState {
 
- List<Log> get logs; List<String> get keywords; String get query; bool get autoScrollToEnd;
+ List<Log> get logs; String get query; bool get autoScrollToEnd;
 /// Create a copy of LogsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1518,20 +1524,20 @@ $LogsStateCopyWith<LogsState> get copyWith => _$LogsStateCopyWithImpl<LogsState>
 @override
 bool operator ==(Object other) {
   final _this = this as LogsState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LogsState&&const DeepCollectionEquality().equals(other.logs, _this.logs)&&const DeepCollectionEquality().equals(other.keywords, _this.keywords)&&(identical(other.query, _this.query) || other.query == _this.query)&&(identical(other.autoScrollToEnd, _this.autoScrollToEnd) || other.autoScrollToEnd == _this.autoScrollToEnd));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LogsState&&const DeepCollectionEquality().equals(other.logs, _this.logs)&&(identical(other.query, _this.query) || other.query == _this.query)&&(identical(other.autoScrollToEnd, _this.autoScrollToEnd) || other.autoScrollToEnd == _this.autoScrollToEnd));
 }
 
 
 @override
 int get hashCode {
   final _this = this as LogsState;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.logs),const DeepCollectionEquality().hash(_this.keywords),_this.query,_this.autoScrollToEnd);
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.logs),_this.query,_this.autoScrollToEnd);
 }
 
 @override
 String toString() {
   final _this = this as LogsState;
-  return 'LogsState(logs: ${_this.logs}, keywords: ${_this.keywords}, query: ${_this.query}, autoScrollToEnd: ${_this.autoScrollToEnd})';
+  return 'LogsState(logs: ${_this.logs}, query: ${_this.query}, autoScrollToEnd: ${_this.autoScrollToEnd})';
 }
 
 
@@ -1542,7 +1548,7 @@ abstract mixin class $LogsStateCopyWith<$Res>  {
   factory $LogsStateCopyWith(LogsState value, $Res Function(LogsState) _then) = _$LogsStateCopyWithImpl;
 @useResult
 $Res call({
- List<Log> logs, List<String> keywords, String query, bool autoScrollToEnd
+ List<Log> logs, String query, bool autoScrollToEnd
 });
 
 
@@ -1559,11 +1565,10 @@ class _$LogsStateCopyWithImpl<$Res>
 
 /// Create a copy of LogsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? logs = null,Object? keywords = null,Object? query = null,Object? autoScrollToEnd = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? logs = null,Object? query = null,Object? autoScrollToEnd = null,}) {
   return _then(LogsState(
 logs: null == logs ? _self.logs : logs // ignore: cast_nullable_to_non_nullable
-as List<Log>,keywords: null == keywords ? _self.keywords : keywords // ignore: cast_nullable_to_non_nullable
-as List<String>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
+as List<Log>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as String,autoScrollToEnd: null == autoScrollToEnd ? _self.autoScrollToEnd : autoScrollToEnd // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -1650,10 +1655,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Log> logs,  List<String> keywords,  String query,  bool autoScrollToEnd)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Log> logs,  String query,  bool autoScrollToEnd)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LogsState() when $default != null:
-return $default(_that.logs,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
+return $default(_that.logs,_that.query,_that.autoScrollToEnd);case _:
   return orElse();
 
 }
@@ -1671,10 +1676,10 @@ return $default(_that.logs,_that.keywords,_that.query,_that.autoScrollToEnd);cas
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Log> logs,  List<String> keywords,  String query,  bool autoScrollToEnd)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Log> logs,  String query,  bool autoScrollToEnd)  $default,) {final _that = this;
 switch (_that) {
 case _LogsState():
-return $default(_that.logs,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
+return $default(_that.logs,_that.query,_that.autoScrollToEnd);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1691,10 +1696,10 @@ return $default(_that.logs,_that.keywords,_that.query,_that.autoScrollToEnd);cas
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Log> logs,  List<String> keywords,  String query,  bool autoScrollToEnd)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Log> logs,  String query,  bool autoScrollToEnd)?  $default,) {final _that = this;
 switch (_that) {
 case _LogsState() when $default != null:
-return $default(_that.logs,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
+return $default(_that.logs,_that.query,_that.autoScrollToEnd);case _:
   return null;
 
 }
@@ -1706,7 +1711,7 @@ return $default(_that.logs,_that.keywords,_that.query,_that.autoScrollToEnd);cas
 
 
 class _LogsState implements LogsState {
-  const _LogsState({ List<Log> logs = const [],  List<String> keywords = const [], this.query = '', this.autoScrollToEnd = true}): _logs = logs,_keywords = keywords;
+  const _LogsState({ List<Log> logs = const [], this.query = '', this.autoScrollToEnd = true}): _logs = logs;
   
 
  final  List<Log> _logs;
@@ -1714,13 +1719,6 @@ class _LogsState implements LogsState {
   if (_logs is EqualUnmodifiableListView) return _logs;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_logs);
-}
-
- final  List<String> _keywords;
-@override@JsonKey() List<String> get keywords {
-  if (_keywords is EqualUnmodifiableListView) return _keywords;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_keywords);
 }
 
 @override@JsonKey() final  String query;
@@ -1736,18 +1734,18 @@ _$LogsStateCopyWith<_LogsState> get copyWith => __$LogsStateCopyWithImpl<_LogsSt
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LogsState&&const DeepCollectionEquality().equals(other.logs, _logs)&&const DeepCollectionEquality().equals(other.keywords, _keywords)&&(identical(other.query, query) || other.query == query)&&(identical(other.autoScrollToEnd, autoScrollToEnd) || other.autoScrollToEnd == autoScrollToEnd));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LogsState&&const DeepCollectionEquality().equals(other.logs, _logs)&&(identical(other.query, query) || other.query == query)&&(identical(other.autoScrollToEnd, autoScrollToEnd) || other.autoScrollToEnd == autoScrollToEnd));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_logs),const DeepCollectionEquality().hash(_keywords),query,autoScrollToEnd);
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_logs),query,autoScrollToEnd);
 }
 
 @override
 String toString() {
-    return 'LogsState(logs: $logs, keywords: $keywords, query: $query, autoScrollToEnd: $autoScrollToEnd)';
+    return 'LogsState(logs: $logs, query: $query, autoScrollToEnd: $autoScrollToEnd)';
 }
 
 
@@ -1758,7 +1756,7 @@ abstract mixin class _$LogsStateCopyWith<$Res> implements $LogsStateCopyWith<$Re
   factory _$LogsStateCopyWith(_LogsState value, $Res Function(_LogsState) _then) = __$LogsStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<Log> logs, List<String> keywords, String query, bool autoScrollToEnd
+ List<Log> logs, String query, bool autoScrollToEnd
 });
 
 
@@ -1775,11 +1773,10 @@ class __$LogsStateCopyWithImpl<$Res>
 
 /// Create a copy of LogsState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? logs = null,Object? keywords = null,Object? query = null,Object? autoScrollToEnd = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? logs = null,Object? query = null,Object? autoScrollToEnd = null,}) {
   return _then(_LogsState(
 logs: null == logs ? _self._logs : logs // ignore: cast_nullable_to_non_nullable
-as List<Log>,keywords: null == keywords ? _self._keywords : keywords // ignore: cast_nullable_to_non_nullable
-as List<String>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
+as List<Log>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as String,autoScrollToEnd: null == autoScrollToEnd ? _self.autoScrollToEnd : autoScrollToEnd // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -1791,7 +1788,7 @@ as bool,
 /// @nodoc
 mixin _$TrackerInfosState {
 
- List<TrackerInfo> get trackerInfos; List<String> get keywords; String get query; bool get autoScrollToEnd;
+ List<TrackerInfo> get trackerInfos; String get query; bool get autoScrollToEnd;
 /// Create a copy of TrackerInfosState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1803,20 +1800,20 @@ $TrackerInfosStateCopyWith<TrackerInfosState> get copyWith => _$TrackerInfosStat
 @override
 bool operator ==(Object other) {
   final _this = this as TrackerInfosState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrackerInfosState&&const DeepCollectionEquality().equals(other.trackerInfos, _this.trackerInfos)&&const DeepCollectionEquality().equals(other.keywords, _this.keywords)&&(identical(other.query, _this.query) || other.query == _this.query)&&(identical(other.autoScrollToEnd, _this.autoScrollToEnd) || other.autoScrollToEnd == _this.autoScrollToEnd));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrackerInfosState&&const DeepCollectionEquality().equals(other.trackerInfos, _this.trackerInfos)&&(identical(other.query, _this.query) || other.query == _this.query)&&(identical(other.autoScrollToEnd, _this.autoScrollToEnd) || other.autoScrollToEnd == _this.autoScrollToEnd));
 }
 
 
 @override
 int get hashCode {
   final _this = this as TrackerInfosState;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.trackerInfos),const DeepCollectionEquality().hash(_this.keywords),_this.query,_this.autoScrollToEnd);
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.trackerInfos),_this.query,_this.autoScrollToEnd);
 }
 
 @override
 String toString() {
   final _this = this as TrackerInfosState;
-  return 'TrackerInfosState(trackerInfos: ${_this.trackerInfos}, keywords: ${_this.keywords}, query: ${_this.query}, autoScrollToEnd: ${_this.autoScrollToEnd})';
+  return 'TrackerInfosState(trackerInfos: ${_this.trackerInfos}, query: ${_this.query}, autoScrollToEnd: ${_this.autoScrollToEnd})';
 }
 
 
@@ -1827,7 +1824,7 @@ abstract mixin class $TrackerInfosStateCopyWith<$Res>  {
   factory $TrackerInfosStateCopyWith(TrackerInfosState value, $Res Function(TrackerInfosState) _then) = _$TrackerInfosStateCopyWithImpl;
 @useResult
 $Res call({
- List<TrackerInfo> trackerInfos, List<String> keywords, String query, bool autoScrollToEnd
+ List<TrackerInfo> trackerInfos, String query, bool autoScrollToEnd
 });
 
 
@@ -1844,11 +1841,10 @@ class _$TrackerInfosStateCopyWithImpl<$Res>
 
 /// Create a copy of TrackerInfosState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? trackerInfos = null,Object? keywords = null,Object? query = null,Object? autoScrollToEnd = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? trackerInfos = null,Object? query = null,Object? autoScrollToEnd = null,}) {
   return _then(TrackerInfosState(
 trackerInfos: null == trackerInfos ? _self.trackerInfos : trackerInfos // ignore: cast_nullable_to_non_nullable
-as List<TrackerInfo>,keywords: null == keywords ? _self.keywords : keywords // ignore: cast_nullable_to_non_nullable
-as List<String>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
+as List<TrackerInfo>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as String,autoScrollToEnd: null == autoScrollToEnd ? _self.autoScrollToEnd : autoScrollToEnd // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -1935,10 +1931,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<TrackerInfo> trackerInfos,  List<String> keywords,  String query,  bool autoScrollToEnd)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<TrackerInfo> trackerInfos,  String query,  bool autoScrollToEnd)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TrackerInfosState() when $default != null:
-return $default(_that.trackerInfos,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
+return $default(_that.trackerInfos,_that.query,_that.autoScrollToEnd);case _:
   return orElse();
 
 }
@@ -1956,10 +1952,10 @@ return $default(_that.trackerInfos,_that.keywords,_that.query,_that.autoScrollTo
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<TrackerInfo> trackerInfos,  List<String> keywords,  String query,  bool autoScrollToEnd)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<TrackerInfo> trackerInfos,  String query,  bool autoScrollToEnd)  $default,) {final _that = this;
 switch (_that) {
 case _TrackerInfosState():
-return $default(_that.trackerInfos,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
+return $default(_that.trackerInfos,_that.query,_that.autoScrollToEnd);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1976,10 +1972,10 @@ return $default(_that.trackerInfos,_that.keywords,_that.query,_that.autoScrollTo
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<TrackerInfo> trackerInfos,  List<String> keywords,  String query,  bool autoScrollToEnd)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<TrackerInfo> trackerInfos,  String query,  bool autoScrollToEnd)?  $default,) {final _that = this;
 switch (_that) {
 case _TrackerInfosState() when $default != null:
-return $default(_that.trackerInfos,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
+return $default(_that.trackerInfos,_that.query,_that.autoScrollToEnd);case _:
   return null;
 
 }
@@ -1991,7 +1987,7 @@ return $default(_that.trackerInfos,_that.keywords,_that.query,_that.autoScrollTo
 
 
 class _TrackerInfosState implements TrackerInfosState {
-  const _TrackerInfosState({ List<TrackerInfo> trackerInfos = const [],  List<String> keywords = const [], this.query = '', this.autoScrollToEnd = true}): _trackerInfos = trackerInfos,_keywords = keywords;
+  const _TrackerInfosState({ List<TrackerInfo> trackerInfos = const [], this.query = '', this.autoScrollToEnd = true}): _trackerInfos = trackerInfos;
   
 
  final  List<TrackerInfo> _trackerInfos;
@@ -1999,13 +1995,6 @@ class _TrackerInfosState implements TrackerInfosState {
   if (_trackerInfos is EqualUnmodifiableListView) return _trackerInfos;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_trackerInfos);
-}
-
- final  List<String> _keywords;
-@override@JsonKey() List<String> get keywords {
-  if (_keywords is EqualUnmodifiableListView) return _keywords;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_keywords);
 }
 
 @override@JsonKey() final  String query;
@@ -2021,18 +2010,18 @@ _$TrackerInfosStateCopyWith<_TrackerInfosState> get copyWith => __$TrackerInfosS
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TrackerInfosState&&const DeepCollectionEquality().equals(other.trackerInfos, _trackerInfos)&&const DeepCollectionEquality().equals(other.keywords, _keywords)&&(identical(other.query, query) || other.query == query)&&(identical(other.autoScrollToEnd, autoScrollToEnd) || other.autoScrollToEnd == autoScrollToEnd));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TrackerInfosState&&const DeepCollectionEquality().equals(other.trackerInfos, _trackerInfos)&&(identical(other.query, query) || other.query == query)&&(identical(other.autoScrollToEnd, autoScrollToEnd) || other.autoScrollToEnd == autoScrollToEnd));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_trackerInfos),const DeepCollectionEquality().hash(_keywords),query,autoScrollToEnd);
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_trackerInfos),query,autoScrollToEnd);
 }
 
 @override
 String toString() {
-    return 'TrackerInfosState(trackerInfos: $trackerInfos, keywords: $keywords, query: $query, autoScrollToEnd: $autoScrollToEnd)';
+    return 'TrackerInfosState(trackerInfos: $trackerInfos, query: $query, autoScrollToEnd: $autoScrollToEnd)';
 }
 
 
@@ -2043,7 +2032,7 @@ abstract mixin class _$TrackerInfosStateCopyWith<$Res> implements $TrackerInfosS
   factory _$TrackerInfosStateCopyWith(_TrackerInfosState value, $Res Function(_TrackerInfosState) _then) = __$TrackerInfosStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<TrackerInfo> trackerInfos, List<String> keywords, String query, bool autoScrollToEnd
+ List<TrackerInfo> trackerInfos, String query, bool autoScrollToEnd
 });
 
 
@@ -2060,11 +2049,10 @@ class __$TrackerInfosStateCopyWithImpl<$Res>
 
 /// Create a copy of TrackerInfosState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? trackerInfos = null,Object? keywords = null,Object? query = null,Object? autoScrollToEnd = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? trackerInfos = null,Object? query = null,Object? autoScrollToEnd = null,}) {
   return _then(_TrackerInfosState(
 trackerInfos: null == trackerInfos ? _self._trackerInfos : trackerInfos // ignore: cast_nullable_to_non_nullable
-as List<TrackerInfo>,keywords: null == keywords ? _self._keywords : keywords // ignore: cast_nullable_to_non_nullable
-as List<String>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
+as List<TrackerInfo>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as String,autoScrollToEnd: null == autoScrollToEnd ? _self.autoScrollToEnd : autoScrollToEnd // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -2379,7 +2367,7 @@ as DateTime,
 /// @nodoc
 mixin _$DnsQueriesState {
 
- List<DnsQuery> get dnsQueries; List<String> get keywords; String get query; bool get autoScrollToEnd;
+ List<DnsQuery> get dnsQueries; String get query; bool get autoScrollToEnd;
 /// Create a copy of DnsQueriesState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2391,20 +2379,20 @@ $DnsQueriesStateCopyWith<DnsQueriesState> get copyWith => _$DnsQueriesStateCopyW
 @override
 bool operator ==(Object other) {
   final _this = this as DnsQueriesState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DnsQueriesState&&const DeepCollectionEquality().equals(other.dnsQueries, _this.dnsQueries)&&const DeepCollectionEquality().equals(other.keywords, _this.keywords)&&(identical(other.query, _this.query) || other.query == _this.query)&&(identical(other.autoScrollToEnd, _this.autoScrollToEnd) || other.autoScrollToEnd == _this.autoScrollToEnd));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DnsQueriesState&&const DeepCollectionEquality().equals(other.dnsQueries, _this.dnsQueries)&&(identical(other.query, _this.query) || other.query == _this.query)&&(identical(other.autoScrollToEnd, _this.autoScrollToEnd) || other.autoScrollToEnd == _this.autoScrollToEnd));
 }
 
 
 @override
 int get hashCode {
   final _this = this as DnsQueriesState;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.dnsQueries),const DeepCollectionEquality().hash(_this.keywords),_this.query,_this.autoScrollToEnd);
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.dnsQueries),_this.query,_this.autoScrollToEnd);
 }
 
 @override
 String toString() {
   final _this = this as DnsQueriesState;
-  return 'DnsQueriesState(dnsQueries: ${_this.dnsQueries}, keywords: ${_this.keywords}, query: ${_this.query}, autoScrollToEnd: ${_this.autoScrollToEnd})';
+  return 'DnsQueriesState(dnsQueries: ${_this.dnsQueries}, query: ${_this.query}, autoScrollToEnd: ${_this.autoScrollToEnd})';
 }
 
 
@@ -2415,7 +2403,7 @@ abstract mixin class $DnsQueriesStateCopyWith<$Res>  {
   factory $DnsQueriesStateCopyWith(DnsQueriesState value, $Res Function(DnsQueriesState) _then) = _$DnsQueriesStateCopyWithImpl;
 @useResult
 $Res call({
- List<DnsQuery> dnsQueries, List<String> keywords, String query, bool autoScrollToEnd
+ List<DnsQuery> dnsQueries, String query, bool autoScrollToEnd
 });
 
 
@@ -2432,11 +2420,10 @@ class _$DnsQueriesStateCopyWithImpl<$Res>
 
 /// Create a copy of DnsQueriesState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? dnsQueries = null,Object? keywords = null,Object? query = null,Object? autoScrollToEnd = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? dnsQueries = null,Object? query = null,Object? autoScrollToEnd = null,}) {
   return _then(DnsQueriesState(
 dnsQueries: null == dnsQueries ? _self.dnsQueries : dnsQueries // ignore: cast_nullable_to_non_nullable
-as List<DnsQuery>,keywords: null == keywords ? _self.keywords : keywords // ignore: cast_nullable_to_non_nullable
-as List<String>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
+as List<DnsQuery>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as String,autoScrollToEnd: null == autoScrollToEnd ? _self.autoScrollToEnd : autoScrollToEnd // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -2523,10 +2510,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<DnsQuery> dnsQueries,  List<String> keywords,  String query,  bool autoScrollToEnd)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<DnsQuery> dnsQueries,  String query,  bool autoScrollToEnd)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DnsQueriesState() when $default != null:
-return $default(_that.dnsQueries,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
+return $default(_that.dnsQueries,_that.query,_that.autoScrollToEnd);case _:
   return orElse();
 
 }
@@ -2544,10 +2531,10 @@ return $default(_that.dnsQueries,_that.keywords,_that.query,_that.autoScrollToEn
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<DnsQuery> dnsQueries,  List<String> keywords,  String query,  bool autoScrollToEnd)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<DnsQuery> dnsQueries,  String query,  bool autoScrollToEnd)  $default,) {final _that = this;
 switch (_that) {
 case _DnsQueriesState():
-return $default(_that.dnsQueries,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
+return $default(_that.dnsQueries,_that.query,_that.autoScrollToEnd);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2564,10 +2551,10 @@ return $default(_that.dnsQueries,_that.keywords,_that.query,_that.autoScrollToEn
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<DnsQuery> dnsQueries,  List<String> keywords,  String query,  bool autoScrollToEnd)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<DnsQuery> dnsQueries,  String query,  bool autoScrollToEnd)?  $default,) {final _that = this;
 switch (_that) {
 case _DnsQueriesState() when $default != null:
-return $default(_that.dnsQueries,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
+return $default(_that.dnsQueries,_that.query,_that.autoScrollToEnd);case _:
   return null;
 
 }
@@ -2579,7 +2566,7 @@ return $default(_that.dnsQueries,_that.keywords,_that.query,_that.autoScrollToEn
 
 
 class _DnsQueriesState implements DnsQueriesState {
-  const _DnsQueriesState({ List<DnsQuery> dnsQueries = const [],  List<String> keywords = const [], this.query = '', this.autoScrollToEnd = true}): _dnsQueries = dnsQueries,_keywords = keywords;
+  const _DnsQueriesState({ List<DnsQuery> dnsQueries = const [], this.query = '', this.autoScrollToEnd = true}): _dnsQueries = dnsQueries;
   
 
  final  List<DnsQuery> _dnsQueries;
@@ -2587,13 +2574,6 @@ class _DnsQueriesState implements DnsQueriesState {
   if (_dnsQueries is EqualUnmodifiableListView) return _dnsQueries;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_dnsQueries);
-}
-
- final  List<String> _keywords;
-@override@JsonKey() List<String> get keywords {
-  if (_keywords is EqualUnmodifiableListView) return _keywords;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_keywords);
 }
 
 @override@JsonKey() final  String query;
@@ -2609,18 +2589,18 @@ _$DnsQueriesStateCopyWith<_DnsQueriesState> get copyWith => __$DnsQueriesStateCo
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DnsQueriesState&&const DeepCollectionEquality().equals(other.dnsQueries, _dnsQueries)&&const DeepCollectionEquality().equals(other.keywords, _keywords)&&(identical(other.query, query) || other.query == query)&&(identical(other.autoScrollToEnd, autoScrollToEnd) || other.autoScrollToEnd == autoScrollToEnd));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DnsQueriesState&&const DeepCollectionEquality().equals(other.dnsQueries, _dnsQueries)&&(identical(other.query, query) || other.query == query)&&(identical(other.autoScrollToEnd, autoScrollToEnd) || other.autoScrollToEnd == autoScrollToEnd));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_dnsQueries),const DeepCollectionEquality().hash(_keywords),query,autoScrollToEnd);
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_dnsQueries),query,autoScrollToEnd);
 }
 
 @override
 String toString() {
-    return 'DnsQueriesState(dnsQueries: $dnsQueries, keywords: $keywords, query: $query, autoScrollToEnd: $autoScrollToEnd)';
+    return 'DnsQueriesState(dnsQueries: $dnsQueries, query: $query, autoScrollToEnd: $autoScrollToEnd)';
 }
 
 
@@ -2631,7 +2611,7 @@ abstract mixin class _$DnsQueriesStateCopyWith<$Res> implements $DnsQueriesState
   factory _$DnsQueriesStateCopyWith(_DnsQueriesState value, $Res Function(_DnsQueriesState) _then) = __$DnsQueriesStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<DnsQuery> dnsQueries, List<String> keywords, String query, bool autoScrollToEnd
+ List<DnsQuery> dnsQueries, String query, bool autoScrollToEnd
 });
 
 
@@ -2648,11 +2628,10 @@ class __$DnsQueriesStateCopyWithImpl<$Res>
 
 /// Create a copy of DnsQueriesState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? dnsQueries = null,Object? keywords = null,Object? query = null,Object? autoScrollToEnd = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? dnsQueries = null,Object? query = null,Object? autoScrollToEnd = null,}) {
   return _then(_DnsQueriesState(
 dnsQueries: null == dnsQueries ? _self._dnsQueries : dnsQueries // ignore: cast_nullable_to_non_nullable
-as List<DnsQuery>,keywords: null == keywords ? _self._keywords : keywords // ignore: cast_nullable_to_non_nullable
-as List<String>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
+as List<DnsQuery>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as String,autoScrollToEnd: null == autoScrollToEnd ? _self.autoScrollToEnd : autoScrollToEnd // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -5397,6 +5376,314 @@ as String,lastUpdateTime: null == lastUpdateTime ? _self.lastUpdateTime : lastUp
 as DateTime,url: freezed == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
 as String?,order: freezed == order ? _self.order : order // ignore: cast_nullable_to_non_nullable
 as int?,
+  ));
+}
+
+
+}
+
+/// @nodoc
+mixin _$MitmModule {
+
+ int get id; String get name; String get description; String? get url; bool get enabled; int? get order; Map<String, String> get arguments; Map<String, String> get resources; String? get system;/// Its scripts FlClash runs, which turning it on asks about first.
+ int get scripts; DateTime get lastUpdateTime;
+/// Create a copy of MitmModule
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MitmModuleCopyWith<MitmModule> get copyWith => _$MitmModuleCopyWithImpl<MitmModule>(this as MitmModule, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as MitmModule;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmModule&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.enabled, _this.enabled) || other.enabled == _this.enabled)&&(identical(other.order, _this.order) || other.order == _this.order)&&const DeepCollectionEquality().equals(other.arguments, _this.arguments)&&const DeepCollectionEquality().equals(other.resources, _this.resources)&&(identical(other.system, _this.system) || other.system == _this.system)&&(identical(other.scripts, _this.scripts) || other.scripts == _this.scripts)&&(identical(other.lastUpdateTime, _this.lastUpdateTime) || other.lastUpdateTime == _this.lastUpdateTime));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as MitmModule;
+  return Object.hash(runtimeType,_this.id,_this.name,_this.description,_this.url,_this.enabled,_this.order,const DeepCollectionEquality().hash(_this.arguments),const DeepCollectionEquality().hash(_this.resources),_this.system,_this.scripts,_this.lastUpdateTime);
+}
+
+@override
+String toString() {
+  final _this = this as MitmModule;
+  return 'MitmModule(id: ${_this.id}, name: ${_this.name}, description: ${_this.description}, url: ${_this.url}, enabled: ${_this.enabled}, order: ${_this.order}, arguments: ${_this.arguments}, resources: ${_this.resources}, system: ${_this.system}, scripts: ${_this.scripts}, lastUpdateTime: ${_this.lastUpdateTime})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MitmModuleCopyWith<$Res>  {
+  factory $MitmModuleCopyWith(MitmModule value, $Res Function(MitmModule) _then) = _$MitmModuleCopyWithImpl;
+@useResult
+$Res call({
+ int id, String name, String description, String? url, bool enabled, int? order, Map<String, String> arguments, Map<String, String> resources, String? system, int scripts, DateTime lastUpdateTime
+});
+
+
+
+
+}
+/// @nodoc
+class _$MitmModuleCopyWithImpl<$Res>
+    implements $MitmModuleCopyWith<$Res> {
+  _$MitmModuleCopyWithImpl(this._self, this._then);
+
+  final MitmModule _self;
+  final $Res Function(MitmModule) _then;
+
+/// Create a copy of MitmModule
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? description = null,Object? url = freezed,Object? enabled = null,Object? order = freezed,Object? arguments = null,Object? resources = null,Object? system = freezed,Object? scripts = null,Object? lastUpdateTime = null,}) {
+  return _then(MitmModule(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,url: freezed == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String?,enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
+as bool,order: freezed == order ? _self.order : order // ignore: cast_nullable_to_non_nullable
+as int?,arguments: null == arguments ? _self.arguments : arguments // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,resources: null == resources ? _self.resources : resources // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,system: freezed == system ? _self.system : system // ignore: cast_nullable_to_non_nullable
+as String?,scripts: null == scripts ? _self.scripts : scripts // ignore: cast_nullable_to_non_nullable
+as int,lastUpdateTime: null == lastUpdateTime ? _self.lastUpdateTime : lastUpdateTime // ignore: cast_nullable_to_non_nullable
+as DateTime,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [MitmModule].
+extension MitmModulePatterns on MitmModule {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _MitmModule value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _MitmModule() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _MitmModule value)  $default,){
+final _that = this;
+switch (_that) {
+case _MitmModule():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _MitmModule value)?  $default,){
+final _that = this;
+switch (_that) {
+case _MitmModule() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String name,  String description,  String? url,  bool enabled,  int? order,  Map<String, String> arguments,  Map<String, String> resources,  String? system,  int scripts,  DateTime lastUpdateTime)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _MitmModule() when $default != null:
+return $default(_that.id,_that.name,_that.description,_that.url,_that.enabled,_that.order,_that.arguments,_that.resources,_that.system,_that.scripts,_that.lastUpdateTime);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String name,  String description,  String? url,  bool enabled,  int? order,  Map<String, String> arguments,  Map<String, String> resources,  String? system,  int scripts,  DateTime lastUpdateTime)  $default,) {final _that = this;
+switch (_that) {
+case _MitmModule():
+return $default(_that.id,_that.name,_that.description,_that.url,_that.enabled,_that.order,_that.arguments,_that.resources,_that.system,_that.scripts,_that.lastUpdateTime);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String name,  String description,  String? url,  bool enabled,  int? order,  Map<String, String> arguments,  Map<String, String> resources,  String? system,  int scripts,  DateTime lastUpdateTime)?  $default,) {final _that = this;
+switch (_that) {
+case _MitmModule() when $default != null:
+return $default(_that.id,_that.name,_that.description,_that.url,_that.enabled,_that.order,_that.arguments,_that.resources,_that.system,_that.scripts,_that.lastUpdateTime);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _MitmModule implements MitmModule {
+  const _MitmModule({required this.id, required this.name, this.description = '', this.url, this.enabled = true, this.order,  Map<String, String> arguments = const {},  Map<String, String> resources = const {}, this.system, this.scripts = 0, required this.lastUpdateTime}): _arguments = arguments,_resources = resources;
+  
+
+@override final  int id;
+@override final  String name;
+@override@JsonKey() final  String description;
+@override final  String? url;
+@override@JsonKey() final  bool enabled;
+@override final  int? order;
+ final  Map<String, String> _arguments;
+@override@JsonKey() Map<String, String> get arguments {
+  if (_arguments is EqualUnmodifiableMapView) return _arguments;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_arguments);
+}
+
+ final  Map<String, String> _resources;
+@override@JsonKey() Map<String, String> get resources {
+  if (_resources is EqualUnmodifiableMapView) return _resources;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_resources);
+}
+
+@override final  String? system;
+/// Its scripts FlClash runs, which turning it on asks about first.
+@override@JsonKey() final  int scripts;
+@override final  DateTime lastUpdateTime;
+
+/// Create a copy of MitmModule
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$MitmModuleCopyWith<_MitmModule> get copyWith => __$MitmModuleCopyWithImpl<_MitmModule>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmModule&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.url, url) || other.url == url)&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.order, order) || other.order == order)&&const DeepCollectionEquality().equals(other.arguments, _arguments)&&const DeepCollectionEquality().equals(other.resources, _resources)&&(identical(other.system, system) || other.system == system)&&(identical(other.scripts, scripts) || other.scripts == scripts)&&(identical(other.lastUpdateTime, lastUpdateTime) || other.lastUpdateTime == lastUpdateTime));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,id,name,description,url,enabled,order,const DeepCollectionEquality().hash(_arguments),const DeepCollectionEquality().hash(_resources),system,scripts,lastUpdateTime);
+}
+
+@override
+String toString() {
+    return 'MitmModule(id: $id, name: $name, description: $description, url: $url, enabled: $enabled, order: $order, arguments: $arguments, resources: $resources, system: $system, scripts: $scripts, lastUpdateTime: $lastUpdateTime)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$MitmModuleCopyWith<$Res> implements $MitmModuleCopyWith<$Res> {
+  factory _$MitmModuleCopyWith(_MitmModule value, $Res Function(_MitmModule) _then) = __$MitmModuleCopyWithImpl;
+@override @useResult
+$Res call({
+ int id, String name, String description, String? url, bool enabled, int? order, Map<String, String> arguments, Map<String, String> resources, String? system, int scripts, DateTime lastUpdateTime
+});
+
+
+
+
+}
+/// @nodoc
+class __$MitmModuleCopyWithImpl<$Res>
+    implements _$MitmModuleCopyWith<$Res> {
+  __$MitmModuleCopyWithImpl(this._self, this._then);
+
+  final _MitmModule _self;
+  final $Res Function(_MitmModule) _then;
+
+/// Create a copy of MitmModule
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? description = null,Object? url = freezed,Object? enabled = null,Object? order = freezed,Object? arguments = null,Object? resources = null,Object? system = freezed,Object? scripts = null,Object? lastUpdateTime = null,}) {
+  return _then(_MitmModule(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,url: freezed == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String?,enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
+as bool,order: freezed == order ? _self.order : order // ignore: cast_nullable_to_non_nullable
+as int?,arguments: null == arguments ? _self._arguments : arguments // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,resources: null == resources ? _self._resources : resources // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,system: freezed == system ? _self.system : system // ignore: cast_nullable_to_non_nullable
+as String?,scripts: null == scripts ? _self.scripts : scripts // ignore: cast_nullable_to_non_nullable
+as int,lastUpdateTime: null == lastUpdateTime ? _self.lastUpdateTime : lastUpdateTime // ignore: cast_nullable_to_non_nullable
+as DateTime,
   ));
 }
 

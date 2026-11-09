@@ -21,7 +21,9 @@ class _SpeedSample {
 }
 
 /// Derives per-connection speed from successive cumulative snapshots and
-/// orders connections by it without reshuffling the list every poll.
+/// orders connections by it without reshuffling the list every poll. A
+/// connection that did not change comes back as the same instance, so its
+/// row is not rebuilt.
 class TrackerSpeedRanker {
   // Closing a connection triggers an out-of-band refresh; a delta over a few
   // milliseconds would read as a spike, so such samples keep the last speed.
@@ -30,6 +32,7 @@ class TrackerSpeedRanker {
 
   final _samples = <String, _SpeedSample>{};
   var _positions = const <String, int>{};
+  var _ranked = const <String, TrackerInfo>{};
 
   List<TrackerInfo> rank(List<TrackerInfo> trackerInfos, DateTime now) {
     final samples = <String, _SpeedSample>{
@@ -51,9 +54,11 @@ class TrackerSpeedRanker {
     final ranked =
         [
           for (final trackerInfo in trackerInfos)
-            trackerInfo.copyWith(
-              uploadSpeed: samples[trackerInfo.id]!.uploadSpeed,
-              downloadSpeed: samples[trackerInfo.id]!.downloadSpeed,
+            _unchangedOr(
+              trackerInfo.copyWith(
+                uploadSpeed: samples[trackerInfo.id]!.uploadSpeed,
+                downloadSpeed: samples[trackerInfo.id]!.downloadSpeed,
+              ),
             ),
         ]..sort((a, b) {
           final bucketA = bucketOf(a);
@@ -80,7 +85,13 @@ class TrackerSpeedRanker {
     _positions = {
       for (final (index, trackerInfo) in ranked.indexed) trackerInfo.id: index,
     };
+    _ranked = {for (final trackerInfo in ranked) trackerInfo.id: trackerInfo};
     return ranked;
+  }
+
+  TrackerInfo _unchangedOr(TrackerInfo trackerInfo) {
+    final previous = _ranked[trackerInfo.id];
+    return previous == trackerInfo ? previous! : trackerInfo;
   }
 
   _SpeedSample _sample(TrackerInfo trackerInfo, DateTime now) {

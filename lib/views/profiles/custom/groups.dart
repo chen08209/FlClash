@@ -10,12 +10,13 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/foundation.dart' show listEquals;
+import 'package:flutter/scheduler.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'icon.dart';
 import 'members.dart';
-import 'quick_edit.dart';
 
 const _defaultEmptyFallback = 'COMPATIBLE';
 
@@ -240,15 +241,15 @@ class _CustomProxyGroupsSectionState
     });
   }
 
-  List<CommonPopupMenuItem> _menuItems(ProxyGroup proxyGroup) {
+  List<PopupMenuItem> _menuItems(ProxyGroup proxyGroup) {
     final appLocalizations = context.appLocalizations;
     return [
-      CommonPopupMenuItem(
+      PopupMenuItem(
         glyph: AppGlyphs.copy,
         label: appLocalizations.copy,
         onPressed: () => _handleDuplicate({proxyGroup.id}),
       ),
-      CommonPopupMenuItem(
+      PopupMenuItem(
         glyph: AppGlyphs.delete,
         label: appLocalizations.delete,
         danger: true,
@@ -299,27 +300,41 @@ class _CustomProxyGroupsSectionState
     final selected = _selected.intersection(ids);
     Widget itemAt(int index) {
       final proxyGroup = proxyGroups![index];
-      return SortableItem(
+      final position = ItemPosition.get(index, proxyGroups.length);
+      final isEditing = selected.isNotEmpty;
+      final isSelected = selected.contains(proxyGroup.id);
+      return MemoBuilder(
         key: ValueKey(proxyGroup.id),
-        index: index,
-        child: ContextMenuRegion(
-          menuItems: selected.isEmpty ? _menuItems(proxyGroup) : null,
-          child: ItemPositionProvider(
-            position: ItemPosition.get(index, proxyGroups.length),
-            child: _ProxyGroupItem(
-              profileId: widget.profileId,
-              proxyGroup: proxyGroup,
-              isEditing: selected.isNotEmpty,
-              isSelected: selected.contains(proxyGroup.id),
-              onSelected: () => _handleToggleSelected(proxyGroup.id),
-              onPressed: () => _handleAddOrUpdate(proxyGroup: proxyGroup),
+        inputs: [
+          widget,
+          appLocalizations,
+          proxyGroup,
+          index,
+          position,
+          isEditing,
+          isSelected,
+        ],
+        builder: (_) => SortableItem(
+          index: index,
+          child: ContextMenuRegion(
+            menuItems: isEditing ? null : _menuItems(proxyGroup),
+            child: ItemPositionProvider(
+              position: position,
+              child: _ProxyGroupItem(
+                profileId: widget.profileId,
+                proxyGroup: proxyGroup,
+                isEditing: isEditing,
+                isSelected: isSelected,
+                onSelected: () => _handleToggleSelected(proxyGroup.id),
+                onPressed: () => _handleAddOrUpdate(proxyGroup: proxyGroup),
+              ),
             ),
           ),
         ),
       );
     }
 
-    return CommonPopScope(
+    return PopGuard(
       onPop: selected.isEmpty && !_sorting
           ? null
           : (_) {
@@ -345,11 +360,14 @@ class _CustomProxyGroupsSectionState
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: NullStatus(label: appLocalizations.proxyGroupEmpty),
+                  child: NullStatus(
+                    label: appLocalizations.proxyGroupEmpty,
+                    illustration: NullStatusIllustration.data,
+                  ),
                 ),
               )
             else if (proxyGroups != null)
-              SliverReorderableList(
+              SliverPrismReorderableList(
                 itemBuilder: (_, index) => itemAt(index),
                 itemCount: proxyGroups.length,
                 itemExtent: _groupRowExtent,
@@ -420,7 +438,7 @@ class _ProxyGroupItem extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (issues.isNotEmpty) CustomIssueButton(issues: issues),
-          CommonCheckBox(
+          Checkbox(
             value: isSelected,
             isCircle: true,
             onChanged: (_) => onSelected(),
@@ -451,14 +469,14 @@ List<String> _filtersOf(ProxyGroup group) => [
 
 List<CustomIssue> _filterIssues(
   AppLocalizations appLocalizations,
-  List<String> errors,
+  Map<int, String> issues,
 ) => [
   for (final (index, title) in [
     appLocalizations.filter,
     appLocalizations.excludeFilter,
   ].indexed)
-    if (errors[index].isNotEmpty)
-      CustomIssue.invalidFilter(title, errors[index]),
+    if (issues[index] case final issue?)
+      CustomIssue.invalidFilter(title, issue),
 ];
 
 Future<bool> _handleSaveProxyGroup(BuildContext context, WidgetRef ref) async {
@@ -469,11 +487,9 @@ Future<bool> _handleSaveProxyGroup(BuildContext context, WidgetRef ref) async {
   if (profileData == null) {
     return false;
   }
-  final blocking = proxyGroupIssues(
-    proxyGroup,
-    profileData,
-  ).where(_blocksSave).toList();
+  final issues = ProxyGroupIssueCheck.once(proxyGroup, profileData);
   final filterErrors = await checkFilters(ref, _filtersOf(proxyGroup));
+  final blocking = (await issues).where(_blocksSave).toList();
   if (!context.mounted) {
     return false;
   }
@@ -528,7 +544,9 @@ class _EditProxyGroupViewState extends ConsumerState<EditProxyGroupView> {
   bool _saving = false;
   Timer? _filterTimer;
   int _filterRequest = 0;
-  List<String> _filterErrors = const ['', ''];
+  Map<int, String> _filterErrors = const {};
+  late final _issueCheck = ProxyGroupIssueCheck(_handleGroupIssues);
+  List<CustomIssue> _groupIssues = const [];
 
   @override
   void initState() {
@@ -541,12 +559,50 @@ class _EditProxyGroupViewState extends ConsumerState<EditProxyGroupView> {
       (_, _) => _scheduleFilterCheck(),
       fireImmediately: true,
     );
+    final profileId = context
+        .getInheritedWidgetOfExactType<ProfileIdProvider>()!
+        .profileId;
+    final profileData = customProfileDataProvider(profileId);
+    ref.listenManual(proxyGroupProvider, (_, _) => _checkGroup(profileData));
+    ref.listenManual(profileData, (_, _) => _checkGroup(profileData));
+    _checkGroup(profileData);
   }
 
   @override
   void dispose() {
     _filterTimer?.cancel();
+    _issueCheck.cancel();
     super.dispose();
+  }
+
+  void _checkGroup(ProviderListenable<CustomProfileData?> profileData) {
+    final data = ref.read(profileData);
+    if (data == null) {
+      _issueCheck.cancel();
+      _handleGroupIssues(const []);
+      return;
+    }
+    _issueCheck.run(ref.read(proxyGroupProvider), data);
+  }
+
+  void _handleGroupIssues(List<CustomIssue> issues) {
+    if (!mounted || listEquals(issues, _groupIssues)) {
+      return;
+    }
+    final scheduler = SchedulerBinding.instance;
+    if (scheduler.schedulerPhase != SchedulerPhase.persistentCallbacks) {
+      setState(() {
+        _groupIssues = issues;
+      });
+      return;
+    }
+    // Reached from a provider read inside another widget's build.
+    _groupIssues = issues;
+    scheduler.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 
   void _scheduleFilterCheck() {
@@ -554,9 +610,9 @@ class _EditProxyGroupViewState extends ConsumerState<EditProxyGroupView> {
     final request = ++_filterRequest;
     final filters = _filtersOf(ref.read(proxyGroupProvider));
     if (filters.every((filter) => filter.isEmpty)) {
-      if (_filterErrors.any((error) => error.isNotEmpty)) {
+      if (_filterErrors.isNotEmpty) {
         setState(() {
-          _filterErrors = const ['', ''];
+          _filterErrors = const {};
         });
       }
       return;
@@ -567,7 +623,7 @@ class _EditProxyGroupViewState extends ConsumerState<EditProxyGroupView> {
         return;
       }
       setState(() {
-        _filterErrors = errors ?? const ['', ''];
+        _filterErrors = errors ?? const {};
       });
     });
   }
@@ -827,7 +883,7 @@ class _EditProxyGroupViewState extends ConsumerState<EditProxyGroupView> {
       title: context.appLocalizations.hashByInUser,
       leading: leading,
       onPressed: handleChangeHashKey,
-      trailing: CommonSwitch(
+      trailing: Switch(
         value: value,
         onChanged: (_) {
           handleChangeHashKey();
@@ -956,7 +1012,7 @@ class _EditProxyGroupViewState extends ConsumerState<EditProxyGroupView> {
       title: appLocalizations.hideFromList,
       leading: leading,
       onPressed: handleChangeHidden,
-      trailing: CommonSwitch(
+      trailing: Switch(
         value: hidden ?? false,
         onChanged: (_) {
           handleChangeHidden();
@@ -979,7 +1035,7 @@ class _EditProxyGroupViewState extends ConsumerState<EditProxyGroupView> {
       title: appLocalizations.testWhenUsed,
       leading: leading,
       onPressed: handleChangeLazy,
-      trailing: CommonSwitch(
+      trailing: Switch(
         value: value,
         onChanged: (_) {
           handleChangeLazy();
@@ -1002,7 +1058,7 @@ class _EditProxyGroupViewState extends ConsumerState<EditProxyGroupView> {
       title: appLocalizations.disableUDP,
       leading: leading,
       onPressed: handleChangeDisableUDP,
-      trailing: CommonSwitch(
+      trailing: Switch(
         value: disableUDP ?? false,
         onChanged: (_) {
           handleChangeDisableUDP();
@@ -1087,7 +1143,7 @@ class _EditProxyGroupViewState extends ConsumerState<EditProxyGroupView> {
 
   Future<void> _handleQuickEdit() {
     final group = ref.read(proxyGroupProvider);
-    return showCustomQuickEdit(
+    return showQuickEdit(
       context,
       title: group.name.isEmpty
           ? context.appLocalizations.quickEdit
@@ -1315,20 +1371,9 @@ class _EditProxyGroupViewState extends ConsumerState<EditProxyGroupView> {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     final profileId = ProfileIdProvider.of(context)!.profileId;
-    final profileData = ref.watch(customProfileDataProvider(profileId));
     final showIncomplete = !_isNew || _submitted;
     final issues = [
-      ...ref
-          .watch(
-            proxyGroupProvider.select(
-              (state) => SelectValue(
-                profileData == null
-                    ? const <CustomIssue>[]
-                    : proxyGroupIssues(state, profileData),
-              ),
-            ),
-          )
-          .value,
+      ..._groupIssues,
       ..._filterIssues(appLocalizations, _filterErrors),
     ].where((issue) => showIncomplete || !issue.isIncomplete).toList();
     final nameInvalid = issues.any(
@@ -1340,7 +1385,7 @@ class _EditProxyGroupViewState extends ConsumerState<EditProxyGroupView> {
     final emptyFallbackIssues = issues
         .whereType<InvalidEmptyFallbackIssue>()
         .toList();
-    return CommonScaffold(
+    return Scaffold(
       iconActions: [
         customQuickEditAction(context, onPressed: _handleQuickEdit),
       ],

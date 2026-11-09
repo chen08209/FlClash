@@ -1,12 +1,12 @@
 package com.follow.clash
 
 import com.follow.clash.common.AccessControlMode
-import com.follow.clash.models.SetupParams
 import com.follow.clash.models.SharedState
 import com.follow.clash.service.models.AccessControlProps
 import com.follow.clash.service.models.NotificationParams
 import com.follow.clash.service.models.VpnOptions
 import com.google.gson.Gson
+import com.google.gson.JsonParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.toList
@@ -38,7 +38,9 @@ private fun vpnOptions(enable: Boolean = true, stack: String = "gvisor") = VpnOp
 
 private fun configuredState(enable: Boolean = true, stack: String = "gvisor") = SharedState(
     vpnOptions = vpnOptions(enable, stack),
-    setupParams = SetupParams(testUrl = "https://example.com", selectedMap = emptyMap()),
+    setupParams = JsonParser.parseString(
+        """{"selected-map":{},"options":{"test-url":"https://example.com"}}""",
+    ).asJsonObject,
 )
 
 private const val STARTED_AT = 1_700_000_000_000L

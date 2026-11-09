@@ -38,7 +38,7 @@ listeners:
 		t.Fatalf("write profile: %v", err)
 	}
 
-	raw, err := handleGetConfig(path)
+	raw, err := readRawConfig(path)
 	if err != nil {
 		t.Fatalf("handleGetConfig = %v", err)
 	}
@@ -69,7 +69,7 @@ func TestHandleGetConfigLeavesProfilesWithoutShortIDsToMihomo(t *testing.T) {
 		t.Fatalf("write profile: %v", err)
 	}
 
-	raw, err := handleGetConfig(path)
+	raw, err := readRawConfig(path)
 	if err != nil {
 		t.Fatalf("handleGetConfig = %v", err)
 	}

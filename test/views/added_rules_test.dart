@@ -6,13 +6,15 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/config/rules.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_database_providers.dart';
+import '../helpers/host_scaffold.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 class _RecordingGlobalRules extends TestGlobalRules {
   _RecordingGlobalRules(super.initial);
@@ -73,11 +75,11 @@ void main() {
         container: container,
         child: TestApp(
           child: pushed
-              ? Scaffold(
+              ? HostScaffold(
                   body: Builder(
                     builder: (context) => TextButton(
                       onPressed: () => Navigator.of(context).push(
-                        CommonRoute<void>(
+                        CardPageRoute<void>(
                           builder: (_) => const AddedRulesView(),
                         ),
                       ),
@@ -116,7 +118,7 @@ void main() {
 
     expect(_barAction(currentAppLocalizations.delete), findsNothing);
 
-    await tester.tap(find.byType(CommonCheckBox).first);
+    await tester.tap(find.byType(Checkbox).first);
     await tester.pumpAndSettle();
 
     expect(_barAction(currentAppLocalizations.selectAll), findsOneWidget);
@@ -135,7 +137,7 @@ void main() {
   ) async {
     await pumpRules(tester, [_rule(1, 'a.com'), _rule(2, 'b.com')]);
 
-    await tester.tap(find.byType(CommonCheckBox).first);
+    await tester.tap(find.byType(Checkbox).first);
     await tester.pumpAndSettle();
     await _tapBarAction(tester, currentAppLocalizations.selectAll);
     await _tapBarAction(tester, currentAppLocalizations.delete);
@@ -150,7 +152,7 @@ void main() {
   testWidgets('declining the delete dialog keeps every rule', (tester) async {
     await pumpRules(tester, [_rule(1, 'a.com'), _rule(2, 'b.com')]);
 
-    await tester.tap(find.byType(CommonCheckBox).first);
+    await tester.tap(find.byType(Checkbox).first);
     await tester.pumpAndSettle();
     await _tapBarAction(tester, currentAppLocalizations.delete);
     await tester.tap(find.text(currentAppLocalizations.cancel));
@@ -163,7 +165,7 @@ void main() {
   testWidgets('deleting only removes the selected rule', (tester) async {
     await pumpRules(tester, [_rule(1, 'a.com'), _rule(2, 'b.com')]);
 
-    await tester.tap(find.byType(CommonCheckBox).last);
+    await tester.tap(find.byType(Checkbox).last);
     await tester.pumpAndSettle();
     await _tapBarAction(tester, currentAppLocalizations.delete);
     await tester.tap(find.text(currentAppLocalizations.delete));
@@ -187,12 +189,12 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    await tester.tap(find.byType(CommonCheckBox));
+    await tester.tap(find.byType(Checkbox));
     await tester.pumpAndSettle();
     await dragBack();
     expect(find.text('a.com'), findsOneWidget);
 
-    await tester.tap(find.byType(CommonCheckBox));
+    await tester.tap(find.byType(Checkbox));
     await tester.pumpAndSettle();
     await dragBack();
     expect(find.text('a.com'), findsNothing);
@@ -211,13 +213,13 @@ void main() {
       tester,
     ) async {
       await pumpRules(tester, [_rule(1, 'a.com'), _rule(2, 'b.net')]);
-      expect(find.byType(ReorderableList), findsOneWidget);
+      expect(find.byType(PrismReorderableListView), findsOneWidget);
 
       await search(tester, 'NET');
 
       expect(find.text('b.net'), findsOneWidget);
       expect(find.text('a.com'), findsNothing);
-      expect(find.byType(ReorderableList), findsNothing);
+      expect(find.byType(PrismReorderableListView), findsNothing);
     });
 
     testWidgets('matches the rule type and the target', (tester) async {
@@ -249,7 +251,7 @@ void main() {
       ]);
 
       await search(tester, 'com');
-      await tester.tap(find.byType(CommonCheckBox).first);
+      await tester.tap(find.byType(Checkbox).first);
       await tester.pumpAndSettle();
       await _tapBarAction(tester, currentAppLocalizations.selectAll);
       await _tapBarAction(tester, currentAppLocalizations.delete);

@@ -272,7 +272,7 @@ func TestDecodeMethodArgumentsRejectsInvalidPayloads(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			call := &MethodCall{
 				ID:        "1",
-				Method:    initClashMethod,
+				Method:    coreInitMethod,
 				Arguments: json.RawMessage(test.arguments),
 			}
 
@@ -291,7 +291,7 @@ func TestDecodeMethodArgumentsRejectsInvalidPayloads(t *testing.T) {
 func TestDecodeMethodArgumentsAcceptsValidPayload(t *testing.T) {
 	call := &MethodCall{
 		ID:        "1",
-		Method:    initClashMethod,
+		Method:    coreInitMethod,
 		Arguments: json.RawMessage(`{"home-dir":"/tmp/flclash","version":3}`),
 	}
 
@@ -422,8 +422,8 @@ func TestMethodHandlerErrorsBecomeFailureEnvelopes(t *testing.T) {
 	}{
 		{"plain error", withFallible(func(string) (string, error) { return "", errors.New("boom") }), "core_error", ""},
 		{"structured error", withFallible(func(string) (string, error) { return "", structured }), "provider_updating", ""},
-		{"message", withMessage(func(string) error { return errors.New("boom") }), "", "boom"},
-		{"structured message", withMessage(func(string) error { return structured }), "provider_updating", ""},
+		{"command error", command(func(string) error { return errors.New("boom") }), "core_error", ""},
+		{"structured command error", command(func(string) error { return structured }), "provider_updating", ""},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -466,7 +466,7 @@ func TestSendMessageBatchDoesNotDoubleEncodeArguments(t *testing.T) {
 }
 
 func TestHandleMethodCallReportsMissingArguments(t *testing.T) {
-	frame := handleMethodCall(&MethodCall{ID: "3", Method: getTrafficMethod})
+	frame := handleMethodCall(&MethodCall{ID: "3", Method: trafficCurrentMethod})
 
 	var envelope struct {
 		Error *MethodError `json:"error"`

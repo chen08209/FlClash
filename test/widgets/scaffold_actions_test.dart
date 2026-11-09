@@ -1,6 +1,6 @@
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/glyph_finders.dart';
@@ -28,7 +28,7 @@ Future<List<String>> _pumpBar(
   await tester.pumpWidget(
     TestApp(
       wrapInProviderScope: true,
-      child: CommonScaffold(
+      child: Scaffold(
         title: 'Page',
         searchState: hasSearch ? AppBarSearchState(onSearch: (_) {}) : null,
         primaryAction: primary == null ? null : action(primary),
@@ -36,7 +36,7 @@ Future<List<String>> _pumpBar(
         selectionActions: [for (final label in selection) action(label)],
         menuItems: [
           for (final label in menuItems)
-            CommonPopupMenuItem(label: label, onPressed: () => taps.add(label)),
+            PopupMenuItem(label: label, onPressed: () => taps.add(label)),
         ],
         body: const SizedBox.expand(),
       ),
@@ -250,7 +250,7 @@ void main() {
           wrapInProviderScope: true,
           child: SheetProvider(
             type: type,
-            child: CommonScaffold(
+            child: Scaffold(
               title: 'Sheet',
               searchState: AppBarSearchState(onSearch: (_) {}),
               primaryAction: IconButtonData(
@@ -273,7 +273,7 @@ void main() {
     await tester.pumpWidget(
       TestApp(
         wrapInProviderScope: true,
-        child: CommonScaffold(
+        child: Scaffold(
           title: 'Page',
           primaryAction: IconButtonData(
             glyph: AppGlyphs.add,
@@ -286,7 +286,6 @@ void main() {
     );
 
     expect(_barButtons(tester), ['Add']);
-    expect(find.byType(FloatingActionButton), findsNothing);
   });
 
   testWidgets('a title menu opens from the title start and runs its items', (
@@ -296,13 +295,10 @@ void main() {
     await tester.pumpWidget(
       TestApp(
         wrapInProviderScope: true,
-        child: CommonScaffold(
+        child: Scaffold(
           title: 'Page',
           titleMenuItems: [
-            CommonPopupMenuItem(
-              label: 'Rename',
-              onPressed: () => taps.add('Rename'),
-            ),
+            PopupMenuItem(label: 'Rename', onPressed: () => taps.add('Rename')),
           ],
           body: const SizedBox.expand(),
         ),

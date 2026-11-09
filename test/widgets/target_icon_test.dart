@@ -4,8 +4,8 @@ import 'dart:ui' as ui;
 
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
@@ -87,7 +87,7 @@ void main() {
           child: Builder(
             builder: (context) => TextButton(
               onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
+                HostPageRoute<void>(
                   builder: (_) => const Center(
                     child: IconTheme(
                       data: IconThemeData(size: 32),
@@ -130,7 +130,7 @@ void main() {
           child: Builder(
             builder: (context) => TextButton(
               onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
+                HostPageRoute<void>(
                   builder: (_) => IconTheme(
                     data: const IconThemeData(size: 32),
                     child: icons,

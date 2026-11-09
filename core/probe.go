@@ -38,9 +38,7 @@ var (
 )
 
 type probeRoute struct {
-	chains      []string
-	rule        string
-	rulePayload string
+	chains []string
 }
 
 // probeDialer opens one connection per dial, either pinned to a proxy or
@@ -219,11 +217,7 @@ func notifyProbeRoute(tracker statistic.Tracker) {
 	if !ok {
 		return
 	}
-	pending.(*routedConn).settle(&probeRoute{
-		chains:      append([]string(nil), info.Chain...),
-		rule:        info.Rule,
-		rulePayload: info.RulePayload,
-	})
+	pending.(*routedConn).settle(&probeRoute{chains: append([]string(nil), info.Chain...)})
 }
 
 func probeErrorKind(err error) string {
@@ -252,15 +246,20 @@ type probeRequest struct {
 	recorder *hitRecorder
 }
 
-func handleProbe(params *ProbeParams) *ProbeResult {
-	return runProbe(context.Background(), probeRequest{
-		method:    http.MethodGet,
-		url:       params.Url,
-		proxyName: params.ProxyName,
-		headers:   params.Headers,
-		timeout:   timeoutFromMillis(params.Timeout, defaultProbeTimeout),
-		maxBody:   params.MaxBody,
-	})
+type ProbeResult struct {
+	StatusCode   int
+	Delay        int64
+	Body         string
+	Url          string
+	Chains       []string
+	Error        string
+	Message      string
+	CoreEpoch    uint64
+	RouteVersion uint64
+
+	header    http.Header
+	lowerBody string
+	hits      []RouteHit
 }
 
 // runProbe returns nil when the request never got a slot before its deadline.
@@ -347,8 +346,6 @@ func runProbe(parent context.Context, req probeRequest) *ProbeResult {
 	result.Url = response.Request.URL.String()
 	if route := dialer.route(); route != nil {
 		result.Chains = route.chains
-		result.Rule = route.rule
-		result.RulePayload = route.rulePayload
 	}
 	if req.maxBody > 0 {
 		result.Body = readProbeBody(response.Body, req.maxBody, req.until)

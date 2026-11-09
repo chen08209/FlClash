@@ -149,7 +149,7 @@ func TestHandleCompileRuleSetWritesTheMrsBesideTheSource(t *testing.T) {
 	if *info != (RuleSetInfo{"domain", "text"}) {
 		t.Fatalf("info = %+v", *info)
 	}
-	dump, err := handleDumpRuleSet(filepath.Join(dir, "set.mrs"))
+	dump, err := handleDumpRuleSet(PathParams{Path: filepath.Join(dir, "set.mrs")})
 	if err != nil || dump != "+.example.com\n" {
 		t.Fatalf("dump = %q, %v", dump, err)
 	}
@@ -211,7 +211,7 @@ func TestHandleCompileRuleSetKeepsTheLastDownloadOnFailure(t *testing.T) {
 	if err != nil || string(source) != "example.com\n" {
 		t.Fatalf("source = %q, %v; want the first download", source, err)
 	}
-	if dump, err := handleDumpRuleSet(filepath.Join(dir, "remote.mrs")); err != nil || dump != "example.com\n" {
+	if dump, err := handleDumpRuleSet(PathParams{Path: filepath.Join(dir, "remote.mrs")}); err != nil || dump != "example.com\n" {
 		t.Fatalf("mrs dump = %q, %v; want the first download", dump, err)
 	}
 }

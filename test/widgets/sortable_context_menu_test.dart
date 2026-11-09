@@ -5,11 +5,12 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 class _Harness extends StatefulWidget {
   const _Harness({required this.sorting, required this.pressed});
@@ -27,11 +28,11 @@ class _HarnessState extends State<_Harness> {
   Widget _buildItem(int index) {
     final item = _items[index];
     return SortableItem(
-      key: ValueKey(item),
+      key: GlobalObjectKey(item),
       index: index,
       child: ContextMenuRegion(
         menuItems: [
-          CommonPopupMenuItem(
+          PopupMenuItem(
             glyph: AppGlyphs.delete,
             label: 'Delete $item',
             onPressed: () => widget.pressed.add('delete $item'),
@@ -50,16 +51,19 @@ class _HarnessState extends State<_Harness> {
   Widget build(BuildContext context) {
     return SortModeScope(
       sorting: widget.sorting,
-      child: Scaffold(
-        body: ReorderableListView.builder(
-          buildDefaultDragHandles: false,
-          itemCount: _items.length,
-          itemBuilder: (_, index) => _buildItem(index),
-          onReorderItem: (oldIndex, newIndex) {
-            setState(() {
-              _items = _items.copyAndReorder(oldIndex, newIndex);
-            });
-          },
+      child: HostScaffold(
+        body: CustomScrollView(
+          slivers: [
+            SliverReorderableList(
+              itemCount: _items.length,
+              itemBuilder: (_, index) => _buildItem(index),
+              onReorderItem: (oldIndex, newIndex) {
+                setState(() {
+                  _items = _items.copyAndReorder(oldIndex, newIndex);
+                });
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -91,12 +95,12 @@ Future<ValueNotifier<bool>> _pumpSyncing(WidgetTester tester) async {
     ValueListenableBuilder(
       valueListenable: syncing,
       builder: (_, value, _) => TestApp(
-        child: Scaffold(
+        child: HostScaffold(
           body: ContextMenuRegion(
             menuItems: value
                 ? null
                 : [
-                    CommonPopupMenuItem(
+                    PopupMenuItem(
                       glyph: AppGlyphs.sync,
                       label: 'Sync',
                       onPressed: () => syncing.value = true,
@@ -245,6 +249,131 @@ void main() {
     expect(_order(tester, ['a', 'b', 'c']), ['c', 'a', 'b']);
   });
 
+  group('a mouse on a sorting row', () {
+    Future<void> mouseDrag(WidgetTester tester, Offset by) async {
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.text('a')),
+        kind: PointerDeviceKind.mouse,
+      );
+      await tester.pump();
+      for (var step = 0; step < 4; step++) {
+        await gesture.moveBy(by / 4);
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      await gesture.up();
+      await tester.pumpAndSettle();
+    }
+
+    double rowHeight(WidgetTester tester) =>
+        tester.getTopLeft(find.text('b')).dy -
+        tester.getTopLeft(find.text('a')).dy;
+
+    testWidgets('drags without a long press', (tester) async {
+      await _pump(tester, sorting: true);
+      await mouseDrag(tester, Offset(0, rowHeight(tester) * 2 + 16));
+      expect(_order(tester, ['a', 'b', 'c']), ['b', 'c', 'a']);
+    });
+
+    testWidgets('leaves a sideways drag alone', (tester) async {
+      await _pump(tester, sorting: true);
+      await mouseDrag(tester, const Offset(120, 0));
+      expect(tester.takeException(), isNull);
+      expect(_order(tester, ['a', 'b', 'c']), ['a', 'b', 'c']);
+    });
+
+    testWidgets('does not drag outside sort mode', (tester) async {
+      await _pump(tester);
+      await mouseDrag(tester, Offset(0, rowHeight(tester) * 2 + 16));
+      expect(_order(tester, ['a', 'b', 'c']), ['a', 'b', 'c']);
+    });
+  });
+
+  testWidgets('an unknown pointer waits for a long press', (tester) async {
+    await _pump(tester, sorting: true);
+    final rowHeight =
+        tester.getTopLeft(find.text('b')).dy -
+        tester.getTopLeft(find.text('a')).dy;
+    Future<void> dragDown({required bool hold}) async {
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.text('a')),
+        kind: PointerDeviceKind.unknown,
+      );
+      await tester.pump(
+        hold
+            ? kLongPressTimeout + const Duration(milliseconds: 50)
+            : kPressTimeout,
+      );
+      for (var step = 0; step < 4; step++) {
+        await gesture.moveBy(Offset(0, rowHeight * 2 / 4 + 4));
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      await gesture.up();
+      await tester.pumpAndSettle();
+    }
+
+    await dragDown(hold: false);
+    expect(_order(tester, ['a', 'b', 'c']), ['a', 'b', 'c']);
+
+    await dragDown(hold: true);
+    expect(_order(tester, ['a', 'b', 'c']), ['b', 'c', 'a']);
+  });
+
+  testWidgets('a mouse drag lifts the row over a scroll view that scrolls by '
+      'mouse', (tester) async {
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+    final moves = <(int, int)>[];
+    final tapped = <int>[];
+    await tester.pumpWidget(
+      TestApp(
+        child: HostScaffold(
+          body: ScrollConfiguration(
+            behavior: const BaseScrollBehavior(),
+            child: CustomScrollView(
+              controller: controller,
+              slivers: [
+                SliverPrismReorderableList(
+                  itemCount: 40,
+                  onReorderItem: (from, to) => moves.add((from, to)),
+                  itemBuilder: (_, index) => ReorderDragStartListener(
+                    key: ValueKey(index),
+                    index: index,
+                    child: GestureDetector(
+                      onTap: () => tapped.add(index),
+                      child: SizedBox(height: 50, child: Text('row $index')),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('row 0')),
+      kind: PointerDeviceKind.mouse,
+    );
+    await tester.pump();
+    for (var step = 0; step < 4; step++) {
+      await gesture.moveBy(const Offset(0, 40));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(controller.offset, 0);
+    expect(moves, hasLength(1));
+    expect(moves.single.$1, 0);
+    expect(tapped, isEmpty);
+
+    await tester.tap(find.text('row 3'), kind: PointerDeviceKind.mouse);
+    await tester.pumpAndSettle();
+    expect(tapped, [3]);
+  });
+
   testWidgets(
     'the handle bounces in from the trailing edge and slides back out',
     (tester) async {
@@ -252,7 +381,7 @@ void main() {
       addTearDown(sorting.dispose);
       await tester.pumpWidget(
         TestApp(
-          child: Scaffold(
+          child: HostScaffold(
             body: ValueListenableBuilder(
               valueListenable: sorting,
               builder: (_, value, _) => SortModeScope(

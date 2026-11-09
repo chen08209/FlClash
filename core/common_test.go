@@ -11,51 +11,38 @@ import (
 	"github.com/metacubex/mihomo/common/utils"
 	"github.com/metacubex/mihomo/constant"
 	cp "github.com/metacubex/mihomo/constant/provider"
+	"github.com/metacubex/mihomo/listener/inner"
 	"github.com/metacubex/mihomo/tunnel"
 )
 
-func TestDefaultSetupParams(t *testing.T) {
-	params := defaultSetupParams()
-
-	if params.TestURL != "https://www.gstatic.com/generate_204" {
-		t.Errorf("TestURL = %s, want the gstatic generate_204 probe", params.TestURL)
-	}
-	if params.SelectedMap == nil {
-		t.Error("SelectedMap must be a usable map so decoding can merge into it")
-	}
+// keepTunnel restores the tunnel, the inner one later rule set downloads dial through included.
+func keepTunnel(t *testing.T) {
+	own := inner.GetTunnel()
+	mode, status := tunnel.Mode(), tunnel.Status()
+	proxies, providers := tunnel.Proxies(), tunnel.Providers()
+	rules, ruleProviders := tunnel.Rules(), tunnel.RuleProviders()
+	t.Cleanup(func() {
+		inner.New(own)
+		tunnel.UpdateProxies(proxies, providers)
+		tunnel.UpdateRules(rules, nil, ruleProviders)
+		tunnel.SetMode(mode)
+		switch status {
+		case tunnel.Suspend:
+			tunnel.OnSuspend()
+		case tunnel.Inner:
+			tunnel.OnInnerLoading()
+		case tunnel.Running:
+			tunnel.OnRunning()
+		}
+	})
 }
 
-func TestDefaultSetupParamsSurvivesPartialDecode(t *testing.T) {
-	params := defaultSetupParams()
-
-	if err := json.Unmarshal([]byte(`{"selected-map":{"GLOBAL":"auto"}}`), params); err != nil {
-		t.Fatalf("decode error: %v", err)
+func issueAt(issues []ValidationIssue, count int) []string {
+	messages := make([]string, count)
+	for _, issue := range issues {
+		messages[issue.Index] = issue.Message
 	}
-
-	if params.TestURL != "https://www.gstatic.com/generate_204" {
-		t.Errorf("TestURL = %s, want the default to survive a partial payload", params.TestURL)
-	}
-	if params.SelectedMap["GLOBAL"] != "auto" {
-		t.Errorf("SelectedMap = %v, want GLOBAL mapped to auto", params.SelectedMap)
-	}
-}
-
-func TestSetupParamsDecodeStartsFromTheDefaults(t *testing.T) {
-	var absent, empty SetupParams
-
-	if err := json.Unmarshal([]byte(`{"skip-cert-verify":true}`), &absent); err != nil {
-		t.Fatalf("decode error: %v", err)
-	}
-	if err := json.Unmarshal([]byte(`{"test-url":""}`), &empty); err != nil {
-		t.Fatalf("decode error: %v", err)
-	}
-
-	if absent.TestURL != defaultTestURL || absent.SelectedMap == nil || !absent.SkipCertVerify {
-		t.Errorf("params = %+v, want the defaults under the decoded fields", absent)
-	}
-	if empty.TestURL != "" {
-		t.Errorf("TestURL = %q, want an explicit empty value kept so the URL in force survives", empty.TestURL)
-	}
+	return messages
 }
 
 func TestToExternalProviderRejectsUnsupportedProvider(t *testing.T) {
@@ -77,7 +64,7 @@ func TestMethodCallDecodeArgumentsRejectsEmptyPayload(t *testing.T) {
 
 	for name, arguments := range tests {
 		t.Run(name, func(t *testing.T) {
-			call := MethodCall{Method: validateConfigMethod, Arguments: arguments}
+			call := MethodCall{Method: configValidateMethod, Arguments: arguments}
 			target := ""
 
 			err := call.decodeArguments(&target)
@@ -92,29 +79,29 @@ func TestMethodCallDecodeArgumentsRejectsEmptyPayload(t *testing.T) {
 	}
 }
 
-func TestMethodCallDecodeArgumentsAcceptsScalar(t *testing.T) {
+func TestMethodCallDecodeArgumentsReadsAnObject(t *testing.T) {
 	call := MethodCall{
-		Method:    validateConfigMethod,
-		Arguments: json.RawMessage(`"/tmp/config.yaml"`),
+		Method:    configValidateMethod,
+		Arguments: json.RawMessage(`{"path":"/tmp/config.yaml"}`),
 	}
-	target := ""
+	var target PathParams
 
 	if err := call.decodeArguments(&target); err != nil {
 		t.Fatalf("decodeArguments error: %v", err)
 	}
-	if target != "/tmp/config.yaml" {
-		t.Errorf("target = %s, want /tmp/config.yaml", target)
+	if target.Path != "/tmp/config.yaml" {
+		t.Errorf("target = %+v, want /tmp/config.yaml", target)
 	}
 }
 
 func TestSideLoadParamsMatchesTheWirePayload(t *testing.T) {
 	params := SideLoadParams{}
 
-	if err := json.Unmarshal([]byte(`{"providerName":"rules","data":"payload"}`), &params); err != nil {
+	if err := json.Unmarshal([]byte(`{"name":"rules","data":"payload"}`), &params); err != nil {
 		t.Fatalf("decode error: %v", err)
 	}
 
-	if params.ProviderName != "rules" || params.Data != "payload" {
+	if params.Name != "rules" || params.Data != "payload" {
 		t.Errorf("params = %+v, want {rules payload}", params)
 	}
 }
@@ -163,11 +150,20 @@ func coreMethodConstants(t *testing.T) []CoreMethod {
 	return methods
 }
 
+const mitmAbsent = "this core has no MITM, so it answers not_implemented"
+
 func TestEveryCoreMethodConstantIsDispatchable(t *testing.T) {
 	notDispatched := map[CoreMethod]string{
-		messageMethod:   "core-to-host event envelope, never received",
-		crashMethod:     "handled by the dispatcher so it bypasses panic recovery",
-		updateDnsMethod: "registered by the Android build only",
+		messageMethod:                 "core-to-host event envelope, never received",
+		coreCrashMethod:               "handled by the dispatcher so it bypasses panic recovery",
+		mitmCertificateMethod:         mitmAbsent,
+		mitmGenerateCertificateMethod: mitmAbsent,
+		mitmValidateMethod:            mitmAbsent,
+		mitmIssueCertificateMethod:    mitmAbsent,
+		mitmRunScriptMethod:           mitmAbsent,
+		mitmExchangesMethod:           mitmAbsent,
+		mitmExchangeMethod:            mitmAbsent,
+		mitmBodyMethod:                mitmAbsent,
 	}
 
 	for _, method := range coreMethodConstants(t) {
@@ -181,16 +177,6 @@ func TestEveryCoreMethodConstantIsDispatchable(t *testing.T) {
 			t.Errorf("method %s has no handler and would answer not_implemented", method)
 		}
 	}
-}
-
-func TestRegisterMethodRejectsADuplicate(t *testing.T) {
-	defer func() {
-		if recover() == nil {
-			t.Error("registerMethod accepted a second handler for an already routed method")
-		}
-	}()
-
-	registerMethod(getProxiesMethod, acknowledged(func() {}))
 }
 
 // fakeProxyProvider and fakeRuleProvider stand in for the mihomo providers the

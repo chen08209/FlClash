@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
@@ -9,24 +10,27 @@ void main() {
     test('fromJson uses snake-case keys', () {
       final json = {
         'selected-map': {'G1': 'P1'},
-        'test-url': 'http://test.com',
-        'skip-cert-verify': true,
+        'options': {'test-url': 'http://test.com', 'skip-cert-verify': true},
       };
       final params = SetupParams.fromJson(json);
       expect(params.selectedMap, {'G1': 'P1'});
-      expect(params.testUrl, 'http://test.com');
-      expect(params.skipCertVerify, isTrue);
+      expect(params.options.testUrl, 'http://test.com');
+      expect(params.options.skipCertVerify, isTrue);
     });
 
     test('toJson uses snake-case keys', () {
       const params = SetupParams(
         selectedMap: {'G1': 'P1'},
-        testUrl: 'http://t.com',
+        options: CoreOptions(testUrl: 'http://t.com'),
       );
-      final json = params.toJson();
+      final json = jsonDecode(jsonEncode(params)) as Map<String, Object?>;
       expect(json['selected-map'], {'G1': 'P1'});
-      expect(json['test-url'], 'http://t.com');
-      expect(json['skip-cert-verify'], isFalse);
+      expect(json['options'], {
+        'test-url': 'http://t.com',
+        'skip-cert-verify': false,
+        'delay-test-timeout': defaultDelayTestTimeout,
+        'mitm-capture': false,
+      });
     });
   });
 
@@ -43,6 +47,7 @@ void main() {
         'tcp-concurrent': false,
         'external-controller': '',
         'unified-delay': false,
+        'options': {'test-url': 'http://t.com'},
       };
       final params = UpdateParams.fromJson(json);
       expect(params.mixedPort, 7890);
@@ -246,6 +251,56 @@ void main() {
       final event = CoreEvent.fromJson({'type': 'log', 'data': 'test log'});
       expect(event.type, CoreEventType.log);
       expect(event.data, 'test log');
+    });
+  });
+
+  group('MitmExchange', () {
+    test('reads a request still waiting on its response', () {
+      final exchange = MitmExchange.fromJson({
+        'id': 3,
+        'start': '2026-10-28T00:00:00Z',
+        'pending': true,
+        'duration': 40,
+        'method': 'POST',
+        'url': 'https://a.test/new',
+        'status': 0,
+        'request-size': 7,
+        'response-size': 0,
+        'connection': 'connection-1',
+        'original-url': 'https://a.test/old',
+        'proto': 'HTTP/2.0',
+        'ttfb': 0,
+        'request-header': {
+          'Host': ['a.test'],
+          'Accept': ['a', 'b'],
+        },
+        'response-header': null,
+        'actions': [
+          {'kind': 'url-rewrite', 'detail': 'header'},
+          {'kind': 'script', 'phase': 'request', 'detail': 'sign'},
+        ],
+      });
+
+      expect(exchange.originalUrl, 'https://a.test/old');
+      expect(exchange.requestHeader['Accept'], ['a', 'b']);
+      expect(exchange.responseHeader, isEmpty);
+      expect(exchange.actions.last.phase, 'request');
+      expect(exchange.error, isEmpty);
+    });
+
+    test('a body reads with its flags left out', () {
+      expect(
+        MitmBody.fromJson(const {'data': 'aGk='}),
+        const MitmBody(data: 'aGk='),
+      );
+      expect(
+        MitmBody.fromJson(const {
+          'data': '',
+          'truncated': true,
+          'encoding': 'compress',
+        }),
+        const MitmBody(truncated: true, encoding: 'compress'),
+      );
     });
   });
 }

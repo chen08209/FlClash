@@ -6,12 +6,13 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/profiles/custom/icon.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 class _TestIconSets extends IconSets {
   _TestIconSets(this.initial);
@@ -74,7 +75,7 @@ Future<_PopResult> _pumpPicker(
           builder: (context) => TextButton(
             onPressed: () async {
               result.value = await Navigator.of(context).push<String>(
-                MaterialPageRoute(
+                HostPageRoute(
                   builder: (_) =>
                       IconPickerView(value: value, groupName: groupName),
                 ),
@@ -178,12 +179,12 @@ void main() {
 
     Finder plateOf(String label) => find.descendant(
       of: find.byTooltip(label).last,
-      matching: find.byType(Material),
+      matching: find.byType(CardSurface),
     );
     BorderSide sideOf(String label) =>
-        (tester.widget<Material>(plateOf(label)).shape! as OutlinedBorder).side;
+        tester.widget<CardSurface>(plateOf(label)).side;
     Color? colorOf(String label) =>
-        tester.widget<Material>(plateOf(label)).color;
+        tester.widget<CardSurface>(plateOf(label)).fill;
     Finder badgeOf(String label) => find.descendant(
       of: find.byTooltip(label).last,
       matching: find.byType(SelectionBadge),
@@ -364,7 +365,7 @@ void main() {
         child: Builder(
           builder: (context) => TextButton(
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
+              HostPageRoute<void>(
                 builder: (_) => IconGridScrollView(
                   slivers: [
                     SliverFixedExtentList.builder(

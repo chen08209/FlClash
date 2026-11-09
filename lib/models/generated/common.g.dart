@@ -48,6 +48,8 @@ _Metadata _$MetadataFromJson(Map<String, dynamic> json) => _Metadata(
   sourceIPASN: json['sourceIPASN'] as String? ?? '',
   specialRules: json['specialRules'] as String? ?? '',
   specialProxy: json['specialProxy'] as String? ?? '',
+  mitm: json['mitm'] as bool? ?? false,
+  mitmRefused: json['mitmRefused'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$MetadataToJson(_Metadata instance) => <String, dynamic>{
@@ -68,6 +70,8 @@ Map<String, dynamic> _$MetadataToJson(_Metadata instance) => <String, dynamic>{
   'sourceIPASN': instance.sourceIPASN,
   'specialRules': instance.specialRules,
   'specialProxy': instance.specialProxy,
+  'mitm': instance.mitm,
+  'mitmRefused': instance.mitmRefused,
 };
 
 const _$DnsModeEnumMap = {

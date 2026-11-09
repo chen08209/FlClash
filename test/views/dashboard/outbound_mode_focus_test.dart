@@ -4,12 +4,13 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/dashboard/widgets/outbound_mode.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
+import '../../helpers/host_scaffold.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +30,7 @@ void main() {
   Widget neighbor(String label) {
     return SizedBox(
       height: 80,
-      child: CommonCard(onPressed: () {}, child: Text(label)),
+      child: Card(onPressed: () {}, child: Text(label)),
     );
   }
 
@@ -43,7 +44,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: TestApp(
-          child: Scaffold(
+          child: HostScaffold(
             body: FocusTraversalGroup(
               policy: PageTraversalPolicy(),
               child: PageFocusScope(

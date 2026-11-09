@@ -88,4 +88,24 @@ void main() {
 
     expect(ranked.single.downloadSpeed, 1000);
   });
+
+  test('hands back an unchanged connection as the same instance', () {
+    final ranker = TrackerSpeedRanker();
+    ranker.rank([_tracker('idle'), _tracker('active')], t0);
+    final first = ranker.rank([
+      _tracker('idle'),
+      _tracker('active', download: 1000),
+    ], at(1));
+
+    final second = ranker.rank([
+      _tracker('idle'),
+      _tracker('active', download: 3000),
+    ], at(2));
+
+    TrackerInfo byId(List<TrackerInfo> ranked, String id) =>
+        ranked.firstWhere((trackerInfo) => trackerInfo.id == id);
+    expect(byId(second, 'idle'), same(byId(first, 'idle')));
+    expect(byId(second, 'active'), isNot(same(byId(first, 'active'))));
+    expect(byId(second, 'active').downloadSpeed, 2000);
+  });
 }

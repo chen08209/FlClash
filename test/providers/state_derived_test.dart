@@ -9,15 +9,20 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
-import 'package:fl_clash/ui/color.dart';
 import 'package:fl_clash/views/navigation.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/prism_ui.dart';
 import 'package:riverpod/riverpod.dart';
 
 import '../helpers/test_profiles.dart';
 
 void main() {
+  setUp(() {
+    mitmFeature = true;
+    addTearDown(() => mitmFeature = false);
+  });
+
   late ProviderContainer container;
 
   setUp(() {
@@ -372,7 +377,7 @@ void main() {
     );
     expect(
       mobile.map((item) => item.label),
-      isNot(contains(PageLabel.connections)),
+      isNot(contains(PageLabel.requests)),
     );
 
     container
@@ -380,13 +385,13 @@ void main() {
         .update((_) => const Size(1200, 800));
     container
         .read(currentPageLabelProvider.notifier)
-        .toPage(PageLabel.connections);
+        .toPage(PageLabel.requests);
     final desktop = container.read(navigationStateProvider);
     expect(desktop.viewMode, ViewMode.desktop);
     expect(desktop.currentIndex, greaterThan(0));
     expect(
       desktop.navigationItems[desktop.currentIndex].label,
-      PageLabel.connections,
+      PageLabel.requests,
     );
 
     container
@@ -740,7 +745,7 @@ void main() {
     );
     expect(fallback.brightness, Brightness.light);
     final explicit = container.read(
-      genColorSchemeProvider(Brightness.dark, color: Colors.purple),
+      genColorSchemeProvider(Brightness.dark, color: const Color(0xFF9C27B0)),
     );
     expect(explicit.brightness, Brightness.dark);
 
@@ -753,7 +758,7 @@ void main() {
   test('a color scheme outlives the provider that generated it', () {
     final provider = genColorSchemeProvider(
       Brightness.dark,
-      color: Colors.teal,
+      color: const Color(0xFF009688),
     );
     final first = container.read(provider);
     container.invalidate(provider);
@@ -945,6 +950,34 @@ void main() {
     await container.read(vpnOptionsProvider.future);
     expect(container.read(sharedStateProvider).vpnOptions?.systemProxy, true);
     expect(container.read(updateParamsProvider).authentication, isEmpty);
+  });
+
+  test('capture reaches the Core in its options, never by a re-apply', () {
+    container.listen(setupPatchProvider, (_, _) {});
+    container.listen(updateParamsProvider, (_, _) {});
+    final setup = container.read(setupPatchProvider);
+
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update(
+          (state) => state.copyWith(mitm: state.mitm.copyWith(capture: true)),
+        );
+
+    expect(container.read(setupPatchProvider), setup);
+    expect(container.read(updateParamsProvider).options.mitmCapture, isTrue);
+  });
+
+  test('capture never reaches a Core built without MITM', () {
+    mitmFeature = false;
+    container.listen(updateParamsProvider, (_, _) {});
+
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update(
+          (state) => state.copyWith(mitm: state.mitm.copyWith(capture: true)),
+        );
+
+    expect(container.read(updateParamsProvider).options.mitmCapture, isFalse);
   });
 
   test('the setup patch changes only with what a re-apply carries', () {

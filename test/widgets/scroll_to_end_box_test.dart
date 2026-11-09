@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:fl_clash/ui/ui.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../helpers/host_scaffold.dart';
+import '../helpers/test_app.dart';
 
 class _Host extends StatefulWidget {
   final int itemCount;
@@ -30,8 +32,8 @@ class _HostState extends State<_Host> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
+    return HostApp(
+      home: HostScaffold(
         body: ScrollToEndBox(
           controller: widget.controller,
           enable: widget.enable,

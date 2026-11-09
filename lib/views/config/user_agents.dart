@@ -3,7 +3,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 List<String> _visibleUserAgents(List<String> saved, String? selected) =>
@@ -99,17 +99,17 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
     }
   }
 
-  List<CommonPopupMenuItem> _buildMenuItems(String userAgent) {
+  List<PopupMenuItem> _buildMenuItems(String userAgent) {
     final appLocalizations = context.appLocalizations;
     return [
-      CommonPopupMenuItem(
+      PopupMenuItem(
         glyph: AppGlyphs.edit,
         label: appLocalizations.edit,
         onPressed: () {
           _handleEdit(userAgent);
         },
       ),
-      CommonPopupMenuItem(
+      PopupMenuItem(
         danger: true,
         glyph: AppGlyphs.delete,
         label: appLocalizations.delete,
@@ -159,7 +159,7 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
       patchClashConfigProvider.select((state) => state.globalUa),
     );
     final entries = _visibleUserAgents(userAgents, selected);
-    return CommonScaffold(
+    return Scaffold(
       canSort: entries.length > 1,
       title: appLocalizations.userAgent,
       actions: [
@@ -169,12 +169,11 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
           icon: const GlyphIcon(AppGlyphs.addCircle),
         ),
       ],
-      body: ReorderableListView.builder(
+      body: PrismReorderableListView(
         padding: const EdgeInsets.all(16).copyWith(
           top: context.contentTopPadding,
           bottom: 16 + context.bottomInset,
         ),
-        buildDefaultDragHandles: false,
         header: ItemPositionProvider(
           position: ItemPosition.get(0, entries.length + 1),
           child: _UserAgentItem(

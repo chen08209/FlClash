@@ -2,7 +2,7 @@ import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/ui/color.dart';
+import 'package:prism_ui/color.dart';
 
 import 'preferences.dart';
 import 'task.dart';

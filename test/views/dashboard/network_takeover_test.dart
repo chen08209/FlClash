@@ -8,12 +8,13 @@ import 'package:fl_clash/views/dashboard/widgets/card.dart';
 import 'package:fl_clash/views/dashboard/widgets/network_takeover.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/gestures.dart' show kPressTimeout;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
+import '../../helpers/host_scaffold.dart';
 
 class _RowCase {
   const _RowCase(
@@ -79,7 +80,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: TestApp(
-          child: Scaffold(body: ListView(children: [card])),
+          child: HostScaffold(body: ListView(children: [card])),
         ),
       ),
     );
@@ -122,7 +123,7 @@ void main() {
       await tester.tap(find.text(testCase.title).last);
       await tester.pumpAndSettle();
 
-      expect(find.byType(CommonScaffold), findsNothing);
+      expect(find.byType(Scaffold), findsNothing);
       expect(testCase.read(container), !testCase.initial);
     });
   }
@@ -174,7 +175,7 @@ void main() {
         UncontrolledProviderScope(
           container: container,
           child: TestApp(
-            child: Scaffold(
+            child: HostScaffold(
               body: Align(
                 alignment: Alignment.topLeft,
                 child: SizedBox(

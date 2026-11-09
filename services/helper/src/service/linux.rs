@@ -153,7 +153,7 @@ fn unit_contents(executable: &Path, owner: Owner) -> String {
     format!(
         "[Unit]\n\
          Description=FlClash Helper starts the FlClash Core with the privileges TUN mode needs.\n\
-         After=network-online.target nftables.service iptables.service\n\
+         After=nftables.service iptables.service\n\
          StartLimitIntervalSec=60\n\
          StartLimitBurst=5\n\
          \n\
@@ -396,6 +396,7 @@ mod tests {
         assert!(unit.contains("RuntimeDirectory=flclash\n"));
         assert!(unit.contains("Restart=on-failure\n"));
         assert!(unit.contains("StartLimitBurst=5\n"));
+        assert!(!unit.contains("network-online.target"));
     }
 
     #[test]

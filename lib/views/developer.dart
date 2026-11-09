@@ -8,7 +8,7 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DeveloperView extends ConsumerWidget {
@@ -22,8 +22,8 @@ class DeveloperView extends ConsumerWidget {
         ListItem(
           title: Text(appLocalizations.messageTest),
           onTap: () {
-            for (final level in MessageLevel.values) {
-              context.showNotifier(
+            for (final level in BannerLevel.values) {
+              dialogs.showBanner(
                 '${level.name}: ${appLocalizations.messageTestTip}',
                 level: level,
               );
@@ -57,6 +57,16 @@ class DeveloperView extends ConsumerWidget {
                 return;
               }
               unawaited(coreAction.crash());
+            },
+          ),
+        if (selfUpdateSuffix != null)
+          ListItem(
+            title: Text(appLocalizations.updateDownloadTest),
+            onTap: () {
+              if (ref.read(loadingProvider(LoadingTag.checkUpdate))) return;
+              unawaited(
+                ref.read(commonActionProvider.notifier).testUpdateDownload(),
+              );
             },
           ),
         ListItem(

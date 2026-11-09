@@ -3,15 +3,14 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
+import 'sources.dart';
+
 final _reorderableList = RegExp(
   r'\b(?:ReorderableListView(?:\.\w+)?|ReorderableList|SliverReorderableList|'
-  r'SuperSliverReorderableList)\(',
+  r'SliverPrismReorderableList|PrismReorderableListView)\(',
 );
 
-const _allowed = {
-  'lib/ui/super_reorderable_list.dart',
-  'lib/views/dashboard/edit.dart',
-};
+const _allowed = {'lib/views/dashboard/edit.dart'};
 
 int _lineOf(String source, int offset) =>
     '\n'.allMatches(source.substring(0, offset)).length + 1;
@@ -38,7 +37,7 @@ void main() {
     () {
       final offenders = <String>[];
 
-      for (final entity in Directory('lib').listSync(recursive: true)) {
+      for (final entity in sourceEntities()) {
         if (entity is! File ||
             !entity.path.endsWith('.dart') ||
             entity.path.contains('/generated/')) {

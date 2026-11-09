@@ -1,10 +1,9 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class Dialogs {
@@ -101,7 +100,7 @@ class Dialogs {
       child: Builder(
         builder: (context) {
           final appLocalizations = context.appLocalizations;
-          return CommonDialog(
+          return AlertDialog(
             title: title ?? appLocalizations.tip,
             destructive: destructive,
             actions: [
@@ -143,7 +142,7 @@ class Dialogs {
   }) {
     return showCommonDialog<void>(
       child: Builder(
-        builder: (context) => CommonDialog(
+        builder: (context) => AlertDialog(
           title: title,
           actions: [
             TextButton(
@@ -170,7 +169,11 @@ class Dialogs {
     );
   }
 
-  Future<String?> showUrlInput({required String title, String value = ''}) {
+  Future<String?> showUrlInput({
+    required String title,
+    String value = '',
+    bool Function(String value)? accepts,
+  }) {
     final appLocalizations = currentAppLocalizations;
     return showCommonDialog<String>(
       child: InputDialog(
@@ -182,7 +185,7 @@ class Dialogs {
           if (value == null || value.isEmpty) {
             return appLocalizations.emptyTip(appLocalizations.value);
           }
-          if (!value.isUrl) {
+          if (!(accepts?.call(value) ?? value.isUrl)) {
             return appLocalizations.urlTip(appLocalizations.value);
           }
           return null;
@@ -217,16 +220,20 @@ class Dialogs {
     );
   }
 
-  void showNotifier(
+  void showBanner(
     String text, {
-    MessageLevel level = MessageLevel.info,
-    MessageActionState? actionState,
+    BannerLevel level = BannerLevel.info,
+    VoidCallback? onTap,
   }) {
-    rootNavigatorKey.currentContext?.showNotifier(
-      text,
-      level: level,
-      actionState: actionState,
-    );
+    if (text.isEmpty) {
+      return;
+    }
+    commonPrint.log('banner: $text');
+    final context = rootNavigatorKey.currentContext;
+    if (context == null) {
+      return;
+    }
+    BannerHost.maybeOf(context)?.show(text, level: level, onTap: onTap);
   }
 
   void showFailures(List<UpdatingMessage> failures) {
@@ -235,20 +242,17 @@ class Dialogs {
       case []:
         return;
       case [final failure]:
-        showNotifier(
+        showBanner(
           appLocalizations.failedItem(failure.label, failure.message),
-          level: MessageLevel.error,
+          level: BannerLevel.error,
         );
       default:
-        showNotifier(
+        showBanner(
           appLocalizations.failedCount(failures.length),
-          level: MessageLevel.error,
-          actionState: MessageActionState(
-            actionText: appLocalizations.view,
-            action: () {
-              unawaited(showFailureDetails(failures));
-            },
-          ),
+          level: BannerLevel.error,
+          onTap: () {
+            unawaited(showFailureDetails(failures));
+          },
         );
     }
   }
@@ -278,10 +282,10 @@ class _FailureDetailsSheet extends StatelessWidget {
       (labelsByMessage[failure.message] ??= []).add(failure.label);
     }
     final groups = labelsByMessage.entries.toList();
-    return CommonScaffold(
+    return Scaffold(
       title: context.appLocalizations.errorDetails,
       body: SelectionArea(
-        child: ListView.builder(
+        child: PrismListView(
           padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
             top: context.sectionsTopPadding,
             bottom: 20 + context.bottomInset,

@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:dio/dio.dart';
 import 'package:fl_clash/common/boot_record.dart';
 import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/common/exception.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -197,4 +199,120 @@ void main() {
       expect(await App().requestInstalledAppsPermission(), isFalse);
     },
   );
+
+  group('downloadFile', () {
+    final uri = Uri.https('github.com', '/a.apk');
+    late List<MethodCall> calls;
+
+    Map<String, Object?> state(int status, int received, {int reason = 0}) {
+      return {
+        'status': status,
+        'reason': reason,
+        'received': received,
+        'total': 100,
+      };
+    }
+
+    void answerQueries(List<Map<String, Object?>?> states) {
+      calls = [];
+      final pending = [...states];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            calls.add(call);
+            return switch (call.method) {
+              'enqueueDownload' => 7,
+              'queryDownload' =>
+                pending.length > 1 ? pending.removeAt(0) : pending.first,
+              _ => true,
+            };
+          });
+    }
+
+    Future<void> download({
+      CancelToken? cancelToken,
+      void Function(int, int)? onReceiveProgress,
+    }) {
+      return App().downloadFile(
+        uri,
+        '/files/a.apk',
+        title: 'a.apk',
+        onReceiveProgress: onReceiveProgress ?? (_, _) {},
+        cancelToken: cancelToken ?? CancelToken(),
+      );
+    }
+
+    Iterable<String> methods() => calls.map((call) => call.method);
+
+    test('follows the system download until it completes', () async {
+      answerQueries([state(2, 50), state(8, 100)]);
+      final progress = <int>[];
+
+      await download(
+        onReceiveProgress: (received, _) => progress.add(received),
+      );
+
+      expect(progress, [50, 100]);
+      expect(calls.first.arguments, containsPair('path', '/files/a.apk'));
+    });
+
+    test('reports why a download failed', () async {
+      answerQueries([state(16, 10, reason: 1006)]);
+
+      await expectLater(
+        download(),
+        throwsA(
+          isA<SystemDownloadException>().having(
+            (e) => e.reason,
+            'reason',
+            1006,
+          ),
+        ),
+      );
+    });
+
+    test('reports a download removed outside the app', () async {
+      answerQueries([null]);
+
+      await expectLater(download(), throwsA(isA<SystemDownloadException>()));
+    });
+
+    test('stops following the download once cancelled', () async {
+      answerQueries([state(2, 10)]);
+      final cancelToken = CancelToken();
+
+      final downloading = download(
+        cancelToken: cancelToken,
+        onReceiveProgress: (_, _) => cancelToken.cancel(),
+      );
+
+      await expectLater(
+        downloading,
+        throwsA(
+          isA<DioException>().having(CancelToken.isCancel, 'isCancel', isTrue),
+        ),
+      );
+      expect(
+        methods().where((method) => method == 'queryDownload'),
+        hasLength(1),
+      );
+    });
+
+    test('fails when the download manager is unavailable', () async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            throw PlatformException(code: 'PLATFORM_ERROR');
+          });
+
+      await expectLater(
+        download(),
+        throwsA(
+          isA<SystemDownloadException>().having(
+            (e) => e.reason,
+            'reason',
+            isNull,
+          ),
+        ),
+      );
+    });
+  });
 }

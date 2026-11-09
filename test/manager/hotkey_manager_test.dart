@@ -1,11 +1,11 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/manager/hotkey_manager.dart';
+import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/models/common.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rust_api/rust_api.dart';
 

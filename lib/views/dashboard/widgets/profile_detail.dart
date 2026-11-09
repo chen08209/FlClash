@@ -13,7 +13,7 @@ import 'package:fl_clash/views/proxies/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:yaml/yaml.dart';
 
 const _statSpacing = 8.0;
@@ -165,7 +165,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet>
     final isUpdating = ref.watch(isUpdatingProvider(profile.updatingKey));
     final appLocalizations = context.appLocalizations;
     final subscriptionInfo = profile.subscriptionInfo;
-    return CommonScaffold(
+    return Scaffold(
       title: profile.realLabel,
       iconActions: [
         if (profile.type == ProfileType.url)

@@ -1,12 +1,12 @@
 import 'dart:math' as math;
-import 'dart:ui' show ImageFilter;
 
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 class PreviewChoice<T> {
   const PreviewChoice({
@@ -399,7 +399,18 @@ class _MiniScreenPainter extends CustomPainter {
     Color color,
     ShapeBorder shape, {
     List<BoxShadow>? shadows,
+    MaskFilter? blur,
   }) {
+    if (blur != null) {
+      shape.paintInterior(
+        canvas,
+        rect,
+        Paint()
+          ..color = color
+          ..maskFilter = blur,
+      );
+      return;
+    }
     ShapeDecoration(color: color, shape: shape, shadows: shadows)
         .createBoxPainter(() {})
         .paint(canvas, rect.topLeft, ImageConfiguration(size: rect.size));
@@ -426,7 +437,7 @@ class _MiniScreenPainter extends CustomPainter {
     _paintDestinations(canvas, geometry.bar, unit);
   }
 
-  void _paintPages(Canvas canvas, _MiniGeometry geometry) {
+  void _paintPages(Canvas canvas, _MiniGeometry geometry, {MaskFilter? blur}) {
     final size = geometry.size;
     canvas.drawRect(
       Offset.zero & size,
@@ -436,10 +447,17 @@ class _MiniScreenPainter extends CustomPainter {
     canvas.clipRect(Offset.zero & size, doAntiAlias: false);
     final previous = this.previous;
     if (previous == null) {
-      _paintPage(canvas, geometry, selected, 0);
+      _paintPage(canvas, geometry, selected, 0, blur: blur);
     } else if (tabAnimation == TabAnimation.fade) {
-      _paintPage(canvas, geometry, previous, 0, opacity: 1 - progress);
-      _paintPage(canvas, geometry, selected, 0, opacity: progress);
+      _paintPage(
+        canvas,
+        geometry,
+        previous,
+        0,
+        opacity: 1 - progress,
+        blur: blur,
+      );
+      _paintPage(canvas, geometry, selected, 0, opacity: progress, blur: blur);
     } else {
       final direction = previous > selected ? -1 : 1;
       _paintPage(
@@ -447,12 +465,14 @@ class _MiniScreenPainter extends CustomPainter {
         geometry,
         previous,
         -direction * size.width * progress,
+        blur: blur,
       );
       _paintPage(
         canvas,
         geometry,
         selected,
         direction * size.width * (1 - progress),
+        blur: blur,
       );
     }
     canvas.restore();
@@ -465,7 +485,6 @@ class _MiniScreenPainter extends CustomPainter {
     final unit = geometry.unit;
     final path = AppShape.full.getOuterPath(bar);
     final style = LiquidGlassStyle.pill(colorScheme);
-    final blur = unit * 0.4;
     canvas
       ..save()
       ..clipPath(
@@ -479,18 +498,19 @@ class _MiniScreenPainter extends CustomPainter {
       bar.shift(shadow.offset),
       shadow.toPaint(),
     );
+    // Each shape blurs on its own in one pass, where a blurred layer would
+    // cost an offscreen pass per sketch on every frame of the theme page.
     canvas
       ..restore()
       ..save()
-      ..clipPath(path)
-      ..saveLayer(
-        bar,
-        Paint()..imageFilter = ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-      );
-    _paintPages(canvas, geometry);
+      ..clipPath(path);
+    _paintPages(
+      canvas,
+      geometry,
+      blur: MaskFilter.blur(BlurStyle.normal, unit * 0.4),
+    );
     final rimWidth = unit * 0.15;
     canvas
-      ..restore()
       ..drawPath(path, Paint()..color = style.tint)
       ..drawPath(
         AppShape.full.getOuterPath(bar.deflate(rimWidth / 2)),
@@ -516,6 +536,7 @@ class _MiniScreenPainter extends CustomPainter {
     int index,
     double offset, {
     double opacity = 1,
+    MaskFilter? blur,
   }) {
     final alpha = Color.getAlphaFromOpacity(opacity);
     if (alpha == 0) {
@@ -540,6 +561,7 @@ class _MiniScreenPainter extends CustomPainter {
       colorScheme,
       geometry.unit,
       content,
+      blur: blur,
     ).paint(_pageOf(index));
     canvas.restore();
   }
@@ -609,13 +631,18 @@ class _MiniScreenPainter extends CustomPainter {
 /// One page of a [MiniScreen] after the app's own, laid out in units of a
 /// twentieth of the screen's width from the top left of [content].
 class _PageSketch {
-  _PageSketch(this.canvas, this.colorScheme, this.unit, this.content)
-    : width = content.width / unit,
-      card = SurfaceLevel.card.colorOf(colorScheme),
-      inset = SurfaceLevel.inset.colorOf(colorScheme),
-      text = colorScheme.onSurface.withValues(alpha: 0.72),
-      line = colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-      faint = colorScheme.onSurfaceVariant.withValues(alpha: 0.16);
+  _PageSketch(
+    this.canvas,
+    this.colorScheme,
+    this.unit,
+    this.content, {
+    this.blur,
+  }) : width = content.width / unit,
+       card = SurfaceLevel.card.colorOf(colorScheme),
+       inset = SurfaceLevel.inset.colorOf(colorScheme),
+       text = colorScheme.onSurface.withValues(alpha: 0.72),
+       line = colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+       faint = colorScheme.onSurfaceVariant.withValues(alpha: 0.16);
 
   static const double _gap = 0.6;
 
@@ -623,6 +650,7 @@ class _PageSketch {
   final ColorScheme colorScheme;
   final double unit;
   final Rect content;
+  final MaskFilter? blur;
   final double width;
   final Color card;
   final Color inset;
@@ -654,11 +682,17 @@ class _PageSketch {
       AppShape.all(AppCorner.fit(unit * extent));
 
   void _block(Rect rect, Color color, {double extent = 5}) {
-    _MiniScreenPainter._fill(canvas, rect, color, _shape(extent));
+    _MiniScreenPainter._fill(canvas, rect, color, _shape(extent), blur: blur);
   }
 
   void _pill(double x, double y, double w, double h, Color color) {
-    _MiniScreenPainter._fill(canvas, _rect(x, y, w, h), color, AppShape.full);
+    _MiniScreenPainter._fill(
+      canvas,
+      _rect(x, y, w, h),
+      color,
+      AppShape.full,
+      blur: blur,
+    );
   }
 
   void _dot(double x, double y, double radius, Color color) {
@@ -667,6 +701,7 @@ class _PageSketch {
       _rect(x - radius, y - radius, radius * 2, radius * 2),
       color,
       AppShape.circle,
+      blur: blur,
     );
   }
 
@@ -693,7 +728,9 @@ class _PageSketch {
       ..drawCircle(
         _rect(buttonX, buttonY, 0, 0).topLeft,
         unit * 4.6,
-        Paint()..color = colorScheme.primary.withValues(alpha: 0.1),
+        Paint()
+          ..color = colorScheme.primary.withValues(alpha: 0.1)
+          ..maskFilter = blur,
       )
       ..restore();
     _dot(buttonX, buttonY, 1.8, colorScheme.primary);
@@ -777,13 +814,19 @@ class _PageSketch {
     canvas
       ..save()
       ..clipPath(_shape(2.9).getOuterPath(tile))
-      ..drawPath(area, Paint()..color = color.withValues(alpha: color.a * 0.2))
+      ..drawPath(
+        area,
+        Paint()
+          ..color = color.withValues(alpha: color.a * 0.2)
+          ..maskFilter = blur,
+      )
       ..drawPath(
         path,
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = unit * 0.15
-          ..color = color,
+          ..color = color
+          ..maskFilter = blur,
       )
       ..restore();
   }
@@ -836,7 +879,9 @@ class _PageSketch {
         if (i < rows - 1) {
           canvas.drawRect(
             _rect(2.6, row + rowHeight - 0.03, width - 3.4, 0.06),
-            Paint()..color = faint,
+            Paint()
+              ..color = faint
+              ..maskFilter = blur,
           );
         }
       }

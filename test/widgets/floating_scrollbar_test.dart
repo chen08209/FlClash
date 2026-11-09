@@ -1,8 +1,10 @@
-import 'package:fl_clash/ui/scroll.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/scroll.dart';
 
 import '../helpers/scrollbar.dart';
+import '../helpers/host_scaffold.dart';
+import '../helpers/test_app.dart';
 
 const _itemHeight = 40.0;
 const _itemCount = 200;
@@ -13,8 +15,8 @@ Widget _list(
   ScrollController controller, {
   bool thumbVisibility = false,
   int itemCount = _itemCount,
-}) => MaterialApp(
-  home: Scaffold(
+}) => HostApp(
+  home: HostScaffold(
     body: FloatingScrollbar(
       controller: controller,
       thumbVisibility: thumbVisibility,
@@ -189,7 +191,7 @@ void main() {
     await gesture.moveBy(const Offset(-110, 0));
     await tester.pump();
     expect(find.byKey(_rateKey), findsOneWidget);
-    expect(tester.widget<Text>(find.byKey(_rateKey)).data, '×1/4');
+    expect(tester.widget<Text>(find.byKey(_rateKey)).data, '0.25×');
 
     await gesture.moveBy(const Offset(0, 40));
     await tester.pump();

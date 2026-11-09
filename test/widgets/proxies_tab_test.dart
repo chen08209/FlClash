@@ -11,13 +11,14 @@ import 'package:fl_clash/views/proxies/card.dart';
 import 'package:fl_clash/views/proxies/group_tabs.dart';
 import 'package:fl_clash/views/proxies/proxies.dart';
 import 'package:fl_clash/views/proxies/tab.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+import '../helpers/host_scaffold.dart';
 
 final _tabStateProvider = NotifierProvider<_TabStateNotifier, ProxiesTabState>(
   _TabStateNotifier.new,
@@ -69,7 +70,7 @@ void main() {
         container: globalContainer,
         child: TestApp(
           child: ProxiesTabView(key: key),
-          homeBuilder: (child) => Scaffold(body: child),
+          homeBuilder: (child) => HostScaffold(body: child),
         ),
       ),
     );
@@ -198,7 +199,7 @@ void main() {
     await tester.tap(find.byGlyph(AppGlyphs.chevronDown));
     await tester.pumpAndSettle();
 
-    final menu = find.byType(CommonPopupMenu);
+    final menu = find.byType(PopupMenu);
     final check = find.descendant(
       of: menu,
       matching: find.byGlyph(AppGlyphs.check),
@@ -308,7 +309,7 @@ void main() {
         .set(_tabState([_group('A'), group]));
     await pumpTabView(tester);
     await tester.pumpAndSettle();
-    final menu = find.byType(CommonPopupMenu);
+    final menu = find.byType(PopupMenu);
 
     await tester.longPress(find.text('B-0', findRichText: true));
     await tester.pumpAndSettle();
@@ -361,7 +362,7 @@ void main() {
         .set(_tabState([_group('A'), group]));
     await pumpTabView(tester);
     await tester.pumpAndSettle();
-    final menu = find.byType(CommonPopupMenu);
+    final menu = find.byType(PopupMenu);
 
     await tester.longPress(find.text('B-0', findRichText: true));
     await tester.pumpAndSettle();
@@ -445,7 +446,7 @@ void main() {
       find
           .descendant(
             of: find.byType(GroupTabs),
-            matching: find.byType(CommonCard),
+            matching: find.byType(Card),
             skipOffstage: false,
           )
           .evaluate()
@@ -505,10 +506,10 @@ void main() {
 }
 
 Finder tabOf(String name) =>
-    find.ancestor(of: find.text(name), matching: find.byType(CommonCard));
+    find.ancestor(of: find.text(name), matching: find.byType(Card));
 
 bool isTabSelected(WidgetTester tester, String name) =>
-    tester.widget<CommonCard>(tabOf(name)).isSelected;
+    tester.widget<Card>(tabOf(name)).isSelected;
 
 ProxiesTabState _tabState(List<Group> groups, {String current = 'B'}) {
   return ProxiesTabState(

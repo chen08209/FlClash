@@ -237,13 +237,6 @@ func handleUpdateDns(value string) {
 	})
 }
 
-func init() {
-	registerMethod(updateDnsMethod, withArguments(func(value string) bool {
-		handleUpdateDns(value)
-		return true
-	}))
-}
-
 // gobind runs an export on the caller's thread and turns no panic into a Java
 // exception, so a panic that leaves one ends the whole application.
 func recoverExport(name string) {
@@ -293,13 +286,13 @@ func QuickSetup(initParamsString, setupParamsString string, answer func(string))
 			answer("init failed")
 			return
 		}
-		handleInitClash(&initParams)
+		_ = handleInit(&initParams)
 		setupParams := &SetupParams{}
 		if err := json.Unmarshal([]byte(setupParamsString), setupParams); err != nil {
 			answer(err.Error())
 			return
 		}
-		isRunning.Store(true)
+		setRunning(true)
 		if err := handleSetupConfig(setupParams); err != nil {
 			answer(err.Error())
 			return
@@ -327,12 +320,12 @@ func hasEventListener() bool {
 
 func GetTotalTraffic(onlyStatisticsProxy bool) string {
 	defer recoverExport("getTotalTraffic")
-	return marshalResult(handleGetTotalTraffic(onlyStatisticsProxy))
+	return marshalResult(handleGetTotalTraffic(TrafficParams{OnlyProxy: onlyStatisticsProxy}))
 }
 
 func GetTraffic(onlyStatisticsProxy bool) string {
 	defer recoverExport("getTraffic")
-	return marshalResult(handleGetTraffic(onlyStatisticsProxy))
+	return marshalResult(handleGetTraffic(TrafficParams{OnlyProxy: onlyStatisticsProxy}))
 }
 
 func marshalResult(value any) string {
@@ -389,6 +382,10 @@ func ForceGC() {
 		handleForceGC()
 	})
 }
+
+// SetMitmPressure stays for the Android service, which reports memory pressure
+// whatever the core; this core keeps nothing to release.
+func SetMitmPressure(level int32) {}
 
 func UpdateDns(value string) {
 	defer recoverExport("updateDns")

@@ -63,7 +63,9 @@ void main() {
     final orphans = <String>[];
 
     for (final MapEntry(key: path, value: source) in sources.entries) {
-      if (!path.startsWith('lib/')) continue;
+      if (!path.startsWith('lib/')) {
+        continue;
+      }
       if (barrels.contains(path) || _entryPoints.contains(path)) continue;
       if (path.startsWith('lib/l10n/')) continue;
 

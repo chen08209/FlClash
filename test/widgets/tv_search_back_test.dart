@@ -1,6 +1,4 @@
-import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/hotkey_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/home.dart';
@@ -9,7 +7,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -29,17 +27,11 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: MaterialApp(
+        child: HostApp(
           builder: (context, child) => wrapAppScopes(context, child!),
           navigatorKey: globalState.navigatorKey,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            AppUiLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
           home: HotKeyManager(
-            child: CommonScaffold(
+            child: Scaffold(
               title: 'Logs',
               searchState: AppBarSearchState(onSearch: (_) {}),
               body: Center(
@@ -98,8 +90,7 @@ void main() {
               NavigationItem(
                 glyph: AppGlyphs.dashboard,
                 label: PageLabel.dashboard,
-                builder: (_) => CommonScaffold(
-                  key: const GlobalObjectKey(PageLabel.dashboard),
+                builder: (_) => Scaffold(
                   title: 'Search page',
                   searchState: AppBarSearchState(
                     onSearch: (value) {
@@ -129,14 +120,8 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: MaterialApp(
+        child: HostApp(
           builder: (context, child) => wrapAppScopes(context, child!),
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            AppUiLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
           home: const HomePage(),
         ),
       ),

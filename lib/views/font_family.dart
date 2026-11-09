@@ -7,7 +7,7 @@ import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 sealed class _FontChoice {
   const _FontChoice();
@@ -103,9 +103,9 @@ class _FontFamilyViewState extends ConsumerState<FontFamilyView> {
   }
 }
 
-/// Laying out a family for the first time loads it on the UI thread, a few
-/// milliseconds each, so each name switches to its family on a frame of its
-/// own.
+/// Laying out a family for the first time loads it on the UI thread, longer
+/// for a large CJK one, so each name switches to its family on a frame of its
+/// own and none while the list or the route moves.
 class _FontLabel extends StatefulWidget {
   const _FontLabel({required this.family, required this.child});
 
@@ -163,10 +163,20 @@ class _FontLabelState extends State<_FontLabel> {
 
   static void _showNext(Duration _) {
     final next = _waiting.firstOrNull;
-    if (next != null && next.mounted && isRouteMoving(next.context)) {
-      // The frames of the motion carry the queue until it stops.
-      SchedulerBinding.instance.addPostFrameCallback(_showNext);
-      return;
+    if (next != null && next.mounted) {
+      if (isRouteMoving(next.context)) {
+        // The frames of the motion carry the queue until it stops.
+        SchedulerBinding.instance.addPostFrameCallback(_showNext);
+        return;
+      }
+      final scrollPosition = Scrollable.maybeOf(next.context)?.position;
+      // A scroll can end without another frame to carry the queue.
+      if (scrollPosition?.isScrollingNotifier.value ?? false) {
+        SchedulerBinding.instance
+          ..addPostFrameCallback(_showNext)
+          ..ensureVisualUpdate();
+        return;
+      }
     }
     _scheduled = false;
     while (_waiting.isNotEmpty) {

@@ -1,20 +1,15 @@
 import 'dart:async';
 
-import 'package:fl_clash/ui/inherited.dart';
-import 'package:fl_clash/ui/paged_sheet.dart';
-import 'package:fl_clash/ui/shape.dart';
-import 'package:fl_clash/ui/sheet.dart';
-import 'package:fl_clash/ui/surface.dart';
 import 'package:flutter/rendering.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import '../helpers/hand_over.dart';
+import 'package:prism_ui/prism_ui.dart';
+import '../helpers/test_app.dart';
 
 void main() {
   testWidgets('uses the bottom sheet surface color and shape', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      const HostApp(
         home: SheetProvider(
           type: SheetType.bottomSheet,
           child: SizedBox(
@@ -30,16 +25,63 @@ void main() {
     );
 
     final context = tester.element(find.byType(PagedSheet));
-    final material = tester.widget<Material>(
+    final material = tester.widget<Surface>(
       find.descendant(
         of: find.byType(PagedSheet),
-        matching: find.byType(Material),
+        matching: find.byType(Surface),
       ),
     );
 
     expect(material.color, SurfaceLevel.page.colorOf(ColorScheme.of(context)));
     expect(material.shape, AppShape.top(AppCorner.xxl));
     expect(material.clipBehavior, Clip.antiAlias);
+  });
+
+  testWidgets('a bottom sheet holds its handle still over a push', (
+    tester,
+  ) async {
+    final navigatorKey = GlobalKey<NavigatorState>();
+    Widget page(String title) => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SheetToolBar(appBar: Text(title)),
+        const SizedBox(height: 200),
+      ],
+    );
+    await tester.pumpWidget(
+      HostApp(
+        home: SheetProvider(
+          type: SheetType.bottomSheet,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: PagedSheet(
+              child: SheetPagesNavigator(
+                key: navigatorKey,
+                onGenerateInitialRoutes: (_, _) => [
+                  PagedSheetRoute<void>(builder: (_) => page('Page 1')),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    final handle = find.byType(SheetDragHandle);
+    expect(handle, findsOneWidget);
+    final rest = tester.getRect(handle);
+    expect(rest.size, const Size(28, SheetDragHandle.height));
+
+    navigatorKey.currentState!.push(
+      PagedSheetRoute<void>(builder: (_) => page('Page 2')),
+    );
+    await tester.pump();
+    await tester.pump();
+    final arriving = tester.getTopLeft(find.text('Page 2')).dx;
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(tester.getTopLeft(find.text('Page 2')).dx, lessThan(arriving));
+    expect(handle, findsOneWidget);
+    expect(tester.getRect(handle), rest);
+    await tester.pumpAndSettle();
   });
 
   testWidgets('pushes, animates, and returns a nested page result', (
@@ -49,7 +91,7 @@ void main() {
     String? result;
 
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         home: SheetProvider(
           type: SheetType.sideSheet,
           child: SizedBox(
@@ -91,20 +133,18 @@ void main() {
       ),
     );
 
+    final opener = tester.getTopLeft(find.text('open nested')).dx;
     await tester.tap(find.text('open nested'));
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
 
-    expect(find.text('open nested'), findsOneWidget);
-    expect(find.text('close nested'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(PagedSheet),
-        matching: find.byType(SlideTransition),
-      ),
-      findsWidgets,
-    );
+    expect(tester.getTopLeft(find.text('open nested')).dx, lessThan(opener));
+    final arriving = tester.getTopLeft(find.text('close nested')).dx;
 
     await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.text('close nested')).dx, lessThan(arriving));
+
     await tester.tap(find.text('close nested'));
     await tester.pumpAndSettle();
 
@@ -138,7 +178,7 @@ void main() {
     }
 
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         home: SheetProvider(
           type: SheetType.bottomSheet,
           child: Center(
@@ -181,7 +221,7 @@ void main() {
     expect(tester.getSize(find.byType(PagedSheet)), const Size(400, 300));
   });
 
-  group('fading pages', () {
+  group('card pages', () {
     final navigatorKey = GlobalKey<NavigatorState>();
 
     Widget label(String text, {double top = 0}) {
@@ -191,11 +231,21 @@ void main() {
       );
     }
 
-    Future<void> pumpSheet(WidgetTester tester) async {
+    Future<void> pumpSheet(
+      WidgetTester tester, {
+      SheetType type = SheetType.bottomSheet,
+    }) async {
       await tester.pumpWidget(
-        MaterialApp(
+        HostApp(
+          theme: ThemeData(),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).applyDisplayCornerRadii(BorderRadius.circular(48)),
+            child: child!,
+          ),
           home: SheetProvider(
-            type: SheetType.bottomSheet,
+            type: type,
             child: Center(
               child: SizedBox(
                 width: 400,
@@ -231,60 +281,107 @@ void main() {
       );
     }
 
-    Future<(Color, Color)> inkAndSurface(WidgetTester tester) async {
-      final rect = tester.getRect(find.text('first'));
-      return (
-        await pixelAt(tester, inkPointOf(tester, 'first')),
-        await pixelAt(tester, rect.centerRight + const Offset(20, 0)),
-      );
-    }
-
-    testWidgets('hand over without one showing through the other', (
+    testWidgets('slide the page below back by three tenths of the sheet', (
       tester,
     ) async {
       await pumpSheet(tester);
-      final (ink, surface) = await inkAndSurface(tester);
+      final origin = tester.getTopLeft(find.text('first')).dx;
 
       push('second', top: 100);
-      await expectHandOver(
-        tester,
-        ['first', 'second'],
-        ink: ink,
-        surface: surface,
-        floor: 0.25,
-      );
-      expect(find.text('first'), findsNothing);
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 60));
 
-      navigatorKey.currentState!.pop();
-      await expectHandOver(
-        tester,
-        ['first', 'second'],
-        ink: ink,
-        surface: surface,
-        floor: 0.25,
+      final progress = ModalRoute.of(
+        tester.element(find.text('second')),
+      )!.animation!.value;
+      expect(progress, inExclusiveRange(0, 1));
+      expect(
+        tester.getTopLeft(find.text('first')).dx,
+        closeTo(origin - 0.3 * 400 * progress, 0.5),
       );
-      expect(find.text('second'), findsNothing);
     });
 
-    testWidgets('cover a page still fading back in', (tester) async {
+    Iterable<ClipRSuperellipseLayer> cardClipsOf(
+      WidgetTester tester, {
+      required double top,
+      required double bottom,
+    }) => tester.layers.whereType<ClipRSuperellipseLayer>().where((layer) {
+      final shape = layer.clipRSuperellipse;
+      return shape != null &&
+          shape.width == 400 &&
+          shape.tlRadius.x == top &&
+          shape.trRadius.x == top &&
+          shape.blRadius.x == bottom &&
+          shape.brRadius.x == bottom;
+    });
+
+    testWidgets('round a moving page with the sheet corners', (tester) async {
       await pumpSheet(tester);
-      final (ink, surface) = await inkAndSurface(tester);
+      Iterable<ClipRSuperellipseLayer> cardClips() =>
+          cardClipsOf(tester, top: 38, bottom: 38);
+
+      push('second', top: 100);
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 60));
+      expect(cardClips(), hasLength(2));
+
+      await tester.pumpAndSettle();
+      expect(cardClips(), isEmpty);
+    });
+
+    testWidgets('round a moving page in a form sheet with its corners', (
+      tester,
+    ) async {
+      await pumpSheet(tester, type: SheetType.formSheet);
+
+      push('second', top: 100);
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 60));
+      expect(
+        cardClipsOf(tester, top: AppCorner.alert, bottom: AppCorner.alert),
+        hasLength(2),
+      );
+    });
+
+    testWidgets('leave the page below in view when popped while covered', (
+      tester,
+    ) async {
+      await pumpSheet(tester);
       push('second', top: 100);
       await tester.pumpAndSettle();
+      push('third', top: 150);
+      await tester.pumpAndSettle();
+      final backdrop = ColorScheme.of(
+        tester.element(find.text('first', skipOffstage: false)),
+      ).surfaceContainerLowest;
 
       navigatorKey.currentState!.pop();
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 30));
-      push('third', top: 200);
-      await expectHandOver(
-        tester,
-        ['first', 'second', 'third'],
-        ink: ink,
-        surface: surface,
+      await tester.pump(const Duration(milliseconds: 60));
+      navigatorKey.currentState!.pop();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 60));
+
+      // The leaving card's leading side shows the page below.
+      expect(
+        tester.renderObject(find.byType(PagedSheet)),
+        isNot(
+          paints..something(
+            (method, arguments) =>
+                method == #drawRect &&
+                (arguments[0] as Rect).left == 0 &&
+                (arguments[0] as Rect).width > AppCorner.xxl + 1 &&
+                (arguments[1] as Paint).color == backdrop,
+          ),
+        ),
       );
+      expect(find.text('first'), findsOneWidget);
     });
 
-    testWidgets('fade without an opacity layer', (tester) async {
+    testWidgets('move without an opacity layer', (tester) async {
       await pumpSheet(tester);
 
       Future<void> expectNoLayers() async {

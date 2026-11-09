@@ -1,7 +1,6 @@
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/ui/color.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:prism_ui/color.dart';
 
 import 'app.dart';
 import 'clash_config.dart';
@@ -15,25 +14,6 @@ part 'generated/state.g.dart';
 @freezed
 abstract class SelectValue<T> with _$SelectValue<T> {
   const factory SelectValue(T value) = _SelectValue;
-}
-
-@freezed
-abstract class CommonMessage with _$CommonMessage {
-  const factory CommonMessage({
-    required String id,
-    required String text,
-    @Default(MessageLevel.info) MessageLevel level,
-    @Default(Duration(seconds: 3)) Duration duration,
-    MessageActionState? actionState,
-  }) = _CommonMessage;
-}
-
-@freezed
-abstract class MessageActionState with _$MessageActionState {
-  const factory MessageActionState({
-    required String actionText,
-    required VoidCallback action,
-  }) = _MessageActionState;
 }
 
 @freezed
@@ -181,7 +161,8 @@ abstract class SelectedProxyState with _$SelectedProxyState {
 @freezed
 abstract class SharedState with _$SharedState {
   const factory SharedState({
-    SetupParams? setupParams,
+    // Gson's JsonObject adapter rejects a JSON null, which would drop the sync.
+    @JsonKey(includeIfNull: false) SetupParams? setupParams,
     VpnOptions? vpnOptions,
     required String stopTip,
     required String startTip,
@@ -233,7 +214,18 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
     @Default({}) Map<String, dynamic> injectedRuleProviders,
     String? matchTarget,
     @Default(false) bool safeMode,
+    @Default([]) List<MitmModuleSource> mitmModules,
   }) = _MakeRealProfileState;
+}
+
+/// An enabled module as the profile build reads it.
+@freezed
+abstract class MitmModuleSource with _$MitmModuleSource {
+  const factory MitmModuleSource({
+    required String content,
+    @Default({}) Map<String, String> arguments,
+    @Default({}) Map<String, String> resources,
+  }) = _MitmModuleSource;
 }
 
 @freezed
@@ -248,6 +240,7 @@ abstract class MigrationData with _$MigrationData {
     @Default([]) List<ClashProvider> clashProviders,
     @Default([]) List<CustomProxy> customProxies,
     @Default([]) List<ProxyDialer> proxyDialers,
+    @Default([]) List<MitmModule> mitmModules,
   }) = _MigrationData;
 }
 
@@ -268,5 +261,6 @@ abstract class SetupState with _$SetupState {
     @Default([]) List<CustomProxy> appProxies,
     @Default({}) Map<int, String> proxyDialers,
     String? matchTarget,
+    @Default([]) List<MitmModuleSource> mitmModules,
   }) = _SetupState;
 }

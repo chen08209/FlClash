@@ -1,7 +1,7 @@
 import 'package:fl_clash/application.dart';
 import 'package:fl_clash/manager/hotkey_manager.dart';
 import 'package:fl_clash/manager/manager.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _leaf = SizedBox.shrink();
@@ -10,7 +10,6 @@ Widget? _childOf(Widget widget) {
   return switch (widget) {
     AppEnvManager(:final child) => child,
     LocaleManager(:final child) => child,
-    StatusManager(:final child) => child,
     ThemeManager(:final child) => child,
     WindowManager(:final child) => child,
     TrayManager(:final child) => child,
@@ -60,7 +59,6 @@ void main() {
     expect(_chainFrom(_stack(isDesktop: true)), [
       AppEnvManager,
       LocaleManager,
-      StatusManager,
       ThemeManager,
       WindowManager,
       TrayManager,
@@ -77,7 +75,6 @@ void main() {
     expect(_chainFrom(_stack(isDesktop: false)), [
       AppEnvManager,
       LocaleManager,
-      StatusManager,
       ThemeManager,
       AndroidManager,
       TileManager,

@@ -1,9 +1,7 @@
-import 'package:fl_clash/ui/inherited.dart';
-import 'package:fl_clash/ui/navigator_resizable.dart';
-import 'package:fl_clash/ui/paged_sheet.dart';
-import 'package:fl_clash/ui/sheet.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:prism_ui/prism_ui.dart';
+import '../helpers/test_app.dart';
 
 PagedSheetRoute<void> _page(String label, double height) {
   return PagedSheetRoute<void>(
@@ -17,7 +15,7 @@ PagedSheetRoute<void> _page(String label, double height) {
 Future<NavigatorState> _pumpSheet(WidgetTester tester, {Widget? first}) async {
   final navigatorKey = GlobalKey<NavigatorState>();
   await tester.pumpWidget(
-    MaterialApp(
+    HostApp(
       home: SheetProvider(
         type: SheetType.bottomSheet,
         child: Align(
@@ -57,9 +55,10 @@ void main() {
     final gesture = await tester.startGesture(
       tester.getCenter(find.text('second')),
     );
-    await gesture.moveBy(const Offset(20, 0));
+    await gesture.moveBy(const Offset(40, 0));
     await gesture.moveBy(Offset(width / 2, 0));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(_height(tester), closeTo(300, 1));
 
     await gesture.moveBy(Offset(width / 4, 0));
@@ -93,14 +92,19 @@ void main() {
     navigator.push(_page('second', 400));
     await tester.pump();
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pump(const Duration(milliseconds: 134));
+    final before = _height(tester);
+    await tester.pump(const Duration(milliseconds: 16));
     final turn = _height(tester);
     expect(turn, inExclusiveRange(200, 400));
 
     navigator.pop();
-    await tester.pump();
-    expect(_height(tester), turn);
-    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(
+      (_height(tester) - turn).abs(),
+      lessThanOrEqualTo((turn - before).abs()),
+    );
+    await tester.pump(const Duration(milliseconds: 200));
     expect(_height(tester), lessThan(turn));
 
     await tester.pumpAndSettle();

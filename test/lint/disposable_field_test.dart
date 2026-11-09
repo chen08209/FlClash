@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
+import 'sources.dart';
+
 const _disposableTypes = {
   'AnimationController',
   'FocusNode',
@@ -49,10 +51,9 @@ bool _isGenerated(String path) {
 
 void main() {
   test('every self-created disposable field is released in the same file', () {
-    final root = Directory('lib');
     final offenders = <String>[];
 
-    for (final entity in root.listSync(recursive: true)) {
+    for (final entity in sourceEntities()) {
       if (entity is! File || !entity.path.endsWith('.dart')) {
         continue;
       }
