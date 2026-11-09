@@ -40,6 +40,11 @@ bool _isAddableToLocal(Proxy proxy, {required bool isCustomProfile}) {
       GroupTypeExtension.getGroupType(proxy.type) == null;
 }
 
+bool _hasDefinition(Proxy proxy) {
+  return !reservedCustomProxyNames.contains(proxy.name) &&
+      GroupTypeExtension.getGroupType(proxy.type) == null;
+}
+
 class ProxyCard extends ConsumerWidget {
   final String groupName;
   final Proxy proxy;
@@ -96,6 +101,11 @@ class ProxyCard extends ConsumerWidget {
     globalState.safeRun(() => proxiesAction.addToLocalProxies(proxy.name));
   }
 
+  void _handleCopy(WidgetRef ref) {
+    final proxiesAction = ref.read(proxiesActionProvider.notifier);
+    globalState.safeRun(() => proxiesAction.copyProxy(proxy.name));
+  }
+
   List<PopupMenuItem> _menuItems(
     BuildContext context,
     WidgetRef ref, {
@@ -124,6 +134,12 @@ class ProxyCard extends ConsumerWidget {
           glyph: AppGlyphs.listAdd,
           label: appLocalizations.addToLocalProxies,
           onPressed: () => _handleAddToLocalProxies(ref),
+        ),
+      if (_hasDefinition(proxy))
+        PopupMenuItem(
+          glyph: AppGlyphs.copy,
+          label: appLocalizations.copy,
+          onPressed: () => _handleCopy(ref),
         ),
     ];
   }
