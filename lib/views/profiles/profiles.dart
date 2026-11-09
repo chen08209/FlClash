@@ -8,6 +8,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/profiles/custom/custom.dart';
 import 'package:fl_clash/views/profiles/extend/extend.dart';
+import 'package:fl_clash/widgets/subscription_usage_cloud.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -499,6 +500,7 @@ class ProfileItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isUpdating = ref.watch(isUpdatingProvider(profile.updatingKey));
     final subscriptionInfo = _subscriptionInfo;
+    final usage = subscriptionInfo?.usage;
     final isSelected = profile.id == groupValue;
     return ContextMenuRegion(
       menuItems: isUpdating ? null : _menuItems(context, ref),
@@ -513,6 +515,7 @@ class ProfileItem extends ConsumerWidget {
           key: Key(profile.id.toString()),
           minTileHeight: _profileItemHeight,
           minVerticalPadding: listRowVerticalPadding,
+          leading: usage == null ? null : SubscriptionUsageCloud(usage: usage),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             spacing: 8,
