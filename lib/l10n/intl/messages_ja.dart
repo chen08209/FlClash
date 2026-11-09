@@ -284,6 +284,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "addSsid": MessageLookupByLibrary.simpleMessage("SSIDを追加"),
     "addToLocalProxies": MessageLookupByLibrary.simpleMessage("ローカルプロキシに追加"),
     "addedRules": MessageLookupByLibrary.simpleMessage("追加ルール"),
+    "addedRulesAfterScript": MessageLookupByLibrary.simpleMessage(
+      "スクリプトの実行後、プロファイルのルールより前に挿入されます",
+    ),
     "addedToLocalProxies": m1,
     "additionalParameters": MessageLookupByLibrary.simpleMessage("追加パラメータ"),
     "additionalPrefix": MessageLookupByLibrary.simpleMessage("名前のプレフィックス"),
@@ -700,7 +703,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "exportLogs": MessageLookupByLibrary.simpleMessage("ログをエクスポート"),
     "exportSuccess": MessageLookupByLibrary.simpleMessage("エクスポートが完了しました"),
     "extend": MessageLookupByLibrary.simpleMessage("拡張"),
-    "extendMode": MessageLookupByLibrary.simpleMessage("拡張モード"),
     "extendScript": MessageLookupByLibrary.simpleMessage("拡張スクリプト"),
     "externalController": MessageLookupByLibrary.simpleMessage("外部コントローラー"),
     "externalControllerDesc": MessageLookupByLibrary.simpleMessage(
@@ -1593,9 +1595,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "save": MessageLookupByLibrary.simpleMessage("保存"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("変更を保存しますか？"),
     "script": MessageLookupByLibrary.simpleMessage("スクリプト"),
-    "scriptModeDesc": MessageLookupByLibrary.simpleMessage(
-      "スクリプトモード：拡張スクリプトでプロファイル全体を書き換えます",
-    ),
     "scrollToSelected": MessageLookupByLibrary.simpleMessage("選択項目へスクロール"),
     "search": MessageLookupByLibrary.simpleMessage("検索"),
     "seconds": MessageLookupByLibrary.simpleMessage("秒"),
@@ -1705,9 +1704,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "stackMode": MessageLookupByLibrary.simpleMessage("スタックモード"),
     "stackTrace": MessageLookupByLibrary.simpleMessage("スタックトレース"),
     "standard": MessageLookupByLibrary.simpleMessage("標準"),
-    "standardModeDesc": MessageLookupByLibrary.simpleMessage(
-      "標準モード：プロファイルにルールを追加します",
-    ),
     "start": MessageLookupByLibrary.simpleMessage("開始"),
     "startFromScratch": MessageLookupByLibrary.simpleMessage("最初から作成"),
     "startVpn": MessageLookupByLibrary.simpleMessage("VPNを起動しています…"),

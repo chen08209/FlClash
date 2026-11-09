@@ -569,6 +569,7 @@ Future<MigrationData> migrateLegacyConfig({
     final value = rawRule['value'] ?? '';
     rules.add(Rule.parse(value, id: id));
   }
+  final globalRuleIds = [for (final rule in rules) rule.id];
   final List rawProfiles = configMap['profiles'] as List<dynamic>? ?? [];
   final List<Profile> profiles = [];
   for (final rawProfile in rawProfiles) {
@@ -580,6 +581,7 @@ Future<MigrationData> migrateLegacyConfig({
     rawProfile['id'] = profileId;
     final overwrite = rawProfile['overwrite'] as Map?;
     if (overwrite != null) {
+      final isScript = overwrite['type'] == 'script';
       final standardOverwrite = overwrite['standardOverwrite'] as Map?;
       if (standardOverwrite != null) {
         final addedRules = standardOverwrite['addedRules'] as List? ?? [];
@@ -589,7 +591,7 @@ Future<MigrationData> migrateLegacyConfig({
           rules.add(Rule.parse(value, id: id).copyWith(profileId: profileId));
         }
         final disabledRuleIds = standardOverwrite['disabledRuleIds'] as List?;
-        if (disabledRuleIds != null) {
+        if (disabledRuleIds != null && !isScript) {
           for (final disabledRuleId in disabledRuleIds) {
             final newDisabledRuleId = idMap[disabledRuleId];
             if (newDisabledRuleId != null) {
@@ -600,14 +602,17 @@ Future<MigrationData> migrateLegacyConfig({
           }
         }
       }
-      final scriptOverwrite = overwrite['scriptOverwrite'] as Map?;
-      if (scriptOverwrite != null) {
-        final scriptId = scriptOverwrite['scriptId'] as String?;
-        rawProfile['scriptId'] = scriptId != null ? idMap[scriptId] : null;
+      // A script profile used to skip the global rules it now runs with.
+      if (isScript) {
+        for (final ruleId in globalRuleIds) {
+          disabledRules.add(DisabledRule(profileId: profileId, ruleId: ruleId));
+        }
+        final scriptId =
+            (overwrite['scriptOverwrite'] as Map?)?['scriptId'] as String?;
+        if (scriptId != null) {
+          rawProfile['scriptId'] = idMap[scriptId];
+        }
       }
-      rawProfile['extendType'] = overwrite['type'] == ExtendType.script.name
-          ? ExtendType.script.name
-          : ExtendType.standard.name;
     }
     final rawUrl = rawProfile['url'];
     rawProfile['type'] = rawUrl is String && rawUrl.isNotEmpty ? 'url' : 'file';

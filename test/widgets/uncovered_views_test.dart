@@ -16,7 +16,7 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/about.dart';
 import 'package:fl_clash/views/config/rules.dart';
 import 'package:fl_clash/views/config/scripts.dart';
-import 'package:fl_clash/views/profiles/extend/standard.dart';
+import 'package:fl_clash/views/profiles/extend/added_rules.dart';
 import 'package:fl_clash/views/proxies/proxies.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
@@ -568,7 +568,7 @@ void main() {
           child: ProfileIdProvider(
             profileId: profile.id,
             child: const HostScaffold(
-              body: CustomScrollView(slivers: [StandardContent()]),
+              body: CustomScrollView(slivers: [AddedRulesContent()]),
             ),
           ),
         ),
@@ -576,7 +576,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byType(StandardContent), findsOneWidget);
+    expect(find.byType(AddedRulesContent), findsOneWidget);
     expect(find.text('added0.com'), findsOneWidget);
     expect(tester.takeException(), null);
 
@@ -626,7 +626,7 @@ void main() {
           child: ProfileIdProvider(
             profileId: profile.id,
             child: const HostScaffold(
-              body: CustomScrollView(slivers: [StandardContent()]),
+              body: CustomScrollView(slivers: [AddedRulesContent()]),
             ),
           ),
         ),
@@ -677,7 +677,7 @@ void main() {
           child: ProfileIdProvider(
             profileId: profile.id,
             child: const HostScaffold(
-              body: CustomScrollView(slivers: [StandardContent()]),
+              body: CustomScrollView(slivers: [AddedRulesContent()]),
             ),
           ),
         ),

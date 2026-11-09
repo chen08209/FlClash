@@ -288,6 +288,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "addSsid": MessageLookupByLibrary.simpleMessage("SSID 추가"),
     "addToLocalProxies": MessageLookupByLibrary.simpleMessage("로컬 프록시에 추가"),
     "addedRules": MessageLookupByLibrary.simpleMessage("추가한 규칙"),
+    "addedRulesAfterScript": MessageLookupByLibrary.simpleMessage(
+      "스크립트 실행 후 프로필 규칙 앞에 삽입됩니다",
+    ),
     "addedToLocalProxies": m1,
     "additionalParameters": MessageLookupByLibrary.simpleMessage("추가 매개변수"),
     "additionalPrefix": MessageLookupByLibrary.simpleMessage("이름 접두사"),
@@ -690,7 +693,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "exportLogs": MessageLookupByLibrary.simpleMessage("로그 내보내기"),
     "exportSuccess": MessageLookupByLibrary.simpleMessage("내보내기 완료"),
     "extend": MessageLookupByLibrary.simpleMessage("확장"),
-    "extendMode": MessageLookupByLibrary.simpleMessage("확장 모드"),
     "extendScript": MessageLookupByLibrary.simpleMessage("확장 스크립트"),
     "externalController": MessageLookupByLibrary.simpleMessage("외부 컨트롤러"),
     "externalControllerDesc": MessageLookupByLibrary.simpleMessage(
@@ -1565,9 +1567,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "save": MessageLookupByLibrary.simpleMessage("저장"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("변경 사항을 저장하시겠습니까?"),
     "script": MessageLookupByLibrary.simpleMessage("스크립트"),
-    "scriptModeDesc": MessageLookupByLibrary.simpleMessage(
-      "스크립트 모드: 확장 스크립트로 프로필 전체를 다시 작성합니다",
-    ),
     "scrollToSelected": MessageLookupByLibrary.simpleMessage("선택 항목으로 스크롤"),
     "search": MessageLookupByLibrary.simpleMessage("검색"),
     "seconds": MessageLookupByLibrary.simpleMessage("초"),
@@ -1675,9 +1674,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "stackMode": MessageLookupByLibrary.simpleMessage("스택 모드"),
     "stackTrace": MessageLookupByLibrary.simpleMessage("스택 트레이스"),
     "standard": MessageLookupByLibrary.simpleMessage("표준"),
-    "standardModeDesc": MessageLookupByLibrary.simpleMessage(
-      "표준 모드: 프로필 위에 규칙을 추가합니다",
-    ),
     "start": MessageLookupByLibrary.simpleMessage("시작"),
     "startFromScratch": MessageLookupByLibrary.simpleMessage("처음부터 시작"),
     "startVpn": MessageLookupByLibrary.simpleMessage("VPN 시작 중…"),

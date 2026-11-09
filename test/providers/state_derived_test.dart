@@ -784,11 +784,9 @@ void main() {
       HotAction.tun,
     );
 
-    final profile = Profile.normal().copyWith(extendType: ExtendType.script);
+    final profile = Profile.normal();
     _profiles(container).replace([profile]);
     expect(container.read(profileProvider(profile.id)), profile);
-    expect(container.read(extendTypeProvider(profile.id)), ExtendType.script);
-    expect(container.read(extendTypeProvider(-1)), ExtendType.standard);
 
     expect(
       container.read(accessControlStateProvider),

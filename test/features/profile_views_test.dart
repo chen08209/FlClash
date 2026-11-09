@@ -163,7 +163,11 @@ void main() {
           profileDisabledRuleIdsProvider.overrideWith2(
             (_) => _TestDisabledRuleIds(),
           ),
-          scriptsProvider.overrideWith(() => TestScripts(const [])),
+          scriptsProvider.overrideWith(
+            () => TestScripts([
+              Script(id: 10, label: 'alpha', lastUpdateTime: DateTime(2026)),
+            ]),
+          ),
           clashConfigProvider(profile.id).overrideWithValue(
             const AsyncData(
               ClashConfig(
@@ -203,42 +207,36 @@ void main() {
       return setupAction;
     }
 
-    Future<void> switchToScript(WidgetTester tester) async {
-      await tester.tap(find.text(currentAppLocalizations.script));
+    Future<void> selectScript(WidgetTester tester) async {
+      await tester.tap(find.text(currentAppLocalizations.extendScript));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('alpha'));
       await tester.pumpAndSettle();
     }
 
     Finder applyNowButton() =>
         find.widgetWithText(FilledButton, currentAppLocalizations.applyNow);
 
-    testWidgets('lists every mode and marks the chosen one', (tester) async {
+    testWidgets('runs the script ahead of the added rules', (tester) async {
       await pumpExtendView(tester);
       final l10n = currentAppLocalizations;
-      expect(find.text(l10n.standardModeDesc), findsOneWidget);
-      expect(find.text(l10n.scriptModeDesc), findsOneWidget);
+      expect(find.text(l10n.none), findsOneWidget);
+      expect(find.text(l10n.addedRulesAfterScript), findsNothing);
       expect(
-        find.ancestor(
-          of: find.byType(SelectionBadge),
-          matching: find.widgetWithText(DecorationListItem, l10n.standard),
-        ),
-        findsOneWidget,
+        tester.getTopLeft(find.text(l10n.extendScript)).dy,
+        lessThan(tester.getTopLeft(find.text(l10n.addedRules)).dy),
       );
 
-      await switchToScript(tester);
-      expect(
-        find.ancestor(
-          of: find.byType(SelectionBadge),
-          matching: find.widgetWithText(DecorationListItem, l10n.script),
-        ),
-        findsOneWidget,
-      );
+      await selectScript(tester);
+      expect(find.text('alpha'), findsOneWidget);
+      expect(find.text(l10n.addedRulesAfterScript), findsOneWidget);
     });
 
     testWidgets('offers applying at once only after a change', (tester) async {
       final setupAction = await pumpExtendView(tester);
       expect(applyNowButton(), findsNothing);
 
-      await switchToScript(tester);
+      await selectScript(tester);
       expect(setupAction.applyCalls, 0);
       await tester.tap(applyNowButton());
       await tester.pumpAndSettle();
@@ -262,7 +260,7 @@ void main() {
 
     testWidgets('applies on leaving without asking', (tester) async {
       final setupAction = await pumpExtendView(tester);
-      await switchToScript(tester);
+      await selectScript(tester);
 
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
@@ -274,7 +272,7 @@ void main() {
 
     testWidgets('offers no apply for a profile not in use', (tester) async {
       final setupAction = await pumpExtendView(tester, current: false);
-      await switchToScript(tester);
+      await selectScript(tester);
 
       expect(applyNowButton(), findsNothing);
       expect(setupAction.applyCalls, 0);

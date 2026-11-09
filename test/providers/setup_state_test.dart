@@ -66,7 +66,6 @@ void main() {
       id: 1,
       type: ProfileType.custom,
       autoUpdateDuration: Duration.zero,
-      extendType: ExtendType.script,
       scriptId: 5,
       matchTarget: 'Proxy',
     );

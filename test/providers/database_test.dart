@@ -373,6 +373,30 @@ void main() {
       },
     );
 
+    test('updateWhere changes every match in one state change', () async {
+      notifier
+        ..put(profile(1, label: 'One', order: 0))
+        ..put(profile(2, label: 'Two', order: 1))
+        ..put(profile(3, label: 'Three', order: 2));
+      await pumpEventQueue();
+      final states = <List<Profile>>[];
+      final subscription = container.listen(
+        profilesProvider,
+        (_, next) => states.add(next),
+      );
+      addTearDown(subscription.close);
+
+      notifier.updateWhere(
+        (item) => item.id != 2,
+        (item) => item.copyWith(label: '${item.label}!'),
+      );
+      expect(states, hasLength(1));
+      await pumpEventQueue();
+
+      final rows = await testDatabase.profilesDao.query().get();
+      expect(rows.map((item) => item.label), ['One!', 'Two', 'Three!']);
+    });
+
     test('reorder only writes the rows whose order actually changed', () async {
       notifier
         ..put(profile(1, label: 'One', order: 0))

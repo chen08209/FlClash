@@ -9,14 +9,14 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class StandardContent extends ConsumerStatefulWidget {
-  const StandardContent({super.key});
+class AddedRulesContent extends ConsumerStatefulWidget {
+  const AddedRulesContent({super.key});
 
   @override
-  ConsumerState createState() => _StandardContentState();
+  ConsumerState createState() => _AddedRulesContentState();
 }
 
-class _StandardContentState extends ConsumerState<StandardContent> {
+class _AddedRulesContentState extends ConsumerState<AddedRulesContent> {
   final _key = uniqueId;
   late int _profileId;
 
@@ -123,6 +123,9 @@ class _StandardContentState extends ConsumerState<StandardContent> {
     _profileId = ProfileIdProvider.of(context)!.profileId;
     final addedRules = ref.watch(profileRulesProvider(_profileId)).value ?? [];
     final selectedRules = ref.watch(itemsProvider(_key));
+    final hasScript = ref.watch(
+      profileProvider(_profileId).select((state) => state?.scriptId != null),
+    );
     return PopGuard(
       onPop: selectedRules.isEmpty
           ? null
@@ -165,6 +168,18 @@ class _StandardContentState extends ConsumerState<StandardContent> {
               ),
             ),
           ),
+          if (hasScript)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding:
+                    const EdgeInsets.fromLTRB(16, 0, 16, 8) * 1.mAp(context) +
+                    const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  appLocalizations.addedRulesAfterScript,
+                  style: context.listCaptionStyle,
+                ),
+              ),
+            ),
           SliverPrismReorderableList(
             itemCount: addedRules.length,
             itemBuilder: (_, index) =>

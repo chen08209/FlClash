@@ -17,12 +17,8 @@ import 'package:riverpod/riverpod.dart';
 import '../helpers/app_paths.dart';
 import '../helpers/preferences.dart';
 
-Profile _profile(int id, String label) => Profile(
-  id: id,
-  label: label,
-  autoUpdateDuration: Duration.zero,
-  extendType: ExtendType.standard,
-);
+Profile _profile(int id, String label) =>
+    Profile(id: id, label: label, autoUpdateDuration: Duration.zero);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

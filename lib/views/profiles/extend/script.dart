@@ -8,11 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class ScriptContent extends ConsumerWidget {
   const ScriptContent({super.key});
 
-  void _handleChange(WidgetRef ref, int profileId, int scriptId) {
+  void _handleChange(WidgetRef ref, int profileId, int? scriptId) {
     ref.read(profilesProvider.notifier).updateProfile(profileId, (state) {
-      return state.copyWith(
-        scriptId: state.scriptId == scriptId ? null : scriptId,
-      );
+      return state.copyWith(scriptId: scriptId);
     });
   }
 
@@ -23,28 +21,28 @@ class ScriptContent extends ConsumerWidget {
     final scriptId = ref.watch(
       profileProvider(profileId).select((state) => state?.scriptId),
     );
-    final scripts = ref.watch(scriptsProvider).value ?? [];
+    final labels = {
+      for (final script in ref.watch(scriptsProvider).value ?? const [])
+        script.id: script.label,
+    };
     return SliverMainAxisGroup(
       slivers: [
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ListHeader(title: appLocalizations.extendScript),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: generateGroup([
-              for (final script in scripts)
-                _ScriptOption(
-                  label: script.label,
-                  isSelected: script.id == scriptId,
-                  onSelected: () {
-                    _handleChange(ref, profileId, script.id);
-                  },
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          sliver: SliverToBoxAdapter(
+            child: generateSection(
+              title: appLocalizations.script,
+              items: [
+                ListItem<int?>.options(
+                  title: Text(appLocalizations.extendScript),
+                  options: [null, ...labels.keys],
+                  sectionStarts: {...labels.keys.take(1)},
+                  value: labels.containsKey(scriptId) ? scriptId : null,
+                  textBuilder: (id) => labels[id] ?? appLocalizations.none,
+                  onChanged: (id) => _handleChange(ref, profileId, id),
                 ),
-            ]),
+              ],
+            ),
           ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 16)),
@@ -57,28 +55,6 @@ class ScriptContent extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ScriptOption extends StatelessWidget {
-  const _ScriptOption({
-    required this.label,
-    required this.isSelected,
-    required this.onSelected,
-  });
-
-  final String label;
-  final bool isSelected;
-  final VoidCallback onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecorationListItem(
-      isSelected: isSelected,
-      title: Text(label),
-      trailing: isSelected ? const SelectionCheck() : null,
-      onPressed: onSelected,
     );
   }
 }

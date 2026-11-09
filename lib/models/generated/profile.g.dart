@@ -51,9 +51,6 @@ _Profile _$ProfileFromJson(Map<String, dynamic> json) => _Profile(
   unfoldSet:
       (json['unfoldSet'] as List<dynamic>?)?.map((e) => e as String).toSet() ??
       const {},
-  extendType:
-      $enumDecodeNullable(_$ExtendTypeEnumMap, json['extendType']) ??
-      ExtendType.standard,
   scriptId: (json['scriptId'] as num?)?.toInt(),
   matchTarget: json['matchTarget'] as String?,
   order: (json['order'] as num?)?.toInt(),
@@ -77,7 +74,6 @@ Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
   'autoUpdate': instance.autoUpdate,
   'selectedMap': instance.selectedMap,
   'unfoldSet': instance.unfoldSet.toList(),
-  'extendType': _$ExtendTypeEnumMap[instance.extendType]!,
   'scriptId': instance.scriptId,
   'matchTarget': instance.matchTarget,
   'order': instance.order,
@@ -88,9 +84,4 @@ const _$ProfileTypeEnumMap = {
   ProfileType.file: 'file',
   ProfileType.url: 'url',
   ProfileType.custom: 'custom',
-};
-
-const _$ExtendTypeEnumMap = {
-  ExtendType.standard: 'standard',
-  ExtendType.script: 'script',
 };

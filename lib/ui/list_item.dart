@@ -43,12 +43,14 @@ final class _OptionsAction<T> extends _ListItemAction {
   final T value;
   final String Function(T value) textBuilder;
   final ValueChanged<T> onChanged;
+  final Set<T> sectionStarts;
 
   const _OptionsAction({
     required this.options,
     required this.textBuilder,
     required this.value,
     required this.onChanged,
+    required this.sectionStarts,
   });
 }
 
@@ -132,6 +134,7 @@ class ListItem<T> extends StatelessWidget {
     required T value,
     required String Function(T value) textBuilder,
     required ValueChanged<T> onChanged,
+    Set<T> sectionStarts = const {},
     this.horizontalTitleGap,
     this.minTileHeight,
     this.minVerticalPadding = listRowVerticalPadding,
@@ -141,6 +144,7 @@ class ListItem<T> extends StatelessWidget {
          value: value,
          textBuilder: textBuilder,
          onChanged: onChanged,
+         sectionStarts: sectionStarts,
        ),
        trailing = null,
        onTap = null;
@@ -318,6 +322,9 @@ class ListItem<T> extends StatelessWidget {
                   PopupMenuItem(
                     label: optionsDelegate.textBuilder(option),
                     checked: option == optionsDelegate.value,
+                    section: optionsDelegate.sectionStarts.contains(option)
+                        ? const PopupMenuSection()
+                        : null,
                     onPressed: () => optionsDelegate.onChanged(option),
                   ),
               ],

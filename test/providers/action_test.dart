@@ -134,10 +134,7 @@ void main() {
     );
 
     test('putScript re-applies only a current profile running that script', () {
-      final profile = Profile.normal().copyWith(
-        extendType: ExtendType.script,
-        scriptId: 1,
-      );
+      final profile = Profile.normal().copyWith(scriptId: 1);
       final setupAction = _ApplyRecordingSetupAction();
       final container = scriptsContainer(profile, setupAction);
       final action = container.read(scriptsActionProvider.notifier);
@@ -154,18 +151,48 @@ void main() {
 
       container
           .read(profilesProvider.notifier)
-          .put(profile.copyWith(extendType: ExtendType.standard));
+          .put(profile.copyWith(scriptId: null));
       action.putScript(script(1));
       expect(setupAction.applyCount, 1);
+    });
+
+    test('deleteScript takes the script off every profile running it', () {
+      final current = Profile.normal(label: 'current').copyWith(scriptId: 1);
+      final other = Profile.normal(label: 'other').copyWith(scriptId: 1);
+      final unrelated = Profile.normal(
+        label: 'unrelated',
+      ).copyWith(scriptId: 2);
+      final setupAction = _ApplyRecordingSetupAction();
+      final container = scriptsContainer(current, setupAction);
+      container.read(profilesProvider.notifier).put(other);
+      container.read(profilesProvider.notifier).put(unrelated);
+      final action = container.read(scriptsActionProvider.notifier);
+      action.putScript(script(1));
+      action.putScript(script(2));
+      final appliesBefore = setupAction.applyCount;
+
+      action.deleteScript(1);
+
+      expect(container.read(scriptsProvider).value?.map((item) => item.id), [
+        2,
+      ]);
+      expect(
+        {
+          for (final profile in container.read(profilesProvider))
+            profile.label: profile.scriptId,
+        },
+        {'current': null, 'other': null, 'unrelated': 2},
+      );
+      expect(setupAction.applyCount, appliesBefore + 1);
+
+      action.deleteScript(2);
+      expect(setupAction.applyCount, appliesBefore + 1);
     });
 
     test(
       'updateScript releases the updating key when the download fails',
       () async {
-        final profile = Profile.normal().copyWith(
-          extendType: ExtendType.script,
-          scriptId: 1,
-        );
+        final profile = Profile.normal().copyWith(scriptId: 1);
         final setupAction = _ApplyRecordingSetupAction();
         final container = scriptsContainer(profile, setupAction);
         final remote = script(1, url: 'bad-url');
@@ -921,6 +948,11 @@ class _MemoryScripts extends Scripts {
   @override
   void put(Script script) {
     state = AsyncData([...value.where((item) => item.id != script.id), script]);
+  }
+
+  @override
+  void del(int id) {
+    state = AsyncData([...value.where((item) => item.id != id)]);
   }
 }
 

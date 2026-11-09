@@ -10,6 +10,22 @@ class ScriptsAction extends _$ScriptsAction {
     _applyIfInUse(script.id);
   }
 
+  void deleteScript(int scriptId) {
+    final inUse = ref.read(currentProfileProvider)?.scriptId == scriptId;
+    ref.read(scriptsProvider.notifier).del(scriptId);
+    ref
+        .read(profilesProvider.notifier)
+        .updateWhere(
+          (profile) => profile.scriptId == scriptId,
+          (profile) => profile.copyWith(scriptId: null),
+        );
+    if (inUse) {
+      ref
+          .read(setupActionProvider.notifier)
+          .applyProfileDebounce(silence: true);
+    }
+  }
+
   Future<void> updateScript(Script script) async {
     final updatingKeys = ref.read(updatingKeysProvider.notifier);
     final operation = updatingKeys.start(script.updatingKey);
@@ -21,9 +37,7 @@ class ScriptsAction extends _$ScriptsAction {
   }
 
   void _applyIfInUse(int scriptId) {
-    final profile = ref.read(currentProfileProvider);
-    if (profile?.extendType != ExtendType.script ||
-        profile?.scriptId != scriptId) {
+    if (ref.read(currentProfileProvider)?.scriptId != scriptId) {
       return;
     }
     ref.read(setupActionProvider.notifier).applyProfileDebounce(silence: true);

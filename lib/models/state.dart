@@ -250,7 +250,6 @@ abstract class SetupState with _$SetupState {
     required int? profileId,
     required int? profileLastUpdateDate,
     required ProfileType profileType,
-    required ExtendType extendType,
     required List<Rule> rules,
     required List<ProxyGroup> proxyGroups,
     required List<Rule> addedRules,

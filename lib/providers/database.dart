@@ -310,6 +310,25 @@ class Profiles extends _$Profiles {
     _optimistic(next, () => _serial(() => _putLatest([profileId])));
   }
 
+  /// One state change and one transaction for every profile [test] picks.
+  void updateWhere(
+    bool Function(Profile profile) test,
+    Profile Function(Profile profile) builder,
+  ) {
+    final changed = <int>[];
+    final next = state.map((profile) {
+      if (!test(profile)) return profile;
+      final updated = builder(profile);
+      if (updated != profile) changed.add(profile.id);
+      return updated;
+    }).toList();
+    if (changed.isEmpty) return;
+    _optimistic(
+      next,
+      () => _serial(() => database.transaction(() => _putLatest(changed))),
+    );
+  }
+
   void reorder(List<Profile> profiles) {
     final next = List<Profile>.from(profiles);
     final moved = <int>[];

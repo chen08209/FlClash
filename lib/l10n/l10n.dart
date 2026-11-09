@@ -3981,34 +3981,19 @@ class AppLocalizations {
     return Intl.message('Edit rule', name: 'editRule', desc: '', args: []);
   }
 
-  /// `Extend mode`
-  String get extendMode {
-    return Intl.message('Extend mode', name: 'extendMode', desc: '', args: []);
-  }
-
-  /// `Standard mode: adds rules on top of the profile`
-  String get standardModeDesc {
-    return Intl.message(
-      'Standard mode: adds rules on top of the profile',
-      name: 'standardModeDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Script mode: rewrites the whole profile with an extension script`
-  String get scriptModeDesc {
-    return Intl.message(
-      'Script mode: rewrites the whole profile with an extension script',
-      name: 'scriptModeDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Added rules`
   String get addedRules {
     return Intl.message('Added rules', name: 'addedRules', desc: '', args: []);
+  }
+
+  /// `Inserted after the script runs, ahead of the profile's rules`
+  String get addedRulesAfterScript {
+    return Intl.message(
+      'Inserted after the script runs, ahead of the profile\'s rules',
+      name: 'addedRulesAfterScript',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Control global added rules`

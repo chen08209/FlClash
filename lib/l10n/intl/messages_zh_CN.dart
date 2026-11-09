@@ -280,6 +280,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "addSsid": MessageLookupByLibrary.simpleMessage("添加SSID"),
     "addToLocalProxies": MessageLookupByLibrary.simpleMessage("添加到本地代理"),
     "addedRules": MessageLookupByLibrary.simpleMessage("附加规则"),
+    "addedRulesAfterScript": MessageLookupByLibrary.simpleMessage(
+      "在脚本之后插入，排在配置规则前面",
+    ),
     "addedToLocalProxies": m1,
     "additionalParameters": MessageLookupByLibrary.simpleMessage("附加参数"),
     "additionalPrefix": MessageLookupByLibrary.simpleMessage("名称前缀"),
@@ -646,7 +649,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "exportLogs": MessageLookupByLibrary.simpleMessage("导出日志"),
     "exportSuccess": MessageLookupByLibrary.simpleMessage("导出成功"),
     "extend": MessageLookupByLibrary.simpleMessage("扩展"),
-    "extendMode": MessageLookupByLibrary.simpleMessage("扩展模式"),
     "extendScript": MessageLookupByLibrary.simpleMessage("扩展脚本"),
     "externalController": MessageLookupByLibrary.simpleMessage("外部控制器"),
     "externalControllerDesc": MessageLookupByLibrary.simpleMessage(
@@ -1443,7 +1445,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "save": MessageLookupByLibrary.simpleMessage("保存"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("是否保存更改？"),
     "script": MessageLookupByLibrary.simpleMessage("脚本"),
-    "scriptModeDesc": MessageLookupByLibrary.simpleMessage("脚本模式，使用扩展脚本改写整个配置"),
     "scrollToSelected": MessageLookupByLibrary.simpleMessage("滚动到已选"),
     "search": MessageLookupByLibrary.simpleMessage("搜索"),
     "seconds": MessageLookupByLibrary.simpleMessage("秒"),
@@ -1541,9 +1542,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "stackMode": MessageLookupByLibrary.simpleMessage("栈模式"),
     "stackTrace": MessageLookupByLibrary.simpleMessage("堆栈信息"),
     "standard": MessageLookupByLibrary.simpleMessage("标准"),
-    "standardModeDesc": MessageLookupByLibrary.simpleMessage(
-      "标准模式，在配置的基础上附加规则",
-    ),
     "start": MessageLookupByLibrary.simpleMessage("启动"),
     "startFromScratch": MessageLookupByLibrary.simpleMessage("从零开始"),
     "startVpn": MessageLookupByLibrary.simpleMessage("正在启动VPN…"),

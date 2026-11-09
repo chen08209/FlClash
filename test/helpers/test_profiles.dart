@@ -40,6 +40,16 @@ class TestProfiles extends Profiles {
     state = next;
   }
 
+  @override
+  void updateWhere(
+    bool Function(Profile profile) test,
+    Profile Function(Profile profile) builder,
+  ) {
+    state = [
+      for (final profile in state) test(profile) ? builder(profile) : profile,
+    ];
+  }
+
   void replace(List<Profile> profiles) {
     state = profiles;
   }
