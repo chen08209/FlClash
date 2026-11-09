@@ -3,6 +3,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/profiles.dart';
+import 'package:fl_clash/widgets/subscription_usage_cloud.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
@@ -88,6 +89,57 @@ Future<ProviderContainer> pumpProfiles(
 }
 
 void main() {
+  testWidgets('quota clouds follow finite remote usage and refreshed quotas', (
+    tester,
+  ) async {
+    Profile subscription(String label, int used, int total) =>
+        urlProfile(label).copyWith(
+          subscriptionInfo: SubscriptionInfo(download: used, total: total),
+        );
+
+    final finite = subscription('Finite', 50, 100);
+    final container = await pumpProfiles(
+      tester,
+      profiles: [
+        subscription('Unused', 0, 100),
+        finite,
+        subscription('Exceeded', 120, 100),
+        subscription('Unlimited', 80, 0),
+        subscription('Invalid', 80, -1),
+        Profile.normal(label: 'Unknown', url: 'https://example.com/unknown'),
+        Profile.normal(
+          label: 'Local',
+        ).copyWith(subscriptionInfo: const SubscriptionInfo(total: 100)),
+      ],
+    );
+
+    List<double> usages() => tester
+        .widgetList<SubscriptionUsageCloud>(find.byType(SubscriptionUsageCloud))
+        .map((cloud) => cloud.usage)
+        .toList();
+
+    expect(usages(), [0.0, 0.5, 1.0]);
+    for (final (total, expected) in [
+      (100, [0.0, 0.75, 1.0]),
+      (0, [0.0, 1.0]),
+    ]) {
+      container
+          .read(profilesProvider.notifier)
+          .updateProfile(
+            finite.id,
+            (profile) => profile.copyWith(
+              subscriptionInfo: SubscriptionInfo(
+                upload: 25,
+                download: 50,
+                total: total,
+              ),
+            ),
+          );
+      await tester.pump();
+      expect(usages(), expected);
+    }
+  });
+
   testWidgets('a focused profile card opens its menu', (tester) async {
     final profiles = [
       urlProfile('url 1'),
