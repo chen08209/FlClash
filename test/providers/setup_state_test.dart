@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:fl_clash/database/database.dart' as db;
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:flutter/widgets.dart';
@@ -104,6 +105,72 @@ void main() {
     expect(state.matchTarget, isNull);
     expect(state.addedRules, isEmpty);
     expect(state.rules.map((rule) => rule.id), [11]);
+  });
+
+  testWidgets('a subscription without its own script runs the global one', (
+    tester,
+  ) async {
+    const standard = Profile(
+      id: 1,
+      type: ProfileType.url,
+      autoUpdateDuration: Duration.zero,
+    );
+    const ownScript = Profile(
+      id: 2,
+      type: ProfileType.url,
+      autoUpdateDuration: Duration.zero,
+      extendType: ExtendType.script,
+      scriptId: 6,
+    );
+    const custom = Profile(
+      id: 3,
+      type: ProfileType.custom,
+      autoUpdateDuration: Duration.zero,
+    );
+    for (final id in [5, 6]) {
+      await testDatabase.scripts.put(
+        Script(
+          id: id,
+          label: 'Script $id',
+          lastUpdateTime: DateTime(2026),
+        ).toCompanion(),
+      );
+    }
+    await testDatabase.rulesDao.putRule(
+      Rule.parse('DOMAIN,global.com,DIRECT', id: 10),
+    );
+    final container = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWith(
+          () => TestProfiles([standard, ownScript, custom]),
+        ),
+        appSettingProvider.overrideWithBuild(
+          (_, _) => const AppSettingProps(globalScriptId: 5),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const SizedBox.shrink(),
+      ),
+    );
+
+    final standardState = await container.read(
+      setupStateProvider(standard.id).future,
+    );
+    final ownScriptState = await container.read(
+      setupStateProvider(ownScript.id).future,
+    );
+    final customState = await container.read(
+      setupStateProvider(custom.id).future,
+    );
+
+    expect(standardState.script?.id, 5);
+    expect(standardState.addedRules.map((rule) => rule.id), [10]);
+    expect(ownScriptState.script?.id, 6);
+    expect(customState.script, isNull);
   });
 
   testWidgets('a custom setup carries the dialers of its own profile', (
