@@ -4,6 +4,7 @@
 
 #include <app_links/app_links_plugin_c_api.h>
 #include <proxy/proxy_plugin_c_api.h>
+#include <tlhelp32.h>
 #include <window/window_plugin_c_api.h>
 
 #include <algorithm>
@@ -23,6 +24,32 @@ constexpr char kWatchProxyArgument[] = "--watch-proxy";
 // The Core outlives the app by up to its exit timeout, and a skipped live port answers like a cleared one.
 constexpr DWORD kProxyRetryDelaysMs[] = {0, 1000, 2000, 4000};
 
+bool AnotherFlClashProcessRunning() {
+  wchar_t path[MAX_PATH];
+  if (GetModuleFileNameW(nullptr, path, MAX_PATH) == 0) {
+    return false;
+  }
+  const std::wstring own_name = std::wstring(path).substr(
+      std::wstring(path).find_last_of(L"\\/") + 1);
+  const HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  if (snapshot == INVALID_HANDLE_VALUE) {
+    return false;
+  }
+  PROCESSENTRY32W entry = {};
+  entry.dwSize = sizeof(entry);
+  bool found = false;
+  if (Process32FirstW(snapshot, &entry)) {
+    do {
+      if (entry.th32ProcessID != GetCurrentProcessId() &&
+          _wcsicmp(entry.szExeFile, own_name.c_str()) == 0) {
+        found = true;
+      }
+    } while (!found && Process32NextW(snapshot, &entry));
+  }
+  CloseHandle(snapshot);
+  return found;
+}
+
 int RunWatchProxy(const std::string &pid_argument) {
   const DWORD pid = static_cast<DWORD>(
       std::strtoul(pid_argument.c_str(), nullptr, 10));
@@ -32,6 +59,9 @@ int RunWatchProxy(const std::string &pid_argument) {
   }
   for (const DWORD delay : kProxyRetryDelaysMs) {
     Sleep(delay);
+    if (AnotherFlClashProcessRunning()) {
+      return EXIT_SUCCESS;
+    }
     ProxyPluginClearStaleProxy();
   }
   return EXIT_SUCCESS;
@@ -52,9 +82,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   }
   if (const auto watch = FindArgument(command_line_arguments,
                                       kWatchProxyArgument);
-      watch != command_line_arguments.end() &&
-      std::next(watch) != command_line_arguments.end()) {
-    return RunWatchProxy(*std::next(watch));
+      watch != command_line_arguments.end()) {
+    // A watcher child never falls through to the app launch below.
+    if (std::next(watch) != command_line_arguments.end()) {
+      return RunWatchProxy(*std::next(watch));
+    }
+    return EXIT_FAILURE;
   }
 
   if (HWND running = WindowPluginFindRunningWindow()) {

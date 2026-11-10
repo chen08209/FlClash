@@ -159,11 +159,18 @@ void ArmProxyWatcher()
   }
   std::wstring command = L"\"" + std::wstring(path) + L"\" --watch-proxy " +
                          std::to_wstring(GetCurrentProcessId());
+  // The app's own working directory can be a dead or removable location by
+  // the time the child spawns; the exe's directory never is.
+  std::wstring directory(path);
+  const size_t slash = directory.find_last_of(L"\\/");
+  if (slash != std::wstring::npos) {
+    directory.resize(slash);
+  }
   STARTUPINFOW startup = {};
   startup.cb = sizeof(startup);
   PROCESS_INFORMATION information = {};
   if (CreateProcessW(nullptr, command.data(), nullptr, nullptr, FALSE,
-                     CREATE_NO_WINDOW, nullptr, nullptr, &startup,
+                     CREATE_NO_WINDOW, nullptr, directory.c_str(), &startup,
                      &information))
   {
     CloseHandle(information.hProcess);
