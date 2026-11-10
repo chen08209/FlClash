@@ -40,6 +40,7 @@ class LinuxProxy {
         homeDir: homeDir,
         backend: selection.backend,
         kdeConfigWriter: selection.executable,
+        writeGSettings: selection.gsettingsAvailable,
       ),
     );
   }
@@ -60,6 +61,7 @@ class LinuxProxy {
         homeDir: homeDir,
         backend: selection.backend,
         kdeConfigWriter: selection.executable,
+        writeGSettings: selection.gsettingsAvailable,
       ),
     );
   }
@@ -91,7 +93,11 @@ class LinuxProxy {
       case LinuxProxyBackend.kde:
         for (final executable in const ['kwriteconfig6', 'kwriteconfig5']) {
           if (await _executableChecker(executable)) {
-            return _LinuxBackendSelection(backend, executable);
+            return _LinuxBackendSelection(
+              backend,
+              executable,
+              gsettingsAvailable: await _executableChecker('gsettings'),
+            );
           }
         }
     }
@@ -174,6 +180,7 @@ class LinuxProxyCommands {
     required String homeDir,
     required LinuxProxyBackend backend,
     required String kdeConfigWriter,
+    bool writeGSettings = false,
   }) {
     return switch (backend) {
       LinuxProxyBackend.gnome => _buildGSettingsStart(
@@ -191,6 +198,7 @@ class LinuxProxyCommands {
         bypassDomain: bypassDomain,
         homeDir: homeDir,
         executable: kdeConfigWriter,
+        writeGSettings: writeGSettings,
       ),
     };
   }
@@ -199,6 +207,7 @@ class LinuxProxyCommands {
     required String homeDir,
     required LinuxProxyBackend backend,
     required String kdeConfigWriter,
+    bool writeGSettings = false,
   }) {
     return switch (backend) {
       LinuxProxyBackend.gnome => _buildGSettingsStop(
@@ -210,6 +219,7 @@ class LinuxProxyCommands {
       LinuxProxyBackend.kde => _buildKdeStop(
         homeDir: homeDir,
         executable: kdeConfigWriter,
+        writeGSettings: writeGSettings,
       ),
     };
   }
@@ -261,6 +271,7 @@ class LinuxProxyCommands {
     required int port,
     required List<String> bypassDomain,
     required String schemaPrefix,
+    bool optional = false,
   }) {
     final commands = <ProxyCommand>[
       ProxyCommand('gsettings', [
@@ -268,7 +279,7 @@ class LinuxProxyCommands {
         schemaPrefix,
         'ignore-hosts',
         _formatGSettingsStringList(bypassDomain),
-      ]),
+      ], optional: optional),
     ];
     for (final type in _ProxyType.values) {
       commands.addAll([
@@ -277,26 +288,37 @@ class LinuxProxyCommands {
           '$schemaPrefix.${type.name}',
           'host',
           proxyHost,
-        ]),
+        ], optional: optional),
         ProxyCommand('gsettings', [
           'set',
           '$schemaPrefix.${type.name}',
           'port',
           '$port',
-        ]),
+        ], optional: optional),
       ]);
     }
     commands.add(
-      ProxyCommand('gsettings', ['set', schemaPrefix, 'mode', 'manual']),
+      ProxyCommand('gsettings', [
+        'set',
+        schemaPrefix,
+        'mode',
+        'manual',
+      ], optional: optional),
     );
     return commands;
   }
 
   static List<ProxyCommand> _buildGSettingsStop({
     required String schemaPrefix,
+    bool optional = false,
   }) {
     return [
-      ProxyCommand('gsettings', ['set', schemaPrefix, 'mode', 'none']),
+      ProxyCommand('gsettings', [
+        'set',
+        schemaPrefix,
+        'mode',
+        'none',
+      ], optional: optional),
     ];
   }
 
@@ -305,6 +327,7 @@ class LinuxProxyCommands {
     required List<String> bypassDomain,
     required String homeDir,
     required String executable,
+    bool writeGSettings = false,
   }) {
     final configFile = path.join(homeDir, '.config', 'kioslaverc');
     return [
@@ -336,6 +359,13 @@ class LinuxProxyCommands {
         'ProxyType',
         '1',
       ]),
+      if (writeGSettings)
+        ..._buildGSettingsStart(
+          port: port,
+          bypassDomain: bypassDomain,
+          schemaPrefix: 'org.gnome.system.proxy',
+          optional: true,
+        ),
       _kdeReparseConfiguration,
     ];
   }
@@ -343,6 +373,7 @@ class LinuxProxyCommands {
   static List<ProxyCommand> _buildKdeStop({
     required String homeDir,
     required String executable,
+    bool writeGSettings = false,
   }) {
     return [
       ProxyCommand(executable, [
@@ -354,6 +385,11 @@ class LinuxProxyCommands {
         'ProxyType',
         '0',
       ]),
+      if (writeGSettings)
+        ..._buildGSettingsStop(
+          schemaPrefix: 'org.gnome.system.proxy',
+          optional: true,
+        ),
       _kdeReparseConfiguration,
     ];
   }
@@ -390,6 +426,11 @@ class LinuxProxyCommands {
 class _LinuxBackendSelection {
   final LinuxProxyBackend backend;
   final String executable;
+  final bool gsettingsAvailable;
 
-  const _LinuxBackendSelection(this.backend, this.executable);
+  const _LinuxBackendSelection(
+    this.backend,
+    this.executable, {
+    this.gsettingsAvailable = false,
+  });
 }
