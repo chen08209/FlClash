@@ -423,11 +423,6 @@ jobs:
           flutter --version
           flutter pub get
 
-      # See .agents/flutter-upgrade.md before bumping FLUTTER_VERSION.
-      - name: Disable Impeller on Intel macOS
-        if: matrix.platform == 'macos' && matrix.arch == 'amd64'
-        run: plutil -replace FLTEnableImpeller -bool NO macos/Runner/Info.plist
-
       # The core embeds this bundle and FlClashHttpOverrides.trustCoreRoots loads it for Dart.
       # Pinned by hash, so a new bundle from https://curl.se/docs/caextract.html is a reviewed bump.
       - name: Fetch CA certificates
@@ -443,6 +438,8 @@ jobs:
       - name: Setup
         env:
           ANDROID_NDK_HOME: ${{ steps.build-ndk.outputs.ndk-path }}
+          # The setup hook builds the Core for the host slice only, so an x86_64 slice in the arm64 app cannot run.
+          FLUTTER_MACOS_ARM64_ONLY: ${{ matrix.platform == 'macos' && matrix.arch == 'arm64' }}
         run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
 
       - name: Upload

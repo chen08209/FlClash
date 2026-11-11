@@ -13,45 +13,6 @@ Hotfix releases (3.50.x) carry only cherry-picks listed in the SDK's `CHANGELOG.
 The SDK checkout carries the engine sources under `engine/src/flutter`, so an entry below that names an engine file can
 be checked against the new SDK with a plain `diff` of that file between the two checkouts.
 
-## Impeller disabled on Intel macOS release builds
-
-- **Bug:** [flutter/flutter#191538](https://github.com/flutter/flutter/issues/191538). From 3.47, when Impeller
-  became the default desktop renderer, Intel (x86_64) Macs flicker across the whole window while scrolling or
-  animating, and text can render garbled. Apple Silicon is not affected.
-- **Fix upstream:** landed on `main` before 2026-08-25 and verified by the reporter on `3.48.0-1.0.pre-404`, so 3.50.0
-  contains it. It is in no 3.47.x hotfix. Flutter no longer tests on Intel Macs from 3.50, so nothing upstream guards
-  against a regression.
-- **Workaround:** the release job for `macos-15-intel` (`arch: amd64`) runs
-  `plutil -replace FLTEnableImpeller -bool NO macos/Runner/Info.plist` before `dart setup.dart`, so only the Intel
-  DMG falls back to Skia. The checked-in `Info.plist` does not set the key, so local builds and the arm64 DMG keep
-  Impeller. The macOS embedder reads the key at launch in `FlutterDartProject.mm` (`enableImpeller`), release
-  builds included.
-- **Side effect:** Skia on Intel renders blur, shadows and text slightly differently; judge Intel-only visual reports
-  against Skia, not Impeller.
-- **Remove when:** the Intel DMG built on 3.50 or later without the step passes the check on real hardware: scroll
-  the proxies and dashboard pages on an Intel Mac with its integrated GPU driving the built-in display; an external
-  display can switch to the discrete GPU and hide the flicker. The SDK condition is met; that check has not been run.
-
-## Impeller disabled on Windows
-
-- **Bug:** [flutter/flutter#193504](https://github.com/flutter/flutter/issues/193504), reported here as #2423. From
-  3.47 the Windows embedder enables Impeller by default (`flutter_windows_engine.cc`). On some machines (seen on
-  Windows 11 26200 with an Intel Arc integrated GPU) dragging a window edge freezes the window on its last frame:
-  the EGL context is lost, no frame of the new size is ever produced, and every later frame is dropped while Dart
-  keeps running. A dump shows no thread blocked; hiding and showing the window leaves it white until the app is
-  restarted. Upstream could not reproduce it and the issue is still open.
-- **Workaround:** `wWinMain` in `windows/runner/main.cpp` calls
-  `project.set_impeller_switch(flutter::ImpellerSwitch::Disabled)`, so every Windows build renders with Skia. Release
-  builds ignore `FLUTTER_ENGINE_SWITCHES`, so users cannot turn Impeller off themselves.
-- **Side effect:** Windows draws Liquid Glass through its Skia fallback, and blur, shadows and text render as Skia
-  does; judge Windows visual reports against Skia.
-- **Status:** a bot closed #193504 on 2026-10-29 because upstream could not reproduce it on 3.47.6; no fix is linked.
-  3.50 changed the path underneath it: the embedder asks for OpenGL ES 3 before falling back to ES 2
-  ([#191516](https://github.com/flutter/flutter/pull/191516)) and uses offscreen MSAA where implicit MSAA is missing.
-- **Remove when:** a build with Impeller on the pinned SDK survives dragging every window edge for a minute on a
-  machine that reproduced the freeze; the window has to keep redrawing. Until then Windows misses the Impeller SDF
-  path for borders, rounded corners and gradients that 3.50 adds on desktop.
-
 ## Wrong-size back buffer on macOS
 
 - **Bug:** [flutter/flutter#185394](https://github.com/flutter/flutter/issues/185394). `removeSurfaceForSize:` in
@@ -128,3 +89,37 @@ be checked against the new SDK with a plain `diff` of that file between the two 
   frosted-pane case of `test/widgets/liquid_glass_host_test.dart` cannot decide it: under
   `flutter test --enable-impeller` it passes without the band offset's `save` on both 3.47.9 and 3.50.0. The slot's
   `save` also scopes its `clipRect`, so it stays whatever the engine does.
+
+## Removed before their check ran
+
+A workaround here is gone from the tree, removed by the maintainer's decision before its removal check had run, so a
+report that matches its symptom points back at it. Drop an entry once the check passes or a stable release has shipped
+without such a report.
+
+### Impeller on Intel macOS
+
+- **Bug:** [flutter/flutter#191538](https://github.com/flutter/flutter/issues/191538). On 3.47, Intel (x86_64) Macs
+  flickered across the whole window while scrolling or animating under Impeller, and text could render garbled.
+- **Removed:** on moving to 3.50.0, because the upstream fix is in 3.50: it landed on `main` before 2026-08-25 and the
+  reporter verified it on `3.48.0-1.0.pre-404`. The Intel hardware check was not run, and Flutter no longer tests on
+  Intel Macs from 3.50, so nothing upstream guards against a regression.
+- **If it returns:** in the release job for `macos-15-intel` (`arch: amd64`), run
+  `plutil -replace FLTEnableImpeller -bool NO macos/Runner/Info.plist` before `dart setup.dart`, so only the Intel DMG
+  falls back to Skia. The check: scroll the proxies and dashboard pages on an Intel Mac with its integrated GPU driving
+  the built-in display; an external display can switch to the discrete GPU and hide the flicker.
+
+### Impeller on Windows
+
+- **Bug:** [flutter/flutter#193504](https://github.com/flutter/flutter/issues/193504), reported here as #2423. On 3.47,
+  on some machines (seen on Windows 11 26200 with an Intel Arc integrated GPU), dragging a window edge froze the
+  window on its last frame: the EGL context was lost, no frame of the new size was ever produced, and every later frame
+  was dropped while Dart kept running. Hiding and showing the window left it white until the app restarted.
+- **Removed:** on moving to 3.50.0, by turning Impeller back on in `wWinMain` (`windows/runner/main.cpp`). Upstream
+  never reproduced the freeze, and a bot closed #193504 on 2026-10-29 with no fix linked, but 3.50 changed the path
+  underneath it: the embedder asks for OpenGL ES 3 before falling back to ES 2
+  ([#191516](https://github.com/flutter/flutter/pull/191516)) and uses offscreen MSAA where implicit MSAA is missing.
+  It was not retested on a machine that reproduced it.
+- **If it returns:** call `project.set_impeller_switch(flutter::ImpellerSwitch::Disabled)` in `wWinMain` before the
+  window is created; release builds ignore `FLUTTER_ENGINE_SWITCHES`, so users cannot turn Impeller off themselves. The
+  check: a build with Impeller survives dragging every window edge for a minute on such a machine, and the window
+  keeps redrawing.
