@@ -4,15 +4,20 @@ FlClash is a multi-platform proxy client based on ClashMeta (mihomo), built with
 
 ## Version Notes
 
-- Flutter stays on the 3.47.x line. Release CI pins 3.47.6 and is the source
-  of truth for release builds; `.fvmrc` and local SDKs may sit on another 3.47
-  patch. The editor in `plugins/code_forge` came from `code_forge` 10.14.0, which
-  needs Dart 3.13.2, so the CI pin cannot go below Flutter 3.47.2.
+- Flutter stays on the 3.50.x line. Release CI pins 3.50.0 and is the source
+  of truth for release builds; `.fvmrc` and local SDKs may sit on another 3.50
+  patch. `pubspec.yaml` requires Flutter 3.50.0, because the app imports
+  `ScrollCacheExtent` through `package:flutter/widgets.dart`, which re-exports it
+  only from 3.50.
 - Before moving the pin, walk `flutter-upgrade.md`: it lists the workarounds tied to
   the current SDK, such as Impeller disabled on the Intel macOS release build.
 - The Dart SDK lower bound in `pubspec.yaml` sets the package language
   version. `flutter analyze` excludes `lib/**/generated/**`, so a raise is
   proven by `flutter test`, which parses the generated code, not by analyze.
+  The root package stays at 3.10 while the SDK is 3.14: at 3.13 and above
+  `dart format` rewrites about 190 files and `final` parameters stop compiling,
+  and APIs marked `@Since("3.14")`, such as `rangeEquals` on typed data, fail
+  analysis with `sdk_version_since` until the bound moves.
 
 ## Forked Dependencies
 
@@ -67,13 +72,21 @@ resolved-until-the-ceiling-moves rather than as debt:
 - `intl` is intentionally unbounded (`any`), which is not a bound this repository
   sets.
 
-The `riverpod` set, `build_runner`, `drift_dev` and `intl_utils` resolve to their
-latest releases. Two are held back:
+The rest trail their latest releases only because the lock file was not
+refreshed, except for these:
 
-- `freezed` 4.0.2 needs `analyzer` 14, while `intl_utils` 2.8.16 still requires
-  `analyzer` ^13. It moves once `intl_utils` accepts analyzer 14.
-- `test` 1.32.0 needs `test_api` 0.7.14, and `flutter_test` on Flutter 3.47 pins
-  0.7.12. It moves with the SDK.
+- `flutter_riverpod` 3.5.0 depends on `material_ui`, so a plain
+  `flutter pub upgrade` brings `material_ui` and `cupertino_ui` into the lock
+  file. Nothing fails when it does: `test/lint/design_package_test.dart` checks
+  imports, not the lock file.
+- `freezed` 4.0.3 needs `analyzer` 14, which `intl_utils` accepts from 2.8.17;
+  both resolve together once the lock file is refreshed. `intl_utils` is
+  discontinued.
+- `test` 1.33.0 needs `test_api` 0.7.15, and `flutter_test` on Flutter 3.50 pins
+  0.7.14. It moves with the SDK.
+- `file_picker` 13 is a major upgrade. Until it lands, `android_file_picker` 1.x
+  keeps `android.newDsl=false` in `android/gradle.properties`: it configures
+  AGP's legacy `LibraryExtension`, which the new DSL does not register.
 
 When an upgrade fails version solving, record the blocker here with
 what has to change upstream before the pin can move, so the next

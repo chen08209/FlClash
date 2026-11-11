@@ -722,9 +722,12 @@ Do not manually edit generated files under:
 After schema, model, or provider changes, run build generation and include focused tests when behavior changes.
 
 `lib/l10n/l10n.dart` is the one file that still imports `package:flutter/material.dart`.
-`intl_utils` hardcodes that import in its own template, so regenerating rewrites it and
-there is nothing to fix here; `test/lint/design_package_test.dart` exempts the generated
-l10n paths for that reason. It only needs what `package:flutter/widgets.dart` exports.
+`intl_utils` hardcodes that import in its own template, so regenerating rewrites it;
+`test/lint/design_package_test.dart` exempts the generated l10n paths for that reason. It
+only needs what `package:flutter/widgets.dart` exports. Flutter 3.50 deprecates
+`material.dart`, so `flutter analyze` reports one `deprecated_member_use` info there.
+`intl_utils` is discontinued, so the import goes only when the SDK removes the library or
+the localization generator is replaced, whichever comes first.
 
 The project has no design library: `material_ui`, `cupertino_ui` and the SDK's
 `material.dart` and `cupertino.dart` are banned by the same test, and the lock file holds

@@ -4,6 +4,7 @@ publish_to: 'none'
 version: 0.9.3+2026110401
 environment:
   sdk: '>=3.10.0 <4.0.0'
+  flutter: '>=3.50.0'
 
 hooks:
   user_defines:
@@ -86,7 +87,7 @@ dev_dependencies:
 
   drift_dev: ^2.35.1
   intl_utils: ^2.8.16
-  test: ^1.31.1
+  test: ^1.32.0
   sqlite3: ^3.7.0
   cross_file: ^0.3.5+5
   mocktail: ^1.0.5
