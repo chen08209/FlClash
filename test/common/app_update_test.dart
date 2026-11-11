@@ -38,13 +38,19 @@ void main() {
       );
     });
 
-    test('leaves macOS and Linux to the release page', () {
-      for (final abi in [
-        Abi.macosArm64,
-        Abi.macosX64,
-        Abi.linuxX64,
-        Abi.linuxArm64,
-      ]) {
+    test('names the DMG built for the running macOS ABI', () {
+      expect(
+        selfUpdateAssetSuffix(Abi.macosArm64, windowsInstalled: false),
+        'macos-arm64.dmg',
+      );
+      expect(
+        selfUpdateAssetSuffix(Abi.macosX64, windowsInstalled: false),
+        'macos-amd64.dmg',
+      );
+    });
+
+    test('leaves Linux to the release page', () {
+      for (final abi in [Abi.linuxX64, Abi.linuxArm64]) {
         expect(selfUpdateAssetSuffix(abi, windowsInstalled: true), isNull);
       }
     });

@@ -7,6 +7,7 @@ import 'package:fl_clash/common/app_data.dart';
 import 'package:fl_clash/common/boot_guard.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/mitm_module.dart';
+import 'package:fl_clash/common/macos_update.dart';
 import 'package:fl_clash/common/system_dns.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/database/database.dart';

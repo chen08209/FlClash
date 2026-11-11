@@ -12,6 +12,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'card.dart';
+
 import 'package:prism_ui/prism_ui.dart';
 
 String _progressText(UpdateDownloading download) {
@@ -22,7 +23,7 @@ String _progressText(UpdateDownloading download) {
   return '$received / ${download.total.traffic.show}';
 }
 
-String _readyTip(AppLocalizations appLocalizations) => system.isWindows
+String _readyTip(AppLocalizations appLocalizations) => system.isDesktop
     ? '${appLocalizations.updateReadyTip}\n${appLocalizations.updateRestartTip}'
     : appLocalizations.updateReadyTip;
 
