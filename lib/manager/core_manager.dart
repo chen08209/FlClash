@@ -198,6 +198,21 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       dialogs.showBanner(message, level: BannerLevel.error);
     }
     super.onCrash(message);
+    // An unexpected Core exit takes every listener down with it. When the
+    // proxy is still supposed to run, bring the Core back once instead of
+    // leaving the app with zero listeners until a manual toggle; restartCore
+    // reapplies the profile and reopens the listeners.
+    if (!ref.read(isStartProvider) || ref.read(safeModeProvider)) {
+      return;
+    }
+    try {
+      await ref.read(coreActionProvider.notifier).restartCore();
+    } catch (error) {
+      commonPrint.log(
+        'crash recovery restart failed: $error',
+        logLevel: LogLevel.warning,
+      );
+    }
   }
 
   @override

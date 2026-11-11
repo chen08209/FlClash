@@ -221,6 +221,15 @@ class SetupAction extends _$SetupAction {
       if (_isCurrent(request) || !_isUnanswered(error)) {
         rethrow;
       }
+      // Dropped, not delivered: a superseded request may swallow an
+      // unanswered start-listener command while nothing guarantees the
+      // request that replaced it sends one. The Core then sits configured
+      // with zero listeners and no error. Say so instead of staying silent.
+      commonPrint.log(
+        'a superseded run request dropped an unanswered start-listener '
+        'command; the current request must send its own',
+        logLevel: LogLevel.warning,
+      );
     }
   }
 
