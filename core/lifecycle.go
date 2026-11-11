@@ -15,6 +15,7 @@ import (
 	"github.com/metacubex/mihomo/constant/features"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/listener"
+	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/mihomo/tunnel"
 	"github.com/metacubex/mihomo/tunnel/statistic"
 )
@@ -48,6 +49,14 @@ func handleStartListener() {
 	configMu.Lock()
 	defer configMu.Unlock()
 	setRunning(true)
+	if currentConfig == nil {
+		// The host sends the listener start concurrently with the config push,
+		// so this ordering is legal and the listeners open once the config
+		// apply reaches updateListeners. Without a word here a start command
+		// that never arrives at all looks identical in the log to a healthy
+		// start, which is exactly what makes that failure silent.
+		log.Warnln("listener start acknowledged before any config is applied; listeners open after the first setupConfig")
+	}
 	updateListeners(currentConfig)
 	resolver.ResetConnection()
 	// A probe already out left before the TUN routes and over the DNS
