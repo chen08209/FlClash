@@ -207,7 +207,7 @@ void main() {
       );
     });
 
-    test('builds MATE commands with MATE proxy schema', () {
+    test('uses the GNOME proxy schema on MATE, which has none of its own', () {
       final commands = LinuxProxyCommands.buildStart(
         port: 7890,
         bypassDomain: ['localhost'],
@@ -215,19 +215,109 @@ void main() {
         homeDir: '/home/user',
       );
 
+      expect(commands.last.args, [
+        'set',
+        'org.gnome.system.proxy',
+        'mode',
+        'manual',
+      ]);
       expect(
         commands.any(
-          (command) => command.args.contains('org.mate.system.proxy'),
-        ),
-        isTrue,
-      );
-      expect(
-        commands.any(
-          (command) => command.args.contains('org.gnome.system.proxy'),
+          (command) => command.args.any((arg) => arg.startsWith('org.mate.')),
         ),
         isFalse,
       );
     });
+
+    test('also sets the GNOME proxy that browsers read on KDE, and clears it '
+        'on stop', () {
+      List<List<String>> gnomeArgs(List<ProxyCommand> commands) => [
+        for (final command in commands)
+          if (command.executable == 'gsettings') command.args,
+      ];
+      final start = LinuxProxyCommands.buildStart(
+        port: 7890,
+        bypassDomain: ['localhost'],
+        desktop: 'KDE',
+        homeDir: '/home/user',
+        availableExecutables: {'kwriteconfig6', 'gsettings'},
+      );
+      final stop = LinuxProxyCommands.buildStop(
+        desktop: 'KDE',
+        homeDir: '/home/user',
+        availableExecutables: {'kwriteconfig6', 'gsettings'},
+      );
+
+      expect(start.first.executable, 'kwriteconfig6');
+      expect(
+        gnomeArgs(start),
+        LinuxProxyCommands.buildStart(
+          port: 7890,
+          bypassDomain: ['localhost'],
+          desktop: 'GNOME',
+          homeDir: '/home/user',
+        ).map((command) => command.args),
+      );
+      expect(stop.first.args.last, '0');
+      expect(gnomeArgs(stop), [
+        ['set', 'org.gnome.system.proxy', 'mode', 'none'],
+      ]);
+      expect(
+        [...start, ...stop]
+            .where((command) => command.executable == 'gsettings')
+            .every((command) => command.optional),
+        isTrue,
+      );
+      expect(
+        LinuxProxyCommands.buildStart(
+          port: 7890,
+          bypassDomain: ['localhost'],
+          desktop: 'KDE',
+          homeDir: '/home/user',
+          availableExecutables: {'kwriteconfig6'},
+        ).where((command) => command.executable == 'gsettings'),
+        isEmpty,
+      );
+    });
+
+    test(
+      'keeps the KDE proxy working when the GNOME schema is missing',
+      () async {
+        final executed = <List<String>>[];
+        final proxy = LinuxProxy(
+          commandRunner: ProxyCommandRunner((
+            executable,
+            arguments, {
+            runInShell = false,
+          }) async {
+            executed.add([executable, ...arguments]);
+            return ProcessResult(1, executable == 'gsettings' ? 1 : 0, '', '');
+          }),
+          executableChecker: (executable) async =>
+              const {'kwriteconfig6', 'gsettings'}.contains(executable),
+        );
+
+        expect(
+          await proxy.start(
+            7890,
+            const ['localhost'],
+            desktop: 'KDE',
+            homeDir: '/home/user',
+          ),
+          isTrue,
+        );
+        expect(await proxy.stop(desktop: 'KDE', homeDir: '/home/user'), isTrue);
+        expect(
+          executed.where(
+            (command) => command.last == 'manual' || command.last == 'none',
+          ),
+          [
+            ['gsettings', 'set', 'org.gnome.system.proxy', 'mode', 'manual'],
+            ['gsettings', 'set', 'org.gnome.system.proxy', 'mode', 'none'],
+          ],
+        );
+      },
+    );
 
     test('falls back to GNOME gsettings commands for XFCE when available', () {
       final commands = LinuxProxyCommands.buildStart(

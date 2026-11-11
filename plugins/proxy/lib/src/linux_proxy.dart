@@ -4,11 +4,14 @@ import 'package:path/path.dart' as path;
 
 import 'proxy_command.dart';
 
-enum LinuxProxyBackend { gnome, mate, kde }
+enum LinuxProxyBackend { gnome, kde }
 
 enum _ProxyType { http, https, socks }
 
 const _fallbackBackends = [LinuxProxyBackend.gnome, LinuxProxyBackend.kde];
+
+/// Firefox, Chromium and GIO read only this schema, whatever the desktop.
+const _gnomeProxySchema = 'org.gnome.system.proxy';
 
 class LinuxProxy {
   final ProxyCommandRunner _commandRunner;
@@ -40,6 +43,7 @@ class LinuxProxy {
         homeDir: homeDir,
         backend: selection.backend,
         kdeConfigWriter: selection.executable,
+        mirrorGnome: selection.mirrorGnome,
       ),
     );
   }
@@ -60,6 +64,7 @@ class LinuxProxy {
         homeDir: homeDir,
         backend: selection.backend,
         kdeConfigWriter: selection.executable,
+        mirrorGnome: selection.mirrorGnome,
       ),
     );
   }
@@ -67,10 +72,11 @@ class LinuxProxy {
   Future<_LinuxBackendSelection?> _resolveBackend(String? desktop) async {
     final preferredBackend = LinuxProxyCommands.preferredBackend(desktop);
     if (preferredBackend != null) {
-      return _resolveSelection(preferredBackend);
+      return _resolveSelection(preferredBackend, probeGnome: true);
     }
+    // GNOME is tried first, so reaching KDE here means gsettings is missing.
     for (final backend in _fallbackBackends) {
-      final selection = await _resolveSelection(backend);
+      final selection = await _resolveSelection(backend, probeGnome: false);
       if (selection != null) {
         return selection;
       }
@@ -79,11 +85,11 @@ class LinuxProxy {
   }
 
   Future<_LinuxBackendSelection?> _resolveSelection(
-    LinuxProxyBackend backend,
-  ) async {
+    LinuxProxyBackend backend, {
+    required bool probeGnome,
+  }) async {
     switch (backend) {
       case LinuxProxyBackend.gnome:
-      case LinuxProxyBackend.mate:
         if (await _executableChecker('gsettings')) {
           return _LinuxBackendSelection(backend, 'gsettings');
         }
@@ -91,7 +97,11 @@ class LinuxProxy {
       case LinuxProxyBackend.kde:
         for (final executable in const ['kwriteconfig6', 'kwriteconfig5']) {
           if (await _executableChecker(executable)) {
-            return _LinuxBackendSelection(backend, executable);
+            return _LinuxBackendSelection(
+              backend,
+              executable,
+              mirrorGnome: probeGnome && await _executableChecker('gsettings'),
+            );
           }
         }
     }
@@ -114,12 +124,14 @@ class LinuxProxyCommands {
     if (desktops.contains('KDE')) {
       return LinuxProxyBackend.kde;
     }
-    if (desktops.contains('MATE')) {
-      return LinuxProxyBackend.mate;
-    }
     if (desktops.any(
-      (desktop) =>
-          const {'GNOME', 'CINNAMON', 'BUDGIE', 'UNITY'}.contains(desktop),
+      (desktop) => const {
+        'GNOME',
+        'CINNAMON',
+        'BUDGIE',
+        'UNITY',
+        'MATE',
+      }.contains(desktop),
     )) {
       return LinuxProxyBackend.gnome;
     }
@@ -146,6 +158,7 @@ class LinuxProxyCommands {
       homeDir: homeDir,
       backend: backend,
       kdeConfigWriter: _resolveKdeConfigWriter(availableExecutables),
+      mirrorGnome: availableExecutables?.contains('gsettings') ?? true,
     );
   }
 
@@ -165,6 +178,7 @@ class LinuxProxyCommands {
       homeDir: homeDir,
       backend: backend,
       kdeConfigWriter: _resolveKdeConfigWriter(availableExecutables),
+      mirrorGnome: availableExecutables?.contains('gsettings') ?? true,
     );
   }
 
@@ -174,24 +188,29 @@ class LinuxProxyCommands {
     required String homeDir,
     required LinuxProxyBackend backend,
     required String kdeConfigWriter,
+    bool mirrorGnome = false,
   }) {
     return switch (backend) {
       LinuxProxyBackend.gnome => _buildGSettingsStart(
         port: port,
         bypassDomain: bypassDomain,
-        schemaPrefix: 'org.gnome.system.proxy',
+        schemaPrefix: _gnomeProxySchema,
       ),
-      LinuxProxyBackend.mate => _buildGSettingsStart(
-        port: port,
-        bypassDomain: bypassDomain,
-        schemaPrefix: 'org.mate.system.proxy',
-      ),
-      LinuxProxyBackend.kde => _buildKdeStart(
-        port: port,
-        bypassDomain: bypassDomain,
-        homeDir: homeDir,
-        executable: kdeConfigWriter,
-      ),
+      LinuxProxyBackend.kde => [
+        ..._buildKdeStart(
+          port: port,
+          bypassDomain: bypassDomain,
+          homeDir: homeDir,
+          executable: kdeConfigWriter,
+        ),
+        if (mirrorGnome)
+          ..._buildGSettingsStart(
+            port: port,
+            bypassDomain: bypassDomain,
+            schemaPrefix: _gnomeProxySchema,
+            optional: true,
+          ),
+      ],
     };
   }
 
@@ -199,18 +218,20 @@ class LinuxProxyCommands {
     required String homeDir,
     required LinuxProxyBackend backend,
     required String kdeConfigWriter,
+    bool mirrorGnome = false,
   }) {
     return switch (backend) {
       LinuxProxyBackend.gnome => _buildGSettingsStop(
-        schemaPrefix: 'org.gnome.system.proxy',
+        schemaPrefix: _gnomeProxySchema,
       ),
-      LinuxProxyBackend.mate => _buildGSettingsStop(
-        schemaPrefix: 'org.mate.system.proxy',
-      ),
-      LinuxProxyBackend.kde => _buildKdeStop(
-        homeDir: homeDir,
-        executable: kdeConfigWriter,
-      ),
+      LinuxProxyBackend.kde => [
+        ..._buildKdeStop(homeDir: homeDir, executable: kdeConfigWriter),
+        if (mirrorGnome)
+          ..._buildGSettingsStop(
+            schemaPrefix: _gnomeProxySchema,
+            optional: true,
+          ),
+      ],
     };
   }
 
@@ -242,8 +263,7 @@ class LinuxProxyCommands {
     Set<String> availableExecutables,
   ) {
     return switch (backend) {
-      LinuxProxyBackend.gnome ||
-      LinuxProxyBackend.mate => availableExecutables.contains('gsettings'),
+      LinuxProxyBackend.gnome => availableExecutables.contains('gsettings'),
       LinuxProxyBackend.kde =>
         availableExecutables.contains('kwriteconfig6') ||
             availableExecutables.contains('kwriteconfig5'),
@@ -261,6 +281,7 @@ class LinuxProxyCommands {
     required int port,
     required List<String> bypassDomain,
     required String schemaPrefix,
+    bool optional = false,
   }) {
     final commands = <ProxyCommand>[
       ProxyCommand('gsettings', [
@@ -268,7 +289,7 @@ class LinuxProxyCommands {
         schemaPrefix,
         'ignore-hosts',
         _formatGSettingsStringList(bypassDomain),
-      ]),
+      ], optional: optional),
     ];
     for (final type in _ProxyType.values) {
       commands.addAll([
@@ -277,26 +298,37 @@ class LinuxProxyCommands {
           '$schemaPrefix.${type.name}',
           'host',
           proxyHost,
-        ]),
+        ], optional: optional),
         ProxyCommand('gsettings', [
           'set',
           '$schemaPrefix.${type.name}',
           'port',
           '$port',
-        ]),
+        ], optional: optional),
       ]);
     }
     commands.add(
-      ProxyCommand('gsettings', ['set', schemaPrefix, 'mode', 'manual']),
+      ProxyCommand('gsettings', [
+        'set',
+        schemaPrefix,
+        'mode',
+        'manual',
+      ], optional: optional),
     );
     return commands;
   }
 
   static List<ProxyCommand> _buildGSettingsStop({
     required String schemaPrefix,
+    bool optional = false,
   }) {
     return [
-      ProxyCommand('gsettings', ['set', schemaPrefix, 'mode', 'none']),
+      ProxyCommand('gsettings', [
+        'set',
+        schemaPrefix,
+        'mode',
+        'none',
+      ], optional: optional),
     ];
   }
 
@@ -390,6 +422,11 @@ class LinuxProxyCommands {
 class _LinuxBackendSelection {
   final LinuxProxyBackend backend;
   final String executable;
+  final bool mirrorGnome;
 
-  const _LinuxBackendSelection(this.backend, this.executable);
+  const _LinuxBackendSelection(
+    this.backend,
+    this.executable, {
+    this.mirrorGnome = false,
+  });
 }
