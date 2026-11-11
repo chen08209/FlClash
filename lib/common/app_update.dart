@@ -48,6 +48,8 @@ String? selfUpdateAssetSuffix(Abi abi, {required bool windowsInstalled}) {
     Abi.androidArm64 => 'android-arm64-v8a.apk',
     Abi.androidArm => 'android-armeabi-v7a.apk',
     Abi.androidX64 => 'android-x86_64.apk',
+    Abi.macosArm64 => 'macos-arm64.dmg',
+    Abi.macosX64 => 'macos-amd64.dmg',
     Abi.windowsX64 when windowsInstalled => 'windows-amd64-setup.exe',
     Abi.windowsArm64 when windowsInstalled => 'windows-arm64-setup.exe',
     _ => null,

@@ -5,9 +5,13 @@ class CommonAction extends _$CommonAction {
   CoreController get _core => ref.read(coreHandlerProvider);
   bool _isUpdatingTraffic = false;
   CancelToken? _updateCancelToken;
+  bool _isInstallingUpdate = false;
 
   @override
   void build() {}
+
+  @protected
+  bool get isMacOSUpdate => system.isMacOS;
 
   void toggleRunning() {
     final running = !ref.read(isStartProvider);
@@ -153,7 +157,13 @@ class CommonAction extends _$CommonAction {
       final suffix = selfUpdateSuffix;
       final res = await dialogs.showMessage(
         title: currentAppLocalizations.discoverNewVersion,
-        message: _releaseSpan(context, tag, data['body'] as String?),
+        message: TextSpan(
+          children: [
+            _releaseSpan(context, tag, data['body'] as String?),
+            if (isMacOSUpdate)
+              TextSpan(text: '\n${currentAppLocalizations.updateRestartTip}'),
+          ],
+        ),
         confirmText: suffix == null
             ? currentAppLocalizations.goDownload
             : currentAppLocalizations.update,
@@ -232,11 +242,15 @@ class CommonAction extends _$CommonAction {
         },
       );
       download.value = UpdateReady(tag, path);
-      dialogs.showBanner(
-        currentAppLocalizations.updateReadyTip,
-        level: BannerLevel.success,
-        onTap: () => unawaited(installUpdate()),
-      );
+      if (isMacOSUpdate && name.endsWith('.dmg')) {
+        unawaited(installUpdate());
+      } else {
+        dialogs.showBanner(
+          currentAppLocalizations.updateReadyTip,
+          level: BannerLevel.success,
+          onTap: () => unawaited(installUpdate()),
+        );
+      }
     } catch (error) {
       download.value = null;
       await clearUpdateDownloads();
@@ -262,6 +276,7 @@ class CommonAction extends _$CommonAction {
   }
 
   Future<void> discardUpdate() async {
+    if (_isInstallingUpdate) return;
     if (ref.read(updateDownloadStateProvider) is! UpdateReady) return;
     ref.read(updateDownloadStateProvider.notifier).value = null;
     await clearUpdateDownloads();
@@ -269,7 +284,30 @@ class CommonAction extends _$CommonAction {
 
   Future<void> installUpdate() async {
     final download = ref.read(updateDownloadStateProvider);
-    if (download is! UpdateReady) return;
+    if (download is! UpdateReady || _isInstallingUpdate) return;
+    if (isMacOSUpdate) {
+      _isInstallingUpdate = true;
+      try {
+        try {
+          if (ref.read(safeModeProvider)) {
+            throw StateError('Installing updates is disabled in safe mode');
+          }
+          dialogs.showBanner(currentAppLocalizations.updateRestartTip);
+          await prepareMacOSUpdate(download);
+        } catch (error) {
+          commonPrint.log(
+            'Update installation failed: ${compactError(error)}',
+            logLevel: LogLevel.warning,
+          );
+          await _showUpdateFailure(currentAppLocalizations.updateInstallFailed);
+          return;
+        }
+        await ref.read(systemActionProvider.notifier).handleExit();
+      } finally {
+        _isInstallingUpdate = false;
+      }
+      return;
+    }
     if (system.isAndroid) {
       ref.read(updateDownloadStateProvider.notifier).value = null;
       final status = await app?.installPackage(download.path);
@@ -285,6 +323,16 @@ class CommonAction extends _$CommonAction {
     } else if (started == false) {
       await _showUpdateFailure(currentAppLocalizations.updateInstallFailed);
     }
+  }
+
+  @protected
+  Future<void> prepareMacOSUpdate(UpdateReady download) {
+    return MacOSUpdater().install(
+      imagePath: download.path,
+      version: download.tag.replaceFirst(RegExp('^v'), ''),
+      failureTitle: currentAppLocalizations.updateFailed,
+      failureMessage: currentAppLocalizations.updateInstallFailed,
+    );
   }
 
   Future<void> _showUpdateFailure(String message) async {

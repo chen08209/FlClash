@@ -65,8 +65,22 @@ Map<String, dynamic> release(String? body) => <String, dynamic>{
   'body': body,
 };
 
-Future<ProviderContainer> pumpApp(WidgetTester tester, {Locale? locale}) async {
-  final container = ProviderContainer();
+Future<ProviderContainer> pumpApp(
+  WidgetTester tester, {
+  Locale? locale,
+  CommonAction? commonAction,
+  SystemAction? systemAction,
+  bool safeMode = false,
+}) async {
+  final container = ProviderContainer(
+    overrides: [
+      if (commonAction != null)
+        commonActionProvider.overrideWith(() => commonAction),
+      if (systemAction != null)
+        systemActionProvider.overrideWith(() => systemAction),
+      safeModeProvider.overrideWithValue(safeMode),
+    ],
+  );
   addTearDown(container.dispose);
   globalState.container = container;
   // appSettingProvider is autoDispose; in the app `configProvider` keeps it
@@ -87,6 +101,29 @@ Future<ProviderContainer> pumpApp(WidgetTester tester, {Locale? locale}) async {
   );
   await tester.pump();
   return container;
+}
+
+class _MacOSUpdateAction extends CommonAction {
+  final prepared = Completer<void>();
+  int preparations = 0;
+
+  @override
+  bool get isMacOSUpdate => true;
+
+  @override
+  Future<void> prepareMacOSUpdate(UpdateReady download) {
+    preparations++;
+    return prepared.future;
+  }
+}
+
+class _UpdateExitAction extends SystemAction {
+  int exits = 0;
+
+  @override
+  Future<void> handleExit([bool needSave = true]) async {
+    exits++;
+  }
 }
 
 /// The dialog blocks until the user answers, so tests must close it before
@@ -208,8 +245,16 @@ void main() {
 
     bool shows(String text) => find.text(text).evaluate().isNotEmpty;
 
-    Future<ProviderContainer> startUpdate(WidgetTester tester) async {
-      final container = await pumpApp(tester);
+    Future<ProviderContainer> startUpdate(
+      WidgetTester tester, {
+      CommonAction? commonAction,
+      SystemAction? systemAction,
+    }) async {
+      final container = await pumpApp(
+        tester,
+        commonAction: commonAction,
+        systemAction: systemAction,
+      );
       final shown = container
           .read(commonActionProvider.notifier)
           .checkUpdateResultHandle(data: release(_bulletsOnly), isUser: true);
@@ -272,6 +317,36 @@ void main() {
       await tester.pump(const Duration(seconds: 10));
     });
 
+    testWidgets('macOS prepares the verified download and then exits', (
+      tester,
+    ) async {
+      resolveSelfUpdateSuffix = () => 'macos-arm64.dmg';
+      request.releaseDio.httpClientAdapter = _ReleaseAdapter(
+        sums: '$digest  ./FlClash-0.8.96-macos-arm64.dmg\n',
+        asset: () => ResponseBody.fromBytes(package, 200),
+      );
+      final action = _MacOSUpdateAction();
+      final exit = _UpdateExitAction();
+      final container = await startUpdate(
+        tester,
+        commonAction: action,
+        systemAction: exit,
+      );
+      await settleUntil(tester, () => action.preparations == 1);
+      expect(exit.exits, 0);
+      expect(container.read(updateDownloadStateProvider), isA<UpdateReady>());
+
+      await action.installUpdate();
+      await action.discardUpdate();
+      expect(action.preparations, 1);
+      expect(container.read(updateDownloadStateProvider), isA<UpdateReady>());
+
+      action.prepared.complete();
+      await tester.pump();
+      expect(exit.exits, 1);
+      await tester.pump(const Duration(seconds: 10));
+    });
+
     testWidgets('cancelling the download reports nothing', (tester) async {
       final partial = '${home.path}/update/$asset';
       final body = StreamController<Uint8List>();
@@ -293,6 +368,57 @@ void main() {
       expect(container.read(updateDownloadStateProvider), isNull);
       expect(shows('Update failed'), isFalse);
     });
+  });
+
+  testWidgets('failed macOS preparation keeps the app and update available', (
+    tester,
+  ) async {
+    final action = _MacOSUpdateAction();
+    final exit = _UpdateExitAction();
+    final container = await pumpApp(
+      tester,
+      commonAction: action,
+      systemAction: exit,
+    );
+    container.read(updateDownloadStateProvider.notifier).value =
+        const UpdateReady('v0.9.3', '/cache/update.dmg');
+    final installation = container
+        .read(commonActionProvider.notifier)
+        .installUpdate();
+    action.prepared.completeError(
+      const FileSystemException('read-only volume'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Update failed'), findsOneWidget);
+    expect(exit.exits, 0);
+    expect(container.read(updateDownloadStateProvider), isA<UpdateReady>());
+    await tapCancel(tester);
+    await installation;
+  });
+
+  testWidgets('safe mode never hands a macOS update to the installer', (
+    tester,
+  ) async {
+    final action = _MacOSUpdateAction();
+    final exit = _UpdateExitAction();
+    final container = await pumpApp(
+      tester,
+      commonAction: action,
+      systemAction: exit,
+      safeMode: true,
+    );
+    container.read(updateDownloadStateProvider.notifier).value =
+        const UpdateReady('v0.9.3', '/cache/update.dmg');
+    final installation = container
+        .read(commonActionProvider.notifier)
+        .installUpdate();
+    await tester.pumpAndSettle();
+
+    expect(action.preparations, 0);
+    expect(exit.exits, 0);
+    await tapCancel(tester);
+    await installation;
   });
 
   testWidgets('a manual check keeps the setting and reports a failure', (
