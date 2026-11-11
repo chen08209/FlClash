@@ -12,9 +12,10 @@ import 'package:flutter_svg/svg.dart';
 
 const _maxCachedIconBytes = 16 << 20;
 
-// The precache and the widget must resolve equal providers to share one
-// ImageCache entry; 192 physical pixels cover a 48 dp icon box at 4x.
-const _iconDecodeExtent = 192;
+// The decode size is in dp and follows the pixel ratio an image resolves at,
+// so the precache resolves at the view's ratio to share the widget's
+// ImageCache entry.
+const _iconDecodeExtent = 48;
 
 ImageProvider _iconImage(Uint8List bytes) {
   return ResizeImage(
@@ -22,6 +23,7 @@ ImageProvider _iconImage(Uint8List bytes) {
     width: _iconDecodeExtent,
     height: _iconDecodeExtent,
     policy: ResizeImagePolicy.fit,
+    useLogicalSize: true,
   );
 }
 
@@ -235,7 +237,10 @@ Stream<Uint8List> _loadRemoteIcon(String src) {
 
 Future<void> _decodeAhead(Uint8List bytes) {
   final completer = Completer<void>();
-  final stream = _iconImage(bytes).resolve(ImageConfiguration.empty);
+  final view = WidgetsBinding.instance.platformDispatcher.implicitView;
+  final stream = _iconImage(
+    bytes,
+  ).resolve(ImageConfiguration(devicePixelRatio: view?.devicePixelRatio));
   late final ImageStreamListener listener;
   void finish() {
     stream.removeListener(listener);
