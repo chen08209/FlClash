@@ -3,22 +3,17 @@
 <svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
   <title>status_2</title>
   <defs>
-    <linearGradient id="top" x1="0" y1="8.31" x2="0" y2="124.11" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#726BF1"/>
-      <stop offset="1" stop-color="#5B5EE1"/>
-    </linearGradient>
-    <linearGradient id="mid" x1="0" y1="96.53" x2="0" y2="177.59" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#4183F2"/>
-      <stop offset="1" stop-color="#1C76E0"/>
-    </linearGradient>
-    <linearGradient id="dot" x1="0" y1="184.76" x2="0" y2="231.08" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#66B6F4"/>
-      <stop offset="1" stop-color="#4FA8E1"/>
+    <linearGradient id="fill" x1="39.74" y1="133.16" x2="213.42" y2="35.79" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7C66D8"/>
+      <stop offset="0.25" stop-color="#9A6AD4"/>
+      <stop offset="0.5" stop-color="#BF67C8"/>
+      <stop offset="0.75" stop-color="#EA7EA4"/>
+      <stop offset="1" stop-color="#FEA27C"/>
     </linearGradient>
   </defs>
-  <g stroke-width="46.32" stroke-linecap="round">
-    <line x1="59.68" y1="100.95" x2="180.02" y2="31.47" stroke="url(#top)"/>
-    <line x1="90.56" y1="154.43" x2="150.74" y2="119.69" stroke="url(#mid)"/>
+  <g stroke="url(#fill)" stroke-width="46.32" stroke-linecap="round">
+    <line x1="59.68" y1="100.95" x2="180.02" y2="31.47"/>
+    <line x1="90.56" y1="154.43" x2="150.74" y2="119.69"/>
   </g>
-  <circle cx="121.44" cy="207.92" r="23.16" fill="url(#dot)"/>
+  <circle cx="121.44" cy="207.92" r="23.16" fill="url(#fill)"/>
 </svg>

@@ -10,14 +10,6 @@ String _androidAttribute(String source, String element, String attribute) {
   ).firstMatch(elementTag)!.group(1)!;
 }
 
-double _androidDoubleAttribute(
-  String source,
-  String element,
-  String attribute,
-) {
-  return double.parse(_androidAttribute(source, element, attribute));
-}
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -49,7 +41,7 @@ void main() {
     }
   });
 
-  test('TV adaptive launcher icon stays centered in the safe zone', () {
+  test('TV adaptive launcher icon stays centered in the safe zone', () async {
     final adaptiveIcon = File(
       'android/app/src/main/res/'
       'mipmap-television-anydpi-v26/ic_launcher.xml',
@@ -60,43 +52,68 @@ void main() {
     );
     expect(
       _androidAttribute(adaptiveIcon, 'background', 'drawable'),
-      '@color/ic_launcher_background',
+      '@drawable/ic_launcher_plate',
     );
 
-    final vector = File(
-      'android/app/src/main/res/drawable/'
-      'ic_launcher_foreground_tv.xml',
-    ).readAsStringSync();
-    final scaleX = _androidDoubleAttribute(vector, 'group', 'scaleX');
-    final scaleY = _androidDoubleAttribute(vector, 'group', 'scaleY');
-    final translateX = _androidDoubleAttribute(vector, 'group', 'translateX');
-    final translateY = _androidDoubleAttribute(vector, 'group', 'translateY');
-    final viewportWidth = _androidDoubleAttribute(
-      vector,
-      'vector',
-      'viewportWidth',
-    );
-    final viewportHeight = _androidDoubleAttribute(
-      vector,
-      'vector',
-      'viewportHeight',
-    );
-
-    // Conservative bounds of the current logo, including the curved caps.
-    const logoBounds = ui.Rect.fromLTRB(54, 33, 179, 206.5);
-    final transformedBounds = ui.Rect.fromLTRB(
-      (logoBounds.left * scaleX + translateX) / viewportWidth * 108,
-      (logoBounds.top * scaleY + translateY) / viewportHeight * 108,
-      (logoBounds.right * scaleX + translateX) / viewportWidth * 108,
-      (logoBounds.bottom * scaleY + translateY) / viewportHeight * 108,
-    );
+    final bounds = await _foregroundGlyphBounds('ic_launcher_foreground_tv');
     const safeZone = ui.Rect.fromLTWH(18, 18, 72, 72);
 
-    expect(transformedBounds.left, greaterThanOrEqualTo(safeZone.left));
-    expect(transformedBounds.top, greaterThanOrEqualTo(safeZone.top));
-    expect(transformedBounds.right, lessThanOrEqualTo(safeZone.right));
-    expect(transformedBounds.bottom, lessThanOrEqualTo(safeZone.bottom));
-    expect(transformedBounds.center.dx, closeTo(safeZone.center.dx, 0.05));
-    expect(transformedBounds.center.dy, closeTo(safeZone.center.dy, 0.05));
+    expect(bounds.left, greaterThanOrEqualTo(safeZone.left));
+    expect(bounds.top, greaterThanOrEqualTo(safeZone.top));
+    expect(bounds.right, lessThanOrEqualTo(safeZone.right));
+    expect(bounds.bottom, lessThanOrEqualTo(safeZone.bottom));
+    expect(bounds.center.dx, closeTo(safeZone.center.dx, 0.5));
+    expect(bounds.center.dy, closeTo(safeZone.center.dy, 0.5));
+    expect(bounds.height, closeTo(70.12, 0.5));
   });
+
+  test('phone adaptive launcher glyph stays centered at its size', () async {
+    final bounds = await _foregroundGlyphBounds('ic_launcher_foreground');
+    expect(bounds.center.dx, closeTo(54, 0.5));
+    expect(bounds.center.dy, closeTo(54, 0.5));
+    expect(bounds.height, closeTo(45.69, 0.5));
+  });
+}
+
+Future<ui.Rect> _foregroundGlyphBounds(String drawable) async {
+  final foreground = File(
+    'android/app/src/main/res/drawable/$drawable.xml',
+  ).readAsStringSync();
+  final art = _androidAttribute(foreground, 'inset', 'drawable');
+  expect(art, startsWith('@drawable/'));
+  final inset = _androidAttribute(foreground, 'inset', 'inset');
+  expect(inset, endsWith('%'));
+  final padding = double.parse(inset.substring(0, inset.length - 1)) / 100;
+  final imageFile = File(
+    'android/app/src/main/res/drawable-xxxhdpi/'
+    '${art.substring('@drawable/'.length)}.webp',
+  );
+  final codec = await ui.instantiateImageCodec(await imageFile.readAsBytes());
+  addTearDown(codec.dispose);
+  final image = (await codec.getNextFrame()).image;
+  addTearDown(image.dispose);
+  final pixels = (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!;
+  var left = image.width;
+  var top = image.height;
+  var right = 0;
+  var bottom = 0;
+  for (var y = 0; y < image.height; y++) {
+    for (var x = 0; x < image.width; x++) {
+      if (pixels.getUint8((y * image.width + x) * 4 + 3) < 128) continue;
+      if (x < left) left = x;
+      if (y < top) top = y;
+      if (x + 1 > right) right = x + 1;
+      if (y + 1 > bottom) bottom = y + 1;
+    }
+  }
+  expect(right, greaterThan(left));
+  expect(bottom, greaterThan(top));
+  final offset = 108 * padding;
+  final size = 108 - 2 * offset;
+  return ui.Rect.fromLTRB(
+    offset + size * left / image.width,
+    offset + size * top / image.height,
+    offset + size * right / image.width,
+    offset + size * bottom / image.height,
+  );
 }
