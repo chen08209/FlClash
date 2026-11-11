@@ -1074,5 +1074,18 @@
   "fakeipFilterDesc": "Estos dominios reciben su IP real en lugar de una Fake-IP. En modo whitelist, solo ellos reciben Fake-IP.",
   "fallbackFilterGeositeDesc": "Los dominios de estas categorías GeoSite se resuelven directamente con Fallback.",
   "fallbackFilterIpcidrDesc": "Si Nameserver devuelve una IP de estos rangos, se usa la respuesta de Fallback.",
-  "fallbackFilterDomainDesc": "Estos dominios se resuelven directamente con Fallback."
+  "fallbackFilterDomainDesc": "Estos dominios se resuelven directamente con Fallback.",
+  "liveStatus": "Estado en vivo",
+  "coreStopped": "Núcleo detenido",
+  "coreStoppedDesc": "La app perdió la conexión con el núcleo",
+  "restartCore": "Reiniciar núcleo",
+  "installUpdate": "Instalar actualización",
+  "updatingResources": "Actualizando",
+  "updatingResourcesCount": "{count, plural, =1{1 elemento actualizándose} other{{count} elementos actualizándose}}",
+  "liveStatusPosition": "{index} de {count}",
+  "coreStarting": "Iniciando núcleo",
+  "coreStartingDesc": "Conectando con el núcleo",
+  "coreRunning": "Núcleo en ejecución",
+  "coreRunningDesc": "La app está conectada al núcleo",
+  "forceRestartCore": "Forzar reinicio"
 }

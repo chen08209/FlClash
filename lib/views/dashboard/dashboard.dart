@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
@@ -14,7 +13,6 @@ import 'edit.dart';
 import 'layout.dart';
 import 'style.dart';
 import 'widget_registry.dart';
-import 'widgets/core_status_button.dart';
 import 'widgets/widgets.dart';
 
 // Narrower columns leave a pair of service cells too tight for a status, so
@@ -76,10 +74,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       title: editing
           ? appLocalizations.editDashboard
           : appLocalizations.dashboard,
-      actions: [
-        if (!editable) const UpdateStatusButton(),
-        if (!editing && coreLib == null) const CoreStatusButton(),
-      ],
+      actions: [if (!editing) const LiveStatusButton()],
       confirmationAction: editing
           ? IconButtonData(
               glyph: AppGlyphs.check,
@@ -360,18 +355,13 @@ class _MobileDashboard extends ConsumerWidget {
               sliver: SliverToBoxAdapter(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: gap,
                   children: [
-                    UpdateStatusSlot(gap: gap),
-                    Column(
-                      spacing: gap,
-                      children: [
-                        for (final widget in widgets)
-                          RepaintBoundary(
-                            key: cardKeyOf(widget),
-                            child: widget.card,
-                          ),
-                      ],
-                    ),
+                    for (final widget in widgets)
+                      RepaintBoundary(
+                        key: cardKeyOf(widget),
+                        child: widget.card,
+                      ),
                   ],
                 ),
               ),

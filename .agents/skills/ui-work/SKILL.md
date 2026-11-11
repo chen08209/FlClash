@@ -73,7 +73,7 @@ dialogs, and interaction behavior.
 - User-facing text goes through ARB; use `localization` when text changes are non-trivial.
 - An asynchronous control keeps four things apart: authoritative provider/domain state; display-only state such as a
   minimum progress duration; tap policy while work or a display hold is active; and failure/disposal cleanup, in
-  `finally` for animations and timers. `CoreStatusButton` and the proxies delay test action are the reference implementations,
+  `finally` for animations and timers. `LiveStatusButton` and the proxies delay test action are the reference implementations,
   described under User-Facing Core And Delay Feedback in `.agents/architecture.md`.
 
 ## Corner Radii

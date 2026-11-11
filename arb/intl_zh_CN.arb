@@ -1074,5 +1074,18 @@
   "fakeipFilterDesc": "这些域名不使用 Fake-IP，返回真实 IP；过滤模式为 whitelist 时则只有它们使用 Fake-IP。",
   "fallbackFilterGeositeDesc": "属于这些 GeoSite 分类的域名直接使用 Fallback 解析。",
   "fallbackFilterIpcidrDesc": "Nameserver 返回这些网段内的 IP 时，改用 Fallback 的结果。",
-  "fallbackFilterDomainDesc": "这些域名直接使用 Fallback 解析。"
+  "fallbackFilterDomainDesc": "这些域名直接使用 Fallback 解析。",
+  "liveStatus": "实时状态",
+  "coreStopped": "核心已停止",
+  "coreStoppedDesc": "应用与核心的连接已断开",
+  "restartCore": "重启核心",
+  "installUpdate": "安装更新",
+  "updatingResources": "正在更新",
+  "updatingResourcesCount": "{count, plural, other{{count} 项正在更新}}",
+  "liveStatusPosition": "第 {index} 项，共 {count} 项",
+  "coreStarting": "正在启动核心",
+  "coreStartingDesc": "正在连接核心",
+  "coreRunning": "核心运行中",
+  "coreRunningDesc": "应用已连接到核心",
+  "forceRestartCore": "强制重启"
 }

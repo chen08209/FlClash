@@ -9057,6 +9057,133 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Live status`
+  String get liveStatus {
+    return Intl.message('Live status', name: 'liveStatus', desc: '', args: []);
+  }
+
+  /// `Core stopped`
+  String get coreStopped {
+    return Intl.message(
+      'Core stopped',
+      name: 'coreStopped',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The app lost its connection to the core`
+  String get coreStoppedDesc {
+    return Intl.message(
+      'The app lost its connection to the core',
+      name: 'coreStoppedDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Restart core`
+  String get restartCore {
+    return Intl.message(
+      'Restart core',
+      name: 'restartCore',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Install update`
+  String get installUpdate {
+    return Intl.message(
+      'Install update',
+      name: 'installUpdate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Updating`
+  String get updatingResources {
+    return Intl.message(
+      'Updating',
+      name: 'updatingResources',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count, plural, =1{1 item updating} other{{count} items updating}}`
+  String updatingResourcesCount(num count) {
+    return Intl.plural(
+      count,
+      one: '1 item updating',
+      other: '$count items updating',
+      name: 'updatingResourcesCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `{index} of {count}`
+  String liveStatusPosition(Object index, Object count) {
+    return Intl.message(
+      '$index of $count',
+      name: 'liveStatusPosition',
+      desc: '',
+      args: [index, count],
+    );
+  }
+
+  /// `Starting core`
+  String get coreStarting {
+    return Intl.message(
+      'Starting core',
+      name: 'coreStarting',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connecting to the core`
+  String get coreStartingDesc {
+    return Intl.message(
+      'Connecting to the core',
+      name: 'coreStartingDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core running`
+  String get coreRunning {
+    return Intl.message(
+      'Core running',
+      name: 'coreRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The app is connected to the core`
+  String get coreRunningDesc {
+    return Intl.message(
+      'The app is connected to the core',
+      name: 'coreRunningDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Force restart`
+  String get forceRestartCore {
+    return Intl.message(
+      'Force restart',
+      name: 'forceRestartCore',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

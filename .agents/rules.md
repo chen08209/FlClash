@@ -318,7 +318,7 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   Consistency in `.agents/architecture.md`); the Core stamps every answer with its counters and hits and checks the
   hits again on a move, so do not add a change signal, a trigger counter, or a `coreStatusProvider` watch of your
   own.
-- Presentation smoothing such as `CoreStatusButton`'s connecting hold must remain local display state. It must not delay or
+- Presentation smoothing such as `LiveStatusButton`'s starting hold must remain local display state. It must not delay or
   overwrite `coreStatusProvider`, and a real failure must bypass/cancel the hold immediately.
 - Safe mode (`SAFE_MODE` define, see the safe mode section of `.agents/architecture.md`) is consulted by each host
   integration at its owner, never by rewriting the user's settings. `safeModeBuild` is for handles created before the
@@ -562,9 +562,8 @@ and are out of scope.
 
 An `IconButton` whose icon is an icon needs a `tooltip`. It is the button's only accessible name — without it TalkBack and
 VoiceOver announce nothing and the desktop build shows no hover hint. `test/lint/icon_button_tooltip_test.dart` enforces
-it and skips exactly two shapes: an `icon:` holding a `Text`, which is already a visible label, and
-`views/dashboard/widgets/core_status_button.dart`, which takes its label from an enclosing `Tooltip` (a second test fails
-if that wrapper disappears). Reuse an existing string before adding one; a label that depends on state goes on the button
+it and skips one shape: an `icon:` holding a `Text`, which is already a visible label. Reuse an existing string before
+adding one; a label that depends on state goes on the button
 inside the `ValueListenableBuilder`, not outside it, or the tooltip cannot follow the icon. A row of window buttons hidden
 behind `system.isMacOS` is unreachable from a macOS test host, so extract it — `WindowHeaderActions` is the pattern.
 

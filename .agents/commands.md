@@ -199,7 +199,7 @@ flutter test test/core/service_test.dart
 flutter test test/core/protocol_contract_test.dart
 flutter test test/manager/core_manager_test.dart
 flutter test test/providers/action_test.dart test/providers/system_action_test.dart
-flutter test test/widgets/core_status_button_test.dart
+flutter test test/views/dashboard/live_status_test.dart
 ```
 
 What those suites own:
@@ -211,8 +211,9 @@ What those suites own:
 - `test/core/protocol_contract_test.dart`: shared Dart/Go method and event-envelope compatibility, including event batches.
 - `test/providers/action_test.dart`: Core start/restart orchestration and overlapping restart requests.
 - `test/providers/system_action_test.dart`: ordered, idempotent exit cleanup and watchdog behavior.
-- `test/widgets/core_status_button_test.dart`: 600-millisecond connecting presentation hold, immediate failure display,
-  long-running connecting state, and disconnected restart.
+- `test/views/dashboard/live_status_test.dart`: 600-millisecond starting presentation hold, immediate failure display,
+  the order of the live status deck, where it sits, a list opening in place, and the confirmation before a force
+  restart.
 
 ## Native Component Verification
 

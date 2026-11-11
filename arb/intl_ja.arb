@@ -1074,5 +1074,18 @@
   "fakeipFilterDesc": "これらのドメインには Fake-IP ではなく実際の IP を返します。whitelist モードでは、これらだけが Fake-IP を使います。",
   "fallbackFilterGeositeDesc": "これらの GeoSite カテゴリのドメインは、直接 Fallback で解決します。",
   "fallbackFilterIpcidrDesc": "Nameserver がこれらの範囲の IP を返したときは、Fallback の結果を使います。",
-  "fallbackFilterDomainDesc": "これらのドメインは、直接 Fallback で解決します。"
+  "fallbackFilterDomainDesc": "これらのドメインは、直接 Fallback で解決します。",
+  "liveStatus": "リアルタイムの状態",
+  "coreStopped": "コアが停止しました",
+  "coreStoppedDesc": "アプリとコアの接続が切れました",
+  "restartCore": "コアを再起動",
+  "installUpdate": "アップデートをインストール",
+  "updatingResources": "更新中",
+  "updatingResourcesCount": "{count, plural, other{{count} 件を更新中}}",
+  "liveStatusPosition": "{count} 件中 {index} 件目",
+  "coreStarting": "コアを起動中",
+  "coreStartingDesc": "コアに接続しています",
+  "coreRunning": "コアは実行中",
+  "coreRunningDesc": "アプリはコアに接続されています",
+  "forceRestartCore": "強制再起動"
 }

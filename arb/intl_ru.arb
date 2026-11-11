@@ -1074,5 +1074,18 @@
   "fakeipFilterDesc": "Эти домены получают реальные IP вместо Fake-IP. В режиме whitelist Fake-IP получают только они.",
   "fallbackFilterGeositeDesc": "Домены из этих категорий GeoSite сразу разрешаются через Fallback.",
   "fallbackFilterIpcidrDesc": "Если Nameserver возвращает IP из этих диапазонов, используется ответ Fallback.",
-  "fallbackFilterDomainDesc": "Эти домены сразу разрешаются через Fallback."
+  "fallbackFilterDomainDesc": "Эти домены сразу разрешаются через Fallback.",
+  "liveStatus": "Текущее состояние",
+  "coreStopped": "Ядро остановлено",
+  "coreStoppedDesc": "Приложение потеряло связь с ядром",
+  "restartCore": "Перезапустить ядро",
+  "installUpdate": "Установить обновление",
+  "updatingResources": "Обновление",
+  "updatingResourcesCount": "{count, plural, one{Обновляется {count} элемент} few{Обновляются {count} элемента} other{Обновляются {count} элементов}}",
+  "liveStatusPosition": "{index} из {count}",
+  "coreStarting": "Запуск ядра",
+  "coreStartingDesc": "Подключение к ядру",
+  "coreRunning": "Ядро работает",
+  "coreRunningDesc": "Приложение подключено к ядру",
+  "forceRestartCore": "Принудительный перезапуск"
 }
