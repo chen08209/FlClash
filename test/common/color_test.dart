@@ -248,6 +248,12 @@ void main() {
     expect(_hct(night.success).tone, closeTo(80, 1));
     expect(_hct(rose.warningContainer).tone, closeTo(90, 1));
     expect(_hct(night.onWarningContainer).tone, closeTo(90, 1));
+    for (final scheme in [rose, night]) {
+      expect(_hct(scheme.successContainer).chroma, lessThanOrEqualTo(16.5));
+      expect(_hct(scheme.warningContainer).chroma, lessThanOrEqualTo(16.5));
+      expect(_contrast(scheme.onSuccess, scheme.success), greaterThan(6));
+      expect(_contrast(scheme.onWarning, scheme.warning), greaterThan(4.5));
+    }
     final gap = (_hct(rose.warning).hue - _hct(rose.error).hue).abs();
     expect(gap, greaterThan(25));
     expect(rose.delayColor(120), rose.success);

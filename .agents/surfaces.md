@@ -112,7 +112,9 @@ Color marks the one item that differs, never the structure around it.
   on a whole card. `success` and `warning` come from fixed green and orange palettes that ignore the seed, like
   Material's `error`; harmonizing pulled orange toward red under rose seeds until warning and error matched. Text takes
   tone 40 in light and 80 in dark, a chip takes `successContainer`/`warningContainer` (90/30) with the `on` role
-  (30/90). A delay under 600 ms is success, above it warning, a failure error: `ColorScheme.delayColor`.
+  (30/90). The containers cap their chroma at 16, near `errorContainer`: green otherwise keeps about 60 at tone 90 and
+  fills a chip with a vivid slab. Content on a `success` or `warning` fill takes `onSuccess`/`onWarning` (100/20),
+  never the container color, which shares the fill's hue and only just clears 4.5:1. A delay under 600 ms is success, above it warning, a failure error: `ColorScheme.delayColor`.
 - **Root access** on the dashboard's status card: a 1.5 dp `primary` border over its content, with no chip.
   Its fill stays at its level, and a screen reader gets the state from the card's label.
 - **Destructive** action in an alert: `ColorScheme.destructive`, iOS 27's systemRed in both modes, not `error`. A
