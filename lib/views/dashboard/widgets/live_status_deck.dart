@@ -9,7 +9,6 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,19 +24,13 @@ const _heroHeight = 156.0;
 const _heroCorner = AppCorner.alert - _cardInset;
 const _actionHeight = 44.0;
 const _textTop = 12.0;
-const _listTop = 8.0;
 const _actionBottom = 4.0;
 const _bottomHeight = _cardHeight - _cardInset * 2 - _heroHeight;
-const _openBottomHeight = _listTop + _actionHeight + _actionBottom;
-const _maxCardHeight = 460.0;
-const _growMargin = 24.0;
 const _anchorGap = 8.0;
 const _windowEdge = 16.0;
 // Room above the front card for the cards behind it to show.
 const _stackRise = 48.0;
-const _dotsWidth = 24.0;
-const _dotSize = 6.0;
-const _dotPitch = 14.0;
+const _rightGutter = 24.0;
 const _dragExtent = 220.0;
 const _flipDistance = 60.0;
 const _flipVelocity = 700.0;
@@ -45,7 +38,9 @@ const _overscroll = 0.3;
 const _settleDuration = Duration(milliseconds: 460);
 const _settleCurve = Cubic(0.2, 0.9, 0.25, 1);
 const _wheelInterval = Duration(milliseconds: 350);
-const _expandDuration = Duration(milliseconds: 320);
+const _labelFade = Duration(milliseconds: 160);
+const _askDuration = Duration(milliseconds: 200);
+const _askGap = 8.0;
 
 typedef _Pose = ({
   double x,
@@ -55,6 +50,8 @@ typedef _Pose = ({
   double turn,
   double opacity,
 });
+
+typedef _Slot = ({_Pose pose, double depth});
 
 // Positions -1 (swiped away) to 3, in the design's CSS frame: z points at the
 // viewer and a positive tilt leans the top away.
@@ -66,13 +63,8 @@ const List<_Pose> _poses = [
   (x: 0, y: -120, z: -220, tilt: 32, turn: 0, opacity: 0),
 ];
 
-_Pose _poseAt(double position) {
-  final t = position.clamp(-1.0, 3.0) + 1;
-  final i = math.min(t.floor(), _poses.length - 2);
-  final f = t - i;
-  final a = _poses[i];
-  final b = _poses[i + 1];
-  double mix(double from, double to) => from + (to - from) * f;
+_Pose _lerpPose(_Pose a, _Pose b, double t) {
+  double mix(double from, double to) => from + (to - from) * t;
   return (
     x: mix(a.x, b.x),
     y: mix(a.y, b.y),
@@ -83,23 +75,48 @@ _Pose _poseAt(double position) {
   );
 }
 
+_Pose _faded(_Pose pose) => (
+  x: pose.x,
+  y: pose.y,
+  z: pose.z,
+  tilt: pose.tilt,
+  turn: pose.turn,
+  opacity: 0,
+);
+
+_Pose _poseAt(double position) {
+  final t = position.clamp(-1.0, 3.0) + 1;
+  final i = math.min(t.floor(), _poses.length - 2);
+  return _lerpPose(_poses[i], _poses[i + 1], t - i);
+}
+
+_Slot _lerpSlot(_Slot a, _Slot b, double t) => (
+  pose: _lerpPose(a.pose, b.pose, t),
+  depth: a.depth + (b.depth - a.depth) * t,
+);
+
+/// A front card leaves as a swipe takes it; one behind fades in place.
+_Slot _exitOf(_Slot slot) => slot.depth < 0.5
+    ? (pose: _poseAt(-1), depth: -1)
+    : (pose: _faded(slot.pose), depth: slot.depth);
+
+bool _isFlat(_Pose pose) =>
+    pose.x == 0 &&
+    pose.y == 0 &&
+    pose.z == 0 &&
+    pose.tilt == 0 &&
+    pose.turn == 0;
+
 // A negative perspective entry keeps the CSS frame of [_poses].
-Matrix4 _transformOf(_Pose pose) => Matrix4.identity()
-  ..setEntry(3, 2, -0.001)
-  ..multiply(Matrix4.translationValues(pose.x, pose.y, pose.z))
-  ..rotateX(pose.tilt * math.pi / 180)
-  ..rotateY(pose.turn * math.pi / 180);
+Matrix4 _transformOf(_Pose pose) => _isFlat(pose)
+    ? Matrix4.identity()
+    : (Matrix4.identity()
+        ..setEntry(3, 2, -0.001)
+        ..multiply(Matrix4.translationValues(pose.x, pose.y, pose.z))
+        ..rotateX(pose.tilt * math.pi / 180)
+        ..rotateY(pose.turn * math.pi / 180));
 
-/// Where the front card sits at rest and how far an opened list may grow it:
-/// about its center where a phone's alert sits, downward from under the bar
-/// on a desktop.
-typedef DeckPlacement = ({Rect front, bool growDown, double maxHeight});
-
-DeckPlacement _placementOf(
-  BuildContext context,
-  Size size, {
-  required Rect anchor,
-}) {
+Rect _frontOf(BuildContext context, Size size, {required Rect anchor}) {
   final padding = MediaQuery.paddingOf(context);
   final width = _cardSize.width;
   final height = _cardSize.height;
@@ -107,17 +124,13 @@ DeckPlacement _placementOf(
     final safe = padding.deflateRect(Offset.zero & size);
     final left = math.min(
       safe.center.dx - width / 2,
-      safe.right - width - _dotsWidth,
+      safe.right - width - _rightGutter,
     );
-    return (
-      front: Rect.fromLTWH(
-        math.max(0, left),
-        safe.center.dy - height / 2,
-        width,
-        height,
-      ),
-      growDown: false,
-      maxHeight: (safe.height - _growMargin * 2).clamp(height, _maxCardHeight),
+    return Rect.fromLTWH(
+      math.max(0, left),
+      safe.center.dy - height / 2,
+      width,
+      height,
     );
   }
   final bottom = size.height - padding.bottom - _windowEdge;
@@ -125,15 +138,11 @@ DeckPlacement _placementOf(
     anchor.bottom + _anchorGap + _stackRise,
     bottom - height,
   );
-  return (
-    front: Rect.fromLTWH(
-      math.max(0, size.width - _windowEdge - _dotsWidth - width),
-      math.max(0, top),
-      width,
-      height,
-    ),
-    growDown: true,
-    maxHeight: (bottom - top).clamp(height, _maxCardHeight),
+  return Rect.fromLTWH(
+    math.max(0, size.width - _windowEdge - _rightGutter - width),
+    math.max(0, top),
+    width,
+    height,
   );
 }
 
@@ -145,12 +154,16 @@ class LiveStatusRoute extends PopupRoute<void>
     required this.separateCore,
     required this.barrierColor,
     required this.barrierLabel,
+    this.statuses,
   });
 
   /// The bar button, in the navigator's coordinates.
   final Rect anchor;
 
   final bool separateCore;
+
+  /// What the deck shows in place of the live statuses.
+  final List<LiveStatus>? statuses;
 
   @override
   final Color barrierColor;
@@ -163,7 +176,7 @@ class LiveStatusRoute extends PopupRoute<void>
 
   @override
   AlertScaleOrigin get scaleOrigin => (context, size) {
-    final center = _placementOf(context, size, anchor: anchor).front.center;
+    final center = _frontOf(context, size, anchor: anchor).center;
     return Alignment(
       center.dx / size.width * 2 - 1,
       center.dy / size.height * 2 - 1,
@@ -179,27 +192,31 @@ class LiveStatusRoute extends PopupRoute<void>
     return LayoutBuilder(
       builder: (context, constraints) => LiveStatusDeck(
         separateCore: separateCore,
-        placement: _placementOf(context, constraints.biggest, anchor: anchor),
+        statuses: statuses,
+        front: _frontOf(context, constraints.biggest, anchor: anchor),
       ),
     );
   }
 }
 
+typedef _Placed = ({LiveStatus status, _Slot slot, bool leaving});
+
 /// The live statuses as a stack of cards, the next ones leaning back above the
 /// front one. A drag down brings the next card forward and a drag up takes it
 /// back; the deck keeps the card it shows while the statuses change under it.
-/// A card with a list opens it in place, the rest of the deck stepping away
-/// until it closes.
 class LiveStatusDeck extends ConsumerStatefulWidget {
   const LiveStatusDeck({
     super.key,
     required this.separateCore,
-    required this.placement,
+    required this.front,
+    this.statuses,
   });
 
   final bool separateCore;
 
-  final DeckPlacement placement;
+  final Rect front;
+
+  final List<LiveStatus>? statuses;
 
   @override
   ConsumerState<LiveStatusDeck> createState() => _LiveStatusDeckState();
@@ -210,17 +227,26 @@ class _LiveStatusDeckState extends ConsumerState<LiveStatusDeck>
   late final AnimationController _position = AnimationController.unbounded(
     vsync: this,
   );
-  late final AnimationController _opening = AnimationController(
+  late final AnimationController _reflow = AnimationController(
     vsync: this,
-    duration: _expandDuration,
-  )..addStatusListener(_onOpeningStatus);
-  late final Animation<double> _expansion = CurvedAnimation(
-    parent: _opening,
+    duration: _settleDuration,
+  )..addStatusListener(_onReflowStatus);
+  late final Animation<double> _reflowProgress = CurvedAnimation(
+    parent: _reflow,
     curve: _settleCurve,
   );
+  late final AnimationController _asking = AnimationController(
+    vsync: this,
+    duration: _askDuration,
+  )..addStatusListener(_onAskingStatus);
+  late final Animation<double> _askProgress = CurvedAnimation(
+    parent: _asking,
+    curve: Curves.easeOut,
+  );
   List<LiveStatus> _statuses = const [];
+  int _count = 0;
   Object? _shownKey;
-  Object? _openKey;
+  Object? _askKey;
   int _target = 0;
   double _dragOrigin = 0;
   double _dragDistance = 0;
@@ -228,33 +254,101 @@ class _LiveStatusDeckState extends ConsumerState<LiveStatusDeck>
   bool _closing = false;
   Duration? _lastWheel;
 
-  int get _last => _statuses.length - 1;
+  Map<Object, _Slot>? _reflowFrom;
+  List<({LiveStatus status, _Slot from})> _leaving = const [];
 
-  bool get _open => _openKey != null;
+  bool get _cycles => _statuses.length > 1;
+
+  bool get _held => _askKey != null;
+
+  int _indexOf(int target) => target % _statuses.length;
 
   @override
   void dispose() {
     _position.dispose();
-    _opening.dispose();
+    _reflow.dispose();
+    _asking.dispose();
     super.dispose();
   }
 
   void _follow(List<LiveStatus> statuses) {
+    if (_statuses.isNotEmpty &&
+        statuses.isNotEmpty &&
+        !_sameKeys(_statuses, statuses) &&
+        !context.disableAnimations) {
+      _startReflow(statuses);
+    }
     _statuses = statuses;
     if (statuses.isEmpty) {
       _close();
       return;
     }
-    if (_open && !statuses.any((status) => status.key == _openKey)) {
-      _openKey = null;
-      _opening.value = 0;
+    if (_askKey != null &&
+        !statuses.any((it) => it.key == _askKey && _confirmOf(it) != null)) {
+      _askKey = null;
+      _asking.value = 0;
     }
     final kept = statuses.indexWhere((status) => status.key == _shownKey);
-    final shown = kept >= 0 ? kept : _target.clamp(0, _last);
+    final shown = kept >= 0 ? kept : _indexOf(_target);
     _shownKey = statuses[shown].key;
-    if (_dragging || shown == _target) return;
+    final recounted = statuses.length != _count;
+    _count = statuses.length;
+    if (_dragging || shown == _indexOf(_target) && !recounted) return;
     _target = shown;
     _position.value = shown.toDouble();
+  }
+
+  static bool _sameKeys(List<LiveStatus> a, List<LiveStatus> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].key != b[i].key) return false;
+    }
+    return true;
+  }
+
+  /// Moves every card on from where it is drawn now, the ones that go too.
+  void _startReflow(List<LiveStatus> next) {
+    final drawn = _layout();
+    final keys = {for (final status in next) status.key};
+    _reflowFrom = {for (final it in drawn) it.status.key: it.slot};
+    _leaving = [
+      for (final it in drawn)
+        if (!keys.contains(it.status.key)) (status: it.status, from: it.slot),
+    ];
+    unawaited(_reflow.forward(from: 0).orCancel.catchError((_) {}));
+  }
+
+  void _onReflowStatus(AnimationStatus status) {
+    if (status != AnimationStatus.completed) return;
+    setState(() {
+      _reflowFrom = null;
+      _leaving = const [];
+    });
+  }
+
+  List<_Placed> _layout() {
+    final from = _reflowFrom;
+    final t = _reflowProgress.value;
+    final position = _position.value;
+    _Slot slotAt(int index) {
+      final slot = _slotOf(index - position);
+      if (from == null) return slot;
+      final start =
+          from[_statuses[index].key] ??
+          (pose: _faded(slot.pose), depth: slot.depth);
+      return _lerpSlot(start, slot, t);
+    }
+
+    return [
+      for (var i = 0; i < _statuses.length; i++)
+        (status: _statuses[i], slot: slotAt(i), leaving: false),
+      for (final (:status, from: start) in _leaving)
+        (
+          status: status,
+          slot: _lerpSlot(start, _exitOf(start), t),
+          leaving: true,
+        ),
+    ];
   }
 
   void _close() {
@@ -272,31 +366,37 @@ class _LiveStatusDeckState extends ConsumerState<LiveStatusDeck>
     });
   }
 
-  void _onOpeningStatus(AnimationStatus status) {
-    if (status == AnimationStatus.dismissed && _open) {
-      setState(() => _openKey = null);
+  void _onAskingStatus(AnimationStatus status) {
+    if (status == AnimationStatus.dismissed && _askKey != null) {
+      setState(() => _askKey = null);
     }
   }
 
-  void _toggle(Object key) {
-    final opening = !_opening.status.isForwardOrCompleted;
-    setState(() {
-      if (opening) _openKey = key;
-    });
+  void _runAsking({required bool forward}) {
     if (context.disableAnimations) {
-      _opening.value = opening ? 1 : 0;
-    } else if (opening) {
-      unawaited(_opening.forward().orCancel.catchError((_) {}));
+      _asking.value = forward ? 1 : 0;
+    } else if (forward) {
+      unawaited(_asking.forward().orCancel.catchError((_) {}));
     } else {
-      unawaited(_opening.reverse().orCancel.catchError((_) {}));
+      unawaited(_asking.reverse().orCancel.catchError((_) {}));
     }
+  }
+
+  void _ask(Object key) {
+    setState(() => _askKey = key);
+    _runAsking(forward: true);
+  }
+
+  void _unask() {
+    setState(() {});
+    _runAsking(forward: false);
   }
 
   void _settle(int index) {
     if (_statuses.isEmpty) return;
-    final target = index.clamp(0, _last);
+    final target = _cycles ? index : 0;
     _target = target;
-    _shownKey = _statuses[target].key;
+    _shownKey = _statuses[_indexOf(target)].key;
     if (context.disableAnimations) {
       _position.value = target.toDouble();
       return;
@@ -315,11 +415,7 @@ class _LiveStatusDeckState extends ConsumerState<LiveStatusDeck>
 
   void _step(int delta) => _settle(_target + delta);
 
-  double _resist(double value) {
-    if (value < 0) return value * _overscroll;
-    if (value > _last) return _last + (value - _last) * _overscroll;
-    return value;
-  }
+  double _resist(double value) => _cycles ? value : value * _overscroll;
 
   void _onDragStart(DragStartDetails details) {
     _position.stop();
@@ -347,7 +443,7 @@ class _LiveStatusDeckState extends ConsumerState<LiveStatusDeck>
   }
 
   void _onPointerSignal(PointerSignalEvent event) {
-    if (event is! PointerScrollEvent || _open) return;
+    if (event is! PointerScrollEvent || _held) return;
     GestureBinding.instance.pointerSignalResolver.register(event, (event) {
       final scroll = event as PointerScrollEvent;
       final last = _lastWheel;
@@ -359,7 +455,7 @@ class _LiveStatusDeckState extends ConsumerState<LiveStatusDeck>
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
-    if (_open || event is! KeyDownEvent && event is! KeyRepeatEvent) {
+    if (_held || event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
     if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
@@ -373,94 +469,108 @@ class _LiveStatusDeckState extends ConsumerState<LiveStatusDeck>
     return KeyEventResult.ignored;
   }
 
+  /// Where a card [offset] places from the front sits in the stack. Once the
+  /// deck cycles, the card that passes the front leaves forward over the
+  /// first half of the step and over the second drops in from one layer
+  /// behind the rear, fading in as it settles there.
+  _Slot _slotOf(double offset) {
+    final count = _statuses.length;
+    if (!_cycles) return (pose: _poseAt(offset), depth: offset);
+    var wrapped = offset % count;
+    if (wrapped > count - 1) wrapped -= count;
+    if (wrapped >= 0) return (pose: _poseAt(wrapped), depth: wrapped);
+    final passed = -wrapped;
+    if (passed <= 0.5) {
+      final forward = -passed * 2;
+      return (pose: _poseAt(forward), depth: forward);
+    }
+    final arrived = passed * 2 - 1;
+    final depth = count - arrived;
+    final pose = _poseAt(depth);
+    return (pose: _lerpPose(_faded(pose), pose, arrived), depth: depth);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final statuses = watchLiveStatuses(ref, separateCore: widget.separateCore);
+    final statuses =
+        widget.statuses ??
+        watchLiveStatuses(ref, separateCore: widget.separateCore);
     _follow(statuses);
     final colorScheme = context.colorScheme;
     final appLocalizations = context.appLocalizations;
     final fill = SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme);
-    final front = widget.placement.front;
-    final open = _open;
-    final cards = [
+    final held = _held;
+    final asking = _asking.status.isForwardOrCompleted;
+    final cards = <Object, Widget>{
       for (final status in statuses)
-        RepaintBoundary(
+        status.key: RepaintBoundary(
           key: ValueKey(status.key),
           child: _StatusCard(
             status: status,
-            expansion: status.key == _openKey
-                ? _expansion
+            asking: status.key == _askKey
+                ? _askProgress
                 : kAlwaysDismissedAnimation,
-            listed: status.key == _openKey,
-            open:
-                status.key == _openKey && _opening.status.isForwardOrCompleted,
-            onToggle: () => _toggle(status.key),
+            confirming: status.key == _askKey && asking,
+            onAsk: () => _ask(status.key),
+            onUnask: _unask,
           ),
         ),
-    ];
+      for (final (:status, from: _) in _leaving)
+        status.key: RepaintBoundary(
+          key: ValueKey(status.key),
+          child: _StatusCard(
+            status: status,
+            asking: kAlwaysDismissedAnimation,
+            confirming: false,
+            onAsk: _inert,
+            onUnask: _inert,
+          ),
+        ),
+    };
     return Focus(
       autofocus: true,
       onKeyEvent: _onKey,
-      child: Listener(
-        onPointerSignal: _onPointerSignal,
-        child: GestureDetector(
-          onVerticalDragStart: open ? null : _onDragStart,
-          onVerticalDragUpdate: open ? null : _onDragUpdate,
-          onVerticalDragEnd: open ? null : _onDragEnd,
-          onVerticalDragCancel: open
-              ? null
-              : () => _onDragEnd(DragEndDetails()),
-          child: AnimatedBuilder(
-            animation: Listenable.merge([_position, _expansion]),
-            builder: (context, _) {
-              final position = _position.value;
-              final rest = 1 - _expansion.value;
-              final placed = [
-                for (var i = 0; i < cards.length; i++) (i, i - position),
-              ]..sort((a, b) => b.$2.compareTo(a.$2));
-              final active = position.round().clamp(0, math.max(0, _last));
-              return Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  for (final (index, offset) in placed)
-                    if (offset > -1 && offset < 3)
-                      _placeCard(
-                        card: cards[index],
-                        offset: offset,
-                        fill: fill,
-                        fade: statuses[index].key == _openKey ? 1 : rest,
-                        shadows: offset < 0.5
-                            ? _frontShadows(colorScheme)
-                            : _backShadows(colorScheme),
-                      ),
-                  if (statuses.length > 1 && rest > 0)
-                    Positioned(
-                      left: front.right,
-                      top: front.center.dy - statuses.length * _dotPitch / 2,
-                      width: _dotsWidth,
-                      child: IgnorePointer(
-                        ignoring: open,
-                        child: Opacity(
-                          opacity: rest,
-                          child: Column(
-                            children: [
-                              for (var i = 0; i < statuses.length; i++)
-                                _Dot(
-                                  active: i == active,
-                                  label: appLocalizations.liveStatusPosition(
-                                    i + 1,
-                                    statuses.length,
-                                  ),
-                                  onTap: () => _settle(i),
-                                ),
-                            ],
-                          ),
+      child: Semantics(
+        container: true,
+        value: statuses.length > 1
+            ? appLocalizations.liveStatusPosition(
+                _indexOf(_target) + 1,
+                statuses.length,
+              )
+            : null,
+        child: Listener(
+          onPointerSignal: _onPointerSignal,
+          child: GestureDetector(
+            onVerticalDragStart: held ? null : _onDragStart,
+            onVerticalDragUpdate: held ? null : _onDragUpdate,
+            onVerticalDragEnd: held ? null : _onDragEnd,
+            onVerticalDragCancel: held
+                ? null
+                : () => _onDragEnd(DragEndDetails()),
+            child: AnimatedBuilder(
+              animation: Listenable.merge([_position, _reflow]),
+              builder: (context, _) {
+                final placed = _layout()
+                  ..sort((a, b) => b.slot.depth.compareTo(a.slot.depth));
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    for (final (:status, :slot, :leaving) in placed)
+                      if (slot.depth > -1 && slot.depth < 3)
+                        _placeCard(
+                          card: cards[status.key]!,
+                          status: status,
+                          pose: slot.pose,
+                          front: !leaving && slot.depth.abs() < 0.5,
+                          fill: fill,
+                          shadows: slot.depth < 0.5
+                              ? _frontShadows(colorScheme)
+                              : _backShadows(colorScheme),
                         ),
-                      ),
-                    ),
-                ],
-              );
-            },
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -469,30 +579,31 @@ class _LiveStatusDeckState extends ConsumerState<LiveStatusDeck>
 
   Widget _placeCard({
     required Widget card,
-    required double offset,
+    required LiveStatus status,
+    required _Pose pose,
+    required bool front,
     required Color fill,
-    required double fade,
     required List<BoxShadow> shadows,
   }) {
-    final pose = _poseAt(offset);
-    final front = offset.abs() < 0.5;
-    return Positioned.fill(
+    return Positioned.fromRect(
       key: card.key,
-      child: CustomSingleChildLayout(
-        delegate: _CardSlot(widget.placement),
-        child: IgnorePointer(
-          ignoring: !front,
-          child: Opacity(
-            opacity: (pose.opacity * fade).clamp(0, 1),
-            child: Transform(
-              alignment: Alignment.center,
-              transform: _transformOf(pose),
-              child: DecoratedBox(
-                decoration: ShapeDecoration(
-                  color: fill,
-                  shape: AppShape.all(AppCorner.alert),
-                  shadows: shadows,
-                ),
+      rect: widget.front,
+      child: IgnorePointer(
+        ignoring: !front,
+        child: Opacity(
+          opacity: pose.opacity.clamp(0, 1),
+          child: Transform(
+            alignment: Alignment.center,
+            transform: _transformOf(pose),
+            child: DecoratedBox(
+              decoration: ShapeDecoration(
+                color: fill,
+                shape: AppShape.all(AppCorner.alert),
+                shadows: shadows,
+              ),
+              child: _LeaningRaster(
+                leaning: !_isFlat(pose),
+                content: status,
                 child: card,
               ),
             ),
@@ -503,82 +614,52 @@ class _LiveStatusDeckState extends ConsumerState<LiveStatusDeck>
   }
 }
 
-/// Lays a card out at its resting place; an opened one grows as tall as the
-/// placement allows, about its center or down from its top.
-class _CardSlot extends SingleChildLayoutDelegate {
-  const _CardSlot(this.placement);
+/// Draws a card that leans from a snapshot, so its text is neither
+/// rasterized at a new scale on every frame of a flip nor drawn under a
+/// perspective transform, where Impeller has logged glyphs missing from its
+/// atlas. A new [content] retakes it.
+class _LeaningRaster extends StatefulWidget {
+  const _LeaningRaster({
+    required this.leaning,
+    required this.content,
+    required this.child,
+  });
 
-  final DeckPlacement placement;
-
-  @override
-  BoxConstraints getConstraintsForChild(BoxConstraints constraints) =>
-      BoxConstraints(
-        minWidth: placement.front.width,
-        maxWidth: placement.front.width,
-        maxHeight: placement.maxHeight,
-      );
-
-  @override
-  Offset getPositionForChild(Size size, Size childSize) {
-    final front = placement.front;
-    return Offset(
-      front.left,
-      placement.growDown ? front.top : front.center.dy - childSize.height / 2,
-    );
-  }
+  final bool leaning;
+  final Object content;
+  final Widget child;
 
   @override
-  bool shouldRelayout(_CardSlot oldDelegate) =>
-      oldDelegate.placement != placement;
+  State<_LeaningRaster> createState() => _LeaningRasterState();
 }
 
-/// A card [progress] of the way from its resting height to the height its
-/// content asks for, which only an opened card measures.
-class _ExpandingBox extends SingleChildRenderObjectWidget {
-  const _ExpandingBox({required this.progress, super.child});
-
-  final double progress;
+class _LeaningRasterState extends State<_LeaningRaster> {
+  late final _controller = SnapshotController(
+    allowSnapshotting: widget.leaning,
+  );
 
   @override
-  _RenderExpandingBox createRenderObject(BuildContext context) =>
-      _RenderExpandingBox(progress);
-
-  @override
-  void updateRenderObject(
-    BuildContext context,
-    _RenderExpandingBox renderObject,
-  ) {
-    renderObject.progress = progress;
-  }
-}
-
-class _RenderExpandingBox extends RenderProxyBox {
-  _RenderExpandingBox(this._progress);
-
-  double _progress;
-  set progress(double value) {
-    if (value == _progress) return;
-    _progress = value;
-    markNeedsLayout();
-  }
-
-  @override
-  void performLayout() {
-    final child = this.child!;
-    final width = constraints.maxWidth;
-    var height = _cardHeight;
-    if (_progress > 0) {
-      final ceiling = math.max(_cardHeight, constraints.maxHeight);
-      final full = child
-          .getMaxIntrinsicHeight(width)
-          .clamp(_cardHeight, ceiling);
-      height = _cardHeight + (full - _cardHeight) * _progress;
+  void didUpdateWidget(_LeaningRaster oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.content, widget.content)) {
+      _controller.allowSnapshotting = false;
     }
-    child.layout(
-      BoxConstraints.tight(constraints.constrain(Size(width, height))),
-      parentUsesSize: true,
+    _controller.allowSnapshotting = widget.leaning;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SnapshotWidget(
+      controller: _controller,
+      mode: SnapshotMode.permissive,
+      child: widget.child,
     );
-    size = child.size;
   }
 }
 
@@ -603,45 +684,6 @@ List<BoxShadow> _backShadows(ColorScheme colorScheme) => [
   ),
 ];
 
-class _Dot extends StatelessWidget {
-  const _Dot({required this.active, required this.label, required this.onTap});
-
-  final bool active;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    return Semantics(
-      button: true,
-      selected: active,
-      label: label,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: SizedBox(
-          width: _dotsWidth,
-          height: _dotPitch,
-          child: Center(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: _dotSize,
-              height: _dotSize,
-              decoration: ShapeDecoration(
-                color: active
-                    ? colorScheme.onSurface
-                    : colorScheme.outlineVariant,
-                shape: AppShape.circle,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 String _progressText(UpdateDownloading download) {
   final received = download.received.traffic.show;
   if (download.total <= 0) {
@@ -654,34 +696,39 @@ String _readyTip(AppLocalizations appLocalizations) => system.isWindows
     ? '${appLocalizations.updateReadyTip}\n${appLocalizations.updateRestartTip}'
     : appLocalizations.updateReadyTip;
 
+/// An action the card asks about in place before it runs.
+enum _Confirm { forceRestart, stopDownload }
+
+_Confirm? _confirmOf(LiveStatus status) => switch (status) {
+  CoreLiveStatus(phase: CoreStatus.connected) => _Confirm.forceRestart,
+  UpdateStatus(download: UpdateDownloading()) => _Confirm.stopDownload,
+  _ => null,
+};
+
+void _inert() {}
+
 class _StatusCard extends ConsumerWidget {
   const _StatusCard({
     required this.status,
-    required this.expansion,
-    required this.listed,
-    required this.open,
-    required this.onToggle,
+    required this.asking,
+    required this.confirming,
+    required this.onAsk,
+    required this.onUnask,
   });
 
   final LiveStatus status;
 
-  final Animation<double> expansion;
+  /// How far the card has turned into asking to confirm its action.
+  final Animation<double> asking;
 
-  /// Whether the card shows its whole list, as it does until it has closed.
-  final bool listed;
+  /// Whether the card is asking or about to, which its button confirms.
+  final bool confirming;
 
-  /// Whether the card is opening or open, which its button closes.
-  final bool open;
+  final VoidCallback onAsk;
 
-  final VoidCallback onToggle;
+  final VoidCallback onUnask;
 
-  Future<void> _restartCore(CoreAction core, {bool confirm = false}) async {
-    if (confirm) {
-      final confirmed = await dialogs.showMessage(
-        message: TextSpan(text: currentAppLocalizations.forceRestartCoreTip),
-      );
-      if (confirmed != true) return;
-    }
+  Future<void> _restartCore(CoreAction core) async {
     try {
       await core.restartCore();
     } catch (error) {
@@ -703,9 +750,19 @@ class _StatusCard extends ConsumerWidget {
     final level = SurfaceLevel.floatingOf(colorScheme);
     final neutral = level.next.colorOf(colorScheme);
     final core = ref.read(coreActionProvider.notifier);
-    final toggleLabel = open
-        ? appLocalizations.showLess
-        : appLocalizations.viewAll;
+    final effects = status.preview == null
+        ? (
+            restartCore: () => unawaited(_restartCore(core)),
+            stopDownload: action.cancelUpdateDownload,
+            install: () => _install(context, ref),
+            discard: () => unawaited(action.discardUpdate()),
+          )
+        : (
+            restartCore: _inert,
+            stopDownload: _inert,
+            install: _inert,
+            discard: _inert,
+          );
     final (
       tint,
       hero,
@@ -721,7 +778,7 @@ class _StatusCard extends ConsumerWidget {
         appLocalizations.coreStopped,
         appLocalizations.coreStoppedDesc,
         appLocalizations.restartCore,
-        () => unawaited(_restartCore(core)),
+        effects.restartCore,
         (colorScheme.error, colorScheme.onError),
       ),
       CoreLiveStatus(phase: CoreStatus.connecting) => (
@@ -739,7 +796,7 @@ class _StatusCard extends ConsumerWidget {
         appLocalizations.coreRunning,
         appLocalizations.coreRunningDesc,
         appLocalizations.forceRestartCore,
-        () => unawaited(_restartCore(core, confirm: true)),
+        onAsk,
         (neutral, colorScheme.onSurface),
       ),
       UpdateStatus(download: final UpdateDownloading download) => (
@@ -748,55 +805,42 @@ class _StatusCard extends ConsumerWidget {
         appLocalizations.downloadingUpdate,
         _progressText(download),
         appLocalizations.cancel,
-        action.cancelUpdateDownload,
+        onAsk,
         (neutral, colorScheme.onSurface),
       ),
       UpdateStatus(download: final UpdateReady download) => (
         colorScheme.successContainer,
-        _ReadyHero(
-          tag: download.tag,
-          onDiscard: () => unawaited(action.discardUpdate()),
-        ),
+        _ReadyHero(tag: download.tag, onDiscard: effects.discard),
         appLocalizations.updateReady,
         _readyTip(appLocalizations),
         appLocalizations.installUpdate,
-        () => _install(context, ref),
-        (colorScheme.success, colorScheme.successContainer),
+        effects.install,
+        (colorScheme.success, colorScheme.onSuccess),
       ),
-      ResourcesStatus(:final items) when items.length > _HeroRows.shown => (
-        neutral,
-        listed ? _ResourcesList(items: items) : _ResourcesHero(items: items),
-        appLocalizations.updatingResources,
-        appLocalizations.updatingResourcesCount(items.length),
-        toggleLabel,
-        onToggle,
-        (neutral, colorScheme.onSurface),
+    };
+    final ask = switch (_confirmOf(status)) {
+      _Confirm.forceRestart => (
+        title: appLocalizations.forceRestartCoreAsk,
+        body: appLocalizations.forceRestartCoreAskDesc,
+        label: appLocalizations.restart,
+        run: effects.restartCore,
       ),
-      ResourcesStatus(:final items) => (
-        neutral,
-        _ResourcesHero(items: items),
-        appLocalizations.updatingResources,
-        appLocalizations.updatingResourcesCount(items.length),
-        null,
-        null,
-        null,
+      _Confirm.stopDownload => (
+        title: appLocalizations.stopUpdateDownloadTip,
+        body: appLocalizations.stopUpdateDownloadDesc,
+        label: appLocalizations.stopDownload,
+        run: effects.stopDownload,
       ),
+      null => null,
     };
     final heroBox = DecoratedBox(
       decoration: ShapeDecoration(
         color: tint,
         shape: AppShape.all(_heroCorner),
       ),
-      child: listed
-          ? ClipRSuperellipse(
-              borderRadius: const BorderRadius.all(
-                Radius.circular(_heroCorner),
-              ),
-              child: hero,
-            )
-          : hero,
+      child: hero,
     );
-    final text = Column(
+    Widget lines(String title, String body) => Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -820,68 +864,110 @@ class _StatusCard extends ConsumerWidget {
         ),
       ],
     );
+    final restText = lines(title, body);
+    final askText = ask == null ? null : lines(ask.title, ask.body);
+    ButtonStyle buttonStyle(Color background, Color foreground) =>
+        ButtonStyle.from(
+          backgroundColor: background,
+          foregroundColor: foreground,
+          minimumSize: const Size.fromHeight(_actionHeight),
+          tapTargetSize: TapTargetSize.shrinkWrap,
+          shape: AppShape.full,
+        );
     final button = actionLabel != null && actionColors != null
         ? FilledButton(
             onPressed: onAction,
-            style: ButtonStyle.from(
-              backgroundColor: actionColors.$1,
-              foregroundColor: actionColors.$2,
-              minimumSize: const Size.fromHeight(_actionHeight),
-              tapTargetSize: TapTargetSize.shrinkWrap,
-              shape: AppShape.full,
+            style: buttonStyle(actionColors.$1, actionColors.$2),
+            child: AnimatedSwitcher(
+              duration: _labelFade,
+              child: Text(actionLabel, key: ValueKey(actionLabel)),
             ),
-            child: Text(actionLabel),
           )
         : null;
+    final askButtons = ask == null
+        ? null
+        : Row(
+            spacing: _askGap,
+            children: [
+              Expanded(
+                child: FilledButton(
+                  onPressed: onUnask,
+                  style: buttonStyle(neutral, colorScheme.onSurface),
+                  child: Text(appLocalizations.cancel),
+                ),
+              ),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () {
+                    ask.run();
+                    onUnask();
+                  },
+                  style: buttonStyle(colorScheme.error, colorScheme.onError),
+                  child: Text(ask.label),
+                ),
+              ),
+            ],
+          );
+    Widget fade(double asked, Widget rest, Widget? question) {
+      if (question == null || asked == 0) return rest;
+      return Stack(
+        children: [
+          IgnorePointer(
+            ignoring: confirming,
+            child: Opacity(opacity: 1 - asked, child: rest),
+          ),
+          Positioned.fill(
+            child: IgnorePointer(
+              ignoring: !confirming,
+              child: Opacity(opacity: asked, child: question),
+            ),
+          ),
+        ],
+      );
+    }
+
     return SurfaceScope(
       level: level,
-      child: AnimatedBuilder(
-        animation: expansion,
-        builder: (context, _) {
-          final t = expansion.value;
-          double toward(double from, double to) => from + (to - from) * t;
-          return _ExpandingBox(
-            progress: t,
-            child: Padding(
-              padding: const EdgeInsets.all(_cardInset),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(child: heroBox),
-                  SizedBox(
-                    height: toward(_bottomHeight, _openBottomHeight),
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        8,
-                        toward(_textTop, _listTop),
-                        8,
-                        _actionBottom,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            child: ClipRect(
-                              child: Opacity(
-                                opacity: 1 - t,
-                                child: OverflowBox(
-                                  alignment: AlignmentDirectional.topStart,
-                                  maxHeight: double.infinity,
-                                  child: text,
-                                ),
-                              ),
+      child: Padding(
+        padding: const EdgeInsets.all(_cardInset),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: heroBox),
+            SizedBox(
+              height: _bottomHeight,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  8,
+                  _textTop,
+                  8,
+                  _actionBottom,
+                ),
+                child: AnimatedBuilder(
+                  animation: asking,
+                  builder: (context, _) {
+                    final a = asking.value;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: ClipRect(
+                            child: OverflowBox(
+                              alignment: AlignmentDirectional.topStart,
+                              maxHeight: double.infinity,
+                              child: fade(a, restText, askText),
                             ),
                           ),
-                          ?button,
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                        ),
+                        if (button != null) fade(a, button, askButtons),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }
@@ -917,7 +1003,7 @@ class _CoreHero extends StatelessWidget {
       CoreStatus.connected => (
         colorScheme.onSurfaceVariant,
         colorScheme.success,
-        colorScheme.successContainer,
+        colorScheme.onSuccess,
         colorScheme.success,
       ),
     };
@@ -992,6 +1078,7 @@ class _Node extends StatelessWidget {
     return SizedBox(
       width: 64,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         spacing: _labelGap,
         children: [
           SizedBox.square(
@@ -1175,7 +1262,7 @@ class _ReadyHero extends StatelessWidget {
                     child: GlyphIcon(
                       AppGlyphs.check,
                       size: 28,
-                      color: colorScheme.successContainer,
+                      color: colorScheme.onSuccess,
                     ),
                   ),
                 ),
@@ -1213,134 +1300,6 @@ class _ReadyHero extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ResourcesHero extends StatelessWidget {
-  const _ResourcesHero({required this.items});
-
-  final List<UpdatingResource> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return _HeroRows(
-      children: [
-        for (final item in items.take(_HeroRows.shown)) _ResourceRow(item),
-      ],
-    );
-  }
-}
-
-class _ResourcesList extends StatelessWidget {
-  const _ResourcesList({required this.items});
-
-  final List<UpdatingResource> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return _HeroList(children: [for (final item in items) _ResourceRow(item)]);
-  }
-}
-
-class _ResourceRow extends StatelessWidget {
-  const _ResourceRow(this.item);
-
-  final UpdatingResource item;
-
-  @override
-  Widget build(BuildContext context) {
-    return _HeroRow(
-      leading: GlyphIcon(
-        item.isProfile ? AppGlyphs.profiles : AppGlyphs.resources,
-        size: 18,
-        color: context.colorScheme.onSurfaceVariant,
-      ),
-      label: item.name,
-      trailing: const ActivityIndicator(size: 16),
-    );
-  }
-}
-
-/// The whole of an opened card's list, scrolling once the card can grow no
-/// taller.
-class _HeroList extends StatelessWidget {
-  const _HeroList({required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 6,
-        children: children,
-      ),
-    );
-  }
-}
-
-class _HeroRows extends StatelessWidget {
-  const _HeroRows({required this.children});
-
-  static const shown = 3;
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: SizedBox(
-        width: 264,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 6,
-          children: children,
-        ),
-      ),
-    );
-  }
-}
-
-class _HeroRow extends StatelessWidget {
-  const _HeroRow({required this.leading, required this.label, this.trailing});
-
-  final Widget leading;
-  final String label;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final trailing = this.trailing;
-    return SizedBox(
-      height: 36,
-      child: DecoratedBox(
-        decoration: ShapeDecoration(
-          color: SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme),
-          shape: AppShape.sm,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            spacing: 10,
-            children: [
-              leading,
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.subheadline.of(context),
-                ),
-              ),
-              ?trailing,
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

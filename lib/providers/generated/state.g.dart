@@ -650,6 +650,64 @@ final class SuspendProvider extends $FunctionalProvider<bool, bool, bool>
 
 String _$suspendHash() => r'9ab9210f4f3c70f63d9858d492a9c09b3fb24bf1';
 
+/// Keeps a start on screen for [minimumStart] so a fast restart does not flash.
+
+@ProviderFor(HeldCoreStatus)
+final heldCoreStatusProvider = HeldCoreStatusProvider._();
+
+/// Keeps a start on screen for [minimumStart] so a fast restart does not flash.
+final class HeldCoreStatusProvider
+    extends $NotifierProvider<HeldCoreStatus, CoreStatus> {
+  /// Keeps a start on screen for [minimumStart] so a fast restart does not flash.
+  HeldCoreStatusProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'heldCoreStatusProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$heldCoreStatusHash();
+
+  @$internal
+  @override
+  HeldCoreStatus create() => HeldCoreStatus();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CoreStatus value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CoreStatus>(value),
+    );
+  }
+}
+
+String _$heldCoreStatusHash() => r'c456d81c1da0e7075c4d96d4ff0307ffd05a42a7';
+
+/// Keeps a start on screen for [minimumStart] so a fast restart does not flash.
+
+abstract class _$HeldCoreStatus extends $Notifier<CoreStatus> {
+  CoreStatus build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<CoreStatus, CoreStatus>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<CoreStatus, CoreStatus>,
+              CoreStatus,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(DynamicColor)
 final dynamicColorProvider = DynamicColorProvider._();
 

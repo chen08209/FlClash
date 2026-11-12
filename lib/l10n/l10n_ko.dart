@@ -3555,6 +3555,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get updateDownloadTest => '업데이트 다운로드 테스트';
 
   @override
+  String get liveStatusTest => '실시간 상태 카드 테스트';
+
+  @override
   String get updateDownloadStarted => '업데이트 다운로드를 시작했습니다. 진행 상황은 대시보드에서 확인하세요.';
 
   @override
@@ -3565,6 +3568,18 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get stopUpdateDownloadTip => '업데이트 다운로드를 중지할까요?';
+
+  @override
+  String get forceRestartCoreAsk => '코어를 강제로 다시 시작할까요?';
+
+  @override
+  String get forceRestartCoreAskDesc => '진행 중인 연결이 끊어집니다';
+
+  @override
+  String get stopUpdateDownloadDesc => '이미 받은 부분은 삭제됩니다';
+
+  @override
+  String get stopDownload => '중지';
 
   @override
   String get updateInstallFailed =>
@@ -3633,19 +3648,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get installUpdate => '업데이트 설치';
-
-  @override
-  String get updatingResources => '업데이트 중';
-
-  @override
-  String updatingResourcesCount(num count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count개 업데이트 중',
-    );
-    return '$_temp0';
-  }
 
   @override
   String liveStatusPosition(Object index, Object count) {

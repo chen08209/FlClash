@@ -3437,6 +3437,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get updateDownloadTest => '更新下载测试';
 
   @override
+  String get liveStatusTest => '实时状态卡片测试';
+
+  @override
   String get updateDownloadStarted => '已开始下载更新，可在首页查看进度';
 
   @override
@@ -3447,6 +3450,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get stopUpdateDownloadTip => '要停止下载更新吗？';
+
+  @override
+  String get forceRestartCoreAsk => '强制重启核心？';
+
+  @override
+  String get forceRestartCoreAskDesc => '进行中的连接会断开';
+
+  @override
+  String get stopUpdateDownloadDesc => '已下载的部分会被删除';
+
+  @override
+  String get stopDownload => '停止';
 
   @override
   String get updateInstallFailed => '无法安装更新，可以前往发布页手动下载。';
@@ -3512,19 +3527,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get installUpdate => '安装更新';
-
-  @override
-  String get updatingResources => '正在更新';
-
-  @override
-  String updatingResourcesCount(num count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count 项正在更新',
-    );
-    return '$_temp0';
-  }
 
   @override
   String liveStatusPosition(Object index, Object count) {

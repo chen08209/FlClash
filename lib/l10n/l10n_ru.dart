@@ -3640,6 +3640,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get updateDownloadTest => 'Тест загрузки обновления';
 
   @override
+  String get liveStatusTest => 'Тест карточек текущего состояния';
+
+  @override
   String get updateDownloadStarted =>
       'Загрузка обновления началась. Следите за ходом на главной странице.';
 
@@ -3652,6 +3655,18 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get stopUpdateDownloadTip => 'Остановить загрузку обновления?';
+
+  @override
+  String get forceRestartCoreAsk => 'Принудительно перезапустить ядро?';
+
+  @override
+  String get forceRestartCoreAskDesc => 'Текущие соединения будут разорваны';
+
+  @override
+  String get stopUpdateDownloadDesc => 'Уже загруженная часть будет удалена';
+
+  @override
+  String get stopDownload => 'Стоп';
 
   @override
   String get updateInstallFailed =>
@@ -3725,21 +3740,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get installUpdate => 'Установить обновление';
-
-  @override
-  String get updatingResources => 'Обновление';
-
-  @override
-  String updatingResourcesCount(num count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Обновляются $count элементов',
-      few: 'Обновляются $count элемента',
-      one: 'Обновляется $count элемент',
-    );
-    return '$_temp0';
-  }
 
   @override
   String liveStatusPosition(Object index, Object count) {

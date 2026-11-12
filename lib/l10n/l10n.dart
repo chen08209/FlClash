@@ -6450,6 +6450,12 @@ abstract class AppLocalizations {
   /// **'Update download test'**
   String get updateDownloadTest;
 
+  /// No description provided for @liveStatusTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Live status cards test'**
+  String get liveStatusTest;
+
   /// No description provided for @updateDownloadStarted.
   ///
   /// In en, this message translates to:
@@ -6473,6 +6479,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Stop downloading the update?'**
   String get stopUpdateDownloadTip;
+
+  /// No description provided for @forceRestartCoreAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Force restart the core?'**
+  String get forceRestartCoreAsk;
+
+  /// No description provided for @forceRestartCoreAskDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Connections in progress will drop'**
+  String get forceRestartCoreAskDesc;
+
+  /// No description provided for @stopUpdateDownloadDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'What has downloaded is deleted'**
+  String get stopUpdateDownloadDesc;
+
+  /// No description provided for @stopDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get stopDownload;
 
   /// No description provided for @updateInstallFailed.
   ///
@@ -6593,18 +6623,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Install update'**
   String get installUpdate;
-
-  /// No description provided for @updatingResources.
-  ///
-  /// In en, this message translates to:
-  /// **'Updating'**
-  String get updatingResources;
-
-  /// No description provided for @updatingResourcesCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 item updating} other{{count} items updating}}'**
-  String updatingResourcesCount(num count);
 
   /// No description provided for @liveStatusPosition.
   ///

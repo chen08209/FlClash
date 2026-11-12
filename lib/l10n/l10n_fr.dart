@@ -3687,6 +3687,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get updateDownloadTest => 'Test de téléchargement de mise à jour';
 
   @override
+  String get liveStatusTest => 'Test des cartes d’état en direct';
+
+  @override
   String get updateDownloadStarted =>
       'Téléchargement de la mise à jour lancé. Suivez la progression sur le tableau de bord.';
 
@@ -3700,6 +3703,20 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get stopUpdateDownloadTip =>
       'Arrêter le téléchargement de la mise à jour ?';
+
+  @override
+  String get forceRestartCoreAsk => 'Forcer le redémarrage du cœur ?';
+
+  @override
+  String get forceRestartCoreAskDesc =>
+      'Les connexions en cours seront coupées';
+
+  @override
+  String get stopUpdateDownloadDesc =>
+      'Ce qui est déjà téléchargé est supprimé';
+
+  @override
+  String get stopDownload => 'Arrêter';
 
   @override
   String get updateInstallFailed =>
@@ -3775,20 +3792,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get installUpdate => 'Installer la mise à jour';
-
-  @override
-  String get updatingResources => 'Mise à jour';
-
-  @override
-  String updatingResourcesCount(num count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count éléments en cours de mise à jour',
-      one: '1 élément en cours de mise à jour',
-    );
-    return '$_temp0';
-  }
 
   @override
   String liveStatusPosition(Object index, Object count) {

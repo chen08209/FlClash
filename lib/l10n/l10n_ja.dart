@@ -3481,6 +3481,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get updateDownloadTest => 'アップデートのダウンロードテスト';
 
   @override
+  String get liveStatusTest => 'ライブステータスカードのテスト';
+
+  @override
   String get updateDownloadStarted =>
       'アップデートのダウンロードを開始しました。進行状況はダッシュボードで確認できます。';
 
@@ -3492,6 +3495,18 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get stopUpdateDownloadTip => 'アップデートのダウンロードを中止しますか？';
+
+  @override
+  String get forceRestartCoreAsk => 'コアを強制再起動しますか？';
+
+  @override
+  String get forceRestartCoreAskDesc => '進行中の接続は切断されます';
+
+  @override
+  String get stopUpdateDownloadDesc => 'ダウンロード済みの部分は削除されます';
+
+  @override
+  String get stopDownload => '中止';
 
   @override
   String get updateInstallFailed => '更新をインストールできませんでした。リリースページからダウンロードできます。';
@@ -3560,19 +3575,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get installUpdate => 'アップデートをインストール';
-
-  @override
-  String get updatingResources => '更新中';
-
-  @override
-  String updatingResourcesCount(num count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count 件を更新中',
-    );
-    return '$_temp0';
-  }
 
   @override
   String liveStatusPosition(Object index, Object count) {

@@ -73,7 +73,17 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       title: editing
           ? appLocalizations.editDashboard
           : appLocalizations.dashboard,
-      actions: [if (!editing) const LiveStatusButton()],
+      actions: [
+        if (!editing) const LiveStatusButton(),
+        if (editable && !editing)
+          AppBarActionButton(
+            data: IconButtonData(
+              glyph: AppGlyphs.edit,
+              tooltip: appLocalizations.editDashboard,
+              onPressed: () => _setEditing(true),
+            ),
+          ),
+      ],
       confirmationAction: editing
           ? IconButtonData(
               glyph: AppGlyphs.check,
@@ -81,14 +91,6 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               onPressed: () => _setEditing(false),
             )
           : null,
-      iconActions: [
-        if (editable && !editing)
-          IconButtonData(
-            glyph: AppGlyphs.edit,
-            tooltip: appLocalizations.editDashboard,
-            onPressed: () => _setEditing(true),
-          ),
-      ],
       // The providers learn a resize a frame late, too late for the cards.
       body: LayoutBuilder(
         builder: (context, constraints) {

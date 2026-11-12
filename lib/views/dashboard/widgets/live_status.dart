@@ -17,140 +17,93 @@ import 'live_status_deck.dart';
 /// What is happening now and still needs the user: one card each in the deck,
 /// in this order of importance.
 sealed class LiveStatus {
-  const LiveStatus();
+  const LiveStatus({this.preview});
 
-  Object get key;
+  /// Set on a card the developer page shows, which may share its kind with
+  /// another and whose actions do nothing.
+  final String? preview;
+
+  Object get key => preview ?? runtimeType;
 }
 
 /// The core's own phase. Starting and stopped lead the deck; a running core
 /// is only there to reach its restart, so it comes last.
 final class CoreLiveStatus extends LiveStatus {
-  const CoreLiveStatus(this.phase);
+  const CoreLiveStatus(this.phase, {super.preview});
 
   final CoreStatus phase;
-
-  @override
-  Object get key => CoreLiveStatus;
 }
 
 final class UpdateStatus extends LiveStatus {
-  const UpdateStatus(this.download);
+  const UpdateStatus(this.download, {super.preview});
 
   final UpdateDownload download;
-
-  @override
-  Object get key => UpdateStatus;
 }
-
-final class ResourcesStatus extends LiveStatus {
-  const ResourcesStatus(this.items);
-
-  final List<UpdatingResource> items;
-
-  @override
-  Object get key => ResourcesStatus;
-}
-
-typedef UpdatingResource = ({String name, bool isProfile});
 
 bool _isRunningCore(LiveStatus status) =>
     status is CoreLiveStatus && status.phase == CoreStatus.connected;
-
-List<UpdatingResource> _updatingResources(
-  Set<String> keys,
-  List<Profile> profiles,
-) {
-  final profileNames = {
-    for (final profile in profiles) profile.updatingKey: profile.realLabel,
-  };
-  final geoNames = {
-    for (final resource in GeoResource.values) resource.updatingKey: resource,
-  };
-  return [
-    for (final key in keys)
-      if (profileNames[key] case final name?)
-        (name: name, isProfile: true)
-      else if (geoNames[key] case final resource?)
-        (name: resource.name, isProfile: false)
-      else if (key.startsWith('provider_'))
-        (name: key.substring('provider_'.length), isProfile: false),
-  ];
-}
 
 /// [separateCore] is a core in its own process, which the user can watch
 /// start and restart; one inside the app only ever shows having stopped.
 List<LiveStatus> watchLiveStatuses(
   WidgetRef ref, {
   required bool separateCore,
-  bool holdStarting = false,
 }) {
-  var core = ref.watch(coreStatusProvider);
-  if (holdStarting && core == CoreStatus.connected) {
-    core = CoreStatus.connecting;
-  }
+  final core = ref.watch(heldCoreStatusProvider);
   final download = ref.watch(updateDownloadStateProvider);
-  final keys = ref.watch(updatingKeysProvider);
-  final resources = keys.isEmpty
-      ? const <UpdatingResource>[]
-      : _updatingResources(keys, ref.watch(profilesProvider));
   return [
     if (core == CoreStatus.disconnected ||
         separateCore && core == CoreStatus.connecting)
       CoreLiveStatus(core),
     if (download is UpdateReady) UpdateStatus(download),
     if (download is UpdateDownloading) UpdateStatus(download),
-    if (resources.isNotEmpty) ResourcesStatus(resources),
     if (separateCore && core == CoreStatus.connected)
       const CoreLiveStatus(CoreStatus.connected),
   ];
 }
 
+/// Opens the deck on one card of every kind, from the developer page.
+void showLiveStatusPreview(BuildContext context) {
+  final navigator = Navigator.of(context);
+  final overlay = navigator.overlay!.context.findRenderObject()! as RenderBox;
+  final top = MediaQuery.paddingOf(context).top;
+  final anchor = Rect.fromLTWH(overlay.size.width - 60, top + 8, 44, 44);
+  const tag = 'v9.9.9';
+  const mb = 1024 * 1024;
+  unawaited(
+    navigator.push(
+      LiveStatusRoute(
+        anchor: anchor,
+        separateCore: true,
+        barrierColor: context.colorScheme.alertScrim,
+        barrierLabel: context.appLocalizations.close,
+        statuses: const [
+          CoreLiveStatus(CoreStatus.disconnected, preview: 'stopped'),
+          CoreLiveStatus(CoreStatus.connecting, preview: 'starting'),
+          UpdateStatus(UpdateReady(tag, ''), preview: 'ready'),
+          UpdateStatus(
+            UpdateDownloading(tag, received: 18 * mb, total: 43 * mb),
+            preview: 'downloading',
+          ),
+          CoreLiveStatus(CoreStatus.connected, preview: 'running'),
+        ],
+      ),
+    ),
+  );
+}
+
 /// The dashboard's bar button: it wears the most important live status and
 /// counts the rest. A running core alone shrinks it to a check, and with an
 /// in-app core it is gone while nothing is happening.
-class LiveStatusButton extends ConsumerStatefulWidget {
+class LiveStatusButton extends ConsumerWidget {
   const LiveStatusButton({super.key, this.separateCore});
 
   /// Whether the core runs in its own process; the build's core when null.
   final bool? separateCore;
 
-  @override
-  ConsumerState<LiveStatusButton> createState() => _LiveStatusButtonState();
-}
+  bool get _separateCore => separateCore ?? coreLib == null;
 
-class _LiveStatusButtonState extends ConsumerState<LiveStatusButton> {
-  // A fast restart would otherwise flash the spinner for a frame or two.
-  static const _holdDuration = Duration(milliseconds: 600);
-
-  Timer? _hold;
-
-  bool get _separateCore => widget.separateCore ?? coreLib == null;
-
-  @override
-  void initState() {
-    super.initState();
-    ref.listenManual(coreStatusProvider, (_, next) {
-      switch (next) {
-        case CoreStatus.connecting:
-          _hold ??= Timer(_holdDuration, () {
-            if (mounted) setState(() => _hold = null);
-          });
-        case CoreStatus.disconnected:
-          _hold?.cancel();
-          _hold = null;
-        case CoreStatus.connected:
-          break;
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _hold?.cancel();
-    super.dispose();
-  }
-
-  void _open() {
+  void _open(BuildContext context) {
     final navigator = Navigator.of(context);
     final box = context.findRenderObject()! as RenderBox;
     final overlay = navigator.overlay!.context.findRenderObject()! as RenderBox;
@@ -168,12 +121,8 @@ class _LiveStatusButtonState extends ConsumerState<LiveStatusButton> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final statuses = watchLiveStatuses(
-      ref,
-      separateCore: _separateCore,
-      holdStarting: _hold != null,
-    );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final statuses = watchLiveStatuses(ref, separateCore: _separateCore);
     final top = statuses.firstOrNull;
     return FadeScaleBox(
       alignment: Alignment.centerRight,
@@ -181,13 +130,13 @@ class _LiveStatusButtonState extends ConsumerState<LiveStatusButton> {
         null => const SizedBox.shrink(),
         _ when _isRunningCore(top) => _RunningCoreButton(
           key: const ValueKey(CoreStatus.connected),
-          onPressed: _open,
+          onPressed: () => _open(context),
         ),
         _ => _LiveStatusPill(
           key: ValueKey(_pillKindOf(top)),
           status: top,
-          more: statuses.where((it) => !_isRunningCore(it)).length - 1,
-          onPressed: _open,
+          count: statuses.where((it) => !_isRunningCore(it)).length,
+          onPressed: () => _open(context),
         ),
       },
     );
@@ -228,16 +177,18 @@ class _RunningCoreButton extends StatelessWidget {
   }
 }
 
+/// The top status's glyph and one number: an update's progress, or how many
+/// statuses there are beside others; the cards say the rest.
 class _LiveStatusPill extends StatelessWidget {
   const _LiveStatusPill({
     super.key,
     required this.status,
-    required this.more,
+    required this.count,
     required this.onPressed,
   });
 
   final LiveStatus status;
-  final int more;
+  final int count;
   final VoidCallback onPressed;
 
   @override
@@ -255,74 +206,80 @@ class _LiveStatusPill extends StatelessWidget {
       ),
       _ => (null, null),
     };
-    final pane = TonalButtonTheme.glassOf(context) && fill != null
-        ? LiquidGlassStyle.tinted(colorScheme, fill)
-        : null;
-    final iconSize = globalState.measure.textHeight(AppTextStyle.subheadline);
     final label = switch (status) {
       CoreLiveStatus(phase: CoreStatus.disconnected) =>
         appLocalizations.coreStopped,
       CoreLiveStatus() => appLocalizations.connecting,
       UpdateStatus(download: UpdateReady()) => appLocalizations.updateReady,
+      UpdateStatus() => appLocalizations.downloadingUpdate,
+    };
+    final iconSize = globalState.measure.textHeight(AppTextStyle.subheadline);
+    final icon = SizedBox.square(
+      dimension: iconSize,
+      child: switch (status) {
+        CoreLiveStatus(phase: CoreStatus.disconnected) => const GlyphIcon(
+          AppGlyphs.error,
+          fill: 1,
+        ),
+        CoreLiveStatus() => Builder(
+          builder: (context) =>
+              ActivityIndicator(color: IconTheme.of(context).color),
+        ),
+        UpdateStatus(download: UpdateReady()) => const GlyphIcon(
+          AppGlyphs.checkCircle,
+          fill: 1,
+        ),
+        UpdateStatus(
+          download: UpdateDownloading(:final received, :final total),
+        ) =>
+          _PillProgressRing(value: total > 0 ? received / total : null),
+      },
+    );
+    final shown = switch (status) {
+      UpdateStatus(download: UpdateReady()) => '100%',
       UpdateStatus(
         download: UpdateDownloading(:final received, :final total),
       ) =>
         total > 0 ? '${received * 100 ~/ total}%' : received.traffic.show,
-      ResourcesStatus() => appLocalizations.updatingResources,
+      _ when count > 1 => '$count',
+      _ => null,
     };
-    return Tooltip(
-      message: appLocalizations.liveStatus,
-      child: FilledButton.icon(
-        onPressed: onPressed,
-        style: ButtonStyle.from(
-          backgroundColor: pane == null ? fill : Colors.transparent,
-          foregroundColor: content,
-          backgroundBuilder: pane == null
-              ? null
-              : LiquidGlass.buttonBackground((_) => pane),
-          pressLook: PressLook.none,
-        ),
-        icon: SizedBox.square(
-          dimension: iconSize,
-          child: switch (status) {
-            CoreLiveStatus(phase: CoreStatus.disconnected) => const GlyphIcon(
-              AppGlyphs.error,
-              fill: 1,
+    final pane = TonalButtonTheme.glassOf(context) && fill != null
+        ? LiquidGlassStyle.tinted(colorScheme, fill)
+        : null;
+    final style = ButtonStyle.from(
+      backgroundColor: pane == null ? fill : Colors.transparent,
+      foregroundColor: content,
+      backgroundBuilder: pane == null
+          ? null
+          : LiquidGlass.buttonBackground((_) => pane),
+      pressLook: PressLook.none,
+    );
+    return Semantics(
+      label: shown == null ? label : '$label, $shown',
+      excludeSemantics: true,
+      button: true,
+      child: shown != null
+          ? Tooltip(
+              message: appLocalizations.liveStatus,
+              child: FilledButton.icon(
+                onPressed: onPressed,
+                style: style,
+                icon: icon,
+                label: Text(
+                  shown,
+                  style: const TextStyle(
+                    fontFeatures: [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ),
+            )
+          : IconButton.filled(
+              tooltip: appLocalizations.liveStatus,
+              style: style,
+              onPressed: onPressed,
+              icon: icon,
             ),
-            CoreLiveStatus() || ResourcesStatus() => ActivityIndicator(
-              color: colorScheme.onPrimary,
-            ),
-            UpdateStatus(download: UpdateReady()) => const GlyphIcon(
-              AppGlyphs.checkCircle,
-              fill: 1,
-            ),
-            UpdateStatus(
-              download: UpdateDownloading(:final received, :final total),
-            ) =>
-              _PillProgressRing(value: total > 0 ? received / total : null),
-          },
-        ),
-        label: more > 0
-            ? Builder(
-                builder: (context) {
-                  final color = DefaultTextStyle.of(context).style.color;
-                  return Text.rich(
-                    TextSpan(
-                      text: label,
-                      children: [
-                        TextSpan(
-                          text: ' +$more',
-                          style: TextStyle(
-                            color: color?.withValues(alpha: 0.6),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              )
-            : Text(label),
-      ),
     );
   }
 }

@@ -502,7 +502,7 @@ final class ScriptsActionProvider
   }
 }
 
-String _$scriptsActionHash() => r'33837d29ad317e730dd679fab3ea1ed5d80cdeb3';
+String _$scriptsActionHash() => r'8ec5b8bcf1bdf8633ee687897775bf1abe5ef17d';
 
 abstract class _$ScriptsAction extends $Notifier<void> {
   void build();

@@ -39,7 +39,7 @@ void main() {
 
   tearDown(() => container.dispose());
 
-  // The resource rows spin, so the deck never settles on its own.
+  // A starting core spins, so the deck never settles on its own.
   Future<void> settle(WidgetTester tester) async {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
@@ -83,6 +83,10 @@ void main() {
 
   Finder front(String text) => find.text(text).hitTestable();
 
+  Finder badge(String label) => find.byWidgetPredicate(
+    (widget) => widget is Semantics && widget.properties.label == label,
+  );
+
   testWidgets('is gone while nothing is happening', (tester) async {
     await pumpButton(tester);
 
@@ -96,13 +100,33 @@ void main() {
         const UpdateDownloading('v0.9.4', received: 25, total: 100);
     await pumpButton(tester);
 
-    expect(find.text('25%'), findsOneWidget);
+    expect(badge('Downloading update, 25%'), findsOneWidget);
 
     container.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
     await settle(tester);
 
-    expect(find.textContaining('Core stopped'), findsOneWidget);
-    expect(find.textContaining('+1'), findsOneWidget);
+    expect(badge('Core stopped, 2'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+  });
+
+  testWidgets('shows an update in progress and a finished one as full', (
+    tester,
+  ) async {
+    final download = container.read(updateDownloadStateProvider.notifier);
+    download.value = const UpdateDownloading(
+      'v0.9.4',
+      received: 25,
+      total: 100,
+    );
+    await pumpButton(tester);
+
+    expect(find.text('25%'), findsOneWidget);
+
+    download.value = const UpdateReady('v0.9.4', '/tmp/update');
+    await settle(tester);
+
+    expect(badge('Update ready, 100%'), findsOneWidget);
+    expect(find.text('100%'), findsOneWidget);
   });
 
   testWidgets('opens the deck on the top status and steps through it', (
@@ -127,6 +151,48 @@ void main() {
     await settle(tester);
 
     expect(front('Restart core'), findsOneWidget);
+  });
+
+  testWidgets('steps round from either end of the deck', (tester) async {
+    container.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+    container.read(updateDownloadStateProvider.notifier).value =
+        const UpdateDownloading('v0.9.4', received: 25, total: 100);
+    await pumpButton(tester);
+    await open(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await settle(tester);
+
+    expect(front('Cancel'), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await settle(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await settle(tester);
+
+    expect(front('Cancel'), findsOneWidget);
+    expect(front('Restart core'), findsNothing);
+  });
+
+  testWidgets('a card stepped past drops into the rear from behind it', (
+    tester,
+  ) async {
+    container.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+    container.read(updateDownloadStateProvider.notifier).value =
+        const UpdateDownloading('v0.9.4', received: 25, total: 100);
+    await pumpButton(tester);
+    await open(tester);
+    final card = find.byKey(const ValueKey<Object>(CoreLiveStatus)).last;
+    Offset topOf() => tester.getTopLeft(find.text('Core stopped').last);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 90));
+    final arriving = topOf();
+    await settle(tester);
+
+    expect(card, findsOneWidget);
+    expect(arriving.dy, lessThan(topOf().dy));
   });
 
   testWidgets('a drag down brings the next card forward', (tester) async {
@@ -178,58 +244,75 @@ void main() {
     );
     await tester.tap(front('Cancel'));
     await settle(tester);
+
+    expect(find.text('Stop downloading the update?'), findsOneWidget);
+    expect(front('Stop'), findsOneWidget);
+
+    await tester.tap(front('Cancel'));
+    await settle(tester);
+
+    expect(find.text('Stop downloading the update?'), findsNothing);
+    expect(front('Cancel'), findsOneWidget);
+    expect(front('Stop'), findsNothing);
   });
 
-  testWidgets('lists the resources that are updating', (tester) async {
-    final keys = container.read(updatingKeysProvider.notifier);
-    keys.start(_profile.updatingKey);
-    keys.start(GeoResource.GEOIP.updatingKey);
+  testWidgets('leaves updating resources out', (tester) async {
+    container.read(updatingKeysProvider.notifier)
+      ..start(_profile.updatingKey)
+      ..start(GeoResource.GEOIP.updatingKey);
     await pumpButton(tester);
-    await open(tester);
 
-    expect(find.text('My subscription'), findsOneWidget);
-    expect(find.text('GEOIP'), findsOneWidget);
-    expect(find.text('2 items updating'), findsOneWidget);
-    expect(find.text('View all'), findsNothing);
+    expect(find.byTooltip('Live status'), findsNothing);
   });
 
-  testWidgets('opens a long resource list in place and closes it', (
+  testWidgets('fades in a card that arrives behind the shown one', (
     tester,
   ) async {
-    final keys = container.read(updatingKeysProvider.notifier);
-    keys.start(_profile.updatingKey);
-    for (final resource in GeoResource.values) {
-      keys.start(resource.updatingKey);
-    }
-    for (final name in ['rejections', 'direct', 'streaming', 'ads']) {
-      keys.start('provider_$name');
-    }
+    container.read(updateDownloadStateProvider.notifier).value =
+        const UpdateDownloading('v0.9.4', received: 25, total: 100);
     await pumpButton(tester);
     await open(tester);
-    final card = find.byKey(const ValueKey<Object>(ResourcesStatus)).last;
+    final card = find.byKey(const ValueKey<Object>(CoreLiveStatus)).last;
+    double opacityOf() => tester
+        .widget<Opacity>(
+          find.ancestor(of: card, matching: find.byType(Opacity)).first,
+        )
+        .opacity;
 
-    expect(find.text('rejections'), findsNothing);
-    expect(tester.getSize(card).height, 300);
-
-    await tester.tap(front('View all'));
+    container.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 90));
+    final arriving = opacityOf();
     await settle(tester);
 
-    expect(find.text('rejections'), findsOneWidget);
-    expect(
-      find.text('${GeoResource.values.length + 5} items updating'),
-      findsOneWidget,
+    expect(arriving, greaterThan(0));
+    expect(arriving, lessThan(opacityOf()));
+    expect(front('Cancel'), findsOneWidget);
+  });
+
+  testWidgets('brings the next card up as the shown one goes', (tester) async {
+    container.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+    container.read(updateDownloadStateProvider.notifier).value =
+        const UpdateDownloading('v0.9.4', received: 25, total: 100);
+    await pumpButton(tester);
+    await open(tester);
+    final core = find.byKey(const ValueKey<Object>(CoreLiveStatus));
+    Offset topOf() => tester.getTopLeft(
+      find.byKey(const ValueKey<Object>(UpdateStatus)).last,
     );
-    expect(front('Collapse'), findsOneWidget);
-    final opened = tester.getRect(card);
-    expect(opened.height, greaterThan(300));
-    expect(opened.height, lessThanOrEqualTo(460));
-    expect(opened.center.dy, closeTo(450, 0.5));
 
-    await tester.tap(front('Collapse'));
+    container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 90));
+    final rising = topOf();
+
+    expect(core, findsWidgets);
+
     await settle(tester);
 
-    expect(find.text('rejections'), findsNothing);
-    expect(tester.getSize(card).height, 300);
+    expect(core, findsNothing);
+    expect(rising.dy, lessThan(topOf().dy));
+    expect(front('Cancel'), findsOneWidget);
   });
 
   testWidgets('drops a desktop deck under the bar at the right edge', (
@@ -304,8 +387,7 @@ void main() {
           const UpdateDownloading('v0.9.4', received: 25, total: 100);
       await pumpButton(tester, separateCore: true);
 
-      expect(find.text('25%'), findsOneWidget);
-      expect(find.textContaining('+1'), findsNothing);
+      expect(badge('Downloading update, 25%'), findsOneWidget);
 
       await open(tester);
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
@@ -321,9 +403,12 @@ void main() {
       await tester.tap(front('Force restart'));
       await settle(tester);
 
+      expect(find.text('Force restart the core?'), findsOneWidget);
+      expect(front('Restart'), findsOneWidget);
+      expect(find.byType(LiveStatusButton), findsOneWidget);
       expect(
         find.text('Are you sure you want to force restart the core?'),
-        findsOneWidget,
+        findsNothing,
       );
     });
 
@@ -332,21 +417,45 @@ void main() {
     ) async {
       await pumpButton(tester, separateCore: true);
       final status = container.read(coreStatusProvider.notifier);
+      const step = Duration(milliseconds: 400);
+      final rest = HeldCoreStatus.minimumStart - step;
 
       status.value = CoreStatus.connecting;
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-      expect(find.text('Connecting…'), findsOneWidget);
+      await tester.pump(step);
+      expect(badge('Connecting…'), findsOneWidget);
 
       status.value = CoreStatus.connected;
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 199));
-      expect(find.text('Connecting…'), findsOneWidget);
+      await tester.pump(rest - const Duration(milliseconds: 1));
+      expect(badge('Connecting…'), findsOneWidget);
 
       await tester.pump(const Duration(milliseconds: 1));
-      await tester.pump(const Duration(milliseconds: 400));
-      expect(find.text('Connecting…'), findsNothing);
+      await tester.pump(step);
+      expect(badge('Connecting…'), findsNothing);
       expect(find.byGlyph(AppGlyphs.check), findsOneWidget);
+    });
+
+    testWidgets('an open deck shows a fast restart for the minimum', (
+      tester,
+    ) async {
+      final status = container.read(coreStatusProvider.notifier);
+      await pumpButton(tester, separateCore: true);
+      await open(tester);
+
+      status.value = CoreStatus.connecting;
+      await tester.pump();
+      status.value = CoreStatus.connected;
+      await tester.pump();
+      await tester.pump(HeldCoreStatus.minimumStart ~/ 2);
+
+      expect(find.text('Starting core'), findsOneWidget);
+
+      await tester.pump(HeldCoreStatus.minimumStart);
+      await settle(tester);
+
+      expect(find.text('Starting core'), findsNothing);
+      expect(front('Force restart'), findsOneWidget);
     });
 
     testWidgets('shows a failed start at once', (tester) async {
@@ -358,7 +467,7 @@ void main() {
       status.value = CoreStatus.disconnected;
       await tester.pump();
 
-      expect(find.textContaining('Core stopped'), findsOneWidget);
+      expect(badge('Core stopped'), findsOneWidget);
     });
   });
 }

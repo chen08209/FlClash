@@ -3647,6 +3647,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateDownloadTest => 'Update download test';
 
   @override
+  String get liveStatusTest => 'Live status cards test';
+
+  @override
   String get updateDownloadStarted =>
       'Downloading the update. Follow its progress on the dashboard.';
 
@@ -3658,6 +3661,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get stopUpdateDownloadTip => 'Stop downloading the update?';
+
+  @override
+  String get forceRestartCoreAsk => 'Force restart the core?';
+
+  @override
+  String get forceRestartCoreAskDesc => 'Connections in progress will drop';
+
+  @override
+  String get stopUpdateDownloadDesc => 'What has downloaded is deleted';
+
+  @override
+  String get stopDownload => 'Stop';
 
   @override
   String get updateInstallFailed =>
@@ -3732,20 +3747,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get installUpdate => 'Install update';
-
-  @override
-  String get updatingResources => 'Updating';
-
-  @override
-  String updatingResourcesCount(num count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count items updating',
-      one: '1 item updating',
-    );
-    return '$_temp0';
-  }
 
   @override
   String liveStatusPosition(Object index, Object count) {
