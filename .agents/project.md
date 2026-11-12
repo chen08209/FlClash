@@ -84,9 +84,12 @@ refreshed, except for these:
   discontinued.
 - `test` 1.33.0 needs `test_api` 0.7.15, and `flutter_test` on Flutter 3.50 pins
   0.7.14. It moves with the SDK.
-- `file_picker` 13 is a major upgrade. Until it lands, `android_file_picker` 1.x
-  keeps `android.newDsl=false` in `android/gradle.properties`: it configures
-  AGP's legacy `LibraryExtension`, which the new DSL does not register.
+- `android_file_picker` 2.1.5, the newest, from `file_picker` 13, still
+  configures AGP's legacy `LibraryExtension`, which the new DSL does not
+  register, so it keeps `android.newDsl=false` in `android/gradle.properties`.
+  It is the only plugin that does: with a copy configuring
+  `com.android.build.api.dsl.LibraryExtension`, the app builds with the new
+  DSL on. The plugin waits on Flutter's migration (flutter/flutter#180137).
 
 When an upgrade fails version solving, record the blocker here with
 what has to change upstream before the pin can move, so the next

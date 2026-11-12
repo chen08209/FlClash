@@ -24,7 +24,7 @@ base class _LocalPlatformFile extends PlatformFile {
   int? lengthSync() => null;
 
   @override
-  Future<int> length() => _file.length();
+  Future<int?> length() => _file.length();
 
   @override
   Future<Uint8List> readAsBytes() => _file.readAsBytes();
