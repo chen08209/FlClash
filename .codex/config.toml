@@ -6,3 +6,7 @@ type = "command"
 command = "bash tool/hooks/comment_density.sh"
 timeout = 15
 statusMessage = "Checking comment density"
+
+[mcp_servers.codegraph]
+command = "codegraph"
+args = ["serve", "--mcp"]
