@@ -1,5 +1,5 @@
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -142,10 +142,10 @@ void main() {
     await tester.enterText(find.byType(TextField), 'missing');
     await tester.pumpAndSettle();
 
-    expect(find.text(AppLocalizations.current.noSearchResults), findsOneWidget);
+    expect(find.text(currentAppLocalizations.noSearchResults), findsOneWidget);
     expect(find.byType(SearchField), findsOneWidget);
 
-    await tester.tap(find.byTooltip(AppLocalizations.current.clearSearch));
+    await tester.tap(find.byTooltip(currentAppLocalizations.clearSearch));
     await tester.pumpAndSettle();
     expect(find.text('Node 1'), findsOneWidget);
   });

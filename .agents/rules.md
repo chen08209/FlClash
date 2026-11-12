@@ -103,7 +103,7 @@ tool plugins setup.dart` runs before `flutter analyze`.
 These directories are excluded from analysis:
 
 - `build/**`
-- `lib/l10n/intl/**`
+- `lib/l10n/**`
 - `lib/**/generated/**`
 - `plugins/**`
 - the platform runner directories: `android/`, `ios/`, `web/`, `windows/`, `macos/`, `linux/`
@@ -713,33 +713,36 @@ name, so it can run again on a database that went through part of it. Its tests 
 
 Do not manually edit generated files under:
 
-- `lib/l10n/l10n.dart`
+- `lib/l10n/`
 - `lib/models/generated/`
 - `lib/providers/generated/`
 - `lib/database/generated/`
-- `lib/l10n/intl/`
 
 After schema, model, or provider changes, run build generation and include focused tests when behavior changes.
 
-`lib/l10n/l10n.dart` is the one file that still imports `package:flutter/material.dart`.
-`intl_utils` hardcodes that import in its own template, so regenerating rewrites it;
-`test/lint/design_package_test.dart` exempts the generated l10n paths for that reason. It
-only needs what `package:flutter/widgets.dart` exports. Flutter 3.50 deprecates
-`material.dart`, so `flutter analyze` reports one `deprecated_member_use` info there.
-`intl_utils` is discontinued, so the import goes only when the SDK removes the library or
-the localization generator is replaced, whichever comes first.
+Flutter's `gen-l10n` writes `lib/l10n/` from `arb/` with the options in `l10n.yaml`. `pubspec.yaml` sets
+`generate: true`, so `flutter pub get` regenerates it; `flutter gen-l10n` does so on demand. The generated
+`AppLocalizations.localizationsDelegates` lists the Material and Cupertino delegates, so the app registers its own list:
+`appLocalizationsDelegate`, `AppUiLocalizations.delegate` and `GlobalWidgetsLocalizations.delegate`.
+`appLocalizationsDelegate` loads through `loadAppLocalizations`, which records the locale `currentAppLocalizations`
+reads; the generated `AppLocalizations.delegate` would leave it behind.
 
 The project has no design library: `material_ui`, `cupertino_ui` and the SDK's
 `material.dart` and `cupertino.dart` are banned by the same test, and the lock file holds
 neither package. Widgets come from `package:flutter/widgets.dart` and components, the
 `ThemeData` and the `ColorScheme` from `prism_ui`.
 
-Strings live in `arb/intl_{en,zh_CN,ja,ru,fr,es,ko}.arb` — flat JSON, no `@` metadata. Add a key to all seven, then regenerate with
-`dart run intl_utils:generate`, which rewrites `lib/l10n/`. A key present in only some locales silently falls back to
-English at runtime, so add the translation rather than leaving it out.
+Strings live in `arb/intl_{en,zh,ja,ru,fr,es,ko}.arb` — flat JSON. Add a key to all seven, then regenerate with
+`flutter gen-l10n`. A key missing from a locale is generated with its English text and reported as untranslated, so add
+the translation rather than leaving it out. The only metadata is in `intl_en.arb`: a message with more than one
+placeholder declares them in the order the text first uses them, under `@key.placeholders`, since `gen-l10n` otherwise
+orders the parameters alphabetically and, as they are untyped `Object`s, a call written in text order would pass them
+swapped. `test/lint/dynamic_message_key_test.dart` enforces it. Chinese is `zh`; a setting saved as `zh_CN` by older
+versions still resolves to it.
 
 Labels for enum values go through the exhaustive switches in `lib/common/l10n_labels.dart`, never
-`Intl.message(<runtime string>)`. A key built from an enum name or a stored string is invisible to the analyzer, and a
-failed lookup returns the key itself, so a stale key ships as `routeMode_config` in the UI rather than throwing.
+`Intl.message(<runtime string>)`. A key built from an enum name or a stored string is invisible to the analyzer, and
+`Intl.message` has no messages to look up since generation moved to `gen-l10n`, so it returns the key itself and ships
+`routeMode_config` in the UI rather than throwing.
 `test/lint/dynamic_message_key_test.dart` fails on any `Intl.message(` in `lib` outside the generated code, and checks
 that every locale carries the same keys and has a display name.

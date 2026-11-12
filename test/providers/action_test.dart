@@ -1,10 +1,10 @@
 import 'dart:async';
 
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -877,7 +877,7 @@ void main() {
 
     test('a failed authorization leaves tun and system DNS off', () async {
       TestWidgetsFlutterBinding.ensureInitialized();
-      await AppLocalizations.load(const Locale('en'));
+      loadAppLocalizations(const Locale('en'));
       late _AuthorizationSetupAction setupAction;
       final container = ProviderContainer(
         overrides: [

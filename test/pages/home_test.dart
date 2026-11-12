@@ -1626,11 +1626,11 @@ class _ThemeManagedTestApp extends StatelessWidget {
     return PrismApp(
       navigatorKey: globalState.navigatorKey,
       localizationsDelegates: const [
-        AppLocalizations.delegate,
+        appLocalizationsDelegate,
         AppUiLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
       ],
-      supportedLocales: AppLocalizations.delegate.supportedLocales,
+      supportedLocales: AppLocalizations.supportedLocales,
       builder: (_, child) => ThemeManager(child: child!),
       home: const HomePage(),
     );

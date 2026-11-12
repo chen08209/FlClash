@@ -449,15 +449,40 @@
   "invalidLinkTip": "Not a subscription link or a proxy share link",
   "numberTip": "{label} must be a number",
   "numberRangeTip": "{label} must be between {min} and {max}",
+  "@numberRangeTip": {
+    "placeholders": {
+      "label": {},
+      "min": {},
+      "max": {}
+    }
+  },
   "interval": "Interval",
   "existsTip": "{label} already exists",
   "maxLengthTip": "{label} must be at most {max} characters",
+  "@maxLengthTip": {
+    "placeholders": {
+      "label": {},
+      "max": {}
+    }
+  },
   "singleImport": "Single import",
   "batchImport": "Batch import",
   "batchUrlInputTip": "One URL per line",
   "batchLinkInputTip": "One link per line",
   "batchPreviewTip": "{count} to add, {skipped} skipped as existing",
+  "@batchPreviewTip": {
+    "placeholders": {
+      "count": {},
+      "skipped": {}
+    }
+  },
   "lineIssueTip": "Line {line}: {message}",
+  "@lineIssueTip": {
+    "placeholders": {
+      "line": {},
+      "message": {}
+    }
+  },
   "singleValueTip": "{label} must be a single item",
   "deleteTip": "Are you sure you want to delete this {label}?",
   "deleteMultipTip": "Are you sure you want to delete the selected {label}?",
@@ -678,8 +703,26 @@
   "geoUpdated": "{name} updated",
   "secondsCount": "{count, plural, =1{1 second} other{{count} seconds}}",
   "proxiesCount": "{count, plural, =1{1 proxy} other{{label} proxies}}",
+  "@proxiesCount": {
+    "placeholders": {
+      "count": {},
+      "label": {}
+    }
+  },
   "rulesCount": "{count, plural, =1{1 rule} other{{label} rules}}",
+  "@rulesCount": {
+    "placeholders": {
+      "count": {},
+      "label": {}
+    }
+  },
   "proxyGroupsCount": "{count, plural, =1{1 proxy group} other{{label} proxy groups}}",
+  "@proxyGroupsCount": {
+    "placeholders": {
+      "count": {},
+      "label": {}
+    }
+  },
   "changelogBreaking": "Breaking changes",
   "changelogFeatures": "New features",
   "changelogFixes": "Bug fixes",
@@ -760,6 +803,12 @@
   "shareLinksInvalid": "No proxy could be read from the links",
   "shareLinkUnreadable": "No proxy could be read from {link}",
   "proxiesProfileLabel": "{name} and others ({count} proxies)",
+  "@proxiesProfileLabel": {
+    "placeholders": {
+      "name": {},
+      "count": {}
+    }
+  },
   "singleShareLinkOnly": "Enter one link here; edit several from the quick edit of the list",
   "username": "Username",
   "emptyFallback": "Empty fallback",
@@ -778,14 +827,38 @@
   "customIssueGroupLoop": "Proxy groups reference each other in a loop: {path}",
   "customIssueInvalidEmptyFallback": "The empty fallback must be a proxy, but {name} does not exist or is a proxy group",
   "customIssueInvalidFilter": "{name} is not a valid regex: {message}",
+  "@customIssueInvalidFilter": {
+    "placeholders": {
+      "name": {},
+      "message": {}
+    }
+  },
   "customIssueMissingDialer": "The dialer proxy {name} does not exist",
   "customIssueDialerLoop": "{proxy} dials through {target}, which leads back to {proxy}, so the dial loops",
+  "@customIssueDialerLoop": {
+    "placeholders": {
+      "proxy": {},
+      "target": {}
+    }
+  },
   "dialerProxyLoopStopped": "Dialing through {name} leads back to the proxy that uses it, so the connection was stopped",
   "customIssuesSummary": "{count} items have problems, and applying this profile may fail",
   "providerInUse": "{label} is still used by {profiles}, which will not work properly once it is deleted. Are you sure you want to delete it?",
+  "@providerInUse": {
+    "placeholders": {
+      "label": {},
+      "profiles": {}
+    }
+  },
   "proxyGroupInUse": "{label} is still named by rules, proxy groups, dialer proxies, DNS or NTP in this profile, which stop working once it is deleted. Are you sure you want to delete it?",
   "proxiesRemovedTip": "These proxies will be deleted: {removed}. A line whose name changed counts as a new proxy, and custom profiles naming the deleted ones will flag them as missing. Apply anyway?",
   "proxiesReplacedTip": "These proxies will be deleted: {removed}. These will be added: {added}. A line whose name changed counts as a new proxy, and custom profiles naming the deleted ones will flag them as missing. Apply anyway?",
+  "@proxiesReplacedTip": {
+    "placeholders": {
+      "removed": {},
+      "added": {}
+    }
+  },
   "fontSize": "Size",
   "large": "Large",
   "extraLarge": "Extra large",
@@ -840,6 +913,12 @@
   "ipVersion": "IP version",
   "addFilters": "Add filters",
   "failedItem": "{label}: {message}",
+  "@failedItem": {
+    "placeholders": {
+      "label": {},
+      "message": {}
+    }
+  },
   "failedCount": "{count} items failed. Tap to view",
   "importConfigInvalid": "This file is not a config that can be imported",
   "importConfigReplaceTip": "Importing replaces the proxy groups, rules and settings this profile has now",
@@ -907,6 +986,12 @@
   "usedShort": "used",
   "profileUpdatedAt": "Updated {time}",
   "profileExpiresIn": "Expires {date}, {days, plural, =1{1 day} other{{days} days}} left",
+  "@profileExpiresIn": {
+    "placeholders": {
+      "date": {},
+      "days": {}
+    }
+  },
   "profileDaysLeft": "{days, plural, =1{1 day left} other{{days} days left}}",
   "target": "Target",
   "outboundExit": "Exit",
@@ -924,6 +1009,12 @@
   "done": "Done",
   "dashboardAddableSection": "Available to add",
   "customImportDroppedSubRules": "{count, plural, =1{1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules} other{{label} SUB-RULE rules were dropped, since custom profiles do not support sub-rules}}",
+  "@customImportDroppedSubRules": {
+    "placeholders": {
+      "count": {},
+      "label": {}
+    }
+  },
   "autoInclude": "Auto-include",
   "allReferencedProxies": "All referenced proxies",
   "allReferencedProxyProviders": "All referenced proxy providers",
@@ -942,6 +1033,12 @@
   "httpCaptureNoHosts": "No host is listed, so nothing is recorded. Add hosts under Hostname on the MITM page, or from the details of a connection.",
   "httpCaptureLimit": "Maximum records",
   "httpCaptureLimitDesc": "The oldest records go first once this many are kept or they fill {memory} of memory. Each body keeps its first {body}.",
+  "@httpCaptureLimitDesc": {
+    "placeholders": {
+      "memory": {},
+      "body": {}
+    }
+  },
   "httpRequests": "HTTP requests",
   "httpRequestsMissing": "Requests made before capture was on, or since cleared, are not listed.",
   "httpRequestCleared": "This request is no longer kept",
@@ -1052,6 +1149,12 @@
   "http2": "HTTP/2",
   "decryptUntrusted": "Decrypt without local trust",
   "invalidOfCount": "{invalid} of {total} invalid",
+  "@invalidOfCount": {
+    "placeholders": {
+      "invalid": {},
+      "total": {}
+    }
+  },
   "batchLineInputTip": "One item per line",
   "downloadingUpdate": "Downloading update",
   "updateFailed": "Update failed",
@@ -1083,6 +1186,12 @@
   "updatingResources": "Updating",
   "updatingResourcesCount": "{count, plural, =1{1 item updating} other{{count} items updating}}",
   "liveStatusPosition": "{index} of {count}",
+  "@liveStatusPosition": {
+    "placeholders": {
+      "index": {},
+      "count": {}
+    }
+  },
   "coreStarting": "Starting core",
   "coreStartingDesc": "Connecting to the core",
   "coreRunning": "Core running",

@@ -79,9 +79,8 @@ refreshed, except for these:
   `flutter pub upgrade` brings `material_ui` and `cupertino_ui` into the lock
   file. Nothing fails when it does: `test/lint/design_package_test.dart` checks
   imports, not the lock file.
-- `freezed` 4.0.3 needs `analyzer` 14, which `intl_utils` accepts from 2.8.17;
-  both resolve together once the lock file is refreshed. `intl_utils` is
-  discontinued.
+- `freezed` 4.0.3 needs `analyzer` 14; both resolve once the lock file is
+  refreshed.
 - `test` 1.33.0 needs `test_api` 0.7.15, and `flutter_test` on Flutter 3.50 pins
   0.7.14. It moves with the SDK.
 - `android_file_picker` 2.1.5, the newest, from `file_picker` 13, still

@@ -1,5 +1,5 @@
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -187,7 +187,7 @@ void main() {
         'stays open', (tester) async {
       seedAccessControl(const AccessControlProps(enable: true));
       await pumpAccessView(tester);
-      final l10n = AppLocalizations.current;
+      final l10n = currentAppLocalizations;
       Finder inMenu(Finder finder) =>
           find.descendant(of: find.byType(PopupMenu), matching: finder);
 
@@ -219,7 +219,7 @@ void main() {
     testWidgets('the settings sub menu switches the mode', (tester) async {
       seedAccessControl(const AccessControlProps(enable: true));
       await pumpAccessView(tester);
-      final l10n = AppLocalizations.current;
+      final l10n = currentAppLocalizations;
       Finder inMenu(Finder finder) =>
           find.descendant(of: find.byType(PopupMenu), matching: finder);
 
@@ -304,7 +304,7 @@ void main() {
 
       expect(find.text('Browser'), findsNothing);
       expect(
-        find.text(AppLocalizations.current.noSearchResults),
+        find.text(currentAppLocalizations.noSearchResults),
         findsOneWidget,
       );
 
@@ -336,7 +336,7 @@ void main() {
         'it on', (tester) async {
       seedAccessControl(const AccessControlProps());
       await pumpAccessView(tester);
-      final l10n = AppLocalizations.current;
+      final l10n = currentAppLocalizations;
 
       expect(find.text(l10n.accessControlDisabledDesc), findsOneWidget);
       await tester.tap(find.widgetWithText(TonalButton, l10n.turnOn));
@@ -358,7 +358,7 @@ void main() {
         ),
       );
       await pumpAccessView(tester);
-      final l10n = AppLocalizations.current;
+      final l10n = currentAppLocalizations;
 
       expect(find.text(l10n.accessControlNotAllowDesc), findsOneWidget);
       expect(find.text(l10n.accessControlSelectedCount(1)), findsOneWidget);
@@ -423,7 +423,7 @@ void main() {
     ) async {
       seedAccessControl(const AccessControlProps(enable: true));
       await pumpAccessView(tester);
-      final l10n = AppLocalizations.current;
+      final l10n = currentAppLocalizations;
       Finder inMenu(Finder finder) =>
           find.descendant(of: find.byType(PopupMenu), matching: finder);
       Finder checkOn(String label) => inMenu(
@@ -582,7 +582,7 @@ void main() {
       await pumpAccessView(tester);
       await tester.pumpAndSettle();
 
-      final l10n = AppLocalizations.current;
+      final l10n = currentAppLocalizations;
       expect(find.text('Browser'), findsOneWidget);
       expect(find.text(l10n.installedAppsPermissionRequired), findsOneWidget);
       expect(find.text(l10n.authorize), findsOneWidget);
@@ -695,7 +695,7 @@ void main() {
 
   group('intelligent selection', () {
     Future<void> runIntelligentSelection(WidgetTester tester) async {
-      final l10n = AppLocalizations.current;
+      final l10n = currentAppLocalizations;
       Finder inMenu(Finder finder) =>
           find.descendant(of: find.byType(PopupMenu), matching: finder);
       await openBarMenu(tester);
@@ -759,7 +759,7 @@ void main() {
           null,
         ),
       );
-      final l10n = AppLocalizations.current;
+      final l10n = currentAppLocalizations;
       Finder inMenu(Finder finder) =>
           find.descendant(of: find.byType(PopupMenu), matching: finder);
       await openBarMenu(tester);

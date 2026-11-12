@@ -20,13 +20,10 @@ const _forbiddenImports = <String, String>{
       'prism_ui',
 };
 
-const _generatedL10n = ['lib/l10n/l10n.dart', 'lib/l10n/intl/'];
-
 bool _isGenerated(String path) {
   return path.contains('/generated/') ||
       path.endsWith('.g.dart') ||
-      path.endsWith('.freezed.dart') ||
-      _generatedL10n.any(path.startsWith);
+      path.endsWith('.freezed.dart');
 }
 
 void main() {

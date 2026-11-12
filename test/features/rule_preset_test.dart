@@ -1,5 +1,5 @@
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/features/form/rule_preset.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:flutter/widgets.dart';
@@ -50,7 +50,7 @@ void main() {
         ),
       ),
     );
-    final l10n = AppLocalizations.current;
+    final l10n = currentAppLocalizations;
     final confirm = find.byTooltip(l10n.confirm);
 
     for (var round = 0; round < 2; round++) {

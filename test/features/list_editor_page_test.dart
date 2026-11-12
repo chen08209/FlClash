@@ -1,5 +1,5 @@
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -72,7 +72,7 @@ Future<void> _tapBarAction(WidgetTester tester, String tooltip) async {
 
 Future<void> _answerDialog(WidgetTester tester, {required bool confirm}) async {
   await tester.pumpAndSettle();
-  final localizations = AppLocalizations.current;
+  final localizations = currentAppLocalizations;
   await tester.tap(
     find.text(confirm ? localizations.delete : localizations.cancel),
   );
@@ -124,7 +124,7 @@ void main() {
     await tester.tap(find.text('a'));
     await tester.pump();
     expect(find.byGlyph(AppGlyphs.delete), findsOneWidget);
-    expect(find.byTooltip(AppLocalizations.current.selectAll), findsOneWidget);
+    expect(find.byTooltip(currentAppLocalizations.selectAll), findsOneWidget);
 
     await tester.tap(find.text('a'));
     await tester.pump();
@@ -141,11 +141,11 @@ void main() {
 
     await tester.tap(find.text('a'));
     await tester.pump();
-    await tester.tap(find.byTooltip(AppLocalizations.current.selectAll));
+    await tester.tap(find.byTooltip(currentAppLocalizations.selectAll));
     await tester.pump();
     expect(find.byGlyph(AppGlyphs.check), findsNWidgets(3));
 
-    await tester.tap(find.byTooltip(AppLocalizations.current.selectAll));
+    await tester.tap(find.byTooltip(currentAppLocalizations.selectAll));
     await tester.pump();
     expect(find.byGlyph(AppGlyphs.check), findsNothing);
 
@@ -203,7 +203,7 @@ void main() {
 
     await tester.enterText(find.byType(TextField), 'zeta');
     await tester.pump();
-    expect(find.text(AppLocalizations.current.noSearchResults), findsOneWidget);
+    expect(find.text(currentAppLocalizations.noSearchResults), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), '');
     await tester.pump();
@@ -233,8 +233,8 @@ void main() {
     await tester.pump();
     await tester.enterText(find.byType(TextField), 'ma');
     await tester.pump();
-    await _tapBarAction(tester, AppLocalizations.current.selectAll);
-    await _tapBarAction(tester, AppLocalizations.current.delete);
+    await _tapBarAction(tester, currentAppLocalizations.selectAll);
+    await _tapBarAction(tester, currentAppLocalizations.delete);
     await _answerDialog(tester, confirm: true);
 
     expect(deleted, {'gamma'});
@@ -260,7 +260,7 @@ void main() {
     await tester.pump();
     await tester.enterText(find.byType(TextField), 'ma');
     await tester.pump();
-    await _tapBarAction(tester, AppLocalizations.current.delete);
+    await _tapBarAction(tester, currentAppLocalizations.delete);
     await _answerDialog(tester, confirm: true);
 
     expect(deleted.single, {'gamma'});
@@ -408,7 +408,7 @@ void main() {
     await tester.pump();
 
     expect(find.byGlyph(AppGlyphs.delete), findsNothing);
-    expect(find.byTooltip(AppLocalizations.current.selectAll), findsOneWidget);
+    expect(find.byTooltip(currentAppLocalizations.selectAll), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

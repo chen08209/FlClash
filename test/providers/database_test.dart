@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:drift/native.dart';
 // `Profiles`, `Scripts` and `ProxyGroups` name both a drift table and a
 // notifier, so the schema side is imported behind a prefix.
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/database/database.dart' as db;
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:flutter/widgets.dart';
@@ -32,7 +32,7 @@ void main() {
     order: order,
   );
 
-  setUpAll(() => AppLocalizations.load(const Locale('en')));
+  setUpAll(() => loadAppLocalizations(const Locale('en')));
 
   setUp(() async {
     testDatabase = db.Database(NativeDatabase.memory());

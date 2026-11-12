@@ -1,9 +1,9 @@
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/app_ports.dart';
 import 'package:fl_clash/common/cidr.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/system.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -575,7 +575,7 @@ void main() {
   });
 
   test('safe mode keeps every host integration off', () async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
     final scoped = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(TestProfiles.new),
@@ -814,7 +814,7 @@ void main() {
   );
 
   test('shared state hands the VPN service the resolved route list', () async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
     container.listen(sharedStateProvider, (_, _) {});
     container
         .read(networkSettingProvider.notifier)
@@ -883,7 +883,7 @@ void main() {
   });
 
   test('shared state keeps the last routes while new ones compute', () async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
     container.listen(sharedStateProvider, (_, _) {});
     container
         .read(networkSettingProvider.notifier)
@@ -918,7 +918,7 @@ void main() {
 
   // VpnService.setHttpProxy cannot carry credentials.
   test('local authentication withholds the VPN system proxy', () async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
     container.listen(sharedStateProvider, (_, _) {});
     await container.read(vpnOptionsProvider.future);
     expect(container.read(sharedStateProvider).vpnOptions?.systemProxy, true);
@@ -1020,7 +1020,7 @@ void main() {
   });
 
   test('shared state carries the notification stop action switch', () async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
     container.listen(sharedStateProvider, (_, _) {});
     expect(container.read(sharedStateProvider).showStopAction, true);
 
@@ -1032,12 +1032,12 @@ void main() {
 
   test('shared state follows the locale whose messages are loaded', () async {
     container.listen(sharedStateProvider, (_, _) {});
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
     container.read(loadedLocaleProvider.notifier).value = const Locale('en');
     final en = container.read(sharedStateProvider);
 
-    await AppLocalizations.load(const Locale('zh', 'CN'));
-    addTearDown(() => AppLocalizations.load(const Locale('en')));
+    loadAppLocalizations(const Locale('zh', 'CN'));
+    addTearDown(() => loadAppLocalizations(const Locale('en')));
     expect(container.read(sharedStateProvider).stopText, en.stopText);
 
     container.read(loadedLocaleProvider.notifier).value = const Locale(

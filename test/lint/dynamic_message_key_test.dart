@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/l10n_labels.dart';
 import 'package:fl_clash/l10n/l10n.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _arbDir = 'arb';
@@ -42,6 +44,37 @@ void main() {
     }
   });
 
+  test('a message with several placeholders declares them in text order', () {
+    final template =
+        jsonDecode(File('$_arbDir/intl_en.arb').readAsStringSync())
+            as Map<String, Object?>;
+    final placeholder = RegExp(r'\{([A-Za-z_][A-Za-z0-9_]*)');
+    final offenders = <String>[];
+    for (final MapEntry(:key, :value) in template.entries) {
+      if (key.startsWith('@') || value is! String) continue;
+      final names = {
+        for (final match in placeholder.allMatches(value)) match.group(1)!,
+      }.toList();
+      if (names.length < 2) continue;
+      final metadata = template['@$key'] as Map<String, Object?>?;
+      final declared = (metadata?['placeholders'] as Map<String, Object?>?)
+          ?.keys
+          .toList();
+      if (declared == null || !listEquals(declared, names)) {
+        offenders.add('$key: declare $names');
+      }
+    }
+
+    expect(
+      offenders,
+      isEmpty,
+      reason:
+          'gen-l10n orders undeclared placeholders alphabetically, and the '
+          'parameters are Objects, so a call written in text order passes '
+          'them swapped:\n  ${offenders.join('\n  ')}',
+    );
+  });
+
   test('no Intl.message call builds a key at runtime', () {
     final offenders = <String>[];
     for (final entity in Directory(_libDir).listSync(recursive: true)) {
@@ -65,8 +98,8 @@ void main() {
   });
 
   test('every supported locale has a translated display name', () async {
-    for (final locale in AppLocalizations.delegate.supportedLocales) {
-      await AppLocalizations.load(locale);
+    for (final locale in AppLocalizations.supportedLocales) {
+      loadAppLocalizations(locale);
       expect(
         locale.label,
         isNot(locale.toString()),

@@ -161,7 +161,7 @@ class ApplicationState extends ConsumerState<Application> {
           navigatorKey: globalState.navigatorKey,
           onNavigationNotification: (_) => true,
           localizationsDelegates: const [
-            AppLocalizations.delegate,
+            appLocalizationsDelegate,
             AppUiLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
           ],
@@ -175,7 +175,7 @@ class ApplicationState extends ConsumerState<Application> {
           },
           title: appName,
           locale: getLocaleForString(locale),
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
+          supportedLocales: AppLocalizations.supportedLocales,
           themeMode: themeProps.themeMode,
           theme: watchAppTheme(ref, Brightness.light),
           darkTheme: watchAppTheme(ref, Brightness.dark),

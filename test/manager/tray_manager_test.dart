@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/manager/locale_manager.dart';
 import 'package:fl_clash/manager/tray_manager.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -57,7 +57,7 @@ void main() {
   late List<String> windowCalls;
 
   setUpAll(() async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
   });
 
   setUp(() {
@@ -225,7 +225,7 @@ void main() {
   testWidgets('a language switch pushes the tray in the new language', (
     tester,
   ) async {
-    addTearDown(() => AppLocalizations.load(const Locale('en')));
+    addTearDown(() => loadAppLocalizations(const Locale('en')));
     container = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(TestProfiles.new),
@@ -240,7 +240,7 @@ void main() {
     await pumpLocalizedTrayManager(tester, const Locale('zh', 'CN'));
 
     expect(_RecordingSystemAction.updateTrayCount, 1);
-    expect(_RecordingSystemAction.updateTrayLocales, <String>['zh_CN']);
+    expect(_RecordingSystemAction.updateTrayLocales, <String>['zh']);
   });
 
   testWidgets('the locale a language switch starts from does not push twice', (

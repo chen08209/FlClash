@@ -47,11 +47,11 @@ class TestApp extends StatelessWidget {
       darkTheme: darkTheme,
       themeMode: themeMode ?? ThemeMode.system,
       localizationsDelegates: const [
-        AppLocalizations.delegate,
+        appLocalizationsDelegate,
         AppUiLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
       ],
-      supportedLocales: AppLocalizations.delegate.supportedLocales,
+      supportedLocales: AppLocalizations.supportedLocales,
       emojiFont: (family: FontFamily.twEmoji.value, pattern: emojiPattern),
       remoteFocus: remoteFocus,
       liquidGlass: liquidGlass,
@@ -126,11 +126,11 @@ class HostApp extends StatelessWidget {
       locale: locale,
       remoteFocus: remoteFocus,
       localizationsDelegates: const [
-        AppLocalizations.delegate,
+        appLocalizationsDelegate,
         AppUiLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
       ],
-      supportedLocales: AppLocalizations.delegate.supportedLocales,
+      supportedLocales: AppLocalizations.supportedLocales,
       debugShowCheckedModeBanner: debugShowCheckedModeBanner,
     );
   }

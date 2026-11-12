@@ -1,4 +1,4 @@
-import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
@@ -94,7 +94,7 @@ void main() {
       ),
     );
 
-    final appLocalizations = AppLocalizations.current;
+    final appLocalizations = currentAppLocalizations;
     expect(find.text(appLocalizations.trafficUsage), findsOneWidget);
     expect(find.text(appLocalizations.usedTraffic), findsOneWidget);
     expect(find.text(appLocalizations.totalTraffic), findsOneWidget);

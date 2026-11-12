@@ -86,13 +86,13 @@ dev_dependencies:
   riverpod_generator: ^4.0.9
 
   drift_dev: ^2.35.1
-  intl_utils: ^2.8.16
   test: ^1.32.0
   sqlite3: ^3.7.0
   cross_file: ^0.3.5+5
   mocktail: ^1.0.5
 
 flutter:
+  generate: true
   assets:
     - assets/data/
     - assets/fonts/
@@ -113,8 +113,3 @@ flutter:
     - family: Twemoji
       fonts:
         - asset: assets/fonts/Twemoji.Mozilla.ttf
-flutter_intl:
-  enabled: true
-  class_name: AppLocalizations
-  arb_dir: arb
-  output_dir: lib/l10n

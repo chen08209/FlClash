@@ -7,7 +7,6 @@ import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/database/database.dart' as db;
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/core.dart';
@@ -771,7 +770,7 @@ tun:
     late List<String> compiledUrls;
 
     setUp(() async {
-      await AppLocalizations.load(const Locale('en'));
+      loadAppLocalizations(const Locale('en'));
       home = Directory.systemTemp.createTempSync('flclash-custom-import-');
       await useAppPaths(home);
       testDatabase = db.Database(NativeDatabase.memory());

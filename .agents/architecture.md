@@ -566,7 +566,7 @@ navigator:
 - `UiLocalizations` (`prism_ui/lib/l10n.dart`): the strings the components show themselves. `AppUiLocalizations.delegate`
   in `lib/common/app_localizations.dart` serves them from the ARB strings; a new one needs a getter on both.
 
-A test that builds its own app registers `AppUiLocalizations.delegate` and returns `wrapAppScopes` from
+A test that builds its own app registers `appLocalizationsDelegate` and `AppUiLocalizations.delegate` and returns `wrapAppScopes` from
 `test/helpers/test_app.dart` in its builder, as `TestApp` does.
 
 ## Icons

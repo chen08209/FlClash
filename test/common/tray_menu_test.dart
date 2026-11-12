@@ -7,7 +7,6 @@ import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/l10n_labels.dart';
 import 'package:fl_clash/common/tray.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/state.dart';
@@ -16,7 +15,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:intl/intl.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:tray/tray.dart';
 
@@ -95,7 +93,7 @@ void main() {
   setUpAll(() async {
     root = Directory.systemTemp.createTempSync('tray_menu_test');
     await useAppPaths(root);
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
   });
 
   tearDownAll(() {
@@ -222,7 +220,7 @@ void main() {
         .where((item) => item['checked'] == true)
         .map((item) => item['label'])
         .toList();
-    expect(checkedModes, contains(Intl.message(Mode.global.name)));
+    expect(checkedModes, contains(currentAppLocalizations.global));
   });
 
   test('sends icon, tooltip and menu in a single show call', () async {

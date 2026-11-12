@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/mitm_trust.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:flutter/widgets.dart';
@@ -114,7 +113,7 @@ void main() {
   });
 
   group('Android', () {
-    setUpAll(() => AppLocalizations.load(const Locale('en')));
+    setUpAll(() => loadAppLocalizations(const Locale('en')));
 
     void locate(
       _MockApp app, {

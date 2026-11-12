@@ -1,13 +1,13 @@
 import 'dart:ui';
 
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('DnsQueriesState.list', () {
-    setUpAll(() => AppLocalizations.load(const Locale('en')));
+    setUpAll(() => loadAppLocalizations(const Locale('en')));
 
     DnsQuery dnsQuery(
       String domain, {

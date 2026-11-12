@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/l10n_labels.dart';
 import 'package:fl_clash/common/request.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -167,7 +167,7 @@ void main() {
       ),
     );
     await tester.pump();
-    final l10n = AppLocalizations.current;
+    final l10n = currentAppLocalizations;
 
     await openProxiesMenu(tester);
     expect(inMenu(find.text(l10n.iconStyle)), findsOneWidget);
@@ -205,7 +205,7 @@ void main() {
       ),
     );
     await tester.pump();
-    final l10n = AppLocalizations.current;
+    final l10n = currentAppLocalizations;
 
     await openProxiesMenu(tester);
     await tester.tap(inMenu(find.text(l10n.sort)));
@@ -633,7 +633,7 @@ void main() {
       ),
     );
     await tester.pump();
-    final l10n = AppLocalizations.current;
+    final l10n = currentAppLocalizations;
     expect(find.text(l10n.followProfile), findsOneWidget);
 
     await tester.tap(find.text(l10n.matchTarget));
@@ -684,7 +684,7 @@ void main() {
       ),
     );
     await tester.pump();
-    final l10n = AppLocalizations.current;
+    final l10n = currentAppLocalizations;
 
     await tester.tap(find.text(l10n.controlGlobalAddedRules));
     await tester.pumpAndSettle();

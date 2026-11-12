@@ -93,7 +93,7 @@ Future<void> _pumpBannerHost(WidgetTester tester) async {
       container: container,
       child: PrismApp(
         navigatorKey: globalState.navigatorKey,
-        supportedLocales: AppLocalizations.delegate.supportedLocales,
+        supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, child) {
           globalState.measure = MeasureScope.of(context);
           return child!;

@@ -17,7 +17,7 @@ void main() {
   late AppLocalizations appLocalizations;
 
   setUpAll(() async {
-    appLocalizations = await AppLocalizations.load(const Locale('en'));
+    appLocalizations = loadAppLocalizations(const Locale('en'));
   });
 
   DioException dioError(
