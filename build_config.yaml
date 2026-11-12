@@ -1,9 +1,4 @@
-core_impl: go
 concord_dir: concord
-tags: with_gvisor
-go_ldflags: "-w -s"
-core_version: v1.19.34
-core_dir: core
 core_name: FlClashCore
 output_dir: libclash
 helper_dir: services/helper

@@ -1,8 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
@@ -30,7 +29,9 @@ class RequestsView extends ConsumerStatefulWidget {
 }
 
 class _RequestsViewState extends ConsumerState<RequestsView>
-    with RouteMotionHoldMixin<RequestsView> {
+    with
+        RouteMotionHoldMixin<RequestsView>,
+        ConnectionCountersMixin<RequestsView> {
   final _recent = TrackerInfoListController();
   final _live = TrackerInfoListController();
   final _liveFeed = GlobalKey<_LiveFeedState>();
@@ -341,7 +342,7 @@ class _LiveFeedState extends ConsumerState<_LiveFeed>
   @override
   Duration get pollInterval => const Duration(seconds: 1);
 
-  Future<void> closeAll() => _close(_core.closeConnections);
+  Future<void> closeAll() => _close(() => _core.api.closeConnections());
 
   @override
   Future<void> poll(PollGuard isCurrent) async {
@@ -365,11 +366,11 @@ class _LiveFeedState extends ConsumerState<_LiveFeed>
     final rank = rankAfter(_ranking);
     try {
       final connectionsReader = widget.connectionsReader;
-      final ranked = connectionsReader != null
-          ? rank(await connectionsReader())
-          : ref.read(coreStatusProvider) == CoreStatus.connected
-          ? await _core.getConnectionsWith(rank)
-          : rank(const []);
+      final ranked = rank(
+        connectionsReader != null
+            ? await connectionsReader()
+            : ref.read(connectionBookProvider).list(),
+      );
       // A refresh after closing a connection can overlap a poll.
       if (read < _shownRead) {
         return null;
@@ -407,7 +408,7 @@ class _LiveFeedState extends ConsumerState<_LiveFeed>
   }
 
   Future<void> _closeConnection(TrackerInfo trackerInfo) =>
-      _close(() => _core.closeConnection(trackerInfo.id));
+      _close(() => _core.api.closeConnections(ids: [trackerInfo.id]));
 
   Future<void> _close(Future<void> Function() close) async {
     await globalState.safeRun(close, title: 'close connections');

@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/common/mitm_body.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
@@ -135,7 +136,8 @@ class _MitmExchangeItem extends ConsumerWidget {
         status: exchange.status,
         responseSize: exchange.responseSize,
         modules: watchLocalMitmModules(ref),
-        load: () => ref.read(coreHandlerProvider).getMitmExchange(exchange.id),
+        load: () =>
+            ref.read(coreHandlerProvider).api.getMitmExchange(exchange.id),
       ),
       child: ListItem(
         title: Text(

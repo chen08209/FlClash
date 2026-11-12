@@ -40,7 +40,7 @@ void main() {
     expect(Tun.fromJson({'mtu': 1500}).mtu, 1500);
   });
 
-  test('the desktop TUN takes only its switch, device and stack, routed', () {
+  test('the desktop TUN takes only its switch and device, routed', () {
     const tun = Tun(
       enable: true,
       stack: TunStack.gvisor,
@@ -51,7 +51,6 @@ void main() {
     expect(tun.coreJson, {
       'enable': true,
       'device': tun.device,
-      'stack': 'gvisor',
       'auto-route': true,
     });
   });

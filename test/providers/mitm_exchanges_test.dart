@@ -1,5 +1,5 @@
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
+import 'dart:convert';
+
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/mitm.dart';
@@ -7,7 +7,7 @@ import 'package:riverpod/riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
+import '../helpers/core_mocks.dart';
 
 final _start = DateTime.utc(2026, 10, 29);
 
@@ -36,26 +36,23 @@ void main() {
       _list(closed: true, pending: false),
     ];
     var calls = 0;
-    final core = _MockCoreHandlerInterface();
-    when(
-      () => core.getMitmExchanges('connection-1'),
-    ).thenAnswer((_) async => answers[(calls++).clamp(0, answers.length - 1)]);
+    final mocks = coreMocks();
+    when(() => mocks.api.mitmExchanges(1)).thenAnswer(
+      (_) async => jsonDecode(
+        jsonEncode(answers[(calls++).clamp(0, answers.length - 1)]),
+      ),
+    );
     final container = ProviderContainer(
-      overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
-      ],
+      overrides: [coreHandlerProvider.overrideWithValue(mocks.controller)],
     );
     addTearDown(container.dispose);
-    container.listen(mitmExchangesProvider('connection-1'), (_, _) {});
+    container.listen(mitmExchangesProvider(1), (_, _) {});
 
     for (var second = 0; second < 12; second++) {
       await tester.pump(const Duration(seconds: 1));
     }
 
     expect(calls, answers.length);
-    expect(
-      container.read(mitmExchangesProvider('connection-1')).value,
-      answers.last,
-    );
+    expect(container.read(mitmExchangesProvider(1)).value, answers.last);
   });
 }

@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/mitm_module.dart';
+import 'package:fl_clash/core/api/mapping.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
@@ -45,32 +46,14 @@ Future<List<Group>> toGroupsTask(ComputeGroupsState data) async {
 
 @visibleForTesting
 Future<List<Group>> buildGroups(ComputeGroupsState state) async {
-  final proxiesData = state.proxiesData;
-  final all = proxiesData.all;
-  final sortType = state.sortType;
-  final delayMap = state.delayMap;
-  final selectedMap = state.selectedMap;
-  final defaultTestUrl = state.defaultTestUrl;
-  final proxies = proxiesData.proxies;
-  if (proxies.isEmpty) return [];
-  final groups = <Group>[];
-  for (final groupName in all) {
-    final raw = proxies[groupName];
-    if (raw is! Map) continue;
-    if (!GroupTypeExtension.valueList.contains(raw['type'])) continue;
-    final memberNames = raw['all'];
-    final group = Map<String, dynamic>.from(raw);
-    group['all'] = memberNames is List
-        ? memberNames.map((name) => proxies[name]).nonNulls.toList()
-        : const [];
-    groups.add(Group.fromJson(group));
-  }
+  final groups = groupsOf(state.proxyGroups);
+  if (groups.isEmpty) return [];
   return computeSort(
     groups: groups,
-    sortType: sortType,
-    delayMap: delayMap,
-    selectedMap: selectedMap,
-    defaultTestUrl: defaultTestUrl,
+    sortType: state.sortType,
+    delayMap: state.delayMap,
+    selectedMap: state.selectedMap,
+    defaultTestUrl: state.defaultTestUrl,
   );
 }
 
@@ -84,7 +67,12 @@ ClashConfig _buildClashConfig(Map<String, dynamic> configMap) {
 
 typedef ConfigCounts = ({int groups, int proxies, int rules});
 
-typedef RealProfile = ({String yaml, String md5, ConfigCounts counts});
+typedef RealProfile = ({
+  String yaml,
+  String md5,
+  ConfigCounts counts,
+  Map<String, dynamic>? overlay,
+});
 
 /// Counts what the Core was handed, not what the profile file declares.
 ConfigCounts configCountsOf(Map<Object?, Object?> config) {
@@ -174,11 +162,10 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
     }
   }
 
-  rawConfig['external-controller'] =
-      data.safeMode || realPatchConfig.secret.isEmpty
-      ? ''
-      : realPatchConfig.externalController.value;
-  rawConfig['secret'] = realPatchConfig.secret;
+  // A hosted Core opens the controller only from config.patch and warns about
+  // a profile that sets it, so these only clear the profile's own values.
+  rawConfig['external-controller'] = '';
+  rawConfig['secret'] = '';
   // mihomo serves the unix and pipe controllers without a secret, and the unix
   // one unlinks whatever sits at its path before opening it to everyone.
   rawConfig['external-controller-tls'] = '';
@@ -388,7 +375,12 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
   }
   rawConfig['rules'] = [...mitm.rules, ...rules];
   final yaml = await _encodeYaml(Map<String, dynamic>.from(rawConfig));
-  return (yaml: yaml, md5: yaml.toMd5(), counts: configCountsOf(rawConfig));
+  return (
+    yaml: yaml,
+    md5: yaml.toMd5(),
+    counts: configCountsOf(rawConfig),
+    overlay: data.keepOverlay ? Map<String, dynamic>.from(rawConfig) : null,
+  );
 }
 
 typedef ShakingStoreArgs = ({

@@ -400,9 +400,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get stopVpn => '正在停止VPN…';
 
   @override
-  String get localNetworkDeniedTip => '本地网络权限被拒绝：已改用 gvisor 栈，局域网无法访问。';
-
-  @override
   String get compatible => '兼容模式';
 
   @override

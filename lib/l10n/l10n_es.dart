@@ -423,10 +423,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get stopVpn => 'Deteniendo VPN…';
 
   @override
-  String get localNetworkDeniedTip =>
-      'Permiso de red local denegado: con la pila gvisor, la LAN no es accesible.';
-
-  @override
   String get compatible => 'Modo de compatibilidad';
 
   @override

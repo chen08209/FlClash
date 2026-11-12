@@ -205,6 +205,11 @@ void main() {
       expect(androidTypes, isNot(contains(InterfaceNameItem)));
     });
 
+    test('the rs build lists no stack row', () {
+      expect(types(isDesktop: true), isNot(contains(TunStackItem)));
+      expect(types(isDesktop: false), isNot(contains(TunStackItem)));
+    });
+
     test('the interface name row is listed only for the custom mode', () {
       expect(
         types(isDesktop: true, isCustomInterfaceName: false),

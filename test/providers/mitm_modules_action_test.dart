@@ -20,11 +20,6 @@ import '../helpers/app_paths.dart';
 /// Real downloads over loopback: the test binding answers every request with a
 /// 400, so its override is lifted while a test runs.
 void main() {
-  setUp(() {
-    mitmFeature = true;
-    addTearDown(() => mitmFeature = false);
-  });
-
   late HttpServer server;
   late Map<String, String> bodies;
   late Directory home;

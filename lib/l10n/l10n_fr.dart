@@ -423,10 +423,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get stopVpn => 'Arrêt du VPN…';
 
   @override
-  String get localNetworkDeniedTip =>
-      'Autorisation du réseau local refusée : la pile gvisor est utilisée, le LAN est inaccessible.';
-
-  @override
   String get compatible => 'Mode de compatibilité';
 
   @override

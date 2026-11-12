@@ -9,7 +9,6 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
-import 'package:fl_clash/providers/route_state.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,25 +17,39 @@ import 'package:prism_ui/banner.dart';
 class CoreManager extends ConsumerStatefulWidget {
   final Widget child;
 
-  const CoreManager({super.key, required this.child});
+  /// Whether the connection feed stops being read while the app is out of
+  /// sight. The platform decides when this is null.
+  final bool? pausesInBackground;
+
+  const CoreManager({
+    super.key,
+    required this.child,
+    @visibleForTesting this.pausesInBackground,
+  });
 
   @override
   ConsumerState<CoreManager> createState() => _CoreContainerState();
 }
 
 class _CoreContainerState extends ConsumerState<CoreManager>
-    with CoreEventListener {
+    with WidgetsBindingObserver {
   CoreController get _core => ref.read(coreHandlerProvider);
 
-  @override
-  Widget build(BuildContext context) {
-    return widget.child;
-  }
+  late final CounterDemand _demand = ref.read(connectionBookProvider).demand;
+
+  final _feeds = <String, StreamSubscription<Object?>>{};
+  StreamSubscription<String>? _crashes;
+  bool _countersOpen = true;
+  bool _away = false;
+
+  bool get _pausesInBackground => widget.pausesInBackground ?? system.isAndroid;
 
   @override
   void initState() {
     super.initState();
-    coreEventManager.addListener(this);
+    WidgetsBinding.instance.addObserver(this);
+    _demand.addListener(_syncConnectionCounters);
+    _crashes = _core.crashes.listen(_onCrash);
     ref.read(updatingActionProvider.notifier);
     // A rejected profile stays selected on purpose: silently reverting to
     // the previous one hides the error and looks like the switch was lost.
@@ -72,7 +85,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       },
     );
     ref.listenManual(mitmModulesProvider, (prev, next) {
-      if (mitmFeature &&
+      if (rsFeature &&
           prev?.value != null &&
           next.hasValue &&
           ref.read(patchClashConfigProvider).mitm.enable) {
@@ -86,46 +99,226 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       next,
     ) {
       if (prev != next) {
-        _syncLogStream();
+        _syncLogFeed();
       }
     });
-    // Every Core process starts without a log stream.
     ref.listenManual(coreStatusProvider, (prev, next) {
       if (next == CoreStatus.connected && prev != CoreStatus.connected) {
-        _syncLogStream();
+        _openFeeds();
+      } else if (next != CoreStatus.connected) {
+        _closeFeeds();
       }
     }, fireImmediately: true);
   }
 
-  void _syncLogStream() {
+  void _feed<T>(String name, Stream<T> stream, void Function(T value) onData) {
+    unawaited(_feeds.remove(name)?.cancel());
+    _feeds[name] = stream.listen(
+      (value) {
+        if (mounted) {
+          onData(value);
+        }
+      },
+      onError: (Object error) => commonPrint.log(
+        '$name feed: ${compactError(error)}',
+        logLevel: coreFailureLogLevel(error),
+      ),
+    );
+  }
+
+  void _openFeeds() {
+    _closeFeeds();
+    final api = _core.api;
+    ref.read(connectionBookProvider).clear();
+    _feed('dns', api.watchDns(), (entries) {
+      ref
+          .read(dnsQueriesProvider.notifier)
+          .addQueries(entries.map(dnsQueryOf).toList());
+      ref
+          .read(dnsQueryCountProvider.notifier)
+          .update((count) => count + entries.length);
+    });
+    _sync
+      ..reset()
+      ..onApplied = _resyncState;
+    _feed('events', api.watchEvents(delays: true, state: true), (events) {
+      events.forEach(_onEvent);
+    });
+    unawaited(_resyncState());
+    _openConnections();
+    _feed('proxies', api.watchProxies(), (_) {
+      ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
+    });
+    _syncLogFeed();
+  }
+
+  void _openConnections() {
+    _countersOpen = _demand.wanted;
+    _feed(
+      'connections',
+      _core.api.watchConnections(maxBatchMs: 250, counters: _countersOpen),
+      _onConnections,
+    );
+    if (_away) {
+      _feeds['connections']?.pause();
+    }
+  }
+
+  void _syncConnectionCounters() {
+    if (_feeds.containsKey('connections') && _demand.wanted != _countersOpen) {
+      _openConnections();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final away =
+        _pausesInBackground &&
+        (state == AppLifecycleState.paused ||
+            state == AppLifecycleState.hidden);
+    if (away == _away) {
+      return;
+    }
+    _away = away;
+    if (away) {
+      _feeds['connections']?.pause();
+    } else {
+      _feeds['connections']?.resume();
+    }
+  }
+
+  void _closeFeeds() {
+    for (final feed in _feeds.values) {
+      unawaited(feed.cancel());
+    }
+    _feeds.clear();
+  }
+
+  void _syncLogFeed() {
     if (ref.read(coreStatusProvider) != CoreStatus.connected) {
       return;
     }
     if (ref.read(appSettingProvider).openLogs) {
-      _core.startLog();
+      _feed('logs', _core.api.watchLogs(), (entries) {
+        entries.map(logOf).forEach(_onLog);
+      });
     } else {
-      _core.stopLog();
+      unawaited(_feeds.remove('logs')?.cancel());
     }
   }
 
   @override
   void dispose() {
-    coreEventManager.removeListener(this);
+    WidgetsBinding.instance.removeObserver(this);
+    _demand.removeListener(_syncConnectionCounters);
+    unawaited(_crashes?.cancel());
+    _closeFeeds();
     super.dispose();
   }
 
-  @override
-  Future<void> onDelay(Delay delay) async {
-    super.onDelay(delay);
-    final proxiesAction = ref.read(proxiesActionProvider.notifier);
-    proxiesAction.setDelay(delay);
-    debouncer.call(FunctionTag.updateDelay, () async {
-      proxiesAction.updateGroupsDebounce();
-    }, duration: const Duration(milliseconds: 5000));
+  void _onEvent(CoreEventDto event) {
+    switch (event) {
+      case DelayEvent(:final result):
+        ref.read(proxiesActionProvider.notifier).setDelay(delayOf(result));
+      case ResourceUpdateEvent(
+        kind: ResourceKind.geo,
+        :final name,
+        :final phase,
+        :final error,
+      ):
+        ref
+            .read(geoResourceActionProvider.notifier)
+            .handleCoreUpdate(name, phase, error);
+      case ResourceUpdateEvent(
+        :final name,
+        phase: ResourcePhase.updated || ResourcePhase.unchanged,
+      ):
+        unawaited(_onLoaded(name));
+      case ResourceUpdateEvent():
+        break;
+      case final StateChangedEvent event:
+        _writeState(_sync.take(event));
+      case DialerLoopEvent(:final name):
+        _onDialerLoop(name);
+      case FatalEvent(:final message):
+        _onCrash(message);
+      case EventsResynced():
+        unawaited(_onResynced());
+        unawaited(_resyncState());
+      case UnknownCoreEvent():
+        break;
+    }
   }
 
-  @override
-  void onLog(Log log) {
+  Future<void> _onResynced() async {
+    ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
+    await ref.read(providersProvider.notifier).syncProviders();
+  }
+
+  CoreStateSync get _sync => ref.read(coreStateSyncProvider);
+
+  Future<void> _resyncState() async {
+    if (!mounted) {
+      return;
+    }
+    final generation = _sync.resync();
+    try {
+      final state = await _core.api.general();
+      if (mounted) {
+        _writeState(_sync.settle(generation, state));
+      }
+    } catch (error) {
+      if (error is CoreMethodException && error.code == 'conflict') {
+        // No config applied yet; the baseline after the first apply follows.
+        return;
+      }
+      commonPrint.log(
+        'config.general: ${compactError(error)}',
+        logLevel: coreFailureLogLevel(error),
+      );
+    }
+  }
+
+  void _writeState(List<StateWrite> writes) {
+    for (final write in writes) {
+      switch (write) {
+        case SelectionWrite(:final group, :final proxy):
+          final profileId =
+              _sync.profileId ?? ref.read(currentProfileIdProvider);
+          if (profileId != null) {
+            ref
+                .read(profilesActionProvider.notifier)
+                .setSelection(profileId, group, proxy);
+          }
+        case GeneralWrite(:final change):
+          ref.read(setupActionProvider.notifier).adoptCoreGeneral(change);
+      }
+    }
+  }
+
+  void _onConnections(ConnectionUpdate update) {
+    final change = ref.read(connectionBookProvider).apply(update);
+    final requests = ref.read(requestsProvider.notifier);
+    if (change.opened.isNotEmpty) {
+      requests.addRequests(change.opened);
+      ref
+          .read(requestCountProvider.notifier)
+          .update((count) => count + change.opened.length);
+    }
+    if (change.counters.isNotEmpty) {
+      requests.updateTraffic(change.counters);
+    }
+  }
+
+  Future<void> _onLoaded(String providerName) async {
+    final provider = await _core.api.getExternalProvider(providerName);
+    if (!mounted) {
+      return;
+    }
+    ref.read(providersProvider.notifier).setProvider(provider);
+  }
+
+  void _onLog(Log log) {
     ref.read(logsProvider.notifier).add(log);
     if (log.logLevel == LogLevel.error) {
       throttler.call(
@@ -135,11 +328,9 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         fire: true,
       );
     }
-    super.onLog(log);
   }
 
-  @override
-  void onDialerLoop(String proxyName) {
+  void _onDialerLoop(String proxyName) {
     throttler.call(
       FunctionTag.dialerLoopNotifier,
       () => dialogs.showBanner(
@@ -149,47 +340,9 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       duration: const Duration(seconds: 3),
       fire: true,
     );
-    super.onDialerLoop(proxyName);
   }
 
-  @override
-  void onRequest(TrackerInfo trackerInfo) async {
-    ref.read(requestsProvider.notifier).addRequest(trackerInfo);
-    ref.read(requestCountProvider.notifier).update((count) => count + 1);
-    super.onRequest(trackerInfo);
-  }
-
-  @override
-  void onRequestTraffic(Map<String, RequestTraffic> traffic) {
-    ref.read(requestsProvider.notifier).updateTraffic(traffic);
-    super.onRequestTraffic(traffic);
-  }
-
-  @override
-  void onDns(DnsQuery dnsQuery) {
-    ref.read(dnsQueriesProvider.notifier).addQuery(dnsQuery);
-    ref.read(dnsQueryCountProvider.notifier).update((count) => count + 1);
-    super.onDns(dnsQuery);
-  }
-
-  @override
-  Future<void> onLoaded(String providerName) async {
-    final provider = await _core.getExternalProvider(providerName);
-    if (!mounted) {
-      return;
-    }
-    ref.read(providersProvider.notifier).setProvider(provider);
-    debouncer.call(FunctionTag.loadedProvider, () async {
-      if (!mounted) {
-        return;
-      }
-      ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
-    }, duration: const Duration(milliseconds: 5000));
-    super.onLoaded(providerName);
-  }
-
-  @override
-  Future<void> onCrash(String message) async {
+  void _onCrash(String message) {
     if (ref.read(coreStatusProvider) != CoreStatus.connected) {
       return;
     }
@@ -197,20 +350,10 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
       dialogs.showBanner(message, level: BannerLevel.error);
     }
-    super.onCrash(message);
   }
 
   @override
-  void onGeoUpdate(String geoType, bool updating, bool skipped, String? error) {
-    ref
-        .read(geoResourceActionProvider.notifier)
-        .handleCoreUpdate(geoType, updating, skipped, error);
-    super.onGeoUpdate(geoType, updating, skipped, error);
-  }
-
-  @override
-  void onRouteChanged(RouteSnapshot snapshot) {
-    ref.read(routeTrackerProvider.notifier).applySnapshot(snapshot);
-    super.onRouteChanged(snapshot);
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 }

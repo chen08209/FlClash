@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:fl_clash/common/constant.dart';
-import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
 
@@ -147,7 +147,7 @@ Future<Map<ServiceTarget, ServiceCheck>> checkServices(
   List<ServiceTarget> targets = const [],
   Duration timeout = probeTimeoutDuration,
 }) async {
-  final items = await core.serviceCheck(
+  final items = await core.api.probeServices(
     ServiceCheckParams(
       proxyName: proxyName,
       names: targets.map((target) => target.id).toList(),
@@ -181,7 +181,7 @@ Future<OutboundIpResult> lookupOutboundIp(
   String proxyName, {
   Duration timeout = outboundIpTimeoutDuration,
 }) {
-  return core.outboundIp(
+  return core.api.probeOutboundIp(
     OutboundIpParams(
       proxyName: proxyName,
       urls: ipInfoSources.keys.toList(),

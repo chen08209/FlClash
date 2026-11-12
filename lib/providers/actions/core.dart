@@ -11,7 +11,8 @@ class CoreAction extends _$CoreAction {
   void build() {}
 
   Future<void> initCore() async {
-    final isInit = await _core.isInit;
+    final isInit =
+        (await _core.api.engineStatus()).state != EngineState.created;
     await _loadCapabilities();
 
     final version = ref.read(versionProvider);
@@ -25,7 +26,7 @@ class CoreAction extends _$CoreAction {
 
   Future<void> _loadCapabilities() async {
     try {
-      final capabilities = await _core.getCapabilities();
+      final capabilities = await _core.api.getCapabilities();
       ref.read(coreCapabilitiesStateProvider.notifier).value = capabilities;
     } catch (error) {
       commonPrint.log(
@@ -57,7 +58,7 @@ class CoreAction extends _$CoreAction {
   }
 
   // Nothing in lib/ calls CoreController.stop(); only close() (app exit)
-  // supersedes a start/restart. statusFirst lets onCrash catch a crash
+  // supersedes a start/restart. statusFirst lets _onCrash catch a crash
   // during initCore itself (it early-returns unless status is connected).
   Future<bool> _applyLifecycleResult(
     CoreLifecycleResult result, {
@@ -73,18 +74,18 @@ class CoreAction extends _$CoreAction {
       await initCore();
       ref.read(coreStatusProvider.notifier).value = CoreStatus.connected;
     }
-    if (mitmFeature && ref.read(patchClashConfigProvider).mitm.enable) {
+    if (rsFeature && ref.read(patchClashConfigProvider).mitm.enable) {
       unawaited(ref.read(mitmTrustStateProvider.notifier).refresh());
     }
     return true;
   }
 
-  Future<void> closeConnection(String id) async {
-    await _core.closeConnection(id);
+  Future<void> closeConnection(int id) async {
+    await _core.api.closeConnections(ids: [id]);
   }
 
   Future<void> closeConnections() async {
-    await _core.closeConnections();
+    await _core.api.closeConnections();
   }
 
   Future<void> reportNetworkChange() async {
@@ -92,7 +93,7 @@ class CoreAction extends _$CoreAction {
       return;
     }
     try {
-      await _core.reportNetworkChange();
+      await _core.api.updateNetwork(interfaceChanged: true);
     } catch (error) {
       commonPrint.log(
         'reportNetworkChange error: $error',
@@ -102,11 +103,11 @@ class CoreAction extends _$CoreAction {
   }
 
   Future<void> forceGc() async {
-    await _core.forceGc();
+    await _core.api.releaseMemory();
   }
 
   Future<void> crash() async {
-    await _core.crash();
+    await _core.api.debugCrash();
   }
 
   Future<bool> restartCore() {

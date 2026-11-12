@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -42,26 +43,31 @@ void main() {
   });
 
   test('toGroupsTask converts, selects, and sorts core proxy data', () async {
-    final proxies = <String, dynamic>{
-      'Selector': {
-        'name': 'Selector',
-        'type': 'Selector',
-        'now': 'Beta',
-        'all': ['Zulu', 'Beta', 'missing'],
-      },
-      'Direct': {'name': 'Direct', 'type': 'Direct'},
-      'Zulu': {'name': 'Zulu', 'type': 'Direct'},
-      'Beta': {'name': 'Beta', 'type': 'Direct'},
-    };
     final groups = await toGroupsTask(
-      ComputeGroupsState(
-        proxiesData: ProxiesData(
-          all: const ['Selector', 'Direct'],
-          proxies: proxies,
+      const ComputeGroupsState(
+        proxyGroups: ProxyGroupsDto(
+          order: ['Selector'],
+          groups: [
+            GroupInfo(
+              name: 'Selector',
+              type: 'Selector',
+              now: 'Beta',
+              all: ['Zulu', 'Beta', 'missing'],
+              testUrl: '',
+              hidden: false,
+              icon: '',
+              emptyFallback: '',
+            ),
+          ],
+          nodes: [
+            NodeInfo(name: 'Direct', type: 'Direct'),
+            NodeInfo(name: 'Zulu', type: 'Direct'),
+            NodeInfo(name: 'Beta', type: 'Direct'),
+          ],
         ),
         sortType: ProxiesSortType.name,
-        delayMap: const {},
-        selectedMap: const {'Selector': 'Beta'},
+        delayMap: {},
+        selectedMap: {'Selector': 'Beta'},
         defaultTestUrl: 'https://example.com/generate_204',
       ),
     );
@@ -108,17 +114,24 @@ void main() {
     },
   );
 
-  test('toGroupsTask leaves the source proxy map untouched', () async {
-    final proxies = <String, dynamic>{
-      'Selector': {
-        'name': 'Selector',
-        'type': 'Selector',
-        'all': ['Beta'],
-      },
-      'Beta': {'name': 'Beta', 'type': 'Direct'},
-    };
+  test('toGroupsTask leaves the source proxy groups untouched', () async {
+    final members = ['Beta'];
     final state = ComputeGroupsState(
-      proxiesData: ProxiesData(all: const ['Selector'], proxies: proxies),
+      proxyGroups: ProxyGroupsDto(
+        order: const ['Selector'],
+        groups: [
+          GroupInfo(
+            name: 'Selector',
+            type: 'Selector',
+            all: members,
+            testUrl: '',
+            hidden: false,
+            icon: '',
+            emptyFallback: '',
+          ),
+        ],
+        nodes: const [NodeInfo(name: 'Beta', type: 'Direct')],
+      ),
       sortType: ProxiesSortType.none,
       delayMap: const {},
       selectedMap: const {},
@@ -128,13 +141,14 @@ void main() {
     await buildGroups(state);
     await buildGroups(state);
 
-    expect(proxies['Selector']['all'], ['Beta']);
+    expect(members, ['Beta']);
+    expect(state.proxyGroups.groups.single.all, ['Beta']);
   });
 
   test('toGroupsTask returns empty data without proxies', () async {
     final groups = await toGroupsTask(
       const ComputeGroupsState(
-        proxiesData: ProxiesData(proxies: {}, all: []),
+        proxyGroups: ProxyGroupsDto(),
         sortType: ProxiesSortType.none,
         delayMap: {},
         selectedMap: {},
@@ -429,6 +443,34 @@ void main() {
     );
   });
 
+  test(
+    'makeRealProfileTask hands back the built config only on request',
+    () async {
+      Future<RealProfile> build({required bool keepOverlay}) =>
+          makeRealProfileTask(
+            MakeRealProfileState(
+              profilesPath: '/profiles',
+              profileId: 13,
+              rawConfig: {
+                'rules': ['MATCH,DIRECT'],
+              },
+              realPatchConfig: const PatchClashConfig(),
+              appendSystemDns: false,
+              proxyGroups: const [],
+              rules: const [],
+              addedRules: const [],
+              defaultUA: 'FlClash-Test',
+              keepOverlay: keepOverlay,
+            ),
+          );
+
+      final kept = await build(keepOverlay: true);
+      expect(kept.overlay?['rules'], ['MATCH,DIRECT']);
+      expect(kept.overlay?['global-ua'], 'FlClash-Test');
+      expect((await build(keepOverlay: false)).overlay, isNull);
+    },
+  );
+
   test('makeRealProfileTask keeps safe mode off the host', () async {
     Future<YamlMap> build({required bool safeMode}) async {
       final result = await makeRealProfileTask(
@@ -497,42 +539,28 @@ void main() {
   );
 
   test(
-    'makeRealProfileTask writes the app secret over the profile one',
+    'makeRealProfileTask leaves an open controller to config.patch',
     () async {
-      Future<YamlMap> build(PatchClashConfig realPatchConfig) async {
-        final result = await makeRealProfileTask(
-          MakeRealProfileState(
-            profilesPath: '/profiles',
-            profileId: 14,
-            rawConfig: {'secret': 'from-the-profile'},
-            realPatchConfig: realPatchConfig,
-            appendSystemDns: false,
-            proxyGroups: const [],
-            rules: const [],
-            addedRules: const [],
-            defaultUA: 'FlClash-Test',
+      final result = await makeRealProfileTask(
+        const MakeRealProfileState(
+          profilesPath: '/profiles',
+          profileId: 14,
+          rawConfig: {'secret': 'from-the-profile'},
+          realPatchConfig: PatchClashConfig(
+            externalController: ExternalControllerStatus.open,
+            secret: 'from-the-app',
           ),
-        );
-        return loadYaml(result.yaml) as YamlMap;
-      }
-
-      final open = await build(
-        const PatchClashConfig(
-          externalController: ExternalControllerStatus.open,
-          secret: 'from-the-app',
+          appendSystemDns: false,
+          proxyGroups: [],
+          rules: [],
+          addedRules: [],
+          defaultUA: 'FlClash-Test',
         ),
       );
-      expect(open['external-controller'], '127.0.0.1:9090');
-      expect(open['secret'], 'from-the-app');
+      final config = loadYaml(result.yaml) as YamlMap;
 
-      final closed = await build(const PatchClashConfig());
-      expect(closed['secret'], '');
-      final missingSecret = await build(
-        const PatchClashConfig(
-          externalController: ExternalControllerStatus.open,
-        ),
-      );
-      expect(missingSecret['external-controller'], '');
+      expect(config['external-controller'], '');
+      expect(config['secret'], '');
     },
   );
 
@@ -607,7 +635,7 @@ void main() {
           expect(config['dns']['listen'], '0.0.0.0:53');
           expect(config['ntp']['write-to-system'], true);
         }
-        expect(config['external-controller'], safeMode ? '' : '127.0.0.1:9090');
+        expect(config['external-controller'], '');
       }
     },
   );
@@ -722,8 +750,7 @@ void main() {
       return loadYaml(result.yaml) as YamlMap;
     }
 
-    test('tun takes its stack from the settings and the rest from the '
-        'profile', () async {
+    test('tun leaves the stack and the rest to the profile', () async {
       final config = await runWith(
         const PatchClashConfig(tun: Tun(stack: TunStack.gvisor, mtu: 1400)),
         {
@@ -737,7 +764,7 @@ void main() {
       );
       final tun = config['tun'] as YamlMap;
 
-      expect(tun['stack'], 'gvisor');
+      expect(tun['stack'], 'system');
       expect(tun['auto-route'], true);
       expect(tun['mtu'], 1500);
       expect(tun['strict-route'], true);

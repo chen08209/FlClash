@@ -18,11 +18,6 @@ import 'package:riverpod/riverpod.dart';
 import '../helpers/test_profiles.dart';
 
 void main() {
-  setUp(() {
-    mitmFeature = true;
-    addTearDown(() => mitmFeature = false);
-  });
-
   late ProviderContainer container;
 
   setUp(() {
@@ -546,7 +541,7 @@ void main() {
     expect(tray.isStart, isTrue);
 
     final vpn = await container.read(vpnOptionsProvider.future);
-    expect(vpn.stack, container.read(patchClashConfigProvider).tun.stack.name);
+    expect(vpn.stack, isEmpty);
     expect(vpn.port, 8899);
     expect(vpn.bypassDomain, ['localhost']);
 
@@ -941,20 +936,7 @@ void main() {
         );
 
     expect(container.read(setupPatchProvider), setup);
-    expect(container.read(updateParamsProvider).options.mitmCapture, isTrue);
-  });
-
-  test('capture never reaches a Core built without MITM', () {
-    mitmFeature = false;
-    container.listen(updateParamsProvider, (_, _) {});
-
-    container
-        .read(patchClashConfigProvider.notifier)
-        .update(
-          (state) => state.copyWith(mitm: state.mitm.copyWith(capture: true)),
-        );
-
-    expect(container.read(updateParamsProvider).options.mitmCapture, isFalse);
+    expect(container.read(updateParamsProvider).options?.mitmCapture, isTrue);
   });
 
   test('the setup patch changes only with what a re-apply carries', () {

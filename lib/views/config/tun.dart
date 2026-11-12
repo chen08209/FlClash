@@ -57,7 +57,7 @@ bool _isRead(
   required bool isWindows,
 }) => switch (key) {
   TunOverrideKey.strictRoute => isLinux || isWindows,
-  TunOverrideKey.gso ||
+  TunOverrideKey.gso => !rsFeature && isLinux,
   TunOverrideKey.includeInterface ||
   TunOverrideKey.excludeInterface ||
   TunOverrideKey.includeUid ||

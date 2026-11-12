@@ -1,8 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
@@ -92,8 +91,6 @@ mixin ConnectionsPolling<T extends ConsumerStatefulWidget>
 
   bool get pollsConnections;
 
-  CoreController get _core => ref.read(coreHandlerProvider);
-
   @override
   Duration get pollInterval => Duration(seconds: pollsConnections ? 1 : 2);
 
@@ -120,7 +117,9 @@ mixin ConnectionsPolling<T extends ConsumerStatefulWidget>
     }
     try {
       if (pollsConnections) {
-        final (:next, :tcp) = await _core.getConnectionsWith(_newestFirst);
+        final (:next, :tcp) = _newestFirst(
+          ref.read(connectionBookProvider).list(),
+        );
         if (!isCurrent()) return;
         connectionCount.value = next.length;
         updateWhenRouteSettled(
@@ -131,7 +130,7 @@ mixin ConnectionsPolling<T extends ConsumerStatefulWidget>
           }),
         );
       } else {
-        final count = await _core.getConnectionCount();
+        final count = ref.read(connectionBookProvider).count;
         if (!isCurrent()) return;
         connectionCount.value = count;
       }
@@ -222,7 +221,8 @@ class _ConnectionsTableCardState extends ConsumerState<ConnectionsTableCard>
         WidgetsBindingObserver,
         ActivePollingMixin<ConnectionsTableCard>,
         RouteMotionHoldMixin<ConnectionsTableCard>,
-        ConnectionsPolling<ConnectionsTableCard> {
+        ConnectionsPolling<ConnectionsTableCard>,
+        ConnectionCountersMixin<ConnectionsTableCard> {
   var _feed = DashboardFeed.connections;
   List<TrackerInfo> _requests = const [];
   List<DnsQuery> _queries = const [];
@@ -230,6 +230,9 @@ class _ConnectionsTableCardState extends ConsumerState<ConnectionsTableCard>
 
   @override
   bool get pollsConnections => _feed == DashboardFeed.connections;
+
+  @override
+  bool get showsConnectionTraffic => _feed != DashboardFeed.dns;
 
   @override
   void initState() {
@@ -279,6 +282,7 @@ class _ConnectionsTableCardState extends ConsumerState<ConnectionsTableCard>
       }
       _takeSnapshot();
     });
+    syncConnectionCounters();
     if (feed == DashboardFeed.connections) {
       stopPolling();
       startPolling();

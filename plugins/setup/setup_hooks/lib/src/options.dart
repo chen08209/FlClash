@@ -6,40 +6,23 @@ import 'package:yaml/yaml.dart';
 
 final _log = Logger('options');
 
-enum CoreImpl { go, concord }
-
 class BuildConfig {
   const BuildConfig({
-    required this.coreImpl,
     required this.concordDir,
-    required this.tags,
-    required this.goLdflags,
-    required this.coreVersion,
-    required this.coreDir,
     required this.coreName,
     required this.outputDir,
     required this.helperDir,
     required this.helperName,
   });
 
-  final CoreImpl coreImpl;
   final String concordDir;
-  final String tags;
-  final String goLdflags;
-  final String coreVersion;
-  final String coreDir;
   final String coreName;
   final String outputDir;
   final String helperDir;
   final String helperName;
 
   static const _defaults = BuildConfig(
-    coreImpl: CoreImpl.go,
     concordDir: 'concord',
-    tags: 'with_gvisor',
-    goLdflags: '-w -s',
-    coreVersion: '',
-    coreDir: 'core',
     coreName: 'FlClashCore',
     outputDir: 'libclash',
     helperDir: 'services/helper',
@@ -55,14 +38,7 @@ class BuildConfig {
     final yaml = loadYaml(file.readAsStringSync()) as YamlMap?;
     if (yaml == null) return _defaults;
     return BuildConfig(
-      coreImpl: CoreImpl.values.byName(
-        yaml['core_impl'] as String? ?? _defaults.coreImpl.name,
-      ),
       concordDir: yaml['concord_dir'] as String? ?? _defaults.concordDir,
-      tags: yaml['tags'] as String? ?? _defaults.tags,
-      goLdflags: yaml['go_ldflags'] as String? ?? _defaults.goLdflags,
-      coreVersion: yaml['core_version'] as String? ?? _defaults.coreVersion,
-      coreDir: yaml['core_dir'] as String? ?? _defaults.coreDir,
       coreName: yaml['core_name'] as String? ?? _defaults.coreName,
       outputDir: yaml['output_dir'] as String? ?? _defaults.outputDir,
       helperDir: yaml['helper_dir'] as String? ?? _defaults.helperDir,
@@ -71,12 +47,7 @@ class BuildConfig {
   }
 
   Map<String, String> toFingerprintMap() => {
-    'core_impl': coreImpl.name,
     'concord_dir': concordDir,
-    'tags': tags,
-    'go_ldflags': goLdflags,
-    'core_version': coreVersion,
-    'core_dir': coreDir,
     'core_name': coreName,
     'output_dir': outputDir,
     'helper_dir': helperDir,

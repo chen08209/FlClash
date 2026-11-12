@@ -186,19 +186,6 @@ enum ResultType {
   error,
 }
 
-enum CoreEventType {
-  log,
-  delay,
-  request,
-  requestTraffic,
-  dns,
-  loaded,
-  crash,
-  geoUpdate,
-  routeChanged,
-  dialerLoop,
-}
-
 enum FindProcessMode { always, off }
 
 enum InterfaceNameMode { clear, follow, custom }

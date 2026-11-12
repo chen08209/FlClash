@@ -108,6 +108,7 @@ class SetupAction extends _$SetupAction {
     _stopRuntimeTicker();
     if (!running) {
       _startTime = null;
+      ref.read(commonActionProvider.notifier).setTrafficFeed(false);
       debouncer.cancel(FunctionTag.applyProfile);
       _pendingForceApply = false;
       _updateRunTime();
@@ -120,7 +121,9 @@ class SetupAction extends _$SetupAction {
   }
 
   void _syncRuntimeTicker() {
-    if (_startTime == null || !_isTrafficShown) {
+    final shown = _startTime != null && _isTrafficShown;
+    ref.read(commonActionProvider.notifier).setTrafficFeed(shown);
+    if (!shown) {
       _stopRuntimeTicker();
       return;
     }
@@ -141,7 +144,6 @@ class SetupAction extends _$SetupAction {
 
   void _refreshRunningState() {
     _updateRunTime();
-    unawaited(ref.read(commonActionProvider.notifier).updateTraffic());
   }
 
   void _updateRunTime() {
@@ -327,6 +329,7 @@ class SetupAction extends _$SetupAction {
   bool _isCurrent(_RunRequest request) => identical(_latestRunRequest, request);
 
   Future<void> updateConfigDebounce() async {
+    ref.read(coreStateSyncProvider).patchScheduled();
     debouncer.call(FunctionTag.updateConfig, updateConfig);
   }
 
@@ -337,7 +340,7 @@ class SetupAction extends _$SetupAction {
 
   @protected
   void resetCoreTraffic() {
-    _core.resetTraffic();
+    _core.api.resetTraffic();
   }
 
   @visibleForTesting
@@ -350,12 +353,16 @@ class SetupAction extends _$SetupAction {
         return;
       }
       final networkSetting = ref.read(networkSettingProvider);
-      await _core.updateConfig(
-        _effectivePatchConfig(patchConfig).toUpdateParams(
+      final sync = ref.read(coreStateSyncProvider);
+      final token = sync.patchStarted();
+      final seq = await _core.updateConfig(
+        configPatchOf(
+          _effectivePatchConfig(patchConfig),
           authentication: networkSetting.authentication.credentials,
           options: ref.read(coreOptionsProvider),
         ),
       );
+      sync.patched(token, seq);
     });
   }
 
@@ -384,6 +391,31 @@ class SetupAction extends _$SetupAction {
         ),
       ),
     );
+  }
+
+  void adoptCoreGeneral(GeneralChange change) {
+    if (Mode.values.asNameMap()[change.mode] case final mode?
+        when mode != ref.read(patchClashConfigProvider).mode) {
+      changeMode(mode);
+    }
+    ref.read(patchClashConfigProvider.notifier).update((state) {
+      final overrides = state.generalOverrideKeys;
+      return state.copyWith(
+        logLevel:
+            LogLevel.values.asNameMap()[change.logLevel] ?? state.logLevel,
+        allowLan: change.allowLan ?? state.allowLan,
+        mixedPort: change.mixedPort ?? state.mixedPort,
+        findProcessMode:
+            FindProcessMode.values.asNameMap()[change.findProcessMode] ??
+            state.findProcessMode,
+        ipv6: overrides.contains(GeneralOverrideKey.ipv6)
+            ? change.ipv6 ?? state.ipv6
+            : state.ipv6,
+        tcpConcurrent: overrides.contains(GeneralOverrideKey.tcpConcurrent)
+            ? change.tcpConcurrent ?? state.tcpConcurrent
+            : state.tcpConcurrent,
+      );
+    });
   }
 
   void changeMode(Mode mode) {
@@ -575,6 +607,7 @@ class SetupAction extends _$SetupAction {
             : lastMatchTarget(profileBase.base.matchRules),
         safeMode: ref.read(safeModeProvider),
         mitmModules: setupState.mitmModules,
+        keepOverlay: profileBase != null,
       ),
     );
     if (profileBase == null) {
@@ -589,7 +622,7 @@ class SetupAction extends _$SetupAction {
         proxies: res.counts.proxies + base.proxies,
         rules: res.counts.rules + base.rules,
       ),
-      base: SetupBase(path: path, overlay: res.yaml),
+      base: SetupBase(path: path, overlay: res.overlay ?? const {}),
     );
   }
 
@@ -679,6 +712,24 @@ class SetupAction extends _$SetupAction {
           ? ExternalControllerStatus.close
           : patchConfig.externalController,
     );
+  }
+
+  /// The Core ignores the profile's `external-controller` and `secret` while
+  /// a host drives it and opens the controller from a patch only.
+  Future<void> _openController(PatchClashConfig config) async {
+    try {
+      await _core.updateConfig(
+        ConfigPatch(
+          externalController: config.externalController.value,
+          secret: config.secret,
+        ),
+      );
+    } catch (error) {
+      commonPrint.log(
+        'external controller: ${compactError(error)}',
+        logLevel: coreFailureLogLevel(error),
+      );
+    }
   }
 
   @protected
@@ -824,11 +875,15 @@ class SetupAction extends _$SetupAction {
               );
             }
           }
+          final sync = ref.read(coreStateSyncProvider);
+          int? appliedProfileId;
+          sync.applyStarted();
           try {
             await _core.setupConfig(
               params: setupParams,
               preloadInvoke: preloadInvoke,
             );
+            appliedProfileId = profileId;
           } on CoreMethodException catch (error) {
             if (error.code != 'config_rejected') {
               rethrow;
@@ -837,6 +892,8 @@ class SetupAction extends _$SetupAction {
             globalState.lastConfigCounts = configCountsOf(const {});
             await globalState.safeRun(() => onUpdated?.call());
             throw MessageException(error.message);
+          } finally {
+            sync.applyEnded(appliedProfileId);
           }
         } catch (e, s) {
           setupFailed = true;
@@ -850,6 +907,7 @@ class SetupAction extends _$SetupAction {
         globalState.lastConfigCounts =
             realProfile?.counts ?? configCountsOf(const {});
         _appliedInputs = inputs;
+        await _openController(realPatchConfig);
         if (system.isAndroid) {
           await preferences.saveAppliedConfigMd5(yamlMd5);
         }

@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/indexing.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/models.dart' hide FileInfo;
@@ -27,6 +25,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../helpers/core_mocks.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
@@ -102,8 +101,6 @@ class _RecordingProxyDialers extends ProxyDialers {
   @override
   void set(int proxyId, String? target) => calls.add((proxyId, target));
 }
-
-class _MockCore extends Mock implements CoreHandlerInterface {}
 
 class _RecordingClashProvidersAction extends ClashProvidersAction {
   final applied = <Set<String>>[];
@@ -893,18 +890,18 @@ void main() {
 
   group('saving a group', () {
     late _TestProxyGroups proxyGroups;
-    late _MockCore core;
+    late CoreMocks mocks;
     late ProviderContainer container;
 
     Future<ProxyGroupProvider> openNewGroup(WidgetTester tester) async {
       _setViewport(tester);
       final profile = Profile.custom();
       proxyGroups = _TestProxyGroups(const []);
-      core = _MockCore();
+      mocks = coreMocks();
       registerFallbackValue(<String>[]);
       container = ProviderContainer(
         overrides: [
-          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          coreHandlerProvider.overrideWithValue(mocks.controller),
           profilesProvider.overrideWith(() => TestProfiles([profile])),
           currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
           proxyGroupsProvider.overrideWith2((_) => proxyGroups),
@@ -969,7 +966,9 @@ void main() {
     ) async {
       final form = await openNewGroup(tester);
       final checked = Completer<Map<int, String>>();
-      when(() => core.validateFilters(any())).thenAnswer((_) => checked.future);
+      when(
+        () => mocks.api.validateFilters(any()),
+      ).thenAnswer((_) => checked.future);
       form.update(
         (state) => state.copyWith(
           name: 'Mine',
@@ -983,7 +982,9 @@ void main() {
       );
       await tester.pump();
       form.update((state) => state.copyWith(name: 'Later'));
-      when(() => core.validateFilters(any())).thenAnswer((_) async => const {});
+      when(
+        () => mocks.api.validateFilters(any()),
+      ).thenAnswer((_) async => const {});
       checked.complete(const {});
       await _expectClosesWithoutIssues(tester);
 
@@ -1010,12 +1011,14 @@ void main() {
         url: 'https://www.gstatic.com/generate_204/a/very/long/url/path',
       ),
     ];
-    final core = _MockCore();
+    final mocks = coreMocks();
     registerFallbackValue(<String>[]);
-    when(() => core.validateFilters(any())).thenAnswer((_) async => const {});
+    when(
+      () => mocks.api.validateFilters(any()),
+    ).thenAnswer((_) async => const {});
     final container = ProviderContainer(
       overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
         profilesProvider.overrideWith(() => TestProfiles([profile])),
         currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
         proxyGroupsProvider.overrideWith2((_) => _TestProxyGroups(proxyGroups)),
@@ -1284,12 +1287,14 @@ void main() {
     _setViewport(tester);
     final validated = Completer<Map<int, String>>();
     final proxies = _RecordingCustomProxies();
-    final core = _MockCore();
+    final mocks = coreMocks();
     registerFallbackValue(<Map<String, dynamic>>[]);
-    when(() => core.validateProxies(any())).thenAnswer((_) => validated.future);
+    when(
+      () => mocks.api.validateProxies(any()),
+    ).thenAnswer((_) => validated.future);
     final container = ProviderContainer(
       overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
         customGroupNamesProvider.overrideWith(
           (_) => Stream.value(const <String>{}),
         ),
@@ -1334,9 +1339,9 @@ void main() {
       'outdated core verdict', (tester) async {
     _setViewport(tester);
     final proxies = _RecordingCustomProxies();
-    final core = _MockCore();
+    final mocks = coreMocks();
     registerFallbackValue(<Map<String, dynamic>>[]);
-    when(() => core.validateProxies(any())).thenAnswer((invocation) async {
+    when(() => mocks.api.validateProxies(any())).thenAnswer((invocation) async {
       await Future<void>.delayed(const Duration(milliseconds: 50));
       return {
         for (final (index, definition)
@@ -1346,7 +1351,7 @@ void main() {
     });
     final container = ProviderContainer(
       overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
         customGroupNamesProvider.overrideWith(
           (_) => Stream.value(const <String>{}),
         ),
@@ -1389,14 +1394,14 @@ void main() {
     tester,
   ) async {
     _setViewport(tester);
-    final core = _MockCore();
+    final mocks = coreMocks();
     registerFallbackValue(<Map<String, dynamic>>[]);
     when(
-      () => core.validateProxies(any()),
+      () => mocks.api.validateProxies(any()),
     ).thenAnswer((_) async => const {0: 'missing server'});
     final container = ProviderContainer(
       overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
         customGroupNamesProvider.overrideWith(
           (_) => Stream.value(const <String>{}),
         ),
@@ -1446,15 +1451,15 @@ void main() {
     tester,
   ) async {
     _setViewport(tester);
-    final core = _MockCore();
+    final mocks = coreMocks();
     registerFallbackValue(<Map<String, dynamic>>[]);
     when(
-      () => core.validateProxies(any()),
+      () => mocks.api.validateProxies(any()),
     ).thenAnswer((_) async => throw Exception('core down'));
     final proxies = _RecordingCustomProxies();
     final container = ProviderContainer(
       overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
         customGroupNamesProvider.overrideWith(
           (_) => Stream.value(const <String>{}),
         ),
@@ -1507,12 +1512,14 @@ void main() {
     final proxies = _RecordingCustomProxies(const [
       CustomProxy(id: 1, definition: {'name': 'Mesh', 'type': 'easytier'}),
     ]);
-    final core = _MockCore();
+    final mocks = coreMocks();
     registerFallbackValue(<Map<String, dynamic>>[]);
-    when(() => core.validateProxies(any())).thenAnswer((_) async => const {});
+    when(
+      () => mocks.api.validateProxies(any()),
+    ).thenAnswer((_) async => const {});
     final container = ProviderContainer(
       overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
         customGroupNamesProvider.overrideWith(
           (_) => Stream.value(const <String>{}),
         ),
@@ -1610,12 +1617,14 @@ void main() {
     final proxies = _RecordingCustomProxies(const [
       CustomProxy(id: 1, definition: {'name': 'Home', 'type': 'ss'}),
     ]);
-    final core = _MockCore();
+    final mocks = coreMocks();
     registerFallbackValue(<Map<String, dynamic>>[]);
-    when(() => core.validateProxies(any())).thenAnswer((_) async => const {});
+    when(
+      () => mocks.api.validateProxies(any()),
+    ).thenAnswer((_) async => const {});
     final container = ProviderContainer(
       overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
         customGroupNamesProvider.overrideWith(
           (_) => Stream.value(const <String>{}),
         ),
@@ -1678,12 +1687,14 @@ void main() {
         },
       ),
     ]);
-    final core = _MockCore();
+    final mocks = coreMocks();
     registerFallbackValue(<Map<String, dynamic>>[]);
-    when(() => core.validateProxies(any())).thenAnswer((_) async => const {});
+    when(
+      () => mocks.api.validateProxies(any()),
+    ).thenAnswer((_) async => const {});
     final container = ProviderContainer(
       overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
         customGroupNamesProvider.overrideWith(
           (_) => Stream.value(const <String>{}),
         ),
@@ -1794,12 +1805,14 @@ void main() {
         },
       ),
     ]);
-    final core = _MockCore();
+    final mocks = coreMocks();
     registerFallbackValue(<Map<String, dynamic>>[]);
-    when(() => core.validateProxies(any())).thenAnswer((_) async => const {});
+    when(
+      () => mocks.api.validateProxies(any()),
+    ).thenAnswer((_) async => const {});
     final container = ProviderContainer(
       overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
         customGroupNamesProvider.overrideWith(
           (_) => Stream.value(const <String>{}),
         ),
@@ -1865,12 +1878,14 @@ void main() {
     _setViewport(tester);
     final proxies = _RecordingCustomProxies();
     final action = _RecordingClashProvidersAction();
-    final core = _MockCore();
+    final mocks = coreMocks();
     registerFallbackValue(<Map<String, dynamic>>[]);
-    when(() => core.validateProxies(any())).thenAnswer((_) async => const {});
+    when(
+      () => mocks.api.validateProxies(any()),
+    ).thenAnswer((_) async => const {});
     final container = ProviderContainer(
       overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
         customGroupNamesProvider.overrideWith(
           (_) => Stream.value(const <String>{}),
         ),
@@ -1914,12 +1929,14 @@ void main() {
       'options they list empty, do not reapply', (tester) async {
     _setViewport(tester);
     final action = _RecordingClashProvidersAction();
-    final core = _MockCore();
+    final mocks = coreMocks();
     registerFallbackValue(<Map<String, dynamic>>[]);
-    when(() => core.validateProxies(any())).thenAnswer((_) async => const {});
+    when(
+      () => mocks.api.validateProxies(any()),
+    ).thenAnswer((_) async => const {});
     final container = ProviderContainer(
       overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
         customGroupNamesProvider.overrideWith(
           (_) => Stream.value(const <String>{}),
         ),

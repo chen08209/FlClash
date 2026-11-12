@@ -388,7 +388,7 @@ class MitmModulesAction extends _$MitmModulesAction {
   /// back even with auto update off.
   Future<void> autoUpdate() async {
     final setting = ref.read(patchClashConfigProvider);
-    if (!mitmFeature || _autoUpdating || !ref.mounted || !setting.mitm.enable) {
+    if (!rsFeature || _autoUpdating || !ref.mounted || !setting.mitm.enable) {
       return;
     }
     _autoUpdating = true;

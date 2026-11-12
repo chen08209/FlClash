@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:fl_clash/core/core.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -189,7 +190,7 @@ class _ProviderItemState extends ConsumerState<ProviderItem> {
           title: provider.name,
           load: isRuleSet
               ? () async =>
-                    CodeForgeDocument.fromText(await core.dumpRuleSet(path))
+                    CodeForgeDocument.fromText(await core.api.dumpRules(path))
               : () => _openProviderText(path),
           schema: EditorSchema.provider,
         ),

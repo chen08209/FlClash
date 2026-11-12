@@ -415,10 +415,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get stopVpn => 'Остановка VPN…';
 
   @override
-  String get localNetworkDeniedTip =>
-      'Доступ к локальной сети запрещён: используется стек gvisor, локальная сеть недоступна.';
-
-  @override
   String get compatible => 'Режим совместимости';
 
   @override

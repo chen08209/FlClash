@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:fl_clash/core/core.dart';
 import 'dart:collection';
 import 'dart:io';
 import 'dart:ui' show Locale;
@@ -95,14 +96,14 @@ class Requests extends _$Requests with AutoDisposeNotifierMixin {
     return FixedList(maxRequestsLength);
   }
 
-  void addRequest(TrackerInfo value) {
+  void addRequests(Iterable<TrackerInfo> values) {
     if (!ref.mounted) {
       return;
     }
-    this.value = state.append(value);
+    value = state.appendAll(values);
   }
 
-  void updateTraffic(Map<String, RequestTraffic> traffic) {
+  void updateTraffic(Map<int, RequestTraffic> traffic) {
     if (!ref.mounted) {
       return;
     }
@@ -135,11 +136,11 @@ class DnsQueries extends _$DnsQueries with AutoDisposeNotifierMixin {
     return FixedList(maxDnsQueriesLength);
   }
 
-  void addQuery(DnsQuery value) {
+  void addQueries(Iterable<DnsQuery> values) {
     if (!ref.mounted) {
       return;
     }
-    this.value = state.append(value);
+    value = state.appendAll(values);
   }
 }
 
@@ -175,7 +176,7 @@ class Providers extends _$Providers with AutoDisposeNotifierMixin {
   }
 
   Future<void> syncProviders() async {
-    value = await ref.read(coreHandlerProvider).getExternalProviders();
+    value = await ref.read(coreHandlerProvider).api.getExternalProviders();
   }
 }
 

@@ -71,9 +71,9 @@ class ClashProvidersAction extends _$ClashProvidersAction {
   }) async {
     // Made here, or a Core running as root would create it as its own.
     await File(await provider.path).parent.create(recursive: true);
-    final info = await _core.compileRuleSet(
+    final info = await _core.api.compileRules(
       provider.fileName,
-      url: download ? provider.url : '',
+      url: download ? provider.url : null,
     );
     final next = provider.withInfo(info);
     if (!next.isCompiled) {
@@ -90,7 +90,7 @@ class ClashProvidersAction extends _$ClashProvidersAction {
     final staged = await appPath.getProviderCachePath(stagedName);
     try {
       await File(staged).safeWriteAsBytes(content);
-      final next = provider.withInfo(await _core.compileRuleSet(stagedName));
+      final next = provider.withInfo(await _core.api.compileRules(stagedName));
       if (next.isCompiled) {
         await File('$staged.mrs').rename(await next.compiledPath);
       } else {
@@ -250,7 +250,7 @@ class ClashProvidersAction extends _$ClashProvidersAction {
       return;
     }
     try {
-      await _core.updateExternalProvider(provider.label);
+      await _core.api.updateProvider(provider.label);
       return;
     } catch (error) {
       commonPrint.log(

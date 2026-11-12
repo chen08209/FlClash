@@ -127,7 +127,7 @@ object NetworkObserver {
             .distinct()
         if (dnsList != currentDnsList) {
             currentDnsList = dnsList
-            Core.updateDNS(dnsList.joinToString(","))
+            Core.updateDns(dnsList)
         }
         val network = preferred?.key ?: return
         // Sockets protected onto the network we left stay bound to it; closing

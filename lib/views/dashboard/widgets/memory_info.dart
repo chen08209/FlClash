@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
@@ -76,7 +76,7 @@ Future<MemorySnapshot> _readSnapshot(WidgetRef ref) async {
   final rss = ProcessInfo.currentRss;
   final coreConnected = ref.read(coreStatusProvider) == CoreStatus.connected;
   final core = coreConnected
-      ? await ref.read(coreHandlerProvider).getMemoryStats()
+      ? await ref.read(coreHandlerProvider).api.getMemoryStats()
       : null;
   return MemorySnapshot.resolve(
     rss: rss,
@@ -313,7 +313,7 @@ class _MemoryDetailSheetState extends ConsumerState<MemoryDetailSheet>
   /// Resolves to the bytes freed.
   Future<int> _release() async {
     final before = _snapshot.total;
-    await ref.read(coreHandlerProvider).forceGc();
+    await ref.read(coreHandlerProvider).api.releaseMemory();
     if (!mounted) {
       return 0;
     }
@@ -378,39 +378,28 @@ class _MemoryDetailSheetState extends ConsumerState<MemoryDetailSheet>
       return [ListItem(title: Text(appLocalizations.memoryCoreNotRunning))];
     }
     final total = snapshot.coreTotal;
+    final reported = [
+      (appLocalizations.memoryCoreHeapInuse, core.heapInuse),
+      (appLocalizations.memoryCoreHeapIdle, core.heapIdle),
+      (appLocalizations.memoryCoreStack, core.stackInuse),
+      (appLocalizations.memoryCoreRuntime, core.runtimeOther),
+      (
+        core.runtimeTotal > 0
+            ? appLocalizations.other
+            : appLocalizations.memoryAppResident,
+        snapshot.coreOther,
+      ),
+    ];
     return [
-      _MemoryRow(
-        label: appLocalizations.memoryCoreHeapInuse,
-        bytes: core.heapInuse,
-        total: total,
-      ),
-      _MemoryRow(
-        label: appLocalizations.memoryCoreHeapIdle,
-        bytes: core.heapIdle,
-        total: total,
-      ),
-      _MemoryRow(
-        label: appLocalizations.memoryCoreStack,
-        bytes: core.stackInuse,
-        total: total,
-      ),
-      _MemoryRow(
-        label: appLocalizations.memoryCoreRuntime,
-        bytes: core.runtimeOther,
-        total: total,
-      ),
-      if (snapshot.coreOther > 0)
-        _MemoryRow(
-          label: appLocalizations.other,
-          bytes: snapshot.coreOther,
-          total: total,
-        ),
+      for (final (label, bytes) in reported)
+        if (bytes > 0) _MemoryRow(label: label, bytes: bytes, total: total),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
+    final coreItems = _coreItems(appLocalizations, _snapshot);
     return Scaffold(
       title: appLocalizations.memoryInfo,
       actions: [
@@ -437,12 +426,13 @@ class _MemoryDetailSheetState extends ConsumerState<MemoryDetailSheet>
             bytes: _snapshot.app,
             items: _appItems(appLocalizations, _snapshot),
           ),
-          _MemorySection(
-            title: appLocalizations.core,
-            bytes: _snapshot.coreTotal,
-            contentKey: ValueKey(_snapshot.core != null),
-            items: _coreItems(appLocalizations, _snapshot),
-          ),
+          if (coreItems.isNotEmpty)
+            _MemorySection(
+              title: appLocalizations.core,
+              bytes: _snapshot.coreTotal,
+              contentKey: ValueKey(_snapshot.core != null),
+              items: coreItems,
+            ),
         ],
       ),
     );
@@ -547,7 +537,7 @@ class _MemoryOverview extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            snapshot.coreInProcess
+            snapshot.coreInProcess && !rsFeature
                 ? appLocalizations.memoryEstimateSharedDesc
                 : appLocalizations.memoryEstimateDesc,
             style: AppTextStyle.footnote

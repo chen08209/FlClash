@@ -2,8 +2,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/ip_quality.dart';
 import 'package:fl_clash/common/service_probe.dart'
     show directOutbound, routedOutbound;
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/ip_quality.dart';
@@ -25,6 +24,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../helpers/core_mocks.dart';
 import '../../helpers/glyph_finders.dart';
 import '../../helpers/test_app.dart';
 import 'package:prism_ui/prism_ui.dart';
@@ -41,8 +41,6 @@ const _residential = IpQuality(
   organization: 'Example Broadband',
   asn: 64500,
 );
-
-class _MockCore extends Mock implements CoreHandlerInterface {}
 
 class _RecordingSetupAction extends SetupAction {
   final requests = <bool>[];
@@ -71,12 +69,44 @@ class _Ips extends OutboundIpProbe {
   void unwatch(String target) {}
 }
 
-OutboundIpResult _address({int coreEpoch = 1}) => OutboundIpResult(
+OutboundIp _address({int coreEpoch = 1}) => OutboundIp(
   url: 'https://www.cloudflare.com/cdn-cgi/trace',
   body: 'ip=$_ip\nloc=GB\n',
-  coreEpoch: coreEpoch,
-  routeVersion: 1,
+  delay: 0,
+  chains: const [],
+  stamp: RouteStampDto(epoch: coreEpoch, version: 1),
+  hits: const [],
+  nodeHits: const [],
 );
+
+const _timedOut = OutboundIp(
+  url: '',
+  body: '',
+  delay: 0,
+  chains: [],
+  error: 'timeout',
+  stamp: RouteStampDto(epoch: 1, version: 1),
+  hits: [],
+  nodeHits: [],
+);
+
+When<Future<OutboundIp>> _whenProbed(MockCoreApi api) => when(
+  () => api.outboundIp(
+    any(),
+    any(),
+    timeout: any(named: 'timeout'),
+    guard: any(named: 'guard'),
+  ),
+);
+
+void _verifyProbed(MockCoreApi api, {required int times}) => verify(
+  () => api.outboundIp(
+    any(),
+    any(),
+    timeout: any(named: 'timeout'),
+    guard: any(named: 'guard'),
+  ),
+).called(times);
 
 Widget _card({DashboardDensity density = DashboardDensity.standard}) =>
     HostScaffold(
@@ -120,7 +150,7 @@ Widget _app(
 }
 
 Widget _probingApp(
-  CoreHandlerInterface core, {
+  CoreController core, {
   Future<IpQuality> Function(Ref ref, String ip)? quality,
 }) {
   return TestApp(
@@ -137,7 +167,7 @@ Widget _probingApp(
           live: true,
         ),
       ),
-      coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+      coreHandlerProvider.overrideWithValue(core),
       ipQualityProvider.overrideWith(quality ?? (_, _) async => _residential),
     ],
     child: _card(),
@@ -168,11 +198,6 @@ DashboardChip _chip(WidgetTester tester, String label) =>
     );
 
 void main() {
-  setUp(() {
-    mitmFeature = true;
-    addTearDown(() => mitmFeature = false);
-  });
-
   setUpAll(() => registerFallbackValue(const OutboundIpParams(timeout: 0)));
 
   group('root access', () {
@@ -295,12 +320,12 @@ void main() {
     testWidgets('checks a failed quality again from its clover', (
       tester,
     ) async {
-      final core = _MockCore();
-      when(() => core.outboundIp(any())).thenAnswer((_) async => _address());
+      final mocks = coreMocks();
+      _whenProbed(mocks.api).thenAnswer((_) async => _address());
       var calls = 0;
       await tester.pumpWidget(
         _probingApp(
-          core,
+          mocks.controller,
           quality: (_, _) async {
             calls++;
             throw const IpQualityLookupException([]);
@@ -315,7 +340,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(calls, 2);
-      verify(() => core.outboundIp(any())).called(2);
+      _verifyProbed(mocks.api, times: 2);
     });
 
     testWidgets('names its network by ASN when the organization is unknown', (
@@ -449,17 +474,16 @@ void main() {
     testWidgets('that fails once keeps checking for a second answer', (
       tester,
     ) async {
-      final core = _MockCore();
+      final mocks = coreMocks();
       var failing = true;
-      when(() => core.outboundIp(any())).thenAnswer((invocation) async {
-        final params =
-            invocation.positionalArguments.single as OutboundIpParams;
-        if (params.proxyName != directOutbound && failing) {
+      _whenProbed(mocks.api).thenAnswer((invocation) async {
+        final proxyName = invocation.positionalArguments.first as String;
+        if (proxyName != directOutbound && failing) {
           throw TimeoutException('no answer');
         }
         return _address();
       });
-      await tester.pumpWidget(_probingApp(core));
+      await tester.pumpWidget(_probingApp(mocks.controller));
       await tester.pump();
       await tester.pump(commonDuration);
       expect(find.text(_ip), findsOneWidget);
@@ -480,19 +504,18 @@ void main() {
     testWidgets('that fails twice is shown, then asked again behind it', (
       tester,
     ) async {
-      final core = _MockCore();
+      final mocks = coreMocks();
       final asked = <String>[];
       const failing = true;
-      when(() => core.outboundIp(any())).thenAnswer((invocation) async {
-        final params =
-            invocation.positionalArguments.single as OutboundIpParams;
-        asked.add(params.proxyName);
-        if (params.proxyName != directOutbound && failing) {
+      _whenProbed(mocks.api).thenAnswer((invocation) async {
+        final proxyName = invocation.positionalArguments.first as String;
+        asked.add(proxyName);
+        if (proxyName != directOutbound && failing) {
           throw TimeoutException('no answer');
         }
         return _address();
       });
-      await tester.pumpWidget(_probingApp(core));
+      await tester.pumpWidget(_probingApp(mocks.controller));
       await tester.pump();
       await tester.pump(commonDuration);
 
@@ -516,19 +539,12 @@ void main() {
     testWidgets('that timed out is shown without a second attempt', (
       tester,
     ) async {
-      final core = _MockCore();
-      when(() => core.outboundIp(any())).thenAnswer((invocation) async {
-        final params =
-            invocation.positionalArguments.single as OutboundIpParams;
-        return params.proxyName == directOutbound
-            ? _address()
-            : const OutboundIpResult(
-                error: 'timeout',
-                coreEpoch: 1,
-                routeVersion: 1,
-              );
+      final mocks = coreMocks();
+      _whenProbed(mocks.api).thenAnswer((invocation) async {
+        final proxyName = invocation.positionalArguments.first as String;
+        return proxyName == directOutbound ? _address() : _timedOut;
       });
-      await tester.pumpWidget(_probingApp(core));
+      await tester.pumpWidget(_probingApp(mocks.controller));
       await tester.pump();
       await tester.pump(commonDuration);
 

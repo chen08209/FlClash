@@ -25,6 +25,11 @@ String _generalOverrideDescription(AppLocalizations l) => l.generalOverrideDesc;
 String? _validateTestUrl(String? value, AppLocalizations l) =>
     value?.isUrl == true ? null : l.urlTip(l.testUrl);
 
+final _generalOverrideKeys = [
+  for (final key in GeneralOverrideKey.values)
+    if (!rsFeature || key != GeneralOverrideKey.geodataLoader) key,
+];
+
 const _generalOverrideSpec = _GeneralOverrideSpec();
 
 class _GeneralOverrideSpec
@@ -43,7 +48,7 @@ class _GeneralOverrideSpec
   String title(AppLocalizations l) => l.core;
 
   @override
-  List<GeneralOverrideKey> get values => GeneralOverrideKey.values;
+  List<GeneralOverrideKey> get values => _generalOverrideKeys;
 
   @override
   NullStatusIllustration get illustration => NullStatusIllustration.data;

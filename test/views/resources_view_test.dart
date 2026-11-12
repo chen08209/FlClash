@@ -24,11 +24,6 @@ import '../helpers/test_database_providers.dart';
 import 'package:prism_ui/prism_ui.dart';
 
 void main() {
-  setUp(() {
-    mitmFeature = true;
-    addTearDown(() => mitmFeature = false);
-  });
-
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory home;

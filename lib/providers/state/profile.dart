@@ -85,7 +85,7 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
         );
   final allProfileProviders = ref.watch(profileProvidersProvider);
   final mitmModules =
-      mitmFeature &&
+      rsFeature &&
           ref.watch(
             patchClashConfigProvider.select((state) => state.mitm.enable),
           )

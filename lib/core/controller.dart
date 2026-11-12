@@ -3,8 +3,6 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
-import 'package:fl_clash/core/interface.dart';
-import 'package:fl_clash/core/spill.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
@@ -12,9 +10,9 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 
-/// Every [CoreHandlerInterface] method passes through unless redeclared here.
-extension type CoreController._(CoreHandlerInterface _interface)
-    implements CoreHandlerInterface {
+/// The lifecycle of the Core and its [api], with the few operations that
+/// compose several calls or turn app models into API arguments.
+extension type CoreController._(CoreBackend _backend) implements CoreBackend {
   static CoreController? _instance;
 
   factory CoreController() {
@@ -24,12 +22,12 @@ extension type CoreController._(CoreHandlerInterface _interface)
   }
 
   @visibleForTesting
-  factory CoreController.test(CoreHandlerInterface interface) {
-    return _instance = CoreController._(interface);
+  factory CoreController.test(CoreBackend backend) {
+    return _instance = CoreController._(backend);
   }
 
   @visibleForTesting
-  CoreController.scoped(this._interface);
+  CoreController.scoped(this._backend);
 
   @visibleForTesting
   static void resetInstance() {
@@ -79,8 +77,7 @@ extension type CoreController._(CoreHandlerInterface _interface)
   Future<void> init(int version) async {
     await ensureHomeDir();
     await initGeo();
-    final homeDirPath = await appPath.homeDirPath;
-    await _interface.init(InitParams(homeDir: homeDirPath, version: version));
+    await api.init(home: await appPath.homeDirPath, sdkInt: version);
   }
 
   /// An age-encrypted config is rewritten in place into its plaintext, and a
@@ -94,17 +91,16 @@ extension type CoreController._(CoreHandlerInterface _interface)
       if (ageSecretKey.isEmpty) {
         throw const AgeSecretKeyRequiredException();
       }
-      await file.safeWriteAsString(
-        await _interface.decryptConfig(path, ageSecretKey),
-      );
+      final plain = await api.decryptConfig(path, ageSecretKey);
+      await file.safeWriteAsString(plain.text ?? '');
     }
-    final issue = await _interface.validateConfig(path);
+    final issue = await _firstIssue(path);
     if (issue == null) {
       return null;
     }
     final List<Map<String, dynamic>> proxies;
     try {
-      proxies = await _interface.convertProxies(path);
+      proxies = await api.convertSubscription(path);
     } on Exception {
       return issue;
     }
@@ -112,28 +108,35 @@ extension type CoreController._(CoreHandlerInterface _interface)
       return issue;
     }
     await file.safeWriteAsString(await encodeYamlTask({'proxies': proxies}));
-    return _interface.validateConfig(path);
+    return _firstIssue(path);
   }
+
+  Future<String?> _firstIssue(String path) async {
+    final issues = await api.validateConfig(path);
+    return issues.firstOrNull?.message;
+  }
+
+  Future<String?> validateConfig(String path) => _firstIssue(path);
 
   Future<Map<int, String>> validateProxies(List<Map<String, dynamic>> proxies) {
     if (proxies.isEmpty) {
       return Future.value(const {});
     }
-    return _interface.validateProxies(proxies);
+    return api.validateProxies(proxies);
   }
 
   Future<Map<int, String>> validateFilters(List<String> filters) {
     if (filters.isEmpty) {
       return Future.value(const {});
     }
-    return _interface.validateFilters(filters);
+    return api.validateFilters(filters);
   }
 
   Future<List<String>> encodeShareLinks(List<Map<String, dynamic>> proxies) {
     if (proxies.isEmpty) {
       return Future.value(const []);
     }
-    return _interface.encodeShareLinks(proxies);
+    return api.encodeLinks(proxies);
   }
 
   Future<List<List<Map<String, dynamic>>>> decodeShareLinks(
@@ -142,7 +145,7 @@ extension type CoreController._(CoreHandlerInterface _interface)
     if (lines.isEmpty) {
       return Future.value(const []);
     }
-    return _interface.decodeShareLinks(lines);
+    return api.decodeLinks(lines);
   }
 
   Future<String?> validateConfigWithData(List<int> data) async {
@@ -150,21 +153,36 @@ extension type CoreController._(CoreHandlerInterface _interface)
     final file = File(path);
     await file.safeWriteAsBytes(data);
     try {
-      return await _interface.validateConfig(path);
+      return await _firstIssue(path);
     } finally {
       await file.safeDelete();
     }
+  }
+
+  Future<List<ConfigWarning>> getConfigWarnings() async {
+    final warnings = await api.lastWarnings();
+    return warnings.map(warningOf).toList();
   }
 
   Future<void> setupConfig({
     required SetupParams params,
     Future<void> Function()? preloadInvoke,
   }) async {
+    final base = params.base;
+    final apply = api.applyConfig(
+      profilePath: base?.path,
+      overlay: base?.overlay,
+      selection: params.selectedMap,
+      options: coreOptionsArgOf(params.options),
+    );
     if (preloadInvoke == null) {
-      return _interface.setupConfig(params);
+      await apply;
+      return;
     }
-    await (_interface.setupConfig(params), preloadInvoke()).wait;
+    await (apply, preloadInvoke()).wait;
   }
+
+  Future<int> updateConfig(ConfigPatch patch) => api.patchConfig(patch);
 
   Future<List<Group>> getProxiesGroups({
     required ProxiesSortType sortType,
@@ -172,10 +190,10 @@ extension type CoreController._(CoreHandlerInterface _interface)
     required Map<String, String> selectedMap,
     required String defaultTestUrl,
   }) async {
-    final proxiesData = await _interface.getProxies();
+    final proxyGroups = await api.proxyGroups();
     return toGroupsTask(
       ComputeGroupsState(
-        proxiesData: proxiesData,
+        proxyGroups: proxyGroups,
         sortType: sortType,
         delayMap: delayMap,
         selectedMap: selectedMap,
@@ -186,25 +204,35 @@ extension type CoreController._(CoreHandlerInterface _interface)
 
   Future<Map<String, dynamic>> readConfig(int id) async {
     final path = await appPath.getProfilePath(id.toString());
-    final data = await _interface.readConfig(path);
-    data['rules'] = data['rule'];
-    data.remove('rule');
-    return data;
+    final read = await api.readConfig(path);
+    return read.config ?? {};
   }
 
   Future<Map<String, dynamic>> getProfileOutbounds(int id) async {
-    return _interface.getProfileOutbounds(
+    final outbounds = await api.profileOutbounds(
       await appPath.getProfilePath(id.toString()),
     );
+    return {
+      'proxies': [
+        for (final item in outbounds.proxies)
+          {'name': item.name, 'type': item.type},
+      ],
+      'proxy-groups': [
+        for (final item in outbounds.proxyGroups)
+          {'name': item.name, 'type': item.type},
+      ],
+    };
   }
 
   Future<String> buildProfile(SetupBase base) async {
-    return readSpilledText(await _interface.buildProfile(base));
+    final built = await api.buildProfile(base.path, base.overlay);
+    return built.text ?? '';
   }
 
   Future<({ProfileBase base, String path})> getProfileBase(int id) async {
     final path = await appPath.getProfilePath(id.toString());
-    final base = await _interface.getProfileBase(path);
+    final inspect = await api.inspectProfile(path);
+    final base = profileBaseOf(inspect);
     final config = Map<String, dynamic>.from(base.config)..remove('rule');
     return (base: base.copyWith(config: config), path: path);
   }

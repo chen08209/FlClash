@@ -82,7 +82,7 @@ const _$DnsModeEnumMap = {
 };
 
 _TrackerInfo _$TrackerInfoFromJson(Map<String, dynamic> json) => _TrackerInfo(
-  id: json['id'] as String,
+  id: (json['id'] as num).toInt(),
   upload: (json['upload'] as num?)?.toInt() ?? 0,
   download: (json['download'] as num?)?.toInt() ?? 0,
   start: DateTime.parse(json['start'] as String),

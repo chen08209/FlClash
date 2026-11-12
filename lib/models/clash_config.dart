@@ -1,7 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/core.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:yaml/yaml.dart';
 
@@ -1189,13 +1188,12 @@ extension TunExt on Tun {
     return subtractCidrsTask(routeAddress, excluded, wholeWhenEmpty: true);
   }
 
-  Map<String, Object?> get coreJson {
-    final json = toJson();
-    return {
-      for (final key in const ['enable', 'device', 'stack']) key: json[key],
-      'auto-route': true,
-    };
-  }
+  Map<String, Object?> get coreJson => {
+    'enable': enable,
+    'device': device,
+    if (!rsFeature) 'stack': stack.name,
+    'auto-route': true,
+  };
 }
 
 @freezed
@@ -2326,40 +2324,13 @@ class MitmRules {
 }
 
 extension PatchClashConfigExt on PatchClashConfig {
-  T? _picked<T>(GeneralOverrideKey key, T value) =>
-      generalOverrideKeys.contains(key) ? value : null;
-
   Map<String, Object?> get generalOverrideJson => _overrideJson(
     toJson(),
     GeneralOverrideKey.values,
     generalOverrideKeys.difference(const {GeneralOverrideKey.testUrl}),
   );
 
-  UpdateParams toUpdateParams({
-    required List<String> authentication,
-    required CoreOptions options,
-  }) {
-    return UpdateParams(
-      tun: tun,
-      authentication: authentication,
-      allowLan: allowLan,
-      findProcessMode: findProcessMode,
-      mode: mode,
-      logLevel: logLevel,
-      ipv6: _picked(GeneralOverrideKey.ipv6, ipv6),
-      tcpConcurrent: _picked(GeneralOverrideKey.tcpConcurrent, tcpConcurrent),
-      externalController: externalController,
-      secret: secret,
-      unifiedDelay: _picked(GeneralOverrideKey.unifiedDelay, unifiedDelay),
-      mixedPort: mixedPort,
-      geoAutoUpdate: geoAutoUpdate,
-      geoUpdateInterval: geoUpdateInterval,
-      geoXUrl: geoXUrl.raw,
-      options: options,
-    );
-  }
-
-  /// Resets every field [toUpdateParams] patches live, leaving what only a
+  /// Resets every field [configPatchOf] patches live, leaving what only a
   /// full setup hands the Core.
   PatchClashConfig get setupOnly => copyWith(
     tun: defaultClashConfig.tun,

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod/riverpod.dart';
@@ -121,9 +121,12 @@ mixin RoutedProbe<K, V>
   Duration get confirmDelay => probeConfirmDelay;
 
   @protected
-  Future<RouteCheck> checkRoutes(List<List<RouteHit>> routes) => ref
-      .read(coreHandlerProvider)
-      .checkRoutes(CheckRoutesParams(routes: routes));
+  Future<RouteCheck> checkRoutes(List<List<RouteHit>> routes) async =>
+      routeCheckOf(
+        await ref.read(coreHandlerProvider).api.checkRoutes([
+          for (final route in routes) route.map(routeHitDtoOf).toList(),
+        ]),
+      );
 
   @protected
   RoutedProbeState<K, V> buildProbe() {

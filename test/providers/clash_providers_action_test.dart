@@ -3,9 +3,7 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
-import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/database/database.dart' as db;
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -19,9 +17,8 @@ import 'package:mocktail/mocktail.dart';
 import 'package:riverpod/riverpod.dart';
 
 import '../helpers/app_paths.dart';
+import '../helpers/core_mocks.dart';
 import '../helpers/test_profiles.dart';
-
-class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 class _RecordingSetupAction extends SetupAction {
   final forced = <bool>[];
@@ -103,18 +100,16 @@ void main() {
     reloadError = null;
     final cacheRoot = Directory(await appPath.providerCacheRootPath);
     if (cacheRoot.existsSync()) cacheRoot.deleteSync(recursive: true);
-    final core = _MockCoreHandlerInterface();
-    when(() => core.updateExternalProvider(any())).thenAnswer((
-      invocation,
-    ) async {
+    final mocks = coreMocks();
+    when(() => mocks.api.updateProvider(any())).thenAnswer((invocation) async {
       reloads.add(invocation.positionalArguments.single as String);
       if (reloadError case final error?) throw error;
     });
-    when(() => core.compileRuleSet(any(), url: any(named: 'url'))).thenAnswer((
-      invocation,
-    ) async {
+    when(
+      () => mocks.api.compileRuleSet(any(), url: any(named: 'url')),
+    ).thenAnswer((invocation) async {
       final name = invocation.positionalArguments.single as String;
-      final url = invocation.namedArguments[#url] as String;
+      final url = invocation.namedArguments[#url] as String? ?? '';
       await compileGate?.future;
       compiles.add((name: name, url: url));
       if (compileError case final error?) throw error;
@@ -130,7 +125,10 @@ void main() {
           '${source.path}.mrs',
         ).writeAsStringSync('mrs of ${source.readAsStringSync()}');
       }
-      return compiled;
+      return RuleSetInfoDto(
+        behavior: compiled.behavior.name,
+        format: compiled.format.name,
+      );
     });
     container = ProviderContainer(
       overrides: [
@@ -138,7 +136,7 @@ void main() {
           () => TestProfiles([profile, standardProfile, otherCustom]),
         ),
         setupActionProvider.overrideWith(() => setup),
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
       ],
     );
     container.listen(currentProfileProvider, (_, _) {});
@@ -528,7 +526,7 @@ void main() {
 
     test('reapplies when the Core does not run it', () async {
       reloadError = const CoreMethodException(
-        code: 'provider_not_found',
+        code: 'not_found',
         message: 'Remote',
       );
 
@@ -646,7 +644,7 @@ void main() {
   });
 
   test('prepare leaves a set the Core cannot build to the Core', () async {
-    compileError = const CoreMethodException(code: 'core_error', message: '');
+    compileError = const CoreMethodException(code: 'rejected', message: '');
 
     expect(await action().prepare(rules), rules);
   });

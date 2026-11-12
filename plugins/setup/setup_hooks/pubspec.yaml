@@ -1,5 +1,5 @@
 name: setup_hooks
-description: Build logic behind FlClash's setup build hook — compiles the Go core and Rust helper.
+description: Build logic behind FlClash's setup build hook — compiles the Concord core and Rust helper.
 publish_to: none
 version: 1.0.0
 

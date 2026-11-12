@@ -3,8 +3,7 @@ import 'dart:async';
 import 'package:drift/native.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/mitm_module.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -19,6 +18,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:prism_ui/loading.dart';
 import 'package:prism_ui/switch.dart';
 
+import '../helpers/core_mocks.dart';
 import '../helpers/test_app.dart';
 
 const _module = r'''
@@ -41,8 +41,6 @@ const _resources = {
   'https://example.com/ads.js': 'ads.js',
   'https://example.com/daily.js': 'daily.js',
 };
-
-class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 final _remote = MitmModule(
   id: 1,
@@ -79,7 +77,7 @@ void main() {
   Future<void> pump(
     WidgetTester tester,
     Widget child, {
-    CoreHandlerInterface? core,
+    CoreController? core,
   }) async {
     tester.view.physicalSize = const Size(1000, 2000);
     tester.view.devicePixelRatio = 1;
@@ -92,8 +90,7 @@ void main() {
     final content = parseMitmModule(_module, resources: _resources);
     container = ProviderContainer(
       overrides: [
-        if (core != null)
-          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        if (core != null) coreHandlerProvider.overrideWithValue(core),
         mitmModuleDetailsProvider(_remote.id).overrideWith(
           (ref) async => (
             content: content,
@@ -180,10 +177,12 @@ void main() {
   testWidgets('a cron script runs from its menu and shows what it wrote', (
     tester,
   ) async {
-    final core = _MockCoreHandlerInterface();
-    final run = Completer<MitmScriptOutput>();
-    when(() => core.runMitmScript('Daily')).thenAnswer((_) => run.future);
-    await pump(tester, MitmModuleView(id: _remote.id), core: core);
+    final mocks = coreMocks();
+    final run = Completer<Object?>();
+    when(
+      () => mocks.api.runMitmScript('Daily', guard: any(named: 'guard')),
+    ).thenAnswer((_) => run.future);
+    await pump(tester, MitmModuleView(id: _remote.id), core: mocks.controller);
     container.listen(patchClashConfigProvider, (_, _) {});
     container.read(patchClashConfigProvider.notifier).value =
         const PatchClashConfig(mitm: Mitm(enable: true));
@@ -205,15 +204,15 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     expect(find.text(currentAppLocalizations.mitmRunScript), findsNothing);
 
-    run.complete(
-      const MitmScriptOutput(
-        logs: ['checked in'],
-        result: '{"title":"Points","content":"+3"}',
-      ),
-    );
+    run.complete({
+      'logs': ['checked in'],
+      'result': '{"title":"Points","content":"+3"}',
+    });
     await tester.pumpAndSettle();
 
-    verify(() => core.runMitmScript('Daily')).called(1);
+    verify(
+      () => mocks.api.runMitmScript('Daily', guard: any(named: 'guard')),
+    ).called(1);
     expect(find.byType(ActivityIndicator), findsNothing);
     expect(
       find.text('Points\n+3\nchecked in', findRichText: true),

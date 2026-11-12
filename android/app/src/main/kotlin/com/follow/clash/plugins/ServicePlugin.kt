@@ -5,6 +5,7 @@ import com.follow.clash.ServiceState
 import com.follow.clash.common.Components
 import com.follow.clash.common.GlobalState
 import com.follow.clash.core.Core
+import com.follow.clash.core.NativeCore
 import com.follow.clash.models.SharedState
 import com.follow.clash.service.NetworkObserver
 import com.google.gson.Gson
@@ -26,6 +27,9 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     private lateinit var scope: CoroutineScope
     private val gson = Gson()
     private var commandRevision = 0
+
+    @Volatile
+    private var dartSession = 0L
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -52,11 +56,13 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         coreChannel.setMethodCallHandler(null)
         scope.cancel()
         ServiceController.setEventListener(null)
+        closeDartSession()
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
-            "init" -> initialize(result)
+            "init" -> initialize(call, result)
+            "session" -> attachSession(call, result)
             "shutdown" -> shutdown(result)
             "getRunTime" -> getRunTime(result)
             "syncState" -> syncState(call, result)
@@ -68,16 +74,35 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
     private fun onCoreMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
-            "invokeMethod" -> invokeMethod(call, result)
+            "send" -> sendFrame(call, result)
             else -> result.notImplemented()
         }
     }
 
-    private fun initialize(result: MethodChannel.Result) {
+    private fun initialize(call: MethodCall, result: MethodChannel.Result) {
         NetworkObserver.start()
+        if (call.arguments == FRAMES_FFI) {
+            scope.launch {
+                runCatching { Core.load() }
+                    .onSuccess { result.success("") }
+                    .onFailure { error -> result.success(error.message.orEmpty()) }
+            }
+            return
+        }
         ServiceController.setEventListener(::sendEvent)
             .onSuccess { result.success("") }
             .onFailure { error -> result.success(error.message.orEmpty()) }
+    }
+
+    private fun attachSession(call: MethodCall, result: MethodChannel.Result) {
+        dartSession = (call.arguments as? Number)?.toLong() ?: 0L
+        result.success(null)
+    }
+
+    private fun closeDartSession() {
+        val session = dartSession
+        dartSession = 0L
+        if (session != 0L) NativeCore.close(session)
     }
 
     private fun shutdown(result: MethodChannel.Result) {
@@ -85,17 +110,15 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         result.success(true)
     }
 
-    private fun invokeMethod(call: MethodCall, result: MethodChannel.Result) {
-        val data = call.arguments as? String
+    private fun sendFrame(call: MethodCall, result: MethodChannel.Result) {
+        val data = call.arguments as? ByteArray
         if (data == null) {
-            result.error("INVALID_ARGUMENT", "Method call payload must be a string", null)
+            result.error("INVALID_ARGUMENT", "A frame must be a byte array", null)
             return
         }
-        ServiceController.invokeMethod(data) { response ->
-            result.success(response)
-        }.onFailure { error ->
-            result.error("CORE_ERROR", error.message, null)
-        }
+        ServiceController.sendFrame(data)
+            .onSuccess { result.success(null) }
+            .onFailure { error -> result.error("CORE_ERROR", error.message, null) }
     }
 
     private fun getRunTime(result: MethodChannel.Result) {
@@ -150,5 +173,6 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     private companion object {
         val SERVICE_CHANNEL = "${Components.PACKAGE_NAME}/service"
         val CORE_CHANNEL = "${Components.PACKAGE_NAME}/core"
+        const val FRAMES_FFI = "ffi"
     }
 }

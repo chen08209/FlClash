@@ -2,8 +2,7 @@ import 'dart:async';
 
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/service_probe.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
@@ -12,37 +11,30 @@ import 'package:fl_clash/providers/routed_probe.dart';
 import 'package:fl_clash/providers/service_status.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 
-class _MockCore extends Mock implements CoreHandlerInterface {}
+import '../helpers/core_mocks.dart';
+import '../helpers/probe_dtos.dart';
 
-ServiceCheckItem _item(String name, {String status = 'available'}) =>
-    ServiceCheckItem(
-      name: name,
-      status: status,
-      delay: 12,
-      chains: const ['HK-01'],
-      checkedAt: 1700000000000,
-      coreEpoch: 1,
-      routeVersion: 1,
-    );
+ServiceItem _item(String name, {String status = 'available'}) => serviceItem(
+  name,
+  status: status,
+  delay: 12,
+  chains: const ['HK-01'],
+  checkedAt: 1700000000000,
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(() => registerFallbackValue(const ServiceCheckParams(timeout: 0)));
-
-  late _MockCore core;
-  late List<ServiceCheckParams> sweeps;
+  late CoreMocks mocks;
+  late List<ServiceSweep> sweeps;
 
   setUp(() {
-    core = _MockCore();
+    mocks = coreMocks();
     sweeps = [];
-    when(() => core.serviceCheck(any())).thenAnswer((invocation) async {
-      final params =
-          invocation.positionalArguments.single as ServiceCheckParams;
-      sweeps.add(params);
-      return [for (final name in params.names) _item(name)];
+    stubCheckServices(mocks.api, (sweep) async {
+      sweeps.add(sweep);
+      return [for (final name in sweep.names) _item(name)];
     });
   });
 
@@ -59,7 +51,7 @@ void main() {
             live: synced,
           ),
         ),
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
       ],
     );
     addTearDown(scope.dispose);
@@ -88,7 +80,7 @@ void main() {
         ['youtube'],
         ['claude'],
       ]);
-      expect(sweeps.first.proxyName, isEmpty);
+      expect(sweeps.first.proxy, isEmpty);
       expect(sweeps.first.timeout, probeTimeoutDuration.inMilliseconds);
       final state = stateOf(scope);
       expect(state.entryOf(ServiceTarget.youtube).phase, ProbePhase.fresh);
@@ -99,12 +91,11 @@ void main() {
 
   test('shows each answer as it lands', () async {
     final scope = container();
-    final gates = <String, Completer<List<ServiceCheckItem>>>{};
-    when(() => core.serviceCheck(any())).thenAnswer((invocation) {
-      final params =
-          invocation.positionalArguments.single as ServiceCheckParams;
-      return (gates[params.names.single] = Completer()).future;
-    });
+    final gates = <String, Completer<List<ServiceItem>>>{};
+    stubCheckServices(
+      mocks.api,
+      (sweep) => (gates[sweep.names.single] = Completer()).future,
+    );
 
     notifierOf(scope).refresh(ServiceTarget.values);
     await pumpEventQueue();
@@ -122,9 +113,9 @@ void main() {
     'checks',
     (tester) async {
       final scope = container();
-      when(() => core.serviceCheck(any())).thenAnswer((invocation) {
-        sweeps.add(invocation.positionalArguments.single as ServiceCheckParams);
-        return Completer<List<ServiceCheckItem>>().future;
+      stubCheckServices(mocks.api, (sweep) {
+        sweeps.add(sweep);
+        return Completer<List<ServiceItem>>().future;
       });
       final notifier = notifierOf(scope);
       ServiceTarget.values.forEach(notifier.watch);
@@ -147,7 +138,7 @@ void main() {
     notifierOf(scope).watch(ServiceTarget.bilibili);
     await pumpEventQueue();
 
-    expect(sweeps.single.proxyName, directOutbound);
+    expect(sweeps.single.proxy, directOutbound);
     expect(sweeps.single.names, ['bilibili']);
   });
 
@@ -157,14 +148,14 @@ void main() {
     notifierOf(scope).watch(ServiceTarget.bilibili);
     await pumpEventQueue();
 
-    verifyNever(() => core.serviceCheck(any()));
+    verifyNeverCheckServices(mocks.api);
     expect(stateOf(scope).isLoading(ServiceTarget.bilibili), isFalse);
   });
 
   test('marks a target loading while its check is in flight', () async {
     final scope = container();
-    final gate = Completer<List<ServiceCheckItem>>();
-    when(() => core.serviceCheck(any())).thenAnswer((_) => gate.future);
+    final gate = Completer<List<ServiceItem>>();
+    stubCheckServices(mocks.api, (_) => gate.future);
 
     notifierOf(scope).watch(ServiceTarget.youtube);
     await pumpEventQueue();
@@ -179,8 +170,8 @@ void main() {
     'will not queue a second check for a target already in flight',
     () async {
       final scope = container();
-      final gate = Completer<List<ServiceCheckItem>>();
-      when(() => core.serviceCheck(any())).thenAnswer((_) => gate.future);
+      final gate = Completer<List<ServiceItem>>();
+      stubCheckServices(mocks.api, (_) => gate.future);
       final notifier = notifierOf(scope);
 
       notifier.watch(ServiceTarget.youtube);
@@ -192,7 +183,7 @@ void main() {
       gate.complete([_item('youtube')]);
       await pumpEventQueue();
 
-      verify(() => core.serviceCheck(any())).called(1);
+      verifyCheckServices(mocks.api).called(1);
     },
   );
 
@@ -216,11 +207,9 @@ void main() {
   testWidgets('a timeout is shown as a status and asked again behind it', (
     tester,
   ) async {
-    when(() => core.serviceCheck(any())).thenAnswer((invocation) async {
-      final params =
-          invocation.positionalArguments.single as ServiceCheckParams;
-      sweeps.add(params);
-      return [for (final name in params.names) _item(name, status: 'timeout')];
+    stubCheckServices(mocks.api, (sweep) async {
+      sweeps.add(sweep);
+      return [for (final name in sweep.names) _item(name, status: 'timeout')];
     });
     final scope = container();
     notifierOf(scope).watch(ServiceTarget.youtube);
@@ -262,17 +251,15 @@ void main() {
     tester,
   ) async {
     final scope = container();
-    final gate = Completer<List<ServiceCheckItem>>();
+    final gate = Completer<List<ServiceItem>>();
     var first = true;
-    when(() => core.serviceCheck(any())).thenAnswer((invocation) {
-      final params =
-          invocation.positionalArguments.single as ServiceCheckParams;
-      sweeps.add(params);
+    stubCheckServices(mocks.api, (sweep) {
+      sweeps.add(sweep);
       if (first) {
         first = false;
         return gate.future;
       }
-      return Future.value([for (final name in params.names) _item(name)]);
+      return Future.value([for (final name in sweep.names) _item(name)]);
     });
     notifierOf(scope).watch(ServiceTarget.youtube);
     await tester.pump();

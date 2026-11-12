@@ -15,8 +15,8 @@ const coreManifestName = 'manifest.json';
 const browserUa =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 const packageName = 'com.follow.clash';
-final unixSocketPath = '/tmp/FlClashSocket_${Random().nextInt(10000)}.sock';
-final windowsPipeName = '\\\\.\\pipe\\FlClashCore_${_randomPipeId()}';
+final unixSocketPath = _privateSocketPath();
+final windowsPipeName = '\\\\.\\pipe\\FlClashCore_${_randomId()}';
 const helperPort = 47890;
 const helperPortKey =
     'SYSTEM\\CurrentControlSet\\Services\\$appHelperService\\Runtime';
@@ -24,7 +24,7 @@ const helperPortValue = 'Port';
 const helperSocketPath = '/run/flclash/helper.sock';
 const helperUnitPath = '/etc/systemd/system/flclash-helper.service';
 const helperProtocolVersionHeader = 'x-flclash-helper-protocol';
-final helperProtocolVersion = Platform.isWindows ? '8' : '6';
+final helperProtocolVersion = Platform.isWindows ? '9' : '7';
 const maxTextScale = 1.4;
 const minTextScale = 0.8;
 
@@ -32,13 +32,28 @@ const watchExecution = false;
 
 const safeModeBuild = bool.fromEnvironment('SAFE_MODE');
 
-/// The bundled core has no MITM, so this stays off until one that has it ships.
-/// Not const so tests can cover both states.
-bool mitmFeature = const bool.fromEnvironment('FEATURE_MITM');
+/// Marks what the rs build adds or drops; the code it turns off goes once rs
+/// ships, with this flag.
+const rsFeature = true;
 
 const disclaimerVersion = 1;
 
-String _randomPipeId() {
+String _privateSocketPath() {
+  final runtime = Platform.environment['XDG_RUNTIME_DIR'];
+  final String base;
+  if (Platform.isLinux) {
+    base = runtime != null && RegExp(r'^/run/user/\d{1,10}$').hasMatch(runtime)
+        ? runtime
+        : '/tmp';
+  } else {
+    base = runtime == null || runtime.isEmpty
+        ? Directory.systemTemp.path
+        : runtime;
+  }
+  return '$base/$appName/${_randomId()}.sock';
+}
+
+String _randomId() {
   final random = Random.secure();
   return List.generate(
     16,
@@ -98,10 +113,7 @@ Duration coreGuardFor(int timeout, {int budgetFactor = 2}) =>
 /// Kept in step with serviceSweepBudgetFactor in core/service_check.go.
 const serviceSweepBudgetFactor = 6;
 
-const coreConnectionWaitDuration = Duration(seconds: 10);
-
-/// Keep at or below the Core's delay-test concurrency (`delayTestConcurrency`
-/// in core/delay.go).
+/// The width of one `delay.run`.
 const maxConcurrentDelayTests = 32;
 const maxConcurrentImports = 4;
 const maxConcurrentIconLoads = 8;

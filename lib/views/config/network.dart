@@ -426,11 +426,13 @@ class TunSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     if (!isDesktop) {
-      final isMipsStack = ref.watch(
-        patchClashConfigProvider.select(
-          (state) => state.tun.stack == TunStack.mips,
-        ),
-      );
+      final isMipsStack =
+          rsFeature ||
+          ref.watch(
+            patchClashConfigProvider.select(
+              (state) => state.tun.stack == TunStack.mips,
+            ),
+          );
       return generateSection(
         title: appLocalizations.tun,
         items: tunItems(isMipsStack: isMipsStack),
@@ -486,7 +488,7 @@ List<Widget> networkOptionsItems({
 }) {
   return [
     if (isDesktop) const TUNItem(),
-    const TunStackItem(),
+    if (!rsFeature) const TunStackItem(),
     // mihomo's DefaultSocketHook ignores interface-name on Android
     // (core/lib.go installHooks, vendored dialer.go), so these rows only
     // apply on desktop.

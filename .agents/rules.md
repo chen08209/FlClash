@@ -174,20 +174,38 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
 
 ## Core API Safety
 
+- Do not expose direct filesystem deletion APIs through Core or helper IPC; use
+  a scope-specific cleanup API instead.
+- The desktop IPC socket in `plugins/rust_api` lives in a `0700` directory of the app user (`/run/user/<uid>` or `/tmp` on Linux, `$XDG_RUNTIME_DIR` or the
+  system temp directory on macOS, subdirectory `FlClash`, 128-bit random file name) and admits a Unix peer only when its
+  effective uid is the app's own or root: the Core connects as root whenever it runs setuid for TUN or under the Linux
+  Helper. A launch mode that runs the Core as any other user has to widen `admit` in `ipc/access.rs`, and Windows
+  keeps its identity check on the Dart side, which compares the named-pipe peer PID with the Core it launched.
+- Both ends then prove they hold the session token before `core.hello`, in the transport and not in the RPC layer. The
+  token is the launch's `sessionId`; the Core reads it from one line of standard input and it never goes into argv, the
+  environment, a log line or an error message. The Dart side is `IpcHandshake` (`lib/core/desktop/ipc_auth.dart`), the
+  Rust side `concord_ipc::{initiate, respond}`; changing either changes the wire format both must pin, and
+  `helperProtocolVersion` moves with it.
+- `FfiFrameChannel` carries Dart's frames on Android: in by `concord_send`, out by `Dart_PostCObject` onto a
+  `ReceivePort`. Never `NativeCallable.listener` for it, whose callback is undefined behavior once its
+  isolate is gone while the VPN service lives on. A receiver that reports its host gone ends the session and with it every
+  subscription it held; do not keep a session alive for a host that cannot answer. The service and the app reach the Core
+  without a Flutter engine through `Core.kt`'s typed calls, and those must not block the Core's own threads.
+- Delay-test progress lives in `pendingDelayTestsProvider`, not as a sentinel value in `DelayDataSource`. A delay of 0
+  used to mean "testing", which let a result and the state of a test overwrite each other and left cards spinning
+  forever when the Core restarted. The run owns its keys and releases them in a `finally`, so nothing depends on a
+  reply arriving; core status leaving `connected` cancels every run in flight.
+
+### Reference Go Core
+
+`core/` (the Go core and the `core/Clash.Meta` fork) is retained as reference until milestone M6 removes it. Nothing in the
+build uses it; the rules below constrain Go code in `core/` only.
+
 - `core/Clash.Meta` is a fork of mihomo, and changes to it are budgeted for features, not repairs. Fixing a bug there is
   low priority even when the bug is real and the fix is small: every patch is one more thing to carry across an upstream
   rebase. Solve it on the FlClash side of the boundary and note the mihomo behaviour you are working around. Reach into
   the submodule only for a feature that has nowhere else to live, or when the problem is one the FlClash patches
   themselves introduced — and say which of the two it is in the commit message.
-- Do not expose direct filesystem deletion APIs through Core or helper IPC; use
-  a scope-specific cleanup API instead.
-- The desktop IPC socket in `plugins/rust_api` admits a Unix peer only when its effective uid is the app's own or root:
-  the socket lives in `/tmp`, and the Core connects as root whenever it runs setuid for TUN or under the Linux Helper.
-  A launch mode that runs the Core as any other user has to widen `admit` in `ipc/access.rs`, and Windows
-  keeps its identity check on the Dart side, which compares the named-pipe peer PID with the Core it launched.
-- Keep the shared `CoreMethodCall`/`CoreMethodResponse` JSON envelope structurally identical across Dart, Go, the
-  gomobile binding, and desktop IPC. Do not double-encode `arguments`, `result`, or event batches. A response whose
-  `file` is set was spilled to disk; a transport resolves it with `resolveSpilledResponse` before reading `result`.
 - `core/message.go` carries three event queues, and the split is load-bearing: state (loaded, geo-update,
   route-changed), priority (every other event), and bulk (log, request, DNS). Priority and bulk evict their own oldest
   entry under backpressure, except DNS, which enters the bulk queue through `enqueueState` so a lookup burst cannot push
@@ -218,8 +236,8 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   `send` holds `writeMu` throughout, so every other frame — method responses and the single batcher goroutine behind
   the event queues — waits behind the stalled one. Memory is bounded by the queues; what gives is delivery: the state
   queue fills and `enqueueState` starts dropping, which is the case the `UpdatingAction` sweep above exists for. Nothing
-  on the Dart side restarts the Core over a stall: `CoreRpcClient` times each pending request out on its own and hands
-  the caller `null` (a `no_response` exception for message methods), and the sweep clears core-scope updating state
+  on the Dart side restarts the Core over a stall: `CoreClient` times each pending request out on its own and fails
+  it with a `TimeoutException`, and the sweep clears core-scope updating state
   minutes later. Only a half-written frame that fails outright desynchronizes the stream, and that is the one case
   `send` closes on.
 - Core method handlers are plain functions that return their answer, registered in the `methodHandlers` table in
@@ -230,9 +248,8 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   application. The exported Android entry points in `core/lib.go` do not reach `handleMethodCall`, so each one carries
   its own recovery.
 - A handler fails by returning an `error`: a `*MethodError` travels as it is and anything else under `core_error`. The
-  exception is `withMessage`, for the methods whose result the host reads as a message that is empty on success
-  (`_invokeMessage` in `lib/core/interface.dart`): there a plain error becomes that message and only a `*MethodError`
-  fails the call. Moving a method between the two changes what Dart receives.
+  exception is `withMessage`, for the methods whose result the host reads as a message that is empty on success:
+  there a plain error becomes that message and only a `*MethodError` fails the call. Moving a method between the two changes what Dart receives.
 - `dialer.DefaultSocketHook` and `process.DefaultPackageNameResolver` are installed exactly once, by `installHooks` in
   `core/lib.go`, and never cleared. mihomo checks `DefaultSocketHook` for nil once and dereferences it again when the
   socket is created (`component/dialer/socket_hook.go`), so clearing it while a dial is in flight calls a nil func
@@ -258,10 +275,6 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   `handleTestDelay` returns within its two timeouts on every path. `testDelay` therefore throws instead of answering a
   `-1` delay, and `ProxiesAction` leaves the last measurement in place and abandons the rest of the run. Writing a
   timeout there is what made a reachable node read as unreachable whenever the host deadline beat the Core's.
-- Delay-test progress lives in `pendingDelayTestsProvider`, not as a sentinel value in `DelayDataSource`. A delay of 0
-  used to mean "testing", which let a result and the state of a test overwrite each other and left cards spinning
-  forever when the Core restarted. The run owns its keys and releases them in a `finally`, so nothing depends on a
-  reply arriving; core status leaving `connected` cancels every run in flight.
 - Some constants in `lib/common/constant.dart` mirror the Core and move with it. `delayTimedOutValue` is the `-1` that
   `core/delay.go` reports for a delay test that ran out of time; any other negative value failed outright.
   `downloadTimeoutDuration` matches mihomo's `resource.DefaultHttpTimeout`, which bounds the Core's provider downloads
@@ -283,6 +296,12 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   Android-only files take `//go:build android` and desktop-only ones `!android`, so `GOOS=android CGO_ENABLED=0 go vet`
   checks the Android side without an NDK. Keep it that way; cgo in `core/` puts the NDK back in front of that vet and of
   `go build ./...` on every developer machine.
+- A Go test in `core/` that reaches `sendMessage` — directly, or through `handleStartLog` or `updater.GeoUpdateHook` —
+  leaves events in the process-wide batcher, which flushes them up to `messageBatchInterval` later into whichever
+  connection `captureFrames` has installed by then. Either keep the event out of the batcher or end the test with
+  `settleMessageBatcher`. That batcher runs for the whole test binary and reads `conn` under `connMu`, so install a test
+  connection with `swapConn`; a bare assignment races every event it happens to be delivering, and `go test -race` catches
+  it in an unrelated test.
 
 ## Lifecycle Rules
 
@@ -448,23 +467,16 @@ as it needs anywhere else, so this part is about where work runs, not how much o
   before adding a Dart port or a pub package that wraps native code of its own: the library already ships on every
   platform. A Dart version that meets its budget at the largest data stays in Dart, since a bridge call and a crate
   have a cost of their own, and `flutter test` needs the Rust library built to reach it. Data the Core produces and
-  already transforms, such as decompressing a captured body, stays in Go.
+  already transforms, such as decompressing a captured body, stays in the Core.
 - An editor document stays in the Rust rope. Open a file for `EditorPage` with `openEditorFile` rather than reading it
   into a string, and read an edited one through `EditorContent`; a profile can be tens of megabytes.
 
 ## Testing Rules
 
 The `core/` directory is excluded from automated coverage accounting. Do not add coverage instrumentation or coverage
-collection for code under `core/`. CI still runs `CGO_ENABLED=0 go test .` and `go vet .` to compile/check the Go wrapper,
-plus a `GOOS=android` vet that covers the `android` files the first two exclude; verify cross-language
-protocol behavior through shared Dart contract tests under `test/core/` and native platform build checks.
-
-A Go test in `core/` that reaches `sendMessage` — directly, or through `handleStartLog` or `updater.GeoUpdateHook` —
-leaves events in the process-wide batcher, which flushes them up to `messageBatchInterval` later into whichever
-connection `captureFrames` has installed by then. Either keep the event out of the batcher or end the test with
-`settleMessageBatcher`. That batcher runs for the whole test binary and reads `conn` under `connMu`, so install a test
-connection with `swapConn`; a bare assignment races every event it happens to be delivering, and `go test -race` catches
-it in an unrelated test.
+collection for code under `core/`. The Concord workspace is checked by the CI `rust-core` job (see `.agents/commands.md`);
+verify cross-language protocol behavior through the contract test `test/core/api/contract_test.dart` against
+`concord/schema/api.json` and native platform build checks.
 
 Register fallback values for freezed params used with `any()` matchers.
 

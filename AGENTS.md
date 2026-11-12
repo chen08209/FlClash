@@ -72,8 +72,8 @@ Read these only when the task touches their area:
 - Follow `lint_options.yaml` (included by every `analysis_options.yaml`), especially single quotes, trailing commas, `child:` last, no `print()`, const/final
   preferences, and declared return types.
 - Before reporting a change done, run `flutter pub get`, `flutter analyze --no-fatal-infos`, and the `flutter test`
-  suites that cover it, as CI does. If a toolchain the build hook needs is missing (Go, and on Linux and Windows
-  cargo), say which check was skipped rather than dropping it silently.
+  suites that cover it, as CI does. If a toolchain the build hook needs is missing (`cargo` and the
+  toolchain pinned in `concord/rust-toolchain.toml`), say which check was skipped rather than dropping it silently.
 
 ## Repo Skills
 

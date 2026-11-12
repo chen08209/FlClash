@@ -402,10 +402,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get stopVpn => 'VPN 중지 중…';
 
   @override
-  String get localNetworkDeniedTip =>
-      '로컬 네트워크 권한이 거부되었습니다. gvisor 스택을 사용하므로 LAN에 연결할 수 없습니다.';
-
-  @override
   String get compatible => '호환 모드';
 
   @override

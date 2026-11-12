@@ -1,6 +1,7 @@
 # Project Context
 
-FlClash is a multi-platform proxy client based on ClashMeta (mihomo), built with Flutter. It supports Android, Windows, macOS, and Linux, drawing its own components in the `prism_ui` package: a color system of its own with Apple's Human Interface interaction conventions.
+FlClash is a multi-platform proxy client built with Flutter around Concord, a Rust core in `concord/` that reads
+Clash/mihomo configuration. It supports Android, Windows, macOS, and Linux, drawing its own components in `plugins/prism_ui`: a Material You color scheme with Apple's Human Interface interaction conventions.
 
 ## Version Notes
 
@@ -18,6 +19,11 @@ FlClash is a multi-platform proxy client based on ClashMeta (mihomo), built with
   `dart format` rewrites about 190 files and `final` parameters stop compiling,
   and APIs marked `@Since("3.14")`, such as `rangeEquals` on typed data, fail
   analysis with `sdk_version_since` until the bound moves.
+
+## Build Dependencies
+
+Builds need Flutter and `cargo` with the toolchain pinned in `concord/rust-toolchain.toml`; they need no Go toolchain.
+The Go core in `core/` and its `core/Clash.Meta` submodule are retained as reference until milestone M6 removes them.
 
 ## Forked Dependencies
 
@@ -49,7 +55,7 @@ The `launch_at_startup` fork (`chen08209/launch_at_startup`) was replaced by the
 
 The `yaml_writer` fork (`chen08209/yaml_writer`) was replaced by
 `lib/common/yaml_writer.dart`. Its key quoting let keys such as `!a`, `'a` or
-`0x1F` reach the Core's yaml.v3 as a parse error or a non-string; a merge key
+`0x1F` reach the Core's YAML parser as a parse error or a non-string; a merge key
 `<<` stays plain on purpose, because `package:yaml` keeps it as an ordinary key
 and the Core applies the merge.
 

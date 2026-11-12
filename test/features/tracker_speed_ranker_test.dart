@@ -5,7 +5,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 TrackerInfo _tracker(
-  String id, {
+  int id, {
   int upload = 0,
   int download = 0,
   DateTime? start,
@@ -26,25 +26,25 @@ void main() {
   final t0 = DateTime.utc(2026, 1, 1, 12);
   DateTime at(double seconds) =>
       t0.add(Duration(milliseconds: (seconds * 1000).round()));
-  List<String> ids(List<TrackerInfo> trackerInfos) =>
+  List<int> ids(List<TrackerInfo> trackerInfos) =>
       trackerInfos.map((trackerInfo) => trackerInfo.id).toList();
 
   test('reports no speed on the first sample and ranks by traffic', () {
     final ranked = _Ranker().rank([
-      _tracker('a', download: 100),
-      _tracker('b', download: 900),
+      _tracker(1, download: 100),
+      _tracker(2, download: 900),
     ], t0);
 
-    expect(ids(ranked), ['b', 'a']);
+    expect(ids(ranked), [2, 1]);
     expect(ranked.map((trackerInfo) => trackerInfo.downloadSpeed), [0, 0]);
   });
 
   test('derives speed from the delta over the elapsed time', () {
     final ranker = _Ranker();
-    ranker.rank([_tracker('a', upload: 100, download: 1000)], t0);
+    ranker.rank([_tracker(1, upload: 100, download: 1000)], t0);
 
     final ranked = ranker.rank([
-      _tracker('a', upload: 1100, download: 5000),
+      _tracker(1, upload: 1100, download: 5000),
     ], at(2));
 
     expect(ranked.single.uploadSpeed, 500);
@@ -53,57 +53,57 @@ void main() {
 
   test('puts an active connection above a larger idle one', () {
     final ranker = _Ranker();
-    ranker.rank([_tracker('idle', download: 1 << 30), _tracker('active')], t0);
+    ranker.rank([_tracker(1, download: 1 << 30), _tracker(2)], t0);
 
     final ranked = ranker.rank([
-      _tracker('idle', download: 1 << 30),
-      _tracker('active', download: 4096),
+      _tracker(1, download: 1 << 30),
+      _tracker(2, download: 4096),
     ], at(1));
 
-    expect(ids(ranked), ['active', 'idle']);
+    expect(ids(ranked), [2, 1]);
   });
 
   test('keeps the order of connections with similar speeds', () {
     final ranker = _Ranker();
-    ranker.rank([_tracker('a'), _tracker('b')], t0);
+    ranker.rank([_tracker(1), _tracker(2)], t0);
     final first = ranker.rank([
-      _tracker('a', download: 5000),
-      _tracker('b', download: 4500),
+      _tracker(1, download: 5000),
+      _tracker(2, download: 4500),
     ], at(1));
-    expect(ids(first), ['a', 'b']);
+    expect(ids(first), [1, 2]);
 
     final second = ranker.rank([
-      _tracker('a', download: 10000),
-      _tracker('b', download: 10200),
+      _tracker(1, download: 10000),
+      _tracker(2, download: 10200),
     ], at(2));
 
-    expect(ids(second), ['a', 'b']);
+    expect(ids(second), [1, 2]);
     expect(second.last.downloadSpeed, greaterThan(second.first.downloadSpeed!));
   });
 
   test('ignores a sample taken too soon after the previous one', () {
     final ranker = _Ranker();
-    ranker.rank([_tracker('a')], t0);
-    ranker.rank([_tracker('a', download: 1000)], at(1));
+    ranker.rank([_tracker(1)], t0);
+    ranker.rank([_tracker(1, download: 1000)], at(1));
 
-    final ranked = ranker.rank([_tracker('a', download: 1100)], at(1.05));
+    final ranked = ranker.rank([_tracker(1, download: 1100)], at(1.05));
 
     expect(ranked.single.downloadSpeed, 1000);
   });
 
   test('ranks in another isolate from what the last poll kept', () async {
     final first = rankTrackerInfos(
-      [_tracker('a'), _tracker('b')],
+      [_tracker(1), _tracker(2)],
       TrackerRanking.empty,
       t0,
     );
     final rank = rankAfter(first.ranking);
-    final next = [_tracker('a', download: 10), _tracker('b', download: 5000)];
+    final next = [_tracker(1, download: 10), _tracker(2, download: 5000)];
 
     final second = await Isolate.run(() => rank(next));
 
-    expect(ids(second.trackerInfos), ['b', 'a']);
-    expect(second.ranking.ids, ['b', 'a']);
+    expect(ids(second.trackerInfos), [2, 1]);
+    expect(second.ranking.ids, [2, 1]);
   });
 }
 

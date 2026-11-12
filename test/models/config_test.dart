@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/api/core_api.dart';
+import 'package:fl_clash/core/api/mapping.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:prism_ui/prism_ui.dart';
@@ -15,6 +17,11 @@ T roundTrip<T>(
   final decoded = jsonDecode(encoded) as Map<String, Object?>;
   return fromJson(decoded);
 }
+
+ConfigPatch _patchOf(
+  PatchClashConfig config, [
+  CoreOptions options = const CoreOptions(testUrl: ''),
+]) => configPatchOf(config, authentication: const [], options: options);
 
 void main() {
   group('GeoResource JSON', () {
@@ -89,42 +96,36 @@ void main() {
       expect(config.geoXUrl, {GeoResource.MMDB: 'https://example.com/mmdb'});
     });
 
-    test('toUpdateParams sends geoXUrl to the Core under geox-url', () {
-      final params =
-          const PatchClashConfig(
-            geoXUrl: {
-              GeoResource.MMDB: 'https://example.com/geoip.metadb',
-              GeoResource.GEOSITE: 'https://example.com/geosite.dat',
-            },
-          ).toUpdateParams(
-            authentication: const [],
-            options: const CoreOptions(testUrl: ''),
-          );
-
-      final json = jsonDecode(jsonEncode(params)) as Map<String, Object?>;
-      expect(json['geox-url'], {
+    test('configPatchOf sends geoXUrl to the Core under geoxUrl', () {
+      final json = _patchOf(
+        const PatchClashConfig(
+          geoXUrl: {
+            GeoResource.MMDB: 'https://example.com/geoip.metadb',
+            GeoResource.GEOSITE: 'https://example.com/geosite.dat',
+          },
+        ),
+      ).toJson();
+      expect(json['geoxUrl'], {
         'mmdb': 'https://example.com/geoip.metadb',
         'geosite': 'https://example.com/geosite.dat',
       });
     });
 
-    test('toUpdateParams sends the Core options under options', () {
-      final params = const PatchClashConfig().toUpdateParams(
-        authentication: const [],
-        options: const CoreOptions(
+    test('configPatchOf sends the Core options under options', () {
+      final json = _patchOf(
+        const PatchClashConfig(),
+        const CoreOptions(
           testUrl: 'http://t',
           skipCertVerify: true,
           delayTestTimeout: 5000,
           mitmCapture: true,
         ),
-      );
-
-      final json = jsonDecode(jsonEncode(params)) as Map<String, Object?>;
+      ).toJson();
       expect(json['options'], {
-        'test-url': 'http://t',
-        'skip-cert-verify': true,
-        'delay-test-timeout': 5000,
-        'mitm-capture': true,
+        'testUrl': 'http://t',
+        'skipCertVerify': true,
+        'delayTestTimeout': 5000,
+        'mitmCapture': true,
       });
       expect(json, isNot(contains('mitm')));
     });
@@ -680,16 +681,11 @@ void main() {
       },
     );
 
-    test('reaches the Core through the update params', () {
-      final params = open
-          .copyWith(secret: 'abc')
-          .toUpdateParams(
-            authentication: const [],
-            options: const CoreOptions(testUrl: ''),
-          );
+    test('reaches the Core through the config patch', () {
+      final patch = _patchOf(open.copyWith(secret: 'abc'));
 
-      expect(params.secret, 'abc');
-      expect(params.toJson()['secret'], 'abc');
+      expect(patch.secret, 'abc');
+      expect(patch.toJson()['secret'], 'abc');
     });
   });
 
@@ -728,21 +724,17 @@ void main() {
     });
 
     test('only picked keys reach the Core live', () {
-      final json = defaultClashConfig
-          .copyWith(
-            ipv6: true,
-            tcpConcurrent: false,
-            generalOverrideKeys: {GeneralOverrideKey.ipv6},
-          )
-          .toUpdateParams(
-            authentication: const [],
-            options: const CoreOptions(testUrl: ''),
-          )
-          .toJson();
+      final patch = _patchOf(
+        defaultClashConfig.copyWith(
+          ipv6: true,
+          tcpConcurrent: false,
+          generalOverrideKeys: {GeneralOverrideKey.ipv6},
+        ),
+      ).toJson();
 
-      expect(json['ipv6'], true);
-      expect(json['tcp-concurrent'], isNull);
-      expect(json['unified-delay'], isNull);
+      expect(patch['ipv6'], true);
+      expect(patch['tcpConcurrent'], isNull);
+      expect(patch['unifiedDelay'], isNull);
     });
 
     test('picking a key reloads the profile', () {
@@ -755,11 +747,6 @@ void main() {
   });
 
   group('PatchClashConfig.setupOnly', () {
-    UpdateParams liveParams(PatchClashConfig config) => config.toUpdateParams(
-      authentication: const [],
-      options: const CoreOptions(testUrl: ''),
-    );
-
     test('drops every field the update params patch live', () {
       final live = defaultClashConfig.copyWith(
         tun: const Tun(enable: true, stack: TunStack.gvisor, mtu: 1500),
@@ -780,9 +767,16 @@ void main() {
       );
 
       final defaults = defaultClashConfig.toJson();
-      final liveKeys = liveParams(
-        defaultClashConfig,
-      ).toJson().keys.where(defaults.containsKey);
+      final liveKeys = _patchOf(defaultClashConfig)
+          .toJson()
+          .keys
+          .map(
+            (key) => key.replaceAllMapped(
+              RegExp('[A-Z]'),
+              (match) => '-${match[0]!.toLowerCase()}',
+            ),
+          )
+          .where(defaults.containsKey);
       expect(liveKeys, isNotEmpty);
       for (final key in liveKeys) {
         expect(live.toJson()[key], isNot(defaults[key]), reason: key);
@@ -806,7 +800,7 @@ void main() {
       ];
 
       for (final config in setupOnlyChanges) {
-        expect(liveParams(config), liveParams(defaultClashConfig));
+        expect(_patchOf(config), _patchOf(defaultClashConfig));
         expect(config.setupOnly, isNot(defaultClashConfig.setupOnly));
       }
     });

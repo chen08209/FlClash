@@ -1,8 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/constant.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -14,7 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod/riverpod.dart';
 
-class _MockCore extends Mock implements CoreHandlerInterface {}
+import '../helpers/core_mocks.dart';
 
 class _Probe extends Notifier<RoutedProbeState<String, String>>
     with RoutedProbe<String, String> {
@@ -955,22 +954,45 @@ void main() {
   });
 
   group('with a live tracker', () {
-    late _MockCore core;
+    late CoreMocks mocks;
+    late List<StreamController<RouteStampDto>> feeds;
+    late void Function(StreamController<RouteStampDto> feed) onFeed;
 
-    setUp(() => core = _MockCore());
+    setUp(() {
+      mocks = coreMocks();
+      feeds = [];
+      onFeed = (_) {};
+      when(() => mocks.api.watchRoute()).thenAnswer((_) {
+        final feed = StreamController<RouteStampDto>();
+        feeds.add(feed);
+        onFeed(feed);
+        return feed.stream;
+      });
+    });
+
+    tearDown(() {
+      for (final feed in feeds) {
+        unawaited(feed.close());
+      }
+    });
 
     ProviderContainer live(RouteSnapshot Function() snapshot) {
-      when(() => core.watchRoute(true)).thenAnswer((_) async => snapshot());
-      when(
-        () => core.watchRoute(false),
-      ).thenAnswer((_) async => RouteSnapshot(coreEpoch: snapshot().coreEpoch));
+      onFeed = (feed) {
+        final current = snapshot();
+        feed.add(
+          RouteStampDto(
+            epoch: current.coreEpoch,
+            version: current.routeVersion,
+          ),
+        );
+      };
       final container = ProviderContainer(
         overrides: [
           initProvider.overrideWithBuild((_, _) => true),
           coreStatusProvider.overrideWithBuild((_, _) => CoreStatus.connected),
           runTimeProvider.overrideWithBuild((_, _) => 1),
           suspendProvider.overrideWithValue(false),
-          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          coreHandlerProvider.overrideWithValue(mocks.controller),
         ],
       );
       addTearDown(container.dispose);
@@ -994,7 +1016,7 @@ void main() {
       });
       await pumpEventQueue();
 
-      verify(() => core.watchRoute(true)).called(2);
+      verify(() => mocks.api.watchRoute()).called(2);
       expect(container.read(routeTrackerProvider).coreEpoch, 2);
       expect(probe.calls, ['a', 'a']);
 
@@ -1014,16 +1036,11 @@ void main() {
         final container = live(
           () => const RouteSnapshot(coreEpoch: 1, routeVersion: 1),
         );
-        final reads = <Completer<RouteSnapshot>>[];
-        when(() => core.watchRoute(true)).thenAnswer((_) {
-          final read = Completer<RouteSnapshot>();
-          reads.add(read);
-          return read.future;
-        });
+        onFeed = (_) {};
         final probe = container.read(_probeProvider.notifier);
         probe.watch('a');
         await pumpEventQueue();
-        reads.last.complete(const RouteSnapshot(coreEpoch: 1, routeVersion: 1));
+        feeds.last.add(const RouteStampDto(epoch: 1, version: 1));
         await pumpEventQueue();
         probe.answer({'a': _ok('a.example:443')});
         await pumpEventQueue();
@@ -1035,7 +1052,7 @@ void main() {
         await pumpEventQueue();
         expect(probe.calls, hasLength(1));
 
-        reads.last.complete(const RouteSnapshot(coreEpoch: 1, routeVersion: 2));
+        feeds.last.add(const RouteStampDto(epoch: 1, version: 2));
         await pumpEventQueue();
         expect(probe.calls, hasLength(2));
       },
@@ -1079,11 +1096,11 @@ void main() {
       await pumpEventQueue();
 
       probe.unwatch('a');
-      verifyNever(() => core.watchRoute(false));
+      expect(feeds.single.hasListener, isTrue);
 
       probe.unwatch('a');
       await pumpEventQueue();
-      verify(() => core.watchRoute(false)).called(1);
+      expect(feeds.single.hasListener, isFalse);
     });
   });
 }

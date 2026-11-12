@@ -876,12 +876,6 @@ abstract class AppLocalizations {
   /// **'Stopping VPN…'**
   String get stopVpn;
 
-  /// No description provided for @localNetworkDeniedTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Local network permission denied: using the gvisor stack, LAN is unreachable.'**
-  String get localNetworkDeniedTip;
-
   /// No description provided for @compatible.
   ///
   /// In en, this message translates to:

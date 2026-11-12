@@ -1,8 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/mitm_trust.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
-import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/mitm.dart';
@@ -16,10 +14,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:prism_ui/prism_ui.dart';
 
+import '../helpers/core_mocks.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
-
-class _MockCore extends Mock implements CoreHandlerInterface {}
 
 class _FakeStore implements MitmTrustStore {
   _FakeStore(this.trust);
@@ -68,10 +65,10 @@ final _renewed = _certificate.copyWith(
 
 void main() {
   late ProviderContainer container;
-  late _MockCore core;
+  late CoreMocks mocks;
 
   setUpAll(() {
-    registerFallbackValue(const MitmRules());
+    registerFallbackValue(<String, Object?>{});
   });
 
   Mitm saved() => container.read(patchClashConfigProvider).mitm;
@@ -90,25 +87,29 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    core = _MockCore();
-    when(() => core.getMitmCertificate()).thenAnswer((_) async => certificate);
+    mocks = coreMocks();
     when(
-      () => core.generateMitmCertificate(),
-    ).thenAnswer((_) async => _certificate);
-    when(() => core.validateMitm(any())).thenAnswer((invocation) async {
-      final rules = invocation.positionalArguments.single as MitmRules;
+      () => mocks.api.mitmCertificate(),
+    ).thenAnswer((_) async => certificate?.toJson());
+    when(
+      () => mocks.api.generateMitmCertificate(),
+    ).thenAnswer((_) async => _certificate.toJson());
+    when(() => mocks.api.validateMitm(any())).thenAnswer((invocation) async {
+      final config = invocation.positionalArguments.single as Map;
       return {
         for (final list in MitmList.values)
-          list: {
-            for (final (index, line) in rules.linesOf(list).indexed)
-              if (line.startsWith('bad')) index: 'unknown type',
-          },
+          list.key: [
+            for (final (index, line)
+                in (config[list.key] as List).cast<String>().indexed)
+              if (line.startsWith('bad'))
+                {'index': index, 'message': 'unknown type'},
+          ],
       };
     });
     container = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(TestProfiles.new),
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
         safeModeProvider.overrideWithValue(safeMode),
         mitmTrustStoreProvider.overrideWithValue(store),
       ],
@@ -175,7 +176,7 @@ void main() {
     await tester.tap(find.text(currentAppLocalizations.generateCertificate));
     await tester.pumpAndSettle();
 
-    verify(() => core.generateMitmCertificate()).called(1);
+    verify(() => mocks.api.generateMitmCertificate()).called(1);
     expect(find.text(_certificate.subject), findsOneWidget);
     expect(
       find.text(currentAppLocalizations.mitmTrustNotInstalled),
@@ -204,14 +205,14 @@ void main() {
     await tester.tap(button(currentAppLocalizations.cancel));
     await tester.pumpAndSettle();
     expect(saved().enable, isFalse);
-    verifyNever(() => core.generateMitmCertificate());
+    verifyNever(() => mocks.api.generateMitmCertificate());
 
     await toggleEnable(tester);
     await tester.tap(button(currentAppLocalizations.confirm));
     await tester.pumpAndSettle();
 
     expect(saved().enable, isTrue);
-    verify(() => core.generateMitmCertificate()).called(1);
+    verify(() => mocks.api.generateMitmCertificate()).called(1);
   });
 
   testWidgets('turning on keeps the certificate there is', (tester) async {
@@ -222,14 +223,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(saved().enable, isTrue);
-    verifyNever(() => core.generateMitmCertificate());
+    verifyNever(() => mocks.api.generateMitmCertificate());
   });
 
   testWidgets('a certificate that fails to generate leaves it off', (
     tester,
   ) async {
     await pumpView(tester);
-    when(() => core.generateMitmCertificate()).thenAnswer(
+    when(() => mocks.api.generateMitmCertificate()).thenAnswer(
       (_) => Future.error(
         const CoreMethodException(code: 'core_error', message: 'disk full'),
       ),
@@ -386,8 +387,8 @@ void main() {
     final store = _FakeStore(MitmTrust.ready);
     await pumpView(tester, certificate: _certificate, store: store);
     when(
-      () => core.generateMitmCertificate(),
-    ).thenAnswer((_) async => _renewed);
+      () => mocks.api.generateMitmCertificate(),
+    ).thenAnswer((_) async => _renewed.toJson());
 
     await tester.tap(find.text(currentAppLocalizations.regenerateCertificate));
     await tester.pumpAndSettle();
@@ -422,8 +423,8 @@ void main() {
       safeMode: true,
     );
     when(
-      () => core.generateMitmCertificate(),
-    ).thenAnswer((_) async => _renewed);
+      () => mocks.api.generateMitmCertificate(),
+    ).thenAnswer((_) async => _renewed.toJson());
 
     await tester.tap(find.text(currentAppLocalizations.regenerateCertificate));
     await tester.pumpAndSettle();

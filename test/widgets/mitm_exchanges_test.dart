@@ -20,7 +20,7 @@ import '../helpers/host_scaffold.dart';
 final _start = DateTime.utc(2026, 10, 28, 0, 0, 5);
 
 final _decrypted = TrackerInfo(
-  id: 'connection-1',
+  id: 1,
   start: _start,
   metadata: const Metadata(network: 'tcp', host: 'a.test', mitm: true),
   chains: const ['DIRECT'],
@@ -39,7 +39,7 @@ final _exchange = MitmExchange(
   proto: 'HTTP/2.0',
   status: 200,
   responseSize: 2048,
-  connection: 'connection-1',
+  connection: '1',
   requestHeader: const {
     'Host': ['a.test'],
   },

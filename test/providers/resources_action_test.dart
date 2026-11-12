@@ -1,8 +1,6 @@
 import 'package:drift/native.dart';
 import 'package:fl_clash/common/app_localizations.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
-import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/database/database.dart' as db;
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/action.dart';
@@ -12,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod/riverpod.dart';
 
-class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
+import '../helpers/core_mocks.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -27,21 +25,19 @@ void main() {
     testDatabase = db.Database(NativeDatabase.memory());
     db.database = testDatabase;
     requests = {};
-    final core = _MockCoreHandlerInterface();
-    when(() => core.updateGeoData(any())).thenAnswer((invocation) async {
+    final mocks = coreMocks();
+    when(() => mocks.api.updateGeo(any())).thenAnswer((invocation) async {
       final name = invocation.positionalArguments.single as String;
       final count = requests[name] = (requests[name] ?? 0) + 1;
       if (count > 1) {
         throw const CoreMethodException(
-          code: 'core_error',
+          code: 'rejected',
           message: 'geo update already in progress',
         );
       }
     });
     container = ProviderContainer(
-      overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
-      ],
+      overrides: [coreHandlerProvider.overrideWithValue(mocks.controller)],
     );
   });
 

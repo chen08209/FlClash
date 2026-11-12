@@ -9,7 +9,7 @@ match a task against the skill `name` and `description`, then load the full inst
 - `localization`: hardcoded UI text scans, ARB updates, locale generation, and localization verification.
 - `ui-work`: Flutter UI, widgets, color and surface styling, icons and glyphs, shapes and corner radii, navigation surfaces,
   async feedback, and user-facing interactions.
-- `core-platform`: Core lifecycle/process ownership, Android services, Go event delivery, desktop IPC, platform managers,
+- `core-platform`: Core lifecycle/process ownership, Android services, Core event delivery, desktop IPC, platform managers,
   build hooks, system proxy, tray, VPN/TUN, and the Windows and Linux Helper.
 - `ui-performance`: dropped frames, slow pages and transitions, UI-thread and raster load, isolate decisions, and the
   probes that measure them.

@@ -127,7 +127,6 @@
   "desc": "ClashMeta 기반의 멀티 플랫폼 프록시 클라이언트로, 간편하게 사용할 수 있으며 오픈 소스이고 광고가 없습니다.",
   "startVpn": "VPN 시작 중…",
   "stopVpn": "VPN 중지 중…",
-  "localNetworkDeniedTip": "로컬 네트워크 권한이 거부되었습니다. gvisor 스택을 사용하므로 LAN에 연결할 수 없습니다.",
   "compatible": "호환 모드",
   "notSelectedTip": "현재 프록시 그룹은 선택할 수 없습니다",
   "changeProxyFailedTip": "프록시를 전환하지 못해 이전 선택을 복원했습니다",

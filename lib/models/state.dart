@@ -1,3 +1,4 @@
+import 'package:fl_clash/core/api/dto.dart' show ProxyGroupsDto;
 import 'package:fl_clash/enum/enum.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:prism_ui/color.dart';
@@ -168,7 +169,6 @@ abstract class SharedState with _$SharedState {
     VpnOptions? vpnOptions,
     required String stopTip,
     required String startTip,
-    required String localNetworkTip,
     required String currentProfileName,
     required String stopText,
     required bool onlyStatisticsProxy,
@@ -186,7 +186,7 @@ extension SharedStateExt on SharedState {
 @freezed
 abstract class ComputeGroupsState with _$ComputeGroupsState {
   const factory ComputeGroupsState({
-    required ProxiesData proxiesData,
+    required ProxyGroupsDto proxyGroups,
     required ProxiesSortType sortType,
     required DelayMap delayMap,
     required Map<String, String> selectedMap,
@@ -210,6 +210,10 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
     required List<Rule> addedRules,
     required String defaultUA,
     @Default([]) List<String> authentication,
+
+    /// Keeps the built config as an object beside its text, for a profile
+    /// whose Core merges it over the profile's own file.
+    @Default(false) bool keepOverlay,
     @Default({}) Map<String, dynamic> injectedProxyProviders,
     @Default({}) Map<String, dynamic> injectedRuleProviders,
     String? matchTarget,

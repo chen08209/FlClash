@@ -18,7 +18,7 @@ TrackerInfo _tracker({
   bool mitmRefused = false,
 }) {
   return TrackerInfo(
-    id: 'id',
+    id: 1,
     upload: 0,
     download: 0,
     start: DateTime.utc(2026),
@@ -37,11 +37,6 @@ TrackerInfo _tracker({
 }
 
 void main() {
-  setUp(() {
-    mitmFeature = true;
-    addTearDown(() => mitmFeature = false);
-  });
-
   late ProviderContainer container;
 
   Mitm saved() => container.read(patchClashConfigProvider).mitm;
@@ -81,17 +76,6 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
-
-  testWidgets('no MITM section shows while the feature is off', (tester) async {
-    mitmFeature = false;
-    await pumpDetail(
-      tester,
-      _tracker(),
-      mitm: const Mitm(enable: true, hostname: ['other.example.com']),
-    );
-
-    expect(find.text(currentAppLocalizations.mitmDecryptHost), findsNothing);
-  });
 
   testWidgets('a host not yet listed is added ahead of the list', (
     tester,

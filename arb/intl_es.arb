@@ -127,7 +127,6 @@
   "desc": "Un cliente proxy multiplataforma basado en ClashMeta, sencillo de usar, de código abierto y sin anuncios.",
   "startVpn": "Iniciando VPN…",
   "stopVpn": "Deteniendo VPN…",
-  "localNetworkDeniedTip": "Permiso de red local denegado: con la pila gvisor, la LAN no es accesible.",
   "compatible": "Modo de compatibilidad",
   "notSelectedTip": "No se puede seleccionar el grupo de proxies actual",
   "changeProxyFailedTip": "No se pudo cambiar de proxy; se ha restaurado la selección anterior",

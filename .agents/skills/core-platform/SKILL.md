@@ -1,19 +1,19 @@
 ---
 name: core-platform
-description: Use when changing FlClash Core integration, lifecycle/process ownership, Go event delivery, Android services, desktop IPC, platform managers, build hooks, system proxy, tray, VPN/TUN, or the Windows or Linux Helper.
+description: Use when changing FlClash Core integration, lifecycle/process ownership, Core event delivery, Android services, desktop IPC, platform managers, build hooks, system proxy, tray, VPN/TUN, or the Windows or Linux Helper.
 ---
 
 # Core And Platform
 
 ## When To Use
 
-Use this for changes touching `lib/core/`, `lib/manager/`, `core/`, `services/helper/`, Android app/service modules,
+Use this for changes touching `lib/core/`, `lib/manager/`, `concord/`, `services/helper/`, Android app/service modules,
 build hooks, system proxy, tray, VPN, TUN, or platform-specific desktop/mobile behavior.
 
 ## Read First
 
-- `.agents/rules.md`: Core API Safety and Lifecycle Rules are binding. They carry the mihomo-fork patch budget, the
-  JSON envelope and `core/message.go` queue rules, gomobile callback rules, `BootGuard`, tray, and SSID rules, and every
+- `.agents/rules.md`: Core API Safety and Lifecycle Rules are binding. They carry the desktop IPC and session-token rules, the
+  Android frame channel rules, the Go rules for the reference `core/`, `BootGuard`, tray, and SSID rules, and every
   lifecycle invariant (latest intent wins, desktop ownership through a `CoreProcessLease`, terminal `close()`,
   optimistic Android commands arbitrated by `ServiceState`, callbacks are not user intent, `goAsync()` finishes once).
 - `.agents/setting-changes.md`: a setting the Core or the Android VPN reads is patched live, re-applied with the
@@ -26,11 +26,13 @@ build hooks, system proxy, tray, VPN, TUN, or platform-specific desktop/mobile b
 
 Every behavior here has one authoritative owner, and a change lands there:
 
-- Shared facade/protocol: `lib/core/controller.dart`, `lib/core/interface.dart`, and `lib/core/method.dart`.
+- Shared facade/protocol: `lib/core/controller.dart`, `lib/core/backend.dart`, and `lib/core/api/` (`CoreApi`, `CoreClient`, DTOs).
 - Android Core connection: `lib/core/lib.dart`, `lib/plugins/service.dart`, and Android `ServicePlugin`.
 - Android start/stop intent: `ServiceState`; binding/process-time bookkeeping: `ServiceController`.
 - Desktop composition: `lib/core/service.dart`; lifecycle/process ownership: `lib/core/desktop/lifecycle.dart`.
-- Desktop IPC/RPC: `lib/core/desktop/transport.dart` and `lib/core/desktop/rpc_client.dart`.
+- Desktop IPC/RPC: `lib/core/desktop/transport.dart` and `lib/core/api/core_client.dart`; the token handshake that
+  precedes `core.hello` is `lib/core/desktop/ipc_auth.dart` (host) and `concord_ipc::initiate` (Core), keyed by the
+  launch's `sessionId`, which reaches the Core on its standard input only.
 - Desktop launch ownership: `lib/core/desktop/launcher.dart`; Windows and Linux Helper HTTP contract:
   `lib/core/desktop/helper_client.dart` and `services/helper/`.
 - Flutter orchestration: `lib/providers/actions/core.dart` and `system.dart`; application exit:
@@ -45,7 +47,7 @@ callbacks, application exit, and crash/disconnect recovery all reach it. Always-
 Focused tests live at the narrowest layer, and the matching commands are in `.agents/commands.md`:
 
 - Desktop lifecycle/transport/RPC: `test/core/desktop/` plus `test/core/service_test.dart`.
-- Cross-language envelopes/events: `test/core/protocol_contract_test.dart` and `CGO_ENABLED=0 go test .`.
+- Cross-language wire contract: `test/core/api/contract_test.dart` against `concord/schema/api.json`, and `cargo test` in `concord/`.
 - Provider/exit convergence: `test/providers/action_test.dart` and `test/providers/system_action_test.dart`.
 - Android Kotlin: compile each touched Gradle module with JDK 17.
 - Helper: `cargo fmt --check` and `cargo test`; the `windows-service` feature only builds on Windows.
@@ -61,5 +63,5 @@ on Linux, and Windows Service Control Manager behavior need their real platform 
   owns.
 - The Helper owns executable integrity: Core SHA256 validation and the protocol stay identical across Flutter build
   modes, so a debug build is not exempt.
-- `plugins/setup/` is a build harness, not a Dart API plugin, and its hooks can trigger Go or Rust compilation
+- `plugins/setup/` is a build harness, not a Dart API plugin, and its hooks can trigger Rust (cargo) compilation
   indirectly through Flutter platform builds; a missing toolchain fails `flutter test`, not only `flutter build`.

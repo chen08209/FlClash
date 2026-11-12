@@ -1,5 +1,4 @@
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/connection/tracker_info_list.dart';
 import 'package:fl_clash/models/models.dart';
@@ -12,21 +11,16 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
 import '../../helpers/host_scaffold.dart';
-import '../../helpers/core_connections.dart';
-import 'package:fl_clash/features/connection/tracker_speed_ranker.dart';
-
-class _MockCore extends Mock implements CoreHandlerInterface {}
 
 const _mobileSize = Size(400, 800);
 
 TrackerInfo _request(int index) {
   return TrackerInfo(
-    id: '$index',
+    id: index,
     start: DateTime.utc(2026),
     metadata: Metadata(
       network: 'tcp',
@@ -41,6 +35,23 @@ TrackerInfo _request(int index) {
   );
 }
 
+ConnectionInfo _open(int id) {
+  return ConnectionInfo(
+    id: id,
+    start: DateTime.utc(2026).millisecondsSinceEpoch,
+    network: 'tcp',
+    sourceIp: '127.0.0.1',
+    sourcePort: 50000,
+    destinationPort: 443,
+    host: 'open-$id.test',
+    inboundType: 'mixed',
+    chains: const ['Proxy'],
+    rule: 'MATCH',
+    upload: 0,
+    download: 0,
+  );
+}
+
 Finder _stat(String label) => find.descendant(
   of: find.byType(ConnectionStatsCard),
   matching: find.text(label),
@@ -49,16 +60,22 @@ Finder _stat(String label) => find.descendant(
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late _MockCore core;
   late ProviderContainer container;
 
+  void holdOpen(int count) {
+    container
+        .read(connectionBookProvider)
+        .apply(
+          ConnectionsReset(
+            ConnectionSnapshot([for (var i = 0; i < count; i++) _open(i)]),
+          ),
+        );
+  }
+
   setUp(() {
-    core = _MockCore();
-    when(() => core.getConnectionCount()).thenAnswer((_) async => 0);
     container = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(TestProfiles.new),
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
         coreStatusProvider.overrideWithBuild((_, _) => CoreStatus.connected),
       ],
     );
@@ -99,7 +116,7 @@ void main() {
   }
 
   testWidgets('counts what the Core is holding open', (tester) async {
-    when(() => core.getConnectionCount()).thenAnswer((_) async => 34);
+    holdOpen(34);
 
     await pumpCard(tester);
 
@@ -128,7 +145,7 @@ void main() {
 
   testWidgets('a count too long for a third of a phone is shortened in any '
       'locale', (tester) async {
-    when(() => core.getConnectionCount()).thenAnswer((_) async => 99999);
+    holdOpen(99999);
     container.read(requestCountProvider.notifier).value = 123456;
 
     await pumpCard(tester, locale: const Locale('zh', 'CN'));
@@ -167,13 +184,10 @@ void main() {
   testWidgets('a sheet switching feeds opens each at its own start', (
     tester,
   ) async {
-    whenConnections<RankedTrackerInfos>(
-      core,
-      () async => [for (var i = 0; i < 100; i++) _request(1000 + i)],
-    );
+    holdOpen(100);
     final notifier = container.read(requestsProvider.notifier);
     for (var i = 0; i < 100; i++) {
-      notifier.addRequest(_request(i));
+      notifier.addRequests([_request(i)]);
     }
     await pumpCard(tester);
     await tester.tap(_stat('Recent requests'));
@@ -222,7 +236,7 @@ void main() {
     final notifier = container.read(requestsProvider.notifier);
     var next = 0;
     while (next < 200) {
-      notifier.addRequest(_request(next++));
+      notifier.addRequests([_request(next++)]);
     }
     await pumpCard(tester);
     await tester.tap(_stat('Recent requests'));
@@ -240,7 +254,7 @@ void main() {
     for (var frame = 0; frame < 40; frame++) {
       if (frame % 10 == 0) {
         for (var i = 0; i < 5; i++) {
-          notifier.addRequest(_request(next++));
+          notifier.addRequests([_request(next++)]);
         }
       }
       await gesture.moveBy(const Offset(0, -6));

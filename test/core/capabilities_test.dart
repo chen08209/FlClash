@@ -1,65 +1,51 @@
-import 'package:fl_clash/core/desktop/model.dart';
-import 'package:fl_clash/core/interface.dart';
-import 'package:fl_clash/core/method.dart';
-import 'package:fl_clash/core/spill.dart';
+import 'package:fl_clash/core/api/dto.dart';
+import 'package:fl_clash/core/api/errors.dart';
+import 'package:fl_clash/core/api/mapping.dart';
+import 'package:fl_clash/core/api/model_api.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:test/test.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 
-class _Core extends CoreHandlerInterface {
-  _Core(this.answer);
+import '../helpers/core_mocks.dart';
 
-  final Object? Function(CoreMethod method) answer;
-
-  @override
-  Future<Object?> invokeMethod({
-    required CoreMethod method,
-    Object? arguments,
-    Duration? timeout,
-    CoreResultModel? model,
-  }) async => answer(method);
-
-  @override
-  Future<CoreLifecycleResult> start() async => _unused;
-
-  @override
-  Future<CoreLifecycleResult> restart() async => _unused;
-
-  @override
-  Future<CoreLifecycleResult> stop() async => _unused;
-
-  @override
-  Future<CoreLifecycleResult> close() async => _unused;
-}
-
-const _unused = CoreLifecycleResult(
-  revision: 0,
-  outcome: CoreLifecycleOutcome.applied,
+const _concord = CapabilitiesInfo(
+  implementation: 'concord',
+  version: '0.1.0',
+  proxyTypes: ['direct', 'reject', 'ss', 'vmess', 'tuic'],
+  transports: ['ws', 'grpc', 'h2', 'http'],
+  ruleTypes: ['DOMAIN', 'MATCH'],
+  ssPlugins: ['obfs', 'v2ray-plugin', 'shadow-tls'],
+  congestionControllers: ['cubic', 'reno'],
+  features: Features(),
 );
 
-Never _notImplemented(CoreMethod method) => throw CoreMethodException(
-  code: 'not_implemented',
-  message: 'unknown method: ${method.wireName}',
+CapabilitiesInfo _with({
+  List<String>? ssPlugins,
+  List<String>? congestionControllers,
+}) => CapabilitiesInfo(
+  implementation: _concord.implementation,
+  version: _concord.version,
+  proxyTypes: _concord.proxyTypes,
+  transports: _concord.transports,
+  ruleTypes: _concord.ruleTypes,
+  ssPlugins: ssPlugins ?? _concord.ssPlugins,
+  congestionControllers:
+      congestionControllers ?? _concord.congestionControllers,
+  features: _concord.features,
 );
-
-const _concord = {
-  'impl': 'concord',
-  'version': '0.1.0',
-  'proxy-types': ['direct', 'reject', 'ss', 'vmess', 'tuic'],
-  'transports': ['ws', 'grpc', 'h2', 'http'],
-  'rule-types': ['DOMAIN', 'MATCH'],
-  'ss-plugins': ['obfs', 'v2ray-plugin', 'shadow-tls'],
-  'congestion-controllers': ['cubic', 'reno'],
-  'features': {'mitm': false, 'ech': false, 'system-stack': false},
-};
 
 void main() {
-  group('a Core without the methods', () {
-    final core = _Core(_notImplemented);
+  late CoreMocks mocks;
 
-    test('supports everything', () async {
-      final capabilities = await core.getCapabilities();
+  setUp(() {
+    mocks = coreMocks();
+  });
 
+  group('a Core that reports nothing', () {
+    const capabilities = CoreCapabilities.everything();
+
+    test('supports everything', () {
       expect(capabilities.restricted, isFalse);
       expect(capabilities.supportsProxyType('tailscale'), isTrue);
       expect(capabilities.supportsNetwork('mkcp'), isTrue);
@@ -67,40 +53,59 @@ void main() {
       expect(capabilities.supportsTunCongestionController('bbr3'), isTrue);
     });
 
-    test('has no warnings', () async {
-      expect(await core.getConfigWarnings(), isEmpty);
+    test('keeps every choice', () {
+      const choices = ['tcp', 'mkcp'];
+
+      expect(capabilities.supportedChoices(ProxyField.network, choices), [
+        'tcp',
+        'mkcp',
+      ]);
     });
   });
 
-  test('another failure is not read as missing methods', () async {
-    final core = _Core(
-      (_) => throw const CoreMethodException(code: 'no_response', message: ''),
+  group('capabilities that fail to load', () {
+    test(
+      'surface the Core error instead of reading it as everything',
+      () async {
+        when(() => mocks.api.capabilities()).thenThrow(
+          const CoreMethodException(code: 'core_unavailable', message: ''),
+        );
+
+        await expectLater(
+          mocks.api.getCapabilities(),
+          throwsA(isA<CoreMethodException>()),
+        );
+      },
     );
 
-    await expectLater(
-      core.getCapabilities(),
-      throwsA(isA<CoreMethodException>()),
-    );
-    await expectLater(
-      core.getConfigWarnings(),
-      throwsA(isA<CoreMethodException>()),
-    );
+    test('warnings surface the Core error too', () async {
+      when(() => mocks.api.lastWarnings()).thenThrow(
+        const CoreMethodException(code: 'core_unavailable', message: ''),
+      );
+
+      await expectLater(
+        mocks.controller.getConfigWarnings(),
+        throwsA(isA<CoreMethodException>()),
+      );
+    });
   });
 
   group('a Core that lists what it runs', () {
     late CoreCapabilities capabilities;
 
     setUp(() async {
-      capabilities = await _Core(
-        (method) => switch (method) {
-          CoreMethod.coreCapabilities => _concord,
-          _ => _notImplemented(method),
-        },
-      ).getCapabilities();
+      when(() => mocks.api.capabilities()).thenAnswer((_) async => _concord);
+      capabilities = await mocks.api.getCapabilities();
+    });
+
+    test('is read as restricted to the report', () {
+      expect(capabilities.restricted, isTrue);
+      expect(capabilities.implementation, 'concord');
+      expect(capabilities.version, '0.1.0');
+      expect(capabilities.ruleTypes, {'DOMAIN', 'MATCH'});
     });
 
     test('hides the proxy types it does not list', () {
-      expect(capabilities.implementation, 'concord');
       expect(capabilities.supportsProxyType('vmess'), isTrue);
       expect(capabilities.supportsProxyType('tailscale'), isFalse);
       expect(capabilities.supportsProxyType('easytier'), isFalse);
@@ -150,19 +155,13 @@ void main() {
   });
 
   group('ss plugins and congestion controllers', () {
-    Future<CoreCapabilities> load(Map<String, Object?> body) => _Core(
-      (method) => switch (method) {
-        CoreMethod.coreCapabilities => body,
-        _ => _notImplemented(method),
-      },
-    ).getCapabilities();
-
-    test('follow what the Core reports', () async {
-      final capabilities = await load({
-        ..._concord,
-        'ss-plugins': ['obfs', 'kcptun'],
-        'congestion-controllers': ['cubic', 'bbr'],
-      });
+    test('follow what the Core reports', () {
+      final capabilities = capabilitiesOf(
+        _with(
+          ssPlugins: ['obfs', 'kcptun'],
+          congestionControllers: ['cubic', 'bbr'],
+        ),
+      );
 
       expect(capabilities.supportsSsPlugin('kcptun'), isTrue);
       expect(capabilities.supportsSsPlugin('v2ray-plugin'), isFalse);
@@ -170,48 +169,49 @@ void main() {
       expect(capabilities.supportsTunCongestionController('reno'), isFalse);
     });
 
-    test('fall back to the known tables when the Core omits them', () async {
-      final capabilities = await load({
-        for (final entry in _concord.entries)
-          if (entry.key != 'ss-plugins' &&
-              entry.key != 'congestion-controllers')
-            entry.key: entry.value,
-      });
+    test('an empty report means none, not the fallback', () {
+      final capabilities = capabilitiesOf(
+        _with(ssPlugins: [], congestionControllers: []),
+      );
 
-      expect(capabilities.restricted, isTrue);
+      expect(capabilities.supportsSsPlugin('obfs'), isFalse);
+      expect(capabilities.supportsTunCongestionController('cubic'), isFalse);
+    });
+
+    test('fall back to the known tables when the model omits them', () {
+      const capabilities = CoreCapabilities(
+        implementation: 'concord',
+        version: '0.1.0',
+        proxyTypes: {'ss'},
+        transports: {},
+        ruleTypes: {},
+      );
+
       expect(capabilities.supportsSsPlugin('obfs'), isTrue);
       expect(capabilities.supportsSsPlugin('shadow-tls'), isTrue);
       expect(capabilities.supportsSsPlugin('kcptun'), isFalse);
       expect(capabilities.supportsTunCongestionController('cubic'), isTrue);
       expect(capabilities.supportsTunCongestionController('bbr'), isFalse);
     });
-
-    test('an empty report means none, not the fallback', () async {
-      final capabilities = await load({
-        ..._concord,
-        'ss-plugins': <String>[],
-        'congestion-controllers': <String>[],
-      });
-
-      expect(capabilities.supportsSsPlugin('obfs'), isFalse);
-      expect(capabilities.supportsTunCongestionController('cubic'), isFalse);
-    });
   });
 
-  test('warnings decode, and only the warning level counts', () async {
-    final core = _Core(
-      (method) => switch (method) {
-        CoreMethod.configWarnings => [
-          {'level': 'warning', 'path': 'proxies[12]', 'message': 'removed'},
-          {'level': 'info', 'path': 'experimental', 'message': 'ignored'},
-        ],
-        _ => _notImplemented(method),
-      },
+  test('warnings map, and only the warning level counts', () async {
+    when(() => mocks.api.lastWarnings()).thenAnswer(
+      (_) async => const [
+        WarningInfo(level: 'warning', path: 'proxies[12]', message: 'removed'),
+        WarningInfo(level: 'info', path: 'experimental', message: 'ignored'),
+      ],
     );
 
-    final warnings = await core.getConfigWarnings();
+    final warnings = await mocks.controller.getConfigWarnings();
 
     expect(warnings, hasLength(2));
     expect(warnings.warnings.map((item) => item.path), ['proxies[12]']);
+  });
+
+  test('no warnings is an empty list', () async {
+    when(() => mocks.api.lastWarnings()).thenAnswer((_) async => const []);
+
+    expect(await mocks.controller.getConfigWarnings(), isEmpty);
   });
 }

@@ -403,10 +403,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get stopVpn => 'VPNを停止しています…';
 
   @override
-  String get localNetworkDeniedTip =>
-      'ローカルネットワークの権限が拒否されたため gvisor スタックを使用します。LAN にはアクセスできません。';
-
-  @override
   String get compatible => '互換モード';
 
   @override

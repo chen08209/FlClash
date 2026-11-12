@@ -127,7 +127,6 @@
   "desc": "ClashMetaベースのマルチプラットフォーム対応プロキシクライアント。シンプルで使いやすく、オープンソースで広告もありません。",
   "startVpn": "VPNを起動しています…",
   "stopVpn": "VPNを停止しています…",
-  "localNetworkDeniedTip": "ローカルネットワークの権限が拒否されたため gvisor スタックを使用します。LAN にはアクセスできません。",
   "compatible": "互換モード",
   "notSelectedTip": "現在のプロキシグループは選択できません",
   "changeProxyFailedTip": "プロキシの切り替えに失敗したため、前回の選択に戻しました",

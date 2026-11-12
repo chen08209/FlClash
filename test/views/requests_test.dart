@@ -21,7 +21,7 @@ const _tableSize = Size(1400, 1000);
 const _listSize = Size(600, 1000);
 
 TrackerInfo _tracker({
-  required String id,
+  required int id,
   String host = 'example.com',
   String network = 'tcp',
   String process = 'curl',
@@ -66,12 +66,12 @@ void main() {
     final notifier = container.read(requestsProvider.notifier);
     notifier.value = FixedList<TrackerInfo>(500);
     for (final request in requests) {
-      notifier.addRequest(request);
+      notifier.addRequests([request]);
     }
   }
 
   void addRequest(TrackerInfo request) {
-    container.read(requestsProvider.notifier).addRequest(request);
+    container.read(requestsProvider.notifier).addRequests([request]);
   }
 
   Future<void> pumpRequests(
@@ -179,8 +179,8 @@ void main() {
     tester,
   ) async {
     seedRequests([
-      _tracker(id: 'a', host: 'alpha.test'),
-      _tracker(id: 'b', host: 'beta.test'),
+      _tracker(id: 1, host: 'alpha.test'),
+      _tracker(id: 2, host: 'beta.test'),
     ]);
 
     await pumpRequests(tester);
@@ -195,12 +195,12 @@ void main() {
   testWidgets('a request arriving after mount reaches the list', (
     tester,
   ) async {
-    seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
+    seedRequests([_tracker(id: 1, host: 'alpha.test')]);
 
     await pumpRequests(tester);
     expect(find.textContaining('gamma.test'), findsNothing);
 
-    addRequest(_tracker(id: 'c', host: 'gamma.test'));
+    addRequest(_tracker(id: 3, host: 'gamma.test'));
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
     await tester.pump();
@@ -211,13 +211,13 @@ void main() {
   });
 
   testWidgets('traffic after a request opened reaches its row', (tester) async {
-    seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
+    seedRequests([_tracker(id: 1, host: 'alpha.test')]);
 
     await pumpRequests(tester);
     expect(find.text('251.8KB'), findsNothing);
 
     container.read(requestsProvider.notifier).updateTraffic({
-      'a': (upload: 460, download: 257835),
+      1: (upload: 460, download: 257835),
     });
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
@@ -234,7 +234,7 @@ void main() {
     final requests = List.generate(
       200,
       (i) => TrackerInfo(
-        id: '$i',
+        id: i,
         start: DateTime.utc(2026, 1, 1, 0, 0, i),
         metadata: Metadata(
           network: 'tcp',
@@ -293,9 +293,9 @@ void main() {
   testWidgets('tapping a column header sorts the table by it, then the '
       'other way, then back to newest first', (tester) async {
     seedRequests([
-      _tracker(id: 'a', host: 'gamma.test', download: 10),
-      _tracker(id: 'b', host: 'alpha.test', download: 30),
-      _tracker(id: 'c', host: 'beta.test', download: 20),
+      _tracker(id: 1, host: 'gamma.test', download: 10),
+      _tracker(id: 2, host: 'alpha.test', download: 30),
+      _tracker(id: 3, host: 'beta.test', download: 20),
     ]);
 
     await pumpRequests(tester);
@@ -346,7 +346,7 @@ void main() {
   testWidgets('dragging a column edge widens it into the columns after it, '
       'keeps the widths and a double click gives them back', (tester) async {
     container.listen(appSettingProvider, (_, _) {});
-    seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
+    seedRequests([_tracker(id: 1, host: 'alpha.test')]);
 
     await pumpRequests(tester);
 
@@ -395,7 +395,7 @@ void main() {
 
   testWidgets('the table opens at the widths kept from before', (tester) async {
     container.listen(appSettingProvider, (_, _) {});
-    seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
+    seedRequests([_tracker(id: 1, host: 'alpha.test')]);
 
     await pumpRequests(tester);
     final target = tester.getTopLeft(find.text('Target')).dx;
@@ -421,7 +421,7 @@ void main() {
   });
 
   testWidgets('a wide page builds only the rows in view', (tester) async {
-    seedRequests([for (var i = 0; i < 500; i++) _tracker(id: '$i')]);
+    seedRequests([for (var i = 0; i < 500; i++) _tracker(id: i)]);
 
     await pumpRequests(tester);
 
@@ -433,7 +433,7 @@ void main() {
   });
 
   testWidgets('a narrow page keeps the stacked rows', (tester) async {
-    seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
+    seedRequests([_tracker(id: 1, host: 'alpha.test')]);
 
     await pumpRequests(tester, size: _listSize);
 
@@ -448,8 +448,8 @@ void main() {
     tester,
   ) async {
     seedRequests([
-      _tracker(id: 'a', host: 'alpha.test'),
-      _tracker(id: 'b', host: 'beta.test', chains: const ['Tokyo', 'Proxy']),
+      _tracker(id: 1, host: 'alpha.test'),
+      _tracker(id: 2, host: 'beta.test', chains: const ['Tokyo', 'Proxy']),
     ]);
 
     await pumpRequests(tester);
@@ -501,8 +501,8 @@ void main() {
     tester,
   ) async {
     seedRequests([
-      _tracker(id: 'a', host: 'alpha.test'),
-      _tracker(id: 'b', host: 'beta.test', chains: const ['Tokyo', 'Proxy']),
+      _tracker(id: 1, host: 'alpha.test'),
+      _tracker(id: 2, host: 'beta.test', chains: const ['Tokyo', 'Proxy']),
     ]);
 
     await pumpRequests(tester);
@@ -517,7 +517,7 @@ void main() {
   });
 
   testWidgets('tapping a table row opens its details', (tester) async {
-    seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
+    seedRequests([_tracker(id: 1, host: 'alpha.test')]);
 
     await pumpRequests(tester);
 
@@ -533,7 +533,7 @@ void main() {
   testWidgets('the table scrollbar leaves no room for the bar above it', (
     tester,
   ) async {
-    seedRequests([for (var i = 0; i < 200; i++) _tracker(id: '$i')]);
+    seedRequests([for (var i = 0; i < 200; i++) _tracker(id: i)]);
 
     await pumpRequests(tester);
 
@@ -553,7 +553,7 @@ void main() {
 
   testWidgets('following pauses when the list is scrolled off its head and '
       'resumes when it is scrolled back', (tester) async {
-    seedRequests([for (var i = 0; i < 60; i++) _tracker(id: '$i')]);
+    seedRequests([for (var i = 0; i < 60; i++) _tracker(id: i)]);
 
     await pumpRequests(tester);
     await tester.pumpAndSettle();
@@ -594,8 +594,8 @@ void main() {
     tester,
   ) async {
     seedRequests([
-      _tracker(id: 'a', host: 'alpha.test'),
-      _tracker(id: 'b', host: 'beta.test', network: 'udp'),
+      _tracker(id: 1, host: 'alpha.test'),
+      _tracker(id: 2, host: 'beta.test', network: 'udp'),
     ]);
 
     await pumpRequests(tester, size: _listSize);
@@ -626,9 +626,9 @@ void main() {
   testWidgets('grouping by app heads each app folded, unfolds one on a tap '
       'and is kept for the page', (tester) async {
     seedRequests([
-      _tracker(id: 'a', host: 'alpha.test'),
-      _tracker(id: 'b', host: 'beta.test', process: 'chrome'),
-      _tracker(id: 'c', host: 'gamma.test'),
+      _tracker(id: 1, host: 'alpha.test'),
+      _tracker(id: 2, host: 'beta.test', process: 'chrome'),
+      _tracker(id: 3, host: 'gamma.test'),
     ]);
     container.listen(appSettingProvider, (_, _) {});
 
@@ -678,7 +678,7 @@ void main() {
       'the newest request', (tester) async {
     seedRequests([
       for (var i = 0; i < 60; i++)
-        _tracker(id: '$i', host: 'host$i.test', process: 'app$i'),
+        _tracker(id: i, host: 'host$i.test', process: 'app$i'),
     ]);
     container.listen(appSettingProvider, (_, _) {});
 
@@ -718,8 +718,8 @@ void main() {
   testWidgets('a wide page pins the offered values as toggles and adds a '
       'tapped exit as a removable chip', (tester) async {
     seedRequests([
-      _tracker(id: 'a', host: 'alpha.test'),
-      _tracker(id: 'b', host: 'beta.test', network: 'udp', chains: ['Tokyo']),
+      _tracker(id: 1, host: 'alpha.test'),
+      _tracker(id: 2, host: 'beta.test', network: 'udp', chains: ['Tokyo']),
     ]);
 
     await pumpRequests(tester);
@@ -758,7 +758,7 @@ void main() {
   testWidgets('the title opens a menu of the feeds at any width', (
     tester,
   ) async {
-    seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
+    seedRequests([_tracker(id: 1, host: 'alpha.test')]);
     final bar = find.byType(AppBar);
 
     for (final size in const [_tableSize, Size(390, 800), Size(340, 800)]) {
@@ -778,8 +778,8 @@ void main() {
 
   group('a refresh builds only what changed', () {
     final full = [
-      for (var index = 0; index < 499; index++) _tracker(id: 'r$index'),
-      _tracker(id: 'r499', host: 'latest.test'),
+      for (var index = 0; index < 499; index++) _tracker(id: index),
+      _tracker(id: 499, host: 'latest.test'),
     ];
 
     Future<int> rowsBuiltBy(WidgetTester tester, void Function() change) async {
@@ -809,7 +809,7 @@ void main() {
 
         final built = await rowsBuiltBy(
           tester,
-          () => addRequest(_tracker(id: 'new')),
+          () => addRequest(_tracker(id: 500)),
         );
 
         expect(built, 1);
@@ -826,7 +826,7 @@ void main() {
       final built = await rowsBuiltBy(
         tester,
         () => container.read(requestsProvider.notifier).updateTraffic({
-          'r499': (upload: 0, download: 2048),
+          499: (upload: 0, download: 2048),
         }),
       );
       expect(built, 0);
@@ -851,7 +851,7 @@ void main() {
       final built = await rowsBuiltBy(
         tester,
         () => container.read(requestsProvider.notifier).updateTraffic({
-          'r499': (upload: 0, download: 2048),
+          499: (upload: 0, download: 2048),
         }),
       );
       expect(built, 0);

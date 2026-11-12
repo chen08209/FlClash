@@ -66,6 +66,19 @@ void main() {
     expect(find.text(l.tcpConcurrent), findsOneWidget);
   });
 
+  testWidgets('offers no geodata loader, which Concord does not read', (
+    tester,
+  ) async {
+    await pumpGeneralView(tester);
+    final l = currentAppLocalizations;
+
+    await tester.tap(find.text(l.addOverrideEntry));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l.tcpConcurrent), findsOneWidget);
+    expect(find.text(l.geodataLoader), findsNothing);
+  });
+
   testWidgets('removing an override resets its value', (tester) async {
     container
         .read(patchClashConfigProvider.notifier)
