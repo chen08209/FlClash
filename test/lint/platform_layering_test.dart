@@ -3,11 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
-const _platformLibraries = [
-  'rust_api/tray.dart',
-  'rust_api/window.dart',
-  'launch_at_startup/',
-];
+const _platformLibraries = ['rust_api/tray.dart', 'rust_api/window.dart'];
 
 const _platformModules = [
   'lib/common/tray.dart',

@@ -707,15 +707,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.14.1"
-  launch_at_startup:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: e930ce65c5804343103447e01d39fccabedc8681
-      resolved-ref: e930ce65c5804343103447e01d39fccabedc8681
-      url: "https://github.com/chen08209/launch_at_startup.git"
-    source: git
-    version: "0.5.1"
   leak_tracker:
     dependency: transitive
     description:
@@ -1573,7 +1564,7 @@ packages:
     source: hosted
     version: "6.4.0"
   win32_registry:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: win32_registry
       sha256: "73b1d78920a9d6e03f8b4e43e612b87bf3152a0e5c5e5150267762b7c4116904"

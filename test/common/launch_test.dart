@@ -1,21 +1,10 @@
 import 'package:fl_clash/common/launch.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:launch_at_startup/launch_at_startup.dart';
 
-class _FakeLauncher implements LaunchAtStartup {
+class _FakeEntry implements AutostartEntry {
   bool enabled = false;
   final calls = <String>[];
-
-  @override
-  void setup({
-    required String appName,
-    required String appPath,
-    String? packageName,
-    List<String> args = const [],
-  }) {
-    calls.add('setup');
-  }
 
   @override
   Future<bool> isEnabled() async {
@@ -24,50 +13,47 @@ class _FakeLauncher implements LaunchAtStartup {
   }
 
   @override
-  Future<bool> enable() async {
-    calls.add('enable');
-    enabled = true;
-    return true;
-  }
-
-  @override
-  Future<bool> disable() async {
-    calls.add('disable');
-    enabled = false;
+  Future<bool> setEnabled(bool enabled) async {
+    calls.add(enabled ? 'enable' : 'disable');
+    this.enabled = enabled;
     return true;
   }
 }
 
 void main() {
-  late _FakeLauncher launcher;
+  late _FakeEntry entry;
+  late AutostartEntry systemEntry;
   late AutoLaunch autoLaunch;
 
+  setUpAll(() {
+    systemEntry = AutoLaunch.entry;
+  });
+
   setUp(() {
-    launcher = _FakeLauncher();
-    AutoLaunch.launcher = launcher;
+    entry = _FakeEntry();
+    AutoLaunch.entry = entry;
     autoLaunch = AutoLaunch();
-    launcher.calls.clear();
   });
 
   tearDownAll(() {
-    AutoLaunch.launcher = launchAtStartup;
+    AutoLaunch.entry = systemEntry;
   });
 
   test('AutoLaunch is a singleton', () {
     expect(AutoLaunch(), same(autoLaunch));
   });
 
-  test('each call delegates straight to the launcher', () async {
-    launcher.enabled = true;
+  test('each call delegates straight to the entry', () async {
+    entry.enabled = true;
     expect(await autoLaunch.isEnable, isTrue);
 
     expect(await autoLaunch.disable(), isTrue);
-    expect(launcher.enabled, isFalse);
+    expect(entry.enabled, isFalse);
 
     expect(await autoLaunch.enable(), isTrue);
-    expect(launcher.enabled, isTrue);
+    expect(entry.enabled, isTrue);
 
-    expect(launcher.calls, ['isEnabled', 'disable', 'enable']);
+    expect(entry.calls, ['isEnabled', 'disable', 'enable']);
   });
 
   test('a debug build never registers autostart', () async {
@@ -81,7 +67,7 @@ void main() {
     await autoLaunch.updateStatus(false);
 
     expect(
-      launcher.calls,
+      entry.calls,
       isEmpty,
       reason:
           'updateStatus must return before reading or writing the autostart '

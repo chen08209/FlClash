@@ -43,14 +43,9 @@ it carried (work-area maximize with a hidden title bar on Windows, geometry
 restore on re-map on Linux, corner preference, terminate and activate events)
 live there, see Desktop Window in `architecture.md`.
 
-`launch_at_startup` — `chen08209/launch_at_startup`, version 0.5.1.
-
-- Migrates `win32_registry` from `^2.0.0` to `^3.0.3`, which is a breaking rename
-  across the whole Windows implementation (`Registry.openPath` → `CURRENT_USER.open`,
-  `createValue` → `setValue`, `getStringValue` → `getString`).
-- This one is not optional while it lasts: FlClash depends on `win32_registry: ^3.0.3`
-  directly, and upstream's `^2.0.0` constraint cannot co-resolve with it.
-- Drop the fork when upstream publishes a release that accepts `win32_registry` 3.x.
+The `launch_at_startup` fork (`chen08209/launch_at_startup`) was replaced by the
+`launch` module of `plugins/rust_api`, which reads and writes the same entries; see
+"rust_api Crate Layout" in `architecture.md`.
 
 The `yaml_writer` fork (`chen08209/yaml_writer`) was replaced by
 `lib/common/yaml_writer.dart`. Its key quoting let keys such as `!a`, `'a` or

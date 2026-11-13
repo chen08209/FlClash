@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:fl_clash/core/desktop/helper_client.dart';
 import 'package:fl_clash/core/desktop/model.dart';
-import 'package:win32_registry/win32_registry.dart';
+import 'package:rust_api/rust_api.dart' as rust_api;
 
 /// CreateProcess reports these when a policy, not the file, refused the image:
 /// ERROR_VIRUS_INFECTED, ERROR_INVALID_IMAGE_HASH, ERROR_ACCESS_DISABLED_BY_POLICY.
@@ -20,23 +20,15 @@ SmartAppControlState readSmartAppControlState() {
   if (!Platform.isWindows) {
     return SmartAppControlState.unknown;
   }
-  try {
-    final key = LOCAL_MACHINE.open(
-      r'SYSTEM\CurrentControlSet\Control\CI\Policy',
-    );
-    try {
-      return switch (key.getInt('VerifiedAndReputablePolicyState')) {
-        0 => SmartAppControlState.off,
-        1 => SmartAppControlState.on,
-        2 => SmartAppControlState.evaluation,
-        _ => SmartAppControlState.unknown,
-      };
-    } finally {
-      key.close();
-    }
-  } catch (_) {
-    return SmartAppControlState.unknown;
-  }
+  return switch (rust_api.readLocalMachineDword(
+    key: r'SYSTEM\CurrentControlSet\Control\CI\Policy',
+    value: 'VerifiedAndReputablePolicyState',
+  )) {
+    0 => SmartAppControlState.off,
+    1 => SmartAppControlState.on,
+    2 => SmartAppControlState.evaluation,
+    _ => SmartAppControlState.unknown,
+  };
 }
 
 /// The OS error behind a failed Core launch, whether the Helper spawned it

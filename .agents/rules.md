@@ -509,9 +509,9 @@ and is therefore null on every test host, so a `CoreLib()` built from it silentl
 path. `CoreLib.scoped` binds an explicit `Service` instead; reset the singleton with `CoreLib.resetInstance()` in `tearDown`.
 
 Three globals in `lib/common` reach real host state and carry a `@visibleForTesting` seam to stand in front of it:
-`AutoLaunch.launcher`, `listNetworkInterfaces` and `LinkManager.uriLinkStream`. Replace the launcher in particular — every
-`enable`/`disable`/`isEnabled` writes the actual autostart entry (a LaunchAgents plist, a `.desktop` file or a registry
-key), so a test that skips the seam registers the test binary on the machine that ran it. `updateStatus` returns early
+`AutoLaunch.entry`, `listNetworkInterfaces` and `LinkManager.uriLinkStream`. Replace the entry in particular — every
+`setEnabled`/`isEnabled` reaches the actual autostart entry (the macOS login item, a `.desktop` file or a registry
+value), so a test that skips the seam registers the test binary on the machine that ran it. `updateStatus` returns early
 under `kDebugMode`, which is always true beneath `flutter test`, so its remaining branches cannot be reached from a test
 at all; `test/common/launch_test.dart` pins the early return instead.
 

@@ -35,9 +35,7 @@ class Window implements WindowPort {
   Future<void> init(int version, WindowProps props) async {
     if (!safeModeBuild) {
       if (system.isWindows) {
-        for (final scheme in protocolSchemes) {
-          protocol.register(scheme);
-        }
+        unawaited(protocol.registerWindows(protocolSchemes));
       }
       if (system.isLinux) {
         unawaited(protocol.registerLinux(protocolSchemes));
