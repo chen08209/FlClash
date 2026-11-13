@@ -366,6 +366,116 @@ void main() {
     );
   });
 
+  group('config warnings', () {
+    const removed = ConfigWarning(
+      level: ConfigWarningLevel.warning,
+      path: 'proxies[12]',
+      message: 'masque is not supported, the proxy was removed',
+    );
+    const ignored = ConfigWarning(
+      level: ConfigWarningLevel.info,
+      path: 'experimental',
+      message: 'ignored',
+    );
+
+    void report(List<ConfigWarning> warnings) {
+      container.read(configWarningsStateProvider.notifier).value = warnings;
+    }
+
+    testWidgets('alone count the warnings on the button', (tester) async {
+      report(const [
+        removed,
+        ConfigWarning(
+          level: ConfigWarningLevel.warning,
+          path: 'rules[3]',
+          message: 'rule 3 was dropped',
+        ),
+      ]);
+      await pumpButton(tester);
+
+      expect(badge('Config warnings, 2'), findsOneWidget);
+      expect(find.text('2'), findsOneWidget);
+    });
+
+    testWidgets('notes of the info level alone show nothing', (tester) async {
+      report(const [ignored]);
+      await pumpButton(tester);
+
+      expect(find.byTooltip('Live status'), findsNothing);
+    });
+
+    testWidgets('come after an update', (tester) async {
+      report(const [removed]);
+      container.read(updateDownloadStateProvider.notifier).value =
+          const UpdateDownloading('v0.9.4', received: 25, total: 100);
+      await pumpButton(tester);
+
+      expect(badge('Downloading update, 25%'), findsOneWidget);
+
+      await open(tester);
+
+      expect(front('Cancel'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await settle(tester);
+
+      expect(front('View all'), findsOneWidget);
+    });
+
+    testWidgets('leave with the core', (tester) async {
+      report(const [removed]);
+      await pumpButton(tester);
+
+      container.read(coreStatusProvider.notifier).value =
+          CoreStatus.disconnected;
+      await settle(tester);
+
+      expect(badge('Core stopped'), findsOneWidget);
+    });
+
+    testWidgets('list the first on their card and all in an alert', (
+      tester,
+    ) async {
+      report([
+        removed,
+        ignored,
+        for (var i = 1; i <= 3; i++)
+          ConfigWarning(
+            level: ConfigWarningLevel.warning,
+            path: 'rules[$i]',
+            message: 'rule $i was dropped',
+          ),
+      ]);
+      container.read(updateDownloadStateProvider.notifier).value =
+          const UpdateDownloading('v0.9.4', received: 25, total: 100);
+      await pumpButton(tester);
+      await open(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await settle(tester);
+
+      expect(find.text(removed.message), findsOneWidget);
+      expect(find.text('proxies[12]'), findsOneWidget);
+      expect(find.text('rule 2 was dropped'), findsOneWidget);
+      expect(find.text('rule 3 was dropped'), findsNothing);
+      expect(find.text('4 warnings from loading the config'), findsOneWidget);
+      expect(find.text(ignored.message), findsNothing);
+
+      await tester.tap(front('View all'));
+      await settle(tester);
+
+      expect(front('View all'), findsNothing);
+      expect(find.text('Config warnings'), findsOneWidget);
+      expect(
+        find.textContaining('rule 3 was dropped\nrules[3]', findRichText: true),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(ignored.message, findRichText: true),
+        findsNothing,
+      );
+    });
+  });
+
   group('a separate core', () {
     testWidgets('alone shrinks the button to a check that opens its card', (
       tester,

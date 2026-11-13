@@ -131,6 +131,35 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('an in-process Core with no share shows one shared figure', (
+    tester,
+  ) async {
+    Future<MemorySnapshot> readMemory() async => MemorySnapshot.resolve(
+      rss: 300 * 1024 * 1024,
+      core: const CoreMemoryStats(rss: 300 * 1024 * 1024),
+      coreInProcess: true,
+    );
+
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        child: SizedBox(
+          width: 380,
+          child: MemoryInfo(memoryReader: readMemory),
+        ),
+        homeBuilder: (child) => HostScaffold(body: Center(child: child)),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('App & shared'), findsOneWidget);
+    expect(find.text('App'), findsNothing);
+    expect(find.text('Core'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('a poll that barely moves the split leaves the bar still', (
     tester,
   ) async {
@@ -648,7 +677,7 @@ void main() {
         ),
       );
 
-      expect(find.text('App & shared'), findsOneWidget);
+      expect(inSheet('App & shared'), findsOneWidget);
       expect(inSheet('App'), findsNothing);
       expect(find.text(_estimateDesc), findsOneWidget);
 

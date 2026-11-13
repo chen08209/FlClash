@@ -1840,7 +1840,7 @@ class AppLocalizationsJa extends AppLocalizations {
       'Helper サービスが利用できないため、TUN モードを有効にできません。FlClash を再インストールしてください。';
 
   @override
-  String get tunAuthorizationFailed => 'TUN の権限を取得できなかったため、オフにしました。';
+  String get tunAuthorizationFailed => 'TUN を承認できなかったため、今回の実行では TUN を使用しません。';
 
   @override
   String get sudoPasswordTitle => 'sudo のパスワードを入力';
@@ -3603,4 +3603,35 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get configWarnings => '設定の警告';
+
+  @override
+  String configWarningsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '設定の読み込みで $count 件の警告',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get httpPort => 'HTTPポート';
+
+  @override
+  String get dnsServer => 'DNS サーバー';
+
+  @override
+  String get serviceFaults => '起動できなかったサービス';
+
+  @override
+  String get faultAddressInUse => 'アドレスはすでに使用されています。';
+
+  @override
+  String get faultAddressNotAvailable => 'このデバイスにそのアドレスはありません。';
+
+  @override
+  String get faultPermissionDenied => '権限がありません。';
+
+  @override
+  String get tunStartFailed => 'TUN を起動できませんでした。今回の実行では再試行しません。';
 }

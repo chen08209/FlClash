@@ -1,3 +1,4 @@
+import 'package:fl_clash/core/api/dto.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/widgets.dart';
 import 'package:prism_ui/color.dart';
@@ -163,6 +164,34 @@ extension RecordGroupingL10n on RecordGrouping {
       RecordGrouping.host => appLocalizations.host,
       RecordGrouping.rule => appLocalizations.rule,
       RecordGrouping.exit => appLocalizations.outboundExit,
+    };
+  }
+}
+
+extension ServiceFaultL10n on ServiceFault {
+  String get serviceLabel {
+    final appLocalizations = currentAppLocalizations;
+    final name = switch (service) {
+      FaultService.mixed => appLocalizations.mixedPort,
+      FaultService.http => appLocalizations.httpPort,
+      FaultService.socks => appLocalizations.socksPort,
+      FaultService.redir => appLocalizations.redirPort,
+      FaultService.tproxy => appLocalizations.tproxyPort,
+      FaultService.tun => appLocalizations.tun,
+      FaultService.dns => appLocalizations.dnsServer,
+      FaultService.unknown => appLocalizations.other,
+    };
+    return address.isEmpty ? name : '$name $address';
+  }
+
+  String get reasonLabel {
+    final appLocalizations = currentAppLocalizations;
+    return switch (reason) {
+      FaultReason.addressInUse => appLocalizations.faultAddressInUse,
+      FaultReason.addressNotAvailable =>
+        appLocalizations.faultAddressNotAvailable,
+      FaultReason.permissionDenied => appLocalizations.faultPermissionDenied,
+      FaultReason.other => message,
     };
   }
 }

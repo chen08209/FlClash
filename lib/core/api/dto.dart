@@ -36,24 +36,92 @@ enum EngineState {
       _enum(values, name, EngineState.unknown);
 }
 
+enum FaultService {
+  mixed,
+  http,
+  socks,
+  redir,
+  tproxy,
+  tun,
+  dns,
+  unknown;
+
+  static FaultService parse(Object? name) =>
+      _enum(values, name, FaultService.unknown);
+}
+
+enum FaultReason {
+  addressInUse('address_in_use'),
+  addressNotAvailable('address_not_available'),
+  permissionDenied('permission_denied'),
+  other('other');
+
+  final String wire;
+
+  const FaultReason(this.wire);
+
+  static FaultReason parse(Object? wire) => values.firstWhere(
+    (reason) => reason.wire == wire,
+    orElse: () => FaultReason.other,
+  );
+}
+
 @immutable
-class EngineStatus {
-  final EngineState state;
-  final String? kind;
+class ServiceFault {
+  final FaultService service;
+  final String address;
+  final FaultReason reason;
+  final String message;
 
-  const EngineStatus({required this.state, this.kind});
+  const ServiceFault({
+    required this.service,
+    this.address = '',
+    required this.reason,
+    required this.message,
+  });
 
-  factory EngineStatus.fromJson(JsonMap json) => EngineStatus(
-    state: EngineState.parse(json['state']),
-    kind: json['kind'] as String?,
+  factory ServiceFault.fromJson(JsonMap json) => ServiceFault(
+    service: FaultService.parse(json['service']),
+    address: json['address'] as String? ?? '',
+    reason: FaultReason.parse(json['reason']),
+    message: json['message'] as String,
   );
 
   @override
   bool operator ==(Object other) =>
-      other is EngineStatus && other.state == state && other.kind == kind;
+      other is ServiceFault &&
+      other.service == service &&
+      other.address == address &&
+      other.reason == reason &&
+      other.message == message;
 
   @override
-  int get hashCode => Object.hash(state, kind);
+  int get hashCode => Object.hash(service, address, reason, message);
+}
+
+@immutable
+class EngineStatus {
+  final EngineState state;
+  final String? kind;
+  final List<ServiceFault> faults;
+
+  const EngineStatus({required this.state, this.kind, this.faults = const []});
+
+  factory EngineStatus.fromJson(JsonMap json) => EngineStatus(
+    state: EngineState.parse(json['state']),
+    kind: json['kind'] as String?,
+    faults: _list(json['faults'], ServiceFault.fromJson),
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      other is EngineStatus &&
+      other.state == state &&
+      other.kind == kind &&
+      listEquals(other.faults, faults);
+
+  @override
+  int get hashCode => Object.hash(state, kind, Object.hashAll(faults));
 }
 
 @immutable
@@ -510,12 +578,18 @@ class RuleSetInfoDto {
 class RouteStampDto {
   final int epoch;
   final int version;
+  final bool running;
 
-  const RouteStampDto({required this.epoch, required this.version});
+  const RouteStampDto({
+    required this.epoch,
+    required this.version,
+    this.running = false,
+  });
 
   factory RouteStampDto.fromJson(JsonMap json) => RouteStampDto(
     epoch: json['epoch'] as int,
     version: json['version'] as int,
+    running: json['running'] as bool? ?? false,
   );
 }
 

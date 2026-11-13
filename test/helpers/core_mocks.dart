@@ -46,6 +46,7 @@ void stubSilentFeeds(MockCoreApi api) {
   ).thenAnswer((_) => const Stream.empty());
   when(() => api.watchProxies()).thenAnswer((_) => const Stream.empty());
   when(() => api.watchRoute()).thenAnswer((_) => const Stream.empty());
+  when(() => api.watchEngineStatus()).thenAnswer((_) => const Stream.empty());
   when(
     () => api.watchLogs(level: any(named: 'level')),
   ).thenAnswer((_) => const Stream.empty());

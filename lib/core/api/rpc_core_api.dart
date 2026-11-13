@@ -89,6 +89,17 @@ final class RpcCoreApi implements CoreApi {
   }
 
   @override
+  Stream<EngineStatus> watchEngineStatus() {
+    return client
+        .watch<EngineStatus, EngineStatus>(
+          'engine.state',
+          decodeSnapshot: (r) => EngineStatus.fromJson(_object(r)),
+          decodeEvent: EngineStatus.fromJson,
+        )
+        .expand((frame) => [?frame.snapshot, ...frame.events]);
+  }
+
+  @override
   Future<void> startEngine() => _command('engine.start');
 
   @override

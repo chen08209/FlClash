@@ -269,6 +269,32 @@ void main() {
     });
   }
 
+  testWidgets('a status stands before the buttons and takes a slot', (
+    tester,
+  ) async {
+    const status = Key('status');
+    IconButtonData action(String label) =>
+        IconButtonData(glyph: AppGlyphs.add, onPressed: () {}, tooltip: label);
+
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        child: Scaffold(
+          title: 'Page',
+          statusActions: const [SizedBox(key: status, width: 40, height: 40)],
+          iconActions: [action('Edit'), action('Sort'), action('Sync')],
+          body: const SizedBox.expand(),
+        ),
+      ),
+    );
+
+    expect(_barButtons(tester), ['Edit', 'More']);
+    expect(
+      tester.getCenter(find.byKey(status)).dx,
+      lessThan(tester.getCenter(find.byTooltip('Edit')).dx),
+    );
+  });
+
   testWidgets('a page keeps its primary action in its bar', (tester) async {
     await tester.pumpWidget(
       TestApp(

@@ -787,25 +787,45 @@ void main() {
       );
     });
 
-    test('a failed authorization turns tun off and asks again on the next '
-        'enable', () async {
+    test('a failed authorization keeps the tun setting, pushes tun off and '
+        'does not ask again in this run', () async {
       loadAppLocalizations(const Locale('en'));
-      container
+      final mocks = coreMocks();
+      when(() => mocks.api.patchConfig(any())).thenAnswer((_) async => 1);
+      final scopedAction = TestSetupAction()
+        ..authorizeResult = AuthorizeCode.error;
+      final scoped = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(TestProfiles.new),
+          setupActionProvider.overrideWith(() => scopedAction),
+          coreHandlerProvider.overrideWithValue(mocks.controller),
+        ],
+      );
+      addTearDown(scoped.dispose);
+      scoped.read(setupActionProvider.notifier);
+      scoped
           .read(patchClashConfigProvider.notifier)
           .update((state) => state.copyWith.tun(enable: true));
-      action.authorizeResult = AuthorizeCode.error;
 
-      expect(await action.requestAdmin(true), isTrue);
-      expect(container.read(patchClashConfigProvider).tun.enable, isFalse);
+      await scopedAction.updateConfig();
+      await scopedAction.updateConfig();
+
+      final patches = verify(
+        () => mocks.api.patchConfig(captureAny()),
+      ).captured.cast<ConfigPatch>();
+      expect(patches.map((patch) => patch.tun?.enable), [false, false]);
+      expect(scoped.read(patchClashConfigProvider).tun.enable, isTrue);
+      expect(scoped.read(tunDisabledThisRunProvider), isTrue);
       expect(
-        container.read(authorizedTunEnableProvider),
+        scoped.read(authorizedTunEnableProvider),
         TunAuthorizationState.none,
       );
+      expect(await scopedAction.requestAdmin(true), isTrue);
+      expect(scopedAction.authorizeCalls, 1);
 
-      action.authorizeResult = AuthorizeCode.success;
-
-      expect(await action.requestAdmin(true), isFalse);
-      expect(action.authorizeCalls, 2);
+      final restarted = ProviderContainer();
+      addTearDown(restarted.dispose);
+      expect(restarted.read(tunDisabledThisRunProvider), isFalse);
     });
   });
 

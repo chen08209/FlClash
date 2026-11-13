@@ -1887,7 +1887,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '헬퍼 서비스를 사용할 수 없어 TUN 모드를 켤 수 없습니다. FlClash를 다시 설치하여 복구하세요.';
 
   @override
-  String get tunAuthorizationFailed => 'TUN 권한을 얻지 못해 끄기로 되돌렸습니다.';
+  String get tunAuthorizationFailed => 'TUN 권한을 받지 못해 이번 실행에서는 TUN을 사용하지 않습니다.';
 
   @override
   String get sudoPasswordTitle => 'sudo 비밀번호를 입력하세요';
@@ -3676,4 +3676,35 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get configWarnings => '구성 경고';
+
+  @override
+  String configWarningsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '구성을 불러올 때 경고 $count개',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get httpPort => 'HTTP 포트';
+
+  @override
+  String get dnsServer => 'DNS 서버';
+
+  @override
+  String get serviceFaults => '시작하지 못한 서비스';
+
+  @override
+  String get faultAddressInUse => '주소가 이미 사용 중입니다.';
+
+  @override
+  String get faultAddressNotAvailable => '이 기기에 해당 주소가 없습니다.';
+
+  @override
+  String get faultPermissionDenied => '권한이 없습니다.';
+
+  @override
+  String get tunStartFailed => 'TUN을 시작하지 못했습니다. 이번 실행에서는 다시 시도하지 않습니다.';
 }

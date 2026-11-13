@@ -129,7 +129,11 @@ ExternalProvider providerOf(ProviderInfo info) => ExternalProvider(
 );
 
 models.RouteSnapshot routeSnapshotOf(RouteStampDto stamp) =>
-    models.RouteSnapshot(coreEpoch: stamp.epoch, routeVersion: stamp.version);
+    models.RouteSnapshot(
+      coreEpoch: stamp.epoch,
+      routeVersion: stamp.version,
+      running: stamp.running,
+    );
 
 models.RouteHit routeHitOf(RouteHitDto hit) =>
     models.RouteHit(host: hit.host, proxy: hit.proxy, exit: hit.exit);

@@ -870,7 +870,8 @@ void main() {
       expect(await first, isFalse);
     });
 
-    test('a failed authorization leaves tun and system DNS off', () async {
+    test('a failed authorization leaves system DNS off and the tun setting '
+        'on', () async {
       TestWidgetsFlutterBinding.ensureInitialized();
       loadAppLocalizations(const Locale('en'));
       late _AuthorizationSetupAction setupAction;
@@ -890,7 +891,7 @@ void main() {
 
       expect(await setupAction.requestAdmin(true), isTrue);
 
-      expect(container.read(patchClashConfigProvider).tun.enable, isFalse);
+      expect(container.read(patchClashConfigProvider).tun.enable, isTrue);
       expect(
         await setupAction.requestAdmin(
           container.read(patchClashConfigProvider).tun.enable,

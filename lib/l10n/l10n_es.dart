@@ -1950,7 +1950,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tunAuthorizationFailed =>
-      'No se pudo autorizar TUN, por lo que se desactivó.';
+      'No se pudo autorizar TUN, así que no se usa en esta ejecución.';
 
   @override
   String get sudoPasswordTitle => 'Introduce tu contraseña para sudo';
@@ -3815,4 +3815,38 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get configWarnings => 'Advertencias de configuración';
+
+  @override
+  String configWarningsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count advertencias al cargar la configuración',
+      one: '1 advertencia al cargar la configuración',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get httpPort => 'Puerto HTTP';
+
+  @override
+  String get dnsServer => 'Servidor DNS';
+
+  @override
+  String get serviceFaults => 'Servicios no iniciados';
+
+  @override
+  String get faultAddressInUse => 'La dirección ya está en uso.';
+
+  @override
+  String get faultAddressNotAvailable =>
+      'La dirección no existe en este dispositivo.';
+
+  @override
+  String get faultPermissionDenied => 'Permiso denegado.';
+
+  @override
+  String get tunStartFailed =>
+      'TUN no pudo iniciarse y no se volverá a intentar en esta ejecución.';
 }

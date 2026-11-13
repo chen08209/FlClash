@@ -742,6 +742,24 @@ class _StatusCard extends ConsumerWidget {
     unawaited(action.installUpdate());
   }
 
+  void _showWarnings(BuildContext context, List<ConfigWarning> warnings) {
+    Navigator.of(context).pop();
+    unawaited(
+      dialogs.showAlert(
+        title: currentAppLocalizations.configWarnings,
+        message: TextSpan(
+          text: warnings
+              .map(
+                (warning) => warning.path.isEmpty
+                    ? warning.message
+                    : '${warning.message}\n${warning.path}',
+              )
+              .join('\n\n'),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = context.colorScheme;
@@ -756,12 +774,20 @@ class _StatusCard extends ConsumerWidget {
             stopDownload: action.cancelUpdateDownload,
             install: () => _install(context, ref),
             discard: () => unawaited(action.discardUpdate()),
+            showWarnings: switch (status) {
+              WarningsStatus(:final items) => () => _showWarnings(
+                context,
+                items,
+              ),
+              _ => _inert,
+            },
           )
         : (
             restartCore: _inert,
             stopDownload: _inert,
             install: _inert,
             discard: _inert,
+            showWarnings: _inert,
           );
     final (
       tint,
@@ -816,6 +842,15 @@ class _StatusCard extends ConsumerWidget {
         appLocalizations.installUpdate,
         effects.install,
         (colorScheme.success, colorScheme.onSuccess),
+      ),
+      WarningsStatus(:final items) => (
+        colorScheme.warningContainer,
+        _WarningsHero(items: items),
+        appLocalizations.configWarnings,
+        appLocalizations.configWarningsCount(items.length),
+        appLocalizations.viewAll,
+        effects.showWarnings,
+        (neutral, colorScheme.onSurface),
       ),
     };
     final ask = switch (_confirmOf(status)) {
@@ -1300,6 +1335,89 @@ class _ReadyHero extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The first warnings a line each, message and path; the card's button lists
+/// them all.
+class _WarningsHero extends StatelessWidget {
+  const _WarningsHero({required this.items});
+
+  static const _shown = 3;
+  static const _rowHeight = 36.0;
+  static const _inset = 8.0;
+  static const _gap = 6.0;
+  static const _pathWidth = 96.0;
+  static const _outerCorner = _heroCorner - _inset;
+  static const _innerCorner = 11.0;
+
+  final List<ConfigWarning> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final fill = SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme);
+    final pathStyle = AppTextStyle.caption1
+        .of(context)
+        .copyWith(color: colorScheme.onSurfaceVariant);
+    final shown = items.take(_shown).toList();
+    final last = shown.length - 1;
+    return Padding(
+      padding: const EdgeInsets.all(_inset),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: _gap,
+        children: [
+          for (final (i, item) in shown.indexed)
+            DecoratedBox(
+              decoration: ShapeDecoration(
+                color: fill,
+                shape: AppShape.vertical(
+                  top: i == 0 ? _outerCorner : _innerCorner,
+                  bottom: i == last ? _outerCorner : _innerCorner,
+                ),
+              ),
+              child: SizedBox(
+                height: _rowHeight,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    spacing: 10,
+                    children: [
+                      GlyphIcon(
+                        AppGlyphs.warning,
+                        size: 18,
+                        fill: 1,
+                        color: colorScheme.warning,
+                      ),
+                      Expanded(
+                        child: Text(
+                          item.message,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyle.subheadline.of(context),
+                        ),
+                      ),
+                      if (item.path.isNotEmpty)
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: _pathWidth,
+                          ),
+                          child: Text(
+                            item.path,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: pathStyle,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

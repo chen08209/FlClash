@@ -35,6 +35,14 @@ class AuthorizedTunEnable extends _$AuthorizedTunEnable
   }
 }
 
+/// Never saved, so the next launch tries TUN again.
+@Riverpod(keepAlive: true)
+class TunDisabledThisRun extends _$TunDisabledThisRun
+    with AutoDisposeNotifierMixin {
+  @override
+  bool build() => false;
+}
+
 @Riverpod(keepAlive: true)
 class UpdateDownloadState extends _$UpdateDownloadState
     with AutoDisposeNotifierMixin {
@@ -55,6 +63,19 @@ class ConfigWarningsState extends _$ConfigWarningsState
     with AutoDisposeNotifierMixin {
   @override
   List<ConfigWarning> build() {
+    ref.listen(coreStatusProvider, (_, next) {
+      if (next != CoreStatus.connected && state.isNotEmpty) {
+        state = const [];
+      }
+    });
+    return const [];
+  }
+}
+
+@Riverpod(keepAlive: true)
+class ServiceFaults extends _$ServiceFaults with AutoDisposeNotifierMixin {
+  @override
+  List<ServiceFault> build() {
     ref.listen(coreStatusProvider, (_, next) {
       if (next != CoreStatus.connected && state.isNotEmpty) {
         state = const [];

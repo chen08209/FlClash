@@ -170,6 +170,8 @@ abstract interface class CoreApi {
 
   Future<EngineStatus> engineStatus();
 
+  Stream<EngineStatus> watchEngineStatus();
+
   Future<void> startEngine();
 
   Future<void> stopEngine();

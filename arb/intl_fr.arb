@@ -575,7 +575,7 @@
   "tolerance": "Tolérance",
   "inputProxyGroupName": "Saisissez le nom du groupe de proxys",
   "helperCorruptTip": "Service Helper indisponible ; le mode TUN ne peut pas être activé. Réinstallez FlClash pour le rétablir.",
-  "tunAuthorizationFailed": "TUN n’a pas pu être autorisé et a donc été désactivé.",
+  "tunAuthorizationFailed": "Le TUN n'a pas pu être autorisé, il n'est pas utilisé pendant cette exécution.",
   "sudoPasswordTitle": "Saisissez votre mot de passe pour sudo",
   "coreBlockedByPolicyTip": "Windows a refusé d’exécuter FlClashCore.exe (erreur {code}). Une stratégie de contrôle des applications, telle que Smart App Control ou AppLocker, bloque les programmes non signés ; autorisez FlClash dans cette stratégie ou désactivez-la, puis réessayez.",
   "coreBlockedBySmartAppControlTip": "Windows Smart App Control a bloqué FlClashCore.exe car il n’est pas signé. Ouvrez Sécurité Windows → Contrôle des applications et du navigateur → Paramètres de Smart App Control, choisissez Désactivé, puis relancez FlClash. Smart App Control ne peut pas être réactivé sans réinstaller Windows.",
@@ -1093,5 +1093,13 @@
   "coreRunning": "Cœur en marche",
   "coreRunningDesc": "L’application est connectée au cœur",
   "forceRestartCore": "Forcer le redémarrage",
-  "configWarnings": "Avertissements de configuration"
+  "configWarnings": "Avertissements de configuration",
+  "configWarningsCount": "{count, plural, =1{1 avertissement au chargement de la configuration} other{{count} avertissements au chargement de la configuration}}",
+  "httpPort": "Port HTTP",
+  "dnsServer": "Serveur DNS",
+  "serviceFaults": "Services non démarrés",
+  "faultAddressInUse": "L'adresse est déjà utilisée.",
+  "faultAddressNotAvailable": "L'adresse n'existe pas sur cet appareil.",
+  "faultPermissionDenied": "Autorisation refusée.",
+  "tunStartFailed": "Le TUN n'a pas pu démarrer et ne sera plus essayé pendant cette exécution."
 }

@@ -48,7 +48,7 @@ final class UpdateParamsProvider
   }
 }
 
-String _$updateParamsHash() => r'14d1ecf3ed09f8b5e2554be50b40900f44ee44d5';
+String _$updateParamsHash() => r'33ff114f768d5113413f8f7deb93a0177fc52d72';
 
 @ProviderFor(coreOptions)
 final coreOptionsProvider = CoreOptionsProvider._();

@@ -434,12 +434,13 @@ listener exceptions so one faulty observer does not prevent the remaining events
 
 ## User-Facing Core And Delay Feedback
 
-`LiveStatusButton` in `lib/views/dashboard/widgets/live_status.dart` is the dashboard's one status surface, shown
-outside edit mode. It wears the most important live status (the Core's phase, an update, resources updating) and opens
-the deck of them in `live_status_deck.dart`. The deck takes an alert's scrim and motion through
-`AlertMotionRouteMixin.scaleOrigin`; its front card sits where a phone's alert sits, or under the bar at the right edge
-on a desktop, and a card with a list opens it in place while the rest of the deck steps away. A Core in its own process (`coreLib == null`) adds its starting and running
-phases; an in-app Core only ever shows having stopped:
+`LiveStatusButton` in `lib/views/dashboard/widgets/live_status.dart` is the dashboard's status surface beside the
+service faults badge, shown outside edit mode. It wears the most important live status (the Core's phase, an update,
+resources updating, config warnings) and opens the deck of them in `live_status_deck.dart`. The deck takes an alert's
+scrim and motion through `AlertMotionRouteMixin.scaleOrigin`; its front card sits where a phone's alert sits, or under
+the bar at the right edge on a desktop, and a card with a list opens it in place while the rest of the deck steps away.
+A Core in its own process (`coreLib == null`) adds its starting and running phases; an in-app Core only ever shows
+having stopped:
 
 - Provider state remains authoritative. The button keeps a separate display-only hold so a fast
   `connecting -> connected` transition still shows at least 600 milliseconds of progress instead of flashing.
@@ -506,7 +507,7 @@ force or is being asked again. The mechanism has three parts.
   come in bursts: a network switch reports more than once, and a launch applies the config and starts the
   listeners back to back. A new route version keeps every answer on show and sends their hits to `checkRoutes` in
   one call, at once for the first move and, for the moves that follow within `probeSettleDuration`, together when
-  it ends, so groups re-picking on neighbouring pick polls cost one check more; only an answer whose exit moved is
+  it ends, so groups re-picking moments apart cost one check more; only an answer whose exit moved is
   dropped and asked again, and one that held takes the checked version. An answer that lands under an older version
   than the state is held back as checking until its own check returns, so it never shows and then flips. An ask
   that is not the user's or a reset's waits out `probeThrottleDuration` since the target's last probe, so a config
@@ -661,7 +662,8 @@ select all included. Two text buttons are filled buttons in `actions`: the custo
 multi-selection, such as delete and select all, go into `selectionActions` instead: the bar keeps them in sight as
 one button group that takes a single slot beside the search button, so they never fold. A sheet's close button
 always leads its bar, whatever actions follow, as SwiftUI places a close in `.cancellationAction`; a pushed page puts
-its back button there instead.
+its back button there instead. A report of the page's state, such as the dashboard's config warnings count, goes in
+`statusActions`, which stand before every button and never fold, so an action such as edit keeps the bar's end.
 
 The search button opens its field in place, as iOS 27 does on a page above a tab bar, measured in the simulator: the
 button's group grows into the field on one spring while what it covers fades out, and the selection and

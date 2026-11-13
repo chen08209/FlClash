@@ -74,6 +74,7 @@ class _Feeds {
   final connections = StreamController<ConnectionUpdate>.broadcast();
   final proxies = StreamController<ProxyUpdate>.broadcast();
   final logs = StreamController<List<LogEntry>>.broadcast();
+  final engine = StreamController<EngineStatus>.broadcast();
 
   Future<void> close() => Future.wait([
     crashes.close(),
@@ -82,6 +83,7 @@ class _Feeds {
     connections.close(),
     proxies.close(),
     logs.close(),
+    engine.close(),
   ]);
 }
 
@@ -105,6 +107,9 @@ _Harness _harness() {
   ).thenAnswer((_) => feeds.connections.stream);
   when(() => mocks.api.watchProxies()).thenAnswer((_) => feeds.proxies.stream);
   when(() => mocks.api.watchLogs()).thenAnswer((_) => feeds.logs.stream);
+  when(
+    () => mocks.api.watchEngineStatus(),
+  ).thenAnswer((_) => feeds.engine.stream);
   when(() => mocks.api.lastWarnings()).thenAnswer((_) async => const []);
   when(() => mocks.api.providers()).thenAnswer((_) async => const []);
   when(
@@ -822,6 +827,79 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('services that did not start are kept until they start', (
+    tester,
+  ) async {
+    final harness = _harness();
+    final container = await _pumpConnected(tester, harness);
+    const fault = ServiceFault(
+      service: FaultService.mixed,
+      address: '127.0.0.1:7890',
+      reason: FaultReason.addressInUse,
+      message: 'address in use',
+    );
+
+    harness.feeds.engine.add(
+      const EngineStatus(state: EngineState.running, faults: [fault]),
+    );
+    await tester.pump();
+    expect(container.read(serviceFaultsProvider), [fault]);
+
+    harness.feeds.engine.add(const EngineStatus(state: EngineState.running));
+    await tester.pump();
+    expect(container.read(serviceFaultsProvider), isEmpty);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a TUN that does not start stays off for the run, reported '
+      'once, and keeps the tun setting', (tester) async {
+    final harness = _harness();
+    final setupAction = _ApplyRecordingSetupAction();
+    final container = await _pumpConnected(
+      tester,
+      harness,
+      overrides: [setupActionProvider.overrideWith(() => setupAction)],
+    );
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith.tun(enable: true));
+    await tester.pump();
+    final updatesBefore = setupAction.updates;
+    const failed = EngineStatus(
+      state: EngineState.running,
+      faults: [
+        ServiceFault(
+          service: FaultService.tun,
+          reason: FaultReason.other,
+          message: 'Start TUN listening error: no device',
+        ),
+      ],
+    );
+    final banner = find.text(
+      '${currentAppLocalizations.tunStartFailed}\n'
+      'Start TUN listening error: no device',
+    );
+
+    harness.feeds.engine
+      ..add(failed)
+      ..add(failed)
+      ..add(const EngineStatus(state: EngineState.running))
+      ..add(failed);
+    await tester.pump();
+    await tester.pump();
+
+    expect(container.read(patchClashConfigProvider).tun.enable, isTrue);
+    expect(container.read(tunDisabledThisRunProvider), isTrue);
+    expect(container.read(updateParamsProvider).tun?.enable, isFalse);
+    expect(setupAction.updates, updatesBefore + 1);
+    expect(container.read(serviceFaultsProvider), failed.faults);
+    expect(banner, findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 10));
   });
 
   testWidgets('geo events are forwarded to the geo resource action', (

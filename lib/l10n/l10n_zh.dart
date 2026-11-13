@@ -1824,7 +1824,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get helperCorruptTip => 'Helper 服务不可用，无法启用 TUN 模式，请重新安装 FlClash。';
 
   @override
-  String get tunAuthorizationFailed => '虚拟网卡授权失败，已关闭。';
+  String get tunAuthorizationFailed => '虚拟网卡授权失败，本次运行不使用虚拟网卡。';
 
   @override
   String get sudoPasswordTitle => '输入 sudo 密码';
@@ -3556,4 +3556,35 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get configWarnings => '配置警告';
+
+  @override
+  String configWarningsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '加载配置时有 $count 条警告',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get httpPort => 'HTTP端口';
+
+  @override
+  String get dnsServer => 'DNS 服务器';
+
+  @override
+  String get serviceFaults => '未能启动的服务';
+
+  @override
+  String get faultAddressInUse => '地址已被占用。';
+
+  @override
+  String get faultAddressNotAvailable => '本机没有这个地址。';
+
+  @override
+  String get faultPermissionDenied => '没有权限。';
+
+  @override
+  String get tunStartFailed => '虚拟网卡启动失败，本次运行不再尝试。';
 }

@@ -1926,7 +1926,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get tunAuthorizationFailed =>
-      'Не удалось получить права для TUN, поэтому он выключен.';
+      'Не удалось авторизовать TUN, в этом запуске он не используется.';
 
   @override
   String get sudoPasswordTitle => 'Введите пароль для sudo';
@@ -3768,4 +3768,38 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get configWarnings => 'Предупреждения конфигурации';
+
+  @override
+  String configWarningsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count предупреждений при загрузке конфигурации',
+      few: '$count предупреждения при загрузке конфигурации',
+      one: '$count предупреждение при загрузке конфигурации',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get httpPort => 'HTTP-порт';
+
+  @override
+  String get dnsServer => 'DNS-сервер';
+
+  @override
+  String get serviceFaults => 'Службы не запущены';
+
+  @override
+  String get faultAddressInUse => 'Адрес уже используется.';
+
+  @override
+  String get faultAddressNotAvailable => 'Этого адреса нет на устройстве.';
+
+  @override
+  String get faultPermissionDenied => 'Нет разрешения.';
+
+  @override
+  String get tunStartFailed =>
+      'Не удалось запустить TUN, в этом запуске попыток больше не будет.';
 }

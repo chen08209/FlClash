@@ -145,6 +145,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       events.forEach(_onEvent);
     });
     unawaited(_resyncState());
+    _feed('engine', api.watchEngineStatus(), _onEngineStatus);
     _openConnections();
     _feed('proxies', api.watchProxies(), (_) {
       ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
@@ -328,6 +329,25 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         fire: true,
       );
     }
+  }
+
+  void _onEngineStatus(EngineStatus status) {
+    ref.read(serviceFaultsProvider.notifier).value = status.faults;
+    final tunFault = status.faults
+        .where((fault) => fault.service == FaultService.tun)
+        .firstOrNull;
+    final tunDisabled = ref.read(tunDisabledThisRunProvider.notifier);
+    if (tunFault == null ||
+        system.isAndroid ||
+        tunDisabled.value ||
+        !ref.read(patchClashConfigProvider).tun.enable) {
+      return;
+    }
+    tunDisabled.value = true;
+    dialogs.showBanner(
+      '${currentAppLocalizations.tunStartFailed}\n${tunFault.reasonLabel}',
+      level: BannerLevel.error,
+    );
   }
 
   void _onDialerLoop(String proxyName) {
