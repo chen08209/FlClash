@@ -6,6 +6,7 @@ mod frb_generated;
 mod hotkey;
 mod ipc;
 mod launch;
+mod network;
 mod proxy;
 mod script;
 mod tray;

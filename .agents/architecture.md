@@ -2043,6 +2043,16 @@ UTF-8 bytes rather than a `String` so that decoding them stays off the UI isolat
   vtable slots, and `libfontconfig.so.1` is opened at run time, so a host without it gets an empty list and a logged
   error rather than a library that fails to load. Hidden (dot-prefixed) names and case-insensitive duplicates are
   dropped and the rest sorted as Dart compares strings.
+- `network/` streams `NetworkState` (on Wi-Fi, behind a VPN) to `ConnectivityManager` on the desktop. Windows registers
+  `NotifyIpInterfaceChange`, `NotifyUnicastIpAddressChange` and `NotifyRouteChange2`, Linux reads rtnetlink and counts
+  only a change in link state, in the address set or in the default routes (wireless events and address lifetime
+  refreshes are not one), and macOS combines `nw_path_monitor` with the `SCDynamicStore` global and per-interface
+  address keys. A burst is coalesced on a `network-watch` thread, read once 300 ms pass quietly or 1 s after it began,
+  and sent even when the state reads the same, because a new address alone still moves the route tracker's host epoch
+  and the Core's network change. A VPN is a PPP or tunnel adapter holding a default route on Windows, the main table's
+  default PPP, TUN or WireGuard interface on Linux, and never on macOS; the Core's own wintun or TUN is not one. Android
+  takes the same events from `DefaultNetworkWatcher` in `AppPlugin`, the app's default network, which is the app's
+  own VPN while it runs.
 - `proxy/` sets the desktop system proxy: `networksetup` for every macOS network service, `gsettings` (GNOME, MATE)
   or `kwriteconfig6`/`kwriteconfig5` (KDE) on Linux, and WinINet for the LAN and every RAS entry on Windows. With
   `NetworkProps.pacMode` on it points the system at a PAC URL instead: `pac` serves `NetworkProps.pacScript`, with

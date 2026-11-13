@@ -8,6 +8,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
+import 'package:rust_api/rust_api.dart' show NetworkState;
 
 const _platformProbeTimeout = Duration(seconds: 2);
 
@@ -27,6 +28,12 @@ class App {
   Function()? onExit;
   Function()? onPackagesChanged;
   final floatingKeyboard = ValueNotifier(false);
+  late final _networkChanges = StreamController<NetworkState>.broadcast(
+    onListen: () => methodChannel.invokeMethod<bool>('watchNetwork', true),
+    onCancel: () => methodChannel.invokeMethod<bool>('watchNetwork', false),
+  );
+
+  Stream<NetworkState> get networkChanges => _networkChanges.stream;
 
   App._internal() {
     methodChannel = const MethodChannel('$packageName/app');
@@ -40,6 +47,14 @@ class App {
           onPackagesChanged?.call();
         case 'floatingImeChanged':
           floatingKeyboard.value = call.arguments as bool;
+        case 'networkChanged':
+          final state = call.arguments as Map;
+          _networkChanges.add(
+            NetworkState(
+              wifi: state['wifi'] as bool,
+              vpn: state['vpn'] as bool,
+            ),
+          );
         default:
           throw MissingPluginException();
       }

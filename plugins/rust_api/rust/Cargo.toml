@@ -62,6 +62,7 @@ windows-sys = { version = "0.61", features = [
   "Win32_Graphics_Dwm",
   "Win32_Graphics_Gdi",
   "Win32_NetworkManagement_IpHelper",
+  "Win32_NetworkManagement_Ndis",
   "Win32_NetworkManagement_Rras",
   "Win32_Networking_WinInet",
   "Win32_Networking_WinSock",

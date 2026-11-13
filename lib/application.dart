@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fl_clash/bootstrap.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/window.dart';
@@ -17,13 +16,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:rust_api/rust_api.dart' show NetworkState;
 
 import 'pages/pages.dart';
 
 Widget buildManagerStack({
   required bool isDesktop,
-  required Future<void> Function(List<ConnectivityResult> results)
-  onConnectivityChanged,
+  required Future<void> Function(NetworkState state) onConnectivityChanged,
   Stream<ProcessSignal>? terminateSignals,
   required Widget child,
 }) {
@@ -125,12 +124,12 @@ class ApplicationState extends ConsumerState<Application> {
     });
   }
 
-  Future<void> _handleConnectivityChanged(
-    List<ConnectivityResult> results,
-  ) async {
-    commonPrint.log('connectivityChanged ${results.toString()}');
+  Future<void> _handleConnectivityChanged(NetworkState state) async {
+    commonPrint.log(
+      'connectivityChanged wifi: ${state.wifi} vpn: ${state.vpn}',
+    );
     unawaited(ref.read(systemActionProvider.notifier).updateLocalIp());
-    final hasVpn = results.contains(ConnectivityResult.vpn);
+    final hasVpn = state.vpn;
     if (_preHasVpn == hasVpn) {
       ref.read(routeTrackerProvider.notifier).bumpHostEpoch();
       // Android's NetworkObserver tells the Core about a new network itself.
