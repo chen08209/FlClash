@@ -422,8 +422,8 @@ void showOverrideAddSheet<K extends OverrideKey, M>(
   final appLocalizations = context.appLocalizations;
   final added = spec.target.read(ref).keys;
   final remaining = spec.values.where((key) => !added.contains(key));
-  showSheet<void>(
-    context: context,
+  showNestedSheet<void>(
+    context,
     builder: (_) => SelectionSheet<K>(
       title: spec.target.addEntry(appLocalizations),
       sections: [

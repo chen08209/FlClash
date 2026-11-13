@@ -50,7 +50,10 @@ class ScriptContent extends ConsumerWidget {
           child: MoreActionButton(
             label: appLocalizations.goToConfigureScript,
             onPressed: () {
-              showInSheet<void>(context, builder: (_) => const ScriptsView());
+              showNestedSheet<void>(
+                context,
+                builder: (_) => const ScriptsView(),
+              );
             },
           ),
         ),

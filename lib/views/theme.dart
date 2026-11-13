@@ -163,9 +163,9 @@ class _PrimaryColorItem extends ConsumerWidget {
     Color initialColor,
     ValueChanged<int> onConfirmed,
   ) {
-    showSheet<void>(
-      context: context,
-      props: const SheetProps(detents: [0.9]),
+    showNestedSheet<void>(
+      context,
+      detents: const [0.9],
       builder: (_) => _CustomColorSheet(
         initialColor: initialColor,
         onConfirmed: (color) {
@@ -847,8 +847,8 @@ class _FontFamilyItem extends ConsumerWidget {
                   openBuilder: (_, _) => const FontFamilyView(),
                 )
               : card(
-                  () => showSheet<void>(
-                    context: context,
+                  () => showNestedSheet<void>(
+                    context,
                     builder: (_) => const FontFamilyView(),
                   ),
                 ),

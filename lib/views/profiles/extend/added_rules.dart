@@ -33,8 +33,8 @@ class _AddedRulesContentState extends ConsumerState<AddedRulesContent> {
   }
 
   void _handleQuickActions() {
-    showSheet<void>(
-      context: context,
+    showNestedSheet<void>(
+      context,
       builder: (_) => RulePresetSheet(
         onAdd: ref.read(profileRulesProvider(_profileId).notifier).putAll,
       ),
@@ -204,8 +204,8 @@ class _MatchTargetItem extends ConsumerWidget {
   const _MatchTargetItem(this.profileId);
 
   Future<void> _handleSelect(BuildContext context, WidgetRef ref) async {
-    final res = await showSheet<String>(
-      context: context,
+    final res = await showNestedSheet<String>(
+      context,
       builder: (context) => Consumer(
         builder: (_, ref, _) {
           final appLocalizations = context.appLocalizations;
@@ -353,7 +353,7 @@ class _EditGlobalAddedRulesState extends ConsumerState<_EditGlobalAddedRules> {
   }
 
   void _handleToAddedRules() {
-    showInSheet<void>(context, builder: (_) => const AddedRulesView());
+    showNestedSheet<void>(context, builder: (_) => const AddedRulesView());
   }
 
   @override

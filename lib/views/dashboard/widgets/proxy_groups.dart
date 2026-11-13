@@ -31,8 +31,8 @@ Future<void> showProxiesSheet(BuildContext context, {String? groupName}) async {
   final query = queryProvider(QueryTag.proxies);
   final pageQuery = container.read(query);
   container.read(query.notifier).value = '';
-  await showSheet<void>(
-    context: context,
+  await showNestedSheet<void>(
+    context,
     builder: (_) => const ProxiesView(picker: true),
   );
   container.read(query.notifier).value = pageQuery;

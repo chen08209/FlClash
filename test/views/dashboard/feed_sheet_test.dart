@@ -380,7 +380,7 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
   });
 
-  testWidgets('a query opens its details in a sheet over the sheet', (
+  testWidgets('a query opens its details as the sheet\'s next page', (
     tester,
   ) async {
     seedDnsQueries(5);
@@ -393,9 +393,9 @@ void main() {
 
     final detail = find.byType(DnsQueryDetailView);
     expect(detail, findsOneWidget);
-    expect(ModalRoute.of(tester.element(detail)), isA<SnapSheetRoute>());
+    expect(ModalRoute.of(tester.element(detail)), isA<PagedSheetRoute>());
 
-    await tester.tap(find.byTooltip('Close').hitTestable());
+    await tester.tap(find.byTooltip('Back').hitTestable());
     await tester.pumpAndSettle();
 
     expect(detail, findsNothing);
@@ -406,7 +406,7 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
   });
 
-  testWidgets('a query opens its details in a side sheet over the sheet', (
+  testWidgets('a query opens its details as the side sheet\'s next page', (
     tester,
   ) async {
     seedDnsQueries(5);
@@ -419,9 +419,9 @@ void main() {
 
     final detail = find.byType(DnsQueryDetailView);
     expect(detail, findsOneWidget);
-    expect(ModalRoute.of(tester.element(detail)), isA<ModalSideSheetRoute>());
+    expect(ModalRoute.of(tester.element(detail)), isA<PagedSheetRoute>());
 
-    await tester.tap(find.byTooltip('Close').hitTestable());
+    await tester.tap(find.byTooltip('Back').hitTestable());
     await tester.pumpAndSettle();
 
     expect(detail, findsNothing);

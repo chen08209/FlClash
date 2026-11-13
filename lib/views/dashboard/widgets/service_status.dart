@@ -638,11 +638,9 @@ class _BadgePainter extends CustomPainter {
 }
 
 Future<void> showServiceStatusSheet(BuildContext context) {
-  return showSheet<void>(
-    context: context,
-    props: nestedPagedSheetProps,
-    builder: (_) =>
-        NestedPagedSheet(builder: (_) => const ServiceStatusSheet()),
+  return showNestedSheet<void>(
+    context,
+    builder: (_) => const ServiceStatusSheet(),
   );
 }
 

@@ -426,7 +426,7 @@ void main() {
     },
   );
 
-  testWidgets('an address in the sheet opens its quality in a sheet over it', (
+  testWidgets('an address in the sheet opens its quality as its next page', (
     tester,
   ) async {
     final sheet = await openCheckedSheet(
@@ -442,18 +442,20 @@ void main() {
     await tester.pump(commonDuration * 2);
     final title = find.text('Outbound IP');
     expect(title, findsOneWidget);
-    expect(find.byType(ServiceStatusSheet), findsOneWidget);
+    expect(
+      find.byType(ServiceStatusSheet, skipOffstage: false),
+      findsOneWidget,
+    );
     expect(
       Navigator.of(tester.element(title)).widget,
-      isNot(isA<SheetPagesNavigator>()),
+      isA<SheetPagesNavigator>(),
     );
 
-    await tester.tap(find.byTooltip('Close').hitTestable());
+    await tester.tap(find.byTooltip('Back').hitTestable());
     await tester.pump();
-    await tester.pump(commonDuration * 2);
+    await tester.pump(const Duration(seconds: 1));
     expect(find.byType(ServiceStatusSheet), findsOneWidget);
     expect(title, findsNothing);
-    await tester.pump(const Duration(seconds: 1));
   });
 
   const quality = IpQuality(

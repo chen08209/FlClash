@@ -16,8 +16,8 @@ class CustomProxyDialersView extends ConsumerWidget {
     WidgetRef ref,
     CustomProxy proxy,
   ) async {
-    final res = await showSheet<String>(
-      context: context,
+    final res = await showNestedSheet<String>(
+      context,
       builder: (context) => Consumer(
         builder: (_, ref, _) {
           final appLocalizations = context.appLocalizations;

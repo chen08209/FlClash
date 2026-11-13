@@ -80,8 +80,8 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
             IconButtonData(
               glyph: AppGlyphs.sort,
               onPressed: () {
-                showSheet(
-                  context: context,
+                showNestedSheet(
+                  context,
                   builder: (_) {
                     return ReorderableProfilesSheet(profiles: profiles);
                   },
@@ -351,7 +351,7 @@ class ProfileItem extends ConsumerWidget {
   }
 
   void _handleShowEditExtendPage(BuildContext context) {
-    showExtend(
+    showNestedExtend(
       context,
       builder: (context) => EditProfileView(profile: profile),
     );
