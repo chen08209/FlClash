@@ -1027,13 +1027,6 @@ packages:
       relative: true
     source: path
     version: "0.1.2"
-  proxy:
-    dependency: "direct main"
-    description:
-      path: "plugins/proxy"
-      relative: true
-    source: path
-    version: "0.0.1"
   pub_semver:
     dependency: transitive
     description:

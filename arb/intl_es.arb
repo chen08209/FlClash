@@ -348,6 +348,8 @@
   "stackMode": "Modo de pila",
   "network": "Red",
   "bypassDomain": "Dominios excluidos",
+  "pacMode": "Modo PAC",
+  "pacScript": "Script PAC",
   "bypassDomainDesc": "Los dominios excluidos solo se aplican mientras el proxy del sistema esté activado.",
   "resetTip": "¿Seguro que quieres restablecer?",
   "icon": "Icono",

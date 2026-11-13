@@ -1087,6 +1087,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get bypassDomain => '우회 도메인';
 
   @override
+  String get pacMode => 'PAC 모드';
+
+  @override
+  String get pacScript => 'PAC 스크립트';
+
+  @override
   String get bypassDomainDesc => '우회 도메인은 시스템 프록시가 켜져 있을 때만 적용됩니다.';
 
   @override

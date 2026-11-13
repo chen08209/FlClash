@@ -2202,6 +2202,18 @@ abstract class AppLocalizations {
   /// **'Bypass domains'**
   String get bypassDomain;
 
+  /// No description provided for @pacMode.
+  ///
+  /// In en, this message translates to:
+  /// **'PAC mode'**
+  String get pacMode;
+
+  /// No description provided for @pacScript.
+  ///
+  /// In en, this message translates to:
+  /// **'PAC script'**
+  String get pacScript;
+
   /// No description provided for @bypassDomainDesc.
   ///
   /// In en, this message translates to:

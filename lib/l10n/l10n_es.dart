@@ -1127,6 +1127,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get bypassDomain => 'Dominios excluidos';
 
   @override
+  String get pacMode => 'Modo PAC';
+
+  @override
+  String get pacScript => 'Script PAC';
+
+  @override
   String get bypassDomainDesc =>
       'Los dominios excluidos solo se aplican mientras el proxy del sistema esté activado.';
 

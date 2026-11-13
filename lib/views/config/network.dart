@@ -270,6 +270,44 @@ class RouteAddressItem extends ConsumerWidget {
   }
 }
 
+class PacModeItem extends ConsumerWidget {
+  const PacModeItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    return _networkToggle(
+      title: (l) => l.pacMode,
+      select: (state) => state.pacMode,
+      update: (state, value) => state.copyWith(pacMode: value),
+    );
+  }
+}
+
+class PacScriptItem extends ConsumerWidget {
+  const PacScriptItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final title = context.appLocalizations.pacScript;
+    return ListItem(
+      title: Text(title),
+      onTap: () => showQuickEdit(
+        context,
+        title: title,
+        content: ref.read(networkSettingProvider).pacScript,
+        language: Language.javaScript,
+        apply: (content) => ref
+            .read(networkSettingProvider.notifier)
+            .update(
+              (state) => state.copyWith(
+                pacScript: content.trim().isEmpty ? defaultPacScript : content,
+              ),
+            ),
+      ),
+    );
+  }
+}
+
 class LoopbackItem extends StatelessWidget {
   const LoopbackItem({super.key});
 
@@ -503,17 +541,21 @@ class VpnSections extends ConsumerWidget {
   }
 }
 
-class SystemProxySection extends StatelessWidget {
+class SystemProxySection extends ConsumerWidget {
   const SystemProxySection({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
     final appLocalizations = context.appLocalizations;
+    final pacMode = ref.watch(
+      networkSettingProvider.select((state) => state.pacMode),
+    );
     return generateSection(
       title: appLocalizations.system,
       items: [
         const SystemProxyItem(),
-        const BypassDomainItem(),
+        const PacModeItem(),
+        if (pacMode) const PacScriptItem() else const BypassDomainItem(),
         if (system.isWindows) const LoopbackItem(),
       ],
     );

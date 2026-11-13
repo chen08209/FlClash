@@ -1127,6 +1127,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get bypassDomain => 'Domaines contournés';
 
   @override
+  String get pacMode => 'Mode PAC';
+
+  @override
+  String get pacScript => 'Script PAC';
+
+  @override
   String get bypassDomainDesc =>
       'Les domaines contournés ne s’appliquent que si le proxy système est activé.';
 

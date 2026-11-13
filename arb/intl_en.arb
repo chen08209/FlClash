@@ -348,6 +348,8 @@
   "stackMode": "Stack mode",
   "network": "Network",
   "bypassDomain": "Bypass domains",
+  "pacMode": "PAC mode",
+  "pacScript": "PAC script",
   "bypassDomainDesc": "Bypass domains apply only while the system proxy is on.",
   "resetTip": "Are you sure you want to reset?",
   "icon": "Icon",

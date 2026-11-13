@@ -3078,7 +3078,7 @@ as List<NavigationItem>,
 /// @nodoc
 mixin _$ProxyState {
 
- bool get isStart; bool get systemProxy; List<String> get bassDomain; int get port;
+ bool get isStart; bool get systemProxy; List<String> get bassDomain; int get port; String? get pacScript;
 /// Create a copy of ProxyState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -3090,20 +3090,20 @@ $ProxyStateCopyWith<ProxyState> get copyWith => _$ProxyStateCopyWithImpl<ProxySt
 @override
 bool operator ==(Object other) {
   final _this = this as ProxyState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProxyState&&(identical(other.isStart, _this.isStart) || other.isStart == _this.isStart)&&(identical(other.systemProxy, _this.systemProxy) || other.systemProxy == _this.systemProxy)&&const DeepCollectionEquality().equals(other.bassDomain, _this.bassDomain)&&(identical(other.port, _this.port) || other.port == _this.port));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProxyState&&(identical(other.isStart, _this.isStart) || other.isStart == _this.isStart)&&(identical(other.systemProxy, _this.systemProxy) || other.systemProxy == _this.systemProxy)&&const DeepCollectionEquality().equals(other.bassDomain, _this.bassDomain)&&(identical(other.port, _this.port) || other.port == _this.port)&&(identical(other.pacScript, _this.pacScript) || other.pacScript == _this.pacScript));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ProxyState;
-  return Object.hash(runtimeType,_this.isStart,_this.systemProxy,const DeepCollectionEquality().hash(_this.bassDomain),_this.port);
+  return Object.hash(runtimeType,_this.isStart,_this.systemProxy,const DeepCollectionEquality().hash(_this.bassDomain),_this.port,_this.pacScript);
 }
 
 @override
 String toString() {
   final _this = this as ProxyState;
-  return 'ProxyState(isStart: ${_this.isStart}, systemProxy: ${_this.systemProxy}, bassDomain: ${_this.bassDomain}, port: ${_this.port})';
+  return 'ProxyState(isStart: ${_this.isStart}, systemProxy: ${_this.systemProxy}, bassDomain: ${_this.bassDomain}, port: ${_this.port}, pacScript: ${_this.pacScript})';
 }
 
 
@@ -3114,7 +3114,7 @@ abstract mixin class $ProxyStateCopyWith<$Res>  {
   factory $ProxyStateCopyWith(ProxyState value, $Res Function(ProxyState) _then) = _$ProxyStateCopyWithImpl;
 @useResult
 $Res call({
- bool isStart, bool systemProxy, List<String> bassDomain, int port
+ bool isStart, bool systemProxy, List<String> bassDomain, int port, String? pacScript
 });
 
 
@@ -3131,13 +3131,14 @@ class _$ProxyStateCopyWithImpl<$Res>
 
 /// Create a copy of ProxyState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? isStart = null,Object? systemProxy = null,Object? bassDomain = null,Object? port = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? isStart = null,Object? systemProxy = null,Object? bassDomain = null,Object? port = null,Object? pacScript = freezed,}) {
   return _then(ProxyState(
 isStart: null == isStart ? _self.isStart : isStart // ignore: cast_nullable_to_non_nullable
 as bool,systemProxy: null == systemProxy ? _self.systemProxy : systemProxy // ignore: cast_nullable_to_non_nullable
 as bool,bassDomain: null == bassDomain ? _self.bassDomain : bassDomain // ignore: cast_nullable_to_non_nullable
 as List<String>,port: null == port ? _self.port : port // ignore: cast_nullable_to_non_nullable
-as int,
+as int,pacScript: freezed == pacScript ? _self.pacScript : pacScript // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -3222,10 +3223,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isStart,  bool systemProxy,  List<String> bassDomain,  int port)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isStart,  bool systemProxy,  List<String> bassDomain,  int port,  String? pacScript)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProxyState() when $default != null:
-return $default(_that.isStart,_that.systemProxy,_that.bassDomain,_that.port);case _:
+return $default(_that.isStart,_that.systemProxy,_that.bassDomain,_that.port,_that.pacScript);case _:
   return orElse();
 
 }
@@ -3243,10 +3244,10 @@ return $default(_that.isStart,_that.systemProxy,_that.bassDomain,_that.port);cas
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isStart,  bool systemProxy,  List<String> bassDomain,  int port)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isStart,  bool systemProxy,  List<String> bassDomain,  int port,  String? pacScript)  $default,) {final _that = this;
 switch (_that) {
 case _ProxyState():
-return $default(_that.isStart,_that.systemProxy,_that.bassDomain,_that.port);case _:
+return $default(_that.isStart,_that.systemProxy,_that.bassDomain,_that.port,_that.pacScript);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -3263,10 +3264,10 @@ return $default(_that.isStart,_that.systemProxy,_that.bassDomain,_that.port);cas
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isStart,  bool systemProxy,  List<String> bassDomain,  int port)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isStart,  bool systemProxy,  List<String> bassDomain,  int port,  String? pacScript)?  $default,) {final _that = this;
 switch (_that) {
 case _ProxyState() when $default != null:
-return $default(_that.isStart,_that.systemProxy,_that.bassDomain,_that.port);case _:
+return $default(_that.isStart,_that.systemProxy,_that.bassDomain,_that.port,_that.pacScript);case _:
   return null;
 
 }
@@ -3278,7 +3279,7 @@ return $default(_that.isStart,_that.systemProxy,_that.bassDomain,_that.port);cas
 
 
 class _ProxyState implements ProxyState {
-  const _ProxyState({required this.isStart, required this.systemProxy, required  List<String> bassDomain, required this.port}): _bassDomain = bassDomain;
+  const _ProxyState({required this.isStart, required this.systemProxy, required  List<String> bassDomain, required this.port, this.pacScript}): _bassDomain = bassDomain;
   
 
 @override final  bool isStart;
@@ -3291,6 +3292,7 @@ class _ProxyState implements ProxyState {
 }
 
 @override final  int port;
+@override final  String? pacScript;
 
 /// Create a copy of ProxyState
 /// with the given fields replaced by the non-null parameter values.
@@ -3302,18 +3304,18 @@ _$ProxyStateCopyWith<_ProxyState> get copyWith => __$ProxyStateCopyWithImpl<_Pro
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProxyState&&(identical(other.isStart, isStart) || other.isStart == isStart)&&(identical(other.systemProxy, systemProxy) || other.systemProxy == systemProxy)&&const DeepCollectionEquality().equals(other.bassDomain, _bassDomain)&&(identical(other.port, port) || other.port == port));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProxyState&&(identical(other.isStart, isStart) || other.isStart == isStart)&&(identical(other.systemProxy, systemProxy) || other.systemProxy == systemProxy)&&const DeepCollectionEquality().equals(other.bassDomain, _bassDomain)&&(identical(other.port, port) || other.port == port)&&(identical(other.pacScript, pacScript) || other.pacScript == pacScript));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,isStart,systemProxy,const DeepCollectionEquality().hash(_bassDomain),port);
+    return Object.hash(runtimeType,isStart,systemProxy,const DeepCollectionEquality().hash(_bassDomain),port,pacScript);
 }
 
 @override
 String toString() {
-    return 'ProxyState(isStart: $isStart, systemProxy: $systemProxy, bassDomain: $bassDomain, port: $port)';
+    return 'ProxyState(isStart: $isStart, systemProxy: $systemProxy, bassDomain: $bassDomain, port: $port, pacScript: $pacScript)';
 }
 
 
@@ -3324,7 +3326,7 @@ abstract mixin class _$ProxyStateCopyWith<$Res> implements $ProxyStateCopyWith<$
   factory _$ProxyStateCopyWith(_ProxyState value, $Res Function(_ProxyState) _then) = __$ProxyStateCopyWithImpl;
 @override @useResult
 $Res call({
- bool isStart, bool systemProxy, List<String> bassDomain, int port
+ bool isStart, bool systemProxy, List<String> bassDomain, int port, String? pacScript
 });
 
 
@@ -3341,13 +3343,14 @@ class __$ProxyStateCopyWithImpl<$Res>
 
 /// Create a copy of ProxyState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? isStart = null,Object? systemProxy = null,Object? bassDomain = null,Object? port = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? isStart = null,Object? systemProxy = null,Object? bassDomain = null,Object? port = null,Object? pacScript = freezed,}) {
   return _then(_ProxyState(
 isStart: null == isStart ? _self.isStart : isStart // ignore: cast_nullable_to_non_nullable
 as bool,systemProxy: null == systemProxy ? _self.systemProxy : systemProxy // ignore: cast_nullable_to_non_nullable
 as bool,bassDomain: null == bassDomain ? _self._bassDomain : bassDomain // ignore: cast_nullable_to_non_nullable
 as List<String>,port: null == port ? _self.port : port // ignore: cast_nullable_to_non_nullable
-as int,
+as int,pacScript: freezed == pacScript ? _self.pacScript : pacScript // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -3636,7 +3639,7 @@ as bool,
 /// @nodoc
 mixin _$SystemProxySelectorState {
 
- bool get systemProxy; List<String> get bypassDomain;
+ bool get systemProxy; List<String> get bypassDomain; String? get pacScript;
 /// Create a copy of SystemProxySelectorState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -3648,20 +3651,20 @@ $SystemProxySelectorStateCopyWith<SystemProxySelectorState> get copyWith => _$Sy
 @override
 bool operator ==(Object other) {
   final _this = this as SystemProxySelectorState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SystemProxySelectorState&&(identical(other.systemProxy, _this.systemProxy) || other.systemProxy == _this.systemProxy)&&const DeepCollectionEquality().equals(other.bypassDomain, _this.bypassDomain));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SystemProxySelectorState&&(identical(other.systemProxy, _this.systemProxy) || other.systemProxy == _this.systemProxy)&&const DeepCollectionEquality().equals(other.bypassDomain, _this.bypassDomain)&&(identical(other.pacScript, _this.pacScript) || other.pacScript == _this.pacScript));
 }
 
 
 @override
 int get hashCode {
   final _this = this as SystemProxySelectorState;
-  return Object.hash(runtimeType,_this.systemProxy,const DeepCollectionEquality().hash(_this.bypassDomain));
+  return Object.hash(runtimeType,_this.systemProxy,const DeepCollectionEquality().hash(_this.bypassDomain),_this.pacScript);
 }
 
 @override
 String toString() {
   final _this = this as SystemProxySelectorState;
-  return 'SystemProxySelectorState(systemProxy: ${_this.systemProxy}, bypassDomain: ${_this.bypassDomain})';
+  return 'SystemProxySelectorState(systemProxy: ${_this.systemProxy}, bypassDomain: ${_this.bypassDomain}, pacScript: ${_this.pacScript})';
 }
 
 
@@ -3672,7 +3675,7 @@ abstract mixin class $SystemProxySelectorStateCopyWith<$Res>  {
   factory $SystemProxySelectorStateCopyWith(SystemProxySelectorState value, $Res Function(SystemProxySelectorState) _then) = _$SystemProxySelectorStateCopyWithImpl;
 @useResult
 $Res call({
- bool systemProxy, List<String> bypassDomain
+ bool systemProxy, List<String> bypassDomain, String? pacScript
 });
 
 
@@ -3689,11 +3692,12 @@ class _$SystemProxySelectorStateCopyWithImpl<$Res>
 
 /// Create a copy of SystemProxySelectorState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? systemProxy = null,Object? bypassDomain = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? systemProxy = null,Object? bypassDomain = null,Object? pacScript = freezed,}) {
   return _then(SystemProxySelectorState(
 systemProxy: null == systemProxy ? _self.systemProxy : systemProxy // ignore: cast_nullable_to_non_nullable
 as bool,bypassDomain: null == bypassDomain ? _self.bypassDomain : bypassDomain // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,pacScript: freezed == pacScript ? _self.pacScript : pacScript // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -3778,10 +3782,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool systemProxy,  List<String> bypassDomain)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool systemProxy,  List<String> bypassDomain,  String? pacScript)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SystemProxySelectorState() when $default != null:
-return $default(_that.systemProxy,_that.bypassDomain);case _:
+return $default(_that.systemProxy,_that.bypassDomain,_that.pacScript);case _:
   return orElse();
 
 }
@@ -3799,10 +3803,10 @@ return $default(_that.systemProxy,_that.bypassDomain);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool systemProxy,  List<String> bypassDomain)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool systemProxy,  List<String> bypassDomain,  String? pacScript)  $default,) {final _that = this;
 switch (_that) {
 case _SystemProxySelectorState():
-return $default(_that.systemProxy,_that.bypassDomain);case _:
+return $default(_that.systemProxy,_that.bypassDomain,_that.pacScript);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -3819,10 +3823,10 @@ return $default(_that.systemProxy,_that.bypassDomain);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool systemProxy,  List<String> bypassDomain)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool systemProxy,  List<String> bypassDomain,  String? pacScript)?  $default,) {final _that = this;
 switch (_that) {
 case _SystemProxySelectorState() when $default != null:
-return $default(_that.systemProxy,_that.bypassDomain);case _:
+return $default(_that.systemProxy,_that.bypassDomain,_that.pacScript);case _:
   return null;
 
 }
@@ -3834,7 +3838,7 @@ return $default(_that.systemProxy,_that.bypassDomain);case _:
 
 
 class _SystemProxySelectorState implements SystemProxySelectorState {
-  const _SystemProxySelectorState({required this.systemProxy, required  List<String> bypassDomain}): _bypassDomain = bypassDomain;
+  const _SystemProxySelectorState({required this.systemProxy, required  List<String> bypassDomain, this.pacScript}): _bypassDomain = bypassDomain;
   
 
 @override final  bool systemProxy;
@@ -3845,6 +3849,7 @@ class _SystemProxySelectorState implements SystemProxySelectorState {
   return EqualUnmodifiableListView(_bypassDomain);
 }
 
+@override final  String? pacScript;
 
 /// Create a copy of SystemProxySelectorState
 /// with the given fields replaced by the non-null parameter values.
@@ -3856,18 +3861,18 @@ _$SystemProxySelectorStateCopyWith<_SystemProxySelectorState> get copyWith => __
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SystemProxySelectorState&&(identical(other.systemProxy, systemProxy) || other.systemProxy == systemProxy)&&const DeepCollectionEquality().equals(other.bypassDomain, _bypassDomain));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SystemProxySelectorState&&(identical(other.systemProxy, systemProxy) || other.systemProxy == systemProxy)&&const DeepCollectionEquality().equals(other.bypassDomain, _bypassDomain)&&(identical(other.pacScript, pacScript) || other.pacScript == pacScript));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,systemProxy,const DeepCollectionEquality().hash(_bypassDomain));
+    return Object.hash(runtimeType,systemProxy,const DeepCollectionEquality().hash(_bypassDomain),pacScript);
 }
 
 @override
 String toString() {
-    return 'SystemProxySelectorState(systemProxy: $systemProxy, bypassDomain: $bypassDomain)';
+    return 'SystemProxySelectorState(systemProxy: $systemProxy, bypassDomain: $bypassDomain, pacScript: $pacScript)';
 }
 
 
@@ -3878,7 +3883,7 @@ abstract mixin class _$SystemProxySelectorStateCopyWith<$Res> implements $System
   factory _$SystemProxySelectorStateCopyWith(_SystemProxySelectorState value, $Res Function(_SystemProxySelectorState) _then) = __$SystemProxySelectorStateCopyWithImpl;
 @override @useResult
 $Res call({
- bool systemProxy, List<String> bypassDomain
+ bool systemProxy, List<String> bypassDomain, String? pacScript
 });
 
 
@@ -3895,11 +3900,12 @@ class __$SystemProxySelectorStateCopyWithImpl<$Res>
 
 /// Create a copy of SystemProxySelectorState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? systemProxy = null,Object? bypassDomain = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? systemProxy = null,Object? bypassDomain = null,Object? pacScript = freezed,}) {
   return _then(_SystemProxySelectorState(
 systemProxy: null == systemProxy ? _self.systemProxy : systemProxy // ignore: cast_nullable_to_non_nullable
 as bool,bypassDomain: null == bypassDomain ? _self._bypassDomain : bypassDomain // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,pacScript: freezed == pacScript ? _self.pacScript : pacScript // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

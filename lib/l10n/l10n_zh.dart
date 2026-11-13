@@ -1080,6 +1080,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bypassDomain => '排除域名';
 
   @override
+  String get pacMode => 'PAC 模式';
+
+  @override
+  String get pacScript => 'PAC 脚本';
+
+  @override
   String get bypassDomainDesc => '排除域名仅在系统代理启用时生效。';
 
   @override

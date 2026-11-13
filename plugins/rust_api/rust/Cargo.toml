@@ -34,6 +34,12 @@ dispatch2 = "0.3"
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = [
   "Win32_Foundation",
+  "Win32_Graphics_Gdi",
+  "Win32_NetworkManagement_IpHelper",
+  "Win32_NetworkManagement_Rras",
+  "Win32_Networking_WinInet",
+  "Win32_Networking_WinSock",
+  "Win32_System_LibraryLoader",
   "Win32_System_Threading",
   "Win32_UI_WindowsAndMessaging",
 ] }

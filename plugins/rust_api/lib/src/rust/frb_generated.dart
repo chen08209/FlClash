@@ -7,6 +7,7 @@ import 'api/charset.dart';
 import 'api/editor.dart';
 import 'api/hotkey.dart';
 import 'api/ipc.dart';
+import 'api/proxy.dart';
 import 'api/script.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -70,7 +71,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 1412991893;
+  int get rustContentHash => 734688645;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -198,6 +199,14 @@ abstract class RustLibApi extends BaseApi {
   Future<List<HotKeyFailure>> crateApiHotkeySetHotKeys({
     required List<HotKeySpec> specs,
   });
+
+  Future<bool> crateApiProxyStartSystemProxy({
+    required int port,
+    required List<String> bypassDomain,
+    String? pacScript,
+  });
+
+  Future<bool> crateApiProxyStopSystemProxy();
 
   Future<Uint8List?> crateApiCharsetTranscodeCharset({
     required List<int> bytes,
@@ -1226,6 +1235,70 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "set_hot_keys", argNames: ["specs"]);
 
   @override
+  Future<bool> crateApiProxyStartSystemProxy({
+    required int port,
+    required List<String> bypassDomain,
+    String? pacScript,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_u_32(port, serializer);
+          sse_encode_list_String(bypassDomain, serializer);
+          sse_encode_opt_String(pacScript, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 31,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiProxyStartSystemProxyConstMeta,
+        argValues: [port, bypassDomain, pacScript],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiProxyStartSystemProxyConstMeta =>
+      const TaskConstMeta(
+        debugName: "start_system_proxy",
+        argNames: ["port", "bypassDomain", "pacScript"],
+      );
+
+  @override
+  Future<bool> crateApiProxyStopSystemProxy() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 32,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiProxyStopSystemProxyConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiProxyStopSystemProxyConstMeta =>
+      const TaskConstMeta(debugName: "stop_system_proxy", argNames: []);
+
+  @override
   Future<Uint8List?> crateApiCharsetTranscodeCharset({
     required List<int> bytes,
     required String label,
@@ -1241,7 +1314,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 31,
+            funcId: 33,
             port: port_,
           );
         },
@@ -1275,7 +1348,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 32,
+            funcId: 34,
             port: port_,
           );
         },

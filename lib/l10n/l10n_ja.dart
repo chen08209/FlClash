@@ -1090,6 +1090,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get bypassDomain => '除外ドメイン';
 
   @override
+  String get pacMode => 'PACモード';
+
+  @override
+  String get pacScript => 'PACスクリプト';
+
+  @override
   String get bypassDomainDesc => '除外ドメインはシステムプロキシが有効な場合のみ適用されます。';
 
   @override

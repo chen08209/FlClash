@@ -1598,8 +1598,8 @@ rewritten; each owner reads the flag where it would otherwise act:
   ends up with, so neither the user's override nor the profile's own NTP config can move the host's time.
 - Profile listeners and firewall rules: `_makeRealProfileTask` clears `listeners`, `tunnels`, `ss-config`,
   `vmess-config`, `tuic-server` and `iptables`, and closes `dns.listen`, preventing profile-only changes during apply.
-- System proxy: the `proxy` plugin handle in `lib/common/proxy.dart` is `null`, so `ProxyManager` and exit cleanup
-  never write the OS setting, not even the `stopProxy` that would clear what the installed app configured.
+- System proxy: `systemProxyQueue` in `lib/common/proxy.dart` is `null`, so `ProxyManager` and exit cleanup never
+  write the OS setting, not even the stop that would clear what the installed app configured.
 - System DNS: `systemDnsCoordinator` is `null` and `shouldPatchSystemDnsProvider` is `false`, so neither the apply nor
   the restore path runs. The restore path matters because a profile or release build shares the preferences of the
   installed app (only a macOS or Android debug build has its own bundle id) and would restore from its record.
@@ -1783,12 +1783,6 @@ NDK version stands in for the hook's cache.
 ## Local Plugins
 
 - `setup`: build-time harness for Go core artifacts and the Rust helper, driven by a Dart build hook; no runtime Dart API.
-- `proxy`: system proxy configuration. On Windows the package installer and uninstaller kill the app, and then run
-  `FlClash.exe --clear-stale-proxy`, the installer once the new files are in place; the runner hands it to the plugin
-  before any engine starts, and it turns off only a proxy still set to FlClash's `127.0.0.1:<port>` with nothing
-  listening on that port. In the app `SystemProxyQueue` sets the system proxy when the Core starts with it on, and
-  stops it on a stop or exit only when this run set it, since a stop also clears a proxy, PAC or auto-detect setting
-  someone else made. Nothing is stored, so a launch leaves alone the proxy a crashed run left.
 - `rust_api`: runtime Flutter Rust Bridge FFI package built through Native Assets. See below.
 - `tray`: system tray for Linux, macOS and Windows. Written for FlClash; replaced the `tray_manager` fork.
 - `window`: desktop window control for Linux, macOS and Windows. Written for FlClash; replaced the
@@ -1952,6 +1946,19 @@ UTF-8 bytes rather than a `String` so that decoding them stays off the UI isolat
   codes, `owner` runs every registration on the thread the platform binds it to (a dedicated message-loop thread on
   Windows, the main dispatch queue on macOS, in place on Linux), and `service` owns the registry and forwards presses
   to Dart. Linux is X11 only; a Wayland session without XWayland gets an error rather than a silent no-op.
+- `proxy/` sets the desktop system proxy: `networksetup` for every macOS network service, `gsettings` (GNOME, MATE)
+  or `kwriteconfig6`/`kwriteconfig5` (KDE) on Linux, and WinINet for the LAN and every RAS entry on Windows. With
+  `NetworkProps.pacMode` on it points the system at a PAC URL instead: `pac` serves `NetworkProps.pacScript`, with
+  `%mixed-port%` replaced, from a loopback listener on an ephemeral port that lives as long as the app process, and
+  each start adds a new `?v=` query so a system that caches PAC files by URL fetches the edited script. On
+  Windows a hidden top-level window on its own thread turns a proxy this run set back off at `WM_ENDSESSION`, since
+  shutdown kills the process before the Dart exit path runs. The package installer and uninstaller kill the app and
+  then run `FlClash.exe --clear-stale-proxy`, the installer once the new files are in place; the runner loads
+  `rust_api.dll` and calls its exported `flclash_clear_stale_proxy` before any engine starts, which turns off only a
+  proxy or `/flclash.pac` URL still set to FlClash's `127.0.0.1:<port>` with nothing listening on that port. In the app
+  `SystemProxyQueue` (`lib/common/proxy.dart`) sets the system proxy when the Core starts with it on, and stops it on
+  a stop or exit only when this run set it, since a stop also clears a proxy, PAC or auto-detect setting someone else
+  made. Nothing is stored, so a launch leaves alone the proxy a crashed run left.
 
 `IpcServer.bind` resolves once the address is bound, `events()` attaches the one event stream, `send` only enqueues
 and is a synchronous call so frames keep the order they were sent in, and `close` joins the thread. A bridge function

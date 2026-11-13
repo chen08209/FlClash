@@ -1115,6 +1115,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bypassDomain => 'Bypass domains';
 
   @override
+  String get pacMode => 'PAC mode';
+
+  @override
+  String get pacScript => 'PAC script';
+
+  @override
   String get bypassDomainDesc =>
       'Bypass domains apply only while the system proxy is on.';
 

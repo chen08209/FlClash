@@ -348,6 +348,8 @@
   "stackMode": "栈模式",
   "network": "网络",
   "bypassDomain": "排除域名",
+  "pacMode": "PAC 模式",
+  "pacScript": "PAC 脚本",
   "bypassDomainDesc": "排除域名仅在系统代理启用时生效。",
   "resetTip": "确定要重置吗？",
   "icon": "图标",

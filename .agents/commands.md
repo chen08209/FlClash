@@ -169,7 +169,6 @@ flutter test test/common/
 flutter test test/database/
 flutter test test/widgets/
 flutter test test/setup_test.dart
-flutter test plugins/proxy/test/proxy_test.dart
 ```
 
 For the whole suite, or a directory of more than a few files, use `tool/test.dart`, which is also what CI runs:

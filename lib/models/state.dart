@@ -113,6 +113,7 @@ abstract class ProxyState with _$ProxyState {
     required bool systemProxy,
     required List<String> bassDomain,
     required int port,
+    String? pacScript,
   }) = _ProxyState;
 }
 
@@ -131,6 +132,7 @@ abstract class SystemProxySelectorState with _$SystemProxySelectorState {
   const factory SystemProxySelectorState({
     required bool systemProxy,
     required List<String> bypassDomain,
+    String? pacScript,
   }) = _SystemProxySelectorState;
 }
 

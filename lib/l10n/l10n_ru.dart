@@ -1114,6 +1114,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get bypassDomain => 'Исключённые домены';
 
   @override
+  String get pacMode => 'Режим PAC';
+
+  @override
+  String get pacScript => 'Скрипт PAC';
+
+  @override
   String get bypassDomainDesc =>
       'Исключённые домены действуют только при включённом системном прокси.';
 

@@ -3,9 +3,8 @@ import 'dart:async';
 import 'package:fl_clash/common/proxy.dart';
 import 'package:fl_clash/models/models.dart' show ProxyState;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:proxy/proxy.dart';
 
-class _FakeProxy implements Proxy {
+class _FakeProxy implements SystemProxy {
   final List<String> calls = [];
   Future<bool>? held;
   Error? failure;
@@ -23,12 +22,12 @@ class _FakeProxy implements Proxy {
   }
 
   @override
-  Future<bool> startProxy(int port, [List<String> bypassDomain = const []]) {
+  Future<bool> start(int port, List<String> bypassDomain, String? pacScript) {
     return _call('start $port');
   }
 
   @override
-  Future<bool> stopProxy() => _call('stop');
+  Future<bool> stop() => _call('stop');
 }
 
 ProxyState _state({required bool isStart}) {

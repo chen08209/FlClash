@@ -348,6 +348,8 @@
   "stackMode": "スタックモード",
   "network": "ネットワーク",
   "bypassDomain": "除外ドメイン",
+  "pacMode": "PACモード",
+  "pacScript": "PACスクリプト",
   "bypassDomainDesc": "除外ドメインはシステムプロキシが有効な場合のみ適用されます。",
   "resetTip": "リセットしてもよろしいですか？",
   "icon": "アイコン",

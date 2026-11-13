@@ -3,7 +3,6 @@
 #include <windows.h>
 
 #include <app_links/app_links_plugin_c_api.h>
-#include <proxy/proxy_plugin_c_api.h>
 #include <window/window_plugin_c_api.h>
 
 #include <algorithm>
@@ -15,13 +14,30 @@
 // path is what normally turns the system proxy off.
 constexpr char kClearStaleProxyArgument[] = "--clear-stale-proxy";
 
+// rust_api is a native asset installed beside the executable; this runs before
+// any Flutter engine exists to load it.
+bool ClearStaleProxy() {
+  HMODULE library = ::LoadLibraryExW(
+      L"rust_api.dll", nullptr,
+      LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32);
+  if (library == nullptr) {
+    return false;
+  }
+  using ClearStaleProxyFunction = bool (*)();
+  auto clear_stale_proxy = reinterpret_cast<ClearStaleProxyFunction>(
+      ::GetProcAddress(library, "flclash_clear_stale_proxy"));
+  const bool cleared = clear_stale_proxy != nullptr && clear_stale_proxy();
+  ::FreeLibrary(library);
+  return cleared;
+}
+
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
   std::vector<std::string> command_line_arguments =
       GetCommandLineArguments();
   if (std::find(command_line_arguments.begin(), command_line_arguments.end(),
                 kClearStaleProxyArgument) != command_line_arguments.end()) {
-    return ProxyPluginClearStaleProxy() ? EXIT_SUCCESS : EXIT_FAILURE;
+    return ClearStaleProxy() ? EXIT_SUCCESS : EXIT_FAILURE;
   }
 
   if (HWND running = WindowPluginFindRunningWindow()) {
