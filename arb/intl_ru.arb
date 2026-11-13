@@ -399,6 +399,7 @@
   "ruleTarget": "Цель правила",
   "matchTarget": "MATCH-TARGET",
   "followProfile": "Как в профиле",
+  "scriptFailed": "Не удалось выполнить скрипт",
   "sourceIp": "IP источника",
   "noResolve": "Не разрешать IP",
   "saveChanges": "Сохранить изменения?",

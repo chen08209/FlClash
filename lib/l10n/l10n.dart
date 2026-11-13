@@ -2508,6 +2508,12 @@ abstract class AppLocalizations {
   /// **'Follow profile'**
   String get followProfile;
 
+  /// No description provided for @scriptFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The script failed'**
+  String get scriptFailed;
+
   /// No description provided for @sourceIp.
   ///
   /// In en, this message translates to:

@@ -1272,6 +1272,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get followProfile => 'Как в профиле';
 
   @override
+  String get scriptFailed => 'Не удалось выполнить скрипт';
+
+  @override
   String get sourceIp => 'IP источника';
 
   @override

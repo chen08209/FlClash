@@ -1236,6 +1236,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get followProfile => '跟随配置';
 
   @override
+  String get scriptFailed => '脚本运行失败';
+
+  @override
   String get sourceIp => '源IP';
 
   @override

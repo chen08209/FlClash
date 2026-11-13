@@ -3586,6 +3586,90 @@ final class ClashConfigFamily extends $Family
   String toString() => r'clashConfigProvider';
 }
 
+/// The groups a script leaves for a MATCH target; null without a script.
+
+@ProviderFor(scriptOutbounds)
+final scriptOutboundsProvider = ScriptOutboundsFamily._();
+
+/// The groups a script leaves for a MATCH target; null without a script.
+
+final class ScriptOutboundsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ClashConfig?>,
+          ClashConfig?,
+          FutureOr<ClashConfig?>
+        >
+    with $FutureModifier<ClashConfig?>, $FutureProvider<ClashConfig?> {
+  /// The groups a script leaves for a MATCH target; null without a script.
+  ScriptOutboundsProvider._({
+    required ScriptOutboundsFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: _noRetry,
+         name: r'scriptOutboundsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$scriptOutboundsHash();
+
+  @override
+  String toString() {
+    return r'scriptOutboundsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<ClashConfig?> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<ClashConfig?> create(Ref ref) {
+    final argument = this.argument as int;
+    return scriptOutbounds(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ScriptOutboundsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$scriptOutboundsHash() => r'ee0dec9a980bed9f0b2b9f35567391abd126cb8a';
+
+/// The groups a script leaves for a MATCH target; null without a script.
+
+final class ScriptOutboundsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<ClashConfig?>, int> {
+  ScriptOutboundsFamily._()
+    : super(
+        retry: _noRetry,
+        name: r'scriptOutboundsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The groups a script leaves for a MATCH target; null without a script.
+
+  ScriptOutboundsProvider call(int profileId) =>
+      ScriptOutboundsProvider._(argument: profileId, from: this);
+
+  @override
+  String toString() => r'scriptOutboundsProvider';
+}
+
 @ProviderFor(setupState)
 final setupStateProvider = SetupStateFamily._();
 

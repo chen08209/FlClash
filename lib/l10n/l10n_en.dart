@@ -1274,6 +1274,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get followProfile => 'Follow profile';
 
   @override
+  String get scriptFailed => 'The script failed';
+
+  @override
   String get sourceIp => 'Source IP';
 
   @override

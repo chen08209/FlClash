@@ -399,6 +399,7 @@
   "ruleTarget": "规则目标",
   "matchTarget": "MATCH-TARGET",
   "followProfile": "跟随配置",
+  "scriptFailed": "脚本运行失败",
   "sourceIp": "源IP",
   "noResolve": "不解析IP",
   "saveChanges": "是否保存更改？",

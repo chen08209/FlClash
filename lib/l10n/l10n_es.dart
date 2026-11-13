@@ -1288,6 +1288,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get followProfile => 'Seguir perfil';
 
   @override
+  String get scriptFailed => 'El script falló';
+
+  @override
   String get sourceIp => 'IP de origen';
 
   @override

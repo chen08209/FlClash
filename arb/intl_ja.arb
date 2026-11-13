@@ -399,6 +399,7 @@
   "ruleTarget": "ルールターゲット",
   "matchTarget": "MATCH-TARGET",
   "followProfile": "プロファイルに従う",
+  "scriptFailed": "スクリプトの実行に失敗しました",
   "sourceIp": "送信元IP",
   "noResolve": "IPを解決しない",
   "saveChanges": "変更を保存しますか？",

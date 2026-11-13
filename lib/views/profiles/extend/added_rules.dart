@@ -2,6 +2,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/clash_config.dart';
+import 'package:fl_clash/models/profile.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/config/rules.dart';
@@ -123,9 +124,6 @@ class _AddedRulesContentState extends ConsumerState<AddedRulesContent> {
     _profileId = ProfileIdProvider.of(context)!.profileId;
     final addedRules = ref.watch(profileRulesProvider(_profileId)).value ?? [];
     final selectedRules = ref.watch(itemsProvider(_key));
-    final hasScript = ref.watch(
-      profileProvider(_profileId).select((state) => state?.scriptId != null),
-    );
     return PopGuard(
       onPop: selectedRules.isEmpty
           ? null
@@ -140,6 +138,7 @@ class _AddedRulesContentState extends ConsumerState<AddedRulesContent> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ListHeader(
                 title: appLocalizations.addedRules,
+                caption: appLocalizations.addedRulesAfterScript,
                 actions: [
                   if (selectedRules.isNotEmpty) ...[
                     IconButtonData(
@@ -168,18 +167,6 @@ class _AddedRulesContentState extends ConsumerState<AddedRulesContent> {
               ),
             ),
           ),
-          if (hasScript)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding:
-                    const EdgeInsets.fromLTRB(16, 0, 16, 8) * 1.mAp(context) +
-                    const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  appLocalizations.addedRulesAfterScript,
-                  style: context.listCaptionStyle,
-                ),
-              ),
-            ),
           SliverPrismReorderableList(
             itemCount: addedRules.length,
             itemBuilder: (_, index) =>
@@ -208,6 +195,9 @@ class _AddedRulesContentState extends ConsumerState<AddedRulesContent> {
   }
 }
 
+bool _runsScript(Profile? profile) =>
+    profile?.type != ProfileType.custom && profile?.scriptId != null;
+
 class _MatchTargetItem extends ConsumerWidget {
   final int profileId;
 
@@ -219,7 +209,30 @@ class _MatchTargetItem extends ConsumerWidget {
       builder: (context) => Consumer(
         builder: (_, ref, _) {
           final appLocalizations = context.appLocalizations;
-          final clashConfig = ref.watch(clashConfigProvider(profileId)).value;
+          final scripted =
+              ref.watch(profileProvider(profileId).select(_runsScript))
+              ? ref.watch(scriptOutboundsProvider(profileId))
+              : const AsyncData<ClashConfig?>(null);
+          if (scripted case AsyncError(:final error)) {
+            return Scaffold(
+              title: appLocalizations.matchTarget,
+              body: NullStatus(
+                label: appLocalizations.scriptFailed,
+                description: '$error',
+                illustration: NullStatusIllustration.error,
+                action: TonalButton(
+                  size: TonalButtonSize.bar,
+                  label: appLocalizations.followProfile,
+                  onPressed: () => Navigator.of(context).pop(''),
+                ),
+              ),
+            );
+          }
+          final clashConfig = switch (scripted) {
+            AsyncData(value: final config?) => config,
+            AsyncData() => ref.watch(clashConfigProvider(profileId)).value,
+            _ => null,
+          };
           final groups = clashConfig?.proxyGroups ?? const [];
           final proxies = clashConfig?.proxies ?? const [];
           final groupTypes = {
@@ -256,6 +269,9 @@ class _MatchTargetItem extends ConsumerWidget {
               ).select((state) => state?.matchTarget ?? ''),
             ),
             onSelected: (item) => Navigator.of(context).pop(item),
+            loadingStatus: scripted is AsyncLoading
+                ? const NullStatus(illustration: NullStatusIllustration.proxies)
+                : null,
           );
         },
       ),
@@ -271,10 +287,15 @@ class _MatchTargetItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
-    final matchTarget = ref.watch(
-      profileProvider(profileId).select((state) => state?.matchTarget),
+    final (:matchTarget, :scripted) = ref.watch(
+      profileProvider(profileId).select(
+        (state) =>
+            (matchTarget: state?.matchTarget, scripted: _runsScript(state)),
+      ),
     );
-    final clashConfig = ref.watch(clashConfigProvider(profileId)).value;
+    final clashConfig = scripted
+        ? null
+        : ref.watch(clashConfigProvider(profileId)).value;
     final invalid =
         matchTarget != null &&
         clashConfig != null &&

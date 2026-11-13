@@ -1246,6 +1246,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get followProfile => 'プロファイルに従う';
 
   @override
+  String get scriptFailed => 'スクリプトの実行に失敗しました';
+
+  @override
   String get sourceIp => '送信元IP';
 
   @override

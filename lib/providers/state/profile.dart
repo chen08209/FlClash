@@ -34,6 +34,30 @@ Future<ClashConfig> clashConfig(Ref ref, int profileId) async {
   return clashConfigTask(outbounds);
 }
 
+/// The groups a script leaves for a MATCH target; null without a script.
+@Riverpod(retry: _noRetry)
+Future<ClashConfig?> scriptOutbounds(Ref ref, int profileId) async {
+  final scriptId = ref.watch(
+    profileProvider(profileId).select(
+      (state) => state?.type == ProfileType.custom ? null : state?.scriptId,
+    ),
+  );
+  if (scriptId == null) {
+    return null;
+  }
+  final script = await ref.watch(
+    scriptsProvider.selectAsync(
+      (scripts) => scripts.firstWhereOrNull((item) => item.id == scriptId),
+    ),
+  );
+  final content = await script?.content;
+  if (content == null || content.isEmpty) {
+    return null;
+  }
+  final config = await ref.read(coreHandlerProvider).readConfig(profileId);
+  return evaluateOutbounds(content, config);
+}
+
 @riverpod
 Future<SetupState> setupState(Ref ref, int? profileId) async {
   final profile = ref.watch(profileProvider(profileId));

@@ -399,6 +399,7 @@
   "ruleTarget": "Destino de la regla",
   "matchTarget": "MATCH-TARGET",
   "followProfile": "Seguir perfil",
+  "scriptFailed": "El script falló",
   "sourceIp": "IP de origen",
   "noResolve": "No resolver IP",
   "saveChanges": "¿Guardar los cambios?",

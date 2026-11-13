@@ -221,7 +221,7 @@ void main() {
       await pumpExtendView(tester);
       final l10n = currentAppLocalizations;
       expect(find.text(l10n.none), findsOneWidget);
-      expect(find.text(l10n.addedRulesAfterScript), findsNothing);
+      expect(find.text(l10n.addedRulesAfterScript), findsOneWidget);
       expect(
         tester.getTopLeft(find.text(l10n.extendScript)).dy,
         lessThan(tester.getTopLeft(find.text(l10n.addedRules)).dy),
@@ -229,7 +229,6 @@ void main() {
 
       await selectScript(tester);
       expect(find.text('alpha'), findsOneWidget);
-      expect(find.text(l10n.addedRulesAfterScript), findsOneWidget);
     });
 
     testWidgets('offers applying at once only after a change', (tester) async {

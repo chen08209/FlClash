@@ -399,6 +399,7 @@
   "ruleTarget": "Rule target",
   "matchTarget": "MATCH-TARGET",
   "followProfile": "Follow profile",
+  "scriptFailed": "The script failed",
   "sourceIp": "Source IP",
   "noResolve": "Don't resolve IP",
   "saveChanges": "Save the changes?",

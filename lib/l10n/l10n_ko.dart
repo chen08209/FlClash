@@ -1244,6 +1244,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get followProfile => '프로필 따르기';
 
   @override
+  String get scriptFailed => '스크립트 실행에 실패했습니다';
+
+  @override
   String get sourceIp => '출발지 IP';
 
   @override
