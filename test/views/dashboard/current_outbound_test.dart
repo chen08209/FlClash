@@ -439,53 +439,55 @@ void main() {
       tester,
     ).read(outboundIpProbeProvider).entryOf(routedOutbound).phase;
 
-    testWidgets('that fails as the proxy starts shows as checking', (
+    Future<void> startProxy(WidgetTester tester) async {
+      start(tester);
+      await tester.pump();
+      await tester.pump(probeMoveSettleDuration);
+      await tester.pump();
+    }
+
+    testWidgets('that fails once keeps checking for a second answer', (
       tester,
     ) async {
       final core = _MockCore();
-      var epoch = 1;
+      var failing = true;
       when(() => core.outboundIp(any())).thenAnswer((invocation) async {
         final params =
             invocation.positionalArguments.single as OutboundIpParams;
-        final failing = params.proxyName != directOutbound && epoch == 1;
-        if (failing) {
+        if (params.proxyName != directOutbound && failing) {
           throw TimeoutException('no answer');
         }
-        return _address(coreEpoch: epoch);
+        return _address();
       });
       await tester.pumpWidget(_probingApp(core));
       await tester.pump();
       await tester.pump(commonDuration);
       expect(find.text(_ip), findsOneWidget);
 
-      start(tester);
-      await tester.pump();
-      await tester.pump(probeSettleDuration);
-      expect(phaseOf(tester), ProbePhase.failed);
+      await startProxy(tester);
+      expect(phaseOf(tester), ProbePhase.probing);
       expect(find.text('Check failed'), findsNothing);
       expect(find.byType(SkeletonText), findsNWidgets(2));
 
-      epoch = 2;
-      containerOf(tester)
-          .read(routeTrackerProvider.notifier)
-          .applySnapshot(const RouteSnapshot(coreEpoch: 2, routeVersion: 1));
-      await tester.pump(probeSettleDuration);
+      failing = false;
+      await tester.pump(probeConfirmDelay);
       await tester.pumpAndSettle();
       await tester.pump(const Duration(milliseconds: 700));
       expect(find.text(_ip), findsOneWidget);
       expect(find.byType(SkeletonText), findsNothing);
     });
 
-    testWidgets('that fails past the start is shown, then checked again', (
+    testWidgets('that fails twice is shown, then asked again behind it', (
       tester,
     ) async {
       final core = _MockCore();
       final asked = <String>[];
+      const failing = true;
       when(() => core.outboundIp(any())).thenAnswer((invocation) async {
         final params =
             invocation.positionalArguments.single as OutboundIpParams;
         asked.add(params.proxyName);
-        if (params.proxyName != directOutbound) {
+        if (params.proxyName != directOutbound && failing) {
           throw TimeoutException('no answer');
         }
         return _address();
@@ -494,25 +496,45 @@ void main() {
       await tester.pump();
       await tester.pump(commonDuration);
 
-      start(tester);
-      await tester.pump();
-      await tester.pump(probeSettleDuration);
-      await tester.tap(find.byTooltip('Retry'));
-      await tester.pump();
-      expect(phaseOf(tester), ProbePhase.failed);
-      expect(find.text('Check failed'), findsNothing);
-      expect(asked, [directOutbound, routedOutbound]);
-
-      await tester.pump(const Duration(seconds: 5));
+      await startProxy(tester);
+      await tester.pump(probeConfirmDelay);
+      await tester.pumpAndSettle();
       expect(find.text('Check failed'), findsOneWidget);
       expect(find.text('Tap the icon to retry'), findsOneWidget);
+      expect(asked, [directOutbound, routedOutbound, routedOutbound]);
+
       await tester.tap(find.byTooltip('Retry'));
       await tester.pump();
-      expect(asked, [directOutbound, routedOutbound, routedOutbound]);
+      expect(asked, hasLength(4));
       await tester.pumpAndSettle();
-      await tester.pump(const Duration(milliseconds: 700));
       expect(find.text('Check failed'), findsOneWidget);
-      expect(find.byType(SkeletonText), findsNothing);
+
+      await tester.pump(const Duration(minutes: 1));
+      expect(asked, hasLength(4));
+    });
+
+    testWidgets('that timed out is shown without a second attempt', (
+      tester,
+    ) async {
+      final core = _MockCore();
+      when(() => core.outboundIp(any())).thenAnswer((invocation) async {
+        final params =
+            invocation.positionalArguments.single as OutboundIpParams;
+        return params.proxyName == directOutbound
+            ? _address()
+            : const OutboundIpResult(
+                error: 'timeout',
+                coreEpoch: 1,
+                routeVersion: 1,
+              );
+      });
+      await tester.pumpWidget(_probingApp(core));
+      await tester.pump();
+      await tester.pump(commonDuration);
+
+      await startProxy(tester);
+      await tester.pump(commonDuration);
+      expect(find.text('Check failed'), findsOneWidget);
     });
   });
 

@@ -219,6 +219,8 @@ class ProxiesAction extends _$ProxiesAction {
         logLevel: coreFailureLogLevel(error),
       );
     }
+    // After the reset, which closes the probes out through the tunnel too.
+    ref.read(routeTrackerProvider.notifier).markPicked();
   }
 
   Future<void> updateProvider(

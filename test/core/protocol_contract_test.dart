@@ -147,7 +147,11 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
           },
         ],
       },
-      CoreMethod.routeWatch => {'core-epoch': 1, 'route-version': 0},
+      CoreMethod.routeWatch => {
+        'core-epoch': 1,
+        'route-version': 0,
+        'running': true,
+      },
       CoreMethod.routeCheck => {
         'core-epoch': 1,
         'route-version': 3,
@@ -250,7 +254,7 @@ void main() {
     );
     expect(switched, const ChangeProxyResult(changed: true));
     final route = await handler.watchRoute(true);
-    expect(route, const RouteSnapshot(coreEpoch: 1));
+    expect(route, const RouteSnapshot(coreEpoch: 1, running: true));
     final check = await handler.checkRoutes(
       const CheckRoutesParams(
         routes: [

@@ -13,6 +13,7 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/route_state.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -272,6 +273,7 @@ void main() {
       expect(container.read(currentProfileProvider)?.selectedMap, {
         'Proxy': 'HK-01',
       });
+      expect(container.read(routeTrackerProvider).picks, 1);
     });
 
     test('skips the connection reset when the switch itself fails', () async {
@@ -300,6 +302,7 @@ void main() {
 
         verifyNever(core.closeConnections);
         verifyNever(core.resetConnections);
+        expect(container.read(routeTrackerProvider).picks, 0);
       },
     );
 

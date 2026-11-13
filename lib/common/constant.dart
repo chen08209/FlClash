@@ -66,18 +66,23 @@ const delayTimedOutValue = -1;
 
 const probeTimeoutDuration = Duration(seconds: 10);
 
-/// Outlasts the Core's one-second pick poll (`routePollInterval` in
-/// core/route.go), so groups re-picking on neighbouring polls cost one route
-/// check.
+/// The window a checked move opens, whose later moves are checked together
+/// when it ends. Outlasts the Core's one-second pick poll (`routePollInterval`
+/// in core/route.go), so groups re-picking on neighbouring polls cost one
+/// route check more.
 const probeSettleDuration = Duration(milliseconds: 1500);
 
 /// Spans a config load, whose providers, rule sets and url-test picks land
 /// over a few seconds, so an exit moving with each costs one probe more.
 const probeThrottleDuration = Duration(seconds: 5);
 
-/// Covers a start, which moves the route three times within about 150 ms
-/// (`proxied`, then the listeners, then the Android TUN).
+/// Covers a burst of resets: a network switch reports more than once, and a
+/// launch applies the config and starts the listeners back to back.
 const probeMoveSettleDuration = Duration(milliseconds: 300);
+
+/// How long after a failure that came back early a watched probe target is
+/// asked the once more that confirms it.
+const probeConfirmDelay = Duration(seconds: 1);
 
 const downloadTimeoutDuration = Duration(seconds: 20);
 

@@ -8,6 +8,9 @@ import 'package:flutter/foundation.dart';
 const directOutbound = 'DIRECT';
 const routedOutbound = '';
 
+/// `probeErrorTimeout` in core/probe.go.
+const probeErrorTimeout = 'timeout';
+
 /// [id] must match the checker name registered in core/service_check.go.
 enum ServiceTarget {
   google('google', 'Google', 'google'),
