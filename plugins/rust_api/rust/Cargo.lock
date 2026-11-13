@@ -1480,6 +1480,8 @@ dependencies = [
  "libc",
  "objc2",
  "objc2-app-kit",
+ "objc2-core-foundation",
+ "objc2-core-text",
  "objc2-foundation",
  "objc2-service-management",
  "ropey",

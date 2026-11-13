@@ -1556,7 +1556,7 @@ packages:
     source: path
     version: "0.0.1"
   win32:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: win32
       sha256: a0b93865d5644f11cf6a8c3f6db909f1ec168958b5805f6cc684adea957cd63d

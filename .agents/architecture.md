@@ -2033,6 +2033,12 @@ UTF-8 bytes rather than a `String` so that decoding them stays off the UI isolat
   registers the `clash` URL schemes under `HKCU\Software\Classes` on Windows, and `readLocalMachineDword` is the
   synchronous HKLM read behind the Helper port and the Smart App Control state. The Linux scheme handler stays in
   `lib/common/protocol.dart`: it is a desktop file and an `xdg-mime` call, with nothing native to replace.
+- `fonts/` lists the font families the picker offers, each through the API the engine resolves names with:
+  CoreText on macOS, the DirectWrite system collection (en-us name, else the first) on Windows, scalable fontconfig
+  families on Linux, and the named families of `/system/etc/fonts.xml` on Android. DirectWrite is called through its
+  vtable slots, and `libfontconfig.so.1` is opened at run time, so a host without it gets an empty list and a logged
+  error rather than a library that fails to load. Hidden (dot-prefixed) names and case-insensitive duplicates are
+  dropped and the rest sorted as Dart compares strings.
 - `proxy/` sets the desktop system proxy: `networksetup` for every macOS network service, `gsettings` (GNOME, MATE)
   or `kwriteconfig6`/`kwriteconfig5` (KDE) on Linux, and WinINet for the LAN and every RAS entry on Windows. With
   `NetworkProps.pacMode` on it points the system at a PAC URL instead: `pac` serves `NetworkProps.pacScript`, with

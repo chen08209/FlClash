@@ -33,6 +33,12 @@ block2 = "0.6"
 dispatch2 = "0.3"
 objc2 = "0.6"
 objc2-app-kit = "0.3"
+objc2-core-foundation = { version = "0.3", default-features = false, features = [
+  "std",
+  "CFArray",
+  "CFString",
+] }
+objc2-core-text = { version = "0.3", default-features = false, features = ["std", "CTFontManager"] }
 objc2-foundation = "0.3"
 objc2-service-management = { version = "0.3", default-features = false, features = [
   "std",

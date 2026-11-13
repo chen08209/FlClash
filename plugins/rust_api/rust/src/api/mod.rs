@@ -1,5 +1,6 @@
 pub mod charset;
 pub mod editor;
+pub mod fonts;
 pub mod hotkey;
 pub mod init;
 pub mod ipc;

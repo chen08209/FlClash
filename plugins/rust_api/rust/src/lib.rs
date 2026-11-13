@@ -1,5 +1,6 @@
 pub mod api;
 mod editor;
+mod fonts;
 mod frb_generated;
 mod hotkey;
 mod ipc;
