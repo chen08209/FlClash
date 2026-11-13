@@ -1350,10 +1350,10 @@ the key directly and does not import `lib/state.dart`.
 ### Platform Layering
 
 `lib/common/common.dart` deliberately does not export `tray.dart`, `window.dart`,
-`launch.dart`, or `system_dns.dart`. Those modules import
-`rust_api/tray.dart`, `rust_api/window.dart`, and `launch_at_startup`;
-exporting them would put those packages in the compile graph of every file that
-imports the barrel for a string helper. Import the specific module instead.
+`launch.dart`, or `system_dns.dart`. Two of those modules import
+`rust_api/tray.dart` and `rust_api/window.dart`, and `launch.dart` writes the
+autostart entry; exporting them would put those packages in the compile graph of
+every file that imports the barrel for a string helper. Import the specific module instead.
 
 `test/lint/platform_layering_test.dart` enforces four rules. Three are local: the
 barrel never re-exports one of those four modules, nothing under `lib/common`,
@@ -2025,6 +2025,14 @@ UTF-8 bytes rather than a `String` so that decoding them stays off the UI isolat
   with a current-thread tokio runtime, so it needs neither GTK nor libappindicator: a left click is
   `TrayIconActivated`, the host shows the menu on a right click, and GNOME shows the item only with the AppIndicator
   extension.
+- `launch/` covers how the system starts the app. Autostart is the `FlClash` value in the user's Run key plus its
+  `StartupApproved\Run` flag on Windows, `SMAppService.mainApp` on macOS 13 and later (nothing on macOS 12), and
+  `$HOME/.config/autostart/FlClash.desktop` on Linux: the entries the `launch_at_startup` fork wrote, in its value
+  format (the Windows Run value is the bare unquoted path), so an entry an older build registered reads as enabled
+  and is removed on disable. `SMAppService` is not tied to a thread, so these are plain worker-pool calls. It also
+  registers the `clash` URL schemes under `HKCU\Software\Classes` on Windows, and `readLocalMachineDword` is the
+  synchronous HKLM read behind the Helper port and the Smart App Control state. The Linux scheme handler stays in
+  `lib/common/protocol.dart`: it is a desktop file and an `xdg-mime` call, with nothing native to replace.
 - `proxy/` sets the desktop system proxy: `networksetup` for every macOS network service, `gsettings` (GNOME, MATE)
   or `kwriteconfig6`/`kwriteconfig5` (KDE) on Linux, and WinINet for the LAN and every RAS entry on Windows. With
   `NetworkProps.pacMode` on it points the system at a PAC URL instead: `pac` serves `NetworkProps.pacScript`, with
@@ -2048,7 +2056,7 @@ surfaces as an unhandled async error instead of reaching the caller. That is why
 everything after it is reported as an event.
 
 What a platform does not use, it does not compile. `interprocess`, `tokio` and `global-hotkey` are declared under
-`cfg(not(target_os = "android"))`, `objc2` only for macOS and `ksni` only for Linux, and `ipc/mod.rs`,
+`cfg(not(target_os = "android"))`, `objc2` and its framework crates only for macOS and `ksni` only for Linux, and `ipc/mod.rs`,
 `hotkey/mod.rs` and `tray/mod.rs` swap in their `unsupported.rs` on Android, which loads the Core in-process and has
 no global shortcuts or status item. Adding a capability follows the same shape: implement it in its own module, gate
 the dependency by target, and keep the `api/` entry point unconditional so one set of bindings still serves every platform.

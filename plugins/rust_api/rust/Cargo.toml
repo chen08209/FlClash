@@ -34,6 +34,12 @@ dispatch2 = "0.3"
 objc2 = "0.6"
 objc2-app-kit = "0.3"
 objc2-foundation = "0.3"
+objc2-service-management = { version = "0.3", default-features = false, features = [
+  "std",
+  "SMAppService",
+  "objc2",
+  "objc2-foundation",
+] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 ksni = { version = "0.3", default-features = false, features = ["tokio"] }
@@ -57,6 +63,7 @@ windows-sys = { version = "0.61", features = [
   "Win32_System_Com",
   "Win32_System_DataExchange",
   "Win32_System_LibraryLoader",
+  "Win32_System_Registry",
   "Win32_System_SystemInformation",
   "Win32_System_Threading",
   "Win32_UI_Controls",

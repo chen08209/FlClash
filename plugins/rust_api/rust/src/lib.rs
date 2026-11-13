@@ -3,6 +3,7 @@ mod editor;
 mod frb_generated;
 mod hotkey;
 mod ipc;
+mod launch;
 mod proxy;
 mod script;
 mod tray;

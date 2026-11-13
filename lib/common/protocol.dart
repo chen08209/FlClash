@@ -1,30 +1,10 @@
 import 'dart:io';
 
-import 'package:win32_registry/win32_registry.dart';
+import 'package:rust_api/rust_api.dart' as rust_api;
 
 import 'print.dart';
 
 const protocolSchemes = ['clash', 'clashmeta', 'flclash'];
-
-class ProtocolRegistrationPlan {
-  final String scheme;
-  final String executable;
-
-  const ProtocolRegistrationPlan({
-    required this.scheme,
-    required this.executable,
-  });
-
-  String get protocolKey => 'Software\\Classes\\$scheme';
-
-  String get commandKey => 'shell\\open\\command';
-
-  String get protocolValueName => 'URL Protocol';
-
-  String get protocolValue => '';
-
-  String get command => '"$executable" "%1"';
-}
 
 /// A user-level desktop entry that claims the schemes for the running binary,
 /// so an AppImage or a development build is reachable without a packaged
@@ -81,25 +61,15 @@ class Protocol {
     return _instance!;
   }
 
-  void register(String scheme) {
-    final plan = ProtocolRegistrationPlan(
-      scheme: scheme,
-      executable: Platform.resolvedExecutable,
-    );
-    final regKey = CURRENT_USER.create(plan.protocolKey);
-    try {
-      regKey.setValue(
-        plan.protocolValueName,
-        RegistryValue.string(plan.protocolValue),
+  Future<void> registerWindows(List<String> schemes) async {
+    for (final scheme in schemes) {
+      final registered = await rust_api.registerUrlScheme(
+        scheme: scheme,
+        executable: Platform.resolvedExecutable,
       );
-      final commandKey = regKey.create(plan.commandKey);
-      try {
-        commandKey.setValue('', RegistryValue.string(plan.command));
-      } finally {
-        commandKey.close();
+      if (!registered) {
+        commonPrint.log('windows protocol registration failed: $scheme');
       }
-    } finally {
-      regKey.close();
     }
   }
 

@@ -8,7 +8,7 @@ import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/print.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:path/path.dart' as p;
-import 'package:win32_registry/win32_registry.dart';
+import 'package:rust_api/rust_api.dart' as rust_api;
 
 import 'core_manifest.dart';
 
@@ -122,16 +122,11 @@ final class HelperClient {
     if (!Platform.isWindows) {
       return helperPort;
     }
-    try {
-      final key = LOCAL_MACHINE.open(helperPortKey);
-      try {
-        return key.getInt(helperPortValue) ?? helperPort;
-      } finally {
-        key.close();
-      }
-    } catch (_) {
-      return helperPort;
-    }
+    return rust_api.readLocalMachineDword(
+          key: helperPortKey,
+          value: helperPortValue,
+        ) ??
+        helperPort;
   }
 
   static Future<String> _readBundledCoreSha256() async {
