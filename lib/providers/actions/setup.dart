@@ -548,7 +548,6 @@ class SetupAction extends _$SetupAction {
         realPatchConfig: patchConfig,
         overrides: setupState.overrides,
         bypassPrivateRoute: networkSetting.bypassPrivateRoute,
-        keepEmptyDnsOverrides: setupState.profileType != ProfileType.custom,
         appendSystemDns: appendSystemDns,
         // sing-tun points the system resolver at the TUN by default with
         // auto-route everywhere but macOS, where native does it through a

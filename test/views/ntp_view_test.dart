@@ -268,7 +268,7 @@ void main() {
     expect(find.text('120'), findsOneWidget);
   });
 
-  testWidgets('an entry emptied after holding a value is taken off', (
+  testWidgets('an entry emptied after holding a value keeps its key', (
     tester,
   ) async {
     await pumpView(tester);
@@ -294,11 +294,9 @@ void main() {
 
     await submit(l.server, 'pool.ntp.org');
     await submit(l.server, '');
-    await submit(l.ntpInterval, ' ');
-    expect(config().ntpOverrideKeys, {NtpOverrideKey.dialerProxy});
-    expect(config().ntp, defaultNtp);
-    expect(find.text(l.server), findsNothing);
-    expect(find.text(l.ntpInterval), findsNothing);
+    expect(config().ntpOverrideKeys, hasLength(3));
+    expect(config().ntp.server, '');
+    expect(find.text(l.server), findsOneWidget);
   });
 
   testWidgets('the add button disables while every key is listed', (
@@ -345,7 +343,7 @@ void main() {
     expect(config().ntp.port, 1230);
   });
 
-  testWidgets('quick edit takes off and resets a key it empties or drops', (
+  testWidgets('quick edit keeps a key it empties and resets one it drops', (
     tester,
   ) async {
     await pumpView(tester);
@@ -374,24 +372,27 @@ void main() {
       ),
       isTrue,
     );
-    expect(config().ntpOverrideKeys, {NtpOverrideKey.enable});
-    expect(config().ntp, defaultNtp.copyWith(enable: true));
+    expect(config().ntpOverrideKeys, {
+      NtpOverrideKey.enable,
+      NtpOverrideKey.server,
+    });
+    expect(config().ntp, defaultNtp.copyWith(enable: true, server: ''));
   });
 
-  testWidgets('quick edit keeps a key added without a value', (tester) async {
+  testWidgets('quick edit lists a key added without a value', (tester) async {
     await pumpView(tester);
     setKeys({NtpOverrideKey.enable, NtpOverrideKey.dialerProxy});
     await tester.pump();
 
     final editor = await openQuickEdit(tester);
-    expect(editor.content, isNot(contains('dialer-proxy')));
+    expect(editor.content, contains('dialer-proxy: ""'));
 
     final context = tester.element(find.byType(EditorPage));
     expect(
       await editor.onPop!(
         context,
         'NTP',
-        const EditorContent.text('enable: true'),
+        const EditorContent.text("enable: true\ndialer-proxy: ''"),
       ),
       isTrue,
     );

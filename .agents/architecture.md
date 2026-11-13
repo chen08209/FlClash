@@ -72,8 +72,10 @@ stored as JSON in the `profiles.overrides` column, with every key available, and
 
 Each `*OverrideKey` names one Clash key, with `parent.field` paths for nested maps, and covers every yaml key of the
 matching mihomo raw struct; `test/models/{dns,ntp,sniffer}_override_test.dart` read `core/Clash.Meta/config/config.go`
-and fail when a core bump adds or drops one. `overrideJson` builds the fragment in model order and skips a key whose
-value is empty, so a key left without a value writes nothing: the core refuses an empty `nameserver` outright.
+and fail when a core bump adds or drops one. `overrideJson` builds the fragment in model order and writes every picked
+key as it is, empty included, for every profile type: an emptied entry clears the profile's value, and a key the core
+refuses empty, such as `nameserver`, or `proxy-server-nameserver` under `respect-rules`, fails the config in the core.
+Only removing an entry, or dropping its line in quick edit, takes a key off.
 `mergeDnsOverride` merges one level deep so a partial fallback filter keeps the profile's other filter keys; NTP spreads
 over the profile's flat `ntp` map. For a profile whose `dns.enable` is not true, the task first fills `baselineDns` for
 `baselineDnsOverrideKeys` (`enable`, `enhanced-mode: fake-ip`, `nameserver`), the one thing the core is never without:
@@ -82,9 +84,9 @@ which carry no preset of the app.
 
 An added key starts from the spec's `defaults` through its `OverrideField.reset`, and those defaults are mihomo's: a key
 starts at the value mihomo parses without it, presets included, such as the nameservers, fake-IP range and filter, and
-NTP server of `DefaultRawConfig`. A key mihomo leaves unset, such as `listen` or a sniff protocol's ports, starts empty
-and writes nothing until the user fills it in, and so does the fallback filter's GeoIP code, whose value is left for the
-user to choose. mihomo sniffs a protocol listed without ports on that protocol's standard port, which the page shows as
+NTP server of `DefaultRawConfig`. A key mihomo leaves unset, such as `listen` or a sniff protocol's ports, starts empty,
+which the core reads the same as the key being absent. The fallback filter's GeoIP code also starts empty, for the user
+to choose, but there an empty value replaces mihomo's `CN`. mihomo sniffs a protocol listed without ports on that protocol's standard port, which the page shows as
 the default. The tests above pin the defaults against `DefaultRawConfig`. A spec that mixes in `OverrideQuickEdit` gets
 quick edit, which opens `overrideYaml` in an `EditorPage` and rebuilds the key set from the document through
 `applyOverrideYaml`, rejecting keys outside the section and values the model cannot hold.

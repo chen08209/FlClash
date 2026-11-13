@@ -308,10 +308,7 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
   }
   rawDns = mergeDnsOverride(
     rawDns,
-    overrides.dns.overrideJson(
-      overrides.dnsOverrideKeys,
-      keepEmpty: data.keepEmptyDnsOverrides,
-    ),
+    overrides.dns.overrideJson(overrides.dnsOverrideKeys),
   );
   rawConfig['dns'] = rawDns;
   final ntpOverride = overrides.ntp.overrideJson(overrides.ntpOverrideKeys);
