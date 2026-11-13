@@ -7,6 +7,7 @@ pub mod init;
 pub mod ipc;
 pub mod launch;
 pub mod link;
+pub mod network;
 pub mod proxy;
 pub mod script;
 pub mod tray;

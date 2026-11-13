@@ -1,20 +1,21 @@
 import 'dart:async';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/on_demand.dart';
 import 'package:flutter/widgets.dart';
+import 'package:fl_clash/plugins/app.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:rust_api/rust_api.dart' show NetworkState, networkChanges;
 import 'package:wifi_ssid/wifi_ssid.dart';
 
 typedef SsidReader = Future<String?> Function();
 
 class ConnectivityManager extends ConsumerStatefulWidget {
-  final Function(List<ConnectivityResult> results)? onConnectivityChanged;
-  final Stream<List<ConnectivityResult>>? connectivityStream;
+  final Function(NetworkState state)? onConnectivityChanged;
+  final Stream<NetworkState>? connectivityStream;
   final SsidReader? readSsid;
   final Widget child;
 
@@ -43,7 +44,8 @@ class _ConnectivityManagerState extends ConsumerState<ConnectivityManager> {
   void initState() {
     super.initState();
     final stream =
-        widget.connectivityStream ?? Connectivity().onConnectivityChanged;
+        widget.connectivityStream ??
+        (system.isAndroid ? app!.networkChanges : networkChanges());
     subscription = stream.listen(_handleResults);
     ref.listenManual(excludeSSIDsProvider.select((state) => state.isNotEmpty), (
       previous,
@@ -65,10 +67,10 @@ class _ConnectivityManagerState extends ConsumerState<ConnectivityManager> {
     );
   }
 
-  void _handleResults(List<ConnectivityResult> results) {
-    _onWifi = results.contains(ConnectivityResult.wifi);
+  void _handleResults(NetworkState state) {
+    _onWifi = state.wifi;
     unawaited(_updateSsid());
-    widget.onConnectivityChanged?.call(results);
+    widget.onConnectivityChanged?.call(state);
   }
 
   Future<void> _updateSsid() async {

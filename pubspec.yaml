@@ -40,7 +40,6 @@ dependencies:
     path: plugins/code_forge
   re_highlight: ^0.0.3
   archive: ^4.3.0
-  connectivity_plus: 7.2.0
   flutter_riverpod: ^3.4.3
   riverpod_annotation: ^4.0.7
   riverpod: ^3.4.3

@@ -11,6 +11,7 @@ import 'api/hotkey.dart';
 import 'api/ipc.dart';
 import 'api/launch.dart';
 import 'api/link.dart';
+import 'api/network.dart';
 import 'api/proxy.dart';
 import 'api/script.dart';
 import 'api/tray.dart';
@@ -103,6 +104,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RustStreamSink<IpcEvent> dco_decode_StreamSink_ipc_event_Sse(dynamic raw);
+
+  @protected
+  RustStreamSink<NetworkState> dco_decode_StreamSink_network_state_Sse(
+    dynamic raw,
+  );
 
   @protected
   RustStreamSink<TraySignal> dco_decode_StreamSink_tray_signal_Sse(dynamic raw);
@@ -198,6 +204,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<WindowDisplay> dco_decode_list_window_display(dynamic raw);
+
+  @protected
+  NetworkState dco_decode_network_state(dynamic raw);
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
@@ -342,6 +351,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  RustStreamSink<NetworkState> sse_decode_StreamSink_network_state_Sse(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   RustStreamSink<TraySignal> sse_decode_StreamSink_tray_signal_Sse(
     SseDeserializer deserializer,
   );
@@ -453,6 +467,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<WindowDisplay> sse_decode_list_window_display(
     SseDeserializer deserializer,
   );
+
+  @protected
+  NetworkState sse_decode_network_state(SseDeserializer deserializer);
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
@@ -615,6 +632,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_StreamSink_network_state_Sse(
+    RustStreamSink<NetworkState> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_StreamSink_tray_signal_Sse(
     RustStreamSink<TraySignal> self,
     SseSerializer serializer,
@@ -754,6 +777,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     List<WindowDisplay> self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_network_state(NetworkState self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
