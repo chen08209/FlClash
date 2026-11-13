@@ -77,6 +77,7 @@ windows-sys = { version = "0.61", features = [
   "Win32_UI_Input_KeyboardAndMouse",
   "Win32_UI_Shell",
   "Win32_UI_WindowsAndMessaging",
+  "Wdk_System_SystemServices",
 ] }
 
 [profile.release]

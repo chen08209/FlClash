@@ -2033,6 +2033,10 @@ UTF-8 bytes rather than a `String` so that decoding them stays off the UI isolat
   registers the `clash` URL schemes under `HKCU\Software\Classes` on Windows, and `readLocalMachineDword` is the
   synchronous HKLM read behind the Helper port and the Smart App Control state. The Linux scheme handler stays in
   `lib/common/protocol.dart`: it is a desktop file and an `xdg-mime` call, with nothing native to replace.
+- `device/` reports the OS major version `System.init` hands to bootstrap: the macOS major version from
+  `NSProcessInfo` and `RtlGetVersion`'s major version on Windows, which is 10 on Windows 11 as well. Android takes the
+  API level and whether the device is a TV (`FEATURE_TELEVISION` or `FEATURE_LEANBACK`) from `AppPlugin`'s
+  `getDeviceInfo` instead, and Linux reports 0.
 - `fonts/` lists the font families the picker offers, each through the API the engine resolves names with:
   CoreText on macOS, the DirectWrite system collection (en-us name, else the first) on Windows, scalable fontconfig
   families on Linux, and the named families of `/system/etc/fonts.xml` on Android. DirectWrite is called through its
