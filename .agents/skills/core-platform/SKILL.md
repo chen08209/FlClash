@@ -20,7 +20,7 @@ build hooks, system proxy, tray, VPN, TUN, or platform-specific desktop/mobile b
   profile, or left to a restart the user confirms; it says which, and what adding a setting to each path takes.
 - `.agents/architecture.md`: Core Integration, Lifecycle Ownership And Convergence, Core Protocol And Event Delivery,
   Safe Mode, Build System, and Rust Helper Service describe the current mechanisms, including the Helper protocol,
-  the applied/coalesced/superseded outcomes, and the unconfirmed-exit lease.
+  the applied/coalesced/superseded outcomes, and the leftover lease.
 
 ## Owners
 
@@ -57,7 +57,7 @@ on Linux, and Windows Service Control Manager behavior need their real platform 
 
 - A `200` from Helper `/stop` means the Core is gone. When termination cannot be confirmed the Helper keeps the child
   and answers `coreStopFailed`, and `/start` reports the same code instead of spawning a replacement. Keep that code
-  out of the Dart pre-spawn fallback set in `helper_client.dart`, or the direct launch races a Core the Helper still
+  out of the Dart pre-spawn fallback set in `launcher.dart`, or the direct launch races a Core the Helper still
   owns.
 - The Helper owns executable integrity: Core SHA256 validation and the protocol stay identical across Flutter build
   modes, so a debug build is not exempt.

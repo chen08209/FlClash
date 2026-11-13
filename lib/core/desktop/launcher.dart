@@ -5,7 +5,9 @@ import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 
+import 'helper_client.dart';
 import 'model.dart';
+import 'process_probe.dart';
 
 typedef CoreProcessStarter =
     Future<Process> Function(String executable, List<String> arguments);
@@ -86,5 +88,163 @@ final class DirectCoreLease implements CoreProcessLease {
     } on TimeoutException {
       return CoreProcessStopResult(stopped: stopped, exitConfirmed: false);
     }
+  }
+}
+
+final class HelperLauncher implements CoreProcessLauncher {
+  final HelperClient client;
+  final ProcessLivenessProbe livenessProbe;
+
+  const HelperLauncher(this.client, {this.livenessProbe = isProcessAlive});
+
+  @override
+  Future<CoreProcessLease> start({
+    required String sessionId,
+    required String address,
+  }) async {
+    try {
+      final response = await client.start(
+        address: address,
+        sessionId: sessionId,
+      );
+      return HelperCoreLease(
+        sessionId: response.sessionId,
+        pid: response.pid,
+        client: client,
+        livenessProbe: livenessProbe,
+      );
+    } catch (error, stackTrace) {
+      try {
+        await client.stop(sessionId);
+      } catch (releaseError) {
+        commonPrint.log(
+          'Failed to release the Helper session after a start failure: '
+          '${compactError(releaseError)}',
+          logLevel: LogLevel.warning,
+        );
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+  }
+}
+
+// The Helper reports these codes before it spawns a Core, and /start releases
+// the previously managed Core first, so no Helper-managed Core is left behind
+// and a direct launch is safe to retry.
+const _preSpawnHelperErrors = {'coreVerificationFailed', 'processLaunchFailed'};
+
+final class FallbackCoreLauncher implements CoreProcessLauncher {
+  final CoreProcessLauncher primary;
+  final CoreProcessLauncher fallback;
+
+  const FallbackCoreLauncher({required this.primary, required this.fallback});
+
+  @override
+  Future<CoreProcessLease> start({
+    required String sessionId,
+    required String address,
+  }) async {
+    try {
+      return await primary.start(sessionId: sessionId, address: address);
+    } on HelperException catch (error) {
+      if (!_preSpawnHelperErrors.contains(error.code)) rethrow;
+      commonPrint.log(
+        'Helper could not start the Core ($error); '
+        'falling back to direct Core',
+        logLevel: LogLevel.warning,
+      );
+      return fallback.start(sessionId: sessionId, address: address);
+    }
+  }
+}
+
+typedef HelperReadinessProbe = Future<HelperReadiness> Function();
+
+final class HelperLauncherResolver implements DesktopCoreLauncherResolver {
+  final bool hasHelper;
+  final CoreProcessLauncher directLauncher;
+  final CoreProcessLauncher helperLauncher;
+  final HelperReadinessProbe helperReady;
+
+  const HelperLauncherResolver({
+    required this.hasHelper,
+    required this.directLauncher,
+    required this.helperLauncher,
+    required this.helperReady,
+  });
+
+  @override
+  Future<CoreProcessLauncher> resolve() async {
+    if (!hasHelper) return directLauncher;
+    final readiness = await helperReady();
+    if (readiness == HelperReadiness.ready) {
+      return FallbackCoreLauncher(
+        primary: helperLauncher,
+        fallback: directLauncher,
+      );
+    }
+    return directLauncher;
+  }
+}
+
+final class HelperCoreLease implements CoreProcessLease {
+  @override
+  final String sessionId;
+
+  @override
+  final int pid;
+
+  final HelperClient _client;
+  final ProcessLivenessProbe _livenessProbe;
+  Future<CoreProcessStopResult>? _stopOperation;
+
+  HelperCoreLease({
+    required this.sessionId,
+    required this.pid,
+    required HelperClient client,
+    ProcessLivenessProbe livenessProbe = isProcessAlive,
+  }) : _client = client,
+       _livenessProbe = livenessProbe;
+
+  @override
+  CoreProcessOwner get owner => CoreProcessOwner.helper;
+
+  @override
+  Future<CoreProcessStopResult> stop(Duration timeout) {
+    final stopOperation = _stopOperation;
+    if (stopOperation != null) {
+      return stopOperation;
+    }
+    final nextOperation = _stop().onError((
+      Object error,
+      StackTrace stackTrace,
+    ) {
+      _stopOperation = null;
+      Error.throwWithStackTrace(error, stackTrace);
+    });
+    _stopOperation = nextOperation;
+    return nextOperation;
+  }
+
+  // A dead Helper takes its Core with it; the OS is then the only witness.
+  Future<CoreProcessStopResult> _stop() async {
+    final HelperStopResponse response;
+    try {
+      response = await _client.stop(sessionId);
+    } on HelperException catch (error) {
+      if (error.code != 'transportError' || await _livenessProbe(pid)) {
+        rethrow;
+      }
+      commonPrint.log(
+        'Helper is unreachable and Core $pid has already exited; '
+        'its session is released',
+        logLevel: LogLevel.warning,
+      );
+      return const CoreProcessStopResult(stopped: false, exitConfirmed: true);
+    }
+    return CoreProcessStopResult(
+      stopped: response.stopped,
+      exitConfirmed: true,
+    );
   }
 }

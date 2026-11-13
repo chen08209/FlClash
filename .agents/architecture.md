@@ -33,8 +33,10 @@ Desktop core mode:
   lifecycle controller, RPC client, and crash-event bridge, and holds no lifecycle logic of its own.
 - `lib/core/desktop/transport.dart` binds an `IpcServer` and turns its events into ready, connected, disconnected, and
   failed transport events plus a frame stream. A connection that ends on an I/O error is a disconnect carrying that
-  error; failed means the server itself is gone and is terminal for that transport. A replaceable binding keeps RPC
-  subscriptions stable when a failed or stale transport must be rebuilt.
+  error; failed means the server itself is gone. One `IpcCoreTransport` lives as long as the lifecycle: `open()` after
+  a failure binds a new server, and `reset()` drops the server and with it the connected peer, which the server cannot
+  drop on its own. Subscribers therefore never resubscribe, and a connection generation is never reused.
+  `connection` is the single answer to "which peer is connected now".
 - `lib/core/desktop/rpc_client.dart` owns request IDs and pending completers, waits up to 10 seconds for a connection,
   applies a three-minute default method timeout, unwraps `CoreMethodResponse`, and fails all pending calls when transport
   disconnects or closes.
@@ -268,18 +270,25 @@ choose one for a new setting.
 
 `DesktopCoreLifecycle` is a latest-desired-intent reconciler, not a queue that blindly executes every request:
 
-- Public intents receive monotonically increasing revisions and target running, restarted, stopped, or closed.
+- Public intents receive monotonically increasing revisions and want the Core running, stopped, or closed. A restart
+  is a running intent that only a session newer than itself satisfies.
+- The lifecycle owns at most one Core, in one of three forms: none, a live session, or a leftover lease, which is a
+  process still to be stopped. One worker reads the latest intent, takes one step toward it, and repeats until the
+  owned Core matches; every lease is stopped through the same release step. A crash only marks the session as a
+  leftover, and the worker cleans it up.
 - Observable phases are `idle`, `starting`, `running`, `stopping`, `failed`, and `closed`.
 - A completed command reports `applied`, `coalesced`, or `superseded`, allowing callers and tests to distinguish a command
   that won from one satisfied or replaced by a newer compatible intent.
-- Startup opens or replaces the IPC transport, resolves a launcher, generates a 128-bit lowercase hexadecimal session ID,
-  launches Core, and waits for the matching connection. Windows additionally verifies that the named-pipe peer PID equals
-  the process PID returned by the Helper lease.
-- Each running session retains its process owner, lease, PID, session ID, and transport connection generation. Stop waits
-  for both process-exit confirmation and the matching disconnect generation; a missing disconnect replaces the transport
-  before later starts.
-- An unconfirmed process exit is retained as an unconfirmed lease. New start/restart intents fail until ownership can be
-  cleaned up, preventing two Core instances from being treated as the active session. Terminal close may continue on a
+- Startup resets a transport that still holds a peer nobody owns, opens it, resolves a launcher, generates a 128-bit
+  lowercase hexadecimal session ID, launches Core, and accepts the peer the transport holds once the launcher has
+  returned. The connection timeout starts there, so a slow launch does not use it up, and a Core that connected and
+  died during the launch is never accepted. Windows additionally verifies that the named-pipe peer PID equals the
+  process PID returned by the Helper lease.
+- Each running session retains its process owner, lease, PID, session ID, and transport connection generation. Stop
+  needs the process exit confirmed; if the transport still holds a peer one event-loop turn later, the lifecycle resets
+  the transport rather than wait for a disconnect that may never come.
+- A lease whose exit is unconfirmed stays the leftover Core. Every later intent releases it first and fails until that
+  succeeds, preventing two Core instances from being treated as the active session. Terminal close may continue on a
   best-effort basis because the application is exiting.
 - An unexpected disconnect or transport failure while running is converted to `DesktopCoreFailure`, the owned process is
   cleaned up, and `CoreService` emits a Core crash event for the normal UI recovery path.

@@ -5,10 +5,6 @@ import 'model.dart';
 import 'transport.dart';
 
 abstract interface class DesktopCoreLifecycleController {
-  DesktopCoreState get state;
-
-  Stream<DesktopCoreState> get states;
-
   Stream<DesktopCoreFailure> get crashEvents;
 
   Future<CoreLifecycleResult> start();
@@ -18,202 +14,115 @@ abstract interface class DesktopCoreLifecycleController {
   Future<CoreLifecycleResult> stop();
 
   Future<CoreLifecycleResult> close();
-
-  Future<DesktopCoreSession> waitUntilRunning(Duration timeout);
 }
 
-enum _LifecycleTarget { running, restarted, stopped, closed }
+enum _Goal { running, stopped, closed }
 
-enum _LifecycleAchievement { runningExisting, runningFresh, idle, closed }
-
-final class _LifecycleIntent {
+final class _Intent {
   final int revision;
-  final _LifecycleTarget target;
+  final _Goal goal;
 
-  const _LifecycleIntent(this.revision, this.target);
+  /// A restart: only a Core that came up after this intent was issued will do.
+  final bool fresh;
+
+  const _Intent(this.revision, this.goal, {this.fresh = false});
+
+  bool keeps(_Live core) {
+    return goal == _Goal.running && (!fresh || core.epoch >= revision);
+  }
 }
 
-final class _PendingLifecycleCommand {
-  final _LifecycleIntent intent;
+final class _Command {
+  final _Intent intent;
   final Completer<CoreLifecycleResult> completer =
       Completer<CoreLifecycleResult>();
 
-  _PendingLifecycleCommand(this.intent);
+  _Command(this.intent);
 }
 
-final class _SessionDisconnect {
+sealed class _Core {
+  const _Core();
+}
+
+final class _Absent extends _Core {
+  const _Absent();
+}
+
+final class _Live extends _Core {
   final DesktopCoreSession session;
-  final Completer<void> _completed = Completer<void>();
 
-  _SessionDisconnect(this.session);
+  /// The newest revision issued by the time the session came up.
+  final int epoch;
 
-  Future<void> get future => _completed.future;
-
-  bool get isCompleted => _completed.isCompleted;
-
-  void record(int generation) {
-    if (generation == session.connectionGeneration && !_completed.isCompleted) {
-      _completed.complete();
-    }
-  }
+  const _Live(this.session, this.epoch);
 }
 
-final class _TransportConnectionWaiter {
-  final Completer<void> _settled = Completer<void>();
-  late final StreamSubscription<DesktopTransportEvent> _subscription;
-  late final Timer _timer;
-  TransportConnected? _connection;
-  Object? _error;
-  StackTrace? _stackTrace;
+/// A process still to be stopped: one being stopped now, lost to a crash, or
+/// whose exit could not be confirmed. Nothing starts while it remains.
+final class _Leftover extends _Core {
+  final CoreProcessLease lease;
 
-  _TransportConnectionWaiter(
-    Stream<DesktopTransportEvent> events,
-    Duration timeout,
-  ) {
-    _subscription = events.listen(
-      (event) {
-        switch (event) {
-          case TransportConnected():
-            if (!_settled.isCompleted) {
-              _connection = event;
-              _settled.complete();
-            }
-          case TransportFailed(:final error, :final stackTrace):
-            if (!_settled.isCompleted) {
-              _error = error;
-              _stackTrace = stackTrace;
-              _settled.complete();
-            }
-          case TransportReady() || TransportDisconnected():
-            break;
-        }
-      },
-      onDone: () {
-        if (!_settled.isCompleted) {
-          _error = StateError('Core transport closed before connection');
-          _stackTrace = StackTrace.current;
-          _settled.complete();
-        }
-      },
-    );
-    _timer = Timer(timeout, () {
-      if (!_settled.isCompleted) {
-        _error = TimeoutException(
-          'Core transport connection timed out',
-          timeout,
-        );
-        _stackTrace = StackTrace.current;
-        _settled.complete();
-      }
-    });
-  }
-
-  Future<TransportConnected> get future async {
-    await _settled.future;
-    final error = _error;
-    if (error != null) {
-      Error.throwWithStackTrace(error, _stackTrace ?? StackTrace.current);
-    }
-    return _connection!;
-  }
-
-  Future<void> cancel() async {
-    _timer.cancel();
-    await _subscription.cancel();
-  }
+  const _Leftover(this.lease);
 }
 
 final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
-  final DesktopCoreTransport Function() transportFactory;
+  final DesktopCoreTransport transport;
   final DesktopCoreLauncherResolver launcherResolver;
   final DesktopCoreTimeouts timeouts;
   final String Function() sessionIdFactory;
   final bool verifyPeerPid;
-  final DesktopCoreTransportBinding _transport;
 
-  final StreamController<DesktopCoreState> _stateController =
+  final StreamController<DesktopCoreState> _states =
       StreamController<DesktopCoreState>.broadcast();
-  final StreamController<DesktopCoreFailure> _crashController =
+  final StreamController<DesktopCoreFailure> _crashes =
       StreamController<DesktopCoreFailure>.broadcast();
-  final List<_PendingLifecycleCommand> _pending = [];
+  final List<_Command> _commands = [];
+  late final StreamSubscription<DesktopTransportEvent> _transportEvents;
 
-  late final StreamSubscription<DesktopTransportEvent> _transportSubscription;
   DesktopCoreState _state = const DesktopCoreIdle();
-  DesktopCoreSession? _session;
-  _SessionDisconnect? _sessionDisconnect;
-  Future<void>? _worker;
-  Future<void>? _unexpectedDisconnectOperation;
-  CoreProcessLease? _unconfirmedLease;
-  Future<CoreLifecycleResult>? _closeResult;
+  _Core _core = const _Absent();
+  _Intent _desired = const _Intent(0, _Goal.stopped);
+  Completer<void> _desiredChanged = Completer<void>();
+  Future<CoreLifecycleResult>? _closing;
   int _revision = 0;
-  _LifecycleIntent _desired = const _LifecycleIntent(
-    0,
-    _LifecycleTarget.stopped,
-  );
-  Completer<void> _intentChanged = Completer<void>();
-  bool _terminalRequested = false;
+  bool _working = false;
+  bool _crashCleanupDue = false;
 
-  factory DesktopCoreLifecycle({
-    required DesktopCoreTransport Function() transportFactory,
-    required DesktopCoreLauncherResolver launcherResolver,
-    DesktopCoreTimeouts timeouts = const DesktopCoreTimeouts(),
-    String Function()? sessionIdFactory,
-    bool verifyPeerPid = false,
-  }) {
-    return DesktopCoreLifecycle._(
-      transportFactory: transportFactory,
-      launcherResolver: launcherResolver,
-      timeouts: timeouts,
-      sessionIdFactory: sessionIdFactory ?? createCoreSessionId,
-      verifyPeerPid: verifyPeerPid,
-      transport: DesktopCoreTransportBinding(transportFactory()),
-    );
-  }
-
-  DesktopCoreLifecycle._({
-    required this.transportFactory,
+  DesktopCoreLifecycle({
+    required this.transport,
     required this.launcherResolver,
-    required this.timeouts,
-    required this.sessionIdFactory,
-    required this.verifyPeerPid,
-    required DesktopCoreTransportBinding transport,
-  }) : _transport = transport {
-    _transportSubscription = _transport.events.listen(_handleTransportEvent);
+    this.timeouts = const DesktopCoreTimeouts(),
+    this.sessionIdFactory = createCoreSessionId,
+    this.verifyPeerPid = false,
+  }) {
+    _transportEvents = transport.events.listen(_handleTransportEvent);
   }
 
-  DesktopCoreTransport get transport => _transport;
-
-  @override
   DesktopCoreState get state => _state;
 
-  @override
-  Stream<DesktopCoreState> get states => _stateController.stream;
+  Stream<DesktopCoreState> get states => _states.stream;
 
   @override
-  Stream<DesktopCoreFailure> get crashEvents => _crashController.stream;
+  Stream<DesktopCoreFailure> get crashEvents => _crashes.stream;
 
   @override
-  Future<CoreLifecycleResult> start() => _submit(_LifecycleTarget.running);
+  Future<CoreLifecycleResult> start() => _submit(_Goal.running);
 
   @override
-  Future<CoreLifecycleResult> restart() => _submit(_LifecycleTarget.restarted);
+  Future<CoreLifecycleResult> restart() => _submit(_Goal.running, fresh: true);
 
   @override
-  Future<CoreLifecycleResult> stop() => _submit(_LifecycleTarget.stopped);
+  Future<CoreLifecycleResult> stop() => _submit(_Goal.stopped);
 
   @override
-  Future<CoreLifecycleResult> close() {
-    final closeResult = _closeResult;
-    if (closeResult != null) {
-      return closeResult;
-    }
-    final result = _submit(_LifecycleTarget.closed);
-    _closeResult = result;
-    return result;
-  }
+  Future<CoreLifecycleResult> close() => _closing ??= _submit(_Goal.closed);
 
-  Future<CoreLifecycleResult> _submit(_LifecycleTarget target) {
-    if (_terminalRequested) {
+  bool get _wantsCore => _desired.goal == _Goal.running;
+
+  bool get _closingDown => _desired.goal == _Goal.closed;
+
+  Future<CoreLifecycleResult> _submit(_Goal goal, {bool fresh = false}) {
+    if (_closingDown) {
       return Future.error(
         DesktopCoreFailure(
           code: 'lifecycle_closed',
@@ -222,197 +131,125 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
         ),
       );
     }
-    if (target == _LifecycleTarget.closed) {
-      _terminalRequested = true;
-    }
-    final intent = _LifecycleIntent(++_revision, target);
-    final command = _PendingLifecycleCommand(intent);
-    _pending.add(command);
-    _desired = intent;
-    final changed = _intentChanged;
-    _intentChanged = Completer<void>();
-    if (!changed.isCompleted) {
-      changed.complete();
-    }
-    _ensureWorker();
+    final command = _Command(_Intent(++_revision, goal, fresh: fresh));
+    _commands.add(command);
+    _desired = command.intent;
+    final changed = _desiredChanged;
+    _desiredChanged = Completer<void>();
+    changed.complete();
+    _wake();
     return command.completer.future;
   }
 
-  void _ensureWorker() {
-    if (_worker != null) {
+  void _wake() {
+    if (_working) {
       return;
     }
-    late final Future<void> worker;
-    worker = _runWorker().whenComplete(() {
-      if (identical(_worker, worker)) {
-        _worker = null;
-      }
-      if (_pending.isNotEmpty) {
-        _ensureWorker();
-      }
-    });
-    _worker = worker;
+    _working = true;
+    unawaited(_work());
   }
 
-  Future<void> _runWorker() async {
-    while (_pending.isNotEmpty) {
-      final recovery = _unexpectedDisconnectOperation;
-      if (recovery != null) {
-        await recovery;
+  Future<void> _work() async {
+    try {
+      while (true) {
+        if (_crashCleanupDue) {
+          _crashCleanupDue = false;
+          await _cleanUpAfterCrash();
+        } else if (_commands.isNotEmpty) {
+          await _pursue(_desired);
+        } else {
+          break;
+        }
       }
-      final intent = _desired;
-      try {
-        final achievement = await _reconcile(intent);
-        final settled = _desired;
-        if (!_satisfies(achievement, settled.target)) {
-          continue;
-        }
-        _completeCommands(settled);
-      } catch (error, stackTrace) {
-        final failure = error is DesktopCoreFailure
-            ? error
-            : _failure(
-                code: 'lifecycle_error',
-                phase: _state.phase,
-                revision: intent.revision,
-                cause: error,
-                stackTrace: stackTrace,
-              );
-        final desired = _desired;
-        if (desired.revision != intent.revision) {
-          if (desired.target != _LifecycleTarget.closed) {
-            _failCommands(intent.revision, failure);
-          }
-          continue;
-        }
+    } finally {
+      _working = false;
+    }
+  }
+
+  Future<void> _pursue(_Intent intent) async {
+    try {
+      await _reconcile(intent);
+      final latest = _desired;
+      if (_satisfies(latest)) {
+        _settle(latest);
+      }
+    } catch (error, stackTrace) {
+      final failure = error is DesktopCoreFailure
+          ? error
+          : _failure(
+              code: 'lifecycle_error',
+              phase: _state.phase,
+              revision: intent.revision,
+              cause: error,
+              stackTrace: stackTrace,
+            );
+      final superseded = _desired.revision != intent.revision;
+      if (!superseded) {
         _publish(DesktopCoreFailed(failure));
+      }
+      // Commands a close superseded wait for the close and settle with it.
+      if (!superseded || !_closingDown) {
         _failCommands(intent.revision, failure);
       }
     }
   }
 
-  Future<_LifecycleAchievement> _reconcile(_LifecycleIntent intent) async {
-    final unconfirmedLease = _unconfirmedLease;
-    if (unconfirmedLease != null) {
-      await _stopUnconfirmedLease(
-        unconfirmedLease,
-        allowFailure: intent.target == _LifecycleTarget.closed,
-      );
+  Future<void> _reconcile(_Intent intent) async {
+    switch (_core) {
+      case final _Live core when intent.keeps(core):
+        return;
+      case _Live(:final session):
+        _publish(
+          DesktopCoreStopping(revision: intent.revision, session: session),
+        );
+        _core = _Leftover(session.lease);
+        await _release(session.lease, intent.revision);
+      case _Leftover(:final lease):
+        await _release(lease, intent.revision);
+      case _Absent():
+        break;
     }
-    switch (intent.target) {
-      case _LifecycleTarget.running:
-        final running = _session;
-        if (running != null) {
-          if (_state is DesktopCoreRunning) {
-            return _LifecycleAchievement.runningExisting;
-          }
-          await _stopSession(
-            running,
-            intent.revision,
-            allowUnconfirmedExit: _terminalRequested,
-          );
-          if (!_wantsRunning) {
-            return _abandonedStart();
-          }
-        }
-        return _startForIntent(intent);
-      case _LifecycleTarget.restarted:
-        final session = _session;
-        if (session != null) {
-          await _stopSession(
-            session,
-            intent.revision,
-            allowUnconfirmedExit: _terminalRequested,
-          );
-        }
-        if (!_wantsRunning) {
-          return _abandonedStart();
-        }
-        return _startForIntent(intent);
-      case _LifecycleTarget.stopped:
-        final session = _session;
-        if (session != null) {
-          await _stopSession(
-            session,
-            intent.revision,
-            allowUnconfirmedExit: false,
-          );
-        }
-        if (_desired.target == _LifecycleTarget.stopped) {
-          _publish(const DesktopCoreIdle());
-        }
-        return _LifecycleAchievement.idle;
-      case _LifecycleTarget.closed:
-        final session = _session;
-        if (session != null) {
-          await _stopSession(
-            session,
-            intent.revision,
-            allowUnconfirmedExit: true,
-          );
-        }
-        await _transportSubscription.cancel();
-        await _transport.close();
-        _publish(DesktopCoreClosed(intent.revision));
-        await _stateController.close();
-        await _crashController.close();
-        return _LifecycleAchievement.closed;
+    if (intent.goal == _Goal.closed) {
+      await _shutDown(intent.revision);
+    } else if (intent.goal == _Goal.running && _wantsCore) {
+      await _start(intent.revision);
     }
   }
 
-  bool get _wantsRunning {
-    return _desired.target == _LifecycleTarget.running ||
-        _desired.target == _LifecycleTarget.restarted;
+  bool _satisfies(_Intent intent) {
+    return switch (intent.goal) {
+      _Goal.running => switch (_core) {
+        final _Live core => intent.keeps(core),
+        _ => false,
+      },
+      _Goal.stopped => _core is _Absent,
+      _Goal.closed => _state is DesktopCoreClosed,
+    };
   }
 
-  Future<_LifecycleAchievement> _startForIntent(_LifecycleIntent intent) async {
-    if (await _startSession(intent.revision)) {
-      return _LifecycleAchievement.runningFresh;
-    }
-    return _abandonedStart();
-  }
-
-  _LifecycleAchievement _abandonedStart() {
-    if (_desired.target == _LifecycleTarget.stopped) {
-      _publish(const DesktopCoreIdle());
-    }
-    return _LifecycleAchievement.idle;
-  }
-
-  Future<bool> _startSession(int revision) async {
+  Future<void> _start(int revision) async {
     final sessionId = sessionIdFactory();
     _publish(DesktopCoreStarting(revision: revision, sessionId: sessionId));
     CoreProcessLease? lease;
-    var leaseReleased = false;
-    _TransportConnectionWaiter? connectionWaiter;
-
-    Future<void> releaseLease() async {
-      final ownedLease = lease;
-      if (ownedLease == null || leaseReleased) {
+    try {
+      if (transport.connection != null) {
+        await transport.reset();
+      }
+      final listening = await _whileWanted(
+        transport.open().timeout(timeouts.ready).then((_) => true),
+      );
+      if (listening == null) {
         return;
       }
-      leaseReleased = true;
-      await _cleanObsoleteLease(ownedLease, revision);
-    }
-
-    try {
-      if (!await _ensureTransportReady()) {
-        return false;
-      }
       final launcher = await launcherResolver.resolve();
-      if (!_wantsRunning) {
-        return false;
+      if (!_wantsCore) {
+        return;
       }
-      connectionWaiter = _TransportConnectionWaiter(
-        _transport.events,
-        timeouts.connection,
-      );
       lease = await launcher.start(
         sessionId: sessionId,
-        address: _transport.address,
+        address: transport.address,
       );
       if (lease.sessionId != sessionId) {
-        await releaseLease();
         throw _failure(
           code: 'session_mismatch',
           phase: DesktopCorePhase.starting,
@@ -420,52 +257,35 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
           lease: lease,
         );
       }
-      if (!_wantsRunning) {
-        await releaseLease();
-        return false;
-      }
-      final connected = await _waitForConnectionWhileWanted(
-        connectionWaiter.future,
+      final connection = await _whileWanted(
+        transport.waitUntilConnected(timeouts.connection),
       );
-      if (connected == null || !_wantsRunning) {
-        await releaseLease();
-        return false;
+      if (connection == null || !_wantsCore) {
+        return;
       }
-      if (verifyPeerPid && connected.pid != lease.pid) {
-        await releaseLease();
+      if (verifyPeerPid && connection.pid != lease.pid) {
         throw _failure(
           code: 'peer_pid_mismatch',
           phase: DesktopCorePhase.starting,
           revision: revision,
           lease: lease,
-          connectionGeneration: connected.generation,
+          connectionGeneration: connection.generation,
           cause: StateError(
-            'Expected Core PID ${lease.pid}, connected ${connected.pid}',
+            'Expected Core PID ${lease.pid}, connected ${connection.pid}',
           ),
         );
       }
       final session = DesktopCoreSession(
         sessionId: sessionId,
         lease: lease,
-        connectionGeneration: connected.generation,
+        connectionGeneration: connection.generation,
       );
-      _session = session;
-      _sessionDisconnect = _SessionDisconnect(session);
-      leaseReleased = true;
+      lease = null;
+      _core = _Live(session, _revision);
       _publish(DesktopCoreRunning(session));
-      return true;
+    } on DesktopCoreFailure {
+      rethrow;
     } catch (error, stackTrace) {
-      try {
-        await releaseLease();
-      } on DesktopCoreFailure catch (cleanupFailure) {
-        Error.throwWithStackTrace(
-          cleanupFailure,
-          cleanupFailure.stackTrace ?? stackTrace,
-        );
-      }
-      if (error is DesktopCoreFailure) {
-        Error.throwWithStackTrace(error, error.stackTrace ?? stackTrace);
-      }
       throw _failure(
         code: 'start_failed',
         phase: DesktopCorePhase.starting,
@@ -474,59 +294,51 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
         stackTrace: stackTrace,
       );
     } finally {
-      await connectionWaiter?.cancel();
-    }
-  }
-
-  Future<bool> _ensureTransportReady() async {
-    if (_transport.state == DesktopTransportState.failed ||
-        _transport.state == DesktopTransportState.closed ||
-        (_transport.state == DesktopTransportState.connected &&
-            _session == null)) {
-      await _transport.replace(transportFactory());
-    }
-    if (_transport.state == DesktopTransportState.ready ||
-        _transport.state == DesktopTransportState.connected) {
-      return true;
-    }
-    final opening = _transport.open().timeout(timeouts.ready);
-    while (_wantsRunning) {
-      final changed = _intentChanged.future;
-      final result = await Future.any<Object?>([
-        opening.then<Object?>((_) => true),
-        changed.then<Object?>((_) => false),
-      ]);
-      if (result == true) {
-        return true;
+      if (lease != null) {
+        await _release(lease, revision);
       }
     }
-    return false;
   }
 
-  Future<TransportConnected?> _waitForConnectionWhileWanted(
-    Future<TransportConnected> connection,
-  ) async {
-    while (_wantsRunning) {
-      final changed = _intentChanged.future;
-      final result = await Future.any<Object?>([
-        connection,
-        changed.then<Object?>((_) => null),
+  /// Completes with [operation], or with null once no Core is wanted any more.
+  Future<T?> _whileWanted<T extends Object>(Future<T> operation) async {
+    while (_wantsCore) {
+      final result = await Future.any<T?>([
+        operation,
+        _desiredChanged.future.then((_) => null),
       ]);
-      if (result is TransportConnected) {
+      if (result != null) {
         return result;
       }
     }
+    operation.ignore();
     return null;
   }
 
-  Future<void> _cleanObsoleteLease(CoreProcessLease lease, int revision) async {
-    late final CoreProcessStopResult result;
+  /// Gives [lease] up once its process is confirmed gone. Until then it stays
+  /// the leftover Core, unless the application is exiting anyway.
+  Future<void> _release(CoreProcessLease lease, int revision) async {
     try {
-      result = await lease.stop(timeouts.disconnection);
+      final result = await lease.stop(timeouts.disconnection);
+      if (!result.exitConfirmed) {
+        throw _failure(
+          code: 'process_exit_unconfirmed',
+          phase: DesktopCorePhase.stopping,
+          revision: revision,
+          lease: lease,
+        );
+      }
     } catch (error, stackTrace) {
-      _unconfirmedLease = lease;
+      if (_closingDown) {
+        _core = const _Absent();
+        return;
+      }
+      _core = _Leftover(lease);
+      if (error is DesktopCoreFailure) {
+        rethrow;
+      }
       throw _failure(
-        code: 'process_cleanup_failed',
+        code: 'stop_failed',
         phase: DesktopCorePhase.stopping,
         revision: revision,
         lease: lease,
@@ -534,192 +346,83 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
         stackTrace: stackTrace,
       );
     }
-    if (result.exitConfirmed) {
-      if (identical(_unconfirmedLease, lease)) {
-        _unconfirmedLease = null;
-      }
+    _core = const _Absent();
+    await _dropStalePeer();
+  }
+
+  /// With no Core owned, a peer the transport still holds is a dead one whose
+  /// disconnect has not arrived. It usually comes with the exit, so the event
+  /// loop gets one turn to deliver it before the listener is rebuilt.
+  Future<void> _dropStalePeer() async {
+    if (_closingDown) {
       return;
     }
-    _unconfirmedLease = lease;
-    throw _failure(
-      code: 'process_exit_unconfirmed',
-      phase: DesktopCorePhase.stopping,
-      revision: revision,
-      lease: lease,
-    );
-  }
-
-  Future<void> _stopUnconfirmedLease(
-    CoreProcessLease lease, {
-    required bool allowFailure,
-  }) async {
-    try {
-      final result = await lease.stop(timeouts.disconnection);
-      if (result.exitConfirmed) {
-        _unconfirmedLease = null;
-      } else if (!allowFailure) {
-        throw _failure(
-          code: 'process_exit_unconfirmed',
-          phase: DesktopCorePhase.stopping,
-          revision: _desired.revision,
-          lease: lease,
-        );
-      }
-    } catch (_) {
-      if (!allowFailure) {
-        rethrow;
-      }
-    } finally {
-      if (allowFailure) {
-        _unconfirmedLease = null;
-      }
+    if (transport.connection != null) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    if (transport.connection != null) {
+      await transport.reset();
     }
   }
 
-  Future<void> _stopSession(
-    DesktopCoreSession session,
-    int revision, {
-    required bool allowUnconfirmedExit,
-  }) async {
-    _publish(DesktopCoreStopping(revision: revision, session: session));
-    final disconnected = _disconnectFor(session);
-    try {
-      final stopResult = await session.lease.stop(timeouts.disconnection);
-      if (!stopResult.exitConfirmed) {
-        if (!allowUnconfirmedExit) {
-          throw _failure(
-            code: 'process_exit_unconfirmed',
-            phase: DesktopCorePhase.stopping,
-            revision: revision,
-            session: session,
-          );
-        }
-        _clearSession(session);
-        return;
-      }
-      if (!disconnected.isCompleted) {
-        await Future.any<void>([
-          disconnected.future,
-          Future<void>.delayed(Duration.zero),
-        ]);
-      }
-      if (!disconnected.isCompleted) {
-        _clearSession(session);
-        if (!_terminalRequested) {
-          await _transport.replace(transportFactory());
-        }
-        return;
-      }
-      _clearSession(session);
-    } on DesktopCoreFailure {
-      rethrow;
-    } catch (error, stackTrace) {
-      if (allowUnconfirmedExit) {
-        _clearSession(session);
-        return;
-      }
-      throw _failure(
-        code: 'stop_failed',
-        phase: DesktopCorePhase.stopping,
-        revision: revision,
-        session: session,
-        cause: error,
-        stackTrace: stackTrace,
-      );
-    }
+  Future<void> _shutDown(int revision) async {
+    await _transportEvents.cancel();
+    await transport.close();
+    _publish(DesktopCoreClosed(revision));
+    await _states.close();
+    await _crashes.close();
   }
 
-  _SessionDisconnect _disconnectFor(DesktopCoreSession session) {
-    final current = _sessionDisconnect;
-    if (current != null && identical(current.session, session)) {
-      return current;
+  void _settle(_Intent settled) {
+    if (settled.goal == _Goal.stopped) {
+      _publish(const DesktopCoreIdle());
     }
-    return _sessionDisconnect = _SessionDisconnect(session);
-  }
-
-  void _clearSession(DesktopCoreSession session) {
-    if (identical(_session, session)) {
-      _session = null;
-    }
-    if (identical(_sessionDisconnect?.session, session)) {
-      _sessionDisconnect = null;
-    }
-  }
-
-  bool _satisfies(_LifecycleAchievement achievement, _LifecycleTarget target) {
-    return switch (target) {
-      _LifecycleTarget.running =>
-        achievement == _LifecycleAchievement.runningExisting ||
-            achievement == _LifecycleAchievement.runningFresh,
-      _LifecycleTarget.restarted =>
-        achievement == _LifecycleAchievement.runningFresh,
-      _LifecycleTarget.stopped => achievement == _LifecycleAchievement.idle,
-      _LifecycleTarget.closed => achievement == _LifecycleAchievement.closed,
+    final session = switch (_core) {
+      _Live(:final session) => session,
+      _ => null,
     };
-  }
-
-  void _completeCommands(_LifecycleIntent settled) {
-    final commands = _pending
-        .where((command) => command.intent.revision <= settled.revision)
-        .toList(growable: false);
-    _pending.removeWhere(
-      (command) => command.intent.revision <= settled.revision,
-    );
-    for (final command in commands) {
-      final outcome = command.intent.revision == settled.revision
-          ? CoreLifecycleOutcome.applied
-          : _targetsCoalesce(command.intent.target, settled.target)
-          ? CoreLifecycleOutcome.coalesced
-          : CoreLifecycleOutcome.superseded;
-      command.completer.complete(
+    for (final _Command(:intent, :completer) in _take(settled.revision)) {
+      completer.complete(
         CoreLifecycleResult(
-          revision: command.intent.revision,
-          outcome: outcome,
-          session: _session,
+          revision: intent.revision,
+          outcome: intent.revision == settled.revision
+              ? CoreLifecycleOutcome.applied
+              : intent.goal == settled.goal
+              ? CoreLifecycleOutcome.coalesced
+              : CoreLifecycleOutcome.superseded,
+          session: session,
         ),
       );
     }
   }
 
-  bool _targetsCoalesce(_LifecycleTarget first, _LifecycleTarget settled) {
-    final firstRuns =
-        first == _LifecycleTarget.running ||
-        first == _LifecycleTarget.restarted;
-    final settledRuns =
-        settled == _LifecycleTarget.running ||
-        settled == _LifecycleTarget.restarted;
-    return (firstRuns && settledRuns) || first == settled;
-  }
-
   void _failCommands(int revision, DesktopCoreFailure failure) {
-    final commands = _pending
-        .where((command) => command.intent.revision <= revision)
-        .toList(growable: false);
-    _pending.removeWhere((command) => command.intent.revision <= revision);
-    for (final command in commands) {
+    for (final command in _take(revision)) {
       command.completer.completeError(failure, failure.stackTrace);
     }
   }
 
+  List<_Command> _take(int revision) {
+    final taken = _commands
+        .takeWhile((command) => command.intent.revision <= revision)
+        .toList(growable: false);
+    _commands.removeRange(0, taken.length);
+    return taken;
+  }
+
   void _handleTransportEvent(DesktopTransportEvent event) {
-    if (event case TransportDisconnected(:final generation)) {
-      _sessionDisconnect?.record(generation);
-    }
-    final running = _state;
-    if (running is! DesktopCoreRunning) {
+    final core = _core;
+    if (core is! _Live) {
       return;
     }
+    final session = core.session;
     switch (event) {
       case TransportDisconnected(:final generation, :final error)
-          when generation == running.session.connectionGeneration:
-        _handleUnexpectedDisconnect(
-          running.session,
-          code: 'unexpected_disconnect',
-          cause: error,
-        );
+          when generation == session.connectionGeneration:
+        _lose(session, code: 'unexpected_disconnect', cause: error);
       case TransportFailed(:final error, :final stackTrace):
-        _handleUnexpectedDisconnect(
-          running.session,
+        _lose(
+          session,
           code: 'transport_failed',
           cause: error,
           stackTrace: stackTrace,
@@ -729,53 +432,42 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
     }
   }
 
-  void _handleUnexpectedDisconnect(
+  void _lose(
     DesktopCoreSession session, {
     required String code,
     Object? cause,
     StackTrace? stackTrace,
   }) {
-    if (_unexpectedDisconnectOperation != null ||
-        !identical(_session, session)) {
-      return;
-    }
-    _clearSession(session);
+    _core = _Leftover(session.lease);
     final failure = _failure(
       code: code,
       phase: DesktopCorePhase.running,
       revision: _revision,
-      session: session,
+      lease: session.lease,
+      connectionGeneration: session.connectionGeneration,
       cause: cause,
       stackTrace: stackTrace,
     );
     _publish(DesktopCoreFailed(failure));
-    if (!_crashController.isClosed) {
-      _crashController.add(failure);
+    _crashes.add(failure);
+    _crashCleanupDue = true;
+    _wake();
+  }
+
+  Future<void> _cleanUpAfterCrash() async {
+    if (_core case _Leftover(:final lease)) {
+      try {
+        await _release(lease, _revision);
+      } catch (_) {
+        // The lease stays the leftover Core and the next intent retries it.
+      }
     }
-    late final Future<void> operation;
-    operation = session.lease
-        .stop(timeouts.disconnection)
-        .then<void>((result) {
-          if (!result.exitConfirmed) {
-            _unconfirmedLease = session.lease;
-          }
-        })
-        .catchError((_) {
-          _unconfirmedLease = session.lease;
-        })
-        .whenComplete(() {
-          if (identical(_unexpectedDisconnectOperation, operation)) {
-            _unexpectedDisconnectOperation = null;
-          }
-        });
-    _unexpectedDisconnectOperation = operation;
   }
 
   DesktopCoreFailure _failure({
     required String code,
     required DesktopCorePhase phase,
     required int revision,
-    DesktopCoreSession? session,
     CoreProcessLease? lease,
     int? connectionGeneration,
     Object? cause,
@@ -785,11 +477,10 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
       code: code,
       phase: phase,
       revision: revision,
-      sessionId: session?.sessionId ?? lease?.sessionId,
-      owner: session?.owner ?? lease?.owner,
-      pid: session?.pid ?? lease?.pid,
-      connectionGeneration:
-          connectionGeneration ?? session?.connectionGeneration,
+      sessionId: lease?.sessionId,
+      owner: lease?.owner,
+      pid: lease?.pid,
+      connectionGeneration: connectionGeneration,
       cause: cause,
       stackTrace: stackTrace,
     );
@@ -797,42 +488,6 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
 
   void _publish(DesktopCoreState state) {
     _state = state;
-    if (!_stateController.isClosed) {
-      _stateController.add(state);
-    }
-  }
-
-  @override
-  Future<DesktopCoreSession> waitUntilRunning(Duration timeout) {
-    final current = _state;
-    if (current is DesktopCoreRunning) {
-      return Future.value(current.session);
-    }
-    if (current is DesktopCoreFailed) {
-      return Future.error(current.failure, current.failure.stackTrace);
-    }
-    if (current is DesktopCoreClosed) {
-      return Future.error(StateError('Desktop Core lifecycle is closed'));
-    }
-    return states
-        .firstWhere(
-          (state) =>
-              state is DesktopCoreRunning ||
-              state is DesktopCoreFailed ||
-              state is DesktopCoreClosed,
-        )
-        .then<DesktopCoreSession>((state) {
-          if (state case DesktopCoreRunning(:final session)) {
-            return session;
-          }
-          if (state case DesktopCoreFailed(:final failure)) {
-            Error.throwWithStackTrace(
-              failure,
-              failure.stackTrace ?? StackTrace.current,
-            );
-          }
-          throw StateError('Desktop Core lifecycle is closed');
-        })
-        .timeout(timeout);
+    _states.add(state);
   }
 }
