@@ -1103,7 +1103,7 @@ void main() {
           'themeProps': const ThemeProps().toJson(),
           'overrideDns': overrideDns,
           'patchClashConfig': {
-            'dns-override-keys': ['nameserver', 'respect-rules'],
+            'dns-override-keys': ['nameserver', 'nameserver-policy'],
           },
         });
 

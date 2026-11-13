@@ -173,8 +173,18 @@ void main() {
 
     await openAddSheet(tester);
 
-    expect(find.text('Direct Nameserver'), findsOneWidget);
-    expect(find.text(currentAppLocalizations.respectRules), findsNothing);
+    expect(find.text(currentAppLocalizations.respectRules), findsOneWidget);
+    expect(find.text(currentAppLocalizations.fakeipTtl), findsNothing);
+    await tester.scrollUntilVisible(
+      find.text('Direct Nameserver'),
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byType(SelectionSheet<DnsOverrideKey>),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     expect(find.text('Nameserver Policy'), findsNothing);
     expect(find.text(currentAppLocalizations.fallbackFilter), findsNothing);
   });
