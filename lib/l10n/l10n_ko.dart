@@ -1513,9 +1513,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get startFromScratch => '처음부터 시작';
 
   @override
-  String get autoSetSystemDns => '시스템 DNS 자동 설정';
-
-  @override
   String details(Object label) {
     return '$label 상세 정보';
   }

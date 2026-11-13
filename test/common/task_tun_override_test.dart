@@ -21,6 +21,7 @@ Future<YamlMap> _tunOf({
   required Map<String, dynamic> rawConfig,
   ProfileOverrides overrides = _overrides,
   bool bypassPrivateRoute = false,
+  String? defaultTunDnsMode,
 }) async {
   final result = await makeRealProfileTask(
     MakeRealProfileState(
@@ -31,6 +32,7 @@ Future<YamlMap> _tunOf({
       overrides: overrides,
       bypassPrivateRoute: bypassPrivateRoute,
       appendSystemDns: false,
+      defaultTunDnsMode: defaultTunDnsMode,
       proxyGroups: const [],
       rules: const [],
       addedRules: const [],
@@ -42,6 +44,28 @@ Future<YamlMap> _tunOf({
 }
 
 void main() {
+  test('fills the default DNS mode only where the profile leaves it', () async {
+    final filled = await _tunOf(rawConfig: {}, defaultTunDnsMode: 'native');
+    final blank = await _tunOf(
+      rawConfig: {
+        'tun': {'dns-mode': ''},
+      },
+      defaultTunDnsMode: 'native',
+    );
+    final picked = await _tunOf(
+      rawConfig: {
+        'tun': {'dns-mode': 'disabled'},
+      },
+      defaultTunDnsMode: 'native',
+    );
+    final untouched = await _tunOf(rawConfig: {});
+
+    expect(filled['dns-mode'], 'native');
+    expect(blank['dns-mode'], 'native');
+    expect(picked['dns-mode'], 'disabled');
+    expect(untouched.containsKey('dns-mode'), isFalse);
+  });
+
   test('writes the selected keys beside the network settings', () async {
     final tun = await _tunOf(rawConfig: {});
 

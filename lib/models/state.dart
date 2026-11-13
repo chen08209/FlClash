@@ -207,6 +207,7 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
     /// Set for a subscription, whose own DNS values an emptied entry replaces.
     @Default(false) bool keepEmptyDnsOverrides,
     required bool appendSystemDns,
+    String? defaultTunDnsMode,
     required List<ProxyGroup> proxyGroups,
     required List<Rule> rules,
     required List<Rule> addedRules,

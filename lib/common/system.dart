@@ -483,78 +483,6 @@ class MacOS implements SystemDnsPort {
     return _instance!;
   }
 
-  @visibleForTesting
-  static String? parseDefaultInterface(String routeOutput) {
-    final deviceLine = routeOutput
-        .split('\n')
-        .firstWhere((s) => s.contains('interface:'), orElse: () => '');
-    final lineSplits = deviceLine.trim().split(' ');
-    if (lineSplits.length != 2) {
-      return null;
-    }
-    return lineSplits[1];
-  }
-
-  @visibleForTesting
-  static String? parseServiceName(String serviceOrderOutput, String device) {
-    final currentService = serviceOrderOutput
-        .split('\n\n')
-        .firstWhere((s) => s.contains('Device: $device'), orElse: () => '');
-    if (currentService.isEmpty) {
-      return null;
-    }
-    final nameLine = currentService
-        .split('\n')
-        .firstWhere(
-          (line) => RegExp(r'^\(\d+\).*').hasMatch(line),
-          orElse: () => '',
-        );
-    final name = RegExp(
-      r'^\(\d+\)\s+(.+)$',
-    ).firstMatch(nameLine.trim())?.group(1)?.trim();
-    if (name == null || name.isEmpty) {
-      return null;
-    }
-    return name;
-  }
-
-  @visibleForTesting
-  static List<String> parseDnsServers(String getDnsServersOutput) {
-    final output = getDnsServersOutput.trim();
-    if (output.startsWith("There aren't any DNS Servers set on")) {
-      return [];
-    }
-    return output.split('\n');
-  }
-
-  @override
-  Future<String?> resolveDefaultService() async {
-    final result = await _run('route', ['-n', 'get', 'default']);
-    if (result == null) {
-      return null;
-    }
-    final device = parseDefaultInterface(result.stdout.toString());
-    if (device == null) {
-      return null;
-    }
-    final serviceResult = await _run('networksetup', [
-      '-listnetworkserviceorder',
-    ]);
-    if (serviceResult == null) {
-      return null;
-    }
-    return parseServiceName(serviceResult.stdout.toString(), device);
-  }
-
-  @override
-  Future<List<String>?> readDnsServers(String service) async {
-    final result = await _run('networksetup', ['-getdnsservers', service]);
-    if (result == null) {
-      return null;
-    }
-    return parseDnsServers(result.stdout.toString());
-  }
-
   @override
   Future<bool> writeDnsServers(String service, List<String> servers) async {
     final result = await _run('networksetup', [
@@ -562,22 +490,18 @@ class MacOS implements SystemDnsPort {
       service,
       if (servers.isEmpty) 'Empty',
       if (servers.isNotEmpty) ...servers,
-    ], logLevel: LogLevel.error);
+    ]);
     return result != null;
   }
 
-  Future<ProcessResult?> _run(
-    String executable,
-    List<String> arguments, {
-    LogLevel logLevel = LogLevel.warning,
-  }) async {
+  Future<ProcessResult?> _run(String executable, List<String> arguments) async {
     final label = '$executable ${arguments.first}';
     try {
       final result = await runProcess(executable, arguments);
       if (result.exitCode != 0) {
         commonPrint.log(
           '$label exited with ${result.exitCode}: ${result.stderr.toString().trim()}',
-          logLevel: logLevel,
+          logLevel: LogLevel.error,
         );
         return null;
       }
@@ -585,7 +509,7 @@ class MacOS implements SystemDnsPort {
     } catch (error) {
       commonPrint.log(
         '$label failed: ${compactError(error)}',
-        logLevel: logLevel,
+        logLevel: LogLevel.error,
       );
       return null;
     }

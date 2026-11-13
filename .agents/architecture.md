@@ -1600,9 +1600,9 @@ rewritten; each owner reads the flag where it would otherwise act:
   `vmess-config`, `tuic-server` and `iptables`, and closes `dns.listen`, preventing profile-only changes during apply.
 - System proxy: `systemProxyQueue` in `lib/common/proxy.dart` is `null`, so `ProxyManager` and exit cleanup never
   write the OS setting, not even the stop that would clear what the installed app configured.
-- System DNS: `systemDnsCoordinator` is `null` and `shouldPatchSystemDnsProvider` is `false`, so neither the apply nor
-  the restore path runs. The restore path matters because a profile or release build shares the preferences of the
-  installed app (only a macOS or Android debug build has its own bundle id) and would restore from its record.
+- System DNS: with no TUN in the generated profile the Core registers no resolver, and `restoreLegacySystemDns` does
+  not run. The restore matters because a profile or release build shares the preferences of the installed app (only a
+  macOS or Android debug build has its own bundle id) and would restore from its record.
 - Login item: the `autoLaunch` handle in `lib/common/launch.dart` is `null`, so neither the boot sync nor the setting
   listener registers the build's executable or removes the installed app's entry, which on Windows is the same
   `FlClash` value in the user's Run key.

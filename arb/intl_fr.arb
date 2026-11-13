@@ -479,7 +479,6 @@
   "importFile": "Importer depuis un fichier",
   "importUrl": "Importer depuis une URL",
   "startFromScratch": "Partir de zéro",
-  "autoSetSystemDns": "Définir automatiquement le DNS du système",
   "details": "Détails de {label}",
   "creationTime": "Date de création",
   "process": "Processus",

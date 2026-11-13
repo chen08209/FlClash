@@ -479,7 +479,6 @@
   "importFile": "Импорт из файла",
   "importUrl": "Импорт по URL",
   "startFromScratch": "С нуля",
-  "autoSetSystemDns": "Автонастройка системного DNS",
   "details": "Сведения: {label}",
   "creationTime": "Время создания",
   "process": "Процесс",

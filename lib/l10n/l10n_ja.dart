@@ -1515,9 +1515,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get startFromScratch => '最初から作成';
 
   @override
-  String get autoSetSystemDns => 'システムDNSを自動設定';
-
-  @override
   String details(Object label) {
     return '$labelの詳細';
   }

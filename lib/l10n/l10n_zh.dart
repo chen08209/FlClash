@@ -1504,9 +1504,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get startFromScratch => '从零开始';
 
   @override
-  String get autoSetSystemDns => '自动设置系统DNS';
-
-  @override
   String details(Object label) {
     return '$label详情';
   }

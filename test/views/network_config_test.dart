@@ -57,12 +57,6 @@ final _toggleCases = <_ToggleCase>[
   ),
   _ToggleCase('ipv6', const Ipv6Item(), (c) => c.read(vpnSettingProvider).ipv6),
   _ToggleCase(
-    'auto set system dns',
-    const AutoSetSystemDnsItem(),
-    (c) => c.read(networkSettingProvider).autoSetSystemDns,
-    initial: true,
-  ),
-  _ToggleCase(
     'dns hijacking',
     const DNSHijackingItem(),
     (c) => c.read(vpnSettingProvider).dnsHijacking,
@@ -169,7 +163,6 @@ void main() {
     }) {
       return networkOptionsItems(
         isDesktop: isDesktop,
-        isMacOS: false,
         isCustomInterfaceName: isCustomInterfaceName,
       ).map((item) => item.runtimeType).toList();
     }

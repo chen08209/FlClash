@@ -152,14 +152,6 @@ class Preferences {
     }
   }
 
-  Future<void> saveSystemDnsRecord(SystemDnsRecord record) async {
-    final sharedPreferencesIns = await _store.value;
-    await sharedPreferencesIns?.setString(
-      systemDnsRecordKey,
-      json.encode(record),
-    );
-  }
-
   Future<void> clearSystemDnsRecord() async {
     final sharedPreferencesIns = await _store.value;
     await sharedPreferencesIns?.remove(systemDnsRecordKey);

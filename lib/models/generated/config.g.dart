@@ -280,7 +280,6 @@ _NetworkProps _$NetworkPropsFromJson(Map<String, dynamic> json) =>
       pacMode: json['pacMode'] as bool? ?? false,
       pacScript: json['pacScript'] as String? ?? defaultPacScript,
       bypassPrivateRoute: json['bypassPrivateRoute'] as bool? ?? true,
-      autoSetSystemDns: json['autoSetSystemDns'] as bool? ?? true,
       appendSystemDns: json['appendSystemDns'] as bool? ?? false,
       authentication: json['authentication'] == null
           ? defaultAuthenticationProps
@@ -296,7 +295,6 @@ Map<String, dynamic> _$NetworkPropsToJson(_NetworkProps instance) =>
       'pacMode': instance.pacMode,
       'pacScript': instance.pacScript,
       'bypassPrivateRoute': instance.bypassPrivateRoute,
-      'autoSetSystemDns': instance.autoSetSystemDns,
       'appendSystemDns': instance.appendSystemDns,
       'authentication': instance.authentication,
     };

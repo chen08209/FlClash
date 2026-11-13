@@ -2988,12 +2988,6 @@ abstract class AppLocalizations {
   /// **'Start from scratch'**
   String get startFromScratch;
 
-  /// No description provided for @autoSetSystemDns.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto-set system DNS'**
-  String get autoSetSystemDns;
-
   /// No description provided for @details.
   ///
   /// In en, this message translates to:

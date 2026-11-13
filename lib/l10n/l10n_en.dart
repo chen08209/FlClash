@@ -1543,9 +1543,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get startFromScratch => 'Start from scratch';
 
   @override
-  String get autoSetSystemDns => 'Auto-set system DNS';
-
-  @override
   String details(Object label) {
     return '$label details';
   }

@@ -479,7 +479,6 @@
   "importFile": "通过文件导入",
   "importUrl": "通过URL导入",
   "startFromScratch": "从零开始",
-  "autoSetSystemDns": "自动设置系统DNS",
   "details": "{label}详情",
   "creationTime": "创建时间",
   "process": "进程",

@@ -507,7 +507,7 @@ void main() {
     expect(container.read(filterGroupsStateProvider('hk jp')).value, isEmpty);
   });
 
-  test('runtime, VPN, tray, and DNS states follow live state', () async {
+  test('runtime, VPN, and tray states follow live state', () async {
     container
         .read(runTimeProvider.notifier)
         .update((_) => DateTime(2026).millisecondsSinceEpoch);
@@ -517,7 +517,6 @@ void main() {
           (state) => state.copyWith(
             systemProxy: false,
             bypassDomain: const ['localhost'],
-            autoSetSystemDns: true,
           ),
         );
     container
@@ -529,8 +528,6 @@ void main() {
             tun: state.tun.copyWith(enable: true),
           ),
         );
-    expect(container.read(shouldPatchSystemDnsProvider), isFalse);
-
     container
         .read(authorizedTunEnableProvider.notifier)
         .update((_) => TunAuthorizationState.authorized);
@@ -553,21 +550,6 @@ void main() {
     expect(vpn.port, 8899);
     expect(vpn.bypassDomain, ['localhost']);
 
-    expect(container.read(shouldPatchSystemDnsProvider), isTrue);
-
-    container
-        .read(networkSettingProvider.notifier)
-        .update((state) => state.copyWith(autoSetSystemDns: false));
-    expect(container.read(shouldPatchSystemDnsProvider), isFalse);
-    container
-        .read(networkSettingProvider.notifier)
-        .update((state) => state.copyWith(autoSetSystemDns: true));
-
-    container
-        .read(authorizedTunEnableProvider.notifier)
-        .update((_) => TunAuthorizationState.unauthorized);
-    expect(container.read(shouldPatchSystemDnsProvider), isFalse);
-
     container.read(excludeSSIDsProvider.notifier).update((_) => ['Office']);
     container.read(currentSSIDProvider.notifier).update((_) => 'Office');
     expect(container.read(suspendProvider), isTrue);
@@ -587,9 +569,7 @@ void main() {
     scoped.read(runTimeProvider.notifier).update((_) => 1);
     scoped
         .read(networkSettingProvider.notifier)
-        .update(
-          (state) => state.copyWith(systemProxy: true, autoSetSystemDns: true),
-        );
+        .update((state) => state.copyWith(systemProxy: true));
     scoped
         .read(patchClashConfigProvider.notifier)
         .update(
@@ -623,7 +603,6 @@ void main() {
     expect(tray.showTrayTitle, isTrue);
     expect(tray.hotKeys.keys, [HotAction.view]);
     expect(scoped.read(trayTitleStateProvider).showTrayTitle, isTrue);
-    expect(scoped.read(shouldPatchSystemDnsProvider), isFalse);
     await scoped.read(vpnOptionsProvider.future);
     final vpnOptions = scoped.read(sharedStateProvider).vpnOptions!;
     expect(vpnOptions.enable, isFalse);

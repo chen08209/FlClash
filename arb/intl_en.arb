@@ -504,7 +504,6 @@
   "importFile": "Import from file",
   "importUrl": "Import from URL",
   "startFromScratch": "Start from scratch",
-  "autoSetSystemDns": "Auto-set system DNS",
   "details": "{label} details",
   "creationTime": "Creation time",
   "process": "Process",

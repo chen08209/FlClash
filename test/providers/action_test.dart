@@ -896,7 +896,6 @@ void main() {
       expect(await setupAction.requestAdmin(true), isTrue);
 
       expect(container.read(patchClashConfigProvider).tun.enable, isFalse);
-      expect(container.read(shouldPatchSystemDnsProvider), isFalse);
       expect(
         await setupAction.requestAdmin(
           container.read(patchClashConfigProvider).tun.enable,

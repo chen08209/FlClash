@@ -141,19 +141,6 @@ class Ipv6Item extends ConsumerWidget {
   }
 }
 
-class AutoSetSystemDnsItem extends ConsumerWidget {
-  const AutoSetSystemDnsItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    return _networkToggle(
-      title: (l) => l.autoSetSystemDns,
-      select: (state) => state.autoSetSystemDns,
-      update: (state, value) => state.copyWith(autoSetSystemDns: value),
-    );
-  }
-}
-
 class DNSHijackingItem extends ConsumerWidget {
   const DNSHijackingItem({super.key});
 
@@ -492,12 +479,10 @@ List<Widget> outboundItems({required bool isDesktop, required bool isLinux}) {
 
 List<Widget> networkOptionsItems({
   required bool isDesktop,
-  required bool isMacOS,
   required bool isCustomInterfaceName,
 }) {
   return [
     if (isDesktop) const TUNItem(),
-    if (isMacOS) const AutoSetSystemDnsItem(),
     const TunStackItem(),
     // mihomo's DefaultSocketHook ignores interface-name on Android
     // (core/lib.go installHooks, vendored dialer.go), so these rows only
@@ -577,7 +562,6 @@ class NetworkOptionsSection extends ConsumerWidget {
       title: appLocalizations.options,
       items: networkOptionsItems(
         isDesktop: system.isDesktop,
-        isMacOS: system.isMacOS,
         isCustomInterfaceName: isCustomInterfaceName,
       ),
       footer: system.isDesktop ? appLocalizations.tunDesc : null,

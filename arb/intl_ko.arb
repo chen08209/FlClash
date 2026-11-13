@@ -479,7 +479,6 @@
   "importFile": "파일에서 가져오기",
   "importUrl": "URL에서 가져오기",
   "startFromScratch": "처음부터 시작",
-  "autoSetSystemDns": "시스템 DNS 자동 설정",
   "details": "{label} 상세 정보",
   "creationTime": "생성 시간",
   "process": "프로세스",

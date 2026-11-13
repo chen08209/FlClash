@@ -85,9 +85,9 @@ flutter test
 Use `flutter test`, not `dart test`, because models pull in Flutter types.
 
 A development build takes over the host exactly like a release: it creates the TUN device, sets the system proxy, on
-macOS rewrites the system DNS, registers itself as the login item, and on Windows and Linux starts its Core through the
-shared privileged Helper, which stops the Core an installed FlClash is running. Only the data directory is kept apart,
-and only for some builds: a macOS debug build is `com.follow.clash.debug` and an Android debug build `com.follow.clash.dev`,
+macOS registers the TUN as the system resolver, registers itself as the login item, and on Windows and Linux starts its
+Core through the shared privileged Helper, which stops the Core an installed FlClash is running. Only the data directory
+is kept apart, and only for some builds: a macOS debug build is `com.follow.clash.debug` and an Android debug build `com.follow.clash.dev`,
 while profile and release builds, and every build on Windows and Linux, share the directory and preferences of the
 installed app. Safe mode keeps all of the host changes off and never opens the Core's listeners or external
 controller, so it does not compete with the installed app for the mixed, DNS, RESTful API and other loopback ports:

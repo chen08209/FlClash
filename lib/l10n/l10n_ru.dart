@@ -1542,9 +1542,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get startFromScratch => 'С нуля';
 
   @override
-  String get autoSetSystemDns => 'Автонастройка системного DNS';
-
-  @override
   String details(Object label) {
     return 'Сведения: $label';
   }

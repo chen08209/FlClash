@@ -479,7 +479,6 @@
   "importFile": "ファイルからインポート",
   "importUrl": "URLからインポート",
   "startFromScratch": "最初から作成",
-  "autoSetSystemDns": "システムDNSを自動設定",
   "details": "{label}の詳細",
   "creationTime": "作成日時",
   "process": "プロセス",

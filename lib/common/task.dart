@@ -230,6 +230,10 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
       ...privateRouteAddress,
     ];
   }
+  if (data.defaultTunDnsMode case final mode?
+      when tun['dns-mode'] == null || tun['dns-mode'] == '') {
+    tun['dns-mode'] = mode;
+  }
   rawConfig['tun'] = tun;
   rawConfig['geo-auto-update'] = realPatchConfig.geoAutoUpdate;
   rawConfig['geo-update-interval'] = realPatchConfig.geoUpdateInterval;
