@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/link.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late StreamController<Uri> links;
   late List<String> received;
 
@@ -77,32 +80,49 @@ void main() {
     expect(received, ['https://example.com/a.yaml']);
   });
 
-  test(
-    'a seeded launch argument is delivered once a listener attaches',
-    () async {
-      linkManager.seedInitialLink([
-        '--verbose',
-        'flclash://install-config?url=https://example.com/a.yaml',
-      ]);
-
-      expect(received, isEmpty);
-
-      await listen();
-
-      expect(received, ['https://example.com/a.yaml']);
-
-      await listen();
-
-      expect(received, ['https://example.com/a.yaml']);
-    },
-  );
-
-  test('launch arguments without a known scheme are ignored', () async {
-    linkManager.seedInitialLink(['https://example.com/a.yaml', 'not a uri']);
-
+  test('a link with a scheme the app does not claim is ignored', () async {
     await listen();
 
+    await emit('https://install-config?url=https://example.com/a.yaml');
+
     expect(received, isEmpty);
+  });
+
+  group('androidLinks', () {
+    const channel = MethodChannel('test/link');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+
+    tearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    Future<void> push(String link) async {
+      await messenger.handlePlatformMessage(
+        channel.name,
+        channel.codec.encodeMethodCall(MethodCall('link', link)),
+        (_) {},
+      );
+    }
+
+    test('delivers the held links, then pushed ones', () async {
+      final calls = <String>[];
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        calls.add(call.method);
+        return ['flclash://install-config?url=https://example.com/a.yaml'];
+      });
+      final uris = <Uri>[];
+      final subscription = androidLinks(channel).listen(uris.add);
+      await pumpEventQueue();
+
+      await push('flclash://install-config?url=https://example.com/b.yaml');
+      await pumpEventQueue();
+
+      expect(calls, ['takeLinks']);
+      expect(uris.map((uri) => uri.queryParameters['url']), [
+        'https://example.com/a.yaml',
+        'https://example.com/b.yaml',
+      ]);
+      await subscription.cancel();
+    });
   });
 
   test('destroy stops delivery and is safe to repeat', () async {

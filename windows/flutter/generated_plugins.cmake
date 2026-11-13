@@ -3,14 +3,11 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  app_links
   connectivity_plus
   dynamic_color
   file_selector_windows
-  screen_retriever_windows
   url_launcher_windows
   wifi_ssid
-  window
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

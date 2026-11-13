@@ -6,17 +6,15 @@ import 'package:fl_clash/manager/tray_manager.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:rust_api/tray.dart';
 
+import '../helpers/fake_desktop_window.dart';
 import '../helpers/fake_tray_host.dart';
 import '../helpers/test_profiles.dart';
 import '../helpers/test_app.dart';
-
-const _windowChannel = MethodChannel('window');
 
 class _RecordingSystemAction extends SystemAction {
   static int updateTrayCount = 0;
@@ -53,7 +51,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late ProviderContainer container;
-  late List<String> windowCalls;
+  late FakeDesktopWindow fakeWindow;
   late FakeTrayHost trayHost;
 
   setUpAll(() async {
@@ -63,19 +61,12 @@ void main() {
   setUp(() {
     _RecordingSystemAction.updateTrayCount = 0;
     _RecordingSystemAction.updateTrayLocales.clear();
-    windowCalls = <String>[];
     trayHost = FakeTrayHost();
     Tray.instance.resetForTesting(trayHost);
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(_windowChannel, (call) async {
-          windowCalls.add(call.method);
-          return call.method == 'isMinimized' ? false : null;
-        });
+    fakeWindow = FakeDesktopWindow().install();
   });
 
   tearDown(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(_windowChannel, null);
     container.dispose();
   });
 
@@ -131,7 +122,7 @@ void main() {
 
   testWidgets('activating the icon brings the window back', (tester) async {
     await pumpTrayManager(tester);
-    windowCalls.clear();
+    fakeWindow.calls.clear();
 
     emitTrayEvent(TraySignalKind.iconActivated);
     await tester.pumpAndSettle();
@@ -139,7 +130,7 @@ void main() {
     // ends the test with no pending timer.
     await tester.pump(const Duration(seconds: 1));
 
-    expect(windowCalls, containsAll(<String>['show', 'focus']));
+    expect(fakeWindow.methods, containsAll(<String>['show', 'focus']));
   });
 
   testWidgets('a menu request is forwarded to the tray', (tester) async {
@@ -258,11 +249,11 @@ void main() {
     await pumpTrayManager(tester);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
-    windowCalls.clear();
+    fakeWindow.calls.clear();
 
     emitTrayEvent(TraySignalKind.iconActivated);
     await tester.pumpAndSettle();
 
-    expect(windowCalls, isEmpty);
+    expect(fakeWindow.methods, isEmpty);
   });
 }

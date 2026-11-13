@@ -10,9 +10,11 @@ import 'api/charset.dart';
 import 'api/editor.dart';
 import 'api/hotkey.dart';
 import 'api/ipc.dart';
+import 'api/link.dart';
 import 'api/proxy.dart';
 import 'api/script.dart';
 import 'api/tray.dart';
+import 'api/window.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';
@@ -96,6 +98,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  RustStreamSink<String> dco_decode_StreamSink_String_Sse(dynamic raw);
+
+  @protected
   RustStreamSink<IpcEvent> dco_decode_StreamSink_ipc_event_Sse(dynamic raw);
 
   @protected
@@ -105,10 +110,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RustStreamSink<int> dco_decode_StreamSink_u_32_Sse(dynamic raw);
 
   @protected
+  RustStreamSink<WindowSignal> dco_decode_StreamSink_window_signal_Sse(
+    dynamic raw,
+  );
+
+  @protected
   String dco_decode_String(dynamic raw);
 
   @protected
   bool dco_decode_bool(dynamic raw);
+
+  @protected
+  double dco_decode_box_autoadd_f_64(dynamic raw);
 
   @protected
   TrayContent dco_decode_box_autoadd_tray_content(dynamic raw);
@@ -120,10 +133,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   BigInt dco_decode_box_autoadd_usize(dynamic raw);
 
   @protected
+  WindowBrightness dco_decode_box_autoadd_window_brightness(dynamic raw);
+
+  @protected
   EditorOpenError dco_decode_editor_open_error(dynamic raw);
 
   @protected
   EditorOpenErrorKind dco_decode_editor_open_error_kind(dynamic raw);
+
+  @protected
+  double dco_decode_f_64(dynamic raw);
 
   @protected
   GuideBlock dco_decode_guide_block(dynamic raw);
@@ -177,7 +196,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<TrayItem> dco_decode_list_tray_item(dynamic raw);
 
   @protected
+  List<WindowDisplay> dco_decode_list_window_display(dynamic raw);
+
+  @protected
   String? dco_decode_opt_String(dynamic raw);
+
+  @protected
+  double? dco_decode_opt_box_autoadd_f_64(dynamic raw);
 
   @protected
   int? dco_decode_opt_box_autoadd_u_32(dynamic raw);
@@ -186,10 +211,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   BigInt? dco_decode_opt_box_autoadd_usize(dynamic raw);
 
   @protected
+  WindowBrightness? dco_decode_opt_box_autoadd_window_brightness(dynamic raw);
+
+  @protected
   Uint8List? dco_decode_opt_list_prim_u_8_strict(dynamic raw);
 
   @protected
   RustFoldRange dco_decode_rust_fold_range(dynamic raw);
+
+  @protected
+  TitleBarStyle dco_decode_title_bar_style(dynamic raw);
 
   @protected
   TrayContent dco_decode_tray_content(dynamic raw);
@@ -223,6 +254,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt dco_decode_usize(dynamic raw);
+
+  @protected
+  WindowBounds dco_decode_window_bounds(dynamic raw);
+
+  @protected
+  WindowBrightness dco_decode_window_brightness(dynamic raw);
+
+  @protected
+  WindowDisplay dco_decode_window_display(dynamic raw);
+
+  @protected
+  WindowEffect dco_decode_window_effect(dynamic raw);
+
+  @protected
+  WindowPoint dco_decode_window_point(dynamic raw);
+
+  @protected
+  WindowSignal dco_decode_window_signal(dynamic raw);
 
   @protected
   AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer);
@@ -282,6 +331,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  RustStreamSink<String> sse_decode_StreamSink_String_Sse(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   RustStreamSink<IpcEvent> sse_decode_StreamSink_ipc_event_Sse(
     SseDeserializer deserializer,
   );
@@ -297,10 +351,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  RustStreamSink<WindowSignal> sse_decode_StreamSink_window_signal_Sse(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
   bool sse_decode_bool(SseDeserializer deserializer);
+
+  @protected
+  double sse_decode_box_autoadd_f_64(SseDeserializer deserializer);
 
   @protected
   TrayContent sse_decode_box_autoadd_tray_content(SseDeserializer deserializer);
@@ -312,12 +374,20 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   BigInt sse_decode_box_autoadd_usize(SseDeserializer deserializer);
 
   @protected
+  WindowBrightness sse_decode_box_autoadd_window_brightness(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   EditorOpenError sse_decode_editor_open_error(SseDeserializer deserializer);
 
   @protected
   EditorOpenErrorKind sse_decode_editor_open_error_kind(
     SseDeserializer deserializer,
   );
+
+  @protected
+  double sse_decode_f_64(SseDeserializer deserializer);
 
   @protected
   GuideBlock sse_decode_guide_block(SseDeserializer deserializer);
@@ -379,7 +449,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<TrayItem> sse_decode_list_tray_item(SseDeserializer deserializer);
 
   @protected
+  List<WindowDisplay> sse_decode_list_window_display(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
+
+  @protected
+  double? sse_decode_opt_box_autoadd_f_64(SseDeserializer deserializer);
 
   @protected
   int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer);
@@ -388,10 +466,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   BigInt? sse_decode_opt_box_autoadd_usize(SseDeserializer deserializer);
 
   @protected
+  WindowBrightness? sse_decode_opt_box_autoadd_window_brightness(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   Uint8List? sse_decode_opt_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
   RustFoldRange sse_decode_rust_fold_range(SseDeserializer deserializer);
+
+  @protected
+  TitleBarStyle sse_decode_title_bar_style(SseDeserializer deserializer);
 
   @protected
   TrayContent sse_decode_tray_content(SseDeserializer deserializer);
@@ -427,6 +513,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt sse_decode_usize(SseDeserializer deserializer);
+
+  @protected
+  WindowBounds sse_decode_window_bounds(SseDeserializer deserializer);
+
+  @protected
+  WindowBrightness sse_decode_window_brightness(SseDeserializer deserializer);
+
+  @protected
+  WindowDisplay sse_decode_window_display(SseDeserializer deserializer);
+
+  @protected
+  WindowEffect sse_decode_window_effect(SseDeserializer deserializer);
+
+  @protected
+  WindowPoint sse_decode_window_point(SseDeserializer deserializer);
+
+  @protected
+  WindowSignal sse_decode_window_signal(SseDeserializer deserializer);
 
   @protected
   void sse_encode_AnyhowException(
@@ -498,6 +602,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_StreamSink_String_Sse(
+    RustStreamSink<String> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_StreamSink_ipc_event_Sse(
     RustStreamSink<IpcEvent> self,
     SseSerializer serializer,
@@ -516,10 +626,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_StreamSink_window_signal_Sse(
+    RustStreamSink<WindowSignal> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
   void sse_encode_bool(bool self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_f_64(double self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_tray_content(
@@ -534,6 +653,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_usize(BigInt self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_window_brightness(
+    WindowBrightness self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_editor_open_error(
     EditorOpenError self,
     SseSerializer serializer,
@@ -544,6 +669,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     EditorOpenErrorKind self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_f_64(double self, SseSerializer serializer);
 
   @protected
   void sse_encode_guide_block(GuideBlock self, SseSerializer serializer);
@@ -621,13 +749,28 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_tray_item(List<TrayItem> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_window_display(
+    List<WindowDisplay> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_f_64(double? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_usize(BigInt? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_window_brightness(
+    WindowBrightness? self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_opt_list_prim_u_8_strict(
@@ -637,6 +780,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_rust_fold_range(RustFoldRange self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_title_bar_style(TitleBarStyle self, SseSerializer serializer);
 
   @protected
   void sse_encode_tray_content(TrayContent self, SseSerializer serializer);
@@ -676,6 +822,27 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_usize(BigInt self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_window_bounds(WindowBounds self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_window_brightness(
+    WindowBrightness self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_window_display(WindowDisplay self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_window_effect(WindowEffect self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_window_point(WindowPoint self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_window_signal(WindowSignal self, SseSerializer serializer);
 }
 
 // Section: wire_class

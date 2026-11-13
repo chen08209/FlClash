@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 
-import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:rust_api/link.dart';
 
+import 'constant.dart';
 import 'print.dart';
 import 'protocol.dart';
 import 'string.dart';
@@ -36,26 +39,48 @@ String? _installConfigUrl(Uri uri) {
   return url == null || url.isEmpty ? null : url;
 }
 
+const _linkChannel = MethodChannel('$packageName/link');
+
+/// The links Android hands MainActivity. The plugin holds those that come
+/// before `takeLinks` and pushes the rest, holding again any nobody takes.
+@visibleForTesting
+Stream<Uri> androidLinks([MethodChannel channel = _linkChannel]) {
+  late final StreamController<Uri> controller;
+  void add(Object? link) {
+    final uri = link is String ? Uri.tryParse(link) : null;
+    if (uri != null) {
+      controller.add(uri);
+    }
+  }
+
+  controller = StreamController<Uri>(
+    onListen: () async {
+      channel.setMethodCallHandler((call) async {
+        if (call.method != 'link') {
+          throw MissingPluginException();
+        }
+        add(call.arguments);
+      });
+      final pending = await channel.invokeListMethod<String>('takeLinks');
+      pending?.forEach(add);
+    },
+    onCancel: () {
+      channel.setMethodCallHandler(null);
+      return controller.close();
+    },
+  );
+  return controller.stream;
+}
+
 class LinkManager {
   static LinkManager? _instance;
   StreamSubscription? subscription;
-  Uri? _pendingUri;
 
   LinkManager._internal();
 
   @visibleForTesting
-  Stream<Uri> Function() uriLinkStream = () => AppLinks().uriLinkStream;
-
-  /// Linux argv: the gtk plugin hooks GApplication too late to see it.
-  void seedInitialLink(List<String> args) {
-    for (final arg in args) {
-      final uri = Uri.tryParse(arg);
-      if (uri != null && protocolSchemes.contains(uri.scheme)) {
-        _pendingUri = uri;
-        return;
-      }
-    }
-  }
+  Stream<Uri> Function() uriLinkStream = () =>
+      Platform.isAndroid ? androidLinks() : desktopLinks();
 
   Future<void> initAppLinksListen(
     Function(String url) installConfigCallBack,
@@ -64,14 +89,12 @@ class LinkManager {
     subscription = uriLinkStream().listen((uri) {
       _handle(uri, installConfigCallBack);
     });
-    final pending = _pendingUri;
-    _pendingUri = null;
-    if (pending != null) {
-      _handle(pending, installConfigCallBack);
-    }
   }
 
   void _handle(Uri uri, Function(String url) installConfigCallBack) {
+    if (!protocolSchemes.contains(uri.scheme)) {
+      return;
+    }
     commonPrint.log('onAppLink: $uri');
     final url = _installConfigUrl(uri);
     if (url != null) {

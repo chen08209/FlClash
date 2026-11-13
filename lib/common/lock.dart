@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 
 /// Keeps two processes off one data directory. Raising the running window is
 /// the platform's job: LaunchServices reopen, GApplication activation, or the
-/// app_links hand-off in the Windows runner.
+/// rust_api hand-off in the Windows runner.
 class SingleInstanceLock {
   static SingleInstanceLock? _instance;
   RandomAccessFile? _accessFile;
