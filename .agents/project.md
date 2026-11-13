@@ -38,10 +38,10 @@ diff -ru ~/.pub-cache/hosted/pub.dev/<name>-<version> ~/.pub-cache/git/<name>-<s
 ```
 
 The `window_manager` fork (`chen08209/window_manager`, tag `v0.5.1-flclash.3`)
-was replaced by the in-repo `plugins/window` package; the behaviors it carried
-(work-area maximize with a hidden title bar on Windows, geometry restore on
-re-map on Linux, corner preference, terminate and activate events) live there
-now, see the window plugin section of `architecture.md`.
+was replaced by an in-repo plugin, now rust_api's `window/` module; the behaviors
+it carried (work-area maximize with a hidden title bar on Windows, geometry
+restore on re-map on Linux, corner preference, terminate and activate events)
+live there, see Desktop Window in `architecture.md`.
 
 `launch_at_startup` — `chen08209/launch_at_startup`, version 0.5.1.
 

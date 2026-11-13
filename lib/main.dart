@@ -15,7 +15,7 @@ import 'common/common.dart';
 import 'common/preferences_store.dart';
 import 'common/window.dart';
 
-void main(List<String> args) {
+void main() {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
@@ -23,9 +23,6 @@ void main(List<String> args) {
         SharedPreferencesStorePlatform.instance = AtomicFilePreferencesStore(
           appPath.sharedPreferencesPath,
         );
-      }
-      if (Platform.isLinux) {
-        linkManager.seedInitialLink(args);
       }
       FlutterError.onError = (details) {
         Future.microtask(() {

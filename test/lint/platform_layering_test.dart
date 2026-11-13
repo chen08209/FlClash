@@ -5,9 +5,8 @@ import 'package:test/test.dart';
 
 const _platformLibraries = [
   'rust_api/tray.dart',
-  'window/',
+  'rust_api/window.dart',
   'launch_at_startup/',
-  'screen_retriever/',
 ];
 
 const _platformModules = [

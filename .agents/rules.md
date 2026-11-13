@@ -93,7 +93,7 @@ own: a long press on Android selects a word.
 Flutter lengths are logical pixels, the unit Android calls dp. Comments, test names, docs and reports give them in dp,
 as in `48 dp`, never px: a reader takes px for physical pixels and misjudges the size by the device pixel ratio. Write
 "physical pixel" in full where the code really works in them, as the hairline snapping in
-`prism_ui/lib/list_row_separator.dart` and the Win32 frame metrics in `plugins/window` do; raster image sizes in
+`prism_ui/lib/list_row_separator.dart` and the Win32 frame metrics in `plugins/rust_api/rust/src/window/windows` do; raster image sizes in
 `tool/` and CSS under `site/` keep px. `test/lint/length_unit_test.dart` fails on a number followed by px in `lib/`
 and `test/`.
 
@@ -548,8 +548,8 @@ The same seam carries the two other places a platform decision changed what was 
 takes nullable `isAndroid`/`isMacOS` that fall back to the host. Every test names the platform it means, because
 `debugDefaultTargetPlatformOverride` does not move `system` and a suite that leaves it to the host asserts the macOS
 shape on a developer machine and the Linux one on CI. `WindowHeaderContainer` builds the caption buttons on every
-non-macOS host, so a test mounting it needs `TestApp` for `AppLocalizations` and a `window` channel mock that
-answers `isMaximized`/`isAlwaysOnTop` with a bool.
+non-macOS host, so a test mounting it needs `TestApp` for `AppLocalizations` and an installed `FakeDesktopWindow`
+(`test/helpers/fake_desktop_window.dart`).
 
 Auto-dispose providers need a container-level hold before a test reads them back. `proxyGroupProvider`, `ruleProvider`,
 `itemsProvider` and friends mix in `AutoDisposeNotifierMixin`, so a `container.read` that no widget is currently watching

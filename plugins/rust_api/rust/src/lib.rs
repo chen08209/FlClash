@@ -6,3 +6,4 @@ mod ipc;
 mod proxy;
 mod script;
 mod tray;
+mod window;

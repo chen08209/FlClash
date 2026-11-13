@@ -18,7 +18,8 @@ is_checkable() {
   esac
   case "$file" in
     */build/* | */generated/* | */lib/l10n/* | */Clash.Meta/* | */.dart_tool/*) return 1 ;;
-    *.g.dart | *.freezed.dart | */frb_generated*.dart | */frb_generated.rs | */open_container.dart) return 1 ;;
+    *.g.dart | *.freezed.dart | */frb_generated*.dart | */frb_generated.rs | */rust_api/lib/src/rust/api/*) return 1 ;;
+    */open_container.dart) return 1 ;;
     */prism_ui/lib/hct/* | */prism_ui/lib/shapes/* | */prism_ui/lib/sliver_list/* | */qr_matrix.dart) return 1 ;;
   esac
   return 0

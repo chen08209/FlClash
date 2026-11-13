@@ -1350,8 +1350,8 @@ the key directly and does not import `lib/state.dart`.
 ### Platform Layering
 
 `lib/common/common.dart` deliberately does not export `tray.dart`, `window.dart`,
-`launch.dart`, or `system_dns.dart`. Those four modules import
-`rust_api/tray.dart`, `window`, `launch_at_startup`, and `screen_retriever`;
+`launch.dart`, or `system_dns.dart`. Those modules import
+`rust_api/tray.dart`, `rust_api/window.dart`, and `launch_at_startup`;
 exporting them would put those packages in the compile graph of every file that
 imports the barrel for a string helper. Import the specific module instead.
 
@@ -1800,8 +1800,6 @@ NDK version stands in for the hook's cache.
 
 - `setup`: build-time harness for Go core artifacts and the Rust helper, driven by a Dart build hook; no runtime Dart API.
 - `rust_api`: runtime Flutter Rust Bridge FFI package built through Native Assets. See below.
-- `window`: desktop window control for Linux, macOS and Windows. Written for FlClash; replaced the
-  `window_manager` fork. See below.
 - `wifi_ssid`: Wi-Fi SSID detection.
 - `code_forge`: the text editor behind `EditorPage`, derived from upstream `code_forge`. See below.
 
@@ -1872,58 +1870,108 @@ folding, caret, gutter and pointer code sit in `lib/code_forge/code_area/` part 
 - A touch drag that moves the selection (a handle, the gutter, a long press that moves on) is won by
   `_SelectionDragHold`: the scroll views stand aside for it, and a sheet or route around the editor would take it.
 
-## window Plugin
+## Desktop Window
 
-`plugins/window` exposes `desktopWindow` (`DesktopWindow`) on the `window` method channel; `plugins/window/README.md`
-is the channel contract (methods, arguments, events, effects, runner hooks) and every platform implements exactly that
-table. `lib/common/window.dart` and `lib/manager/window_manager.dart` are the only application callers.
+`package:rust_api/window.dart` exposes `desktopWindow` (`DesktopWindow`) over rust_api's `window/` module, which replaced
+the `window` plugin, itself the successor of the `window_manager` fork. `lib/common/window.dart` and
+`lib/manager/window_manager.dart` are the only application callers; tests swap in `FakeDesktopWindow`
+(`test/helpers/fake_desktop_window.dart`) through `DesktopWindow.instance`. Coordinates and sizes are logical pixels with
+a top-left origin on every platform; Windows converts with `GetDpiForWindow`. Events reach `WindowListener`s as
+`WindowEvent`s: `close`, `maximize`, `unmaximize`, `minimize`, `restore`, `geometryChanged`, `enterFullScreen`,
+`leaveFullScreen`, `shouldTerminate` (macOS) and `activate` (another launch or a Dock reopen asked for the window;
+nothing is shown natively).
 
-- Each platform keeps one style record (title bar style and button visibility everywhere, rounded corners on
-  Windows, effect, tint and brightness on Windows and macOS) and reapplies it whole from a single `apply` routine, so DWM margins
-  on Windows and `isOpaque`/effect views on macOS have one writer. Add a visual setting to that record, never a second
-  code path.
-- Method dispatch is a table on every platform, and every handler validates its arguments; a bad call answers with a
-  `bad_args` `PlatformException`, a capability the platform lacks with `unsupported`. Coordinates cross the channel in
-  logical pixels; Windows converts with `GetDpiForWindow`.
-- Position and size changes surface as one `geometry-changed` event that each platform coalesces natively (150 ms
-  after the last `WM_WINDOWPOSCHANGED`, did-move/did-resize, or configure-event); `WindowManager` only debounces the
-  capture on top of it.
-- Windows: with `titleBarStyle: hidden`, `WM_NCCALCSIZE` takes the frame insets from `AdjustWindowRectExForDpi` and
+- Threading: every `api/window.rs` function is an ordinary asynchronous bridge call that hands its work to the
+  platform's main thread and waits for it there: a job posted to the top-level window (a registered `flclash.window.job`
+  message) on Windows, the main dispatch queue on macOS, a GLib idle source on Linux. None is `#[frb(sync)]`, though
+  Flutter 3.50 runs the UI isolate on that thread: a resize or a drag runs a nested loop that services engine tasks,
+  which must not find Dart in the middle of an FFI call. State lives in a thread-local on the main thread in `Cell`s,
+  never borrowed across a platform call, because those calls re-enter the module's own handlers synchronously.
+- Finding the window and its messages: Windows' runner loads `rust_api.dll` before the engine (`windows/runner/rust_api.h`)
+  and keeps it, so Dart's later load gets the same module. `FlutterWindow::MessageHandler` calls the exported
+  `flclash_window_message` after `HandleTopLevelWindowProc`, where a plugin's top-level delegate ran, rather than
+  `SetWindowSubclass`, which would run first and consume the minimize `WM_SIZE` before the runner forwards it to the
+  engine. The first message records the top-level `HWND`; `ensureInitialized` finds the `FLUTTERVIEW` child. macOS takes
+  the `NSApp` window whose content view controller is a `FlutterViewController` and becomes its delegate; the
+  `AppDelegate` posts `FlClashApplicationShouldTerminate` and `FlClashApplicationReopen` notifications that the module
+  observes. Linux takes the toplevel whose child is the `FlView`, connects GTK signals, and adds an `activate-window`
+  action to the `GApplication`, which the runner activates when a relaunch reaches the running instance.
+- Messages that need an answer at once (`WM_NCCALCSIZE`, `WM_NCHITTEST`, `WM_GETMINMAXINFO`, `WM_CLOSE`,
+  `windowShouldClose:`, `delete-event`) are answered in Rust from state Dart set earlier (`setPreventClose`,
+  `setMinimumSize`, the title bar style), never by asking Dart.
+- Lifecycle: where the engine's view of the window keeps an unseen window rendering, the module sends a lifecycle
+  signal and `DesktopWindow` pushes it on `flutter/lifecycle` through `ServicesBinding.channelBuffers`, as the engine
+  would. Linux: Wayland has no minimized state, so a focus loss within 500 ms of `minimize`, seen from a
+  `window-state-event` handler connected after the engine's, is reported `hidden`. macOS: after every activation change
+  the module reports `hidden` while the window is not visible, and `resumed` or `inactive` once `show` or a
+  deminiaturize brings it back, since the occlusion notification may never come. Windows: the runner forwards the
+  top-level window's `WM_SHOWWINDOW` and `WM_SIZE` to the engine for the view, which it counts as hidden only once
+  sized to zero; the module consumes a minimize's `WM_SIZE` so the view keeps its size.
+- Each platform keeps one style record (title bar style everywhere, rounded corners on Windows, effect, tint and
+  brightness on Windows and macOS) and reapplies it whole from a single `apply` routine, so DWM margins on Windows and
+  `isOpaque`/effect views on macOS have one writer. Add a visual setting to that record, never a second code path.
+- Position and size changes surface as one `geometryChanged` that each platform coalesces natively (150 ms after the
+  last `WM_WINDOWPOSCHANGED`, did-move/did-resize, or configure-event); `WindowManager` only debounces the capture on
+  top of it.
+- `getDisplays` and `getCursorPosition` replace `screen_retriever`. Coordinates have a top-left origin at the primary
+  display, in the units `getBounds` uses, except that on Windows each display is in its own logical pixels (physical
+  over its own scale) while the window and the cursor are in the window's, which is why `restoredWindowPosition`
+  compares physical pixels. GDK names no primary monitor on Wayland, so the first one stands in.
+- Windows: with `TitleBarStyle.hidden`, `WM_NCCALCSIZE` takes the frame insets from `AdjustWindowRectExForDpi` and
   keeps the client rect at the top edge (plus the frame height when maximized, so the taskbar stays uncovered; plus
   one physical pixel on Windows 11, which draws the top border only into a non-client strip; none on Windows 10,
   where DWM draws the whole caption over any strip shorter than one). Windows 10 gets its top border the Windows
-  Terminal way instead: the DWM frame is extended over the caption height, the plugin places the Flutter view one
-  physical pixel lower and paints that row black, which DWM treats as alpha 0, and hit-tests it as `HTTOP`; see
-  `plugins/window/README.md`.
-  The plugin therefore owns the view placement on `WM_SIZE`. Fullscreen is emulated by the
-  plugin, which raises `enter-full-screen` and
-  `leave-full-screen` itself and mutes `WM_SIZE` while it is on. The find-running-window IPC
-  (`WindowPluginFindRunningWindow`/`WindowPluginActivateWindow`) registers a window message from the executable path
-  and whitelists it through UIPI so a non-elevated launcher reaches an elevated instance.
+  Terminal way instead: while no accent effect is on, the DWM frame is extended over the caption height, the module
+  places the Flutter view one physical pixel lower, paints that row black, which DWM treats as alpha 0, and hit-tests
+  it as `HTTOP`. The module therefore owns the view placement on `WM_SIZE`. Mica extends the whole frame, under which
+  DWM would draw its own caption buttons, so a hidden title bar under Mica clears `WS_SYSMENU`. Fullscreen is emulated:
+  the module raises `enterFullScreen` and `leaveFullScreen` itself and mutes `WM_SIZE` while it is on. Single instance:
+  the runner calls the exported `flclash_find_running_window`, `flclash_forward_links` and `flclash_activate_window`
+  before any engine exists; the activate message is registered from the executable path and allowed through UIPI, with
+  the links' `WM_COPYDATA`, so a non-elevated launcher reaches an elevated instance. `flclash_find_running_window`
+  first claims a session-local mutex named from the same path: a launch that finds it taken waits up to ten seconds
+  for the other instance's window instead of exiting on the data-directory lock with its link, and an elevated
+  owner's mutex, which a non-elevated launch is denied, counts as taken. The runner's window exists before its engine,
+  and a message it gets until then is dropped with the default answer 0, so each link and the activate message are
+  resent until rust_api answers `HANDLED`.
+- Links (`package:rust_api/link.dart`, which replaced `app_links`) share one buffer in `window/link.rs`: a link that
+  arrives while no Dart listener can take it waits for the next listener, so each is delivered once. The first listen
+  adds the process's own `://` arguments on Windows and Linux. A relaunch forwards its arguments: on Windows by
+  `WM_COPYDATA` from `flclash_forward_links`; on Linux the runner's `command_line` handler activates the `open-link`
+  action, or holds them under the `flclash-pending-links` object data until the module adds it. On macOS the app
+  delegate installs the `kAEGetURL` handler in `applicationWillFinishLaunching`, holds events until the module calls
+  `takePendingLinks`, and posts `FlClashApplicationOpenLink` after. Android links come from `LinkPlugin`, which holds
+  the launch intent and any `onNewIntent` link until Dart calls `takeLinks`. Registering the schemes is not part of
+  this; `LinkManager` drops any scheme outside `protocolSchemes`.
 - Linux: GTK drops the placement of an unmapped window, so `hide` saves the geometry and the `map-event` handler
   applies it, then corrects the placement for 150 ms while the window manager settles (it may place the window
-  after the map handler ran). `isPositionSupported` is X11-only; Wayland owns placement and re-shown windows land where the
-  compositor puts them. Linux supports no effect: GTK 3 has no desktop-neutral blur protocol, so `isEffectSupported`
-  is true only for `none` and the runner keeps the default visual.
-- macOS: `WindowPlugin.instance` is reached from `AppDelegate` for `applicationShouldTerminate` (emits
-  `should-terminate`) and `applicationShouldHandleReopen` (emits `activate`); `MainFlutterWindow` calls
-  `hiddenWindowAtLaunch()` so the first `order` keeps the window hidden until Dart shows it.
-- Window effects (`transparent`, `blur`, `acrylic`, `mica`, `glass`) are capability-gated by `isEffectSupported`; the
-  Flutter content must paint a translucent background for them to show. `ThemeProps.sidebarBlur` (off by default)
-  drives them, taking the material the same release's system apps give their sidebars: `Window.setBlur` tries
-  `glass` then `blur` on macOS (Liquid Glass on 26+, the `.sidebar` vibrancy before) and `mica`, `acrylic`, then
-  `blur` on Windows (Mica on 11, acrylic from 10 1803, the plain accent blur before), and caches only a successful
-  probe, so a platform that answered unsupported is asked again the next time blur is turned on. Linux draws none,
-  as GNOME and KDE draw opaque sidebars. `WindowManager` reapplies it whenever the setting or the app brightness
-  changes and records in `windowBlurProvider` how opaque the sidebar and caption strip keep their own color over the
-  backdrop, null while there is none. Every material keeps that color at 50%, or the rail takes the hue of whatever lies
-  behind the window while the content beside it keeps the theme's; the Windows 10 accent effects also take the same
-  tint natively, as they draw nothing without one. Glass, the macOS vibrancy and Mica each go opaque on their own
-  where the system does (an inactive window, Reduce Transparency, transparency effects off).
+  after the map handler ran). `isPositionSupported` is X11-only; Wayland owns placement and re-shown windows land where
+  the compositor puts them. A tray click reaches the app over D-Bus with no input event, so `focus` presents with the X
+  server time. `startDragging` uses the press a global `button-press-event` emission hook recorded and sends Flutter
+  the release the window manager swallowed. Linux supports no effect: GTK 3 has no desktop-neutral blur protocol.
+- macOS: `MainFlutterWindow` hides itself on its first `order` so the window stays hidden until Dart shows it.
+  `ensureInitialized` makes an `NSVisualEffectView` the window's content view and the Flutter view its subview, as
+  macos_window_utils does for flutter_acrylic: as a sibling beneath the Flutter view it would take the unhandled
+  `mouseDown`s first. `none` masks the material out and parks the view. `glass` holds the Flutter view in an
+  `NSGlassEffectView` as its `contentView`, with the private variant and adaptive appearance copied off the sidebar of a
+  split view laid out offscreen once, so it follows each release's own sidebar; without sidebar glass it is
+  unsupported. `ensureInitialized` also installs the back-buffer guard (`.agents/flutter-upgrade.md`).
+- Window effects (`blur`, `mica`, `glass`) are capability-gated by `isEffectSupported`; the Flutter content must paint a
+  translucent background for them to show. `ThemeProps.sidebarBlur` (off by default) drives them, taking the material
+  the same release's system apps give their sidebars: `Window.setBlur` tries `glass` then `blur` on macOS (Liquid Glass
+  on 26+, the `.sidebar` vibrancy before) and `mica` then `blur` on Windows (Mica on 11, the accent blur before, since
+  Windows 10's acrylic makes the window trail the pointer while dragged), and caches only a successful probe, so a
+  platform that answered unsupported is asked again the next time blur is turned on. Linux draws none, as GNOME and KDE
+  draw opaque sidebars. `WindowManager` reapplies it whenever the setting or the app brightness changes and records in
+  `windowBlurProvider` how opaque the sidebar and caption strip keep their own color over the backdrop, null while
+  there is none. Every material keeps that color at 50%, or the rail takes the hue of whatever lies behind the window
+  while the content beside it keeps the theme's; the Windows 10 accent blur also takes the same tint natively, as it
+  draws nothing without one. Glass, the macOS vibrancy and Mica each go opaque on their own where the system does (an
+  inactive window, Reduce Transparency, transparency effects off).
 - Releases stored `sidebarBlur: true` while the toggle was hidden, so upgrade 4 in `lib/common/migration.dart` turns it
-  off once. With blur off, `WindowManager` still sends its request at startup: the macOS plugin installs its
-  effect view in `ensureInitialized` and leaves it active until the first `setEffect`, so the `none` request is what
-  makes the window opaque and parks the effect view.
+  off once. With blur off, `WindowManager` still sends its request at startup: the macOS effect view stays active
+  from `ensureInitialized` until the first `setEffect`, so the `none` request is what makes the window opaque and
+  parks the effect view.
 
 ## rust_api Crate Layout
 
@@ -1990,6 +2038,8 @@ UTF-8 bytes rather than a `String` so that decoding them stays off the UI isolat
   `SystemProxyQueue` (`lib/common/proxy.dart`) sets the system proxy when the Core starts with it on, and stops it on
   a stop or exit only when this run set it, since a stop also clears a proxy, PAC or auto-detect setting someone else
   made. Nothing is stored, so a launch leaves alone the proxy a crashed run left.
+- `window/` drives the desktop window the Flutter view lives in, one submodule per platform (Win32 and DWM, AppKit
+  through `objc2`, GTK through the `-sys` crates). See Desktop Window.
 
 `IpcServer.bind` resolves once the address is bound, `events()` attaches the one event stream, `send` only enqueues
 and is a synchronous call so frames keep the order they were sent in, and `close` joins the thread. A bridge function

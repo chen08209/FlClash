@@ -7,9 +7,11 @@ import 'api/charset.dart';
 import 'api/editor.dart';
 import 'api/hotkey.dart';
 import 'api/ipc.dart';
+import 'api/link.dart';
 import 'api/proxy.dart';
 import 'api/script.dart';
 import 'api/tray.dart';
+import 'api/window.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';
@@ -72,7 +74,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 857011881;
+  int get rustContentHash => -155602093;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -199,6 +201,8 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiInitInitApp();
 
+  Stream<String> crateApiLinkLinkStream();
+
   bool crateApiTrayOpenTrayMenu();
 
   List<HotKeyFailure> crateApiHotkeySetHotKeys({
@@ -224,6 +228,80 @@ abstract class RustLibApi extends BaseApi {
   });
 
   Stream<TraySignal> crateApiTrayTraySignals();
+
+  Future<void> crateApiWindowWindowClose();
+
+  Future<void> crateApiWindowWindowEnsureInitialized();
+
+  Future<void> crateApiWindowWindowFocus();
+
+  Future<WindowBounds> crateApiWindowWindowGetBounds();
+
+  Future<WindowPoint> crateApiWindowWindowGetCursorPosition();
+
+  Future<List<WindowDisplay>> crateApiWindowWindowGetDisplays();
+
+  Future<void> crateApiWindowWindowHide();
+
+  Future<bool> crateApiWindowWindowIsAlwaysOnTop();
+
+  Future<bool> crateApiWindowWindowIsEffectSupported({
+    required WindowEffect effect,
+  });
+
+  Future<bool> crateApiWindowWindowIsFullScreen();
+
+  Future<bool> crateApiWindowWindowIsMaximized();
+
+  Future<bool> crateApiWindowWindowIsMinimized();
+
+  Future<bool> crateApiWindowWindowIsPositionSupported();
+
+  Future<bool> crateApiWindowWindowIsVisible();
+
+  Future<void> crateApiWindowWindowMaximize();
+
+  Future<void> crateApiWindowWindowMinimize();
+
+  Future<void> crateApiWindowWindowSetAlwaysOnTop({required bool value});
+
+  Future<void> crateApiWindowWindowSetBounds({
+    double? x,
+    double? y,
+    double? width,
+    double? height,
+  });
+
+  Future<void> crateApiWindowWindowSetEffect({
+    required WindowEffect effect,
+    int? tint,
+    WindowBrightness? brightness,
+  });
+
+  Future<void> crateApiWindowWindowSetFullScreen({required bool value});
+
+  Future<void> crateApiWindowWindowSetMinimumSize({
+    required double width,
+    required double height,
+  });
+
+  Future<void> crateApiWindowWindowSetPreventClose({required bool value});
+
+  Future<void> crateApiWindowWindowSetRoundedCorners({required bool value});
+
+  Future<void> crateApiWindowWindowSetSkipTaskbar({required bool value});
+
+  Future<void> crateApiWindowWindowSetTitleBarStyle({
+    required TitleBarStyle style,
+  });
+
+  Future<void> crateApiWindowWindowShow();
+
+  Stream<WindowSignal> crateApiWindowWindowSignals();
+
+  Future<void> crateApiWindowWindowStartDragging();
+
+  Future<void> crateApiWindowWindowUnmaximize();
 
   Future<List<String>> crateApiEditorWordsExtract({required RopeBridge rope});
 
@@ -1238,12 +1316,44 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "init_app", argNames: []);
 
   @override
+  Stream<String> crateApiLinkLinkStream() {
+    final sink = RustStreamSink<String>();
+    unawaited(
+      handler.executeNormal(
+        NormalTask(
+          callFfi: (port_) {
+            final serializer = SseSerializer(generalizedFrbRustBinding);
+            sse_encode_StreamSink_String_Sse(sink, serializer);
+            pdeCallFfi(
+              generalizedFrbRustBinding,
+              serializer,
+              funcId: 31,
+              port: port_,
+            );
+          },
+          codec: SseCodec(
+            decodeSuccessData: sse_decode_unit,
+            decodeErrorData: null,
+          ),
+          constMeta: kCrateApiLinkLinkStreamConstMeta,
+          argValues: [sink],
+          apiImpl: this,
+        ),
+      ),
+    );
+    return sink.stream;
+  }
+
+  TaskConstMeta get kCrateApiLinkLinkStreamConstMeta =>
+      const TaskConstMeta(debugName: "link_stream", argNames: ["sink"]);
+
+  @override
   bool crateApiTrayOpenTrayMenu() {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 31)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 32)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -1268,7 +1378,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_list_hot_key_spec(specs, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 32)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 33)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_hot_key_failure,
@@ -1291,7 +1401,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(title, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 33)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 34)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -1314,7 +1424,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_tray_content(content, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 34)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 35)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -1346,7 +1456,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 35,
+            funcId: 36,
             port: port_,
           );
         },
@@ -1376,7 +1486,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 36,
+            funcId: 37,
             port: port_,
           );
         },
@@ -1410,7 +1520,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 37,
+            funcId: 38,
             port: port_,
           );
         },
@@ -1443,7 +1553,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 38,
+              funcId: 39,
               port: port_,
             );
           },
@@ -1464,6 +1574,862 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "tray_signals", argNames: ["sink"]);
 
   @override
+  Future<void> crateApiWindowWindowClose() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 40,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowCloseConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowCloseConstMeta =>
+      const TaskConstMeta(debugName: "window_close", argNames: []);
+
+  @override
+  Future<void> crateApiWindowWindowEnsureInitialized() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 41,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowEnsureInitializedConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowEnsureInitializedConstMeta =>
+      const TaskConstMeta(debugName: "window_ensure_initialized", argNames: []);
+
+  @override
+  Future<void> crateApiWindowWindowFocus() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 42,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowFocusConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowFocusConstMeta =>
+      const TaskConstMeta(debugName: "window_focus", argNames: []);
+
+  @override
+  Future<WindowBounds> crateApiWindowWindowGetBounds() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 43,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_window_bounds,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowGetBoundsConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowGetBoundsConstMeta =>
+      const TaskConstMeta(debugName: "window_get_bounds", argNames: []);
+
+  @override
+  Future<WindowPoint> crateApiWindowWindowGetCursorPosition() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 44,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_window_point,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowGetCursorPositionConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowGetCursorPositionConstMeta =>
+      const TaskConstMeta(
+        debugName: "window_get_cursor_position",
+        argNames: [],
+      );
+
+  @override
+  Future<List<WindowDisplay>> crateApiWindowWindowGetDisplays() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 45,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_window_display,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowGetDisplaysConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowGetDisplaysConstMeta =>
+      const TaskConstMeta(debugName: "window_get_displays", argNames: []);
+
+  @override
+  Future<void> crateApiWindowWindowHide() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 46,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowHideConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowHideConstMeta =>
+      const TaskConstMeta(debugName: "window_hide", argNames: []);
+
+  @override
+  Future<bool> crateApiWindowWindowIsAlwaysOnTop() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 47,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowIsAlwaysOnTopConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowIsAlwaysOnTopConstMeta =>
+      const TaskConstMeta(debugName: "window_is_always_on_top", argNames: []);
+
+  @override
+  Future<bool> crateApiWindowWindowIsEffectSupported({
+    required WindowEffect effect,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_window_effect(effect, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 48,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowIsEffectSupportedConstMeta,
+        argValues: [effect],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowIsEffectSupportedConstMeta =>
+      const TaskConstMeta(
+        debugName: "window_is_effect_supported",
+        argNames: ["effect"],
+      );
+
+  @override
+  Future<bool> crateApiWindowWindowIsFullScreen() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 49,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowIsFullScreenConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowIsFullScreenConstMeta =>
+      const TaskConstMeta(debugName: "window_is_full_screen", argNames: []);
+
+  @override
+  Future<bool> crateApiWindowWindowIsMaximized() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 50,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowIsMaximizedConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowIsMaximizedConstMeta =>
+      const TaskConstMeta(debugName: "window_is_maximized", argNames: []);
+
+  @override
+  Future<bool> crateApiWindowWindowIsMinimized() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 51,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowIsMinimizedConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowIsMinimizedConstMeta =>
+      const TaskConstMeta(debugName: "window_is_minimized", argNames: []);
+
+  @override
+  Future<bool> crateApiWindowWindowIsPositionSupported() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 52,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowIsPositionSupportedConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowIsPositionSupportedConstMeta =>
+      const TaskConstMeta(
+        debugName: "window_is_position_supported",
+        argNames: [],
+      );
+
+  @override
+  Future<bool> crateApiWindowWindowIsVisible() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 53,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowIsVisibleConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowIsVisibleConstMeta =>
+      const TaskConstMeta(debugName: "window_is_visible", argNames: []);
+
+  @override
+  Future<void> crateApiWindowWindowMaximize() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 54,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowMaximizeConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowMaximizeConstMeta =>
+      const TaskConstMeta(debugName: "window_maximize", argNames: []);
+
+  @override
+  Future<void> crateApiWindowWindowMinimize() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 55,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowMinimizeConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowMinimizeConstMeta =>
+      const TaskConstMeta(debugName: "window_minimize", argNames: []);
+
+  @override
+  Future<void> crateApiWindowWindowSetAlwaysOnTop({required bool value}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_bool(value, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 56,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowSetAlwaysOnTopConstMeta,
+        argValues: [value],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowSetAlwaysOnTopConstMeta =>
+      const TaskConstMeta(
+        debugName: "window_set_always_on_top",
+        argNames: ["value"],
+      );
+
+  @override
+  Future<void> crateApiWindowWindowSetBounds({
+    double? x,
+    double? y,
+    double? width,
+    double? height,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_opt_box_autoadd_f_64(x, serializer);
+          sse_encode_opt_box_autoadd_f_64(y, serializer);
+          sse_encode_opt_box_autoadd_f_64(width, serializer);
+          sse_encode_opt_box_autoadd_f_64(height, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 57,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowSetBoundsConstMeta,
+        argValues: [x, y, width, height],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowSetBoundsConstMeta =>
+      const TaskConstMeta(
+        debugName: "window_set_bounds",
+        argNames: ["x", "y", "width", "height"],
+      );
+
+  @override
+  Future<void> crateApiWindowWindowSetEffect({
+    required WindowEffect effect,
+    int? tint,
+    WindowBrightness? brightness,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_window_effect(effect, serializer);
+          sse_encode_opt_box_autoadd_u_32(tint, serializer);
+          sse_encode_opt_box_autoadd_window_brightness(brightness, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 58,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowSetEffectConstMeta,
+        argValues: [effect, tint, brightness],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowSetEffectConstMeta =>
+      const TaskConstMeta(
+        debugName: "window_set_effect",
+        argNames: ["effect", "tint", "brightness"],
+      );
+
+  @override
+  Future<void> crateApiWindowWindowSetFullScreen({required bool value}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_bool(value, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 59,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowSetFullScreenConstMeta,
+        argValues: [value],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowSetFullScreenConstMeta =>
+      const TaskConstMeta(
+        debugName: "window_set_full_screen",
+        argNames: ["value"],
+      );
+
+  @override
+  Future<void> crateApiWindowWindowSetMinimumSize({
+    required double width,
+    required double height,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_f_64(width, serializer);
+          sse_encode_f_64(height, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 60,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowSetMinimumSizeConstMeta,
+        argValues: [width, height],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowSetMinimumSizeConstMeta =>
+      const TaskConstMeta(
+        debugName: "window_set_minimum_size",
+        argNames: ["width", "height"],
+      );
+
+  @override
+  Future<void> crateApiWindowWindowSetPreventClose({required bool value}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_bool(value, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 61,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowSetPreventCloseConstMeta,
+        argValues: [value],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowSetPreventCloseConstMeta =>
+      const TaskConstMeta(
+        debugName: "window_set_prevent_close",
+        argNames: ["value"],
+      );
+
+  @override
+  Future<void> crateApiWindowWindowSetRoundedCorners({required bool value}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_bool(value, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 62,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowSetRoundedCornersConstMeta,
+        argValues: [value],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowSetRoundedCornersConstMeta =>
+      const TaskConstMeta(
+        debugName: "window_set_rounded_corners",
+        argNames: ["value"],
+      );
+
+  @override
+  Future<void> crateApiWindowWindowSetSkipTaskbar({required bool value}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_bool(value, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 63,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowSetSkipTaskbarConstMeta,
+        argValues: [value],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowSetSkipTaskbarConstMeta =>
+      const TaskConstMeta(
+        debugName: "window_set_skip_taskbar",
+        argNames: ["value"],
+      );
+
+  @override
+  Future<void> crateApiWindowWindowSetTitleBarStyle({
+    required TitleBarStyle style,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_title_bar_style(style, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 64,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowSetTitleBarStyleConstMeta,
+        argValues: [style],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowSetTitleBarStyleConstMeta =>
+      const TaskConstMeta(
+        debugName: "window_set_title_bar_style",
+        argNames: ["style"],
+      );
+
+  @override
+  Future<void> crateApiWindowWindowShow() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 65,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowShowConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowShowConstMeta =>
+      const TaskConstMeta(debugName: "window_show", argNames: []);
+
+  @override
+  Stream<WindowSignal> crateApiWindowWindowSignals() {
+    final sink = RustStreamSink<WindowSignal>();
+    unawaited(
+      handler.executeNormal(
+        NormalTask(
+          callFfi: (port_) {
+            final serializer = SseSerializer(generalizedFrbRustBinding);
+            sse_encode_StreamSink_window_signal_Sse(sink, serializer);
+            pdeCallFfi(
+              generalizedFrbRustBinding,
+              serializer,
+              funcId: 66,
+              port: port_,
+            );
+          },
+          codec: SseCodec(
+            decodeSuccessData: sse_decode_unit,
+            decodeErrorData: null,
+          ),
+          constMeta: kCrateApiWindowWindowSignalsConstMeta,
+          argValues: [sink],
+          apiImpl: this,
+        ),
+      ),
+    );
+    return sink.stream;
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowSignalsConstMeta =>
+      const TaskConstMeta(debugName: "window_signals", argNames: ["sink"]);
+
+  @override
+  Future<void> crateApiWindowWindowStartDragging() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 67,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowStartDraggingConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowStartDraggingConstMeta =>
+      const TaskConstMeta(debugName: "window_start_dragging", argNames: []);
+
+  @override
+  Future<void> crateApiWindowWindowUnmaximize() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 68,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiWindowWindowUnmaximizeConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowWindowUnmaximizeConstMeta =>
+      const TaskConstMeta(debugName: "window_unmaximize", argNames: []);
+
+  @override
   Future<List<String>> crateApiEditorWordsExtract({required RopeBridge rope}) {
     return handler.executeNormal(
       NormalTask(
@@ -1476,7 +2442,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 39,
+            funcId: 69,
             port: port_,
           );
         },
@@ -1606,6 +2572,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RustStreamSink<String> dco_decode_StreamSink_String_Sse(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    throw UnimplementedError();
+  }
+
+  @protected
   RustStreamSink<IpcEvent> dco_decode_StreamSink_ipc_event_Sse(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     throw UnimplementedError();
@@ -1626,6 +2598,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RustStreamSink<WindowSignal> dco_decode_StreamSink_window_signal_Sse(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    throw UnimplementedError();
+  }
+
+  @protected
   String dco_decode_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as String;
@@ -1635,6 +2615,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   bool dco_decode_bool(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as bool;
+  }
+
+  @protected
+  double dco_decode_box_autoadd_f_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as double;
   }
 
   @protected
@@ -1656,6 +2642,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  WindowBrightness dco_decode_box_autoadd_window_brightness(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_window_brightness(raw);
+  }
+
+  @protected
   EditorOpenError dco_decode_editor_open_error(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -1671,6 +2663,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   EditorOpenErrorKind dco_decode_editor_open_error_kind(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return EditorOpenErrorKind.values[raw as int];
+  }
+
+  @protected
+  double dco_decode_f_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as double;
   }
 
   @protected
@@ -1805,9 +2803,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<WindowDisplay> dco_decode_list_window_display(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_window_display).toList();
+  }
+
+  @protected
   String? dco_decode_opt_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_String(raw);
+  }
+
+  @protected
+  double? dco_decode_opt_box_autoadd_f_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_f_64(raw);
   }
 
   @protected
@@ -1820,6 +2830,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   BigInt? dco_decode_opt_box_autoadd_usize(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_usize(raw);
+  }
+
+  @protected
+  WindowBrightness? dco_decode_opt_box_autoadd_window_brightness(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_window_brightness(raw);
   }
 
   @protected
@@ -1838,6 +2854,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       startLine: dco_decode_i_32(arr[0]),
       endLine: dco_decode_i_32(arr[1]),
     );
+  }
+
+  @protected
+  TitleBarStyle dco_decode_title_bar_style(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return TitleBarStyle.values[raw as int];
   }
 
   @protected
@@ -1939,6 +2961,61 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   BigInt dco_decode_usize(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dcoDecodeU64(raw);
+  }
+
+  @protected
+  WindowBounds dco_decode_window_bounds(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return WindowBounds(
+      x: dco_decode_f_64(arr[0]),
+      y: dco_decode_f_64(arr[1]),
+      width: dco_decode_f_64(arr[2]),
+      height: dco_decode_f_64(arr[3]),
+    );
+  }
+
+  @protected
+  WindowBrightness dco_decode_window_brightness(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return WindowBrightness.values[raw as int];
+  }
+
+  @protected
+  WindowDisplay dco_decode_window_display(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return WindowDisplay(
+      bounds: dco_decode_window_bounds(arr[0]),
+      workArea: dco_decode_window_bounds(arr[1]),
+      scaleFactor: dco_decode_f_64(arr[2]),
+      primary: dco_decode_bool(arr[3]),
+    );
+  }
+
+  @protected
+  WindowEffect dco_decode_window_effect(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return WindowEffect.values[raw as int];
+  }
+
+  @protected
+  WindowPoint dco_decode_window_point(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return WindowPoint(x: dco_decode_f_64(arr[0]), y: dco_decode_f_64(arr[1]));
+  }
+
+  @protected
+  WindowSignal dco_decode_window_signal(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return WindowSignal.values[raw as int];
   }
 
   @protected
@@ -2057,6 +3134,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RustStreamSink<String> sse_decode_StreamSink_String_Sse(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    throw UnimplementedError('Unreachable ()');
+  }
+
+  @protected
   RustStreamSink<IpcEvent> sse_decode_StreamSink_ipc_event_Sse(
     SseDeserializer deserializer,
   ) {
@@ -2081,6 +3166,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RustStreamSink<WindowSignal> sse_decode_StreamSink_window_signal_Sse(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    throw UnimplementedError('Unreachable ()');
+  }
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_list_prim_u_8_strict(deserializer);
@@ -2091,6 +3184,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   bool sse_decode_bool(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getUint8() != 0;
+  }
+
+  @protected
+  double sse_decode_box_autoadd_f_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_f_64(deserializer));
   }
 
   @protected
@@ -2114,6 +3213,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  WindowBrightness sse_decode_box_autoadd_window_brightness(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_window_brightness(deserializer));
+  }
+
+  @protected
   EditorOpenError sse_decode_editor_open_error(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_kind = sse_decode_editor_open_error_kind(deserializer);
@@ -2128,6 +3235,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_i_32(deserializer);
     return EditorOpenErrorKind.values[inner];
+  }
+
+  @protected
+  double sse_decode_f_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getFloat64();
   }
 
   @protected
@@ -2316,11 +3429,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<WindowDisplay> sse_decode_list_window_display(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <WindowDisplay>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_window_display(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   String? sse_decode_opt_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_String(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  double? sse_decode_opt_box_autoadd_f_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_f_64(deserializer));
     } else {
       return null;
     }
@@ -2349,6 +3487,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  WindowBrightness? sse_decode_opt_box_autoadd_window_brightness(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_window_brightness(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   Uint8List? sse_decode_opt_list_prim_u_8_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -2365,6 +3516,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_startLine = sse_decode_i_32(deserializer);
     var var_endLine = sse_decode_i_32(deserializer);
     return RustFoldRange(startLine: var_startLine, endLine: var_endLine);
+  }
+
+  @protected
+  TitleBarStyle sse_decode_title_bar_style(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return TitleBarStyle.values[inner];
   }
 
   @protected
@@ -2474,6 +3632,65 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   BigInt sse_decode_usize(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getBigUint64();
+  }
+
+  @protected
+  WindowBounds sse_decode_window_bounds(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_x = sse_decode_f_64(deserializer);
+    var var_y = sse_decode_f_64(deserializer);
+    var var_width = sse_decode_f_64(deserializer);
+    var var_height = sse_decode_f_64(deserializer);
+    return WindowBounds(
+      x: var_x,
+      y: var_y,
+      width: var_width,
+      height: var_height,
+    );
+  }
+
+  @protected
+  WindowBrightness sse_decode_window_brightness(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return WindowBrightness.values[inner];
+  }
+
+  @protected
+  WindowDisplay sse_decode_window_display(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_bounds = sse_decode_window_bounds(deserializer);
+    var var_workArea = sse_decode_window_bounds(deserializer);
+    var var_scaleFactor = sse_decode_f_64(deserializer);
+    var var_primary = sse_decode_bool(deserializer);
+    return WindowDisplay(
+      bounds: var_bounds,
+      workArea: var_workArea,
+      scaleFactor: var_scaleFactor,
+      primary: var_primary,
+    );
+  }
+
+  @protected
+  WindowEffect sse_decode_window_effect(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return WindowEffect.values[inner];
+  }
+
+  @protected
+  WindowPoint sse_decode_window_point(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_x = sse_decode_f_64(deserializer);
+    var var_y = sse_decode_f_64(deserializer);
+    return WindowPoint(x: var_x, y: var_y);
+  }
+
+  @protected
+  WindowSignal sse_decode_window_signal(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return WindowSignal.values[inner];
   }
 
   @protected
@@ -2603,6 +3820,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_StreamSink_String_Sse(
+    RustStreamSink<String> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(
+      self.setupAndSerialize(
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+      ),
+      serializer,
+    );
+  }
+
+  @protected
   void sse_encode_StreamSink_ipc_event_Sse(
     RustStreamSink<IpcEvent> self,
     SseSerializer serializer,
@@ -2654,6 +3888,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_StreamSink_window_signal_Sse(
+    RustStreamSink<WindowSignal> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(
+      self.setupAndSerialize(
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_window_signal,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+      ),
+      serializer,
+    );
+  }
+
+  @protected
   void sse_encode_String(String self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(utf8.encoder.convert(self), serializer);
@@ -2663,6 +3914,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_bool(bool self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putUint8(self ? 1 : 0);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_f_64(double self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self, serializer);
   }
 
   @protected
@@ -2687,6 +3944,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_window_brightness(
+    WindowBrightness self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_window_brightness(self, serializer);
+  }
+
+  @protected
   void sse_encode_editor_open_error(
     EditorOpenError self,
     SseSerializer serializer,
@@ -2703,6 +3969,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_f_64(double self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putFloat64(self);
   }
 
   @protected
@@ -2878,12 +4150,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_window_display(
+    List<WindowDisplay> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_window_display(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_String(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_f_64(double? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_f_64(self, serializer);
     }
   }
 
@@ -2911,6 +4205,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_window_brightness(
+    WindowBrightness? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_window_brightness(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_list_prim_u_8_strict(
     Uint8List? self,
     SseSerializer serializer,
@@ -2931,6 +4238,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.startLine, serializer);
     sse_encode_i_32(self.endLine, serializer);
+  }
+
+  @protected
+  void sse_encode_title_bar_style(
+    TitleBarStyle self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected
@@ -3017,6 +4333,52 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_usize(BigInt self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putBigUint64(self);
+  }
+
+  @protected
+  void sse_encode_window_bounds(WindowBounds self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.x, serializer);
+    sse_encode_f_64(self.y, serializer);
+    sse_encode_f_64(self.width, serializer);
+    sse_encode_f_64(self.height, serializer);
+  }
+
+  @protected
+  void sse_encode_window_brightness(
+    WindowBrightness self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_window_display(WindowDisplay self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_window_bounds(self.bounds, serializer);
+    sse_encode_window_bounds(self.workArea, serializer);
+    sse_encode_f_64(self.scaleFactor, serializer);
+    sse_encode_bool(self.primary, serializer);
+  }
+
+  @protected
+  void sse_encode_window_effect(WindowEffect self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_window_point(WindowPoint self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.x, serializer);
+    sse_encode_f_64(self.y, serializer);
+  }
+
+  @protected
+  void sse_encode_window_signal(WindowSignal self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 }
 
