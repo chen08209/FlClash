@@ -1334,7 +1334,7 @@ the key directly and does not import `lib/state.dart`.
 
 `lib/common/common.dart` deliberately does not export `tray.dart`, `window.dart`,
 `launch.dart`, or `system_dns.dart`. Those four modules import
-`tray`, `window`, `launch_at_startup`, and `screen_retriever`;
+`rust_api/tray.dart`, `window`, `launch_at_startup`, and `screen_retriever`;
 exporting them would put those packages in the compile graph of every file that
 imports the barrel for a string helper. Import the specific module instead.
 
@@ -1625,8 +1625,7 @@ rewritten; each owner reads the flag where it would otherwise act:
   decryption page offers no install row, so no CA reaches or leaves the keychain, the Windows root store, the Linux
   anchors and NSS databases, or Android's installer; the read-only trust check and the export still work.
 - Presentation: `AppEnvManager` shows a `SAFE MODE` banner ahead of the channel banner, and `TrayState.safeMode` gives
-  the tray the `status_4` bug icon, a suffixed tooltip and a menu of only show and exit. `trayStateProvider` and
-  `trayTitleStateProvider` report `showTrayTitle: false`, so the macOS menu bar carries no traffic title.
+  the tray the `status_4` bug icon and a suffixed tooltip; the menu and the macOS traffic title are the normal ones.
 
 A new host integration, anything that changes the OS's routes, proxy, DNS, login items, privileges or VPN state, or
 that asks the OS for a permission, a global shortcut or a registration, must consult the flag at its owner in the same way and get a test that overrides `safeModeProvider`.
@@ -1784,7 +1783,6 @@ NDK version stands in for the hook's cache.
 
 - `setup`: build-time harness for Go core artifacts and the Rust helper, driven by a Dart build hook; no runtime Dart API.
 - `rust_api`: runtime Flutter Rust Bridge FFI package built through Native Assets. See below.
-- `tray`: system tray for Linux, macOS and Windows. Written for FlClash; replaced the `tray_manager` fork.
 - `window`: desktop window control for Linux, macOS and Windows. Written for FlClash; replaced the
   `window_manager` fork. See below.
 - `wifi_ssid`: Wi-Fi SSID detection.
@@ -1944,8 +1942,24 @@ UTF-8 bytes rather than a `String` so that decoding them stays off the UI isolat
   generic names such as `GuideBlock` out of app code.
 - `hotkey/` registers desktop global shortcuts through `global-hotkey`: `keys` maps Flutter USB HID usages to key
   codes, `owner` runs every registration on the thread the platform binds it to (a dedicated message-loop thread on
-  Windows, the main dispatch queue on macOS, in place on Linux), and `service` owns the registry and forwards presses
+  Windows, in place on the main thread on macOS, in place on Linux), and `service` owns the registry and forwards presses
   to Dart. Linux is X11 only; a Wayland session without XWayland gets an error rather than a silent no-op.
+- macOS main thread: every entry point that touches AppKit or Carbon is `#[frb(sync)]`, so with Flutter 3.50's
+  merged UI and platform threads it already runs on the main thread. `tray/macos` checks `MainThreadMarker` and
+  `hotkey/owner` checks `pthread_main_np`, and each refuses an off-thread call instead of dispatching it. Work that
+  has to run after the call returns, such as tracking a menu, goes to a main run-loop block, not the main dispatch
+  queue, which a nested event loop would hold.
+- `tray/` shows the desktop status item behind `lib/tray.dart`, a library of its own whose `Tray` encodes the menu
+  with ids assigned in pre-order, suppresses an unchanged payload and turns `TraySignal`s back into item callbacks.
+  The calls are synchronous bridge calls, since the UI isolate runs on the platform thread. macOS builds an
+  `NSStatusItem` with self-drawn title and menu rows through `objc2`, and starts menu tracking from a main run-loop
+  block rather than inside the call, because tracking runs a nested event loop. Windows owns the icon from a hidden
+  top-level window on a `tray` thread, which gets `TaskbarCreated`, resume broadcasts and its retry timer there and
+  runs `TrackPopupMenu`; `show` and `hide` call `Shell_NotifyIconW` on the caller's thread so that a hide before
+  `exit` has landed. Linux exports a StatusNotifierItem and its dbusmenu over D-Bus with `ksni`, on a `tray` thread
+  with a current-thread tokio runtime, so it needs neither GTK nor libappindicator: a left click is
+  `TrayIconActivated`, the host shows the menu on a right click, and GNOME shows the item only with the AppIndicator
+  extension.
 - `proxy/` sets the desktop system proxy: `networksetup` for every macOS network service, `gsettings` (GNOME, MATE)
   or `kwriteconfig6`/`kwriteconfig5` (KDE) on Linux, and WinINet for the LAN and every RAS entry on Windows. With
   `NetworkProps.pacMode` on it points the system at a PAC URL instead: `pac` serves `NetworkProps.pacScript`, with
@@ -1967,9 +1981,10 @@ surfaces as an unhandled async error instead of reaching the caller. That is why
 everything after it is reported as an event.
 
 What a platform does not use, it does not compile. `interprocess`, `tokio` and `global-hotkey` are declared under
-`cfg(not(target_os = "android"))`, and `ipc/mod.rs` and `hotkey/mod.rs` swap in their `unsupported.rs` there, because
-Android loads the Core in-process and has no global shortcuts. Adding a capability follows the same shape: implement it in its own module, gate the
-dependency by target, and keep the `api/` entry point unconditional so one set of bindings still serves every platform.
+`cfg(not(target_os = "android"))`, `objc2` only for macOS and `ksni` only for Linux, and `ipc/mod.rs`,
+`hotkey/mod.rs` and `tray/mod.rs` swap in their `unsupported.rs` on Android, which loads the Core in-process and has
+no global shortcuts or status item. Adding a capability follows the same shape: implement it in its own module, gate
+the dependency by target, and keep the `api/` entry point unconditional so one set of bindings still serves every platform.
 
 `RustLib.init()` runs on every platform in `main`, because the script engine and the editor are shared; the editor
 shows its unavailable state when `RustLib` is not initialized rather than loading the library itself.

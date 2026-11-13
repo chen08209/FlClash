@@ -10,14 +10,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
-import 'package:tray/tray.dart';
+import 'package:rust_api/tray.dart';
 
+import '../helpers/fake_tray_host.dart';
 import '../helpers/test_profiles.dart';
 import '../helpers/test_app.dart';
 
-const _trayChannel = MethodChannel('tray');
 const _windowChannel = MethodChannel('window');
-const _codec = StandardMethodCodec();
 
 class _RecordingSystemAction extends SystemAction {
   static int updateTrayCount = 0;
@@ -55,6 +54,7 @@ void main() {
 
   late ProviderContainer container;
   late List<String> windowCalls;
+  late FakeTrayHost trayHost;
 
   setUpAll(() async {
     loadAppLocalizations(const Locale('en'));
@@ -64,9 +64,8 @@ void main() {
     _RecordingSystemAction.updateTrayCount = 0;
     _RecordingSystemAction.updateTrayLocales.clear();
     windowCalls = <String>[];
-    Tray.instance.resetForTesting();
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(_trayChannel, (call) async => true);
+    trayHost = FakeTrayHost();
+    Tray.instance.resetForTesting(trayHost);
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_windowChannel, (call) async {
           windowCalls.add(call.method);
@@ -76,18 +75,12 @@ void main() {
 
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-      ..setMockMethodCallHandler(_trayChannel, null)
-      ..setMockMethodCallHandler(_windowChannel, null);
+        .setMockMethodCallHandler(_windowChannel, null);
     container.dispose();
   });
 
-  Future<void> emitTrayEvent(String event, [Object? arguments]) async {
-    await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .handlePlatformMessage(
-          _trayChannel.name,
-          _codec.encodeMethodCall(MethodCall(event, arguments)),
-          null,
-        );
+  void emitTrayEvent(TraySignalKind kind) {
+    trayHost.emit(kind);
   }
 
   Future<void> pumpTrayManager(
@@ -140,7 +133,7 @@ void main() {
     await pumpTrayManager(tester);
     windowCalls.clear();
 
-    await emitTrayEvent('onIconActivated');
+    emitTrayEvent(TraySignalKind.iconActivated);
     await tester.pumpAndSettle();
     // A macOS host arms the Dock settle timer on show; drain it so the binding
     // ends the test with no pending timer.
@@ -152,7 +145,7 @@ void main() {
   testWidgets('a menu request is forwarded to the tray', (tester) async {
     await pumpTrayManager(tester);
 
-    await emitTrayEvent('onMenuRequested');
+    emitTrayEvent(TraySignalKind.menuRequested);
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
@@ -267,7 +260,7 @@ void main() {
     await tester.pump();
     windowCalls.clear();
 
-    await emitTrayEvent('onIconActivated');
+    emitTrayEvent(TraySignalKind.iconActivated);
     await tester.pumpAndSettle();
 
     expect(windowCalls, isEmpty);

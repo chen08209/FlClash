@@ -9,6 +9,7 @@ import 'api/hotkey.dart';
 import 'api/ipc.dart';
 import 'api/proxy.dart';
 import 'api/script.dart';
+import 'api/tray.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi' as ffi;
@@ -96,6 +97,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RustStreamSink<IpcEvent> dco_decode_StreamSink_ipc_event_Sse(dynamic raw);
 
   @protected
+  RustStreamSink<TraySignal> dco_decode_StreamSink_tray_signal_Sse(dynamic raw);
+
+  @protected
   RustStreamSink<int> dco_decode_StreamSink_u_32_Sse(dynamic raw);
 
   @protected
@@ -103,6 +107,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   bool dco_decode_bool(dynamic raw);
+
+  @protected
+  TrayContent dco_decode_box_autoadd_tray_content(dynamic raw);
 
   @protected
   int dco_decode_box_autoadd_u_32(dynamic raw);
@@ -153,6 +160,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<HotKeySpec> dco_decode_list_hot_key_spec(dynamic raw);
 
   @protected
+  List<Uint8List> dco_decode_list_list_prim_u_8_strict(dynamic raw);
+
+  @protected
   List<int> dco_decode_list_prim_u_8_loose(dynamic raw);
 
   @protected
@@ -160,6 +170,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<RustFoldRange> dco_decode_list_rust_fold_range(dynamic raw);
+
+  @protected
+  List<TrayItem> dco_decode_list_tray_item(dynamic raw);
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
@@ -175,6 +188,27 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RustFoldRange dco_decode_rust_fold_range(dynamic raw);
+
+  @protected
+  TrayContent dco_decode_tray_content(dynamic raw);
+
+  @protected
+  TrayIconPlacement dco_decode_tray_icon_placement(dynamic raw);
+
+  @protected
+  TrayImage dco_decode_tray_image(dynamic raw);
+
+  @protected
+  TrayItem dco_decode_tray_item(dynamic raw);
+
+  @protected
+  TrayItemKind dco_decode_tray_item_kind(dynamic raw);
+
+  @protected
+  TraySignal dco_decode_tray_signal(dynamic raw);
+
+  @protected
+  TraySignalKind dco_decode_tray_signal_kind(dynamic raw);
 
   @protected
   int dco_decode_u_32(dynamic raw);
@@ -251,6 +285,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  RustStreamSink<TraySignal> sse_decode_StreamSink_tray_signal_Sse(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   RustStreamSink<int> sse_decode_StreamSink_u_32_Sse(
     SseDeserializer deserializer,
   );
@@ -260,6 +299,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   bool sse_decode_bool(SseDeserializer deserializer);
+
+  @protected
+  TrayContent sse_decode_box_autoadd_tray_content(SseDeserializer deserializer);
 
   @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
@@ -316,6 +358,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<HotKeySpec> sse_decode_list_hot_key_spec(SseDeserializer deserializer);
 
   @protected
+  List<Uint8List> sse_decode_list_list_prim_u_8_strict(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer);
 
   @protected
@@ -325,6 +372,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<RustFoldRange> sse_decode_list_rust_fold_range(
     SseDeserializer deserializer,
   );
+
+  @protected
+  List<TrayItem> sse_decode_list_tray_item(SseDeserializer deserializer);
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
@@ -340,6 +390,29 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RustFoldRange sse_decode_rust_fold_range(SseDeserializer deserializer);
+
+  @protected
+  TrayContent sse_decode_tray_content(SseDeserializer deserializer);
+
+  @protected
+  TrayIconPlacement sse_decode_tray_icon_placement(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  TrayImage sse_decode_tray_image(SseDeserializer deserializer);
+
+  @protected
+  TrayItem sse_decode_tray_item(SseDeserializer deserializer);
+
+  @protected
+  TrayItemKind sse_decode_tray_item_kind(SseDeserializer deserializer);
+
+  @protected
+  TraySignal sse_decode_tray_signal(SseDeserializer deserializer);
+
+  @protected
+  TraySignalKind sse_decode_tray_signal_kind(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_32(SseDeserializer deserializer);
@@ -429,6 +502,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_StreamSink_tray_signal_Sse(
+    RustStreamSink<TraySignal> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_StreamSink_u_32_Sse(
     RustStreamSink<int> self,
     SseSerializer serializer,
@@ -439,6 +518,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_bool(bool self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_tray_content(
+    TrayContent self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
@@ -510,6 +595,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_list_prim_u_8_strict(
+    List<Uint8List> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_prim_u_8_loose(List<int> self, SseSerializer serializer);
 
   @protected
@@ -523,6 +614,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     List<RustFoldRange> self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_list_tray_item(List<TrayItem> self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
@@ -541,6 +635,33 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_rust_fold_range(RustFoldRange self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_tray_content(TrayContent self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_tray_icon_placement(
+    TrayIconPlacement self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_tray_image(TrayImage self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_tray_item(TrayItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_tray_item_kind(TrayItemKind self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_tray_signal(TraySignal self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_tray_signal_kind(
+    TraySignalKind self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_u_32(int self, SseSerializer serializer);

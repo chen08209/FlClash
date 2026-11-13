@@ -270,7 +270,6 @@ Future<int> _ensureMacosDependencies() async {
 Future<int> _ensureLinuxDependencies() async {
   const pkgGroups = <List<String>>[
     ['ninja-build', 'libgtk-3-dev'],
-    ['libayatana-appindicator3-dev'],
     ['libsecret-1-dev'],
     ['locate'],
     ['rpm', 'patchelf'],

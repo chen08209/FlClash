@@ -64,13 +64,8 @@ brew install --cask flclash
 
 **Linux tray icon**
 
-The `.deb` package installs its own dependencies. With the AppImage or the `.rpm`, install the AyatanaAppIndicator
-library so the tray icon can show:
-
-```bash
-sudo apt-get install libayatana-appindicator3-1   # Debian and Ubuntu
-sudo dnf install libayatana-appindicator-gtk3     # Fedora
-```
+The tray icon is a StatusNotifierItem. KDE Plasma, XFCE and most panels show it as is; GNOME needs the
+AppIndicator and KStatusNotifierItem Support extension.
 
 **Unattended desktop**
 

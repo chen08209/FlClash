@@ -34,8 +34,6 @@ dependencies:
   mobile_scanner: ^7.4.2
   app_links: ^7.2.2
   win32_registry: ^3.0.3
-  tray:
-    path: plugins/tray
   wifi_ssid:
     path: plugins/wifi_ssid
   collection: ^1.19.1

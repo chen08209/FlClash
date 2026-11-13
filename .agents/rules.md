@@ -325,17 +325,20 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   container exists; everything else reads `safeModeProvider` so a test can override it.
 - `Tray.hide()` is idempotent on all three desktop platforms and returns native state to "`show` was never called".
   `AppTray.shutdown()` latches, so no later `update()`/`updateTitle()` can resurrect the icon once shutdown begins.
-  Keep it that way; a resurrected icon outlives `exit(0)` as a Windows ghost icon, because `setPreventClose(true)`
-  means `WM_DESTROY` never runs.
-- The `tray` plugin owns call ordering, idempotency, serialization, and unchanged-payload suppression. Application code
-  declares desired state through one `Tray.show(TraySpec)` call and must not add platform branches to work around
-  ordering. Platform branches in `lib/common/tray.dart` are only for deliberate product differences (macOS speed title
-  and group submenus); query `Tray.instance.capabilities` for ability differences.
+  Keep it that way; a resurrected icon outlives `exit(0)` as a Windows ghost icon, because nothing deletes it once the
+  process is gone. That is also why Windows `hide_tray` deletes the icon on the calling thread instead of posting to
+  the tray thread.
+- `Tray` (`package:rust_api/tray.dart`) owns call ordering, idempotency, serialization, and unchanged-payload
+  suppression. Application code declares desired state through one `Tray.show(TraySpec)` call and must not add
+  platform branches to work around ordering. Platform branches in `lib/common/tray.dart` are only for deliberate
+  product differences (macOS speed title and group submenus); query `Tray.instance.capabilities` for ability
+  differences.
 - Every native `show` returns whether the tray accepted the payload, and reports `false` instead of showing a broken
   icon. `Tray` caches the payload signature only on `true`, so a rejected `show` is retried by the next update rather
-  than suppressed until restart. Windows accepts a payload the shell refused, as at sign-in, and retries the icon
-  natively until it lands, so `Tray` still treats it as visible and `hide` reaches native to delete an add that may
-  have landed. Any test that mocks the `tray` channel must return `true` from `show`.
+  than suppressed until restart. Windows and Linux accept a payload the shell refused, as at sign-in, and retry the
+  icon natively until it lands, so `Tray` still treats it as visible and `hide` reaches native to delete an add that
+  may have landed. A test replaces the native side with `Tray.instance.resetForTesting(host)`, as
+  `test/helpers/fake_tray_host.dart` does.
 - Reading the Wi-Fi SSID is opt-in work, not ambient state. `ConnectivityManager` reads it only while `excludeSSIDs` is
   non-empty, because that list is its only consumer through `suspendProvider`, and the read costs a blocking platform
   call plus a location permission on Android and macOS. A second consumer must widen that gate, not drop it.

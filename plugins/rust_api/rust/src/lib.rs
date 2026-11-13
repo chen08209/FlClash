@@ -5,3 +5,4 @@ mod hotkey;
 mod ipc;
 mod proxy;
 mod script;
+mod tray;

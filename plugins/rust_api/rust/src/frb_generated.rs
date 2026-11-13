@@ -41,7 +41,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 734688645;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 857011881;
 
 // Section: executor
 
@@ -1316,6 +1316,37 @@ fn wire__crate__api__editor__guides_compute_viewport_impl(
         },
     )
 }
+fn wire__crate__api__tray__hide_tray_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "hide_tray",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Ok::<_, ()>({
+                    crate::api::tray::hide_tray();
+                })?;
+                std::result::Result::Ok(output_ok)
+            })())
+        },
+    )
+}
 fn wire__crate__api__hotkey__hot_key_events_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -1386,17 +1417,45 @@ fn wire__crate__api__init__init_app_impl(
         },
     )
 }
-fn wire__crate__api__hotkey__set_hot_keys_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
+fn wire__crate__api__tray__open_tray_menu_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "open_tray_menu",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Ok::<_, ()>(crate::api::tray::open_tray_menu())?;
+                std::result::Result::Ok(output_ok)
+            })())
+        },
+    )
+}
+fn wire__crate__api__hotkey__set_hot_keys_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
             debug_name: "set_hot_keys",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
         },
         move || {
             let message = unsafe {
@@ -1410,12 +1469,70 @@ fn wire__crate__api__hotkey__set_hot_keys_impl(
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_specs = <Vec<crate::api::hotkey::HotKeySpec>>::sse_decode(&mut deserializer);
             deserializer.end();
-            move |context| {
-                transform_result_sse::<_, String>((move || {
-                    let output_ok = crate::api::hotkey::set_hot_keys(api_specs)?;
-                    std::result::Result::Ok(output_ok)
-                })())
-            }
+            transform_result_sse::<_, String>((move || {
+                let output_ok = crate::api::hotkey::set_hot_keys(api_specs)?;
+                std::result::Result::Ok(output_ok)
+            })())
+        },
+    )
+}
+fn wire__crate__api__tray__set_tray_title_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "set_tray_title",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_title = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Ok::<_, ()>(crate::api::tray::set_tray_title(api_title))?;
+                std::result::Result::Ok(output_ok)
+            })())
+        },
+    )
+}
+fn wire__crate__api__tray__show_tray_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "show_tray",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_content = <crate::api::tray::TrayContent>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Ok::<_, ()>(crate::api::tray::show_tray(api_content))?;
+                std::result::Result::Ok(output_ok)
+            })())
         },
     )
 }
@@ -1521,6 +1638,44 @@ fn wire__crate__api__charset__transcode_charset_impl(
                     let output_ok = Ok::<_, ()>(crate::api::charset::transcode_charset(
                         api_bytes, api_label, api_lossy,
                     ))?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__tray__tray_signals_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "tray_signals",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_sink = <StreamSink<
+                crate::api::tray::TraySignal,
+                flutter_rust_bridge::for_generated::SseCodec,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>({
+                        crate::api::tray::tray_signals(api_sink);
+                    })?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -1662,6 +1817,16 @@ impl SseDecode
 
 impl SseDecode
     for StreamSink<crate::api::ipc::IpcEvent, flutter_rust_bridge::for_generated::SseCodec>
+{
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <String>::sse_decode(deserializer);
+        return StreamSink::deserialize(inner);
+    }
+}
+
+impl SseDecode
+    for StreamSink<crate::api::tray::TraySignal, flutter_rust_bridge::for_generated::SseCodec>
 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1877,6 +2042,18 @@ impl SseDecode for Vec<crate::api::hotkey::HotKeySpec> {
     }
 }
 
+impl SseDecode for Vec<Vec<u8>> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<Vec<u8>>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1898,6 +2075,18 @@ impl SseDecode for Vec<crate::api::editor::RustFoldRange> {
             ans_.push(<crate::api::editor::RustFoldRange>::sse_decode(
                 deserializer,
             ));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::tray::TrayItem> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::tray::TrayItem>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -1959,6 +2148,115 @@ impl SseDecode for crate::api::editor::RustFoldRange {
     }
 }
 
+impl SseDecode for crate::api::tray::TrayContent {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <String>::sse_decode(deserializer);
+        let mut var_image = <crate::api::tray::TrayImage>::sse_decode(deserializer);
+        let mut var_toolTip = <String>::sse_decode(deserializer);
+        let mut var_title = <String>::sse_decode(deserializer);
+        let mut var_menu = <Vec<crate::api::tray::TrayItem>>::sse_decode(deserializer);
+        return crate::api::tray::TrayContent {
+            id: var_id,
+            image: var_image,
+            tool_tip: var_toolTip,
+            title: var_title,
+            menu: var_menu,
+        };
+    }
+}
+
+impl SseDecode for crate::api::tray::TrayIconPlacement {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::tray::TrayIconPlacement::Leading,
+            1 => crate::api::tray::TrayIconPlacement::Trailing,
+            _ => unreachable!("Invalid variant for TrayIconPlacement: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::tray::TrayImage {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_path = <String>::sse_decode(deserializer);
+        let mut var_pngs = <Vec<Vec<u8>>>::sse_decode(deserializer);
+        let mut var_template = <bool>::sse_decode(deserializer);
+        let mut var_size = <u32>::sse_decode(deserializer);
+        let mut var_placement = <crate::api::tray::TrayIconPlacement>::sse_decode(deserializer);
+        return crate::api::tray::TrayImage {
+            path: var_path,
+            pngs: var_pngs,
+            template: var_template,
+            size: var_size,
+            placement: var_placement,
+        };
+    }
+}
+
+impl SseDecode for crate::api::tray::TrayItem {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <u32>::sse_decode(deserializer);
+        let mut var_kind = <crate::api::tray::TrayItemKind>::sse_decode(deserializer);
+        let mut var_label = <String>::sse_decode(deserializer);
+        let mut var_detail = <Option<String>>::sse_decode(deserializer);
+        let mut var_enabled = <bool>::sse_decode(deserializer);
+        let mut var_checked = <bool>::sse_decode(deserializer);
+        let mut var_items = <Vec<crate::api::tray::TrayItem>>::sse_decode(deserializer);
+        return crate::api::tray::TrayItem {
+            id: var_id,
+            kind: var_kind,
+            label: var_label,
+            detail: var_detail,
+            enabled: var_enabled,
+            checked: var_checked,
+            items: var_items,
+        };
+    }
+}
+
+impl SseDecode for crate::api::tray::TrayItemKind {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::tray::TrayItemKind::Action,
+            1 => crate::api::tray::TrayItemKind::Checkbox,
+            2 => crate::api::tray::TrayItemKind::Submenu,
+            3 => crate::api::tray::TrayItemKind::Separator,
+            _ => unreachable!("Invalid variant for TrayItemKind: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::tray::TraySignal {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_kind = <crate::api::tray::TraySignalKind>::sse_decode(deserializer);
+        let mut var_itemId = <u32>::sse_decode(deserializer);
+        return crate::api::tray::TraySignal {
+            kind: var_kind,
+            item_id: var_itemId,
+        };
+    }
+}
+
+impl SseDecode for crate::api::tray::TraySignalKind {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::tray::TraySignalKind::IconActivated,
+            1 => crate::api::tray::TraySignalKind::MenuRequested,
+            2 => crate::api::tray::TraySignalKind::ItemSelected,
+            _ => unreachable!("Invalid variant for TraySignalKind: {}", inner),
+        };
+    }
+}
+
 impl SseDecode for u32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -2008,13 +2306,13 @@ fn pde_ffi_dispatcher_primary_impl(
         23 => wire__crate__api__editor__RopeUpload_push_impl(port, ptr, rust_vec_len, data_len),
         24 => wire__crate__api__script__evaluate_script_impl(port, ptr, rust_vec_len, data_len),
         25 => wire__crate__api__editor__folds_compute_all_impl(port, ptr, rust_vec_len, data_len),
-        28 => wire__crate__api__hotkey__hot_key_events_impl(port, ptr, rust_vec_len, data_len),
-        29 => wire__crate__api__init__init_app_impl(port, ptr, rust_vec_len, data_len),
-        30 => wire__crate__api__hotkey__set_hot_keys_impl(port, ptr, rust_vec_len, data_len),
-        31 => wire__crate__api__proxy__start_system_proxy_impl(port, ptr, rust_vec_len, data_len),
-        32 => wire__crate__api__proxy__stop_system_proxy_impl(port, ptr, rust_vec_len, data_len),
-        33 => wire__crate__api__charset__transcode_charset_impl(port, ptr, rust_vec_len, data_len),
-        34 => wire__crate__api__editor__words_extract_impl(port, ptr, rust_vec_len, data_len),
+        29 => wire__crate__api__hotkey__hot_key_events_impl(port, ptr, rust_vec_len, data_len),
+        30 => wire__crate__api__init__init_app_impl(port, ptr, rust_vec_len, data_len),
+        35 => wire__crate__api__proxy__start_system_proxy_impl(port, ptr, rust_vec_len, data_len),
+        36 => wire__crate__api__proxy__stop_system_proxy_impl(port, ptr, rust_vec_len, data_len),
+        37 => wire__crate__api__charset__transcode_charset_impl(port, ptr, rust_vec_len, data_len),
+        38 => wire__crate__api__tray__tray_signals_impl(port, ptr, rust_vec_len, data_len),
+        39 => wire__crate__api__editor__words_extract_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -2050,6 +2348,11 @@ fn pde_ffi_dispatcher_sync_impl(
             wire__crate__api__editor__folds_find_matching_bracket_impl(ptr, rust_vec_len, data_len)
         }
         27 => wire__crate__api__editor__guides_compute_viewport_impl(ptr, rust_vec_len, data_len),
+        28 => wire__crate__api__tray__hide_tray_impl(ptr, rust_vec_len, data_len),
+        31 => wire__crate__api__tray__open_tray_menu_impl(ptr, rust_vec_len, data_len),
+        32 => wire__crate__api__hotkey__set_hot_keys_impl(ptr, rust_vec_len, data_len),
+        33 => wire__crate__api__tray__set_tray_title_impl(ptr, rust_vec_len, data_len),
+        34 => wire__crate__api__tray__show_tray_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -2294,6 +2597,153 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::editor::RustFoldRange>
         self
     }
 }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::tray::TrayContent {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.id.into_into_dart().into_dart(),
+            self.image.into_into_dart().into_dart(),
+            self.tool_tip.into_into_dart().into_dart(),
+            self.title.into_into_dart().into_dart(),
+            self.menu.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::tray::TrayContent {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::tray::TrayContent>
+    for crate::api::tray::TrayContent
+{
+    fn into_into_dart(self) -> crate::api::tray::TrayContent {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::tray::TrayIconPlacement {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Leading => 0.into_dart(),
+            Self::Trailing => 1.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::tray::TrayIconPlacement
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::tray::TrayIconPlacement>
+    for crate::api::tray::TrayIconPlacement
+{
+    fn into_into_dart(self) -> crate::api::tray::TrayIconPlacement {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::tray::TrayImage {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.path.into_into_dart().into_dart(),
+            self.pngs.into_into_dart().into_dart(),
+            self.template.into_into_dart().into_dart(),
+            self.size.into_into_dart().into_dart(),
+            self.placement.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::tray::TrayImage {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::tray::TrayImage>
+    for crate::api::tray::TrayImage
+{
+    fn into_into_dart(self) -> crate::api::tray::TrayImage {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::tray::TrayItem {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.id.into_into_dart().into_dart(),
+            self.kind.into_into_dart().into_dart(),
+            self.label.into_into_dart().into_dart(),
+            self.detail.into_into_dart().into_dart(),
+            self.enabled.into_into_dart().into_dart(),
+            self.checked.into_into_dart().into_dart(),
+            self.items.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::tray::TrayItem {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::tray::TrayItem> for crate::api::tray::TrayItem {
+    fn into_into_dart(self) -> crate::api::tray::TrayItem {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::tray::TrayItemKind {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Action => 0.into_dart(),
+            Self::Checkbox => 1.into_dart(),
+            Self::Submenu => 2.into_dart(),
+            Self::Separator => 3.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::tray::TrayItemKind
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::tray::TrayItemKind>
+    for crate::api::tray::TrayItemKind
+{
+    fn into_into_dart(self) -> crate::api::tray::TrayItemKind {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::tray::TraySignal {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.kind.into_into_dart().into_dart(),
+            self.item_id.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::tray::TraySignal {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::tray::TraySignal>
+    for crate::api::tray::TraySignal
+{
+    fn into_into_dart(self) -> crate::api::tray::TraySignal {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::tray::TraySignalKind {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::IconActivated => 0.into_dart(),
+            Self::MenuRequested => 1.into_dart(),
+            Self::ItemSelected => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::tray::TraySignalKind
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::tray::TraySignalKind>
+    for crate::api::tray::TraySignalKind
+{
+    fn into_into_dart(self) -> crate::api::tray::TraySignalKind {
+        self
+    }
+}
 
 impl SseEncode for flutter_rust_bridge::for_generated::anyhow::Error {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -2358,6 +2808,15 @@ impl SseEncode
 
 impl SseEncode
     for StreamSink<crate::api::ipc::IpcEvent, flutter_rust_bridge::for_generated::SseCodec>
+{
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        unimplemented!("")
+    }
+}
+
+impl SseEncode
+    for StreamSink<crate::api::tray::TraySignal, flutter_rust_bridge::for_generated::SseCodec>
 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -2543,6 +3002,16 @@ impl SseEncode for Vec<crate::api::hotkey::HotKeySpec> {
     }
 }
 
+impl SseEncode for Vec<Vec<u8>> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <Vec<u8>>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -2559,6 +3028,16 @@ impl SseEncode for Vec<crate::api::editor::RustFoldRange> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::api::editor::RustFoldRange>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::tray::TrayItem> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::tray::TrayItem>::sse_encode(item, serializer);
         }
     }
 }
@@ -2608,6 +3087,100 @@ impl SseEncode for crate::api::editor::RustFoldRange {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.start_line, serializer);
         <i32>::sse_encode(self.end_line, serializer);
+    }
+}
+
+impl SseEncode for crate::api::tray::TrayContent {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.id, serializer);
+        <crate::api::tray::TrayImage>::sse_encode(self.image, serializer);
+        <String>::sse_encode(self.tool_tip, serializer);
+        <String>::sse_encode(self.title, serializer);
+        <Vec<crate::api::tray::TrayItem>>::sse_encode(self.menu, serializer);
+    }
+}
+
+impl SseEncode for crate::api::tray::TrayIconPlacement {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::tray::TrayIconPlacement::Leading => 0,
+                crate::api::tray::TrayIconPlacement::Trailing => 1,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::tray::TrayImage {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.path, serializer);
+        <Vec<Vec<u8>>>::sse_encode(self.pngs, serializer);
+        <bool>::sse_encode(self.template, serializer);
+        <u32>::sse_encode(self.size, serializer);
+        <crate::api::tray::TrayIconPlacement>::sse_encode(self.placement, serializer);
+    }
+}
+
+impl SseEncode for crate::api::tray::TrayItem {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.id, serializer);
+        <crate::api::tray::TrayItemKind>::sse_encode(self.kind, serializer);
+        <String>::sse_encode(self.label, serializer);
+        <Option<String>>::sse_encode(self.detail, serializer);
+        <bool>::sse_encode(self.enabled, serializer);
+        <bool>::sse_encode(self.checked, serializer);
+        <Vec<crate::api::tray::TrayItem>>::sse_encode(self.items, serializer);
+    }
+}
+
+impl SseEncode for crate::api::tray::TrayItemKind {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::tray::TrayItemKind::Action => 0,
+                crate::api::tray::TrayItemKind::Checkbox => 1,
+                crate::api::tray::TrayItemKind::Submenu => 2,
+                crate::api::tray::TrayItemKind::Separator => 3,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::tray::TraySignal {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::tray::TraySignalKind>::sse_encode(self.kind, serializer);
+        <u32>::sse_encode(self.item_id, serializer);
+    }
+}
+
+impl SseEncode for crate::api::tray::TraySignalKind {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::tray::TraySignalKind::IconActivated => 0,
+                crate::api::tray::TraySignalKind::MenuRequested => 1,
+                crate::api::tray::TraySignalKind::ItemSelected => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
     }
 }
 

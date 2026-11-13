@@ -103,7 +103,7 @@ own tree. Everything downstream sees `DynamicColorSeeds`.
 Linux:
 
 ```bash
-sudo apt-get install libayatana-appindicator3-dev
+sudo apt-get install ninja-build libgtk-3-dev libsecret-1-dev
 ```
 
 Windows:

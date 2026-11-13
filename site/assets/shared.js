@@ -80,7 +80,7 @@ globalThis.FlClashSite = (() => {
       tipBrew: 'Install from the terminal, and upgrade with brew later.',
       tipTrayTitle: 'Tray icon',
       tipTray:
-        'The .deb package installs its own dependencies. With the AppImage or the .rpm, install the AyatanaAppIndicator library so the tray icon can show.',
+        'The tray icon is a StatusNotifierItem. KDE Plasma, XFCE and most panels show it as is; GNOME needs the AppIndicator and KStatusNotifierItem Support extension.',
       clTitle: 'Changelog',
       clMeta: (n, d) => `${n} releases since ${d}`,
       clSearch: 'Search changes or versions',
@@ -168,7 +168,7 @@ globalThis.FlClashSite = (() => {
       tipBrewTitle: 'Homebrew',
       tipBrew: '在终端中安装，之后用 brew 升级。',
       tipTrayTitle: '托盘图标',
-      tipTray: '.deb 安装包会自动安装所需依赖。使用 AppImage 或 .rpm 时，需要先安装 AyatanaAppIndicator 库，托盘图标才能显示。',
+      tipTray: '托盘图标是 StatusNotifierItem。KDE Plasma、XFCE 和多数面板直接显示；GNOME 需要安装 AppIndicator and KStatusNotifierItem Support 扩展。',
       clTitle: '更新日志',
       clMeta: (n, d) => `自 ${d}以来共 ${n} 个版本`,
       clSearch: '搜索更新内容或版本',

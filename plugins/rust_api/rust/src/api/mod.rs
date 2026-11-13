@@ -5,3 +5,4 @@ pub mod init;
 pub mod ipc;
 pub mod proxy;
 pub mod script;
+pub mod tray;

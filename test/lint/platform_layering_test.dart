@@ -3,11 +3,11 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
-const _platformPackages = [
-  'tray',
-  'window',
-  'launch_at_startup',
-  'screen_retriever',
+const _platformLibraries = [
+  'rust_api/tray.dart',
+  'window/',
+  'launch_at_startup/',
+  'screen_retriever/',
 ];
 
 const _platformModules = [
@@ -18,7 +18,7 @@ const _platformModules = [
 ];
 
 final _platformImport = RegExp(
-  "^import 'package:(${_platformPackages.join('|')})/",
+  "^import 'package:(${_platformLibraries.map(RegExp.escape).join('|')})",
   multiLine: true,
 );
 
@@ -107,8 +107,8 @@ void main() {
   test('nothing the common barrel reaches imports a platform package', () {
     final reached = _closureOfCommonBarrel();
     final offenders = [
-      for (final package in _platformPackages)
-        if (reached.any((uri) => uri.startsWith('package:$package/'))) package,
+      for (final library in _platformLibraries)
+        if (reached.any((uri) => uri.startsWith('package:$library'))) library,
     ];
 
     expect(

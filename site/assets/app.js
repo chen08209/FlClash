@@ -436,14 +436,7 @@
       case 'macos':
         return [tip('tipBrewTitle', 'tipBrew', commandBlock('brew tap chen08209/tap\nbrew install --cask flclash'))];
       case 'linux':
-        return [
-          tip(
-            'tipTrayTitle',
-            'tipTray',
-            commandBlock('sudo apt-get install libayatana-appindicator3-1   # Debian, Ubuntu'),
-            commandBlock('sudo dnf install libayatana-appindicator-gtk3     # Fedora'),
-          ),
-        ];
+        return [tip('tipTrayTitle', 'tipTray')];
       default:
         return [];
     }

@@ -8,7 +8,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   dynamic_color
   file_selector_windows
   screen_retriever_windows
-  tray
   url_launcher_windows
   wifi_ssid
   window

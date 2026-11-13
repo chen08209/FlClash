@@ -1,38 +1,58 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
 
+import '../rust/api/tray.dart';
 import 'tray_capabilities.dart';
 import 'tray_codec.dart';
 import 'tray_event.dart';
 import 'tray_menu.dart';
 import 'tray_spec.dart';
 
-const String _methodShow = 'show';
-const String _methodHide = 'hide';
-const String _methodSetTitle = 'setTitle';
-const String _methodOpenMenu = 'openMenu';
+abstract interface class TrayHost {
+  Stream<TraySignal> signals();
 
-const String _eventIconActivated = 'onIconActivated';
-const String _eventMenuRequested = 'onMenuRequested';
-const String _eventMenuItemSelected = 'onMenuItemSelected';
+  bool show(TrayContent content);
+
+  bool setTitle(String title);
+
+  void hide();
+
+  bool openMenu();
+}
+
+final class _RustTrayHost implements TrayHost {
+  const _RustTrayHost();
+
+  @override
+  Stream<TraySignal> signals() => traySignals();
+
+  @override
+  bool show(TrayContent content) => showTray(content: content);
+
+  @override
+  bool setTitle(String title) => setTrayTitle(title: title);
+
+  @override
+  void hide() => hideTray();
+
+  @override
+  bool openMenu() => openTrayMenu();
+}
 
 final class Tray {
-  Tray._() {
-    _channel.setMethodCallHandler(_onPlatformCall);
-  }
+  Tray._();
 
   static final Tray instance = Tray._();
-
-  final MethodChannel _channel = const MethodChannel('tray');
 
   final StreamController<TrayEvent> _events =
       StreamController<TrayEvent>.broadcast();
 
+  TrayHost _host = const _RustTrayHost();
+  StreamSubscription<TraySignal>? _signals;
   Map<int, TrayMenuItem> _itemsById = const {};
   Future<void> _queue = Future<void>.value();
   String? _signature;
@@ -40,7 +60,10 @@ final class Tray {
   String _requestedTitle = '';
   bool _isVisible = false;
 
-  Stream<TrayEvent> get events => _events.stream;
+  Stream<TrayEvent> get events {
+    _listen();
+    return _events.stream;
+  }
 
   TrayCapabilities get capabilities =>
       TrayCapabilities.of(defaultTargetPlatform);
@@ -53,19 +76,22 @@ final class Tray {
 
   Future<void> setTitle(String title) {
     _requestedTitle = title;
-    return _serialize(() => _setTitle(_requestedTitle));
+    return _serialize(() async => _setTitle(_requestedTitle));
   }
 
   Future<void> hide() {
-    return _serialize(_hide);
+    return _serialize(() async => _hide());
   }
 
   Future<void> openMenu() {
-    return _serialize(_openMenu);
+    return _serialize(() async => _openMenu());
   }
 
   @visibleForTesting
-  void resetForTesting() {
+  void resetForTesting(TrayHost host) {
+    _signals?.cancel();
+    _signals = null;
+    _host = host;
     _itemsById = const {};
     _queue = Future<void>.value();
     _signature = null;
@@ -95,15 +121,18 @@ final class Tray {
       _itemsById = encoded.itemsById;
       return;
     }
-    final isApplied = await _channel
-        .invokeMethod<bool>(_methodShow, <String, Object?>{
-          'id': _stableId,
-          'icon': await _resolveIcon(spec.icon),
-          'toolTip': encoded.toolTip,
-          'title': _title,
-          'menu': encoded.menu,
-        });
-    if (isApplied != true) {
+    _listen();
+    final image = await _resolveImage(spec.icon);
+    final isApplied = _host.show(
+      TrayContent(
+        id: _stableId,
+        image: image,
+        toolTip: spec.toolTip,
+        title: _title,
+        menu: encoded.menu,
+      ),
+    );
+    if (!isApplied) {
       _signature = null;
       return;
     }
@@ -112,7 +141,7 @@ final class Tray {
     _isVisible = true;
   }
 
-  Future<void> _setTitle(String title) async {
+  void _setTitle(String title) {
     if (!capabilities.title) {
       return;
     }
@@ -121,12 +150,10 @@ final class Tray {
     if (isUnchanged || !_isVisible) {
       return;
     }
-    await _channel.invokeMethod(_methodSetTitle, <String, Object?>{
-      'title': title,
-    });
+    _host.setTitle(title);
   }
 
-  Future<void> _hide() async {
+  void _hide() {
     _itemsById = const {};
     _signature = null;
     _title = '';
@@ -134,29 +161,28 @@ final class Tray {
       return;
     }
     _isVisible = false;
-    await _channel.invokeMethod(_methodHide);
+    _host.hide();
   }
 
-  Future<void> _openMenu() async {
+  void _openMenu() {
     if (!capabilities.menuControl || !_isVisible) {
       return;
     }
-    await _channel.invokeMethod(_methodOpenMenu);
+    _host.openMenu();
   }
 
-  Future<void> _onPlatformCall(MethodCall call) async {
-    switch (call.method) {
-      case _eventIconActivated:
+  void _listen() {
+    _signals ??= _host.signals().listen(_onSignal);
+  }
+
+  void _onSignal(TraySignal signal) {
+    switch (signal.kind) {
+      case TraySignalKind.iconActivated:
         _events.add(const TrayIconActivated());
-      case _eventMenuRequested:
+      case TraySignalKind.menuRequested:
         _events.add(const TrayMenuRequested());
-      case _eventMenuItemSelected:
-        final arguments = call.arguments;
-        if (arguments is! Map) {
-          return;
-        }
-        final id = arguments['id'];
-        final item = id is int ? _itemsById[id] : null;
+      case TraySignalKind.itemSelected:
+        final item = _itemsById[signal.itemId];
         if (item == null) {
           return;
         }
@@ -173,8 +199,9 @@ final class Tray {
     }
   }
 
-  /// Scales probed in Flutter's `2.0x/` variant layout; the README says how
-  /// each platform consumes them.
+  /// Scales probed in Flutter's `2.0x/` variant layout. macOS takes every one
+  /// found as a representation of one image, Linux the largest on disk, and
+  /// Windows loads the asset as-is, so it names a multi-size `.ico`.
   static const variantScales = [1.0, 2.0, 3.0, 4.0];
 
   @visibleForTesting
@@ -194,25 +221,26 @@ final class Tray {
     ]);
   }
 
-  Future<Map<String, Object?>> _resolveIcon(TrayIcon icon) async {
-    final resolved = <String, Object?>{
-      'isTemplate': icon.isTemplate,
-      'size': icon.size,
-      'position': icon.position.name,
-    };
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.macOS:
-        resolved['reps'] = await _loadRepresentations(icon.asset);
-      case TargetPlatform.linux:
-        resolved['path'] = _largestBundledVariant(icon.asset);
-      default:
-        resolved['path'] = _bundledPath(icon.asset);
-    }
-    return resolved;
+  Future<TrayImage> _resolveImage(TrayIcon icon) async {
+    final isMacOS = defaultTargetPlatform == TargetPlatform.macOS;
+    return TrayImage(
+      path: switch (defaultTargetPlatform) {
+        TargetPlatform.macOS => '',
+        TargetPlatform.linux => _largestBundledVariant(icon.asset),
+        _ => _bundledPath(icon.asset),
+      },
+      pngs: isMacOS ? await _loadVariants(icon.asset) : const [],
+      template: icon.isTemplate,
+      size: icon.size,
+      placement: switch (icon.position) {
+        TrayIconPosition.leading => TrayIconPlacement.leading,
+        TrayIconPosition.trailing => TrayIconPlacement.trailing,
+      },
+    );
   }
 
-  Future<List<Map<String, Object?>>> _loadRepresentations(String asset) async {
-    final reps = <Map<String, Object?>>[];
+  Future<List<Uint8List>> _loadVariants(String asset) async {
+    final variants = <Uint8List>[];
     for (final scale in variantScales) {
       final ByteData data;
       try {
@@ -220,12 +248,11 @@ final class Tray {
       } on FlutterError {
         continue;
       }
-      reps.add({
-        'scale': scale,
-        'bytes': base64Encode(data.buffer.asUint8List()),
-      });
+      variants.add(
+        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+      );
     }
-    return reps;
+    return variants;
   }
 
   String _largestBundledVariant(String asset) {

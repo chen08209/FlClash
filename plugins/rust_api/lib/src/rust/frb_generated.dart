@@ -9,6 +9,7 @@ import 'api/hotkey.dart';
 import 'api/ipc.dart';
 import 'api/proxy.dart';
 import 'api/script.dart';
+import 'api/tray.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';
@@ -71,7 +72,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 734688645;
+  int get rustContentHash => 857011881;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -192,13 +193,21 @@ abstract class RustLibApi extends BaseApi {
     required BigInt tabSize,
   });
 
+  void crateApiTrayHideTray();
+
   Stream<int> crateApiHotkeyHotKeyEvents();
 
   Future<void> crateApiInitInitApp();
 
-  Future<List<HotKeyFailure>> crateApiHotkeySetHotKeys({
+  bool crateApiTrayOpenTrayMenu();
+
+  List<HotKeyFailure> crateApiHotkeySetHotKeys({
     required List<HotKeySpec> specs,
   });
+
+  bool crateApiTraySetTrayTitle({required String title});
+
+  bool crateApiTrayShowTray({required TrayContent content});
 
   Future<bool> crateApiProxyStartSystemProxy({
     required int port,
@@ -213,6 +222,8 @@ abstract class RustLibApi extends BaseApi {
     required String label,
     required bool lossy,
   });
+
+  Stream<TraySignal> crateApiTrayTraySignals();
 
   Future<List<String>> crateApiEditorWordsExtract({required RopeBridge rope});
 
@@ -1146,6 +1157,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  void crateApiTrayHideTray() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 28)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTrayHideTrayConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTrayHideTrayConstMeta =>
+      const TaskConstMeta(debugName: "hide_tray", argNames: []);
+
+  @override
   Stream<int> crateApiHotkeyHotKeyEvents() {
     final sink = RustStreamSink<int>();
     unawaited(
@@ -1157,7 +1190,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 28,
+              funcId: 29,
               port: port_,
             );
           },
@@ -1186,7 +1219,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 29,
+            funcId: 30,
             port: port_,
           );
         },
@@ -1205,20 +1238,37 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "init_app", argNames: []);
 
   @override
-  Future<List<HotKeyFailure>> crateApiHotkeySetHotKeys({
+  bool crateApiTrayOpenTrayMenu() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 31)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTrayOpenTrayMenuConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTrayOpenTrayMenuConstMeta =>
+      const TaskConstMeta(debugName: "open_tray_menu", argNames: []);
+
+  @override
+  List<HotKeyFailure> crateApiHotkeySetHotKeys({
     required List<HotKeySpec> specs,
   }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_list_hot_key_spec(specs, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 30,
-            port: port_,
-          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 32)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_hot_key_failure,
@@ -1233,6 +1283,52 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kCrateApiHotkeySetHotKeysConstMeta =>
       const TaskConstMeta(debugName: "set_hot_keys", argNames: ["specs"]);
+
+  @override
+  bool crateApiTraySetTrayTitle({required String title}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(title, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 33)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTraySetTrayTitleConstMeta,
+        argValues: [title],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTraySetTrayTitleConstMeta =>
+      const TaskConstMeta(debugName: "set_tray_title", argNames: ["title"]);
+
+  @override
+  bool crateApiTrayShowTray({required TrayContent content}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_tray_content(content, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 34)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTrayShowTrayConstMeta,
+        argValues: [content],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTrayShowTrayConstMeta =>
+      const TaskConstMeta(debugName: "show_tray", argNames: ["content"]);
 
   @override
   Future<bool> crateApiProxyStartSystemProxy({
@@ -1250,7 +1346,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 31,
+            funcId: 35,
             port: port_,
           );
         },
@@ -1280,7 +1376,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 32,
+            funcId: 36,
             port: port_,
           );
         },
@@ -1314,7 +1410,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 33,
+            funcId: 37,
             port: port_,
           );
         },
@@ -1336,6 +1432,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Stream<TraySignal> crateApiTrayTraySignals() {
+    final sink = RustStreamSink<TraySignal>();
+    unawaited(
+      handler.executeNormal(
+        NormalTask(
+          callFfi: (port_) {
+            final serializer = SseSerializer(generalizedFrbRustBinding);
+            sse_encode_StreamSink_tray_signal_Sse(sink, serializer);
+            pdeCallFfi(
+              generalizedFrbRustBinding,
+              serializer,
+              funcId: 38,
+              port: port_,
+            );
+          },
+          codec: SseCodec(
+            decodeSuccessData: sse_decode_unit,
+            decodeErrorData: null,
+          ),
+          constMeta: kCrateApiTrayTraySignalsConstMeta,
+          argValues: [sink],
+          apiImpl: this,
+        ),
+      ),
+    );
+    return sink.stream;
+  }
+
+  TaskConstMeta get kCrateApiTrayTraySignalsConstMeta =>
+      const TaskConstMeta(debugName: "tray_signals", argNames: ["sink"]);
+
+  @override
   Future<List<String>> crateApiEditorWordsExtract({required RopeBridge rope}) {
     return handler.executeNormal(
       NormalTask(
@@ -1348,7 +1476,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 34,
+            funcId: 39,
             port: port_,
           );
         },
@@ -1484,6 +1612,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RustStreamSink<TraySignal> dco_decode_StreamSink_tray_signal_Sse(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    throw UnimplementedError();
+  }
+
+  @protected
   RustStreamSink<int> dco_decode_StreamSink_u_32_Sse(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     throw UnimplementedError();
@@ -1499,6 +1635,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   bool dco_decode_bool(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as bool;
+  }
+
+  @protected
+  TrayContent dco_decode_box_autoadd_tray_content(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_tray_content(raw);
   }
 
   @protected
@@ -1633,6 +1775,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<Uint8List> dco_decode_list_list_prim_u_8_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_list_prim_u_8_strict).toList();
+  }
+
+  @protected
   List<int> dco_decode_list_prim_u_8_loose(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as List<int>;
@@ -1648,6 +1796,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<RustFoldRange> dco_decode_list_rust_fold_range(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_rust_fold_range).toList();
+  }
+
+  @protected
+  List<TrayItem> dco_decode_list_tray_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_tray_item).toList();
   }
 
   @protected
@@ -1684,6 +1838,83 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       startLine: dco_decode_i_32(arr[0]),
       endLine: dco_decode_i_32(arr[1]),
     );
+  }
+
+  @protected
+  TrayContent dco_decode_tray_content(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return TrayContent(
+      id: dco_decode_String(arr[0]),
+      image: dco_decode_tray_image(arr[1]),
+      toolTip: dco_decode_String(arr[2]),
+      title: dco_decode_String(arr[3]),
+      menu: dco_decode_list_tray_item(arr[4]),
+    );
+  }
+
+  @protected
+  TrayIconPlacement dco_decode_tray_icon_placement(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return TrayIconPlacement.values[raw as int];
+  }
+
+  @protected
+  TrayImage dco_decode_tray_image(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return TrayImage(
+      path: dco_decode_String(arr[0]),
+      pngs: dco_decode_list_list_prim_u_8_strict(arr[1]),
+      template: dco_decode_bool(arr[2]),
+      size: dco_decode_u_32(arr[3]),
+      placement: dco_decode_tray_icon_placement(arr[4]),
+    );
+  }
+
+  @protected
+  TrayItem dco_decode_tray_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return TrayItem(
+      id: dco_decode_u_32(arr[0]),
+      kind: dco_decode_tray_item_kind(arr[1]),
+      label: dco_decode_String(arr[2]),
+      detail: dco_decode_opt_String(arr[3]),
+      enabled: dco_decode_bool(arr[4]),
+      checked: dco_decode_bool(arr[5]),
+      items: dco_decode_list_tray_item(arr[6]),
+    );
+  }
+
+  @protected
+  TrayItemKind dco_decode_tray_item_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return TrayItemKind.values[raw as int];
+  }
+
+  @protected
+  TraySignal dco_decode_tray_signal(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return TraySignal(
+      kind: dco_decode_tray_signal_kind(arr[0]),
+      itemId: dco_decode_u_32(arr[1]),
+    );
+  }
+
+  @protected
+  TraySignalKind dco_decode_tray_signal_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return TraySignalKind.values[raw as int];
   }
 
   @protected
@@ -1834,6 +2065,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RustStreamSink<TraySignal> sse_decode_StreamSink_tray_signal_Sse(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    throw UnimplementedError('Unreachable ()');
+  }
+
+  @protected
   RustStreamSink<int> sse_decode_StreamSink_u_32_Sse(
     SseDeserializer deserializer,
   ) {
@@ -1852,6 +2091,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   bool sse_decode_bool(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getUint8() != 0;
+  }
+
+  @protected
+  TrayContent sse_decode_box_autoadd_tray_content(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_tray_content(deserializer));
   }
 
   @protected
@@ -2015,6 +2262,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<Uint8List> sse_decode_list_list_prim_u_8_strict(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <Uint8List>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_list_prim_u_8_strict(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
@@ -2038,6 +2299,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var ans_ = <RustFoldRange>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_rust_fold_range(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<TrayItem> sse_decode_list_tray_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <TrayItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_tray_item(deserializer));
     }
     return ans_;
   }
@@ -2092,6 +2365,92 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_startLine = sse_decode_i_32(deserializer);
     var var_endLine = sse_decode_i_32(deserializer);
     return RustFoldRange(startLine: var_startLine, endLine: var_endLine);
+  }
+
+  @protected
+  TrayContent sse_decode_tray_content(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_image = sse_decode_tray_image(deserializer);
+    var var_toolTip = sse_decode_String(deserializer);
+    var var_title = sse_decode_String(deserializer);
+    var var_menu = sse_decode_list_tray_item(deserializer);
+    return TrayContent(
+      id: var_id,
+      image: var_image,
+      toolTip: var_toolTip,
+      title: var_title,
+      menu: var_menu,
+    );
+  }
+
+  @protected
+  TrayIconPlacement sse_decode_tray_icon_placement(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return TrayIconPlacement.values[inner];
+  }
+
+  @protected
+  TrayImage sse_decode_tray_image(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_path = sse_decode_String(deserializer);
+    var var_pngs = sse_decode_list_list_prim_u_8_strict(deserializer);
+    var var_template = sse_decode_bool(deserializer);
+    var var_size = sse_decode_u_32(deserializer);
+    var var_placement = sse_decode_tray_icon_placement(deserializer);
+    return TrayImage(
+      path: var_path,
+      pngs: var_pngs,
+      template: var_template,
+      size: var_size,
+      placement: var_placement,
+    );
+  }
+
+  @protected
+  TrayItem sse_decode_tray_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_u_32(deserializer);
+    var var_kind = sse_decode_tray_item_kind(deserializer);
+    var var_label = sse_decode_String(deserializer);
+    var var_detail = sse_decode_opt_String(deserializer);
+    var var_enabled = sse_decode_bool(deserializer);
+    var var_checked = sse_decode_bool(deserializer);
+    var var_items = sse_decode_list_tray_item(deserializer);
+    return TrayItem(
+      id: var_id,
+      kind: var_kind,
+      label: var_label,
+      detail: var_detail,
+      enabled: var_enabled,
+      checked: var_checked,
+      items: var_items,
+    );
+  }
+
+  @protected
+  TrayItemKind sse_decode_tray_item_kind(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return TrayItemKind.values[inner];
+  }
+
+  @protected
+  TraySignal sse_decode_tray_signal(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_kind = sse_decode_tray_signal_kind(deserializer);
+    var var_itemId = sse_decode_u_32(deserializer);
+    return TraySignal(kind: var_kind, itemId: var_itemId);
+  }
+
+  @protected
+  TraySignalKind sse_decode_tray_signal_kind(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return TraySignalKind.values[inner];
   }
 
   @protected
@@ -2261,6 +2620,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_StreamSink_tray_signal_Sse(
+    RustStreamSink<TraySignal> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(
+      self.setupAndSerialize(
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_tray_signal,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+      ),
+      serializer,
+    );
+  }
+
+  @protected
   void sse_encode_StreamSink_u_32_Sse(
     RustStreamSink<int> self,
     SseSerializer serializer,
@@ -2287,6 +2663,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_bool(bool self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putUint8(self ? 1 : 0);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_tray_content(
+    TrayContent self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_tray_content(self, serializer);
   }
 
   @protected
@@ -2435,6 +2820,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_list_prim_u_8_strict(
+    List<Uint8List> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_list_prim_u_8_strict(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_prim_u_8_loose(
     List<int> self,
     SseSerializer serializer,
@@ -2465,6 +2862,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_rust_fold_range(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_tray_item(
+    List<TrayItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_tray_item(item, serializer);
     }
   }
 
@@ -2522,6 +2931,69 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.startLine, serializer);
     sse_encode_i_32(self.endLine, serializer);
+  }
+
+  @protected
+  void sse_encode_tray_content(TrayContent self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_tray_image(self.image, serializer);
+    sse_encode_String(self.toolTip, serializer);
+    sse_encode_String(self.title, serializer);
+    sse_encode_list_tray_item(self.menu, serializer);
+  }
+
+  @protected
+  void sse_encode_tray_icon_placement(
+    TrayIconPlacement self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_tray_image(TrayImage self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.path, serializer);
+    sse_encode_list_list_prim_u_8_strict(self.pngs, serializer);
+    sse_encode_bool(self.template, serializer);
+    sse_encode_u_32(self.size, serializer);
+    sse_encode_tray_icon_placement(self.placement, serializer);
+  }
+
+  @protected
+  void sse_encode_tray_item(TrayItem self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.id, serializer);
+    sse_encode_tray_item_kind(self.kind, serializer);
+    sse_encode_String(self.label, serializer);
+    sse_encode_opt_String(self.detail, serializer);
+    sse_encode_bool(self.enabled, serializer);
+    sse_encode_bool(self.checked, serializer);
+    sse_encode_list_tray_item(self.items, serializer);
+  }
+
+  @protected
+  void sse_encode_tray_item_kind(TrayItemKind self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_tray_signal(TraySignal self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_tray_signal_kind(self.kind, serializer);
+    sse_encode_u_32(self.itemId, serializer);
+  }
+
+  @protected
+  void sse_encode_tray_signal_kind(
+    TraySignalKind self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected
