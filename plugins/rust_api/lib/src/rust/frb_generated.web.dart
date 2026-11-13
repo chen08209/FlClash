@@ -7,6 +7,7 @@
 // ignore_for_file: argument_type_not_assignable
 
 import 'api/charset.dart';
+import 'api/device.dart';
 import 'api/editor.dart';
 import 'api/fonts.dart';
 import 'api/hotkey.dart';

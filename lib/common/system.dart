@@ -1,7 +1,6 @@
 import 'dart:ffi';
 import 'dart:io';
 
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:ffi/ffi.dart';
 import 'package:fl_clash/common/boot_record.dart';
 import 'package:fl_clash/common/common.dart';
@@ -12,6 +11,7 @@ import 'package:fl_clash/plugins/app.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:prism_ui/banner.dart';
+import 'package:rust_api/rust_api.dart' as rust_api;
 
 typedef ProcessRunner =
     Future<ProcessResult> Function(String executable, List<String> arguments);
@@ -42,31 +42,15 @@ class System {
 
   bool get isTV => _isTV;
 
+  /// The OS major version: the API level on Android, the macOS major
+  /// version, 10 on Windows 10 and 11 alike, and 0 elsewhere.
   Future<int> init() async {
-    final BaseDeviceInfo deviceInfo;
-    try {
-      deviceInfo = await DeviceInfoPlugin().deviceInfo;
-    } on RangeError {
-      // device_info_plus turns the registry InstallDate into a DateTime, and
-      // some Windows installs store a value past DateTime's range.
-      if (isWindows) return 0;
-      rethrow;
+    if (isAndroid) {
+      final info = await app!.getDeviceInfo();
+      _isTV = info.isTelevision;
+      return info.sdkInt;
     }
-    _isTV = switch (deviceInfo) {
-      AndroidDeviceInfo(:final systemFeatures) => systemFeatures.any(
-        const {
-          'android.hardware.type.television',
-          'android.software.leanback',
-        }.contains,
-      ),
-      _ => false,
-    };
-    return switch (Platform.operatingSystem) {
-      'macos' => (deviceInfo as MacOsDeviceInfo).majorVersion,
-      'android' => (deviceInfo as AndroidDeviceInfo).version.sdkInt,
-      'windows' => (deviceInfo as WindowsDeviceInfo).majorVersion,
-      String() => 0,
-    };
+    return rust_api.osMajorVersion();
   }
 
   Future<AppExitInfo?> lastExitInfo() async {

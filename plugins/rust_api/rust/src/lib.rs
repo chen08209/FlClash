@@ -1,4 +1,5 @@
 pub mod api;
+mod device;
 mod editor;
 mod fonts;
 mod frb_generated;

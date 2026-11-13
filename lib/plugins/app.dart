@@ -51,6 +51,16 @@ class App {
     return _instance!;
   }
 
+  Future<({int sdkInt, bool isTelevision})> getDeviceInfo() async {
+    final info = await methodChannel.invokeMapMethod<String, Object?>(
+      'getDeviceInfo',
+    );
+    return (
+      sdkInt: info!['sdkInt'] as int,
+      isTelevision: info['isTelevision'] as bool,
+    );
+  }
+
   Future<bool?> moveTaskToBack() async {
     return methodChannel.invokeMethod<bool>('moveTaskToBack');
   }

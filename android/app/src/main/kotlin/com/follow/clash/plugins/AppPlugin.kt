@@ -184,6 +184,15 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
     override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
+            "getDeviceInfo" -> {
+                result.success(
+                    mapOf(
+                        "sdkInt" to Build.VERSION.SDK_INT,
+                        "isTelevision" to isTelevision,
+                    )
+                )
+            }
+
             "moveTaskToBack" -> {
                 activity?.moveTaskToBack(true)
                 result.success(true)

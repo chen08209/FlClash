@@ -1,4 +1,5 @@
 pub mod charset;
+pub mod device;
 pub mod editor;
 pub mod fonts;
 pub mod hotkey;
