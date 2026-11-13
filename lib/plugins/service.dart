@@ -14,20 +14,20 @@ final _utf8JsonDecoder = utf8.decoder.fuse(json.decoder);
 
 Object? _decodeUtf8Json(Uint8List data) => _utf8JsonDecoder.convert(data);
 
-Map<String, Object?> _decodeResponseOf((Uint8List, CoreMethod) request) {
-  final (data, method) = request;
+Map<String, Object?> _decodeResponseOf((Uint8List, CoreResultModel?) request) {
+  final (data, model) = request;
   final decoded = _decodeUtf8Json(data);
-  return withResultModel(method, Map<String, Object?>.from(decoded as Map));
+  return withResultModel(model, Map<String, Object?>.from(decoded as Map));
 }
 
 Future<Map<String, Object?>> _decodeResponse(
   Uint8List data,
-  CoreMethod method,
+  CoreResultModel? model,
 ) async {
-  if (data.length < 51200) {
-    return _decodeResponseOf((data, method));
+  if (data.length < coreIsolateDecodeBytes) {
+    return _decodeResponseOf((data, model));
   }
-  return compute(_decodeResponseOf, (data, method));
+  return compute(_decodeResponseOf, (data, model));
 }
 
 abstract mixin class ServiceListener {
@@ -83,7 +83,11 @@ class Service {
     });
   }
 
-  Future<CoreMethodResponse> invokeMethod(CoreMethodCall call) async {
+  Future<CoreMethodResponse> invokeMethod(
+    CoreMethodCall call, {
+    CoreResultModel? model,
+  }) async {
+    model ??= coreResultModelOf(call.method);
     final data = await _coreChannel.invokeMethod<Uint8List>(
       'invokeMethod',
       json.encode(call),
@@ -95,8 +99,8 @@ class Service {
       );
     }
     return resolveSpilledResponse(
-      CoreMethodResponse.fromJson(await _decodeResponse(data, call.method)),
-      method: call.method,
+      CoreMethodResponse.fromJson(await _decodeResponse(data, model)),
+      model: model,
     );
   }
 

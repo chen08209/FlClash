@@ -374,6 +374,13 @@ A response over 1 MiB goes to a file under `<home>/responses/`, and the envelope
 direct buffer), and desktop IPC drops a frame above `maxIPCFrameSize`. `lib/core/spill.dart` reads a spilled file only
 from that directory, decodes it in an isolate and deletes it; `core.init` clears what an earlier run left.
 
+A transport decodes a response of 50 KiB or more in an isolate and runs the result model there too:
+`coreResultModelOf` for the method, or one the caller passes. `getConnectionsWith` passes the caller's function, so
+the connections page ranks a poll and the dashboard sorts one in the isolate that decoded it, and the ranking state
+sent along is ids and typed data, which copies at the cost of its buffers. Such a function must be top level or
+built by a top-level function, since a closure made inside an instance method can capture what an isolate cannot
+receive.
+
 A profile file's proxies, groups and rules never cross the bridge. `profile.base` returns the config without
 `proxies`, `proxy-groups`, `sub-rules` and `rules`, with their counts, the profile's MATCH rules and a sha256 digest.
 `SetupAction.getProfile` patches it as before and sends the result as `SetupParams.base.overlay`. `core/profile_base.go`
@@ -1193,8 +1200,8 @@ than the frames a load costs. What a transition must not carry is work that repe
   it. A feed's first content is no refresh: `showFirstContent` applies it at once while `ArrivalHold` still holds the
   push, and past `arrivalHoldLimit` keeps it until the route has settled, as `RequestsView` does with its first poll. A
   feed that trims at a cap lists through `RecordFeedList`, whose rows follow their keys and keep their stripes, so a
-  refresh builds only what it added. A held poll keeps the time it was read at, which `TrackerSpeedRanker` derives
-  speeds from. Per-frame work spread over frames pauses the same way: the font family page switches one name to its own family per frame and
+  refresh builds only what it added. A held poll keeps the time it was read at: `rankTrackerInfos` derives
+  speeds when the poll is decoded. Per-frame work spread over frames pauses the same way: the font family page switches one name to its own family per frame and
   stops while `isRouteMoving`.
 - A scroll view of image tiles takes `arrivalCacheExtent` from `ArrivalCacheExtentMixin`: the rows past the viewport
   would otherwise be built in the same frame as the ones on screen, which for a screen of icon cards is most of the

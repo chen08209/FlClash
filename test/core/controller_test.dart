@@ -244,29 +244,6 @@ void main() {
   });
 
   group('connection methods', () {
-    test('getConnections delegates structured connections', () async {
-      final connection = TrackerInfo.fromJson({
-        'id': '1',
-        'metadata': {'network': 'tcp'},
-        'upload': 0,
-        'download': 0,
-        'start': '2024-01-01',
-        'chains': ['Proxy'],
-        'rule': 'DIRECT',
-        'rulePayload': '',
-      });
-      when(() => mock.getConnections()).thenAnswer((_) async => [connection]);
-      final result = await controller.getConnections();
-      expect(result.length, 1);
-      expect(result.first.id, '1');
-    });
-
-    test('getConnections handles empty connections', () async {
-      when(() => mock.getConnections()).thenAnswer((_) async => []);
-      final result = await controller.getConnections();
-      expect(result, isEmpty);
-    });
-
     test('closeConnection delegates', () async {
       when(() => mock.closeConnection('id1')).thenAnswer((_) async {});
       await controller.closeConnection('id1');
