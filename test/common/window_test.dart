@@ -184,16 +184,21 @@ void main() {
   );
 
   group('restoredWindowPosition', () {
+    // Windows measures every display in physical pixels over the window's
+    // current scale; these are for a window at 100%.
     const primary = DesktopDisplay(
       bounds: Rect.fromLTWH(0, 0, 1920, 1080),
       workArea: Rect.fromLTWH(0, 0, 1920, 1040),
       isPrimary: true,
     );
-    // 2560x1440 physical at 150%, right of the primary: rust_api divides its
-    // origin by its own scale.
-    const secondary = DesktopDisplay(
-      bounds: Rect.fromLTWH(1280, 0, 1707, 960),
-      workArea: Rect.fromLTWH(1280, 0, 1707, 920),
+    const right150 = DesktopDisplay(
+      bounds: Rect.fromLTWH(1920, 0, 2560, 1440),
+      workArea: Rect.fromLTWH(1920, 0, 2560, 1400),
+      scaleFactor: 1.5,
+    );
+    const left150 = DesktopDisplay(
+      bounds: Rect.fromLTWH(-2560, -200, 2560, 1440),
+      workArea: Rect.fromLTWH(-2560, -200, 2560, 1400),
       scaleFactor: 1.5,
     );
 
@@ -208,7 +213,7 @@ void main() {
 
       final position = restoredWindowPosition(
         props,
-        displays: const [primary, secondary],
+        displays: const [primary, right150],
         currentScale: 1,
       );
 
@@ -216,11 +221,111 @@ void main() {
       expect(position.dy, closeTo(150, 0.001));
     });
 
-    test('rejects a position no display shows any more', () {
+    test('places a window saved left of and above the primary', () {
       const props = WindowProps(
         width: 800,
         height: 600,
-        left: 2200,
+        left: -2000 / 1.5,
+        top: -100 / 1.5,
+        scale: 1.5,
+      );
+
+      final position = restoredWindowPosition(
+        props,
+        displays: const [primary, left150],
+        currentScale: 1,
+      );
+
+      expect(position!.dx, closeTo(-2000, 0.001));
+      expect(position.dy, closeTo(-100, 0.001));
+    });
+
+    test('measures in the scale the window starts at', () {
+      const props = WindowProps(
+        width: 800,
+        height: 600,
+        left: 100,
+        top: 50,
+        scale: 1,
+      );
+
+      final position = restoredWindowPosition(
+        props,
+        displays: const [
+          DesktopDisplay(
+            bounds: Rect.fromLTWH(0, 0, 1280, 720),
+            workArea: Rect.fromLTWH(0, 0, 1280, 693),
+            isPrimary: true,
+          ),
+        ],
+        currentScale: 1.5,
+      );
+
+      expect(position!.dx, closeTo(100 / 1.5, 0.001));
+      expect(position.dy, closeTo(50 / 1.5, 0.001));
+    });
+
+    test('rejects a position on a monitor that was unplugged', () {
+      const props = WindowProps(
+        width: 800,
+        height: 600,
+        left: 2200 / 1.5,
+        top: 150 / 1.5,
+        scale: 1.5,
+      );
+
+      expect(
+        restoredWindowPosition(
+          props,
+          displays: const [primary],
+          currentScale: 1,
+        ),
+        isNull,
+      );
+    });
+
+    test('rejects a title bar under the taskbar', () {
+      const props = WindowProps(
+        width: 800,
+        height: 600,
+        left: 400,
+        top: 1045,
+        scale: 1,
+      );
+
+      expect(
+        restoredWindowPosition(
+          props,
+          displays: const [primary],
+          currentScale: 1,
+        ),
+        isNull,
+      );
+    });
+
+    test('rejects a title bar under the menu bar', () {
+      const props = WindowProps(width: 800, height: 600, left: 400, top: 10);
+
+      expect(
+        restoredWindowPosition(
+          props,
+          displays: const [
+            DesktopDisplay(
+              bounds: Rect.fromLTWH(0, 0, 1440, 900),
+              workArea: Rect.fromLTWH(0, 25, 1440, 800),
+              isPrimary: true,
+            ),
+          ],
+        ),
+        isNull,
+      );
+    });
+
+    test('rejects a sliver left on the remaining monitor', () {
+      const props = WindowProps(
+        width: 800,
+        height: 600,
+        left: 1800,
         top: 100,
         scale: 1,
       );
@@ -235,13 +340,57 @@ void main() {
       );
     });
 
+    test('counts a title bar across two displays', () {
+      const props = WindowProps(
+        width: 800,
+        height: 600,
+        left: 1800,
+        top: 100,
+        scale: 1,
+      );
+
+      expect(
+        restoredWindowPosition(
+          props,
+          displays: const [primary, right150],
+          currentScale: 1,
+        ),
+        const Offset(1800, 100),
+      );
+    });
+
+    test('keeps a window that fills the work area exactly', () {
+      const props = WindowProps(
+        width: 1920,
+        height: 1040,
+        left: 0,
+        top: 0,
+        scale: 1,
+      );
+
+      expect(
+        restoredWindowPosition(
+          props,
+          displays: const [primary],
+          currentScale: 1,
+        ),
+        Offset.zero,
+      );
+    });
+
     test('reads a position saved without a scale at the current one', () {
       const props = WindowProps(width: 800, height: 600, left: 100, top: 50);
 
       expect(
         restoredWindowPosition(
           props,
-          displays: const [primary],
+          displays: const [
+            DesktopDisplay(
+              bounds: Rect.fromLTWH(0, 0, 1536, 864),
+              workArea: Rect.fromLTWH(0, 0, 1536, 832),
+              isPrimary: true,
+            ),
+          ],
           currentScale: 1.25,
         ),
         const Offset(100, 50),
@@ -258,7 +407,21 @@ void main() {
       );
 
       expect(
-        restoredWindowPosition(props, displays: const [primary, secondary]),
+        restoredWindowPosition(
+          props,
+          displays: const [
+            DesktopDisplay(
+              bounds: Rect.fromLTWH(0, 0, 1440, 900),
+              workArea: Rect.fromLTWH(0, 25, 1440, 800),
+              scaleFactor: 2,
+              isPrimary: true,
+            ),
+            DesktopDisplay(
+              bounds: Rect.fromLTWH(1440, 0, 1920, 1080),
+              workArea: Rect.fromLTWH(1440, 0, 1920, 1080),
+            ),
+          ],
+        ),
         const Offset(1500, 100),
       );
     });

@@ -87,7 +87,11 @@ class Window implements WindowPort {
   Future<void> _center() async {
     final size = (await desktopWindow.getBounds()).size;
     await desktopWindow.setPosition(
-      await calcWindowPosition(size, Alignment.center),
+      await calcWindowPosition(
+        size,
+        Alignment.center,
+        currentScale: system.isWindows ? _windowScale : null,
+      ),
     );
   }
 
@@ -224,7 +228,11 @@ class Window implements WindowPort {
 }
 
 @visibleForTesting
-Future<Offset> calcWindowPosition(Size windowSize, Alignment alignment) async {
+Future<Offset> calcWindowPosition(
+  Size windowSize,
+  Alignment alignment, {
+  double? currentScale,
+}) async {
   final displays = await desktopWindow.getDisplays();
   final cursor = await desktopWindow.getCursorPosition();
   final currentDisplay =
@@ -236,11 +244,14 @@ Future<Offset> calcWindowPosition(Size windowSize, Alignment alignment) async {
     return Offset.zero;
   }
 
+  final landedSize = currentScale == null
+      ? windowSize
+      : windowSize * (currentDisplay.scaleFactor / currentScale);
   final visibleSize = currentDisplay.workArea.size;
   final visibleStart = currentDisplay.workArea.topLeft;
   final slack = Offset(
-    visibleSize.width - windowSize.width,
-    visibleSize.height - windowSize.height,
+    visibleSize.width - landedSize.width,
+    visibleSize.height - landedSize.height,
   );
   return Offset(
     visibleStart.dx + slack.dx / 2 + alignment.x * slack.dx / 2,
@@ -261,22 +272,24 @@ Offset? restoredWindowPosition(
   required List<DesktopDisplay> displays,
   double? currentScale,
 }) {
-  final savedScale = currentScale == null ? 1.0 : props.scale ?? currentScale;
-  final topLeft = Offset(props.left!, props.top!) * savedScale;
-  final bottomRight =
-      topLeft + props.size.bottomRight(Offset.zero) * savedScale;
-  final isVisible = displays.any((display) {
-    final scale = currentScale == null ? 1.0 : display.scaleFactor;
-    final bounds = display.bounds;
-    final physical = Rect.fromLTRB(
-      bounds.left * scale,
-      bounds.top * scale,
-      bounds.right * scale,
-      bounds.bottom * scale,
+  final scale = currentScale == null
+      ? 1.0
+      : (props.scale ?? currentScale) / currentScale;
+  final topLeft = Offset(props.left!, props.top!) * scale;
+  final size = props.size * scale;
+  final titleBar = topLeft & Size(size.width, kHeaderHeight * scale);
+  var visibleWidth = 0.0;
+  for (final display in displays) {
+    final area = display.workArea;
+    if (titleBar.top < area.top || titleBar.bottom > area.bottom) {
+      continue;
+    }
+    visibleWidth += math.max(
+      0,
+      math.min(titleBar.right, area.right) - math.max(titleBar.left, area.left),
     );
-    return physical.contains(topLeft) || physical.contains(bottomRight);
-  });
-  return isVisible ? topLeft / (currentScale ?? 1.0) : null;
+  }
+  return visibleWidth >= titleBar.width / 2 ? topLeft : null;
 }
 
 class _InitFailureWindowListener with WindowListener {

@@ -9,10 +9,9 @@ use windows_sys::Win32::Graphics::Gdi::{
 use windows_sys::Win32::UI::HiDpi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI};
 use windows_sys::Win32::UI::WindowsAndMessaging::MONITORINFOF_PRIMARY;
 
-// Each display is in its own logical pixels, physical over its own scale, as
-// screen_retriever reported them; only physical pixels compare across scales.
-pub(super) fn all() -> Vec<WindowDisplay> {
-    let mut displays = Vec::new();
+// In the window's units, the cursor's and the bounds', whatever each monitor's own scale.
+pub(super) fn all(window_scale: f64) -> Vec<WindowDisplay> {
+    let mut displays: Vec<WindowDisplay> = Vec::new();
     unsafe {
         EnumDisplayMonitors(
             null_mut(),
@@ -21,6 +20,10 @@ pub(super) fn all() -> Vec<WindowDisplay> {
             &mut displays as *mut Vec<WindowDisplay> as LPARAM,
         )
     };
+    for display in &mut displays {
+        display.bounds = scaled(display.bounds, window_scale);
+        display.work_area = scaled(display.work_area, window_scale);
+    }
     displays
 }
 
@@ -43,19 +46,28 @@ unsafe extern "system" fn collect(
         1.0
     };
     displays.push(WindowDisplay {
-        bounds: scaled(info.rcMonitor, scale),
-        work_area: scaled(info.rcWork, scale),
+        bounds: physical(info.rcMonitor),
+        work_area: physical(info.rcWork),
         scale_factor: scale,
         primary: info.dwFlags & MONITORINFOF_PRIMARY != 0,
     });
     1
 }
 
-fn scaled(rect: RECT, scale: f64) -> WindowBounds {
+fn physical(rect: RECT) -> WindowBounds {
     WindowBounds {
-        x: f64::from(rect.left) / scale,
-        y: f64::from(rect.top) / scale,
-        width: f64::from(rect.right - rect.left) / scale,
-        height: f64::from(rect.bottom - rect.top) / scale,
+        x: f64::from(rect.left),
+        y: f64::from(rect.top),
+        width: f64::from(rect.right - rect.left),
+        height: f64::from(rect.bottom - rect.top),
+    }
+}
+
+fn scaled(bounds: WindowBounds, scale: f64) -> WindowBounds {
+    WindowBounds {
+        x: bounds.x / scale,
+        y: bounds.y / scale,
+        width: bounds.width / scale,
+        height: bounds.height / scale,
     }
 }

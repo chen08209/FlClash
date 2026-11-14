@@ -25,8 +25,9 @@ enum WindowEvent {
   activate,
 }
 
-/// On Windows each display is in its own logical pixels, physical over its
-/// own [scaleFactor], so only physical pixels compare across displays.
+/// [bounds] and [workArea] are in the units of [DesktopWindow.getBounds]: on
+/// Windows that is physical pixels over the window's current scale for every
+/// display, whatever its own [scaleFactor].
 @immutable
 class DesktopDisplay {
   const DesktopDisplay({
