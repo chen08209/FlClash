@@ -342,15 +342,16 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
 - Reading the Wi-Fi SSID is opt-in work, not ambient state. `ConnectivityManager` reads it only while `excludeSSIDs` is
   non-empty, because that list is its only consumer through `suspendProvider`, and the read costs a blocking platform
   call plus a location permission on Android and macOS. A second consumer must widen that gate, not drop it.
-- On Android the `wifi_ssid` permission is only `granted` once `ACCESS_BACKGROUND_LOCATION` is held too (Q+). Fine
+- On Android the SSID permission is only `granted` once `ACCESS_BACKGROUND_LOCATION` is held too (Q+). Fine
   location alone reads the SSID in the foreground but returns `UNKNOWN_SSID` once the app is backgrounded, which is
-  where on-demand spends most of its time. `getSsid` itself only needs fine location, so the split stays inside the
-  plugin.
-- No `wifi_ssid` implementation may answer `getSsid` on the platform thread. Android resolves through a network callback
-  with a timeout, Linux through `g_task_run_in_thread`, and macOS through `ssidQueue` after checking the location
-  authorization, because CoreWLAN reaches `wifid` over XPC and a wedged daemon would freeze the window. Windows is the
-  outstanding exception: `WlanQueryInterface` still runs inline, since replying off-thread there needs a window-message
-  hop that the plugin API does not provide.
+  where on-demand spends most of its time. `getSsid` itself only needs fine location, so the split stays inside
+  `WifiSsidPlugin`.
+- No SSID implementation may answer `getSsid` on the platform thread. Android resolves through a network callback with
+  a timeout. The desktop reads come from rust_api's `wifi` module through async bridge calls, which run on the
+  flutter_rust_bridge runtime and do the blocking part (CoreWLAN, `WlanQueryInterface`, `nmcli`) in
+  `spawn_blocking`. On macOS only the location work hops to the main queue: the `CLLocationManager`, its delegate and
+  the pending requests live there, and the SSID read waits for that answer before it asks CoreWLAN, which reaches
+  `wifid` over XPC, so a wedged daemon would freeze the window.
 - Android's `system` nameserver resolves only through the DNS `NetworkObserver` reports; mihomo builds it with no
   fallback, so with no list every lookup through it fails at once. The Core tests delays and updates providers with no
   service running, so the observer lives for the process from the first `init` or native `quickSetup` and never sends

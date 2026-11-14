@@ -11,4 +11,5 @@ pub mod network;
 pub mod proxy;
 pub mod script;
 pub mod tray;
+pub mod wifi;
 pub mod window;

@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/manager/connectivity_manager.dart';
+import 'package:fl_clash/plugins/wifi_ssid.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/on_demand.dart';
@@ -10,12 +12,15 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rust_api/rust_api.dart' show NetworkState;
-import 'package:wifi_ssid/wifi_ssid.dart';
 
 const _wifi = NetworkState(wifi: true, vpn: false);
 const _offWifi = NetworkState(wifi: false, vpn: false);
 
 void main() {
+  setUpAll(() {
+    wifiSsidManager.resetForTesting(const AndroidWifiSsidHost());
+  });
+
   late ProviderContainer container;
   late StreamController<NetworkState> connectivity;
 
@@ -135,7 +140,7 @@ void main() {
   testWidgets('reads the SSID again once location permission is granted', (
     tester,
   ) async {
-    const channel = MethodChannel('wifi_ssid');
+    const channel = MethodChannel('$packageName/wifi_ssid');
     final messenger = tester.binding.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(channel, (_) async => 0);
     addTearDown(() => messenger.setMockMethodCallHandler(channel, null));

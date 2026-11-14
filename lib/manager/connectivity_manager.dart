@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/plugins/wifi_ssid.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/on_demand.dart';
@@ -9,7 +10,6 @@ import 'package:flutter/widgets.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rust_api/rust_api.dart' show NetworkState, networkChanges;
-import 'package:wifi_ssid/wifi_ssid.dart';
 
 typedef SsidReader = Future<String?> Function();
 
@@ -34,8 +34,7 @@ class ConnectivityManager extends ConsumerStatefulWidget {
 
 class _ConnectivityManagerState extends ConsumerState<ConnectivityManager> {
   late final StreamSubscription subscription;
-  late final SsidReader _readSsid =
-      widget.readSsid ?? WifiSsidManager.instance.getSsid;
+  late final SsidReader _readSsid = widget.readSsid ?? wifiSsidManager.getSsid;
 
   int _ssidRequestId = 0;
   bool _onWifi = false;

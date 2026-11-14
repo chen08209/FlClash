@@ -41,7 +41,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -2137788227;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1212020668;
 
 // Section: executor
 
@@ -1125,6 +1125,77 @@ fn wire__crate__api__editor__RopeUpload_push_impl(
         },
     )
 }
+fn wire__crate__api__wifi__check_wifi_ssid_permission_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "check_wifi_ssid_permission",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, ()>(
+                    (move || async move {
+                        let output_ok =
+                            Ok::<_, ()>(crate::api::wifi::check_wifi_ssid_permission().await)?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__wifi__current_wifi_ssid_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "current_wifi_ssid",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, String>(
+                    (move || async move {
+                        let output_ok = crate::api::wifi::current_wifi_ssid().await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
 fn wire__crate__api__script__evaluate_script_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -1657,6 +1728,42 @@ fn wire__crate__api__launch__register_url_scheme_impl(
                     ))?;
                     std::result::Result::Ok(output_ok)
                 })())
+            }
+        },
+    )
+}
+fn wire__crate__api__wifi__request_wifi_ssid_permission_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "request_wifi_ssid_permission",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, ()>(
+                    (move || async move {
+                        let output_ok =
+                            Ok::<_, ()>(crate::api::wifi::request_wifi_ssid_permission().await)?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
             }
         },
     )
@@ -3623,6 +3730,19 @@ impl SseDecode for usize {
     }
 }
 
+impl SseDecode for crate::api::wifi::WifiSsidPermission {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::wifi::WifiSsidPermission::Granted,
+            1 => crate::api::wifi::WifiSsidPermission::Denied,
+            2 => crate::api::wifi::WifiSsidPermission::PermanentlyDenied,
+            _ => unreachable!("Invalid variant for WifiSsidPermission: {}", inner),
+        };
+    }
+}
+
 impl SseDecode for crate::api::window::WindowBounds {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -3734,114 +3854,127 @@ fn pde_ffi_dispatcher_primary_impl(
         }
         21 => wire__crate__api__editor__RopeUpload_finish_impl(port, ptr, rust_vec_len, data_len),
         23 => wire__crate__api__editor__RopeUpload_push_impl(port, ptr, rust_vec_len, data_len),
-        24 => wire__crate__api__script__evaluate_script_impl(port, ptr, rust_vec_len, data_len),
-        25 => wire__crate__api__editor__folds_compute_all_impl(port, ptr, rust_vec_len, data_len),
-        29 => wire__crate__api__hotkey__hot_key_events_impl(port, ptr, rust_vec_len, data_len),
-        30 => wire__crate__api__init__init_app_impl(port, ptr, rust_vec_len, data_len),
-        31 => {
+        24 => wire__crate__api__wifi__check_wifi_ssid_permission_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        25 => wire__crate__api__wifi__current_wifi_ssid_impl(port, ptr, rust_vec_len, data_len),
+        26 => wire__crate__api__script__evaluate_script_impl(port, ptr, rust_vec_len, data_len),
+        27 => wire__crate__api__editor__folds_compute_all_impl(port, ptr, rust_vec_len, data_len),
+        31 => wire__crate__api__hotkey__hot_key_events_impl(port, ptr, rust_vec_len, data_len),
+        32 => wire__crate__api__init__init_app_impl(port, ptr, rust_vec_len, data_len),
+        33 => {
             wire__crate__api__launch__is_autostart_enabled_impl(port, ptr, rust_vec_len, data_len)
         }
-        32 => wire__crate__api__link__link_stream_impl(port, ptr, rust_vec_len, data_len),
-        33 => wire__crate__api__network__network_changes_impl(port, ptr, rust_vec_len, data_len),
-        35 => wire__crate__api__device__os_major_version_impl(port, ptr, rust_vec_len, data_len),
-        37 => wire__crate__api__launch__register_url_scheme_impl(port, ptr, rust_vec_len, data_len),
-        38 => wire__crate__api__launch__set_autostart_impl(port, ptr, rust_vec_len, data_len),
-        42 => wire__crate__api__proxy__start_system_proxy_impl(port, ptr, rust_vec_len, data_len),
-        43 => wire__crate__api__proxy__stop_system_proxy_impl(port, ptr, rust_vec_len, data_len),
-        44 => wire__crate__api__fonts__system_font_families_impl(port, ptr, rust_vec_len, data_len),
-        45 => wire__crate__api__charset__transcode_charset_impl(port, ptr, rust_vec_len, data_len),
-        46 => wire__crate__api__tray__tray_signals_impl(port, ptr, rust_vec_len, data_len),
-        47 => wire__crate__api__window__window_close_impl(port, ptr, rust_vec_len, data_len),
-        48 => wire__crate__api__window__window_ensure_initialized_impl(
+        34 => wire__crate__api__link__link_stream_impl(port, ptr, rust_vec_len, data_len),
+        35 => wire__crate__api__network__network_changes_impl(port, ptr, rust_vec_len, data_len),
+        37 => wire__crate__api__device__os_major_version_impl(port, ptr, rust_vec_len, data_len),
+        39 => wire__crate__api__launch__register_url_scheme_impl(port, ptr, rust_vec_len, data_len),
+        40 => wire__crate__api__wifi__request_wifi_ssid_permission_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        49 => wire__crate__api__window__window_focus_impl(port, ptr, rust_vec_len, data_len),
-        50 => wire__crate__api__window__window_get_bounds_impl(port, ptr, rust_vec_len, data_len),
-        51 => wire__crate__api__window__window_get_cursor_position_impl(
+        41 => wire__crate__api__launch__set_autostart_impl(port, ptr, rust_vec_len, data_len),
+        45 => wire__crate__api__proxy__start_system_proxy_impl(port, ptr, rust_vec_len, data_len),
+        46 => wire__crate__api__proxy__stop_system_proxy_impl(port, ptr, rust_vec_len, data_len),
+        47 => wire__crate__api__fonts__system_font_families_impl(port, ptr, rust_vec_len, data_len),
+        48 => wire__crate__api__charset__transcode_charset_impl(port, ptr, rust_vec_len, data_len),
+        49 => wire__crate__api__tray__tray_signals_impl(port, ptr, rust_vec_len, data_len),
+        50 => wire__crate__api__window__window_close_impl(port, ptr, rust_vec_len, data_len),
+        51 => wire__crate__api__window__window_ensure_initialized_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        52 => wire__crate__api__window__window_get_displays_impl(port, ptr, rust_vec_len, data_len),
-        53 => wire__crate__api__window__window_hide_impl(port, ptr, rust_vec_len, data_len),
-        54 => wire__crate__api__window__window_is_always_on_top_impl(
+        52 => wire__crate__api__window__window_focus_impl(port, ptr, rust_vec_len, data_len),
+        53 => wire__crate__api__window__window_get_bounds_impl(port, ptr, rust_vec_len, data_len),
+        54 => wire__crate__api__window__window_get_cursor_position_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        55 => wire__crate__api__window__window_is_effect_supported_impl(
+        55 => wire__crate__api__window__window_get_displays_impl(port, ptr, rust_vec_len, data_len),
+        56 => wire__crate__api__window__window_hide_impl(port, ptr, rust_vec_len, data_len),
+        57 => wire__crate__api__window__window_is_always_on_top_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        56 => {
+        58 => wire__crate__api__window__window_is_effect_supported_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        59 => {
             wire__crate__api__window__window_is_full_screen_impl(port, ptr, rust_vec_len, data_len)
         }
-        57 => wire__crate__api__window__window_is_maximized_impl(port, ptr, rust_vec_len, data_len),
-        58 => wire__crate__api__window__window_is_minimized_impl(port, ptr, rust_vec_len, data_len),
-        59 => wire__crate__api__window__window_is_position_supported_impl(
+        60 => wire__crate__api__window__window_is_maximized_impl(port, ptr, rust_vec_len, data_len),
+        61 => wire__crate__api__window__window_is_minimized_impl(port, ptr, rust_vec_len, data_len),
+        62 => wire__crate__api__window__window_is_position_supported_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        60 => wire__crate__api__window__window_is_visible_impl(port, ptr, rust_vec_len, data_len),
-        61 => wire__crate__api__window__window_maximize_impl(port, ptr, rust_vec_len, data_len),
-        62 => wire__crate__api__window__window_minimize_impl(port, ptr, rust_vec_len, data_len),
-        63 => wire__crate__api__window__window_set_always_on_top_impl(
+        63 => wire__crate__api__window__window_is_visible_impl(port, ptr, rust_vec_len, data_len),
+        64 => wire__crate__api__window__window_maximize_impl(port, ptr, rust_vec_len, data_len),
+        65 => wire__crate__api__window__window_minimize_impl(port, ptr, rust_vec_len, data_len),
+        66 => wire__crate__api__window__window_set_always_on_top_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        64 => wire__crate__api__window__window_set_bounds_impl(port, ptr, rust_vec_len, data_len),
-        65 => wire__crate__api__window__window_set_effect_impl(port, ptr, rust_vec_len, data_len),
-        66 => {
+        67 => wire__crate__api__window__window_set_bounds_impl(port, ptr, rust_vec_len, data_len),
+        68 => wire__crate__api__window__window_set_effect_impl(port, ptr, rust_vec_len, data_len),
+        69 => {
             wire__crate__api__window__window_set_full_screen_impl(port, ptr, rust_vec_len, data_len)
         }
-        67 => wire__crate__api__window__window_set_minimum_size_impl(
+        70 => wire__crate__api__window__window_set_minimum_size_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        68 => wire__crate__api__window__window_set_prevent_close_impl(
+        71 => wire__crate__api__window__window_set_prevent_close_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        69 => wire__crate__api__window__window_set_rounded_corners_impl(
+        72 => wire__crate__api__window__window_set_rounded_corners_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        70 => wire__crate__api__window__window_set_skip_taskbar_impl(
+        73 => wire__crate__api__window__window_set_skip_taskbar_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        71 => wire__crate__api__window__window_set_title_bar_style_impl(
+        74 => wire__crate__api__window__window_set_title_bar_style_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        72 => wire__crate__api__window__window_show_impl(port, ptr, rust_vec_len, data_len),
-        73 => wire__crate__api__window__window_signals_impl(port, ptr, rust_vec_len, data_len),
-        74 => {
+        75 => wire__crate__api__window__window_show_impl(port, ptr, rust_vec_len, data_len),
+        76 => wire__crate__api__window__window_signals_impl(port, ptr, rust_vec_len, data_len),
+        77 => {
             wire__crate__api__window__window_start_dragging_impl(port, ptr, rust_vec_len, data_len)
         }
-        75 => wire__crate__api__window__window_unmaximize_impl(port, ptr, rust_vec_len, data_len),
-        76 => wire__crate__api__editor__words_extract_impl(port, ptr, rust_vec_len, data_len),
+        78 => wire__crate__api__window__window_unmaximize_impl(port, ptr, rust_vec_len, data_len),
+        79 => wire__crate__api__editor__words_extract_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -3873,16 +4006,16 @@ fn pde_ffi_dispatcher_sync_impl(
         18 => wire__crate__api__editor__RopeBridge_slice_impl(ptr, rust_vec_len, data_len),
         19 => wire__crate__api__editor__RopeBridge_snapshot_impl(ptr, rust_vec_len, data_len),
         22 => wire__crate__api__editor__RopeUpload_new_impl(ptr, rust_vec_len, data_len),
-        26 => {
+        28 => {
             wire__crate__api__editor__folds_find_matching_bracket_impl(ptr, rust_vec_len, data_len)
         }
-        27 => wire__crate__api__editor__guides_compute_viewport_impl(ptr, rust_vec_len, data_len),
-        28 => wire__crate__api__tray__hide_tray_impl(ptr, rust_vec_len, data_len),
-        34 => wire__crate__api__tray__open_tray_menu_impl(ptr, rust_vec_len, data_len),
-        36 => wire__crate__api__launch__read_local_machine_dword_impl(ptr, rust_vec_len, data_len),
-        39 => wire__crate__api__hotkey__set_hot_keys_impl(ptr, rust_vec_len, data_len),
-        40 => wire__crate__api__tray__set_tray_title_impl(ptr, rust_vec_len, data_len),
-        41 => wire__crate__api__tray__show_tray_impl(ptr, rust_vec_len, data_len),
+        29 => wire__crate__api__editor__guides_compute_viewport_impl(ptr, rust_vec_len, data_len),
+        30 => wire__crate__api__tray__hide_tray_impl(ptr, rust_vec_len, data_len),
+        36 => wire__crate__api__tray__open_tray_menu_impl(ptr, rust_vec_len, data_len),
+        38 => wire__crate__api__launch__read_local_machine_dword_impl(ptr, rust_vec_len, data_len),
+        42 => wire__crate__api__hotkey__set_hot_keys_impl(ptr, rust_vec_len, data_len),
+        43 => wire__crate__api__tray__set_tray_title_impl(ptr, rust_vec_len, data_len),
+        44 => wire__crate__api__tray__show_tray_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -4313,6 +4446,28 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::tray::TraySignalKind>
     for crate::api::tray::TraySignalKind
 {
     fn into_into_dart(self) -> crate::api::tray::TraySignalKind {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::wifi::WifiSsidPermission {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Granted => 0.into_dart(),
+            Self::Denied => 1.into_dart(),
+            Self::PermanentlyDenied => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::wifi::WifiSsidPermission
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::wifi::WifiSsidPermission>
+    for crate::api::wifi::WifiSsidPermission
+{
+    fn into_into_dart(self) -> crate::api::wifi::WifiSsidPermission {
         self
     }
 }
@@ -5011,6 +5166,23 @@ impl SseEncode for usize {
             .cursor
             .write_u64::<NativeEndian>(self as _)
             .unwrap();
+    }
+}
+
+impl SseEncode for crate::api::wifi::WifiSsidPermission {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::wifi::WifiSsidPermission::Granted => 0,
+                crate::api::wifi::WifiSsidPermission::Denied => 1,
+                crate::api::wifi::WifiSsidPermission::PermanentlyDenied => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
     }
 }
 

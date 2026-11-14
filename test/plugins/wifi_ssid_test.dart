@@ -1,12 +1,13 @@
+import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/plugins/wifi_ssid.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wifi_ssid/wifi_ssid.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const channel = MethodChannel('wifi_ssid');
-  final manager = WifiSsidManager.instance;
+  const channel = MethodChannel('$packageName/wifi_ssid');
+  const manager = AndroidWifiSsidHost();
 
   tearDown(() async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

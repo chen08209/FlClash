@@ -10,4 +10,5 @@ mod network;
 mod proxy;
 mod script;
 mod tray;
+mod wifi;
 mod window;

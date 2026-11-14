@@ -1632,8 +1632,8 @@ rewritten; each owner reads the flag where it would otherwise act:
   foreground service runs without a `VpnService`.
 - Wi-Fi SSID: `ConnectivityManager` never reads the SSID and `LocationPermissions.refresh` neither checks
   nor requests location authorization, so `currentSSIDProvider` stays `null` and the excluded-network suspend never
-  trips. The macOS `wifi_ssid` plugin builds its `CLLocationManager` and `CWWiFiClient` lazily, so a build that
-  never asks never reaches locationd or wifid.
+  trips. rust_api's macOS `wifi` module builds its `CLLocationManager` on the first call, so a build that never
+  asks never reaches locationd or wifid.
 - Global hotkeys: `HotKeyManager` neither subscribes to hotkey events nor registers the configured shortcuts with the
   OS; the in-window `Shortcuts` (close window, escape) stay.
 - URL schemes and launcher shortcuts: `Window.init` skips the Windows registry and Linux desktop-entry registration
@@ -1800,7 +1800,8 @@ NDK version stands in for the hook's cache.
 
 - `setup`: build-time harness for Go core artifacts and the Rust helper, driven by a Dart build hook; no runtime Dart API.
 - `rust_api`: runtime Flutter Rust Bridge FFI package built through Native Assets. See below.
-- `wifi_ssid`: Wi-Fi SSID detection.
+- `window`: desktop window control for Linux, macOS and Windows. Written for FlClash; replaced the
+  `window_manager` fork. See below.
 - `code_forge`: the text editor behind `EditorPage`, derived from upstream `code_forge`. See below.
 
 ## code_forge Plugin
@@ -2053,6 +2054,16 @@ UTF-8 bytes rather than a `String` so that decoding them stays off the UI isolat
   default PPP, TUN or WireGuard interface on Linux, and never on macOS; the Core's own wintun or TUN is not one. Android
   takes the same events from `DefaultNetworkWatcher` in `AppPlugin`, the app's default network, which is the app's
   own VPN while it runs.
+- `wifi/` reads the Wi-Fi SSID for on-demand's excluded networks and asks for the location permission it needs.
+  The three calls are async bridge calls, so they run on the flutter_rust_bridge tokio runtime, and each blocking read
+  goes to `spawn_blocking`. macOS keeps a `CLLocationManager` and its delegate on the main thread, reached through
+  the main dispatch queue, because the prompt and the delegate callbacks need the main run loop; a nested event loop
+  that holds the queue only delays the answer. The SSID comes from CoreWLAN, and from macOS 14 only once location is
+  authorized. Windows loads `wlanapi.dll` at run time, since an install without the Wireless LAN feature has none
+  and a load-time import would stop the app from starting, and from build 26100 (24H2) asks for the `wiFiControl`
+  capability through WinRT. Linux asks NetworkManager, iwd and ConnMan over the system D-Bus with `zbus`, then
+  `nmcli`, and needs no permission. Android reads the SSID in the app's `WifiSsidPlugin`; `lib/plugins/wifi_ssid.dart`
+  picks the host.
 - `proxy/` sets the desktop system proxy: `networksetup` for every macOS network service, `gsettings` (GNOME, MATE)
   or `kwriteconfig6`/`kwriteconfig5` (KDE) on Linux, and WinINet for the LAN and every RAS entry on Windows. With
   `NetworkProps.pacMode` on it points the system at a PAC URL instead: `pac` serves `NetworkProps.pacScript`, with
@@ -2076,10 +2087,11 @@ surfaces as an unhandled async error instead of reaching the caller. That is why
 everything after it is reported as an event.
 
 What a platform does not use, it does not compile. `interprocess`, `tokio` and `global-hotkey` are declared under
-`cfg(not(target_os = "android"))`, `objc2` and its framework crates only for macOS and `ksni` only for Linux, and `ipc/mod.rs`,
-`hotkey/mod.rs` and `tray/mod.rs` swap in their `unsupported.rs` on Android, which loads the Core in-process and has
-no global shortcuts or status item. Adding a capability follows the same shape: implement it in its own module, gate
-the dependency by target, and keep the `api/` entry point unconditional so one set of bindings still serves every platform.
+`cfg(not(target_os = "android"))`, `objc2` and its framework crates only for macOS, `ksni` and `zbus` only for Linux
+and `windows` only for Windows, and `ipc/mod.rs`, `hotkey/mod.rs`, `tray/mod.rs` and `wifi/mod.rs` swap in their
+`unsupported.rs` on Android, which loads the Core in-process, has no global shortcuts or status item, and reads the
+SSID in Kotlin. Adding a capability follows the same shape: implement it in its own module, gate the dependency by
+target, and keep the `api/` entry point unconditional so one set of bindings still serves every platform.
 
 `RustLib.init()` runs on every platform in `main`, because the script engine and the editor are shared; the editor
 shows its unavailable state when `RustLib` is not initialized rather than loading the library itself.

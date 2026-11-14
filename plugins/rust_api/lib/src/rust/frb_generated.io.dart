@@ -15,6 +15,7 @@ import 'api/network.dart';
 import 'api/proxy.dart';
 import 'api/script.dart';
 import 'api/tray.dart';
+import 'api/wifi.dart';
 import 'api/window.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -264,6 +265,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt dco_decode_usize(dynamic raw);
+
+  @protected
+  WifiSsidPermission dco_decode_wifi_ssid_permission(dynamic raw);
 
   @protected
   WindowBounds dco_decode_window_bounds(dynamic raw);
@@ -531,6 +535,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt sse_decode_usize(SseDeserializer deserializer);
+
+  @protected
+  WifiSsidPermission sse_decode_wifi_ssid_permission(
+    SseDeserializer deserializer,
+  );
 
   @protected
   WindowBounds sse_decode_window_bounds(SseDeserializer deserializer);
@@ -849,6 +858,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_usize(BigInt self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_wifi_ssid_permission(
+    WifiSsidPermission self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_window_bounds(WindowBounds self, SseSerializer serializer);
