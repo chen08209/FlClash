@@ -997,7 +997,9 @@ const _proxyVariants = <String, Map<String, YamlSchema>>{
     'udp': _bool,
     ..._tcpDial,
     'psk': _str,
-    'version': YamlSchema.scalar(['1', '2', '3', '4', '5']),
+    'version': YamlSchema.scalar(['1', '2', '3', '4', '5', '6']),
+    // v6 only; must match the server
+    'mode': YamlSchema.scalar(['default', 'unshaped', 'unsafe-raw']),
     'reuse': _bool,
     'client-fingerprint': _clientFingerprint,
     'obfs-opts': YamlSchema.map({
@@ -1663,7 +1665,9 @@ const _listener = YamlSchema.map(
     },
     'snell': {
       'psk': _str,
-      'version': YamlSchema.scalar(['1', '2', '3', '4', '5']),
+      'version': YamlSchema.scalar(['1', '2', '3', '4', '5', '6']),
+      // v6 only
+      'mode': YamlSchema.scalar(['default', 'unshaped', 'unsafe-raw']),
       'udp': _bool,
       'obfs-opts': YamlSchema.map({
         'mode': YamlSchema.scalar(['http', 'tls']),
