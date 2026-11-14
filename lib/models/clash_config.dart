@@ -34,8 +34,6 @@ const defaultGeoXUrl = {
       'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb',
   GeoResource.ASN:
       'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb',
-  GeoResource.GEOIP:
-      'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat',
   GeoResource.GEOSITE:
       'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat',
 };
@@ -1199,7 +1197,7 @@ extension TunExt on Tun {
 @freezed
 abstract class FallbackFilter with _$FallbackFilter {
   const factory FallbackFilter({
-    @Default(true) bool geoip,
+    @Default(false) bool geoip,
     @Default('') @JsonKey(name: 'geoip-code') String geoipCode,
     @Default([]) List<String> geosite,
     @Default([]) List<String> ipcidr,
@@ -2067,9 +2065,12 @@ Map<GeoResource, String> _geoXUrlFromJson(Map<String, Object?>? json) {
   if (json == null) {
     return defaultGeoXUrl;
   }
-  return json.map(
-    (key, value) => MapEntry(GeoResource.fromJson(key), value as String),
-  );
+  return {
+    for (final MapEntry(:key, :value) in json.entries)
+      // Saved configs from before the core stopped reading GeoIP.dat.
+      if (key != 'geoip' && key != 'geo-ip')
+        GeoResource.fromJson(key): value as String,
+  };
 }
 
 Map<String, String> _geoXUrlToJson(Map<GeoResource, String> value) {

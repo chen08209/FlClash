@@ -210,7 +210,6 @@ void main() {
     test('GeoResource has correct updatingKey', () {
       expect(GeoResource.MMDB.updatingKey, 'geo_resource_MMDB');
       expect(GeoResource.ASN.updatingKey, 'geo_resource_ASN');
-      expect(GeoResource.GEOIP.updatingKey, 'geo_resource_GEOIP');
       expect(GeoResource.GEOSITE.updatingKey, 'geo_resource_GEOSITE');
     });
 

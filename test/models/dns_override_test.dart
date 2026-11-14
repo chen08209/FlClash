@@ -22,7 +22,7 @@ void main() {
     });
   });
 
-  test('the model defaults match the core\'s, GeoIP code aside', () {
+  test('the model defaults match the core\'s', () {
     final core = concordDefaults('dns');
 
     expect(core['enable'], defaultDns.enable);
@@ -31,10 +31,9 @@ void main() {
     expect(core['use-system-hosts'], defaultDns.useSystemHosts);
     expect(core['ipv6-timeout'], defaultDns.ipv6Timeout);
     expect(core['fake-ip-ttl'], defaultDns.fakeIpTtl);
-    expect(
-      (core['fallback-filter']! as Map)['geoip'],
-      defaultDns.fallbackFilter.geoip,
-    );
+    final filter = core['fallback-filter']! as Map;
+    expect(filter['geoip'], defaultDns.fallbackFilter.geoip);
+    expect(filter['geoip-code'], defaultDns.fallbackFilter.geoipCode);
     expect(core['enhanced-mode'], 'redir-host');
     expect(defaultDns.enhancedMode, DnsMode.redirHost);
     expect(core['fake-ip-filter-mode'], 'blacklist');

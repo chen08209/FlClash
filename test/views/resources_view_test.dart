@@ -145,7 +145,7 @@ void main() {
         findsNothing,
       );
     }
-    expect(find.byType(FutureBuilder<FileInfo?>), findsNWidgets(4));
+    expect(find.byType(FutureBuilder<FileInfo?>), findsNWidgets(3));
     for (final url in defaultGeoXUrl.values) {
       expect(find.text(url), findsNothing);
     }

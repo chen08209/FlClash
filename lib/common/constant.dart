@@ -121,7 +121,6 @@ const renderThrottleDuration = Duration(milliseconds: 300);
 const defaultUpdateDuration = Duration(days: 1);
 const MMDB = 'GEOIP.metadb';
 const ASN = 'ASN.mmdb';
-const GEOIP = 'GEOIP.dat';
 const GEOSITE = 'GEOSITE.dat';
 
 final double kHeaderHeight = getWindowHeaderHeight(

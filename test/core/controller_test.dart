@@ -106,7 +106,7 @@ void main() {
     setUp(() async {
       home = Directory.systemTemp.createTempSync('controller_init_test');
       await useAppPaths(home);
-      for (final name in [MMDB, GEOIP, GEOSITE, ASN]) {
+      for (final name in [MMDB, GEOSITE]) {
         File('${home.path}/$name').writeAsStringSync('geo');
       }
     });

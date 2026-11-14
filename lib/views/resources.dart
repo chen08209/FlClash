@@ -444,7 +444,6 @@ class _FileInfoBuilderState extends ConsumerState<_FileInfoBuilder> {
 String _geoFileName(GeoResource type) => switch (type) {
   GeoResource.MMDB => MMDB,
   GeoResource.ASN => ASN,
-  GeoResource.GEOIP => GEOIP,
   GeoResource.GEOSITE => GEOSITE,
 };
 

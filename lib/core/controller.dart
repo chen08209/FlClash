@@ -46,7 +46,7 @@ extension type CoreController._(CoreBackend _backend) implements CoreBackend {
 
   static Future<void> initGeo() async {
     final homePath = await appPath.homeDirPath;
-    const geoFileNameList = [MMDB, GEOIP, GEOSITE, ASN];
+    const geoFileNameList = [MMDB, GEOSITE];
     try {
       for (final geoFileName in geoFileNameList) {
         final geoFile = File(join(homePath, geoFileName));
@@ -56,7 +56,7 @@ extension type CoreController._(CoreBackend _backend) implements CoreBackend {
         }
         final asset = 'assets/data/$geoFileName';
         // rootBundle inflates the asset on the platform thread, which Android
-        // shares with the UI: the four files stall frames for over 100 ms.
+        // shares with the UI: the files stall frames for over 100 ms.
         if (app case final app?) {
           await app.extractAsset(asset, geoFile.path);
           continue;

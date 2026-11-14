@@ -313,7 +313,7 @@ const _$TunStackEnumMap = {
 _FallbackFilter _$FallbackFilterFromJson(
   Map<String, dynamic> json,
 ) => _FallbackFilter(
-  geoip: json['geoip'] as bool? ?? true,
+  geoip: json['geoip'] as bool? ?? false,
   geoipCode: json['geoip-code'] as String? ?? '',
   geosite:
       (json['geosite'] as List<dynamic>?)?.map((e) => e as String).toList() ??

@@ -28,7 +28,6 @@ void main() {
     test('exposes mihomo raw config keys', () {
       expect(GeoResource.MMDB.configKey, 'mmdb');
       expect(GeoResource.ASN.configKey, 'asn');
-      expect(GeoResource.GEOIP.configKey, 'geoip');
       expect(GeoResource.GEOSITE.configKey, 'geosite');
     });
 
@@ -37,7 +36,6 @@ void main() {
         'geox-url': {
           'mmdb': 'https://example.com/mmdb',
           'asn': 'https://example.com/asn.mmdb',
-          'geoip': 'https://example.com/geoip.dat',
           'geosite': 'https://example.com/geosite.dat',
         },
       });
@@ -45,23 +43,30 @@ void main() {
       expect(config.geoXUrl, {
         GeoResource.MMDB: 'https://example.com/mmdb',
         GeoResource.ASN: 'https://example.com/asn.mmdb',
-        GeoResource.GEOIP: 'https://example.com/geoip.dat',
         GeoResource.GEOSITE: 'https://example.com/geosite.dat',
       });
     });
 
     test('parses hyphenated GeoResource keys from config JSON', () {
       final config = PatchClashConfig.fromJson({
-        'geox-url': {
-          'geo-ip': 'https://example.com/legacy-geoip.dat',
-          'geo-site': 'https://example.com/legacy-geosite.dat',
-        },
+        'geox-url': {'geo-site': 'https://example.com/legacy-geosite.dat'},
       });
 
       expect(config.geoXUrl, {
-        GeoResource.GEOIP: 'https://example.com/legacy-geoip.dat',
         GeoResource.GEOSITE: 'https://example.com/legacy-geosite.dat',
       });
+    });
+
+    test('drops the GeoIP.dat urls saved configs still hold', () {
+      final config = PatchClashConfig.fromJson({
+        'geox-url': {
+          'geoip': 'https://example.com/geoip.dat',
+          'geo-ip': 'https://example.com/legacy-geoip.dat',
+          'mmdb': 'https://example.com/mmdb',
+        },
+      });
+
+      expect(config.geoXUrl, {GeoResource.MMDB: 'https://example.com/mmdb'});
     });
 
     test('GeoXUrl defaults use GeoResource keys', () {
@@ -70,10 +75,10 @@ void main() {
 
     test('PatchClashConfig serializes geoXUrl map with lowercase keys', () {
       final json = const PatchClashConfig(
-        geoXUrl: {GeoResource.GEOIP: 'https://example.com/geoip.dat'},
+        geoXUrl: {GeoResource.GEOSITE: 'https://example.com/geosite.dat'},
       ).toJson();
 
-      expect(json['geox-url'], {'geoip': 'https://example.com/geoip.dat'});
+      expect(json['geox-url'], {'geosite': 'https://example.com/geosite.dat'});
     });
 
     test('converts geoXUrl map to raw config map', () {
