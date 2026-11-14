@@ -184,9 +184,27 @@ func encodeShadowsocksR(f proxyFields) string {
 	return "ssr://" + encode(body)
 }
 
-func wsEarlyDataPath(path string, opts proxyFields) string {
+// mihomo reads a type=httpupgrade link back as ws with v2ray-http-upgrade.
+func shareNetwork(f proxyFields) string {
+	network := f.str("network")
+	if network == "ws" && f.sub("ws-opts").flag("v2ray-http-upgrade") {
+		return "httpupgrade"
+	}
+	return network
+}
+
+func wsEarlyDataPath(network string, opts proxyFields) string {
+	path := opts.str("path")
 	earlyData := opts.str("max-early-data")
-	if earlyData == "" || earlyData == "0" {
+	if network == "httpupgrade" {
+		earlyData = ""
+		if opts.flag("v2ray-http-upgrade-fast-open") {
+			earlyData = "0"
+		}
+	} else if earlyData == "0" {
+		earlyData = ""
+	}
+	if earlyData == "" {
 		return path
 	}
 	link, err := url.Parse(path)
@@ -226,15 +244,12 @@ func encodeVmess(f proxyFields) string {
 	if values["aid"] == "" {
 		values["aid"] = "0"
 	}
-	switch network := f.str("network"); network {
+	switch network := shareNetwork(f); network {
 	case "ws", "httpupgrade":
 		opts := f.sub("ws-opts")
 		values["net"] = network
 		values["host"] = opts.sub("headers").str("Host")
-		values["path"] = opts.str("path")
-		if network == "ws" {
-			values["path"] = wsEarlyDataPath(opts.str("path"), opts)
-		}
+		values["path"] = wsEarlyDataPath(network, opts)
 	case "http":
 		opts := f.sub("http-opts")
 		values["type"] = "http"
@@ -290,7 +305,7 @@ func vShareQuery(f proxyFields) url.Values {
 	case !f.flag("xudp"):
 		query.Set("packetEncoding", "none")
 	}
-	switch network := f.str("network"); network {
+	switch network := shareNetwork(f); network {
 	case "", "tcp":
 	case "http":
 		opts := f.sub("http-opts")
@@ -341,13 +356,14 @@ func encodeTrojan(f proxyFields) string {
 	}
 	setIf(query, "sni", f.str("sni"))
 	setIf(query, "alpn", strings.Join(f.list("alpn"), ","))
-	switch f.str("network") {
-	case "ws":
+	switch network := shareNetwork(f); network {
+	case "ws", "httpupgrade":
 		opts := f.sub("ws-opts")
-		if opts.sub("headers").str("Host") != "" {
+		if opts.sub("headers").str("Host") != "" ||
+			network == "httpupgrade" && opts.flag("v2ray-http-upgrade-fast-open") {
 			return ""
 		}
-		query.Set("type", "ws")
+		query.Set("type", network)
 		setIf(query, "path", opts.str("path"))
 	case "grpc":
 		query.Set("type", "grpc")
