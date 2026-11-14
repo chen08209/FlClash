@@ -1915,9 +1915,12 @@ nothing is shown natively).
   last `WM_WINDOWPOSCHANGED`, did-move/did-resize, or configure-event); `WindowManager` only debounces the capture on
   top of it.
 - `getDisplays` and `getCursorPosition` replace `screen_retriever`. Coordinates have a top-left origin at the primary
-  display, in the units `getBounds` uses, except that on Windows each display is in its own logical pixels (physical
-  over its own scale) while the window and the cursor are in the window's, which is why `restoredWindowPosition`
-  compares physical pixels. GDK names no primary monitor on Wayland, so the first one stands in.
+  display, in the units `getBounds` uses. On Windows that is physical pixels over the window's current scale for the
+  displays, the cursor and the window alike, so they compare directly; a display's own `scaleFactor` only tells what
+  size the window takes once it lands there, which `calcWindowPosition` centers with. A move onto a monitor with
+  another DPI lets the runner apply the `WM_DPICHANGED` rect and then puts the top-left back where `setBounds` was
+  asked to. `restoredWindowPosition` keeps a saved position only while half of its title bar lies in some display's
+  work area. GDK names no primary monitor on Wayland, so the first one stands in.
 - Windows: with `TitleBarStyle.hidden`, `WM_NCCALCSIZE` takes the frame insets from `AdjustWindowRectExForDpi` and
   keeps the client rect at the top edge (plus the frame height when maximized, so the taskbar stays uncovered; plus
   one physical pixel on Windows 11, which draws the top border only into a non-client strip; none on Windows 10,

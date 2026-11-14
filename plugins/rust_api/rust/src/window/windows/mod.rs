@@ -173,6 +173,10 @@ pub unsafe extern "C" fn flclash_window_message(
     }
 }
 
+fn to_physical(logical: f64, scale: f64) -> i32 {
+    (logical * scale).round() as i32
+}
+
 fn dpi_scale(hwnd: HWND) -> f64 {
     if hwnd.is_null() {
         return 1.0;
@@ -642,7 +646,7 @@ pub fn get_bounds() -> Result<WindowBounds, String> {
 }
 
 pub fn get_displays() -> Result<Vec<WindowDisplay>, String> {
-    on_main(|_| Ok(display::all()))
+    on_main(|state| Ok(display::all(dpi_scale(state.hwnd.get()))))
 }
 
 pub fn get_cursor_position() -> Result<WindowPoint, String> {
@@ -660,6 +664,7 @@ pub fn get_cursor_position() -> Result<WindowPoint, String> {
 pub fn set_bounds(position: Option<(f64, f64)>, size: Option<(f64, f64)>) -> Result<(), String> {
     on_main(move |state| {
         let hwnd = state.require_window()?;
+        let dpi = unsafe { GetDpiForWindow(hwnd) };
         let scale = dpi_scale(hwnd);
         let mut flags = SWP_NOZORDER | SWP_NOACTIVATE;
         let (x, y) = position.map_or_else(
@@ -667,16 +672,30 @@ pub fn set_bounds(position: Option<(f64, f64)>, size: Option<(f64, f64)>) -> Res
                 flags |= SWP_NOMOVE;
                 (0, 0)
             },
-            |(x, y)| ((x * scale) as i32, (y * scale) as i32),
+            |(x, y)| (to_physical(x, scale), to_physical(y, scale)),
         );
         let (width, height) = size.map_or_else(
             || {
                 flags |= SWP_NOSIZE;
                 (0, 0)
             },
-            |(width, height)| ((width * scale) as i32, (height * scale) as i32),
+            |(width, height)| (to_physical(width, scale), to_physical(height, scale)),
         );
         unsafe { SetWindowPos(hwnd, null_mut(), x, y, width, height, flags) };
+        // The runner applied the WM_DPICHANGED rect, whose origin Windows picks.
+        if position.is_some() && unsafe { GetDpiForWindow(hwnd) } != dpi {
+            unsafe {
+                SetWindowPos(
+                    hwnd,
+                    null_mut(),
+                    x,
+                    y,
+                    0,
+                    0,
+                    SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE,
+                )
+            };
+        }
         Ok(())
     })
 }
