@@ -26,8 +26,6 @@ dependencies:
   json_annotation: ^4.12.0
   file_picker: ^13.3.3
   mobile_scanner: ^7.4.2
-  wifi_ssid:
-    path: plugins/wifi_ssid
   collection: ^1.19.1
   package_info_plus: ^10.2.2
   url_launcher: ^6.3.3

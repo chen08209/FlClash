@@ -11,6 +11,7 @@ export 'src/rust/api/launch.dart';
 export 'src/rust/api/network.dart';
 export 'src/rust/api/proxy.dart';
 export 'src/rust/api/script.dart';
+export 'src/rust/api/wifi.dart';
 export 'src/rust/frb_generated.dart' show RustLib;
 
 bool get isRustLibInitialized => RustLib.instance.initialized;

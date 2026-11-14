@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/plugins/battery.dart';
+import 'package:fl_clash/plugins/wifi_ssid.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:wifi_ssid/wifi_ssid.dart';
 
 import 'app.dart';
 import 'config.dart';

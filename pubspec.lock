@@ -1500,13 +1500,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.1"
-  wifi_ssid:
-    dependency: "direct main"
-    description:
-      path: "plugins/wifi_ssid"
-      relative: true
-    source: path
-    version: "0.0.1"
   win32:
     dependency: transitive
     description:
