@@ -194,6 +194,7 @@ const _$ProxyFieldEnumMap = {
   ProxyField.obfsMode: 'obfsMode',
   ProxyField.obfsHost: 'obfsHost',
   ProxyField.version: 'version',
+  ProxyField.snellMode: 'snellMode',
   ProxyField.ports: 'ports',
   ProxyField.hopInterval: 'hopInterval',
   ProxyField.congestionController: 'congestionController',

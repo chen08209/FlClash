@@ -1095,7 +1095,7 @@ void main() {
     test('every field and option is a key its struct reads', () {
       for (final type in customProxyTypes) {
         final definitions = [
-          {'type': type, 'plugin': 'obfs', 'obfs': 'salamander'},
+          {'type': type, 'plugin': 'obfs', 'obfs': 'salamander', 'version': 6},
           for (final network in CustomProxy(
             id: 0,
             definition: {'type': type},
@@ -1297,6 +1297,37 @@ void main() {
         },
       ).withField(ProxyField.obfs, null).definition,
       {'type': 'hysteria2'},
+    );
+  });
+
+  test('a Snell proxy offers the shaping mode only on version 6', () {
+    CustomProxy snell(Map<String, Object?> extra) =>
+        CustomProxy(id: 0, definition: {'type': 'snell', ...extra});
+    expect(snell({}).options, isNot(contains(ProxyField.snellMode)));
+    expect(
+      snell({'version': 4}).options,
+      isNot(contains(ProxyField.snellMode)),
+    );
+    expect(snell({'version': 6}).options, contains(ProxyField.snellMode));
+    expect(snell({'version': '6'}).options, contains(ProxyField.snellMode));
+    expect(
+      const CustomProxy(
+        id: 0,
+        definition: {'type': 'vmess', 'version': 6},
+      ).options,
+      isNot(contains(ProxyField.snellMode)),
+    );
+    expect(snell({'version': 6}).choicesOf(ProxyField.snellMode), [
+      'default',
+      'unshaped',
+      'unsafe-raw',
+    ]);
+    expect(
+      snell({
+        'version': 6,
+        'mode': 'unshaped',
+      }).withField(ProxyField.version, 4).definition,
+      {'type': 'snell', 'version': 4},
     );
   });
 

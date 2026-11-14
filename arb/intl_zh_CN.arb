@@ -875,6 +875,7 @@
   "uploadBandwidth": "上行带宽",
   "downloadBandwidth": "下行带宽",
   "protocolVersion": "协议版本",
+  "shapingMode": "流量整形模式",
   "portHopping": "端口跳跃",
   "hopInterval": "跳跃间隔",
   "congestionControl": "拥塞控制",

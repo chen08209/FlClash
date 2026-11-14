@@ -745,6 +745,7 @@ enum ProxyField {
   obfsMode(['obfs-opts', 'mode'], ProxyFieldKind.choice),
   obfsHost(['obfs-opts', 'host']),
   version(['version'], ProxyFieldKind.number),
+  snellMode(['mode'], ProxyFieldKind.choice),
   ports(['ports']),
   hopInterval(['hop-interval']),
   congestionController(['congestion-controller'], ProxyFieldKind.choice),

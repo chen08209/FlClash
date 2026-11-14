@@ -875,6 +875,7 @@
   "uploadBandwidth": "Upload bandwidth",
   "downloadBandwidth": "Download bandwidth",
   "protocolVersion": "Protocol version",
+  "shapingMode": "Shaping mode",
   "portHopping": "Port hopping",
   "hopInterval": "Hop interval",
   "congestionControl": "Congestion control",

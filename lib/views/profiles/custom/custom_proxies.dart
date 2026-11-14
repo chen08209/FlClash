@@ -81,6 +81,7 @@ extension on ProxyField {
     ProxyField.obfsMode => l.obfsMode,
     ProxyField.obfsHost => l.obfsHost,
     ProxyField.version => l.protocolVersion,
+    ProxyField.snellMode => l.shapingMode,
     ProxyField.ports => l.portHopping,
     ProxyField.hopInterval => l.hopInterval,
     ProxyField.congestionController => l.congestionControl,
