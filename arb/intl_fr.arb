@@ -875,6 +875,7 @@
   "uploadBandwidth": "Bande passante d’envoi",
   "downloadBandwidth": "Bande passante de réception",
   "protocolVersion": "Version du protocole",
+  "shapingMode": "Mode de mise en forme",
   "portHopping": "Saut de port",
   "hopInterval": "Intervalle de saut",
   "congestionControl": "Contrôle de congestion",

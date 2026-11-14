@@ -875,6 +875,7 @@
   "uploadBandwidth": "Скорость отдачи",
   "downloadBandwidth": "Скорость загрузки",
   "protocolVersion": "Версия протокола",
+  "shapingMode": "Режим шейпинга",
   "portHopping": "Перескок портов",
   "hopInterval": "Интервал перескока",
   "congestionControl": "Управление перегрузкой",

@@ -7238,6 +7238,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Shaping mode`
+  String get shapingMode {
+    return Intl.message(
+      'Shaping mode',
+      name: 'shapingMode',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Port hopping`
   String get portHopping {
     return Intl.message(

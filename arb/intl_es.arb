@@ -875,6 +875,7 @@
   "uploadBandwidth": "Ancho de banda de subida",
   "downloadBandwidth": "Ancho de banda de descarga",
   "protocolVersion": "Versión del protocolo",
+  "shapingMode": "Modo de modelado",
   "portHopping": "Salto de puertos",
   "hopInterval": "Intervalo de salto",
   "congestionControl": "Control de congestión",

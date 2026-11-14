@@ -612,6 +612,9 @@ extension CustomProxyExt on CustomProxy {
       ProxyField.obfsMode ||
       ProxyField.obfsHost ||
       ProxyField.version => type == 'snell',
+      // Snell v6 replaced simple-obfs with PSK-derived traffic shaping, which this picks.
+      ProxyField.snellMode =>
+        type == 'snell' && valueOf(ProxyField.version)?.toString() == '6',
       ProxyField.ports ||
       ProxyField.hopInterval => type == 'hysteria' || type == 'hysteria2',
       ProxyField.congestionController => const {
@@ -787,6 +790,7 @@ extension CustomProxyExt on CustomProxy {
       'bbr_meta_v2',
     ],
     ProxyField.udpRelayMode => const ['native', 'quic'],
+    ProxyField.snellMode => const ['default', 'unshaped', 'unsafe-raw'],
     ProxyField.ipVersion => [
       for (final version in IpVersion.values) version.value,
     ],
