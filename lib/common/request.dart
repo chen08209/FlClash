@@ -107,6 +107,8 @@ class Request {
   /// Null when this build is current; throws when GitHub cannot be asked.
   Future<Map<String, dynamic>?> checkForUpdate() async {
     final release = await latestRelease();
+    // GitHub's latest release is the Go build, which the rs build must not offer.
+    if (rsFeature) return null;
     final remoteVersion = release['tag_name'] as String;
     final version = globalState.packageInfo.version;
     final hasUpdate =

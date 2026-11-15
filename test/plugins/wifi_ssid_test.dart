@@ -26,6 +26,14 @@ void main() {
     expect(receivedCall?.method, 'getSsid');
   });
 
+  test('the manager asks its host for the SSID', () async {
+    wifiSsidManager.resetForTesting(const AndroidWifiSsidHost());
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (_) async => 'Office Wi-Fi');
+
+    expect(await wifiSsidManager.getSsid(), 'Office Wi-Fi');
+  });
+
   test('getSsid preserves a null native value', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (_) async => null);

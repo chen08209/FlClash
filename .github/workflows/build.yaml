@@ -13,6 +13,7 @@ concurrency:
   cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/v') }}
 
 env:
+  # An rs tag (-rs.N[+M]) releases exactly as a pre tag does; the two part here when they need to.
   IS_STABLE: ${{ !contains(github.ref, '-') }}
   # See CI Caches in .agents/commands.md.
   BRANCH_CACHE: ${{ !startsWith(github.ref, 'refs/tags/') }}
@@ -35,7 +36,6 @@ jobs:
         with:
           fetch-depth: 0
           submodules: true
-          token: ${{ secrets.CONCORD_TOKEN }}
 
       - name: Test git hooks
         run: bash tool/hooks/test.sh
@@ -91,7 +91,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: true
-          token: ${{ secrets.CONCORD_TOKEN }}
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -129,7 +128,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          token: ${{ secrets.CONCORD_TOKEN }}
 
       - &fetch-ca
         name: Fetch CA certificates
@@ -171,6 +169,16 @@ jobs:
         if: matrix.platform == 'windows'
         run: git config --global core.longpaths true
 
+      # BoringSSL's x86_64 assembly needs NASM; arm64 assembles with clang-cl.
+      - &install-nasm
+        name: Install NASM
+        if: runner.os == 'Windows' && runner.arch == 'X64'
+        shell: bash
+        run: |
+          choco install nasm --no-progress -y > /dev/null
+          echo 'C:\Program Files\NASM' >> "$GITHUB_PATH"
+          echo 'LIBCLANG_PATH=C:\Program Files\LLVM\bin' >> "$GITHUB_ENV"
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -188,7 +196,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          token: ${{ secrets.CONCORD_TOKEN }}
 
       - *fetch-ca
 
@@ -284,7 +291,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: true
-          token: ${{ secrets.CONCORD_TOKEN }}
 
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
@@ -371,8 +377,8 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          if [[ ! "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)(-pre\.[0-9]+(\+[0-9]+)?)?$ ]]; then
-            echo "::error::$TAG is neither vX.Y.Z nor vX.Y.Z-pre.N[+M]"
+          if [[ ! "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)(-(pre|rs)\.[0-9]+(\+[0-9]+)?)?$ ]]; then
+            echo "::error::$TAG is neither vX.Y.Z nor vX.Y.Z-pre.N[+M] nor vX.Y.Z-rs.N[+M]"
             exit 1
           fi
           name="${BASH_REMATCH[1]}"
@@ -428,7 +434,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          token: ${{ secrets.CONCORD_TOKEN }}
 
       - name: Apply the tag's version
         shell: bash
@@ -455,6 +460,8 @@ jobs:
       - name: Enable git long paths (Windows)
         if: startsWith(matrix.os, 'windows')
         run: git config --global core.longpaths true
+
+      - *install-nasm
 
       # Stable publishes no Windows or Linux arm64 archive; master makes the action
       # clone the SDK at the pinned tag and let it fetch the host's own Dart SDK.
@@ -520,7 +527,6 @@ jobs:
         with:
           fetch-depth: 0
           submodules: true
-          token: ${{ secrets.CONCORD_TOKEN }}
 
       - name: Apply the tag's version
         env:
