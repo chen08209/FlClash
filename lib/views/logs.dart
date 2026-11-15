@@ -56,10 +56,7 @@ class _LogsViewState extends ConsumerState<LogsView>
   @override
   void initState() {
     super.initState();
-    _scrollController = sheetScrollController(
-      context,
-      initialScrollOffset: double.maxFinite,
-    );
+    _scrollController = sheetScrollController(context);
     _setLogs(ref.read(logsProvider).list);
     ref.listenManual(logsProvider.select((state) => state.revision), (_, _) {
       updateLogsThrottler();

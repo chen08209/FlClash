@@ -204,16 +204,7 @@ class _RecentFeedState extends State<_RecentFeed> {
   void initState() {
     super.initState();
     _scrollController =
-        widget.scrollController ??
-        sheetScrollController(context, initialScrollOffset: double.maxFinite);
-    // A sheet's one controller may have been left where the live feed reads.
-    if (widget.scrollController != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _scrollController.hasClients) {
-          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-        }
-      });
-    }
+        widget.scrollController ?? sheetScrollController(context);
   }
 
   @override
@@ -339,8 +330,6 @@ class _LiveFeedState extends ConsumerState<_LiveFeed>
   var _shownRead = 0;
   late final ScrollController _scrollController;
   var _loaded = false;
-  // A sheet's one controller opens where the recent feed reads, its far end.
-  late var _startsAtFarEnd = widget.scrollController != null;
 
   @override
   void initState() {
@@ -415,14 +404,6 @@ class _LiveFeedState extends ConsumerState<_LiveFeed>
     }
     widget.listController.setTrackerInfos(trackerInfos);
     widget.filters.offer(widget.listController.value.trackerInfos);
-    if (_startsAtFarEnd) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _startsAtFarEnd && _scrollController.hasClients) {
-          _startsAtFarEnd = false;
-          _scrollController.jumpTo(0);
-        }
-      });
-    }
   }
 
   Future<void> _closeConnection(TrackerInfo trackerInfo) =>

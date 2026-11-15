@@ -674,6 +674,47 @@ void main() {
     await teardownView(tester);
   });
 
+  testWidgets('grouping opens on the newest group and ungrouping returns to '
+      'the newest request', (tester) async {
+    seedRequests([
+      for (var i = 0; i < 60; i++)
+        _tracker(id: '$i', host: 'host$i.test', process: 'app$i'),
+    ]);
+    container.listen(appSettingProvider, (_, _) {});
+
+    await pumpRequests(tester, size: _listSize);
+    await tester.pumpAndSettle();
+    await openSubMenu(tester, 'Group by');
+    await tester.tap(inMenu(find.text('App')));
+    await tester.pumpAndSettle();
+
+    final grouped = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byType(CustomScrollView),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(grouped.position.maxScrollExtent, greaterThan(0));
+    expect(grouped.position.pixels, 0);
+    final top = find.byType(CollapsibleHeader).first;
+    expect(tester.widget<CollapsibleHeader>(top).label, 'app59');
+
+    await openSubMenu(tester, 'Group by');
+    await tester.tap(inMenu(find.text('None')));
+    await tester.pumpAndSettle();
+
+    final feed = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byType(ScrollToEndBox),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(feed.position.pixels, feed.position.maxScrollExtent);
+    expect(find.textContaining('host59.test'), findsWidgets);
+
+    await teardownView(tester);
+  });
+
   testWidgets('a wide page pins the offered values as toggles and adds a '
       'tapped exit as a removable chip', (tester) async {
     seedRequests([

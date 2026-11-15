@@ -266,4 +266,31 @@ void main() {
     expect(find.text('99'), findsOneWidget);
     expect(atEnd.offset, atEnd.position.maxScrollExtent);
   });
+
+  testWidgets('a reversed list opens at its top in the first frame', (
+    tester,
+  ) async {
+    late ScrollController controller;
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: Builder(
+          builder: (context) {
+            controller = sheetScrollController(context);
+            return ListView.builder(
+              controller: controller,
+              reverse: true,
+              itemCount: 100,
+              itemExtent: 50,
+              itemBuilder: (_, index) => Text('$index'),
+            );
+          },
+        ),
+      ),
+    );
+    addTearDown(controller.dispose);
+
+    expect(find.text('99'), findsOneWidget);
+    expect(controller.offset, controller.position.maxScrollExtent);
+  });
 }

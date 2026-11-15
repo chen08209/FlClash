@@ -62,8 +62,7 @@ class _DnsQueriesViewState extends ConsumerState<DnsQueriesView>
   void initState() {
     super.initState();
     _scrollController =
-        widget.scrollController ??
-        sheetScrollController(context, initialScrollOffset: double.maxFinite);
+        widget.scrollController ?? sheetScrollController(context);
     _setDnsQueries(ref.read(dnsQueriesProvider).list);
     ref.listenManual(dnsQueriesProvider.select((state) => state.revision), (
       _,
