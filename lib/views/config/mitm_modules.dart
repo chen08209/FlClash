@@ -130,7 +130,7 @@ String? _resultText(String result) {
 
 Future<void> _updateModule(WidgetRef ref, MitmModule module) async {
   await globalState.safeRun<void>(
-    () => updateMitmModule(ref, module),
+    () => ref.read(mitmModulesActionProvider.notifier).updateModule(module),
     title: module.name,
     silence: false,
   );
@@ -146,6 +146,7 @@ class MitmModulesItem extends ConsumerWidget {
       mitmModulesProvider.select((state) => state.value?.length ?? 0),
     );
     return ListItem.open(
+      leading: const GlyphIcon(AppGlyphs.puzzle),
       title: Text(appLocalizations.mitmModules),
       subtitle: Text(
         count == 0 ? appLocalizations.none : appLocalizations.itemsCount(count),
@@ -537,12 +538,9 @@ class MitmModuleView extends ConsumerWidget {
     MitmModuleArgument argument,
   ) {
     final value = module.arguments[argument.name] ?? argument.defaultValue;
-    Future<void> save(String next) async {
-      final turnedOff = await ref
-          .read(mitmModulesActionProvider.notifier)
-          .setArguments(module, {...module.arguments, argument.name: next});
-      await offerMitmScripts(ref, turnedOff);
-    }
+    Future<void> save(String next) => ref
+        .read(mitmModulesActionProvider.notifier)
+        .setArguments(module, {...module.arguments, argument.name: next});
 
     return switch (argument.type) {
       MitmModuleArgumentType.toggle => ListItem.toggle(

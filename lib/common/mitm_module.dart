@@ -314,16 +314,6 @@ MitmModuleContent parseMitmModule(
       : parser.parseStash(override, text);
 }
 
-/// What consent to a module's scripts covers; a line run names its content's hash.
-Set<String> mitmScriptScope(
-  String text, {
-  Map<String, String> values = const {},
-  Map<String, String> resources = const {},
-}) {
-  final content = parseMitmModule(text, values: values, resources: resources);
-  return {...content.declaredScriptLines, ...content.script};
-}
-
 /// Keys at the top of a Stash override that a Surge module or a Quantumult X
 /// snippet read as YAML never has.
 const _stashKeys = {'http', 'script-providers', 'cron', 'rules', 'tiles'};

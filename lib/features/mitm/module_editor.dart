@@ -29,17 +29,6 @@ Future<void> offerMitmScripts(WidgetRef ref, MitmModule? module) async {
   }
 }
 
-/// An update that brings new or changed scripts turned the module off, so it
-/// asks to turn it back on.
-Future<void> updateMitmModule(WidgetRef ref, MitmModule module) async {
-  final updated = await ref
-      .read(mitmModulesActionProvider.notifier)
-      .updateModule(module);
-  if (module.enabled && !updated.enabled) {
-    await offerMitmScripts(ref, updated);
-  }
-}
-
 String _moduleTemplate(String name) =>
     '#!name=$name\n#!desc=\n\n[URL Rewrite]\n\n[MITM]\nhostname = %APPEND%\n';
 
@@ -74,7 +63,9 @@ Future<void> openMitmModuleEditor(
     if (context.mounted) {
       Navigator.of(context).pop();
     }
-    await offerMitmScripts(ref, saved);
+    if (module == null) {
+      await offerMitmScripts(ref, saved);
+    }
   }
 
   if (!context.mounted) {

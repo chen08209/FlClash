@@ -3405,9 +3405,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'FlClash pourra lire tout ce qui est envoyé aux hôtes déchiffrés, cookies et mots de passe compris. N’activez cette option que pour les hôtes à réécrire.';
 
   @override
-  String get certificate => 'Certificat';
-
-  @override
   String get generateCertificate => 'Générer le certificat';
 
   @override
@@ -3446,9 +3443,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get mitmTrustChecking => 'Vérification…';
-
-  @override
-  String get trustCertificate => 'Approuver le certificat';
 
   @override
   String get mitmCertificateAndroidReadyTip =>
@@ -3512,6 +3506,31 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get removeCertificate => 'Supprimer le certificat';
+
+  @override
+  String get removeCertificateSuccess => 'Certificat supprimé';
+
+  @override
+  String get mitmSystemStoreRemoveFailed =>
+      'Impossible de retirer le certificat des racines de confiance du système';
+
+  @override
+  String get mitmRemoveInSettings => 'Supprimer dans les Paramètres';
+
+  @override
+  String mitmRemoveUserCertificateTip(Object name) {
+    return 'Android ne permet pas aux applications de supprimer les certificats utilisateur. Supprimez $name dans Paramètres › Sécurité › Chiffrement et identifiants › Identifiants de confiance › Utilisateur.';
+  }
+
+  @override
+  String get mitmCannotRemove => 'Suppression impossible';
+
+  @override
+  String get mitmRemoveSystemCertificateTip =>
+      'Le module root « FlClash MITM CA » a ajouté le certificat au système. Autorisez l’accès root à FlClash dans votre gestionnaire root puis réessayez, ou supprimez-y le module et redémarrez.';
+
+  @override
   String get mitmDecryptHost => 'Déchiffrer cet hôte';
 
   @override
@@ -3542,10 +3561,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get mapLocal => 'Mappage local';
-
-  @override
-  String get mitmHostnameDesc =>
-      'Un - en tête exclut un hôte, et la première correspondance l’emporte.';
 
   @override
   String get mitmModules => 'Modules';
@@ -3655,12 +3670,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get mitmScriptRisk =>
-      'Ses scripts lisent et modifient le trafic des hôtes qu\'ils ciblent, cookies et jetons compris, et peuvent envoyer leurs propres requêtes. Ne l\'activez que si vous faites confiance à sa source.';
-
-  @override
-  String mitmModuleScriptsChanged(Object name) {
-    return 'Les scripts de $name ont changé : le module a été désactivé';
-  }
+      'Ses scripts lisent et modifient le trafic des hôtes qu\'ils ciblent, cookies et jetons compris, et peuvent envoyer leurs propres requêtes. Ne l\'activez que si vous faites confiance à sa source. Une fois activé, ses mises à jour s\'appliquent sans nouvelle demande.';
 
   @override
   String get skipServerCertVerify =>

@@ -3172,9 +3172,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '开启后，FlClash 能读取发往被解密主机的全部内容，包括 Cookie 和密码。请只为需要改写的主机开启。';
 
   @override
-  String get certificate => '证书';
-
-  @override
   String get generateCertificate => '生成证书';
 
   @override
@@ -3212,9 +3209,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mitmTrustChecking => '正在检查…';
-
-  @override
-  String get trustCertificate => '信任证书';
 
   @override
   String get mitmCertificateAndroidReadyTip => '只有信任用户证书的应用（多为浏览器）会被解密。';
@@ -3274,6 +3268,30 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get removeCertificate => '移除证书';
+
+  @override
+  String get removeCertificateSuccess => '已移除证书';
+
+  @override
+  String get mitmSystemStoreRemoveFailed => '无法把证书从系统信任的根证书中移除';
+
+  @override
+  String get mitmRemoveInSettings => '在系统设置中移除';
+
+  @override
+  String mitmRemoveUserCertificateTip(Object name) {
+    return 'Android 不允许应用移除用户证书。请在“安全 › 加密与凭据 › 信任的凭据 › 用户”中移除 $name。';
+  }
+
+  @override
+  String get mitmCannotRemove => '无法移除';
+
+  @override
+  String get mitmRemoveSystemCertificateTip =>
+      '证书由 root 模块“FlClash MITM CA”加入系统。请在 root 管理器中允许 FlClash 使用 root 后再试，或在其中移除该模块并重启手机。';
+
+  @override
   String get mitmDecryptHost => '解密此主机';
 
   @override
@@ -3303,9 +3321,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mapLocal => '本地映射';
-
-  @override
-  String get mitmHostnameDesc => '以 - 开头表示排除，第一条匹配的生效。';
 
   @override
   String get mitmModules => '模块';
@@ -3406,12 +3421,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mitmScriptRisk =>
-      '它的脚本能读取并修改所匹配主机的流量，包括 Cookie 和令牌，还能自行发送请求。只在信任其来源时开启。';
-
-  @override
-  String mitmModuleScriptsChanged(Object name) {
-    return '$name 的脚本有变化，已关闭';
-  }
+      '它的脚本能读取并修改所匹配主机的流量，包括 Cookie 和令牌，还能自行发送请求。只在信任其来源时开启。开启后，它之后的更新会直接生效。';
 
   @override
   String get skipServerCertVerify => '跳过服务器证书验证';

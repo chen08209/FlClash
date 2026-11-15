@@ -3211,9 +3211,6 @@ class AppLocalizationsJa extends AppLocalizations {
       'オンにすると、FlClash は復号するホストに送られるすべての内容（Cookie やパスワードを含む）を読み取れます。書き換えが必要なホストに限ってオンにしてください。';
 
   @override
-  String get certificate => '証明書';
-
-  @override
   String get generateCertificate => '証明書を生成';
 
   @override
@@ -3251,9 +3248,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get mitmTrustChecking => '確認中…';
-
-  @override
-  String get trustCertificate => '証明書を信頼';
 
   @override
   String get mitmCertificateAndroidReadyTip =>
@@ -3315,6 +3309,30 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get removeCertificate => '証明書を削除';
+
+  @override
+  String get removeCertificateSuccess => '証明書を削除しました';
+
+  @override
+  String get mitmSystemStoreRemoveFailed => '証明書をシステムの信頼されたルートから削除できませんでした';
+
+  @override
+  String get mitmRemoveInSettings => '設定で削除';
+
+  @override
+  String mitmRemoveUserCertificateTip(Object name) {
+    return 'Android ではアプリがユーザー証明書を削除できません。設定の「セキュリティ › 暗号化と認証情報 › 信頼できる認証情報 › ユーザー」で $name を削除してください。';
+  }
+
+  @override
+  String get mitmCannotRemove => '削除できません';
+
+  @override
+  String get mitmRemoveSystemCertificateTip =>
+      'この証明書は root モジュール「FlClash MITM CA」によってシステムに追加されています。root マネージャーで FlClash に root を許可してからもう一度試すか、そこでモジュールを削除して再起動してください。';
+
+  @override
   String get mitmDecryptHost => 'このホストを復号';
 
   @override
@@ -3345,9 +3363,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get mapLocal => 'ローカルマップ';
-
-  @override
-  String get mitmHostnameDesc => '先頭の - は除外を表し、最初に一致した項目が優先されます。';
 
   @override
   String get mitmModules => 'モジュール';
@@ -3449,12 +3464,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get mitmScriptRisk =>
-      'スクリプトは一致したホストの通信を読み取り、変更できます。Cookie やトークンも含まれ、独自にリクエストを送ることもできます。提供元を信頼できる場合にのみオンにしてください。';
-
-  @override
-  String mitmModuleScriptsChanged(Object name) {
-    return '$name のスクリプトが変更されたためオフにしました';
-  }
+      'スクリプトは一致したホストの通信を読み取り、変更できます。Cookie やトークンも含まれ、独自にリクエストを送ることもできます。提供元を信頼できる場合にのみオンにしてください。オンにすると、以後の更新は確認なしで反映されます。';
 
   @override
   String get skipServerCertVerify => 'サーバー証明書の検証をスキップ';

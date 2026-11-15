@@ -3285,9 +3285,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '켜면 FlClash가 복호화되는 호스트로 보내는 모든 내용을 읽을 수 있습니다(쿠키와 비밀번호 포함). 재작성이 필요한 호스트에만 켜세요.';
 
   @override
-  String get certificate => '인증서';
-
-  @override
   String get generateCertificate => '인증서 생성';
 
   @override
@@ -3325,9 +3322,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get mitmTrustChecking => '확인 중…';
-
-  @override
-  String get trustCertificate => '인증서 신뢰';
 
   @override
   String get mitmCertificateAndroidReadyTip =>
@@ -3388,6 +3382,31 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get removeCertificate => '인증서 제거';
+
+  @override
+  String get removeCertificateSuccess => '인증서를 제거했습니다';
+
+  @override
+  String get mitmSystemStoreRemoveFailed =>
+      '인증서를 시스템의 신뢰할 수 있는 루트에서 제거하지 못했습니다';
+
+  @override
+  String get mitmRemoveInSettings => '설정에서 제거';
+
+  @override
+  String mitmRemoveUserCertificateTip(Object name) {
+    return 'Android에서는 앱이 사용자 인증서를 제거할 수 없습니다. 설정의 \'보안 › 암호화 및 사용자 인증 정보 › 신뢰할 수 있는 자격증명 › 사용자\'에서 $name을(를) 제거하세요.';
+  }
+
+  @override
+  String get mitmCannotRemove => '제거할 수 없음';
+
+  @override
+  String get mitmRemoveSystemCertificateTip =>
+      '인증서는 루트 모듈 \'FlClash MITM CA\'가 시스템에 추가했습니다. 루트 관리자에서 FlClash의 루트 권한을 허용한 뒤 다시 시도하거나, 그곳에서 모듈을 제거하고 다시 시작하세요.';
+
+  @override
   String get mitmDecryptHost => '이 호스트 복호화';
 
   @override
@@ -3418,9 +3437,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get mapLocal => '로컬 매핑';
-
-  @override
-  String get mitmHostnameDesc => '앞에 -를 붙이면 제외하며, 처음 일치하는 항목이 적용됩니다.';
 
   @override
   String get mitmModules => '모듈';
@@ -3523,12 +3539,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get mitmScriptRisk =>
-      '스크립트가 일치하는 호스트의 트래픽을 읽고 바꿀 수 있으며, 쿠키와 토큰도 포함되고 직접 요청을 보낼 수도 있습니다. 출처를 신뢰할 때만 켜세요.';
-
-  @override
-  String mitmModuleScriptsChanged(Object name) {
-    return '$name의 스크립트가 변경되어 껐습니다';
-  }
+      '스크립트가 일치하는 호스트의 트래픽을 읽고 바꿀 수 있으며, 쿠키와 토큰도 포함되고 직접 요청을 보낼 수도 있습니다. 출처를 신뢰할 때만 켜세요. 켜면 이후 업데이트는 다시 묻지 않고 적용됩니다.';
 
   @override
   String get skipServerCertVerify => '서버 인증서 검증 건너뛰기';

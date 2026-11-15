@@ -3369,9 +3369,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'FlClash will be able to read everything sent to the decrypted hosts, cookies and passwords included. Turn this on only for hosts you mean to rewrite.';
 
   @override
-  String get certificate => 'Certificate';
-
-  @override
   String get generateCertificate => 'Generate certificate';
 
   @override
@@ -3410,9 +3407,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mitmTrustChecking => 'Checking…';
-
-  @override
-  String get trustCertificate => 'Trust certificate';
 
   @override
   String get mitmCertificateAndroidReadyTip =>
@@ -3476,6 +3470,31 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get removeCertificate => 'Remove certificate';
+
+  @override
+  String get removeCertificateSuccess => 'Certificate removed';
+
+  @override
+  String get mitmSystemStoreRemoveFailed =>
+      'Removing the certificate from the system\'s trusted roots failed';
+
+  @override
+  String get mitmRemoveInSettings => 'Remove in Settings';
+
+  @override
+  String mitmRemoveUserCertificateTip(Object name) {
+    return 'Android doesn\'t let apps remove user certificates. Remove $name in Settings under Security › Encryption & credentials › Trusted credentials › User.';
+  }
+
+  @override
+  String get mitmCannotRemove => 'Can\'t remove';
+
+  @override
+  String get mitmRemoveSystemCertificateTip =>
+      'The FlClash MITM CA root module added the certificate to the system. Allow FlClash root access in your root manager and try again, or remove the module there and restart.';
+
+  @override
   String get mitmDecryptHost => 'Decrypt this host';
 
   @override
@@ -3506,10 +3525,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mapLocal => 'Map local';
-
-  @override
-  String get mitmHostnameDesc =>
-      'A leading - excludes a host, and the first match decides.';
 
   @override
   String get mitmModules => 'Modules';
@@ -3615,12 +3630,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mitmScriptRisk =>
-      'Its scripts read and change the traffic of the hosts they match, cookies and tokens included, and can send requests of their own. Turn it on only if you trust where it comes from.';
-
-  @override
-  String mitmModuleScriptsChanged(Object name) {
-    return '$name changed its scripts and was turned off';
-  }
+      'Its scripts read and change the traffic of the hosts they match, cookies and tokens included, and can send requests of their own. Turn it on only if you trust where it comes from. Once on, its updates take effect without asking again.';
 
   @override
   String get skipServerCertVerify => 'Skip server certificate verification';

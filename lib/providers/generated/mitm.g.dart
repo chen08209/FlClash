@@ -127,7 +127,7 @@ final class MitmTrustStateProvider
   MitmTrustState create() => MitmTrustState();
 }
 
-String _$mitmTrustStateHash() => r'92fafbd967b6cc730d12ed57f86424d83863a350';
+String _$mitmTrustStateHash() => r'e0a0a094dd2c3392a1a76d648028d1961e932a67';
 
 /// Whether this device trusts the CA. A check records the CA it found
 /// trusted, which is the one the Core decrypts HTTPS with.
@@ -512,7 +512,7 @@ final class MitmHostnameIssuesProvider
 }
 
 String _$mitmHostnameIssuesHash() =>
-    r'2665dded42e187044c2fb182a068363bdfc0279c';
+    r'804f3127a7cda77bfe4345b93cbc60e4cb24794e';
 
 /// Null while the module's content is not on disk.
 

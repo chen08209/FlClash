@@ -190,7 +190,7 @@ Extra = type=http-response,pattern=^https://b,script-path=${urlOf('/extra.js')},
     },
   );
 
-  test('an update that brings more scripts turns the module off', () async {
+  test('an update that brings scripts keeps the module on', () async {
     bodies = {'/ads.sgmodule': module('Ads'), '/blank.json': '{}'};
     await action().addFromUrl(urlOf('/ads.sgmodule'));
     expect((await stored()).single.enabled, isTrue);
@@ -203,7 +203,7 @@ Ads = type=http-response,pattern=^https://a,script-path=${urlOf('/ads.js')}
 
     final updated = await action().updateModule((await stored()).single);
 
-    expect(updated.enabled, isFalse);
+    expect(updated.enabled, isTrue);
     expect((await stored()).single.scripts, 1);
   });
 
@@ -227,47 +227,17 @@ Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
     // The sweep a save leaves running must end before the test's directory goes.
     tearDown(() => Future<void>.delayed(const Duration(milliseconds: 50)));
 
-    Future<bool> enabledAfterUpdate(MitmModule ads) async {
-      await action().updateModule(ads);
-      return (await stored()).single.enabled;
-    }
-
-    test('stays on through an update that changes no script', () async {
-      final ads = await accepted();
-
-      expect(await enabledAfterUpdate(ads), isTrue);
-    });
-
-    test('turns off when an update replaces a script\'s content', () async {
-      final ads = await accepted();
-      bodies['/ads.js'] = 'two';
-
-      expect(await enabledAfterUpdate(ads), isFalse);
-    });
-
-    test('turns off when an update changes a script line', () async {
+    test('stays on through an update that changes its scripts', () async {
       final ads = await accepted();
       bodies['/ads.sgmodule'] = scripted('.*');
+      bodies['/ads.js'] = 'two';
 
-      expect(await enabledAfterUpdate(ads), isFalse);
+      await action().updateModule(ads);
+
+      expect((await stored()).single.enabled, isTrue);
     });
 
-    test('stays on when an update drops a script', () async {
-      final ads = await accepted();
-      bodies['/ads.sgmodule'] = module('Ads');
-      bodies['/blank.json'] = '{}';
-
-      expect(await enabledAfterUpdate(ads), isTrue);
-    });
-
-    test('stays on through an update with no text to compare', () async {
-      final ads = await accepted();
-      await File(join(await appPath.mitmModulesDirPath, ads.fileName)).delete();
-
-      expect(await enabledAfterUpdate(ads), isTrue);
-    });
-
-    test('an auto update that turns it off leaves it off', () async {
+    test('stays on through an auto update that changes its scripts', () async {
       final ads = await accepted();
       bodies['/ads.js'] = 'two';
       action().putModule(ads.copyWith(lastUpdateTime: DateTime.utc(2000)));
@@ -276,11 +246,13 @@ Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
 
       await action().autoUpdate();
 
-      expect((await stored()).single.enabled, isFalse);
+      final updated = (await stored()).single;
+      expect(updated.enabled, isTrue);
+      expect(updated.lastUpdateTime.isAfter(DateTime.utc(2000)), isTrue);
     });
   });
 
-  test('values that declare a new script turn a module off to offer', () async {
+  test('values that declare a new script keep the module on', () async {
     bodies = {
       '/q.snippet': '''
 #!arguments=Line:
@@ -294,14 +266,14 @@ Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
     expect(module.enabled, isTrue);
     bodies['/a.js'] = 'one';
 
-    final turnedOff = await action().setArguments(module, {
+    await action().setArguments(module, {
       'Line': '^https://b url script-response-body ${urlOf('/a.js')}',
     });
 
-    expect(turnedOff?.enabled, isFalse);
-    expect((await stored()).single.enabled, isFalse);
-    expect((await stored()).single.scripts, 1);
-    expect((await stored()).single.resources.keys, [urlOf('/a.js')]);
+    final changed = (await stored()).single;
+    expect(changed.enabled, isTrue);
+    expect(changed.scripts, 1);
+    expect(changed.resources.keys, [urlOf('/a.js')]);
   });
 
   test('an update keeps what the user changed while it ran', () async {
@@ -345,7 +317,7 @@ Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
     final edited = (await stored()).single;
     expect(mitmAttachments(edited).keys, ['own.js']);
     expect(edited.scripts, 1);
-    expect(edited.enabled, isFalse);
+    expect(edited.enabled, isTrue);
 
     await action().detach(edited, 'own.js');
     await action().clean();

@@ -382,41 +382,6 @@ $line
       }
     });
 
-    test('the scope of consent follows script lines and their content', () {
-      const module = '''
-[MITM]
-hostname = a.com
-[Script]
-A = type=http-request,pattern=^https://a,script-path=https://cdn.test/a.js
-''';
-      final scope = mitmScriptScope(
-        module,
-        resources: const {'https://cdn.test/a.js': 'one.js'},
-      );
-
-      expect(
-        mitmScriptScope(
-          module.replaceFirst('a.com', 'a.com, b.com'),
-          resources: const {'https://cdn.test/a.js': 'one.js'},
-        ),
-        scope,
-      );
-      expect(
-        mitmScriptScope(
-          module,
-          resources: const {'https://cdn.test/a.js': 'two.js'},
-        ).difference(scope),
-        isNotEmpty,
-      );
-      expect(
-        mitmScriptScope(
-          module.replaceFirst('^https://a', '.*'),
-          resources: const {'https://cdn.test/a.js': 'one.js'},
-        ).difference(scope),
-        isNotEmpty,
-      );
-    });
-
     test('the lines the user can run are named as the Core names them', () {
       expect(
         mitmTaskName(

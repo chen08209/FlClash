@@ -5988,12 +5988,6 @@ abstract class AppLocalizations {
   /// **'FlClash will be able to read everything sent to the decrypted hosts, cookies and passwords included. Turn this on only for hosts you mean to rewrite.'**
   String get mitmEnableTip;
 
-  /// No description provided for @certificate.
-  ///
-  /// In en, this message translates to:
-  /// **'Certificate'**
-  String get certificate;
-
   /// No description provided for @generateCertificate.
   ///
   /// In en, this message translates to:
@@ -6065,12 +6059,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Checking…'**
   String get mitmTrustChecking;
-
-  /// No description provided for @trustCertificate.
-  ///
-  /// In en, this message translates to:
-  /// **'Trust certificate'**
-  String get trustCertificate;
 
   /// No description provided for @mitmCertificateAndroidReadyTip.
   ///
@@ -6156,6 +6144,48 @@ abstract class AppLocalizations {
   /// **'The old certificate, {name}, is still among the system\'s trusted CAs. Allow FlClash root access in your root manager and regenerate, or remove the FlClash MITM CA module there and restart.'**
   String mitmOldSystemCertificateLeftTip(Object name);
 
+  /// No description provided for @removeCertificate.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove certificate'**
+  String get removeCertificate;
+
+  /// No description provided for @removeCertificateSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate removed'**
+  String get removeCertificateSuccess;
+
+  /// No description provided for @mitmSystemStoreRemoveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Removing the certificate from the system\'s trusted roots failed'**
+  String get mitmSystemStoreRemoveFailed;
+
+  /// No description provided for @mitmRemoveInSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove in Settings'**
+  String get mitmRemoveInSettings;
+
+  /// No description provided for @mitmRemoveUserCertificateTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Android doesn\'t let apps remove user certificates. Remove {name} in Settings under Security › Encryption & credentials › Trusted credentials › User.'**
+  String mitmRemoveUserCertificateTip(Object name);
+
+  /// No description provided for @mitmCannotRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t remove'**
+  String get mitmCannotRemove;
+
+  /// No description provided for @mitmRemoveSystemCertificateTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The FlClash MITM CA root module added the certificate to the system. Allow FlClash root access in your root manager and try again, or remove the module there and restart.'**
+  String get mitmRemoveSystemCertificateTip;
+
   /// No description provided for @mitmDecryptHost.
   ///
   /// In en, this message translates to:
@@ -6209,12 +6239,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Map local'**
   String get mapLocal;
-
-  /// No description provided for @mitmHostnameDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'A leading - excludes a host, and the first match decides.'**
-  String get mitmHostnameDesc;
 
   /// No description provided for @mitmModules.
   ///
@@ -6399,14 +6423,8 @@ abstract class AppLocalizations {
   /// No description provided for @mitmScriptRisk.
   ///
   /// In en, this message translates to:
-  /// **'Its scripts read and change the traffic of the hosts they match, cookies and tokens included, and can send requests of their own. Turn it on only if you trust where it comes from.'**
+  /// **'Its scripts read and change the traffic of the hosts they match, cookies and tokens included, and can send requests of their own. Turn it on only if you trust where it comes from. Once on, its updates take effect without asking again.'**
   String get mitmScriptRisk;
-
-  /// No description provided for @mitmModuleScriptsChanged.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} changed its scripts and was turned off'**
-  String mitmModuleScriptsChanged(Object name);
 
   /// No description provided for @skipServerCertVerify.
   ///

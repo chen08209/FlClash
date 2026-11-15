@@ -3363,9 +3363,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'FlClash сможет читать всё, что отправляется на расшифровываемые узлы, включая cookie и пароли. Включайте только для узлов, которые нужно перезаписывать.';
 
   @override
-  String get certificate => 'Сертификат';
-
-  @override
   String get generateCertificate => 'Создать сертификат';
 
   @override
@@ -3404,9 +3401,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get mitmTrustChecking => 'Проверка…';
-
-  @override
-  String get trustCertificate => 'Доверять сертификату';
 
   @override
   String get mitmCertificateAndroidReadyTip =>
@@ -3470,6 +3464,31 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get removeCertificate => 'Удалить сертификат';
+
+  @override
+  String get removeCertificateSuccess => 'Сертификат удалён';
+
+  @override
+  String get mitmSystemStoreRemoveFailed =>
+      'Не удалось удалить сертификат из доверенных корневых сертификатов системы';
+
+  @override
+  String get mitmRemoveInSettings => 'Удалите в настройках';
+
+  @override
+  String mitmRemoveUserCertificateTip(Object name) {
+    return 'Android не позволяет приложениям удалять пользовательские сертификаты. Удалите $name в настройках: Безопасность › Шифрование и учётные данные › Надёжные учётные данные › Пользователь.';
+  }
+
+  @override
+  String get mitmCannotRemove => 'Не удалось удалить';
+
+  @override
+  String get mitmRemoveSystemCertificateTip =>
+      'Сертификат добавлен в систему root-модулем «FlClash MITM CA». Разрешите FlClash доступ root в менеджере root и повторите попытку или удалите там модуль и перезагрузите устройство.';
+
+  @override
   String get mitmDecryptHost => 'Расшифровывать этот хост';
 
   @override
@@ -3500,10 +3519,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get mapLocal => 'Локальная подмена';
-
-  @override
-  String get mitmHostnameDesc =>
-      'Префикс - исключает хост; действует первое совпадение.';
 
   @override
   String get mitmModules => 'Модули';
@@ -3608,12 +3623,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get mitmScriptRisk =>
-      'Его скрипты читают и меняют трафик подходящих хостов, включая файлы cookie и токены, и могут сами отправлять запросы. Включайте, только если доверяете источнику.';
-
-  @override
-  String mitmModuleScriptsChanged(Object name) {
-    return 'Скрипты модуля $name изменились, модуль выключен';
-  }
+      'Его скрипты читают и меняют трафик подходящих хостов, включая файлы cookie и токены, и могут сами отправлять запросы. Включайте, только если доверяете источнику. После включения его обновления применяются без повторного запроса.';
 
   @override
   String get skipServerCertVerify => 'Пропускать проверку сертификата сервера';

@@ -131,6 +131,30 @@ class MitmTrustState extends _$MitmTrustState {
     return outcome;
   }
 
+  Future<MitmRemoveOutcome?> remove() async {
+    final ca = await ref.read(mitmCaProvider.future);
+    final store = ref.read(mitmTrustStoreProvider);
+    if (ca == null || store == null || ref.read(safeModeProvider)) {
+      return null;
+    }
+    MitmRemoveOutcome outcome;
+    try {
+      outcome = await store.remove(ca);
+    } on ProcessException catch (error) {
+      commonPrint.log(
+        'Removing the MITM certificate failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+      outcome = MitmRemoveOutcome.failed;
+    } finally {
+      if (store is AndroidMitmTrustStore && ref.mounted) {
+        ref.invalidate(rootAccessProvider);
+      }
+    }
+    await refresh();
+    return outcome;
+  }
+
   /// False when the old CA is left in the trust store for the user to remove,
   /// as safe mode always leaves it.
   Future<bool> regenerate() async {
@@ -142,7 +166,9 @@ class MitmTrustState extends _$MitmTrustState {
         store != null &&
         (trust == MitmTrust.ready || trust == MitmTrust.untrusted)) {
       try {
-        removed = !ref.read(safeModeProvider) && await store.remove(old);
+        removed =
+            !ref.read(safeModeProvider) &&
+            await store.remove(old) == MitmRemoveOutcome.removed;
       } catch (error) {
         commonPrint.log(
           'Removing the old MITM certificate failed: ${compactError(error)}',
@@ -247,6 +273,9 @@ Future<Map<String, String>> mitmHostnameIssues(Ref ref) async {
   final hostname = ref.watch(
     patchClashConfigProvider.select((state) => state.mitm.hostname),
   );
+  if (hostname.isEmpty) {
+    return const {};
+  }
   final issues = await _issuesOf(ref, MitmRules(hostname: hostname));
   return issues[MitmList.hostname] ?? const {};
 }
