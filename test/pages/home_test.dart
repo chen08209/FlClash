@@ -15,6 +15,7 @@ import 'package:fl_clash/views/dashboard/dashboard.dart';
 import 'package:fl_clash/views/navigation.dart';
 import 'package:fl_clash/views/tools.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -1210,6 +1211,89 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 5));
   });
+
+  for (final animation in TabAnimation.values) {
+    testWidgets('tools opens at the top with fractional safe areas during a '
+        '${animation.name} tab switch and retains user scrolling', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      tester.view.physicalSize = const Size(1184, 2560);
+      tester.view.devicePixelRatio = 3;
+      tester.view.padding = const FakeViewPadding(top: 85.2, bottom: 60);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPadding);
+
+      final container = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(TestProfiles.new),
+          navigationItemsStateProvider.overrideWithValue(
+            NavigationItemsState(
+              value: navigation
+                  .getItems(openLogs: true, hasProxies: true)
+                  .map(
+                    (item) => item.label == PageLabel.tools
+                        ? item
+                        : item.copyWith(
+                            builder: (_) => const SizedBox.shrink(),
+                          ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      globalState.container = container;
+      container.read(viewSizeProvider.notifier).value = const Size(
+        1184 / 3,
+        2560 / 3,
+      );
+      container
+          .read(appSettingProvider.notifier)
+          .update((state) => state.copyWith(tabAnimation: animation));
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+        ),
+      );
+      await tester.pump();
+
+      final scrollable = find.descendant(
+        of: find.byType(ToolsView),
+        matching: find.byType(Scrollable),
+      );
+      ScrollPosition position() =>
+          tester.state<ScrollableState>(scrollable).position;
+      await tester.tap(_glyph(AppGlyphs.tools));
+      await tester.pump();
+      for (var frame = 0; frame < 40; frame++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        if (scrollable.evaluate().isNotEmpty) {
+          expect(position().pixels, 0, reason: 'frame $frame');
+        }
+      }
+      await tester.pumpAndSettle();
+      expect(scrollable, findsOneWidget);
+      expect(position().pixels, 0);
+      expect(position().maxScrollExtent, greaterThan(0));
+
+      await tester.drag(find.byType(PrismListView), const Offset(0, -80));
+      await tester.pumpAndSettle();
+      final savedOffset = position().pixels;
+      expect(savedOffset, greaterThan(0));
+      await tester.tap(_glyph(AppGlyphs.dashboard));
+      await tester.pumpAndSettle();
+      await tester.tap(_glyph(AppGlyphs.tools));
+      await tester.pumpAndSettle();
+
+      expect(position().pixels, savedOffset);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('a far mobile page switch builds no page in between', (
     tester,
