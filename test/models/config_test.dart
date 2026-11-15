@@ -1222,6 +1222,24 @@ void main() {
       );
     });
 
+    test('only a fresh Windows config bypasses hosts without a dot', () {
+      expect(
+        Config.realFromJson(null).networkProps.bypassDomain,
+        Platform.isWindows
+            ? [...defaultBypassDomain, windowsLocalBypass]
+            : defaultBypassDomain,
+      );
+    });
+
+    test('a saved bypass list is kept as saved', () {
+      final config = Config.realFromJson({
+        'themeProps': const ThemeProps().toJson(),
+        'networkProps': {'bypassDomain': defaultBypassDomain},
+      });
+
+      expect(config.networkProps.bypassDomain, defaultBypassDomain);
+    });
+
     test('full config round-trip', () {
       const config = Config(
         currentProfileId: 42,

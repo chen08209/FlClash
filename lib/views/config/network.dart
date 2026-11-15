@@ -230,6 +230,8 @@ class BypassDomainItem extends ConsumerWidget {
     return ConfigListEditItem(
       title: (l) => l.bypassDomain,
       itemMaxLength: TextInputLimits.domain,
+      itemSubtitle: (item, l) =>
+          item == windowsLocalBypass ? l.bypassLocalWindowsOnly : null,
       selector: networkSettingProvider.select((state) => state.bypassDomain),
       onChanged: _networkWriter(
         (state, value) => state.copyWith(bypassDomain: value),

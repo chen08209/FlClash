@@ -2,12 +2,9 @@ use std::net::Ipv6Addr;
 
 use super::{PAC_PATH, PROXY_HOST};
 
-const LOCAL_TOKEN: &str = "<local>";
-
 /// WinINet rejects the whole list over one bare IPv6 literal or one entry
-/// ending in `/`, so the system proxy is not set at all, and its `<local>`
-/// token for single-label intranet hosts like `nas` has no cross-platform
-/// pattern. Loopback needs no entry: WinINet never proxies it.
+/// ending in `/`, so the system proxy is not set at all. Loopback needs no
+/// entry: WinINet never proxies it.
 pub fn bypass_list(bypass_domain: &[String]) -> String {
     let mut entries: Vec<String> = Vec::new();
     for domain in bypass_domain {
@@ -23,9 +20,6 @@ pub fn bypass_list(bypass_domain: &[String]) -> String {
         if !entries.contains(&entry) {
             entries.push(entry);
         }
-    }
-    if !entries.iter().any(|entry| entry == LOCAL_TOKEN) {
-        entries.push(LOCAL_TOKEN.to_owned());
     }
     entries.join(";")
 }
@@ -66,19 +60,19 @@ mod tests {
     }
 
     #[test]
-    fn adds_the_intranet_token_once() {
+    fn keeps_the_intranet_token_only_where_listed() {
         assert_eq!(
-            list(&["localhost", "127.*", "<local>"]),
-            "localhost;127.*;<local>"
+            list(&["localhost", "<local>", "127.*", "<local>"]),
+            "localhost;<local>;127.*"
         );
-        assert_eq!(list(&["localhost"]), "localhost;<local>");
+        assert_eq!(list(&["localhost"]), "localhost");
     }
 
     #[test]
     fn brackets_bare_ipv6_literals_and_drops_blank_entries() {
         assert_eq!(
             list(&[" ::1 ", "fe80::1", "", "[fd00::1]", "*.lan", "fe80::1%eth0"]),
-            "[::1];[fe80::1];[fd00::1];*.lan;[fe80::1%eth0];<local>"
+            "[::1];[fe80::1];[fd00::1];*.lan;[fe80::1%eth0]"
         );
     }
 
@@ -86,7 +80,7 @@ mod tests {
     fn drops_trailing_slashes_that_fail_the_whole_list() {
         assert_eq!(
             list(&["example.test/", "example.test", "nas//", "/"]),
-            "example.test;nas;<local>"
+            "example.test;nas"
         );
     }
 

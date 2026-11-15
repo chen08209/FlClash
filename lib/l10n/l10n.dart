@@ -2220,6 +2220,12 @@ abstract class AppLocalizations {
   /// **'Bypass domains apply only while the system proxy is on.'**
   String get bypassDomainDesc;
 
+  /// No description provided for @bypassLocalWindowsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Windows only: host names without a dot'**
+  String get bypassLocalWindowsOnly;
+
   /// No description provided for @resetTip.
   ///
   /// In en, this message translates to:

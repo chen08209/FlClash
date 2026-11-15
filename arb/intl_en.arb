@@ -351,6 +351,7 @@
   "pacMode": "PAC mode",
   "pacScript": "PAC script",
   "bypassDomainDesc": "Bypass domains apply only while the system proxy is on.",
+  "bypassLocalWindowsOnly": "Windows only: host names without a dot",
   "resetTip": "Are you sure you want to reset?",
   "icon": "Icon",
   "noData": "No data",

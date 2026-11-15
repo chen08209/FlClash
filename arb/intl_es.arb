@@ -351,6 +351,7 @@
   "pacMode": "Modo PAC",
   "pacScript": "Script PAC",
   "bypassDomainDesc": "Los dominios excluidos solo se aplican mientras el proxy del sistema esté activado.",
+  "bypassLocalWindowsOnly": "Solo Windows: nombres de host sin punto",
   "resetTip": "¿Seguro que quieres restablecer?",
   "icon": "Icono",
   "noData": "Sin datos",

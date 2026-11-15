@@ -5,6 +5,7 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/config/network.dart';
 import 'package:fl_clash/views/config/tun.dart';
 import 'package:flutter/widgets.dart';
@@ -12,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prism_ui/prism_ui.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 import '../helpers/host_scaffold.dart';
@@ -154,6 +156,32 @@ void main() {
         target,
       );
     });
+  });
+
+  testWidgets('the Windows-only bypass entry says so and deletes like any', (
+    tester,
+  ) async {
+    container.read(networkSettingProvider.notifier).value = const NetworkProps(
+      bypassDomain: ['localhost', windowsLocalBypass],
+    );
+    await pumpItem(tester, const BypassDomainItem());
+    final l = currentAppLocalizations;
+
+    await tester.tap(find.text(l.bypassDomain));
+    await tester.pumpAndSettle();
+    expect(find.text(windowsLocalBypass), findsOneWidget);
+    expect(find.text(l.bypassLocalWindowsOnly), findsOneWidget);
+
+    await tester.tap(find.byType(Checkbox).last);
+    await tester.pump();
+    await tester.tap(find.byGlyph(AppGlyphs.delete));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, l.delete));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip(l.save));
+    await tester.pumpAndSettle();
+
+    expect(container.read(networkSettingProvider).bypassDomain, ['localhost']);
   });
 
   group('network options items', () {

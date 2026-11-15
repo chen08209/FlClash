@@ -1089,6 +1089,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bypassDomainDesc => '排除域名仅在系统代理启用时生效。';
 
   @override
+  String get bypassLocalWindowsOnly => '仅 Windows：不带点的内网主机名';
+
+  @override
   String get resetTip => '确定要重置吗？';
 
   @override

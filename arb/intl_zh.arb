@@ -351,6 +351,7 @@
   "pacMode": "PAC 模式",
   "pacScript": "PAC 脚本",
   "bypassDomainDesc": "排除域名仅在系统代理启用时生效。",
+  "bypassLocalWindowsOnly": "仅 Windows：不带点的内网主机名",
   "resetTip": "确定要重置吗？",
   "icon": "图标",
   "noData": "暂无数据",

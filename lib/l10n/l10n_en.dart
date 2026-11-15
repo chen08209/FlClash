@@ -1125,6 +1125,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Bypass domains apply only while the system proxy is on.';
 
   @override
+  String get bypassLocalWindowsOnly => 'Windows only: host names without a dot';
+
+  @override
   String get resetTip => 'Are you sure you want to reset?';
 
   @override
