@@ -7,6 +7,7 @@ cd "$root"
 
 mode=""
 want_version=""
+rebuild=0
 do_push=0
 assume_yes=0
 dry_run=0
@@ -15,20 +16,26 @@ usage() {
   cat <<'EOF'
 Usage: tool/release.sh <pre|stable> [options]
 
-  pre                Tag the next vX.Y.Z-pre.N prerelease.
+  pre                Tag the next vX.Y.Z-pre.N prerelease on HEAD, no commit.
   stable             Write the changelog, commit it, and tag vX.Y.Z.
+
+CI takes the app version from the tag and the build number from the clock,
+so neither mode writes a build number into pubspec.yaml.
 
 Options:
   --version X.Y.Z    Target app version. Defaults to the pubspec version,
                      bumping the patch when that version is already tagged.
+  --rebuild          With pre: tag vX.Y.Z-pre.N+M, rebuilding the newest
+                     prerelease N instead of starting N+1.
   --push             Push the branch and the tag once the local steps pass.
   --yes              Skip the confirmation prompt.
   --dry-run          Report the plan and exit without changing anything.
   -h, --help         Show this help.
 
 Examples:
-  tool/release.sh pre --push          # v0.8.97-pre.1, notes rendered by CI
-  tool/release.sh stable --push       # v0.8.97 with a chore(release) commit
+  tool/release.sh pre --push            # v0.8.97-pre.1, notes rendered by CI
+  tool/release.sh pre --rebuild --push  # v0.8.97-pre.1+1 after a fix
+  tool/release.sh stable --push         # v0.8.97 with a chore(release) commit
 EOF
 }
 
@@ -48,6 +55,7 @@ while (($#)); do
       want_version="$1"
       ;;
     --version=*) want_version="${1#*=}" ;;
+    --rebuild) rebuild=1 ;;
     --push) do_push=1 ;;
     --yes | -y) assume_yes=1 ;;
     --dry-run) dry_run=1 ;;
@@ -110,16 +118,29 @@ fi
 
 if [[ "$mode" == "pre" ]]; then
   last="$(git tag --list "v$version-pre.*" |
-    sed -n "s/^v$version-pre\.\([0-9]*\)$/\1/p" | sort -n | tail -1)"
-  tag="v$version-pre.$(((${last:-0}) + 1))"
+    sed -n "s/^v$version-pre\.\([0-9]*\)\(+[0-9]*\)\{0,1\}$/\1/p" | sort -n | tail -1)"
+  if ((rebuild)); then
+    [[ -n "$last" ]] || die "no v$version-pre.N to rebuild; run without --rebuild first"
+    builds="$(git tag --list "v$version-pre.$last+*" |
+      sed -n "s/^v$version-pre\.$last+\([0-9]*\)$/\1/p" | sort -n | tail -1)"
+    tag="v$version-pre.$last+$(((${builds:-0}) + 1))"
+  else
+    tag="v$version-pre.$(((${last:-0}) + 1))"
+  fi
 else
+  ((rebuild == 0)) || die "--rebuild only applies to pre"
   tag="v$version"
+fi
+
+rewritten=""
+if ((bumped)) && [[ "$mode" == "stable" ]]; then
+  rewritten=' (pubspec will be rewritten)'
 fi
 
 echo
 echo "mode      : $mode"
 echo "branch    : $branch"
-echo "version   : $current -> $version$([[ $bumped == 1 ]] && echo ' (pubspec will be rewritten)')"
+echo "version   : $current -> $version$rewritten"
 echo "tag       : $tag"
 if [[ "$mode" == "pre" ]]; then
   echo "changelog : rendered by CI from build --unreleased; nothing committed"
@@ -142,7 +163,6 @@ if ((bumped)); then
   sed -i.bak "s/^version: [0-9]*\.[0-9]*\.[0-9]*/version: $version/" pubspec.yaml
   rm -f pubspec.yaml.bak
 fi
-tool/bump_version.sh minor
 
 echo "--- release notes for $tag ---"
 if dart run tool/changelog.dart build --unreleased >/dev/null 2>&1; then
@@ -187,12 +207,6 @@ if [[ "$mode" == "stable" ]]; then
   git commit -m "chore(release): v$version"
   committed=1
   dart run tool/changelog.dart verify
-elif ! git diff --quiet -- pubspec.yaml; then
-  git add pubspec.yaml
-  git commit -m "chore: bump version to $(sed -n 's/^version: //p' pubspec.yaml)"
-  committed=1
-else
-  committed=1
 fi
 
 git tag "$tag"

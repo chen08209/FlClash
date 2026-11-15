@@ -279,12 +279,20 @@ dart run tool/changelog.dart render telegram --out telegram.md
 Releasing a stable version, in order:
 
 ```bash
-tool/bump_version.sh all
+tool/bump_version.sh major
 dart run tool/changelog.dart release --version 0.8.96
 git commit -am "chore(release): v0.8.96"
 git tag v0.8.96
 git push origin main && git push origin v0.8.96
 ```
+
+The tag decides the version, not a commit. A release tag is `vX.Y.Z`, `vX.Y.Z-pre.N`, or `vX.Y.Z-pre.N+M`, where `+M`
+rebuilds prerelease N after a fix; the `version` job rejects any other `v*` tag. It writes `X.Y.Z` from the tag into
+`pubspec.yaml` for the build and upload jobs, with a build number of the tag run's UTC `YYYYMMDDHH`, raised above the
+committed one when that is not already larger, because Android refuses an update with a lower versionCode. The app's
+version name stays `X.Y.Z` for a prerelease too: `compareVersions` reads only numbers. The build number in
+`pubspec.yaml` therefore no longer moves with releases; a local build that must install over a CI one passes its own
+`--build-number`.
 
 Push the tag by name. Every release tag here is lightweight, and `--follow-tags` carries annotated tags only: it skips a
 lightweight one silently, so the branch lands, the tag does not, and the release workflow never fires.
@@ -294,9 +302,10 @@ the patch when pubspec still names an already tagged one), prints the notes the 
 `--push`:
 
 ```bash
-tool/release.sh pre --dry-run     # plan and notes, changes nothing
-tool/release.sh pre --push        # bump, tag vX.Y.Z-pre.N, push
-tool/release.sh stable --push     # changelog, chore(release) commit, tag, push
+tool/release.sh pre --dry-run            # plan and notes, changes nothing
+tool/release.sh pre --push               # tag vX.Y.Z-pre.N on HEAD, push; no commit
+tool/release.sh pre --rebuild --push     # tag vX.Y.Z-pre.N+M on HEAD after a fix
+tool/release.sh stable --push            # changelog, chore(release) commit, tag, push
 ```
 
 The release commit comes before the tag on purpose: the generated wording is reviewable in the diff before it ships, and
@@ -312,10 +321,11 @@ in `CHANGELOG.md`, and are never regenerated.
 skipped and moves on instead of reporting drift that does not exist. Checking mere tag existence is what made every such
 branch fail on an unrelated release.
 
-Prerelease tags (`v0.8.96-pre.N`) skip the release commit, and CI renders their notes with `build --unreleased` for the
-Telegram post. They publish no GitHub release, so the update dialog never sees them. `build --unreleased` reads the
-version from `pubspec.yaml` rather than the tag, so the patch has to be bumped before the first `-pre.N` of a cycle:
-while `v<pubspec version>` is still tagged it refuses to collect anything and the release job fails.
+Prerelease tags (`v0.8.96-pre.N[+M]`) skip the release commit, and CI renders their notes with `build --unreleased` for
+the Telegram post. They publish no GitHub release, so the update dialog never sees them. `build --unreleased` reads the
+version from `pubspec.yaml`, which the upload job has already set from the tag, and refuses to collect anything while
+`v<that version>` is tagged, so a prerelease tag must name the next, untagged `X.Y.Z`. The changelog builder walks
+stable tags only and ignores a `+M` tag.
 
 ### Website
 
