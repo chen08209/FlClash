@@ -8,10 +8,10 @@ import 'package:flutter/foundation.dart';
 const directOutbound = 'DIRECT';
 const routedOutbound = '';
 
-/// `probeErrorTimeout` in core/probe.go.
+/// The Core's name for a probe that ran out of time.
 const probeErrorTimeout = 'timeout';
 
-/// [id] must match the checker name registered in core/service_check.go.
+/// [id] must match the Core's name for the checker.
 enum ServiceTarget {
   google('google', 'Google', 'google'),
   github('github', 'GitHub', 'github'),

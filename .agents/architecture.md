@@ -2,14 +2,14 @@
 
 ## Core Integration
 
-The Core is Concord, the Rust core in `concord/` (see Concord Core below). The Go core in `core/` and its
-`core/Clash.Meta` fork stay in the tree as reference until milestone M6 removes them; nothing in the build uses them.
+The Core is Concord, the Rust core in the `concord/` submodule (see Concord Core below).
 
 Android lib mode:
 
-- `cargoCore` in the `:core` Gradle module builds the `concord-android` crate into `libconcord.so` per ABI. The JNI
-  surface is the five entries of `Mobile` (`android/core/src/main/java/com/follow/clash/core/mobile/Mobile.kt`:
-  `openSession`, `sendFrame`, `closeSession`, `setPlatformHost`, `adoptFd`). `NativeCore` is its only caller, and
+- `cargoCore` in the `:core` Gradle module builds Concord's `libconcord.so`, which speaks only C, and FlClash's
+  JNI glue `libcore_jni.so` (`android/core/jni`) over it, per ABI. The JNI surface is the five entries of `Mobile`
+  (`android/core/src/main/java/com/follow/clash/core/mobile/Mobile.kt`: `openSession`, `sendFrame`, `closeSession`,
+  `setPlatformHost`, `adoptFd`). `NativeCore` is its only caller, and
   `CoreClient` and `Core.kt` speak the typed JSON-RPC session over it.
 - Dart reaches the session through `FfiFrameChannel` by default or `MethodChannelFrameChannel` (`CORE_FRAMES=method`),
   and lifecycle commands cross MethodChannels through `lib/plugins/service.dart` and Android's `ServicePlugin`:
@@ -66,7 +66,7 @@ stored as JSON in the `profiles.overrides` column, with every key available, and
 `_makeRealProfileTask` merges whatever it is handed; there is no on/off toggle, a picked key is the override.
 
 Each `*OverrideKey` names one Clash key, with `parent.field` paths for nested maps, and covers every yaml key of the
-matching mihomo raw struct; `test/models/{dns,ntp,sniffer}_override_test.dart` read the reference `core/Clash.Meta/config/config.go`
+matching Concord section; `test/models/{dns,ntp,sniffer}_override_test.dart` read `concord/schema/config-schema.json`
 and fail when a core bump adds or drops one. `overrideJson` builds the fragment in model order and writes every picked
 key as it is, empty included, for every profile type: an emptied entry clears the profile's value, and a key the core
 refuses empty, such as `nameserver`, or `proxy-server-nameserver` under `respect-rules`, fails the config in the core.
@@ -108,8 +108,8 @@ that value. A key sing-tun reads on some platforms only is listed only there
 on Linux, and GSO, which Concord parses but never applies, nowhere under `rsFeature`; the general overrides drop
 `geodata-loader` the same way. `udp-timeout` reaches only the gvisor and system stacks and congestion control only mips, which their
 descriptions say. Route address sets are left out: sing-tun applies them only through `auto-redirect`.
-`test/models/tun_override_test.dart` fails if a key comes to overlap `Tun.coreJson`. Android starts its VPN from
-`core/tun` without the section, so TUN is listed on desktop only. Being a part of the section, the page has no quick
+`test/models/tun_override_test.dart` fails if a key comes to overlap `Tun.coreJson`. Android starts its VPN without
+the section, so TUN is listed on desktop only. Being a part of the section, the page has no quick
 edit; see Quick Edit.
 
 A custom profile's overview keeps rows for rules, providers and DNS, which every custom profile runs on, and puts the
@@ -191,8 +191,7 @@ privileged filesystem operations available to the host. Changes must not widen a
 
 The same task also writes `interface-name` per `PatchClashConfig.interfaceNameMode`: `clear` (default) forces it empty so a
 subscription's value cannot survive into the generated profile, `follow` leaves whatever the profile YAML already has, and
-`custom` writes the user's `interfaceName`. mihomo ignores `interface-name` on Android whenever `dialer.DefaultSocketHook`
-is installed (`core/lib.go` `installHooks`, vendored `dialer.go`), so `NetworkListView` in `lib/views/config/network.dart`
+`custom` writes the user's `interfaceName`. The Core ignores `interface-name` on Android, so `NetworkListView` in `lib/views/config/network.dart`
 shows the mode picker and text field only on desktop.
 
 ### Network Settings
@@ -209,7 +208,7 @@ Android and `_makeRealProfileTask` on desktop. VpnService can only add routes be
 `VpnService.addRoutes` routes everything only for an empty list. A config saved with the old `routeMode` keeps its
 choice: `bypassPrivate`, which ignored the route list, loads with the flag on and the list cleared, and `config` with
 the flag off. No stack in the vendored sing-tun reads `endpoint-independent-nat`, so it is not offered. Android builds
-its TUN from the VpnService descriptor in `core/tun/tun.go`, so only MTU and the congestion controller reach it,
+its TUN from the VpnService descriptor, so only MTU and the congestion controller reach it,
 through `VpnOptions` and the `mtu` and `congestionController` of `tun.start`; the VpnService builder takes the same MTU.
 
 The TUN fields start at mihomo's own defaults, and a saved zero MTU or empty congestion controller, which mihomo reads
@@ -218,18 +217,7 @@ re-applies the profile; keep-alive is forced off on Android, and only Linux hono
 
 ## HTTPS Decryption
 
-The code paths named in this section are the reference Go implementation in `core/`; Concord implements the same
-feature in `concord/crates/mitm`.
-
-MITM is a feature of the Clash.Meta fork, a config section like `sniffer`, so every inbound mihomo creates is decrypted,
-the controller's and the Android TUN's included. The engine is the new package `component/mitm`: the hostname list
-with Surge's matching (`hostname.go`), the URL, header and body rewrites and map local (`rules.go`), the CA and its
-leaf cache (`ca.go`, `authority.go`), an `http.Server` per decrypted connection (`session.go`), and the `mitm`
-section (`config.go`). The rest of the fork's share stays in its own files with one call into each upstream one, so an
-upstream merge conflicts on those lines alone: `config/patch.go` parses the section, `hub/executor/patch.go` hands it
-to `tunnel/patch_mitm.go`, which keeps the running engine while the section is unchanged, and two lines in
-`tunnel/tunnel.go` offer each TCP connection to it before the rules and drop QUIC to a listed host, so a client falls
-back to TCP. It decrypts what its hostname list names: the domain of the connection, or the one fake-ip or redir-host
+MITM is implemented in `concord/crates/mitm`, a config section like `sniffer`, so every inbound is decrypted. It decrypts what its hostname list names: the domain of the connection, or the one fake-ip or redir-host
 gave its address out for, or for an address alone on 443, the server name in the ClientHello. Its upstream
 connections are matched by the rules and tracked like any other. It reaches the server before it answers the client's
 handshake: a server the rules reject, or one that cannot be reached or verified, leaves the connection to the tunnel as
@@ -380,9 +368,10 @@ Quick Settings, notification, revoke, and Always-on VPN paths converge on the sa
 `concord/` is the Rust core: its own git repository (remote `chen08209/concord`), checked out in the FlClash root and not
 tracked by it. It reads Clash YAML and speaks JSON-RPC 2.0 on every platform. `concord_dir` in `build_config.yaml` names
 the workspace (default `concord`). On desktop `plugins/setup/setup_hooks/lib/src/concord_builder.dart` runs
-`cargo build --release -p concord-desktop` and installs the result as `FlClashCore`; on Android the `:core` module's
-`cargoCore` task builds `concord-android` into `libconcord.so`. `concord-api` (`concord/crates/api`) is the typed service
-crate over `concord-rpc`.
+`cargo build --release -p concord-desktop` and installs the built `concord` as `core_name` (`FlClashCore`); on Android
+the `:core` module's `cargoCore` task builds `concord-android` into `libconcord.so` and the JNI glue in
+`android/core/jni` over its C ABI. Both builds set `CONCORD_PRODUCT_NAME` from `product_name`, the name Concord gives the MITM CA and the
+Android TUN device. `concord-api` (`concord/crates/api`) is the typed service crate over `concord-rpc`.
 
 The Dart side speaks one protocol, JSON-RPC 2.0 with subscriptions, described by `concord/schema/api.json`
 (`cargo run -p xtask -- schema` regenerates it, `schema --check` fails when it is stale). `test/core/api/contract_test.dart`
@@ -1683,7 +1672,7 @@ What the hook protocol forces:
 Platform projects copy the artifacts out of `libclash/`; application code must not import `plugins/setup`:
 
 - Android: nothing. The hook returns without building, because the `:core` Gradle module builds every ABI of
-  `libconcord.so` in one `cargoCore` task.
+  `libconcord.so` and `libcore_jni.so` in one `cargoCore` task.
 - macOS: a standalone `FlClashCore`. `Release.xcconfig` pins release and profile `ARCHS` to the host because
   flutter_tools otherwise builds a universal binary and every artifact ships one slice; the hook skips a non-host slice
   for the same reason. The `Stage Core` phase copies the Core after the hook may have rewritten it and fails when it is
@@ -1749,7 +1738,7 @@ Windows helper integrity/version check:
   `hub.rs` uses it at every lock site, tests included, and two tests in that file pin the behaviour.
 
 Build configuration defaults live in `plugins/setup/setup_hooks/lib/src/options.dart` and can be overridden via the root
-`build_config.yaml`, which holds `concord_dir`, `core_name`, `output_dir`, `helper_dir` and `helper_name`.
+`build_config.yaml`, which holds `concord_dir`, `core_name`, `product_name`, `output_dir`, `helper_dir` and `helper_name`.
 
 Architecture detection is automatic. The `--description` flag passed to `flutter_distributor` adds arch suffixes to artifact names, such as `FlClash-0.8.93-macos-arm64.dmg`.
 
@@ -1774,16 +1763,18 @@ gone, and ending one cancels every subscription it started. Two clients hold one
 whose `inherited` source names the descriptor `concord_adopt_fd` took over. `Core.startTun` registers the host before the call
 and `stopTun` clears it after; a start that fails clears it too.
 
-Loading follows one rule: Kotlin's `System.loadLibrary("concord")` runs `JNI_OnLoad`, which builds the Core, and Dart's
+Loading follows one rule: Kotlin's `System.loadLibrary("core_jni")` loads `libconcord.so` with it and runs the
+glue's `JNI_OnLoad`, which starts the Core with `concord_start` and attaches every Core thread to the JVM, and Dart's
 `DynamicLibrary.open('libconcord.so')` then finds the same image. `ServicePlugin`'s `init` therefore answers only after the
 load when the frames are FFI, and Dart opens the library only after `init`.
 
 #### Android Core Build
 
-`android/core/build.gradle.kts` registers `cargoCore`, which runs `cargo build --release --locked -p concord-android` per ABI
-in the Concord workspace and copies `libconcord.so` into `build/cargo/jniLibs`, handed to every variant through
-`variant.sources.jniLibs.addGeneratedSourceDirectory`. The Kotlin sources, `Mobile` JNI object included, are in
-`android/core/src/main/java`. Gradle runs the cargo build before any task that needs the
+`android/core/build.gradle.kts` registers `cargoCore`, which per ABI runs `cargo build --release --locked -p
+concord-android` in the Concord workspace, then builds `android/core/jni` against it in the same target directory, and
+copies `libconcord.so` and `libcore_jni.so` into `build/cargo/jniLibs`, handed to every variant through
+`variant.sources.jniLibs.addGeneratedSourceDirectory`. The glue pins its own toolchain and lockfile; the Kotlin
+sources, `Mobile` included, are in `android/core/src/main/java`. Gradle runs the cargo build before any task that needs the
 library, in every variant and whether or not Flutter started the build, and the task's up-to-date check over the
 workspace (`target/` left out) stands in for the hook's cache.
 
@@ -2172,7 +2163,7 @@ password the app asks for and hands to `sudo -S` on stdin. A 126 means the user 
 - `/start` additionally requires the Core address to be a socket owned by the owner UID before spawning, since the
   Core connects to it as root.
 - The Core is spawned with the owner's real UID and an effective UID of 0, which is what a setuid Core would have had.
-  It is the signal `core/ownership_unix.go` uses to hand the files it created back to the user; without it a root
+  It is the signal the Core uses to hand the files it created back to the user; without it a root
   service would leave a root-owned config tree in the owner's home.
 - An AppImage has neither a stable executable path nor a writable Core, and its FUSE mount is `nosuid`, so
   `system.isAppImage` reports TUN authorization as unavailable instead of prompting for a password that cannot help.

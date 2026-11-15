@@ -13,7 +13,7 @@ build hooks, system proxy, tray, VPN, TUN, or platform-specific desktop/mobile b
 ## Read First
 
 - `.agents/rules.md`: Core API Safety and Lifecycle Rules are binding. They carry the desktop IPC and session-token rules, the
-  Android frame channel rules, the Go rules for the reference `core/`, `BootGuard`, tray, and SSID rules, and every
+  Android frame channel rules, `BootGuard`, tray, and SSID rules, and every
   lifecycle invariant (latest intent wins, desktop ownership through a `CoreProcessLease`, terminal `close()`,
   optimistic Android commands arbitrated by `ServiceState`, callbacks are not user intent, `goAsync()` finishes once).
 - `.agents/setting-changes.md`: a setting the Core or the Android VPN reads is patched live, re-applied with the

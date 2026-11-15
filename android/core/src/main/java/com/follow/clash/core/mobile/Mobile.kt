@@ -5,7 +5,7 @@ import com.follow.clash.core.PlatformHost
 
 object Mobile {
     init {
-        System.loadLibrary("concord")
+        System.loadLibrary("core_jni")
     }
 
     fun touch() {}

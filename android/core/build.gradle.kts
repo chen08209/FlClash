@@ -1,4 +1,6 @@
+import org.gradle.process.ExecSpec
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 
 plugins {
@@ -33,8 +35,6 @@ kotlin {
 }
 
 val isWindows = System.getProperty("os.name").startsWith("Windows")
-
-val concordLibraryName = "concord"
 
 val buildConfig =
     providers.fileContents(rootProject.layout.projectDirectory.file("../build_config.yaml")).asText.map { text ->
@@ -89,7 +89,13 @@ abstract class CargoBuild : DefaultTask() {
     abstract val workspace: DirectoryProperty
 
     @get:Internal
+    abstract val glue: DirectoryProperty
+
+    @get:Internal
     abstract val cargoExecutable: Property<String>
+
+    @get:Internal
+    abstract val checkoutDirectory: DirectoryProperty
 
     @get:Input
     abstract val triples: ListProperty<String>
@@ -110,7 +116,7 @@ abstract class CargoBuild : DefaultTask() {
     abstract val ndkVersion: Property<String>
 
     @get:Input
-    abstract val libraryName: Property<String>
+    abstract val productName: Property<String>
 
     @get:OutputDirectory
     abstract val outputDirectory: DirectoryProperty
@@ -125,6 +131,11 @@ abstract class CargoBuild : DefaultTask() {
         val api = androidApi.get()
         val output = outputDirectory.get().asFile
         output.deleteRecursively()
+        val prefixes = pathPrefixes()
+        val rustflags =
+            System.getenv("CARGO_ENCODED_RUSTFLAGS")?.takeIf { it.isNotEmpty() }?.split('\u001f')
+                ?: System.getenv("RUSTFLAGS").orEmpty().split(Regex("\\s+")).filter { it.isNotEmpty() }
+        val fileMaps = prefixes.filterNot { (from, _) -> from.any(Char::isWhitespace) }.map { (from, to) -> "-ffile-prefix-map=$from=$to" }
         triples.get().indices.forEach { index ->
             val triple = triples.get()[index]
             val abi = abis.get()[index]
@@ -140,8 +151,7 @@ abstract class CargoBuild : DefaultTask() {
                 include("${ndk.resolve("build/cmake/android.toolchain.cmake").path.replace('\\', '/')}")
                 """.trimIndent(),
             )
-            execOperations.exec {
-                workingDir(workspace)
+            val ndkEnvironment: ExecSpec.() -> Unit = {
                 environment("ANDROID_NDK_HOME", ndk.path)
                 environment("ANDROID_NDK_ROOT", ndk.path)
                 environment("CC_$underscored", clang)
@@ -156,11 +166,59 @@ abstract class CargoBuild : DefaultTask() {
                 )
                 // The APK ships no libc++_shared.so for boring-sys to load.
                 environment("BORING_BSSL_RUST_CPPLIB", "c++_static")
+                environment("CONCORD_PRODUCT_NAME", productName.get())
+                environment(
+                    "CARGO_ENCODED_RUSTFLAGS",
+                    (rustflags + prefixes.map { (from, to) -> "--remap-path-prefix=$from=$to" }).joinToString("\u001f"),
+                )
+                listOf("CFLAGS", "CXXFLAGS").map { "${it}_$underscored" }.forEach { name ->
+                    environment(name, (listOfNotNull(System.getenv(name)) + fileMaps).joinToString(" "))
+                }
+            }
+            val target = workspace.get().asFile.resolve("target")
+            val release = target.resolve("$triple/release")
+            execOperations.exec {
+                ndkEnvironment()
+                workingDir(workspace)
                 commandLine(cargoExecutable.get(), "build", "--release", "--locked", "--target", triple, "-p", "concord-android")
             }
-            val library = "lib${libraryName.get()}.so"
-            val built = workspace.get().asFile.resolve("target/$triple/release/$library")
-            built.copyTo(output.resolve("$abi/$library"), overwrite = true)
+            execOperations.exec {
+                ndkEnvironment()
+                workingDir(glue)
+                environment("CONCORD_LIB_DIR", release.path)
+                environment("CARGO_TARGET_DIR", target.path)
+                commandLine(cargoExecutable.get(), "build", "--release", "--locked", "--target", triple)
+            }
+            listOf("libconcord.so", "libcore_jni.so").forEach { library ->
+                release.resolve(library).copyTo(output.resolve("$abi/$library"), overwrite = true)
+            }
+        }
+    }
+
+    // Mirrors plugins/setup/setup_hooks/lib/src/path_remap.dart, which the desktop Core and Helper builds use.
+    private fun pathPrefixes(): List<Pair<String, String>> {
+        val cargo = File(cargoExecutable.get())
+        val rustcPath = cargo.resolveSibling(cargo.name.replace("cargo", "rustc")).path
+
+        fun rustc(vararg args: String): String {
+            val out = ByteArrayOutputStream()
+            execOperations.exec {
+                workingDir(workspace)
+                commandLine(rustcPath, *args)
+                standardOutput = out
+            }
+            return out.toString().trim()
+        }
+        val commit = Regex("^commit-hash: (\\S+)$", RegexOption.MULTILINE).find(rustc("-vV"))?.groupValues?.get(1) ?: "unknown"
+        val home = System.getenv("HOME") ?: System.getenv("USERPROFILE")
+        val cargoHome = System.getenv("CARGO_HOME") ?: home?.let { "$it/.cargo" }
+        return listOfNotNull(
+            home?.let { File(it) to "~" },
+            checkoutDirectory.get().asFile to ".",
+            cargoHome?.let { File(it) to "/cargo" },
+            File(rustc("--print", "sysroot")).resolve("lib/rustlib/src/rust") to "/rustc/$commit",
+        ).flatMap { (directory, placeholder) ->
+            listOf(directory.absoluteFile.normalize(), directory.canonicalFile).distinct().map { it.path to placeholder }
         }
     }
 }
@@ -172,7 +230,10 @@ val cargoCore =
                 rootProject.layout.projectDirectory.dir("..").asFile.resolve(config["concord_dir"] ?: "concord")
             }
         sources.from(concordWorkspace.map { fileTree(it) { exclude("target/**") } })
+        sources.from(fileTree("jni") { exclude("target/**") })
         workspace.set(layout.dir(concordWorkspace))
+        glue.set(layout.projectDirectory.dir("jni"))
+        checkoutDirectory.set(rootProject.layout.projectDirectory.dir(".."))
         cargoExecutable.set(cargoExecutablePath)
         triples.set(cargoAbis.map { it.triple })
         abis.set(cargoAbis.map { it.abi })
@@ -180,7 +241,7 @@ val cargoCore =
         androidApi.set(libs.versions.minSdk.get().toInt())
         ndkDirectory.set(androidComponents.sdkComponents.ndkDirectory)
         ndkVersion.set(libs.versions.ndkVersion)
-        libraryName.set(concordLibraryName)
+        productName.set(buildConfig.map { it["product_name"] ?: "FlClash" })
         outputDirectory.set(layout.buildDirectory.dir("cargo/jniLibs"))
     }
 

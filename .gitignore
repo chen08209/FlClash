@@ -67,6 +67,7 @@ docs/
 /libclash/
 /android/app/src/main/jniLibs/
 /services/helper/target
+/android/core/jni/target
 /macos/**/Package.resolved
 /macos/build/
 /env.json
@@ -80,5 +81,3 @@ devtools_options.yaml
 .fvmrc
 /coverage/lcov.info
 
-# Own repository, selected with concord_dir in build_config.yaml.
-/concord/

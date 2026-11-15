@@ -2,9 +2,8 @@
 
 ## Building
 
-Update submodules first. The Go core in `core/` and its `core/Clash.Meta` submodule are kept as reference until
-milestone M6 removes them; no build step uses them. The Core is Concord in `concord/`, which needs `cargo` and the
-toolchain pinned in `concord/rust-toolchain.toml`.
+Update submodules first. The Core is Concord in the `concord/` submodule, a private repository, which needs `cargo` and
+the toolchain pinned in `concord/rust-toolchain.toml`.
 
 ```bash
 git submodule update --init --recursive
@@ -23,8 +22,8 @@ The desktop Concord core and the Rust helper build automatically: Flutter runs
 `plugins/setup/hook/build.dart` on every `flutter build` and `flutter test`,
 and the hook drives `CoreBuilder` from the `setup_hooks` package in
 `plugins/setup/setup_hooks/`, which runs `cargo build` for `concord-desktop` and the Helper. Artifacts land in
-`libclash/`. Android's Core is `libconcord.so`, which the `:core` Gradle module builds with its `cargoCore` task before
-anything compiles against it; that needs `cargo` on `PATH` and the NDK from AGP. The hook reruns only when Concord,
+`libclash/`. Android's Core is `libconcord.so` with the JNI glue `libcore_jni.so`, which the `:core` Gradle
+module builds with its `cargoCore` task before anything compiles against it; that needs `cargo` on `PATH` and the NDK from AGP. The hook reruns only when Concord,
 Helper, or `setup_hooks` inputs change; the fingerprint cache lives in
 `.dart_tool/setup_build_cache/`. To force a rebuild, delete that directory:
 
@@ -241,7 +240,7 @@ registered with `java_home`, so export it by prefix:
 ```bash
 cd android
 export JAVA_HOME="$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home"   # elsewhere: any JDK 17
-./gradlew :core:compileDebugKotlin -Ptarget-platform=android-arm64   # builds libconcord.so for one ABI
+./gradlew :core:compileDebugKotlin -Ptarget-platform=android-arm64   # builds the Core and JNI glue for one ABI
 ./gradlew :service:compileDebugKotlin
 ./gradlew :app:compileDebugKotlin
 ```
@@ -258,7 +257,7 @@ the toolchain pinned in `concord/rust-toolchain.toml` must be installed.
 Work inside it from `concord/`:
 
 ```bash
-cargo build --release -p concord-desktop          # target/release/FlClashCore
+cargo build --release -p concord-desktop          # target/release/concord
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 CONCORD_REQUIRE_APP_TREE=1 cargo test --workspace
@@ -266,7 +265,7 @@ cargo run -p xtask -- check-layers
 cargo run -p xtask -- schema                      # rewrite concord/schema/, then commit it
 cargo run -p xtask -- schema --check
 cargo deny check
-cargo run -p xtask -- check-size target/release/FlClashCore 15000000
+cargo run -p xtask -- check-size target/release/concord 15000000
 ```
 
 `CONCORD_REQUIRE_APP_TREE=1` turns the contract tests that read `lib/` from a skip into a failure when the FlClash tree
@@ -406,7 +405,7 @@ Root analysis excludes `plugins/**`, and root tests do not discover nested
 plugin packages, so parallel jobs validate the rest from their own package
 directories: `plugins` (local Flutter packages and the setup build tool), `android` (JVM unit tests
 for `:common`, `:service` and `:app`, with the Flutter compile tasks excluded
-and `libconcord.so` built for one ABI), `rust` (both crates), `rust-core` (the Concord
+and the Core built for one ABI), `rust` (both crates), `rust-core` (the Concord
 workspace), and a
 Windows runner for the helper's `windows-service` feature. On branch pushes a
 `desktop` job also compiles a debug build per desktop platform; a tag skips it,

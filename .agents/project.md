@@ -23,7 +23,6 @@ Clash/mihomo configuration. It supports Android, Windows, macOS, and Linux, draw
 ## Build Dependencies
 
 Builds need Flutter and `cargo` with the toolchain pinned in `concord/rust-toolchain.toml`; they need no Go toolchain.
-The Go core in `core/` and its `core/Clash.Meta` submodule are retained as reference until milestone M6 removes them.
 
 ## Forked Dependencies
 

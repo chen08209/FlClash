@@ -489,9 +489,8 @@ List<Widget> networkOptionsItems({
   return [
     if (isDesktop) const TUNItem(),
     if (!rsFeature) const TunStackItem(),
-    // mihomo's DefaultSocketHook ignores interface-name on Android
-    // (core/lib.go installHooks, vendored dialer.go), so these rows only
-    // apply on desktop.
+    // The Core ignores interface-name on Android, so these rows only apply on
+    // desktop.
     if (isDesktop) ...[
       const InterfaceNameModeItem(),
       if (isCustomInterfaceName) const InterfaceNameItem(),

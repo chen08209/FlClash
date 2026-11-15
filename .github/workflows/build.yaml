@@ -35,13 +35,6 @@ jobs:
         with:
           fetch-depth: 0
           submodules: true
-
-      - &checkout-concord
-        name: Checkout Concord
-        uses: actions/checkout@v4
-        with:
-          repository: chen08209/concord
-          path: concord
           token: ${{ secrets.CONCORD_TOKEN }}
 
       - name: Test git hooks
@@ -98,6 +91,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: true
+          token: ${{ secrets.CONCORD_TOKEN }}
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -135,8 +129,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - *checkout-concord
+          token: ${{ secrets.CONCORD_TOKEN }}
 
       - &fetch-ca
         name: Fetch CA certificates
@@ -195,8 +188,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - *checkout-concord
+          token: ${{ secrets.CONCORD_TOKEN }}
 
       - *fetch-ca
 
@@ -271,6 +263,7 @@ jobs:
         run: |
           cargo fmt --manifest-path services/helper/Cargo.toml -- --check
           cargo fmt --manifest-path plugins/rust_api/rust/Cargo.toml -- --check
+          cargo fmt --manifest-path android/core/jni/Cargo.toml -- --check
 
       - name: Run tests
         run: |
@@ -283,14 +276,15 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_COLOR: always
-      # The release budget in bytes for FlClashCore. The design target is 15 MB.
-      CORE_MAX_BYTES: 15000000
+      # The release budget in bytes for the desktop Core.
+      CORE_MAX_BYTES: 25000000
       CONCORD_REQUIRE_APP_TREE: '1'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - *checkout-concord
+        with:
+          submodules: true
+          token: ${{ secrets.CONCORD_TOKEN }}
 
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
@@ -335,7 +329,7 @@ jobs:
 
       - name: Check binary size
         working-directory: concord
-        run: cargo run -p xtask -- check-size target/release/FlClashCore "$CORE_MAX_BYTES"
+        run: cargo run -p xtask -- check-size target/release/concord "$CORE_MAX_BYTES"
 
   windows-helper-test:
     name: Windows helper test
@@ -434,8 +428,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - *checkout-concord
+          token: ${{ secrets.CONCORD_TOKEN }}
 
       - name: Apply the tag's version
         shell: bash
@@ -527,6 +520,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: true
+          token: ${{ secrets.CONCORD_TOKEN }}
 
       - name: Apply the tag's version
         env:

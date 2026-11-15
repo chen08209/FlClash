@@ -165,8 +165,8 @@ how important it feels.
   that.
 - **A fact that is true only at one call site, and is not visible from that call site, is the one thing a comment does
   better than a test or a document.** Its value is being in the reader's line of sight at the moment of the edit.
-  `lib/common/constant.dart` carries one: the delay-test concurrency cap is bound to `delayTestConcurrency` in
-  `core/delay.go`, and whoever changes that number must see the constraint on the same screen. This is the case a
+  `lib/common/constant.dart` carries one: the delay-test concurrency cap is bound to the Core's own cap, and
+  whoever changes that number must see the constraint on the same screen. This is the case a
   comment is for; the bar is that no test and no `.agents/` entry could hold the fact instead.
 
 Both failure directions are real. Moving a local constraint into `.agents/` hides it from the person editing the line;
@@ -196,112 +196,12 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   forever when the Core restarted. The run owns its keys and releases them in a `finally`, so nothing depends on a
   reply arriving; core status leaving `connected` cancels every run in flight.
 
-### Reference Go Core
+### Core Constants
 
-`core/` (the Go core and the `core/Clash.Meta` fork) is retained as reference until milestone M6 removes it. Nothing in the
-build uses it; the rules below constrain Go code in `core/` only.
-
-- `core/Clash.Meta` is a fork of mihomo, and changes to it are budgeted for features, not repairs. Fixing a bug there is
-  low priority even when the bug is real and the fix is small: every patch is one more thing to carry across an upstream
-  rebase. Solve it on the FlClash side of the boundary and note the mihomo behaviour you are working around. Reach into
-  the submodule only for a feature that has nowhere else to live, or when the problem is one the FlClash patches
-  themselves introduced — and say which of the two it is in the commit message.
-- `core/message.go` carries three event queues, and the split is load-bearing: state (loaded, geo-update,
-  route-changed), priority (every other event), and bulk (log, request, DNS). Priority and bulk evict their own oldest
-  entry under backpressure, except DNS, which enters the bulk queue through `enqueueState` so a lookup burst cannot push
-  out the request events the connection list is built from; state uses `enqueueState`, which never evicts, because a dropped `geoUpdate{updating:false}` leaves `isUpdatingProvider` stuck at true in the UI until
-  `UpdatingAction` sweeps it as stale minutes later. Do not merge the tiers or give state eviction semantics. `enqueueState` drops silently on a full
-  queue and must stay that way: reaching it means the host stopped reading, which `logDeliveryError` already reports,
-  and reporting it from the message layer feeds the same batcher.
-- Every method of the callback interfaces in `core/mobile` (`TunHandler`, `ResultHandler`) returns an `error`. gobind
-  clears a Java exception and hands it to Go only for a method that declares one; otherwise the exception stays pending
-  and the next JNI call on that thread aborts the process, so a throw in `protect`/`resolveUid`/`resolvePackage`/
-  `onResult` would crash unrelated code. `core/mobile` turns the error into the answer the system gives when it will not
-  help: `false`, `-1`, or an empty package name.
-- `TunHandler`'s hooks in `core/lib.go` check `callbacks` under `th.mu` before every call. `clear` drops the callbacks
-  while connections may still be resolving, and a call through the nil interface panics on a mihomo goroutine, outside
-  every recovery.
-- The Android bridge resolves an owner in two steps — `ResolveUid` then `ResolvePackage` — because mihomo fills
-  `metadata.Uid` from a procfs lookup that Android Q closed off. Collapsing them back into one call that returns only a
-  package name is what left every connection reporting uid 0, so `UID` rules matched nothing.
-- The desktop delivery path in `core/server.go` must not report failures through `logError`. A log event is published to
-  the log subscriber, batched, and handed back to `send`, so a send failure reported that way feeds itself; use
-  `logDeliveryError`, which writes to stderr and latches until a frame gets through or the next connection is installed.
-  A write that fails without putting a byte on the wire — host backpressure hitting `ipcWriteTimeout`, or a payload above
-  `maxIPCFrameSize` — drops that one frame and keeps the connection: the stream is still framed correctly, and tearing it
-  down here ends the read loop, and with it the Core process. A half-written frame whose write merely timed out is
-  resumed for as long as the stall lasts: Windows Modern Standby suspends the app while the Helper's Core keeps running,
-  so the host can stop draining for hours and still come back, and go-winio reports the expiry as its own `ErrTimeout`
-  rather than `os.ErrDeadlineExceeded`, which is why `send` checks `Timeout()`. The wait has no cap on purpose, and
-  `send` holds `writeMu` throughout, so every other frame — method responses and the single batcher goroutine behind
-  the event queues — waits behind the stalled one. Memory is bounded by the queues; what gives is delivery: the state
-  queue fills and `enqueueState` starts dropping, which is the case the `UpdatingAction` sweep above exists for. Nothing
-  on the Dart side restarts the Core over a stall: `CoreClient` times each pending request out on its own and fails
-  it with a `TimeoutException`, and the sweep clears core-scope updating state
-  minutes later. Only a half-written frame that fails outright desynchronizes the stream, and that is the one case
-  `send` closes on.
-- Core method handlers are plain functions that return their answer, registered in the `methodHandlers` table in
-  `core/method.go` through the adapter matching their shape. `dispatchMethodCall` already runs every call on its own
-  goroutine and `handleMethodCall` turns a panic into an `internal_error` answer, so a handler blocks for as long as its
-  work takes and never spawns a goroutine just to answer. Work that outlives the answer goes through `safeGo`, which
-  recovers; a bare `go` puts a panic outside every recovery and kills the process, which on Android is the whole
-  application. The exported Android entry points in `core/lib.go` do not reach `handleMethodCall`, so each one carries
-  its own recovery.
-- A handler fails by returning an `error`: a `*MethodError` travels as it is and anything else under `core_error`. The
-  exception is `withMessage`, for the methods whose result the host reads as a message that is empty on success:
-  there a plain error becomes that message and only a `*MethodError` fails the call. Moving a method between the two changes what Dart receives.
-- `dialer.DefaultSocketHook` and `process.DefaultPackageNameResolver` are installed exactly once, by `installHooks` in
-  `core/lib.go`, and never cleared. mihomo checks `DefaultSocketHook` for nil once and dereferences it again when the
-  socket is created (`component/dialer/socket_hook.go`), so clearing it while a dial is in flight calls a nil func
-  value. Stopping the TUN swaps `activeTunHandler` instead.
-- `tunnel.AllProxies()` returns a shared, cached map — never modify it. The cache is invalidated by
-  `invalidateAllProxies` on `tunnel.UpdateProxies` and validated against each provider's `Version()`, so a rebuild
-  costs one read per provider rather than one per proxy. Anything else added to `tunnel/patch.go` that derives from the
-  proxy set needs both signals: the external controller can reload the config through `hub/route/configs.go` without
-  going through FlClash's `applyConfig`, so a hook on the FlClash side alone would miss a profile switch.
-- Core state that mirrors mihomo state goes stale at the next `applyConfig`, which replaces every proxy, provider and
-  rule. Read the tunnel instead of caching a snapshot of it: `lookupExternalProvider` kept one that was rebuilt only
-  when the host asked for the provider list, and the host asks after a successful setup and not after a failed one, so
-  an update ran against a provider the tunnel no longer held — downloading, writing to disk and reporting success
-  against nothing.
-- Selection writes take `selectMu`, not `configMu`. mihomo's `Selector.Set` has no lock of its own, so the writes need
-  mutual exclusion against each other and against `patchSelectGroup` — but not against a whole config apply, which is
-  what `configMu` made a proxy switch wait for, provider downloads included. `patchSelectGroup` takes `selectMu` under
-  `configMu`, fixing the order as `configMu` → `selectMu`.
-- Queueing for the delay-test semaphore and probing the node each get the full timeout in `handleTestDelay`. With one
-  shared deadline, a node that waited behind a saturated semaphore reached `URLTest` with almost nothing left, so a bulk
-  test of a large subscription reported whatever sat at the back of the queue as unreachable.
-- A delay test that the Core does not answer is a fault of the Core or the channel, never a verdict on the proxy:
-  `handleTestDelay` returns within its two timeouts on every path. `testDelay` therefore throws instead of answering a
-  `-1` delay, and `ProxiesAction` leaves the last measurement in place and abandons the rest of the run. Writing a
-  timeout there is what made a reachable node read as unreachable whenever the host deadline beat the Core's.
-- Some constants in `lib/common/constant.dart` mirror the Core and move with it. `delayTimedOutValue` is the `-1` that
-  `core/delay.go` reports for a delay test that ran out of time; any other negative value failed outright.
-  `downloadTimeoutDuration` matches mihomo's `resource.DefaultHttpTimeout`, which bounds the Core's provider downloads
-  end to end. `shareLinkSchemes` are the schemes mihomo's `ConvertsV2Ray` reads, less http(s), which is a subscription.
-- Anything on the mihomo side that is reached from both a user-triggered core method and mihomo's own background
-  scheduler needs its in-flight guard on the FlClash side. `updater.UpdateMMDB` and its siblings have none — only the
-  batch `UpdateGeoDatabases` does — and two concurrent runs close the mmap'd database twice, so `handleUpdateGeoData`
-  claims per resource and `updater.GeoUpdateHook` releases.
-- A failed `applyConfig` rolls the tunnel back to the default config, and that rollback is the whole recovery:
-  `handleSetupConfig` returns the error and stops there. Do not add a teardown on top of it — stopping the listeners
-  takes the app offline over a profile the user can still switch away from, and the error already reaches the host,
-  which is what surfaces the failure (`MessageException` on the Flutter side, the config-error toast on Android). Keep
-  an empty `config.yaml` out of the failure path — it is how the app says "no profile selected", and `loadConfig`
-  resolves it to the defaults.
-- Package `init` in the Android library runs while the `.so` is being loaded, so a panic there takes the application
-  down before it can report anything. `platform/limit.go` arms an fd-pressure probe and degrades to never blocking when
-  it cannot; keep that shape for anything else `init` sets up that correctness does not depend on.
-- No file in `core/` uses cgo: the only C in the Android library is the glue gobind generates during `gomobile bind`.
-  Android-only files take `//go:build android` and desktop-only ones `!android`, so `GOOS=android CGO_ENABLED=0 go vet`
-  checks the Android side without an NDK. Keep it that way; cgo in `core/` puts the NDK back in front of that vet and of
-  `go build ./...` on every developer machine.
-- A Go test in `core/` that reaches `sendMessage` — directly, or through `handleStartLog` or `updater.GeoUpdateHook` —
-  leaves events in the process-wide batcher, which flushes them up to `messageBatchInterval` later into whichever
-  connection `captureFrames` has installed by then. Either keep the event out of the batcher or end the test with
-  `settleMessageBatcher`. That batcher runs for the whole test binary and reads `conn` under `connMu`, so install a test
-  connection with `swapConn`; a bare assignment races every event it happens to be delivering, and `go test -race` catches
-  it in an unrelated test.
+Some constants in `lib/common/constant.dart` mirror the Core and move with it. `delayTimedOutValue` is the `-1` the Core
+reports for a delay test that ran out of time; any other negative value failed outright. `downloadTimeoutDuration` bounds
+the Core's provider downloads end to end. `shareLinkSchemes` are the schemes share links are read from, less http(s),
+which is a subscription.
 
 ## Lifecycle Rules
 

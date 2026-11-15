@@ -82,9 +82,8 @@ const delayTimedOutValue = -1;
 const probeTimeoutDuration = Duration(seconds: 10);
 
 /// The window a checked move opens, whose later moves are checked together
-/// when it ends. Outlasts the Core's one-second pick poll (`routePollInterval`
-/// in core/route.go), so groups re-picking on neighbouring polls cost one
-/// route check more.
+/// when it ends. Outlasts the Core's one-second pick poll, so groups
+/// re-picking on neighbouring polls cost one route check more.
 const probeSettleDuration = Duration(milliseconds: 1500);
 
 /// Spans a config load, whose providers, rule sets and url-test picks land
@@ -110,7 +109,7 @@ const outboundIpTimeoutDuration = Duration(seconds: 6);
 Duration coreGuardFor(int timeout, {int budgetFactor = 2}) =>
     Duration(milliseconds: timeout * budgetFactor) + const Duration(seconds: 5);
 
-/// Kept in step with serviceSweepBudgetFactor in core/service_check.go.
+/// Kept in step with the Core's service sweep budget.
 const serviceSweepBudgetFactor = 6;
 
 /// The width of one `delay.run`.

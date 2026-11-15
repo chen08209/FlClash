@@ -1,5 +1,6 @@
 concord_dir: concord
 core_name: FlClashCore
+product_name: FlClash
 output_dir: libclash
 helper_dir: services/helper
 helper_name: FlClashHelperService

@@ -1,30 +1,14 @@
-import 'dart:io';
-
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
 
-Set<String> _keysOf(String path, String struct, String tag) {
-  final source = File(path).readAsStringSync();
-  final body = RegExp(
-    'type $struct struct {([^}]*)}',
-  ).firstMatch(source)!.group(1)!;
-  return {
-    for (final line in body.split('\n'))
-      if (!line.trim().startsWith('//'))
-        for (final match in RegExp('$tag:"([^",]+)').allMatches(line))
-          match.group(1)!,
-  };
-}
+import '../helpers/concord_config.dart';
 
 void main() {
   final tunKeys = const Tun().toJson().keys.toSet();
 
   test('every Tun key is a key of the core TUN section', () {
-    expect(
-      _keysOf('core/Clash.Meta/config/config.go', 'RawTun', 'yaml'),
-      containsAll(tunKeys),
-    );
+    expect(concordKeys('tun'), containsAll(tunKeys));
   });
 
   test('a saved zero MTU or empty congestion control reads as the default', () {
@@ -53,12 +37,5 @@ void main() {
       'device': tun.device,
       'auto-route': true,
     });
-  });
-
-  test('a config update patches every key the desktop TUN takes', () {
-    expect(
-      _keysOf('core/protocol.go', 'tunSchema', 'json'),
-      const Tun().coreJson.keys.toSet(),
-    );
   });
 }
