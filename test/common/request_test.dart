@@ -141,6 +141,22 @@ void main() {
     });
   });
 
+  test('an rs build is not offered the latest release, the Go build', () async {
+    final request = Request()
+      ..dio.httpClientAdapter = _HostAdapter({
+        'api.github.com': () => ResponseBody.fromString(
+          '{"tag_name":"v99.0.0"}',
+          200,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        ),
+      });
+
+    expect(rsFeature, isTrue);
+    expect(await request.checkForUpdate(), isNull);
+  });
+
   group('downloadVerifiedRelease', () {
     const name = 'FlClash-1.2.3-android-arm64-v8a.apk';
     final package = utf8.encode('package');
