@@ -50,6 +50,10 @@ void main() {
     });
   });
 
+  test('an rs build has no self-update asset to download', () {
+    expect(selfUpdateSuffix, isNull);
+  });
+
   test('releaseAssetName drops the tag prefix', () {
     expect(
       releaseAssetName('v0.9.3', 'android-arm64-v8a.apk'),

@@ -35,10 +35,12 @@ final class UpdateReady extends UpdateDownload {
 }
 
 @visibleForTesting
-String? Function() resolveSelfUpdateSuffix = () => selfUpdateAssetSuffix(
-  Abi.current(),
-  windowsInstalled: system.isWindows && isInstalledWindowsBuild,
-);
+String? Function() resolveSelfUpdateSuffix = () => rsFeature
+    ? null
+    : selfUpdateAssetSuffix(
+        Abi.current(),
+        windowsInstalled: system.isWindows && isInstalledWindowsBuild,
+      );
 
 String? get selfUpdateSuffix => resolveSelfUpdateSuffix();
 

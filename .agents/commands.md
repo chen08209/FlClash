@@ -300,8 +300,8 @@ do not `cargo clean` a tree someone else is building. Release uses fat LTO, so b
 the question. Run `cargo` with `CARGO_INCREMENTAL=0` and without a stale `all_proxy`.
 
 CI runs the `rust-core` job in `build.yaml`, and `concord/.github/workflows/ci.yaml` runs the same steps inside the
-Concord repository. The first checks `chen08209/concord` out into `concord/` with the `CONCORD_TOKEN` secret and is not
-a release gate: `upload` does not wait for it.
+Concord repository. The first checks the public `chen08209/concord` submodule out into `concord/` without a token and
+is not a release gate: `upload` does not wait for it.
 
 ## Changelog And Release
 
@@ -333,7 +333,8 @@ git push origin main && git push origin v0.8.96
 ```
 
 The tag decides the version, not a commit. A release tag is `vX.Y.Z`, `vX.Y.Z-pre.N`, or `vX.Y.Z-pre.N+M`, where `+M`
-rebuilds prerelease N after a fix; the `version` job rejects any other `v*` tag. It writes `X.Y.Z` from the tag into
+rebuilds prerelease N after a fix, or `vX.Y.Z-rs.N[+M]`, which releases the Concord build exactly as a pre tag does;
+the `version` job rejects any other `v*` tag. It writes `X.Y.Z` from the tag into
 `pubspec.yaml` for the build and upload jobs, with a build number of the tag run's UTC `YYYYMMDDHH`, raised above the
 committed one when that is not already larger, because Android refuses an update with a lower versionCode. The app's
 version name stays `X.Y.Z` for a prerelease too: `compareVersions` reads only numbers. The build number in
@@ -351,8 +352,12 @@ the patch when pubspec still names an already tagged one), prints the notes the 
 tool/release.sh pre --dry-run            # plan and notes, changes nothing
 tool/release.sh pre --push               # tag vX.Y.Z-pre.N on HEAD, push; no commit
 tool/release.sh pre --rebuild --push     # tag vX.Y.Z-pre.N+M on HEAD after a fix
+tool/release.sh rs --push                # tag vX.Y.Z-rs.N on HEAD (the rs branch), push; no commit
 tool/release.sh stable --push            # changelog, chore(release) commit, tag, push
 ```
+
+`--push` goes to `origin`; `--remote NAME` pushes to another remote instead, such as the public repository in a
+checkout whose `origin` is a private mirror.
 
 The release commit comes before the tag on purpose: the generated wording is reviewable in the diff before it ships, and
 the tag is what `render release` reads. CI never writes back to the repository; it only runs `verify`. Wording in
