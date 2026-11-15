@@ -1,7 +1,7 @@
 use std::process::{Command, Stdio};
 
 use super::command::{self, ProxyCommand};
-use super::{Target, PROXY_HOST};
+use super::{without_wininet_local, Target, PROXY_HOST};
 
 const NETWORKSETUP: &str = "/usr/sbin/networksetup";
 
@@ -93,10 +93,11 @@ fn stop_commands(service: &str) -> Vec<ProxyCommand> {
 
 fn bypass_command(service: &str, bypass_domain: &[String]) -> ProxyCommand {
     let mut args = vec!["-setproxybypassdomains", service];
-    if bypass_domain.is_empty() {
+    let domains = without_wininet_local(bypass_domain);
+    if domains.is_empty() {
         args.push("Empty");
     } else {
-        args.extend(bypass_domain.iter().map(String::as_str));
+        args.extend(domains);
     }
     networksetup(&args)
 }
@@ -122,6 +123,16 @@ mod tests {
         assert_eq!(
             command.args,
             ["-setproxybypassdomains", "Wi-Fi", "localhost", "*.lan"]
+        );
+    }
+
+    #[test]
+    fn leaves_out_the_wininet_local_entry() {
+        let command = bypass_command("Wi-Fi", &["<local>".into(), "*.lan".into()]);
+        assert_eq!(command.args, ["-setproxybypassdomains", "Wi-Fi", "*.lan"]);
+        assert_eq!(
+            bypass_command("Wi-Fi", &["<local>".into()]).args,
+            ["-setproxybypassdomains", "Wi-Fi", "Empty"]
         );
     }
 

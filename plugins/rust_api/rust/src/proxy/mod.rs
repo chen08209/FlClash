@@ -14,6 +14,17 @@ mod windows;
 mod wininet;
 
 const PROXY_HOST: &str = "127.0.0.1";
+
+/// WinINet's entry for hosts without a dot, kept in a list that may come from
+/// Windows; networksetup and the Linux settings would take it for a host.
+#[cfg(any(target_os = "linux", target_os = "macos", test))]
+fn without_wininet_local(bypass_domain: &[String]) -> Vec<&str> {
+    bypass_domain
+        .iter()
+        .map(String::as_str)
+        .filter(|domain| domain.trim() != "<local>")
+        .collect()
+}
 const PAC_PATH: &str = "/flclash.pac";
 const PAC_PORT_PLACEHOLDER: &str = "%mixed-port%";
 

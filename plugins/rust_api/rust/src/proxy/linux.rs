@@ -2,7 +2,7 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 
 use super::command::{self, ProxyCommand};
-use super::{Target, PROXY_HOST};
+use super::{without_wininet_local, Target, PROXY_HOST};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Backend {
@@ -147,7 +147,7 @@ fn gsettings_start(port: u16, bypass_domain: &[String], schema: &str) -> Vec<Pro
             "set",
             schema,
             "ignore-hosts",
-            &gsettings_string_list(bypass_domain),
+            &gsettings_string_list(&without_wininet_local(bypass_domain)),
         ],
     )];
     for proxy_type in PROXY_TYPES {
@@ -189,7 +189,7 @@ fn kde_start(port: u16, bypass_domain: &[String], home: &str, tool: &str) -> Vec
         tool,
         home,
         "NoProxyFor",
-        &bypass_domain.join(","),
+        &without_wininet_local(bypass_domain).join(","),
     )];
     for proxy_type in PROXY_TYPES {
         let scheme = if proxy_type == "socks" {
@@ -243,7 +243,7 @@ fn kde_reparse() -> ProxyCommand {
     }
 }
 
-fn gsettings_string_list(values: &[String]) -> String {
+fn gsettings_string_list(values: &[&str]) -> String {
     let items: Vec<String> = values
         .iter()
         .map(|value| format!("'{}'", value.replace('\\', "\\\\").replace('\'', "\\'")))
@@ -348,6 +348,20 @@ mod tests {
     }
 
     #[test]
+    fn leaves_out_the_wininet_local_entry() {
+        let bypass = ["<local>".to_owned(), "*.lan".to_owned()];
+        let gnome = start_commands(&manual(&bypass), "/home/user", Backend::Gnome, "gsettings");
+        assert_eq!(gnome[0].args[3], "['*.lan']");
+        let kde = start_commands(
+            &manual(&bypass),
+            "/home/user",
+            Backend::Kde,
+            "kwriteconfig6",
+        );
+        assert_eq!(kde[0].args[5..], ["NoProxyFor", "*.lan"]);
+    }
+
+    #[test]
     fn builds_mate_commands_with_the_mate_schema() {
         let start = start_commands(&manual(&[]), "/home/user", Backend::Mate, "gsettings");
         assert!(start
@@ -364,7 +378,7 @@ mod tests {
     fn formats_gsettings_string_lists() {
         assert_eq!(gsettings_string_list(&[]), "[]");
         assert_eq!(
-            gsettings_string_list(&[r"a\b".into(), "it's".into()]),
+            gsettings_string_list(&[r"a\b", "it's"]),
             r"['a\\b', 'it\'s']"
         );
     }

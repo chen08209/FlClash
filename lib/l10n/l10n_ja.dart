@@ -1099,6 +1099,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get bypassDomainDesc => '除外ドメインはシステムプロキシが有効な場合のみ適用されます。';
 
   @override
+  String get bypassLocalWindowsOnly => 'Windows のみ：ドットを含まないホスト名';
+
+  @override
   String get resetTip => 'リセットしてもよろしいですか？';
 
   @override

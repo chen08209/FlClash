@@ -30,6 +30,15 @@ const defaultBypassDomain = [
   '192.168.*',
 ];
 
+/// WinINet's entry for every host without a dot; the other platforms leave it
+/// out when they write the list.
+const windowsLocalBypass = '<local>';
+
+/// The field default keeps the shared list because it must be const.
+final List<String> platformDefaultBypassDomain = system.isWindows
+    ? const [...defaultBypassDomain, windowsLocalBypass]
+    : defaultBypassDomain;
+
 /// `%mixed-port%` is replaced with the mixed port when the script is served.
 const defaultPacScript = '''function FindProxyForURL(url, host) {
   if (isPlainHostName(host)) {
@@ -548,6 +557,7 @@ abstract class Config with _$Config {
         appSettingProps: AppSettingProps(
           dashboardWidgets: platformDefaultDashboardWidgets,
         ),
+        networkProps: NetworkProps(bypassDomain: platformDefaultBypassDomain),
       );
     }
     return Config.fromJson(json);

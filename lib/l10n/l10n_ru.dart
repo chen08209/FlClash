@@ -1124,6 +1124,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Исключённые домены действуют только при включённом системном прокси.';
 
   @override
+  String get bypassLocalWindowsOnly => 'Только Windows: имена хостов без точки';
+
+  @override
   String get resetTip => 'Вы уверены, что хотите выполнить сброс?';
 
   @override

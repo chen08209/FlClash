@@ -351,6 +351,7 @@
   "pacMode": "Mode PAC",
   "pacScript": "Script PAC",
   "bypassDomainDesc": "Les domaines contournés ne s’appliquent que si le proxy système est activé.",
+  "bypassLocalWindowsOnly": "Windows uniquement : noms d’hôte sans point",
   "resetTip": "Voulez-vous vraiment réinitialiser ?",
   "icon": "Icône",
   "noData": "Aucune donnée",

@@ -351,6 +351,7 @@
   "pacMode": "PACモード",
   "pacScript": "PACスクリプト",
   "bypassDomainDesc": "除外ドメインはシステムプロキシが有効な場合のみ適用されます。",
+  "bypassLocalWindowsOnly": "Windows のみ：ドットを含まないホスト名",
   "resetTip": "リセットしてもよろしいですか？",
   "icon": "アイコン",
   "noData": "データがありません",
