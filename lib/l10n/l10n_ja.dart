@@ -1249,10 +1249,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get ruleTarget => 'ルールターゲット';
 
   @override
-  String get matchTarget => 'MATCH-TARGET';
+  String get exitDefault => 'デフォルト';
 
   @override
-  String get followProfile => 'プロファイルに従う';
+  String get customExit => 'カスタム出口';
 
   @override
   String get scriptFailed => 'スクリプトの実行に失敗しました';

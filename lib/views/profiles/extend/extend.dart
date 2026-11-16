@@ -53,7 +53,7 @@ class _ExtendViewState extends ConsumerState<ExtendView> {
     final profile = ref.watch(
       profileProvider(
         profileId,
-      ).select((state) => (state?.scriptId, state?.matchTarget)),
+      ).select((state) => (state?.scriptId, state?.exitTargets)),
     );
     final rules = ref.watch(profileRulesProvider(profileId)).value;
     final disabledRuleIds = ref

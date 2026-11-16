@@ -194,6 +194,7 @@ void main() {
               ruleAction: RuleAction.DOMAIN_SUFFIX,
               content: 'added.example',
               ruleTarget: 'MATCH',
+              customExit: true,
             ),
           ],
           defaultUA: 'FlClash-Test',
@@ -237,48 +238,113 @@ void main() {
     expect(lastMatchTarget(['DOMAIN,x.test,B']), isNull);
   });
 
-  test(
-    'makeRealProfileTask routes MATCH placeholders to matchTarget',
-    () async {
+  group('custom exits', () {
+    Rule exitRule(String content, String exit) => Rule(
+      ruleAction: RuleAction.DOMAIN_SUFFIX,
+      content: content,
+      ruleTarget: exit,
+      customExit: true,
+    );
+
+    Future<List<Object?>> addedRulesOf({
+      List<String> groups = const [],
+      Map<String, String> exitTargets = const {},
+      Set<String>? outboundNames,
+      String? defaultExitTarget,
+      List<Rule>? addedRules,
+    }) async {
       final rawConfig = await decodeJSONTask<Map<String, dynamic>>(
         jsonEncode({
-          'proxies': [],
-          'rules': ['DOMAIN,existing.example,DIRECT', 'MATCH,Original'],
+          'proxies': [
+            {'name': 'HK', 'type': 'ss'},
+          ],
+          'proxy-groups': [
+            for (final name in ['Proxy', ...groups])
+              {'name': name, 'type': 'select'},
+          ],
+          'rules': ['DOMAIN,existing.example,DIRECT', 'MATCH,Proxy'],
         }),
       );
-      final state = MakeRealProfileState(
-        profilesPath: '/profiles',
-        profileId: 7,
-        rawConfig: rawConfig,
-        realPatchConfig: const PatchClashConfig(),
-        appendSystemDns: false,
-        proxyGroups: const [],
-        rules: const [],
-        addedRules: const [
-          Rule(
-            ruleAction: RuleAction.DOMAIN_SUFFIX,
-            content: 'added.example',
-            ruleTarget: 'MATCH',
-          ),
-        ],
-        defaultUA: 'FlClash-Test',
-        matchTarget: 'HK',
+      final real = await makeRealProfileTask(
+        MakeRealProfileState(
+          profilesPath: '/profiles',
+          profileId: 7,
+          rawConfig: rawConfig,
+          realPatchConfig: const PatchClashConfig(),
+          appendSystemDns: false,
+          proxyGroups: const [],
+          rules: const [],
+          addedRules:
+              addedRules ??
+              [exitRule('a.example', 'Media'), exitRule('b.example', 'AI')],
+          defaultUA: 'FlClash-Test',
+          exitTargets: exitTargets,
+          outboundNames: outboundNames,
+          defaultExitTarget: defaultExitTarget,
+        ),
       );
+      final rules = (loadYaml(real.yaml) as YamlMap)['rules'] as List;
+      return rules.take(rules.length - 2).toList();
+    }
 
-      final overridden = await makeRealProfileTask(state);
-      expect((loadYaml(overridden.yaml) as YamlMap)['rules'], [
-        'DOMAIN-SUFFIX,added.example,HK',
-        'DOMAIN,existing.example,DIRECT',
-        'MATCH,Original',
+    test('go where each is mapped', () async {
+      expect(await addedRulesOf(exitTargets: {'Media': 'HK', 'AI': 'DIRECT'}), [
+        'DOMAIN-SUFFIX,a.example,HK',
+        'DOMAIN-SUFFIX,b.example,DIRECT',
       ]);
+    });
 
-      final blank = await makeRealProfileTask(state.copyWith(matchTarget: ' '));
+    test('go by default where the last MATCH rule goes', () async {
+      expect(await addedRulesOf(exitTargets: {'AI': 'HK'}), [
+        'DOMAIN-SUFFIX,a.example,Proxy',
+        'DOMAIN-SUFFIX,b.example,HK',
+      ]);
+    });
+
+    test('take a group of their name only while left on default', () async {
       expect(
-        (loadYaml(blank.yaml) as YamlMap)['rules'].first,
-        'DOMAIN-SUFFIX,added.example,Original',
+        await addedRulesOf(groups: ['Media', 'AI'], exitTargets: {'AI': 'HK'}),
+        ['DOMAIN-SUFFIX,a.example,Media', 'DOMAIN-SUFFIX,b.example,HK'],
       );
-    },
-  );
+    });
+
+    test('fall back in the same order from a target that is gone', () async {
+      expect(
+        await addedRulesOf(
+          groups: ['AI'],
+          exitTargets: {'Media': 'Gone', 'AI': 'Gone'},
+        ),
+        ['DOMAIN-SUFFIX,a.example,Proxy', 'DOMAIN-SUFFIX,b.example,AI'],
+      );
+    });
+
+    test('read the outbounds and default given for a merged profile', () async {
+      expect(
+        await addedRulesOf(
+          outboundNames: {'US'},
+          defaultExitTarget: 'US',
+          exitTargets: {'AI': 'HK'},
+        ),
+        ['DOMAIN-SUFFIX,a.example,US', 'DOMAIN-SUFFIX,b.example,US'],
+      );
+    });
+
+    test('leave a rule that names its target alone', () async {
+      expect(
+        await addedRulesOf(
+          addedRules: const [
+            Rule(
+              ruleAction: RuleAction.DOMAIN,
+              content: 'c.example',
+              ruleTarget: 'Media',
+            ),
+          ],
+          exitTargets: {'Media': 'HK'},
+        ),
+        ['DOMAIN,c.example,Media'],
+      );
+    });
+  });
 
   // The core re-reads these two keys out of the generated config on every
   // profile apply and adopts whatever it finds, so a subscription that ships

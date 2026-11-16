@@ -1275,10 +1275,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get ruleTarget => 'Цель правила';
 
   @override
-  String get matchTarget => 'MATCH-TARGET';
+  String get exitDefault => 'По умолчанию';
 
   @override
-  String get followProfile => 'Как в профиле';
+  String get customExit => 'Свой выход';
 
   @override
   String get scriptFailed => 'Не удалось выполнить скрипт';

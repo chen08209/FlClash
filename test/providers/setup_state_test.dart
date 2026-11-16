@@ -67,7 +67,7 @@ void main() {
       type: ProfileType.custom,
       autoUpdateDuration: Duration.zero,
       scriptId: 5,
-      matchTarget: 'Proxy',
+      exitTargets: {'MATCH': 'Proxy'},
     );
     await testDatabase.profilesDao.putAll([profile.toCompanion()]);
     await testDatabase.scripts.put(
@@ -100,7 +100,7 @@ void main() {
     final state = await container.read(setupStateProvider(profile.id).future);
 
     expect(state.script, isNull);
-    expect(state.matchTarget, isNull);
+    expect(state.exitTargets, isEmpty);
     expect(state.addedRules, isEmpty);
     expect(state.rules.map((rule) => rule.id), [11]);
   });

@@ -1277,10 +1277,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ruleTarget => 'Rule target';
 
   @override
-  String get matchTarget => 'MATCH-TARGET';
+  String get exitDefault => 'Default';
 
   @override
-  String get followProfile => 'Follow profile';
+  String get customExit => 'Custom exit';
 
   @override
   String get scriptFailed => 'The script failed';

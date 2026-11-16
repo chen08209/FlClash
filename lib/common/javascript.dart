@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:fl_clash/common/exception.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/clash_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rust_api/rust_api.dart';
@@ -57,9 +58,18 @@ ClashConfig _outboundsOf(String result) {
       for (final item in items)
         if (item is Map) {'name': item['name'], 'type': item['type']},
   ];
+  final rules = config['rules'];
   return ClashConfig.fromJson({
     'proxies': outbounds(config['proxies']),
     'proxy-groups': outbounds(config['proxy-groups']),
+    'rules': [
+      if (rules is List)
+        for (final rule in rules)
+          if (rule is String &&
+              rule.split(',').first.trim().toUpperCase() ==
+                  RuleAction.MATCH.value)
+            rule,
+    ],
   });
 }
 

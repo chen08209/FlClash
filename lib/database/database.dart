@@ -56,7 +56,7 @@ class Database extends _$Database {
   Database([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 24;
+  int get schemaVersion => 25;
 
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {
@@ -129,6 +129,11 @@ class Database extends _$Database {
         if (from < 24) {
           await _mergeExtendModes();
         }
+        if (from < 25) {
+          await _addColumnIfMissing(m, rules, rules.customExit);
+          await _addColumnIfMissing(m, profiles, profiles.exitTargets);
+          await _matchTargetToExit();
+        }
       }),
       beforeOpen: (_) => customStatement('PRAGMA foreign_keys = ON'),
     );
@@ -188,6 +193,21 @@ class Database extends _$Database {
       'UPDATE profiles SET extend_type = '
       "CASE WHEN script_id IS NULL THEN 'standard' ELSE 'script' END",
     );
+  }
+
+  Future<void> _matchTargetToExit() async {
+    await customStatement(
+      'UPDATE rules SET custom_exit = 1 '
+      "WHERE upper(trim(rule_target)) = 'MATCH' AND rule_action != 'SUB_RULE' "
+      'AND (profile_id IS NULL OR profile_id IN '
+      "(SELECT id FROM profiles WHERE type != 'custom'))",
+    );
+    await customStatement(
+      "UPDATE profiles SET exit_targets = json_object('MATCH', "
+      'trim(match_target)) '
+      "WHERE trim(coalesce(match_target, '')) != '' AND type != 'custom'",
+    );
+    await customStatement('UPDATE profiles SET match_target = NULL');
   }
 
   /// alterTable re-creates the old index, which names the dropped column.

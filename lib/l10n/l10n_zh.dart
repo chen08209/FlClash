@@ -1239,10 +1239,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ruleTarget => '规则目标';
 
   @override
-  String get matchTarget => 'MATCH-TARGET';
+  String get exitDefault => '默认';
 
   @override
-  String get followProfile => '跟随配置';
+  String get customExit => '自定义出口';
 
   @override
   String get scriptFailed => '脚本运行失败';

@@ -58,6 +58,23 @@ Future<ClashConfig?> scriptOutbounds(Ref ref, int profileId) async {
   return evaluateOutbounds(content, config);
 }
 
+@Riverpod(retry: _noRetry)
+Future<String?> profileMatchTarget(Ref ref, int profileId) async {
+  final (:type, updated: _) = ref.watch(
+    profileProvider(
+      profileId,
+    ).select((state) => (type: state?.type, updated: state?.lastUpdateDate)),
+  );
+  if (type == null || type == ProfileType.custom) {
+    return null;
+  }
+  final scripted = await ref.watch(scriptOutboundsProvider(profileId).future);
+  if (scripted != null) {
+    return matchTargetOf(scripted.rules);
+  }
+  return ref.read(coreHandlerProvider).getProfileMatchTarget(profileId);
+}
+
 @riverpod
 Future<SetupState> setupState(Ref ref, int? profileId) async {
   final profile = ref.watch(profileProvider(profileId));
@@ -134,9 +151,9 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
     addedRules: addedRules,
     script: script,
     overrides: overrides,
-    matchTarget: profileType != ProfileType.custom
-        ? profile?.matchTarget
-        : null,
+    exitTargets: profileType != ProfileType.custom
+        ? profile?.exitTargets ?? const {}
+        : const {},
   );
 }
 

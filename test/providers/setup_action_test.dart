@@ -1418,7 +1418,7 @@ void main() {
       await leaveEditor();
       verifyNever(() => core.getProfileBase(any()));
 
-      setupState = setupState.copyWith(matchTarget: 'DIRECT');
+      setupState = setupState.copyWith(exitTargets: {'MATCH': 'DIRECT'});
       scoped.invalidate(setupStateProvider);
       await leaveEditor();
       verify(() => core.getProfileBase(any())).called(1);
@@ -1624,6 +1624,78 @@ void main() {
       expect(shownGroups(), ['Proxy']);
     });
 
+    test('custom exits of a merged profile read its outbounds once per '
+        'profile file', () async {
+      final profile = Profile.normal(label: 'p');
+      final core = _MockCoreHandlerInterface();
+      var digest = 'd1';
+      when(() => core.getProfileBase(any())).thenAnswer(
+        (_) async => ProfileBase(
+          config: const {},
+          digest: digest,
+          matchRules: const ['MATCH,Final'],
+        ),
+      );
+      when(() => core.getProfileOutbounds(any())).thenAnswer(
+        (_) async => {
+          'proxies': [
+            {'name': 'HK', 'type': 'ss'},
+          ],
+          'proxy-groups': [
+            {'name': 'Final', 'type': 'select'},
+          ],
+        },
+      );
+      final pushed = <SetupParams>[];
+      when(() => core.setupConfig(any())).thenAnswer((invocation) async {
+        pushed.add(invocation.positionalArguments.single as SetupParams);
+      });
+      final scoped = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(() => TestProfiles([profile])),
+          currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+          setupStateProvider.overrideWith(
+            (_, profileId) => nullProfileSetupState.copyWith(
+              profileId: profileId,
+              addedRules: const [
+                Rule(
+                  ruleAction: RuleAction.DOMAIN,
+                  content: 'a.example',
+                  ruleTarget: 'Media',
+                  customExit: true,
+                ),
+                Rule(
+                  ruleAction: RuleAction.DOMAIN,
+                  content: 'b.example',
+                  ruleTarget: 'AI',
+                  customExit: true,
+                ),
+              ],
+              exitTargets: const {'AI': 'HK', 'Media': 'Gone'},
+            ),
+          ),
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          setupActionProvider.overrideWith(SetupAction.new),
+        ],
+      );
+      addTearDown(scoped.dispose);
+      final setupAction = scoped.read(setupActionProvider.notifier);
+      addTearDown(() => globalState.lastConfigCounts = null);
+
+      expect(await setupAction.applyProfile(force: true), isTrue);
+      final overlay = loadYaml(pushed.last.base!.overlay) as YamlMap;
+      expect(overlay['rules'], [
+        'DOMAIN,a.example,Final',
+        'DOMAIN,b.example,HK',
+      ]);
+      await setupAction.applyProfile(force: true);
+      verify(() => core.getProfileOutbounds(any())).called(1);
+
+      digest = 'd2';
+      await setupAction.applyProfile(force: true);
+      verify(() => core.getProfileOutbounds(any())).called(1);
+    });
+
     test('a profile file leaves its bulk sections in the Core and records '
         'what the Core was handed', () async {
       final profile = Profile.normal(label: 'p');
@@ -1643,6 +1715,9 @@ void main() {
       when(() => core.setupConfig(any())).thenAnswer((invocation) async {
         pushed.add(invocation.positionalArguments.single as SetupParams);
       });
+      when(
+        () => core.getProfileOutbounds(any()),
+      ).thenAnswer((_) async => const <String, dynamic>{});
       final configFile = File(await appPath.configFilePath);
       await configFile.writeAsString('previous');
       final scoped = ProviderContainer(
@@ -1652,7 +1727,11 @@ void main() {
           setupStateProvider.overrideWith(
             (_, profileId) => nullProfileSetupState.copyWith(
               profileId: profileId,
-              addedRules: [Rule.parse('DOMAIN,added.test,MATCH')],
+              addedRules: [
+                Rule.parse(
+                  'DOMAIN,added.test,MATCH',
+                ).copyWith(customExit: true),
+              ],
             ),
           ),
           coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
@@ -2127,7 +2206,10 @@ void main() {
               script: script,
               addedRules: [
                 Rule.parse('DOMAIN,added.com,REJECT', id: 1),
-                Rule.parse('DOMAIN,placeholder.com,MATCH', id: 2),
+                Rule.parse(
+                  'DOMAIN,placeholder.com,MATCH',
+                  id: 2,
+                ).copyWith(customExit: true),
               ],
             ),
             patchConfig: const PatchClashConfig(),

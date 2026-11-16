@@ -772,6 +772,7 @@ _Rule _$RuleFromJson(Map<String, dynamic> json) => _Rule(
   noResolve: json['noResolve'] as bool? ?? false,
   src: json['src'] as bool? ?? false,
   order: json['order'] as String?,
+  customExit: json['customExit'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$RuleToJson(_Rule instance) => <String, dynamic>{
@@ -784,6 +785,7 @@ Map<String, dynamic> _$RuleToJson(_Rule instance) => <String, dynamic>{
   'noResolve': instance.noResolve,
   'src': instance.src,
   'order': instance.order,
+  'customExit': instance.customExit,
 };
 
 const _$RuleActionEnumMap = {

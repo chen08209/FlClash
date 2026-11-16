@@ -1292,10 +1292,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get ruleTarget => 'Cible de la règle';
 
   @override
-  String get matchTarget => 'MATCH-TARGET';
+  String get exitDefault => 'Par défaut';
 
   @override
-  String get followProfile => 'Suivre le profil';
+  String get customExit => 'Sortie personnalisée';
 
   @override
   String get scriptFailed => 'Le script a échoué';

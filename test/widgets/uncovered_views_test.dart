@@ -591,97 +591,46 @@ void main() {
     expect(tester.takeException(), null);
   });
 
-  testWidgets('standard extension picks a MATCH-TARGET from the profile', (
-    tester,
-  ) async {
-    final profile = Profile.normal();
-    final container = _containerFor(
-      tester,
-      profiles: [profile],
-      overrides: [
-        currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
-        profileRulesProvider.overrideWith2(
-          (_) => _TestProfileAddedRules(const []),
-        ),
-        globalRulesProvider.overrideWith(() => _TestGlobalRules(const [])),
-        profileDisabledRuleIdsProvider.overrideWith2(
-          (_) => _TestProfileDisabledRuleIds(const []),
-        ),
-        clashConfigProvider(profile.id).overrideWithValue(
-          const AsyncData(
-            ClashConfig(
-              proxies: [Proxy(name: 'HK', type: 'ss')],
-              proxyGroups: [
-                ProxyGroup(id: 1, name: 'Proxy', type: GroupType.Selector),
-              ],
-            ),
-          ),
-        ),
-      ],
+  group('the exits of a profile', () {
+    Rule exitRule(int id, String exit) => Rule(
+      id: id,
+      ruleAction: RuleAction.DOMAIN,
+      content: '$id.example',
+      ruleTarget: exit,
+      customExit: true,
     );
 
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: TestApp(
-          child: ProfileIdProvider(
-            profileId: profile.id,
-            child: const HostScaffold(
-              body: CustomScrollView(slivers: [AddedRulesContent()]),
-            ),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-    final l10n = currentAppLocalizations;
-    expect(find.text(l10n.followProfile), findsOneWidget);
-
-    await tester.tap(find.text(l10n.matchTarget));
-    await tester.pumpAndSettle();
-    expect(find.byType(SelectionSheet<String>), findsOneWidget);
-    expect(find.text('Proxy'), findsOneWidget);
-
-    await tester.tap(find.text('HK'));
-    await tester.pumpAndSettle();
-    expect(find.byType(SelectionSheet<String>), findsNothing);
-    expect(container.read(profilesProvider).first.matchTarget, 'HK');
-    expect(find.text('HK'), findsOneWidget);
-    expect(tester.takeException(), null);
-  });
-
-  group('a profile running a script', () {
-    final profile = Profile.normal().copyWith(
-      scriptId: 7,
-      matchTarget: 'Before',
+    const outbounds = ClashConfig(
+      proxies: [Proxy(name: 'HK', type: 'ss')],
+      proxyGroups: [ProxyGroup(id: 1, name: 'Final', type: GroupType.Selector)],
     );
 
-    Future<ProviderContainer> pumpMatchTarget(
-      WidgetTester tester,
-      AsyncValue<ClashConfig?> scripted,
-    ) async {
+    Future<ProviderContainer> pumpExits(
+      WidgetTester tester, {
+      required Profile profile,
+      List<Rule> own = const [],
+      List<Rule> global = const [],
+      List<int> disabled = const [],
+      ClashConfig config = outbounds,
+      AsyncValue<ClashConfig?> scripted = const AsyncData(null),
+    }) async {
       final container = _containerFor(
         tester,
         profiles: [profile],
         overrides: [
           currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
           profileRulesProvider.overrideWith2(
-            (_) => _TestProfileAddedRules(const []),
+            (_) => _TestProfileAddedRules(own),
           ),
-          globalRulesProvider.overrideWith(() => _TestGlobalRules(const [])),
+          globalRulesProvider.overrideWith(() => _TestGlobalRules(global)),
           profileDisabledRuleIdsProvider.overrideWith2(
-            (_) => _TestProfileDisabledRuleIds(const []),
+            (_) => _TestProfileDisabledRuleIds(disabled),
           ),
-          clashConfigProvider(profile.id).overrideWithValue(
-            const AsyncData(
-              ClashConfig(
-                proxyGroups: [
-                  ProxyGroup(id: 1, name: 'Before', type: GroupType.Selector),
-                ],
-              ),
-            ),
-          ),
+          clashConfigProvider(profile.id).overrideWithValue(AsyncData(config)),
           scriptOutboundsProvider(profile.id).overrideWithValue(scripted),
+          profileMatchTargetProvider(
+            profile.id,
+          ).overrideWithValue(const AsyncData('Final')),
         ],
       );
       await tester.pumpWidget(
@@ -698,17 +647,141 @@ void main() {
         ),
       );
       await tester.pump();
-      await tester.tap(find.text(currentAppLocalizations.matchTarget));
-      await tester.pumpAndSettle();
       return container;
     }
 
-    testWidgets('picks a MATCH-TARGET from what the script leaves', (
+    Finder exitRow(String exit) => find
+        .ancestor(of: find.text(exit), matching: find.byType(ListItem<dynamic>))
+        .first;
+
+    Finder inRow(String exit, String text) =>
+        find.descendant(of: exitRow(exit), matching: find.text(text));
+
+    testWidgets('lists each exit the rules in force go to, once, on default '
+        'and where that goes', (tester) async {
+      final l10n = currentAppLocalizations;
+      await pumpExits(
+        tester,
+        profile: Profile.normal(),
+        own: [
+          exitRule(1, 'Media'),
+          exitRule(2, 'AI'),
+          exitRule(3, 'Media'),
+          Rule.parse('DOMAIN,plain.example,Final', id: 4),
+        ],
+        global: [exitRule(5, 'Media'), exitRule(6, 'Off')],
+        disabled: [6],
+      );
+
+      expect(find.text(l10n.outboundExit), findsOneWidget);
+      expect(find.byType(ListItem<dynamic>), findsNWidgets(2));
+      for (final exit in ['Media', 'AI']) {
+        expect(inRow(exit, l10n.exitDefault), findsOneWidget);
+        expect(inRow(exit, 'Final'), findsOneWidget);
+      }
+      expect(find.text('Off'), findsNothing);
+      expect(tester.takeException(), null);
+    });
+
+    testWidgets('a profile with no exit shows no section', (tester) async {
+      await pumpExits(
+        tester,
+        profile: Profile.normal(),
+        own: [Rule.parse('DOMAIN,plain.example,DIRECT', id: 1)],
+      );
+
+      expect(find.text(currentAppLocalizations.outboundExit), findsNothing);
+    });
+
+    testWidgets('a group of its name is where a default exit goes, while a '
+        'picked target holds until it is put back on default', (tester) async {
+      final l10n = currentAppLocalizations;
+      final container = await pumpExits(
+        tester,
+        profile: Profile.normal().copyWith(exitTargets: {'AI': 'HK'}),
+        own: [exitRule(1, 'Media'), exitRule(2, 'AI')],
+        config: const ClashConfig(
+          proxies: [Proxy(name: 'HK', type: 'ss')],
+          proxyGroups: [
+            ProxyGroup(id: 1, name: 'Media', type: GroupType.Selector),
+            ProxyGroup(id: 2, name: 'AI', type: GroupType.Selector),
+          ],
+        ),
+      );
+
+      expect(inRow('Media', l10n.exitDefault), findsOneWidget);
+      expect(inRow('Media', 'Media'), findsNWidgets(2));
+      expect(inRow('AI', 'HK'), findsOneWidget);
+      expect(inRow('AI', l10n.exitDefault), findsNothing);
+
+      await tester.tap(exitRow('AI'));
+      await tester.pumpAndSettle();
+      final sheet = find.byType(SelectionSheet<String>);
+      expect(
+        find.descendant(of: sheet, matching: find.text(l10n.exitDefault)),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.descendant(of: sheet, matching: find.text(l10n.exitDefault)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(container.read(profilesProvider).first.exitTargets, isEmpty);
+      expect(inRow('AI', l10n.exitDefault), findsOneWidget);
+      expect(inRow('AI', 'AI'), findsNWidgets(2));
+      expect(tester.takeException(), null);
+    });
+
+    testWidgets('a picked target that is gone shows red over where the exit '
+        'falls back to', (tester) async {
+      await pumpExits(
+        tester,
+        profile: Profile.normal().copyWith(exitTargets: {'Media': 'Gone'}),
+        own: [exitRule(1, 'Media')],
+      );
+
+      final gone = tester.element(find.text('Gone'));
+      expect(
+        tester.widget<Text>(find.text('Gone')).style?.color,
+        gone.colorScheme.error,
+      );
+      expect(inRow('Media', 'Final'), findsOneWidget);
+    });
+
+    testWidgets('picks a target for an exit into the mapping', (tester) async {
+      final container = await pumpExits(
+        tester,
+        profile: Profile.normal(),
+        own: [exitRule(1, 'Media')],
+      );
+
+      await tester.tap(exitRow('Media'));
+      await tester.pumpAndSettle();
+      expect(find.byType(SelectionSheet<String>), findsOneWidget);
+      await tester.tap(find.text('HK'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SelectionSheet<String>), findsNothing);
+      expect(container.read(profilesProvider).first.exitTargets, {
+        'Media': 'HK',
+      });
+      expect(inRow('Media', 'HK'), findsOneWidget);
+      expect(tester.takeException(), null);
+    });
+
+    testWidgets('a script profile picks from the groups its script leaves', (
       tester,
     ) async {
-      await pumpMatchTarget(
+      await pumpExits(
         tester,
-        const AsyncData(
+        profile: Profile.normal().copyWith(scriptId: 7),
+        own: [exitRule(1, 'Media')],
+        config: const ClashConfig(
+          proxyGroups: [
+            ProxyGroup(id: 1, name: 'Before', type: GroupType.Selector),
+          ],
+        ),
+        scripted: const AsyncData(
           ClashConfig(
             proxyGroups: [
               ProxyGroup(id: 2, name: 'After', type: GroupType.URLTest),
@@ -716,39 +789,43 @@ void main() {
           ),
         ),
       );
+      await tester.tap(exitRow('Media'));
+      await tester.pumpAndSettle();
 
-      expect(find.byType(SelectionSheet<String>), findsOneWidget);
-      expect(find.text('After'), findsOneWidget);
-      expect(find.text('Before'), findsOneWidget);
+      final sheet = find.byType(SelectionSheet<String>);
       expect(
-        find.descendant(
-          of: find.byType(SelectionSheet<String>),
-          matching: find.text('Before'),
-        ),
+        find.descendant(of: sheet, matching: find.text('After')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: sheet, matching: find.text('Before')),
         findsNothing,
       );
       expect(tester.takeException(), null);
     });
 
-    testWidgets('a script that fails leaves only following the profile', (
-      tester,
-    ) async {
-      final container = await pumpMatchTarget(
+    testWidgets('a script that fails leaves only default', (tester) async {
+      final container = await pumpExits(
         tester,
-        const AsyncError(
+        profile: Profile.normal().copyWith(
+          scriptId: 7,
+          exitTargets: {'Media': 'HK'},
+        ),
+        own: [exitRule(1, 'Media')],
+        scripted: const AsyncError(
           MessageException('main is not a function'),
           StackTrace.empty,
         ),
       );
       final l10n = currentAppLocalizations;
+      await tester.tap(exitRow('Media'));
+      await tester.pumpAndSettle();
 
       expect(find.byType(SelectionSheet<String>), findsNothing);
       expect(find.text(l10n.scriptFailed), findsOneWidget);
-      expect(find.text('main is not a function'), findsOneWidget);
-
-      await tester.tap(find.text(l10n.followProfile).last);
+      await tester.tap(find.text(l10n.exitDefault).last);
       await tester.pumpAndSettle();
-      expect(container.read(profilesProvider).first.matchTarget, isNull);
+      expect(container.read(profilesProvider).first.exitTargets, isEmpty);
       expect(tester.takeException(), null);
     });
   });

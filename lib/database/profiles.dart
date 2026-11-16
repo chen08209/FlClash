@@ -24,7 +24,11 @@ class Profiles extends Table {
 
   IntColumn get scriptId => integer().nullable()();
 
+  /// Read only by the v25 upgrade, which moves it into [exitTargets].
   TextColumn get matchTarget => text().nullable()();
+
+  TextColumn get exitTargets =>
+      text().map(const StringMapConverter()).nullable()();
 
   IntColumn get autoUpdateDurationMillis => integer()();
 
@@ -177,7 +181,7 @@ extension RawProfilExt on RawProfile {
       selectedMap: selectedMap,
       unfoldSet: unfoldSet,
       scriptId: scriptId,
-      matchTarget: matchTarget,
+      exitTargets: exitTargets ?? const {},
       order: order,
       overrides: overrides ?? const ProfileOverrides(),
     );
@@ -201,7 +205,7 @@ extension ProfilesCompanionExt on Profile {
       unfoldSet: unfoldSet,
       extendType: scriptId == null ? 'standard' : 'script',
       scriptId: Value(scriptId),
-      matchTarget: Value(matchTarget),
+      exitTargets: Value(exitTargets),
       order: Value(order ?? this.order),
       overrides: Value(overrides),
     );

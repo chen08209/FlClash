@@ -1,9 +1,11 @@
 import 'package:drift/native.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/database/database.dart' as fl;
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
+import 'package:yaml/yaml.dart';
 
 /// Rebuilds [raw] into the shape schema version 1 left behind: no
 /// `proxy_groups`, no `icon_records`, and a `rules` table that still stores the
@@ -288,7 +290,7 @@ void main() {
 
     await openAndMigrate();
 
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
   });
 
   test('the v3 upgrade adds match_target to profiles', () async {
@@ -298,7 +300,7 @@ void main() {
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'profiles'), contains('match_target'));
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
   });
 
   test('the v4 upgrade adds url to scripts', () async {
@@ -312,7 +314,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_columnsOf(raw, 'scripts'), contains('url'));
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
     final scripts = await database.scriptsDao.query().get();
     expect(scripts.single.label, 'Local');
     expect(scripts.single.url, isNull);
@@ -329,7 +331,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_columnsOf(raw, 'scripts'), contains('order'));
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
     final scripts = await database.scriptsDao.query().get();
     expect(scripts.map((item) => item.label), ['First', 'Second']);
     expect(scripts.map((item) => item.order), [null, null]);
@@ -344,7 +346,7 @@ void main() {
       await openAndMigrate();
 
       expect(_columnsOf(raw, 'profiles'), contains('match_target'));
-      expect(_userVersion(raw), 24);
+      expect(_userVersion(raw), 25);
     },
   );
 
@@ -355,7 +357,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_hasTable(raw, 'clash_providers'), isTrue);
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
     expect(await database.clashProvidersDao.query().get(), isEmpty);
   });
 
@@ -368,7 +370,7 @@ void main() {
       await openAndMigrate();
 
       expect(_hasTable(raw, 'clash_providers'), isTrue);
-      expect(_userVersion(raw), 24);
+      expect(_userVersion(raw), 25);
     },
   );
 
@@ -379,7 +381,7 @@ void main() {
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'proxy_groups'), contains('definition'));
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
   });
 
   test('a v6 user_version on the current proxy_groups still opens', () async {
@@ -389,7 +391,7 @@ void main() {
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'proxy_groups'), contains('definition'));
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
   });
 
   test(
@@ -413,7 +415,7 @@ void main() {
         _columnsOf(raw, 'clash_providers'),
         isNot(anyOf(contains('interval'), contains('filter'))),
       );
-      expect(_userVersion(raw), 24);
+      expect(_userVersion(raw), 25);
       expect(
         (await database.clashProvidersDao.query().get()).single.label,
         'Kept',
@@ -520,7 +522,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_hasTable(raw, 'custom_proxies'), isTrue);
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
     expect(await database.customProxiesDao.query().get(), isEmpty);
   });
 
@@ -531,7 +533,7 @@ void main() {
 
     expect(_columnsOf(raw, 'proxy_groups'), contains('definition'));
     expect(_columnsOf(raw, 'proxy_groups'), isNot(contains('url')));
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
   });
 
   test('the v17 upgrade renames overwrite_type and adds overrides', () async {
@@ -580,7 +582,7 @@ void main() {
 
     final database = await openAndMigrate();
 
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
     expect(
       {
         for (final profile in await database.profilesDao.query().get())
@@ -654,7 +656,7 @@ void main() {
 
     final database = await openAndMigrate();
 
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
     expect(_hasTable(raw, 'profile_rule_mapping'), isFalse);
     expect(
       {
@@ -708,8 +710,8 @@ void main() {
 
     expect(await database.rulesDao.queryAddedRules(2).get(), isEmpty);
     expect(
-      (await database.profilesDao.query().get()).single.matchTarget,
-      isNull,
+      (await database.profilesDao.query().get()).single.exitTargets,
+      isEmpty,
     );
     expect(raw.select('SELECT id FROM rules').map((row) => row['id']), [10]);
   });
@@ -815,7 +817,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_hasTable(raw, 'proxy_dialers'), isTrue);
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
     expect(await database.proxyDialersDao.query(1).get(), isEmpty);
   });
 
@@ -827,7 +829,7 @@ void main() {
 
     expect(_hasTable(raw, 'icon_sets'), isTrue);
     expect(_columnsOf(raw, 'icon_sets'), contains('last_update_time'));
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
     expect(await database.iconSetsDao.query().get(), isEmpty);
   });
 
@@ -840,7 +842,7 @@ void main() {
       final database = await openAndMigrate();
 
       expect(_columnsOf(raw, 'icon_sets'), contains('last_update_time'));
-      expect(_userVersion(raw), 24);
+      expect(_userVersion(raw), 25);
       expect(await database.iconSetsDao.query().get(), isEmpty);
     },
   );
@@ -921,7 +923,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_columnsOf(raw, 'profiles'), contains('age_secret_key'));
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
     expect(
       (await database.profilesDao.query().get()).single.ageSecretKey,
       isEmpty,
@@ -939,7 +941,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_columnsOf(raw, 'custom_proxies'), contains('empty_options'));
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
     expect(
       (await database.customProxiesDao.query().get()).single.emptyOptions,
       isEmpty,
@@ -953,7 +955,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_hasTable(raw, 'ip_qualities'), isTrue);
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
     expect(await database.ipQualities.count.getSingle(), 0);
   });
 
@@ -964,7 +966,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_hasTable(raw, 'mitm_modules'), isTrue);
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
     expect(await database.mitmModulesDao.query().get(), isEmpty);
   });
 
@@ -996,6 +998,77 @@ void main() {
     );
   });
 
+  test('the v25 upgrade turns the MATCH placeholder into a custom exit '
+      'that builds the same rules', () async {
+    raw.execute('ALTER TABLE rules DROP COLUMN custom_exit');
+    raw.execute('ALTER TABLE profiles DROP COLUMN exit_targets');
+    raw.execute(
+      'INSERT INTO profiles (id, type, label, url, extend_type, '
+      'auto_update_duration_millis, auto_update, selected_map, unfold_set, '
+      'match_target) VALUES '
+      "(1, 'url', 'Sub', 'https://example.com/sub', 'standard', 0, 0, "
+      "'{}', '[]', ' HK '), "
+      "(2, 'file', 'File', '', 'standard', 0, 0, '{}', '[]', NULL), "
+      "(3, 'custom', 'Mine', '', 'standard', 0, 0, '{}', '[]', 'X')",
+    );
+    raw.execute(
+      'INSERT INTO rules (id, profile_id, rule_action, content, rule_target) '
+      "VALUES (10, NULL, 'DOMAIN', 'a.example', 'MATCH'), "
+      "(11, 1, 'DOMAIN', 'b.example', 'DIRECT'), "
+      "(12, 3, 'DOMAIN', 'c.example', 'MATCH')",
+    );
+    raw.execute('PRAGMA user_version = 24');
+
+    final database = await openAndMigrate();
+
+    expect(_userVersion(raw), 25);
+    final profiles = {
+      for (final profile in await database.profilesDao.query().get())
+        profile.id: profile.exitTargets,
+    };
+    expect(profiles, {
+      1: {'MATCH': 'HK'},
+      2: isEmpty,
+      3: isEmpty,
+    });
+    expect(
+      raw
+          .select('SELECT match_target FROM profiles')
+          .map((row) => row['match_target']),
+      everyElement(isNull),
+    );
+    final rules = {
+      for (final row in raw.select('SELECT id, custom_exit FROM rules'))
+        row['id']: row['custom_exit'],
+    };
+    expect(rules, {10: 1, 11: 0, 12: 0});
+
+    final real = await makeRealProfileTask(
+      MakeRealProfileState(
+        profilesPath: '/profiles',
+        profileId: 1,
+        rawConfig: {
+          'proxies': [
+            {'name': 'HK', 'type': 'ss'},
+          ],
+          'rules': ['MATCH,DIRECT'],
+        },
+        realPatchConfig: const PatchClashConfig(),
+        appendSystemDns: false,
+        proxyGroups: const [],
+        rules: const [],
+        addedRules: await database.rulesDao.queryAddedRules(1).get(),
+        defaultUA: 'FlClash-Test',
+        exitTargets: profiles[1]!,
+      ),
+    );
+    expect((loadYaml(real.yaml) as YamlMap)['rules'], [
+      'DOMAIN,b.example,DIRECT',
+      'DOMAIN,a.example,HK',
+      'MATCH,DIRECT',
+    ]);
+  });
+
   test(
     'a v17 user_version with definition already present still opens',
     () async {
@@ -1012,7 +1085,7 @@ void main() {
 
       final database = await openAndMigrate();
 
-      expect(_userVersion(raw), 24);
+      expect(_userVersion(raw), 25);
       expect(
         (await database.proxyGroupsDao.query(3).get()).single.hidden,
         isTrue,
@@ -1025,7 +1098,7 @@ void main() {
 
     final database = await openAndMigrate();
 
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
     expect(await database.customSelect('SELECT * FROM rules').get(), isEmpty);
   });
 
@@ -1035,7 +1108,7 @@ void main() {
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'rules'), before);
-    expect(_userVersion(raw), 24);
+    expect(_userVersion(raw), 25);
     expect(_hasTable(raw, 'proxy_groups'), isTrue);
   });
 }

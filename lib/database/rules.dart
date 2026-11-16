@@ -31,6 +31,8 @@ class Rules extends Table {
 
   TextColumn get order => text().nullable()();
 
+  BoolColumn get customExit => boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -289,6 +291,7 @@ extension RawRuleExt on RawRule {
       noResolve: noResolve,
       src: src,
       order: order,
+      customExit: customExit,
     );
   }
 }
@@ -306,6 +309,7 @@ extension RulesCompanionExt on Rule {
       noResolve: Value(noResolve),
       src: Value(src),
       order: Value(order),
+      customExit: Value(customExit),
     );
   }
 }

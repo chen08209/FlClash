@@ -6,6 +6,7 @@ import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import 'form_page.dart';
@@ -28,7 +29,6 @@ class RuleItem extends StatelessWidget {
   final bool isSelected;
   final bool isEditing;
   final Rule rule;
-  final bool hasMatch;
   final void Function() onSelected;
   final void Function(Rule rule) onEdit;
   final String? Function(Rule rule)? invalidMessageOf;
@@ -41,20 +41,25 @@ class RuleItem extends StatelessWidget {
     required this.onEdit,
     this.invalidMessageOf,
     this.isEditing = false,
-    this.hasMatch = false,
   });
 
   ({bool invalid, Color? color, String? message}) _checkInvalid(
     BuildContext context,
   ) {
     final message = invalidMessageOf?.call(rule);
+    if (rule.customExit) {
+      return (
+        invalid: false,
+        color: context.colorScheme.tertiary,
+        message: null,
+      );
+    }
     if (message == null && rule.ruleAction != RuleAction.SUB_RULE) {
       final ruleTarget = (rule.ruleTarget ?? '').toUpperCase();
       final color = switch (ruleTarget) {
         'DIRECT' || 'COMPATIBLE' => context.colorScheme.success,
         'REJECT' || 'REJECT-DROP' => context.colorScheme.warning,
         'PASS' || 'PASS-RULE' || 'GLOBAL' => context.colorScheme.tertiary,
-        'MATCH' when hasMatch => context.colorScheme.tertiary,
         _ => null,
       };
       if (color != null) {
@@ -145,11 +150,7 @@ class RuleItem extends StatelessWidget {
                         Flexible(
                           child: TooltipText(
                             text: Text(
-                              hasMatch &&
-                                      rule.realTarget!.toUpperCase() ==
-                                          RuleAction.MATCH.value
-                                  ? context.appLocalizations.matchTarget
-                                  : rule.realTarget!,
+                              rule.realTarget!,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: AppTextStyle.subheadline
@@ -243,12 +244,19 @@ class RuleStatusItem extends StatelessWidget {
   }
 }
 
-enum _RuleField { content, target }
+enum _RuleField { content, target, exit }
+
+typedef _Target = ({String name, bool exit});
+
+const _Target _newExit = (name: '', exit: true);
 
 class RuleForm extends StatefulWidget {
   final Rule? rule;
 
-  const RuleForm({super.key, this.rule});
+  /// The custom exits other added rules already go to.
+  final Iterable<String> exits;
+
+  const RuleForm({super.key, this.rule, this.exits = const []});
 
   @override
   State<RuleForm> createState() => _RuleFormState();
@@ -256,8 +264,9 @@ class RuleForm extends StatefulWidget {
 
 class _RuleFormState extends State<RuleForm> {
   late RuleAction _ruleAction;
-  late String _ruleTarget;
+  late _Target _target;
   late final TextEditingController _contentController;
+  final _exitController = TextEditingController();
   late bool _noResolve;
   late bool _src;
   bool _attempted = false;
@@ -267,7 +276,10 @@ class _RuleFormState extends State<RuleForm> {
     super.initState();
     final rule = widget.rule;
     _ruleAction = rule?.ruleAction ?? RuleAction.addedRuleActions.first;
-    _ruleTarget = rule?.ruleTarget ?? RuleTarget.ruleTargetNames.first;
+    _target = (
+      name: rule?.ruleTarget ?? RuleTarget.ruleTargetNames.first,
+      exit: rule?.customExit ?? false,
+    );
     _contentController = TextEditingController(text: rule?.content);
     _noResolve = rule?.noResolve ?? false;
     _src = rule?.src ?? false;
@@ -276,6 +288,7 @@ class _RuleFormState extends State<RuleForm> {
   @override
   void dispose() {
     _contentController.dispose();
+    _exitController.dispose();
     super.dispose();
   }
 
@@ -298,7 +311,21 @@ class _RuleFormState extends State<RuleForm> {
         message: payloadError.getMessage(context),
       );
     }
-    if (_ruleTarget.isEmpty) {
+    if (_target == _newExit) {
+      final name = _exitController.text.trim();
+      if (name.isEmpty) {
+        return (
+          field: _RuleField.exit,
+          message: appLocalizations.emptyTip(appLocalizations.name),
+        );
+      }
+      if (RuleTarget.ruleTargets.contains(name)) {
+        return (
+          field: _RuleField.exit,
+          message: appLocalizations.existsTip(appLocalizations.name),
+        );
+      }
+    } else if (_target.name.isEmpty) {
       return (
         field: _RuleField.target,
         message: appLocalizations.splitStrategyNotEmpty,
@@ -314,20 +341,29 @@ class _RuleFormState extends State<RuleForm> {
       });
       return;
     }
+    final target = _target == _newExit
+        ? (name: _exitController.text.trim(), exit: true)
+        : _target;
     Navigator.of(context).pop(
       (widget.rule ?? Rule(id: snowflake.id)).copyWith(
         ruleAction: _ruleAction,
         content: _contentController.text,
-        ruleTarget: _ruleTarget,
+        ruleTarget: target.name,
+        customExit: target.exit,
         noResolve: _noResolve,
         src: _src,
       ),
     );
   }
 
-  String _targetLabel(String target) => target == RuleAction.MATCH.value
-      ? context.appLocalizations.matchTarget
-      : target;
+  String _targetLabel(_Target target) =>
+      target == _newExit ? context.appLocalizations.customExit : target.name;
+
+  void _handleTarget(_Target target) {
+    setState(() {
+      _target = target;
+    });
+  }
 
   Widget _buildSwitchRow({
     required String title,
@@ -345,7 +381,17 @@ class _RuleFormState extends State<RuleForm> {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     final issue = _attempted ? _issue() : null;
-    final targets = [...RuleTarget.ruleTargetNames, RuleAction.MATCH.value];
+    final basic = [
+      for (final name in RuleTarget.ruleTargetNames) (name: name, exit: false),
+    ];
+    final exits = [
+      for (final name in {
+        ...widget.exits,
+        if (_target.exit && _target != _newExit) _target.name,
+      })
+        (name: name, exit: true),
+    ];
+    final targets = [...basic, ...exits, _newExit];
     return FormPage(
       title: widget.rule != null
           ? appLocalizations.editRule
@@ -383,20 +429,36 @@ class _RuleFormState extends State<RuleForm> {
                 onFieldSubmitted: (_) => _handleSubmit(),
               ),
             ),
-            ListItem<String>.options(
+            ListItem<_Target>.options(
               title: Text(appLocalizations.splitStrategy),
-              options: [
-                if (!targets.contains(_ruleTarget)) _ruleTarget,
-                ...targets,
-              ],
-              value: _ruleTarget,
+              options: [if (!targets.contains(_target)) _target, ...targets],
+              value: _target,
               textBuilder: _targetLabel,
-              onChanged: (target) {
-                setState(() {
-                  _ruleTarget = target;
-                });
-              },
+              sectionStarts: {?exits.firstOrNull, _newExit},
+              onChanged: _handleTarget,
             ),
+            if (_target == _newExit)
+              FormRow(
+                title: appLocalizations.name,
+                invalid: issue?.field == _RuleField.exit,
+                trailing: FormRowTextField(
+                  controller: _exitController,
+                  hintText: appLocalizations.customExit,
+                  autofocus: true,
+                  autocorrect: false,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.singleLineFormatter,
+                    FilteringTextInputFormatter.deny(','),
+                    ...TextInputLimits.limit(TextInputLimits.name),
+                  ],
+                  onChanged: (_) {
+                    if (_attempted) {
+                      setState(() {});
+                    }
+                  },
+                  onFieldSubmitted: (_) => _handleSubmit(),
+                ),
+              ),
           ],
         ),
         if (_ruleAction.hasParams)

@@ -3628,6 +3628,76 @@ final class ScriptOutboundsFamily extends $Family
   String toString() => r'scriptOutboundsProvider';
 }
 
+@ProviderFor(profileMatchTarget)
+final profileMatchTargetProvider = ProfileMatchTargetFamily._();
+
+final class ProfileMatchTargetProvider
+    extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
+    with $FutureModifier<String?>, $FutureProvider<String?> {
+  ProfileMatchTargetProvider._({
+    required ProfileMatchTargetFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: _noRetry,
+         name: r'profileMatchTargetProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$profileMatchTargetHash();
+
+  @override
+  String toString() {
+    return r'profileMatchTargetProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String?> create(Ref ref) {
+    final argument = this.argument as int;
+    return profileMatchTarget(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ProfileMatchTargetProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$profileMatchTargetHash() =>
+    r'b42cc6c842bb53ac2928a0b2c4abf7943c5e3c54';
+
+final class ProfileMatchTargetFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<String?>, int> {
+  ProfileMatchTargetFamily._()
+    : super(
+        retry: _noRetry,
+        name: r'profileMatchTargetProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ProfileMatchTargetProvider call(int profileId) =>
+      ProfileMatchTargetProvider._(argument: profileId, from: this);
+
+  @override
+  String toString() => r'profileMatchTargetProvider';
+}
+
 @ProviderFor(setupState)
 final setupStateProvider = SetupStateFamily._();
 
@@ -3682,7 +3752,7 @@ final class SetupStateProvider
   }
 }
 
-String _$setupStateHash() => r'9c5702474f8efddaea1fd5950e5f50ff4fae3824';
+String _$setupStateHash() => r'2ea392ea96f1ab0866e179932b64376a8a16ebfd';
 
 final class SetupStateFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<SetupState>, int?> {

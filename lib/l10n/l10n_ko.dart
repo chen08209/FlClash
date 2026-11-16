@@ -1247,10 +1247,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get ruleTarget => '규칙 대상';
 
   @override
-  String get matchTarget => 'MATCH-TARGET';
+  String get exitDefault => '기본값';
 
   @override
-  String get followProfile => '프로필 따르기';
+  String get customExit => '사용자 지정 출구';
 
   @override
   String get scriptFailed => '스크립트 실행에 실패했습니다';

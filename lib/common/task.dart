@@ -96,17 +96,47 @@ ConfigCounts configCountsOf(Map<Object?, Object?> config) {
   );
 }
 
-String? lastMatchTarget(List<String> rules) {
-  for (int i = rules.length - 1; i >= 0; i--) {
-    final parsed = Rule.parse(rules[i]);
-    if (parsed.ruleAction == RuleAction.MATCH) {
-      final target = parsed.ruleTarget;
+String? lastMatchTarget(List<String> rules) =>
+    matchTargetOf(rules.map(Rule.parse));
+
+String? matchTargetOf(Iterable<Rule> rules) {
+  for (final rule in rules.toList().reversed) {
+    if (rule.ruleAction == RuleAction.MATCH) {
+      final target = rule.ruleTarget;
       if (target != null && target.isNotEmpty) {
         return target;
       }
     }
   }
   return null;
+}
+
+Set<String> outboundNamesOf(Map<dynamic, dynamic> config) => {
+  for (final key in const ['proxies', 'proxy-groups'])
+    if (config[key] case final List<dynamic> items)
+      for (final item in items)
+        if (item case {'name': final String name}) name,
+};
+
+/// mihomo sends DIRECT what no rule matches, MATCH included.
+String Function(String exit) exitTargetResolver({
+  required Map<String, String> targets,
+  required Set<String> outbounds,
+  required String? fallback,
+}) {
+  bool usable(String? target) =>
+      target != null &&
+      (RuleTarget.ruleTargets.contains(target) || outbounds.contains(target));
+  return (exit) {
+    final mapped = targets[exit];
+    if (usable(mapped)) {
+      return mapped!;
+    }
+    if (outbounds.contains(exit)) {
+      return exit;
+    }
+    return fallback ?? RuleTarget.DIRECT.value;
+  };
 }
 
 Map<String, dynamic> inboundConfigOf(
@@ -348,34 +378,18 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
       rules = List<String>.from(rawConfig['rules']);
     }
     if (addedRules.isNotEmpty) {
-      final hasMatchPlaceholder = addedRules.any(
-        (item) => item.ruleTarget?.toUpperCase() == 'MATCH',
+      final exitTarget = exitTargetResolver(
+        targets: data.exitTargets,
+        outbounds: data.outboundNames ?? outboundNamesOf(rawConfig),
+        fallback: data.defaultExitTarget ?? lastMatchTarget(rules),
       );
-      String? replacementTarget = data.matchTarget?.trim();
-      if (replacementTarget?.isEmpty == true) {
-        replacementTarget = null;
-      }
-
-      if (hasMatchPlaceholder && replacementTarget == null) {
-        replacementTarget = lastMatchTarget(rules);
-      }
-      final List<String> finalAddedRules;
-
-      if (replacementTarget?.isNotEmpty == true) {
-        finalAddedRules = [];
-        for (int i = 0; i < addedRules.length; i++) {
-          final parsed = addedRules[i];
-          if (parsed.ruleTarget?.toUpperCase() == 'MATCH') {
-            finalAddedRules.add(
-              parsed.copyWith(ruleTarget: replacementTarget).rawValue,
-            );
-          } else {
-            finalAddedRules.add(addedRules[i].rawValue);
-          }
-        }
-      } else {
-        finalAddedRules = addedRules.map((e) => e.rawValue).toList();
-      }
+      final finalAddedRules = [
+        for (final rule in addedRules)
+          (rule.customExit && rule.ruleTarget != null
+                  ? rule.copyWith(ruleTarget: exitTarget(rule.ruleTarget!))
+                  : rule)
+              .rawValue,
+      ];
       rules = [...finalAddedRules, ...rules];
     }
   } else {

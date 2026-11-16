@@ -202,6 +202,11 @@ extension type CoreController._(CoreHandlerInterface _interface)
     return readSpilledText(await _interface.buildProfile(base));
   }
 
+  Future<String?> getProfileMatchTarget(int id) async {
+    final path = await appPath.getProfilePath(id.toString());
+    return lastMatchTarget((await _interface.getProfileBase(path)).matchRules);
+  }
+
   Future<({ProfileBase base, String path})> getProfileBase(int id) async {
     final path = await appPath.getProfilePath(id.toString());
     final base = await _interface.getProfileBase(path);

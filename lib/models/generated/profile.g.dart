@@ -52,7 +52,11 @@ _Profile _$ProfileFromJson(Map<String, dynamic> json) => _Profile(
       (json['unfoldSet'] as List<dynamic>?)?.map((e) => e as String).toSet() ??
       const {},
   scriptId: (json['scriptId'] as num?)?.toInt(),
-  matchTarget: json['matchTarget'] as String?,
+  exitTargets:
+      (json['exitTargets'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, e as String),
+      ) ??
+      const {},
   order: (json['order'] as num?)?.toInt(),
   overrides: json['overrides'] == null
       ? const ProfileOverrides()
@@ -75,7 +79,7 @@ Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
   'selectedMap': instance.selectedMap,
   'unfoldSet': instance.unfoldSet.toList(),
   'scriptId': instance.scriptId,
-  'matchTarget': instance.matchTarget,
+  'exitTargets': instance.exitTargets,
   'order': instance.order,
   'overrides': instance.overrides,
 };

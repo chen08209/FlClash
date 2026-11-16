@@ -2514,17 +2514,17 @@ abstract class AppLocalizations {
   /// **'Rule target'**
   String get ruleTarget;
 
-  /// No description provided for @matchTarget.
+  /// No description provided for @exitDefault.
   ///
   /// In en, this message translates to:
-  /// **'MATCH-TARGET'**
-  String get matchTarget;
+  /// **'Default'**
+  String get exitDefault;
 
-  /// No description provided for @followProfile.
+  /// No description provided for @customExit.
   ///
   /// In en, this message translates to:
-  /// **'Follow profile'**
-  String get followProfile;
+  /// **'Custom exit'**
+  String get customExit;
 
   /// No description provided for @scriptFailed.
   ///

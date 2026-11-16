@@ -42,6 +42,7 @@ class SetupAction extends _$SetupAction {
   _RunRequest? _latestRunRequest;
   DateTime? _startTime;
   var _resumeOnRestart = false;
+  ({String digest, Set<String> names})? _outboundNames;
   _SetupInputs? _appliedInputs;
   var _lastPushDuration = Duration.zero;
   var _pendingForceApply = false;
@@ -555,6 +556,7 @@ class SetupAction extends _$SetupAction {
       rawConfig = await handleEvaluate(scriptContent!, rawConfig);
     }
     final directory = await appPath.profilesPath;
+    final hasCustomExit = setupState.addedRules.any((rule) => rule.customExit);
     final injected = await _resolveInjectedProviders(
       setupState,
       proxyGroups: proxyGroups,
@@ -580,10 +582,12 @@ class SetupAction extends _$SetupAction {
         addedRules: setupState.addedRules,
         defaultUA: defaultUA,
         authentication: networkSetting.authentication.credentials,
-        matchTarget:
-            profileBase == null ||
-                setupState.matchTarget?.trim().isNotEmpty == true
-            ? setupState.matchTarget
+        exitTargets: setupState.exitTargets,
+        outboundNames: profileBase != null && hasCustomExit
+            ? await _outboundNamesOf(profileId, profileBase.base.digest)
+            : null,
+        defaultExitTarget: profileBase == null
+            ? null
             : lastMatchTarget(profileBase.base.matchRules),
         safeMode: ref.read(safeModeProvider),
         mitmModules: setupState.mitmModules,
@@ -603,6 +607,17 @@ class SetupAction extends _$SetupAction {
       ),
       base: SetupBase(path: path, overlay: res.yaml),
     );
+  }
+
+  Future<Set<String>> _outboundNamesOf(int profileId, String digest) async {
+    final cached = _outboundNames;
+    if (cached != null && cached.digest == digest) {
+      return cached.names;
+    }
+    final outbounds = await _core.getProfileOutbounds(profileId);
+    final names = outboundNamesOf(outbounds);
+    _outboundNames = (digest: digest, names: names);
+    return names;
   }
 
   /// Only what the custom profile actually references is injected, so an

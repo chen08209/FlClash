@@ -1808,6 +1808,7 @@ abstract class Rule with _$Rule {
     @Default(false) bool noResolve,
     @Default(false) bool src,
     String? order,
+    @Default(false) bool customExit,
   }) = _Rule;
 
   factory Rule.init() {
@@ -1945,6 +1946,11 @@ extension RuleExt on Rule {
 
   List<String> get searchFields => [ruleAction.name, rawValue];
 }
+
+Set<String> customExitsOf(Iterable<Rule> rules) => {
+  for (final rule in rules)
+    if (rule.customExit && rule.ruleTarget != null) rule.ruleTarget!,
+};
 
 final class RuleLineException implements Exception {
   final int line;
