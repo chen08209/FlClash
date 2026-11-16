@@ -1189,6 +1189,7 @@
   "liveStatus": "Live status",
   "coreStopped": "Core stopped",
   "coreStoppedDesc": "The app lost its connection to the core",
+  "coreStoppedWithReason": "The app lost its connection to the core: {reason}",
   "restartCore": "Restart core",
   "installUpdate": "Install update",
   "liveStatusPosition": "{index} of {count}",

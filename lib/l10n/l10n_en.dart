@@ -3752,6 +3752,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coreStoppedDesc => 'The app lost its connection to the core';
 
   @override
+  String coreStoppedWithReason(Object reason) {
+    return 'The app lost its connection to the core: $reason';
+  }
+
+  @override
   String get restartCore => 'Restart core';
 
   @override

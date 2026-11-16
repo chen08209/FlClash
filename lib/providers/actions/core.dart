@@ -131,7 +131,7 @@ class CoreAction extends _$CoreAction {
       var applied = true;
       while (appliedRevision < _requestedRestartRevision) {
         final revision = _requestedRestartRevision;
-        if (ref.read(isStartProvider)) {
+        if (ref.read(setupActionProvider.notifier).wantsRunning) {
           applied = await ref
               .read(setupActionProvider.notifier)
               .setRunning(true, initialize: true);

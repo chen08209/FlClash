@@ -1086,6 +1086,7 @@
   "liveStatus": "Текущее состояние",
   "coreStopped": "Ядро остановлено",
   "coreStoppedDesc": "Приложение потеряло связь с ядром",
+  "coreStoppedWithReason": "Приложение потеряло связь с ядром: {reason}",
   "restartCore": "Перезапустить ядро",
   "installUpdate": "Установить обновление",
   "liveStatusPosition": "{index} из {count}",

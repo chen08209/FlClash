@@ -6630,6 +6630,12 @@ abstract class AppLocalizations {
   /// **'The app lost its connection to the core'**
   String get coreStoppedDesc;
 
+  /// No description provided for @coreStoppedWithReason.
+  ///
+  /// In en, this message translates to:
+  /// **'The app lost its connection to the core: {reason}'**
+  String coreStoppedWithReason(Object reason);
+
   /// No description provided for @restartCore.
   ///
   /// In en, this message translates to:

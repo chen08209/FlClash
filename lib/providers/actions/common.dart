@@ -11,6 +11,13 @@ class CommonAction extends _$CommonAction {
 
   void toggleRunning() {
     final running = !ref.read(isStartProvider);
+    if (running && ref.read(coreStatusProvider) == CoreStatus.disconnected) {
+      ref.read(setupActionProvider.notifier).resumeOnRestart();
+      unawaited(
+        globalState.safeRun(ref.read(coreActionProvider.notifier).restartCore),
+      );
+      return;
+    }
     unawaited(
       globalState.safeRun(
         () => ref

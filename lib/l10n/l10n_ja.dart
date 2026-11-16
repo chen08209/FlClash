@@ -3580,6 +3580,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get coreStoppedDesc => 'アプリとコアの接続が切れました';
 
   @override
+  String coreStoppedWithReason(Object reason) {
+    return 'アプリとコアの接続が切れました：$reason';
+  }
+
+  @override
   String get restartCore => 'コアを再起動';
 
   @override

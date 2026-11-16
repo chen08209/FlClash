@@ -1086,6 +1086,7 @@
   "liveStatus": "État en direct",
   "coreStopped": "Cœur arrêté",
   "coreStoppedDesc": "L’application a perdu la connexion au cœur",
+  "coreStoppedWithReason": "L’application a perdu la connexion au cœur : {reason}",
   "restartCore": "Redémarrer le cœur",
   "installUpdate": "Installer la mise à jour",
   "liveStatusPosition": "{index} sur {count}",

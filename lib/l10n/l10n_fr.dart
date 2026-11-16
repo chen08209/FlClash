@@ -3798,6 +3798,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get coreStoppedDesc => 'L’application a perdu la connexion au cœur';
 
   @override
+  String coreStoppedWithReason(Object reason) {
+    return 'L’application a perdu la connexion au cœur : $reason';
+  }
+
+  @override
   String get restartCore => 'Redémarrer le cœur';
 
   @override

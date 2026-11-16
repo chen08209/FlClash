@@ -160,6 +160,18 @@ String userFacingErrorMessage(Object error, AppLocalizations appLocalizations) {
       };
 }
 
+String coreSessionLostMessage(
+  Object? cause,
+  AppLocalizations appLocalizations,
+) {
+  final reason = cause == null
+      ? ''
+      : userFacingErrorMessage(cause, appLocalizations);
+  return reason.isEmpty
+      ? appLocalizations.coreStoppedDesc
+      : appLocalizations.coreStoppedWithReason(reason);
+}
+
 String delayFailureText(int delay, AppLocalizations appLocalizations) {
   return delay == delayTimedOutValue
       ? appLocalizations.timeout

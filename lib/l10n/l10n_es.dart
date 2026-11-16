@@ -3792,6 +3792,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get coreStoppedDesc => 'La app perdió la conexión con el núcleo';
 
   @override
+  String coreStoppedWithReason(Object reason) {
+    return 'La app perdió la conexión con el núcleo: $reason';
+  }
+
+  @override
   String get restartCore => 'Reiniciar núcleo';
 
   @override

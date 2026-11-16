@@ -3653,6 +3653,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get coreStoppedDesc => '앱과 코어의 연결이 끊어졌습니다';
 
   @override
+  String coreStoppedWithReason(Object reason) {
+    return '앱과 코어의 연결이 끊어졌습니다: $reason';
+  }
+
+  @override
   String get restartCore => '코어 다시 시작';
 
   @override

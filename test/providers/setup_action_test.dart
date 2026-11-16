@@ -435,6 +435,20 @@ void main() {
       await setup.setRunning(false);
     });
 
+    testWidgets('a lost Core session stops the clock for good', (tester) async {
+      final setup = buildScoped();
+      await setup.setRunning(true);
+      await tester.pump(const Duration(seconds: 2));
+
+      setup.onCoreLost();
+      final updates = trafficUpdates();
+      await tester.pump(const Duration(seconds: 3));
+
+      expect(scoped.read(runTimeProvider), isNull);
+      expect(trafficUpdates(), updates);
+      expect(scoped.read(isStartProvider), isFalse);
+    });
+
     testWidgets('a start while hidden waits for the app to be shown', (
       tester,
     ) async {
@@ -680,6 +694,60 @@ void main() {
       await notifier.setRunning(true);
       expect(container.read(runTimeProvider), isNotNull);
       expect(action.coreRunningCalls, [true, false, true]);
+    });
+  });
+
+  group('a lost Core session', () {
+    test('ends the run here without a stop and keeps it to resume', () async {
+      markInitialized();
+      final setup = container.read(setupActionProvider.notifier);
+      await setup.setRunning(true);
+
+      setup.onCoreLost();
+
+      expect(action.coreRunningCalls, [true]);
+      expect(container.read(isStartProvider), isFalse);
+      expect(container.read(runTimeProvider), isNull);
+      expect(container.read(runningVpnOptionsProvider), isNull);
+      expect(setup.wantsRunning, isTrue);
+    });
+
+    test('a start it cut off cannot bring the run back', () async {
+      markInitialized();
+      final setup = container.read(setupActionProvider.notifier);
+      action.blockCoreCalls = true;
+      action.unansweredCoreCalls.add(true);
+
+      final starting = setup.setRunning(true);
+      while (action.pendingCoreCalls.isEmpty) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      setup.onCoreLost();
+      action.pendingCoreCalls.single.complete();
+
+      expect(await starting, isTrue);
+      expect(container.read(isStartProvider), isFalse);
+      expect(container.read(runningVpnOptionsProvider), isNull);
+      expect(setup.wantsRunning, isTrue);
+    });
+
+    test('a later stop is the run a restart keeps', () async {
+      markInitialized();
+      final setup = container.read(setupActionProvider.notifier);
+      await setup.setRunning(true);
+      setup.onCoreLost();
+
+      await setup.setRunning(false);
+
+      expect(setup.wantsRunning, isFalse);
+    });
+
+    test('leaves nothing to resume when no run was on', () {
+      final setup = container.read(setupActionProvider.notifier);
+
+      setup.onCoreLost();
+
+      expect(setup.wantsRunning, isFalse);
     });
   });
 

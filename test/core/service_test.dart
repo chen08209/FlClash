@@ -6,6 +6,7 @@ import 'package:fl_clash/core/desktop/rpc_client.dart';
 import 'package:fl_clash/core/event.dart';
 import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/core/service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -74,21 +75,49 @@ void main() {
     );
   });
 
-  test('forwards lifecycle crash events once', () async {
+  test('forwards a lost session once, in words, with its cause', () async {
     final listener = _CrashListener();
     coreEventManager.addListener(listener);
+    addTearDown(() => coreEventManager.removeListener(listener));
+    final logs = <String>[];
+    final print = debugPrint;
+    debugPrint = (message, {wrapWidth}) => logs.add(message ?? '');
+    addTearDown(() => debugPrint = print);
 
     crashes.add(
       const DesktopCoreFailure(
         code: 'unexpected_disconnect',
         phase: DesktopCorePhase.running,
         revision: 2,
+        cause: 'pipe closed',
+      ),
+    );
+    crashes.add(
+      const DesktopCoreFailure(
+        code: 'unexpected_disconnect',
+        phase: DesktopCorePhase.running,
+        revision: 3,
+        sessionId: 'session-token',
+        owner: CoreProcessOwner.helper,
+        pid: 4242,
+        connectionGeneration: 7,
       ),
     );
     await pumpEventQueue();
 
-    expect(listener.messages, ['core done']);
-    coreEventManager.removeListener(listener);
+    expect(listener.messages, [
+      'The app lost its connection to the core: pipe closed',
+      'The app lost its connection to the core',
+    ]);
+    expect(
+      logs.last,
+      allOf(
+        contains('unexpected_disconnect'),
+        contains('pid: 4242'),
+        contains('generation: 7'),
+        isNot(contains('session-token')),
+      ),
+    );
   });
 
   test('close coalesces lifecycle and RPC cleanup', () async {

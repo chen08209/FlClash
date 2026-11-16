@@ -1,7 +1,6 @@
 import 'dart:async';
 
-import 'package:fl_clash/common/constant.dart';
-import 'package:fl_clash/common/system.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/core.dart';
 import 'package:flutter/foundation.dart';
@@ -66,10 +65,14 @@ class CoreService extends CoreHandlerInterface {
   }) : _lifecycle = lifecycle,
        _rpcClient = rpcClient {
     _crashSubscription = _lifecycle.crashEvents.listen((failure) {
+      commonPrint.log(
+        'Core session lost: $failure',
+        logLevel: LogLevel.warning,
+      );
       coreEventManager.sendEvent(
         CoreEvent(
           type: CoreEventType.crash,
-          data: failure.cause?.toString() ?? 'core done',
+          data: coreSessionLostMessage(failure.cause, currentAppLocalizations),
         ),
       );
     });

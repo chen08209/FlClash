@@ -1086,6 +1086,7 @@
   "liveStatus": "실시간 상태",
   "coreStopped": "코어가 중지됨",
   "coreStoppedDesc": "앱과 코어의 연결이 끊어졌습니다",
+  "coreStoppedWithReason": "앱과 코어의 연결이 끊어졌습니다: {reason}",
   "restartCore": "코어 다시 시작",
   "installUpdate": "업데이트 설치",
   "liveStatusPosition": "{count}개 중 {index}번째",

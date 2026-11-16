@@ -3532,6 +3532,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get coreStoppedDesc => '应用与核心的连接已断开';
 
   @override
+  String coreStoppedWithReason(Object reason) {
+    return '应用与核心的连接已断开：$reason';
+  }
+
+  @override
   String get restartCore => '重启核心';
 
   @override

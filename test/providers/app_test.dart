@@ -518,8 +518,8 @@ void main() {
     });
 
     test('why the core stopped is kept until it starts again', () {
-      container.read(coreStopReasonProvider.notifier).value = 'core done';
-      expect(container.read(coreStopReasonProvider), 'core done');
+      container.read(coreStopReasonProvider.notifier).value = 'pipe reset';
+      expect(container.read(coreStopReasonProvider), 'pipe reset');
 
       container.read(coreStatusProvider.notifier).value = CoreStatus.connecting;
 

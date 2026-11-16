@@ -1086,6 +1086,7 @@
   "liveStatus": "Estado en vivo",
   "coreStopped": "Núcleo detenido",
   "coreStoppedDesc": "La app perdió la conexión con el núcleo",
+  "coreStoppedWithReason": "La app perdió la conexión con el núcleo: {reason}",
   "restartCore": "Reiniciar núcleo",
   "installUpdate": "Instalar actualización",
   "liveStatusPosition": "{index} de {count}",

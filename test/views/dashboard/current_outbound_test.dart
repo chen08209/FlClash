@@ -585,6 +585,7 @@ void main() {
     ) async {
       container = containerWith();
       container.read(runTimeProvider.notifier).value = 1;
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
       await pumpCard(tester);
       final action =
           container.read(setupActionProvider.notifier) as _RecordingSetupAction;
