@@ -55,18 +55,19 @@ begin
   end;
 end;
 
+// FlClash and FlClash rs ship processes of the same names, so a name alone
+// would also end the other installation's.
 procedure KillProcesses;
 var
-  Processes: TArrayOfString;
-  i: Integer;
+  AppDir: String;
   ResultCode: Integer;
 begin
-  Processes := ['FlClash.exe', 'FlClashCore.exe', 'FlClashHelperService.exe'];
-
-  for i := 0 to GetArrayLength(Processes)-1 do
-  begin
-    Exec('taskkill', '/f /im ' + Processes[i], '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  end;
+  AppDir := AddBackslash(ExpandConstant('{app}'));
+  StringChangeEx(AppDir, '''', '''''', True);
+  Exec('powershell.exe',
+    '-NoProfile -NonInteractive -Command "Get-Process -Name FlClash,FlClashCore,FlClashHelperService -ErrorAction SilentlyContinue | ' +
+    'Where-Object { $_.Path -and $_.Path.StartsWith(''' + AppDir + ''', [StringComparison]::OrdinalIgnoreCase) } | Stop-Process -Force"',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
 procedure UnregisterHelperService;
