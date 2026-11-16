@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sync"
@@ -174,7 +175,7 @@ func waitForClaim(t *testing.T, name string) {
 	deadline := time.Now().Add(2 * time.Second)
 	for {
 		serviceClaimsMu.Lock()
-		claimed := serviceClaims[name] != nil
+		claimed := serviceClaims[serviceClaimKey{serviceName: name}] != nil
 		serviceClaimsMu.Unlock()
 		if claimed {
 			return
@@ -318,6 +319,51 @@ func TestHandleServiceCheckReportsARepeatedTimeout(t *testing.T) {
 	}
 	if got := calls.Load(); got != 2 {
 		t.Errorf("ran %d times, want a single retry", got)
+	}
+}
+
+func TestHandleServiceCheckDoesNotCancelOtherProxy(t *testing.T) {
+	started := make(chan context.Context, 1)
+	release := make(chan struct{})
+	defer func() {
+		select {
+		case <-release:
+		default:
+			close(release)
+		}
+	}()
+	withServiceCheckers(t, serviceChecker{name: "alpha", check: func(env serviceEnv) ServiceCheckItem {
+		if env.proxyName == "first" {
+			started <- env.ctx
+			select {
+			case <-release:
+				return ServiceCheckItem{Status: serviceAvailable}
+			case <-env.ctx.Done():
+				return ServiceCheckItem{Status: serviceFailed}
+			}
+		}
+		return ServiceCheckItem{Status: serviceAvailable}
+	}})
+
+	first := make(chan []ServiceCheckItem, 1)
+	go func() {
+		first <- handleServiceCheck(&ServiceCheckParams{
+			ProxyName: "first", Names: []string{"alpha"}, Timeout: 5000,
+		})
+	}()
+	firstContext := <-started
+	second := handleServiceCheck(&ServiceCheckParams{
+		ProxyName: "second", Names: []string{"alpha"}, Timeout: 5000,
+	})
+	if second[0].Status != serviceAvailable {
+		t.Fatalf("second proxy: %q, want available", second[0].Status)
+	}
+	if err := firstContext.Err(); err != nil {
+		t.Fatalf("a check on another proxy cancelled the first: %v", err)
+	}
+	close(release)
+	if items := <-first; items[0].Status != serviceAvailable {
+		t.Fatalf("first proxy: %q, want available", items[0].Status)
 	}
 }
 
