@@ -62,11 +62,16 @@ func (w *requestTrafficWatch) collect(
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	var changed []RequestTraffic
+	// Only revisit closing requests once the delivery result is known.
+	var closedIDs []string
 	for id, request := range w.requests {
 		if request.closedReports > 0 || !request.fresh && !isOpen(id) {
 			request.closedReports++
 		}
 		request.fresh = false
+		if request.closedReports > 0 {
+			closedIDs = append(closedIDs, id)
+		}
 		info := request.tracker.Info()
 		upload, download := info.UploadTotal.Load(), info.DownloadTotal.Load()
 		if upload != request.upload || download != request.download {
@@ -80,8 +85,8 @@ func (w *requestTrafficWatch) collect(
 			request.upload, request.download = traffic.Upload, traffic.Download
 		}
 	}
-	for id, request := range w.requests {
-		if request.closedReports > 0 && (queued || request.closedReports > requestTrafficCloseRetries) {
+	for _, id := range closedIDs {
+		if queued || w.requests[id].closedReports > requestTrafficCloseRetries {
 			delete(w.requests, id)
 		}
 	}
