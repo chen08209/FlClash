@@ -48,6 +48,7 @@ func handleStartListener() {
 	configMu.Lock()
 	defer configMu.Unlock()
 	setRunning(true)
+	warmFallbackGroups(currentConfig)
 	updateListeners(currentConfig)
 	resolver.ResetConnection()
 	// A probe already out left before the TUN routes and over the DNS

@@ -164,6 +164,9 @@ func applyConfig(params *SetupParams) error {
 	hub.ApplyConfig(cfg)
 	patchSelectGroup(params.SelectedMap)
 	bumpRouteEpoch()
+	if isRunning.Load() {
+		warmFallbackGroups(cfg)
+	}
 	updateListeners(cfg)
 	reconcileGeoUpdater()
 	scheduleLoadMemoryRelease()
