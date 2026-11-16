@@ -27,6 +27,7 @@ class MainFlutterWindow: NSWindow {
             }
         }
         
+        ICloudFolder().register(with: flutterViewController.engine.binaryMessenger)
         RegisterGeneratedPlugins(registry: flutterViewController)
         super.awakeFromNib()
     }

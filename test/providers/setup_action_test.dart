@@ -31,6 +31,24 @@ import '../helpers/test_profiles.dart';
 
 class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
+class _SnapshotSetupAction extends SetupAction {
+  final List<SetupState> builtStates = [];
+
+  @override
+  Future<BuiltProfile> getProfile({
+    required SetupState setupState,
+    required PatchClashConfig patchConfig,
+  }) async {
+    builtStates.add(setupState);
+    return (
+      yaml: 'proxies: []\n',
+      md5: setupState.hashCode.toString(),
+      counts: configCountsOf(const {}),
+      base: null,
+    );
+  }
+}
+
 // checkAndUpdateAndCopy checks the file system before it refreshes, so its
 // failure tests need appPath to resolve to a real, writable directory.
 class _ListenerHandoffFailureSetupAction extends SetupAction {
@@ -1104,6 +1122,107 @@ void main() {
       addedRules: [],
       script: null,
       overrides: ProfileOverrides(),
+    );
+
+    for (final operation in ['apply', 'preview', 'inputsApplied']) {
+      test('$operation survives setup invalidation while loading', () async {
+        const profile = Profile(
+          id: 1,
+          label: 'latest',
+          autoUpdateDuration: Duration.zero,
+        );
+        final core = _MockCoreHandlerInterface();
+        when(() => core.setupConfig(any())).thenAnswer((_) async {});
+        when(() => core.getExternalProviders()).thenAnswer((_) async => []);
+        when(
+          () => core.getProxies(),
+        ).thenAnswer((_) async => const ProxiesData(all: [], proxies: {}));
+        final snapshotAction = _SnapshotSetupAction();
+        final started = Completer<void>();
+        final gate = Completer<void>();
+        var block = false;
+        final scoped = ProviderContainer(
+          overrides: [
+            profilesProvider.overrideWith(() => TestProfiles([profile])),
+            currentProfileIdProvider.overrideWithBuild((_, _) => null),
+            setupStateProvider.overrideWith((ref, _) async {
+              final providers = ref.watch(profileProvidersProvider);
+              if (block) {
+                if (!started.isCompleted) started.complete();
+                await gate.future;
+              }
+              return nullProfileSetupState.copyWith(
+                profileProviders: providers,
+              );
+            }),
+            coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+            setupActionProvider.overrideWith(() => snapshotAction),
+          ],
+        );
+        addTearDown(scoped.dispose);
+        final setupAction = scoped.read(setupActionProvider.notifier);
+        if (operation == 'inputsApplied') {
+          expect(await setupAction.applyProfile(force: true), isTrue);
+        }
+        scoped
+            .read(profilesProvider.notifier)
+            .put(profile.copyWith(label: 'stale'));
+        block = true;
+        final Future<Object> result = switch (operation) {
+          'apply' => setupAction.applyProfile(force: true),
+          'preview' => setupAction.getProfileWithId(profile.id),
+          _ => setupAction.inputsApplied(),
+        };
+        await started.future;
+        scoped.read(profilesProvider.notifier).put(profile);
+        scoped.invalidate(
+          setupStateProvider(operation == 'preview' ? profile.id : null),
+        );
+        await scoped.pump();
+        gate.complete();
+
+        expect(await result, operation == 'preview' ? 'proxies: []\n' : true);
+        expect(snapshotAction.builtStates.last.profileProviders, {'latest': 1});
+        await scoped.pump();
+        expect(
+          scoped.exists(
+            setupStateProvider(operation == 'preview' ? profile.id : null),
+          ),
+          isFalse,
+        );
+      });
+    }
+
+    test(
+      'a failed setup read releases its subscription and can retry',
+      () async {
+        final snapshotAction = _SnapshotSetupAction();
+        var fail = true;
+        final scoped = ProviderContainer(
+          retry: (_, _) => null,
+          overrides: [
+            profilesProvider.overrideWith(TestProfiles.new),
+            setupStateProvider.overrideWith((_, _) async {
+              if (fail) throw StateError('query failed');
+              return nullProfileSetupState;
+            }),
+            setupActionProvider.overrideWith(() => snapshotAction),
+          ],
+        );
+        addTearDown(scoped.dispose);
+        final setupAction = scoped.read(setupActionProvider.notifier);
+
+        expect(await setupAction.getProfileWithId(1), isEmpty);
+        expect(snapshotAction.builtStates, isEmpty);
+        await scoped.pump();
+        expect(scoped.exists(setupStateProvider(1)), isFalse);
+
+        fail = false;
+        expect(await setupAction.getProfileWithId(1), 'proxies: []\n');
+        expect(snapshotAction.builtStates, [nullProfileSetupState]);
+        await scoped.pump();
+        expect(scoped.exists(setupStateProvider(1)), isFalse);
+      },
     );
 
     test(

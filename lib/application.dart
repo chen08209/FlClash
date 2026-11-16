@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fl_clash/bootstrap.dart';
+import 'package:fl_clash/features/icloud/section.dart';
+import 'package:fl_clash/features/icloud/sync.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/system_dns.dart';
 import 'package:fl_clash/common/window.dart';
@@ -62,6 +64,8 @@ class Application extends ConsumerStatefulWidget {
 class ApplicationState extends ConsumerState<Application> {
   Timer? _autoUpdateProfilesTaskTimer;
   bool _preHasVpn = false;
+  bool _iCloudDialogOpen = false;
+  final _shownICloudConflicts = <String>{};
   // Windows can only watch SIGINT and SIGHUP.
   final _terminateSignals = system.isDesktop && !system.isWindows
       ? ProcessSignal.sigterm.watch()
@@ -77,12 +81,52 @@ class ApplicationState extends ConsumerState<Application> {
       } else {
         exit(0);
       }
+      if (system.isMacOS && mounted) {
+        iCloudYamlSync.addListener(_onICloudSync);
+        unawaited(
+          iCloudYamlSync.start(
+            profiles: () => ref.read(profilesProvider),
+            validate: (bytes) => ref
+                .read(profilesActionProvider.notifier)
+                .validateConfigWithData(bytes),
+            put: (profile) =>
+                ref.read(profilesActionProvider.notifier).putProfile(profile),
+            changed: () => ref
+                .read(setupActionProvider.notifier)
+                .applyProfileDebounce(silence: true),
+          ),
+        );
+      }
       _autoUpdateProfilesTask();
       _initLink();
       if (!safeModeBuild) {
         unawaited(app?.initShortcuts());
       }
     });
+  }
+
+  void _onICloudSync() {
+    final context = globalState.navigatorKey.currentContext;
+    if (!mounted ||
+        context == null ||
+        iCloudYamlSync.busy ||
+        _iCloudDialogOpen ||
+        !ref.read(appVisibleProvider)) {
+      return;
+    }
+    for (final conflict in iCloudYamlSync.conflicts.values) {
+      final key =
+          '${iCloudYamlSync.folder}:${conflict.name}:${conflict.local}:${conflict.remote}';
+      if (!_shownICloudConflicts.add(key)) continue;
+      _iCloudDialogOpen = true;
+      unawaited(
+        showICloudConflict(context, iCloudYamlSync, conflict).whenComplete(() {
+          _iCloudDialogOpen = false;
+          if (mounted) _onICloudSync();
+        }),
+      );
+      return;
+    }
   }
 
   void _initLink() {
@@ -204,6 +248,10 @@ class ApplicationState extends ConsumerState<Application> {
 
   @override
   void dispose() {
+    if (system.isMacOS) {
+      iCloudYamlSync.removeListener(_onICloudSync);
+      iCloudYamlSync.stop();
+    }
     linkManager.destroy();
     _autoUpdateProfilesTaskTimer?.cancel();
     super.dispose();
