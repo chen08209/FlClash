@@ -64,7 +64,7 @@ var (
 	serviceCheckSlots = make(slots, serviceCheckConcurrency)
 
 	serviceClaimsMu sync.Mutex
-	serviceClaims   = map[string]*context.CancelFunc{}
+	serviceClaims   = map[serviceClaimKey]*context.CancelFunc{}
 )
 
 type serviceEnv struct {
@@ -128,7 +128,7 @@ func handleServiceCheck(params *ServiceCheckParams) []ServiceCheckItem {
 
 	// Claimed before queueing, so a check waiting for a slot is cancelled the
 	// moment its service is asked again.
-	contexts, release := claimServices(ctx, wanted)
+	contexts, release := claimServices(ctx, wanted, params.ProxyName)
 	defer release()
 	var running sync.WaitGroup
 	for index, checker := range wanted {
@@ -172,9 +172,14 @@ func runServiceCheck(ctx context.Context, checker serviceChecker, proxyName stri
 	return item
 }
 
-// The host asks for a service again only once the older answer can no longer
-// be used, so a newer check cancels the older one and frees its probe slots.
-func claimServices(parent context.Context, checkers []serviceChecker) ([]context.Context, func()) {
+// A new check cancels only an older check of the same service on the same
+// proxy, freeing its probe slot without disrupting other proxies.
+type serviceClaimKey struct {
+	proxyName   string
+	serviceName string
+}
+
+func claimServices(parent context.Context, checkers []serviceChecker, proxyName string) ([]context.Context, func()) {
 	contexts := make([]context.Context, len(checkers))
 	claimed := make(map[string]context.Context, len(checkers))
 	var releases []func()
@@ -182,7 +187,7 @@ func claimServices(parent context.Context, checkers []serviceChecker) ([]context
 		ctx, ok := claimed[checker.name]
 		if !ok {
 			var release func()
-			ctx, release = claimService(parent, checker.name)
+			ctx, release = claimService(parent, serviceClaimKey{proxyName: proxyName, serviceName: checker.name})
 			claimed[checker.name] = ctx
 			releases = append(releases, release)
 		}
@@ -195,7 +200,7 @@ func claimServices(parent context.Context, checkers []serviceChecker) ([]context
 	}
 }
 
-func claimService(parent context.Context, name string) (context.Context, func()) {
+func claimService(parent context.Context, name serviceClaimKey) (context.Context, func()) {
 	ctx, cancel := context.WithCancel(parent)
 	claim := &cancel
 	serviceClaimsMu.Lock()
