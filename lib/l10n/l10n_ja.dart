@@ -3604,4 +3604,11 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get forceRestartCore => '強制再起動';
+
+  @override
+  String get vpnPermissionNotGranted =>
+      'VPN の権限が許可されなかったため、VPN は起動しませんでした。ほかのアプリが常時接続 VPN に設定されている場合も起動できません。';
+
+  @override
+  String get vpnServiceStartFailed => 'VPN サービスを起動できませんでした。';
 }

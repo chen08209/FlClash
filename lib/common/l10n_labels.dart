@@ -166,3 +166,14 @@ extension RecordGroupingL10n on RecordGrouping {
     };
   }
 }
+
+extension ServiceStartFailureL10n on ServiceStartFailure {
+  String get label {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      ServiceStartFailure.vpnPermission =>
+        appLocalizations.vpnPermissionNotGranted,
+      ServiceStartFailure.service => appLocalizations.vpnServiceStartFailed,
+    };
+  }
+}

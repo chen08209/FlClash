@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/manager/android_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/service.dart';
@@ -88,6 +90,28 @@ void main() {
     expect(_RecordingSetupAction.requests, [false]);
 
     await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a start the service gave up says why it turned off', (
+    tester,
+  ) async {
+    loadAppLocalizations(const Locale('en'));
+    await pumpAndroidManager(tester);
+    final listener =
+        tester.state(find.byType(AndroidManager)) as ServiceListener;
+
+    listener.onServiceStopped(ServiceStartFailure.vpnPermission);
+    await tester.pump();
+    await tester.pump();
+
+    expect(_RecordingSetupAction.requests, [false]);
+    expect(
+      find.text(currentAppLocalizations.vpnPermissionNotGranted),
+      findsOneWidget,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 10));
   });
 
   testWidgets('persists shared state after the debounce window', (

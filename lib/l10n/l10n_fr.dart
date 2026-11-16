@@ -3822,4 +3822,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get forceRestartCore => 'Forcer le redémarrage';
+
+  @override
+  String get vpnPermissionNotGranted =>
+      'L\'autorisation VPN n\'a pas été accordée, le VPN n\'a donc pas démarré. Un VPN permanent défini pour une autre application l\'empêche aussi.';
+
+  @override
+  String get vpnServiceStartFailed => 'Le service VPN n\'a pas pu démarrer.';
 }

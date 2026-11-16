@@ -3677,4 +3677,11 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get forceRestartCore => '강제 다시 시작';
+
+  @override
+  String get vpnPermissionNotGranted =>
+      'VPN 권한이 허용되지 않아 VPN을 시작하지 않았습니다. 다른 앱이 상시 사용 VPN으로 설정되어 있어도 시작할 수 없습니다.';
+
+  @override
+  String get vpnServiceStartFailed => 'VPN 서비스를 시작하지 못했습니다.';
 }

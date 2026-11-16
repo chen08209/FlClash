@@ -22,9 +22,13 @@ class _RecordingListener with ServiceListener {
 
 class _RecordingStopListener with ServiceListener {
   var stops = 0;
+  final failures = <ServiceStartFailure?>[];
 
   @override
-  void onServiceStopped() => stops++;
+  void onServiceStopped([ServiceStartFailure? failure]) {
+    stops++;
+    failures.add(failure);
+  }
 }
 
 class _ThrowingListener with ServiceListener {
@@ -37,7 +41,7 @@ class _ThrowingListener with ServiceListener {
   }
 
   @override
-  void onServiceStopped() {
+  void onServiceStopped([ServiceStartFailure? failure]) {
     throw StateError('listener boom');
   }
 }
@@ -174,11 +178,13 @@ void main() {
   group('stop reports', () {
     late _RecordingStopListener listener;
 
-    Future<void> reportStopped(Object? revision) async {
+    Future<void> reportStopped(Object? revision, {String? failure}) async {
       await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .handlePlatformMessage(
             channelName,
-            codec.encodeMethodCall(MethodCall('stopped', revision)),
+            codec.encodeMethodCall(
+              MethodCall('stopped', {'revision': revision, 'failure': failure}),
+            ),
             null,
           );
     }
@@ -212,6 +218,14 @@ void main() {
         expect(listener.stops, 1);
       },
     );
+
+    test('a start the service gave up names why', () async {
+      await Service().start();
+
+      await reportStopped(lastRevision(), failure: 'vpn_permission');
+
+      expect(listener.failures, [ServiceStartFailure.vpnPermission]);
+    });
 
     test('a report older than the newest command is dropped', () async {
       await Service().start();

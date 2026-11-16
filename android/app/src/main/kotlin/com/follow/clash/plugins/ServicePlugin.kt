@@ -2,6 +2,7 @@ package com.follow.clash.plugins
 
 import com.follow.clash.ServiceController
 import com.follow.clash.ServiceState
+import com.follow.clash.StartFailure
 import com.follow.clash.common.Components
 import com.follow.clash.common.GlobalState
 import com.follow.clash.core.Core
@@ -132,10 +133,13 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     }
 
     // Read on the platform thread, where start and stop arrive: revision and intent are one instant.
-    fun notifyStopped() {
+    internal fun notifyStopped(failure: StartFailure?) {
         scope.launch(Dispatchers.Main) {
             if (!ServiceState.isRunRequested) {
-                channel.invokeMethod("stopped", commandRevision)
+                channel.invokeMethod(
+                    "stopped",
+                    mapOf("revision" to commandRevision, "failure" to failure?.code),
+                )
             }
         }
     }

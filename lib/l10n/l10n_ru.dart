@@ -3769,4 +3769,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get forceRestartCore => 'Принудительный перезапуск';
+
+  @override
+  String get vpnPermissionNotGranted =>
+      'Разрешение на VPN не выдано, поэтому VPN не запущен. Постоянная VPN, заданная для другого приложения, тоже мешает запуску.';
+
+  @override
+  String get vpnServiceStartFailed => 'Не удалось запустить службу VPN.';
 }

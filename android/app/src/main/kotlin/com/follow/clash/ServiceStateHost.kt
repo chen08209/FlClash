@@ -47,7 +47,7 @@ internal interface ServiceStateHost {
 
     fun app(): AppGateway?
 
-    fun notifyStopped()
+    fun notifyStopped(failure: StartFailure? = null)
 
     suspend fun quickSetup(initParams: String, setupParams: String): Result<String>
 
@@ -135,8 +135,8 @@ internal object AndroidServiceStateHost : ServiceStateHost {
         }
     }
 
-    override fun notifyStopped() {
-        flutterEngine?.plugin<ServicePlugin>()?.notifyStopped()
+    override fun notifyStopped(failure: StartFailure?) {
+        flutterEngine?.plugin<ServicePlugin>()?.notifyStopped(failure)
     }
 
     override suspend fun quickSetup(initParams: String, setupParams: String): Result<String> =

@@ -37,6 +37,11 @@ private enum class StartOutcome {
     SUPERSEDED,
 }
 
+internal enum class StartFailure(val code: String) {
+    VPN_PERMISSION("vpn_permission"),
+    SERVICE("service"),
+}
+
 /**
  * Callers request a transition; the newest request always wins. No step assigns [runState]:
  * [publish] derives it from the latest intent, the transition in flight and what the host really
@@ -214,44 +219,47 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
     }
 
     private suspend fun start(request: RunRequest): StartOutcome {
-        val started = try {
+        val failure = try {
             startPreparationLock.withLock { runStart(request) }
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {
             host.log("Unable to process service start request: $error")
-            false
+            StartFailure.SERVICE
         }
-        return if (started) StartOutcome.STARTED else abandon(request)
+        return if (failure == null) StartOutcome.STARTED else abandon(request, failure)
     }
 
-    private suspend fun abandon(request: RunRequest): StartOutcome {
+    private suspend fun abandon(request: RunRequest, failure: StartFailure? = null): StartOutcome {
         val dropped = arbiter.resetToStopped(request)
         reconcileStopped()
         if (!dropped) {
             return StartOutcome.SUPERSEDED
         }
-        host.notifyStopped()
+        host.notifyStopped(failure)
         return StartOutcome.FAILED
     }
 
-    private suspend fun runStart(request: RunRequest): Boolean {
+    /** Null once the service runs as asked; a request no longer current is never reported. */
+    private suspend fun runStart(request: RunRequest): StartFailure? {
         if (!isCurrent(request)) {
-            return false
+            return StartFailure.SERVICE
         }
-        val options = sharedState.vpnOptions ?: return false
+        val options = sharedState.vpnOptions ?: return StartFailure.SERVICE
         if (!prepareVpn(options)) {
             if (host.app() == null && isCurrent(request)) {
                 host.showToast(VPN_PERMISSION_MESSAGE)
             }
-            return false
+            return StartFailure.VPN_PERMISSION
         }
         return transitionLock.withLock {
             when {
-                !isCurrent(request) -> false
-                host.runtime?.vpn == options.enable -> true
+                !isCurrent(request) -> StartFailure.SERVICE
+                host.runtime?.vpn == options.enable -> null
                 else -> transitioning(RunState.STARTING) {
-                    host.startService(withLocalNetworkFallback(options)) && isCurrent(request)
+                    StartFailure.SERVICE.takeUnless {
+                        host.startService(withLocalNetworkFallback(options)) && isCurrent(request)
+                    }
                 }
             }
         }

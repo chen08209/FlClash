@@ -3776,4 +3776,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get forceRestartCore => 'Force restart';
+
+  @override
+  String get vpnPermissionNotGranted =>
+      'VPN permission was not granted, so the VPN did not start. An always-on VPN set for another app also blocks it.';
+
+  @override
+  String get vpnServiceStartFailed => 'The VPN service could not start.';
 }

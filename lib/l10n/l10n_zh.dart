@@ -3556,4 +3556,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get forceRestartCore => '强制重启';
+
+  @override
+  String get vpnPermissionNotGranted =>
+      '未获得 VPN 权限，VPN 没有启动。其他应用设为始终开启的 VPN 时也会如此。';
+
+  @override
+  String get vpnServiceStartFailed => 'VPN 服务无法启动。';
 }

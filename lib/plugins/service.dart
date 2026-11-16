@@ -33,7 +33,7 @@ Future<Map<String, Object?>> _decodeResponse(
 abstract mixin class ServiceListener {
   void onServiceEvent(CoreEvent event) {}
 
-  void onServiceStopped() {}
+  void onServiceStopped([ServiceStartFailure? failure]) {}
 }
 
 class Service {
@@ -70,12 +70,17 @@ class Service {
           }
           break;
         case 'stopped':
+          final report = call.arguments as Map<Object?, Object?>;
           // A report stamped before the newest command no longer describes it.
-          if (call.arguments != _commandRevision || !_startRequested) {
+          if (report['revision'] != _commandRevision || !_startRequested) {
             break;
           }
           _startRequested = false;
-          _dispatch('stop report', (listener) => listener.onServiceStopped());
+          final failure = ServiceStartFailure.fromCode(report['failure']);
+          _dispatch(
+            'stop report',
+            (listener) => listener.onServiceStopped(failure),
+          );
           break;
         default:
           throw MissingPluginException();

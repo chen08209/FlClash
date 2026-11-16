@@ -114,6 +114,7 @@ private class FakeHost(override val scope: CoroutineScope) : ServiceStateHost {
     var startCalls = 0
     var stopCalls = 0
     var stoppedNotifications = 0
+    val stopFailures = mutableListOf<StartFailure?>()
     var lastInitParams: String? = null
     var lastSetupParams: String? = null
 
@@ -139,8 +140,9 @@ private class FakeHost(override val scope: CoroutineScope) : ServiceStateHost {
 
     override fun app(): AppGateway? = app
 
-    override fun notifyStopped() {
+    override fun notifyStopped(failure: StartFailure?) {
         stoppedNotifications++
+        stopFailures += failure
     }
 
     override suspend fun quickSetup(initParams: String, setupParams: String): Result<String> {
@@ -251,7 +253,7 @@ class ServiceStateMachineTest {
         assertFalse(machine.requestStart().await())
         assertEquals(RunState.STOPPED, machine.runState.value)
         assertFalse(machine.isRunRequested)
-        assertEquals(1, host.stoppedNotifications)
+        assertEquals(listOf(StartFailure.SERVICE), host.stopFailures)
     }
 
     @Test
@@ -320,7 +322,7 @@ class ServiceStateMachineTest {
 
         assertFalse(machine.requestStart().await())
         assertEquals(0, host.startCalls)
-        assertEquals(1, host.stoppedNotifications)
+        assertEquals(listOf(StartFailure.VPN_PERMISSION), host.stopFailures)
     }
 
     /** Flutter opened the Core's listeners before asking, and may be gone before it hears back. */

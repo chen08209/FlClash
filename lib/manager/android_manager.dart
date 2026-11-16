@@ -9,6 +9,7 @@ import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:prism_ui/banner.dart';
 
 class AndroidManager extends ConsumerStatefulWidget {
   final Widget child;
@@ -79,9 +80,12 @@ class _AndroidContainerState extends ConsumerState<AndroidManager>
   }
 
   @override
-  void onServiceStopped() {
+  void onServiceStopped([ServiceStartFailure? failure]) {
     unawaited(ref.read(setupActionProvider.notifier).setRunning(false));
-    super.onServiceStopped();
+    if (failure != null) {
+      dialogs.showBanner(failure.label, level: BannerLevel.error);
+    }
+    super.onServiceStopped(failure);
   }
 
   @override
