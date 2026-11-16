@@ -414,7 +414,7 @@ class SetupAction extends _$SetupAction {
     final profileId = ref.read(currentProfileIdProvider);
     final SetupState setupState;
     try {
-      setupState = await ref.read(setupStateProvider(profileId).future);
+      setupState = await _readSetupState(profileId);
     } catch (_) {
       return false;
     }
@@ -621,7 +621,7 @@ class SetupAction extends _$SetupAction {
 
   Future<String> getProfileWithId(int profileId) async {
     try {
-      final setupState = await ref.read(setupStateProvider(profileId).future);
+      final setupState = await _readSetupState(profileId);
       final patchClashConfig = ref.read(patchClashConfigProvider);
       final res = await getProfile(
         setupState: setupState,
@@ -635,6 +635,18 @@ class SetupAction extends _$SetupAction {
       dialogs.showBanner(e.toString(), level: BannerLevel.error);
     }
     return '';
+  }
+
+  Future<SetupState> _readSetupState(int? profileId) async {
+    final subscription = ref.listen(
+      setupStateProvider(profileId).future,
+      (_, _) {},
+    );
+    try {
+      return await subscription.read();
+    } finally {
+      subscription.close();
+    }
   }
 
   PatchClashConfig _effectivePatchConfig(PatchClashConfig patchConfig) {
@@ -744,7 +756,7 @@ class SetupAction extends _$SetupAction {
     final networkSetting = ref.read(networkSettingProvider);
     SetupState? setupState;
     final realProfile = await globalState.safeRun(() async {
-      final state = await ref.read(setupStateProvider(profile?.id).future);
+      final state = await _readSetupState(profile?.id);
       setupState = state;
       return getProfile(setupState: state, patchConfig: realPatchConfig);
     }, title: 'build profile');

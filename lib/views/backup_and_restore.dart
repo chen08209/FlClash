@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/dav_client.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/icloud/section.dart';
+import 'package:fl_clash/features/icloud/sync.dart';
 import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
@@ -159,6 +161,7 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
           bottom: 16 + context.bottomInset,
         ),
         children: [
+          if (system.isMacOS) ICloudSyncSection(sync: iCloudYamlSync),
           generateSection(
             title: appLocalizations.remote,
             items: [
