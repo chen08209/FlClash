@@ -1211,8 +1211,10 @@ than the frames a load costs. What a transition must not carry is work that repe
   without an image, so a grid of placeholders is never painted only to be replaced. `whenRouteSettled`
   (`prism_ui/lib/navigator.dart`) is left for sequencing navigation, such as opening a page once the sheet above it is gone.
 - Two views arrive after the motion. `EditorPage` keeps the document it opened until its route has settled and only
-  then mounts CodeForge, showing a spinner only if the file is still being read: the mount lays out, folds and
-  highlights a screen of text in one frame, which a phone cannot fit in a transition frame whatever the file's size.
+  then mounts CodeForge, sliding in with its spinner until then: the mount lays out, folds and highlights a screen of
+  text in one frame, which a phone cannot fit in a transition frame whatever the file's size. The spinner, with no
+  surface behind it, leaves in the frame the text mounts rather than fading: a fade there runs over the bar items
+  fading in after the route settles, and on a phone at 120 Hz the two together overran a frame.
   `AccessView` reads the installed apps only once its route has settled and its bar items have faded in
   (`whenNothingAnimates`, not counting its own spinner), and slides in with that spinner when this run has not read
   them yet (`NullStatusSwitcher` with `holdsArrival: false`): the read can outlast `arrivalHoldLimit`, and a list of
