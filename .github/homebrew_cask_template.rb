@@ -7,7 +7,7 @@ cask "flclash" do
     sha256 arm:   "ARM_SHA256",
            intel: "AMD_SHA256"
 
-    url "https://github.com/chen08209/FlClash/releases/download/v#{version}/FlClash-#{version}-macos-#{arch}.dmg"
+    url "https://github.com/chen08209/FlClash/releases/download/v#{version}/FlClash-LINE-#{version}-macos-#{arch}.dmg"
   end
 
   name "FlClash"
