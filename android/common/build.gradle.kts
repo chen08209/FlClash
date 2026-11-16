@@ -20,6 +20,7 @@ android {
     sourceSets {
         // Unit tests live under android/tests/ instead of each module's src/test.
         getByName("test").java.setSrcDirs(listOf("../tests/common"))
+        getByName("test").kotlin.setSrcDirs(listOf("../tests/common"))
     }
 }
 
