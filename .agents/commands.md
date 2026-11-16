@@ -1,5 +1,11 @@
 # Commands
 
+`make` is the entry point on macOS and Linux: `make help` lists every target with its variables, generated from the
+`##` comments in the `Makefile`, and `test/tool/makefile_test.dart` keeps the two in step. Each target only calls the
+command this file documents, so the logic stays in `tool/`; `make doctor` names a missing toolchain, `make check` is
+CI's `dart` job, `make core-check` and `make core-test` the Go wrapper checks CI runs, and `make run` starts the safe mode
+build, the only kind a shared host may run.
+
 ## Building
 
 Update submodules first. The ClashMeta Go core lives in `core/Clash.Meta/`, the UI library in `plugins/prism_ui/`.
@@ -8,8 +14,8 @@ Update submodules first. The ClashMeta Go core lives in `core/Clash.Meta/`, the 
 git submodule update --init --recursive
 ```
 
-Full package build, including Go core, Flutter, and packaging, runs through `tool/package.dart` (`make package` on
-macOS and Linux):
+Full package build, including Go core, Flutter, and packaging, runs through `tool/package.dart` (`make package`,
+`make package-android`, with `ARCH=`, `FORM=` and `DRY=1`):
 
 ```bash
 dart run tool/package.dart                 # this host: dmg, exe + zip, or deb + AppImage + rpm
