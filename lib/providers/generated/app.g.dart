@@ -193,6 +193,58 @@ abstract class _$UpdateDownloadState extends $Notifier<UpdateDownload?> {
   }
 }
 
+@ProviderFor(CoreStopReason)
+final coreStopReasonProvider = CoreStopReasonProvider._();
+
+final class CoreStopReasonProvider
+    extends $NotifierProvider<CoreStopReason, String?> {
+  CoreStopReasonProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'coreStopReasonProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$coreStopReasonHash();
+
+  @$internal
+  @override
+  CoreStopReason create() => CoreStopReason();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String?>(value),
+    );
+  }
+}
+
+String _$coreStopReasonHash() => r'ba8ddb362ef3e025c5f052a68e896a0e728f9458';
+
+abstract class _$CoreStopReason extends $Notifier<String?> {
+  String? build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<String?, String?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String?, String?>,
+              String?,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(Logs)
 final logsProvider = LogsProvider._();
 

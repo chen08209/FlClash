@@ -469,5 +469,21 @@ void main() {
 
       expect(badge('Core stopped'), findsOneWidget);
     });
+
+    testWidgets('the stopped card says why the core stopped', (tester) async {
+      container.read(coreStatusProvider.notifier).value =
+          CoreStatus.disconnected;
+      container.read(coreStopReasonProvider.notifier).value =
+          'The core could not be launched';
+      await pumpButton(tester, separateCore: true);
+
+      await open(tester);
+
+      expect(front('The core could not be launched'), findsOneWidget);
+      expect(
+        find.text('The app lost its connection to the core'),
+        findsNothing,
+      );
+    });
   });
 }

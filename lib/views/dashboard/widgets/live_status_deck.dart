@@ -776,7 +776,8 @@ class _StatusCard extends ConsumerWidget {
         colorScheme.errorContainer,
         const _CoreHero(CoreStatus.disconnected),
         appLocalizations.coreStopped,
-        appLocalizations.coreStoppedDesc,
+        (status.preview == null ? ref.watch(coreStopReasonProvider) : null) ??
+            appLocalizations.coreStoppedDesc,
         appLocalizations.restartCore,
         effects.restartCore,
         (colorScheme.error, colorScheme.onError),

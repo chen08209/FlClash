@@ -311,6 +311,27 @@ void main() {
       await expectLater(action.reportNetworkChange(), completes);
     });
 
+    test('a core that fails to start keeps why for the stopped card', () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      loadAppLocalizations(const Locale('en'));
+      final container = ProviderContainer(
+        overrides: [coreActionProvider.overrideWith(_TestCoreAction.new)],
+      );
+      addTearDown(container.dispose);
+      final coreAction =
+          container.read(coreActionProvider.notifier) as _TestCoreAction;
+      coreAction.startCompleter = Completer()
+        ..completeError(StateError('launch refused'));
+
+      await coreAction.startCore();
+
+      expect(container.read(coreStatusProvider), CoreStatus.disconnected);
+      expect(
+        container.read(coreStopReasonProvider),
+        'Bad state: launch refused',
+      );
+    });
+
     test('applies the profile after restarting a stopped core', () async {
       final container = ProviderContainer(
         overrides: [

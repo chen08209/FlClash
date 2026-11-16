@@ -42,6 +42,19 @@ class UpdateDownloadState extends _$UpdateDownloadState
 }
 
 @Riverpod(keepAlive: true)
+class CoreStopReason extends _$CoreStopReason with AutoDisposeNotifierMixin {
+  @override
+  String? build() {
+    ref.listen(coreStatusProvider, (_, next) {
+      if (next != CoreStatus.disconnected) {
+        state = null;
+      }
+    });
+    return null;
+  }
+}
+
+@Riverpod(keepAlive: true)
 class Logs extends _$Logs with AutoDisposeNotifierMixin {
   @override
   FixedList<Log> build() {
