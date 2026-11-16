@@ -1,8 +1,13 @@
 package core
 
 import (
+	"runtime"
+	"sync/atomic"
+
 	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/dns"
+	"github.com/metacubex/mihomo/listener"
+	"github.com/metacubex/mihomo/tunnel"
 	"github.com/metacubex/mihomo/tunnel/statistic"
 )
 
@@ -52,10 +57,32 @@ func handleClearDnsCache() {
 	dns.ClearAll()
 }
 
+// retryTunOnNetworkChange reopens a failed TUN listener, or refreshes the
+// existing listener's interface binding, after the underlying network moves.
+var retryTunOnNetworkChange = listener.ReCreateTun
+
+var networkChangeVersion atomic.Uint64
+
 // handleNetworkChanged is how the desktop host reports a new network, which
 // Android's NetworkObserver reports through handleResetNetwork.
 func handleNetworkChanged() {
-	handleClearDnsCache()
+	var version uint64
+	if runtime.GOARCH == "amd64" && (runtime.GOOS == "windows" || runtime.GOOS == "linux") {
+		version = networkChangeVersion.Add(1)
+	}
+	configMu.Lock()
+	defer configMu.Unlock()
+	// A newer network state supersedes reports queued behind a slow config
+	// apply or listener restart. Only the latest one resets DNS and TUN.
+	if version != 0 && version != networkChangeVersion.Load() {
+		return
+	}
+	dns.ClearAll()
+	if runtime.GOARCH == "amd64" &&
+		(runtime.GOOS == "windows" || runtime.GOOS == "linux") &&
+		isRunning.Load() && currentConfig != nil && currentConfig.General.Tun.Enable {
+		retryTunOnNetworkChange(currentConfig.General.Tun, tunnel.Tunnel)
+	}
 }
 
 // A connection that went out over a network the device has left hangs until
