@@ -30,6 +30,24 @@ const defaultBypassDomain = [
   '192.168.*',
 ];
 
+/// WinINet's entry for every host without a dot; the other platforms leave it
+/// out when they write the list.
+const windowsLocalBypass = '<local>';
+
+/// The field default keeps the shared list because it must be const.
+final List<String> platformDefaultBypassDomain = system.isWindows
+    ? const [...defaultBypassDomain, windowsLocalBypass]
+    : defaultBypassDomain;
+
+/// `%mixed-port%` is replaced with the mixed port when the script is served.
+const defaultPacScript = '''function FindProxyForURL(url, host) {
+  if (isPlainHostName(host)) {
+    return "DIRECT";
+  }
+  return "PROXY 127.0.0.1:%mixed-port%; SOCKS5 127.0.0.1:%mixed-port%; DIRECT";
+}
+''';
+
 const defaultUserAgents = ['clash-verge/v2.4.2', 'ClashforWindows/0.19.23'];
 
 const defaultFilters = [
@@ -386,8 +404,9 @@ abstract class NetworkProps with _$NetworkProps {
   const factory NetworkProps({
     @Default(true) bool systemProxy,
     @Default(defaultBypassDomain) List<String> bypassDomain,
+    @Default(false) bool pacMode,
+    @Default(defaultPacScript) String pacScript,
     @Default(true) bool bypassPrivateRoute,
-    @Default(true) bool autoSetSystemDns,
     @Default(false) bool appendSystemDns,
     @Default(defaultAuthenticationProps) AuthenticationProps authentication,
   }) = _NetworkProps;
@@ -538,6 +557,7 @@ abstract class Config with _$Config {
         appSettingProps: AppSettingProps(
           dashboardWidgets: platformDefaultDashboardWidgets,
         ),
+        networkProps: NetworkProps(bypassDomain: platformDefaultBypassDomain),
       );
     }
     return Config.fromJson(json);

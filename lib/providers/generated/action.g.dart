@@ -40,7 +40,7 @@ final class CommonActionProvider extends $NotifierProvider<CommonAction, void> {
   }
 }
 
-String _$commonActionHash() => r'c0861209c71a2996971e25c98f59f20770a8b848';
+String _$commonActionHash() => r'15baafcc30c4fd1bdaada3a060879e8430541bdc';
 
 abstract class _$CommonAction extends $Notifier<void> {
   void build();
@@ -91,7 +91,7 @@ final class SetupActionProvider extends $NotifierProvider<SetupAction, void> {
   }
 }
 
-String _$setupActionHash() => r'ee90d607ba84130b6ec2e112f8bd18598e2410aa';
+String _$setupActionHash() => r'18ff44174700e1155f9b8e98f0b9d388bf8c13f1';
 
 abstract class _$SetupAction extends $Notifier<void> {
   void build();
@@ -193,7 +193,7 @@ final class CoreActionProvider extends $NotifierProvider<CoreAction, void> {
   }
 }
 
-String _$coreActionHash() => r'66ca02d5e03d6de90ff4cf7849fd42b48c0d1313';
+String _$coreActionHash() => r'942a3b5732a4bf200f8e7d685fb5d6e37c01af9f';
 
 abstract class _$CoreAction extends $Notifier<void> {
   void build();
@@ -244,7 +244,7 @@ final class SystemActionProvider extends $NotifierProvider<SystemAction, void> {
   }
 }
 
-String _$systemActionHash() => r'9e7580ff094045c6261a66512301f98a7a505c3d';
+String _$systemActionHash() => r'c4322f9eb86a47c36b27549e0e46094495eaf9c0';
 
 abstract class _$SystemAction extends $Notifier<void> {
   void build();
@@ -398,7 +398,7 @@ final class ProxiesActionProvider
   }
 }
 
-String _$proxiesActionHash() => r'09ba0ec4e7776a78aebca8ed2c54579bfdc59f8c';
+String _$proxiesActionHash() => r'f5ab52e013477fa15b31400f7db32038e222e507';
 
 abstract class _$ProxiesAction extends $Notifier<void> {
   void build();
@@ -502,7 +502,7 @@ final class ScriptsActionProvider
   }
 }
 
-String _$scriptsActionHash() => r'f4ec8e120ae8163e4b7bb78636c30d75264de87d';
+String _$scriptsActionHash() => r'8ec5b8bcf1bdf8633ee687897775bf1abe5ef17d';
 
 abstract class _$ScriptsAction extends $Notifier<void> {
   void build();
@@ -554,7 +554,7 @@ final class MitmModulesActionProvider
   }
 }
 
-String _$mitmModulesActionHash() => r'cd33ffb399209820ebc80ad9d649c30e1f2ddec0';
+String _$mitmModulesActionHash() => r'99278008215d7cbe518bc879470ce01920fea82f';
 
 abstract class _$MitmModulesAction extends $Notifier<void> {
   void build();
@@ -763,7 +763,7 @@ final class ResourcesActionProvider
   }
 }
 
-String _$resourcesActionHash() => r'2034421cda9f4889f496aea8cd40e17c724ec4f9';
+String _$resourcesActionHash() => r'1d35501f1e3d2306e58da6b1759cb5d86c5de529';
 
 abstract class _$ResourcesAction extends $Notifier<void> {
   void build();

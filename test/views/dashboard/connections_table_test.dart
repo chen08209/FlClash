@@ -18,6 +18,7 @@ import 'package:mocktail/mocktail.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
 import '../../helpers/host_scaffold.dart';
+import '../../helpers/core_connections.dart';
 
 class _MockCore extends Mock implements CoreHandlerInterface {}
 
@@ -149,8 +150,9 @@ void main() {
   testWidgets('the table keeps the newest rows, sorts every connection and '
       'counts them all', (tester) async {
     final core = _MockCore();
-    when(() => core.getConnections()).thenAnswer(
-      (_) async => [
+    whenConnections<({List<TrackerInfo> next, int tcp})>(
+      core,
+      () async => [
         for (var index = 0; index < 150; index++)
           _connection(
             index,

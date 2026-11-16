@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -79,8 +80,8 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
             IconButtonData(
               glyph: AppGlyphs.sort,
               onPressed: () {
-                showSheet(
-                  context: context,
+                showNestedSheet(
+                  context,
                   builder: (_) {
                     return ReorderableProfilesSheet(profiles: profiles);
                   },
@@ -164,14 +165,8 @@ class _ProfilesGrid extends ConsumerStatefulWidget {
 class _ProfilesGridState extends ConsumerState<_ProfilesGrid> {
   static const _horizontalPadding = 16.0;
 
-  late final ScrollController _controller;
+  ScrollController? _controller;
   var _revealed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = sheetScrollController(context);
-  }
 
   @override
   void didChangeDependencies() {
@@ -187,7 +182,7 @@ class _ProfilesGridState extends ConsumerState<_ProfilesGrid> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
@@ -204,38 +199,69 @@ class _ProfilesGridState extends ConsumerState<_ProfilesGrid> {
     minItemWidth: profileItemMinWidth.ap(context),
   );
 
-  void _revealSelected() {
-    if (!mounted || !_controller.hasClients) {
-      return;
-    }
+  double? _revealOffset({
+    required double width,
+    required double viewport,
+    required double pixels,
+    required double maxScrollExtent,
+  }) {
     final index = widget.profiles.indexWhere(
       (profile) => profile.id == widget.currentProfileId,
     );
     if (index == -1) {
-      return;
+      return null;
     }
-    final position = _controller.position;
-    final padding = _padding;
     final height = _profileItemHeight;
-    final row = index ~/ _columnsFor(context.size!.width);
+    final row = index ~/ _columnsFor(width);
     final atTop = row * (height + widget.spacing);
-    final atBottom =
-        atTop + padding.vertical + height - position.viewportDimension;
-    if (position.pixels >= atBottom && position.pixels <= atTop) {
+    final atBottom = atTop + _padding.vertical + height - viewport;
+    if (pixels >= atBottom && pixels <= atTop) {
+      return null;
+    }
+    return ((atTop + atBottom) / 2).clamp(0.0, maxScrollExtent);
+  }
+
+  /// A tab switch draws the page it brings in from a snapshot of its first
+  /// frame, so a reveal after that frame would only show once the switch ends.
+  double _initialOffset(Size size) {
+    if (!_revealed) {
+      return 0;
+    }
+    final rows = (widget.profiles.length / _columnsFor(size.width)).ceil();
+    final extent =
+        _padding.vertical +
+        rows * _profileItemHeight +
+        math.max(0, rows - 1) * widget.spacing;
+    return _revealOffset(
+          width: size.width,
+          viewport: size.height,
+          pixels: 0,
+          maxScrollExtent: math.max(0, extent - size.height),
+        ) ??
+        0;
+  }
+
+  void _revealSelected() {
+    final controller = _controller;
+    if (!mounted || controller == null || !controller.hasClients) {
       return;
     }
-    _controller.jumpTo(
-      ((atTop + atBottom) / 2).clamp(
-        position.minScrollExtent,
-        position.maxScrollExtent,
-      ),
+    final position = controller.position;
+    final offset = _revealOffset(
+      width: context.size!.width,
+      viewport: position.viewportDimension,
+      pixels: position.pixels,
+      maxScrollExtent: position.maxScrollExtent,
     );
+    if (offset != null) {
+      controller.jumpTo(offset);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final profiles = widget.profiles;
-    return WidthBuilder(
+    final grid = WidthBuilder(
       builder: (_, width) {
         return GridView.builder(
           key: profilesStoreKey,
@@ -260,6 +286,15 @@ class _ProfilesGridState extends ConsumerState<_ProfilesGrid> {
             );
           },
         );
+      },
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _controller ??= sheetScrollController(
+          context,
+          initialScrollOffset: _initialOffset(constraints.biggest),
+        );
+        return grid;
       },
     );
   }
@@ -316,7 +351,7 @@ class ProfileItem extends ConsumerWidget {
   }
 
   void _handleShowEditExtendPage(BuildContext context) {
-    showExtend(
+    showNestedExtend(
       context,
       builder: (context) => EditProfileView(profile: profile),
     );

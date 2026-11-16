@@ -616,10 +616,14 @@ void main() {
     final editor = await openEditor(tester, 'editable');
     expect(shownText(tester), 'payload:\n  - old\n');
 
-    editor.onSave!(
-      tester.element(find.byType(EditorPage)),
-      'editable',
-      const EditorContent.text('payload:\n  - new\n'),
+    unawaited(
+      Future.sync(
+        () => editor.onSave!(
+          tester.element(find.byType(EditorPage)),
+          'editable',
+          const EditorContent.text('payload:\n  - new\n'),
+        ),
+      ),
     );
     await pumpUntil(tester, find.byType(EditorPage), found: false);
 
@@ -686,10 +690,14 @@ void main() {
     await pump(tester, container);
 
     final editor = await openEditor(tester, 'rejected');
-    editor.onSave!(
-      tester.element(find.byType(EditorPage)),
-      'rejected',
-      const EditorContent.text('payload: broken\n'),
+    unawaited(
+      Future.sync(
+        () => editor.onSave!(
+          tester.element(find.byType(EditorPage)),
+          'rejected',
+          const EditorContent.text('payload: broken\n'),
+        ),
+      ),
     );
     await pumpUntil(tester, find.text('invalid payload'));
 

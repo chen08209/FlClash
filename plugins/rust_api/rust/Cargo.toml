@@ -17,7 +17,7 @@ ropey = { version = "1.6.1", default-features = false, features = ["simd"] }
 # loads the Core in-process, so nothing below is built into the Android library.
 [target.'cfg(not(target_os = "android"))'.dependencies]
 interprocess = { version = "2", features = ["tokio"] }
-tokio = { version = "1.36", features = ["io-util", "macros", "rt", "sync"] }
+tokio = { version = "1.36", features = ["io-util", "macros", "rt", "sync", "time"] }
 global-hotkey = "0.8"
 
 [target.'cfg(all(unix, not(target_os = "android")))'.dependencies]
@@ -29,13 +29,74 @@ libc = "0.2"
 rquickjs = { version = "0.12", default-features = false, features = ["bindgen"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
+block2 = "0.6"
 dispatch2 = "0.3"
+objc2 = "0.6"
+objc2-app-kit = "0.3"
+objc2-core-foundation = { version = "0.3", default-features = false, features = [
+  "std",
+  "CFArray",
+  "CFString",
+] }
+objc2-core-text = { version = "0.3", default-features = false, features = ["std", "CTFontManager"] }
+objc2-core-location = { version = "0.3", default-features = false, features = [
+  "std",
+  "CLLocationManager",
+  "CLLocationManagerDelegate",
+] }
+objc2-core-wlan = { version = "0.3", default-features = false, features = [
+  "std",
+  "CWInterface",
+  "CWWiFiClient",
+] }
+objc2-foundation = "0.3"
+objc2-service-management = { version = "0.3", default-features = false, features = [
+  "std",
+  "SMAppService",
+  "objc2",
+  "objc2-foundation",
+] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+ksni = { version = "0.3", default-features = false, features = ["tokio"] }
+gdk-sys = "0.18"
+gio-sys = "0.18"
+glib-sys = "0.18"
+gobject-sys = "0.18"
+gtk-sys = "0.18"
+serde = "1"
+zbus = { version = "5", default-features = false, features = ["tokio"] }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = [
   "Win32_Foundation",
+  "Win32_Globalization",
+  "Win32_Graphics_Dwm",
+  "Win32_Graphics_Gdi",
+  "Win32_NetworkManagement_IpHelper",
+  "Win32_NetworkManagement_Ndis",
+  "Win32_NetworkManagement_Rras",
+  "Win32_NetworkManagement_WiFi",
+  "Win32_Networking_WinInet",
+  "Win32_Networking_WinSock",
+  "Win32_Security",
+  "Win32_System_Com",
+  "Win32_System_DataExchange",
+  "Win32_System_LibraryLoader",
+  "Win32_System_Registry",
+  "Win32_System_SystemInformation",
   "Win32_System_Threading",
+  "Win32_UI_Controls",
+  "Win32_UI_HiDpi",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_UI_Shell",
   "Win32_UI_WindowsAndMessaging",
+  "Wdk_System_SystemServices",
+] }
+windows = { version = "0.62", features = [
+  "Devices_WiFi",
+  "Foundation",
+  "Security_Authorization_AppCapabilityAccess",
 ] }
 
 [profile.release]

@@ -27,6 +27,7 @@ class _Probe extends Notifier<RoutedProbeState<String, String>>
   Duration settle = Duration.zero;
   Duration moveSettle = Duration.zero;
   Duration throttle = Duration.zero;
+  Duration? retry;
 
   @override
   Duration get settleDuration => settle;
@@ -36,6 +37,9 @@ class _Probe extends Notifier<RoutedProbeState<String, String>>
 
   @override
   Duration get throttleDuration => throttle;
+
+  @override
+  Duration get confirmDelay => retry ?? super.confirmDelay;
 
   @override
   RoutedProbeState<String, String> build() => buildProbe();
@@ -111,9 +115,10 @@ void main() {
   RouteTracker trackerOf(ProviderContainer container) =>
       container.read(routeTrackerProvider.notifier);
 
-  void moveRoute(ProviderContainer container, int routeVersion) => trackerOf(
-    container,
-  ).applySnapshot(RouteSnapshot(coreEpoch: 1, routeVersion: routeVersion));
+  void moveRoute(ProviderContainer container, int routeVersion) =>
+      trackerOf(container).applySnapshot(
+        RouteSnapshot(coreEpoch: 1, routeVersion: routeVersion, running: true),
+      );
 
   test('probes a watched target and keeps the answer while fresh', () async {
     final container = build();
@@ -302,7 +307,9 @@ void main() {
     expect(probe.routes.last.hostEpoch, _route.hostEpoch + 3);
   });
 
-  testWidgets('a route check waits past the next pick poll', (tester) async {
+  testWidgets('a move is checked at once, the ones on its heels together', (
+    tester,
+  ) async {
     final container = build();
     final probe = container.read(_probeProvider.notifier)
       ..settle = probeSettleDuration
@@ -312,17 +319,21 @@ void main() {
     probe.answer({'a': _ok('a.example:443')});
     await tester.pump();
 
-    probe.moved.add('a.example:443');
     moveRoute(container, 2);
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    expect(probe.checks, hasLength(1));
+    expect(container.read(_probeProvider).entryOf('a').stamp?.routeVersion, 2);
+
     moveRoute(container, 3);
+    await tester.pump(const Duration(seconds: 1));
+    moveRoute(container, 4);
     await tester.pump(const Duration(milliseconds: 100));
-    expect(probe.checks, isEmpty);
-    expect(container.read(_probeProvider).entryOf('a').phase, ProbePhase.fresh);
+    expect(probe.checks, hasLength(1));
 
     await tester.pump(probeSettleDuration);
-    expect(probe.checks, hasLength(1));
-    expect(probe.calls, ['a', 'a']);
+    expect(probe.checks, hasLength(2));
+    expect(container.read(_probeProvider).entryOf('a').stamp?.routeVersion, 4);
+    expect(probe.calls, ['a']);
   });
 
   testWidgets('an exit that keeps moving is asked at most once a throttle', (
@@ -433,37 +444,338 @@ void main() {
     expect(state.entryOf('b').stamp?.routeVersion, 2);
   });
 
-  test('a failed answer waits for a refresh or the app resuming', () async {
+  const down = ProbeAnswer(value: 'down', coreEpoch: 1, routeVersion: 1);
+  const timedOut = ProbeAnswer(
+    value: 'down',
+    coreEpoch: 1,
+    routeVersion: 1,
+    timedOut: true,
+  );
+
+  testWidgets('a failure that came back early shows once a second agrees', (
+    tester,
+  ) async {
     final container = build();
     final probe = container.read(_probeProvider.notifier);
     probe.watch('a');
-    await pumpEventQueue();
+    await tester.pump();
     probe.answer(const {});
-    await pumpEventQueue();
+    await tester.pump();
+    expect(container.read(_probeProvider).isLoading('a'), isTrue);
+    expect(probe.calls, hasLength(1));
+
+    await tester.pump(probeConfirmDelay);
+    expect(probe.calls, hasLength(2));
+    probe.answer({'a': down});
+    await tester.pump();
+
+    final entry = container.read(_probeProvider).entryOf('a');
+    expect(entry.phase, ProbePhase.failed);
+    expect(entry.value, 'down');
+    container.dispose();
+  });
+
+  testWidgets('a failure through an exit the route moved to is confirmed', (
+    tester,
+  ) async {
+    ProbeAnswer<String> downVia(String exit, int routeVersion) => ProbeAnswer(
+      value: 'down',
+      coreEpoch: 1,
+      routeVersion: routeVersion,
+      hits: [RouteHit(host: 'a.example:443', exit: exit)],
+    );
+    final container = build();
+    final probe = container.read(_probeProvider.notifier);
+    probe.watch('a');
+    await tester.pump();
+    probe.answer({'a': downVia('A', 1)});
+    await tester.pump();
+
+    moveRoute(container, 2);
+    await tester.pump(probeConfirmDelay);
+    expect(probe.calls, hasLength(2));
+    probe.answer({'a': downVia('B', 2)});
+    await tester.pump();
+    expect(container.read(_probeProvider).isLoading('a'), isTrue);
+
+    await tester.pump(probeConfirmDelay);
+    expect(probe.calls, hasLength(3));
+    probe.answer({'a': downVia('B', 2)});
+    await tester.pump();
+    expect(
+      container.read(_probeProvider).entryOf('a').phase,
+      ProbePhase.failed,
+    );
+    container.dispose();
+  });
+
+  testWidgets('a second attempt that answers never shows the failure', (
+    tester,
+  ) async {
+    final container = build();
+    final probe = container.read(_probeProvider.notifier);
+    final phases = <ProbePhase>[];
+    container.listen(
+      _probeProvider,
+      (_, state) => phases.add(state.entryOf('a').phase),
+    );
+    probe.watch('a');
+    await tester.pump();
+    probe.answer({'a': down});
+    await tester.pump(probeConfirmDelay);
+    probe.answer({'a': _ok('a.example:443')});
+    await tester.pump();
+
+    expect(phases, [ProbePhase.probing, ProbePhase.fresh]);
+  });
+
+  testWidgets('a failure that timed out shows at once', (tester) async {
+    final container = build();
+    final probe = container.read(_probeProvider.notifier);
+    probe.watch('a');
+    await tester.pump();
+    probe.answer({'a': timedOut});
+    await tester.pump();
+
+    expect(
+      container.read(_probeProvider).entryOf('a').phase,
+      ProbePhase.failed,
+    );
+    container.dispose();
+  });
+
+  testWidgets('a failure on show is left alone while the route holds', (
+    tester,
+  ) async {
+    final container = build();
+    final probe = container.read(_probeProvider.notifier);
+    probe.watch('a');
+    probe.watch('b');
+    await tester.pump();
+    probe.answer({'a': timedOut});
+    probe.answer({'b': down});
+    await tester.pump(probeConfirmDelay);
+    probe.answer({'b': down});
+    await tester.pump();
+
+    await tester.pump(const Duration(minutes: 5));
+    expect(probe.calls, ['a', 'b', 'b']);
+    container.dispose();
+  });
+
+  testWidgets('a retry skips the throttle', (tester) async {
+    final container = build();
+    final probe = container.read(_probeProvider.notifier)
+      ..throttle = probeThrottleDuration;
+    probe.watch('a');
+    await tester.pump();
+    probe.answer({'a': down});
+    await tester.pump(probeConfirmDelay);
+
+    expect(probe.calls, hasLength(2));
+    container.dispose();
+  });
+
+  testWidgets('a failure nobody watches is shown and left alone', (
+    tester,
+  ) async {
+    final container = build();
+    final probe = container.read(_probeProvider.notifier);
+    probe.refresh(['a']);
+    await tester.pump();
+    probe.answer({'a': down});
+    await tester.pump();
     expect(
       container.read(_probeProvider).entryOf('a').phase,
       ProbePhase.failed,
     );
 
+    await tester.pump(const Duration(minutes: 1));
+    expect(probe.calls, hasLength(1));
+  });
+
+  testWidgets('a target left before its second attempt stops loading', (
+    tester,
+  ) async {
+    final container = build();
+    final probe = container.read(_probeProvider.notifier);
     probe.watch('a');
-    await pumpEventQueue();
+    await tester.pump();
+    probe.answer({'a': down});
+    await tester.pump();
+    expect(container.read(_probeProvider).isLoading('a'), isTrue);
+
+    probe.unwatch('a');
+    await tester.pump(probeConfirmDelay);
+
+    expect(probe.calls, hasLength(1));
+    expect(container.read(_probeProvider).entries, isEmpty);
+  });
+
+  testWidgets('a retry that falls due while the app is hidden waits for it', (
+    tester,
+  ) async {
+    final container = build();
+    final probe = container.read(_probeProvider.notifier);
+    probe.watch('a');
+    await tester.pump();
+    probe.answer({'a': down});
+    await tester.pump();
+
+    container.read(appVisibleProvider.notifier).value = false;
+    await tester.pump(probeConfirmDelay);
     expect(probe.calls, hasLength(1));
 
-    probe.refresh(['a']);
-    await pumpEventQueue();
+    container.read(appVisibleProvider.notifier).value = true;
+    await tester.pump();
+    expect(probe.calls, hasLength(2));
+    container.dispose();
+  });
+
+  testWidgets('a reset makes the next failure one to confirm again', (
+    tester,
+  ) async {
+    final container = build();
+    final probe = container.read(_probeProvider.notifier);
+    probe.watch('a');
+    await tester.pump();
+    probe.answer({'a': timedOut});
+    await tester.pump();
+
+    trackerOf(container).bumpHostEpoch();
+    await tester.pump(Duration.zero);
     expect(probe.calls, hasLength(2));
     probe.answer({
       'a': const ProbeAnswer(value: 'down', coreEpoch: 1, routeVersion: 1),
     });
-    await pumpEventQueue();
-    final entry = container.read(_probeProvider).entryOf('a');
-    expect(entry.phase, ProbePhase.failed);
-    expect(entry.value, 'down');
+    await tester.pump();
+    expect(container.read(_probeProvider).isLoading('a'), isTrue);
 
-    trackerOf(container).markResumed();
-    await pumpEventQueue();
+    await tester.pump(probeConfirmDelay);
     expect(probe.calls, hasLength(3));
+    container.dispose();
   });
+
+  test('a proxy the user switched takes over a probe still out', () async {
+    final container = build();
+    final probe = container.read(_probeProvider.notifier);
+    probe.watch('a');
+    await pumpEventQueue();
+
+    trackerOf(container).markPicked();
+    await pumpEventQueue();
+    expect(probe.calls, ['a', 'a']);
+
+    probe.answer({'a': down});
+    probe.answer({'a': _ok('a.example:443')});
+    await pumpEventQueue();
+    expect(container.read(_probeProvider).entryOf('a').phase, ProbePhase.fresh);
+  });
+
+  test('a proxy the user switched asks a failure again at once', () async {
+    final container = build();
+    final probe = container.read(_probeProvider.notifier);
+    probe.watch('a');
+    probe.watch('b');
+    await pumpEventQueue();
+    probe.answer({'a': timedOut});
+    probe.answer({'b': _ok('b.example:443')});
+    await pumpEventQueue();
+
+    trackerOf(container).markPicked();
+    await pumpEventQueue();
+
+    expect(probe.calls, ['a', 'b', 'a']);
+    expect(container.read(_probeProvider).isLoading('a'), isTrue);
+  });
+
+  testWidgets('a proxy the user switched lets one probe past the throttle', (
+    tester,
+  ) async {
+    final container = build();
+    final probe = container.read(_probeProvider.notifier)
+      ..throttle = probeThrottleDuration;
+    probe.watch('a');
+    await tester.pump();
+    probe.answer({'a': _ok('a.example:443')});
+    await tester.pump();
+
+    probe.moved.add('a.example:443');
+    moveRoute(container, 2);
+    await tester.pump();
+    expect(probe.calls, ['a']);
+
+    trackerOf(container).markPicked();
+    await tester.pump();
+    expect(probe.calls, ['a', 'a']);
+    probe.answer({'a': _ok('a.example:443', routeVersion: 2)});
+    await tester.pump();
+
+    moveRoute(container, 3);
+    await tester.pump();
+    expect(probe.calls, ['a', 'a']);
+    await tester.pump(probeThrottleDuration);
+    expect(probe.calls, ['a', 'a', 'a']);
+    await tester.pump(probeThrottleDuration);
+  });
+
+  testWidgets('a proxy the user switched is checked without waiting', (
+    tester,
+  ) async {
+    final container = build();
+    final probe = container.read(_probeProvider.notifier)
+      ..settle = probeSettleDuration;
+    probe.watch('a');
+    await tester.pump();
+    probe.answer({'a': _ok('a.example:443')});
+    await tester.pump();
+
+    moveRoute(container, 2);
+    await tester.pump();
+    moveRoute(container, 3);
+    await tester.pump();
+    expect(probe.checks, hasLength(1));
+
+    trackerOf(container).markPicked();
+    await tester.pump();
+    expect(probe.checks, hasLength(2));
+    await tester.pump(probeSettleDuration);
+  });
+
+  test(
+    'a failed answer is asked again on a refresh or the app resuming',
+    () async {
+      final container = build();
+      final probe = container.read(_probeProvider.notifier);
+      probe.watch('a');
+      await pumpEventQueue();
+      probe.answer({'a': timedOut});
+      await pumpEventQueue();
+      expect(
+        container.read(_probeProvider).entryOf('a').phase,
+        ProbePhase.failed,
+      );
+
+      probe.watch('a');
+      await pumpEventQueue();
+      expect(probe.calls, hasLength(1));
+
+      probe.refresh(['a']);
+      await pumpEventQueue();
+      expect(probe.calls, hasLength(2));
+      expect(container.read(_probeProvider).isLoading('a'), isTrue);
+      probe.answer({'a': down});
+      await pumpEventQueue();
+      final entry = container.read(_probeProvider).entryOf('a');
+      expect(entry.phase, ProbePhase.failed);
+      expect(entry.value, 'down');
+
+      trackerOf(container).markResumed();
+      await pumpEventQueue();
+      expect(probe.calls, hasLength(3));
+      expect(container.read(_probeProvider).isLoading('a'), isTrue);
+    },
+  );
 
   test('coming back to a failed target asks again', () async {
     final container = build();
@@ -618,7 +930,7 @@ void main() {
     expect(probe.calls, hasLength(1));
   });
 
-  test('a second stale answer under the same route gives up', () async {
+  test('a second stale answer under the same route is a failure', () async {
     final container = build();
     final probe = container.read(_probeProvider.notifier);
     probe.watch('a');

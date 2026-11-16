@@ -77,7 +77,7 @@ void main() {
     Future<(ProviderContainer, List<List<HotKeySpec>>)> pump(
       WidgetTester tester, {
       bool safeMode = false,
-      Future<List<HotKeyFailure>> Function()? respond,
+      List<HotKeyFailure> Function()? respond,
     }) async {
       final registrations = <List<HotKeySpec>>[];
       final container = ProviderContainer(
@@ -91,7 +91,7 @@ void main() {
         UncontrolledProviderScope(
           container: container,
           child: HotKeyManager(
-            registerHotKeys: ({required specs}) async {
+            registerHotKeys: ({required specs}) {
               registrations.add(specs);
               return respond?.call() ?? const [];
             },
@@ -123,7 +123,7 @@ void main() {
     testWidgets('publishes the shortcuts the OS refused', (tester) async {
       final (container, _) = await pump(
         tester,
-        respond: () async => [
+        respond: () => [
           HotKeyFailure(id: HotAction.view.index, reason: 'taken'),
         ],
       );
@@ -136,7 +136,7 @@ void main() {
     ) async {
       final (container, _) = await pump(
         tester,
-        respond: () => Future.error(StateError('no backend')),
+        respond: () => throw StateError('no backend'),
       );
 
       expect(container.read(hotKeyFailuresProvider).keys, [HotAction.view]);
@@ -147,7 +147,7 @@ void main() {
     ) async {
       final (container, registrations) = await pump(
         tester,
-        respond: () async => [
+        respond: () => [
           HotKeyFailure(id: HotAction.view.index, reason: 'taken'),
         ],
       );

@@ -334,7 +334,9 @@ class _LiveFeedState extends ConsumerState<_LiveFeed>
         RouteMotionHoldMixin<_LiveFeed> {
   CoreController get _core => ref.read(coreHandlerProvider);
 
-  final _speedRanker = TrackerSpeedRanker();
+  var _ranking = TrackerRanking.empty;
+  var _reads = 0;
+  var _shownRead = 0;
   late final ScrollController _scrollController;
   var _loaded = false;
   // A sheet's one controller opens where the recent feed reads, its far end.
@@ -370,14 +372,22 @@ class _LiveFeedState extends ConsumerState<_LiveFeed>
   }
 
   Future<List<TrackerInfo>?> _readConnections() async {
+    final read = ++_reads;
+    final rank = rankAfter(_ranking);
     try {
       final connectionsReader = widget.connectionsReader;
-      if (connectionsReader != null) {
-        return await connectionsReader();
+      final ranked = connectionsReader != null
+          ? rank(await connectionsReader())
+          : ref.read(coreStatusProvider) == CoreStatus.connected
+          ? await _core.getConnectionsWith(rank)
+          : rank(const []);
+      // A refresh after closing a connection can overlap a poll.
+      if (read < _shownRead) {
+        return null;
       }
-      return ref.read(coreStatusProvider) == CoreStatus.connected
-          ? await _core.getConnections()
-          : const [];
+      _shownRead = read;
+      _ranking = ranked.ranking;
+      return ranked.trackerInfos;
     } catch (error) {
       commonPrint.log(
         'updateConnections error: $error',
@@ -388,25 +398,22 @@ class _LiveFeedState extends ConsumerState<_LiveFeed>
   }
 
   void _showConnections(List<TrackerInfo>? trackerInfos) {
-    final readAt = DateTime.now();
     if (!_loaded) {
       showFirstContent(() {
         setState(() => _loaded = true);
         // A failed read must not leave the controller's list from the last visit.
-        _applyConnections(trackerInfos ?? const [], readAt);
+        _applyConnections(trackerInfos ?? const []);
       });
       return;
     }
-    updateWhenRouteSettled(() => _applyConnections(trackerInfos, readAt));
+    updateWhenRouteSettled(() => _applyConnections(trackerInfos));
   }
 
-  void _applyConnections(List<TrackerInfo>? trackerInfos, DateTime readAt) {
+  void _applyConnections(List<TrackerInfo>? trackerInfos) {
     if (trackerInfos == null) {
       return;
     }
-    widget.listController.setTrackerInfos(
-      _speedRanker.rank(trackerInfos, readAt),
-    );
+    widget.listController.setTrackerInfos(trackerInfos);
     widget.filters.offer(widget.listController.value.trackerInfos);
     if (_startsAtFarEnd) {
       WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -18,8 +18,6 @@ abstract interface class OverrideModel<M> {
   ProviderListenable<T> selectModel<T>(T Function(M model) select);
 
   ConfigWriter<T> modelWriter<T>(M Function(M model, T value) update);
-
-  bool get emptyCancels;
 }
 
 /// Where an override page keeps its model and the keys picked from it.
@@ -54,9 +52,6 @@ abstract class OverrideTarget<K extends OverrideKey, M>
         ref,
         (state) => (model: update(state.model, value), keys: state.keys),
       );
-
-  @override
-  bool get emptyCancels => true;
 }
 
 class PatchOverrideTarget<K extends OverrideKey, M>
@@ -84,10 +79,6 @@ class PatchOverrideTarget<K extends OverrideKey, M>
   @override
   ConfigLabel get addEntry =>
       (l) => l.addOverrideEntry;
-
-  /// An emptied entry overrides the profile's own value with nothing.
-  @override
-  bool get emptyCancels => false;
 
   @override
   ProviderListenable<T> select<T>(
@@ -287,7 +278,6 @@ class NumberOverrideField<M> extends ValueOverrideField<M, int> {
       keyboardType: TextInputType.number,
       normalize: (value) => value.trim(),
       validator: (value, _) => _validate(value, title),
-      allowEmpty: model.emptyCancels,
     );
   }
 }
@@ -422,8 +412,8 @@ void showOverrideAddSheet<K extends OverrideKey, M>(
   final appLocalizations = context.appLocalizations;
   final added = spec.target.read(ref).keys;
   final remaining = spec.values.where((key) => !added.contains(key));
-  showSheet<void>(
-    context: context,
+  showNestedSheet<void>(
+    context,
     builder: (_) => SelectionSheet<K>(
       title: spec.target.addEntry(appLocalizations),
       sections: [
@@ -504,16 +494,10 @@ class OverrideView<K extends OverrideKey, M> extends ConsumerWidget {
           quickEdit.schema,
           (content) => quickEdit.applyOverrideYaml(state.model, content),
         );
-        final stillSet = quickEdit
-            .applyOverrideYaml(
-              next.model,
-              quickEdit.overrideYaml(next.model, next.keys),
-            )
-            .keys;
         return spec.withoutKeys((
           model: next.model,
           keys: {...next.keys, ...state.keys.difference(listed)},
-        ), listed.difference(stillSet));
+        ), listed.difference(next.keys));
       });
       return true;
     } catch (error) {
@@ -692,46 +676,11 @@ class OverrideEntry<K extends OverrideKey, M> extends StatelessWidget {
   Widget build(BuildContext context) {
     final field = spec.fieldOf(overrideKey);
     return field.build(
-      field is ValueOverrideField && spec.target.emptyCancels
-          ? _ListedValue(spec, overrideKey)
-          : spec.target,
+      spec.target,
       title: (l) => spec.label(overrideKey, l),
       leading: _RemoveButton(spec: spec, overrideKey: overrideKey),
     );
   }
-}
-
-/// A key's own value; emptying it takes the key off the list.
-class _ListedValue<K extends OverrideKey, M> implements OverrideModel<M> {
-  const _ListedValue(this.spec, this.overrideKey);
-
-  final OverrideSpec<K, M> spec;
-  final K overrideKey;
-
-  OverrideTarget<K, M> get target => spec.target;
-
-  @override
-  bool get emptyCancels => true;
-
-  static bool _isEmpty(Object? value) => switch (value) {
-    String() => value.isEmpty,
-    Iterable() => value.isEmpty,
-    Map() => value.isEmpty,
-    _ => false,
-  };
-
-  @override
-  ProviderListenable<T> selectModel<T>(T Function(M model) select) =>
-      target.selectModel(select);
-
-  @override
-  ConfigWriter<T> modelWriter<T>(M Function(M model, T value) update) =>
-      (ref, value) => target.update(
-        ref,
-        (state) => _isEmpty(value)
-            ? spec.withoutKeys(state, {overrideKey})
-            : (model: update(state.model, value), keys: state.keys),
-      );
 }
 
 class _RemoveButton<K extends OverrideKey, M> extends ConsumerWidget {

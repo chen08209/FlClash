@@ -31,7 +31,7 @@ pub fn hot_key_events(sink: StreamSink<u32, SseCodec>) -> Result<(), String> {
     hotkey::listen(sink)
 }
 
-#[frb]
+#[frb(sync)]
 pub fn set_hot_keys(specs: Vec<HotKeySpec>) -> Result<Vec<HotKeyFailure>, String> {
     hotkey::set_hot_keys(specs)
 }

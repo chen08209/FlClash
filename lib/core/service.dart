@@ -15,6 +15,7 @@ import 'desktop/transport.dart';
 import 'event.dart';
 import 'interface.dart';
 import 'method.dart';
+import 'spill.dart';
 
 class CoreService extends CoreHandlerInterface {
   static CoreService? _instance;
@@ -38,7 +39,7 @@ class CoreService extends CoreHandlerInterface {
     final directLauncher = DirectCoreLauncher();
 
     final lifecycle = DesktopCoreLifecycle(
-      transportFactory: () => IpcCoreTransport(address: address),
+      transport: IpcCoreTransport(address: address),
       launcherResolver: HelperLauncherResolver(
         hasHelper: system.hasHelperService && !safeModeBuild,
         directLauncher: directLauncher,
@@ -102,11 +103,13 @@ class CoreService extends CoreHandlerInterface {
     required CoreMethod method,
     Object? arguments,
     Duration? timeout,
+    CoreResultModel? model,
   }) {
     return _rpcClient.invoke(
       method: method,
       arguments: arguments,
       timeout: timeout,
+      model: model,
     );
   }
 }

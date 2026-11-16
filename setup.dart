@@ -186,7 +186,7 @@ Future<int> _package(
     'git',
     'https://github.com/chen08209/flutter_distributor.git',
     '--git-ref',
-    'v0.6.11-flclash.4',
+    'v0.6.11-flclash.5',
     '--git-path',
     'packages/flutter_distributor',
   ]);
@@ -270,7 +270,6 @@ Future<int> _ensureMacosDependencies() async {
 Future<int> _ensureLinuxDependencies() async {
   const pkgGroups = <List<String>>[
     ['ninja-build', 'libgtk-3-dev'],
-    ['libayatana-appindicator3-dev'],
     ['libsecret-1-dev'],
     ['locate'],
     ['rpm', 'patchelf'],

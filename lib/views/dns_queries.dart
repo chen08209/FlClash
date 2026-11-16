@@ -231,8 +231,8 @@ class _DnsQueriesViewState extends ConsumerState<DnsQueriesView>
 }
 
 void _showDnsQueryDetail(BuildContext context, DnsQuery dnsQuery) {
-  showSheet<void>(
-    context: context,
+  showNestedSheet<void>(
+    context,
     builder: (_) {
       return Scaffold(
         body: DnsQueryDetailView(dnsQuery: dnsQuery),

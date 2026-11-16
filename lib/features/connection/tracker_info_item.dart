@@ -26,14 +26,11 @@ void showTrackerInfoDetail(
   TrackerInfo trackerInfo,
   String title,
 ) {
-  showSheet<void>(
-    context: context,
-    props: nestedPagedSheetProps,
-    builder: (_) => NestedPagedSheet(
-      builder: (_) => Scaffold(
-        body: TrackerInfoDetailView(trackerInfo: trackerInfo),
-        title: title,
-      ),
+  showNestedSheet<void>(
+    context,
+    builder: (_) => Scaffold(
+      body: TrackerInfoDetailView(trackerInfo: trackerInfo),
+      title: title,
     ),
   );
 }

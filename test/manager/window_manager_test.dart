@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/app_ports.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/window_manager.dart';
 import 'package:fl_clash/models/config.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -14,13 +13,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prism_ui/prism_ui.dart';
-import 'package:window/window.dart' show WindowListener, desktopWindow;
+import 'package:rust_api/window.dart'
+    show WindowEvent, WindowListener, desktopWindow;
 
+import '../helpers/fake_desktop_window.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
-
-const _windowChannel = MethodChannel('window');
 
 class _RecordingSystemAction extends SystemAction {
   static final calls = <String>[];
@@ -97,18 +96,17 @@ void main() {
 
   late ProviderContainer container;
   late _RecordingWindowPort window;
-  late List<MethodCall> windowCalls;
+  late FakeDesktopWindow fakeWindow;
   late bool isAlwaysOnTop;
   late bool isMaximized;
   late bool isFullScreen;
 
   setUpAll(() async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
   });
 
   setUp(() {
     _RecordingSystemAction.calls.clear();
-    windowCalls = [];
     isAlwaysOnTop = false;
     isMaximized = false;
     isFullScreen = false;
@@ -121,25 +119,21 @@ void main() {
       ],
     );
     globalState.container = container;
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(_windowChannel, (call) async {
-          windowCalls.add(call);
-          if (call.method == 'setAlwaysOnTop') {
-            isAlwaysOnTop = call.arguments['value'] as bool;
-          }
-          return switch (call.method) {
-            'isAlwaysOnTop' => isAlwaysOnTop,
-            'isMaximized' => isMaximized,
-            'isFullScreen' => isFullScreen,
-            _ => null,
-          };
-        });
+    fakeWindow = FakeDesktopWindow((call) {
+      if (call.method == 'setAlwaysOnTop') {
+        isAlwaysOnTop = call.arguments['value'] as bool;
+      }
+      return switch (call.method) {
+        'isAlwaysOnTop' => isAlwaysOnTop,
+        'isMaximized' => isMaximized,
+        'isFullScreen' => isFullScreen,
+        _ => null,
+      };
+    }).install();
   });
 
   tearDown(() {
     windowPort = null;
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(_windowChannel, null);
     container.dispose();
   });
 
@@ -242,7 +236,6 @@ void main() {
 
     listener.onWindowMinimize();
     listener.onWindowRestore();
-    listener.onWindowFocus();
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
 
@@ -323,7 +316,6 @@ void main() {
     final listener = await pumpWindowManager(tester);
 
     listener.onWindowActivate();
-    listener.onWindowFocus();
     await tester.pump();
 
     expect(window.shows, 1);
@@ -553,15 +545,8 @@ void main() {
   });
 
   group('WindowCaptionController', () {
-    Future<void> emitWindowEvent(String name) async {
-      await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .handlePlatformMessage(
-            _windowChannel.name,
-            _windowChannel.codec.encodeMethodCall(
-              MethodCall('onEvent', {'name': name}),
-            ),
-            (_) {},
-          );
+    Future<void> emitWindowEvent(WindowEvent event) async {
+      fakeWindow.emit(event);
     }
 
     Future<WindowCaptionController> pumpController(WidgetTester tester) async {
@@ -590,19 +575,19 @@ void main() {
       tester,
     ) async {
       final caption = await pumpController(tester);
-      windowCalls.clear();
+      fakeWindow.calls.clear();
 
       await caption.toggleMaximized();
       await tester.pump();
 
-      expect(methodsOf(windowCalls), [
+      expect(methodsOf(fakeWindow.calls), [
         'isFullScreen',
         'isMaximized',
         'maximize',
       ]);
       expect(caption.value.isMaximized, isFalse);
 
-      await emitWindowEvent('maximize');
+      await emitWindowEvent(WindowEvent.maximize);
 
       expect(caption.value.isMaximized, isTrue);
     });
@@ -610,12 +595,12 @@ void main() {
     testWidgets('a maximized window is asked to restore', (tester) async {
       isMaximized = true;
       final caption = await pumpController(tester);
-      windowCalls.clear();
+      fakeWindow.calls.clear();
 
       await caption.toggleMaximized();
-      await emitWindowEvent('unmaximize');
+      await emitWindowEvent(WindowEvent.unmaximize);
 
-      expect(methodsOf(windowCalls), contains('unmaximize'));
+      expect(methodsOf(fakeWindow.calls), contains('unmaximize'));
       expect(caption.value.isMaximized, isFalse);
     });
 
@@ -625,18 +610,18 @@ void main() {
       isFullScreen = true;
       isMaximized = true;
       final caption = await pumpController(tester);
-      windowCalls.clear();
+      fakeWindow.calls.clear();
 
       await caption.toggleMaximized();
 
-      expect(methodsOf(windowCalls), isNot(contains('maximize')));
-      expect(methodsOf(windowCalls), isNot(contains('unmaximize')));
-      final leave = windowCalls.singleWhere(
+      expect(methodsOf(fakeWindow.calls), isNot(contains('maximize')));
+      expect(methodsOf(fakeWindow.calls), isNot(contains('unmaximize')));
+      final leave = fakeWindow.calls.singleWhere(
         (call) => call.method == 'setFullScreen',
       );
       expect(leave.arguments, {'value': false});
 
-      await emitWindowEvent('leave-full-screen');
+      await emitWindowEvent(WindowEvent.leaveFullScreen);
 
       expect(
         caption.value,
@@ -649,14 +634,14 @@ void main() {
     ) async {
       final caption = await pumpController(tester);
 
-      await emitWindowEvent('maximize');
+      await emitWindowEvent(WindowEvent.maximize);
       expect(caption.value.isMaximized, isTrue);
 
-      await emitWindowEvent('enter-full-screen');
+      await emitWindowEvent(WindowEvent.enterFullScreen);
       expect(caption.value.isFullScreen, isTrue);
 
-      await emitWindowEvent('leave-full-screen');
-      await emitWindowEvent('unmaximize');
+      await emitWindowEvent(WindowEvent.leaveFullScreen);
+      await emitWindowEvent(WindowEvent.unmaximize);
       expect(caption.value, const WindowCaptionState());
     });
 

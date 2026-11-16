@@ -14,6 +14,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
 import android.net.Uri
 import android.net.VpnService
 import android.os.Build
@@ -76,6 +77,8 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         PluginRegistry.RequestPermissionsResultListener(::onRequestPermissionsResultListener)
 
     private lateinit var channel: MethodChannel
+
+    private var networkWatcher: DefaultNetworkWatcher? = null
 
     private lateinit var flutterAssets: FlutterPlugin.FlutterAssets
 
@@ -184,6 +187,24 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
     override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
+            "watchNetwork" -> {
+                if (call.arguments == true) {
+                    networkWatcher?.start()
+                } else {
+                    networkWatcher?.stop()
+                }
+                result.success(true)
+            }
+
+            "getDeviceInfo" -> {
+                result.success(
+                    mapOf(
+                        "sdkInt" to Build.VERSION.SDK_INT,
+                        "isTelevision" to isTelevision,
+                    )
+                )
+            }
+
             "moveTaskToBack" -> {
                 activity?.moveTaskToBack(true)
                 result.success(true)
@@ -730,6 +751,13 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         channel.setMethodCallHandler(this)
         flutterAssets = flutterPluginBinding.flutterAssets
         watchPackageChanges(flutterPluginBinding.applicationContext)
+        networkWatcher = flutterPluginBinding.applicationContext
+            .getSystemService(ConnectivityManager::class.java)
+            ?.let { connectivity ->
+                DefaultNetworkWatcher(connectivity) { state ->
+                    channel.invokeMethod("networkChanged", state)
+                }
+            }
         flutterPluginBinding.applicationContext.registerReceiverCompat(
             installStatusReceiver,
             IntentFilter(INSTALL_STATUS_ACTION),
@@ -748,6 +776,8 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        networkWatcher?.stop()
+        networkWatcher = null
         packageChangeContext?.unregisterReceiver(packageChangeReceiver)
         packageChangeContext = null
         binding.applicationContext.unregisterReceiver(installStatusReceiver)

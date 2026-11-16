@@ -16,7 +16,7 @@ env:
   IS_STABLE: ${{ !contains(github.ref, '-') }}
   # See CI Caches in .agents/commands.md.
   BRANCH_CACHE: ${{ !startsWith(github.ref, 'refs/tags/') }}
-  FLUTTER_VERSION: '3.47.6'
+  FLUTTER_VERSION: '3.50.0'
   GO_VERSION: '1.27.1'
   NDK_VERSION: r28c
 
@@ -50,6 +50,11 @@ jobs:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: ${{ env.BRANCH_CACHE }}
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev
 
       - name: Install dependencies
         run: flutter pub get
@@ -149,7 +154,7 @@ jobs:
         if: matrix.platform == 'linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build libgtk-3-dev libayatana-appindicator3-dev libsecret-1-dev
+          sudo apt-get install -y ninja-build libgtk-3-dev libsecret-1-dev
 
       - name: Setup Xcode
         if: matrix.platform == 'macos'
@@ -294,6 +299,11 @@ jobs:
             plugins/rust_api/rust
           save-if: ${{ env.BRANCH_CACHE }}
 
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev
+
       - name: Check format
         run: |
           cargo fmt --manifest-path services/helper/Cargo.toml -- --check
@@ -324,9 +334,42 @@ jobs:
       - name: Run Windows service tests
         run: cargo test --manifest-path services/helper/Cargo.toml --features windows-service
 
-  build:
+  version:
+    name: Version
     # Releases publish where the release links point: the public repository.
-    if: github.repository == 'chen08209/FlClash' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: &release github.repository == 'chen08209/FlClash' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: pubspec.yaml
+          sparse-checkout-cone-mode: false
+
+      # Android refuses a lower versionCode, so the clock-based build number never drops below pubspec's.
+      - name: Resolve the version from the tag
+        id: tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [[ ! "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)(-pre\.[0-9]+(\+[0-9]+)?)?$ ]]; then
+            echo "::error::$TAG is neither vX.Y.Z nor vX.Y.Z-pre.N[+M]"
+            exit 1
+          fi
+          name="${BASH_REMATCH[1]}"
+          committed="$(sed -n 's/^version: .*+\([0-9]*\)$/\1/p' pubspec.yaml)"
+          build="$(date -u +%Y%m%d%H)"
+          if ((build <= ${committed:-0})); then
+            build=$((committed + 1))
+          fi
+          echo "version=$name+$build" >> "$GITHUB_OUTPUT"
+          echo "$TAG builds $name+$build"
+
+  build:
+    if: *release
+    needs: version
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -368,6 +411,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Apply the tag's version
+        shell: bash
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          sed "s/^version: .*/version: $VERSION/" pubspec.yaml > pubspec.yaml.tmp
+          mv pubspec.yaml.tmp pubspec.yaml
 
       - name: Setup Android Signing
         if: startsWith(matrix.platform,'android')
@@ -423,11 +474,6 @@ jobs:
           flutter --version
           flutter pub get
 
-      # See .agents/flutter-upgrade.md before bumping FLUTTER_VERSION.
-      - name: Disable Impeller on Intel macOS
-        if: matrix.platform == 'macos' && matrix.arch == 'amd64'
-        run: plutil -replace FLTEnableImpeller -bool NO macos/Runner/Info.plist
-
       # The core embeds this bundle and FlClashHttpOverrides.trustCoreRoots loads it for Dart.
       # Pinned by hash, so a new bundle from https://curl.se/docs/caextract.html is a reviewed bump.
       - name: Fetch CA certificates
@@ -443,6 +489,8 @@ jobs:
       - name: Setup
         env:
           ANDROID_NDK_HOME: ${{ steps.build-ndk.outputs.ndk-path }}
+          # The setup hook builds the Core for the host slice only, so an x86_64 slice in the arm64 app cannot run.
+          FLUTTER_MACOS_ARM64_ONLY: ${{ matrix.platform == 'macos' && matrix.arch == 'arm64' }}
         run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
 
       - name: Upload
@@ -455,7 +503,7 @@ jobs:
   upload:
     permissions:
       contents: write
-    needs: [ build, dart, plugins, go, android, rust, windows-helper-test ]
+    needs: [ version, build, dart, plugins, go, android, rust, windows-helper-test ]
     runs-on: ubuntu-latest
     services:
       telegram-bot-api:
@@ -471,6 +519,12 @@ jobs:
         with:
           fetch-depth: 0
           submodules: true
+
+      - name: Apply the tag's version
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          sed -i "s/^version: .*/version: $VERSION/" pubspec.yaml
 
       - name: Download
         uses: actions/download-artifact@v4

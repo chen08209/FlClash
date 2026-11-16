@@ -1,6 +1,15 @@
 pub mod charset;
+pub mod device;
 pub mod editor;
+pub mod fonts;
 pub mod hotkey;
 pub mod init;
 pub mod ipc;
+pub mod launch;
+pub mod link;
+pub mod network;
+pub mod proxy;
 pub mod script;
+pub mod tray;
+pub mod wifi;
+pub mod window;

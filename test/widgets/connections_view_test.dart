@@ -15,6 +15,7 @@ import 'package:mocktail/mocktail.dart';
 
 import '../helpers/test_app.dart';
 import 'package:prism_ui/prism_ui.dart';
+import '../helpers/core_connections.dart';
 
 void main() {
   late ProviderContainer container;
@@ -235,7 +236,8 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    verifyNever(() => core.getConnections());
+    registerConnectionsPresenter<RankedTrackerInfos>();
+    verifyNever(() => core.getConnectionsWith<RankedTrackerInfos>(any()));
     expect(find.byType(NullStatus), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());

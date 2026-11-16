@@ -43,8 +43,8 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
   }
 
   void _handleQuickActions() {
-    showSheet<void>(
-      context: context,
+    showNestedSheet<void>(
+      context,
       builder: (_) => RulePresetSheet(
         onAdd: (rules) => ref.read(globalRulesProvider.notifier).putAll(rules),
       ),

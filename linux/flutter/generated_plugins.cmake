@@ -3,14 +3,9 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  app_links_linux
   dynamic_color
   file_selector_linux
-  screen_retriever_linux
-  tray
   url_launcher_linux
-  wifi_ssid
-  window
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

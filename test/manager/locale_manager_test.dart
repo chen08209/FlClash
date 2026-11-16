@@ -42,8 +42,8 @@ void main() {
     await pumpLocaleManager(tester, const Locale('en'));
     await pumpLocaleManager(tester, const Locale('zh', 'CN'));
 
-    expect(container.read(loadedLocaleProvider), const Locale('zh', 'CN'));
-    expect(published, <String>['en@en', 'zh_CN@zh_CN']);
+    expect(container.read(loadedLocaleProvider), const Locale('zh'));
+    expect(published, <String>['en@en', 'zh@zh']);
   });
 
   testWidgets('a rebuild in the same locale publishes nothing new', (

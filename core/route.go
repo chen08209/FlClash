@@ -26,9 +26,12 @@ const (
 )
 
 type routeTracker struct {
-	mu               sync.Mutex
-	epoch            uint64
-	version          uint64
+	mu      sync.Mutex
+	epoch   uint64
+	version uint64
+	// Read only as the epoch moves, so the host never pairs the listeners'
+	// state with an epoch from before they changed.
+	running          bool
 	picks            map[string]string
 	providerVersions map[string]uint32
 	ruleSets         map[string]any
@@ -49,6 +52,7 @@ func routeStateLocked() RouteState {
 	return RouteState{
 		CoreEpoch:    currentRoute.epoch,
 		RouteVersion: currentRoute.version,
+		Running:      currentRoute.running,
 	}
 }
 
@@ -105,6 +109,7 @@ func refreshRouteLocked(change routeChange) {
 	currentRoute.picks = picks
 	if change == routeReset {
 		currentRoute.epoch++
+		currentRoute.running = isRunning.Load()
 	}
 	if change == routeUnchanged {
 		currentRoute.mu.Unlock()

@@ -14,6 +14,9 @@ dependencies:
     sdk: flutter
   flutter_rust_bridge: 2.13.0
   flutter_rust_bridge_hooks: 2.13.0
+  path: ^1.9.1
+  setup_hooks:
+    path: ../setup/setup_hooks
 
 dev_dependencies:
   flutter_test:

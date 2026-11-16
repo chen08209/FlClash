@@ -10,7 +10,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 Stream<int> hotKeyEvents() => RustLib.instance.api.crateApiHotkeyHotKeyEvents();
 
-Future<List<HotKeyFailure>> setHotKeys({required List<HotKeySpec> specs}) =>
+List<HotKeyFailure> setHotKeys({required List<HotKeySpec> specs}) =>
     RustLib.instance.api.crateApiHotkeySetHotKeys(specs: specs);
 
 class HotKeyFailure {

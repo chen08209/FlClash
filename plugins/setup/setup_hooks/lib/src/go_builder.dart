@@ -91,6 +91,7 @@ class GoBuilder {
 
   List<String> _buildArguments(Target target, {String? outFile}) => [
     'build',
+    '-trimpath',
     '-ldflags=${_ldflags()}',
     '-tags=${config.tags}',
     if (outFile != null) ...['-o', outFile],

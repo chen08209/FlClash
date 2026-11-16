@@ -23,11 +23,17 @@ class FlutterWindow : public Win32Window {
                          LPARAM const lparam) noexcept override;
 
  private:
+  using WindowMessageFunction = bool (*)(HWND, UINT, WPARAM, LPARAM, LRESULT*);
+
   // The project to run.
   flutter::DartProject project_;
 
   // The Flutter instance hosted by this window.
   std::unique_ptr<flutter::FlutterViewController> flutter_controller_;
+
+  // rust_api's window module, which sees what a plugin's top-level window
+  // procedure delegate saw.
+  WindowMessageFunction window_message_;
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_

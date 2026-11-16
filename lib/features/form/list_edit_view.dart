@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
@@ -280,6 +281,7 @@ class ConfigListEditItem extends ConsumerWidget {
     required this.onChanged,
     this.itemMaxLength,
     this.itemValidator,
+    this.itemSubtitle,
     this.description,
     this.subtitle,
     this.leading,
@@ -290,6 +292,8 @@ class ConfigListEditItem extends ConsumerWidget {
   final ConfigWriter<List<String>> onChanged;
   final int? itemMaxLength;
   final ConfigValidator? itemValidator;
+  final String? Function(String item, AppLocalizations appLocalizations)?
+  itemSubtitle;
   final ConfigLabel? description;
   final ConfigLabel? subtitle;
   final Widget? leading;
@@ -301,6 +305,7 @@ class ConfigListEditItem extends ConsumerWidget {
     final subtitle = this.subtitle;
     final label = title(appLocalizations);
     final itemValidator = this.itemValidator;
+    final itemSubtitle = this.itemSubtitle;
     return ListItem.open(
       leading: leading,
       title: Text(label),
@@ -320,6 +325,12 @@ class ConfigListEditItem extends ConsumerWidget {
             ? null
             : (item) => itemValidator(item, appLocalizations),
         titleBuilder: (item) => Text(item),
+        subtitleBuilder: itemSubtitle == null
+            ? null
+            : (item) => switch (itemSubtitle(item, appLocalizations)) {
+                final text? => Text(text),
+                null => null,
+              },
       ),
       onChanged: (items) {
         if (items is! List) {
@@ -339,6 +350,7 @@ class ListEditView extends ConsumerStatefulWidget {
   final String? description;
   final List<String> items;
   final Widget Function(String item) titleBuilder;
+  final Widget? Function(String item)? subtitleBuilder;
   final int? itemMaxLength;
   final String? Function(String item)? itemValidator;
 
@@ -348,6 +360,7 @@ class ListEditView extends ConsumerStatefulWidget {
     this.description,
     required this.items,
     required this.titleBuilder,
+    this.subtitleBuilder,
     this.itemMaxLength,
     this.itemValidator,
   });
@@ -377,7 +390,7 @@ class _ListEditViewState extends EditViewState<ListEditView, String> {
     if (widget.itemValidator?.call(entry) case final error?) {
       return Text(error, style: TextStyle(color: context.colorScheme.error));
     }
-    return null;
+    return widget.subtitleBuilder?.call(entry);
   }
 
   @override

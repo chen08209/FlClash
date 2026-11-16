@@ -1,13 +1,14 @@
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('load resolves accessors for every supported locale', () async {
-    for (final locale in AppLocalizations.delegate.supportedLocales) {
-      final appLocalizations = await AppLocalizations.load(locale);
+    for (final locale in AppLocalizations.supportedLocales) {
+      final appLocalizations = loadAppLocalizations(locale);
 
-      expect(AppLocalizations.current, same(appLocalizations));
+      expect(currentAppLocalizations.localeName, appLocalizations.localeName);
       expect(appLocalizations.dashboard, isNotEmpty);
       expect(appLocalizations.proxies, isNotEmpty);
       expect(appLocalizations.settings, isNotEmpty);

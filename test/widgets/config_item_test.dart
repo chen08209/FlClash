@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/widgets/config_item.dart';
 import 'package:flutter/widgets.dart';
@@ -9,7 +10,7 @@ void main() {
   late AppLocalizations appLocalizations;
 
   setUpAll(() async {
-    appLocalizations = await AppLocalizations.load(const Locale('en'));
+    appLocalizations = loadAppLocalizations(const Locale('en'));
   });
 
   test('a DNS listen address takes what net.SplitHostPort reads', () {

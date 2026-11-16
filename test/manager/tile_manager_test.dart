@@ -1,5 +1,5 @@
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/tile_manager.dart';
 import 'package:fl_clash/plugins/tile.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -27,7 +27,7 @@ void main() {
   late ProviderContainer container;
 
   setUpAll(() async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
   });
 
   setUp(() {

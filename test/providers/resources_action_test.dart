@@ -1,10 +1,10 @@
 import 'package:drift/native.dart';
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/database/database.dart' as db;
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:flutter/widgets.dart' show Locale;
@@ -21,7 +21,7 @@ void main() {
   late ProviderContainer container;
   late Map<String, int> requests;
 
-  setUpAll(() => AppLocalizations.load(const Locale('en')));
+  setUpAll(() => loadAppLocalizations(const Locale('en')));
 
   setUp(() {
     testDatabase = db.Database(NativeDatabase.memory());

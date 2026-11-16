@@ -28,8 +28,8 @@ class _CustomRulesViewState extends ConsumerState<CustomRulesView> {
   }
 
   void _handleQuickActions() {
-    showSheet<void>(
-      context: context,
+    showNestedSheet<void>(
+      context,
       builder: (_) => RulePresetSheet(
         onAdd: ref.read(profileRulesProvider(_profileId).notifier).putAll,
       ),

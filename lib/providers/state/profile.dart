@@ -23,15 +23,6 @@ Profile? profile(Ref ref, int? profileId) {
 }
 
 @riverpod
-ExtendType extendType(Ref ref, int? profileId) {
-  return ref.watch(
-    profileProvider(
-      profileId,
-    ).select((state) => state?.extendType ?? ExtendType.standard),
-  );
-}
-
-@riverpod
 Future<ClashConfig> clashConfig(Ref ref, int profileId) async {
   final type = ref.read(profileProvider(profileId))?.type;
   if (type == ProfileType.custom) {
@@ -43,13 +34,36 @@ Future<ClashConfig> clashConfig(Ref ref, int profileId) async {
   return clashConfigTask(outbounds);
 }
 
+/// The groups a script leaves for a MATCH target; null without a script.
+@Riverpod(retry: _noRetry)
+Future<ClashConfig?> scriptOutbounds(Ref ref, int profileId) async {
+  final scriptId = ref.watch(
+    profileProvider(profileId).select(
+      (state) => state?.type == ProfileType.custom ? null : state?.scriptId,
+    ),
+  );
+  if (scriptId == null) {
+    return null;
+  }
+  final script = await ref.watch(
+    scriptsProvider.selectAsync(
+      (scripts) => scripts.firstWhereOrNull((item) => item.id == scriptId),
+    ),
+  );
+  final content = await script?.content;
+  if (content == null || content.isEmpty) {
+    return null;
+  }
+  final config = await ref.read(coreHandlerProvider).readConfig(profileId);
+  return evaluateOutbounds(content, config);
+}
+
 @riverpod
 Future<SetupState> setupState(Ref ref, int? profileId) async {
   final profile = ref.watch(profileProvider(profileId));
   final scriptId = profile?.scriptId;
   final profileLastUpdateDate = profile?.lastUpdateDate?.millisecondsSinceEpoch;
   final profileType = profile?.type ?? ProfileType.file;
-  final extendType = profile?.extendType ?? ExtendType.standard;
   final overrides = profileType == ProfileType.custom
       ? ref.watch(
           patchClashConfigProvider.select(
@@ -97,9 +111,8 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
             in await database.proxyDialersDao.query(profileId).get())
           dialer.proxyId: dialer.target,
       };
-    } else if (extendType == ExtendType.standard) {
+    } else {
       addedRules = await database.rulesDao.queryAddedRules(profileId).get();
-    } else if (extendType == ExtendType.script) {
       script = scriptId == null
           ? null
           : await database.scriptsDao.get(scriptId).getSingleOrNull();
@@ -118,12 +131,10 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
     profileId: profileId,
     profileLastUpdateDate: profileLastUpdateDate,
     profileType: profileType,
-    extendType: extendType,
     addedRules: addedRules,
     script: script,
     overrides: overrides,
-    matchTarget:
-        profileType != ProfileType.custom && extendType == ExtendType.standard
+    matchTarget: profileType != ProfileType.custom
         ? profile?.matchTarget
         : null,
   );

@@ -1,3 +1,5 @@
+import 'package:code_assets/code_assets.dart';
+
 import 'error.dart';
 
 class Target {
@@ -55,4 +57,21 @@ class Target {
 
   @override
   String toString() => '$goos/$goarch';
+}
+
+String rustTargetTriple(CodeConfig code) {
+  final arch = switch (code.targetArchitecture) {
+    Architecture.arm64 => 'aarch64',
+    Architecture.x64 => 'x86_64',
+    Architecture.arm when code.targetOS == OS.android => 'armv7',
+    final other => throw BuildException('No Rust target for $other'),
+  };
+  return switch (code.targetOS) {
+    OS.android when arch == 'armv7' => 'armv7-linux-androideabi',
+    OS.android => '$arch-linux-android',
+    OS.macOS => '$arch-apple-darwin',
+    OS.linux => '$arch-unknown-linux-gnu',
+    OS.windows => '$arch-pc-windows-msvc',
+    final other => throw BuildException('No Rust target for $other'),
+  };
 }

@@ -3,7 +3,6 @@ import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -154,7 +153,7 @@ void main() {
   late _MockCore core;
 
   setUpAll(() async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
     registerFallbackValue(<String>[]);
   });
 

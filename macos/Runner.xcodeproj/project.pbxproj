@@ -28,7 +28,6 @@
 		33CC10F62044A3C60003C045 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 33CC10F42044A3C60003C045 /* MainMenu.xib */; };
 		33CC11132044BFA00003C045 /* MainFlutterWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33CC11122044BFA00003C045 /* MainFlutterWindow.swift */; };
 		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
-		F5131FDD2EF0F1A500A1748D /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = F5131FDC2EF0F1A500A1748D /* LaunchAtLogin */; };
 		F51BB7CB2EF0267400E05D67 /* FlClashCore in Copy Core */ = {isa = PBXBuildFile; fileRef = F51BB7CA2EF0267400E05D67 /* FlClashCore */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -109,7 +108,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */,
-				F5131FDD2EF0F1A500A1748D /* LaunchAtLogin in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -279,7 +277,6 @@
 			mainGroup = 33CC10E42044A3C60003C045;
 			packageReferences = (
 				781AD8BC2B33823900A9FFBB /* XCLocalSwiftPackageReference "FlutterGeneratedPluginSwiftPackage" */,
-				F5131FDB2EF0F1A500A1748D /* XCRemoteSwiftPackageReference "LaunchAtLogin" */,
 			);
 			productRefGroup = 33CC10EE2044A3C60003C045 /* Products */;
 			projectDirPath = "";
@@ -757,26 +754,10 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		F5131FDB2EF0F1A500A1748D /* XCRemoteSwiftPackageReference "LaunchAtLogin" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sindresorhus/LaunchAtLogin";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
 /* Begin XCSwiftPackageProductDependency section */
 		78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = FlutterGeneratedPluginSwiftPackage;
-		};
-		F5131FDC2EF0F1A500A1748D /* LaunchAtLogin */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = F5131FDB2EF0F1A500A1748D /* XCRemoteSwiftPackageReference "LaunchAtLogin" */;
-			productName = LaunchAtLogin;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

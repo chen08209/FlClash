@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
@@ -7,7 +8,6 @@ import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/core/spill.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -770,7 +770,7 @@ void main() {
 
     test('a failed authorization turns tun off and asks again on the next '
         'enable', () async {
-      await AppLocalizations.load(const Locale('en'));
+      loadAppLocalizations(const Locale('en'));
       container
           .read(patchClashConfigProvider.notifier)
           .update((state) => state.copyWith.tun(enable: true));
@@ -1038,11 +1038,11 @@ void main() {
 
   group('applyIfGlobalRulesUsed', () {
     for (final (name, profile, applies) in [
-      ('a standard extension', Profile.normal(label: 'p'), true),
+      ('a profile without a script', Profile.normal(label: 'p'), true),
       (
-        'a script extension',
-        Profile.normal(label: 'p').copyWith(extendType: ExtendType.script),
-        false,
+        'a profile running a script',
+        Profile.normal(label: 'p').copyWith(scriptId: 1),
+        true,
       ),
       ('a custom profile', Profile.custom(label: 'p'), false),
     ]) {
@@ -1072,7 +1072,7 @@ void main() {
     setUpAll(() async {
       tempDir = Directory.systemTemp.createTempSync('setup_action_test');
       await useAppPaths(tempDir);
-      await AppLocalizations.load(const Locale('en'));
+      loadAppLocalizations(const Locale('en'));
       originalLastConfigMd5 = globalState.lastConfigMd5;
       globalState.packageInfo = PackageInfo(
         appName: 'FlClash',
@@ -1098,7 +1098,6 @@ void main() {
       profileId: null,
       profileLastUpdateDate: null,
       profileType: ProfileType.file,
-      extendType: ExtendType.standard,
       rules: [],
       proxyGroups: [],
       addedRules: [],
@@ -1931,6 +1930,31 @@ void main() {
       expect(group['include-all-providers'], isTrue);
     });
 
+    test('without a profile the Core still opens the mixed port the Android '
+        'VPN advertises as its HTTP proxy', () async {
+      final core = _MockCoreHandlerInterface();
+      final scoped = ProviderContainer(
+        overrides: [
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          setupActionProvider.overrideWith(SetupAction.new),
+        ],
+      );
+      addTearDown(scoped.dispose);
+
+      final res = await scoped
+          .read(setupActionProvider.notifier)
+          .getProfile(
+            setupState: nullProfileSetupState,
+            patchConfig: const PatchClashConfig(mixedPort: 7899),
+          );
+      final config = loadYaml(res.yaml) as YamlMap;
+
+      verifyNever(() => core.readConfig(any()));
+      expect(config['mixed-port'], 7899);
+      expect(config['skip-auth-prefixes'], isEmpty);
+      expect(res.md5, isNotEmpty);
+    });
+
     test('only a subscription profile runs its script extension', () async {
       final engine = scriptEvaluator;
       addTearDown(() => scriptEvaluator = engine);
@@ -1960,7 +1984,6 @@ void main() {
             setupState: nullProfileSetupState.copyWith(
               profileId: 5,
               profileType: type,
-              extendType: ExtendType.script,
               script: script,
             ),
             patchConfig: const PatchClashConfig(),
@@ -1973,6 +1996,55 @@ void main() {
       await build(ProfileType.file);
       expect(evaluated, hasLength(1));
       verify(() => core.readConfig(any())).called(1);
+    });
+
+    test('puts the added rules ahead of what the script returns', () async {
+      final engine = scriptEvaluator;
+      addTearDown(() => scriptEvaluator = engine);
+      scriptEvaluator =
+          ({required String script, required String config}) async =>
+              json.encode({
+                'rules': ['DOMAIN,script.com,DIRECT', 'MATCH,FromScript'],
+              });
+      final script = await Script(
+        id: 78,
+        label: 'script',
+        lastUpdateTime: DateTime(2026),
+      ).save('const main = (config) => config;');
+      final core = _MockCoreHandlerInterface();
+      when(() => core.readConfig(any())).thenAnswer(
+        (_) async => {
+          'rules': ['MATCH,FromProfile'],
+        },
+      );
+      final scoped = ProviderContainer(
+        overrides: [
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          setupActionProvider.overrideWith(SetupAction.new),
+        ],
+      );
+      addTearDown(scoped.dispose);
+
+      final res = await scoped
+          .read(setupActionProvider.notifier)
+          .getProfile(
+            setupState: nullProfileSetupState.copyWith(
+              profileId: 5,
+              script: script,
+              addedRules: [
+                Rule.parse('DOMAIN,added.com,REJECT', id: 1),
+                Rule.parse('DOMAIN,placeholder.com,MATCH', id: 2),
+              ],
+            ),
+            patchConfig: const PatchClashConfig(),
+          );
+
+      expect((loadYaml(res.yaml) as YamlMap)['rules'], [
+        'DOMAIN,added.com,REJECT',
+        'DOMAIN,placeholder.com,FromScript',
+        'DOMAIN,script.com,DIRECT',
+        'MATCH,FromScript',
+      ]);
     });
 
     test(

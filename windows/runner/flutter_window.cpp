@@ -2,12 +2,13 @@
 
 #include <optional>
 
-#include <window/window_plugin_runner.h>
-
 #include "flutter/generated_plugin_registrant.h"
+#include "rust_api.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
-    : project_(project) {}
+    : project_(project),
+      window_message_(RustApiFunction<WindowMessageFunction>(
+          "flclash_window_message")) {}
 
 FlutterWindow::~FlutterWindow() {}
 
@@ -55,13 +56,24 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               LPARAM const lparam) noexcept {
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
-    WindowPluginForwardVisibility(*flutter_controller_, message, wparam,
-                                  lparam);
+    // The engine hides the view only once it is sized to zero, and hiding or
+    // minimizing the top-level window never resizes it: rust_api consumes a
+    // minimize's WM_SIZE.
+    if (message == WM_SHOWWINDOW || message == WM_SIZE) {
+      flutter_controller_->engine()->ProcessExternalWindowMessage(
+          flutter_controller_->view()->GetNativeWindow(), message, wparam,
+          lparam);
+    }
     std::optional<LRESULT> result =
         flutter_controller_->HandleTopLevelWindowProc(hwnd, message, wparam,
                                                       lparam);
     if (result) {
       return *result;
+    }
+    LRESULT window_result = 0;
+    if (window_message_ != nullptr &&
+        window_message_(hwnd, message, wparam, lparam, &window_result)) {
+      return window_result;
     }
   }
 

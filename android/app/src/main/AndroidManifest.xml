@@ -19,6 +19,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
@@ -47,7 +50,7 @@
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme" />
-            <!-- install-config links go through app_links; Flutter would also push them as routes. -->
+            <!-- install-config links go through LinkPlugin; Flutter would also push them as routes. -->
             <meta-data
                 android:name="flutter_deeplinking_enabled"
                 android:value="false" />

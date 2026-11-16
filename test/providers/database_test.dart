@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:drift/native.dart';
 // `Profiles`, `Scripts` and `ProxyGroups` name both a drift table and a
 // notifier, so the schema side is imported behind a prefix.
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/database/database.dart' as db;
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:flutter/widgets.dart';
@@ -32,7 +32,7 @@ void main() {
     order: order,
   );
 
-  setUpAll(() => AppLocalizations.load(const Locale('en')));
+  setUpAll(() => loadAppLocalizations(const Locale('en')));
 
   setUp(() async {
     testDatabase = db.Database(NativeDatabase.memory());
@@ -372,6 +372,30 @@ void main() {
         expect(read().single.label, 'Before', reason: 'rolled back');
       },
     );
+
+    test('updateWhere changes every match in one state change', () async {
+      notifier
+        ..put(profile(1, label: 'One', order: 0))
+        ..put(profile(2, label: 'Two', order: 1))
+        ..put(profile(3, label: 'Three', order: 2));
+      await pumpEventQueue();
+      final states = <List<Profile>>[];
+      final subscription = container.listen(
+        profilesProvider,
+        (_, next) => states.add(next),
+      );
+      addTearDown(subscription.close);
+
+      notifier.updateWhere(
+        (item) => item.id != 2,
+        (item) => item.copyWith(label: '${item.label}!'),
+      );
+      expect(states, hasLength(1));
+      await pumpEventQueue();
+
+      final rows = await testDatabase.profilesDao.query().get();
+      expect(rows.map((item) => item.label), ['One!', 'Two', 'Three!']);
+    });
 
     test('reorder only writes the rows whose order actually changed', () async {
       notifier

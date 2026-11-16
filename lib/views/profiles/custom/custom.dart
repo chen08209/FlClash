@@ -25,12 +25,9 @@ import 'providers.dart';
 import 'rules.dart';
 
 void showCustomProfileSheet(BuildContext context, int profileId) {
-  showSheet<void>(
-    context: context,
-    props: nestedPagedSheetProps,
-    builder: (_) => NestedPagedSheet(
-      builder: (_) => CustomProfileView(profileId: profileId),
-    ),
+  showNestedSheet<void>(
+    context,
+    builder: (_) => CustomProfileView(profileId: profileId),
   );
 }
 

@@ -10,7 +10,6 @@ import 'package:fl_clash/providers/routed_probe.dart';
 import 'package:fl_clash/providers/service_status.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
-import 'package:fl_clash/views/dashboard/probe_start_hold.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
@@ -78,11 +77,10 @@ Color _statusColor(BuildContext context, ServiceProbeStatus status) {
   return (localizations.servicePending, idle);
 }
 
-/// A service as the card shows it: a failure held through a start reads as
-/// still checking, without the result it replaced.
 class _ServiceView {
-  _ServiceView(this.target, ProbeEntry<ServiceCheck> entry, this.phase)
-    : check = phase == entry.phase ? entry.value : null;
+  _ServiceView(this.target, ProbeEntry<ServiceCheck> entry)
+    : phase = entry.phase,
+      check = entry.value;
 
   final ServiceTarget target;
   final ProbePhase phase;
@@ -125,8 +123,7 @@ class ServiceStatusCard extends ConsumerStatefulWidget {
   ConsumerState<ServiceStatusCard> createState() => _ServiceStatusCardState();
 }
 
-class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard>
-    with ProbeStartHold<ServiceStatusCard> {
+class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard> {
   late final ServiceStatus _services;
   Set<ServiceTarget> _shown = const {};
   Set<ServiceTarget> _watched = const {};
@@ -183,12 +180,7 @@ class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard>
     _syncShown(shown.toSet(), shownCount);
     final state = ref.watch(serviceStatusProvider);
     final services = [
-      for (final target in shown)
-        _ServiceView(
-          target,
-          state.entryOf(target),
-          shownPhase(state.entryOf(target)),
-        ),
+      for (final target in shown) _ServiceView(target, state.entryOf(target)),
     ];
     final problems = services.where((service) => service.abnormal).length;
     final verdict = problems > 0
@@ -225,7 +217,7 @@ class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard>
         mainAxisSize: mobile ? MainAxisSize.min : MainAxisSize.max,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.verified,
+            glyph: AppGlyphs.radar,
             title: appLocalizations.serviceStatus,
             chevron: mobile,
             trailing: [
@@ -638,11 +630,9 @@ class _BadgePainter extends CustomPainter {
 }
 
 Future<void> showServiceStatusSheet(BuildContext context) {
-  return showSheet<void>(
-    context: context,
-    props: nestedPagedSheetProps,
-    builder: (_) =>
-        NestedPagedSheet(builder: (_) => const ServiceStatusSheet()),
+  return showNestedSheet<void>(
+    context,
+    builder: (_) => const ServiceStatusSheet(),
   );
 }
 
@@ -870,7 +860,7 @@ class _ServiceRowState extends ConsumerState<_ServiceRow>
           )
         : null;
     final outboundIp = ipEntry?.value;
-    final service = _ServiceView(target, entry, entry.phase);
+    final service = _ServiceView(target, entry);
     return LayoutBuilder(
       builder: (context, constraints) => DecorationListItem(
         minVerticalPadding: _rowBadgeInset,

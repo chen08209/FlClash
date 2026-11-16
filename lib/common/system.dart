@@ -1,7 +1,6 @@
 import 'dart:ffi';
 import 'dart:io';
 
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:ffi/ffi.dart';
 import 'package:fl_clash/common/boot_record.dart';
 import 'package:fl_clash/common/common.dart';
@@ -12,6 +11,7 @@ import 'package:fl_clash/plugins/app.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:prism_ui/banner.dart';
+import 'package:rust_api/rust_api.dart' as rust_api;
 
 typedef ProcessRunner =
     Future<ProcessResult> Function(String executable, List<String> arguments);
@@ -42,31 +42,15 @@ class System {
 
   bool get isTV => _isTV;
 
+  /// The OS major version: the API level on Android, the macOS major
+  /// version, 10 on Windows 10 and 11 alike, and 0 elsewhere.
   Future<int> init() async {
-    final BaseDeviceInfo deviceInfo;
-    try {
-      deviceInfo = await DeviceInfoPlugin().deviceInfo;
-    } on RangeError {
-      // device_info_plus turns the registry InstallDate into a DateTime, and
-      // some Windows installs store a value past DateTime's range.
-      if (isWindows) return 0;
-      rethrow;
+    if (isAndroid) {
+      final info = await app!.getDeviceInfo();
+      _isTV = info.isTelevision;
+      return info.sdkInt;
     }
-    _isTV = switch (deviceInfo) {
-      AndroidDeviceInfo(:final systemFeatures) => systemFeatures.any(
-        const {
-          'android.hardware.type.television',
-          'android.software.leanback',
-        }.contains,
-      ),
-      _ => false,
-    };
-    return switch (Platform.operatingSystem) {
-      'macos' => (deviceInfo as MacOsDeviceInfo).majorVersion,
-      'android' => (deviceInfo as AndroidDeviceInfo).version.sdkInt,
-      'windows' => (deviceInfo as WindowsDeviceInfo).majorVersion,
-      String() => 0,
-    };
+    return rust_api.osMajorVersion();
   }
 
   Future<AppExitInfo?> lastExitInfo() async {
@@ -483,78 +467,6 @@ class MacOS implements SystemDnsPort {
     return _instance!;
   }
 
-  @visibleForTesting
-  static String? parseDefaultInterface(String routeOutput) {
-    final deviceLine = routeOutput
-        .split('\n')
-        .firstWhere((s) => s.contains('interface:'), orElse: () => '');
-    final lineSplits = deviceLine.trim().split(' ');
-    if (lineSplits.length != 2) {
-      return null;
-    }
-    return lineSplits[1];
-  }
-
-  @visibleForTesting
-  static String? parseServiceName(String serviceOrderOutput, String device) {
-    final currentService = serviceOrderOutput
-        .split('\n\n')
-        .firstWhere((s) => s.contains('Device: $device'), orElse: () => '');
-    if (currentService.isEmpty) {
-      return null;
-    }
-    final nameLine = currentService
-        .split('\n')
-        .firstWhere(
-          (line) => RegExp(r'^\(\d+\).*').hasMatch(line),
-          orElse: () => '',
-        );
-    final name = RegExp(
-      r'^\(\d+\)\s+(.+)$',
-    ).firstMatch(nameLine.trim())?.group(1)?.trim();
-    if (name == null || name.isEmpty) {
-      return null;
-    }
-    return name;
-  }
-
-  @visibleForTesting
-  static List<String> parseDnsServers(String getDnsServersOutput) {
-    final output = getDnsServersOutput.trim();
-    if (output.startsWith("There aren't any DNS Servers set on")) {
-      return [];
-    }
-    return output.split('\n');
-  }
-
-  @override
-  Future<String?> resolveDefaultService() async {
-    final result = await _run('route', ['-n', 'get', 'default']);
-    if (result == null) {
-      return null;
-    }
-    final device = parseDefaultInterface(result.stdout.toString());
-    if (device == null) {
-      return null;
-    }
-    final serviceResult = await _run('networksetup', [
-      '-listnetworkserviceorder',
-    ]);
-    if (serviceResult == null) {
-      return null;
-    }
-    return parseServiceName(serviceResult.stdout.toString(), device);
-  }
-
-  @override
-  Future<List<String>?> readDnsServers(String service) async {
-    final result = await _run('networksetup', ['-getdnsservers', service]);
-    if (result == null) {
-      return null;
-    }
-    return parseDnsServers(result.stdout.toString());
-  }
-
   @override
   Future<bool> writeDnsServers(String service, List<String> servers) async {
     final result = await _run('networksetup', [
@@ -562,22 +474,18 @@ class MacOS implements SystemDnsPort {
       service,
       if (servers.isEmpty) 'Empty',
       if (servers.isNotEmpty) ...servers,
-    ], logLevel: LogLevel.error);
+    ]);
     return result != null;
   }
 
-  Future<ProcessResult?> _run(
-    String executable,
-    List<String> arguments, {
-    LogLevel logLevel = LogLevel.warning,
-  }) async {
+  Future<ProcessResult?> _run(String executable, List<String> arguments) async {
     final label = '$executable ${arguments.first}';
     try {
       final result = await runProcess(executable, arguments);
       if (result.exitCode != 0) {
         commonPrint.log(
           '$label exited with ${result.exitCode}: ${result.stderr.toString().trim()}',
-          logLevel: logLevel,
+          logLevel: LogLevel.error,
         );
         return null;
       }
@@ -585,7 +493,7 @@ class MacOS implements SystemDnsPort {
     } catch (error) {
       commonPrint.log(
         '$label failed: ${compactError(error)}',
-        logLevel: logLevel,
+        logLevel: LogLevel.error,
       );
       return null;
     }

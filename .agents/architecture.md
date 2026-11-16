@@ -33,8 +33,10 @@ Desktop core mode:
   lifecycle controller, RPC client, and crash-event bridge, and holds no lifecycle logic of its own.
 - `lib/core/desktop/transport.dart` binds an `IpcServer` and turns its events into ready, connected, disconnected, and
   failed transport events plus a frame stream. A connection that ends on an I/O error is a disconnect carrying that
-  error; failed means the server itself is gone and is terminal for that transport. A replaceable binding keeps RPC
-  subscriptions stable when a failed or stale transport must be rebuilt.
+  error; failed means the server itself is gone. One `IpcCoreTransport` lives as long as the lifecycle: `open()` after
+  a failure binds a new server, and `reset()` drops the server and with it the connected peer, which the server cannot
+  drop on its own. Subscribers therefore never resubscribe, and a connection generation is never reused.
+  `connection` is the single answer to "which peer is connected now".
 - `lib/core/desktop/rpc_client.dart` owns request IDs and pending completers, waits up to 10 seconds for a connection,
   applies a three-minute default method timeout, unwraps `CoreMethodResponse`, and fails all pending calls when transport
   disconnects or closes.
@@ -70,8 +72,10 @@ stored as JSON in the `profiles.overrides` column, with every key available, and
 
 Each `*OverrideKey` names one Clash key, with `parent.field` paths for nested maps, and covers every yaml key of the
 matching mihomo raw struct; `test/models/{dns,ntp,sniffer}_override_test.dart` read `core/Clash.Meta/config/config.go`
-and fail when a core bump adds or drops one. `overrideJson` builds the fragment in model order and skips a key whose
-value is empty, so a key left without a value writes nothing: the core refuses an empty `nameserver` outright.
+and fail when a core bump adds or drops one. `overrideJson` builds the fragment in model order and writes every picked
+key as it is, empty included, for every profile type: an emptied entry clears the profile's value, and a key the core
+refuses empty, such as `nameserver`, or `proxy-server-nameserver` under `respect-rules`, fails the config in the core.
+Only removing an entry, or dropping its line in quick edit, takes a key off.
 `mergeDnsOverride` merges one level deep so a partial fallback filter keeps the profile's other filter keys; NTP spreads
 over the profile's flat `ntp` map. For a profile whose `dns.enable` is not true, the task first fills `baselineDns` for
 `baselineDnsOverrideKeys` (`enable`, `enhanced-mode: fake-ip`, `nameserver`), the one thing the core is never without:
@@ -80,9 +84,9 @@ which carry no preset of the app.
 
 An added key starts from the spec's `defaults` through its `OverrideField.reset`, and those defaults are mihomo's: a key
 starts at the value mihomo parses without it, presets included, such as the nameservers, fake-IP range and filter, and
-NTP server of `DefaultRawConfig`. A key mihomo leaves unset, such as `listen` or a sniff protocol's ports, starts empty
-and writes nothing until the user fills it in, and so does the fallback filter's GeoIP code, whose value is left for the
-user to choose. mihomo sniffs a protocol listed without ports on that protocol's standard port, which the page shows as
+NTP server of `DefaultRawConfig`. A key mihomo leaves unset, such as `listen` or a sniff protocol's ports, starts empty,
+which the core reads the same as the key being absent. The fallback filter's GeoIP code also starts empty, for the user
+to choose, but there an empty value replaces mihomo's `CN`. mihomo sniffs a protocol listed without ports on that protocol's standard port, which the page shows as
 the default. The tests above pin the defaults against `DefaultRawConfig`. A spec that mixes in `OverrideQuickEdit` gets
 quick edit, which opens `overrideYaml` in an `EditorPage` and rebuilds the key set from the document through
 `applyOverrideYaml`, rejecting keys outside the section and values the model cannot hold.
@@ -268,18 +272,25 @@ choose one for a new setting.
 
 `DesktopCoreLifecycle` is a latest-desired-intent reconciler, not a queue that blindly executes every request:
 
-- Public intents receive monotonically increasing revisions and target running, restarted, stopped, or closed.
+- Public intents receive monotonically increasing revisions and want the Core running, stopped, or closed. A restart
+  is a running intent that only a session newer than itself satisfies.
+- The lifecycle owns at most one Core, in one of three forms: none, a live session, or a leftover lease, which is a
+  process still to be stopped. One worker reads the latest intent, takes one step toward it, and repeats until the
+  owned Core matches; every lease is stopped through the same release step. A crash only marks the session as a
+  leftover, and the worker cleans it up.
 - Observable phases are `idle`, `starting`, `running`, `stopping`, `failed`, and `closed`.
 - A completed command reports `applied`, `coalesced`, or `superseded`, allowing callers and tests to distinguish a command
   that won from one satisfied or replaced by a newer compatible intent.
-- Startup opens or replaces the IPC transport, resolves a launcher, generates a 128-bit lowercase hexadecimal session ID,
-  launches Core, and waits for the matching connection. Windows additionally verifies that the named-pipe peer PID equals
-  the process PID returned by the Helper lease.
-- Each running session retains its process owner, lease, PID, session ID, and transport connection generation. Stop waits
-  for both process-exit confirmation and the matching disconnect generation; a missing disconnect replaces the transport
-  before later starts.
-- An unconfirmed process exit is retained as an unconfirmed lease. New start/restart intents fail until ownership can be
-  cleaned up, preventing two Core instances from being treated as the active session. Terminal close may continue on a
+- Startup resets a transport that still holds a peer nobody owns, opens it, resolves a launcher, generates a 128-bit
+  lowercase hexadecimal session ID, launches Core, and accepts the peer the transport holds once the launcher has
+  returned. The connection timeout starts there, so a slow launch does not use it up, and a Core that connected and
+  died during the launch is never accepted. Windows additionally verifies that the named-pipe peer PID equals the
+  process PID returned by the Helper lease.
+- Each running session retains its process owner, lease, PID, session ID, and transport connection generation. Stop
+  needs the process exit confirmed; if the transport still holds a peer one event-loop turn later, the lifecycle resets
+  the transport rather than wait for a disconnect that may never come.
+- A lease whose exit is unconfirmed stays the leftover Core. Every later intent releases it first and fails until that
+  succeeds, preventing two Core instances from being treated as the active session. Terminal close may continue on a
   best-effort basis because the application is exiting.
 - An unexpected disconnect or transport failure while running is converted to `DesktopCoreFailure`, the owned process is
   cleaned up, and `CoreService` emits a Core crash event for the normal UI recovery path.
@@ -374,6 +385,13 @@ A response over 1 MiB goes to a file under `<home>/responses/`, and the envelope
 direct buffer), and desktop IPC drops a frame above `maxIPCFrameSize`. `lib/core/spill.dart` reads a spilled file only
 from that directory, decodes it in an isolate and deletes it; `core.init` clears what an earlier run left.
 
+A transport decodes a response of 50 KiB or more in an isolate and runs the result model there too:
+`coreResultModelOf` for the method, or one the caller passes. `getConnectionsWith` passes the caller's function, so
+the connections page ranks a poll and the dashboard sorts one in the isolate that decoded it, and the ranking state
+sent along is ids and typed data, which copies at the cost of its buffers. Such a function must be top level or
+built by a top-level function, since a closure made inside an instance method can capture what an isolate cannot
+receive.
+
 A profile file's proxies, groups and rules never cross the bridge. `profile.base` returns the config without
 `proxies`, `proxy-groups`, `sub-rules` and `rules`, with their counts, the profile's MATCH rules and a sha256 digest.
 `SetupAction.getProfile` patches it as before and sends the result as `SetupParams.base.overlay`. `core/profile_base.go`
@@ -425,16 +443,21 @@ listener exceptions so one faulty observer does not prevent the remaining events
 
 ## User-Facing Core And Delay Feedback
 
-`CoreStatusButton` in `lib/views/dashboard/widgets/core_status_button.dart` is the desktop dashboard's status/restart
-surface. It is shown only outside dashboard edit mode and only when `coreLib == null`:
+`LiveStatusButton` in `lib/views/dashboard/widgets/live_status.dart` is the dashboard's one status surface, shown
+outside edit mode. It wears the most important live status (the Core's phase, an update, resources updating) and opens
+the deck of them in `live_status_deck.dart`. The deck takes an alert's scrim and motion through
+`AlertMotionRouteMixin.scaleOrigin`; its front card sits where a phone's alert sits, or under the bar at the right edge
+on a desktop, and a card with a list opens it in place while the rest of the deck steps away. A Core in its own process (`coreLib == null`) adds its starting and running
+phases; an in-app Core only ever shows having stopped:
 
-- Provider state remains authoritative. The widget keeps a separate display-only status so a fast
+- Provider state remains authoritative. The button keeps a separate display-only hold so a fast
   `connecting -> connected` transition still shows at least 600 milliseconds of progress instead of flashing.
 - The hold arms only after an observed transition to `connecting`; mounting while already connecting does not invent a new
   delay. A real `disconnected` transition cancels the hold immediately so failure is never hidden, while a long-running
   connecting state remains visible after the timer expires.
-- Taps during the display hold or while the provider is genuinely connecting are inert. Connected/disconnected taps show
-  the appropriate confirmation and delegate restart to `CoreAction`; the widget never starts Core directly.
+- A tap always opens the deck. The Core's card restarts a stopped Core at once and asks before force restarting a
+  running one, delegating both to `CoreAction`; a starting Core's card has no action. The widgets never start Core
+  directly.
 
 Proxy delay testing follows the same failure-safe UI rule. `ProxiesAction._runDelayTests` marks its keys in
 `pendingDelayTestsProvider` and releases them in `finally`, and a test the Core does not answer leaves the last
@@ -445,14 +468,10 @@ test button, the tab page's action and the list page's group header alike, spins
 holds the group; `delayTestPageGroup` marks it, ignores a second request for the same group, and clears it in `finally`,
 so an RPC failure cannot leave the button spinning and remounting a header does not lose the state.
 
-The dashboard's probe cards show a failure as still checking for five seconds after they see `proxied` turn true,
-through `ProbeStartHold` in `lib/views/dashboard/probe_start_hold.dart`: `ServiceStatusCard` holds the check on each
-tile, and `CurrentOutboundCard` holds the exit IP, whose refresh button stays inert meanwhile.
-`SetupAction.setRunning` flips the run time, and with it `proxied`, before the Core has brought its listeners up, so the
-probe launched on the spot often fails, and the config re-apply that follows every start probes again moments later;
-without the hold a card flashes a failure and then takes it back. The hold is local display state like the connecting
-hold above: the cache still records the failure, the hold arms only on an observed transition, a result that is not a
-failure shows at once, a stop cancels it, and a failure still standing when it ends is shown.
+The dashboard's probe cards, `ServiceStatusCard` and `CurrentOutboundCard`, hold nothing back themselves: a card
+shows its cache entry as it is. What keeps one from flashing a failure through a start and taking it back is in the
+cache (Route Consistency): no probe leaves on the tap, since `proxied` turns with the Core's epoch once the listeners
+are up, and a failure that came back before its deadline stays checking until a second attempt agrees.
 
 ## Route Consistency
 
@@ -460,8 +479,10 @@ A probe result on the dashboard — the exit IP, a node's exit IP, a service che
 force or is being asked again. The mechanism has three parts.
 
 - The Core is the source of truth for the route. `core/route.go` keeps two counters. The epoch is a reset, which
-  no answer outlives: a config apply, an IPv6 switch, and a start (the listeners coming up and, on Android, the TUN
-  after them). The route version is a move, which may send a host to another exit: a Selector, URLTest or Fallback
+  no answer outlives: a config apply, an IPv6 switch, a start and a stop (the listeners, and on Android the TUN
+  with them), and a new network, whose report on Android closes every connection. The epoch moves once that work
+  is done, so a probe that left while the listeners or the TUN were changing, or over the network just left,
+  carries the older epoch and its failure goes with it. The route version is a move, which may send a host to another exit: a Selector, URLTest or Fallback
   pick changing, a proxy provider whose version changed, a rule set that loaded new content, a GeoIP or GeoSite
   update, and a mode switch. `handleChangeProxy` re-reads the picks under `selectMu` and answers
   `ChangeProxyResult{changed}`, so the connection reset only runs when the pick moved. A health check moving a
@@ -473,14 +494,18 @@ force or is being asked again. The mechanism has three parts.
   An exit is the last hop with its server address, or a load balancer, which spreads connections without the route
   moving. `checkRoutes` matches those hosts again through `tunnel.ResolveRoute`, a fork patch that runs the rules
   without dialing, and reports per answer whether every exit held. `routeChanged` publishes the counters whenever
-  they differ from the last read. A start resets the epoch because `isStartProvider` flips before the Core is told,
-  so the probes sent at the tap leave ahead of the TUN routes and over DNS connections `handleStartListener` resets,
-  and an Android start acknowledges before the VPN exists. Outbound IP lookups are cancelled by the first lookup
+  they differ from the last read, and with them `running`: whether the listeners were up as of the last reset. It
+  is read only as the epoch moves, so the host never pairs it with an epoch from before a start or a stop
+  finished. Outbound IP lookups are cancelled by the first lookup
   under a newer epoch, which frees their probe slots; lookups under one epoch are left alone, since the routed
   target while stopped and a pinned `DIRECT` send the same request.
-- `routeTrackerProvider` in `lib/providers/route_state.dart` merges that with the host's side: `proxied` (running and
-  not suspended), a host epoch that a connectivity event moves, and `synced`, which is false until `watchRoute` has
-  returned a snapshot and again after a Core disconnect. Nothing is fresh while unsynced, so a cache never judges
+- `routeTrackerProvider` in `lib/providers/route_state.dart` merges that with the host's side: a host epoch that
+  a connectivity event moves, and `synced`, which is false until `watchRoute` has returned a snapshot and again
+  after a Core disconnect. `proxied`, which decides whether the routed target is asked through the rules or pinned
+  to `DIRECT`, is the Core's `running` and not `isStartProvider`: that flips at the tap, before the Core is told,
+  and an Android start acknowledges before the VPN exists, so probes sent on it left ahead of the route they were
+  meant to describe. Only safe mode, which never starts the listeners, follows the run the app shows. Nothing is
+  fresh while unsynced, so a cache never judges
   answers against counters it made up. The tracker subscribes when the first target is watched and releases the Core
   when the last one goes; an answer newer than the state means an event was evicted, and the cache asks for a resync.
   It also releases the Core while the app is hidden and reads it again on return, keeping `synced`: the Core and its
@@ -490,17 +515,30 @@ force or is being asked again. The mechanism has three parts.
   in. A widget `watch`es the target it shows and `unwatch`es on the way out; only watched targets are probed, one
   request in flight per target. An answer is stamped with the Core's counters, its hits and the host state at
   launch. A reset (`RouteState.hasMovedSince`: the Core epoch, the host epoch or `proxied`) invalidates everything:
-  a stale watched entry shows as checking at once and is asked again after `probeMoveSettleDuration`, since a start
-  moves it three times within about 150 ms (`proxied`, then the listeners, then the Android TUN) and the user is
-  watching for the new address. A new route version keeps every answer on show and, once `probeSettleDuration` has
-  passed the next pick poll, sends their hits to `checkRoutes` in one call; only an answer whose exit moved is
+  a stale watched entry shows as checking at once and is asked again after `probeMoveSettleDuration`, since resets
+  come in bursts: a network switch reports more than once, and a launch applies the config and starts the
+  listeners back to back. A new route version keeps every answer on show and sends their hits to `checkRoutes` in
+  one call, at once for the first move and, for the moves that follow within `probeSettleDuration`, together when
+  it ends, so groups re-picking on neighbouring pick polls cost one check more; only an answer whose exit moved is
   dropped and asked again, and one that held takes the checked version. An answer that lands under an older version
   than the state is held back as checking until its own check returns, so it never shows and then flips. An ask
   that is not the user's or a reset's waits out `probeThrottleDuration` since the target's last probe, so a config
   load whose providers, rule sets and url-test picks land over a few seconds moves an exit at most one probe more.
-  A `refresh` waits for neither, and an unwatched entry whose exit moved is dropped. Nothing launches or checks
+  A `refresh` waits for neither, and an unwatched entry whose exit moved is dropped. A proxy the user switched is
+  no churn either: `ProxiesAction.changeProxy` marks it (`RouteTracker.markPicked`) after the connection reset that
+  follows, which closes the routed probes too, and the cache then ends the check window, asks again at once for
+  every watched target with no answer on show (a probe still out, which may hang on the node just left, or a
+  failure), and lets one probe per target past the throttle. Nothing launches or checks
   while the app is hidden: what falls due waits for it to be shown.
-  Failures wait for `retry`, `refresh`, or the app resuming (`markResumed`), and
+  A failure is a verdict only when the route held still for it. One that came back before its deadline — a refused
+  or closed connection, a failed lookup, a Core that gave no answer — may be the route still settling or a
+  connection something else closed (`closeConnections` after a proxy switch closes the routed probes too), so a watched
+  target stays checking and is asked once more after `probeConfirmDelay`; it shows as failed when the
+  second attempt agrees, and a failure that spent its whole deadline (`ProbeAnswer.timedOut`) shows at once.
+  A failure on show is not asked again while the route holds still, since the same exit would only be asked the
+  same thing: it waits for a reset, a moved exit, a proxy the user switched, `refresh`, or the app resuming
+  (`markResumed`), which asks the watched ones again on show. A reset or a moved exit makes the next failure one
+  to confirm again, and
   a service check that timed out is a failure that still shows its status. `refresh` is the user's own request and
   runs for unwatched targets too: the service sheet reads the cache and never watches its rows, because one service
   check is one to four full HTTPS fetches where a delay test is a single empty request.
@@ -561,7 +599,7 @@ navigator:
 - `UiLocalizations` (`prism_ui/lib/l10n.dart`): the strings the components show themselves. `AppUiLocalizations.delegate`
   in `lib/common/app_localizations.dart` serves them from the ARB strings; a new one needs a getter on both.
 
-A test that builds its own app registers `AppUiLocalizations.delegate` and returns `wrapAppScopes` from
+A test that builds its own app registers `appLocalizationsDelegate` and `AppUiLocalizations.delegate` and returns `wrapAppScopes` from
 `test/helpers/test_app.dart` in its builder, as `TestApp` does.
 
 ## Icons
@@ -766,7 +804,7 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
 - A pane is a rounded rectangle, each corner with its own radius, unless a `clipper` gives it a path, as the start
   button's cookie does. The shader reads that path as its reach from the pane's center in 64 directions, so it must
   meet every ray from the center once.
-- Without Impeller's shader filters (Skia on the Intel macOS build, `flutter test`) a pane frosts from its capture:
+- Without Impeller's shader filters (Skia, as under plain `flutter test`) a pane frosts from its capture:
   blur, saturation, brightness, tint, and a rim, with no refraction; the tint is not thickened there, as it is where a
   pane has no capture, since the capture holds the blur. `flutter test --enable-impeller` runs the shader, so `toImage`
   shows the real glass.
@@ -1188,8 +1226,8 @@ than the frames a load costs. What a transition must not carry is work that repe
   it. A feed's first content is no refresh: `showFirstContent` applies it at once while `ArrivalHold` still holds the
   push, and past `arrivalHoldLimit` keeps it until the route has settled, as `RequestsView` does with its first poll. A
   feed that trims at a cap lists through `RecordFeedList`, whose rows follow their keys and keep their stripes, so a
-  refresh builds only what it added. A held poll keeps the time it was read at, which `TrackerSpeedRanker` derives
-  speeds from. Per-frame work spread over frames pauses the same way: the font family page switches one name to its own family per frame and
+  refresh builds only what it added. A held poll keeps the time it was read at: `rankTrackerInfos` derives
+  speeds when the poll is decoded. Per-frame work spread over frames pauses the same way: the font family page switches one name to its own family per frame and
   stops while `isRouteMoving`.
 - A scroll view of image tiles takes `arrivalCacheExtent` from `ArrivalCacheExtentMixin`: the rows past the viewport
   would otherwise be built in the same frame as the ones on screen, which for a screen of icon cards is most of the
@@ -1312,10 +1350,10 @@ the key directly and does not import `lib/state.dart`.
 ### Platform Layering
 
 `lib/common/common.dart` deliberately does not export `tray.dart`, `window.dart`,
-`launch.dart`, or `system_dns.dart`. Those four modules import
-`tray`, `window`, `launch_at_startup`, and `screen_retriever`;
-exporting them would put those packages in the compile graph of every file that
-imports the barrel for a string helper. Import the specific module instead.
+`launch.dart`, or `system_dns.dart`. Two of those modules import
+`rust_api/tray.dart` and `rust_api/window.dart`, and `launch.dart` writes the
+autostart entry; exporting them would put those packages in the compile graph of
+every file that imports the barrel for a string helper. Import the specific module instead.
 
 `test/lint/platform_layering_test.dart` enforces four rules. Three are local: the
 barrel never re-exports one of those four modules, nothing under `lib/common`,
@@ -1577,11 +1615,11 @@ rewritten; each owner reads the flag where it would otherwise act:
   ends up with, so neither the user's override nor the profile's own NTP config can move the host's time.
 - Profile listeners and firewall rules: `_makeRealProfileTask` clears `listeners`, `tunnels`, `ss-config`,
   `vmess-config`, `tuic-server` and `iptables`, and closes `dns.listen`, preventing profile-only changes during apply.
-- System proxy: the `proxy` plugin handle in `lib/common/proxy.dart` is `null`, so `ProxyManager` and exit cleanup
-  never write the OS setting, not even the `stopProxy` that would clear what the installed app configured.
-- System DNS: `systemDnsCoordinator` is `null` and `shouldPatchSystemDnsProvider` is `false`, so neither the apply nor
-  the restore path runs. The restore path matters because a profile or release build shares the preferences of the
-  installed app (only a macOS or Android debug build has its own bundle id) and would restore from its record.
+- System proxy: `systemProxyQueue` in `lib/common/proxy.dart` is `null`, so `ProxyManager` and exit cleanup never
+  write the OS setting, not even the stop that would clear what the installed app configured.
+- System DNS: with no TUN in the generated profile the Core registers no resolver, and `restoreLegacySystemDns` does
+  not run. The restore matters because a profile or release build shares the preferences of the installed app (only a
+  macOS or Android debug build has its own bundle id) and would restore from its record.
 - Login item: the `autoLaunch` handle in `lib/common/launch.dart` is `null`, so neither the boot sync nor the setting
   listener registers the build's executable or removes the installed app's entry, which on Windows is the same
   `FlClash` value in the user's Run key.
@@ -1594,8 +1632,8 @@ rewritten; each owner reads the flag where it would otherwise act:
   foreground service runs without a `VpnService`.
 - Wi-Fi SSID: `ConnectivityManager` never reads the SSID and `LocationPermissions.refresh` neither checks
   nor requests location authorization, so `currentSSIDProvider` stays `null` and the excluded-network suspend never
-  trips. The macOS `wifi_ssid` plugin builds its `CLLocationManager` and `CWWiFiClient` lazily, so a build that
-  never asks never reaches locationd or wifid.
+  trips. rust_api's macOS `wifi` module builds its `CLLocationManager` on the first call, so a build that never
+  asks never reaches locationd or wifid.
 - Global hotkeys: `HotKeyManager` neither subscribes to hotkey events nor registers the configured shortcuts with the
   OS; the in-window `Shortcuts` (close window, escape) stay.
 - URL schemes and launcher shortcuts: `Window.init` skips the Windows registry and Linux desktop-entry registration
@@ -1604,8 +1642,7 @@ rewritten; each owner reads the flag where it would otherwise act:
   decryption page offers no install row, so no CA reaches or leaves the keychain, the Windows root store, the Linux
   anchors and NSS databases, or Android's installer; the read-only trust check and the export still work.
 - Presentation: `AppEnvManager` shows a `SAFE MODE` banner ahead of the channel banner, and `TrayState.safeMode` gives
-  the tray the `status_4` bug icon, a suffixed tooltip and a menu of only show and exit. `trayStateProvider` and
-  `trayTitleStateProvider` report `showTrayTitle: false`, so the macOS menu bar carries no traffic title.
+  the tray the `status_4` bug icon and a suffixed tooltip; the menu and the macOS traffic title are the normal ones.
 
 A new host integration, anything that changes the OS's routes, proxy, DNS, login items, privileges or VPN state, or
 that asks the OS for a permission, a global shortcut or a registration, must consult the flag at its owner in the same way and get a test that overrides `safeModeProvider`.
@@ -1762,17 +1799,9 @@ NDK version stands in for the hook's cache.
 ## Local Plugins
 
 - `setup`: build-time harness for Go core artifacts and the Rust helper, driven by a Dart build hook; no runtime Dart API.
-- `proxy`: system proxy configuration. On Windows the package installer and uninstaller kill the app, and then run
-  `FlClash.exe --clear-stale-proxy`, the installer once the new files are in place; the runner hands it to the plugin
-  before any engine starts, and it turns off only a proxy still set to FlClash's `127.0.0.1:<port>` with nothing
-  listening on that port. In the app `SystemProxyQueue` sets the system proxy when the Core starts with it on, and
-  stops it on a stop or exit only when this run set it, since a stop also clears a proxy, PAC or auto-detect setting
-  someone else made. Nothing is stored, so a launch leaves alone the proxy a crashed run left.
 - `rust_api`: runtime Flutter Rust Bridge FFI package built through Native Assets. See below.
-- `tray`: system tray for Linux, macOS and Windows. Written for FlClash; replaced the `tray_manager` fork.
 - `window`: desktop window control for Linux, macOS and Windows. Written for FlClash; replaced the
   `window_manager` fork. See below.
-- `wifi_ssid`: Wi-Fi SSID detection.
 - `code_forge`: the text editor behind `EditorPage`, derived from upstream `code_forge`. See below.
 
 ## code_forge Plugin
@@ -1842,58 +1871,111 @@ folding, caret, gutter and pointer code sit in `lib/code_forge/code_area/` part 
 - A touch drag that moves the selection (a handle, the gutter, a long press that moves on) is won by
   `_SelectionDragHold`: the scroll views stand aside for it, and a sheet or route around the editor would take it.
 
-## window Plugin
+## Desktop Window
 
-`plugins/window` exposes `desktopWindow` (`DesktopWindow`) on the `window` method channel; `plugins/window/README.md`
-is the channel contract (methods, arguments, events, effects, runner hooks) and every platform implements exactly that
-table. `lib/common/window.dart` and `lib/manager/window_manager.dart` are the only application callers.
+`package:rust_api/window.dart` exposes `desktopWindow` (`DesktopWindow`) over rust_api's `window/` module, which replaced
+the `window` plugin, itself the successor of the `window_manager` fork. `lib/common/window.dart` and
+`lib/manager/window_manager.dart` are the only application callers; tests swap in `FakeDesktopWindow`
+(`test/helpers/fake_desktop_window.dart`) through `DesktopWindow.instance`. Coordinates and sizes are logical pixels with
+a top-left origin on every platform; Windows converts with `GetDpiForWindow`. Events reach `WindowListener`s as
+`WindowEvent`s: `close`, `maximize`, `unmaximize`, `minimize`, `restore`, `geometryChanged`, `enterFullScreen`,
+`leaveFullScreen`, `shouldTerminate` (macOS) and `activate` (another launch or a Dock reopen asked for the window;
+nothing is shown natively).
 
-- Each platform keeps one style record (title bar style and button visibility everywhere, rounded corners on
-  Windows, effect, tint and brightness on Windows and macOS) and reapplies it whole from a single `apply` routine, so DWM margins
-  on Windows and `isOpaque`/effect views on macOS have one writer. Add a visual setting to that record, never a second
-  code path.
-- Method dispatch is a table on every platform, and every handler validates its arguments; a bad call answers with a
-  `bad_args` `PlatformException`, a capability the platform lacks with `unsupported`. Coordinates cross the channel in
-  logical pixels; Windows converts with `GetDpiForWindow`.
-- Position and size changes surface as one `geometry-changed` event that each platform coalesces natively (150 ms
-  after the last `WM_WINDOWPOSCHANGED`, did-move/did-resize, or configure-event); `WindowManager` only debounces the
-  capture on top of it.
-- Windows: with `titleBarStyle: hidden`, `WM_NCCALCSIZE` takes the frame insets from `AdjustWindowRectExForDpi` and
+- Threading: every `api/window.rs` function is an ordinary asynchronous bridge call that hands its work to the
+  platform's main thread and waits for it there: a job posted to the top-level window (a registered `flclash.window.job`
+  message) on Windows, the main dispatch queue on macOS, a GLib idle source on Linux. None is `#[frb(sync)]`, though
+  Flutter 3.50 runs the UI isolate on that thread: a resize or a drag runs a nested loop that services engine tasks,
+  which must not find Dart in the middle of an FFI call. State lives in a thread-local on the main thread in `Cell`s,
+  never borrowed across a platform call, because those calls re-enter the module's own handlers synchronously.
+- Finding the window and its messages: Windows' runner loads `rust_api.dll` before the engine (`windows/runner/rust_api.h`)
+  and keeps it, so Dart's later load gets the same module. `FlutterWindow::MessageHandler` calls the exported
+  `flclash_window_message` after `HandleTopLevelWindowProc`, where a plugin's top-level delegate ran, rather than
+  `SetWindowSubclass`, which would run first and consume the minimize `WM_SIZE` before the runner forwards it to the
+  engine. The first message records the top-level `HWND`; `ensureInitialized` finds the `FLUTTERVIEW` child. macOS takes
+  the `NSApp` window whose content view controller is a `FlutterViewController` and becomes its delegate; the
+  `AppDelegate` posts `FlClashApplicationShouldTerminate` and `FlClashApplicationReopen` notifications that the module
+  observes. Linux takes the toplevel whose child is the `FlView`, connects GTK signals, and adds an `activate-window`
+  action to the `GApplication`, which the runner activates when a relaunch reaches the running instance.
+- Messages that need an answer at once (`WM_NCCALCSIZE`, `WM_NCHITTEST`, `WM_GETMINMAXINFO`, `WM_CLOSE`,
+  `windowShouldClose:`, `delete-event`) are answered in Rust from state Dart set earlier (`setPreventClose`,
+  `setMinimumSize`, the title bar style), never by asking Dart.
+- Lifecycle: where the engine's view of the window keeps an unseen window rendering, the module sends a lifecycle
+  signal and `DesktopWindow` pushes it on `flutter/lifecycle` through `ServicesBinding.channelBuffers`, as the engine
+  would. Linux: Wayland has no minimized state, so a focus loss within 500 ms of `minimize`, seen from a
+  `window-state-event` handler connected after the engine's, is reported `hidden`. macOS: after every activation change
+  the module reports `hidden` while the window is not visible, and `resumed` or `inactive` once `show` or a
+  deminiaturize brings it back, since the occlusion notification may never come. Windows: the runner forwards the
+  top-level window's `WM_SHOWWINDOW` and `WM_SIZE` to the engine for the view, which it counts as hidden only once
+  sized to zero; the module consumes a minimize's `WM_SIZE` so the view keeps its size.
+- Each platform keeps one style record (title bar style everywhere, rounded corners on Windows, effect, tint and
+  brightness on Windows and macOS) and reapplies it whole from a single `apply` routine, so DWM margins on Windows and
+  `isOpaque`/effect views on macOS have one writer. Add a visual setting to that record, never a second code path.
+- Position and size changes surface as one `geometryChanged` that each platform coalesces natively (150 ms after the
+  last `WM_WINDOWPOSCHANGED`, did-move/did-resize, or configure-event); `WindowManager` only debounces the capture on
+  top of it.
+- `getDisplays` and `getCursorPosition` replace `screen_retriever`. Coordinates have a top-left origin at the primary
+  display, in the units `getBounds` uses. On Windows that is physical pixels over the window's current scale for the
+  displays, the cursor and the window alike, so they compare directly; a display's own `scaleFactor` only tells what
+  size the window takes once it lands there, which `calcWindowPosition` centers with. A move onto a monitor with
+  another DPI lets the runner apply the `WM_DPICHANGED` rect and then puts the top-left back where `setBounds` was
+  asked to. `restoredWindowPosition` keeps a saved position only while half of its title bar lies in some display's
+  work area. GDK names no primary monitor on Wayland, so the first one stands in.
+- Windows: with `TitleBarStyle.hidden`, `WM_NCCALCSIZE` takes the frame insets from `AdjustWindowRectExForDpi` and
   keeps the client rect at the top edge (plus the frame height when maximized, so the taskbar stays uncovered; plus
   one physical pixel on Windows 11, which draws the top border only into a non-client strip; none on Windows 10,
   where DWM draws the whole caption over any strip shorter than one). Windows 10 gets its top border the Windows
-  Terminal way instead: the DWM frame is extended over the caption height, the plugin places the Flutter view one
-  physical pixel lower and paints that row black, which DWM treats as alpha 0, and hit-tests it as `HTTOP`; see
-  `plugins/window/README.md`.
-  The plugin therefore owns the view placement on `WM_SIZE`. Fullscreen is emulated by the
-  plugin, which raises `enter-full-screen` and
-  `leave-full-screen` itself and mutes `WM_SIZE` while it is on. The find-running-window IPC
-  (`WindowPluginFindRunningWindow`/`WindowPluginActivateWindow`) registers a window message from the executable path
-  and whitelists it through UIPI so a non-elevated launcher reaches an elevated instance.
+  Terminal way instead: while no accent effect is on, the DWM frame is extended over the caption height, the module
+  places the Flutter view one physical pixel lower, paints that row black, which DWM treats as alpha 0, and hit-tests
+  it as `HTTOP`. The module therefore owns the view placement on `WM_SIZE`. Mica extends the whole frame, under which
+  DWM would draw its own caption buttons, so a hidden title bar under Mica clears `WS_SYSMENU`. Fullscreen is emulated:
+  the module raises `enterFullScreen` and `leaveFullScreen` itself and mutes `WM_SIZE` while it is on. Single instance:
+  the runner calls the exported `flclash_find_running_window`, `flclash_forward_links` and `flclash_activate_window`
+  before any engine exists; the activate message is registered from the executable path and allowed through UIPI, with
+  the links' `WM_COPYDATA`, so a non-elevated launcher reaches an elevated instance. `flclash_find_running_window`
+  first claims a session-local mutex named from the same path: a launch that finds it taken waits up to ten seconds
+  for the other instance's window instead of exiting on the data-directory lock with its link, and an elevated
+  owner's mutex, which a non-elevated launch is denied, counts as taken. The runner's window exists before its engine,
+  and a message it gets until then is dropped with the default answer 0, so each link and the activate message are
+  resent until rust_api answers `HANDLED`.
+- Links (`package:rust_api/link.dart`, which replaced `app_links`) share one buffer in `window/link.rs`: a link that
+  arrives while no Dart listener can take it waits for the next listener, so each is delivered once. The first listen
+  adds the process's own `://` arguments on Windows and Linux. A relaunch forwards its arguments: on Windows by
+  `WM_COPYDATA` from `flclash_forward_links`; on Linux the runner's `command_line` handler activates the `open-link`
+  action, or holds them under the `flclash-pending-links` object data until the module adds it. On macOS the app
+  delegate installs the `kAEGetURL` handler in `applicationWillFinishLaunching`, holds events until the module calls
+  `takePendingLinks`, and posts `FlClashApplicationOpenLink` after. Android links come from `LinkPlugin`, which holds
+  the launch intent and any `onNewIntent` link until Dart calls `takeLinks`. Registering the schemes is not part of
+  this; `LinkManager` drops any scheme outside `protocolSchemes`.
 - Linux: GTK drops the placement of an unmapped window, so `hide` saves the geometry and the `map-event` handler
   applies it, then corrects the placement for 150 ms while the window manager settles (it may place the window
-  after the map handler ran). `isPositionSupported` is X11-only; Wayland owns placement and re-shown windows land where the
-  compositor puts them. Linux supports no effect: GTK 3 has no desktop-neutral blur protocol, so `isEffectSupported`
-  is true only for `none` and the runner keeps the default visual.
-- macOS: `WindowPlugin.instance` is reached from `AppDelegate` for `applicationShouldTerminate` (emits
-  `should-terminate`) and `applicationShouldHandleReopen` (emits `activate`); `MainFlutterWindow` calls
-  `hiddenWindowAtLaunch()` so the first `order` keeps the window hidden until Dart shows it.
-- Window effects (`transparent`, `blur`, `acrylic`, `mica`, `glass`) are capability-gated by `isEffectSupported`; the
-  Flutter content must paint a translucent background for them to show. `ThemeProps.sidebarBlur` (off by default)
-  drives them, taking the material the same release's system apps give their sidebars: `Window.setBlur` tries
-  `glass` then `blur` on macOS (Liquid Glass on 26+, the `.sidebar` vibrancy before) and `mica`, `acrylic`, then
-  `blur` on Windows (Mica on 11, acrylic from 10 1803, the plain accent blur before), and caches only a successful
-  probe, so a platform that answered unsupported is asked again the next time blur is turned on. Linux draws none,
-  as GNOME and KDE draw opaque sidebars. `WindowManager` reapplies it whenever the setting or the app brightness
-  changes and records in `windowBlurProvider` how opaque the sidebar and caption strip keep their own color over the
-  backdrop, null while there is none. Every material keeps that color at 50%, or the rail takes the hue of whatever lies
-  behind the window while the content beside it keeps the theme's; the Windows 10 accent effects also take the same
-  tint natively, as they draw nothing without one. Glass, the macOS vibrancy and Mica each go opaque on their own
-  where the system does (an inactive window, Reduce Transparency, transparency effects off).
+  after the map handler ran). `isPositionSupported` is X11-only; Wayland owns placement and re-shown windows land where
+  the compositor puts them. A tray click reaches the app over D-Bus with no input event, so `focus` presents with the X
+  server time. `startDragging` uses the press a global `button-press-event` emission hook recorded and sends Flutter
+  the release the window manager swallowed. Linux supports no effect: GTK 3 has no desktop-neutral blur protocol.
+- macOS: `MainFlutterWindow` hides itself on its first `order` so the window stays hidden until Dart shows it.
+  `ensureInitialized` makes an `NSVisualEffectView` the window's content view and the Flutter view its subview, as
+  macos_window_utils does for flutter_acrylic: as a sibling beneath the Flutter view it would take the unhandled
+  `mouseDown`s first. `none` masks the material out and parks the view. `glass` holds the Flutter view in an
+  `NSGlassEffectView` as its `contentView`, with the private variant and adaptive appearance copied off the sidebar of a
+  split view laid out offscreen once, so it follows each release's own sidebar; without sidebar glass it is
+  unsupported. `ensureInitialized` also installs the back-buffer guard (`.agents/flutter-upgrade.md`).
+- Window effects (`blur`, `mica`, `glass`) are capability-gated by `isEffectSupported`; the Flutter content must paint a
+  translucent background for them to show. `ThemeProps.sidebarBlur` (off by default) drives them, taking the material
+  the same release's system apps give their sidebars: `Window.setBlur` tries `glass` then `blur` on macOS (Liquid Glass
+  on 26+, the `.sidebar` vibrancy before) and `mica` then `blur` on Windows (Mica on 11, the accent blur before, since
+  Windows 10's acrylic makes the window trail the pointer while dragged), and caches only a successful probe, so a
+  platform that answered unsupported is asked again the next time blur is turned on. Linux draws none, as GNOME and KDE
+  draw opaque sidebars. `WindowManager` reapplies it whenever the setting or the app brightness changes and records in
+  `windowBlurProvider` how opaque the sidebar and caption strip keep their own color over the backdrop, null while
+  there is none. Every material keeps that color at 50%, or the rail takes the hue of whatever lies behind the window
+  while the content beside it keeps the theme's; the Windows 10 accent blur also takes the same tint natively, as it
+  draws nothing without one. Glass, the macOS vibrancy and Mica each go opaque on their own where the system does (an
+  inactive window, Reduce Transparency, transparency effects off).
 - Releases stored `sidebarBlur: true` while the toggle was hidden, so upgrade 4 in `lib/common/migration.dart` turns it
-  off once. With blur off, `WindowManager` still sends its request at startup: the macOS plugin installs its
-  effect view in `ensureInitialized` and leaves it active until the first `setEffect`, so the `none` request is what
-  makes the window opaque and parks the effect view.
+  off once. With blur off, `WindowManager` still sends its request at startup: the macOS effect view stays active
+  from `ensureInitialized` until the first `setEffect`, so the `none` request is what makes the window opaque and
+  parks the effect view.
 
 ## rust_api Crate Layout
 
@@ -1929,8 +2011,77 @@ UTF-8 bytes rather than a `String` so that decoding them stays off the UI isolat
   generic names such as `GuideBlock` out of app code.
 - `hotkey/` registers desktop global shortcuts through `global-hotkey`: `keys` maps Flutter USB HID usages to key
   codes, `owner` runs every registration on the thread the platform binds it to (a dedicated message-loop thread on
-  Windows, the main dispatch queue on macOS, in place on Linux), and `service` owns the registry and forwards presses
+  Windows, in place on the main thread on macOS, in place on Linux), and `service` owns the registry and forwards presses
   to Dart. Linux is X11 only; a Wayland session without XWayland gets an error rather than a silent no-op.
+- macOS main thread: every entry point that touches AppKit or Carbon is `#[frb(sync)]`, so with Flutter 3.50's
+  merged UI and platform threads it already runs on the main thread. `tray/macos` checks `MainThreadMarker` and
+  `hotkey/owner` checks `pthread_main_np`, and each refuses an off-thread call instead of dispatching it. Work that
+  has to run after the call returns, such as tracking a menu, goes to a main run-loop block, not the main dispatch
+  queue, which a nested event loop would hold.
+- `tray/` shows the desktop status item behind `lib/tray.dart`, a library of its own whose `Tray` encodes the menu
+  with ids assigned in pre-order, suppresses an unchanged payload and turns `TraySignal`s back into item callbacks.
+  The calls are synchronous bridge calls, since the UI isolate runs on the platform thread. macOS builds an
+  `NSStatusItem` with self-drawn title and menu rows through `objc2`, and starts menu tracking from a main run-loop
+  block rather than inside the call, because tracking runs a nested event loop. Windows owns the icon from a hidden
+  top-level window on a `tray` thread, which gets `TaskbarCreated`, resume broadcasts and its retry timer there and
+  runs `TrackPopupMenu`; `show` and `hide` call `Shell_NotifyIconW` on the caller's thread so that a hide before
+  `exit` has landed. Linux exports a StatusNotifierItem and its dbusmenu over D-Bus with `ksni`, on a `tray` thread
+  with a current-thread tokio runtime, so it needs neither GTK nor libappindicator: a left click is
+  `TrayIconActivated`, the host shows the menu on a right click, and GNOME shows the item only with the AppIndicator
+  extension.
+- `launch/` covers how the system starts the app. Autostart is the `FlClash` value in the user's Run key plus its
+  `StartupApproved\Run` flag on Windows, `SMAppService.mainApp` on macOS 13 and later (nothing on macOS 12), and
+  `$HOME/.config/autostart/FlClash.desktop` on Linux: the entries the `launch_at_startup` fork wrote, in its value
+  format (the Windows Run value is the bare unquoted path), so an entry an older build registered reads as enabled
+  and is removed on disable. `SMAppService` is not tied to a thread, so these are plain worker-pool calls. It also
+  registers the `clash` URL schemes under `HKCU\Software\Classes` on Windows, and `readLocalMachineDword` is the
+  synchronous HKLM read behind the Helper port and the Smart App Control state. The Linux scheme handler stays in
+  `lib/common/protocol.dart`: it is a desktop file and an `xdg-mime` call, with nothing native to replace.
+- `device/` reports the OS major version `System.init` hands to bootstrap: the macOS major version from
+  `NSProcessInfo` and `RtlGetVersion`'s major version on Windows, which is 10 on Windows 11 as well. Android takes the
+  API level and whether the device is a TV (`FEATURE_TELEVISION` or `FEATURE_LEANBACK`) from `AppPlugin`'s
+  `getDeviceInfo` instead, and Linux reports 0.
+- `fonts/` lists the font families the picker offers, each through the API the engine resolves names with:
+  CoreText on macOS, the DirectWrite system collection (en-us name, else the first) on Windows, scalable fontconfig
+  families on Linux, and the named families of `/system/etc/fonts.xml` on Android. DirectWrite is called through its
+  vtable slots, and `libfontconfig.so.1` is opened at run time, so a host without it gets an empty list and a logged
+  error rather than a library that fails to load. Hidden (dot-prefixed) names and case-insensitive duplicates are
+  dropped and the rest sorted as Dart compares strings.
+- `network/` streams `NetworkState` (on Wi-Fi, behind a VPN) to `ConnectivityManager` on the desktop. Windows registers
+  `NotifyIpInterfaceChange`, `NotifyUnicastIpAddressChange` and `NotifyRouteChange2`, Linux reads rtnetlink and counts
+  only a change in link state, in the address set or in the default routes (wireless events and address lifetime
+  refreshes are not one), and macOS combines `nw_path_monitor` with the `SCDynamicStore` global and per-interface
+  address keys. A burst is coalesced on a `network-watch` thread, read once 300 ms pass quietly or 1 s after it began,
+  and sent even when the state reads the same, because a new address alone still moves the route tracker's host epoch
+  and the Core's network change. A VPN is a PPP or tunnel adapter holding a default route on Windows, the main table's
+  default PPP, TUN or WireGuard interface on Linux, and never on macOS; the Core's own wintun or TUN is not one. Android
+  takes the same events from `DefaultNetworkWatcher` in `AppPlugin`, the app's default network, which is the app's
+  own VPN while it runs.
+- `wifi/` reads the Wi-Fi SSID for on-demand's excluded networks and asks for the location permission it needs.
+  The three calls are async bridge calls, so they run on the flutter_rust_bridge tokio runtime, and each blocking read
+  goes to `spawn_blocking`. macOS keeps a `CLLocationManager` and its delegate on the main thread, reached through
+  the main dispatch queue, because the prompt and the delegate callbacks need the main run loop; a nested event loop
+  that holds the queue only delays the answer. The SSID comes from CoreWLAN, and from macOS 14 only once location is
+  authorized. Windows loads `wlanapi.dll` at run time, since an install without the Wireless LAN feature has none
+  and a load-time import would stop the app from starting, and from build 26100 (24H2) asks for the `wiFiControl`
+  capability through WinRT. Linux asks NetworkManager, iwd and ConnMan over the system D-Bus with `zbus`, then
+  `nmcli`, and needs no permission. Android reads the SSID in the app's `WifiSsidPlugin`; `lib/plugins/wifi_ssid.dart`
+  picks the host.
+- `proxy/` sets the desktop system proxy: `networksetup` for every macOS network service, `gsettings` (GNOME, MATE)
+  or `kwriteconfig6`/`kwriteconfig5` (KDE) on Linux, and WinINet for the LAN and every RAS entry on Windows. With
+  `NetworkProps.pacMode` on it points the system at a PAC URL instead: `pac` serves `NetworkProps.pacScript`, with
+  `%mixed-port%` replaced, from a loopback listener on an ephemeral port that lives as long as the app process, and
+  each start adds a new `?v=` query so a system that caches PAC files by URL fetches the edited script. On
+  Windows a hidden top-level window on its own thread turns a proxy this run set back off at `WM_ENDSESSION`, since
+  shutdown kills the process before the Dart exit path runs. The package installer and uninstaller kill the app and
+  then run `FlClash.exe --clear-stale-proxy`, the installer once the new files are in place; the runner loads
+  `rust_api.dll` and calls its exported `flclash_clear_stale_proxy` before any engine starts, which turns off only a
+  proxy or `/flclash.pac` URL still set to FlClash's `127.0.0.1:<port>` with nothing listening on that port. In the app
+  `SystemProxyQueue` (`lib/common/proxy.dart`) sets the system proxy when the Core starts with it on, and stops it on
+  a stop or exit only when this run set it, since a stop also clears a proxy, PAC or auto-detect setting someone else
+  made. Nothing is stored, so a launch leaves alone the proxy a crashed run left.
+- `window/` drives the desktop window the Flutter view lives in, one submodule per platform (Win32 and DWM, AppKit
+  through `objc2`, GTK through the `-sys` crates). See Desktop Window.
 
 `IpcServer.bind` resolves once the address is bound, `events()` attaches the one event stream, `send` only enqueues
 and is a synchronous call so frames keep the order they were sent in, and `close` joins the thread. A bridge function
@@ -1939,9 +2090,11 @@ surfaces as an unhandled async error instead of reaching the caller. That is why
 everything after it is reported as an event.
 
 What a platform does not use, it does not compile. `interprocess`, `tokio` and `global-hotkey` are declared under
-`cfg(not(target_os = "android"))`, and `ipc/mod.rs` and `hotkey/mod.rs` swap in their `unsupported.rs` there, because
-Android loads the Core in-process and has no global shortcuts. Adding a capability follows the same shape: implement it in its own module, gate the
-dependency by target, and keep the `api/` entry point unconditional so one set of bindings still serves every platform.
+`cfg(not(target_os = "android"))`, `objc2` and its framework crates only for macOS, `ksni` and `zbus` only for Linux
+and `windows` only for Windows, and `ipc/mod.rs`, `hotkey/mod.rs`, `tray/mod.rs` and `wifi/mod.rs` swap in their
+`unsupported.rs` on Android, which loads the Core in-process, has no global shortcuts or status item, and reads the
+SSID in Kotlin. Adding a capability follows the same shape: implement it in its own module, gate the dependency by
+target, and keep the `api/` entry point unconditional so one set of bindings still serves every platform.
 
 `RustLib.init()` runs on every platform in `main`, because the script engine and the editor are shared; the editor
 shows its unavailable state when `RustLib` is not initialized rather than loading the library itself.

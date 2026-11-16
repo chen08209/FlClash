@@ -4,15 +4,14 @@ import 'package:fl_clash/common/window.dart';
 import 'package:fl_clash/models/config.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:screen_retriever/screen_retriever.dart';
+import 'package:rust_api/window.dart';
 
-const _windowChannel = MethodChannel('window');
+import '../helpers/fake_desktop_window.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late List<String> calls;
-  late List<MethodCall> methodCalls;
+  late FakeDesktopWindow fake;
   late bool isVisible;
   late bool isMaximized;
   late bool isFullScreen;
@@ -20,37 +19,22 @@ void main() {
   late Rect bounds;
 
   setUp(() {
-    calls = <String>[];
-    methodCalls = <MethodCall>[];
     isVisible = true;
     isMaximized = false;
     isFullScreen = false;
     isMinimized = false;
     bounds = const Rect.fromLTWH(20, 30, 1000, 800);
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(_windowChannel, (call) async {
-          calls.add(call.method);
-          methodCalls.add(call);
-          return switch (call.method) {
-            'isEffectSupported' => true,
-            'isVisible' => isVisible,
-            'isMaximized' => isMaximized,
-            'isFullScreen' => isFullScreen,
-            'isMinimized' => isMinimized,
-            'getBounds' => <String, double>{
-              'x': bounds.left,
-              'y': bounds.top,
-              'width': bounds.width,
-              'height': bounds.height,
-            },
-            _ => null,
-          };
-        });
-  });
-
-  tearDown(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(_windowChannel, null);
+    fake = FakeDesktopWindow((call) {
+      return switch (call.method) {
+        'isEffectSupported' => true,
+        'isVisible' => isVisible,
+        'isMaximized' => isMaximized,
+        'isFullScreen' => isFullScreen,
+        'isMinimized' => isMinimized,
+        'getBounds' => bounds,
+        _ => null,
+      };
+    }).install();
   });
 
   test('is a singleton so every caller drives the same window', () {
@@ -63,7 +47,7 @@ void main() {
     await Window().show();
 
     expect(
-      calls,
+      fake.methods,
       containsAllInOrder(<String>['show', 'focus', 'setSkipTaskbar']),
     );
     await tester.pump(const Duration(seconds: 1));
@@ -72,7 +56,10 @@ void main() {
   test('hide drops the window off the taskbar', () async {
     await Window().hide();
 
-    expect(calls, containsAllInOrder(<String>['hide', 'setSkipTaskbar']));
+    expect(
+      fake.methods,
+      containsAllInOrder(<String>['hide', 'setSkipTaskbar']),
+    );
   });
 
   // Runs before any probe succeeds: the singleton caches a supported effect.
@@ -82,11 +69,9 @@ void main() {
       return;
     }
     var supported = false;
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(_windowChannel, (call) async {
-          methodCalls.add(call);
-          return call.method == 'isEffectSupported' ? supported : null;
-        });
+    fake.responder = (call) {
+      return call.method == 'isEffectSupported' ? supported : null;
+    };
 
     final first = await Window().setBlur(
       enabled: true,
@@ -103,10 +88,10 @@ void main() {
     expect(first, isNull);
     expect(second, 0.5);
     expect(
-      methodCalls.where((call) => call.method == 'isEffectSupported'),
+      fake.calls.where((call) => call.method == 'isEffectSupported'),
       hasLength(Platform.isWindows ? 4 : 3),
     );
-    expect(methodCalls.last.arguments['effect'], isNot('none'));
+    expect(fake.calls.last.arguments['effect'], isNot('none'));
   });
 
   test('blur respects the platform effect support and brightness', () async {
@@ -119,13 +104,13 @@ void main() {
 
     if (Platform.isLinux) {
       expect(active, isNull);
-      expect(methodCalls, isEmpty);
+      expect(fake.calls, isEmpty);
       return;
     }
 
     expect(active, 0.5);
-    expect(calls.last, 'setEffect');
-    expect(methodCalls.last.arguments, {
+    expect(fake.methods.last, 'setEffect');
+    expect(fake.calls.last.arguments, {
       'effect': Platform.isWindows ? 'mica' : 'glass',
       'tint': Platform.isWindows
           ? tint.withValues(alpha: 0.5).toARGB32()
@@ -144,11 +129,11 @@ void main() {
 
     expect(active, isNull);
     if (Platform.isLinux) {
-      expect(methodCalls, isEmpty);
+      expect(fake.calls, isEmpty);
       return;
     }
 
-    expect(methodCalls.last.arguments, {
+    expect(fake.calls.last.arguments, {
       'effect': 'none',
       'tint': Platform.isWindows
           ? tint.withValues(alpha: 0.5).toARGB32()
@@ -160,7 +145,7 @@ void main() {
   test('close asks the platform to close the window', () async {
     await Window().close();
 
-    expect(calls, ['close']);
+    expect(fake.methods, ['close']);
   });
 
   testWidgets('toggle hides a visible window and shows a hidden one', (
@@ -169,16 +154,16 @@ void main() {
     await Window().toggle();
 
     expect(
-      calls,
+      fake.methods,
       containsAllInOrder(<String>['isVisible', 'hide', 'setSkipTaskbar']),
     );
 
-    calls.clear();
+    fake.calls.clear();
     isVisible = false;
     await Window().toggle();
 
     expect(
-      calls,
+      fake.methods,
       containsAllInOrder(<String>['isVisible', 'show', 'setSkipTaskbar']),
     );
     await tester.pump(const Duration(seconds: 1));
@@ -199,18 +184,21 @@ void main() {
   );
 
   group('restoredWindowPosition', () {
-    const primary = Display(
-      id: 'primary',
-      size: Size(1920, 1080),
-      visiblePosition: Offset.zero,
-      scaleFactor: 1,
+    // Windows measures every display in physical pixels over the window's
+    // current scale; these are for a window at 100%.
+    const primary = DesktopDisplay(
+      bounds: Rect.fromLTWH(0, 0, 1920, 1080),
+      workArea: Rect.fromLTWH(0, 0, 1920, 1040),
+      isPrimary: true,
     );
-    // 2560x1440 physical at 150%, right of the primary: screen_retriever
-    // divides its origin by its own scale.
-    const secondary = Display(
-      id: 'secondary',
-      size: Size(1707, 960),
-      visiblePosition: Offset(1280, 0),
+    const right150 = DesktopDisplay(
+      bounds: Rect.fromLTWH(1920, 0, 2560, 1440),
+      workArea: Rect.fromLTWH(1920, 0, 2560, 1400),
+      scaleFactor: 1.5,
+    );
+    const left150 = DesktopDisplay(
+      bounds: Rect.fromLTWH(-2560, -200, 2560, 1440),
+      workArea: Rect.fromLTWH(-2560, -200, 2560, 1400),
       scaleFactor: 1.5,
     );
 
@@ -225,7 +213,7 @@ void main() {
 
       final position = restoredWindowPosition(
         props,
-        displays: const [primary, secondary],
+        displays: const [primary, right150],
         currentScale: 1,
       );
 
@@ -233,11 +221,111 @@ void main() {
       expect(position.dy, closeTo(150, 0.001));
     });
 
-    test('rejects a position no display shows any more', () {
+    test('places a window saved left of and above the primary', () {
       const props = WindowProps(
         width: 800,
         height: 600,
-        left: 2200,
+        left: -2000 / 1.5,
+        top: -100 / 1.5,
+        scale: 1.5,
+      );
+
+      final position = restoredWindowPosition(
+        props,
+        displays: const [primary, left150],
+        currentScale: 1,
+      );
+
+      expect(position!.dx, closeTo(-2000, 0.001));
+      expect(position.dy, closeTo(-100, 0.001));
+    });
+
+    test('measures in the scale the window starts at', () {
+      const props = WindowProps(
+        width: 800,
+        height: 600,
+        left: 100,
+        top: 50,
+        scale: 1,
+      );
+
+      final position = restoredWindowPosition(
+        props,
+        displays: const [
+          DesktopDisplay(
+            bounds: Rect.fromLTWH(0, 0, 1280, 720),
+            workArea: Rect.fromLTWH(0, 0, 1280, 693),
+            isPrimary: true,
+          ),
+        ],
+        currentScale: 1.5,
+      );
+
+      expect(position!.dx, closeTo(100 / 1.5, 0.001));
+      expect(position.dy, closeTo(50 / 1.5, 0.001));
+    });
+
+    test('rejects a position on a monitor that was unplugged', () {
+      const props = WindowProps(
+        width: 800,
+        height: 600,
+        left: 2200 / 1.5,
+        top: 150 / 1.5,
+        scale: 1.5,
+      );
+
+      expect(
+        restoredWindowPosition(
+          props,
+          displays: const [primary],
+          currentScale: 1,
+        ),
+        isNull,
+      );
+    });
+
+    test('rejects a title bar under the taskbar', () {
+      const props = WindowProps(
+        width: 800,
+        height: 600,
+        left: 400,
+        top: 1045,
+        scale: 1,
+      );
+
+      expect(
+        restoredWindowPosition(
+          props,
+          displays: const [primary],
+          currentScale: 1,
+        ),
+        isNull,
+      );
+    });
+
+    test('rejects a title bar under the menu bar', () {
+      const props = WindowProps(width: 800, height: 600, left: 400, top: 10);
+
+      expect(
+        restoredWindowPosition(
+          props,
+          displays: const [
+            DesktopDisplay(
+              bounds: Rect.fromLTWH(0, 0, 1440, 900),
+              workArea: Rect.fromLTWH(0, 25, 1440, 800),
+              isPrimary: true,
+            ),
+          ],
+        ),
+        isNull,
+      );
+    });
+
+    test('rejects a sliver left on the remaining monitor', () {
+      const props = WindowProps(
+        width: 800,
+        height: 600,
+        left: 1800,
         top: 100,
         scale: 1,
       );
@@ -252,13 +340,57 @@ void main() {
       );
     });
 
+    test('counts a title bar across two displays', () {
+      const props = WindowProps(
+        width: 800,
+        height: 600,
+        left: 1800,
+        top: 100,
+        scale: 1,
+      );
+
+      expect(
+        restoredWindowPosition(
+          props,
+          displays: const [primary, right150],
+          currentScale: 1,
+        ),
+        const Offset(1800, 100),
+      );
+    });
+
+    test('keeps a window that fills the work area exactly', () {
+      const props = WindowProps(
+        width: 1920,
+        height: 1040,
+        left: 0,
+        top: 0,
+        scale: 1,
+      );
+
+      expect(
+        restoredWindowPosition(
+          props,
+          displays: const [primary],
+          currentScale: 1,
+        ),
+        Offset.zero,
+      );
+    });
+
     test('reads a position saved without a scale at the current one', () {
       const props = WindowProps(width: 800, height: 600, left: 100, top: 50);
 
       expect(
         restoredWindowPosition(
           props,
-          displays: const [primary],
+          displays: const [
+            DesktopDisplay(
+              bounds: Rect.fromLTWH(0, 0, 1536, 864),
+              workArea: Rect.fromLTWH(0, 0, 1536, 832),
+              isPrimary: true,
+            ),
+          ],
           currentScale: 1.25,
         ),
         const Offset(100, 50),
@@ -275,7 +407,21 @@ void main() {
       );
 
       expect(
-        restoredWindowPosition(props, displays: const [primary, secondary]),
+        restoredWindowPosition(
+          props,
+          displays: const [
+            DesktopDisplay(
+              bounds: Rect.fromLTWH(0, 0, 1440, 900),
+              workArea: Rect.fromLTWH(0, 25, 1440, 800),
+              scaleFactor: 2,
+              isPrimary: true,
+            ),
+            DesktopDisplay(
+              bounds: Rect.fromLTWH(1440, 0, 1920, 1080),
+              workArea: Rect.fromLTWH(1440, 0, 1920, 1080),
+            ),
+          ],
+        ),
         const Offset(1500, 100),
       );
     });
@@ -297,7 +443,7 @@ void main() {
     isMaximized = true;
 
     expect(await Window().captureNormalGeometry(const WindowProps()), isNull);
-    expect(calls, isNot(contains('getBounds')));
+    expect(fake.methods, isNot(contains('getBounds')));
   });
 
   test('fullscreen and minimized geometry are not captured', () async {
@@ -315,7 +461,7 @@ void main() {
     await Window().showInitFailure(onExit: () async => exits++);
 
     MethodCall callOf(String method) =>
-        methodCalls.firstWhere((call) => call.method == method);
+        fake.calls.firstWhere((call) => call.method == method);
     expect(callOf('setPreventClose').arguments, {'value': true});
     expect(
       (callOf('setTitleBarStyle').arguments as Map)['style'],
@@ -323,16 +469,9 @@ void main() {
       reason: 'the error screen draws no window header of its own',
     );
 
-    for (final event in ['close', 'should-terminate']) {
-      await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .handlePlatformMessage(
-            _windowChannel.name,
-            _windowChannel.codec.encodeMethodCall(
-              MethodCall('onEvent', {'name': event}),
-            ),
-            null,
-          );
-    }
+    fake
+      ..emit(WindowEvent.close)
+      ..emit(WindowEvent.shouldTerminate);
     expect(
       exits,
       2,

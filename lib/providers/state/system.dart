@@ -174,24 +174,6 @@ HotKeyAction getHotKeyAction(Ref ref, HotAction hotAction) {
 }
 
 @riverpod
-bool shouldPatchSystemDns(Ref ref) {
-  final autoSetSystemDns = ref.watch(
-    networkSettingProvider.select((state) => state.autoSetSystemDns),
-  );
-  if (!autoSetSystemDns || ref.watch(safeModeProvider)) {
-    return false;
-  }
-  final isStart = ref.watch(runTimeProvider.select((state) => state != null));
-  final tunEnable = ref.watch(
-    patchClashConfigProvider.select((state) => state.tun.enable),
-  );
-  final authorizationState = ref.watch(authorizedTunEnableProvider);
-  return isStart &&
-      tunEnable &&
-      authorizationState == TunAuthorizationState.authorized;
-}
-
-@riverpod
 SharedState sharedState(Ref ref) {
   ref.watch(loadedLocaleProvider);
   final currentProfile = ref.watch(
@@ -298,4 +280,34 @@ bool suspend(Ref ref) {
   final currentSSID = ref.watch(currentSSIDProvider);
   final excludeSSIDs = ref.watch(excludeSSIDsProvider);
   return excludeSSIDs.contains(currentSSID);
+}
+
+/// Keeps a start on screen for [minimumStart] so a fast restart does not flash.
+@riverpod
+class HeldCoreStatus extends _$HeldCoreStatus {
+  static const minimumStart = Duration(milliseconds: 1500);
+
+  Timer? _hold;
+
+  @override
+  CoreStatus build() {
+    ref.onDispose(() => _hold?.cancel());
+    ref.listen(coreStatusProvider, (_, next) {
+      switch (next) {
+        case CoreStatus.connecting:
+          _hold ??= Timer(minimumStart, () {
+            _hold = null;
+            state = ref.read(coreStatusProvider);
+          });
+          state = next;
+        case CoreStatus.disconnected:
+          _hold?.cancel();
+          _hold = null;
+          state = next;
+        case CoreStatus.connected:
+          if (_hold == null) state = next;
+      }
+    });
+    return ref.read(coreStatusProvider);
+  }
 }

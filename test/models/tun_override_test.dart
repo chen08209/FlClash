@@ -116,13 +116,13 @@ void main() {
       );
     });
 
-    test('a list key without items writes nothing', () {
+    test('a picked list key without items writes the empty list', () {
       expect(
         const ProfileTun().overrideJson({
           TunOverrideKey.disableIcmpForwarding,
           TunOverrideKey.excludeInterface,
         }),
-        {'disable-icmp-forwarding': false},
+        {'disable-icmp-forwarding': false, 'exclude-interface': <String>[]},
       );
     });
   });

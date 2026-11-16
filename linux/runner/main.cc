@@ -6,8 +6,9 @@
 
 int main(int argc, char** argv) {
 #ifdef GDK_WINDOWING_X11
-  // libX11 enables its own locking only from 1.8 on; on older releases the
-  // tray indicator reaching X11 from another thread aborts the process.
+  // libX11 enables its own locking only from 1.8 on. Nothing in the app calls
+  // libX11 off the main thread now that the tray speaks D-Bus, but a plugin
+  // that did would abort the process on an older release.
   XInitThreads();
 #endif
   g_autoptr(MyApplication) app = my_application_new();

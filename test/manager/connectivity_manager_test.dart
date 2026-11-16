@@ -1,7 +1,8 @@
 import 'dart:async';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/manager/connectivity_manager.dart';
+import 'package:fl_clash/plugins/wifi_ssid.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/on_demand.dart';
@@ -10,16 +11,23 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wifi_ssid/wifi_ssid.dart';
+import 'package:rust_api/rust_api.dart' show NetworkState;
+
+const _wifi = NetworkState(wifi: true, vpn: false);
+const _offWifi = NetworkState(wifi: false, vpn: false);
 
 void main() {
+  setUpAll(() {
+    wifiSsidManager.resetForTesting(const AndroidWifiSsidHost());
+  });
+
   late ProviderContainer container;
-  late StreamController<List<ConnectivityResult>> connectivity;
+  late StreamController<NetworkState> connectivity;
 
   setUp(() {
     container = ProviderContainer();
     globalState.container = container;
-    connectivity = StreamController<List<ConnectivityResult>>.broadcast();
+    connectivity = StreamController<NetworkState>.broadcast();
   });
 
   tearDown(() async {
@@ -35,7 +43,7 @@ void main() {
   Future<void> pumpManager(
     WidgetTester tester, {
     required SsidReader readSsid,
-    void Function(List<ConnectivityResult>)? onConnectivityChanged,
+    void Function(NetworkState)? onConnectivityChanged,
     List<String> excludeSSIDs = const ['Home'],
   }) async {
     await tester.pumpWidget(
@@ -57,7 +65,7 @@ void main() {
   testWidgets('publishes the SSID once Wi-Fi is up', (tester) async {
     await pumpManager(tester, readSsid: () async => 'Home');
 
-    connectivity.add([ConnectivityResult.wifi]);
+    connectivity.add(_wifi);
     await tester.pumpAndSettle();
 
     expect(currentSsid(), 'Home');
@@ -66,9 +74,9 @@ void main() {
   testWidgets('clears the SSID when Wi-Fi drops', (tester) async {
     await pumpManager(tester, readSsid: () async => 'Home');
 
-    connectivity.add([ConnectivityResult.wifi]);
+    connectivity.add(_wifi);
     await tester.pumpAndSettle();
-    connectivity.add([ConnectivityResult.mobile]);
+    connectivity.add(_offWifi);
     await tester.pumpAndSettle();
 
     expect(currentSsid(), isNull);
@@ -84,7 +92,7 @@ void main() {
       },
     );
 
-    connectivity.add([ConnectivityResult.mobile]);
+    connectivity.add(_offWifi);
     await tester.pumpAndSettle();
 
     expect(reads, 0);
@@ -103,7 +111,7 @@ void main() {
       },
     );
 
-    connectivity.add([ConnectivityResult.wifi]);
+    connectivity.add(_wifi);
     await tester.pumpAndSettle();
 
     expect(reads, 0);
@@ -119,7 +127,7 @@ void main() {
       readSsid: () async => 'Home',
     );
 
-    connectivity.add([ConnectivityResult.wifi]);
+    connectivity.add(_wifi);
     await tester.pumpAndSettle();
     expect(currentSsid(), isNull);
 
@@ -132,14 +140,14 @@ void main() {
   testWidgets('reads the SSID again once location permission is granted', (
     tester,
   ) async {
-    const channel = MethodChannel('wifi_ssid');
+    const channel = MethodChannel('$packageName/wifi_ssid');
     final messenger = tester.binding.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(channel, (_) async => 0);
     addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
     var permitted = false;
     await pumpManager(tester, readSsid: () async => permitted ? 'Home' : null);
 
-    connectivity.add([ConnectivityResult.wifi]);
+    connectivity.add(_wifi);
     await tester.pumpAndSettle();
     expect(currentSsid(), isNull);
 
@@ -166,7 +174,7 @@ void main() {
       },
     );
 
-    connectivity.add([ConnectivityResult.wifi]);
+    connectivity.add(_wifi);
     await tester.pumpAndSettle();
     expect(currentSsid(), 'Home');
 
@@ -185,7 +193,7 @@ void main() {
       readSsid: () async => throw Exception('Context not available'),
     );
 
-    connectivity.add([ConnectivityResult.wifi]);
+    connectivity.add(_wifi);
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
@@ -202,12 +210,12 @@ void main() {
       },
     );
 
-    connectivity.add([ConnectivityResult.wifi]);
+    connectivity.add(_wifi);
     await tester.pumpAndSettle();
     expect(currentSsid(), 'Home');
 
     shouldFail = true;
-    connectivity.add([ConnectivityResult.wifi]);
+    connectivity.add(_wifi);
     await tester.pumpAndSettle();
 
     expect(currentSsid(), isNull);
@@ -221,9 +229,9 @@ void main() {
     var index = 0;
     await pumpManager(tester, readSsid: () => gates[index++].future);
 
-    connectivity.add([ConnectivityResult.wifi]);
+    connectivity.add(_wifi);
     await tester.pump();
-    connectivity.add([ConnectivityResult.wifi]);
+    connectivity.add(_wifi);
     await tester.pump();
 
     gates[1].complete('Office');
@@ -246,9 +254,9 @@ void main() {
     final gate = Completer<String?>();
     await pumpManager(tester, readSsid: () => gate.future);
 
-    connectivity.add([ConnectivityResult.wifi]);
+    connectivity.add(_wifi);
     await tester.pump();
-    connectivity.add([ConnectivityResult.none]);
+    connectivity.add(_offWifi);
     await tester.pump();
 
     gate.complete('Home');
@@ -272,7 +280,7 @@ void main() {
       },
     );
 
-    connectivity.add([ConnectivityResult.wifi]);
+    connectivity.add(_wifi);
     await tester.pumpAndSettle();
 
     expect(reads, 0);
@@ -280,29 +288,26 @@ void main() {
   });
 
   testWidgets('forwards every result to the callback', (tester) async {
-    final seen = <List<ConnectivityResult>>[];
+    final seen = <NetworkState>[];
     await pumpManager(
       tester,
       readSsid: () async => 'Home',
       onConnectivityChanged: seen.add,
     );
 
-    connectivity.add([ConnectivityResult.wifi]);
+    connectivity.add(_wifi);
     await tester.pumpAndSettle();
-    connectivity.add([ConnectivityResult.none]);
+    connectivity.add(_offWifi);
     await tester.pumpAndSettle();
 
-    expect(seen, [
-      [ConnectivityResult.wifi],
-      [ConnectivityResult.none],
-    ]);
+    expect(seen, [_wifi, _offWifi]);
   });
 
   testWidgets('a read that resolves after disposal is dropped', (tester) async {
     final gate = Completer<String?>();
     await pumpManager(tester, readSsid: () => gate.future);
 
-    connectivity.add([ConnectivityResult.wifi]);
+    connectivity.add(_wifi);
     await tester.pump();
 
     await tester.pumpWidget(const SizedBox.shrink());

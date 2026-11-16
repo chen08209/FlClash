@@ -2,6 +2,54 @@
   "schemaVersion": 2,
   "versions": [
     {
+      "version": "0.9.3",
+      "tag": "v0.9.3",
+      "date": "2026-11-04",
+      "prerelease": false,
+      "groups": [
+        {
+          "type": "feat",
+          "entries": [
+            {
+              "id": "52b975f",
+              "scope": "connections",
+              "text": "Merged requests and connections; quick edit lists"
+            },
+            {
+              "id": "bb47f2c",
+              "scope": "ui",
+              "text": "iOS 27 transitions, press and text selection; smoother pages"
+            },
+            {
+              "id": "b8f84b3",
+              "scope": "update",
+              "text": "Download and install updates in the app"
+            },
+            {
+              "id": "2a5a42c",
+              "scope": "core",
+              "text": "One delay test timeout; VPN crash and startup fixes"
+            }
+          ]
+        },
+        {
+          "type": "fix",
+          "entries": [
+            {
+              "id": "7d5db7e",
+              "scope": "core",
+              "text": "Auto-select leaves an unusable first node at once"
+            },
+            {
+              "id": "63aaf6d",
+              "scope": "access",
+              "text": "Keep selections a filter hides"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.9.2",
       "tag": "v0.9.2",
       "date": "2026-10-24",

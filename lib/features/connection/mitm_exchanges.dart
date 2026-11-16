@@ -159,7 +159,7 @@ class _MitmExchangeItem extends ConsumerWidget {
               .of(context)
               .copyWith(color: colorScheme.onSurfaceVariant),
         ),
-        onTap: () => showInSheet<void>(
+        onTap: () => showNestedSheet<void>(
           context,
           builder: (_) => MitmExchangeView(id: exchange.id),
         ),

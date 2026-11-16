@@ -17,6 +17,8 @@ import 'package:mocktail/mocktail.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
 import '../../helpers/host_scaffold.dart';
+import '../../helpers/core_connections.dart';
+import 'package:fl_clash/features/connection/tracker_speed_ranker.dart';
 
 class _MockCore extends Mock implements CoreHandlerInterface {}
 
@@ -165,8 +167,9 @@ void main() {
   testWidgets('a sheet switching feeds opens each at its own start', (
     tester,
   ) async {
-    when(() => core.getConnections()).thenAnswer(
-      (_) async => [for (var i = 0; i < 100; i++) _request(1000 + i)],
+    whenConnections<RankedTrackerInfos>(
+      core,
+      () async => [for (var i = 0; i < 100; i++) _request(1000 + i)],
     );
     final notifier = container.read(requestsProvider.notifier);
     for (var i = 0; i < 100; i++) {

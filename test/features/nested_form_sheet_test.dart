@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -180,7 +179,7 @@ void main() {
   testWidgets('closing with changes asks before saving them', (tester) async {
     final harness = _NestedSheetHarness();
     await harness.pump(tester);
-    final l = AppLocalizations.current;
+    final l = currentAppLocalizations;
 
     await harness.mutate(tester);
     await harness.closeBySystemBack(tester);
@@ -198,7 +197,7 @@ void main() {
   testWidgets('declining the save closes without saving', (tester) async {
     final harness = _NestedSheetHarness();
     await harness.pump(tester);
-    final l = AppLocalizations.current;
+    final l = currentAppLocalizations;
 
     await harness.mutate(tester);
     await tester.tap(find.byTooltip(l.close));
@@ -213,7 +212,7 @@ void main() {
   testWidgets('dismissing the save prompt keeps the form open', (tester) async {
     final harness = _NestedSheetHarness();
     await harness.pump(tester);
-    final l = AppLocalizations.current;
+    final l = currentAppLocalizations;
 
     await harness.mutate(tester);
     await harness.closeBySystemBack(tester);
@@ -231,7 +230,7 @@ void main() {
   ) async {
     final harness = _NestedSheetHarness();
     await harness.pump(tester, size: const Size(400, 800));
-    final l = AppLocalizations.current;
+    final l = currentAppLocalizations;
 
     harness.container
         .read(proxyGroupProvider.notifier)
@@ -255,7 +254,7 @@ void main() {
   ) async {
     final harness = _NestedSheetHarness()..saves = false;
     await harness.pump(tester);
-    final l = AppLocalizations.current;
+    final l = currentAppLocalizations;
 
     await harness.mutate(tester);
     await harness.closeBySystemBack(tester);

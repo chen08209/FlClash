@@ -3,11 +3,12 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:fl_clash/common/app_localizations.dart';
+import 'package:fl_clash/common/exception.dart';
 import 'package:fl_clash/common/l10n_labels.dart';
 import 'package:fl_clash/common/request.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -16,7 +17,7 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/about.dart';
 import 'package:fl_clash/views/config/rules.dart';
 import 'package:fl_clash/views/config/scripts.dart';
-import 'package:fl_clash/views/profiles/extend/standard.dart';
+import 'package:fl_clash/views/profiles/extend/added_rules.dart';
 import 'package:fl_clash/views/proxies/proxies.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
@@ -167,7 +168,7 @@ void main() {
       ),
     );
     await tester.pump();
-    final l10n = AppLocalizations.current;
+    final l10n = currentAppLocalizations;
 
     await openProxiesMenu(tester);
     expect(inMenu(find.text(l10n.iconStyle)), findsOneWidget);
@@ -205,7 +206,7 @@ void main() {
       ),
     );
     await tester.pump();
-    final l10n = AppLocalizations.current;
+    final l10n = currentAppLocalizations;
 
     await openProxiesMenu(tester);
     await tester.tap(inMenu(find.text(l10n.sort)));
@@ -568,7 +569,7 @@ void main() {
           child: ProfileIdProvider(
             profileId: profile.id,
             child: const HostScaffold(
-              body: CustomScrollView(slivers: [StandardContent()]),
+              body: CustomScrollView(slivers: [AddedRulesContent()]),
             ),
           ),
         ),
@@ -576,7 +577,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byType(StandardContent), findsOneWidget);
+    expect(find.byType(AddedRulesContent), findsOneWidget);
     expect(find.text('added0.com'), findsOneWidget);
     expect(tester.takeException(), null);
 
@@ -626,14 +627,14 @@ void main() {
           child: ProfileIdProvider(
             profileId: profile.id,
             child: const HostScaffold(
-              body: CustomScrollView(slivers: [StandardContent()]),
+              body: CustomScrollView(slivers: [AddedRulesContent()]),
             ),
           ),
         ),
       ),
     );
     await tester.pump();
-    final l10n = AppLocalizations.current;
+    final l10n = currentAppLocalizations;
     expect(find.text(l10n.followProfile), findsOneWidget);
 
     await tester.tap(find.text(l10n.matchTarget));
@@ -647,6 +648,109 @@ void main() {
     expect(container.read(profilesProvider).first.matchTarget, 'HK');
     expect(find.text('HK'), findsOneWidget);
     expect(tester.takeException(), null);
+  });
+
+  group('a profile running a script', () {
+    final profile = Profile.normal().copyWith(
+      scriptId: 7,
+      matchTarget: 'Before',
+    );
+
+    Future<ProviderContainer> pumpMatchTarget(
+      WidgetTester tester,
+      AsyncValue<ClashConfig?> scripted,
+    ) async {
+      final container = _containerFor(
+        tester,
+        profiles: [profile],
+        overrides: [
+          currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+          profileRulesProvider.overrideWith2(
+            (_) => _TestProfileAddedRules(const []),
+          ),
+          globalRulesProvider.overrideWith(() => _TestGlobalRules(const [])),
+          profileDisabledRuleIdsProvider.overrideWith2(
+            (_) => _TestProfileDisabledRuleIds(const []),
+          ),
+          clashConfigProvider(profile.id).overrideWithValue(
+            const AsyncData(
+              ClashConfig(
+                proxyGroups: [
+                  ProxyGroup(id: 1, name: 'Before', type: GroupType.Selector),
+                ],
+              ),
+            ),
+          ),
+          scriptOutboundsProvider(profile.id).overrideWithValue(scripted),
+        ],
+      );
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: TestApp(
+            child: ProfileIdProvider(
+              profileId: profile.id,
+              child: const HostScaffold(
+                body: CustomScrollView(slivers: [AddedRulesContent()]),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.text(currentAppLocalizations.matchTarget));
+      await tester.pumpAndSettle();
+      return container;
+    }
+
+    testWidgets('picks a MATCH-TARGET from what the script leaves', (
+      tester,
+    ) async {
+      await pumpMatchTarget(
+        tester,
+        const AsyncData(
+          ClashConfig(
+            proxyGroups: [
+              ProxyGroup(id: 2, name: 'After', type: GroupType.URLTest),
+            ],
+          ),
+        ),
+      );
+
+      expect(find.byType(SelectionSheet<String>), findsOneWidget);
+      expect(find.text('After'), findsOneWidget);
+      expect(find.text('Before'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(SelectionSheet<String>),
+          matching: find.text('Before'),
+        ),
+        findsNothing,
+      );
+      expect(tester.takeException(), null);
+    });
+
+    testWidgets('a script that fails leaves only following the profile', (
+      tester,
+    ) async {
+      final container = await pumpMatchTarget(
+        tester,
+        const AsyncError(
+          MessageException('main is not a function'),
+          StackTrace.empty,
+        ),
+      );
+      final l10n = currentAppLocalizations;
+
+      expect(find.byType(SelectionSheet<String>), findsNothing);
+      expect(find.text(l10n.scriptFailed), findsOneWidget);
+      expect(find.text('main is not a function'), findsOneWidget);
+
+      await tester.tap(find.text(l10n.followProfile).last);
+      await tester.pumpAndSettle();
+      expect(container.read(profilesProvider).first.matchTarget, isNull);
+      expect(tester.takeException(), null);
+    });
   });
 
   testWidgets('the global added rules page opens where they are added in a '
@@ -677,14 +781,14 @@ void main() {
           child: ProfileIdProvider(
             profileId: profile.id,
             child: const HostScaffold(
-              body: CustomScrollView(slivers: [StandardContent()]),
+              body: CustomScrollView(slivers: [AddedRulesContent()]),
             ),
           ),
         ),
       ),
     );
     await tester.pump();
-    final l10n = AppLocalizations.current;
+    final l10n = currentAppLocalizations;
 
     await tester.tap(find.text(l10n.controlGlobalAddedRules));
     await tester.pumpAndSettle();

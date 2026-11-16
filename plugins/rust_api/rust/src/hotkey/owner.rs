@@ -1,7 +1,6 @@
 //! `global-hotkey` binds registrations to a thread: on Windows the hidden
 //! window must be created and pumped by one thread, and on macOS Carbon wants
-//! the main thread. `with_registry` runs the caller's closure wherever the
-//! platform requires; flutter_rust_bridge otherwise calls from a worker pool.
+//! the main thread, where the synchronous bridge call already runs.
 
 use super::service::Registry;
 
@@ -45,19 +44,16 @@ mod direct {
 #[cfg(target_os = "macos")]
 mod macos {
     use super::Registry;
-    use dispatch2::DispatchQueue;
 
     pub fn with_registry<T, F>(f: F) -> Result<T, String>
     where
         T: Send + 'static,
         F: FnOnce(&mut Registry) -> T + Send + 'static,
     {
-        if unsafe { libc::pthread_main_np() } != 0 {
-            return super::shared::locked(f);
+        if unsafe { libc::pthread_main_np() } == 0 {
+            return Err("Hotkeys must be registered from the main thread".into());
         }
-        let mut result = None;
-        DispatchQueue::main().exec_sync(|| result = Some(super::shared::locked(f)));
-        result.unwrap_or_else(|| Err("Main-thread dispatch did not run".into()))
+        super::shared::locked(f)
     }
 }
 

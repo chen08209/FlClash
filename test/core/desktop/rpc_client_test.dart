@@ -7,6 +7,7 @@ import 'package:fl_clash/core/desktop/rpc_client.dart';
 import 'package:fl_clash/core/event.dart';
 import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/core/spill.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 
@@ -19,6 +20,31 @@ Future<Map<String, Object?>> _sentRequest(
   await pumpEventQueue();
   return jsonDecode(transport.sentMessages.single) as Map<String, Object?>;
 }
+
+Uint8List _connectionsFrame(Object? id, int count) {
+  final frame = utf8.encode(
+    jsonEncode({
+      'id': id,
+      'result': {
+        'connections': [
+          for (var index = 0; index < count; index++)
+            {
+              'id': 'connection-$index',
+              'start': '2026-01-01T00:00:00Z',
+              'metadata': {'network': 'tcp', 'host': 'host-$index.example.com'},
+              'chains': ['proxy'],
+              'rule': 'MATCH',
+              'rulePayload': '',
+            },
+        ],
+      },
+    }),
+  );
+  expect(frame.length, greaterThanOrEqualTo(coreIsolateDecodeBytes));
+  return frame;
+}
+
+Object? _connectionCount(Object? result) => trackerInfosOf(result).length;
 
 void main() {
   test('reads a response the Core spilled to a file', () async {
@@ -81,6 +107,74 @@ void main() {
       ),
     );
     expect(client.pendingCount, 0);
+    await client.close();
+    await transport.close();
+  });
+
+  test(
+    'decodes a large response in an isolate ahead of a later disconnect',
+    () async {
+      final transport = FakeDesktopCoreTransport.connected();
+      final client = CoreRpcClient(transport);
+      final invocation = client.invoke(method: CoreMethod.connectionList);
+      final request = await _sentRequest(transport);
+      final frame = _connectionsFrame(request['id'], 600);
+
+      transport.addFrame(frame);
+      transport.disconnect(1);
+
+      final result = await invocation;
+      expect(
+        result,
+        isA<List<TrackerInfo>>().having((l) => l.length, 'length', 600),
+      );
+      expect(client.pendingCount, 0);
+      await client.close();
+      await transport.close();
+    },
+  );
+
+  test(
+    'a disconnect held behind a large response spares the next connection',
+    () async {
+      final transport = FakeDesktopCoreTransport.connected();
+      final client = CoreRpcClient(transport);
+      final listing = client.invoke(method: CoreMethod.connectionList);
+      final request = await _sentRequest(transport);
+
+      transport.addFrame(_connectionsFrame(request['id'], 20000));
+      transport.disconnect(1);
+      await pumpEventQueue();
+      transport.connect(generation: 2);
+      final initialized = client.invoke(method: CoreMethod.coreInitialized);
+      await pumpEventQueue();
+      final next =
+          jsonDecode(transport.sentMessages.last) as Map<String, Object?>;
+      transport.addJson({'id': next['id'], 'result': true});
+
+      expect(await initialized, isTrue);
+      expect(
+        await listing,
+        isA<List<TrackerInfo>>().having((l) => l.length, 'length', 20000),
+      );
+      expect(client.pendingCount, 0);
+      await client.close();
+      await transport.close();
+    },
+  );
+
+  test('runs a request\'s own model on a large response', () async {
+    final transport = FakeDesktopCoreTransport.connected();
+    final client = CoreRpcClient(transport);
+    final invocation = client.invoke(
+      method: CoreMethod.connectionList,
+      model: _connectionCount,
+    );
+    final request = await _sentRequest(transport);
+
+    transport.addFrame(_connectionsFrame(request['id'], 600));
+
+    expect(await invocation, 600);
     await client.close();
     await transport.close();
   });

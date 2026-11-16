@@ -270,17 +270,15 @@ class CodeForgeContextMenuRequest {
 
   const CodeForgeContextMenuRequest({
     required this.globalPosition,
-    required TextSelection Function() selection,
-    required int Function() length,
-    required Rect? Function() selectionRect,
+    required this._selection,
+    required this._length,
+    required this._selectionRect,
     required this.readOnly,
     required this.copy,
     required this.cut,
     required this.paste,
     required this.selectAll,
-  }) : _selection = selection,
-       _length = length,
-       _selectionRect = selectionRect;
+  });
 }
 
 class CodeForgeScrollbarDetails {

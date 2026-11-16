@@ -64,13 +64,8 @@ brew install --cask flclash
 
 **Linux tray icon**
 
-The `.deb` package installs its own dependencies. With the AppImage or the `.rpm`, install the AyatanaAppIndicator
-library so the tray icon can show:
-
-```bash
-sudo apt-get install libayatana-appindicator3-1   # Debian and Ubuntu
-sudo dnf install libayatana-appindicator-gtk3     # Fedora
-```
+The tray icon is a StatusNotifierItem. KDE Plasma, XFCE and most panels show it as is; GNOME needs the
+AppIndicator and KStatusNotifierItem Support extension.
 
 **Unattended desktop**
 
@@ -103,7 +98,7 @@ adb shell am start -a com.follow.clash.action.TOGGLE
 
 ## Build from source
 
-You need [Flutter](https://docs.flutter.dev/get-started/install) 3.47 (release builds use 3.47.6),
+You need [Flutter](https://docs.flutter.dev/get-started/install) 3.50 (release builds use 3.50.0),
 [Go](https://go.dev/dl/) 1.27 and [Rust](https://rustup.rs/) installed through rustup. Each platform builds on its own
 host, except Android, which builds anywhere.
 

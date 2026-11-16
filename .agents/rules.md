@@ -93,7 +93,7 @@ own: a long press on Android selects a word.
 Flutter lengths are logical pixels, the unit Android calls dp. Comments, test names, docs and reports give them in dp,
 as in `48 dp`, never px: a reader takes px for physical pixels and misjudges the size by the device pixel ratio. Write
 "physical pixel" in full where the code really works in them, as the hairline snapping in
-`prism_ui/lib/list_row_separator.dart` and the Win32 frame metrics in `plugins/window` do; raster image sizes in
+`prism_ui/lib/list_row_separator.dart` and the Win32 frame metrics in `plugins/rust_api/rust/src/window/windows` do; raster image sizes in
 `tool/` and CSS under `site/` keep px. `test/lint/length_unit_test.dart` fails on a number followed by px in `lib/`
 and `test/`.
 
@@ -103,7 +103,7 @@ tool plugins setup.dart` runs before `flutter analyze`.
 These directories are excluded from analysis:
 
 - `build/**`
-- `lib/l10n/intl/**`
+- `lib/l10n/**`
 - `lib/**/generated/**`
 - `plugins/**`
 - the platform runner directories: `android/`, `ios/`, `web/`, `windows/`, `macos/`, `linux/`
@@ -318,36 +318,40 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   Consistency in `.agents/architecture.md`); the Core stamps every answer with its counters and hits and checks the
   hits again on a move, so do not add a change signal, a trigger counter, or a `coreStatusProvider` watch of your
   own.
-- Presentation smoothing such as `CoreStatusButton`'s connecting hold must remain local display state. It must not delay or
+- Presentation smoothing such as `LiveStatusButton`'s starting hold must remain local display state. It must not delay or
   overwrite `coreStatusProvider`, and a real failure must bypass/cancel the hold immediately.
 - Safe mode (`SAFE_MODE` define, see the safe mode section of `.agents/architecture.md`) is consulted by each host
   integration at its owner, never by rewriting the user's settings. `safeModeBuild` is for handles created before the
   container exists; everything else reads `safeModeProvider` so a test can override it.
 - `Tray.hide()` is idempotent on all three desktop platforms and returns native state to "`show` was never called".
   `AppTray.shutdown()` latches, so no later `update()`/`updateTitle()` can resurrect the icon once shutdown begins.
-  Keep it that way; a resurrected icon outlives `exit(0)` as a Windows ghost icon, because `setPreventClose(true)`
-  means `WM_DESTROY` never runs.
-- The `tray` plugin owns call ordering, idempotency, serialization, and unchanged-payload suppression. Application code
-  declares desired state through one `Tray.show(TraySpec)` call and must not add platform branches to work around
-  ordering. Platform branches in `lib/common/tray.dart` are only for deliberate product differences (macOS speed title
-  and group submenus); query `Tray.instance.capabilities` for ability differences.
+  Keep it that way; a resurrected icon outlives `exit(0)` as a Windows ghost icon, because nothing deletes it once the
+  process is gone. That is also why Windows `hide_tray` deletes the icon on the calling thread instead of posting to
+  the tray thread.
+- `Tray` (`package:rust_api/tray.dart`) owns call ordering, idempotency, serialization, and unchanged-payload
+  suppression. Application code declares desired state through one `Tray.show(TraySpec)` call and must not add
+  platform branches to work around ordering. Platform branches in `lib/common/tray.dart` are only for deliberate
+  product differences (macOS speed title and group submenus); query `Tray.instance.capabilities` for ability
+  differences.
 - Every native `show` returns whether the tray accepted the payload, and reports `false` instead of showing a broken
   icon. `Tray` caches the payload signature only on `true`, so a rejected `show` is retried by the next update rather
-  than suppressed until restart. Windows accepts a payload the shell refused, as at sign-in, and retries the icon
-  natively until it lands, so `Tray` still treats it as visible and `hide` reaches native to delete an add that may
-  have landed. Any test that mocks the `tray` channel must return `true` from `show`.
+  than suppressed until restart. Windows and Linux accept a payload the shell refused, as at sign-in, and retry the
+  icon natively until it lands, so `Tray` still treats it as visible and `hide` reaches native to delete an add that
+  may have landed. A test replaces the native side with `Tray.instance.resetForTesting(host)`, as
+  `test/helpers/fake_tray_host.dart` does.
 - Reading the Wi-Fi SSID is opt-in work, not ambient state. `ConnectivityManager` reads it only while `excludeSSIDs` is
   non-empty, because that list is its only consumer through `suspendProvider`, and the read costs a blocking platform
   call plus a location permission on Android and macOS. A second consumer must widen that gate, not drop it.
-- On Android the `wifi_ssid` permission is only `granted` once `ACCESS_BACKGROUND_LOCATION` is held too (Q+). Fine
+- On Android the SSID permission is only `granted` once `ACCESS_BACKGROUND_LOCATION` is held too (Q+). Fine
   location alone reads the SSID in the foreground but returns `UNKNOWN_SSID` once the app is backgrounded, which is
-  where on-demand spends most of its time. `getSsid` itself only needs fine location, so the split stays inside the
-  plugin.
-- No `wifi_ssid` implementation may answer `getSsid` on the platform thread. Android resolves through a network callback
-  with a timeout, Linux through `g_task_run_in_thread`, and macOS through `ssidQueue` after checking the location
-  authorization, because CoreWLAN reaches `wifid` over XPC and a wedged daemon would freeze the window. Windows is the
-  outstanding exception: `WlanQueryInterface` still runs inline, since replying off-thread there needs a window-message
-  hop that the plugin API does not provide.
+  where on-demand spends most of its time. `getSsid` itself only needs fine location, so the split stays inside
+  `WifiSsidPlugin`.
+- No SSID implementation may answer `getSsid` on the platform thread. Android resolves through a network callback with
+  a timeout. The desktop reads come from rust_api's `wifi` module through async bridge calls, which run on the
+  flutter_rust_bridge runtime and do the blocking part (CoreWLAN, `WlanQueryInterface`, `nmcli`) in
+  `spawn_blocking`. On macOS only the location work hops to the main queue: the `CLLocationManager`, its delegate and
+  the pending requests live there, and the SSID read waits for that answer before it asks CoreWLAN, which reaches
+  `wifid` over XPC, so a wedged daemon would freeze the window.
 - Android's `system` nameserver resolves only through the DNS `NetworkObserver` reports; mihomo builds it with no
   fallback, so with no list every lookup through it fails at once. The Core tests delays and updates providers with no
   service running, so the observer lives for the process from the first `init` or native `quickSetup` and never sends
@@ -506,9 +510,9 @@ and is therefore null on every test host, so a `CoreLib()` built from it silentl
 path. `CoreLib.scoped` binds an explicit `Service` instead; reset the singleton with `CoreLib.resetInstance()` in `tearDown`.
 
 Three globals in `lib/common` reach real host state and carry a `@visibleForTesting` seam to stand in front of it:
-`AutoLaunch.launcher`, `listNetworkInterfaces` and `LinkManager.uriLinkStream`. Replace the launcher in particular — every
-`enable`/`disable`/`isEnabled` writes the actual autostart entry (a LaunchAgents plist, a `.desktop` file or a registry
-key), so a test that skips the seam registers the test binary on the machine that ran it. `updateStatus` returns early
+`AutoLaunch.entry`, `listNetworkInterfaces` and `LinkManager.uriLinkStream`. Replace the entry in particular — every
+`setEnabled`/`isEnabled` reaches the actual autostart entry (the macOS login item, a `.desktop` file or a registry
+value), so a test that skips the seam registers the test binary on the machine that ran it. `updateStatus` returns early
 under `kDebugMode`, which is always true beneath `flutter test`, so its remaining branches cannot be reached from a test
 at all; `test/common/launch_test.dart` pins the early return instead.
 
@@ -545,8 +549,8 @@ The same seam carries the two other places a platform decision changed what was 
 takes nullable `isAndroid`/`isMacOS` that fall back to the host. Every test names the platform it means, because
 `debugDefaultTargetPlatformOverride` does not move `system` and a suite that leaves it to the host asserts the macOS
 shape on a developer machine and the Linux one on CI. `WindowHeaderContainer` builds the caption buttons on every
-non-macOS host, so a test mounting it needs `TestApp` for `AppLocalizations` and a `window` channel mock that
-answers `isMaximized`/`isAlwaysOnTop` with a bool.
+non-macOS host, so a test mounting it needs `TestApp` for `AppLocalizations` and an installed `FakeDesktopWindow`
+(`test/helpers/fake_desktop_window.dart`).
 
 Auto-dispose providers need a container-level hold before a test reads them back. `proxyGroupProvider`, `ruleProvider`,
 `itemsProvider` and friends mix in `AutoDisposeNotifierMixin`, so a `container.read` that no widget is currently watching
@@ -562,9 +566,8 @@ and are out of scope.
 
 An `IconButton` whose icon is an icon needs a `tooltip`. It is the button's only accessible name — without it TalkBack and
 VoiceOver announce nothing and the desktop build shows no hover hint. `test/lint/icon_button_tooltip_test.dart` enforces
-it and skips exactly two shapes: an `icon:` holding a `Text`, which is already a visible label, and
-`views/dashboard/widgets/core_status_button.dart`, which takes its label from an enclosing `Tooltip` (a second test fails
-if that wrapper disappears). Reuse an existing string before adding one; a label that depends on state goes on the button
+it and skips one shape: an `icon:` holding a `Text`, which is already a visible label. Reuse an existing string before
+adding one; a label that depends on state goes on the button
 inside the `ValueListenableBuilder`, not outside it, or the tooltip cannot follow the icon. A row of window buttons hidden
 behind `system.isMacOS` is unreachable from a macOS test host, so extract it — `WindowHeaderActions` is the pattern.
 
@@ -714,30 +717,36 @@ name, so it can run again on a database that went through part of it. Its tests 
 
 Do not manually edit generated files under:
 
-- `lib/l10n/l10n.dart`
+- `lib/l10n/`
 - `lib/models/generated/`
 - `lib/providers/generated/`
 - `lib/database/generated/`
-- `lib/l10n/intl/`
 
 After schema, model, or provider changes, run build generation and include focused tests when behavior changes.
 
-`lib/l10n/l10n.dart` is the one file that still imports `package:flutter/material.dart`.
-`intl_utils` hardcodes that import in its own template, so regenerating rewrites it and
-there is nothing to fix here; `test/lint/design_package_test.dart` exempts the generated
-l10n paths for that reason. It only needs what `package:flutter/widgets.dart` exports.
+Flutter's `gen-l10n` writes `lib/l10n/` from `arb/` with the options in `l10n.yaml`. `pubspec.yaml` sets
+`generate: true`, so `flutter pub get` regenerates it; `flutter gen-l10n` does so on demand. The generated
+`AppLocalizations.localizationsDelegates` lists the Material and Cupertino delegates, so the app registers its own list:
+`appLocalizationsDelegate`, `AppUiLocalizations.delegate` and `GlobalWidgetsLocalizations.delegate`.
+`appLocalizationsDelegate` loads through `loadAppLocalizations`, which records the locale `currentAppLocalizations`
+reads; the generated `AppLocalizations.delegate` would leave it behind.
 
 The project has no design library: `material_ui`, `cupertino_ui` and the SDK's
 `material.dart` and `cupertino.dart` are banned by the same test, and the lock file holds
 neither package. Widgets come from `package:flutter/widgets.dart` and components, the
 `ThemeData` and the `ColorScheme` from `prism_ui`.
 
-Strings live in `arb/intl_{en,zh_CN,ja,ru,fr,es,ko}.arb` — flat JSON, no `@` metadata. Add a key to all seven, then regenerate with
-`dart run intl_utils:generate`, which rewrites `lib/l10n/`. A key present in only some locales silently falls back to
-English at runtime, so add the translation rather than leaving it out.
+Strings live in `arb/intl_{en,zh,ja,ru,fr,es,ko}.arb` — flat JSON. Add a key to all seven, then regenerate with
+`flutter gen-l10n`. A key missing from a locale is generated with its English text and reported as untranslated, so add
+the translation rather than leaving it out. The only metadata is in `intl_en.arb`: a message with more than one
+placeholder declares them in the order the text first uses them, under `@key.placeholders`, since `gen-l10n` otherwise
+orders the parameters alphabetically and, as they are untyped `Object`s, a call written in text order would pass them
+swapped. `test/lint/dynamic_message_key_test.dart` enforces it. Chinese is `zh`; a setting saved as `zh_CN` by older
+versions still resolves to it.
 
 Labels for enum values go through the exhaustive switches in `lib/common/l10n_labels.dart`, never
-`Intl.message(<runtime string>)`. A key built from an enum name or a stored string is invisible to the analyzer, and a
-failed lookup returns the key itself, so a stale key ships as `routeMode_config` in the UI rather than throwing.
+`Intl.message(<runtime string>)`. A key built from an enum name or a stored string is invisible to the analyzer, and
+`Intl.message` has no messages to look up since generation moved to `gen-l10n`, so it returns the key itself and ships
+`routeMode_config` in the UI rather than throwing.
 `test/lint/dynamic_message_key_test.dart` fails on any `Intl.message(` in `lib` outside the generated code, and checks
 that every locale carries the same keys and has a display name.

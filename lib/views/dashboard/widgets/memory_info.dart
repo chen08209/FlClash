@@ -130,8 +130,8 @@ class _MemoryInfoState extends ConsumerState<MemoryInfo>
     }
     _detailOpen = true;
     stopPolling();
-    await showSheet(
-      context: context,
+    await showNestedSheet(
+      context,
       builder: (_) => MemoryDetailSheet(
         initial: _memoryStateNotifier.value,
         memoryReader: widget.memoryReader,

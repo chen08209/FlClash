@@ -2,7 +2,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
-import 'package:tray/tray.dart';
+import 'package:rust_api/tray.dart';
 
 import 'app_localizations.dart';
 import 'l10n_labels.dart';

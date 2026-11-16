@@ -388,12 +388,14 @@ _RouteSnapshot _$RouteSnapshotFromJson(Map<String, dynamic> json) =>
     _RouteSnapshot(
       coreEpoch: (json['core-epoch'] as num?)?.toInt() ?? 0,
       routeVersion: (json['route-version'] as num?)?.toInt() ?? 0,
+      running: json['running'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$RouteSnapshotToJson(_RouteSnapshot instance) =>
     <String, dynamic>{
       'core-epoch': instance.coreEpoch,
       'route-version': instance.routeVersion,
+      'running': instance.running,
     };
 
 _RouteHit _$RouteHitFromJson(Map<String, dynamic> json) => _RouteHit(

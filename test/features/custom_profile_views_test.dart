@@ -6,7 +6,6 @@ import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart' hide FileInfo;
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/action.dart';
@@ -134,7 +133,7 @@ Future<void> _dismissSaveBlocked(WidgetTester tester, String reason) async {
   expect(
     find.descendant(
       of: dialog,
-      matching: find.text(AppLocalizations.current.cannotSave),
+      matching: find.text(currentAppLocalizations.cannotSave),
     ),
     findsOneWidget,
   );
@@ -142,7 +141,7 @@ Future<void> _dismissSaveBlocked(WidgetTester tester, String reason) async {
     find.descendant(of: dialog, matching: find.textContaining(reason)),
     findsOneWidget,
   );
-  await tester.tap(find.text(AppLocalizations.current.confirm));
+  await tester.tap(find.text(currentAppLocalizations.confirm));
   await tester.pumpAndSettle();
 }
 
@@ -301,7 +300,7 @@ void main() {
         kind: PointerDeviceKind.mouse,
       );
       await tester.pumpAndSettle();
-      await tester.tap(menuItem(AppLocalizations.current.copy));
+      await tester.tap(menuItem(currentAppLocalizations.copy));
       await tester.pumpAndSettle();
 
       expect(notifier.value.map((rule) => rule.content), [
@@ -327,9 +326,9 @@ void main() {
         kind: PointerDeviceKind.mouse,
       );
       await tester.pumpAndSettle();
-      await tester.tap(menuItem(AppLocalizations.current.delete));
+      await tester.tap(menuItem(currentAppLocalizations.delete));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(AppLocalizations.current.delete));
+      await tester.tap(find.text(currentAppLocalizations.delete));
       await tester.pumpAndSettle();
 
       expect(notifier.value.map((rule) => rule.id), [1, 3]);
@@ -356,7 +355,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(menuItem(AppLocalizations.current.copy), findsOneWidget);
+      expect(menuItem(currentAppLocalizations.copy), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox.shrink());
     });
@@ -370,7 +369,7 @@ void main() {
     await tester.tap(find.byType(Checkbox).at(0));
     await tester.pump();
 
-    expect(find.byTooltip(AppLocalizations.current.copy), findsNothing);
+    expect(find.byTooltip(currentAppLocalizations.copy), findsNothing);
     expect(
       find.descendant(
         of: find.byType(TonalButtonGroup),
@@ -409,9 +408,9 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('Group 2'));
     await tester.pump();
-    await tester.tap(find.byTooltip(AppLocalizations.current.delete));
+    await tester.tap(find.byTooltip(currentAppLocalizations.delete));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(AppLocalizations.current.delete));
+    await tester.tap(find.text(currentAppLocalizations.delete));
     await tester.pumpAndSettle();
 
     expect(notifier.deleted.single, {100, 102});
@@ -439,8 +438,8 @@ void main() {
       final notifier = await _pumpProxyGroups(tester);
 
       await rightClick(tester, 'Group 0');
-      expect(menuItem(AppLocalizations.current.delete), findsOneWidget);
-      await tester.tap(menuItem(AppLocalizations.current.copy));
+      expect(menuItem(currentAppLocalizations.delete), findsOneWidget);
+      await tester.tap(menuItem(currentAppLocalizations.copy));
       await tester.pumpAndSettle();
 
       expect(menu, findsNothing);
@@ -451,7 +450,7 @@ void main() {
       expect(find.text('Group 0-01'), findsOneWidget);
 
       await rightClick(tester, 'Group 0-01');
-      await tester.tap(menuItem(AppLocalizations.current.copy));
+      await tester.tap(menuItem(currentAppLocalizations.copy));
       await tester.pumpAndSettle();
 
       expect(notifier.value.map((group) => group.name), [
@@ -473,7 +472,7 @@ void main() {
       await tester.longPress(find.text('Group 0'));
       await tester.pumpAndSettle();
 
-      expect(menuItem(AppLocalizations.current.copy), findsOneWidget);
+      expect(menuItem(currentAppLocalizations.copy), findsOneWidget);
       expect(notifier.orders, isEmpty);
 
       await tester.pumpWidget(const SizedBox.shrink());
@@ -490,13 +489,13 @@ void main() {
         kind: PointerDeviceKind.mouse,
       );
       await tester.pumpAndSettle();
-      await tester.tap(menuItem(AppLocalizations.current.delete));
+      await tester.tap(menuItem(currentAppLocalizations.delete));
       await tester.pumpAndSettle();
       expect(
-        find.text(AppLocalizations.current.confirmDeleteProxyGroup),
+        find.text(currentAppLocalizations.confirmDeleteProxyGroup),
         findsOneWidget,
       );
-      await tester.tap(find.text(AppLocalizations.current.delete));
+      await tester.tap(find.text(currentAppLocalizations.delete));
       await tester.pumpAndSettle();
 
       expect(notifier.deleted.single, {101});
@@ -515,13 +514,13 @@ void main() {
         kind: PointerDeviceKind.mouse,
       );
       await tester.pumpAndSettle();
-      await tester.tap(menuItem(AppLocalizations.current.delete));
+      await tester.tap(menuItem(currentAppLocalizations.delete));
       await tester.pumpAndSettle();
       expect(
-        find.text(AppLocalizations.current.proxyGroupInUse('Group 1')),
+        find.text(currentAppLocalizations.proxyGroupInUse('Group 1')),
         findsOneWidget,
       );
-      await tester.tap(find.text(AppLocalizations.current.delete));
+      await tester.tap(find.text(currentAppLocalizations.delete));
       await tester.pumpAndSettle();
 
       expect(notifier.deleted.single, {101});
@@ -538,20 +537,20 @@ void main() {
       await tester.pumpAndSettle();
       final delete = find.descendant(
         of: find.byType(EditProxyGroupView),
-        matching: find.text(AppLocalizations.current.delete),
+        matching: find.text(currentAppLocalizations.delete),
       );
       await tester.ensureVisible(delete);
       await tester.pumpAndSettle();
       await tester.tap(delete);
       await tester.pumpAndSettle();
       expect(
-        find.text(AppLocalizations.current.proxyGroupInUse('Group 1')),
+        find.text(currentAppLocalizations.proxyGroupInUse('Group 1')),
         findsOneWidget,
       );
       await tester.tap(
         find.descendant(
           of: find.byType(AlertDialog),
-          matching: find.text(AppLocalizations.current.delete),
+          matching: find.text(currentAppLocalizations.delete),
         ),
       );
       await tester.pumpAndSettle();
@@ -601,7 +600,7 @@ void main() {
       tester,
     ) async {
       await _pumpProxyGroups(tester, pushed: true);
-      final l10n = AppLocalizations.current;
+      final l10n = currentAppLocalizations;
 
       await tester.tap(find.byTooltip(l10n.sort));
       await tester.pumpAndSettle();
@@ -639,7 +638,7 @@ void main() {
   ) async {
     await _pumpProxyGroups(tester);
     tester.view.physicalSize = const Size(1400, 2600);
-    final l10n = AppLocalizations.current;
+    final l10n = currentAppLocalizations;
     Finder row(String title) =>
         find.ancestor(of: find.text(title), matching: find.byType(FormRow));
     Finder valueIn(String title, String value) =>
@@ -721,7 +720,7 @@ void main() {
   ) async {
     await _pumpProxyGroups(tester);
     tester.view.physicalSize = const Size(1400, 2600);
-    final l10n = AppLocalizations.current;
+    final l10n = currentAppLocalizations;
     Finder row(String title) =>
         find.ancestor(of: find.text(title), matching: find.byType(FormRow));
     final addOption = find.widgetWithText(FormRow, l10n.addSettingEntry);
@@ -792,7 +791,7 @@ void main() {
       'reopening', (tester) async {
     await _pumpProxyGroups(tester);
     tester.view.physicalSize = const Size(1400, 2600);
-    final l10n = AppLocalizations.current;
+    final l10n = currentAppLocalizations;
     final titles = [l10n.testUrl, l10n.timeout, l10n.expectedStatus];
     Finder row(String title) =>
         find.ancestor(of: find.text(title), matching: find.byType(FormRow));
@@ -1539,7 +1538,7 @@ void main() {
       ),
     );
     await tester.pump();
-    final l10n = AppLocalizations.current;
+    final l10n = currentAppLocalizations;
     await tester.tap(find.text('Mesh'));
     await tester.pumpAndSettle();
 
@@ -1649,7 +1648,7 @@ void main() {
       ),
     );
     await tester.pump();
-    final l10n = AppLocalizations.current;
+    final l10n = currentAppLocalizations;
     await tester.tap(find.text('Example HTTP'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(

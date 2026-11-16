@@ -36,6 +36,7 @@ class OutboundIpProbe extends _$OutboundIpProbe
         coreEpoch: result.coreEpoch,
         routeVersion: result.routeVersion,
         hits: result.hits,
+        timedOut: result.error == probeErrorTimeout,
       ),
       // A node leaves through the same address whatever it is asked for.
       if (value != null && exit != null && exit != target)

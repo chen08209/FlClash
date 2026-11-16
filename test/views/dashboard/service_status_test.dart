@@ -208,12 +208,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(
-      asked,
-      unorderedEquals([
-        for (final target in ServiceTarget.values.take(4)) target.id,
-      ]),
-    );
+    expect(asked.toSet(), {
+      for (final target in ServiceTarget.values.take(4)) target.id,
+    });
     expect(find.byTooltip('Check all'), findsOneWidget);
     expect(find.text('Check all'), findsNothing);
     expect(tester.takeException(), isNull);
@@ -426,7 +423,7 @@ void main() {
     },
   );
 
-  testWidgets('an address in the sheet opens its quality in a sheet over it', (
+  testWidgets('an address in the sheet opens its quality as its next page', (
     tester,
   ) async {
     final sheet = await openCheckedSheet(
@@ -442,18 +439,20 @@ void main() {
     await tester.pump(commonDuration * 2);
     final title = find.text('Outbound IP');
     expect(title, findsOneWidget);
-    expect(find.byType(ServiceStatusSheet), findsOneWidget);
+    expect(
+      find.byType(ServiceStatusSheet, skipOffstage: false),
+      findsOneWidget,
+    );
     expect(
       Navigator.of(tester.element(title)).widget,
-      isNot(isA<SheetPagesNavigator>()),
+      isA<SheetPagesNavigator>(),
     );
 
-    await tester.tap(find.byTooltip('Close').hitTestable());
+    await tester.tap(find.byTooltip('Back').hitTestable());
     await tester.pump();
-    await tester.pump(commonDuration * 2);
+    await tester.pump(const Duration(seconds: 1));
     expect(find.byType(ServiceStatusSheet), findsOneWidget);
     expect(title, findsNothing);
-    await tester.pump(const Duration(seconds: 1));
   });
 
   const quality = IpQuality(
@@ -1072,19 +1071,25 @@ void main() {
     tester,
   ).read(serviceStatusProvider).entryOf(ServiceTarget.google).phase;
 
-  testWidgets('a check that fails as the proxy starts shows as checking', (
+  Future<void> start(WidgetTester tester) async {
+    setStarted(tester, true);
+    await tester.pump();
+    await tester.pump(probeMoveSettleDuration);
+    await tester.pump();
+  }
+
+  testWidgets('a check that fails once keeps checking for a second answer', (
     tester,
   ) async {
-    var epoch = 1;
+    var failing = true;
     answer(
       (params) => [
         for (final name in params.names)
           _item(
             name,
-            params.proxyName == directOutbound || epoch > 1
+            params.proxyName == directOutbound || !failing
                 ? ServiceProbeStatus.available
                 : ServiceProbeStatus.failed,
-            coreEpoch: epoch,
           ),
       ],
     );
@@ -1093,24 +1098,54 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    setStarted(tester, true);
-    await tester.pump();
-    await tester.pump(probeSettleDuration);
-    expect(checkPhase(tester), ProbePhase.failed);
+    await start(tester);
+    expect(checkPhase(tester), ProbePhase.probing);
     expect(find.text('Check failed'), findsNothing);
     expect(find.byType(SkeletonText), findsWidgets);
 
-    epoch = 2;
-    containerOf(tester)
-        .read(routeTrackerProvider.notifier)
-        .applySnapshot(const RouteSnapshot(coreEpoch: 2, routeVersion: 1));
-    await tester.pump(probeSettleDuration);
+    failing = false;
+    await tester.pump(probeConfirmDelay);
     await tester.pump(commonDuration);
     expect(find.text('Available'), findsOneWidget);
     expect(find.byType(SkeletonText), findsNothing);
   });
 
-  testWidgets('a failure that outlasts the start is shown', (tester) async {
+  testWidgets('a failure a second attempt repeats is shown and asked again', (
+    tester,
+  ) async {
+    const failing = true;
+    final asked = <String>[];
+    answer((params) {
+      asked.add(params.proxyName);
+      return [
+        for (final name in params.names)
+          _item(
+            name,
+            params.proxyName == directOutbound || !failing
+                ? ServiceProbeStatus.available
+                : ServiceProbeStatus.failed,
+          ),
+      ];
+    });
+    await tester.pumpWidget(
+      app(started: false, settings: only([ServiceTarget.google])),
+    );
+    await tester.pumpAndSettle();
+
+    await start(tester);
+    await tester.pump(probeConfirmDelay);
+    await tester.pump(commonDuration);
+    expect(find.text('Check failed'), findsOneWidget);
+    expect(asked, [directOutbound, routedOutbound, routedOutbound]);
+
+    await tester.pump(const Duration(minutes: 1));
+    expect(asked, hasLength(3));
+    expect(find.text('Check failed'), findsOneWidget);
+  });
+
+  testWidgets('a check that timed out is shown without a second attempt', (
+    tester,
+  ) async {
     answer(
       (params) => [
         for (final name in params.names)
@@ -1118,7 +1153,7 @@ void main() {
             name,
             params.proxyName == directOutbound
                 ? ServiceProbeStatus.available
-                : ServiceProbeStatus.failed,
+                : ServiceProbeStatus.timeout,
           ),
       ],
     );
@@ -1127,39 +1162,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    setStarted(tester, true);
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 4));
-    expect(checkPhase(tester), ProbePhase.failed);
-    expect(find.text('Check failed'), findsNothing);
-
-    await tester.pump(const Duration(seconds: 2));
-    expect(find.text('Check failed'), findsOneWidget);
-  });
-
-  testWidgets('stopping the proxy shows a failure without waiting', (
-    tester,
-  ) async {
-    answer(
-      (params) => [
-        for (final name in params.names) _item(name, ServiceProbeStatus.failed),
-      ],
-    );
-    await tester.pumpWidget(
-      app(started: false, settings: only([ServiceTarget.google])),
-    );
-    await tester.pumpAndSettle();
-
-    setStarted(tester, true);
-    await tester.pump();
-    await tester.pump(probeSettleDuration);
-    expect(checkPhase(tester), ProbePhase.failed);
-    expect(find.text('Check failed'), findsNothing);
-
-    setStarted(tester, false);
-    await tester.pump(probeSettleDuration);
+    await start(tester);
     await tester.pump(commonDuration);
-    expect(find.text('Check failed'), findsOneWidget);
+    expect(find.text('Timeout'), findsOneWidget);
   });
 
   testWidgets('leaving the dashboard releases the shown services', (

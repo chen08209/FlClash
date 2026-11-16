@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"maps"
 	"net/http"
 	"path/filepath"
@@ -45,6 +46,7 @@ func clearRoute() {
 	defer currentRoute.mu.Unlock()
 	currentRoute.epoch = 0
 	currentRoute.version = 0
+	currentRoute.running = false
 	currentRoute.picks = nil
 	currentRoute.providerVersions = nil
 	currentRoute.ruleSets = nil
@@ -200,6 +202,45 @@ func TestStartingTheListenersAdvancesTheEpoch(t *testing.T) {
 	}
 	if len(recorder.published()) != 1 {
 		t.Error("starting the listeners did not publish the new epoch")
+	}
+}
+
+func TestTheListenersStateTravelsWithTheEpoch(t *testing.T) {
+	recorder := recordRoutes(t)
+	withCurrentConfig(t, nil)
+	t.Cleanup(func() { isRunning.Store(false) })
+	before := handleWatchRoute(true, 0)
+
+	isRunning.Store(true)
+	refreshRoute()
+	if got := routeState(); got != before {
+		t.Fatalf("state = %+v before the start finished, want %+v", got, before)
+	}
+
+	handleStartListener()
+	handleStopListener()
+
+	want := []RouteState{
+		{CoreEpoch: before.CoreEpoch + 1, RouteVersion: before.RouteVersion + 1, Running: true},
+		{CoreEpoch: before.CoreEpoch + 2, RouteVersion: before.RouteVersion + 2},
+	}
+	if got := recorder.published(); !slices.Equal(got, want) {
+		t.Errorf("published = %+v, want %+v", got, want)
+	}
+	if data, _ := json.Marshal(want[0]); !strings.Contains(string(data), `"running":true`) {
+		t.Errorf("state on the wire = %s, want the host's running key", data)
+	}
+}
+
+func TestANewNetworkAdvancesTheEpoch(t *testing.T) {
+	recordRoutes(t)
+	before := routeState().CoreEpoch
+
+	handleNetworkChanged()
+	handleResetNetwork()
+
+	if got := routeState().CoreEpoch; got != before+2 {
+		t.Errorf("epoch = %d after two network changes, want %d", got, before+2)
 	}
 }
 

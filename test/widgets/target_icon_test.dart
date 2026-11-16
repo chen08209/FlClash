@@ -162,7 +162,10 @@ void main() {
       await _pump(tester, const CommonTargetIcon(src: src));
       await tester.pump();
 
-      expect(tester.widget<RawImage>(find.byType(RawImage)).image!.width, 192);
+      expect(
+        tester.widget<RawImage>(find.byType(RawImage)).image!.width,
+        (48 * tester.view.devicePixelRatio).ceil(),
+      );
       expect(imageCache.currentSize, 1);
     });
 

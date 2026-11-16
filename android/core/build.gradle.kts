@@ -148,6 +148,7 @@ abstract class GomobileBind : DefaultTask() {
             commandLine(
                 tools.resolve("gomobile$executableSuffix").path,
                 "bind",
+                "-trimpath",
                 "-target=${targets.get().joinToString(",")}",
                 "-androidapi=${androidApi.get()}",
                 "-javapkg=com.follow.clash.core",

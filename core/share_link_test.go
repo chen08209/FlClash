@@ -110,6 +110,37 @@ func TestShareLinksReadBackThroughTheConverter(t *testing.T) {
 		},
 		{
 			proxy: map[string]any{
+				"name": "vmess httpupgrade", "type": "vmess", "server": "c.example", "port": 443,
+				"uuid": "u", "alterId": 64, "cipher": "auto", "network": "ws",
+				"ws-opts": map[string]any{
+					"path": "/up", "headers": map[string]any{"Host": "host.example"},
+					"v2ray-http-upgrade": true, "v2ray-http-upgrade-fast-open": true,
+				},
+			},
+			prefix: "vmess://eyJ",
+			want: map[string]string{
+				"network": "ws", "ws-opts.path": "/up", "ws-opts.headers.Host": "host.example",
+				"ws-opts.v2ray-http-upgrade": "true", "ws-opts.v2ray-http-upgrade-fast-open": "true",
+			},
+		},
+		{
+			proxy: map[string]any{
+				"name": "vless httpupgrade", "type": "vless", "server": "d.example", "port": 443,
+				"uuid": "u", "tls": true, "network": "ws",
+				"ws-opts": map[string]any{
+					"path": "/up", "headers": map[string]any{"Host": "host.example"},
+					"v2ray-http-upgrade": true, "v2ray-http-upgrade-fast-open": true,
+				},
+			},
+			prefix: "vless://u@d.example:443?",
+			want: map[string]string{
+				"network": "ws", "ws-opts.path": "/up", "ws-opts.headers.Host": "host.example",
+				"ws-opts.v2ray-http-upgrade": "true", "ws-opts.v2ray-http-upgrade-fast-open": "true",
+				"ws-opts.max-early-data": "<nil>",
+			},
+		},
+		{
+			proxy: map[string]any{
 				"name": "vless reality", "type": "vless", "server": "d.example", "port": 443,
 				"uuid": "u-1", "flow": "xtls-rprx-vision", "tls": true, "servername": "www.example",
 				"client-fingerprint": "firefox", "network": "tcp",
@@ -150,6 +181,16 @@ func TestShareLinksReadBackThroughTheConverter(t *testing.T) {
 				"password": "p", "network": "ws", "ws-opts": map[string]any{"path": "/ws"},
 			},
 			want: map[string]string{"network": "ws", "ws-opts.path": "/ws"},
+		},
+		{
+			proxy: map[string]any{
+				"name": "trojan httpupgrade", "type": "trojan", "server": "e.example", "port": 443,
+				"password": "p", "network": "ws",
+				"ws-opts": map[string]any{"path": "/up", "v2ray-http-upgrade": true},
+			},
+			want: map[string]string{
+				"network": "ws", "ws-opts.path": "/up", "ws-opts.v2ray-http-upgrade": "true",
+			},
 		},
 		{
 			proxy: map[string]any{
@@ -262,6 +303,13 @@ func TestShareLinksLeaveOutWhatNoLinkCarries(t *testing.T) {
 			"name": "trojan ws host", "type": "trojan", "server": "a.example", "port": 443,
 			"password": "p", "network": "ws",
 			"ws-opts": map[string]any{"path": "/ws", "headers": map[string]any{"Host": "cdn.example"}},
+		},
+		{
+			"name": "trojan httpupgrade fast open", "type": "trojan", "server": "a.example",
+			"port": 443, "password": "p", "network": "ws",
+			"ws-opts": map[string]any{
+				"path": "/up", "v2ray-http-upgrade": true, "v2ray-http-upgrade-fast-open": true,
+			},
 		},
 	}})
 	for i, link := range links {

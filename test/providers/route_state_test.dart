@@ -105,9 +105,11 @@ void main() {
       CoreStatus status = CoreStatus.connected,
       bool running = true,
       bool watched = true,
+      bool safeMode = false,
     }) {
       final container = ProviderContainer(
         overrides: [
+          safeModeProvider.overrideWithValue(safeMode),
           initProvider.overrideWithBuild((_, _) => init),
           coreStatusProvider.overrideWithBuild((_, _) => status),
           runTimeProvider.overrideWithBuild((_, _) => running ? 1 : null),
@@ -128,20 +130,45 @@ void main() {
     RouteState stateOf(ProviderContainer container) =>
         container.read(routeTrackerProvider);
 
-    test('proxied follows the run state', () async {
+    test('proxied is what the Core reports with its counters', () async {
       final container = build(running: false);
+      final tracker = trackerOf(container)..attach();
+      await pumpEventQueue();
+
+      container.read(runTimeProvider.notifier).value = 1;
+      await pumpEventQueue();
+      expect(stateOf(container).proxied, isFalse);
+
+      tracker.applySnapshot(
+        const RouteSnapshot(coreEpoch: 4, routeVersion: 2, running: true),
+      );
+      expect(stateOf(container).proxied, isTrue);
+      expect(stateOf(container).coreEpoch, 4);
+
+      container.read(runTimeProvider.notifier).value = null;
+      await pumpEventQueue();
+      expect(stateOf(container).proxied, isTrue);
+
+      tracker.applySnapshot(const RouteSnapshot(coreEpoch: 5, routeVersion: 3));
+      expect(stateOf(container).proxied, isFalse);
+    });
+
+    test('in safe mode proxied follows the run the app shows', () async {
+      final container = build(running: false, safeMode: true);
       expect(stateOf(container).proxied, isFalse);
 
       container.read(runTimeProvider.notifier).value = 1;
       await pumpEventQueue();
+      expect(stateOf(container).proxied, isTrue);
 
+      trackerOf(container).applySnapshot(_snapshot);
       expect(stateOf(container).proxied, isTrue);
     });
 
     testWidgets(
       'a widget reading a run state the unwatched tracker missed mounts cleanly',
       (tester) async {
-        final container = build(running: false, watched: false);
+        final container = build(running: false, watched: false, safeMode: true);
         trackerOf(container);
         await tester.pumpWidget(
           UncontrolledProviderScope(

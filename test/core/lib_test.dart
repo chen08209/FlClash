@@ -1,7 +1,8 @@
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/core/lib.dart';
 import 'package:fl_clash/core/method.dart';
-import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/core/spill.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -57,7 +58,10 @@ class _FakeService implements Service {
   }
 
   @override
-  Future<CoreMethodResponse> invokeMethod(CoreMethodCall call) async {
+  Future<CoreMethodResponse> invokeMethod(
+    CoreMethodCall call, {
+    CoreResultModel? model,
+  }) async {
     calls.add('invokeMethod:${call.method.wireName}');
     invokedCalls.add(call);
     final response = onInvokeMethod?.call(call);
@@ -82,7 +86,7 @@ void main() {
   late CoreLib lib;
 
   setUpAll(() async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
   });
 
   setUp(() {

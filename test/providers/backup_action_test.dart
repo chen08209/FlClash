@@ -8,7 +8,6 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
@@ -17,12 +16,8 @@ import 'package:riverpod/riverpod.dart';
 import '../helpers/app_paths.dart';
 import '../helpers/preferences.dart';
 
-Profile _profile(int id, String label) => Profile(
-  id: id,
-  label: label,
-  autoUpdateDuration: Duration.zero,
-  extendType: ExtendType.standard,
-);
+Profile _profile(int id, String label) =>
+    Profile(id: id, label: label, autoUpdateDuration: Duration.zero);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +27,7 @@ void main() {
 
   setUpAll(() async {
     await mockPreferences({'version': 1});
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
     home = Directory.systemTemp.createTempSync('flclash-backup-action-');
     await useAppPaths(home);
   });

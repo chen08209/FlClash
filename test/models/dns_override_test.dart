@@ -72,7 +72,11 @@ void main() {
         DnsOverrideKey.fakeIpRange6,
         DnsOverrideKey.fallbackFilterGeoipCode,
       }),
-      isEmpty,
+      {
+        'listen': '',
+        'fake-ip-range6': '',
+        'fallback-filter': {'geoip-code': ''},
+      },
     );
   });
 

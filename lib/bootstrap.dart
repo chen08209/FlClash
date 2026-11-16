@@ -10,7 +10,6 @@ import 'package:fl_clash/common/tray.dart';
 import 'package:fl_clash/common/window.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -126,7 +125,7 @@ class Bootstrap {
         );
     final profiles = await database.profilesDao.query().get();
     container.read(profilesProvider.notifier).reorder(profiles);
-    await AppLocalizations.load(
+    loadAppLocalizations(
       getLocaleForString(config.appSettingProps.locale) ??
           WidgetsBinding.instance.platformDispatcher.locale,
     );

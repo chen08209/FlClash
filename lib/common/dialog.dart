@@ -129,8 +129,8 @@ class Dialogs {
   }
 
   Future<void> showFailureDetails(List<UpdatingMessage> failures) {
-    return showSheet(
-      context: _context,
+    return showNestedSheet(
+      _context,
       builder: (_) => _FailureDetailsSheet(failures: failures),
     );
   }

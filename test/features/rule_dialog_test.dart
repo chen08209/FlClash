@@ -1,6 +1,6 @@
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/ui.dart';
@@ -41,7 +41,7 @@ void main() {
     );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    final l10n = AppLocalizations.current;
+    final l10n = currentAppLocalizations;
 
     await tester.tap(find.widgetWithText(TextButton, l10n.save));
     await tester.pumpAndSettle();
@@ -179,7 +179,7 @@ void main() {
     );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    final l10n = AppLocalizations.current;
+    final l10n = currentAppLocalizations;
 
     await tester.enterText(find.byType(TextFormField), 'example.com');
     await tester.tap(find.text(l10n.splitStrategy));
@@ -239,7 +239,7 @@ void main() {
 
     await tester.enterText(find.byType(TextFormField), 'US');
     await tester.tap(
-      find.widgetWithText(TextButton, AppLocalizations.current.save),
+      find.widgetWithText(TextButton, currentAppLocalizations.save),
     );
     await tester.pumpAndSettle();
 
@@ -286,7 +286,7 @@ void main() {
     );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    final l10n = AppLocalizations.current;
+    final l10n = currentAppLocalizations;
 
     await tester.enterText(find.byType(TextFormField), 'https');
     await tester.tap(find.widgetWithText(TextButton, l10n.save));

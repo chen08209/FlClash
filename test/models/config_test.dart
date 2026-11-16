@@ -427,7 +427,6 @@ void main() {
       expect(props.systemProxy, true);
       expect(props.bypassDomain, defaultBypassDomain);
       expect(props.bypassPrivateRoute, true);
-      expect(props.autoSetSystemDns, true);
       expect(props.appendSystemDns, false);
     });
 
@@ -1104,7 +1103,7 @@ void main() {
           'themeProps': const ThemeProps().toJson(),
           'overrideDns': overrideDns,
           'patchClashConfig': {
-            'dns-override-keys': ['nameserver', 'respect-rules'],
+            'dns-override-keys': ['nameserver', 'nameserver-policy'],
           },
         });
 
@@ -1221,6 +1220,24 @@ void main() {
         defaults.map((action) => action.key).toSet(),
         hasLength(defaults.length),
       );
+    });
+
+    test('only a fresh Windows config bypasses hosts without a dot', () {
+      expect(
+        Config.realFromJson(null).networkProps.bypassDomain,
+        Platform.isWindows
+            ? [...defaultBypassDomain, windowsLocalBypass]
+            : defaultBypassDomain,
+      );
+    });
+
+    test('a saved bypass list is kept as saved', () {
+      final config = Config.realFromJson({
+        'themeProps': const ThemeProps().toJson(),
+        'networkProps': {'bypassDomain': defaultBypassDomain},
+      });
+
+      expect(config.networkProps.bypassDomain, defaultBypassDomain);
     });
 
     test('full config round-trip', () {

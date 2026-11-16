@@ -3,7 +3,7 @@ include: lint_options.yaml
 analyzer:
   exclude:
     - build/**
-    - lib/l10n/intl/**
+    - lib/l10n/**
     - lib/**/generated/**
     - plugins/**
     - android/**

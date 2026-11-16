@@ -1,6 +1,4 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -27,18 +25,16 @@ void main() {
   late ProviderContainer container;
 
   setUpAll(() async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
   });
 
   ProviderContainer buildContainer({
     required List<Script> scripts,
     int? selectedScriptId,
   }) {
-    final profile = Profile.normal(label: 'p').copyWith(
-      id: _profileId,
-      extendType: ExtendType.script,
-      scriptId: selectedScriptId,
-    );
+    final profile = Profile.normal(
+      label: 'p',
+    ).copyWith(id: _profileId, scriptId: selectedScriptId);
     final built = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(() => TestProfiles([profile])),
@@ -70,15 +66,20 @@ void main() {
     return container.read(profilesProvider).getProfile(_profileId)?.scriptId;
   }
 
-  testWidgets('lists every script with the configure entry', (tester) async {
+  Future<void> openMenu(WidgetTester tester) async {
+    await tester.tap(find.text(currentAppLocalizations.extendScript));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('shows no script and the configure entry', (tester) async {
     container = buildContainer(
       scripts: [_script(10, 'alpha'), _script(11, 'beta')],
     );
 
     await pumpScriptContent(tester);
 
-    expect(find.text('alpha'), findsOneWidget);
-    expect(find.text('beta'), findsOneWidget);
+    expect(find.text(currentAppLocalizations.none), findsOneWidget);
+    expect(find.text('alpha'), findsNothing);
     expect(
       find.text(currentAppLocalizations.goToConfigureScript),
       findsOneWidget,
@@ -96,18 +97,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(ScriptsView), findsOneWidget);
-    expect(find.text(currentAppLocalizations.extendScript), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('leaves the gap the standard mode leaves above its entry', (
-    tester,
-  ) async {
+  testWidgets('leaves a gap above its configure entry', (tester) async {
     container = buildContainer(scripts: [_script(10, 'alpha')]);
 
     await pumpScriptContent(tester);
 
-    final listBottom = tester.getBottomLeft(find.byType(DecorationListItem)).dy;
+    final rowBottom = tester.getBottomLeft(find.byType(ListItem<int?>)).dy;
     final entryTop = tester
         .getTopLeft(
           find.descendant(
@@ -116,19 +114,20 @@ void main() {
           ),
         )
         .dy;
-    expect(entryTop - listBottom, 20);
+    expect(entryTop - rowBottom, 20);
   });
 
-  testWidgets('renders only the header when no script exists', (tester) async {
+  testWidgets('offers only no script when none exists', (tester) async {
     container = buildContainer(scripts: const []);
 
     await pumpScriptContent(tester);
+    await openMenu(tester);
 
-    expect(find.text(currentAppLocalizations.extendScript), findsOneWidget);
-    expect(find.byType(DecorationListItem), findsNothing);
+    expect(find.text(currentAppLocalizations.none), findsNWidgets(2));
+    expect(tester.takeException(), isNull);
   });
 
-  testWidgets('checks only the profile script', (tester) async {
+  testWidgets('shows the profile script on its row', (tester) async {
     container = buildContainer(
       scripts: [_script(10, 'alpha'), _script(11, 'beta')],
       selectedScriptId: 11,
@@ -136,35 +135,44 @@ void main() {
 
     await pumpScriptContent(tester);
 
-    Finder checkIn(String label) => find.descendant(
-      of: find.widgetWithText(DecorationListItem, label),
-      matching: find.byType(SelectionCheck),
-    );
-    expect(checkIn('beta'), findsOneWidget);
-    expect(checkIn('alpha'), findsNothing);
+    expect(find.text('beta'), findsOneWidget);
+    expect(find.text(currentAppLocalizations.none), findsNothing);
   });
 
-  testWidgets('tapping an unselected script selects it', (tester) async {
+  testWidgets('shows a deleted script as no script', (tester) async {
+    container = buildContainer(
+      scripts: [_script(10, 'alpha')],
+      selectedScriptId: 99,
+    );
+
+    await pumpScriptContent(tester);
+
+    expect(find.text(currentAppLocalizations.none), findsOneWidget);
+  });
+
+  testWidgets('choosing a script from the menu selects it', (tester) async {
     container = buildContainer(
       scripts: [_script(10, 'alpha'), _script(11, 'beta')],
     );
 
     await pumpScriptContent(tester);
+    await openMenu(tester);
     await tester.tap(find.text('beta'));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(selectedScriptId(), 11);
   });
 
-  testWidgets('tapping the selected script clears it', (tester) async {
+  testWidgets('choosing no script clears it', (tester) async {
     container = buildContainer(
       scripts: [_script(10, 'alpha')],
       selectedScriptId: 10,
     );
 
     await pumpScriptContent(tester);
-    await tester.tap(find.text('alpha'));
-    await tester.pump();
+    await openMenu(tester);
+    await tester.tap(find.text(currentAppLocalizations.none));
+    await tester.pumpAndSettle();
 
     expect(selectedScriptId(), isNull);
   });

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/app_localizations.dart';
@@ -7,7 +6,6 @@ import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/l10n_labels.dart';
 import 'package:fl_clash/common/tray.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/state.dart';
@@ -16,13 +14,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:intl/intl.dart';
 import 'package:riverpod/riverpod.dart';
-import 'package:tray/tray.dart';
+import 'package:rust_api/tray.dart';
 
 import '../helpers/app_paths.dart';
-
-const _channel = MethodChannel('tray');
+import '../helpers/fake_tray_host.dart';
 
 const _proxyGroup = Group(
   name: 'Proxy',
@@ -70,23 +66,36 @@ TrayState _trayState({
   );
 }
 
-List<Map<Object?, Object?>> _items(MethodCall? call) {
-  final menu = (call?.arguments as Map?)?['menu'] as List?;
-  return menu?.cast<Map<Object?, Object?>>() ?? const [];
+Map<String, Object?> _describe(TrayItem item) {
+  return {
+    'id': item.id,
+    'type': item.kind.name,
+    'label': item.label,
+    if (item.detail != null) 'detail': item.detail,
+    'enabled': item.enabled,
+    'checked': item.checked,
+    'items': item.items.map(_describe).toList(),
+  };
 }
 
-Map<Object?, Object?> _item(MethodCall? call, String label) {
-  return _items(call).firstWhere((item) => item['label'] == label);
+List<Map<String, Object?>> _items(TrayContent? content) {
+  return content?.menu.map(_describe).toList() ?? const [];
 }
 
-List<String> _labels(MethodCall? call) {
-  return _items(call).map((item) => item['label']).whereType<String>().toList();
+Map<String, Object?> _item(TrayContent? content, String label) {
+  return _items(content).firstWhere((item) => item['label'] == label);
+}
+
+List<String> _labels(TrayContent? content) {
+  return _items(
+    content,
+  ).map((item) => item['label']).whereType<String>().toList();
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late List<MethodCall> calls;
+  late FakeTrayHost host;
   late ProviderContainer container;
   late AppTray tray;
 
@@ -95,7 +104,7 @@ void main() {
   setUpAll(() async {
     root = Directory.systemTemp.createTempSync('tray_menu_test');
     await useAppPaths(root);
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
   });
 
   tearDownAll(() {
@@ -113,32 +122,18 @@ void main() {
 
   setUp(() {
     debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
-    calls = [];
+    host = FakeTrayHost();
     tray = AppTray.forPlatform(isMacOS: true, isWindows: false);
     container = ProviderContainer();
-    Tray.instance.resetForTesting();
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(_channel, (call) async {
-          calls.add(call);
-          return true;
-        });
+    Tray.instance.resetForTesting(host);
   });
 
   tearDown(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(_channel, null);
     container.dispose();
     debugDefaultTargetPlatformOverride = null;
   });
 
-  MethodCall? showCall() {
-    for (final call in calls.reversed) {
-      if (call.method == 'show') {
-        return call;
-      }
-    }
-    return null;
-  }
+  TrayContent? showCall() => host.lastShown;
 
   Future<void> update(TrayState trayState, {AppTray? on}) {
     return (on ?? tray).update(
@@ -201,16 +196,12 @@ void main() {
     test('names the mode in the tooltip and ships the safe icon', () async {
       await update(_trayState(isStart: true, safeMode: true));
 
-      final arguments = showCall()!.arguments as Map;
+      final content = showCall()!;
       final l10n = currentAppLocalizations;
-      expect(arguments['toolTip'], '$appName (${l10n.safeMode})');
-      final reps = ((arguments['icon'] as Map)['reps'] as List).cast<Map>();
-      final base = reps.firstWhere((rep) => rep['scale'] == 1.0);
+      expect(content.toolTip, '$appName (${l10n.safeMode})');
       expect(
-        base['bytes'],
-        base64Encode(
-          File('assets/images/tray/macos/status_4.png').readAsBytesSync(),
-        ),
+        content.image.pngs.first,
+        File('assets/images/tray/macos/status_4.png').readAsBytesSync(),
       );
     });
   });
@@ -222,22 +213,20 @@ void main() {
         .where((item) => item['checked'] == true)
         .map((item) => item['label'])
         .toList();
-    expect(checkedModes, contains(Intl.message(Mode.global.name)));
+    expect(checkedModes, contains(currentAppLocalizations.global));
   });
 
   test('sends icon, tooltip and menu in a single show call', () async {
     await update(_trayState(isStart: true, tunEnable: true));
 
-    final showCalls = calls.where((call) => call.method == 'show').toList();
-    expect(showCalls, hasLength(1));
+    expect(host.shown, hasLength(1));
 
-    final arguments = showCalls.single.arguments as Map;
-    expect(arguments['toolTip'], appName);
-    expect(arguments['menu'], isNotEmpty);
-    final reps = ((arguments['icon'] as Map)['reps'] as List).cast<Map>();
-    expect(reps.map((rep) => rep['scale']), containsAll([1.0, 2.0, 3.0, 4.0]));
-    expect(reps.map((rep) => rep['bytes']), everyElement(isNotEmpty));
-    expect((arguments['icon'] as Map)['isTemplate'], isTrue);
+    final content = host.shown.single;
+    expect(content.toolTip, appName);
+    expect(content.menu, isNotEmpty);
+    expect(content.image.pngs, hasLength(Tray.variantScales.length));
+    expect(content.image.pngs, everyElement(isNotEmpty));
+    expect(content.image.template, isTrue);
   });
 
   test('ships the color status icon once monochrome is off', () async {
@@ -245,15 +234,11 @@ void main() {
       _trayState(isStart: true, tunEnable: true, monochromeTrayIcon: false),
     );
 
-    final arguments = showCall()!.arguments as Map;
-    expect((arguments['icon'] as Map)['isTemplate'], isFalse);
-    final reps = ((arguments['icon'] as Map)['reps'] as List).cast<Map>();
-    final base = reps.firstWhere((rep) => rep['scale'] == 1.0);
+    final content = showCall()!;
+    expect(content.image.template, isFalse);
     expect(
-      base['bytes'],
-      base64Encode(
-        File('assets/images/tray/unix/status_3.png').readAsBytesSync(),
-      ),
+      content.image.pngs.first,
+      File('assets/images/tray/unix/status_3.png').readAsBytesSync(),
     );
     expect(
       _item(showCall(), currentAppLocalizations.monochromeIcon)['checked'],
@@ -265,15 +250,15 @@ void main() {
     await update(_trayState(isStart: true));
     await update(_trayState(isStart: true));
 
-    expect(calls.where((call) => call.method == 'show'), hasLength(1));
+    expect(host.shown, hasLength(1));
   });
 
   test('menu item ids are stable across identical rebuilds', () async {
     await update(_trayState());
     final first = _items(showCall()).map((item) => item['id']).toList();
 
-    Tray.instance.resetForTesting();
-    calls.clear();
+    host = FakeTrayHost();
+    Tray.instance.resetForTesting(host);
 
     await update(_trayState());
     final second = _items(showCall()).map((item) => item['id']).toList();
@@ -299,7 +284,7 @@ void main() {
       showCall(),
     ).firstWhere((item) => item['type'] == 'submenu');
     expect(submenu['label'], 'Proxy');
-    final children = (submenu['items'] as List).cast<Map<Object?, Object?>>();
+    final children = (submenu['items'] as List).cast<Map<String, Object?>>();
     expect(children.map((item) => item['label']), contains('A'));
   });
 
@@ -353,7 +338,7 @@ void main() {
 
       final submenu = _item(showCall(), 'Proxy');
       expect(submenu['detail'], '120');
-      final children = (submenu['items'] as List).cast<Map<Object?, Object?>>();
+      final children = (submenu['items'] as List).cast<Map<String, Object?>>();
       expect(children.map((item) => item['detail']), [
         '120',
         currentAppLocalizations.timeout,
@@ -404,8 +389,7 @@ void main() {
         on: windows,
       );
 
-      final arguments = showCall()!.arguments as Map;
-      expect((arguments['icon'] as Map)['isTemplate'], isFalse);
+      expect(showCall()!.image.template, isFalse);
       expect(
         _items(showCall()).where((item) => item['type'] == 'submenu'),
         isEmpty,
@@ -440,7 +424,7 @@ void main() {
     test('never pushes a tray title', () async {
       await windows.updateTitle(showTrayTitle: true, traffic: const Traffic());
 
-      expect(calls.where((call) => call.method == 'setTitle'), isEmpty);
+      expect(host.titles, isEmpty);
     });
   });
 }

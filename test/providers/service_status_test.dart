@@ -213,35 +213,32 @@ void main() {
     expect(stateOf(scope).valueOf(ServiceTarget.claude), isNotNull);
   });
 
-  testWidgets(
-    'a timeout is shown as a status and retried once the app resumes',
-    (tester) async {
-      when(() => core.serviceCheck(any())).thenAnswer((invocation) async {
-        final params =
-            invocation.positionalArguments.single as ServiceCheckParams;
-        sweeps.add(params);
-        return [
-          for (final name in params.names) _item(name, status: 'timeout'),
-        ];
-      });
-      final scope = container();
-      notifierOf(scope).watch(ServiceTarget.youtube);
-      await tester.pump();
+  testWidgets('a timeout is shown as a status and asked again behind it', (
+    tester,
+  ) async {
+    when(() => core.serviceCheck(any())).thenAnswer((invocation) async {
+      final params =
+          invocation.positionalArguments.single as ServiceCheckParams;
+      sweeps.add(params);
+      return [for (final name in params.names) _item(name, status: 'timeout')];
+    });
+    final scope = container();
+    notifierOf(scope).watch(ServiceTarget.youtube);
+    await tester.pump();
 
-      final entry = stateOf(scope).entryOf(ServiceTarget.youtube);
-      expect(entry.phase, ProbePhase.failed);
-      expect(entry.value?.status, ServiceProbeStatus.timeout);
+    final entry = stateOf(scope).entryOf(ServiceTarget.youtube);
+    expect(entry.phase, ProbePhase.failed);
+    expect(entry.value?.status, ServiceProbeStatus.timeout);
 
-      await tester.pump(const Duration(seconds: 1));
-      scope.read(routeTrackerProvider.notifier).markResumed();
-      await tester.pump();
-      expect(sweeps, hasLength(1));
+    await tester.pump(const Duration(minutes: 1));
+    expect(sweeps, hasLength(1));
 
-      await tester.pump(probeThrottleDuration);
-      expect(sweeps, hasLength(2));
-      await tester.pump(probeThrottleDuration);
-    },
-  );
+    scope.read(routeTrackerProvider.notifier).markResumed();
+    await tester.pump();
+    await tester.pump(probeThrottleDuration);
+    expect(sweeps, hasLength(2));
+    scope.dispose();
+  });
 
   testWidgets('drops results once the route has changed under them', (
     tester,

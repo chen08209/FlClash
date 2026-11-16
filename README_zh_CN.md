@@ -61,12 +61,7 @@ brew install --cask flclash
 
 **Linux 托盘图标**
 
-`.deb` 安装包会自动安装所需依赖。使用 AppImage 或 `.rpm` 时，需要先安装 AyatanaAppIndicator 库，托盘图标才能显示：
-
-```bash
-sudo apt-get install libayatana-appindicator3-1   # Debian 与 Ubuntu
-sudo dnf install libayatana-appindicator-gtk3     # Fedora
-```
+托盘图标是 StatusNotifierItem。KDE Plasma、XFCE 和多数面板直接显示；GNOME 需要安装 AppIndicator and KStatusNotifierItem Support 扩展。
 
 **无人值守的桌面环境**
 
@@ -97,7 +92,7 @@ adb shell am start -a com.follow.clash.action.TOGGLE
 
 ## 从源码构建
 
-需要 [Flutter](https://docs.flutter.dev/get-started/install) 3.47（正式版构建使用 3.47.6）、[Go](https://go.dev/dl/) 1.27，
+需要 [Flutter](https://docs.flutter.dev/get-started/install) 3.50（正式版构建使用 3.50.0）、[Go](https://go.dev/dl/) 1.27，
 以及通过 rustup 安装的 [Rust](https://rustup.rs/)。桌面端需要在对应系统上构建，Android 在任意系统上都能构建。
 
 ```bash

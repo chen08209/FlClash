@@ -254,6 +254,7 @@ type ChangeProxyResult struct {
 type RouteState struct {
 	CoreEpoch    uint64 `json:"core-epoch"`
 	RouteVersion uint64 `json:"route-version"`
+	Running      bool   `json:"running"`
 }
 
 type TestDelayParams struct {

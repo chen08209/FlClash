@@ -25,6 +25,7 @@ const _allowed = {
   // `App` is the process-wide Android plugin; the notifier relays keyboard
   // state from the platform channel for the whole run.
   'lib/plugins/app.dart#floatingKeyboard',
+  'lib/plugins/app.dart#_networkChanges',
 };
 
 final _declaration = RegExp(

@@ -1340,18 +1340,8 @@ extension DnsOverrideExt on Dns {
     return json;
   }
 
-  /// [keepEmpty] writes emptied keys, but the core refuses an empty nameserver.
-  Map<String, Object?> overrideJson(
-    Set<DnsOverrideKey> keys, {
-    bool keepEmpty = false,
-  }) => _overrideJson(
-    _json,
-    DnsOverrideKey.values,
-    keys,
-    keepEmpty: keepEmpty
-        ? keys.difference({DnsOverrideKey.nameserver})
-        : const <DnsOverrideKey>{},
-  );
+  Map<String, Object?> overrideJson(Set<DnsOverrideKey> keys) =>
+      _overrideJson(_json, DnsOverrideKey.values, keys);
 
   String overrideYaml(Set<DnsOverrideKey> keys) =>
       yaml.encode(overrideJson(keys));
@@ -1383,12 +1373,13 @@ Object? _plainYaml(Object? node) => switch (node) {
   _ => node,
 };
 
+/// A picked key is written as it is, empty included: an emptied entry clears
+/// the profile's value, and one the core refuses empty fails the config there.
 Map<String, Object?> _overrideJson<K extends OverrideKey>(
   Map<String, Object?> json,
   List<K> values,
-  Set<K> keys, {
-  Set<K> keepEmpty = const {},
-}) {
+  Set<K> keys,
+) {
   final result = <String, Object?>{};
   for (final key in values) {
     if (!keys.contains(key)) {
@@ -1398,9 +1389,6 @@ Map<String, Object?> _overrideJson<K extends OverrideKey>(
     final value = parent == null
         ? json[key.path]
         : (json[parent] as Map)[key.field];
-    if (_isUnset(value) && !keepEmpty.contains(key)) {
-      continue;
-    }
     if (parent == null) {
       result[key.path] = value;
       continue;
@@ -1412,13 +1400,6 @@ Map<String, Object?> _overrideJson<K extends OverrideKey>(
   }
   return result;
 }
-
-bool _isUnset(Object? value) => switch (value) {
-  String() => value.isEmpty,
-  Iterable() => value.isEmpty,
-  Map() => value.isEmpty,
-  _ => false,
-};
 
 /// Reads an edited override document into [json] and returns the keys it
 /// names, which become the override set, or null for an empty document.

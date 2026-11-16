@@ -75,11 +75,11 @@ void main() {
         container: container,
         child: PrismApp(
           localizationsDelegates: const [
-            AppLocalizations.delegate,
+            appLocalizationsDelegate,
             AppUiLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
           ],
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
+          supportedLocales: AppLocalizations.supportedLocales,
           builder: (_, child) => ThemeManager(child: child!),
           onGenerateRoute: (settings) =>
               HomeRoute(settings: settings, builder: (_) => const HomePage()),

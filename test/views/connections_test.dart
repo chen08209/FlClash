@@ -18,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../helpers/core_connections.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
@@ -110,7 +111,10 @@ void main() {
   testWidgets('shows the empty state when core reports no connections', (
     tester,
   ) async {
-    when(core.getConnections).thenAnswer((_) async => const <TrackerInfo>[]);
+    whenConnections<RankedTrackerInfos>(
+      core,
+      () async => const <TrackerInfo>[],
+    );
 
     await pumpConnections(tester);
 
@@ -124,7 +128,7 @@ void main() {
     tester,
   ) async {
     final pending = Completer<List<TrackerInfo>>();
-    when(core.getConnections).thenAnswer((_) => pending.future);
+    whenConnections<RankedTrackerInfos>(core, () => pending.future);
 
     await pumpConnections(tester);
     expect(find.byType(NullStatus), findsNothing);
@@ -144,9 +148,10 @@ void main() {
   testWidgets('shows its first connections while its page is pushed in', (
     tester,
   ) async {
-    when(
-      core.getConnections,
-    ).thenAnswer((_) async => [_tracker(id: 'a', host: 'alpha.test')]);
+    whenConnections<RankedTrackerInfos>(
+      core,
+      () async => [_tracker(id: 'a', host: 'alpha.test')],
+    );
     tester.view.physicalSize = const Size(1400, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -183,8 +188,9 @@ void main() {
   });
 
   testWidgets('renders one row per reported connection', (tester) async {
-    when(core.getConnections).thenAnswer(
-      (_) async => [
+    whenConnections<RankedTrackerInfos>(
+      core,
+      () async => [
         _tracker(id: 'a', host: 'alpha.test'),
         _tracker(id: 'b', host: 'beta.test'),
       ],
@@ -204,8 +210,9 @@ void main() {
   testWidgets('orders rows by total traffic, then newest first', (
     tester,
   ) async {
-    when(core.getConnections).thenAnswer(
-      (_) async => [
+    whenConnections<RankedTrackerInfos>(
+      core,
+      () async => [
         _tracker(id: 'a', host: 'alpha.test', download: 100),
         _tracker(id: 'b', host: 'beta.test', upload: 300, download: 300),
         _tracker(
@@ -235,7 +242,7 @@ void main() {
       _tracker(id: 'a', host: 'alpha.test', chains: const ['Tokyo', 'Proxy']),
       _tracker(id: 'b', host: 'beta.test'),
     ];
-    when(core.getConnections).thenAnswer((_) async => connections);
+    whenConnections<RankedTrackerInfos>(core, () async => connections);
     when(() => core.closeConnection(any())).thenAnswer((_) async {});
 
     await pumpConnections(tester);
@@ -283,8 +290,9 @@ void main() {
   testWidgets('a live table keeps the totals ahead of protocol and duration', (
     tester,
   ) async {
-    when(core.getConnections).thenAnswer(
-      (_) async => [
+    whenConnections<RankedTrackerInfos>(
+      core,
+      () async => [
         _tracker(id: 'a', host: 'alpha.test', upload: 512, download: 1536),
       ],
     );
@@ -313,8 +321,9 @@ void main() {
   testWidgets('a table marks a decrypted connection in its target', (
     tester,
   ) async {
-    when(core.getConnections).thenAnswer(
-      (_) async => [
+    whenConnections<RankedTrackerInfos>(
+      core,
+      () async => [
         _tracker(id: 'a', host: 'alpha.test', mitm: true),
         _tracker(id: 'b', host: 'beta.test'),
       ],
@@ -342,8 +351,9 @@ void main() {
   });
 
   testWidgets('a sorted table keeps its order across polls', (tester) async {
-    when(core.getConnections).thenAnswer(
-      (_) async => [
+    whenConnections<RankedTrackerInfos>(
+      core,
+      () async => [
         _tracker(id: 'a', host: 'alpha.test', process: 'zsh', download: 300),
         _tracker(id: 'b', host: 'beta.test', process: 'curl', download: 200),
         _tracker(id: 'c', host: 'gamma.test', process: 'make', download: 100),
@@ -370,7 +380,10 @@ void main() {
   });
 
   testWidgets('keeps the empty state when core throws', (tester) async {
-    when(core.getConnections).thenThrow(StateError('core down'));
+    whenConnections<RankedTrackerInfos>(
+      core,
+      () async => throw StateError('core down'),
+    );
 
     await pumpConnections(tester);
 
@@ -381,7 +394,10 @@ void main() {
   });
 
   testWidgets('stops polling once the view is disposed', (tester) async {
-    when(core.getConnections).thenAnswer((_) async => const <TrackerInfo>[]);
+    whenConnections<RankedTrackerInfos>(
+      core,
+      () async => const <TrackerInfo>[],
+    );
 
     await pumpConnections(tester);
     await teardownView(tester);
@@ -389,7 +405,7 @@ void main() {
 
     await tester.pump(const Duration(seconds: 3));
 
-    verifyNever(core.getConnections);
+    verifyNever(() => core.getConnectionsWith<RankedTrackerInfos>(any()));
   });
 
   testWidgets('one page switches between recent requests and what is open, '
@@ -397,9 +413,10 @@ void main() {
     final requests = container.read(requestsProvider.notifier);
     requests.value = FixedList<TrackerInfo>(500);
     requests.addRequest(_tracker(id: 'old', host: 'finished.test'));
-    when(
-      core.getConnections,
-    ).thenAnswer((_) async => [_tracker(id: 'open', host: 'open.test')]);
+    whenConnections<RankedTrackerInfos>(
+      core,
+      () async => [_tracker(id: 'open', host: 'open.test')],
+    );
     tester.view.physicalSize = const Size(1400, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -417,7 +434,7 @@ void main() {
 
     expect(find.textContaining('finished.test'), findsWidgets);
     expect(find.byTooltip('Close connections'), findsNothing);
-    verifyNever(core.getConnections);
+    verifyNever(() => core.getConnectionsWith<RankedTrackerInfos>(any()));
 
     await tester.tap(find.text('Recent requests'));
     await tester.pumpAndSettle();
@@ -440,7 +457,7 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
 
     expect(find.textContaining('finished.test'), findsWidgets);
-    verifyNever(core.getConnections);
+    verifyNever(() => core.getConnectionsWith<RankedTrackerInfos>(any()));
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));

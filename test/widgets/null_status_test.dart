@@ -1,4 +1,4 @@
-import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/null_status_illustration.dart';
 import 'package:flutter/widgets.dart';
@@ -339,7 +339,7 @@ void main() {
     await tester.pumpWidget(_switcher(isEmpty: true, isSearching: true));
     await tester.pumpAndSettle();
 
-    expect(find.text(AppLocalizations.current.noSearchResults), findsOneWidget);
+    expect(find.text(currentAppLocalizations.noSearchResults), findsOneWidget);
     expect(
       find.byKey(const ValueKey<Illustration>(Illustration.search)),
       findsOneWidget,

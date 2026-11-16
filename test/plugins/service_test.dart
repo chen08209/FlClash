@@ -318,6 +318,25 @@ void main() {
       expect(response.result, names);
     });
 
+    test(
+      'runs the call\'s own model where it decodes a large envelope',
+      () async {
+        final names = List.generate(5000, (index) => '节点-$index');
+        mockCoreChannel(
+          (_) async => utf8.encode(
+            json.encode(CoreMethodResponse(id: '3', result: names).toJson()),
+          ),
+        );
+
+        final response = await Service().invokeMethod(
+          const CoreMethodCall(id: '3', method: CoreMethod.proxyList),
+          model: _lengthOf,
+        );
+
+        expect(response.result, 5000);
+      },
+    );
+
     test('reads an envelope the Core spilled to a file', () async {
       final home = Directory.systemTemp.createTempSync('service_spill');
       addTearDown(() => home.deleteSync(recursive: true));
@@ -511,3 +530,5 @@ void main() {
     });
   });
 }
+
+Object? _lengthOf(Object? result) => (result as List).length;

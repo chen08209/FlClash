@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fl_clash/bootstrap.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/system_dns.dart';
 import 'package:fl_clash/common/window.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
@@ -18,13 +16,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:rust_api/rust_api.dart' show NetworkState;
 
 import 'pages/pages.dart';
 
 Widget buildManagerStack({
   required bool isDesktop,
-  required Future<void> Function(List<ConnectivityResult> results)
-  onConnectivityChanged,
+  required Future<void> Function(NetworkState state) onConnectivityChanged,
   Stream<ProcessSignal>? terminateSignals,
   required Widget child,
 }) {
@@ -126,13 +124,12 @@ class ApplicationState extends ConsumerState<Application> {
     });
   }
 
-  Future<void> _handleConnectivityChanged(
-    List<ConnectivityResult> results,
-  ) async {
-    commonPrint.log('connectivityChanged ${results.toString()}');
-    unawaited(systemDnsCoordinator?.resync() ?? Future.value());
+  Future<void> _handleConnectivityChanged(NetworkState state) async {
+    commonPrint.log(
+      'connectivityChanged wifi: ${state.wifi} vpn: ${state.vpn}',
+    );
     unawaited(ref.read(systemActionProvider.notifier).updateLocalIp());
-    final hasVpn = results.contains(ConnectivityResult.vpn);
+    final hasVpn = state.vpn;
     if (_preHasVpn == hasVpn) {
       ref.read(routeTrackerProvider.notifier).bumpHostEpoch();
       // Android's NetworkObserver tells the Core about a new network itself.
@@ -161,7 +158,7 @@ class ApplicationState extends ConsumerState<Application> {
           navigatorKey: globalState.navigatorKey,
           onNavigationNotification: (_) => true,
           localizationsDelegates: const [
-            AppLocalizations.delegate,
+            appLocalizationsDelegate,
             AppUiLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
           ],
@@ -175,7 +172,7 @@ class ApplicationState extends ConsumerState<Application> {
           },
           title: appName,
           locale: getLocaleForString(locale),
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
+          supportedLocales: AppLocalizations.supportedLocales,
           themeMode: themeProps.themeMode,
           theme: watchAppTheme(ref, Brightness.light),
           darkTheme: watchAppTheme(ref, Brightness.dark),

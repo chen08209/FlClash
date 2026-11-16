@@ -1,20 +1,17 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/window_manager.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/fake_desktop_window.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
-
-const _windowChannel = MethodChannel('window');
 
 const _contentKey = Key('window-header-test-content');
 
@@ -56,7 +53,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
   });
 
   group('showsWindowHeader', () {
@@ -722,20 +719,7 @@ void main() {
       await tester.pump();
     }
 
-    setUpAll(() {
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(_windowChannel, (call) async {
-            return switch (call.method) {
-              'isMaximized' || 'isAlwaysOnTop' || 'isFullScreen' => false,
-              _ => null,
-            };
-          });
-    });
-
-    tearDownAll(() {
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(_windowChannel, null);
-    });
+    setUp(() => FakeDesktopWindow().install());
 
     testWidgets('a narrow desktop window carries the header', (tester) async {
       await pumpContainer(tester, version: 15, viewSize: const Size(420, 800));

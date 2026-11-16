@@ -1,6 +1,14 @@
 pub mod api;
+mod device;
 mod editor;
+mod fonts;
 mod frb_generated;
 mod hotkey;
 mod ipc;
+mod launch;
+mod network;
+mod proxy;
 mod script;
+mod tray;
+mod wifi;
+mod window;
