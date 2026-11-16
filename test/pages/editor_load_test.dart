@@ -6,6 +6,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/nested_sheet.dart';
 import 'package:flutter/gestures.dart' show PointerDeviceKind, kSecondaryButton;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -129,98 +130,114 @@ void main() {
     expect(find.byType(CodeForge), findsOneWidget);
   });
 
-  testWidgets('an editor in a sheet grows the sheet before it scrolls', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(400, 860);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    late BuildContext home;
-    await tester.pumpWidget(
-      TestApp(
-        overrides: [
-          viewSizeProvider.overrideWithBuild((_, _) => const Size(400, 860)),
-        ],
-        child: Builder(
-          builder: (context) {
-            home = context;
-            return const SizedBox();
-          },
+  for (final readOnly in [true, false]) {
+    testWidgets('an editor opened from a sheet page grows the sheet before it '
+        'scrolls and shrinks it from its top, readOnly: $readOnly', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(400, 860);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      late BuildContext home;
+      await tester.pumpWidget(
+        TestApp(
+          overrides: [
+            viewSizeProvider.overrideWithBuild((_, _) => const Size(400, 860)),
+          ],
+          child: Builder(
+            builder: (context) {
+              home = context;
+              return const SizedBox();
+            },
+          ),
         ),
-      ),
-    );
-    late BuildContext sheetPage;
-    unawaited(
-      showSheet<void>(
-        context: home,
-        props: nestedPagedSheetProps,
-        builder: (_) => NestedPagedSheet(
-          builder: (context) {
-            sheetPage = context;
-            return ListView(
-              primary: true,
-              children: [
-                for (var i = 0; i < 30; i++)
-                  SizedBox(height: 44, child: Text('$i')),
-              ],
-            );
-          },
+      );
+      late BuildContext sheetPage;
+      unawaited(
+        showSheet<void>(
+          context: home,
+          props: nestedPagedSheetProps,
+          builder: (_) => NestedPagedSheet(
+            builder: (context) {
+              sheetPage = context;
+              return ListView(
+                primary: true,
+                children: [
+                  for (var i = 0; i < 30; i++)
+                    SizedBox(height: 44, child: Text('$i')),
+                ],
+              );
+            },
+          ),
         ),
-      ),
-    );
-    await settle(tester, 12);
-    unawaited(
-      Navigator.of(sheetPage).push(
-        PagedSheetRoute<void>(
-          builder: (_) => EditorPage(
+      );
+      await settle(tester, 12);
+      unawaited(
+        pushNestedPage<void>(
+          sheetPage,
+          EditorPage(
             title: 'Preview',
             content: [for (var i = 0; i < 400; i++) 'key$i: $i'].join('\n'),
+            onSave: readOnly ? null : (_, _, _) {},
           ),
         ),
-      ),
-    );
-    await settle(tester, 30);
-    double sheetTop() => tester.getTopLeft(find.byType(PagedSheet)).dy;
-    double editorOffset() => tester
-        .stateList<ScrollableState>(
-          find.descendant(
-            of: find.byType(CodeForge),
-            matching: find.byWidgetPredicate((widget) => widget is Scrollable),
-          ),
-        )
-        .firstWhere((state) => state.position.axis == Axis.vertical)
-        .position
-        .pixels;
-    final collapsed = sheetTop();
-
-    // A trackpad pan scrolls without the press a touch selects with on the
-    // host, and the sheet measures what it fits only between frames.
-    Future<void> dragEditor(double dy) async {
-      final gesture = await tester.createGesture(
-        kind: PointerDeviceKind.trackpad,
       );
-      await gesture.panZoomStart(tester.getCenter(find.byType(CodeForge)));
-      for (var moved = 10.0; moved <= dy.abs(); moved += 10) {
-        await gesture.panZoomUpdate(
-          tester.getCenter(find.byType(CodeForge)),
-          pan: Offset(0, moved * dy.sign),
-        );
-        await tester.pump(const Duration(milliseconds: 16));
-      }
-      await tester.pump(const Duration(milliseconds: 200));
-      await gesture.panZoomEnd();
       await settle(tester, 30);
-    }
+      double sheetTop() => tester.getTopLeft(find.byType(PagedSheet)).dy;
+      double editorOffset() => tester
+          .stateList<ScrollableState>(
+            find.descendant(
+              of: find.byType(CodeForge),
+              matching: find.byWidgetPredicate(
+                (widget) => widget is Scrollable,
+              ),
+            ),
+          )
+          .firstWhere((state) => state.position.axis == Axis.vertical)
+          .position
+          .pixels;
+      final collapsed = sheetTop();
 
-    await dragEditor(-200);
+      // A trackpad pan scrolls without the press a touch selects with on the
+      // host, and the sheet measures what it fits only between frames.
+      Future<void> dragEditor(double dy) async {
+        final gesture = await tester.createGesture(
+          kind: PointerDeviceKind.trackpad,
+        );
+        await gesture.panZoomStart(tester.getCenter(find.byType(CodeForge)));
+        for (var moved = 10.0; moved <= dy.abs(); moved += 10) {
+          await gesture.panZoomUpdate(
+            tester.getCenter(find.byType(CodeForge)),
+            pan: Offset(0, moved * dy.sign),
+          );
+          await tester.pump(const Duration(milliseconds: 16));
+        }
+        await tester.pump(const Duration(milliseconds: 200));
+        await gesture.panZoomEnd();
+        await settle(tester, 30);
+      }
 
-    expect(sheetTop(), lessThan(collapsed - 100));
-    expect(editorOffset(), 0);
+      await dragEditor(-200);
 
-    await dragEditor(-100);
+      expect(sheetTop(), lessThan(collapsed - 100));
+      expect(editorOffset(), 0);
 
-    expect(editorOffset(), greaterThan(0));
-  });
+      await dragEditor(-100);
+
+      final scrolled = editorOffset();
+      expect(scrolled, greaterThan(0));
+      final open = sheetTop();
+
+      await dragEditor(scrolled + 20);
+
+      expect(editorOffset(), 0);
+      expect(sheetTop(), open);
+
+      await dragEditor(collapsed - open);
+
+      expect(sheetTop(), closeTo(collapsed, 1));
+    });
+  }
 
   Future<void> openCrlf(WidgetTester tester, {required bool loaded}) async {
     const crlf = 'mode: rule\r\nmixed-port: 7890\r\n';

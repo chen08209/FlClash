@@ -240,7 +240,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
         return false;
       },
     );
-    final data = await BaseNavigator.push<Uint8List>(context, editorPage);
+    final data = await pushNestedPage<Uint8List>(context, editorPage);
     if (data == null || !mounted) {
       return;
     }

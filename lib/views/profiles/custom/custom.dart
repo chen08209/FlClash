@@ -31,14 +31,6 @@ void showCustomProfileSheet(BuildContext context, int profileId) {
   );
 }
 
-void _push(BuildContext context, Widget view) {
-  if (isSheetPage(context)) {
-    Navigator.of(context).push(PagedSheetRoute<void>(builder: (_) => view));
-    return;
-  }
-  BaseNavigator.push(context, view);
-}
-
 Widget _sectionRow(
   BuildContext context,
   Glyph glyph,
@@ -66,7 +58,7 @@ Widget _sectionRow(
         const GlyphIcon(AppGlyphs.chevronForward),
       ],
     ),
-    onTap: () => _push(context, view),
+    onTap: () => unawaited(pushNestedPage<void>(context, view)),
   );
 }
 
@@ -243,7 +235,9 @@ class _CustomProfileViewState extends ConsumerState<CustomProfileView> {
   void _handlePreview() {
     final profile = ref.read(profileProvider(widget.profileId));
     if (profile != null) {
-      _push(context, PreviewProfileView(profile: profile));
+      unawaited(
+        pushNestedPage<void>(context, PreviewProfileView(profile: profile)),
+      );
     }
   }
 
