@@ -212,6 +212,21 @@ void main() {
     });
   });
 
+  group('PatchClashConfig provider', () {
+    test('keeps its mixed port over a 0 and takes the rest', () {
+      final notifier = container.read(patchClashConfigProvider.notifier);
+      notifier.update((state) => state.copyWith(mixedPort: 7899));
+
+      notifier.update((state) => state.copyWith(mixedPort: 0, allowLan: true));
+      notifier.value = notifier.value.copyWith(mixedPort: 0, ipv6: true);
+
+      final config = container.read(patchClashConfigProvider);
+      expect(config.mixedPort, 7899);
+      expect(config.allowLan, isTrue);
+      expect(config.ipv6, isTrue);
+    });
+  });
+
   group('writeConfig', () {
     test('never leaves a restored open controller without a secret', () {
       final ref = container.read(Provider<Ref>((ref) => ref));

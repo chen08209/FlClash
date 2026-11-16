@@ -6636,6 +6636,12 @@ abstract class AppLocalizations {
   /// **'The app lost its connection to the core: {reason}'**
   String coreStoppedWithReason(Object reason);
 
+  /// No description provided for @mixedPortReset.
+  ///
+  /// In en, this message translates to:
+  /// **'The mixed port cannot be {value}, so it was set back to {port}'**
+  String mixedPortReset(Object value, Object port);
+
   /// No description provided for @restartCore.
   ///
   /// In en, this message translates to:

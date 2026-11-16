@@ -3797,6 +3797,11 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String mixedPortReset(Object value, Object port) {
+    return 'El puerto mixto no puede ser $value, se restableció a $port';
+  }
+
+  @override
   String get restartCore => 'Reiniciar núcleo';
 
   @override

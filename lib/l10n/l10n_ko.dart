@@ -3658,6 +3658,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String mixedPortReset(Object value, Object port) {
+    return '혼합 포트는 $value일 수 없어 $port(으)로 되돌렸습니다';
+  }
+
+  @override
   String get restartCore => '코어 다시 시작';
 
   @override

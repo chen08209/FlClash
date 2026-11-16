@@ -1087,6 +1087,7 @@
   "coreStopped": "核心已停止",
   "coreStoppedDesc": "应用与核心的连接已断开",
   "coreStoppedWithReason": "应用与核心的连接已断开：{reason}",
+  "mixedPortReset": "混合端口不能是 {value}，已恢复为 {port}",
   "restartCore": "重启核心",
   "installUpdate": "安装更新",
   "liveStatusPosition": "第 {index} 项，共 {count} 项",

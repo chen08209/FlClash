@@ -1087,6 +1087,7 @@
   "coreStopped": "コアが停止しました",
   "coreStoppedDesc": "アプリとコアの接続が切れました",
   "coreStoppedWithReason": "アプリとコアの接続が切れました：{reason}",
+  "mixedPortReset": "混合ポートを {value} にはできないため、{port} に戻しました",
   "restartCore": "コアを再起動",
   "installUpdate": "アップデートをインストール",
   "liveStatusPosition": "{count} 件中 {index} 件目",

@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -84,6 +85,19 @@ class _PatchClashConfig extends _$PatchClashConfig
   @override
   PatchClashConfig build() {
     return const PatchClashConfig();
+  }
+
+  @override
+  set value(PatchClashConfig value) {
+    if (isUsableMixedPort(value.mixedPort)) {
+      state = value;
+      return;
+    }
+    commonPrint.log(
+      'mixed-port ${value.mixedPort} refused, kept ${state.mixedPort}',
+      logLevel: LogLevel.warning,
+    );
+    state = value.copyWith(mixedPort: state.mixedPort);
   }
 }
 

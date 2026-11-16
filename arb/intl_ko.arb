@@ -1087,6 +1087,7 @@
   "coreStopped": "코어가 중지됨",
   "coreStoppedDesc": "앱과 코어의 연결이 끊어졌습니다",
   "coreStoppedWithReason": "앱과 코어의 연결이 끊어졌습니다: {reason}",
+  "mixedPortReset": "혼합 포트는 {value}일 수 없어 {port}(으)로 되돌렸습니다",
   "restartCore": "코어 다시 시작",
   "installUpdate": "업데이트 설치",
   "liveStatusPosition": "{count}개 중 {index}번째",

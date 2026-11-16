@@ -3750,6 +3750,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String mixedPortReset(Object value, Object port) {
+    return 'Смешанный порт не может быть $value, он возвращён к $port';
+  }
+
+  @override
   String get restartCore => 'Перезапустить ядро';
 
   @override

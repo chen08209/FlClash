@@ -636,6 +636,34 @@ void main() {
     });
   });
 
+  group('PatchClashConfig mixed port', () {
+    test('a stored 0 or a part of a port reads as the default', () {
+      for (final stored in <Object>[0, 0.5, -1, 70000, '7890']) {
+        expect(
+          PatchClashConfig.fromJson({'mixed-port': stored}).mixedPort,
+          defaultMixedPort,
+          reason: '$stored',
+        );
+        expect(unusableMixedPort({'mixed-port': stored}), stored);
+      }
+    });
+
+    test('a usable port and the other ports at 0 are kept', () {
+      final config = PatchClashConfig.fromJson({
+        'mixed-port': 7899,
+        'port': 0,
+        'socks-port': 0,
+      });
+
+      expect(config.mixedPort, 7899);
+      expect(config.port, 0);
+      expect(config.socksPort, 0);
+      expect(unusableMixedPort({'mixed-port': 7899}), isNull);
+      expect(unusableMixedPort(const <String, Object?>{}), isNull);
+      expect(unusableMixedPort('not a map'), isNull);
+    });
+  });
+
   group('PatchClashConfig.ensureControllerSecret', () {
     const open = PatchClashConfig(
       externalController: ExternalControllerStatus.open,

@@ -3537,6 +3537,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String mixedPortReset(Object value, Object port) {
+    return '混合端口不能是 $value，已恢复为 $port';
+  }
+
+  @override
   String get restartCore => '重启核心';
 
   @override

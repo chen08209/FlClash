@@ -3803,6 +3803,11 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String mixedPortReset(Object value, Object port) {
+    return 'Le port mixte ne peut pas être $value, il a été remis à $port';
+  }
+
+  @override
   String get restartCore => 'Redémarrer le cœur';
 
   @override

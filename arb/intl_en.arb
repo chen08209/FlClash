@@ -1190,6 +1190,13 @@
   "coreStopped": "Core stopped",
   "coreStoppedDesc": "The app lost its connection to the core",
   "coreStoppedWithReason": "The app lost its connection to the core: {reason}",
+  "mixedPortReset": "The mixed port cannot be {value}, so it was set back to {port}",
+  "@mixedPortReset": {
+    "placeholders": {
+      "value": {},
+      "port": {}
+    }
+  },
   "restartCore": "Restart core",
   "installUpdate": "Install update",
   "liveStatusPosition": "{index} of {count}",

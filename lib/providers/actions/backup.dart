@@ -141,6 +141,9 @@ class BackupAction extends _$BackupAction {
         ),
       ),
     );
+    if (unusableMixedPort(configMap?['patchClashConfig']) case final value?) {
+      dialogs.showMixedPortReset(value, config.patchClashConfig.mixedPort);
+    }
     await _restoreMitmModules();
   }
 

@@ -1087,6 +1087,7 @@
   "coreStopped": "Cœur arrêté",
   "coreStoppedDesc": "L’application a perdu la connexion au cœur",
   "coreStoppedWithReason": "L’application a perdu la connexion au cœur : {reason}",
+  "mixedPortReset": "Le port mixte ne peut pas être {value}, il a été remis à {port}",
   "restartCore": "Redémarrer le cœur",
   "installUpdate": "Installer la mise à jour",
   "liveStatusPosition": "{index} sur {count}",

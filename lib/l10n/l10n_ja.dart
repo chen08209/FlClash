@@ -3585,6 +3585,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String mixedPortReset(Object value, Object port) {
+    return '混合ポートを $value にはできないため、$port に戻しました';
+  }
+
+  @override
   String get restartCore => 'コアを再起動';
 
   @override

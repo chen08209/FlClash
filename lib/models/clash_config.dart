@@ -1167,6 +1167,21 @@ abstract class Tun with _$Tun {
   }
 }
 
+bool isUsableMixedPort(int port) => port > 0 && port <= 65535;
+
+Object? unusableMixedPort(Object? patchJson) {
+  if (patchJson is! Map) return null;
+  final raw = patchJson['mixed-port'];
+  return raw != null && _mixedPortFromJson(raw) != raw ? raw : null;
+}
+
+int _mixedPortFromJson(Object? value) => switch (value) {
+  final num port
+      when port == port.truncate() && isUsableMixedPort(port.toInt()) =>
+    port.toInt(),
+  _ => defaultMixedPort,
+};
+
 int _mtuFromJson(int value) =>
     value > 0 ? value.clamp(minTunMtu, maxTunMtu) : defaultTunMtu;
 
@@ -2111,7 +2126,9 @@ Map<String, Object?> _withLegacyGeneralOverrideKeys(Map<String, Object?> json) {
 @freezed
 abstract class PatchClashConfig with _$PatchClashConfig {
   const factory PatchClashConfig({
-    @Default(defaultMixedPort) @JsonKey(name: 'mixed-port') int mixedPort,
+    @Default(defaultMixedPort)
+    @JsonKey(name: 'mixed-port', fromJson: _mixedPortFromJson)
+    int mixedPort,
     @Default(0) @JsonKey(name: 'socks-port') int socksPort,
     @Default(0) @JsonKey(name: 'port') int port,
     @Default(0) @JsonKey(name: 'redir-port') int redirPort,
