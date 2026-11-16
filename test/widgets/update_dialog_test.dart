@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/release_asset.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -32,7 +33,7 @@ class _ReleaseAdapter implements HttpClientAdapter {
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
   ) async {
-    if (options.uri.path.endsWith('/$releaseChecksumsName')) {
+    if (options.uri.path.endsWith('/${updateChecksumsName('v0.8.96')}')) {
       return ResponseBody.fromString(sums, 200);
     }
     return asset();
@@ -174,23 +175,28 @@ void main() {
   });
 
   group('a build that updates itself', () {
-    const asset = 'FlClash-0.8.96-android-arm64-v8a.apk';
+    const asset = 'FlClash-dev-0.8.96-android-arm64.apk';
     final package = utf8.encode('package');
     final digest = sha256.convert(package).toString();
     late Directory home;
-    late String? Function() suffix;
+    late SelfUpdateAsset? Function() resolveAsset;
     late HttpClientAdapter adapter;
 
     setUp(() async {
       home = await Directory.systemTemp.createTemp('self_update');
       await useAppPaths(home);
-      suffix = resolveSelfUpdateSuffix;
+      resolveAsset = resolveSelfUpdateAsset;
       adapter = request.releaseDio.httpClientAdapter;
-      resolveSelfUpdateSuffix = () => 'android-arm64-v8a.apk';
+      resolveSelfUpdateAsset = () => (
+        os: ReleaseOs.android,
+        arch: ReleaseArch.arm64,
+        form: null,
+        extension: 'apk',
+      );
     });
 
     tearDown(() async {
-      resolveSelfUpdateSuffix = suffix;
+      resolveSelfUpdateAsset = resolveAsset;
       request.releaseDio.httpClientAdapter = adapter;
       await home.delete(recursive: true);
     });

@@ -60,7 +60,7 @@ jobs:
         run: flutter pub get
 
       - name: Check format
-        run: dart format --output=none --set-exit-if-changed lib test tool plugins setup.dart
+        run: dart format --output=none --set-exit-if-changed lib test tool plugins
 
       - name: Analyze
         run: flutter analyze --no-fatal-infos
@@ -491,7 +491,7 @@ jobs:
           ANDROID_NDK_HOME: ${{ steps.build-ndk.outputs.ndk-path }}
           # The setup hook builds the Core for the host slice only, so an x86_64 slice in the arm64 app cannot run.
           FLUTTER_MACOS_ARM64_ONLY: ${{ matrix.platform == 'macos' && matrix.arch == 'arm64' }}
-        run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
+        run: dart run tool/package.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
 
       - name: Upload
         uses: actions/upload-artifact@v4

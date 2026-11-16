@@ -117,7 +117,7 @@ without such a report.
   reporter verified it on `3.48.0-1.0.pre-404`. The Intel hardware check was not run, and Flutter no longer tests on
   Intel Macs from 3.50, so nothing upstream guards against a regression.
 - **If it returns:** in the release job for `macos-15-intel` (`arch: amd64`), run
-  `plutil -replace FLTEnableImpeller -bool NO macos/Runner/Info.plist` before `dart setup.dart`, so only the Intel DMG
+  `plutil -replace FLTEnableImpeller -bool NO macos/Runner/Info.plist` before `tool/package.dart`, so only the Intel DMG
   falls back to Skia. The check: scroll the proxies and dashboard pages on an Intel Mac with its integrated GPU driving
   the built-in display; an external display can switch to the discrete GPU and hide the flicker.
 

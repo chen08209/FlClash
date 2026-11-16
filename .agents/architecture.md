@@ -1649,9 +1649,8 @@ that asks the OS for a permission, a global shortcut or a registration, must con
 
 ## Build System
 
-`setup.dart` is the release build orchestrator: it writes `env.json` (`APP_ENV`), activates `flutter_distributor` from
-the `chen08209/flutter_distributor` fork pinned to a `v<version>-flclash.<n>` tag (cut a new tag there and bump
-`--git-ref` when the fork changes), and leaves the Core artifacts to the build hook.
+`tool/package.dart` is the release build orchestrator (see Packaging below): it writes `env.json` (`APP_ENV`), runs
+`flutter build`, and leaves the Core artifacts to the build hook.
 
 The desktop Go core and the Rust helper are built by a Dart build hook; Android's Core is built by Gradle (see Android
 Core Build). `plugins/setup/hook/build.dart` only constructs
@@ -1669,7 +1668,7 @@ What the hook protocol forces:
 - The hook does not know the build mode: the protocol carries none and `linkingEnabled` only says whether link hooks
   run, so nothing in the hook branches on debug versus release. It cannot tell `flutter test` from a build either; the
   `build_assets: false` user-define in the root `pubspec.yaml` is the one switch (see `.agents/commands.md`), and
-  `setup.dart` refuses to package while it is set.
+  `tool/package.dart` refuses to package while it is set.
 - The hook declares the files it read but the *directories* it wrote: `hooks_runner` hashes a file by content and a
   directory by child names, so `libclash/macos/` catches a deleted artifact without MD5-ing a 55 MB Core on every
   build. A rebuild touches those directories after the runner's cutoff, so the next build runs the hook once more and
@@ -1753,7 +1752,30 @@ its version only from its own CI, so the fork alone reports the placeholder `1.1
 user agents; `GoBuilder` passes the value as `-X github.com/metacubex/mihomo/constant.Version=...` for every build,
 local and CI alike. Bump it whenever the submodule moves onto a new upstream release.
 
-Architecture detection is automatic. The `--description` flag passed to `flutter_distributor` adds arch suffixes to artifact names, such as `FlClash-0.8.93-macos-arm64.dmg`.
+### Packaging
+
+`tool/package.dart` (sources in `tool/src/package/`) replaced the forked `flutter_distributor`. It runs one
+`flutter build` per platform, then the native tool of each format: Inno Setup's `ISCC` for the installer, `appdmg`,
+`dpkg-deb`, `rpmbuild` and `appimagetool`; the portable zip is written in Dart. `--dry-run` prints every artifact name
+and step without building, for any platform.
+
+- Inputs stay per format in `<os>/packaging/<format>/make_config.yaml`; the packager reads only the keys it uses. The
+  Linux binary name and window class come from `BINARY_NAME` and `APPLICATION_ID` in `linux/CMakeLists.txt`.
+  `windows/packaging/exe/inno_setup.iss` takes `{{NAME}}` placeholders, filled by `innoVariables`, and nothing else.
+- Names come from `releaseAssetName` in `lib/common/release_asset.dart`, which the in-app updater also uses:
+  `FlClash-<line>-<version>-<os>-<arch>[-<form>].<ext>`. The line is `rs` when `build_config.yaml` names
+  `concord_dir` and `dev` when it names `core_dir`, whatever the branch. The version is the `v*` tag on `HEAD` without
+  its `v` and with `+` turned into `.` (GitHub rewrites `+` in asset names), else `<pubspec version>-nightly.<commit
+  date>.<sha7>`. The form is `setup` or `portable` on Windows and absent elsewhere.
+- Each run writes `dist/manifest.json` and `FlClash-<line>-<version>-SHA256SUMS`. The release job merges the
+  per-platform runs with `dart run tool/package.dart merge`, and its release notes, Homebrew cask and F-Droid copy
+  read names from the merged manifest. For the `dev` line it also uploads the Windows installers and APKs under their
+  old names plus a `SHA256SUMS`, which apps released before these names still fetch.
+- Kept from the fork's patches: package trees normalized to 0755/0644 before `dpkg-deb`, `rpmbuild` and
+  `appimagetool` (see Linux Helper below); `dpkg-deb -Zxz`, because the dpkg of UOS and other Debian derivatives
+  cannot unpack Ubuntu's default zstd; `StartupWMClass` in every desktop entry; an `AppRun` that passes its arguments
+  on and appends to `LD_LIBRARY_PATH`; and an AppImage that leaves `libstdc++`, glibc, the GL stack and the other
+  libraries in `appImageSystemLibraries` to the host, since a bundled `libstdc++` older than the host's breaks Mesa.
 
 #### Android Core Build
 
@@ -2148,7 +2170,7 @@ password the app asks for and hands to `sudo -S` on stdin. A 126 means the user 
   the socket to. It also refuses a Helper whose binary or directory is not root-owned and non-writable (a unit runs it
   as root at every boot, so an unpacked bundle would be a standing escalation), and refuses to replace a unit already
   installed for a different UID rather than restart the service out from under that account.
-- That ownership check is why the `flutter_distributor` fork normalizes the packaging tree to 0755/0644 before
+- That ownership check is why `tool/package.dart` normalizes the packaging tree to 0755/0644 before
   `dpkg-deb`, `rpmbuild` and `appimagetool` run: they record modes verbatim, and Ubuntu's per-user default umask
   of 002 would otherwise ship `/opt/FlClash` as 0775, which the installer rejects as group-writable.
 - The rpm spec sets `debug_package` and `__os_install_post` to nil for the same reason: rpmbuild's find-debuginfo and

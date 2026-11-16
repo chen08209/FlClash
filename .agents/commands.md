@@ -8,14 +8,17 @@ Update submodules first. The ClashMeta Go core lives in `core/Clash.Meta/`, the 
 git submodule update --init --recursive
 ```
 
-Full package build, including Go core, Flutter, and packaging, runs through `setup.dart`:
+Full package build, including Go core, Flutter, and packaging, runs through `tool/package.dart` (`make package` on
+macOS and Linux):
 
 ```bash
-dart setup.dart macos
-dart setup.dart linux
-dart setup.dart windows
-dart setup.dart android
+dart run tool/package.dart                 # this host: dmg, exe + zip, or deb + AppImage + rpm
+dart run tool/package.dart android         # every ABI; --arch arm64 for one
+dart run tool/package.dart linux --dry-run --arch arm64   # names and steps only, any platform
 ```
+
+Artifacts land in `dist/` as `FlClash-<line>-<version>-<os>-<arch>[-<form>].<ext>`, with `manifest.json` and
+`FlClash-<line>-<version>-SHA256SUMS`; see Packaging in `architecture.md`.
 
 The desktop Go core and the Rust helper build automatically: Flutter runs
 `plugins/setup/hook/build.dart` on every `flutter build` and `flutter test`,
@@ -65,7 +68,7 @@ stays on there because the editor tests in `test/plugins/code_forge/` and the so
 test in `test/core/desktop/ipc_native_test.dart` load the Rust library the hook
 builds; the release-notes job, which runs no tests, flips both.
 Never commit `false`: a build with it set stages whatever `libclash/` already
-holds and bundles no Rust library, which is why `setup.dart` refuses to package
+holds and bundles no Rust library, which is why `tool/package.dart` refuses to package
 while it is set. Locally, `false` is worth setting for a Dart-only test loop,
 but the hook cache keys on the user-define, so the first build afterwards runs
 the hooks again. The editor and IPC socket tests still need the Rust library: keep `rust_api`
@@ -365,7 +368,7 @@ The `dart` job performs these root-package checks in order:
 ```bash
 bash tool/hooks/test.sh
 flutter pub get
-dart format --output=none --set-exit-if-changed lib test tool plugins setup.dart
+dart format --output=none --set-exit-if-changed lib test tool plugins
 flutter analyze --no-fatal-infos
 dart run tool/changelog.dart verify   # main and tags only
 dart run tool/test.dart -- --reporter expanded --coverage

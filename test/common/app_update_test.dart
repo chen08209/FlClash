@@ -6,36 +6,40 @@ import 'package:crypto/crypto.dart';
 import 'package:fl_clash/common/app_update.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../tool/src/package/version.dart';
+
 void main() {
-  group('selfUpdateAssetSuffix', () {
+  String? nameOn(Abi abi, {required bool windowsInstalled}) {
+    final asset = selfUpdateAssetFor(abi, windowsInstalled: windowsInstalled);
+    return asset == null ? null : updateAssetName('v0.9.4', asset);
+  }
+
+  group('selfUpdateAssetFor', () {
     test('names the APK built for the running ABI', () {
       expect(
-        selfUpdateAssetSuffix(Abi.androidArm64, windowsInstalled: false),
-        'android-arm64-v8a.apk',
+        nameOn(Abi.androidArm64, windowsInstalled: false),
+        'FlClash-dev-0.9.4-android-arm64.apk',
       );
       expect(
-        selfUpdateAssetSuffix(Abi.androidArm, windowsInstalled: false),
-        'android-armeabi-v7a.apk',
+        nameOn(Abi.androidArm, windowsInstalled: false),
+        'FlClash-dev-0.9.4-android-armv7.apk',
       );
       expect(
-        selfUpdateAssetSuffix(Abi.androidX64, windowsInstalled: false),
-        'android-x86_64.apk',
+        nameOn(Abi.androidX64, windowsInstalled: false),
+        'FlClash-dev-0.9.4-android-amd64.apk',
       );
     });
 
     test('names the Windows installer only for an installed build', () {
       expect(
-        selfUpdateAssetSuffix(Abi.windowsX64, windowsInstalled: true),
-        'windows-amd64-setup.exe',
+        nameOn(Abi.windowsX64, windowsInstalled: true),
+        'FlClash-dev-0.9.4-windows-amd64-setup.exe',
       );
       expect(
-        selfUpdateAssetSuffix(Abi.windowsArm64, windowsInstalled: true),
-        'windows-arm64-setup.exe',
+        nameOn(Abi.windowsArm64, windowsInstalled: true),
+        'FlClash-dev-0.9.4-windows-arm64-setup.exe',
       );
-      expect(
-        selfUpdateAssetSuffix(Abi.windowsX64, windowsInstalled: false),
-        isNull,
-      );
+      expect(nameOn(Abi.windowsX64, windowsInstalled: false), isNull);
     });
 
     test('leaves macOS and Linux to the release page', () {
@@ -45,15 +49,31 @@ void main() {
         Abi.linuxX64,
         Abi.linuxArm64,
       ]) {
-        expect(selfUpdateAssetSuffix(abi, windowsInstalled: true), isNull);
+        expect(nameOn(abi, windowsInstalled: true), isNull);
       }
     });
   });
 
-  test('releaseAssetName drops the tag prefix', () {
+  test('asks for the files a rebuild tag published', () {
+    final asset = selfUpdateAssetFor(
+      Abi.androidArm64,
+      windowsInstalled: false,
+    )!;
+
     expect(
-      releaseAssetName('v0.9.3', 'android-arm64-v8a.apk'),
-      'FlClash-0.9.3-android-arm64-v8a.apk',
+      updateAssetName('v0.9.4-pre.1+2', asset),
+      'FlClash-dev-0.9.4-pre.1.2-android-arm64.apk',
+    );
+    expect(
+      updateChecksumsName('v0.9.4-pre.1+2'),
+      'FlClash-dev-0.9.4-pre.1.2-SHA256SUMS',
+    );
+  });
+
+  test('updates from the line tool/package.dart names this build', () {
+    expect(
+      releaseLineOf(File('build_config.yaml').readAsStringSync()),
+      appReleaseLine,
     );
   });
 

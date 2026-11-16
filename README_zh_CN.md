@@ -99,7 +99,7 @@ adb shell am start -a com.follow.clash.action.TOGGLE
 git clone --recursive https://github.com/chen08209/FlClash.git
 cd FlClash
 flutter pub get
-dart setup.dart android   # 或 windows、macos、linux
+dart run tool/package.dart android   # 或 windows、macos、linux
 ```
 
 安装包输出到 `dist/`。Go 内核和 Rust 库会在 Flutter 构建过程中一并编译。
@@ -111,7 +111,7 @@ dart setup.dart android   # 或 windows、macos、linux
 | macOS | Xcode 与 Node.js。脚本会通过 npm 安装 `appdmg`。 |
 | Linux | Debian 或 Ubuntu。脚本会用 apt 安装构建所需的软件包，并下载 `appimagetool`。 |
 
-其余选项可以运行 `dart setup.dart --help` 查看，例如用 `--targets` 只构建部分安装包格式。
+其余选项可以运行 `dart run tool/package.dart --help` 查看，例如用 `--targets` 只构建部分安装包格式，用 `--dry-run` 列出这次会生成的文件。
 
 ## 支持
 

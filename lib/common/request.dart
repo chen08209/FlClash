@@ -152,7 +152,7 @@ class Request {
     CancelToken? cancelToken,
   }) async {
     final sums = await releaseDio.getUri<String>(
-      releaseAssetUri(tag, releaseChecksumsName),
+      releaseAssetUri(tag, updateChecksumsName(tag)),
       options: Options(responseType: ResponseType.plain),
       cancelToken: cancelToken,
     );

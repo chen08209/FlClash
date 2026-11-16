@@ -98,7 +98,7 @@ as in `48 dp`, never px: a reader takes px for physical pixels and misjudges the
 and `test/`.
 
 CI gates formatting: `dart format --output=none --set-exit-if-changed lib test
-tool plugins setup.dart` runs before `flutter analyze`.
+tool plugins` runs before `flutter analyze`.
 
 These directories are excluded from analysis:
 
