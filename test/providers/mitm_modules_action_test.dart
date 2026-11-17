@@ -8,6 +8,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/mitm.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_test/flutter_test.dart';
@@ -218,7 +219,7 @@ Extra = type=http-response,pattern=^https://b,script-path=${urlOf('/extra.js')},
       expect(added.scripts, 2);
       expect(added.resources.keys, [urlOf('/ads.js')]);
 
-      action().putModule(added.copyWith(enabled: true));
+      action().putModule(added.copyWith(enabled: true, accepted: true));
       await action().setArguments((await stored()).single, const {
         'Extra': 'true',
       });
@@ -256,22 +257,128 @@ Extra = type=http-response,pattern=^https://b,script-path=${urlOf('/extra.js')},
     },
   );
 
-  test('an update that brings scripts keeps the module on', () async {
-    bodies = {'/ads.sgmodule': module('Ads'), '/blank.json': '{}'};
-    await action().addFromUrl(urlOf('/ads.sgmodule'));
-    expect((await stored()).single.enabled, isTrue);
-    bodies['/ads.sgmodule'] =
+  group('an update that brings scripts', () {
+    String withScript() =>
         '''
 ${module('Ads')}[Script]
 Ads = type=http-response,pattern=^https://a,script-path=${urlOf('/ads.js')}
 ''';
-    bodies['/ads.js'] = r'$done({})';
 
-    final updated = await action().updateModule((await stored()).single);
+    Future<MitmModule> bringScripts() async {
+      bodies['/ads.sgmodule'] = withScript();
+      bodies['/ads.js'] = r'$done({})';
+      return action().updateModule((await stored()).single);
+    }
 
-    expect(updated.enabled, isTrue);
-    expect((await stored()).single.scripts, 1);
+    Set<int> awaitingConsent() =>
+        container.read(mitmModulesAwaitingConsentProvider);
+
+    setUp(() async {
+      bodies = {'/ads.sgmodule': module('Ads'), '/blank.json': '{}'};
+      await action().addFromUrl(urlOf('/ads.sgmodule'));
+    });
+
+    test('turns off a module never agreed to and asks', () async {
+      final added = (await stored()).single;
+      expect(added.enabled, isTrue);
+      expect(added.accepted, isFalse);
+
+      final updated = await bringScripts();
+
+      expect(updated.enabled, isFalse);
+      expect((await stored()).single.enabled, isFalse);
+      expect((await stored()).single.scripts, 1);
+      expect(awaitingConsent(), {updated.id});
+    });
+
+    test('keeps a module agreed to on', () async {
+      action().putModule((await stored()).single.copyWith(accepted: true));
+
+      final updated = await bringScripts();
+
+      expect(updated.enabled, isTrue);
+      expect((await stored()).single.scripts, 1);
+      expect(awaitingConsent(), isEmpty);
+    });
+
+    test('leaves a module the user turned off alone', () async {
+      action().putModule((await stored()).single.copyWith(enabled: false));
+
+      await bringScripts();
+
+      expect((await stored()).single.enabled, isFalse);
+      expect(awaitingConsent(), isEmpty);
+    });
+
+    group('to a module stored before agreement was recorded', () {
+      Future<void> stored0(String text, {bool enabled = true}) async {
+        final current = (await stored()).single;
+        await File(
+          join(await appPath.mitmModulesDirPath, current.fileName),
+        ).writeAsString(text);
+        action().putModule(
+          MitmModule(
+            id: current.id,
+            name: current.name,
+            url: current.url,
+            enabled: enabled,
+            resources: current.resources,
+            scripts: parseMitmModule(text).declaredScripts,
+            lastUpdateTime: current.lastUpdateTime,
+          ),
+        );
+      }
+
+      test('keeps it on when it was on with scripts', () async {
+        bodies['/ads.js'] = r'$done({})';
+        await stored0(withScript());
+        bodies['/ads.sgmodule'] =
+            '${withScript()}Two = type=http-request,pattern=^https://b,'
+            'script-path=${urlOf('/ads.js')}\n';
+
+        final updated = await action().updateModule((await stored()).single);
+
+        expect(updated.enabled, isTrue);
+        expect(updated.accepted, isTrue);
+      });
+
+      test('keeps it on when it was on with network changes', () async {
+        await stored0('${module('Ads')}[General]\ndns-server = 223.5.5.5\n');
+
+        final updated = await bringScripts();
+
+        expect(updated.enabled, isTrue);
+        expect(updated.accepted, isTrue);
+      });
+
+      test('turns it off when it was on with neither', () async {
+        await stored0(module('Ads'));
+
+        final updated = await bringScripts();
+
+        expect(updated.enabled, isFalse);
+        expect(updated.accepted, isFalse);
+      });
+    });
   });
+
+  test(
+    'an edit that brings scripts turns off a module never agreed to',
+    () async {
+      final local = await action().create(
+        '[URL Rewrite]\n^https://a - reject\n',
+      );
+      action().putModule(local.copyWith(enabled: true));
+
+      final edited = await action().edit(
+        (await stored()).single,
+        '[Script]\nA = type=cron,cronexp="0 * * * *",script-path=a.js\n',
+      );
+
+      expect(edited.enabled, isFalse);
+      expect(container.read(mitmModulesAwaitingConsentProvider), {local.id});
+    },
+  );
 
   group('an accepted module', () {
     String scripted(String pattern) =>
@@ -286,7 +393,9 @@ Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
     Future<MitmModule> accepted() async {
       bodies = {'/ads.sgmodule': scripted('^https://a'), '/ads.js': 'one'};
       await action().addFromUrl(urlOf('/ads.sgmodule'));
-      action().putModule((await stored()).single.copyWith(enabled: true));
+      action().putModule(
+        (await stored()).single.copyWith(enabled: true, accepted: true),
+      );
       return (await stored()).single;
     }
 
@@ -327,28 +436,48 @@ Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
     }
   });
 
-  test('values that declare a new script keep the module on', () async {
-    bodies = {
-      '/q.snippet': '''
+  group('values that declare a new script', () {
+    setUp(() async {
+      bodies = {
+        '/q.snippet': '''
 #!arguments=Line:
 [rewrite_local]
 {{{Line}}}
 ^https://a url reject
 ''',
-    };
-    await action().addFromUrl(urlOf('/q.snippet'));
-    final module = (await stored()).single;
-    expect(module.enabled, isTrue);
-    bodies['/a.js'] = 'one';
-
-    await action().setArguments(module, {
-      'Line': '^https://b url script-response-body ${urlOf('/a.js')}',
+        '/a.js': 'one',
+      };
+      await action().addFromUrl(urlOf('/q.snippet'));
     });
 
-    final changed = (await stored()).single;
-    expect(changed.enabled, isTrue);
-    expect(changed.scripts, 1);
-    expect(changed.resources.keys, [urlOf('/a.js')]);
+    Future<MitmModule?> declare(MitmModule module) => action().setArguments(
+      module,
+      {'Line': '^https://b url script-response-body ${urlOf('/a.js')}'},
+    );
+
+    test('turn off a module never agreed to', () async {
+      final module = (await stored()).single;
+      expect(module.enabled, isTrue);
+
+      final returned = await declare(module);
+
+      final changed = (await stored()).single;
+      expect(returned, changed);
+      expect(changed.enabled, isFalse);
+      expect(changed.scripts, 1);
+      expect(changed.resources.keys, [urlOf('/a.js')]);
+      expect(container.read(mitmModulesAwaitingConsentProvider), {module.id});
+    });
+
+    test('keep a module agreed to on', () async {
+      action().putModule((await stored()).single.copyWith(accepted: true));
+
+      await declare((await stored()).single);
+
+      final changed = (await stored()).single;
+      expect(changed.enabled, isTrue);
+      expect(changed.scripts, 1);
+    });
   });
 
   test('an update keeps what the user changed while it ran', () async {
@@ -392,7 +521,6 @@ Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
     final edited = (await stored()).single;
     expect(mitmAttachments(edited).keys, ['own.js']);
     expect(edited.scripts, 1);
-    expect(edited.enabled, isTrue);
 
     await action().detach(edited, 'own.js');
     await action().clean();

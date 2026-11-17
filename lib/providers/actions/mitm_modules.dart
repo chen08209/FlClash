@@ -85,13 +85,14 @@ class MitmModulesAction extends _$MitmModulesAction {
     ref.read(mitmModulesProvider.notifier).put(module, first: first);
   }
 
-  Future<void> setArguments(
+  Future<MitmModule?> setArguments(
     MitmModule module,
     Map<String, String> arguments,
   ) async {
     putModule(module.copyWith(arguments: arguments));
     final held = <String>[];
     try {
+      final wasAccepted = await _accepted(module);
       final text = await File(await _pathOf(module)).readAsString();
       final content = await compute(_parseMitmModule, (text, arguments));
       final missing = content.resourceUrls.difference({
@@ -105,24 +106,26 @@ class MitmModulesAction extends _$MitmModulesAction {
           if (!module.resources.containsKey(key)) key: value,
       }, held);
       final current = await _current(module.id);
-      if (!ref.mounted ||
-          current == null ||
-          (fetched.isEmpty &&
-              written.isEmpty &&
-              current.scripts == content.declaredScripts)) {
-        return;
+      if (!ref.mounted || current == null) {
+        return current;
       }
-      putModule(
-        current.copyWith(
-          resources: {...current.resources, ...fetched, ...written},
-          scripts: content.declaredScripts,
-        ),
+      final changed = current.copyWith(
+        enabled: _staysOn(current, content, wasAccepted: wasAccepted),
+        accepted: current.accepted ?? wasAccepted,
+        resources: {...current.resources, ...fetched, ...written},
+        scripts: content.declaredScripts,
       );
+      if (changed != current) {
+        putModule(changed);
+        _awaitConsentIfTurnedOff(current, changed);
+      }
+      return changed;
     } on FileSystemException catch (e) {
       commonPrint.log(
         'MITM module ${module.name}: ${compactError(e)}',
         logLevel: LogLevel.warning,
       );
+      return null;
     } finally {
       held.forEach(_held.remove);
     }
@@ -209,6 +212,7 @@ class MitmModulesAction extends _$MitmModulesAction {
         held: held,
       );
       final written = await _writeInline(content.inlineResources, held);
+      final wasAccepted = !added && await _accepted(module);
       await File(await _pathOf(module)).writeAsStringAtomically(text);
       if (!ref.mounted) {
         return module;
@@ -222,13 +226,15 @@ class MitmModulesAction extends _$MitmModulesAction {
         description: content.description ?? '',
         system: content.system,
         enabled: added
-            ? content.declaredScripts == 0 && !content.asksConsent
-            : current.enabled,
+            ? !_asksConsent(content)
+            : _staysOn(current, content, wasAccepted: wasAccepted),
+        accepted: current.accepted ?? wasAccepted,
         scripts: content.declaredScripts,
         resources: {...mitmAttachments(current), ...resources, ...written},
         lastUpdateTime: DateTime.now(),
       );
       putModule(saved, first: first);
+      _awaitConsentIfTurnedOff(current, saved);
       return saved;
     } finally {
       held.forEach(_held.remove);
@@ -236,6 +242,46 @@ class MitmModulesAction extends _$MitmModulesAction {
         unawaited(_cleanAfterSave());
       }
     }
+  }
+
+  void _awaitConsentIfTurnedOff(MitmModule before, MitmModule after) {
+    if (before.enabled && !after.enabled) {
+      ref.read(mitmModulesAwaitingConsentProvider.notifier).add(after.id);
+    }
+  }
+
+  bool _asksConsent(MitmModuleContent content) =>
+      content.declaredScripts > 0 || content.asksConsent;
+
+  bool _staysOn(
+    MitmModule current,
+    MitmModuleContent content, {
+    required bool wasAccepted,
+  }) =>
+      current.enabled &&
+      ((current.accepted ?? wasAccepted) || !_asksConsent(content));
+
+  /// A module stored before agreement was recorded counts as agreed to when it
+  /// was on with something turning it on asks about.
+  Future<bool> _accepted(MitmModule module) async {
+    if (module.accepted case final accepted?) {
+      return accepted;
+    }
+    if (!module.enabled) {
+      return false;
+    }
+    if (module.scripts > 0) {
+      return true;
+    }
+    final file = File(await _pathOf(module));
+    if (!await file.exists()) {
+      return false;
+    }
+    final content = await compute(_parseMitmModule, (
+      await file.readAsString(),
+      module.arguments,
+    ));
+    return content.asksConsent;
   }
 
   Future<void> _cleanAfterSave() async {

@@ -50,6 +50,24 @@ const _resources = {
 
 class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
+/// Every update and new value brings what the module was never agreed to.
+class _TurningOff extends MitmModulesAction {
+  MitmModule _off(MitmModule module) {
+    final off = module.copyWith(enabled: false, accepted: false, scripts: 1);
+    putModule(off);
+    return off;
+  }
+
+  @override
+  Future<MitmModule> updateModule(MitmModule module) async => _off(module);
+
+  @override
+  Future<MitmModule?> setArguments(
+    MitmModule module,
+    Map<String, String> arguments,
+  ) async => _off(module.copyWith(arguments: arguments));
+}
+
 final _remote = MitmModule(
   id: 1,
   name: 'Ads',
@@ -86,6 +104,7 @@ void main() {
     WidgetTester tester,
     Widget child, {
     CoreController? core,
+    bool turningOff = false,
     MitmModuleContent? remoteContent,
     Map<MitmList, Map<String, String>> issues = const {
       MitmList.urlRewrite: {'bad line': 'unknown type'},
@@ -105,6 +124,7 @@ void main() {
     container = ProviderContainer(
       overrides: [
         if (core != null) coreHandlerProvider.overrideWithValue(core),
+        if (turningOff) mitmModulesActionProvider.overrideWith(_TurningOff.new),
         mitmModuleContentProvider(
           _remote.id,
         ).overrideWith((ref) async => content),
@@ -156,12 +176,65 @@ void main() {
     await tester.tap(find.text(currentAppLocalizations.cancel));
     await tester.pumpAndSettle();
     expect((await stored()).last.enabled, isFalse);
+    expect((await stored()).last.accepted, isNull);
 
     await tester.tap(find.byType(Switch).last);
     await tester.pumpAndSettle();
     await tester.tap(find.text(currentAppLocalizations.turnOn));
     await tester.pumpAndSettle();
     expect((await stored()).last.enabled, isTrue);
+    expect((await stored()).last.accepted, isTrue);
+  });
+
+  group('a change that turns a module off for consent', () {
+    Future<void> expectAsked(WidgetTester tester) async {
+      expect(
+        find.text(currentAppLocalizations.mitmModuleRiskTitle),
+        findsOneWidget,
+      );
+      await tester.tap(find.text(currentAppLocalizations.turnOn));
+      await tester.pumpAndSettle();
+      final ads = (await stored()).first;
+      expect(ads.enabled, isTrue);
+      expect(ads.accepted, isTrue);
+      expect(container.read(mitmModulesAwaitingConsentProvider), isEmpty);
+    }
+
+    testWidgets('asks at once after a manual update', (tester) async {
+      await pump(tester, MitmModuleView(id: _remote.id), turningOff: true);
+
+      await tester.tap(find.text(currentAppLocalizations.update));
+      await tester.pumpAndSettle();
+
+      await expectAsked(tester);
+    });
+
+    testWidgets('asks at once after a new value', (tester) async {
+      await pump(tester, MitmModuleView(id: _remote.id), turningOff: true);
+
+      await tester.tap(find.text('Toggle'));
+      await tester.pumpAndSettle();
+
+      await expectAsked(tester);
+    });
+
+    testWidgets('waits on the list until the user answers', (tester) async {
+      await pump(tester, const MitmModulesView());
+      container.read(mitmModulesAwaitingConsentProvider.notifier).add(1);
+      MitmModulesAction action() =>
+          container.read(mitmModulesActionProvider.notifier);
+      action().putModule(_remote.copyWith(enabled: false));
+      await tester.pumpAndSettle();
+      expect(container.read(mitmModulesToAgreeProvider), hasLength(1));
+
+      await tester.tap(find.byType(Switch).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(currentAppLocalizations.cancel));
+      await tester.pumpAndSettle();
+
+      expect((await stored()).first.enabled, isFalse);
+      expect(container.read(mitmModulesToAgreeProvider), isEmpty);
+    });
   });
 
   testWidgets('the details show what the module adds and leaves out', (

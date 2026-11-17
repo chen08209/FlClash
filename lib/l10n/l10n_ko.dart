@@ -3645,6 +3645,24 @@ class AppLocalizationsKo extends AppLocalizations {
   String get mitmScriptRiskTitle => '이 모듈의 스크립트를 실행할까요?';
 
   @override
+  String get mitmModulesTurnedOff => '모듈이 꺼졌습니다';
+
+  @override
+  String mitmModuleTurnedOffDesc(Object name) {
+    return '$name 업데이트에 아직 동의하지 않은 스크립트나 네트워크 변경이 포함되어 있습니다';
+  }
+
+  @override
+  String mitmModulesTurnedOffDesc(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '모듈 $count개의 업데이트에 아직 동의하지 않은 스크립트나 네트워크 변경이 포함되어 있습니다',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get mitmScriptRisk =>
       '스크립트가 일치하는 호스트의 트래픽을 읽고 바꿀 수 있으며, 쿠키와 토큰도 포함되고 직접 요청을 보낼 수도 있습니다. 출처를 신뢰할 때만 켜세요. 켜면 이후 업데이트는 다시 묻지 않고 적용됩니다.';
 

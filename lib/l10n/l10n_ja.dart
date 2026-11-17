@@ -3569,6 +3569,24 @@ class AppLocalizationsJa extends AppLocalizations {
   String get mitmScriptRiskTitle => 'このモジュールのスクリプトを実行しますか？';
 
   @override
+  String get mitmModulesTurnedOff => 'モジュールをオフにしました';
+
+  @override
+  String mitmModuleTurnedOffDesc(Object name) {
+    return '$name の更新に、まだ同意していないスクリプトまたはネットワーク変更が含まれています';
+  }
+
+  @override
+  String mitmModulesTurnedOffDesc(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 個のモジュールの更新に、まだ同意していないスクリプトまたはネットワーク変更が含まれています',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get mitmScriptRisk =>
       'スクリプトは一致したホストの通信を読み取り、変更できます。Cookie やトークンも含まれ、独自にリクエストを送ることもできます。提供元を信頼できる場合にのみオンにしてください。オンにすると、以後の更新は確認なしで反映されます。';
 

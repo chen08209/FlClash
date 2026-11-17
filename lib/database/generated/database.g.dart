@@ -4813,6 +4813,20 @@ class $MitmModulesTable extends MitmModules
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _acceptedMeta = const VerificationMeta(
+    'accepted',
+  );
+  @override
+  late final GeneratedColumn<bool> accepted = GeneratedColumn<bool>(
+    'accepted',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("accepted" IN (0, 1))',
+    ),
+  );
   static const VerificationMeta _lastUpdateTimeMeta = const VerificationMeta(
     'lastUpdateTime',
   );
@@ -4837,6 +4851,7 @@ class $MitmModulesTable extends MitmModules
     resources,
     system,
     scripts,
+    accepted,
     lastUpdateTime,
   ];
   @override
@@ -4899,6 +4914,12 @@ class $MitmModulesTable extends MitmModules
       context.handle(
         _scriptsMeta,
         scripts.isAcceptableOrUnknown(data['scripts']!, _scriptsMeta),
+      );
+    }
+    if (data.containsKey('accepted')) {
+      context.handle(
+        _acceptedMeta,
+        accepted.isAcceptableOrUnknown(data['accepted']!, _acceptedMeta),
       );
     }
     if (data.containsKey('last_update_time')) {
@@ -4965,6 +4986,10 @@ class $MitmModulesTable extends MitmModules
         DriftSqlType.int,
         data['${effectivePrefix}scripts'],
       )!,
+      accepted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}accepted'],
+      ),
       lastUpdateTime: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_update_time'],
@@ -4994,6 +5019,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
   final Map<String, String> resources;
   final String? system;
   final int scripts;
+  final bool? accepted;
   final DateTime lastUpdateTime;
   const RawMitmModule({
     required this.id,
@@ -5006,6 +5032,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
     required this.resources,
     this.system,
     required this.scripts,
+    this.accepted,
     required this.lastUpdateTime,
   });
   @override
@@ -5035,6 +5062,9 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
       map['system'] = Variable<String>(system);
     }
     map['scripts'] = Variable<int>(scripts);
+    if (!nullToAbsent || accepted != null) {
+      map['accepted'] = Variable<bool>(accepted);
+    }
     map['last_update_time'] = Variable<DateTime>(lastUpdateTime);
     return map;
   }
@@ -5055,6 +5085,9 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
           ? const Value.absent()
           : Value(system),
       scripts: Value(scripts),
+      accepted: accepted == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accepted),
       lastUpdateTime: Value(lastUpdateTime),
     );
   }
@@ -5075,6 +5108,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
       resources: serializer.fromJson<Map<String, String>>(json['resources']),
       system: serializer.fromJson<String?>(json['system']),
       scripts: serializer.fromJson<int>(json['scripts']),
+      accepted: serializer.fromJson<bool?>(json['accepted']),
       lastUpdateTime: serializer.fromJson<DateTime>(json['lastUpdateTime']),
     );
   }
@@ -5092,6 +5126,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
       'resources': serializer.toJson<Map<String, String>>(resources),
       'system': serializer.toJson<String?>(system),
       'scripts': serializer.toJson<int>(scripts),
+      'accepted': serializer.toJson<bool?>(accepted),
       'lastUpdateTime': serializer.toJson<DateTime>(lastUpdateTime),
     };
   }
@@ -5107,6 +5142,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
     Map<String, String>? resources,
     Value<String?> system = const Value.absent(),
     int? scripts,
+    Value<bool?> accepted = const Value.absent(),
     DateTime? lastUpdateTime,
   }) => RawMitmModule(
     id: id ?? this.id,
@@ -5119,6 +5155,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
     resources: resources ?? this.resources,
     system: system.present ? system.value : this.system,
     scripts: scripts ?? this.scripts,
+    accepted: accepted.present ? accepted.value : this.accepted,
     lastUpdateTime: lastUpdateTime ?? this.lastUpdateTime,
   );
   RawMitmModule copyWithCompanion(MitmModulesCompanion data) {
@@ -5135,6 +5172,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
       resources: data.resources.present ? data.resources.value : this.resources,
       system: data.system.present ? data.system.value : this.system,
       scripts: data.scripts.present ? data.scripts.value : this.scripts,
+      accepted: data.accepted.present ? data.accepted.value : this.accepted,
       lastUpdateTime: data.lastUpdateTime.present
           ? data.lastUpdateTime.value
           : this.lastUpdateTime,
@@ -5154,6 +5192,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
           ..write('resources: $resources, ')
           ..write('system: $system, ')
           ..write('scripts: $scripts, ')
+          ..write('accepted: $accepted, ')
           ..write('lastUpdateTime: $lastUpdateTime')
           ..write(')'))
         .toString();
@@ -5171,6 +5210,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
     resources,
     system,
     scripts,
+    accepted,
     lastUpdateTime,
   );
   @override
@@ -5187,6 +5227,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
           other.resources == this.resources &&
           other.system == this.system &&
           other.scripts == this.scripts &&
+          other.accepted == this.accepted &&
           other.lastUpdateTime == this.lastUpdateTime);
 }
 
@@ -5201,6 +5242,7 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
   final Value<Map<String, String>> resources;
   final Value<String?> system;
   final Value<int> scripts;
+  final Value<bool?> accepted;
   final Value<DateTime> lastUpdateTime;
   const MitmModulesCompanion({
     this.id = const Value.absent(),
@@ -5213,6 +5255,7 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
     this.resources = const Value.absent(),
     this.system = const Value.absent(),
     this.scripts = const Value.absent(),
+    this.accepted = const Value.absent(),
     this.lastUpdateTime = const Value.absent(),
   });
   MitmModulesCompanion.insert({
@@ -5226,6 +5269,7 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
     this.resources = const Value.absent(),
     this.system = const Value.absent(),
     this.scripts = const Value.absent(),
+    this.accepted = const Value.absent(),
     required DateTime lastUpdateTime,
   }) : name = Value(name),
        lastUpdateTime = Value(lastUpdateTime);
@@ -5240,6 +5284,7 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
     Expression<String>? resources,
     Expression<String>? system,
     Expression<int>? scripts,
+    Expression<bool>? accepted,
     Expression<DateTime>? lastUpdateTime,
   }) {
     return RawValuesInsertable({
@@ -5253,6 +5298,7 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
       if (resources != null) 'resources': resources,
       if (system != null) 'system': system,
       if (scripts != null) 'scripts': scripts,
+      if (accepted != null) 'accepted': accepted,
       if (lastUpdateTime != null) 'last_update_time': lastUpdateTime,
     });
   }
@@ -5268,6 +5314,7 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
     Value<Map<String, String>>? resources,
     Value<String?>? system,
     Value<int>? scripts,
+    Value<bool?>? accepted,
     Value<DateTime>? lastUpdateTime,
   }) {
     return MitmModulesCompanion(
@@ -5281,6 +5328,7 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
       resources: resources ?? this.resources,
       system: system ?? this.system,
       scripts: scripts ?? this.scripts,
+      accepted: accepted ?? this.accepted,
       lastUpdateTime: lastUpdateTime ?? this.lastUpdateTime,
     );
   }
@@ -5322,6 +5370,9 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
     if (scripts.present) {
       map['scripts'] = Variable<int>(scripts.value);
     }
+    if (accepted.present) {
+      map['accepted'] = Variable<bool>(accepted.value);
+    }
     if (lastUpdateTime.present) {
       map['last_update_time'] = Variable<DateTime>(lastUpdateTime.value);
     }
@@ -5341,6 +5392,7 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
           ..write('resources: $resources, ')
           ..write('system: $system, ')
           ..write('scripts: $scripts, ')
+          ..write('accepted: $accepted, ')
           ..write('lastUpdateTime: $lastUpdateTime')
           ..write(')'))
         .toString();
@@ -9245,6 +9297,7 @@ typedef $$MitmModulesTableCreateCompanionBuilder =
       Value<Map<String, String>> resources,
       Value<String?> system,
       Value<int> scripts,
+      Value<bool?> accepted,
       required DateTime lastUpdateTime,
     });
 typedef $$MitmModulesTableUpdateCompanionBuilder =
@@ -9259,6 +9312,7 @@ typedef $$MitmModulesTableUpdateCompanionBuilder =
       Value<Map<String, String>> resources,
       Value<String?> system,
       Value<int> scripts,
+      Value<bool?> accepted,
       Value<DateTime> lastUpdateTime,
     });
 
@@ -9331,6 +9385,11 @@ class $$MitmModulesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<bool> get accepted => $composableBuilder(
+    column: $table.accepted,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<DateTime> get lastUpdateTime => $composableBuilder(
     column: $table.lastUpdateTime,
     builder: (column) => ColumnFilters(column),
@@ -9396,6 +9455,11 @@ class $$MitmModulesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get accepted => $composableBuilder(
+    column: $table.accepted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get lastUpdateTime => $composableBuilder(
     column: $table.lastUpdateTime,
     builder: (column) => ColumnOrderings(column),
@@ -9442,6 +9506,9 @@ class $$MitmModulesTableAnnotationComposer
 
   GeneratedColumn<int> get scripts =>
       $composableBuilder(column: $table.scripts, builder: (column) => column);
+
+  GeneratedColumn<bool> get accepted =>
+      $composableBuilder(column: $table.accepted, builder: (column) => column);
 
   GeneratedColumn<DateTime> get lastUpdateTime => $composableBuilder(
     column: $table.lastUpdateTime,
@@ -9490,6 +9557,7 @@ class $$MitmModulesTableTableManager
                 Value<Map<String, String>> resources = const Value.absent(),
                 Value<String?> system = const Value.absent(),
                 Value<int> scripts = const Value.absent(),
+                Value<bool?> accepted = const Value.absent(),
                 Value<DateTime> lastUpdateTime = const Value.absent(),
               }) => MitmModulesCompanion(
                 id: id,
@@ -9502,6 +9570,7 @@ class $$MitmModulesTableTableManager
                 resources: resources,
                 system: system,
                 scripts: scripts,
+                accepted: accepted,
                 lastUpdateTime: lastUpdateTime,
               ),
           createCompanionCallback:
@@ -9516,6 +9585,7 @@ class $$MitmModulesTableTableManager
                 Value<Map<String, String>> resources = const Value.absent(),
                 Value<String?> system = const Value.absent(),
                 Value<int> scripts = const Value.absent(),
+                Value<bool?> accepted = const Value.absent(),
                 required DateTime lastUpdateTime,
               }) => MitmModulesCompanion.insert(
                 id: id,
@@ -9528,6 +9598,7 @@ class $$MitmModulesTableTableManager
                 resources: resources,
                 system: system,
                 scripts: scripts,
+                accepted: accepted,
                 lastUpdateTime: lastUpdateTime,
               ),
           withReferenceMapper: (p0) => p0

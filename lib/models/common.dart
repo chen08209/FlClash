@@ -828,6 +828,11 @@ abstract class MitmModule with _$MitmModule {
 
     /// Its scripts FlClash runs, which turning it on asks about first.
     @Default(0) int scripts,
+
+    /// Whether the user agreed to what turning it on asks about, after which
+    /// its updates bring new scripts without asking. Null for a module stored
+    /// before FlClash recorded it.
+    bool? accepted,
     required DateTime lastUpdateTime,
   }) = _MitmModule;
 }

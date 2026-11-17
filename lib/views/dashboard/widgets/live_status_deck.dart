@@ -8,6 +8,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/views/config/mitm_modules.dart' show MitmModulesView;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -742,6 +743,16 @@ class _StatusCard extends ConsumerWidget {
     unawaited(action.installUpdate());
   }
 
+  void _reviewModules(BuildContext context) {
+    final navigator = Navigator.of(context)..pop();
+    unawaited(
+      BaseNavigator.push<void>(
+        navigator.overlay!.context,
+        const MitmModulesView(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = context.colorScheme;
@@ -756,12 +767,14 @@ class _StatusCard extends ConsumerWidget {
             stopDownload: action.cancelUpdateDownload,
             install: () => _install(context, ref),
             discard: () => unawaited(action.discardUpdate()),
+            reviewModules: () => _reviewModules(context),
           )
         : (
             restartCore: _inert,
             stopDownload: _inert,
             install: _inert,
             discard: _inert,
+            reviewModules: _inert,
           );
     final (
       tint,
@@ -817,6 +830,17 @@ class _StatusCard extends ConsumerWidget {
         appLocalizations.installUpdate,
         effects.install,
         (colorScheme.success, colorScheme.onSuccess),
+      ),
+      MitmConsentStatus(:final names) => (
+        colorScheme.warningContainer,
+        _ConsentHero(names: names),
+        appLocalizations.mitmModulesTurnedOff,
+        names.length == 1
+            ? appLocalizations.mitmModuleTurnedOffDesc(names.single)
+            : appLocalizations.mitmModulesTurnedOffDesc(names.length),
+        appLocalizations.view,
+        effects.reviewModules,
+        (colorScheme.warning, colorScheme.onWarning),
       ),
     };
     final ask = switch (_confirmOf(status)) {
@@ -1301,6 +1325,74 @@ class _ReadyHero extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ConsentHero extends StatelessWidget {
+  const _ConsentHero({required this.names});
+
+  static const _shownNames = 2;
+
+  final List<String> names;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final chipFill = SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme);
+    final shown = names.take(_shownNames);
+    final rest = names.length - shown.length;
+    Widget chip(String text) => Flexible(
+      child: DecoratedBox(
+        decoration: ShapeDecoration(color: chipFill, shape: AppShape.full),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyle.footnote
+                .of(context)
+                .copyWith(color: colorScheme.onSurfaceVariant),
+          ),
+        ),
+      ),
+    );
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 14,
+          children: [
+            SizedBox.square(
+              dimension: 60,
+              child: DecoratedBox(
+                decoration: ShapeDecoration(
+                  color: colorScheme.warning,
+                  shape: AppShape.circle,
+                ),
+                child: Center(
+                  child: GlyphIcon(
+                    AppGlyphs.puzzle,
+                    size: 28,
+                    fill: 1,
+                    color: colorScheme.onWarning,
+                  ),
+                ),
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 8,
+              children: [
+                for (final name in shown) chip(name),
+                if (rest > 0) chip('+$rest'),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

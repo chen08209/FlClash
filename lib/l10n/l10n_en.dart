@@ -3741,6 +3741,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mitmScriptRiskTitle => 'Run this module\'s scripts?';
 
   @override
+  String get mitmModulesTurnedOff => 'Modules turned off';
+
+  @override
+  String mitmModuleTurnedOffDesc(Object name) {
+    return 'An update to $name brought scripts or network changes you have not agreed to';
+  }
+
+  @override
+  String mitmModulesTurnedOffDesc(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count modules got updates with scripts or network changes you have not agreed to',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get mitmScriptRisk =>
       'Its scripts read and change the traffic of the hosts they match, cookies and tokens included, and can send requests of their own. Turn it on only if you trust where it comes from. Once on, its updates take effect without asking again.';
 

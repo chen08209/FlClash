@@ -6588,6 +6588,24 @@ abstract class AppLocalizations {
   /// **'Run this module\'s scripts?'**
   String get mitmScriptRiskTitle;
 
+  /// No description provided for @mitmModulesTurnedOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Modules turned off'**
+  String get mitmModulesTurnedOff;
+
+  /// No description provided for @mitmModuleTurnedOffDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'An update to {name} brought scripts or network changes you have not agreed to'**
+  String mitmModuleTurnedOffDesc(Object name);
+
+  /// No description provided for @mitmModulesTurnedOffDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, other{{count} modules got updates with scripts or network changes you have not agreed to}}'**
+  String mitmModulesTurnedOffDesc(num count);
+
   /// No description provided for @mitmScriptRisk.
   ///
   /// In en, this message translates to:

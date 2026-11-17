@@ -1,6 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/mitm.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
@@ -20,11 +21,14 @@ final _profile = Profile.normal(label: 'My subscription');
 
 void main() {
   late ProviderContainer container;
+  var toAgree = <MitmModule>[];
 
   setUp(() {
+    toAgree = [];
     container = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(() => TestProfiles([_profile])),
+        mitmModulesToAgreeProvider.overrideWith((ref) => toAgree),
       ],
     );
     globalState.container = container;
@@ -254,6 +258,43 @@ void main() {
     expect(find.text('Stop downloading the update?'), findsNothing);
     expect(front('Cancel'), findsOneWidget);
     expect(front('Stop'), findsNothing);
+  });
+
+  testWidgets('names the modules an update turned off', (tester) async {
+    MitmModule module(int id, String name) => MitmModule(
+      id: id,
+      name: name,
+      enabled: false,
+      lastUpdateTime: DateTime(2026, 11, 17),
+    );
+    toAgree = [module(1, 'Ads')];
+    await pumpButton(tester);
+
+    expect(badge('Modules turned off'), findsOneWidget);
+    await open(tester);
+
+    expect(front('Ads'), findsOneWidget);
+    expect(
+      find.text(
+        'An update to Ads brought scripts or network changes you have not '
+        'agreed to',
+      ),
+      findsOneWidget,
+    );
+    expect(front('View'), findsOneWidget);
+
+    toAgree = [module(1, 'Ads'), module(2, 'Tracker'), module(3, 'Video')];
+    container.invalidate(mitmModulesToAgreeProvider);
+    await settle(tester);
+
+    expect(front('+1'), findsOneWidget);
+    expect(
+      find.text(
+        '3 modules got updates with scripts or network changes you have not '
+        'agreed to',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('leaves updating resources out', (tester) async {

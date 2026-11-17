@@ -55,7 +55,7 @@ String mitmNetworkChangeValue(
 
 /// Scripts and network changes reach past the module's own hosts, so either
 /// asks before the module turns on.
-Future<bool> acceptMitmModule(WidgetRef ref, MitmModule module) async {
+Future<MitmModule?> acceptMitmModule(WidgetRef ref, MitmModule module) async {
   final content = ref.listenManual(
     mitmModuleContentProvider(module.id).future,
     (_, _) {},
@@ -71,7 +71,7 @@ Future<bool> acceptMitmModule(WidgetRef ref, MitmModule module) async {
   final sources = read?.clientSourceAddress ?? const <String>[];
   final scripts = module.scripts > 0;
   if (!scripts && read?.asksConsent != true) {
-    return true;
+    return module.copyWith(enabled: true);
   }
   final appLocalizations = currentAppLocalizations;
   final overrides = ref.read(
@@ -117,16 +117,29 @@ Future<bool> acceptMitmModule(WidgetRef ref, MitmModule module) async {
     ),
     confirmText: appLocalizations.turnOn,
   );
-  return accepted == true;
+  return accepted == true
+      ? module.copyWith(enabled: true, accepted: true)
+      : null;
 }
 
 Future<void> offerMitmModule(WidgetRef ref, MitmModule? module) async {
-  if (module != null &&
-      !module.enabled &&
-      await acceptMitmModule(ref, module)) {
-    ref
-        .read(mitmModulesActionProvider.notifier)
-        .putModule(module.copyWith(enabled: true));
+  if (module == null || module.enabled) {
+    return;
+  }
+  final accepted = await acceptMitmModule(ref, module);
+  ref.read(mitmModulesAwaitingConsentProvider.notifier).answer(module.id);
+  if (accepted != null) {
+    ref.read(mitmModulesActionProvider.notifier).putModule(accepted);
+  }
+}
+
+Future<void> askIfMitmModuleTurnedOff(
+  WidgetRef ref,
+  MitmModule before,
+  MitmModule? after,
+) async {
+  if (before.enabled && after != null && !after.enabled) {
+    await offerMitmModule(ref, after);
   }
 }
 
@@ -166,6 +179,8 @@ Future<void> openMitmModuleEditor(
     }
     if (module == null) {
       await offerMitmModule(ref, saved);
+    } else {
+      await askIfMitmModuleTurnedOff(ref, module, saved);
     }
   }
 

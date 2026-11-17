@@ -3735,6 +3735,25 @@ class AppLocalizationsRu extends AppLocalizations {
   String get mitmScriptRiskTitle => 'Запускать скрипты этого модуля?';
 
   @override
+  String get mitmModulesTurnedOff => 'Модули отключены';
+
+  @override
+  String mitmModuleTurnedOffDesc(Object name) {
+    return 'Обновление $name принесло скрипты или сетевые изменения, на которые вы не соглашались';
+  }
+
+  @override
+  String mitmModulesTurnedOffDesc(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Обновления $count модулей принесли скрипты или сетевые изменения, на которые вы не соглашались',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get mitmScriptRisk =>
       'Его скрипты читают и меняют трафик подходящих хостов, включая файлы cookie и токены, и могут сами отправлять запросы. Включайте, только если доверяете источнику. После включения его обновления применяются без повторного запроса.';
 
