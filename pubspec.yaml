@@ -1,5 +1,5 @@
 name: fl_clash
-description: A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.
+description: A multi-platform proxy client based on the Concord core, simple and easy to use, open-source and ad-free.
 publish_to: 'none'
 version: 0.9.3+2026110401
 environment:

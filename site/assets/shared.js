@@ -17,9 +17,9 @@ globalThis.FlClashSite = (() => {
 
   const STRINGS = {
     en: {
-      pageTitle: 'FlClash – Clash Meta (mihomo) proxy client for Android, Windows, macOS and Linux',
+      pageTitle: 'FlClash – Clash proxy client for Android, Windows, macOS and Linux',
       pageDescription:
-        'FlClash is a free, open-source Clash Meta (mihomo) proxy client for Android, Windows, macOS and Linux, with rule routing, TUN mode and subscription import. No ads.',
+        'FlClash is a free, open-source Clash proxy client for Android, Windows, macOS and Linux, built on the Concord core, with rule routing, TUN mode and subscription import. No ads.',
       skip: 'Skip to downloads',
       navDownload: 'Download',
       navChangelog: 'Changelog',
@@ -28,7 +28,7 @@ globalThis.FlClashSite = (() => {
       themeLabel: 'Toggle dark mode',
       heroFor: 'for',
       reelLabel: 'Switch platform',
-      heroLede: 'A multi-platform proxy client based on Clash Meta (mihomo). Simple to use, open source and ad-free.',
+      heroLede: 'A multi-platform proxy client based on the Concord core. Simple to use, open source and ad-free.',
       heroOther: 'Other platforms',
       heroReleaseLoading: 'Latest release',
       heroRelease: (v) => `${v} is out · See what’s new`,
@@ -36,7 +36,7 @@ globalThis.FlClashSite = (() => {
       ctaChoose: 'Choose a download',
       ctaIos: 'FlClash does not run on iOS. Pick a build for another device below.',
       previewAlt: 'FlClash dashboard on a MacBook and a phone',
-      fact1Title: 'mihomo core',
+      fact1Title: 'Concord core',
       fact1: 'Rule routing, proxy groups and TUN mode.',
       fact2Title: 'Subscriptions',
       fact2: 'Import a profile from a subscription link.',
@@ -106,9 +106,9 @@ globalThis.FlClashSite = (() => {
       stars: (n) => `${n} stars on GitHub`,
     },
     zh: {
-      pageTitle: 'FlClash – 基于 Clash Meta（mihomo）的多平台代理客户端，支持 Android、Windows、macOS、Linux',
+      pageTitle: 'FlClash – 基于 Concord 内核的多平台代理客户端，支持 Android、Windows、macOS、Linux',
       pageDescription:
-        'FlClash 是免费开源的 Clash Meta（mihomo）代理客户端，支持 Android、Windows、macOS 与 Linux，提供规则分流、TUN 模式与订阅导入，没有广告。',
+        'FlClash 是免费开源的 Clash 代理客户端，基于 Concord 内核，支持 Android、Windows、macOS 与 Linux，提供规则分流、TUN 模式与订阅导入，没有广告。',
       skip: '跳到下载',
       navDownload: '下载',
       navChangelog: '更新日志',
@@ -117,7 +117,7 @@ globalThis.FlClashSite = (() => {
       themeLabel: '切换深色模式',
       heroFor: '适用于',
       reelLabel: '切换平台',
-      heroLede: '基于 Clash Meta（mihomo）内核的多平台代理客户端。简单易用，开源，无广告。',
+      heroLede: '基于 Concord 内核的多平台代理客户端。简单易用，开源，无广告。',
       heroOther: '其他平台',
       heroReleaseLoading: '最新版本',
       heroRelease: (v) => `${v} 已发布 · 查看更新`,
@@ -125,7 +125,7 @@ globalThis.FlClashSite = (() => {
       ctaChoose: '选择下载版本',
       ctaIos: 'FlClash 不支持 iOS，可以在下方选择其他设备的版本。',
       previewAlt: 'FlClash 仪表盘在 MacBook 与手机上的界面',
-      fact1Title: 'mihomo 内核',
+      fact1Title: 'Concord 内核',
       fact1: '规则分流、代理组与 TUN 模式。',
       fact2Title: '订阅导入',
       fact2: '通过订阅链接导入配置。',

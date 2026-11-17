@@ -106,14 +106,14 @@ void main() {
 
     verify(
       () => api.crateApiLaunchIsAutostartEnabled(
-        id: appName,
+        id: sideBySideName,
         executable: executable,
       ),
     ).called(1);
     verify(
       () => api.crateApiLaunchSetAutostart(
-        id: appName,
-        displayName: appName,
+        id: sideBySideName,
+        displayName: sideBySideName,
         executable: executable,
         enabled: true,
       ),

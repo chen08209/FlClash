@@ -1843,7 +1843,7 @@ workspace (`target/` left out) stands in for the hook's cache.
 
 - `setup`: build-time harness for the Concord core and the Rust helper, driven by a Dart build hook; no runtime Dart API.
 - `proxy`: system proxy configuration. On Windows the package installer and uninstaller kill the app, and then run
-  `FlClash.exe --clear-stale-proxy`, the installer once the new files are in place; the runner hands it to the plugin
+  `FlClash-RS.exe --clear-stale-proxy`, the installer once the new files are in place; the runner hands it to the plugin
   before any engine starts, and it turns off only a proxy still set to FlClash's `127.0.0.1:<port>` with nothing
   listening on that port. In the app `SystemProxyQueue` sets the system proxy when the Core starts with it on, and
   stops it on a stop or exit only when this run set it, since a stop also clears a proxy, PAC or auto-detect setting
@@ -2123,7 +2123,7 @@ UTF-8 bytes rather than a `String` so that decoding them stays off the UI isolat
   each start adds a new `?v=` query so a system that caches PAC files by URL fetches the edited script. On
   Windows a hidden top-level window on its own thread turns a proxy this run set back off at `WM_ENDSESSION`, since
   shutdown kills the process before the Dart exit path runs. The package installer and uninstaller kill the app and
-  then run `FlClash.exe --clear-stale-proxy`, the installer once the new files are in place; the runner loads
+  then run `FlClash-RS.exe --clear-stale-proxy`, the installer once the new files are in place; the runner loads
   `rust_api.dll` and calls its exported `flclash_clear_stale_proxy` before any engine starts, which turns off only a
   proxy or `/flclash.pac` URL still set to FlClash's `127.0.0.1:<port>` with nothing listening on that port. In the app
   `SystemProxyQueue` (`lib/common/proxy.dart`) sets the system proxy when the Core starts with it on, and stops it on
@@ -2184,6 +2184,11 @@ The helper owns its Windows Service Control Manager lifecycle through two elevat
 
 The Dart layer only launches the helper's `install` command through `ShellExecuteW`; it does not compose `sc.exe`,
 `taskkill`, or `cmd.exe` command lines.
+
+While `rsSideBySide` (`lib/common/constant.dart`) is on, the rs Helper registers under its own names so it installs
+beside FlClash's: the Windows service `FlClashRsHelperService` (and its `Runtime` key), the systemd unit
+`flclash-rs-helper.service`, `RuntimeDirectory=flclash-rs` and `/run/flclash-rs/helper.sock`. The executable keeps the
+name `FlClashHelperService`, and the names below are FlClash's.
 
 Linux takes the same shape with systemd in place of the Service Control Manager, and the same install timing: nothing
 is registered at package install, and `Linux.registerService` asks for elevation only when TUN authorization needs it.

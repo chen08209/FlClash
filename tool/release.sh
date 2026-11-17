@@ -15,9 +15,10 @@ dry_run=0
 
 usage() {
   cat <<'EOF'
-Usage: tool/release.sh <pre|stable> [options]
+Usage: tool/release.sh <pre|rs|stable> [options]
 
   pre                Tag the next vX.Y.Z-pre.N prerelease on HEAD, no commit.
+  rs                 Tag the next vX.Y.Z-rs.N prerelease on HEAD, no commit.
   stable             Write the changelog, commit it, and tag vX.Y.Z.
 
 CI takes the app version from the tag and the build number from the clock,
@@ -26,8 +27,8 @@ so neither mode writes a build number into pubspec.yaml.
 Options:
   --version X.Y.Z    Target app version. Defaults to the pubspec version,
                      bumping the patch when that version is already tagged.
-  --rebuild          With pre: tag vX.Y.Z-pre.N+M, rebuilding the newest
-                     prerelease N instead of starting N+1.
+  --rebuild          With pre or rs: tag vX.Y.Z-<mode>.N+M, rebuilding the
+                     newest prerelease N instead of starting N+1.
   --push             Push the branch and the tag once the local steps pass.
   --remote NAME      Remote to push to (default origin).
   --yes              Skip the confirmation prompt.
@@ -37,6 +38,7 @@ Options:
 Examples:
   tool/release.sh pre --push            # v0.8.97-pre.1, notes rendered by CI
   tool/release.sh pre --rebuild --push  # v0.8.97-pre.1+1 after a fix
+  tool/release.sh rs --push             # v0.8.97-rs.1 from the rs branch
   tool/release.sh stable --push         # v0.8.97 with a chore(release) commit
 EOF
 }
@@ -48,7 +50,7 @@ die() {
 
 while (($#)); do
   case "$1" in
-    pre | stable)
+    pre | rs | stable)
       [[ -z "$mode" ]] || die "mode given twice: $mode and $1"
       mode="$1"
       ;;
@@ -135,7 +137,7 @@ if [[ "$mode" != "stable" ]]; then
     tag="v$version-$mode.$(((${last:-0}) + 1))"
   fi
 else
-  ((rebuild == 0)) || die "--rebuild only applies to pre"
+  ((rebuild == 0)) || die "--rebuild only applies to pre and rs"
   tag="v$version"
 fi
 

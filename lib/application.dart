@@ -170,7 +170,7 @@ class ApplicationState extends ConsumerState<Application> {
               child: child!,
             );
           },
-          title: appName,
+          title: packageDisplayName,
           locale: getLocaleForString(locale),
           supportedLocales: AppLocalizations.supportedLocales,
           themeMode: themeProps.themeMode,

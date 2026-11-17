@@ -2,9 +2,9 @@
 
 `make` is the entry point on macOS and Linux: `make help` lists every target with its variables, generated from the
 `##` comments in the `Makefile`, and `test/tool/makefile_test.dart` keeps the two in step. Each target only calls the
-command this file documents, so the logic stays in `tool/`; `make doctor` names a missing toolchain, `make check` is
-CI's `dart` job, `make core-check` and `make core-test` the Go wrapper checks CI runs, and `make run` starts the safe mode
-build, the only kind a shared host may run.
+command this file documents, so the logic stays in `tool/` and `xtask`; `make doctor` names a missing toolchain,
+`make check` is CI's `dart` job, `make core-gate` the Concord gate, and `make run` starts the safe mode build, the only
+kind a shared host may run.
 
 ## Building
 
@@ -15,7 +15,7 @@ the toolchain pinned in `concord/rust-toolchain.toml`.
 git submodule update --init --recursive
 ```
 
-Full package build, including Go core, Flutter, and packaging, runs through `tool/package.dart` (`make package`,
+Full package build, including the Concord core, Flutter, and packaging, runs through `tool/package.dart` (`make package`,
 `make package-android`, with `ARCH=`, `FORM=` and `DRY=1`). Run it with `dart`, not `dart run`, which first runs
 every build hook for the host:
 
@@ -146,16 +146,39 @@ Localizations in `lib/l10n/` come from the ARB files in `arb/` through Flutter's
 flutter gen-l10n
 ```
 
-Tray and Windows app icons are generated, not hand-edited. `assets_source/images/icon/*.svg` is
-the source of truth; the script needs `rsvg-convert` (librsvg) on `PATH`:
+App and tray icons are generated, not hand-edited. `assets_source/images/icon/*.svg` is the source of truth;
+the scripts need `rsvg-convert` (librsvg) and, for the app icon, `cwebp` (webp) on `PATH`:
 
 ```bash
-dart run tool/generate_status_icons.dart
+dart run tool/generate_app_icons.dart     # app icons, the running gradient, then every tray icon
+dart run tool/generate_status_icons.dart  # tray icons only, after editing status_1, status_3 or status_4
 ```
 
-It writes the tray PNGs with Flutter `2.0x/`–`4.0x/` resolution variants to `assets/images/tray/unix/`,
-multi-size tray `.ico` files to `assets/images/tray/windows/`, and `windows/runner/resources/app_icon.ico`
-from `assets/images/icon.png`. `status_1`–`status_3` are the logo glyph alone and tell stopped, running and TUN
+`app.svg` is the app icon: `#base` is the plate, an Apple continuous-corner square whose 234 units map to the
+824 px plate of the macOS template; `#plate-fill` is its color over the whole square; `#art` is the glyph with its
+shadows, scaled by the `#mask` factor so it stands 596/824 of the plate. `generate_app_icons.dart` renders every
+app icon from those layers and keeps each platform's glyph at the size it had on `main`:
+
+| Output | Layout |
+| --- | --- |
+| `assets/images/icon.png`, `assets/images/icon.ico`, `windows/runner/resources/app_icon.ico` | `app.svg` as drawn |
+| macOS `AppIcon.appiconset` | plate 824 of 1024 at 100, shadow dy 14, blur 10, 25% black |
+| Android adaptive layers | `ic_launcher_plate` full bleed, `ic_launcher_art` inset so the glyph is 45.69 of 108 dp |
+| Android monochrome layer | the glyph paths at the same 45.69 dp |
+| Android TV foreground and TV launcher rasters | full bleed, glyph 70.12 of 108 dp |
+| Play Store image | full bleed, glyph 336 of 512 px |
+| Pre-O `ic_launcher` and `ic_launcher_round` | Android Studio's legacy frames: square 152 of 192 px, round 176, both with a 2 px shadow, showing the adaptive icon's visible 72 dp |
+| TV `ic_banner` | glyph 96 px tall at (73.5, 89.5); the wordmark right of x = 140 is kept from the committed file |
+
+Launchers on Android 8 and later shape and shadow the adaptive layers themselves, so the layers carry no frame.
+The splash screen draws `ic_launcher_foreground` on `ic_launcher_background`, the plate's middle color.
+
+The running state uses the app icon's colors: the script copies `#face` of `app.svg`, with its axis mapped from the
+scaled glyph back to the lattice, into `status_2.svg`, `glyph.svg` and the Android `ic_service.xml`. Edit the
+running gradient in `app.svg` only. `status_1` (stopped) and `status_3` (TUN) keep their own hand-set colors.
+
+`generate_status_icons.dart` writes the tray PNGs with Flutter `2.0x/`–`4.0x/` resolution variants to
+`assets/images/tray/unix/` and multi-size tray `.ico` files to `assets/images/tray/windows/`. `status_1`–`status_3` are the logo glyph alone and tell stopped, running and TUN
 apart only by color, so they carry no rings or shadow. macOS draws its menu bar icon as a template by default,
 where color is lost: `status_1` renders the bare logo from `assets_source/images/icon/glyph.svg` and `status_4`
 reuses `status_4.svg`, both recolored to black into `assets/images/tray/macos/`; the sources keep their colors.
@@ -323,7 +346,8 @@ git push origin main && git push origin v0.8.96
 ```
 
 The tag decides the version, not a commit. A release tag is `vX.Y.Z`, `vX.Y.Z-pre.N`, or `vX.Y.Z-pre.N+M`, where `+M`
-rebuilds prerelease N after a fix; the `version` job rejects any other `v*` tag. It writes `X.Y.Z` from the tag into
+rebuilds prerelease N after a fix, or `vX.Y.Z-rs.N[+M]`, which releases the Concord build exactly as a pre tag does;
+the `version` job rejects any other `v*` tag. It writes `X.Y.Z` from the tag into
 `pubspec.yaml` for the build and upload jobs, with a build number of the tag run's UTC `YYYYMMDDHH`, raised above the
 committed one when that is not already larger, because Android refuses an update with a lower versionCode. The app's
 version name stays `X.Y.Z` for a prerelease too: `compareVersions` reads only numbers. The build number in
@@ -341,6 +365,7 @@ the patch when pubspec still names an already tagged one), prints the notes the 
 tool/release.sh pre --dry-run            # plan and notes, changes nothing
 tool/release.sh pre --push               # tag vX.Y.Z-pre.N on HEAD, push; no commit
 tool/release.sh pre --rebuild --push     # tag vX.Y.Z-pre.N+M on HEAD after a fix
+tool/release.sh rs --push                # tag vX.Y.Z-rs.N on HEAD (the rs branch), push; no commit
 tool/release.sh stable --push            # changelog, chore(release) commit, tag, push
 ```
 

@@ -18,26 +18,26 @@ void main() {
     test('names the APK built for the running ABI', () {
       expect(
         nameOn(Abi.androidArm64, windowsInstalled: false),
-        'FlClash-dev-0.9.4-android-arm64.apk',
+        'FlClash-rs-0.9.4-android-arm64.apk',
       );
       expect(
         nameOn(Abi.androidArm, windowsInstalled: false),
-        'FlClash-dev-0.9.4-android-armv7.apk',
+        'FlClash-rs-0.9.4-android-armv7.apk',
       );
       expect(
         nameOn(Abi.androidX64, windowsInstalled: false),
-        'FlClash-dev-0.9.4-android-amd64.apk',
+        'FlClash-rs-0.9.4-android-amd64.apk',
       );
     });
 
     test('names the Windows installer only for an installed build', () {
       expect(
         nameOn(Abi.windowsX64, windowsInstalled: true),
-        'FlClash-dev-0.9.4-windows-amd64-setup.exe',
+        'FlClash-rs-0.9.4-windows-amd64-setup.exe',
       );
       expect(
         nameOn(Abi.windowsArm64, windowsInstalled: true),
-        'FlClash-dev-0.9.4-windows-arm64-setup.exe',
+        'FlClash-rs-0.9.4-windows-arm64-setup.exe',
       );
       expect(nameOn(Abi.windowsX64, windowsInstalled: false), isNull);
     });
@@ -62,12 +62,16 @@ void main() {
 
     expect(
       updateAssetName('v0.9.4-pre.1+2', asset),
-      'FlClash-dev-0.9.4-pre.1.2-android-arm64.apk',
+      'FlClash-rs-0.9.4-pre.1.2-android-arm64.apk',
     );
     expect(
       updateChecksumsName('v0.9.4-pre.1+2'),
-      'FlClash-dev-0.9.4-pre.1.2-SHA256SUMS',
+      'FlClash-rs-0.9.4-pre.1.2-SHA256SUMS',
     );
+  });
+
+  test('an rs build has no self-update asset to download', () {
+    expect(selfUpdateAsset, isNull);
   });
 
   test('updates from the line tool/package.dart names this build', () {

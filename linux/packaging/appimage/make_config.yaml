@@ -1,4 +1,4 @@
-display_name: FlClash
+display_name: FlClash RS
 
 icon: ./assets/images/icon.png
 
@@ -10,10 +10,10 @@ supported_mime_type:
 keywords:
   - FlClash
   - Clash
-  - ClashMeta
+  - Concord
   - Proxy
 
-generic_name: FlClash
+generic_name: FlClash RS
 
 categories:
   - Network
