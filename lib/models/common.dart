@@ -829,9 +829,14 @@ abstract class MitmModule with _$MitmModule {
     /// Its scripts FlClash runs, which turning it on asks about first.
     @Default(0) int scripts,
 
-    /// Whether the user agreed to what turning it on asks about, after which
-    /// its updates bring new scripts without asking. Null for a module stored
-    /// before FlClash recorded it.
+    /// Network changes, skipped verification or limited clients, which
+    /// turning it on also asks about.
+    @Default(false) bool asksConsent,
+
+    /// The user's answer to what turning it on asks about: once agreed, its
+    /// updates bring new scripts without asking; false once they declined or
+    /// turned it off. Null until asked, and again once an update turns it off
+    /// for something it was never agreed to.
     bool? accepted,
     required DateTime lastUpdateTime,
   }) = _MitmModule;
@@ -843,6 +848,10 @@ extension MitmModuleExt on MitmModule {
   String get fileName => '$id.txt';
 
   String get updatingKey => 'mitm_module_$id';
+
+  bool get asksBeforeTurningOn => scripts > 0 || asksConsent;
+
+  bool get awaitsConsent => !enabled && accepted == null && asksBeforeTurningOn;
 }
 
 @freezed

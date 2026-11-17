@@ -657,7 +657,7 @@ class _ModuleItem extends ConsumerWidget {
         final updated = await ref
             .read(mitmModulesActionProvider.notifier)
             .updateModule(module);
-        await askIfMitmModuleTurnedOff(ref, module, updated);
+        await offerMitmModule(ref, updated);
       },
     );
   }

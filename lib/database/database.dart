@@ -6,9 +6,11 @@ import 'package:collection/collection.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/mitm_module.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:path/path.dart' show join;
 
 part 'clash_providers.dart';
 part 'converter.dart';
@@ -125,7 +127,10 @@ class Database extends _$Database {
         }
         if (from < 23) {
           await m.alterTable(
-            TableMigration(mitmModules, newColumns: [mitmModules.accepted]),
+            TableMigration(
+              mitmModules,
+              newColumns: [mitmModules.asksConsent, mitmModules.accepted],
+            ),
           );
         }
         if (from < 24) {
@@ -137,7 +142,10 @@ class Database extends _$Database {
           await _matchTargetToExit();
         }
         if (from < 26) {
+          // Past v23 the table misses the columns v23 now rebuilds it with.
+          await _addColumnIfMissing(m, mitmModules, mitmModules.asksConsent);
           await _addColumnIfMissing(m, mitmModules, mitmModules.accepted);
+          await _recordMitmConsent();
         }
       }),
       beforeOpen: (_) => customStatement('PRAGMA foreign_keys = ON'),
@@ -198,6 +206,31 @@ class Database extends _$Database {
       'UPDATE profiles SET extend_type = '
       "CASE WHEN script_id IS NULL THEN 'standard' ELSE 'script' END",
     );
+  }
+
+  Future<void> _recordMitmConsent() async {
+    final rows = await select(mitmModules).get();
+    if (rows.isEmpty) {
+      return;
+    }
+    final directory = await appPath.mitmModulesDirPath;
+    for (final row in rows) {
+      final file = File(join(directory, row.toMitmModule().fileName));
+      final asksConsent =
+          await file.exists() &&
+          parseMitmModule(
+            await file.readAsString(),
+            values: row.arguments,
+          ).asksConsent;
+      final asks = row.scripts > 0 || asksConsent;
+      final accepted = row.enabled ? (asks ? true : null) : false;
+      await (update(mitmModules)..where((t) => t.id.equals(row.id))).write(
+        MitmModulesCompanion(
+          asksConsent: Value(asksConsent),
+          accepted: Value(accepted),
+        ),
+      );
+    }
   }
 
   Future<void> _matchTargetToExit() async {

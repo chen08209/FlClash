@@ -53,7 +53,7 @@ class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 /// Every update and new value brings what the module was never agreed to.
 class _TurningOff extends MitmModulesAction {
   MitmModule _off(MitmModule module) {
-    final off = module.copyWith(enabled: false, accepted: false, scripts: 1);
+    final off = module.copyWith(enabled: false, accepted: null, scripts: 1);
     putModule(off);
     return off;
   }
@@ -66,6 +66,20 @@ class _TurningOff extends MitmModulesAction {
     MitmModule module,
     Map<String, String> arguments,
   ) async => _off(module.copyWith(arguments: arguments));
+}
+
+/// Takes new values without reading the module file, which a widget test
+/// cannot reach.
+class _SavingArguments extends MitmModulesAction {
+  @override
+  Future<MitmModule?> setArguments(
+    MitmModule module,
+    Map<String, String> arguments,
+  ) async {
+    final changed = module.copyWith(arguments: arguments);
+    putModule(changed);
+    return changed;
+  }
 }
 
 final _remote = MitmModule(
@@ -82,6 +96,7 @@ final _local = MitmModule(
   name: 'Mine',
   enabled: false,
   scripts: 1,
+  accepted: false,
   resources: const {'own.js': 'h1.js'},
   lastUpdateTime: DateTime(2026, 10, 24),
   order: 1,
@@ -104,7 +119,7 @@ void main() {
     WidgetTester tester,
     Widget child, {
     CoreController? core,
-    bool turningOff = false,
+    MitmModulesAction Function()? action,
     MitmModuleContent? remoteContent,
     Map<MitmList, Map<String, String>> issues = const {
       MitmList.urlRewrite: {'bad line': 'unknown type'},
@@ -124,7 +139,7 @@ void main() {
     container = ProviderContainer(
       overrides: [
         if (core != null) coreHandlerProvider.overrideWithValue(core),
-        if (turningOff) mitmModulesActionProvider.overrideWith(_TurningOff.new),
+        if (action != null) mitmModulesActionProvider.overrideWith(action),
         mitmModuleContentProvider(
           _remote.id,
         ).overrideWith((ref) async => content),
@@ -176,7 +191,7 @@ void main() {
     await tester.tap(find.text(currentAppLocalizations.cancel));
     await tester.pumpAndSettle();
     expect((await stored()).last.enabled, isFalse);
-    expect((await stored()).last.accepted, isNull);
+    expect((await stored()).last.accepted, isFalse);
 
     await tester.tap(find.byType(Switch).last);
     await tester.pumpAndSettle();
@@ -197,11 +212,15 @@ void main() {
       final ads = (await stored()).first;
       expect(ads.enabled, isTrue);
       expect(ads.accepted, isTrue);
-      expect(container.read(mitmModulesAwaitingConsentProvider), isEmpty);
+      expect(container.read(mitmModulesToAgreeProvider), isEmpty);
     }
 
     testWidgets('asks at once after a manual update', (tester) async {
-      await pump(tester, MitmModuleView(id: _remote.id), turningOff: true);
+      await pump(
+        tester,
+        MitmModuleView(id: _remote.id),
+        action: _TurningOff.new,
+      );
 
       await tester.tap(find.text(currentAppLocalizations.update));
       await tester.pumpAndSettle();
@@ -210,7 +229,11 @@ void main() {
     });
 
     testWidgets('asks at once after a new value', (tester) async {
-      await pump(tester, MitmModuleView(id: _remote.id), turningOff: true);
+      await pump(
+        tester,
+        MitmModuleView(id: _remote.id),
+        action: _TurningOff.new,
+      );
 
       await tester.tap(find.text('Toggle'));
       await tester.pumpAndSettle();
@@ -218,12 +241,11 @@ void main() {
       await expectAsked(tester);
     });
 
-    testWidgets('waits on the list until the user answers', (tester) async {
+    testWidgets('waits on the list until the user declines', (tester) async {
       await pump(tester, const MitmModulesView());
-      container.read(mitmModulesAwaitingConsentProvider.notifier).add(1);
-      MitmModulesAction action() =>
-          container.read(mitmModulesActionProvider.notifier);
-      action().putModule(_remote.copyWith(enabled: false));
+      container
+          .read(mitmModulesActionProvider.notifier)
+          .putModule(_remote.copyWith(enabled: false, scripts: 1));
       await tester.pumpAndSettle();
       expect(container.read(mitmModulesToAgreeProvider), hasLength(1));
 
@@ -233,6 +255,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect((await stored()).first.enabled, isFalse);
+      expect((await stored()).first.accepted, isFalse);
       expect(container.read(mitmModulesToAgreeProvider), isEmpty);
     });
   });
@@ -520,7 +543,11 @@ void main() {
   });
 
   testWidgets('an argument is saved on the module', (tester) async {
-    await pump(tester, MitmModuleView(id: _remote.id));
+    await pump(
+      tester,
+      MitmModuleView(id: _remote.id),
+      action: _SavingArguments.new,
+    );
 
     await tester.tap(find.text('Toggle'));
     await tester.pumpAndSettle();

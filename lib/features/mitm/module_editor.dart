@@ -123,24 +123,13 @@ Future<MitmModule?> acceptMitmModule(WidgetRef ref, MitmModule module) async {
 }
 
 Future<void> offerMitmModule(WidgetRef ref, MitmModule? module) async {
-  if (module == null || module.enabled) {
+  if (module == null || !module.awaitsConsent) {
     return;
   }
-  final accepted = await acceptMitmModule(ref, module);
-  ref.read(mitmModulesAwaitingConsentProvider.notifier).answer(module.id);
-  if (accepted != null) {
-    ref.read(mitmModulesActionProvider.notifier).putModule(accepted);
-  }
-}
-
-Future<void> askIfMitmModuleTurnedOff(
-  WidgetRef ref,
-  MitmModule before,
-  MitmModule? after,
-) async {
-  if (before.enabled && after != null && !after.enabled) {
-    await offerMitmModule(ref, after);
-  }
+  final answered = await acceptMitmModule(ref, module);
+  ref
+      .read(mitmModulesActionProvider.notifier)
+      .putModule(answered ?? module.copyWith(accepted: false));
 }
 
 String _moduleTemplate(String name) =>
@@ -177,11 +166,7 @@ Future<void> openMitmModuleEditor(
     if (context.mounted) {
       Navigator.of(context).pop();
     }
-    if (module == null) {
-      await offerMitmModule(ref, saved);
-    } else {
-      await askIfMitmModuleTurnedOff(ref, module, saved);
-    }
+    await offerMitmModule(ref, saved);
   }
 
   if (!context.mounted) {

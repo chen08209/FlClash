@@ -467,66 +467,6 @@ abstract class _$MitmExportWarned extends $Notifier<bool> {
   }
 }
 
-/// Modules an update turned off this run, until the user answers.
-
-@ProviderFor(MitmModulesAwaitingConsent)
-final mitmModulesAwaitingConsentProvider =
-    MitmModulesAwaitingConsentProvider._();
-
-/// Modules an update turned off this run, until the user answers.
-final class MitmModulesAwaitingConsentProvider
-    extends $NotifierProvider<MitmModulesAwaitingConsent, Set<int>> {
-  /// Modules an update turned off this run, until the user answers.
-  MitmModulesAwaitingConsentProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'mitmModulesAwaitingConsentProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$mitmModulesAwaitingConsentHash();
-
-  @$internal
-  @override
-  MitmModulesAwaitingConsent create() => MitmModulesAwaitingConsent();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(Set<int> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<Set<int>>(value),
-    );
-  }
-}
-
-String _$mitmModulesAwaitingConsentHash() =>
-    r'a96ba3668de128557c54cbccc5a996ce9639babf';
-
-/// Modules an update turned off this run, until the user answers.
-
-abstract class _$MitmModulesAwaitingConsent extends $Notifier<Set<int>> {
-  Set<int> build();
-  @$mustCallSuper
-  @override
-  WhenComplete runBuild() {
-    final ref = this.ref as $Ref<Set<int>, Set<int>>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<Set<int>, Set<int>>,
-              Set<int>,
-              Object?,
-              Object?
-            >;
-    return element.handleCreate(ref, build);
-  }
-}
-
 @ProviderFor(mitmModulesToAgree)
 final mitmModulesToAgreeProvider = MitmModulesToAgreeProvider._();
 
@@ -572,7 +512,7 @@ final class MitmModulesToAgreeProvider
 }
 
 String _$mitmModulesToAgreeHash() =>
-    r'9f4ff48024b60b3386ca6823877af3691a3133f3';
+    r'b6472c1b0dca198af5710006b265ac11008a0ed7';
 
 /// Why the Core skips each of the user's hostnames, by the line.
 

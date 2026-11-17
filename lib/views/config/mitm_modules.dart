@@ -33,12 +33,9 @@ void _putModule(WidgetRef ref, MitmModule module) {
 
 Future<void> _setEnabled(WidgetRef ref, MitmModule module, bool enabled) async {
   final next = enabled
-      ? await acceptMitmModule(ref, module)
-      : module.copyWith(enabled: false);
-  ref.read(mitmModulesAwaitingConsentProvider.notifier).answer(module.id);
-  if (next != null) {
-    _putModule(ref, next);
-  }
+      ? await acceptMitmModule(ref, module) ?? module.copyWith(accepted: false)
+      : module.copyWith(enabled: false, accepted: module.accepted ?? false);
+  _putModule(ref, next);
 }
 
 /// Runs a cron, event or generic script line now; any other line, any while
@@ -137,7 +134,7 @@ Future<void> _updateModule(WidgetRef ref, MitmModule module) async {
     title: module.name,
     silence: false,
   );
-  await askIfMitmModuleTurnedOff(ref, module, updated);
+  await offerMitmModule(ref, updated);
 }
 
 class MitmModulesItem extends ConsumerWidget {
@@ -556,10 +553,15 @@ class MitmModuleView extends ConsumerWidget {
   ) {
     final value = module.arguments[argument.name] ?? argument.defaultValue;
     Future<void> save(String next) async {
-      final changed = await ref
-          .read(mitmModulesActionProvider.notifier)
-          .setArguments(module, {...module.arguments, argument.name: next});
-      await askIfMitmModuleTurnedOff(ref, module, changed);
+      final changed = await globalState.safeRun(
+        () => ref.read(mitmModulesActionProvider.notifier).setArguments(
+          module,
+          {...module.arguments, argument.name: next},
+        ),
+        title: module.name,
+        silence: false,
+      );
+      await offerMitmModule(ref, changed);
     }
 
     return switch (argument.type) {

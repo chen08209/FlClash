@@ -85,47 +85,46 @@ class MitmModulesAction extends _$MitmModulesAction {
     ref.read(mitmModulesProvider.notifier).put(module, first: first);
   }
 
+  /// Null once the module is gone; a module file that cannot be read throws.
   Future<MitmModule?> setArguments(
     MitmModule module,
     Map<String, String> arguments,
   ) async {
-    putModule(module.copyWith(arguments: arguments));
+    final text = await File(await _pathOf(module)).readAsString();
+    final content = await compute(_parseMitmModule, (text, arguments));
+    final current = await _current(module.id);
+    if (!ref.mounted || current == null) {
+      return current;
+    }
+    final changed = _withContent(
+      current.copyWith(arguments: arguments),
+      content,
+    );
+    putModule(changed);
     final held = <String>[];
     try {
-      final wasAccepted = await _accepted(module);
-      final text = await File(await _pathOf(module)).readAsString();
-      final content = await compute(_parseMitmModule, (text, arguments));
       final missing = content.resourceUrls.difference({
-        ...module.resources.keys,
+        ...changed.resources.keys,
       });
       final fetched = missing.isEmpty || !ref.mounted
           ? const <String, String>{}
           : await _download(missing, previous: const {}, held: held);
       final written = await _writeInline({
         for (final MapEntry(:key, :value) in content.inlineResources.entries)
-          if (!module.resources.containsKey(key)) key: value,
+          if (!changed.resources.containsKey(key)) key: value,
       }, held);
-      final current = await _current(module.id);
-      if (!ref.mounted || current == null) {
-        return current;
+      if (fetched.isEmpty && written.isEmpty) {
+        return changed;
       }
-      final changed = current.copyWith(
-        enabled: _staysOn(current, content, wasAccepted: wasAccepted),
-        accepted: current.accepted ?? wasAccepted,
-        resources: {...current.resources, ...fetched, ...written},
-        scripts: content.declaredScripts,
-      );
-      if (changed != current) {
-        putModule(changed);
-        _awaitConsentIfTurnedOff(current, changed);
+      final latest = await _current(module.id);
+      if (!ref.mounted || latest == null) {
+        return latest;
       }
-      return changed;
-    } on FileSystemException catch (e) {
-      commonPrint.log(
-        'MITM module ${module.name}: ${compactError(e)}',
-        logLevel: LogLevel.warning,
+      final withResources = latest.copyWith(
+        resources: {...latest.resources, ...fetched, ...written},
       );
-      return null;
+      putModule(withResources);
+      return withResources;
     } finally {
       held.forEach(_held.remove);
     }
@@ -190,8 +189,6 @@ class MitmModulesAction extends _$MitmModulesAction {
     mitmModulesProvider.future,
   )).where((item) => item.id == id).firstOrNull;
 
-  /// Accepting a module's scripts or network changes trusts its source, so
-  /// later saves keep it on.
   Future<MitmModule> _save(
     MitmModule module,
     String text, {
@@ -212,7 +209,6 @@ class MitmModulesAction extends _$MitmModulesAction {
         held: held,
       );
       final written = await _writeInline(content.inlineResources, held);
-      final wasAccepted = !added && await _accepted(module);
       await File(await _pathOf(module)).writeAsStringAtomically(text);
       if (!ref.mounted) {
         return module;
@@ -221,20 +217,14 @@ class MitmModulesAction extends _$MitmModulesAction {
       if (current == null || !ref.mounted) {
         return module;
       }
-      final saved = current.copyWith(
+      final saved = _withContent(current, content).copyWith(
         name: content.name ?? current.name,
         description: content.description ?? '',
         system: content.system,
-        enabled: added
-            ? !_asksConsent(content)
-            : _staysOn(current, content, wasAccepted: wasAccepted),
-        accepted: current.accepted ?? wasAccepted,
-        scripts: content.declaredScripts,
         resources: {...mitmAttachments(current), ...resources, ...written},
         lastUpdateTime: DateTime.now(),
       );
       putModule(saved, first: first);
-      _awaitConsentIfTurnedOff(current, saved);
       return saved;
     } finally {
       held.forEach(_held.remove);
@@ -244,44 +234,17 @@ class MitmModulesAction extends _$MitmModulesAction {
     }
   }
 
-  void _awaitConsentIfTurnedOff(MitmModule before, MitmModule after) {
-    if (before.enabled && !after.enabled) {
-      ref.read(mitmModulesAwaitingConsentProvider.notifier).add(after.id);
+  MitmModule _withContent(MitmModule current, MitmModuleContent content) {
+    final next = current.copyWith(
+      scripts: content.declaredScripts,
+      asksConsent: content.asksConsent,
+    );
+    if (!current.enabled ||
+        current.accepted == true ||
+        !next.asksBeforeTurningOn) {
+      return next;
     }
-  }
-
-  bool _asksConsent(MitmModuleContent content) =>
-      content.declaredScripts > 0 || content.asksConsent;
-
-  bool _staysOn(
-    MitmModule current,
-    MitmModuleContent content, {
-    required bool wasAccepted,
-  }) =>
-      current.enabled &&
-      ((current.accepted ?? wasAccepted) || !_asksConsent(content));
-
-  /// A module stored before agreement was recorded counts as agreed to when it
-  /// was on with something turning it on asks about.
-  Future<bool> _accepted(MitmModule module) async {
-    if (module.accepted case final accepted?) {
-      return accepted;
-    }
-    if (!module.enabled) {
-      return false;
-    }
-    if (module.scripts > 0) {
-      return true;
-    }
-    final file = File(await _pathOf(module));
-    if (!await file.exists()) {
-      return false;
-    }
-    final content = await compute(_parseMitmModule, (
-      await file.readAsString(),
-      module.arguments,
-    ));
-    return content.asksConsent;
+    return next.copyWith(enabled: false, accepted: null);
   }
 
   Future<void> _cleanAfterSave() async {

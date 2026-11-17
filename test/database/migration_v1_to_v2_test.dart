@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/database/database.dart' as fl;
@@ -6,6 +8,8 @@ import 'package:fl_clash/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:yaml/yaml.dart';
+
+import '../helpers/app_paths.dart';
 
 /// Rebuilds [raw] into the shape schema version 1 left behind: no
 /// `proxy_groups`, no `icon_records`, and a `rules` table that still stores the
@@ -265,6 +269,9 @@ void main() {
   late Database raw;
 
   setUp(() async {
+    final home = await Directory.systemTemp.createTemp('migration');
+    addTearDown(() => home.delete(recursive: true));
+    await useAppPaths(home);
     raw = sqlite3.openInMemory();
     final seed = fl.Database(
       NativeDatabase.opened(raw, closeUnderlyingOnClose: false),
@@ -998,20 +1005,45 @@ void main() {
     );
   });
 
-  test('the v26 upgrade leaves agreement to modules unknown', () async {
+  test('the v26 upgrade records what each module asks and whether the user '
+      'agreed to it', () async {
+    final modules = await Directory(
+      await appPath.mitmModulesDirPath,
+    ).create(recursive: true);
+    const plain = '[URL Rewrite]\n^https://a - reject\n';
+    const network = '[General]\ndns-server = 223.5.5.5\n';
+    for (final (id, text) in [
+      (1, plain),
+      (2, plain),
+      (3, network),
+      (4, plain),
+    ]) {
+      await File('${modules.path}/$id.txt').writeAsString(text);
+    }
     raw.execute('ALTER TABLE mitm_modules DROP COLUMN accepted');
+    raw.execute('ALTER TABLE mitm_modules DROP COLUMN asks_consent');
     raw.execute(
-      'INSERT INTO mitm_modules (id, name, enabled, scripts, '
-      "last_update_time) VALUES (1, 'M', 1, 2, 0)",
+      'INSERT INTO mitm_modules (id, name, enabled, scripts, last_update_time) '
+      "VALUES (1, 'Scripts', 1, 2, 0), (2, 'Plain', 1, 0, 0), "
+      "(3, 'Network', 1, 0, 0), (4, 'Off', 0, 1, 0)",
     );
     raw.execute('PRAGMA user_version = 25');
 
     final database = await openAndMigrate();
 
     expect(_userVersion(raw), 26);
-    final module = (await database.mitmModulesDao.query().get()).single;
-    expect(module.scripts, 2);
-    expect(module.accepted, isNull);
+    expect(
+      {
+        for (final module in await database.mitmModulesDao.query().get())
+          module.name: (module.asksConsent, module.accepted),
+      },
+      {
+        'Scripts': (false, true),
+        'Plain': (false, null),
+        'Network': (true, true),
+        'Off': (false, false),
+      },
+    );
   });
 
   test('the v25 upgrade turns the MATCH placeholder into a custom exit '

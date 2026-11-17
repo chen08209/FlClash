@@ -272,28 +272,12 @@ class MitmExportWarned extends _$MitmExportWarned {
   void accept() => state = true;
 }
 
-/// Modules an update turned off this run, until the user answers.
-@Riverpod(keepAlive: true)
-class MitmModulesAwaitingConsent extends _$MitmModulesAwaitingConsent {
-  @override
-  Set<int> build() => const {};
-
-  void add(int id) => state = {...state, id};
-
-  void answer(int id) => state = {...state}..remove(id);
-}
-
 @riverpod
-List<MitmModule> mitmModulesToAgree(Ref ref) {
-  final ids = ref.watch(mitmModulesAwaitingConsentProvider);
-  if (ids.isEmpty) {
-    return const [];
-  }
-  return [
-    for (final module in ref.watch(mitmModulesProvider).value ?? const [])
-      if (ids.contains(module.id) && !module.enabled) module,
-  ];
-}
+List<MitmModule> mitmModulesToAgree(Ref ref) => [
+  for (final module
+      in ref.watch(mitmModulesProvider).value ?? const <MitmModule>[])
+    if (module.awaitsConsent) module,
+];
 
 /// Why the Core skips each of the user's hostnames, by the line.
 @riverpod

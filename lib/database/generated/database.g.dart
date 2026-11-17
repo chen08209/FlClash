@@ -4813,6 +4813,21 @@ class $MitmModulesTable extends MitmModules
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _asksConsentMeta = const VerificationMeta(
+    'asksConsent',
+  );
+  @override
+  late final GeneratedColumn<bool> asksConsent = GeneratedColumn<bool>(
+    'asks_consent',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("asks_consent" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _acceptedMeta = const VerificationMeta(
     'accepted',
   );
@@ -4851,6 +4866,7 @@ class $MitmModulesTable extends MitmModules
     resources,
     system,
     scripts,
+    asksConsent,
     accepted,
     lastUpdateTime,
   ];
@@ -4914,6 +4930,15 @@ class $MitmModulesTable extends MitmModules
       context.handle(
         _scriptsMeta,
         scripts.isAcceptableOrUnknown(data['scripts']!, _scriptsMeta),
+      );
+    }
+    if (data.containsKey('asks_consent')) {
+      context.handle(
+        _asksConsentMeta,
+        asksConsent.isAcceptableOrUnknown(
+          data['asks_consent']!,
+          _asksConsentMeta,
+        ),
       );
     }
     if (data.containsKey('accepted')) {
@@ -4986,6 +5011,10 @@ class $MitmModulesTable extends MitmModules
         DriftSqlType.int,
         data['${effectivePrefix}scripts'],
       )!,
+      asksConsent: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}asks_consent'],
+      )!,
       accepted: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}accepted'],
@@ -5019,6 +5048,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
   final Map<String, String> resources;
   final String? system;
   final int scripts;
+  final bool asksConsent;
   final bool? accepted;
   final DateTime lastUpdateTime;
   const RawMitmModule({
@@ -5032,6 +5062,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
     required this.resources,
     this.system,
     required this.scripts,
+    required this.asksConsent,
     this.accepted,
     required this.lastUpdateTime,
   });
@@ -5062,6 +5093,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
       map['system'] = Variable<String>(system);
     }
     map['scripts'] = Variable<int>(scripts);
+    map['asks_consent'] = Variable<bool>(asksConsent);
     if (!nullToAbsent || accepted != null) {
       map['accepted'] = Variable<bool>(accepted);
     }
@@ -5085,6 +5117,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
           ? const Value.absent()
           : Value(system),
       scripts: Value(scripts),
+      asksConsent: Value(asksConsent),
       accepted: accepted == null && nullToAbsent
           ? const Value.absent()
           : Value(accepted),
@@ -5108,6 +5141,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
       resources: serializer.fromJson<Map<String, String>>(json['resources']),
       system: serializer.fromJson<String?>(json['system']),
       scripts: serializer.fromJson<int>(json['scripts']),
+      asksConsent: serializer.fromJson<bool>(json['asksConsent']),
       accepted: serializer.fromJson<bool?>(json['accepted']),
       lastUpdateTime: serializer.fromJson<DateTime>(json['lastUpdateTime']),
     );
@@ -5126,6 +5160,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
       'resources': serializer.toJson<Map<String, String>>(resources),
       'system': serializer.toJson<String?>(system),
       'scripts': serializer.toJson<int>(scripts),
+      'asksConsent': serializer.toJson<bool>(asksConsent),
       'accepted': serializer.toJson<bool?>(accepted),
       'lastUpdateTime': serializer.toJson<DateTime>(lastUpdateTime),
     };
@@ -5142,6 +5177,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
     Map<String, String>? resources,
     Value<String?> system = const Value.absent(),
     int? scripts,
+    bool? asksConsent,
     Value<bool?> accepted = const Value.absent(),
     DateTime? lastUpdateTime,
   }) => RawMitmModule(
@@ -5155,6 +5191,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
     resources: resources ?? this.resources,
     system: system.present ? system.value : this.system,
     scripts: scripts ?? this.scripts,
+    asksConsent: asksConsent ?? this.asksConsent,
     accepted: accepted.present ? accepted.value : this.accepted,
     lastUpdateTime: lastUpdateTime ?? this.lastUpdateTime,
   );
@@ -5172,6 +5209,9 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
       resources: data.resources.present ? data.resources.value : this.resources,
       system: data.system.present ? data.system.value : this.system,
       scripts: data.scripts.present ? data.scripts.value : this.scripts,
+      asksConsent: data.asksConsent.present
+          ? data.asksConsent.value
+          : this.asksConsent,
       accepted: data.accepted.present ? data.accepted.value : this.accepted,
       lastUpdateTime: data.lastUpdateTime.present
           ? data.lastUpdateTime.value
@@ -5192,6 +5232,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
           ..write('resources: $resources, ')
           ..write('system: $system, ')
           ..write('scripts: $scripts, ')
+          ..write('asksConsent: $asksConsent, ')
           ..write('accepted: $accepted, ')
           ..write('lastUpdateTime: $lastUpdateTime')
           ..write(')'))
@@ -5210,6 +5251,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
     resources,
     system,
     scripts,
+    asksConsent,
     accepted,
     lastUpdateTime,
   );
@@ -5227,6 +5269,7 @@ class RawMitmModule extends DataClass implements Insertable<RawMitmModule> {
           other.resources == this.resources &&
           other.system == this.system &&
           other.scripts == this.scripts &&
+          other.asksConsent == this.asksConsent &&
           other.accepted == this.accepted &&
           other.lastUpdateTime == this.lastUpdateTime);
 }
@@ -5242,6 +5285,7 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
   final Value<Map<String, String>> resources;
   final Value<String?> system;
   final Value<int> scripts;
+  final Value<bool> asksConsent;
   final Value<bool?> accepted;
   final Value<DateTime> lastUpdateTime;
   const MitmModulesCompanion({
@@ -5255,6 +5299,7 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
     this.resources = const Value.absent(),
     this.system = const Value.absent(),
     this.scripts = const Value.absent(),
+    this.asksConsent = const Value.absent(),
     this.accepted = const Value.absent(),
     this.lastUpdateTime = const Value.absent(),
   });
@@ -5269,6 +5314,7 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
     this.resources = const Value.absent(),
     this.system = const Value.absent(),
     this.scripts = const Value.absent(),
+    this.asksConsent = const Value.absent(),
     this.accepted = const Value.absent(),
     required DateTime lastUpdateTime,
   }) : name = Value(name),
@@ -5284,6 +5330,7 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
     Expression<String>? resources,
     Expression<String>? system,
     Expression<int>? scripts,
+    Expression<bool>? asksConsent,
     Expression<bool>? accepted,
     Expression<DateTime>? lastUpdateTime,
   }) {
@@ -5298,6 +5345,7 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
       if (resources != null) 'resources': resources,
       if (system != null) 'system': system,
       if (scripts != null) 'scripts': scripts,
+      if (asksConsent != null) 'asks_consent': asksConsent,
       if (accepted != null) 'accepted': accepted,
       if (lastUpdateTime != null) 'last_update_time': lastUpdateTime,
     });
@@ -5314,6 +5362,7 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
     Value<Map<String, String>>? resources,
     Value<String?>? system,
     Value<int>? scripts,
+    Value<bool>? asksConsent,
     Value<bool?>? accepted,
     Value<DateTime>? lastUpdateTime,
   }) {
@@ -5328,6 +5377,7 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
       resources: resources ?? this.resources,
       system: system ?? this.system,
       scripts: scripts ?? this.scripts,
+      asksConsent: asksConsent ?? this.asksConsent,
       accepted: accepted ?? this.accepted,
       lastUpdateTime: lastUpdateTime ?? this.lastUpdateTime,
     );
@@ -5370,6 +5420,9 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
     if (scripts.present) {
       map['scripts'] = Variable<int>(scripts.value);
     }
+    if (asksConsent.present) {
+      map['asks_consent'] = Variable<bool>(asksConsent.value);
+    }
     if (accepted.present) {
       map['accepted'] = Variable<bool>(accepted.value);
     }
@@ -5392,6 +5445,7 @@ class MitmModulesCompanion extends UpdateCompanion<RawMitmModule> {
           ..write('resources: $resources, ')
           ..write('system: $system, ')
           ..write('scripts: $scripts, ')
+          ..write('asksConsent: $asksConsent, ')
           ..write('accepted: $accepted, ')
           ..write('lastUpdateTime: $lastUpdateTime')
           ..write(')'))
@@ -9297,6 +9351,7 @@ typedef $$MitmModulesTableCreateCompanionBuilder =
       Value<Map<String, String>> resources,
       Value<String?> system,
       Value<int> scripts,
+      Value<bool> asksConsent,
       Value<bool?> accepted,
       required DateTime lastUpdateTime,
     });
@@ -9312,6 +9367,7 @@ typedef $$MitmModulesTableUpdateCompanionBuilder =
       Value<Map<String, String>> resources,
       Value<String?> system,
       Value<int> scripts,
+      Value<bool> asksConsent,
       Value<bool?> accepted,
       Value<DateTime> lastUpdateTime,
     });
@@ -9385,6 +9441,11 @@ class $$MitmModulesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<bool> get asksConsent => $composableBuilder(
+    column: $table.asksConsent,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<bool> get accepted => $composableBuilder(
     column: $table.accepted,
     builder: (column) => ColumnFilters(column),
@@ -9455,6 +9516,11 @@ class $$MitmModulesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get asksConsent => $composableBuilder(
+    column: $table.asksConsent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get accepted => $composableBuilder(
     column: $table.accepted,
     builder: (column) => ColumnOrderings(column),
@@ -9507,6 +9573,11 @@ class $$MitmModulesTableAnnotationComposer
   GeneratedColumn<int> get scripts =>
       $composableBuilder(column: $table.scripts, builder: (column) => column);
 
+  GeneratedColumn<bool> get asksConsent => $composableBuilder(
+    column: $table.asksConsent,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get accepted =>
       $composableBuilder(column: $table.accepted, builder: (column) => column);
 
@@ -9557,6 +9628,7 @@ class $$MitmModulesTableTableManager
                 Value<Map<String, String>> resources = const Value.absent(),
                 Value<String?> system = const Value.absent(),
                 Value<int> scripts = const Value.absent(),
+                Value<bool> asksConsent = const Value.absent(),
                 Value<bool?> accepted = const Value.absent(),
                 Value<DateTime> lastUpdateTime = const Value.absent(),
               }) => MitmModulesCompanion(
@@ -9570,6 +9642,7 @@ class $$MitmModulesTableTableManager
                 resources: resources,
                 system: system,
                 scripts: scripts,
+                asksConsent: asksConsent,
                 accepted: accepted,
                 lastUpdateTime: lastUpdateTime,
               ),
@@ -9585,6 +9658,7 @@ class $$MitmModulesTableTableManager
                 Value<Map<String, String>> resources = const Value.absent(),
                 Value<String?> system = const Value.absent(),
                 Value<int> scripts = const Value.absent(),
+                Value<bool> asksConsent = const Value.absent(),
                 Value<bool?> accepted = const Value.absent(),
                 required DateTime lastUpdateTime,
               }) => MitmModulesCompanion.insert(
@@ -9598,6 +9672,7 @@ class $$MitmModulesTableTableManager
                 resources: resources,
                 system: system,
                 scripts: scripts,
+                asksConsent: asksConsent,
                 accepted: accepted,
                 lastUpdateTime: lastUpdateTime,
               ),
