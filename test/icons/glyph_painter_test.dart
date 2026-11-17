@@ -120,6 +120,8 @@ final _glyphs = {
   'vpn': AppGlyphs.vpn,
   'status': AppGlyphs.status,
   'radar': AppGlyphs.radar,
+  'verified': AppGlyphs.verified,
+  'certificate': AppGlyphs.certificate,
   'swap': AppGlyphs.swap,
   'shuffle': AppGlyphs.shuffle,
   'split': AppGlyphs.split,

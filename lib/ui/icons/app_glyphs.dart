@@ -1471,6 +1471,45 @@ abstract final class AppGlyphs {
     ], role: GlyphRole.detail),
   ]);
 
+  static const verified = Glyph([
+    GlyphPolyline([
+      GlyphVertex(12, 2.9, 1.5),
+      GlyphVertex(19.6, 5.5, 2),
+      GlyphVertex(19.6, 12.5, 5),
+      GlyphVertex(12, 21.1, 2.5),
+      GlyphVertex(4.4, 12.5, 5),
+      GlyphVertex(4.4, 5.5, 2),
+    ], closed: true),
+    GlyphPolyline([
+      GlyphVertex(8.7, 11.8),
+      GlyphVertex(11, 14.1),
+      GlyphVertex(15.3, 9.6),
+    ], role: GlyphRole.detail),
+  ]);
+
+  static const certificate = Glyph([
+    GlyphPath(
+      'M11.95 17H5A2.5 2.5 0 0 1 2.5 14.5V6.5A2.5 2.5 0 0 1 5 4H19'
+      'A2.5 2.5 0 0 1 21.5 6.5V11.1A5.8 5.8 0 0 0 11.95 17Z',
+    ),
+    GlyphPolyline([
+      GlyphVertex(6, 8.5),
+      GlyphVertex(13, 8.5),
+    ], role: GlyphRole.detail),
+    GlyphPolyline([
+      GlyphVertex(6, 12),
+      GlyphVertex(9, 12),
+    ], role: GlyphRole.detail),
+    GlyphCircle(17.5, 15.3, 2.7),
+    GlyphPolyline([
+      GlyphVertex(16.2, 17.6),
+      GlyphVertex(16.2, 22, 0.4),
+      GlyphVertex(17.5, 21),
+      GlyphVertex(18.8, 22, 0.4),
+      GlyphVertex(18.8, 17.6),
+    ], role: GlyphRole.line),
+  ]);
+
   static const swap = Glyph([
     GlyphPolyline([
       GlyphVertex(3.5, 8),
