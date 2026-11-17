@@ -92,7 +92,7 @@ _UpdateParams _$UpdateParamsFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as String)
               .toList() ??
           const [],
-      geoAutoUpdate: json['geo-auto-update'] as bool? ?? false,
+      geoAutoUpdate: json['geo-auto-update'] as bool? ?? true,
       geoUpdateInterval: (json['geo-update-interval'] as num?)?.toInt() ?? 24,
       geoXUrl:
           (json['geox-url'] as Map<String, dynamic>?)?.map(

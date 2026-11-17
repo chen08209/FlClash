@@ -935,7 +935,7 @@ _PatchClashConfig _$PatchClashConfigFromJson(Map<String, dynamic> json) =>
             (k, e) => MapEntry(k, e as String),
           ) ??
           const {},
-      geoAutoUpdate: json['geo-auto-update'] as bool? ?? false,
+      geoAutoUpdate: json['geo-auto-update'] as bool? ?? true,
       geoUpdateInterval: (json['geo-update-interval'] as num?)?.toInt() ?? 24,
       testUrl: json['test-url'] as String? ?? defaultTestUrl,
       generalOverrideKeys: json['general-override-keys'] == null

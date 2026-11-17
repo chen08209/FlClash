@@ -167,7 +167,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('a switch row turns auto update on and reveals its interval', (
+  testWidgets('auto update starts on and the row toggles its interval', (
     tester,
   ) async {
     const size = Size(1000, 1000);
@@ -200,6 +200,12 @@ void main() {
       ),
       findsNothing,
     );
+    expect(autoUpdate(), isTrue);
+    expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
+    expect(interval, findsOneWidget);
+
+    await tester.tap(find.text(l10n.autoUpdate));
+    await tester.pumpAndSettle();
     expect(autoUpdate(), isFalse);
     expect(interval, findsNothing);
 

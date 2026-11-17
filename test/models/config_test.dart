@@ -587,7 +587,39 @@ void main() {
       expect(config.geodataLoader, GeodataLoader.memconservative);
       expect(config.interfaceNameMode, InterfaceNameMode.clear);
       expect(config.interfaceName, '');
+      expect(config.geoAutoUpdate, isTrue);
+      expect(config.geoUpdateInterval, 24);
     });
+
+    test(
+      'missing geo auto-update uses the default and saved false stays off',
+      () {
+        expect(PatchClashConfig.fromJson({}).geoAutoUpdate, isTrue);
+        expect(PatchClashConfig.safeFormJson(null).geoAutoUpdate, isTrue);
+        final saved = PatchClashConfig.fromJson({'geo-auto-update': false});
+        expect(saved.geoAutoUpdate, isFalse);
+        expect(
+          roundTrip(saved.toJson, PatchClashConfig.fromJson).geoAutoUpdate,
+          isFalse,
+        );
+      },
+    );
+
+    test(
+      'live update params default geo auto-update on and preserve false',
+      () {
+        final params = const PatchClashConfig().toUpdateParams(
+          authentication: const [],
+          options: const CoreOptions(testUrl: ''),
+        );
+        final json = jsonDecode(jsonEncode(params)) as Map<String, Object?>;
+        expect(json.remove('geo-auto-update'), isTrue);
+        expect(UpdateParams.fromJson(json).geoAutoUpdate, isTrue);
+        expect(UpdateParams.fromJson(json).geoUpdateInterval, 24);
+        json['geo-auto-update'] = false;
+        expect(UpdateParams.fromJson(json).geoAutoUpdate, isFalse);
+      },
+    );
 
     test('custom values survive round-trip', () {
       const config = PatchClashConfig(
@@ -801,7 +833,7 @@ void main() {
         externalController: ExternalControllerStatus.open,
         secret: 'secret',
         unifiedDelay: false,
-        geoAutoUpdate: true,
+        geoAutoUpdate: false,
         geoUpdateInterval: 6,
         geoXUrl: {...defaultGeoXUrl, GeoResource.MMDB: 'https://mmdb.test'},
         testUrl: 'https://probe.test/204',
