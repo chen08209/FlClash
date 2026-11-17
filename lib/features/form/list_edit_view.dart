@@ -285,6 +285,7 @@ class ConfigListEditItem extends ConsumerWidget {
     this.description,
     this.subtitle,
     this.leading,
+    this.enabled = true,
   });
 
   final ProviderListenable<List<String>> selector;
@@ -297,6 +298,7 @@ class ConfigListEditItem extends ConsumerWidget {
   final ConfigLabel? description;
   final ConfigLabel? subtitle;
   final Widget? leading;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -307,6 +309,7 @@ class ConfigListEditItem extends ConsumerWidget {
     final itemValidator = this.itemValidator;
     final itemSubtitle = this.itemSubtitle;
     return ListItem.open(
+      enabled: enabled,
       leading: leading,
       title: Text(label),
       subtitle: Text(

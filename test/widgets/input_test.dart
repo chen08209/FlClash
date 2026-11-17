@@ -61,6 +61,36 @@ void main() {
     await tester.pump();
   });
 
+  testWidgets('a disabled ListItem.open does not open and dims its chevron', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [_viewSizeOverride],
+        child: HostScaffold(
+          body: generateSection(
+            items: [
+              ListItem.open(
+                enabled: false,
+                title: const Text('Closed'),
+                widget: const Text('Page'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final chevron = tester.widget<GlyphIcon>(find.byType(GlyphIcon));
+    final colorScheme = tester.element(find.text('Closed')).colorScheme;
+    expect(chevron.color, colorScheme.onSurface.opacity38);
+    expect(find.byType(OpenContainer<dynamic>), findsNothing);
+
+    await tester.tap(find.text('Closed'));
+    await tester.pumpAndSettle();
+    expect(find.text('Page'), findsNothing);
+  });
+
   testWidgets('ListItem takes the grouped card inside a V3 section', (
     tester,
   ) async {

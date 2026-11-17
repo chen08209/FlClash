@@ -32,11 +32,13 @@ final class _OpenAction extends _ListItemAction {
   final ValueChanged<dynamic>? onChanged;
 
   final bool forceFull;
+  final bool enabled;
 
   const _OpenAction({
     required this.widget,
     this.onChanged,
     required this.forceFull,
+    required this.enabled,
   });
 }
 
@@ -115,6 +117,7 @@ class ListItem<T> extends StatelessWidget {
     required Widget widget,
     ValueChanged<dynamic>? onChanged,
     bool forceFull = true,
+    bool enabled = true,
     this.horizontalTitleGap,
     this.minTileHeight,
     this.minVerticalPadding = listRowVerticalPadding,
@@ -123,6 +126,7 @@ class ListItem<T> extends StatelessWidget {
          widget: widget,
          onChanged: onChanged,
          forceFull: forceFull,
+         enabled: enabled,
        ),
        onTap = null;
 
@@ -268,6 +272,19 @@ class ListItem<T> extends StatelessWidget {
       case final _OpenAction openDelegate:
         final child = openDelegate.widget;
         final onChanged = openDelegate.onChanged;
+        if (!openDelegate.enabled) {
+          // Dimmed as a disabled Switch draws its thumb; the row's text stays as it is.
+          return _buildRow(
+            context,
+            position: position,
+            trailing:
+                trailing ??
+                GlyphIcon(
+                  Glyphs.chevronForward,
+                  color: context.colorScheme.onSurface.opacity38,
+                ),
+          );
+        }
         if (!context.isMobileView) {
           return _buildRow(
             context,
