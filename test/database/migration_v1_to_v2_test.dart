@@ -1020,12 +1020,14 @@ void main() {
     ]) {
       await File('${modules.path}/$id.txt').writeAsString(text);
     }
+    await File('${modules.path}/6.txt').writeAsBytes([0xff, 0xfe, 0xfd]);
     raw.execute('ALTER TABLE mitm_modules DROP COLUMN accepted');
     raw.execute('ALTER TABLE mitm_modules DROP COLUMN asks_consent');
     raw.execute(
       'INSERT INTO mitm_modules (id, name, enabled, scripts, last_update_time) '
       "VALUES (1, 'Scripts', 1, 2, 0), (2, 'Plain', 1, 0, 0), "
-      "(3, 'Network', 1, 0, 0), (4, 'Off', 0, 1, 0)",
+      "(3, 'Network', 1, 0, 0), (4, 'Off', 0, 1, 0), "
+      "(5, 'Missing', 1, 0, 0), (6, 'Broken', 0, 0, 0)",
     );
     raw.execute('PRAGMA user_version = 25');
 
@@ -1042,6 +1044,8 @@ void main() {
         'Plain': (false, null),
         'Network': (true, true),
         'Off': (false, false),
+        'Missing': (true, null),
+        'Broken': (true, false),
       },
     );
   });

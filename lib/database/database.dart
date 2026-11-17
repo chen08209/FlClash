@@ -142,7 +142,7 @@ class Database extends _$Database {
           await _matchTargetToExit();
         }
         if (from < 26) {
-          // Past v23 the table misses the columns v23 now rebuilds it with.
+          // v23 rebuilds the table with both columns; v26 adds what is missing.
           await _addColumnIfMissing(m, mitmModules, mitmModules.asksConsent);
           await _addColumnIfMissing(m, mitmModules, mitmModules.accepted);
           await _recordMitmConsent();
@@ -215,21 +215,29 @@ class Database extends _$Database {
     }
     final directory = await appPath.mitmModulesDirPath;
     for (final row in rows) {
-      final file = File(join(directory, row.toMitmModule().fileName));
-      final asksConsent =
-          await file.exists() &&
-          parseMitmModule(
-            await file.readAsString(),
-            values: row.arguments,
-          ).asksConsent;
-      final asks = row.scripts > 0 || asksConsent;
-      final accepted = row.enabled ? (asks ? true : null) : false;
+      final fileAsks = await _fileAsksConsent(directory, row);
+      bool? accepted = row.enabled ? null : false;
+      if (row.enabled && (row.scripts > 0 || fileAsks == true)) {
+        accepted = true;
+      }
       await (update(mitmModules)..where((t) => t.id.equals(row.id))).write(
         MitmModulesCompanion(
-          asksConsent: Value(asksConsent),
+          asksConsent: Value(fileAsks ?? true),
           accepted: Value(accepted),
         ),
       );
+    }
+  }
+
+  Future<bool?> _fileAsksConsent(String directory, RawMitmModule row) async {
+    try {
+      final file = File(join(directory, row.toMitmModule().fileName));
+      return parseMitmModule(
+        await file.readAsString(),
+        values: row.arguments,
+      ).asksConsent;
+    } catch (_) {
+      return null;
     }
   }
 
