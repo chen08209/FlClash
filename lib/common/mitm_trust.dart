@@ -41,6 +41,7 @@ class MitmTrustCheck {
   /// Linux: the browsers whose databases still lack the CA, by name.
   final List<String> missingStores;
 
+  /// Linux: the browsers that hold the CA without trusting it for TLS.
   final List<String> untrustedStores;
 
   /// Linux: the command that installs certutil, which those databases need.
@@ -578,12 +579,13 @@ fi
         untrusted.add(browser);
       }
     }
-    final trust = switch ((system, missing.length + untrusted.length)) {
-      (true, 0) => MitmTrust.ready,
-      (false, _) when missing.length == databases.length =>
-        MitmTrust.notInstalled,
-      _ => MitmTrust.untrusted,
-    };
+    final everyBrowserTrusts = missing.isEmpty && untrusted.isEmpty;
+    final noBrowserHolds = missing.length == databases.length;
+    final trust = system && everyBrowserTrusts
+        ? MitmTrust.ready
+        : !system && noBrowserHolds
+        ? MitmTrust.notInstalled
+        : MitmTrust.untrusted;
     return MitmTrustCheck(
       trust,
       missingStores: missing,
