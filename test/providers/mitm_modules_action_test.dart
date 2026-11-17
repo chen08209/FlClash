@@ -310,6 +310,17 @@ Ads = type=http-response,pattern=^https://a,script-path=${urlOf('/ads.js')}
       expect(awaitingConsent(), isEmpty);
     });
 
+    test('is told apart from one that only widens the hosts', () async {
+      bodies['/ads.sgmodule'] = module(
+        'Ads',
+      ).replaceFirst('example.com', 'example.com, *.example.org');
+
+      final updated = await action().updateModule((await stored()).single);
+
+      expect(updated.enabled, isTrue);
+      expect(awaitingConsent(), isEmpty);
+    });
+
     group('to a module stored before agreement was recorded', () {
       Future<void> stored0(String text, {bool enabled = true}) async {
         final current = (await stored()).single;
