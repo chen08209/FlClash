@@ -37,6 +37,7 @@ ServiceItem _serviceItemDto(ServiceCheckItem item) => ServiceItem(
   name: item.name,
   status: item.status,
   region: item.region,
+  ip: item.ip,
   delay: item.delay,
   chains: item.chains,
   checkedAt: item.checkedAt,

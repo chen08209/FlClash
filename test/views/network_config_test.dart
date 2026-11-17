@@ -201,15 +201,11 @@ void main() {
   });
 
   group('tun settings', () {
-    List<Widget> items({bool isMipsStack = true}) =>
-        tunItems(isMipsStack: isMipsStack);
-
     test('Android sets the routes its VPN service starts with', () {
-      final types = items().map((item) => item.runtimeType);
+      final types = tunItems().map((item) => item.runtimeType);
       expect(types, contains(BypassPrivateRouteItem));
       expect(types, contains(RouteAddressItem));
-      expect(items(), hasLength(5));
-      expect(items(isMipsStack: false), hasLength(4));
+      expect(tunItems(), hasLength(5));
     });
 
     Widget desktopSection({bool isWindows = false}) =>
@@ -274,7 +270,7 @@ void main() {
     testWidgets('a number shows the core default and resets to it', (
       tester,
     ) async {
-      await pumpItem(tester, items().first);
+      await pumpItem(tester, tunItems().first);
       final l = currentAppLocalizations;
       expect(find.text('9000'), findsOneWidget);
 
@@ -290,6 +286,38 @@ void main() {
       await tester.tap(find.text(l.reset));
       await tester.pumpAndSettle();
       expect(container.read(patchClashConfigProvider).tun.mtu, 9000);
+    });
+
+    testWidgets('a Core without the TUN congestion controls hides them', (
+      tester,
+    ) async {
+      Future<void> openCongestion() async {
+        await pumpItem(tester, tunItems()[1]);
+        await tester.tap(
+          find.text(currentAppLocalizations.congestionController),
+        );
+        await tester.pumpAndSettle();
+      }
+
+      await openCongestion();
+      expect(find.text('bbr3'), findsOneWidget);
+
+      container
+          .read(coreCapabilitiesStateProvider.notifier)
+          .value = const CoreCapabilities(
+        implementation: 'concord',
+        version: '0.1.0',
+        proxyTypes: {'ss'},
+        transports: {'ws'},
+        ruleTypes: {'MATCH'},
+      );
+      await tester.tapAt(Offset.zero);
+      await tester.pumpAndSettle();
+      await openCongestion();
+
+      expect(find.text('reno'), findsOneWidget);
+      expect(find.text('bbr'), findsNothing);
+      expect(find.text('bbr3'), findsNothing);
     });
 
     test('keep-alive rows stay off Android and the mark is Linux only', () {

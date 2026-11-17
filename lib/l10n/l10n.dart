@@ -3999,7 +3999,7 @@ abstract class AppLocalizations {
   /// No description provided for @tunAuthorizationFailed.
   ///
   /// In en, this message translates to:
-  /// **'TUN could not be authorized, so it was turned off.'**
+  /// **'TUN could not be authorized, so it is not used in this run.'**
   String get tunAuthorizationFailed;
 
   /// No description provided for @sudoPasswordTitle.
@@ -7373,6 +7373,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Force restart'**
   String get forceRestartCore;
+
+  /// No description provided for @configWarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Config warnings'**
+  String get configWarnings;
+
+  /// No description provided for @configWarningsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 warning from loading the config} other{{count} warnings from loading the config}}'**
+  String configWarningsCount(num count);
+
+  /// No description provided for @httpPort.
+  ///
+  /// In en, this message translates to:
+  /// **'HTTP port'**
+  String get httpPort;
+
+  /// No description provided for @dnsServer.
+  ///
+  /// In en, this message translates to:
+  /// **'DNS server'**
+  String get dnsServer;
+
+  /// No description provided for @serviceFaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Services not started'**
+  String get serviceFaults;
+
+  /// No description provided for @faultAddressInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'The address is already in use.'**
+  String get faultAddressInUse;
+
+  /// No description provided for @faultAddressNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The address is not available on this device.'**
+  String get faultAddressNotAvailable;
+
+  /// No description provided for @faultPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission denied.'**
+  String get faultPermissionDenied;
+
+  /// No description provided for @tunStartFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'TUN could not start and will not be tried again in this run.'**
+  String get tunStartFailed;
 
   /// No description provided for @vpnPermissionNotGranted.
   ///

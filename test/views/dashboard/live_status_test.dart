@@ -34,6 +34,7 @@ void main() {
         mitmModulesToAgreeProvider.overrideWith((ref) => toAgree),
       ],
     );
+    container.listen(appSettingProvider, (_, _) {});
     globalState.container = container;
     globalState.packageInfo = PackageInfo(
       appName: 'FlClash',
@@ -474,6 +475,203 @@ void main() {
       tester.getCenter(find.byKey(const ValueKey<Object>(CoreLiveStatus)).last),
       const Offset(400, 450),
     );
+  });
+
+  group('config warnings', () {
+    setUp(() {
+      container.read(appSettingProvider.notifier).value = const AppSettingProps(
+        openLogs: true,
+      );
+    });
+    const removed = ConfigWarning(
+      level: ConfigWarningLevel.warning,
+      path: 'proxies[12]',
+      message: 'masque is not supported, the proxy was removed',
+    );
+    const ignored = ConfigWarning(
+      level: ConfigWarningLevel.info,
+      path: 'experimental',
+      message: 'ignored',
+    );
+
+    void report(List<ConfigWarning> warnings) {
+      container.read(configWarningsStateProvider.notifier).value = warnings;
+    }
+
+    testWidgets('follow the logs setting in both the deck and hotspot count', (
+      tester,
+    ) async {
+      final settings = container.read(appSettingProvider.notifier);
+      settings.value = const AppSettingProps(openLogs: false);
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connecting;
+      report(const [removed]);
+      await pumpButton(tester, separateCore: true);
+
+      expect(badge('Connecting…'), findsOneWidget);
+      expect(find.text('2'), findsNothing);
+      await open(tester);
+      expect(find.byKey(const ValueKey<Object>(WarningsStatus)), findsNothing);
+
+      settings.value = settings.value.copyWith(openLogs: true);
+      await settle(tester);
+      expect(badge('Connecting…, 2'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await settle(tester);
+      expect(front('View all'), findsOneWidget);
+      expect(find.text(removed.message), findsOneWidget);
+
+      settings.value = settings.value.copyWith(openLogs: false);
+      await settle(tester);
+      expect(badge('Connecting…'), findsOneWidget);
+      expect(find.byKey(const ValueKey<Object>(WarningsStatus)), findsNothing);
+      expect(front('View all'), findsNothing);
+      expect(container.read(configWarningsStateProvider), const [removed]);
+    });
+
+    testWidgets('alone stay hidden while logs are off', (tester) async {
+      container.read(appSettingProvider.notifier).value = const AppSettingProps(
+        openLogs: false,
+      );
+      report(const [removed]);
+      await pumpButton(tester);
+      expect(find.byTooltip('Live status'), findsNothing);
+    });
+
+    testWidgets('alone count the warnings on the button', (tester) async {
+      report(const [
+        removed,
+        ConfigWarning(
+          level: ConfigWarningLevel.warning,
+          path: 'rules[3]',
+          message: 'rule 3 was dropped',
+        ),
+      ]);
+      await pumpButton(tester);
+
+      expect(badge('Config warnings, 2'), findsOneWidget);
+      expect(find.text('2'), findsOneWidget);
+    });
+
+    testWidgets('notes of the info level alone show nothing', (tester) async {
+      report(const [ignored]);
+      await pumpButton(tester);
+
+      expect(find.byTooltip('Live status'), findsNothing);
+    });
+
+    testWidgets('come after an update', (tester) async {
+      report(const [removed]);
+      container.read(updateDownloadStateProvider.notifier).value =
+          const UpdateDownloading('v0.9.4', received: 25, total: 100);
+      await pumpButton(tester);
+
+      expect(badge('Downloading update, 25%'), findsOneWidget);
+
+      await open(tester);
+
+      expect(front('Cancel'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await settle(tester);
+
+      expect(front('View all'), findsOneWidget);
+    });
+
+    testWidgets('leave with the core', (tester) async {
+      report(const [removed]);
+      await pumpButton(tester);
+
+      container.read(coreStatusProvider.notifier).value =
+          CoreStatus.disconnected;
+      await settle(tester);
+
+      expect(badge('Core stopped'), findsOneWidget);
+    });
+
+    testWidgets('list the first on their card and open it in place to all', (
+      tester,
+    ) async {
+      report([
+        removed,
+        ignored,
+        for (var i = 1; i <= 6; i++)
+          ConfigWarning(
+            level: ConfigWarningLevel.warning,
+            path: 'rules[$i]',
+            message: 'rule $i was dropped',
+          ),
+      ]);
+      container.read(updateDownloadStateProvider.notifier).value =
+          const UpdateDownloading('v0.9.4', received: 25, total: 100);
+      await pumpButton(tester);
+      await open(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await settle(tester);
+      final card = find.byKey(const ValueKey<Object>(WarningsStatus)).last;
+      final route = ModalRoute.of(tester.element(card));
+
+      expect(find.text(removed.message), findsOneWidget);
+      expect(find.text('proxies[12]'), findsOneWidget);
+      expect(find.text('rule 2 was dropped'), findsOneWidget);
+      expect(find.text('rule 3 was dropped'), findsNothing);
+      expect(find.text('7 warnings from loading the config'), findsOneWidget);
+      expect(find.text(ignored.message), findsNothing);
+      expect(tester.getSize(card).height, 300);
+
+      await tester.tap(front('View all'));
+      await settle(tester);
+
+      expect(ModalRoute.of(tester.element(card)), same(route));
+      expect(route!.isCurrent, isTrue);
+      expect(tester.getSize(card).height, greaterThan(300));
+      expect(tester.getSize(card).height, lessThanOrEqualTo(460));
+      expect(front('Collapse'), findsOneWidget);
+      expect(
+        find.text('7 warnings from loading the config').hitTestable(),
+        findsNothing,
+      );
+      expect(find.text('rule 3 was dropped').hitTestable(), findsOneWidget);
+      expect(find.text('rules[3]').hitTestable(), findsOneWidget);
+      expect(find.text(ignored.message), findsNothing);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await settle(tester);
+
+      expect(front('Collapse'), findsOneWidget);
+
+      await tester.tap(front('Collapse'));
+      await settle(tester);
+
+      expect(tester.getSize(card).height, 300);
+      expect(front('View all'), findsOneWidget);
+      expect(find.text('rule 3 was dropped'), findsNothing);
+    });
+
+    testWidgets('opened to all lay out only the rows in view', (tester) async {
+      report([
+        for (var i = 1; i <= 500; i++)
+          ConfigWarning(
+            level: ConfigWarningLevel.warning,
+            path: 'rules[$i]',
+            message: 'rule $i was dropped',
+          ),
+      ]);
+      container.read(updateDownloadStateProvider.notifier).value =
+          const UpdateDownloading('v0.9.4', received: 25, total: 100);
+      await pumpButton(tester);
+      await open(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await settle(tester);
+
+      await tester.tap(front('View all'));
+      await settle(tester);
+
+      expect(find.text('rule 3 was dropped').hitTestable(), findsOneWidget);
+      expect(
+        find.text('rule 500 was dropped', skipOffstage: false),
+        findsNothing,
+      );
+    });
   });
 
   group('a separate core', () {
