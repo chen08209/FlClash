@@ -317,6 +317,9 @@ tool/release.sh pre --rebuild --push     # tag vX.Y.Z-pre.N+M on HEAD after a fi
 tool/release.sh stable --push            # changelog, chore(release) commit, tag, push
 ```
 
+`--push` goes to `origin`; `--remote NAME` pushes to another remote instead, such as the public repository in a
+checkout whose `origin` is a private mirror.
+
 The release commit comes before the tag on purpose: the generated wording is reviewable in the diff before it ships, and
 the tag is what `render release` reads. CI never writes back to the repository; it only runs `verify`. Wording in
 `changelog.json` may be edited by hand as long as no derivable entry disappears and every entry still points at a commit

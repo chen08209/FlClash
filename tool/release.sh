@@ -9,6 +9,7 @@ mode=""
 want_version=""
 rebuild=0
 do_push=0
+remote=origin
 assume_yes=0
 dry_run=0
 
@@ -28,6 +29,7 @@ Options:
   --rebuild          With pre: tag vX.Y.Z-pre.N+M, rebuilding the newest
                      prerelease N instead of starting N+1.
   --push             Push the branch and the tag once the local steps pass.
+  --remote NAME      Remote to push to (default origin).
   --yes              Skip the confirmation prompt.
   --dry-run          Report the plan and exit without changing anything.
   -h, --help         Show this help.
@@ -57,6 +59,11 @@ while (($#)); do
     --version=*) want_version="${1#*=}" ;;
     --rebuild) rebuild=1 ;;
     --push) do_push=1 ;;
+    --remote)
+      shift || die "--remote needs a value"
+      remote="$1"
+      ;;
+    --remote=*) remote="${1#*=}" ;;
     --yes | -y) assume_yes=1 ;;
     --dry-run) dry_run=1 ;;
     -h | --help)
@@ -116,16 +123,16 @@ if [[ "$version" != "$current" ]]; then
   bumped=1
 fi
 
-if [[ "$mode" == "pre" ]]; then
-  last="$(git tag --list "v$version-pre.*" |
-    sed -n "s/^v$version-pre\.\([0-9]*\)\(+[0-9]*\)\{0,1\}$/\1/p" | sort -n | tail -1)"
+if [[ "$mode" != "stable" ]]; then
+  last="$(git tag --list "v$version-$mode.*" |
+    sed -n "s/^v$version-$mode\.\([0-9]*\)\(+[0-9]*\)\{0,1\}$/\1/p" | sort -n | tail -1)"
   if ((rebuild)); then
-    [[ -n "$last" ]] || die "no v$version-pre.N to rebuild; run without --rebuild first"
-    builds="$(git tag --list "v$version-pre.$last+*" |
-      sed -n "s/^v$version-pre\.$last+\([0-9]*\)$/\1/p" | sort -n | tail -1)"
-    tag="v$version-pre.$last+$(((${builds:-0}) + 1))"
+    [[ -n "$last" ]] || die "no v$version-$mode.N to rebuild; run without --rebuild first"
+    builds="$(git tag --list "v$version-$mode.$last+*" |
+      sed -n "s/^v$version-$mode\.$last+\([0-9]*\)$/\1/p" | sort -n | tail -1)"
+    tag="v$version-$mode.$last+$(((${builds:-0}) + 1))"
   else
-    tag="v$version-pre.$(((${last:-0}) + 1))"
+    tag="v$version-$mode.$(((${last:-0}) + 1))"
   fi
 else
   ((rebuild == 0)) || die "--rebuild only applies to pre"
@@ -142,14 +149,14 @@ echo "mode      : $mode"
 echo "branch    : $branch"
 echo "version   : $current -> $version$rewritten"
 echo "tag       : $tag"
-if [[ "$mode" == "pre" ]]; then
+if [[ "$mode" != "stable" ]]; then
   echo "changelog : rendered by CI from build --unreleased; nothing committed"
   echo "publishes : build artifacts + Telegram only, no GitHub release"
 else
   echo "changelog : CHANGELOG.md + changelog.json regenerated and committed"
   echo "publishes : GitHub release with artifacts, SHA256SUMS, Homebrew cask"
 fi
-echo "push      : $([[ $do_push == 1 ]] && echo yes || echo 'no (printed at the end)')"
+echo "push      : $([[ $do_push == 1 ]] && echo "yes, to $remote" || echo 'no (printed at the end)')"
 echo
 
 committed=0
@@ -213,11 +220,11 @@ git tag "$tag"
 echo "tagged $tag at $(git rev-parse --short HEAD)"
 
 if ((do_push)); then
-  git push origin "$branch"
-  git push origin "$tag"
-  echo "pushed $branch and $tag"
+  git push "$remote" "$branch"
+  git push "$remote" "$tag"
+  echo "pushed $branch and $tag to $remote"
 else
   echo
   echo "Nothing was pushed. To publish:"
-  echo "  git push origin $branch && git push origin $tag"
+  echo "  git push $remote $branch && git push $remote $tag"
 fi
