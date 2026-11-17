@@ -1058,9 +1058,12 @@ in `lib/views/config/network.dart` and `_appSettingToggle` in `lib/views/config/
 second provider write — stay hand-written rather than growing extra parameters on the shared items.
 
 In an inset grouped list (`generateSection`, `generateAnimatedSection`), a row's subtitle shows its value or state,
-never what the setting does. As iOS settings do, the explanation goes in the group's `footer`, drawn by `ListFooter`,
-one sentence per setting that names it. A section header carries its title, set as iOS 27 sets a grouped list's header
-in `headline` and the footer's `onSurfaceVariant`, and at most a few actions on the group, as
+never what the setting does, and holds one piece of information: two facts are never joined into one subtitle with
+`·`. Most groups have no `footer`. One, drawn by `ListFooter`, holds only what the row cannot say and what changes
+the outcome, one sentence per setting that names it, such as a platform limit; a note that depends on a state shows
+only in that state, and steps to install or do something belong in the dialog that starts them. A list or map edit
+page is the exception: its description says what to enter and when it takes effect. A section header carries its
+title, set as iOS 27 sets a grouped list's header in `headline` and the footer's `onSurfaceVariant`, and at most a few actions on the group, as
 `IconButtonData`: `ListHeader` draws them as 36 dp tonal buttons (`TonalButtonSize.section`), the first two grouped,
 centered on the title. Every header stands as tall as one with a button, 6 dp clear of the group below, so headers
 match whether or not they carry actions. A group with a selection swaps them
@@ -1083,6 +1086,10 @@ control shows its value with `PopupValueText`, which blurs across to the new val
 width. A menu opened at a point, as a context menu or the editor's is, runs its pick at once. A menu capped by
 `maxVisibleItems`, such as the proxy group tabs' more menu with every group in it, builds only the rows in view and
 takes its width from its labels measured as `EmojiText` lays them out.
+
+Copy calls a proxy a proxy (`Proxy`, 代理) everywhere except the members of a custom profile's proxy group, the one
+place it says node (`Node`, 节点): the member list and the picker its add entry opens. A key names one concept in
+every locale, and a key two contexts share is split into two.
 
 ## Forms
 
@@ -1159,6 +1166,9 @@ the overlay or the whole section with them on every frame. `test/widgets/route_t
 `SnapSheetRoute` follows `UISheetPresentationController` as measured on the iOS 27 simulator (a UIKit probe app driven
 by the simulator's touch injection, logging the presented view's presentation layer every frame).
 
+- A sheet rests at 9/16 of the view and drags up to 0.9 (`snapSheetDetents` in `prism_ui/lib/snap_sheet.dart`), or
+  fits content shorter than that. A sheet that needs other heights passes `SheetProps(detents: ...)` where it is
+  shown, never a fixed `SizedBox` or `ConstrainedBox` inside its content.
 - One spring moves a sheet: UIKit's mass 3, stiffness 1000, which runs critically damped (ω ≈ 18.26 rad/s, done in
   about 0.5 s). Presenting, closing, a detent change and a spring back all trace it within a point. A release thrown
   toward its target keeps its velocity and lands with UIKit's slight overshoot, about damping ratio 0.8 at full
