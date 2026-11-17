@@ -28,8 +28,9 @@ Read these only when the task touches their area:
 
 ## Highest Priority Rules
 
-- Implement an explicitly requested, scoped, low-risk change directly; ask only when ambiguity, destructive impact,
-  extra authority, or scope expansion could change the result.
+- Implement an explicitly requested, scoped, low-risk change directly. Do not require brainstorming, design documents,
+  implementation plans, multiple-option proposals, or repeated confirmation; ask only when ambiguity, destructive
+  impact, extra authority, or scope expansion could change the result.
 - The request sets the scope: an unrequested fix, cleanup, or refactor is a follow-up in the summary. Edit surgically,
   keep scratch checks out of the repository, and commit tests only where the task or the neighbouring code keeps them.
 - A comment carries only what the code cannot say; never restate, narrate the change, or keep commented-out code. The

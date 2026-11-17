@@ -1059,12 +1059,13 @@ second provider write — stay hand-written rather than growing extra parameters
 
 In an inset grouped list (`generateSection`, `generateAnimatedSection`), a row's subtitle shows its value or state,
 never what the setting does, and holds one piece of information: two facts are never joined into one subtitle with
-`·`. Most groups have no `footer`. One, drawn by `ListFooter`, holds only what the row cannot say and what changes
-the outcome, one sentence per setting that names it, such as a platform limit; a note that depends on a state shows
-only in that state, and steps to install or do something belong in the dialog that starts them. A list or map edit
-page is the exception: its description says what to enter and when it takes effect. A section header carries its
-title, set as iOS 27 sets a grouped list's header in `headline` and the footer's `onSurfaceVariant`, and at most a few actions on the group, as
-`IconButtonData`: `ListHeader` draws them as 36 dp tonal buttons (`TonalButtonSize.section`), the first two grouped,
+`·`. Most groups have no `footer`. A footer, when a group has one, is drawn by `ListFooter` and holds only what the
+row cannot say and what changes the outcome, one sentence per setting that names it, such as a platform limit; a
+note that depends on a state shows only in that state, and steps to install or do something belong in the dialog
+that starts them. A list or map edit page is the exception: its description says what to enter and when it takes
+effect. A section header carries its title, set as iOS 27 sets a grouped list's header in `headline` and the
+footer's `onSurfaceVariant`, and at most a few actions on the group, as `IconButtonData`: `ListHeader` draws them as
+36 dp tonal buttons (`TonalButtonSize.section`), the first two grouped,
 centered on the title. Every header stands as tall as one with a button, 6 dp clear of the group below, so headers
 match whether or not they carry actions. A group with a selection swaps them
 for delete and select all, never a text button. `generateSection` is the only section builder, and a sheet lays its groups inside the 16 dp inset the pages use.
