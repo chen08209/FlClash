@@ -23,10 +23,37 @@ Use the smallest durable surface that matches the job.
 - State a gate's real force. Enforcement differs per tool, and a rule that claims uniform coverage it does not have is worse than one that names the gap.
 - Keep user-specific preferences out of the repository. They belong in user-level Codex configuration or user-level skills.
 
+## Repo Skills
+
+Repo skills live under `.agents/skills/*/SKILL.md`, where Codex discovers them directly. Claude Code discovers them
+through the symlinks in `.claude/skills/`, one per skill, pointing back at the `.agents/skills/` directory. Both tools
+match a task against the skill `name` and `description`, then load the full instructions only when it matches.
+
+- `localization`: hardcoded UI text scans, ARB updates, locale generation, and localization verification.
+- `ui-work`: Flutter UI, widgets, color and surface styling, icons and glyphs, shapes and corner radii, navigation
+  surfaces, async feedback, and user-facing interactions.
+- `core-platform`: Core lifecycle/process ownership, Android services, Go event delivery, desktop IPC, platform
+  managers, build hooks, system proxy, tray, VPN/TUN, and the Windows and Linux Helper.
+- `ui-performance`: dropped frames, slow pages and transitions, UI-thread and raster load, isolate decisions, and the
+  probes that measure them.
+- `pre-commit-quality-review`: lightweight triage before commits, with scoped structural review and user decisions on
+  concrete regressions.
+
 ## Skill Authoring Rules
 
 - Use lowercase hyphenated names.
+- Add a new skill as `.agents/skills/<skill-name>/SKILL.md` plus the matching `.claude/skills/<skill-name>` symlink;
+  remove both when retiring a skill.
+- Git stores the symlinks as links only where the checkout supports them. A Windows checkout needs
+  `core.symlinks=true` and Developer Mode, otherwise the links become plain files and Claude Code loads no repo
+  skill there; Codex is unaffected because it reads `.agents/skills/` directly.
 - Start descriptions with `Use when...`.
 - Describe trigger conditions in the description, not the workflow.
 - Keep `SKILL.md` lean; link to `.agents/*.md` for large reference material.
 - Add scripts only when deterministic behavior is needed repeatedly.
+
+## Worktrees
+
+Claude Code, Codex, and Gemini each create git worktrees. `tool/worktrees.sh` lists them with their owning tool and
+prunes the clean ones (see Worktree Tooling in `.agents/commands.md`). `.claude/worktrees/` is ignored by git;
+`.claude/settings.json` is tracked.

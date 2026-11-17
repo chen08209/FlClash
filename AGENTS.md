@@ -19,12 +19,10 @@ Read these only when the task touches their area:
   profile, or asks for an Android VPN restart.
 - [.agents/surfaces.md](.agents/surfaces.md): fill levels, selection and status colors, and the few borders that
   remain, for any change to how a surface is colored.
-- [.agents/agent-config.md](.agents/agent-config.md): how to choose between `AGENTS.md`, `.agents`, skills, Codex config,
-  command rules, and hooks.
-- [.agents/worktrees.md](.agents/worktrees.md): worktree hygiene across Claude Code, Codex, and Gemini.
+- [.agents/agent-config.md](.agents/agent-config.md): where agent guidance belongs, the repo skills in
+  `.agents/skills/`, and worktree hygiene.
 - [.agents/flutter-upgrade.md](.agents/flutter-upgrade.md): SDK-pinned workarounds to recheck before changing the
   Flutter version.
-- [.agents/skills.md](.agents/skills.md): index of repo-scoped skills in `.agents/skills/`.
 
 ## Highest Priority Rules
 
