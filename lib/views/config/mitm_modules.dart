@@ -33,7 +33,7 @@ void _putModule(WidgetRef ref, MitmModule module) {
 
 Future<void> _setEnabled(WidgetRef ref, MitmModule module, bool enabled) async {
   final next = enabled
-      ? await acceptMitmModule(ref, module) ?? module.copyWith(accepted: false)
+      ? await acceptMitmModule(ref, module)
       : module.copyWith(enabled: false, accepted: module.accepted ?? false);
   _putModule(ref, next);
 }

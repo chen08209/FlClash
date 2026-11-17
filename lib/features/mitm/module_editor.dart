@@ -54,8 +54,11 @@ String mitmNetworkChangeValue(
 }
 
 /// Scripts and network changes reach past the module's own hosts, so either
-/// asks before the module turns on.
-Future<MitmModule?> acceptMitmModule(WidgetRef ref, MitmModule module) async {
+/// asks before the module turns on; declining records the answer.
+Future<MitmModule> acceptMitmModule(WidgetRef ref, MitmModule module) async {
+  if (!module.asksBeforeTurningOn) {
+    return module.copyWith(enabled: true);
+  }
   final content = ref.listenManual(
     mitmModuleContentProvider(module.id).future,
     (_, _) {},
@@ -70,9 +73,6 @@ Future<MitmModule?> acceptMitmModule(WidgetRef ref, MitmModule module) async {
   final unverified = read?.skipVerifyHostname ?? const <String>[];
   final sources = read?.clientSourceAddress ?? const <String>[];
   final scripts = module.scripts > 0;
-  if (!scripts && read?.asksConsent != true) {
-    return module.copyWith(enabled: true);
-  }
   final appLocalizations = currentAppLocalizations;
   final overrides = ref.read(
     profileOverridesProvider(ref.read(currentProfileIdProvider)),
@@ -119,17 +119,16 @@ Future<MitmModule?> acceptMitmModule(WidgetRef ref, MitmModule module) async {
   );
   return accepted == true
       ? module.copyWith(enabled: true, accepted: true)
-      : null;
+      : module.copyWith(accepted: false);
 }
 
 Future<void> offerMitmModule(WidgetRef ref, MitmModule? module) async {
   if (module == null || !module.awaitsConsent) {
     return;
   }
-  final answered = await acceptMitmModule(ref, module);
   ref
       .read(mitmModulesActionProvider.notifier)
-      .putModule(answered ?? module.copyWith(accepted: false));
+      .putModule(await acceptMitmModule(ref, module));
 }
 
 String _moduleTemplate(String name) =>
