@@ -6828,6 +6828,12 @@ abstract class AppLocalizations {
   /// **'URL-REGEX and USER-AGENT rules run as URL rewrites, on HTTPS only for listed hosts.'**
   String get mitmRequestRulesDesc;
 
+  /// No description provided for @mitmExtendedMatchingNote.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} use extended matching'**
+  String mitmExtendedMatchingNote(Object count);
+
   /// No description provided for @mitmModuleSystemTip.
   ///
   /// In en, this message translates to:
@@ -6936,12 +6942,6 @@ abstract class AppLocalizations {
   /// **'This rule type is not supported'**
   String get mitmSkipRule;
 
-  /// No description provided for @mitmSkipHttpRulePolicy.
-  ///
-  /// In en, this message translates to:
-  /// **'URL-REGEX and USER-AGENT rules only take a REJECT policy'**
-  String get mitmSkipHttpRulePolicy;
-
   /// No description provided for @mitmSkipFinalRule.
   ///
   /// In en, this message translates to:
@@ -6984,12 +6984,6 @@ abstract class AppLocalizations {
   /// **'FlClash cannot send packets back to their sender'**
   String get mitmSkipReflect;
 
-  /// No description provided for @mitmSkipConditional.
-  ///
-  /// In en, this message translates to:
-  /// **'Conditional rewrites are not supported'**
-  String get mitmSkipConditional;
-
   /// No description provided for @mitmSkipSkipVerifyAll.
   ///
   /// In en, this message translates to:
@@ -7002,17 +6996,113 @@ abstract class AppLocalizations {
   /// **'The file this line names is not attached; use a URL or attach it'**
   String get mitmSkipRelativeData;
 
-  /// No description provided for @mitmSkipNotDownloaded.
-  ///
-  /// In en, this message translates to:
-  /// **'Its file has not been downloaded'**
-  String get mitmSkipNotDownloaded;
-
   /// No description provided for @mitmSkipUnreadable.
   ///
   /// In en, this message translates to:
   /// **'This line cannot be read'**
   String get mitmSkipUnreadable;
+
+  /// No description provided for @mitmSkipNoSection.
+  ///
+  /// In en, this message translates to:
+  /// **'This line is outside any section'**
+  String get mitmSkipNoSection;
+
+  /// No description provided for @mitmSkipRequirementUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'This line’s requirement cannot be read'**
+  String get mitmSkipRequirementUnreadable;
+
+  /// No description provided for @mitmSkipPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'This rule’s policy names nothing'**
+  String get mitmSkipPolicy;
+
+  /// No description provided for @mitmSkipNestedRuleSet.
+  ///
+  /// In en, this message translates to:
+  /// **'A rule set cannot include another rule set'**
+  String get mitmSkipNestedRuleSet;
+
+  /// No description provided for @mitmSkipCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'This condition cannot be tested'**
+  String get mitmSkipCondition;
+
+  /// No description provided for @mitmSkipRuntimeValue.
+  ///
+  /// In en, this message translates to:
+  /// **'This line needs a value only the request at hand has'**
+  String get mitmSkipRuntimeValue;
+
+  /// No description provided for @mitmResources.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote files'**
+  String get mitmResources;
+
+  /// No description provided for @mitmResourceOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloaded'**
+  String get mitmResourceOk;
+
+  /// No description provided for @mitmResourceFetching.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading'**
+  String get mitmResourceFetching;
+
+  /// No description provided for @mitmResourceMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Not downloaded yet'**
+  String get mitmResourceMissing;
+
+  /// No description provided for @mitmFetchDns.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed: the host name could not be resolved'**
+  String get mitmFetchDns;
+
+  /// No description provided for @mitmFetchTls.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed: the secure connection could not be set up'**
+  String get mitmFetchTls;
+
+  /// No description provided for @mitmFetchTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed: the server took too long'**
+  String get mitmFetchTimeout;
+
+  /// No description provided for @mitmFetchConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed: the connection was lost'**
+  String get mitmFetchConnection;
+
+  /// No description provided for @mitmFetchOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed'**
+  String get mitmFetchOther;
+
+  /// No description provided for @mitmResourcesFetch.
+  ///
+  /// In en, this message translates to:
+  /// **'Download again'**
+  String get mitmResourcesFetch;
+
+  /// No description provided for @mitmFetchHttp.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed: the server answered {status}'**
+  String mitmFetchHttp(int status);
 
   /// No description provided for @mitmAddLocalFile.
   ///
@@ -7079,6 +7169,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Generic'**
   String get mitmScriptGeneric;
+
+  /// No description provided for @mitmScriptDns.
+  ///
+  /// In en, this message translates to:
+  /// **'DNS'**
+  String get mitmScriptDns;
 
   /// No description provided for @mitmExcluded.
   ///
@@ -7355,6 +7451,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The app lost its connection to the core: {reason}'**
   String coreStoppedWithReason(Object reason);
+
+  /// No description provided for @coreUnavailableTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The core is not running. Try again once it has started.'**
+  String get coreUnavailableTip;
 
   /// No description provided for @mixedPortReset.
   ///

@@ -133,6 +133,8 @@ mitm:
     script-memory: 67108864
     capture-entries: 500
     capture-bytes: 16777216
+  modules: []
+  module-language: "und"
 profile:
   store-selected: false
 geox-url:

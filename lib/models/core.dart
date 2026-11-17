@@ -126,14 +126,19 @@ sealed class MitmLineView with _$MitmLineView {
     required String dataType,
     @Default('') String data,
     int? status,
+    @Default([]) List<MitmHeader> headers,
+    @Default('') String contentType,
   }) = MitmMapLocalView;
 
   const factory MitmLineView.script({
     required String name,
     required String kind,
+    @Default('') String path,
     String? pattern,
     String? cronexp,
     String? event,
+    @Default(false) bool requiresBody,
+    int? timeoutMs,
   }) = MitmScriptView;
 
   const factory MitmLineView.hosts({@Default([]) List<MitmHostEntry> entries}) =
@@ -156,6 +161,15 @@ abstract class MitmBodyReplacement with _$MitmBodyReplacement {
 
   factory MitmBodyReplacement.fromJson(Map<String, Object?> json) =>
       _$MitmBodyReplacementFromJson(json);
+}
+
+@freezed
+abstract class MitmHeader with _$MitmHeader {
+  const factory MitmHeader({required String name, required String value}) =
+      _MitmHeader;
+
+  factory MitmHeader.fromJson(Map<String, Object?> json) =>
+      _$MitmHeaderFromJson(json);
 }
 
 @freezed

@@ -1,10 +1,12 @@
 import 'dart:async';
+
 import 'package:fl_clash/core/core.dart';
+
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/mitm_module.dart';
+import 'package:fl_clash/common/mitm_module_file.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/l10n/l10n.dart';
@@ -36,10 +38,17 @@ Future<void> _setEnabled(WidgetRef ref, MitmModule module, bool enabled) async {
   }
 }
 
+/// The name the Core runs a cron, event or generic script line by; null for
+/// any other line.
+String? _taskName(MitmLineView? view) => switch (view) {
+  MitmScriptView(:final name, kind: 'cron' || 'event' || 'generic') => name,
+  _ => null,
+};
+
 /// Runs a cron, event or generic script line now; any other line, any while
 /// decryption is off, and a task still running have none.
-PopupMenuItem? mitmRunScriptItem(WidgetRef ref, String line) {
-  final name = mitmTaskName(line);
+PopupMenuItem? mitmRunScriptItem(WidgetRef ref, MitmLineView? view) {
+  final name = _taskName(view);
   if (name == null ||
       !ref.read(patchClashConfigProvider).mitm.enable ||
       ref.read(updatingKeysProvider).contains(_runKey(name))) {
@@ -55,14 +64,14 @@ PopupMenuItem? mitmRunScriptItem(WidgetRef ref, String line) {
 String _runKey(String name) => 'mitm_script_$name';
 
 class MitmTaskRunning extends ConsumerWidget {
-  const MitmTaskRunning({super.key, required this.line, required this.builder});
+  const MitmTaskRunning({super.key, required this.view, required this.builder});
 
-  final String line;
+  final MitmLineView? view;
   final Widget Function(bool running) builder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final name = mitmTaskName(line);
+    final name = _taskName(view);
     return builder(
       name != null && ref.watch(isUpdatingProvider(_runKey(name))),
     );
@@ -129,6 +138,28 @@ String? _resultText(String result) {
 Future<void> _updateModule(WidgetRef ref, MitmModule module) async {
   final updated = await globalState.safeRun(
     () => ref.read(mitmModulesActionProvider.notifier).updateModule(module),
+    title: module.name,
+    silence: false,
+  );
+  await offerMitmModule(ref, updated);
+}
+
+Future<void> _editModuleUrl(WidgetRef ref, MitmModule module) async {
+  final appLocalizations = currentAppLocalizations;
+  final url = await dialogs.showUrlInput(
+    title: appLocalizations.url,
+    value: module.url ?? '',
+  );
+  if (url == null || url == module.url) {
+    return;
+  }
+  final modules = ref.read(mitmModulesProvider).value ?? const [];
+  if (modules.any((other) => other.id != module.id && other.url == url)) {
+    dialogs.showBanner(appLocalizations.existsTip(appLocalizations.mitmModule));
+    return;
+  }
+  final updated = await globalState.safeRun(
+    () => ref.read(mitmModulesActionProvider.notifier).changeUrl(module, url),
     title: module.name,
     silence: false,
   );
@@ -315,13 +346,18 @@ class _MitmModuleRow extends ConsumerWidget {
         menuItems: isUpdating
             ? null
             : [
-                if (module.isRemote)
+                if (module.isRemote) ...[
                   PopupMenuItem(
                     glyph: AppGlyphs.sync,
                     label: appLocalizations.update,
                     onPressed: () => _updateModule(ref, module),
-                  )
-                else
+                  ),
+                  PopupMenuItem(
+                    glyph: AppGlyphs.link,
+                    label: appLocalizations.url,
+                    onPressed: () => _editModuleUrl(ref, module),
+                  ),
+                ] else
                   PopupMenuItem(
                     glyph: AppGlyphs.edit,
                     label: appLocalizations.edit,
@@ -375,33 +411,39 @@ class MitmModuleView extends ConsumerWidget {
 
   final int id;
 
-  String _skipReason(AppLocalizations appLocalizations, MitmModuleSkip skip) {
-    return switch (skip.reason) {
-      MitmModuleSkipReason.section => appLocalizations.mitmSkipSection(
-        skip.section,
+  String _skipReason(
+    AppLocalizations appLocalizations,
+    MitmModuleIgnoredLine skip,
+  ) {
+    final reason = switch (skip.reason) {
+      'section' when skip.detail != null => appLocalizations.mitmSkipSection(
+        skip.detail!,
       ),
-      MitmModuleSkipReason.setting => appLocalizations.mitmSkipSetting,
-      MitmModuleSkipReason.scriptType => appLocalizations.mitmSkipScriptType,
-      MitmModuleSkipReason.event => appLocalizations.mitmSkipEvent,
-      MitmModuleSkipReason.disabled => appLocalizations.mitmSkipDisabled,
-      MitmModuleSkipReason.rule => appLocalizations.mitmSkipRule,
-      MitmModuleSkipReason.httpRulePolicy =>
-        appLocalizations.mitmSkipHttpRulePolicy,
-      MitmModuleSkipReason.finalRule => appLocalizations.mitmSkipFinalRule,
-      MitmModuleSkipReason.deviceRule => appLocalizations.mitmSkipDeviceRule,
-      MitmModuleSkipReason.requirement => appLocalizations.mitmSkipRequirement,
-      MitmModuleSkipReason.managedCa => appLocalizations.mitmSkipManagedCa,
-      MitmModuleSkipReason.proxies => appLocalizations.mitmSkipProxies,
-      MitmModuleSkipReason.appOnly => appLocalizations.mitmSkipAppOnly,
-      MitmModuleSkipReason.reflect => appLocalizations.mitmSkipReflect,
-      MitmModuleSkipReason.conditional => appLocalizations.mitmSkipConditional,
-      MitmModuleSkipReason.skipVerifyAll =>
-        appLocalizations.mitmSkipSkipVerifyAll,
-      MitmModuleSkipReason.relativeData =>
-        appLocalizations.mitmSkipRelativeData,
-      MitmModuleSkipReason.notDownloaded =>
-        appLocalizations.mitmSkipNotDownloaded,
-      MitmModuleSkipReason.unreadable => appLocalizations.mitmSkipUnreadable,
+      'section' => appLocalizations.mitmSkipNoSection,
+      'appOnly' => appLocalizations.mitmSkipAppOnly,
+      'proxies' => appLocalizations.mitmSkipProxies,
+      'setting' => appLocalizations.mitmSkipSetting,
+      'managedCa' => appLocalizations.mitmSkipManagedCa,
+      'requirement' => appLocalizations.mitmSkipRequirement,
+      'requirementUnreadable' => appLocalizations.mitmSkipRequirementUnreadable,
+      'scriptType' => appLocalizations.mitmSkipScriptType,
+      'event' => appLocalizations.mitmSkipEvent,
+      'disabled' => appLocalizations.mitmSkipDisabled,
+      'finalRule' => appLocalizations.mitmSkipFinalRule,
+      'deviceRule' => appLocalizations.mitmSkipDeviceRule,
+      'ruleType' => appLocalizations.mitmSkipRule,
+      'policy' => appLocalizations.mitmSkipPolicy,
+      'nestedRuleSet' => appLocalizations.mitmSkipNestedRuleSet,
+      'reflect' => appLocalizations.mitmSkipReflect,
+      'skipVerifyAll' => appLocalizations.mitmSkipSkipVerifyAll,
+      'noAttachment' => appLocalizations.mitmSkipRelativeData,
+      'condition' => appLocalizations.mitmSkipCondition,
+      'runtimeValue' => appLocalizations.mitmSkipRuntimeValue,
+      _ => appLocalizations.mitmSkipUnreadable,
+    };
+    return switch (skip.detail) {
+      final detail? when skip.reason != 'section' => '$reason\n$detail',
+      _ => reason,
     };
   }
 
@@ -421,18 +463,16 @@ class MitmModuleView extends ConsumerWidget {
 
   Widget _linesItem(
     String title,
-    List<String> lines, {
-    Map<String, String> issues = const {},
-    Map<String, MitmLineView> views = const {},
+    List<_ShownLine> lines, {
     String? note,
     bool rules = false,
     Map<String, Map<String, Object?>> ruleSets = const {},
-    List<PopupMenuItem> Function(String line)? menuItemsOf,
+    List<PopupMenuItem> Function(_ShownLine line)? menuItemsOf,
   }) {
     return Builder(
       builder: (context) {
         final appLocalizations = context.appLocalizations;
-        final invalid = lines.where(issues.containsKey).length;
+        final invalid = lines.where((line) => line.issue != null).length;
         final count = invalid == 0
             ? appLocalizations.itemsCount(lines.length)
             : appLocalizations.invalidOfCount(invalid, lines.length);
@@ -441,8 +481,7 @@ class MitmModuleView extends ConsumerWidget {
           subtitle: Text([count, ?note].join('\n')),
           builder: (_) => _MitmModuleLinesView(
             title: title,
-            lines: [for (final line in lines) (line, issues[line])],
-            views: views,
+            lines: lines,
             rules: rules,
             ruleSets: ruleSets,
             menuItemsOf: menuItemsOf,
@@ -463,6 +502,7 @@ class MitmModuleView extends ConsumerWidget {
       ListItem(
         title: Text(appLocalizations.source),
         subtitle: Text(url ?? appLocalizations.local),
+        onTap: url == null ? null : () => _editModuleUrl(ref, module),
       ),
       ListItem(
         title: Text(appLocalizations.lastUpdated),
@@ -548,8 +588,9 @@ class MitmModuleView extends ConsumerWidget {
   Widget _argumentItem(
     WidgetRef ref,
     MitmModule module,
-    MitmModuleArgument argument,
+    MitmModuleArgumentView argument,
   ) {
+    final title = argument.label ?? argument.name;
     final value = module.arguments[argument.name] ?? argument.defaultValue;
     Future<void> save(String next) async {
       final changed = await globalState.safeRun(
@@ -564,13 +605,13 @@ class MitmModuleView extends ConsumerWidget {
     }
 
     return switch (argument.type) {
-      MitmModuleArgumentType.toggle => ListItem.toggle(
-        title: Text(argument.title),
+      MitmArgumentType.switcher => ListItem.toggle(
+        title: Text(title),
         value: value == 'true',
         onChanged: (next) => save(next.toString()),
       ),
-      MitmModuleArgumentType.select => ListItem.options(
-        title: Text(argument.title),
+      MitmArgumentType.select => ListItem.options(
+        title: Text(title),
         options: argument.options.contains(value)
             ? argument.options
             : [value, ...argument.options],
@@ -578,10 +619,10 @@ class MitmModuleView extends ConsumerWidget {
         textBuilder: (option) => option,
         onChanged: save,
       ),
-      MitmModuleArgumentType.input => ListItem.input(
-        title: Text(argument.title),
+      MitmArgumentType.text => ListItem.input(
+        title: Text(title),
         subtitle: value.isEmpty ? null : Text(value),
-        dialogTitle: argument.title,
+        dialogTitle: title,
         value: value,
         onChanged: (next) {
           if (next != null) {
@@ -595,16 +636,75 @@ class MitmModuleView extends ConsumerWidget {
   String? _aboutFooter(
     AppLocalizations appLocalizations,
     MitmModule module,
-    MitmModuleContent? content,
-  ) {
+    MitmModuleDetails? content, {
+    Object? readError,
+  }) {
     final paragraphs = [
       if (module.description.isNotEmpty) module.description,
+      if (readError != null)
+        userFacingErrorMessage(readError, appLocalizations),
       ?_systemTip(appLocalizations, module.system),
-      if (content?.requirement case final requirement?
-          when content?.requirementMet != true)
+      if (content?.read.meta.requirement case final requirement?
+          when content?.read.off != null)
         appLocalizations.mitmModuleRequirementTip(requirement),
     ];
     return paragraphs.isEmpty ? null : paragraphs.join('\n\n');
+  }
+
+  String _resourceState(
+    AppLocalizations appLocalizations,
+    MitmModuleResourceStatus resource,
+  ) => switch ((resource.state, resource.error)) {
+    (MitmResourceState.ok, _) => appLocalizations.mitmResourceOk,
+    (MitmResourceState.fetching, _) => appLocalizations.mitmResourceFetching,
+    (MitmResourceState.missing, _) => appLocalizations.mitmResourceMissing,
+    (_, MitmFetchFailure(reason: 'http', :final status?)) =>
+      appLocalizations.mitmFetchHttp(status),
+    (_, MitmFetchFailure(reason: 'dns')) => appLocalizations.mitmFetchDns,
+    (_, MitmFetchFailure(reason: 'tls')) => appLocalizations.mitmFetchTls,
+    (_, MitmFetchFailure(reason: 'timeout')) =>
+      appLocalizations.mitmFetchTimeout,
+    (_, MitmFetchFailure(reason: 'connection')) =>
+      appLocalizations.mitmFetchConnection,
+    _ => appLocalizations.mitmFetchOther,
+  };
+
+  List<Widget> _resourceItems(
+    BuildContext context,
+    WidgetRef ref,
+    MitmModule module,
+    MitmModuleStatus status,
+  ) {
+    final appLocalizations = context.appLocalizations;
+    return [
+      for (final resource in status.resources)
+        ListItem(
+          title: Text(
+            resource.url,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Text(
+            _resourceState(appLocalizations, resource),
+            style: resource.state == MitmResourceState.failed
+                ? TextStyle(color: context.colorScheme.error)
+                : null,
+          ),
+          trailing: resource.state == MitmResourceState.fetching
+              ? const ActivityIndicator(size: 24)
+              : null,
+        ),
+      ListItem(
+        title: Text(appLocalizations.mitmResourcesFetch),
+        onTap: () => globalState.safeRun(
+          () => ref
+              .read(mitmModulesActionProvider.notifier)
+              .fetchResources(module),
+          title: module.name,
+          silence: false,
+        ),
+      ),
+    ];
   }
 
   Widget _networkItem(BuildContext context, MitmNetworkChangeState state) {
@@ -623,12 +723,12 @@ class MitmModuleView extends ConsumerWidget {
     );
   }
 
-  String? _argumentsFooter(MitmModuleContent content) {
+  String? _argumentsFooter(MitmModuleDetails content) {
     final lines = [
-      ?content.argumentsDescription,
-      for (final argument in content.arguments)
-        if (argument.description case final description?)
-          '${argument.title}: $description',
+      ?content.read.meta.argumentsDesc,
+      for (final argument in content.read.arguments)
+        if (argument.desc case final description?)
+          '${argument.label ?? argument.name}: $description',
     ];
     return lines.isEmpty ? null : lines.join('\n');
   }
@@ -637,10 +737,13 @@ class MitmModuleView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     final module = _moduleOf(ref, id);
-    final details = ref.watch(mitmModuleDetailsProvider(id));
-    final content = details.value?.content;
-    final issues = details.value?.issues ?? const {};
-    final views = details.value?.views ?? const {};
+    final details = ref.watch(mitmModuleContentProvider(id));
+    final content = details.value;
+    final status = ref.watch(mitmModuleStatusProvider).value?['$id'];
+    final refused = {
+      for (final rule in status?.refusedRules ?? const <MitmRefusedRule>[])
+        rule.line: rule.detail,
+    };
     final networkChanges =
         ref.watch(mitmModuleNetworkChangesProvider(id)).value ?? const [];
     return Scaffold(
@@ -663,7 +766,12 @@ class MitmModuleView extends ConsumerWidget {
                         onChanged: (value) => _setEnabled(ref, module, value),
                       ),
                     ],
-                    footer: _aboutFooter(appLocalizations, module, content),
+                    footer: _aboutFooter(
+                      appLocalizations,
+                      module,
+                      content,
+                      readError: details.hasValue ? null : details.error,
+                    ),
                   ),
                   generateSection(
                     title: appLocalizations.source,
@@ -676,14 +784,19 @@ class MitmModuleView extends ConsumerWidget {
                       footer: appLocalizations.mitmAttachmentsDesc,
                       last: content == null && networkChanges.isEmpty,
                     ),
-                  if (content != null && content.arguments.isNotEmpty)
+                  if (content != null && content.read.arguments.isNotEmpty)
                     generateSection(
                       title: appLocalizations.arguments,
                       items: [
-                        for (final argument in content.arguments)
+                        for (final argument in content.read.arguments)
                           _argumentItem(ref, module, argument),
                       ],
                       footer: _argumentsFooter(content),
+                    ),
+                  if (status != null && status.resources.isNotEmpty)
+                    generateSection(
+                      title: appLocalizations.mitmResources,
+                      items: _resourceItems(context, ref, module, status),
                     ),
                   if (networkChanges.isNotEmpty)
                     generateSection(
@@ -700,49 +813,71 @@ class MitmModuleView extends ConsumerWidget {
                       title: appLocalizations.rules,
                       items: [
                         for (final list in MitmList.values)
-                          if (content.mitm.linesOf(list) case final lines
+                          if (content.lists[list] case final lines?
                               when lines.isNotEmpty)
                             _linesItem(
                               list.label,
-                              lines,
-                              issues: issues[list] ?? const {},
-                              views: views[list] ?? const {},
+                              [
+                                for (final line in lines)
+                                  (
+                                    text: line.text,
+                                    issue: line.issue,
+                                    view: line.view,
+                                  ),
+                              ],
                               note: list == MitmList.clientSourceAddress
                                   ? appLocalizations.mitmClientSourceTunTip
                                   : null,
                               menuItemsOf:
                                   list == MitmList.script && module.enabled
-                                  ? (line) => [?mitmRunScriptItem(ref, line)]
+                                  ? (line) => [
+                                      ?mitmRunScriptItem(ref, line.view),
+                                    ]
                                   : null,
                             ),
-                        if (content.rules.isNotEmpty)
+                        if (content.read.rules.isNotEmpty)
                           _linesItem(
                             appLocalizations.mitmRoutingRules,
-                            content.rules,
-                            issues: {
-                              for (final line in content.rules)
-                                if (_moduleRule(line) == null)
-                                  line: appLocalizations.mitmSkipRule,
+                            [
+                              for (final rule in content.read.rules)
+                                _ruleLine(
+                                  rule,
+                                  refused[rule.line],
+                                  appLocalizations,
+                                ),
+                            ],
+                            note: switch (content.read.rules
+                                .where((rule) => rule.extendedMatching)
+                                .length) {
+                              0 => null,
+                              final count =>
+                                appLocalizations.mitmExtendedMatchingNote(
+                                  count,
+                                ),
                             },
                             rules: true,
-                            ruleSets: content.ruleProviders,
+                            ruleSets: {
+                              for (final set in content.read.ruleSets)
+                                set.name: {'url': ?set.url, 'path': ?set.file},
+                            },
                           ),
-                        if (content.skipped.isNotEmpty)
+                        if (content.read.ignored.isNotEmpty)
                           ListItem.open(
                             title: Text(appLocalizations.mitmIgnoredLines),
                             subtitle: Text(
                               appLocalizations.itemsCount(
-                                content.skipped.length,
+                                content.read.ignored.length,
                               ),
                             ),
                             builder: (_) => _MitmModuleLinesView(
                               title: appLocalizations.mitmIgnoredLines,
                               notes: true,
                               lines: [
-                                for (final skip in content.skipped)
+                                for (final skip in content.read.ignored)
                                   (
-                                    skip.line,
-                                    _skipReason(appLocalizations, skip),
+                                    text: skip.text,
+                                    issue: _skipReason(appLocalizations, skip),
+                                    view: null,
                                   ),
                               ],
                             ),
@@ -750,7 +885,7 @@ class MitmModuleView extends ConsumerWidget {
                       ],
                       footer: [
                         appLocalizations.mitmModuleRulesDesc,
-                        if (content.requestRules > 0)
+                        if (content.read.rules.any(_isRequestRule))
                           appLocalizations.mitmRequestRulesDesc,
                       ].join(' '),
                       last: true,
@@ -761,6 +896,39 @@ class MitmModuleView extends ConsumerWidget {
     );
   }
 }
+
+typedef _ShownLine = ({String text, String? issue, MitmLineView? view});
+
+_ShownLine _ruleLine(
+  MitmModuleRule rule,
+  String? refused,
+  AppLocalizations appLocalizations,
+) {
+  final text = _ruleText(rule);
+  return (
+    text: text,
+    issue:
+        refused ??
+        (_moduleRule(text) == null && !_isScriptRule(text)
+            ? appLocalizations.mitmSkipRule
+            : null),
+    view: null,
+  );
+}
+
+String _ruleText(MitmModuleRule rule) => [
+  rule.rule,
+  rule.policy.name,
+  if (rule.noResolve) 'no-resolve',
+  if (rule.requiresResolve) 'requires-resolve',
+].join(',');
+
+/// A `SCRIPT` rule, which the Core runs but the rule editor has no type for.
+bool _isScriptRule(String line) => line.startsWith('SCRIPT,');
+
+/// A rule decided by the request a session decrypts.
+bool _isRequestRule(MitmModuleRule rule) =>
+    RegExp(r'(^|\()\s*(URL-REGEX|USER-AGENT),').hasMatch(rule.rule);
 
 /// A routing rule as the module's reader wrote it, or null for a line whose
 /// type, payload or target [Rule.parse] would have to guess.
@@ -781,7 +949,6 @@ class _MitmModuleLinesView extends StatelessWidget {
   const _MitmModuleLinesView({
     required this.title,
     required this.lines,
-    this.views = const {},
     this.notes = false,
     this.rules = false,
     this.ruleSets = const {},
@@ -791,15 +958,12 @@ class _MitmModuleLinesView extends StatelessWidget {
   final String title;
 
   /// Each line with why the Core skips it, or with [notes] why the module's
-  /// reader left it out.
-  final List<(String, String?)> lines;
-
-  /// How the Core reads each line it applies, in whole or in part.
-  final Map<String, MitmLineView> views;
+  /// reader left it out, and how the Core reads one it applies.
+  final List<_ShownLine> lines;
   final bool notes;
   final bool rules;
   final Map<String, Map<String, Object?>> ruleSets;
-  final List<PopupMenuItem> Function(String line)? menuItemsOf;
+  final List<PopupMenuItem> Function(_ShownLine line)? menuItemsOf;
 
   Color? _issueColor(BuildContext context) =>
       notes ? null : context.colorScheme.error;
@@ -842,34 +1006,45 @@ class _MitmModuleLinesView extends StatelessWidget {
         onEdit: (_) => _showLine(context, line, issue),
       );
     }
-    final message = issue ?? context.appLocalizations.mitmSkipRule;
+    final message =
+        issue ??
+        (_isScriptRule(line) ? null : context.appLocalizations.mitmSkipRule);
     return DecorationListItem(
       minVerticalPadding: 0,
-      invalid: true,
+      invalid: message != null,
       title: Text(
         line,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: DefaultTextStyle.of(context).style.toJetBrainsMono,
       ),
-      subtitle: Text(
-        message,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: context.colorScheme.error),
-      ),
+      subtitle: switch (message) {
+        final message? => Text(
+          message,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(color: context.colorScheme.error),
+        ),
+        null => null,
+      },
       onPressed: () => _showLine(context, line, message),
     );
   }
 
-  Widget _lineRow(BuildContext context, String line, String? issue) {
+  Widget _lineRow(BuildContext context, _ShownLine line) {
     return MitmTaskRunning(
-      line: line,
+      view: line.view,
       builder: (running) => ContextMenuRegion(
         menuItems: menuItemsOf?.call(line),
-        child: switch (views[line]) {
-          final view? => _viewRow(context, line, view, issue, running),
-          null => _rawRow(context, line, issue, running),
+        child: switch (line.view) {
+          final view? => _viewRow(
+            context,
+            line.text,
+            view,
+            line.issue,
+            running,
+          ),
+          null => _rawRow(context, line.text, line.issue, running),
         },
       ),
     );
@@ -959,21 +1134,27 @@ class _MitmModuleLinesView extends StatelessWidget {
         itemCount: lines.length,
         itemExtent: rules ? ruleItemHeight : null,
         itemBuilder: (context, index) {
-          final (line, issue) = lines[index];
+          final line = lines[index];
           return ItemPositionProvider(
             position: ItemPosition.get(index, lines.length),
             child: rules
                 ? ContextMenuRegion(
                     menuItems: menuItemsOf?.call(line),
-                    child: _ruleRow(context, line, issue),
+                    child: _ruleRow(context, line.text, line.issue),
                   )
-                : _lineRow(context, line, issue),
+                : _lineRow(context, line),
           );
         },
       ),
     );
   }
 }
+
+const _requiresBodyKey = 'requires-body';
+const _timeoutKey = 'timeout';
+const _contentTypeHeader = 'Content-Type';
+
+String _seconds(int ms) => ms % 1000 == 0 ? '${ms ~/ 1000}s' : '${ms / 1000}s';
 
 /// A line the Core reads, laid out as a rule row is: what it matches on top,
 /// what it does below, and the kind of action at the trailing edge.
@@ -1055,6 +1236,13 @@ class _MitmLineParts {
             'text' || 'file' when view.data.isNotEmpty => view.data,
             final dataType => dataType,
           },
+          if (view.contentType.isNotEmpty)
+            '$_contentTypeHeader: ${view.contentType}',
+          if (view.headers case [final first, ...final rest])
+            [
+              '${first.name}: ${first.value}',
+              if (rest.isNotEmpty) '+${rest.length}',
+            ].join('  '),
           ...heads(view.requestHead, null),
         ],
         tag: view.status?.toString() ?? view.dataType,
@@ -1062,12 +1250,24 @@ class _MitmLineParts {
       final MitmScriptView view => _MitmLineParts(
         primary: view.name,
         code: false,
-        details: [?(view.pattern ?? view.cronexp ?? view.event)],
+        details: [
+          ?(view.pattern ?? view.cronexp ?? view.event),
+          if (view.path.isNotEmpty) view.path,
+          if ([
+                if (view.requiresBody) _requiresBodyKey,
+                if (view.timeoutMs case final ms?)
+                  '$_timeoutKey ${_seconds(ms)}',
+              ]
+              case final flags when flags.isNotEmpty)
+            flags.join('  '),
+        ],
         tag: switch (view.kind) {
           'httpRequest' => appLocalizations.request,
           'httpResponse' => appLocalizations.response,
           'cron' => appLocalizations.mitmScriptCron,
           'event' => appLocalizations.mitmScriptEvent,
+          'rule' => appLocalizations.rule,
+          'dns' => appLocalizations.mitmScriptDns,
           _ => appLocalizations.mitmScriptGeneric,
         },
       ),

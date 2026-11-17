@@ -2,6 +2,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 
 import 'core_api.dart';
+import 'dto.dart';
 import 'mapping.dart';
 
 /// [CoreApi] answers in wire types; these read them as the app's models.
@@ -64,8 +65,38 @@ extension ModelApi on CoreApi {
   Future<MitmCertificate> createMitmCertificate() async =>
       MitmCertificate.fromJson(await generateMitmCertificate());
 
-  Future<MitmCheck> checkMitmRules(MitmRules rules) async {
-    final result = await validateMitm(rules.toJson());
+  Future<MitmCheck> checkMitmRules(MitmRules rules) async =>
+      mitmCheckOf(await validateMitm(rules.toJson()));
+
+  Future<({MitmModuleRead read, MitmCheck check})> getMitmModuleRead(
+    String text, {
+    Map<String, String> arguments = const {},
+    Map<String, String> attachments = const {},
+    String language = '',
+  }) async {
+    final read = MitmModuleRead.fromJson(
+      await readMitmModule(
+        text,
+        arguments: arguments,
+        attachments: attachments,
+        language: language,
+      ),
+    );
+    return (
+      read: read,
+      check: mitmCheckOf({'issues': read.issues, 'views': read.views}),
+    );
+  }
+
+  Future<List<MitmModuleStatus>> getMitmModuleStatus() async {
+    final status = await mitmModuleStatus();
+    return [
+      for (final module in status['modules'] as List? ?? const [])
+        MitmModuleStatus.fromJson(Map<String, Object?>.from(module as Map)),
+    ];
+  }
+
+  static MitmCheck mitmCheckOf(Map<String, Object?> result) {
     Map<MitmList, Map<int, T>> byLine<T>(
       Object? lists,
       T? Function(Map item) valueOf,

@@ -557,6 +557,31 @@ final class RpcCoreApi implements CoreApi {
     _resultOrNull,
     params: {'id': id, 'response': response},
   );
+
+  @override
+  Future<JsonMap> readMitmModule(
+    String text, {
+    Map<String, String> arguments = const {},
+    Map<String, String> attachments = const {},
+    String language = '',
+  }) => _call(
+    'mitm.readModule',
+    (r) => _object(r),
+    params: {
+      'text': text,
+      'arguments': arguments,
+      'attachments': attachments,
+      'language': language,
+    },
+  );
+
+  @override
+  Future<JsonMap> mitmModuleStatus() =>
+      _call('mitm.moduleStatus', (r) => _object(r));
+
+  @override
+  Future<void> fetchMitmModule({String? name}) =>
+      _call('mitm.fetchModule', (_) {}, params: {'name': ?name});
 }
 
 Object? _resultOrNull(Object? result) => _object(result)['result'];

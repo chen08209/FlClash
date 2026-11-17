@@ -176,6 +176,12 @@ MitmMapLocalView _$MitmMapLocalViewFromJson(Map<String, dynamic> json) =>
       dataType: json['dataType'] as String,
       data: json['data'] as String? ?? '',
       status: (json['status'] as num?)?.toInt(),
+      headers:
+          (json['headers'] as List<dynamic>?)
+              ?.map((e) => MitmHeader.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      contentType: json['contentType'] as String? ?? '',
       $type: json['type'] as String?,
     );
 
@@ -186,6 +192,8 @@ Map<String, dynamic> _$MitmMapLocalViewToJson(MitmMapLocalView instance) =>
       'dataType': instance.dataType,
       'data': instance.data,
       'status': instance.status,
+      'headers': instance.headers,
+      'contentType': instance.contentType,
       'type': instance.$type,
     };
 
@@ -193,9 +201,12 @@ MitmScriptView _$MitmScriptViewFromJson(Map<String, dynamic> json) =>
     MitmScriptView(
       name: json['name'] as String,
       kind: json['kind'] as String,
+      path: json['path'] as String? ?? '',
       pattern: json['pattern'] as String?,
       cronexp: json['cronexp'] as String?,
       event: json['event'] as String?,
+      requiresBody: json['requiresBody'] as bool? ?? false,
+      timeoutMs: (json['timeoutMs'] as num?)?.toInt(),
       $type: json['type'] as String?,
     );
 
@@ -203,9 +214,12 @@ Map<String, dynamic> _$MitmScriptViewToJson(MitmScriptView instance) =>
     <String, dynamic>{
       'name': instance.name,
       'kind': instance.kind,
+      'path': instance.path,
       'pattern': instance.pattern,
       'cronexp': instance.cronexp,
       'event': instance.event,
+      'requiresBody': instance.requiresBody,
+      'timeoutMs': instance.timeoutMs,
       'type': instance.$type,
     };
 
@@ -247,6 +261,12 @@ Map<String, dynamic> _$MitmBodyReplacementToJson(
   'regex': instance.regex,
   'replacement': instance.replacement,
 };
+
+_MitmHeader _$MitmHeaderFromJson(Map<String, dynamic> json) =>
+    _MitmHeader(name: json['name'] as String, value: json['value'] as String);
+
+Map<String, dynamic> _$MitmHeaderToJson(_MitmHeader instance) =>
+    <String, dynamic>{'name': instance.name, 'value': instance.value};
 
 _MitmHostEntry _$MitmHostEntryFromJson(Map<String, dynamic> json) =>
     _MitmHostEntry(

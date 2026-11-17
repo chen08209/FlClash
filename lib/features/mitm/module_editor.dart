@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/mitm_module.dart';
 import 'package:fl_clash/common/mitm_network.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
@@ -64,7 +63,7 @@ Future<bool> answerMitmModule(WidgetRef ref, MitmModule module) async {
     mitmModuleContentProvider(module.id).future,
     (_, _) {},
   );
-  MitmModuleContent? read;
+  MitmModuleDetails? read;
   try {
     read = await content.read();
   } catch (_) {
@@ -72,15 +71,16 @@ Future<bool> answerMitmModule(WidgetRef ref, MitmModule module) async {
   } finally {
     content.close();
   }
-  final asksConsent = read?.asksConsent ?? true;
+  final asksConsent = read?.read.asksConsent ?? true;
   if (!module.copyWith(asksConsent: asksConsent).asksBeforeTurningOn) {
     await action.recordConsent(module.id, asksConsent: asksConsent);
     return true;
   }
   final changes = read?.network.changes ?? const <MitmNetworkChange>[];
-  final unverified = read?.skipVerifyHostname ?? const <String>[];
-  final sources = read?.clientSourceAddress ?? const <String>[];
-  final scripts = module.scripts > 0;
+  final unverified =
+      read?.hostsOf(MitmList.skipVerifyHostname) ?? const <String>[];
+  final sources = read?.clientSources ?? const <String>[];
+  final scripts = read?.read.declaredScripts.isNotEmpty ?? module.scripts > 0;
   final appLocalizations = currentAppLocalizations;
   String line(MitmNetworkChange change) {
     final title = mitmNetworkChangeTitle(appLocalizations, change);

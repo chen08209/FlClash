@@ -57,31 +57,6 @@ void main() {
     ]);
   });
 
-  test('DNS changes go over what the profile and the user set', () {
-    final dns = <String, dynamic>{
-      'nameserver': ['1.1.1.1'],
-      'fake-ip-filter': ['*.lan'],
-      'nameserver-policy': {'a.test': '8.8.8.8', 'b.test': '8.8.8.8'},
-    };
-    const MitmNetwork(
-      nameserver: MitmListEdit(replace: true, before: ['9.9.9.9']),
-      defaultNameserver: MitmListEdit(replace: true, before: ['223.5.5.5']),
-      fakeIpFilter: MitmListEdit(after: ['*.lan', 'time.test']),
-      nameserverPolicy: {
-        'b.test': ['system://'],
-      },
-    ).applyToDns(dns);
-    expect(dns, {
-      'nameserver': ['9.9.9.9'],
-      'default-nameserver': ['223.5.5.5'],
-      'fake-ip-filter': ['*.lan', 'time.test'],
-      'nameserver-policy': {
-        'a.test': '8.8.8.8',
-        'b.test': ['system://'],
-      },
-    });
-  });
-
   test('routes reach the TUN, and included ones only a list it names', () {
     const network = MitmNetwork(
       routeAddress: ['10.0.0.0/8'],
@@ -130,21 +105,5 @@ void main() {
       [for (final change in changes) change.replaces],
       [false, true, true, true],
     );
-  });
-
-  test('DNS servers and routes read as the Core takes them', () {
-    expect(mitmDnsServer('system'), 'system://');
-    expect(mitmDnsServer('223.5.5.5'), '223.5.5.5');
-    expect(mitmDnsServer('[2400:3200::1]:53'), '[2400:3200::1]:53');
-    expect(
-      mitmDnsServer('h3://dns.a.test/dns-query'),
-      'https://dns.a.test/dns-query#h3=true',
-    );
-    expect(mitmDnsServer('quic://dns.test'), 'quic://dns.test');
-    expect(mitmDnsServer('dns.test'), isNull);
-    expect(mitmRoute('10.0.0.0/8'), '10.0.0.0/8');
-    expect(mitmRoute('1.1.1.1'), '1.1.1.1/32');
-    expect(mitmRoute('2001:db8::1'), '2001:db8::1/128');
-    expect(mitmRoute('lan'), isNull);
   });
 }

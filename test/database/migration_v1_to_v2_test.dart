@@ -250,6 +250,15 @@ void _insertV10Profile(
   );
 }
 
+/// The shape v0.9.4-rs.1+3 shipped at schema version 24.
+void _downgradeToRs13(Database raw) {
+  raw.execute('ALTER TABLE mitm_modules DROP COLUMN accepted');
+  raw.execute('ALTER TABLE mitm_modules DROP COLUMN asks_consent');
+  raw.execute('ALTER TABLE rules DROP COLUMN custom_exit');
+  raw.execute('ALTER TABLE profiles DROP COLUMN exit_targets');
+  raw.execute('PRAGMA user_version = 24');
+}
+
 Set<String> _columnsOf(Database raw, String table) => {
   for (final row in raw.select('PRAGMA table_info($table)'))
     row['name'] as String,
@@ -1005,22 +1014,8 @@ void main() {
     );
   });
 
-  test('the v26 upgrade records what each module asks and whether the user '
-      'agreed to it', () async {
-    final modules = await Directory(
-      await appPath.mitmModulesDirPath,
-    ).create(recursive: true);
-    const plain = '[URL Rewrite]\n^https://a - reject\n';
-    const network = '[General]\ndns-server = 223.5.5.5\n';
-    for (final (id, text) in [
-      (1, plain),
-      (2, plain),
-      (3, network),
-      (4, plain),
-    ]) {
-      await File('${modules.path}/$id.txt').writeAsString(text);
-    }
-    await File('${modules.path}/6.txt').writeAsBytes([0xff, 0xfe, 0xfd]);
+  test('the v26 upgrade keeps an enabled module agreed to and asks before '
+      'turning another on', () async {
     raw.execute('ALTER TABLE mitm_modules DROP COLUMN accepted');
     raw.execute('ALTER TABLE mitm_modules DROP COLUMN asks_consent');
     raw.execute(
@@ -1040,12 +1035,80 @@ void main() {
           module.name: (module.asksConsent, module.accepted),
       },
       {
-        'Scripts': (false, true),
-        'Plain': (false, null),
+        'Scripts': (true, true),
+        'Plain': (true, true),
         'Network': (true, true),
-        'Off': (false, false),
-        'Missing': (true, null),
+        'Off': (true, false),
+        'Missing': (true, true),
         'Broken': (true, false),
+      },
+    );
+  });
+
+  test('a v0.9.4-rs.1+3 database opens with its profiles, rules and modules '
+      'in use', () async {
+    _downgradeToRs13(raw);
+    raw.execute(
+      'INSERT INTO profiles (id, type, label, url, extend_type, '
+      'auto_update_duration_millis, auto_update, selected_map, unfold_set) '
+      "VALUES (1, 'url', 'Sub', 'https://example.com/sub', 'standard', 0, 0, "
+      "?, '[]')",
+      ['{"Select":"HK"}'],
+    );
+    raw.execute(
+      'INSERT INTO rules (id, profile_id, rule_action, content, rule_target) '
+      "VALUES (10, 1, 'DOMAIN', 'a.example', 'DIRECT')",
+    );
+    raw.execute(
+      'INSERT INTO mitm_modules (id, name, url, enabled, scripts, '
+      'last_update_time) VALUES '
+      "(1, 'Scripts', 'https://example.com/a.sgmodule', 1, 2, 0), "
+      "(2, 'Plain', NULL, 1, 0, 0), (3, 'Off', NULL, 0, 1, 0)",
+    );
+
+    final database = await openAndMigrate();
+
+    expect(_userVersion(raw), 26);
+    final profile = (await database.profilesDao.query().get()).single;
+    expect(profile.label, 'Sub');
+    expect(profile.selectedMap, {'Select': 'HK'});
+    expect(await database.rulesDao.queryAddedRules(1).get(), hasLength(1));
+    final modules = await database.mitmModulesDao.query().get();
+    expect(
+      {
+        for (final module in modules)
+          module.name: (module.enabled, module.accepted, module.awaitsConsent),
+      },
+      {
+        'Scripts': (true, true, false),
+        'Plain': (true, true, false),
+        'Off': (false, false, false),
+      },
+    );
+    expect(modules.first.url, 'https://example.com/a.sgmodule');
+  });
+
+  test('a v0.9.4-rs.2 database opens as it was', () async {
+    raw.execute(
+      'INSERT INTO mitm_modules (id, name, enabled, scripts, asks_consent, '
+      'accepted, last_update_time) VALUES '
+      "(1, 'Agreed', 1, 2, 1, 1, 0), (2, 'Plain', 1, 0, 0, NULL, 0), "
+      "(3, 'Declined', 0, 1, 1, 0, 0), (4, 'Waiting', 0, 0, 1, NULL, 0)",
+    );
+    expect(_userVersion(raw), 26);
+
+    final database = await openAndMigrate();
+
+    expect(
+      {
+        for (final module in await database.mitmModulesDao.query().get())
+          module.name: (module.enabled, module.asksConsent, module.accepted),
+      },
+      {
+        'Agreed': (true, true, true),
+        'Plain': (true, false, null),
+        'Declined': (false, true, false),
+        'Waiting': (false, true, null),
       },
     );
   });

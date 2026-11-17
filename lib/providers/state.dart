@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/mitm_module_file.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -15,7 +15,6 @@ import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' show join;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'app.dart';

@@ -110,8 +110,8 @@ void main() {
       expect(workDirs(), isEmpty);
     });
 
-    test('brings back the attachments of local modules and cleans the '
-        'rest', () async {
+    test('brings back the attachments of local modules and leaves other '
+        'files to the Core', () async {
       final module = MitmModule(
         id: 9,
         name: 'Mine',
@@ -137,7 +137,7 @@ void main() {
 
       expect(restored, isTrue);
       expect(own.readAsStringSync(), '{}');
-      expect(stale.existsSync(), isFalse);
+      expect(stale.existsSync(), isTrue);
     });
 
     test('removes the work directory when delivery fails', () async {

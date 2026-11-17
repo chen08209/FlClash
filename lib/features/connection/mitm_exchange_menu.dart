@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/mitm_body.dart';
 import 'package:fl_clash/common/mitm_export.dart';
-import 'package:fl_clash/common/mitm_module.dart';
+import 'package:fl_clash/common/mitm_module_file.dart';
 import 'package:fl_clash/features/mitm/module_editor.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/core.dart';

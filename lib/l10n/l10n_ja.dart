@@ -3674,6 +3674,11 @@ class AppLocalizationsJa extends AppLocalizations {
       'URL-REGEX と USER-AGENT のルールは URL 書き換えとして動作し、HTTPS ではホスト名に含まれるホストだけが対象です。';
 
   @override
+  String mitmExtendedMatchingNote(Object count) {
+    return 'うち $count 件は拡張マッチング';
+  }
+
+  @override
   String mitmModuleSystemTip(Object system) {
     return '$system 向けに書かれています。一部の行はこのデバイスのアプリに一致しない場合があります。';
   }
@@ -3749,10 +3754,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get mitmSkipRule => 'この種類のルールには対応していません';
 
   @override
-  String get mitmSkipHttpRulePolicy =>
-      'URL-REGEX と USER-AGENT のルールは REJECT 系のポリシーのみ使えます';
-
-  @override
   String get mitmSkipFinalRule => 'モジュールのルールは先頭に入るため、最終ルールは以降のすべてのルールを隠してしまいます';
 
   @override
@@ -3774,19 +3775,66 @@ class AppLocalizationsJa extends AppLocalizations {
   String get mitmSkipReflect => 'FlClash はパケットを送信元へ折り返せません';
 
   @override
-  String get mitmSkipConditional => '条件付きの書き換えには対応していません';
-
-  @override
   String get mitmSkipSkipVerifyAll => 'すべてのホストで証明書の検証を無効にすることはできません';
 
   @override
   String get mitmSkipRelativeData => 'この行が指すファイルは添付されていません。URL を使うか、添付してください';
 
   @override
-  String get mitmSkipNotDownloaded => 'ファイルがまだダウンロードされていません';
+  String get mitmSkipUnreadable => 'この行を読み取れません';
 
   @override
-  String get mitmSkipUnreadable => 'この行を読み取れません';
+  String get mitmSkipNoSection => 'この行はどのセクションにも属していません';
+
+  @override
+  String get mitmSkipRequirementUnreadable => 'この行の動作条件を読み取れません';
+
+  @override
+  String get mitmSkipPolicy => 'このルールのポリシーが何も指していません';
+
+  @override
+  String get mitmSkipNestedRuleSet => 'ルールセットの中に別のルールセットは入れられません';
+
+  @override
+  String get mitmSkipCondition => 'この条件は判定できません';
+
+  @override
+  String get mitmSkipRuntimeValue => 'この行には処理中のリクエストにしかない値が必要です';
+
+  @override
+  String get mitmResources => 'リモートファイル';
+
+  @override
+  String get mitmResourceOk => 'ダウンロード済み';
+
+  @override
+  String get mitmResourceFetching => 'ダウンロード中';
+
+  @override
+  String get mitmResourceMissing => 'まだダウンロードされていません';
+
+  @override
+  String get mitmFetchDns => 'ダウンロード失敗：ホスト名を解決できませんでした';
+
+  @override
+  String get mitmFetchTls => 'ダウンロード失敗：安全な接続を確立できませんでした';
+
+  @override
+  String get mitmFetchTimeout => 'ダウンロード失敗：サーバーの応答が遅すぎます';
+
+  @override
+  String get mitmFetchConnection => 'ダウンロード失敗：接続が切れました';
+
+  @override
+  String get mitmFetchOther => 'ダウンロード失敗';
+
+  @override
+  String get mitmResourcesFetch => '再ダウンロード';
+
+  @override
+  String mitmFetchHttp(int status) {
+    return 'ダウンロード失敗：サーバーの応答 $status';
+  }
 
   @override
   String get mitmAddLocalFile => 'ローカルファイルを追加';
@@ -3823,6 +3871,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get mitmScriptGeneric => '汎用';
+
+  @override
+  String get mitmScriptDns => 'DNS';
 
   @override
   String get mitmExcluded => '除外';
@@ -3985,6 +4036,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String coreStoppedWithReason(Object reason) {
     return 'アプリとコアの接続が切れました：$reason';
   }
+
+  @override
+  String get coreUnavailableTip => 'コアが動いていません。起動してからもう一度お試しください。';
 
   @override
   String mixedPortReset(Object value, Object port) {

@@ -1932,14 +1932,14 @@ return sources(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String pattern,  String action,  String? replacement,  String? requestHead)?  urlRewrite,TResult Function( String phase,  String pattern,  String? requestHead,  String? responseHead,  String action,  String? name,  String? value,  String? regex,  String? replacement)?  headerRewrite,TResult Function( String phase,  String pattern,  String? requestHead,  String? responseHead,  List<MitmBodyReplacement> replacements,  String? jq)?  bodyRewrite,TResult Function( String pattern,  String? requestHead,  String dataType,  String data,  int? status)?  mapLocal,TResult Function( String name,  String kind,  String? pattern,  String? cronexp,  String? event)?  script,TResult Function( List<MitmHostEntry> entries)?  hosts,TResult Function( List<MitmSourceEntry> entries)?  sources,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String pattern,  String action,  String? replacement,  String? requestHead)?  urlRewrite,TResult Function( String phase,  String pattern,  String? requestHead,  String? responseHead,  String action,  String? name,  String? value,  String? regex,  String? replacement)?  headerRewrite,TResult Function( String phase,  String pattern,  String? requestHead,  String? responseHead,  List<MitmBodyReplacement> replacements,  String? jq)?  bodyRewrite,TResult Function( String pattern,  String? requestHead,  String dataType,  String data,  int? status,  List<MitmHeader> headers,  String contentType)?  mapLocal,TResult Function( String name,  String kind,  String path,  String? pattern,  String? cronexp,  String? event,  bool requiresBody,  int? timeoutMs)?  script,TResult Function( List<MitmHostEntry> entries)?  hosts,TResult Function( List<MitmSourceEntry> entries)?  sources,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case MitmUrlRewriteView() when urlRewrite != null:
 return urlRewrite(_that.pattern,_that.action,_that.replacement,_that.requestHead);case MitmHeaderRewriteView() when headerRewrite != null:
 return headerRewrite(_that.phase,_that.pattern,_that.requestHead,_that.responseHead,_that.action,_that.name,_that.value,_that.regex,_that.replacement);case MitmBodyRewriteView() when bodyRewrite != null:
 return bodyRewrite(_that.phase,_that.pattern,_that.requestHead,_that.responseHead,_that.replacements,_that.jq);case MitmMapLocalView() when mapLocal != null:
-return mapLocal(_that.pattern,_that.requestHead,_that.dataType,_that.data,_that.status);case MitmScriptView() when script != null:
-return script(_that.name,_that.kind,_that.pattern,_that.cronexp,_that.event);case MitmHostsView() when hosts != null:
+return mapLocal(_that.pattern,_that.requestHead,_that.dataType,_that.data,_that.status,_that.headers,_that.contentType);case MitmScriptView() when script != null:
+return script(_that.name,_that.kind,_that.path,_that.pattern,_that.cronexp,_that.event,_that.requiresBody,_that.timeoutMs);case MitmHostsView() when hosts != null:
 return hosts(_that.entries);case MitmSourcesView() when sources != null:
 return sources(_that.entries);case _:
   return orElse();
@@ -1959,14 +1959,14 @@ return sources(_that.entries);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String pattern,  String action,  String? replacement,  String? requestHead)  urlRewrite,required TResult Function( String phase,  String pattern,  String? requestHead,  String? responseHead,  String action,  String? name,  String? value,  String? regex,  String? replacement)  headerRewrite,required TResult Function( String phase,  String pattern,  String? requestHead,  String? responseHead,  List<MitmBodyReplacement> replacements,  String? jq)  bodyRewrite,required TResult Function( String pattern,  String? requestHead,  String dataType,  String data,  int? status)  mapLocal,required TResult Function( String name,  String kind,  String? pattern,  String? cronexp,  String? event)  script,required TResult Function( List<MitmHostEntry> entries)  hosts,required TResult Function( List<MitmSourceEntry> entries)  sources,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String pattern,  String action,  String? replacement,  String? requestHead)  urlRewrite,required TResult Function( String phase,  String pattern,  String? requestHead,  String? responseHead,  String action,  String? name,  String? value,  String? regex,  String? replacement)  headerRewrite,required TResult Function( String phase,  String pattern,  String? requestHead,  String? responseHead,  List<MitmBodyReplacement> replacements,  String? jq)  bodyRewrite,required TResult Function( String pattern,  String? requestHead,  String dataType,  String data,  int? status,  List<MitmHeader> headers,  String contentType)  mapLocal,required TResult Function( String name,  String kind,  String path,  String? pattern,  String? cronexp,  String? event,  bool requiresBody,  int? timeoutMs)  script,required TResult Function( List<MitmHostEntry> entries)  hosts,required TResult Function( List<MitmSourceEntry> entries)  sources,}) {final _that = this;
 switch (_that) {
 case MitmUrlRewriteView():
 return urlRewrite(_that.pattern,_that.action,_that.replacement,_that.requestHead);case MitmHeaderRewriteView():
 return headerRewrite(_that.phase,_that.pattern,_that.requestHead,_that.responseHead,_that.action,_that.name,_that.value,_that.regex,_that.replacement);case MitmBodyRewriteView():
 return bodyRewrite(_that.phase,_that.pattern,_that.requestHead,_that.responseHead,_that.replacements,_that.jq);case MitmMapLocalView():
-return mapLocal(_that.pattern,_that.requestHead,_that.dataType,_that.data,_that.status);case MitmScriptView():
-return script(_that.name,_that.kind,_that.pattern,_that.cronexp,_that.event);case MitmHostsView():
+return mapLocal(_that.pattern,_that.requestHead,_that.dataType,_that.data,_that.status,_that.headers,_that.contentType);case MitmScriptView():
+return script(_that.name,_that.kind,_that.path,_that.pattern,_that.cronexp,_that.event,_that.requiresBody,_that.timeoutMs);case MitmHostsView():
 return hosts(_that.entries);case MitmSourcesView():
 return sources(_that.entries);}
 }
@@ -1982,14 +1982,14 @@ return sources(_that.entries);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String pattern,  String action,  String? replacement,  String? requestHead)?  urlRewrite,TResult? Function( String phase,  String pattern,  String? requestHead,  String? responseHead,  String action,  String? name,  String? value,  String? regex,  String? replacement)?  headerRewrite,TResult? Function( String phase,  String pattern,  String? requestHead,  String? responseHead,  List<MitmBodyReplacement> replacements,  String? jq)?  bodyRewrite,TResult? Function( String pattern,  String? requestHead,  String dataType,  String data,  int? status)?  mapLocal,TResult? Function( String name,  String kind,  String? pattern,  String? cronexp,  String? event)?  script,TResult? Function( List<MitmHostEntry> entries)?  hosts,TResult? Function( List<MitmSourceEntry> entries)?  sources,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String pattern,  String action,  String? replacement,  String? requestHead)?  urlRewrite,TResult? Function( String phase,  String pattern,  String? requestHead,  String? responseHead,  String action,  String? name,  String? value,  String? regex,  String? replacement)?  headerRewrite,TResult? Function( String phase,  String pattern,  String? requestHead,  String? responseHead,  List<MitmBodyReplacement> replacements,  String? jq)?  bodyRewrite,TResult? Function( String pattern,  String? requestHead,  String dataType,  String data,  int? status,  List<MitmHeader> headers,  String contentType)?  mapLocal,TResult? Function( String name,  String kind,  String path,  String? pattern,  String? cronexp,  String? event,  bool requiresBody,  int? timeoutMs)?  script,TResult? Function( List<MitmHostEntry> entries)?  hosts,TResult? Function( List<MitmSourceEntry> entries)?  sources,}) {final _that = this;
 switch (_that) {
 case MitmUrlRewriteView() when urlRewrite != null:
 return urlRewrite(_that.pattern,_that.action,_that.replacement,_that.requestHead);case MitmHeaderRewriteView() when headerRewrite != null:
 return headerRewrite(_that.phase,_that.pattern,_that.requestHead,_that.responseHead,_that.action,_that.name,_that.value,_that.regex,_that.replacement);case MitmBodyRewriteView() when bodyRewrite != null:
 return bodyRewrite(_that.phase,_that.pattern,_that.requestHead,_that.responseHead,_that.replacements,_that.jq);case MitmMapLocalView() when mapLocal != null:
-return mapLocal(_that.pattern,_that.requestHead,_that.dataType,_that.data,_that.status);case MitmScriptView() when script != null:
-return script(_that.name,_that.kind,_that.pattern,_that.cronexp,_that.event);case MitmHostsView() when hosts != null:
+return mapLocal(_that.pattern,_that.requestHead,_that.dataType,_that.data,_that.status,_that.headers,_that.contentType);case MitmScriptView() when script != null:
+return script(_that.name,_that.kind,_that.path,_that.pattern,_that.cronexp,_that.event,_that.requiresBody,_that.timeoutMs);case MitmHostsView() when hosts != null:
 return hosts(_that.entries);case MitmSourcesView() when sources != null:
 return sources(_that.entries);case _:
   return null;
@@ -2266,7 +2266,7 @@ as String?,
 @JsonSerializable()
 
 class MitmMapLocalView implements MitmLineView {
-  const MitmMapLocalView({required this.pattern, this.requestHead, required this.dataType, this.data = '', this.status,  String? $type}): $type = $type ?? 'mapLocal';
+  const MitmMapLocalView({required this.pattern, this.requestHead, required this.dataType, this.data = '', this.status,  List<MitmHeader> headers = const [], this.contentType = '',  String? $type}): _headers = headers,$type = $type ?? 'mapLocal';
   factory MitmMapLocalView.fromJson(Map<String, dynamic> json) => _$MitmMapLocalViewFromJson(json);
 
  final  String pattern;
@@ -2274,6 +2274,14 @@ class MitmMapLocalView implements MitmLineView {
  final  String dataType;
 @JsonKey() final  String data;
  final  int? status;
+ final  List<MitmHeader> _headers;
+@JsonKey() List<MitmHeader> get headers {
+  if (_headers is EqualUnmodifiableListView) return _headers;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_headers);
+}
+
+@JsonKey() final  String contentType;
 
 @JsonKey(name: 'type')
 final String $type;
@@ -2292,18 +2300,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmMapLocalView&&(identical(other.pattern, pattern) || other.pattern == pattern)&&(identical(other.requestHead, requestHead) || other.requestHead == requestHead)&&(identical(other.dataType, dataType) || other.dataType == dataType)&&(identical(other.data, data) || other.data == data)&&(identical(other.status, status) || other.status == status));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmMapLocalView&&(identical(other.pattern, pattern) || other.pattern == pattern)&&(identical(other.requestHead, requestHead) || other.requestHead == requestHead)&&(identical(other.dataType, dataType) || other.dataType == dataType)&&(identical(other.data, data) || other.data == data)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.headers, _headers)&&(identical(other.contentType, contentType) || other.contentType == contentType));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,pattern,requestHead,dataType,data,status);
+    return Object.hash(runtimeType,pattern,requestHead,dataType,data,status,const DeepCollectionEquality().hash(_headers),contentType);
 }
 
 @override
 String toString() {
-    return 'MitmLineView.mapLocal(pattern: $pattern, requestHead: $requestHead, dataType: $dataType, data: $data, status: $status)';
+    return 'MitmLineView.mapLocal(pattern: $pattern, requestHead: $requestHead, dataType: $dataType, data: $data, status: $status, headers: $headers, contentType: $contentType)';
 }
 
 
@@ -2314,7 +2322,7 @@ abstract mixin class $MitmMapLocalViewCopyWith<$Res> implements $MitmLineViewCop
   factory $MitmMapLocalViewCopyWith(MitmMapLocalView value, $Res Function(MitmMapLocalView) _then) = _$MitmMapLocalViewCopyWithImpl;
 @useResult
 $Res call({
- String pattern, String? requestHead, String dataType, String data, int? status
+ String pattern, String? requestHead, String dataType, String data, int? status, List<MitmHeader> headers, String contentType
 });
 
 
@@ -2331,14 +2339,16 @@ class _$MitmMapLocalViewCopyWithImpl<$Res>
 
 /// Create a copy of MitmLineView
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? pattern = null,Object? requestHead = freezed,Object? dataType = null,Object? data = null,Object? status = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? pattern = null,Object? requestHead = freezed,Object? dataType = null,Object? data = null,Object? status = freezed,Object? headers = null,Object? contentType = null,}) {
   return _then(MitmMapLocalView(
 pattern: null == pattern ? _self.pattern : pattern // ignore: cast_nullable_to_non_nullable
 as String,requestHead: freezed == requestHead ? _self.requestHead : requestHead // ignore: cast_nullable_to_non_nullable
 as String?,dataType: null == dataType ? _self.dataType : dataType // ignore: cast_nullable_to_non_nullable
 as String,data: null == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
 as String,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,headers: null == headers ? _self._headers : headers // ignore: cast_nullable_to_non_nullable
+as List<MitmHeader>,contentType: null == contentType ? _self.contentType : contentType // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 
@@ -2349,14 +2359,17 @@ as int?,
 @JsonSerializable()
 
 class MitmScriptView implements MitmLineView {
-  const MitmScriptView({required this.name, required this.kind, this.pattern, this.cronexp, this.event,  String? $type}): $type = $type ?? 'script';
+  const MitmScriptView({required this.name, required this.kind, this.path = '', this.pattern, this.cronexp, this.event, this.requiresBody = false, this.timeoutMs,  String? $type}): $type = $type ?? 'script';
   factory MitmScriptView.fromJson(Map<String, dynamic> json) => _$MitmScriptViewFromJson(json);
 
  final  String name;
  final  String kind;
+@JsonKey() final  String path;
  final  String? pattern;
  final  String? cronexp;
  final  String? event;
+@JsonKey() final  bool requiresBody;
+ final  int? timeoutMs;
 
 @JsonKey(name: 'type')
 final String $type;
@@ -2375,18 +2388,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmScriptView&&(identical(other.name, name) || other.name == name)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.pattern, pattern) || other.pattern == pattern)&&(identical(other.cronexp, cronexp) || other.cronexp == cronexp)&&(identical(other.event, event) || other.event == event));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmScriptView&&(identical(other.name, name) || other.name == name)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.path, path) || other.path == path)&&(identical(other.pattern, pattern) || other.pattern == pattern)&&(identical(other.cronexp, cronexp) || other.cronexp == cronexp)&&(identical(other.event, event) || other.event == event)&&(identical(other.requiresBody, requiresBody) || other.requiresBody == requiresBody)&&(identical(other.timeoutMs, timeoutMs) || other.timeoutMs == timeoutMs));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,name,kind,pattern,cronexp,event);
+    return Object.hash(runtimeType,name,kind,path,pattern,cronexp,event,requiresBody,timeoutMs);
 }
 
 @override
 String toString() {
-    return 'MitmLineView.script(name: $name, kind: $kind, pattern: $pattern, cronexp: $cronexp, event: $event)';
+    return 'MitmLineView.script(name: $name, kind: $kind, path: $path, pattern: $pattern, cronexp: $cronexp, event: $event, requiresBody: $requiresBody, timeoutMs: $timeoutMs)';
 }
 
 
@@ -2397,7 +2410,7 @@ abstract mixin class $MitmScriptViewCopyWith<$Res> implements $MitmLineViewCopyW
   factory $MitmScriptViewCopyWith(MitmScriptView value, $Res Function(MitmScriptView) _then) = _$MitmScriptViewCopyWithImpl;
 @useResult
 $Res call({
- String name, String kind, String? pattern, String? cronexp, String? event
+ String name, String kind, String path, String? pattern, String? cronexp, String? event, bool requiresBody, int? timeoutMs
 });
 
 
@@ -2414,14 +2427,17 @@ class _$MitmScriptViewCopyWithImpl<$Res>
 
 /// Create a copy of MitmLineView
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? name = null,Object? kind = null,Object? pattern = freezed,Object? cronexp = freezed,Object? event = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? name = null,Object? kind = null,Object? path = null,Object? pattern = freezed,Object? cronexp = freezed,Object? event = freezed,Object? requiresBody = null,Object? timeoutMs = freezed,}) {
   return _then(MitmScriptView(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as String,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
 as String,pattern: freezed == pattern ? _self.pattern : pattern // ignore: cast_nullable_to_non_nullable
 as String?,cronexp: freezed == cronexp ? _self.cronexp : cronexp // ignore: cast_nullable_to_non_nullable
 as String?,event: freezed == event ? _self.event : event // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,requiresBody: null == requiresBody ? _self.requiresBody : requiresBody // ignore: cast_nullable_to_non_nullable
+as bool,timeoutMs: freezed == timeoutMs ? _self.timeoutMs : timeoutMs // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -2856,6 +2872,279 @@ class __$MitmBodyReplacementCopyWithImpl<$Res>
   return _then(_MitmBodyReplacement(
 regex: null == regex ? _self.regex : regex // ignore: cast_nullable_to_non_nullable
 as String,replacement: null == replacement ? _self.replacement : replacement // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$MitmHeader {
+
+ String get name; String get value;
+/// Create a copy of MitmHeader
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MitmHeaderCopyWith<MitmHeader> get copyWith => _$MitmHeaderCopyWithImpl<MitmHeader>(this as MitmHeader, _$identity);
+
+  /// Serializes this MitmHeader to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as MitmHeader;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmHeader&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.value, _this.value) || other.value == _this.value));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as MitmHeader;
+  return Object.hash(runtimeType,_this.name,_this.value);
+}
+
+@override
+String toString() {
+  final _this = this as MitmHeader;
+  return 'MitmHeader(name: ${_this.name}, value: ${_this.value})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MitmHeaderCopyWith<$Res>  {
+  factory $MitmHeaderCopyWith(MitmHeader value, $Res Function(MitmHeader) _then) = _$MitmHeaderCopyWithImpl;
+@useResult
+$Res call({
+ String name, String value
+});
+
+
+
+
+}
+/// @nodoc
+class _$MitmHeaderCopyWithImpl<$Res>
+    implements $MitmHeaderCopyWith<$Res> {
+  _$MitmHeaderCopyWithImpl(this._self, this._then);
+
+  final MitmHeader _self;
+  final $Res Function(MitmHeader) _then;
+
+/// Create a copy of MitmHeader
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? value = null,}) {
+  return _then(MitmHeader(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [MitmHeader].
+extension MitmHeaderPatterns on MitmHeader {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _MitmHeader value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _MitmHeader() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _MitmHeader value)  $default,){
+final _that = this;
+switch (_that) {
+case _MitmHeader():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _MitmHeader value)?  $default,){
+final _that = this;
+switch (_that) {
+case _MitmHeader() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String value)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _MitmHeader() when $default != null:
+return $default(_that.name,_that.value);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String value)  $default,) {final _that = this;
+switch (_that) {
+case _MitmHeader():
+return $default(_that.name,_that.value);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String value)?  $default,) {final _that = this;
+switch (_that) {
+case _MitmHeader() when $default != null:
+return $default(_that.name,_that.value);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _MitmHeader implements MitmHeader {
+  const _MitmHeader({required this.name, required this.value});
+  factory _MitmHeader.fromJson(Map<String, dynamic> json) => _$MitmHeaderFromJson(json);
+
+@override final  String name;
+@override final  String value;
+
+/// Create a copy of MitmHeader
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$MitmHeaderCopyWith<_MitmHeader> get copyWith => __$MitmHeaderCopyWithImpl<_MitmHeader>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$MitmHeaderToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmHeader&&(identical(other.name, name) || other.name == name)&&(identical(other.value, value) || other.value == value));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,name,value);
+}
+
+@override
+String toString() {
+    return 'MitmHeader(name: $name, value: $value)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$MitmHeaderCopyWith<$Res> implements $MitmHeaderCopyWith<$Res> {
+  factory _$MitmHeaderCopyWith(_MitmHeader value, $Res Function(_MitmHeader) _then) = __$MitmHeaderCopyWithImpl;
+@override @useResult
+$Res call({
+ String name, String value
+});
+
+
+
+
+}
+/// @nodoc
+class __$MitmHeaderCopyWithImpl<$Res>
+    implements _$MitmHeaderCopyWith<$Res> {
+  __$MitmHeaderCopyWithImpl(this._self, this._then);
+
+  final _MitmHeader _self;
+  final $Res Function(_MitmHeader) _then;
+
+/// Create a copy of MitmHeader
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? value = null,}) {
+  return _then(_MitmHeader(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

@@ -6,7 +6,7 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/migration.dart';
-import 'package:fl_clash/common/mitm_module.dart';
+import 'package:fl_clash/common/mitm_module_file.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
