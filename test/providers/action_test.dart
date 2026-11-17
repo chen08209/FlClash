@@ -1,9 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/app_localizations.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/desktop/model.dart';
-import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
@@ -17,9 +15,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod/riverpod.dart';
 
+import '../helpers/core_mocks.dart';
 import '../helpers/test_profiles.dart';
-
-class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 void main() {
   group('ProfilesAction', () {
@@ -213,7 +210,6 @@ void main() {
     test('GeoResource has correct updatingKey', () {
       expect(GeoResource.MMDB.updatingKey, 'geo_resource_MMDB');
       expect(GeoResource.ASN.updatingKey, 'geo_resource_ASN');
-      expect(GeoResource.GEOIP.updatingKey, 'geo_resource_GEOIP');
       expect(GeoResource.GEOSITE.updatingKey, 'geo_resource_GEOSITE');
     });
 
@@ -234,30 +230,26 @@ void main() {
     });
 
     test('forwards a manual resource update to Core', () async {
-      final core = _MockCoreHandlerInterface();
-      when(() => core.updateGeoData('MMDB')).thenAnswer((_) async {});
+      final mocks = coreMocks();
+      when(() => mocks.api.updateGeo('MMDB')).thenAnswer((_) async {});
       final container = ProviderContainer(
-        overrides: [
-          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
-        ],
+        overrides: [coreHandlerProvider.overrideWithValue(mocks.controller)],
       );
       addTearDown(container.dispose);
       final action = container.read(geoResourceActionProvider.notifier);
 
       await action.updateGeoResource(GeoResource.MMDB);
 
-      verify(() => core.updateGeoData('MMDB')).called(1);
+      verify(() => mocks.api.updateGeo('MMDB')).called(1);
     });
 
     test('propagates a failed manual Core request', () async {
-      final core = _MockCoreHandlerInterface();
+      final mocks = coreMocks();
       when(
-        () => core.updateGeoData('MMDB'),
+        () => mocks.api.updateGeo('MMDB'),
       ).thenThrow(StateError('disconnected'));
       final container = ProviderContainer(
-        overrides: [
-          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
-        ],
+        overrides: [coreHandlerProvider.overrideWithValue(mocks.controller)],
       );
       addTearDown(container.dispose);
       final action = container.read(geoResourceActionProvider.notifier);
@@ -266,7 +258,7 @@ void main() {
         action.updateGeoResource(GeoResource.MMDB),
         throwsStateError,
       );
-      verify(() => core.updateGeoData('MMDB')).called(1);
+      verify(() => mocks.api.updateGeo('MMDB')).called(1);
     });
 
     test('updates valid resource URLs and rejects malformed URLs', () {
@@ -290,24 +282,26 @@ void main() {
 
   group('CoreAction', () {
     test('reports a network change to the Core only while connected', () async {
-      final core = _MockCoreHandlerInterface();
-      when(core.reportNetworkChange).thenAnswer((_) async => true);
+      final mocks = coreMocks();
+      when(
+        () => mocks.api.updateNetwork(interfaceChanged: true),
+      ).thenAnswer((_) async {});
       final container = ProviderContainer(
-        overrides: [
-          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
-        ],
+        overrides: [coreHandlerProvider.overrideWithValue(mocks.controller)],
       );
       addTearDown(container.dispose);
       final action = container.read(coreActionProvider.notifier);
 
       await action.reportNetworkChange();
-      verifyNever(core.reportNetworkChange);
+      verifyNever(() => mocks.api.updateNetwork(interfaceChanged: true));
 
       container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
       await action.reportNetworkChange();
-      verify(core.reportNetworkChange).called(1);
+      verify(() => mocks.api.updateNetwork(interfaceChanged: true)).called(1);
 
-      when(core.reportNetworkChange).thenThrow(StateError('disconnected'));
+      when(
+        () => mocks.api.updateNetwork(interfaceChanged: true),
+      ).thenThrow(StateError('disconnected'));
       await expectLater(action.reportNetworkChange(), completes);
     });
 
@@ -653,13 +647,14 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 1100));
 
         expect(container.read(runTimeProvider), greaterThan(initialRunTime));
-        expect(commonAction.updateTrafficCount, greaterThanOrEqualTo(2));
+        expect(commonAction.trafficFeeds.last, isTrue);
 
         startCompleter.complete(true);
         await startFuture;
 
         expect(action.transitions, [true]);
         await action.setRunning(false);
+        expect(commonAction.trafficFeeds.last, isFalse);
       });
 
       test('serializes listener changes while latest start owns UI', () async {
@@ -1191,10 +1186,10 @@ class _InitializingSetupAction extends _RaceSetupAction {
 }
 
 class _RaceCommonAction extends CommonAction {
-  int updateTrafficCount = 0;
+  final trafficFeeds = <bool>[];
 
   @override
-  Future<void> updateTraffic() async {
-    updateTrafficCount++;
+  void setTrafficFeed(bool wanted) {
+    trafficFeeds.add(wanted);
   }
 }

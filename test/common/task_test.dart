@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -42,26 +43,31 @@ void main() {
   });
 
   test('toGroupsTask converts, selects, and sorts core proxy data', () async {
-    final proxies = <String, dynamic>{
-      'Selector': {
-        'name': 'Selector',
-        'type': 'Selector',
-        'now': 'Beta',
-        'all': ['Zulu', 'Beta', 'missing'],
-      },
-      'Direct': {'name': 'Direct', 'type': 'Direct'},
-      'Zulu': {'name': 'Zulu', 'type': 'Direct'},
-      'Beta': {'name': 'Beta', 'type': 'Direct'},
-    };
     final groups = await toGroupsTask(
-      ComputeGroupsState(
-        proxiesData: ProxiesData(
-          all: const ['Selector', 'Direct'],
-          proxies: proxies,
+      const ComputeGroupsState(
+        proxyGroups: ProxyGroupsDto(
+          order: ['Selector'],
+          groups: [
+            GroupInfo(
+              name: 'Selector',
+              type: 'Selector',
+              now: 'Beta',
+              all: ['Zulu', 'Beta', 'missing'],
+              testUrl: '',
+              hidden: false,
+              icon: '',
+              emptyFallback: '',
+            ),
+          ],
+          nodes: [
+            NodeInfo(name: 'Direct', type: 'Direct'),
+            NodeInfo(name: 'Zulu', type: 'Direct'),
+            NodeInfo(name: 'Beta', type: 'Direct'),
+          ],
         ),
         sortType: ProxiesSortType.name,
-        delayMap: const {},
-        selectedMap: const {'Selector': 'Beta'},
+        delayMap: {},
+        selectedMap: {'Selector': 'Beta'},
         defaultTestUrl: 'https://example.com/generate_204',
       ),
     );
@@ -108,17 +114,24 @@ void main() {
     },
   );
 
-  test('toGroupsTask leaves the source proxy map untouched', () async {
-    final proxies = <String, dynamic>{
-      'Selector': {
-        'name': 'Selector',
-        'type': 'Selector',
-        'all': ['Beta'],
-      },
-      'Beta': {'name': 'Beta', 'type': 'Direct'},
-    };
+  test('toGroupsTask leaves the source proxy groups untouched', () async {
+    final members = ['Beta'];
     final state = ComputeGroupsState(
-      proxiesData: ProxiesData(all: const ['Selector'], proxies: proxies),
+      proxyGroups: ProxyGroupsDto(
+        order: const ['Selector'],
+        groups: [
+          GroupInfo(
+            name: 'Selector',
+            type: 'Selector',
+            all: members,
+            testUrl: '',
+            hidden: false,
+            icon: '',
+            emptyFallback: '',
+          ),
+        ],
+        nodes: const [NodeInfo(name: 'Beta', type: 'Direct')],
+      ),
       sortType: ProxiesSortType.none,
       delayMap: const {},
       selectedMap: const {},
@@ -128,13 +141,14 @@ void main() {
     await buildGroups(state);
     await buildGroups(state);
 
-    expect(proxies['Selector']['all'], ['Beta']);
+    expect(members, ['Beta']);
+    expect(state.proxyGroups.groups.single.all, ['Beta']);
   });
 
   test('toGroupsTask returns empty data without proxies', () async {
     final groups = await toGroupsTask(
       const ComputeGroupsState(
-        proxiesData: ProxiesData(proxies: {}, all: []),
+        proxyGroups: ProxyGroupsDto(),
         sortType: ProxiesSortType.none,
         delayMap: {},
         selectedMap: {},
@@ -639,6 +653,34 @@ DOMAIN,c.example,REJECT
     );
   });
 
+  test(
+    'makeRealProfileTask hands back the built config only on request',
+    () async {
+      Future<RealProfile> build({required bool keepOverlay}) =>
+          makeRealProfileTask(
+            MakeRealProfileState(
+              profilesPath: '/profiles',
+              profileId: 13,
+              rawConfig: {
+                'rules': ['MATCH,DIRECT'],
+              },
+              realPatchConfig: const PatchClashConfig(),
+              appendSystemDns: false,
+              proxyGroups: const [],
+              rules: const [],
+              addedRules: const [],
+              defaultUA: 'FlClash-Test',
+              keepOverlay: keepOverlay,
+            ),
+          );
+
+      final kept = await build(keepOverlay: true);
+      expect(kept.overlay?['rules'], ['MATCH,DIRECT']);
+      expect(kept.overlay?['global-ua'], 'FlClash-Test');
+      expect((await build(keepOverlay: false)).overlay, isNull);
+    },
+  );
+
   test('makeRealProfileTask keeps safe mode off the host', () async {
     Future<YamlMap> build({required bool safeMode}) async {
       final result = await makeRealProfileTask(
@@ -707,42 +749,28 @@ DOMAIN,c.example,REJECT
   );
 
   test(
-    'makeRealProfileTask writes the app secret over the profile one',
+    'makeRealProfileTask leaves an open controller to config.patch',
     () async {
-      Future<YamlMap> build(PatchClashConfig realPatchConfig) async {
-        final result = await makeRealProfileTask(
-          MakeRealProfileState(
-            profilesPath: '/profiles',
-            profileId: 14,
-            rawConfig: {'secret': 'from-the-profile'},
-            realPatchConfig: realPatchConfig,
-            appendSystemDns: false,
-            proxyGroups: const [],
-            rules: const [],
-            addedRules: const [],
-            defaultUA: 'FlClash-Test',
+      final result = await makeRealProfileTask(
+        const MakeRealProfileState(
+          profilesPath: '/profiles',
+          profileId: 14,
+          rawConfig: {'secret': 'from-the-profile'},
+          realPatchConfig: PatchClashConfig(
+            externalController: ExternalControllerStatus.open,
+            secret: 'from-the-app',
           ),
-        );
-        return loadYaml(result.yaml) as YamlMap;
-      }
-
-      final open = await build(
-        const PatchClashConfig(
-          externalController: ExternalControllerStatus.open,
-          secret: 'from-the-app',
+          appendSystemDns: false,
+          proxyGroups: [],
+          rules: [],
+          addedRules: [],
+          defaultUA: 'FlClash-Test',
         ),
       );
-      expect(open['external-controller'], '127.0.0.1:9090');
-      expect(open['secret'], 'from-the-app');
+      final config = loadYaml(result.yaml) as YamlMap;
 
-      final closed = await build(const PatchClashConfig());
-      expect(closed['secret'], '');
-      final missingSecret = await build(
-        const PatchClashConfig(
-          externalController: ExternalControllerStatus.open,
-        ),
-      );
-      expect(missingSecret['external-controller'], '');
+      expect(config['external-controller'], '');
+      expect(config['secret'], '');
     },
   );
 
@@ -817,7 +845,7 @@ DOMAIN,c.example,REJECT
           expect(config['dns']['listen'], '0.0.0.0:53');
           expect(config['ntp']['write-to-system'], true);
         }
-        expect(config['external-controller'], safeMode ? '' : '127.0.0.1:9090');
+        expect(config['external-controller'], '');
       }
     },
   );
@@ -907,14 +935,37 @@ DOMAIN,c.example,REJECT
     });
   });
 
+  group('transparent ports', () {
+    test('follow what each platform can open', () {
+      expect(transparentPortsOf('linux'), (redir: true, tproxy: true));
+      expect(transparentPortsOf('android'), (redir: true, tproxy: true));
+      expect(transparentPortsOf('macos'), (redir: true, tproxy: false));
+      expect(transparentPortsOf('windows'), (redir: false, tproxy: false));
+    });
+
+    test('a port the platform cannot open is sent as 0 and kept', () {
+      const config = PatchClashConfig(redirPort: 7892, tproxyPort: 7894);
+      Map<String, dynamic> inbound(TransparentPorts ports) =>
+          inboundConfigOf(config, authentication: [], transparent: ports);
+
+      final all = inbound((redir: true, tproxy: true));
+      expect([all['redir-port'], all['tproxy-port']], [7892, 7894]);
+      final none = inbound((redir: false, tproxy: false));
+      expect([none['redir-port'], none['tproxy-port']], [0, 0]);
+      expect([config.redirPort, config.tproxyPort], [7892, 7894]);
+    });
+  });
+
   group('makeRealProfileTask network settings', () {
     Future<YamlMap> runWith(
       PatchClashConfig realPatchConfig,
       Map<String, dynamic> rawConfig, {
       List<MitmModuleSource> mitmModules = const [],
+      String? os,
     }) async {
       final result = await makeRealProfileTask(
         MakeRealProfileState(
+          os: os,
           profilesPath: '/profiles',
           profileId: 14,
           rawConfig: await decodeJSONTask<Map<String, dynamic>>(
@@ -932,10 +983,9 @@ DOMAIN,c.example,REJECT
       return loadYaml(result.yaml) as YamlMap;
     }
 
-    test('tun takes its stack from the settings and the rest from the '
-        'profile', () async {
+    test('tun leaves the stack and the rest to the profile', () async {
       final config = await runWith(
-        const PatchClashConfig(tun: Tun(stack: TunStack.gvisor, mtu: 1400)),
+        const PatchClashConfig(tun: Tun(mtu: 1400)),
         {
           'tun': {
             'stack': 'system',
@@ -947,7 +997,7 @@ DOMAIN,c.example,REJECT
       );
       final tun = config['tun'] as YamlMap;
 
-      expect(tun['stack'], 'gvisor');
+      expect(tun['stack'], 'system');
       expect(tun['auto-route'], true);
       expect(tun['mtu'], 1500);
       expect(tun['strict-route'], true);
@@ -981,6 +1031,29 @@ DOMAIN,c.example,REJECT
 
       expect(config['routing-mark'], 6666);
       expect(config['disable-keep-alive'], true);
+    });
+
+    group('a desktop backup with a bound interface and a routing mark', () {
+      const desktop = PatchClashConfig(
+        interfaceNameMode: InterfaceNameMode.custom,
+        interfaceName: 'en0',
+        routingMark: 6666,
+      );
+      const profile = {'interface-name': 'wlan0', 'routing-mark': 1};
+
+      test('binds and marks nothing on Android', () async {
+        final config = await runWith(desktop, profile, os: 'android');
+
+        expect(config['interface-name'], '');
+        expect(config['routing-mark'], 0);
+      });
+
+      test('keeps both on Linux', () async {
+        final config = await runWith(desktop, profile, os: 'linux');
+
+        expect(config['interface-name'], 'en0');
+        expect(config['routing-mark'], 6666);
+      });
     });
 
     test('the mitm section is the app setting, never the profile', () async {
@@ -1046,6 +1119,80 @@ DOMAIN-SUFFIX,ads.example.com,REJECT
       expect(config['rules'], [
         'DOMAIN-SUFFIX,ads.example.com,REJECT',
         'MATCH,DIRECT',
+      ]);
+    });
+
+    test('module network settings go over the profile and the user', () async {
+      const module = MitmModuleSource(
+        content: '''
+[General]
+dns-server = 9.9.9.9
+always-real-ip = %APPEND% *.game.test
+tun-excluded-routes = %APPEND% 10.0.0.0/8
+tun-included-routes = 172.16.0.0/12
+
+[Host]
+ad.test = 0.0.0.0
+own.test = 0.0.0.0
+''',
+      );
+      Future<YamlMap> run(ProfileOverrides overrides) async {
+        final result = await makeRealProfileTask(
+          MakeRealProfileState(
+            profilesPath: '/profiles',
+            profileId: 14,
+            rawConfig: await decodeJSONTask<Map<String, dynamic>>(
+              jsonEncode({
+                'dns': {
+                  'enable': true,
+                  'nameserver': ['1.1.1.1'],
+                  'fake-ip-filter': ['*.lan'],
+                },
+                'tun': {
+                  'route-exclude-address': ['192.168.0.0/16'],
+                },
+                'rules': ['MATCH,DIRECT'],
+              }),
+            ),
+            realPatchConfig: const PatchClashConfig(
+              mitm: Mitm(enable: true),
+              hosts: {'own.test': '127.0.0.1'},
+            ),
+            appendSystemDns: false,
+            proxyGroups: const [],
+            rules: const [],
+            addedRules: const [],
+            defaultUA: 'FlClash-Test',
+            overrides: overrides,
+            mitmModules: const [module],
+          ),
+        );
+        return loadYaml(result.yaml) as YamlMap;
+      }
+
+      final config = await run(const ProfileOverrides());
+      expect(config['dns']['nameserver'], ['9.9.9.9']);
+      expect(config['dns']['fake-ip-filter'], ['*.lan', '*.game.test']);
+      expect(config['hosts']['ad.test'], ['0.0.0.0']);
+      expect(config['hosts']['own.test'], ['0.0.0.0']);
+      expect(config['tun']['route-exclude-address'], [
+        '192.168.0.0/16',
+        '10.0.0.0/8',
+      ]);
+      expect(config['tun']['route-address'], isNull);
+
+      final overridden = await run(
+        const ProfileOverrides(
+          dns: Dns(nameserver: ['8.8.8.8']),
+          dnsOverrideKeys: {DnsOverrideKey.nameserver},
+          tun: ProfileTun(routeExcludeAddress: ['100.64.0.0/10']),
+          tunOverrideKeys: {TunOverrideKey.routeExcludeAddress},
+        ),
+      );
+      expect(overridden['dns']['nameserver'], ['9.9.9.9']);
+      expect(overridden['tun']['route-exclude-address'], [
+        '100.64.0.0/10',
+        '10.0.0.0/8',
       ]);
     });
 

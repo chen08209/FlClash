@@ -33,7 +33,7 @@ final class MitmCaProvider
   MitmCa create() => MitmCa();
 }
 
-String _$mitmCaHash() => r'a3c0701e935a4b1949cca7baa07b0860cc814ba6';
+String _$mitmCaHash() => r'fbb31e73365ab11543816ccd768fd109f1243e1d';
 
 abstract class _$MitmCa extends $AsyncNotifier<MitmCertificate?> {
   FutureOr<MitmCertificate?> build();
@@ -127,7 +127,7 @@ final class MitmTrustStateProvider
   MitmTrustState create() => MitmTrustState();
 }
 
-String _$mitmTrustStateHash() => r'351876d39d532eb12a986d7b9dfb8052eb65f1d1';
+String _$mitmTrustStateHash() => r'9142caad5821ea1cbc3d5b32ebda377d43521538';
 
 /// Whether this device trusts the CA. A check records the CA it found
 /// trusted, which is the one the Core decrypts HTTPS with.
@@ -171,7 +171,7 @@ final class MitmExchangesProvider
   /// requests is pending.
   MitmExchangesProvider._({
     required MitmExchangesFamily super.from,
-    required String super.argument,
+    required int super.argument,
   }) : super(
          retry: null,
          name: r'mitmExchangesProvider',
@@ -198,7 +198,7 @@ final class MitmExchangesProvider
 
   @override
   FutureOr<MitmExchangeList> create(Ref ref) {
-    final argument = this.argument as String;
+    final argument = this.argument as int;
     return mitmExchanges(ref, argument);
   }
 
@@ -213,13 +213,13 @@ final class MitmExchangesProvider
   }
 }
 
-String _$mitmExchangesHash() => r'66e3981eecc1c4b45126a90d061ffe75e3c01585';
+String _$mitmExchangesHash() => r'29d7ebbce5c3b52f39882628005b995c5e9bd737';
 
 /// Fetched again while shown, until the connection has closed and none of its
 /// requests is pending.
 
 final class MitmExchangesFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<MitmExchangeList>, String> {
+    with $FunctionalFamilyOverride<FutureOr<MitmExchangeList>, int> {
   MitmExchangesFamily._()
     : super(
         retry: null,
@@ -232,7 +232,7 @@ final class MitmExchangesFamily extends $Family
   /// Fetched again while shown, until the connection has closed and none of its
   /// requests is pending.
 
-  MitmExchangesProvider call(String connectionId) =>
+  MitmExchangesProvider call(int connectionId) =>
       MitmExchangesProvider._(argument: connectionId, from: this);
 
   @override
@@ -294,7 +294,7 @@ final class MitmExchangeProvider
   }
 }
 
-String _$mitmExchangeHash() => r'f7b026828659fb4e9ccdc7ccc8fc3e02f45f7042';
+String _$mitmExchangeHash() => r'4db9f9893ab5587c0c3400e28200349900a5db90';
 
 final class MitmExchangeFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<MitmExchange?>, int> {
@@ -375,7 +375,7 @@ final class MitmBodyProvider
   }
 }
 
-String _$mitmBodyHash() => r'bf38c11bea05417c720bfb6e04ef8fc39a9275cc';
+String _$mitmBodyHash() => r'e64fd6edd90479902b345749f20febe1d47cd54a';
 
 final class MitmBodyFamily extends $Family
     with
@@ -605,7 +605,7 @@ final class EnabledMitmModulesProvider
 }
 
 String _$enabledMitmModulesHash() =>
-    r'5b135136f70420c16aba461ebd1dc05e8cc7ad9f';
+    r'd2160368d73532d43c570eab4cc7f194e979b9b3';
 
 @ProviderFor(mitmModuleExits)
 final mitmModuleExitsProvider = MitmModuleExitsProvider._();

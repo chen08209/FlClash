@@ -426,6 +426,22 @@ void main() {
     });
   });
 
+  test('an rs build is not offered the latest release, the Go build', () async {
+    final request = Request()
+      ..dio.httpClientAdapter = _HostAdapter({
+        'api.github.com': () => ResponseBody.fromString(
+          '{"tag_name":"v99.0.0"}',
+          200,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        ),
+      });
+
+    expect(rsReleasesOnGitHub, isFalse);
+    expect(await request.checkForUpdate(UpdateChannel.stable), isNull);
+  });
+
   test('releaseTagsOfFeed reads every entry and decodes the tag', () {
     expect(releaseTagsOfFeed(_feed).toList(), [
       'v0.9.3',

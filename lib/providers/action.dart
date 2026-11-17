@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:clock/clock.dart' show clock;
 import 'package:dio/dio.dart' show CancelToken, DioException;
 import 'package:fl_clash/common/app_data.dart';
 import 'package:fl_clash/common/boot_guard.dart';

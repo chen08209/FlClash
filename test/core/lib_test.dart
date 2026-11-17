@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:isolate';
 
 import 'package:fl_clash/common/app_localizations.dart';
+import 'package:fl_clash/core/api/channels/ffi_channel.dart';
+import 'package:fl_clash/core/api/channels/method_channel_channel.dart';
+import 'package:fl_clash/core/api/errors.dart';
+import 'package:fl_clash/core/api/frame_channel.dart';
 import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/core/lib.dart';
-import 'package:fl_clash/core/method.dart';
-import 'package:fl_clash/core/spill.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -13,13 +16,42 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 
+import '../helpers/core_mocks.dart';
 import '../helpers/test_profiles.dart';
 
+class _RefusingLibrary implements ConcordLibrary {
+  @override
+  bool initialize() => true;
+
+  @override
+  int open(SendPort port) => 0;
+
+  @override
+  bool send(int session, Uint8List frame) => false;
+
+  @override
+  void close(int session) {}
+}
+
 class _FakeService implements Service {
-  _FakeService();
+  @override
+  final SessionFrameChannel frames;
+
+  _FakeService({SessionFrameChannel? frames})
+    : frames =
+          frames ?? MethodChannelFrameChannel(const MethodChannel('test/core'));
 
   final calls = <String>[];
+
+  /// Whether the frames were connected when each call was made.
+  final framesLive = <String, bool>{};
+
+  void _record(String call) {
+    calls.add(call);
+    framesLive[call] = frames.generation != null;
+  }
 
   String initError = '';
   String syncError = '';
@@ -27,22 +59,19 @@ class _FakeService implements Service {
   bool shutdownResult = true;
   bool startResult = true;
   bool stopResult = true;
-  CoreMethodResponse? Function(CoreMethodCall call)? onInvokeMethod;
-
-  final invokedCalls = <CoreMethodCall>[];
 
   Completer<void>? initGate;
 
   @override
   Future<String> init() async {
-    calls.add('init');
+    _record('init');
     await initGate?.future;
     return initError;
   }
 
   @override
   Future<String> syncState(SharedState state) async {
-    calls.add('syncState');
+    _record('syncState');
     if (syncException case final exception?) {
       throw exception;
     }
@@ -51,34 +80,20 @@ class _FakeService implements Service {
 
   @override
   Future<bool> shutdown() async {
-    calls.add('shutdown');
+    _record('shutdown');
     return shutdownResult;
   }
 
   @override
   Future<bool> start() async {
-    calls.add('start');
+    _record('start');
     return startResult;
   }
 
   @override
   Future<bool> stop() async {
-    calls.add('stop');
+    _record('stop');
     return stopResult;
-  }
-
-  @override
-  Future<CoreMethodResponse> invokeMethod(
-    CoreMethodCall call, {
-    CoreResultModel? model,
-  }) async {
-    calls.add('invokeMethod:${call.method.wireName}');
-    invokedCalls.add(call);
-    final response = onInvokeMethod?.call(call);
-    if (response == null) {
-      throw const CoreMethodException(code: 'no_response', message: '');
-    }
-    return response;
   }
 
   @override
@@ -93,6 +108,7 @@ void main() {
 
   late ProviderContainer container;
   late _FakeService service;
+  late MockCoreApi api;
   late CoreLib lib;
 
   setUpAll(() async {
@@ -105,21 +121,57 @@ void main() {
     );
     globalState.container = container;
     service = _FakeService();
-    lib = CoreLib.scoped(service);
+    api = MockCoreApi();
+    lib = CoreLib.scoped(service, api: api);
   });
 
-  tearDown(() {
+  tearDown(() async {
     container.dispose();
     CoreLib.resetInstance();
+    await service.frames.close();
+  });
+
+  test('exposes the API it was given', () {
+    expect(lib.api, same(api));
+  });
+
+  group('crashes', () {
+    test('reports a session that ends while connected', () async {
+      await lib.start();
+      final reasons = <String>[];
+      final subscription = lib.crashes.listen(reasons.add);
+
+      service.frames.disconnect(StateError('gone'));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(reasons, [
+        'The app lost its connection to the core: Bad state: gone',
+      ]);
+      await subscription.cancel();
+    });
+
+    test('stays quiet when the lib itself stops the session', () async {
+      await lib.start();
+      final reasons = <String>[];
+      final subscription = lib.crashes.listen(reasons.add);
+
+      await lib.stop();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(reasons, isEmpty);
+      await subscription.cancel();
+    });
   });
 
   group('start', () {
-    test('initializes, connects and syncs shared state', () async {
+    test('initializes, connects the frames and syncs shared state', () async {
       final result = await lib.start();
 
       expect(result.outcome, CoreLifecycleOutcome.applied);
       expect(result.revision, 1);
       expect(service.calls, ['init', 'syncState']);
+      expect(service.framesLive, {'init': false, 'syncState': true});
+      expect(service.frames.generation, isNotNull);
     });
 
     test('coalesces a second start while already connected', () async {
@@ -133,7 +185,7 @@ void main() {
       expect(service.calls, isEmpty);
     });
 
-    test('an initialization error leaves the handler unconnected', () async {
+    test('an initialization error leaves the lib unconnected', () async {
       service.initError = 'init boom';
 
       await expectLater(
@@ -143,13 +195,15 @@ void main() {
         ),
       );
       expect(service.calls, ['init']);
+      expect(service.frames.generation, isNull);
 
       service.initError = '';
       final retry = await lib.start();
       expect(retry.outcome, CoreLifecycleOutcome.applied);
     });
 
-    test('a sync error shuts the service down and reopens the gate', () async {
+    test('a sync error disconnects, shuts the service down and '
+        'reopens the gate', () async {
       service.syncError = 'sync boom';
 
       await expectLater(
@@ -159,6 +213,8 @@ void main() {
         ),
       );
       expect(service.calls, ['init', 'syncState', 'shutdown']);
+      expect(service.framesLive['shutdown'], isFalse);
+      expect(service.frames.generation, isNull);
 
       service.syncError = '';
       service.calls.clear();
@@ -173,6 +229,7 @@ void main() {
 
       await expectLater(lib.start(), throwsA(isA<PlatformException>()));
       expect(service.calls, ['init', 'syncState', 'shutdown']);
+      expect(service.frames.generation, isNull);
 
       service.syncException = null;
       service.calls.clear();
@@ -180,6 +237,52 @@ void main() {
 
       expect(retry.outcome, CoreLifecycleOutcome.applied);
       expect(service.calls, ['init', 'syncState']);
+    });
+
+    test('the VPN options are read once the Core can answer what they ask '
+        'of it', () async {
+      container.dispose();
+      container = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(TestProfiles.new),
+          vpnOptionsProvider.overrideWith((ref) async {
+            if (service.frames.generation == null) {
+              throw StateError(
+                'the options were read before the Core connected',
+              );
+            }
+            return const VpnOptions(
+              enable: true,
+              port: 7890,
+              ipv6: false,
+              dnsHijacking: false,
+              accessControlProps: AccessControlProps(),
+              allowBypass: false,
+              systemProxy: false,
+              bypassDomain: [],
+            );
+          }),
+        ],
+      );
+      globalState.container = container;
+
+      final started = await lib.start();
+
+      expect(started.outcome, CoreLifecycleOutcome.applied);
+      expect(service.calls, ['init', 'syncState']);
+    });
+
+    test('a Core that refuses the session shuts the service down and '
+        'leaves the gate open to a retry', () async {
+      final refusing = _FakeService(
+        frames: FfiFrameChannel(library: _RefusingLibrary.new),
+      );
+      lib = CoreLib.scoped(refusing, api: api);
+
+      await expectLater(lib.start(), throwsStateError);
+      expect(refusing.calls, ['init', 'shutdown']);
+      expect(refusing.frames.generation, isNull);
+      await refusing.frames.close();
     });
   });
 
@@ -195,6 +298,7 @@ void main() {
       expect((await start).outcome, CoreLifecycleOutcome.superseded);
       expect((await close).outcome, CoreLifecycleOutcome.coalesced);
       expect(service.calls, ['init', 'shutdown']);
+      expect(service.frames.generation, isNull);
     });
 
     test('gives way to a stop and leaves no session open', () async {
@@ -205,7 +309,7 @@ void main() {
 
       expect((await start).outcome, CoreLifecycleOutcome.superseded);
       expect((await stop).outcome, CoreLifecycleOutcome.coalesced);
-      expect(service.calls, ['init', 'shutdown']);
+      expect(service.frames.generation, isNull);
     });
 
     test('takes a second start as the same one', () async {
@@ -228,7 +332,7 @@ void main() {
       expect(service.calls, isEmpty);
     });
 
-    test('shuts the service down once connected', () async {
+    test('disconnects the frames then shuts the service down', () async {
       await lib.start();
       service.calls.clear();
 
@@ -236,6 +340,8 @@ void main() {
 
       expect(result.outcome, CoreLifecycleOutcome.applied);
       expect(service.calls, ['shutdown']);
+      expect(service.framesLive['shutdown'], isFalse);
+      expect(service.frames.generation, isNull);
     });
 
     test('a failed shutdown throws but still closes the gate', () async {
@@ -250,14 +356,16 @@ void main() {
     });
   });
 
-  test('restart stops before starting again', () async {
+  test('restart stops before starting again on a new session', () async {
     await lib.start();
+    final first = service.frames.generation;
     service.calls.clear();
 
     final result = await lib.restart();
 
     expect(result.outcome, CoreLifecycleOutcome.applied);
     expect(service.calls, ['shutdown', 'init', 'syncState']);
+    expect(service.frames.generation, isNot(first));
   });
 
   group('close', () {
@@ -289,9 +397,10 @@ void main() {
   group('listeners', () {
     test('a listener start is answered by the service', () async {
       await lib.start();
-      service.onInvokeMethod = (_) => const CoreMethodResponse(id: '1');
+      service.calls.clear();
 
       await lib.startListener();
+      expect(service.calls, ['start']);
 
       service.startResult = false;
       await expectLater(
@@ -304,106 +413,35 @@ void main() {
           ),
         ),
       );
-
-      service.startResult = true;
-      service.onInvokeMethod = (_) => null;
-      await lib.startListener();
-      expect(service.calls.last, 'start');
     });
 
     test('a listener stop is answered by the service', () async {
       await lib.start();
-      service.onInvokeMethod = (_) => null;
+      service.calls.clear();
 
       await lib.stopListener();
+      expect(service.calls, ['stop']);
 
       service.stopResult = false;
       await expectLater(
         lib.stopListener(),
-        throwsA(isA<CoreMethodException>()),
-      );
-    });
-
-    test('a listener command the Core refuses still fails', () async {
-      await lib.start();
-      service.onInvokeMethod = (call) => CoreMethodResponse(
-        id: call.id,
-        error: const CoreMethodError(code: 'core_error', message: 'busy'),
-      );
-
-      await expectLater(
-        lib.startListener(),
-        throwsA(isA<CoreMethodException>()),
-      );
-      expect(service.calls, isNot(contains('start')));
-    });
-
-    test('stopListener stops the service before the core listener', () async {
-      await lib.start();
-      service.onInvokeMethod = (_) => const CoreMethodResponse(id: '1');
-      service.calls.clear();
-
-      await lib.stopListener();
-      expect(service.calls, ['stop', 'invokeMethod:listener.stop']);
-    });
-  });
-
-  group('invokeMethod', () {
-    test('assigns an increasing call id per request', () async {
-      await lib.start();
-      service.onInvokeMethod = (call) =>
-          CoreMethodResponse(id: call.id, result: 'ok');
-
-      await lib.invokeMethod(method: CoreMethod.proxyList);
-      await lib.invokeMethod(method: CoreMethod.proxyList);
-
-      expect(service.invokedCalls.map((call) => call.id), ['1', '2']);
-    });
-
-    test('unwraps the response payload', () async {
-      await lib.start();
-      service.onInvokeMethod = (call) =>
-          CoreMethodResponse(id: call.id, result: 'payload');
-
-      expect(await lib.invokeMethod(method: CoreMethod.proxyList), 'payload');
-    });
-
-    test('fails when the service answers nothing', () async {
-      await lib.start();
-      service.onInvokeMethod = (_) => null;
-
-      await expectLater(
-        lib.invokeMethod(method: CoreMethod.proxyList),
         throwsA(
           isA<CoreMethodException>().having(
             (error) => error.code,
             'code',
-            'no_response',
+            'service_refused',
           ),
         ),
       );
     });
 
-    testWidgets('gives up instead of hanging when no connection arrives', (
-      tester,
-    ) async {
-      Object? failure;
-      final pending = lib
-          .invokeMethod(method: CoreMethod.proxyList)
-          .catchError((Object error) => failure = error);
+    test('neither asks the Core', () async {
+      await lib.start();
 
-      await tester.pump(const Duration(seconds: 11));
-      await pending;
+      await lib.startListener();
+      await lib.stopListener();
 
-      expect(
-        failure,
-        isA<CoreMethodException>().having(
-          (error) => error.code,
-          'code',
-          'core_unavailable',
-        ),
-      );
-      expect(service.calls, isEmpty);
+      verifyZeroInteractions(api);
     });
   });
 }

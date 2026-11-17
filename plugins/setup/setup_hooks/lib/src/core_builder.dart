@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'build.dart';
 import 'error.dart';
 import 'logging.dart';
+import 'options.dart' as options;
 import 'target.dart';
 
 typedef CoreBuildFunction = Future<BuildReport> Function(BuildRequest request);
@@ -96,7 +97,7 @@ final class CoreBuilder implements Builder {
   BuildRequest? requestFor(BuildInput input) {
     if (!input.config.buildCodeAssets) return null;
     final code = input.config.code;
-    // Android's Core is the gomobile AAR the :core Gradle module builds.
+    // Android's Core is the library the :core Gradle module builds.
     final platform = switch (code.targetOS) {
       OS.linux => 'linux',
       OS.macOS => 'macos',
@@ -119,6 +120,12 @@ final class CoreBuilder implements Builder {
     }
 
     final rootDir = repositoryRoot(input);
+    final concordDir = options.BuildConfig.load(rootDir: rootDir).concordDir;
+    if (!Directory(p.join(rootDir, concordDir)).existsSync()) {
+      throw InfraError(
+        message: 'The Concord workspace $concordDir is missing from $rootDir',
+      );
+    }
     return BuildRequest(
       rootDir: rootDir,
       harnessDir: p.join(p.fromUri(input.packageRoot), 'setup_hooks'),
@@ -129,12 +136,11 @@ final class CoreBuilder implements Builder {
   String repositoryRoot(BuildInput input) {
     final packageRoot = p.fromUri(input.packageRoot);
     final rootDir = p.normalize(p.join(packageRoot, '..', '..'));
-    if (!Directory(p.join(rootDir, 'core')).existsSync() ||
-        !File(p.join(rootDir, 'pubspec.yaml')).existsSync()) {
+    if (!File(p.join(rootDir, 'pubspec.yaml')).existsSync()) {
       throw InfraError(
         message:
             'The setup package must live at plugins/setup of the FlClash '
-            'repository; $rootDir has no core/ and pubspec.yaml',
+            'repository; $rootDir has no pubspec.yaml',
       );
     }
     return rootDir;

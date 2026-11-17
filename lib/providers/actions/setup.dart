@@ -32,17 +32,6 @@ class _RunRequest {
   });
 }
 
-const _closestBeats = Duration(milliseconds: 500);
-
-int _nextRunTime(int? shown, Duration elapsed) {
-  final rounded = (elapsed.inMilliseconds / 1000).round() * 1000;
-  if (shown == null) {
-    return rounded;
-  }
-  final next = shown + 1000;
-  return (next - elapsed.inMilliseconds).abs() > 1000 ? rounded : next;
-}
-
 @Riverpod(keepAlive: true)
 class SetupAction extends _$SetupAction {
   CoreController get _core => ref.read(coreHandlerProvider);
@@ -53,7 +42,6 @@ class SetupAction extends _$SetupAction {
   _RunRequest? _latestRunRequest;
   Future<void>? _initialRun;
   DateTime? _startTime;
-  DateTime? _runTimeMovedAt;
   var _resumeOnRestart = false;
   ({String digest, Set<String> names})? _outboundNames;
   _SetupInputs? _appliedInputs;
@@ -111,19 +99,22 @@ class SetupAction extends _$SetupAction {
     _stopRuntimeTicker();
     if (!running) {
       _startTime = null;
+      ref.read(commonActionProvider.notifier).setTrafficFeed(false);
       debouncer.cancel(FunctionTag.applyProfile);
       _pendingForceApply = false;
       _updateRunTime();
       return;
     }
 
-    _startTime ??= DateTime.now();
+    _startTime ??= clock.now();
     _updateRunTime();
     _syncRuntimeTicker();
   }
 
   void _syncRuntimeTicker() {
-    if (_startTime == null || !_isTrafficShown) {
+    final shown = _startTime != null && _isTrafficShown;
+    ref.read(commonActionProvider.notifier).setTrafficFeed(shown);
+    if (!shown) {
       _stopRuntimeTicker();
       return;
     }
@@ -142,32 +133,15 @@ class SetupAction extends _$SetupAction {
     _runtimeTimer = null;
   }
 
-  // The runtime waits for its tick's traffic, so both redraw in one frame.
   void _refreshRunningState() {
-    unawaited(
-      ref
-          .read(commonActionProvider.notifier)
-          .updateTraffic()
-          .whenComplete(_updateRunTime),
-    );
+    _updateRunTime();
   }
 
   void _updateRunTime() {
     final startTime = _startTime;
-    final runTime = ref.read(runTimeProvider.notifier);
-    if (startTime == null) {
-      _runTimeMovedAt = null;
-      runTime.value = null;
-      return;
-    }
-    final now = DateTime.now();
-    final movedAt = _runTimeMovedAt;
-    // Starting sets it just before the first tick's read returns.
-    if (movedAt != null && now.difference(movedAt) < _closestBeats) {
-      return;
-    }
-    _runTimeMovedAt = now;
-    runTime.value = _nextRunTime(runTime.value, now.difference(startTime));
+    ref.read(runTimeProvider.notifier).value = startTime == null
+        ? null
+        : clock.now().millisecondsSinceEpoch - startTime.millisecondsSinceEpoch;
   }
 
   @protected
@@ -384,6 +358,7 @@ class SetupAction extends _$SetupAction {
   bool _isCurrent(_RunRequest request) => identical(_latestRunRequest, request);
 
   Future<void> updateConfigDebounce() async {
+    ref.read(coreStateSyncProvider).patchScheduled();
     debouncer.call(FunctionTag.updateConfig, updateConfig);
   }
 
@@ -394,7 +369,7 @@ class SetupAction extends _$SetupAction {
 
   @protected
   void resetCoreTraffic() {
-    _core.resetTraffic();
+    _core.api.resetTraffic();
   }
 
   @visibleForTesting
@@ -407,12 +382,16 @@ class SetupAction extends _$SetupAction {
         return;
       }
       final networkSetting = ref.read(networkSettingProvider);
-      await _core.updateConfig(
-        _effectivePatchConfig(patchConfig).toUpdateParams(
+      final sync = ref.read(coreStateSyncProvider);
+      final token = sync.patchStarted();
+      final seq = await _core.updateConfig(
+        configPatchOf(
+          _effectivePatchConfig(patchConfig),
           authentication: networkSetting.authentication.credentials,
           options: ref.read(coreOptionsProvider),
         ),
       );
+      sync.patched(token, seq);
     });
   }
 
@@ -441,6 +420,43 @@ class SetupAction extends _$SetupAction {
         ),
       ),
     );
+  }
+
+  void adoptCoreGeneral(GeneralChange change) {
+    if (Mode.values.asNameMap()[change.mode] case final mode?
+        when mode != ref.read(patchClashConfigProvider).mode) {
+      changeMode(mode);
+    }
+    final mixedPort = change.mixedPort;
+    final refusedPort = mixedPort != null && !isUsableMixedPort(mixedPort);
+    final keptPort = ref.read(patchClashConfigProvider).mixedPort;
+    if (mixedPort != null && !refusedPort && mixedPort != keptPort) {
+      commonPrint.log('mixed-port $keptPort -> $mixedPort from the Core');
+    }
+    ref.read(patchClashConfigProvider.notifier).update((state) {
+      final overrides = state.generalOverrideKeys;
+      return state.copyWith(
+        logLevel:
+            LogLevel.values.asNameMap()[change.logLevel] ?? state.logLevel,
+        allowLan: change.allowLan ?? state.allowLan,
+        mixedPort: refusedPort ? state.mixedPort : mixedPort ?? state.mixedPort,
+        findProcessMode: switch (change.findProcessMode) {
+          null => state.findProcessMode,
+          final name =>
+            FindProcessMode.values.asNameMap()[name] ?? FindProcessMode.strict,
+        },
+        ipv6: overrides.contains(GeneralOverrideKey.ipv6)
+            ? change.ipv6 ?? state.ipv6
+            : state.ipv6,
+        tcpConcurrent: overrides.contains(GeneralOverrideKey.tcpConcurrent)
+            ? change.tcpConcurrent ?? state.tcpConcurrent
+            : state.tcpConcurrent,
+      );
+    });
+    if (refusedPort) {
+      dialogs.showMixedPortReset(mixedPort, keptPort);
+      updateConfigDebounce();
+    }
   }
 
   void changeMode(Mode mode) {
@@ -632,10 +648,6 @@ class SetupAction extends _$SetupAction {
         overrides: setupState.overrides,
         bypassPrivateRoute: networkSetting.bypassPrivateRoute,
         appendSystemDns: appendSystemDns,
-        // sing-tun points the system resolver at the TUN by default with
-        // auto-route everywhere but macOS, where native does it through a
-        // dynamic store entry that configd drops when the Core exits.
-        defaultTunDnsMode: system.isMacOS ? 'native' : null,
         addedRules: setupState.addedRules,
         defaultUA: defaultUA,
         authentication: networkSetting.authentication.credentials,
@@ -648,6 +660,7 @@ class SetupAction extends _$SetupAction {
             : lastMatchTarget(profileBase.base.matchRules),
         safeMode: ref.read(safeModeProvider),
         mitmModules: setupState.mitmModules,
+        keepOverlay: profileBase != null,
       ),
     );
     if (profileBase == null) {
@@ -662,7 +675,7 @@ class SetupAction extends _$SetupAction {
         proxies: res.counts.proxies + base.proxies,
         rules: res.counts.rules + base.rules,
       ),
-      base: SetupBase(path: path, overlay: res.yaml),
+      base: SetupBase(path: path, overlay: res.overlay ?? const {}),
     );
   }
 
@@ -765,10 +778,36 @@ class SetupAction extends _$SetupAction {
     );
   }
 
+  /// The Core ignores the profile's `external-controller` and `secret` while
+  /// a host drives it and opens the controller from a patch only.
+  Future<void> _openController(PatchClashConfig config) async {
+    try {
+      await _core.updateConfig(
+        ConfigPatch(
+          externalController: config.externalController.value,
+          secret: config.secret,
+          externalControllerCors: controllerCorsOf(
+            config.externalControllerCors,
+          ),
+        ),
+      );
+    } catch (error) {
+      commonPrint.log(
+        'external controller: ${compactError(error)}',
+        logLevel: coreFailureLogLevel(error),
+      );
+    }
+  }
+
   @protected
   Future<AuthorizeCode> authorizeCore() {
     return system.authorizeCore();
   }
+
+  /// Android's TUN comes from VpnService or the root mode, never from the
+  /// app's TUN setting, which a desktop backup can still carry there.
+  @protected
+  bool get tunNeedsAuthorization => system.isDesktop;
 
   @visibleForTesting
   Future<bool> requestAdmin(bool enableTun) async {
@@ -908,18 +947,25 @@ class SetupAction extends _$SetupAction {
               );
             }
           }
+          final sync = ref.read(coreStateSyncProvider);
+          int? appliedProfileId;
+          sync.applyStarted();
           try {
             await _core.setupConfig(
               params: setupParams,
               preloadInvoke: preloadInvoke,
             );
+            appliedProfileId = profileId;
           } on CoreMethodException catch (error) {
             if (error.code != 'config_rejected') {
               rethrow;
             }
+            await _loadConfigWarnings();
             globalState.lastConfigCounts = configCountsOf(const {});
             await globalState.safeRun(() => onUpdated?.call());
             throw MessageException(error.message);
+          } finally {
+            sync.applyEnded(appliedProfileId);
           }
         } catch (e, s) {
           setupFailed = true;
@@ -928,11 +974,13 @@ class SetupAction extends _$SetupAction {
           }
           rethrow;
         }
+        await _loadConfigWarnings();
         globalState.lastConfigMd5 = yamlMd5;
         ref.invalidate(activeRulesProvider);
         globalState.lastConfigCounts =
             realProfile?.counts ?? configCountsOf(const {});
         _appliedInputs = inputs;
+        await _openController(realPatchConfig);
         if (system.isAndroid) {
           await preferences.saveAppliedConfigMd5(yamlMd5);
         }

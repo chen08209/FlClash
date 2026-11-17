@@ -257,7 +257,7 @@ void main() {
 
   testWidgets('a status with no connections says so, and a search that '
       'matches none says nothing matched', (tester) async {
-    seedRequests([_tracker(id: '1', host: 'alpha.test')]);
+    seedRequests([_tracker(id: 1, host: 'alpha.test')]);
 
     await pumpRequests(tester, size: _listSize);
     await pickStatus(tester, 'Failed 0');

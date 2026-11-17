@@ -1,6 +1,4 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -10,28 +8,24 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 
+import '../../helpers/core_mocks.dart';
 import '../../helpers/host_scaffold.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
-
-class _MockCore extends Mock implements CoreHandlerInterface {}
 
 const _size = Size(400, 800);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late _MockCore core;
   late ProviderContainer container;
 
   setUp(() {
-    core = _MockCore();
     container = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(TestProfiles.new),
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(coreMocks().controller),
         coreStatusProvider.overrideWithBuild((_, _) => CoreStatus.connected),
       ],
     );

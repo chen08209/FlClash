@@ -13,11 +13,11 @@ import 'tracker_texts.dart';
 import 'tracker_app_well.dart';
 import 'tracker_clock.dart';
 
-class _NoSelection implements ValueListenable<String?> {
+class _NoSelection implements ValueListenable<int?> {
   const _NoSelection();
 
   @override
-  String? get value => null;
+  int? get value => null;
 
   @override
   void addListener(VoidCallback listener) {}
@@ -30,7 +30,7 @@ class _NoSelection implements ValueListenable<String?> {
 /// shows one there and in a sheet elsewhere.
 class RelatedConnections extends StatelessWidget {
   final String title;
-  final List<String> ids;
+  final List<int> ids;
   final bool atTop;
   final ValueChanged<TrackerInfo>? onOpenConnection;
 
@@ -56,7 +56,7 @@ class RelatedConnections extends StatelessWidget {
 /// [RelatedConnections] as slivers that build only the rows in view.
 class SliverRelatedConnections extends StatelessWidget {
   final String title;
-  final List<String> ids;
+  final List<int> ids;
   final bool atTop;
   final ValueChanged<TrackerInfo>? onOpenConnection;
 
@@ -89,7 +89,7 @@ Widget _opening(ValueChanged<TrackerInfo>? onOpen, Widget section) =>
         child: section,
       );
 
-Widget _relatedRow(String id) => Consumer(
+Widget _relatedRow(int id) => Consumer(
   key: ValueKey(id),
   builder: (context, ref, _) {
     final trackerInfo = ref.watch(requestsProvider.select((log) => log[id]));

@@ -15,8 +15,8 @@ const coreManifestName = 'manifest.json';
 const browserUa =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 const packageName = 'com.follow.clash';
-final unixSocketPath = '/tmp/FlClashSocket_${Random().nextInt(10000)}.sock';
-final windowsPipeName = '\\\\.\\pipe\\FlClashCore_${_randomPipeId()}';
+final unixSocketPath = _privateSocketPath();
+final windowsPipeName = '\\\\.\\pipe\\FlClashCore_${_randomId()}';
 const helperPort = 47890;
 const helperPortKey =
     'SYSTEM\\CurrentControlSet\\Services\\$appHelperService\\Runtime';
@@ -24,7 +24,7 @@ const helperPortValue = 'Port';
 const helperSocketPath = '/run/flclash/helper.sock';
 const helperUnitPath = '/etc/systemd/system/flclash-helper.service';
 const helperProtocolVersionHeader = 'x-flclash-helper-protocol';
-final helperProtocolVersion = Platform.isWindows ? '8' : '6';
+final helperProtocolVersion = Platform.isWindows ? '9' : '7';
 const maxTextScale = 1.4;
 const minTextScale = 0.8;
 
@@ -68,9 +68,8 @@ const delayTimedOutValue = -1;
 const probeTimeoutDuration = Duration(seconds: 10);
 
 /// The window a checked move opens, whose later moves are checked together
-/// when it ends. Outlasts the Core's one-second pick poll (`routePollInterval`
-/// in core/route.go), so groups re-picking on neighbouring polls cost one
-/// route check more.
+/// when it ends. Outlasts the Core's one-second pick poll, so groups
+/// re-picking on neighbouring polls cost one route check more.
 const probeSettleDuration = Duration(milliseconds: 1500);
 
 /// Spans a config load, whose providers, rule sets and url-test picks land
@@ -96,13 +95,10 @@ const outboundIpTimeoutDuration = Duration(seconds: 6);
 Duration coreGuardFor(int timeout, {int budgetFactor = 2}) =>
     Duration(milliseconds: timeout * budgetFactor) + const Duration(seconds: 5);
 
-/// Kept in step with serviceSweepBudgetFactor in core/service_check.go.
+/// Kept in step with the Core's service sweep budget.
 const serviceSweepBudgetFactor = 6;
 
-const coreConnectionWaitDuration = Duration(seconds: 10);
-
-/// Keep at or below the Core's delay-test concurrency (`delayTestConcurrency`
-/// in core/delay.go).
+/// The width of one `delay.run`.
 const maxConcurrentDelayTests = 32;
 const maxConcurrentImports = 4;
 const maxConcurrentIconLoads = 8;
@@ -114,7 +110,6 @@ const renderThrottleDuration = Duration(milliseconds: 300);
 const defaultUpdateDuration = Duration(days: 1);
 const MMDB = 'GEOIP.metadb';
 const ASN = 'ASN.mmdb';
-const GEOIP = 'GEOIP.dat';
 const GEOSITE = 'GEOSITE.dat';
 
 final double kHeaderHeight = getWindowHeaderHeight(

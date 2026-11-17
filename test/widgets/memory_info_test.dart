@@ -1,8 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -15,10 +14,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../helpers/core_mocks.dart';
 import '../helpers/test_app.dart';
 import '../helpers/host_scaffold.dart';
-
-class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 void main() {
   testWidgets('MemoryInfo refreshes only while the app is resumed', (
@@ -330,11 +328,11 @@ void main() {
   testWidgets('the default reader adds Core memory while connected', (
     tester,
   ) async {
-    final coreInterface = _MockCoreHandlerInterface();
+    final mocks = coreMocks();
     when(
-      () => coreInterface.getMemoryStats(),
-    ).thenAnswer((_) async => const CoreMemoryStats(rss: 4096));
-    final container = _containerWith(coreInterface, CoreStatus.connected);
+      () => mocks.api.stats(),
+    ).thenAnswer((_) async => const CoreStats(rss: 4096));
+    final container = _containerWith(mocks.controller, CoreStatus.connected);
     addTearDown(container.dispose);
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
@@ -347,9 +345,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    verify(
-      () => coreInterface.getMemoryStats(),
-    ).called(greaterThanOrEqualTo(1));
+    verify(() => mocks.api.stats()).called(greaterThanOrEqualTo(1));
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -357,11 +353,11 @@ void main() {
   testWidgets('the default reader skips Core memory while disconnected', (
     tester,
   ) async {
-    final coreInterface = _MockCoreHandlerInterface();
+    final mocks = coreMocks();
     when(
-      () => coreInterface.getMemoryStats(),
-    ).thenAnswer((_) async => const CoreMemoryStats(rss: 4096));
-    final container = _containerWith(coreInterface, CoreStatus.disconnected);
+      () => mocks.api.stats(),
+    ).thenAnswer((_) async => const CoreStats(rss: 4096));
+    final container = _containerWith(mocks.controller, CoreStatus.disconnected);
     addTearDown(container.dispose);
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
@@ -374,7 +370,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    verifyNever(() => coreInterface.getMemoryStats());
+    verifyNever(() => mocks.api.stats());
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -534,10 +530,10 @@ void main() {
     Future<void> openSheet(
       WidgetTester tester, {
       required Future<MemorySnapshot> Function() reader,
-      CoreHandlerInterface? coreInterface,
+      CoreMocks? mocks,
     }) async {
       final container = _containerWith(
-        coreInterface ?? _MockCoreHandlerInterface(),
+        (mocks ?? coreMocks()).controller,
         CoreStatus.connected,
       );
       addTearDown(container.dispose);
@@ -599,7 +595,30 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
-    testWidgets('an in-process Core labels the app share as shared', (
+    testWidgets('a Core that reports only its resident size lists just that', (
+      tester,
+    ) async {
+      await openSheet(
+        tester,
+        reader: () async => MemorySnapshot.resolve(
+          rss: 12 * 1024 * 1024,
+          core: const CoreMemoryStats(rss: 4 * 1024 * 1024),
+          coreInProcess: false,
+        ),
+      );
+
+      expect(inSheet('Core'), findsOneWidget);
+      expect(find.text('Resident memory'), findsNWidgets(2));
+      expect(find.text('Heap in use'), findsNothing);
+      expect(find.text('Heap idle'), findsNothing);
+      expect(find.text('Goroutine stacks'), findsNothing);
+      expect(find.text('Runtime overhead'), findsNothing);
+      expect(find.text('Other'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('an in-process Core that reports no breakdown has no section', (
       tester,
     ) async {
       await openSheet(
@@ -686,18 +705,18 @@ void main() {
     });
 
     testWidgets('the release action asks the Core to collect', (tester) async {
-      final coreInterface = _MockCoreHandlerInterface();
-      when(() => coreInterface.forceGc()).thenAnswer((_) async {});
+      final mocks = coreMocks();
+      when(() => mocks.api.releaseMemory()).thenAnswer((_) async {});
       await openSheet(
         tester,
         reader: () async => const MemorySnapshot(app: 1024),
-        coreInterface: coreInterface,
+        mocks: mocks,
       );
 
       await tester.tap(find.byTooltip('Release memory'));
       await tester.pump();
 
-      verify(() => coreInterface.forceGc()).called(1);
+      verify(() => mocks.api.releaseMemory()).called(1);
       expect(find.byType(ActivityIndicator), findsOneWidget);
 
       await tester.pump(const Duration(milliseconds: 600));
@@ -719,16 +738,9 @@ const _estimateSharedDesc =
 
 Widget _scaffoldBody(Widget child) => HostScaffold(body: child);
 
-ProviderContainer _containerWith(
-  CoreHandlerInterface coreInterface,
-  CoreStatus status,
-) {
+ProviderContainer _containerWith(CoreController core, CoreStatus status) {
   final container = ProviderContainer(
-    overrides: [
-      coreHandlerProvider.overrideWithValue(
-        CoreController.scoped(coreInterface),
-      ),
-    ],
+    overrides: [coreHandlerProvider.overrideWithValue(core)],
   );
   container.read(coreStatusProvider.notifier).value = status;
   return container;

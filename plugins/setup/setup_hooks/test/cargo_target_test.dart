@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 import 'package:setup_hooks/src/build_cache.dart';
+import 'package:setup_hooks/src/concord_builder.dart';
 import 'package:setup_hooks/src/options.dart';
 import 'package:setup_hooks/src/rust_builder.dart';
 import 'package:setup_hooks/src/target.dart';
@@ -39,19 +40,48 @@ void main() {
     };
   }
 
-  test('the Helper comes from where Cargo built it', () async {
+  void leaveStale(String directory, String binary) {
     File(
         p.join(
           root.path,
-          config.helperDir,
+          directory,
           'target',
           target.rustTriple,
           'release',
-          'helper',
+          binary,
         ),
       )
       ..createSync(recursive: true)
       ..writeAsStringSync('stale');
+  }
+
+  String output(String name) => File(
+    p.join(root.path, config.outputDir, target.platformDir, name),
+  ).readAsStringSync();
+
+  test('the Core comes from where Cargo built it', () async {
+    leaveStale(config.concordDir, 'concord');
+
+    await ConcordBuilder(
+      rootDir: root.path,
+      config: config,
+      cache: BuildCache(rootDir: root.path),
+      notice: BuildNotice(),
+      cargo: cargo('concord'),
+      environment: {'CARGO_TARGET_DIR': inherited},
+    ).build(target);
+
+    expect(output(config.coreName), 'fresh');
+    expect(
+      File(
+        p.join(inherited, target.rustTriple, 'release', 'concord'),
+      ).existsSync(),
+      isTrue,
+    );
+  });
+
+  test('the Helper comes from where Cargo built it', () async {
+    leaveStale(config.helperDir, 'helper');
 
     await RustBuilder(
       rootDir: root.path,
@@ -62,16 +92,6 @@ void main() {
       environment: {'CARGO_TARGET_DIR': inherited},
     ).build(target, 'core-sha256');
 
-    expect(
-      File(
-        p.join(
-          root.path,
-          config.outputDir,
-          target.platformDir,
-          config.helperName,
-        ),
-      ).readAsStringSync(),
-      'fresh',
-    );
+    expect(output(config.helperName), 'fresh');
   });
 }

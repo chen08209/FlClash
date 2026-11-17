@@ -59,12 +59,12 @@ void main() {
       expect(_inserted(completion, 'mixed-port'), 'mixed-port: ');
     });
 
-    test('omits disabled controllers and keeps listener completion', () {
+    test('omits disabled controllers and the listeners Concord ignores', () {
       final controllers = _labels(_complete('external-controller-|'));
       expect(controllers, isNot(contains('external-controller-tls')));
       expect(controllers, isNot(contains('external-controller-unix')));
       expect(controllers, isNot(contains('external-controller-pipe')));
-      expect(_labels(_complete('listen|')), contains('listeners'));
+      expect(_labels(_complete('listen|')), isNot(contains('listeners')));
     });
 
     test('keeps dashes in the prefix and opens a sequence', () {
@@ -105,12 +105,92 @@ void main() {
       expect(_labels(_complete(direct)), isNot(contains('server')));
     });
 
-    test('offers the fields of the listener type', () {
-      List<String> fields(String type) => _labels(
-        _complete('listeners:\n  - name: a\n    type: $type\n    ws|'),
+    test('completes the dns and rematch outbounds and ShadowTLS', () {
+      expect(
+        _labels(_complete('proxies:\n  - name: a\n    type: rem|')),
+        contains('rematch'),
       );
-      expect(fields('vmess'), contains('ws-path'));
-      expect(fields('shadowsocks'), isNot(contains('ws-path')));
+      expect(
+        _labels(_complete('proxies:\n  - name: a\n    type: dn|')),
+        contains('dns'),
+      );
+      const rematch = 'proxies:\n  - name: a\n    type: rematch\n    target|';
+      expect(
+        _labels(_complete(rematch)),
+        containsAll(['target-rematch-name', 'target-sub-rule']),
+      );
+      const trojan = 'proxies:\n  - name: a\n    type: trojan\n    shadow|';
+      expect(_labels(_complete(trojan)), contains('shadow-tls-opts'));
+      expect(
+        _labels(_complete('rules:\n  - REMATCH|')),
+        contains('REMATCH-NAME'),
+      );
+    });
+
+    test('completes every ShadowTLS option Concord reads', () {
+      const opts =
+          'proxies:\n  - name: a\n    type: trojan\n    shadow-tls-opts:\n';
+      for (final key in [
+        'host',
+        'password',
+        'version',
+        'fingerprint',
+        'skip-cert-verify',
+        'alpn',
+        'certificate',
+        'private-key',
+        'name-cert-verify',
+      ]) {
+        final typed = key.substring(0, 3);
+        expect(_labels(_complete('$opts      $typed|')), contains(key));
+      }
+    });
+
+    test('completes Snell v6, JLS, gost-plugin and gost-relay', () {
+      const proxy = 'proxies:\n  - name: a\n';
+      expect(
+        _labels(_complete('$proxy    type: gost-r|')),
+        contains('gost-relay'),
+      );
+      expect(
+        _labels(_complete('$proxy    type: gost-relay\n    forw|')),
+        contains('forward'),
+      );
+      expect(
+        _labels(_complete('$proxy    type: snell\n    userk|')),
+        contains('userkey'),
+      );
+      const obfs = '$proxy    type: snell\n    obfs-opts:\n      mode: j|';
+      expect(_labels(_complete(obfs)), contains('jls'));
+      expect(
+        _labels(_complete('$proxy    type: trojan\n    jls|')),
+        contains('jls-opts'),
+      );
+      const ss = '$proxy    type: ss\n';
+      expect(_labels(_complete('$ss    plugin: g|')), contains('gost-plugin'));
+      expect(_labels(_complete('$ss    plugin: j|')), contains('jls'));
+      expect(
+        _labels(_complete('$ss    plugin-opts:\n      userna|')),
+        contains('username'),
+      );
+    });
+
+    test('completes MASQUE and the fields Concord reads for it', () {
+      const proxy = 'proxies:\n  - name: a\n';
+      expect(_labels(_complete('$proxy    type: masq|')), contains('masque'));
+      const masque = '$proxy    type: masque\n';
+      for (final key in ['public-key', 'ipv6', 'uri', 'network', 'mtu']) {
+        final typed = key.substring(0, 3);
+        expect(_labels(_complete('$masque    $typed|')), contains(key));
+      }
+      expect(
+        _labels(_complete('$masque    network: h|')),
+        containsAll(['h2', 'h3-l4proxy']),
+      );
+      expect(
+        _labels(_complete('$masque    name-|')),
+        isNot(contains('name-cert-verify')),
+      );
     });
 
     test('completes the keys of an item the caret line opens', () {
@@ -288,7 +368,7 @@ void main() {
       expect(_labels(script("({ type: 'vm|")), ['vmess']);
       expect(
         _labels(script("proxy.type === 'hyst|")),
-        unorderedEquals(['hysteria2', 'hysteria', 'hysteria2-realm']),
+        unorderedEquals(['hysteria2', 'hysteria']),
       );
     });
 

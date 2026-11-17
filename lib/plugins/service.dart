@@ -2,37 +2,16 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/event.dart';
-import 'package:fl_clash/core/method.dart';
-import 'package:fl_clash/core/spill.dart';
+import 'package:fl_clash/core/api/channels/android_frames.dart';
+import 'package:fl_clash/core/api/channels/ffi_channel.dart';
+import 'package:fl_clash/core/api/channels/method_channel_channel.dart';
+import 'package:fl_clash/core/api/frame_channel.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-final _utf8JsonDecoder = utf8.decoder.fuse(json.decoder);
-
-Object? _decodeUtf8Json(Uint8List data) => _utf8JsonDecoder.convert(data);
-
-Map<String, Object?> _decodeResponseOf((Uint8List, CoreResultModel?) request) {
-  final (data, model) = request;
-  final decoded = _decodeUtf8Json(data);
-  return withResultModel(model, Map<String, Object?>.from(decoded as Map));
-}
-
-Future<Map<String, Object?>> _decodeResponse(
-  Uint8List data,
-  CoreResultModel? model,
-) async {
-  if (data.length < coreIsolateDecodeBytes) {
-    return _decodeResponseOf((data, model));
-  }
-  return compute(_decodeResponseOf, (data, model));
-}
-
 abstract mixin class ServiceListener {
-  void onServiceEvent(CoreEvent event) {}
-
   void onServiceStopped([ServiceStartFailure? failure]) {}
 }
 
@@ -41,11 +20,29 @@ class Service {
   late MethodChannel methodChannel;
   static const _coreChannel = MethodChannel('$packageName/core');
 
+  @visibleForTesting
+  static SessionFrameChannel Function(
+    MethodChannel coreChannel, {
+    void Function(int session)? onSession,
+  })
+  framesFactory = createAndroidFrames;
+
+  /// The frames of the Core's JSON-RPC session.
+  late final SessionFrameChannel frames = framesFactory(
+    _coreChannel,
+    onSession: _attachSession,
+  );
+
   final ObserverList<ServiceListener> _listeners =
       ObserverList<ServiceListener>();
 
   int _commandRevision = 0;
   bool _startRequested = false;
+
+  @visibleForTesting
+  static void resetInstance() {
+    _instance = null;
+  }
 
   factory Service() {
     _instance ??= Service._internal();
@@ -57,16 +54,9 @@ class Service {
     methodChannel.setMethodCallHandler((call) async {
       switch (call.method) {
         case 'event':
-          final methodCall = CoreMethodCall.fromJson(
-            Map<String, Object?>.from(
-              _decodeUtf8Json(call.arguments as Uint8List) as Map,
-            ),
-          );
-          for (final event in coreEventsFromData(methodCall.arguments)) {
-            _dispatch(
-              'Core event ${event.type.name}',
-              (listener) => listener.onServiceEvent(event),
-            );
+          final channel = frames;
+          if (channel is MethodChannelFrameChannel) {
+            channel.receive(call.arguments as Uint8List);
           }
           break;
         case 'stopped':
@@ -86,27 +76,6 @@ class Service {
           throw MissingPluginException();
       }
     });
-  }
-
-  Future<CoreMethodResponse> invokeMethod(
-    CoreMethodCall call, {
-    CoreResultModel? model,
-  }) async {
-    model ??= coreResultModelOf(call.method);
-    final data = await _coreChannel.invokeMethod<Uint8List>(
-      'invokeMethod',
-      json.encode(call),
-    );
-    if (data == null) {
-      throw CoreMethodException(
-        code: 'no_response',
-        message: 'Core did not answer ${call.method.wireName}',
-      );
-    }
-    return resolveSpilledResponse(
-      CoreMethodResponse.fromJson(await _decodeResponse(data, model)),
-      model: model,
-    );
   }
 
   void _dispatch(String label, void Function(ServiceListener) deliver) {
@@ -138,7 +107,25 @@ class Service {
   }
 
   Future<String> init() async {
-    return await methodChannel.invokeMethod<String>('init') ?? '';
+    return await methodChannel.invokeMethod<String>(
+          'init',
+          frames is FfiFrameChannel ? 'ffi' : 'method',
+        ) ??
+        '';
+  }
+
+  /// Tells the platform which session the engine owns, so that it ends with the engine.
+  void _attachSession(int session) {
+    unawaited(
+      methodChannel.invokeMethod<void>('session', session).catchError((
+        Object error,
+      ) {
+        commonPrint.log(
+          'Unable to report the Core session: $error',
+          logLevel: LogLevel.debug,
+        );
+      }),
+    );
   }
 
   Future<String> syncState(SharedState state) async {

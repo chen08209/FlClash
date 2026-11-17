@@ -5,6 +5,8 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:rust_api/rust_api.dart';
 
+import 'ipc_auth.dart';
+
 typedef IpcServerBinder = Future<IpcServer> Function(String address);
 
 enum DesktopTransportState { idle, starting, ready, connected, failed, closed }
@@ -52,6 +54,10 @@ abstract interface class DesktopCoreTransport {
 
   Future<void> open();
 
+  /// The next connection must prove it holds [sessionId], the token the Core
+  /// was started with, before it is reported as connected.
+  void expectSession(String sessionId);
+
   /// Stops listening, which is the only way to drop a connected peer.
   Future<void> reset();
 
@@ -67,11 +73,16 @@ final class IpcCoreTransport implements DesktopCoreTransport {
   final String address;
 
   final IpcServerBinder _bind;
+  final Duration _handshakeTimeout;
   final StreamController<DesktopTransportEvent> _events =
       StreamController<DesktopTransportEvent>.broadcast();
   final StreamController<Uint8List> _frames =
       StreamController<Uint8List>.broadcast();
 
+  String? _sessionToken;
+  IpcHandshake? _handshake;
+  Timer? _handshakeTimer;
+  int? _pendingPid;
   DesktopTransportState _state = DesktopTransportState.idle;
   ({IpcServer server, StreamSubscription<IpcEvent> events})? _listener;
   TransportConnected? _connection;
@@ -82,8 +93,12 @@ final class IpcCoreTransport implements DesktopCoreTransport {
   int _generation = 0;
   int _bindAttempt = 0;
 
-  IpcCoreTransport({required this.address, IpcServerBinder? bind})
-    : _bind = bind ?? _bindIpcServer;
+  IpcCoreTransport({
+    required this.address,
+    IpcServerBinder? bind,
+    Duration handshakeTimeout = const Duration(seconds: 5),
+  }) : _bind = bind ?? _bindIpcServer,
+       _handshakeTimeout = handshakeTimeout;
 
   static Future<IpcServer> _bindIpcServer(String address) {
     return IpcServer.bind(address: address);
@@ -172,15 +187,73 @@ final class IpcCoreTransport implements DesktopCoreTransport {
   void _handleEvent(IpcEvent event) {
     switch (event.kind) {
       case IpcEventKind.connected:
-        _connect(event.pid);
+        _authenticate(event.pid);
       case IpcEventKind.message:
-        _frames.add(event.payload);
+        final handshake = _handshake;
+        if (handshake == null) {
+          _frames.add(event.payload);
+        } else {
+          _continueHandshake(handshake, event.payload);
+        }
       case IpcEventKind.disconnected:
+        _endHandshake();
         final error = event.error;
         _disconnect(error == null ? null : StateError('IPC error: $error'));
       case IpcEventKind.failed:
         _fail(StateError('IPC error: ${event.error}'), StackTrace.current);
     }
+  }
+
+  @override
+  void expectSession(String sessionId) {
+    _sessionToken = sessionId;
+  }
+
+  void _authenticate(int? pid) {
+    final token = _sessionToken;
+    _sessionToken = null;
+    if (token == null) {
+      _rejectPeer(const IpcAuthException('no session is expecting a Core'));
+      return;
+    }
+    _pendingPid = pid;
+    _handshake = IpcHandshake(token);
+    _handshakeTimer = Timer(_handshakeTimeout, () {
+      _rejectPeer(const IpcAuthException('the peer did not answer in time'));
+    });
+  }
+
+  void _continueHandshake(IpcHandshake handshake, Uint8List frame) {
+    try {
+      final reply = handshake.receive(frame);
+      if (reply != null) {
+        _listener?.server.send(message: reply);
+      }
+    } on IpcAuthException catch (error) {
+      _rejectPeer(error);
+      return;
+    } catch (error, stackTrace) {
+      _fail(error, stackTrace);
+      return;
+    }
+    if (handshake.isComplete) {
+      final pid = _pendingPid;
+      _endHandshake();
+      _connect(pid);
+    }
+  }
+
+  void _endHandshake() {
+    _handshake = null;
+    _handshakeTimer?.cancel();
+    _handshakeTimer = null;
+    _pendingPid = null;
+  }
+
+  /// The server takes one peer at a time and has no call to drop it, so
+  /// refusing a peer fails the transport, which drops the server.
+  void _rejectPeer(IpcAuthException error) {
+    _fail(error, StackTrace.current);
   }
 
   void _connect(int? pid) {
@@ -210,6 +283,7 @@ final class IpcCoreTransport implements DesktopCoreTransport {
         _state == DesktopTransportState.closed) {
       return;
     }
+    _endHandshake();
     commonPrint.log('IPC error: $error', logLevel: LogLevel.debug);
     final failure = TransportFailed(error, stackTrace);
     _connection = null;
@@ -246,6 +320,7 @@ final class IpcCoreTransport implements DesktopCoreTransport {
     }
     final binding = _state == DesktopTransportState.starting ? _opening : null;
     _bindAttempt++;
+    _endHandshake();
     _disconnect(StateError('IPC transport was reset'));
     _state = DesktopTransportState.idle;
     _failure = null;
@@ -300,6 +375,7 @@ final class IpcCoreTransport implements DesktopCoreTransport {
     _bindAttempt++;
     _state = DesktopTransportState.closed;
     _connection = null;
+    _endHandshake();
     try {
       await _dropServer();
     } finally {

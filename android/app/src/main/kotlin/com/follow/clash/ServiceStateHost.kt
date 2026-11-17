@@ -1,10 +1,6 @@
 package com.follow.clash
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.net.VpnService
-import android.os.Build
-import androidx.core.content.ContextCompat
 import com.follow.clash.common.GlobalState
 import com.follow.clash.models.SharedState
 import com.follow.clash.plugins.AppPlugin
@@ -42,8 +38,6 @@ internal interface ServiceStateHost {
     fun loadSharedState(): SharedState
 
     fun isVpnPermissionGranted(): Boolean
-
-    fun isLocalNetworkPermissionGranted(): Boolean
 
     fun tile(): TileGateway?
 
@@ -111,13 +105,6 @@ internal object AndroidServiceStateHost : ServiceStateHost {
 
     override fun isVpnPermissionGranted(): Boolean =
         VpnService.prepare(GlobalState.application) == null
-
-    override fun isLocalNetworkPermissionGranted(): Boolean =
-        sdkInt < Build.VERSION_CODES.CINNAMON_BUN ||
-            ContextCompat.checkSelfPermission(
-                GlobalState.application,
-                Manifest.permission.ACCESS_LOCAL_NETWORK,
-            ) == PackageManager.PERMISSION_GRANTED
 
     override fun tile(): TileGateway? = flutterEngine?.plugin<TilePlugin>()?.let { plugin ->
         TileGateway(plugin::handleStart)

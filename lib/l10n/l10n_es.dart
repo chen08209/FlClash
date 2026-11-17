@@ -432,10 +432,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get stopVpn => 'Deteniendo VPN…';
 
   @override
-  String get localNetworkDeniedTip =>
-      'Permiso de red local denegado: con la pila gvisor, la LAN no es accesible.';
-
-  @override
   String get compatible => 'Modo de compatibilidad';
 
   @override
@@ -528,6 +524,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get externalControllerSecret => 'Clave del controlador externo';
 
   @override
+  String get externalControllerCors => 'Permitir acceso de origen cruzado';
+
+  @override
+  String get externalControllerCorsDesc =>
+      'Los paneles web pueden conectarse desde otros sitios.';
+
+  @override
   String get ipv6Desc =>
       'El tráfico IPv6 solo se recibe mientras IPv6 esté activado.';
 
@@ -551,9 +554,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tcpConcurrent => 'TCP concurrente';
-
-  @override
-  String get geodataLoader => 'Modo geo de poca memoria';
 
   @override
   String get requests => 'Solicitudes';
@@ -1356,9 +1356,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get hideTimeoutProxies => 'Ocultar proxies sin respuesta';
-
-  @override
-  String get stackMode => 'Modo de pila';
 
   @override
   String get network => 'Red';
@@ -3033,10 +3030,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get congestionController => 'Control de congestión TCP';
 
   @override
-  String get congestionControllerDesc =>
-      'El control de congestión TCP solo funciona con la pila mips.';
-
-  @override
   String get routeExcludeAddress => 'Direcciones excluidas de la ruta';
 
   @override
@@ -3110,8 +3103,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get udpTimeout => 'Tiempo de espera UDP';
 
   @override
-  String get udpTimeoutDesc =>
-      'El tiempo de espera UDP se indica en segundos y solo funciona con las pilas gvisor, system y mixed.';
+  String get udpTimeoutDesc => 'El tiempo de espera UDP se indica en segundos.';
 
   @override
   String get dnsHijackDesc =>

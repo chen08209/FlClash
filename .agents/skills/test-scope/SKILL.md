@@ -1,6 +1,6 @@
 ---
 name: test-scope
-description: Use when about to run `flutter test`, `dart run tool/test.dart`, `go test`, `cargo test`, Gradle unit tests or `tool/check_plugins.sh`; when deciding which checks a change needs, including changes under `core/`, `android/`, `plugins/`, `services/helper`, `tool/` or `.github/`; before sending a change for review or reporting it done; or when a run lists files that failed in a shared isolate.
+description: Use when about to run `flutter test`, `dart run tool/test.dart`, `cargo test`, the Concord gate, Gradle unit tests or `tool/check_plugins.sh`; when deciding which checks a change needs, including changes under `concord/`, `android/`, `plugins/`, `services/helper`, `tool/` or `.github/`; before sending a change for review or reporting it done; or when a run lists files that failed in a shared isolate.
 ---
 
 # Test Scope
@@ -13,12 +13,12 @@ Verify) and `make help`; this skill decides which of them a change runs and wher
 | Change under | Checks | Where |
 |---|---|---|
 | `lib/`, `test/`, `arb/`, `assets/` | Which Tests below, `flutter analyze --no-fatal-infos` | host |
-| an `rsFeature` check or code behind one | the `rsFeature` pass below, `make strip-check` | host |
 | `plugins/prism_ui`, `plugins/code_forge`, `plugins/dynamic_color`, Dart in `plugins/rust_api` | `make plugins-check`; the root `test/plugins/` files for the plugin | host |
 | `plugins/setup` | `dart analyze` and `dart test` in `plugins/setup/setup_hooks` | host |
 | `plugins/rust_api/rust` | `make rust-check`; the root tests that load the library, such as `test/plugins/code_forge/` and `test/core/desktop/ipc_native_test.dart` | host; Linux for `cfg(target_os = "linux")` |
 | `services/helper` | `make rust-check` | host; Windows for `--features windows-service` |
-| `core/*.go`, the `core/Clash.Meta` pointer | `make core-check core-test`; root tests that read Go sources, such as `test/core/protocol_contract_test.dart` and `test/models/` | host |
+| Concord sources in `concord/` | Concord's own scope, Test Scope in `concord/.agents/commands.md` (from Concord's `dev`; an older pointer has none); `make core-check core-test` | host; another platform where Concord's scope says so |
+| the `concord` pointer | `make core-gate`; `dart run tool/generate_concord_tiers.dart`, then `test/features/clash_schema_test.dart`, `test/core/sent_config_golden_test.dart` and `test/core/api/`; root tests that read `concord/`, such as `test/models/` | host |
 | `android/` | compile the touched modules, the JVM unit tests | host; a device or emulator for system callbacks such as always-on VPN, revoke, the permission UI, rapid start and stop |
 | `linux/`, `macos/`, `windows/`, `plugins/*/{linux,macos,windows}` | `flutter build <platform> --debug` | that platform |
 | `tool/` scripts, `Makefile` | `test/tool/` | host |
@@ -31,8 +31,8 @@ Verify) and `make help`; this skill decides which of them a change runs and wher
 
 - Shared bases, listed under Which Tests, add the full root suite whatever row they fall in.
 - On the private `origin` every CI job runs only when started by hand, so the rows above are what runs before a merge.
-- Gradle, which also builds the gomobile AAR, a cold `cargo` build, a desktop debug build and the first Go core build
-  of the build hook each take long and load the whole machine.
+- Gradle, which also builds Concord for Android, a cold `cargo` build, a Concord release build, a desktop debug build
+  and the build hook's first Concord build each take long and load the whole machine.
 - Report a check you could not run as skipped, with the reason: a missing toolchain (`make doctor` names it), another
   platform, or no device. Never report it as passed.
 
@@ -74,22 +74,22 @@ them alone, and that run decides the exit code; the bundle failures printed abov
 
 After a rerun, report the first run's count and the rerun's result, not just the last line.
 
-## The `rsFeature` Pass
+## No `rsFeature` Pass
 
-Only when the change touches code behind an `rsFeature` check, or a test inside `if (rsFeature) { ... }`, also run the
-tests it reaches with the feature on: set `const rsFeature = true;` in `lib/common/constant.dart`, run them, and set it
-back before staging. Report both counts. The check forms are in rsFeature in `.agents/rules.md`.
+The rs line has no `rsFeature` checks left to turn on: `tool/strip_rs_feature.dart` removed them, so dev's
+`rsFeature` pass does not apply here and `make strip-check` finds nothing to strip.
 
-## A Worktree Without the Go Core Build
+## A Worktree Without the Concord Build
 
-The build hook builds the Go core for every `flutter test`, which needs Go, and on Linux and Windows `cargo`. For a
-Dart-only run in a worktree that cannot build it:
+The build hook builds Concord for every `flutter test`, which needs `cargo` and the toolchain pinned in
+`concord/rust-toolchain.toml`. For a Dart-only run in a worktree that cannot build it:
 
 1. Check out the submodules at the commits the tree records (`git submodule status`), or extract them from another
    checkout's submodule with `git -C <checkout>/<submodule> archive <commit> | tar -x -C <submodule>`.
    `flutter pub get` needs `plugins/prism_ui`; every `flutter test` needs the asset
-   `core/Clash.Meta/component/ca/ca-certificates.crt` and stops at `No file or variants found for asset` without it;
-   tests under `test/models/` and `test/providers/` read Go sources under `core/Clash.Meta/`.
+   `concord/assets/ca-certificates.crt` and stops at `No file or variants found for asset` without it; tests under
+   `test/core/api/`, `test/models/`, `test/features/` and `test/providers/` read `concord/schema/` and Concord's
+   config goldens.
 2. Turn off only the `setup` hook:
    `perl -0pi -e 's/(setup:\n\s+build_assets:) true/$1 false/' pubspec.yaml`. Keep `rust_api` on: the editor tests in
    `test/plugins/code_forge/` and `test/core/desktop/ipc_native_test.dart` load the Rust library (see

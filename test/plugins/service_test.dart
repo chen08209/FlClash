@@ -1,24 +1,14 @@
 import 'dart:convert';
-import 'dart:io';
-
+import 'dart:isolate';
 import 'package:fl_clash/common/constant.dart';
-import 'package:fl_clash/core/method.dart';
-import 'package:fl_clash/core/spill.dart';
+import 'package:fl_clash/core/api/channels/ffi_channel.dart';
+import 'package:fl_clash/core/api/channels/method_channel_channel.dart';
+import 'package:fl_clash/core/api/frame_channel.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:path/path.dart';
-
-import '../helpers/app_paths.dart';
-
-class _RecordingListener with ServiceListener {
-  final events = <CoreEvent>[];
-
-  @override
-  void onServiceEvent(CoreEvent event) => events.add(event);
-}
 
 class _RecordingStopListener with ServiceListener {
   var stops = 0;
@@ -35,13 +25,8 @@ class _ThrowingListener with ServiceListener {
   var called = false;
 
   @override
-  void onServiceEvent(CoreEvent event) {
-    called = true;
-    throw StateError('listener boom');
-  }
-
-  @override
   void onServiceStopped([ServiceStartFailure? failure]) {
+    called = true;
     throw StateError('listener boom');
   }
 }
@@ -52,9 +37,23 @@ class _MutatingListener with ServiceListener {
   _MutatingListener(this.target);
 
   @override
-  void onServiceEvent(CoreEvent event) {
+  void onServiceStopped([ServiceStartFailure? failure]) {
     Service().removeListener(target);
   }
+}
+
+class _ReportedLibrary implements ConcordLibrary {
+  @override
+  bool initialize() => true;
+
+  @override
+  int open(SendPort port) => 1;
+
+  @override
+  bool send(int session, Uint8List frame) => true;
+
+  @override
+  void close(int session) {}
 }
 
 void main() {
@@ -81,17 +80,19 @@ void main() {
   void mockCoreChannel(Future<Object?>? Function(MethodCall call) handler) =>
       mockChannel(handler, target: coreChannel);
 
-  Future<void> emitFromPlatform(Object? arguments) async {
-    final payload = json.encode(
-      CoreMethodCall(method: CoreMethod.message, arguments: arguments).toJson(),
-    );
+  Future<void> emitFromPlatform(Uint8List frame) async {
     await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .handlePlatformMessage(
           channelName,
-          codec.encodeMethodCall(MethodCall('event', utf8.encode(payload))),
+          codec.encodeMethodCall(MethodCall('event', frame)),
           null,
         );
   }
+
+  setUpAll(() {
+    Service.framesFactory = (core, {onSession}) =>
+        MethodChannelFrameChannel(core);
+  });
 
   setUp(() {
     calls = <MethodCall>[];
@@ -145,7 +146,6 @@ void main() {
           const SharedState(
             stopTip: 'stopTip',
             startTip: 'startTip',
-            localNetworkTip: 'localNetworkTip',
             currentProfileName: 'profile',
             stopText: 'stop',
             onlyStatisticsProxy: false,
@@ -160,7 +160,6 @@ void main() {
       const state = SharedState(
         stopTip: 'stopTip',
         startTip: 'startTip',
-        localNetworkTip: 'localNetworkTip',
         currentProfileName: 'profile',
         stopText: 'stop',
         onlyStatisticsProxy: true,
@@ -284,194 +283,133 @@ void main() {
     });
   });
 
-  group('invokeMethod', () {
-    test('encodes the call and decodes the response envelope', () async {
-      mockCoreChannel(
-        (_) async => utf8.encode(
-          json.encode(
-            const CoreMethodResponse(id: '7', result: {'up': 1}).toJson(),
-          ),
-        ),
-      );
+  group('frames', () {
+    test('an event call hands its bytes to the frame channel', () async {
+      final received = <Uint8List>[];
+      final subscription = Service().frames.frames.listen(received.add);
+      addTearDown(subscription.cancel);
 
-      final response = await Service().invokeMethod(
-        const CoreMethodCall(
-          id: '7',
-          method: CoreMethod.trafficCurrent,
-          arguments: true,
-        ),
-      );
+      await emitFromPlatform(Uint8List.fromList([1, 2, 3]));
+      await emitFromPlatform(Uint8List.fromList([4]));
+      await pumpEventQueue();
 
-      final sent =
-          json.decode(calls.single.arguments as String) as Map<String, Object?>;
-      expect(calls.single.method, 'invokeMethod');
-      expect(sent['id'], '7');
-      expect(sent['method'], CoreMethod.trafficCurrent.wireName);
-      expect(
-        sent['arguments'],
-        isTrue,
-        reason: 'arguments stay structured JSON, never a pre-encoded string',
-      );
-      expect(response.id, '7');
-      expect(response.result, {'up': 1});
-      expect(response.error, isNull);
+      expect(received, [
+        [1, 2, 3],
+        [4],
+      ]);
     });
 
-    test('decodes a large UTF-8 envelope off the calling isolate', () async {
-      final names = List.generate(5000, (index) => '节点-$index');
-      mockCoreChannel(
-        (_) async => utf8.encode(
-          json.encode(CoreMethodResponse(id: '3', result: names).toJson()),
-        ),
-      );
-
-      final response = await Service().invokeMethod(
-        const CoreMethodCall(id: '3', method: CoreMethod.proxyList),
-      );
-
-      expect(response.result, names);
-    });
-
-    test(
-      'runs the call\'s own model where it decodes a large envelope',
-      () async {
-        final names = List.generate(5000, (index) => '节点-$index');
-        mockCoreChannel(
-          (_) async => utf8.encode(
-            json.encode(CoreMethodResponse(id: '3', result: names).toJson()),
-          ),
-        );
-
-        final response = await Service().invokeMethod(
-          const CoreMethodCall(id: '3', method: CoreMethod.proxyList),
-          model: _lengthOf,
-        );
-
-        expect(response.result, 5000);
-      },
-    );
-
-    test('reads an envelope the Core spilled to a file', () async {
-      final home = Directory.systemTemp.createTempSync('service_spill');
-      addTearDown(() => home.deleteSync(recursive: true));
-      await useAppPaths(home);
-      final file = File(join(home.path, coreSpillDirectoryName, '1.json'))
-        ..createSync(recursive: true)
-        ..writeAsStringSync(
-          json.encode(
-            const CoreMethodResponse(id: '8', result: 'big').toJson(),
-          ),
-        );
-      mockCoreChannel(
-        (_) async => utf8.encode(
-          json.encode(CoreMethodResponse(id: '8', file: file.path).toJson()),
-        ),
-      );
-
-      final response = await Service().invokeMethod(
-        const CoreMethodCall(id: '8', method: CoreMethod.configRead),
-      );
-
-      expect(response.result, 'big');
-      expect(file.existsSync(), isFalse);
-    });
-
-    test('fails when the platform sends no envelope', () async {
+    test('a frame sent to the Core reaches the core channel as send', () async {
       mockCoreChannel((_) async => null);
 
-      await expectLater(
-        Service().invokeMethod(
-          const CoreMethodCall(method: CoreMethod.trafficCurrent),
-        ),
-        throwsA(
-          isA<CoreMethodException>().having(
-            (error) => error.code,
-            'code',
-            'no_response',
-          ),
-        ),
-      );
+      Service().frames.send(Uint8List.fromList([9, 8, 7]));
+      await pumpEventQueue();
+
+      expect(calls.single.method, 'send');
+      expect(calls.single.arguments, Uint8List.fromList([9, 8, 7]));
     });
 
-    test('surfaces a Core error inside the envelope', () async {
-      mockCoreChannel(
-        (_) async => utf8.encode(
-          json.encode({
-            'id': '1',
-            'result': null,
-            'error': {'code': 'unavailable', 'message': 'core down'},
-          }),
-        ),
-      );
+    test('a frame given as a plain list is sent as bytes', () async {
+      mockCoreChannel((_) async => null);
 
-      final response = await Service().invokeMethod(
-        const CoreMethodCall(id: '1', method: CoreMethod.trafficCurrent),
-      );
+      Service().frames.send([5, 6]);
+      await pumpEventQueue();
 
-      expect(response.error, isNotNull);
-      expect(response.error!.code, 'unavailable');
-      expect(response.error!.message, 'core down');
+      expect(calls.single.arguments, isA<Uint8List>());
+      expect(calls.single.arguments, [5, 6]);
+    });
+
+    test('a failed send ends the connection', () async {
+      mockCoreChannel((_) async => throw PlatformException(code: 'gone'));
+      final frames = Service().frames..connect();
+      addTearDown(frames.disconnect);
+      final events = <ChannelEvent>[];
+      final subscription = frames.events.listen(events.add);
+      addTearDown(subscription.cancel);
+
+      frames.send([1]);
+      await pumpEventQueue();
+
+      expect(events.single, isA<ChannelDisconnected>());
+      expect(frames.generation, isNull);
     });
   });
 
-  group('event dispatch', () {
-    test('fans a batched event list out to every listener', () async {
-      final first = _RecordingListener();
-      final second = _RecordingListener();
+  group('ffi frames', () {
+    late _ReportedLibrary library;
+
+    setUp(() {
+      library = _ReportedLibrary();
+      Service.resetInstance();
+      Service.framesFactory = (core, {onSession}) =>
+          FfiFrameChannel(library: () => library, onSession: onSession);
+    });
+
+    tearDown(() async {
+      await Service().frames.close();
+      Service.resetInstance();
+      Service.framesFactory = (core, {onSession}) =>
+          MethodChannelFrameChannel(core);
+    });
+
+    test('init tells the platform the frames do not use its channel', () async {
+      mockChannel((_) async => '');
+
+      await Service().init();
+
+      expect(calls.single.method, 'init');
+      expect(calls.single.arguments, 'ffi');
+    });
+
+    test('the platform learns the session that opens and ends', () async {
+      mockChannel((_) async => null);
+      final frames = Service().frames;
+
+      frames.connect();
+      frames.disconnect();
+      await pumpEventQueue();
+
+      expect(calls.map((call) => call.method), ['session', 'session']);
+      expect(calls.map((call) => call.arguments), [1, 0]);
+    });
+
+    test('a platform without the report does not break the session', () async {
+      mockChannel((_) async => throw MissingPluginException());
+      final frames = Service().frames..connect();
+      await pumpEventQueue();
+
+      expect(frames.generation, isNotNull);
+    });
+  });
+
+  group('listeners', () {
+    test('a stop report reaches every listener', () async {
+      mockChannel((_) async => true);
+      final first = _RecordingStopListener();
+      final second = _RecordingStopListener();
       Service().addListener(first);
       Service().addListener(second);
       addTearDown(() {
         Service().removeListener(first);
         Service().removeListener(second);
       });
+      await Service().start();
 
-      await emitFromPlatform([
-        {'type': CoreEventType.crash.name, 'data': 'boom'},
-        {'type': CoreEventType.loaded.name, 'data': 'provider'},
-      ]);
+      await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .handlePlatformMessage(
+            channelName,
+            codec.encodeMethodCall(
+              MethodCall('stopped', {'revision': calls.last.arguments}),
+            ),
+            null,
+          );
 
-      for (final listener in [first, second]) {
-        expect(listener.events.map((event) => event.type), [
-          CoreEventType.crash,
-          CoreEventType.loaded,
-        ]);
-        expect(listener.events.first.data, 'boom');
-      }
-    });
-
-    test('accepts a single event object as well as a list', () async {
-      final listener = _RecordingListener();
-      Service().addListener(listener);
-      addTearDown(() => Service().removeListener(listener));
-
-      await emitFromPlatform({
-        'type': CoreEventType.crash.name,
-        'data': 'boom',
-      });
-
-      expect(listener.events.single.type, CoreEventType.crash);
-    });
-
-    test('a throwing listener does not starve the others', () async {
-      final throwing = _ThrowingListener();
-      final healthy = _RecordingListener();
-      Service().addListener(throwing);
-      Service().addListener(healthy);
-      addTearDown(() {
-        Service().removeListener(throwing);
-        Service().removeListener(healthy);
-      });
-
-      await emitFromPlatform([
-        {'type': CoreEventType.crash.name, 'data': 'boom'},
-      ]);
-
-      expect(throwing.called, isTrue);
-      expect(healthy.events.single.type, CoreEventType.crash);
+      expect([first.stops, second.stops], [1, 1]);
     });
 
     test('mutating listeners during dispatch does not throw', () async {
-      final second = _RecordingListener();
+      mockChannel((_) async => true);
+      final second = _RecordingStopListener();
       final mutating = _MutatingListener(second);
       Service().addListener(mutating);
       Service().addListener(second);
@@ -479,42 +417,44 @@ void main() {
         Service().removeListener(mutating);
         Service().removeListener(second);
       });
+      await Service().start();
 
       await expectLater(
-        emitFromPlatform([
-          {'type': CoreEventType.crash.name, 'data': 'boom'},
-        ]),
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .handlePlatformMessage(
+              channelName,
+              codec.encodeMethodCall(
+                MethodCall('stopped', {'revision': calls.last.arguments}),
+              ),
+              null,
+            ),
         completes,
       );
     });
 
-    test('an unparsable event is dropped without losing the batch', () async {
-      final listener = _RecordingListener();
-      Service().addListener(listener);
-      addTearDown(() => Service().removeListener(listener));
-
-      await emitFromPlatform([
-        {'type': 'notAnEventType'},
-        {'type': CoreEventType.crash.name, 'data': 'boom'},
-      ]);
-
-      expect(listener.events.single.type, CoreEventType.crash);
-    });
-
-    test('a removed listener stops receiving events', () async {
-      final listener = _RecordingListener();
+    test('a removed listener stops receiving reports', () async {
+      mockChannel((_) async => true);
+      final listener = _RecordingStopListener();
       Service().addListener(listener);
       expect(Service().hasListeners, isTrue);
       Service().removeListener(listener);
       expect(Service().hasListeners, isFalse);
+      await Service().start();
 
-      await emitFromPlatform([
-        {'type': CoreEventType.crash.name, 'data': 'boom'},
-      ]);
+      await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .handlePlatformMessage(
+            channelName,
+            codec.encodeMethodCall(
+              MethodCall('stopped', {'revision': calls.last.arguments}),
+            ),
+            null,
+          );
 
-      expect(listener.events, isEmpty);
+      expect(listener.stops, 0);
     });
+  });
 
+  group('platform handler', () {
     test('an unknown platform method is reported as unimplemented', () async {
       final unknown = await TestDefaultBinaryMessengerBinding
           .instance
@@ -544,5 +484,3 @@ void main() {
     });
   });
 }
-
-Object? _lengthOf(Object? result) => (result as List).length;

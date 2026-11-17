@@ -301,7 +301,15 @@ class GeneralView extends ConsumerWidget {
             )
             .ensureControllerSecret(),
       ),
-      if (externalController) const ExternalControllerSecretItem(),
+      if (externalController) ...[
+        const ExternalControllerSecretItem(),
+        _clashToggle(
+          title: (l) => l.externalControllerCors,
+          select: (state) => state.externalControllerCors,
+          update: (state, value) =>
+              state.copyWith(externalControllerCors: value),
+        ),
+      ],
       const AuthenticationItem(),
       if (authentication) ...const [
         AuthenticationAccountItem(),
@@ -407,7 +415,11 @@ class GeneralView extends ConsumerWidget {
               authentication: authentication,
               externalController: externalController,
             ),
-            footer: appLocalizations.externalControllerDesc,
+            footer: [
+              appLocalizations.externalControllerDesc,
+              if (externalController)
+                appLocalizations.externalControllerCorsDesc,
+            ].join('\n'),
           ),
           generateSection(
             title: appLocalizations.connection,

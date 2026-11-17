@@ -30,6 +30,7 @@ void main() {
       expect(result.session?.owner, CoreProcessOwner.direct);
       expect(result.session?.connectionGeneration, 1);
       expect(lifecycle.state, isA<DesktopCoreRunning>());
+      expect(transport.expectedSessions, [_sessionId]);
       await _closeRunning(lifecycle, transport, launcher.lease, 1);
     },
   );

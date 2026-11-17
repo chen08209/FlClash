@@ -424,10 +424,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get stopVpn => 'Остановка VPN…';
 
   @override
-  String get localNetworkDeniedTip =>
-      'Доступ к локальной сети запрещён: используется стек gvisor, локальная сеть недоступна.';
-
-  @override
   String get compatible => 'Режим совместимости';
 
   @override
@@ -518,6 +514,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get externalControllerSecret => 'Секрет внешнего контроллера';
 
   @override
+  String get externalControllerCors => 'Разрешить кросс-доменный доступ';
+
+  @override
+  String get externalControllerCorsDesc =>
+      'Веб-панели смогут подключаться с других сайтов.';
+
+  @override
   String get ipv6Desc => 'Трафик IPv6 принимается, только когда IPv6 включён.';
 
   @override
@@ -540,9 +543,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get tcpConcurrent => 'Параллельный TCP';
-
-  @override
-  String get geodataLoader => 'Geo: экономия памяти';
 
   @override
   String get requests => 'Запросы';
@@ -1342,9 +1342,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get hideTimeoutProxies => 'Скрывать прокси с таймаутом';
-
-  @override
-  String get stackMode => 'Режим стека';
 
   @override
   String get network => 'Сеть';
@@ -3009,10 +3006,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get congestionController => 'Управление перегрузкой TCP';
 
   @override
-  String get congestionControllerDesc =>
-      'Управление перегрузкой TCP действует только со стеком mips.';
-
-  @override
   String get routeExcludeAddress => 'Исключённые адреса маршрутов';
 
   @override
@@ -3086,8 +3079,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get udpTimeout => 'Тайм-аут UDP';
 
   @override
-  String get udpTimeoutDesc =>
-      'Тайм-аут UDP задаётся в секундах и действует только со стеками gvisor, system и mixed.';
+  String get udpTimeoutDesc => 'Тайм-аут UDP задаётся в секундах.';
 
   @override
   String get dnsHijackDesc =>

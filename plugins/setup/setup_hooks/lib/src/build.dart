@@ -2,8 +2,8 @@ import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p;
 
 import 'build_cache.dart';
+import 'concord_builder.dart';
 import 'fingerprint.dart';
-import 'go_builder.dart';
 import 'options.dart';
 import 'rust_builder.dart';
 import 'target.dart';
@@ -54,7 +54,7 @@ Future<BuildReport> buildPlatform(BuildRequest request) async {
     final dir => collectPackageInputs(dir),
   };
 
-  final core = await GoBuilder(
+  final core = await ConcordBuilder(
     rootDir: rootDir,
     config: config,
     cache: cache,

@@ -22,14 +22,15 @@ FlClash is a multi-platform proxy client based on ClashMeta (mihomo), built with
   and APIs marked `@Since("3.14")`, such as `rangeEquals` on typed data, fail
   analysis with `sdk_version_since` until the bound moves.
 
+## Build Dependencies
+
+Builds need Flutter and `cargo` with the toolchain pinned in `concord/rust-toolchain.toml`; they need no Go toolchain.
+
 ## Forked Dependencies
 
-One `pubspec.yaml` dependency is pinned to a fork by commit SHA. The fork lives
-under `chen08209`, the same account that owns this repository, so it is
-maintained in-house rather than tracked from a third party: advancing a pin is a
-local decision, and there is no external maintainer to wait on for the patch
-itself. What the fork still waits on is the *upstream* fix that would let the pin
-be dropped entirely, recorded below.
+No `pubspec.yaml` dependency is pinned to a fork. The forks below, all under
+`chen08209`, were folded into the repository; each entry says where their
+behavior lives now.
 
 Each entry records what the fork changes and what has to be true before it can go
 back to the published package, so a future upgrade does not have to rediscover it.
@@ -52,7 +53,7 @@ The `launch_at_startup` fork (`chen08209/launch_at_startup`) was replaced by the
 
 The `yaml_writer` fork (`chen08209/yaml_writer`) was replaced by
 `lib/common/yaml_writer.dart`. Its key quoting let keys such as `!a`, `'a` or
-`0x1F` reach the Core's yaml.v3 as a parse error or a non-string; a merge key
+`0x1F` reach the Core's YAML parser as a parse error or a non-string; a merge key
 `<<` stays plain on purpose, because `package:yaml` keeps it as an ordinary key
 and the Core applies the merge.
 
@@ -106,7 +107,8 @@ sudo apt-get install ninja-build libgtk-3-dev libsecret-1-dev
 
 Windows:
 
-- GCC and Inno Setup.
+- Inno Setup, and on x64 NASM for BoringSSL's assembly (CI installs it with
+  `choco install nasm`).
 
 macOS:
 

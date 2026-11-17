@@ -259,22 +259,11 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
                 host.runtime?.vpn == options.enable -> null
                 else -> transitioning(RunState.STARTING) {
                     StartFailure.SERVICE.takeUnless {
-                        host.startService(withLocalNetworkFallback(options)) && isCurrent(request)
+                        host.startService(options) && isCurrent(request)
                     }
                 }
             }
         }
-    }
-
-    // system/mixed hand TCP to the kernel via the tun subnet, which Android 17 gates as local network.
-    private fun withLocalNetworkFallback(options: VpnOptions): VpnOptions {
-        if (!options.enable || options.stack !in KERNEL_TCP_STACKS ||
-            host.isLocalNetworkPermissionGranted()
-        ) {
-            return options
-        }
-        host.showToast(sharedState.localNetworkTip)
-        return options.copy(stack = FALLBACK_STACK)
     }
 
     // Flutter's startListener and the native quickSetup both open the Core's listeners before any
@@ -367,17 +356,11 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
     private fun isCurrent(request: RunRequest): Boolean = arbiter.isCurrent(request)
 
     internal companion object {
-        val KERNEL_TCP_STACKS = setOf("system", "mixed")
-        const val FALLBACK_STACK = "gvisor"
-
-        /**
-         * The Core init payload. The key spelling is a cross-language contract with the Go wrapper,
-         * not an implementation detail.
-         */
+        /** The `core.init` params of the Core protocol; the key spelling is its contract. */
         fun initParams(homeDirPath: String, sdkInt: Int): String = Gson().toJson(
             mapOf(
-                "home-dir" to homeDirPath,
-                "version" to sdkInt,
+                "home" to homeDirPath,
+                "sdkInt" to sdkInt,
             ),
         )
 

@@ -36,7 +36,7 @@ int _minuteOf(int micros) => micros ~/ Duration.microsecondsPerMinute;
 /// Following the log's end, the list holds what the log holds. Off the end,
 /// it keeps the rows it has, trimmed or not, and takes new ones up to
 /// [rowLimit].
-class ConnectionRows extends ChangeNotifier implements MinuteRows<String> {
+class ConnectionRows extends ChangeNotifier implements MinuteRows<int> {
   final int rowLimit;
 
   ConnectionRows({this.rowLimit = 2 * maxRequestsLength});
@@ -47,9 +47,9 @@ class ConnectionRows extends ChangeNotifier implements MinuteRows<String> {
   var _following = true;
   var _hovered = false;
   var _staggersDetails = false;
-  final _waiting = <String>[];
+  final _waiting = <int>[];
   var _refollowWhenFree = false;
-  final _held = <String, _Held>{};
+  final _held = <int, _Held>{};
   var _active = 0;
   var _failed = 0;
 
@@ -58,12 +58,12 @@ class ConnectionRows extends ChangeNotifier implements MinuteRows<String> {
 
   /// Oldest first.
   final _shown = <_Held>[];
-  final _shownIds = HashSet<String>();
+  final _shownIds = HashSet<int>();
   final _minutes = <_Minute>[];
   Int32List? _minuteRows;
-  final _runs = HashMap<Object, List<String>>();
-  final _repeats = <String, int>{};
-  Map<String, int>? _repeatsView;
+  final _runs = HashMap<Object, List<int>>();
+  final _repeats = <int, int>{};
+  Map<int, int>? _repeatsView;
 
   bool get following => _following;
 
@@ -102,16 +102,16 @@ class ConnectionRows extends ChangeNotifier implements MinuteRows<String> {
   ];
 
   /// How many failed dials each merged row stands for, where more than one.
-  Map<String, int> get repeats => _repeatsView ??= Map.unmodifiable(_repeats);
+  Map<int, int> get repeats => _repeatsView ??= Map.unmodifiable(_repeats);
 
-  TrackerInfo infoOf(String id) => heldInfoOf(id)!;
+  TrackerInfo infoOf(int id) => heldInfoOf(id)!;
 
   /// Null once the rows have let [id] go, which its row on screen may still
   /// be asked of until the next frame builds the rows again.
-  TrackerInfo? heldInfoOf(String id) => _log?[id] ?? _held[id]?.info;
+  TrackerInfo? heldInfoOf(int id) => _log?[id] ?? _held[id]?.info;
 
   /// As of its last change other than traffic, which [traffic] tells of.
-  TrackerInfo detailsOf(String id) => _held[id]!.info;
+  TrackerInfo detailsOf(int id) => _held[id]!.info;
 
   Listenable get traffic => _traffic;
 
@@ -207,7 +207,7 @@ class ConnectionRows extends ChangeNotifier implements MinuteRows<String> {
     update(log);
   }
 
-  void _open(ConnectionLog log, String id, {required bool placing}) {
+  void _open(ConnectionLog log, int id, {required bool placing}) {
     final trackerInfo = log[id];
     if (trackerInfo == null || _held.containsKey(id)) {
       return;
@@ -424,7 +424,7 @@ class ConnectionRows extends ChangeNotifier implements MinuteRows<String> {
     _setRepeats(run);
   }
 
-  void _setRepeats(List<String> run) {
+  void _setRepeats(List<int> run) {
     if (run.length > 1) {
       _repeats[run.last] = run.length;
     } else {
@@ -460,7 +460,7 @@ class ConnectionRows extends ChangeNotifier implements MinuteRows<String> {
     _minuteRows = null;
   }
 
-  int? _shownIndexOf(String id) {
+  int? _shownIndexOf(int id) {
     if (!_shownIds.contains(id)) {
       return null;
     }
@@ -511,7 +511,7 @@ class ConnectionRows extends ChangeNotifier implements MinuteRows<String> {
   int get length => _shown.length + _minutes.length;
 
   @override
-  MinuteRow<String> rowAt(int index) {
+  MinuteRow<int> rowAt(int index) {
     final rows = _rowsOfMinutes;
     final group = _lowerBound(rows.length, (at) => rows[at] - index - 1) - 1;
     final minute = _minutes[group];
@@ -531,7 +531,7 @@ class ConnectionRows extends ChangeNotifier implements MinuteRows<String> {
   }
 
   @override
-  Key keyOf(String id) => ValueKey(id);
+  Key keyOf(int id) => ValueKey(id);
 
   @override
   int? indexOfKey(Key key) {
@@ -539,7 +539,7 @@ class ConnectionRows extends ChangeNotifier implements MinuteRows<String> {
       return null;
     }
     switch (key.value) {
-      case final String id:
+      case final int id:
         final at = _shownIndexOf(id);
         if (at == null) {
           return null;

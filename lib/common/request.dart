@@ -112,6 +112,7 @@ class Request {
   /// Null when this build is current; throws when GitHub cannot be asked.
   Future<Map<String, dynamic>?> checkForUpdate(UpdateChannel channel) async {
     final release = await newestRelease(channel);
+    if (!rsReleasesOnGitHub) return null;
     final remote = ReleaseVersion.tryParse(release['tag_name'] as String);
     final installed = installedReleaseVersion(globalState.packageInfo.version);
     return remote != null && remote > installed ? release : null;

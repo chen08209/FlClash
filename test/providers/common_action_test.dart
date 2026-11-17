@@ -1,7 +1,6 @@
 import 'dart:async';
 
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
@@ -14,17 +13,18 @@ import 'package:mocktail/mocktail.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:riverpod/riverpod.dart';
 
-class MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
+import '../helpers/core_mocks.dart';
 
 const runningVersion = '0.8.96';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late MockCoreHandlerInterface core;
+  late CoreMocks mocks;
+
+  setUp(() => mocks = coreMocks());
 
   setUpAll(() {
-    core = MockCoreHandlerInterface();
     globalState.packageInfo = PackageInfo(
       appName: 'FlClash',
       packageName: 'com.follow.clash',
@@ -33,13 +33,9 @@ void main() {
     );
   });
 
-  setUp(() => reset(core));
-
   ProviderContainer buildContainer() {
     final container = ProviderContainer(
-      overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
-      ],
+      overrides: [coreHandlerProvider.overrideWithValue(mocks.controller)],
     );
     addTearDown(container.dispose);
     return container;
@@ -78,20 +74,46 @@ void main() {
     });
   });
 
-  group('CommonAction.updateTraffic', () {
-    test('records the sampled traffic and the running total', () async {
+  group('CommonAction.setTrafficFeed', () {
+    late StreamController<TrafficSample> feed;
+
+    ProviderContainer buildFeedContainer({bool connected = true}) {
       final container = buildContainer();
+      container.read(commonActionProvider);
+      if (connected) {
+        container.read(coreStatusProvider.notifier).value =
+            CoreStatus.connected;
+      }
+      return container;
+    }
+
+    void stubFeed() {
+      when(
+        () => mocks.api.watchTraffic(
+          intervalMs: any(named: 'intervalMs'),
+          onlyProxy: any(named: 'onlyProxy'),
+        ),
+      ).thenAnswer((_) => feed.stream);
+    }
+
+    setUp(() {
+      feed = StreamController<TrafficSample>.broadcast();
+      stubFeed();
+    });
+
+    tearDown(() => feed.close());
+
+    test('records the sampled traffic and the running total', () async {
+      final container = buildFeedContainer();
       container
           .read(appSettingProvider.notifier)
           .update((state) => state.copyWith(onlyStatisticsProxy: true));
-      when(
-        () => core.getTraffic(true),
-      ).thenAnswer((_) async => const Traffic(up: 10, down: 20));
-      when(
-        () => core.getTotalTraffic(true),
-      ).thenAnswer((_) async => const Traffic(up: 100, down: 200));
 
-      await container.read(commonActionProvider.notifier).updateTraffic();
+      container.read(commonActionProvider.notifier).setTrafficFeed(true);
+      feed.add(
+        const TrafficSample(up: 10, down: 20, totalUp: 100, totalDown: 200),
+      );
+      await pumpEventQueue();
 
       expect(container.read(trafficsProvider).list.last.up, 10);
       expect(container.read(trafficsProvider).list.last.down, 20);
@@ -99,61 +121,78 @@ void main() {
         container.read(totalTrafficProvider),
         const Traffic(up: 100, down: 200),
       );
-      verify(() => core.getTraffic(true)).called(1);
-      verify(() => core.getTotalTraffic(true)).called(1);
+      verify(
+        () => mocks.api.watchTraffic(intervalMs: 1000, onlyProxy: true),
+      ).called(1);
     });
 
-    test('swallows a core failure and leaves the total untouched', () async {
-      final container = buildContainer();
+    test('does not subscribe while the core is not connected', () async {
+      final container = buildFeedContainer(connected: false);
+
+      container.read(commonActionProvider.notifier).setTrafficFeed(true);
+      await pumpEventQueue();
+
+      expect(feed.hasListener, isFalse);
+
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      await pumpEventQueue();
+
+      expect(feed.hasListener, isTrue);
+    });
+
+    test('ends the subscription when the feed is turned off', () async {
+      final container = buildFeedContainer();
+      final action = container.read(commonActionProvider.notifier);
+
+      action.setTrafficFeed(true);
+      await pumpEventQueue();
+      expect(feed.hasListener, isTrue);
+
+      action.setTrafficFeed(false);
+      await pumpEventQueue();
+      expect(feed.hasListener, isFalse);
+    });
+
+    test('turning the feed on twice subscribes once', () async {
+      final container = buildFeedContainer();
+      final action = container.read(commonActionProvider.notifier);
+
+      action
+        ..setTrafficFeed(true)
+        ..setTrafficFeed(true);
+
+      verify(
+        () => mocks.api.watchTraffic(
+          intervalMs: any(named: 'intervalMs'),
+          onlyProxy: any(named: 'onlyProxy'),
+        ),
+      ).called(1);
+    });
+
+    test('resubscribes with the new filter when it changes', () async {
+      final container = buildFeedContainer();
+      container.read(commonActionProvider.notifier).setTrafficFeed(true);
+
+      container
+          .read(appSettingProvider.notifier)
+          .update((state) => state.copyWith(onlyStatisticsProxy: true));
+
+      verify(
+        () => mocks.api.watchTraffic(intervalMs: 1000, onlyProxy: true),
+      ).called(1);
+    });
+
+    test('keeps the total untouched when the feed fails', () async {
+      final container = buildFeedContainer();
       final before = container.read(totalTrafficProvider);
-      when(() => core.getTraffic(any())).thenThrow(StateError('core down'));
+      container.read(commonActionProvider.notifier).setTrafficFeed(true);
 
-      await expectLater(
-        container.read(commonActionProvider.notifier).updateTraffic(),
-        completes,
-      );
+      feed.addError(StateError('core down'));
+      await pumpEventQueue();
+
       expect(container.read(totalTrafficProvider), before);
+      expect(feed.hasListener, isTrue);
     });
-
-    test('does not record a total when only the total call fails', () async {
-      final container = buildContainer();
-      final before = container.read(totalTrafficProvider);
-      when(
-        () => core.getTraffic(any()),
-      ).thenAnswer((_) async => const Traffic(up: 1, down: 2));
-      when(() => core.getTotalTraffic(any())).thenThrow(StateError('boom'));
-
-      await container.read(commonActionProvider.notifier).updateTraffic();
-
-      expect(container.read(trafficsProvider).list.last.up, 1);
-      expect(container.read(totalTrafficProvider), before);
-    });
-
-    test(
-      'drops concurrent in-flight updates while one is in progress',
-      () async {
-        final container = buildContainer();
-        final completer = Completer<Traffic>();
-        when(() => core.getTraffic(any())).thenAnswer((_) => completer.future);
-        when(
-          () => core.getTotalTraffic(any()),
-        ).thenAnswer((_) => completer.future);
-
-        final first = container
-            .read(commonActionProvider.notifier)
-            .updateTraffic();
-        final second = container
-            .read(commonActionProvider.notifier)
-            .updateTraffic();
-
-        await expectLater(second, completes);
-        completer.complete(const Traffic(up: 5, down: 10));
-        await first;
-
-        verify(() => core.getTraffic(any())).called(1);
-        verify(() => core.getTotalTraffic(any())).called(1);
-      },
-    );
   });
 
   group('CommonAction.autoCheckUpdate', () {

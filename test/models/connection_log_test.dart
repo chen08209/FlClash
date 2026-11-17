@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 final _t0 = DateTime.utc(2026, 11, 21, 8);
 
-TrackerInfo _connection(String id, {int second = 0, int? downloadSpeed}) {
+TrackerInfo _connection(int id, {int second = 0, int? downloadSpeed}) {
   return TrackerInfo(
     id: id,
     start: _t0.add(Duration(seconds: second)),
@@ -19,7 +19,7 @@ TrackerInfo _connection(String id, {int second = 0, int? downloadSpeed}) {
   );
 }
 
-List<String> _ids(ConnectionLog log) => [for (final c in log.list) c.id];
+List<int> _ids(ConnectionLog log) => [for (final c in log.list) c.id];
 
 /// Counts how often a lookup reads it.
 class _ReadQueries extends ListBase<int> {
@@ -47,16 +47,16 @@ class _ReadQueries extends ListBase<int> {
 void main() {
   test('a connection keeps its place when it closes', () {
     var log = ConnectionLog(10).open([
-      _connection('a'),
-      _connection('b', second: 1, downloadSpeed: 900),
-      _connection('c', second: 2),
+      _connection(1),
+      _connection(2, second: 1, downloadSpeed: 900),
+      _connection(3, second: 2),
     ]);
     final closedAt = _t0.add(const Duration(minutes: 1));
 
-    log = log.close(['b'], closedAt);
+    log = log.close([2], closedAt);
 
-    expect(_ids(log), ['a', 'b', 'c']);
-    final closed = log['b']!;
+    expect(_ids(log), [1, 2, 3]);
+    final closed = log[2]!;
     expect(closed.isActive, isFalse);
     expect(closed.closedAt, closedAt);
     expect(closed.downloadSpeed, isNull);
@@ -64,16 +64,16 @@ void main() {
   });
 
   test('a change that changes nothing keeps the revision', () {
-    final log = ConnectionLog(10).open([_connection('a')]);
+    final log = ConnectionLog(10).open([_connection(1)]);
 
-    expect(log.open([_connection('a')]).revision, log.revision);
-    expect(log.close(['gone'], _t0).revision, log.revision);
+    expect(log.open([_connection(1)]).revision, log.revision);
+    expect(log.close([99], _t0).revision, log.revision);
     expect(
-      log.updateTraffic({'gone': (upload: 1, download: 1)}).revision,
+      log.updateTraffic({99: (upload: 1, download: 1)}).revision,
       log.revision,
     );
-    final closed = log.close(['a'], _t0);
-    expect(closed.close(['a'], _t0).revision, closed.revision);
+    final closed = log.close([1], _t0);
+    expect(closed.close([1], _t0).revision, closed.revision);
   });
 
   test('a snapshot keeps the connections it repeats and takes those whose '
@@ -108,15 +108,15 @@ void main() {
 
   test('the history makes way for new closes, never the open connections', () {
     var log = ConnectionLog(2).open([
-      _connection('long'),
-      for (var i = 0; i < 4; i++) _connection('$i', second: i + 1),
+      _connection(100),
+      for (var i = 0; i < 4; i++) _connection(i, second: i + 1),
     ]);
 
-    log = log.close(['0', '1', '2'], _t0);
-    expect(_ids(log), ['long', '1', '2', '3']);
+    log = log.close([0, 1, 2], _t0);
+    expect(_ids(log), [100, 1, 2, 3]);
 
-    log = log.close(['3'], _t0);
-    expect(_ids(log), ['long', '2', '3']);
+    log = log.close([3], _t0);
+    expect(_ids(log), [100, 2, 3]);
     expect(log.activeCount, 1);
   });
 
@@ -161,51 +161,51 @@ void main() {
   test('a long-lived connection closing into a full history stays, and the '
       'earliest closed record makes way for it', () {
     var log = ConnectionLog(2).open([
-      _connection('long'),
-      for (var i = 0; i < 2; i++) _connection('$i', second: i + 1),
+      _connection(100),
+      for (var i = 0; i < 2; i++) _connection(i, second: i + 1),
     ]);
-    log = log.close(['0', '1'], _t0);
+    log = log.close([0, 1], _t0);
 
-    log = log.close(['long'], _t0.add(const Duration(seconds: 1)));
+    log = log.close([100], _t0.add(const Duration(seconds: 1)));
 
-    expect(_ids(log), ['long', '1']);
+    expect(_ids(log), [100, 1]);
     expect(log.activeCount, 0);
   });
 
   test('traffic reaches the connections it names, open or closed', () {
-    var log = ConnectionLog(10).open([_connection('a'), _connection('b')]);
-    log = log.close(['b'], _t0);
+    var log = ConnectionLog(10).open([_connection(1), _connection(2)]);
+    log = log.close([2], _t0);
 
     log = log.updateTraffic({
-      'a': (upload: 10, download: 20),
-      'b': (upload: 3, download: 4),
+      1: (upload: 10, download: 20),
+      2: (upload: 3, download: 4),
     });
 
     expect(
       [for (final c in log.list) (c.id, c.upload, c.download, c.isActive)],
-      [('a', 10, 20, true), ('b', 3, 4, false)],
+      [(1, 10, 20, true), (2, 3, 4, false)],
     );
   });
 
   test('a snapshot adds what the log missed in the order they opened, '
       'refreshes the rest and closes those it no longer lists', () {
     var log = ConnectionLog(10).open([
-      _connection('a', second: 10),
-      _connection('b', second: 20),
-      _connection('fresh', second: 60),
+      _connection(1, second: 10),
+      _connection(2, second: 20),
+      _connection(60, second: 60),
     ]);
     final at = _t0.add(const Duration(seconds: 60, milliseconds: 500));
 
     log = log.sync([
-      _connection('early', second: 5),
-      _connection('b', second: 20, downloadSpeed: 300),
+      _connection(5, second: 5),
+      _connection(2, second: 20, downloadSpeed: 300),
     ], at);
 
-    expect(_ids(log), ['early', 'a', 'b', 'fresh']);
-    expect(log['a']!.closedAt, at, reason: 'missing from the snapshot');
-    expect(log['b']!.downloadSpeed, 300);
+    expect(_ids(log), [5, 1, 2, 60]);
+    expect(log[1]!.closedAt, at, reason: 'missing from the snapshot');
+    expect(log[2]!.downloadSpeed, 300);
     expect(
-      log['fresh']!.isActive,
+      log[60]!.isActive,
       isTrue,
       reason: 'it may be announced before the Core stores it',
     );
@@ -288,16 +288,16 @@ void main() {
   });
 
   test('a snapshot does not reopen a closed connection', () {
-    var log = ConnectionLog(10).open([_connection('a')]);
-    log = log.close(['a'], _t0);
+    var log = ConnectionLog(10).open([_connection(1)]);
+    log = log.close([1], _t0);
 
-    log = log.sync([_connection('a', downloadSpeed: 5)], _t0);
+    log = log.sync([_connection(1, downloadSpeed: 5)], _t0);
 
-    expect(log['a']!.isActive, isFalse);
+    expect(log[1]!.isActive, isFalse);
   });
 
   test('closeAll closes every open connection at once', () {
-    var log = ConnectionLog(10).open([_connection('a'), _connection('b')]);
+    var log = ConnectionLog(10).open([_connection(1), _connection(2)]);
 
     log = log.closeAll(_t0);
 

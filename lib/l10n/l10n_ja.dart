@@ -412,10 +412,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get stopVpn => 'VPNを停止しています…';
 
   @override
-  String get localNetworkDeniedTip =>
-      'ローカルネットワークの権限が拒否されたため gvisor スタックを使用します。LAN にはアクセスできません。';
-
-  @override
   String get compatible => '互換モード';
 
   @override
@@ -503,6 +499,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get externalControllerSecret => '外部コントローラーのシークレット';
 
   @override
+  String get externalControllerCors => 'クロスオリジンアクセスを許可';
+
+  @override
+  String get externalControllerCorsDesc => 'Web パネルが他のサイトから接続できるようにします。';
+
+  @override
   String get ipv6Desc => 'IPv6 トラフィックは IPv6 が有効なときだけ受信します。';
 
   @override
@@ -525,9 +527,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get tcpConcurrent => 'TCP同時接続';
-
-  @override
-  String get geodataLoader => 'Geo低メモリモード';
 
   @override
   String get requests => 'リクエスト';
@@ -1305,9 +1304,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get hideTimeoutProxies => 'タイムアウトしたプロキシを隠す';
-
-  @override
-  String get stackMode => 'スタックモード';
 
   @override
   String get network => 'ネットワーク';
@@ -2872,9 +2868,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get congestionController => 'TCP 輻輳制御';
 
   @override
-  String get congestionControllerDesc => 'TCP 輻輳制御は mips スタックでのみ有効です。';
-
-  @override
   String get routeExcludeAddress => 'ルート除外アドレス';
 
   @override
@@ -2946,8 +2939,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get udpTimeout => 'UDP タイムアウト';
 
   @override
-  String get udpTimeoutDesc =>
-      'UDP タイムアウトは秒単位で、gvisor・system・mixed スタックでのみ有効です。';
+  String get udpTimeoutDesc => 'UDP タイムアウトは秒単位です。';
 
   @override
   String get dnsHijackDesc =>

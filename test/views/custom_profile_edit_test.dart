@@ -1,6 +1,4 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/models.dart';
@@ -15,12 +13,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart' show Override;
 
+import '../helpers/core_mocks.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
 const _profileId = 1;
-
-class _MockCore extends Mock implements CoreHandlerInterface {}
 
 class _TestClashProviders extends ClashProviders {
   @override
@@ -150,7 +147,7 @@ Future<void> _dismissSaveBlocked(WidgetTester tester, String reason) async {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late ProviderContainer container;
-  late _MockCore core;
+  late CoreMocks mocks;
 
   setUpAll(() async {
     loadAppLocalizations(const Locale('en'));
@@ -167,8 +164,8 @@ void main() {
       label: 'p',
       url: 'https://example.com/p',
     ).copyWith(id: 2);
-    core = _MockCore();
-    when(() => core.validateFilters(any())).thenAnswer(
+    mocks = coreMocks();
+    when(() => mocks.api.validateFilters(any())).thenAnswer(
       (invocation) async => {
         for (final (index, filter)
             in (invocation.positionalArguments.single as List<String>).indexed)
@@ -177,7 +174,7 @@ void main() {
     );
     final built = ProviderContainer(
       overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
         profilesProvider.overrideWith(
           () => TestProfiles([profile, subscription]),
         ),
