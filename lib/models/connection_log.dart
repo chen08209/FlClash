@@ -18,7 +18,7 @@ const _changesKept = 8192;
 
 enum ConnectionChangeKind { opened, changed, closed, removed }
 
-typedef ConnectionChange = ({ConnectionChangeKind kind, String id});
+typedef ConnectionChange = ({ConnectionChangeKind kind, int id});
 
 class _Entry {
   /// Traffic as of the last write here; the log's arrays hold the latest.
@@ -31,14 +31,14 @@ class _Entry {
 }
 
 class _Entries {
-  final byId = <String, _Entry>{};
-  final closedOrder = Queue<String>();
+  final byId = <int, _Entry>{};
+  final closedOrder = Queue<int>();
 
   /// Never before the latest start held.
   DateTime? latestStart;
 
   /// As each was last held, oldest first.
-  final trimmed = <String, TrackerInfo>{};
+  final trimmed = <int, TrackerInfo>{};
 
   var upload = Int64List(0);
   var download = Int64List(0);
@@ -59,7 +59,7 @@ class _Entries {
 
   var changesFrom = 0;
   var changeCount = 0;
-  ({int dnsQueryId, int changeCount, List<String> ids})? resolved;
+  ({int dnsQueryId, int changeCount, List<int> ids})? resolved;
 }
 
 /// The connections of this run in the order they opened: every open one, and
@@ -94,19 +94,19 @@ class ConnectionLog {
 
   int get failedCount => _entries.failed;
 
-  TrackerInfo? operator [](String id) {
+  TrackerInfo? operator [](int id) {
     final entry = _entries.byId[id];
     return entry == null ? null : _infoOf(entry);
   }
 
   /// [id] as held, or as last held if the log has since trimmed it.
-  TrackerInfo? lastOf(String id) => this[id] ?? _entries.trimmed[id];
+  TrackerInfo? lastOf(int id) => this[id] ?? _entries.trimmed[id];
 
   /// When every connection the log no longer knows had closed by.
   DateTime? get forgottenBy => _entries.trimmed.values.firstOrNull?.closedAt;
 
   /// The connections DNS query [dnsQueryId] resolved for, newest first.
-  List<String> resolvedBy(int dnsQueryId) {
+  List<int> resolvedBy(int dnsQueryId) {
     final entries = _entries;
     final last = entries.resolved;
     if (last != null &&
@@ -114,7 +114,7 @@ class ConnectionLog {
         last.changeCount == entries.changeCount) {
       return last.ids;
     }
-    final found = List<String>.unmodifiable(
+    final found = List<int>.unmodifiable(
       [
         for (final entry in entries.byId.values)
           if (entry.info.dnsQueries.contains(dnsQueryId)) entry.info.id,
@@ -123,7 +123,7 @@ class ConnectionLog {
     final ids =
         last != null &&
             last.dnsQueryId == dnsQueryId &&
-            const ListEquality<String>().equals(last.ids, found)
+            const ListEquality<int>().equals(last.ids, found)
         ? last.ids
         : found;
     entries.resolved = (
@@ -135,7 +135,7 @@ class ConnectionLog {
   }
 
   /// Orders connections that opened at the same instant.
-  int? seqOf(String id) => _entries.byId[id]?.seq;
+  int? seqOf(int id) => _entries.byId[id]?.seq;
 
   /// What changed after [revision] other than traffic, oldest first, or null
   /// when the changes no longer reach that far back.
@@ -174,7 +174,7 @@ class ConnectionLog {
   ConnectionLog _next() =>
       ConnectionLog._(closedCapacity, _entries, revision + 1);
 
-  void _record(ConnectionChangeKind kind, String id) {
+  void _record(ConnectionChangeKind kind, int id) {
     _entries.changeCount++;
     final changes = _entries.changes;
     changes.add((revision + 1, (kind: kind, id: id)));
@@ -217,7 +217,7 @@ class ConnectionLog {
     return true;
   }
 
-  ConnectionLog updateTraffic(Map<String, RequestTraffic> traffic) {
+  ConnectionLog updateTraffic(Map<int, RequestTraffic> traffic) {
     final entries = _entries;
     var changed = false;
     traffic.forEach((id, traffic) {
@@ -234,7 +234,7 @@ class ConnectionLog {
     return changed ? _next() : this;
   }
 
-  ConnectionLog close(Iterable<String> ids, DateTime at) {
+  ConnectionLog close(Iterable<int> ids, DateTime at) {
     var changed = false;
     for (final id in ids) {
       changed = _close(id, at) || changed;
@@ -258,7 +258,7 @@ class ConnectionLog {
     final byId = entries.byId;
     final placed = byId.length;
     final trimmed = entries.trimmed;
-    final listed = <String>{};
+    final listed = <int>{};
     var changed = false;
     var late = false;
     for (final trackerInfo in open) {
@@ -427,7 +427,7 @@ class ConnectionLog {
     );
   }
 
-  bool _close(String id, DateTime at) {
+  bool _close(int id, DateTime at) {
     final entry = _entries.byId[id];
     if (entry == null || !entry.info.isActive) {
       return false;

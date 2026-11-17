@@ -1,55 +1,9 @@
-import 'dart:io';
-
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
 
-final _source = File('core/Clash.Meta/config/config.go').readAsStringSync();
-
-List<String> _firstArguments(String function) => [
-  for (final match in RegExp(
-    '(?<!func )\\b$function\\(([^,]+),',
-  ).allMatches(_source))
-    match[1]!.trim(),
-];
-
 ProfileOverrides _dns(Dns dns, DnsOverrideKey key) =>
     ProfileOverrides(dns: dns, dnsOverrideKeys: {key});
-
-ProfileOverrides _sniffer(Sniffer sniffer, SnifferOverrideKey key) =>
-    ProfileOverrides(sniffer: sniffer, snifferOverrideKeys: {key});
-
-/// A rule set named `x` in each place the core reads one from.
-final _ruleSetSites = {
-  'cfg.NameServerPolicy': _dns(
-    const Dns(nameserverPolicy: {'rule-set:x': '1.1.1.1'}),
-    DnsOverrideKey.nameserverPolicy,
-  ),
-  'cfg.ProxyServerNameserverPolicy': _dns(
-    const Dns(proxyServerNameserverPolicy: {'RULE-SET:x': '1.1.1.1'}),
-    DnsOverrideKey.proxyServerNameserverPolicy,
-  ),
-  'cfg.FakeIPFilter': _dns(
-    const Dns(fakeIpFilter: ['rule-set:x']),
-    DnsOverrideKey.fakeIpFilter,
-  ),
-  'snifferRaw.ForceDomain': _sniffer(
-    const Sniffer(forceDomain: ['rule-set:x']),
-    SnifferOverrideKey.forceDomain,
-  ),
-  'snifferRaw.SkipDomain': _sniffer(
-    const Sniffer(skipDomain: ['rule-set:x']),
-    SnifferOverrideKey.skipDomain,
-  ),
-  'snifferRaw.SkipSrcAddress': _sniffer(
-    const Sniffer(skipSrcAddress: ['rule-set:x']),
-    SnifferOverrideKey.skipSrcAddress,
-  ),
-  'snifferRaw.SkipDstAddress': _sniffer(
-    const Sniffer(skipDstAddress: ['rule-set:x']),
-    SnifferOverrideKey.skipDstAddress,
-  ),
-};
 
 /// A server dialing through a proxy named `x` in each list the core reads.
 final _serverSites = {
@@ -80,75 +34,6 @@ final _serverSites = {
 };
 
 void main() {
-  group('the core reads names only where the references read them', () {
-    test('every function taking the rule sets is one the sites cover', () {
-      expect(
-        {
-          for (final match in RegExp(
-            r'func (\w+)\([^)]*ruleProviders map\[string\]P\.RuleProvider',
-          ).allMatches(_source))
-            match[1]!,
-        },
-        {
-          'parseSubRules',
-          'parseRules',
-          'parseNameServerPolicy',
-          'parseDNS',
-          'parseFakeIPRules',
-          'parseSniffer',
-          'parseIPCIDR',
-          'parseDomain',
-          'parseIPRuleSet',
-          'parseDomainRuleSet',
-        },
-      );
-    });
-
-    test('each place a rule set is read from is one ruleSets reads', () {
-      final sites = {
-        for (final function in [
-          'parseDomain',
-          'parseIPCIDR',
-          'parseNameServerPolicy',
-          'parseFakeIPRules',
-        ])
-          ..._firstArguments(function),
-      };
-      expect(sites, _ruleSetSites.keys.toSet());
-      // Rules carry their own RULE-SET names; sub-rules a custom profile
-      // never writes.
-      expect(_firstArguments('parseRules'), ['rawCfg.Rule', 'rawRules']);
-      for (final MapEntry(key: site, value: overrides)
-          in _ruleSetSites.entries) {
-        expect(overrides.ruleSets, {'x'}, reason: site);
-        expect(overrides.renamedRuleSets({'x': 'y'}).ruleSets, {
-          'y',
-        }, reason: site);
-      }
-    });
-
-    test('each server list is one dnsProxies reads, and NTP the only other '
-        'dialer a section names', () {
-      expect(_firstArguments('parseNameServer').toSet(), {
-        ..._serverSites.keys,
-      });
-      for (final MapEntry(key: site, value: overrides)
-          in _serverSites.entries) {
-        expect(overrides.dnsProxies, {'x'}, reason: site);
-        expect(overrides.renamedProxies({'x': 'y'}).dnsProxies, {
-          'y',
-        }, reason: site);
-      }
-      expect(RegExp(r'DialerProxy\s+string').allMatches(_source), hasLength(2));
-      const ntp = ProfileOverrides(
-        ntp: Ntp(dialerProxy: 'x'),
-        ntpOverrideKeys: {NtpOverrideKey.dialerProxy},
-      );
-      expect(ntp.ntpProxy, 'x');
-      expect(ntp.renamedProxies({'x': 'y'}).ntpProxy, 'y');
-    });
-  });
-
   group('DNS servers', () {
     test('name the last fragment part without a value, decoded, and a ts or '
         'et host', () {

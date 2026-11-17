@@ -894,12 +894,6 @@ abstract class AppLocalizations {
   /// **'Stopping VPN…'**
   String get stopVpn;
 
-  /// No description provided for @localNetworkDeniedTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Local network permission denied: using the gvisor stack, LAN is unreachable.'**
-  String get localNetworkDeniedTip;
-
   /// No description provided for @compatible.
   ///
   /// In en, this message translates to:
@@ -1074,6 +1068,18 @@ abstract class AppLocalizations {
   /// **'External controller secret'**
   String get externalControllerSecret;
 
+  /// No description provided for @externalControllerCors.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow cross-origin access'**
+  String get externalControllerCors;
+
+  /// No description provided for @externalControllerCorsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Web dashboards can connect from other sites.'**
+  String get externalControllerCorsDesc;
+
   /// No description provided for @ipv6Desc.
   ///
   /// In en, this message translates to:
@@ -1121,12 +1127,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'TCP concurrent'**
   String get tcpConcurrent;
-
-  /// No description provided for @geodataLoader.
-  ///
-  /// In en, this message translates to:
-  /// **'Geo low-memory mode'**
-  String get geodataLoader;
 
   /// No description provided for @requests.
   ///
@@ -2609,12 +2609,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hide timed-out proxies'**
   String get hideTimeoutProxies;
-
-  /// No description provided for @stackMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Stack mode'**
-  String get stackMode;
 
   /// No description provided for @network.
   ///
@@ -5376,12 +5370,6 @@ abstract class AppLocalizations {
   /// **'TCP congestion control'**
   String get congestionController;
 
-  /// No description provided for @congestionControllerDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'TCP congestion control works only with the mips stack.'**
-  String get congestionControllerDesc;
-
   /// No description provided for @routeExcludeAddress.
   ///
   /// In en, this message translates to:
@@ -5517,7 +5505,7 @@ abstract class AppLocalizations {
   /// No description provided for @udpTimeoutDesc.
   ///
   /// In en, this message translates to:
-  /// **'The UDP timeout is in seconds and works only with the gvisor, system and mixed stacks.'**
+  /// **'The UDP timeout is in seconds.'**
   String get udpTimeoutDesc;
 
   /// No description provided for @dnsHijackDesc.

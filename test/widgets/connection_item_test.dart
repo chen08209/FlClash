@@ -36,7 +36,7 @@ TrackerInfo _tracker({
   List<String> chains = const [],
 }) {
   return TrackerInfo(
-    id: '1',
+    id: 1,
     start: DateTime(2026, 1, 1, 10, 30),
     metadata: Metadata(
       network: 'tcp',

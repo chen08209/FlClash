@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/mitm_module.dart';
+import 'package:fl_clash/core/api/mapping.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
@@ -45,32 +46,14 @@ Future<List<Group>> toGroupsTask(ComputeGroupsState data) async {
 
 @visibleForTesting
 Future<List<Group>> buildGroups(ComputeGroupsState state) async {
-  final proxiesData = state.proxiesData;
-  final all = proxiesData.all;
-  final sortType = state.sortType;
-  final delayMap = state.delayMap;
-  final selectedMap = state.selectedMap;
-  final defaultTestUrl = state.defaultTestUrl;
-  final proxies = proxiesData.proxies;
-  if (proxies.isEmpty) return [];
-  final groups = <Group>[];
-  for (final groupName in all) {
-    final raw = proxies[groupName];
-    if (raw is! Map) continue;
-    if (!GroupTypeExtension.valueList.contains(raw['type'])) continue;
-    final memberNames = raw['all'];
-    final group = Map<String, dynamic>.from(raw);
-    group['all'] = memberNames is List
-        ? memberNames.map((name) => proxies[name]).nonNulls.toList()
-        : const [];
-    groups.add(Group.fromJson(group));
-  }
+  final groups = groupsOf(state.proxyGroups);
+  if (groups.isEmpty) return [];
   return computeSort(
     groups: groups,
-    sortType: sortType,
-    delayMap: delayMap,
-    selectedMap: selectedMap,
-    defaultTestUrl: defaultTestUrl,
+    sortType: state.sortType,
+    delayMap: state.delayMap,
+    selectedMap: state.selectedMap,
+    defaultTestUrl: state.defaultTestUrl,
   );
 }
 
@@ -84,7 +67,12 @@ ClashConfig _buildClashConfig(Map<String, dynamic> configMap) {
 
 typedef ConfigCounts = ({int groups, int proxies, int rules});
 
-typedef RealProfile = ({String yaml, String md5, ConfigCounts counts});
+typedef RealProfile = ({
+  String yaml,
+  String md5,
+  ConfigCounts counts,
+  Map<String, dynamic>? overlay,
+});
 
 /// Counts what the Core was handed, not what the profile file declares.
 ConfigCounts configCountsOf(Map<Object?, Object?> config) {
@@ -139,15 +127,27 @@ String Function(String exit) exitTargetResolver({
   };
 }
 
+typedef TransparentPorts = ({bool redir, bool tproxy});
+
+/// Where the Core can open each port: redir needs the original-destination
+/// lookup, tproxy needs IP_TRANSPARENT.
+TransparentPorts transparentPortsOf(String os) =>
+    (redir: os != 'windows', tproxy: os == 'linux' || os == 'android');
+
+final transparentPorts = transparentPortsOf(Platform.operatingSystem);
+
 Map<String, dynamic> inboundConfigOf(
   PatchClashConfig config, {
   required List<String> authentication,
+  TransparentPorts? transparent,
 }) => {
   'mixed-port': config.mixedPort,
   'port': config.port,
   'socks-port': config.socksPort,
-  'redir-port': config.redirPort,
-  'tproxy-port': config.tproxyPort,
+  'redir-port': (transparent ?? transparentPorts).redir ? config.redirPort : 0,
+  'tproxy-port': (transparent ?? transparentPorts).tproxy
+      ? config.tproxyPort
+      : 0,
   'allow-lan': config.allowLan,
   // A profile's skip-auth-prefixes could exempt loopback from authentication.
   'authentication': authentication,
@@ -167,6 +167,7 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
   final addedRules = data.addedRules;
   final appendSystemDns = data.appendSystemDns;
   final defaultUA = data.defaultUA;
+  final os = data.os ?? Platform.operatingSystem;
   String getProvidersFilePathInner(String type, String key) {
     return join(
       profilesPath,
@@ -204,11 +205,10 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
     }
   }
 
-  rawConfig['external-controller'] =
-      data.safeMode || realPatchConfig.secret.isEmpty
-      ? ''
-      : realPatchConfig.externalController.value;
-  rawConfig['secret'] = realPatchConfig.secret;
+  // A hosted Core opens the controller only from config.patch and warns about
+  // a profile that sets it, so these only clear the profile's own values.
+  rawConfig['external-controller'] = '';
+  rawConfig['secret'] = '';
   // mihomo serves the unix and pipe controllers without a secret, and the unix
   // one unlinks whatever sits at its path before opening it to everyone.
   rawConfig['external-controller-tls'] = '';
@@ -222,7 +222,12 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
     }
   }
   rawConfig['external-ui'] = '';
-  switch (realPatchConfig.interfaceNameMode) {
+  // Android shows neither row, yet its Core binds and marks every dial with
+  // them, so values restored from a desktop backup would fail each dial there.
+  final outboundRows = os != 'android';
+  switch (outboundRows
+      ? realPatchConfig.interfaceNameMode
+      : InterfaceNameMode.clear) {
     case InterfaceNameMode.clear:
       rawConfig['interface-name'] = '';
     case InterfaceNameMode.follow:
@@ -236,9 +241,13 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
   rawConfig['keep-alive-interval'] = realPatchConfig.keepAliveInterval;
   rawConfig['keep-alive-idle'] = realPatchConfig.keepAliveIdle;
   rawConfig['disable-keep-alive'] = realPatchConfig.disableKeepAlive;
-  rawConfig['routing-mark'] = realPatchConfig.routingMark;
+  rawConfig['routing-mark'] = outboundRows ? realPatchConfig.routingMark : 0;
   rawConfig.addAll(
-    inboundConfigOf(realPatchConfig, authentication: data.authentication),
+    inboundConfigOf(
+      realPatchConfig,
+      authentication: data.authentication,
+      transparent: transparentPortsOf(os),
+    ),
   );
   rawConfig['find-process-mode'] = realPatchConfig.findProcessMode.name;
   rawConfig['mode'] = realPatchConfig.mode.name;
@@ -259,10 +268,6 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
       if (tun['route-exclude-address'] case final List routes) ...routes,
       ...privateRouteAddress,
     ];
-  }
-  if (data.defaultTunDnsMode case final mode?
-      when tun['dns-mode'] == null || tun['dns-mode'] == '') {
-    tun['dns-mode'] = mode;
   }
   rawConfig['tun'] = tun;
   rawConfig['geo-auto-update'] = realPatchConfig.geoAutoUpdate;
@@ -294,7 +299,11 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
         resources: module.resources,
       ),
   ]);
-  rawConfig['mitm'] = realPatchConfig.mitm.coreJson(mitm.mitm);
+  rawConfig['mitm'] = realPatchConfig.mitm.coreJson(
+    mitm.mitm,
+    isAndroid: os == 'android',
+  );
+  mitm.network.applyToTun(tun);
   if (rawConfig['profile'] == null) {
     rawConfig['profile'] = {};
   }
@@ -430,7 +439,12 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
         );
   rawConfig['rules'] = [...mitmRules, ...rules];
   final yaml = await _encodeYaml(Map<String, dynamic>.from(rawConfig));
-  return (yaml: yaml, md5: yaml.toMd5(), counts: configCountsOf(rawConfig));
+  return (
+    yaml: yaml,
+    md5: yaml.toMd5(),
+    counts: configCountsOf(rawConfig),
+    overlay: data.keepOverlay ? Map<String, dynamic>.from(rawConfig) : null,
+  );
 }
 
 typedef ShakingStoreArgs = ({

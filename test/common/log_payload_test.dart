@@ -36,7 +36,7 @@ void main() {
         'using Proxy',
       ).route!;
       final inner = LogPayload.parse(
-        '[TCP] mihomo --> dns.google:853 using DIRECT',
+        '[TCP] concord --> dns.google:853 using DIRECT',
       ).route!;
 
       expect(direct.source, '[fe80::1]:5353');
@@ -44,7 +44,7 @@ void main() {
       expect(direct.rule, '');
       expect(unmatched.rule, "doesn't match any rule");
       expect(unmatched.proxy, 'Proxy');
-      expect(inner.source, 'mihomo');
+      expect(inner.source, 'concord');
       expect(inner.sourceDetail, '');
     });
 

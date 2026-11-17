@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -10,6 +9,7 @@ import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../helpers/test_profiles.dart';
+import '../helpers/concord_config.dart';
 
 class _TestClashProviders extends ClashProviders {
   final List<ClashProvider> initial;
@@ -932,242 +932,69 @@ void main() {
     });
   });
 
-  test('customProxyTypes lists every type the core parses', () {
-    final source = File('core/Clash.Meta/adapter/parser.go').readAsStringSync();
-    expect(customProxyTypes, [
-      for (final match in RegExp(
-        r'^\tcase "([^"]+)":',
-        multiLine: true,
-      ).allMatches(source))
-        match.group(1)!,
-    ]);
+  test('customProxyTypes names only types the core knows', () {
+    expect(concordProxyTypes(), containsAll(customProxyTypes));
   });
 
-  group('proxy fields follow the option structs of the core', () {
-    const root = 'core/Clash.Meta/adapter';
-    final structs = {
-      for (final file in Directory(
-        '$root/outbound',
-      ).listSync().whereType<File>())
-        if (!file.path.endsWith('_test.go'))
-          for (final match in RegExp(
-            r'^type (\w+) struct \{\n([\s\S]*?)\n\}',
-            multiLine: true,
-          ).allMatches(file.readAsStringSync()))
-            match.group(1)!: match.group(2)!,
-    };
-    final keyPattern = RegExp(r'proxy:"([^",]+)(,omitempty)?"');
-    final typePattern = RegExp(
-      r'^\t\w+\s+(\S+)\s+`proxy:"([^",]+)',
-      multiLine: true,
+  test('a plugin offers only the plugin-opts keys it reads', () {
+    List<ProxyField> optionsOf(String plugin) => CustomProxy(
+      id: 0,
+      definition: {'type': 'ss', 'plugin': plugin},
+    ).options;
+    expect(optionsOf('kcptun'), contains(ProxyField.pluginMode));
+    expect(optionsOf('kcptun'), isNot(contains(ProxyField.pluginHost)));
+    expect(optionsOf('shadow-tls'), contains(ProxyField.pluginHost));
+    expect(optionsOf('shadow-tls'), isNot(contains(ProxyField.pluginMode)));
+    expect(
+      optionsOf('shadow-tls'),
+      containsAll([ProxyField.pluginPassword, ProxyField.pluginVersion]),
     );
-    final embeddedPattern = RegExp(r'^\t(\w+Option)$', multiLine: true);
-    final bodies = {
-      for (final match in RegExp(
-        r'^\tcase "([^"]+)":\n\t\t\w+ := &outbound\.(\w+)\{',
-        multiLine: true,
-      ).allMatches(File('$root/parser.go').readAsStringSync()))
-        match.group(1)!: [
-          structs[match.group(2)]!,
-          for (final embedded in embeddedPattern.allMatches(
-            structs[match.group(2)]!,
-          ))
-            if (embedded.group(1) != 'BasicOption') structs[embedded.group(1)]!,
-          structs['BasicOption']!,
-        ].join('\n'),
-    };
-    Set<String> keysIn(String body, {bool required = false}) => {
-      for (final match in keyPattern.allMatches(body))
-        if (match.group(1) != '-' && (!required || match.group(2) == null))
-          match.group(1)!,
-    };
-    Set<String> keysOf(String type, {bool required = false}) =>
-        keysIn(bodies[type]!, required: required);
-
-    test('every type the core parses has its struct', () {
-      expect(bodies.keys, customProxyTypes);
-    });
-
-    test('a plugin offers only the plugin-opts keys it reads', () {
-      List<ProxyField> optionsOf(String plugin) => CustomProxy(
+    expect(
+      optionsOf('restls'),
+      containsAll([ProxyField.pluginPassword, ProxyField.pluginVersionHint]),
+    );
+    expect(
+      optionsOf('jls'),
+      containsAll([ProxyField.pluginUsername, ProxyField.pluginPassword]),
+    );
+    expect(
+      [
+        'obfs',
+        'v2ray-plugin',
+        'gost-plugin',
+        'shadow-tls',
+        'restls',
+        'jls',
+        'kcptun',
+      ],
+      const CustomProxy(
         id: 0,
-        definition: {'type': 'ss', 'plugin': plugin},
-      ).options;
-      expect(optionsOf('kcptun'), contains(ProxyField.pluginMode));
-      expect(optionsOf('kcptun'), isNot(contains(ProxyField.pluginHost)));
-      expect(optionsOf('shadow-tls'), contains(ProxyField.pluginHost));
-      expect(optionsOf('shadow-tls'), isNot(contains(ProxyField.pluginMode)));
+        definition: {'type': 'ss'},
+      ).choicesOf(ProxyField.plugin),
+    );
+  });
+
+  test('the form always shows every key a type requires', () {
+    // A PEM block does not fit a form row, and the form has no row for a
+    // zerotier network yet.
+    const notInForm = {
+      'openvpn': {'ca'},
+      'zerotier': {'network'},
+    };
+    for (final type in customProxyTypes) {
+      final proxy = CustomProxy(id: 0, definition: {'type': type});
       expect(
-        optionsOf('shadow-tls'),
-        containsAll([ProxyField.pluginPassword, ProxyField.pluginVersion]),
+        {for (final field in proxy.fields) field.path.single},
+        containsAll(
+          proxy.requiredKeys.difference({
+            'server',
+            'port',
+            ...?notInForm[type],
+          }),
+        ),
+        reason: type,
       );
-      expect(
-        optionsOf('restls'),
-        containsAll([ProxyField.pluginPassword, ProxyField.pluginVersionHint]),
-      );
-      expect(
-        optionsOf('jls'),
-        containsAll([ProxyField.pluginUsername, ProxyField.pluginPassword]),
-      );
-
-      const pluginStructs = {
-        'obfs': 'simpleObfsOption',
-        'v2ray-plugin': 'v2rayObfsOption',
-        'gost-plugin': 'gostObfsOption',
-        'shadow-tls': 'shadowTLSOption',
-        'restls': 'restlsOption',
-        'jls': 'jlsOption',
-        'kcptun': 'kcpTunOption',
-      };
-      expect(
-        pluginStructs.keys,
-        const CustomProxy(
-          id: 0,
-          definition: {'type': 'ss'},
-        ).choicesOf(ProxyField.plugin),
-      );
-      for (final MapEntry(key: plugin, value: struct)
-          in pluginStructs.entries) {
-        final read = {
-          for (final match in RegExp(
-            r'obfs:"([^",]+)',
-          ).allMatches(structs[struct]!))
-            match.group(1)!,
-        };
-        for (final field in optionsOf(plugin)) {
-          if (field.path.first == 'plugin-opts') {
-            expect(read, contains(field.path.last), reason: '$plugin $field');
-          }
-        }
-      }
-    });
-
-    test('the form asks for the credentials each struct reads', () {
-      const credentials = {'username', 'password', 'uuid'};
-      for (final type in customProxyTypes) {
-        expect(
-          {
-            for (final field in CustomProxy(
-              id: 0,
-              definition: {'type': type},
-            ).credentials)
-              field.path.single,
-          },
-          keysOf(type).intersection(credentials),
-          reason: type,
-        );
-      }
-    });
-
-    test('the required keys are the ones each struct requires', () {
-      for (final type in customProxyTypes) {
-        expect(
-          CustomProxy(id: 0, definition: {'type': type}).requiredKeys,
-          keysOf(type, required: true).difference({'name'}),
-          reason: type,
-        );
-      }
-    });
-
-    test('the form always shows every key a struct requires', () {
-      // A PEM block does not fit a form row, and the form has no row for a
-      // zerotier network yet.
-      const notInForm = {
-        'openvpn': {'ca'},
-        'zerotier': {'network'},
-      };
-      for (final type in customProxyTypes) {
-        final proxy = CustomProxy(id: 0, definition: {'type': type});
-        expect(
-          {for (final field in proxy.fields) field.path.single},
-          containsAll(
-            proxy.requiredKeys.difference({
-              'server',
-              'port',
-              ...?notInForm[type],
-            }),
-          ),
-          reason: type,
-        );
-      }
-    });
-
-    test('every field and option is a key its struct reads', () {
-      for (final type in customProxyTypes) {
-        final definitions = [
-          {'type': type, 'plugin': 'obfs', 'obfs': 'salamander'},
-          for (final network in CustomProxy(
-            id: 0,
-            definition: {'type': type},
-          ).choicesOf(ProxyField.network))
-            {'type': type, 'network': network},
-        ];
-        for (final definition in definitions) {
-          final proxy = CustomProxy(id: 0, definition: definition);
-          for (final field in [...proxy.fields, ...proxy.options]) {
-            var body = bodies[type]!;
-            for (final key in field.path) {
-              expect(keysIn(body), contains(key), reason: '$type $field');
-              final nested =
-                  structs[[
-                    for (final match in typePattern.allMatches(body))
-                      if (match.group(2) == key) match.group(1)!,
-                  ].first];
-              if (nested == null) {
-                break;
-              }
-              body = nested;
-            }
-            if (field.kind == ProxyFieldKind.choice) {
-              expect(
-                proxy.choicesOf(field),
-                isNotEmpty,
-                reason: '$type $field',
-              );
-            }
-          }
-        }
-      }
-    });
-
-    test('every choice the form offers is a value the core names', () {
-      final sources = [
-        for (final directory in [
-          'adapter',
-          'component',
-          'constant',
-          'transport',
-        ])
-          for (final file in Directory(
-            'core/Clash.Meta/$directory',
-          ).listSync(recursive: true).whereType<File>())
-            if (file.path.endsWith('.go') && !file.path.endsWith('_test.go'))
-              file.readAsStringSync().toLowerCase(),
-      ].join('\n');
-      // These fields take their values from modules outside the submodule.
-      const elsewhere = {
-        'ss': {ProxyField.cipher},
-        'vmess': {ProxyField.cipher},
-        'hysteria2': {ProxyField.obfs},
-      };
-      const elsewhereForEveryType = {ProxyField.pluginVersionHint};
-      for (final type in customProxyTypes) {
-        final proxy = CustomProxy(id: 0, definition: {'type': type});
-        for (final field in ProxyField.values) {
-          if (elsewhereForEveryType.contains(field) ||
-              (elsewhere[type]?.contains(field) ?? false)) {
-            continue;
-          }
-          for (final choice in proxy.choicesOf(field)) {
-            expect(
-              sources,
-              contains('"${choice.toLowerCase()}"'),
-              reason: '$type $field $choice',
-            );
-          }
-        }
-      }
-    });
+    }
   });
 
   test('a nested field adds and drops the maps that hold it, in any case the '

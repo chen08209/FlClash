@@ -77,7 +77,7 @@ class DnsQueryDetailView extends ConsumerWidget {
     final appLocalizations = context.appLocalizations;
     final id = dnsQuery.id;
     final related = id == null
-        ? const <String>[]
+        ? const <int>[]
         : ref.watch(requestsProvider.select((log) => log.resolvedBy(id)));
     final failed = dnsQuery.isFailed;
     final answers = dnsQuery.answers;

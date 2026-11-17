@@ -24,7 +24,6 @@ private fun vpnOptions(port: Int) = VpnOptions(
     allowBypass = true,
     systemProxy = false,
     bypassDomain = listOf("example.test"),
-    stack = "system",
     routeAddress = listOf("0.0.0.0/0"),
 )
 

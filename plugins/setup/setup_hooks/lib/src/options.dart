@@ -8,31 +8,28 @@ final _log = Logger('options');
 
 class BuildConfig {
   const BuildConfig({
-    required this.tags,
-    required this.goLdflags,
-    required this.coreVersion,
-    required this.coreDir,
+    required this.concordDir,
     required this.coreName,
+    required this.coreBundleId,
+    required this.productName,
     required this.outputDir,
     required this.helperDir,
     required this.helperName,
   });
 
-  final String tags;
-  final String goLdflags;
-  final String coreVersion;
-  final String coreDir;
+  final String concordDir;
   final String coreName;
+  final String coreBundleId;
+  final String productName;
   final String outputDir;
   final String helperDir;
   final String helperName;
 
   static const _defaults = BuildConfig(
-    tags: 'with_gvisor',
-    goLdflags: '-w -s',
-    coreVersion: '',
-    coreDir: 'core',
+    concordDir: 'concord',
     coreName: 'FlClashCore',
+    coreBundleId: 'com.follow.clash.core',
+    productName: 'FlClash',
     outputDir: 'libclash',
     helperDir: 'services/helper',
     helperName: 'FlClashHelperService',
@@ -47,11 +44,10 @@ class BuildConfig {
     final yaml = loadYaml(file.readAsStringSync()) as YamlMap?;
     if (yaml == null) return _defaults;
     return BuildConfig(
-      tags: yaml['tags'] as String? ?? _defaults.tags,
-      goLdflags: yaml['go_ldflags'] as String? ?? _defaults.goLdflags,
-      coreVersion: yaml['core_version'] as String? ?? _defaults.coreVersion,
-      coreDir: yaml['core_dir'] as String? ?? _defaults.coreDir,
+      concordDir: yaml['concord_dir'] as String? ?? _defaults.concordDir,
       coreName: yaml['core_name'] as String? ?? _defaults.coreName,
+      coreBundleId: yaml['core_bundle_id'] as String? ?? _defaults.coreBundleId,
+      productName: yaml['product_name'] as String? ?? _defaults.productName,
       outputDir: yaml['output_dir'] as String? ?? _defaults.outputDir,
       helperDir: yaml['helper_dir'] as String? ?? _defaults.helperDir,
       helperName: yaml['helper_name'] as String? ?? _defaults.helperName,
@@ -59,11 +55,10 @@ class BuildConfig {
   }
 
   Map<String, String> toFingerprintMap() => {
-    'tags': tags,
-    'go_ldflags': goLdflags,
-    'core_version': coreVersion,
-    'core_dir': coreDir,
+    'concord_dir': concordDir,
     'core_name': coreName,
+    'core_bundle_id': coreBundleId,
+    'product_name': productName,
     'output_dir': outputDir,
     'helper_dir': helperDir,
     'helper_name': helperName,

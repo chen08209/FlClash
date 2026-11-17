@@ -1,8 +1,6 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
@@ -17,16 +15,15 @@ import 'package:mocktail/mocktail.dart';
 import 'package:yaml/yaml.dart';
 
 import '../helpers/app_paths.dart';
+import '../helpers/core_mocks.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
-
-class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory home;
-  late _MockCoreHandlerInterface core;
+  late CoreMocks mocks;
   late ProviderContainer container;
 
   setUpAll(() async {
@@ -40,12 +37,14 @@ void main() {
   });
 
   setUp(() {
-    core = _MockCoreHandlerInterface();
-    when(() => core.validateConfig(any())).thenAnswer((_) async => null);
+    mocks = coreMocks();
+    when(
+      () => mocks.api.validateConfig(any()),
+    ).thenAnswer((_) async => const []);
     container = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(TestProfiles.new),
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
       ],
     );
     addTearDown(container.dispose);
@@ -54,7 +53,7 @@ void main() {
 
   void decodesTo(String link, List<Map<String, dynamic>> proxies) {
     when(
-      () => core.decodeShareLinks([link]),
+      () => mocks.api.decodeLinks([link]),
     ).thenAnswer((_) async => [proxies]);
   }
 
@@ -95,7 +94,7 @@ void main() {
       expect(await savedProxies(profile), [
         {'name': 'HK', 'type': 'vless', 'server': 'hk.example.com'},
       ]);
-      verify(() => core.validateConfig(any())).called(1);
+      verify(() => mocks.api.validateConfig(any())).called(1);
     });
 
     test('names an unnamed proxy after its server', () async {
@@ -142,7 +141,7 @@ void main() {
 
       expect(find.text(currentAppLocalizations.shareLinksInvalid), findsOne);
       expect(container.read(profilesProvider), isEmpty);
-      verifyNever(() => core.validateConfig(any()));
+      verifyNever(() => mocks.api.validateConfig(any()));
     });
   });
 
@@ -154,7 +153,7 @@ void main() {
     ];
 
     test('makes one profile of all their proxies', () async {
-      when(() => core.decodeShareLinks(links)).thenAnswer(
+      when(() => mocks.api.decodeLinks(links)).thenAnswer(
         (_) async => [
           [
             {'name': 'HK', 'type': 'vless', 'server': 'hk.example.com'},
@@ -182,13 +181,13 @@ void main() {
         [for (final proxy in await savedProxies(profile)) proxy['name']],
         ['HK', 'HK-01', 'ss.example.com'],
       );
-      verify(() => core.decodeShareLinks(links)).called(1);
+      verify(() => mocks.api.decodeLinks(links)).called(1);
     });
 
     testWidgets('names the link no proxy can be read from and adds nothing', (
       tester,
     ) async {
-      when(() => core.decodeShareLinks(links)).thenAnswer(
+      when(() => mocks.api.decodeLinks(links)).thenAnswer(
         (_) async => [
           [
             {'name': 'HK', 'type': 'vless', 'server': 'hk.example.com'},
@@ -215,7 +214,7 @@ void main() {
         findsOne,
       );
       expect(container.read(profilesProvider), isEmpty);
-      verifyNever(() => core.validateConfig(any()));
+      verifyNever(() => mocks.api.validateConfig(any()));
     });
   });
 }

@@ -8,7 +8,8 @@ build, the only kind a shared host may run.
 
 ## Building
 
-Update submodules first. The ClashMeta Go core lives in `core/Clash.Meta/`, the UI library in `plugins/prism_ui/`.
+Update submodules first. The Core is Concord in the `concord/` submodule, which needs `cargo` and
+the toolchain pinned in `concord/rust-toolchain.toml`.
 
 ```bash
 git submodule update --init --recursive
@@ -27,14 +28,13 @@ dart tool/package.dart linux --dry-run --arch arm64   # names and steps only, an
 Artifacts land in `dist/` as `FlClash-<version>-<os>-<arch>[-<form>].<ext>`, with `manifest.json` and
 `FlClash-<version>-SHA256SUMS`; see Packaging in `architecture.md`.
 
-The desktop Go core and the Rust helper build automatically: Flutter runs
+The desktop Concord core and the Rust helper build automatically: Flutter runs
 `plugins/setup/hook/build.dart` on every `flutter build` and `flutter test`,
 and the hook drives `CoreBuilder` from the `setup_hooks` package in
-`plugins/setup/setup_hooks/`. Artifacts land in `libclash/`. Android's Core is
-the AAR the `:core` Gradle module builds with `gomobile bind` before anything
-compiles against it; that needs `go` on `PATH` and nothing else, since the
-gomobile tools come from `core/go.mod` and the NDK from AGP. The hook reruns only when Go, Rust, or
-`setup_hooks` inputs change; the fingerprint cache lives in
+`plugins/setup/setup_hooks/`, which runs `cargo build` for `concord-desktop` and the Helper. Artifacts land in
+`libclash/`. Android's Core is `libconcord.so` with the JNI glue `libcore_jni.so`, which the `:core` Gradle
+module builds with its `cargoCore` task before anything compiles against it; that needs `cargo` on `PATH` and the NDK from AGP. The hook reruns only when Concord,
+Helper, or `setup_hooks` inputs change; the fingerprint cache lives in
 `.dart_tool/setup_build_cache/`. To force a rebuild, delete that directory:
 
 ```bash
@@ -55,22 +55,21 @@ the flags through `CARGO_ENCODED_RUSTFLAGS` instead, and Cargo then reads no
 rustflags from its config.
 
 The hook runs for `flutter test` and for `dart run` of any root-package script
-too, so a pure Dart test run needs the Go toolchain, and on Linux and Windows
-also `cargo` and `rustc` — the Helper fingerprint shells out to both even on a
-cache hit. The hook protocol carries no build mode and no caller, so the only
+too, so a pure Dart test run needs `cargo` and `rustc` — the fingerprints shell out to
+both even on a cache hit. The hook protocol carries no build mode and no caller, so the only
 switch is the user-define in the root `pubspec.yaml`:
 
 ```yaml
 hooks:
   user_defines:
     setup:
-      build_assets: true   # false turns the Go core and Helper hook into a no-op
+      build_assets: true   # false turns the Core and Helper hook into a no-op
     rust_api:
       build_assets: true   # false does the same for the Rust library
 ```
 
 CI flips `setup` to `false` with `yq` in its throwaway checkout before
-`dart run tool/changelog.dart` and `dart run tool/test.dart`; no test loads the Go core. `rust_api`
+`dart run tool/changelog.dart` and `dart run tool/test.dart`; no test loads the Core. `rust_api`
 stays on there because the editor tests in `test/plugins/code_forge/` and the socket
 test in `test/core/desktop/ipc_native_test.dart` load the Rust library the hook
 builds; the release-notes job, which runs no tests, flips both.
@@ -97,7 +96,7 @@ Use `flutter test`, not `dart test`, because models pull in Flutter types.
 A development build takes over the host exactly like a release: it creates the TUN device, sets the system proxy, on
 macOS registers the TUN as the system resolver, registers itself as the login item, and on Windows and Linux starts its
 Core through the shared privileged Helper, which stops the Core an installed FlClash is running. Only the data directory
-is kept apart, and only for some builds: a macOS debug build is `com.follow.clash.debug` and an Android debug build `com.follow.clash.dev`,
+is kept apart, and only for some builds: a macOS debug build is `com.follow.clash.rs.debug` and an Android debug build `com.follow.clash.rs.dev`,
 while profile and release builds, and every build on Windows and Linux, share the directory and preferences of the
 installed app. Safe mode keeps all of the host changes off and never opens the Core's listeners or external
 controller, so it does not compete with the installed app for the mixed, DNS, RESTful API and other loopback ports:
@@ -178,7 +177,6 @@ flutter test test/providers/
 flutter test test/common/
 flutter test test/database/
 flutter test test/widgets/
-flutter test test/setup_test.dart
 ```
 
 For the whole suite, or a directory of more than a few files, use `tool/test.dart`, which is also what CI runs:
@@ -215,7 +213,7 @@ For the current Core/service architecture, useful focused checks are:
 ```bash
 flutter test test/core/desktop/
 flutter test test/core/service_test.dart
-flutter test test/core/protocol_contract_test.dart
+flutter test test/core/api/
 flutter test test/manager/core_manager_test.dart
 flutter test test/providers/action_test.dart test/providers/system_action_test.dart
 flutter test test/views/dashboard/live_status_test.dart
@@ -223,11 +221,13 @@ flutter test test/views/dashboard/live_status_test.dart
 
 What those suites own:
 
-- `test/core/desktop/`: replaceable IPC transport, RPC request correlation/failure, direct/Helper process leases, and
+- `test/core/desktop/`: replaceable IPC transport, direct/Helper process leases, and
   latest-intent desktop lifecycle convergence. `ipc_native_test.dart` runs the transport over a real socket through
   the Rust `IpcServer`; the server's own behavior is covered by `cargo test` in `plugins/rust_api/rust`.
 - `test/core/service_test.dart`: `CoreService` composition and terminal close behavior.
-- `test/core/protocol_contract_test.dart`: shared Dart/Go method and event-envelope compatibility, including event batches.
+- `test/core/api/`: `CoreClient` framing, streams, credit and cancellation against a fake channel, and `contract_test.dart`,
+  which checks every `CoreApi` call and DTO against `concord/schema/api.json`; a new schema method must be called there or
+  listed as not called by Dart.
 - `test/providers/action_test.dart`: Core start/restart orchestration and overlapping restart requests.
 - `test/providers/system_action_test.dart`: ordered, idempotent exit cleanup and watchdog behavior.
 - `test/views/dashboard/live_status_test.dart`: 600-millisecond starting presentation hold, immediate failure display,
@@ -235,19 +235,6 @@ What those suites own:
   restart.
 
 ## Native Component Verification
-
-The CI Go-wrapper checks can be reproduced without CGO (`make core-check core-test`). They cover the Android files
-too, except the cgo one in `timezone/`, which only the gomobile build compiles:
-
-```bash
-cd core
-gofmt -l ./*.go ./cmd ./mobile ./platform ./timezone ./tun   # prints nothing when formatted
-CGO_ENABLED=0 go test -count=1 .
-CGO_ENABLED=0 go vet . ./cmd/...
-CGO_ENABLED=0 GOOS=linux go vet ./platform
-GOOS=android GOARCH=arm64 CGO_ENABLED=0 go vet "-tags=$(sed -n 's/^tags: *//p' ../build_config.yaml)" \
-  . ./mobile ./tun ./platform
-```
 
 `plugins/rust_api/rust` is checked the same way as the Helper below; `make rust-check` runs both crates' format
 checks and tests as CI does. Tests under `cfg(target_os = "linux")` compile and run only on Linux:
@@ -273,15 +260,15 @@ registered with `java_home`, so export it by prefix:
 ```bash
 cd android
 export JAVA_HOME="$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home"   # elsewhere: any JDK 17
-./gradlew :core:compileDebugKotlin -Ptarget-platform=android-arm64   # builds the gomobile AAR for one ABI
+./gradlew :core:compileDebugKotlin -Ptarget-platform=android-arm64   # builds the Core and JNI glue for one ABI
 ./gradlew :service:compileDebugKotlin
 ./gradlew :app:compileDebugKotlin
 ```
 
 Run the JVM unit tests of `:common`, `:service` and `:app` as the CI `android` job does. No test loads the Core or
-the Flutter build, but `:core` compiles against the gomobile AAR, so Go and the NDK are needed and one ABI is built.
-`android/gradlew` and `android/local.properties` are ignored by git; CI copies the wrapper from Flutter's cache and
-writes the SDK paths, and a checkout without them needs the same:
+the Flutter build, but `:core` builds the Concord library, so `cargo`, the pinned toolchain and the NDK are needed and
+one ABI is built. `android/gradlew` and `android/local.properties` are ignored by git; CI copies the wrapper from
+Flutter's cache and writes the SDK paths, and a checkout without them needs the same:
 
 ```bash
 cd android
@@ -295,6 +282,42 @@ test -f local.properties ||
 
 Always-on VPN entry, system VPN revoke, actual permission UI, and rapid device start/stop still require Android device or
 emulator validation; Kotlin compilation cannot prove those system callbacks.
+
+## Concord Core
+
+Concord is the Rust core in `concord/` (see Concord Core in `architecture.md`). A normal `flutter test`, `flutter run` or
+`tool/package.dart` build compiles it through the setup hook, and Android through the `:core` Gradle module, so `cargo` and
+the toolchain pinned in `concord/rust-toolchain.toml` must be installed.
+
+Work inside it from `concord/`:
+
+```bash
+cargo build --release -p concord-desktop          # target/release/concord
+cargo fmt --check
+cargo clippy --workspace --all-targets -- -D warnings
+CONCORD_REQUIRE_APP_TREE=1 cargo test --workspace
+cargo run -p xtask -- check-layers
+cargo run -p xtask -- schema                      # rewrite concord/schema/, then commit it
+cargo run -p xtask -- schema --check
+cargo deny check
+cargo run -p xtask -- check-size target/release/concord 15000000
+```
+
+`make core-sent-config` (`dart tool/check_sent_config.dart` from the repository root, part of `make core-gate` and CI's
+Core job) loads each `test/fixtures/sent_config/` golden with `concord -t`; see Config Keys Sent To The Core in the
+`core-platform` skill.
+
+`CONCORD_REQUIRE_APP_TREE=1` turns the contract tests that read `lib/` from a skip into a failure when the FlClash tree
+is missing. Tests marked `#[ignore]` need an external peer; `concord/.agents/commands.md` lists the environment variables.
+
+Disk: the workspace has one target directory, `concord/target`, and it grows past 10 GB with debug, release and the
+Android and Windows targets. Never point cargo at another target directory, never keep one per crate or per agent, and
+do not `cargo clean` a tree someone else is building. Release uses fat LTO, so build it only when its size or speed is
+the question. Run `cargo` with `CARGO_INCREMENTAL=0` and without a stale `all_proxy`.
+
+CI runs the `rust-core` job in `build.yaml`, and `concord/.github/workflows/ci.yaml` runs the same steps inside the
+Concord repository. The first checks the public `chen08209/concord` submodule out into `concord/` without a token and
+is not a release gate: `upload` does not wait for it.
 
 ## Changelog And Release
 
@@ -529,10 +552,10 @@ Run `flutter analyze --no-fatal-infos` before committing; CI runs the same comma
 Release builds run only for `v*` tag pushes; pull requests trigger nothing.
 Root analysis excludes `plugins/**`, and root tests do not discover nested
 plugin packages, so parallel jobs validate the rest from their own package
-directories: `plugins` (local Flutter packages and the setup build tool), `go`
-(the Core wrapper, plus a vet of the Android files), `android` (JVM unit tests
+directories: `plugins` (local Flutter packages and the setup build tool), `android` (JVM unit tests
 for `:common`, `:service` and `:app`, with the Flutter compile tasks excluded
-and the gomobile AAR built for one ABI), `rust` (both crates), and a
+and the Core built for one ABI), `rust` (both crates), `rust-core` (the Concord
+workspace), and a
 Windows runner for the helper's `windows-service` feature. On branch pushes a
 `desktop` job also compiles a debug build per desktop platform; a tag skips it,
 since its release matrix compiles the same native code. Release builds run only
@@ -551,9 +574,8 @@ repository holds 10 GB before evicting the least recently used entries. Every re
 reads from, so `BRANCH_CACHE` turns caching off in tag runs, whose entries would evict what `dev` saved. Release
 builds therefore start cold; branch runs, chiefly `dev`, keep the caches.
 
-- setup-go keys its entry on the `cache-dependency-path` files alone and saves only on a miss, so jobs listing the
-  same files share one entry holding the build cache of whichever finished first. `desktop` and `android` each add
-  the file that drives their Core build to get an entry of their own.
+- `Swatinem/rust-cache` keys each entry on its `workspaces` and `key`, and the branch jobs save only when
+  `BRANCH_CACHE` is on; `desktop` adds a per-platform `key` to get an entry of its own.
 - setup-gradle writes only on the default branch unless told otherwise, so `android` lets `dev` write as well. Its
   entries are keyed by job, which is one more reason the release build gains nothing from caching.
 

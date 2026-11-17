@@ -55,7 +55,7 @@ class StoreAction extends _$StoreAction {
     await Future.wait(
       profileIds.map((profileId) async {
         try {
-          await _core.clearEffect(profileId);
+          await _core.api.clearEffect(profileId);
         } catch (error) {
           commonPrint.log(
             'clearEffect($profileId) failed: $error',

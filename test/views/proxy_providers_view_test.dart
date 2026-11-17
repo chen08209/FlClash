@@ -2,9 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
-import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -20,12 +18,11 @@ import 'package:mocktail/mocktail.dart';
 import 'package:path/path.dart' hide context;
 
 import '../helpers/context_menu.dart';
+import '../helpers/core_mocks.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../plugins/code_forge/support.dart' show initEditorNative;
 import '../helpers/host_scaffold.dart';
-
-class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 class _ProvidersSection extends ConsumerWidget {
   const _ProvidersSection();
@@ -62,19 +59,35 @@ ExternalProvider _provider(
   );
 }
 
+ProviderInfo _info(String name, {String path = ''}) {
+  return ProviderInfo(
+    name: name,
+    type: ProviderKindDto.proxy,
+    vehicleType: 'HTTP',
+    count: 3,
+    path: path,
+    updatedAt: DateTime.utc(2026, 1, 1).millisecondsSinceEpoch,
+  );
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late _MockCoreHandlerInterface core;
+  late CoreMocks mocks;
   late Directory home;
 
   setUpAll(() async {
     await initEditorNative();
-    core = _MockCoreHandlerInterface();
+    mocks = coreMocks();
     home = Directory.systemTemp.createTempSync('flclash-providers-');
   });
 
-  setUp(() => reset(core));
+  setUp(() {
+    reset(mocks.api);
+    when(
+      () => mocks.api.proxyGroups(),
+    ).thenAnswer((_) async => const ProxyGroupsDto());
+  });
 
   tearDownAll(() {
     if (home.existsSync()) home.deleteSync(recursive: true);
@@ -95,9 +108,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final container = ProviderContainer(
-      overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
-      ],
+      overrides: [coreHandlerProvider.overrideWithValue(mocks.controller)],
     );
     addTearDown(container.dispose);
     globalState.container = container;
@@ -490,18 +501,15 @@ void main() {
       _provider('proxy-a'),
       _provider('rule-a', type: 'Rule'),
     ]);
-    final completer = Completer<String>();
+    final completer = Completer<void>();
     when(
-      () => core.updateExternalProvider('proxy-a'),
+      () => mocks.api.updateProvider('proxy-a'),
     ).thenAnswer((_) => completer.future);
-    when(() => core.updateExternalProvider('rule-a')).thenAnswer((_) async {});
-    when(() => core.getExternalProvider(any())).thenAnswer(
+    when(() => mocks.api.updateProvider('rule-a')).thenAnswer((_) async {});
+    when(() => mocks.api.provider(any())).thenAnswer(
       (invocation) async =>
-          _provider(invocation.positionalArguments.first as String),
+          _info(invocation.positionalArguments.first as String),
     );
-    when(
-      () => core.getProxies(),
-    ).thenAnswer((_) async => const ProxiesData(proxies: {}, all: []));
     await pump(tester, container);
 
     await tester.tap(find.byGlyph(AppGlyphs.sync));
@@ -521,29 +529,26 @@ void main() {
     await tester.tap(find.byTooltip(currentAppLocalizations.update));
     await tester.pump();
 
-    completer.complete('');
+    completer.complete();
     await tester.pumpAndSettle();
     await tester.pump(const Duration(milliseconds: 700));
 
     expect(find.byType(ActivityIndicator), findsNothing);
     expect(find.byGlyph(AppGlyphs.sync), findsOne);
-    verify(() => core.updateExternalProvider('proxy-a')).called(1);
-    verify(() => core.updateExternalProvider('rule-a')).called(1);
+    verify(() => mocks.api.updateProvider('proxy-a')).called(1);
+    verify(() => mocks.api.updateProvider('rule-a')).called(1);
   });
 
   testWidgets('the header action classifies Core request failures', (
     tester,
   ) async {
     final container = containerFor(tester, [_provider('proxy-a')]);
-    when(() => core.updateExternalProvider('proxy-a')).thenThrow(
+    when(() => mocks.api.updateProvider('proxy-a')).thenThrow(
       const CoreMethodException(
         code: 'request_bad_response',
         message: '503 Service Unavailable',
       ),
     );
-    when(
-      () => core.getProxies(),
-    ).thenAnswer((_) async => const ProxiesData(proxies: {}, all: []));
     await pump(tester, container);
 
     await tester.tap(find.byGlyph(AppGlyphs.sync));
@@ -598,17 +603,11 @@ void main() {
     final file = providerFile('editable', 'payload:\n  - old\n');
     final provider = _provider('editable', path: file.path);
     when(
-      () => core.sideLoadExternalProvider(
-        providerName: 'editable',
-        data: any(named: 'data'),
-      ),
+      () => mocks.api.sideLoadProvider('editable', any()),
     ).thenAnswer((_) async {});
     when(
-      () => core.getExternalProvider('editable'),
-    ).thenAnswer((_) async => provider);
-    when(
-      () => core.getProxies(),
-    ).thenAnswer((_) async => const ProxiesData(proxies: {}, all: []));
+      () => mocks.api.provider('editable'),
+    ).thenAnswer((_) async => _info('editable', path: file.path));
 
     final container = containerFor(tester, [provider]);
     await pump(tester, container);
@@ -629,10 +628,7 @@ void main() {
 
     expect(file.readAsStringSync(), 'payload:\n  - new\n');
     verify(
-      () => core.sideLoadExternalProvider(
-        providerName: 'editable',
-        data: 'payload:\n  - new\n',
-      ),
+      () => mocks.api.sideLoadProvider('editable', 'payload:\n  - new\n'),
     ).called(1);
     expect(find.byType(EditorPage), findsNothing);
 
@@ -674,12 +670,7 @@ void main() {
   testWidgets('a rejected side-load keeps the editor open', (tester) async {
     final file = providerFile('rejected', 'payload:\n');
     final provider = _provider('rejected', path: file.path);
-    when(
-      () => core.sideLoadExternalProvider(
-        providerName: 'rejected',
-        data: any(named: 'data'),
-      ),
-    ).thenAnswer(
+    when(() => mocks.api.sideLoadProvider('rejected', any())).thenAnswer(
       (_) async => throw const CoreMethodException(
         code: 'core_error',
         message: 'invalid payload',
@@ -705,7 +696,7 @@ void main() {
     await tester.tap(find.text(currentAppLocalizations.confirm));
     await pumpTransitions(tester);
     expect(find.byType(EditorPage), findsOneWidget);
-    verifyNever(() => core.getExternalProvider('rejected'));
+    verifyNever(() => mocks.api.provider('rejected'));
   });
 
   testWidgets('leaving an edited provider offers to save the changes', (
@@ -731,12 +722,7 @@ void main() {
 
     expect(await popped, isTrue);
     expect(file.readAsStringSync(), 'payload:\n');
-    verifyNever(
-      () => core.sideLoadExternalProvider(
-        providerName: any(named: 'providerName'),
-        data: any(named: 'data'),
-      ),
-    );
+    verifyNever(() => mocks.api.sideLoadProvider(any(), any()));
   });
 
   testWidgets('a file that only the full read rejects closes the editor', (
@@ -765,16 +751,13 @@ void main() {
     tester,
   ) async {
     final provider = _provider('http-one');
-    final completer = Completer<String>();
+    final completer = Completer<void>();
     when(
-      () => core.updateExternalProvider('http-one'),
+      () => mocks.api.updateProvider('http-one'),
     ).thenAnswer((_) => completer.future);
     when(
-      () => core.getExternalProvider('http-one'),
-    ).thenAnswer((_) async => provider);
-    when(
-      () => core.getProxies(),
-    ).thenAnswer((_) async => const ProxiesData(proxies: {}, all: []));
+      () => mocks.api.provider('http-one'),
+    ).thenAnswer((_) async => _info('http-one'));
 
     final container = containerFor(tester, [provider]);
     await pump(tester, container);
@@ -787,7 +770,7 @@ void main() {
 
     expect(find.byType(ActivityIndicator), findsOne);
 
-    completer.complete('');
+    completer.complete();
     await tester.pumpAndSettle();
     await tester.pump(const Duration(milliseconds: 700));
 

@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
@@ -71,12 +70,6 @@ class _AndroidContainerState extends ConsumerState<AndroidManager>
     }
     service?.removeListener(this);
     super.dispose();
-  }
-
-  @override
-  void onServiceEvent(CoreEvent event) {
-    coreEventManager.sendEvent(event);
-    super.onServiceEvent(event);
   }
 
   @override

@@ -5,7 +5,7 @@ which page edits it. Choose the path when you add a setting or move one.
 
 | Path    | Who reads the setting                       | Watched provider                       | Acts                          | Effect                                     |
 |---------|---------------------------------------------|----------------------------------------|-------------------------------|--------------------------------------------|
-| Update  | Core, and Go can change it in place         | `updateParamsProvider`                 | `CoreManager`, automatically  | Patches the running config, no reload      |
+| Update  | Core, and it can change it in place          | `updateParamsProvider`                 | `CoreManager`, automatically  | Patches the running config, no reload      |
 | Apply   | Core, only when it parses a config          | `setupPatchProvider`                   | `CoreManager`, automatically  | Rebuilds the profile and reloads the Core  |
 | Restart | Android service, when it starts             | `vpnOptionsProvider`                   | `VpnManager` asks the user    | Stop and start of the service              |
 
@@ -16,8 +16,8 @@ reads takes no path.
 ## Update
 
 `CoreManager` hands each change of `updateParamsProvider` to `SetupAction.updateConfigDebounce`. `updateConfig` then sends
-`PatchClashConfig.toUpdateParams` to Go's `updateConfig` in `core/config.go`. That function writes the fields into the
-running config and calls the runtime setter for each one, or `updateListeners` for the inbounds. Nothing is re-parsed.
+`configPatchOf(PatchClashConfig, ...)` to the Core's `config.patch`. It writes the fields into the
+running config and calls the runtime setter for each one, or rebinds the inbounds. Nothing is re-parsed.
 
 The update path carries these fields:
 
@@ -25,33 +25,35 @@ The update path carries these fields:
   `secret`, `geo-auto-update`, `geo-update-interval`, `geox-url`, and the `tun` keys of `Tun.coreJson`: `enable`,
   `device`, `stack`, and `auto-route`, always on.
 - From `PatchClashConfig`, only while picked in `generalOverrideKeys`: `ipv6`, `tcp-concurrent` and `unified-delay`.
-  Unpicked, they go as null and Go leaves the profile's value running.
+  Unpicked, they go as null and the Core leaves the profile's value running.
 - `NetworkProps.authentication`, and `coreOptionsProvider`'s `CoreOptions`, sent as `options`:
   `PatchClashConfig.testUrl`, `AppSettingProps.checkCertificate` as `skip-cert-verify`, and `Mitm.capture` as
   `mitm-capture`, which `setupOnly` resets and `coreJson` leaves out of the `mitm` section.
   `SetupParams.options` carries the same object, so a Core holds them from its first config.
 
-On desktop, `updateListeners` rebuilds the TUN from the patched `tun`. Enabling TUN may need authorization first. When
+On desktop, the Core rebuilds the TUN from the patched `tun`. Enabling TUN may need authorization first. When
 `requestAdmin` gets it newly granted, `updateConfig` restarts the Core instead of patching it. On Android,
-`updateListeners` skips TUN, so a `tun` update reaches the VPN only through a restart.
+the Core skips TUN, so a `tun` update reaches the VPN only through a restart.
 
 To move a setting onto this path:
 
-1. Add it to Dart `UpdateParams` and `toUpdateParams`.
-2. Add it to Go `UpdateParams` in `core/protocol.go` and apply it in `updateConfig`.
-3. Reset it in `PatchClashConfig.setupOnly`. If you skip this, every change also reloads the profile. The
+1. Add it to `ConfigPatch` (`lib/core/api/core_api.dart`) and `configPatchOf` (`lib/core/api/mapping.dart`), and to
+   `ConfigPatchParams` in `concord/crates/proto/src/types/config.rs`, and apply it in the Core's `config_patch`.
+2. Reset it in `PatchClashConfig.setupOnly`. If you skip this, every change also reloads the profile. The
    `PatchClashConfig.setupOnly` test in `test/models/config_test.dart` fails until its fixture changes the field and
    `setupOnly` resets it.
-4. Keep writing it in `_makeRealProfileTask`, so a full apply hands the Core the same value. A general override is
-   written there through `generalOverrideJson` and sent by `toUpdateParams` only while picked, so both paths leave an
-   unpicked one to the profile.
+3. Keep writing it in `_makeRealProfileTask`, so a full apply hands the Core the same value. A general override is
+   written there through `generalOverrideJson` and sent by `configPatchOf` only while picked, so both paths leave an
+   unpicked one to the profile. `external-controller` and `secret` are the exception: a hosted Core takes them only
+   from `config.patch` and warns about any it finds in a config, so the task writes them empty and `SetupAction`
+   patches them in after every apply.
 
-Prefer update whenever Go has a setter for the setting, because an apply reloads the whole config.
+Prefer update whenever the Core has a setter for the setting, because an apply reloads the whole config.
 
 ## Apply
 
 `CoreManager` answers each change of `setupPatchProvider` with `applyProfileDebounce(silence: true)`. That call
-rebuilds the profile YAML and hands it to Go's `applyConfig` through `setupConfig`. The provider holds three values:
+rebuilds the profile YAML and hands it to the Core's `config.apply` through `setupConfig`. The provider holds three values:
 
 - `PatchClashConfig.setupOnly`: the config with every field that update carries reset to its default.
 - `NetworkProps.appendSystemDns`.
@@ -59,7 +61,7 @@ rebuilds the profile YAML and hands it to Go's `applyConfig` through `setupConfi
   `route-exclude-address`.
 
 A change to anything else in `PatchClashConfig` therefore reaches it. Today that is the DNS, TUN and general overrides
-(`dns`, `dnsOverrideKeys`, `tunOverride`, `tunOverrideKeys`, `generalOverrideKeys`, `geodata-loader`), `hosts`, the
+(`dns`, `dnsOverrideKeys`, `tunOverride`, `tunOverrideKeys`, `generalOverrideKeys`), `hosts`, the
 extra inbound ports (`port`, `socks-port`, `redir-port`, `tproxy-port`), the dialer options (`keep-alive-*`,
 `disable-keep-alive`, `interface-name`, its mode, `routing-mark`), `global-ua` and `mitm` but its `capture`, which the
 task writes over the profile's own section. A new `PatchClashConfig` field written by `_makeRealProfileTask` lands here without further
@@ -115,7 +117,6 @@ asks for nothing. The tap runs `SetupAction.restartVpn`: a stop, then a start, a
 | `VpnOptions` field     | Taken from                                                    | The service reads it                   |
 |------------------------|---------------------------------------------------------------|----------------------------------------|
 | `enable`               | `VpnProps.enable`, off in safe mode                           | always                                 |
-| `stack`                | `Tun.stack`                                                   | with the VPN                           |
 | `ipv6`, `dnsHijacking` | `VpnProps`                                                    | with the VPN                           |
 | `allowBypass`          | `VpnProps`                                                    | with the VPN                           |
 | `accessControlProps`   | `VpnProps.accessControlProps`                                 | `enable`, `mode` and that mode's list  |
@@ -157,7 +158,7 @@ Each path watches its own provider, so a single setting can take more than one o
 For a new or moved setting, answer each question. More than one answer can be yes.
 
 1. Does the Android service read it when it starts? Then it belongs in `VpnOptions` and takes the restart path.
-2. Does the Core read it, and can Go change it in place? Then it belongs in `UpdateParams` and takes the update path.
+2. Does the Core read it, and can it change it in place? Then it belongs in `ConfigPatch` and takes the update path.
 3. Does the Core read it only when it parses a config? Then write it into the generated config, and it takes the
    apply path.
 4. Does only Flutter read it? Then it takes no path.

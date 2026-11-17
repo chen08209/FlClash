@@ -39,7 +39,7 @@ class GeoResourceAction extends _$GeoResourceAction {
   }
 
   /// Completes once the Core has accepted the update, not once it finishes.
-  /// Completion arrives as a geo-update event through [handleCoreUpdate];
+  /// Completion arrives as a resource update through [handleCoreUpdate];
   /// callers that need it watch [isUpdatingProvider] for the key to clear.
   /// A request the Core turns down leaves an update already running as it
   /// was.
@@ -52,7 +52,7 @@ class GeoResourceAction extends _$GeoResourceAction {
     _manualUpdates[geoResource] = announceSuccess;
     final operation = _startUpdating(geoResource);
     try {
-      await _core.updateGeoData(geoResource.name);
+      await _core.api.updateGeo(geoResource.name);
     } catch (_) {
       if (previous != null) {
         _manualUpdates[geoResource] = previous;
@@ -66,21 +66,21 @@ class GeoResourceAction extends _$GeoResourceAction {
     }
   }
 
-  void handleCoreUpdate(
-    String geoType,
-    bool updating,
-    bool skipped,
-    String? error,
-  ) {
+  /// A fetch the Core cut short for a newer config or its shutdown ends
+  /// without a banner: nothing failed that the user could act on.
+  void handleCoreUpdate(String geoType, ResourcePhase phase, String error) {
     final geoResource = GeoResource.fromJson(geoType.toLowerCase());
+    final updating = phase == ResourcePhase.updating;
     final announceSuccess = updating
         ? null
         : _manualUpdates.remove(geoResource);
-    if (announceSuccess != null && error != null && error.isNotEmpty) {
-      dialogs.showBanner(error, level: BannerLevel.error);
+    if (phase == ResourcePhase.failed) {
+      if (announceSuccess != null && error != resourceSuperseded) {
+        dialogs.showBanner(error, level: BannerLevel.error);
+      }
     } else if (announceSuccess == true) {
       final l10n = currentAppLocalizations;
-      final message = skipped
+      final message = phase == ResourcePhase.unchanged
           ? l10n.geoSkipped(geoResource.name)
           : l10n.geoUpdated(geoResource.name);
       dialogs.showBanner(message);
@@ -90,6 +90,15 @@ class GeoResourceAction extends _$GeoResourceAction {
     } else {
       _stopUpdating(geoResource);
     }
+  }
+
+  /// An update whose end was among the events lost can be asked about
+  /// nowhere, so its key would never clear; it is let go and may run again.
+  void forgetUpdates() {
+    for (final geoResource in List.of(_operations.keys)) {
+      _stopUpdating(geoResource);
+    }
+    _manualUpdates.clear();
   }
 
   void updateGeoResourceUrl(GeoResource geoResource, String newUrl) {

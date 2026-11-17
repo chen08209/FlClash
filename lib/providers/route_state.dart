@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
@@ -153,14 +153,16 @@ class RouteTracker extends _$RouteTracker {
 
   int _watchers = 0;
   int _generation = 0;
-  bool _syncing = false;
-  bool _resubscribe = false;
+  StreamSubscription<RouteStampDto>? _feed;
   Timer? _retry;
   int _failures = 0;
 
   @override
   RouteState build() {
-    ref.onDispose(_cancelRetry);
+    ref.onDispose(() {
+      _cancelRetry();
+      unawaited(_feed?.cancel());
+    });
     final safeMode = ref.read(safeModeProvider);
     if (safeMode) {
       ref.listen(isStartProvider, (_, _) => _scheduleSyncProxied());
@@ -253,49 +255,50 @@ class RouteTracker extends _$RouteTracker {
     }
   }
 
-  Future<void> _subscribe() async {
+  /// The first item is the Core's current counters, the rest are its moves.
+  void _subscribe() {
     _retry?.cancel();
+    _retry = null;
     if (!_ready) {
       return;
     }
-    if (_syncing) {
-      _resubscribe = true;
-      return;
-    }
-    _syncing = true;
-    _resubscribe = false;
     final generation = ++_generation;
-    RouteSnapshot? snapshot;
-    try {
-      snapshot = await ref.read(coreHandlerProvider).watchRoute(true);
-    } catch (error) {
-      commonPrint.log(
-        'watchRoute failed: $error',
-        logLevel: coreFailureLogLevel(error),
-      );
-    } finally {
-      _syncing = false;
-    }
-    if (!ref.mounted) {
-      return;
-    }
-    if (generation == _generation) {
-      if (snapshot != null) {
-        _failures = 0;
-        applySnapshot(snapshot);
-      } else if (!_resubscribe) {
-        _retryLater();
-      }
-    }
-    if (_resubscribe) {
-      unawaited(_subscribe());
-    }
+    unawaited(_feed?.cancel());
+    _feed = ref
+        .read(coreHandlerProvider)
+        .api
+        .watchRoute()
+        .listen(
+          (stamp) {
+            if (!ref.mounted || generation != _generation) {
+              return;
+            }
+            _failures = 0;
+            applySnapshot(routeSnapshotOf(stamp));
+          },
+          onError: (Object error) {
+            if (!ref.mounted || generation != _generation) {
+              return;
+            }
+            commonPrint.log(
+              'watchRoute failed: $error',
+              logLevel: coreFailureLogLevel(error),
+            );
+            _retryLater();
+          },
+          onDone: () {
+            if (ref.mounted && generation == _generation && _retry == null) {
+              _retryLater();
+            }
+          },
+        );
   }
 
   void _retryLater() {
+    _retry?.cancel();
     final delay = _retryDelays[_failures.clamp(0, _retryDelays.length - 1)];
     _failures++;
-    _retry = Timer(delay, () => unawaited(_subscribe()));
+    _retry = Timer(delay, _subscribe);
   }
 
   void _cancelRetry() {
@@ -313,28 +316,15 @@ class RouteTracker extends _$RouteTracker {
         state = state.copyWith(live: false);
       }
     });
-    if (ref.read(coreStatusProvider) != CoreStatus.connected) {
-      return;
-    }
-    unawaited(
-      ref
-          .read(coreHandlerProvider)
-          .watchRoute(false)
-          .then<void>(
-            (_) {},
-            onError: (Object error) {
-              commonPrint.log(
-                'watchRoute release failed: $error',
-                logLevel: coreFailureLogLevel(error),
-              );
-            },
-          ),
-    );
+    unawaited(_feed?.cancel());
+    _feed = null;
   }
 
   void _dropSync() {
     _cancelRetry();
     _generation++;
+    unawaited(_feed?.cancel());
+    _feed = null;
     if (state.synced || state.live) {
       state = state.copyWith(synced: false, live: false);
     }

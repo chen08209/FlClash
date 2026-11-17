@@ -432,10 +432,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get stopVpn => 'Arrêt du VPN…';
 
   @override
-  String get localNetworkDeniedTip =>
-      'Autorisation du réseau local refusée : la pile gvisor est utilisée, le LAN est inaccessible.';
-
-  @override
   String get compatible => 'Mode de compatibilité';
 
   @override
@@ -528,6 +524,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get externalControllerSecret => 'Secret du contrôleur externe';
 
   @override
+  String get externalControllerCors => 'Autoriser l’accès cross-origin';
+
+  @override
+  String get externalControllerCorsDesc =>
+      'Les tableaux de bord web peuvent se connecter depuis d’autres sites.';
+
+  @override
   String get ipv6Desc => 'Le trafic IPv6 n’est reçu que si IPv6 est activé.';
 
   @override
@@ -550,9 +553,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tcpConcurrent => 'TCP simultané';
-
-  @override
-  String get geodataLoader => 'Mode Geo à faible mémoire';
 
   @override
   String get requests => 'Requêtes';
@@ -1356,9 +1356,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get hideTimeoutProxies => 'Masquer les proxys expirés';
-
-  @override
-  String get stackMode => 'Mode de pile';
 
   @override
   String get network => 'Réseau';
@@ -3015,10 +3012,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get congestionController => 'Contrôle de congestion TCP';
 
   @override
-  String get congestionControllerDesc =>
-      'Le contrôle de congestion TCP ne fonctionne qu’avec la pile mips.';
-
-  @override
   String get routeExcludeAddress => 'Adresses de route exclues';
 
   @override
@@ -3092,8 +3085,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get udpTimeout => 'Délai UDP';
 
   @override
-  String get udpTimeoutDesc =>
-      'Le délai UDP est en secondes et ne fonctionne qu’avec les piles gvisor, system et mixed.';
+  String get udpTimeoutDesc => 'Le délai UDP est en secondes.';
 
   @override
   String get dnsHijackDesc =>

@@ -250,6 +250,7 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
       if (!_wantsCore) {
         return;
       }
+      transport.expectSession(sessionId);
       lease = await launcher.start(
         sessionId: sessionId,
         address: transport.address,

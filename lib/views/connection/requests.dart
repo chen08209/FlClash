@@ -1,8 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
@@ -44,12 +43,13 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     with
         WidgetsBindingObserver,
         ActivePollingMixin<RequestsView>,
-        RouteMotionHoldMixin<RequestsView> {
+        RouteMotionHoldMixin<RequestsView>,
+        ConnectionCountersMixin<RequestsView> {
   final _rows = ConnectionRows();
   var _query = '';
   var _rowsQuery = '';
   final _filters = connectionFilters();
-  final _selected = ValueNotifier<String?>(null);
+  final _selected = ValueNotifier<int?>(null);
   late var _segment = widget.segment;
 
   /// Each segment shown so far, kept as it was left while another shows.
@@ -374,7 +374,7 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     final appLocalizations = context.appLocalizations;
     var cleared = false;
     try {
-      await _core.clearDnsCache();
+      await _core.api.clearDnsCache();
       cleared = true;
     } catch (error) {
       commonPrint.log(
@@ -472,7 +472,7 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     }
   }
 
-  TrackerInfo? _infoOf(String id) =>
+  TrackerInfo? _infoOf(int id) =>
       ref.read(requestsProvider)[id] ?? _rows.heldInfoOf(id);
 
   void _onlyApp(TrackerInfo trackerInfo) {
@@ -491,7 +491,7 @@ class _RequestsViewState extends ConsumerState<RequestsView>
   }
 
   Future<void> _closeConnection(TrackerInfo trackerInfo) =>
-      _close(() => _core.closeConnection(trackerInfo.id));
+      _close(() => _core.api.closeConnections(ids: [trackerInfo.id]));
 
   Future<void> _closeActiveConnections() async {
     final count = ref.read(requestsProvider).activeCount;
@@ -508,7 +508,7 @@ class _RequestsViewState extends ConsumerState<RequestsView>
       destructive: true,
     );
     if (confirmed == true && mounted) {
-      await _close(_core.closeConnections);
+      await _close(() => _core.api.closeConnections());
     }
   }
 
@@ -796,7 +796,7 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     final appLocalizations = context.appLocalizations;
     return TrackerRepeats(
       counts: _rows.repeats,
-      child: RecordFeedView<String>(
+      child: RecordFeedView<int>(
         rows: _rows,
         isEmpty: _rows.shownCount == 0,
         isSearching: SearchQuery(_query).isNotEmpty || _filters.isFiltering,

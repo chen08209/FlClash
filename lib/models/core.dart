@@ -9,8 +9,8 @@ part 'generated/core.g.dart';
 @freezed
 abstract class SetupParams with _$SetupParams {
   const factory SetupParams({
-    @JsonKey(includeIfNull: false) SetupBase? base,
-    @JsonKey(name: 'selected-map') required Map<String, String> selectedMap,
+    @JsonKey(includeToJson: false, includeFromJson: false) SetupBase? base,
+    @JsonKey(name: 'selection') required Map<String, String> selectedMap,
     required CoreOptions options,
   }) = _SetupParams;
 
@@ -21,12 +21,10 @@ abstract class SetupParams with _$SetupParams {
 @freezed
 abstract class CoreOptions with _$CoreOptions {
   const factory CoreOptions({
-    @JsonKey(name: 'test-url') required String testUrl,
-    @Default(false) @JsonKey(name: 'skip-cert-verify') bool skipCertVerify,
-    @Default(defaultDelayTestTimeout)
-    @JsonKey(name: 'delay-test-timeout')
-    int delayTestTimeout,
-    @Default(false) @JsonKey(name: 'mitm-capture') bool mitmCapture,
+    required String testUrl,
+    @Default(false) bool skipCertVerify,
+    @Default(defaultDelayTestTimeout) int delayTestTimeout,
+    @Default(false) bool mitmCapture,
   }) = _CoreOptions;
 
   factory CoreOptions.fromJson(Map<String, Object?> json) =>
@@ -35,11 +33,10 @@ abstract class CoreOptions with _$CoreOptions {
 
 @freezed
 abstract class SetupBase with _$SetupBase {
-  const factory SetupBase({required String path, required String overlay}) =
-      _SetupBase;
-
-  factory SetupBase.fromJson(Map<String, dynamic> json) =>
-      _$SetupBaseFromJson(json);
+  const factory SetupBase({
+    required String path,
+    required Map<String, dynamic> overlay,
+  }) = _SetupBase;
 }
 
 @freezed
@@ -47,41 +44,14 @@ abstract class ProfileBase with _$ProfileBase {
   const factory ProfileBase({
     required Map<String, dynamic> config,
     required String digest,
-    @Default([]) @JsonKey(name: 'match-rules') List<String> matchRules,
+    @Default([]) List<String> matchRules,
     @Default(0) int proxies,
-    @Default(0) @JsonKey(name: 'proxy-groups') int proxyGroups,
+    @Default(0) int proxyGroups,
     @Default(0) int rules,
   }) = _ProfileBase;
 
   factory ProfileBase.fromJson(Map<String, dynamic> json) =>
       _$ProfileBaseFromJson(json);
-}
-
-@freezed
-abstract class UpdateParams with _$UpdateParams {
-  const factory UpdateParams({
-    @JsonKey(toJson: _tunCoreJson) required Tun tun,
-    @JsonKey(name: 'mixed-port') required int mixedPort,
-    @JsonKey(name: 'allow-lan') required bool allowLan,
-    @JsonKey(name: 'find-process-mode')
-    required FindProcessMode findProcessMode,
-    required Mode mode,
-    @JsonKey(name: 'log-level') required LogLevel logLevel,
-    bool? ipv6,
-    @JsonKey(name: 'tcp-concurrent') bool? tcpConcurrent,
-    @JsonKey(name: 'external-controller')
-    required ExternalControllerStatus externalController,
-    @Default('') String secret,
-    @JsonKey(name: 'unified-delay') bool? unifiedDelay,
-    @Default([]) List<String> authentication,
-    @Default(true) @JsonKey(name: 'geo-auto-update') bool geoAutoUpdate,
-    @Default(24) @JsonKey(name: 'geo-update-interval') int geoUpdateInterval,
-    @Default({}) @JsonKey(name: 'geox-url') Map<String, String> geoXUrl,
-    required CoreOptions options,
-  }) = _UpdateParams;
-
-  factory UpdateParams.fromJson(Map<String, dynamic> json) =>
-      _$UpdateParamsFromJson(json);
 }
 
 /// The CA the Core signs decrypted hosts' certificates with.
@@ -232,17 +202,13 @@ abstract class MitmExchangeSummary with _$MitmExchangeSummary {
 
     /// `reject`, `redirect`, `map-local`, `script`, or empty for the server.
     @Default('') String answer,
-    @JsonKey(name: 'connection-id', fromJson: _connectionIdOf)
-    String? connectionId,
+    @JsonKey(name: 'connection-id') int? connectionId,
     MitmApp? app,
   }) = _MitmExchangeSummary;
 
   factory MitmExchangeSummary.fromJson(Map<String, Object?> json) =>
       _$MitmExchangeSummaryFromJson(json);
 }
-
-/// The Go Core names a connection by a string, the rs Core by a number.
-String? _connectionIdOf(Object? id) => id?.toString();
 
 @freezed
 abstract class MitmApp with _$MitmApp {
@@ -332,6 +298,7 @@ abstract class MitmExchange with _$MitmExchange {
     @Default(0) @JsonKey(name: 'response-size') int responseSize,
     @Default('') String error,
     @Default('') String connection,
+    @JsonKey(name: 'connection-id') int? connectionId,
     @Default({})
     @JsonKey(name: 'request-header')
     Map<String, List<String>> requestHeader,
@@ -360,8 +327,6 @@ abstract class MitmBody with _$MitmBody {
       _$MitmBodyFromJson(json);
 }
 
-Map<String, Object?> _tunCoreJson(Tun tun) => tun.coreJson;
-
 @freezed
 abstract class VpnOptions with _$VpnOptions {
   const factory VpnOptions({
@@ -373,7 +338,6 @@ abstract class VpnOptions with _$VpnOptions {
     required bool allowBypass,
     required bool systemProxy,
     required List<String> bypassDomain,
-    required String stack,
     @Default([]) List<String> routeAddress,
     @Default(0) int mtu,
     @Default('') String congestionController,
@@ -396,7 +360,6 @@ extension VpnOptionsExt on VpnOptions {
         allowBypass: false,
         systemProxy: false,
         bypassDomain: [],
-        stack: '',
       );
     }
     final accessControl = accessControlProps;
@@ -417,48 +380,12 @@ extension VpnOptionsExt on VpnOptions {
 }
 
 @freezed
-abstract class InitParams with _$InitParams {
-  const factory InitParams({
-    @JsonKey(name: 'home-dir') required String homeDir,
-    required int version,
-  }) = _InitParams;
-
-  factory InitParams.fromJson(Map<String, Object?> json) =>
-      _$InitParamsFromJson(json);
-}
-
-@freezed
-abstract class ChangeProxyParams with _$ChangeProxyParams {
-  const factory ChangeProxyParams({
-    @JsonKey(name: 'group-name') required String groupName,
-    @JsonKey(name: 'proxy-name') required String proxyName,
-  }) = _ChangeProxyParams;
-
-  factory ChangeProxyParams.fromJson(Map<String, Object?> json) =>
-      _$ChangeProxyParamsFromJson(json);
-}
-
-@freezed
-abstract class ChangeProxyResult with _$ChangeProxyResult {
-  const factory ChangeProxyResult({
-    @Default('') String message,
-    @Default(false) bool changed,
-  }) = _ChangeProxyResult;
-
-  factory ChangeProxyResult.fromJson(Map<String, Object?> json) =>
-      _$ChangeProxyResultFromJson(json);
-}
-
-@freezed
 abstract class RouteSnapshot with _$RouteSnapshot {
   const factory RouteSnapshot({
-    @JsonKey(name: 'core-epoch') @Default(0) int coreEpoch,
-    @JsonKey(name: 'route-version') @Default(0) int routeVersion,
+    @Default(0) int coreEpoch,
+    @Default(0) int routeVersion,
     @Default(false) bool running,
   }) = _RouteSnapshot;
-
-  factory RouteSnapshot.fromJson(Map<String, Object?> json) =>
-      _$RouteSnapshotFromJson(json);
 }
 
 /// [exit] is the Core's name for where a connection left, only compared whole.
@@ -475,15 +402,6 @@ abstract class RouteHit with _$RouteHit {
 }
 
 @freezed
-abstract class CheckRoutesParams with _$CheckRoutesParams {
-  const factory CheckRoutesParams({@Default([]) List<List<RouteHit>> routes}) =
-      _CheckRoutesParams;
-
-  factory CheckRoutesParams.fromJson(Map<String, Object?> json) =>
-      _$CheckRoutesParamsFromJson(json);
-}
-
-@freezed
 abstract class RouteCheck with _$RouteCheck {
   const factory RouteCheck({
     @JsonKey(name: 'core-epoch') @Default(0) int coreEpoch,
@@ -493,27 +411,6 @@ abstract class RouteCheck with _$RouteCheck {
 
   factory RouteCheck.fromJson(Map<String, Object?> json) =>
       _$RouteCheckFromJson(json);
-}
-
-@freezed
-abstract class CoreEvent with _$CoreEvent {
-  const factory CoreEvent({required CoreEventType type, dynamic data}) =
-      _CoreEvent;
-
-  factory CoreEvent.fromJson(Map<String, Object?> json) =>
-      _$CoreEventFromJson(json);
-}
-
-@freezed
-abstract class TestDelayParams with _$TestDelayParams {
-  const factory TestDelayParams({
-    @JsonKey(name: 'proxy-name') required String proxyName,
-    @JsonKey(name: 'test-url') required String testUrl,
-    required int timeout,
-  }) = _TestDelayParams;
-
-  factory TestDelayParams.fromJson(Map<String, Object?> json) =>
-      _$TestDelayParamsFromJson(json);
 }
 
 @freezed
@@ -632,15 +529,4 @@ abstract class ExternalProvider with _$ExternalProvider {
 
 extension ExternalProviderExt on ExternalProvider {
   String get updatingKey => 'provider_$name';
-}
-
-@freezed
-abstract class ProxiesData with _$ProxiesData {
-  const factory ProxiesData({
-    required Map<String, dynamic> proxies,
-    required List<String> all,
-  }) = _ProxiesData;
-
-  factory ProxiesData.fromJson(Map<String, Object?> json) =>
-      _$ProxiesDataFromJson(json);
 }

@@ -2,8 +2,6 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/database/database.dart' as db;
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -17,9 +15,8 @@ import 'package:path/path.dart';
 import 'package:riverpod/riverpod.dart';
 
 import '../helpers/app_paths.dart';
+import '../helpers/core_mocks.dart';
 import '../helpers/preferences.dart';
-
-class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 class _RecordingSystemAction extends SystemAction {
   static final exits = <bool>[];
@@ -43,7 +40,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory home;
-  late _MockCoreHandlerInterface core;
+  late CoreMocks mocks;
   late db.Database testDatabase;
 
   setUpAll(() async {
@@ -59,8 +56,8 @@ void main() {
   setUp(() async {
     await mockPreferences();
     await preferences.setVersion(7);
-    core = _MockCoreHandlerInterface();
-    when(() => core.clearEffect(any())).thenAnswer((_) async {});
+    mocks = coreMocks();
+    when(() => mocks.api.clearEffect(any())).thenAnswer((_) async {});
     testDatabase = db.Database(NativeDatabase.memory());
     db.database = testDatabase;
     _RecordingSystemAction.exits.clear();
@@ -77,7 +74,7 @@ void main() {
   ProviderContainer buildContainer({List<Profile> profiles = const []}) {
     final container = ProviderContainer(
       overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
         systemActionProvider.overrideWith(_RecordingSystemAction.new),
         profilesProvider.overrideWith(() => _TestProfiles(profiles)),
       ],
@@ -101,7 +98,9 @@ void main() {
 
       await container.read(storeActionProvider.notifier).handleClear();
 
-      final cleared = verify(() => core.clearEffect(captureAny())).captured;
+      final cleared = verify(
+        () => mocks.api.clearEffect(captureAny()),
+      ).captured;
       expect(cleared.toSet(), {1, 2});
     });
 
@@ -112,7 +111,9 @@ void main() {
 
       await container.read(storeActionProvider.notifier).handleClear();
 
-      final cleared = verify(() => core.clearEffect(captureAny())).captured;
+      final cleared = verify(
+        () => mocks.api.clearEffect(captureAny()),
+      ).captured;
       expect(
         cleared.toSet(),
         {1, 41, 42},
@@ -132,7 +133,7 @@ void main() {
 
       await container.read(storeActionProvider.notifier).handleClear();
 
-      verifyNever(() => core.clearEffect(any()));
+      verifyNever(() => mocks.api.clearEffect(any()));
     });
 
     test('empties the preferences it was asked to clear', () async {

@@ -20,7 +20,7 @@ void main() {
     File(
       p.join(repository.path, 'pubspec.yaml'),
     ).writeAsStringSync('name: x\n');
-    Directory(p.join(repository.path, 'core')).createSync();
+    Directory(p.join(repository.path, 'concord')).createSync();
     packageRoot = Directory(p.join(repository.path, 'plugins', 'setup'))
       ..createSync(recursive: true);
     outputShared = Directory(p.join(repository.path, 'out'))..createSync();
@@ -146,6 +146,17 @@ void main() {
       );
     });
 
+    test('fails when the Concord workspace is missing', () {
+      Directory(p.join(repository.path, 'concord')).deleteSync();
+
+      expect(
+        () => const CoreBuilder().requestFor(
+          buildInput(os: OS.linux, architecture: Architecture.x64),
+        ),
+        throwsA(isA<InfraError>()),
+      );
+    });
+
     test('fails when the package is not inside the repository', () {
       final elsewhere = Directory(
         p.join(repository.path, 'elsewhere', 'plugins', 'setup'),
@@ -168,14 +179,14 @@ void main() {
     test(
       'reports read files and written directories as dependencies',
       () async {
-        final goFile = p.join(repository.path, 'core', 'lib.go');
+        final manifest = p.join(repository.path, 'concord', 'Cargo.toml');
         final coreDir = p.join(repository.path, 'libclash', 'linux');
         BuildRequest? seen;
         final builder = CoreBuilder(
           build: (request) async {
             seen = request;
             return BuildReport(
-              inputs: [goFile],
+              inputs: [manifest],
               outputs: [
                 p.join(coreDir, 'FlClashCore'),
                 p.join(coreDir, 'manifest.json'),
@@ -193,7 +204,7 @@ void main() {
 
         expect(seen?.target, Target.linuxAmd64);
         expect(BuildOutput(output.json).dependencies, [
-          Uri.file(goFile),
+          Uri.file(manifest),
           Uri.directory(coreDir),
         ]);
       },
@@ -288,8 +299,10 @@ void main() {
 
     test('reports a vanished build input as an infrastructure failure', () {
       final builder = CoreBuilder(
-        build: (_) async =>
-            throw const FileSystemException('Cannot open file', 'core/lib.go'),
+        build: (_) async => throw const FileSystemException(
+          'Cannot open file',
+          'concord/Cargo.toml',
+        ),
       );
 
       expect(
@@ -301,7 +314,7 @@ void main() {
           isA<InfraError>().having(
             (error) => error.message,
             'message',
-            contains('core/lib.go'),
+            contains('concord/Cargo.toml'),
           ),
         ),
       );

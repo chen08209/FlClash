@@ -425,10 +425,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stopVpn => 'Stopping VPN…';
 
   @override
-  String get localNetworkDeniedTip =>
-      'Local network permission denied: using the gvisor stack, LAN is unreachable.';
-
-  @override
   String get compatible => 'Compatibility mode';
 
   @override
@@ -520,6 +516,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get externalControllerSecret => 'External controller secret';
 
   @override
+  String get externalControllerCors => 'Allow cross-origin access';
+
+  @override
+  String get externalControllerCorsDesc =>
+      'Web dashboards can connect from other sites.';
+
+  @override
   String get ipv6Desc => 'IPv6 traffic is received only while IPv6 is on.';
 
   @override
@@ -542,9 +545,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tcpConcurrent => 'TCP concurrent';
-
-  @override
-  String get geodataLoader => 'Geo low-memory mode';
 
   @override
   String get requests => 'Requests';
@@ -1341,9 +1341,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hideTimeoutProxies => 'Hide timed-out proxies';
-
-  @override
-  String get stackMode => 'Stack mode';
 
   @override
   String get network => 'Network';
@@ -2978,10 +2975,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get congestionController => 'TCP congestion control';
 
   @override
-  String get congestionControllerDesc =>
-      'TCP congestion control works only with the mips stack.';
-
-  @override
   String get routeExcludeAddress => 'Route exclude addresses';
 
   @override
@@ -3055,8 +3048,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get udpTimeout => 'UDP timeout';
 
   @override
-  String get udpTimeoutDesc =>
-      'The UDP timeout is in seconds and works only with the gvisor, system and mixed stacks.';
+  String get udpTimeoutDesc => 'The UDP timeout is in seconds.';
 
   @override
   String get dnsHijackDesc =>

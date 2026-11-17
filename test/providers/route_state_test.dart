@@ -1,8 +1,6 @@
 import 'dart:async';
 
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
-import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -14,7 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class _MockCore extends Mock implements CoreHandlerInterface {}
+import '../helpers/core_mocks.dart';
 
 class _RunStateReader extends ConsumerStatefulWidget {
   const _RunStateReader();
@@ -42,7 +40,7 @@ const _state = RouteState(
   synced: true,
 );
 
-const _snapshot = RouteSnapshot(coreEpoch: 3, routeVersion: 1);
+const _firstStamp = RouteStampDto(epoch: 3, version: 1);
 
 RouteStamp _stamp({
   int coreEpoch = 3,
@@ -92,12 +90,26 @@ void main() {
   });
 
   group('RouteTracker', () {
-    late _MockCore core;
+    late CoreMocks mocks;
+    late List<StreamController<RouteStampDto>> feeds;
+    late void Function(StreamController<RouteStampDto> feed) onFeed;
 
     setUp(() {
-      core = _MockCore();
-      when(() => core.watchRoute(true)).thenAnswer((_) async => _snapshot);
-      when(() => core.watchRoute(false)).thenAnswer((_) async => _snapshot);
+      mocks = coreMocks();
+      feeds = [];
+      onFeed = (feed) => feed.add(_firstStamp);
+      when(() => mocks.api.watchRoute()).thenAnswer((_) {
+        final feed = StreamController<RouteStampDto>();
+        feeds.add(feed);
+        onFeed(feed);
+        return feed.stream;
+      });
+    });
+
+    tearDown(() {
+      for (final feed in feeds) {
+        unawaited(feed.close());
+      }
     });
 
     ProviderContainer build({
@@ -114,7 +126,7 @@ void main() {
           coreStatusProvider.overrideWithBuild((_, _) => status),
           runTimeProvider.overrideWithBuild((_, _) => running ? 1 : null),
           suspendProvider.overrideWithValue(false),
-          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          coreHandlerProvider.overrideWithValue(mocks.controller),
         ],
       );
       addTearDown(container.dispose);
@@ -161,7 +173,9 @@ void main() {
       await pumpEventQueue();
       expect(stateOf(container).proxied, isTrue);
 
-      trackerOf(container).applySnapshot(_snapshot);
+      trackerOf(
+        container,
+      ).applySnapshot(const RouteSnapshot(coreEpoch: 3, routeVersion: 1));
       expect(stateOf(container).proxied, isTrue);
     });
 
@@ -201,7 +215,8 @@ void main() {
         tracker.attach();
         await pumpEventQueue();
 
-        verify(() => core.watchRoute(true)).called(1);
+        verify(() => mocks.api.watchRoute()).called(1);
+        expect(feeds.single.hasListener, isTrue);
         final state = stateOf(container);
         expect(state.synced, isTrue);
         expect(state.coreEpoch, 3);
@@ -211,7 +226,23 @@ void main() {
         tracker.detach();
         await pumpEventQueue();
 
-        verify(() => core.watchRoute(false)).called(1);
+        expect(feeds.single.hasListener, isFalse);
+      },
+    );
+
+    test(
+      'follows the moves the Core streams after the first counters',
+      () async {
+        final container = build();
+        trackerOf(container).attach();
+        await pumpEventQueue();
+
+        feeds.single.add(const RouteStampDto(epoch: 3, version: 4));
+        await pumpEventQueue();
+
+        expect(stateOf(container).routeVersion, 4);
+        expect(stateOf(container).hostEpoch, 1);
+        verify(() => mocks.api.watchRoute()).called(1);
       },
     );
 
@@ -219,12 +250,12 @@ void main() {
       final container = build(init: false);
       trackerOf(container).attach();
       await pumpEventQueue();
-      verifyNever(() => core.watchRoute(any()));
+      verifyNever(() => mocks.api.watchRoute());
 
       container.read(initProvider.notifier).value = true;
       await pumpEventQueue();
 
-      verify(() => core.watchRoute(true)).called(1);
+      verify(() => mocks.api.watchRoute()).called(1);
       expect(stateOf(container).synced, isTrue);
     });
 
@@ -234,35 +265,30 @@ void main() {
         final container = build();
         trackerOf(container).attach();
         await pumpEventQueue();
-        verify(() => core.watchRoute(true)).called(1);
+        verify(() => mocks.api.watchRoute()).called(1);
 
         container.read(appVisibleProvider.notifier).value = false;
         await pumpEventQueue();
 
-        verify(() => core.watchRoute(false)).called(1);
+        expect(feeds.single.hasListener, isFalse);
         expect(stateOf(container).synced, isTrue);
         expect(stateOf(container).live, isFalse);
 
         trackerOf(container).resync();
         await pumpEventQueue();
-        verifyNever(() => core.watchRoute(true));
+        verifyNever(() => mocks.api.watchRoute());
 
         container.read(appVisibleProvider.notifier).value = true;
         await pumpEventQueue();
 
-        verify(() => core.watchRoute(true)).called(1);
+        verify(() => mocks.api.watchRoute()).called(1);
         expect(stateOf(container).hostEpoch, 1);
         expect(stateOf(container).live, isTrue);
       },
     );
 
-    test('a read asked for while one is on the way runs after it', () async {
-      final reads = <Completer<RouteSnapshot>>[];
-      when(() => core.watchRoute(true)).thenAnswer((_) {
-        final read = Completer<RouteSnapshot>();
-        reads.add(read);
-        return read.future;
-      });
+    test('a feed asked for again replaces the one on the way', () async {
+      onFeed = (_) {};
       final container = build();
       final tracker = trackerOf(container);
       tracker.attach();
@@ -270,28 +296,29 @@ void main() {
 
       container.read(appVisibleProvider.notifier).value = false;
       container.read(appVisibleProvider.notifier).value = true;
-      reads.single.complete(_snapshot);
       await pumpEventQueue();
 
-      expect(reads, hasLength(2));
+      expect(feeds, hasLength(2));
+      expect(feeds.first.hasListener, isFalse);
+      expect(feeds.last.hasListener, isTrue);
       expect(stateOf(container).live, isFalse);
 
-      reads.last.complete(_snapshot);
+      feeds.last.add(_firstStamp);
       await pumpEventQueue();
       expect(stateOf(container).live, isTrue);
     });
 
-    testWidgets('a read the Core leaves unanswered is asked again', (
+    testWidgets('a feed the Core leaves unanswered is asked again', (
       tester,
     ) async {
-      final answers = <RouteSnapshot Function()>[
-        () => throw const CoreMethodException(code: 'no_response', message: ''),
-        () => throw TimeoutException('no answer'),
-        () => _snapshot,
+      final answers = <void Function(StreamController<RouteStampDto>)>[
+        (feed) => feed.addError(
+          const CoreMethodException(code: 'core_unavailable', message: ''),
+        ),
+        (feed) => feed.addError(TimeoutException('no answer')),
+        (feed) => feed.add(_firstStamp),
       ];
-      when(
-        () => core.watchRoute(true),
-      ).thenAnswer((_) async => answers.removeAt(0)());
+      onFeed = (feed) => answers.removeAt(0)(feed);
       final container = build();
       trackerOf(container).attach();
       await tester.pump();
@@ -301,14 +328,29 @@ void main() {
       expect(stateOf(container).live, isFalse);
 
       await tester.pump(const Duration(seconds: 2));
-      verify(() => core.watchRoute(true)).called(3);
+      verify(() => mocks.api.watchRoute()).called(3);
+      expect(stateOf(container).live, isTrue);
+    });
+
+    testWidgets('a feed that ends is asked again', (tester) async {
+      final answers = <void Function(StreamController<RouteStampDto>)>[
+        (feed) => unawaited(feed.close()),
+        (feed) => feed.add(_firstStamp),
+      ];
+      onFeed = (feed) => answers.removeAt(0)(feed);
+      final container = build();
+      trackerOf(container).attach();
+      await tester.pump();
+      expect(stateOf(container).live, isFalse);
+
+      await tester.pump(const Duration(seconds: 1));
+
+      verify(() => mocks.api.watchRoute()).called(2);
       expect(stateOf(container).live, isTrue);
     });
 
     testWidgets('letting go stops asking again', (tester) async {
-      when(
-        () => core.watchRoute(true),
-      ).thenAnswer((_) async => throw TimeoutException('no answer'));
+      onFeed = (feed) => feed.addError(TimeoutException('no answer'));
       final container = build();
       final tracker = trackerOf(container);
       tracker.attach();
@@ -317,7 +359,7 @@ void main() {
       tracker.detach();
       await tester.pump(const Duration(minutes: 1));
 
-      verify(() => core.watchRoute(true)).called(1);
+      verify(() => mocks.api.watchRoute()).called(1);
     });
 
     test('a hidden app with nothing watching leaves the Core alone', () async {
@@ -327,7 +369,7 @@ void main() {
       container.read(appVisibleProvider.notifier).value = true;
       await pumpEventQueue();
 
-      verifyNever(() => core.watchRoute(any()));
+      verifyNever(() => mocks.api.watchRoute());
     });
 
     test(
@@ -341,12 +383,13 @@ void main() {
             CoreStatus.disconnected;
         await pumpEventQueue();
         expect(stateOf(container).synced, isFalse);
+        expect(feeds.single.hasListener, isFalse);
 
         container.read(coreStatusProvider.notifier).value =
             CoreStatus.connected;
         await pumpEventQueue();
 
-        verify(() => core.watchRoute(true)).called(2);
+        verify(() => mocks.api.watchRoute()).called(2);
         expect(stateOf(container).synced, isTrue);
         expect(stateOf(container).hostEpoch, 2);
       },

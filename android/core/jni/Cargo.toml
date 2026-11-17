@@ -1,0 +1,19 @@
+[package]
+name = "core-jni"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "The JNI glue between FlClash's :core module and Concord's C ABI"
+
+[lib]
+crate-type = ["cdylib"]
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.22.4"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "unwind"
+strip = true

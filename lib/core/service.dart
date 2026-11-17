@@ -2,26 +2,26 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/core.dart';
 import 'package:flutter/foundation.dart';
 
+import 'api/channels/socket_channel.dart';
+import 'api/core_api.dart';
+import 'api/core_client.dart';
+import 'api/rpc_core_api.dart';
+import 'backend.dart';
 import 'desktop/helper_client.dart';
 import 'desktop/launcher.dart';
 import 'desktop/lifecycle.dart';
 import 'desktop/model.dart';
-import 'desktop/rpc_client.dart';
 import 'desktop/transport.dart';
-import 'event.dart';
-import 'interface.dart';
-import 'method.dart';
-import 'spill.dart';
 
-class CoreService extends CoreHandlerInterface {
+class CoreService extends CoreBackend {
   static CoreService? _instance;
 
   final DesktopCoreLifecycleController _lifecycle;
-  final CoreRpcChannel _rpcClient;
-  late final StreamSubscription<DesktopCoreFailure> _crashSubscription;
+  final CoreClient? _client;
+  @override
+  final CoreApi api;
   Future<CoreLifecycleResult>? _closeOperation;
 
   factory CoreService() {
@@ -47,36 +47,35 @@ class CoreService extends CoreHandlerInterface {
       ),
       verifyPeerPid: system.isWindows,
     );
+    final client = CoreClient(
+      SocketFrameChannel(lifecycle.transport),
+      debug: kDebugMode,
+    );
     return CoreService._(
       lifecycle: lifecycle,
-      rpcClient: CoreRpcClient(lifecycle.transport),
+      client: client,
+      api: RpcCoreApi(client),
     );
   }
 
   @visibleForTesting
   CoreService.forTesting({
     required DesktopCoreLifecycleController lifecycle,
-    required CoreRpcChannel rpcClient,
-  }) : this._(lifecycle: lifecycle, rpcClient: rpcClient);
+    required CoreApi api,
+  }) : this._(lifecycle: lifecycle, client: null, api: api);
 
   CoreService._({
     required DesktopCoreLifecycleController lifecycle,
-    required CoreRpcChannel rpcClient,
+    required CoreClient? client,
+    required this.api,
   }) : _lifecycle = lifecycle,
-       _rpcClient = rpcClient {
-    _crashSubscription = _lifecycle.crashEvents.listen((failure) {
-      commonPrint.log(
-        'Core session lost: $failure',
-        logLevel: LogLevel.warning,
-      );
-      coreEventManager.sendEvent(
-        CoreEvent(
-          type: CoreEventType.crash,
-          data: coreSessionLostMessage(failure.cause, currentAppLocalizations),
-        ),
-      );
-    });
-  }
+       _client = client;
+
+  @override
+  Stream<String> get crashes => _lifecycle.crashEvents.map((failure) {
+    commonPrint.log('Core session lost: $failure', logLevel: LogLevel.warning);
+    return coreSessionLostMessage(failure.cause, currentAppLocalizations);
+  });
 
   @override
   Future<CoreLifecycleResult> start() => _lifecycle.start();
@@ -96,25 +95,15 @@ class CoreService extends CoreHandlerInterface {
     try {
       return await _lifecycle.close();
     } finally {
-      await _rpcClient.close();
-      await _crashSubscription.cancel();
+      await _client?.close();
     }
   }
 
   @override
-  Future<Object?> invokeMethod({
-    required CoreMethod method,
-    Object? arguments,
-    Duration? timeout,
-    CoreResultModel? model,
-  }) {
-    return _rpcClient.invoke(
-      method: method,
-      arguments: arguments,
-      timeout: timeout,
-      model: model,
-    );
-  }
+  Future<void> startListener() => api.startEngine();
+
+  @override
+  Future<void> stopListener() => api.stopEngine();
 }
 
 final coreService = system.isDesktop ? CoreService() : null;

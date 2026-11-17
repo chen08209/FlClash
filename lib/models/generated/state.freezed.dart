@@ -4729,7 +4729,7 @@ as String?,
 /// @nodoc
 mixin _$SharedState {
 
-@JsonKey(includeIfNull: false) SetupParams? get setupParams; VpnOptions? get vpnOptions; String get stopTip; String get startTip; String get localNetworkTip; String get currentProfileName; String get stopText; bool get onlyStatisticsProxy; bool get showStopAction;
+@JsonKey(includeIfNull: false) SetupParams? get setupParams; VpnOptions? get vpnOptions; String get stopTip; String get startTip; String get currentProfileName; String get stopText; bool get onlyStatisticsProxy; bool get showStopAction;
 /// Create a copy of SharedState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -4743,20 +4743,20 @@ $SharedStateCopyWith<SharedState> get copyWith => _$SharedStateCopyWithImpl<Shar
 @override
 bool operator ==(Object other) {
   final _this = this as SharedState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SharedState&&(identical(other.setupParams, _this.setupParams) || other.setupParams == _this.setupParams)&&(identical(other.vpnOptions, _this.vpnOptions) || other.vpnOptions == _this.vpnOptions)&&(identical(other.stopTip, _this.stopTip) || other.stopTip == _this.stopTip)&&(identical(other.startTip, _this.startTip) || other.startTip == _this.startTip)&&(identical(other.localNetworkTip, _this.localNetworkTip) || other.localNetworkTip == _this.localNetworkTip)&&(identical(other.currentProfileName, _this.currentProfileName) || other.currentProfileName == _this.currentProfileName)&&(identical(other.stopText, _this.stopText) || other.stopText == _this.stopText)&&(identical(other.onlyStatisticsProxy, _this.onlyStatisticsProxy) || other.onlyStatisticsProxy == _this.onlyStatisticsProxy)&&(identical(other.showStopAction, _this.showStopAction) || other.showStopAction == _this.showStopAction));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SharedState&&(identical(other.setupParams, _this.setupParams) || other.setupParams == _this.setupParams)&&(identical(other.vpnOptions, _this.vpnOptions) || other.vpnOptions == _this.vpnOptions)&&(identical(other.stopTip, _this.stopTip) || other.stopTip == _this.stopTip)&&(identical(other.startTip, _this.startTip) || other.startTip == _this.startTip)&&(identical(other.currentProfileName, _this.currentProfileName) || other.currentProfileName == _this.currentProfileName)&&(identical(other.stopText, _this.stopText) || other.stopText == _this.stopText)&&(identical(other.onlyStatisticsProxy, _this.onlyStatisticsProxy) || other.onlyStatisticsProxy == _this.onlyStatisticsProxy)&&(identical(other.showStopAction, _this.showStopAction) || other.showStopAction == _this.showStopAction));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as SharedState;
-  return Object.hash(runtimeType,_this.setupParams,_this.vpnOptions,_this.stopTip,_this.startTip,_this.localNetworkTip,_this.currentProfileName,_this.stopText,_this.onlyStatisticsProxy,_this.showStopAction);
+  return Object.hash(runtimeType,_this.setupParams,_this.vpnOptions,_this.stopTip,_this.startTip,_this.currentProfileName,_this.stopText,_this.onlyStatisticsProxy,_this.showStopAction);
 }
 
 @override
 String toString() {
   final _this = this as SharedState;
-  return 'SharedState(setupParams: ${_this.setupParams}, vpnOptions: ${_this.vpnOptions}, stopTip: ${_this.stopTip}, startTip: ${_this.startTip}, localNetworkTip: ${_this.localNetworkTip}, currentProfileName: ${_this.currentProfileName}, stopText: ${_this.stopText}, onlyStatisticsProxy: ${_this.onlyStatisticsProxy}, showStopAction: ${_this.showStopAction})';
+  return 'SharedState(setupParams: ${_this.setupParams}, vpnOptions: ${_this.vpnOptions}, stopTip: ${_this.stopTip}, startTip: ${_this.startTip}, currentProfileName: ${_this.currentProfileName}, stopText: ${_this.stopText}, onlyStatisticsProxy: ${_this.onlyStatisticsProxy}, showStopAction: ${_this.showStopAction})';
 }
 
 
@@ -4767,7 +4767,7 @@ abstract mixin class $SharedStateCopyWith<$Res>  {
   factory $SharedStateCopyWith(SharedState value, $Res Function(SharedState) _then) = _$SharedStateCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(includeIfNull: false) SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String localNetworkTip, String currentProfileName, String stopText, bool onlyStatisticsProxy, bool showStopAction
+@JsonKey(includeIfNull: false) SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String currentProfileName, String stopText, bool onlyStatisticsProxy, bool showStopAction
 });
 
 
@@ -4784,13 +4784,12 @@ class _$SharedStateCopyWithImpl<$Res>
 
 /// Create a copy of SharedState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? setupParams = freezed,Object? vpnOptions = freezed,Object? stopTip = null,Object? startTip = null,Object? localNetworkTip = null,Object? currentProfileName = null,Object? stopText = null,Object? onlyStatisticsProxy = null,Object? showStopAction = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? setupParams = freezed,Object? vpnOptions = freezed,Object? stopTip = null,Object? startTip = null,Object? currentProfileName = null,Object? stopText = null,Object? onlyStatisticsProxy = null,Object? showStopAction = null,}) {
   return _then(SharedState(
 setupParams: freezed == setupParams ? _self.setupParams : setupParams // ignore: cast_nullable_to_non_nullable
 as SetupParams?,vpnOptions: freezed == vpnOptions ? _self.vpnOptions : vpnOptions // ignore: cast_nullable_to_non_nullable
 as VpnOptions?,stopTip: null == stopTip ? _self.stopTip : stopTip // ignore: cast_nullable_to_non_nullable
 as String,startTip: null == startTip ? _self.startTip : startTip // ignore: cast_nullable_to_non_nullable
-as String,localNetworkTip: null == localNetworkTip ? _self.localNetworkTip : localNetworkTip // ignore: cast_nullable_to_non_nullable
 as String,currentProfileName: null == currentProfileName ? _self.currentProfileName : currentProfileName // ignore: cast_nullable_to_non_nullable
 as String,stopText: null == stopText ? _self.stopText : stopText // ignore: cast_nullable_to_non_nullable
 as String,onlyStatisticsProxy: null == onlyStatisticsProxy ? _self.onlyStatisticsProxy : onlyStatisticsProxy // ignore: cast_nullable_to_non_nullable
@@ -4904,10 +4903,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(includeIfNull: false)  SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String localNetworkTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool showStopAction)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(includeIfNull: false)  SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool showStopAction)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SharedState() when $default != null:
-return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.localNetworkTip,_that.currentProfileName,_that.stopText,_that.onlyStatisticsProxy,_that.showStopAction);case _:
+return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.onlyStatisticsProxy,_that.showStopAction);case _:
   return orElse();
 
 }
@@ -4925,10 +4924,10 @@ return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(includeIfNull: false)  SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String localNetworkTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool showStopAction)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(includeIfNull: false)  SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool showStopAction)  $default,) {final _that = this;
 switch (_that) {
 case _SharedState():
-return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.localNetworkTip,_that.currentProfileName,_that.stopText,_that.onlyStatisticsProxy,_that.showStopAction);case _:
+return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.onlyStatisticsProxy,_that.showStopAction);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -4945,10 +4944,10 @@ return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(includeIfNull: false)  SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String localNetworkTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool showStopAction)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(includeIfNull: false)  SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool showStopAction)?  $default,) {final _that = this;
 switch (_that) {
 case _SharedState() when $default != null:
-return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.localNetworkTip,_that.currentProfileName,_that.stopText,_that.onlyStatisticsProxy,_that.showStopAction);case _:
+return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.onlyStatisticsProxy,_that.showStopAction);case _:
   return null;
 
 }
@@ -4960,14 +4959,13 @@ return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,
 @JsonSerializable()
 
 class _SharedState implements SharedState {
-  const _SharedState({@JsonKey(includeIfNull: false) this.setupParams, this.vpnOptions, required this.stopTip, required this.startTip, required this.localNetworkTip, required this.currentProfileName, required this.stopText, required this.onlyStatisticsProxy, this.showStopAction = true});
+  const _SharedState({@JsonKey(includeIfNull: false) this.setupParams, this.vpnOptions, required this.stopTip, required this.startTip, required this.currentProfileName, required this.stopText, required this.onlyStatisticsProxy, this.showStopAction = true});
   factory _SharedState.fromJson(Map<String, dynamic> json) => _$SharedStateFromJson(json);
 
 @override@JsonKey(includeIfNull: false) final  SetupParams? setupParams;
 @override final  VpnOptions? vpnOptions;
 @override final  String stopTip;
 @override final  String startTip;
-@override final  String localNetworkTip;
 @override final  String currentProfileName;
 @override final  String stopText;
 @override final  bool onlyStatisticsProxy;
@@ -4986,18 +4984,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SharedState&&(identical(other.setupParams, setupParams) || other.setupParams == setupParams)&&(identical(other.vpnOptions, vpnOptions) || other.vpnOptions == vpnOptions)&&(identical(other.stopTip, stopTip) || other.stopTip == stopTip)&&(identical(other.startTip, startTip) || other.startTip == startTip)&&(identical(other.localNetworkTip, localNetworkTip) || other.localNetworkTip == localNetworkTip)&&(identical(other.currentProfileName, currentProfileName) || other.currentProfileName == currentProfileName)&&(identical(other.stopText, stopText) || other.stopText == stopText)&&(identical(other.onlyStatisticsProxy, onlyStatisticsProxy) || other.onlyStatisticsProxy == onlyStatisticsProxy)&&(identical(other.showStopAction, showStopAction) || other.showStopAction == showStopAction));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SharedState&&(identical(other.setupParams, setupParams) || other.setupParams == setupParams)&&(identical(other.vpnOptions, vpnOptions) || other.vpnOptions == vpnOptions)&&(identical(other.stopTip, stopTip) || other.stopTip == stopTip)&&(identical(other.startTip, startTip) || other.startTip == startTip)&&(identical(other.currentProfileName, currentProfileName) || other.currentProfileName == currentProfileName)&&(identical(other.stopText, stopText) || other.stopText == stopText)&&(identical(other.onlyStatisticsProxy, onlyStatisticsProxy) || other.onlyStatisticsProxy == onlyStatisticsProxy)&&(identical(other.showStopAction, showStopAction) || other.showStopAction == showStopAction));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,setupParams,vpnOptions,stopTip,startTip,localNetworkTip,currentProfileName,stopText,onlyStatisticsProxy,showStopAction);
+    return Object.hash(runtimeType,setupParams,vpnOptions,stopTip,startTip,currentProfileName,stopText,onlyStatisticsProxy,showStopAction);
 }
 
 @override
 String toString() {
-    return 'SharedState(setupParams: $setupParams, vpnOptions: $vpnOptions, stopTip: $stopTip, startTip: $startTip, localNetworkTip: $localNetworkTip, currentProfileName: $currentProfileName, stopText: $stopText, onlyStatisticsProxy: $onlyStatisticsProxy, showStopAction: $showStopAction)';
+    return 'SharedState(setupParams: $setupParams, vpnOptions: $vpnOptions, stopTip: $stopTip, startTip: $startTip, currentProfileName: $currentProfileName, stopText: $stopText, onlyStatisticsProxy: $onlyStatisticsProxy, showStopAction: $showStopAction)';
 }
 
 
@@ -5008,7 +5006,7 @@ abstract mixin class _$SharedStateCopyWith<$Res> implements $SharedStateCopyWith
   factory _$SharedStateCopyWith(_SharedState value, $Res Function(_SharedState) _then) = __$SharedStateCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(includeIfNull: false) SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String localNetworkTip, String currentProfileName, String stopText, bool onlyStatisticsProxy, bool showStopAction
+@JsonKey(includeIfNull: false) SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String currentProfileName, String stopText, bool onlyStatisticsProxy, bool showStopAction
 });
 
 
@@ -5025,13 +5023,12 @@ class __$SharedStateCopyWithImpl<$Res>
 
 /// Create a copy of SharedState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? setupParams = freezed,Object? vpnOptions = freezed,Object? stopTip = null,Object? startTip = null,Object? localNetworkTip = null,Object? currentProfileName = null,Object? stopText = null,Object? onlyStatisticsProxy = null,Object? showStopAction = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? setupParams = freezed,Object? vpnOptions = freezed,Object? stopTip = null,Object? startTip = null,Object? currentProfileName = null,Object? stopText = null,Object? onlyStatisticsProxy = null,Object? showStopAction = null,}) {
   return _then(_SharedState(
 setupParams: freezed == setupParams ? _self.setupParams : setupParams // ignore: cast_nullable_to_non_nullable
 as SetupParams?,vpnOptions: freezed == vpnOptions ? _self.vpnOptions : vpnOptions // ignore: cast_nullable_to_non_nullable
 as VpnOptions?,stopTip: null == stopTip ? _self.stopTip : stopTip // ignore: cast_nullable_to_non_nullable
 as String,startTip: null == startTip ? _self.startTip : startTip // ignore: cast_nullable_to_non_nullable
-as String,localNetworkTip: null == localNetworkTip ? _self.localNetworkTip : localNetworkTip // ignore: cast_nullable_to_non_nullable
 as String,currentProfileName: null == currentProfileName ? _self.currentProfileName : currentProfileName // ignore: cast_nullable_to_non_nullable
 as String,stopText: null == stopText ? _self.stopText : stopText // ignore: cast_nullable_to_non_nullable
 as String,onlyStatisticsProxy: null == onlyStatisticsProxy ? _self.onlyStatisticsProxy : onlyStatisticsProxy // ignore: cast_nullable_to_non_nullable
@@ -5070,7 +5067,7 @@ $VpnOptionsCopyWith<$Res>? get vpnOptions {
 /// @nodoc
 mixin _$ComputeGroupsState {
 
- ProxiesData get proxiesData; ProxiesSortType get sortType; DelayMap get delayMap; Map<String, String> get selectedMap; String get defaultTestUrl;
+ ProxyGroupsDto get proxyGroups; ProxiesSortType get sortType; DelayMap get delayMap; Map<String, String> get selectedMap; String get defaultTestUrl;
 /// Create a copy of ComputeGroupsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -5082,20 +5079,20 @@ $ComputeGroupsStateCopyWith<ComputeGroupsState> get copyWith => _$ComputeGroupsS
 @override
 bool operator ==(Object other) {
   final _this = this as ComputeGroupsState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ComputeGroupsState&&(identical(other.proxiesData, _this.proxiesData) || other.proxiesData == _this.proxiesData)&&(identical(other.sortType, _this.sortType) || other.sortType == _this.sortType)&&const DeepCollectionEquality().equals(other.delayMap, _this.delayMap)&&const DeepCollectionEquality().equals(other.selectedMap, _this.selectedMap)&&(identical(other.defaultTestUrl, _this.defaultTestUrl) || other.defaultTestUrl == _this.defaultTestUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ComputeGroupsState&&(identical(other.proxyGroups, _this.proxyGroups) || other.proxyGroups == _this.proxyGroups)&&(identical(other.sortType, _this.sortType) || other.sortType == _this.sortType)&&const DeepCollectionEquality().equals(other.delayMap, _this.delayMap)&&const DeepCollectionEquality().equals(other.selectedMap, _this.selectedMap)&&(identical(other.defaultTestUrl, _this.defaultTestUrl) || other.defaultTestUrl == _this.defaultTestUrl));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ComputeGroupsState;
-  return Object.hash(runtimeType,_this.proxiesData,_this.sortType,const DeepCollectionEquality().hash(_this.delayMap),const DeepCollectionEquality().hash(_this.selectedMap),_this.defaultTestUrl);
+  return Object.hash(runtimeType,_this.proxyGroups,_this.sortType,const DeepCollectionEquality().hash(_this.delayMap),const DeepCollectionEquality().hash(_this.selectedMap),_this.defaultTestUrl);
 }
 
 @override
 String toString() {
   final _this = this as ComputeGroupsState;
-  return 'ComputeGroupsState(proxiesData: ${_this.proxiesData}, sortType: ${_this.sortType}, delayMap: ${_this.delayMap}, selectedMap: ${_this.selectedMap}, defaultTestUrl: ${_this.defaultTestUrl})';
+  return 'ComputeGroupsState(proxyGroups: ${_this.proxyGroups}, sortType: ${_this.sortType}, delayMap: ${_this.delayMap}, selectedMap: ${_this.selectedMap}, defaultTestUrl: ${_this.defaultTestUrl})';
 }
 
 
@@ -5106,11 +5103,11 @@ abstract mixin class $ComputeGroupsStateCopyWith<$Res>  {
   factory $ComputeGroupsStateCopyWith(ComputeGroupsState value, $Res Function(ComputeGroupsState) _then) = _$ComputeGroupsStateCopyWithImpl;
 @useResult
 $Res call({
- ProxiesData proxiesData, ProxiesSortType sortType, DelayMap delayMap, Map<String, String> selectedMap, String defaultTestUrl
+ ProxyGroupsDto proxyGroups, ProxiesSortType sortType, DelayMap delayMap, Map<String, String> selectedMap, String defaultTestUrl
 });
 
 
-$ProxiesDataCopyWith<$Res> get proxiesData;
+
 
 }
 /// @nodoc
@@ -5123,26 +5120,17 @@ class _$ComputeGroupsStateCopyWithImpl<$Res>
 
 /// Create a copy of ComputeGroupsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? proxiesData = null,Object? sortType = null,Object? delayMap = null,Object? selectedMap = null,Object? defaultTestUrl = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? proxyGroups = null,Object? sortType = null,Object? delayMap = null,Object? selectedMap = null,Object? defaultTestUrl = null,}) {
   return _then(ComputeGroupsState(
-proxiesData: null == proxiesData ? _self.proxiesData : proxiesData // ignore: cast_nullable_to_non_nullable
-as ProxiesData,sortType: null == sortType ? _self.sortType : sortType // ignore: cast_nullable_to_non_nullable
+proxyGroups: null == proxyGroups ? _self.proxyGroups : proxyGroups // ignore: cast_nullable_to_non_nullable
+as ProxyGroupsDto,sortType: null == sortType ? _self.sortType : sortType // ignore: cast_nullable_to_non_nullable
 as ProxiesSortType,delayMap: null == delayMap ? _self.delayMap : delayMap // ignore: cast_nullable_to_non_nullable
 as DelayMap,selectedMap: null == selectedMap ? _self.selectedMap : selectedMap // ignore: cast_nullable_to_non_nullable
 as Map<String, String>,defaultTestUrl: null == defaultTestUrl ? _self.defaultTestUrl : defaultTestUrl // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
-/// Create a copy of ComputeGroupsState
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$ProxiesDataCopyWith<$Res> get proxiesData {
-  
-  return $ProxiesDataCopyWith<$Res>(_self.proxiesData, (value) {
-    return _then(_self.copyWith(proxiesData: value));
-  });
-}
+
 }
 
 
@@ -5224,10 +5212,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ProxiesData proxiesData,  ProxiesSortType sortType,  DelayMap delayMap,  Map<String, String> selectedMap,  String defaultTestUrl)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ProxyGroupsDto proxyGroups,  ProxiesSortType sortType,  DelayMap delayMap,  Map<String, String> selectedMap,  String defaultTestUrl)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ComputeGroupsState() when $default != null:
-return $default(_that.proxiesData,_that.sortType,_that.delayMap,_that.selectedMap,_that.defaultTestUrl);case _:
+return $default(_that.proxyGroups,_that.sortType,_that.delayMap,_that.selectedMap,_that.defaultTestUrl);case _:
   return orElse();
 
 }
@@ -5245,10 +5233,10 @@ return $default(_that.proxiesData,_that.sortType,_that.delayMap,_that.selectedMa
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ProxiesData proxiesData,  ProxiesSortType sortType,  DelayMap delayMap,  Map<String, String> selectedMap,  String defaultTestUrl)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ProxyGroupsDto proxyGroups,  ProxiesSortType sortType,  DelayMap delayMap,  Map<String, String> selectedMap,  String defaultTestUrl)  $default,) {final _that = this;
 switch (_that) {
 case _ComputeGroupsState():
-return $default(_that.proxiesData,_that.sortType,_that.delayMap,_that.selectedMap,_that.defaultTestUrl);case _:
+return $default(_that.proxyGroups,_that.sortType,_that.delayMap,_that.selectedMap,_that.defaultTestUrl);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -5265,10 +5253,10 @@ return $default(_that.proxiesData,_that.sortType,_that.delayMap,_that.selectedMa
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ProxiesData proxiesData,  ProxiesSortType sortType,  DelayMap delayMap,  Map<String, String> selectedMap,  String defaultTestUrl)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ProxyGroupsDto proxyGroups,  ProxiesSortType sortType,  DelayMap delayMap,  Map<String, String> selectedMap,  String defaultTestUrl)?  $default,) {final _that = this;
 switch (_that) {
 case _ComputeGroupsState() when $default != null:
-return $default(_that.proxiesData,_that.sortType,_that.delayMap,_that.selectedMap,_that.defaultTestUrl);case _:
+return $default(_that.proxyGroups,_that.sortType,_that.delayMap,_that.selectedMap,_that.defaultTestUrl);case _:
   return null;
 
 }
@@ -5280,10 +5268,10 @@ return $default(_that.proxiesData,_that.sortType,_that.delayMap,_that.selectedMa
 
 
 class _ComputeGroupsState implements ComputeGroupsState {
-  const _ComputeGroupsState({required this.proxiesData, required this.sortType, required  DelayMap delayMap, required  Map<String, String> selectedMap, required this.defaultTestUrl}): _delayMap = delayMap,_selectedMap = selectedMap;
+  const _ComputeGroupsState({required this.proxyGroups, required this.sortType, required  DelayMap delayMap, required  Map<String, String> selectedMap, required this.defaultTestUrl}): _delayMap = delayMap,_selectedMap = selectedMap;
   
 
-@override final  ProxiesData proxiesData;
+@override final  ProxyGroupsDto proxyGroups;
 @override final  ProxiesSortType sortType;
  final  DelayMap _delayMap;
 @override DelayMap get delayMap {
@@ -5311,18 +5299,18 @@ _$ComputeGroupsStateCopyWith<_ComputeGroupsState> get copyWith => __$ComputeGrou
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ComputeGroupsState&&(identical(other.proxiesData, proxiesData) || other.proxiesData == proxiesData)&&(identical(other.sortType, sortType) || other.sortType == sortType)&&const DeepCollectionEquality().equals(other.delayMap, _delayMap)&&const DeepCollectionEquality().equals(other.selectedMap, _selectedMap)&&(identical(other.defaultTestUrl, defaultTestUrl) || other.defaultTestUrl == defaultTestUrl));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ComputeGroupsState&&(identical(other.proxyGroups, proxyGroups) || other.proxyGroups == proxyGroups)&&(identical(other.sortType, sortType) || other.sortType == sortType)&&const DeepCollectionEquality().equals(other.delayMap, _delayMap)&&const DeepCollectionEquality().equals(other.selectedMap, _selectedMap)&&(identical(other.defaultTestUrl, defaultTestUrl) || other.defaultTestUrl == defaultTestUrl));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,proxiesData,sortType,const DeepCollectionEquality().hash(_delayMap),const DeepCollectionEquality().hash(_selectedMap),defaultTestUrl);
+    return Object.hash(runtimeType,proxyGroups,sortType,const DeepCollectionEquality().hash(_delayMap),const DeepCollectionEquality().hash(_selectedMap),defaultTestUrl);
 }
 
 @override
 String toString() {
-    return 'ComputeGroupsState(proxiesData: $proxiesData, sortType: $sortType, delayMap: $delayMap, selectedMap: $selectedMap, defaultTestUrl: $defaultTestUrl)';
+    return 'ComputeGroupsState(proxyGroups: $proxyGroups, sortType: $sortType, delayMap: $delayMap, selectedMap: $selectedMap, defaultTestUrl: $defaultTestUrl)';
 }
 
 
@@ -5333,11 +5321,11 @@ abstract mixin class _$ComputeGroupsStateCopyWith<$Res> implements $ComputeGroup
   factory _$ComputeGroupsStateCopyWith(_ComputeGroupsState value, $Res Function(_ComputeGroupsState) _then) = __$ComputeGroupsStateCopyWithImpl;
 @override @useResult
 $Res call({
- ProxiesData proxiesData, ProxiesSortType sortType, DelayMap delayMap, Map<String, String> selectedMap, String defaultTestUrl
+ ProxyGroupsDto proxyGroups, ProxiesSortType sortType, DelayMap delayMap, Map<String, String> selectedMap, String defaultTestUrl
 });
 
 
-@override $ProxiesDataCopyWith<$Res> get proxiesData;
+
 
 }
 /// @nodoc
@@ -5350,10 +5338,10 @@ class __$ComputeGroupsStateCopyWithImpl<$Res>
 
 /// Create a copy of ComputeGroupsState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? proxiesData = null,Object? sortType = null,Object? delayMap = null,Object? selectedMap = null,Object? defaultTestUrl = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? proxyGroups = null,Object? sortType = null,Object? delayMap = null,Object? selectedMap = null,Object? defaultTestUrl = null,}) {
   return _then(_ComputeGroupsState(
-proxiesData: null == proxiesData ? _self.proxiesData : proxiesData // ignore: cast_nullable_to_non_nullable
-as ProxiesData,sortType: null == sortType ? _self.sortType : sortType // ignore: cast_nullable_to_non_nullable
+proxyGroups: null == proxyGroups ? _self.proxyGroups : proxyGroups // ignore: cast_nullable_to_non_nullable
+as ProxyGroupsDto,sortType: null == sortType ? _self.sortType : sortType // ignore: cast_nullable_to_non_nullable
 as ProxiesSortType,delayMap: null == delayMap ? _self._delayMap : delayMap // ignore: cast_nullable_to_non_nullable
 as DelayMap,selectedMap: null == selectedMap ? _self._selectedMap : selectedMap // ignore: cast_nullable_to_non_nullable
 as Map<String, String>,defaultTestUrl: null == defaultTestUrl ? _self.defaultTestUrl : defaultTestUrl // ignore: cast_nullable_to_non_nullable
@@ -5361,22 +5349,16 @@ as String,
   ));
 }
 
-/// Create a copy of ComputeGroupsState
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$ProxiesDataCopyWith<$Res> get proxiesData {
-  
-  return $ProxiesDataCopyWith<$Res>(_self.proxiesData, (value) {
-    return _then(_self.copyWith(proxiesData: value));
-  });
-}
+
 }
 
 /// @nodoc
 mixin _$MakeRealProfileState {
 
- String get profilesPath; int get profileId; Map<String, dynamic> get rawConfig; PatchClashConfig get realPatchConfig; ProfileOverrides get overrides; bool get bypassPrivateRoute; bool get appendSystemDns; String? get defaultTunDnsMode; List<ProxyGroup> get proxyGroups; List<Rule> get rules; List<Rule> get addedRules; String get defaultUA; List<String> get authentication; Map<String, dynamic> get injectedProxyProviders; Map<String, dynamic> get injectedRuleProviders; Map<String, String> get exitTargets;/// The profile's own outbounds when [rawConfig] does not carry them.
+ String get profilesPath; int get profileId; Map<String, dynamic> get rawConfig; PatchClashConfig get realPatchConfig; ProfileOverrides get overrides; bool get bypassPrivateRoute; bool get appendSystemDns;/// `Platform.operatingSystem` of the Core the config is for; null is this one.
+ String? get os; List<ProxyGroup> get proxyGroups; List<Rule> get rules; List<Rule> get addedRules; String get defaultUA; List<String> get authentication;/// Keeps the built config as an object beside its text, for a profile
+/// whose Core merges it over the profile's own file.
+ bool get keepOverlay; Map<String, dynamic> get injectedProxyProviders; Map<String, dynamic> get injectedRuleProviders; Map<String, String> get exitTargets;/// The profile's own outbounds when [rawConfig] does not carry them.
  Set<String>? get outboundNames; String? get defaultExitTarget; bool get safeMode; List<MitmModuleSource> get mitmModules;
 /// Create a copy of MakeRealProfileState
 /// with the given fields replaced by the non-null parameter values.
@@ -5389,20 +5371,20 @@ $MakeRealProfileStateCopyWith<MakeRealProfileState> get copyWith => _$MakeRealPr
 @override
 bool operator ==(Object other) {
   final _this = this as MakeRealProfileState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MakeRealProfileState&&(identical(other.profilesPath, _this.profilesPath) || other.profilesPath == _this.profilesPath)&&(identical(other.profileId, _this.profileId) || other.profileId == _this.profileId)&&const DeepCollectionEquality().equals(other.rawConfig, _this.rawConfig)&&(identical(other.realPatchConfig, _this.realPatchConfig) || other.realPatchConfig == _this.realPatchConfig)&&(identical(other.overrides, _this.overrides) || other.overrides == _this.overrides)&&(identical(other.bypassPrivateRoute, _this.bypassPrivateRoute) || other.bypassPrivateRoute == _this.bypassPrivateRoute)&&(identical(other.appendSystemDns, _this.appendSystemDns) || other.appendSystemDns == _this.appendSystemDns)&&(identical(other.defaultTunDnsMode, _this.defaultTunDnsMode) || other.defaultTunDnsMode == _this.defaultTunDnsMode)&&const DeepCollectionEquality().equals(other.proxyGroups, _this.proxyGroups)&&const DeepCollectionEquality().equals(other.rules, _this.rules)&&const DeepCollectionEquality().equals(other.addedRules, _this.addedRules)&&(identical(other.defaultUA, _this.defaultUA) || other.defaultUA == _this.defaultUA)&&const DeepCollectionEquality().equals(other.authentication, _this.authentication)&&const DeepCollectionEquality().equals(other.injectedProxyProviders, _this.injectedProxyProviders)&&const DeepCollectionEquality().equals(other.injectedRuleProviders, _this.injectedRuleProviders)&&const DeepCollectionEquality().equals(other.exitTargets, _this.exitTargets)&&const DeepCollectionEquality().equals(other.outboundNames, _this.outboundNames)&&(identical(other.defaultExitTarget, _this.defaultExitTarget) || other.defaultExitTarget == _this.defaultExitTarget)&&(identical(other.safeMode, _this.safeMode) || other.safeMode == _this.safeMode)&&const DeepCollectionEquality().equals(other.mitmModules, _this.mitmModules));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MakeRealProfileState&&(identical(other.profilesPath, _this.profilesPath) || other.profilesPath == _this.profilesPath)&&(identical(other.profileId, _this.profileId) || other.profileId == _this.profileId)&&const DeepCollectionEquality().equals(other.rawConfig, _this.rawConfig)&&(identical(other.realPatchConfig, _this.realPatchConfig) || other.realPatchConfig == _this.realPatchConfig)&&(identical(other.overrides, _this.overrides) || other.overrides == _this.overrides)&&(identical(other.bypassPrivateRoute, _this.bypassPrivateRoute) || other.bypassPrivateRoute == _this.bypassPrivateRoute)&&(identical(other.appendSystemDns, _this.appendSystemDns) || other.appendSystemDns == _this.appendSystemDns)&&(identical(other.os, _this.os) || other.os == _this.os)&&const DeepCollectionEquality().equals(other.proxyGroups, _this.proxyGroups)&&const DeepCollectionEquality().equals(other.rules, _this.rules)&&const DeepCollectionEquality().equals(other.addedRules, _this.addedRules)&&(identical(other.defaultUA, _this.defaultUA) || other.defaultUA == _this.defaultUA)&&const DeepCollectionEquality().equals(other.authentication, _this.authentication)&&(identical(other.keepOverlay, _this.keepOverlay) || other.keepOverlay == _this.keepOverlay)&&const DeepCollectionEquality().equals(other.injectedProxyProviders, _this.injectedProxyProviders)&&const DeepCollectionEquality().equals(other.injectedRuleProviders, _this.injectedRuleProviders)&&const DeepCollectionEquality().equals(other.exitTargets, _this.exitTargets)&&const DeepCollectionEquality().equals(other.outboundNames, _this.outboundNames)&&(identical(other.defaultExitTarget, _this.defaultExitTarget) || other.defaultExitTarget == _this.defaultExitTarget)&&(identical(other.safeMode, _this.safeMode) || other.safeMode == _this.safeMode)&&const DeepCollectionEquality().equals(other.mitmModules, _this.mitmModules));
 }
 
 
 @override
 int get hashCode {
   final _this = this as MakeRealProfileState;
-  return Object.hashAll([runtimeType,_this.profilesPath,_this.profileId,const DeepCollectionEquality().hash(_this.rawConfig),_this.realPatchConfig,_this.overrides,_this.bypassPrivateRoute,_this.appendSystemDns,_this.defaultTunDnsMode,const DeepCollectionEquality().hash(_this.proxyGroups),const DeepCollectionEquality().hash(_this.rules),const DeepCollectionEquality().hash(_this.addedRules),_this.defaultUA,const DeepCollectionEquality().hash(_this.authentication),const DeepCollectionEquality().hash(_this.injectedProxyProviders),const DeepCollectionEquality().hash(_this.injectedRuleProviders),const DeepCollectionEquality().hash(_this.exitTargets),const DeepCollectionEquality().hash(_this.outboundNames),_this.defaultExitTarget,_this.safeMode,const DeepCollectionEquality().hash(_this.mitmModules)]);
+  return Object.hashAll([runtimeType,_this.profilesPath,_this.profileId,const DeepCollectionEquality().hash(_this.rawConfig),_this.realPatchConfig,_this.overrides,_this.bypassPrivateRoute,_this.appendSystemDns,_this.os,const DeepCollectionEquality().hash(_this.proxyGroups),const DeepCollectionEquality().hash(_this.rules),const DeepCollectionEquality().hash(_this.addedRules),_this.defaultUA,const DeepCollectionEquality().hash(_this.authentication),_this.keepOverlay,const DeepCollectionEquality().hash(_this.injectedProxyProviders),const DeepCollectionEquality().hash(_this.injectedRuleProviders),const DeepCollectionEquality().hash(_this.exitTargets),const DeepCollectionEquality().hash(_this.outboundNames),_this.defaultExitTarget,_this.safeMode,const DeepCollectionEquality().hash(_this.mitmModules)]);
 }
 
 @override
 String toString() {
   final _this = this as MakeRealProfileState;
-  return 'MakeRealProfileState(profilesPath: ${_this.profilesPath}, profileId: ${_this.profileId}, rawConfig: ${_this.rawConfig}, realPatchConfig: ${_this.realPatchConfig}, overrides: ${_this.overrides}, bypassPrivateRoute: ${_this.bypassPrivateRoute}, appendSystemDns: ${_this.appendSystemDns}, defaultTunDnsMode: ${_this.defaultTunDnsMode}, proxyGroups: ${_this.proxyGroups}, rules: ${_this.rules}, addedRules: ${_this.addedRules}, defaultUA: ${_this.defaultUA}, authentication: ${_this.authentication}, injectedProxyProviders: ${_this.injectedProxyProviders}, injectedRuleProviders: ${_this.injectedRuleProviders}, exitTargets: ${_this.exitTargets}, outboundNames: ${_this.outboundNames}, defaultExitTarget: ${_this.defaultExitTarget}, safeMode: ${_this.safeMode}, mitmModules: ${_this.mitmModules})';
+  return 'MakeRealProfileState(profilesPath: ${_this.profilesPath}, profileId: ${_this.profileId}, rawConfig: ${_this.rawConfig}, realPatchConfig: ${_this.realPatchConfig}, overrides: ${_this.overrides}, bypassPrivateRoute: ${_this.bypassPrivateRoute}, appendSystemDns: ${_this.appendSystemDns}, os: ${_this.os}, proxyGroups: ${_this.proxyGroups}, rules: ${_this.rules}, addedRules: ${_this.addedRules}, defaultUA: ${_this.defaultUA}, authentication: ${_this.authentication}, keepOverlay: ${_this.keepOverlay}, injectedProxyProviders: ${_this.injectedProxyProviders}, injectedRuleProviders: ${_this.injectedRuleProviders}, exitTargets: ${_this.exitTargets}, outboundNames: ${_this.outboundNames}, defaultExitTarget: ${_this.defaultExitTarget}, safeMode: ${_this.safeMode}, mitmModules: ${_this.mitmModules})';
 }
 
 
@@ -5413,7 +5395,7 @@ abstract mixin class $MakeRealProfileStateCopyWith<$Res>  {
   factory $MakeRealProfileStateCopyWith(MakeRealProfileState value, $Res Function(MakeRealProfileState) _then) = _$MakeRealProfileStateCopyWithImpl;
 @useResult
 $Res call({
- String profilesPath, int profileId, Map<String, dynamic> rawConfig, PatchClashConfig realPatchConfig, ProfileOverrides overrides, bool bypassPrivateRoute, bool appendSystemDns, String? defaultTunDnsMode, List<ProxyGroup> proxyGroups, List<Rule> rules, List<Rule> addedRules, String defaultUA, List<String> authentication, Map<String, dynamic> injectedProxyProviders, Map<String, dynamic> injectedRuleProviders, Map<String, String> exitTargets, Set<String>? outboundNames, String? defaultExitTarget, bool safeMode, List<MitmModuleSource> mitmModules
+ String profilesPath, int profileId, Map<String, dynamic> rawConfig, PatchClashConfig realPatchConfig, ProfileOverrides overrides, bool bypassPrivateRoute, bool appendSystemDns, String? os, List<ProxyGroup> proxyGroups, List<Rule> rules, List<Rule> addedRules, String defaultUA, List<String> authentication, bool keepOverlay, Map<String, dynamic> injectedProxyProviders, Map<String, dynamic> injectedRuleProviders, Map<String, String> exitTargets, Set<String>? outboundNames, String? defaultExitTarget, bool safeMode, List<MitmModuleSource> mitmModules
 });
 
 
@@ -5430,7 +5412,7 @@ class _$MakeRealProfileStateCopyWithImpl<$Res>
 
 /// Create a copy of MakeRealProfileState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? profilesPath = null,Object? profileId = null,Object? rawConfig = null,Object? realPatchConfig = null,Object? overrides = null,Object? bypassPrivateRoute = null,Object? appendSystemDns = null,Object? defaultTunDnsMode = freezed,Object? proxyGroups = null,Object? rules = null,Object? addedRules = null,Object? defaultUA = null,Object? authentication = null,Object? injectedProxyProviders = null,Object? injectedRuleProviders = null,Object? exitTargets = null,Object? outboundNames = freezed,Object? defaultExitTarget = freezed,Object? safeMode = null,Object? mitmModules = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? profilesPath = null,Object? profileId = null,Object? rawConfig = null,Object? realPatchConfig = null,Object? overrides = null,Object? bypassPrivateRoute = null,Object? appendSystemDns = null,Object? os = freezed,Object? proxyGroups = null,Object? rules = null,Object? addedRules = null,Object? defaultUA = null,Object? authentication = null,Object? keepOverlay = null,Object? injectedProxyProviders = null,Object? injectedRuleProviders = null,Object? exitTargets = null,Object? outboundNames = freezed,Object? defaultExitTarget = freezed,Object? safeMode = null,Object? mitmModules = null,}) {
   return _then(MakeRealProfileState(
 profilesPath: null == profilesPath ? _self.profilesPath : profilesPath // ignore: cast_nullable_to_non_nullable
 as String,profileId: null == profileId ? _self.profileId : profileId // ignore: cast_nullable_to_non_nullable
@@ -5439,13 +5421,14 @@ as Map<String, dynamic>,realPatchConfig: null == realPatchConfig ? _self.realPat
 as PatchClashConfig,overrides: null == overrides ? _self.overrides : overrides // ignore: cast_nullable_to_non_nullable
 as ProfileOverrides,bypassPrivateRoute: null == bypassPrivateRoute ? _self.bypassPrivateRoute : bypassPrivateRoute // ignore: cast_nullable_to_non_nullable
 as bool,appendSystemDns: null == appendSystemDns ? _self.appendSystemDns : appendSystemDns // ignore: cast_nullable_to_non_nullable
-as bool,defaultTunDnsMode: freezed == defaultTunDnsMode ? _self.defaultTunDnsMode : defaultTunDnsMode // ignore: cast_nullable_to_non_nullable
+as bool,os: freezed == os ? _self.os : os // ignore: cast_nullable_to_non_nullable
 as String?,proxyGroups: null == proxyGroups ? _self.proxyGroups : proxyGroups // ignore: cast_nullable_to_non_nullable
 as List<ProxyGroup>,rules: null == rules ? _self.rules : rules // ignore: cast_nullable_to_non_nullable
 as List<Rule>,addedRules: null == addedRules ? _self.addedRules : addedRules // ignore: cast_nullable_to_non_nullable
 as List<Rule>,defaultUA: null == defaultUA ? _self.defaultUA : defaultUA // ignore: cast_nullable_to_non_nullable
 as String,authentication: null == authentication ? _self.authentication : authentication // ignore: cast_nullable_to_non_nullable
-as List<String>,injectedProxyProviders: null == injectedProxyProviders ? _self.injectedProxyProviders : injectedProxyProviders // ignore: cast_nullable_to_non_nullable
+as List<String>,keepOverlay: null == keepOverlay ? _self.keepOverlay : keepOverlay // ignore: cast_nullable_to_non_nullable
+as bool,injectedProxyProviders: null == injectedProxyProviders ? _self.injectedProxyProviders : injectedProxyProviders // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,injectedRuleProviders: null == injectedRuleProviders ? _self.injectedRuleProviders : injectedRuleProviders // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,exitTargets: null == exitTargets ? _self.exitTargets : exitTargets // ignore: cast_nullable_to_non_nullable
 as Map<String, String>,outboundNames: freezed == outboundNames ? _self.outboundNames : outboundNames // ignore: cast_nullable_to_non_nullable
@@ -5555,10 +5538,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  ProfileOverrides overrides,  bool bypassPrivateRoute,  bool appendSystemDns,  String? defaultTunDnsMode,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  String defaultUA,  List<String> authentication,  Map<String, dynamic> injectedProxyProviders,  Map<String, dynamic> injectedRuleProviders,  Map<String, String> exitTargets,  Set<String>? outboundNames,  String? defaultExitTarget,  bool safeMode,  List<MitmModuleSource> mitmModules)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  ProfileOverrides overrides,  bool bypassPrivateRoute,  bool appendSystemDns,  String? os,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  String defaultUA,  List<String> authentication,  bool keepOverlay,  Map<String, dynamic> injectedProxyProviders,  Map<String, dynamic> injectedRuleProviders,  Map<String, String> exitTargets,  Set<String>? outboundNames,  String? defaultExitTarget,  bool safeMode,  List<MitmModuleSource> mitmModules)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MakeRealProfileState() when $default != null:
-return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrides,_that.bypassPrivateRoute,_that.appendSystemDns,_that.defaultTunDnsMode,_that.proxyGroups,_that.rules,_that.addedRules,_that.defaultUA,_that.authentication,_that.injectedProxyProviders,_that.injectedRuleProviders,_that.exitTargets,_that.outboundNames,_that.defaultExitTarget,_that.safeMode,_that.mitmModules);case _:
+return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrides,_that.bypassPrivateRoute,_that.appendSystemDns,_that.os,_that.proxyGroups,_that.rules,_that.addedRules,_that.defaultUA,_that.authentication,_that.keepOverlay,_that.injectedProxyProviders,_that.injectedRuleProviders,_that.exitTargets,_that.outboundNames,_that.defaultExitTarget,_that.safeMode,_that.mitmModules);case _:
   return orElse();
 
 }
@@ -5576,10 +5559,10 @@ return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPat
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  ProfileOverrides overrides,  bool bypassPrivateRoute,  bool appendSystemDns,  String? defaultTunDnsMode,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  String defaultUA,  List<String> authentication,  Map<String, dynamic> injectedProxyProviders,  Map<String, dynamic> injectedRuleProviders,  Map<String, String> exitTargets,  Set<String>? outboundNames,  String? defaultExitTarget,  bool safeMode,  List<MitmModuleSource> mitmModules)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  ProfileOverrides overrides,  bool bypassPrivateRoute,  bool appendSystemDns,  String? os,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  String defaultUA,  List<String> authentication,  bool keepOverlay,  Map<String, dynamic> injectedProxyProviders,  Map<String, dynamic> injectedRuleProviders,  Map<String, String> exitTargets,  Set<String>? outboundNames,  String? defaultExitTarget,  bool safeMode,  List<MitmModuleSource> mitmModules)  $default,) {final _that = this;
 switch (_that) {
 case _MakeRealProfileState():
-return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrides,_that.bypassPrivateRoute,_that.appendSystemDns,_that.defaultTunDnsMode,_that.proxyGroups,_that.rules,_that.addedRules,_that.defaultUA,_that.authentication,_that.injectedProxyProviders,_that.injectedRuleProviders,_that.exitTargets,_that.outboundNames,_that.defaultExitTarget,_that.safeMode,_that.mitmModules);case _:
+return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrides,_that.bypassPrivateRoute,_that.appendSystemDns,_that.os,_that.proxyGroups,_that.rules,_that.addedRules,_that.defaultUA,_that.authentication,_that.keepOverlay,_that.injectedProxyProviders,_that.injectedRuleProviders,_that.exitTargets,_that.outboundNames,_that.defaultExitTarget,_that.safeMode,_that.mitmModules);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -5596,10 +5579,10 @@ return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPat
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  ProfileOverrides overrides,  bool bypassPrivateRoute,  bool appendSystemDns,  String? defaultTunDnsMode,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  String defaultUA,  List<String> authentication,  Map<String, dynamic> injectedProxyProviders,  Map<String, dynamic> injectedRuleProviders,  Map<String, String> exitTargets,  Set<String>? outboundNames,  String? defaultExitTarget,  bool safeMode,  List<MitmModuleSource> mitmModules)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  ProfileOverrides overrides,  bool bypassPrivateRoute,  bool appendSystemDns,  String? os,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  String defaultUA,  List<String> authentication,  bool keepOverlay,  Map<String, dynamic> injectedProxyProviders,  Map<String, dynamic> injectedRuleProviders,  Map<String, String> exitTargets,  Set<String>? outboundNames,  String? defaultExitTarget,  bool safeMode,  List<MitmModuleSource> mitmModules)?  $default,) {final _that = this;
 switch (_that) {
 case _MakeRealProfileState() when $default != null:
-return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrides,_that.bypassPrivateRoute,_that.appendSystemDns,_that.defaultTunDnsMode,_that.proxyGroups,_that.rules,_that.addedRules,_that.defaultUA,_that.authentication,_that.injectedProxyProviders,_that.injectedRuleProviders,_that.exitTargets,_that.outboundNames,_that.defaultExitTarget,_that.safeMode,_that.mitmModules);case _:
+return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrides,_that.bypassPrivateRoute,_that.appendSystemDns,_that.os,_that.proxyGroups,_that.rules,_that.addedRules,_that.defaultUA,_that.authentication,_that.keepOverlay,_that.injectedProxyProviders,_that.injectedRuleProviders,_that.exitTargets,_that.outboundNames,_that.defaultExitTarget,_that.safeMode,_that.mitmModules);case _:
   return null;
 
 }
@@ -5611,7 +5594,7 @@ return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPat
 
 
 class _MakeRealProfileState implements MakeRealProfileState {
-  const _MakeRealProfileState({required this.profilesPath, required this.profileId, required  Map<String, dynamic> rawConfig, required this.realPatchConfig, this.overrides = const ProfileOverrides(), this.bypassPrivateRoute = false, required this.appendSystemDns, this.defaultTunDnsMode, required  List<ProxyGroup> proxyGroups, required  List<Rule> rules, required  List<Rule> addedRules, required this.defaultUA,  List<String> authentication = const [],  Map<String, dynamic> injectedProxyProviders = const {},  Map<String, dynamic> injectedRuleProviders = const {},  Map<String, String> exitTargets = const {},  Set<String>? outboundNames, this.defaultExitTarget, this.safeMode = false,  List<MitmModuleSource> mitmModules = const []}): _rawConfig = rawConfig,_proxyGroups = proxyGroups,_rules = rules,_addedRules = addedRules,_authentication = authentication,_injectedProxyProviders = injectedProxyProviders,_injectedRuleProviders = injectedRuleProviders,_exitTargets = exitTargets,_outboundNames = outboundNames,_mitmModules = mitmModules;
+  const _MakeRealProfileState({required this.profilesPath, required this.profileId, required  Map<String, dynamic> rawConfig, required this.realPatchConfig, this.overrides = const ProfileOverrides(), this.bypassPrivateRoute = false, required this.appendSystemDns, this.os, required  List<ProxyGroup> proxyGroups, required  List<Rule> rules, required  List<Rule> addedRules, required this.defaultUA,  List<String> authentication = const [], this.keepOverlay = false,  Map<String, dynamic> injectedProxyProviders = const {},  Map<String, dynamic> injectedRuleProviders = const {},  Map<String, String> exitTargets = const {},  Set<String>? outboundNames, this.defaultExitTarget, this.safeMode = false,  List<MitmModuleSource> mitmModules = const []}): _rawConfig = rawConfig,_proxyGroups = proxyGroups,_rules = rules,_addedRules = addedRules,_authentication = authentication,_injectedProxyProviders = injectedProxyProviders,_injectedRuleProviders = injectedRuleProviders,_exitTargets = exitTargets,_outboundNames = outboundNames,_mitmModules = mitmModules;
   
 
 @override final  String profilesPath;
@@ -5627,7 +5610,8 @@ class _MakeRealProfileState implements MakeRealProfileState {
 @override@JsonKey() final  ProfileOverrides overrides;
 @override@JsonKey() final  bool bypassPrivateRoute;
 @override final  bool appendSystemDns;
-@override final  String? defaultTunDnsMode;
+/// `Platform.operatingSystem` of the Core the config is for; null is this one.
+@override final  String? os;
  final  List<ProxyGroup> _proxyGroups;
 @override List<ProxyGroup> get proxyGroups {
   if (_proxyGroups is EqualUnmodifiableListView) return _proxyGroups;
@@ -5657,6 +5641,9 @@ class _MakeRealProfileState implements MakeRealProfileState {
   return EqualUnmodifiableListView(_authentication);
 }
 
+/// Keeps the built config as an object beside its text, for a profile
+/// whose Core merges it over the profile's own file.
+@override@JsonKey() final  bool keepOverlay;
  final  Map<String, dynamic> _injectedProxyProviders;
 @override@JsonKey() Map<String, dynamic> get injectedProxyProviders {
   if (_injectedProxyProviders is EqualUnmodifiableMapView) return _injectedProxyProviders;
@@ -5709,18 +5696,18 @@ _$MakeRealProfileStateCopyWith<_MakeRealProfileState> get copyWith => __$MakeRea
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MakeRealProfileState&&(identical(other.profilesPath, profilesPath) || other.profilesPath == profilesPath)&&(identical(other.profileId, profileId) || other.profileId == profileId)&&const DeepCollectionEquality().equals(other.rawConfig, _rawConfig)&&(identical(other.realPatchConfig, realPatchConfig) || other.realPatchConfig == realPatchConfig)&&(identical(other.overrides, overrides) || other.overrides == overrides)&&(identical(other.bypassPrivateRoute, bypassPrivateRoute) || other.bypassPrivateRoute == bypassPrivateRoute)&&(identical(other.appendSystemDns, appendSystemDns) || other.appendSystemDns == appendSystemDns)&&(identical(other.defaultTunDnsMode, defaultTunDnsMode) || other.defaultTunDnsMode == defaultTunDnsMode)&&const DeepCollectionEquality().equals(other.proxyGroups, _proxyGroups)&&const DeepCollectionEquality().equals(other.rules, _rules)&&const DeepCollectionEquality().equals(other.addedRules, _addedRules)&&(identical(other.defaultUA, defaultUA) || other.defaultUA == defaultUA)&&const DeepCollectionEquality().equals(other.authentication, _authentication)&&const DeepCollectionEquality().equals(other.injectedProxyProviders, _injectedProxyProviders)&&const DeepCollectionEquality().equals(other.injectedRuleProviders, _injectedRuleProviders)&&const DeepCollectionEquality().equals(other.exitTargets, _exitTargets)&&const DeepCollectionEquality().equals(other.outboundNames, _outboundNames)&&(identical(other.defaultExitTarget, defaultExitTarget) || other.defaultExitTarget == defaultExitTarget)&&(identical(other.safeMode, safeMode) || other.safeMode == safeMode)&&const DeepCollectionEquality().equals(other.mitmModules, _mitmModules));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MakeRealProfileState&&(identical(other.profilesPath, profilesPath) || other.profilesPath == profilesPath)&&(identical(other.profileId, profileId) || other.profileId == profileId)&&const DeepCollectionEquality().equals(other.rawConfig, _rawConfig)&&(identical(other.realPatchConfig, realPatchConfig) || other.realPatchConfig == realPatchConfig)&&(identical(other.overrides, overrides) || other.overrides == overrides)&&(identical(other.bypassPrivateRoute, bypassPrivateRoute) || other.bypassPrivateRoute == bypassPrivateRoute)&&(identical(other.appendSystemDns, appendSystemDns) || other.appendSystemDns == appendSystemDns)&&(identical(other.os, os) || other.os == os)&&const DeepCollectionEquality().equals(other.proxyGroups, _proxyGroups)&&const DeepCollectionEquality().equals(other.rules, _rules)&&const DeepCollectionEquality().equals(other.addedRules, _addedRules)&&(identical(other.defaultUA, defaultUA) || other.defaultUA == defaultUA)&&const DeepCollectionEquality().equals(other.authentication, _authentication)&&(identical(other.keepOverlay, keepOverlay) || other.keepOverlay == keepOverlay)&&const DeepCollectionEquality().equals(other.injectedProxyProviders, _injectedProxyProviders)&&const DeepCollectionEquality().equals(other.injectedRuleProviders, _injectedRuleProviders)&&const DeepCollectionEquality().equals(other.exitTargets, _exitTargets)&&const DeepCollectionEquality().equals(other.outboundNames, _outboundNames)&&(identical(other.defaultExitTarget, defaultExitTarget) || other.defaultExitTarget == defaultExitTarget)&&(identical(other.safeMode, safeMode) || other.safeMode == safeMode)&&const DeepCollectionEquality().equals(other.mitmModules, _mitmModules));
 }
 
 
 @override
 int get hashCode {
-    return Object.hashAll([runtimeType,profilesPath,profileId,const DeepCollectionEquality().hash(_rawConfig),realPatchConfig,overrides,bypassPrivateRoute,appendSystemDns,defaultTunDnsMode,const DeepCollectionEquality().hash(_proxyGroups),const DeepCollectionEquality().hash(_rules),const DeepCollectionEquality().hash(_addedRules),defaultUA,const DeepCollectionEquality().hash(_authentication),const DeepCollectionEquality().hash(_injectedProxyProviders),const DeepCollectionEquality().hash(_injectedRuleProviders),const DeepCollectionEquality().hash(_exitTargets),const DeepCollectionEquality().hash(_outboundNames),defaultExitTarget,safeMode,const DeepCollectionEquality().hash(_mitmModules)]);
+    return Object.hashAll([runtimeType,profilesPath,profileId,const DeepCollectionEquality().hash(_rawConfig),realPatchConfig,overrides,bypassPrivateRoute,appendSystemDns,os,const DeepCollectionEquality().hash(_proxyGroups),const DeepCollectionEquality().hash(_rules),const DeepCollectionEquality().hash(_addedRules),defaultUA,const DeepCollectionEquality().hash(_authentication),keepOverlay,const DeepCollectionEquality().hash(_injectedProxyProviders),const DeepCollectionEquality().hash(_injectedRuleProviders),const DeepCollectionEquality().hash(_exitTargets),const DeepCollectionEquality().hash(_outboundNames),defaultExitTarget,safeMode,const DeepCollectionEquality().hash(_mitmModules)]);
 }
 
 @override
 String toString() {
-    return 'MakeRealProfileState(profilesPath: $profilesPath, profileId: $profileId, rawConfig: $rawConfig, realPatchConfig: $realPatchConfig, overrides: $overrides, bypassPrivateRoute: $bypassPrivateRoute, appendSystemDns: $appendSystemDns, defaultTunDnsMode: $defaultTunDnsMode, proxyGroups: $proxyGroups, rules: $rules, addedRules: $addedRules, defaultUA: $defaultUA, authentication: $authentication, injectedProxyProviders: $injectedProxyProviders, injectedRuleProviders: $injectedRuleProviders, exitTargets: $exitTargets, outboundNames: $outboundNames, defaultExitTarget: $defaultExitTarget, safeMode: $safeMode, mitmModules: $mitmModules)';
+    return 'MakeRealProfileState(profilesPath: $profilesPath, profileId: $profileId, rawConfig: $rawConfig, realPatchConfig: $realPatchConfig, overrides: $overrides, bypassPrivateRoute: $bypassPrivateRoute, appendSystemDns: $appendSystemDns, os: $os, proxyGroups: $proxyGroups, rules: $rules, addedRules: $addedRules, defaultUA: $defaultUA, authentication: $authentication, keepOverlay: $keepOverlay, injectedProxyProviders: $injectedProxyProviders, injectedRuleProviders: $injectedRuleProviders, exitTargets: $exitTargets, outboundNames: $outboundNames, defaultExitTarget: $defaultExitTarget, safeMode: $safeMode, mitmModules: $mitmModules)';
 }
 
 
@@ -5731,7 +5718,7 @@ abstract mixin class _$MakeRealProfileStateCopyWith<$Res> implements $MakeRealPr
   factory _$MakeRealProfileStateCopyWith(_MakeRealProfileState value, $Res Function(_MakeRealProfileState) _then) = __$MakeRealProfileStateCopyWithImpl;
 @override @useResult
 $Res call({
- String profilesPath, int profileId, Map<String, dynamic> rawConfig, PatchClashConfig realPatchConfig, ProfileOverrides overrides, bool bypassPrivateRoute, bool appendSystemDns, String? defaultTunDnsMode, List<ProxyGroup> proxyGroups, List<Rule> rules, List<Rule> addedRules, String defaultUA, List<String> authentication, Map<String, dynamic> injectedProxyProviders, Map<String, dynamic> injectedRuleProviders, Map<String, String> exitTargets, Set<String>? outboundNames, String? defaultExitTarget, bool safeMode, List<MitmModuleSource> mitmModules
+ String profilesPath, int profileId, Map<String, dynamic> rawConfig, PatchClashConfig realPatchConfig, ProfileOverrides overrides, bool bypassPrivateRoute, bool appendSystemDns, String? os, List<ProxyGroup> proxyGroups, List<Rule> rules, List<Rule> addedRules, String defaultUA, List<String> authentication, bool keepOverlay, Map<String, dynamic> injectedProxyProviders, Map<String, dynamic> injectedRuleProviders, Map<String, String> exitTargets, Set<String>? outboundNames, String? defaultExitTarget, bool safeMode, List<MitmModuleSource> mitmModules
 });
 
 
@@ -5748,7 +5735,7 @@ class __$MakeRealProfileStateCopyWithImpl<$Res>
 
 /// Create a copy of MakeRealProfileState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? profilesPath = null,Object? profileId = null,Object? rawConfig = null,Object? realPatchConfig = null,Object? overrides = null,Object? bypassPrivateRoute = null,Object? appendSystemDns = null,Object? defaultTunDnsMode = freezed,Object? proxyGroups = null,Object? rules = null,Object? addedRules = null,Object? defaultUA = null,Object? authentication = null,Object? injectedProxyProviders = null,Object? injectedRuleProviders = null,Object? exitTargets = null,Object? outboundNames = freezed,Object? defaultExitTarget = freezed,Object? safeMode = null,Object? mitmModules = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? profilesPath = null,Object? profileId = null,Object? rawConfig = null,Object? realPatchConfig = null,Object? overrides = null,Object? bypassPrivateRoute = null,Object? appendSystemDns = null,Object? os = freezed,Object? proxyGroups = null,Object? rules = null,Object? addedRules = null,Object? defaultUA = null,Object? authentication = null,Object? keepOverlay = null,Object? injectedProxyProviders = null,Object? injectedRuleProviders = null,Object? exitTargets = null,Object? outboundNames = freezed,Object? defaultExitTarget = freezed,Object? safeMode = null,Object? mitmModules = null,}) {
   return _then(_MakeRealProfileState(
 profilesPath: null == profilesPath ? _self.profilesPath : profilesPath // ignore: cast_nullable_to_non_nullable
 as String,profileId: null == profileId ? _self.profileId : profileId // ignore: cast_nullable_to_non_nullable
@@ -5757,13 +5744,14 @@ as Map<String, dynamic>,realPatchConfig: null == realPatchConfig ? _self.realPat
 as PatchClashConfig,overrides: null == overrides ? _self.overrides : overrides // ignore: cast_nullable_to_non_nullable
 as ProfileOverrides,bypassPrivateRoute: null == bypassPrivateRoute ? _self.bypassPrivateRoute : bypassPrivateRoute // ignore: cast_nullable_to_non_nullable
 as bool,appendSystemDns: null == appendSystemDns ? _self.appendSystemDns : appendSystemDns // ignore: cast_nullable_to_non_nullable
-as bool,defaultTunDnsMode: freezed == defaultTunDnsMode ? _self.defaultTunDnsMode : defaultTunDnsMode // ignore: cast_nullable_to_non_nullable
+as bool,os: freezed == os ? _self.os : os // ignore: cast_nullable_to_non_nullable
 as String?,proxyGroups: null == proxyGroups ? _self._proxyGroups : proxyGroups // ignore: cast_nullable_to_non_nullable
 as List<ProxyGroup>,rules: null == rules ? _self._rules : rules // ignore: cast_nullable_to_non_nullable
 as List<Rule>,addedRules: null == addedRules ? _self._addedRules : addedRules // ignore: cast_nullable_to_non_nullable
 as List<Rule>,defaultUA: null == defaultUA ? _self.defaultUA : defaultUA // ignore: cast_nullable_to_non_nullable
 as String,authentication: null == authentication ? _self._authentication : authentication // ignore: cast_nullable_to_non_nullable
-as List<String>,injectedProxyProviders: null == injectedProxyProviders ? _self._injectedProxyProviders : injectedProxyProviders // ignore: cast_nullable_to_non_nullable
+as List<String>,keepOverlay: null == keepOverlay ? _self.keepOverlay : keepOverlay // ignore: cast_nullable_to_non_nullable
+as bool,injectedProxyProviders: null == injectedProxyProviders ? _self._injectedProxyProviders : injectedProxyProviders // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,injectedRuleProviders: null == injectedRuleProviders ? _self._injectedRuleProviders : injectedRuleProviders // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,exitTargets: null == exitTargets ? _self._exitTargets : exitTargets // ignore: cast_nullable_to_non_nullable
 as Map<String, String>,outboundNames: freezed == outboundNames ? _self._outboundNames : outboundNames // ignore: cast_nullable_to_non_nullable

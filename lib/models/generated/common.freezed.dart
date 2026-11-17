@@ -1759,7 +1759,7 @@ as String,
 /// @nodoc
 mixin _$TrackerInfo {
 
- String get id; int get upload; int get download; DateTime get start; Metadata get metadata; List<String> get chains; String get rule; String get rulePayload; int? get downloadSpeed; int? get uploadSpeed; DateTime? get closedAt; ConnectionFailure? get failure; ConnectionTiming? get timing; int? get ruleIndex;/// [DnsQuery.id]s of the queries that gave its address.
+ int get id; int get upload; int get download; DateTime get start; Metadata get metadata; List<String> get chains; String get rule; String get rulePayload; int? get downloadSpeed; int? get uploadSpeed; DateTime? get closedAt; ConnectionFailure? get failure; ConnectionTiming? get timing; int? get ruleIndex;/// [DnsQuery.id]s of the queries that gave its address.
  List<int> get dnsQueries; ConnectionEnd? get end;
 /// Create a copy of TrackerInfo
 /// with the given fields replaced by the non-null parameter values.
@@ -1798,7 +1798,7 @@ abstract mixin class $TrackerInfoCopyWith<$Res>  {
   factory $TrackerInfoCopyWith(TrackerInfo value, $Res Function(TrackerInfo) _then) = _$TrackerInfoCopyWithImpl;
 @useResult
 $Res call({
- String id, int upload, int download, DateTime start, Metadata metadata, List<String> chains, String rule, String rulePayload, int? downloadSpeed, int? uploadSpeed, DateTime? closedAt, ConnectionFailure? failure, ConnectionTiming? timing, int? ruleIndex, List<int> dnsQueries, ConnectionEnd? end
+ int id, int upload, int download, DateTime start, Metadata metadata, List<String> chains, String rule, String rulePayload, int? downloadSpeed, int? uploadSpeed, DateTime? closedAt, ConnectionFailure? failure, ConnectionTiming? timing, int? ruleIndex, List<int> dnsQueries, ConnectionEnd? end
 });
 
 
@@ -1818,7 +1818,7 @@ class _$TrackerInfoCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? upload = null,Object? download = null,Object? start = null,Object? metadata = null,Object? chains = null,Object? rule = null,Object? rulePayload = null,Object? downloadSpeed = freezed,Object? uploadSpeed = freezed,Object? closedAt = freezed,Object? failure = freezed,Object? timing = freezed,Object? ruleIndex = freezed,Object? dnsQueries = null,Object? end = freezed,}) {
   return _then(TrackerInfo(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,upload: null == upload ? _self.upload : upload // ignore: cast_nullable_to_non_nullable
+as int,upload: null == upload ? _self.upload : upload // ignore: cast_nullable_to_non_nullable
 as int,download: null == download ? _self.download : download // ignore: cast_nullable_to_non_nullable
 as int,start: null == start ? _self.start : start // ignore: cast_nullable_to_non_nullable
 as DateTime,metadata: null == metadata ? _self.metadata : metadata // ignore: cast_nullable_to_non_nullable
@@ -1963,7 +1963,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed,  DateTime? closedAt,  ConnectionFailure? failure,  ConnectionTiming? timing,  int? ruleIndex,  List<int> dnsQueries,  ConnectionEnd? end)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed,  DateTime? closedAt,  ConnectionFailure? failure,  ConnectionTiming? timing,  int? ruleIndex,  List<int> dnsQueries,  ConnectionEnd? end)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TrackerInfo() when $default != null:
 return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed,_that.closedAt,_that.failure,_that.timing,_that.ruleIndex,_that.dnsQueries,_that.end);case _:
@@ -1984,7 +1984,7 @@ return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed,  DateTime? closedAt,  ConnectionFailure? failure,  ConnectionTiming? timing,  int? ruleIndex,  List<int> dnsQueries,  ConnectionEnd? end)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed,  DateTime? closedAt,  ConnectionFailure? failure,  ConnectionTiming? timing,  int? ruleIndex,  List<int> dnsQueries,  ConnectionEnd? end)  $default,) {final _that = this;
 switch (_that) {
 case _TrackerInfo():
 return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed,_that.closedAt,_that.failure,_that.timing,_that.ruleIndex,_that.dnsQueries,_that.end);case _:
@@ -2004,7 +2004,7 @@ return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed,  DateTime? closedAt,  ConnectionFailure? failure,  ConnectionTiming? timing,  int? ruleIndex,  List<int> dnsQueries,  ConnectionEnd? end)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed,  DateTime? closedAt,  ConnectionFailure? failure,  ConnectionTiming? timing,  int? ruleIndex,  List<int> dnsQueries,  ConnectionEnd? end)?  $default,) {final _that = this;
 switch (_that) {
 case _TrackerInfo() when $default != null:
 return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed,_that.closedAt,_that.failure,_that.timing,_that.ruleIndex,_that.dnsQueries,_that.end);case _:
@@ -2022,7 +2022,7 @@ class _TrackerInfo implements TrackerInfo {
   const _TrackerInfo({required this.id, this.upload = 0, this.download = 0, required this.start, required this.metadata, required  List<String> chains, required this.rule, required this.rulePayload, this.downloadSpeed, this.uploadSpeed, this.closedAt, this.failure, this.timing, this.ruleIndex,  List<int> dnsQueries = const [], this.end}): _chains = chains,_dnsQueries = dnsQueries;
   factory _TrackerInfo.fromJson(Map<String, dynamic> json) => _$TrackerInfoFromJson(json);
 
-@override final  String id;
+@override final  int id;
 @override@JsonKey() final  int upload;
 @override@JsonKey() final  int download;
 @override final  DateTime start;
@@ -2088,7 +2088,7 @@ abstract mixin class _$TrackerInfoCopyWith<$Res> implements $TrackerInfoCopyWith
   factory _$TrackerInfoCopyWith(_TrackerInfo value, $Res Function(_TrackerInfo) _then) = __$TrackerInfoCopyWithImpl;
 @override @useResult
 $Res call({
- String id, int upload, int download, DateTime start, Metadata metadata, List<String> chains, String rule, String rulePayload, int? downloadSpeed, int? uploadSpeed, DateTime? closedAt, ConnectionFailure? failure, ConnectionTiming? timing, int? ruleIndex, List<int> dnsQueries, ConnectionEnd? end
+ int id, int upload, int download, DateTime start, Metadata metadata, List<String> chains, String rule, String rulePayload, int? downloadSpeed, int? uploadSpeed, DateTime? closedAt, ConnectionFailure? failure, ConnectionTiming? timing, int? ruleIndex, List<int> dnsQueries, ConnectionEnd? end
 });
 
 
@@ -2108,7 +2108,7 @@ class __$TrackerInfoCopyWithImpl<$Res>
 @override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? upload = null,Object? download = null,Object? start = null,Object? metadata = null,Object? chains = null,Object? rule = null,Object? rulePayload = null,Object? downloadSpeed = freezed,Object? uploadSpeed = freezed,Object? closedAt = freezed,Object? failure = freezed,Object? timing = freezed,Object? ruleIndex = freezed,Object? dnsQueries = null,Object? end = freezed,}) {
   return _then(_TrackerInfo(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,upload: null == upload ? _self.upload : upload // ignore: cast_nullable_to_non_nullable
+as int,upload: null == upload ? _self.upload : upload // ignore: cast_nullable_to_non_nullable
 as int,download: null == download ? _self.download : download // ignore: cast_nullable_to_non_nullable
 as int,start: null == start ? _self.start : start // ignore: cast_nullable_to_non_nullable
 as DateTime,metadata: null == metadata ? _self.metadata : metadata // ignore: cast_nullable_to_non_nullable

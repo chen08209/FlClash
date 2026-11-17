@@ -1,8 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/core/core.dart';
-import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/manager/core_manager.dart';
 import 'package:fl_clash/models/models.dart';
@@ -11,7 +11,6 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
-import 'package:fl_clash/providers/route_state.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/ui.dart';
@@ -22,11 +21,10 @@ import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../helpers/app_paths.dart';
+import '../helpers/core_mocks.dart';
 import '../helpers/test_database_providers.dart';
 import '../helpers/test_profiles.dart';
 import '../helpers/test_app.dart';
-
-class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 const _nullProfileSetupState = SetupState(
   profileId: null,
@@ -38,24 +36,6 @@ const _nullProfileSetupState = SetupState(
   script: null,
   overrides: ProfileOverrides(),
 );
-
-const _crash = CoreEvent(type: CoreEventType.crash, data: 'boom');
-
-CoreEvent _geoUpdate({
-  bool updating = false,
-  bool skipped = false,
-  String? error,
-}) {
-  return CoreEvent(
-    type: CoreEventType.geoUpdate,
-    data: <String, dynamic>{
-      'type': 'MMDB',
-      'updating': updating,
-      'skipped': skipped,
-      'error': error,
-    },
-  );
-}
 
 class _ApplyRecordingSetupAction extends SetupAction {
   int updates = 0;
@@ -76,6 +56,17 @@ class _ApplyRecordingSetupAction extends SetupAction {
   }
 }
 
+class _RecordingProxiesAction extends ProxiesAction {
+  final delays = <Delay>[];
+  int groupUpdates = 0;
+
+  @override
+  void setDelay(Delay delay) => delays.add(delay);
+
+  @override
+  void updateGroupsDebounce([Duration? duration]) => groupUpdates++;
+}
+
 class _LostRecordingSetupAction extends SetupAction {
   int lostCount = 0;
 
@@ -90,18 +81,30 @@ _MockCoreHandlerInterface _coreInterface() {
   return coreInterface;
 }
 
+ConnectionInfo _connection(int id, {int upload = 0, int download = 0}) =>
+    ConnectionInfo(
+      id: id,
+      start: 1,
+      network: 'tcp',
+      sourceIp: '10.0.0.1',
+      sourcePort: 5000 + id,
+      destinationPort: 443,
+      host: 'host$id.test',
+      inboundType: 'http',
+      chains: const ['DIRECT'],
+      rule: 'MATCH',
+      upload: upload,
+      download: download,
+    );
+
 Future<ProviderContainer> _pumpCoreManager(
   WidgetTester tester,
-  CoreHandlerInterface coreInterface, {
+  CoreController core, {
   List<Override> overrides = const [],
+  bool? pausesInBackground,
 }) async {
   final container = ProviderContainer(
-    overrides: [
-      coreHandlerProvider.overrideWithValue(
-        CoreController.scoped(coreInterface),
-      ),
-      ...overrides,
-    ],
+    overrides: [coreHandlerProvider.overrideWithValue(core), ...overrides],
   );
   addTearDown(container.dispose);
   await tester.pumpWidget(
@@ -113,10 +116,30 @@ Future<ProviderContainer> _pumpCoreManager(
           globalState.measure = Measure.of(context, 1);
           return BannerHost(stacked: false, topInset: 0, child: child!);
         },
-        home: const CoreManager(child: SizedBox()),
+        home: CoreManager(
+          pausesInBackground: pausesInBackground,
+          child: const SizedBox(),
+        ),
       ),
     ),
   );
+  return container;
+}
+
+Future<ProviderContainer> _pumpConnected(
+  WidgetTester tester,
+  _Harness harness, {
+  List<Override> overrides = const [],
+  bool? pausesInBackground,
+}) async {
+  final container = await _pumpCoreManager(
+    tester,
+    harness.mocks.controller,
+    overrides: overrides,
+    pausesInBackground: pausesInBackground,
+  );
+  container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+  await tester.pump();
   return container;
 }
 
@@ -144,16 +167,20 @@ Future<void> _waitForSetupToSettle(
   });
 }
 
+Future<List<WarningInfo>> _applied(MockCoreApi api) => api.applyConfig(
+  profilePath: any(named: 'profilePath'),
+  overlay: any(named: 'overlay'),
+  selection: any(named: 'selection'),
+  options: any(named: 'options'),
+);
+
 void main() {
   late Directory profileSwitchTempDir;
 
   setUpAll(() async {
-    registerFallbackValue(
-      const SetupParams(
-        selectedMap: {},
-        options: CoreOptions(testUrl: ''),
-      ),
-    );
+    registerFallbackValue(const CoreOptionsArg(testUrl: ''));
+    registerFallbackValue(const ConfigPatch());
+    registerFallbackValue(LogLevel.info);
     loadAppLocalizations(const Locale('en'));
     profileSwitchTempDir = Directory.systemTemp.createTempSync(
       'core_manager_test',
@@ -167,26 +194,13 @@ void main() {
     } catch (_) {}
   });
 
-  testWidgets('duplicate crash events disconnect the core only once', (
+  testWidgets('duplicate crash reports disconnect the core only once', (
     tester,
   ) async {
-    final coreInterface = _MockCoreHandlerInterface();
-    when(() => coreInterface.stopLog()).thenAnswer((_) async {});
-    final container = ProviderContainer(
-      overrides: [
-        coreHandlerProvider.overrideWithValue(
-          CoreController.scoped(coreInterface),
-        ),
-      ],
-    );
-    addTearDown(container.dispose);
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const HostApp(home: CoreManager(child: SizedBox())),
-      ),
-    );
+    final harness = _harness();
+    final container = await _pumpCoreManager(tester, harness.mocks.controller);
     container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+    await tester.pump();
     final transitions = <CoreStatus>[];
     final subscription = container.listen<CoreStatus>(
       coreStatusProvider,
@@ -195,54 +209,65 @@ void main() {
     addTearDown(subscription.close);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
 
-    coreEventManager.sendEvent(_crash);
-    coreEventManager.sendEvent(_crash);
+    harness.feeds.crashes
+      ..add('boom')
+      ..add('boom');
+    harness.feeds.events.add(const [FatalEvent('boom')]);
     await tester.pump();
 
     expect(container.read(coreStatusProvider), CoreStatus.disconnected);
     expect(transitions, [CoreStatus.disconnected]);
-    verifyNever(() => coreInterface.stop());
+    verifyNever(() => harness.mocks.backend.stop());
 
     await tester.pumpWidget(const SizedBox());
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
   });
 
-  testWidgets('a crash while the app is visible surfaces the message', (
-    tester,
-  ) async {
-    final coreInterface = _coreInterface();
-    final container = await _pumpCoreManager(tester, coreInterface);
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-    container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+  for (final (name, report) in <(String, void Function(_Feeds))>[
+    ('the backend crash stream', (feeds) => feeds.crashes.add('boom')),
+    ('a fatal event', (feeds) => feeds.events.add(const [FatalEvent('boom')])),
+  ]) {
+    testWidgets('$name while the app is visible surfaces the message', (
+      tester,
+    ) async {
+      final harness = _harness();
+      final container = await _pumpCoreManager(
+        tester,
+        harness.mocks.controller,
+      );
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      await tester.pump();
 
-    coreEventManager.sendEvent(_crash);
-    await tester.pump();
+      report(harness.feeds);
+      await tester.pump();
+      await tester.pump();
 
-    expect(container.read(coreStatusProvider), CoreStatus.disconnected);
-    expect(find.text('boom'), findsOneWidget);
+      expect(container.read(coreStatusProvider), CoreStatus.disconnected);
+      expect(find.text('boom'), findsOneWidget);
 
-    await tester.pumpWidget(const SizedBox.shrink());
-  });
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
 
   testWidgets('a crash ends the run here without telling the Core to stop', (
     tester,
   ) async {
-    final coreInterface = _coreInterface();
+    final harness = _harness();
     final setup = _LostRecordingSetupAction();
-    final container = await _pumpCoreManager(
+    final container = await _pumpConnected(
       tester,
-      coreInterface,
+      harness,
       overrides: [setupActionProvider.overrideWith(() => setup)],
     );
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-    container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
 
-    coreEventManager.sendEvent(_crash);
+    harness.feeds.crashes.add('boom');
     await tester.pump();
 
     expect(container.read(coreStatusProvider), CoreStatus.disconnected);
     expect(setup.lostCount, 1);
-    verifyNever(() => coreInterface.stopListener());
+    verifyNever(() => harness.mocks.api.stopEngine());
 
     await tester.pumpWidget(const SizedBox());
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
@@ -251,20 +276,11 @@ void main() {
   testWidgets('connections still open close once the core is gone', (
     tester,
   ) async {
-    final container = await _pumpCoreManager(tester, _coreInterface());
-    container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
-    container
-        .read(requestsProvider.notifier)
-        .addRequest(
-          TrackerInfo(
-            id: 'a',
-            start: DateTime.utc(2026),
-            metadata: const Metadata(network: 'tcp', host: 'example.com'),
-            chains: const ['Proxy'],
-            rule: 'MATCH',
-            rulePayload: '',
-          ),
-        );
+    final harness = _harness();
+    final container = await _pumpConnected(tester, harness);
+    harness.feeds.connections.add(
+      ConnectionsReset(ConnectionSnapshot([_connection(1)])),
+    );
     await tester.pump();
     expect(container.read(requestsProvider).activeCount, 1);
 
@@ -272,7 +288,7 @@ void main() {
     await tester.pump();
 
     expect(container.read(requestsProvider).activeCount, 0);
-    expect(container.read(requestsProvider)['a']!.closedAt, isNotNull);
+    expect(container.read(requestsProvider)[1]!.closedAt, isNotNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -309,8 +325,8 @@ void main() {
   testWidgets('a crash is ignored when the core is not connected', (
     tester,
   ) async {
-    final coreInterface = _coreInterface();
-    final container = await _pumpCoreManager(tester, coreInterface);
+    final harness = _harness();
+    final container = await _pumpCoreManager(tester, harness.mocks.controller);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     container.read(coreStatusProvider.notifier).value = CoreStatus.connecting;
     final transitions = <CoreStatus>[];
@@ -320,7 +336,7 @@ void main() {
     );
     addTearDown(subscription.close);
 
-    coreEventManager.sendEvent(_crash);
+    harness.feeds.crashes.add('boom');
     await tester.pump();
 
     expect(container.read(coreStatusProvider), CoreStatus.connecting);
@@ -330,61 +346,93 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('the log stream follows the openLogs setting', (tester) async {
-    final coreInterface = _coreInterface();
-    final container = await _pumpCoreManager(tester, coreInterface);
+  testWidgets('the streams open on connect and close when it is lost', (
+    tester,
+  ) async {
+    final harness = _harness();
+    final feeds = harness.feeds;
+    final container = await _pumpCoreManager(tester, harness.mocks.controller);
+    await tester.pump();
+
+    expect(feeds.dns.hasListener, isFalse);
+    expect(feeds.events.hasListener, isFalse);
+    expect(feeds.connections.hasListener, isFalse);
+    expect(feeds.proxies.hasListener, isFalse);
+
     container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
     await tester.pump();
 
-    verify(() => coreInterface.stopLog()).called(1);
-    verifyNever(() => coreInterface.startLog());
+    expect(feeds.dns.hasListener, isTrue);
+    expect(feeds.events.hasListener, isTrue);
+    expect(feeds.connections.hasListener, isTrue);
+    expect(feeds.proxies.hasListener, isTrue);
+
+    container.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+    await tester.pump();
+
+    expect(feeds.dns.hasListener, isFalse);
+    expect(feeds.events.hasListener, isFalse);
+    expect(feeds.connections.hasListener, isFalse);
+    expect(feeds.proxies.hasListener, isFalse);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('the log stream follows the openLogs setting', (tester) async {
+    final harness = _harness();
+    final container = await _pumpConnected(tester, harness);
+
+    expect(harness.feeds.logs.hasListener, isFalse);
+    verifyNever(() => harness.mocks.api.watchLogs());
 
     container
         .read(appSettingProvider.notifier)
         .update((state) => state.copyWith(openLogs: true));
     await tester.pump();
 
-    verify(() => coreInterface.startLog()).called(1);
+    expect(harness.feeds.logs.hasListener, isTrue);
+    verify(() => harness.mocks.api.watchLogs()).called(1);
 
     container
         .read(appSettingProvider.notifier)
         .update((state) => state.copyWith(openLogs: false));
     await tester.pump();
 
-    verify(() => coreInterface.stopLog()).called(1);
+    expect(harness.feeds.logs.hasListener, isFalse);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
   testWidgets('the log stream waits for the core and is restored on '
       'every connection', (tester) async {
-    final coreInterface = _coreInterface();
-    final container = await _pumpCoreManager(tester, coreInterface);
+    final harness = _harness();
+    final container = await _pumpCoreManager(tester, harness.mocks.controller);
     container
         .read(appSettingProvider.notifier)
         .update((state) => state.copyWith(openLogs: true));
     await tester.pump();
 
-    verifyNever(() => coreInterface.startLog());
-    verifyNever(() => coreInterface.stopLog());
+    verifyNever(() => harness.mocks.api.watchLogs());
 
     container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
     await tester.pump();
 
-    verify(() => coreInterface.startLog()).called(1);
+    verify(() => harness.mocks.api.watchLogs()).called(1);
+    expect(harness.feeds.logs.hasListener, isTrue);
 
     container.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
     await tester.pump();
     container.read(coreStatusProvider.notifier).value = CoreStatus.connecting;
     await tester.pump();
 
-    verifyNever(() => coreInterface.startLog());
+    verifyNever(() => harness.mocks.api.watchLogs());
+    expect(harness.feeds.logs.hasListener, isFalse);
 
     container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
     await tester.pump();
 
-    verify(() => coreInterface.startLog()).called(1);
-    verifyNever(() => coreInterface.stopLog());
+    verify(() => harness.mocks.api.watchLogs()).called(1);
+    expect(harness.feeds.logs.hasListener, isTrue);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -395,7 +443,7 @@ void main() {
     final setupAction = _ApplyRecordingSetupAction();
     final container = await _pumpCoreManager(
       tester,
-      _coreInterface(),
+      _harness().mocks.controller,
       overrides: [setupActionProvider.overrideWith(() => setupAction)],
     );
 
@@ -416,7 +464,7 @@ void main() {
     final setupAction = _ApplyRecordingSetupAction();
     final container = await _pumpCoreManager(
       tester,
-      _coreInterface(),
+      _harness().mocks.controller,
       overrides: [setupActionProvider.overrideWith(() => setupAction)],
     );
 
@@ -442,7 +490,7 @@ void main() {
     final setupAction = _ApplyRecordingSetupAction();
     final container = await _pumpCoreManager(
       tester,
-      _coreInterface(),
+      _harness().mocks.controller,
       overrides: [setupActionProvider.overrideWith(() => setupAction)],
     );
 
@@ -462,7 +510,7 @@ void main() {
     final setupAction = _ApplyRecordingSetupAction();
     final container = await _pumpCoreManager(
       tester,
-      _coreInterface(),
+      _harness().mocks.controller,
       overrides: [
         setupActionProvider.overrideWith(() => setupAction),
         globalRulesProvider.overrideWith(() => TestGlobalRules()),
@@ -482,15 +530,16 @@ void main() {
   });
 
   testWidgets('core logs are recorded for the logs view', (tester) async {
-    final coreInterface = _coreInterface();
-    final container = await _pumpCoreManager(tester, coreInterface);
+    final harness = _harness();
+    final container = await _pumpConnected(tester, harness);
+    container
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(openLogs: true));
+    await tester.pump();
 
-    coreEventManager.sendEvent(
-      const CoreEvent(
-        type: CoreEventType.log,
-        data: {'LogLevel': 'info', 'Payload': 'hello'},
-      ),
-    );
+    harness.feeds.logs.add(const [
+      LogEntry(level: 'info', time: 1, text: 'hello'),
+    ]);
     await tester.pump();
 
     expect(
@@ -502,23 +551,24 @@ void main() {
   });
 
   testWidgets('core dns queries are recorded and counted', (tester) async {
-    final coreInterface = _coreInterface();
-    final container = await _pumpCoreManager(tester, coreInterface);
+    final harness = _harness();
+    final container = await _pumpConnected(tester, harness);
 
-    for (final domain in ['alpha.test', 'beta.test']) {
-      coreEventManager.sendEvent(
-        CoreEvent(
-          type: CoreEventType.dns,
-          data: {
-            'domain': domain,
-            'type': 'A',
-            'answers': ['1.1.1.1'],
-            'delay': 3,
-            'time': '2026-09-18T04:30:01Z',
-          },
+    harness.feeds.dns.add([
+      for (final domain in ['alpha.test', 'beta.test'])
+        DnsEntry(
+          domain: domain,
+          type: 'A',
+          initiator: 'user',
+          upstream: '',
+          cached: false,
+          answers: const ['1.1.1.1'],
+          rcode: '',
+          error: '',
+          delay: 3,
+          time: 1,
         ),
-      );
-    }
+    ]);
     await tester.pump();
 
     expect(
@@ -530,69 +580,292 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('geo events are forwarded to the geo resource action', (
-    tester,
-  ) async {
-    final coreInterface = _coreInterface();
-    final container = await _pumpCoreManager(tester, coreInterface);
-    final key = GeoResource.MMDB.updatingKey;
-    final subscription = container.listen<bool>(
-      isUpdatingProvider(key),
-      (_, _) {},
+  testWidgets('connection updates are recorded, counted, kept up to date '
+      'and closed', (tester) async {
+    final harness = _harness();
+    final container = await _pumpConnected(tester, harness);
+
+    harness.feeds.connections.add(
+      ConnectionsReset(ConnectionSnapshot([_connection(1), _connection(2)])),
     );
-    addTearDown(subscription.close);
-
-    coreEventManager.sendEvent(_geoUpdate(updating: true));
     await tester.pump();
 
-    expect(container.read(isUpdatingProvider(key)), isTrue);
+    expect(container.read(requestsProvider).list.map((request) => request.id), [
+      1,
+      2,
+    ]);
+    expect(container.read(requestCountProvider), 2);
 
-    coreEventManager.sendEvent(_geoUpdate(error: 'background failure'));
-    await tester.pump();
-
-    expect(container.read(isUpdatingProvider(key)), isFalse);
-    expect(find.text('background failure'), findsNothing);
-
-    await tester.pumpWidget(const SizedBox.shrink());
-  });
-
-  testWidgets('route events reach the route tracker', (tester) async {
-    final coreInterface = _coreInterface();
-    final container = await _pumpCoreManager(tester, coreInterface);
-
-    coreEventManager.sendEvent(
-      const CoreEvent(
-        type: CoreEventType.routeChanged,
-        data: {'core-epoch': 7, 'route-version': 42},
+    harness.feeds.connections.add(
+      ConnectionsChanged(
+        ConnectionDelta(
+          opened: [_connection(3)],
+          counters: const [ConnectionCounter(id: 1, upload: 7, download: 9)],
+          closed: const [2],
+        ),
       ),
     );
     await tester.pump();
 
-    final route = container.read(routeTrackerProvider);
-    expect(route.coreEpoch, 7);
-    expect(route.routeVersion, 42);
-    expect(route.synced, isTrue);
+    final requests = container.read(requestsProvider).list;
+    expect(requests.map((request) => request.id), [1, 2, 3]);
+    expect(container.read(requestCountProvider), 3);
+    expect(requests.first.upload, 7);
+    expect(requests.first.download, 9);
+    expect(requests.map((request) => request.isActive), [true, false, true]);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('non-geo Core errors retain global notifications', (
+  testWidgets(
+    'connection counters are asked for only while a view shows them',
+    (tester) async {
+      final harness = _harness();
+      final asked = <bool>[];
+      when(
+        () => harness.mocks.api.watchConnections(
+          maxBatchMs: 250,
+          counters: any(named: 'counters'),
+        ),
+      ).thenAnswer((invocation) {
+        asked.add(invocation.namedArguments[#counters] as bool);
+        return harness.feeds.connections.stream;
+      });
+      final container = await _pumpConnected(tester, harness);
+      expect(asked, [false]);
+
+      final demand = container.read(connectionBookProvider).demand..acquire();
+      await tester.pump();
+      demand.acquire();
+      await tester.pump();
+      expect(asked, [false, true]);
+
+      demand
+        ..release()
+        ..release();
+      await tester.pump();
+      expect(asked, [false, true, false]);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets('the connection feed is not read while the app is in the '
+      'background and catches up on return', (tester) async {
+    final harness = _harness();
+    final container = await _pumpConnected(
+      tester,
+      harness,
+      pausesInBackground: true,
+    );
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    harness.feeds.connections.add(
+      ConnectionsReset(ConnectionSnapshot([_connection(1)])),
+    );
+    await tester.pump();
+    expect(container.read(requestCountProvider), 0);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(container.read(requestCountProvider), 1);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a reconnect starts the connection book afresh', (tester) async {
+    final harness = _harness();
+    final container = await _pumpConnected(tester, harness);
+    harness.feeds.connections.add(
+      ConnectionsReset(ConnectionSnapshot([_connection(1)])),
+    );
+    await tester.pump();
+    expect(container.read(connectionBookProvider).count, 1);
+
+    container.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+    await tester.pump();
+    container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+    await tester.pump();
+
+    expect(container.read(connectionBookProvider).count, 0);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('delay events and proxy changes reach the proxies action', (
     tester,
   ) async {
-    final coreInterface = _coreInterface();
-    await _pumpCoreManager(tester, coreInterface);
+    final harness = _harness();
+    final proxies = _RecordingProxiesAction();
+    await _pumpConnected(
+      tester,
+      harness,
+      overrides: [proxiesActionProvider.overrideWith(() => proxies)],
+    );
 
-    coreEventManager.sendEvent(
-      const CoreEvent(
-        type: CoreEventType.log,
-        data: {'LogLevel': 'error', 'Payload': 'core failure'},
+    harness.feeds.events.add(const [
+      DelayEvent(
+        DelayResult(name: 'node', url: 'https://probe.test', value: 42),
       ),
+    ]);
+    harness.feeds.proxies.add(const ProxiesChanged(ProxyDelta()));
+    await tester.pump();
+
+    expect(proxies.delays, hasLength(1));
+    expect(proxies.delays.single.name, 'node');
+    expect(proxies.delays.single.url, 'https://probe.test');
+    expect(proxies.delays.single.value, 42);
+    expect(proxies.groupUpdates, 1);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a loaded provider event refreshes that provider', (
+    tester,
+  ) async {
+    final harness = _harness();
+    final container = await _pumpConnected(tester, harness);
+    ExternalProvider provider(int count) => ExternalProvider(
+      name: 'sub',
+      type: 'Proxy',
+      count: count,
+      vehicleType: 'HTTP',
+      updateAt: DateTime.fromMillisecondsSinceEpoch(0),
+    );
+    container.read(providersProvider.notifier).value = [provider(1)];
+    when(() => harness.mocks.api.provider('sub')).thenAnswer(
+      (_) async => const ProviderInfo(
+        name: 'sub',
+        type: ProviderKindDto.proxy,
+        vehicleType: 'HTTP',
+        count: 5,
+        path: '',
+        updatedAt: 0,
+      ),
+    );
+
+    harness.feeds.events.add(const [
+      ResourceUpdateEvent(
+        kind: ResourceKind.proxyProvider,
+        name: 'sub',
+        phase: ResourcePhase.updated,
+      ),
+    ]);
+    await tester.pump();
+    await tester.pump();
+
+    expect(container.read(providersProvider).single.count, 5);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a dashboard pick and mode reach the app, and the host\'s '
+      'own changes are not applied twice', (tester) async {
+    final harness = _harness();
+    final setupAction = _ApplyRecordingSetupAction();
+    final profile = Profile.normal(
+      label: 'p',
+    ).copyWith(selectedMap: const {'G': 'A', 'F': 'dead'});
+    when(() => harness.mocks.api.general()).thenAnswer(
+      (_) async => const GeneralStateDto(
+        seq: 1,
+        general: GeneralChange(mode: 'rule'),
+        selections: {'G': 'A'},
+      ),
+    );
+    final container = await _pumpConnected(
+      tester,
+      harness,
+      overrides: [
+        setupActionProvider.overrideWith(() => setupAction),
+        profilesProvider.overrideWith(() => TestProfiles([profile])),
+        currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+      ],
+    );
+    await tester.pump();
+
+    harness.feeds.events.add(const [
+      StateChangedEvent(
+        seq: 2,
+        origin: ChangeOrigin.controller,
+        change: SelectedChange(group: 'G', proxy: 'B'),
+      ),
+      StateChangedEvent(
+        seq: 3,
+        origin: ChangeOrigin.core,
+        change: SelectedChange(group: 'F', proxy: ''),
+      ),
+      StateChangedEvent(
+        seq: 4,
+        origin: ChangeOrigin.controller,
+        change: GeneralChange(mode: 'global'),
+      ),
+      StateChangedEvent(
+        seq: 5,
+        origin: ChangeOrigin.host,
+        change: SelectedChange(group: 'G', proxy: 'C'),
+      ),
+    ]);
+    await tester.pump();
+
+    expect(container.read(currentProfileProvider)?.selectedMap, {'G': 'B'});
+    expect(container.read(patchClashConfigProvider).mode, Mode.global);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a resynced event reads the groups and providers again', (
+    tester,
+  ) async {
+    final harness = _harness();
+    final proxies = _RecordingProxiesAction();
+    final container = await _pumpConnected(
+      tester,
+      harness,
+      overrides: [proxiesActionProvider.overrideWith(() => proxies)],
+    );
+    when(() => harness.mocks.api.providers()).thenAnswer(
+      (_) async => const [
+        ProviderInfo(
+          name: 'rules',
+          type: ProviderKindDto.rule,
+          vehicleType: 'File',
+          count: 3,
+          path: '',
+        ),
+      ],
+    );
+
+    harness.feeds.events.add(const [EventsResynced()]);
+    await tester.pump();
+    await tester.pump();
+
+    expect(proxies.groupUpdates, 1);
+    expect(container.read(providersProvider).map((item) => item.name), [
+      'rules',
+    ]);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a dialer loop event surfaces the proxy name', (tester) async {
+    final harness = _harness();
+    await _pumpConnected(tester, harness);
+
+    harness.feeds.events.add(const [DialerLoopEvent('loop-node')]);
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      find.text(currentAppLocalizations.dialerProxyLoopStopped('loop-node')),
+      findsOneWidget,
     );
     await tester.pump();
 
     expect(find.text('core failure'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
   });
 
   group('profile switch failure', () {
@@ -613,9 +886,9 @@ void main() {
     testWidgets('keeps the selected profile when Core rejects it', (
       tester,
     ) async {
-      final coreInterface = _coreInterface();
+      final harness = _harness();
       var setupCalls = 0;
-      when(() => coreInterface.setupConfig(any())).thenAnswer((_) async {
+      when(() => _applied(harness.mocks.api)).thenAnswer((_) async {
         setupCalls++;
         throw const CoreMethodException(
           code: 'config_rejected',
@@ -624,7 +897,7 @@ void main() {
       });
       final container = await _pumpCoreManager(
         tester,
-        coreInterface,
+        harness.mocks.controller,
         overrides: profileOverrides(),
       );
       globalState.container = container;
@@ -641,9 +914,9 @@ void main() {
     testWidgets('rapid A -> B -> C settles on C even when both are rejected', (
       tester,
     ) async {
-      final coreInterface = _coreInterface();
+      final harness = _harness();
       var setupCalls = 0;
-      when(() => coreInterface.setupConfig(any())).thenAnswer((_) async {
+      when(() => _applied(harness.mocks.api)).thenAnswer((_) async {
         setupCalls++;
         throw const CoreMethodException(
           code: 'config_rejected',
@@ -655,7 +928,7 @@ void main() {
       final c = Profile.normal(label: 'c');
       final container = await _pumpCoreManager(
         tester,
-        coreInterface,
+        harness.mocks.controller,
         overrides: [
           initProvider.overrideWithBuild((_, _) => true),
           profilesProvider.overrideWith(() => TestProfiles([a, b, c])),
@@ -679,9 +952,9 @@ void main() {
       'a missing profile id recovers to a fallback without looping when '
       'the fallback is also rejected',
       (tester) async {
-        final coreInterface = _coreInterface();
+        final harness = _harness();
         var setupCalls = 0;
-        when(() => coreInterface.setupConfig(any())).thenAnswer((_) async {
+        when(() => _applied(harness.mocks.api)).thenAnswer((_) async {
           setupCalls++;
           throw const CoreMethodException(
             code: 'config_rejected',
@@ -691,7 +964,7 @@ void main() {
         const missingId = -1;
         final container = await _pumpCoreManager(
           tester,
-          coreInterface,
+          harness.mocks.controller,
           overrides: [
             initProvider.overrideWithBuild((_, _) => true),
             profilesProvider.overrideWith(() => TestProfiles([previous])),
@@ -713,5 +986,42 @@ void main() {
         await tester.pumpWidget(const SizedBox.shrink());
       },
     );
+  });
+
+  testWidgets('a geo update whose end the events lost stops showing as '
+      'updating', (tester) async {
+    final harness = _harness();
+    final container = await _pumpConnected(
+      tester,
+      harness,
+      overrides: [
+        proxiesActionProvider.overrideWith(_RecordingProxiesAction.new),
+      ],
+    );
+    final key = GeoResource.MMDB.updatingKey;
+    final subscription = container.listen<bool>(
+      isUpdatingProvider(key),
+      (_, _) {},
+    );
+    addTearDown(subscription.close);
+    when(() => harness.mocks.api.providers()).thenAnswer((_) async => const []);
+
+    harness.feeds.events.add(const [
+      ResourceUpdateEvent(
+        kind: ResourceKind.geo,
+        name: 'MMDB',
+        phase: ResourcePhase.updating,
+      ),
+    ]);
+    await tester.pump();
+    expect(container.read(isUpdatingProvider(key)), isTrue);
+
+    harness.feeds.events.add(const [EventsResynced()]);
+    await tester.pump();
+    await tester.pump();
+
+    expect(container.read(isUpdatingProvider(key)), isFalse);
+
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 }

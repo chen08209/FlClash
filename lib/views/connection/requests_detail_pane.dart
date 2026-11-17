@@ -19,7 +19,7 @@ class RequestsDetailPane extends StatelessWidget {
       _detailMinWidth + _detailMargin.start + _detailMargin.end;
 
   final RequestsSegment segment;
-  final ValueListenable<String?> selected;
+  final ValueListenable<int?> selected;
   final ConnectionRows rows;
   final ValueListenable<DnsQuery?> dnsSelected;
   final ValueListenable<int?> httpSelected;

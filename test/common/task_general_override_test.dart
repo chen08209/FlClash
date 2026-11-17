@@ -42,16 +42,11 @@ void main() {
     final config = await _configOf(
       const PatchClashConfig(
         tcpConcurrent: true,
-        geodataLoader: GeodataLoader.memconservative,
-        generalOverrideKeys: {
-          GeneralOverrideKey.tcpConcurrent,
-          GeneralOverrideKey.geodataLoader,
-        },
+        generalOverrideKeys: {GeneralOverrideKey.tcpConcurrent},
       ),
     );
 
     expect(config['tcp-concurrent'], true);
-    expect(config['geodata-loader'], 'memconservative');
     expect(config['unified-delay'], false);
     expect(config['ipv6'], true);
   });

@@ -19,11 +19,7 @@ String? _resolveToolSearchPath() {
   final candidates = [
     '/opt/homebrew/bin',
     '/usr/local/bin',
-    '/usr/local/go/bin',
-    if (home != null && home.isNotEmpty) ...[
-      p.join(home, 'go', 'bin'),
-      p.join(home, '.cargo', 'bin'),
-    ],
+    if (home != null && home.isNotEmpty) ...[p.join(home, '.cargo', 'bin')],
   ];
   final missing = candidates
       .where((dir) => !entries.contains(dir) && Directory(dir).existsSync())

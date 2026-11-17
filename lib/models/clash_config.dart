@@ -1,7 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/core.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:yaml/yaml.dart';
 
@@ -35,8 +34,6 @@ const defaultGeoXUrl = {
       'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb',
   GeoResource.ASN:
       'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb',
-  GeoResource.GEOIP:
-      'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat',
   GeoResource.GEOSITE:
       'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat',
 };
@@ -48,7 +45,8 @@ const minTunMtu = 1280;
 const maxTunMtu = 65535;
 const defaultCongestionController = 'cubic';
 
-// The congestion controls mipstack registers, cubic first as its default.
+// The TUN congestion controls the app knows, cubic first as the default; the
+// Core's reported list decides which of them are offered.
 const congestionControllers = [
   defaultCongestionController,
   'reno',
@@ -1204,19 +1202,17 @@ extension TunExt on Tun {
     return subtractCidrsTask(routeAddress, excluded, wholeWhenEmpty: true);
   }
 
-  Map<String, Object?> get coreJson {
-    final json = toJson();
-    return {
-      for (final key in const ['enable', 'device', 'stack']) key: json[key],
-      'auto-route': true,
-    };
-  }
+  Map<String, Object?> get coreJson => {
+    'enable': enable,
+    'device': device,
+    'auto-route': true,
+  };
 }
 
 @freezed
 abstract class FallbackFilter with _$FallbackFilter {
   const factory FallbackFilter({
-    @Default(true) bool geoip,
+    @Default(false) bool geoip,
     @Default('') @JsonKey(name: 'geoip-code') String geoipCode,
     @Default([]) List<String> geosite,
     @Default([]) List<String> ipcidr,
@@ -1577,7 +1573,6 @@ abstract class ProfileTun with _$ProfileTun {
     @Default(false)
     @JsonKey(name: 'disable-icmp-forwarding')
     bool disableIcmpForwarding,
-    @Default(false) bool gso,
     @Default([])
     @JsonKey(name: 'include-interface')
     List<String> includeInterface,
@@ -2090,9 +2085,12 @@ Map<GeoResource, String> _geoXUrlFromJson(Map<String, Object?>? json) {
   if (json == null) {
     return defaultGeoXUrl;
   }
-  return json.map(
-    (key, value) => MapEntry(GeoResource.fromJson(key), value as String),
-  );
+  return {
+    for (final MapEntry(:key, :value) in json.entries)
+      // Saved configs from before the core stopped reading GeoIP.dat.
+      if (key != 'geoip' && key != 'geo-ip')
+        GeoResource.fromJson(key): value as String,
+  };
 }
 
 Map<String, String> _geoXUrlToJson(Map<GeoResource, String> value) {
@@ -2111,7 +2109,6 @@ const _legacyForcedGeneralKeys = [
   GeneralOverrideKey.unifiedDelay,
   GeneralOverrideKey.tcpConcurrent,
   GeneralOverrideKey.ipv6,
-  GeneralOverrideKey.geodataLoader,
 ];
 
 Map<String, Object?> _withLegacyGeneralOverrideKeys(Map<String, Object?> json) {
@@ -2182,14 +2179,14 @@ abstract class PatchClashConfig with _$PatchClashConfig {
       toJson: _geoXUrlToJson,
     )
     Map<GeoResource, String> geoXUrl,
-    @Default(GeodataLoader.memconservative)
-    @JsonKey(name: 'geodata-loader')
-    GeodataLoader geodataLoader,
     @JsonKey(name: 'global-ua') String? globalUa,
     @Default(ExternalControllerStatus.close)
     @JsonKey(name: 'external-controller')
     ExternalControllerStatus externalController,
     @Default('') String secret,
+    @Default(true)
+    @JsonKey(name: 'external-controller-cors')
+    bool externalControllerCors,
     @Default({}) Map<String, String> hosts,
     @Default(true) @JsonKey(name: 'geo-auto-update') bool geoAutoUpdate,
     @Default(24) @JsonKey(name: 'geo-update-interval') int geoUpdateInterval,
@@ -2294,7 +2291,7 @@ extension MitmExt on Mitm {
   );
 
   /// The hostnames come from [rules] alone, which the user's own lead.
-  Map<String, Object?> coreJson(MitmRules rules) {
+  Map<String, Object?> coreJson(MitmRules rules, {bool? isAndroid}) {
     final json = toJson()
       ..remove('hostname')
       ..remove('decrypt-untrusted')
@@ -2308,7 +2305,7 @@ extension MitmExt on Mitm {
       'decrypt-tls': decryptUntrusted || trustedFingerprint != null,
       'ca-fingerprint': decryptUntrusted ? '' : trustedFingerprint ?? '',
       'limits': {
-        ..._mitmLimits(isAndroid: system.isAndroid),
+        ..._mitmLimits(isAndroid: isAndroid ?? system.isAndroid),
         'capture-entries': ?captureEntries,
       },
     };
@@ -2360,40 +2357,13 @@ class MitmRules {
 }
 
 extension PatchClashConfigExt on PatchClashConfig {
-  T? _picked<T>(GeneralOverrideKey key, T value) =>
-      generalOverrideKeys.contains(key) ? value : null;
-
   Map<String, Object?> get generalOverrideJson => _overrideJson(
     toJson(),
     GeneralOverrideKey.values,
     generalOverrideKeys.difference(const {GeneralOverrideKey.testUrl}),
   );
 
-  UpdateParams toUpdateParams({
-    required List<String> authentication,
-    required CoreOptions options,
-  }) {
-    return UpdateParams(
-      tun: tun,
-      authentication: authentication,
-      allowLan: allowLan,
-      findProcessMode: findProcessMode,
-      mode: mode,
-      logLevel: logLevel,
-      ipv6: _picked(GeneralOverrideKey.ipv6, ipv6),
-      tcpConcurrent: _picked(GeneralOverrideKey.tcpConcurrent, tcpConcurrent),
-      externalController: externalController,
-      secret: secret,
-      unifiedDelay: _picked(GeneralOverrideKey.unifiedDelay, unifiedDelay),
-      mixedPort: mixedPort,
-      geoAutoUpdate: geoAutoUpdate,
-      geoUpdateInterval: geoUpdateInterval,
-      geoXUrl: geoXUrl.raw,
-      options: options,
-    );
-  }
-
-  /// Resets every field [toUpdateParams] patches live, leaving what only a
+  /// Resets every field [configPatchOf] patches live, leaving what only a
   /// full setup hands the Core.
   PatchClashConfig get setupOnly => copyWith(
     tun: defaultClashConfig.tun,
@@ -2406,6 +2376,7 @@ extension PatchClashConfigExt on PatchClashConfig {
     tcpConcurrent: defaultClashConfig.tcpConcurrent,
     externalController: defaultClashConfig.externalController,
     secret: defaultClashConfig.secret,
+    externalControllerCors: defaultClashConfig.externalControllerCors,
     unifiedDelay: defaultClashConfig.unifiedDelay,
     geoAutoUpdate: defaultClashConfig.geoAutoUpdate,
     geoUpdateInterval: defaultClashConfig.geoUpdateInterval,

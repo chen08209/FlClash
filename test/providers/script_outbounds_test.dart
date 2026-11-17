@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/core.dart';
@@ -14,14 +13,13 @@ import 'package:mocktail/mocktail.dart';
 import 'package:riverpod/riverpod.dart';
 
 import '../helpers/app_paths.dart';
+import '../helpers/core_mocks.dart';
 import '../helpers/test_database_providers.dart';
 import '../helpers/test_profiles.dart';
 
-class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
-
 void main() {
   late Directory tempDir;
-  late _MockCoreHandlerInterface core;
+  late CoreMocks mocks;
   late Script script;
   late ScriptEvaluator engine;
 
@@ -39,20 +37,22 @@ void main() {
 
   setUp(() {
     engine = scriptEvaluator;
-    core = _MockCoreHandlerInterface();
-    when(() => core.readConfig(any())).thenAnswer(
-      (_) async => <String, dynamic>{
-        'proxies': [
-          {'name': 'node', 'type': 'ss', 'server': 'example.com'},
-        ],
-        'proxy-groups': [
-          {
-            'name': 'Before',
-            'type': 'select',
-            'proxies': ['node'],
-          },
-        ],
-      },
+    mocks = coreMocks();
+    when(() => mocks.api.readConfig(any())).thenAnswer(
+      (_) async => const ConfigReadOutput(
+        config: {
+          'proxies': [
+            {'name': 'node', 'type': 'ss', 'server': 'example.com'},
+          ],
+          'proxy-groups': [
+            {
+              'name': 'Before',
+              'type': 'select',
+              'proxies': ['node'],
+            },
+          ],
+        },
+      ),
     );
   });
 
@@ -63,7 +63,7 @@ void main() {
       overrides: [
         profilesProvider.overrideWith(() => TestProfiles([profile])),
         scriptsProvider.overrideWith(() => TestScripts([script])),
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
       ],
     );
     addTearDown(container.dispose);
@@ -121,6 +121,6 @@ void main() {
     final profile = Profile.normal(label: 'sub');
 
     expect(await outboundsOf(profile), isNull);
-    verifyNever(() => core.readConfig(any()));
+    verifyNever(() => mocks.api.readConfig(any()));
   });
 }

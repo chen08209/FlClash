@@ -212,10 +212,9 @@ class _MitmExchangeDetail extends StatelessWidget {
                 ),
             ],
           ),
-        if (showsConnection && exchange.connection.isNotEmpty)
+        if (exchange.connectionId case final id? when showsConnection)
           Consumer(
             builder: (context, ref, _) {
-              final id = exchange.connection;
               final kept = ref.watch(
                 requestsProvider.select((log) => log[id] != null),
               );

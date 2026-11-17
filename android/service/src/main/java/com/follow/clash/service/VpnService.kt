@@ -12,13 +12,13 @@ import com.follow.clash.common.AccessControlMode
 import com.follow.clash.common.GlobalState
 import com.follow.clash.common.R as CommonR
 import com.follow.clash.core.Core
+import com.follow.clash.core.TunOptions
 import com.follow.clash.service.models.CIDR
 import com.follow.clash.service.models.VpnOptions
 import com.follow.clash.service.models.getIpv4RouteAddress
 import com.follow.clash.service.models.getIpv6RouteAddress
 import com.follow.clash.service.models.toCIDR
 import com.follow.clash.service.models.tunMtu
-import com.follow.clash.service.models.tunOptions
 import com.follow.clash.service.modules.ServiceModules
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentHashMap
@@ -66,25 +66,19 @@ class VpnService : SystemVpnService(), ManagedService {
     }
 
     private val VpnOptions.tunAddress
-        get(): String = buildString {
-            append(IPV4_ADDRESS)
-            if (ipv6) {
-                append(",")
-                append(IPV6_ADDRESS)
-            }
+        get(): List<String> = buildList {
+            add(IPV4_ADDRESS)
+            if (ipv6) add(IPV6_ADDRESS)
         }
 
     private val VpnOptions.tunDns
-        get(): String {
+        get(): List<String> {
             if (dnsHijacking) {
-                return NET_ANY
+                return listOf(NET_ANY)
             }
-            return buildString {
-                append(DNS)
-                if (ipv6) {
-                    append(",")
-                    append(DNS6)
-                }
+            return buildList {
+                add(DNS)
+                if (ipv6) add(DNS6)
             }
         }
 
@@ -157,18 +151,18 @@ class VpnService : SystemVpnService(), ManagedService {
                 // longer keeps its own sockets out of them: every connection
                 // then hangs until it times out. Tear the VPN down instead of
                 // reporting a start that only looks successful.
-                check(
-                    Core.startTun(
-                        fd = fd,
-                        protect = this::protect,
-                        resolveUid = this::resolveUid,
-                        resolvePackage = this::resolvePackage,
-                        stack = options.stack,
+                Core.startTun(
+                    fd = fd,
+                    protect = this::protect,
+                    resolveUid = this::resolveUid,
+                    resolvePackage = this::resolvePackage,
+                    options = TunOptions(
+                        mtu = options.tunMtu,
                         address = options.tunAddress,
                         dns = options.tunDns,
-                        options = options.tunOptions,
+                        congestionController = options.congestionController,
                     ),
-                ) { "Core rejected the tun file descriptor" }
+                )
             } catch (error: Exception) {
                 stopTunLocked()
                 throw error

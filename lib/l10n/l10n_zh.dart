@@ -409,9 +409,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get stopVpn => '正在停止VPN…';
 
   @override
-  String get localNetworkDeniedTip => '本地网络权限被拒绝：已改用 gvisor 栈，局域网无法访问。';
-
-  @override
   String get compatible => '兼容模式';
 
   @override
@@ -499,6 +496,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get externalControllerSecret => '外部控制器密钥';
 
   @override
+  String get externalControllerCors => '允许跨域访问';
+
+  @override
+  String get externalControllerCorsDesc => '允许网页面板从其他网址连接。';
+
+  @override
   String get ipv6Desc => '开启 IPv6 后才会接收 IPv6 流量。';
 
   @override
@@ -521,9 +524,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tcpConcurrent => 'TCP并发';
-
-  @override
-  String get geodataLoader => 'Geo低内存模式';
 
   @override
   String get requests => '请求';
@@ -1297,9 +1297,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get hideTimeoutProxies => '隐藏超时代理';
-
-  @override
-  String get stackMode => '栈模式';
 
   @override
   String get network => '网络';
@@ -2828,9 +2825,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get congestionController => 'TCP 拥塞控制';
 
   @override
-  String get congestionControllerDesc => 'TCP 拥塞控制仅在 mips 栈生效。';
-
-  @override
   String get routeExcludeAddress => '排除路由地址';
 
   @override
@@ -2900,7 +2894,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get udpTimeout => 'UDP 超时';
 
   @override
-  String get udpTimeoutDesc => 'UDP 超时以秒为单位，仅在 gvisor、system 和 mixed 栈生效。';
+  String get udpTimeoutDesc => 'UDP 超时以秒为单位。';
 
   @override
   String get dnsHijackDesc => '未添加时劫持所有发往 53 端口的 DNS 请求（any:53）。';
