@@ -193,11 +193,68 @@ abstract class _$UpdateDownloadState extends $Notifier<UpdateDownload?> {
   }
 }
 
+@ProviderFor(CoreCapabilitiesState)
+final coreCapabilitiesStateProvider = CoreCapabilitiesStateProvider._();
+
+final class CoreCapabilitiesStateProvider
+    extends $NotifierProvider<CoreCapabilitiesState, CoreCapabilities> {
+  CoreCapabilitiesStateProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'coreCapabilitiesStateProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$coreCapabilitiesStateHash();
+
+  @$internal
+  @override
+  CoreCapabilitiesState create() => CoreCapabilitiesState();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CoreCapabilities value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CoreCapabilities>(value),
+    );
+  }
+}
+
+String _$coreCapabilitiesStateHash() =>
+    r'd1e986c16b1dac28ab6480019ee33108da0ef185';
+
+abstract class _$CoreCapabilitiesState extends $Notifier<CoreCapabilities> {
+  CoreCapabilities build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<CoreCapabilities, CoreCapabilities>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<CoreCapabilities, CoreCapabilities>,
+              CoreCapabilities,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+/// The warnings of the config the Core last set up; they end with the Core.
+
 @ProviderFor(CoreStopReason)
 final coreStopReasonProvider = CoreStopReasonProvider._();
 
+/// The warnings of the config the Core last set up; they end with the Core.
 final class CoreStopReasonProvider
     extends $NotifierProvider<CoreStopReason, String?> {
+  /// The warnings of the config the Core last set up; they end with the Core.
   CoreStopReasonProvider._()
     : super(
         from: null,
@@ -226,6 +283,8 @@ final class CoreStopReasonProvider
 }
 
 String _$coreStopReasonHash() => r'ba8ddb362ef3e025c5f052a68e896a0e728f9458';
+
+/// The warnings of the config the Core last set up; they end with the Core.
 
 abstract class _$CoreStopReason extends $Notifier<String?> {
   String? build();

@@ -42,6 +42,14 @@ class UpdateDownloadState extends _$UpdateDownloadState
 }
 
 @Riverpod(keepAlive: true)
+class CoreCapabilitiesState extends _$CoreCapabilitiesState
+    with AutoDisposeNotifierMixin {
+  @override
+  CoreCapabilities build() => const CoreCapabilities.everything();
+}
+
+/// The warnings of the config the Core last set up; they end with the Core.
+@Riverpod(keepAlive: true)
 class CoreStopReason extends _$CoreStopReason with AutoDisposeNotifierMixin {
   @override
   String? build() {

@@ -213,10 +213,12 @@ class OptionsOverrideField<M, T extends Object>
     super.select,
     super.update, {
     this.labelOf = _nameOf,
+    this.available,
   });
 
   final List<T> options;
   final String Function(T value) labelOf;
+  final ProviderListenable<bool Function(T option)>? available;
 
   static String _nameOf(Object value) => value is Enum ? value.name : '$value';
 
@@ -231,6 +233,7 @@ class OptionsOverrideField<M, T extends Object>
       title: title,
       options: options,
       textBuilder: labelOf,
+      available: available,
       selector: model.selectModel(select),
       onChanged: model.modelWriter(update),
     );

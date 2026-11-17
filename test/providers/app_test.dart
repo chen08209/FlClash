@@ -525,5 +525,11 @@ void main() {
 
       expect(container.read(coreStopReasonProvider), isNull);
     });
+
+    test('a core that reports nothing supports everything', () {
+      final capabilities = container.read(coreCapabilitiesStateProvider);
+
+      expect(capabilities.restricted, isFalse);
+    });
   });
 }
