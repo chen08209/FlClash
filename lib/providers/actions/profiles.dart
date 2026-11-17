@@ -19,6 +19,24 @@ class ProfilesAction extends _$ProfilesAction {
     }
   }
 
+  /// An empty [proxyName] forgets the group's pick.
+  void setSelection(int profileId, String groupName, String proxyName) {
+    final profile = ref.read(profilesProvider).getProfile(profileId);
+    if (profile == null ||
+        (profile.selectedMap[groupName] ?? '') == proxyName) {
+      return;
+    }
+    final selectedMap = Map<String, String>.from(profile.selectedMap);
+    if (proxyName.isEmpty) {
+      selectedMap.remove(groupName);
+    } else {
+      selectedMap[groupName] = proxyName;
+    }
+    ref
+        .read(profilesProvider.notifier)
+        .put(profile.copyWith(selectedMap: selectedMap));
+  }
+
   Future<void> deleteProfile(int id) async {
     await ref.read(profilesProvider.notifier).del(id);
     await clearEffect(id);
